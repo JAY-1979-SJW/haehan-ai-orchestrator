@@ -13,12 +13,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import subprocess
 import sys
 import time
 import urllib.request
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -187,7 +190,7 @@ def _show_info() -> None:
         print(f"  브라우저: {info.get('Browser', '?')}")
         print(f"  WebSocket: {info.get('webSocketDebuggerUrl', '?')}")
     except Exception:
-        pass
+        logger.debug("CDP /json/version 조회 실패", exc_info=True)
 
 
 def cmd_status() -> None:
@@ -200,7 +203,7 @@ def cmd_status() -> None:
         try:
             pid_data = json.loads(PID_FILE.read_text(encoding="utf-8"))
         except Exception:
-            pass
+            logger.debug("PID 파일 읽기 실패: %s", PID_FILE, exc_info=True)
     if pid_data.get("pid"):
         print(f"Chrome PID: {pid_data['pid']}")
 

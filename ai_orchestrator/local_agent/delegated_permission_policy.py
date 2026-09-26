@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -14,6 +15,8 @@ from ai_orchestrator.local_agent.action_risk_policy import (
     is_blocked,
     is_delegatable,
 )
+
+logger = logging.getLogger(__name__)
 
 # ── 권한 상태 상수 ─────────────────────────────────────────────────────────────
 
@@ -114,7 +117,7 @@ def check_permission(
             if datetime.now(tz=UTC) > expires_at:
                 return {"result": CHECK_EXPIRED, "reason": "권한 만료됨"}
         except ValueError:
-            pass
+            logger.warning("expires_at 파싱 실패, 만료 판정 건너뜀: %r", expires_at_str)
 
     # scope 검사
     if permission.get("action") != action:

@@ -444,13 +444,13 @@ def _detect_backend() -> str:
 
         return "ImageGrab"
     except ImportError:
-        pass
+        logger.debug("PIL.ImageGrab 사용 불가, mss로 폴백", exc_info=True)
     try:
         import mss  # type: ignore  # noqa: F401
 
         return "mss"
     except ImportError:
-        pass
+        logger.debug("mss 사용 불가 — 캡처 백엔드 없음", exc_info=True)
     return "none"
 
 

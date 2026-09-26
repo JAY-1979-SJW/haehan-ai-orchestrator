@@ -3,18 +3,25 @@
 bulk_collect, monitor_keywords, track_blogger, search_bulk, compare_bloggers.
 개별 조회 능력은 self(MRO)로 호출한다. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
+import logging
 import time
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 
 class BlogCollectMixin:
-    def blog_bulk_collect(self, blog_urls: list[str],
-                           include_posts: bool = True,
-                           include_comments: bool = False,
-                           include_images: bool = False,
-                           max_posts_each: int = 20) -> list[dict]:
+    def blog_bulk_collect(
+        self,
+        blog_urls: list[str],
+        include_posts: bool = True,
+        include_comments: bool = False,
+        include_images: bool = False,
+        max_posts_each: int = 20,
+    ) -> list[dict]:
         """여러 블로그 일괄 수집."""
         results = []
 
@@ -41,9 +48,7 @@ class BlogCollectMixin:
 
         return results
 
-    def blog_monitor_keywords(self, keywords: list[str],
-                                page: int = 1,
-                                max_each: int = 20) -> dict:
+    def blog_monitor_keywords(self, keywords: list[str], page: int = 1, max_each: int = 20) -> dict:
         """키워드 검색 → 결과 수집."""
         results = {}
 
@@ -59,8 +64,7 @@ class BlogCollectMixin:
 
         return results
 
-    def blog_track_blogger(self, target_blog_url: str,
-                             save_path: str = "") -> dict:
+    def blog_track_blogger(self, target_blog_url: str, save_path: str = "") -> dict:
         """블로거 전체 정보 스냅샷."""
         from datetime import datetime
 
@@ -82,7 +86,7 @@ class BlogCollectMixin:
                     if tag:
                         top_tags[tag] = top_tags.get(tag, 0) + 1
             except Exception:
-                pass
+                logger.debug("포스트 태그 수집 실패: %s", href, exc_info=True)
         # 빈도순 정렬
         top_tags = dict(sorted(top_tags.items(), key=lambda x: x[1], reverse=True))
 
@@ -97,6 +101,7 @@ class BlogCollectMixin:
 
         if save_path:
             import json
+
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
             with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(snapshot, f, ensure_ascii=False, indent=2)
@@ -104,8 +109,7 @@ class BlogCollectMixin:
 
         return snapshot
 
-    def blog_search_bulk(self, query: str, max_pages: int = 3,
-                          collect_post: bool = False) -> list[dict]:
+    def blog_search_bulk(self, query: str, max_pages: int = 3, collect_post: bool = False) -> list[dict]:
         """검색 결과 여러 페이지 수집."""
         results = []
 
@@ -123,7 +127,7 @@ class BlogCollectMixin:
                                 result["body"] = post_data.get("body", "")
                                 result["images"] = post_data.get("images", [])
                             except Exception:
-                                pass
+                                logger.debug("포스트 본문 수집 실패: %s", post_url, exc_info=True)
 
                 results.extend(page_results)
                 print(f" {len(page_results)}개")
@@ -155,20 +159,22 @@ class BlogCollectMixin:
                                 pd = self.blog_read_post(href)
                                 like_counts.append(pd.get("like_count", 0))
                             except Exception:
-                                pass
+                                logger.debug("포스트 좋아요 수 수집 실패: %s", href, exc_info=True)
                     if like_counts:
                         avg_likes = sum(like_counts) / len(like_counts)
 
-                results.append({
-                    "blog_id": info["blog_id"],
-                    "title": info["title"],
-                    "post_count": len(posts),
-                    "neighbor_count": info["neighbor_count"],
-                    "visitor_total": info["visitor_total"],
-                    "visitor_today": info["visitor_today"],
-                    "avg_comments": round(avg_comments, 1),
-                    "avg_likes": avg_likes,
-                })
+                results.append(
+                    {
+                        "blog_id": info["blog_id"],
+                        "title": info["title"],
+                        "post_count": len(posts),
+                        "neighbor_count": info["neighbor_count"],
+                        "visitor_total": info["visitor_total"],
+                        "visitor_today": info["visitor_today"],
+                        "avg_comments": round(avg_comments, 1),
+                        "avg_likes": avg_likes,
+                    }
+                )
                 time.sleep(2.0)
             except Exception as e:
                 print(f"  {blog_url} 오류: {e}")

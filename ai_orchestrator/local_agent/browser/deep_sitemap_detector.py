@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -103,8 +106,8 @@ def detect_mail_detail_fields(page) -> MailDetailInfo:
 
                     if len(elements) > 0:
                         found_selectors[sel] = len(elements)
-                except:  # noqa: E722, S110
-                    pass
+                except Exception:  # 셀렉터 탐색 실패는 정상 흐름
+                    logger.debug("필드 셀렉터 탐색 실패: %s", sel, exc_info=True)
 
             if found_selectors:
                 info.selectors[field_name] = found_selectors
@@ -125,8 +128,8 @@ def detect_mail_detail_fields(page) -> MailDetailInfo:
             }"""
             )
             info.sample_data = sample
-        except:  # noqa: E722, S110
-            pass
+        except Exception:  # 샘플 추출 실패는 정상 흐름
+            logger.debug("샘플 데이터 추출 실패", exc_info=True)
 
         return info
 
@@ -159,8 +162,8 @@ def detect_mail_inbox_structure(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_mails[sel] = len(elements)
-            except:  # noqa: E722, S110
-                pass
+            except Exception:  # 셀렉터 탐색 실패는 정상 흐름
+                logger.debug("메일 항목 셀렉터 탐색 실패: %s", sel, exc_info=True)
 
         if found_mails:
             print(f"  ✓ 메일 항목 셀렉터: {found_mails}")
@@ -273,8 +276,8 @@ def deep_detect_calendar_service(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_events[sel] = len(elements)
-            except:  # noqa: E722, S110
-                pass
+            except Exception:  # 셀렉터 탐색 실패는 정상 흐름
+                logger.debug("이벤트 셀렉터 탐색 실패: %s", sel, exc_info=True)
 
         if found_events:
             print(f"  ✓ 이벤트 셀렉터: {found_events}")
@@ -318,8 +321,8 @@ def deep_detect_mybox_service(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_files[sel] = len(elements)
-            except:  # noqa: E722, S110
-                pass
+            except Exception:  # 셀렉터 탐색 실패는 정상 흐름
+                logger.debug("파일 셀렉터 탐색 실패: %s", sel, exc_info=True)
 
         if found_files:
             print(f"  ✓ 파일 셀렉터: {found_files}")

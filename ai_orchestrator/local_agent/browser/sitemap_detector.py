@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import time
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -124,8 +127,8 @@ def detect_dom_selectors(page) -> dict[str, list[str]]:
                 count = len(page.query_selector_all(sel))
                 if count > 0:
                     mail_found.append({"selector": sel, "count": count})
-            except:  # noqa: E722, S110
-                pass
+            except Exception:  # 셀렉터 탐색 실패는 정상 흐름
+                logger.debug("메일 셀렉터 탐색 실패: %s", sel, exc_info=True)
 
         if mail_found:
             selectors_result["mail_item"] = mail_found
@@ -144,8 +147,8 @@ def detect_dom_selectors(page) -> dict[str, list[str]]:
                 count = len(page.query_selector_all(sel))
                 if count > 0:
                     folder_found.append({"selector": sel, "count": count})
-            except:  # noqa: E722, S110
-                pass
+            except Exception:  # 셀렉터 탐색 실패는 정상 흐름
+                logger.debug("폴더 셀렉터 탐색 실패: %s", sel, exc_info=True)
 
         if folder_found:
             selectors_result["folder"] = folder_found

@@ -22,6 +22,7 @@ Production path:
     Replace sqlite3 connection with SQLAlchemy engine targeting PostgreSQL.
     Schema and interface are identical.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -30,7 +31,6 @@ import sqlite3
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, List
 
 from .browser_approval_persistent_store import BrowserApprovalRecord
 from .browser_approval_verifier import DuplicateApprovalError
@@ -66,16 +66,27 @@ _CREATE_INDEXES_SQL = [
 ]
 
 # Fields that MUST NOT appear in DB rows (defense-in-depth validation)
-_FORBIDDEN_DB_COLUMNS: frozenset[str] = frozenset({
-    "approval_token", "final_approval_token", "raw_token",
-    "typed_text", "password", "otp", "cookie", "session",
-    "authorization", "localstorage", "sessionstorage",
-})
+_FORBIDDEN_DB_COLUMNS: frozenset[str] = frozenset(
+    {
+        "approval_token",
+        "final_approval_token",
+        "raw_token",
+        "typed_text",
+        "password",
+        "otp",
+        "cookie",
+        "session",
+        "authorization",
+        "localstorage",
+        "sessionstorage",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
@@ -85,7 +96,7 @@ def _now_iso() -> str:
     return datetime.utcnow().isoformat()
 
 
-def _parse_dt(value: Optional[str]) -> Optional[datetime]:
+def _parse_dt(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
@@ -112,6 +123,7 @@ def _row_to_record(row: sqlite3.Row) -> BrowserApprovalRecord:
 # Store
 # ---------------------------------------------------------------------------
 
+
 class SQLiteBrowserApprovalStore:
     """SQLite-backed approval store.
 
@@ -122,13 +134,11 @@ class SQLiteBrowserApprovalStore:
         db_path: Path to SQLite file. None or ":memory:" for in-memory (tests).
     """
 
-    def __init__(self, db_path: Optional[Path] = None) -> None:
+    def __init__(self, db_path: Path | None = None) -> None:
         path_str = str(db_path) if db_path else ":memory:"
         self._db_path = path_str
         self._lock = threading.Lock()
-        self._conn: sqlite3.Connection = sqlite3.connect(
-            path_str, check_same_thread=False
-        )
+        self._conn: sqlite3.Connection = sqlite3.connect(path_str, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._init_schema()
 
@@ -150,19 +160,15 @@ class SQLiteBrowserApprovalStore:
         approval_id: str,
         action_type: str,
         selector: str,
-        approval_token: str,      # raw token — hash computed and discarded
+        approval_token: str,  # raw token — hash computed and discarded
         risk_level: str = "low",
         final_approval_required: bool = False,
-        expires_in_seconds: Optional[int] = None,
+        expires_in_seconds: int | None = None,
     ) -> BrowserApprovalRecord:
         """Create approval record. Raw token never reaches the DB."""
         token_hash = _hash_token(approval_token)  # hash and discard
         now = datetime.utcnow()
-        expires_at = (
-            now + timedelta(seconds=expires_in_seconds)
-            if expires_in_seconds
-            else None
-        )
+        expires_at = now + timedelta(seconds=expires_in_seconds) if expires_in_seconds else None
 
         with self._lock:
             try:
@@ -188,9 +194,7 @@ class SQLiteBrowserApprovalStore:
             except sqlite3.IntegrityError as exc:
                 # UNIQUE constraint on approval_id — translate to common policy
                 self._conn.rollback()
-                raise DuplicateApprovalError(
-                    f"approval_id already exists: {approval_id}"
-                ) from exc
+                raise DuplicateApprovalError(f"approval_id already exists: {approval_id}") from exc
 
         logger.info("db approval created: %s", approval_id)
         return BrowserApprovalRecord(
@@ -205,7 +209,7 @@ class SQLiteBrowserApprovalStore:
             created_at=now,
         )
 
-    def get(self, approval_id: str) -> Optional[BrowserApprovalRecord]:
+    def get(self, approval_id: str) -> BrowserApprovalRecord | None:
         with self._lock:
             row = self._conn.execute(
                 "SELECT * FROM browser_approvals WHERE approval_id = ?",
@@ -245,34 +249,31 @@ class SQLiteBrowserApprovalStore:
     # ------------------------------------------------------------------
     # Extra helpers (not in base interface)
 
-    def list_pending(self) -> List[str]:
+    def list_pending(self) -> list[str]:
         """Return approval_ids with status='approved' (for tray status display)."""
         with self._lock:
-            rows = self._conn.execute(
-                "SELECT approval_id FROM browser_approvals WHERE status = 'approved'"
-            ).fetchall()
+            rows = self._conn.execute("SELECT approval_id FROM browser_approvals WHERE status = 'approved'").fetchall()
         return [r["approval_id"] for r in rows]
 
-    def get_column_names(self) -> List[str]:
+    def get_column_names(self) -> list[str]:
         """Return DB schema column names (for security validation in tests)."""
         with self._lock:
-            rows = self._conn.execute(
-                "PRAGMA table_info(browser_approvals)"
-            ).fetchall()
+            rows = self._conn.execute("PRAGMA table_info(browser_approvals)").fetchall()
         return [r["name"] for r in rows]
 
     def close(self) -> None:
         try:
             self._conn.close()
         except Exception:
-            pass
+            # 종료 경로 — 이미 닫혔을 수 있음
+            logger.debug("DB connection close 실패(종료 경로)", exc_info=True)
 
 
 # Alias for use in production migration path
 DatabaseBrowserApprovalStore = SQLiteBrowserApprovalStore
 
 __all__ = [
-    "SQLiteBrowserApprovalStore",
-    "DatabaseBrowserApprovalStore",
     "_FORBIDDEN_DB_COLUMNS",
+    "DatabaseBrowserApprovalStore",
+    "SQLiteBrowserApprovalStore",
 ]

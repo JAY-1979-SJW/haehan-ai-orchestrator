@@ -23,12 +23,17 @@ launch 하지 않고 **사용자 로그인 세션을 유지**한 채 같은 브�
         # 처음에는 로그인 화면 → 사용자가 직접 로그인
         # 이후 호출에서는 자동 로그인 상태로 시작
 """
+
 from __future__ import annotations
 
+import logging
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Any
+from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # 프로젝트 루트 기준 세션 저장 경로
 _DEFAULT_SESSION_ROOT = Path(__file__).resolve().parents[2] / "data" / "browser_sessions"
@@ -87,9 +92,7 @@ def open_user_session(
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as e:
-        raise RuntimeError(
-            "playwright 미설치. `pip install playwright` 후 `playwright install chrome` 실행."
-        ) from e
+        raise RuntimeError("playwright 미설치. `pip install playwright` 후 `playwright install chrome` 실행.") from e
 
     session_dir = get_session_dir(profile_name)
     storage_state_path = session_dir / "state.json"
@@ -108,9 +111,7 @@ def open_user_session(
             no_viewport=True if maximized else False,
         )
         # 자동화 감지 우회 — 모든 페이지에 적용
-        context.add_init_script(
-            "Object.defineProperty(navigator,'webdriver',{get:()=>undefined});"
-        )
+        context.add_init_script("Object.defineProperty(navigator,'webdriver',{get:()=>undefined});")
         try:
             if start_url:
                 page = context.pages[0] if context.pages else context.new_page()
@@ -126,7 +127,8 @@ def open_user_session(
             try:
                 context.close()
             except Exception:
-                pass
+                # 종료 경로 — 이미 닫혔거나 브라우저 프로세스가 죽은 경우일 수 있음
+                logger.debug("browser context.close() 실패(종료 경로)", exc_info=True)
 
 
 def wait_for_user_action(seconds: int = 60, message: str = "") -> None:

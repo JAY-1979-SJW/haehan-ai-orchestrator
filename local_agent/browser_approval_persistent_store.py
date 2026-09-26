@@ -116,13 +116,13 @@ class PersistentBrowserApprovalStore:
                         try:
                             rec["expires_at"] = datetime.fromisoformat(event.get("expires_at"))
                         except (ValueError, TypeError):
-                            pass
+                            logger.warning("approval expires_at 파싱 실패: approval_id=%s", approval_id, exc_info=True)
 
                     if event.get("created_at"):
                         try:
                             rec["created_at"] = datetime.fromisoformat(event.get("created_at"))
                         except (ValueError, TypeError):
-                            pass
+                            logger.debug("approval created_at 파싱 실패: approval_id=%s", approval_id, exc_info=True)
 
                     # Create record
                     self._records[approval_id] = BrowserApprovalRecord(**rec)

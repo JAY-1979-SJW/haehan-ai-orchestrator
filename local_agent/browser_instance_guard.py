@@ -327,7 +327,7 @@ def clear_pid_file(paths: GuardPaths) -> None:
     try:
         paths.pid_file.unlink()
     except FileNotFoundError:
-        pass
+        pass  # 의도적: 이미 삭제된 파일 — 정상 종료 경로(idempotent delete)
 
 
 def cleanup_stale_pid(paths: GuardPaths) -> tuple[int, bool]:
@@ -361,7 +361,7 @@ def clear_lock_file(paths: GuardPaths) -> None:
     try:
         paths.lock_file.unlink()
     except FileNotFoundError:
-        pass
+        pass  # 의도적: 이미 삭제된 파일 — 정상 종료 경로(idempotent delete)
 
 
 def is_lock_active(paths: GuardPaths) -> bool:
@@ -582,7 +582,7 @@ def quit_automation_browsers(
     try:
         paths.snapshot_file.unlink()
     except FileNotFoundError:
-        pass
+        pass  # 의도적: 이미 삭제된 파일 — 정상 종료 경로(idempotent delete)
 
     return {
         "ok": not failed,

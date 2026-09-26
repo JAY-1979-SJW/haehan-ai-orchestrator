@@ -27,11 +27,13 @@
 주입할 수 있다. None 이면 실제 ``playwright.sync_api.sync_playwright`` /
 ``time`` / ``builtins.input`` 이 사용된다.
 """
+
 from __future__ import annotations
 
 import logging
 import time as _time_default
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
@@ -45,13 +47,22 @@ from .web_reader import analyze_html_structure, validate_url_for_readonly_open
 logger = logging.getLogger(__name__)
 
 
-_ALLOWED_WAIT_UNTIL: frozenset[str] = frozenset({
-    "domcontentloaded", "load", "networkidle", "commit",
-})
+_ALLOWED_WAIT_UNTIL: frozenset[str] = frozenset(
+    {
+        "domcontentloaded",
+        "load",
+        "networkidle",
+        "commit",
+    }
+)
 
-_ALLOWED_BROWSER_CHANNELS: frozenset[str] = frozenset({
-    "chromium", "chrome", "msedge",
-})
+_ALLOWED_BROWSER_CHANNELS: frozenset[str] = frozenset(
+    {
+        "chromium",
+        "chrome",
+        "msedge",
+    }
+)
 
 _MIN_WAIT_SECONDS = 1
 _MAX_WAIT_SECONDS = 600
@@ -65,16 +76,12 @@ _MIN_VIEWPORT = 200
 _MAX_VIEWPORT = 4096
 
 _VISIBLE_CONFIRM_PROMPT = (
-    "\n[manual-login-probe] 브라우저 창이 실제 화면에 보이면 Enter를 누르세요.\n"
-    "보이지 않으면 Ctrl+C로 중단하세요.\n> "
+    "\n[manual-login-probe] 브라우저 창이 실제 화면에 보이면 Enter를 누르세요.\n보이지 않으면 Ctrl+C로 중단하세요.\n> "
 )
 _USER_LOGIN_CONFIRM_PROMPT = (
-    "\n[manual-login-probe] 로그인이 완료된 화면이 실제로 보이면 Enter 를,\n"
-    "아직 아니면 n + Enter 를 누르세요.\n> "
+    "\n[manual-login-probe] 로그인이 완료된 화면이 실제로 보이면 Enter 를,\n아직 아니면 n + Enter 를 누르세요.\n> "
 )
-_KEEP_OPEN_PROMPT = (
-    "\n[manual-login-probe] 브라우저를 닫으려면 Enter 를 누르세요.\n> "
-)
+_KEEP_OPEN_PROMPT = "\n[manual-login-probe] 브라우저를 닫으려면 Enter 를 누르세요.\n> "
 
 
 def probe_manual_login_flow(
@@ -113,7 +120,8 @@ def probe_manual_login_flow(
     """
     # 1) URL 안전성 (http/https + 공개 호스트).
     validation = validate_url_for_readonly_open(
-        url, allow_private_network=allow_private_network,
+        url,
+        allow_private_network=allow_private_network,
     )
     if not validation.get("ok"):
         return _err(
@@ -136,15 +144,24 @@ def probe_manual_login_flow(
     if wait_until not in _ALLOWED_WAIT_UNTIL:
         wait_until = "domcontentloaded"
     wait_seconds = _clip_int(
-        wait_seconds, _MIN_WAIT_SECONDS, _MAX_WAIT_SECONDS, 120,
+        wait_seconds,
+        _MIN_WAIT_SECONDS,
+        _MAX_WAIT_SECONDS,
+        120,
     )
     poll_interval_seconds = _clip_int(
-        poll_interval_seconds, _MIN_POLL_SECONDS, _MAX_POLL_SECONDS, 3,
+        poll_interval_seconds,
+        _MIN_POLL_SECONDS,
+        _MAX_POLL_SECONDS,
+        3,
     )
     if poll_interval_seconds > wait_seconds:
         poll_interval_seconds = wait_seconds
     max_html_chars = _clip_int(
-        max_html_chars, 1000, _MAX_HTML_CAP, _DEFAULT_MAX_HTML,
+        max_html_chars,
+        1000,
+        _MAX_HTML_CAP,
+        _DEFAULT_MAX_HTML,
     )
     goto_timeout_ms = _clip_int(goto_timeout_ms, 1000, 60000, 15000)
     slow_mo_ms = _clip_int(slow_mo_ms, _MIN_SLOW_MO_MS, _MAX_SLOW_MO_MS, 0)
@@ -154,10 +171,7 @@ def probe_manual_login_flow(
         return _err(
             url=url,
             error_code="BROWSER_CHANNEL_INVALID",
-            reason=(
-                f"unknown browser_channel: {browser_channel!r} — "
-                "allowed: chromium / chrome / msedge"
-            ),
+            reason=(f"unknown browser_channel: {browser_channel!r} — allowed: chromium / chrome / msedge"),
         )
 
     viewport_norm = _normalize_viewport(viewport)
@@ -206,17 +220,21 @@ def probe_manual_login_flow(
         )
     except BrowserDependencyMissing as e:
         return _err(
-            url=url, error_code="BROWSER_DEPENDENCY_MISSING",
+            url=url,
+            error_code="BROWSER_DEPENDENCY_MISSING",
             reason=str(e)[:200],
         )
     except Exception as e:  # pragma: no cover - 실제 환경 오류
         logger.exception("manual login probe failed")
         return _err(
-            url=url, error_code="BROWSER_OPEN_FAILED", reason=str(e)[:200],
+            url=url,
+            error_code="BROWSER_OPEN_FAILED",
+            reason=str(e)[:200],
         )
 
 
 # ── 내부 ────────────────────────────────────────────────────────────────
+
 
 def _run_probe(
     *,
@@ -266,7 +284,9 @@ def _run_probe(
                 page = context.new_page()
                 try:
                     page.goto(
-                        url, wait_until=wait_until, timeout=goto_timeout_ms,
+                        url,
+                        wait_until=wait_until,
+                        timeout=goto_timeout_ms,
                     )
 
                     # 사용자 화면에 실제로 노출되도록 bring_to_front 시도
@@ -298,12 +318,14 @@ def _run_probe(
                         if now >= deadline_ts:
                             break
                         sleep_for = min(
-                            poll_interval_seconds, deadline_ts - now,
+                            poll_interval_seconds,
+                            deadline_ts - now,
                         )
                         if sleep_for > 0:
                             time_mod.sleep(sleep_for)
                         last_obs = _observe(
-                            page, max_html_chars=max_html_chars,
+                            page,
+                            max_html_chars=max_html_chars,
                         )
                         completed_reasons = _detect_completion(
                             initial=initial,
@@ -333,17 +355,14 @@ def _run_probe(
                                     )
 
                     # 6) 상태 분류.
-                    initial_is_already_logged_in = (
-                        _initial_is_already_logged_in(
-                            initial=initial, success_urls=success_urls,
-                        )
+                    initial_is_already_logged_in = _initial_is_already_logged_in(
+                        initial=initial,
+                        success_urls=success_urls,
                     )
                     login_state_hint, login_completed_hint = _classify_login(
                         initial=initial,
                         completion_reasons=completed_reasons,
-                        initial_is_already_logged_in=(
-                            initial_is_already_logged_in
-                        ),
+                        initial_is_already_logged_in=(initial_is_already_logged_in),
                         require_user_login_confirm=require_user_login_confirm,
                         login_confirmed_by_user=login_confirmed_by_user,
                     )
@@ -355,40 +374,29 @@ def _run_probe(
                     #    read-only 로만 수집해 집계한다. fake context 에서는
                     #    `pages` 속성이 없으므로 getattr default=None 로 안전
                     #    fallback 된다.
-                    pages_observed_count, success_url_across_pages = (
-                        _scan_context_pages_aggregate(
-                            context=context,
-                            success_urls=success_urls,
-                        )
+                    pages_observed_count, success_url_across_pages = _scan_context_pages_aggregate(
+                        context=context,
+                        success_urls=success_urls,
                     )
                     if success_url_across_pages and not login_confirmed_by_user:
                         # 사용자 확인이 없는데 다른 탭에 target 이 열려 있는
                         # 상태는 자동 단정하지 않는다 (§5.3, §8.4 WARN).
-                        if (
-                            "success_url_observed_across_pages"
-                            not in (warnings or [])
-                        ):
-                            warnings.append(
-                                "success_url_observed_across_pages"
-                            )
+                        if "success_url_observed_across_pages" not in (warnings or []):
+                            warnings.append("success_url_observed_across_pages")
                     if login_confirmed_by_user and not success_url_across_pages:
                         # 사용자 확인은 있는데 스크립트가 target URL 을 어느
                         # 탭에서도 관측하지 못한 경우 — §8.4 "PASS with
                         # measurement caveat" 케이스.
-                        if (
-                            "script_observed_without_target_url"
-                            not in (warnings or [])
-                        ):
-                            warnings.append(
-                                "script_observed_without_target_url"
-                            )
+                        if "script_observed_without_target_url" not in (warnings or []):
+                            warnings.append("script_observed_without_target_url")
 
                     # 8) keep_open 시 닫기 전에 사용자 Enter 를 기다림.
                     if keep_open:
                         try:
                             input_reader(_KEEP_OPEN_PROMPT)
                         except (KeyboardInterrupt, EOFError):
-                            pass
+                            # 의도적: 사용자가 대기 중 중단해도 정상 진행
+                            logger.debug("keep_open 대기 중 중단됨(Ctrl+C/EOF)", exc_info=True)
 
                     return _build_result(
                         url=url,
@@ -400,9 +408,7 @@ def _run_probe(
                         visible_confirmed_by_user=visible_confirmed_by_user,
                         login_confirmed_by_user=login_confirmed_by_user,
                         pages_observed_count=pages_observed_count,
-                        success_url_observed_across_pages=(
-                            success_url_across_pages
-                        ),
+                        success_url_observed_across_pages=(success_url_across_pages),
                         warnings=warnings,
                     )
                 finally:
@@ -436,9 +442,7 @@ def _build_result(
         "login_completed_hint": bool(login_completed_hint),
         "login_completion_reason": list(completed_reasons),
         "pages_observed_count": int(pages_observed_count),
-        "success_url_observed_across_pages": bool(
-            success_url_observed_across_pages
-        ),
+        "success_url_observed_across_pages": bool(success_url_observed_across_pages),
         "initial": _redact_observation(initial, include_structure=False),
         "warnings": list(warnings),
     }
@@ -452,9 +456,7 @@ def _build_result(
             login_completion_reason=completed_reasons,
         )
         base["summary"] = (
-            "manual login completed hint=true state="
-            + login_state_hint
-            + " reasons=" + ",".join(completed_reasons)
+            "manual login completed hint=true state=" + login_state_hint + " reasons=" + ",".join(completed_reasons)
         )[:300]
         return base
 
@@ -468,14 +470,11 @@ def _build_result(
     if login_state_hint == "already_logged_in_or_public_page":
         base["error_code"] = "LOGIN_NOT_CONFIRMED"
         base["summary"] = (
-            "initial page already looked logged in or was a public page — "
-            "manual login completion not confirmed"
+            "initial page already looked logged in or was a public page — manual login completion not confirmed"
         )[:300]
     else:
         base["error_code"] = "LOGIN_TIMEOUT"
-        base["summary"] = (
-            "Manual login was not detected before timeout"
-        )[:300]
+        base["summary"] = ("Manual login was not detected before timeout")[:300]
     return base
 
 
@@ -487,7 +486,8 @@ def _build_canceled_result(
     success_urls: list[str],
 ) -> dict[str, Any]:
     initial_is_already_logged_in = _initial_is_already_logged_in(
-        initial=initial, success_urls=success_urls,
+        initial=initial,
+        success_urls=success_urls,
     )
     login_state_hint, _ = _classify_login(
         initial=initial,
@@ -613,12 +613,8 @@ def _detect_completion(
     """
     reasons: list[str] = []
 
-    initial_pw = "password_input_detected" in (
-        initial.get("login_reason") or []
-    )
-    current_pw = "password_input_detected" in (
-        current.get("login_reason") or []
-    )
+    initial_pw = "password_input_detected" in (initial.get("login_reason") or [])
+    current_pw = "password_input_detected" in (current.get("login_reason") or [])
     if initial_pw and not current_pw:
         reasons.append("password_input_disappeared")
 
@@ -627,9 +623,7 @@ def _detect_completion(
     if init_url and cur_url and init_url != cur_url:
         reasons.append("url_changed")
 
-    if initial.get("login_required_hint") and not current.get(
-        "login_required_hint"
-    ):
+    if initial.get("login_required_hint") and not current.get("login_required_hint"):
         reasons.append("login_required_hint_cleared")
 
     init_url_lc = init_url.lower()
@@ -644,12 +638,8 @@ def _detect_completion(
             reasons.append(f"success_url_match:{tok[:60]}")
             break
 
-    text_blob_current = _visible_text_blob(
-        current.get("page_structure") or {}
-    )
-    text_blob_initial = _visible_text_blob(
-        initial.get("page_structure") or {}
-    )
+    text_blob_current = _visible_text_blob(current.get("page_structure") or {})
+    text_blob_initial = _visible_text_blob(initial.get("page_structure") or {})
     for tok in success_texts:
         if not tok:
             continue
@@ -678,7 +668,9 @@ def _has_strong_reason(reasons: list[str]) -> bool:
 
 
 def _initial_is_already_logged_in(
-    *, initial: dict[str, Any], success_urls: list[str],
+    *,
+    initial: dict[str, Any],
+    success_urls: list[str],
 ) -> bool:
     """초기 페이지가 이미 target 상태 (로그인됨 또는 공개 페이지) 로 보이는지.
 
@@ -734,10 +726,7 @@ def _classify_login(
         return "manual_login_completed", hint
 
     init_reasons = initial.get("login_reason") or []
-    if (
-        "password_input_detected" in init_reasons
-        or initial.get("login_required_hint")
-    ):
+    if "password_input_detected" in init_reasons or initial.get("login_required_hint"):
         return "login_required", False
 
     return "unknown", False
