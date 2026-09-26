@@ -54,7 +54,7 @@ services:
 
 | Container Name | Service | Image | Status | Base Image |
 |---|---|---|---|---|
-| haehan-ai-orchestrator-api | ai-orchestrator-api | haehan-ai-orchestrator-api:local | Up 4h (healthy) | python:3.11-slim |
+| haehan-ai-orchestrator-api | ai-orchestrator-api | haehan-ai-orchestrator-api:local | Up 4h (healthy) | python:3.14-slim |
 | haehan-ai-orchestrator-admin-web | admin-web | haehan-ai-orchestrator-admin-web:local | Up 22h | (Node.js) |
 
 ---
@@ -75,7 +75,7 @@ services:
 ```
 Name: playwright
 Version: 1.58.0
-Location: /usr/local/lib/python3.11/site-packages
+Location: /usr/local/lib/python3.14/site-packages
 Depends on: greenlet, pyee
 ```
 
@@ -247,7 +247,7 @@ def action_browser_inspect(params: dict) -> ActionResult:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                  ai-orchestrator-api Container               │
-│                     (python:3.11-slim)                        │
+│                     (python:3.14-slim)                        │
 │                                                               │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ Server-Side Browser Operations                       │   │
@@ -552,7 +552,7 @@ ai_orchestrator/browser_router.py
 
 ### Q1: Playwright가 어느 서비스/컨테이너에 설치되어 있는가?
 
-**A:** ai-orchestrator-api 컨테이너 **1개뿐** (1.58.0, /usr/local/lib/python3.11/site-packages)
+**A:** ai-orchestrator-api 컨테이너 **1개뿐** (1.58.0, /usr/local/lib/python3.14/site-packages)
 
 ### Q2: 중복 설치가 있는가?
 

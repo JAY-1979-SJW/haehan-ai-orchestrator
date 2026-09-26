@@ -32,8 +32,8 @@
 ### Dockerfile 현황
 | 항목 | 값 |
 |------|-----|
-| **base image** | python:3.11-slim |
-| **Python version** | 3.11 |
+| **base image** | python:3.14-slim |
+| **Python version** | 3.14 |
 | **requirements.txt** | 설치됨 |
 | **playwright install 명령** | 없음 ❌ |
 | **PLAYWRIGHT_BROWSERS_PATH** | 설정 안 됨 |
@@ -44,7 +44,7 @@
 |------|-----|
 | **설치 상태** | pip install -r requirements.txt로 설치됨 |
 | **버전** | 1.58.0 |
-| **위치** | /usr/local/lib/python3.11/site-packages |
+| **위치** | /usr/local/lib/python3.14/site-packages |
 | **browser binary 경로** | /root/.cache/ms-playwright |
 | **실제 browser binary** | 없음 ❌ |
 
@@ -77,7 +77,7 @@
 - ✗ 바이너리 업데이트 시 이미지 재빌드 필요
 
 **예상 영향:**
-- 현재 이미지: ~200MB (python:3.11-slim + deps)
+- 현재 이미지: ~200MB (python:3.14-slim + deps)
 - 설치 후: ~700-800MB
 - Docker registry 저장소 비용 증가 (미미)
 
@@ -153,7 +153,7 @@
 
 **Step 1: Dockerfile 수정**
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # apt dependency 추가 (chromium 필요)
 RUN apt-get update && apt-get install -y --no-install-recommends \

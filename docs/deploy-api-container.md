@@ -77,7 +77,7 @@ curl -sk --resolve haehan-ai.kr:443:127.0.0.1 \
 
 ## 파일 구성
 
-- `Dockerfile` — Python 3.11 slim, `uvicorn ai_orchestrator.server:app`, HEALTHCHECK 포함
+- `Dockerfile` — Python 3.14 slim, `uvicorn ai_orchestrator.server:app`, HEALTHCHECK 포함
 - `docker-compose.yml` — 서비스 1개(`ai-orchestrator-api`), 127.0.0.1:8400 바인딩, named volume
 - 호스트 배치 권장 경로: `/home/ubuntu/apps/haehan-ai-orchestrator-api/`
   (기존 `.../haehan-ai-orchestrator/` 와 **별도 디렉터리**. 브랜치/레이아웃 다이버전스 이슈 회피)

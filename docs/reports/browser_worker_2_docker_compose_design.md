@@ -36,11 +36,11 @@
 ### API Dockerfile 현황
 | 항목 | 값 |
 |------|-----|
-| **base image** | python:3.11-slim (~80MB) |
-| **Python version** | 3.11 |
+| **base image** | python:3.14-slim (~80MB) |
+| **Python version** | 3.14 |
 | **Playwright package** | 1.58.0 (via requirements.txt) |
 | **browser binary** | 미설치 (playwright install 실행 안 됨) |
-| **Playwright path** | /usr/local/lib/python3.11/site-packages |
+| **Playwright path** | /usr/local/lib/python3.14/site-packages |
 | **EXPOSE port** | 8400 |
 | **HEALTHCHECK** | /api/v1/health (Python urllib) |
 
@@ -73,9 +73,9 @@ browser_worker/
 
 ### Dockerfile 후보 비교
 
-#### 후보 A: python:3.11-slim 기반 (권장)
+#### 후보 A: python:3.14-slim 기반 (권장)
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # apt dependencies for Playwright
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -103,7 +103,7 @@ CMD ["uvicorn", "browser_worker.app:app", "--host", "0.0.0.0", "--port", "8500"]
 ```
 
 **장점:**
-- ✓ 최소 크기 (python:3.11-slim 기반)
+- ✓ 최소 크기 (python:3.14-slim 기반)
 - ✓ Dockerfile으로 재현성 높음
 - ✓ 조직 통일: API와 같은 기본 이미지
 - ✓ 커스텀 최소화
@@ -160,7 +160,7 @@ CMD ["uvicorn", "browser_worker.app:app", "--host", "0.0.0.0", "--port", "8500"]
 - ✗ 유지보수 복잡도 증가
 - ✗ 스케일링 시 어려움
 
-### 권장 선택: 후보 A (python:3.11-slim)
+### 권장 선택: 후보 A (python:3.14-slim)
 **이유:**
 1. 최소 크기와 빌드 시간의 균형
 2. 재현성과 명확성
@@ -463,7 +463,7 @@ Browser Worker Container (8500, default network only)
 
 구현:
 1. docker/browser-worker.Dockerfile 생성
-   - python:3.11-slim base
+   - python:3.14-slim base
    - apt deps (chromium sandbox)
    - browser_worker 패키지만 COPY
    - healthcheck: GET /health
@@ -559,7 +559,7 @@ B. API 컨테이너도 설치 (비권장)
 
 **설계 완료:**
 1. ✓ Browser Worker Dockerfile 후보 3개 제시
-2. ✓ 권장안 선택 (python:3.11-slim)
+2. ✓ 권장안 선택 (python:3.14-slim)
 3. ✓ docker-compose.yml browser-worker service 설계
 4. ✓ 네트워크/포트/healthcheck 정책
 5. ✓ 통신 구조 설계 (API → worker HTTP)
