@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.publish_guard import guarded
 from scripts.realtime_audit import emit_event
 from security_utils import safe_preview
 
@@ -180,6 +181,7 @@ def _upload_with_official_api(plan: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "video_id": response.get("id", ""), "response": response}
 
 
+@guarded("youtube_upload", ok_fn=lambda r: r[0]["status"] != "failed")
 def execute_upload_plan(
     plan_path: str | Path,
     *,

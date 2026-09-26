@@ -29,6 +29,7 @@ import urllib.request
 from dotenv import load_dotenv
 
 from scripts.logger import get_logger
+from scripts.publish_guard import guarded
 
 _log = get_logger(__name__)
 
@@ -101,6 +102,7 @@ def publish(container_id: str) -> dict:
     return res
 
 
+@guarded("ig_publish")
 def publish_reel(video_url: str, caption: str, confirmed: bool = False) -> dict:
     """릴스 발행 전 과정. confirmed=True 일 때만 실제 게시한다."""
     cid = create_reel_container(video_url, caption)
@@ -142,6 +144,7 @@ def create_carousel(image_urls: list[str], caption: str) -> str:
     return parent
 
 
+@guarded("ig_publish")
 def publish_carousel(image_urls: list[str], caption: str, confirmed: bool = False) -> dict:
     cid = create_carousel(image_urls, caption)
     if not confirmed:
@@ -174,6 +177,7 @@ def create_story_container(*, image_url: str = "", video_url: str = "") -> str:
     return cid
 
 
+@guarded("ig_publish")
 def publish_story(*, image_url: str = "", video_url: str = "", confirmed: bool = False) -> dict:
     """스토리 발행. confirmed=True 일 때만 실제 게시한다."""
     cid = create_story_container(image_url=image_url, video_url=video_url)
