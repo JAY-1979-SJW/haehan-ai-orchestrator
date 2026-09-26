@@ -5,10 +5,12 @@ import json
 import pytest
 
 from scripts.browser_cdp_selection_gate import CdpPage, CdpSession
-from scripts.naver import router
+from scripts.naver import router, router_cafe
 from scripts.naver.cafe import join_request, main_page, member_collect, topic_search
 from scripts.naver.cafe import list_background_runner as runner
 from scripts.naver.cafe import list_collector as collector
+from scripts.naver.cafe.background import list_background_runner as real_runner
+from scripts.naver.cafe.collection import member_collect as real_member_collect
 
 
 def _api_payload(*, total: int = 1) -> dict:
@@ -110,7 +112,7 @@ def test_background_runner_can_select_mixed_session_for_readonly():
         )
     ]
 
-    session, selection = runner.select_naver_session(sessions=sessions, allow_mixed_readonly=True)
+    session, selection = real_runner.select_naver_session(sessions=sessions, allow_mixed_readonly=True)
 
     assert session is sessions[0]
     assert selection.code == "mixed_domain_session"
@@ -128,7 +130,7 @@ def test_background_runner_strict_mode_blocks_mixed_session():
         )
     ]
 
-    session, selection = runner.select_naver_session(sessions=sessions, allow_mixed_readonly=False)
+    session, selection = real_runner.select_naver_session(sessions=sessions, allow_mixed_readonly=False)
 
     assert session is None
     assert selection.code == "mixed_domain_session"
@@ -159,9 +161,9 @@ def test_create_isolated_cafe_target_creates_new_tab(monkeypatch):
         calls.append(kwargs)
         return FakeIsolationReport()
 
-    monkeypatch.setattr(runner, "create_isolated_target", fake_create_isolated_target)
+    monkeypatch.setattr(real_runner, "create_isolated_target", fake_create_isolated_target)
 
-    target_id, page = runner.create_isolated_cafe_target(port=9222, work="join-request", cafe_url="royaltyserver")
+    target_id, page = real_runner.create_isolated_cafe_target(port=9222, work="join-request", cafe_url="royaltyserver")
 
     assert target_id == "iso"
     assert calls == [
@@ -195,7 +197,7 @@ def test_router_cafe_list_uses_attach_only_collector(monkeypatch, tmp_path):
         return FakeReport()
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: None)
     monkeypatch.setattr(runner, "collect_background", fake_collect_background)
 
     router._cmd_cafe("list", [])
@@ -328,10 +330,12 @@ def test_background_runner_main_mode_returns_sections(monkeypatch):
         messages = ["ok"]
 
     monkeypatch.setattr(
-        runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions))
+        real_runner,
+        "select_naver_session",
+        lambda **kwargs: (sessions[0], real_runner.evaluate_sessions("naver", sessions)),
     )
     monkeypatch.setattr(
-        runner,
+        real_runner,
         "create_isolated_cafe_target",
         lambda *, port, work, cafe_url="": (
             "target",
@@ -339,13 +343,13 @@ def test_background_runner_main_mode_returns_sections(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        runner.cdp,
+        real_runner.cdp,
         "list_pages",
         lambda port: [{"id": "target", "url": "https://section.cafe.naver.com/ca-fe/home", "title": "네이버 카페"}],
     )
     monkeypatch.setattr(main_page, "collect_main_from_target", lambda target_id, *, port: FakeReport())
 
-    report = runner.collect_main_background(allow_mixed_readonly=True)
+    report = real_runner.collect_main_background(allow_mixed_readonly=True)
 
     assert report.ok is True
     assert report.sections["my_cafes"][0]["name"] == "건설공무"
@@ -373,7 +377,7 @@ def test_router_cafe_home_uses_attach_only_main_collector(monkeypatch, tmp_path)
         return FakeReport()
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: None)
     monkeypatch.setattr(runner, "collect_main_background", fake_collect_main_background)
 
     router._cmd_cafe("home", [])
@@ -463,10 +467,12 @@ def test_background_runner_topic_search_mode_returns_attach_only_report(monkeypa
         messages = ["ok"]
 
     monkeypatch.setattr(
-        runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions))
+        real_runner,
+        "select_naver_session",
+        lambda **kwargs: (sessions[0], real_runner.evaluate_sessions("naver", sessions)),
     )
     monkeypatch.setattr(
-        runner,
+        real_runner,
         "create_isolated_cafe_target",
         lambda *, port, work, cafe_url="": (
             "target",
@@ -474,13 +480,15 @@ def test_background_runner_topic_search_mode_returns_attach_only_report(monkeypa
         ),
     )
     monkeypatch.setattr(
-        runner.cdp,
+        real_runner.cdp,
         "list_pages",
         lambda port: [{"id": "target", "url": "https://search.naver.com/search.naver", "title": "Search"}],
     )
     monkeypatch.setattr(topic_search, "collect_topic_search_from_target", lambda target_id, **kwargs: FakeReport())
 
-    report = runner.collect_topic_search_background(allow_mixed_readonly=True, keywords=chatgpt, limit_per_keyword=3)
+    report = real_runner.collect_topic_search_background(
+        allow_mixed_readonly=True, keywords=chatgpt, limit_per_keyword=3
+    )
 
     assert report.ok is True
     assert report.keywords == [chatgpt]
@@ -520,7 +528,7 @@ def test_router_cafe_topic_search_uses_attach_only_collector(monkeypatch, tmp_pa
         return FakeReport()
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: None)
     monkeypatch.setattr(runner, "collect_topic_search_background", fake_collect_topic_search_background)
 
     router._cmd_cafe("topic-search", [f"--query={interior},{automation}", "--limit=7"])
@@ -539,7 +547,7 @@ def test_member_collect_filters_home_links_readonly():
         {"text": "hello", "href": "https://example.com/"},
     ]
 
-    boards, articles = member_collect._filtered_links(links, terms=["smart", "SmartStore", "upload"])
+    boards, articles = real_member_collect._filtered_links(links, terms=["smart", "SmartStore", "upload"])
 
     assert len(boards) == 2
     assert articles == [
@@ -623,10 +631,12 @@ def test_background_runner_joined_cafe_collect_returns_payload(monkeypatch):
             return {"ok": True, "cafe_url": "soho", "articles": [{"text": "SmartStore upload help"}]}
 
     monkeypatch.setattr(
-        runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions))
+        real_runner,
+        "select_naver_session",
+        lambda **kwargs: (sessions[0], real_runner.evaluate_sessions("naver", sessions)),
     )
     monkeypatch.setattr(
-        runner,
+        real_runner,
         "create_isolated_cafe_target",
         lambda *, port, work, cafe_url="": (
             "target",
@@ -634,11 +644,13 @@ def test_background_runner_joined_cafe_collect_returns_payload(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        runner.cdp, "list_pages", lambda port: [{"id": "target", "url": "https://cafe.naver.com/soho", "title": "Cafe"}]
+        real_runner.cdp,
+        "list_pages",
+        lambda port: [{"id": "target", "url": "https://cafe.naver.com/soho", "title": "Cafe"}],
     )
     monkeypatch.setattr(member_collect, "collect_home_from_target", lambda target_id, **kwargs: FakeReport())
 
-    report = runner.collect_joined_cafe_background(cafe_url="soho", mode="home", allow_mixed_readonly=True)
+    report = real_runner.collect_joined_cafe_background(cafe_url="soho", mode="home", allow_mixed_readonly=True)
 
     assert report.ok is True
     assert report.payload["articles"][0]["text"] == "SmartStore upload help"
@@ -683,10 +695,12 @@ def test_background_runner_join_request_returns_payload(monkeypatch):
             return {"ok": True, "cafe_url": "royaltyserver", "final_submit_blocked": True}
 
     monkeypatch.setattr(
-        runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions))
+        real_runner,
+        "select_naver_session",
+        lambda **kwargs: (sessions[0], real_runner.evaluate_sessions("naver", sessions)),
     )
     monkeypatch.setattr(
-        runner,
+        real_runner,
         "create_isolated_cafe_target",
         lambda *, port, work, cafe_url="": (
             "target",
@@ -694,13 +708,13 @@ def test_background_runner_join_request_returns_payload(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        runner.cdp,
+        real_runner.cdp,
         "list_pages",
         lambda port: [{"id": "target", "url": "https://cafe.naver.com/royaltyserver", "title": "Cafe"}],
     )
     monkeypatch.setattr(join_request, "inspect_join_request_from_target", lambda target_id, **kwargs: FakeReport())
 
-    report = runner.collect_joined_cafe_background(
+    report = real_runner.collect_joined_cafe_background(
         cafe_url="royaltyserver",
         mode="join-request",
         allow_mixed_readonly=True,
@@ -729,7 +743,7 @@ def test_router_cafe_collect_saves_readonly_payload(monkeypatch, tmp_path):
         return FakeReport()
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: None)
     monkeypatch.setattr(runner, "collect_joined_cafe_background", fake_collect_joined_cafe_background)
 
     router._cmd_cafe("collect", ["--cafe-url=soho"])
@@ -755,7 +769,7 @@ def test_router_cafe_join_request_saves_prepare_only_payload(monkeypatch, tmp_pa
         return FakeReport()
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: None)
     monkeypatch.setattr(runner, "collect_joined_cafe_background", fake_collect_joined_cafe_background)
 
     router._cmd_cafe("join-request", ["--cafe-url=royaltyserver", "--nickname=haehan", "--purpose=AI 자동화"])
@@ -787,7 +801,7 @@ def test_router_cafe_join_submit_records_gate_pass(monkeypatch, tmp_path):
     calls = []
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: calls.append((a, k)))
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: calls.append((a, k)))
 
     router._cmd_cafe("join-submit", ["--cafe-url=royaltyserver", "--approved", "--confirm=NAVER_APPROVED_CAFE_JOIN"])
 
