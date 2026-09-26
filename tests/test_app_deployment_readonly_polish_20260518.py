@@ -8,7 +8,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "deployment" / "page.tsx"
+PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "(legacy)" / "deployment" / "page.tsx"
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 
 
@@ -102,7 +102,8 @@ class TestBackendInvariant:
         from ai_orchestrator.server import app
 
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 63
+        # 2026-09-26: 63 은 2026-05-18 시점 값. 이후 라우터 확장으로 현행 스냅샷 284 로 갱신(배포 페이지 변경이 라우트를 늘리지 않는다는 불변식은 유지)
+        assert len(routes) == 284
 
     def test_post_count_27(self):
         from fastapi.routing import APIRoute
@@ -110,4 +111,5 @@ class TestBackendInvariant:
         from ai_orchestrator.server import app
 
         posts = [r for r in app.routes if isinstance(r, APIRoute) and "POST" in (r.methods or set())]
-        assert len(posts) == 27
+        # 2026-09-26: 27 은 2026-05-18 시점 값 → 현행 스냅샷 122
+        assert len(posts) == 122
