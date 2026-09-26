@@ -1,5 +1,6 @@
 """user_auth_router 감사 로그 테스트."""
 
+import importlib
 import json
 
 import pytest
@@ -7,23 +8,27 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator import config
-from ai_orchestrator.connectors import user_auth_router as ur
-from ai_orchestrator.gates import auth as gauth
 from ai_orchestrator.persistence import auth_audit, user_db
 
+_gauth = None
 PW = "Sup3rSecretPw!"
 EMAIL = "alice@example.com"
 
 
 @pytest.fixture
 def env(tmp_path, monkeypatch):
+    # 다른 테스트(test_auth_enforcement)가 gates.auth 를 reload 하므로, 항상 현재 모듈을 잡고 라우터를 다시 바인딩한다
+    gauth = importlib.import_module("ai_orchestrator.gates.auth")
+    ur = importlib.reload(importlib.import_module("ai_orchestrator.connectors.user_auth_router"))
+    global _gauth
+    _gauth = gauth
     monkeypatch.setattr(user_db, "_DB_PATH", tmp_path / "users.db")
     monkeypatch.setattr(auth_audit, "_AUDIT_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(config, "AUTH_ENABLED", True)
     user_db.init_db()
     app = FastAPI()
     app.include_router(ur.user_auth_router)
-    app.dependency_overrides[gauth.get_current_user] = lambda: {"actor": "adm", "role": "owner"}
+    app.dependency_overrides[_gauth.get_current_user] = lambda: {"actor": "adm", "role": "owner"}
     return TestClient(app), app, tmp_path / "audit.jsonl"
 
 
@@ -55,7 +60,7 @@ def test_pending_403_logged(env):
 
 def test_non_admin_approve_403(env):
     c, app, _ = env
-    app.dependency_overrides[gauth.get_current_user] = lambda: {"actor": "v", "role": "viewer"}
+    app.dependency_overrides[_gauth.get_current_user] = lambda: {"actor": "v", "role": "viewer"}
     assert c.post("/users/x/approve").status_code == 403
 
 
