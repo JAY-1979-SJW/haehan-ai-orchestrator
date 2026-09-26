@@ -19040,6 +19040,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_local_agent_models_bind.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "local_agent",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

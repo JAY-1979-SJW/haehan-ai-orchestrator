@@ -8,22 +8,31 @@ LocalAgent, LocalAgentTask, RegisterResult 데이터클래스와
   - LocalAgentTask.params 는 민감 키 제거된 상태로만 저장
   - to_safe() / to_list_safe() / to_dispatch() 는 외부 노출 전 필드 재확인
 """
+
 from __future__ import annotations
 
-import importlib
 from dataclasses import dataclass
-from typing import Optional
+
+# 상태 계산 함수 제공자 — local_agent_registry_agent 가 import 시 bind_registry 로 주입한다
+# (models 가 registry 를 역방향 import 하지 않도록: 의존 주입, S2c C2).
+_registry = None
+
+
+def bind_registry(registry_module) -> None:
+    """get_agent_status / get_*_task_count 등을 가진 모듈을 to_safe 계산용으로 등록."""
+    global _registry
+    _registry = registry_module
 
 
 @dataclass
 class LocalAgent:
     agent_id: str
-    host: str            # 사람이 식별 가능한 PC 이름 (예: "skyjw-desktop")
-    os_name: str         # "Windows 11" 등 (개인정보 제외)
-    version: str         # 에이전트 버전 (예: "0.1.0")
+    host: str  # 사람이 식별 가능한 PC 이름 (예: "skyjw-desktop")
+    os_name: str  # "Windows 11" 등 (개인정보 제외)
+    version: str  # 에이전트 버전 (예: "0.1.0")
     registered_at: str
-    requested_by: str    # 등록을 요청한 actor
-    token_hash: str      # SHA-256(device_token) — 원문은 저장 금지
+    requested_by: str  # 등록을 요청한 actor
+    token_hash: str  # SHA-256(device_token) — 원문은 저장 금지
     smoke_test: bool = False  # smoke test marker for cleanup eligibility
     # Stage 11-6B: 연결 상태 타임스탬프 (저장 필드, agent_status는 계산값)
     connected_at: str = ""
@@ -32,8 +41,9 @@ class LocalAgent:
 
     def to_safe(self) -> dict:
         """API 응답용 (token_hash 제외, 연결 상태 계산값 포함)."""
-        # Late binding: circular import 회피
-        registry = importlib.import_module("ai_orchestrator.local_agent_registry")
+        registry = _registry
+        if registry is None:
+            raise RuntimeError("local_agent_registry_agent 가 아직 import 되지 않아 상태 계산 함수가 바인딩되지 않았다")
 
         return {
             "agent_id": self.agent_id,
@@ -60,7 +70,7 @@ class LocalAgentTask:
     task_id: str
     agent_id: str
     action: str
-    params: dict          # 민감 키 제거된 상태로만 저장
+    params: dict  # 민감 키 제거된 상태로만 저장
     risk_level: str
     # queued / delivered / running / waiting_approval / completed / failed / rejected
     # cancel_requested / cancelled
@@ -68,7 +78,7 @@ class LocalAgentTask:
     requested_by: str
     created_at: str
     updated_at: str
-    token_id: str = ""    # high risk 일 때만 채워짐 (서버 내부 검증용 secret-like)
+    token_id: str = ""  # high risk 일 때만 채워짐 (서버 내부 검증용 secret-like)
     # Stage 13H-2E: 외부 노출용 public approval id (UI/result_data/audit).
     # token_id 는 result_data/WS dispatch 에 절대 노출되지 않으며, 본 필드만
     # public 식별자로 사용된다.
@@ -85,26 +95,26 @@ class LocalAgentTask:
     rejected_at: str = ""
     reject_reason: str = ""
     # Stage 11-3B 추가 필드 — timeout / 실패 분류
-    failure_reason: str = ""   # agent_error | delivered_timeout | running_timeout | cancel_timeout | websocket_disconnected | invalid_transition | unknown_error
-    timed_out_at: str = ""     # timeout 종결 시각 (timeout 케이스만)
+    failure_reason: str = ""  # agent_error | delivered_timeout | running_timeout | cancel_timeout | websocket_disconnected | invalid_transition | unknown_error
+    timed_out_at: str = ""  # timeout 종결 시각 (timeout 케이스만)
     # Stage 11-7B 추가 필드 — 취소 흔적
-    cancel_reason: str = ""           # 취소 사유 (최대 200자)
-    cancel_requested_at: str = ""     # cancel_requested 전환 시각
-    cancel_requested_by: str = ""     # 취소 요청자
-    cancelled_at: str = ""            # 최종 cancelled 전환 시각
+    cancel_reason: str = ""  # 취소 사유 (최대 200자)
+    cancel_requested_at: str = ""  # cancel_requested 전환 시각
+    cancel_requested_by: str = ""  # 취소 요청자
+    cancelled_at: str = ""  # 최종 cancelled 전환 시각
     # Stage 13B-3A: controlled browser observe 결과 구조화 요약 (sanitized, optional)
-    observe_summary: Optional[dict] = None
+    observe_summary: dict | None = None
     # Stage 13C-2: audit summary (PC local audit 이벤트 safe 요약, optional)
-    audit_summary: Optional[dict] = None
+    audit_summary: dict | None = None
     # Stage 13G-3A: agent result data 안전 저장 (허용 key만, 민감정보 제거)
-    result_data: Optional[dict] = None
+    result_data: dict | None = None
 
     def to_safe(self) -> dict:
         return {
             "task_id": self.task_id,
             "agent_id": self.agent_id,
             "action": self.action,
-            "params": self.params,        # 이미 민감값 제거됨
+            "params": self.params,  # 이미 민감값 제거됨
             "risk_level": self.risk_level,
             "status": self.status,
             "requested_by": self.requested_by,
@@ -165,9 +175,7 @@ class LocalAgentTask:
         `approved: True` 플래그는 클라이언트가 high-risk 승인 분기를 구별하는
         용도 — 미승인 시 클라이언트는 NOT_IMPLEMENTED_STAGE2 로 즉시 거절한다.
         """
-        approved_flag = bool(
-            self.risk_level == "high" and self.approved_at
-        )
+        approved_flag = bool(self.risk_level == "high" and self.approved_at)
         payload = {
             "task_id": self.task_id,
             "agent_id": self.agent_id,
@@ -193,6 +201,7 @@ class LocalAgentTask:
 
 class RegisterResult:
     """register_agent 반환 컨테이너 (token 원문은 1회만 노출)."""
+
     __slots__ = ("agent", "device_token")
 
     def __init__(self, agent: LocalAgent, device_token: str):

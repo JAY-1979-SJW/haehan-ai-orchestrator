@@ -189,3 +189,11 @@ __all__ = [
     "set_agent_disconnected",
     "set_agent_last_seen",
 ]
+
+
+# models.to_safe 가 쓸 상태 계산 함수 제공자로 자신을 등록 (역방향 import 회피)
+import sys as _sys  # noqa: E402
+
+from . import local_agent_models as _models  # noqa: E402
+
+_models.bind_registry(_sys.modules[__name__])
