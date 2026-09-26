@@ -1,4 +1,5 @@
-FROM python:3.14-slim
+# Playwright 1.63 은 Debian 13(trixie) 공식 지원(#36916)이나 --with-deps 실측 미검증 -> bookworm 고정
+FROM python:3.14-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
