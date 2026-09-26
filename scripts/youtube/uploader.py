@@ -1,11 +1,13 @@
 """YouTube upload manifest, gate, and official API upload path."""
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.publish_guard import guarded
 from scripts.realtime_audit import emit_event
 from security_utils import safe_preview
 
@@ -20,7 +22,7 @@ VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _stamp() -> str:
@@ -179,6 +181,7 @@ def _upload_with_official_api(plan: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "video_id": response.get("id", ""), "response": response}
 
 
+@guarded("youtube_upload", ok_fn=lambda r: r[0]["status"] != "failed")
 def execute_upload_plan(
     plan_path: str | Path,
     *,
@@ -229,7 +232,12 @@ def execute_upload_plan(
         status=result["status"],
         risk="external_video_upload",
         artifact_path=str(path),
-        metadata={"state_change": result["state_change"], "dry_run": dry_run, "video_id": result["video_id"], "reason": result["reason"]},
+        metadata={
+            "state_change": result["state_change"],
+            "dry_run": dry_run,
+            "video_id": result["video_id"],
+            "reason": result["reason"],
+        },
     )
     return result, path
 
