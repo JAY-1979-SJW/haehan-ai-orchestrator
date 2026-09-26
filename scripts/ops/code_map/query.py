@@ -80,6 +80,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--map", type=Path)
     ap.add_argument("--limit", type=int, default=40)
     a = ap.parse_args(argv)
+    if a.map is None and not os.environ.get("HAEHAN_CODE_MAP"):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+        from scripts.ops.code_map import freshness  # 신선도 보장(기준서 §5.3)
+
+        freshness.ensure_fresh()
     try:
         m = load(a.map)
     except FileNotFoundError:

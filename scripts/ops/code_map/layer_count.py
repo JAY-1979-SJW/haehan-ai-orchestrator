@@ -51,6 +51,9 @@ def _count(import_edges: dict, layer_of, bad_fn) -> dict:
 
 
 def measure() -> dict:
+    from scripts.ops.code_map import freshness
+
+    freshness.ensure_fresh(OUT_DIR / "map.json", root=ROOT)
     m = json.loads((OUT_DIR / "map.json").read_text(encoding="utf-8"))
     edges = m.get("import_edges") or m["all_edges"]
     reg_doc = json.loads((ROOT / "configs" / "module_registry.json").read_text(encoding="utf-8"))
@@ -58,7 +61,13 @@ def measure() -> dict:
     legacy = lambda f: classify_path(f)[0]  # noqa: E731
     registry = lambda f: reg[f]["layer"] if f in reg else classify_path(f)[0]  # noqa: E731
     return {
-        "meta": {"commit": m["meta"].get("commit"), "edge_source": "import_edges"},
+        "meta": {
+            "commit": m["meta"].get("commit"),
+            "edge_source": "import_edges",
+            "worktree_fingerprint": json.loads((OUT_DIR / "map.json").read_text(encoding="utf-8"))["meta"].get(
+                "worktree_fingerprint"
+            ),
+        },
         "primary_management_metric": _count(edges, legacy, lambda a, b: _num(a) < _num(b)),
         "secondary_registry_allowed_deps": _count(edges, registry, lambda a, b: b not in allowed.get(a, [])),
     }

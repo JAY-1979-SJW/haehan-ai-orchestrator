@@ -2,5 +2,8 @@
   "_doc": "verify_change.py 저장소별 설정. 다른 저장소에 복사할 때 이 파일만 그 저장소에 맞게 바꾼다.",
   "route_check": "import ai_orchestrator.server as s;print(len(s.app.routes))",
   "ruff_config": "configs/ruff.toml",
-  "test_timeout": 120
+  "test_timeout": 120,
+  "py311_tests": [
+    "tests/test_pipeline_lock.py"
+  ]
 }

@@ -157,6 +157,10 @@ def main() -> int:
         "scan_root": str(ROOT),
         "digest": _digest(result),
     }
+    from scripts.ops.code_map import freshness  # 신선도 지문(기준서 §5.3)
+
+    meta["head_full"] = freshness.head_full(ROOT)
+    meta["worktree_fingerprint"] = freshness.fingerprint(ROOT)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "map.json").write_text(
         json.dumps({"meta": meta, **result}, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8"

@@ -294,6 +294,24 @@ def affected_tests(changed: list[str]) -> list[str]:
     return sorted(p for p in seen if is_test(p))
 
 
+class _Tee:
+    """stdout 사본을 로그 파일에 남긴다(두 번째 실행자에게 알려줄 경로)."""
+
+    def __init__(self, out, fh) -> None:
+        self.out, self.fh = out, fh
+
+    def write(self, s: str) -> int:
+        self.fh.write(s)
+        self.fh.flush()
+        return self.out.write(s)
+
+    def flush(self) -> None:
+        self.out.flush()
+
+    def __getattr__(self, name: str):
+        return getattr(self.out, name)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="master", help="비교 기준 커밋/브랜치")
@@ -306,6 +324,17 @@ def main() -> int:
     a = ap.parse_args()
     with contextlib.suppress(AttributeError, ValueError):
         sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
+    from scripts.ops import pipeline_lock  # 전역 락(기준서 §5.2)
+
+    ts = __import__("time").strftime("%Y%m%d_%H%M%S")
+    log_path = pipeline_lock.log_dir() / f"verify_{ts}.log"
+    try:
+        pipeline_lock.acquire("verify", head=a.head or "", log_path=str(log_path))
+    except pipeline_lock.LockBusy as exc:
+        print(f"[verify] {exc}")
+        return pipeline_lock.EXIT_BUSY
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    sys.stdout = _Tee(sys.stdout, log_path.open("w", encoding="utf-8"))
     changed = changed_files(a.base, a.head)
     loc_deps = moved_location_deps(a.base, a.head)
     run([PY, "scripts/ops/code_map/build.py"], ROOT)
@@ -338,6 +367,14 @@ def main() -> int:
             )
             if py_changed
             else None
+        )
+        from scripts.ops import py311_gate  # 운영(3.11) 검증 — 인터프리터 없으면 '미검증'(기준서 G1)
+
+        p311 = py311_gate.run_gate(
+            head_tree,
+            [c for c in changed if c.endswith(".py")],
+            CFG.get("route_check") or "",
+            CFG.get("py311_tests", []),
         )
     finally:
         killed = kill_leftovers(tmp.name)  # 측정 폴더 경로가 명령줄에 든 잔여 프로세스
@@ -401,6 +438,7 @@ def main() -> int:
         ("바뀐 파일 ruff", "-", len(ruff_errors), ruff_errors),
         ("이동 파일 위치의존 미조정", "-", len(loc_deps), loc_deps),
     ]
+    checks.append(("Python 3.11 게이트", "-", len(p311), p311))
     ok = all(not c[3] for c in checks)
     lines = [
         f"## 변경 검증: {'PASS' if ok else 'FAIL'} (기준 {a.base} → {a.head or '작업트리'}, 바뀐 파일 {len(changed)})",

@@ -59,6 +59,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--map", type=Path)
     ap.add_argument("--out", type=Path)
     a = ap.parse_args(argv)
+    if a.map is None:
+        from scripts.ops.code_map import freshness  # 신선도 보장(기준서 §5.3)
+
+        freshness.ensure_fresh()
     out = a.out or ROOT / "data" / "impact" / f"{a.spec_id}.brief.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(build(a.spec_id, a.role, a.files, a.map), encoding="utf-8")

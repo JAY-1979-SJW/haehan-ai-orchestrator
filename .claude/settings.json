@@ -55,6 +55,11 @@
             "type": "command",
             "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_instagram_publish.py\"",
             "statusMessage": "인스타그램 실제 발행 여부 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_single_verify.py\"",
+            "statusMessage": "verify/merge 중복 실행 검사 중..."
           }
         ]
       }

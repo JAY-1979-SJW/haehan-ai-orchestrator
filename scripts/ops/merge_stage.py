@@ -131,6 +131,7 @@ def run_verify_change(base: str, branch: str, json_path: Path) -> dict:
             text=True,
             encoding="utf-8",
             errors="replace",
+            env={**os.environ, "PIPELINE_LOCK_TOKEN": os.environ.get("PIPELINE_LOCK_TOKEN", "")},
         )
         returncode, stderr = proc.returncode, proc.stderr
     except Exception as exc:
@@ -232,6 +233,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[dry-run]   3) (병합 성공 시) git tag -a {tag} -m <검증표>")
         return 0
 
+    from scripts.ops import pipeline_lock  # 전역 락 — 자식 verify 는 토큰으로 재진입(기준서 §5.2)
+
+    try:
+        os.environ["PIPELINE_LOCK_TOKEN"] = pipeline_lock.acquire("merge", head=a.branch)
+    except pipeline_lock.LockBusy as exc:
+        print(f"[merge_stage] {exc}")
+        return pipeline_lock.EXIT_BUSY
     fd, tmp_name = tempfile.mkstemp(suffix=".json", prefix="merge_stage_")
     os.close(fd)
     tmp = Path(tmp_name)
