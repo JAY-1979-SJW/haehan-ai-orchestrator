@@ -10018,7 +10018,7 @@
    "source": "rule"
   },
   "scripts/naver/auth.py": {
-   "layer": "L5",
+   "layer": "L4",
    "role": "site_module",
    "domain": "naver",
    "reason": "네이버 ID/PW 자동 로그인 모듈(사람처럼 타이핑·캡차 감지·login_detector 호출) — 정책 게이트가 아니라 사이트별 자동화 구현. 이름만 auth라 오분류.",
@@ -10538,7 +10538,7 @@
    "source": "rule"
   },
   "scripts/naver/blog/core/writer.py": {
-   "layer": "L5",
+   "layer": "L4",
    "role": "site_module",
    "domain": "naver_blog",
    "reason": "도메인(naver_blog) 자동화",
@@ -10770,7 +10770,7 @@
    "source": "rule"
   },
   "scripts/naver/blog/seo/tag_suggester.py": {
-   "layer": "L5",
+   "layer": "L4",
    "role": "site_module",
    "domain": "naver_blog",
    "reason": "도메인(naver_blog) 자동화",
@@ -10786,7 +10786,7 @@
    "source": "rule"
   },
   "scripts/naver/blog/tag_suggester.py": {
-   "layer": "L5",
+   "layer": "L4",
    "role": "site_module",
    "domain": "naver_blog",
    "reason": "도메인(naver_blog) 자동화",
@@ -19045,6 +19045,14 @@
    "layer": "L11",
    "role": "test",
    "domain": "local_agent",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_blog_writer_layer_chain.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

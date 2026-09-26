@@ -555,9 +555,9 @@
   "source": "manual"
  },
  "scripts/naver/auth.py": {
-  "layer": "L5",
+  "layer": "L4",
   "role": "site_module",
-  "reason": "네이버 ID/PW 자동 로그인 모듈(사람처럼 타이핑·캡차 감지·login_detector 호출) — 정책 게이트가 아니라 사이트별 자동화 구현. 이름만 auth라 오분류.",
+  "reason": "S2b 선언층 정정: 로그인(out<=L4, in L5/L6)",
   "source": "manual"
  },
  "scripts/naver/auth_window_gate.py": {
@@ -763,5 +763,20 @@
   "layer": "L5",
   "role": "browser_engine",
   "reason": "S2b 선언층 정정: CLI 디스패처(21 lazy import), site_registry L5 화 동반"
+ },
+ "scripts/naver/blog/tag_suggester.py": {
+  "layer": "L4",
+  "role": "site_module",
+  "reason": "S2b 선언층 정정: writer 체인(C4)"
+ },
+ "scripts/naver/blog/seo/tag_suggester.py": {
+  "layer": "L4",
+  "role": "site_module",
+  "reason": "S2b 선언층 정정: writer 체인(C4)"
+ },
+ "scripts/naver/blog/core/writer.py": {
+  "layer": "L4",
+  "role": "site_module",
+  "reason": "S2b 선언층 정정: 블로그 에디터 엔진(mixin이 위임, C4)"
  }
 }
