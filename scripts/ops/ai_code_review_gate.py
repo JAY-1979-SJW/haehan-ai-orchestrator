@@ -16,6 +16,7 @@ VERDICT: BLOCK 이 나오면 push를 차단한다.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
@@ -73,10 +74,12 @@ def get_diff() -> str:
             cwd=str(ROOT),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",  # Windows 기본 코드페이지(cp949)가 UTF-8 diff에서 깨지는 문제 방지(2026-09-28)
             timeout=30,
         )
         diff = result.stdout.strip()
-    except Exception:
+    except (OSError, subprocess.TimeoutExpired):
         diff = ""
 
     if not diff:
@@ -86,6 +89,8 @@ def get_diff() -> str:
             cwd=str(ROOT),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=30,
         )
         diff = result.stdout.strip()
@@ -113,6 +118,8 @@ def run_review(diff: str) -> dict:
             cwd=str(ROOT),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=60,
         )
         output = result.stdout.strip()
@@ -142,6 +149,12 @@ def save_report(payload: dict) -> None:
 
 
 def main() -> int:
+    # Windows 콘솔 기본 코드페이지(cp949)가 이모지·em-dash 등 출력을 못 받아 죽는 문제 방지
+    # (2026-09-28 발견 — git push 시 pre-push 훅에서 이 스크립트가 크래시함)
+    for stream in (sys.stdout, sys.stderr):
+        with contextlib.suppress(AttributeError, ValueError):
+            stream.reconfigure(encoding="utf-8")
+
     if not _enabled():
         print("[ai-review] AI_REVIEW_ENABLED=false — 검수 건너뜀")
         return 0
