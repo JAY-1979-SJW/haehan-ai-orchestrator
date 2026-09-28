@@ -7641,30 +7641,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/content_rag/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/content_rag/query.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/content_rag/store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/credentials.py": {
    "layer": "L1",
    "role": "contract",
