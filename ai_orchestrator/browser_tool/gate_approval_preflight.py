@@ -72,7 +72,7 @@ def build_gate_approval_context(
         return build_audit_approval_context(approval_id, approval_store_path)
     except FileNotFoundError:
         return {}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 승인 프리플라이트 게이트 -- 기본값이 이미 BLOCK이고 approval context 조회 실패는 감사용 부가정보만 비우는 것(판정에 영향 없음), 승인 상태 조회 중 예외 발생 시에도 명시적으로 BLOCK 처리(fail-closed)
         logger.warning(f"Failed to build approval context: {e}")
         return {}
 
@@ -332,7 +332,7 @@ def evaluate_gate_approval_preflight(
             result["message_ko"] = "approval store 없음: 승인 필요"
             result["should_write_audit"] = True
             return result
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 승인 프리플라이트 게이트 -- 기본값이 이미 BLOCK이고 approval context 조회 실패는 감사용 부가정보만 비우는 것(판정에 영향 없음), 승인 상태 조회 중 예외 발생 시에도 명시적으로 BLOCK 처리(fail-closed)
             logger.error(f"Error evaluating approval: {e}")
             result["preflight_decision"] = "BLOCK"
             result["block_reason"] = "APPROVAL_NOT_FOUND"

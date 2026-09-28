@@ -65,7 +65,7 @@ for cat_dir in cats:
         shot = cat_out / f"page_{pg + 1:03d}.png"
         try:
             page.screenshot(path=str(shot), full_page=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 고노비 페이지 검증 스크립트(읽기 전용, 스크린샷 저장) -- 스크린샷 실패는 콘솔에 출력만 하고 다음 페이지 계속, 임시 검증 파일 삭제 실패는 무시
             print(f"  페이지{pg + 1} 스크린샷 실패: {e}")
 
     print(f"  → 저장: {cat_out}")
@@ -73,7 +73,7 @@ for cat_dir in cats:
 # 임시 파일 삭제
 try:
     Path("data/_tmp_verify.html").unlink()
-except Exception:
+except Exception:  # noqa: BLE001 - 고노비 페이지 검증 스크립트(읽기 전용, 스크린샷 저장) -- 스크린샷 실패는 콘솔에 출력만 하고 다음 페이지 계속, 임시 검증 파일 삭제 실패는 무시
     pass
 
 print(f"\n완료 — 스크린샷 위치: {OUT}")

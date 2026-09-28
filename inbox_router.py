@@ -8,7 +8,9 @@ GET  /api/v1/inbox                          — inbox 목록 조회 (?source_typ
 GET  /api/v1/inbox/candidates               — task 후보 목록 조회
 GET  /api/v1/tasks/<task_id>               — 생성된 email task 단건 조회
 """
+
 import os
+
 from flask import Blueprint, jsonify, request
 
 import audit_logger
@@ -59,16 +61,17 @@ def fetch_email():
             log.warning("inbox 저장 실패: %s", e)
             errors += 1
 
-    log.info("fetch_email 완료: fetched=%d saved=%d skipped=%d errors=%d",
-             len(mails), saved, skipped, errors)
+    log.info("fetch_email 완료: fetched=%d saved=%d skipped=%d errors=%d", len(mails), saved, skipped, errors)
 
-    return jsonify({
-        "status": "ok",
-        "fetched": len(mails),
-        "saved": saved,
-        "skipped": skipped,
-        "errors": errors,
-    }), 200
+    return jsonify(
+        {
+            "status": "ok",
+            "fetched": len(mails),
+            "saved": saved,
+            "skipped": skipped,
+            "errors": errors,
+        }
+    ), 200
 
 
 @inbox_bp.route("/email/classify", methods=["POST"])
@@ -95,30 +98,33 @@ def classify_email():
             )
             if r["status"] == "saved":
                 classified += 1
-                results.append({
-                    "item_id": r["item_id"],
-                    "external_id": item["external_id"],
-                    "category": clf["category"],
-                    "priority": clf["priority"],
-                    "needs_review": clf["needs_review"],
-                    "candidate_task_type": clf["candidate_task_type"],
-                })
+                results.append(
+                    {
+                        "item_id": r["item_id"],
+                        "external_id": item["external_id"],
+                        "category": clf["category"],
+                        "priority": clf["priority"],
+                        "needs_review": clf["needs_review"],
+                        "candidate_task_type": clf["candidate_task_type"],
+                    }
+                )
             else:
                 skipped += 1
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 메일/메시지 분류 라우터 -- 개별 항목 분류 실패는 로깅 후 error 카운트만 증가시키고 다음 항목을 계속 처리
             log.warning("분류 실패 external_id=%s: %s", item.get("external_id", "?"), e)
             errors += 1
 
-    log.info("classify_email 완료: classified=%d skipped=%d errors=%d",
-             classified, skipped, errors)
+    log.info("classify_email 완료: classified=%d skipped=%d errors=%d", classified, skipped, errors)
 
-    return jsonify({
-        "status": "ok",
-        "classified": classified,
-        "skipped": skipped,
-        "errors": errors,
-        "results": results,
-    }), 200
+    return jsonify(
+        {
+            "status": "ok",
+            "classified": classified,
+            "skipped": skipped,
+            "errors": errors,
+            "results": results,
+        }
+    ), 200
 
 
 @inbox_bp.route("", methods=["GET"])
@@ -130,11 +136,13 @@ def list_inbox():
 
     items = inbox_store.list_inbox(source_type=source_type, limit=limit)
 
-    return jsonify({
-        "status": "ok",
-        "count": len(items),
-        "items": items,
-    }), 200
+    return jsonify(
+        {
+            "status": "ok",
+            "count": len(items),
+            "items": items,
+        }
+    ), 200
 
 
 @inbox_bp.route("/classify", methods=["POST"])
@@ -152,10 +160,12 @@ def classify_messages():
 
     _ALLOWED_SOURCE_TYPES = {"email", "kakaowork", "kakaotalk_channel"}
     if source_type not in _ALLOWED_SOURCE_TYPES:
-        return jsonify({
-            "status": "error",
-            "message": f"source_type must be one of {sorted(_ALLOWED_SOURCE_TYPES)}",
-        }), 400
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"source_type must be one of {sorted(_ALLOWED_SOURCE_TYPES)}",
+            }
+        ), 400
 
     items = inbox_store.list_inbox(source_type=source_type)
     classified = 0
@@ -194,14 +204,16 @@ def classify_messages():
                     actor="classifier",
                     note=f"item_id={r['item_id']} source={source_type}",
                 )
-                results.append({
-                    "item_id": r["item_id"],
-                    "external_id": item["external_id"],
-                    "category": clf["category"],
-                    "priority": clf["priority"],
-                    "needs_review": clf["needs_review"],
-                    "candidate_task_type": clf["candidate_task_type"],
-                })
+                results.append(
+                    {
+                        "item_id": r["item_id"],
+                        "external_id": item["external_id"],
+                        "category": clf["category"],
+                        "priority": clf["priority"],
+                        "needs_review": clf["needs_review"],
+                        "candidate_task_type": clf["candidate_task_type"],
+                    }
+                )
             else:
                 skipped += 1
                 audit_logger.record(
@@ -209,22 +221,24 @@ def classify_messages():
                     actor="classifier",
                     note=f"duplicate item external_id={item['external_id'][:20]}",
                 )
-        except Exception as e:
-            log.warning("분류 실패 source=%s external_id=%s: %s",
-                        source_type, item.get("external_id", "?"), e)
+        except Exception as e:  # noqa: BLE001 - 메일/메시지 분류 라우터 -- 개별 항목 분류 실패는 로깅 후 error 카운트만 증가시키고 다음 항목을 계속 처리
+            log.warning("분류 실패 source=%s external_id=%s: %s", source_type, item.get("external_id", "?"), e)
             errors += 1
 
-    log.info("classify_messages 완료: source=%s classified=%d skipped=%d errors=%d",
-             source_type, classified, skipped, errors)
+    log.info(
+        "classify_messages 완료: source=%s classified=%d skipped=%d errors=%d", source_type, classified, skipped, errors
+    )
 
-    return jsonify({
-        "status": "ok",
-        "source_type": source_type,
-        "classified": classified,
-        "skipped": skipped,
-        "errors": errors,
-        "results": results,
-    }), 200
+    return jsonify(
+        {
+            "status": "ok",
+            "source_type": source_type,
+            "classified": classified,
+            "skipped": skipped,
+            "errors": errors,
+            "results": results,
+        }
+    ), 200
 
 
 @inbox_bp.route("/candidates", methods=["GET"])
@@ -245,11 +259,13 @@ def list_candidates():
         limit=limit,
     )
 
-    return jsonify({
-        "status": "ok",
-        "count": len(items),
-        "candidates": items,
-    }), 200
+    return jsonify(
+        {
+            "status": "ok",
+            "count": len(items),
+            "candidates": items,
+        }
+    ), 200
 
 
 @inbox_bp.route("/candidates/<item_id>/task", methods=["POST"])
@@ -258,9 +274,9 @@ def promote_candidate(item_id: str):
     result = candidate_to_task.promote(item_id)
 
     status_map = {
-        "created":      201,
-        "duplicate":    200,
-        "not_found":    404,
+        "created": 201,
+        "duplicate": 200,
+        "not_found": 404,
         "no_task_type": 422,
     }
     http_code = status_map.get(result["status"], 500)

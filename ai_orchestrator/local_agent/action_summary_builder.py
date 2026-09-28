@@ -1,4 +1,5 @@
 """Action Summary Builder — 사용자 사전 review용 요약."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -6,11 +7,22 @@ from urllib.parse import urlparse
 
 from ai_orchestrator.local_agent.action_schemas import all_specs
 
-_SENSITIVE_PARAM_KEYS = frozenset((
-    "password", "otp", "cert_password", "certificate_password",
-    "cookie", "session", "token", "storage_state", "private_key",
-    "npki", "auth_header", "Authorization",
-))
+_SENSITIVE_PARAM_KEYS = frozenset(
+    (
+        "password",
+        "otp",
+        "cert_password",
+        "certificate_password",
+        "cookie",
+        "session",
+        "token",
+        "storage_state",
+        "private_key",
+        "npki",
+        "auth_header",
+        "Authorization",
+    )
+)
 
 
 def _safe_url(url: str, length: int = 80) -> str:
@@ -20,7 +32,7 @@ def _safe_url(url: str, length: int = 80) -> str:
     try:
         p = urlparse(url)
         return f"{p.scheme}://{p.hostname or ''}{p.path or ''}"[:length]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 액션 요약 로그 생성 -- URL/경로 값을 요약용으로 안전하게 축약, 파싱 실패 시 빈 문자열/자리표시자로 대체(민감정보 노출 방지 목적)
         return "(invalid_url)"
 
 
@@ -64,7 +76,7 @@ def build_action_summary(action_name: str, params: dict[str, Any]) -> dict[str, 
             url = params.get("url") or params.get("site_url") or params.get("source_url") or ""
             try:
                 summary[field_name] = (urlparse(url).hostname or "") if url else params.get("site", "")
-            except Exception:
+            except Exception:  # noqa: BLE001 - 액션 요약 로그 생성 -- URL/경로 값을 요약용으로 안전하게 축약, 파싱 실패 시 빈 문자열/자리표시자로 대체(민감정보 노출 방지 목적)
                 summary[field_name] = ""
         elif field_name == "file_name":
             summary[field_name] = _safe_path(params.get("file_name") or params.get("attach_file") or "")

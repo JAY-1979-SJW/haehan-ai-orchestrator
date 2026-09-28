@@ -26,7 +26,7 @@ def _read_jsonl(path: str, limit: int = 0) -> list:
     try:
         with open(path, encoding="utf-8") as f:
             raw_lines = f.readlines()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로그 분석 도구 -- 로그 파일 읽기 실패 시 빈 리스트 반환, 캐시 쓰기 실패는 경고만(분석 결과에는 영향 없음)
         log.warning("Failed to read %s: %s", path, e)
         return []
 
@@ -193,5 +193,5 @@ def save_cache(summary: dict) -> None:
         os.makedirs(os.path.dirname(_CACHE_PATH), exist_ok=True)
         with open(_CACHE_PATH, "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=2)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로그 분석 도구 -- 로그 파일 읽기 실패 시 빈 리스트 반환, 캐시 쓰기 실패는 경고만(분석 결과에는 영향 없음)
         log.warning("Cache write failed: %s", e)

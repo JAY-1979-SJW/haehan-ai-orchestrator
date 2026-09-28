@@ -288,7 +288,7 @@ class LoginAutoFlowEngine:
             )
         try:
             ok = bool(self._click_executor(target_id, plan))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로그인 자동 재개 흐름 -- 클릭/재개 실행기 예외 시 ok=False로 처리(성공으로 오판하지 않음, fail-closed)
             ok = False
         return Event(
             type=EVT_LOGIN_BUTTON_CLICKED,
@@ -328,7 +328,7 @@ class LoginAutoFlowEngine:
         err = ""
         try:
             ok = bool(self._resume_executor(cmd))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 로그인 자동 재개 흐름 -- 클릭/재개 실행기 예외 시 ok=False로 처리(성공으로 오판하지 않음, fail-closed)
             ok = False
             err = type(exc).__name__
         cmd.resume_status = RESUME_DONE if ok else RESUME_FAILED

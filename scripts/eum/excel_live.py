@@ -33,7 +33,7 @@ from scripts.eum.shared.layout_schema import ITEM_START, OUTPUT_DIR
 def _connect(hint: str = "견적서"):
     try:
         xl = win32.GetActiveObject("Excel.Application")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 엑셀 실시간 연동 스크립트(로컬 PC 작업, 견적서 갱신) -- Excel 미실행 시 RuntimeError 발생시켜 상위로 전파(무시 아님), 라이브 루프 중 개별 계산 오류는 콘솔 출력 후 다음 주기에 계속
         raise RuntimeError("Excel이 실행 중이지 않습니다.")
     for i in range(1, xl.Workbooks.Count + 1):
         wb = xl.Workbooks(i)
@@ -83,7 +83,7 @@ def watch_mode(interval: float, recipient: str) -> None:
                 print("\n[live] 변경 감지 → 재계산")
                 update_values(ws, rec, qty1, mo1, qty2, mo2, qty3)
                 prev = cur
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 엑셀 실시간 연동 스크립트(로컬 PC 작업, 견적서 갱신) -- Excel 미실행 시 RuntimeError 발생시켜 상위로 전파(무시 아님), 라이브 루프 중 개별 계산 오류는 콘솔 출력 후 다음 주기에 계속
             print(f"[live] 오류: {e}")
         time.sleep(interval)
 

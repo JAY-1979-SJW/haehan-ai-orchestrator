@@ -14,31 +14,32 @@ API 계층에서 직접 정책 구현 금지.
   - 민감 필드 저장 금지
   - dry_run 기본 True
 """
+
 from __future__ import annotations
 
 from typing import Any
 
+from ai_orchestrator.server.action_approval_audit_store import (
+    STATUS_PENDING,
+    get_approval_request,
+    list_approval_requests,
+    save_approval_request,
+    update_approval_status,
+)
+from ai_orchestrator.server.action_evidence_store import (
+    get_evidence,
+    list_evidence,
+    save_evidence,
+    validate_evidence_fields,
+)
 from ai_orchestrator.server.action_task_handoff import (
     VERDICT_APPROVAL_REQUIRED,
     VERDICT_HANDOFF_READY,
     prepare_action_task,
 )
-from ai_orchestrator.server.action_approval_audit_store import (
-    STATUS_PENDING,
-    save_approval_request,
-    update_approval_status,
-    get_approval_request,
-    list_approval_requests,
-)
-from ai_orchestrator.server.action_evidence_store import (
-    validate_evidence_fields,
-    save_evidence,
-    get_evidence,
-    list_evidence,
-)
-
 
 # ── prepare ───────────────────────────────────────────────────────────────────
+
 
 def api_prepare_action(
     *,
@@ -89,12 +90,11 @@ def api_prepare_action(
                 },
                 summary_safe={
                     "user_intent_summary": user_intent_summary,
-                    **{k: v for k, v in summary.items()
-                       if isinstance(v, (str, int, float, bool, type(None)))},
+                    **{k: v for k, v in summary.items() if isinstance(v, (str, int, float, bool, type(None)))},
                 },
                 status=STATUS_PENDING,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 액션 준비 API -- verdict는 이미 prepare_action_task에서 확정된 뒤, 감사 저장소 기록 실패만 warnings에 추가할 뿐 판정 자체를 바꾸지 않음
             result.setdefault("warnings", []).append(f"audit store 기록 실패: {e}")
 
     # HANDOFF_READY + approval_request_id 있으면 consumed 상태 기록
@@ -106,7 +106,7 @@ def api_prepare_action(
                 verdict=verdict,
                 consumed_at=None,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 액션 준비 API -- verdict는 이미 prepare_action_task에서 확정된 뒤, 감사 저장소 기록 실패만 warnings에 추가할 뿐 판정 자체를 바꾸지 않음
             result.setdefault("warnings", []).append(f"audit 소비 상태 기록 실패: {e}")
 
     result["dry_run"] = dry_run
@@ -114,6 +114,7 @@ def api_prepare_action(
 
 
 # ── evidence ──────────────────────────────────────────────────────────────────
+
 
 def api_receive_evidence(
     *,
@@ -162,6 +163,7 @@ def api_receive_evidence(
 
 
 # ── 조회 helpers ──────────────────────────────────────────────────────────────
+
 
 def api_get_approval_request(approval_request_id: str) -> dict[str, Any] | None:
     return get_approval_request(approval_request_id)

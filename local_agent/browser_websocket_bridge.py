@@ -200,7 +200,7 @@ class BrowserLocalWebSocketBridge:
             return
         try:
             self._audit_writer.write(event)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 브라우저 로컬 웹소켓 브리지 -- 감사 로그 기록 실패는 원본 스택 노출 없이 예외 타입명만 로깅(주석에 명시된 의도적 설계), 핸들러 예외는 안전한 실패 결과로 변환, 콜백 예외는 드롭
             # Safe summary only — never surface raw stack to caller or log.
             logger.error("audit writer failed: %s", type(exc).__name__)
 
@@ -390,7 +390,7 @@ class BrowserLocalWebSocketBridge:
         clean = {k: v for k, v in message.items() if k.lower() not in forbidden}
         try:
             self._callback(clean)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 브라우저 로컬 웹소켓 브리지 -- 감사 로그 기록 실패는 원본 스택 노출 없이 예외 타입명만 로깅(주석에 명시된 의도적 설계), 핸들러 예외는 안전한 실패 결과로 변환, 콜백 예외는 드롭
             logger.error("callback raised — dropping: %s", exc)
 
 

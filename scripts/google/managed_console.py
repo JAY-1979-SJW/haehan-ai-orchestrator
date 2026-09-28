@@ -3,6 +3,7 @@
 Google Console and OAuth approval preparation must use the managed CDP browser
 profile. This module intentionally does not call OS/default browser openers.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -130,11 +131,11 @@ def open_youtube_oauth_console_managed(
         page.goto(item["url"], timeout=timeout_ms)
         try:
             page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 관리 콘솔 탐색(읽기 전용) -- 페이지 로드 대기/전면화 등 best-effort 동작 실패는 무시, 최종 페이지 타이틀 조회 실패는 빈 문자열로 폴백
             pass
         try:
             page.bring_to_front()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 관리 콘솔 탐색(읽기 전용) -- 페이지 로드 대기/전면화 등 best-effort 동작 실패는 무시, 최종 페이지 타이틀 조회 실패는 빈 문자열로 폴백
             pass
         visited.append(
             {

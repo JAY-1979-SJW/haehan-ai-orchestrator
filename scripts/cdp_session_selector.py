@@ -4,15 +4,16 @@ The selector never launches or restarts a browser. It only inspects reachable
 CDP endpoints and chooses a session that matches the requested work domain
 without crossing into another active work domain.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
-
+from typing import Any
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORTS = (9222, 9223, 9333, 9444, 9555)
@@ -54,7 +55,7 @@ def _fetch_json(url: str, timeout: float) -> Any:
 def _domain(url: str) -> str:
     try:
         return urllib.parse.urlparse(url).netloc.lower().split("@")[-1].split(":")[0]
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 세션 후보 탐색 -- 도메인 추출 실패 시 빈 문자열, 후보 조회 실패는 unavailable로 기록(에러 메시지 180자로 절단)
         return ""
 
 
@@ -85,7 +86,7 @@ def discover_cdp_candidates(
                 if isinstance(row, dict)
             ]
             candidates.append(CdpCandidate(port=port, available=True, tabs=tabs))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - CDP 세션 후보 탐색 -- 도메인 추출 실패 시 빈 문자열, 후보 조회 실패는 unavailable로 기록(에러 메시지 180자로 절단)
             candidates.append(CdpCandidate(port=port, available=False, tabs=[], error=str(exc)[:180]))
     return candidates
 
