@@ -124,7 +124,7 @@ def fix_one(page, log_no: str, apply: bool) -> dict:
             page.keyboard.type(new, delay=15)
             page.wait_for_timeout(220)
             changed += 1
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 기존 글의 마크다운 서식 일괄 수정 스크립트 — 문단 수정 실패는 개별 warning 로그 후 다음 문단으로 계속, 발행 확인 팝업 클릭 실패도 무시(팝업 없으면 그냥 넘어감), 건별 실패는 failed 리스트에 기록되어 은폐되지 않으며 --apply 플래그로만 실제 저장됨.
             _log.warning("[md-fix] 문단 %s 수정 실패: %s", item["i"], str(e)[:70])
 
     if changed:
@@ -139,12 +139,12 @@ def _save_post(page, frame) -> None:
             frame.get_by_text(label, exact=True).first.click(timeout=6000)
             page.wait_for_timeout(2500)
             break
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 블로그 기존 글의 마크다운 서식 일괄 수정 스크립트 — 문단 수정 실패는 개별 warning 로그 후 다음 문단으로 계속, 발행 확인 팝업 클릭 실패도 무시(팝업 없으면 그냥 넘어감), 건별 실패는 failed 리스트에 기록되어 은폐되지 않으며 --apply 플래그로만 실제 저장됨.
             continue
     # 발행 확인 팝업
     try:
         frame.get_by_text("발행", exact=True).last.click(timeout=6000)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 블로그 기존 글의 마크다운 서식 일괄 수정 스크립트 — 문단 수정 실패는 개별 warning 로그 후 다음 문단으로 계속, 발행 확인 팝업 클릭 실패도 무시(팝업 없으면 그냥 넘어감), 건별 실패는 failed 리스트에 기록되어 은폐되지 않으며 --apply 플래그로만 실제 저장됨.
         pass
     page.wait_for_timeout(4000)
 
@@ -184,7 +184,7 @@ def main() -> None:
                 else:
                     print(f"    - {r.get('note', '변경 없음')}")
                     st["skipped"].append(t["log_no"])
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 네이버 블로그 기존 글의 마크다운 서식 일괄 수정 스크립트 — 문단 수정 실패는 개별 warning 로그 후 다음 문단으로 계속, 발행 확인 팝업 클릭 실패도 무시(팝업 없으면 그냥 넘어감), 건별 실패는 failed 리스트에 기록되어 은폐되지 않으며 --apply 플래그로만 실제 저장됨.
                 print(f"    ❌ {str(e)[:90]}")
                 st["failed"].append(t["log_no"])
             if args.apply:

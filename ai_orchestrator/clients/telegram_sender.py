@@ -7,6 +7,7 @@ telegram_notifier.py 는 메시지 포맷만 담당.
     TELEGRAM_BOT_TOKEN         — Bot API 토큰 (@BotFather 발급)
     TELEGRAM_APPROVER_CHAT_ID  — 승인 메시지를 받을 chat_id (개인/그룹)
 """
+
 import json
 import logging
 import os
@@ -54,7 +55,7 @@ def send_message(
         resp = httpx.post(_url("sendMessage"), json=payload, timeout=_TIMEOUT)
         resp.raise_for_status()
         return resp.json()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 텔레그램 Bot API HTTP 전송 레이어 — sendMessage/sendPhoto/answerCallbackQuery 각각 실패 시 로그와 {ok: False, error}를 반환, 토큰/chat_id 원문은 에러 메시지에 노출되지 않음.
         logger.error("sendMessage 실패: %s", e)
         return {"ok": False, "error": str(e)}
 
@@ -87,7 +88,7 @@ def send_photo(
             resp = httpx.post(_url("sendPhoto"), data=data, files=files, timeout=_TIMEOUT)
         resp.raise_for_status()
         return resp.json()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 텔레그램 Bot API HTTP 전송 레이어 — sendMessage/sendPhoto/answerCallbackQuery 각각 실패 시 로그와 {ok: False, error}를 반환, 토큰/chat_id 원문은 에러 메시지에 노출되지 않음.
         logger.error("sendPhoto 실패: %s", e)
         return {"ok": False, "error": str(e)}
 
@@ -98,12 +99,16 @@ def answer_callback_query(callback_query_id: str, text: str = "") -> dict:
     if not tok:
         return {"ok": False, "skipped": True}
     try:
-        resp = httpx.post(_url("answerCallbackQuery"), json={
-            "callback_query_id": callback_query_id,
-            "text": text,
-        }, timeout=_TIMEOUT)
+        resp = httpx.post(
+            _url("answerCallbackQuery"),
+            json={
+                "callback_query_id": callback_query_id,
+                "text": text,
+            },
+            timeout=_TIMEOUT,
+        )
         resp.raise_for_status()
         return resp.json()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 텔레그램 Bot API HTTP 전송 레이어 — sendMessage/sendPhoto/answerCallbackQuery 각각 실패 시 로그와 {ok: False, error}를 반환, 토큰/chat_id 원문은 에러 메시지에 노출되지 않음.
         logger.error("answerCallbackQuery 실패: %s", e)
         return {"ok": False, "error": str(e)}

@@ -6,6 +6,7 @@ Playwright 설치 상태 진단 및 bootstrap 모듈
 사용자 브라우저 프로필 삭제 금지.
 서버에서 호출하지 않는다 (로컬 PC 전용).
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -24,11 +25,19 @@ NETWORK_BLOCKED = "NETWORK_BLOCKED"
 PERMISSION_DENIED = "PERMISSION_DENIED"
 UNKNOWN_ERROR = "UNKNOWN_ERROR"
 
-_ALL_STATES: frozenset[str] = frozenset({
-    PLAYWRIGHT_READY, PLAYWRIGHT_PACKAGE_MISSING, PLAYWRIGHT_BROWSER_MISSING,
-    PLAYWRIGHT_INSTALL_REQUIRED, PLAYWRIGHT_INSTALL_FAILED,
-    PLAYWRIGHT_LAUNCH_FAILED, NETWORK_BLOCKED, PERMISSION_DENIED, UNKNOWN_ERROR,
-})
+_ALL_STATES: frozenset[str] = frozenset(
+    {
+        PLAYWRIGHT_READY,
+        PLAYWRIGHT_PACKAGE_MISSING,
+        PLAYWRIGHT_BROWSER_MISSING,
+        PLAYWRIGHT_INSTALL_REQUIRED,
+        PLAYWRIGHT_INSTALL_FAILED,
+        PLAYWRIGHT_LAUNCH_FAILED,
+        NETWORK_BLOCKED,
+        PERMISSION_DENIED,
+        UNKNOWN_ERROR,
+    }
+)
 
 # ── headed/headless 정책 상수 ──────────────────────────────────────────────────
 
@@ -55,6 +64,7 @@ def check_playwright_status() -> dict[str, Any]:
     # 1. 패키지 확인
     try:
         from playwright.sync_api import sync_playwright  # noqa: F401
+
         version = _get_playwright_version()
     except ImportError:
         return _result(
@@ -62,10 +72,7 @@ def check_playwright_status() -> dict[str, Any]:
             package_version=None,
             browser_available=False,
             install_command="pip install playwright",
-            message_ko=(
-                "playwright Python 패키지가 설치되어 있지 않습니다.\n"
-                "설치 명령: pip install playwright"
-            ),
+            message_ko=("playwright Python 패키지가 설치되어 있지 않습니다.\n설치 명령: pip install playwright"),
         )
 
     # 2. Chromium binary 확인 (about:blank 실행)
@@ -143,7 +150,7 @@ def install_chromium() -> dict[str, Any]:
             install_command="python -m playwright install chromium",
             message_ko="Chromium 설치 시간이 초과되었습니다. 네트워크 상태를 확인해 주세요.",
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - Playwright 설치상태 진단/설치 유틸(로컬 PC 전용, 문서에 '설치 로그에 secret 출력 금지' 명시) — 버전조회/브라우저실행테스트/설치 실패 시 모두 상태 코드(UNKNOWN_ERROR 등)와 함께 명확히 실패로 보고됨.
         return _result(
             UNKNOWN_ERROR,
             package_version=_get_playwright_version(),
@@ -162,9 +169,7 @@ def ensure_playwright_ready(auto_install: bool = False) -> dict[str, Any]:
     if status["status"] == PLAYWRIGHT_READY:
         return status
 
-    if auto_install and status["status"] in (
-        PLAYWRIGHT_BROWSER_MISSING, PLAYWRIGHT_INSTALL_REQUIRED
-    ):
+    if auto_install and status["status"] in (PLAYWRIGHT_BROWSER_MISSING, PLAYWRIGHT_INSTALL_REQUIRED):
         return install_chromium()
 
     return status
@@ -192,7 +197,7 @@ def get_launch_options(requires_user_auth: bool = False) -> dict[str, Any]:
 
 def _try_launch_chromium() -> tuple[bool, str]:
     """Chromium을 about:blank로 실행해 본다. 성공 여부와 오류 메시지 반환."""
-    probe = r'''
+    probe = r"""
 from __future__ import annotations
 
 try:
@@ -207,7 +212,7 @@ try:
 except Exception as exc:
     message = str(exc).replace("\r", " ").replace("\n", " ")
     print(f"PLAYWRIGHT_LAUNCH_ERROR:{type(exc).__name__}:{message[:1000]}")
-'''
+"""
     try:
         result = subprocess.run(
             [sys.executable, "-c", probe],
@@ -215,7 +220,7 @@ except Exception as exc:
             text=True,
             timeout=30,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - Playwright 설치상태 진단/설치 유틸(로컬 PC 전용, 문서에 '설치 로그에 secret 출력 금지' 명시) — 버전조회/브라우저실행테스트/설치 실패 시 모두 상태 코드(UNKNOWN_ERROR 등)와 함께 명확히 실패로 보고됨.
         return False, str(exc)
     if "PLAYWRIGHT_LAUNCH_OK" in result.stdout:
         return True, ""
@@ -238,10 +243,7 @@ def _classify_launch_error(error: str, version: str | None) -> dict[str, Any]:
             package_version=version,
             browser_available=False,
             install_command="python -m playwright install chromium",
-            message_ko=(
-                "Chromium 바이너리가 없습니다.\n"
-                "설치 명령: python -m playwright install chromium"
-            ),
+            message_ko=("Chromium 바이너리가 없습니다.\n설치 명령: python -m playwright install chromium"),
         )
     if "permission" in lower or "access denied" in lower:
         return _result(
@@ -264,10 +266,12 @@ def _get_playwright_version() -> str | None:
     try:
         result = subprocess.run(
             [sys.executable, "-m", "playwright", "--version"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         return result.stdout.strip().replace("Version ", "") if result.returncode == 0 else None
-    except Exception:
+    except Exception:  # noqa: BLE001 - Playwright 설치상태 진단/설치 유틸(로컬 PC 전용, 문서에 '설치 로그에 secret 출력 금지' 명시) — 버전조회/브라우저실행테스트/설치 실패 시 모두 상태 코드(UNKNOWN_ERROR 등)와 함께 명확히 실패로 보고됨.
         return None
 
 

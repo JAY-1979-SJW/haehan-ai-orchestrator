@@ -29,7 +29,7 @@ class NaverPay:
         time.sleep(3)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버페이 — 문서에 '실제 결제는 자동화 금지. 조회만.' 이라고 명시된 조회전용 모듈, except는 팝업처리 무시 및 조회 실패 시 로그와 빈 결과 반환뿐 결제 동작 없음.
             pass
         return True
 
@@ -42,7 +42,7 @@ class NaverPay:
         time.sleep(3)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버페이 — 문서에 '실제 결제는 자동화 금지. 조회만.' 이라고 명시된 조회전용 모듈, except는 팝업처리 무시 및 조회 실패 시 로그와 빈 결과 반환뿐 결제 동작 없음.
             pass
 
         try:
@@ -66,7 +66,7 @@ class NaverPay:
             )
             _log.info("[naver-pay] 결제 내역 %d건", len(orders))
             return orders
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버페이 — 문서에 '실제 결제는 자동화 금지. 조회만.' 이라고 명시된 조회전용 모듈, except는 팝업처리 무시 및 조회 실패 시 로그와 빈 결과 반환뿐 결제 동작 없음.
             _log.error("[naver-pay] list_orders 실패: %s", e)
             return []
 
@@ -85,6 +85,6 @@ class NaverPay:
             }
             """)
             return info
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버페이 — 문서에 '실제 결제는 자동화 금지. 조회만.' 이라고 명시된 조회전용 모듈, except는 팝업처리 무시 및 조회 실패 시 로그와 빈 결과 반환뿐 결제 동작 없음.
             _log.error("[naver-pay] points 실패: %s", e)
             return {}

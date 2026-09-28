@@ -5,6 +5,7 @@
 
 exit code: 0=PASS/PASS_WITH_KNOWN_WARN, 1=FAIL, 2=STOP_CONDITION
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,8 +13,9 @@ import importlib
 import inspect
 import json
 import sys
-from dataclasses import fields as dc_fields, is_dataclass
-from datetime import datetime, timezone
+from dataclasses import fields as dc_fields
+from dataclasses import is_dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -25,12 +27,32 @@ if str(ROOT) not in __import__("sys").path:
 AUDIT_NAME = "domain_core"
 
 FORBIDDEN_FIELD_NAMES = {
-    "password", "passwd", "pwd", "otp", "token", "access_token",
-    "refresh_token", "auth_token", "device_token", "api_key",
-    "client_secret", "session", "cookie", "cookies", "credential",
-    "credentials", "secret", "private_key", "authorization",
-    "cert_password", "certificate_password", "npki", "npki_data",
-    "approval_token", "final_approval_token", "token_hash",
+    "password",
+    "passwd",
+    "pwd",
+    "otp",
+    "token",
+    "access_token",
+    "refresh_token",
+    "auth_token",
+    "device_token",
+    "api_key",
+    "client_secret",
+    "session",
+    "cookie",
+    "cookies",
+    "credential",
+    "credentials",
+    "secret",
+    "private_key",
+    "authorization",
+    "cert_password",
+    "certificate_password",
+    "npki",
+    "npki_data",
+    "approval_token",
+    "final_approval_token",
+    "token_hash",
 }
 
 CHECKLIST = [
@@ -56,7 +78,7 @@ CHECKLIST = [
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _check(title: str) -> dict[str, Any]:
@@ -79,13 +101,11 @@ def run_audit() -> dict[str, Any]:
 
     # dc-01
     p1 = ROOT / "ai_orchestrator/domain/models.py"
-    results.append(item("dc-01", "PASS" if p1.exists() else "FAIL",
-                         str(p1), {"exists": p1.exists()}))
+    results.append(item("dc-01", "PASS" if p1.exists() else "FAIL", str(p1), {"exists": p1.exists()}))
 
     # dc-02
     p2 = ROOT / "ai_orchestrator/domain/model_adapters.py"
-    results.append(item("dc-02", "PASS" if p2.exists() else "FAIL",
-                         str(p2), {"exists": p2.exists()}))
+    results.append(item("dc-02", "PASS" if p2.exists() else "FAIL", str(p2), {"exists": p2.exists()}))
 
     # dc-03 ~ dc-10: 모델 import
     model_checks = [
@@ -101,7 +121,7 @@ def run_audit() -> dict[str, Any]:
     models_mod = None
     try:
         models_mod = importlib.import_module("ai_orchestrator.domain.models")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
         for cid, _ in model_checks:
             results.append(item(cid, "FAIL", f"import 실패: {e}"))
     else:
@@ -112,7 +132,7 @@ def run_audit() -> dict[str, Any]:
                 try:
                     ae_mod = importlib.import_module("ai_orchestrator.audit_evidence.models")
                     obj = getattr(ae_mod, "StandardAuditEvent", None)
-                except Exception:
+                except Exception:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
                     pass
             st = "PASS" if obj is not None else "FAIL"
             results.append(item(cid, st, f"{name}={'found' if obj else 'not found'}"))
@@ -130,8 +150,7 @@ def run_audit() -> dict[str, Any]:
             cls = getattr(models_mod, name, None)
             if cls and hasattr(cls, "to_safe_dict"):
                 found_safe.append(name)
-    results.append(item("dc-14", "PASS" if found_safe else "FAIL",
-                         f"to_safe_dict 보유 클래스: {found_safe}"))
+    results.append(item("dc-14", "PASS" if found_safe else "FAIL", f"to_safe_dict 보유 클래스: {found_safe}"))
 
     # dc-15: secret 필드 직접 정의 없음
     violations: list[str] = []
@@ -141,8 +160,9 @@ def run_audit() -> dict[str, Any]:
                 for f in dc_fields(obj):
                     if f.name.lower() in FORBIDDEN_FIELD_NAMES:
                         violations.append(f"{name}.{f.name}")
-    results.append(item("dc-15", "PASS" if not violations else "FAIL",
-                         f"위반: {violations}" if violations else "secret 필드 없음"))
+    results.append(
+        item("dc-15", "PASS" if not violations else "FAIL", f"위반: {violations}" if violations else "secret 필드 없음")
+    )
 
     # dc-16: get_all_bridges adapter
     try:
@@ -153,7 +173,7 @@ def run_audit() -> dict[str, Any]:
             results.append(item("dc-16", "PASS", f"bridge 수={len(bridges)}", {"count": len(bridges)}))
         else:
             results.append(item("dc-16", "FAIL", "get_all_bridges 없음"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
         results.append(item("dc-16", "FAIL", str(e)))
 
     # dc-17: EXTERNAL_APP_HOLD 표현
@@ -165,16 +185,24 @@ def run_audit() -> dict[str, Any]:
         covered = required_types & app_types
         st = "PASS" if required_types <= app_types else "FAIL"
         results.append(item("dc-17", st, f"covered={covered}, missing={required_types - app_types}"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
         results.append(item("dc-17", "FAIL", str(e)))
 
     # dc-18: domain이 router/server를 import하지 않음
     models_src = p1.read_text(encoding="utf-8") if p1.exists() else ""
-    forbidden_imports = [line.strip() for line in models_src.splitlines()
-                         if "import" in line and any(x in line for x in
-                         ["fastapi", "flask", "ai_orchestrator.server", "ai_orchestrator.router"])]
-    results.append(item("dc-18", "PASS" if not forbidden_imports else "FAIL",
-                         f"금지 import: {forbidden_imports}" if forbidden_imports else "독립 도메인 확인"))
+    forbidden_imports = [
+        line.strip()
+        for line in models_src.splitlines()
+        if "import" in line
+        and any(x in line for x in ["fastapi", "flask", "ai_orchestrator.server", "ai_orchestrator.router"])
+    ]
+    results.append(
+        item(
+            "dc-18",
+            "PASS" if not forbidden_imports else "FAIL",
+            f"금지 import: {forbidden_imports}" if forbidden_imports else "독립 도메인 확인",
+        )
+    )
 
     # 집계
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}
@@ -202,10 +230,12 @@ def main() -> int:
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(f"[{AUDIT_NAME}] verdict={result['verdict']} "
-              f"pass={result['summary']['pass']} "
-              f"warn={result['summary']['warn']} "
-              f"fail={result['summary']['fail']}")
+        print(
+            f"[{AUDIT_NAME}] verdict={result['verdict']} "
+            f"pass={result['summary']['pass']} "
+            f"warn={result['summary']['warn']} "
+            f"fail={result['summary']['fail']}"
+        )
         for r in result["checklist"]:
             icon = "✓" if r["status"] == "PASS" else ("△" if r["status"] == "WARN" else "✗")
             print(f"  {icon} [{r['id']}] {r['title']} — {r['evidence'][:80]}")

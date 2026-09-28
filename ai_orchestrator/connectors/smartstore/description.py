@@ -64,7 +64,7 @@ def api_description_render(
             note=f"sections={body.sections}",
         )
         return {"ok": True, "html": html, "sections": builder.sections}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 상세설명 렌더링/템플릿 관리 엔드포인트 — 렌더링/템플릿조회 실패 시 {ok: False, error}를 반환, 손상된 템플릿 파일은 건너뜀(이미 noqa: S112 존재). 템플릿 저장/삭제는 로컬 앱 데이터 파일(운영 DB 아님)이며 명시적 API 호출로만 수행됨.
         return {"ok": False, "error": str(e)}
 
 
@@ -135,7 +135,7 @@ def api_templates_list(user: dict = Depends(require_role("admin", "owner"))) -> 
                     "data": t.get("data", {}),
                 }
             )
-        except Exception:  # noqa: S112 — 손상된 템플릿 파일은 조용히 건너뜀
+        except Exception:  # noqa: BLE001, S112 — 손상된 템플릿 파일은 조용히 건너뜀
             continue
     log_event(
         "SMARTSTORE_TEMPLATES_LIST",
@@ -193,7 +193,7 @@ def api_templates_get(template_id: str, user: dict = Depends(require_role("admin
             note=f"id={template_id}",
         )
         return {"ok": True, **t}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 상세설명 렌더링/템플릿 관리 엔드포인트 — 렌더링/템플릿조회 실패 시 {ok: False, error}를 반환, 손상된 템플릿 파일은 건너뜀(이미 noqa: S112 존재). 템플릿 저장/삭제는 로컬 앱 데이터 파일(운영 DB 아님)이며 명시적 API 호출로만 수행됨.
         return {"ok": False, "error": str(e)}
 
 

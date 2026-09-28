@@ -81,7 +81,7 @@ _PROBE_JS = r"""
 def probe_page(page) -> dict[str, Any]:
     try:
         return page.evaluate(_PROBE_JS)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 범용 로그인 인증창 감지 엔진 — probe_page/click_sso/_bring_front 실패 시 안전한 기본값(빈 probe, None, 무시)을 반환하며, 보안단계(OTP/캡차)는 자동입력 없이 사용자에게 창을 띄우는 설계이고 단계판정(classify)은 예외를 던지지 않는 순수함수.
         return {"url": "", "text": "", "buttons": [], "hasPw": False, "error": str(e)[:80]}
 
 
@@ -140,14 +140,14 @@ def click_sso(page, profile: SiteAuthProfile) -> str | None:
     """
     try:
         return page.evaluate(js, profile.sso_button_regex)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 로그인 인증창 감지 엔진 — probe_page/click_sso/_bring_front 실패 시 안전한 기본값(빈 probe, None, 무시)을 반환하며, 보안단계(OTP/캡차)는 자동입력 없이 사용자에게 창을 띄우는 설계이고 단계판정(classify)은 예외를 던지지 않는 순수함수.
         return None
 
 
 def _bring_front(page) -> None:
     try:
         page.bring_to_front()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 로그인 인증창 감지 엔진 — probe_page/click_sso/_bring_front 실패 시 안전한 기본값(빈 probe, None, 무시)을 반환하며, 보안단계(OTP/캡차)는 자동입력 없이 사용자에게 창을 띄우는 설계이고 단계판정(classify)은 예외를 던지지 않는 순수함수.
         pass
 
 
@@ -218,7 +218,7 @@ def run_auth_gate(
             if notify:
                 try:
                     notify({"site": profile.site, "stage": stage, "hint": st.get("hint")})
-                except Exception:
+                except Exception:  # noqa: BLE001 - 범용 로그인 인증창 감지 엔진 — probe_page/click_sso/_bring_front 실패 시 안전한 기본값(빈 probe, None, 무시)을 반환하며, 보안단계(OTP/캡차)는 자동입력 없이 사용자에게 창을 띄우는 설계이고 단계판정(classify)은 예외를 던지지 않는 순수함수.
                     pass
 
         time.sleep(poll)

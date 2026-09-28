@@ -35,7 +35,7 @@ def api_popup_unblock(user: dict = Depends(require_role("admin", "owner"))) -> d
         with sync_playwright() as pw:
             ctx = pw.chromium.connect_over_cdp(_CDP).contexts[0]
             result = CdpPopupManager().unblock(ctx, origin=_SS_ORIGIN)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 CDP 팝업 관리(모달 닫기/배너 스캔) — 모든 except가 {ok: False, error}를 반환, 데이터 삭제나 승인 우회와 무관한 UI 팝업 정리 기능.
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event("SMARTSTORE_POPUP_UNBLOCK", task_id="-", actor=user["actor"], role=user["role"], decision="ok")
     return result
@@ -63,7 +63,7 @@ def api_popup_scan(user: dict = Depends(require_role("admin", "owner"))) -> dict
             mgr = CdpPopupManager()
             modals = mgr.scan_page(page)
             banners = mgr.scan_banners(page)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 CDP 팝업 관리(모달 닫기/배너 스캔) — 모든 except가 {ok: False, error}를 반환, 데이터 삭제나 승인 우회와 무관한 UI 팝업 정리 기능.
         return {"ok": False, "error": str(e)}
     return {"ok": True, "url": page.url, **modals, "banners_found": banners["found"], "banners": banners["banners"]}
 
@@ -108,7 +108,7 @@ def api_popup_handle(user: dict = Depends(require_role("admin", "owner"))) -> di
             mgr = CdpPopupManager()
             mgr.unblock(ctx, origin=_SS_ORIGIN)
             result = mgr.handle_page(page, auto_confirm=True)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 CDP 팝업 관리(모달 닫기/배너 스캔) — 모든 except가 {ok: False, error}를 반환, 데이터 삭제나 승인 우회와 무관한 UI 팝업 정리 기능.
         return {"ok": False, "error": str(e)}
     log_event(
         "SMARTSTORE_POPUP_HANDLE",

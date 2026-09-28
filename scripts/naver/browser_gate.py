@@ -3,6 +3,7 @@
 This module keeps Naver browser automation out of the sandbox and checks
 that an already-running CDP browser enters login from naver.com.
 """
+
 from __future__ import annotations
 
 import json
@@ -13,9 +14,10 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -34,18 +36,22 @@ CODE_MULTIPLE = "multiple_naver_browsers"
 CODE_DIRECT_LOGIN = "direct_login_entry"
 CODE_SANDBOX_BLOCKED = "sandbox_browser_launch_blocked"
 
-from scripts.browser_sandbox_gate import (  # noqa: E402
-    assert_browser_launch_allowed,
-    is_sandboxed_runtime,
-)
 from scripts.browser_cdp_selection_gate import (  # noqa: E402
     CODE_AMBIGUOUS_DOMAIN_SESSION,
     CODE_MIXED_DOMAIN_SESSION,
     CODE_NO_CDP,
     CODE_NO_DOMAIN_SESSION,
-    CODE_OK as CDP_SELECT_OK,
     discover_sessions,
+)
+from scripts.browser_cdp_selection_gate import (  # noqa: E402
+    CODE_OK as CDP_SELECT_OK,
+)
+from scripts.browser_cdp_selection_gate import (  # noqa: E402
     evaluate_sessions as evaluate_cdp_sessions,
+)
+from scripts.browser_sandbox_gate import (  # noqa: E402
+    assert_browser_launch_allowed,
+    is_sandboxed_runtime,
 )
 
 
@@ -105,11 +111,7 @@ def evaluate_conditions(
     cdp_available: bool,
     tab_urls: Iterable[str] = (),
 ) -> BrowserGateReport:
-    matched = [
-        int(pid)
-        for pid, command_line in process_rows
-        if command_matches_naver_browser(command_line)
-    ]
+    matched = [int(pid) for pid, command_line in process_rows if command_matches_naver_browser(command_line)]
     tabs = list(tab_urls)
     if cdp_available and _is_direct_login_only(tabs):
         return BrowserGateReport(
@@ -214,15 +216,11 @@ def is_cdp_available() -> bool:
 def list_cdp_tab_urls() -> list[str]:
     try:
         rows = _cdp_json("/json/list", timeout=1.5)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 CDP 브라우저 실행 상태 게이트 — 탭목록/프로세스목록 조회 실패 시 모두 빈 결과를 반환해 '실행 중 아님' 방향에 수렴하고, 실제 브라우저 실행은 샌드박스 가드(assert_browser_launch_allowed) 통과 후에만 수행되어 이 폴백이 승인 우회로 이어지지 않음.
         return []
     if not isinstance(rows, list):
         return []
-    return [
-        str(row.get("url") or "")
-        for row in rows
-        if isinstance(row, dict) and row.get("type") == "page"
-    ]
+    return [str(row.get("url") or "") for row in rows if isinstance(row, dict) and row.get("type") == "page"]
 
 
 def list_chrome_processes() -> list[tuple[int, str]]:
@@ -239,10 +237,10 @@ def list_chrome_processes() -> list[tuple[int, str]]:
                 if "--type=" in command:
                     continue
                 rows.append((int(proc.info["pid"]), command))
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 CDP 브라우저 실행 상태 게이트 — 탭목록/프로세스목록 조회 실패 시 모두 빈 결과를 반환해 '실행 중 아님' 방향에 수렴하고, 실제 브라우저 실행은 샌드박스 가드(assert_browser_launch_allowed) 통과 후에만 수행되어 이 폴백이 승인 우회로 이어지지 않음.
                 continue
         return rows
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 CDP 브라우저 실행 상태 게이트 — 탭목록/프로세스목록 조회 실패 시 모두 빈 결과를 반환해 '실행 중 아님' 방향에 수렴하고, 실제 브라우저 실행은 샌드박스 가드(assert_browser_launch_allowed) 통과 후에만 수행되어 이 폴백이 승인 우회로 이어지지 않음.
         pass
 
     if os.name != "nt":
@@ -270,7 +268,7 @@ def list_chrome_processes() -> list[tuple[int, str]]:
                 continue
             out.append((int(row.get("ProcessId") or 0), cmd))
         return out
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 CDP 브라우저 실행 상태 게이트 — 탭목록/프로세스목록 조회 실패 시 모두 빈 결과를 반환해 '실행 중 아님' 방향에 수렴하고, 실제 브라우저 실행은 샌드박스 가드(assert_browser_launch_allowed) 통과 후에만 수행되어 이 폴백이 승인 우회로 이어지지 않음.
         return []
 
 
@@ -373,11 +371,7 @@ def launch_naver_browser() -> int:
             *command[4:],
         ]
         ps_args = ",".join(_ps_single_quote(arg) for arg in args)
-        ps = (
-            f"$p = Start-Process -FilePath {_ps_single_quote(exe)} "
-            f"-ArgumentList @({ps_args}) -PassThru; "
-            "$p.Id"
-        )
+        ps = f"$p = Start-Process -FilePath {_ps_single_quote(exe)} -ArgumentList @({ps_args}) -PassThru; $p.Id"
         result = subprocess.run(
             ["powershell", "-NoProfile", "-Command", ps],
             capture_output=True,
