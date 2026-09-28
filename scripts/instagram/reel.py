@@ -91,7 +91,7 @@ def build_slideshow(
         str(out_path),
     ]
     _log.info(f"[ig-reel] ffmpeg 슬라이드 생성: {case.case_id} ({n}장)")
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         _log.error(f"[ig-reel] ffmpeg 실패: {proc.stderr[-2000:]}")
         raise RuntimeError(f"ffmpeg 실패 (exit {proc.returncode})")
@@ -167,7 +167,7 @@ def build_slideshow_from_frames(
         str(out_path),
     ]
     _log.info(f"[ig-reel] bgm 합성 슬라이드 생성: {out_path.name} ({n}장)")
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         _log.error(f"[ig-reel] ffmpeg 실패: {proc.stderr[-2000:]}")
         raise RuntimeError(f"ffmpeg 실패 (exit {proc.returncode})")

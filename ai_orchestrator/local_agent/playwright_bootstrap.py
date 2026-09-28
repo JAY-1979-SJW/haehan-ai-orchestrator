@@ -101,6 +101,7 @@ def install_chromium() -> dict[str, Any]:
             capture_output=True,
             text=True,
             timeout=300,
+            encoding="utf-8",
         )
         if result.returncode == 0:
             # 재진단
@@ -219,6 +220,7 @@ except Exception as exc:
             capture_output=True,
             text=True,
             timeout=30,
+            encoding="utf-8",
         )
     except Exception as exc:  # noqa: BLE001 - Playwright 설치상태 진단/설치 유틸(로컬 PC 전용, 문서에 '설치 로그에 secret 출력 금지' 명시) — 버전조회/브라우저실행테스트/설치 실패 시 모두 상태 코드(UNKNOWN_ERROR 등)와 함께 명확히 실패로 보고됨.
         return False, str(exc)
@@ -269,6 +271,7 @@ def _get_playwright_version() -> str | None:
             capture_output=True,
             text=True,
             timeout=10,
+            encoding="utf-8",
         )
         return result.stdout.strip().replace("Version ", "") if result.returncode == 0 else None
     except Exception:  # noqa: BLE001 - Playwright 설치상태 진단/설치 유틸(로컬 PC 전용, 문서에 '설치 로그에 secret 출력 금지' 명시) — 버전조회/브라우저실행테스트/설치 실패 시 모두 상태 코드(UNKNOWN_ERROR 등)와 함께 명확히 실패로 보고됨.

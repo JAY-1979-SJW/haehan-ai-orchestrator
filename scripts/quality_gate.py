@@ -394,6 +394,7 @@ def main() -> int:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             check=False,
+            encoding="utf-8",
         )
         path = record_deploy_dry_run(command, exit_code=result.returncode, output=result.stdout)
         print(result.stdout, end="")

@@ -45,7 +45,7 @@ def extract_keyframes(
         "-y",
         out_pattern,
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=300)
     timestamps = _parse_showinfo_timestamps(result.stderr)
     frames = sorted(out_dir.glob("frame_*.jpg"))
 
@@ -59,7 +59,7 @@ def extract_keyframes(
         for i, ts in enumerate(timestamps):
             frame_path = out_dir / f"frame_{i + 1:03d}.jpg"
             fallback_cmd = ["ffmpeg", "-ss", str(ts), "-i", media_path, "-frames:v", "1", "-y", str(frame_path)]
-            fb_result = subprocess.run(fallback_cmd, capture_output=True, text=True, timeout=60)
+            fb_result = subprocess.run(fallback_cmd, capture_output=True, text=True, encoding="utf-8", timeout=60)
             if fb_result.returncode != 0:
                 raise RuntimeError(f"ffmpeg 균등 샘플링 폴백도 실패: {fb_result.stderr[-500:]}")
         frames = sorted(out_dir.glob("frame_*.jpg"))
@@ -80,6 +80,7 @@ def _get_duration_seconds(media_path: str) -> float:
         capture_output=True,
         text=True,
         timeout=30,
+        encoding="utf-8",
     )
     return float(result.stdout.strip())
 

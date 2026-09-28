@@ -261,7 +261,7 @@ def _process_info(pid: int) -> dict[str, str]:
                 "Select-Object ProcessId,ExecutablePath,CommandLine | ConvertTo-Json -Compress"
             ),
         ]
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=5)
         if r.returncode != 0 or not r.stdout.strip():
             return {}
         data = json.loads(r.stdout)

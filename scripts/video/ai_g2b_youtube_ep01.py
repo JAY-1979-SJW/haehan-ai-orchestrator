@@ -176,6 +176,7 @@ def _probe_duration(path: Path) -> float:
         ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     return float(out.stdout.strip())
 

@@ -395,6 +395,7 @@ def run_command(command: tuple[str, ...]) -> GateResult:
             check=False,
             env=env,
             timeout=timeout_s,
+            encoding="utf-8",
         )
     except subprocess.TimeoutExpired as exc:
         output = redact((exc.stdout or exc.stderr or "") if isinstance(exc.stdout or exc.stderr, str) else "").strip()

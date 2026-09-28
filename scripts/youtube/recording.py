@@ -166,6 +166,7 @@ def execute_recording_plan(plan_path: str | Path, *, approved: bool, confirm: st
             stderr=subprocess.STDOUT,
             timeout=int(recording["duration_seconds"]) + 30,
             check=False,
+            encoding="utf-8",
         )
         result.update(
             {

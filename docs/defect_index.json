@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
-  "updated": "2026-09-24",
-  "next_no": 35,
+  "updated": "2026-09-29",
+  "next_no": 36,
   "items": [
     {
       "no": 1,
@@ -433,12 +433,10 @@
       "category": 1,
       "title": "import 자체가 실패하는 모듈 4개 — 끊어진 shim, 없어진 함수, 다른 저장소 의존",
       "where": [
-        "scripts/audit_dev_reg_approvals.py",
         "scripts/ops/report_naver_mail_inbox_consolidated.py",
-        "scripts/ops/check_a4.py",
         "scripts/ops/check_excel_live.py"
       ],
-      "evidence": "runcheck R0: archive 대상 없음 / batch_runner._classify_priority 없음 / shared·excel_ai_agent 모듈(06 저장소) 필요",
+      "evidence": "runcheck R0(2026-09-29 재확인): scripts/audit_dev_reg_approvals.py 는 a1f4de20 삭제 전 커밋에서 복원 + persistence/clients 이동 경로 2곳 갱신으로 해결(테스트 35개 통과). scripts/ops/check_a4.py 는 shared.constants/excel_utils 실제 구현을 다른 저장소(42. excel-ai-agent)에서 scripts/common/excel_a4_constants.py·excel_a4_utils.py 로 이식해 해결 — xlsx 편집마다 도는 PostToolUse 훅이 다시 정상 동작 확인(실제 xlsx 파일 대상 COM 자동화 실행 검증). 단, 이 훅의 2단계(ai_check_a4.py, GPT-4o-mini 호출)는 \"외부 유료 AI API 호출 승인제\"+2026-09-24 \"유료 AI 호출 0\" 결정과 충돌해 복원하지 않고 hook_check_a4.py에서 의도적으로 건너뛰도록 함(별도 사용자 승인 필요 사안). 나머지 2개는 미해결: report_naver_mail_inbox_consolidated.py 는 batch_runner shim이 private 함수를 재노출 안 함(호출하는 곳 없음, 낮은 우선순위). check_excel_live.py 는 __main__ 가드 없는 수동 진단 스크립트라 runcheck 오탐에 가까움.",
       "stage": "RUN",
       "status": "open",
       "no": 32
@@ -468,6 +466,23 @@
       "stage": "GATE",
       "status": "fixed",
       "no": 34
+    },
+    {
+      "id": "run.chrome_ui_watcher_zombie_daemon",
+      "category": 1,
+      "title": "cdp_daemon이 상시 재기동하는 chrome_ui_monitor가 삭제된 chrome_ui_watcher를 못 찾아 조용한 좀비로 도는 중이었음",
+      "where": [
+        "scripts/chrome_ui_watcher.py",
+        "scripts/archive/misc/chrome_ui_watcher.py",
+        "scripts/chrome_ui_monitor.py",
+        "scripts/archive/misc/chrome_ui_monitor.py",
+        "scripts/cdp_daemon.py"
+      ],
+      "evidence": "data/code_map/map.json import_failed_samples(2026-09-28 재빌드)에서 발견. chrome_ui_watcher.py는 5973ebd2(이름만 언급되던 미도달 파일 정리 4회차)가, 실구현 scripts/archive/misc/chrome_ui_watcher.py는 a1f4de20(#32 audit_dev_reg_approvals.py를 지운 바로 그 커밋)이 지웠음 — 둘 다 chrome_ui_monitor.py의 run_monitor() 루프 안 지연 import를 정적분석이 못 봐서 생긴 오판. cdp_daemon.py가 매 heartbeat마다 chrome_ui_monitor.py를 재기동하는데, 이 ImportError를 except Exception: _log.debug(...)로 삼켜 크래시 없이 3초 주기로 영원히 빈 작업만 하는 좀비 프로세스가 됨(2026-09-29 실측: 재기동 시도 자체는 성공하되 매 루프 조용히 실패).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 35,
+      "fix_note": "2026-09-29: 두 파일 모두 삭제 직전 커밋에서 복원 + 신규 의존성 uiautomation 패키지 설치(requirements.txt에 pywin32와 같은 Windows 전용 마커로 추가). 실제 subprocess로 기동해 5초간 크래시 없이 폴링 루프가 도는 것, 관련 테스트(test_chrome_ui_monitor_runtime_path.py) 통과 확인."
     }
   ]
 }

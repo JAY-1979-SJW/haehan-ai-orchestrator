@@ -275,7 +275,7 @@ def run():
         "+faststart",
         str(OUTPUT_VIDEO),
     ]
-    result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
+    result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, encoding="utf-8")
     if result.returncode != 0:
         print("FFmpeg 오류:", result.stderr[-500:])
         sys.exit(1)

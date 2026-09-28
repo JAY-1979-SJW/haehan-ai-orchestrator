@@ -297,6 +297,7 @@ class TestSafetBoundary:
             cwd=str(ROOT),
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         changed = proc.stdout.splitlines()
         ui_changed = [f for f in changed if f.startswith("admin-web/") or f.startswith("desktop/ui/")]

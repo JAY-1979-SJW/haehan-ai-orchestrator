@@ -4,6 +4,7 @@ This validates that the manual smoke path can be run safely later, without
 performing network calls, starting a local agent, launching a browser, editing
 server users, or printing secrets.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,7 +13,6 @@ import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT_OF_SCOPE = {
@@ -70,6 +70,7 @@ def git_status_short() -> list[str]:
         text=True,
         capture_output=True,
         check=False,
+        encoding="utf-8",
     )
     if proc.returncode != 0:
         return ["!! git status failed"]
@@ -103,7 +104,7 @@ def dry_run() -> DryRunResult:
         add(findings, "PASS", "required_files", "all present")
 
     router = read("ai_orchestrator/local_agent_router.py")
-    if "require_role(\"admin\", \"owner\")" in router and '@local_agent_router.post("/registration-codes")' in router:
+    if 'require_role("admin", "owner")' in router and '@local_agent_router.post("/registration-codes")' in router:
         add(findings, "PASS", "authenticated_registration_code_flow", "admin/owner issue endpoint present")
     else:
         add(findings, "FAIL", "authenticated_registration_code_flow", "guard or endpoint missing")

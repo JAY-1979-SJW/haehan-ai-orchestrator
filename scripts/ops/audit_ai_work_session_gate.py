@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
-import shutil
-from uuid import uuid4
 from pathlib import Path
-
+from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
 SESSION = ROOT / "scripts" / "ops" / "ai_work_session.py"
@@ -17,6 +16,7 @@ def run(args: list[str], record_root: Path) -> subprocess.CompletedProcess[str]:
         [sys.executable, str(SESSION), "--record-root", str(record_root), "--lane", "audit-lane", *args],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
         timeout=30,
@@ -29,7 +29,11 @@ def audit() -> tuple[bool, list[str]]:
     if not SESSION.exists():
         return False, [f"[FAIL] missing ai work session helper: {SESSION}"]
     text = STANDARD.read_text(encoding="utf-8") if STANDARD.exists() else ""
-    for token in ["AI Agent Work Record Rule", "Before a new AI session continues operational work", "data/runtime/ai_work_record_latest.json"]:
+    for token in [
+        "AI Agent Work Record Rule",
+        "Before a new AI session continues operational work",
+        "data/runtime/ai_work_record_latest.json",
+    ]:
         if token not in text:
             ok = False
             findings.append(f"[FAIL] standard workflow missing work record token: {token}")

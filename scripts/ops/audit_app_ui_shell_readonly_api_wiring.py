@@ -269,6 +269,7 @@ def check_backend_unchanged(report: AuditReport) -> None:
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
+            encoding="utf-8",
         )
         if rel_path in result.stdout:
             report.add(f"backend_{Path(rel_path).name}", "FAIL", f"{rel_path} 변경됨 — 금지")

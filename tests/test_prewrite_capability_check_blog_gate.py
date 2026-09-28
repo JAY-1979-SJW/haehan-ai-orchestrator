@@ -30,6 +30,7 @@ def _run_hook(file_path: str, content: str) -> subprocess.CompletedProcess:
         capture_output=True,
         text=True,
         cwd=str(ROOT),
+        encoding="utf-8",
     )
 
 
@@ -123,5 +124,6 @@ def test_non_write_tool_ignored():
         capture_output=True,
         text=True,
         cwd=str(ROOT),
+        encoding="utf-8",
     )
     assert result.returncode == 0

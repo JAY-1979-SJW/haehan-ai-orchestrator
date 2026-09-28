@@ -68,6 +68,7 @@ def _read_admin_web_audit_report(command: list[str]) -> tuple[bool, dict | str]:
             stderr=subprocess.STDOUT,
             check=False,
             timeout=120,
+            encoding="utf-8",
         )
     except FileNotFoundError:
         return False, "npm not found"

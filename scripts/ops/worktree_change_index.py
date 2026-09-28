@@ -3,6 +3,7 @@
 The output is a management index: it groups changed files by git status,
 architecture layer, site owner, and broad review category.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -10,7 +11,7 @@ import json
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +22,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.ops.codebase_layer_audit import classify_path
-
 
 SITE_IDS = {"eum", "hiworks", "naver", "google", "g2b", "kakao", "smartstore"}
 
@@ -46,6 +46,7 @@ def run_git_status(root: Path = ROOT) -> str:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
+        encoding="utf-8",
     )
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or "git status failed")
@@ -157,7 +158,7 @@ def build_index(status_output: str | None = None, *, root: Path = ROOT) -> dict[
     changes = classify_changes(rows)
     return {
         "schema_version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "root": str(root),
         "summary": {
             "changed_count": len(changes),

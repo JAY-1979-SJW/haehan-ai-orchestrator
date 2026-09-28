@@ -187,6 +187,7 @@ def collect_services() -> list[dict[str, Any]]:
             capture_output=True,
             text=True,
             timeout=15,
+            encoding="utf-8",
         )
         services = []
         current: dict[str, str] = {}

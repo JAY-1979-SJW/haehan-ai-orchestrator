@@ -83,6 +83,7 @@ def check(file_path: str, content: str) -> str | None:
         capture_output=True,
         text=True,
         cwd=str(ROOT),
+        encoding="utf-8",
     )
     output = (proc.stdout or "").strip()
     if not output or "기존 구현 없음" in output:

@@ -124,6 +124,7 @@ def git_staged_paths() -> list[str]:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
+        encoding="utf-8",
     )
     if result.returncode != 0:
         raise RuntimeError(redact(result.stderr.strip()) or "git diff --cached failed")
@@ -143,6 +144,7 @@ def _run_check_command(command: list[str], *, cwd: Path = ROOT, timeout: int = 1
             stderr=subprocess.STDOUT,
             check=False,
             timeout=timeout,
+            encoding="utf-8",
         )
     except FileNotFoundError:
         return False, f"{command[0]} not found"

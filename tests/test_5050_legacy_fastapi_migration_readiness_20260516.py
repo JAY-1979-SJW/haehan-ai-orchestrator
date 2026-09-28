@@ -2,6 +2,7 @@
 
 ASSISTANT_BACKEND_5050_LEGACY_FASTAPI_MIGRATION_PLAN_01
 """
+
 from __future__ import annotations
 
 import json
@@ -16,7 +17,10 @@ SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_legacy_fastapi_migration_readine
 def _run_json() -> dict:
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--json"],
-        capture_output=True, text=True, cwd=ROOT,
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+        encoding="utf-8",
     )
     return json.loads(result.stdout)
 
@@ -58,44 +62,28 @@ def test_5050_routes_total():
 def test_migration_matrix_has_dashboard():
     report = _run_json()
     matrix = report["migration_matrix"]
-    dashboard_routes = [
-        r for tier in matrix.values()
-        for r in tier
-        if "dashboard" in r["path"]
-    ]
+    dashboard_routes = [r for tier in matrix.values() for r in tier if "dashboard" in r["path"]]
     assert len(dashboard_routes) >= 2
 
 
 def test_migration_matrix_has_webhook():
     report = _run_json()
     matrix = report["migration_matrix"]
-    webhook_routes = [
-        r for tier in matrix.values()
-        for r in tier
-        if "webhook" in r["path"]
-    ]
+    webhook_routes = [r for tier in matrix.values() for r in tier if "webhook" in r["path"]]
     assert len(webhook_routes) >= 2
 
 
 def test_migration_matrix_has_inbox():
     report = _run_json()
     matrix = report["migration_matrix"]
-    inbox_routes = [
-        r for tier in matrix.values()
-        for r in tier
-        if "inbox" in r["path"]
-    ]
+    inbox_routes = [r for tier in matrix.values() for r in tier if "inbox" in r["path"]]
     assert len(inbox_routes) >= 3
 
 
 def test_migration_matrix_has_tasks():
     report = _run_json()
     matrix = report["migration_matrix"]
-    task_routes = [
-        r for tier in matrix.values()
-        for r in tier
-        if "/tasks" in r["path"]
-    ]
+    task_routes = [r for tier in matrix.values() for r in tier if "/tasks" in r["path"]]
     assert len(task_routes) >= 4
 
 

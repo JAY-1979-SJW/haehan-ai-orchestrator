@@ -115,6 +115,7 @@ def audio_seconds(mp3: Path) -> float:
         capture_output=True,
         text=True,
         timeout=30,
+        encoding="utf-8",
     )
     try:
         return float(r.stdout.strip())

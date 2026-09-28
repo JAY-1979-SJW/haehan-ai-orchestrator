@@ -66,7 +66,9 @@ def check_git_tracked() -> list[str]:
 
     errors = []
     try:
-        r = subprocess.run(["git", "ls-files", "data/sessions/"], capture_output=True, text=True, cwd=str(REPO_ROOT))
+        r = subprocess.run(
+            ["git", "ls-files", "data/sessions/"], capture_output=True, text=True, encoding="utf-8", cwd=str(REPO_ROOT)
+        )
         if r.stdout.strip():
             errors.append(f"data/sessions/ Git 추적 중: {r.stdout.strip()}")
     except Exception as e:  # noqa: BLE001 - 버전관리 추적파일 조회 명령 실행 오류를 감사 오류 목록에 기록, 코드 스캔 중 개별 파일 읽기 실패는 건너뜀(check_web_connector는 현재 main()에서 호출되지 않아 최종 판정에 영향 없음) — 감사 스크립트 자체는 읽기전용

@@ -1279,6 +1279,7 @@ def action_cdp_run(params: dict) -> ActionResult:
             text=True,
             timeout=timeout,
             cwd=str(root),
+            encoding="utf-8",
         )
         output = (proc.stdout or "") + (proc.stderr or "")
         success = proc.returncode == 0

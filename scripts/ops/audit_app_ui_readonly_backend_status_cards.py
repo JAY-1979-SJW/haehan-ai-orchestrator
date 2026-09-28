@@ -259,6 +259,7 @@ def check_backend_unchanged(report: AuditReport) -> None:
             ["git", "diff", "--name-only", "HEAD", "--", rel_path],
             capture_output=True,
             text=True,
+            encoding="utf-8",
             cwd=REPO_ROOT,
         )
         if rel_path in result.stdout:

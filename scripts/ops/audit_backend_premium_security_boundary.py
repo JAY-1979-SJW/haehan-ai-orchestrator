@@ -235,6 +235,7 @@ def run_audit() -> dict[str, Any]:
             capture_output=True,
             text=True,
             timeout=10,
+            encoding="utf-8",
         )
         changed = proc.stdout.splitlines()
         ui_changed = [f for f in changed if f.startswith("admin-web/") or f.startswith("desktop/ui/")]
@@ -273,6 +274,7 @@ def run_audit() -> dict[str, Any]:
                 capture_output=True,
                 text=True,
                 timeout=60,
+                encoding="utf-8",
             )
             passed = proc.returncode == 0
             out = proc.stdout.strip().splitlines()

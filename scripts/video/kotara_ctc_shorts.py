@@ -367,7 +367,7 @@ def _pad_to(src: Path, dst: Path, seconds: float) -> None:
         "2",
         str(dst),
     ]
-    subprocess.run(cmd, capture_output=True, text=True, check=True)
+    subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", check=True)
 
 
 def _silence(dst: Path, seconds: float) -> None:
@@ -382,7 +382,7 @@ def _silence(dst: Path, seconds: float) -> None:
         f"{seconds:.3f}",
         str(dst),
     ]
-    subprocess.run(cmd, capture_output=True, text=True, check=True)
+    subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", check=True)
 
 
 def _concat_audio(segments: list[Path], dst: Path) -> None:
@@ -392,7 +392,7 @@ def _concat_audio(segments: list[Path], dst: Path) -> None:
     n = len(segments)
     filt = "".join(f"[{i}:a]" for i in range(n)) + f"concat=n={n}:v=0:a=1[aout]"
     cmd = ["ffmpeg", "-y", *inputs, "-filter_complex", filt, "-map", "[aout]", str(dst)]
-    subprocess.run(cmd, capture_output=True, text=True, check=True)
+    subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", check=True)
 
 
 def build_short(script: dict) -> Path:
@@ -453,6 +453,7 @@ def _probe_duration(path: Path) -> float:
         ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     return float(proc.stdout.strip() or 0)
 

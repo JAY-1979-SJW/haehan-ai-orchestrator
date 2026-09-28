@@ -358,7 +358,7 @@ def _melt_kenburns_render(path: Path, duration: float, zoom_in: bool, k: float =
         "width=1920",
         "height=1080",
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0 or not out_path.exists():
         raise RuntimeError(f"melt 렌더 실패: {proc.stderr[-2000:]}")
     return out_path
@@ -396,6 +396,7 @@ def build_video(
             capture_output=True,
             text=True,
             check=True,
+            encoding="utf-8",
         ).stdout.strip()
     )
     clip_list.append((manim_path, manim_duration))
@@ -440,7 +441,7 @@ def build_video(
         f"{total:.2f}",
         str(out_path),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg xfade 조립 실패: {proc.stderr[-3000:]}")
     return out_path
@@ -458,7 +459,7 @@ def concat_narration(out_path: Path) -> Path:
     list_file = OUT_DIR / "narration_concat.txt"
     list_file.write_text("\n".join(f"file '{(NARRATION_DIR / n).as_posix()}'" for n in names), encoding="utf-8")
     cmd = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(list_file), "-c", "copy", str(out_path)]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"나레이션 병합 실패: {proc.stderr[-2000:]}")
     return out_path
@@ -487,7 +488,7 @@ def mux(video_no_audio: Path, narration: Path, out_path: Path) -> Path:
         "-shortest",
         str(out_path),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"mux 실패: {proc.stderr[-2000:]}")
     return out_path

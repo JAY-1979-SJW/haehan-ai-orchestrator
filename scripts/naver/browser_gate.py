@@ -259,6 +259,7 @@ def list_chrome_processes() -> list[tuple[int, str]]:
             capture_output=True,
             text=True,
             timeout=5,
+            encoding="utf-8",
         )
         if result.returncode != 0 or not result.stdout.strip():
             return []
@@ -380,6 +381,7 @@ def launch_naver_browser() -> int:
             capture_output=True,
             text=True,
             timeout=10,
+            encoding="utf-8",
         )
         if result.returncode != 0:
             raise RuntimeError((result.stderr or result.stdout or "Start-Process failed").strip())

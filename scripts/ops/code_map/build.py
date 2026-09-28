@@ -149,7 +149,7 @@ def main() -> int:
         if not same:
             return 1
     commit = subprocess.run(
-        ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True
+        ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True, encoding="utf-8"
     ).stdout.strip()
     meta = {
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),

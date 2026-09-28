@@ -472,7 +472,7 @@ def build_video(frames: list[Path], durations: list[float], out_path: Path, fade
         f"{total:.2f}",
         str(out_path),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg 실패: {proc.stderr[-2000:]}")
     return out_path
@@ -548,7 +548,7 @@ def mux_audio(
             "-shortest",
             str(out_path),
         ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg 오디오 믹싱 실패: {proc.stderr[-2000:]}")
     return out_path
@@ -556,7 +556,7 @@ def mux_audio(
 
 def strip_audio(src: Path, out_path: Path) -> Path:
     cmd = ["ffmpeg", "-y", "-i", str(src), "-an", "-c:v", "copy", str(out_path)]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg 무음화 실패: {proc.stderr[-2000:]}")
     return out_path
@@ -568,6 +568,6 @@ def extract_check_frames(video_path: Path, out_dir: Path, timestamps: list[float
     for t in timestamps:
         dst = out_dir / f"check_t{t:.1f}.png"
         cmd = ["ffmpeg", "-y", "-ss", str(t), "-i", str(video_path), "-frames:v", "1", str(dst)]
-        subprocess.run(cmd, capture_output=True, text=True)
+        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
         paths.append(dst)
     return paths

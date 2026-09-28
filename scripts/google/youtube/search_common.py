@@ -6,12 +6,9 @@ no leaf may import from another leaf.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
-import sqlite3
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -20,6 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.common import youtube_search_cache as _shared_cache
 from security_utils import safe_preview
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -274,44 +272,13 @@ def _should_retry_without_proxy(exc: urllib.error.URLError) -> bool:
 # 훨씬 낮아, 같은 쿼리를 반복 검색하면 시장조사 1회 실행만으로도 쉽게
 # 소진된다. 두 검색 경로(단건 검색 / 시장조사 키워드 확장 검색)가 같은 DB를
 # 공유하면 어느 경로로 먼저 검색됐든 캐시가 재사용된다.
-_SEARCH_CACHE_DB = ROOT / "data" / "youtube_search_cache.db"
-_CACHE_TTL_SECONDS = 86_400  # 24시간
-
-
-def _search_cache_key(query: str, max_results: int, captions_only: bool = False) -> str:
-    raw = f"{query.strip().lower()}|{max_results}|{captions_only}"
-    return hashlib.sha256(raw.encode()).hexdigest()
-
-
-def _search_cache_get(key: str) -> dict[str, Any] | None:
-    try:
-        _SEARCH_CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
-        con = sqlite3.connect(str(_SEARCH_CACHE_DB))
-        row = con.execute("SELECT payload, cached_at FROM search_cache WHERE cache_key=?", (key,)).fetchone()
-        con.close()
-        if row and (time.time() - row[1]) < _CACHE_TTL_SECONDS:
-            return json.loads(row[0])
-    except Exception:  # noqa: BLE001 - SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 무시 — 캐시는 성능최적화 부가기능일 뿐 핵심 검색 로직에 영향 없음
-        pass
-    return None
-
-
-def _search_cache_set(key: str, payload: dict[str, Any]) -> None:
-    try:
-        _SEARCH_CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
-        con = sqlite3.connect(str(_SEARCH_CACHE_DB))
-        con.execute(
-            "CREATE TABLE IF NOT EXISTS search_cache (cache_key TEXT PRIMARY KEY, payload TEXT, cached_at REAL)"
-        )
-        con.execute(
-            "INSERT OR REPLACE INTO search_cache VALUES (?,?,?)",
-            (key, json.dumps(payload, ensure_ascii=False), time.time()),
-        )
-        con.execute("DELETE FROM search_cache WHERE cached_at < ?", (time.time() - 259200,))
-        con.commit()
-        con.close()
-    except Exception:  # noqa: BLE001 - SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 무시 — 캐시는 성능최적화 부가기능일 뿐 핵심 검색 로직에 영향 없음
-        pass
+# 정리(docs/defect_index.json #15, 2026-09-29): 실제 구현은
+# scripts/common/youtube_search_cache.py 로 옮기고, 이 도메인의 기존
+# import 지점(search.py/search_analyze.py/search_score.py/search_search.py 등)이
+# 계속 같은 이름으로 쓸 수 있게 여기서 별칭만 다시 내보낸다.
+_search_cache_key = _shared_cache.cache_key
+_search_cache_get = _shared_cache.cache_get
+_search_cache_set = _shared_cache.cache_set
 
 
 def build_search_url(query: str) -> str:

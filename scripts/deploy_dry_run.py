@@ -1,4 +1,5 @@
 """Run a deployment dry-run command and record quality-gate evidence."""
+
 from __future__ import annotations
 
 import argparse
@@ -30,6 +31,7 @@ def main() -> int:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         check=False,
+        encoding="utf-8",
     )
     print(result.stdout, end="")
     path = record_deploy_dry_run(command, exit_code=result.returncode, output=result.stdout)

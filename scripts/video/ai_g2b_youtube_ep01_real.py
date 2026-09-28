@@ -194,6 +194,7 @@ def _probe_duration(path: Path) -> float:
         ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     return float(out.stdout.strip())
 
@@ -258,7 +259,7 @@ def build_video(frames: list[Path], durations: list[float], out_path: Path, fade
         f"{total:.2f}",
         str(out_path),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg 실패: {proc.stderr[-2000:]}")
     return out_path
@@ -285,7 +286,7 @@ def mux_audio(video_no_audio: Path, narration: Path, out_path: Path) -> Path:
         "-shortest",
         str(out_path),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"오디오 믹싱 실패: {proc.stderr[-2000:]}")
     return out_path

@@ -1,9 +1,9 @@
 """Install repository-local Git hooks."""
+
 from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 HOOKS_DIR = ROOT / ".githooks"
@@ -21,6 +21,7 @@ def main() -> int:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         check=False,
+        encoding="utf-8",
     )
     if result.returncode != 0:
         print((result.stdout or "").strip() or "FAIL: git config core.hooksPath failed")

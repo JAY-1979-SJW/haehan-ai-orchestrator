@@ -26,7 +26,9 @@ _RRN_RE = re.compile(r"\d{6}-\d{7}")
 
 def _git_sha() -> str:
     try:
-        r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=2)
+        r = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, encoding="utf-8", timeout=2
+        )
         return r.stdout.strip() if r.returncode == 0 else ""
     except Exception:  # noqa: BLE001 - 감사 레코드용 git commit hash 조회 실패 시 빈 문자열 반환 — 부가 정보 실패, 감사 기록 자체 차단과 무관
         return ""
