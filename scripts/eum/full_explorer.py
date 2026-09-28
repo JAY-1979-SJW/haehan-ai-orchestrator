@@ -298,7 +298,7 @@ def _safe_goto(page, url: str, timeout: int = 15000) -> bool:
         page.goto(url, timeout=timeout)
         page.wait_for_load_state("networkidle", timeout=timeout)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
         log.debug("goto 실패: url=%s err=%s", url, e)
         return False
 
@@ -334,7 +334,7 @@ def _extract_page(page, url: str, name: str) -> dict[str, Any]:
         try:
             install_watcher(page)
             time.sleep(0.5)  # MutationObserver 초기화 대기
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
             log.debug(f"[EUM] popup_watcher 설치 실패: {e}")
 
         # 2단계: popup_watcher 이벤트 확인 (비정상 접근)
@@ -400,14 +400,14 @@ def _extract_page(page, url: str, name: str) -> dict[str, Any]:
                     log.critical(f"[EUM] 접근 불가능: {info['error']}")
                     return info
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
         log.debug(f"[EUM] 비정상 접근 감지 오류 (무시): {e}")
 
     # JS 전체 추출
     try:
         extracted = page.evaluate(_JS_FULL_EXTRACT)
         info.update(extracted)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
         log.warning("JS 추출 실패: url=%s err=%s", url, e)
         info["error"] = f"JS 실행 오류: {e}"
 
@@ -468,7 +468,7 @@ def _explore_menu(page) -> dict[str, Any]:
                 for lnk in data.get("all_links", [])
                 if EUM_BASE in lnk.get("href", "") or lnk.get("href", "").startswith("/")
             ]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
             log.warning("메인 페이지 추출 실패: %s", e)
 
     # 마이페이지
@@ -476,7 +476,7 @@ def _explore_menu(page) -> dict[str, Any]:
         try:
             data = page.evaluate(_JS_FULL_EXTRACT)
             menu_result["mypage"] = data
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
             log.warning("마이페이지 추출 실패: %s", e)
 
     return menu_result

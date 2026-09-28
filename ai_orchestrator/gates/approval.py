@@ -186,7 +186,7 @@ def issue_token(req: TaskRequest, risk: RiskAssessment, ttl_minutes: int = 30) -
             target="",
             note=f"public_id={token.public_id}",
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인 토큰 발급/승인/거절 감사로그(log_event) 기록 실패만 감싸는 except - 실제 승인/거절/만료 판정은 try 밖에서 이미 확정되어 상태값을 반환하므로 감사로그 실패가 승인 여부에 영향 없음
         logger.warning("승인 발행 감사 기록 실패: %s", e)
 
     return token
@@ -241,7 +241,7 @@ def approve_token(
                 decision="expired",
                 note=f"public_id={token_obj.public_id}",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 승인 토큰 발급/승인/거절 감사로그(log_event) 기록 실패만 감싸는 except - 실제 승인/거절/만료 판정은 try 밖에서 이미 확정되어 상태값을 반환하므로 감사로그 실패가 승인 여부에 영향 없음
             logger.warning("승인 만료 감사 기록 실패: %s", e)
 
         token_obj.status = "expired"
@@ -278,7 +278,7 @@ def approve_token(
             decision="approved",
             note=f"public_id={token_obj.public_id}",
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인 토큰 발급/승인/거절 감사로그(log_event) 기록 실패만 감싸는 except - 실제 승인/거절/만료 판정은 try 밖에서 이미 확정되어 상태값을 반환하므로 감사로그 실패가 승인 여부에 영향 없음
         logger.warning("승인 허가 감사 기록 실패: %s", e)
 
     token_obj.approved_by = approved_by
@@ -334,7 +334,7 @@ def reject_token(
                 decision="expired",
                 note=f"public_id={token_obj.public_id}",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 승인 토큰 발급/승인/거절 감사로그(log_event) 기록 실패만 감싸는 except - 실제 승인/거절/만료 판정은 try 밖에서 이미 확정되어 상태값을 반환하므로 감사로그 실패가 승인 여부에 영향 없음
             logger.warning("거절 만료 감사 기록 실패: %s", e)
 
         token_obj.status = "expired"
@@ -368,7 +368,7 @@ def reject_token(
             decision="rejected",
             note=f"public_id={token_obj.public_id}, reason={reason}" if reason else f"public_id={token_obj.public_id}",
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인 토큰 발급/승인/거절 감사로그(log_event) 기록 실패만 감싸는 except - 실제 승인/거절/만료 판정은 try 밖에서 이미 확정되어 상태값을 반환하므로 감사로그 실패가 승인 여부에 영향 없음
         logger.warning("거절 거부 감사 기록 실패: %s", e)
 
     token_obj.approved_by = rejected_by
@@ -474,7 +474,7 @@ def issue_token_for_dev_reg(
             target="",
             note=f"public_id={token.public_id}",
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인 토큰 발급/승인/거절 감사로그(log_event) 기록 실패만 감싸는 except - 실제 승인/거절/만료 판정은 try 밖에서 이미 확정되어 상태값을 반환하므로 감사로그 실패가 승인 여부에 영향 없음
         logger.warning("개발자 등록 승인 발행 감사 기록 실패: %s", e)
 
     return token

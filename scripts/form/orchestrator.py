@@ -72,7 +72,7 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
         c = get_cred(site)
         if c.get("id") and c.get("pw"):
             return c["id"], c["pw"]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
         log.debug("[orchestrator] credentials 조회 실패: %s", e)
 
     # 2) profile (site override → base)
@@ -83,7 +83,7 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
         pw = get_value("default_pw", site=site)
         if nid and pw:
             return nid, pw
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
         log.debug("[orchestrator] profile 조회 실패: %s", e)
 
     return "", ""
@@ -161,7 +161,7 @@ def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms
     before_url = ""
     try:
         before_url = page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
         pass
 
     # 5) ID 입력 (휴먼 타이핑)
@@ -200,13 +200,13 @@ def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms
             # 버튼 클릭 실패 → Enter 폴백
             try:
                 page.locator(pw_field.selector).press("Enter")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
                 result["reason"] = f"제출 실패: {e}"
                 return result
     else:
         try:
             page.locator(pw_field.selector).press("Enter")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
             result["reason"] = f"제출 실패(Enter): {e}"
             return result
 
@@ -252,7 +252,7 @@ def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms
                 result["user"] = nid
                 result["reason"] = "로그인 성공 (폼 사라짐)"
                 return result
-        except Exception:
+        except Exception:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
             pass
         result["reason"] = f"응답 타임아웃 ({wait_submit_ms}ms)"
         return result

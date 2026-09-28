@@ -29,7 +29,7 @@ def _hide_own_console() -> None:
         print(
             f"[console] hwnd={hwnd} (자식 상속용 콘솔 {'있음·숨김' if hwnd else '없음!'})", file=sys.stderr, flush=True
         )
-    except Exception:  # noqa: S110 — 콘솔 숨김 실패는 무시(기능 영향 없음)
+    except Exception:  # noqa: S110, BLE001 — 콘솔 숨김 실패는 무시(기능 영향 없음)
         pass
 
 
@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI):
         from .connectors.community_scheduler import community_schedule_loop
 
         community_task = asyncio.create_task(community_schedule_loop())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동/종료 시 백그라운드 스케줄러(커뮤니티/gonobi/CDP폴러) 시작 실패 처리 - 로그만 남기고 해당 기능 비활성화, 보안 판정과 무관
         community_task = None
         logger.warning("커뮤니티 스케줄러 시작 실패 (무시): %s", e)
 
@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI):
         from .connectors.gonobi_scheduler import gonobi_schedule_loop
 
         gonobi_task = asyncio.create_task(gonobi_schedule_loop())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동/종료 시 백그라운드 스케줄러(커뮤니티/gonobi/CDP폴러) 시작 실패 처리 - 로그만 남기고 해당 기능 비활성화, 보안 판정과 무관
         gonobi_task = None
         logger.warning("gonobi 스케줄러 시작 실패 (무시): %s", e)
 
@@ -76,7 +76,7 @@ async def lifespan(app: FastAPI):
 
         poller = start_poller(interval=5)
         logger.info("CDP 팝업 폴러 시작 (interval=5s)")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동/종료 시 백그라운드 스케줄러(커뮤니티/gonobi/CDP폴러) 시작 실패 처리 - 로그만 남기고 해당 기능 비활성화, 보안 판정과 무관
         poller = None
         logger.warning("CDP 팝업 폴러 시작 실패 (무시): %s", e)
 
@@ -103,7 +103,7 @@ async def lifespan(app: FastAPI):
         if poller:
             try:
                 stop_poller()
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
         logger.info("haehan-ai-orchestrator 종료")
 

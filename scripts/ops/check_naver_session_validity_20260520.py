@@ -5,7 +5,6 @@
 - www.naver.com / myInfo.naver 진입 후 페이지 신호로 판정
 - 쿠키 값/PW/토큰 출력 금지 (존재 여부만)
 """
-
 from __future__ import annotations
 
 import json
@@ -33,18 +32,19 @@ def _list_pages() -> list[dict]:
     return [t for t in rows if t.get("type") == "page"]
 
 
-def _send(ws, msg_id: int, method: str, params: dict | None = None, timeout: float = 8.0) -> dict:
+def _send(ws, msg_id: int, method: str, params: dict | None = None,
+          timeout: float = 8.0) -> dict:
     ws.send(json.dumps({"id": msg_id, "method": method, "params": params or {}}))
     deadline = time.time() + timeout
     while time.time() < deadline:
         ws.settimeout(max(0.5, deadline - time.time()))
         try:
             raw = ws.recv()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 세션 유효성 CDP 읽기전용 점검 - 실패 시 timeout/None으로 폴백
             return {"id": msg_id, "_timeout": True}
         try:
             m = json.loads(raw)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 세션 유효성 CDP 읽기전용 점검 - 실패 시 timeout/None으로 폴백
             continue
         if m.get("id") == msg_id:
             return m
@@ -104,9 +104,10 @@ def _eval_with_retry(target_id: str, expr: str, max_wait: float = 15.0) -> dict:
                 continue
             try:
                 w = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=5)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 세션 유효성 CDP 읽기전용 점검 - 실패 시 timeout/None으로 폴백
                 break
-            ev = _send(w, 1, "Runtime.evaluate", {"expression": expr, "returnByValue": True}, timeout=5.0)
+            ev = _send(w, 1, "Runtime.evaluate",
+                       {"expression": expr, "returnByValue": True}, timeout=5.0)
             w.close()
             last_ev = ev
             val = ev.get("result", {}).get("result", {}).get("value")
@@ -117,7 +118,7 @@ def _eval_with_retry(target_id: str, expr: str, max_wait: float = 15.0) -> dict:
                     # about:blank 면 아직 로드 안됨
                     if href and not href.startswith("about:"):
                         return obj
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 세션 유효성 CDP 읽기전용 점검 - 실패 시 timeout/None으로 폴백
                     pass
             break
         time.sleep(0.8)
@@ -192,7 +193,7 @@ def main() -> None:
                 w = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=5)
                 _send(w, 88, "Page.navigate", {"url": "about:blank"}, timeout=3.0)
                 w.close()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 세션 유효성 CDP 읽기전용 점검 - 실패 시 timeout/None으로 폴백
                 pass
             break
 

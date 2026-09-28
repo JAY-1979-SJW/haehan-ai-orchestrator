@@ -91,7 +91,7 @@ def _parse_received_at(msg: email.message.Message) -> str:
         try:
             dt = parsedate_to_datetime(date_str)
             return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S")
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -136,7 +136,7 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
                 parts = line.decode("ascii", errors="replace").split(" ", 1)
                 if len(parts) == 2:
                     uidl_map[int(parts[0])] = parts[1].strip()
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass  # UIDL 미지원 시 fallback
 
         # 최신 limit건 (번호 역순)
@@ -163,7 +163,7 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
                         "source_account": account,
                     }
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 하이웍스 POP3 메일 읽기전용 수집 - 개별 메일 파싱 실패는 continue, 연결 종료 실패는 무시
                 log.warning("메일 파싱 오류 idx=%d: %s", idx, e)
                 continue
 
@@ -173,13 +173,13 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
         log.error("POP3 인증/프로토콜 오류: %s", e)
     except OSError as e:
         log.error("POP3 네트워크 오류: %s", e)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 하이웍스 POP3 메일 읽기전용 수집 - 개별 메일 파싱 실패는 continue, 연결 종료 실패는 무시
         log.error("하이웍스 메일 수집 중 예외: %s", e)
     finally:
         if pop is not None:
             try:
                 pop.quit()
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
 
     return results

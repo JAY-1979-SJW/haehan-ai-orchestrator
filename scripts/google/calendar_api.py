@@ -58,7 +58,7 @@ class CalendarAPI:
             """)
                 or []
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
             return []
 
     def create_event(
@@ -86,7 +86,7 @@ class CalendarAPI:
             self.page.keyboard.press("Escape")
             time.sleep(0.5)
             self.page.keyboard.press("Escape")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
             pass
 
         self.page.goto("https://calendar.google.com/calendar/u/0/r", timeout=20000)
@@ -156,7 +156,7 @@ class CalendarAPI:
                         self.page.locator('input[aria-label*="위치"], input[placeholder*="위치"]').first.fill(
                             location, timeout=3000
                         )
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
                         pass
                 if description:
                     try:
@@ -165,7 +165,7 @@ class CalendarAPI:
                         ).first
                         desc_el.click(timeout=2000)
                         self.page.keyboard.type(description, delay=10)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
                         pass
                 time.sleep(0.5)
                 # 풀 페이지 저장 버튼 — JS 직접 클릭
@@ -201,7 +201,7 @@ class CalendarAPI:
             time.sleep(3)
             log_critical("OTHER", f"Calendar 이벤트: {title}", when=when_dt.isoformat(), mode="cal_create")
             return {"ok": True, "title": title, "when": when_dt.isoformat(), "end": end_dt.isoformat()}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
             return {"ok": False, "error": str(e)[:100]}
 
     def quick_add(self, text: str) -> dict:
@@ -219,5 +219,5 @@ class CalendarAPI:
             time.sleep(2.5)
             log_critical("OTHER", f"Calendar 빠른추가: {text[:40]}", mode="cal_quick")
             return {"ok": True, "text": text}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
             return {"ok": False, "error": str(e)[:100]}

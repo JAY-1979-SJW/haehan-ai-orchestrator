@@ -113,7 +113,7 @@ def _unsplash_live_search(topic: str, count: int) -> list[str]:
                     headers={"Authorization": f"Client-ID {key}"},
                     timeout=5,
                 )
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
         result_names.append(fname)
         time.sleep(0.1)
@@ -144,7 +144,7 @@ def _resolve_unsplash_images(topic: str, media: list[str], count: int = 3) -> li
         names = _unsplash_live_search(topic, count)
         if names:
             return names
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
 
     return _resolve_unsplash_images_from_cache(topic, count)
@@ -194,7 +194,7 @@ def _resolve_unsplash_images_from_cache(topic: str, count: int = 3) -> list[str]
             if dl_loc:
                 try:
                     _req.get(dl_loc, headers={"Authorization": f"Client-ID {_unsplash_key()}"}, timeout=5)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 네이버 블로그 이미지(Unsplash) 다운로드/초안 목록/SEO 제안 라우터 - 실패 시 빈 목록/기본 분석값으로 폴백, 쓰기 실패는 draft 목록에서 빠질 뿐 발행 승인 로직과 무관
                     # Unsplash 정책상 download_location 통지는 실패해도 본 작업은 계속한다
                     _log.debug("[unsplash] download_location 통지 실패: %s", type(e).__name__)
             result_names.append(fname)
@@ -209,7 +209,7 @@ def _resolve_unsplash_images_from_cache(topic: str, count: int = 3) -> list[str]
             metadata={"topic": topic[:80], "count": len(result_names), "files": result_names},
         )
         return result_names
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 블로그 이미지(Unsplash) 다운로드/초안 목록/SEO 제안 라우터 - 실패 시 빈 목록/기본 분석값으로 폴백, 쓰기 실패는 draft 목록에서 빠질 뿐 발행 승인 로직과 무관
         return []
 
 
@@ -480,7 +480,7 @@ def list_drafts(
                     "published_url": d.get("published_url"),
                 }
             )
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
     return {"ok": True, "total": len(files), "items": drafts}
 
@@ -499,7 +499,7 @@ def analyze_seo(
         body_result = seo.analyze_body(req.body, req.target_keywords or None)
         tags = seo.suggest_tags(req.body)
         return {"ok": True, "title": title_result, "body": body_result, "suggested_tags": tags}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 블로그 이미지(Unsplash) 다운로드/초안 목록/SEO 제안 라우터 - 실패 시 빈 목록/기본 분석값으로 폴백, 쓰기 실패는 draft 목록에서 빠질 뿐 발행 승인 로직과 무관
         # 브라우저 없이 실행할 수 없는 경우 기본 분석으로 폴백
         words = [w.strip(".,!?") for w in req.body.split() if len(w.strip(".,!?")) >= 2]
         freq: dict[str, int] = {}

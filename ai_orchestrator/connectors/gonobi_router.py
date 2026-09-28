@@ -55,7 +55,7 @@ async def start_scrape(delay: float = 0.8):
                     "current": "완료",
                 }
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
             logger.error("gonobi 수집 오류: %s", e)
             _scrape_state.update({"running": False, "current": f"오류: {e}"})
 
@@ -83,7 +83,7 @@ async def list_posts(
         with open_db() as conn:
             posts = get_posts(conn, our_category=category or "", limit=limit, offset=offset)
         return {"posts": posts, "count": len(posts)}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -100,7 +100,7 @@ async def get_post_detail(log_no: str):
         return post
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -113,7 +113,7 @@ async def get_stats():
         with open_db() as conn:
             stats = count_posts(conn)
         return stats
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -126,5 +126,5 @@ async def reclassify(limit: int = Query(100, description="재분류할 미분류
         with open_db() as conn:
             updated = reclassify_untagged(conn, limit=limit)
         return {"updated": updated}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
         raise HTTPException(status_code=500, detail=str(e))

@@ -99,7 +99,7 @@ def run_audit() -> dict[str, Any]:
     registry_mod = None
     try:
         registry_mod = importlib.import_module("ai_orchestrator.safety_policy.safety_policy_registry")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
         for cid in ["pl-04", "pl-05", "pl-06", "pl-07", "pl-08", "pl-09", "pl-10", "pl-11", "pl-12"]:
             results.append(item(cid, "FAIL", f"import 실패: {e}"))
 
@@ -123,7 +123,7 @@ def run_audit() -> dict[str, Any]:
     redact_mod = None
     try:
         redact_mod = importlib.import_module("ai_orchestrator.safety_policy.secret_redaction")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
         for cid in ["pl-13", "pl-14", "pl-15"]:
             results.append(item(cid, "FAIL", f"import 실패: {e}"))
 
@@ -167,7 +167,7 @@ def run_audit() -> dict[str, Any]:
         results.append(
             item("pl-16", "PASS" if has_eps else "WARN", "ExecutionPolicyService 존재" if has_eps else "미연결")
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
         results.append(item("pl-16", "WARN", str(e)))
 
     # pl-17: CAD/Tax/Bid 차단 — decide_execution_policy(classification) 사용
@@ -185,7 +185,7 @@ def run_audit() -> dict[str, Any]:
                 f"BID server_executable={d_bid.server_executable}",
             )
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
         results.append(item("pl-17", "WARN", f"판정 호출 실패: {e}"))
 
     # pl-18: OAuth 차단 — decide_execution_policy(classification) 사용
@@ -200,7 +200,7 @@ def run_audit() -> dict[str, Any]:
                 f"requires_oauth_setup={d.requires_oauth_setup} is_blocked={d.is_blocked}",
             )
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
         results.append(item("pl-18", "WARN", f"판정 호출 실패: {e}"))
 
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}

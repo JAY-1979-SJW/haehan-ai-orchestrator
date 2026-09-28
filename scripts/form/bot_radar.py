@@ -128,7 +128,7 @@ def _scan_cookies(page) -> tuple[list[str], list[dict]]:
     signals = []
     try:
         cookies = page.context.cookies()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
         return vendors_found, signals
     for vendor, sig in _VENDORS.items():
         for c in cookies:
@@ -168,7 +168,7 @@ def _scan_dom(page) -> tuple[list[str], list[dict]]:
     """
     try:
         data = page.evaluate(js)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
         log.debug("[bot-radar] dom scan 실패: %s", e)
         return [], []
 
@@ -336,7 +336,7 @@ class BotRadar:
             self.page.on("response", self._on_response)
             self.page.on("requestfailed", self._on_request_failed)
             self._armed = True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
             log.debug("[bot-radar] arm 실패: %s", e)
 
     def _on_response(self, resp) -> None:
@@ -355,7 +355,7 @@ class BotRadar:
             # 헤더 기반 vendor 식별
             try:
                 headers = resp.headers
-            except Exception:
+            except Exception:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
                 headers = {}
             for vendor, pats in [
                 ("cloudflare_bot", ["cf-ray", "cf-bm", "cf-cache-status"]),
@@ -375,7 +375,7 @@ class BotRadar:
                             }
                         )
                         break
-        except Exception:
+        except Exception:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
             pass
 
     def _on_request_failed(self, req) -> None:
@@ -387,7 +387,7 @@ class BotRadar:
                     "severity": "low",
                 }
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
             pass
 
     def report(self) -> dict:

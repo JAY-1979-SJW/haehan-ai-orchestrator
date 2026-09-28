@@ -16,7 +16,6 @@ GABIA_LOGIN_WATCH_01
   쿠키/session 추출 금지
   최종 저장 버튼 자동 클릭 금지
 """
-
 from __future__ import annotations
 
 import argparse
@@ -27,9 +26,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-GABIA_LOGIN_URL = "https://accounts.gabia.com/"
+GABIA_LOGIN_URL   = "https://accounts.gabia.com/"
 GABIA_DNS_MGMT_URL = "https://my.gabia.com/service/domain/haehan-ai.kr/dns"
-GABIA_MY_URL = "https://my.gabia.com/"
+GABIA_MY_URL      = "https://my.gabia.com/"
 
 POLL_INTERVAL_S = 1
 DEFAULT_TIMEOUT_S = 300
@@ -68,14 +67,13 @@ _GABIA_LOGGED_IN_JS = r"""
 
 def _get_page():
     from scripts.web_connector import get_page
-
     return get_page()
 
 
 def _current_url(page) -> str:
     try:
         return page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
         return ""
 
 
@@ -114,7 +112,7 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                 if not current_url or "about:blank" in current_url:
                     page = _get_page()
                     current_url = _current_url(page)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
                 page = _get_page()
                 current_url = _current_url(page)
 
@@ -139,11 +137,10 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                         print("  → DNS 관리 화면으로 이동 중...")
                         try:
                             from scripts.navigator import goto
-
                             goto(GABIA_DNS_MGMT_URL)
                             dns_navigated = True
                             print(f"  → DNS 관리 화면 이동 완료: {GABIA_DNS_MGMT_URL}")
-                        except Exception as nav_err:
+                        except Exception as nav_err:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
                             print(f"  ⚠ DNS 화면 자동 이동 실패: {nav_err}")
                             print(f"    수동으로 이동하세요: {GABIA_DNS_MGMT_URL}")
 
@@ -159,12 +156,12 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                         "url": current_url,
                         "navigated_to_dns": dns_navigated,
                     }
-            except Exception as js_err:
+            except Exception as js_err:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
                 # 탭 닫힘 등 예외 → 재획득
                 if "has been closed" in str(js_err) or "Target" in str(js_err):
                     page = _get_page()
 
-        except Exception as outer_err:
+        except Exception as outer_err:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
             if tick % 10 == 0:
                 print(f"  [{elapsed:>3}s] 대기 중... ({str(outer_err)[:50]})")
 
@@ -189,10 +186,10 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="가비아 로그인 실시간 감지")
-    parser.add_argument(
-        "--timeout", type=int, default=DEFAULT_TIMEOUT_S, help=f"최대 대기 시간(초) (기본: {DEFAULT_TIMEOUT_S})"
-    )
-    parser.add_argument("--no-navigate", action="store_true", help="로그인 감지 후 DNS 관리 화면 자동 이동 안 함")
+    parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_S,
+                        help=f"최대 대기 시간(초) (기본: {DEFAULT_TIMEOUT_S})")
+    parser.add_argument("--no-navigate", action="store_true",
+                        help="로그인 감지 후 DNS 관리 화면 자동 이동 안 함")
     args = parser.parse_args()
 
     result = watch_gabia_login(

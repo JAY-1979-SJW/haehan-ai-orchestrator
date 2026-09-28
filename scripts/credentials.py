@@ -60,7 +60,7 @@ def _get_or_create_key() -> bytes:
     KEY_FILE.write_bytes(key)
     try:
         os.chmod(KEY_FILE, 0o600)
-    except Exception:
+    except Exception:  # noqa: BLE001 - chmod 권한 강화/레거시 파일 아카이브 이동 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
         pass
     return key
 
@@ -102,7 +102,7 @@ def _read_legacy_env(site: str) -> dict:
                 out["id"] = v
             elif k == pw_key:
                 out["pw"] = v
-    except Exception:
+    except Exception:  # noqa: BLE001 - 자격증명 통합 저장소(Fernet 암호화) - chmod 권한설정 실패는 무시(파일은 정상 저장), JSON/레거시 파싱 실패는 빈 dict로 폴백(자격증명 없음으로 처리되어 인증 실패 방향), 예외 메시지에 실제 pw 값 미노출
         return {}
     return out
 
@@ -112,7 +112,7 @@ def _load_raw() -> dict:
         return {}
     try:
         return json.loads(CRED_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 자격증명 통합 저장소(Fernet 암호화) - chmod 권한설정 실패는 무시(파일은 정상 저장), JSON/레거시 파싱 실패는 빈 dict로 폴백(자격증명 없음으로 처리되어 인증 실패 방향), 예외 메시지에 실제 pw 값 미노출
         return {}
 
 
@@ -124,7 +124,7 @@ def _save_raw(data: dict) -> None:
     )
     try:
         os.chmod(CRED_FILE, 0o600)
-    except Exception:
+    except Exception:  # noqa: BLE001 - chmod 권한 강화/레거시 파일 아카이브 이동 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
         pass
 
 
@@ -252,7 +252,7 @@ def migrate_legacy() -> dict:
             try:
                 fp.rename(target)
                 archived.append(str(target))
-            except Exception:
+            except Exception:  # noqa: BLE001 - chmod 권한 강화/레거시 파일 아카이브 이동 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
                 pass
     return {"sites": list(data.keys()), "archived": archived}
 

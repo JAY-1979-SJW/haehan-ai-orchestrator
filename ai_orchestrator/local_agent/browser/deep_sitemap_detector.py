@@ -103,7 +103,7 @@ def detect_mail_detail_fields(page) -> MailDetailInfo:
 
                     if len(elements) > 0:
                         found_selectors[sel] = len(elements)
-                except:  # noqa: E722, S110
+                except:  # noqa: S110, E722
                     pass
 
             if found_selectors:
@@ -125,12 +125,12 @@ def detect_mail_detail_fields(page) -> MailDetailInfo:
             }"""
             )
             info.sample_data = sample
-        except:  # noqa: E722, S110
+        except:  # noqa: S110, E722
             pass
 
         return info
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 구조(메뉴/메일/캘린더/파일) 탐지 전용 읽기전용 도구 - 실패 시 빈 dict/기본값 반환, 실제 조작 없음
         print(f"  ✗ 필드 탐지 오류: {e}")
         return info
 
@@ -159,7 +159,7 @@ def detect_mail_inbox_structure(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_mails[sel] = len(elements)
-            except:  # noqa: E722, S110
+            except:  # noqa: S110, E722
                 pass
 
         if found_mails:
@@ -175,7 +175,7 @@ def detect_mail_inbox_structure(page) -> dict:
             print(f"  📄 HTML에서 /read/ 링크 발견: {mail_count}개")
             return {"mail_links": mail_count}
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 구조(메뉴/메일/캘린더/파일) 탐지 전용 읽기전용 도구 - 실패 시 빈 dict/기본값 반환, 실제 조작 없음
         print(f"  ✗ 구조 탐지 오류: {e}")
         return {}
 
@@ -234,10 +234,10 @@ def deep_detect_mail_service(page) -> dict:
                 if iframes:
                     print(f"  ℹ️  {len(iframes)}개 iframe 발견 (내용 접근 불가)")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 구조(메뉴/메일/캘린더/파일) 탐지 전용 읽기전용 도구 - 실패 시 빈 dict/기본값 반환, 실제 조작 없음
             print(f"  ✗ 메일 클릭 오류: {e}")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 구조(메뉴/메일/캘린더/파일) 탐지 전용 읽기전용 도구 - 실패 시 빈 dict/기본값 반환, 실제 조작 없음
         print(f"\n✗ 심층 탐지 실패: {e}")
 
     return result
@@ -273,7 +273,7 @@ def deep_detect_calendar_service(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_events[sel] = len(elements)
-            except:  # noqa: E722, S110
+            except:  # noqa: S110, E722
                 pass
 
         if found_events:
@@ -282,7 +282,7 @@ def deep_detect_calendar_service(page) -> dict:
         else:
             print("  ✗ 이벤트를 찾을 수 없음")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 구조(메뉴/메일/캘린더/파일) 탐지 전용 읽기전용 도구 - 실패 시 빈 dict/기본값 반환, 실제 조작 없음
         print(f"  ✗ 캘린더 탐지 실패: {e}")
 
     return result
@@ -318,7 +318,7 @@ def deep_detect_mybox_service(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_files[sel] = len(elements)
-            except:  # noqa: E722, S110
+            except:  # noqa: S110, E722
                 pass
 
         if found_files:
@@ -327,7 +327,7 @@ def deep_detect_mybox_service(page) -> dict:
         else:
             print("  ✗ 파일을 찾을 수 없음")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 구조(메뉴/메일/캘린더/파일) 탐지 전용 읽기전용 도구 - 실패 시 빈 dict/기본값 반환, 실제 조작 없음
         print(f"  ✗ MyBox 탐지 실패: {e}")
 
     return result

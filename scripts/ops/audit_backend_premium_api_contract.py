@@ -64,14 +64,14 @@ def run_audit() -> dict[str, Any]:
     try:
         importlib.import_module("ai_orchestrator.router")
         results.append(item("ac-01", "PASS", "router import 성공"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 백엔드 API 계약 자체검증 스크립트 - import/실행 실패를 체크리스트 FAIL/WARN으로 기록(런타임 게이트 아님)
         results.append(item("ac-01", "FAIL", str(e)[:120]))
 
     # ac-02: ops_router
     try:
         importlib.import_module("ai_orchestrator.routers.ops_router")
         results.append(item("ac-02", "PASS", "ops_router import 성공"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 백엔드 API 계약 자체검증 스크립트 - import/실행 실패를 체크리스트 FAIL/WARN으로 기록(런타임 게이트 아님)
         results.append(item("ac-02", "FAIL", str(e)[:120]))
 
     # ac-03: OPS 7개 GET
@@ -81,7 +81,7 @@ def run_audit() -> dict[str, Any]:
         results.append(
             item("ac-03", "PASS" if get_count >= 7 else "FAIL", f"GET endpoint 수={get_count}/7", {"count": get_count})
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 백엔드 API 계약 자체검증 스크립트 - import/실행 실패를 체크리스트 FAIL/WARN으로 기록(런타임 게이트 아님)
         results.append(item("ac-03", "FAIL", str(e)))
 
     # ac-04: naver 3개 — 실제 위치: ai_orchestrator/connectors/naver_search_router.py
@@ -167,7 +167,7 @@ def run_audit() -> dict[str, Any]:
                 if "legacy" in f.read_text(encoding="utf-8").lower():
                     has_legacy = True
                     break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 백엔드 API 계약 자체검증 스크립트 - import/실행 실패를 체크리스트 FAIL/WARN으로 기록(런타임 게이트 아님)
                 pass
     results.append(
         item(
@@ -193,7 +193,7 @@ def run_audit() -> dict[str, Any]:
             )
         else:
             results.append(item("ac-14", "FAIL", "api contract 테스트 파일 없음"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 백엔드 API 계약 자체검증 스크립트 - import/실행 실패를 체크리스트 FAIL/WARN으로 기록(런타임 게이트 아님)
         results.append(item("ac-14", "WARN", f"pytest 실행 실패: {e}"))
 
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}
