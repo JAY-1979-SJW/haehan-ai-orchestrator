@@ -302,7 +302,7 @@ def main():
 
     # 메일 초안 저장 (S/A등급만)
     out_mail = ROOT / "data" / f"promo_mails_priority_{TODAY.strftime('%Y%m%d')}.txt"
-    with open(out_mail, "w", encoding="utf-8") as mf:
+    with out_mail.open("w", encoding="utf-8") as mf:
         mf.write("# 단말기 임대 홍보 메일 - S/A등급 우선 발송\n")
         mf.write(f"# 생성일: {TODAY} | 대상: {len(top)}개 현장\n\n")
         mf.write("=" * 80 + "\n")

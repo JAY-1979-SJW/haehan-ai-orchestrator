@@ -25,7 +25,7 @@ BLOCKED = {"browser.submit.production", "browser.submit.real"}
 
 def load_fixture():
     assert FIXTURE_PATH.exists(), f"fixture not found: {FIXTURE_PATH}"
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -195,8 +195,7 @@ def test_browser_open_type_close_controlled_risk_needs_review():
 def test_no_action_allows_production():
     data = load_fixture()
     for a in data["actions"]:
-        assert a["production_allowed"] is False, \
-            f"{a['action_name']}: production_allowed must be False"
+        assert a["production_allowed"] is False, f"{a['action_name']}: production_allowed must be False"
 
 
 # gate_required 와 gate_not_required 겹침 없음

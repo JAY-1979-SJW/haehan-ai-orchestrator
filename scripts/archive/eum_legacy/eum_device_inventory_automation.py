@@ -39,7 +39,7 @@ class EumDeviceInventoryManager:
     def _load_sitemap(self) -> dict:
         """사이트맵 로드"""
         if self.SITEMAP_FILE.exists():
-            with open(self.SITEMAP_FILE, encoding="utf-8") as f:
+            with self.SITEMAP_FILE.open(encoding="utf-8") as f:
                 return json.load(f)
         return {}
 

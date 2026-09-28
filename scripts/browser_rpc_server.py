@@ -159,7 +159,7 @@ def cmd_start():
     if _is_alive():
         print(f"✓ 이미 실행 중 (port={RPC_PORT})")
         return
-    log_f = open(LOG_FILE, "a", encoding="utf-8")
+    log_f = LOG_FILE.open("a", encoding="utf-8")
     args = [sys.executable, str(Path(__file__).resolve()), "_run"]
     broke_away = False
     if sys.platform == "win32":

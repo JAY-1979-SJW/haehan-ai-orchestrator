@@ -101,7 +101,7 @@ def _persist_token(agent_id: str, device_token: str) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"agent_id": agent_id, "device_token": device_token}), encoding="utf-8")
         try:
-            os.chmod(path, 0o600)
+            path.chmod(0o600)
         except OSError:
             pass  # Windows 등에서는 별도 ACL 필요
     except OSError as e:

@@ -70,7 +70,7 @@ def save_csv(data: list[dict], path: Path):
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     fields = ["log_no", "title", "author", "date", "comment_count", "href", "body", "tags", "images", "comments"]
-    with open(path, "w", newline="", encoding="utf-8-sig") as f:
+    with path.open("w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         for row in data:

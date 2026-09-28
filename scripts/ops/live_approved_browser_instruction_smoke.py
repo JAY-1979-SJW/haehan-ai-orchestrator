@@ -149,7 +149,7 @@ def start_worker(server_url: str, agent_id: str, device_token: str) -> subproces
     env["HAEHAN_LIVE_DEVICE_TOKEN"] = device_token
     env["HAEHAN_AGENT_AUDIT"] = str(logs / "live_approved_browser_instruction_audit.jsonl")
     env["PYTHONIOENCODING"] = "utf-8"
-    log = open(logs / "live_approved_browser_instruction_worker.log", "a", encoding="utf-8")
+    log = (logs / "live_approved_browser_instruction_worker.log").open("a", encoding="utf-8")
     return subprocess.Popen(
         [sys.executable, "-c", WORKER_CODE],
         cwd=ROOT,
