@@ -9,7 +9,7 @@ password/otp/certificate_password/token/cookie/session 저장/전송 없음.
 """
 
 import json
-import os
+from pathlib import Path
 
 import pytest
 
@@ -45,16 +45,12 @@ from tests.helpers.local_agent_user_present_test_transport import (
     make_hometax_task_payload,
 )
 
-FIXTURE_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "fixtures",
-    "local_agent_websocket_user_present_runtime_20260507.json",
-)
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "local_agent_websocket_user_present_runtime_20260507.json"
 
 
 @pytest.fixture(scope="module")
 def fixture_cases():
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)["cases"]
 
 
