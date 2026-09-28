@@ -278,7 +278,6 @@ data/mk_catalog/detail/
 # 재생성하는 캐시(정본은 configs/module_registry.json, 이미 추적 중).
 data/code_map/
 data/community/
-data/content_rag/
 data/impact/
 data/blog_drafts/
 data/smartstore_drafts/
