@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 import time
+from contextlib import suppress
 
 from .blog_mixin_common import _js
 
@@ -64,15 +65,13 @@ class BlogReadMixin:
                 pass
 
         # 프로필 이미지
-        try:
+        with suppress(Exception):
             profile_img = (
                 frame.evaluate(
                     "document.querySelector('.profile_img img, .blog_profile img, .se-profile-image img')?.src || ''"
                 )
                 or ""
             )
-        except Exception:  # noqa: S110, BLE001
-            pass
 
         return {
             "blog_id": blog_id,
@@ -106,7 +105,7 @@ class BlogReadMixin:
         time.sleep(2.5)
         frame = self._get_blog_post_frame(blog_id) or self._page
         dom_cats: list[dict] = []
-        try:
+        with suppress(Exception):
             dom_cats = frame.evaluate("""
             (() => {
               const res = [];
@@ -126,8 +125,6 @@ class BlogReadMixin:
               return res;
             })()
             """)
-        except Exception:  # noqa: S110, BLE001
-            pass
 
         if dom_cats:
             return [{**c, "post_count": cat_counts.get(c["category_no"], 0)} for c in dom_cats]
@@ -436,16 +433,12 @@ class BlogReadMixin:
             pass
 
         # 댓글
-        try:
+        with suppress(Exception):
             comments = frame.evaluate(_js("extract_blog_comments.js")) or []
-        except Exception:  # noqa: S110, BLE001
-            pass
 
         # 태그
-        try:
+        with suppress(Exception):
             tags = [t.strip() for t in frame.locator(".tag_area a, .post_tag a").all_inner_texts() if t.strip()]
-        except Exception:  # noqa: S110, BLE001
-            pass
 
         return {
             "blog_id": blog_id,

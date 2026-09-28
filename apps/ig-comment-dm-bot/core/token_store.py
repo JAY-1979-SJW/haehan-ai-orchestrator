@@ -5,6 +5,8 @@ Windows 는 DPAPI 백엔드를 자동 사용하므로 파일로 토큰이 노출
 
 from __future__ import annotations
 
+from contextlib import suppress
+
 import keyring
 
 _SERVICE_NAME = "ig-comment-dm-bot"
@@ -20,7 +22,5 @@ def load_token() -> str | None:
 
 
 def delete_token() -> None:
-    try:
+    with suppress(keyring.errors.PasswordDeleteError):
         keyring.delete_password(_SERVICE_NAME, _USERNAME)
-    except keyring.errors.PasswordDeleteError:
-        pass

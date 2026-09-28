@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import Any
 
@@ -121,10 +121,8 @@ def open_user_session(
                     context.storage_state(path=str(storage_state_path))
                 except Exception as e:  # noqa: BLE001 - 사용자 브라우저 영속 세션 관리 — storage_state 저장 실패는 경고 출력만(세션이 저장되지 않을 뿐 데이터 유출 아님), context.close 실패는 무시, is_likely_logged_in은 예외 시 False(=로그인 안 됨, 보수적 방향)로 폴백해 미인증 상태로 안전하게 처리됨.
                     print(f"[경고] storage_state 저장 실패: {e}")
-            try:
+            with suppress(Exception):
                 context.close()
-            except Exception:  # noqa: S110, BLE001 - 사용자 브라우저 영속 세션 관리 — storage_state 저장 실패는 경고 출력만(세션이 저장되지 않을 뿐 데이터 유출 아님), context.close 실패는 무시, is_likely_logged_in은 예외 시 False(=로그인 안 됨, 보수적 방향)로 폴백해 미인증 상태로 안전하게 처리됨.
-                pass
 
 
 def wait_for_user_action(seconds: int = 60, message: str = "") -> None:

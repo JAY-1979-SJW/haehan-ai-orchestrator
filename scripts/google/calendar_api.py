@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import time
+from contextlib import suppress
 from datetime import datetime, timedelta
 
 from playwright.sync_api import Page
@@ -152,12 +153,10 @@ class CalendarAPI:
                 )
                 time.sleep(0.5)
                 if location:
-                    try:
+                    with suppress(Exception):
                         self.page.locator('input[aria-label*="위치"], input[placeholder*="위치"]').first.fill(
                             location, timeout=3000
                         )
-                    except Exception:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
-                        pass
                 if description:
                     try:
                         desc_el = self.page.locator(

@@ -6,6 +6,7 @@ URL: https://talk.naver.com/
 from __future__ import annotations
 
 import time
+from contextlib import suppress
 
 from playwright.sync_api import Page
 
@@ -29,10 +30,8 @@ class NaverTalk:
             return False
         self.page.goto(TALK_URL, timeout=20000, wait_until="domcontentloaded")
         time.sleep(3)
-        try:
+        with suppress(Exception):
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 채팅창 진입 전 팝업 처리 실패는 무시하고 계속 진행
-            pass
         return True
 
     def list_chats(self, limit: int = 30) -> list[dict]:

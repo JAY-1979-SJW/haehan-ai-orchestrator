@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import Any
 
 # 보이는 모달 1개의 텍스트와 버튼
@@ -76,10 +77,8 @@ def dismiss_blocking_modals(page: Any, *, max_rounds: int = 15, settle_ms: int =
         text = (info.get("text") or "").strip()
         if text:
             seen.append(text)
-        try:
+        with suppress(Exception):
             page.wait_for_timeout(settle_ms)
-        except Exception:  # noqa: BLE001 - wait_for_timeout 등 대기 호출 실패는 무시 — 모달 닫기 루프의 보조 대기 동작일 뿐
-            pass
     return seen
 
 

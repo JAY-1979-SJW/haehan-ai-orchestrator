@@ -33,6 +33,7 @@ from __future__ import annotations
 import logging
 import time as _time_default
 from collections.abc import Callable
+from contextlib import suppress
 from typing import Any
 
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
@@ -392,10 +393,8 @@ def _run_probe(
 
                     # 8) keep_open 시 닫기 전에 사용자 Enter 를 기다림.
                     if keep_open:
-                        try:
+                        with suppress(KeyboardInterrupt, EOFError):
                             input_reader(_KEEP_OPEN_PROMPT)
-                        except (KeyboardInterrupt, EOFError):
-                            pass
 
                     return _build_result(
                         url=url,

@@ -31,6 +31,7 @@ import subprocess
 import sys
 import threading
 import time
+from contextlib import suppress
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,10 +76,8 @@ class _Handler(socketserver.StreamRequestHandler):
                 result = self._dispatch(cmd, req)
             self.wfile.write((json.dumps(result, ensure_ascii=False) + "\n").encode("utf-8"))
         except Exception as e:  # noqa: BLE001 - 브라우저 RPC 서버 - 명령 처리 실패를 JSON 에러 응답으로 변환, 탭 재사용 실패 시 새 탭으로 대체
-            try:
+            with suppress(Exception):
                 self.wfile.write((json.dumps({"ok": False, "error": str(e)}) + "\n").encode("utf-8"))
-            except Exception:  # noqa: BLE001 - 브라우저 RPC 서버 - 명령 처리 실패를 JSON 에러 응답으로 변환, 탭 재사용 실패 시 새 탭으로 대체
-                pass
 
     def _dispatch(self, cmd: str, req: dict) -> dict:
         global _current_page

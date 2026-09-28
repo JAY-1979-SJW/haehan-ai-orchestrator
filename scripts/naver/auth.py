@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -104,10 +105,8 @@ def save_credentials(naver_id: str, naver_pw: str) -> Path:
     ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
     content = f"NAVER_ID={naver_id}\nNAVER_PW={naver_pw}\n"
     ENV_FILE.write_text(content, encoding="utf-8")
-    try:
+    with suppress(Exception):
         ENV_FILE.chmod(0o600)
-    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
-        pass
     _log.info("[naver-auth] 자격증명 저장: %s", ENV_FILE)
     return ENV_FILE
 
@@ -140,10 +139,8 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
 
         # 1. 현재 값 확인
         current = ""
-        try:
+        with suppress(Exception):
             current = el.input_value(timeout=1500) or ""
-        except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
-            pass
 
         # 2. 분기
         if current == value:
@@ -161,16 +158,12 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
             time.sleep(0.3)
             # 삭제 확인
             after_clear = ""
-            try:
+            with suppress(Exception):
                 after_clear = el.input_value(timeout=1000) or ""
-            except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
-                pass
             if after_clear:
                 # 여전히 남아있으면 fill로 한번 더
-                try:
+                with suppress(Exception):
                     el.fill("", timeout=1500)
-                except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
-                    pass
             action = "replaced"
         else:
             action = "empty"
@@ -184,10 +177,8 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
 
         # 4. 입력 검증
         final = ""
-        try:
+        with suppress(Exception):
             final = el.input_value(timeout=1500) or ""
-        except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
-            pass
 
         if final != value:
             _log.warning("[naver-auth] %s 입력 검증 실패 (기대=%d자, 실제=%d자)", label, len(value), len(final))

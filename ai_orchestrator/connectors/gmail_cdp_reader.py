@@ -6,6 +6,7 @@ L3 Connectors 계층. 업무 로직 없음.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,10 +30,8 @@ def fetch_gmail_via_cdp(max_results: int = 20) -> list[dict]:
             page = open_page(_GMAIL_INBOX_URL)
 
         # 로딩 대기
-        try:
+        with contextlib.suppress(PWTimeout):
             page.wait_for_load_state("domcontentloaded", timeout=15000)
-        except PWTimeout:
-            pass
 
         # 로그인 여부 확인
         if "accounts.google.com" in page.url or "signin" in page.url:

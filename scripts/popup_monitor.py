@@ -30,7 +30,7 @@ import json
 import sqlite3
 import threading
 import time
-from contextlib import closing
+from contextlib import closing, suppress
 from pathlib import Path
 from typing import Any
 
@@ -298,10 +298,8 @@ class PopupMonitor:
                 for ev in events:
                     self._process_event(ev)
                 if events:
-                    try:
+                    with suppress(Exception):
                         _cdp_clear_events()
-                    except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
-                        pass
             except Exception as e:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
                 _log.debug("[popup_monitor] 루프 오류 무시: %s", e)
             self._write_state()
@@ -352,10 +350,8 @@ def status() -> dict:
     """현재 모니터 상태 + 누적 통계."""
     state: dict = {"running": False}
     if STATE_PATH.exists():
-        try:
+        with suppress(Exception):
             state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
-        except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
-            pass
     state["pending"] = len(list_pending(limit=500))
     state["stats_24h"] = stats(since_ms=int((time.time() - 86400) * 1000))
     return state
@@ -468,8 +464,6 @@ def chrome_ui_status() -> dict:
     """Chrome UI Watcher 상태."""
     out: dict = {"running": False}
     if CHROME_UI_STATE_PATH.exists():
-        try:
+        with suppress(Exception):
             out = json.loads(CHROME_UI_STATE_PATH.read_text(encoding="utf-8"))
-        except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
-            pass
     return out
