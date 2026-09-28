@@ -37,7 +37,7 @@ FIXTURE_PATH = pathlib.Path(__file__).parent / "fixtures" / "local_agent_server_
 
 @pytest.fixture(scope="session")
 def fixture_data():
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 

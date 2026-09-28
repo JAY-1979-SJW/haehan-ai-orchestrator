@@ -6,23 +6,24 @@ Fixture-based integration tests for policy verdicts.
 No actual submit, no browser, no network, no DB.
 Pure policy judgment validation only.
 """
+
 import json
-import pytest
 from pathlib import Path
 
+import pytest
+
 from ai_orchestrator.browser_tool.submit_policy import (
-    SubmitValidationRequest,
     SubmitPolicyResult,
-    validate_submit_policy,
-    detect_prompt_injection,
+    SubmitValidationRequest,
     contains_denied_field,
+    detect_prompt_injection,
     extract_origin,
     validate_allowlist_exists,
-    validate_origin_match,
     validate_form_id,
     validate_intent,
+    validate_origin_match,
+    validate_submit_policy,
 )
-
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_submit_policy_allowlist_20260506.json"
 
@@ -30,7 +31,7 @@ FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_submit_policy_allow
 @pytest.fixture
 def allowlist():
     """Load fixture allowlist."""
-    with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -451,9 +452,7 @@ class TestValidatorIntegration:
             )
             result = validate_submit_policy(request, allowlist)
 
-            assert result.verdict == "DENY", (
-                f"Case {case['site_id']}: expected DENY but got {result.verdict}"
-            )
+            assert result.verdict == "DENY", f"Case {case['site_id']}: expected DENY but got {result.verdict}"
 
 
 if __name__ == "__main__":
