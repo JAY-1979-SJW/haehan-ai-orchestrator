@@ -6,6 +6,7 @@ send_mail()은 사용자 명시 승인(confirmed=True) 후에만 발송 버튼 �
 
 from __future__ import annotations
 
+import contextlib
 import time
 from typing import Any
 
@@ -54,12 +55,11 @@ def open_compose(page) -> dict[str, Any]:
     for selector in candidates:
         locator = page.locator(selector).first
         if locator.count() > 0:
-            try:
-                locator.click(timeout=5000)
-            except Exception:  # noqa: BLE001 - SPA가 클릭을 처리하는 동안 Playwright 대기가 타임아웃될 수 있어 무시하고 이어서 결과 상태를 별도로 확인 — 주석에 의도 명시됨
+            # SPA가 클릭을 처리하는 동안 Playwright 대기가 타임아웃될 수 있어 무시하고 이어서 결과 상태를 별도로 확인
+            with contextlib.suppress(Exception):
                 # Hiworks SPA can handle the click while Playwright waits for
                 # completion. Continue and inspect the resulting state.
-                pass
+                locator.click(timeout=5000)
             clicked = selector
             break
     if not clicked:

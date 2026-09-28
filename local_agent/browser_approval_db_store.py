@@ -25,6 +25,7 @@ Production path:
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import logging
 import sqlite3
@@ -262,10 +263,9 @@ class SQLiteBrowserApprovalStore:
         return [r["name"] for r in rows]
 
     def close(self) -> None:
-        try:
+        # DB 커넥션 close() 실패 무시 - 리소스 정리 코드일 뿐, 승인 데이터는 이미 커밋된 상태라 무결성 영향 없음
+        with contextlib.suppress(Exception):
             self._conn.close()
-        except Exception:  # noqa: S110, BLE001 - DB 커넥션 close() 실패를 무시(S110) - 리소스 정리 코드일 뿐 승인 데이터 자체는 이미 커밋된 상태, close 실패가 데이터 무결성에 영향 없음
-            pass
 
 
 # Alias for use in production migration path

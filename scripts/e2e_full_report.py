@@ -4,6 +4,7 @@
 """
 
 import asyncio
+import contextlib
 import json
 import pathlib
 import re
@@ -58,10 +59,9 @@ async def goto(pg: Page, path: str) -> int:
 
 async def shot(pg: Page, name: str) -> str:
     p = str(SS_DIR / f"{name}.png")
-    try:
+    # E2E 탐색 리포트 - 스크린샷 실패는 결과에 기록만 하고 계속, 실제 쓰기 동작 없음
+    with contextlib.suppress(Exception):
         await pg.screenshot(path=p, full_page=False, timeout=30000)
-    except Exception:  # noqa: BLE001 - 관리자 웹 E2E 버튼/탭 클릭 탐색 리포트 - SKIP_PATTERNS(삭제/결제/발행/로그아웃 등)로 위험 버튼은 클릭 자체를 건너뛰고, except 는 클릭 실패를 errors 리스트에 기록할 뿐
-        pass
     return p
 
 

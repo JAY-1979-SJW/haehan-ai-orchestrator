@@ -6,6 +6,7 @@ profile. This module intentionally does not call OS/default browser openers.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from scripts.gates.secret_action_gate import build_secret_action_policy
@@ -129,14 +130,12 @@ def open_youtube_oauth_console_managed(
     visited: list[dict[str, Any]] = []
     for item in plan["sequence"]:
         page.goto(item["url"], timeout=timeout_ms)
-        try:
+        # 구글 관리 콘솔 탐색(읽기 전용) -- 페이지 로드 대기 best-effort 실패는 무시
+        with contextlib.suppress(Exception):
             page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
-        except Exception:  # noqa: BLE001 - 구글 관리 콘솔 탐색(읽기 전용) -- 페이지 로드 대기/전면화 등 best-effort 동작 실패는 무시, 최종 페이지 타이틀 조회 실패는 빈 문자열로 폴백
-            pass
-        try:
+        # 구글 관리 콘솔 탐색(읽기 전용) -- 전면화 best-effort 실패는 무시
+        with contextlib.suppress(Exception):
             page.bring_to_front()
-        except Exception:  # noqa: BLE001 - 구글 관리 콘솔 탐색(읽기 전용) -- 페이지 로드 대기/전면화 등 best-effort 동작 실패는 무시, 최종 페이지 타이틀 조회 실패는 빈 문자열로 폴백
-            pass
         visited.append(
             {
                 "stage": item["stage"],

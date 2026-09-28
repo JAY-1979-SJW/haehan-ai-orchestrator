@@ -11,6 +11,7 @@ URL: https://calendar.naver.com/
 
 from __future__ import annotations
 
+import contextlib
 import time
 from datetime import date, datetime
 
@@ -36,10 +37,9 @@ class NaverCalendar:
             return False
         self.page.goto(CALENDAR_URL, timeout=20000, wait_until="domcontentloaded")
         time.sleep(3)
-        try:
+        # 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
+        with contextlib.suppress(Exception):
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
-            pass
         return True
 
     def list_events(self, target_date: date | None = None) -> list[dict]:
@@ -104,15 +104,13 @@ class NaverCalendar:
 
             # 위치/메모
             if location:
-                try:
+                # 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
+                with contextlib.suppress(Exception):
                     self.page.locator('input[name="location"], input[placeholder*="위치"]').first.fill(location)
-                except Exception:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
-                    pass
             if memo:
-                try:
+                # 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
+                with contextlib.suppress(Exception):
                     self.page.locator('textarea[name="memo"], textarea').first.fill(memo)
-                except Exception:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
-                    pass
 
             if confirm:
                 self.page.locator('button:has-text("저장"), .btn_save').first.click(timeout=3000)

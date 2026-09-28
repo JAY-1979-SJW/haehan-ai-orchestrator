@@ -25,6 +25,7 @@ CLI
 
 from __future__ import annotations
 
+import contextlib
 import re
 import time
 import uuid
@@ -366,10 +367,9 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
     # ── 내부 유틸 ─────────────────────────────────────────────────────────────
     def _wait_render(self, extra: float = DEFAULT_WAIT):
         """SPA 렌더링 완료 대기: DOM 안정화 + 추가 대기."""
-        try:
+        # 렌더 대기 best-effort - 실패해도 아래 DOM 크기 안정화 루프로 계속 진행
+        with contextlib.suppress(Exception):
             self._page.wait_for_load_state("domcontentloaded", timeout=8000)
-        except Exception:  # noqa: S110, BLE001
-            pass
         # DOM 크기 안정화 확인
         prev_len = 0
         deadline = time.time() + RENDER_MAX
