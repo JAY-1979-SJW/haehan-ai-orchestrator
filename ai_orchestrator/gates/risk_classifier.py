@@ -1,10 +1,16 @@
 import logging
+from pathlib import Path
 
 from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 logger = logging.getLogger(__name__)
 
-SENSITIVE_PATHS = ["/etc/", "/var/lib/", "~/.ssh/", "~/.secrets/", "C:/Windows/", "C:/Users/skyjw/.ssh/"]
+# 현재 실행 계정의 실제 홈 .ssh 경로를 동적으로 계산한다(설치 PC/계정마다 다름).
+# 예전엔 "C:/Users/skyjw/.ssh/"로 하드코딩되어 있어, 다른 계정에서 실행하면
+# 이 민감 경로 감지가 조용히 동작하지 않았다(2026-09-28 ABS-PATH-LITERAL 재검토 중 발견).
+_HOME_SSH_PATH = str(Path.home() / ".ssh").replace("\\", "/") + "/"
+
+SENSITIVE_PATHS = ["/etc/", "/var/lib/", "~/.ssh/", "~/.secrets/", "C:/Windows/", _HOME_SSH_PATH]
 DESTRUCTIVE_COMMANDS = ["rm -rf", "dd if=", "mkfs", "shutdown", "reboot", "DROP TABLE", "DELETE FROM", "fdisk"]
 
 
