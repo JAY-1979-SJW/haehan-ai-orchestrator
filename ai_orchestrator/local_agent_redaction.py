@@ -13,14 +13,30 @@ result_data는 명시적 허용 목록만 저장하는 정책을 정의한다.
 """
 
 # params / result 에서 절대 저장·노출 금지인 키
-_SENSITIVE_KEYS: frozenset[str] = frozenset({
-    "password", "passwd", "pwd",
-    "token", "access_token", "refresh_token", "session_token",
-    "device_token", "approval_token", "final_approval_token", "token_hash",
-    "cookie", "cookies", "session",
-    "client_secret", "secret", "api_secret", "api_key",
-    "auth", "authorization",
-})
+_SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {
+        "password",
+        "passwd",
+        "pwd",
+        "token",
+        "access_token",
+        "refresh_token",
+        "session_token",
+        "device_token",
+        "approval_token",
+        "final_approval_token",
+        "token_hash",
+        "cookie",
+        "cookies",
+        "session",
+        "client_secret",
+        "secret",
+        "api_secret",
+        "api_key",
+        "auth",
+        "authorization",
+    }
+)
 
 
 def _strip_sensitive(params: dict) -> dict:
@@ -31,134 +47,245 @@ def _strip_sensitive(params: dict) -> dict:
 
 
 # result_data 에 저장 허용된 key 목록 (명시적 허용 목록 방식)
-_RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "action", "dry_run", "normalized_url", "url_scheme", "url_host",
-    "would_open_browser", "external_network_call", "requires_approval",
-    "policy_decision", "message", "reason", "error_code",
-    "approval_id", "approved_by", "execution_task_id",
-    # capture_screenshot safe metadata (Stage 13H-2)
-    "screenshot_taken", "file_basename", "file_ext", "file_size_bytes",
-    "image_width", "image_height", "storage_ref",
-    "redaction_applied", "sensitive_screen_warning",
-    # dry_run capture_screenshot self-check
-    "screenshot_dir_ready", "backend_available", "upload",
-    # browser action safe result metadata (BROWSER-4E)
-    "status", "selector", "executed", "element_found", "risk_level",
-    "final_approval_required", "result", "target_url_domain", "text_length",
-    "text_preview", "error_message", "screenshot_ref",
-    # safe_desktop_capability result metadata
-    "capabilities",
-    # safe_app_presence_known_paths result metadata
-    "detection_mode", "apps",
-    # browser.plan_open_url result metadata
-    "plan", "target",
-    # browser.inspect result metadata
-    "inspection_mode",
-    # browser.plan_click result metadata
-    "click_target",
-    # browser.plan_type result metadata
-    "typed", "field_id", "field_role", "sample_value_id", "input_redacted", "timestamp",
-    # browser.open_url_controlled result metadata
-    "execution_mode", "approval_required", "browser",
-    # browser.open_click_close_controlled result metadata
-    "clicked_target", "url_info", "navigation", "cleanup",
-    # browser.open_type_close_controlled result metadata
-    "typed", "field_id", "field_role", "sample_value_id", "executed", "requires_approval", "lifecycle",
-})
+_RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "action",
+        "dry_run",
+        "normalized_url",
+        "url_scheme",
+        "url_host",
+        "would_open_browser",
+        "external_network_call",
+        "requires_approval",
+        "policy_decision",
+        "message",
+        "reason",
+        "error_code",
+        "approval_id",
+        "approved_by",
+        "execution_task_id",
+        # capture_screenshot safe metadata (Stage 13H-2)
+        "screenshot_taken",
+        "file_basename",
+        "file_ext",
+        "file_size_bytes",
+        "image_width",
+        "image_height",
+        "storage_ref",
+        "redaction_applied",
+        "sensitive_screen_warning",
+        # dry_run capture_screenshot self-check
+        "screenshot_dir_ready",
+        "backend_available",
+        "upload",
+        # browser action safe result metadata (BROWSER-4E)
+        "status",
+        "selector",
+        "executed",
+        "element_found",
+        "risk_level",
+        "final_approval_required",
+        "result",
+        "target_url_domain",
+        "text_length",
+        "text_preview",
+        "error_message",
+        "screenshot_ref",
+        # safe_desktop_capability result metadata
+        "capabilities",
+        # safe_app_presence_known_paths result metadata
+        "detection_mode",
+        "apps",
+        # browser.plan_open_url result metadata
+        "plan",
+        "target",
+        # browser.inspect result metadata
+        "inspection_mode",
+        # browser.plan_click result metadata
+        "click_target",
+        # browser.plan_type result metadata
+        "typed",
+        "field_id",
+        "field_role",
+        "sample_value_id",
+        "input_redacted",
+        "timestamp",
+        # browser.open_url_controlled result metadata
+        "execution_mode",
+        "approval_required",
+        "browser",
+        # browser.open_click_close_controlled result metadata
+        "clicked_target",
+        "url_info",
+        "navigation",
+        "cleanup",
+        # browser.open_type_close_controlled result metadata
+        "lifecycle",
+    }
+)
 
 # safe_desktop_capability capabilities 내부 허용 key (nested boolean allowlist)
 # browser.inspect capabilities 내부 허용 key 포함
-_CAPABILITIES_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "browser_supported", "office_supported", "cad_supported",
-    "can_plan_inspection", "actual_inspection_enabled",
-})
+_CAPABILITIES_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "browser_supported",
+        "office_supported",
+        "cad_supported",
+        "can_plan_inspection",
+        "actual_inspection_enabled",
+    }
+)
 
 # safe_app_presence_known_paths 및 safe_app_capability_matrix apps 항목 내부 허용 key
-_APPS_ITEM_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "app_id", "supported", "next_actions",
-})
+_APPS_ITEM_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "app_id",
+        "supported",
+        "next_actions",
+    }
+)
 
 # safe_app_capability_matrix next_actions 허용 목록 (고정 allowlist)
-_NEXT_ACTIONS_ALLOWED: frozenset[str] = frozenset({
-    "browser_plan_open_url",
-    "browser_inspect",
-    "excel_plan_open_workbook",
-    "cad_plan_open_file",
-})
+_NEXT_ACTIONS_ALLOWED: frozenset[str] = frozenset(
+    {
+        "browser_plan_open_url",
+        "browser_inspect",
+        "excel_plan_open_workbook",
+        "cad_plan_open_file",
+    }
+)
 
 # browser.plan_open_url plan 내부 허용 key
 # browser.inspect plan 내부 허용 key 포함
 # browser.plan_click plan 내부 허용 key 포함
-_PLAN_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "action_id", "will_open_browser", "will_navigate", "requires_approval",
-    "will_access_dom", "will_capture_screenshot", "will_click",
-})
+_PLAN_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "action_id",
+        "will_open_browser",
+        "will_navigate",
+        "requires_approval",
+        "will_access_dom",
+        "will_capture_screenshot",
+        "will_click",
+    }
+)
 
 # browser.plan_open_url target 내부 허용 key
-_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "scheme", "host_class", "url_redacted",
-})
+_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "scheme",
+        "host_class",
+        "url_redacted",
+    }
+)
 
 # browser.plan_open_url target scheme 허용값
-_TARGET_SCHEME_ALLOWED: frozenset[str] = frozenset({
-    "http", "https",
-})
+_TARGET_SCHEME_ALLOWED: frozenset[str] = frozenset(
+    {
+        "http",
+        "https",
+    }
+)
 
 # browser.plan_open_url target host_class 허용값
-_TARGET_HOST_CLASS_ALLOWED: frozenset[str] = frozenset({
-    "public", "private_or_local", "blocked", "invalid", "sample",
-})
+_TARGET_HOST_CLASS_ALLOWED: frozenset[str] = frozenset(
+    {
+        "public",
+        "private_or_local",
+        "blocked",
+        "invalid",
+        "sample",
+    }
+)
 
 # browser.inspect inspection_mode 허용값
-_INSPECTION_MODE_ALLOWED: frozenset[str] = frozenset({
-    "page_layout", "accessibility_tree",
-})
+_INSPECTION_MODE_ALLOWED: frozenset[str] = frozenset(
+    {
+        "page_layout",
+        "accessibility_tree",
+    }
+)
 
 # browser.open_url_controlled browser 내부 허용 key
-_BROWSER_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "isolated_context", "used_existing_profile", "opened", "closed", "clicked",
-})
+_BROWSER_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "isolated_context",
+        "used_existing_profile",
+        "opened",
+        "closed",
+        "clicked",
+    }
+)
 
 # browser.plan_click click_target 내부 허용 key
-_CLICK_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "target_id", "target_role", "selector_redacted",
-})
+_CLICK_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "target_id",
+        "target_role",
+        "selector_redacted",
+    }
+)
 
 # browser.plan_click target_id 허용값
-_CLICK_TARGET_ID_ALLOWED: frozenset[str] = frozenset({
-    "sample_primary_action", "sample_secondary_action",
-})
+_CLICK_TARGET_ID_ALLOWED: frozenset[str] = frozenset(
+    {
+        "sample_primary_action",
+        "sample_secondary_action",
+    }
+)
 
 # browser.plan_click target_role 허용값
-_CLICK_TARGET_ROLE_ALLOWED: frozenset[str] = frozenset({
-    "primary_action", "secondary_action", "navigation_link",
-})
+_CLICK_TARGET_ROLE_ALLOWED: frozenset[str] = frozenset(
+    {
+        "primary_action",
+        "secondary_action",
+        "navigation_link",
+    }
+)
 
 # browser.open_click_close_controlled url_info 내부 허용 key
-_URL_INFO_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "scheme", "host_class", "url_redacted",
-})
+_URL_INFO_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "scheme",
+        "host_class",
+        "url_redacted",
+    }
+)
 
 # browser.open_click_close_controlled navigation 내부 허용 key
-_NAVIGATION_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "will_navigate",
-})
+_NAVIGATION_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "will_navigate",
+    }
+)
 
 # browser.open_click_close_controlled cleanup 내부 허용 key
-_CLEANUP_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "context_closed", "browser_closed", "temp_files_deleted",
-})
+_CLEANUP_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "context_closed",
+        "browser_closed",
+        "temp_files_deleted",
+    }
+)
 
 # browser.open_type_close_controlled lifecycle 내부 허용 key
-_LIFECYCLE_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "opened", "typed", "closed",
-})
+_LIFECYCLE_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "opened",
+        "typed",
+        "closed",
+    }
+)
 
 # browser.open_click_close_controlled clicked_target 내부 허용 key
 # browser.plan_click click_target과 동일
-_CLICKED_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "target_id", "target_role", "selector_redacted",
-})
+_CLICKED_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset(
+    {
+        "target_id",
+        "target_role",
+        "selector_redacted",
+    }
+)
 
 
 def _strip_capabilities(value: object) -> "dict | None":
@@ -219,10 +346,11 @@ def _strip_apps(value: object) -> "list | None":
 def _sanitize_url_for_storage(url: str) -> str:
     """URL에서 query string을 제거하고 scheme+host+path만 반환."""
     from urllib.parse import urlparse, urlunparse
+
     try:
         p = urlparse(url)
         return urlunparse((p.scheme, p.netloc, p.path, "", "", ""))
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL 쿼리 제거 후 저장용 sanitize 헬퍼 - urlparse 실패 시 원본 URL 대신 빈 문자열로 폴백(민감정보 노출 방지 방향), 쓰기 없음
         return ""
 
 
@@ -245,7 +373,13 @@ def _strip_plan(value: object) -> "dict | None":
             continue
         if k_low == "action_id" and isinstance(v, str):
             out[k] = v[:200]
-        elif k_low in ("will_open_browser", "will_navigate", "will_access_dom", "will_capture_screenshot", "requires_approval"):
+        elif k_low in (
+            "will_open_browser",
+            "will_navigate",
+            "will_access_dom",
+            "will_capture_screenshot",
+            "requires_approval",
+        ):
             if isinstance(v, bool):
                 out[k] = v
     return out if out else None

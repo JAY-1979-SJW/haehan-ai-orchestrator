@@ -95,7 +95,7 @@ def run_daily_check() -> dict[str, Any]:
                 ),
                 encoding="utf-8",
             )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 사용 불가 등으로 일일 점검 작업 실패 시 skipped=True, reason 기록 후 반환 - 실패를 성공으로 위장하지 않고 건너뜀으로 명시 처리
         result["skipped"] = True
         result["reason"] = f"cdp_unavailable: {type(e).__name__}"
         return result

@@ -36,7 +36,7 @@ def check(name, fn, *args, allow_zero=False, **kwargs):
         )
         print(f"  {tag} {name}: {summary}")
         return val
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 디버그 검증 스크립트 - 각 메서드 호출 실패를 결과 리스트에 기록하고 출력, 아카이브된 진단 도구일 뿐 운영 로직 아님
         results.append((name, False, str(e)))
         print(f"  {FAIL} {name}: {e}")
         return None

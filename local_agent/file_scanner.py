@@ -11,55 +11,90 @@
 휴지통 이동 라이브러리 모두 사용하지 않는다. (문자열 대조 검사용 목록은
 테스트에서 관리한다.)
 """
+
 from __future__ import annotations
 
 import hashlib
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 # ─── 분류 기준 ──────────────────────────────────────────────────────────────
 
-PRESERVE_EXTENSIONS: frozenset[str] = frozenset({
-    ".pem", ".key", ".env", ".pfx", ".p12", ".kdbx",
-    ".db", ".sqlite",
-    ".xlsx", ".xls",
-    ".hwp", ".hwpx",
-    ".docx",
-    ".pdf",
-    ".dwg", ".dxf",
-})
-
-PRESERVE_KEYWORDS: tuple[str, ...] = (
-    "계약", "견적", "내역", "기성", "청구", "세금계산서", "사업자",
-    "입찰", "공고", "인증서", "서버", "접속정보", "비밀번호",
-    "password", "secret", "token", "api_key",
+PRESERVE_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".pem",
+        ".key",
+        ".env",
+        ".pfx",
+        ".p12",
+        ".kdbx",
+        ".db",
+        ".sqlite",
+        ".xlsx",
+        ".xls",
+        ".hwp",
+        ".hwpx",
+        ".docx",
+        ".pdf",
+        ".dwg",
+        ".dxf",
+    }
 )
 
-DELETE_CANDIDATE_EXTENSIONS: frozenset[str] = frozenset({
-    ".tmp", ".bak", ".log", ".cache",
-})
+PRESERVE_KEYWORDS: tuple[str, ...] = (
+    "계약",
+    "견적",
+    "내역",
+    "기성",
+    "청구",
+    "세금계산서",
+    "사업자",
+    "입찰",
+    "공고",
+    "인증서",
+    "서버",
+    "접속정보",
+    "비밀번호",
+    "password",
+    "secret",
+    "token",
+    "api_key",
+)
 
-DELETE_CANDIDATE_BASENAMES: frozenset[str] = frozenset({
-    "Thumbs.db", "desktop.ini",
-})
+DELETE_CANDIDATE_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".tmp",
+        ".bak",
+        ".log",
+        ".cache",
+    }
+)
 
-EXCLUDED_DIRS: frozenset[str] = frozenset({
-    "AppData",
-    "node_modules",
-    ".git",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "dist",
-    "build",
-    ".next",
-    ".cache",
-    ".pytest_cache",
-})
+DELETE_CANDIDATE_BASENAMES: frozenset[str] = frozenset(
+    {
+        "Thumbs.db",
+        "desktop.ini",
+    }
+)
+
+EXCLUDED_DIRS: frozenset[str] = frozenset(
+    {
+        "AppData",
+        "node_modules",
+        ".git",
+        "__pycache__",
+        ".venv",
+        "venv",
+        "dist",
+        "build",
+        ".next",
+        ".cache",
+        ".pytest_cache",
+    }
+)
 
 _BLOCKED_PATH_PREFIXES: tuple[str, ...] = (
     "c:/windows",
@@ -74,6 +109,7 @@ _DRIVE_ROOT_PATTERN = re.compile(r"^[A-Za-z]:[\\/]?$")
 
 
 # ─── 공개 API ──────────────────────────────────────────────────────────────
+
 
 def scan_file_tree(
     root_path: str,
@@ -134,16 +170,22 @@ def scan_file_tree(
 
     if root_resolved.is_file():
         item = _build_item(
-            root_resolved, root_resolved.parent, depth=0,
-            compute_hash=compute_hash, max_hash_size_mb=max_hash_size_mb,
-            warnings=warnings, is_hidden=_is_hidden(root_resolved),
+            root_resolved,
+            root_resolved.parent,
+            depth=0,
+            compute_hash=compute_hash,
+            max_hash_size_mb=max_hash_size_mb,
+            warnings=warnings,
+            is_hidden=_is_hidden(root_resolved),
         )
         items = [item] if item is not None else []
         _classify_items(items)
         _mark_duplicates(items)
         return _build_report(
             root_display=_root_display(root_resolved),
-            items=items, scanned_dirs=0, excluded_count=0,
+            items=items,
+            scanned_dirs=0,
+            excluded_count=0,
             warnings=warnings,
         )
 
@@ -152,20 +194,26 @@ def scan_file_tree(
 
     items, scanned_dirs, excluded_count = _walk(
         root_resolved,
-        max_depth=max_depth, max_files=max_files,
-        include_hidden=include_hidden, compute_hash=compute_hash,
-        max_hash_size_mb=max_hash_size_mb, warnings=warnings,
+        max_depth=max_depth,
+        max_files=max_files,
+        include_hidden=include_hidden,
+        compute_hash=compute_hash,
+        max_hash_size_mb=max_hash_size_mb,
+        warnings=warnings,
     )
     _classify_items(items)
     _mark_duplicates(items)
     return _build_report(
         root_display=_root_display(root_resolved),
-        items=items, scanned_dirs=scanned_dirs,
-        excluded_count=excluded_count, warnings=warnings,
+        items=items,
+        scanned_dirs=scanned_dirs,
+        excluded_count=excluded_count,
+        warnings=warnings,
     )
 
 
 # ─── 내부 구현 ──────────────────────────────────────────────────────────────
+
 
 def _error(code: str, summary: str) -> dict[str, Any]:
     return {
@@ -266,10 +314,13 @@ def _walk(
                 continue
 
             item = _build_item(
-                entry, root, depth=depth + 1,
+                entry,
+                root,
+                depth=depth + 1,
                 compute_hash=compute_hash,
                 max_hash_size_mb=max_hash_size_mb,
-                warnings=warnings, is_hidden=hidden,
+                warnings=warnings,
+                is_hidden=hidden,
             )
             if item is not None:
                 items.append(item)
@@ -465,6 +516,7 @@ def _is_hidden(path: Path) -> bool:
     if os.name == "nt":
         try:
             import stat as _stat
+
             attrs = path.stat().st_file_attributes  # type: ignore[attr-defined]
             hidden_flag = getattr(_stat, "FILE_ATTRIBUTE_HIDDEN", 0x02)
             return bool(attrs & hidden_flag)
@@ -499,7 +551,7 @@ def _file_type(ext: str) -> str:
 
 def _iso_utc(ts: float) -> str:
     try:
-        return datetime.fromtimestamp(float(ts), tz=timezone.utc).isoformat()
+        return datetime.fromtimestamp(float(ts), tz=UTC).isoformat()
     except (OSError, ValueError, OverflowError):
         return ""
 
@@ -508,13 +560,15 @@ def _root_display(root: Path) -> str:
     try:
         name = root.name
         return name if name else "<selected_root>"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 선택된 루트 디렉터리 표시명 조회 실패 시 플레이스홀더 문자열 반환 - 파일 스캐너 UI 표시용, 읽기전용 파일 목록 스캔 로직에 영향 없음
         return "<selected_root>"
 
 
 __all__ = [
-    "scan_file_tree",
-    "PRESERVE_EXTENSIONS", "PRESERVE_KEYWORDS",
-    "DELETE_CANDIDATE_EXTENSIONS", "DELETE_CANDIDATE_BASENAMES",
+    "DELETE_CANDIDATE_BASENAMES",
+    "DELETE_CANDIDATE_EXTENSIONS",
     "EXCLUDED_DIRS",
+    "PRESERVE_EXTENSIONS",
+    "PRESERVE_KEYWORDS",
+    "scan_file_tree",
 ]

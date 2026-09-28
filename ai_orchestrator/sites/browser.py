@@ -6,12 +6,13 @@
 - 실제로는 브라우저를 열지 않는다 (launch_available 로 가능성만 점검).
 - 스크린샷 경로 정책만 정의한다.
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .. import config
 from . import secrets_policy
@@ -33,8 +34,9 @@ class BrowserLaunchProbe:
 def _try_import_playwright() -> tuple[bool, str]:
     try:
         import playwright  # type: ignore  # noqa: F401
+
         return True, ""
-    except Exception as e:  # ImportError + 모듈 부수적 오류 모두 보호
+    except Exception as e:  # ImportError + 모듈 부수적 오류 모두 보호  # noqa: BLE001 - playwright 모듈 import 가능 여부 probe - ImportError 등 모든 부수 오류를 캡처해 '사용 불가' 상태로 안전하게 폴백, 실행/위험 조작 없음
         return False, f"playwright import 불가: {type(e).__name__}"
 
 
@@ -57,7 +59,7 @@ def screenshot_dir(site_name: str) -> Path:
     return SCREENSHOT_ROOT / site_name
 
 
-def storage_state_option(site_name: str) -> Optional[str]:
+def storage_state_option(site_name: str) -> str | None:
     """context 생성 시 넘길 storage_state 파일 경로. 없으면 None."""
     p = secrets_policy.session_state_path(site_name)
     return str(p) if p.is_file() else None
@@ -84,12 +86,12 @@ def save_storage_state(site_name: str, context: Any) -> Path:
 
 
 __all__ = [
+    "DEFAULT_HEADLESS",
+    "DEFAULT_TIMEOUT_MS",
+    "SCREENSHOT_ROOT",
     "BrowserLaunchProbe",
     "probe_launch",
+    "save_storage_state",
     "screenshot_dir",
     "storage_state_option",
-    "save_storage_state",
-    "DEFAULT_TIMEOUT_MS",
-    "DEFAULT_HEADLESS",
-    "SCREENSHOT_ROOT",
 ]

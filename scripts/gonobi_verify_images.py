@@ -63,7 +63,7 @@ for cat in cats:
         status = "✅" if broken == 0 else f"❌ {broken}개 깨짐"
         print(f"  {cat:25} 전체:{total_imgs:4} 로드:{loaded:4} {status}")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카테고리별 이미지 검증(스크린샷) 실패를 출력만 하고 계속 진행 - 읽기전용 검증 스크립트, 결과 리포트에 실패로 표시될 뿐 위험 조작 없음
         print(f"  {cat:25} 스크린샷 실패: {e}")
 
 print(f"\n스크린샷 저장: {OUT}")

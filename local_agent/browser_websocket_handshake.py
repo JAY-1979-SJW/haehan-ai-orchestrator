@@ -9,22 +9,24 @@
 - password / OTP 절대 포함 금지
 - cookie / session / storage 절대 포함 금지
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import logging
 import platform
-from dataclasses import dataclass, asdict, field
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class HandshakeMessageType(str, Enum):
     """Handshake message type enumeration."""
+
     AGENT_HELLO = "agent.hello"
     AGENT_READY = "agent.ready"
     AGENT_HEARTBEAT = "agent.heartbeat"
@@ -36,12 +38,14 @@ class HandshakeMessageType(str, Enum):
 
 class HandshakeMode(str, Enum):
     """Agent operational mode."""
+
     READ_ONLY = "read_only"
     FULL = "full"
 
 
 class Capability(str, Enum):
     """Agent capabilities in read-only mode."""
+
     BROWSER_INSPECT = "browser.inspect"
     BROWSER_PLAN_CLICK = "browser.plan_click"
     BROWSER_PLAN_TYPE = "browser.plan_type"
@@ -57,7 +61,7 @@ def _get_hostname_hash() -> str:
         if not hostname:
             return "unknown"
         return hashlib.sha256(hostname.encode()).hexdigest()[:12]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 호스트명 해시 생성 실패 시 'error' 플레이스홀더 반환 - 원문 hostname은 애초에 노출하지 않는 진단용 식별자, 인증/승인 판정과 무관
         return "error"
 
 
@@ -75,21 +79,32 @@ def safe_dict(data: dict) -> dict:
       - machine_id (raw value; hash is safe)
     """
     forbidden_patterns = {
-        "approval_token", "final_approval_token", "token_hash",
-        "password", "otp", "cookie", "session", "authorization",
-        "localstorage", "sessionstorage", "typed_text",
-        "base64", "full_dom", "raw_html", "raw_dom",
-        "hostname", "username", "user_name", "ip_address",
-        "machine_id", "device_id",
+        "approval_token",
+        "final_approval_token",
+        "token_hash",
+        "password",
+        "otp",
+        "cookie",
+        "session",
+        "authorization",
+        "localstorage",
+        "sessionstorage",
+        "typed_text",
+        "base64",
+        "full_dom",
+        "raw_html",
+        "raw_dom",
+        "hostname",
+        "username",
+        "user_name",
+        "ip_address",
+        "machine_id",
+        "device_id",
     }
 
     def _clean(obj: Any) -> Any:
         if isinstance(obj, dict):
-            return {
-                k: _clean(v)
-                for k, v in obj.items()
-                if k.lower() not in forbidden_patterns
-            }
+            return {k: _clean(v) for k, v in obj.items() if k.lower() not in forbidden_patterns}
         elif isinstance(obj, (list, tuple)):
             return type(obj)(_clean(item) for item in obj)
         return obj
@@ -99,7 +114,7 @@ def safe_dict(data: dict) -> dict:
 
 def _iso8601_now() -> str:
     """Return current UTC time in ISO 8601 format."""
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 @dataclass
@@ -119,20 +134,23 @@ class AgentHelloMessage:
       - registration_user_id: (TENANT-3) optional, agent registration user
       - timestamp: UTC ISO 8601 timestamp
     """
+
     message_type: str = HandshakeMessageType.AGENT_HELLO.value
     agent_id: str = ""
     agent_version: str = ""
     host_name_hash: str = ""
-    capabilities: list[str] = field(default_factory=lambda: [
-        Capability.BROWSER_INSPECT.value,
-        Capability.BROWSER_PLAN_CLICK.value,
-        Capability.BROWSER_PLAN_TYPE.value,
-    ])
+    capabilities: list[str] = field(
+        default_factory=lambda: [
+            Capability.BROWSER_INSPECT.value,
+            Capability.BROWSER_PLAN_CLICK.value,
+            Capability.BROWSER_PLAN_TYPE.value,
+        ]
+    )
     mode: str = HandshakeMode.READ_ONLY.value
     audit_enabled: bool = True
     approval_required: bool = True
     organization_id: str = ""  # TENANT-3: organization scope
-    registration_user_id: Optional[str] = None  # TENANT-3: optional registration user
+    registration_user_id: str | None = None  # TENANT-3: optional registration user
     timestamp: str = field(default_factory=_iso8601_now)
 
     def to_dict(self) -> dict:
@@ -166,6 +184,7 @@ class ServerPolicyMessage:
       - agent_id: (TENANT-3) agent identifier (echo from agent.hello)
       - timestamp: UTC ISO 8601 timestamp
     """
+
     message_type: str = HandshakeMessageType.SERVER_POLICY.value
     mode: str = HandshakeMode.READ_ONLY.value
     allow_execute: bool = False
@@ -204,12 +223,13 @@ class AgentHeartbeatMessage:
       - last_error: last error message (safe summary only, no secrets)
       - timestamp: UTC ISO 8601 timestamp
     """
+
     message_type: str = HandshakeMessageType.AGENT_HEARTBEAT.value
     agent_id: str = ""
     status: str = "ready"
     mode: str = HandshakeMode.READ_ONLY.value
     pending_tasks: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
     timestamp: str = field(default_factory=_iso8601_now)
 
     def to_dict(self) -> dict:
@@ -225,7 +245,7 @@ class AgentHeartbeatMessage:
         return safe_dict(self.to_dict())
 
 
-def validate_agent_hello_message(msg: dict) -> tuple[bool, Optional[str]]:
+def validate_agent_hello_message(msg: dict) -> tuple[bool, str | None]:
     """Validate agent.hello message.
 
     TENANT-3: Validate organization_id and registration_user_id fields.
@@ -241,9 +261,18 @@ def validate_agent_hello_message(msg: dict) -> tuple[bool, Optional[str]]:
 
     # Check for forbidden fields FIRST (before mode check)
     forbidden = {
-        "approval_token", "final_approval_token", "token_hash",
-        "password", "otp", "cookie", "session", "authorization",
-        "localstorage", "sessionstorage", "typed_text", "base64",
+        "approval_token",
+        "final_approval_token",
+        "token_hash",
+        "password",
+        "otp",
+        "cookie",
+        "session",
+        "authorization",
+        "localstorage",
+        "sessionstorage",
+        "typed_text",
+        "base64",
     }
     for key in msg.keys():
         if key.lower() in forbidden:
@@ -275,7 +304,7 @@ def validate_agent_hello_message(msg: dict) -> tuple[bool, Optional[str]]:
 
     # Check that no raw hostname/user/IP is present
     msg_str = json.dumps(msg).lower()
-    if any(x in msg_str for x in ["hostname=", "user=", "ip="] if not "hash" in msg_str):
+    if any(x in msg_str for x in ["hostname=", "user=", "ip="] if "hash" not in msg_str):
         # Simple check: if we find hostname= but not hostname_hash, flag it
         if "hostname=" in msg_str and "hostname_hash" not in msg_str:
             return False, "raw hostname not allowed; use host_name_hash"
@@ -283,7 +312,7 @@ def validate_agent_hello_message(msg: dict) -> tuple[bool, Optional[str]]:
     return True, None
 
 
-def validate_server_policy_message(msg: dict) -> tuple[bool, Optional[str]]:
+def validate_server_policy_message(msg: dict) -> tuple[bool, str | None]:
     """Validate server.policy message for read-only mode.
 
     Returns:
@@ -322,7 +351,7 @@ def validate_server_policy_message(msg: dict) -> tuple[bool, Optional[str]]:
     return True, None
 
 
-def validate_agent_heartbeat_message(msg: dict) -> tuple[bool, Optional[str]]:
+def validate_agent_heartbeat_message(msg: dict) -> tuple[bool, str | None]:
     """Validate agent.heartbeat message.
 
     Returns:
@@ -356,16 +385,22 @@ def validate_agent_heartbeat_message(msg: dict) -> tuple[bool, Optional[str]]:
     # Check for forbidden fields in error message
     if last_error:
         forbidden = {
-            "approval_token", "final_approval_token", "token_hash",
-            "password", "otp", "cookie", "session", "authorization",
+            "approval_token",
+            "final_approval_token",
+            "token_hash",
+            "password",
+            "otp",
+            "cookie",
+            "session",
+            "authorization",
         }
         if any(f in last_error.lower() for f in forbidden):
-            return False, f"forbidden field in last_error"
+            return False, "forbidden field in last_error"
 
     return True, None
 
 
-def validate_handshake_message(msg: dict) -> tuple[bool, Optional[str]]:
+def validate_handshake_message(msg: dict) -> tuple[bool, str | None]:
     """Validate any handshake message.
 
     Returns:
@@ -386,15 +421,15 @@ def validate_handshake_message(msg: dict) -> tuple[bool, Optional[str]]:
 
 
 __all__ = [
+    "AgentHeartbeatMessage",
+    "AgentHelloMessage",
+    "Capability",
     "HandshakeMessageType",
     "HandshakeMode",
-    "Capability",
-    "AgentHelloMessage",
     "ServerPolicyMessage",
-    "AgentHeartbeatMessage",
     "safe_dict",
-    "validate_handshake_message",
-    "validate_agent_hello_message",
-    "validate_server_policy_message",
     "validate_agent_heartbeat_message",
+    "validate_agent_hello_message",
+    "validate_handshake_message",
+    "validate_server_policy_message",
 ]

@@ -38,7 +38,7 @@ class CommentPoller(QThread):
                 self._poll_once()
             except IgApiError as e:
                 self.error_occurred.emit(str(e))
-            except Exception as e:  # 폴링 루프는 예외로 죽지 않고 계속 돈다
+            except Exception as e:  # 폴링 루프는 예외로 죽지 않고 계속 돈다  # noqa: BLE001 - 인스타그램 폴링 루프 - 주석에 명시된 대로 폴링이 예외로 죽지 않고 계속 돌도록 의도된 설계(best-effort 반복 작업), 오류는 시그널로만 전파하고 재시도
                 self.error_occurred.emit(f"예상치 못한 오류: {e}")
 
             self._sleep_interruptible(self.config.interval_seconds)

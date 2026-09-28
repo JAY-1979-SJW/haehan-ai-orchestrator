@@ -57,7 +57,7 @@ class AIResponder:
                 data = json.loads(resp.read())
             text = data["choices"][0]["message"]["content"]
             return {"ok": True, "text": text.strip(), "model": self.model}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - AI 응답 생성 API 호출 실패 - ok:False + _redact()로 민감정보 제거된 에러 메시지만 반환, 이미 안전 처리된 에러 경로
             return {"ok": False, "error": _redact(str(e))[:200]}
 
     def draft_blog_post(self, topic: str, keywords: list[str] | None = None, length: str = "medium") -> dict:

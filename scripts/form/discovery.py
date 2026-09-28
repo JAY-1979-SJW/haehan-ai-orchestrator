@@ -20,6 +20,7 @@
     captcha_text, sms_code, email_code,
     submit, search_query, other
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -32,14 +33,34 @@ log = get_logger(__name__)
 
 # 역할별 키워드 — name/id/placeholder/label 매칭
 _ROLE_KEYWORDS: dict[str, list[str]] = {
-    "id": ["userid", "user_id", "loginid", "login_id", "memberid", "member_id",
-           "username", "user_name", "id", "아이디", "회원id"],
+    "id": [
+        "userid",
+        "user_id",
+        "loginid",
+        "login_id",
+        "memberid",
+        "member_id",
+        "username",
+        "user_name",
+        "id",
+        "아이디",
+        "회원id",
+    ],
     "email": ["email", "mail", "e-mail", "이메일", "메일주소"],
     "phone": ["phone", "mobile", "cellphone", "tel", "hp", "휴대폰", "전화", "핸드폰"],
     "password": ["password", "passwd", "pw", "pwd", "비밀번호", "패스워드"],
-    "password_confirm": ["password_confirm", "passwd_confirm", "pw_confirm",
-                         "password2", "pw2", "confirm_password", "passwordcheck",
-                         "비밀번호 확인", "비밀번호확인", "재입력"],
+    "password_confirm": [
+        "password_confirm",
+        "passwd_confirm",
+        "pw_confirm",
+        "password2",
+        "pw2",
+        "confirm_password",
+        "passwordcheck",
+        "비밀번호 확인",
+        "비밀번호확인",
+        "재입력",
+    ],
     "name_full": ["fullname", "full_name", "name", "성명", "이름"],
     "name_first": ["firstname", "first_name", "givenname"],
     "name_last": ["lastname", "last_name", "familyname", "surname"],
@@ -49,15 +70,11 @@ _ROLE_KEYWORDS: dict[str, list[str]] = {
     "birth_full": ["birth", "birthdate", "birth_date", "dob", "생년월일"],
     "zipcode": ["zip", "zipcode", "postcode", "postal_code", "우편번호"],
     "address": ["address", "addr", "주소"],
-    "address_detail": ["address2", "addr2", "address_detail", "addrdetail",
-                       "상세주소", "나머지주소"],
+    "address_detail": ["address2", "addr2", "address_detail", "addrdetail", "상세주소", "나머지주소"],
     "gender": ["gender", "sex", "성별"],
-    "agree_terms": ["agree_terms", "terms", "tos", "service_agree",
-                    "이용약관", "서비스약관"],
-    "agree_privacy": ["agree_privacy", "privacy", "personal_info",
-                      "개인정보", "개인정보처리"],
-    "agree_marketing": ["agree_marketing", "marketing", "promotion",
-                        "광고", "마케팅", "수신동의", "이벤트"],
+    "agree_terms": ["agree_terms", "terms", "tos", "service_agree", "이용약관", "서비스약관"],
+    "agree_privacy": ["agree_privacy", "privacy", "personal_info", "개인정보", "개인정보처리"],
+    "agree_marketing": ["agree_marketing", "marketing", "promotion", "광고", "마케팅", "수신동의", "이벤트"],
     "agree_age": ["agree_age", "over14", "age_confirm", "14세", "성인", "만14"],
     "captcha_text": ["captcha", "보안문자", "자동입력", "robot"],
     "sms_code": ["sms_code", "phone_code", "auth_code_sms", "인증번호", "smsauth"],
@@ -101,14 +118,17 @@ _AUTOCOMPLETE_MAP: dict[str, str] = {
 class FormField:
     role: str
     selector: str
-    score: float           # 0~1
-    element_type: str      # input/select/textarea
-    raw: dict[str, Any]    # 원본 속성
+    score: float  # 0~1
+    element_type: str  # input/select/textarea
+    raw: dict[str, Any]  # 원본 속성
 
     def to_dict(self) -> dict:
         return {
-            "role": self.role, "selector": self.selector, "score": self.score,
-            "element_type": self.element_type, "raw": self.raw,
+            "role": self.role,
+            "selector": self.selector,
+            "score": self.score,
+            "element_type": self.element_type,
+            "raw": self.raw,
         }
 
 
@@ -255,16 +275,16 @@ def _score_field(attrs: dict) -> tuple[str, float]:
         # type=search 이지만 placeholder/label/aria에 "아이디"/"id"/"user" 가 있으면 id 로 override
         if base_role == "search_query":
             for src in (ph, label, aria, name, el_id):
-                if any(k in src for k in ["아이디", "userid", "user_id", "loginid",
-                                            "login_id", "username", "user_name"]):
+                if any(
+                    k in src for k in ["아이디", "userid", "user_id", "loginid", "login_id", "username", "user_name"]
+                ):
                     return "id", 0.92
                 if any(k in src for k in ["이메일", "메일주소", "email"]):
                     return "email", 0.92
         return base_role, 0.85
 
     # 3) 키워드 매칭 (name > id > autocomplete > placeholder > label > aria > near)
-    sources = [(name, 0.9), (el_id, 0.85), (ph, 0.75), (label, 0.7),
-               (aria, 0.65), (near, 0.55)]
+    sources = [(name, 0.9), (el_id, 0.85), (ph, 0.75), (label, 0.7), (aria, 0.65), (near, 0.55)]
     best_role = "other"
     best_score = 0.0
     for src, weight in sources:
@@ -285,7 +305,7 @@ def discover_form(page) -> FormDiscovery:
     """현재 페이지의 폼을 자동 탐색 + 의미 매핑."""
     try:
         data = page.evaluate(_EXTRACT_JS)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 폼 필드 discovery용 page.evaluate 실패를 로그로 남기고 notes에 실패 사유를 담아 반환 - 읽기전용 폼 탐색, 제출/입력 동작 없음
         log.warning("[form-discovery] evaluate 실패: %s", e)
         return FormDiscovery(notes=[f"evaluate_failed: {str(e)[:100]}"])
 
@@ -294,13 +314,15 @@ def discover_form(page) -> FormDiscovery:
         if not attrs.get("visible"):
             continue
         role, score = _score_field(attrs)
-        result.fields.append(FormField(
-            role=role,
-            selector=attrs.get("selector", ""),
-            score=score,
-            element_type=attrs.get("tag", "input"),
-            raw=attrs,
-        ))
+        result.fields.append(
+            FormField(
+                role=role,
+                selector=attrs.get("selector", ""),
+                score=score,
+                element_type=attrs.get("tag", "input"),
+                raw=attrs,
+            )
+        )
 
     # 체크박스도 별도로 분류
     for chk in data.get("checkboxes", []):
@@ -316,13 +338,15 @@ def discover_form(page) -> FormDiscovery:
                     break
             if role != "other":
                 break
-        result.fields.append(FormField(
-            role=role,
-            selector=chk.get("selector", ""),
-            score=score,
-            element_type="checkbox",
-            raw=chk,
-        ))
+        result.fields.append(
+            FormField(
+                role=role,
+                selector=chk.get("selector", ""),
+                score=score,
+                element_type="checkbox",
+                raw=chk,
+            )
+        )
 
     # 제출 버튼 선택 (가장 의미있는 텍스트 우선)
     submits = data.get("submits", [])
@@ -357,6 +381,10 @@ def discover_form(page) -> FormDiscovery:
         elif any(f.role == "search_query" for f in result.fields):
             result.intent = "search"
 
-    log.info("[form-discovery] intent=%s fields=%d submit=%s",
-             result.intent, len(result.fields), result.submit_selector or "-")
+    log.info(
+        "[form-discovery] intent=%s fields=%d submit=%s",
+        result.intent,
+        len(result.fields),
+        result.submit_selector or "-",
+    )
     return result

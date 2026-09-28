@@ -18,29 +18,49 @@
 
 이 서비스는 얇은 조립 계층이다.
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # 통합 금지 필드 — task_queue_schema + domain/models + desktop/task_receiver 교집합
-_FORBIDDEN_FIELDS: frozenset[str] = frozenset({
-    "cookie", "cookies", "session", "authorization",
-    "password", "otp", "certificate_password", "certificate_file_path",
-    "localstorage", "sessionstorage", "token", "access_token", "refresh_token",
-    "npki", "private_key", "auth_header",
-    "approval_token", "final_approval_token", "token_hash",
-    "typed_text", "device_token", "raw_screenshot", "base64",
-})
+_FORBIDDEN_FIELDS: frozenset[str] = frozenset(
+    {
+        "cookie",
+        "cookies",
+        "session",
+        "authorization",
+        "password",
+        "otp",
+        "certificate_password",
+        "certificate_file_path",
+        "localstorage",
+        "sessionstorage",
+        "token",
+        "access_token",
+        "refresh_token",
+        "npki",
+        "private_key",
+        "auth_header",
+        "approval_token",
+        "final_approval_token",
+        "token_hash",
+        "typed_text",
+        "device_token",
+        "raw_screenshot",
+        "base64",
+    }
+)
 
 # execution location 상수 (execution_location_guard.py 값 호환)
-_LOC_SERVER   = "SERVER_INTERNAL_ONLY"
-_LOC_AGENT    = "LOCAL_AGENT_REQUIRED"
-_LOC_USER     = "USER_DIRECT_REQUIRED"
-_LOC_BLOCKED  = "BLOCKED"
+_LOC_SERVER = "SERVER_INTERNAL_ONLY"
+_LOC_AGENT = "LOCAL_AGENT_REQUIRED"
+_LOC_USER = "USER_DIRECT_REQUIRED"
+_LOC_BLOCKED = "BLOCKED"
 
 
 def _strip_forbidden(d: dict[str, Any]) -> dict[str, Any]:
@@ -76,6 +96,7 @@ def _classify_location(task: dict[str, Any]) -> str:
 @dataclass
 class TaskQueueSummary:
     """Task 큐 분류 요약 — 읽기 전용."""
+
     total_pending: int = 0
     server_internal_count: int = 0
     local_agent_count: int = 0
@@ -116,8 +137,9 @@ class TaskQueueService:
         """pending task 목록을 금지 필드 제거 후 반환한다."""
         try:
             from ai_orchestrator.server.task_queue_schema import get_pending_tasks
+
             raw_tasks = get_pending_tasks(limit=limit)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - task_queue_schema 조회 실패 시 debug 로그 남기고 빈 목록 반환 - 읽기전용 조회 폴백, 실패해도 작업 누락(빈 결과)만 발생할 뿐 위험 조작 없음
             logger.debug("task_queue_schema 조회 실패: %s", exc)
             raw_tasks = []
         return [_strip_forbidden(t) for t in raw_tasks]
@@ -145,9 +167,9 @@ class TaskQueueService:
         """execution_location별 pending count를 반환한다."""
         summary = self.get_queue_summary()
         return {
-            _LOC_SERVER:  summary.server_internal_count,
-            _LOC_AGENT:   summary.local_agent_count,
-            _LOC_USER:    summary.user_direct_count,
+            _LOC_SERVER: summary.server_internal_count,
+            _LOC_AGENT: summary.local_agent_count,
+            _LOC_USER: summary.user_direct_count,
             _LOC_BLOCKED: summary.blocked_count,
         }
 
@@ -166,7 +188,7 @@ class TaskQueueService:
 
 
 # 싱글턴 인스턴스 (경량 — 상태 없음)
-_service_instance: Optional[TaskQueueService] = None
+_service_instance: TaskQueueService | None = None
 
 
 def get_task_queue_service() -> TaskQueueService:

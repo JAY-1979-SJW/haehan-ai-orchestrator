@@ -176,7 +176,7 @@ class GuiController:
         for fn in self._listeners:
             try:
                 fn(snap)
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
 
     def render_user_block(self) -> str:

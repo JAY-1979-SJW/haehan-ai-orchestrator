@@ -10,33 +10,55 @@ Action Evidence Store
 - 실제 파일 내용 (경로 ref만 허용)
 - localStorage / sessionStorage
 """
+
 from __future__ import annotations
 
 import json
 import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 # ── 금지 필드 ─────────────────────────────────────────────────────────────────
 
-FORBIDDEN_EVIDENCE_FIELDS: frozenset[str] = frozenset({
-    "cookie", "cookies", "session", "storage_state",
-    "password", "otp", "cert_password", "certificate_password",
-    "private_key", "npki", "auth_header", "Authorization",
-    "token", "access_token", "refresh_token",
-    "localStorage", "sessionStorage",
-    "raw_browser_storage", "browser_storage",
-    "npki_data", "auth_token",
-    "certificate_file_path",
-})
+FORBIDDEN_EVIDENCE_FIELDS: frozenset[str] = frozenset(
+    {
+        "cookie",
+        "cookies",
+        "session",
+        "storage_state",
+        "password",
+        "otp",
+        "cert_password",
+        "certificate_password",
+        "private_key",
+        "npki",
+        "auth_header",
+        "Authorization",
+        "token",
+        "access_token",
+        "refresh_token",
+        "localStorage",
+        "sessionStorage",
+        "raw_browser_storage",
+        "browser_storage",
+        "npki_data",
+        "auth_token",
+        "certificate_file_path",
+    }
+)
 
 # 파일 ref만 허용 (실제 내용 금지)
-_FORBIDDEN_FILE_CONTENT_KEYS: frozenset[str] = frozenset({
-    "file_content", "file_bytes", "file_data",
-    "attachment_content", "attachment_bytes",
-})
+_FORBIDDEN_FILE_CONTENT_KEYS: frozenset[str] = frozenset(
+    {
+        "file_content",
+        "file_bytes",
+        "file_data",
+        "attachment_content",
+        "attachment_bytes",
+    }
+)
 
 # ── in-memory + JSONL ─────────────────────────────────────────────────────────
 
@@ -48,7 +70,7 @@ _EVIDENCE_FILE_NAME = "action_evidence.jsonl"
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _evidence_path() -> Path:
@@ -61,7 +83,7 @@ def _append_jsonl(record: dict[str, Any]) -> None:
     try:
         with _evidence_path().open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 증거 기록 파일 append 실패 시 무시하고 계속 - 파일 기록은 보조 저장소이며 실패해도 주 판정/승인 흐름에 영향 없음, 쓰기 실패 자체를 안전하게 삼킴
         pass
 
 

@@ -152,7 +152,7 @@ async def send_user_present_status_event(
     payload = {"type": "user_present_status", **event}
     try:
         await ws.send(json.dumps(payload))
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - WebSocket status 전송 실패를 캡처해 ok=False, sent=False 로 안전하게 반환 - 전송 실패를 성공으로 위장하지 않음
         logger.warning("[status-sender] WS send 실패 wf=%s: %s", wf_id, type(exc).__name__)
         return {"ok": False, "errors": [f"SEND_ERROR: {type(exc).__name__}"], "sent": False}
 

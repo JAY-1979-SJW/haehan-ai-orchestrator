@@ -1,13 +1,15 @@
 """Small JSON run logger for EUM work commands."""
+
 from __future__ import annotations
 
 import json
 import traceback
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Iterator
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNS_DIR = ROOT / "data" / "eum_runs"
@@ -40,7 +42,7 @@ def _audit_event(
                 **(metadata or {}),
             },
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - _audit_event: 주석에 명시된 대로 best-effort 실시간 감사로그 전송 - 실패해도 무시하고 계속(로깅 실패가 본작업에 영향 없음)
         pass
 
 

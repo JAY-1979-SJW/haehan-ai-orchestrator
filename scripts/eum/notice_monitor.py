@@ -58,7 +58,7 @@ def _load_seen() -> set[str]:
         return set()
     try:
         return set(json.loads(p.read_text(encoding="utf-8")))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 이미 처리한 공지 ID 캐시(seen) 로드 실패 시 빈 set 반환 - 읽기전용 중복방지 캐시 폴백, 최악의 경우 중복 알림 정도일 뿐 위험 조작 없음
         return set()
 
 

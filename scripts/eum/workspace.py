@@ -163,7 +163,7 @@ def known_webman_targets() -> list[dict[str, Any]]:
     """Load WEBMAN targets from the existing deep explorer without running it."""
     try:
         from scripts.eum.full_explorer import WEBMAN_TARGETS
-    except Exception:
+    except Exception:  # noqa: BLE001 - 선택적 모듈(full_explorer의 WEBMAN_TARGETS) import 실패 시 빈 목록으로 폴백 - 해당 모듈이 없으면 그냥 빈 목록으로 계속 진행, 위험 조작 없음
         WEBMAN_TARGETS = []
 
     rows: list[dict[str, Any]] = []

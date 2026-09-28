@@ -188,7 +188,7 @@ def evaluate_server_browser_url_policy(
     try:
         parsed = urlparse(url_clean)
         host = (parsed.netloc or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL host 파싱 실패 시 URL 원문 전체를 host로 간주해 금지 도메인 키워드 검사(substring 매칭)를 계속 진행 - 파싱 실패가 오히려 더 넓게 매칭되어 차단 방향으로 작동하며, 뒤이은 '미분류 외부 도메인 기본 차단' 로직으로 인해 결과적으로 fail-closed(알 수 없으면 차단)
         host = url_clean.lower()
 
     for kw in _FORBIDDEN_DOMAIN_KEYWORDS:
