@@ -19264,6 +19264,46 @@
    "reason": "업무 흐름 이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/video/_cdp_tab.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "video",
+   "reason": "도메인(video) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/video/_upload_kakao_ep01.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "kakao",
+   "reason": "도메인(kakao) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/video/kakao_skill_bot_ep01.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "kakao",
+   "reason": "도메인(kakao) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/video/kakao_skill_bot_ep01_visuals.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "kakao",
+   "reason": "도메인(kakao) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/video/scripted_recorder.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "video",
+   "reason": "도메인(video) 자동화",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
