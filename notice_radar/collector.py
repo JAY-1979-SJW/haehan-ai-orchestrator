@@ -84,7 +84,7 @@ def download_attachments(candidate: NoticeCandidate, output_dir: str | Path) -> 
                         size_bytes=len(response.content),
                     )
                 )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - 공고 알림 레이더 수집기 -- 첨부파일 다운로드 실패는 개별 결과에 실패로 기록, 페이지 HTML 수집은 Playwright 실패 시 httpx로 폴백(모두 읽기 전용)
                 results.append(
                     AttachmentResult(
                         filename=f"download_failed_{idx}",
@@ -107,7 +107,7 @@ def _fetch_rendered_html(url: str) -> str:
             html = page.content()
             browser.close()
             return html
-    except Exception:
+    except Exception:  # noqa: BLE001 - 공고 알림 레이더 수집기 -- 첨부파일 다운로드 실패는 개별 결과에 실패로 기록, 페이지 HTML 수집은 Playwright 실패 시 httpx로 폴백(모두 읽기 전용)
         with httpx.Client(follow_redirects=True, timeout=45.0) as client:
             response = client.get(url)
             response.raise_for_status()
@@ -150,7 +150,7 @@ def _find_near_date(text: str, markers: list[str]) -> str | None:
     date_re = re.compile(r"(20\d{2})[.\-/년 ]\s*(\d{1,2})[.\-/월 ]\s*(\d{1,2})")
     candidates: list[tuple[int, str]] = []
     for match in date_re.finditer(text):
-        window = text[max(0, match.start() - 80): min(len(text), match.end() + 80)]
+        window = text[max(0, match.start() - 80) : min(len(text), match.end() + 80)]
         score = sum(1 for marker in markers if marker in window)
         y, m, d = match.groups()
         candidates.append((score, f"{int(y):04d}-{int(m):02d}-{int(d):02d}"))

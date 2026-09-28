@@ -14,7 +14,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -42,23 +42,45 @@ STATE_RUNTIME_NOT_AVAILABLE = "RUNTIME_NOT_AVAILABLE"
 
 # ── 허용 operation_type ──────────────────────────────────────────────────────
 
-_ALLOWED_OPERATIONS: frozenset[str] = frozenset({
-    "read", "navigate", "open_url", "readonly_search",
-    "readonly_scrape", "readonly_status_check",
-})
+_ALLOWED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "read",
+        "navigate",
+        "open_url",
+        "readonly_search",
+        "readonly_scrape",
+        "readonly_status_check",
+    }
+)
 
 # ── 차단 operation_type ──────────────────────────────────────────────────────
 
-_BLOCKED_OPERATIONS: frozenset[str] = frozenset({
-    "click", "type", "fill", "submit", "download", "upload",
-    "write", "delete", "update", "insert", "sign", "login_auto",
-})
+_BLOCKED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "click",
+        "type",
+        "fill",
+        "submit",
+        "download",
+        "upload",
+        "write",
+        "delete",
+        "update",
+        "insert",
+        "sign",
+        "login_auto",
+    }
+)
 
 # ── API 처리 사이트 카테고리 ─────────────────────────────────────────────────
 
-_API_CATEGORIES: frozenset[str] = frozenset({
-    "cloud_service", "google", "google_workspace",
-})
+_API_CATEGORIES: frozenset[str] = frozenset(
+    {
+        "cloud_service",
+        "google",
+        "google_workspace",
+    }
+)
 
 # ── text_snippet 민감 키워드 (redaction 대상) ─────────────────────────────────
 
@@ -91,10 +113,16 @@ _SECURITY_REQ_PATTERNS: list[tuple[str, str, bool]] = [
 
 # ── 사용자 직접 인증 필요 auth_method ────────────────────────────────────────
 
-_USER_PRESENT_AUTH_METHODS: frozenset[str] = frozenset({
-    "certificate", "financial_certificate", "otp", "security_card",
-    "simple_auth", "password",
-})
+_USER_PRESENT_AUTH_METHODS: frozenset[str] = frozenset(
+    {
+        "certificate",
+        "financial_certificate",
+        "otp",
+        "security_card",
+        "simple_auth",
+        "password",
+    }
+)
 
 # ── text_snippet 최대 길이 ───────────────────────────────────────────────────
 
@@ -110,6 +138,7 @@ def _redact_url(url: str) -> str:
     """URL에서 도메인만 남기고 나머지는 [REDACTED]로 처리한다."""
     try:
         from urllib.parse import urlparse
+
         parsed = urlparse(url)
         scheme = parsed.scheme or "https"
         netloc = parsed.netloc or url
@@ -118,7 +147,7 @@ def _redact_url(url: str) -> str:
         short_path = "/" + path_parts[0] if path_parts else ""
         suffix = "/..." if len(path_parts) > 1 else ""
         return f"{scheme}://[REDACTED].{netloc.split('.')[-1] if '.' in netloc else netloc}{short_path}{suffix}"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 읽기 전용 브라우저 런타임 -- URL 리다크션 실패 시 [REDACTED_URL]로 대체(정보 노출 방지 방향), 실행 실패는 DECISION_RUNTIME_NOT_AVAILABLE로 처리(fail-closed)
         return "[REDACTED_URL]"
 
 
@@ -251,47 +280,56 @@ def execute_readonly_browser_task(payload: dict[str, Any]) -> dict[str, Any]:
     """
     permission = evaluate_readonly_browser_permission(payload)
     if permission["runtime_decision"] != DECISION_READONLY_ALLOWED:
-        return build_readonly_browser_result({
-            **payload,
-            **permission,
-            "page_title": None,
-            "text_snippet_redacted": None,
-            "detected_auth_methods": [],
-            "detected_security_requirements": [],
-            "final_url_redacted": None,
-            "final_url_hash": None,
-        })
+        return build_readonly_browser_result(
+            {
+                **payload,
+                **permission,
+                "page_title": None,
+                "text_snippet_redacted": None,
+                "detected_auth_methods": [],
+                "detected_security_requirements": [],
+                "final_url_redacted": None,
+                "final_url_hash": None,
+            }
+        )
 
     target_url = payload.get("target_url", "")
     if not target_url:
-        return build_readonly_browser_result({
-            **payload,
-            "runtime_decision": DECISION_BLOCK,
-            "blocked_reason": "MISSING_TARGET_URL",
-            "readonly_execution": False,
-            "page_title": None,
-            "text_snippet_redacted": None,
-            "detected_auth_methods": [],
-            "detected_security_requirements": [],
-            "final_url_redacted": None,
-            "final_url_hash": None,
-        })
+        return build_readonly_browser_result(
+            {
+                **payload,
+                "runtime_decision": DECISION_BLOCK,
+                "blocked_reason": "MISSING_TARGET_URL",
+                "readonly_execution": False,
+                "page_title": None,
+                "text_snippet_redacted": None,
+                "detected_auth_methods": [],
+                "detected_security_requirements": [],
+                "final_url_redacted": None,
+                "final_url_hash": None,
+            }
+        )
 
     try:
-        from .browser_reader import open_url_readonly, BrowserDependencyMissing
+        from .browser_reader import (  # noqa: F401 - BrowserDependencyMissing은 예외 타입명 문자열 비교(type(exc).__name__)로만 쓰여 심볼 자체는 미사용, 기존 코드(이번 BLE001 작업과 무관)
+            BrowserDependencyMissing,
+            open_url_readonly,
+        )
     except ImportError:
-        return build_readonly_browser_result({
-            **payload,
-            "runtime_decision": DECISION_RUNTIME_NOT_AVAILABLE,
-            "blocked_reason": "BROWSER_IMPORT_FAILED",
-            "readonly_execution": False,
-            "page_title": None,
-            "text_snippet_redacted": None,
-            "detected_auth_methods": [],
-            "detected_security_requirements": [],
-            "final_url_redacted": None,
-            "final_url_hash": None,
-        })
+        return build_readonly_browser_result(
+            {
+                **payload,
+                "runtime_decision": DECISION_RUNTIME_NOT_AVAILABLE,
+                "blocked_reason": "BROWSER_IMPORT_FAILED",
+                "readonly_execution": False,
+                "page_title": None,
+                "text_snippet_redacted": None,
+                "detected_auth_methods": [],
+                "detected_security_requirements": [],
+                "final_url_redacted": None,
+                "final_url_hash": None,
+            }
+        )
 
     try:
         raw_result = open_url_readonly(
@@ -300,7 +338,7 @@ def execute_readonly_browser_task(payload: dict[str, Any]) -> dict[str, Any]:
             timeout_ms=15000,
             max_html_chars=500000,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 읽기 전용 브라우저 런타임 -- URL 리다크션 실패 시 [REDACTED_URL]로 대체(정보 노출 방지 방향), 실행 실패는 DECISION_RUNTIME_NOT_AVAILABLE로 처리(fail-closed)
         err_str = str(exc)
         if "BrowserDependencyMissing" in type(exc).__name__ or "Executable doesn't exist" in err_str:
             decision = DECISION_RUNTIME_NOT_AVAILABLE
@@ -309,18 +347,20 @@ def execute_readonly_browser_task(payload: dict[str, Any]) -> dict[str, Any]:
             decision = DECISION_FAILED
             reason = "BROWSER_OPEN_FAILED"
 
-        return build_readonly_browser_result({
-            **payload,
-            "runtime_decision": decision,
-            "blocked_reason": reason,
-            "readonly_execution": False,
-            "page_title": None,
-            "text_snippet_redacted": None,
-            "detected_auth_methods": [],
-            "detected_security_requirements": [],
-            "final_url_redacted": None,
-            "final_url_hash": None,
-        })
+        return build_readonly_browser_result(
+            {
+                **payload,
+                "runtime_decision": decision,
+                "blocked_reason": reason,
+                "readonly_execution": False,
+                "page_title": None,
+                "text_snippet_redacted": None,
+                "detected_auth_methods": [],
+                "detected_security_requirements": [],
+                "final_url_redacted": None,
+                "final_url_hash": None,
+            }
+        )
 
     # 결과 분석
     page_title = (raw_result.get("title") or "")[:_TITLE_MAX_CHARS]
@@ -334,36 +374,40 @@ def execute_readonly_browser_task(payload: dict[str, Any]) -> dict[str, Any]:
 
     # CAPTCHA 등 blocker 감지 시 BLOCK
     if blockers:
-        return build_readonly_browser_result({
+        return build_readonly_browser_result(
+            {
+                **payload,
+                "runtime_decision": DECISION_BLOCK,
+                "blocked_reason": f"SECURITY_BLOCKED:{','.join(blockers)}",
+                "readonly_execution": True,
+                "page_title": page_title,
+                "text_snippet_redacted": _redact_snippet(raw_text),
+                "detected_auth_methods": detected_auth,
+                "detected_security_requirements": detected_security,
+                "final_url_redacted": _redact_url(final_url),
+                "final_url_hash": _hash_url(final_url),
+            }
+        )
+
+    # 인증 필요 감지 시 USER_PRESENT_REQUIRED
+    user_present_required = bool(set(detected_auth) & _USER_PRESENT_AUTH_METHODS)
+    runtime_decision = DECISION_REQUIRE_USER_PRESENT if user_present_required else DECISION_READONLY_ALLOWED
+
+    return build_readonly_browser_result(
+        {
             **payload,
-            "runtime_decision": DECISION_BLOCK,
-            "blocked_reason": f"SECURITY_BLOCKED:{','.join(blockers)}",
+            "runtime_decision": runtime_decision,
+            "blocked_reason": None,
             "readonly_execution": True,
+            "user_present_required": user_present_required,
             "page_title": page_title,
             "text_snippet_redacted": _redact_snippet(raw_text),
             "detected_auth_methods": detected_auth,
             "detected_security_requirements": detected_security,
             "final_url_redacted": _redact_url(final_url),
             "final_url_hash": _hash_url(final_url),
-        })
-
-    # 인증 필요 감지 시 USER_PRESENT_REQUIRED
-    user_present_required = bool(set(detected_auth) & _USER_PRESENT_AUTH_METHODS)
-    runtime_decision = DECISION_REQUIRE_USER_PRESENT if user_present_required else DECISION_READONLY_ALLOWED
-
-    return build_readonly_browser_result({
-        **payload,
-        "runtime_decision": runtime_decision,
-        "blocked_reason": None,
-        "readonly_execution": True,
-        "user_present_required": user_present_required,
-        "page_title": page_title,
-        "text_snippet_redacted": _redact_snippet(raw_text),
-        "detected_auth_methods": detected_auth,
-        "detected_security_requirements": detected_security,
-        "final_url_redacted": _redact_url(final_url),
-        "final_url_hash": _hash_url(final_url),
-    })
+        }
+    )
 
 
 def build_readonly_browser_result(payload: dict[str, Any]) -> dict[str, Any]:
@@ -389,18 +433,33 @@ def build_readonly_browser_result(payload: dict[str, Any]) -> dict[str, Any]:
         "safe_to_dispatch": False,
         "safe_to_execute": False,
         "audit_required": True,
-        "created_at": datetime.now(tz=timezone.utc).isoformat(),
+        "created_at": datetime.now(tz=UTC).isoformat(),
     }
 
 
 def redact_readonly_browser_result(result: dict[str, Any]) -> dict[str, Any]:
     """결과 dict에서 민감 필드를 제거한다."""
-    _forbidden = frozenset({
-        "target_url", "final_url", "raw_html", "html", "screenshot",
-        "cookie", "session", "token", "password", "otp",
-        "certificate_password", "localStorage", "sessionStorage",
-        "internal_policy", "audit_raw", "secret", "api_key",
-    })
+    _forbidden = frozenset(
+        {
+            "target_url",
+            "final_url",
+            "raw_html",
+            "html",
+            "screenshot",
+            "cookie",
+            "session",
+            "token",
+            "password",
+            "otp",
+            "certificate_password",
+            "localStorage",
+            "sessionStorage",
+            "internal_policy",
+            "audit_raw",
+            "secret",
+            "api_key",
+        }
+    )
     return {k: v for k, v in result.items() if k not in _forbidden}
 
 
@@ -409,9 +468,15 @@ def validate_readonly_browser_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required_fields = [
-        "runtime_decision", "readonly_execution", "user_present_required",
-        "local_agent_required", "api_required", "safe_to_dispatch",
-        "safe_to_execute", "audit_required", "created_at",
+        "runtime_decision",
+        "readonly_execution",
+        "user_present_required",
+        "local_agent_required",
+        "api_required",
+        "safe_to_dispatch",
+        "safe_to_execute",
+        "audit_required",
+        "created_at",
     ]
     for field in required_fields:
         if field not in result:
@@ -424,9 +489,12 @@ def validate_readonly_browser_result(result: dict[str, Any]) -> list[str]:
         errors.append("safe_to_dispatch는 항상 False여야 한다")
 
     valid_decisions = {
-        DECISION_READONLY_ALLOWED, DECISION_REQUIRE_USER_PRESENT,
-        DECISION_REQUIRE_API, DECISION_BLOCK,
-        DECISION_RUNTIME_NOT_AVAILABLE, DECISION_FAILED,
+        DECISION_READONLY_ALLOWED,
+        DECISION_REQUIRE_USER_PRESENT,
+        DECISION_REQUIRE_API,
+        DECISION_BLOCK,
+        DECISION_RUNTIME_NOT_AVAILABLE,
+        DECISION_FAILED,
     }
     decision = result.get("runtime_decision")
     if decision not in valid_decisions:

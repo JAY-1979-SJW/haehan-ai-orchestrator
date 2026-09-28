@@ -4,6 +4,7 @@ This module intentionally avoids Playwright for tab listing/closing. The CDP
 browser can be reachable over HTTP even when Playwright's driver process is
 blocked by Windows permissions or a stale connection.
 """
+
 from __future__ import annotations
 
 import json
@@ -34,7 +35,7 @@ def _close_target(target_id: str) -> bool:
         with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/close/{quoted}", timeout=5) as resp:
             body = resp.read().decode("utf-8", errors="replace")
         return "Target is closing" in body or body.strip().lower() in {"ok", ""}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 브라우저 탭 모니터 -- CDP 탭 닫기/조회 실패 시 False/빈 리스트 반환(읽기 전용 모니터링)
         log.debug("[tab-monitor] close failed target=%s err=%s", target_id, exc)
         return False
 
@@ -43,7 +44,7 @@ def get_active_tabs() -> list[dict[str, Any]]:
     """Return active page targets from the running CDP browser."""
     try:
         rows = _cdp_json("/json/list")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 브라우저 탭 모니터 -- CDP 탭 닫기/조회 실패 시 False/빈 리스트 반환(읽기 전용 모니터링)
         log.debug("[tab-monitor] tab query failed: %s", exc)
         return []
 
@@ -74,7 +75,7 @@ def close_extra_tabs(keep_count: int = 1, target_domain: str | None = None) -> i
     if target_domain:
         target_tabs = [tab for tab in tabs if target_domain in tab.get("url", "")]
     else:
-        target_tabs = tabs[max(0, keep_count):]
+        target_tabs = tabs[max(0, keep_count) :]
 
     closed = 0
     for tab in target_tabs:

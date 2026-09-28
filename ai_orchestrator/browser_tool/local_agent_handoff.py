@@ -10,6 +10,7 @@ Local Agent Handoff 모듈
 - 안전한 URL과 action만 전달
 - forbidden 목록은 항상 포함
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -23,10 +24,17 @@ HANDOFF_LOCAL_READONLY = "LOCAL_AGENT_READONLY"
 
 # ── 허용 action ────────────────────────────────────────────────────────────────
 
-_ALLOWED_HANDOFF_ACTIONS: frozenset[str] = frozenset({
-    "open", "read", "navigate", "open_url", "login_wait",
-    "public_read", "search",
-})
+_ALLOWED_HANDOFF_ACTIONS: frozenset[str] = frozenset(
+    {
+        "open",
+        "read",
+        "navigate",
+        "open_url",
+        "login_wait",
+        "public_read",
+        "search",
+    }
+)
 
 # ── 금지 목록 (항상 포함) ─────────────────────────────────────────────────────
 
@@ -51,10 +59,14 @@ _FORBIDDEN_ALWAYS: list[str] = [
     "screenshot_sensitive",
 ]
 
-_ALLOWED_URL_DOMAINS: frozenset[str] = frozenset({
-    "g2b.go.kr", "www.g2b.go.kr",
-    "hometax.go.kr", "www.hometax.go.kr",
-})
+_ALLOWED_URL_DOMAINS: frozenset[str] = frozenset(
+    {
+        "g2b.go.kr",
+        "www.g2b.go.kr",
+        "hometax.go.kr",
+        "www.hometax.go.kr",
+    }
+)
 
 
 def build_local_agent_handoff(
@@ -117,13 +129,13 @@ def _sanitize_url(url: str) -> str:
         sensitive_params = {"token", "session", "auth", "password", "otp", "key"}
         if parsed.query:
             from urllib.parse import parse_qs, urlencode
+
             params = parse_qs(parsed.query, keep_blank_values=True)
-            clean_params = {k: v for k, v in params.items()
-                           if k.lower() not in sensitive_params}
+            clean_params = {k: v for k, v in params.items() if k.lower() not in sensitive_params}
             clean_query = urlencode(clean_params, doseq=True)
             return parsed._replace(query=clean_query).geturl()
         return url
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 에이전트 핸드오프 페이로드의 URL 정리/도메인 추출 -- 실패 시 원본 URL 또는 빈 문자열 반환(안전한 폴백), 쓰기 없음
         return url
 
 
@@ -134,8 +146,12 @@ def validate_handoff_payload(payload: dict[str, Any]) -> list[str]:
     """
     violations: list[str] = []
     sensitive_checks = {
-        "cookie_included", "session_included", "password_included",
-        "otp_included", "cert_info_included", "sensitive_data_included",
+        "cookie_included",
+        "session_included",
+        "password_included",
+        "otp_included",
+        "cert_info_included",
+        "sensitive_data_included",
     }
     for field in sensitive_checks:
         if payload.get(field) is True:
@@ -175,7 +191,7 @@ def handoff_to_task_protocol(
     서버 task queue로 전달하기 위한 bridge 함수.
     민감 데이터 없음이 보장된다.
     """
-    from ai_orchestrator.local_agent.task_protocol import build_task, ALLOWED_TASK_ACTIONS
+    from ai_orchestrator.local_agent.task_protocol import ALLOWED_TASK_ACTIONS, build_task
 
     raw_action = (handoff.get("action") or "open").lower()
     protocol_action = _HANDOFF_ACTION_TO_PROTOCOL.get(raw_action, "open_url")
@@ -205,5 +221,5 @@ def handoff_to_task_protocol(
 def _extract_domain(url: str) -> str:
     try:
         return urlparse(url).netloc.lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 에이전트 핸드오프 페이로드의 URL 정리/도메인 추출 -- 실패 시 원본 URL 또는 빈 문자열 반환(안전한 폴백), 쓰기 없음
         return ""

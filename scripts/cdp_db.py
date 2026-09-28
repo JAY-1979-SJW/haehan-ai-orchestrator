@@ -290,7 +290,7 @@ def log_finish(
             try:
                 t0 = datetime.fromisoformat(started["started_at"])
                 duration = (datetime.now(UTC) - t0).total_seconds()
-            except Exception:
+            except Exception:  # noqa: BLE001 - CDP 작업 로그 DB -- 트랜잭션 컨텍스트는 예외 시 rollback 후 재발생시켜 상위로 전파(swallow 아님), 소요시간/인자 표시 파싱 실패는 표시용 부가 값만 생략(DB 쓰기 자체와 무관)
                 pass
         con.execute(
             """
@@ -606,7 +606,7 @@ def print_site_requests(site_name: str | None = None, limit: int = 30) -> None:
             import json
 
             args = " ".join(json.loads(args)) or "-"
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP 작업 로그 DB -- 트랜잭션 컨텍스트는 예외 시 rollback 후 재발생시켜 상위로 전파(swallow 아님), 소요시간/인자 표시 파싱 실패는 표시용 부가 값만 생략(DB 쓰기 자체와 무관)
             pass
         print(
             f"  {r['id']:<5} {r['requested_at']:<22} {r['site_name']:<10} "

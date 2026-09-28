@@ -1,4 +1,5 @@
 """네이버 MyBox Mixin — auto_structure_builder 자동 생성."""
+
 from __future__ import annotations
 
 import time
@@ -44,14 +45,17 @@ class MyBoxMixin:
             raw = result.get("list", [])
             if not isinstance(raw, list):
                 return []
-            return [{
-                "name":         f.get("resourcePath", "").lstrip("/").split("/")[-1] or f.get("name", ""),
-                "type":         f.get("resourceType", "file"),
-                "size":         f.get("resourceSize", 0),
-                "mtime":        f.get("updateDate", 0),
-                "resource_key": f.get("resourceKey", ""),
-            } for f in raw]
-        except Exception:
+            return [
+                {
+                    "name": f.get("resourcePath", "").lstrip("/").split("/")[-1] or f.get("name", ""),
+                    "type": f.get("resourceType", "file"),
+                    "size": f.get("resourceSize", 0),
+                    "mtime": f.get("updateDate", 0),
+                    "resource_key": f.get("resourceKey", ""),
+                }
+                for f in raw
+            ]
+        except Exception:  # noqa: BLE001 - 네이버 마이박스 파일 목록/용량 조회 -- 읽기 전용 JSON API, 실패 시 빈 리스트/딕셔너리 반환
             return []
 
     def mybox_quota(self) -> dict:
@@ -72,11 +76,11 @@ class MyBoxMixin:
                 return {}
             result = data.get("result", {})
             return {
-                "used":     result.get("usedQuota", 0),
-                "total":    result.get("totalQuota", 0),
-                "unused":   result.get("unusedQuota", 0),
+                "used": result.get("usedQuota", 0),
+                "total": result.get("totalQuota", 0),
+                "unused": result.get("unusedQuota", 0),
                 "file_max": result.get("fileMaxSize", 0),
-                "unit":     "bytes",
+                "unit": "bytes",
             }
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 마이박스 파일 목록/용량 조회 -- 읽기 전용 JSON API, 실패 시 빈 리스트/딕셔너리 반환
             return {}

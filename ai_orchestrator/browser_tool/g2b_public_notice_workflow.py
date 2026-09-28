@@ -118,7 +118,7 @@ def _build_canonical_url(original_url: str, normalized_domain: str) -> str:
         parsed = urlparse(original_url)
         if parsed.netloc and parsed.netloc.lower() != normalized_domain:
             return original_url.replace(parsed.netloc, normalized_domain, 1)
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
     return original_url
 
@@ -204,7 +204,7 @@ def classify_g2b_public_notice_workflow_request(
     try:
         parsed = urlparse(url) if url else None
         raw_domain = parsed.netloc if parsed else ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 나라장터 공고 URL 도메인 정규화 -- urlparse 실패 시 원본 URL을 그대로 반환하는 안전한 폴백, 쓰기 없음
         raw_domain = ""
     domain_info = normalize_g2b_domain(raw_domain)  # noqa: F841
 

@@ -123,7 +123,7 @@ def extract_origin(url: str) -> str:
     try:
         p = urlparse(url)
         return f"{p.scheme}://{p.netloc}"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 폼 제출 정책 allowlist 검사 -- origin/path 파싱 실패 시 매치 실패(False)로 처리되어 결과적으로 차단 방향(fail-closed)
         return ""
 
 
@@ -235,7 +235,7 @@ def validate_path_match(url: str, allowed_paths: list[str]) -> bool:
         p = urlparse(url)
         actual_path = p.path or "/"
         return path_matches_allowlist(actual_path, allowed_paths)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 폼 제출 정책 allowlist 검사 -- origin/path 파싱 실패 시 매치 실패(False)로 처리되어 결과적으로 차단 방향(fail-closed)
         return False
 
 

@@ -162,7 +162,7 @@ class RealPlaywrightBackend:
                     status="ok",
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 워커 백엔드 -- 실행 실패는 success=False 응답으로 변환(fail-closed)
             return WorkerBrowserResponse(
                 success=False,
                 task_id=request.task_id,
@@ -183,5 +183,5 @@ class RealPlaywrightBackend:
                     context.close()
                 if browser is not None:
                     browser.close()
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass

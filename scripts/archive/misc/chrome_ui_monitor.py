@@ -9,6 +9,7 @@ IDE/터미널 세션과 무관함.
     python scripts/cdp_client.py chrome-ui-monitor status
     python scripts/cdp_client.py chrome-ui-monitor stop
 """
+
 from __future__ import annotations
 
 import json
@@ -20,9 +21,14 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
-from scripts.logger import get_logger
-from scripts.popup_monitor import _record_event
-from scripts.popup_classifier import classify, is_auto_handleable
+from scripts.logger import get_logger  # noqa: E402 - REPO_ROOT 계산 이후 임포트하는 기존 구조(이번 BLE001 작업과 무관)
+from scripts.popup_classifier import (  # noqa: E402 - REPO_ROOT 계산 이후 임포트하는 기존 구조(이번 BLE001 작업과 무관)
+    classify,
+    is_auto_handleable,
+)
+from scripts.popup_monitor import (  # noqa: E402 - REPO_ROOT 계산 이후 임포트하는 기존 구조(이번 BLE001 작업과 무관)
+    _record_event,
+)
 
 _log = get_logger(__name__)
 
@@ -50,14 +56,16 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
     signal.signal(signal.SIGTERM, _signal_handler)
     signal.signal(signal.SIGINT, _signal_handler)
 
-    _save_state({
-        "running": True,
-        "pid": __import__("os").getpid(),
-        "started_at": time.time(),
-        "processed": 0,
-        "handled": 0,
-        "notified": 0,
-    })
+    _save_state(
+        {
+            "running": True,
+            "pid": __import__("os").getpid(),
+            "started_at": time.time(),
+            "processed": 0,
+            "handled": 0,
+            "notified": 0,
+        }
+    )
 
     processed = 0
     handled = 0
@@ -87,8 +95,10 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
 
                     _log.info(
                         "[chrome_ui_monitor] %s @ %s → %s/%s",
-                        marker, win_title[:30],
-                        decision["category"], decision["action"],
+                        marker,
+                        win_title[:30],
+                        decision["category"],
+                        decision["action"],
                     )
 
                     if auto_handle and is_auto_handleable(decision) and decision["target"]:
@@ -107,7 +117,7 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
                                 handled += 1
                             else:
                                 notified += 1
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001 - 크롬 UI 이벤트 모니터 -- 자동 처리 실패 시 사용자에게 알림(notified)으로 안전하게 폴백(자동실행 강행 아님), 루프 자체 오류는 디버그 로깅 후 무시하고 폴링 계속
                             _log.warning("[chrome_ui_monitor] 자동 처리 실패: %s", e)
                             _record_event(ev, decision, status="notified", source="chrome_ui")
                             notified += 1
@@ -115,28 +125,32 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
                         _record_event(ev, decision, status="notified", source="chrome_ui")
                         notified += 1
 
-            _save_state({
-                "running": True,
-                "pid": __import__("os").getpid(),
-                "updated_at": time.time(),
-                "processed": processed,
-                "handled": handled,
-                "notified": notified,
-            })
-        except Exception as e:
+            _save_state(
+                {
+                    "running": True,
+                    "pid": __import__("os").getpid(),
+                    "updated_at": time.time(),
+                    "processed": processed,
+                    "handled": handled,
+                    "notified": notified,
+                }
+            )
+        except Exception as e:  # noqa: BLE001 - 크롬 UI 이벤트 모니터 -- 자동 처리 실패 시 사용자에게 알림(notified)으로 안전하게 폴백(자동실행 강행 아님), 루프 자체 오류는 디버그 로깅 후 무시하고 폴링 계속
             _log.debug("[chrome_ui_monitor] 루프 오류 무시: %s", e)
 
         _stop_event.wait(timeout=poll_interval_s)
 
     _log.info("Chrome UI Monitor 종료")
-    _save_state({
-        "running": False,
-        "pid": __import__("os").getpid(),
-        "stopped_at": time.time(),
-        "processed": processed,
-        "handled": handled,
-        "notified": notified,
-    })
+    _save_state(
+        {
+            "running": False,
+            "pid": __import__("os").getpid(),
+            "stopped_at": time.time(),
+            "processed": processed,
+            "handled": handled,
+            "notified": notified,
+        }
+    )
 
 
 if __name__ == "__main__":

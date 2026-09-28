@@ -196,7 +196,7 @@ def run_agent(
                 actions_executed.append(step["action"])
                 log_id = str(uuid.uuid4())[:8]
                 audit_log_ids.append(log_id)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 범용 사이트 자동화 에이전트 -- 액션 실행 실패는 즉시 STATUS_FAILED 결과로 반환(fail-closed)
                 return _build_agent_result(
                     task_id=task_id,
                     site_id=matched_profile,
@@ -218,7 +218,7 @@ def run_agent(
     if save_learned and auto_steps:
         try:
             _update_learned_profile(host, site_type, plan, selectors)
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass  # 학습 저장 실패는 무시
 
     return _build_agent_result(
