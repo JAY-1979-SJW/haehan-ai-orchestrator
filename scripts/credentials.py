@@ -22,7 +22,6 @@ CLI:
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -59,7 +58,7 @@ def _get_or_create_key() -> bytes:
     key = Fernet.generate_key()
     KEY_FILE.write_bytes(key)
     try:
-        os.chmod(KEY_FILE, 0o600)
+        KEY_FILE.chmod(0o600)
     except Exception:  # noqa: BLE001 - chmod 권한 강화/레거시 파일 아카이브 이동 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
         pass
     return key
@@ -123,7 +122,7 @@ def _save_raw(data: dict) -> None:
         encoding="utf-8",
     )
     try:
-        os.chmod(CRED_FILE, 0o600)
+        CRED_FILE.chmod(0o600)
     except Exception:  # noqa: BLE001 - chmod 권한 강화/레거시 파일 아카이브 이동 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
         pass
 

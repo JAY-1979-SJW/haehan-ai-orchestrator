@@ -15,7 +15,7 @@ def analyze_work_items():
     snapshots = {}
     for snapshot_file in SITEMAP_DIR.glob("eum.cw.or.kr_*.json"):
         try:
-            with open(snapshot_file, encoding="utf-8") as f:
+            with snapshot_file.open(encoding="utf-8") as f:
                 data = json.load(f)
                 page_title = data.get("title", "")
                 url = data.get("url", "")
@@ -113,7 +113,7 @@ def analyze_work_items():
 
     # 저장
     output_file = SITEMAP_DIR / "eum_work_analysis.json"
-    with open(output_file, "w", encoding="utf-8") as f:
+    with output_file.open("w", encoding="utf-8") as f:
         json.dump(work_summary, f, ensure_ascii=False, indent=2)
 
     print(f"\n✓ 업무 분석 결과 저장: {output_file}")

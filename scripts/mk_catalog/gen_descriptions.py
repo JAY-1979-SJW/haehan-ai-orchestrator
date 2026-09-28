@@ -1,8 +1,9 @@
 import hashlib
 import json
 import re
+from pathlib import Path
 
-catalog = json.load(open("data/mk_catalog/products_web.json", encoding="utf-8"))
+catalog = json.load(Path("data/mk_catalog/products_web.json").open(encoding="utf-8"))
 
 # 카테고리별: 문제 프레이밍 헤드카피 / 추천 공간 / 타겟 페르소나 / 구매포인트 불릿
 CAT_INFO = {
@@ -353,6 +354,6 @@ def gen_desc(c):
 for c in catalog:
     c["desc"] = gen_desc(c)
 
-json.dump(catalog, open("data/mk_catalog/products_web.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(catalog, Path("data/mk_catalog/products_web.json").open("w", encoding="utf-8"), ensure_ascii=False)
 print("done")
 print(catalog[10]["desc"])
