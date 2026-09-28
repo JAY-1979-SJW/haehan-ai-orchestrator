@@ -345,7 +345,7 @@ def write_lock_file(paths: GuardPaths, owner_pid: int) -> None:
     payload = {"pid": int(owner_pid), "ts": time.time()}
     tmp = paths.lock_file.with_suffix(paths.lock_file.suffix + ".tmp")
     tmp.write_text(json.dumps(payload), encoding="utf-8")
-    os.replace(tmp, paths.lock_file)
+    tmp.replace(paths.lock_file)
 
 
 def read_lock_file(paths: GuardPaths) -> dict[str, Any]:

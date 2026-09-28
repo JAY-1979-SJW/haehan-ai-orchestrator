@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 _SAFE_FIELDS = (
@@ -54,7 +54,7 @@ def present_installer_in_explorer(
             opened=False,
         )
 
-    if not os.path.exists(local_path):
+    if not Path(local_path).exists():
         return _result(
             status=PRESENT_FAILED,
             installer_safe_name=_safe_name(installer_safe_name),
