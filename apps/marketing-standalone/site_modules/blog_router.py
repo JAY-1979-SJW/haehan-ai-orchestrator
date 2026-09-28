@@ -172,6 +172,7 @@ def publish(draft: dict, auto_images: bool = True, blog_id: str | None = None) -
         "body": body,
         "body_segments": split_body(body, parts=max(1, len(images))) if images else None,
         "tags": draft.get("tags", []),
+        "visibility": draft.get("visibility", "public"),
     }
     pw, _browser, page = connect_and_ensure_login(blog_id=target_blog_id)
     try:
