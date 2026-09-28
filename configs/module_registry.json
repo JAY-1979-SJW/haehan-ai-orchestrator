@@ -19304,6 +19304,14 @@
    "reason": "도메인(video) 자동화",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/ops/ruff_new_only_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

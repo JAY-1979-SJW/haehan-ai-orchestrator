@@ -14,6 +14,7 @@ select = [
     "I",    # isort (import 정렬)
     "UP",   # pyupgrade (구버전 문법)
     "RUF",  # ruff 전용 규칙
+    "BLE",  # flake8-blind-except (STD-04: except Exception 남용 금지, 2026-09-28 추가)
 ]
 ignore = [
     "E501",   # line too long — 120자 제한으로 완화
