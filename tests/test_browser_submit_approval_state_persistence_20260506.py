@@ -165,7 +165,7 @@ class TestApprovalStateAppend:
         append_approval_state_event(log_file, event)
 
         assert log_file.exists()
-        with open(log_file) as f:
+        with log_file.open() as f:
             line = f.read().strip()
             saved_event = json.loads(line)
             assert saved_event["validation_id"] == "val_123"
@@ -257,7 +257,7 @@ class TestReadApprovalStateEvents:
         append_approval_state_event(log_file, event1)
 
         # Add blank line
-        with open(log_file, "a") as f:
+        with log_file.open("a") as f:
             f.write("\n")
 
         event2 = create_approval_requested_event(
@@ -274,7 +274,7 @@ class TestReadApprovalStateEvents:
     def test_read_invalid_json_raises_error(self, tmp_path):
         """Should raise ApprovalStateError for invalid JSON."""
         log_file = tmp_path / "approval_state.jsonl"
-        with open(log_file, "w") as f:
+        with log_file.open("w") as f:
             f.write("invalid json line\n")
 
         with pytest.raises(ApprovalStateError, match="Invalid JSON"):

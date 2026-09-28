@@ -7,10 +7,11 @@ import sys
 import time
 import urllib.request
 import uuid
+from pathlib import Path
 
 import websocket
 
-sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 CREDS_FILE = "data/.tmp_creds.pkl"
 GABIA_TAB = "1620EC5553AE2CFFD42553A8DFD4E915"
@@ -51,7 +52,7 @@ def save(tabs, tid, domains, fname):
         "cookie_count": len(filtered),
         "cookies": filtered,
     }
-    with open(fname, "w", encoding="utf-8") as f:
+    with Path(fname).open("w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
     return len(filtered)
 
@@ -93,13 +94,13 @@ def cap_screenshot(tabs, tid, fname):
         },
     )
     img = base64.b64decode(r2["result"]["data"])
-    with open(fname, "wb") as f:
+    with Path(fname).open("wb") as f:
         f.write(img)
     return fname
 
 
 def main(gabia_captcha: str, datago_captcha: str = ""):
-    with open(CREDS_FILE, "rb") as f:
+    with Path(CREDS_FILE).open("rb") as f:
         creds = pickle.load(f)
 
     tabs = json.loads(urllib.request.urlopen("http://localhost:9222/json").read())

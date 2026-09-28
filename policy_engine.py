@@ -1,18 +1,17 @@
-import os
+from pathlib import Path
+
 import yaml
-from typing import Optional
+
+_POLICY_PATH = Path(__file__).parent / "policies" / "default_policy.yaml"
 
 
-_POLICY_PATH = os.path.join(os.path.dirname(__file__), "policies", "default_policy.yaml")
-
-
-def load_policy(path: Optional[str] = None) -> dict:
+def load_policy(path: str | None = None) -> dict:
     target = path or _POLICY_PATH
-    with open(target, encoding="utf-8") as f:
+    with Path(target).open(encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
-def get_risk_level_for_action(action_type: str, policy: dict) -> Optional[str]:
+def get_risk_level_for_action(action_type: str, policy: dict) -> str | None:
     for level, cfg in policy.get("risk_levels", {}).items():
         if action_type in cfg.get("actions", []):
             return level

@@ -16,17 +16,18 @@
 Playwright 가 없는 환경에서도 import/테스트는 깨지지 않아야 하므로, 실제 브라우저 기동은
 `open_persistent_context` 호출 시점에서만 수행한다.
 """
+
 from __future__ import annotations
 
 import json
 import logging
-import os
 import threading
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator, Literal, Optional
+from typing import Any, Literal
 
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
@@ -40,18 +41,19 @@ SessionStatus = Literal["ACTIVE", "EXPIRED", "REAUTH_REQUIRED", "UNKNOWN"]
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 @dataclass
 class SessionMeta:
     """세션 상태 메타데이터. 쿠키/토큰 원문은 절대 담지 않는다."""
+
     site_id: str
     status: SessionStatus = "UNKNOWN"
-    last_verified_at: str = ""      # post_login_verify 성공 시 갱신
-    last_reauth_at: str = ""        # 재인증 완료 시 갱신
+    last_verified_at: str = ""  # post_login_verify 성공 시 갱신
+    last_reauth_at: str = ""  # 재인증 완료 시 갱신
     last_checked_at: str = field(default_factory=_utc_now_iso)
-    last_reason: str = ""           # 짧은 코드 (예: "redirected_to_login")
+    last_reason: str = ""  # 짧은 코드 (예: "redirected_to_login")
     detected_url: str = ""
     # 재인증 대기 중인 job_id (있을 때만). 감사/복구용.
     paused_job_id: str = ""
@@ -68,7 +70,7 @@ def _meta_read(site_id: str) -> SessionMeta:
     if not path.is_file():
         return SessionMeta(site_id=site_id, status="UNKNOWN")
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with path.open("r", encoding="utf-8") as f:
             raw = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         logger.warning("[SESSION-META-READ-FAIL] site=%s err=%s", site_id, type(e).__name__)
@@ -84,9 +86,9 @@ def _meta_write(meta: SessionMeta) -> None:
     path = secrets_policy.session_meta_path(meta.site_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
+    with tmp.open("w", encoding="utf-8") as f:
         json.dump(meta.to_dict(), f, ensure_ascii=False, indent=2)
-    os.replace(tmp, path)
+    tmp.replace(path)
 
 
 def get_meta(site_id: str) -> SessionMeta:
@@ -98,12 +100,12 @@ def get_meta(site_id: str) -> SessionMeta:
 def update_meta(
     site_id: str,
     *,
-    status: Optional[SessionStatus] = None,
-    last_verified_at: Optional[str] = None,
-    last_reauth_at: Optional[str] = None,
-    last_reason: Optional[str] = None,
-    detected_url: Optional[str] = None,
-    paused_job_id: Optional[str] = None,
+    status: SessionStatus | None = None,
+    last_verified_at: str | None = None,
+    last_reauth_at: str | None = None,
+    last_reason: str | None = None,
+    detected_url: str | None = None,
+    paused_job_id: str | None = None,
 ) -> SessionMeta:
     """메타데이터 부분 갱신. 제공된 필드만 덮어쓴다."""
     with _META_LOCK:
@@ -124,7 +126,10 @@ def update_meta(
         _meta_write(meta)
         logger.info(
             "[SESSION-META-UPDATE] site=%s status=%s reason=%s paused_job=%s",
-            site_id, meta.status, meta.last_reason, meta.paused_job_id or "-",
+            site_id,
+            meta.status,
+            meta.last_reason,
+            meta.paused_job_id or "-",
         )
         return meta
 
@@ -205,18 +210,22 @@ def open_persistent_context(
     if playwright_sync_api is None:
         try:
             from playwright import sync_api as _sync_api  # type: ignore
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             raise RuntimeError(f"playwright import 실패: {type(e).__name__}") from e
         playwright_sync_api = _sync_api
 
     logger.info(
         "[SESSION-OPEN] site=%s profile=%s headless=%s",
-        site_id, profile_dir.name, headless,
+        site_id,
+        profile_dir.name,
+        headless,
     )
     pw_cm = playwright_sync_api.sync_playwright()
     pw = pw_cm.start()
     try:
-        assert_browser_launch_allowed(component="ai_orchestrator.sites.session_manager", action="playwright_persistent_context")
+        assert_browser_launch_allowed(
+            component="ai_orchestrator.sites.session_manager", action="playwright_persistent_context"
+        )
         context = pw.chromium.launch_persistent_context(
             user_data_dir=str(profile_dir),
             headless=headless,
@@ -250,15 +259,15 @@ def clear_meta_for_tests(site_id: str) -> None:
 
 
 __all__ = [
-    "SessionStatus",
     "SessionMeta",
+    "SessionStatus",
+    "clear_meta_for_tests",
+    "ensure_profile_dir",
     "get_meta",
-    "update_meta",
     "mark_active",
+    "mark_expired",
     "mark_reauth_required",
     "mark_reauth_success",
-    "mark_expired",
-    "ensure_profile_dir",
     "open_persistent_context",
-    "clear_meta_for_tests",
+    "update_meta",
 ]

@@ -29,7 +29,7 @@ ALLOWED_OPERATION_TYPES = {"read", "navigate", "open_url", "click", "type", "sub
 
 def load_fixture():
     assert FIXTURE_PATH.exists(), f"fixture not found: {FIXTURE_PATH}"
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -300,7 +300,7 @@ def test_existing_gate_fixture_still_valid():
     existing = Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
     if not existing.exists():
         pytest.skip("existing gate fixture not found")
-    with open(existing, encoding="utf-8") as f:
+    with existing.open(encoding="utf-8") as f:
         d = json.load(f)
     # GATE_PASS 케이스 존재
     assert "gate_pass_case" in d
@@ -310,7 +310,7 @@ def test_existing_gate_fixture_still_valid():
 def test_existing_allowlist_fixture_submit_deny():
     """기존 allowlist fixture의 submit DENY_BY_DEFAULT 유지 확인."""
     allowlist = Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
-    with open(allowlist, encoding="utf-8") as f:
+    with allowlist.open(encoding="utf-8") as f:
         d = json.load(f)
     assert d["default_verdicts"]["submit"] == "DENY_BY_DEFAULT"
 

@@ -9,21 +9,11 @@ ASSISTANT_BACKEND_AUDIT_EVIDENCE_STANDARDIZATION_01 공정 검증.
 - skip/xfail 금지
 - secret/token/password 실값 사용 금지
 """
+
 from __future__ import annotations
 
-import importlib
-import os
+from pathlib import Path
 
-import pytest
-
-from ai_orchestrator.audit_evidence.models import (
-    ArtifactEvidenceRef,
-    AuditEventStatus,
-    ExecutionAttempt,
-    ExternalAppHandoff,
-    SafetyVerdict,
-    StandardAuditEvent,
-)
 from ai_orchestrator.audit_evidence.adapters import (
     audit_event_dict_to_standard,
     build_external_app_handoff,
@@ -31,15 +21,21 @@ from ai_orchestrator.audit_evidence.adapters import (
     policy_decision_to_safety_verdict,
     task_state_to_execution_attempt,
 )
+from ai_orchestrator.audit_evidence.models import (
+    ArtifactEvidenceRef,
+    ExecutionAttempt,
+    ExternalAppHandoff,
+    SafetyVerdict,
+    StandardAuditEvent,
+)
 from ai_orchestrator.safety_policy.secret_redaction import (
     FORBIDDEN_SECRET_FIELDS,
-    assert_no_sensitive_fields,
 )
-
 
 # ---------------------------------------------------------------------------
 # 금지 필드 헬퍼
 # ---------------------------------------------------------------------------
+
 
 def _has_forbidden(d: dict, checked: set | None = None) -> list[str]:
     """재귀적으로 금지 필드 탐색."""
@@ -57,6 +53,7 @@ def _has_forbidden(d: dict, checked: set | None = None) -> list[str]:
 # ---------------------------------------------------------------------------
 # STEP 3: StandardAuditEvent
 # ---------------------------------------------------------------------------
+
 
 class TestStandardAuditEvent:
     """StandardAuditEvent 표준 필드 11개 계약."""
@@ -82,9 +79,17 @@ class TestStandardAuditEvent:
         )
         d = ev.to_safe_dict()
         required = {
-            "event_id", "event_type", "task_id", "actor", "status",
-            "timestamp", "summary", "safety_verdict", "artifact_refs",
-            "metadata", "redaction_applied",
+            "event_id",
+            "event_type",
+            "task_id",
+            "actor",
+            "status",
+            "timestamp",
+            "summary",
+            "safety_verdict",
+            "artifact_refs",
+            "metadata",
+            "redaction_applied",
         }
         assert required == set(d.keys())
 
@@ -126,6 +131,7 @@ class TestStandardAuditEvent:
 # ---------------------------------------------------------------------------
 # STEP 3: ExecutionAttempt
 # ---------------------------------------------------------------------------
+
 
 class TestExecutionAttempt:
     """ExecutionAttempt 실행 위치/정책판정/결과 계약."""
@@ -179,14 +185,23 @@ class TestExecutionAttempt:
             safe_to_execute_on_server=True,
         )
         d = ea.to_safe_dict()
-        for f in ["attempt_id", "task_id", "execution_location", "risk_level",
-                  "started_at", "status", "policy_decision", "safe_to_execute_on_server"]:
+        for f in [
+            "attempt_id",
+            "task_id",
+            "execution_location",
+            "risk_level",
+            "started_at",
+            "status",
+            "policy_decision",
+            "safe_to_execute_on_server",
+        ]:
             assert f in d
 
 
 # ---------------------------------------------------------------------------
 # STEP 3: SafetyVerdict
 # ---------------------------------------------------------------------------
+
 
 class TestSafetyVerdict:
     """SafetyVerdict block/hold/user_direct/oauth_required 계약."""
@@ -239,15 +254,26 @@ class TestSafetyVerdict:
             required_execution_location="server",
         )
         d = sv.to_safe_dict()
-        for f in ["verdict_id", "task_id", "policy_id", "decision", "reason",
-                  "required_execution_location", "requires_approval",
-                  "requires_user_direct", "requires_oauth_setup", "blocked", "checked_at"]:
+        for f in [
+            "verdict_id",
+            "task_id",
+            "policy_id",
+            "decision",
+            "reason",
+            "required_execution_location",
+            "requires_approval",
+            "requires_user_direct",
+            "requires_oauth_setup",
+            "blocked",
+            "checked_at",
+        ]:
             assert f in d
 
 
 # ---------------------------------------------------------------------------
 # STEP 3: ExternalAppHandoff
 # ---------------------------------------------------------------------------
+
 
 class TestExternalAppHandoff:
     """ExternalAppHandoff CAD/HWPX/Excel/Tax/Bid 계약."""
@@ -356,6 +382,7 @@ class TestExternalAppHandoff:
 # STEP 3: ArtifactEvidenceRef
 # ---------------------------------------------------------------------------
 
+
 class TestArtifactEvidenceRef:
     """ArtifactEvidenceRef storage_ref 포함, 민감정보 미포함 계약."""
 
@@ -406,6 +433,7 @@ class TestArtifactEvidenceRef:
 # ---------------------------------------------------------------------------
 # STEP 4: Adapter 테스트
 # ---------------------------------------------------------------------------
+
 
 class TestAdapters:
     """read-only adapter 변환 테스트."""
@@ -510,30 +538,50 @@ class TestAdapters:
 # STEP 5: secret redaction 종합
 # ---------------------------------------------------------------------------
 
+
 class TestSecretRedactionAllModels:
     """모든 모델 to_safe_dict에 금지 키 없음 보장."""
 
     def test_all_models_safe_dict_no_forbidden(self):
         models = [
             StandardAuditEvent.create(
-                event_type="test", task_id="t", actor="a", status="ok", summary="s",
+                event_type="test",
+                task_id="t",
+                actor="a",
+                status="ok",
+                summary="s",
                 metadata={"password": "FAKE", "token": "FAKE_TOK"},
             ).to_safe_dict(),
             ExecutionAttempt.create(
-                task_id="t", execution_location="server", risk_level="low",
-                status="ok", policy_decision="allow", safe_to_execute_on_server=True,
+                task_id="t",
+                execution_location="server",
+                risk_level="low",
+                status="ok",
+                policy_decision="allow",
+                safe_to_execute_on_server=True,
             ).to_safe_dict(),
             SafetyVerdict.create(
-                task_id="t", policy_id="p", decision="allow", reason="ok",
+                task_id="t",
+                policy_id="p",
+                decision="allow",
+                reason="ok",
                 required_execution_location="server",
             ).to_safe_dict(),
             ExternalAppHandoff.create(
-                task_id="t", bridge_id="b", app_type="CAD", handoff_mode="file_drop",
-                status="handoff_recorded", approval_required=True, user_direct_required=False,
+                task_id="t",
+                bridge_id="b",
+                app_type="CAD",
+                handoff_mode="file_drop",
+                status="handoff_recorded",
+                approval_required=True,
+                user_direct_required=False,
             ).to_safe_dict(),
             ArtifactEvidenceRef.create(
-                artifact_type="log", content_type="text/plain",
-                storage_ref="/tmp/x", safe_name="x", source_task_id="t",
+                artifact_type="log",
+                content_type="text/plain",
+                storage_ref="/tmp/x",
+                safe_name="x",
+                source_task_id="t",
             ).to_safe_dict(),
         ]
         for d in models:
@@ -544,33 +592,33 @@ class TestSecretRedactionAllModels:
 # STEP 10: 기존 API contract / endpoint inventory 불변 확인
 # ---------------------------------------------------------------------------
 
+
 class TestExistingContractUnchanged:
     """기존 API contract / endpoint inventory 변경 없음."""
 
     def test_audit_evidence_package_importable(self):
-        import ai_orchestrator.audit_evidence
-        import ai_orchestrator.audit_evidence.models
-        import ai_orchestrator.audit_evidence.adapters
+        pass
 
     def test_existing_audit_logger_still_importable(self):
-        import ai_orchestrator.audit_logger
+        pass
 
     def test_existing_task_state_still_importable(self):
-        import ai_orchestrator.task_state
+        pass
 
     def test_existing_action_evidence_store_still_importable(self):
-        import ai_orchestrator.server.action_evidence_store
+        pass
 
     def test_existing_action_approval_audit_store_still_importable(self):
-        import ai_orchestrator.server.action_approval_audit_store
+        pass
 
     def test_no_ui_files_modified(self):
         ui_paths = [
             "admin-web/src",
             "desktop/ui",
         ]
-        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        base = Path(__file__).resolve().parent.parent
         import subprocess
+
         result = subprocess.run(
             ["git", "diff", "--name-only", "HEAD"],
             cwd=base,

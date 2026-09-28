@@ -7,7 +7,7 @@ dry_run: 항상 True.
 """
 
 import json
-import os
+from pathlib import Path
 
 import pytest
 
@@ -25,16 +25,12 @@ from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import 
     validate_dryrun_dispatch_result,
 )
 
-FIXTURE_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "fixtures",
-    "browser_engine_routing_dispatch_dryrun_20260507.json",
-)
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_engine_routing_dispatch_dryrun_20260507.json"
 
 
 @pytest.fixture(scope="module")
 def fixture_cases():
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)["cases"]
 
 
