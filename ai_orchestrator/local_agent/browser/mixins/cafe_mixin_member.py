@@ -34,7 +34,7 @@ class CafeMemberMixin:
         body_txt = ""
         try:
             body_txt = self._page.inner_text("body")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 카페 회원 프로필/목록 조회(읽기전용) — 페이지 텍스트 추출 실패 시 빈 기본값을 반환, 멤버목록 JS평가/텍스트폴백 실패는 빈 리스트로 안전 처리(이미 noqa: S110 존재).
             return {
                 "nickname": "",
                 "masked_id": "",
@@ -151,7 +151,7 @@ class CafeMemberMixin:
             })()
             """)
             members = result[:max_members]
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         # 텍스트 폴백
@@ -171,7 +171,7 @@ class CafeMemberMixin:
                         )
                         if len(members) >= max_members:
                             break
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
 
         return members

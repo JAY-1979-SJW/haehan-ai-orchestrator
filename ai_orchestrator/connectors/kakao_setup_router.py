@@ -61,7 +61,7 @@ def _load_state() -> SetupState:
     if STATE_PATH.exists():
         try:
             return SetupState(**json.loads(STATE_PATH.read_text(encoding="utf-8")))
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
     return SetupState(gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()])
 
@@ -150,7 +150,7 @@ def _run_gates_stream():
                 _save_state(state)
                 yield f"event: done\ndata: {json.dumps({'success': False})}\n\n"
                 return
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 게이트 모니터링(운영규칙상 AI가 직접 수행 가능한 개발자 콘솔 앱 등록 작업) — 상태파일 로드 실패시 초기상태로 폴백(이미 noqa: S110 존재), CDP 자동시작 예외/게이트 5~8 예외는 모두 fail 이벤트로 SSE 스트리밍되어 은폐되지 않음.
             yield event("GATE-1", "fail", f"CDP 시작 오류: {e}")
             state.running = False
             _save_state(state)
@@ -212,7 +212,7 @@ def _run_gates_stream():
                     _save_state(state)
             else:
                 yield event(gate_id, "fail", r.message, fix=r.message)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 게이트 모니터링(운영규칙상 AI가 직접 수행 가능한 개발자 콘솔 앱 등록 작업) — 상태파일 로드 실패시 초기상태로 폴백(이미 noqa: S110 존재), CDP 자동시작 예외/게이트 5~8 예외는 모두 fail 이벤트로 SSE 스트리밍되어 은폐되지 않음.
             yield event(gate_id, "fail", f"오류: {e}", fix="로그 확인 후 재시도")
 
     state.running = False

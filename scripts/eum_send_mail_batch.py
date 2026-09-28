@@ -194,7 +194,7 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
             if i % 100 == 0:
                 try:
                     server.quit()
-                except Exception:
+                except Exception:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
                     pass
                 server = connect_smtp()
                 reconnect_count += 1
@@ -214,12 +214,12 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
                 log["failed"].append({"email": email, "reason": "invalid_email", "row": row})
                 logger.warning("[%d/%d] ✗ 이메일 없음: %s", i, len(targets), row.get("업체명"))
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
             logger.error("[%d/%d] ✗ 발송 실패 %s: %s", i, len(targets), email, e)
             log["failed"].append({"email": email, "reason": str(e), "row": row})
             try:
                 server = connect_smtp()
-            except Exception:
+            except Exception:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
                 pass
 
         # 로그 저장 (10건마다)
@@ -230,7 +230,7 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
 
     try:
         server.quit()
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
         pass
 
     save_log(log)

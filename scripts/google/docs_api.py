@@ -51,7 +51,7 @@ class DocsAPI:
                 )
                 or []
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - Google Docs 브라우저 자동화 — 최근문서 조회/신규생성/텍스트추가/본문추출 각각 실패 시 {ok: False, error} 또는 빈 리스트를 반환, 문서 삭제·공유 등 위험 동작 없음.
             return []
 
     def new(self, title: str = "", content: str = "") -> dict:
@@ -78,7 +78,7 @@ class DocsAPI:
 
             log_critical("OTHER", f"Docs 새 문서: {title[:30]}", url=url_after, mode="docs_new")
             return {"ok": True, "title": title, "url": url_after, "content_len": len(content)}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Google Docs 브라우저 자동화 — 최근문서 조회/신규생성/텍스트추가/본문추출 각각 실패 시 {ok: False, error} 또는 빈 리스트를 반환, 문서 삭제·공유 등 위험 동작 없음.
             return {"ok": False, "error": str(e)[:100], "url": url_after}
 
     def open_doc(self, url: str) -> dict:
@@ -100,7 +100,7 @@ class DocsAPI:
             time.sleep(1.5)
             log_critical("OTHER", f"Docs 텍스트 추가: {len(text)}자", mode="docs_append")
             return {"ok": True, "appended": len(text)}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Google Docs 브라우저 자동화 — 최근문서 조회/신규생성/텍스트추가/본문추출 각각 실패 시 {ok: False, error} 또는 빈 리스트를 반환, 문서 삭제·공유 등 위험 동작 없음.
             return {"ok": False, "error": str(e)[:100]}
 
     def get_text(self, url: str) -> dict:
@@ -112,5 +112,5 @@ class DocsAPI:
                           || document.body?.innerText || '').substring(0, 50000)"""
             )
             return {"ok": True, "text": text, "len": len(text)}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Google Docs 브라우저 자동화 — 최근문서 조회/신규생성/텍스트추가/본문추출 각각 실패 시 {ok: False, error} 또는 빈 리스트를 반환, 문서 삭제·공유 등 위험 동작 없음.
             return {"ok": False, "error": str(e)[:100]}

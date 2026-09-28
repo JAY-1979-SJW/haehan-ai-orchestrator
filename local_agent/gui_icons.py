@@ -2,26 +2,26 @@
 
 unicode glyph 가 우선 (의존성 ↓). PIL 은 sparkline + 라운드 dot 만.
 """
+
 from __future__ import annotations
 
-from typing import Sequence
-
+from collections.abc import Sequence
 
 # ── 사이드바 아이콘 (unicode glyph) ──────────────────────────────
 
 SIDEBAR_ICONS = {
-    "dashboard":     "⌂",
-    "registration":  "◆",
-    "logs":          "▦",
-    "settings":      "⚙",
-    "help":          "ⓘ",
+    "dashboard": "⌂",
+    "registration": "◆",
+    "logs": "▦",
+    "settings": "⚙",
+    "help": "ⓘ",
 }
 
 PAGE_TITLES = {
-    "dashboard":    "Dashboard",
+    "dashboard": "Dashboard",
     "registration": "Registration",
-    "logs":         "Logs",
-    "settings":     "Settings",
+    "logs": "Logs",
+    "settings": "Settings",
 }
 
 
@@ -32,7 +32,7 @@ def make_dot(color: str = "#10B981", size: int = 12, *, alpha: float = 1.0):
     """작은 색 원 PIL Image — 상태 dot 용."""
     try:
         from PIL import Image, ImageDraw
-    except Exception:
+    except Exception:  # noqa: BLE001 - PIL 미설치/렌더링 실패 시 아이콘 생성 함수(make_dot/make_tray_icon/make_sparkline/make_spinner_frame)가 None을 반환 — 화면표시 실패일 뿐 데이터나 보안에 영향 없음.
         return None
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
@@ -46,7 +46,7 @@ def make_tray_icon(color: str = "#10B981", size: int = 64):
     """트레이 아이콘 — 색 원."""
     try:
         from PIL import Image, ImageDraw
-    except Exception:
+    except Exception:  # noqa: BLE001 - PIL 미설치/렌더링 실패 시 아이콘 생성 함수(make_dot/make_tray_icon/make_sparkline/make_spinner_frame)가 None을 반환 — 화면표시 실패일 뿐 데이터나 보안에 영향 없음.
         return None
     img = Image.new("RGB", (size, size), (15, 17, 21))
     d = ImageDraw.Draw(img)
@@ -62,18 +62,22 @@ def _hex_to_rgb(hexc: str) -> tuple[int, int, int]:
 # ── sparkline ───────────────────────────────────────────────────
 
 
-def make_sparkline(values: Sequence[float], *,
-                    width: int = 240, height: int = 36,
-                    line_color: str = "#6366F1",
-                    fill_color: str = "#6366F1", fill_alpha: int = 50,
-                    bg: str = "#1C2129"):
+def make_sparkline(
+    values: Sequence[float],
+    *,
+    width: int = 240,
+    height: int = 36,
+    line_color: str = "#6366F1",
+    fill_color: str = "#6366F1",
+    fill_alpha: int = 50,
+    bg: str = "#1C2129",
+):
     """heartbeat sparkline. PIL ImageTk 호환 PNG 반환."""
     try:
         from PIL import Image, ImageDraw
-    except Exception:
+    except Exception:  # noqa: BLE001 - PIL 미설치/렌더링 실패 시 아이콘 생성 함수(make_dot/make_tray_icon/make_sparkline/make_spinner_frame)가 None을 반환 — 화면표시 실패일 뿐 데이터나 보안에 영향 없음.
         return None
-    img = Image.new("RGBA", (width, height),
-                     (*_hex_to_rgb(bg), 255))
+    img = Image.new("RGBA", (width, height), (*_hex_to_rgb(bg), 255))
     d = ImageDraw.Draw(img)
     if not values:
         return img
@@ -92,8 +96,7 @@ def make_sparkline(values: Sequence[float], *,
         y = pad_y + (1 - (v - lo) / rng) * usable_h
         pts.append((x, y))
     # 채우기 다각형
-    fill_poly = pts + [(pts[-1][0], height - pad_y),
-                       (pts[0][0], height - pad_y)]
+    fill_poly = pts + [(pts[-1][0], height - pad_y), (pts[0][0], height - pad_y)]  # noqa: RUF005 - sparkline 채우기 다각형 좌표 리스트 결합 — 성능/보안과 무관한 스타일 제안, 로컬 리스트 결합일 뿐
     r, g, b = _hex_to_rgb(fill_color)
     d.polygon(fill_poly, fill=(r, g, b, fill_alpha))
     # 선
@@ -105,14 +108,11 @@ def make_sparkline(values: Sequence[float], *,
 # ── spinner (frame) ────────────────────────────────────────────
 
 
-def make_spinner_frame(angle_deg: int = 0, *,
-                       size: int = 16,
-                       color: str = "#818CF8",
-                       bg: str = "#1C2129"):
+def make_spinner_frame(angle_deg: int = 0, *, size: int = 16, color: str = "#818CF8", bg: str = "#1C2129"):
     """회전 spinner 한 프레임. after(80ms) 마다 angle+30."""
     try:
         from PIL import Image, ImageDraw
-    except Exception:
+    except Exception:  # noqa: BLE001 - PIL 미설치/렌더링 실패 시 아이콘 생성 함수(make_dot/make_tray_icon/make_sparkline/make_spinner_frame)가 None을 반환 — 화면표시 실패일 뿐 데이터나 보안에 영향 없음.
         return None
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
@@ -121,6 +121,7 @@ def make_spinner_frame(angle_deg: int = 0, *,
     r_out = size / 2 - 1
     r_in = r_out - 3
     import math
+
     base = math.radians(angle_deg)
     for i in range(12):
         a = base + math.radians(i * 30)

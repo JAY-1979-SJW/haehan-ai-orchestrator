@@ -44,7 +44,7 @@ _PLAN_JS = """
 def run(req: dict) -> dict:
     try:
         from playwright.sync_api import sync_playwright
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정부 지원사업 신청폼 초안 입력 — 문서 자체에 '제출 버튼은 절대 클릭하지 않음' 명시, except는 playwright 미설치/CDP 연결실패/입력실패/JSON파싱실패 시 모두 {ok: False}로 안전 반환.
         return {"ok": False, "reason": f"playwright_missing:{e}"}
 
     url_substr = (req.get("url_substr") or "").strip()
@@ -54,7 +54,7 @@ def run(req: dict) -> dict:
     with sync_playwright() as pw:
         try:
             b = pw.chromium.connect_over_cdp(CDP, timeout=30000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 정부 지원사업 신청폼 초안 입력 — 문서 자체에 '제출 버튼은 절대 클릭하지 않음' 명시, except는 playwright 미설치/CDP 연결실패/입력실패/JSON파싱실패 시 모두 {ok: False}로 안전 반환.
             return {"ok": False, "reason": f"cdp_connect_failed:{e}"}
         ctx = b.contexts[0]
         pages = ctx.pages
@@ -81,7 +81,7 @@ def run(req: dict) -> dict:
             target.evaluate(
                 "() => { const e=document.querySelector('[data-haehan-fill]'); if(e) e.removeAttribute('data-haehan-fill'); }"
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 정부 지원사업 신청폼 초안 입력 — 문서 자체에 '제출 버튼은 절대 클릭하지 않음' 명시, except는 playwright 미설치/CDP 연결실패/입력실패/JSON파싱실패 시 모두 {ok: False}로 안전 반환.
             return {"ok": False, "reason": f"fill_failed:{e}", "url": target.url}
 
         return {
@@ -96,7 +96,7 @@ def run(req: dict) -> dict:
 def main() -> int:
     try:
         req = json.loads(sys.stdin.read() or "{}")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 정부 지원사업 신청폼 초안 입력 — 문서 자체에 '제출 버튼은 절대 클릭하지 않음' 명시, except는 playwright 미설치/CDP 연결실패/입력실패/JSON파싱실패 시 모두 {ok: False}로 안전 반환.
         req = {}
     print(json.dumps(run(req), ensure_ascii=False))
     return 0

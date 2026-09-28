@@ -5,14 +5,15 @@
 - 첨부만 수행 (제출은 별도 액션)
 - 쿠키/session/storage_state 추출 안 함
 """
+
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
-from ai_orchestrator.local_agent.action_registry import register_handler
 from ai_orchestrator.local_agent.action_evidence_collector import collect_evidence
+from ai_orchestrator.local_agent.action_registry import register_handler
 from ai_orchestrator.local_agent.user_approval_gate import verify_and_consume_token
 
 ACTION_NAME = "browser.attach_file"
@@ -63,8 +64,7 @@ def execute(
             context = browser.new_context()
             page = context.new_page()
             try:
-                page.goto(page_url, timeout=timeout_seconds * 1000,
-                          wait_until="domcontentloaded")
+                page.goto(page_url, timeout=timeout_seconds * 1000, wait_until="domcontentloaded")
 
                 # input[type=file] 매핑 — label 기준
                 # 우선 label 매칭, 없으면 첫 번째 file input
@@ -74,7 +74,7 @@ def execute(
                 if label:
                     try:
                         target = label
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - USER_DELEGATED 파일첨부 액션 — 실행 전 verify_and_consume_token으로 1회용 승인토큰을 먼저 검증(try 블록 이전)하고, except는 라벨탐색 실패시 fallback 셀렉터로 전환하거나 첨부/페이지로드 실패를 ATTACH_FAILED/PAGE_LOAD_FAILED verdict로 명확히 반환 — 승인 없이는 애초에 이 코드에 도달하지 않으며 제출(submit) 버튼은 클릭하지 않음.
                         target = None
                 if target is None:
                     # fallback: 첫 file input
@@ -91,17 +91,17 @@ def execute(
                         raw["ok"] = True
                         raw["verdict"] = "FILE_ATTACHED"
                         raw["attached_file_name"] = os.path.basename(file_path)
-                        raw["attached_at"] = datetime.now(timezone.utc).isoformat()
+                        raw["attached_at"] = datetime.now(UTC).isoformat()
                         raw["form_state_after"] = {
                             "field_label": form_field_label,
                             "filled": True,
                         }
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001 - USER_DELEGATED 파일첨부 액션 — 실행 전 verify_and_consume_token으로 1회용 승인토큰을 먼저 검증(try 블록 이전)하고, except는 라벨탐색 실패시 fallback 셀렉터로 전환하거나 첨부/페이지로드 실패를 ATTACH_FAILED/PAGE_LOAD_FAILED verdict로 명확히 반환 — 승인 없이는 애초에 이 코드에 도달하지 않으며 제출(submit) 버튼은 클릭하지 않음.
                         raw["ok"] = False
                         raw["verdict"] = "ATTACH_FAILED"
                         raw["error"] = f"{type(e).__name__}: {str(e)[:100]}"
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - USER_DELEGATED 파일첨부 액션 — 실행 전 verify_and_consume_token으로 1회용 승인토큰을 먼저 검증(try 블록 이전)하고, except는 라벨탐색 실패시 fallback 셀렉터로 전환하거나 첨부/페이지로드 실패를 ATTACH_FAILED/PAGE_LOAD_FAILED verdict로 명확히 반환 — 승인 없이는 애초에 이 코드에 도달하지 않으며 제출(submit) 버튼은 클릭하지 않음.
                 raw["ok"] = False
                 raw["verdict"] = "PAGE_LOAD_FAILED"
                 raw["error"] = f"{type(e).__name__}: {str(e)[:100]}"

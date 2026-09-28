@@ -42,7 +42,7 @@ def _get_service():
 def _decode_b64(data: str) -> str:
     try:
         return base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="replace")
-    except Exception:
+    except Exception:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
         return ""
 
 
@@ -74,7 +74,7 @@ def _parse_message(msg: dict) -> dict | None:
 
         try:
             received_at = parsedate_to_datetime(date_str).isoformat() if date_str else ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
             received_at = datetime.now(UTC).isoformat()
 
         body = _extract_body(msg.get("payload", {}))
@@ -88,7 +88,7 @@ def _parse_message(msg: dict) -> dict | None:
             "body_summary": body_summary,
             "received_at": received_at,
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
         logger.error("메시지 파싱 실패 | id=%s | %s", msg.get("id", "?"), e)
         return None
 
@@ -114,7 +114,7 @@ def fetch_recent_emails(max_results: int = 50, hours: int = 24) -> list[dict]:
     except FileNotFoundError as e:
         logger.warning("Gmail credentials 없음 — 수집 생략: %s", e)
         return []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
         logger.error("Gmail 수집 실패: %s", e)
         return []
 

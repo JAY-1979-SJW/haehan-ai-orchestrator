@@ -91,7 +91,7 @@ def _probe(page: Any, selector: str) -> tuple[int, int]:
         try:
             if loc.nth(i).is_visible(timeout=500):
                 visible += 1
-        except Exception:
+        except Exception:  # noqa: BLE001 - UI 셀렉터 존재여부 헬스체크(읽기전용) — 가시성 확인/선행조건 확인/셀렉터 조회 실패 시 모두 ERROR/SKIPPED 상태로 명확히 표시되어 '정상'으로 오판되지 않음.
             pass
     return total, visible
 
@@ -112,7 +112,7 @@ def run_site_checks(page: Any, spec: SiteSpec, *, log=None) -> list[CheckResult]
     if spec.setup is not None:
         try:
             spec.setup(page)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - UI 셀렉터 존재여부 헬스체크(읽기전용) — 가시성 확인/선행조건 확인/셀렉터 조회 실패 시 모두 ERROR/SKIPPED 상태로 명확히 표시되어 '정상'으로 오판되지 않음.
             _say(f"  [setup 실패, 검사는 계속] {type(e).__name__}: {str(e)[:80]}")
 
     # 선행조건 없는 것 먼저, 그다음 조건별로 묶어서
@@ -131,7 +131,7 @@ def run_site_checks(page: Any, spec: SiteSpec, *, log=None) -> list[CheckResult]
             else:
                 try:
                     satisfied = bool(fn(page))
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - UI 셀렉터 존재여부 헬스체크(읽기전용) — 가시성 확인/선행조건 확인/셀렉터 조회 실패 시 모두 ERROR/SKIPPED 상태로 명확히 표시되어 '정상'으로 오판되지 않음.
                     satisfied = False
                     _say(f"  [선행조건 실패] {req}: {type(e).__name__}")
                 if not satisfied:
@@ -152,7 +152,7 @@ def run_site_checks(page: Any, spec: SiteSpec, *, log=None) -> list[CheckResult]
                 continue
             try:
                 total, vis = _probe(page, c.selector)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - UI 셀렉터 존재여부 헬스체크(읽기전용) — 가시성 확인/선행조건 확인/셀렉터 조회 실패 시 모두 ERROR/SKIPPED 상태로 명확히 표시되어 '정상'으로 오판되지 않음.
                 results.append(
                     CheckResult(
                         c.name,

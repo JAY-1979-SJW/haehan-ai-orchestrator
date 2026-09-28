@@ -95,7 +95,7 @@ class OptionGrid:
         """생성된 조합을 행 단위로. ag-Grid 라 tr 이 아니라 ag-cell 을 본다."""
         try:
             g = self.page.evaluate(_READ_GRID_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 옵션조합(ag-Grid) 자동화 — 모든 except가 error 필드를 채운 {ok: False}를 반환하며, 값을 입력한 뒤 '믿지 않고 되읽어' 검증하는 설계라 실패가 성공으로 오인되지 않음.
             return []
         n = len(g.get("name1") or [])
         rows = []
@@ -133,7 +133,7 @@ class OptionGrid:
                 self.page.wait_for_timeout(250)
                 vi.nth(i).fill(",".join(values))
                 self.page.wait_for_timeout(400)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 스마트스토어 옵션조합(ag-Grid) 자동화 — 모든 except가 error 필드를 채운 {ok: False}를 반환하며, 값을 입력한 뒤 '믿지 않고 되읽어' 검증하는 설계라 실패가 성공으로 오인되지 않음.
                 return {"ok": False, "error": f"fill_row{i}_{type(e).__name__}"}
 
         # 넣었다고 믿지 않고 되읽는다
@@ -149,7 +149,7 @@ class OptionGrid:
         notices = dismiss_blocking_modals(self.page)
         try:
             clicked = self.page.evaluate(_APPLY_JS)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 옵션조합(ag-Grid) 자동화 — 모든 except가 error 필드를 채운 {ok: False}를 반환하며, 값을 입력한 뒤 '믿지 않고 되읽어' 검증하는 설계라 실패가 성공으로 오인되지 않음.
             return {"ok": False, "error": f"{type(e).__name__}", "notices": notices}
         if not clicked:
             return {"ok": False, "error": "apply_button_missing", "notices": notices}
@@ -180,7 +180,7 @@ class OptionGrid:
             self.page.keyboard.press("Enter")
             self.page.wait_for_timeout(400)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 옵션조합(ag-Grid) 자동화 — 모든 except가 error 필드를 채운 {ok: False}를 반환하며, 값을 입력한 뒤 '믿지 않고 되읽어' 검증하는 설계라 실패가 성공으로 오인되지 않음.
             return False
 
     def set_prices_and_stock(

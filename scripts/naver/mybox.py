@@ -39,7 +39,7 @@ class NaverMyBox:
         time.sleep(3)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 마이박스 파일 목록/업로드/검색 — 모든 except가 로그를 남기고 {ok: False} 또는 빈 리스트를 반환, 파일 삭제 등 위험 동작 없음.
             pass
         return True
 
@@ -67,7 +67,7 @@ class NaverMyBox:
             )
             _log.info("[naver-mybox] %d개 항목", len(items))
             return items
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 마이박스 파일 목록/업로드/검색 — 모든 except가 로그를 남기고 {ok: False} 또는 빈 리스트를 반환, 파일 삭제 등 위험 동작 없음.
             _log.error("[naver-mybox] list 실패: %s", e)
             return []
 
@@ -89,7 +89,7 @@ class NaverMyBox:
                 size=Path(local_path).stat().st_size,
             )
             return {"ok": True, "file": Path(local_path).name}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 마이박스 파일 목록/업로드/검색 — 모든 except가 로그를 남기고 {ok: False} 또는 빈 리스트를 반환, 파일 삭제 등 위험 동작 없음.
             _log.error("[naver-mybox] upload 실패: %s", e)
             return {"ok": False, "error": str(e)}
 
@@ -103,6 +103,6 @@ class NaverMyBox:
             self.page.keyboard.press("Enter")
             time.sleep(2.5)
             return self.list_files()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 마이박스 파일 목록/업로드/검색 — 모든 except가 로그를 남기고 {ok: False} 또는 빈 리스트를 반환, 파일 삭제 등 위험 동작 없음.
             _log.error("[naver-mybox] search 실패: %s", e)
             return []

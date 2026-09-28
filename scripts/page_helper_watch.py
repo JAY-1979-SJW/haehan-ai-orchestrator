@@ -1,13 +1,15 @@
 """page_helper 통합 감시 레이어 — network/dom watch + poll + submit_and_verify."""
+
 from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Callable, Generator
 
 from playwright.sync_api import Page, Response
+
 from scripts.logger import get_logger
 from scripts.page_helper_common import _ERROR_SELECTORS
 
@@ -17,8 +19,9 @@ log = get_logger(__name__)
 @dataclass
 class NetworkLog:
     """네트워크 감시 결과."""
-    matched: list[dict] = field(default_factory=list)   # 매칭된 요청 목록
-    errors:  list[dict] = field(default_factory=list)   # 4xx/5xx 응답
+
+    matched: list[dict] = field(default_factory=list)  # 매칭된 요청 목록
+    errors: list[dict] = field(default_factory=list)  # 4xx/5xx 응답
 
 
 @contextmanager
@@ -48,7 +51,7 @@ def page_watch_network(
             return
         entry = {
             "method": req.method,
-            "url":    response.url,
+            "url": response.url,
             "status": response.status,
         }
         with lock:
@@ -69,6 +72,7 @@ def page_watch_network(
 @dataclass
 class DomChangeLog:
     """DOM 변화 감시 결과."""
+
     changed: bool = False
     change_count: int = 0
     last_text: str = ""
@@ -90,21 +94,21 @@ def page_watch_dom(
     log_obj = DomChangeLog()
 
     # MutationObserver를 JS로 주입 — 변화 발생 시 window.__domChanged 플래그 설정
-    js_inject = f"""
-    (selector) => {{
-        window.__domChanged = window.__domChanged || {{}};
-        window.__domChanged[selector] = {{ count: 0, text: '' }};
+    js_inject = """
+    (selector) => {
+        window.__domChanged = window.__domChanged || {};
+        window.__domChanged[selector] = { count: 0, text: '' };
         const target = document.querySelector(selector);
         if (!target) return false;
-        const obs = new MutationObserver((mutations) => {{
+        const obs = new MutationObserver((mutations) => {
             window.__domChanged[selector].count += mutations.length;
             window.__domChanged[selector].text = target.innerText || target.value || '';
-        }});
-        obs.observe(target, {{ childList: true, subtree: true, characterData: true, attributes: true }});
-        window.__domObservers = window.__domObservers || {{}};
+        });
+        obs.observe(target, { childList: true, subtree: true, characterData: true, attributes: true });
+        window.__domObservers = window.__domObservers || {};
         window.__domObservers[selector] = obs;
         return true;
-    }}
+    }
     """
     installed = page.evaluate(js_inject, selector)
     if not installed:
@@ -114,22 +118,20 @@ def page_watch_dom(
         yield log_obj
     finally:
         # 감시 결과 수집
-        result = page.evaluate(
-            "(sel) => window.__domChanged && window.__domChanged[sel]",
-            selector
-        )
+        result = page.evaluate("(sel) => window.__domChanged && window.__domChanged[sel]", selector)
         if result and result.get("count", 0) > 0:
             log_obj.changed = True
             log_obj.change_count = result["count"]
             log_obj.last_text = result.get("text", "")
-            log.debug("dom 변화 확인: %s — %d회 변경, 최종='%s'",
-                      selector, log_obj.change_count, log_obj.last_text[:50])
+            log.debug(
+                "dom 변화 확인: %s — %d회 변경, 최종='%s'", selector, log_obj.change_count, log_obj.last_text[:50]
+            )
 
         # MutationObserver 해제
         page.evaluate(
             "(sel) => { if (window.__domObservers && window.__domObservers[sel]) "
             "window.__domObservers[sel].disconnect(); }",
-            selector
+            selector,
         )
 
 
@@ -153,12 +155,12 @@ def page_poll_until(
                 text = ""
                 try:
                     text = el.input_value()
-                except Exception:
+                except Exception:  # noqa: BLE001 - 폼 제출 3중 검증(네트워크/DOM변화/폴링) 유틸 — 각 except는 폴백 시도(input_value 실패시 inner_text) 또는 폴링 계속을 할 뿐, 제출버튼 클릭 실패나 검증 실패는 error_msg와 success=False로 명확히 반환되어 실패가 성공으로 오인되지 않음.
                     text = el.inner_text()
                 if check_fn(text):
                     log.debug("poll_until 조건 충족: '%s'", text[:50])
                     return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 폼 제출 3중 검증(네트워크/DOM변화/폴링) 유틸 — 각 except는 폴백 시도(input_value 실패시 inner_text) 또는 폴링 계속을 할 뿐, 제출버튼 클릭 실패나 검증 실패는 error_msg와 success=False로 명확히 반환되어 실패가 성공으로 오인되지 않음.
             pass
         time.sleep(interval)
 
@@ -169,17 +171,18 @@ def page_poll_until(
 @dataclass
 class VerifyResult:
     """page_submit_and_verify 결과."""
+
     success: bool = False
-    network_ok: bool = False   # 서버 요청 2xx 확인
+    network_ok: bool = False  # 서버 요청 2xx 확인
     dom_changed: bool = False  # UI DOM 변화 확인
-    poll_ok: bool = False      # 최종 상태 폴링 확인
+    poll_ok: bool = False  # 최종 상태 폴링 확인
     error_msg: str = ""
 
     def summary(self) -> str:
         parts = []
-        parts.append("네트워크 ✓" if self.network_ok  else "네트워크 ✗")
-        parts.append("DOM변화 ✓"  if self.dom_changed  else "DOM변화 ✗")
-        parts.append("폴링확인 ✓" if self.poll_ok      else "폴링확인 ✗")
+        parts.append("네트워크 ✓" if self.network_ok else "네트워크 ✗")
+        parts.append("DOM변화 ✓" if self.dom_changed else "DOM변화 ✗")
+        parts.append("폴링확인 ✓" if self.poll_ok else "폴링확인 ✗")
         status = "성공" if self.success else "실패"
         return f"[{status}] {' | '.join(parts)}" + (f" | 에러={self.error_msg}" if self.error_msg else "")
 
@@ -222,7 +225,7 @@ def page_submit_and_verify(
                 btn = page.wait_for_selector(submit_selector, timeout=submit_timeout, state="visible")
                 btn.click()
                 log.debug("submit_and_verify: 클릭 완료 — %s", submit_selector)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 폼 제출 3중 검증(네트워크/DOM변화/폴링) 유틸 — 각 except는 폴백 시도(input_value 실패시 inner_text) 또는 폴링 계속을 할 뿐, 제출버튼 클릭 실패나 검증 실패는 error_msg와 success=False로 명확히 반환되어 실패가 성공으로 오인되지 않음.
                 result.error_msg = f"제출 버튼 없음: {e}"
                 log.warn("submit_and_verify: %s", result.error_msg)
                 return result
@@ -240,7 +243,7 @@ def page_submit_and_verify(
                         result.error_msg = appeared.inner_text().strip()
                         log.warn("submit_and_verify: 에러 응답 — %s", result.error_msg)
                         return result
-                except Exception:
+                except Exception:  # noqa: BLE001 - 폼 제출 3중 검증(네트워크/DOM변화/폴링) 유틸 — 각 except는 폴백 시도(input_value 실패시 inner_text) 또는 폴링 계속을 할 뿐, 제출버튼 클릭 실패나 검증 실패는 error_msg와 success=False로 명확히 반환되어 실패가 성공으로 오인되지 않음.
                     pass
 
             # DOM 변화 감지를 위해 짧게 대기
@@ -261,15 +264,13 @@ def page_submit_and_verify(
 
     # ── 검증 3: 폴링 ─────────────────────────────────────────────────
     if poll_selector and poll_check:
-        result.poll_ok = page_poll_until(
-            page, poll_selector, poll_check,
-            interval=0.5, timeout=verify_timeout
-        )
+        result.poll_ok = page_poll_until(page, poll_selector, poll_check, interval=0.5, timeout=verify_timeout)
     else:
         result.poll_ok = True  # 폴링 기준 미지정 시 생략
 
     # 에러 메시지 최종 확인
     from scripts.page_helper_interact import page_check_error
+
     err = page_check_error(page, timeout=1000)
     if err:
         result.error_msg = err

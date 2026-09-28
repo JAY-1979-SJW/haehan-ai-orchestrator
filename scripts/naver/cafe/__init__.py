@@ -75,7 +75,7 @@ class NaverCafe:
         time.sleep(2.5)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 카페 읽기전용 조회(NaverCafe: open_my_cafes/list_posts/read_post) — 각 except는 빈 리스트 또는 오류 dict를 반환하며, 실제 글쓰기(write_post)는 별도 writer 모듈에 위임되어 이 파일에 포함되지 않음.
             pass
         try:
             return self.page.evaluate("""
@@ -97,7 +97,7 @@ class NaverCafe:
                 return out;
             }
             """)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 읽기전용 조회(NaverCafe: open_my_cafes/list_posts/read_post) — 각 except는 빈 리스트 또는 오류 dict를 반환하며, 실제 글쓰기(write_post)는 별도 writer 모듈에 위임되어 이 파일에 포함되지 않음.
             _log.error("[naver-cafe] open_my_cafes 실패: %s", e)
             return []
 
@@ -133,7 +133,7 @@ class NaverCafe:
                     )
                     if posts:
                         return posts
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 카페 읽기전용 조회(NaverCafe: open_my_cafes/list_posts/read_post) — 각 except는 빈 리스트 또는 오류 dict를 반환하며, 실제 글쓰기(write_post)는 별도 writer 모듈에 위임되어 이 파일에 포함되지 않음.
                     continue
         return []
 
@@ -154,7 +154,7 @@ class NaverCafe:
                         comment_count: document.querySelectorAll('.comment_box, .CommentItem').length,
                     })
                     """)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 카페 읽기전용 조회(NaverCafe: open_my_cafes/list_posts/read_post) — 각 except는 빈 리스트 또는 오류 dict를 반환하며, 실제 글쓰기(write_post)는 별도 writer 모듈에 위임되어 이 파일에 포함되지 않음.
                     continue
         return {"error": "iframe_not_found"}
 

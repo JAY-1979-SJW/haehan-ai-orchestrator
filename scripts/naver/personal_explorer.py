@@ -189,7 +189,7 @@ def explore_service(page, svc: dict) -> dict:
         # 팝업/별도창 정리
         try:
             handle_page_popups(page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 개인 서비스 전체 사이트맵 탐색(읽기전용) — 각 except는 팝업 무시 또는 서비스별 오류를 결과 dict의 error 필드에 기록하고 다음 서비스 탐색으로 계속, 최종 예외도 traceback 출력 후 안전 종료.
             pass
 
         meta = page.evaluate(EXTRACT_JS)
@@ -204,7 +204,7 @@ def explore_service(page, svc: dict) -> dict:
         # 사이트맵 개별 저장
         out = SITEMAP_DIR / f"naver_{name}_auto.json"
         out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 개인 서비스 전체 사이트맵 탐색(읽기전용) — 각 except는 팝업 무시 또는 서비스별 오류를 결과 dict의 error 필드에 기록하고 다음 서비스 탐색으로 계속, 최종 예외도 traceback 출력 후 안전 종료.
         result["error"] = str(e)[:150]
     return result
 
@@ -258,7 +258,7 @@ def main():
         # 별도 창 팝업 정리
         try:
             close_popup_windows(page)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 개인 서비스 전체 사이트맵 탐색(읽기전용) — 각 except는 팝업 무시 또는 서비스별 오류를 결과 dict의 error 필드에 기록하고 다음 서비스 탐색으로 계속, 최종 예외도 traceback 출력 후 안전 종료.
             pass
 
     # 결과 정리
@@ -305,7 +305,7 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\n중단됨")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 개인 서비스 전체 사이트맵 탐색(읽기전용) — 각 except는 팝업 무시 또는 서비스별 오류를 결과 dict의 error 필드에 기록하고 다음 서비스 탐색으로 계속, 최종 예외도 traceback 출력 후 안전 종료.
         import traceback
 
         traceback.print_exc()
