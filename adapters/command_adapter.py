@@ -2,38 +2,49 @@
 명령 어댑터 — 화이트리스트 패턴 매칭 후 안전한 argv로만 실행
 shell=True 금지, high/critical 호출 금지
 """
+
 import subprocess
-import shlex
-from typing import Optional
 
 DEFAULT_TIMEOUT = 30  # seconds
 
 # (pattern_string, argv_builder) — pattern 매칭 시 안전 argv 반환
 _WHITELIST: list[tuple[str, list[str]]] = [
-    ("pwd",            ["pwd"]),
-    ("ls -la",         ["ls", "-la"]),
-    ("ls",             ["ls"]),
-    ("whoami",         ["whoami"]),
-    ("hostname",       ["hostname"]),
-    ("date",           ["date"]),
-    ("docker compose logs --tail 50", ["docker", "compose", "logs", "--tail", "50"]),
-    ("docker compose ps",             ["docker", "compose", "ps"]),
+    ("pwd", ["pwd"]),
+    ("ls -la", ["ls", "-la"]),
+    ("ls", ["ls"]),
+    ("whoami", ["whoami"]),
+    ("hostname", ["hostname"]),
+    ("date", ["date"]),
 ]
 
 _BLOCKED_PATTERNS = [
-    "rm", "mv", "chmod", "chown",
-    "systemctl restart", "reboot", "shutdown",
-    "docker compose up", "docker compose build", "docker compose restart",
+    "rm",
+    "mv",
+    "chmod",
+    "chown",
+    "systemctl restart",
+    "reboot",
+    "shutdown",
+    "docker compose up",
+    "docker compose build",
+    "docker compose restart",
     "git push",
-    "curl |", "bash -c", "sh -c",
+    "curl |",
+    "bash -c",
+    "sh -c",
     "sudo",
-    "|", ";", "&&", "||", "`", "$(",
+    "|",
+    ";",
+    "&&",
+    "||",
+    "`",
+    "$(",
 ]
 
 _BLOCKED_ACTION_TYPES = {"high", "critical"}
 
 
-def _match_whitelist(command: str) -> Optional[list[str]]:
+def _match_whitelist(command: str) -> list[str] | None:
     cmd_stripped = command.strip().lower()
     for pattern, argv in _WHITELIST:
         if cmd_stripped == pattern.lower():
@@ -41,7 +52,7 @@ def _match_whitelist(command: str) -> Optional[list[str]]:
     return None
 
 
-def _has_blocked_pattern(command: str) -> Optional[str]:
+def _has_blocked_pattern(command: str) -> str | None:
     cl = command.lower()
     for bp in _BLOCKED_PATTERNS:
         if bp.lower() in cl:
@@ -81,6 +92,7 @@ def run_command(
             capture_output=True,
             text=True,
             timeout=timeout,
+            encoding="utf-8",
         )
         return {
             "status": "OK",
