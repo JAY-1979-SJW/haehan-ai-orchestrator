@@ -184,7 +184,7 @@ def detect_login_states(
         if body_sampler is not None:
             try:
                 body = body_sampler(s.target_id) or ""
-            except Exception:
+            except Exception:  # noqa: BLE001 - 로그인 상태 분류용 body_sampler 호출 실패 시 빈 문자열로 폴백 - classify()는 URL/title 만으로도 분류 가능한 보조 신호 수집 실패일 뿐, 로그인 세션 파기나 승인 판정과 무관한 읽기전용 샘플링
                 body = ""
         out[s.target_id] = classify(
             s.url,

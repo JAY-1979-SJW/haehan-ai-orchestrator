@@ -81,7 +81,7 @@ def _append_jsonl(record: dict[str, Any]) -> None:
     try:
         with _audit_path().open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass  # 파일 기록 실패 시 in-memory만 유지
 
 

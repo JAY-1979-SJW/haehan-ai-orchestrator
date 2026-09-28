@@ -59,7 +59,7 @@ def get_machine_id() -> str:
                 if "MachineGuid" in line:
                     raw = line.strip().split()[-1]
                     break
-        except Exception:
+        except Exception:  # noqa: BLE001 - get_machine_id: 레지스트리 MachineGuid 조회 실패 시 platform.node()+machine() 대체 식별자로 폴백 - 라이선스 허용/거부 판정(verify_license)은 별도 함수로 secret 미설정 시 항상 False(fail-closed), 이 폴백은 식별자 생성 방식 대체일 뿐 검증 우회 아님
             raw = ""
     if not raw:
         raw = platform.node() + platform.machine()

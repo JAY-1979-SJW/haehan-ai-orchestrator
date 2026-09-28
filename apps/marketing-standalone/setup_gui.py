@@ -97,7 +97,7 @@ def _load_existing() -> dict:
     if SETTINGS_PATH.exists():
         try:
             return json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - GUI 설정 파일 로드 실패 시 빈 dict 반환 - 기본값으로 폴백, 데스크톱 설정 UI 초기화 로직일 뿐 위험 조작 없음
             return {}
     return {}
 

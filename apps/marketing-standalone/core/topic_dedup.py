@@ -29,7 +29,7 @@ def load_cache(blog_id: str | None = None) -> dict:
     if path.exists():
         try:
             return json.loads(path.read_text(encoding="utf-8"))
-        except Exception:  # noqa: S110 - 캐시 파일 손상/형식불일치 시 빈 캐시로 폴백(치명적이지 않음)
+        except Exception:  # noqa: S110, BLE001 - 캐시 파일 손상/형식불일치 시 빈 캐시로 폴백(치명적이지 않음)
             pass
     return {"topics": [], "posted": []}
 

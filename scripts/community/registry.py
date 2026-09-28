@@ -19,7 +19,7 @@ def _load() -> list[dict]:
         return []
     try:
         return json.loads(_SITES_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 커뮤니티 사이트 레지스트리 JSON 로드 실패 시 빈 목록 반환 - 읽기전용 설정 조회 폴백, 쓰기 없음
         return []
 
 

@@ -44,7 +44,7 @@ def _load_latest_live_input_results_by_action() -> dict[str, dict[str, Any]]:
     for path in sorted(input_dir.glob("google_live_input_*.json"), key=lambda item: item.stat().st_mtime):
         try:
             item = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 리포트 집계용 JSON 파일 파싱 실패 시 해당 파일만 건너뛰고 계속(continue) - 읽기전용 집계 스크립트, 손상된 파일 하나가 전체 리포트를 막지 않도록 하는 안전한 폴백
             continue
         action_key = item.get("action_key")
         if action_key:

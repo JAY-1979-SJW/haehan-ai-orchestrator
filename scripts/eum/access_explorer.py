@@ -94,7 +94,7 @@ def explore_accessible_pages(page, *, max_pages: int | None = None, partial_path
             time.sleep(0.5)
             item.update(page.evaluate(_PAGE_JS))
             item["ok"] = True
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - EUM 사이트 페이지 탐색(page.evaluate) 실패를 item['error']에 기록하고 다음 페이지 계속 탐색 - 읽기전용 탐색, 실패 페이지는 에러로 표시될 뿐 위험 조작 없음
             item["error"] = str(exc)
         result["pages"].append(item)
         result["explored_count"] = len(result["pages"])

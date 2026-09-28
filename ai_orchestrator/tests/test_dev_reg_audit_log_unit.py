@@ -147,7 +147,7 @@ def test_readonly_dir_oserror_silenced(tmp_path):
     bad_path = ro_dir / "nested" / "audit.jsonl"
     try:
         al.append_run({"result": "PASS"}, path=bad_path)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 테스트 코드 - append_run 호출이 OSError를 삼키지 않고 실제로 전파하는지 검증하는 테스트, 실패 시 pytest.fail로 명시적 실패 처리
         pytest.fail(f"OSError가 외부로 전파됨: {exc}")
     finally:
         ro_dir.chmod(stat.S_IRWXU)
