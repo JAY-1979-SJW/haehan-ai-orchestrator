@@ -24,8 +24,9 @@ import json
 import os
 import sys
 import unittest
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import warnings
 
@@ -50,15 +51,11 @@ from ai_orchestrator.browser_tool.g2b_domain_policy import (  # noqa: E402
 )
 from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 
-FIXTURE_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "fixtures",
-    "g2b_domain_normalization_policy_20260507.json",
-)
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "g2b_domain_normalization_policy_20260507.json"
 
 
 def _load_fixture():
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 

@@ -12,10 +12,11 @@ Tests validate:
 Note: This stage contains DESIGN VALIDATION ONLY.
 No actual submit implementation, browser execution, network calls, or DB operations.
 """
+
 import json
-import pytest
 from pathlib import Path
 
+import pytest
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_submit_policy_allowlist_20260506.json"
 
@@ -29,27 +30,27 @@ class TestBrowserSubmitPolicyFixtureStructure:
 
     def test_fixture_json_syntax(self):
         """Fixture JSON must be valid."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
         assert isinstance(data, dict), "Fixture root must be dict"
 
     def test_fixture_required_top_level_keys(self):
         """Fixture must have required top-level keys."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
         required_keys = {"version", "description", "created_at", "submit_sites"}
         assert required_keys.issubset(data.keys()), f"Missing keys: {required_keys - set(data.keys())}"
 
     def test_fixture_submit_sites_is_list(self):
         """submit_sites must be a list."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
         assert isinstance(data["submit_sites"], list), "submit_sites must be list"
         assert len(data["submit_sites"]) > 0, "submit_sites must not be empty"
 
     def test_each_site_has_required_fields(self):
         """Each site entry must have all required fields."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         required_site_fields = {
@@ -75,7 +76,7 @@ class TestBrowserSubmitPolicyFixtureStructure:
 
     def test_site_id_unique(self):
         """Each site_id must be unique."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site_ids = [site["site_id"] for site in data["submit_sites"]]
@@ -87,7 +88,7 @@ class TestBrowserSubmitPolicyAllowedCases:
 
     def test_allowed_internal_mock_form_has_preview_required(self):
         """allowed_internal_mock_form must require preview."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -99,7 +100,7 @@ class TestBrowserSubmitPolicyAllowedCases:
 
     def test_allowed_internal_mock_form_has_user_confirm_required(self):
         """allowed_internal_mock_form must require user confirmation."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -111,7 +112,7 @@ class TestBrowserSubmitPolicyAllowedCases:
 
     def test_allowed_internal_mock_form_is_active(self):
         """allowed_internal_mock_form must be active."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -123,7 +124,7 @@ class TestBrowserSubmitPolicyAllowedCases:
 
     def test_allowed_internal_mock_form_has_audit_level(self):
         """allowed_internal_mock_form must have audit_level set."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -139,7 +140,7 @@ class TestBrowserSubmitPolicyDeniedCases:
 
     def test_denied_unknown_origin_inactive_and_has_reason(self):
         """denied_unknown_origin must be inactive and have reason."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -152,7 +153,7 @@ class TestBrowserSubmitPolicyDeniedCases:
 
     def test_denied_login_form_has_password_in_denied_fields(self):
         """denied_login_form_with_password must have password in denied_fields."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -164,7 +165,7 @@ class TestBrowserSubmitPolicyDeniedCases:
 
     def test_denied_payment_form_not_in_allowed_intents(self):
         """denied_payment_form must not have payment intent in allowed_intents."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -177,7 +178,7 @@ class TestBrowserSubmitPolicyDeniedCases:
 
     def test_denied_delete_action_not_in_allowed_intents(self):
         """denied_delete_action must not have delete intent in allowed_intents."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -189,7 +190,7 @@ class TestBrowserSubmitPolicyDeniedCases:
 
     def test_denied_prompt_injection_submit_has_test_case(self):
         """denied_prompt_injection_submit must have test_case with injection pattern."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -202,7 +203,7 @@ class TestBrowserSubmitPolicyDeniedCases:
 
     def test_denied_hidden_field_unknown_has_test_case(self):
         """denied_hidden_field_unknown must have test_case explaining validation failure."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site = next(
@@ -219,7 +220,7 @@ class TestBrowserSubmitPolicySecurityFields:
 
     def test_no_password_fields_in_allowed_origins(self):
         """No test case should have 'password' in allowed_origins."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         for site in data["submit_sites"]:
@@ -229,7 +230,7 @@ class TestBrowserSubmitPolicySecurityFields:
 
     def test_no_token_in_allowed_origins(self):
         """No test case should have 'token' in allowed_origins."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         for site in data["submit_sites"]:
@@ -238,7 +239,7 @@ class TestBrowserSubmitPolicySecurityFields:
 
     def test_no_api_key_in_allowed_origins(self):
         """No test case should have 'api_key' or 'secret' in allowed_origins."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         for site in data["submit_sites"]:
@@ -252,18 +253,31 @@ class TestBrowserSubmitPolicyExternalSiteDomains:
 
     REAL_EXTERNAL_DOMAINS = {
         # Payment/Banking
-        "naver.com", "kakao.com", "google.com", "amazon.com",
-        "paypal.com", "stripe.com", "toss.im", "shinhan.com",
-        "kb.co.kr", "woori.co.kr", "hana.co.kr",
+        "naver.com",
+        "kakao.com",
+        "google.com",
+        "amazon.com",
+        "paypal.com",
+        "stripe.com",
+        "toss.im",
+        "shinhan.com",
+        "kb.co.kr",
+        "woori.co.kr",
+        "hana.co.kr",
         # Corporate
-        "linkedin.com", "slack.com", "github.com", "gitlab.com",
+        "linkedin.com",
+        "slack.com",
+        "github.com",
+        "gitlab.com",
         # Government
-        "g2b.go.kr", "e-biz.go.kr", "nps.or.kr",
+        "g2b.go.kr",
+        "e-biz.go.kr",
+        "nps.or.kr",
     }
 
     def test_no_real_external_domains_in_allowed_origins(self):
         """Fixture must not contain real external business domains."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         for site in data["submit_sites"]:
@@ -276,7 +290,7 @@ class TestBrowserSubmitPolicyExternalSiteDomains:
 
     def test_no_real_external_domains_in_test_cases(self):
         """Fixture test_cases must not contain real external business domains."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         for site in data["submit_sites"]:
@@ -292,18 +306,31 @@ class TestBrowserSubmitPolicySensitiveDataAbsence:
     """Validate that no sensitive data (password, token, secret) appears in fixture."""
 
     SENSITIVE_KEYWORDS = {
-        "password", "passwd", "pwd",
-        "token", "access_token", "session_token", "refresh_token",
-        "secret", "api_secret", "client_secret",
-        "key", "api_key",
-        "credential", "auth",
-        "credit_card", "cvv", "ccv",
-        "ssn", "pin", "otp",
+        "password",
+        "passwd",
+        "pwd",
+        "token",
+        "access_token",
+        "session_token",
+        "refresh_token",
+        "secret",
+        "api_secret",
+        "client_secret",
+        "key",
+        "api_key",
+        "credential",
+        "auth",
+        "credit_card",
+        "cvv",
+        "ccv",
+        "ssn",
+        "pin",
+        "otp",
     }
 
     def test_no_actual_passwords_in_fixture(self):
         """Fixture must not contain actual password values."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             content = f.read()
 
         # Look for patterns like "password123", "token_abcd1234", etc.
@@ -313,7 +340,7 @@ class TestBrowserSubmitPolicySensitiveDataAbsence:
 
     def test_no_sensitive_field_values_in_test_cases(self):
         """Fixture test_cases must not contain actual sensitive field values."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         for site in data["submit_sites"]:
@@ -326,9 +353,13 @@ class TestBrowserSubmitPolicySensitiveDataAbsence:
                     if keyword in test_case_str:
                         # If the keyword appears, it should be in context like
                         # "password_field_present" or "includes_password", not "password123"
-                        assert not (keyword in test_case_str and any(
-                            c.isdigit() for c in test_case_str[test_case_str.index(keyword):test_case_str.index(keyword)+50]
-                        )), f"Found suspicious pattern with {keyword}"
+                        assert not (
+                            keyword in test_case_str
+                            and any(
+                                c.isdigit()
+                                for c in test_case_str[test_case_str.index(keyword) : test_case_str.index(keyword) + 50]
+                            )
+                        ), f"Found suspicious pattern with {keyword}"
 
 
 class TestBrowserSubmitPolicyNoActualSubmitImplementation:
@@ -337,7 +368,7 @@ class TestBrowserSubmitPolicyNoActualSubmitImplementation:
     def test_no_submit_function_implementation_exists(self):
         """This test verifies the design contains no actual submit() function."""
         # Check that the fixture only defines policy structure, not execution code
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         # The fixture should only be JSON data, no Python functions
@@ -354,14 +385,15 @@ class TestBrowserSubmitPolicyNoActualSubmitImplementation:
         if not design_path.exists():
             pytest.skip("Design document not found")
 
-        with open(design_path, "r", encoding="utf-8") as f:
+        with design_path.open("r", encoding="utf-8") as f:
             content = f.read()
 
         # Should NOT contain actual implementation code
         assert "browser.submit(" not in content, "Design must not contain actual submit() call"
         assert "click_submit(" not in content, "Design must not contain actual click_submit() call"
-        assert "playwright" not in content.lower() or "playwright backend" in content.lower(), \
+        assert "playwright" not in content.lower() or "playwright backend" in content.lower(), (
             "Design should not reference actual Playwright execution"
+        )
 
 
 class TestBrowserSubmitPolicyCompletenessCriteria:
@@ -369,7 +401,7 @@ class TestBrowserSubmitPolicyCompletenessCriteria:
 
     def test_fixture_has_at_least_one_allowed_case(self):
         """Fixture must have at least one allowed case for positive testing."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         allowed_cases = [s for s in data["submit_sites"] if s.get("active") and s["allowed_intents"]]
@@ -377,18 +409,17 @@ class TestBrowserSubmitPolicyCompletenessCriteria:
 
     def test_fixture_has_multiple_denied_cases(self):
         """Fixture must have multiple denied cases for comprehensive testing."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         denied_cases = [
-            s for s in data["submit_sites"]
-            if not s.get("active") or not s["allowed_intents"] or "reason_denied" in s
+            s for s in data["submit_sites"] if not s.get("active") or not s["allowed_intents"] or "reason_denied" in s
         ]
         assert len(denied_cases) >= 3, "Fixture must have at least 3 denied test cases"
 
     def test_fixture_covers_key_denial_reasons(self):
         """Fixture must cover key denial reasons from design doc."""
-        with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+        with FIXTURE_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
         site_ids = {s["site_id"] for s in data["submit_sites"]}
@@ -396,12 +427,9 @@ class TestBrowserSubmitPolicyCompletenessCriteria:
         # Must cover these categories
         assert "denied_unknown_origin" in site_ids, "Must test unknown origin denial"
         assert any("login" in sid for sid in site_ids), "Must test login form denial"
-        assert any("payment" in sid or "delete" in sid for sid in site_ids), \
-            "Must test destructive action denial"
-        assert any("prompt_injection" in sid for sid in site_ids), \
-            "Must test prompt injection denial"
-        assert any("hidden_field" in sid for sid in site_ids), \
-            "Must test hidden field validation denial"
+        assert any("payment" in sid or "delete" in sid for sid in site_ids), "Must test destructive action denial"
+        assert any("prompt_injection" in sid for sid in site_ids), "Must test prompt injection denial"
+        assert any("hidden_field" in sid for sid in site_ids), "Must test hidden field validation denial"
 
 
 if __name__ == "__main__":

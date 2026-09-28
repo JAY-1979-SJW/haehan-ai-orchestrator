@@ -10,62 +10,64 @@
   RetryEngine     — EXECUTION_FAILED 자동 재시도 (백오프)
   Monitor         — 메인 루프 (threading.Event 정지 가능)
 """
+
 import json
 import os
 import re
 import threading
 import time
-from typing import Optional
+from pathlib import Path
 
 from logger import get_logger
 from telegram_notifier import send_status_message
 
 log = get_logger("monitor")
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_BASE_DIR = str(Path(__file__).resolve().parent)
 
 # ── 환경변수 설정 ──────────────────────────────────────────────────────────────
-POLL_INTERVAL     = float(os.environ.get("MONITOR_POLL_INTERVAL",    "2"))
-ALERT_COOLDOWN    = float(os.environ.get("MONITOR_ALERT_COOLDOWN",   "120"))
-APPROVAL_REMINDER = float(os.environ.get("MONITOR_APPROVAL_REMINDER","300"))
-MAX_RETRY         = int(os.environ.get("MONITOR_MAX_RETRY",          "3"))
-_RETRY_BACKOFF    = [30, 60, 120]
+POLL_INTERVAL = float(os.environ.get("MONITOR_POLL_INTERVAL", "2"))
+ALERT_COOLDOWN = float(os.environ.get("MONITOR_ALERT_COOLDOWN", "120"))
+APPROVAL_REMINDER = float(os.environ.get("MONITOR_APPROVAL_REMINDER", "300"))
+MAX_RETRY = int(os.environ.get("MONITOR_MAX_RETRY", "3"))
+_RETRY_BACKOFF = [30, 60, 120]
 
 WATCH_FILES = {
-    "ops":   os.path.join(_BASE_DIR, "logs", "orchestrator.log"),
-    "audit": os.path.join(_BASE_DIR, "logs", "audit.jsonl"),
+    "ops": Path(_BASE_DIR) / "logs" / "orchestrator.log",
+    "audit": Path(_BASE_DIR) / "logs" / "audit.jsonl",
 }
 
 
 # ── FileTailer ─────────────────────────────────────────────────────────────────
 
+
 class FileTailer:
     """tail -f 스타일 감시. 시작 시 기존 내용 skip, 이후 신규 줄만 반환."""
 
-    def __init__(self, path: str, name: str):
-        self.path = path
+    def __init__(self, path: str | Path, name: str):
+        self.path = Path(path)
         self.name = name
         self._pos: int = 0
-        self._inode: Optional[int] = None
+        self._inode: int | None = None
         self._seek_end()
 
     def _seek_end(self):
-        if not os.path.exists(self.path):
+        if not self.path.exists():
             return
         try:
-            st = os.stat(self.path)
+            st = self.path.stat()
             self._inode = st.st_ino
             self._pos = st.st_size
         except OSError:
             pass
 
     def read_new(self) -> list[str]:
-        if not os.path.exists(self.path):
+        if not self.path.exists():
             self._pos = 0
             self._inode = None
             return []
         try:
-            st = os.stat(self.path)
+            st = self.path.stat()
         except OSError:
             return []
 
@@ -82,7 +84,7 @@ class FileTailer:
             return []
 
         try:
-            with open(self.path, "r", encoding="utf-8", errors="replace") as f:
+            with self.path.open(encoding="utf-8", errors="replace") as f:
                 f.seek(self._pos)
                 chunk = f.read()
                 self._pos = f.tell()
@@ -103,20 +105,20 @@ _OPS_RE = re.compile(
 )
 
 
-def _parse_ops(line: str) -> Optional[dict]:
+def _parse_ops(line: str) -> dict | None:
     m = _OPS_RE.match(line)
     if not m:
         return None
     return {
-        "ts":      m.group("ts"),
-        "level":   m.group("level").strip(),
-        "logger":  m.group("logger"),
+        "ts": m.group("ts"),
+        "level": m.group("level").strip(),
+        "logger": m.group("logger"),
         "message": m.group("message").strip(),
-        "raw":     line,
+        "raw": line,
     }
 
 
-def _parse_audit(line: str) -> Optional[dict]:
+def _parse_audit(line: str) -> dict | None:
     try:
         return json.loads(line)
     except (json.JSONDecodeError, ValueError):
@@ -124,6 +126,7 @@ def _parse_audit(line: str) -> Optional[dict]:
 
 
 # ── AlertThrottle ──────────────────────────────────────────────────────────────
+
 
 class AlertThrottle:
     def __init__(self, cooldown: float = ALERT_COOLDOWN):
@@ -143,6 +146,7 @@ class AlertThrottle:
 
 # ── ApprovalWatcher ────────────────────────────────────────────────────────────
 
+
 class ApprovalWatcher:
     """APPROVAL_ISSUED 추적 → reminder_interval 마다 재알림 (최대 3회)."""
 
@@ -156,11 +160,10 @@ class ApprovalWatcher:
             return
         self._pending[task_id] = {
             "issued_at": time.time(),
-            "event":     event,
-            "reminded":  0,
+            "event": event,
+            "reminded": 0,
         }
-        log.info("monitor: approval tracking start task_id=%s risk=%s",
-                 task_id, event.get("risk_level", "-"))
+        log.info("monitor: approval tracking start task_id=%s risk=%s", task_id, event.get("risk_level", "-"))
 
     def on_resolved(self, task_id: str):
         if task_id in self._pending:
@@ -180,23 +183,26 @@ class ApprovalWatcher:
                 key = f"approval_reminder:{task_id}:{reminded}"
                 if self._throttle.allow(key):
                     info["reminded"] += 1
-                    alerts.append({
-                        "task_id": task_id,
-                        "elapsed": int(elapsed),
-                        "event":   info["event"],
-                        "count":   info["reminded"],
-                    })
+                    alerts.append(
+                        {
+                            "task_id": task_id,
+                            "elapsed": int(elapsed),
+                            "event": info["event"],
+                            "count": info["reminded"],
+                        }
+                    )
         return alerts
 
 
 # ── RetryEngine ────────────────────────────────────────────────────────────────
+
 
 class RetryEngine:
     """EXECUTION_FAILED 자동 재시도 — 지수 백오프."""
 
     def __init__(self, max_retry: int = MAX_RETRY):
         self._counts: dict[str, int] = {}
-        self._next:   dict[str, float] = {}
+        self._next: dict[str, float] = {}
         self._max = max_retry
 
     def schedule(self, task_id: str) -> bool:
@@ -206,8 +212,7 @@ class RetryEngine:
         delay = _RETRY_BACKOFF[min(count, len(_RETRY_BACKOFF) - 1)]
         self._counts[task_id] = count + 1
         self._next[task_id] = time.time() + delay
-        log.info("monitor: retry scheduled task_id=%s attempt=%d/%d delay=%ds",
-                 task_id, count + 1, self._max, delay)
+        log.info("monitor: retry scheduled task_id=%s attempt=%d/%d delay=%ds", task_id, count + 1, self._max, delay)
         return True
 
     def due(self) -> list[str]:
@@ -227,27 +232,31 @@ class RetryEngine:
 
 # ── Monitor ────────────────────────────────────────────────────────────────────
 
-class Monitor:
 
+class Monitor:
     def __init__(self):
-        self._tailers  = {name: FileTailer(path, name) for name, path in WATCH_FILES.items()}
+        self._tailers = {name: FileTailer(path, name) for name, path in WATCH_FILES.items()}
         self._throttle = AlertThrottle()
         self._approval = ApprovalWatcher(self._throttle)
-        self._retry    = RetryEngine()
-        self._stop     = threading.Event()
+        self._retry = RetryEngine()
+        self._stop = threading.Event()
 
     def stop(self):
         self._stop.set()
 
     def run(self):
         log.info(
-            "monitor: started poll=%.1fs cooldown=%.0fs "
-            "approval_reminder=%.0fs max_retry=%d",
-            POLL_INTERVAL, ALERT_COOLDOWN, APPROVAL_REMINDER, MAX_RETRY,
+            "monitor: started poll=%.1fs cooldown=%.0fs approval_reminder=%.0fs max_retry=%d",
+            POLL_INTERVAL,
+            ALERT_COOLDOWN,
+            APPROVAL_REMINDER,
+            MAX_RETRY,
         )
-        _alert("🟢 *[감시기 시작]* orchestrator monitor 가동\n"
-               f"• poll: {POLL_INTERVAL}s  cooldown: {ALERT_COOLDOWN}s\n"
-               f"• approval_reminder: {APPROVAL_REMINDER}s  max_retry: {MAX_RETRY}")
+        _alert(
+            "🟢 *[감시기 시작]* orchestrator monitor 가동\n"
+            f"• poll: {POLL_INTERVAL}s  cooldown: {ALERT_COOLDOWN}s\n"
+            f"• approval_reminder: {APPROVAL_REMINDER}s  max_retry: {MAX_RETRY}"
+        )
 
         while not self._stop.is_set():
             try:
@@ -279,7 +288,7 @@ class Monitor:
             event = _parse_audit(line)
             if not event:
                 continue
-            et      = event.get("event_type", "")
+            et = event.get("event_type", "")
             task_id = event.get("task_id", "-")
 
             if et == "APPROVAL_ISSUED":
@@ -296,10 +305,7 @@ class Monitor:
                 self._approval.on_resolved(task_id)
                 icon = "✅" if et == "APPROVAL_GRANTED" else "❌"
                 _alert(
-                    f"{icon} *[승인 결정]*\n"
-                    f"• task_id: `{task_id}`\n"
-                    f"• 결과: *{et}*\n"
-                    f"• actor: {event.get('actor', '-')}"
+                    f"{icon} *[승인 결정]*\n• task_id: `{task_id}`\n• 결과: *{et}*\n• actor: {event.get('actor', '-')}"
                 )
 
             elif et == "EXECUTION_FAILED":
@@ -312,7 +318,7 @@ class Monitor:
                         f"🚫 *[실행 차단]*\n"
                         f"• task_id: `{task_id}`\n"
                         f"• risk: {event.get('risk_level', '-')}\n"
-                        f"• 사유: {str(event.get('note',''))[:200]}"
+                        f"• 사유: {str(event.get('note', ''))[:200]}"
                     )
 
     def _check_approval_reminders(self):
@@ -338,20 +344,18 @@ class Monitor:
         if not self._throttle.allow(key):
             return
         _alert(
-            f"🔴 *[운영 에러]* [{parsed['level']}]\n"
-            f"• {parsed['ts']} {parsed['logger']}\n"
-            f"• {parsed['message'][:300]}"
+            f"🔴 *[운영 에러]* [{parsed['level']}]\n• {parsed['ts']} {parsed['logger']}\n• {parsed['message'][:300]}"
         )
 
     def _on_exec_failed(self, event: dict):
         task_id = event.get("task_id", "-")
         scheduled = self._retry.schedule(task_id)
-        attempt   = self._retry.attempt_count(task_id)
+        attempt = self._retry.attempt_count(task_id)
         key = f"exec_failed:{task_id}"
         if self._throttle.allow(key):
             suffix = (
                 f"• 자동 재시도: {attempt}/{MAX_RETRY} "
-                f"({_RETRY_BACKOFF[min(attempt-1, len(_RETRY_BACKOFF)-1)]}초 후)"
+                f"({_RETRY_BACKOFF[min(attempt - 1, len(_RETRY_BACKOFF) - 1)]}초 후)"
                 if scheduled
                 else "• 최대 재시도 도달 — 수동 확인 필요"
             )
@@ -359,7 +363,7 @@ class Monitor:
                 f"⚠️ *[실행 실패]*\n"
                 f"• task_id: `{task_id}`\n"
                 f"• action: {event.get('action_type', '-')}\n"
-                f"• note: {str(event.get('note',''))[:200]}\n"
+                f"• note: {str(event.get('note', ''))[:200]}\n"
                 f"{suffix}"
             )
 
@@ -368,6 +372,7 @@ class Monitor:
         log.info("monitor: retry executing task_id=%s attempt=%d", task_id, attempt)
         try:
             from executor import execute_task
+
             result = execute_task(task_id)
             status = result.get("status", "UNKNOWN")
 
@@ -376,18 +381,13 @@ class Monitor:
                 self._retry.clear(task_id)
                 self._throttle.reset(f"exec_failed:{task_id}")
                 _alert(
-                    f"✅ *[재시도 성공]*\n"
-                    f"• task_id: `{task_id}`\n"
-                    f"• status: {status}  attempt: {attempt}/{MAX_RETRY}"
+                    f"✅ *[재시도 성공]*\n• task_id: `{task_id}`\n• status: {status}  attempt: {attempt}/{MAX_RETRY}"
                 )
 
             elif status == "BLOCKED":
                 log.warning("monitor: retry blocked task_id=%s", task_id)
                 self._retry.clear(task_id)
-                _alert(
-                    f"🚫 *[재시도 차단]* 정책상 실행 불가\n"
-                    f"• task_id: `{task_id}`"
-                )
+                _alert(f"🚫 *[재시도 차단]* 정책상 실행 불가\n• task_id: `{task_id}`")
 
             else:
                 # 재실패 — 다음 백오프로 재스케줄
@@ -399,14 +399,11 @@ class Monitor:
 
         except Exception as exc:
             log.error("monitor: retry exception task_id=%s — %s", task_id, exc, exc_info=True)
-            _alert(
-                f"🔴 *[재시도 예외]*\n"
-                f"• task_id: `{task_id}`\n"
-                f"• {str(exc)[:200]}"
-            )
+            _alert(f"🔴 *[재시도 예외]*\n• task_id: `{task_id}`\n• {str(exc)[:200]}")
 
 
 # ── 헬퍼 ──────────────────────────────────────────────────────────────────────
+
 
 def _alert(text: str):
     log.info("monitor: alert → %s", text[:120].replace("\n", " "))

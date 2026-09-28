@@ -9,14 +9,14 @@ executor.py 단위 테스트 (6단계)
 """
 
 import json
-import os
 import sys
 import tempfile
 import time
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import approval_manager
 import executor as exec_mod
@@ -86,9 +86,9 @@ def _issue_and_approve(task_id: str, risk_level: str) -> str:
 
 def _read_exec_log(tmp_path) -> list:
     path = str(tmp_path / "execution.jsonl")
-    if not os.path.exists(path):
+    if not Path(path).exists():
         return []
-    with open(path, encoding="utf-8") as f:
+    with Path(path).open(encoding="utf-8") as f:
         return [json.loads(l) for l in f if l.strip()]  # noqa: E741
 
 
@@ -190,9 +190,9 @@ def test_dashboard_approve_triggers_execution(tmp_path, monkeypatch):
     monkeypatch.setattr(exec_mod, "_EXEC_LOG_PATH", str(tmp_path / "execution.jsonl"))
 
     tmp_logs = str(tmp_path / "logs")
-    os.makedirs(tmp_logs, exist_ok=True)
+    Path(tmp_logs).mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(al, "_LOGS_DIR", tmp_logs)
-    monkeypatch.setattr(al, "_AUDIT_PATH", os.path.join(tmp_logs, "audit.jsonl"))
+    monkeypatch.setattr(al, "_AUDIT_PATH", str(Path(tmp_logs) / "audit.jsonl"))
     al._logger = None
 
     # low task 등록
@@ -272,13 +272,12 @@ def test_rotation_creates_backup(tmp_path, monkeypatch):
     for i in range(10):
         exec_mod._log_execution(f"rot-{i:03d}", "SUCCESS", float(i))
 
-    assert os.path.exists(log_path)
-    assert os.path.exists(log_path + ".1"), "rotation backup not created"
+    assert Path(log_path).exists()
+    assert Path(log_path + ".1").exists(), "rotation backup not created"
 
 
 def test_jsonl_format_preserved_after_rotation(tmp_path, monkeypatch):
     """rotation 후에도 각 줄이 유효한 JSON 이고 필수 필드를 보유하는지 확인."""
-    import glob
     import logging
     from logging.handlers import RotatingFileHandler
 
@@ -297,8 +296,9 @@ def test_jsonl_format_preserved_after_rotation(tmp_path, monkeypatch):
         exec_mod._log_execution(f"fmt-{i:03d}", "SUCCESS", float(i), None)
 
     records = []
-    for fp in sorted(glob.glob(log_path + "*")):
-        with open(fp, encoding="utf-8") as f:
+    _log_path_obj = Path(log_path)
+    for fp in sorted(_log_path_obj.parent.glob(_log_path_obj.name + "*")):
+        with fp.open(encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:

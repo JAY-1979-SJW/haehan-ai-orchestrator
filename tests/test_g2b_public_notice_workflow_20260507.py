@@ -23,8 +23,9 @@ import json
 import os
 import sys
 import unittest
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import warnings
 
@@ -40,11 +41,7 @@ from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (  # noqa: E
     validate_g2b_public_notice_workflow_result,
 )
 
-FIXTURE_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "fixtures",
-    "g2b_public_notice_workflow_fixture_20260507.json",
-)
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
 
 _FORBIDDEN_STEP_NAMES = {
     "click",
@@ -64,7 +61,7 @@ _FORBIDDEN_STEP_NAMES = {
 
 
 def _load_fixture():
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 

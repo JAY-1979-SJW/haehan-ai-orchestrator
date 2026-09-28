@@ -9,13 +9,13 @@ dashboard 라우트 테스트 (5단계)
 """
 
 import base64
-import os
 import sys
 import time
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import approval_manager
 import dashboard as dash_mod
@@ -65,9 +65,9 @@ def client(tmp_path, monkeypatch):
     import audit_logger as al
 
     tmp_logs = str(tmp_path / "logs")
-    os.makedirs(tmp_logs, exist_ok=True)
+    Path(tmp_logs).mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(al, "_LOGS_DIR", tmp_logs)
-    monkeypatch.setattr(al, "_AUDIT_PATH", os.path.join(tmp_logs, "audit.jsonl"))
+    monkeypatch.setattr(al, "_AUDIT_PATH", str(Path(tmp_logs) / "audit.jsonl"))
     # Reset audit logger so it picks up the new path
     al._logger = None
 
@@ -252,8 +252,8 @@ def test_reject_records_decision(client, tmp_path):
         "/dashboard/reject",
         json={"token_id": token_id, "task_id": "task-rec-001", "user_id": "operator-1", "reason": "테스트"},
     )
-    assert os.path.exists(decisions_path)
-    with open(decisions_path, encoding="utf-8") as f:
+    assert Path(decisions_path).exists()
+    with Path(decisions_path).open(encoding="utf-8") as f:
         lines = [_json.loads(l) for l in f if l.strip()]  # noqa: E741
     assert any(l.get("decision") == "REJECTED" for l in lines)  # noqa: E741
 

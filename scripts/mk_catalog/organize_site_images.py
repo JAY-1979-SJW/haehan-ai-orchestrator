@@ -7,8 +7,8 @@
 """
 
 import json
-import os
 import re
+from pathlib import Path
 
 from PIL import Image
 
@@ -17,31 +17,30 @@ EXCLUDE_CATS = {"시공사례"}
 FNAME_RE = re.compile(r"^(\d+)_(\d+)_(.+)\.(png|jpg|jpeg|gif|webp)$", re.I)
 
 OUT_DIR = "data/mk_catalog/site"
-IMG_DIR = os.path.join(OUT_DIR, "images")
+IMG_DIR = Path(OUT_DIR) / "images"
 MAX_SIDE = 1600
 QUALITY = 88
 
-os.makedirs(IMG_DIR, exist_ok=True)
+IMG_DIR.mkdir(parents=True, exist_ok=True)
 
 # 1) log_no -> 정렬된 원본 이미지 경로 목록
 posts_files = {}
-for cat in os.listdir(ROOT):
-    if cat in EXCLUDE_CATS:
+for catdir in Path(ROOT).iterdir():
+    if catdir.name in EXCLUDE_CATS:
         continue
-    catdir = os.path.join(ROOT, cat)
-    if not os.path.isdir(catdir):
+    if not catdir.is_dir():
         continue
-    for f in os.listdir(catdir):
-        m = FNAME_RE.match(f)
+    for f in catdir.iterdir():
+        m = FNAME_RE.match(f.name)
         if not m:
             continue
         log_no, seq, name, ext = m.groups()
-        posts_files.setdefault(log_no, []).append((seq, os.path.join(catdir, f)))
+        posts_files.setdefault(log_no, []).append((seq, f))
 
 for k in posts_files:
     posts_files[k].sort(key=lambda x: x[0])
 
-catalog = json.load(open("data/mk_catalog/products_web.json", encoding="utf-8"))
+catalog = json.load(Path("data/mk_catalog/products_web.json").open(encoding="utf-8"))
 
 
 def save_full(src_path, dst_path):
@@ -74,11 +73,11 @@ for c in catalog:
     if not files:
         c["images"] = []
         continue
-    code_dir = os.path.join(IMG_DIR, c["code"])
-    os.makedirs(code_dir, exist_ok=True)
+    code_dir = IMG_DIR / c["code"]
+    code_dir.mkdir(parents=True, exist_ok=True)
     rel_paths = []
     for i, (seq, path) in enumerate(files, start=1):
-        dst = os.path.join(code_dir, f"{i:02d}.jpg")
+        dst = code_dir / f"{i:02d}.jpg"
         if save_full(path, dst):
             rel_paths.append(f"images/{c['code']}/{i:02d}.jpg")
             n_images_total += 1
@@ -89,5 +88,5 @@ for c in catalog:
 print("products with images:", n_products_with_images, "/", len(catalog))
 print("total image files written:", n_images_total)
 
-json.dump(catalog, open(os.path.join(OUT_DIR, "products.json"), "w", encoding="utf-8"), ensure_ascii=False)
-print("saved:", os.path.join(OUT_DIR, "products.json"))
+json.dump(catalog, (Path(OUT_DIR) / "products.json").open("w", encoding="utf-8"), ensure_ascii=False)
+print("saved:", Path(OUT_DIR) / "products.json")

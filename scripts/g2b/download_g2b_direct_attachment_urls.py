@@ -23,10 +23,11 @@ import time
 import unicodedata
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REPO_ROOT = str(Path(__file__).resolve().parent.parent.parent)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
@@ -59,7 +60,7 @@ _SAFE_FIELDS_DEFAULT = {
 
 
 def _is_local_pc() -> bool:
-    if os.path.exists("/.dockerenv"):
+    if Path("/.dockerenv").exists():
         return False
     return True
 
@@ -73,7 +74,8 @@ def _sanitize_filename(name: str, max_len: int = 160) -> str:
     name = "".join(c for c in name if c.isprintable() and ord(c) >= 32)
     if len(name) > max_len:
         # 확장자 보존
-        root, ext = os.path.splitext(name)
+        _name_path = Path(name)
+        root, ext = _name_path.stem, _name_path.suffix
         name = root[: max_len - len(ext) - 1] + ext
     return name or "unnamed"
 
@@ -90,22 +92,23 @@ def _hash_url(url: str) -> str:
     return hashlib.sha1((url or "").encode("utf-8")).hexdigest()[:8]
 
 
-def _file_signature(path: str) -> tuple[str, str]:
+def _file_signature(path: str | Path) -> tuple[str, str]:
     """(signature, verdict) 반환."""
-    if not os.path.exists(path):
+    p = Path(path)
+    if not p.exists():
         return "MISSING", V_ERROR
-    size = os.path.getsize(path)
+    size = p.stat().st_size
     if size == 0:
         return "EMPTY", V_ERROR
-    with open(path, "rb") as f:
+    with p.open("rb") as f:
         head = f.read(16)
     # OLE2 (HWP)
     if head[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
         return "HWP_OLE2", V_HWP_CONVERT
     # ZIP / HWPX (HWPX는 ZIP 컨테이너)
     if head[:4] == b"PK\x03\x04":
-        # 확장자 .hwpx면 HWPX, 그 외 .zip
-        if path.lower().endswith(".hwpx"):
+        # 확장자 .hwpx면 HWPX, 그 외 .zip (원래 path.lower().endswith 동작 유지)
+        if str(p).lower().endswith(".hwpx"):
             return "ZIP_OR_HWPX", V_HWPX_READY
         return "ZIP", V_ZIP
     # PDF
@@ -178,10 +181,10 @@ print(json.dumps(rows, ensure_ascii=False))
 
 def _fetch_candidates_from_cache() -> list[dict[str, Any]]:
     """이미 저장된 candidates JSON에서 fallback 로드."""
-    cache = os.path.join(_REPO_ROOT, "tmp", "g2b_user_present_attachment_candidates_20260508.json")
-    if not os.path.exists(cache):
+    cache = Path(_REPO_ROOT) / "tmp" / "g2b_user_present_attachment_candidates_20260508.json"
+    if not cache.exists():
         return []
-    with open(cache, encoding="utf-8") as f:
+    with cache.open(encoding="utf-8") as f:
         d = json.load(f)
     items = d.get("items", [])
     # file_ext 정규화
@@ -214,7 +217,7 @@ def _fetch_candidates() -> list[dict[str, Any]]:
 # ── 다운로드 ────────────────────────────────────────────────────────────────
 
 
-def _download_one(playwright, candidate: dict[str, Any], out_dir: str, index: int, headless: bool) -> dict[str, Any]:
+def _download_one(playwright, candidate: dict[str, Any], out_dir: Path, index: int, headless: bool) -> dict[str, Any]:
     """단일 URL 다운로드 시도."""
     started = time.time()
     bid_no = candidate.get("bid_ntce_no") or ""
@@ -267,15 +270,16 @@ def _download_one(playwright, candidate: dict[str, Any], out_dir: str, index: in
             safe_orig = _sanitize_filename(suggested)
             base_name = f"{index:04d}_{bid_no}_{bid_ord}_{safe_orig}"
             base_name = _sanitize_filename(base_name, max_len=200)
-            save_path = os.path.join(out_dir, base_name)
-            if os.path.exists(save_path):
+            save_path = out_dir / base_name
+            if save_path.exists():
                 # 충돌 시 hash 추가
-                root, ext = os.path.splitext(base_name)
+                _base_path = Path(base_name)
+                root, ext = _base_path.stem, _base_path.suffix
                 base_name = f"{root}_{url_hash}{ext}"
-                save_path = os.path.join(out_dir, base_name)
+                save_path = out_dir / base_name
             download.save_as(save_path)
 
-            size = os.path.getsize(save_path) if os.path.exists(save_path) else 0
+            size = save_path.stat().st_size if save_path.exists() else 0
             sig, verdict = _file_signature(save_path)
             result["saved_path"] = os.path.relpath(save_path, _REPO_ROOT)
             result["file_size"] = size
@@ -371,8 +375,8 @@ def run_batch(args) -> dict[str, Any]:
             **_SAFE_FIELDS_DEFAULT,
         }
 
-    out_dir = os.path.join(_REPO_ROOT, args.out_dir)
-    os.makedirs(out_dir, exist_ok=True)
+    out_dir = Path(_REPO_ROOT) / args.out_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
     print(f"[2/4] 다운로드 시작 → {os.path.relpath(out_dir, _REPO_ROOT)}")
     print()
 
@@ -424,24 +428,24 @@ def run_batch(args) -> dict[str, Any]:
     }
 
     # JSON 저장
-    json_path = os.path.join(_REPO_ROOT, args.result_json)
-    os.makedirs(os.path.dirname(json_path), exist_ok=True)
-    with open(json_path, "w", encoding="utf-8") as f:
+    json_path = Path(_REPO_ROOT) / args.result_json
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    with json_path.open("w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
     print(f"  JSON: {os.path.relpath(json_path, _REPO_ROOT)}")
 
     # MD 리포트 생성
     print()
     print("[4/4] 리포트 작성")
-    md_path = os.path.join(_REPO_ROOT, args.report_md)
-    os.makedirs(os.path.dirname(md_path), exist_ok=True)
+    md_path = Path(_REPO_ROOT) / args.report_md
+    md_path.parent.mkdir(parents=True, exist_ok=True)
     _write_md_report(summary, md_path, len(candidates_all), len(deduped))
     print(f"  MD: {os.path.relpath(md_path, _REPO_ROOT)}")
 
     return summary
 
 
-def _write_md_report(summary: dict, path: str, total_cands: int, deduped: int) -> None:
+def _write_md_report(summary: dict, path: Path, total_cands: int, deduped: int) -> None:
     counts = summary["verdict_counts"]
     g = counts.get
     success = g(V_HWPX_READY, 0) + g(V_HWP_CONVERT, 0) + g(V_PDF, 0) + g(V_ZIP, 0)
@@ -542,7 +546,7 @@ def _write_md_report(summary: dict, path: str, total_cands: int, deduped: int) -
     else:
         md.append("**FAIL** — 정상 다운로드 0건")
 
-    with open(path, "w", encoding="utf-8") as f:
+    with path.open("w", encoding="utf-8") as f:
         f.write("\n".join(md))
 
 
