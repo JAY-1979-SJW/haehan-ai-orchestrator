@@ -7,6 +7,7 @@ token_hash / code_hash / 모든 비밀 값.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from dataclasses import asdict, dataclass
@@ -83,10 +84,8 @@ def save_config(cfg: DesktopConfig, path: Path | None = None) -> Path:
     tmp = p.with_suffix(p.suffix + ".tmp")
     tmp.write_text(json.dumps(body, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(p)
-    try:
-        p.chmod(0o600)
-    except OSError:
-        pass  # Windows ACL은 별도 안내
+    with contextlib.suppress(OSError):
+        p.chmod(0o600)  # Windows ACL은 별도 안내
     return p
 
 

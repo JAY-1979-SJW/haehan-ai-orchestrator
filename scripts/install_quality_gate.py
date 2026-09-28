@@ -1,6 +1,8 @@
 """Install the repository quality gate as a local pre-commit hook."""
+
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,10 +19,8 @@ def install() -> Path:
         raise RuntimeError("not a git repository")
     HOOK.parent.mkdir(parents=True, exist_ok=True)
     HOOK.write_text(HOOK_BODY, encoding="utf-8")
-    try:
+    with contextlib.suppress(OSError):
         HOOK.chmod(0o755)
-    except OSError:
-        pass
     return HOOK
 
 

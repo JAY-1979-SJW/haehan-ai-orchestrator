@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 from datetime import UTC, datetime
@@ -106,10 +107,8 @@ def explore_google_surfaces(
             result = _visit_surface(visit_page, item, timeout_ms=timeout_ms)
         finally:
             if visit_page is not base_page:
-                try:
+                with contextlib.suppress(Exception):
                     visit_page.close()
-                except Exception:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
-                    pass
         report["surfaces"].append(result)
         if result["status"] == "failed":
             report["counts"]["failed"] += 1
@@ -221,10 +220,8 @@ def _goto_readonly(page: Any, url: str, *, timeout_ms: int) -> None:
             last_exc = exc
             if "interrupted by another navigation" not in str(exc) or attempt == 2:
                 break
-            try:
+            with contextlib.suppress(Exception):
                 page.wait_for_timeout(2500)
-            except Exception:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
-                pass
     if last_exc:
         raise last_exc
 

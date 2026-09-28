@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -64,10 +65,8 @@ def load_recent_runs(n: int = 10, *, path: Path | None = None) -> list:
         for line in lines:
             stripped = line.strip()
             if stripped:
-                try:
+                with contextlib.suppress(json.JSONDecodeError):
                     records.append(json.loads(stripped))
-                except json.JSONDecodeError:
-                    pass
         tail = records[-n:] if len(records) > n else records
         return list(reversed(tail))
     except Exception as e:  # noqa: BLE001

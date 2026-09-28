@@ -15,6 +15,7 @@ device_token 원문은 어떤 로그/예외/CLI 출력에도 노출되지 않는
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -81,10 +82,8 @@ def _save_plaintext(server_url: str, agent_id: str, token: str, base_dir: Path |
     tmp = p.with_suffix(p.suffix + ".tmp")
     tmp.write_text(json.dumps({"v": 1, "token": token}), encoding="utf-8")
     tmp.replace(p)
-    try:
+    with contextlib.suppress(OSError):
         p.chmod(0o600)
-    except OSError:
-        pass
 
 
 def _load_plaintext(server_url: str, agent_id: str, base_dir: Path | None = None) -> str | None:

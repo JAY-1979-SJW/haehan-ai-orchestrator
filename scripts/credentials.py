@@ -21,6 +21,7 @@ CLI:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -57,10 +58,9 @@ def _get_or_create_key() -> bytes:
     KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
     key = Fernet.generate_key()
     KEY_FILE.write_bytes(key)
-    try:
+    # chmod 권한 강화 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
+    with contextlib.suppress(Exception):
         KEY_FILE.chmod(0o600)
-    except Exception:  # noqa: BLE001 - chmod 권한 강화/레거시 파일 아카이브 이동 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
-        pass
     return key
 
 
@@ -121,10 +121,9 @@ def _save_raw(data: dict) -> None:
         json.dumps(data, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    try:
+    # chmod 권한 강화 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
+    with contextlib.suppress(Exception):
         CRED_FILE.chmod(0o600)
-    except Exception:  # noqa: BLE001 - chmod 권한 강화/레거시 파일 아카이브 이동 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
-        pass
 
 
 def _normalize(data: dict) -> tuple[dict, bool]:
