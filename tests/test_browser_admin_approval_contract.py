@@ -5,10 +5,18 @@ Verifies:
 2. Forbidden fields are never in UI data
 3. Token non-disclosure policy enforced
 4. Risky keyword detection
-5. Status vocabulary consistency
-6. Final approval workflow
-7. Result display safety
-8. Integration with BROWSER-4G schema
+5. Final approval workflow
+6. Result display safety
+7. Integration with BROWSER-4G schema
+
+Note (2026-09-28): a `TestStatusVocabulary` class used to be here, but every method
+was a stub with no assertions (just a status assignment + comments describing the
+expected button state, e.g. "can_approve = true, can_reject = true") — it always
+passed regardless of behavior. Removed as non-functional (ERA001 audit-kit review
+flagged its comments as false-positive "commented-out code"; closer inspection
+showed the tests behind them were never actually implemented). The status-vocabulary
+concern IS actually covered elsewhere: see `TestStatusVocabulary` in
+`test_browser_websocket_payload_schema.py`, which asserts against the real schema.
 """
 
 from local_agent.browser_websocket_schema import (
@@ -289,50 +297,6 @@ class TestResultDisplay:
         """Result never contains raw screenshot content"""
         assert "raw_screenshot" in RESULT_DATA_FORBIDDEN_KEYS
         # UI shows screenshot_ref only (metadata, not content)
-
-
-class TestStatusVocabulary:
-    """Verify status vocabulary for button state management"""
-
-    def test_status_received_enables_approve_reject(self):
-        """'received' status enables Approve and Reject buttons"""
-        status = "received"  # noqa: F841
-        # can_approve = true, can_reject = true
-
-    def test_status_approved_disables_buttons(self):
-        """'approved' status disables Approve and Reject buttons"""
-        status = "approved"  # noqa: F841
-        # can_approve = false, can_reject = false
-
-    def test_status_executed_shows_result_only(self):
-        """'executed' status shows result, no action buttons"""
-        status = "executed"  # noqa: F841
-        # can_approve = false, can_reject = false
-        # Show result_data
-
-    def test_status_failed_shows_error(self):
-        """'failed' status shows error, no action buttons"""
-        status = "failed"  # noqa: F841
-        # can_approve = false, can_reject = false
-        # Show error_code, error_message
-
-    def test_status_rejected_shows_reason(self):
-        """'rejected' status shows rejection reason"""
-        status = "rejected"  # noqa: F841
-        # Show rejection reason
-        # can_approve = false, can_reject = false
-
-    def test_status_expired_disables_all_buttons(self):
-        """'expired' status disables all action buttons"""
-        status = "expired"  # noqa: F841
-        # can_approve = false, can_reject = false
-        # Show expiration timestamp
-
-    def test_status_blocked_prevents_execution(self):
-        """'blocked' status prevents any execution"""
-        status = "blocked"  # noqa: F841
-        # can_execute = false
-        # Show "Blocked" reason
 
 
 class TestApprovalDecisionPayload:
