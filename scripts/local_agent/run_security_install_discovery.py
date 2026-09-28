@@ -290,13 +290,20 @@ def _verify_signature(path: str) -> str:
     """PowerShell로 코드 서명 확인."""
     import subprocess
 
-    cmd = (
-        f"powershell -NoProfile -ExecutionPolicy Bypass -Command "
-        f"\"Get-AuthenticodeSignature -FilePath '{path}' | "
-        f'Select-Object -ExpandProperty Status"'
-    )
+    # list 인자 + shell=False: shell=True로 문자열 명령을 넘기면 path에 셸 메타문자가
+    # 섞였을 때 명령 주입 위험이 생긴다(이 함수는 현재 호출부가 없어 미사용이지만,
+    # 다운로드 후보 파일의 경로를 검사하는 용도라 향후 연결 시 path가 외부 페이지가
+    # 제안한 파일명에서 올 수 있어 안전하게 고쳐둠).
+    cmd = [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        f"Get-AuthenticodeSignature -FilePath '{path}' | Select-Object -ExpandProperty Status",
+    ]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, shell=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
         return result.stdout.strip() or "Unknown"
     except Exception as e:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
         return f"CheckFailed: {e}"

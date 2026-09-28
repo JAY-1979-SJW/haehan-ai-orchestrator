@@ -27,20 +27,6 @@ from .constants import (
 # ── COM 초기화 ────────────────────────────────────────────────────────────────
 
 
-def open_excel(file_path: str) -> tuple:
-    """숨김 Excel 앱과 워크시트를 열어 반환.
-
-    Returns:
-        (xl_app, workbook, worksheet, page_setup)
-    """
-    xl = win32.Dispatch("Excel.Application")
-    xl.Visible = False
-    xl.DisplayAlerts = False
-    wb = xl.Workbooks.Open(str(Path(file_path).resolve()))
-    ws = wb.Sheets(1)
-    return xl, wb, ws, ws.PageSetup
-
-
 @contextlib.contextmanager
 def excel_session(file_path: str):
     """with 블록 안에서 Excel COM 세션을 안전하게 사용.

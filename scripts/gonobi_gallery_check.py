@@ -142,7 +142,7 @@ window.addEventListener('load', () => {{
 
 if __name__ == "__main__":
     out = make_gallery()
-    import subprocess
+    import os
 
-    subprocess.Popen(["start", "", str(out)], shell=True)
+    os.startfile(str(out))  # 로컬 생성 파일을 기본 앱으로 열기(Windows), shell 경유 없음
     print("브라우저에서 열기 완료")

@@ -94,6 +94,6 @@ h1 {{ margin-bottom:6px; }}
 OUT.write_text(html, encoding="utf-8")
 print(f"생성: {OUT} ({len(problems)}개)")
 
-import subprocess  # noqa: E402
+import os  # noqa: E402
 
-subprocess.Popen(["start", "", str(OUT.resolve())], shell=True)
+os.startfile(str(OUT.resolve()))  # 로컬 생성 파일을 기본 앱으로 열기(Windows), shell 경유 없음
