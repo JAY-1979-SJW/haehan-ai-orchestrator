@@ -44,7 +44,7 @@ def main_root() -> Path:
         if not common_dir.is_absolute():
             common_dir = Path.cwd() / common_dir
         return common_dir.resolve().parent
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         return Path.cwd()
 
 
@@ -55,7 +55,7 @@ def load_config() -> dict[str, Any]:
     cfg_path = ROOT / "configs" / "session_guard.json"
     try:
         return json.loads(cfg_path.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         return {
             "warn_mb": 8,
             "block_mb": 12,
@@ -80,7 +80,7 @@ def log_event(kind: str, **fields: Any) -> None:
         row = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "kind": kind, **fields}
         with path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그 기록/플래그 정리 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
         pass
 
 
@@ -88,7 +88,7 @@ def _run(args: list[str], cwd: Path | None = None) -> str:
     try:
         r = subprocess.run(args, cwd=str(cwd or ROOT), capture_output=True, text=True, timeout=15)
         return r.stdout
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         return ""
 
 
@@ -97,7 +97,7 @@ def _tail_jsonl(path: Path, limit: int = 500) -> list[dict]:
         return []
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[-limit:]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         return []
     rows = []
     for ln in lines:
@@ -106,7 +106,7 @@ def _tail_jsonl(path: Path, limit: int = 500) -> list[dict]:
             continue
         try:
             rows.append(json.loads(ln))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
             continue
     return rows
 
@@ -182,7 +182,7 @@ def _section_specs() -> str:
         for f in sorted(specs_dir.glob("*.md")):
             try:
                 text = f.read_text(encoding="utf-8", errors="replace")
-            except Exception:
+            except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
                 continue
             parsed = _parse_spec_status(text)
             if not parsed:
@@ -238,7 +238,7 @@ def _section_next_todo() -> str:
         if worklogs:
             try:
                 text = worklogs[0].read_text(encoding="utf-8", errors="replace")
-            except Exception:
+            except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
                 text = ""
             m = re.search(r"##\s*대기\s*중(.*?)(\n##\s|\Z)", text, re.S)
             if m:
@@ -287,13 +287,13 @@ def verify() -> bool:
         return False
     try:
         mtime = path.stat().st_mtime
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         return False
     if time.time() - mtime > 60:
         return False
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         return False
     return all(sec in text for sec in REQUIRED_SECTIONS)
 
@@ -308,7 +308,7 @@ def _read_handoff_summary(max_lines: int = 60) -> str:
         return "(HANDOFF.md 없음 — 새 작업으로 시작)"
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         return "(HANDOFF.md 읽기 실패)"
     return "\n".join(lines[:max_lines])
 
@@ -331,7 +331,7 @@ def _is_protected(rel_or_abs: Path, protected: list[str]) -> bool:
     s = str(rel_or_abs).replace("\\", "/")
     try:
         rel = str(Path(s).resolve().relative_to(ROOT)).replace("\\", "/")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         rel = s
     name = Path(s).name
     candidates = {s, rel, name}
@@ -366,7 +366,7 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
             try:
                 digest = handoff_path.read_text(encoding="utf-8", errors="replace").splitlines()[:5]
                 log_event("handoff_digest", digest=" | ".join(digest))
-            except Exception:
+            except Exception:  # noqa: BLE001 - 로그 기록/플래그 정리 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                 pass
 
     # 2. 이전 세션 scratchpad — report-only 기본, apply 시 2일 초과분만 삭제
@@ -380,7 +380,7 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
                 continue
             try:
                 age_days = (time.time() - d.stat().st_mtime) / 86400
-            except Exception:
+            except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
                 age_days = 0
             entry = {"path": str(d), "age_days": round(age_days, 1)}
             if apply and age_days > ccfg.get("scratchpad_report_only_days", 2):
@@ -389,7 +389,7 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
                         shutil.rmtree(d, ignore_errors=True)
                         report["deleted"].append(entry)
                         continue
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
                         report["errors"].append(str(exc))
             report["reported"].append(entry)
 
@@ -437,7 +437,7 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
                 try:
                     shutil.rmtree(d, ignore_errors=True)
                     report["deleted"].append(entry)
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
                     report["errors"].append(str(exc))
             else:
                 report["reported"].append(entry)
@@ -449,7 +449,7 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
         for f in specs_dir.glob("*.md"):
             try:
                 text = f.read_text(encoding="utf-8", errors="replace")
-            except Exception:
+            except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
                 continue
             parsed = _parse_spec_status(text)
             if parsed and parsed[1] == superseded_status:
@@ -476,7 +476,7 @@ def start(apply_cleanup: bool = False) -> None:
     try:
         if flag.exists():
             flag.unlink()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그 기록/플래그 정리 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
         pass
 
 

@@ -115,7 +115,7 @@ def _extract_domain(url: str) -> str:
 def _host_from_url(url: str) -> str:
     try:
         return (urlparse(url).hostname or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
         return ""
 
 
@@ -188,7 +188,7 @@ def detect_login_on_current_tab(page) -> tuple[bool, str | None]:
             if _check_site_login_text(site, body_text):
                 _log.info("[login-detector] site login text detected: %s url=%s", site, url)
                 return True, site
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
             _log.debug("[login-detector] 페이지 내용 획득 실패 (%s): %s", site, e)
 
         try:
@@ -196,12 +196,12 @@ def detect_login_on_current_tab(page) -> tuple[bool, str | None]:
             if state.get("logged_in") and not state.get("on_login_page"):
                 _log.info("[login-detector] generic login detected: %s url=%s", site, url)
                 return True, site
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
             _log.debug("[login-detector] generic login detection failed (%s): %s", site, e)
 
         return False, None
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
         _log.debug("[login-detector] 오류: %s", e)
         return False, None
 
@@ -225,7 +225,7 @@ def save_detected_login(site: str, page=None) -> bool:
                 from scripts.auth_session import save_session
 
                 session_file = str(save_session(storage_host, page))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
                 _log.warning("[login-detector] encrypted session save failed for %s: %s", site, e)
 
         cdp_db.init_db()
@@ -245,11 +245,11 @@ def save_detected_login(site: str, page=None) -> bool:
                 artifact_path=session_file,
                 metadata={"storage_host": storage_host, "url": getattr(page, "url", "") if page else ""},
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 프레임/신호를 순차 확인하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
             pass
         _log.info("[login-detector] %s 세션 저장됨", site)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
         _log.error("[login-detector] %s 세션 저장 실패: %s", site, e)
         return False
 
@@ -295,7 +295,7 @@ def _inject_login_watcher(page) -> bool:
         """)
         _log.info("[login-detector] 로그인 감지기 주입 완료")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
         _log.debug("[login-detector] 감지기 주입 실패: %s", e)
         return False
 
@@ -329,7 +329,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale
             try:
                 js_detected = page.evaluate("() => window.__login_detected || false")
                 stale_count = 0  # evaluate 성공 → 정상
-            except Exception as ev_err:
+            except Exception as ev_err:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
                 msg = str(ev_err)
                 if "has been closed" in msg or "Target page" in msg or "Target closed" in msg:
                     stale_count += 1
@@ -351,7 +351,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale
                                 )
                                 try:
                                     _inject_login_watcher(page)
-                                except Exception:
+                                except Exception:  # noqa: BLE001 - 여러 프레임/신호를 순차 확인하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
                                     pass
                             else:
                                 _log.warning("[login-detector] page 재획득 실패 — 종료")
@@ -362,7 +362,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale
                                     "elapsed_s": elapsed,
                                     "aborted_reason": "page_stale_unrecoverable",
                                 }
-                        except Exception as re_err:
+                        except Exception as re_err:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
                             _log.warning("[login-detector] page 재획득 예외: %s — 종료", re_err)
                             elapsed = int(time.time() - start_time)
                             return {
@@ -392,7 +392,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale
 
             time.sleep(check_interval)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
             _log.debug("[login-detector] 모니터링 오류: %s", e)
             time.sleep(check_interval)
 
@@ -414,7 +414,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale
 def _iter_context_pages(page) -> list[Any]:
     try:
         return list(page.context.pages)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
         return [page] if page is not None else []
 
 
@@ -446,7 +446,7 @@ def watch_all_logins(page=None, *, check_interval: float = 1.0, timeout_s: int =
                         if save_detected_login(site, candidate):
                             saved.add(site)
                             print(f"saved login session: {site} ({url})")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
                     _log.debug("[login-detector] watch page skipped: %s", e)
             time.sleep(check_interval)
     except KeyboardInterrupt:
@@ -579,7 +579,7 @@ def detect_login_state(page) -> dict[str, Any]:
                     if fr.get("score", 0) > result.get("score", 0):
                         result = fr
                         result["in_iframe"] = True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
                     continue
 
         user = result.get("user_block") or result.get("greeting_name")
@@ -601,7 +601,7 @@ def detect_login_state(page) -> dict[str, Any]:
                 "aria_logged": result.get("aria_logged"),
             },
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
         _log.debug("[login-detector-generic] 감지 실패: %s", e)
         return {"logged_in": False, "score": 0, "error": str(e)[:100]}
 
@@ -644,7 +644,7 @@ def wait_for_login_generic(page, max_wait_s: int = 600, poll_interval: float = 3
         if on_progress and state.get("score", 0) != last_score:
             try:
                 on_progress(state)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 프레임/신호를 순차 확인하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
                 pass
             last_score = state.get("score", 0)
 

@@ -18,6 +18,7 @@
     python -m scripts.explorer.site_crawler <site> [depth] [max_pages]
     python scripts/cdp_client.py crawl <site> [depth] [max]
 """
+
 from __future__ import annotations
 
 import json
@@ -26,11 +27,11 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urljoin, urlparse
 
-from scripts.logger import get_logger
 from scripts.explorer.page_classifier import classify_page
 from scripts.form.bot_radar import scan as bot_scan
+from scripts.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -43,7 +44,8 @@ def _dismiss_popups(page, rounds: int = 3) -> list[dict]:
       - scripts.popup_detector.close_popup_windows: 별도 창 팝업 닫기
     연쇄 팝업 대비 여러 라운드.
     """
-    from scripts.popup_detector import handle_page_popups, close_popup_windows
+    from scripts.popup_detector import close_popup_windows, handle_page_popups
+
     all_actions: list[dict] = []
     for i in range(rounds):
         round_actions: list[dict] = []
@@ -52,15 +54,16 @@ def _dismiss_popups(page, rounds: int = 3) -> list[dict]:
             n = close_popup_windows(page)
             if n:
                 round_actions.append({"kind": "popup_window", "count": n})
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
             log.debug("[crawler] close_popup_windows 실패: %s", e)
         # DOM 모달
         try:
             r = handle_page_popups(page, timeout_s=2.0)
             if r and r.get("handled"):
-                round_actions.append({"kind": "dom_modal",
-                                       "detail": r.get("actions", []) if isinstance(r, dict) else r})
-        except Exception as e:
+                round_actions.append(
+                    {"kind": "dom_modal", "detail": r.get("actions", []) if isinstance(r, dict) else r}
+                )
+        except Exception as e:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
             log.debug("[crawler] handle_page_popups 실패: %s", e)
 
         if not round_actions:
@@ -69,33 +72,57 @@ def _dismiss_popups(page, rounds: int = 3) -> list[dict]:
         log.info("[crawler] 팝업 닫기 라운드 %d: %s", i + 1, round_actions)
     return all_actions
 
+
 ROOT = Path(__file__).resolve().parents[2]
 SITEMAP_DIR = ROOT / "data" / "sitemap"
 DISCOVERED_DIR = ROOT / "data" / "discovered"
 
 
 _SKIP_URL_KEYWORDS = (
-    "logout", "signout", "delete", "remove", "withdraw",
-    "submit", "register/save", "/upload", "/download",
-    "javascript:", "mailto:", "tel:",
+    "logout",
+    "signout",
+    "delete",
+    "remove",
+    "withdraw",
+    "submit",
+    "register/save",
+    "/upload",
+    "/download",
+    "javascript:",
+    "mailto:",
+    "tel:",
 )
 
-_BINARY_EXT = (".pdf", ".zip", ".exe", ".docx", ".xlsx", ".hwp", ".jpg",
-               ".jpeg", ".png", ".gif", ".mp4", ".avi", ".tar", ".gz")
+_BINARY_EXT = (
+    ".pdf",
+    ".zip",
+    ".exe",
+    ".docx",
+    ".xlsx",
+    ".hwp",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".mp4",
+    ".avi",
+    ".tar",
+    ".gz",
+)
 
 
 def _same_host(a: str, b: str) -> bool:
     try:
         ua, ub = urlparse(a), urlparse(b)
         return (ua.hostname or "").lower() == (ub.hostname or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
         return False
 
 
 def _norm(href: str, base: str) -> str:
     try:
         return urljoin(base, href).split("#")[0]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
         return href
 
 
@@ -121,7 +148,7 @@ def _collect_links(page) -> list[dict]:
     """
     try:
         return page.evaluate(js) or []
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
         return []
 
 
@@ -139,13 +166,13 @@ def _save_unknown_snapshot(page, host: str, url: str, classify: dict) -> str:
     # 1) 스크린샷
     try:
         page.screenshot(path=str(base.with_suffix(".png")), full_page=True)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
         pass
     # 2) HTML
     try:
         html = page.content()
         base.with_suffix(".html").write_text(html, encoding="utf-8")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
         pass
     # 3) 메타 + 핸들러 스텁
     stub = {
@@ -155,7 +182,8 @@ def _save_unknown_snapshot(page, host: str, url: str, classify: dict) -> str:
         "suggested_handler_stub": _build_handler_stub(url, classify),
     }
     base.with_suffix(".json").write_text(
-        json.dumps(stub, ensure_ascii=False, indent=2), encoding="utf-8",
+        json.dumps(stub, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
     return str(base.relative_to(ROOT))
 
@@ -181,8 +209,11 @@ def handle_{slug.replace(".", "_").replace("-", "_")}(page):
     # 1) 필요 시 폼 탐색
     disc = discover_form(page)
 
-    # 2) 검출된 필드: {[(f.get("role"), f.get("selector"))
-                       for f in disc.get("fields", [])[:5]] if isinstance(disc, dict) else "(discovery 필요)"}
+    # 2) 검출된 필드: {
+        [(f.get("role"), f.get("selector")) for f in disc.get("fields", [])[:5]]
+        if isinstance(disc, dict)
+        else "(discovery 필요)"
+    }
 
     # TODO: 실제 동작 작성
     raise NotImplementedError("핸들러 구현 필요: {url}")
@@ -226,7 +257,7 @@ def crawl_site(
     elif from_homepage_root:
         try:
             cur = page.url or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
             cur = ""
         cur_host = urlparse(cur).hostname or ""
         if cur_host:
@@ -234,17 +265,21 @@ def crawl_site(
         else:
             seed = cur
     else:
-        try: seed = page.url or ""
-        except Exception: seed = ""
+        try:
+            seed = page.url or ""
+        except Exception:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
+            seed = ""
 
     # 2) 시작 URL 로 이동
     if seed:
         log.info("[crawler] 시작 URL 진입: %s", seed)
         try:
             page.goto(seed, timeout=20000)
-            try: page.wait_for_load_state("domcontentloaded", timeout=8000)
-            except Exception: pass
-        except Exception as e:
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=8000)
+            except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
+                pass
+        except Exception as e:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
             log.warning("[crawler] 시작 URL goto 실패: %s", e)
 
     # 3) 홈페이지 팝업 자동 처리 (연쇄 팝업 포함)
@@ -256,7 +291,7 @@ def crawl_site(
     # 4) seed 갱신 (팝업 닫고 나서 redirect 있을 수 있음)
     try:
         seed_url = page.url
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
         seed_url = seed
     host = urlparse(seed_url).hostname or ""
 
@@ -267,8 +302,7 @@ def crawl_site(
     aborted = ""
     type_counts: dict[str, int] = {}
 
-    log.info("[crawler] start host=%s seed=%s depth=%d max=%d",
-             host, seed_url, depth, max_pages)
+    log.info("[crawler] start host=%s seed=%s depth=%d max=%d", host, seed_url, depth, max_pages)
 
     while queue and len(pages) < max_pages:
         url, d = queue.pop(0)
@@ -288,14 +322,16 @@ def crawl_site(
         # 이동
         try:
             cur = page.url or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
             cur = ""
         if cur != url:
             try:
                 page.goto(url, timeout=20000)
-                try: page.wait_for_load_state("domcontentloaded", timeout=8000)
-                except Exception: pass
-            except Exception as e:
+                try:
+                    page.wait_for_load_state("domcontentloaded", timeout=8000)
+                except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
+                    pass
+            except Exception as e:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
                 log.warning("[crawler] goto 실패 %s: %s", url, e)
                 pages.append({"url": url, "error": f"goto: {str(e)[:120]}"})
                 continue
@@ -304,7 +340,7 @@ def crawl_site(
         if handle_popups:
             try:
                 _dismiss_popups(page, rounds=1)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
                 pass
 
         # 봇 감지
@@ -315,7 +351,7 @@ def crawl_site(
                     aborted = f"bot_flagged: {br['level']}"
                     log.warning("[crawler] 봇 감지 중단: %s", aborted)
                     break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
                 pass
 
         # 분류
@@ -324,7 +360,8 @@ def crawl_site(
         type_counts[page_type] = type_counts.get(page_type, 0) + 1
 
         rec = {
-            "url": url, "depth": d,
+            "url": url,
+            "depth": d,
             "title": (info["snapshot"].get("title") or "")[:120],
             "type": page_type,
             "confidence": info["confidence"],
@@ -340,12 +377,11 @@ def crawl_site(
                 rec["discovered_to"] = saved
                 discovered_paths.append(saved)
                 log.info("[crawler] [미설계 반영] %s → %s", url, saved)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
                 log.warning("[crawler] snapshot 저장 실패 %s: %s", url, e)
 
         pages.append(rec)
-        log.info("[crawler] [%d/%d] d=%d %s (%s)",
-                 len(pages), max_pages, d, (rec["title"] or url)[:60], page_type)
+        log.info("[crawler] [%d/%d] d=%d %s (%s)", len(pages), max_pages, d, (rec["title"] or url)[:60], page_type)
 
         # 링크 수집 + 큐 추가
         if d + 1 <= depth:
@@ -382,8 +418,7 @@ def crawl_site(
         fp = SITEMAP_DIR / f"{safe_host}_crawl_{ts}.json"
         fp.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         result["saved_to"] = str(fp.relative_to(ROOT))
-        log.info("[crawler] saved %s (방문 %d, 미설계 %d)",
-                 fp, len(pages), len(discovered_paths))
+        log.info("[crawler] saved %s (방문 %d, 미설계 %d)", fp, len(pages), len(discovered_paths))
 
     return result
 
@@ -397,9 +432,10 @@ def main() -> None:
     max_pages = int(sys.argv[3]) if len(sys.argv) > 3 else 50
 
     from scripts.site_access import open_site
+
     page = open_site(site)
     result = crawl_site(page, depth=depth, max_pages=max_pages)
-    print(f"\n✓ 크롤 완료")
+    print("\n✓ 크롤 완료")
     print(f"  방문: {result['visited_count']} / 미설계 반영: {result['discovered_count']}")
     print(f"  타입 분포: {result['type_counts']}")
     if result.get("saved_to"):

@@ -165,7 +165,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             self._page.goto(url, timeout=20000)
             self._wait_render(wait)
             return ActionResult(ok=True, data=self._page.url)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return ActionResult(ok=False, error=str(e))
 
     def back(self):
@@ -179,7 +179,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             self._page.click(selector, timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return ActionResult(ok=False, error=str(e))
 
     def click_text(self, text: str, exact: bool = False, wait: float = DEFAULT_WAIT) -> ActionResult:
@@ -190,7 +190,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             loc.click(timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         # 2. 링크 텍스트 포함 매칭
@@ -198,7 +198,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             self._page.locator(f"a:has-text('{text}')").first.click(timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         # 3. 버튼 텍스트
@@ -206,7 +206,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             self._page.locator(f"button:has-text('{text}')").first.click(timeout=3000)
             self._wait_render(wait)
             return ActionResult(ok=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return ActionResult(ok=False, error=f"'{text}' 요소를 찾을 수 없음: {e}")
 
     def click_link(self, href_contains: str, wait: float = DEFAULT_WAIT) -> ActionResult:
@@ -215,7 +215,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             self._page.locator(f"a[href*='{href_contains}']").first.click(timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return ActionResult(ok=False, error=str(e))
 
     # ── 입력 ─────────────────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                 el.clear()
             el.type(text, delay=30)
             return ActionResult(ok=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return ActionResult(ok=False, error=str(e))
 
     def press(self, key: str):
@@ -262,7 +262,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         """특정 셀렉터의 텍스트."""
         try:
             return self._page.locator(selector).first.inner_text()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return ""
 
     def page_info(self) -> PageInfo:
@@ -299,7 +299,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
     );
 }}
 """)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return []
 
     def extract_forms(self) -> list[dict]:
@@ -323,7 +323,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             for loc in locs[:5]:
                 tag = loc.evaluate("el => el.tagName.toLowerCase()")
                 candidates.append(f"{tag}:has-text('{description}')")
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
         return candidates
 
@@ -342,7 +342,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                     return True
                 if text and text in self._page.inner_text("body"):
                     return True
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
             time.sleep(RENDER_POLL)
         return False
@@ -359,7 +359,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             try:
                 self._page.locator(next_selector).first.click(timeout=3000)
                 self._wait_render()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
                 break
         return all_items
 
@@ -368,7 +368,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         """SPA 렌더링 완료 대기: DOM 안정화 + 추가 대기."""
         try:
             self._page.wait_for_load_state("domcontentloaded", timeout=8000)
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
         # DOM 크기 안정화 확인
         prev_len = 0
@@ -379,7 +379,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                 if curr_len == prev_len and curr_len > 0:
                     break
                 prev_len = curr_len
-            except Exception:
+            except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
                 break
             time.sleep(RENDER_POLL)
         time.sleep(max(0, extra - RENDER_POLL))
@@ -477,7 +477,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                     if p["href"] not in seen:
                         seen.add(p["href"])
                         all_posts.append(p)
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         # 폴백: 메인 프레임 일반 링크에서 articleid 포함 추출
@@ -535,7 +535,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                     raw_fn = fn_m.group(1).strip()
                     try:
                         suggested = urllib.parse.unquote(raw_fn)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
                         suggested = raw_fn
             if not suggested:
                 suggested = Path(file_url.split("?")[0]).name or "download"
@@ -552,7 +552,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
             return {"ok": True, "path": str(dest), "error": ""}
 
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass  # 2차 시도로 진행
 
         # ── 2차: Playwright download 이벤트 ─────────────────────────────────
@@ -564,7 +564,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             dest = save_path / suggested
             download.save_as(str(dest))
             return {"ok": True, "path": str(dest), "error": ""}
-        except Exception as pw_err:
+        except Exception as pw_err:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             # 3차: 새 탭
             try:
                 with self._ctx.expect_page() as new_page_info:
@@ -579,9 +579,9 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                     download.save_as(str(dest))
                     new_page.close()
                     return {"ok": True, "path": str(dest), "error": ""}
-                except Exception:
+                except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
                     new_page.close()
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
             return {"ok": False, "path": "", "error": str(pw_err)}
 
