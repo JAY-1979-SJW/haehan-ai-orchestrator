@@ -7,15 +7,27 @@ CHK="$TOP/.githooks/commit_checklist.py"
 [ -f "$CHK" ] || CHK="$TOP/scripts/ops/commit_checklist/commit_checklist.py"
 # 워크트리·다른 브랜치엔 사본이 없을 수 있어 설치 시점 원본 절대경로로 대체(없는 브랜치 커밋 전면차단 방지)
 [ -f "$CHK" ] || CHK="C:/work/01. haehan-ai-orchestrator/.githooks/commit_checklist.py"
-PY=python
-command -v python >/dev/null 2>&1 || PY=py
+# 이 PC는 계정(User) PATH엔 3.14가 먼저 있지만 시스템(Machine) PATH에 3.11이 박혀 있어
+# bare `python`/`python3`가 ruff 없는 3.11로 잡힐 수 있다(2026-09-28 발견, quality_gate가
+# 요구하는 ruff는 3.13/3.14에만 설치됨). PATH 순서에 기대지 않고 py 런처로 3.14를 명시한다.
+if command -v py >/dev/null 2>&1 && py -3.14 -c "pass" >/dev/null 2>&1; then
+  PY_BIN=py
+  PY_VER=-3.14
+else
+  PY_BIN=python
+  command -v python >/dev/null 2>&1 || PY_BIN=py
+  PY_VER=
+fi
 if [ -f "$CHK" ]; then
-  "$PY" "$CHK" || exit 1
+  "$PY_BIN" $PY_VER "$CHK" || exit 1
 else
   echo "[커밋 전 체크리스트] 검사기 없음: $CHK — 커밋 차단(설치 확인)"; exit 1
 fi
 if [ -f "$HOOK_DIR/pre-commit.orig" ]; then
-  "$HOOK_DIR/pre-commit.orig" "$@"
+  # pre-commit.orig 의 셔뱅(#!/usr/bin/env python3)이 이 PC에서 Windows Store 실행 별칭
+  # 스텁으로 연결돼 있어(실제 python3.exe 없음) 직접 실행하면 항상 실패한다(2026-09-28 발견).
+  # 위에서 고른 $PY_BIN/$PY_VER 로 명시 실행해 우회한다.
+  "$PY_BIN" $PY_VER "$HOOK_DIR/pre-commit.orig" "$@"
   exit $?
 fi
 exit 0
