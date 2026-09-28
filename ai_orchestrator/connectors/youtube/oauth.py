@@ -91,7 +91,7 @@ def youtube_oauth_status(user: dict = Depends(require_role("admin", "owner"))):
                 items = d.get("items", [])
                 if items:
                     channel = {"title": items[0]["snippet"]["title"], "id": items[0]["id"]}
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
 
         return {
@@ -101,5 +101,5 @@ def youtube_oauth_status(user: dict = Depends(require_role("admin", "owner"))):
             "has_upload_scope": has_upload,
             "channel": channel,
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - YouTube OAuth 토큰 상태 확인 -- 실패 시 상태값만 반환(token_error), 에러 메시지 100자로 절단해 토큰/시크릿 값 자체는 노출하지 않음
         return {"ok": False, "status": "token_error", "error": str(e)[:100], "scopes": []}

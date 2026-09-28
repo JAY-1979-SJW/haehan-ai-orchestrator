@@ -164,7 +164,7 @@ class CafeMediaMixin:
                         )
                     if len(polls) >= max_polls:
                         break
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
         return polls
 
@@ -259,7 +259,7 @@ class CafeMediaMixin:
                                 "is_all_day": False,
                             }
                         )
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
         return events
 

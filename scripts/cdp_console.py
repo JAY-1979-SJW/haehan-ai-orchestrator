@@ -140,7 +140,7 @@ class CDPSession:
             return raw, True
         try:
             return json.loads(raw), False
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP 콘솔 CLI 도구 -- JSON 파싱 실패 시 원문 텍스트 반환, 네트워크 요청 목록 출력 중 개별 오류는 무시(출력용 도구)
             return raw, True
 
     # ── 네비게이션 ────────────────────────────────────────────────────────────
@@ -621,7 +621,7 @@ def main():
                             if url not in seen:
                                 seen.add(url)
                                 print(f"  {req.get('method', ''):4s} {url[:100]}")
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - CDP 콘솔 CLI 도구 -- JSON 파싱 실패 시 원문 텍스트 반환, 네트워크 요청 목록 출력 중 개별 오류는 무시(출력용 도구)
                         pass
                 print(f"\n총 {len(seen)}개")
             case _:

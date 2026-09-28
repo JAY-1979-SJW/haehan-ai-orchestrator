@@ -21,6 +21,7 @@
     val = get_value("name")             # "홍길동"
     val = get_value("default_id", site="naver")  # 사이트별 우선
 """
+
 from __future__ import annotations
 
 import json
@@ -35,17 +36,29 @@ PROFILE_FILE = ROOT / "data" / "profile.json"
 
 # 공통 필드 카탈로그 — 회원가입에서 자주 쓰이는 역할
 KNOWN_FIELDS = [
-    "name", "name_en", "name_first", "name_last",
-    "email", "phone",
-    "birth", "birth_year", "birth_month", "birth_day",
-    "gender", "zipcode", "address", "address_detail",
-    "default_id", "default_pw",
+    "name",
+    "name_en",
+    "name_first",
+    "name_last",
+    "email",
+    "phone",
+    "birth",
+    "birth_year",
+    "birth_month",
+    "birth_day",
+    "gender",
+    "zipcode",
+    "address",
+    "address_detail",
+    "default_id",
+    "default_pw",
 ]
 
 
 def _crypto():
     """credentials.py 의 키를 그대로 재사용."""
     from scripts.credentials import _fernet
+
     return _fernet()
 
 
@@ -69,7 +82,7 @@ def _load_raw() -> dict:
         return {}
     try:
         return json.loads(PROFILE_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 폼 자동입력용 개인정보 프로필 저장소(Fernet 암호화 저장) -- JSON 파싱 실패 시 빈 딕셔너리 반환(암호화된 파일 형식 오류일 뿐, 복호화 실패는 InvalidToken으로 별도 처리되어 평문 노출 없음)
         return {}
 
 
@@ -81,7 +94,7 @@ def _save_raw(data: dict) -> None:
     )
     try:
         os.chmod(PROFILE_FILE, 0o600)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 저장 파일 권한(chmod 600) 설정 실패는 무시 -- 파일 저장 자체는 이미 완료된 뒤의 부가적 권한 강화 조치이며 Windows 등 chmod 미지원 환경에서도 저장 기능이 막히지 않도록 함
         pass
 
 
@@ -145,14 +158,25 @@ def list_fields(site: str | None = None) -> list[str]:
 
 # ── CLI ─────────────────────────────────────────────────────────────
 
+
 def _cmd_set() -> None:
     import getpass
+
     print("개인정보 프로필 입력 — 빈 값은 변경 안 함")
     print("(민감 필드는 자동 암호화)")
     vals = {}
-    for k in ["name", "name_en", "email", "phone",
-              "birth", "gender", "zipcode", "address", "address_detail",
-              "default_id"]:
+    for k in [
+        "name",
+        "name_en",
+        "email",
+        "phone",
+        "birth",
+        "gender",
+        "zipcode",
+        "address",
+        "address_detail",
+        "default_id",
+    ]:
         cur = get_value(k)
         prompt = f"  {k}"
         if cur:
@@ -199,12 +223,15 @@ def _cmd_show(site: str | None = None) -> None:
 
 def _cmd_set_override(site: str) -> None:
     import getpass
+
     print(f"[{site}] 사이트 전용 오버라이드 입력")
     nid = input("  default_id (사이트 전용): ").strip()
     pw = getpass.getpass("  default_pw (사이트 전용): ").strip()
     vals = {}
-    if nid: vals["default_id"] = nid
-    if pw: vals["default_pw"] = pw
+    if nid:
+        vals["default_id"] = nid
+    if pw:
+        vals["default_pw"] = pw
     if not vals:
         print("✘ 입력값 없음")
         return

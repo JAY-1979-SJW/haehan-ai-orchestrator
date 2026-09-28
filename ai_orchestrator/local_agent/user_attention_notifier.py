@@ -10,6 +10,7 @@
 - 알림 클릭으로 submit/sign/payment/bid 실행
 - OS 시작프로그램/서비스 자동 등록
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -24,15 +25,13 @@ _AUTH_NOTICE_TEMPLATE = (
 )
 
 _TIMEOUT_NOTICE_TEMPLATE = (
-    "인증 대기 중입니다. {remaining_sec}초 후 자동 취소됩니다.\n"
-    "브라우저에서 직접 인증을 완료해 주세요."
+    "인증 대기 중입니다. {remaining_sec}초 후 자동 취소됩니다.\n브라우저에서 직접 인증을 완료해 주세요."
 )
 
 _CANCEL_NOTICE = "인증이 취소되었습니다. 작업이 종료됩니다."
 
 _NO_AUTO_INPUT_NOTICE = (
-    "이 단계에서는 비밀번호, OTP, 인증서 비밀번호를 앱이 자동으로 입력하지 않습니다.\n"
-    "사용자가 직접 입력해 주세요."
+    "이 단계에서는 비밀번호, OTP, 인증서 비밀번호를 앱이 자동으로 입력하지 않습니다.\n사용자가 직접 입력해 주세요."
 )
 
 
@@ -90,8 +89,9 @@ def request_browser_foreground(
         from ai_orchestrator.local_agent.browser_foreground_adapter import (
             request_foreground,
         )
+
         result = request_foreground(is_headed=is_headed, browser_pid=browser_pid)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 사용자 개입 필요 알림 -- 브라우저 포그라운드 전환 실패는 UNAVAILABLE 상태로 보고, 알림 발송 실패는 NOTIFICATION_FAILED로 기록 후 계속 진행(알림은 부가 기능)
         result = {
             "status": "BROWSER_FOREGROUND_UNAVAILABLE",
             "message_ko": f"foreground 전환 오류: {type(exc).__name__}",
@@ -132,9 +132,10 @@ def notify_auth_required(
         from ai_orchestrator.local_agent.user_notification_adapter import (
             notify_auth_required as _notify,
         )
+
         notification_result = _notify(auth_signal=auth_signal)
         notification_status = notification_result["status"]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사용자 개입 필요 알림 -- 브라우저 포그라운드 전환 실패는 UNAVAILABLE 상태로 보고, 알림 발송 실패는 NOTIFICATION_FAILED로 기록 후 계속 진행(알림은 부가 기능)
         notification_status = "NOTIFICATION_FAILED"
 
     # 브라우저 포그라운드 요청

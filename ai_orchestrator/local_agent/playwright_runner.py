@@ -132,7 +132,7 @@ def run_task(task: dict[str, Any]) -> dict[str, Any]:
     try:
         with sync_playwright() as pw:
             return handler(pw, task)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 브라우저 워커 실행기 -- 실행 실패를 ok=False 결과로 변환(fail-closed), URL 호스트 추출 실패는 빈 문자열
         return build_result(
             task_id=task_id,
             ok=False,
@@ -144,7 +144,7 @@ def run_task(task: dict[str, Any]) -> dict[str, Any]:
 def _get_url_host(url: str) -> str:
     try:
         return urlparse(url).netloc
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 워커 실행기 -- 실행 실패를 ok=False 결과로 변환(fail-closed), URL 호스트 추출 실패는 빈 문자열
         return ""
 
 

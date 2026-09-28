@@ -70,7 +70,7 @@ def _load_file() -> dict | None:
         return None
     try:
         return json.loads(DATA_PATH.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 상태 조회 라우터 -- 읽기 전용, 파일 파싱 실패는 None, 프로버 실패는 마지막 저장 결과 파일로 폴백
         return None
 
 
@@ -145,7 +145,7 @@ def refresh_session_status():
         from scripts.ops.session_probe import probe_all
 
         data = probe_all()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 상태 조회 라우터 -- 읽기 전용, 파일 파싱 실패는 None, 프로버 실패는 마지막 저장 결과 파일로 폴백
         # 프로버 실패 시 마지막 결과 파일로 폴백
         data = _load_file() or {"checked_at": "", "cdp_available": False, "sites": []}
     return _build_response(data)

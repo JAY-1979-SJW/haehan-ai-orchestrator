@@ -105,7 +105,7 @@ def render(ws, xl_app, layout: list[CellDef] | None = None) -> None:
     ws.Cells.Clear()
     try:
         ws.Parent.Windows(1).DisplayGridlines = False
-    except Exception:
+    except Exception:  # noqa: BLE001 - 엑셀 레이아웃 엔진(로컬 PC 작업) -- 그리드라인 숨김/페이지뷰 전환 등 화면 표시 옵션 설정 실패는 무시(기능·데이터에 영향 없는 스타일 설정)
         pass
 
     # 열 너비
@@ -144,7 +144,7 @@ def render(ws, xl_app, layout: list[CellDef] | None = None) -> None:
     # 페이지 레이아웃 뷰
     try:
         ws.Parent.Windows(1).View = 2
-    except Exception:
+    except Exception:  # noqa: BLE001 - 엑셀 레이아웃 엔진(로컬 PC 작업) -- 그리드라인 숨김/페이지뷰 전환 등 화면 표시 옵션 설정 실패는 무시(기능·데이터에 영향 없는 스타일 설정)
         pass
 
 

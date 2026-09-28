@@ -46,7 +46,7 @@ def parse_attachment(path: str | Path) -> AttachmentResult:
         else:
             result.parser = "unsupported"
             result.error = f"지원하지 않는 첨부 형식입니다: {suffix}"
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 공고 첨부파일 파서 -- 파싱 실패는 result.error에 기록, PDF 라이브러리(fitz) 미설치 시 빈 문자열 반환(읽기 전용 텍스트 추출)
         result.error = f"{type(exc).__name__}: {exc}"
     return result
 
@@ -54,7 +54,7 @@ def parse_attachment(path: str | Path) -> AttachmentResult:
 def parse_pdf(path: Path) -> str:
     try:
         import fitz  # type: ignore
-    except Exception:
+    except Exception:  # noqa: BLE001 - 공고 첨부파일 파서 -- 파싱 실패는 result.error에 기록, PDF 라이브러리(fitz) 미설치 시 빈 문자열 반환(읽기 전용 텍스트 추출)
         return ""
     chunks: list[str] = []
     with fitz.open(str(path)) as doc:

@@ -136,7 +136,7 @@ def analyze_keyword_topic_market(
                 order=order,
                 published_after=published_after,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 유튜브 검색/댓글 수집 분석(읽기 전용) -- 키워드 검색·댓글 수집 실패 시 status=blocked로 처리(안전한 실패), 에러 메시지는 safe_preview로 200자 제한 축약해 민감정보 노출 방지
             result = {
                 "status": "blocked",
                 "source": source,
@@ -357,7 +357,7 @@ def collect_public_comment_summary(
             max_comments_total=max_comments_total,
             include_replies=include_replies,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 유튜브 검색/댓글 수집 분석(읽기 전용) -- 키워드 검색·댓글 수집 실패 시 status=blocked로 처리(안전한 실패), 에러 메시지는 safe_preview로 200자 제한 축약해 민감정보 노출 방지
         return {
             "status": "blocked",
             "reason": "youtube_comment_collection_unavailable",

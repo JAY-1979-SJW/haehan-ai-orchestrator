@@ -69,7 +69,7 @@ def execute(
                 with page.expect_download(timeout=timeout_seconds * 1000) as dl_info:
                     try:
                         page.goto(source_url, timeout=timeout_seconds * 1000, wait_until="domcontentloaded")
-                    except Exception:  # noqa: S110
+                    except Exception:  # noqa: S110, BLE001
                         pass
                 download = dl_info.value
                 fname = expected_filename or download.suggested_filename or "downloaded"
@@ -83,7 +83,7 @@ def execute(
                 raw["downloaded_at"] = datetime.now(UTC).isoformat()
                 raw["ok"] = True
                 raw["verdict"] = "DOWNLOAD_SUCCESS"
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 브라우저 파일 다운로드 액션 -- 리다이렉트 goto 실패는 무시하고 다운로드 이벤트 대기를 계속 진행, 최종 실패는 DOWNLOAD_FAILED로 결과에 기록(쿠키/세션 추출 없음)
                 raw["ok"] = False
                 raw["verdict"] = "DOWNLOAD_FAILED"
                 raw["error"] = f"{type(e).__name__}: {str(e)[:100]}"

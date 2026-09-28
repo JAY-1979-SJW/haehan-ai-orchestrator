@@ -1,4 +1,5 @@
 """CDP 프로필 세션 관리 — 진단/백업/리셋/로그인 자동 감지."""
+
 from __future__ import annotations
 
 import os
@@ -17,16 +18,16 @@ ACTOR = "session_manager"
 # 사이트별 인증 쿠키 마커 — 등장 시 로그인 완료로 판정
 # 추가 사이트는 도메인:[쿠키명, ...] 형식으로 등록
 LOGIN_MARKERS: dict[str, list[str]] = {
-    "naver.com":            ["NID_AUT", "NID_SES"],
-    "blog.naver.com":       ["NID_AUT", "NID_SES"],
-    "cafe.naver.com":       ["NID_AUT", "NID_SES"],
-    "mail.naver.com":       ["NID_AUT", "NID_SES"],
-    "calendar.naver.com":   ["NID_AUT", "NID_SES"],
-    "mybox.naver.com":      ["NID_AUT", "NID_SES"],
-    "g2b.go.kr":            ["JSESSIONID"],
+    "naver.com": ["NID_AUT", "NID_SES"],
+    "blog.naver.com": ["NID_AUT", "NID_SES"],
+    "cafe.naver.com": ["NID_AUT", "NID_SES"],
+    "mail.naver.com": ["NID_AUT", "NID_SES"],
+    "calendar.naver.com": ["NID_AUT", "NID_SES"],
+    "mybox.naver.com": ["NID_AUT", "NID_SES"],
+    "g2b.go.kr": ["JSESSIONID"],
     "developer.hancom.com": ["JSESSIONID"],
-    "github.com":           ["user_session", "logged_in"],
-    "google.com":           ["SID", "HSID"],
+    "github.com": ["user_session", "logged_in"],
+    "google.com": ["SID", "HSID"],
 }
 
 
@@ -42,7 +43,7 @@ def is_session_initialized() -> bool:
         with sqlite3.connect(f"file:{cookies_db}?mode=ro", uri=True) as con:
             cur = con.execute("SELECT COUNT(*) FROM cookies")
             return cur.fetchone()[0] > 0
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 프로필 세션 진단 -- 쿠키 개수/도메인 조회 실패 시 False/빈 리스트 반환(읽기 전용, 쿠키 값 자체를 로그·반환값에 노출하지 않음)
         return False
 
 
@@ -87,7 +88,7 @@ def get_cdp_cookies(host: str = "127.0.0.1", port: int = 9222) -> list[dict]:
             browser = pw.chromium.connect_over_cdp(f"http://{host}:{port}")
             ctx = browser.contexts[0] if browser.contexts else None
             return list(ctx.cookies()) if ctx else []
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 프로필 세션 진단 -- 쿠키 개수/도메인 조회 실패 시 False/빈 리스트 반환(읽기 전용, 쿠키 값 자체를 로그·반환값에 노출하지 않음)
         return []
 
 
@@ -103,11 +104,7 @@ def is_logged_in(domain: str, host: str = "127.0.0.1", port: int = 9222) -> bool
         return any(domain in (c.get("domain", "") or "") for c in cookies)
 
     cookies = get_cdp_cookies(host, port)
-    found = {
-        c.get("name", "")
-        for c in cookies
-        if domain in (c.get("domain", "") or "")
-    }
+    found = {c.get("name", "") for c in cookies if domain in (c.get("domain", "") or "")}
     return any(m in found for m in markers)
 
 
@@ -143,8 +140,7 @@ def wait_for_login(
         cookies = get_cdp_cookies(host, port)
         cnt = len([c for c in cookies if domain in (c.get("domain", "") or "")])
         if cnt != last_cookie_count:
-            L3("LOGIN_PROGRESS", ACTOR, domain=domain,
-               cookie_count=cnt, elapsed_s=int(time.time() - t0))
+            L3("LOGIN_PROGRESS", ACTOR, domain=domain, cookie_count=cnt, elapsed_s=int(time.time() - t0))
             last_cookie_count = cnt
 
         time.sleep(poll_interval)
@@ -156,12 +152,7 @@ def wait_for_login(
 def reset_session(confirm: bool = True) -> None:
     if not confirm:
         raise ValueError("reset_session은 confirm=True 명시 필요")
-    size_before = (
-        sum(p.stat().st_size for p in PROFILE_ROOT.rglob("*") if p.is_file())
-        if PROFILE_ROOT.exists() else 0
-    )
-    L3("SESSION_RESET", ACTOR,
-       confirmed_by=os.environ.get("USERNAME", ""),
-       profile_size_before=size_before)
+    size_before = sum(p.stat().st_size for p in PROFILE_ROOT.rglob("*") if p.is_file()) if PROFILE_ROOT.exists() else 0
+    L3("SESSION_RESET", ACTOR, confirmed_by=os.environ.get("USERNAME", ""), profile_size_before=size_before)
     if PROFILE_ROOT.exists():
         shutil.rmtree(PROFILE_ROOT)

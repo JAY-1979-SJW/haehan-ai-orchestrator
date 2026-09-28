@@ -126,7 +126,7 @@ class PersistentBrowserApprovalStore:
 
                     # Create record
                     self._records[approval_id] = BrowserApprovalRecord(**rec)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 승인 영구 저장소 -- 저장소 로드 실패 시 빈 레코드로 초기화(존재하지 않는 승인은 이후 로직에서 미승인으로 처리되어 fail-closed), 이벤트 append 실패는 로깅만
             logger.error("Failed to load approval store: %s", e)
             self._records = {}
 
@@ -152,7 +152,7 @@ class PersistentBrowserApprovalStore:
             }
             with open(self.store_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(event, ensure_ascii=False) + "\n")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 승인 영구 저장소 -- 저장소 로드 실패 시 빈 레코드로 초기화(존재하지 않는 승인은 이후 로직에서 미승인으로 처리되어 fail-closed), 이벤트 append 실패는 로깅만
             logger.error("Failed to append approval event: %s", e)
 
     def create_approval(

@@ -3,10 +3,11 @@
 This explorer uses the already-running local Chrome debugging profile. It does
 not click, type, submit, export cookies, export storage, or read secret values.
 """
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,10 +15,10 @@ from scripts.cdp_console import connect
 from scripts.google import surfaces, tab_logic
 from scripts.google.cloud.live_console_explorer import (
     _extract_visible_console_snapshot,
-    load_latest_cloud_console_live_report,
     _redact_text,
     _redact_url,
     _risk_controls,
+    load_latest_cloud_console_live_report,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,7 +27,7 @@ LATEST_REPORT = ROOT / "data" / "google_surface_live_latest.json"
 
 
 def _utc() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _surface_tab_map() -> dict[str, str]:
@@ -131,12 +132,12 @@ def explore_google_surfaces_direct_cdp(
                     report["counts"]["visited"] += 1
                     if result["risk_controls"]:
                         report["counts"]["risk_controls_detected"] += 1
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - 구글 서비스 표면 라이브 탐색(읽기 전용) -- 개별 화면 방문 실패는 report에 failed로 기록하고 계속, 예외 텍스트는 _redact_text로 민감정보를 제거한 뒤 저장
                     result["status"] = "failed"
                     result["warnings"].append(_redact_text(exc))
                     report["counts"]["failed"] += 1
                 report["surfaces"].append(result)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 서비스 표면 라이브 탐색(읽기 전용) -- 개별 화면 방문 실패는 report에 failed로 기록하고 계속, 예외 텍스트는 _redact_text로 민감정보를 제거한 뒤 저장
         report["status"] = "failed"
         report["warnings"] = [_redact_text(exc)]
         report["counts"]["failed"] = len(selected)
@@ -149,7 +150,7 @@ def explore_google_surfaces_direct_cdp(
 def save_google_surface_live_report(report: dict[str, Any], path: Path | None = None) -> tuple[dict[str, Any], Path]:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     LATEST_REPORT.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     target = path or REPORT_DIR / f"google_surface_live_{timestamp}.json"
     text = json.dumps(report, ensure_ascii=True, indent=2)
     target.write_text(text, encoding="utf-8")
@@ -237,7 +238,9 @@ def build_google_surface_live_logic(report: dict[str, Any] | None = None) -> dic
     return {
         "site_id": "google",
         "source_report_status": (
-            "completed" if source_reports and all(item.get("status") == "completed" for item in source_reports) else report.get("status", "unknown")
+            "completed"
+            if source_reports and all(item.get("status") == "completed" for item in source_reports)
+            else report.get("status", "unknown")
         ),
         "source_generated_at": report.get("generated_at", ""),
         "source_reports": [
