@@ -148,7 +148,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
     try:
         sys.modules[spec.name] = required_gate_mod
         spec.loader.exec_module(required_gate_mod)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 저장소 품질게이트 점검 함수(check_required_local_gate_wiring) - required_quality_gate 모듈 동적 import 실패 시 (False, 사유) 튜플을 반환해 해당 점검이 FAIL 처리됨(=커밋/게이트 차단 방향), 이전에 실제 버그였던 execution_policy_service.py의 fail-open(허용 방향 폴백)과 반대로 이 함수는 실패를 차단 방향으로 전파하는 fail-closed 구조임을 확인
         return False, f"required_quality_gate import failed: {type(exc).__name__}"
 
     offenders = [

@@ -55,7 +55,7 @@ def save_full(src_path, dst_path):
                 im = im.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
             im.save(dst_path, format="JPEG", quality=QUALITY)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카탈로그 이미지 리사이즈/저장 - 개별 이미지 처리 실패 시 False 반환하고 해당 이미지만 skip, 다른 이미지 처리에 영향 없음
         print("fail", src_path, e)
         return False
 

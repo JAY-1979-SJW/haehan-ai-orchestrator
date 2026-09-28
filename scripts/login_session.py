@@ -13,12 +13,14 @@
     if is_logged_in(page, "google"):
         ...
 """
+
 from __future__ import annotations
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from playwright.sync_api import Page
+
 from scripts.config import LOGIN_PROBE_URLS
 from scripts.logger import get_logger
 
@@ -27,8 +29,8 @@ log = get_logger(__name__)
 
 # ── 공통 판별 헬퍼 ───────────────────────────────────────────────────
 
-def _probe(page: Page, site: str, logged_in_sels: list[str],
-           logged_out_sels: list[str], url_block: str = "") -> bool:
+
+def _probe(page: Page, site: str, logged_in_sels: list[str], logged_out_sels: list[str], url_block: str = "") -> bool:
     """공통 로그인 판별 — URL 이동 후 셀렉터 다중 매칭."""
     if site.lower() == "google":
         from local_agent import site_entry_policy
@@ -41,7 +43,8 @@ def _probe(page: Page, site: str, logged_in_sels: list[str],
         if url_block and url_block in page.url:
             return False
         import json
-        js_in  = json.dumps(logged_in_sels)
+
+        js_in = json.dumps(logged_in_sels)
         js_out = json.dumps(logged_out_sels)
         result = page.evaluate(f"""() => {{
             const loggedInSels  = {js_in};
@@ -51,21 +54,26 @@ def _probe(page: Page, site: str, logged_in_sels: list[str],
             return 'unknown';
         }}""")
         return result == "logged_in"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트별 로그인 판별 프로브(_probe, 읽기전용) - 페이지 이동/평가 실패 시 False(미로그인으로 간주)를 반환하는 안전한 방향의 기본값, ensure_login이 이를 근거로 재로그인 대기를 트리거할 뿐 세션을 파기하지 않음
         return False
 
 
 # ── 사이트별 로그인 판별 ─────────────────────────────────────────────
 
+
 def _check_google(page: Page) -> bool:
     return _probe(
-        page, "google",
+        page,
+        "google",
         logged_in_sels=[
-            'a[href*="SignOutOptions"]', 'img[aria-label*="Google"]',
-            '[data-ogsr-up]', 'a[href*="accounts.google.com/SignOut"]',
+            'a[href*="SignOutOptions"]',
+            'img[aria-label*="Google"]',
+            "[data-ogsr-up]",
+            'a[href*="accounts.google.com/SignOut"]',
         ],
         logged_out_sels=[
-            'a[href*="ServiceLogin"]', 'input[type="email"]',
+            'a[href*="ServiceLogin"]',
+            'input[type="email"]',
         ],
         url_block="accounts.google.com",
     )
@@ -73,26 +81,37 @@ def _check_google(page: Page) -> bool:
 
 def _check_naver(page: Page) -> bool:
     return _probe(
-        page, "naver",
+        page,
+        "naver",
         logged_in_sels=[
-            '#gnb_my_name', '.gnb_id', '[class*="gnb_my"]', '[class*="MyView"]',
-            'a[href*="logout"]', 'a[href*="nid.naver.com/user2/help/myInfo"]',
+            "#gnb_my_name",
+            ".gnb_id",
+            '[class*="gnb_my"]',
+            '[class*="MyView"]',
+            'a[href*="logout"]',
+            'a[href*="nid.naver.com/user2/help/myInfo"]',
         ],
         logged_out_sels=[
-            'a[href*="nid.naver.com/nidlogin"]', 'a.link_login',
-            '#gnb-login-button', 'a[href*="/login.naver"]',
+            'a[href*="nid.naver.com/nidlogin"]',
+            "a.link_login",
+            "#gnb-login-button",
+            'a[href*="/login.naver"]',
         ],
     )
 
 
 def _check_kakao(page: Page) -> bool:
     return _probe(
-        page, "kakao",
+        page,
+        "kakao",
         logged_in_sels=[
-            'a[href*="logout"]', '.thumb_profile', '[class*="profile"]',
+            'a[href*="logout"]',
+            ".thumb_profile",
+            '[class*="profile"]',
         ],
         logged_out_sels=[
-            'input[name="loginKey"]', 'a[href*="/login"]',
+            'input[name="loginKey"]',
+            'a[href*="/login"]',
         ],
         url_block="accounts.kakao.com/login",
     )
@@ -100,43 +119,49 @@ def _check_kakao(page: Page) -> bool:
 
 def _check_youtube(page: Page) -> bool:
     return _probe(
-        page, "youtube",
+        page,
+        "youtube",
         logged_in_sels=[
-            '#avatar-btn', 'ytd-topbar-menu-button-renderer',
+            "#avatar-btn",
+            "ytd-topbar-menu-button-renderer",
         ],
         logged_out_sels=[
-            'button[aria-label*="Sign in"]', 'a[href*="/signin"]',
+            'button[aria-label*="Sign in"]',
+            'a[href*="/signin"]',
         ],
     )
 
 
 def _check_github(page: Page) -> bool:
     return _probe(
-        page, "github",
+        page,
+        "github",
         logged_in_sels=[
-            '.avatar-user', 'meta[name="user-login"]',
+            ".avatar-user",
+            'meta[name="user-login"]',
             'a[href="/logout"]',
         ],
         logged_out_sels=[
-            'a[href="/login"]', 'input[name="login"]',
+            'a[href="/login"]',
+            'input[name="login"]',
         ],
     )
 
 
 # 사이트 별칭 → 확인 함수 매핑
 _SITE_CHECKERS: dict[str, Callable[[Page], bool]] = {
-    "google":   _check_google,
-    "gmail":    _check_google,
+    "google": _check_google,
+    "gmail": _check_google,
     "calendar": _check_google,
-    "drive":    _check_google,
-    "docs":     _check_google,
-    "sheets":   _check_google,
-    "naver":    _check_naver,
-    "blog":     _check_naver,
-    "cafe":     _check_naver,
-    "kakao":    _check_kakao,
-    "youtube":  _check_youtube,
-    "github":   _check_github,
+    "drive": _check_google,
+    "docs": _check_google,
+    "sheets": _check_google,
+    "naver": _check_naver,
+    "blog": _check_naver,
+    "cafe": _check_naver,
+    "kakao": _check_kakao,
+    "youtube": _check_youtube,
+    "github": _check_github,
 }
 
 
@@ -146,7 +171,7 @@ def is_logged_in(page: Page, site: str) -> bool:
     쿠키 마커 기반(페이지 이동 없음)으로 1차 판별.
     마커 미등록 사이트만 기존 셀렉터 기반 _SITE_CHECKERS로 폴백.
     """
-    from scripts.login_check import is_logged_in_by_cookie, _LOGIN_MARKERS, _domain_of
+    from scripts.login_check import _LOGIN_MARKERS, _domain_of, is_logged_in_by_cookie
 
     domain = _domain_of(site)
     if domain in _LOGIN_MARKERS:

@@ -77,7 +77,7 @@ def sanitize(products: list[dict]) -> list[dict]:
                 im = Image.open(src).convert("RGB")
                 im.thumbnail((520, 520), Image.LANCZOS)
                 im.save(DST_IMG_DIR / name, "JPEG", quality=78, optimize=True)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 공개 카탈로그용 썸네일 생성 - 개별 이미지 처리 실패 시 continue로 해당 항목만 skip(읽기전용 이미지 가공)
                 continue
             item["img"] = f"img/{name}"
 
