@@ -37,8 +37,8 @@ py_files = [f for f in r.stdout.splitlines() if f.endswith(".py")]
 
 if py_files:
     cfg = str(ROOT / "configs" / "ruff.toml")
-    # 1. ruff check (자동 수정 + 수정 불가 오류는 FAIL)
-    check = subprocess.run(
+    # 1. ruff check (자동 수정)
+    subprocess.run(
         [sys.executable, "-m", "ruff", "check", "--fix", "--config", cfg] + py_files,
         cwd=str(ROOT),
     )
@@ -49,9 +49,19 @@ if py_files:
     )
     # ruff check 이 수정한 파일을 다시 stage
     subprocess.run(["git", "add"] + py_files, cwd=str(ROOT))
-    if check.returncode != 0:
-        print("[ruff] 수정 불가 오류가 있습니다. 위 내용을 확인하고 재커밋하세요.")
-        sys.exit(1)
+    # 3. 자동수정 안 되는 나머지 위반은 "이번 커밋으로 새로 생긴 것"만 차단한다.
+    #    (BLE001 같은 대규모 기존 부채가 있는 파일을 조금만 건드려도 매번 전체가
+    #    막히면 사실상 개발이 정지된다 — CLAUDE.md "새 훅은 새로 생긴 오류만
+    #    차단" 원칙을 실제로 구현, 2026-09-28)
+    gate = ROOT / "scripts" / "ops" / "ruff_new_only_gate.py"
+    if gate.exists():
+        gate_result = subprocess.run(
+            [sys.executable, str(gate), "--config", cfg] + py_files,
+            cwd=str(ROOT),
+        )
+        if gate_result.returncode != 0:
+            print("[ruff] 이번 변경으로 새로 생긴 위반이 있습니다. 위 내용을 확인하고 재커밋하세요.")
+            sys.exit(1)
 
 # ── 로그인 세션 파기 코드 차단 ───────────────────────────────────────
 # 세션을 임의 로그아웃/쿠키삭제하면 '매번 재로그인' 문제 발생(CLAUDE.md 로그인 세션 보존).
