@@ -9,7 +9,6 @@ from uuid import uuid4
 
 from scripts.ops.audit_ai_work_session_gate import audit
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SESSION = ROOT / "scripts" / "ops" / "ai_work_session.py"
 
@@ -46,6 +45,7 @@ def test_ai_work_session_saves_lane_separated_record() -> None:
         ],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -87,6 +87,7 @@ def test_ai_work_session_rejects_secret_shaped_text() -> None:
         ],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )

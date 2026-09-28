@@ -62,6 +62,7 @@ def git_status_short() -> list[str]:
         text=True,
         capture_output=True,
         check=False,
+        encoding="utf-8",
     )
     if proc.returncode != 0:
         return ["!! git status failed"]

@@ -303,7 +303,7 @@ def _verify_signature(path: str) -> str:
         f"Get-AuthenticodeSignature -FilePath '{path}' | Select-Object -ExpandProperty Status",
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=15)
         return result.stdout.strip() or "Unknown"
     except Exception as e:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
         return f"CheckFailed: {e}"

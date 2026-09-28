@@ -9,12 +9,13 @@
 - backend route 수정 없음
 - docker-compose 수정 없음
 """
+
 from __future__ import annotations
 
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -117,10 +118,18 @@ def check_routes(report: AuditReport) -> None:
     for route in REQUIRED_ROUTES:
         path = FRONTEND_ROOT / route
         if path.exists():
-            report.add(f"route_{route.replace('/','_').replace('[','').replace(']','').replace('.tsx','')}", "PASS", f"{route} 존재")
+            report.add(
+                f"route_{route.replace('/', '_').replace('[', '').replace(']', '').replace('.tsx', '')}",
+                "PASS",
+                f"{route} 존재",
+            )
         else:
             missing.append(route)
-            report.add(f"route_{route.replace('/','_').replace('[','').replace(']','').replace('.tsx','')}", "FAIL", f"{route} 없음")
+            report.add(
+                f"route_{route.replace('/', '_').replace('[', '').replace(']', '').replace('.tsx', '')}",
+                "FAIL",
+                f"{route} 없음",
+            )
     if not missing:
         report.add("routes_all_8_present", "PASS", "8개 화면 route 모두 존재")
 
@@ -149,15 +158,19 @@ def check_mock_data(report: AuditReport) -> None:
     content = mock_path.read_text(encoding="utf-8")
     for pattern, name in FORBIDDEN_SECRET_PATTERNS:
         if re.search(pattern, content):
-            report.add(f"mock_secret_{name.replace(' ','_')}", "FAIL", f"mock에 {name} 발견")
+            report.add(f"mock_secret_{name.replace(' ', '_')}", "FAIL", f"mock에 {name} 발견")
         else:
-            report.add(f"mock_secret_{name.replace(' ','_')}", "PASS", f"mock에 {name} 없음")
+            report.add(f"mock_secret_{name.replace(' ', '_')}", "PASS", f"mock에 {name} 없음")
 
 
 def check_forbidden_actions(report: AuditReport) -> None:
     assistant_dir = FRONTEND_ROOT / "app" / "assistant"
     comp_dir = FRONTEND_ROOT / "components" / "assistant"
-    files = list(assistant_dir.rglob("*.tsx")) + list(comp_dir.rglob("*.tsx")) if comp_dir.exists() else list(assistant_dir.rglob("*.tsx"))
+    files = (
+        list(assistant_dir.rglob("*.tsx")) + list(comp_dir.rglob("*.tsx"))
+        if comp_dir.exists()
+        else list(assistant_dir.rglob("*.tsx"))
+    )
 
     violations: list[str] = []
     for f in files:
@@ -170,7 +183,7 @@ def check_forbidden_actions(report: AuditReport) -> None:
         report.add("forbidden_actions_clean", "PASS", "금지 액션 코드 없음")
     else:
         for v in violations:
-            report.add(f"forbidden_violation_{v[:40].replace(' ','_')}", "FAIL", v)
+            report.add(f"forbidden_violation_{v[:40].replace(' ', '_')}", "FAIL", v)
 
 
 def check_backend_unchanged(report: AuditReport) -> None:
@@ -181,17 +194,21 @@ def check_backend_unchanged(report: AuditReport) -> None:
             continue
         # git diff로 스테이지/워킹 변경 확인
         import subprocess
+
         result = subprocess.run(
             ["git", "diff", "--name-only", "HEAD", "--", rel_path],
-            capture_output=True, text=True, cwd=REPO_ROOT
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            encoding="utf-8",
         )
         changed = rel_path in result.stdout
         if changed:
-            report.add(f"backend_protected_{Path(rel_path).name}", "FAIL",
-                       f"{rel_path} 변경됨 — backend route 수정 금지")
+            report.add(
+                f"backend_protected_{Path(rel_path).name}", "FAIL", f"{rel_path} 변경됨 — backend route 수정 금지"
+            )
         else:
-            report.add(f"backend_protected_{Path(rel_path).name}", "PASS",
-                       f"{rel_path} 변경 없음")
+            report.add(f"backend_protected_{Path(rel_path).name}", "PASS", f"{rel_path} 변경 없음")
 
 
 def check_types_file(report: AuditReport) -> None:
@@ -203,7 +220,7 @@ def check_types_file(report: AuditReport) -> None:
 
 
 def run_audit() -> AuditReport:
-    report = AuditReport(generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    report = AuditReport(generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
     check_routes(report)
     check_components(report)
     check_mock_data(report)

@@ -196,6 +196,7 @@ def run_step(step: GateStep, *, dry_run: bool) -> bool:
         stderr=subprocess.STDOUT,
         check=False,
         env=env,
+        encoding="utf-8",
     )
     output = redact(result.stdout or "")
     if output:

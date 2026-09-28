@@ -79,6 +79,7 @@ def get_audio_duration(mp3: Path) -> float:
         capture_output=True,
         text=True,
         errors="replace",
+        encoding="utf-8",
     )
     for line in (r.stdout + r.stderr).splitlines():
         if "Duration" in line:

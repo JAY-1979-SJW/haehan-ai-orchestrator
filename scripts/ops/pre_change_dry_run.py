@@ -33,6 +33,7 @@ def _git_head() -> str:
         ["git", "rev-parse", "HEAD"],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
@@ -131,6 +132,7 @@ def run_dry_run(command: list[str], *, scope: str, reason: str) -> tuple[int, Pa
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         check=False,
+        encoding="utf-8",
     )
     print(result.stdout, end="")
     record = build_record(

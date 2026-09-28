@@ -36,7 +36,9 @@ def probe_cdp(host: str = CDP_HOST, port: int = CDP_PORT, timeout: float = 1.5) 
 
 def is_task_registered(task_name: str = TASK_NAME) -> bool:
     try:
-        r = subprocess.run(["schtasks", "/query", "/tn", task_name], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(
+            ["schtasks", "/query", "/tn", task_name], capture_output=True, text=True, encoding="utf-8", timeout=5
+        )
         return r.returncode == 0
     except Exception:  # noqa: BLE001 - CDP Chrome 기동 보장 유틸 — 작업스케줄러 등록여부/실행 확인 실패 시 False를 반환(등록 안 됨으로 간주해 RuntimeError로 사용자에게 안내), 탭 열기 실패는 RuntimeError로 재발생시켜 은폐되지 않음.
         return False
@@ -44,7 +46,9 @@ def is_task_registered(task_name: str = TASK_NAME) -> bool:
 
 def start_via_scheduler(task_name: str = TASK_NAME) -> tuple[bool, str]:
     try:
-        r = subprocess.run(["schtasks", "/run", "/tn", task_name], capture_output=True, text=True, timeout=10)
+        r = subprocess.run(
+            ["schtasks", "/run", "/tn", task_name], capture_output=True, text=True, encoding="utf-8", timeout=10
+        )
         ok = r.returncode == 0
         msg = ((r.stdout or "") + (r.stderr or "")).strip()
         L2("CDP_TASK_TRIGGER", ACTOR, task_name=task_name, exit_code=r.returncode)

@@ -19480,6 +19480,54 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/archive/debug/audit_dev_reg_approvals.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/misc/chrome_ui_watcher.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/chrome_ui_watcher.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/common/excel_a4_constants.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/common/excel_a4_utils.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/common/youtube_search_cache.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "youtube",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

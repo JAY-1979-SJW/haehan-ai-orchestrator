@@ -60,7 +60,12 @@ def kill_leftovers(path_marker: str) -> list[int]:
     )
     env = {**os.environ, "VC_MARK": path_marker, "VC_SELF": str(os.getpid())}
     out = subprocess.run(
-        ["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, env=env, timeout=60
+        ["powershell", "-NoProfile", "-Command", ps],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=env,
+        timeout=60,
     ).stdout
     return [int(x) for x in out.split() if x.isdigit()]
 

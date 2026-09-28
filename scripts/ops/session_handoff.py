@@ -39,6 +39,7 @@ def main_root() -> Path:
             capture_output=True,
             text=True,
             check=True,
+            encoding="utf-8",
         ).stdout.strip()
         common_dir = Path(out)
         if not common_dir.is_absolute():
@@ -86,7 +87,7 @@ def log_event(kind: str, **fields: Any) -> None:
 
 def _run(args: list[str], cwd: Path | None = None) -> str:
     try:
-        r = subprocess.run(args, cwd=str(cwd or ROOT), capture_output=True, text=True, timeout=15)
+        r = subprocess.run(args, cwd=str(cwd or ROOT), capture_output=True, text=True, encoding="utf-8", timeout=15)
         return r.stdout
     except Exception:  # noqa: BLE001 - 세션 인계·정리 유틸리티 — 파일/설정 읽기 실패는 안전한 기본값으로 폴백, 실제 삭제(rmtree/unlink)의 실패는 report[errors]에 기록해 상위에 알림(숨기지 않음), 기본은 report-only(2026-09-28 검토)
         return ""
@@ -417,7 +418,9 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
                             subprocess.run(
                                 ["git", "worktree", "remove", wt_path, "--force"], cwd=str(ROOT), capture_output=True
                             )
-                r = subprocess.run(["git", "branch", "-d", cand], cwd=str(ROOT), capture_output=True, text=True)
+                r = subprocess.run(
+                    ["git", "branch", "-d", cand], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8"
+                )
                 if r.returncode == 0:
                     report["deleted"].append(entry)
                 else:

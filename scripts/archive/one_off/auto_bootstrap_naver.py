@@ -18,6 +18,7 @@ def run_bootstrap():
             capture_output=False,
             text=True,
             timeout=30,
+            encoding="utf-8",
         )
 
         if result.returncode != 0:

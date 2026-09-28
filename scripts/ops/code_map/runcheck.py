@@ -250,7 +250,7 @@ def main() -> int:
     ledger = json.loads(LEDGER.read_text(encoding="utf-8")) if LEDGER.exists() else {"nodes": {}, "runs": []}
     now = datetime.now(UTC).isoformat(timespec="seconds")
     commit = subprocess.run(
-        ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True
+        ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True, encoding="utf-8"
     ).stdout.strip()
     summary = {}
     for lv in [x.strip().upper() for x in a.levels.split(",") if x.strip()]:

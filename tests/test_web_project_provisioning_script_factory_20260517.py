@@ -6,6 +6,7 @@ ASSISTANT_WEB_PROJECT_PROVISIONING_SCRIPT_FACTORY_01
     실제 DNS 조회 금지 / 실제 nginx 변경 금지 / 실제 certbot 실행 금지
     skip/xfail 금지
 """
+
 from __future__ import annotations
 
 import json
@@ -22,9 +23,8 @@ AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_web_project_provisioning_factor
 
 def _load_factory():
     import importlib.util
-    spec = importlib.util.spec_from_file_location(
-        "create_web_project_provisioning_plan", PROVISIONING_SCRIPT
-    )
+
+    spec = importlib.util.spec_from_file_location("create_web_project_provisioning_plan", PROVISIONING_SCRIPT)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -60,6 +60,7 @@ def _futurework_plan():
 # 1. provisioning script 존재
 # ---------------------------------------------------------------------------
 
+
 def test_provisioning_script_exists():
     assert PROVISIONING_SCRIPT.exists()
 
@@ -79,6 +80,7 @@ def test_provisioning_script_importable():
 # 2. autowork 기본 계획 생성
 # ---------------------------------------------------------------------------
 
+
 def test_autowork_plan_verdict_ready():
     plan = _autowork_plan()
     assert plan["verdict"] == "PLAN_READY"
@@ -92,14 +94,23 @@ def test_autowork_plan_fqdn():
 
 def test_autowork_plan_has_all_sections():
     plan = _autowork_plan()
-    required = {"provisioning_request", "dns_draft", "nginx_plan", "ssl_plan",
-                "smoke_checklist", "rollback_plan", "safety_boundary", "next_steps"}
+    required = {
+        "provisioning_request",
+        "dns_draft",
+        "nginx_plan",
+        "ssl_plan",
+        "smoke_checklist",
+        "rollback_plan",
+        "safety_boundary",
+        "next_steps",
+    }
     assert required.issubset(set(plan.keys()))
 
 
 # ---------------------------------------------------------------------------
 # 3. arbitrary fqdn 계획 생성
 # ---------------------------------------------------------------------------
+
 
 def test_futurework_plan_generated():
     plan = _futurework_plan()
@@ -127,6 +138,7 @@ def test_futurework_smoke_fqdn():
 # 4. fqdn host/root_domain 분해
 # ---------------------------------------------------------------------------
 
+
 def test_fqdn_split_autowork():
     mod = _load_factory()
     host, root = mod._split_fqdn("autowork.haehan-ai.kr")
@@ -152,6 +164,7 @@ def test_fqdn_split_newservice():
 # 5. DNS draft final_save_required=True
 # ---------------------------------------------------------------------------
 
+
 def test_dns_final_save_required():
     plan = _autowork_plan()
     assert plan["dns_draft"]["final_save_required"] is True
@@ -166,6 +179,7 @@ def test_dns_final_save_required_arbitrary():
 # 6. DNS draft ai_may_prepare_only=True
 # ---------------------------------------------------------------------------
 
+
 def test_dns_ai_may_prepare_only():
     plan = _autowork_plan()
     assert plan["dns_draft"]["ai_may_prepare_only"] is True
@@ -179,6 +193,7 @@ def test_dns_user_must_click_final_save():
 # ---------------------------------------------------------------------------
 # 7. nginx plan 5050 do-not-stop 포함
 # ---------------------------------------------------------------------------
+
 
 def test_nginx_5050_do_not_stop():
     plan = _autowork_plan()
@@ -204,6 +219,7 @@ def test_nginx_change_not_allowed_now():
 # 8. api strategy existing-orchestrator-api 표현
 # ---------------------------------------------------------------------------
 
+
 def test_api_strategy_uses_orchestrator_path():
     plan = _autowork_plan()
     url = plan["provisioning_request"]["api_base_url_short_term"]
@@ -219,6 +235,7 @@ def test_api_strategy_change_not_allowed_now():
 # ---------------------------------------------------------------------------
 # 9. SSL plan certbot_execution_allowed=False
 # ---------------------------------------------------------------------------
+
 
 def test_ssl_certbot_not_allowed():
     plan = _autowork_plan()
@@ -243,6 +260,7 @@ def test_ssl_plan_steps_count():
 # ---------------------------------------------------------------------------
 # 10. smoke checklist 8개 이상
 # ---------------------------------------------------------------------------
+
 
 def test_smoke_checklist_count():
     plan = _autowork_plan()
@@ -295,6 +313,7 @@ def test_smoke_p0_count():
 # 11. rollback plan 존재
 # ---------------------------------------------------------------------------
 
+
 def test_rollback_plan_exists():
     plan = _autowork_plan()
     rb = plan["rollback_plan"]
@@ -321,11 +340,13 @@ def test_rollback_conditions_count():
 # 12. --json 출력 유효
 # ---------------------------------------------------------------------------
 
+
 def test_json_output_valid():
     result = subprocess.run(
-        [sys.executable, str(PROVISIONING_SCRIPT),
-         "--fqdn", "autowork.haehan-ai.kr", "--json"],
-        capture_output=True, text=True, timeout=15
+        [sys.executable, str(PROVISIONING_SCRIPT), "--fqdn", "autowork.haehan-ai.kr", "--json"],
+        capture_output=True,
+        text=True,
+        timeout=15,
     )
     assert result.returncode == 0
     parsed = json.loads(result.stdout)
@@ -335,11 +356,21 @@ def test_json_output_valid():
 
 def test_json_arbitrary_fqdn():
     result = subprocess.run(
-        [sys.executable, str(PROVISIONING_SCRIPT),
-         "--fqdn", "futurework.haehan-ai.kr",
-         "--project-id", "futurework",
-         "--display-name", "미래 업무동", "--json"],
-        capture_output=True, text=True, timeout=15
+        [
+            sys.executable,
+            str(PROVISIONING_SCRIPT),
+            "--fqdn",
+            "futurework.haehan-ai.kr",
+            "--project-id",
+            "futurework",
+            "--display-name",
+            "미래 업무동",
+            "--json",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        encoding="utf-8",
     )
     assert result.returncode == 0
     parsed = json.loads(result.stdout)
@@ -350,11 +381,13 @@ def test_json_arbitrary_fqdn():
 # 13. --check-only 동작
 # ---------------------------------------------------------------------------
 
+
 def test_check_only_exits_zero():
     result = subprocess.run(
-        [sys.executable, str(PROVISIONING_SCRIPT),
-         "--fqdn", "test.haehan-ai.kr", "--check-only"],
-        capture_output=True, text=True, timeout=10
+        [sys.executable, str(PROVISIONING_SCRIPT), "--fqdn", "test.haehan-ai.kr", "--check-only"],
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
     assert result.returncode == 0
     assert "check-only" in result.stdout.lower() or "CHECK-ONLY" in result.stdout
@@ -362,9 +395,11 @@ def test_check_only_exits_zero():
 
 def test_check_only_no_plan_output():
     result = subprocess.run(
-        [sys.executable, str(PROVISIONING_SCRIPT),
-         "--fqdn", "test.haehan-ai.kr", "--check-only"],
-        capture_output=True, text=True, timeout=10
+        [sys.executable, str(PROVISIONING_SCRIPT), "--fqdn", "test.haehan-ai.kr", "--check-only"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        encoding="utf-8",
     )
     assert "PLAN_READY" not in result.stdout
 
@@ -372,6 +407,7 @@ def test_check_only_no_plan_output():
 # ---------------------------------------------------------------------------
 # 14. 실제 DNS write 없음
 # ---------------------------------------------------------------------------
+
 
 def test_no_actual_dns_write_in_boundary():
     mod = _load_factory()
@@ -388,6 +424,7 @@ def test_no_actual_dns_write_in_plan():
 # 15. 실제 nginx change 없음
 # ---------------------------------------------------------------------------
 
+
 def test_no_actual_nginx_change_in_boundary():
     mod = _load_factory()
     assert mod.SAFE_BOUNDARY["actual_nginx_change"] is False
@@ -402,6 +439,7 @@ def test_no_actual_nginx_change_in_plan():
 # ---------------------------------------------------------------------------
 # 16. 실제 certbot 실행 없음
 # ---------------------------------------------------------------------------
+
 
 def test_no_actual_certbot_in_boundary():
     mod = _load_factory()
@@ -418,6 +456,7 @@ def test_no_actual_certbot_in_plan():
 # 17. UI 파일 변경 없음
 # ---------------------------------------------------------------------------
 
+
 def test_no_ui_change_in_boundary():
     mod = _load_factory()
     assert mod.SAFE_BOUNDARY["actual_ui_change"] is False
@@ -432,8 +471,10 @@ def test_no_ui_change_in_plan():
 # 18. 기존 공정 기준 충돌 없음
 # ---------------------------------------------------------------------------
 
+
 def test_compatible_with_frontdoor_checklist():
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
         ROOT / "scripts" / "ops" / "audit_autowork_frontdoor_operation.py",
@@ -461,11 +502,11 @@ def test_orchestrator_api_target_consistent():
 # 19. audit script PASS
 # ---------------------------------------------------------------------------
 
+
 def test_audit_factory_all_ok():
     import importlib.util
-    spec = importlib.util.spec_from_file_location(
-        "audit_web_project_provisioning_factory", AUDIT_SCRIPT
-    )
+
+    spec = importlib.util.spec_from_file_location("audit_web_project_provisioning_factory", AUDIT_SCRIPT)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     result = mod.run_audit()

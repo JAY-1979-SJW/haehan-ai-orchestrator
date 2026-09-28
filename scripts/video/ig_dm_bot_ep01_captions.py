@@ -90,7 +90,7 @@ def burn_in(video_path: Path, srt_path: Path, out_path: Path) -> Path:
     )
     vf = f"subtitles='{srt_escaped}':force_style='{style}'"
     cmd = ["ffmpeg", "-y", "-i", str(video_path), "-vf", vf, "-c:a", "copy", str(out_path)]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"자막 번인 실패: {proc.stderr[-3000:]}")
     return out_path

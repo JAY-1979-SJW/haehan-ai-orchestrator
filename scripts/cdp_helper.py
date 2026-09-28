@@ -1,8 +1,14 @@
-"""CDP 공통 헬퍼 — 백그라운드 스레드로 이벤트 범람 처리."""
+"""CDP 공통 헬퍼 — 백그라운드 스레드로 이벤트 범람 처리.
+
+apps/marketing-standalone/connectors/cdp_helper.py 는 이 파일의 사본(독립배포 앱이라
+scripts/ 를 import 할 수 없어 부득이하게 복제 — docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md
+§3 참고). 2026-09-29 정리에서 그 사본이 먼저 넣었던 개선 2건(urlopen 타임아웃,
+예외 디버그 로깅)을 이쪽 원본에 역이식해 두 사본을 다시 동일하게 맞춤.
+"""
 
 import base64
-import contextlib
 import json
+import logging
 import threading
 import time
 import urllib.request
@@ -12,6 +18,7 @@ import websocket
 
 ROOT = Path(__file__).resolve().parents[1]
 SHOT_PATH = ROOT / "data" / "browser_screenshot.png"
+_log = logging.getLogger(__name__)
 
 
 class CDP:
@@ -27,7 +34,7 @@ class CDP:
         threading.Thread(target=self._reader, daemon=True).start()
 
     def _get_ws_url(self) -> str:
-        with urllib.request.urlopen(f"http://127.0.0.1:{self._port}/json") as r:
+        with urllib.request.urlopen(f"http://127.0.0.1:{self._port}/json", timeout=5) as r:
             tabs = json.loads(r.read())
         page_tab = next((t for t in tabs if t.get("type") == "page"), tabs[0])
         return page_tab["webSocketDebuggerUrl"]
@@ -42,8 +49,8 @@ class CDP:
                 time.sleep(0.5)
                 self._ws = self._connect()
                 return True
-            except Exception:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라.
-                pass
+            except Exception as e:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라, 실패해도 재연결 루프로 복구됨.
+                _log.debug("CDP 재연결 시도 실패(무시): %s", e)
         return False
 
     def on(self, method: str, callback):
@@ -74,9 +81,10 @@ class CDP:
                     with self._lock:
                         cb = self._callbacks.get(method)
                     if cb:
-                        # CDP 웹소켓 연결 헬퍼(원본) — 이벤트 콜백 실패 무시(best-effort 브라우저 자동화 인프라)
-                        with contextlib.suppress(Exception):
+                        try:
                             cb(msg.get("params", {}))
+                        except Exception as e:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라, 실패해도 재연결 루프로 복구됨.
+                            _log.debug("CDP 이벤트 콜백 실패(무시): %s", e)
             except Exception:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라.
                 if self._alive:
                     self._reconnect()  # 끊기면 재연결 후 계속
@@ -130,6 +138,7 @@ class CDP:
 
     def close(self):
         self._alive = False
-        # CDP 웹소켓 연결 헬퍼(원본) — 종료 시 소켓 close 실패 무시(best-effort 브라우저 자동화 인프라)
-        with contextlib.suppress(Exception):
+        try:
             self._ws.close()
+        except Exception as e:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라, 실패해도 재연결 루프로 복구됨.
+            _log.debug("CDP 종료 중 예외(무시): %s", e)

@@ -133,6 +133,7 @@ def remote_user(action: str, username: str, password: str = "") -> None:
         capture_output=True,
         check=False,
         timeout=30,
+        encoding="utf-8",
     )
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip().splitlines()

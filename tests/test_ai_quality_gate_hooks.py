@@ -78,6 +78,7 @@ def test_pre_edit_dup_check_fails_open_on_bad_input():
         capture_output=True,
         text=True,
         timeout=10,
+        encoding="utf-8",
     )
     assert proc.returncode == 0
 
@@ -145,6 +146,7 @@ def test_post_edit_fast_gate_fails_open_on_bad_input():
         capture_output=True,
         text=True,
         timeout=10,
+        encoding="utf-8",
     )
     assert proc.returncode == 0
 
@@ -217,5 +219,6 @@ def test_stop_fast_verify_fails_open_on_bad_input():
         capture_output=True,
         text=True,
         timeout=40,
+        encoding="utf-8",
     )
     assert proc.returncode == 0

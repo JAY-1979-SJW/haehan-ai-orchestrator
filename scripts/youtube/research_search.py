@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
-import sqlite3
-import time
 from pathlib import Path
 from typing import Any
 
+from scripts.common.youtube_search_cache import cache_get as _cache_get
+from scripts.common.youtube_search_cache import cache_key as _cache_key
+
+# cache_set: 이 파일은 캐시를 조회만 하고 직접 쓰지 않는다(정리 전부터 그랬음 —
+# scripts/google/youtube 쪽 검색 경로가 같은 DB에 써주는 걸 읽기만 함, 2026-09-29 확인).
 from scripts.youtube.research_common import (
     LATEST_SEARCH,
     ROOT,
@@ -35,47 +36,6 @@ COMMENT_CLASS_RULES: dict[str, tuple[str, ...]] = {
     "price_business": ("price", "cost", "money", "profit", "가격", "비용", "수익", "매출", "돈"),
     "implementation": ("setup", "install", "tool", "code", "api", "설정", "설치", "도구", "코드", "자동화"),
 }
-
-
-_SEARCH_CACHE_DB = Path(__file__).resolve().parents[2] / "data" / "youtube_search_cache.db"
-_CACHE_TTL_SECONDS = 86_400  # 24시간
-
-
-def _cache_key(query: str, max_results: int, captions_only: bool) -> str:
-    raw = f"{query.strip().lower()}|{max_results}|{captions_only}"
-    return hashlib.sha256(raw.encode()).hexdigest()
-
-
-def _cache_get(key: str) -> dict | None:
-    try:
-        _SEARCH_CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
-        con = sqlite3.connect(str(_SEARCH_CACHE_DB))
-        row = con.execute("SELECT payload, cached_at FROM search_cache WHERE cache_key=?", (key,)).fetchone()
-        con.close()
-        if row and (time.time() - row[1]) < _CACHE_TTL_SECONDS:
-            return json.loads(row[0])
-    except Exception:  # noqa: BLE001 - SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 무시 — 캐시는 성능최적화 부가기능
-        pass
-    return None
-
-
-def _cache_set(key: str, payload: dict) -> None:
-    try:
-        _SEARCH_CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
-        con = sqlite3.connect(str(_SEARCH_CACHE_DB))
-        con.execute(
-            "CREATE TABLE IF NOT EXISTS search_cache (cache_key TEXT PRIMARY KEY, payload TEXT, cached_at REAL)"
-        )
-        con.execute(
-            "INSERT OR REPLACE INTO search_cache VALUES (?,?,?)",
-            (key, json.dumps(payload, ensure_ascii=False), time.time()),
-        )
-        # 72시간 초과 항목 자동 정리
-        con.execute("DELETE FROM search_cache WHERE cached_at < ?", (time.time() - 259200,))
-        con.commit()
-        con.close()
-    except Exception:  # noqa: BLE001 - SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 무시 — 캐시는 성능최적화 부가기능
-        pass
 
 
 def search_videos(

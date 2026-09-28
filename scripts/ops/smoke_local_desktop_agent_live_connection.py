@@ -38,6 +38,7 @@ def _ssh(cmd: str, timeout: float = 10.0) -> tuple[bool, str]:
             capture_output=True,
             text=True,
             timeout=timeout + 5,
+            encoding="utf-8",
         )
         if r.returncode == 0:
             return (True, r.stdout)
@@ -55,6 +56,7 @@ def step_a_server_head() -> dict:
             capture_output=True,
             text=True,
             timeout=15,
+            encoding="utf-8",
         )
         remote_head = r.stdout.split()[0] if r.returncode == 0 and r.stdout else ""
     except Exception:  # noqa: BLE001 - 로컬 데스크톱 에이전트 실시간 연결 스모크테스트 — ssh/git head 조회 실패는 빈 문자열 폴백, 각 검증 단계(step) 실패는 report에 에러 기록 후 다음 단계 계속, 모두 read-only 진단
@@ -71,6 +73,7 @@ def step_a_server_head() -> dict:
         ["git", "rev-parse", "HEAD"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     ).stdout.strip()[:16]
     out["local_head"] = local_head
     out["server_matches_local"] = remote_head[:7] == local_head[:7] or out["ssh_head"][:7] == local_head[:7]

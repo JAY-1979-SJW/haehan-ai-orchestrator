@@ -185,6 +185,7 @@ def run_audit() -> dict[str, Any]:
                 capture_output=True,
                 text=True,
                 timeout=60,
+                encoding="utf-8",
             )
             passed = proc.returncode == 0
             summary_line = [l for l in proc.stdout.splitlines() if "passed" in l or "failed" in l]  # noqa: E741

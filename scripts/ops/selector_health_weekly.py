@@ -77,6 +77,7 @@ def ensure_cdp() -> bool:
             text=True,
             timeout=90,
             cwd=str(ROOT),
+            encoding="utf-8",
         )
     except Exception:  # noqa: BLE001 - CDP 연결 상태 확인 실패시 False(미연결)로 안전한 기본값 반환하는 읽기전용 헬스체크
         return False
@@ -95,6 +96,7 @@ def run_check() -> int:
         text=True,
         timeout=900,
         cwd=str(ROOT),
+        encoding="utf-8",
     )
     out = proc.stdout or ""
     print(out)

@@ -128,6 +128,7 @@ def _mp3_duration_sec(path: Path) -> float:
         capture_output=True,
         text=True,
         check=True,
+        encoding="utf-8",
     )
     return float(out.stdout.strip())
 

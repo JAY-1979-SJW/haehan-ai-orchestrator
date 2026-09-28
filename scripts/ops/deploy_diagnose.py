@@ -30,7 +30,9 @@ def _curl(url: str) -> tuple[int | None, str]:
 
 def _git(*args: str) -> str:
     try:
-        return subprocess.run(["git", *args], capture_output=True, text=True, timeout=20).stdout.strip()
+        return subprocess.run(
+            ["git", *args], capture_output=True, text=True, encoding="utf-8", timeout=20
+        ).stdout.strip()
     except Exception as e:  # noqa: BLE001 - HTTP 상태조회/git 명령 실행 실패를 오류 문자열로 반환하는 읽기전용 배포 진단 도구 — 쓰기 없음
         return f"err:{e}"
 

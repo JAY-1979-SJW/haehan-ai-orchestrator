@@ -3,6 +3,7 @@
 This script does not start Chrome, connect to CDP, build, deploy, stage, commit,
 or print secrets. It validates the local attach design and helper contracts.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,7 +13,6 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -69,6 +69,7 @@ def git_status_short() -> list[str]:
         text=True,
         capture_output=True,
         check=False,
+        encoding="utf-8",
     )
     if proc.returncode != 0:
         return ["!! git status failed"]

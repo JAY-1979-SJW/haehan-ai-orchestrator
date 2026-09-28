@@ -31,7 +31,7 @@ VISITS_DIR = ROOT / "data" / "manual_visits" / "taxlaw.nts.go.kr"
 
 
 def _run(cmd: list[str]) -> str:
-    r = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=60)
+    r = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", timeout=60)
     return r.stdout + r.stderr
 
 

@@ -264,6 +264,9 @@ def test_no_db_access():
 
 def test_audit_script_passes():
     result = subprocess.run(
-        [sys.executable, "scripts/ops/audit_standard_ui_package.py"], capture_output=True, text=True
+        [sys.executable, "scripts/ops/audit_standard_ui_package.py"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
     )
     assert result.returncode == 0, f"audit script 실패:\n{result.stdout}\n{result.stderr}"

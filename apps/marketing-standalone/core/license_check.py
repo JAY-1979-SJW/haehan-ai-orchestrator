@@ -54,6 +54,7 @@ def get_machine_id() -> str:
                 text=True,
                 timeout=5,
                 check=False,
+                encoding="utf-8",
             )
             for line in out.stdout.splitlines():
                 if "MachineGuid" in line:

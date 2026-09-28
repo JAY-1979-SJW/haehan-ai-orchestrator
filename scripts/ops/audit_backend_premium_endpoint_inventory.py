@@ -96,6 +96,7 @@ def run_audit() -> dict[str, Any]:
             capture_output=True,
             text=True,
             timeout=60,
+            encoding="utf-8",
         )
         if proc.returncode == 0:
             # 테스트가 PASS이면 60 이상임을 신뢰
@@ -188,6 +189,7 @@ def run_audit() -> dict[str, Any]:
                 capture_output=True,
                 text=True,
                 timeout=60,
+                encoding="utf-8",
             )
             passed = proc.returncode == 0
             summary_line = [line for line in proc.stdout.splitlines() if "passed" in line or "failed" in line]

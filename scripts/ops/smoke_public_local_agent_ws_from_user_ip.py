@@ -164,7 +164,9 @@ def main():
         # /tmp 가 ssh server-side 경로일 수 있음 — fetch via ssh
         import subprocess
 
-        r = subprocess.run(["ssh", "haehan-app", "cat /tmp/regcode.txt"], capture_output=True, text=True, timeout=10)
+        r = subprocess.run(
+            ["ssh", "haehan-app", "cat /tmp/regcode.txt"], capture_output=True, text=True, encoding="utf-8", timeout=10
+        )
         if r.returncode == 0:
             raw_code = r.stdout.strip()
     report["steps"]["00_regcode_loaded"] = {

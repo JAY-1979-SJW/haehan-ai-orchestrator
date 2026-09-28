@@ -206,6 +206,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         text=True,
         capture_output=True,
         check=False,
+        encoding="utf-8",
     )
     hooks_path = normalize_path(config.stdout.strip()) if config.returncode == 0 else ""
     if hooks_path != ".githooks":

@@ -3,6 +3,7 @@
 ASSISTANT_BACKEND_OPERATION_MONITORING_AND_INCIDENT_RUNBOOK_NO_FRONTEND_01
 프론트엔드 제외 원칙 준수 확인 포함.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -27,12 +28,16 @@ def _load_module():
 def _run_json() -> dict:
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--json"],
-        capture_output=True, text=True, cwd=ROOT,
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+        encoding="utf-8",
     )
     return json.loads(result.stdout)
 
 
 # ── 스크립트 존재 ─────────────────────────────────────────────────────────────
+
 
 def test_script_exists():
     assert SCRIPT.exists(), f"감사 스크립트 없음: {SCRIPT}"
@@ -43,6 +48,7 @@ def test_script_is_python():
 
 
 # ── frontend_excluded ─────────────────────────────────────────────────────────
+
 
 def test_frontend_excluded_true():
     report = _run_json()
@@ -62,6 +68,7 @@ def test_admin_web_not_in_smoke_commands():
 
 
 # ── health / smoke ────────────────────────────────────────────────────────────
+
 
 def test_health_commands_exist():
     report = _run_json()
@@ -99,6 +106,7 @@ def test_p0_smoke_exists():
 
 # ── nginx routing ─────────────────────────────────────────────────────────────
 
+
 def test_nginx_routing_api_to_8400():
     report = _run_json()
     api_routes = [r for r in report["nginx_routing"] if "/orchestrator/api/" in r["location"]]
@@ -130,6 +138,7 @@ def test_5050_not_shutdown_condition():
 
 # ── rollback ──────────────────────────────────────────────────────────────────
 
+
 def test_rollback_conditions_exist():
     report = _run_json()
     assert len(report["rollback_conditions"]) >= 3
@@ -142,6 +151,7 @@ def test_rollback_includes_health_failure():
 
 
 # ── external app hold ────────────────────────────────────────────────────────
+
 
 def test_external_app_hold_all_no_auto_execute():
     report = _run_json()
@@ -162,6 +172,7 @@ def test_external_app_hold_note_exists():
 
 # ── secret 출력 금지 ──────────────────────────────────────────────────────────
 
+
 def test_secret_output_forbidden_exists():
     report = _run_json()
     assert report["secret_output_forbidden"] is True
@@ -170,6 +181,7 @@ def test_secret_output_forbidden_exists():
 
 
 # ── verdict ───────────────────────────────────────────────────────────────────
+
 
 def test_script_returns_pass_verdict():
     report = _run_json()
@@ -184,6 +196,7 @@ def test_checklist_all_pass():
 
 # ── read-only (파일 쓰기 없음) ────────────────────────────────────────────────
 
+
 def test_script_does_not_write_files(tmp_path, monkeypatch):
     written = []
     original_write = Path.write_text
@@ -196,6 +209,9 @@ def test_script_does_not_write_files(tmp_path, monkeypatch):
 
     subprocess.run(
         [sys.executable, str(SCRIPT)],
-        capture_output=True, text=True, cwd=ROOT,
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+        encoding="utf-8",
     )
     assert not written, f"스크립트가 파일을 씀: {written}"

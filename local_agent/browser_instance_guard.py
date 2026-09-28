@@ -158,6 +158,7 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
                 capture_output=True,
                 text=True,
                 timeout=5,
+                encoding="utf-8",
             )
             out: list[tuple[int, str]] = []
             for line in (r.stdout or "").splitlines():
@@ -182,6 +183,7 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
             capture_output=True,
             text=True,
             timeout=5,
+            encoding="utf-8",
         )
         out: list[tuple[int, str]] = []
         for line in (r.stdout or "").splitlines()[1:]:
@@ -300,6 +302,7 @@ def _pid_alive(pid: int) -> bool:
                 capture_output=True,
                 text=True,
                 timeout=3,
+                encoding="utf-8",
             )
             return str(pid) in (r.stdout or "")
         except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)

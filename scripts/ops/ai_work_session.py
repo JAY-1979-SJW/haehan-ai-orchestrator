@@ -3,6 +3,7 @@
 This wraps ai_work_record.py with deterministic per-lane paths so each work
 stream can be closed and resumed without mixing records.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -10,7 +11,6 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RECORD_ROOT = ROOT / "data" / "runtime" / "ai_work_records"
@@ -37,6 +37,7 @@ def run_record(args: list[str]) -> int:
         cwd=ROOT,
         text=True,
         check=False,
+        encoding="utf-8",
     )
     return proc.returncode
 

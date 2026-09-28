@@ -35,7 +35,7 @@ INTERP_CATEGORIES = {"질의회신", "사전답변", "과세기준자문", "고�
 
 
 def _run(cmd: list[str]) -> str:
-    r = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=60)
+    r = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", timeout=60)
     return r.stdout + r.stderr
 
 

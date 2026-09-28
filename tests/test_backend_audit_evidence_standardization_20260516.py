@@ -624,6 +624,7 @@ class TestExistingContractUnchanged:
             cwd=base,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         changed = result.stdout.splitlines()
         for p in ui_paths:

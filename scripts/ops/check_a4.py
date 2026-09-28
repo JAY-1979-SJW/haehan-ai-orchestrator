@@ -14,7 +14,20 @@ from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-from shared.constants import (  # noqa: E402
+# hook_check_a4.py가 `python scripts/ops/check_a4.py <path>`로 -m 없이 직접
+# 실행하므로(cwd=repo root 이긴 하나 그것만으론 sys.path에 안 잡힘) 절대 패키지
+# import(scripts.common...)가 되게 저장소 루트를 앞에 넣는다(scripts/ops 하위
+# 다른 스크립트들의 기존 관례, 예: audit_backend_runtime_contract.py).
+_ROOT = Path(__file__).resolve().parents[2]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+# 2026-09-29 정정(docs/defect_index.json #32): 원래 여기서 참조하던 `shared` 패키지는
+# 이 저장소에 없어(다른 저장소 "42. excel-ai-agent"의 excel_ai_agent 패키지를 잘못
+# 가리킴) 이 스크립트가 xlsx 편집마다 도는 PostToolUse 훅에서 매번 ImportError로
+# 실패하고 있었다. 실제 구현을 scripts/common/excel_a4_constants.py·excel_a4_utils.py
+# 로 이식해 정상 경로로 고쳤다.
+from scripts.common.excel_a4_constants import (  # noqa: E402
     MARGIN_BOTTOM_IN,
     MARGIN_TOLERANCE_IN,
     MARGIN_TOP_IN,
@@ -23,7 +36,7 @@ from shared.constants import (  # noqa: E402
     PT_PER_INCH,
     ROW_HEIGHT_TOLERANCE,
 )
-from shared.excel_utils import (  # noqa: E402
+from scripts.common.excel_a4_utils import (  # noqa: E402
     available_height,
     excel_session,
     parse_last_row,

@@ -56,6 +56,7 @@ def run_command(args: list[str], *, cwd: Path | None = None, timeout: int = 60) 
         capture_output=True,
         timeout=timeout,
         check=False,
+        encoding="utf-8",
     )
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
@@ -75,6 +76,7 @@ def run_command_stdin(
         capture_output=True,
         timeout=timeout,
         check=False,
+        encoding="utf-8",
     )
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
