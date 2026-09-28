@@ -27,7 +27,7 @@ FIXTURE_PATH = ROOT / "tests" / "fixtures" / "local_agent_user_present_e2e_dryru
 
 
 def _load_fixture() -> dict:
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
