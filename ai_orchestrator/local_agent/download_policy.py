@@ -12,6 +12,7 @@
 - 민감 파일명 업로드 금지.
 - 실행파일 업로드 금지.
 """
+
 from __future__ import annotations
 
 import os
@@ -19,37 +20,95 @@ from typing import Any
 
 # ── 허용 확장자 ────────────────────────────────────────────────────────────────
 
-ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
-    ".pdf", ".hwpx", ".xlsx", ".xls", ".docx",
-    ".zip", ".txt", ".csv", ".png", ".jpg", ".jpeg",
-})
+ALLOWED_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".pdf",
+        ".hwpx",
+        ".xlsx",
+        ".xls",
+        ".docx",
+        ".zip",
+        ".txt",
+        ".csv",
+        ".png",
+        ".jpg",
+        ".jpeg",
+    }
+)
 
 # ── 차단 확장자 (인증서/키/실행파일) ──────────────────────────────────────────
 
-BLOCKED_EXTENSIONS: frozenset[str] = frozenset({
-    # 인증서/키
-    ".pfx", ".p12", ".der", ".key", ".pem", ".crt", ".cer",
-    ".jks", ".p7b", ".p7c", ".p8", ".p15", ".pub",
-    # 실행파일
-    ".exe", ".msi", ".bat", ".cmd", ".ps1", ".js", ".vbs",
-    ".sh", ".py", ".jar", ".dll", ".so", ".dmg", ".pkg",
-    # 기타 위험
-    ".lnk", ".scr", ".com", ".hta", ".reg",
-})
+BLOCKED_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        # 인증서/키
+        ".pfx",
+        ".p12",
+        ".der",
+        ".key",
+        ".pem",
+        ".crt",
+        ".cer",
+        ".jks",
+        ".p7b",
+        ".p7c",
+        ".p8",
+        ".p15",
+        ".pub",
+        # 실행파일
+        ".exe",
+        ".msi",
+        ".bat",
+        ".cmd",
+        ".ps1",
+        ".js",
+        ".vbs",
+        ".sh",
+        ".py",
+        ".jar",
+        ".dll",
+        ".so",
+        ".dmg",
+        ".pkg",
+        # 기타 위험
+        ".lnk",
+        ".scr",
+        ".com",
+        ".hta",
+        ".reg",
+    }
+)
 
 # ── NPKI/인증서 경로 패턴 ──────────────────────────────────────────────────────
 
 NPKI_PATH_PATTERNS: tuple[str, ...] = (
-    "npki", "NPKI", "usercert", "signCert", "signPri",
-    "인증서", "certificate", "npkicard",
+    "npki",
+    "NPKI",
+    "usercert",
+    "signCert",
+    "signPri",
+    "인증서",
+    "certificate",
+    "npkicard",
 )
 
 # ── 민감 파일명 패턴 ───────────────────────────────────────────────────────────
 
 SENSITIVE_NAME_PATTERNS: tuple[str, ...] = (
-    "password", "passwd", "secret", "token", "cookie",
-    "session", "credential", "private_key", "apikey", "api_key",
-    "access_key", "auth", "비밀번호", "인증서", "otp",
+    "password",
+    "passwd",
+    "secret",
+    "token",
+    "cookie",
+    "session",
+    "credential",
+    "private_key",
+    "apikey",
+    "api_key",
+    "access_key",
+    "auth",
+    "비밀번호",
+    "인증서",
+    "otp",
 )
 
 # ── 파일 크기 제한 (50MB) ─────────────────────────────────────────────────────
@@ -139,12 +198,20 @@ def check_files(
 
 
 def _get_extension(filename: str) -> str:
+    # STD-02 예외: 반환값이 ALLOWED_EXTENSIONS/BLOCKED_EXTENSIONS 판정에 쓰이는
+    # 보안 허용/차단 로직이며, _safe_filename()과 함께 동일 파일명을 다루므로
+    # 두 함수의 trailing-slash 처리 방식을 일치시켜 둔다(os.path 유지). 테스트 커버리지 없이
+    # Path.suffix 로 바꾸면 엣지케이스 회귀를 검증할 수 없어 보수적으로 SKIP.
     _, ext = os.path.splitext(filename)
     return ext.lower()
 
 
 def _safe_filename(filename: str) -> str:
     """경로를 제거하고 파일명만 반환한다."""
+    # STD-02 예외: safe_name은 check_file()에서 task_downloaded_files 식별자 비교에도
+    # 쓰인다. os.path.basename("a/b/")=="" 이지만 Path("a/b/").name=="b"로 동작이 달라
+    # (trailing slash 엣지케이스), 식별자 비교 의미가 바뀔 위험이 있다. 테스트 커버리지 없이
+    # 이 보안 관련 판정을 바꾸지 않고 보수적으로 SKIP.
     return os.path.basename(filename)
 
 

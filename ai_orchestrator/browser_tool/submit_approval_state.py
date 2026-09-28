@@ -8,19 +8,20 @@ Manages approval decision history as append-only JSONL event log.
 - No network, DB, or environment variable dependencies
 """
 
-from pathlib import Path
-from datetime import datetime, timezone
-from typing import Optional
 import json
+from datetime import UTC, datetime
+from pathlib import Path
 
 
 class ApprovalStateError(Exception):
     """Base exception for approval state operations."""
+
     pass
 
 
 class ValidationError(ApprovalStateError):
     """Raised when event validation fails."""
+
     pass
 
 
@@ -29,8 +30,8 @@ def create_approval_requested_event(
     preview_hash: str,
     site_id: str,
     form_id: str,
-    user_id: Optional[str] = None,
-    tenant_id: Optional[str] = None,
+    user_id: str | None = None,
+    tenant_id: str | None = None,
 ) -> dict:
     """
     Create an approval requested event.
@@ -63,7 +64,7 @@ def create_approval_requested_event(
         "form_id": form_id,
         "user_id": user_id,
         "tenant_id": tenant_id,
-        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }
 
 
@@ -71,7 +72,7 @@ def create_approval_decision_event(
     validation_id: str,
     preview_hash: str,
     approval_status: str,
-    decided_by: Optional[str] = None,
+    decided_by: str | None = None,
 ) -> dict:
     """
     Create an approval decision event (approved/cancelled).
@@ -104,7 +105,7 @@ def create_approval_decision_event(
         "preview_hash": preview_hash,
         "approval_status": approval_status,
         "decided_by": decided_by,
-        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }
 
 
@@ -132,7 +133,7 @@ def append_approval_state_event(log_path: Path, event: dict) -> None:
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Append to log (never truncate, always append)
-    with open(log_path, "a") as f:
+    with log_path.open("a") as f:
         f.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
@@ -153,7 +154,7 @@ def read_approval_state_events(log_path: Path) -> list[dict]:
         return []
 
     events = []
-    with open(log_path, "r") as f:
+    with log_path.open() as f:
         for line_num, line in enumerate(f, start=1):
             line = line.strip()
             if not line:
@@ -170,7 +171,7 @@ def read_approval_state_events(log_path: Path) -> list[dict]:
 def latest_approval_state(
     events: list[dict],
     preview_hash: str,
-) -> Optional[dict]:
+) -> dict | None:
     """
     Get the latest approval state for a given preview_hash.
 
@@ -185,10 +186,7 @@ def latest_approval_state(
         return None
 
     # Find all events matching this preview_hash, in order
-    matching_events = [
-        e for e in events
-        if e.get("preview_hash") == preview_hash
-    ]
+    matching_events = [e for e in events if e.get("preview_hash") == preview_hash]
 
     if not matching_events:
         return None
@@ -197,7 +195,7 @@ def latest_approval_state(
     return matching_events[-1]
 
 
-def get_approval_status(event: Optional[dict]) -> str:
+def get_approval_status(event: dict | None) -> str:
     """
     Get the approval status string from an event.
 

@@ -23,13 +23,13 @@
 
 from __future__ import annotations
 
-import os
 import re
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 @pytest.fixture(autouse=True)

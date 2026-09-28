@@ -69,7 +69,7 @@ def _make_record(
 
 def _write_jsonl(path: Path, records: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    with path.open("w", encoding="utf-8") as f:
         for rec in records:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
@@ -405,7 +405,7 @@ def test_run_log_no_sensitive_fields(tmp_path, capsys):
     with mock.patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": True}):
         _mod.audit_and_alert(store_path=store, alert_enabled=False, log_run=True, audit_log_path=log_path)
 
-    with open(log_path, encoding="utf-8") as f:
+    with log_path.open(encoding="utf-8") as f:
         content = f.read()
 
     assert "SENSITIVE_HASH" not in content

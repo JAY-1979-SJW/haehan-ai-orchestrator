@@ -16,11 +16,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import secrets as _secrets
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 # ── helpers ──────────────────────────────────────────────────────────────
