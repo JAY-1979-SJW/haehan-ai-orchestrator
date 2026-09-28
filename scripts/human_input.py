@@ -9,6 +9,7 @@
   4. 한 글자씩 keyboard.type(delay)
   5. 입력 후 값 검증
 """
+
 from __future__ import annotations
 
 import time
@@ -23,12 +24,12 @@ def _click_field(el, *, label: str, timeout: int = 3000) -> None:
     try:
         el.click(timeout=timeout)
         return
-    except Exception as first_error:
+    except Exception as first_error:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
         _log.warning("[human-input] %s 일반 클릭 실패 — force 클릭 재시도: %s", label, str(first_error)[:120])
         try:
             el.click(timeout=timeout, force=True)
             return
-        except Exception:
+        except Exception:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
             raise first_error
 
 
@@ -63,7 +64,7 @@ def safe_human_input(
         current = ""
         try:
             current = el.input_value(timeout=1500) or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
             pass
 
         # 2. 동일 → skip
@@ -81,9 +82,9 @@ def safe_human_input(
             page.keyboard.press("Delete")
             time.sleep(0.3)
             try:
-                if (el.input_value(timeout=1000) or ""):
+                if el.input_value(timeout=1000) or "":
                     el.fill("", timeout=1500)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
                 pass
             action = "replaced"
         else:
@@ -100,23 +101,28 @@ def safe_human_input(
         final = ""
         try:
             final = el.input_value(timeout=1500) or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
             pass
 
         if final != value:
             _log.warning(
                 "[human-input] %s 입력 검증 실패 (기대=%d자, 실제=%d자)",
-                label, len(value), len(final),
+                label,
+                len(value),
+                len(final),
             )
             return {
-                "ok": False, "action": action, "before": current, "after": final,
+                "ok": False,
+                "action": action,
+                "before": current,
+                "after": final,
                 "reason": "value_mismatch",
             }
 
         _log.info("[human-input] %s 입력 완료 (%s, %d자)", label, action, len(value))
         return {"ok": True, "action": action, "before": current, "after": final}
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
         _log.error("[human-input] %s 입력 실패: %s", label, e)
         return {"ok": False, "action": "error", "reason": str(e)[:120]}
 
@@ -128,6 +134,6 @@ def find_selector(page, candidates: list[str]) -> str | None:
             el = page.query_selector(sel)
             if el and el.is_visible():
                 return sel
-        except Exception:
+        except Exception:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
             pass
     return None

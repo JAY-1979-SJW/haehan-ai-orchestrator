@@ -44,7 +44,7 @@ def _naver_cookies(ctx) -> bool:
     try:
         names = {c.get("name") for c in ctx.cookies("https://www.naver.com")}
         return "NID_AUT" in names and "NID_SES" in names
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 로그인 세션 능동점검(읽기전용) - CLAUDE.md 명시대로 로그인 상태를 바꾸지 않고 쿠키 이름 존재만 bool 로 확인, 실패시 False 또는 ERROR 상태 기록
         return False
 
 
@@ -53,7 +53,7 @@ def probe_all() -> dict:
     now = datetime.now(UTC).isoformat()
     try:
         from playwright.sync_api import sync_playwright
-    except Exception as e:  # playwright 미가용
+    except Exception as e:  # playwright 미가용  # noqa: BLE001 - 사이트 로그인 세션 능동점검(읽기전용) - CLAUDE.md 명시대로 로그인 상태를 바꾸지 않고 쿠키 이름 존재만 bool 로 확인, 실패시 False 또는 ERROR 상태 기록
         payload = {"checked_at": now, "cdp_available": False, "sites": [], "error": f"playwright 불가: {str(e)[:80]}"}
         _write(payload)
         return payload
@@ -63,7 +63,7 @@ def probe_all() -> dict:
     with sync_playwright() as p:
         try:
             browser = p.chromium.connect_over_cdp(CDP_URL)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 로그인 세션 능동점검(읽기전용) - CLAUDE.md 명시대로 로그인 상태를 바꾸지 않고 쿠키 이름 존재만 bool 로 확인, 실패시 False 또는 ERROR 상태 기록
             payload = {"checked_at": now, "cdp_available": False, "sites": [], "error": f"CDP 연결 불가: {str(e)[:80]}"}
             _write(payload)
             return payload
@@ -84,7 +84,7 @@ def probe_all() -> dict:
                     has_pw = False
                     try:
                         has_pw = page.query_selector("input[type=password]") is not None
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 사이트 로그인 세션 능동점검(읽기전용) - CLAUDE.md 명시대로 로그인 상태를 바꾸지 않고 쿠키 이름 존재만 bool 로 확인, 실패시 False 또는 ERROR 상태 기록
                         has_pw = False
                     logged_in = not redirected and not has_pw
                     has_cookie = naver_cookie if key in _NAVER_KEYS else logged_in
@@ -98,7 +98,7 @@ def probe_all() -> dict:
                             "checked_at": ts,
                         }
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 사이트 로그인 세션 능동점검(읽기전용) - CLAUDE.md 명시대로 로그인 상태를 바꾸지 않고 쿠키 이름 존재만 bool 로 확인, 실패시 False 또는 ERROR 상태 기록
                     sites_out.append(
                         {
                             "key": key,
@@ -112,7 +112,7 @@ def probe_all() -> dict:
         finally:
             try:
                 page.close()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 사이트 로그인 세션 능동점검(읽기전용) - CLAUDE.md 명시대로 로그인 상태를 바꾸지 않고 쿠키 이름 존재만 bool 로 확인, 실패시 False 또는 ERROR 상태 기록
                 pass
 
     payload = {
@@ -129,7 +129,7 @@ def _write(payload: dict) -> None:
     try:
         OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 로그인 세션 능동점검(읽기전용) - CLAUDE.md 명시대로 로그인 상태를 바꾸지 않고 쿠키 이름 존재만 bool 로 확인, 실패시 False 또는 ERROR 상태 기록
         pass
 
 

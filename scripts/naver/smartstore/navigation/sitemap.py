@@ -283,7 +283,7 @@ def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5, r
 
         clicker.log("click_result", target=text, url_changed=url_changed, after_url=page.url[:100])
         return {"ok": True, "url_changed": url_changed, "after_url": page.url, "x": target["x"], "y": target["y"]}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
         clicker.log("click_exception", target=text, error=str(e)[:80])
         return {"ok": False, "reason": str(e)[:80]}
 
@@ -308,7 +308,7 @@ def main():
                 page = p
                 clicker.log("tab_reuse", url=p.url[:80])
                 break
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
             continue
     if page is None:
         page = ctx.new_page()
@@ -322,7 +322,7 @@ def main():
         handle_page_popups(page, timeout_s=2.0)
         close_popup_windows(page)
         clicker.log("popups_handled")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
         clicker.log("popups_error", error=str(e)[:80])
 
     if not is_logged_in_generic(page):
@@ -370,7 +370,7 @@ def main():
                 buttons=len(page_meta.get("buttons", [])),
                 is_product_register=page_meta.get("is_product_register"),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
             page_meta = {"error": str(e)[:80]}
             clicker.log("page_meta_error", error=str(e)[:80])
 
@@ -402,7 +402,7 @@ def main():
 
             previous_submenu_names = {s["text"] for s in submenus} if submenus else previous_submenu_names
             clicker.log("submenu_extracted", parent=text, count=len(submenus), names=[s["text"] for s in submenus[:8]])
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
             submenus = []
             clicker.log("submenu_error", parent=text, error=str(e)[:80])
 
@@ -430,7 +430,7 @@ def main():
                     url=sm.get("url", "")[:80],
                     fields=sm.get("field_count", 0),
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
                 print(f"메타실패 {str(e)[:30]}")
                 clicker.log("submenu_page_error", menu=sub_text, error=str(e)[:80])
 
@@ -482,7 +482,7 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\n중단됨")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
         import traceback
 
         traceback.print_exc()

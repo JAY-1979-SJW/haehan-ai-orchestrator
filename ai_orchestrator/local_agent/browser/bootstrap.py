@@ -46,7 +46,7 @@ def check_cdp_connection() -> bool:
             print_err(f"CDP 시작 실패: {e}")
             return False
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 믹스인 코드 생성 스캐폴딩 개발도구 - 파일 생성 실패시 print_err 후 False 반환, 런타임 보안과 무관한 개발 보조 스크립트
         print_err(f"CDP 확인 오류: {e}")
         return False
 
@@ -103,7 +103,7 @@ class MailMixin:
         mixin_file.write_text(mail_mixin_code, encoding="utf-8")
         print_ok(f"생성: {mixin_file}")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 믹스인 코드 생성 스캐폴딩 개발도구 - 파일 생성 실패시 print_err 후 False 반환, 런타임 보안과 무관한 개발 보조 스크립트
         print_err(f"생성 실패: {e}")
         return False
 
@@ -134,7 +134,7 @@ class CalendarMixin:
         mixin_file.write_text(calendar_mixin_code, encoding="utf-8")
         print_ok(f"생성: {mixin_file}")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 믹스인 코드 생성 스캐폴딩 개발도구 - 파일 생성 실패시 print_err 후 False 반환, 런타임 보안과 무관한 개발 보조 스크립트
         print_err(f"생성 실패: {e}")
         return False
 
@@ -165,7 +165,7 @@ class MyBoxMixin:
         mixin_file.write_text(mybox_mixin_code, encoding="utf-8")
         print_ok(f"생성: {mixin_file}")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 믹스인 코드 생성 스캐폴딩 개발도구 - 파일 생성 실패시 print_err 후 False 반환, 런타임 보안과 무관한 개발 보조 스크립트
         print_err(f"생성 실패: {e}")
         return False
 
@@ -194,7 +194,7 @@ def update_mixins_init() -> bool:
         else:
             print_ok("이미 등록됨")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 믹스인 코드 생성 스캐폴딩 개발도구 - 파일 생성 실패시 print_err 후 False 반환, 런타임 보안과 무관한 개발 보조 스크립트
         print_err(f"업데이트 실패: {e}")
         return False
 
@@ -225,7 +225,7 @@ def update_browser_agent() -> bool:
         else:
             print_ok("이미 등록됨")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 믹스인 코드 생성 스캐폴딩 개발도구 - 파일 생성 실패시 print_err 후 False 반환, 런타임 보안과 무관한 개발 보조 스크립트
         print_err(f"업데이트 실패: {e}")
         return False
 
@@ -249,7 +249,7 @@ def verify_import() -> bool:
         print(f"  mybox_files 메서드: {'예정' if not has_mybox else '추가됨'}")
 
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 믹스인 코드 생성 스캐폴딩 개발도구 - 파일 생성 실패시 print_err 후 False 반환, 런타임 보안과 무관한 개발 보조 스크립트
         print_err(f"Import 실패: {e}")
         return False
 

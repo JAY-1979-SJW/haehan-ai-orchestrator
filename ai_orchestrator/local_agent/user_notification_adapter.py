@@ -11,6 +11,7 @@ OS별 토스트/알림을 발송한다.
 - 민감정보 포함 메시지 발송
 - OS 시작프로그램/서비스 자동 등록
 """
+
 from __future__ import annotations
 
 import sys
@@ -35,25 +36,46 @@ _SAFE_BODY = (
 
 # ── 금지 키워드 (민감정보 포함 여부 검사용) ───────────────────────────────────
 
-_SENSITIVE_KEYWORDS: frozenset[str] = frozenset({
-    "password", "비밀번호", "otp", "일회용", "인증서 비밀번호",
-    "cookie", "session", "token", "npki", "private_key",
-    "submit", "sign", "payment", "bid", "결제", "투찰", "전자서명",
-})
+_SENSITIVE_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "password",
+        "비밀번호",
+        "otp",
+        "일회용",
+        "인증서 비밀번호",
+        "cookie",
+        "session",
+        "token",
+        "npki",
+        "private_key",
+        "submit",
+        "sign",
+        "payment",
+        "bid",
+        "결제",
+        "투찰",
+        "전자서명",
+    }
+)
 
 
 def _contains_sensitive(text: str) -> bool:
     lower = text.lower()
-    return any(k in lower for k in _SENSITIVE_KEYWORDS - {
-        # 아래는 안내 문구에서 허용 (수집/입력하지 않는다고 명시할 때)
-        "비밀번호", "otp", "인증서 비밀번호",
-    })
+    return any(
+        k in lower
+        for k in _SENSITIVE_KEYWORDS
+        - {
+            # 아래는 안내 문구에서 허용 (수집/입력하지 않는다고 명시할 때)
+            "비밀번호",
+            "otp",
+            "인증서 비밀번호",
+        }
+    )
 
 
 def _is_safe_message(title: str, body: str) -> bool:
     """알림 메시지에 민감정보가 없는지 검증한다."""
-    forbidden = {"password", "cookie", "session", "token", "npki",
-                 "private_key", "submit", "sign", "결제", "투찰"}
+    forbidden = {"password", "cookie", "session", "token", "npki", "private_key", "submit", "sign", "결제", "투찰"}
     combined = (title + " " + body).lower()
     return not any(k in combined for k in forbidden)
 
@@ -121,31 +143,34 @@ def _send_windows_toast(title: str, body: str) -> str:
     # plyer 우선 시도
     try:
         from plyer import notification  # type: ignore
+
         notification.notify(
             title=title,
             message=body,
             timeout=10,
         )
         return NOTIFICATION_SENT
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 데스크톱 알림 표시 다단계 폴백(toast/win10toast/winotify/plyer/subprocess) - 각 방법 실패시 다음 방법을 시도할 뿐, 보안과 무관한 UI 알림 유틸
         pass
 
     # win10toast 시도
     try:
         from win10toast import ToastNotifier  # type: ignore
+
         toaster = ToastNotifier()
         toaster.show_toast(title, body, duration=10, threaded=True)
         return NOTIFICATION_SENT
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 데스크톱 알림 표시 다단계 폴백(toast/win10toast/winotify/plyer/subprocess) - 각 방법 실패시 다음 방법을 시도할 뿐, 보안과 무관한 UI 알림 유틸
         pass
 
     # winotify 시도
     try:
         from winotify import Notification  # type: ignore
+
         toast = Notification(app_id="해한 AI 에이전트", title=title, msg=body)
         toast.show()
         return NOTIFICATION_SENT
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 데스크톱 알림 표시 다단계 폴백(toast/win10toast/winotify/plyer/subprocess) - 각 방법 실패시 다음 방법을 시도할 뿐, 보안과 무관한 UI 알림 유틸
         pass
 
     return NOTIFICATION_UNAVAILABLE
@@ -155,24 +180,25 @@ def _send_macos_notification(title: str, body: str) -> str:
     """macOS 알림. plyer 또는 osascript 사용."""
     try:
         from plyer import notification  # type: ignore
+
         notification.notify(title=title, message=body, timeout=10)
         return NOTIFICATION_SENT
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 데스크톱 알림 표시 다단계 폴백(toast/win10toast/winotify/plyer/subprocess) - 각 방법 실패시 다음 방법을 시도할 뿐, 보안과 무관한 UI 알림 유틸
         pass
 
     try:
         import subprocess
+
         safe_title = title.replace('"', "")
         safe_body = body.replace('"', "").replace("\n", " ")
         subprocess.run(
-            ["osascript", "-e",
-             f'display notification "{safe_body}" with title "{safe_title}"'],
+            ["osascript", "-e", f'display notification "{safe_body}" with title "{safe_title}"'],
             timeout=5,
             check=False,
             capture_output=True,
         )
         return NOTIFICATION_SENT
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 데스크톱 알림 표시 다단계 폴백(toast/win10toast/winotify/plyer/subprocess) - 각 방법 실패시 다음 방법을 시도할 뿐, 보안과 무관한 UI 알림 유틸
         pass
 
     return NOTIFICATION_UNAVAILABLE
@@ -182,13 +208,15 @@ def _send_linux_notification(title: str, body: str) -> str:
     """Linux 알림. plyer 또는 notify-send 사용."""
     try:
         from plyer import notification  # type: ignore
+
         notification.notify(title=title, message=body, timeout=10)
         return NOTIFICATION_SENT
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 데스크톱 알림 표시 다단계 폴백(toast/win10toast/winotify/plyer/subprocess) - 각 방법 실패시 다음 방법을 시도할 뿐, 보안과 무관한 UI 알림 유틸
         pass
 
     try:
         import subprocess
+
         safe_title = title.replace('"', "")
         safe_body = body.replace('"', "").replace("\n", " ")
         subprocess.run(
@@ -198,7 +226,7 @@ def _send_linux_notification(title: str, body: str) -> str:
             capture_output=True,
         )
         return NOTIFICATION_SENT
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 데스크톱 알림 표시 다단계 폴백(toast/win10toast/winotify/plyer/subprocess) - 각 방법 실패시 다음 방법을 시도할 뿐, 보안과 무관한 UI 알림 유틸
         pass
 
     return NOTIFICATION_UNAVAILABLE

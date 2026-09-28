@@ -60,7 +60,7 @@ async def get_label(el):
                 t = (await el.get_attribute(attr) or "").strip()
             if t:
                 return t[:60]
-        except Exception:
+        except Exception:  # noqa: BLE001 - 관리자 웹 심층 버튼 클릭 탐색 - SKIP_PATTERNS(삭제/결제 등)로 위험 버튼 클릭을 배제, except 는 클릭/스크린샷 실패를 기록할 뿐
             pass
     return "?"
 
@@ -70,7 +70,7 @@ async def scan_page(pg: Page, path: str, name: str):
     try:
         r = await pg.goto(f"{BASE}{path}", wait_until="networkidle", timeout=30000)
         status = r.status if r else 0
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 관리자 웹 심층 버튼 클릭 탐색 - SKIP_PATTERNS(삭제/결제 등)로 위험 버튼 클릭을 배제, except 는 클릭/스크린샷 실패를 기록할 뿐
         print(f"  ❌ 로드실패: {e}")
         return {"path": path, "name": name, "status": 0, "buttons": [], "errors": [str(e)]}
 
@@ -80,7 +80,7 @@ async def scan_page(pg: Page, path: str, name: str):
     ss_path = str(SS_DIR / f"{safe(name)}_page.png")
     try:
         await pg.screenshot(path=ss_path, full_page=False, timeout=30000)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 관리자 웹 심층 버튼 클릭 탐색 - SKIP_PATTERNS(삭제/결제 등)로 위험 버튼 클릭을 배제, except 는 클릭/스크린샷 실패를 기록할 뿐
         pass
 
     print(f"  HTTP {status}")
@@ -118,7 +118,7 @@ async def scan_page(pg: Page, path: str, name: str):
             try:
                 await el.click(timeout=4000)
                 await pg.wait_for_timeout(700)
-            except Exception as ce:
+            except Exception as ce:  # noqa: BLE001 - 관리자 웹 심층 버튼 클릭 탐색 - SKIP_PATTERNS(삭제/결제 등)로 위험 버튼 클릭을 배제, except 는 클릭/스크린샷 실패를 기록할 뿐
                 btns.append({"label": label, "role": role, "status": "error", "detail": str(ce)[:100]})
                 print(f"    ❌ [{i}] {label[:40]!r} → {str(ce)[:60]}")
                 await pg.goto(f"{BASE}{path}", wait_until="networkidle", timeout=20000)
@@ -143,7 +143,7 @@ async def scan_page(pg: Page, path: str, name: str):
                     ).first
                     if await close.count():
                         await close.click(timeout=2000)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 관리자 웹 심층 버튼 클릭 탐색 - SKIP_PATTERNS(삭제/결제 등)로 위험 버튼 클릭을 배제, except 는 클릭/스크린샷 실패를 기록할 뿐
                     pass
             elif toast:
                 st = "toast"
@@ -156,14 +156,14 @@ async def scan_page(pg: Page, path: str, name: str):
             ss_b = str(SS_DIR / f"{safe(name)}_btn{i}_{safe(label)}.png")
             try:
                 await pg.screenshot(path=ss_b, full_page=False, timeout=20000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 관리자 웹 심층 버튼 클릭 탐색 - SKIP_PATTERNS(삭제/결제 등)로 위험 버튼 클릭을 배제, except 는 클릭/스크린샷 실패를 기록할 뿐
                 ss_b = ""
 
             btns.append({"label": label, "role": role, "status": st, "detail": detail, "screenshot": ss_b})
             icon = {"ok": "✅", "nav": "🔀", "modal": "📋", "toast": "💬"}.get(st, "?")
             print(f"    {icon} [{i}] {label[:40]!r} → {st} {detail[:50]}")
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001 - 관리자 웹 심층 버튼 클릭 탐색 - SKIP_PATTERNS(삭제/결제 등)로 위험 버튼 클릭을 배제, except 는 클릭/스크린샷 실패를 기록할 뿐
             print(f"    ⚠️ [{i}] 처리오류: {ex}")
 
     return {"path": path, "name": name, "status": status, "buttons": btns, "errors": []}

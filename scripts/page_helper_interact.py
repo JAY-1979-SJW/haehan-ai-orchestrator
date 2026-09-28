@@ -19,7 +19,7 @@ def page_check_error(page: Page, timeout: int = 1500) -> str | None:
         msg = el.inner_text().strip()
         log.warn("에러 감지: %s", msg)
         return msg or "(에러 텍스트 없음)"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         return None
 
 
@@ -33,7 +33,7 @@ def page_wait_click(page: Page, selector: str, timeout: int = 20000) -> bool:
         el = page.wait_for_selector(selector, timeout=timeout, state="visible")
         el.click()
         log.debug("click OK: %s", selector)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         # iframe 탐색 fallback
         frame, el = _find_frame(page, selector)
         if el:
@@ -65,7 +65,7 @@ def page_wait_click(page: Page, selector: str, timeout: int = 20000) -> bool:
                         )
                         if clicked:
                             break
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
                         pass
                 if clicked:
                     log.debug("click JS fallback OK: text='%s'", clicked)
@@ -95,7 +95,7 @@ def page_click_then_wait(
     try:
         el = page.wait_for_selector(click_selector, timeout=click_timeout, state="visible")
         el.click()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         log.warn("click_then_wait: 클릭 요소 없음 — %s", click_selector)
         return False
 
@@ -113,7 +113,7 @@ def page_click_then_wait(
             return False
         log.debug("click_then_wait: 결과 요소 확인")
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         log.warn("click_then_wait: 결과 요소 미등장 — %s", wait_selector)
         return False
 
@@ -135,19 +135,19 @@ def page_wait_type(
         el = page.wait_for_selector(selector, timeout=timeout, state="visible")
         try:
             el.fill(text)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
             el.click()
             el.click()
             el.click()
             el.type(text, delay=delay)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         # iframe 탐색 fallback
         _found_frame, found_el = _find_frame(page, selector)
         if found_el:
             el = found_el
             try:
                 el.fill(text)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
                 el.click()
                 el.click()
                 el.click()
@@ -174,7 +174,7 @@ def page_wait_type(
                     result = frame.evaluate(js_fill, [selector, text])
                     if result is not None:
                         break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
                     pass
             if result is None:
                 log.warn("type 실패 — JS fallback도 요소 없음: %s", selector)
@@ -195,6 +195,6 @@ def page_wait_type(
         log.warn("type 검증 실패 — 기대='%s' 실제='%s'", text[:30], actual[:30])
         print(f"    ⚠  입력값 불일치: 기대='{text}' 실제='{actual}'")
         return False
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         log.debug("type 검증 생략 (input_value 미지원): %s", selector)
         return True

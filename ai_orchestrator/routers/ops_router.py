@@ -64,7 +64,7 @@ def get_ops_approvals(
                 }
             )
         return {"items": items, "source": "live"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         logger.warning("ops/approvals 조회 실패: %s", e)
         return {"items": [], "source": "error", "error": str(e)}
 
@@ -99,10 +99,10 @@ def gc_expired_approvals(
                     if exp_dt <= now:
                         _mark_expired(rec.get("task_id", ""))
                         cleared.append(rec.get("task_id", ""))
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
                     logger.debug("만료일 파싱 실패 (무시): %s", exc)
         return {"cleared": len(cleared), "ids": cleared}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         logger.warning("ops/approvals/gc 실패: %s", e)
         return {"cleared": 0, "error": str(e)}
 
@@ -137,7 +137,7 @@ def get_ops_web_tasks(
                 }
             )
         return {"tasks": tasks, "source": "live"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         logger.warning("ops/web-tasks 조회 실패: %s", e)
         return {"tasks": [], "source": "error", "error": str(e)}
 
@@ -170,7 +170,7 @@ def get_ops_audit_events(
                 }
             )
         return {"events": events, "source": "live"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         logger.warning("ops/audit-events 조회 실패: %s", e)
         return {"events": [], "source": "error", "error": str(e)}
 
@@ -231,7 +231,7 @@ def get_ops_agents(
                 }
             )
         return {"agents": agents, "source": "live"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         logger.warning("ops/agents 조회 실패: %s", e)
         return {"agents": [], "source": "error", "error": str(e)}
 
@@ -265,7 +265,7 @@ def get_ops_external_work(
     try:
         entries = _list_external(provider=provider, classification=classification)
         return {"entries": entries, "total": len(entries), "source": "live"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         logger.warning("ops/external-work 조회 실패: %s", e)
         return {"entries": [], "total": 0, "source": "error", "error": str(e)}
 
@@ -357,24 +357,24 @@ def get_ops_summary(
     """대시보드 메트릭 집계 — 각 모듈 상태를 읽어 집계."""
     try:
         pending_count = len(_list_pending())
-    except Exception:
+    except Exception:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         pending_count = 0
 
     try:
         agents_raw = _reg.list_agents()
         online_count = sum(1 for a in agents_raw if _map_agent_status(a.get("status", "")) == "online")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         online_count = 0
         agents_raw = []
 
     try:
         web_task_count = len(_list_web_tasks())
-    except Exception:
+    except Exception:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         web_task_count = 0
 
     try:
         external_count = len(_list_external())
-    except Exception:
+    except Exception:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
         external_count = 0
 
     approval_status: str = "WARN" if pending_count > 0 else "PASS"

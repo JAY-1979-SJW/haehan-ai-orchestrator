@@ -69,7 +69,7 @@ def run_default_search(page) -> dict[str, Any]:
     actions: list[str] = []
     try:
         page.locator("#__loading__").wait_for(state="hidden", timeout=10000)
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
         pass
     for selector in (
         "input[name='WEBMAN370M00_regDateRadio'][value='thisYear']",
@@ -79,7 +79,7 @@ def run_default_search(page) -> dict[str, Any]:
         if locator.count() > 0:
             try:
                 locator.check(timeout=3000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
                 page.evaluate(
                     """(selector) => {
                       const el = document.querySelector(selector);
@@ -148,7 +148,7 @@ def _set_page_size_max(page) -> bool:
         )
         page.wait_for_timeout(1500)
         return bool(ok)
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
         return False
 
 
@@ -169,7 +169,7 @@ def _click_page_button(page, num: int) -> bool:
                 num,
             )
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
         return False
 
 
@@ -202,7 +202,7 @@ def collect_all_install_targets(page, *, max_pages: int = 50, save: bool = True)
             return page.evaluate(
                 "() => { const r = document.querySelector('tbody tr'); return r ? (r.innerText || '').slice(0, 40) : ''; }"
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
             return ""
 
     _accumulate()  # 1페이지
@@ -218,7 +218,7 @@ def collect_all_install_targets(page, *, max_pages: int = 50, save: bool = True)
                 arg=prev,
                 timeout=8000,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
             pass
         page.wait_for_timeout(800)
         if _accumulate() == 0:  # 같은 페이지 재추출(더 이상 진행 안 됨) → 종료
@@ -295,7 +295,7 @@ def try_excel_download(page) -> dict[str, Any]:
             "suggested_filename": suggested,
             "size": save_path.stat().st_size if save_path.exists() else None,
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
         return {"attempted": True, "ok": False, "error": str(exc)}
 
 

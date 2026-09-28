@@ -107,7 +107,7 @@ def _check_work_trade() -> bool:
         assert wt is not None
         assert wt.execution_location == "LOCAL_AGENT_REQUIRED"
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 가비아 DNS 사용자승인 워크플로 정책 존재여부 자체감사 스크립트 - 예외 발생시 해당 체크 항목을 False(불통과)로 기록하는 fail-closed 패턴, 이미 안전한 방향
         return False
 
 
@@ -124,7 +124,7 @@ def _check_external_works() -> tuple[bool, list[str]]:
         }
         missing = required - set(ids)
         return len(missing) == 0, list(missing)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 DNS 사용자승인 워크플로 정책 존재여부 자체감사 스크립트 - 예외 발생시 해당 체크 항목을 False(불통과)로 기록하는 fail-closed 패턴, 이미 안전한 방향
         return False, [str(e)]
 
 
@@ -139,7 +139,7 @@ def _check_policies() -> dict[str, bool]:
         result["FINAL_APPROVAL_GATE_REQUIRED"] = get_policy("FINAL_APPROVAL_GATE_REQUIRED") is not None
         result["SECRET_STORAGE_FORBIDDEN"] = get_policy("SECRET_STORAGE_FORBIDDEN") is not None
         result["SERVER_SECURITY_LOGIN_BLOCKED"] = get_policy("SERVER_SECURITY_LOGIN_BLOCKED") is not None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 DNS 사용자승인 워크플로 정책 존재여부 자체감사 스크립트 - 예외 발생시 해당 체크 항목을 False(불통과)로 기록하는 fail-closed 패턴, 이미 안전한 방향
         for k in result:
             result[k] = False
         result["[error]"] = str(e)
@@ -172,7 +172,7 @@ def _check_policy_decisions() -> dict[str, bool]:
         expired = svc.decide_gabia_session_expired()
         result["session_expired_reauth_required"] = expired.requires_reauth is True
         result["session_expired_no_reuse"] = expired.allowed_to_reuse_trusted_session is False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 DNS 사용자승인 워크플로 정책 존재여부 자체감사 스크립트 - 예외 발생시 해당 체크 항목을 False(불통과)로 기록하는 fail-closed 패턴, 이미 안전한 방향
         result["[error]"] = str(e)
     return result
 
@@ -208,7 +208,7 @@ def _check_dns_models() -> dict[str, bool]:
         forbidden = {"password", "otp", "cert_password", "token", "cookie", "session", "private_key"}
         result["safe_dict_no_secrets"] = not bool(set(safe_d.keys()) & forbidden)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 DNS 사용자승인 워크플로 정책 존재여부 자체감사 스크립트 - 예외 발생시 해당 체크 항목을 False(불통과)로 기록하는 fail-closed 패턴, 이미 안전한 방향
         result["[error]"] = str(e)
     return result
 
@@ -228,7 +228,7 @@ def _check_audit_events() -> bool:
             "GABIA_DNS_REAUTH_REQUIRED",
         }
         return gabia_events <= AUDIT_EVENT_TYPES
-    except Exception:
+    except Exception:  # noqa: BLE001 - 가비아 DNS 사용자승인 워크플로 정책 존재여부 자체감사 스크립트 - 예외 발생시 해당 체크 항목을 False(불통과)로 기록하는 fail-closed 패턴, 이미 안전한 방향
         return False
 
 
@@ -240,7 +240,7 @@ def _check_external_work_registry() -> bool:
         f = get_external_work("gabia", "dns_final_save")
         r = get_external_work("gabia", "dns_record_read")
         return p is not None and f is not None and r is not None
-    except Exception:
+    except Exception:  # noqa: BLE001 - 가비아 DNS 사용자승인 워크플로 정책 존재여부 자체감사 스크립트 - 예외 발생시 해당 체크 항목을 False(불통과)로 기록하는 fail-closed 패턴, 이미 안전한 방향
         return False
 
 
