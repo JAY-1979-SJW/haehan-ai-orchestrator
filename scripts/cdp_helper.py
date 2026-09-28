@@ -41,7 +41,7 @@ class CDP:
                 time.sleep(0.5)
                 self._ws = self._connect()
                 return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라.
                 pass
         return False
 
@@ -75,9 +75,9 @@ class CDP:
                     if cb:
                         try:
                             cb(msg.get("params", {}))
-                        except Exception:
+                        except Exception:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라.
                             pass
-            except Exception:
+            except Exception:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라.
                 if self._alive:
                     self._reconnect()  # 끊기면 재연결 후 계속
 
@@ -132,5 +132,5 @@ class CDP:
         self._alive = False
         try:
             self._ws.close()
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP 웹소켓 연결 헬퍼(원본) — 재연결 재시도, 이벤트 콜백 실패 무시, 종료 시 소켓 close 실패 무시 등 모두 best-effort 브라우저 자동화 인프라.
             pass

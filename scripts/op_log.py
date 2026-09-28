@@ -102,7 +102,7 @@ def _init_db() -> None:
         con.execute("CREATE INDEX IF NOT EXISTS idx_ops_status ON ops_log(status)")
         con.commit()
         con.close()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 작업 로그 기록 인프라(ops.log 파일 + sqlite) — DB 초기화/기록/조회 실패 시 모두 조용히 무시하거나 빈 결과를 반환 — 로깅 실패가 호출자의 실제 업무 흐름을 막지 않도록 하는 의도된 설계(주석에 명시).
         pass
 
 
@@ -125,7 +125,7 @@ def _write_db(op_name: str, status: str, duration_ms: int | None, message: str, 
         row_id = int(cur.lastrowid or 0)
         con.close()
         return row_id
-    except Exception:
+    except Exception:  # noqa: BLE001 - 작업 로그 기록 인프라(ops.log 파일 + sqlite) — DB 초기화/기록/조회 실패 시 모두 조용히 무시하거나 빈 결과를 반환 — 로깅 실패가 호출자의 실제 업무 흐름을 막지 않도록 하는 의도된 설계(주석에 명시).
         return 0
 
 
@@ -330,7 +330,7 @@ def query_recent(op_name: str | None = None, limit: int = 50, status: str | None
         ).fetchall()
         con.close()
         return [dict(r) for r in rows]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 작업 로그 기록 인프라(ops.log 파일 + sqlite) — DB 초기화/기록/조회 실패 시 모두 조용히 무시하거나 빈 결과를 반환 — 로깅 실패가 호출자의 실제 업무 흐름을 막지 않도록 하는 의도된 설계(주석에 명시).
         return []
 
 
@@ -353,5 +353,5 @@ def query_stats(hours: int = 24) -> list[dict]:
         ).fetchall()
         con.close()
         return [{"op_name": r[0], "total": r[1], "ok": r[2], "fail": r[3], "avg_ms": r[4]} for r in rows]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 작업 로그 기록 인프라(ops.log 파일 + sqlite) — DB 초기화/기록/조회 실패 시 모두 조용히 무시하거나 빈 결과를 반환 — 로깅 실패가 호출자의 실제 업무 흐름을 막지 않도록 하는 의도된 설계(주석에 명시).
         return []

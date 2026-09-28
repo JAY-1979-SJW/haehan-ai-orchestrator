@@ -105,14 +105,14 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
         try:
             result["current_url"] = page.url
             result["title"] = page.title()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 'no_final_submit'(최종 제출 버튼 클릭 금지) 원칙이 설계 전체에 명시된 구글 워크플로 폼 프리필 파사드 — except는 페이지정보 조회 실패 무시, 자동화 경로 실패 시 CDP 폴백 또는 경고 기록으로 전환할 뿐 실제 제출(Send/Grant/Save 등)은 어디서도 자동 클릭하지 않음.
             pass
         if result["status"] == "started":
             result["status"] = "filled_no_final_submit"
         if action["key"] == "youtube_studio_upload_video" and "video_path" not in result["filled_fields"]:
             result["status"] = "opened_no_upload_input"
             result["warnings"].append("YouTube upload input was not verified; no video was uploaded or published.")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 'no_final_submit'(최종 제출 버튼 클릭 금지) 원칙이 설계 전체에 명시된 구글 워크플로 폼 프리필 파사드 — except는 페이지정보 조회 실패 무시, 자동화 경로 실패 시 CDP 폴백 또는 경고 기록으로 전환할 뿐 실제 제출(Send/Grant/Save 등)은 어디서도 자동 클릭하지 않음.
         result["warnings"].append(f"playwright_live_input_unavailable: {exc}")
         _dispatch_live_input_direct_cdp(action, values, result)
         if action["key"] == "youtube_studio_upload_video" and "video_path" not in result["filled_fields"]:
@@ -171,7 +171,7 @@ def run_live_input_manifest(
                 summary["counts"]["blocked"] += 1
             else:
                 summary["counts"]["failed"] += 1
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 'no_final_submit'(최종 제출 버튼 클릭 금지) 원칙이 설계 전체에 명시된 구글 워크플로 폼 프리필 파사드 — except는 페이지정보 조회 실패 무시, 자동화 경로 실패 시 CDP 폴백 또는 경고 기록으로 전환할 뿐 실제 제출(Send/Grant/Save 등)은 어디서도 자동 클릭하지 않음.
             item["status"] = "failed"
             item["warnings"] = [str(exc)]
             summary["counts"]["failed"] += 1
@@ -378,7 +378,7 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
         result["title"] = session.title
         if result["status"] == "started":
             result["status"] = "filled_no_final_submit"
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 'no_final_submit'(최종 제출 버튼 클릭 금지) 원칙이 설계 전체에 명시된 구글 워크플로 폼 프리필 파사드 — except는 페이지정보 조회 실패 무시, 자동화 경로 실패 시 CDP 폴백 또는 경고 기록으로 전환할 뿐 실제 제출(Send/Grant/Save 등)은 어디서도 자동 클릭하지 않음.
         _record_direct_cdp_incomplete(target_action, result, session, exc)
     finally:
         if session_manager is not None:

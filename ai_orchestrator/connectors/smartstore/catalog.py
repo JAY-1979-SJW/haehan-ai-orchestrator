@@ -27,7 +27,7 @@ def api_status(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     catalog_path = ROOT / "data" / "smartstore_action_catalog_latest.json"
     try:
         catalog = load_action_catalog(catalog_path) if catalog_path.exists() else build_action_catalog()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 카탈로그/이력/메뉴 조회 엔드포인트(읽기전용) — 카탈로그 로드 실패 시 build_action_catalog()로 재생성 폴백, 제출이력 JSON 파일 손상 시 해당 건만 건너뜀(이미 noqa: S110 존재).
         catalog = build_action_catalog()
     log_event("SMARTSTORE_STATUS_READ", task_id="-", actor=user["actor"], role=user["role"], decision="ok", note="")
     return {"catalog": catalog, "db_path": str(catalog_path.name)}
@@ -44,13 +44,13 @@ def api_submit_history(user: dict = Depends(require_role("admin", "owner"))) -> 
         for f in sorted(submits_dir.glob("*.json"), reverse=True)[:20]:
             try:
                 history.append(json.loads(f.read_text(encoding="utf-8")))
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
     latest: dict = {}
     if submit_path.exists():
         try:
             latest = json.loads(submit_path.read_text(encoding="utf-8"))
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
     log_event(
         "SMARTSTORE_HISTORY_READ",

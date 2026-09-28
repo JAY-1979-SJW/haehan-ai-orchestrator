@@ -117,7 +117,7 @@ class CDPSession:
                 if not page.is_closed():
                     page.close()
                     closed += 1
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
         self.opened_pages.clear()
         return closed
@@ -128,7 +128,7 @@ class CDPSession:
         for p in self.context.pages:
             try:
                 result.append({"url": p.url, "title": p.title()})
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
         return result
 
@@ -184,10 +184,10 @@ def open_cdp_session(
             session.close_opened_tabs()
             try:
                 browser.close()  # CDP 연결만 끊음, Chrome 종료 X
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
     finally:
         try:
             pw.stop()
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass

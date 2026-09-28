@@ -84,7 +84,7 @@ def _has_element(page, selector: str) -> bool:
     """
     try:
         return page.query_selector(selector) is not None
-    except Exception:
+    except Exception:  # noqa: BLE001 - 개발자 등록 폼 입력 공통 유틸 — _has_element/_is_login_redirect는 판정 실패 시 False(보수적 방향)로 폴백하며 실제 제출은 별도 승인 토큰 체계(dev_reg_runner)로 게이트되어 이 폴백이 승인 우회로 이어지지 않음. abort_form/capture_screenshot 실패는 로그만 남기고 무시.
         return False
 
 
@@ -93,7 +93,7 @@ def _is_login_redirect(page, hints: tuple[str, ...]) -> bool:
     try:
         url = str(page.url or "").lower()
         return any(h.lower() in url for h in hints)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 개발자 등록 폼 입력 공통 유틸 — _has_element/_is_login_redirect는 판정 실패 시 False(보수적 방향)로 폴백하며 실제 제출은 별도 승인 토큰 체계(dev_reg_runner)로 게이트되어 이 폴백이 승인 우회로 이어지지 않음. abort_form/capture_screenshot 실패는 로그만 남기고 무시.
         return False
 
 
@@ -163,7 +163,7 @@ class DevRegAdapterBase(ABC):
         """브라우저 세션 안전 중단. 거절/만료 시 호출."""
         try:
             page.goto("about:blank")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 개발자 등록 폼 입력 공통 유틸 — _has_element/_is_login_redirect는 판정 실패 시 False(보수적 방향)로 폴백하며 실제 제출은 별도 승인 토큰 체계(dev_reg_runner)로 게이트되어 이 폴백이 승인 우회로 이어지지 않음. abort_form/capture_screenshot 실패는 로그만 남기고 무시.
             logger.warning("abort_form: 페이지 이동 실패 (무시) | %s", e)
 
     def capture_screenshot(self, page, path: Path) -> Path:
@@ -171,6 +171,6 @@ class DevRegAdapterBase(ABC):
         try:
             page.screenshot(path=str(path))
             logger.debug("스크린샷 저장: %s", path)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 개발자 등록 폼 입력 공통 유틸 — _has_element/_is_login_redirect는 판정 실패 시 False(보수적 방향)로 폴백하며 실제 제출은 별도 승인 토큰 체계(dev_reg_runner)로 게이트되어 이 폴백이 승인 우회로 이어지지 않음. abort_form/capture_screenshot 실패는 로그만 남기고 무시.
             logger.warning("capture_screenshot 실패 (무시): %s", e)
         return path

@@ -88,7 +88,7 @@ class BlogAnalytics:
                 stats["visitors_total"] = visitors_total
                 stats["_source"] = "xml_api"
                 _log.info("[blog-analytics] XML API: today=%s total=%s", visitors_today, visitors_total)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 통계 읽기전용 수집(XML API 1차 + 어드민 페이지 폴백) — 각 except는 다음 폴백 단계로 넘어가거나 부분 실패를 debug 로그로만 남기며, 로컬 앱 자체 지표 sqlite(cdp.db)에 INSERT만 하는 앱 전용 로그 DB로 운영 DB 삭제/스키마 변경과 무관.
             _log.debug("[blog-analytics] XML API 실패: %s", e)
 
         # ── 2차: 어드민 페이지 fallback ──────────────────────────────
@@ -121,9 +121,9 @@ class BlogAnalytics:
                                 if stats.get(k) is None and v is not None:
                                     stats[k] = v
                             break
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 네이버 블로그 통계 읽기전용 수집(XML API 1차 + 어드민 페이지 폴백) — 각 except는 다음 폴백 단계로 넘어가거나 부분 실패를 debug 로그로만 남기며, 로컬 앱 자체 지표 sqlite(cdp.db)에 INSERT만 하는 앱 전용 로그 DB로 운영 DB 삭제/스키마 변경과 무관.
                         continue
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 블로그 통계 읽기전용 수집(XML API 1차 + 어드민 페이지 폴백) — 각 except는 다음 폴백 단계로 넘어가거나 부분 실패를 debug 로그로만 남기며, 로컬 앱 자체 지표 sqlite(cdp.db)에 INSERT만 하는 앱 전용 로그 DB로 운영 DB 삭제/스키마 변경과 무관.
                 pass
 
         _init_db()
@@ -204,7 +204,7 @@ class BlogAnalytics:
                 if "stat.naver.com" in frame.url:
                     try:
                         text = frame.inner_text("body", timeout=5000)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 네이버 블로그 통계 읽기전용 수집(XML API 1차 + 어드민 페이지 폴백) — 각 except는 다음 폴백 단계로 넘어가거나 부분 실패를 debug 로그로만 남기며, 로컬 앱 자체 지표 sqlite(cdp.db)에 INSERT만 하는 앱 전용 로그 DB로 운영 DB 삭제/스키마 변경과 무관.
                         continue
                     if text.strip():
                         last_text = text

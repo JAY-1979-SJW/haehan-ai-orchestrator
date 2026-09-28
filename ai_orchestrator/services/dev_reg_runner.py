@@ -85,7 +85,7 @@ def run_dev_reg(
     # ── 1. 폼 자동 입력 ─────────────────────────────────────────────
     try:
         fill_result = adapter.fill_form(page, params)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 개발자 등록 신청 승인 게이트 실행기 — submit_form은 텔레그램 승인(approved) 확인 후에만 호출되며, except는 폼입력/스크린샷/제출/중단 각 단계 실패를 로그와 명확한 실패 상태로 반환할 뿐 승인 절차를 우회하지 않음.
         logger.error("폼 입력 예외 | task=%s | %s", task_id, e)
         log_event(
             "DEV_REG_FAILED",
@@ -109,7 +109,7 @@ def run_dev_reg(
     # ── 2. 스크린샷 캡처 ────────────────────────────────────────────
     try:
         adapter.capture_screenshot(page, screenshot_path)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 개발자 등록 신청 승인 게이트 실행기 — submit_form은 텔레그램 승인(approved) 확인 후에만 호출되며, except는 폼입력/스크린샷/제출/중단 각 단계 실패를 로그와 명확한 실패 상태로 반환할 뿐 승인 절차를 우회하지 않음.
         logger.warning("스크린샷 실패 (계속 진행) | %s", e)
 
     # ── 3. 승인 토큰 발행 ────────────────────────────────────────────
@@ -208,7 +208,7 @@ def run_dev_reg(
             result_str = (
                 submit_result.result_summary if submit_result.success else f"submit_failed:{submit_result.error}"
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 개발자 등록 신청 승인 게이트 실행기 — submit_form은 텔레그램 승인(approved) 확인 후에만 호출되며, except는 폼입력/스크린샷/제출/중단 각 단계 실패를 로그와 명확한 실패 상태로 반환할 뿐 승인 절차를 우회하지 않음.
             result_str = f"submit_exception:{e}"
             logger.error("submit_form 예외 | task=%s | %s", task_id, e)
 
@@ -230,7 +230,7 @@ def run_dev_reg(
         # ── 10b. 거절/만료 → 세션 중단 ─────────────────────────────
         try:
             adapter.abort_form(page)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 개발자 등록 신청 승인 게이트 실행기 — submit_form은 텔레그램 승인(approved) 확인 후에만 호출되며, except는 폼입력/스크린샷/제출/중단 각 단계 실패를 로그와 명확한 실패 상태로 반환할 뿐 승인 절차를 우회하지 않음.
             logger.warning("abort_form 실패 (무시) | task=%s | %s", task_id, e)
 
         if final_status == "rejected":

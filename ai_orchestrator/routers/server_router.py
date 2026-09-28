@@ -67,7 +67,7 @@ def _tcp_open(host: str, port: int, timeout: float = 2.0) -> bool:
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
         return False
 
 
@@ -84,7 +84,7 @@ def _http_status(url: str, timeout: float = 6.0) -> int | None:
             return r.status
     except urllib.error.HTTPError as e:
         return e.code
-    except Exception:
+    except Exception:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
         return None
 
 
@@ -100,7 +100,7 @@ def _read_deploy_status() -> dict[str, Any]:
             "created_at": d.get("created_at"),
             "service": d.get("service"),
         }
-    except Exception:
+    except Exception:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
         return {"available": False, "status": "status_file_unreadable"}
 
 
