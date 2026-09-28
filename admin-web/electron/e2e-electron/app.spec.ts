@@ -1,11 +1,8 @@
-import { test, expect, _electron as electron } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { launchApp } from "./launch_helper";
 
-const EXE = path.resolve(
-  __dirname,
-  "../../../dist-installer/win-unpacked/Haehan AI.exe"
-);
 const SS_DIR = path.resolve(
   __dirname,
   "../../../../data/screenshots_check/electron"
@@ -16,10 +13,7 @@ test.setTimeout(90_000);
 test("Electron 앱 기능 점검", async () => {
   fs.mkdirSync(SS_DIR, { recursive: true });
 
-  const app = await electron.launch({
-    executablePath: EXE,
-    env: { ...process.env, HAEHAN_OWNER: "1" },
-  });
+  const app = await launchApp({ HAEHAN_OWNER: "1" });
 
   const win = await app.firstWindow();
   await win.waitForLoadState("domcontentloaded", { timeout: 30_000 });

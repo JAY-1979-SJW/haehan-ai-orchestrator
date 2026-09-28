@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { buildApiUrl } from "@/lib/api";
 
 type ApiStatus = "checking" | "live" | "unauthorized" | "error";
 
@@ -13,8 +14,11 @@ interface PanelStatus {
 async function checkEndpoint(path: string): Promise<ApiStatus> {
   try {
     // 상태 체크도 인증 필요 — localStorage 토큰을 Bearer 로 부착(미부착 시 401=unauthorized 표시되던 문제).
+    // 경로는 buildApiUrl()(src/lib/api.ts)로 만든다 — "/api/v1..." 을 직접 fetch하면
+    // NEXT_PUBLIC_API_BASE_PATH(개발: /api/proxy/api/v1, 운영: /orchestrator/api/v1) 를
+    // 거치지 않아 dev 환경에서 항상 404 였다(2026-09-28 Electron e2e 진단으로 재현·확인).
     const token = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
-    const res = await fetch(`/api/v1${path}`, {
+    const res = await fetch(buildApiUrl(`/api/v1${path}`), {
       cache: "no-store",
       signal: AbortSignal.timeout(4000),
       headers: token ? { Authorization: `Bearer ${token}` } : {},

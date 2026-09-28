@@ -1,10 +1,10 @@
-import { test, _electron as electron } from "@playwright/test";
+import { test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { launchApp } from "./launch_helper";
 
 // 실제 앱 webview 를 백그라운드로 띄워 오류를 계측한다(콘솔/네트워크/DOM + 스크린샷).
-const EXE = path.resolve(__dirname, "../../../dist-installer/win-unpacked/Haehan AI.exe");
 const SS = path.resolve(__dirname, "../../../../data/diagnose");
 
 test.setTimeout(240_000);
@@ -33,7 +33,7 @@ async function domErrors(ui: Page): Promise<string[]> {
 
 test("앱 webview 오류 진단", async () => {
   fs.mkdirSync(SS, { recursive: true });
-  const app = await electron.launch({ executablePath: EXE, env: { ...process.env, HAEHAN_OWNER: "1" } });
+  const app = await launchApp({ HAEHAN_OWNER: "1" });
   const consoleErrs: string[] = [];
   const failed: string[] = [];
 
