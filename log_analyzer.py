@@ -5,26 +5,26 @@ audit.jsonl + execution_history.jsonl 읽어 집계 및 운영 요약 생성.
 """
 
 import json
-import os
 import time
 from collections import Counter
+from pathlib import Path
 
 from logger import get_logger
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_AUDIT_PATH = os.path.join(_BASE_DIR, "logs", "audit.jsonl")
-_HISTORY_PATH = os.path.join(_BASE_DIR, "storage", "execution_history.jsonl")
-_CACHE_PATH = os.path.join(_BASE_DIR, "storage", "dashboard_cache.json")
+_BASE_DIR = Path(__file__).resolve().parent
+_AUDIT_PATH = _BASE_DIR / "logs" / "audit.jsonl"
+_HISTORY_PATH = _BASE_DIR / "storage" / "execution_history.jsonl"
+_CACHE_PATH = _BASE_DIR / "storage" / "dashboard_cache.json"
 
 log = get_logger("log_analyzer")
 
 
 def _read_jsonl(path: str, limit: int = 0) -> list:
     """JSONL 파일 읽기. 파싱 실패 라인은 skip + WARN."""
-    if not os.path.exists(path):
+    if not Path(path).exists():
         return []
     try:
-        with open(path, encoding="utf-8") as f:
+        with Path(path).open(encoding="utf-8") as f:
             raw_lines = f.readlines()
     except Exception as e:  # noqa: BLE001 - 로그 분석 도구 -- 로그 파일 읽기 실패 시 빈 리스트 반환, 캐시 쓰기 실패는 경고만(분석 결과에는 영향 없음)
         log.warning("Failed to read %s: %s", path, e)
@@ -190,8 +190,8 @@ def save_cache(summary: dict) -> None:
             "cached_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "summary": summary,
         }
-        os.makedirs(os.path.dirname(_CACHE_PATH), exist_ok=True)
-        with open(_CACHE_PATH, "w", encoding="utf-8") as f:
+        _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with _CACHE_PATH.open("w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=2)
     except Exception as e:  # noqa: BLE001 - 로그 분석 도구 -- 로그 파일 읽기 실패 시 빈 리스트 반환, 캐시 쓰기 실패는 경고만(분석 결과에는 영향 없음)
         log.warning("Cache write failed: %s", e)

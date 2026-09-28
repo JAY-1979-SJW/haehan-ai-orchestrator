@@ -4,6 +4,7 @@
 
 import difflib
 import os
+from pathlib import Path
 
 MAX_FILE_SIZE = 1 * 1024 * 1024  # 1 MB
 BINARY_EXTENSIONS = {
@@ -34,11 +35,11 @@ BINARY_EXTENSIONS = {
 
 
 def _is_binary(path: str) -> bool:
-    ext = os.path.splitext(path)[1].lower()
+    ext = Path(path).suffix.lower()
     if ext in BINARY_EXTENSIONS:
         return True
     try:
-        with open(path, "rb") as f:
+        with Path(path).open("rb") as f:
             chunk = f.read(8192)
         return b"\x00" in chunk
     except OSError:
@@ -46,6 +47,10 @@ def _is_binary(path: str) -> bool:
 
 
 def _norm(p: str) -> str:
+    # os.path.abspath 유지(STD-02 pathlib 전환 예외): Path.resolve()는 심볼릭 링크를
+    # 따라가는데, 이 함수는 allowed/blocked 경로 포함 여부를 판정하는 보안 경계
+    # 로직(_check_path)에 쓰인다 — 심볼릭 링크로 우회 가능한 다른 정규화로 바꾸면
+    # 판정 의미가 바뀔 위험이 있어 기존 동작(symlink 미해석)을 그대로 유지한다.
     return os.path.normcase(os.path.normpath(os.path.abspath(p)))
 
 
@@ -70,18 +75,18 @@ def read_file(path: str, allowed_paths: list, blocked_paths: list) -> dict:
     if not ok:
         return {"status": "BLOCKED", "reason": msg}
 
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         return {"status": "ERROR", "reason": f"file not found: {path}"}
 
     if _is_binary(path):
         return {"status": "BLOCKED", "reason": "binary files are not readable"}
 
-    size = os.path.getsize(path)
+    size = Path(path).stat().st_size
     if size > MAX_FILE_SIZE:
         return {"status": "BLOCKED", "reason": f"file too large ({size} bytes > {MAX_FILE_SIZE})"}
 
     try:
-        with open(path, encoding="utf-8", errors="replace") as f:
+        with Path(path).open(encoding="utf-8", errors="replace") as f:
             content = f.read()
         return {"status": "OK", "content": content, "size": size, "path": path}
     except OSError as e:
@@ -93,18 +98,17 @@ def list_dir(path: str, allowed_paths: list, blocked_paths: list) -> dict:
     if not ok:
         return {"status": "BLOCKED", "reason": msg}
 
-    if not os.path.isdir(path):
+    if not Path(path).is_dir():
         return {"status": "ERROR", "reason": f"not a directory: {path}"}
 
     try:
         entries = []
-        for name in sorted(os.listdir(path)):
-            full = os.path.join(path, name)
+        for full in sorted(Path(path).iterdir(), key=lambda p: p.name):
             entries.append(
                 {
-                    "name": name,
-                    "type": "dir" if os.path.isdir(full) else "file",
-                    "size": os.path.getsize(full) if os.path.isfile(full) else None,
+                    "name": full.name,
+                    "type": "dir" if full.is_dir() else "file",
+                    "size": full.stat().st_size if full.is_file() else None,
                 }
             )
         return {"status": "OK", "path": path, "entries": entries, "count": len(entries)}
@@ -116,7 +120,7 @@ def file_exists(path: str, allowed_paths: list, blocked_paths: list) -> dict:
     ok, msg = _check_path(path, allowed_paths, blocked_paths)
     if not ok:
         return {"status": "BLOCKED", "reason": msg}
-    exists = os.path.exists(path)
+    exists = Path(path).exists()
     return {"status": "OK", "exists": exists, "path": path}
 
 
@@ -126,9 +130,9 @@ def preview_patch(path: str, new_content: str, allowed_paths: list, blocked_path
     if not ok:
         return {"status": "BLOCKED", "reason": msg}
 
-    if os.path.isfile(path):
+    if Path(path).is_file():
         try:
-            with open(path, encoding="utf-8", errors="replace") as f:
+            with Path(path).open(encoding="utf-8", errors="replace") as f:
                 original = f.read()
         except OSError as e:
             return {"status": "ERROR", "reason": str(e)}
@@ -139,8 +143,8 @@ def preview_patch(path: str, new_content: str, allowed_paths: list, blocked_path
         difflib.unified_diff(
             original.splitlines(keepends=True),
             new_content.splitlines(keepends=True),
-            fromfile=f"a/{os.path.basename(path)}",
-            tofile=f"b/{os.path.basename(path)}",
+            fromfile=f"a/{Path(path).name}",
+            tofile=f"b/{Path(path).name}",
         )
     )
     return {
