@@ -20,24 +20,28 @@
 사용:
   python scripts/local_agent/run_naver_cafe_to_blog_workflow.py
 """
+
 from __future__ import annotations
 
+import datetime
 import json
 import os
-import sys
 import pathlib
-import datetime
+import sys
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ai_orchestrator.local_agent.playwright_bootstrap import (
-    check_playwright_status, PLAYWRIGHT_READY,
-)
-from ai_orchestrator.local_agent.naver_content_workflow_runner import (
+from ai_orchestrator.local_agent.naver_content_workflow_runner import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+    WORKFLOW_PASS,
+    WORKFLOW_WARN_AUTH,
+    WORKFLOW_WARN_PERMISSION,
     run_cafe_to_blog_workflow,
-    WORKFLOW_PASS, WORKFLOW_WARN_AUTH, WORKFLOW_WARN_PERMISSION,
+)
+from ai_orchestrator.local_agent.playwright_bootstrap import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+    PLAYWRIGHT_READY,
+    check_playwright_status,
 )
 
 CAFE_URL = "https://cafe.naver.com/"
@@ -64,7 +68,7 @@ def main() -> None:
     if pw_status.get("status") != PLAYWRIGHT_READY:
         print(f"[WARN] Playwright 미설치: {pw_status}")
         report = {
-            "run_at": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+            "run_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
             "final_status": "WARN_PLAYWRIGHT_NOT_INSTALLED",
             "playwright_status": pw_status,
             "server_browser_used": False,
@@ -74,6 +78,7 @@ def main() -> None:
     else:
         try:
             from ai_orchestrator.local_agent.playwright_runner import run_task
+
             report = run_cafe_to_blog_workflow(
                 cafe_url=CAFE_URL,
                 cafe_search_query="",
@@ -82,9 +87,9 @@ def main() -> None:
                 runner_fn=run_task,
                 dry_run=True,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 네이버 카페→블로그 workflow 실행 - dry_run=True 고정, 비밀번호/OTP 자동입력·cookie export·무권한발행 전부 코드 docstring상 금지. except는 workflow 실행 자체의 실패를 WARN_EXCEPTION 상태로 리포트에 남기고 종료코드 2로 반영(숨기지 않음)
             report = {
-                "run_at": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+                "run_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
                 "final_status": f"WARN_EXCEPTION: {type(exc).__name__}: {str(exc)[:100]}",
                 "server_browser_used": False,
                 "blog_draft": None,

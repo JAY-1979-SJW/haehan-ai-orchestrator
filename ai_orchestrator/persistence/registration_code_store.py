@@ -397,7 +397,7 @@ class _PostgresDbExecutor:
         except (self._psycopg2.OperationalError, self._psycopg2.InterfaceError):
             logger.error("PostgreSQL connection failed")
             raise RuntimeError("Cannot connect to PostgreSQL")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 등록코드 저장소 - 나머지 except는 이미 fail-closed(재raise) 또는 안전한 폴백(빈 dict/리스트) 패턴, update_used_at/revoked_at/used_by_agent_id/clear()는 이번 재검토로 조용한 실패가 재사용 위험을 만든다는 걸 발견해 raise로 고쳤음(별도 커밋 사유 참조)
             logger.error("Unexpected error connecting to PostgreSQL")
             raise RuntimeError("Unexpected error connecting to PostgreSQL")
 
@@ -479,9 +479,13 @@ class _PostgresDbExecutor:
                     (used_at, code_id),
                 )
                 conn.commit()
-            except Exception:
+            except Exception as e:
                 conn.rollback()
                 logger.error("UPDATE used_at failed")
+                # fail-closed: 조용히 넘어가면 호출자(consume())는 DB 반영을 확인하지
+                # 않고 "사용됨" 처리를 계속하므로, DB에는 미사용 상태로 남아 같은
+                # 1회용 등록코드가 재사용될 수 있다(2026-09-28 STD-04 재검토로 발견).
+                raise RuntimeError("registration code used_at 기록 실패") from e
             finally:
                 cur.close()
                 conn.close()
@@ -497,9 +501,13 @@ class _PostgresDbExecutor:
                     (revoked_at, revoked_by, code_id),
                 )
                 conn.commit()
-            except Exception:
+            except Exception as e:
                 conn.rollback()
                 logger.error("UPDATE revoked_at failed")
+                # fail-closed: 조용히 넘어가면 호출자(revoke())는 DB 반영을 확인하지
+                # 않고 revoke 성공으로 응답하므로, DB에는 미revoke 상태로 남아 이미
+                # 취소된 코드가 계속 유효한 것처럼 사용될 수 있다.
+                raise RuntimeError("registration code revoked_at 기록 실패") from e
             finally:
                 cur.close()
                 conn.close()
@@ -515,9 +523,12 @@ class _PostgresDbExecutor:
                     (agent_id, code_id),
                 )
                 conn.commit()
-            except Exception:
+            except Exception as e:
                 conn.rollback()
                 logger.error("UPDATE used_by_agent_id failed")
+                # fail-closed: 감사 연결 정보 유실을 조용히 넘기지 않고 알린다
+                # (used_at/revoked_at 만큼 치명적이진 않지만 감사 추적성 저하).
+                raise RuntimeError("registration code used_by_agent_id 기록 실패") from e
             finally:
                 cur.close()
                 conn.close()
@@ -530,9 +541,12 @@ class _PostgresDbExecutor:
             try:
                 cur.execute("DELETE FROM registration_codes")
                 conn.commit()
-            except Exception:
+            except Exception as e:
                 conn.rollback()
                 logger.error("CLEAR failed")
+                # fail-closed: 테스트 정리가 실패했는데 조용히 넘어가면 다음 테스트가
+                # 이전 테스트의 잔여 데이터를 보고 오판할 수 있다.
+                raise RuntimeError("registration code 테스트 초기화(DELETE) 실패") from e
             finally:
                 cur.close()
                 conn.close()
@@ -587,7 +601,7 @@ class _PostgresDbExecutor:
         if self._conn is not None:
             try:
                 self._conn.close()
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
             self._conn = None
 
