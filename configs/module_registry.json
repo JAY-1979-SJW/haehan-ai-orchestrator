@@ -19528,6 +19528,14 @@
    "reason": "DB·저장 신호",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/ops/ci_layer_gate_check.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
