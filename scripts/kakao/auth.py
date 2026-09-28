@@ -6,6 +6,7 @@
 사용:
     from scripts.kakao.auth import is_logged_in, login
 """
+
 from __future__ import annotations
 
 import sys

@@ -16,6 +16,7 @@ GABIA_LOGIN_WATCH_01
   쿠키/session 추출 금지
   최종 저장 버튼 자동 클릭 금지
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,9 +27,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-GABIA_LOGIN_URL   = "https://accounts.gabia.com/"
+GABIA_LOGIN_URL = "https://accounts.gabia.com/"
 GABIA_DNS_MGMT_URL = "https://my.gabia.com/service/domain/haehan-ai.kr/dns"
-GABIA_MY_URL      = "https://my.gabia.com/"
+GABIA_MY_URL = "https://my.gabia.com/"
 
 POLL_INTERVAL_S = 1
 DEFAULT_TIMEOUT_S = 300
@@ -67,6 +68,7 @@ _GABIA_LOGGED_IN_JS = r"""
 
 def _get_page():
     from scripts.web_connector import get_page
+
     return get_page()
 
 
@@ -137,6 +139,7 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                         print("  → DNS 관리 화면으로 이동 중...")
                         try:
                             from scripts.navigator import goto
+
                             goto(GABIA_DNS_MGMT_URL)
                             dns_navigated = True
                             print(f"  → DNS 관리 화면 이동 완료: {GABIA_DNS_MGMT_URL}")
@@ -186,10 +189,10 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="가비아 로그인 실시간 감지")
-    parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_S,
-                        help=f"최대 대기 시간(초) (기본: {DEFAULT_TIMEOUT_S})")
-    parser.add_argument("--no-navigate", action="store_true",
-                        help="로그인 감지 후 DNS 관리 화면 자동 이동 안 함")
+    parser.add_argument(
+        "--timeout", type=int, default=DEFAULT_TIMEOUT_S, help=f"최대 대기 시간(초) (기본: {DEFAULT_TIMEOUT_S})"
+    )
+    parser.add_argument("--no-navigate", action="store_true", help="로그인 감지 후 DNS 관리 화면 자동 이동 안 함")
     args = parser.parse_args()
 
     result = watch_gabia_login(

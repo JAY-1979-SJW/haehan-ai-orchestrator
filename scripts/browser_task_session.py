@@ -5,12 +5,13 @@ connection. This module keeps that model, but makes tab ownership explicit:
 reuse a matching tab first, create a new tab only when needed, and clean only
 the tabs that belong to the finished task.
 """
+
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 from urllib.parse import urlparse
-
 
 BLANK_URLS = {"", "about:blank", "chrome://newtab/"}
 DEFAULT_MAX_TOTAL_TABS = 6

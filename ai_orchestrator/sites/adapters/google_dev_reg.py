@@ -29,6 +29,7 @@ submit 버튼 우선순위:
   특정 selector 출현을 기다리는 방식을 사용한다.
   실제 DOM 에 맞게 선택자를 조정해야 할 수 있다.
 """
+
 from __future__ import annotations
 
 import logging
@@ -54,9 +55,9 @@ _CLIENT_URL = "https://console.cloud.google.com/apis/credentials/oauthclient"
 
 # formcontrolname 기반 선택자 (Angular SPA 안정 속성, 우선순위 2순위 상당)
 _CONSENT_SELECTORS: dict[str, str] = {
-    "app_name":      "input[formcontrolname='displayName']",
+    "app_name": "input[formcontrolname='displayName']",
     "contact_email": "input[formcontrolname='userSupportEmail']",
-    "service_url":   "input[formcontrolname='homepageUrl']",
+    "service_url": "input[formcontrolname='homepageUrl']",
 }
 
 # 개발자 연락처 이메일 (동의 화면 하단 별도 영역) — aria-label 기반(1순위)
@@ -64,7 +65,7 @@ _DEV_EMAIL_SELECTOR = "input[aria-label='Developer contact information email add
 
 # 리다이렉트 URI — Add 버튼(aria-label 1순위) + 입력창(placeholder 3순위)
 _REDIRECT_URI_ADD_BTN = "button[aria-label='Add URI']"
-_REDIRECT_URI_INPUT   = "input[placeholder='Enter a URI']"
+_REDIRECT_URI_INPUT = "input[placeholder='Enter a URI']"
 
 # 제출 버튼: aria-label(1순위) → class 기반 폴백
 _CONSENT_SAVE_BTN_SELECTORS = (
@@ -93,8 +94,11 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
         errors = validate_params(params)
         if errors:
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url="", error="; ".join(errors),
+                success=False,
+                summary="",
+                field_names=[],
+                target_url="",
+                error="; ".join(errors),
                 error_code=ErrorCode.FORM_FIELD_MISSING,
             )
 
@@ -116,15 +120,21 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
             page.wait_for_selector(_CONSENT_SELECTORS["app_name"], timeout=15000)
         except Exception as e:
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url=_CONSENT_URL, error=f"페이지 로드 실패: {e}",
+                success=False,
+                summary="",
+                field_names=[],
+                target_url=_CONSENT_URL,
+                error=f"페이지 로드 실패: {e}",
                 error_code=ErrorCode.PAGE_LOAD_FAILED,
             )
 
         if _is_login_redirect(page, _LOGIN_HINTS):
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url=_CONSENT_URL, error="로그인이 필요합니다",
+                success=False,
+                summary="",
+                field_names=[],
+                target_url=_CONSENT_URL,
+                error="로그인이 필요합니다",
                 error_code=ErrorCode.LOGIN_REQUIRED,
             )
 
@@ -165,8 +175,11 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
 
         if errors_fill:
             return FormFillResult(
-                success=False, summary="", field_names=filled,
-                target_url=page.url, error="; ".join(errors_fill),
+                success=False,
+                summary="",
+                field_names=filled,
+                target_url=page.url,
+                error="; ".join(errors_fill),
                 error_code=ErrorCode.PROVIDER_LAYOUT_CHANGED,
             )
 
@@ -179,12 +192,11 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
 
     def submit_form(self, page) -> SubmitResult:
         """저장/생성 버튼 클릭 — run_dev_reg 의 승인 확인 후에만 호출된다."""
-        btn_sel = next(
-            (s for s in _CONSENT_SAVE_BTN_SELECTORS if _has_element(page, s)), None
-        )
+        btn_sel = next((s for s in _CONSENT_SAVE_BTN_SELECTORS if _has_element(page, s)), None)
         if btn_sel is None:
             return SubmitResult(
-                success=False, result_summary="",
+                success=False,
+                result_summary="",
                 error="제출 버튼을 찾을 수 없습니다",
                 error_code=ErrorCode.SUBMIT_BUTTON_NOT_FOUND,
             )

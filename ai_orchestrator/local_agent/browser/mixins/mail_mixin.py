@@ -1,4 +1,5 @@
 """네이버 메일 Mixin — auto_structure_builder 자동 생성."""
+
 from __future__ import annotations
 
 import time
@@ -64,7 +65,7 @@ class MailMixin:
             return origXhrSend.apply(this, a);
         };
         """
-        if not hasattr(self._page, '_mail_search_hook_added'):
+        if not hasattr(self._page, "_mail_search_hook_added"):
             self._page.add_init_script(HOOK)
             self._page._mail_search_hook_added = True
 
@@ -83,7 +84,7 @@ class MailMixin:
 
         # 검색 input 찾아서 입력 + Enter
         try:
-            search_input = self._page.query_selector('input.search_input')
+            search_input = self._page.query_selector("input.search_input")
             if not search_input or not search_input.is_visible():
                 # 폴백: placeholder 매칭
                 search_input = self._page.query_selector('input[placeholder*="메일 검색"]')
@@ -106,13 +107,15 @@ class MailMixin:
         result = []
         for m in mail_data[:max_n]:
             from_info = m.get("from") or {}
-            result.append({
-                "id":      str(m.get("mailSN", "")),
-                "from":    from_info.get("name") or from_info.get("email") or "",
-                "subject": m.get("subject", ""),
-                "date":    m.get("receivedTime", ""),
-                "unread":  not bool(m.get("isRead", False)) if "isRead" in m else False,
-            })
+            result.append(
+                {
+                    "id": str(m.get("mailSN", "")),
+                    "from": from_info.get("name") or from_info.get("email") or "",
+                    "subject": m.get("subject", ""),
+                    "date": m.get("receivedTime", ""),
+                    "unread": not bool(m.get("isRead", False)) if "isRead" in m else False,
+                }
+            )
         return result
 
     def mail_folders(self) -> list[dict]:
@@ -139,7 +142,7 @@ class MailMixin:
             return origXhrSend.apply(this, a);
         };
         """
-        if not hasattr(self._page, '_mail_hook_added'):
+        if not hasattr(self._page, "_mail_hook_added"):
             self._page.add_init_script(HOOK)
             self._page._mail_hook_added = True
 
@@ -150,13 +153,16 @@ class MailMixin:
         if not data:
             return []
         folder_list = data.get("folderList", [])
-        return [{
-            "name":       f.get("folderName", ""),
-            "count":      f.get("unreadMailCount", 0),
-            "mail_count": f.get("mailCount", 0),
-            "folder_sn":  f.get("folderSN"),
-            "folder_type": f.get("folderType", ""),
-        } for f in folder_list]
+        return [
+            {
+                "name": f.get("folderName", ""),
+                "count": f.get("unreadMailCount", 0),
+                "mail_count": f.get("mailCount", 0),
+                "folder_sn": f.get("folderSN"),
+                "folder_type": f.get("folderType", ""),
+            }
+            for f in folder_list
+        ]
 
     def mail_unread_count(self) -> int:
         """전체 안읽은 메일 수 — mail_folders XHR 후킹 데이터 활용.
@@ -179,6 +185,7 @@ class MailMixin:
         반환: {ok, draft_url}
         """
         from ai_orchestrator.local_agent.browser.cdp_audit import L2
+
         self.go("https://mail.naver.com/v2/write")
         time.sleep(2)
         try:

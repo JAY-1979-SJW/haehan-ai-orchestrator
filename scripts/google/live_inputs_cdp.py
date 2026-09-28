@@ -3,6 +3,7 @@
 직접 CDP 타깃 세션 생성/연결/식별/미완기록. config(공유 leaf)만 의존,
 다른 live_inputs 함수 호출 없음. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -11,6 +12,7 @@ from urllib.parse import quote, urlsplit
 import requests
 
 from .live_inputs_config import _cdp_websocket_timeout
+
 
 class _CDPSessionManager:
     def __init__(self, session: Any):

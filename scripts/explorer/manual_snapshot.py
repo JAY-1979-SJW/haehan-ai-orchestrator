@@ -6,6 +6,7 @@
   - 누적 저장: data/manual_visits/<host>/<page_slug>.json
   - 사이트맵 인덱스: data/manual_visits/<host>/_index.json
 """
+
 from __future__ import annotations
 
 import json
@@ -15,9 +16,9 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
-from scripts.logger import get_logger
 from scripts.explorer.page_classifier import classify_page
 from scripts.form.bot_radar import scan as bot_scan
+from scripts.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -116,13 +117,15 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
             idx = json.loads(idx_path.read_text(encoding="utf-8"))
         except Exception:
             idx = []
-    idx.append({
-        "captured_at": record["captured_at"],
-        "url": url,
-        "page_type": record["page_type"],
-        "title": record["title"],
-        "record": rec_path.name,
-    })
+    idx.append(
+        {
+            "captured_at": record["captured_at"],
+            "url": url,
+            "page_type": record["page_type"],
+            "title": record["title"],
+            "record": rec_path.name,
+        }
+    )
     idx_path.write_text(json.dumps(idx, ensure_ascii=False, indent=2), encoding="utf-8")
 
     log.info("[manual] snapshot %s [%s] → %s", url, record["page_type"], rec_path)
@@ -131,6 +134,7 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
 
 def cli_snapshot() -> None:
     from scripts.web_connector import get_page
+
     page = get_page()
     r = snapshot_current(page)
     if r["ok"]:
@@ -148,9 +152,11 @@ def cli_list(host: str = "") -> None:
         dirs = list(VISITS_DIR.iterdir()) if VISITS_DIR.exists() else []
     total = 0
     for d in dirs:
-        if not d.is_dir(): continue
+        if not d.is_dir():
+            continue
         idx_path = d / "_index.json"
-        if not idx_path.exists(): continue
+        if not idx_path.exists():
+            continue
         try:
             idx = json.loads(idx_path.read_text(encoding="utf-8"))
         except Exception:
@@ -164,7 +170,7 @@ def cli_list(host: str = "") -> None:
         print(f"  타입 분포: {types}")
         # 최근 5개
         for r in idx[-5:]:
-            print(f"  - [{r.get('page_type','?'):<14}] {r.get('title','')[:50]}  {r.get('url','')[:80]}")
+            print(f"  - [{r.get('page_type', '?'):<14}] {r.get('title', '')[:50]}  {r.get('url', '')[:80]}")
         total += len(idx)
     if total == 0:
         print("저장된 수동 스냅샷 없음")
@@ -177,7 +183,8 @@ def main() -> None:
         print("사용법: python -m scripts.explorer.manual_snapshot <snap|list> [host]")
         return
     cmd = sys.argv[1]
-    if cmd == "snap": cli_snapshot()
+    if cmd == "snap":
+        cli_snapshot()
     elif cmd == "list":
         host = sys.argv[2] if len(sys.argv) > 2 else ""
         cli_list(host)
