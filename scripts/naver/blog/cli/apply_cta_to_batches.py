@@ -27,7 +27,7 @@ UPLOAD_DIR = ROOT / "data" / "blog_uploads"
 def resolve_topic_image(title: str) -> str | None:
     try:
         names = _resolve_unsplash_images(title, [], count=1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 대표사진(Unsplash) 소싱 실패시 사진 없이 진행, 게시물 수정(edit_post) 실패는 ok:False로 로그에 기록되어 성공으로 위장되지 않음
         print(f"  대표사진 소싱 실패(무시): {e}")
         return None
     for n in names:
@@ -121,7 +121,7 @@ def main() -> int:
                     images=images or None,
                     visibility="public",
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 대표사진(Unsplash) 소싱 실패시 사진 없이 진행, 게시물 수정(edit_post) 실패는 ok:False로 로그에 기록되어 성공으로 위장되지 않음
             result = {"ok": False, "error": f"{type(e).__name__}: {e}"}
 
         record = {

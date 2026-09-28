@@ -60,7 +60,7 @@ def main() -> int:
 
     try:
         from scripts.web_connector import get_page, run_on_browser_thread
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - web_connector 로드 실패/브라우저 스레드 실행 실패시 오류 메시지 출력 후 return 2로 명시적 실패 종료 — 성공 위장 없음
         print(f"web_connector 로드 실패: {e}")
         return 2
 
@@ -76,7 +76,7 @@ def main() -> int:
 
         try:
             results = run_on_browser_thread(_run, timeout=180)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - web_connector 로드 실패/브라우저 스레드 실행 실패시 오류 메시지 출력 후 return 2로 명시적 실패 종료 — 성공 위장 없음
             print(f"[{spec.key}] 검사 실패: {type(e).__name__}: {str(e)[:120]}")
             print("  CDP 브라우저가 떠 있는지 확인: python scripts/cdp_force_start.py status")
             return 2

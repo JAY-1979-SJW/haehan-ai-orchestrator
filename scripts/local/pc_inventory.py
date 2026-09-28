@@ -11,15 +11,15 @@
   - password/token/secret 포함 금지
   - 결과 외부 전송 없음
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import platform
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +40,7 @@ def _mask(text: str) -> str:
 
 
 # ── 시스템 정보 ────────────────────────────────────────────────────────────────
+
 
 def collect_system() -> dict[str, Any]:
     vm = psutil.virtual_memory()
@@ -66,6 +67,7 @@ def collect_system() -> dict[str, Any]:
 
 # ── 설치된 프로그램 (레지스트리) ────────────────────────────────────────────────
 
+
 def collect_installed_apps() -> list[dict[str, Any]]:
     try:
         import winreg
@@ -86,11 +88,13 @@ def collect_installed_apps() -> list[dict[str, Any]]:
                     try:
                         sub_name = winreg.EnumKey(base, i)
                         with winreg.OpenKey(base, sub_name) as sub:
+
                             def _val(name: str) -> str:
                                 try:
                                     return str(winreg.QueryValueEx(sub, name)[0])
                                 except OSError:
                                     return ""
+
                             display = _val("DisplayName").strip()
                             if not display or display.startswith("{"):
                                 continue
@@ -115,6 +119,7 @@ def collect_installed_apps() -> list[dict[str, Any]]:
 
 # ── 실행 중인 프로세스 ──────────────────────────────────────────────────────────
 
+
 def collect_processes(top_n: int = 50) -> list[dict[str, Any]]:
     procs = []
     for p in psutil.process_iter(["pid", "name", "status", "cpu_percent", "memory_info", "exe", "username"]):
@@ -124,14 +129,16 @@ def collect_processes(top_n: int = 50) -> list[dict[str, Any]]:
             # 경로에서 민감 정보 마스킹
             exe = _mask(exe)
             mem_mb = round(info["memory_info"].rss / 1024**2, 1) if info.get("memory_info") else 0
-            procs.append({
-                "pid": info["pid"],
-                "name": info["name"],
-                "status": info["status"],
-                "cpu_pct": info.get("cpu_percent", 0.0),
-                "mem_mb": mem_mb,
-                "exe": exe,
-            })
+            procs.append(
+                {
+                    "pid": info["pid"],
+                    "name": info["name"],
+                    "status": info["status"],
+                    "cpu_pct": info.get("cpu_percent", 0.0),
+                    "mem_mb": mem_mb,
+                    "exe": exe,
+                }
+            )
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
     # CPU + 메모리 기준 상위 N개
@@ -140,6 +147,7 @@ def collect_processes(top_n: int = 50) -> list[dict[str, Any]]:
 
 
 # ── 열린 포트 ───────────────────────────────────────────────────────────────────
+
 
 def collect_ports() -> list[dict[str, Any]]:
     pid_to_name: dict[int, str] = {}
@@ -159,23 +167,27 @@ def collect_ports() -> list[dict[str, Any]]:
             continue
         seen.add(port)
         pid = conn.pid or 0
-        ports.append({
-            "port": port,
-            "address": conn.laddr.ip,
-            "pid": pid,
-            "process": pid_to_name.get(pid, "unknown"),
-        })
+        ports.append(
+            {
+                "port": port,
+                "address": conn.laddr.ip,
+                "pid": pid,
+                "process": pid_to_name.get(pid, "unknown"),
+            }
+        )
     return sorted(ports, key=lambda x: x["port"])
 
 
 # ── Windows 서비스 ──────────────────────────────────────────────────────────────
 
+
 def collect_services() -> list[dict[str, Any]]:
     try:
-        import winreg
         result = subprocess.run(
             ["sc", "query", "type=", "all", "state=", "all"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
         services = []
         current: dict[str, str] = {}
@@ -198,11 +210,12 @@ def collect_services() -> list[dict[str, Any]]:
             [s for s in services if s.get("name")],
             key=lambda x: x.get("display", x["name"]).lower(),
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 PC 정보 조회(읽기전용) — 조회 실패시 오류 문자열만 결과에 담아 반환, 시스템 변경 없음
         return [{"error": str(e)[:100]}]
 
 
 # ── 시작프로그램 ────────────────────────────────────────────────────────────────
+
 
 def collect_startup() -> list[dict[str, Any]]:
     try:
@@ -212,7 +225,7 @@ def collect_startup() -> list[dict[str, Any]]:
 
     startup: list[dict[str, Any]] = []
     run_keys = [
-        (winreg.HKEY_CURRENT_USER,  r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"),
         (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"),
         (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run"),
     ]
@@ -247,14 +260,14 @@ SECTIONS = {
 def collect_all(sections: list[str] | None = None) -> dict[str, Any]:
     targets = sections or list(SECTIONS)
     result: dict[str, Any] = {
-        "collected_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "collected_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "secret_values_output": False,
     }
     for name in targets:
         if name in SECTIONS:
             try:
                 result[name] = SECTIONS[name]()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 로컬 PC 정보 조회(읽기전용) — 조회 실패시 오류 문자열만 결과에 담아 반환, 시스템 변경 없음
                 result[name] = {"error": str(e)[:200]}
     return result
 
@@ -275,7 +288,9 @@ def main() -> None:
     parser.add_argument("--json", action="store_true", help="JSON 형식으로 출력")
     parser.add_argument("--save", action="store_true", help="data/local/에 저장")
     parser.add_argument(
-        "--section", choices=list(SECTIONS), default=None,
+        "--section",
+        choices=list(SECTIONS),
+        default=None,
         help="특정 섹션만 수집 (기본: 전체)",
     )
     parser.add_argument("--top", type=int, default=50, help="프로세스 상위 N개 (기본 50)")
@@ -298,10 +313,12 @@ def main() -> None:
 def _print_summary(data: dict) -> None:
     if "system" in data:
         s = data["system"]
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"  시스템: {s.get('os')} {s.get('os_release')}  {s.get('hostname')}")
-        print(f"  CPU: {s.get('cpu_physical_cores')}코어/{s.get('cpu_logical_cores')}스레드  "
-              f"RAM: {s.get('ram_total_gb')}GB ({s.get('ram_used_pct')}% 사용)")
+        print(
+            f"  CPU: {s.get('cpu_physical_cores')}코어/{s.get('cpu_logical_cores')}스레드  "
+            f"RAM: {s.get('ram_total_gb')}GB ({s.get('ram_used_pct')}% 사용)"
+        )
         print(f"  디스크: {s.get('disk_total_gb')}GB (여유 {s.get('disk_free_gb')}GB)")
 
     if "apps" in data:
@@ -312,12 +329,12 @@ def _print_summary(data: dict) -> None:
                 ver = f" v{a['version']}" if a.get("version") else ""
                 print(f"    • {a['name']}{ver}")
             if len(apps) > 10:
-                print(f"    ... 외 {len(apps)-10}개")
+                print(f"    ... 외 {len(apps) - 10}개")
 
     if "processes" in data:
         procs = data["processes"]
         if isinstance(procs, list):
-            print(f"\n  실행 프로세스 상위 10 (메모리 기준):")
+            print("\n  실행 프로세스 상위 10 (메모리 기준):")
             for p in procs[:10]:
                 print(f"    [{p['pid']:6}] {p['name']:<30} {p['mem_mb']:>7.1f}MB")
 
@@ -335,7 +352,7 @@ def _print_summary(data: dict) -> None:
             for s in items:
                 print(f"    • {s['name']}")
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"  수집시각: {data.get('collected_at', '-')}")
 
 

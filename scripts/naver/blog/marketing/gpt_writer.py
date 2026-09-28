@@ -316,7 +316,7 @@ def parse_draft(raw: str) -> dict | None:
         text = text[start : end + 1]
     try:
         data = json.loads(text)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - GPT 응답 JSON 파싱 실패시 None 반환, 경쟁사 조사 실패시 그 정보 없이 계속 진행 — 안전한 기능저하(degradation)일 뿐 발행 승인/여부에는 영향 없음
         _log.warning("[gpt-writer] JSON 파싱 실패: %s", e)
         return None
     if not data.get("title") or not data.get("body"):
@@ -380,7 +380,7 @@ def generate_draft(
             query = topic_info.get("competitor_query") or topic_info.get("topic", "")
             competitors = research_competitors(cdp, query)
             competitor_block = summarize_for_prompt(competitors)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - GPT 응답 JSON 파싱 실패시 None 반환, 경쟁사 조사 실패시 그 정보 없이 계속 진행 — 안전한 기능저하(degradation)일 뿐 발행 승인/여부에는 영향 없음
             _log.warning("[gpt-writer] 경쟁 글 조사 실패(무시하고 진행): %s", e)
 
     template = _PROMPT_TEMPLATES.get(blog_id or "skyjwsin", _PROMPT_TEMPLATE)

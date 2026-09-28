@@ -5,12 +5,14 @@ AI가 작업 단위로 local agent를 start/stop 한다.
 cookie/session/token/password 접근 금지.
 data/sessions/*.json 접근 금지.
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
+from scripts.local_agent.process_guard import cleanup_stale_processes
 from scripts.local_agent.status_store import (
     acquire_lock,
     lock_exists,
@@ -18,23 +20,25 @@ from scripts.local_agent.status_store import (
     release_lock,
     write_status,
 )
-from scripts.local_agent.process_guard import cleanup_stale_processes
 
 # ── approval gate decision 상수 ───────────────────────────────────────
 
-DECISION_BLOCKED               = "BLOCKED"
-DECISION_LOCAL_AGENT_REQUIRED  = "LOCAL_AGENT_REQUIRED"
-DECISION_USER_DIRECT_REQUIRED  = "USER_DIRECT_REQUIRED"
-DECISION_APPROVAL_REQUIRED     = "APPROVAL_REQUIRED"
-DECISION_READ_ONLY_ALLOWED     = "READ_ONLY_ALLOWED"
-DECISION_DRAFT_ALLOWED         = "DRAFT_ALLOWED"
+DECISION_BLOCKED = "BLOCKED"
+DECISION_LOCAL_AGENT_REQUIRED = "LOCAL_AGENT_REQUIRED"
+DECISION_USER_DIRECT_REQUIRED = "USER_DIRECT_REQUIRED"
+DECISION_APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
+DECISION_READ_ONLY_ALLOWED = "READ_ONLY_ALLOWED"
+DECISION_DRAFT_ALLOWED = "DRAFT_ALLOWED"
 
-_STARTABLE_DECISIONS = frozenset({
-    DECISION_LOCAL_AGENT_REQUIRED,
-    DECISION_APPROVAL_REQUIRED,
-})
+_STARTABLE_DECISIONS = frozenset(
+    {
+        DECISION_LOCAL_AGENT_REQUIRED,
+        DECISION_APPROVAL_REQUIRED,
+    }
+)
 
 # ── approval 검증 ─────────────────────────────────────────────────────
+
 
 def _validate_approval(approval: dict[str, Any]) -> dict[str, Any]:
     """승인 정보를 검증하고 start 가능 여부를 반환한다."""
@@ -57,10 +61,10 @@ def _validate_approval(approval: dict[str, Any]) -> dict[str, Any]:
         try:
             exp = datetime.fromisoformat(expires_at)
             if exp.tzinfo is None:
-                exp = exp.replace(tzinfo=timezone.utc)
-            if datetime.now(timezone.utc) > exp:
+                exp = exp.replace(tzinfo=UTC)
+            if datetime.now(UTC) > exp:
                 return {"ok": False, "reason": "승인이 만료되었습니다."}
-        except Exception:
+        except Exception:  # noqa: BLE001 - 승인 만료시각(expires_at) 파싱 실패시 승인거부(ok:False)로 fail-closed 처리 — 상태조회 함수의 경과시간 계산 실패는 elapsed_s 표시 생략일 뿐 running 상태 판정에는 영향 없음
             return {"ok": False, "reason": "expires_at 형식 오류."}
 
     return {"ok": True}
@@ -68,11 +72,12 @@ def _validate_approval(approval: dict[str, Any]) -> dict[str, Any]:
 
 # ── 공개 API ──────────────────────────────────────────────────────────
 
+
 def start_local_agent(
-    task_id: Optional[str],
+    task_id: str | None,
     domain: str,
     approved_scope: list[str],
-    approval: Optional[dict[str, Any]] = None,
+    approval: dict[str, Any] | None = None,
     idle_timeout_s: int = 1800,
     action: str = "",
 ) -> dict[str, Any]:
@@ -89,8 +94,8 @@ def start_local_agent(
     if lock_exists():
         status = read_status()
         return {
-            "ok":     False,
-            "error":  "이미 실행 중인 작업이 있습니다.",
+            "ok": False,
+            "error": "이미 실행 중인 작업이 있습니다.",
             "status": status,
         }
 
@@ -108,12 +113,12 @@ def start_local_agent(
     )
 
     return {
-        "ok":            True,
-        "task_id":       effective_task_id,
-        "domain":        domain,
-        "action":        action,
+        "ok": True,
+        "task_id": effective_task_id,
+        "domain": domain,
+        "action": action,
         "approved_scope": approved_scope,
-        "started_at":    datetime.now(timezone.utc).isoformat(),
+        "started_at": datetime.now(UTC).isoformat(),
         "idle_timeout_s": idle_timeout_s,
     }
 
@@ -128,23 +133,23 @@ def get_local_agent_status() -> dict[str, Any]:
         return {"running": False, "lock_exists": lock_exists()}
 
     started_at_str = status.get("updated_at", "")
-    elapsed_s: Optional[float] = None
+    elapsed_s: float | None = None
     if started_at_str:
         try:
             started = datetime.fromisoformat(started_at_str)
-            elapsed_s = (datetime.now(timezone.utc) - started).total_seconds()
-        except Exception:
+            elapsed_s = (datetime.now(UTC) - started).total_seconds()
+        except Exception:  # noqa: BLE001 - 승인 만료시각(expires_at) 파싱 실패시 승인거부(ok:False)로 fail-closed 처리 — 상태조회 함수의 경과시간 계산 실패는 elapsed_s 표시 생략일 뿐 running 상태 판정에는 영향 없음
             pass
 
     return {
-        "running":        True,
-        "task_id":        status.get("task_id", ""),
-        "domain":         status.get("domain", ""),
-        "action":         status.get("action", ""),
+        "running": True,
+        "task_id": status.get("task_id", ""),
+        "domain": status.get("domain", ""),
+        "action": status.get("action", ""),
         "approved_scope": status.get("approved_scope", []),
         "idle_timeout_s": status.get("idle_timeout_s", 1800),
-        "elapsed_s":      elapsed_s,
-        "lock_exists":    lock_exists(),
+        "elapsed_s": elapsed_s,
+        "lock_exists": lock_exists(),
     }
 
 
@@ -157,9 +162,9 @@ def stop_local_agent(reason: str = "completed") -> dict[str, Any]:
     write_status(running=False, reason=reason)
     release_lock()
     return {
-        "ok":         True,
-        "stopped_at": datetime.now(timezone.utc).isoformat(),
-        "reason":     reason,
+        "ok": True,
+        "stopped_at": datetime.now(UTC).isoformat(),
+        "reason": reason,
         "was_running": was_running,
     }
 

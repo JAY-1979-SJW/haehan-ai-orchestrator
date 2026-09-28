@@ -36,7 +36,7 @@ _MANAGER_RE = re.compile(r"(\d{2}:\d{2})\s+([가-힣]{2,4})\s+\d{4}-\d{2}-\d{2}"
 def _load_profile() -> dict:
     try:
         return json.loads(PROFILE_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 프로필/스캔결과 JSON 읽기 전용 — 파일 없거나 손상돼도 빈 결과로 안전 폴백, 쓰기 없음
         return {"keywords": [], "keyword_weights": {}}
 
 
@@ -78,7 +78,7 @@ def _summarize(item: dict) -> str:
 def build_report() -> dict:
     try:
         scan = json.loads(SCAN_FILE.read_text(encoding="utf-8"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 프로필/스캔결과 JSON 읽기 전용 — 파일 없거나 손상돼도 빈 결과로 안전 폴백, 쓰기 없음
         return {"ok": False, "error": f"스캔 파일 없음: {e}", "items": []}
 
     profile = _load_profile()

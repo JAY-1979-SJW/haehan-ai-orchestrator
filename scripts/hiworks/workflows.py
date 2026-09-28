@@ -1,4 +1,5 @@
 """Hiworks business workflows and safe mail preparation."""
+
 from __future__ import annotations
 
 import json
@@ -35,7 +36,9 @@ def prepare_sales_mail(page, *, index: int = 1, queue_path: str | Path = SALES_Q
         body=item["body"],
     )
     path = DATA_DIR / "hiworks_prepare_sales_mail_latest.json"
-    path.write_text(json.dumps({**result, "metadata": item.get("metadata")}, ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(
+        json.dumps({**result, "metadata": item.get("metadata")}, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return result, path
 
 
@@ -54,11 +57,13 @@ def record_prepare_success(index: int, item: dict[str, Any]) -> None:
             input_ref=str(SALES_QUEUE),
             detail=f"recipient={item['to']}",
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 메일 준비/발송계획 성공 이후의 감사로그(cdp_db) 기록 실패를 무시 — 이미 완료된 업무 자체에는 영향 없는 best-effort 로깅
         pass
 
 
-def build_and_save_send_plan(*, limit: int = 5, delay_min: int = 15, delay_max: int = 45) -> tuple[dict[str, Any], Path]:
+def build_and_save_send_plan(
+    *, limit: int = 5, delay_min: int = 15, delay_max: int = 45
+) -> tuple[dict[str, Any], Path]:
     from scripts.hiworks.mail_batch import build_send_plan, save_send_plan
 
     plan = build_send_plan(limit=limit, delay_min=delay_min, delay_max=delay_max)
@@ -77,6 +82,6 @@ def build_and_save_send_plan(*, limit: int = 5, delay_min: int = 15, delay_max: 
             output_ref=str(path),
             detail=f"selected={plan.get('selected')} delay={delay_min}-{delay_max}",
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 메일 준비/발송계획 성공 이후의 감사로그(cdp_db) 기록 실패를 무시 — 이미 완료된 업무 자체에는 영향 없는 best-effort 로깅
         pass
     return plan, path

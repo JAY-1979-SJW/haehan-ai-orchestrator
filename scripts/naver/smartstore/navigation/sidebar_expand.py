@@ -180,7 +180,7 @@ def main():
     try:
         handle_page_popups(page, timeout_s=2.0)
         close_popup_windows(page)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 팝업/닫기창 처리 브라우저자동화 실패 무시(best-effort), 최상위 main() 예외는 traceback 출력으로 진단정보 남김
         pass
 
     # 2. 사이드바 강제 펼침 (CSS 직접 조작)
@@ -338,7 +338,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 팝업/닫기창 처리 브라우저자동화 실패 무시(best-effort), 최상위 main() 예외는 traceback 출력으로 진단정보 남김
         import traceback
 
         traceback.print_exc()

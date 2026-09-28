@@ -5,6 +5,7 @@ inputs may be prepared with explicit values, while send/submit/save/delete style
 buttons are cataloged and kept behind the approval gate.  It never clicks a
 state-changing button.
 """
+
 from __future__ import annotations
 
 import json
@@ -123,10 +124,7 @@ def _field_key(field: dict[str, Any], index: int) -> str:
 
 
 def _is_sensitive_input(field: dict[str, Any]) -> bool:
-    probe = " ".join(
-        _clean(field.get(key))
-        for key in ("type", "name", "id", "placeholder", "aria")
-    )
+    probe = " ".join(_clean(field.get(key)) for key in ("type", "name", "id", "placeholder", "aria"))
     if _clean(field.get("type")).lower() == "file":
         return True
     return _contains_any(probe, SENSITIVE_INPUT_TOKENS)
@@ -145,10 +143,7 @@ def classify_input(field: dict[str, Any]) -> dict[str, Any]:
 def classify_button(button: dict[str, Any]) -> dict[str, Any]:
     """Classify one button-like control without clicking it."""
     text = _clean(button.get("text"))
-    probe = " ".join(
-        _clean(button.get(key))
-        for key in ("text", "type", "name", "id", "href", "aria")
-    )
+    probe = " ".join(_clean(button.get(key)) for key in ("text", "type", "name", "id", "href", "aria"))
     if button.get("disabled"):
         return {"risk": "disabled", "can_auto_click": False, "reason": "disabled"}
     if _contains_any(probe, STATE_CHANGE_BUTTON_TOKENS):
@@ -350,7 +345,9 @@ def save_prepare_plan(plan: dict[str, Any], output: str | Path | None = None) ->
     return path
 
 
-def get_submit_control(catalog: dict[str, Any], service_name: str, control_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
+def get_submit_control(
+    catalog: dict[str, Any], service_name: str, control_id: str
+) -> tuple[dict[str, Any], dict[str, Any]]:
     services = _select_catalog_services(catalog, service_name)
     service = services[0]
     for button in service.get("buttons") or []:
@@ -457,7 +454,7 @@ def execute_approved_button(page, plan: dict[str, Any], *, approved: bool, dry_r
     try:
         plan["after_url"] = page.url
         plan["after_title"] = page.title()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 디버그 출력용 page.title() 조회 — 실패해도 해당 줄 출력만 생략, 기능 영향 없음
         pass
     return plan
 
@@ -485,7 +482,7 @@ def save_submit_record(record: dict[str, Any], output: str | Path | None = None)
                 "dry_run": record.get("dry_run"),
             },
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 디버그 출력용 page.title() 조회 — 실패해도 해당 줄 출력만 생략, 기능 영향 없음
         pass
     return path
 

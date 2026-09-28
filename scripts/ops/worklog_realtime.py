@@ -167,7 +167,7 @@ def main() -> None:
     try:
         raw = sys.stdin.read()
         event = json.loads(raw) if raw.strip() else {}
-    except Exception:
+    except Exception:  # noqa: BLE001 - Claude Code 훅 진입점 — stdin 읽기/JSON 파싱 실패시 조용히 반환(무동작), 기타 처리 오류는 stderr 로그만 남기는 의도된 fail-open(워크로그 기록 실패가 본작업을 막지 않도록)
         return
 
     try:
@@ -177,7 +177,7 @@ def main() -> None:
             handle_tool_done(event)
         elif mode == "stop":
             handle_stop(event)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Claude Code 훅 진입점 — stdin 읽기/JSON 파싱 실패시 조용히 반환(무동작), 기타 처리 오류는 stderr 로그만 남기는 의도된 fail-open(워크로그 기록 실패가 본작업을 막지 않도록)
         sys.stderr.write(f"[worklog_realtime] 오류: {e}\n")
 
 
