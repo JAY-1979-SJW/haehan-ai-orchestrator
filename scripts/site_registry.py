@@ -4,42 +4,48 @@
     1. 아래 _REGISTRY 에 항목 추가
     2. 사이트별 auth 모듈에 login() / is_logged_in() 제공
 """
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 
 @dataclass
 class SiteSpec:
     key: str
     base_url: str
-    login_domain_hints: tuple[str, ...]   # 로그인 페이지 URL 포함 키워드
-    is_logged_in: Callable[[object], bool]   # page → bool
-    login: Callable[[object], dict]          # page → {ok, reason, user, needs_manual?}
+    login_domain_hints: tuple[str, ...]  # 로그인 페이지 URL 포함 키워드
+    is_logged_in: Callable[[object], bool]  # page → bool
+    login: Callable[[object], dict]  # page → {ok, reason, user, needs_manual?}
     login_strategy: str = "registered_only"  # registered_only | registered_then_universal | manual_only
 
 
 # ── lazy 로더 ─────────────────────────────────────────────────────────────
 
+
 def _eum_is_logged_in(page):
     from scripts.eum.auth import is_logged_in
+
     return is_logged_in(page)
 
 
 def _eum_login(page):
     from scripts.eum.auth import login
+
     return login(page)
 
 
 def _naver_is_logged_in(page):
     from scripts.login_detector import detect_login_state
+
     s = detect_login_state(page)
     return bool(s.get("logged_in"))
 
 
 def _naver_login(page, *, force_login: bool = False):
     from scripts.naver.auth import login_naver
+
     # wait_for_user_s 짧게 (B방식 fallback은 site_access에서 제어)
     r = login_naver(page, wait_for_user_s=10, force_relogin=force_login)
     # 통일된 스키마로 변환
@@ -53,7 +59,7 @@ def _naver_login(page, *, force_login: bool = False):
 
 def _smartstore_is_logged_in(page):
     try:
-        from scripts.smartstore.live_probe import classify_probe
+        from scripts.naver.smartstore.live_probe import classify_probe
 
         raw = page.evaluate(
             """() => {
@@ -93,12 +99,14 @@ def _smartstore_login(page):
 
 def _google_is_logged_in(page):
     from scripts.login_detector import detect_login_state
+
     s = detect_login_state(page)
     return bool(s.get("logged_in"))
 
 
 def _google_login(page):
     from scripts.google.auth import login_google
+
     r = login_google(page, wait_for_user_s=10)
     return {
         "ok": bool(r.get("logged_in") or r.get("ok")),
@@ -110,21 +118,25 @@ def _google_login(page):
 
 def _gabia_is_logged_in(page):
     from scripts.gabia.auth import is_logged_in
+
     return is_logged_in(page)
 
 
 def _gabia_login(page):
     from scripts.gabia.auth import login
+
     return login(page)
 
 
 def _kakao_is_logged_in(page):
     from scripts.kakao.auth import is_logged_in
+
     return is_logged_in(page)
 
 
 def _kakao_login(page):
     from scripts.kakao.auth import login
+
     return login(page)
 
 
@@ -157,8 +169,7 @@ _REGISTRY: dict[str, SiteSpec] = {
     "eum": SiteSpec(
         key="eum",
         base_url="https://eum.cw.or.kr/main",
-        login_domain_hints=("eum.cw.or.kr/web/log/WEBLOG400M00",
-                            "eum.cw.or.kr/login", "eum.cw.or.kr/web/login"),
+        login_domain_hints=("eum.cw.or.kr/web/log/WEBLOG400M00", "eum.cw.or.kr/login", "eum.cw.or.kr/web/login"),
         is_logged_in=_eum_is_logged_in,
         login=_eum_login,
         login_strategy="registered_only",

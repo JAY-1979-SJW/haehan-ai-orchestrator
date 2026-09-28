@@ -11,10 +11,8 @@ cdp_client.py 의 CLI 파서에서 라우팅 책임만 분리.
     - 서비스 진입 시 gate.check() 자동 실행 (서비스별 위험 등급 적용)
     - 브라우저 명령(goto/click 등)은 각 함수 내부 gate 적용
 """
-from __future__ import annotations
 
-import sys
-from typing import Any
+from __future__ import annotations
 
 from scripts.logger import get_logger
 
@@ -25,35 +23,60 @@ _log = get_logger(__name__)
 # gate_op: None 이면 게이트 생략
 
 _SERVICE_ROUTERS: dict[str, tuple[str, str]] = {
-    "naver":       ("scripts.naver.router",        "run_naver"),
-    "google":      ("scripts.google.router",       "run_google"),
-    "gmail":       ("scripts.google.router",       "run_google"),
-    "youtube":     ("scripts.youtube.router",      "run_youtube"),
-    "kakao":       ("scripts.kakao.router",        "run_kakao"),
-    "eum":         ("scripts.eum.router",          "run_eum"),
-    "hiworks":     ("scripts.hiworks.router",      "run_hiworks"),
-    "smartstore":  ("scripts.smartstore.router",   "run_smartstore"),
-    "gabia":       ("scripts.gabia.router",        "run_gabia"),
-    "g2b":         ("scripts.g2b.router",          "run_g2b"),
-    "hanafax":     ("scripts.hanafax.router",      "run_hanafax"),
-    "local":       ("scripts.local_agent.router",  "run_local_agent"),
-    "explore":     ("scripts.explorer.router",     "run_explorer"),
+    "naver": ("scripts.naver.router", "run_naver"),
+    "google": ("scripts.google.router", "run_google"),
+    "gmail": ("scripts.google.router", "run_google"),
+    "youtube": ("scripts.youtube.router", "run_youtube"),
+    "kakao": ("scripts.kakao.router", "run_kakao"),
+    "eum": ("scripts.eum.router", "run_eum"),
+    "hiworks": ("scripts.hiworks.router", "run_hiworks"),
+    "smartstore": ("scripts.naver.smartstore.api.router", "run_smartstore"),
+    "gabia": ("scripts.gabia.router", "run_gabia"),
+    "g2b": ("scripts.g2b.router", "run_g2b"),
+    "hanafax": ("scripts.hanafax.router", "run_hanafax"),
+    "local": ("scripts.local_agent.router", "run_local_agent"),
+    "explore": ("scripts.explorer.router", "run_explorer"),
 }
 
 # ── 브라우저 명령 목록 ────────────────────────────────────────────────
-_BROWSER_CMDS = frozenset({
-    "check-login", "goto", "wait-login", "save-session", "write-blog",
-    "paste-image", "handle-draft-popup", "is-ready", "verify-input",
-    "verify-text", "scan-links", "scan-page", "type-into",
-    "click-button", "click-link", "install-watcher", "detect-popup",
-    "close-popups", "poll-events", "auto-handle",
-})
+_BROWSER_CMDS = frozenset(
+    {
+        "check-login",
+        "goto",
+        "wait-login",
+        "save-session",
+        "write-blog",
+        "paste-image",
+        "handle-draft-popup",
+        "is-ready",
+        "verify-input",
+        "verify-text",
+        "scan-links",
+        "scan-page",
+        "type-into",
+        "click-button",
+        "click-link",
+        "install-watcher",
+        "detect-popup",
+        "close-popups",
+        "poll-events",
+        "auto-handle",
+    }
+)
 
 # ── 시스템 명령 목록 ─────────────────────────────────────────────────
-_SYSTEM_CMDS = frozenset({
-    "popup-monitor", "chrome-ui", "chrome-ui-monitor", "analyze", "explore",
-    "auto-login", "gate", "op-log",
-})
+_SYSTEM_CMDS = frozenset(
+    {
+        "popup-monitor",
+        "chrome-ui",
+        "chrome-ui-monitor",
+        "analyze",
+        "explore",
+        "auto-login",
+        "gate",
+        "op-log",
+    }
+)
 
 
 def dispatch(cmd: str, task: str, sub: str, args: list[str]) -> None:
@@ -77,11 +100,16 @@ def dispatch(cmd: str, task: str, sub: str, args: list[str]) -> None:
 
 
 def _call_service(
-    cmd: str, module_path: str, fn_name: str,
-    task: str, sub: str, args: list[str],
+    cmd: str,
+    module_path: str,
+    fn_name: str,
+    task: str,
+    sub: str,
+    args: list[str],
 ) -> None:
     """서비스 라우터 함수 동적 호출."""
     import importlib
+
     mod = importlib.import_module(module_path)
     fn = getattr(mod, fn_name)
 

@@ -1,24 +1,23 @@
 """네이버 페이/톡/장소/스마트스토어 명령 핸들러"""
-from __future__ import annotations
 
-import json
+from __future__ import annotations
 
 from scripts.gate import check as gate_check
 
 from .router_common import (
-    _option_value,
     _flag,
     _int_option,
-    _save_latest,
+    _option_value,
     _print_saved,
+    _save_latest,
 )
 
 
 def _cmd_pay(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
-    from scripts.web_connector import get_page
     from scripts.naver.pay import NaverPay
+    from scripts.web_connector import get_page
 
     gate_check("scan_page")
     pay = NaverPay(get_page())
@@ -38,8 +37,8 @@ def _cmd_pay(sub: str, args: list[str]) -> None:
 def _cmd_talk(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
-    from scripts.web_connector import get_page
     from scripts.naver.talk import NaverTalk
+    from scripts.web_connector import get_page
 
     if sub in ("list", "chats"):
         gate_check("scan_page")
@@ -50,7 +49,9 @@ def _cmd_talk(sub: str, args: list[str]) -> None:
         return
 
     if sub not in ("send", "message"):
-        print("usage: python scripts/cdp_client.py naver talk [list|send] --partner=NAME --message=TEXT [--dry-run|--execute --approved --confirm=NAVER_APPROVED_SEND]")
+        print(
+            "usage: python scripts/cdp_client.py naver talk [list|send] --partner=NAME --message=TEXT [--dry-run|--execute --approved --confirm=NAVER_APPROVED_SEND]"
+        )
         return
 
     partner = _option_value(args, "--partner=") or _option_value(args, "--to=") or ""
@@ -85,8 +86,8 @@ def _cmd_talk(sub: str, args: list[str]) -> None:
 def _cmd_place(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
-    from scripts.web_connector import get_page
     from scripts.naver.place import NaverPlace
+    from scripts.web_connector import get_page
 
     gate_check("scan_page")
     place = NaverPlace(get_page())
@@ -104,6 +105,6 @@ def _cmd_place(sub: str, args: list[str]) -> None:
 
 
 def _cmd_smartstore(sub: str, args: list[str]) -> None:
-    from scripts.smartstore.router import run_smartstore
+    from scripts.naver.smartstore.api.router import run_smartstore
 
     run_smartstore(sub or "actions", args[0] if args else None, args[1:] if args else [])

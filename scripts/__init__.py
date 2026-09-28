@@ -27,51 +27,76 @@
     scripts.google     — Google 서비스 자동화
     scripts.kakao      — 카카오 서비스
     scripts.eum        — 건설공제회 단말기 관리
-    scripts.smartstore — 스마트스토어
+    scripts.naver.smartstore — 스마트스토어
     scripts.g2b        — 나라장터 G2B
     scripts.local_agent — 정부/민원 로컬 에이전트
     scripts.explorer   — 사이트 탐색
 """
+
 from __future__ import annotations
 
 # 버전 정보
 __version__ = "1.0.0"
 
 # 핵심 유틸리티 — 직접 참조 허용
-from scripts.logger import get_logger  # noqa: F401
-from scripts.schemas import (          # noqa: F401
-    RiskLevel,
-    GateVerdict,
-    OpStatus,
-    GateResult,
-    OpRecord,
-    CriticalRecord,
-    CdpNavEvent,
-    CdpRequestEvent,
-    FileChangeRecord,
-    PopupEvent,
-    PopupDecision,
-    EumDevice,
-    G2bNotice,
-    LocalAgentTask,
-    ExplorePageResult,
+from scripts.critical_logger import (  # noqa: F401
+    log_critical,
 )
-from scripts.gate import (             # noqa: F401
-    check as gate_check,
-    gated,
-    force_approved,
+from scripts.critical_logger import (
+    query_recent as critical_query,
+)
+from scripts.gate import (
     GateBlocked,
+    force_approved,
+    gated,
     get_risk,
+)
+from scripts.gate import (  # noqa: F401
+    check as gate_check,
+)
+from scripts.gate import (
     register as gate_register,
 )
-from scripts.op_log import (           # noqa: F401
+from scripts.logger import get_logger  # noqa: F401
+from scripts.op_log import (  # noqa: F401
     log_op,
     op_context,
     op_logged,
+)
+from scripts.op_log import (
     query_recent as op_query,
+)
+from scripts.op_log import (
     query_stats as op_stats,
 )
-from scripts.critical_logger import (  # noqa: F401
-    log_critical,
-    query_recent as critical_query,
+from scripts.schemas import (  # noqa: F401
+    CdpNavEvent,
+    CdpRequestEvent,
+    CriticalRecord,
+    EumDevice,
+    ExplorePageResult,
+    FileChangeRecord,
+    G2bNotice,
+    GateResult,
+    GateVerdict,
+    LocalAgentTask,
+    OpRecord,
+    OpStatus,
+    PopupDecision,
+    PopupEvent,
+    RiskLevel,
 )
+
+# 위 임포트 중 이름이 겹쳐 `x as x` 형태(ruff 권장 재수출 표기)를 쓸 수 없는 것들
+# (critical_logger 와 op_log 가 같은 이름 query_recent/query_stats 를 가짐)과, 별칭 없이
+# 그대로 재수출하는 것들을 __all__ 로 명시해 F401(미사용 임포트)을 해소한다.
+__all__ = [
+    "GateBlocked",
+    "critical_query",
+    "force_approved",
+    "gate_register",
+    "gated",
+    "get_risk",
+    "op_query",
+    "op_stats",
+]

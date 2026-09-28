@@ -1,4 +1,5 @@
 """Google lane work records for user-visible handoff and resume."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 from scripts.ops import ai_work_record, ai_work_session
-
 
 ROOT = Path(__file__).resolve().parents[2]
 LANE = "google"
@@ -21,7 +21,6 @@ DEFAULT_SCOPES = [
 ]
 DEFAULT_FORBIDDEN_SCOPES = [
     "scripts/naver/",
-    "scripts/smartstore/",
 ]
 
 
@@ -112,5 +111,5 @@ def load_history(limit: int = 20, record_root: Path | None = None) -> list[dict[
     if not history.exists():
         return []
     lines = [line for line in history.read_text(encoding="utf-8").splitlines() if line.strip()]
-    records = [json.loads(line) for line in lines[-max(limit, 1):]]
+    records = [json.loads(line) for line in lines[-max(limit, 1) :]]
     return records
