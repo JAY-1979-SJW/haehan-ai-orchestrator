@@ -11,9 +11,18 @@ const { FASTAPI_URL, getEnabledSites } = require("./config");
 let agentProc = null;
 
 function resolvePython() {
-  const candidates = ["python", "python3"];
-  for (const p of candidates) {
-    try { execSync(`"${p}" --version`, { stdio: "ignore" }); return p; } catch {}
+  // Windows py 런처로 프로젝트 고정 버전(3.14)을 우선 찾는다 — PATH의 "python"이
+  // 다른 버전(예: 3.11)을 가리키면 requirements.txt로 설치한 패키지(예:
+  // websocket-client)가 없어 조용히 실패한다(2026-09-28 Electron 셸 복원 후 재현·확인:
+  // "python"이 3.11을 가리켜 local_agent.py가 websocket-client ImportError로 즉시 종료).
+  if (process.platform === "win32") {
+    try {
+      execSync("py -3.14 --version", { stdio: "ignore" });
+      return { cmd: "py", prefixArgs: ["-3.14"] };
+    } catch {}
+  }
+  for (const p of ["python3.14", "python3", "python"]) {
+    try { execSync(`"${p}" --version`, { stdio: "ignore" }); return { cmd: p, prefixArgs: [] }; } catch {}
   }
   return null;
 }
@@ -43,8 +52,8 @@ function startAgent(licenseKey) {
       console.error("[agent] local_agent.py 없음:", agentScript);
       return;
     }
-    cmd = python;
-    args = [agentScript];
+    cmd = python.cmd;
+    args = [...python.prefixArgs, agentScript];
     cwd = scriptDir;
   }
 
