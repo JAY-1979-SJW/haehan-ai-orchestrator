@@ -192,7 +192,7 @@ def _run_cdp_tool(name: str, inputs: dict) -> dict:
 
             return {"ok": False, "error": f"알 수 없는 도구: {name}"}
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 에이전트 CDP 명령 실행/WebSocket 루프 — 알 수 없는 도구 호출 실패는 에러 dict로 반환, 루프 중 예외는 로그 남기고 재시도 대기 후 계속(무한 크래시 방지용 방어 코드)
         return {"ok": False, "error": str(e), "hint": "로컬 Chrome CDP가 실행 중인지 확인하세요"}
 
 
@@ -238,7 +238,7 @@ def run_agent(server_url: str, license_key: str, retry_interval: int = 5, enable
                         }
                     )
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 로컬 에이전트 CDP 명령 실행/WebSocket 루프 — 알 수 없는 도구 호출 실패는 에러 dict로 반환, 루프 중 예외는 로그 남기고 재시도 대기 후 계속(무한 크래시 방지용 방어 코드)
             print(f"[에이전트] 오류: {e}")
             traceback.print_exc()
 
@@ -260,7 +260,7 @@ def run_agent(server_url: str, license_key: str, retry_interval: int = 5, enable
         except KeyboardInterrupt:
             print("[에이전트] 종료")
             break
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 로컬 에이전트 CDP 명령 실행/WebSocket 루프 — 알 수 없는 도구 호출 실패는 에러 dict로 반환, 루프 중 예외는 로그 남기고 재시도 대기 후 계속(무한 크래시 방지용 방어 코드)
             print(f"[에이전트] 예외: {e}")
         time.sleep(retry_interval)
 

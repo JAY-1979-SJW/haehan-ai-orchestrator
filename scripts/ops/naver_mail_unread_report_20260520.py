@@ -7,6 +7,7 @@ main-page-first 정책:
 캡쳐: data/inspection/mail_20260520/*.png
 보안: 쿠키/토큰/PW 출력 금지. 본인 메일 내용은 출력 허용.
 """
+
 from __future__ import annotations
 
 import base64
@@ -29,6 +30,7 @@ MAX_READ = 15
 
 # ── CDP 헬퍼 ────────────────────────────────────────────────────────
 
+
 def _ws_browser() -> str:
     with urllib.request.urlopen(f"http://127.0.0.1:{CDP_PORT}/json/version", timeout=2) as r:
         return json.loads(r.read())["webSocketDebuggerUrl"]
@@ -46,11 +48,11 @@ def _send(ws, msg_id, method, params=None, timeout=8.0):
         ws.settimeout(max(0.5, deadline - time.time()))
         try:
             raw = ws.recv()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메일 미읽음 리포트 스크립트(읽기전용, WS 기반 CDP 통신) — 응답수신 실패 시 타임아웃 결과 반환, JSON파싱 실패는 continue, 쓰기 없음
             return {"id": msg_id, "_timeout": True}
         try:
             m = json.loads(raw)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메일 미읽음 리포트 스크립트(읽기전용, WS 기반 CDP 통신) — 응답수신 실패 시 타임아웃 결과 반환, JSON파싱 실패는 continue, 쓰기 없음
             continue
         if m.get("id") == msg_id:
             return m
@@ -72,15 +74,15 @@ def navigate(target_id, url):
 
 def evaluate(target_id, expr, timeout=8.0):
     w = _open_ws_for(target_id)
-    ev = _send(w, 1, "Runtime.evaluate",
-               {"expression": expr, "returnByValue": True, "awaitPromise": True},
-               timeout=timeout)
+    ev = _send(
+        w, 1, "Runtime.evaluate", {"expression": expr, "returnByValue": True, "awaitPromise": True}, timeout=timeout
+    )
     w.close()
     val = ev.get("result", {}).get("result", {}).get("value")
     if isinstance(val, str):
         try:
             return json.loads(val)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메일 미읽음 리포트 스크립트(읽기전용, WS 기반 CDP 통신) — 응답수신 실패 시 타임아웃 결과 반환, JSON파싱 실패는 continue, 쓰기 없음
             return val
     return val
 
@@ -162,11 +164,27 @@ JSON.stringify((function(){
 
 CLASSIFY_RULES = [
     # (label, sender_substr_or_re, subject_keywords)
-    ("결제/영수증", ["paypal", "kakaopay", "naverpay", "billing", "결제", "영수증", "invoice"], ["결제", "영수증", "구매", "주문"]),
-    ("공식/계정", ["noreply", "no-reply", "naver", "google", "kakao", "github"], ["보안", "비밀번호", "로그인", "계정", "인증"]),
+    (
+        "결제/영수증",
+        ["paypal", "kakaopay", "naverpay", "billing", "결제", "영수증", "invoice"],
+        ["결제", "영수증", "구매", "주문"],
+    ),
+    (
+        "공식/계정",
+        ["noreply", "no-reply", "naver", "google", "kakao", "github"],
+        ["보안", "비밀번호", "로그인", "계정", "인증"],
+    ),
     ("뉴스레터", ["newsletter", "subscribe", "news"], ["뉴스레터", "newsletter", "주간", "월간"]),
-    ("쇼핑/프로모션", ["shop", "mall", "11st", "coupang", "gmarket", "musinsa", "올리브영"], ["할인", "쿠폰", "프로모션", "세일", "특가"]),
-    ("업무/계약", ["@haehan", "계약", "견적", "발주", "송금", "세금계산서", "비전아이"], ["견적", "계약", "발주", "송금", "세금계산서", "공사"]),
+    (
+        "쇼핑/프로모션",
+        ["shop", "mall", "11st", "coupang", "gmarket", "musinsa", "올리브영"],
+        ["할인", "쿠폰", "프로모션", "세일", "특가"],
+    ),
+    (
+        "업무/계약",
+        ["@haehan", "계약", "견적", "발주", "송금", "세금계산서", "비전아이"],
+        ["견적", "계약", "발주", "송금", "세금계산서", "공사"],
+    ),
     ("EUM/공제회", ["cw.or.kr", "공제회", "건설근로자"], ["EUM", "공제회", "단말기", "전자카드"]),
     ("일반/광고", ["광고", "ad@", "promo"], ["광고", "이벤트"]),
 ]
@@ -189,12 +207,14 @@ def main():
     target_id = None
     for t in _list_pages():
         if "mail.naver.com" in t.get("url", ""):
-            target_id = t["id"]; break
+            target_id = t["id"]
+            break
     if not target_id:
         # about:blank or 새 탭
         for t in _list_pages():
             if t.get("url") in ("about:blank", "chrome://newtab/"):
-                target_id = t["id"]; break
+                target_id = t["id"]
+                break
         if not target_id:
             bws = websocket.create_connection(_ws_browser(), timeout=8)
             new = _send(bws, 1, "Target.createTarget", {"url": "about:blank"}, timeout=5.0)
@@ -230,9 +250,10 @@ def main():
 
     # 페이지네이션 — Naver Mail v2 는 페이지 단위 (15개/page)
     all_items = {}  # sn -> item
+
     def merge(items):
         for it in items:
-            sn = it.get("sn") or (it.get("subject","") + "|" + it.get("sender_name",""))
+            sn = it.get("sn") or (it.get("subject", "") + "|" + it.get("sender_name", ""))
             if sn and sn not in all_items:
                 all_items[sn] = it
 
@@ -266,7 +287,7 @@ def main():
     # 페이지 2..끝 순회 (현재 page 1 이미 수집됨)
     # 페이지 후보가 [1,2,3] 처럼만 보이고 더 있을 수 있으므로 1..20 시도하면서 빈 페이지 stop
     visited = {"1"}
-    for pg in (pages_avail + [str(i) for i in range(1, 21)]):
+    for pg in pages_avail + [str(i) for i in range(1, 21)]:
         if pg in visited:
             continue
         visited.add(pg)
@@ -303,7 +324,7 @@ def main():
     # 3) 분류
     classified = {}
     for it in unread:
-        sender_blob = (it.get("sender_name","") + " " + it.get("sender_full",""))
+        sender_blob = it.get("sender_name", "") + " " + it.get("sender_full", "")
         lbl = classify(sender_blob, it.get("subject", ""))
         classified.setdefault(lbl, []).append(it)
 
@@ -317,21 +338,39 @@ def main():
         for lbl, lst in sorted(classified.items(), key=lambda x: -len(x[1])):
             print(f"\n[{lbl}] {len(lst)}건")
             for it in lst:
-                print(f"  - 보낸이: {it.get('sender_name','')}  <{it.get('sender_full','')}>")
-                print(f"    제목: {it.get('subject','')}")
+                print(f"  - 보낸이: {it.get('sender_name', '')}  <{it.get('sender_full', '')}>")
+                print(f"    제목: {it.get('subject', '')}")
                 if it.get("preview"):
                     print(f"    미리보기: {it['preview']}")
                 if it.get("time_txt"):
-                    print(f"    시각: {it['time_txt']}  크기: {it.get('size_txt','')}")
+                    print(f"    시각: {it['time_txt']}  크기: {it.get('size_txt', '')}")
 
     # 5) 결과 JSON 저장
     out_json = CAP_DIR / "mail_unread_report.json"
-    out_json.write_text(json.dumps({
-        "href": href, "title": title, "total": len(items), "unread": len(unread),
-        "classified": {lbl: [{k: it.get(k) for k in ("sender_name","sender_full","subject","preview","time_txt","size_txt","sn")} for it in lst]
-                       for lbl, lst in classified.items()},
-        "items_raw_first_20": items[:20],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_json.write_text(
+        json.dumps(
+            {
+                "href": href,
+                "title": title,
+                "total": len(items),
+                "unread": len(unread),
+                "classified": {
+                    lbl: [
+                        {
+                            k: it.get(k)
+                            for k in ("sender_name", "sender_full", "subject", "preview", "time_txt", "size_txt", "sn")
+                        }
+                        for it in lst
+                    ]
+                    for lbl, lst in classified.items()
+                },
+                "items_raw_first_20": items[:20],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     print(f"\n[json] {out_json}")
 
     # 6) 캡쳐 종료

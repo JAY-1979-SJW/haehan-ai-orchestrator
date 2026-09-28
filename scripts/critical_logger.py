@@ -20,6 +20,7 @@
     log_critical("FILE_DOWNLOAD", "Veraport 다운로드", file="veraport-g3-x64-sha2.exe", size=30041304)
     log_critical("MAIL_SEND", "통신단절 알림 발송", to="vendor@x.com", subject="...")
 """
+
 from __future__ import annotations
 
 import json
@@ -39,75 +40,143 @@ DB_PATH = ROOT / "data" / "cdp.db"
 # 카테고리 분류 (확장 가능)
 CATEGORIES = {
     # 금융
-    "BANK_VISIT", "BANK_LOGIN", "BANK_LOGOUT", "BANK_INQUIRY", "BANK_TRANSFER",
-    "CARD_VISIT", "CARD_LOGIN", "CARD_INQUIRY", "CARD_PAYMENT", "CARD_STATEMENT",
-    "INSURANCE_VISIT", "INSURANCE_LOGIN", "INSURANCE_CLAIM",
+    "BANK_VISIT",
+    "BANK_LOGIN",
+    "BANK_LOGOUT",
+    "BANK_INQUIRY",
+    "BANK_TRANSFER",
+    "CARD_VISIT",
+    "CARD_LOGIN",
+    "CARD_INQUIRY",
+    "CARD_PAYMENT",
+    "CARD_STATEMENT",
+    "INSURANCE_VISIT",
+    "INSURANCE_LOGIN",
+    "INSURANCE_CLAIM",
     "FIN_REGULATOR",
     # 세무
-    "TAX_VISIT", "TAX_LOGIN", "TAX_FILING", "TAX_PAYMENT", "TAX_REFUND",
+    "TAX_VISIT",
+    "TAX_LOGIN",
+    "TAX_FILING",
+    "TAX_PAYMENT",
+    "TAX_REFUND",
     # 4대보험 (공공)
-    "SOCIAL_INSURANCE", "SOCIAL_INSURANCE_FILING",
+    "SOCIAL_INSURANCE",
+    "SOCIAL_INSURANCE_FILING",
     # 사법/법무
-    "COURT_VISIT", "COURT_FILING", "COURT_CERT_ISSUE",
+    "COURT_VISIT",
+    "COURT_FILING",
+    "COURT_CERT_ISSUE",
     # 노동/취업
-    "LABOR_VISIT", "LABOR_FILING",
+    "LABOR_VISIT",
+    "LABOR_FILING",
     # 부동산/등기
-    "REALESTATE_VISIT", "REALESTATE_FILING",
+    "REALESTATE_VISIT",
+    "REALESTATE_FILING",
     # 특허/지적재산
-    "IP_VISIT", "IP_FILING",
+    "IP_VISIT",
+    "IP_FILING",
     # 자동차/교통
-    "MOTOR_VISIT", "MOTOR_FILING",
+    "MOTOR_VISIT",
+    "MOTOR_FILING",
     # 정부 부처/공공
-    "GOV_MINISTRY", "GOV_VISIT", "GOV_OTHER",
-    "GOV_LOGIN", "GOV_FILING", "GOV_CERT_ISSUE",
+    "GOV_MINISTRY",
+    "GOV_VISIT",
+    "GOV_OTHER",
+    "GOV_LOGIN",
+    "GOV_FILING",
+    "GOV_CERT_ISSUE",
     # 인증
-    "CERT_USE", "CERT_INSTALL", "CERT_DELETE", "CERT_COPY", "CERT_RENEW",
+    "CERT_USE",
+    "CERT_INSTALL",
+    "CERT_DELETE",
+    "CERT_COPY",
+    "CERT_RENEW",
     # 파일
-    "FILE_DOWNLOAD", "FILE_UPLOAD", "FILE_DELETE",
+    "FILE_DOWNLOAD",
+    "FILE_UPLOAD",
+    "FILE_DELETE",
     # 보안 프로그램
-    "SECU_INSTALL", "SECU_UNINSTALL",
+    "SECU_INSTALL",
+    "SECU_UNINSTALL",
     # 메일
-    "MAIL_SEND", "MAIL_DELETE",
+    "MAIL_SEND",
+    "MAIL_DELETE",
     # 데이터
-    "DATA_DELETE", "DATA_EXPORT", "DATA_IMPORT",
+    "DATA_DELETE",
+    "DATA_EXPORT",
+    "DATA_IMPORT",
     # 인증/결제
-    "PAYMENT", "AUTH_SUCCESS", "AUTH_FAIL",
+    "PAYMENT",
+    "AUTH_SUCCESS",
+    "AUTH_FAIL",
     # EUM (건설근로자공제회)
-    "EUM_LOGIN", "EUM_INQUIRY", "EUM_REGISTER", "EUM_REMOVE",
+    "EUM_LOGIN",
+    "EUM_INQUIRY",
+    "EUM_REGISTER",
+    "EUM_REMOVE",
     # 일반 인기 사이트 (commercial/consumer)
     "PORTAL_VISIT",
     "KAKAO_SERVICE",
-    "SHOPPING_VISIT", "SHOPPING_ORDER", "SHOPPING_PAYMENT",
+    "SHOPPING_VISIT",
+    "SHOPPING_ORDER",
+    "SHOPPING_PAYMENT",
     "MART_VISIT",
-    "DELIVERY_VISIT", "DELIVERY_ORDER",
-    "USED_MARKET", "USED_LIST", "USED_DEAL",
-    "OTT_VISIT", "OTT_LOGIN", "OTT_SUBSCRIBE",
-    "MUSIC_VISIT", "MUSIC_LOGIN",
-    "TRAVEL_VISIT", "TRAVEL_BOOK", "TRAVEL_CANCEL",
-    "TELCO_VISIT", "TELCO_LOGIN", "TELCO_USAGE",
-    "PAYMENT_VISIT", "PAYMENT_RUN",
-    "GAME_VISIT", "GAME_LOGIN",
-    "COMMUNITY_VISIT", "COMMUNITY_POST",
-    "REALESTATE_PRIVATE", "REALESTATE_INQUIRY",
-    "MAP_NAVIGATION", "MAP_SEARCH", "MAP_ROUTE",
-    "AUTO_MARKET", "AUTO_INQUIRY",
-    "JOB_VISIT", "JOB_APPLY",
-    "MAIL_PORTAL", "MAIL_PORTAL_SEND",
+    "DELIVERY_VISIT",
+    "DELIVERY_ORDER",
+    "USED_MARKET",
+    "USED_LIST",
+    "USED_DEAL",
+    "OTT_VISIT",
+    "OTT_LOGIN",
+    "OTT_SUBSCRIBE",
+    "MUSIC_VISIT",
+    "MUSIC_LOGIN",
+    "TRAVEL_VISIT",
+    "TRAVEL_BOOK",
+    "TRAVEL_CANCEL",
+    "TELCO_VISIT",
+    "TELCO_LOGIN",
+    "TELCO_USAGE",
+    "PAYMENT_VISIT",
+    "PAYMENT_RUN",
+    "GAME_VISIT",
+    "GAME_LOGIN",
+    "COMMUNITY_VISIT",
+    "COMMUNITY_POST",
+    "REALESTATE_PRIVATE",
+    "REALESTATE_INQUIRY",
+    "MAP_NAVIGATION",
+    "MAP_SEARCH",
+    "MAP_ROUTE",
+    "AUTO_MARKET",
+    "AUTO_INQUIRY",
+    "JOB_VISIT",
+    "JOB_APPLY",
+    "MAIL_PORTAL",
+    "MAIL_PORTAL_SEND",
     "COLLAB_VISIT",
-    "EDU_VISIT", "EDU_PURCHASE",
-    "SNS_VISIT", "SNS_POST",
+    "EDU_VISIT",
+    "EDU_PURCHASE",
+    "SNS_VISIT",
+    "SNS_POST",
     "NEWS_VISIT",
     # 명품/라이프스타일/디자인
-    "LUXURY_FASHION", "LUXURY_FASHION_BUY",
-    "LUXURY_PLATFORM", "LUXURY_PLATFORM_BUY",
+    "LUXURY_FASHION",
+    "LUXURY_FASHION_BUY",
+    "LUXURY_PLATFORM",
+    "LUXURY_PLATFORM_BUY",
     "WATCH_LUXURY",
     "JEWELRY_LUXURY",
     "AUTO_LUXURY",
-    "INTERIOR_FURNITURE", "INTERIOR_INQUIRY",
+    "INTERIOR_FURNITURE",
+    "INTERIOR_INQUIRY",
     "LIGHTING_DESIGN",
     "DESIGN_MEDIA",
-    "ART_MUSEUM", "ART_VISIT",
-    "ART_AUCTION", "ART_BID",
+    "ART_MUSEUM",
+    "ART_VISIT",
+    "ART_AUCTION",
+    "ART_BID",
     "LIFESTYLE_LUXURY",
     "TECH_GLOBAL",
     "FRAGRANCE_LUXURY",
@@ -132,9 +201,7 @@ def _init() -> logging.Logger:
     logger.propagate = False  # 일반 로거와 분리
 
     if not logger.handlers:
-        fh = RotatingFileHandler(
-            CRITICAL_LOG_FILE, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
-        )
+        fh = RotatingFileHandler(CRITICAL_LOG_FILE, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8")
         fh.setFormatter(logging.Formatter(_FMT, datefmt=_DATE_FMT))
         logger.addHandler(fh)
 
@@ -165,7 +232,7 @@ def _init_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_critical_ts ON critical_logs(ts)")
         conn.commit()
         conn.close()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그 기록(auxiliary) 실패가 본 기능 흐름을 막아선 안 되므로 무시 — DB write는 INSERT뿐, DELETE/DROP 없음
         pass
 
 
@@ -199,7 +266,7 @@ def log_critical(category: str, message: str, **metadata: Any) -> None:
         )
         conn.commit()
         conn.close()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 중요 이벤트 SQLite 로깅 유틸 — 로그 기록 자체가 실패해도 무시(pass)하거나 경고만 남김, 로깅 실패가 본 기능을 막으면 안 되는 부가 기록용 코드이며 DELETE/DROP 없음(INSERT/SELECT만)
         logger.warning(f"DB 기록 실패 (무시): {e}", extra={"category": "OTHER"})
 
 
@@ -214,10 +281,8 @@ def query_recent(category: str | None = None, limit: int = 50) -> list[dict]:
                 (category, limit),
             ).fetchall()
         else:
-            rows = conn.execute(
-                "SELECT * FROM critical_logs ORDER BY id DESC LIMIT ?", (limit,)
-            ).fetchall()
+            rows = conn.execute("SELECT * FROM critical_logs ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
         conn.close()
         return [dict(r) for r in rows]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 중요 이벤트 SQLite 로깅 유틸 — 로그 기록 자체가 실패해도 무시(pass)하거나 경고만 남김, 로깅 실패가 본 기능을 막으면 안 되는 부가 기록용 코드이며 DELETE/DROP 없음(INSERT/SELECT만)
         return []

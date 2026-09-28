@@ -122,7 +122,7 @@ def search_videos_official(
 
     try:
         search_data = _get_json(YOUTUBE_SEARCH_URL, params)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 유튜브 검색 API/브라우저 폴백 조회 — API 호출 실패 시 payload에 status=blocked 로 명시적 기록 후 반환, 상세정보 조회 실패는 빈 목록으로 폴백할 뿐 쓰기 없음
         payload.update(
             {
                 "ok": False,
@@ -149,7 +149,7 @@ def search_videos_official(
                     "key": key,
                 },
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 유튜브 검색 API/브라우저 폴백 조회 — API 호출 실패 시 payload에 status=blocked 로 명시적 기록 후 반환, 상세정보 조회 실패는 빈 목록으로 폴백할 뿐 쓰기 없음
             details = {"items": []}
     detail_by_id = {item.get("id"): item for item in details.get("items", [])}
     rows: list[dict[str, Any]] = []
@@ -206,7 +206,7 @@ def search_videos_browser(
             session.goto(payload["search_url"], wait_idle=False)
             session.wait(wait_seconds)
             snapshot = extract_browser_search_results(session, limit=max_results)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 유튜브 검색 API/브라우저 폴백 조회 — API 호출 실패 시 payload에 status=blocked 로 명시적 기록 후 반환, 상세정보 조회 실패는 빈 목록으로 폴백할 뿐 쓰기 없음
         payload.update(
             {
                 "ok": False,

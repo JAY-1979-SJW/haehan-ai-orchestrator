@@ -164,7 +164,7 @@ def main():
     try:
         handle_page_popups(page, timeout_s=2.0)
         close_popup_windows(page)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 필드 진단 스크립트(읽기전용 분석, 실제 저장 클릭 없음) — 팝업처리/스크롤/버튼탐색 실패는 무시하거나 진단결과에 오류 메시지만 기록
         pass
 
     # 페이지 전체 스크롤
@@ -217,7 +217,7 @@ def main():
         page.locator('button:has-text("저장하기")').first.scroll_into_view_if_needed(timeout=3000)
         time.sleep(0.5)
         print("  저장하기 버튼 화면에 위치 — 클릭하면 어떤 검증 오류 발생할지 다음 단계에서 확인")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 필드 진단 스크립트(읽기전용 분석, 실제 저장 클릭 없음) — 팝업처리/스크롤/버튼탐색 실패는 무시하거나 진단결과에 오류 메시지만 기록
         print(f"  저장하기 버튼 위치 찾기 실패: {e}")
 
     # 결과 저장
@@ -229,7 +229,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 필드 진단 스크립트(읽기전용 분석, 실제 저장 클릭 없음) — 팝업처리/스크롤/버튼탐색 실패는 무시하거나 진단결과에 오류 메시지만 기록
         import traceback
 
         traceback.print_exc()

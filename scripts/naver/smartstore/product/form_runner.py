@@ -17,6 +17,7 @@
         "save":         False,   # True: 실제 저장 / False: 임시저장 / None: 저장 안 함
     })
 """
+
 from __future__ import annotations
 
 import time
@@ -26,6 +27,7 @@ from typing import Any
 from playwright.sync_api import Page
 
 from scripts.logger import get_logger
+from scripts.naver.smartstore.product.general_product import GeneralProductRegister
 from scripts.naver.smartstore.product.register_form import (
     CategorySection,
     ChannelSection,
@@ -44,7 +46,6 @@ from scripts.naver.smartstore.product.register_form import (
     TaxSection,
     VideoSection,
 )
-from scripts.naver.smartstore.product.general_product import GeneralProductRegister
 
 _log = get_logger(__name__)
 
@@ -54,16 +55,16 @@ class RegisterData:
     """상품 등록 데이터 — 전체 폼 필드."""
 
     # ── 필수 ────────────────────────────────────────────────────────────────
-    name:        str = ""
-    price:       int = 0
-    stock:       int = 0
+    name: str = ""
+    price: int = 0
+    stock: int = 0
 
     # ── 카테고리 ─────────────────────────────────────────────────────────────
-    category:         str = ""
-    category_result_idx: int = 0   # 검색 결과 중 몇 번째 항목
+    category: str = ""
+    category_result_idx: int = 0  # 검색 결과 중 몇 번째 항목
 
     # ── 가격 옵션 ────────────────────────────────────────────────────────────
-    original_price:   int | None = None
+    original_price: int | None = None
     discount_enabled: bool = False
 
     # ── 재고·구매 수량 ────────────────────────────────────────────────────────
@@ -71,52 +72,52 @@ class RegisterData:
     max_purchase: int | None = None
 
     # ── 부가세 / 상품 상태 ───────────────────────────────────────────────────
-    tax_type:     str = "과세"        # 과세 / 면세 / 영세
-    product_type: str = "신상품"      # 신상품 / 중고상품
-    self_made:    bool = False
+    tax_type: str = "과세"  # 과세 / 면세 / 영세
+    product_type: str = "신상품"  # 신상품 / 중고상품
+    self_made: bool = False
 
     # ── 이미지 ──────────────────────────────────────────────────────────────
-    main_image:         str = ""
-    additional_images:  list[str] = field(default_factory=list)
+    main_image: str = ""
+    additional_images: list[str] = field(default_factory=list)
 
     # ── 동영상 ──────────────────────────────────────────────────────────────
     video_title: str = ""
-    video_url:   str = ""
+    video_url: str = ""
 
     # ── 상세설명 ─────────────────────────────────────────────────────────────
-    description:      str = ""
-    description_mode: str = "direct"   # direct / smart_editor / ai(네이버) / claude(AI 자동)
+    description: str = ""
+    description_mode: str = "direct"  # direct / smart_editor / ai(네이버) / claude(AI 자동)
 
     # claude 모드 전용: AI 생성 파라미터
-    ai_product_data:  dict = field(default_factory=dict)  # {features, keywords, target, style, ...}
-    ai_image_paths:   list[str] = field(default_factory=list)
+    ai_product_data: dict = field(default_factory=dict)  # {features, keywords, target, style, ...}
+    ai_image_paths: list[str] = field(default_factory=list)
 
     # ── 옵션 ────────────────────────────────────────────────────────────────
     options: dict[str, list[str]] = field(default_factory=dict)  # {"색상": ["블랙", "화이트"]}
 
     # ── 주요정보 ─────────────────────────────────────────────────────────────
-    brand:        str = ""
+    brand: str = ""
     manufacturer: str = ""
-    origin:       str = ""
+    origin: str = ""
 
     # ── 검색 태그 ────────────────────────────────────────────────────────────
     keywords: list[str] = field(default_factory=list)
 
     # ── 노출채널 ─────────────────────────────────────────────────────────────
-    display:         bool = True
-    naver_shopping:  bool = True
+    display: bool = True
+    naver_shopping: bool = True
 
     # ── 예약구매 ─────────────────────────────────────────────────────────────
-    pre_order:       bool = False
-    pre_order_start: str  = ""
-    pre_order_end:   str  = ""
+    pre_order: bool = False
+    pre_order_start: str = ""
+    pre_order_end: str = ""
 
     # ── 저장 옵션 ────────────────────────────────────────────────────────────
-    save:            bool | None = None  # True=저장 / False=임시저장 / None=저장 안 함
-    require_confirm: bool = True         # 저장 전 확인 여부
+    save: bool | None = None  # True=저장 / False=임시저장 / None=저장 안 함
+    require_confirm: bool = True  # 저장 전 확인 여부
 
     @classmethod
-    def from_dict(cls, data: dict) -> "RegisterData":
+    def from_dict(cls, data: dict) -> RegisterData:
         valid = {f.name for f in cls.__dataclass_fields__.values()}
         return cls(**{k: v for k, v in data.items() if k in valid})
 
@@ -141,22 +142,22 @@ class ProductFormRunner:
     """
 
     SECTION_ORDER = [
-        "open",         # 1. 페이지 진입
-        "category",     # 2. 카테고리
-        "pre_order",    # 3. 예약구매
-        "name",         # 4. 상품명
-        "price",        # 5. 판매가
-        "discount",     # 6. 즉시할인
-        "tax",          # 7. 부가세
-        "stock",        # 8. 재고수량
-        "option",       # 9. 옵션
-        "image",        # 10~11. 이미지
-        "video",        # 12. 동영상
+        "open",  # 1. 페이지 진입
+        "category",  # 2. 카테고리
+        "pre_order",  # 3. 예약구매
+        "name",  # 4. 상품명
+        "price",  # 5. 판매가
+        "discount",  # 6. 즉시할인
+        "tax",  # 7. 부가세
+        "stock",  # 8. 재고수량
+        "option",  # 9. 옵션
+        "image",  # 10~11. 이미지
+        "video",  # 12. 동영상
         "description",  # 13. 상세설명
-        "product_info", # 14. 상품 주요정보
-        "keywords",     # 17. 검색설정
-        "channel",      # 18. 노출채널
-        "save",         # 저장
+        "product_info",  # 14. 상품 주요정보
+        "keywords",  # 17. 검색설정
+        "channel",  # 18. 노출채널
+        "save",  # 저장
     ]
 
     def __init__(self, page: Page):
@@ -164,25 +165,24 @@ class ProductFormRunner:
         self._reg = GeneralProductRegister(page)
 
         # 섹션 인스턴스
-        self.category     = CategorySection(page)
-        self.pre_order    = PreOrderSection(page)
+        self.category = CategorySection(page)
+        self.pre_order = PreOrderSection(page)
         self.product_name = ProductNameSection(page)
-        self.price        = PriceSection(page)
-        self.discount     = DiscountSection(page)
-        self.tax          = TaxSection(page)
-        self.stock        = StockSection(page)
-        self.option       = OptionSection(page)
-        self.image        = ImageSection(page)
-        self.video        = VideoSection(page)
-        self.description  = DescriptionSection(page)
+        self.price = PriceSection(page)
+        self.discount = DiscountSection(page)
+        self.tax = TaxSection(page)
+        self.stock = StockSection(page)
+        self.option = OptionSection(page)
+        self.image = ImageSection(page)
+        self.video = VideoSection(page)
+        self.description = DescriptionSection(page)
         self.product_info = ProductInfoSection(page)
-        self.size         = SizeSection(page)
-        self.keywords     = SearchTagSection(page)
-        self.channel      = ChannelSection(page)
+        self.size = SizeSection(page)
+        self.keywords = SearchTagSection(page)
+        self.channel = ChannelSection(page)
         self.save_section = SaveSection(page)
 
-    def run(self, data: dict | RegisterData,
-            skip_open: bool = False) -> dict:
+    def run(self, data: dict | RegisterData, skip_open: bool = False) -> dict:
         """전체 폼 실행.
 
         Args:
@@ -212,20 +212,19 @@ class ProductFormRunner:
 
         # 2. 카테고리
         if data.category:
-            steps["category"] = self.category.set(
-                data.category, result_idx=data.category_result_idx)
+            steps["category"] = self.category.set(data.category, result_idx=data.category_result_idx)
             time.sleep(0.8)  # 카테고리 선택 후 폼 리렌더링 대기
             # 카테고리 선택 후 뜨는 팝업/모달 자동 처리
             try:
                 from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
+
                 CdpPopupManager().handle_page(self.page, auto_confirm=True)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 예약구매/팝업 처리를 위한 CdpPopupManager 호출 실패는 무시하고 다음 폼 입력 단계로 계속 진행
                 pass
 
         # 3. 예약구매
         if data.pre_order:
-            steps["pre_order"] = self.pre_order.enable(
-                data.pre_order_start, data.pre_order_end)
+            steps["pre_order"] = self.pre_order.enable(data.pre_order_start, data.pre_order_end)
         else:
             steps["pre_order"] = self.pre_order.disable()
 
@@ -249,8 +248,7 @@ class ProductFormRunner:
         steps["tax"] = self.tax.set(data.tax_type)
 
         # 8. 재고수량
-        steps["stock"] = self.stock.set(
-            data.stock, data.min_purchase, data.max_purchase)
+        steps["stock"] = self.stock.set(data.stock, data.min_purchase, data.max_purchase)
         if not steps["stock"]["ok"]:
             return {"ok": False, "errors": ["재고수량 입력 실패"], "steps": steps}
 
@@ -265,8 +263,7 @@ class ProductFormRunner:
         if data.main_image:
             img_results["main"] = self.image.upload_main(data.main_image)
         if data.additional_images:
-            img_results["additional"] = self.image.upload_additional(
-                data.additional_images)
+            img_results["additional"] = self.image.upload_additional(data.additional_images)
         steps["image"] = {"ok": True, **img_results}
 
         # 12. 동영상
@@ -277,15 +274,14 @@ class ProductFormRunner:
         if data.description_mode == "claude":
             # Claude AI 자동 작성 — description 텍스트 대신 ai_product_data 사용
             ai_data = {
-                "name":     data.name,
+                "name": data.name,
                 "category": data.category,
-                "price":    data.price,
-                "brand":    data.brand,
+                "price": data.price,
+                "brand": data.brand,
                 "keywords": data.keywords,
-                **data.ai_product_data,   # features, target, specs, notice, style 등 오버라이드
+                **data.ai_product_data,  # features, target, specs, notice, style 등 오버라이드
             }
-            steps["description"] = self.description.write_claude(
-                ai_data, image_paths=data.ai_image_paths or None)
+            steps["description"] = self.description.write_claude(ai_data, image_paths=data.ai_image_paths or None)
         elif data.description:
             if data.description_mode == "smart_editor":
                 steps["description"] = self.description.write_via_editor(data.description)
@@ -316,8 +312,7 @@ class ProductFormRunner:
 
         # 저장
         if data.save is True:
-            steps["save"] = self.save_section.save(
-                require_confirm=data.require_confirm)
+            steps["save"] = self.save_section.save(require_confirm=data.require_confirm)
         elif data.save is False:
             steps["save"] = self.save_section.temp_save()
         else:
@@ -358,13 +353,13 @@ class ProductFormRunner:
             # 팝업 처리 (임시저장 불러오기 등)
             try:
                 from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
+
                 CdpPopupManager().handle_page(self.page, auto_confirm=True)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 예약구매/팝업 처리를 위한 CdpPopupManager 호출 실패는 무시하고 다음 폼 입력 단계로 계속 진행
                 pass
             steps["open"] = {"ok": True, "url": EDIT_URL}
-        except Exception as e:
-            return {"ok": False, "product_id": product_id,
-                    "errors": [f"수정 페이지 진입 실패: {e}"], "steps": steps}
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 등록/수정 폼 자동화(필드 입력 단계) — 팝업관리자 호출 실패는 무시하고 계속, 수정페이지 진입 실패는 에러 목록에 담아 반환할 뿐 최종 저장/제출 버튼 클릭은 별도 단계로 분리되어 있음
+            return {"ok": False, "product_id": product_id, "errors": [f"수정 페이지 진입 실패: {e}"], "steps": steps}
 
         # 2. 지정된 필드만 수정 (카테고리는 수정 불가 — 등록 후 변경 금지)
         if fields.get("name"):

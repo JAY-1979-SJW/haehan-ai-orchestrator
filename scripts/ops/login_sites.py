@@ -124,7 +124,7 @@ def main(captcha_gabia: str):
                 },
             )
             print("  ✗ 가비아 실패:", r3["result"]["result"].get("value", ""))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 여러 사이트(가비아/하이웍스/공공데이터포털) 로그인 상태 WebSocket 확인 스크립트(읽기전용) — 각 사이트 확인 실패는 print로 오류만 출력하고 다음 사이트로 계속, 로그인 상태를 바꾸지 않음
         print("  !", e)
     ws_g.close()
 
@@ -155,7 +155,7 @@ def main(captcha_gabia: str):
             print(f"  ✓ 하이웍스 성공 ({n} cookies)")
         else:
             print("  ✗ 하이웍스 실패")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 여러 사이트(가비아/하이웍스/공공데이터포털) 로그인 상태 WebSocket 확인 스크립트(읽기전용) — 각 사이트 확인 실패는 print로 오류만 출력하고 다음 사이트로 계속, 로그인 상태를 바꾸지 않음
         print("  !", e)
     ws_h.close()
 
@@ -192,7 +192,7 @@ def main(captcha_gabia: str):
             print(f"  ✓ 공공데이터포털 성공 ({n} cookies)")
         else:
             print("  ✗ 공공데이터포털 실패")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 여러 사이트(가비아/하이웍스/공공데이터포털) 로그인 상태 WebSocket 확인 스크립트(읽기전용) — 각 사이트 확인 실패는 print로 오류만 출력하고 다음 사이트로 계속, 로그인 상태를 바꾸지 않음
         print("  !", e)
     ws_d.close()
 

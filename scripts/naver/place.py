@@ -29,7 +29,7 @@ class NaverPlace:
         time.sleep(3)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 팝업 처리 시도 실패는 무시하고 계속 진행 — 읽기전용 조회이므로 팝업이 남아도 조회 로직에는 영향 적음
             pass
         return True
 
@@ -50,7 +50,7 @@ class NaverPlace:
                 return out;
             }
             """)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 플레이스 목록/리뷰 읽기전용 조회 — 팝업처리 실패는 무시, 조회 실패는 에러 로그 남기고 빈 리스트 반환, 쓰기 없음
             _log.error("[naver-place] list 실패: %s", e)
             return []
 
@@ -76,6 +76,6 @@ class NaverPlace:
             """,
                 limit,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 플레이스 목록/리뷰 읽기전용 조회 — 팝업처리 실패는 무시, 조회 실패는 에러 로그 남기고 빈 리스트 반환, 쓰기 없음
             _log.error("[naver-place] reviews 실패: %s", e)
             return []

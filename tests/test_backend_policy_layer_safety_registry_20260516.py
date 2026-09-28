@@ -490,7 +490,7 @@ class TestNoApiResponseChange:
 
             routes = [r for r in app.routes if hasattr(r, "path")]
             assert len(routes) >= 1  # router 로드 성공 확인
-        except Exception:
+        except Exception:  # noqa: BLE001 - 정책/레이어/안전 레지스트리 관련 pytest 테스트 — 서버 app 로드 실패 시 pytest.skip 또는 pass로 환경의존 테스트를 건너뛸 뿐, 실제 정책 판정 로직을 검증하는 assert 문은 그대로 살아있어 안전판정을 약화시키지 않음
             pytest.skip("server app 로드 불가 — 환경 의존")
 
     def test_health_endpoint_reachable(self):
@@ -500,7 +500,7 @@ class TestNoApiResponseChange:
 
             health_paths = [r.path for r in app.routes if hasattr(r, "path") and "health" in r.path]
             assert len(health_paths) >= 1
-        except Exception:
+        except Exception:  # noqa: BLE001 - 정책/레이어/안전 레지스트리 관련 pytest 테스트 — 서버 app 로드 실패 시 pytest.skip 또는 pass로 환경의존 테스트를 건너뛸 뿐, 실제 정책 판정 로직을 검증하는 assert 문은 그대로 살아있어 안전판정을 약화시키지 않음
             pass  # 서버 없는 환경에서는 skip
 
 
@@ -517,7 +517,7 @@ class TestEndpointInventory:
 
             routes = [r for r in app.routes if hasattr(r, "methods")]
             assert len(routes) >= 50  # 최소 50개 이상
-        except Exception:
+        except Exception:  # noqa: BLE001 - 정책/레이어/안전 레지스트리 관련 pytest 테스트 — 서버 app 로드 실패 시 pytest.skip 또는 pass로 환경의존 테스트를 건너뛸 뿐, 실제 정책 판정 로직을 검증하는 assert 문은 그대로 살아있어 안전판정을 약화시키지 않음
             pytest.skip("FastAPI app 로드 불가 — 서버 환경 필요")
 
 

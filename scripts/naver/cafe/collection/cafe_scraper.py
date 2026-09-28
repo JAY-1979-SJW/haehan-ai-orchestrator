@@ -75,9 +75,9 @@ def _board_list_url(club_id: str, menu_id: str, page: int) -> str:
 
 def _search_url(club_id: str, query: str, page: int) -> str:
     import urllib.parse
+
     q = urllib.parse.quote(query)
-    return (f"https://cafe.naver.com/f-e/cafes/{club_id}/menus/0"
-            f"?viewType=L&ta=ARTICLE_COMMENT&page={page}&q={q}")
+    return f"https://cafe.naver.com/f-e/cafes/{club_id}/menus/0?viewType=L&ta=ARTICLE_COMMENT&page={page}&q={q}"
 
 
 def _popular_url(club_id: str) -> str:
@@ -100,7 +100,7 @@ def scrape_posts_page(agent: BrowserAgent, url: str) -> list[dict]:
                     seen.add(aid)
                     p["article_id"] = aid
                     posts.append(p)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 카페 게시글 읽기전용 스크래핑 — 개별 게시글 파싱 실패는 continue로 건너뛰고, 캐시 로드 실패는 빈 목록/빈 set으로 폴백, 쓰기 없음
             continue
     return posts
 
@@ -119,7 +119,7 @@ def load_existing(path: Path) -> tuple[list[dict], set[str]]:
         data = json.loads(path.read_text(encoding="utf-8"))
         ids = {r.get("article_id", "") for r in data if r.get("article_id")}
         return data, ids
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 카페 게시글 읽기전용 스크래핑 — 개별 게시글 파싱 실패는 continue로 건너뛰고, 캐시 로드 실패는 빈 목록/빈 set으로 폴백, 쓰기 없음
         return [], set()
 
 
@@ -133,9 +133,22 @@ def save_csv(data: list[dict], path: Path):
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     # 목록용 필드 (본문은 별도 컬럼)
-    fields = ["article_id", "title", "author", "date", "views", "comments",
-              "href", "board", "written_at", "view_count", "like_count",
-              "comment_count", "tags", "body"]
+    fields = [
+        "article_id",
+        "title",
+        "author",
+        "date",
+        "views",
+        "comments",
+        "href",
+        "board",
+        "written_at",
+        "view_count",
+        "like_count",
+        "comment_count",
+        "tags",
+        "body",
+    ]
     with open(path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -149,8 +162,7 @@ def save_csv(data: list[dict], path: Path):
             writer.writerow(r)
 
 
-def _resolve_board(agent: BrowserAgent, cafe_url: str,
-                   board_name: str, club_id: str) -> tuple[str, str]:
+def _resolve_board(agent: BrowserAgent, cafe_url: str, board_name: str, club_id: str) -> tuple[str, str]:
     """게시판명 → (menu_id, board_label)."""
     if not board_name or board_name == "전체글보기":
         return "", "전체글보기"
@@ -180,17 +192,12 @@ def main():
     parser.add_argument("--query", default="", help="검색 키워드 (지정 시 검색 결과 수집)")
     parser.add_argument("--popular", action="store_true", help="인기글 수집")
     parser.add_argument("--pages", type=int, default=1, help="수집할 페이지 수 (기본: 1)")
-    parser.add_argument("--max-articles", type=int, default=0,
-                        help="최대 게시글 수 (0=무제한)")
-    parser.add_argument("--full", action="store_true",
-                        help="본문 + 댓글 포함 수집 (느림)")
-    parser.add_argument("--delay", type=float, default=1.5,
-                        help="게시글 간 대기(초, 기본: 1.5)")
-    parser.add_argument("--out", default="",
-                        help="저장 경로 (기본: data/scrape/<카페명>_<날짜>.json)")
+    parser.add_argument("--max-articles", type=int, default=0, help="최대 게시글 수 (0=무제한)")
+    parser.add_argument("--full", action="store_true", help="본문 + 댓글 포함 수집 (느림)")
+    parser.add_argument("--delay", type=float, default=1.5, help="게시글 간 대기(초, 기본: 1.5)")
+    parser.add_argument("--out", default="", help="저장 경로 (기본: data/scrape/<카페명>_<날짜>.json)")
     parser.add_argument("--csv", action="store_true", help="CSV도 함께 저장")
-    parser.add_argument("--incremental", action="store_true",
-                        help="기존 파일에 없는 글만 수집")
+    parser.add_argument("--incremental", action="store_true", help="기존 파일에 없는 글만 수집")
     args = parser.parse_args()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -220,8 +227,7 @@ def main():
         else:
             label = re.sub(r"[^\w가-힣]", "_", board_label)[:20]
 
-        out_path = Path(args.out) if args.out else \
-            Path(f"data/scrape/{cafe_slug}_{label}_{timestamp}.json")
+        out_path = Path(args.out) if args.out else Path(f"data/scrape/{cafe_slug}_{label}_{timestamp}.json")
 
         # 증분 모드: 기존 데이터 로드
         existing_data, existing_ids = [], set()
@@ -264,7 +270,7 @@ def main():
                 page_posts = scrape_posts_page(agent, url)
 
                 if not page_posts:
-                    print(f"  → 게시글 없음, 수집 종료")
+                    print("  → 게시글 없음, 수집 종료")
                     break
 
                 new_count = 0
@@ -298,17 +304,19 @@ def main():
                 try:
                     detail = scrape_article(agent, href, delay=args.delay)
                     # 목록 정보 보존 + 상세 정보 병합
-                    post.update({
-                        "board": detail.get("board", ""),
-                        "written_at": detail.get("written_at", ""),
-                        "view_count": detail.get("view_count", ""),
-                        "like_count": detail.get("like_count", ""),
-                        "comment_count": detail.get("comment_count", 0),
-                        "tags": detail.get("tags", []),
-                        "body": detail.get("body", ""),
-                        "comments": detail.get("comments", []),
-                    })
-                except Exception as e:
+                    post.update(
+                        {
+                            "board": detail.get("board", ""),
+                            "written_at": detail.get("written_at", ""),
+                            "view_count": detail.get("view_count", ""),
+                            "like_count": detail.get("like_count", ""),
+                            "comment_count": detail.get("comment_count", 0),
+                            "tags": detail.get("tags", []),
+                            "body": detail.get("body", ""),
+                            "comments": detail.get("comments", []),
+                        }
+                    )
+                except Exception as e:  # noqa: BLE001 - 네이버 카페 게시글 읽기전용 스크래핑 — 개별 게시글 파싱 실패는 continue로 건너뛰고, 캐시 로드 실패는 빈 목록/빈 set으로 폴백, 쓰기 없음
                     print(f"    [오류] {e}")
                     post["body"] = ""
                     post["comments"] = []
@@ -326,11 +334,13 @@ def main():
             print(f"CSV 저장: {csv_path}")
 
         # 요약 출력
-        print(f"\n=== 수집 요약 ===")
+        print("\n=== 수집 요약 ===")
         print(f"신규 수집: {len(all_posts)}개")
         print(f"전체 저장: {len(final_data)}개")
         if all_posts:
-            dates = [p.get("date") or p.get("written_at") or "" for p in all_posts if p.get("date") or p.get("written_at")]
+            dates = [
+                p.get("date") or p.get("written_at") or "" for p in all_posts if p.get("date") or p.get("written_at")
+            ]
             if dates:
                 print(f"날짜 범위: {min(dates)} ~ {max(dates)}")
             if args.full:

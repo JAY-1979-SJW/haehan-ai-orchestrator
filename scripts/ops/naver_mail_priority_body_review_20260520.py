@@ -3,6 +3,7 @@
 시급 메일 4건 본문 열람 + 핵심 요약 + 조치 판단 + 피싱 확인.
 삭제/읽음/이동/답장 금지. PII 마스킹.
 """
+
 from __future__ import annotations
 
 import base64
@@ -21,17 +22,14 @@ CAP_DIR = Path("data/inspection/mail_20260520/bodies")
 CAP_DIR.mkdir(parents=True, exist_ok=True)
 
 TARGETS = [
-    {"sn": "112364", "tag": "coupang_support_listing_stop",
-     "expected": "쿠팡 고객센터 답변지연 상품 노출 정지"},
-    {"sn": "111565", "tag": "gsc_indexing_haehan_ai",
-     "expected": "GSC haehan-ai.kr 색인 미생성"},
-    {"sn": "112155", "tag": "smartstore_dormant",
-     "expected": "스마트스토어 휴면 전환"},
-    {"sn": "112075", "tag": "coupang_simple_login_registered",
-     "expected": "쿠팡 간편 로그인 등록"},
+    {"sn": "112364", "tag": "coupang_support_listing_stop", "expected": "쿠팡 고객센터 답변지연 상품 노출 정지"},
+    {"sn": "111565", "tag": "gsc_indexing_haehan_ai", "expected": "GSC haehan-ai.kr 색인 미생성"},
+    {"sn": "112155", "tag": "smartstore_dormant", "expected": "스마트스토어 휴면 전환"},
+    {"sn": "112075", "tag": "coupang_simple_login_registered", "expected": "쿠팡 간편 로그인 등록"},
 ]
 
 # ── PII 마스킹 ───────────────────────────────────────────────────────
+
 
 def _redact(text: str) -> str:
     if not text:
@@ -43,19 +41,22 @@ def _redact(text: str) -> str:
     text = re.sub(r"\b01[016789][- .]?\d{3,4}[- .]?\d{4}\b", "010-****-****", text)
     # 주민번호류
     text = re.sub(r"\b\d{6}[- ]?[1-4]\d{6}\b", "[RRN_MASKED]", text)
+
     # 이메일 — 도메인은 남기고 local-part 일부 마스킹
     def _mask_email(m):
         lp, dom = m.group(1), m.group(2)
-        if len(lp) <= 2: return f"**@{dom}"
+        if len(lp) <= 2:
+            return f"**@{dom}"
         return f"{lp[:2]}***@{dom}"
+
     text = re.sub(r"\b([A-Za-z0-9_.+\-]+)@([A-Za-z0-9.\-]+\.[A-Za-z]{2,})\b", _mask_email, text)
     # 인증번호/OTP 6자리
-    text = re.sub(r"(인증번호|OTP|확인번호)[^\d]{0,8}(\d{4,8})",
-                  lambda m: f"{m.group(1)} [CODE_MASKED]", text)
+    text = re.sub(r"(인증번호|OTP|확인번호)[^\d]{0,8}(\d{4,8})", lambda m: f"{m.group(1)} [CODE_MASKED]", text)
     return text
 
 
 # ── CDP ─────────────────────────────────────────────────────────────
+
 
 def _list_pages():
     with urllib.request.urlopen(f"http://127.0.0.1:{CDP_PORT}/json/list", timeout=2) as r:
@@ -69,11 +70,11 @@ def _send(ws, msg_id, method, params=None, timeout=8.0):
         ws.settimeout(max(0.5, deadline - time.time()))
         try:
             raw = ws.recv()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메일 우선순위 본문 검토 스크립트(읽기전용, WS 기반 CDP 통신) — 응답수신 실패 시 타임아웃 결과 반환, JSON파싱 실패는 continue, 쓰기 없음
             return {"id": msg_id, "_timeout": True}
         try:
             m = json.loads(raw)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메일 우선순위 본문 검토 스크립트(읽기전용, WS 기반 CDP 통신) — 응답수신 실패 시 타임아웃 결과 반환, JSON파싱 실패는 continue, 쓰기 없음
             continue
         if m.get("id") == msg_id:
             return m
@@ -84,14 +85,13 @@ def _eval(target_id, expr, timeout=8.0):
     for t in _list_pages():
         if t.get("id") == target_id:
             ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=8)
-            ev = _send(ws, 1, "Runtime.evaluate",
-                       {"expression": expr, "returnByValue": True}, timeout=timeout)
+            ev = _send(ws, 1, "Runtime.evaluate", {"expression": expr, "returnByValue": True}, timeout=timeout)
             ws.close()
             val = ev.get("result", {}).get("result", {}).get("value")
             if isinstance(val, str):
                 try:
                     return json.loads(val)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 메일 우선순위 본문 검토 스크립트(읽기전용, WS 기반 CDP 통신) — 응답수신 실패 시 타임아웃 결과 반환, JSON파싱 실패는 continue, 쓰기 없음
                     return val
             return val
     return None
@@ -167,17 +167,31 @@ JSON.stringify((function(){
 
 def _domain(url: str) -> str:
     m = re.match(r"https?://([^/]+)/?", url or "")
-    return (m.group(1).lower() if m else "")
+    return m.group(1).lower() if m else ""
 
 
 # 합법 도메인 (피싱 아님)
 TRUSTED_DOMAINS = {
-    "coupang.com", "search.google.com", "google.com", "navercorp.com",
-    "naver.com", "smartstore.naver.com", "centersettlement.naver.com",
-    "search.google.com", "wcs.naver.net", "search.naver.com",
-    "n.news.naver.com", "blog.naver.com", "kbcard.com", "kbmail.kbcard.com",
-    "hyundaicard.com", "shinhancard.com", "lottecardmailcenter.net",
-    "wooribank.com", "yes24.com", "x.com",
+    "coupang.com",
+    "search.google.com",
+    "google.com",
+    "navercorp.com",
+    "naver.com",
+    "smartstore.naver.com",
+    "centersettlement.naver.com",
+    "search.google.com",
+    "wcs.naver.net",
+    "search.naver.com",
+    "n.news.naver.com",
+    "blog.naver.com",
+    "kbcard.com",
+    "kbmail.kbcard.com",
+    "hyundaicard.com",
+    "shinhancard.com",
+    "lottecardmailcenter.net",
+    "wooribank.com",
+    "yes24.com",
+    "x.com",
 }
 
 
@@ -202,11 +216,13 @@ def main():
     target_id = None
     for t in _list_pages():
         if "mail.naver" in t.get("url", ""):
-            target_id = t["id"]; break
+            target_id = t["id"]
+            break
     if not target_id:
         for t in _list_pages():
             if t.get("url") in ("about:blank", "chrome://newtab/"):
-                target_id = t["id"]; break
+                target_id = t["id"]
+                break
     if not target_id:
         print("FAIL: mail tab not found")
         return
@@ -220,9 +236,11 @@ def main():
         time.sleep(4.0)
         # 본문 iframe 로딩 대기
         for _ in range(10):
-            ready = _eval(target_id,
-                "(function(){var f=document.querySelector('iframe#readFrame, iframe[name=\"readFrame\"], iframe[id*=\"read\"]'); if(!f) return false; try{var d=f.contentDocument||f.contentWindow.document; return (d&&d.body&&d.body.innerText.length>30);}catch(e){return false;}})()",
-                timeout=3.0)
+            ready = _eval(
+                target_id,
+                '(function(){var f=document.querySelector(\'iframe#readFrame, iframe[name="readFrame"], iframe[id*="read"]\'); if(!f) return false; try{var d=f.contentDocument||f.contentWindow.document; return (d&&d.body&&d.body.innerText.length>30);}catch(e){return false;}})()',
+                timeout=3.0,
+            )
             if ready is True:
                 break
             time.sleep(1.0)
@@ -267,25 +285,27 @@ def main():
         }
         results.append(res)
         print(f"  subject: {res['subject'][:80]}")
-        print(f"  body_len: {res['body_len']}  links: {len(links)}  img: {res['img_count']}  attach: {res['has_attach']}")
+        print(
+            f"  body_len: {res['body_len']}  links: {len(links)}  img: {res['img_count']}  attach: {res['has_attach']}"
+        )
 
     out = CAP_DIR.parent / "priority_body_review.json"
     out.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n[json] {out}")
 
     # 콘솔 보고
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("=== 시급 메일 4건 본문 검토 결과 ===")
-    print("="*60)
+    print("=" * 60)
     for r in results:
-        print(f"\n[#{r['sn']}] {r.get('expected','')}")
+        print(f"\n[#{r['sn']}] {r.get('expected', '')}")
         if r.get("error"):
             print(f"  ERROR: {r['error']}")
             continue
         print(f"  제목: {r['subject']}")
         print(f"  발신자: {r['sender_name']}  {r['sender_addr']}")
         print(f"  날짜: {r['date']}")
-        print(f"  본문(요약 발췌, redacted):")
+        print("  본문(요약 발췌, redacted):")
         for line in (r["body_excerpt_redacted"][:1200] or "").splitlines()[:25]:
             if line.strip():
                 print(f"    | {line.strip()[:140]}")

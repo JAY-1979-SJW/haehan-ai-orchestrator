@@ -66,7 +66,7 @@ class ImageProcessor:
 
             size_kb = dst_path.stat().st_size // 1024
             return {"ok": True, "src": src, "dst": dst, "size_kb": size_kb, "dimensions": [img.width, img.height]}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 이미지 리사이즈/워터마크 처리 유틸 — 처리 실패 시 ok=False와 에러 메시지를 담은 dict 반환, 폰트 로드 실패 시 기본 폰트로 폴백할 뿐 파일 삭제 없음
             return {"ok": False, "error": str(e)[:80]}
 
     def add_watermark(
@@ -83,7 +83,7 @@ class ImageProcessor:
             draw = ImageDraw.Draw(overlay)
             try:
                 font = ImageFont.truetype("malgun.ttf", font_size)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 이미지 리사이즈/워터마크 처리 유틸 — 처리 실패 시 ok=False와 에러 메시지를 담은 dict 반환, 폰트 로드 실패 시 기본 폰트로 폴백할 뿐 파일 삭제 없음
                 font = ImageFont.load_default()
             # 텍스트 위치 계산
             bbox = draw.textbbox((0, 0), text, font=font)
@@ -103,7 +103,7 @@ class ImageProcessor:
             Path(dst).parent.mkdir(parents=True, exist_ok=True)
             combined.save(dst, "JPEG", quality=90, optimize=True)
             return {"ok": True, "dst": dst, "watermark": text, "position": position}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 이미지 리사이즈/워터마크 처리 유틸 — 처리 실패 시 ok=False와 에러 메시지를 담은 dict 반환, 폰트 로드 실패 시 기본 폰트로 폴백할 뿐 파일 삭제 없음
             return {"ok": False, "error": str(e)[:80]}
 
     def batch_process(

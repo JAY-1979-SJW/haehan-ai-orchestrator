@@ -16,6 +16,7 @@ stdin으로 JSON 이벤트를 수신해 op_log 에 기록한다.
     "tool_response": { ... }
   }
 """
+
 from __future__ import annotations
 
 import json
@@ -30,19 +31,14 @@ def main() -> None:
     try:
         raw = sys.stdin.read()
         event = json.loads(raw) if raw.strip() else {}
-    except Exception:
+    except Exception:  # noqa: BLE001 - 코드 변경 로그 기록 훅(PostToolUse) — 이벤트 파싱 실패/경로 변환 실패/로그 기록 실패 모두 훅이 Claude Code 동작을 막지 않도록 무시하거나 원본값 사용(주석에 명시된 의도적 fail-open)
         event = {}
 
     tool_name = event.get("tool_name", "unknown")
     tool_input = event.get("tool_input", {})
 
     # 파일 경로 추출 (Write / Edit / NotebookEdit 공통)
-    file_path = (
-        tool_input.get("file_path")
-        or tool_input.get("path")
-        or tool_input.get("notebook_path")
-        or "unknown"
-    )
+    file_path = tool_input.get("file_path") or tool_input.get("path") or tool_input.get("notebook_path") or "unknown"
 
     # 변경 크기 추출
     if tool_name == "Write":
@@ -65,7 +61,7 @@ def main() -> None:
     try:
         rel = Path(file_path).relative_to(ROOT)
         display_path = str(rel)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 코드 변경 로그 기록 훅(PostToolUse) — 이벤트 파싱 실패/경로 변환 실패/로그 기록 실패 모두 훅이 Claude Code 동작을 막지 않도록 무시하거나 원본값 사용(주석에 명시된 의도적 fail-open)
         display_path = file_path
 
     # 확장자 추출
@@ -73,6 +69,7 @@ def main() -> None:
 
     try:
         from scripts.op_log import log_op
+
         log_op(
             op,
             ok=True,
@@ -81,7 +78,7 @@ def main() -> None:
             size=change_size,
             tool=tool_name,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 코드 변경 로그 기록 훅(PostToolUse) — 이벤트 파싱 실패/경로 변환 실패/로그 기록 실패 모두 훅이 Claude Code 동작을 막지 않도록 무시하거나 원본값 사용(주석에 명시된 의도적 fail-open)
         # 훅이 실패해도 Claude Code 동작에 영향 없도록 조용히 처리
         sys.stderr.write(f"[log_code_change] op_log 실패: {e}\n")
 

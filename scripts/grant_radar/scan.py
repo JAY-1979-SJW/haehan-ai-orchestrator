@@ -119,7 +119,7 @@ def _extract(page, portal: dict) -> list[dict]:
         else:
             rows = page.evaluate(_ROWS_JS)
         return rows[:PER_PORTAL_CAP]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정부 지원사업 포털 스캔(읽기전용) — 개별 포털 추출 실패나 playwright 미설치는 오류 메시지와 함께 빈 리스트/errors 목록으로 폴백, 쓰기 동작 없음
         print(f"[scan] {portal['key']} 추출 오류: {e}")
         return []
 
@@ -127,7 +127,7 @@ def _extract(page, portal: dict) -> list[dict]:
 def scan_all() -> dict:
     try:
         from playwright.sync_api import sync_playwright
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정부 지원사업 포털 스캔(읽기전용) — 개별 포털 추출 실패나 playwright 미설치는 오류 메시지와 함께 빈 리스트/errors 목록으로 폴백, 쓰기 동작 없음
         return {"ok": False, "error": f"playwright 미설치: {e}", "items": []}
 
     items: list[dict] = []
@@ -145,7 +145,7 @@ def scan_all() -> dict:
                     r["portal_name"] = portal["name"]
                 items.extend(rows)
                 print(f"[scan] {portal['key']}: {len(rows)}건")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 정부 지원사업 포털 스캔(읽기전용) — 개별 포털 추출 실패나 playwright 미설치는 오류 메시지와 함께 빈 리스트/errors 목록으로 폴백, 쓰기 동작 없음
                 msg = f"{portal['key']} 스캔 실패: {e}"
                 errors.append(msg)
                 print(f"[scan] {msg}")

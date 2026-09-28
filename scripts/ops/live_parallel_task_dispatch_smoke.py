@@ -9,6 +9,7 @@ It does not prove parallel local execution inside one local agent process. The
 current local agent processes one WebSocket task at a time; this smoke verifies
 that concurrent submissions are safely queued and all complete without loss.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from local_agent.network_bypass import direct_child_env, urlopen_for_server
-
 
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
@@ -88,7 +88,7 @@ def _register_temp_agent(
 
 
 def _basic_header(username: str, password: str) -> str:
-    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+    token = base64.b64encode(f"{username}:{password}".encode()).decode("ascii")
     return f"Basic {token}"
 
 
@@ -248,7 +248,7 @@ def main(argv: list[str] | None = None) -> int:
         print("[PASS] temp admin user added")
         try:
             agent_id, device_token = _register_temp_agent(server_url=server_url, auth=auth)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 병렬 작업 디스패치 스모크테스트(임시 계정/에이전트 생성 후 자체 정리) — 임시 에이전트 등록 실패는 FAIL 결과 반환, 상태폴링 실패는 continue로 다음 폴링, 임시 관리자계정 정리(remove) 실패는 경고만 출력 — 모두 테스트용 임시 리소스이며 운영 데이터 아님
             print(f"[FAIL] temp agent register - {type(exc).__name__}")
             print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
             return 1
@@ -267,10 +267,7 @@ def main(argv: list[str] | None = None) -> int:
         else _start_worker(server_url, log_path)
     )
     device_token = ""
-    print(
-        "[PASS] worker start - "
-        f"pid={worker.pid} agent_id={_mask_agent_id(agent_id)}"
-    )
+    print(f"[PASS] worker start - pid={worker.pid} agent_id={_mask_agent_id(agent_id)}")
 
     try:
         time.sleep(5)
@@ -334,7 +331,7 @@ def main(argv: list[str] | None = None) -> int:
                         detail_url=f"{tasks_url}/{task_id}",
                         auth=auth,
                     )
-                except Exception:
+                except Exception:  # noqa: BLE001 - 병렬 작업 디스패치 스모크테스트(임시 계정/에이전트 생성 후 자체 정리) — 임시 에이전트 등록 실패는 FAIL 결과 반환, 상태폴링 실패는 continue로 다음 폴링, 임시 관리자계정 정리(remove) 실패는 경고만 출력 — 모두 테스트용 임시 리소스이며 운영 데이터 아님
                     continue
                 if status in {"completed", "failed", "cancelled", "expired"}:
                     final[task_id] = (status, error_code)
@@ -351,18 +348,14 @@ def main(argv: list[str] | None = None) -> int:
 
         print(
             "[PASS]" if len(completed) == count else "[FAIL]",
-            "parallel task final - "
-            f"completed={len(completed)}/{count} failed={len(failed)}",
+            f"parallel task final - completed={len(completed)}/{count} failed={len(failed)}",
         )
         if failed:
             print(json.dumps(failed, ensure_ascii=False, indent=2))
             print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
             return 1
 
-        print(
-            "[PASS] server queued concurrent submissions; "
-            "single local agent completed all ws_noop tasks"
-        )
+        print("[PASS] server queued concurrent submissions; single local agent completed all ws_noop tasks")
         print("[WARN] local execution model - single worker processes tasks sequentially per agent")
         print("RESULT=PASS_LIVE_PARALLEL_TASK_DISPATCH")
         return 0
@@ -375,7 +368,7 @@ def main(argv: list[str] | None = None) -> int:
 
                 remote_user("remove", temp_admin_user)
                 print("[PASS] temp admin user removed")
-            except Exception:
+            except Exception:  # noqa: BLE001 - 병렬 작업 디스패치 스모크테스트(임시 계정/에이전트 생성 후 자체 정리) — 임시 에이전트 등록 실패는 FAIL 결과 반환, 상태폴링 실패는 continue로 다음 폴링, 임시 관리자계정 정리(remove) 실패는 경고만 출력 — 모두 테스트용 임시 리소스이며 운영 데이터 아님
                 print("[WARN] temp admin user cleanup failed")
 
 

@@ -54,7 +54,7 @@ def _cache_get(key: str) -> dict | None:
         con.close()
         if row and (time.time() - row[1]) < _CACHE_TTL_SECONDS:
             return json.loads(row[0])
-    except Exception:
+    except Exception:  # noqa: BLE001 - SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 무시 — 캐시는 성능최적화 부가기능
         pass
     return None
 
@@ -74,7 +74,7 @@ def _cache_set(key: str, payload: dict) -> None:
         con.execute("DELETE FROM search_cache WHERE cached_at < ?", (time.time() - 259200,))
         con.commit()
         con.close()
-    except Exception:
+    except Exception:  # noqa: BLE001 - SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 무시 — 캐시는 성능최적화 부가기능
         pass
 
 
@@ -400,7 +400,7 @@ def collect_comments(
             next_page_token = str(data.get("nextPageToken") or "")
             if not next_page_token:
                 break
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 유튜브 리서치 검색(읽기전용, SQLite 캐시 활용) — 캐시 조회/저장 실패는 무시(캐시미스로 간주), API 조회 실패는 status를 blocked_or_unavailable/partial로 기록
         if not comments:
             status = "blocked_or_unavailable"
         else:

@@ -39,7 +39,7 @@ def main() -> int:
 
         if not _is_cdp_alive():
             cmd_start()
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 강제시작 헬퍼가 없거나 실패해도 무시 — 아래 단계에서 자체적으로 연결 상태를 다시 확인함
         pass  # 강제시작 도우미가 없거나 실패해도 아래 단계에서 자체 확인
 
     try:
@@ -51,7 +51,7 @@ def main() -> int:
         result["snapshot_ok"] = True
         result["snapshot_summary"] = snap_result
         print(f"[daily-pipeline] 수집 완료: {snap_result}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카페마케팅 일일 파이프라인 오케스트레이션 — CDP 강제시작 실패 무시(다음 단계에서 자체 확인), 수집/요약재빌드 실패는 result dict에 에러 기록 후 다음 단계 계속 진행할 뿐 쓰기 대상은 로컬 요약 파일
         result["snapshot_error"] = f"{type(e).__name__}: {e}"
         print(f"[daily-pipeline] 수집 실패(건너뜀): {result['snapshot_error']}")
 
@@ -61,7 +61,7 @@ def main() -> int:
         marketing_summary_build.main()
         result["build_ok"] = True
         print("[daily-pipeline] 마케팅 요약 재빌드 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카페마케팅 일일 파이프라인 오케스트레이션 — CDP 강제시작 실패 무시(다음 단계에서 자체 확인), 수집/요약재빌드 실패는 result dict에 에러 기록 후 다음 단계 계속 진행할 뿐 쓰기 대상은 로컬 요약 파일
         result["build_error"] = f"{type(e).__name__}: {e}"
         print(f"[daily-pipeline] 요약 재빌드 실패: {result['build_error']}")
         traceback.print_exc()

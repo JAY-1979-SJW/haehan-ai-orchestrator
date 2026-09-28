@@ -42,7 +42,7 @@ def _ssh(cmd: str, timeout: float = 10.0) -> tuple[bool, str]:
         if r.returncode == 0:
             return (True, r.stdout)
         return (False, (r.stderr or r.stdout)[:300])
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 로컬 데스크톱 에이전트 실시간 연결 스모크테스트 — ssh/git head 조회 실패는 빈 문자열 폴백, 각 검증 단계(step) 실패는 report에 에러 기록 후 다음 단계 계속, 모두 read-only 진단
         return (False, str(exc)[:300])
 
 
@@ -57,7 +57,7 @@ def step_a_server_head() -> dict:
             timeout=15,
         )
         remote_head = r.stdout.split()[0] if r.returncode == 0 and r.stdout else ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 데스크톱 에이전트 실시간 연결 스모크테스트 — ssh/git head 조회 실패는 빈 문자열 폴백, 각 검증 단계(step) 실패는 report에 에러 기록 후 다음 단계 계속, 모두 read-only 진단
         remote_head = ""
     # 2) ssh 로 deployed head (이중 확인)
     ok, ssh_head = _ssh(
@@ -210,7 +210,7 @@ def main() -> None:
     ):
         try:
             report["steps"][name] = fn()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 로컬 데스크톱 에이전트 실시간 연결 스모크테스트 — ssh/git head 조회 실패는 빈 문자열 폴백, 각 검증 단계(step) 실패는 report에 에러 기록 후 다음 단계 계속, 모두 read-only 진단
             report["steps"][name] = {"error": str(exc)[:300]}
     # audit 입력용 e2e_results 추출
     d = report["steps"].get("D_inprocess_e2e", {})

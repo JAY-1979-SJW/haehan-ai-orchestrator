@@ -15,7 +15,7 @@ try:
     raw = sys.stdin.read()
     if raw.strip():
         data = json.loads(raw)
-except Exception:
+except Exception:  # noqa: BLE001 - stdin JSON 파싱 실패 시 무시하고 빈 dict로 계속 — 훅이 죽지 않고 통과하도록 하는 의도된 fail-open
     pass
 
 if data.get("stop_hook_active"):
@@ -57,9 +57,9 @@ if transcript_path and Path(transcript_path).exists():
                     elif isinstance(content, str):
                         last_text = content
                     break
-            except Exception:
+            except Exception:  # noqa: BLE001 - Stop 훅: AI 응답 텍스트에서 금지행동 패턴을 감지해 exit(2)로 차단 — stdin JSON 파싱 실패나 transcript 개별 줄 파싱 실패는 검사를 건너뛰고 통과시키는 의도된 fail-open(훅 진입점 패턴), 패턴이 실제로 매칭되면 여전히 차단됨
                 continue
-    except Exception:
+    except Exception:  # noqa: BLE001 - stdin JSON 파싱 실패 시 무시하고 빈 dict로 계속 — 훅이 죽지 않고 통과하도록 하는 의도된 fail-open
         pass
 
 if not last_text:

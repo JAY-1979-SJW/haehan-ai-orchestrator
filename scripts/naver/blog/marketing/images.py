@@ -117,7 +117,7 @@ def fetch_unsplash_images(count_per_query: int = 5, blog_id: str | None = None) 
                     )
             else:
                 _log.warning("Unsplash %s: %s", q_en, r.status_code)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Unsplash 이미지 검색/다운로드 커넥터 — 실패 시 경고 로그만 남기고 다음 이미지로 진행, 읽기전용 외부 API 호출
             _log.warning("Unsplash fetch error: %s", e)
         time.sleep(0.3)
     return images
@@ -134,7 +134,7 @@ def download_image(url: str, filename: str) -> str | None:
         r.raise_for_status()
         path.write_bytes(r.content)
         return str(path)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Unsplash 이미지 검색/다운로드 커넥터 — 실패 시 경고 로그만 남기고 다음 이미지로 진행, 읽기전용 외부 API 호출
         _log.warning("이미지 다운로드 실패 %s: %s", url, e)
         return None
 
@@ -163,7 +163,7 @@ def pick_3_images(all_images: list[dict], idx: int) -> list[str]:
                 headers={"Authorization": f"Client-ID {_unsplash_key()}"},
                 timeout=5,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - Unsplash 이미지 검색/다운로드 커넥터 — 실패 시 경고 로그만 남기고 다음 이미지로 진행, 읽기전용 외부 API 호출
             pass
         time.sleep(0.2)
     return paths

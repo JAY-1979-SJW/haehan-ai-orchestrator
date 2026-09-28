@@ -76,7 +76,7 @@ def load_cache(blog_id: str | None = None) -> dict:
     if path.exists():
         try:
             return json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 이미 게시된 주제 캐시 파일이 없거나 형식이 안 맞으면 무시하고 빈 기본값 사용
             pass
     return {"topics": [], "posted": []}
 
@@ -225,7 +225,7 @@ def get_researched_topics(product_only: bool = True) -> list[dict]:
                     return filtered
                 _log.warning("[topic-seed] 제품 관련 주제가 없어 전체를 사용합니다")
             return topics
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 주제 리서치 파일 로드/AI 보충 JSON 파싱 — 파일 로드나 JSON 파싱 실패 시 빈 리스트로 안전 폴백하고 경고/에러 로그 남길 뿐 쓰기 없음
         _log.warning("[topic-seed] 리서치 파일 로드 실패, 폴백 사용: %s", e)
     return []
 
@@ -335,7 +335,7 @@ def generate_topics(cache: dict, count: int, dry_run: bool = False) -> list[dict
 
     try:
         topics = json.loads(text[start:end])
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 주제 리서치 파일 로드/AI 보충 JSON 파싱 — 파일 로드나 JSON 파싱 실패 시 빈 리스트로 안전 폴백하고 경고/에러 로그 남길 뿐 쓰기 없음
         _log.error("JSON 파싱 오류: %s | %s", e, text[start:end][:200])
         return result
 
