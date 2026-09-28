@@ -91,7 +91,7 @@ class LogBuffer:
         for fn in list(self._subs):
             try:
                 fn(entry)
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
         return entry
 

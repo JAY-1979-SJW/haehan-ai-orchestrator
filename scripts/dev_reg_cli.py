@@ -286,7 +286,7 @@ def cmd_expire(task_id: str) -> int:
     if rec.token_id:
         try:
             revoke_token(rec.token_id)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - cmd_expire(강제 만료) 중 하위 승인 토큰 revoke 실패를 경고만 남기고 계속 진행 - 이후 dev_reg 레코드를 expired로 마킹하는 거부/만료 방향 흐름이라 승인 우회가 아니며, revoke 실패가 오히려 상태를 더 안전한(만료) 쪽으로 이끎
             print(f"  WARN: 토큰 revoke 실패 (계속 진행): {e}")
 
     # 2. dev_reg 레코드 만료 처리

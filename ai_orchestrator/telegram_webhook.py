@@ -39,7 +39,7 @@ def load_user_map() -> list[dict]:
         return []
     try:
         return json.loads(_USER_MAP_PATH.read_text(encoding="utf-8"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - telegram_users.json 로드 실패 시 에러 로그 남기고 빈 목록 반환 - 허용 사용자 목록이 비면 이후 권한 체크가 전원 거부(fail-closed)로 이어지는 안전한 폴백
         logger.error("telegram_users.json 로드 실패: %s", e)
         return []
 

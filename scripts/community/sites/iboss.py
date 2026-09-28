@@ -146,7 +146,7 @@ def fetch_post_detail(page: Any, url: str, *, wait_seconds: float = 3.0) -> dict
 
     try:
         result["comments_raw"] = page.evaluate(_COMMENT_ITEM_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 페이지 댓글 수집(page.evaluate) 실패 시 빈 목록으로 폴백 - 읽기전용 스크래핑, 실패 시 해당 항목만 누락될 뿐 쓰기·위험 조작 없음
         result["comments_raw"] = []
 
     return result

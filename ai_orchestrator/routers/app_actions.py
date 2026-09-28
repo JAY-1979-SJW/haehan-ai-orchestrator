@@ -124,5 +124,5 @@ def run_action(path: str, params: dict | None, user: dict, confirmed: bool = Fal
 
         txt = result if isinstance(result, str) else _json.dumps(result, ensure_ascii=False, default=str)
         return {"ok": True, "result": txt[:2000]}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 결과 래핑 - 실행 중 예외를 에러 딕셔너리로 변환해 반환(이미 실패로 처리), 결제/삭제 등 위험 조작 없음
         return {"ok": False, "error": f"실행 오류: {str(e)[:160]}"}

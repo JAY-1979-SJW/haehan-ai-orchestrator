@@ -203,7 +203,7 @@ class BrowserTaskHandler:
         # Execute action via adapter
         try:
             execution_result = await self.adapter.execute_action(server_action)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 액션 실행(execute_action) 실패를 캡처해 BrowserTaskResult status=failed로 반환 - 실패를 성공으로 위장하지 않음, read-only 핸드셰이크 경로
             logger.error(f"Action execution failed: {e}")
             return BrowserTaskResult(
                 task_id=payload.task_id,

@@ -78,7 +78,7 @@ def authenticate_agent(agent_id: str, device_token: str) -> LocalAgent | None:
         return None
     try:
         candidate_hash = hashlib.sha256(device_token.encode("utf-8")).hexdigest()
-    except Exception:
+    except Exception:  # noqa: BLE001 - device_token 해시 계산 실패 시 인증 실패(None)로 폴백 - 이미 fail-closed(허용 아님), secrets.compare_digest 상수시간 비교 로직 앞단 가드
         return None
     if not secrets.compare_digest(candidate_hash, agent.token_hash):
         return None
