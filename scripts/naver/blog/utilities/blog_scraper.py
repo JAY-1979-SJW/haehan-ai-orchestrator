@@ -54,7 +54,7 @@ def load_existing(path: Path) -> tuple[list[dict], set[str]]:
         data = json.loads(path.read_text(encoding="utf-8"))
         ids = {str(r.get("log_no", "")) for r in data if r.get("log_no")}
         return data, ids
-    except Exception:
+    except Exception:  # noqa: BLE001 - 블로그 스크래퍼 캐시 JSON 로드(읽기전용) - 로드 실패 시 빈 리스트/집합으로 안전한 기본값 반환
         return [], set()
 
 

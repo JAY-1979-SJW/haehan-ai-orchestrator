@@ -154,7 +154,7 @@ class BlogSchedule:
                     ok=pr.get("ok"),
                     mode="blog_schedule_publish",
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 블로그 예약발행 실행 루프 - 개별 예약 항목 처리 실패는 error 필드에 기록 후 다음 항목 계속 진행, 실제 발행 자체는 이 except 밖의 별도 publish 호출/게이트가 담당
                 r["error"] = str(e)[:200]
             results.append(r)
         return {"ok": True, "processed": len(results), "results": results}
