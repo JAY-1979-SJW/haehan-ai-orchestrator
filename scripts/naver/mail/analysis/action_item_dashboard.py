@@ -17,16 +17,17 @@ dueDateCandidate 를 부여하여 실제 처리 lane 단위 데이터 계층을 
   - status 기본 NEW (caller 가 state 파일 주입하면 override 가능)
   - HIGH 3건 (스마트스토어 휴면 / 쿠팡 노출 정지 / FedEx 사칭) 유지 필수
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import re
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Iterable
 
 from . import business_report as br
 
@@ -42,8 +43,7 @@ STATUS_DONE = "DONE"
 STATUS_DISMISSED = "DISMISSED"
 STATUS_SNOOZED = "SNOOZED"
 
-ALL_STATUSES = (STATUS_NEW, STATUS_REVIEWING, STATUS_DONE,
-                STATUS_DISMISSED, STATUS_SNOOZED)
+ALL_STATUSES = (STATUS_NEW, STATUS_REVIEWING, STATUS_DONE, STATUS_DISMISSED, STATUS_SNOOZED)
 
 
 RISK_ACCOUNT = "ACCOUNT_RISK"
@@ -58,9 +58,16 @@ RISK_SERVICE_NOTICE = "SERVICE_NOTICE"
 RISK_UNKNOWN_REVIEW = "UNKNOWN_REVIEW"
 
 ALL_RISK_TYPES = (
-    RISK_ACCOUNT, RISK_SELLER_ACCOUNT, RISK_PHISHING, RISK_SEO,
-    RISK_DELIVERY_FAILURE, RISK_BILLING_REVIEW, RISK_POLICY_REVIEW,
-    RISK_SECURITY_REVIEW, RISK_SERVICE_NOTICE, RISK_UNKNOWN_REVIEW,
+    RISK_ACCOUNT,
+    RISK_SELLER_ACCOUNT,
+    RISK_PHISHING,
+    RISK_SEO,
+    RISK_DELIVERY_FAILURE,
+    RISK_BILLING_REVIEW,
+    RISK_POLICY_REVIEW,
+    RISK_SECURITY_REVIEW,
+    RISK_SERVICE_NOTICE,
+    RISK_UNKNOWN_REVIEW,
 )
 
 
@@ -68,18 +75,17 @@ ALL_RISK_TYPES = (
 
 _SELLER_KEYWORD_RE = re.compile(
     r"스마트스토어|smartstore|판매자|상품 ?노출|노출 ?정지|wing\.coupang"
-    r"|coupangcorp|seller|확약서|미답변|답변지연", re.IGNORECASE,
+    r"|coupangcorp|seller|확약서|미답변|답변지연",
+    re.IGNORECASE,
 )
 
 
 def _is_seller_domain(domain: str) -> bool:
     """발신 도메인이 셀러 컨텍스트인지."""
-    return any(s in (domain or "").lower()
-               for s in ("coupang", "smartstore", "navercorp"))
+    return any(s in (domain or "").lower() for s in ("coupang", "smartstore", "navercorp"))
 
 
-def infer_risk_type(category: str, title_redacted: str,
-                    sender_domain: str) -> str:
+def infer_risk_type(category: str, title_redacted: str, sender_domain: str) -> str:
     """category + 제목/도메인으로 riskType 결정."""
     blob = f"{title_redacted} {sender_domain}"
     if category == br.CAT_SPAM_OR_PHISHING_SUSPECTED:
@@ -88,8 +94,7 @@ def infer_risk_type(category: str, title_redacted: str,
         return RISK_DELIVERY_FAILURE
     if category == br.CAT_REVIEW:
         # GSC / 색인 → SEO
-        if re.search(r"색인|indexing|search ?console|haehan-ai\.kr",
-                     title_redacted, re.IGNORECASE):
+        if re.search(r"색인|indexing|search ?console|haehan-ai\.kr", title_redacted, re.IGNORECASE):
             return RISK_SEO
         return RISK_UNKNOWN_REVIEW
     if category == br.CAT_ATTENTION:
@@ -120,8 +125,7 @@ _DATE_PATTERNS = [
 ]
 
 
-def infer_due_date(title: str, received_date: str,
-                   *, ref_year: int = 2026) -> tuple[str, str]:
+def infer_due_date(title: str, received_date: str, *, ref_year: int = 2026) -> tuple[str, str]:
     """제목/날짜에서 마감 후보 추출.
 
     Returns:
@@ -139,7 +143,7 @@ def infer_due_date(title: str, received_date: str,
         try:
             iso = f"{y:04d}-{mo:02d}-{d:02d}"
             return (iso, "HIGH")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 메일 제목의 날짜 패턴(YY년M월D일) 파싱 실패 시 pass 하고 다음 정규식 패턴으로 폴백 — 날짜 추출 실패해도 안전한 기본 동작으로 이어지는 읽기전용 파싱.
             pass
     # 2) YY 년 M 월 D 일
     m = _DATE_PATTERNS[1].search(title)
@@ -223,13 +227,13 @@ class DashboardSummary:
 # ── 빌드 ───────────────────────────────────────────────────────────
 
 
-def _action_dict_to_item(a: dict,
-                         *, status_lookup: dict[str, str] | None = None
-                         ) -> DashboardItem:
+def _action_dict_to_item(a: dict, *, status_lookup: dict[str, str] | None = None) -> DashboardItem:
     title = a.get("title_redacted", "")
     sender_dom = a.get("sender_domain", "")
     risk = infer_risk_type(
-        a.get("category", ""), title, sender_dom,
+        a.get("category", ""),
+        title,
+        sender_dom,
     )
     due_iso, due_conf = infer_due_date(title, a.get("received_date", ""))
     status = (status_lookup or {}).get(a.get("actionId", ""), STATUS_NEW)
@@ -252,24 +256,25 @@ def _action_dict_to_item(a: dict,
     )
 
 
-def build_dashboard(action_items: Iterable[dict],
-                    *, status_lookup: dict[str, str] | None = None,
-                    input_report_text: str = "") -> Dashboard:
-    items = [_action_dict_to_item(a, status_lookup=status_lookup)
-             for a in action_items]
+def build_dashboard(
+    action_items: Iterable[dict], *, status_lookup: dict[str, str] | None = None, input_report_text: str = ""
+) -> Dashboard:
+    items = [_action_dict_to_item(a, status_lookup=status_lookup) for a in action_items]
     # 정렬: priority HIGH → MEDIUM → LOW, 그 다음 dueDateCandidate, 그 다음 received_date desc
     pri_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
-    items.sort(key=lambda i: (pri_order.get(i.priority, 9),
-                              # dueDateCandidate 있는 것 우선
-                              0 if i.dueDateCandidate else 1,
-                              i.dueDateCandidate or "9999-99-99",
-                              # received_date 는 문자열로 그대로 (역순 비교 어려움 — best-effort)
-                              i.received_date))
+    items.sort(
+        key=lambda i: (
+            pri_order.get(i.priority, 9),
+            # dueDateCandidate 있는 것 우선
+            0 if i.dueDateCandidate else 1,
+            i.dueDateCandidate or "9999-99-99",
+            # received_date 는 문자열로 그대로 (역순 비교 어려움 — best-effort)
+            i.received_date,
+        )
+    )
     return Dashboard(
         generated_at=datetime.now(KST).replace(microsecond=0).isoformat(),
-        input_report_hash=hashlib.sha256(
-            (input_report_text or "").encode("utf-8")
-        ).hexdigest()[:16],
+        input_report_hash=hashlib.sha256((input_report_text or "").encode("utf-8")).hexdigest()[:16],
         items=items,
     )
 
@@ -285,10 +290,7 @@ def _high_required_check(items: list[DashboardItem]) -> dict[str, bool]:
     out: dict[str, bool] = {}
     for key, kws in HIGH_REQUIRED_KEYWORDS.items():
         out[key] = any(
-            i.priority == "HIGH"
-            and all(kw.lower() in (i.title_redacted or "").lower()
-                    for kw in kws)
-            for i in items
+            i.priority == "HIGH" and all(kw.lower() in (i.title_redacted or "").lower() for kw in kws) for i in items
         )
     return out
 
@@ -297,8 +299,7 @@ def build_summary(dash: Dashboard) -> DashboardSummary:
     pri_c = Counter(i.priority for i in dash.items)
     risk_c = Counter(i.riskType for i in dash.items)
     cat_c = Counter(i.sourceCategory for i in dash.items)
-    unknown = sum(1 for i in dash.items
-                  if i.sourceCategory == br.CAT_UNKNOWN_REVIEW_REQUIRED)
+    unknown = sum(1 for i in dash.items if i.sourceCategory == br.CAT_UNKNOWN_REVIEW_REQUIRED)
     due_n = sum(1 for i in dash.items if i.dueDateCandidate)
     pii_all = all(i.pii_masked for i in dash.items) if dash.items else True
     raw_any = any(i.raw_body_saved for i in dash.items)
@@ -332,12 +333,11 @@ def render_markdown(dash: Dashboard, summary: DashboardSummary) -> str:
             by_pri.setdefault(it.priority, []).append(it)
 
     lines = [
-        f"# Action Item Dashboard",
+        "# Action Item Dashboard",
         "",
         "## 개요",
         f"- 총 액션: **{summary.total_items}건**",
-        f"- HIGH **{summary.high_count}** / MEDIUM {summary.medium_count} "
-        f"/ LOW {summary.low_count}",
+        f"- HIGH **{summary.high_count}** / MEDIUM {summary.medium_count} / LOW {summary.low_count}",
         f"- UNKNOWN review lane: {summary.unknown_review_count}건",
         f"- dueDate 후보: {summary.due_date_candidate_count}건",
         f"- 생성: {summary.generated_at}",
@@ -375,8 +375,7 @@ def render_markdown(dash: Dashboard, summary: DashboardSummary) -> str:
         lines.append(f"- … ({len(unknown_lane) - 50}건 더)")
 
     lines += ["", "## 리스크 유형별 요약"]
-    for k, v in sorted(summary.risk_type_counts.items(),
-                       key=lambda x: -x[1]):
+    for k, v in sorted(summary.risk_type_counts.items(), key=lambda x: -x[1]):
         lines.append(f"- {k}: {v}")
     lines += ["", "## 카테고리별 요약"]
     for k, v in sorted(summary.category_counts.items(), key=lambda x: -x[1]):
@@ -385,18 +384,14 @@ def render_markdown(dash: Dashboard, summary: DashboardSummary) -> str:
     due = [i for i in dash.items if i.dueDateCandidate]
     due.sort(key=lambda i: i.dueDateCandidate)
     for it in due[:20]:
-        lines.append(
-            f"- `{it.actionId}` {it.dueDateCandidate} "
-            f"({it.dueDateConfidence}) — {it.title_redacted[:60]}"
-        )
+        lines.append(f"- `{it.actionId}` {it.dueDateCandidate} ({it.dueDateConfidence}) — {it.title_redacted[:60]}")
     lines += [
         "",
         "## 원문/PII 저장 여부",
         f"- raw_body_saved_any: **{summary.raw_body_saved_any}**",
         f"- pii_masked_all: **{summary.pii_masked_all}**",
         "",
-        "> 본 dashboard 는 PII 마스킹된 데이터만 사용합니다. "
-        "원문 본문/이메일 local-part 0건.",
+        "> 본 dashboard 는 PII 마스킹된 데이터만 사용합니다. 원문 본문/이메일 local-part 0건.",
     ]
     return "\n".join(lines)
 
@@ -420,17 +415,14 @@ def load_action_items(path: Path) -> list[dict]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def write_outputs(dash: Dashboard, summary: DashboardSummary,
-                  out_dir: Path) -> dict[str, Path]:
+def write_outputs(dash: Dashboard, summary: DashboardSummary, out_dir: Path) -> dict[str, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     paths = {}
     p1 = out_dir / "action_dashboard.json"
-    p1.write_text(json.dumps(dash.to_dict(), ensure_ascii=False, indent=2),
-                  encoding="utf-8")
+    p1.write_text(json.dumps(dash.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
     paths["dashboard"] = p1
     p2 = out_dir / "action_dashboard_summary.json"
-    p2.write_text(json.dumps(summary.to_dict(), ensure_ascii=False, indent=2),
-                  encoding="utf-8")
+    p2.write_text(json.dumps(summary.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
     paths["summary"] = p2
     p3 = out_dir / "action_dashboard.md"
     p3.write_text(render_markdown(dash, summary), encoding="utf-8")

@@ -1,13 +1,14 @@
 """navigator_nav — 페이지 이동 및 로그인 감지."""
+
 from __future__ import annotations
 
 import time
 
-from scripts.web_connector import get_page
-from scripts.login_check import is_logged_in_by_cookie
 from scripts.logger import get_logger
-from scripts.op_log import log_op
+from scripts.login_check import is_logged_in_by_cookie
 from scripts.navigator_common import resolve
+from scripts.op_log import log_op
+from scripts.web_connector import get_page
 
 _log = get_logger(__name__)
 
@@ -37,15 +38,17 @@ def goto(target: str, timeout_ms: int = 60000, auto_scan: bool = True, handle_po
     if handle_popups:
         try:
             from scripts.popup_detector import handle_page_popups
+
             result = handle_page_popups(page)
             if result.get("had_popup"):
                 print(f"✓ 팝업 처리 완료 ({result.get('popups_closed')}개)")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 페이지 이동 후 팝업 자동 처리 best-effort — 팝업 처리 실패해도 경고만 출력하고 이후 네비게이션/스캔 로직은 계속 진행.
             print(f"⚠️  팝업 처리 실패: {e}")
 
     print("=" * 60)
     if auto_scan:
         from scripts.navigator_scan import scan_page
+
         scan_page()
 
 
@@ -71,6 +74,5 @@ def wait_login(site: str, timeout_s: int = 300, interval_s: int = 3) -> bool:
             print(f"  대기 중... {elapsed}초 경과")
     print(f"✗ 타임아웃 — {timeout_s}초 내 로그인 감지 안 됨")
     print("=" * 60)
-    log_op("wait_login", ok=False, duration_ms=int(timeout_s * 1000),
-           message="타임아웃", site=site)
+    log_op("wait_login", ok=False, duration_ms=int(timeout_s * 1000), message="타임아웃", site=site)
     return False

@@ -368,7 +368,7 @@ def run(root: Path = ROOT) -> int:
     """
     try:
         ok, results = evaluate(root)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 코드맵 골격 게이트 — evaluate() 내부 오류 시 명시적 SKELETON_GATE_SKIP_REASON 환경변수가 없으면 FAIL(exit 1)로 취급하는 fail-closed 경로, 우회 시에도 감사 로그(_log_bypass) 남김.
         print(f"[skeleton_gate] 내부 오류로 판정할 수 없습니다: {type(exc).__name__}: {exc}")
         reason = _bypass_reason()
         if reason:

@@ -80,7 +80,7 @@ class TestAuditScriptsImportable:
         for name in AUDIT_SCRIPT_NAMES:
             try:
                 _load(name)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 감사 스크립트 import 가능 여부를 검증하는 pytest — import 실패를 errors 리스트에 모아 assert errors == [] 로 테스트를 실패시키는 fail-closed 테스트.
                 errors.append(f"{name}: {e}")
         assert errors == [], f"import 실패: {errors}"
 

@@ -109,7 +109,7 @@ def find_direct_urls(page: Any, keyword: str, *, max_pages: int = 3, settle_s: f
         page.wait_for_timeout(int(settle_s * 1000))
         try:
             got = page.evaluate(_EXTRACT_JS)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 경쟁사 상품 URL 목록 읽기전용 스크래핑 — 페이지별 추출(page.evaluate) 실패를 로그로 남기고 continue로 다음 페이지 진행, 쓰기 없음.
             _say(f"  [{keyword} p{p}] 추출 실패: {type(e).__name__}")
             continue
 

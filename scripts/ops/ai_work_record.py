@@ -1,14 +1,14 @@
 """Create safe AI work records for handoff and resume."""
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_LATEST = ROOT / "data" / "runtime" / "ai_work_record_latest.json"
@@ -28,7 +28,7 @@ FORBIDDEN_PATTERNS = tuple(
 
 
 def now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def safe_text(value: str) -> str:
@@ -221,7 +221,7 @@ def main(argv: list[str] | None = None) -> int:
                 }
             else:
                 result = validate_record(current)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 작업기록(work record) 검증 CLI — 처리 중 예외 발생 시 ok=False, status=work_record_failed 로 실패 판정하는 fail-closed 경로. 예외를 허용 방향으로 흡수하지 않음.
         result = {
             "ok": False,
             "status": "work_record_failed",

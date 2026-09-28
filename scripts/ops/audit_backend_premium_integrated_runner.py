@@ -10,13 +10,14 @@
 
 exit code: 0=PASS/PASS_WITH_KNOWN_WARN, 1=FAIL, 2=STOP_CONDITION
 """
+
 from __future__ import annotations
 
 import argparse
 import importlib.util
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,20 +29,20 @@ if str(ROOT) not in __import__("sys").path:
 SCRIPTS_OPS = ROOT / "scripts/ops"
 
 AUDIT_MODULES_ORDERED = [
-    ("domain_core",         "audit_backend_premium_domain_core"),
-    ("service_layer",       "audit_backend_premium_service_layer"),
-    ("policy_layer",        "audit_backend_premium_policy_layer"),
-    ("audit_evidence",      "audit_backend_premium_audit_evidence"),
+    ("domain_core", "audit_backend_premium_domain_core"),
+    ("service_layer", "audit_backend_premium_service_layer"),
+    ("policy_layer", "audit_backend_premium_policy_layer"),
+    ("audit_evidence", "audit_backend_premium_audit_evidence"),
     ("external_app_bridge", "audit_backend_premium_external_app_bridge"),
-    ("api_contract",        "audit_backend_premium_api_contract"),
-    ("endpoint_inventory",  "audit_backend_premium_endpoint_inventory"),
-    ("security_boundary",   "audit_backend_premium_security_boundary"),
-    ("external_app_hold",   "audit_backend_premium_external_app_hold"),
+    ("api_contract", "audit_backend_premium_api_contract"),
+    ("endpoint_inventory", "audit_backend_premium_endpoint_inventory"),
+    ("security_boundary", "audit_backend_premium_security_boundary"),
+    ("external_app_hold", "audit_backend_premium_external_app_hold"),
 ]
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _load_module(name: str) -> Any:
@@ -77,7 +78,7 @@ def run_integrated_audit(fail_fast: bool = False) -> dict[str, Any]:
             mod = _load_module(module_name)
             result = mod.run_audit()
             audit_results.append(result)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 여러 감사 모듈을 순회 실행하는 통합 러너 — 개별 감사 모듈 로드/실행 실패를 verdict=FAIL 결과로 변환하는 fail-closed 경로.
             err_result = {
                 "audit_name": audit_name,
                 "verdict": "FAIL",
@@ -107,7 +108,9 @@ def run_integrated_audit(fail_fast: bool = False) -> dict[str, Any]:
         "audit_results": audit_results,
         "total_summary": total_summary,
         "errors": errors,
-        "fail_fast_triggered": fail_fast and integrated_verdict == "FAIL" and len(audit_results) < len(AUDIT_MODULES_ORDERED),
+        "fail_fast_triggered": fail_fast
+        and integrated_verdict == "FAIL"
+        and len(audit_results) < len(AUDIT_MODULES_ORDERED),
     }
 
 
@@ -115,8 +118,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Premium Backend 통합 감사 Runner")
     parser.add_argument("--json", action="store_true", help="JSON stdout 출력")
     parser.add_argument("--fail-fast", action="store_true", help="첫 FAIL에서 중단")
-    parser.add_argument("--continue-on-fail", action="store_true", default=True,
-                        help="FAIL 후 계속 진행 (기본값)")
+    parser.add_argument("--continue-on-fail", action="store_true", default=True, help="FAIL 후 계속 진행 (기본값)")
     args = parser.parse_args()
 
     result = run_integrated_audit(fail_fast=args.fail_fast)
@@ -125,18 +127,20 @@ def main() -> int:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         print("=" * 70)
-        print(f"  Premium Backend 통합 감사 Runner")
+        print("  Premium Backend 통합 감사 Runner")
         print(f"  통합 verdict: {result['verdict']}")
         print(f"  checked_at:  {result['checked_at']}")
         print("=" * 70)
         for r in result["audit_results"]:
             icon = "✓" if r["verdict"] in ("PASS", "PASS_WITH_KNOWN_WARN", "PASS_WITH_EXTERNAL_APP_HOLD") else "✗"
             s = r.get("summary", {})
-            print(f"  {icon} [{r['audit_name']:28s}] verdict={r['verdict']:32s} "
-                  f"pass={s.get('pass',0):3d} warn={s.get('warn',0):2d} fail={s.get('fail',0):2d}")
+            print(
+                f"  {icon} [{r['audit_name']:28s}] verdict={r['verdict']:32s} "
+                f"pass={s.get('pass', 0):3d} warn={s.get('warn', 0):2d} fail={s.get('fail', 0):2d}"
+            )
         print("-" * 70)
         ts = result["total_summary"]
-        print(f"  총계: pass={ts.get('pass',0)} warn={ts.get('warn',0)} fail={ts.get('fail',0)}")
+        print(f"  총계: pass={ts.get('pass', 0)} warn={ts.get('warn', 0)} fail={ts.get('fail', 0)}")
         print(f"  최종 verdict: {result['verdict']}")
         if result["errors"]:
             print(f"  오류: {result['errors']}")

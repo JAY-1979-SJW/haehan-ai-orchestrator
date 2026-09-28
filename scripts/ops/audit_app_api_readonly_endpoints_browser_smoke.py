@@ -68,7 +68,7 @@ def run_audit() -> None:
         # provider 12개, post_tasks_dry_run, post_tasks_dry_run
         _add("smoke verdict READY 또는 WARN", report.verdict != VERDICT_BLOCKED, report.verdict)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 읽기전용 API 엔드포인트 브라우저 스모크 감사 스크립트 — 개별 체크 실행 실패를 False(실패)로 _add 기록하는 fail-closed 감사 항목.
         _add("smoke 실행 가능", False, str(e))
 
     # POST route 없음 (router 파일 기준)

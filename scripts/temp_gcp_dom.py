@@ -31,7 +31,7 @@ for sel in iframes:
             print(f"{sel}: {len(inputs)}개 요소")
             for el in inputs[:5]:
                 print(f"  {el.inner_text()[:30]}")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 임시 DOM 탐색/디버깅용 수동 스크립트 — 셀렉터 조회 실패를 무시하고 나머지 mouse 클릭 등 탐색을 계속하는 read-only 디버그 코드.
         pass
 
 # mouse 직접 클릭

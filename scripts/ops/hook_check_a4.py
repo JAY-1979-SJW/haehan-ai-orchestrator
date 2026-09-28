@@ -34,7 +34,7 @@ def _run(script: str, file_path: str) -> int:
 def main():
     try:
         data = json.loads(sys.stdin.read())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - PreToolUse 훅 진입점 — stdin JSON 파싱 실패 시 exit(0)으로 통과시키는 의도된 fail-open, 이후 실제 파일 경로 검사 로직은 파싱 성공을 전제로 별도 수행.
         log.warning("stdin 파싱 실패: %s", e)
         sys.exit(0)
 

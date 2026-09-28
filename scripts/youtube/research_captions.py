@@ -167,7 +167,7 @@ def download_caption(
 
     try:
         text = _get_text_oauth(f"{YOUTUBE_CAPTIONS_URL}/{urllib.parse.quote(caption_id)}", {"tfmt": tfmt}, token)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 자막 다운로드(oauth) 실패 시 ok=False, status=blocked 인 실패 payload를 반환하는 fail-closed 경로.
         payload = {
             "schema_version": 1,
             "created_at": _now(),
