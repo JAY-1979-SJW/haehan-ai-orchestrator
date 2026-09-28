@@ -4,6 +4,7 @@
 감사 note 축약 로직. 라우트/상태 없음. 공유 계약(schemas)만 import.
 [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 from urllib.parse import urlparse
@@ -22,7 +23,7 @@ def _capture_approval_note(task, agent_id: str, dry_run: bool) -> str:
     parts = [f"agent_id={agent_id}", f"dry_run={dry_run}"]
     try:
         params = task.params if task is not None else None
-    except Exception:
+    except Exception:  # noqa: BLE001 - 감사 note 축약용 헬퍼 - task.params 접근 실패 시 None 처리 후 reason/note 생략, 승인/차단 판정과 무관
         params = None
     if isinstance(params, dict):
         raw_reason = params.get("reason")
@@ -34,19 +35,62 @@ def _capture_approval_note(task, agent_id: str, dry_run: bool) -> str:
     return " ".join(parts)
 
 
-_READONLY_WAIT_UNTIL_VALUES: frozenset[str] = frozenset({
-    "domcontentloaded", "load", "networkidle",
-})
+_READONLY_WAIT_UNTIL_VALUES: frozenset[str] = frozenset(
+    {
+        "domcontentloaded",
+        "load",
+        "networkidle",
+    }
+)
 
-_UNSAFE_BROWSER_INSTRUCTION_TERMS: frozenset[str] = frozenset({
-    "click", "submit", "type", "input", "login", "sign in", "password",
-    "otp", "2fa", "pay", "purchase", "buy", "send", "transfer", "delete",
-    "remove", "download", "upload", "save", "register", "create account",
-    "approve", "confirm", "checkout",
-    "클릭", "제출", "입력", "로그인", "비밀번호", "패스워드", "인증번호",
-    "결제", "구매", "송금", "전송", "삭제", "다운로드", "업로드", "저장",
-    "등록", "가입", "승인", "확인", "체크아웃",
-})
+_UNSAFE_BROWSER_INSTRUCTION_TERMS: frozenset[str] = frozenset(
+    {
+        "click",
+        "submit",
+        "type",
+        "input",
+        "login",
+        "sign in",
+        "password",
+        "otp",
+        "2fa",
+        "pay",
+        "purchase",
+        "buy",
+        "send",
+        "transfer",
+        "delete",
+        "remove",
+        "download",
+        "upload",
+        "save",
+        "register",
+        "create account",
+        "approve",
+        "confirm",
+        "checkout",
+        "클릭",
+        "제출",
+        "입력",
+        "로그인",
+        "비밀번호",
+        "패스워드",
+        "인증번호",
+        "결제",
+        "구매",
+        "송금",
+        "전송",
+        "삭제",
+        "다운로드",
+        "업로드",
+        "저장",
+        "등록",
+        "가입",
+        "승인",
+        "확인",
+        "체크아웃",
+    }
+)
 
 
 def _validate_readonly_browser_instruction(

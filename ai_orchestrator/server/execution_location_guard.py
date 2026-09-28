@@ -1,4 +1,5 @@
 """Execution Location Guard — 서버 측 외부 웹 실행 차단 강제."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -18,32 +19,67 @@ BLOCKED_EXTERNAL_URL_FROM_SERVER = "BLOCKED_EXTERNAL_URL_FROM_SERVER"
 BLOCKED_UNSAFE_EXECUTION_LOCATION = "BLOCKED_UNSAFE_EXECUTION_LOCATION"
 
 # 내부 host (서버 실행 허용)
-_INTERNAL_HOSTS = frozenset((
-    "localhost", "127.0.0.1", "::1", "0.0.0.0",
-))
+_INTERNAL_HOSTS = frozenset(
+    (
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "0.0.0.0",  # noqa: S104 - 소켓 bind 코드가 아니라 내부 허용 host 판별용 문자열 상수 목록
+    )
+)
 
 # 내부 docker service host suffix
 _INTERNAL_DOMAIN_SUFFIX = (
-    ".internal", ".local", ".svc.cluster.local",
+    ".internal",
+    ".local",
+    ".svc.cluster.local",
 )
 
 # 외부 실행 작업 키워드 (action 분류)
-_EXTERNAL_WEB_ACTIONS = frozenset((
-    "open_url", "read_page", "extract_text", "extract_tables",
-    "download", "download_file", "screenshot", "fill_form",
-    "form_fill", "click", "navigate", "search", "login",
-    "selector_discovery", "page_observation",
-))
+_EXTERNAL_WEB_ACTIONS = frozenset(
+    (
+        "open_url",
+        "read_page",
+        "extract_text",
+        "extract_tables",
+        "download",
+        "download_file",
+        "screenshot",
+        "fill_form",
+        "form_fill",
+        "click",
+        "navigate",
+        "search",
+        "login",
+        "selector_discovery",
+        "page_observation",
+    )
+)
 
-_USER_DIRECT_ACTIONS = frozenset((
-    "submit", "sign", "e_signature", "payment", "transfer", "bid",
-    "final_submit", "결제", "송금", "투찰", "전자서명",
-))
+_USER_DIRECT_ACTIONS = frozenset(
+    (
+        "submit",
+        "sign",
+        "e_signature",
+        "payment",
+        "transfer",
+        "bid",
+        "final_submit",
+        "결제",
+        "송금",
+        "투찰",
+        "전자서명",
+    )
+)
 
 _SAFE_FIELDS = (
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 )
 
 
@@ -77,7 +113,7 @@ def _extract_host(url: str) -> str:
         return ""
     try:
         return (urlparse(url).hostname or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - _extract_host: URL host 파싱 실패 시 빈 문자열 반환 - 빈 host는 _is_internal_host에서 False(내부 아님) 처리되어 이후 분류가 LOCAL_AGENT_REQUIRED(서버 직접실행 차단, handoff 필요)로 귀결되는 fail-closed 경로, 서버 외부실행 허용 방향 아님
         return ""
 
 
@@ -90,36 +126,26 @@ def classify_execution_location_for_server(task: dict[str, Any]) -> dict[str, An
 
     # URL 없는 task는 서버 내부 처리 가능
     if not target_url:
-        return _result(SERVER_INTERNAL_ONLY,
-                       reason="target_url 없음 — 서버 내부 작업으로 처리",
-                       blocked=False)
+        return _result(SERVER_INTERNAL_ONLY, reason="target_url 없음 — 서버 내부 작업으로 처리", blocked=False)
 
     # 내부 host
     if _is_internal_host(host):
-        return _result(SERVER_INTERNAL_ONLY,
-                       reason=f"내부 host: {host}",
-                       blocked=False,
-                       target_host=host)
+        return _result(SERVER_INTERNAL_ONLY, reason=f"내부 host: {host}", blocked=False, target_host=host)
 
     # 외부 host + 외부 웹 action → LOCAL_AGENT_REQUIRED
     if action in _EXTERNAL_WEB_ACTIONS or not action:
-        return _result(LOCAL_AGENT_REQUIRED,
-                       reason="외부 URL — local agent로 handoff 필요",
-                       blocked=False,
-                       target_host=host)
+        return _result(
+            LOCAL_AGENT_REQUIRED, reason="외부 URL — local agent로 handoff 필요", blocked=False, target_host=host
+        )
 
     # 외부 host + 결제/송금/투찰 → USER_DIRECT
     if action in _USER_DIRECT_ACTIONS:
-        return _result(USER_DIRECT_REQUIRED,
-                       reason="결제/송금/투찰/서명 — 사용자 직접 수행",
-                       blocked=False,
-                       target_host=host)
+        return _result(
+            USER_DIRECT_REQUIRED, reason="결제/송금/투찰/서명 — 사용자 직접 수행", blocked=False, target_host=host
+        )
 
     # 그 외 외부 URL은 일단 LOCAL_AGENT_REQUIRED
-    return _result(LOCAL_AGENT_REQUIRED,
-                   reason="외부 URL 기본 처리: local agent",
-                   blocked=False,
-                   target_host=host)
+    return _result(LOCAL_AGENT_REQUIRED, reason="외부 URL 기본 처리: local agent", blocked=False, target_host=host)
 
 
 def assert_server_may_not_execute_external_web(task: dict[str, Any]) -> None:
@@ -200,8 +226,7 @@ def build_local_agent_handoff(task: dict[str, Any]) -> dict[str, Any]:
     return handoff
 
 
-def _result(execution_location: str, reason: str, blocked: bool,
-            target_host: str = "") -> dict[str, Any]:
+def _result(execution_location: str, reason: str, blocked: bool, target_host: str = "") -> dict[str, Any]:
     r: dict[str, Any] = {
         "execution_location": execution_location,
         "reason": reason,

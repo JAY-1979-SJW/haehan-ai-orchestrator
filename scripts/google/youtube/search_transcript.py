@@ -1,12 +1,13 @@
 """Visible transcript panel extraction via CDP browser session."""
+
 from __future__ import annotations
 
 import re
 from typing import Any
 
-from security_utils import safe_preview
 from scripts.cdp_console import connect
 from scripts.google.youtube.search_common import WORD_RE, _top_keywords
+from security_utils import safe_preview
 
 
 def collect_visible_transcript_summary(
@@ -41,7 +42,7 @@ def collect_visible_transcript_summary(
             if opened.get("needs_wait"):
                 session.wait(1.5)
             segments = _extract_visible_transcript_segments(session, limit=max_segments)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - YouTube 자막 CDP 추출 실패 시 reason=youtube_transcript_cdp_unavailable 과 에러 요약을 담아 반환 - 읽기전용 자막 조회, 실패를 명시적으로 표시할 뿐 위험 조작 없음
         base["reason"] = "youtube_transcript_cdp_unavailable"
         base["error"] = safe_preview(str(exc), limit=220)
         return base
@@ -126,7 +127,7 @@ def _extract_visible_transcript_segments(session: Any, *, limit: int = 180) -> l
                 seen[key] = true;
                 return true;
             }}).slice(0, {limit});
-        }})()"""  # noqa: E501
+        }})()"""
     )
     if err or not isinstance(data, list):
         return []

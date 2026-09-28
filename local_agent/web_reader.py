@@ -12,6 +12,7 @@
 본 모듈은 브라우저 자동화 라이브러리(Playwright, Selenium) 를 import 하지
 않으며 실제 클릭/입력/제출 API 를 호출하지 않는다.
 """
+
 from __future__ import annotations
 
 import ipaddress
@@ -20,56 +21,105 @@ from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
-
 # ─── 키워드 테이블 ─────────────────────────────────────────────────────────
 
 # 쓰기/상태 변경 동작을 의미하는 한국어 키워드.
 RISK_WRITE_KEYWORDS: tuple[str, ...] = (
-    "저장", "제출", "등록", "삭제", "수정", "승인",
-    "전송", "결제", "확정", "마감", "신청", "취소",
+    "저장",
+    "제출",
+    "등록",
+    "삭제",
+    "수정",
+    "승인",
+    "전송",
+    "결제",
+    "확정",
+    "마감",
+    "신청",
+    "취소",
 )
 
 # 읽기/조회 전용 한국어 키워드.
 SAFE_READ_KEYWORDS: tuple[str, ...] = (
-    "조회", "검색", "보기", "목록", "상세",
+    "조회",
+    "검색",
+    "보기",
+    "목록",
+    "상세",
 )
 
 # 파일 내려받기/내보내기 — 쓰기는 아니지만 네트워크 side-effect 주의.
 MEDIUM_KEYWORDS: tuple[str, ...] = (
-    "다운로드", "download", "export", "엑셀", "pdf",
+    "다운로드",
+    "download",
+    "export",
+    "엑셀",
+    "pdf",
 )
 
 # 업무 도메인 키워드 (링크/표 헤더 점수화용).
 BUSINESS_KEYWORDS: tuple[str, ...] = (
-    "기성", "청구", "정산", "계약", "현장", "내역", "견적",
+    "기성",
+    "청구",
+    "정산",
+    "계약",
+    "현장",
+    "내역",
+    "견적",
 )
 
 # danger_write 로 간주해야 하는 href/링크 텍스트 토큰.
 _LINK_DANGER_TOKENS: tuple[str, ...] = (
-    "delete", "remove", "logout", "signout", "destroy",
-    "삭제", "탈퇴", "로그아웃",
+    "delete",
+    "remove",
+    "logout",
+    "signout",
+    "destroy",
+    "삭제",
+    "탈퇴",
+    "로그아웃",
 )
 
 # 결과에 절대 저장하지 않는 attribute / meta name 키.
-_SENSITIVE_NAME_TOKENS: frozenset[str] = frozenset({
-    "password", "passwd", "pwd",
-    "cookie", "set-cookie",
-    "authorization", "auth",
-    "session", "sessionid", "session_id",
-    "token", "access_token", "refresh_token", "id_token",
-    "csrf", "xsrf", "csrf_token", "xsrf_token",
-    "bearer", "api_key", "apikey",
-})
+_SENSITIVE_NAME_TOKENS: frozenset[str] = frozenset(
+    {
+        "password",
+        "passwd",
+        "pwd",
+        "cookie",
+        "set-cookie",
+        "authorization",
+        "auth",
+        "session",
+        "sessionid",
+        "session_id",
+        "token",
+        "access_token",
+        "refresh_token",
+        "id_token",
+        "csrf",
+        "xsrf",
+        "csrf_token",
+        "xsrf_token",
+        "bearer",
+        "api_key",
+        "apikey",
+    }
+)
 
 # value 를 읽지 않는 input type.
-_NO_VALUE_INPUT_TYPES: frozenset[str] = frozenset({
-    "password", "hidden",
-})
+_NO_VALUE_INPUT_TYPES: frozenset[str] = frozenset(
+    {
+        "password",
+        "hidden",
+    }
+)
 
 _WS_RE = re.compile(r"\s+")
 
 
 # ─── URL 안전성 검사 ───────────────────────────────────────────────────────
+
 
 def validate_url_for_readonly_open(
     url: str,
@@ -171,6 +221,7 @@ def _try_parse_ip(host: str) -> Any | None:
 
 # ─── HTML 구조 분석 ────────────────────────────────────────────────────────
 
+
 def analyze_html_structure(
     html: str,
     base_url: str | None = None,
@@ -193,23 +244,24 @@ def analyze_html_structure(
     try:
         parser.feed(html)
         parser.close()
-    except Exception:  # pragma: no cover - html.parser 는 관대함
+    except Exception:  # pragma: no cover - html.parser 는 관대함  # noqa: S110, BLE001 - html.parser 파싱 중 예외를 무시(이미 pragma no cover 주석 존재) - 파서가 관대하지 않은 입력에 예외를 던져도 지금까지 수집한 부분 결과로 계속 진행, 읽기전용 페이지 읽기
         # 파서가 예외를 던지더라도 지금까지 수집한 상태로 결과 생성
         pass
 
     hints = [h for h in (keyword_hints or []) if isinstance(h, str) and h.strip()]
     for link in parser.links:
         link["keyword_score"] = _score_keywords(
-            link.get("text", ""), link.get("raw_href", ""), hints,
+            link.get("text", ""),
+            link.get("raw_href", ""),
+            hints,
         )
         link["risk_hint"] = _link_risk_hint(
-            link.get("raw_href", ""), link.get("text", ""),
+            link.get("raw_href", ""),
+            link.get("text", ""),
         )
         href = link.pop("raw_href", "")
         link["href"] = href
-        link["normalized_href"] = (
-            urljoin(base_url, href) if base_url and href else href
-        )
+        link["normalized_href"] = urljoin(base_url, href) if base_url and href else href
 
     # 폼 위험도 보정 — 폼 내부 danger_write 버튼이 있으면 danger_write 로 상향.
     # (파서 단계에서는 버튼과 폼을 독립 수집하므로 후처리로 연결)
@@ -220,10 +272,15 @@ def analyze_html_structure(
             form["risk_level"] = "medium"
 
     risky = _collect_risky_elements(
-        parser.buttons, parser.links, parser.forms,
+        parser.buttons,
+        parser.links,
+        parser.forms,
     )
     recommended = _recommend_read_only_actions(
-        parser.page_title, parser.headings, parser.tables, parser.links,
+        parser.page_title,
+        parser.headings,
+        parser.tables,
+        parser.links,
     )
 
     return {
@@ -258,6 +315,7 @@ def classify_button_text(text: str, btype: str = "") -> tuple[str, str]:
 
 # ─── 내부 ───────────────────────────────────────────────────────────────────
 
+
 def _empty_result(error_code: str | None) -> dict[str, Any]:
     base: dict[str, Any] = {
         "ok": error_code is None,
@@ -274,8 +332,12 @@ def _empty_result(error_code: str | None) -> dict[str, Any]:
         "risky_elements": [],
         "recommended_actions": [],
         "counts": {
-            "headings": 0, "links": 0, "buttons": 0,
-            "inputs": 0, "forms": 0, "tables": 0,
+            "headings": 0,
+            "links": 0,
+            "buttons": 0,
+            "inputs": 0,
+            "forms": 0,
+            "tables": 0,
         },
     }
     if error_code is not None:
@@ -353,26 +415,32 @@ def _collect_risky_elements(
     risky: list[dict] = []
     for b in buttons:
         if b.get("risk_level") == "danger_write":
-            risky.append({
-                "kind": "button",
-                "text": b.get("text", ""),
-                "reason": b.get("reason", ""),
-            })
+            risky.append(
+                {
+                    "kind": "button",
+                    "text": b.get("text", ""),
+                    "reason": b.get("reason", ""),
+                }
+            )
     for link in links:
         if link.get("risk_hint") == "danger_write":
-            risky.append({
-                "kind": "link",
-                "text": link.get("text", ""),
-                "reason": "danger_href",
-            })
+            risky.append(
+                {
+                    "kind": "link",
+                    "text": link.get("text", ""),
+                    "reason": "danger_href",
+                }
+            )
     for f in forms:
         if f.get("has_password"):
             risky.append({"kind": "form", "reason": "has_password"})
         if f.get("risk_level") == "danger_write":
-            risky.append({
-                "kind": "form",
-                "reason": f"action:{(f.get('action') or '')[:120]}",
-            })
+            risky.append(
+                {
+                    "kind": "form",
+                    "reason": f"action:{(f.get('action') or '')[:120]}",
+                }
+            )
     return risky
 
 
@@ -384,28 +452,31 @@ def _recommend_read_only_actions(
 ) -> list[dict]:
     """read-only 권장 액션만 생성. click/submit/save 류는 절대 포함되지 않음."""
     recs: list[dict] = []
-    joined = " ".join(
-        [page_title or ""]
-        + [h.get("text", "") for h in headings]
-    )
+    joined = " ".join([page_title or ""] + [h.get("text", "") for h in headings])
     for kw in BUSINESS_KEYWORDS:
         if kw in joined:
-            recs.append({
-                "action": "analyze_text",
-                "reason": f"business_keyword:{kw}",
-            })
+            recs.append(
+                {
+                    "action": "analyze_text",
+                    "reason": f"business_keyword:{kw}",
+                }
+            )
             break
     if tables:
-        recs.append({
-            "action": "read_table",
-            "reason": f"table_count={len(tables)}",
-        })
+        recs.append(
+            {
+                "action": "read_table",
+                "reason": f"table_count={len(tables)}",
+            }
+        )
     safe_links = [link for link in links if link.get("risk_hint") != "danger_write"]
     if safe_links:
-        recs.append({
-            "action": "list_links",
-            "reason": f"safe_links={len(safe_links)}",
-        })
+        recs.append(
+            {
+                "action": "list_links",
+                "reason": f"safe_links={len(safe_links)}",
+            }
+        )
     return recs
 
 
@@ -552,20 +623,24 @@ class _StructureParser(HTMLParser):
         if tag in ("h1", "h2", "h3", "h4", "h5", "h6") and self._heading_buf is not None:
             text = _collapse_ws("".join(self._heading_buf))
             if text:
-                self.headings.append({
-                    "level": self._heading_level,
-                    "text": text[:200],
-                })
+                self.headings.append(
+                    {
+                        "level": self._heading_level,
+                        "text": text[:200],
+                    }
+                )
             self._heading_buf = None
             self._heading_level = 0
             return
         if tag == "a" and self._a_attrs is not None:
             text = _collapse_ws("".join(self._a_buf or []))
             href = (self._a_attrs.get("href") or "")[:500]
-            self.links.append({
-                "text": text[:200],
-                "raw_href": href,
-            })
+            self.links.append(
+                {
+                    "text": text[:200],
+                    "raw_href": href,
+                }
+            )
             self._a_attrs = None
             self._a_buf = None
             return
@@ -573,12 +648,14 @@ class _StructureParser(HTMLParser):
             text = _collapse_ws("".join(self._button_buf or []))
             btype = (self._button_attrs.get("type") or "")[:32]
             risk, reason = _classify_button(text, btype)
-            self.buttons.append({
-                "text": text[:200],
-                "type": btype,
-                "risk_level": risk,
-                "reason": reason,
-            })
+            self.buttons.append(
+                {
+                    "text": text[:200],
+                    "type": btype,
+                    "risk_level": risk,
+                    "reason": reason,
+                }
+            )
             # 폼 내부 danger_write 버튼은 폼 위험도에도 반영
             if self._current_form is not None and risk == "danger_write":
                 self._current_form["risk_level"] = "danger_write"
@@ -586,20 +663,24 @@ class _StructureParser(HTMLParser):
             self._button_buf = None
             return
         if tag == "select" and self._select_attrs is not None:
-            self.selects.append({
-                "name": (self._select_attrs.get("name") or "")[:200],
-                "options_count": self._select_options,
-                "has_multiple": "multiple" in self._select_attrs,
-            })
+            self.selects.append(
+                {
+                    "name": (self._select_attrs.get("name") or "")[:200],
+                    "options_count": self._select_options,
+                    "has_multiple": "multiple" in self._select_attrs,
+                }
+            )
             self._select_attrs = None
             self._select_options = 0
             return
         if tag == "textarea" and self._textarea_attrs is not None:
             # textarea 의 내부 텍스트는 value 에 해당하므로 저장하지 않는다.
-            self.textareas.append({
-                "name": (self._textarea_attrs.get("name") or "")[:200],
-                "placeholder": (self._textarea_attrs.get("placeholder") or "")[:200],
-            })
+            self.textareas.append(
+                {
+                    "name": (self._textarea_attrs.get("name") or "")[:200],
+                    "placeholder": (self._textarea_attrs.get("placeholder") or "")[:200],
+                }
+            )
             self._textarea_attrs = None
             self._textarea_buf = None
             return
@@ -611,9 +692,7 @@ class _StructureParser(HTMLParser):
             t = self._current_table
             t["column_count"] = t.pop("_max_cols", 0)
             joined_headers = " ".join(t["headers"])
-            t["purpose_candidate"] = [
-                kw for kw in BUSINESS_KEYWORDS if kw in joined_headers
-            ]
+            t["purpose_candidate"] = [kw for kw in BUSINESS_KEYWORDS if kw in joined_headers]
             self.tables.append(t)
             self._current_table = None
             self._in_tr = False
@@ -681,12 +760,14 @@ class _StructureParser(HTMLParser):
 
         if itype in ("submit", "button", "reset"):
             risk, reason = _classify_button(caption, itype)
-            self.buttons.append({
-                "text": caption[:80] if caption else f"<input:{itype}>",
-                "type": itype,
-                "risk_level": risk,
-                "reason": reason,
-            })
+            self.buttons.append(
+                {
+                    "text": caption[:80] if caption else f"<input:{itype}>",
+                    "type": itype,
+                    "risk_level": risk,
+                    "reason": reason,
+                }
+            )
             if self._current_form is not None and risk == "danger_write":
                 self._current_form["risk_level"] = "danger_write"
 
@@ -707,9 +788,11 @@ def _guess_label(attrs: dict[str, str]) -> str:
 
 
 __all__ = [
-    "validate_url_for_readonly_open",
+    "BUSINESS_KEYWORDS",
+    "MEDIUM_KEYWORDS",
+    "RISK_WRITE_KEYWORDS",
+    "SAFE_READ_KEYWORDS",
     "analyze_html_structure",
     "classify_button_text",
-    "RISK_WRITE_KEYWORDS", "SAFE_READ_KEYWORDS", "MEDIUM_KEYWORDS",
-    "BUSINESS_KEYWORDS",
+    "validate_url_for_readonly_open",
 ]
