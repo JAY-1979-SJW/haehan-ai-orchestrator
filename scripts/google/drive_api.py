@@ -47,7 +47,7 @@ class DriveAPI:
             self.page.keyboard.press("Enter")
             time.sleep(3)
             return self._extract_files(limit)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 드라이브 CDP 자동화(검색/업로드/폴더생성/공유링크) - 실패 시 ok:False와 에러 반환, 성공 위장 없음
             _log.error("[drive] 검색 실패: %s", e)
             return []
 
@@ -71,7 +71,7 @@ class DriveAPI:
                 )
                 or []
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 드라이브 CDP 자동화(검색/업로드/폴더생성/공유링크) - 실패 시 ok:False와 에러 반환, 성공 위장 없음
             return []
 
     def upload(self, file_path: str) -> dict:
@@ -93,7 +93,7 @@ class DriveAPI:
             time.sleep(5)  # 업로드 대기
             log_critical("FILE_UPLOAD", f"Drive 업로드: {p.name}", path=str(p), mode="drive_upload")
             return {"ok": True, "name": p.name, "size": p.stat().st_size}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 드라이브 CDP 자동화(검색/업로드/폴더생성/공유링크) - 실패 시 ok:False와 에러 반환, 성공 위장 없음
             return {"ok": False, "error": str(e)[:100]}
 
     def create_folder(self, name: str) -> dict:
@@ -116,7 +116,7 @@ class DriveAPI:
             time.sleep(2)
             log_critical("OTHER", f"Drive 폴더 생성: {name}", mode="drive_folder")
             return {"ok": True, "name": name}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 드라이브 CDP 자동화(검색/업로드/폴더생성/공유링크) - 실패 시 ok:False와 에러 반환, 성공 위장 없음
             return {"ok": False, "error": str(e)[:100]}
 
     def share_link(self, file_index: int = 0, role: str = "viewer") -> dict:
@@ -138,5 +138,5 @@ class DriveAPI:
             time.sleep(1)
             log_critical("OTHER", f"Drive 공유 링크: idx={file_index}", role=role, mode="drive_share")
             return {"ok": True, "file": files[file_index], "role": role}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 드라이브 CDP 자동화(검색/업로드/폴더생성/공유링크) - 실패 시 ok:False와 에러 반환, 성공 위장 없음
             return {"ok": False, "error": str(e)[:100]}

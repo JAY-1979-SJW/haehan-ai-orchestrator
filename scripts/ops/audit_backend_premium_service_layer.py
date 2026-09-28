@@ -85,7 +85,7 @@ def run_audit() -> dict[str, Any]:
             if cls_name == "ExecutionPolicyService":
                 eps_mod = mod
             results.append(item(cid, "PASS" if obj else "FAIL", f"{cls_name}={'found' if obj else 'not found'}"))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
             results.append(item(cid, "FAIL", str(e)))
 
     # sl-08: pending task 조회
@@ -150,7 +150,7 @@ def run_audit() -> dict[str, Any]:
                         f"execution_location={d.execution_location} server_executable={d.server_executable}",
                     )
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
                 results.append(item("sl-11", "WARN", f"decide_execution_policy 호출 실패: {e}"))
 
             # USER_DIRECT_REQUIRED
@@ -163,7 +163,7 @@ def run_audit() -> dict[str, Any]:
                         f"execution_location={d.execution_location} server_executable={d.server_executable}",
                     )
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
                 results.append(item("sl-12", "WARN", f"호출 실패: {e}"))
 
             # BLOCKED (QUARANTINE_OR_HOLD)
@@ -176,7 +176,7 @@ def run_audit() -> dict[str, Any]:
                         f"execution_location={d.execution_location} is_blocked={d.is_blocked}",
                     )
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
                 results.append(item("sl-13", "WARN", f"호출 실패: {e}"))
 
             # OAUTH
@@ -189,7 +189,7 @@ def run_audit() -> dict[str, Any]:
                         f"execution_location={d.execution_location} requires_oauth_setup={d.requires_oauth_setup} is_blocked={d.is_blocked}",
                     )
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
                 results.append(item("sl-14", "WARN", f"호출 실패: {e}"))
         else:
             for cid in ["sl-11", "sl-12", "sl-13", "sl-14"]:

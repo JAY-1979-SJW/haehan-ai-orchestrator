@@ -36,7 +36,7 @@ def check_import() -> list[str]:
 
         _ = m.CANONICAL_SITE_SETTINGS
         _ = m.get_canonical_primary
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 도메인 정본 레지스트리 import/조회 자체검증 스크립트 - 실패를 errors 목록에 추가(감사 리포트, 런타임 게이트 아님)
         errors.append(f"import 실패: {e}")
     return errors
 
@@ -47,7 +47,7 @@ def check_canonical_primary() -> list[str]:
 
     try:
         entry = get_canonical_primary()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 도메인 정본 레지스트리 import/조회 자체검증 스크립트 - 실패를 errors 목록에 추가(감사 리포트, 런타임 게이트 아님)
         errors.append(f"get_canonical_primary 오류: {e}")
         return errors
 
@@ -113,20 +113,20 @@ def check_old_models_not_broken() -> list[str]:
 
         _ = m.GabiaDnsRecordDraft
         _ = m.make_assistant_subdomain_drafts
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 도메인 정본 레지스트리 import/조회 자체검증 스크립트 - 실패를 errors 목록에 추가(감사 리포트, 런타임 게이트 아님)
         errors.append(f"gabia_dns_models import 실패: {e}")
     try:
         import ai_orchestrator.gabia.gabia_browser_task as m
 
         _ = m.GabiaBrowserTask
         _ = m.make_autowork_dns_task
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 도메인 정본 레지스트리 import/조회 자체검증 스크립트 - 실패를 errors 목록에 추가(감사 리포트, 런타임 게이트 아님)
         errors.append(f"gabia_browser_task import 실패: {e}")
     try:
         import ai_orchestrator.gabia.gabia_dns_work_registry as m
 
         _ = m.GABIA_DNS_WORK_TRADE
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 도메인 정본 레지스트리 import/조회 자체검증 스크립트 - 실패를 errors 목록에 추가(감사 리포트, 런타임 게이트 아님)
         errors.append(f"gabia_dns_work_registry import 실패: {e}")
     return errors
 

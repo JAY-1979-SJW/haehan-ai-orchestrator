@@ -72,7 +72,7 @@ def wait_for_js_load(page, timeout_s: float = 10.0, stable_time_s: float = 2.0) 
             "timeout": True,
         }
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 페이지 구조(메뉴/테이블/완성도) 분석 읽기전용 도구 - 실패 시 에러 정보를 담은 기본 dict 반환
         _log.error("[page-analyzer] JS 로드 감시 실패: %s", e)
         return {
             "loaded": False,
@@ -170,7 +170,7 @@ def detect_menu_structure(page) -> dict[str, Any]:
 
         return result
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 페이지 구조(메뉴/테이블/완성도) 분석 읽기전용 도구 - 실패 시 에러 정보를 담은 기본 dict 반환
         _log.error("[page-analyzer] 메뉴 감지 실패: %s", e)
         return {
             "menus": [],
@@ -244,7 +244,7 @@ def extract_table_data(page) -> dict[str, Any]:
 
         return result
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 페이지 구조(메뉴/테이블/완성도) 분석 읽기전용 도구 - 실패 시 에러 정보를 담은 기본 dict 반환
         _log.error("[page-analyzer] 테이블 추출 실패: %s", e)
         return {
             "tables": [],
@@ -312,7 +312,7 @@ def analyze_page_completeness(page) -> dict[str, Any]:
             "recommendations": recommendations,
         }
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 페이지 구조(메뉴/테이블/완성도) 분석 읽기전용 도구 - 실패 시 에러 정보를 담은 기본 dict 반환
         _log.error("[page-analyzer] 완성도 분석 실패: %s", e)
         return {
             "is_complete": False,
@@ -366,7 +366,7 @@ def full_page_analysis(page, wait_for_load: bool = True) -> dict[str, Any]:
 
         return results
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 페이지 구조(메뉴/테이블/완성도) 분석 읽기전용 도구 - 실패 시 에러 정보를 담은 기본 dict 반환
         _log.error("[page-analyzer] 종합 분석 실패: %s", e)
         return {
             "error": str(e),

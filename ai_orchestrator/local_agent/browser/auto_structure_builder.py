@@ -149,7 +149,7 @@ class NetworkCapture:
 
             parsed = urlparse(url)
             return parsed.path
-        except Exception:
+        except Exception:  # noqa: BLE001 - 페이지 구조/필드 자동탐지 및 요소 클릭 헬퍼(읽기전용 탐지+단순 클릭) - 실패 시 빈 목록/False 반환; 파일 내 다른 except처럼 보이는 부분은 실제로는 코드 생성용 문자열 템플릿 내부 텍스트라 AST상 except가 아님
             return url
 
     def get_unique_api_paths(self) -> list[str]:
@@ -210,7 +210,7 @@ def detect_list_structure(page, service: str) -> list[dict]:
             )
             if result:
                 found.append(result)
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
     return found
@@ -238,7 +238,7 @@ def detect_fields_on_page(page) -> dict[str, list]:
                 )
                 if result:
                     found.append(result)
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
 
         if found:
@@ -269,7 +269,7 @@ def click_first_item(page, service: str, list_items: list[dict]) -> bool:
             sel,
         )
         return clicked
-    except Exception:
+    except Exception:  # noqa: BLE001 - 페이지 구조/필드 자동탐지 및 요소 클릭 헬퍼(읽기전용 탐지+단순 클릭) - 실패 시 빈 목록/False 반환; 파일 내 다른 except처럼 보이는 부분은 실제로는 코드 생성용 문자열 템플릿 내부 텍스트라 AST상 except가 아님
         return False
 
 

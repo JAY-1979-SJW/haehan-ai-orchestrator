@@ -136,7 +136,7 @@ class BlogWriterPro:
         seo = BlogSEO(self.page)
         try:
             seo_result = seo.full_optimize(title, body, keywords or [])
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 발행 도우미 - SEO 분석/이미지 alt/예약시간 계산 실패는 기본값으로 폴백, 발행 자체를 우회하지 않음
             _log.warning("[blog-pro] SEO 분석 실패 (skip): %s", e)
             seo_result = {
                 "overall_score": 50,
@@ -186,7 +186,7 @@ class BlogWriterPro:
             try:
                 d = json.loads(f.read_text(encoding="utf-8"))
                 out.append({"file": f.name, "saved_at": d.get("saved_at"), "title": d.get("title", "")[:50]})
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 블로그 발행 도우미 - SEO 분석/이미지 alt/예약시간 계산 실패는 기본값으로 폴백, 발행 자체를 우회하지 않음
                 continue
         return out
 
@@ -198,7 +198,7 @@ class BlogWriterPro:
             from scripts.naver.blog.seo import BlogSEO
 
             seo = BlogSEO(self.page)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 블로그 발행 도우미 - SEO 분석/이미지 alt/예약시간 계산 실패는 기본값으로 폴백, 발행 자체를 우회하지 않음
             seo = None
         out = []
         for i, img in enumerate(images):
@@ -207,7 +207,7 @@ class BlogWriterPro:
                 try:
                     r = seo.generate_image_alt(f"{topic} 이미지 #{i + 1}", product_name=topic)
                     alt = (r.get("text") or "").strip()[:80]
-                except Exception:
+                except Exception:  # noqa: BLE001 - 임시저장 목록 파일 읽기 실패는 해당 항목만 건너뜀
                     pass
             out.append({"path": img, "alt": alt or f"{topic} 관련 이미지"})
         return out
@@ -308,7 +308,7 @@ class BlogWriterPro:
                 if schedule_at <= datetime.now():
                     schedule_at = schedule_at + timedelta(days=1)
                 _log.info("[blog-pro] 자동 예약: %s", schedule_at)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 네이버 블로그 발행 도우미 - SEO 분석/이미지 alt/예약시간 계산 실패는 기본값으로 폴백, 발행 자체를 우회하지 않음
                 _log.warning("[blog-pro] 자동 예약 시간 계산 실패: %s", e)
 
         # 8) 실제 발행

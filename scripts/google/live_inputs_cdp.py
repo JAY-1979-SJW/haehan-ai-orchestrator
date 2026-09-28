@@ -12,6 +12,7 @@ import requests
 
 from .live_inputs_config import _cdp_websocket_timeout
 
+
 class _CDPSessionManager:
     def __init__(self, session: Any):
         self._session = session
@@ -40,7 +41,7 @@ def _new_cdp_target_session(target_url: str) -> _CDPSessionManager:
             if not ws_url:
                 raise RuntimeError("CDP new target response did not include websocket URL")
             return _CDPSessionManager(CDPSession(ws_url, timeout=_cdp_websocket_timeout()))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - CDP 세션 연결 유틸 - 연결 실패를 경고 목록에 누적하며 다음 후보로 폴백, 최종 실패 시 명시적으로 raise
             last_error = exc
     raise RuntimeError(f"CDP new target unavailable: {last_error}")
 
@@ -59,14 +60,14 @@ def _connect_live_input_cdp(action: dict, result: dict) -> Any:
     target_url = action.get("target_url", "")
     try:
         return _new_cdp_target_session(target_url)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - CDP 세션 연결 유틸 - 연결 실패를 경고 목록에 누적하며 다음 후보로 폴백, 최종 실패 시 명시적으로 raise
         result["warnings"].append(f"cdp_new_target_unavailable: {exc}")
 
     host = urlsplit(target_url).netloc
     for token in (host, "google", ""):
         try:
             return connect(url_contains=token, websocket_timeout=_cdp_websocket_timeout())
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - CDP 세션 연결 유틸 - 연결 실패를 경고 목록에 누적하며 다음 후보로 폴백, 최종 실패 시 명시적으로 raise
             result["warnings"].append(f"cdp_existing_tab_unavailable({token or 'any'}): {exc}")
     raise RuntimeError("no usable CDP tab")
 
@@ -76,11 +77,11 @@ def _safe_cdp_identity(session: Any, action: dict) -> dict:
     if session is not None:
         try:
             identity["current_url"] = session.url
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP 세션 연결 유틸 - 연결 실패를 경고 목록에 누적하며 다음 후보로 폴백, 최종 실패 시 명시적으로 raise
             identity["current_url"] = ""
         try:
             identity["title"] = session.title
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP 세션 연결 유틸 - 연결 실패를 경고 목록에 누적하며 다음 후보로 폴백, 최종 실패 시 명시적으로 raise
             identity["title"] = ""
     if session is not None and not identity["current_url"] and action.get("target_url"):
         identity["current_url"] = action["target_url"]

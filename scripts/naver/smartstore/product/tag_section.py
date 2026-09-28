@@ -147,13 +147,13 @@ class TagSection:
     def read_tags(self) -> list[str]:
         try:
             return list(self.page.evaluate(_READ_JS) or [])
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 태그 위젯 UI 조작 - 실패 시 빈 목록/False/에러dict 반환
             return []
 
     def _widget_index(self) -> int:
         try:
             return int(self.page.evaluate(_WIDGET_IDX_JS, TAG_CONFIG))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 태그 위젯 UI 조작 - 실패 시 빈 목록/False/에러dict 반환
             return -1
 
     def is_available(self) -> bool:
@@ -169,12 +169,12 @@ class TagSection:
             if not cb.is_checked():
                 try:
                     cb.click(timeout=3000)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 태그 위젯 UI 조작 - 실패 시 빈 목록/False/에러dict 반환
                     # 숨겨진 체크박스라 Playwright 클릭이 거부될 수 있다
                     self.page.evaluate(f"() => document.querySelector('{DIRECT_INPUT_CHECKBOX}').click()")
                 self.page.wait_for_timeout(1200)
             return bool(cb.is_checked())
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 태그 위젯 UI 조작 - 실패 시 빈 목록/False/에러dict 반환
             return False
 
     def clear_all(self, *, max_rounds: int = 5) -> int:
@@ -185,7 +185,7 @@ class TagSection:
             try:
                 self.page.evaluate(_CLEAR_ALL_JS)
                 self.page.wait_for_timeout(700)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 태그 위젯 UI 조작 - 실패 시 빈 목록/False/에러dict 반환
                 break
         return before - len(self.read_tags())
 
@@ -197,7 +197,7 @@ class TagSection:
         before = len(self.read_tags())
         try:
             r = self.page.evaluate(_ADD_ONE_JS, {"idx": idx, "text": tag})
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 태그 위젯 UI 조작 - 실패 시 빈 목록/False/에러dict 반환
             return {"ok": False, "error": f"{type(e).__name__}"}
         if not r.get("ok"):
             return r

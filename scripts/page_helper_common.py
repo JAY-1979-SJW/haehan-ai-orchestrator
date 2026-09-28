@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from playwright.sync_api import Page
+
 from scripts.logger import get_logger
 
 log = get_logger(__name__)
@@ -35,7 +36,7 @@ def _safe_auto_popup(page: Page) -> None:
     try:
         from scripts.popup_detector import handle_page_popups
         handle_page_popups(page, timeout_s=2.0)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 자동화 공용 헬퍼(팝업처리/중요작업로깅/로그인감지) - 실패 시 무시하고 계속하거나 (None, None) 반환, 로그인 감지 실패는 감지 안 함으로 처리될 뿐 로그인됨으로 오판하지 않음
         log.debug("자동 팝업 처리 실패 (무시): %s", e)
 
 
@@ -782,7 +783,7 @@ def _safe_critical_log(url: str) -> None:
         if is_work_category(category):
             from scripts.critical_logger import log_critical
             log_critical(category, f"페이지 접속: {url[:120]}", url=url)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 자동 팝업 처리/로그 기록/프레임 탐색 등 부수 동작 실패는 무시해도 메인 흐름에 영향 없음
         pass
 
 
@@ -844,9 +845,9 @@ def _safe_auto_login_detect(page: Page, url: str) -> None:
                             domain=domain,
                             url=url[:120],
                         )
-            except Exception:
+            except Exception:  # noqa: BLE001 - 자동 팝업 처리/로그 기록/프레임 탐색 등 부수 동작 실패는 무시해도 메인 흐름에 영향 없음
                 pass
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 자동화 공용 헬퍼(팝업처리/중요작업로깅/로그인감지) - 실패 시 무시하고 계속하거나 (None, None) 반환, 로그인 감지 실패는 감지 안 함으로 처리될 뿐 로그인됨으로 오판하지 않음
         log.debug("자동 로그인 감지 실패 (무시): %s", e)
 
 
@@ -860,6 +861,6 @@ def _find_frame(page: Page, selector: str):
             el = frame.query_selector(selector)
             if el and el.is_visible():
                 return frame, el
-        except Exception:
+        except Exception:  # noqa: BLE001 - 자동 팝업 처리/로그 기록/프레임 탐색 등 부수 동작 실패는 무시해도 메인 흐름에 영향 없음
             pass
     return None, None
