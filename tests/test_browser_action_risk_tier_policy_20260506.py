@@ -7,12 +7,33 @@ FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_risk_tier_po
 
 EXPECTED_TIERS = {"LOW_READ", "LOW_NAVIGATE", "MEDIUM_TYPE", "MEDIUM_DOWNLOAD", "HIGH_STATE_CHANGE", "CRITICAL_SUBMIT"}
 
-LOW_READ_ACTIONS = {"page_open", "read_text", "extract_table", "screenshot", "inspect_dom", "get_current_url", "check_status"}
+LOW_READ_ACTIONS = {
+    "page_open",
+    "read_text",
+    "extract_table",
+    "screenshot",
+    "inspect_dom",
+    "get_current_url",
+    "check_status",
+}
 LOW_NAVIGATE_ACTIONS = {"click_tab", "click_detail", "pagination", "breadcrumb", "open_link_same_origin"}
 MEDIUM_TYPE_ACTIONS = {"type_text", "fill_search_keyword", "fill_filter", "fill_date_range", "select_option"}
 MEDIUM_DOWNLOAD_ACTIONS = {"download_file", "save_attachment", "export_csv", "export_pdf"}
-HIGH_STATE_CHANGE_ACTIONS = {"save_form", "form_commit", "approve_request", "mark_complete", "delete_record", "update_status"}
-CRITICAL_SUBMIT_ACTIONS = {"submit_form", "final_submit", "confirm_action", "execute_transaction", "open_type_close_controlled"}
+HIGH_STATE_CHANGE_ACTIONS = {
+    "save_form",
+    "form_commit",
+    "approve_request",
+    "mark_complete",
+    "delete_record",
+    "update_status",
+}
+CRITICAL_SUBMIT_ACTIONS = {
+    "submit_form",
+    "final_submit",
+    "confirm_action",
+    "execute_transaction",
+    "open_type_close_controlled",
+}
 
 EXISTING_ACTION_MAPPING = {
     "inspect": "LOW_READ",
@@ -27,7 +48,7 @@ EXISTING_ACTION_MAPPING = {
 
 def load_fixture():
     assert FIXTURE_PATH.exists(), f"fixture not found: {FIXTURE_PATH}"
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -139,16 +160,16 @@ def test_critical_submit_open_type_close_controlled_in_tier():
 def test_no_tier_allows_production_submit():
     data = load_fixture()
     for tier_name, tier in data["tiers"].items():
-        assert tier.get("production_submit_allowed") is False, \
-            f"{tier_name}: production_submit_allowed must be False"
+        assert tier.get("production_submit_allowed") is False, f"{tier_name}: production_submit_allowed must be False"
 
 
 def test_existing_action_mapping():
     data = load_fixture()
     mapping = data["existing_action_mapping"]
     for action, expected_tier in EXISTING_ACTION_MAPPING.items():
-        assert mapping.get(action) == expected_tier, \
+        assert mapping.get(action) == expected_tier, (
             f"action '{action}' expected tier '{expected_tier}', got '{mapping.get(action)}'"
+        )
 
 
 def test_conflict_verdict():

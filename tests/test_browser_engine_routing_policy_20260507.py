@@ -36,7 +36,7 @@ MODULE_PATH = Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" 
 
 @pytest.fixture(scope="module")
 def fixture_data():
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 

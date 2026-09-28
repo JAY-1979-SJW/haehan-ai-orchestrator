@@ -105,7 +105,7 @@ def save_credentials(naver_id: str, naver_pw: str) -> Path:
     content = f"NAVER_ID={naver_id}\nNAVER_PW={naver_pw}\n"
     ENV_FILE.write_text(content, encoding="utf-8")
     try:
-        os.chmod(ENV_FILE, 0o600)
+        ENV_FILE.chmod(0o600)
     except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
         pass
     _log.info("[naver-auth] 자격증명 저장: %s", ENV_FILE)

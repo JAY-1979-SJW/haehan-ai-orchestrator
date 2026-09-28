@@ -149,7 +149,7 @@ def save_csv(data: list[dict], path: Path):
         "tags",
         "body",
     ]
-    with open(path, "w", newline="", encoding="utf-8-sig") as f:
+    with path.open("w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         for row in data:
