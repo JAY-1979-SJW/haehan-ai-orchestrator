@@ -13809,30 +13809,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/shared/__init__.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/shared/constants.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/shared/excel_utils.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/smoke_app_api_readonly_endpoints.py": {
    "layer": "L12",
    "role": "ops_tool",
