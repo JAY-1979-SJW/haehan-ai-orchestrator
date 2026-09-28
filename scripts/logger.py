@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import sys
@@ -63,11 +64,10 @@ def _init_root() -> None:
     # 콘솔 핸들러 (frozen exe의 cp949 stdout에서도 한글·em-dash 안전 기록)
     stream = sys.stdout
     if stream is not None:
-        try:
+        # 콘솔 스트림 UTF-8 인코딩 재설정 best-effort - 실패해도 로깅 자체(핸들러 등록)는 계속 진행
+        with contextlib.suppress(Exception):
             # utf-8 로 강제 + 인코딩 불가 문자는 대체(크래시 방지)
             stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-        except Exception:  # noqa: BLE001 - 콘솔 로그 스트림 UTF-8 인코딩 재설정 best-effort - 실패해도 로깅 자체(핸들러 등록)는 계속 진행, 단순 콘솔 출력 인코딩 조정
-            pass
         ch = logging.StreamHandler(stream)
         ch.setLevel(_resolve_level())
         ch.setFormatter(logging.Formatter(_FMT_CONSOLE))

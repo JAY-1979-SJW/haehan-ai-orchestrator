@@ -10,6 +10,7 @@ fail-open: 예상 못한 오류는 항상 exit 0 (차단 경로 제외).
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 import time
@@ -91,10 +92,9 @@ def _handle_session_start(payload: dict) -> int:
 
 
 def _handle_quiet_write() -> int:
-    try:
+    # fail-open 훅 - handoff write 실패로 세션을 죽이지 않기 위한 의도된 설계(차단 경로는 이 함수 밖에서 별도 처리됨)
+    with contextlib.suppress(Exception):
         sh.write()
-    except Exception:  # noqa: BLE001 - 세션 기록 크기 기반 handoff 강제 훅 - 파일명은 session_guard이나 로그아웃/보안 차단과 무관한 생산성 훅, 자체 문서화된 fail-open(exit 0)으로 세션을 죽이지 않기 위한 의도된 설계이며 실제 차단(exit 2) 경로는 이 except 밖에서 이미 처리됨
-        pass
     return 0
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 
@@ -42,16 +43,14 @@ def api_submit_history(user: dict = Depends(require_role("admin", "owner"))) -> 
     history: list = []
     if submits_dir.exists():
         for f in sorted(submits_dir.glob("*.json"), reverse=True)[:20]:
-            try:
+            # 제출이력 JSON 파일 손상 시 해당 건만 건너뜀(읽기전용)
+            with contextlib.suppress(Exception):
                 history.append(json.loads(f.read_text(encoding="utf-8")))
-            except Exception:  # noqa: S110, BLE001
-                pass
     latest: dict = {}
     if submit_path.exists():
-        try:
+        # 제출이력 JSON 파일 손상 시 건너뜀(읽기전용)
+        with contextlib.suppress(Exception):
             latest = json.loads(submit_path.read_text(encoding="utf-8"))
-        except Exception:  # noqa: S110, BLE001
-            pass
     log_event(
         "SMARTSTORE_HISTORY_READ",
         task_id="-",

@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 from scripts.logger import get_logger
@@ -148,10 +149,9 @@ def _detect_notice_popup(page) -> dict:
             el = page.locator(sel).first
             if el.count() > 0 and el.is_visible(timeout=300):
                 txt = ""
-                try:
+                # 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+                with contextlib.suppress(Exception):
                     txt = el.inner_text(timeout=500)[:100]
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                    pass
                 return {"detected": True, "selector": sel, "text": txt}
         except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
@@ -300,7 +300,8 @@ def _close_popup_windows(page) -> int:
 
 
 def _cleanup_backdrop(page) -> None:
-    try:
+    # 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+    with contextlib.suppress(Exception):
         page.evaluate("""
         () => {
             document.querySelectorAll(
@@ -314,5 +315,3 @@ def _cleanup_backdrop(page) -> None:
             document.body.style.overflow = "";
         }
         """)
-    except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-        pass

@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import sys
 from pathlib import Path
 
@@ -372,10 +373,9 @@ class TestRegistrationCodesWrapper:
         from ai_orchestrator import registration_codes
 
         yield
-        try:
+        # 테스트 후 store 정리 - clear() 미구현/실패해도 다음 테스트에 영향 없음(각 테스트가 자체 격리)
+        with contextlib.suppress(Exception):
             registration_codes.clear()
-        except Exception:  # noqa: S110, BLE001
-            pass
 
     def test_wrapper_issue_code(self, reset_store):
         """래퍼 issue_code 호환성."""

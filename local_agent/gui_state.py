@@ -5,6 +5,7 @@ GUI 와 트레이가 공유하는 단일 진실 소스.
 
 from __future__ import annotations
 
+import contextlib
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -174,10 +175,9 @@ class GuiController:
     def _notify(self) -> None:
         snap = self.model
         for fn in self._listeners:
-            try:
+            # 구독자 콜백 실패가 다른 구독자 통지를 막지 않도록 격리(순수 상태 머신, UI 콜백 오류는 GUI 계층 책임)
+            with contextlib.suppress(Exception):
                 fn(snap)
-            except Exception:  # noqa: S110, BLE001
-                pass
 
     def render_user_block(self) -> str:
         m = self.model

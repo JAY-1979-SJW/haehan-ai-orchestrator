@@ -25,6 +25,7 @@ severity: low(0.1) | medium(0.4) | high(0.8) | critical(1.0)
 
 from __future__ import annotations
 
+import contextlib
 import re
 
 from scripts.logger import get_logger
@@ -379,7 +380,8 @@ class BotRadar:
             pass
 
     def _on_request_failed(self, req) -> None:
-        try:
+        # 봇 탐지 신호 스캔 도구 - 이벤트 기록 실패는 무시(리포팅 전용, 차단 여부를 직접 결정하지 않음)
+        with contextlib.suppress(Exception):
             self.requests.append(
                 {
                     "kind": "request_failed",
@@ -387,8 +389,6 @@ class BotRadar:
                     "severity": "low",
                 }
             )
-        except Exception:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
-            pass
 
     def report(self) -> dict:
         # DOM/cookie 스캔 + 누적 이벤트 합산
