@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import time
@@ -324,10 +325,8 @@ def write_pid_file(paths: GuardPaths, pid: int) -> None:
 
 
 def clear_pid_file(paths: GuardPaths) -> None:
-    try:
+    with contextlib.suppress(FileNotFoundError):
         paths.pid_file.unlink()
-    except FileNotFoundError:
-        pass
 
 
 def cleanup_stale_pid(paths: GuardPaths) -> tuple[int, bool]:
@@ -358,10 +357,8 @@ def read_lock_file(paths: GuardPaths) -> dict[str, Any]:
 
 
 def clear_lock_file(paths: GuardPaths) -> None:
-    try:
+    with contextlib.suppress(FileNotFoundError):
         paths.lock_file.unlink()
-    except FileNotFoundError:
-        pass
 
 
 def is_lock_active(paths: GuardPaths) -> bool:
@@ -579,10 +576,8 @@ def quit_automation_browsers(
 
     clear_pid_file(paths)
     clear_lock_file(paths)
-    try:
+    with contextlib.suppress(FileNotFoundError):
         paths.snapshot_file.unlink()
-    except FileNotFoundError:
-        pass
 
     return {
         "ok": not failed,

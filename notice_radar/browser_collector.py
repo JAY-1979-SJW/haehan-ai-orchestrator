@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import re
 import time
 from pathlib import Path
@@ -43,10 +44,9 @@ def collect_current_browser_page(
         p.stop()
         raise RuntimeError("No usable browser tab found through CDP")
 
-    try:
+    # 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
+    with contextlib.suppress(Exception):
         page.wait_for_load_state("domcontentloaded", timeout=10_000)
-    except Exception:  # noqa: S110, BLE001 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
-        pass
 
     html = page.content()
     url = page.url

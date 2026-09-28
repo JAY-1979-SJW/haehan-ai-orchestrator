@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 from typing import Any
 
@@ -42,10 +43,8 @@ def _cdp_call(fn):
     except Exception as e:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
         return None, str(e)[:200]
     finally:
-        try:
+        with contextlib.suppress(Exception):
             pw.stop()
-        except Exception:  # noqa: S110, BLE001
-            pass
 
 
 # ── 서비스 열기 (로그인된 CDP 브라우저에서) ──────────────────────────────────
@@ -72,10 +71,8 @@ def open_service(
     def _fn(page):
         new = page.context.new_page()
         new.goto(url, wait_until="domcontentloaded", timeout=20000)
-        try:
+        with contextlib.suppress(Exception):
             new.bring_to_front()
-        except Exception:  # noqa: S110, BLE001
-            pass
         return {"ok": True, "url": new.url}
 
     result, err = _cdp_call(_fn)

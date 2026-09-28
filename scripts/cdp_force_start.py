@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
@@ -197,10 +198,9 @@ def cmd_status() -> None:
         _show_info()
     pid_data = {}
     if PID_FILE.exists():
-        try:
+        # 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회 실패 시 pid_data 비워둠(print 안내로 대체)
+        with contextlib.suppress(Exception):
             pid_data = json.loads(PID_FILE.read_text(encoding="utf-8"))
-        except Exception:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내
-            pass
     if pid_data.get("pid"):
         print(f"Chrome PID: {pid_data['pid']}")
 

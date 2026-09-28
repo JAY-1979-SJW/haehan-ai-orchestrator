@@ -18,6 +18,7 @@ ExportAsFixedFormat 하는 방식 — 매번 새로 열면 1,840건 기준 감�
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import shutil
@@ -224,10 +225,9 @@ def main():
         wb = excel.Workbooks.Open(tmp_xlsx)
         try:
             for name in DROP_SHEETS:
-                try:
+                # 임시 엑셀 시트 삭제 cleanup 단계 — 실패해도 실제 팩스발송(send_fax) 로직은 이 부분과 무관
+                with contextlib.suppress(Exception):
                     wb.Sheets(name).Delete()
-                except Exception:  # noqa: BLE001 - 임시 엑셀 시트 삭제·발송후 임시PDF 삭제 등 cleanup 단계 — 실패해도 실제 팩스발송(send_fax) 로직은 이 except로 감싸지 않아 영향 없음
-                    pass
 
             content_addrs = {}
             for name in KEEP_SHEETS:
@@ -321,10 +321,9 @@ def main():
                     "[%d/%d 실패] %s (%s): %s", i + 1, len(targets), r["corp_nm"], r["fax_no"], result.get("message")
                 )
 
-            try:
+            # 발송후 임시 PDF 삭제 cleanup 단계 — 실패해도 실제 팩스발송(send_fax) 로직은 이 부분과 무관
+            with contextlib.suppress(Exception):
                 Path(final_pdf).unlink(missing_ok=True)
-            except Exception:  # noqa: BLE001 - 임시 엑셀 시트 삭제·발송후 임시PDF 삭제 등 cleanup 단계 — 실패해도 실제 팩스발송(send_fax) 로직은 이 except로 감싸지 않아 영향 없음
-                pass
 
             time.sleep(2)
 

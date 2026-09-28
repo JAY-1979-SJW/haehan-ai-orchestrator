@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import sys
 import time as _t
 
@@ -70,10 +71,8 @@ def api_settlements_summary(user: dict = Depends(require_role("admin", "owner"))
     total = 0
     for row in rows:
         raw = col(row, "정산금액") or col(row, "금액") or col(row, "amount")
-        try:
+        with contextlib.suppress(ValueError):
             total += int(str(raw).replace(",", "").replace("원", "").strip() or "0")
-        except ValueError:
-            pass
     return {
         "ok": True,
         "total_rows": len(rows),
