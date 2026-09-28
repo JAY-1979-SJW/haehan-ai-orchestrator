@@ -83,7 +83,7 @@ def send_photo(
         data: dict = {"chat_id": cid, "caption": caption, "parse_mode": parse_mode}
         if reply_markup:
             data["reply_markup"] = json.dumps(reply_markup, ensure_ascii=False)
-        with open(photo_path, "rb") as f:
+        with photo_path.open("rb") as f:
             files = {"photo": (photo_path.name, f, "image/png")}
             resp = httpx.post(_url("sendPhoto"), data=data, files=files, timeout=_TIMEOUT)
         resp.raise_for_status()

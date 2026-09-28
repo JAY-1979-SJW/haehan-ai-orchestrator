@@ -100,7 +100,7 @@ class BlogCollectMixin:
             import json
 
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-            with open(save_path, "w", encoding="utf-8") as f:
+            with Path(save_path).open("w", encoding="utf-8") as f:
                 json.dump(snapshot, f, ensure_ascii=False, indent=2)
             print(f"  저장: {save_path}")
 

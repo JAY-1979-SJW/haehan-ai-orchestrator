@@ -8,7 +8,7 @@ DEFAULT_POLICY_PATH = Path(__file__).resolve().parents[1] / "policies" / "defaul
 
 
 def load_policy(path: Path = DEFAULT_POLICY_PATH) -> dict:
-    with open(path, encoding="utf-8") as f:
+    with path.open(encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

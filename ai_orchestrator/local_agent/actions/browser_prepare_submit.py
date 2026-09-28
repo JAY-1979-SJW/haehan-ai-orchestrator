@@ -9,8 +9,8 @@
 
 from __future__ import annotations
 
-import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -61,7 +61,7 @@ def execute(
     if attached_files:
         for f in attached_files:
             if f:
-                safe_files.append(os.path.basename(f))
+                safe_files.append(Path(f).name)
 
     # 민감 필드 확인 (input params에서)
     sensitive_keys = _find_sensitive_keys(

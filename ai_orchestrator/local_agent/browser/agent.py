@@ -541,7 +541,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                 suggested = Path(file_url.split("?")[0]).name or "download"
 
             dest = save_path / suggested
-            with open(dest, "wb") as f:
+            with dest.open("wb") as f:
                 for chunk in resp.iter_content(chunk_size=65536):
                     if chunk:
                         f.write(chunk)
