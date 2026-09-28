@@ -122,7 +122,7 @@ def _start_worker(server_url: str, log_path: Path) -> subprocess.Popen:
     env["HAEHAN_AGENT_POLL_SEC"] = "2"
     env["PYTHONIOENCODING"] = "utf-8"
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    out = open(log_path, "a", encoding="utf-8")
+    out = log_path.open("a", encoding="utf-8")
     return subprocess.Popen(
         [
             sys.executable,
@@ -155,7 +155,7 @@ def _start_token_worker(
     env["HAEHAN_AGENT_AUDIT"] = str(ROOT / "logs" / "live_parallel_task_audit.jsonl")
     env["PYTHONIOENCODING"] = "utf-8"
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    out = open(log_path, "a", encoding="utf-8")
+    out = log_path.open("a", encoding="utf-8")
     return subprocess.Popen(
         [sys.executable, "-c", WORKER_CODE],
         cwd=ROOT,

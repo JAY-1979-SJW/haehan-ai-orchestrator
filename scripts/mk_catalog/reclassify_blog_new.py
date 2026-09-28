@@ -1,7 +1,8 @@
 import json
 from collections import Counter
+from pathlib import Path
 
-catalog = json.load(open("data/mk_catalog/products_web.json", encoding="utf-8"))
+catalog = json.load(Path("data/mk_catalog/products_web.json").open(encoding="utf-8"))
 
 
 def classify(name, features):
@@ -160,4 +161,4 @@ print("reclassified:", changed)
 newitems = [c for c in catalog if c["src"] == "blog-new"]
 print(Counter(c["cat"] for c in newitems).most_common())
 
-json.dump(catalog, open("data/mk_catalog/products_web.json", "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(catalog, Path("data/mk_catalog/products_web.json").open("w", encoding="utf-8"), ensure_ascii=False)

@@ -154,8 +154,8 @@ def main():
     code_path = "/tmp/regcode.txt"
     try:
         # 로컬 머신이므로 /tmp 는 WSL 외부 — skip Windows fallback
-        if os.path.exists(code_path):
-            raw_code = open(code_path).read().strip()
+        if Path(code_path).exists():
+            raw_code = Path(code_path).read_text().strip()
         else:
             raw_code = os.environ.get("SMOKE_REGISTRATION_CODE", "").strip()
     except Exception:  # noqa: BLE001 - 로컬 에이전트 외부 접근 smoke 테스트 - HTTP/WS 실패를 에러 dict로 반환

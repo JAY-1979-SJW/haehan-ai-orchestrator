@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import json
-import os
 from collections import Counter, defaultdict
 from datetime import datetime
+from pathlib import Path
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -229,7 +229,7 @@ def _write_analysis(ws, articles, month_label, start_row):
 
 
 def main():
-    data = json.loads(open(DATA_PATH, encoding="utf-8").read())
+    data = json.loads(Path(DATA_PATH).read_text(encoding="utf-8"))
 
     for a in data:
         try:
@@ -387,7 +387,7 @@ def main():
 
     # ── 저장 ──────────────────────────────────────────────────────────
     wb.save(OUT_PATH)
-    print(f"저장: {os.path.abspath(OUT_PATH)}")
+    print(f"저장: {Path(OUT_PATH).resolve()}")
     print(f"시트: {len(wb.sheetnames)}개 — {', '.join(wb.sheetnames)}")
 
 

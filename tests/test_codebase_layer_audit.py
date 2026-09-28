@@ -35,7 +35,7 @@ def test_audit_detects_root_python_script():
     rows = [
         ClassifiedFile("loose_script.py", "L4", "generic script automation", 10, 1.0),
     ]
-    issues = audit(rows, root=Path("."))
+    issues = audit(rows, root=Path())
     assert any(issue.code == "ROOT_PY_SCRIPT" for issue in issues)
 
 
@@ -43,7 +43,7 @@ def test_audit_detects_fat_hiworks_router():
     rows = [
         ClassifiedFile("scripts/hiworks/router.py", "L5", "site module", 13000, 1.0),
     ]
-    issues = audit(rows, root=Path("."))
+    issues = audit(rows, root=Path())
     assert (
         AuditIssue(
             "warn",
