@@ -121,7 +121,7 @@ def is_controlled_internal_origin(
 
         return False
 
-    except Exception:
+    except Exception:  # noqa: BLE001 - is_controlled_internal_origin(): URL 파싱 실패 시 False(내부 신뢰 오리진 아님)로 fail-closed 반환 — 더 안전한 방향의 기본값
         return False
 
 

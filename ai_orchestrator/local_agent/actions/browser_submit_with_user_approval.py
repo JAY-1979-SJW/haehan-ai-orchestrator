@@ -6,14 +6,15 @@
 - 서버에서 직접 클릭 안 함
 - 쿠키/session/storage_state 추출 안 함
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.local_agent.action_registry import register_handler
 from ai_orchestrator.local_agent.action_evidence_collector import collect_evidence
+from ai_orchestrator.local_agent.action_registry import register_handler
 from ai_orchestrator.local_agent.user_approval_gate import verify_and_consume_token
 
 ACTION_NAME = "browser.submit_with_user_approval"
@@ -73,7 +74,7 @@ def execute(
     try:
         parsed_url = urlparse(page_url)
         safe_url = f"{parsed_url.scheme}://{parsed_url.hostname or ''}{parsed_url.path or ''}"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 감사로그 표시용 safe_url 생성 실패 시 '(invalid_url)' 플레이스홀더 사용 — verify_and_consume_token 승인 검증을 이미 통과한 이후 단계이므로 게이트 판정과 무관
         safe_url = "(invalid_url)"
 
     # 실제 제출은 handoff로 — 서버에서 실행하지 않음
@@ -92,7 +93,7 @@ def execute(
         "evidence_requirements": evidence_requirements or {},
         "timeout_seconds": timeout_seconds,
         "headless": headless,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     raw: dict[str, Any] = {

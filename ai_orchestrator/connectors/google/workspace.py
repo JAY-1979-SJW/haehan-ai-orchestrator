@@ -41,7 +41,7 @@ def get_gmail_inbox(
         items = fetch_recent_emails(max_results=max_results, hours=hours)
         audit("GOOGLE_GMAIL_INBOX_READ", user, status="ok", note=f"count={len(items)}")
         return {"ok": True, "items": items, "count": len(items), "duration_ms": duration_ms(t0)}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Gmail 받은편지함 조회 API — 예외 시 {ok: False, error}로 반환, 읽기 전용 조회 실패 처리
         return {"ok": False, "error": str(e)[:200], "duration_ms": duration_ms(t0)}
 
 

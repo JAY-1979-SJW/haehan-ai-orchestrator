@@ -72,7 +72,7 @@ def search_videos(
                 status_code=429, detail="YouTube API 일일 할당량 초과(429). 내일 재시도하거나 다른 API 키를 사용하세요."
             )
         raise HTTPException(status_code=502, detail=f"YouTube API 오류: HTTP {e.code}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - YouTube 검색 API 오류를 HTTPException 500으로 변환 — 조회 실패 처리, 업로드 등 쓰기 동작과 무관
         raise HTTPException(status_code=500, detail=f"YouTube 검색 오류: {type(e).__name__}: {str(e)[:200]}")
     result["report_path"] = str(path)
     result["duration_ms"] = duration_ms(t0)

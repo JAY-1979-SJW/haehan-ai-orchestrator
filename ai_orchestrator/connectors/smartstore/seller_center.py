@@ -34,7 +34,7 @@ def api_open_seller_center(page_key: str = "dashboard", user: dict = Depends(req
             page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
             page.bring_to_front()
             page.goto(url, timeout=15000, wait_until="domcontentloaded")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 브라우저로 셀러센터 페이지 열기 실패를 {ok: False, error, hint}로 반환 — 읽기 전용 네비게이션
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(
         "SMARTSTORE_OPEN",

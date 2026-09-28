@@ -175,5 +175,5 @@ def _extract_domain(url: str) -> str:
 
     try:
         return urlparse(url).hostname or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL에서 도메인 추출 실패 시 빈 문자열 반환 — 실제 설치 여부는 별도 정책 함수(evaluate_installer)가 판정하며, 도메인 추출 실패는 매칭 실패로 이어져 fail-closed
         return ""

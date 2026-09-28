@@ -352,7 +352,7 @@ def get_search_status(
 
     try:
         recent_runs = load_recent_runs(recent_runs_n, path=run_log_path)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 최근 실행 로그 조회 실패 시 빈 리스트로 폴백 — 상태 요약용 부가 정보일 뿐 검색 실행 자체에 영향 없음
         recent_runs = []
     last_success_at, last_warn_at, last_fail_at = _extract_timestamps(recent_runs)
 

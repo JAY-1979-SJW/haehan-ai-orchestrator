@@ -36,7 +36,7 @@ def api_settlements_collect(limit: int = 30, user: dict = Depends(require_role("
             from scripts.naver.smartstore import NaverSmartStore
 
             result = NaverSmartStore(page).list_settlements(limit=limit)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정산 내역 CDP 수집 실패를 {ok: False, error}로 저장 — 읽기 전용 조회
         result = {"ok": False, "error": str(e)}
     result.update({"collected_at": now_iso(), "duration_ms": elapsed_ms(t0)})
     save_ss("settlements", result)

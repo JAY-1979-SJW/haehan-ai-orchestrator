@@ -25,7 +25,7 @@ def fetch_gmail_via_cdp(max_results: int = 20) -> list[dict]:
         # Gmail 탭 찾기 또는 열기
         try:
             page = get_page_by_url("mail.google.com", create_url=_GMAIL_INBOX_URL)
-        except Exception:
+        except Exception:  # noqa: BLE001 - Gmail CDP 탭 조회 실패 시 새 탭을 여는 대체 경로로 폴백(읽기 전용 수집), 메일 목록 조회 실패는 로그 남기고 재raise — 쓰기·발송 없음
             page = open_page(_GMAIL_INBOX_URL)
 
         # 로딩 대기

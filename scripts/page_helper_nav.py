@@ -1,13 +1,15 @@
 """page_helper 네비게이션 헬퍼 — goto / wait_visible / wait_nav."""
+
 from __future__ import annotations
 
 from playwright.sync_api import Page
+
 from scripts.logger import get_logger
 from scripts.page_helper_common import (
+    _find_frame,
+    _safe_auto_login_detect,
     _safe_auto_popup,
     _safe_critical_log,
-    _safe_auto_login_detect,
-    _find_frame,
 )
 
 log = get_logger(__name__)
@@ -39,7 +41,7 @@ def page_wait_visible(page: Page, selector: str, timeout: int = 20000) -> bool:
         page.wait_for_selector(selector, timeout=timeout, state="visible")
         log.debug("visible OK: %s", selector)
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 자동화 헬퍼(요소 가시성 확인·URL 패턴 대기) — 실패 시 대체 탐색(iframe) 시도 또는 False 반환하는 best-effort 판정, 승인/차단 로직 아님, 실제 클릭·제출 없음
         pass
 
     # iframe 탐색 fallback
@@ -58,6 +60,6 @@ def page_wait_nav(page: Page, url_pattern: str, timeout: int = 20000) -> bool:
         page.wait_for_url(url_pattern, timeout=timeout)
         log.debug("nav OK: %s", url_pattern)
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 자동화 헬퍼(요소 가시성 확인·URL 패턴 대기) — 실패 시 대체 탐색(iframe) 시도 또는 False 반환하는 best-effort 판정, 승인/차단 로직 아님, 실제 클릭·제출 없음
         log.warn("nav 타임아웃: %s", url_pattern)
         return False

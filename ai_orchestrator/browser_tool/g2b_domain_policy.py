@@ -23,10 +23,12 @@ from urllib.parse import urlparse
 
 _G2B_APEX_DOMAIN = "g2b.go.kr"
 
-_G2B_PUBLIC_READONLY_DOMAINS: frozenset[str] = frozenset({
-    "g2b.go.kr",
-    "www.g2b.go.kr",
-})
+_G2B_PUBLIC_READONLY_DOMAINS: frozenset[str] = frozenset(
+    {
+        "g2b.go.kr",
+        "www.g2b.go.kr",
+    }
+)
 
 # www prefix → apex로 정규화
 _G2B_WWW_NORMALIZE_MAP: dict[str, str] = {
@@ -34,9 +36,11 @@ _G2B_WWW_NORMALIZE_MAP: dict[str, str] = {
 }
 
 # 검증 필요 서브도메인 (공개 read-only 확인 전)
-_G2B_READONLY_CANDIDATE_DOMAINS: frozenset[str] = frozenset({
-    "shop.g2b.go.kr",
-})
+_G2B_READONLY_CANDIDATE_DOMAINS: frozenset[str] = frozenset(
+    {
+        "shop.g2b.go.kr",
+    }
+)
 
 # ── domain_decision 값 ────────────────────────────────────────────────────────
 
@@ -58,42 +62,82 @@ PATH_UNKNOWN = "PATH_UNKNOWN"
 
 # ── 금지 경로 키워드 (소문자 경로 부분문자열 매칭) ────────────────────────────
 
-_LOGIN_PATH_KEYWORDS: frozenset[str] = frozenset({
-    "egovuserreqstlogin", "login", "/co/menu/", "userlogin", "signin",
-})
+_LOGIN_PATH_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "egovuserreqstlogin",
+        "login",
+        "/co/menu/",
+        "userlogin",
+        "signin",
+    }
+)
 
-_CERT_PATH_KEYWORDS: frozenset[str] = frozenset({
-    "/cert", "/certificate", "/sign", "/esign", "/nksign",
-})
+_CERT_PATH_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "/cert",
+        "/certificate",
+        "/sign",
+        "/esign",
+        "/nksign",
+    }
+)
 
-_BID_SUBMIT_PATH_KEYWORDS: frozenset[str] = frozenset({
-    "/bid/", "/bidding/", "/submit", "/apply", "/ptb05",
-})
+_BID_SUBMIT_PATH_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "/bid/",
+        "/bidding/",
+        "/submit",
+        "/apply",
+        "/ptb05",
+    }
+)
 
-_CONTRACT_PATH_KEYWORDS: frozenset[str] = frozenset({
-    "/contract", "/ct/menu/ntn02", "/ctb",
-})
+_CONTRACT_PATH_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "/contract",
+        "/ct/menu/ntn02",
+        "/ctb",
+    }
+)
 
-_PAYMENT_PATH_KEYWORDS: frozenset[str] = frozenset({
-    "/pay", "/payment", "/checkout",
-})
+_PAYMENT_PATH_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "/pay",
+        "/payment",
+        "/checkout",
+    }
+)
 
 # ── 금지 operation ────────────────────────────────────────────────────────────
 
-_BLOCKED_OPERATIONS: frozenset[str] = frozenset({
-    "submit", "type", "fill", "click_submit", "auto_login",
-    "execute_type", "execute_submit", "download",
-})
+_BLOCKED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "submit",
+        "type",
+        "fill",
+        "click_submit",
+        "auto_login",
+        "execute_type",
+        "execute_submit",
+        "download",
+    }
+)
 
 # click은 별도 승인 필요 (차단이 아닌 requires_approval)
-_APPROVAL_REQUIRED_OPERATIONS: frozenset[str] = frozenset({
-    "click",
-})
+_APPROVAL_REQUIRED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "click",
+    }
+)
 
 # 허용 operation
-_READONLY_OPERATIONS: frozenset[str] = frozenset({
-    "read", "navigate", "open_url",
-})
+_READONLY_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "read",
+        "navigate",
+        "open_url",
+    }
+)
 
 
 def normalize_g2b_domain(domain: str) -> dict[str, Any]:
@@ -252,7 +296,7 @@ def classify_g2b_url(
         parsed = urlparse(url) if url else None
         domain = parsed.netloc if parsed else ""
         path = parsed.path if parsed else ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - classify_g2b_url(): URL 파싱 실패 시 blocked_reason=URL_PARSE_ERROR로 설정 후 반환 — 결과 dict의 safe_to_dispatch/safe_to_execute/readonly_allowed는 초기값 False 그대로 유지되어 fail-closed
         result["blocked_reason"] = "URL_PARSE_ERROR"
         result["message_ko"] = "URL 파싱 오류."
         return result
@@ -278,8 +322,11 @@ def classify_g2b_url(
     result["path_decision"] = path_decision
 
     blocked_paths = {
-        PATH_BLOCKED_LOGIN, PATH_BLOCKED_CERT, PATH_BLOCKED_BID_SUBMIT,
-        PATH_BLOCKED_CONTRACT, PATH_BLOCKED_PAYMENT,
+        PATH_BLOCKED_LOGIN,
+        PATH_BLOCKED_CERT,
+        PATH_BLOCKED_BID_SUBMIT,
+        PATH_BLOCKED_CONTRACT,
+        PATH_BLOCKED_PAYMENT,
     }
 
     if path_decision in blocked_paths:
@@ -292,7 +339,7 @@ def classify_g2b_url(
     if path_decision == PATH_READONLY_ALLOWED and op in _READONLY_OPERATIONS | {""}:
         result["readonly_allowed"] = True
         result["safe_to_dispatch"] = True
-        result["message_ko"] = f"G2B 공개 read-only 경로. 허용."
+        result["message_ko"] = "G2B 공개 read-only 경로. 허용."
         return result
 
     result["message_ko"] = f"G2B 경로 분류: {path_decision}, operation: {op}"
@@ -310,8 +357,11 @@ def validate_g2b_domain_policy_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required = [
-        "domain_decision", "path_decision", "readonly_allowed",
-        "download_auto_allowed", "safe_to_execute",
+        "domain_decision",
+        "path_decision",
+        "readonly_allowed",
+        "download_auto_allowed",
+        "safe_to_execute",
     ]
     for field in required:
         if field not in result:
@@ -336,19 +386,19 @@ def validate_g2b_domain_policy_result(result: dict[str, Any]) -> list[str]:
 
 
 __all__ = [
-    "normalize_g2b_domain",
-    "classify_g2b_url",
-    "is_g2b_readonly_allowed",
-    "validate_g2b_domain_policy_result",
     "DOMAIN_G2B_PUBLIC_READONLY",
-    "DOMAIN_READONLY_CANDIDATE",
     "DOMAIN_NEEDS_URL_VERIFICATION",
     "DOMAIN_NOT_G2B",
-    "PATH_READONLY_ALLOWED",
-    "PATH_DOWNLOAD_MANUAL_ONLY",
-    "PATH_BLOCKED_LOGIN",
-    "PATH_BLOCKED_CERT",
+    "DOMAIN_READONLY_CANDIDATE",
     "PATH_BLOCKED_BID_SUBMIT",
+    "PATH_BLOCKED_CERT",
     "PATH_BLOCKED_CONTRACT",
+    "PATH_BLOCKED_LOGIN",
     "PATH_BLOCKED_PAYMENT",
+    "PATH_DOWNLOAD_MANUAL_ONLY",
+    "PATH_READONLY_ALLOWED",
+    "classify_g2b_url",
+    "is_g2b_readonly_allowed",
+    "normalize_g2b_domain",
+    "validate_g2b_domain_policy_result",
 ]
