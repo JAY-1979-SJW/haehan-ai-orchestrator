@@ -98,7 +98,7 @@ _REQUEST_DELAY_SEC = 1.5
 
 
 def _load_fixture_allowed_urls(fixture_path: Path) -> list[dict[str, Any]]:
-    with open(fixture_path, encoding="utf-8") as f:
+    with fixture_path.open(encoding="utf-8") as f:
         data = json.load(f)
     cases = data if isinstance(data, list) else data.get("cases", [])
     allowed = []
@@ -482,12 +482,12 @@ def main() -> None:
     md_path = _REPORT_MD_DIR / f"g2b_public_notice_valid_url_discovery_{date_label}.md"
     fixture_path = _FIXTURE_OUT_DIR / f"g2b_public_notice_valid_url_candidates_{date_label}.json"
 
-    with open(json_path, "w", encoding="utf-8") as f:
+    with json_path.open("w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
     print(f"[INFO] JSON 보고서: {json_path}")
 
     md_content = _build_markdown_report(report, run_ts)
-    with open(md_path, "w", encoding="utf-8") as f:
+    with md_path.open("w", encoding="utf-8") as f:
         f.write(md_content)
     print(f"[INFO] Markdown 보고서: {md_path}")
 
@@ -510,7 +510,7 @@ def main() -> None:
         "local_agent_used": local_agent_used,
         "server_browser_used": server_browser_used,
     }
-    with open(fixture_path, "w", encoding="utf-8") as f:
+    with fixture_path.open("w", encoding="utf-8") as f:
         json.dump(candidate_fixture, f, ensure_ascii=False, indent=2)
     print(f"[INFO] 후보 fixture: {fixture_path}")
 

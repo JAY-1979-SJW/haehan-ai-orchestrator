@@ -380,13 +380,13 @@ def append_submit_audit_event(
         json_line = serialize_audit_event(event)
 
         # Append to file
-        with open(path, "a", encoding="utf-8") as f:
+        with path.open("a", encoding="utf-8") as f:
             f.write(json_line + "\n")
 
         # Count events in file
         event_count = 0
         if path.exists():
-            with open(path, encoding="utf-8") as f:
+            with path.open(encoding="utf-8") as f:
                 event_count = sum(1 for line in f if line.strip())
 
         return SubmitAuditWriteResult(
@@ -421,7 +421,7 @@ def read_submit_audit_events(path: Path) -> list[dict]:
         raise FileNotFoundError(f"Audit log file not found: {path}")
 
     events = []
-    with open(path, encoding="utf-8") as f:
+    with path.open(encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:

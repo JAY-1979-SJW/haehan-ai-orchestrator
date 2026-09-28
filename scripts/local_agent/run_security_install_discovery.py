@@ -9,15 +9,15 @@ auth 감지 우회가 아니라, 설치 안내 페이지용 특화된 탐색 로
 from __future__ import annotations
 
 import hashlib
-import os
 import sys
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 from urllib.parse import urlparse
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from ai_orchestrator.local_agent.security_installer_candidate_finder import find_installer_candidates  # noqa: E402
 from ai_orchestrator.local_agent.security_program_detector import detect_security_signals  # noqa: E402
@@ -280,7 +280,7 @@ def select_best_candidate(results: list[dict]) -> dict | None:
 
 def _sha256_file(path: str) -> str:
     h = hashlib.sha256()
-    with open(path, "rb") as f:
+    with Path(path).open("rb") as f:
         for chunk in iter(lambda: f.read(65536), b""):
             h.update(chunk)
     return h.hexdigest()

@@ -375,13 +375,13 @@ def append_approval_record(
         json_line = json.dumps(record_dict, ensure_ascii=False, sort_keys=True)
 
         # Append
-        with open(jsonl_path, "a", encoding="utf-8") as f:
+        with jsonl_path.open("a", encoding="utf-8") as f:
             f.write(json_line + "\n")
 
         # Count events
         event_count = 0
         if jsonl_path.exists():
-            with open(jsonl_path, encoding="utf-8") as f:
+            with jsonl_path.open(encoding="utf-8") as f:
                 event_count = sum(1 for line in f if line.strip())
 
         return ApprovalWriteResult(
@@ -422,7 +422,7 @@ def read_approval_records(jsonl_path: Path | str) -> list[dict]:
         raise FileNotFoundError(f"Approval file not found: {jsonl_path}")
 
     records = []
-    with open(jsonl_path, encoding="utf-8") as f:
+    with jsonl_path.open(encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:
