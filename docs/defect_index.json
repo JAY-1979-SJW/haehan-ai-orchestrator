@@ -52,7 +52,7 @@
       "where": [
         "scripts/ops/server_deploy.py"
       ],
-      "evidence": ".github/ 없음, server_deploy.py 에 pytest/quality_gate 호출 0(주석 1줄만)",
+      "evidence": "2026-09-29: CI 부재는 해결 — .github/workflows/ci.yml 신규(사용자 승인, docs/specs/2026-09-24_self_hosted_ci_jenkins.md 의 기존 \"GitHub Actions 안 씀\" 결정 번복). scripts/ops/verify_change.py(기존 로컬 CI 도구)를 push/PR 트리거로 재사용. 단, server_deploy.py 가 배포 전 이 CI 결과를 확인하도록 연결하는 두 번째 절반은 아직 미해결(pytest/quality_gate 호출 여전히 0).",
       "stage": "E",
       "status": "open"
     },

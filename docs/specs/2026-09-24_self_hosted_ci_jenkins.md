@@ -1,6 +1,12 @@
 # 자체 CI — Jenkins(틀) + 파이썬 파이프라인(판단) (2026-09-24)
 
-## 결정 (사용자)
+> 2026-09-29 정정: 아래 "GitHub Actions 등은 쓰지 않는다" 결정은 **번복됨**(사용자 승인).
+> Jenkins 는 설계만 있고 실제로 설치·구현된 적이 없었다(docs/defect_index.json #4 —
+> "CI 없음"). 대신 `.github/workflows/ci.yml` 로 GitHub Actions를 도입, 이 저장소가
+> 이미 갖고 있던 "로컬 CI" 도구 `scripts/ops/verify_change.py`(기준 대비 새로 생긴
+> 문제만 FAIL로 판정)를 그대로 재사용한다. 아래 Jenkins 설계는 실행 이력으로만 남긴다.
+
+## 결정 (사용자, 2026-09-24 — 2026-09-29 번복됨)
 - GitHub Actions 등 GitHub 기능은 쓰지 않는다. 오픈소스를 이 PC 에 설치해 자체 운영.
 - Jenkins·Buildbot 장점 통합 → **Jenkins 하나를 틀**로, **판단·로직은 전부 우리 파이썬 스크립트**(Buildbot 의 장점). CI 엔진 이중 운영은 하지 않음(결과 분산·중복 구현 방지).
 - "느려도 모두 검증" — 병합·일일 실행은 전 모듈 V0~V6 전체. "스크립트로 할 수 있는 건 스크립트로".
