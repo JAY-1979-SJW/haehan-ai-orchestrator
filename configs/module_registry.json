@@ -19112,6 +19112,38 @@
    "reason": "도메인(smartstore) 자동화",
    "confidence": "high",
    "source": "rule"
+  },
+  "apps/marketing-standalone/_bootstrap.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "marketing",
+   "reason": "공용 기반 이름(_bootstrap)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "apps/marketing-standalone/connectors/blog_accounts.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "naver_blog",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/marketing-standalone/core/content_rules.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "marketing",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/marketing-standalone/core/topic_dedup.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "marketing",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
   }
  }
 }
