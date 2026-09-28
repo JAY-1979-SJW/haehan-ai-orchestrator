@@ -19440,6 +19440,46 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/local_agent/browser/electron_target.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "local_agent",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/local_agent/browser/universal_actions.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "local_agent",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_local_agent_actions_run_claude_agent.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "local_agent",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_local_agent_browser_electron_target.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "local_agent",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_local_agent_browser_universal_actions.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "local_agent",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import platform
@@ -1298,6 +1299,121 @@ def action_cdp_run(params: dict) -> ActionResult:
         )
 
 
+def action_run_claude_agent(params: dict) -> ActionResult:
+    """Claude Code를 헤드리스로 실행해 MCP(haehan-orchestrator)로 앱 작업을 시킨다.
+
+    앱 버튼 → 이 액션(작업 큐 경유) → `claude -p` 서브프로세스 → Claude가 MCP
+    클라이언트로 .mcp.json의 haehan-orchestrator에 접속해 list_api_endpoints/
+    call_api/snapshot_page/act_on_page/navigate_page 등 도구를 쓴다. 실제 쓰기
+    작업(발행/발송/삭제 등)은 이 액션과 무관하게 기존 gates/approval.py 승인
+    플로우를 그대로 거친다 — 이 액션은 그 요청을 만드는 트리거일 뿐이다.
+    (docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md §5.1)
+
+    params:
+      prompt        (str, 필수) — Claude에게 줄 지시문
+      timeout       (int, 선택, 기본 300초, 30~1800 사이로 강제)
+      max_budget_usd(float, 선택, 기본 2.0) — 이 1회 호출의 API 비용 상한
+        (공식 --max-budget-usd, subagent 비용 포함, 초과 시 Claude Code가 스스로 중단)
+      allowed_tools (list[str], 선택, 기본 없음) — 헤드리스 세션에서 권한 프롬프트
+        없이 자동 실행을 허용할 도구 이름(예: "mcp__haehan-orchestrator__snapshot_page").
+        공식 --allowedTools 플래그에 그대로 전달한다(허용목록 방식 권장,
+        code.claude.com/docs/en/cli-reference 2026-09-28 확인). 비워두면(기본값)
+        MCP 도구 호출은 전부 거부된다 — 이 액션의 호출자가 이번 작업에 실제로
+        필요한 도구만 명시적으로 골라 넣어야 한다(--dangerously-skip-permissions
+        같은 전체 우회는 쓰지 않음, 이 프로젝트 승인 원칙에 위배).
+
+    반환:
+      ActionResult.data = {"result": "...", "session_id": "...", "cost_usd": 0.0, "num_turns": N}
+    """
+    prompt = str(params.get("prompt", "")).strip()
+    if not prompt:
+        return ActionResult(False, "run_claude_agent 실패", {}, "prompt 누락", error_code="MISSING_PROMPT")
+
+    try:
+        timeout = int(params.get("timeout", 300))
+    except (TypeError, ValueError):
+        timeout = 300
+    timeout = max(30, min(timeout, 1800))
+
+    try:
+        max_budget_usd = float(params.get("max_budget_usd", 2.0))
+    except (TypeError, ValueError):
+        max_budget_usd = 2.0
+
+    raw_allowed_tools = params.get("allowed_tools") or []
+    if not isinstance(raw_allowed_tools, list):
+        raw_allowed_tools = [raw_allowed_tools]
+    allowed_tools = [str(t).strip() for t in raw_allowed_tools if str(t).strip()]
+
+    root = Path(__file__).parents[1]
+    cmd = [
+        "claude",
+        "-p",
+        "--mcp-config",
+        str(root / ".mcp.json"),
+        "--output-format",
+        "json",
+        "--max-budget-usd",
+        str(max_budget_usd),
+    ]
+    if allowed_tools:
+        cmd += ["--allowedTools", ",".join(allowed_tools)]
+    # "--" 로 옵션 파싱을 끊는다: --allowedTools 는 실측상 다음 토큰들을 계속
+    # 도구 이름으로 먹어치우는 greedy 옵션이라(공식 --help의 "<tools...>" 표기와
+    # 일치), 구분자 없이 prompt를 바로 이어 붙이면 "prompt 인자가 없다" 오류가 난다
+    # (2026-09-28 실측 확인).
+    cmd += ["--", prompt]
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=timeout,
+            cwd=str(root),
+        )
+    except FileNotFoundError:
+        return ActionResult(
+            False,
+            "run_claude_agent 실패",
+            {},
+            "claude CLI를 찾을 수 없습니다 (PATH 확인 필요)",
+            error_code="CLAUDE_CLI_NOT_FOUND",
+        )
+    except subprocess.TimeoutExpired:
+        return ActionResult(
+            success=False,
+            summary=f"run_claude_agent timeout({timeout}s)",
+            data={"timeout": timeout},
+            error=f"{timeout}초 초과",
+            error_code="CLAUDE_AGENT_TIMEOUT",
+        )
+
+    raw_stdout = (proc.stdout or "").strip()
+    try:
+        payload = json.loads(raw_stdout) if raw_stdout else {}
+    except json.JSONDecodeError:
+        payload = {}
+
+    is_error = bool(payload.get("is_error", proc.returncode != 0))
+    result_text = str(payload.get("result", "") or "")[:2000]
+    success = proc.returncode == 0 and not is_error
+
+    return ActionResult(
+        success=success,
+        summary=(result_text[:300] if success else f"실패(exit={proc.returncode})"),
+        data={
+            "result": result_text,
+            "session_id": payload.get("session_id", ""),
+            "cost_usd": payload.get("total_cost_usd"),
+            "num_turns": payload.get("num_turns"),
+        },
+        error="" if success else ((proc.stderr or "")[:400] or result_text[:400]),
+        error_code="" if success else "CLAUDE_AGENT_ERROR",
+    )
+
+
 # ── KRAS 서식 액션 ────────────────────────────────────────────────────────
 
 
@@ -1401,6 +1517,7 @@ _ACTIONS = {
     "web_probe_manual_login": action_web_probe_manual_login,
     "browser.inspect": action_browser_inspect,
     "cdp.run": action_cdp_run,
+    "run_claude_agent": action_run_claude_agent,
     # KRAS 서식 작성 연동 (kras_connector.py)
     "kras.form.create_session": action_kras_form_create_session,
     "kras.form.get_session": action_kras_form_get_session,

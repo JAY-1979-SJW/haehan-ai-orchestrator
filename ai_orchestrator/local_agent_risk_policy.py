@@ -56,6 +56,10 @@ ACTION_RISK: dict[str, str] = {
     "browser.open_url_controlled": "medium",
     "browser.open_click_close_controlled": "medium",
     "browser.open_type_close_controlled": "medium",
+    # Claude Code 헤드리스 트리거 (docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md §5.1)
+    # medium: 큐 대기, 기본 검증만 — 이 액션 자체는 "Claude Code 세션 하나를 돌린다"일 뿐이고,
+    # 실제 쓰기 작업(발행/발송/삭제 등)은 이 액션과 무관하게 gates/approval.py 승인을 그대로 거친다.
+    "run_claude_agent": "medium",
 }
 
 # 서버가 즉시 응답 가능한 액션 (PC 의존 없음)
