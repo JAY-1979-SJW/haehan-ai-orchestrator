@@ -133,10 +133,10 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
                     continue
                 cmd = " ".join(p.info.get("cmdline") or [])
                 out.append((int(p.info["pid"]), cmd))
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
         return out
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
 
     # Windows wmic fallback
@@ -170,7 +170,7 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
                     continue
                 out.append((pid, cmd))
             return out
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
             return []
 
     try:
@@ -198,7 +198,7 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
                 continue
             out.append((pid, cmd))
         return out
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
         return []
 
 
@@ -288,7 +288,7 @@ def _pid_alive(pid: int) -> bool:
         import psutil  # type: ignore
 
         return psutil.pid_exists(int(pid))
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
     if os.name == "nt":
         try:
@@ -301,7 +301,7 @@ def _pid_alive(pid: int) -> bool:
                 timeout=3,
             )
             return str(pid) in (r.stdout or "")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
             return False
     try:
         os.kill(int(pid), 0)
@@ -315,7 +315,7 @@ def read_pid_file(paths: GuardPaths) -> int:
         return 0
     try:
         return int(paths.pid_file.read_text(encoding="utf-8").strip() or "0")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
         return 0
 
 
@@ -353,7 +353,7 @@ def read_lock_file(paths: GuardPaths) -> dict[str, Any]:
         return {}
     try:
         return json.loads(paths.lock_file.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
         return {}
 
 
@@ -390,7 +390,7 @@ def check_cdp_alive(port: int, timeout: float = 1.0) -> bool:
     if _cdp_probe is not None:
         try:
             return bool(_cdp_probe(port))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
             return False
     try:
         import urllib.request
@@ -400,7 +400,7 @@ def check_cdp_alive(port: int, timeout: float = 1.0) -> bool:
             timeout=timeout,
         ) as resp:
             return 200 <= resp.status < 300
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
         return False
 
 
@@ -498,7 +498,7 @@ def close_all_cdp_targets(cdp_port: int) -> list[str]:
             timeout=2.0,
         ) as resp:
             rows = _json.loads(resp.read().decode("utf-8") or "[]")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
         return []
 
     closed: list[str] = []
@@ -515,7 +515,7 @@ def close_all_cdp_targets(cdp_port: int) -> list[str]:
                 timeout=2.0,
             ):
                 closed.append(tid)
-        except Exception:  # noqa: S112
+        except Exception:  # noqa: BLE001, S112
             continue
     return closed
 
@@ -536,7 +536,7 @@ def quit_automation_browsers(
     if close_targets_first:
         try:
             closed_targets = close_all_cdp_targets(paths.cdp_port)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
             closed_targets = []
 
     procs = list_automation_chrome_processes(paths)
@@ -548,7 +548,7 @@ def quit_automation_browsers(
 
             psutil.Process(int(pid)).terminate()
             return True
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
         if os.name == "nt":
             try:
@@ -560,14 +560,14 @@ def quit_automation_browsers(
                     timeout=5,
                 )
                 return r.returncode == 0
-            except Exception:
+            except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
                 return False
         try:
             import signal
 
             os.kill(int(pid), signal.SIGTERM)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
             return False
 
     killer = kill_fn or _default_kill

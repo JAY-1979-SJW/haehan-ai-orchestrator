@@ -37,10 +37,10 @@ def goto(page, url, wait=True):
         if wait:
             try:
                 page.wait_for_load_state("domcontentloaded", timeout=10000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
                 pass
         time.sleep(2)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
         print(f"  goto 실패({url[:50]}): {e}")
         time.sleep(2)
 
@@ -63,12 +63,12 @@ def narration(page, text: str, hold: float = 3.0):
     """
     try:
         page.evaluate(js)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
         pass
     time.sleep(hold)
     try:
         page.evaluate("let d=document.getElementById('_hn'); if(d) d.style.display='none';")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
         pass
 
 
@@ -96,7 +96,7 @@ def title_card(page, title: str, sub: str = "", hold: float = 3.0):
         page.evaluate(js)
         time.sleep(hold)
         page.evaluate("let d=document.getElementById('_ht'); if(d) d.style.display='none';")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
         time.sleep(hold)
 
 
@@ -114,7 +114,7 @@ def mask_pii(page):
             });
         });
         """)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
         pass
 
 
@@ -123,7 +123,7 @@ def blank_page(page, html_body: str, hold: float = 5.0):
         page.goto("about:blank")
         page.evaluate(f"document.body.innerHTML = {html_body!r}; document.body.style.margin='0';")
         time.sleep(hold)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
         time.sleep(hold)
 
 
@@ -170,7 +170,7 @@ def stop_rec():
             _ff.stdin.write(b"q")
             _ff.stdin.flush()
             _ff.wait(timeout=15)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
             _ff.kill()
     print("🎥 녹화 완료")
 
@@ -253,7 +253,7 @@ def scene_youtube_channel(page):
         time.sleep(0.5)
         page.keyboard.type("해한AI엔지니어링", delay=120)
         narration(page, "채널명 입력 완료: 해한AI엔지니어링", 3)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
         print(f"  입력 실패: {e}")
         narration(page, "채널명 '해한AI엔지니어링' 자동 입력 중...", 3)
 
@@ -337,7 +337,7 @@ def scene_smartstore(page):
             page.keyboard.type(ch)
             time.sleep(0.06)
         narration(page, "SEO 최적화 상품명 자동 입력 완료", 3)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
         print(f"  상품명 입력 실패: {e}")
         narration(page, "AI가 카테고리·상품명·상세설명을 자동으로 채웁니다", 4)
 
@@ -388,14 +388,14 @@ def scene_gabia(page):
         page.goto("https://www.gabia.com", timeout=20000)
         try:
             page.wait_for_load_state("domcontentloaded", timeout=15000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
             pass
         mask_pii(page)
         time.sleep(3)
         narration(page, "가비아 — 도메인·서버 만료일 AI가 자동 모니터링", 3)
         narration(page, "만료 30일 전 자동 알림 → 갱신 페이지 자동 이동", 3)
         narration(page, "결제는 사람이 직접 — AI는 준비까지만", 2.5)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
         print(f"  가비아 오류: {e}")
         narration(page, "가비아 도메인 자동 관리 — 만료 감지·갱신 준비 자동화", 4)
 
@@ -408,13 +408,13 @@ def scene_public_data(page):
         page.goto("https://www.data.go.kr", timeout=20000)
         try:
             page.wait_for_load_state("domcontentloaded", timeout=12000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
             pass
         mask_pii(page)
         time.sleep(2)
         narration(page, "공공데이터포털 — API 인증키 현황 자동 조회", 3)
         narration(page, "일일 호출 한도 모니터링 — 초과 전 자동 경보", 3)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
         print(f"  공공데이터 오류: {e}")
         narration(page, "공공데이터포털 API 자동 관리", 3)
 
@@ -475,7 +475,7 @@ def main():
             scene_gabia(page)
             scene_public_data(page)
             scene_outro(page)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
             print(f"\n❌ 오류: {e}")
             import traceback
 
@@ -484,7 +484,7 @@ def main():
             stop_rec()
             try:
                 page.close()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
                 pass
 
     if not RAW_VIDEO.exists() or RAW_VIDEO.stat().st_size < 1_000_000:

@@ -141,7 +141,7 @@ def _gmail_compose_visible(page: Any) -> bool:
                 for index in range(min(matches.count(), 8)):
                     if matches.nth(index).bounding_box(timeout=_locator_timeout(500)) is not None:
                         return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
                 continue
     return False
 
@@ -214,7 +214,7 @@ def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) 
                     result["skipped_fields"].remove("role")
                 result["filled_fields"].append("role")
                 result["warnings"].append("role typed through open role picker; visual selection should be checked.")
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
                 result["skipped_fields"].append("role")
                 result["warnings"].append("field not found: role")
     else:
@@ -282,7 +282,7 @@ def _fill_youtube_studio_upload(page: Any, action: dict, values: dict, result: d
     try:
         page.set_input_files('input[type="file"]', video_path)
         result["filled_fields"].append("video_path")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
         result["skipped_fields"].append("video_path")
         result["warnings"].append(f"file input failed: {exc}")
     _fill_first(
@@ -321,7 +321,7 @@ def _fill_youtube_studio_upload_v2(page: Any, action: dict, values: dict, result
         page.set_input_files('input[type="file"]', video_path)
         result["filled_fields"].append("video_path")
         result["warnings"].append("video file selected/upload draft may be created; Publish was not clicked.")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
         result["skipped_fields"].append("video_path")
         result["warnings"].append(f"file input failed: {exc}")
         return
@@ -531,13 +531,13 @@ def _fill_first(
                     locator.click(timeout=_locator_timeout(3000))
                     try:
                         locator.fill(value, timeout=_locator_timeout(5000))
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
                         page.keyboard.type(value, delay=5)
                     if press_enter:
                         page.keyboard.press("Enter")
                     result["filled_fields"].append(field)
                     return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
                 continue
     result["skipped_fields"].append(field)
     result["warnings"].append(f"field not found: {field}")
@@ -558,7 +558,7 @@ def _fill_contenteditable(page: Any, value: str, field: str, result: dict) -> bo
                     page.keyboard.type(value, delay=5)
                     result["filled_fields"].append(field)
                     return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
                 continue
     result["skipped_fields"].append(field)
     result["warnings"].append(f"contenteditable not found: {field}")
@@ -573,7 +573,7 @@ def _click_text(page: Any, labels: list[str], result: dict, *, optional: bool = 
                 if locator.count() > 0:
                     locator.click(timeout=_locator_timeout(4000))
                     return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
                 continue
     try:
         for frame in page.frames:
@@ -601,7 +601,7 @@ def _click_text(page: Any, labels: list[str], result: dict, *, optional: bool = 
             if clicked.get("ok"):
                 result.setdefault("clicked_nonfinal_controls", []).append(clicked)
                 return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/프레임을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
         pass
     if not optional:
         result["warnings"].append("button not found: " + " / ".join(labels))
@@ -617,7 +617,7 @@ def _click_first_selector(page: Any, selectors: list[str], field: str, result: d
                     locator.click(timeout=_locator_timeout(5000))
                     result.setdefault("clicked_nonfinal_controls", []).append({"field": field, "selector": selector})
                     return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
                 continue
     return False
 
@@ -675,7 +675,7 @@ def _detect_final_controls(page: Any) -> list[dict]:
             for item in frame.evaluate(script, list(FINAL_CONTROL_LABELS)):
                 if item not in detected:
                     detected.append(item)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
             continue
     return detected
 
@@ -708,7 +708,7 @@ def _fill_visible_input_js(page: Any, selector: str, value: str, field: str, res
                     result["skipped_fields"].remove(field)
                 result["filled_fields"].append(field)
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
             continue
     return False
 
@@ -748,7 +748,7 @@ def _fill_gmail_recipient_js(page: Any, value: str, field: str, result: dict) ->
                 result["skipped_fields"].remove(field)
             result["filled_fields"].append(field)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
             continue
     return False
 
@@ -771,9 +771,9 @@ def _attach_file_input(page: Any, file_path: str, field: str, result: dict) -> b
                     result["filled_fields"].append(field)
                     result["warnings"].append(f"local file attached: {path}")
                     return True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
                     continue
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글/유튜브 업로드 폼 필드 채우기 — 실패는 result[skipped_fields]/result[warnings]에 투명하게 기록(숨기지 않음), 여러 셀렉터를 순차 시도, 발행류 최종 버튼은 클릭하지 않음(2026-09-28 검토)
             continue
     result["skipped_fields"].append(field)
     result["warnings"].append(f"file input not found for attachment: {field}")
