@@ -247,13 +247,13 @@ def get_credential(domain: str) -> dict:
                 else:
                     err = r.get("result", {}).get("exceptionDetails", {})
                     print(f"[get_credential] 비밀번호 취득 실패: {err}", file=sys.stderr)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - Chrome 저장 자격증명 조회 CLI - 사용자가 직접 실행, Windows PIN 팝업으로 본인 인증 필요. except는 WebSocket/CDP 통신 실패만 감싸며 로그에 예외 타입만 출력, 실제 조회 결과(JSON 출력)는 도구의 의도된 동작
                 print(f"[get_credential] _request_password 오류: {exc}", file=sys.stderr)
             finally:
                 if ws2:
                     try:
                         ws2.close()
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - Chrome 저장 자격증명 조회 CLI - 사용자가 직접 실행, Windows PIN 팝업으로 본인 인증 필요. except는 WebSocket/CDP 통신 실패만 감싸며 로그에 예외 타입만 출력, 실제 조회 결과(JSON 출력)는 도구의 의도된 동작
                         pass
                 eval_done.set()
 

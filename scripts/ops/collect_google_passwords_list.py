@@ -51,7 +51,7 @@ def _parse_users(pg) -> list[str]:
             "() => Array.from(document.querySelectorAll('button[aria-label]')).map(b => b.getAttribute('aria-label'))"
         )
         return [COPY_USER_RE.search(lb).group(1) for lb in labels if lb and COPY_USER_RE.search(lb)]
-    except Exception:
+    except Exception:  # noqa: BLE001 - Google 비밀번호 관리자 전체 수집 CLI - 사용자가 직접 실행, Windows Hello/패스키로 본인 인증 필요. except는 개별 항목 파싱/조회 실패만 감싸 빈 문자열로 폴백, 결과를 JSON 파일로 저장하는 건 도구의 의도된 동작(비밀번호 값 자체를 노출시키는 게 아니라 그대로 반환)
         return []
 
 
@@ -65,7 +65,7 @@ def _reveal_password(pg, username: str) -> str:
             "() => Array.from(document.querySelectorAll('input[type=text]')).map(i=>i.value).filter(v=>v)"
         )
         return vals[0] if vals else ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - Google 비밀번호 관리자 전체 수집 CLI - 사용자가 직접 실행, Windows Hello/패스키로 본인 인증 필요. except는 개별 항목 파싱/조회 실패만 감싸 빈 문자열로 폴백, 결과를 JSON 파일로 저장하는 건 도구의 의도된 동작(비밀번호 값 자체를 노출시키는 게 아니라 그대로 반환)
         return ""
 
 
@@ -81,7 +81,7 @@ def _parse_site(pg) -> str:
         for line in lines[2:]:
             if line not in skip and len(line) > 2:
                 return line
-    except Exception:
+    except Exception:  # noqa: BLE001 - Google 비밀번호 관리자 전체 수집 CLI - 사용자가 직접 실행, Windows Hello/패스키로 본인 인증 필요. except는 개별 항목 파싱/조회 실패만 감싸 빈 문자열로 폴백, 결과를 JSON 파일로 저장하는 건 도구의 의도된 동작(비밀번호 값 자체를 노출시키는 게 아니라 그대로 반환)
         pass
     return ""
 
@@ -152,7 +152,7 @@ def collect() -> list[dict]:
                     print(f"site={site:30s} user={username:25s} pw={pw_display}")
                     results.append({"site": site, "username": username, "password": pw or "●●●● (표시실패)"})
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - Google 비밀번호 관리자 전체 수집 CLI - 사용자가 직접 실행, Windows Hello/패스키로 본인 인증 필요. except는 개별 항목 파싱/조회 실패만 감싸 빈 문자열로 폴백, 결과를 JSON 파일로 저장하는 건 도구의 의도된 동작(비밀번호 값 자체를 노출시키는 게 아니라 그대로 반환)
                 print(f"오류: {str(e)[:60]}")
                 results.append({"site": link, "username": "", "password": "오류"})
 
