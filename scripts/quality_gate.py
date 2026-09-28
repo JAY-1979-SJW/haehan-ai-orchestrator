@@ -46,6 +46,8 @@ def _run_git(args: list[str]) -> str:
         ["git", *args],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
+        errors="replace",  # Windows 기본 코드페이지(cp949)가 UTF-8 diff에서 깨지는 문제 방지(2026-09-28)
         capture_output=True,
         check=False,
     )

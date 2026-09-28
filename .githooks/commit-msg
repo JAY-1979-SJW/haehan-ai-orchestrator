@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """commit-msg 훅 — 대량 코드 삭제 차단.
 
 staged 변경에서 .py/.ts/.tsx 순삭제(deleted-added) >= 60줄 파일이 있으면 커밋 차단.
@@ -27,6 +27,7 @@ if "[allow-delete]" in message:
 r = subprocess.run(
     ["git", "diff", "--cached", "--numstat", "--diff-filter=MD"],
     cwd=str(ROOT), capture_output=True, text=True,
+    encoding="utf-8", errors="replace",  # Windows 기본 코드페이지(cp949)가 UTF-8 경로/내용에서 깨지는 문제 방지(2026-09-28)
 )
 big = []
 for line in r.stdout.splitlines():

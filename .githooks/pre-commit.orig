@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 �
 r = subprocess.run(
     ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
     cwd=str(ROOT), capture_output=True, text=True,
+    encoding="utf-8", errors="replace",  # Windows 기본 코드페이지(cp949)가 UTF-8 diff에서 깨지는 문제 방지(2026-09-28)
 )
 py_files = [f for f in r.stdout.splitlines() if f.endswith(".py")]
 
@@ -38,6 +39,7 @@ if _sg_files:
     _sdiff = subprocess.run(
         ["git", "diff", "--cached", "-U0", "--"] + _sg_files,
         cwd=str(ROOT), capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
     )
     _sess_pat = (
         "nidlogin.logout", "logout.naver", "clear_cookies", "delete_cookies",
@@ -102,6 +104,7 @@ if _js_staged:
     _jsdiff = subprocess.run(
         ["git", "diff", "--cached", "-U5", "--"] + _js_staged,
         cwd=str(ROOT), capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
     )
     _chunks, _cur = [], []
     for _ln in _jsdiff.stdout.splitlines():
