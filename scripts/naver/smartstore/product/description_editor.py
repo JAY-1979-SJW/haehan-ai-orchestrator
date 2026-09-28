@@ -166,7 +166,7 @@ class SmartEditorSession:
                 self.page.mouse.click(coords["x"], coords["y"])
             new_page = new_page_info.value
             new_page.wait_for_load_state()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             _log.error("[editor] 새 탭 캡처 실패: %s", str(e)[:120])
             return False
 
@@ -206,7 +206,7 @@ class SmartEditorSession:
             self.page.keyboard.type(text, delay=30)
             _log.info("[editor] 텍스트 입력: %d자", len(text))
             return {"ok": True, "chars": len(text)}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
 
     def write_paragraph(self, text: str) -> dict:
@@ -231,7 +231,7 @@ class SmartEditorSession:
                 time.sleep(2)
                 _log.info("[editor] 등록 버튼 클릭")
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "등록 버튼 없음"}
 
@@ -242,7 +242,7 @@ class SmartEditorSession:
             if btn.count() > 0:
                 btn.click(timeout=3000)
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "뷰모드 버튼 없음"}
 
@@ -262,7 +262,7 @@ class TextToolbar:
             if el.count() > 0 and el.is_visible(timeout=2000):
                 el.click(timeout=3000)
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": f"{label or sel} 버튼 없음"}
 
@@ -293,7 +293,7 @@ class TextToolbar:
                 if opt.count() > 0:
                     opt.click(timeout=3000)
                     return {"ok": True, "size": size}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "글자크기 변경 실패"}
 
@@ -310,7 +310,7 @@ class TextToolbar:
                 if opt.count() > 0:
                     opt.click(timeout=3000)
                     return {"ok": True, "align": direction}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "정렬 변경 실패"}
 
@@ -325,7 +325,7 @@ class TextToolbar:
                 if opt.count() > 0:
                     opt.click(timeout=3000)
                     return {"ok": True, "format": fmt}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": f"서식 {fmt} 적용 실패"}
 
@@ -346,7 +346,7 @@ class BlockToolbar:
                 el.click(timeout=3000)
                 time.sleep(0.5)
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": f"{label} 버튼 없음"}
 
@@ -368,7 +368,7 @@ class BlockToolbar:
                 time.sleep(3)
                 _log.info("[editor] 이미지 업로드: %s", p.name)
                 return {"ok": True, "filename": p.name}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "파일 input 없음"}
 
@@ -386,7 +386,7 @@ class BlockToolbar:
                 self.page.keyboard.press("Enter")
                 time.sleep(1)
                 return {"ok": True, "url": url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "URL 입력창 없음"}
 
@@ -407,7 +407,7 @@ class BlockToolbar:
                     time.sleep(0.5)
                     _log.info("[editor] HTML 삽입: %d자", len(html))
                     return {"ok": True, "html_length": len(html)}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "HTML 입력창 없음"}
 
@@ -427,7 +427,7 @@ class BlockToolbar:
             if grid.count() > 0:
                 grid.click(timeout=3000)
                 return {"ok": True, "rows": rows, "cols": cols}
-        except Exception:
+        except Exception:  # noqa: BLE001 - 표 크기 등 부가 옵션 자동 선택 실패 — 기본값으로 진행 가능(2026-09-28 검토)
             pass
         return {"ok": True, "note": "표 크기 자동 선택 실패 — 직접 선택 필요"}
 
@@ -444,7 +444,7 @@ class BlockToolbar:
                 self.page.keyboard.press("Enter")
                 time.sleep(1)
                 return {"ok": True, "url": url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "URL 입력창 없음"}
 
@@ -461,7 +461,7 @@ class BlockToolbar:
                 self.page.keyboard.press("Enter")
                 time.sleep(1)
                 return {"ok": True, "url": url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "동영상 URL 입력창 없음"}
 
@@ -493,7 +493,7 @@ class ToolToolbar:
                 btn.click(timeout=3000)
                 time.sleep(0.5)
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "템플릿 버튼 없음"}
 
@@ -509,7 +509,7 @@ class ToolToolbar:
                 items.nth(idx).click(timeout=3000)
                 time.sleep(1)
                 return {"ok": True, "template_idx": idx}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "템플릿 항목 없음"}
 
@@ -526,7 +526,7 @@ class ToolToolbar:
                     self.page.keyboard.press("Enter")
                     time.sleep(1)
                     return {"ok": True, "keyword": keyword}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "글감 검색 실패"}
 
@@ -538,7 +538,7 @@ class ToolToolbar:
                 btn.click(timeout=3000)
                 time.sleep(0.5)
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "라이브러리 버튼 없음"}
 
@@ -567,7 +567,7 @@ class AIWriter:
                 time.sleep(1)
                 _log.info("[editor-ai] AI 작성 패널 열림")
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "AI 버튼 없음"}
 
@@ -584,7 +584,7 @@ class AIWriter:
             if inp.count() > 0:
                 inp.fill(", ".join(keywords), timeout=5000)
                 time.sleep(0.3)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": f"키워드 입력 실패: {e}"}
 
         # 생성 버튼 클릭
@@ -601,7 +601,7 @@ class AIWriter:
                         return {"ok": True, "status": "generated"}
                     time.sleep(1)
                 return {"ok": False, "error": "AI 생성 타임아웃"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": f"생성 버튼 클릭 실패: {e}"}
         return {"ok": False, "error": "생성 버튼 없음"}
 
@@ -614,7 +614,7 @@ class AIWriter:
                 time.sleep(1)
                 _log.info("[editor-ai] AI 내용 적용 완료")
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트에디터 툴바/콘텐츠 조작 — 각 동작 실패는 항상 {ok: False, error} 로 반환해 호출부가 판단, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "적용 버튼 없음"}
 

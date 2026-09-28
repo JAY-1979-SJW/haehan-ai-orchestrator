@@ -47,7 +47,7 @@ class BlogReadMixin:
                 if ln not in skip_keywords and not re.match(r"^(메뉴|본문|이웃|서비스)", ln):
                     description = ln[:200]
                     break
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         # WidgetView 프레임에서 이웃 수 추출
@@ -60,7 +60,7 @@ class BlogReadMixin:
                     m_n = re.search(r"([\d,]+)\s*명", w_body)
                 if m_n:
                     neighbor_count = int(m_n.group(1).replace(",", ""))
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
 
         # 프로필 이미지
@@ -71,7 +71,7 @@ class BlogReadMixin:
                 )
                 or ""
             )
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return {
@@ -126,7 +126,7 @@ class BlogReadMixin:
               return res;
             })()
             """)
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         if dom_cats:
@@ -169,7 +169,7 @@ class BlogReadMixin:
             fixed = _re.sub(r"\\'", "'", raw)
             try:
                 data = __import__("json").loads(fixed)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 블로그 콘텐츠 읽기 전용 스크래핑 — 사이트 구조 변경 시 추출만 실패하고 빈 값/기본값으로 폴백, 쓰기·결제·인증 없음(2026-09-28 검토)
                 break
 
             total = int(data.get("totalCount", 0))
@@ -289,7 +289,7 @@ class BlogReadMixin:
                 if p["log_no"] not in seen:
                     seen.add(p["log_no"])
                     posts.append(p)
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         # 폴백: extract_blog_posts.js (카드형 레이아웃)
@@ -300,7 +300,7 @@ class BlogReadMixin:
                     if p.get("log_no") and p["log_no"] not in seen:
                         seen.add(p["log_no"])
                         posts.append(p)
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
 
         if not posts:
@@ -335,7 +335,7 @@ class BlogReadMixin:
                     if p.get("log_no") and p["log_no"] not in seen:
                         seen.add(p["log_no"])
                         posts.append(p)
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
 
         return posts[:max_posts]
@@ -373,7 +373,7 @@ class BlogReadMixin:
                             if txt and len(txt) > 50:
                                 _f = f
                                 break
-                        except Exception:  # noqa: S110
+                        except Exception:  # noqa: S110, BLE001
                             pass
             if _f:
                 frame = _f
@@ -392,7 +392,7 @@ class BlogReadMixin:
                 if len(parts) > 1:
                     date_m = re.search(r"(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}:\d{2})", parts[1])
                     written_at = date_m.group(1).strip() if date_m else parts[1].strip()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 블로그 콘텐츠 읽기 전용 스크래핑 — 사이트 구조 변경 시 추출만 실패하고 빈 값/기본값으로 폴백, 쓰기·결제·인증 없음(2026-09-28 검토)
                 body_txt = frame.inner_text("body")
                 m_date = re.search(r"(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}:\d{2})", body_txt)
                 written_at = m_date.group(1) if m_date else ""
@@ -405,7 +405,7 @@ class BlogReadMixin:
                         if nick:
                             author = nick
                             break
-                    except Exception:  # noqa: S110
+                    except Exception:  # noqa: S110, BLE001
                         pass
                 if not author:
                     author = blog_id
@@ -423,7 +423,7 @@ class BlogReadMixin:
                 .first.inner_text(timeout=2000)
                 .strip()[:8000]
             )
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         # 이미지 (본문 프레임에서 추출, 프로필 이미지 제외)
@@ -432,19 +432,19 @@ class BlogReadMixin:
             images = [
                 img for img in raw_imgs if not re.search(r"blogpf|thumb|profile|avatar", img.get("src", ""), re.I)
             ]
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         # 댓글
         try:
             comments = frame.evaluate(_js("extract_blog_comments.js")) or []
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         # 태그
         try:
             tags = [t.strip() for t in frame.locator(".tag_area a, .post_tag a").all_inner_texts() if t.strip()]
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return {
@@ -470,7 +470,7 @@ class BlogReadMixin:
         try:
             result = self._page.evaluate(_js("extract_blog_images.js"))
             images = result or []
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return images
@@ -490,7 +490,7 @@ class BlogReadMixin:
         try:
             result = self._page.evaluate(_js("extract_blog_search.js"))
             results = result or []
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return results[:max_results]
@@ -529,7 +529,7 @@ class BlogReadMixin:
                     )
                 else:
                     i += 1
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return entries
@@ -550,7 +550,7 @@ class BlogReadMixin:
                     return result.get("neighbors", [])
                 if isinstance(result, list):
                     return result
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001
                 pass
             return []
 
@@ -593,9 +593,9 @@ class BlogReadMixin:
                         comments.extend(result or [])
                     else:
                         break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 블로그 콘텐츠 읽기 전용 스크래핑 — 사이트 구조 변경 시 추출만 실패하고 빈 값/기본값으로 폴백, 쓰기·결제·인증 없음(2026-09-28 검토)
                     break
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return comments[:max_comments]
@@ -621,7 +621,7 @@ class BlogReadMixin:
                 all_comments.extend(comments)
                 print(f" → {len(comments)}개")
                 time.sleep(1.5)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 블로그 콘텐츠 읽기 전용 스크래핑 — 사이트 구조 변경 시 추출만 실패하고 빈 값/기본값으로 폴백, 쓰기·결제·인증 없음(2026-09-28 검토)
                 print(f" → 오류: {e}")
 
         return all_comments
@@ -635,7 +635,7 @@ class BlogReadMixin:
         try:
             result = self._page.evaluate(_js("extract_blog_stats.js"))
             stats = result or {}
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return {
@@ -664,7 +664,7 @@ class BlogReadMixin:
         try:
             result = self._page.evaluate(_js("extract_blog_posts.js"))
             posts = result or []
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return posts[:max_posts]

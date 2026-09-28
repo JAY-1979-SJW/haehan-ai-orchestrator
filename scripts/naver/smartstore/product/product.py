@@ -68,7 +68,7 @@ class ProductRegister:
         try:
             handle_page_popups(self.page, timeout_s=2.0)
             close_popup_windows(self.page)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
             pass
 
         if "standard-group-product/create" not in self.page.url:
@@ -109,7 +109,7 @@ class ProductRegister:
                 });
             })();
             """)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
             pass
 
     def _show_fixed_bar(self) -> None:
@@ -125,7 +125,7 @@ class ProductRegister:
                 });
             })();
             """)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
             pass
 
     def _ensure_opened(self) -> bool:
@@ -177,14 +177,14 @@ class ProductRegister:
                 if first_result.is_visible(timeout=1500):
                     first_result.click(timeout=3000, force=True)
                     time.sleep(0.8)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
                 self.page.keyboard.press("ArrowDown")
                 time.sleep(0.3)
                 self.page.keyboard.press("Enter")
                 time.sleep(0.8)
             _log.info("[product-reg] 카테고리: %s", category_name)
             return {"ok": True, "category": category_name}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             _log.error("[product-reg] 카테고리 입력 실패: %s", e)
             return {"ok": False, "error": str(e)[:80]}
 
@@ -226,7 +226,7 @@ class ProductRegister:
             time.sleep(0.5)
             _log.info("[product-reg] 상품명: %s", name)
             return {"ok": True, "name": name}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             _log.error("[product-reg] 상품명 입력 실패: %s", e)
             return {"ok": False, "error": str(e)[:80]}
 
@@ -240,7 +240,7 @@ class ProductRegister:
             self.page.get_by_text(exemption_type, exact=True).first.click(timeout=3000)
             time.sleep(0.5)
             return {"ok": True, "type": exemption_type}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     def set_certification(self, agency: str, cert_number: str) -> dict:
@@ -255,7 +255,7 @@ class ProductRegister:
             self.page.locator('input[placeholder*="인증번호"]').first.fill(cert_number, timeout=3000)
             time.sleep(0.3)
             return {"ok": True, "agency": agency, "number": cert_number}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 모델명 ──────────────────────────────────────────────────────────
@@ -287,7 +287,7 @@ class ProductRegister:
             time.sleep(0.3)
             _log.info("[product-reg] 모델명: %s", model)
             return {"ok": True, "model": model}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             _log.error("[product-reg] 모델명 입력 실패: %s", e)
             return {"ok": False, "error": str(e)[:80]}
 
@@ -303,7 +303,7 @@ class ProductRegister:
             el.fill(gift_text, timeout=5000)
             time.sleep(0.3)
             return {"ok": True, "gift": gift_text}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 이벤트 추가 문구 ─────────────────────────────────────────────────
@@ -318,7 +318,7 @@ class ProductRegister:
             el.fill(text, timeout=5000)
             time.sleep(0.3)
             return {"ok": True, "event_text": text}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 이미지 업로드 ────────────────────────────────────────────────────
@@ -338,7 +338,7 @@ class ProductRegister:
             try:
                 self.page.get_by_text("이미지 등록", exact=True).first.click(timeout=3000, force=True)
                 time.sleep(0.8)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
                 pass
 
             file_inputs = self.page.locator('input[type="file"]')
@@ -363,7 +363,7 @@ class ProductRegister:
             )
             _log.info("[product-reg] 대표 이미지: %s (file_inputs=%d)", image_path, n)
             return {"ok": True, "file": image_path, "file_inputs_found": n}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             _log.error("[product-reg] 대표 이미지 업로드 실패: %s", e)
             return {"ok": False, "error": str(e)[:80]}
 
@@ -386,7 +386,7 @@ class ProductRegister:
                 log_critical(
                     "FILE_UPLOAD", f"상품 추가 이미지: {Path(path).name}", file=path, mode="product_image_additional"
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
                 results.append({"file": path, "ok": False, "error": str(e)[:60]})
         return {"ok": True, "results": results}
 
@@ -408,7 +408,7 @@ class ProductRegister:
             try:
                 self.page.locator("text=스마트 에디터 ONE").first.click(timeout=3000)
                 time.sleep(3)  # 에디터 로딩 대기
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
                 _log.debug("[product-reg] 에디터 버튼 클릭 실패 (이미 열림 가능): %s", e)
 
             # SmartEditor iframe 찾기
@@ -431,7 +431,7 @@ class ProductRegister:
             time.sleep(0.5)
             self.page.keyboard.type(content, delay=10)
             return {"ok": True, "mode": mode}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             _log.error("[product-reg] 상세설명 입력 실패: %s", e)
             return {"ok": False, "error": str(e)[:80]}
 
@@ -452,7 +452,7 @@ class ProductRegister:
             time.sleep(0.3)
             self.page.locator(sel).first.fill(brand, timeout=3000, force=True)
             return {"ok": True, "brand": brand}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     def set_manufacturer(self, manufacturer: str) -> dict:
@@ -470,7 +470,7 @@ class ProductRegister:
             time.sleep(0.3)
             self.page.locator(sel).first.fill(manufacturer, timeout=3000, force=True)
             return {"ok": True, "manufacturer": manufacturer}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     def set_vat_type(self, vat_type: str = "과세상품") -> dict:
@@ -514,13 +514,13 @@ class ProductRegister:
             cb = label.locator("xpath=preceding::input[@type='checkbox'][1]").first
             try:
                 is_checked = cb.is_checked(timeout=1000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
                 is_checked = False
             if is_checked != enabled:
                 # 라벨 클릭
                 label.click(timeout=2000, force=True)
             return {"ok": True, "self_made": enabled}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     def _click_label_radio(self, label_text: str, scroll_y: int = 0) -> dict:
@@ -535,7 +535,7 @@ class ProductRegister:
             time.sleep(0.3)
             _log.info("[product-reg] 라디오 선택: %s", label_text)
             return {"ok": True, "selected": label_text}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             _log.error("[product-reg] 라디오 선택 실패 (%s): %s", label_text, e)
             return {"ok": False, "error": str(e)[:80]}
 
@@ -550,7 +550,7 @@ class ProductRegister:
             self.page.get_by_text(label, exact=True).first.click(timeout=3000, force=True)
             time.sleep(1.5)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             _log.warning("[product-reg] 이미지 영역 활성화 실패: %s", e)
             return False
 
@@ -586,7 +586,7 @@ class ProductRegister:
             log_critical("OTHER", "상품 등록 저장 완료", url=url, mode="product_register_save")
             _log.info("[product-reg] 저장 완료: %s", url)
             return {"ok": True, "url": url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             _log.error("[product-reg] 저장 실패: %s", e)
             return {"ok": False, "error": str(e)[:80]}
 
@@ -596,7 +596,7 @@ class ProductRegister:
             self.page.locator('button:has-text("취소")').first.click(timeout=3000)
             time.sleep(2)
             return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 그룹상품 등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환, 실제 저장은 save() 명시 호출 시에만, 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 통합 원샷 등록 ───────────────────────────────────────────────────
