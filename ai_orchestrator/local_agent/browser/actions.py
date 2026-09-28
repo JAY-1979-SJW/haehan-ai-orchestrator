@@ -94,7 +94,7 @@ def _gate_check(
 def _current_url(page) -> str:
     try:
         return page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         return ""
 
 
@@ -117,7 +117,7 @@ def navigate(
         page.goto(url, wait_until=wait_until, timeout=timeout_ms)
         log_action("navigate", url=url, result="ok", risk_level=gate.verdict, audit_path=audit_path)
         return ActionResult("navigate", ok=True, verdict=gate.verdict, value=url)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "navigate", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
         )
@@ -149,7 +149,7 @@ def click(
             audit_path=audit_path,
         )
         return ActionResult("click", ok=True, verdict=gate.verdict)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "click",
             url=url,
@@ -191,7 +191,7 @@ def type_text(
             audit_path=audit_path,
         )
         return ActionResult("type", ok=True, verdict=gate.verdict)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "type",
             url=url,
@@ -229,7 +229,7 @@ def select_option(
             audit_path=audit_path,
         )
         return ActionResult("select", ok=True, verdict=gate.verdict, value=value)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "select", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
         )
@@ -266,7 +266,7 @@ def upload_file(
             audit_path=audit_path,
         )
         return ActionResult("file_upload", ok=True, verdict=gate.verdict, value=str(fp))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "file_upload", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
         )
@@ -297,7 +297,7 @@ def screenshot(
             audit_path=audit_path,
         )
         return ActionResult("screenshot", ok=True, verdict=gate.verdict, value=str(save_path))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "screenshot", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
         )
@@ -328,7 +328,7 @@ def scroll(
             audit_path=audit_path,
         )
         return ActionResult("scroll", ok=True, verdict=gate.verdict)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "scroll", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
         )
@@ -352,7 +352,7 @@ def get_text(
             "get_text", url=url, selector=selector[:200], result="ok", risk_level=gate.verdict, audit_path=audit_path
         )
         return ActionResult("get_text", ok=True, verdict=gate.verdict, value=text)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "get_text", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
         )
@@ -383,7 +383,7 @@ def get_attribute(
             audit_path=audit_path,
         )
         return ActionResult("get_attribute", ok=True, verdict=gate.verdict, value=val)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "get_attribute", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
         )
@@ -414,7 +414,7 @@ def wait_for_selector(
             audit_path=audit_path,
         )
         return ActionResult("wait_for_selector", ok=True, verdict=gate.verdict)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "wait_for_selector",
             url=url,
@@ -440,7 +440,7 @@ def accept_dialog(
         page.on("dialog", lambda dialog: dialog.accept())
         log_action("accept_dialog", url=url, result="ok", risk_level=gate.verdict, audit_path=audit_path)
         return ActionResult("accept_dialog", ok=True, verdict=gate.verdict)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사로그 완비된 브라우저 액션 실행기 — 모든 액션이 성공/실패 모두 log_action()으로 감사기록(risk_level·audit_path 포함), 실패는 ActionResult(ok=False, error) 로 반환, 아무것도 숨기지 않음(2026-09-28 검토)
         log_action(
             "accept_dialog", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
         )

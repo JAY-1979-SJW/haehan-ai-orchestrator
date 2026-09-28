@@ -54,12 +54,12 @@ def record_session_edit(session_id: str | None, rel_path: str) -> None:
         if path.exists():
             try:
                 existing = json.loads(path.read_text(encoding="utf-8"))
-            except Exception:
+            except Exception:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
                 existing = []
         if rel_path not in existing:
             existing.append(rel_path)
         path.write_text(json.dumps(existing), encoding="utf-8")
-    except Exception as exc:  # 기록 실패는 훅 동작 자체를 막지 않는다(fail-open)
+    except Exception as exc:  # 기록 실패는 훅 동작 자체를 막지 않는다(fail-open)  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         sys.stderr.write(f"[post_edit_fast_gate] session edit record failed (ignored): {exc}\n")
 
 
@@ -71,7 +71,7 @@ def load_session_edits(session_id: str | None) -> list[str]:
         return []
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         return []
 
 
@@ -87,7 +87,7 @@ def cleanup_old_session_edit_files(max_age_seconds: float = SESSION_EDITS_MAX_AG
                     f.unlink()
             except OSError:
                 continue
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         sys.stderr.write(f"[post_edit_fast_gate] session edit cleanup failed (ignored): {exc}\n")
 
 
@@ -167,7 +167,7 @@ def _git_show_head(rel_path: str) -> str | None:
         if proc.returncode != 0:
             return None
         return proc.stdout
-    except Exception:
+    except Exception:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         return None
 
 
@@ -211,7 +211,7 @@ def _check_python(file_path: Path, start: float) -> int:
             if s.endswith(".py") and ("test" in s.lower()):
                 candidates.append(s)
         candidates = [c for c in candidates if not _SKIP_TEST_PATTERNS.search(c)][:MAX_TESTS]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         candidates = []
 
     if not candidates:
@@ -233,7 +233,7 @@ def _check_python(file_path: Path, start: float) -> int:
             return 2
     except subprocess.TimeoutExpired:
         sys.stderr.write("[post_edit_fast_gate] 영향 테스트 시간 초과 — 수동 확인 필요(차단 아님)\n")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         sys.stderr.write(f"[post_edit_fast_gate] 영향 테스트 실행 실패(무시): {exc}\n")
 
     return 0
@@ -243,7 +243,7 @@ def _tsc_cache_fresh() -> bool:
     try:
         data = json.loads(TSC_CACHE_FILE.read_text(encoding="utf-8"))
         return (time.time() - float(data.get("ts", 0))) < TSC_CACHE_SECONDS
-    except Exception:
+    except Exception:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         return False
 
 
@@ -251,7 +251,7 @@ def _tsc_cache_write() -> None:
     try:
         TSC_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
         TSC_CACHE_FILE.write_text(json.dumps({"ts": time.time()}), encoding="utf-8")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         sys.stderr.write(f"[post_edit_fast_gate] tsc cache write failed (ignored): {exc}\n")
 
 
@@ -279,7 +279,7 @@ def _check_typescript(file_path: Path, start: float) -> int:
             return 2
     except subprocess.TimeoutExpired:
         sys.stderr.write("[post_edit_fast_gate] typecheck 시간 초과 — 수동 확인 필요(차단 아님)\n")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         sys.stderr.write(f"[post_edit_fast_gate] typecheck 실행 실패(무시): {exc}\n")
 
     return 0
@@ -289,7 +289,7 @@ def main() -> int:
     start = time.monotonic()
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         return 0
 
     try:
@@ -315,7 +315,7 @@ def main() -> int:
         if suffix in (".ts", ".tsx"):
             return _check_typescript(file_path, start)
         return 0
-    except Exception as exc:  # fail-open
+    except Exception as exc:  # fail-open  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         sys.stderr.write(f"[post_edit_fast_gate] internal error (ignored): {exc}\n")
         return 0
 
