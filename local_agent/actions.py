@@ -1459,7 +1459,7 @@ def _safe_final_url(current_url: str, url_category: str) -> str | None:
         if host in ("127.0.0.1", "localhost"):
             port_str = f":{parsed.port}" if parsed.port else ""
             return f"{parsed.scheme}://{host}{port_str}{parsed.path}"
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
     return None
 
@@ -1524,7 +1524,7 @@ def _agent_version() -> str:
         from . import __version__
 
         return __version__
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 에이전트 액션 디스패처 -- 각 액션 실행 실패를 ActionResult(False, ...)로 변환해 반환(fail-closed), 버전 조회/로컬호스트 URL 정규화 실패는 안전한 기본값으로 폴백
         return "0.0.0"
 
 

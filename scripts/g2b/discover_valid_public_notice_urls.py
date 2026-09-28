@@ -127,7 +127,7 @@ def _extract_anchors_from_page(page: Any, base_url: str) -> list[str]:
             if not href.startswith("http"):
                 href = urljoin(base_url, href)
             hrefs.append(href)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 나라장터 공고 URL 탐색(읽기 전용) -- 앵커 추출 실패 시 빈 리스트, 페이지 방문 전체 실패도 빈 리스트 반환(수집 실패가 다른 URL 탐색을 막지 않도록)
         pass
     return hrefs
 
@@ -197,7 +197,7 @@ def _collect_anchors_via_playwright(url: str) -> list[str]:
             hrefs = _extract_anchors_from_page(page, url)
             browser.close()
         return hrefs
-    except Exception:
+    except Exception:  # noqa: BLE001 - 나라장터 공고 URL 탐색(읽기 전용) -- 앵커 추출 실패 시 빈 리스트, 페이지 방문 전체 실패도 빈 리스트 반환(수집 실패가 다른 URL 탐색을 막지 않도록)
         return []
 
 

@@ -9,10 +9,11 @@
     info = classify_page(page)
     # info: {type, confidence, signals, suggested_handlers, snapshot}
 """
+
 from __future__ import annotations
 
-from scripts.logger import get_logger
 from scripts.form.discovery import discover_form
+from scripts.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -102,15 +103,21 @@ def classify_page(page) -> dict:
     """
     try:
         snap = page.evaluate(_CLASSIFY_JS)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 페이지 분류기(읽기 전용 탐색) -- JS 평가 실패 시 unknown 분류로 폴백, 폼 discovery 실패도 unknown/빈 필드로 폴백(판정을 과장하지 않는 방향)
         log.debug("[classify] evaluate 실패: %s", e)
-        return {"type": "unknown", "confidence": 0.0, "signals": ["evaluate_failed"],
-                "suggested_handlers": [], "discovery": {}, "snapshot": {}}
+        return {
+            "type": "unknown",
+            "confidence": 0.0,
+            "signals": ["evaluate_failed"],
+            "suggested_handlers": [],
+            "discovery": {},
+            "snapshot": {},
+        }
 
     # discovery 결과 (intent + 폼 필드)
     try:
         disc = discover_form(page).to_dict()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 페이지 분류기(읽기 전용 탐색) -- JS 평가 실패 시 unknown 분류로 폴백, 폼 discovery 실패도 unknown/빈 필드로 폴백(판정을 과장하지 않는 방향)
         disc = {"intent": "unknown", "fields": []}
 
     signals: list[str] = []
@@ -186,8 +193,10 @@ def classify_page(page) -> dict:
     else:
         page_type = "unknown"
         confidence = 0.3
-        signals.append(f"forms={snap['forms']}, inputs={snap['inputs_visible']}, "
-                       f"tables={len(snap['tables'])}, body={snap['body_chars']}")
+        signals.append(
+            f"forms={snap['forms']}, inputs={snap['inputs_visible']}, "
+            f"tables={len(snap['tables'])}, body={snap['body_chars']}"
+        )
         suggestions.append("data/discovered/<host>/<page>.json 에 스냅샷 저장 — 수동 핸들러 추가 필요")
 
     return {

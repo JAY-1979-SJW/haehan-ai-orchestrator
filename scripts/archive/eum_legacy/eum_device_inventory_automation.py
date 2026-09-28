@@ -174,7 +174,7 @@ class EumDeviceInventoryManager:
                 "extraction_time": datetime.now().isoformat(),
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM 단말기 재고 자동화(구버전, archive 보존) -- 추출 실패를 로깅·트레이스백 출력 후 에러 결과 반환, 최상위 실행 실패 시 종료코드 1
             _log.error(f"추출 실패: {e}")
             import traceback
 
@@ -324,7 +324,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 단말기 재고 자동화(구버전, archive 보존) -- 추출 실패를 로깅·트레이스백 출력 후 에러 결과 반환, 최상위 실행 실패 시 종료코드 1
         _log.error(f"실행 실패: {e}")
         import traceback
 

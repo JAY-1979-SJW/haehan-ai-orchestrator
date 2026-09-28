@@ -1,4 +1,5 @@
 """Shared constants, dataclasses, and private helpers for workflows."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -149,7 +150,7 @@ def _open_target_readonly(url: str) -> dict:
         title = ""
         try:
             title = page.title()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 워크플로우 공통 유틸(읽기 전용 타겟 오픈) -- 제목 조회 실패는 빈 문자열로 폴백, 오픈 자체 실패는 ok=False 결과로 반환(fail-closed)
             title = ""
         return {
             "attempted": True,
@@ -158,7 +159,7 @@ def _open_target_readonly(url: str) -> dict:
             "title": title,
             "mode": "readonly_target_open",
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 워크플로우 공통 유틸(읽기 전용 타겟 오픈) -- 제목 조회 실패는 빈 문자열로 폴백, 오픈 자체 실패는 ok=False 결과로 반환(fail-closed)
         return {
             "attempted": True,
             "ok": False,

@@ -24,7 +24,7 @@ def _cdp_alive() -> bool:
     try:
         with urllib.request.urlopen(f"{_CDP_URL}/json/version", timeout=2) as r:  # noqa: S310
             return r.status == 200
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 상태 확인/스크린샷 조회 -- 읽기 전용 best-effort, 실패 시 False/None 반환
         return False
 
 
@@ -44,7 +44,7 @@ def _take_screenshot() -> bytes | None:
             if not pages:
                 return None
             return pages[-1].screenshot(type="jpeg", quality=55)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 상태 확인/스크린샷 조회 -- 읽기 전용 best-effort, 실패 시 False/None 반환
         logger.debug("CDP 스크린샷 실패: %s", e)
         return None
 

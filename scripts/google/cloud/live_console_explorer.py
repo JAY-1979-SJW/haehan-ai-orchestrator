@@ -4,11 +4,12 @@ This avoids Playwright process startup and talks to the already-running Chrome
 debugging port. It navigates only, does not click, type, submit, export
 cookies, or read storage.
 """
+
 from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,11 @@ LATEST_REPORT = ROOT / "data" / "google_cloud_console_live_latest.json"
 
 CLOUD_SURFACE_USER_GUIDANCE: dict[str, dict[str, list[str]]] = {
     "cloud_console": {
-        "user_can_request": ["Check project console overview.", "List visible quick access options.", "Identify visible create/deploy shortcuts."],
+        "user_can_request": [
+            "Check project console overview.",
+            "List visible quick access options.",
+            "Identify visible create/deploy shortcuts.",
+        ],
         "approval_required_for": ["Create API key", "create VM", "deploy application", "create bucket", "create agent"],
     },
     "maps_platform": {
@@ -46,7 +51,10 @@ CLOUD_SURFACE_USER_GUIDANCE: dict[str, dict[str, list[str]]] = {
         "approval_required_for": ["Deploy service", "change traffic", "delete service"],
     },
     "compute_engine": {
-        "user_can_request": ["Open Compute Engine read-only.", "Check VM, storage, instance group, and VM Manager navigation."],
+        "user_can_request": [
+            "Open Compute Engine read-only.",
+            "Check VM, storage, instance group, and VM Manager navigation.",
+        ],
         "approval_required_for": ["Create VM", "start/stop/delete VM", "change disk/network/firewall settings"],
     },
     "cloud_storage": {
@@ -70,15 +78,24 @@ CLOUD_SURFACE_USER_GUIDANCE: dict[str, dict[str, list[str]]] = {
         "approval_required_for": ["Create topic/subscription", "publish message", "delete resource"],
     },
     "secret_manager": {
-        "user_can_request": ["Open Secret Manager read-only.", "Check secret navigation without reading secret values."],
+        "user_can_request": [
+            "Open Secret Manager read-only.",
+            "Check secret navigation without reading secret values.",
+        ],
         "approval_required_for": ["Create/update/delete secret", "access secret value", "change IAM"],
     },
     "cloud_logging": {
-        "user_can_request": ["Open Logging read-only.", "Check logs explorer, detection, and configuration navigation."],
+        "user_can_request": [
+            "Open Logging read-only.",
+            "Check logs explorer, detection, and configuration navigation.",
+        ],
         "approval_required_for": ["Create sink", "change retention/configuration", "export logs"],
     },
     "cloud_monitoring": {
-        "user_can_request": ["Open Monitoring read-only.", "Check monitoring, detection, and configuration navigation."],
+        "user_can_request": [
+            "Open Monitoring read-only.",
+            "Check monitoring, detection, and configuration navigation.",
+        ],
         "approval_required_for": ["Create alert", "change dashboard/policy/notification channel"],
     },
 }
@@ -89,7 +106,7 @@ PROJECT_ID_RE = re.compile(r"(?i)\b[a-z][a-z0-9-]{5,30}\b")
 
 
 def _utc() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _redact_text(value: Any) -> str:
@@ -259,12 +276,12 @@ def explore_cloud_console_surfaces(
                     report["counts"]["visited"] += 1
                     if result["risk_controls"]:
                         report["counts"]["risk_controls_detected"] += 1
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - 구글 클라우드 콘솔 라이브 탐색(읽기 전용) -- 개별 화면 방문 실패는 report에 failed로 기록하고 계속, 예외 텍스트는 _redact_text로 민감정보를 제거한 뒤 저장
                     result["status"] = "failed"
                     result["warnings"].append(_redact_text(exc))
                     report["counts"]["failed"] += 1
                 report["surfaces"].append(result)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 클라우드 콘솔 라이브 탐색(읽기 전용) -- 개별 화면 방문 실패는 report에 failed로 기록하고 계속, 예외 텍스트는 _redact_text로 민감정보를 제거한 뒤 저장
         report["status"] = "failed"
         report["warnings"] = [_redact_text(exc)]
         report["counts"]["failed"] = len(selected)
@@ -277,7 +294,7 @@ def explore_cloud_console_surfaces(
 def save_cloud_console_live_report(report: dict[str, Any], path: Path | None = None) -> tuple[dict[str, Any], Path]:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     LATEST_REPORT.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     target = path or REPORT_DIR / f"google_cloud_console_live_{timestamp}.json"
     text = json.dumps(report, ensure_ascii=True, indent=2)
     target.write_text(text, encoding="utf-8")

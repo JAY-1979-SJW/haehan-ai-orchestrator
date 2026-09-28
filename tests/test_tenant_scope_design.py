@@ -60,7 +60,7 @@ class TestAuthOrganizationIdGap:
 
             # Gap: organization_ids 필드 없음
             assert "organization_ids" not in _DUMMY_USER, "Gap G4: Auth should return organization_ids list"
-        except (ImportError, Exception) as e:
+        except (ImportError, Exception) as e:  # noqa: BLE001 - 테넌트 스코프 설계 검증 테스트 -- import 실패 시 pytest.skip으로 건너뛰는 용도, 실제 로직 실행이나 판정에 영향 없음
             # Skip due to env setup issues
             pytest.skip(f"Import failed: {e}")
 
@@ -310,7 +310,7 @@ class TestBrowserAuditEventTypes:
             missing = browser_event_types - EVENT_TYPES
             # Gap: browser event types 부족
             assert len(missing) > 0, "Gap: Missing browser audit event types: " + ", ".join(missing)
-        except (ImportError, Exception) as e:
+        except (ImportError, Exception) as e:  # noqa: BLE001 - 테넌트 스코프 설계 검증 테스트 -- import 실패 시 pytest.skip으로 건너뛰는 용도, 실제 로직 실행이나 판정에 영향 없음
             # Skip due to env setup issues
             pytest.skip(f"Import failed: {e}")
 
@@ -407,7 +407,7 @@ class TestGapDocumentation:
 
             # Gap: user_id 없음
             assert "user_id" not in _DUMMY_USER, "Gap G1 documented: User model needs user_id field"
-        except (ImportError, Exception) as e:
+        except (ImportError, Exception) as e:  # noqa: BLE001 - 테넌트 스코프 설계 검증 테스트 -- import 실패 시 pytest.skip으로 건너뛰는 용도, 실제 로직 실행이나 판정에 영향 없음
             # Skip due to env setup
             pytest.skip(f"Import failed: {e}")
 

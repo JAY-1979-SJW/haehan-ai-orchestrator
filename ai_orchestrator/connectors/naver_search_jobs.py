@@ -181,7 +181,7 @@ def _update_state_if_inserted(
     try:
         state_mod.mark_query_collected(source, query, path=state_path)
         outcome.state_updated = True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 검색 수집 잡 -- 상태 파일 갱신/DB 저장·열기·닫기 실패를 로깅하고 outcome에 에러 상태만 기록, 수집 자체(읽기전용 검색 + 로컬 DB 적재)의 성공 여부 판정에는 영향 없음
         logger.warning("[NAVER-STATE-UPDATE-FAIL] type=%s", type(e).__name__)
 
 
@@ -421,7 +421,7 @@ def run_naver_shopping_search_job(
         if conn_cm is not None:
             try:
                 conn_cm.__exit__(None, None, None)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 검색 수집 잡 -- 상태 파일 갱신/DB 저장·열기·닫기 실패를 로깅하고 outcome에 에러 상태만 기록, 수집 자체(읽기전용 검색 + 로컬 DB 적재)의 성공 여부 판정에는 영향 없음
                 logger.warning("[NAVER-SHOPPING-DB-CLOSE-ERR]")
 
     saved = _persist_if_data(

@@ -57,7 +57,7 @@ def _close(tid: str) -> str:
             req = urllib.request.Request(f"{CDP}/json/close/{tid}", method=method)
             with urllib.request.urlopen(req, timeout=10) as r:
                 return f"{method}:{r.read().decode()[:20]}"
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - CDP 탭 관리 CLI -- 탭 닫기 시도 각 방식 실패는 마지막 에러만 기록 후 다음 방식 시도, 탭 목록 조회 실패는 종료코드 1로 안내(출력용 CLI 도구)
             last = f"{method} 실패:{e}"
     return last
 
@@ -117,7 +117,7 @@ def main() -> int:
 
     try:
         pages = list_pages()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 탭 관리 CLI -- 탭 닫기 시도 각 방식 실패는 마지막 에러만 기록 후 다음 방식 시도, 탭 목록 조회 실패는 종료코드 1로 안내(출력용 CLI 도구)
         print(f"[cdp] 9222 연결 실패: {e}")
         return 1
 

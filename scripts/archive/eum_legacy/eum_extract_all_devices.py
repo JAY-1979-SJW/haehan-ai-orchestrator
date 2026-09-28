@@ -170,7 +170,7 @@ def main():
         from scripts.popup_detector import handle_page_popups
 
         handle_page_popups(page, timeout_s=2.0)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 페이지 팝업 처리 실패는 무시하고 계속 진행(팝업 없는 정상 케이스가 대부분)
         pass
 
     # 표시 개수 60으로 설정
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     with op_context("eum_extract_all_devices", site="eum.cw.or.kr") as _ctx:
         try:
             main()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM 단말기 전체 추출 스크립트(archive 보존) -- 최상위 실행 실패는 로깅 후 op_context 결과를 실패로 기록
             _log.error(f"실패: {e}")
             import traceback
 

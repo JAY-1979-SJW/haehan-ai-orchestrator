@@ -97,7 +97,7 @@ def list_external_works_as_models() -> list[ExternalWork]:
 
         entries = list_external_works()
         return [adapt_external_work_entry(e) for e in entries]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 외부 앱/작업 어댑터 목록 조회 -- 조회 실패 시 빈 리스트 반환, 읽기 전용
         return []
 
 
@@ -171,7 +171,7 @@ def list_integrations_as_models() -> list[Integration]:
         # ops_router._STATIC_INTEGRATIONS 원본도 동일 값으로 존재함
         # (test_ops_router_read_only_20260516.py 가 ops_router.py 소스 텍스트에서
         # "cad-app" 리터럴을 직접 검사하므로 원본 리스트를 되돌림).
-    except Exception:
+    except Exception:  # noqa: BLE001 - 외부 앱/작업 어댑터 목록 조회 -- 조회 실패 시 빈 리스트 반환, 읽기 전용
         return []
 
 
