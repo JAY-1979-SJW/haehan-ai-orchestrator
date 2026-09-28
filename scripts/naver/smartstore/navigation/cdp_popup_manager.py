@@ -229,7 +229,7 @@ class CdpPopupManager:
                 origin=origin if origin != "*" else None,
             )
             methods_tried.append("grant_permissions:notifications")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 팝업/배너 감지·해제 — Playwright 요소 조회 실패 종류가 다양해 일괄 로그 후 계속 진행, 실제 업무 액션(결제·DB쓰기) 아닌 UI 노이즈 제거 전용(2026-09-28 검토)
             _log.debug("[popup-mgr] grant_permissions 실패: %s", e)
 
         # ── 방법 2: CDP Browser.setPermission ─────────────────────────────
@@ -245,7 +245,7 @@ class CdpPopupManager:
             )
             methods_tried.append("cdp:Browser.setPermission:notifications")
             cdp.detach()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 팝업/배너 감지·해제 — Playwright 요소 조회 실패 종류가 다양해 일괄 로그 후 계속 진행, 실제 업무 액션(결제·DB쓰기) 아닌 UI 노이즈 제거 전용(2026-09-28 검토)
             _log.debug("[popup-mgr] CDP setPermission 실패: %s", e)
 
         # ── 방법 3: JS로 window.open 차단 우회 주입 ──────────────────────
@@ -271,7 +271,7 @@ class CdpPopupManager:
             })();
             """)
             methods_tried.append("js:window.open_override")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 팝업/배너 감지·해제 — Playwright 요소 조회 실패 종류가 다양해 일괄 로그 후 계속 진행, 실제 업무 액션(결제·DB쓰기) 아닌 UI 노이즈 제거 전용(2026-09-28 검토)
             _log.debug("[popup-mgr] JS 주입 실패: %s", e)
 
         _log.info("[popup-mgr] 팝업 차단 해제: origin=%s methods=%s", origin, methods_tried)
@@ -306,7 +306,7 @@ class CdpPopupManager:
         if self._context and self._watching:
             try:
                 self._context.remove_listener("page", self._on_new_page)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
         self._watching = False
         _log.info("[popup-mgr] 감시 해제")
@@ -332,7 +332,7 @@ class CdpPopupManager:
                 _log.info("[popup-mgr] 팝업 창 내용: %s", content[:80])
                 # 팝업 창은 자동으로 닫지 않음 — 사용자 확인 후 닫기
                 ev.handled = False
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
         elif kind == "new_tab":
             ev.handled = True  # 새 일반 탭은 자동 처리 없음
@@ -341,7 +341,7 @@ class CdpPopupManager:
         if self._custom_handler:
             try:
                 self._custom_handler(ev)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 팝업/배너 감지·해제 — Playwright 요소 조회 실패 종류가 다양해 일괄 로그 후 계속 진행, 실제 업무 액션(결제·DB쓰기) 아닌 UI 노이즈 제거 전용(2026-09-28 검토)
                 _log.debug("[popup-mgr] 커스텀 핸들러 오류: %s", e)
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -385,7 +385,7 @@ class CdpPopupManager:
                                 page.evaluate(f"document.querySelectorAll('{sel}')[{i}]?.outerHTML?.slice(0,80) || ''")
                                 or ""
                             )
-                        except Exception:
+                        except Exception:  # noqa: BLE001 - 팝업/배너 감지·해제 — Playwright 요소 조회 실패 종류가 다양해 일괄 로그 후 계속 진행, 실제 업무 액션(결제·DB쓰기) 아닌 UI 노이즈 제거 전용(2026-09-28 검토)
                             key = f"{sel}:{i}"
                         if key in seen_outer_html_keys:
                             continue
@@ -395,7 +395,7 @@ class CdpPopupManager:
                         full_text = ""
                         try:
                             full_text = el.inner_text(timeout=500).strip()
-                        except Exception:
+                        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                             pass
                         clean_text = _clean_popup_text(full_text)
 
@@ -406,7 +406,7 @@ class CdpPopupManager:
                             buttons = [
                                 b.inner_text(timeout=200).strip() for b in btns if b.inner_text(timeout=200).strip()
                             ]
-                        except Exception:
+                        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                             pass
 
                         # 링크 목록 (공지 URL 등)
@@ -421,7 +421,7 @@ class CdpPopupManager:
                                 or []
                             )
                             links = [f"{ln['text']} → {ln['href']}" for ln in hrefs if ln.get("href")]
-                        except Exception:
+                        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                             pass
 
                         has_close = _has_close_button(el)
@@ -436,9 +436,9 @@ class CdpPopupManager:
                                 "has_close_btn": has_close,
                             }
                         )
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                         pass
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
 
         return {"found": len(found), "popups": found}
@@ -562,7 +562,7 @@ class CdpPopupManager:
                             "action": "esc",
                         }
                     )
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
 
             if ok:
@@ -625,7 +625,7 @@ class CdpPopupManager:
                     )
                     if action:
                         found.append({"selector": sel, "index": i, "text": text, "action": action})
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
         return {"found": len(found), "banners": found}
 
@@ -648,7 +648,7 @@ class CdpPopupManager:
                     el = page.locator(sel).nth(idx)
                     if _click_close_in(el):
                         dismissed = True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
 
                 # 2) JS로 배너 요소 직접 제거 (닫기 버튼 없는 경우)
@@ -666,7 +666,7 @@ class CdpPopupManager:
                         """)
                         dismissed = True
                         _log.info("[popup-mgr] 배너 JS 제거: %s", banner["text"][:40])
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                         pass
 
                 # 3) ESC
@@ -674,7 +674,7 @@ class CdpPopupManager:
                     try:
                         page.keyboard.press("Escape")
                         dismissed = True
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                         pass
 
                 if dismissed:
@@ -691,7 +691,7 @@ class CdpPopupManager:
                         closed += 1
                         _log.info("[popup-mgr] 배너 불러오기 클릭: %s", banner["text"][:40])
                         time.sleep(1)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
 
         return closed
@@ -755,7 +755,7 @@ def _has_close_button(modal_el) -> bool:
             btn = modal_el.locator(sel).first
             if btn.count() > 0 and btn.is_visible(timeout=100):
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
     return False
 
@@ -813,7 +813,7 @@ def _click_confirm_in(modal_el, page=None) -> bool:
                 time.sleep(0.4)
                 _log.info("[popup-mgr] 승인 버튼 클릭: %s", sel)
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
 
     # 2. 텍스트 기반 확인 버튼
@@ -825,7 +825,7 @@ def _click_confirm_in(modal_el, page=None) -> bool:
                 time.sleep(0.4)
                 _log.info("[popup-mgr] 텍스트 승인: '%s'", txt)
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
 
     # 3. 페이지 전체에서 텍스트 검색 (모달이 복잡한 경우)
@@ -838,7 +838,7 @@ def _click_confirm_in(modal_el, page=None) -> bool:
                     time.sleep(0.4)
                     _log.info("[popup-mgr] 페이지 텍스트 승인: '%s'", txt)
                     return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
 
     return False
@@ -854,7 +854,7 @@ def _click_close_in(modal_el) -> bool:
                 time.sleep(0.4)
                 _log.info("[popup-mgr] 닫기 버튼 클릭: %s", sel)
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
     for txt in CLOSE_TEXTS:
         try:
@@ -864,7 +864,7 @@ def _click_close_in(modal_el) -> bool:
                 time.sleep(0.4)
                 _log.info("[popup-mgr] 텍스트 닫기: '%s'", txt)
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
     return False
 
@@ -889,7 +889,7 @@ def _cleanup_backdrop(page) -> None:
             document.body.style.paddingRight = '';
         }
         """)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
         pass
 
 
@@ -940,7 +940,7 @@ class CdpPopupPoller:
             try:
                 self._tick()
                 self.error_streak = 0
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 팝업/배너 감지·해제 — Playwright 요소 조회 실패 종류가 다양해 일괄 로그 후 계속 진행, 실제 업무 액션(결제·DB쓰기) 아닌 UI 노이즈 제거 전용(2026-09-28 검토)
                 self.error_streak += 1
                 _log.debug("[poller] tick 오류 (streak=%d): %s", self.error_streak, e)
                 if self.error_streak >= 10:

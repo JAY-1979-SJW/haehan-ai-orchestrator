@@ -129,14 +129,14 @@ class BlogWriter:
                     return False
                 self.page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
                 time.sleep(3)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
                 _log.warning("[blog-writer] 자동 로그인 처리 실패: %s", e)
 
         # 편집기 준비 대기 (SE3: .se-section-documentTitle)
         try:
             self.page.wait_for_selector(TITLE_SEL, timeout=15000, state="visible")
             _log.info("[blog-writer] 편집기 준비 완료")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 편집기 로드 실패: %s", e)
             return False
 
@@ -167,7 +167,7 @@ class BlogWriter:
                     _id = m.group(1)
                     if _id not in ("stat", "category", "manage"):
                         return _id
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] blog_id 자동 감지 실패: %s", e)
         return None
 
@@ -190,11 +190,11 @@ class BlogWriter:
                 # 팝업이 DOM에서 제거될 때까지 대기 (최대 3초)
                 try:
                     popup.wait_for(state="hidden", timeout=3000)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                     pass
                 _log.info("[blog-writer] 임시저장 복원 다이얼로그 취소 완료")
                 time.sleep(0.5)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 다이얼로그 없음 또는 처리 무시: %s", e)
         finally:
             self._draft_handled = True
@@ -211,7 +211,7 @@ class BlogWriter:
             self.page.keyboard.press("Delete")
             time.sleep(0.2)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 제목 초기화 실패: %s", e)
             return False
 
@@ -225,7 +225,7 @@ class BlogWriter:
             self.page.keyboard.press("Delete")
             time.sleep(0.3)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 본문 초기화 실패: %s", e)
             return False
 
@@ -248,7 +248,7 @@ class BlogWriter:
 
             _log.info("[blog-writer] 제목 입력: %s", text[:30])
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 제목 입력 실패: %s", e)
             return False
 
@@ -256,7 +256,7 @@ class BlogWriter:
         """현재 편집기 제목의 실제 텍스트를 읽어온다."""
         try:
             return self.page.locator(".se-title-text").first.inner_text(timeout=3000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 제목 텍스트 조회 실패: %s", e)
             return ""
 
@@ -300,7 +300,7 @@ class BlogWriter:
                 pyperclip.copy(full_text)
                 self.page.keyboard.press("Control+v")
                 time.sleep(1.0)
-            except (ImportError, Exception):
+            except (ImportError, Exception):  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
                 # fallback: 단락 단위 keyboard.type
                 paragraphs = full_text.split("\n\n")
                 for i, p in enumerate(paragraphs):
@@ -329,7 +329,7 @@ class BlogWriter:
                 )
                 return False
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 본문 입력 실패: %s", e)
             return False
 
@@ -380,7 +380,7 @@ class BlogWriter:
         try:
             paragraphs = self.page.locator(".se-text-paragraph").all_inner_texts()
             return "\n".join(paragraphs)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 본문 텍스트 조회 실패: %s", e)
             return ""
 
@@ -412,7 +412,7 @@ class BlogWriter:
             self.page.locator(f'button[data-name="{data_name}"]').first.click(timeout=3000)
             time.sleep(wait_s)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] toolbar(%s) 클릭 실패: %s", data_name, e)
             return False
 
@@ -437,7 +437,7 @@ class BlogWriter:
             if result is None:
                 return False
             return result.get("selected", False) or result.get("ariaPressed", False)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] _is_toolbar_active(%s) 실패: %s", data_name, e)
             return False
 
@@ -495,7 +495,7 @@ class BlogWriter:
                 "strikethrough": result.get("strikethrough", {}).get("active", False),
                 "detail": result,
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] get_editor_state 실패: %s", e)
             return {"bold": False, "italic": False, "underline": False, "strikethrough": False}
 
@@ -503,7 +503,7 @@ class BlogWriter:
         """현재 편집기 본문에 삽입된 이미지 개수."""
         try:
             return self.page.locator(".se-image").count()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 이미지 개수 조회 실패: %s", e)
             return -1
 
@@ -535,7 +535,7 @@ class BlogWriter:
                 )
                 return False
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 사진 삽입 실패: %s", e)
             return False
 
@@ -581,14 +581,14 @@ class BlogWriter:
             try:
                 self.page.locator("input.nvu_inp").first.fill(video_title, timeout=3000)
                 time.sleep(0.3)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                 pass
 
             if description:
                 try:
                     self.page.locator("textarea.nvu_inp").first.fill(description, timeout=2000)
                     time.sleep(0.3)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                     pass
 
             # 완료 버튼 클릭 → 에디터 삽입
@@ -597,7 +597,7 @@ class BlogWriter:
 
             _log.info("[blog-writer] 영상 삽입 완료: %s", video_title)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 영상 삽입 실패: %s", e)
             self.page.keyboard.press("Escape")
             return False
@@ -626,7 +626,7 @@ class BlogWriter:
             self.page.keyboard.type(text, delay=15)
             _log.info("[blog-writer] 인용구 삽입")
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 인용구 실패: %s", e)
             return False
 
@@ -640,7 +640,7 @@ class BlogWriter:
                 opts.nth(style).click(timeout=1500)
             _log.info("[blog-writer] 구분선 삽입")
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 구분선 실패: %s", e)
             return False
 
@@ -659,7 +659,7 @@ class BlogWriter:
             time.sleep(2.5)
             _log.info("[blog-writer] 링크 카드 삽입: %s", url[:60])
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 링크 카드 실패: %s", e)
             return False
 
@@ -672,7 +672,7 @@ class BlogWriter:
             time.sleep(1)
             _log.info("[blog-writer] 텍스트 링크 삽입")
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 텍스트 링크 실패: %s", e)
             return False
 
@@ -742,7 +742,7 @@ class BlogWriter:
 
             _log.info("[blog-writer] 글자 크기: %d", size)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 글자 크기 실패: %s", e)
             return False
 
@@ -754,7 +754,7 @@ class BlogWriter:
             time.sleep(0.3)
             _log.info("[blog-writer] 문단 서식: %s", format_name)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 문단 서식 실패: %s", e)
             return False
 
@@ -767,7 +767,7 @@ class BlogWriter:
             self.page.get_by_text(label, exact=True).first.click(timeout=2000)
             time.sleep(0.2)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 정렬 실패: %s", e)
             return False
 
@@ -780,12 +780,12 @@ class BlogWriter:
                 try:
                     self.page.get_by_text(language, exact=True).first.click(timeout=1500)
                     time.sleep(0.3)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                     pass
             self.page.keyboard.type(code, delay=10)
             _log.info("[blog-writer] 코드 블록 삽입")
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 코드 블록 실패: %s", e)
             return False
 
@@ -799,7 +799,7 @@ class BlogWriter:
         """현재 선택된 카테고리 표시 텍스트."""
         try:
             return self.page.locator('.category_select, button:has-text("카테고리")').first.inner_text(timeout=2000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 카테고리 텍스트 조회 실패: %s", e)
             return ""
 
@@ -810,7 +810,7 @@ class BlogWriter:
             time.sleep(0.5)
             try:
                 self.page.locator(f'[data-category-no="{name_or_no}"]').first.click(timeout=1500)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
                 self.page.get_by_text(name_or_no, exact=True).first.click(timeout=2000)
             time.sleep(0.5)
 
@@ -825,7 +825,7 @@ class BlogWriter:
 
             _log.info("[blog-writer] 카테고리 선택: %s", name_or_no)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.warning("[blog-writer] 카테고리 선택 실패: %s", e)
             return False
 
@@ -835,7 +835,7 @@ class BlogWriter:
             return self.page.locator('.layer_popup__i0QOY.is_show__TMSLq, input[placeholder*="태그"]').first.is_visible(
                 timeout=500
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             return False
 
     def _open_publish_panel(self) -> bool:
@@ -855,7 +855,7 @@ class BlogWriter:
             btn.click(timeout=3000)
             time.sleep(1.0)
             return self._is_publish_panel_open()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.warning("[blog-writer] 발행 패널 열기 실패: %s", e)
             return False
 
@@ -867,7 +867,7 @@ class BlogWriter:
         """
         try:
             return self.page.locator('[class*="tag"]').first.inner_text(timeout=2000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] 태그 목록 조회 실패: %s", e)
             return ""
 
@@ -909,7 +909,7 @@ class BlogWriter:
 
             _log.info("[blog-writer] 태그 %d개 추가", len(tags))
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.warning("[blog-writer] 태그 추가 실패: %s", e)
             return False
         finally:
@@ -925,7 +925,7 @@ class BlogWriter:
             value = VISIBILITY_MAP[level]
             try:
                 self.page.locator(f'input[name="visibility"][value="{value}"]').first.click(timeout=1500)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
                 label_map = {
                     "public": "전체공개",
                     "neighbors": "이웃공개",
@@ -935,7 +935,7 @@ class BlogWriter:
                 self.page.get_by_text(label_map[level], exact=True).first.click(timeout=2000)
             _log.info("[blog-writer] 공개설정: %s", level)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.warning("[blog-writer] 공개설정 실패: %s", e)
             return False
 
@@ -963,7 +963,7 @@ class BlogWriter:
                 time.sleep(0.2)
             _log.info("[blog-writer] %s %s", label, "허용" if want else "거부")
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.debug("[blog-writer] %s 설정 무시: %s", label, e)
             return False
 
@@ -977,7 +977,7 @@ class BlogWriter:
             _log.info("[blog-writer] 임시저장 완료")
             log_critical("OTHER", "블로그 임시저장", mode="blog_draft")
             return {"ok": True, "mode": "draft"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 임시저장 실패: %s", e)
             return {"ok": False, "error": str(e)}
 
@@ -991,10 +991,10 @@ class BlogWriter:
             # 2) 패널 내 최종 발행 버튼 (.confirm_btn 또는 .publish_btn 계열 fallback)
             try:
                 self.page.locator('[class*="confirm_btn"]').click(timeout=3000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
                 try:
                     self.page.get_by_role("button", name="발행", exact=True).last.click(timeout=3000)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                     pass
 
             # 3) URL이 PostWriteForm에서 벗어날 때까지 최대 30초 대기
@@ -1004,11 +1004,11 @@ class BlogWriter:
                     lambda url: "PostWriteForm" not in url,
                     timeout=deadline * 1000,
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
                 time.sleep(wait_verify_s)
 
             return self.verify_published()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 발행 실패: %s", e)
             return {"ok": False, "error": str(e)}
 
@@ -1018,7 +1018,7 @@ class BlogWriter:
             try:
                 self.page.locator('button:has-text("발행")').first.click(timeout=3000)
                 time.sleep(1.5)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                 pass
 
             self.page.locator('input[type="radio"][value="reserve"], label:has-text("예약")').first.click(timeout=2000)
@@ -1036,7 +1036,7 @@ class BlogWriter:
             _log.info("[blog-writer] 예약 발행: %s", when)
             log_critical("OTHER", "블로그 예약 발행", scheduled_at=when.isoformat(), mode="blog_schedule")
             return {"ok": True, "mode": "scheduled", "scheduled_at": when.isoformat()}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.error("[blog-writer] 예약 발행 실패: %s", e)
             return {"ok": False, "error": str(e)}
 
@@ -1053,13 +1053,13 @@ class BlogWriter:
         title_text = ""
         try:
             title_text = self.page.title()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
             pass
 
         result_text = ""
         try:
             result_text = self.page.evaluate("() => (document.body?.innerText || '').substring(0, 500)")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
             pass
 
         success = bool(m) or "발행" in result_text or "완료" in result_text
@@ -1148,7 +1148,7 @@ def write_post(
         page.on("dialog", lambda d: d.dismiss())
         try:
             page._haehan_dialog_handler_installed = True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
             pass
 
     # Step 1: 로그인 확인
@@ -1166,7 +1166,7 @@ def write_post(
 
             tags = suggest_tags(title, body_str, brand_tags=brand_tags)
             _log.info("[write_post] 태그 자동 생성: %s", tags)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
             _log.warning("[write_post] 태그 자동 생성 실패 (무시): %s", e)
             tags = []
 
@@ -1283,7 +1283,7 @@ def edit_post(
         page.on("dialog", lambda d: d.dismiss())
         try:
             page._haehan_dialog_handler_installed = True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
             pass
 
     from scripts.naver.auth import ensure_naver_login

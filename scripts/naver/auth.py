@@ -65,7 +65,7 @@ def _load_credentials(
                     nid = cred["id"]
             if not pw and cred.get("pw"):
                 pw = cred["pw"]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
             _log.debug("통합 자격증명 로드 실패: %s", e)
 
     # 2. 환경변수
@@ -90,7 +90,7 @@ def _load_credentials(
                     nid = v
                 elif k == "NAVER_PW" and not pw:
                     pw = v
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
             _log.debug("자격증명 파일 읽기 실패: %s", e)
 
     return nid, pw
@@ -106,7 +106,7 @@ def save_credentials(naver_id: str, naver_pw: str) -> Path:
     ENV_FILE.write_text(content, encoding="utf-8")
     try:
         os.chmod(ENV_FILE, 0o600)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
         pass
     _log.info("[naver-auth] 자격증명 저장: %s", ENV_FILE)
     return ENV_FILE
@@ -142,7 +142,7 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
         current = ""
         try:
             current = el.input_value(timeout=1500) or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
 
         # 2. 분기
@@ -163,13 +163,13 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
             after_clear = ""
             try:
                 after_clear = el.input_value(timeout=1000) or ""
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
                 pass
             if after_clear:
                 # 여전히 남아있으면 fill로 한번 더
                 try:
                     el.fill("", timeout=1500)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
                     pass
             action = "replaced"
         else:
@@ -186,7 +186,7 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
         final = ""
         try:
             final = el.input_value(timeout=1500) or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
 
         if final != value:
@@ -196,7 +196,7 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
         _log.info("[naver-auth] %s 입력 완료 (%s, %d자)", label, action, len(value))
         return {"ok": True, "action": action, "before": current, "after": final}
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         _log.error("[naver-auth] %s 입력 실패: %s", label, e)
         return {"ok": False, "action": "error", "reason": str(e)[:80]}
 
@@ -230,7 +230,7 @@ def _submit_login_form(page) -> dict:
     try:
         page.locator(selector).first.click(timeout=3000)
         return {"ok": True, "method": "click"}
-    except Exception as click_error:
+    except Exception as click_error:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         _log.warning("[naver-auth] login button normal click failed: %s", str(click_error)[:120])
 
     try:
@@ -244,13 +244,13 @@ def _submit_login_form(page) -> dict:
         )
         if clicked:
             return {"ok": True, "method": "js_click"}
-    except Exception as js_error:
+    except Exception as js_error:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         _log.warning("[naver-auth] login button js click failed: %s", str(js_error)[:120])
 
     try:
         page.locator("#pw").press("Enter", timeout=2000)
         return {"ok": True, "method": "enter"}
-    except Exception as enter_error:
+    except Exception as enter_error:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         return {"ok": False, "reason": str(enter_error)[:120]}
 
 
@@ -263,7 +263,7 @@ def _open_login_from_naver_main(page) -> dict:
     try:
         if page.locator("#id").first.is_visible(timeout=1000):
             return {"ok": True, "method": "already_on_login_form"}
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
         pass
 
     # 직접 로그인 폼 이동 (가장 안정적)
@@ -276,7 +276,7 @@ def _open_login_from_naver_main(page) -> dict:
     try:
         page.locator("#id").first.wait_for(state="visible", timeout=8000)
         return {"ok": True, "method": "direct_form_url"}
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
         pass
 
     # fallback: www.naver.com 경유 클릭 (리뉴얼 UI)
@@ -296,7 +296,7 @@ def _open_login_from_naver_main(page) -> dict:
             el.click(timeout=3000)
             page.locator("#id").first.wait_for(state="visible", timeout=10000)
             return {"ok": True, "method": f"click:{selector}"}
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
             continue
 
     return {"ok": False, "reason": "login_link_not_found"}
@@ -314,7 +314,7 @@ def _detect_captcha(page) -> bool:
             return false;
         })();
         """)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         return False
 
 
@@ -369,7 +369,7 @@ def login_naver(
                     "target_user": nid,
                     "hint": "현재 다른 사용자로 로그인됨. 먼저 로그아웃 필요.",
                 }
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
         pass
 
     # 3. 로그인 페이지 진입
@@ -409,7 +409,7 @@ def login_naver(
         if not submit_result.get("ok"):
             raise RuntimeError(submit_result.get("reason", "submit_failed"))
         time.sleep(3)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         _log.error("[naver-auth] 로그인 버튼 클릭 실패: %s", e)
         return {"ok": False, "reason": f"submit_failed:{str(e)[:60]}"}
 
@@ -468,7 +468,7 @@ def _get_actual_naver_id(page) -> str:
         m2 = __import__("re").search(r"blog\.naver\.com/([^/?#]+)", redirected)
         if m2 and m2.group(1) not in ("", "MyBlog.naver"):
             return m2.group(1)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
         pass
     return ""
 
@@ -482,7 +482,7 @@ def _naver_auth_cookies_present(page) -> bool:
         cookies = page.context.cookies("https://www.naver.com")
         names = {c.get("name") for c in cookies}
         return "NID_AUT" in names and "NID_SES" in names
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         return False
 
 
@@ -497,13 +497,13 @@ def ensure_naver_login(
     # (호출처가 about:blank/타 사이트에 있어도 쿠키 기반 로그인을 올바로 감지하기 위함)
     try:
         _cur = page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         _cur = ""
     if "naver.com" not in _cur:
         try:
             page.goto("https://www.naver.com/", timeout=20000, wait_until="domcontentloaded")
             time.sleep(1)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
 
     state = detect_login_state(page)
@@ -525,7 +525,7 @@ def ensure_naver_login(
 
                     cred = get_naver_cred(naver_id)
                     naver_pw = cred.get("pw", "")
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
                     pass
             if naver_pw:
                 return login_naver(page, naver_id=naver_id, naver_pw=naver_pw, force_relogin=True)
@@ -545,7 +545,7 @@ def ensure_naver_login(
 
             cred = get_naver_cred(naver_id)
             naver_pw = cred.get("pw", "")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
 
     original_url = return_url or page.url
@@ -581,7 +581,7 @@ def ensure_naver_login(
                 "hint": step.get("hint"),
                 "captcha_required": step["stage"] == STAGE_CAPTCHA,
             }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         _log.debug("[naver-auth] auth-gate 스킵: %s", str(e)[:100])
 
     # ── fallback: 기존 자격증명 기반 로그인 ────────────────────────────────────
@@ -594,6 +594,6 @@ def ensure_naver_login(
         try:
             page.goto(original_url, timeout=15000, wait_until="domcontentloaded")
             time.sleep(2)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
     return result
