@@ -35,11 +35,11 @@ def _send(ws, msg_id: int, method: str, params: dict | None = None, timeout: flo
         ws.settimeout(max(0.5, deadline - time.time()))
         try:
             raw = ws.recv()
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP WebSocket 메일읽기(읽기전용) 클라이언트 — 응답 수신 실패 시 타임아웃 결과 반환, JSON 파싱 실패는 continue로 다음 메시지 대기, 쓰기 없음
             return {"id": msg_id, "_timeout": True}
         try:
             m = json.loads(raw)
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP WebSocket 메일읽기(읽기전용) 클라이언트 — 응답 수신 실패 시 타임아웃 결과 반환, JSON 파싱 실패는 continue로 다음 메시지 대기, 쓰기 없음
             continue
         if m.get("id") == msg_id:
             return m
@@ -56,7 +56,7 @@ def evaluate(target_id: str, expr: str, timeout: float = 8.0, port: int = CDP_PO
             if isinstance(val, str):
                 try:
                     return json.loads(val)
-                except Exception:
+                except Exception:  # noqa: BLE001 - CDP WebSocket 메일읽기(읽기전용) 클라이언트 — 응답 수신 실패 시 타임아웃 결과 반환, JSON 파싱 실패는 continue로 다음 메시지 대기, 쓰기 없음
                     return val
             return val
     return None

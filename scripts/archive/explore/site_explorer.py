@@ -13,6 +13,7 @@
   python scripts/site_explorer.py --category BANK_VISIT   # 카테고리 한정
   python scripts/site_explorer.py --limit 10      # 처음 N개만
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,11 +27,11 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.page_helper import _CRITICAL_SITE_PATTERNS, is_work_category
-from scripts.popup_detector import handle_page_popups
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.critical_logger import log_critical  # noqa: E402 - 레거시 sys.path 조작 후 import
+from scripts.logger import get_logger  # noqa: E402 - 레거시 sys.path 조작 후 import
+from scripts.page_helper import _CRITICAL_SITE_PATTERNS, is_work_category  # noqa: E402 - 레거시 sys.path 조작 후 import
+from scripts.popup_detector import handle_page_popups  # noqa: E402 - 레거시 sys.path 조작 후 import
+from scripts.web_connector import get_page  # noqa: E402 - 레거시 sys.path 조작 후 import
 
 _log = get_logger(__name__)
 TODAY = date.today()
@@ -40,6 +41,7 @@ SITEMAP_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ── 사이트 URL 카탈로그 빌드 ────────────────────────────────────────────────
+
 
 def build_catalog() -> list[dict]:
     """등재된 모든 사이트를 (category, domain, url) 리스트로 변환"""
@@ -167,6 +169,7 @@ def extract_page_meta(page) -> dict:
 
 # ── 사이트 1개 탐색 ──────────────────────────────────────────────────────────
 
+
 def explore_site(page, site: dict, timeout_s: int = 15) -> dict:
     """사이트 1개 메인 페이지 탐색"""
     url = site["url"]
@@ -189,7 +192,7 @@ def explore_site(page, site: dict, timeout_s: int = 15) -> dict:
         time.sleep(2)
         try:
             handle_page_popups(page, timeout_s=2.0)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 팝업 닫기 시도 실패는 탐색에 영향 없어 무시하고 계속 진행 — 읽기전용 탐색
             pass
         meta = extract_page_meta(page)
         result["meta"] = meta
@@ -199,7 +202,7 @@ def explore_site(page, site: dict, timeout_s: int = 15) -> dict:
         out = SITEMAP_DIR / f"{domain}_auto.json"
         out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 구조 탐색 스크립트(읽기전용) — 팝업닫기 실패는 무시(pass)하고 계속 탐색, 탐색 자체 실패는 결과 dict에 오류 기록 후 반환할 뿐 쓰기 동작 없음
         result["error"] = str(e)[:200]
         _log.warning("[%s] 탐색 실패: %s", domain, e)
 
@@ -208,14 +211,15 @@ def explore_site(page, site: dict, timeout_s: int = 15) -> dict:
 
 # ── 보고서 생성 ──────────────────────────────────────────────────────────────
 
+
 def build_report(results: list[dict]) -> str:
     by_cat: dict[str, list[dict]] = {}
     for r in results:
         by_cat.setdefault(r["category"], []).append(r)
 
     lines = []
-    lines.append(f"# 등재 사이트 자동 탐색 보고서")
-    lines.append(f"")
+    lines.append("# 등재 사이트 자동 탐색 보고서")
+    lines.append("")
     lines.append(f"- 기준일: {TODAY}")
     lines.append(f"- 전체 사이트: {len(results)}개")
     lines.append(f"- 성공: {sum(1 for r in results if r['success'])}개")
@@ -253,7 +257,9 @@ def build_report(results: list[dict]) -> str:
             lines.append(f"- ✓ **{domain}**{login_mark}{secu_mark}")
             lines.append(f"  - 제목: {m.get('title', '')[:60]}")
             stats = m.get("stats", {})
-            lines.append(f"  - 통계: 링크 {stats.get('link_count', 0)} / 폼 {stats.get('form_count', 0)} / 입력 {stats.get('input_count', 0)} / iframe {stats.get('iframe_count', 0)}")
+            lines.append(
+                f"  - 통계: 링크 {stats.get('link_count', 0)} / 폼 {stats.get('form_count', 0)} / 입력 {stats.get('input_count', 0)} / iframe {stats.get('iframe_count', 0)}"
+            )
             menus = m.get("menus") or []
             if menus:
                 menu_str = ", ".join(mm["text"] for mm in menus[:8])
@@ -268,14 +274,18 @@ def build_report(results: list[dict]) -> str:
 
 # ── 메인 ────────────────────────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(description="등재 사이트 자동 순회 + 사이트맵 수집")
     parser.add_argument("--category", default=None, help="특정 카테고리만 (예: BANK_VISIT)")
     parser.add_argument("--limit", type=int, default=0, help="처음 N개만 (0=전체)")
     parser.add_argument("--timeout", type=int, default=15, help="사이트당 타임아웃(초)")
     parser.add_argument("--skip-failed", action="store_true", help="실패 사이트 보고서 제외")
-    parser.add_argument("--skip-existing", action="store_true",
-                        help="data/sitemap/{도메인}_auto.json 이미 있으면 건너뜀 (신규 추가분만 처리)")
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="data/sitemap/{도메인}_auto.json 이미 있으면 건너뜀 (신규 추가분만 처리)",
+    )
     args = parser.parse_args()
 
     catalog = build_catalog()
@@ -297,10 +307,10 @@ def main():
     if args.limit > 0:
         catalog = catalog[: args.limit]
 
-    print(f"\n{'='*70}")
-    print(f"  등재 사이트 자동 탐색")
+    print(f"\n{'=' * 70}")
+    print("  등재 사이트 자동 탐색")
     print(f"  대상: {len(catalog)}개  |  카테고리: {args.category or '전체'}  |  타임아웃: {args.timeout}초")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     page = get_page()
     results = []
@@ -328,12 +338,12 @@ def main():
     json_path = ROOT / "data" / f"site_explorer_result_{TODAY.strftime('%Y%m%d')}.json"
     json_path.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  완료 | 성공 {sum(1 for r in results if r['success'])}/{len(results)}")
     print(f"  보고서: {rpt_path.name}")
     print(f"  JSON:   {json_path.name}")
     print(f"  사이트맵: data/sitemap/*_auto.json ({len([r for r in results if r['success']])}개)")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
 
 if __name__ == "__main__":
@@ -342,8 +352,9 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n사용자 중단")
         sys.exit(0)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 구조 탐색 스크립트(읽기전용) — 팝업닫기 실패는 무시(pass)하고 계속 탐색, 탐색 자체 실패는 결과 dict에 오류 기록 후 반환할 뿐 쓰기 동작 없음
         _log.error("실행 실패: %s", e)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

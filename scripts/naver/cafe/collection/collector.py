@@ -142,7 +142,7 @@ def _extract_search_page(page: Page, clubid: str, query: str, page_no: int) -> l
         if items:
             _log.debug("[cafe-search] 검색 p%d: %d건", page_no, len(items))
             return items
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 카페 목록/상세 읽기전용 수집 — JS 추출 실패 시 빈 리스트 반환, 상세 추출은 재시도 후 실패해도 빈 dict 반환, 쓰기 없음
         _log.warning("[cafe-search] JS 추출 실패 p%d: %s", page_no, e)
     return []
 
@@ -194,7 +194,7 @@ def _extract_list_page(page: Page, clubid: str, page_no: int, menu_id: str = "")
         if items:
             _log.debug("[cafe-collect] 목록 p%d: %d건", page_no, len(items))
             return items
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 카페 목록/상세 읽기전용 수집 — JS 추출 실패 시 빈 리스트 반환, 상세 추출은 재시도 후 실패해도 빈 dict 반환, 쓰기 없음
         _log.warning("[cafe-collect] JS 추출 실패 p%d: %s", page_no, e)
     return []
 
@@ -211,7 +211,7 @@ def _fetch_article_detail(page: Page, clubid: str, article_id: str) -> dict:
     for attempt in range(2):
         try:
             return _fetch_article_detail_once(page, url)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 목록/상세 읽기전용 수집 — JS 추출 실패 시 빈 리스트 반환, 상세 추출은 재시도 후 실패해도 빈 dict 반환, 쓰기 없음
             _log.warning("[cafe-collect] 상세 추출 실패(시도 %d) %s: %s", attempt + 1, article_id, e)
             time.sleep(2.0)
     return {}

@@ -91,7 +91,7 @@ def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
             })()"""
         )
         info = json.loads(raw) if raw else {}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 수동발행 CLI — CDP 상태조회 실패는 에러 dict 반환, 사용이미지 이력로드/playwright 종료 실패는 무시하고 계속(중복발행 방지 캐시는 부가기능, 발행 자체 실패는 아님)
         return {"ok": False, "blog_id": "", "reason": f"브라우저/상태 확인 실패: {e}"}
     finally:
         if cdp is not None:
@@ -212,7 +212,7 @@ def collect_images(draft: dict, count: int = 3, blog_id: str | None = None) -> l
         for p in load_cache(blog_id).get("posted", []):
             for path in p.get("img_paths", []) or []:
                 used.add(str(path))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 수동발행 CLI — CDP 상태조회 실패는 에러 dict 반환, 사용이미지 이력로드/playwright 종료 실패는 무시하고 계속(중복발행 방지 캐시는 부가기능, 발행 자체 실패는 아님)
         _log.debug("[manual] 사용 이미지 이력 로드 실패(무시): %s", e)
 
     slots = max(1, len(pool) // 3)
@@ -248,7 +248,7 @@ def publish(draft: dict, auto_images: bool = True, blog_id: str | None = None) -
     finally:
         try:
             pw.stop()
-        except Exception:
+        except Exception:  # noqa: BLE001 - playwright 인스턴스 정리(stop) 실패는 무시 — 리소스 정리 실패가 발행 결과에 영향 없음
             pass
 
     # 2026-08-19 GPT 차단 이후 이 수동 경로가 기본이 됐는데, 캐시 기록이

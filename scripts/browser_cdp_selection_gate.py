@@ -3,6 +3,7 @@
 The gate does not launch or close browsers. It only inspects running CDP
 endpoints, selects a session for a task domain, and blocks mixed ownership.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -11,8 +12,9 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 import websocket  # type: ignore
 
@@ -66,7 +68,7 @@ class CdpPage:
     def host(self) -> str:
         try:
             return (urllib.parse.urlparse(self.url).hostname or "").lower()
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP 세션 선택/탭격리 게이트 — host 파싱 실패나 게이트체크·타겟생성 실패 시 전부 ok=False(차단) 결과로 fail-closed 폴백, 허용 방향으로 새는 기본값 없음
             return ""
 
 
@@ -362,7 +364,9 @@ def _read_browser_ws_url(host: str, port: int, timeout: float = 2.0) -> str:
     return str(payload.get("webSocketDebuggerUrl") or "")
 
 
-def _send_browser_cdp(browser_ws_url: str, method: str, params: dict[str, Any], *, timeout: float = 5.0) -> dict[str, Any]:
+def _send_browser_cdp(
+    browser_ws_url: str, method: str, params: dict[str, Any], *, timeout: float = 5.0
+) -> dict[str, Any]:
     ws = websocket.create_connection(browser_ws_url, timeout=timeout)
     try:
         ws.send(json.dumps({"id": 1, "method": method, "params": params}))
@@ -403,7 +407,7 @@ def create_isolated_target(
         from scripts.gate import check as gate_check
 
         gate_check("cdp_nav", context="cdp_tab_isolation", task=task, work=work, port=port)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - CDP 세션 선택/탭격리 게이트 — host 파싱 실패나 게이트체크·타겟생성 실패 시 전부 ok=False(차단) 결과로 fail-closed 폴백, 허용 방향으로 새는 기본값 없음
         return TargetIsolationReport(
             ok=False,
             code="tab_isolation_gate_blocked",
@@ -502,7 +506,7 @@ def create_isolated_target(
                 "Created an isolated tab in the existing CDP session; no browser launch, restart, or close action.",
             ],
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - CDP 세션 선택/탭격리 게이트 — host 파싱 실패나 게이트체크·타겟생성 실패 시 전부 ok=False(차단) 결과로 fail-closed 폴백, 허용 방향으로 새는 기본값 없음
         return TargetIsolationReport(
             ok=False,
             code=CODE_TARGET_CREATE_FAILED,

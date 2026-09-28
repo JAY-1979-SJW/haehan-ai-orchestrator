@@ -122,7 +122,7 @@ def smoke_one(candidate: dict, headed: bool = True) -> dict:
                 with page.expect_download(timeout=30000) as dl_info:
                     try:
                         page.goto(url, timeout=30000, wait_until="domcontentloaded")
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 나라장터(G2B) 첨부파일 다운로드 스모크테스트(사용자 입회 하 read-only 검증) — goto 실패해도 download 이벤트가 이미 트리거됐을 수 있어 무시, 차단사유 추정을 위한 페이지 정보 조회 실패는 빈 문자열로 폴백
                         # goto 실패해도 download가 트리거됐을 수 있음
                         pass
                 download = dl_info.value
@@ -155,7 +155,7 @@ def smoke_one(candidate: dict, headed: bool = True) -> dict:
                 else:
                     result["verdict"] = "DOWNLOAD_SUCCESS_UNKNOWN_SIG"
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 나라장터(G2B) 첨부파일 다운로드 스모크테스트(사용자 입회 하 read-only 검증) — goto 실패해도 download 이벤트가 이미 트리거됐을 수 있어 무시, 차단사유 추정을 위한 페이지 정보 조회 실패는 빈 문자열로 폴백
                 # download event 미발생 — 페이지 응답 확인
                 err_name = type(e).__name__
                 err_msg = str(e)[:200]
@@ -164,7 +164,7 @@ def smoke_one(candidate: dict, headed: bool = True) -> dict:
                     cur_url = page.url
                     title = page.title()
                     body_sample = page.inner_text("body")[:300] if page.query_selector("body") else ""
-                except Exception:
+                except Exception:  # noqa: BLE001 - 나라장터(G2B) 첨부파일 다운로드 스모크테스트(사용자 입회 하 read-only 검증) — goto 실패해도 download 이벤트가 이미 트리거됐을 수 있어 무시, 차단사유 추정을 위한 페이지 정보 조회 실패는 빈 문자열로 폴백
                     cur_url, title, body_sample = "", "", ""  # noqa: F841
 
                 # 차단 사유 분류

@@ -28,7 +28,7 @@ def _naver_auth_cookies_present(page) -> bool:
         cookies = page.context.cookies("https://www.naver.com")
         names = {c.get("name") for c in cookies}
         return "NID_AUT" in names and "NID_SES" in names
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 로그인 상태 읽기전용 확인(쿠키 존재 여부·현재 URL 조회) — 실패 시 False/빈문자열로 안전하게 폴백, 로그인 세션을 바꾸거나 파기하지 않음
         return False
 
 
@@ -36,13 +36,13 @@ def check_login(page) -> dict:
     """현재 세션이 네이버에 로그인돼있는지 확인. 자동 로그인 시도 없음(fail로 안내만)."""
     try:
         cur = page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 로그인 상태 읽기전용 확인(쿠키 존재 여부·현재 URL 조회) — 실패 시 False/빈문자열로 안전하게 폴백, 로그인 세션을 바꾸거나 파기하지 않음
         cur = ""
     if "naver.com" not in cur:
         try:
             page.goto("https://www.naver.com/", timeout=20000, wait_until="domcontentloaded")
             time.sleep(1)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 로그인 상태 읽기전용 확인(쿠키 존재 여부·현재 URL 조회) — 실패 시 False/빈문자열로 안전하게 폴백, 로그인 세션을 바꾸거나 파기하지 않음
             _log.debug("naver.com 이동 실패(무시, 쿠키 확인은 계속): %s", e)
 
     if _naver_auth_cookies_present(page):

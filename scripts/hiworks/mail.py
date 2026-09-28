@@ -3,6 +3,7 @@
 compose 단계는 자동 진행 가능.
 send_mail()은 사용자 명시 승인(confirmed=True) 후에만 발송 버튼 클릭.
 """
+
 from __future__ import annotations
 
 import time
@@ -55,7 +56,7 @@ def open_compose(page) -> dict[str, Any]:
         if locator.count() > 0:
             try:
                 locator.click(timeout=5000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - SPA가 클릭을 처리하는 동안 Playwright 대기가 타임아웃될 수 있어 무시하고 이어서 결과 상태를 별도로 확인 — 주석에 의도 명시됨
                 # Hiworks SPA can handle the click while Playwright waits for
                 # completion. Continue and inspect the resulting state.
                 pass
@@ -85,7 +86,7 @@ def fill_compose(page, *, to: str, subject: str, body: str) -> dict[str, Any]:
             if frame.frame_element().get_attribute("class") == "se-contents-edit":
                 editor_frame = frame
                 break
-        except Exception:
+        except Exception:  # noqa: BLE001 - SPA가 클릭을 처리하는 동안 Playwright 대기가 타임아웃될 수 있어 무시하고 이어서 결과 상태를 별도로 확인 — 주석에 의도 명시됨
             pass
     if editor_frame:
         editor_frame.evaluate(
@@ -134,7 +135,7 @@ def send_mail(page) -> dict[str, Any]:
                 btn.click(timeout=5000)
                 clicked = True
                 break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 하이웍스 메일 UI 자동조작 — SPA 클릭이 완료되기 전에 대기 타임아웃 나거나 프레임 탐색이 실패해도 다음 셀렉터/프레임으로 계속 시도, 최종 결과는 별도 상태확인으로 판단(주석에 의도 명시)
                 continue
 
     if not clicked:

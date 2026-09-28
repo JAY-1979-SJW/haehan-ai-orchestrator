@@ -33,11 +33,11 @@ class TabCDP:
         while self._alive:
             try:
                 raw = self._ws.recv()
-            except Exception:
+            except Exception:  # noqa: BLE001 - CDP 탭 제어용 WebSocket 클라이언트 내부 유틸 — 수신루프 실패는 break로 종료, JSON파싱 실패는 continue, 연결 종료(close) 실패는 무시할 뿐 쓰기 없음
                 break
             try:
                 msg = json.loads(raw)
-            except Exception:
+            except Exception:  # noqa: BLE001 - CDP 탭 제어용 WebSocket 클라이언트 내부 유틸 — 수신루프 실패는 break로 종료, JSON파싱 실패는 continue, 연결 종료(close) 실패는 무시할 뿐 쓰기 없음
                 continue
             if "id" in msg:
                 with self._lock:
@@ -91,7 +91,7 @@ class TabCDP:
         self._alive = False
         try:
             self._ws.close()
-        except Exception:
+        except Exception:  # noqa: BLE001 - WebSocket 연결 close() 실패는 무시 — 이미 종료 중인 리소스 정리 실패일 뿐
             pass
 
 

@@ -9,15 +9,16 @@ runtime path is:
 This module must not collect, save, type, replay, or log Google passwords,
 cookies, storage state, session values, or raw tokens.
 """
+
 from __future__ import annotations
 
 import time
 from typing import Any
 
+from local_agent import site_entry_policy
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 from scripts.login_detector import detect_login_state, wait_for_login_generic
-from local_agent import site_entry_policy
 
 _log = get_logger(__name__)
 
@@ -52,7 +53,7 @@ def _is_google_url(url: str) -> bool:
 def _is_current_google_session(page) -> dict[str, Any] | None:
     try:
         state = detect_login_state(page)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 구글 로그인 상태 읽기전용 확인/이동 — 감지 실패 시 None 반환하거나 페이지 복귀 실패를 무시, 로그인 세션을 파기·변경하지 않음
         return None
 
     current_url = str(getattr(page, "url", "") or "")
@@ -83,7 +84,7 @@ def login_google(
     site_entry_policy.assert_main_page_first(GOOGLE_LOGIN_URL, site_key="google")
     try:
         page.goto(GOOGLE_LOGIN_URL, timeout=15000, wait_until="domcontentloaded")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 구글 로그인 상태 읽기전용 확인/이동 — 감지 실패 시 None 반환하거나 페이지 복귀 실패를 무시, 로그인 세션을 파기·변경하지 않음
         return {
             "ok": False,
             "reason": "login_page_open_failed",
@@ -131,7 +132,7 @@ def ensure_google_login(
         try:
             page.goto(original_url, timeout=15000, wait_until="domcontentloaded")
             time.sleep(2)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로그인 페이지 확인 후 원래 URL로 되돌아가는 부수 동작 실패는 무시 — 로그인 세션 자체는 건드리지 않음
             pass
     return result
 
