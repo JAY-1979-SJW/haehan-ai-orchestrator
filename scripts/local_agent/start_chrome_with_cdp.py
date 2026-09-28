@@ -11,6 +11,7 @@
 
 AI 브라우저 자동화를 사용하려면 Chrome이 CDP 모드로 실행 중이어야 한다.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,7 +25,9 @@ _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
 from ai_orchestrator.local_agent.browser.cdp import (
-    is_cdp_available, get_chrome_start_command, DEFAULT_CDP_PORT,
+    DEFAULT_CDP_PORT,
+    get_chrome_start_command,
+    is_cdp_available,
 )
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
@@ -43,14 +46,12 @@ def _find_chrome_exe() -> str | None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="CDP 모드 Chrome 시작")
-    parser.add_argument("--port", type=int, default=DEFAULT_CDP_PORT,
-                        help=f"원격 디버깅 포트 (기본 {DEFAULT_CDP_PORT})")
-    parser.add_argument("--url", default="about:blank",
-                        help="시작 URL")
-    parser.add_argument("--profile", default="cdp_session",
-                        help="Chrome 프로필 이름 (data/browser_sessions/<name>)")
-    parser.add_argument("--wait", type=int, default=3,
-                        help="Chrome 시작 후 대기 초")
+    parser.add_argument(
+        "--port", type=int, default=DEFAULT_CDP_PORT, help=f"원격 디버깅 포트 (기본 {DEFAULT_CDP_PORT})"
+    )
+    parser.add_argument("--url", default="about:blank", help="시작 URL")
+    parser.add_argument("--profile", default="cdp_session", help="Chrome 프로필 이름 (data/browser_sessions/<name>)")
+    parser.add_argument("--wait", type=int, default=3, help="Chrome 시작 후 대기 초")
     args = parser.parse_args()
 
     print(f"[CDP] 포트 {args.port} 확인 중...")
@@ -78,13 +79,16 @@ def main() -> None:
     if args.url and args.url != "about:blank":
         cmd += f" {args.url}"
 
-    print(f"[CDP] Chrome 시작 중...")
+    print("[CDP] Chrome 시작 중...")
     print(f"      포트: {args.port}")
     print(f"      프로필: {profile_dir}")
     print(f"      URL: {args.url}")
     print(f"      명령: {cmd}")
     print()
 
+    # 로컬 CLI 도구 — cmd는 이 스크립트가 조립하고, 유일한 외부입력(args.url)도
+    # 실행한 사용자 본인이 커맨드라인으로 직접 넘긴 값이라 권한 경계를 넘는
+    # 주입 경로가 아님(scripts/** 는 S 카테고리 자체가 이미 완화돼 있어 noqa 불필요).
     subprocess.Popen(cmd, shell=True)
 
     print(f"[CDP] Chrome 기동 대기 중 ({args.wait}초)...")
