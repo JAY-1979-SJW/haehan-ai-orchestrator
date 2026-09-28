@@ -12,7 +12,7 @@ _BLOCKED = ["/etc/", "/var/lib/"]
 
 
 def test_read_file_success():
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=_TMPDIR) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False, dir=_TMPDIR) as f:
         f.write("hello world")
         path = f.name
 
@@ -41,7 +41,7 @@ def test_blocked_path_fails():
 
 
 def test_preview_patch_does_not_modify_file():
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=_TMPDIR) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False, dir=_TMPDIR) as f:
         f.write("original content")
         path = f.name
 
@@ -49,13 +49,13 @@ def test_preview_patch_does_not_modify_file():
     assert result["status"] == "PREVIEW_ONLY", result
     assert result.get("note") and "NOT modified" in result["note"]
 
-    with Path(path).open() as f:
+    with Path(path).open(encoding="utf-8") as f:
         assert f.read() == "original content"
     Path(path).unlink()
 
 
 def test_file_exists_in_allowed():
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=_TMPDIR) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False, dir=_TMPDIR) as f:
         path = f.name
 
     result = file_exists(path, _ALLOWED, _BLOCKED)
@@ -65,7 +65,7 @@ def test_file_exists_in_allowed():
 
 
 def test_preview_patch_has_diff():
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=_TMPDIR) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False, dir=_TMPDIR) as f:
         f.write("line1\nline2\n")
         path = f.name
 

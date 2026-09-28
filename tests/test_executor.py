@@ -51,7 +51,9 @@ def _policy_with_tmp() -> dict:
 def _register_task(task_id: str, action_type: str, risk_level: str, target: str = "") -> tuple:
     if not target:
         # 실제 readable 파일 생성
-        f = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=tempfile.gettempdir())
+        f = tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".txt", delete=False, dir=tempfile.gettempdir()
+        )
         f.write("test content")
         f.close()
         target = f.name

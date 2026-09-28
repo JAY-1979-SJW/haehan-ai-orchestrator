@@ -133,7 +133,7 @@ def append_approval_state_event(log_path: Path, event: dict) -> None:
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Append to log (never truncate, always append)
-    with log_path.open("a") as f:
+    with log_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
@@ -154,7 +154,7 @@ def read_approval_state_events(log_path: Path) -> list[dict]:
         return []
 
     events = []
-    with log_path.open() as f:
+    with log_path.open(encoding="utf-8") as f:
         for line_num, line in enumerate(f, start=1):
             line = line.strip()
             if not line:

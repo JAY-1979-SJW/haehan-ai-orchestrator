@@ -289,7 +289,7 @@ class TestAppendAuditRecord:
         append_audit_record(record1, jsonl_file)
 
         # Read original content
-        with jsonl_file.open() as f:
+        with jsonl_file.open(encoding="utf-8") as f:
             original_content = f.read()
 
         # Write second record
@@ -304,7 +304,7 @@ class TestAppendAuditRecord:
         append_audit_record(record2, jsonl_file)
 
         # Read new content
-        with jsonl_file.open() as f:
+        with jsonl_file.open(encoding="utf-8") as f:
             new_content = f.read()
 
         # Original content should be preserved
@@ -424,7 +424,7 @@ class TestFixtureCompatibility:
         fixture_path = Path("tests/fixtures/browser_audit_module_design_20260506.json")
         assert fixture_path.exists(), f"Fixture not found: {fixture_path}"
 
-        with fixture_path.open() as f:
+        with fixture_path.open(encoding="utf-8") as f:
             fixture = json.load(f)
 
         # Check that production_mode and safe_to_execute are false
@@ -453,7 +453,7 @@ class TestFixtureCompatibility:
         fixture_path = Path("tests/fixtures/browser_real_workflow_policy_pack_20260507.json")
         assert fixture_path.exists(), f"Fixture not found: {fixture_path}"
 
-        with fixture_path.open() as f:
+        with fixture_path.open(encoding="utf-8") as f:
             fixture = json.load(f)
 
         # Check critical flags

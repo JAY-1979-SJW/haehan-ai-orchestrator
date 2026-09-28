@@ -8,8 +8,9 @@ TENANT-1 P1 Gap (G1~G13)을 코드 계약으로 변환하고 검증한다.
 - schema proposal이 gap을 다루는지 확인
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestTenantMinimalSchemaProposal:
@@ -17,18 +18,13 @@ class TestTenantMinimalSchemaProposal:
 
     def test_tenant_schema_report_exists(self):
         """Schema proposal 문서 존재"""
-        report_file = Path(
-            "docs/reports/tenant_2_minimal_scope_schema_proposal.md"
-        )
-        assert report_file.exists(), \
-            "tenant_2_minimal_scope_schema_proposal.md must exist"
+        report_file = Path("docs/reports/tenant_2_minimal_scope_schema_proposal.md")
+        assert report_file.exists(), "tenant_2_minimal_scope_schema_proposal.md must exist"
 
     def test_schema_report_mentions_all_entities(self):
         """Schema에 필수 entity 포함"""
-        report_file = Path(
-            "docs/reports/tenant_2_minimal_scope_schema_proposal.md"
-        )
-        content = report_file.read_text()
+        report_file = Path("docs/reports/tenant_2_minimal_scope_schema_proposal.md")
+        content = report_file.read_text(encoding="utf-8")
 
         entities = [
             "User",
@@ -42,20 +38,18 @@ class TestTenantMinimalSchemaProposal:
         ]
 
         for entity in entities:
-            assert entity in content, \
-                f"Schema report must mention {entity}"
+            assert entity in content, f"Schema report must mention {entity}"
 
     def test_schema_report_mentions_organization_id_requirement(self):
         """Schema에 organization_id 필수 항목 설명"""
-        report_file = Path(
-            "docs/reports/tenant_2_minimal_scope_schema_proposal.md"
-        )
-        content = report_file.read_text()
+        report_file = Path("docs/reports/tenant_2_minimal_scope_schema_proposal.md")
+        content = report_file.read_text(encoding="utf-8")
 
-        assert "organization_id NOT NULL" in content or \
-               "organization_id REQUIRED" in content or \
-               "organization_id 필수" in content, \
-            "Schema must describe organization_id as required"
+        assert (
+            "organization_id NOT NULL" in content
+            or "organization_id REQUIRED" in content
+            or "organization_id 필수" in content
+        ), "Schema must describe organization_id as required"
 
 
 class TestTenantContractFile:
@@ -63,18 +57,14 @@ class TestTenantContractFile:
 
     def test_tenant_contract_file_exists(self):
         """tenant_scope_contract.py 파일 존재"""
-        contract_file = Path(
-            "local_agent/tenant_scope_contract.py"
-        )
-        assert contract_file.exists(), \
-            "tenant_scope_contract.py must exist"
+        contract_file = Path("local_agent/tenant_scope_contract.py")
+        assert contract_file.exists(), "tenant_scope_contract.py must exist"
 
     def test_contract_file_compiles(self):
         """contract file Python 컴파일 검사"""
         import py_compile
-        contract_file = Path(
-            "local_agent/tenant_scope_contract.py"
-        )
+
+        contract_file = Path("local_agent/tenant_scope_contract.py")
         try:
             py_compile.compile(str(contract_file), doraise=True)
         except py_compile.PyCompileError as e:
@@ -365,8 +355,8 @@ class TestScopeValidationRules:
     def test_task_approval_agent_same_org_rule(self):
         """RULE: task.org == approval.org == agent.org"""
         from local_agent.tenant_scope_contract import (
-            BrowserTaskScope,
             BrowserApprovalScope,
+            BrowserTaskScope,
             LocalAgentScope,
             assert_task_approval_agent_same_org,
         )
@@ -394,8 +384,8 @@ class TestScopeValidationRules:
     def test_task_approval_org_mismatch_rejected(self):
         """org mismatch: task.org != approval.org → ValueError"""
         from local_agent.tenant_scope_contract import (
-            BrowserTaskScope,
             BrowserApprovalScope,
+            BrowserTaskScope,
             LocalAgentScope,
             assert_task_approval_agent_same_org,
         )
@@ -424,8 +414,8 @@ class TestScopeValidationRules:
     def test_task_agent_org_mismatch_rejected(self):
         """org mismatch: task.org != agent.org → ValueError"""
         from local_agent.tenant_scope_contract import (
-            BrowserTaskScope,
             BrowserApprovalScope,
+            BrowserTaskScope,
             LocalAgentScope,
             assert_task_approval_agent_same_org,
         )
@@ -454,8 +444,8 @@ class TestScopeValidationRules:
     def test_result_task_same_org_rule(self):
         """RULE: result.org == task.org"""
         from local_agent.tenant_scope_contract import (
-            BrowserTaskScope,
             BrowserResultScope,
+            BrowserTaskScope,
             assert_result_task_same_org,
         )
 
@@ -476,8 +466,8 @@ class TestScopeValidationRules:
     def test_result_task_org_mismatch_rejected(self):
         """result.org != task.org → ValueError"""
         from local_agent.tenant_scope_contract import (
-            BrowserTaskScope,
             BrowserResultScope,
+            BrowserTaskScope,
             assert_result_task_same_org,
         )
 
@@ -538,8 +528,7 @@ class TestPermissionMatrix:
 
         roles = ["owner", "admin", "manager", "operator", "viewer", "auditor", "local_agent"]
         for role in roles:
-            assert role in PERMISSION_MATRIX, \
-                f"PERMISSION_MATRIX must define {role}"
+            assert role in PERMISSION_MATRIX, f"PERMISSION_MATRIX must define {role}"
 
     def test_permission_matrix_owner_full_access(self):
         """owner role은 full access"""
@@ -557,41 +546,45 @@ class TestGapCoverage:
     def test_gap_g1_covered_by_auth_context_user_id(self):
         """G1: auth_context.actor_user_id"""
         from local_agent.tenant_scope_contract import AuthTenantContext
+
         ctx = AuthTenantContext(
             actor_user_id="user-1",
             organization_ids=["org-1"],
             active_organization_id="org-1",
         )
-        assert hasattr(ctx, 'actor_user_id')
+        assert hasattr(ctx, "actor_user_id")
 
     def test_gap_g4_covered_by_auth_context_org_ids(self):
         """G4: auth_context.organization_ids"""
         from local_agent.tenant_scope_contract import AuthTenantContext
+
         ctx = AuthTenantContext(
             actor_user_id="user-1",
             organization_ids=["org-1"],
             active_organization_id="org-1",
         )
-        assert hasattr(ctx, 'organization_ids')
+        assert hasattr(ctx, "organization_ids")
 
     def test_gap_g5_covered_by_browser_task_scope(self):
         """G5: BrowserTaskScope.organization_id"""
         from local_agent.tenant_scope_contract import BrowserTaskScope
+
         task = BrowserTaskScope(
             task_id="task-1",
             organization_id="org-1",
             requested_by_user_id="user-1",
         )
-        assert hasattr(task, 'organization_id')
+        assert hasattr(task, "organization_id")
 
     def test_gap_g10_covered_by_local_agent_scope(self):
         """G10: LocalAgentScope.organization_id"""
         from local_agent.tenant_scope_contract import LocalAgentScope
+
         agent = LocalAgentScope(
             agent_id="agent-1",
             organization_id="org-1",
         )
-        assert hasattr(agent, 'organization_id')
+        assert hasattr(agent, "organization_id")
 
 
 if __name__ == "__main__":
