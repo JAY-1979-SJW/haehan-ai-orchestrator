@@ -367,7 +367,7 @@ def main():
 
     for service, data in results.items():
         cache_file = cache_dir / f"{service}_deep.json"
-        with open(cache_file, "w", encoding="utf-8") as f:
+        with cache_file.open("w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"\n💾 저장: {cache_file}")
 

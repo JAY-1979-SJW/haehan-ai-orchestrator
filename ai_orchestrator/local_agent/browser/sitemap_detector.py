@@ -254,7 +254,7 @@ def save_sitemap_cache(info: SitemapInfo, cache_dir: Path = None):  # noqa: RUF0
     # SitemapInfo를 dict로 변환 (dataclass → dict)
     data = asdict(info)
 
-    with open(cache_file, "w", encoding="utf-8") as f:
+    with cache_file.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print(f"  💾 캐시 저장: {cache_file}")

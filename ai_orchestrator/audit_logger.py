@@ -114,7 +114,7 @@ def log_event(
 
     try:
         _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_LOG_PATH, "a", encoding="utf-8") as f:
+        with _LOG_PATH.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except OSError as e:
         logger.error("감사 로그 파일 기록 실패: %s | entry=%s", e, entry)

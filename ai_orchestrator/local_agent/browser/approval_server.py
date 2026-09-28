@@ -234,7 +234,7 @@ def audit_stream():
                 continue
             current_size = path.stat().st_size
             if current_size > last_size:
-                with open(path, encoding="utf-8") as f:
+                with path.open(encoding="utf-8") as f:
                     f.seek(last_size)
                     new_lines = f.read()
                 last_size = current_size

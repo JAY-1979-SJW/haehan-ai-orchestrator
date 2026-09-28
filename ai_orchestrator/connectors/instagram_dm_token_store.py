@@ -65,7 +65,7 @@ else:
         _STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
         _STORE_PATH.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
         try:
-            os.chmod(_STORE_PATH, 0o600)
+            _STORE_PATH.chmod(0o600)
         except OSError:
             pass
 
