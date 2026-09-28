@@ -1,8 +1,8 @@
-import os
 import sys
 import tempfile
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 from models import ExecutionPlan, RiskAssessment, TaskRequest
 from policy_engine import load_policy
@@ -43,7 +43,7 @@ def test_low_read_file_can_execute():
     task, risk, plan = _make_low_read(path)
     ok, reasons = can_execute(task, risk, plan, policy, approval_valid=False)
     assert ok, f"Expected executable but got: {reasons}"
-    os.unlink(path)
+    Path(path).unlink()
 
 
 def test_low_read_file_executes():
@@ -55,7 +55,7 @@ def test_low_read_file_executes():
     task, risk, plan = _make_low_read(path)
     result = execute_allowed(task, risk, plan, policy, approval_valid=False)
     assert result["status"] == "EXECUTED", result
-    os.unlink(path)
+    Path(path).unlink()
 
 
 def test_medium_edit_config_preview_only():
@@ -79,9 +79,9 @@ def test_medium_edit_config_preview_only():
     assert result["status"] == "PREVIEW_ONLY", result
     assert result.get("preview_only") is True
 
-    with open(path) as f:
+    with Path(path).open() as f:
         assert f.read() == "old", "file must NOT be modified"
-    os.unlink(path)
+    Path(path).unlink()
 
 
 def test_high_restart_service_blocked():
@@ -114,7 +114,7 @@ def test_blocked_path_is_blocked():
         task_id="t-blocked-path",
         source="pc",
         action_type="read_file",
-        target=os.path.join(blocked_path, "testfile"),
+        target=str(Path(blocked_path) / "testfile"),
         description="try to read blocked path",
     )
     risk = RiskAssessment(risk_level="low", requires_approval=False)

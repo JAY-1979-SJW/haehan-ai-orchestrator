@@ -7,8 +7,9 @@ haehan-ai-orchestrator 시나리오 실행기 (3단계)
 import logging
 import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, str(Path(__file__).parent))
 
 import audit_logger
 import task_store
@@ -93,7 +94,7 @@ def run_scenario(label: str, task: TaskRequest, mock_approve: bool = False) -> d
 
     policy = load_policy()
     # Windows: storage 경로를 allowed_paths에 추가
-    storage_path = os.path.join(os.path.dirname(__file__), "storage") + os.sep
+    storage_path = str(Path(__file__).parent / "storage") + os.sep
     allowed = policy.get("allowed_paths", [])
     if storage_path not in allowed:
         allowed.append(storage_path)
@@ -236,11 +237,11 @@ def main():
     import tempfile
 
     tempfile.gettempdir()
-    storage_dir = os.path.join(os.path.dirname(__file__), "storage")
-    os.makedirs(storage_dir, exist_ok=True)
-    test_file = os.path.join(storage_dir, "test_read.txt")
-    if not os.path.exists(test_file):
-        with open(test_file, "w") as f:
+    storage_dir = Path(__file__).parent / "storage"
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    test_file = storage_dir / "test_read.txt"
+    if not test_file.exists():
+        with test_file.open("w") as f:
             f.write("hello orchestrator\n")
 
     log_event(log, logging.INFO, "=== orchestrator scenarios start ===", event_type="TASK_RECEIVED", actor="main")

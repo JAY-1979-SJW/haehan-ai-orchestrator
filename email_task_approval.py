@@ -5,9 +5,9 @@ storage/email_approval_tokens.json (파일 기반, JSON dict)
 """
 
 import json
-import os
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 
 import audit_logger
 import email_task_store
@@ -15,22 +15,24 @@ from logger import get_logger
 
 log = get_logger("email_task_approval")
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_DEFAULT_TOKEN_PATH = os.path.join(_BASE_DIR, "storage", "email_approval_tokens.json")
+_BASE_DIR = str(Path(__file__).resolve().parent)
+_DEFAULT_TOKEN_PATH = str(Path(_BASE_DIR) / "storage" / "email_approval_tokens.json")
 
 
-def _load_tokens(path: str) -> dict:
-    if not os.path.exists(path):
+def _load_tokens(path: str | Path) -> dict:
+    p = Path(path)
+    if not p.exists():
         return {}
     try:
-        return json.loads(open(path, encoding="utf-8").read())
+        return json.loads(p.open(encoding="utf-8").read())
     except Exception:  # noqa: BLE001 - 승인 토큰 저장 파일 로드 실패 시 빈 dict 반환 - approve/reject/get_approval_for_task는 조회 실패를 'not_found'로 처리(자동승인 아님), request_approval도 자동 실행 없이 pending 상태만 기록하므로 예외가 승인 우회로 이어지지 않음
         return {}
 
 
-def _save_tokens(tokens: dict, path: str) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+def _save_tokens(tokens: dict, path: str | Path) -> None:
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", encoding="utf-8") as f:
         f.write(json.dumps(tokens, indent=2, ensure_ascii=False))
 
 

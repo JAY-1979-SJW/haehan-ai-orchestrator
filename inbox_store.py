@@ -5,22 +5,23 @@
 """
 
 import json
-import os
 from datetime import UTC, datetime
+from pathlib import Path
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_INBOX_PATH = os.path.join(_BASE_DIR, "storage", "inbox.jsonl")
+_BASE_DIR = str(Path(__file__).resolve().parent)
+_INBOX_PATH = Path(_BASE_DIR) / "storage" / "inbox.jsonl"
 
 
-def _inbox_path() -> str:
+def _inbox_path() -> str | Path:
     return _INBOX_PATH
 
 
-def _load_all(path: str) -> list[dict]:
-    if not os.path.exists(path):
+def _load_all(path: str | Path) -> list[dict]:
+    p = Path(path)
+    if not p.exists():
         return []
     items = []
-    with open(path, encoding="utf-8") as f:
+    with p.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:
@@ -31,7 +32,7 @@ def _load_all(path: str) -> list[dict]:
     return items
 
 
-def _is_duplicate(external_id: str, source_account: str, path: str) -> bool:
+def _is_duplicate(external_id: str, source_account: str, path: str | Path) -> bool:
     for item in _load_all(path):
         if item.get("external_id") == external_id and item.get("source_account") == source_account:
             return True
@@ -63,8 +64,8 @@ def save_mail(
     if not title:
         raise ValueError("title은 필수입니다")
 
-    inbox_path = path or _inbox_path()
-    os.makedirs(os.path.dirname(inbox_path), exist_ok=True)
+    inbox_path = Path(path or _inbox_path())
+    inbox_path.parent.mkdir(parents=True, exist_ok=True)
 
     if _is_duplicate(external_id, source_account, inbox_path):
         return {
@@ -88,7 +89,7 @@ def save_mail(
         "linked_task_id": None,
     }
 
-    with open(inbox_path, "a", encoding="utf-8") as f:
+    with inbox_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     return {"status": "saved", "external_id": external_id, "source_account": source_account}
@@ -123,8 +124,8 @@ def save_message(
     if not title:
         raise ValueError("title은 필수입니다")
 
-    inbox_path = path or _inbox_path()
-    os.makedirs(os.path.dirname(inbox_path), exist_ok=True)
+    inbox_path = Path(path or _inbox_path())
+    inbox_path.parent.mkdir(parents=True, exist_ok=True)
 
     if _is_duplicate(external_id, source_account, inbox_path):
         return {
@@ -150,7 +151,7 @@ def save_message(
     if metadata:
         entry["metadata"] = metadata
 
-    with open(inbox_path, "a", encoding="utf-8") as f:
+    with inbox_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     return {"status": "saved", "external_id": external_id, "source_account": source_account}

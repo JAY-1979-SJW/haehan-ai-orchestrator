@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import time
+from pathlib import Path
 
 import audit_logger
 from adapters import command_adapter, file_adapter
@@ -16,7 +17,7 @@ from models import ExecutionPlan, RiskAssessment, TaskRequest
 
 log = get_logger("executor")
 
-_HISTORY_PATH = os.path.join(os.path.dirname(__file__), "storage", "execution_history.jsonl")
+_HISTORY_PATH = Path(__file__).parent / "storage" / "execution_history.jsonl"
 
 _EXECUTABLE_LOW_ACTIONS = {"read_file", "list_dir", "inspect_logs", "status_check"}
 _BLOCKED_LEVELS = {"high", "critical"}
@@ -34,8 +35,8 @@ _ADAPTER_MAP = {
 
 
 def _append_history(entry: dict) -> None:
-    os.makedirs(os.path.dirname(_HISTORY_PATH), exist_ok=True)
-    with open(_HISTORY_PATH, "a", encoding="utf-8") as f:
+    Path(_HISTORY_PATH).parent.mkdir(parents=True, exist_ok=True)
+    with Path(_HISTORY_PATH).open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
@@ -85,6 +86,10 @@ def can_execute(
             allowed_paths = policy.get("allowed_paths", [])
 
             def _starts(child: str, parent: str) -> bool:
+                # os.path.abspath 유지(STD-02 pathlib 전환 예외): Path.resolve()는 심볼릭 링크를
+                # 따라가는데, 이 함수는 allowed/blocked 경로 포함 여부를 판정하는 보안 경계
+                # 로직이다 — 심볼릭 링크로 우회 가능한 다른 정규화로 바꾸면 판정 의미가
+                # 바뀔 위험이 있어 기존 동작(symlink 미해석)을 그대로 유지한다.
                 p = os.path.normcase(os.path.normpath(os.path.abspath(parent)))
                 c = os.path.normcase(os.path.normpath(os.path.abspath(child)))
                 return c == p or c.startswith(p + os.sep)
