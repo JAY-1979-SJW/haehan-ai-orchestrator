@@ -37,7 +37,7 @@ AUDIT_REQUIRED_OPS = {"click", "type", "submit"}
 
 def load_fixture():
     assert FIXTURE_PATH.exists(), f"fixture not found: {FIXTURE_PATH}"
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -348,7 +348,7 @@ def test_gate_fixture_gate_decisions_compatible():
     """기존 gate fixture의 gate_decisions가 audit 설계와 호환된다."""
     gate_fixture = Path(__file__).parent / "fixtures" / "browser_gate_module_design_20260506.json"
     assert gate_fixture.exists(), "gate module fixture not found"
-    with open(gate_fixture, encoding="utf-8") as f:
+    with gate_fixture.open(encoding="utf-8") as f:
         g = json.load(f)
     assert set(g["gate_decisions"]) == ALLOWED_GATE_DECISIONS
 
@@ -357,7 +357,7 @@ def test_allowlist_fixture_submit_deny_by_default():
     """기존 allowlist fixture의 submit=DENY_BY_DEFAULT 유지."""
     allowlist = Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
     assert allowlist.exists(), "allowlist fixture not found"
-    with open(allowlist, encoding="utf-8") as f:
+    with allowlist.open(encoding="utf-8") as f:
         a = json.load(f)
     assert a["default_verdicts"]["submit"] == "DENY_BY_DEFAULT"
 

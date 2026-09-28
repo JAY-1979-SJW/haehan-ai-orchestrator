@@ -17,11 +17,11 @@ USER_PRESENT_STATUS Observability 테스트
 - browser_worker/task_executor 호출 없음
 """
 
-import os
 import sys
 import unittest
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (
     clear_status_registry,

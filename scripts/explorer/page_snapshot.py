@@ -11,9 +11,9 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from scripts.logger import get_logger
@@ -98,12 +98,12 @@ def snapshot(page, save_dir: str = "data/sitemap") -> dict[str, Any]:
             data["frames"].append({"idx": i, "url": f.url, "error": str(e)})
             _log.warning("[explorer] 프레임[%d] 추출 실패: %s", i, e)
 
-    os.makedirs(save_dir, exist_ok=True)
-    out_path = os.path.join(save_dir, f"{slugify(url)}.json")
-    with open(out_path, "w", encoding="utf-8") as fp:
+    Path(save_dir).mkdir(parents=True, exist_ok=True)
+    out_path = Path(save_dir) / f"{slugify(url)}.json"
+    with out_path.open("w", encoding="utf-8") as fp:
         json.dump(data, fp, ensure_ascii=False, indent=2)
 
-    data["path"] = out_path
+    data["path"] = str(out_path)
     _log.info("[explorer] 페이지 스냅샷 저장: %s", out_path)
     return data
 

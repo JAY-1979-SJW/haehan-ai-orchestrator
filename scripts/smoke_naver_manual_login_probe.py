@@ -13,13 +13,13 @@
 주의:
   - 이 스크립트는 pytest 로 자동 실행하지 않는다. 사용자가 수동 실행용.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
-
+from pathlib import Path
 
 DEFAULT_URL = "https://www.naver.com/"
 DEFAULT_ALLOWED_HOSTS = ("www.naver.com", "nid.naver.com")
@@ -33,15 +33,21 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wait-seconds", type=int, default=120)
     parser.add_argument("--poll-interval-seconds", type=int, default=3)
     parser.add_argument(
-        "--success-url-contains", action="append", default=None,
+        "--success-url-contains",
+        action="append",
+        default=None,
         help="current_url 에 포함되면 로그인 완료로 간주할 토큰 (여러 개 가능)",
     )
     parser.add_argument(
-        "--success-text-hints", action="append", default=None,
+        "--success-text-hints",
+        action="append",
+        default=None,
         help="visible text 에 포함되면 로그인 완료로 간주할 토큰 (여러 개 가능)",
     )
     parser.add_argument(
-        "--allow-additional-host", action="append", default=None,
+        "--allow-additional-host",
+        action="append",
+        default=None,
         help="추가 허용 호스트 (기본 네이버 도메인 외). 주의: 확신한 경우에만.",
     )
     return parser
@@ -75,9 +81,7 @@ def _redact_for_print(result: dict) -> dict:
         if "login_completed_hint" in obs:
             compact["login_completed_hint"] = obs["login_completed_hint"]
         if "login_completion_reason" in obs:
-            compact["login_completion_reason"] = list(
-                obs.get("login_completion_reason") or []
-            )
+            compact["login_completion_reason"] = list(obs.get("login_completion_reason") or [])
         struct = obs.get("page_structure")
         if isinstance(struct, dict):
             counts = struct.get("counts") or {}
@@ -100,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
     # 발생하지 않도록 한다.
     sys.path.insert(
         0,
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
+        str(Path(__file__).resolve().parent.parent),
     )
     from local_agent.browser_login_probe import probe_manual_login_flow
 

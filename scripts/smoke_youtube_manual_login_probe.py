@@ -38,8 +38,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
+from pathlib import Path
 
 DEFAULT_URL = "https://www.youtube.com"
 
@@ -203,7 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     # 발생하지 않도록 한다.
     sys.path.insert(
         0,
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
+        str(Path(__file__).resolve().parent.parent),
     )
     from local_agent.browser_login_probe import probe_manual_login_flow
 

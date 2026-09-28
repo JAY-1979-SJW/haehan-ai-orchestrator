@@ -3,17 +3,18 @@
 기본 셀렉터(`button.tab_link`)는 건설e음 등 일반적인 패턴.
 다른 사이트는 tab_selector 인자로 셀렉터 지정 가능.
 """
+
 from __future__ import annotations
 
 import json
-import os
 import re
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
-from scripts.web_connector import get_page
 from scripts.logger import get_logger
+from scripts.web_connector import get_page
 
 _log = get_logger(__name__)
 
@@ -127,12 +128,12 @@ def explore_tabs(
         time.sleep(0.3)
         _log.debug("[explorer] 첫 탭으로 복귀: %s", initial_tab)
 
-    os.makedirs(save_dir, exist_ok=True)
-    out_path = os.path.join(save_dir, f"{slugify(url)}_login_tabs.json")
-    with open(out_path, "w", encoding="utf-8") as fp:
+    Path(save_dir).mkdir(parents=True, exist_ok=True)
+    out_path = Path(save_dir) / f"{slugify(url)}_login_tabs.json"
+    with out_path.open("w", encoding="utf-8") as fp:
         json.dump(results, fp, ensure_ascii=False, indent=2)
 
-    results["path"] = out_path
+    results["path"] = str(out_path)
     _log.info("[explorer] 탭 탐색 저장: %s", out_path)
     return results
 
@@ -146,7 +147,7 @@ def run_cli(args: list[str]) -> None:
     r = explore_tabs(page, tab_selector=tab_sel, panel_selector=panel_sel)
     if "error" in r:
         print(f"\n✗ {r['error']}")
-        _log.error("[explorer] 탭 탐색 실패: %s", r['error'])
+        _log.error("[explorer] 탭 탐색 실패: %s", r["error"])
         return
     print(f"\n✓ 탭 탐색 저장: {r['path']}")
     print(f"  URL: {r['url']}")

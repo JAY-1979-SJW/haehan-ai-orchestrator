@@ -18,14 +18,17 @@ G2B 공개 공고 Dry-Run Workflow Integration 테스트
 - DB write 없음
 - click/type/fill/submit 실행 없음
 """
+
 import inspect
 import os
 import sys
 import unittest
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import warnings
+
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
@@ -43,11 +46,23 @@ from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (
     VERDICT_NEEDS_VERIFICATION,
 )
 
-_FORBIDDEN_STEP_NAMES = frozenset({
-    "click", "type", "fill", "submit", "download",
-    "login", "cert", "payment", "contract_submit", "bid_submit",
-    "auto_login", "upload", "write_form",
-})
+_FORBIDDEN_STEP_NAMES = frozenset(
+    {
+        "click",
+        "type",
+        "fill",
+        "submit",
+        "download",
+        "login",
+        "cert",
+        "payment",
+        "contract_submit",
+        "bid_submit",
+        "auto_login",
+        "upload",
+        "write_form",
+    }
+)
 
 
 class TestDryRunInvariants(unittest.TestCase):
@@ -73,30 +88,27 @@ class TestDryRunInvariants(unittest.TestCase):
     def test_execution_dispatched_always_false(self):
         for url, op in self._CASES:
             result = evaluate_g2b_public_notice_dryrun(url, operation=op)
-            self.assertFalse(result["execution_dispatched"],
-                             f"{url}+{op}: execution_dispatched must be False")
+            self.assertFalse(result["execution_dispatched"], f"{url}+{op}: execution_dispatched must be False")
 
     def test_safe_to_execute_always_false(self):
         for url, op in self._CASES:
             result = evaluate_g2b_public_notice_dryrun(url, operation=op)
-            self.assertFalse(result["safe_to_execute"],
-                             f"{url}+{op}: safe_to_execute must be False")
+            self.assertFalse(result["safe_to_execute"], f"{url}+{op}: safe_to_execute must be False")
 
     def test_live_browser_worker_called_always_false(self):
         for url, op in self._CASES:
             result = evaluate_g2b_public_notice_dryrun(url, operation=op)
-            self.assertFalse(result["live_browser_worker_called"],
-                             f"{url}+{op}: live_browser_worker_called must be False")
+            self.assertFalse(
+                result["live_browser_worker_called"], f"{url}+{op}: live_browser_worker_called must be False"
+            )
 
     def test_download_auto_allowed_always_false(self):
         for url, op in self._CASES:
             result = evaluate_g2b_public_notice_dryrun(url, operation=op)
-            self.assertFalse(result["download_auto_allowed"],
-                             f"{url}+{op}: download_auto_allowed must be False")
+            self.assertFalse(result["download_auto_allowed"], f"{url}+{op}: download_auto_allowed must be False")
 
 
 class TestDryRunAllowed(unittest.TestCase):
-
     # A. g2b.go.kr 공개 URL read → dry_run True, execution_dispatched False, DRYRUN_READY
     def test_A_apex_read_dryrun_ready(self):
         result = evaluate_g2b_public_notice_dryrun(
@@ -148,7 +160,6 @@ class TestDryRunAllowed(unittest.TestCase):
 
 
 class TestDryRunBlocked(unittest.TestCase):
-
     # D. login 경로 → BLOCKED
     def test_D_login_path_blocked(self):
         result = evaluate_g2b_public_notice_dryrun(
@@ -239,12 +250,10 @@ class TestDryRunBlocked(unittest.TestCase):
         )
         self.assertEqual(result["adapter_decision"], ADAPTER_G2B_BLOCKED)
         # BLOCK 결과는 workflow_steps 비어 있어야 함
-        self.assertEqual(result["workflow_steps"], [],
-                         "BLOCKED result should have no workflow_steps")
+        self.assertEqual(result["workflow_steps"], [], "BLOCKED result should have no workflow_steps")
 
 
 class TestDryRunVerification(unittest.TestCase):
-
     # I. shop.g2b.go.kr → NEEDS_VERIFICATION
     def test_I_shop_needs_verification(self):
         result = evaluate_g2b_public_notice_dryrun(
@@ -266,7 +275,6 @@ class TestDryRunVerification(unittest.TestCase):
 
 
 class TestDryRunWorkflowStepSafety(unittest.TestCase):
-
     # workflow_steps에 금지 step 없음 (허용 케이스)
     def test_no_forbidden_steps_in_allowed_workflow(self):
         for op in ["read", "navigate", "open_url"]:
@@ -276,8 +284,9 @@ class TestDryRunWorkflowStepSafety(unittest.TestCase):
             )
             for step_entry in result.get("workflow_steps", []):
                 step_name = (step_entry.get("step") or "").lower()
-                self.assertNotIn(step_name, _FORBIDDEN_STEP_NAMES,
-                                 f"op={op}: forbidden step in workflow_steps: {step_name}")
+                self.assertNotIn(
+                    step_name, _FORBIDDEN_STEP_NAMES, f"op={op}: forbidden step in workflow_steps: {step_name}"
+                )
 
     # S. forbidden_operations가 결과에 유지됨
     def test_S_forbidden_operations_preserved(self):
@@ -287,8 +296,7 @@ class TestDryRunWorkflowStepSafety(unittest.TestCase):
         )
         forbidden = result.get("forbidden_operations", [])
         for must_include in ["submit", "type", "fill", "click", "download"]:
-            self.assertIn(must_include, forbidden,
-                          f"forbidden_operations must include: {must_include}")
+            self.assertIn(must_include, forbidden, f"forbidden_operations must include: {must_include}")
 
     # allowed_operations에 금지 동작 없음
     def test_allowed_operations_no_forbidden(self):
@@ -298,12 +306,10 @@ class TestDryRunWorkflowStepSafety(unittest.TestCase):
         )
         forbidden_set = set(FORBIDDEN_OPERATIONS)
         for op in result.get("allowed_operations", []):
-            self.assertNotIn(op, forbidden_set,
-                             f"allowed_operations must not contain: {op}")
+            self.assertNotIn(op, forbidden_set, f"allowed_operations must not contain: {op}")
 
 
 class TestDryRunValidation(unittest.TestCase):
-
     # T. validate 함수 실패 케이스
     def test_T_validate_missing_field_fails(self):
         incomplete = {"dry_run": True, "input_url": "x"}
@@ -342,33 +348,38 @@ class TestDryRunCodeSafety(unittest.TestCase):
 
     def _get_adapter_src(self):
         import ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter as m
+
         return inspect.getsource(m)
 
     def _get_workflow_src(self):
         import ai_orchestrator.browser_tool.g2b_public_notice_workflow as m
+
         return inspect.getsource(m)
 
     # R. task_executor/browser_worker가 import/호출되지 않음
     def test_R_no_task_executor_browser_worker(self):
         src = self._get_adapter_src()
-        import_lines = [ln for ln in src.splitlines()
-                        if ln.strip().startswith("import ") or ln.strip().startswith("from ")]
+        import_lines = [
+            ln for ln in src.splitlines() if ln.strip().startswith("import ") or ln.strip().startswith("from ")
+        ]
         code = "\n".join(import_lines)
         self.assertNotIn("task_executor", code)
         self.assertNotIn("browser_worker", code)
 
     def test_no_playwright_selenium_import(self):
         src = self._get_adapter_src()
-        import_lines = [ln for ln in src.splitlines()
-                        if ln.strip().startswith("import ") or ln.strip().startswith("from ")]
+        import_lines = [
+            ln for ln in src.splitlines() if ln.strip().startswith("import ") or ln.strip().startswith("from ")
+        ]
         code = "\n".join(import_lines)
         self.assertNotIn("playwright", code)
         self.assertNotIn("selenium", code)
 
     def test_no_requests_httpx_live_call(self):
         src = self._get_adapter_src()
-        import_lines = [ln for ln in src.splitlines()
-                        if ln.strip().startswith("import ") or ln.strip().startswith("from ")]
+        import_lines = [
+            ln for ln in src.splitlines() if ln.strip().startswith("import ") or ln.strip().startswith("from ")
+        ]
         code = "\n".join(import_lines)
         self.assertNotIn("import requests", code)
         self.assertNotIn("import httpx", code)
