@@ -23,9 +23,10 @@ import socket
 import sys
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REPO_ROOT = str(Path(__file__).resolve().parent.parent.parent)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
@@ -108,12 +109,12 @@ _SAFE_FIELDS = (
 def _is_local_execution() -> bool:
     """현재 실행 환경이 로컬 PC인지 확인 (서버 컨테이너 차단)."""
     # docker container indicator
-    if os.path.exists("/.dockerenv"):
+    if Path("/.dockerenv").exists():
         return False
     # systemd-detect-virt 같은 신호 (linux)
     if sys.platform.startswith("linux"):
         try:
-            with open("/proc/1/cgroup") as f:
+            with Path("/proc/1/cgroup").open() as f:
                 content = f.read()
             if "docker" in content or "kubepods" in content:
                 return False
@@ -327,13 +328,13 @@ def run_full_smoke(write_report: bool = True) -> dict[str, Any]:
     }
 
     if write_report:
-        report_dir = os.path.join(_REPO_ROOT, "data", "reports", "local_agent")
-        os.makedirs(report_dir, exist_ok=True)
-        report_path = os.path.join(
-            report_dir,
-            f"local_agent_public_external_readonly_live_smoke_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+        report_dir = Path(_REPO_ROOT) / "data" / "reports" / "local_agent"
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_path = (
+            report_dir
+            / f"local_agent_public_external_readonly_live_smoke_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         )
-        with open(report_path, "w", encoding="utf-8") as f:
+        with report_path.open("w", encoding="utf-8") as f:
             json.dump(summary, f, ensure_ascii=False, indent=2)
         print()
         print(f"[리포트 저장] {os.path.relpath(report_path, _REPO_ROOT)}")

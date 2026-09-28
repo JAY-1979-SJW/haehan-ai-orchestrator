@@ -9,12 +9,12 @@ email task → approval request 테스트
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import email_task_approval
 import email_task_store
@@ -47,8 +47,8 @@ def _seed_task(task_path: str, task_id: str = "etask-test001") -> dict:
         "created_at": "2026-04-22T10:00:00",
         "linked_candidate_id": "item-abc123",
     }
-    os.makedirs(os.path.dirname(task_path), exist_ok=True)
-    with open(task_path, "a", encoding="utf-8") as f:
+    Path(task_path).parent.mkdir(parents=True, exist_ok=True)
+    with Path(task_path).open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
     return entry
 
@@ -97,7 +97,7 @@ def test_duplicate_approval_request(task_path, token_path):
     assert r2["token_id"] == r1["token_id"]
 
     # 토큰 파일에 1개만 존재해야 함
-    tokens = json.loads(open(token_path, encoding="utf-8").read())
+    tokens = json.loads(Path(token_path).open(encoding="utf-8").read())
     task_tokens = [e for e in tokens.values() if e["task_id"] == "etask-test001"]
     assert len(task_tokens) == 1
 
@@ -115,7 +115,7 @@ def test_not_found_task(task_path, token_path):
     assert result["task_id"] == "etask-nonexistent"
 
     # 토큰 파일이 생성되지 않아야 함
-    assert not os.path.exists(token_path)
+    assert not Path(token_path).exists()
 
 
 # ── 4. approval_token_id 연결 검증 ────────────────────────────────────────────
@@ -176,12 +176,12 @@ def test_email_approval_token_separate_from_main_tokens(task_path, token_path):
     email_task_approval.request_approval("etask-test001", token_path=token_path, task_path=task_path)
 
     # 지정한 token_path에만 저장됨
-    assert os.path.exists(token_path)
+    assert Path(token_path).exists()
 
     # 메인 approval_tokens.json 파일 경로 확인 (ai_orchestrator/storage/ 아님)
-    os.path.join(os.path.dirname(os.path.dirname(token_path)), "email_approval_tokens.json")
+    Path(token_path).parent.parent / "email_approval_tokens.json"
     # 테스트 token_path가 tmp_path이므로 메인 경로와 다름
-    assert os.path.abspath(token_path) != email_task_approval._DEFAULT_TOKEN_PATH
+    assert str(Path(token_path).resolve()) != email_task_approval._DEFAULT_TOKEN_PATH
 
 
 # ── 6. 앱 부팅 가능 여부 ──────────────────────────────────────────────────────

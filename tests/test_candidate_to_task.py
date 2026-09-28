@@ -10,12 +10,12 @@ candidate → task 승격 테스트
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import candidate_store
 import candidate_to_task
@@ -61,8 +61,8 @@ def _seed_candidate(
         "classified_at": "2026-04-22T10:00:00",
         "linked_task_id": None,
     }
-    os.makedirs(os.path.dirname(cand_path), exist_ok=True)
-    with open(cand_path, "a", encoding="utf-8") as f:
+    Path(cand_path).parent.mkdir(parents=True, exist_ok=True)
+    with Path(cand_path).open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
     return item_id
 
@@ -180,7 +180,7 @@ def test_no_task_type_rejected(cand_path, task_path):
         "classified_at": "2026-04-22T10:00:00",
         "linked_task_id": None,
     }
-    with open(cand_path, "a", encoding="utf-8") as f:
+    with Path(cand_path).open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
 
     result = candidate_to_task.promote(item_id2, candidate_path=cand_path, task_path=task_path)
@@ -231,7 +231,7 @@ def test_email_task_jsonl_format(cand_path, task_path):
     item_id = _seed_candidate(cand_path)
     candidate_to_task.promote(item_id, candidate_path=cand_path, task_path=task_path)
 
-    with open(task_path, encoding="utf-8") as f:
+    with Path(task_path).open(encoding="utf-8") as f:
         lines = [l.strip() for l in f if l.strip()]  # noqa: E741
     assert len(lines) == 1
 

@@ -18,14 +18,15 @@ import os
 import sys
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REPO_ROOT = str(Path(__file__).resolve().parent.parent.parent)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-_TMP = os.path.join(_REPO_ROOT, "tmp")
-_DL_DIR = os.path.join(_TMP, "g2b_user_present_downloads_20260508")
-os.makedirs(_DL_DIR, exist_ok=True)
+_TMP = Path(_REPO_ROOT) / "tmp"
+_DL_DIR = _TMP / "g2b_user_present_downloads_20260508"
+_DL_DIR.mkdir(parents=True, exist_ok=True)
 
 _SAFE_FIELDS = (
     "cookie_exported",
@@ -40,19 +41,20 @@ _SAFE_FIELDS = (
 
 def _is_local_pc() -> bool:
     """서버 컨테이너에서 실행 차단."""
-    if os.path.exists("/.dockerenv"):
+    if Path("/.dockerenv").exists():
         return False
     return True
 
 
-def _file_signature(path: str) -> str:
+def _file_signature(path: str | Path) -> str:
     """파일 시그니처 판정 (HWP/HWPX/PDF/ZIP/HTML)."""
-    if not os.path.exists(path):
+    p = Path(path)
+    if not p.exists():
         return "NOT_EXISTS"
-    size = os.path.getsize(path)
+    size = p.stat().st_size
     if size == 0:
         return "EMPTY"
-    with open(path, "rb") as f:
+    with p.open("rb") as f:
         head = f.read(8)
     # OLE2 (HWP)
     if head[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
@@ -130,10 +132,10 @@ def smoke_one(candidate: dict, headed: bool = True) -> dict:
                 safe_name = f"{candidate['bid_ntce_no']}_{candidate['bid_ntce_ord']}_{download.suggested_filename}"
                 # 경로 트래버설 방지
                 safe_name = safe_name.replace("/", "_").replace("\\", "_")
-                save_path = os.path.join(_DL_DIR, safe_name)
+                save_path = _DL_DIR / safe_name
                 download.save_as(save_path)
 
-                size = os.path.getsize(save_path) if os.path.exists(save_path) else 0
+                size = save_path.stat().st_size if save_path.exists() else 0
                 sig = _file_signature(save_path)
 
                 result["downloaded_path"] = os.path.relpath(save_path, _REPO_ROOT)
@@ -201,12 +203,12 @@ def main():
         print("ERROR: 이 스크립트는 로컬 PC에서만 실행 가능 (docker 환경 감지됨)")
         sys.exit(1)
 
-    top3_path = os.path.join(_TMP, "g2b_user_present_smoke_top3_20260508.json")
-    if not os.path.exists(top3_path):
+    top3_path = _TMP / "g2b_user_present_smoke_top3_20260508.json"
+    if not top3_path.exists():
         print(f"ERROR: 후보 파일 없음 — {top3_path}")
         sys.exit(1)
 
-    with open(top3_path, encoding="utf-8") as f:
+    with top3_path.open(encoding="utf-8") as f:
         data = json.load(f)
     candidates = data.get("top3", [])
 
@@ -247,15 +249,15 @@ def main():
         v = r["verdict"]
         summary["verdict_counts"][v] = summary["verdict_counts"].get(v, 0) + 1
 
-    out_path = os.path.join(
-        _REPO_ROOT,
-        "data",
-        "reports",
-        "local_agent",
-        f"g2b_user_present_attachment_smoke_top3_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+    out_path = (
+        Path(_REPO_ROOT)
+        / "data"
+        / "reports"
+        / "local_agent"
+        / f"g2b_user_present_attachment_smoke_top3_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     )
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open("w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
 
     print("=" * 70)

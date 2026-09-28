@@ -14,10 +14,11 @@
 
 import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import candidate_store
 import inbox_store
@@ -266,12 +267,8 @@ def test_no_auto_task_creation_on_classify(tmp_cand):
     )
 
     # email_tasks.jsonl 기본 경로에 task가 생성되면 안됨
-    import os
-
-    task_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "storage", "email_tasks.jsonl"
-    )
-    if os.path.exists(task_path):
+    task_path = Path(__file__).resolve().parent.parent / "storage" / "email_tasks.jsonl"
+    if task_path.exists():
         tasks = email_task_store.list_email_tasks()  # noqa: F841
         # 테스트 중 생성된 task가 없어야 함 (기존 데이터 무시)
     # task_store는 비어있어야 함

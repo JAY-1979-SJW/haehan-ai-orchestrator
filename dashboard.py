@@ -8,8 +8,9 @@ import json
 import os
 import sys
 import time
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from flask import Flask, Response, jsonify, render_template, request
 
@@ -30,8 +31,8 @@ from notice_router import notice_bp
 from tasks_router import tasks_bp
 from webhooks_router import webhooks_bp
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_DECISIONS_PATH = os.path.join(_BASE_DIR, "storage", "approval_decisions.jsonl")
+_BASE_DIR = str(Path(__file__).resolve().parent)
+_DECISIONS_PATH = Path(_BASE_DIR) / "storage" / "approval_decisions.jsonl"
 
 log = get_logger("dashboard")
 
@@ -94,8 +95,8 @@ _ROLE_MAX_RISK = {
 def create_app() -> Flask:
     app = Flask(
         __name__,
-        template_folder=os.path.join(_BASE_DIR, "ui", "templates"),
-        static_folder=os.path.join(_BASE_DIR, "ui", "static"),
+        template_folder=str(Path(_BASE_DIR) / "ui" / "templates"),
+        static_folder=str(Path(_BASE_DIR) / "ui" / "static"),
         static_url_path="/static",
     )
 
@@ -131,8 +132,8 @@ def create_app() -> Flask:
 
     @app.route("/dashboard/tasks/<task_id>")
     def task_detail(task_id: str):
-        audit_path = os.path.join(_BASE_DIR, "logs", "audit.jsonl")
-        history_path = os.path.join(_BASE_DIR, "storage", "execution_history.jsonl")
+        audit_path = Path(_BASE_DIR) / "logs" / "audit.jsonl"
+        history_path = Path(_BASE_DIR) / "storage" / "execution_history.jsonl"
 
         audit_events = [e for e in _read_jsonl(audit_path) if e.get("task_id") == task_id]
         history_events = [e for e in _read_jsonl(history_path) if e.get("task_id") == task_id]
@@ -325,8 +326,9 @@ def _record_decision(
             "reason": reason,
         }
     )
-    os.makedirs(os.path.dirname(_DECISIONS_PATH), exist_ok=True)
-    with open(_DECISIONS_PATH, "a", encoding="utf-8") as f:
+    decisions_path = Path(_DECISIONS_PATH)  # 테스트가 str로 monkeypatch하는 경우 호환
+    decisions_path.parent.mkdir(parents=True, exist_ok=True)
+    with decisions_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 

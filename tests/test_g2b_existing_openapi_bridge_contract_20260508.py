@@ -57,7 +57,7 @@ def test_contract_document_api_key_forbidden():
 
 def test_sample_fixture_exists_and_synthetic():
     assert _FIXTURE_SAMPLE.exists()
-    with open(_FIXTURE_SAMPLE, encoding="utf-8") as f:
+    with _FIXTURE_SAMPLE.open(encoding="utf-8") as f:
         data = json.load(f)
     assert data.get("synthetic_sample") is True
 
@@ -66,7 +66,7 @@ def test_sample_fixture_exists_and_synthetic():
 
 
 def test_sample_fixture_policy_fields_fixed():
-    with open(_FIXTURE_SAMPLE, encoding="utf-8") as f:
+    with _FIXTURE_SAMPLE.open(encoding="utf-8") as f:
         data = json.load(f)
     assert data.get("api_key_used_by_current_app") is False
     assert data.get("api_key_value_exposed") is False
@@ -78,7 +78,7 @@ def test_sample_fixture_policy_fields_fixed():
 
 
 def test_sample_fixture_has_five_items():
-    with open(_FIXTURE_SAMPLE, encoding="utf-8") as f:
+    with _FIXTURE_SAMPLE.open(encoding="utf-8") as f:
         data = json.load(f)
     assert len(data.get("items", [])) == 5
 
@@ -88,7 +88,7 @@ def test_sample_fixture_has_five_items():
 
 def test_candidates_fixture_endpoint_not_confirmed():
     assert _FIXTURE_CANDIDATES.exists()
-    with open(_FIXTURE_CANDIDATES, encoding="utf-8") as f:
+    with _FIXTURE_CANDIDATES.open(encoding="utf-8") as f:
         data = json.load(f)
     assert data.get("endpoint_confirmed") is False
 
@@ -97,7 +97,7 @@ def test_candidates_fixture_endpoint_not_confirmed():
 
 
 def test_candidates_fixture_policy_fields():
-    with open(_FIXTURE_CANDIDATES, encoding="utf-8") as f:
+    with _FIXTURE_CANDIDATES.open(encoding="utf-8") as f:
         data = json.load(f)
     assert data.get("api_key_used_by_current_app") is False
     assert data.get("api_key_value_exposed") is False
@@ -145,7 +145,7 @@ def test_bridge_verdict_not_content_valid_pass():
         classify_existing_source_bridge_result,
     )
 
-    with open(_FIXTURE_SAMPLE, encoding="utf-8") as f:
+    with _FIXTURE_SAMPLE.open(encoding="utf-8") as f:
         payload = json.load(f)
     result = build_g2b_notice_candidates_from_existing_source(payload)
     classified = classify_existing_source_bridge_result(result)
@@ -161,7 +161,7 @@ def test_blocked_url_not_in_safe_candidates():
         build_g2b_notice_candidates_from_existing_source,
     )
 
-    with open(_FIXTURE_SAMPLE, encoding="utf-8") as f:
+    with _FIXTURE_SAMPLE.open(encoding="utf-8") as f:
         payload = json.load(f)
     result = build_g2b_notice_candidates_from_existing_source(payload)
     safe = result["safe_detail_url_candidates"]
