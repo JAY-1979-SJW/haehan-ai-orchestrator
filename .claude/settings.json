@@ -5,17 +5,6 @@
     "defaultMode": "bypassPermissions"
   },
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\behavior_gate.py\"",
-            "statusMessage": "행동 게이트 검사 중..."
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
@@ -55,6 +44,31 @@
             "type": "command",
             "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_instagram_publish.py\"",
             "statusMessage": "인스타그램 실제 발행 여부 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_youtube_upload.py\"",
+            "statusMessage": "유튜브 업로드/채널 확인 여부 검사 중..."
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__claude-in-chrome__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_force_cdp.py\"",
+            "statusMessage": "claude-in-chrome 사용 금지, CDP 강제 전환 중..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\pre_edit_dup_check.py\"",
+            "statusMessage": "중복 구현 가능성 검사 중..."
           }
         ]
       }
@@ -70,12 +84,42 @@
         ]
       },
       {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\post_edit_fast_gate.py\"",
+            "statusMessage": "빠른 게이트(ruff+영향테스트) 실행 중..."
+          }
+        ]
+      },
+      {
         "matcher": "Write",
         "hooks": [
           {
             "type": "command",
             "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\hook_check_a4.py\"",
             "statusMessage": "A4 서식 자동 검사 + AI 품질 검증 중..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\behavior_gate.py\"",
+            "statusMessage": "행동 게이트 검사 중..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\stop_fast_verify.py\"",
+            "statusMessage": "세션 변경분 최종 게이트 확인 중..."
           }
         ]
       }

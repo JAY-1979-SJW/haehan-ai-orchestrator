@@ -19088,6 +19088,22 @@
    "reason": "도메인(smartstore) 자동화",
    "confidence": "low",
    "source": "rule"
+  },
+  "scripts/ops/guard_force_cdp.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "browser",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/guard_youtube_upload.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "youtube",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
