@@ -28,6 +28,7 @@ import platform
 import sys
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -112,7 +113,7 @@ def _collect_host_proof() -> dict[str, Any]:
         "platform": platform.system(),
         "platform_version": platform.version()[:80],
         "python_executable": sys.executable,
-        "cwd": os.getcwd(),
+        "cwd": str(Path.cwd()),
         "process_id": os.getpid(),
         "is_server_environment": is_server,
         "is_ssh_session": is_ssh,
@@ -473,7 +474,7 @@ def run_g2b_public_notice_fixture_live_suite(
         suite_result["playwright_available"] = pw_check.get("playwright_available", False)
         suite_result["chromium_available"] = pw_check.get("chromium_available", False)
 
-    with open(fixture_path, encoding="utf-8") as f:
+    with Path(fixture_path).open(encoding="utf-8") as f:
         fixture = json.load(f)
 
     cases = fixture.get("cases", [])

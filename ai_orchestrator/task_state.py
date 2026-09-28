@@ -64,7 +64,7 @@ class TaskRecord:
 def _append_event(event_type: str, rec: dict) -> None:
     try:
         _STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_STATE_PATH, "a", encoding="utf-8") as f:
+        with _STATE_PATH.open("a", encoding="utf-8") as f:
             ev = {"event_timestamp": _now().isoformat(), "event_type": event_type, **rec}
             f.write(json.dumps(ev, ensure_ascii=False) + "\n")
     except OSError as e:
@@ -78,7 +78,7 @@ def _load() -> None:
     if not _STATE_PATH.exists():
         return
     try:
-        with open(_STATE_PATH, encoding="utf-8") as f:
+        with _STATE_PATH.open(encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:

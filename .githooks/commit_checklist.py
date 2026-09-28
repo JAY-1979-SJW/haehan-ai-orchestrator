@@ -19,7 +19,7 @@ import os
 import re
 import subprocess
 import sys
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 MAX_BYTES = 50 * 1024 * 1024
 SCAN_TEXT_MAX = 2 * 1024 * 1024
@@ -139,10 +139,10 @@ def write_report(git_dir: str, ok: bool, results: dict[str, list[str]], files: l
         lines.append(f"- [{'x' if not v else ' '}] {k}" + ("" if not v else f" — {len(v)}건"))
         lines += [f"    - {i}" for i in v[:50]]
     lines.append("\n저장소 고유 게이트(기준서·lane·테스트 등)는 기존 훅(pre-commit.orig·commit-msg)이 이어서 검사한다.")
-    path = os.path.join(git_dir, "commit_checklist_last.md")
-    with open(path, "w", encoding="utf-8") as fh:
+    path = Path(git_dir) / "commit_checklist_last.md"
+    with path.open("w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
-    return path
+    return str(path)
 
 
 def main() -> int:

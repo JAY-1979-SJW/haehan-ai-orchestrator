@@ -91,7 +91,7 @@ def _load_store() -> None:
     if not _STORE_PATH.exists():
         return
     try:
-        with open(_STORE_PATH, encoding="utf-8") as f:
+        with _STORE_PATH.open(encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -137,7 +137,7 @@ def _append_event(event_type: str, entry: dict) -> None:
             "event_type": event_type,
             **{k: entry.get(k) for k in _TOKEN_FIELDS},
         }
-        with open(_STORE_PATH, "a", encoding="utf-8") as f:
+        with _STORE_PATH.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event, ensure_ascii=False) + "\n")
     except OSError as e:
         logger.error("승인 토큰 이벤트 기록 실패: %s", e)
