@@ -24,6 +24,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -91,10 +92,9 @@ def _save_raw(data: dict) -> None:
         json.dumps(data, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    try:
+    # 저장 파일 권한(chmod 600) 설정 실패는 무시 -- 파일 저장 자체는 이미 완료된 뒤의 부가적 권한 강화 조치이며 Windows 등 chmod 미지원 환경에서도 저장 기능이 막히지 않도록 함
+    with contextlib.suppress(Exception):
         PROFILE_FILE.chmod(0o600)
-    except Exception:  # noqa: BLE001 - 저장 파일 권한(chmod 600) 설정 실패는 무시 -- 파일 저장 자체는 이미 완료된 뒤의 부가적 권한 강화 조치이며 Windows 등 chmod 미지원 환경에서도 저장 기능이 막히지 않도록 함
-        pass
 
 
 def set_profile(**fields) -> dict:

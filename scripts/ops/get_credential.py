@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 import time
@@ -251,10 +252,9 @@ def get_credential(domain: str) -> dict:
                 print(f"[get_credential] _request_password 오류: {exc}", file=sys.stderr)
             finally:
                 if ws2:
-                    try:
+                    # WebSocket 연결 종료(cleanup) 실패는 무시 — 실제 조회 결과(JSON 출력)와 무관
+                    with contextlib.suppress(Exception):
                         ws2.close()
-                    except Exception:  # noqa: BLE001 - Chrome 저장 자격증명 조회 CLI - 사용자가 직접 실행, Windows PIN 팝업으로 본인 인증 필요. except는 WebSocket/CDP 통신 실패만 감싸며 로그에 예외 타입만 출력, 실제 조회 결과(JSON 출력)는 도구의 의도된 동작
-                        pass
                 eval_done.set()
 
         t = threading.Thread(target=_request_password, daemon=True)

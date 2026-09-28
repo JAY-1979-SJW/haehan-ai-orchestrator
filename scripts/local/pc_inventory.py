@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import platform
 import subprocess
@@ -152,10 +153,8 @@ def collect_processes(top_n: int = 50) -> list[dict[str, Any]]:
 def collect_ports() -> list[dict[str, Any]]:
     pid_to_name: dict[int, str] = {}
     for p in psutil.process_iter(["pid", "name"]):
-        try:
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
             pid_to_name[p.pid] = p.info["name"]
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
 
     ports = []
     seen: set[int] = set()

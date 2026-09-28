@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -146,10 +147,9 @@ class ChatUiController:
     def _notify(self) -> None:
         snap = self.state
         for fn in list(self._listeners):
-            try:
+            # GUI 상태 변경 구독자 콜백 호출 실패를 무시 - UI 갱신 실패일 뿐 채팅 상태 데이터에는 영향 없음, best-effort 알림
+            with contextlib.suppress(Exception):
                 fn(snap)
-            except Exception:  # noqa: S110, BLE001 - GUI 상태 변경 구독자 콜백(fn(snap)) 호출 실패를 무시 - UI 갱신 실패일 뿐 채팅 상태 자체 데이터에는 영향 없음, best-effort 알림
-                pass
 
     def clear_messages(self) -> None:
         with self._lock:

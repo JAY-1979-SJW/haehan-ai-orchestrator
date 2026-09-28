@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import sys
 from pathlib import Path
 
@@ -220,10 +221,9 @@ def is_logged_in(page) -> bool:
 
     # 1. 로그인 폼(ID+PW)이 보이면 = 미로그인 (R1 핵심)
     if "/main" in current_url:
-        try:
+        # 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
+        with contextlib.suppress(Exception):
             page.wait_for_selector(".login_dashboard", state="attached", timeout=5000)
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-            pass
     id_visible = _find_selector(page, _ID_SELECTORS) is not None
     pw_visible = _find_selector(page, _PW_SELECTORS) is not None
     try:
@@ -317,13 +317,13 @@ def _prepare_login_page(page, url: str) -> bool:
     if "WEBLOG400M00" in current:
         if _select_member_category(page, _MEMBER_CATEGORY):
             _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
-            try:
+            # 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
+            with contextlib.suppress(Exception):
                 page.wait_for_selector(
                     "input[type='password']:visible",
                     state="visible",
                     timeout=3000,
                 )
-            except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
                 pass
 
     id_sel = _find_selector(page, _ID_SELECTORS)
@@ -377,14 +377,13 @@ def login(page) -> dict:
             if "WEBLOG400M00" in current:
                 if _select_member_category(page, _MEMBER_CATEGORY):
                     _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
-                    # 폼이 visible 로 바뀔 때까지 잠깐 대기
-                    try:
+                    # 폼이 visible 로 바뀔 때까지 잠깐 대기 (best-effort, 실패해도 다음 신호로 계속, 2026-09-28 검토)
+                    with contextlib.suppress(Exception):
                         page.wait_for_selector(
                             "input[type='password']:visible",
                             state="visible",
                             timeout=3000,
                         )
-                    except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
                         pass
 
             id_sel = _find_selector(page, _ID_SELECTORS)
@@ -442,17 +441,13 @@ def login(page) -> dict:
             log.info("로그인 버튼 미발견 — Enter 키 사용")
             page.locator(pw_sel).press("Enter")
 
-        # 페이지 로딩 대기
-        try:
+        # 페이지 로딩 대기 (best-effort, 실패해도 다음 신호로 계속, 2026-09-28 검토)
+        with contextlib.suppress(Exception):
             page.wait_for_load_state("networkidle", timeout=15000)
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-            pass
 
-        # 팝업/알림 처리 (로그인 실패 메시지)
-        try:
+        # 팝업/알림 처리 (로그인 실패 메시지, best-effort, 2026-09-28 검토)
+        with contextlib.suppress(Exception):
             page.wait_for_timeout(1000)
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-            pass
 
         # 로그인 성공 여부 확인
         if is_logged_in(page):
@@ -532,11 +527,9 @@ def ensure_logged_in(page) -> None:
         if r.get("ok"):
             log.info("[eum-auth] 저장 세션 복원 완료 (saved_at=%s)", r.get("saved_at"))
             print(f"  [EUM] 세션 복원 ✔ ({r.get('saved_at', '?')} 저장본)", flush=True)
-            # 복원 후 페이지 이동해 로그인 확인
-            try:
+            # 복원 후 페이지 이동해 로그인 확인 (best-effort, 2026-09-28 검토)
+            with contextlib.suppress(Exception):
                 page.goto(EUM_BASE + "/web/man/WEBMAN390M00", timeout=12000, wait_until="domcontentloaded")
-            except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-                pass
             if is_logged_in(page):
                 log.info("[eum-auth] 세션 복원 후 로그인 확인됨")
                 return

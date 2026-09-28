@@ -28,6 +28,7 @@ OpenAI 호출을 차단했고(ai_orchestrator/openai_guard.py), 글은 Claude Co
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import sys
@@ -246,10 +247,9 @@ def publish(draft: dict, auto_images: bool = True, blog_id: str | None = None) -
     try:
         result = publish_one(page, post=post, img_paths=images)
     finally:
-        try:
+        # playwright 인스턴스 정리(stop) 실패는 무시 — 리소스 정리 실패가 발행 결과에 영향 없음
+        with contextlib.suppress(Exception):
             pw.stop()
-        except Exception:  # noqa: BLE001 - playwright 인스턴스 정리(stop) 실패는 무시 — 리소스 정리 실패가 발행 결과에 영향 없음
-            pass
 
     # 2026-08-19 GPT 차단 이후 이 수동 경로가 기본이 됐는데, 캐시 기록이
     # 빠져 있어서 중복 발행 방지가 무력화돼 있었다(2026-08-22 발견).

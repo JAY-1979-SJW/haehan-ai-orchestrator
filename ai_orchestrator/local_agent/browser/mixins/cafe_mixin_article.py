@@ -6,6 +6,7 @@ CafeMixin 이 다중상속. [docs/module_separation_standard.md]
 
 from __future__ import annotations
 
+import contextlib
 import re
 import time
 from pathlib import Path
@@ -175,10 +176,8 @@ class CafeArticleMixin:
                         break
                 if not body and frame in article_frames:
                     fb = ""
-                    try:
+                    with contextlib.suppress(Exception):
                         fb = frame.inner_text("body")
-                    except Exception:  # noqa: S110, BLE001
-                        pass
                     if fb and len(fb.strip()) > 50:
                         body = fb.strip()
                         af = frame

@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import re
@@ -574,7 +575,6 @@ def _run(
                 browser.close()
     finally:
         if not using_external_file:
-            try:
+            # 임시파일 정리 best-effort(실패해도 임시파일만 남을 뿐 안전, 팩스 발송 결과와 무관)
+            with contextlib.suppress(Exception):
                 Path(tmp_path).unlink()
-            except Exception:  # noqa: BLE001 - 팩스 발송 Playwright 자동화 - 실패 시 success:False로 반환(fail-closed), 두번째 except는 임시파일 정리 best-effort(실패해도 임시파일만 남을 뿐 안전)
-                pass
