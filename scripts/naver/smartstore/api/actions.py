@@ -348,7 +348,7 @@ def save_submit_record(record: dict[str, Any], output: str | Path | None = None)
                 "dry_run": record.get("dry_run"),
             },
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 제출 기록 저장(save_submit_record) 후 부가적인 실시간 감사 이벤트 전송(emit_event) 실패를 흡수하는 except — 기록 파일 저장은 이미 완료된 뒤이며, 이 except가 실제 제출/결제 동작에 영향을 주지 않음.
         pass
     return path
 

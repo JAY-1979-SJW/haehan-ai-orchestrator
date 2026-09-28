@@ -1,11 +1,11 @@
 """Audit locked Google domain/module/page/action/input/control/evidence boundaries."""
+
 from __future__ import annotations
 
 import json
 import sys
 from pathlib import Path
 from typing import Any
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -58,9 +58,7 @@ def audit() -> dict[str, Any]:
 
     final_controls = payload.get("final_control_modules") or []
     bad_controls = [
-        item["key"]
-        for item in final_controls
-        if item.get("ai_click_allowed") or not item.get("user_click_required")
+        item["key"] for item in final_controls if item.get("ai_click_allowed") or not item.get("user_click_required")
     ]
     if bad_controls:
         failures.append("unsafe final controls: " + ", ".join(bad_controls[:20]))
@@ -70,10 +68,7 @@ def audit() -> dict[str, Any]:
     if raw_secret_evidence:
         failures.append("raw secret evidence modules: " + ", ".join(raw_secret_evidence[:20]))
 
-    approval_actions = [
-        item for item in payload.get("work_action_modules", [])
-        if item.get("requires_approval")
-    ]
+    approval_actions = [item for item in payload.get("work_action_modules", []) if item.get("requires_approval")]
     control_keys = {item["key"] for item in final_controls}
     missing_controls = [
         f"{action['key']}.final_control"
@@ -132,12 +127,11 @@ def main() -> int:
             ],
             next_step="keep google boundary changes inside google lane and rerun boundary audit",
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 도메인 모듈 경계 감사 — 메인 판정(report)은 이미 계산된 뒤, 부가적인 작업기록 체크포인트(work_records.checkpoint) 실패만 흡수해 warnings에 남기고 report['ok']에는 영향 없음.
         report.setdefault("warnings", []).append(f"work_record_checkpoint_failed:{type(exc).__name__}")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     print(
-        "RESULT="
-        + ("PASS_GOOGLE_DOMAIN_MODULE_BOUNDARIES" if report["ok"] else "FAIL_GOOGLE_DOMAIN_MODULE_BOUNDARIES")
+        "RESULT=" + ("PASS_GOOGLE_DOMAIN_MODULE_BOUNDARIES" if report["ok"] else "FAIL_GOOGLE_DOMAIN_MODULE_BOUNDARIES")
     )
     return 0 if report["ok"] else 1
 

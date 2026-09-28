@@ -1,8 +1,9 @@
 """YouTube upload manifest, gate, and official API upload path."""
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +21,7 @@ VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _stamp() -> str:
@@ -140,7 +141,7 @@ def _upload_with_official_api(plan: dict[str, Any]) -> dict[str, Any]:
         from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
         from googleapiclient.http import MediaFileUpload
-    except Exception as exc:  # pragma: no cover - depends on local installation
+    except Exception as exc:  # pragma: no cover - depends on local installation  # noqa: BLE001 - 공식 YouTube API 업로드 경로에서 필요한 라이브러리 import 실패 시 ok=False, reason=youtube_api_dependencies_missing 을 반환하는 fail-closed 경로(업로드 진행 안 함).
         return {"ok": False, "reason": "youtube_api_dependencies_missing", "error": str(exc)[:300]}
 
     token_file = plan.get("auth", {}).get("token_file") or ""
@@ -229,7 +230,12 @@ def execute_upload_plan(
         status=result["status"],
         risk="external_video_upload",
         artifact_path=str(path),
-        metadata={"state_change": result["state_change"], "dry_run": dry_run, "video_id": result["video_id"], "reason": result["reason"]},
+        metadata={
+            "state_change": result["state_change"],
+            "dry_run": dry_run,
+            "video_id": result["video_id"],
+            "reason": result["reason"],
+        },
     )
     return result, path
 

@@ -42,7 +42,7 @@ def main() -> None:
     try:
         raw = sys.stdin.read()
         data = json.loads(raw) if raw.strip() else {}
-    except Exception:
+    except Exception:  # noqa: BLE001 - PreToolUse(Write) 훅 진입점 — stdin JSON 파싱 실패 시 exit(0)으로 통과시키는 의도된 fail-open, 실제 capability 검사 로직은 파싱 성공 이후 수행.
         sys.exit(0)
 
     tool_name = data.get("tool_name", "")

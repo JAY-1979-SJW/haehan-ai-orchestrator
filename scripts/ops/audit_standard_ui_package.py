@@ -1,4 +1,5 @@
 """표준 UI 패키지 감사 스크립트."""
+
 from __future__ import annotations
 
 import pathlib
@@ -8,6 +9,7 @@ TARGET = pathlib.Path("admin-web/src/standard-ui")
 
 ISSUES: list[str] = []
 WARNINGS: list[str] = []
+
 
 def _check(condition: bool, label: str, *, warn: bool = False) -> None:
     mark = "PASS" if condition else ("WARN" if warn else "FAIL")
@@ -19,7 +21,7 @@ def _check(condition: bool, label: str, *, warn: bool = False) -> None:
 def _file_contains(path: pathlib.Path, text: str) -> bool:
     try:
         return text in path.read_text(encoding="utf-8")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 표준 UI 패키지 감사 — 파일 내용 검색(_file_contains) 실패 시 False(불일치)를 반환하는 안전한 기본값.
         return False
 
 
@@ -88,35 +90,36 @@ def run_audit() -> int:
 
     # 19~22. 금지 패턴 검사
     # 실제 인증/보안 로직 패턴 (경로명 'tokens' 는 제외)
-    _secret_patterns = ["password", "sessionStorage", "localStorage", "document.cookie",
-                        "access_token", "refresh_token", "getItem('g2b"]
-    _api_patterns    = ["fetch(", "axios.", "api_client", "G2B_API_BASE"]
-    _db_patterns     = ["import sqlite3", "import sqlalchemy", "from scripts.db", "from scripts.models"]
-    _html_patterns   = ["HTMLResponse", "Jinja2Templates", "<html>"]
+    _secret_patterns = [
+        "password",
+        "sessionStorage",
+        "localStorage",
+        "document.cookie",
+        "access_token",
+        "refresh_token",
+        "getItem('g2b",
+    ]
+    _api_patterns = ["fetch(", "axios.", "api_client", "G2B_API_BASE"]
+    _db_patterns = ["import sqlite3", "import sqlalchemy", "from scripts.db", "from scripts.models"]
+    _html_patterns = ["HTMLResponse", "Jinja2Templates", "<html>"]
 
     all_tsx_ts = list(TARGET.rglob("*.ts")) + list(TARGET.rglob("*.tsx"))
 
     secret_hit = any(
-        any(pat in f.read_text(encoding="utf-8", errors="ignore") for pat in _secret_patterns)
-        for f in all_tsx_ts
+        any(pat in f.read_text(encoding="utf-8", errors="ignore") for pat in _secret_patterns) for f in all_tsx_ts
     )
     _check(not secret_hit, "secret/session/cookie/token 로직 없음")
 
     api_hit = any(
-        any(pat in f.read_text(encoding="utf-8", errors="ignore") for pat in _api_patterns)
-        for f in all_tsx_ts
+        any(pat in f.read_text(encoding="utf-8", errors="ignore") for pat in _api_patterns) for f in all_tsx_ts
     )
     _check(not api_hit, "외부 API 호출 없음")
 
-    db_hit = any(
-        any(pat in f.read_text(encoding="utf-8", errors="ignore") for pat in _db_patterns)
-        for f in all_tsx_ts
-    )
+    db_hit = any(any(pat in f.read_text(encoding="utf-8", errors="ignore") for pat in _db_patterns) for f in all_tsx_ts)
     _check(not db_hit, "DB 접근 없음")
 
     html_hit = any(
-        any(pat in f.read_text(encoding="utf-8", errors="ignore") for pat in _html_patterns)
-        for f in all_tsx_ts
+        any(pat in f.read_text(encoding="utf-8", errors="ignore") for pat in _html_patterns) for f in all_tsx_ts
     )
     _check(not html_hit, "임시 FastAPI HTML 문자열 없음")
 

@@ -11,7 +11,6 @@ from pathlib import Path
 
 from local_agent.network_bypass import direct_child_env, urlopen_for_server
 
-
 ROOT = Path(__file__).resolve().parent
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
@@ -134,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
             time.sleep(2)
             try:
                 _, detail = _request_json("GET", detail_url)
-            except Exception:
+            except Exception:  # noqa: BLE001, S112 - 실행 중인 태스크 상태를 폴링하는 읽기전용 검증 스크립트 — 상태 조회(GET) 실패를 continue로 넘기고 다음 폴링에서 재시도.
                 continue
             last_status = str(detail.get("status") or last_status)
             if last_status in {"completed", "failed", "cancelled", "expired"}:

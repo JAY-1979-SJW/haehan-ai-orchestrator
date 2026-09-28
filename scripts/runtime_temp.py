@@ -1,10 +1,10 @@
 """Runtime temporary directory selection with create/delete verification."""
+
 from __future__ import annotations
 
 import os
 from pathlib import Path
 from uuid import uuid4
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,7 +31,7 @@ def _can_create_list_remove(base: Path) -> bool:
         list(probe.iterdir())
         probe.rmdir()
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 임시 디렉터리 사용 가능 여부 프로브 — 생성/조회/삭제 테스트 실패 시 False(사용 불가)를 반환해 다음 후보 경로로 넘어가는 안전한 기본값.
         return False
 
 

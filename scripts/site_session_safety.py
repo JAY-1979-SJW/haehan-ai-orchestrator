@@ -4,6 +4,7 @@ This module is site-neutral.  Site-specific auth helpers can return their normal
 result dicts, and live workflows should pass those dicts through this guard
 before any browser navigation, scan, prepare, or submit work continues.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -98,7 +99,7 @@ def emit_session_integrity_event(result: dict[str, Any]) -> None:
                 "auth_ok": result.get("auth_ok"),
             },
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 무결성 위반 텔레메트리 전송(emit_session_integrity_event) 실패를 흡수하는 except — 실제 차단(raise SessionIntegrityBlocked)은 이 except 밖의 assert_session_integrity에서 무조건 수행되므로 이 except가 차단 여부에 영향을 주지 않음.
         pass
 
 

@@ -36,7 +36,7 @@ def _load_json(p: Path) -> dict:
         return {}
     try:
         return json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 메일함 통합 리포트 — 체크포인트 JSON 로드 실패 시 빈 dict를 반환하는 안전한 기본값(선택적 상태 파일), 읽기전용 리포트 생성.
         return {}
 
 

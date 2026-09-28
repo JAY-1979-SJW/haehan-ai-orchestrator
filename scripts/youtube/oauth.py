@@ -3,13 +3,14 @@
 This module only implements the official OAuth installed-app flow. It never
 prints client secrets, access tokens, or refresh tokens.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,6 @@ from scripts import local_user_secret_store
 from scripts.gates.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
 from scripts.gates.work_mode_gate import build_google_work_mode_policy
 from security_utils import safe_preview
-
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT_DIR = ROOT / "data" / "youtube_oauth_reports"
@@ -40,7 +40,7 @@ YOUTUBE_SCOPES = {
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _stamp() -> str:
@@ -86,7 +86,11 @@ def _load_client(values: dict[str, str]) -> tuple[dict[str, Any], str]:
         or os.environ.get("YOUTUBE_CLIENT_SECRETS_FILE", "")
         or os.environ.get("YOUTUBE_CLIENT_SECRETS_REF", "")
     )
-    client_id = values.get("client_id") or os.environ.get("YOUTUBE_OAUTH_CLIENT_ID") or os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+    client_id = (
+        values.get("client_id")
+        or os.environ.get("YOUTUBE_OAUTH_CLIENT_ID")
+        or os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+    )
     client_secret = (
         values.get("client_secret")
         or os.environ.get("YOUTUBE_OAUTH_CLIENT_SECRET")
@@ -243,7 +247,9 @@ def exchange_code(values: dict[str, str]) -> tuple[dict[str, Any], Path]:
         },
     )
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(_token_payload_for_file(token, client), ensure_ascii=False, indent=2), encoding="utf-8")
+    output.write_text(
+        json.dumps(_token_payload_for_file(token, client), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     payload = {
         "schema_version": 1,
         "created_at": _now(),
@@ -273,21 +279,9 @@ def handle_server_callback(values: dict[str, str]) -> tuple[dict[str, Any], Path
     error = values.get("error", "").strip()
     state = values.get("state", "").strip()
     exchange_enabled = _truthy_env("YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED")
-    redirect_uri = (
-        values.get("redirect_uri")
-        or os.environ.get("YOUTUBE_OAUTH_REDIRECT_URI")
-        or SERVER_REDIRECT_URI
-    )
-    client_file = (
-        values.get("client_file")
-        or os.environ.get("YOUTUBE_CLIENT_SECRETS_FILE")
-        or SERVER_CLIENT_FILE
-    )
-    token_file = (
-        values.get("token_file")
-        or os.environ.get("YOUTUBE_OAUTH_TOKEN_FILE")
-        or SERVER_TOKEN_FILE
-    )
+    redirect_uri = values.get("redirect_uri") or os.environ.get("YOUTUBE_OAUTH_REDIRECT_URI") or SERVER_REDIRECT_URI
+    client_file = values.get("client_file") or os.environ.get("YOUTUBE_CLIENT_SECRETS_FILE") or SERVER_CLIENT_FILE
+    token_file = values.get("token_file") or os.environ.get("YOUTUBE_OAUTH_TOKEN_FILE") or SERVER_TOKEN_FILE
     base = {
         "schema_version": 1,
         "created_at": _now(),
@@ -337,7 +331,7 @@ def handle_server_callback(values: dict[str, str]) -> tuple[dict[str, Any], Path
                 "output": token_file,
             }
         )
-    except Exception as exc:  # pragma: no cover - network/Google dependent
+    except Exception as exc:  # pragma: no cover - network/Google dependent  # noqa: BLE001 - OAuth 인가 코드 교환(exchange_code) 실패 시 status=failed, reason=token_exchange_failed 인 실패 payload를 반환하는 fail-closed 경로.
         payload = {
             **base,
             "status": "failed",
@@ -373,7 +367,9 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
         secret_action_mode,
         secret_issue_approved=secret_issue_approved,
     )
-    redirect_uri = values.get("redirect_uri") or os.environ.get("YOUTUBE_OAUTH_SERVER_REDIRECT_URI") or SERVER_REDIRECT_URI
+    redirect_uri = (
+        values.get("redirect_uri") or os.environ.get("YOUTUBE_OAUTH_SERVER_REDIRECT_URI") or SERVER_REDIRECT_URI
+    )
     client_file = values.get("client_file") or os.environ.get("YOUTUBE_SERVER_CLIENT_FILE") or SERVER_CLIENT_FILE
     token_file = values.get("token_file") or os.environ.get("YOUTUBE_SERVER_TOKEN_FILE") or SERVER_TOKEN_FILE
     scope = _scope_text({"scope": values.get("scope") or "force-ssl"})

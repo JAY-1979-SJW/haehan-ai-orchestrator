@@ -11,21 +11,22 @@ check_session() / task_context() 를 한 곳으로 모은 모듈.
     start_url        : 컨텍스트 진입 직후 이동할 URL (선택)
     with_db_log      : True 면 cdp_db.log_start/log_finish 기록
 """
+
 from __future__ import annotations
 
 import sys
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator
 
 from playwright.sync_api import Page
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import browser_session, get_page, close_page  # noqa: E402
-from scripts.login_session import ensure_login, is_logged_in  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
+from scripts.login_session import ensure_login, is_logged_in  # noqa: E402
+from scripts.web_connector import browser_session, close_page, get_page  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -36,7 +37,7 @@ def check_session(site: str) -> dict:
     try:
         with browser_session() as page:
             result["logged_in"] = is_logged_in(page, site)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - check_session은 세션 확인 실패를 error 필드에 기록하고 logged_in을 True로 바꾸지 않는 안전한 기본값(None 유지); task_context의 except는 로그만 남기고 예외를 다시 raise(재전파)해 흡수하지 않음.
         result["error"] = str(e)
     return result
 
@@ -57,6 +58,7 @@ def task_context(
     log_id = None
     if with_db_log:
         from scripts.cdp_db import log_start
+
         log_id = log_start(site, task, args)
 
     page: Page | None = None
@@ -73,6 +75,7 @@ def task_context(
                 yield page
                 if with_db_log and log_id is not None:
                     from scripts.cdp_db import log_finish
+
                     log_finish(log_id, "success")
                 log.info("[%s] %s 완료", site, task)
             return
@@ -84,11 +87,13 @@ def task_context(
         yield page
         if with_db_log and log_id is not None:
             from scripts.cdp_db import log_finish
+
             log_finish(log_id, "success")
         log.info("[%s] %s 완료", site, task)
     except Exception as e:
         if with_db_log and log_id is not None:
             from scripts.cdp_db import log_finish
+
             log_finish(log_id, "fail", error_msg=str(e))
         log.error("[%s] %s 실패: %s", site, task, e)
         raise

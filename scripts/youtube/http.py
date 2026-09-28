@@ -3,6 +3,7 @@
 Shared by scripts/youtube/research.py and scripts/google/youtube/search.py.
 No business logic here — only transport, auth resolution, and proxy fallback.
 """
+
 from __future__ import annotations
 
 import json
@@ -13,8 +14,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-
 # ── API key ───────────────────────────────────────────────────────────────────
+
 
 def api_key(explicit: str | None = None) -> str:
     """Return the best available YouTube Data API key."""
@@ -30,7 +31,9 @@ def api_key(explicit: str | None = None) -> str:
 
 _DEFAULT_TOKEN_PATH = (
     Path(__file__).resolve().parents[2]
-    / "ai_orchestrator" / "storage" / "secrets"
+    / "ai_orchestrator"
+    / "storage"
+    / "secrets"
     / "youtube_oauth_authorized_user.json"
 )
 
@@ -43,20 +46,23 @@ def refresh_oauth_token(parsed: dict[str, Any]) -> str:
     token_uri = str(parsed.get("token_uri") or "https://oauth2.googleapis.com/token")
     if not refresh or not client_id or not client_secret:
         return ""
-    encoded = urllib.parse.urlencode({
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "refresh_token": refresh,
-        "grant_type": "refresh_token",
-    }).encode("utf-8")
+    encoded = urllib.parse.urlencode(
+        {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh,
+            "grant_type": "refresh_token",
+        }
+    ).encode("utf-8")
     req = urllib.request.Request(
-        token_uri, data=encoded,
+        token_uri,
+        data=encoded,
         headers={"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"},
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return str(json.loads(r.read().decode("utf-8")).get("access_token") or "")
-    except Exception:
+    except Exception:  # noqa: BLE001 - OAuth 토큰 교환 실패 시 빈 문자열을 반환하는 안전한 기본값 — 호출부에서 빈 토큰을 유효하지 않은 토큰으로 취급.
         return ""
 
 
@@ -67,16 +73,11 @@ def oauth_token(
     """Resolve an OAuth access token from explicit value, env var, or token file."""
     if explicit:
         return explicit
-    env = (
-        os.environ.get("YOUTUBE_OAUTH_ACCESS_TOKEN", "")
-        or os.environ.get("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN", "")
-    )
+    env = os.environ.get("YOUTUBE_OAUTH_ACCESS_TOKEN", "") or os.environ.get("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN", "")
     if env:
         return env
     # 명시적 token_file > 환경변수 > 기본 경로
-    path = Path(
-        token_file or os.environ.get("YOUTUBE_OAUTH_TOKEN_FILE", "") or _DEFAULT_TOKEN_PATH
-    )
+    path = Path(token_file or os.environ.get("YOUTUBE_OAUTH_TOKEN_FILE", "") or _DEFAULT_TOKEN_PATH)
     if not path.exists():
         return ""
     raw = path.read_text(encoding="utf-8", errors="replace").strip()
@@ -96,9 +97,8 @@ def oauth_token(
 
 # ── HTTP transport ────────────────────────────────────────────────────────────
 
-def urlopen_with_dead_proxy_fallback(
-    request: urllib.request.Request, *, timeout: int
-):
+
+def urlopen_with_dead_proxy_fallback(request: urllib.request.Request, *, timeout: int):
     """Open a URL, bypassing a dead local proxy on connection-refused errors."""
     try:
         return urllib.request.urlopen(request, timeout=timeout)
@@ -117,15 +117,12 @@ def _should_retry_without_proxy(exc: urllib.error.URLError) -> bool:
         os.environ.get("https_proxy", ""),
         os.environ.get("http_proxy", ""),
     ]
-    dead_local = any(
-        "127.0.0.1:9" in v or "localhost:9" in v for v in proxy_values
-    )
-    return dead_local and (
-        "10061" in reason or "Connection refused" in reason or "연결을 거부" in reason
-    )
+    dead_local = any("127.0.0.1:9" in v or "localhost:9" in v for v in proxy_values)
+    return dead_local and ("10061" in reason or "Connection refused" in reason or "연결을 거부" in reason)
 
 
 # ── JSON / text fetchers ──────────────────────────────────────────────────────
+
 
 def get_json(
     url: str,
@@ -166,9 +163,9 @@ def get_text(
 
 __all__ = [
     "api_key",
+    "get_json",
+    "get_text",
     "oauth_token",
     "refresh_oauth_token",
     "urlopen_with_dead_proxy_fallback",
-    "get_json",
-    "get_text",
 ]

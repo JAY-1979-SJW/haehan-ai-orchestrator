@@ -33,13 +33,13 @@
   - 이 스크립트는 pytest 로 자동 실행하지 않는다. 사용자가 수동 실행용.
   - Google 계정 설정 페이지로 이동하더라도 어떤 변경도 하지 않는다.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
 import sys
-
 
 DEFAULT_URL = "https://www.youtube.com"
 
@@ -69,7 +69,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wait-seconds", type=int, default=180)
     parser.add_argument("--poll-interval-seconds", type=int, default=3)
     parser.add_argument(
-        "--success-url-contains", action="append", default=None,
+        "--success-url-contains",
+        action="append",
+        default=None,
         help=(
             "current_url 에 포함되면 로그인 완료 후보로 간주할 토큰. "
             "success_url_match 단독으로는 login_completed_hint=True 가 "
@@ -79,15 +81,20 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--success-text-hints", action="append", default=None,
+        "--success-text-hints",
+        action="append",
+        default=None,
         help="visible text 에 포함되면 로그인 완료 후보로 간주할 토큰 (여러 개).",
     )
     parser.add_argument(
-        "--allow-additional-host", action="append", default=None,
+        "--allow-additional-host",
+        action="append",
+        default=None,
         help="추가 허용 호스트 (기본 목록 외). 확신한 경우에만 사용.",
     )
     parser.add_argument(
-        "--browser-channel", choices=_VALID_BROWSER_CHANNELS,
+        "--browser-channel",
+        choices=_VALID_BROWSER_CHANNELS,
         default="chromium",
         help=(
             "사용할 Chromium 채널. 실제 사용자 브라우저 창을 쓰고 싶으면 "
@@ -95,29 +102,32 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--require-visible-confirm", action="store_true",
-        help=(
-            "브라우저 창이 실제 화면에 보인다고 사용자가 Enter 로 확인하기 "
-            "전까지 polling 루프로 넘어가지 않음."
-        ),
+        "--require-visible-confirm",
+        action="store_true",
+        help=("브라우저 창이 실제 화면에 보인다고 사용자가 Enter 로 확인하기 전까지 polling 루프로 넘어가지 않음."),
     )
     parser.add_argument(
-        "--require-user-login-confirm", action="store_true",
+        "--require-user-login-confirm",
+        action="store_true",
         help=(
             "구조적 근거만으로 login_completed_hint=True 를 단정하지 않음. "
             "사용자가 Enter 를 눌러 확인해야만 True 로 승격된다."
         ),
     )
     parser.add_argument(
-        "--keep-open", action="store_true",
+        "--keep-open",
+        action="store_true",
         help="판정 종료 뒤 브라우저를 바로 닫지 않고 Enter 입력을 기다림.",
     )
     parser.add_argument(
-        "--slow-mo-ms", type=int, default=0,
+        "--slow-mo-ms",
+        type=int,
+        default=0,
         help="각 브라우저 조작 사이에 지연을 추가 (최대 2000ms).",
     )
     parser.add_argument(
-        "--viewport", default=None,
+        "--viewport",
+        default=None,
         help="viewport 크기 (예: 1280x800). 미지정이면 기본값.",
     )
     return parser
@@ -130,7 +140,7 @@ def _parse_viewport(value: str | None) -> dict | None:
         w_s, h_s = value.lower().split("x", 1)
         w = int(w_s)
         h = int(h_s)
-    except Exception:
+    except Exception:  # noqa: BLE001 - "WIDTHxHEIGHT" 형식 문자열 파싱 실패 시 None을 반환하는 안전한 기본값, 로그인 여부와 무관한 화면 크기 파싱 유틸.
         return None
     if w <= 0 or h <= 0:
         return None
@@ -148,19 +158,11 @@ def _redact_for_print(result: dict) -> dict:
         "url": result.get("url"),
         "summary": result.get("summary"),
         "warnings": list(result.get("warnings") or []),
-        "visible_confirmed_by_user": bool(
-            result.get("visible_confirmed_by_user", False)
-        ),
-        "login_confirmed_by_user": bool(
-            result.get("login_confirmed_by_user", False)
-        ),
+        "visible_confirmed_by_user": bool(result.get("visible_confirmed_by_user", False)),
+        "login_confirmed_by_user": bool(result.get("login_confirmed_by_user", False)),
         "login_state_hint": result.get("login_state_hint"),
-        "login_completed_hint": bool(
-            result.get("login_completed_hint", False)
-        ),
-        "login_completion_reason": list(
-            result.get("login_completion_reason") or []
-        ),
+        "login_completed_hint": bool(result.get("login_completed_hint", False)),
+        "login_completion_reason": list(result.get("login_completion_reason") or []),
     }
     if "error_code" in result:
         out["error_code"] = result["error_code"]
@@ -178,9 +180,7 @@ def _redact_for_print(result: dict) -> dict:
         if "login_completed_hint" in obs:
             compact["login_completed_hint"] = obs["login_completed_hint"]
         if "login_completion_reason" in obs:
-            compact["login_completion_reason"] = list(
-                obs.get("login_completion_reason") or []
-            )
+            compact["login_completion_reason"] = list(obs.get("login_completion_reason") or [])
         struct = obs.get("page_structure")
         if isinstance(struct, dict):
             counts = struct.get("counts") or {}

@@ -1,4 +1,5 @@
 """navigator_scan — 페이지/링크 스캔 기능."""
+
 from __future__ import annotations
 
 from scripts.web_connector import get_page
@@ -122,11 +123,11 @@ def scan_page() -> dict:
     for frame in page.frames:
         try:
             part = frame.evaluate(scan_js)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 페이지의 모든 프레임을 순회하며 링크/입력/버튼 등을 읽기전용으로 수집하는 스캐너 — 개별 프레임 스캔 실패를 경고 로그로 남기고 continue로 다음 프레임 계속.
             print(f"  [경고] frame 스캔 실패 ({frame.url[:50]}): {e}")
             continue
         frame_count += 1
-        frame_tag = f"[main]" if frame is page.main_frame else f"[iframe:{frame.name or frame.url[:40]}]"
+        frame_tag = "[main]" if frame is page.main_frame else f"[iframe:{frame.name or frame.url[:40]}]"
         for cat in ("links", "inputs", "buttons", "editables"):
             for item in part[cat]:
                 item["_frame"] = frame_tag
@@ -144,16 +145,27 @@ def scan_page() -> dict:
         if len(items) > limit:
             print(f"  ... 외 {len(items) - limit}개")
 
-    show("LINKS", data["links"],
-         lambda l: f"{l.get('_frame',''):<24} {l['text'][:30]:<32} → {l['href'][:50]}")
-    show("INPUTS", data["inputs"],
-         lambda i: f"{i.get('_frame',''):<24} <{i['tag']} type={i['type']} name={i['name']} id={i['id']}> ph='{i['placeholder'][:25]}' val='{i['value_preview']}'")
-    show("BUTTONS", data["buttons"],
-         lambda b: f"{b.get('_frame',''):<24} '{b['text'][:30]}' aria='{b['aria'][:25]}' id={b['id']}")
-    show("EDITABLES", data["editables"],
-         lambda e: f"{e.get('_frame',''):<24} <{e['tag']} id={e['id']} ce={e.get('ce','')} role={e.get('role','')}> cls='{e.get('cls','')[:25]}' ph='{e.get('placeholder','')[:25]}' aria='{e['aria'][:20]}' preview='{e['preview']}'")
-    show("IFRAMES", data["iframes"],
-         lambda f: f"id={f['id']} name={f['name']} src={f['src'][:80]}")
+    show("LINKS", data["links"], lambda l: f"{l.get('_frame', ''):<24} {l['text'][:30]:<32} → {l['href'][:50]}")  # noqa: E741
+    show(
+        "INPUTS",
+        data["inputs"],
+        lambda i: (
+            f"{i.get('_frame', ''):<24} <{i['tag']} type={i['type']} name={i['name']} id={i['id']}> ph='{i['placeholder'][:25]}' val='{i['value_preview']}'"
+        ),
+    )
+    show(
+        "BUTTONS",
+        data["buttons"],
+        lambda b: f"{b.get('_frame', ''):<24} '{b['text'][:30]}' aria='{b['aria'][:25]}' id={b['id']}",
+    )
+    show(
+        "EDITABLES",
+        data["editables"],
+        lambda e: (
+            f"{e.get('_frame', ''):<24} <{e['tag']} id={e['id']} ce={e.get('ce', '')} role={e.get('role', '')}> cls='{e.get('cls', '')[:25]}' ph='{e.get('placeholder', '')[:25]}' aria='{e['aria'][:20]}' preview='{e['preview']}'"
+        ),
+    )
+    show("IFRAMES", data["iframes"], lambda f: f"id={f['id']} name={f['name']} src={f['src'][:80]}")
 
     print("=" * 60)
     print("✓ 조회 완료 — 다음 명령 입력")
