@@ -43,7 +43,7 @@ class NaverCafe:
         time.sleep(2.5)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음
             pass
         try:
             cafes = self.page.evaluate("""
@@ -68,7 +68,7 @@ class NaverCafe:
             """)
             _log.info("[naver-cafe] 내 카페 %d개", len(cafes))
             return cafes
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음
             _log.error("[naver-cafe] open_my_cafes 실패: %s", e)
             return []
 
@@ -107,7 +107,7 @@ class NaverCafe:
                     )
                     if posts:
                         return posts
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음
                     continue
         return []
 
@@ -130,7 +130,7 @@ class NaverCafe:
                         comment_count: document.querySelectorAll('.comment_box, .CommentItem').length,
                     })
                     """)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음
                     continue
         return {"error": "iframe_not_found"}
 
@@ -167,10 +167,10 @@ class NaverCafe:
                         # 임시저장
                         try:
                             f.locator('button:has-text("임시저장"), .btn_temp').first.click(timeout=3000)
-                        except Exception:
+                        except Exception:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음
                             pass
                         time.sleep(2)
                         return {"ok": True, "mode": "draft"}
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음
                     return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "write_iframe_not_found"}

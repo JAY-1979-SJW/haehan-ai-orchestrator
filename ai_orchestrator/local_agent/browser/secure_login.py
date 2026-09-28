@@ -117,7 +117,7 @@ def detect_login_state(page, site_host: str = "") -> str:
     """현재 페이지의 로그인 상태를 감지."""
     try:
         text = page.inner_text("body")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그인 상태 감지/자격증명 입력 헬퍼 - 예외 발생 시 LOGIN_UNKNOWN 또는 False로 fail-closed 반환(로그인됨으로 오판하지 않음), 자격증명 값은 로그에 남기지 않고 길이만 기록
         return LOGIN_UNKNOWN
 
     cfg = _get_site_cfg(site_host or _extract_host(page))
@@ -402,7 +402,7 @@ def handle_idpw_login(
                     try:
                         page.click(btn_sel, timeout=2000)
                         break
-                    except Exception:  # noqa: S112
+                    except Exception:  # noqa: BLE001, S112
                         continue
                 wait_ms(2000)
                 page.wait_for_load_state("networkidle", timeout=15000)
@@ -421,13 +421,13 @@ def handle_idpw_login(
                     return LoginResult(status=LOGIN_TWO_FACTOR, site=host, method_used="idpw_auto")
                 if state == LOGIN_CERT:
                     return LoginResult(status=LOGIN_CERT, site=host, method_used="idpw_auto")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 로그인 상태 감지/자격증명 입력 헬퍼 - 예외 발생 시 LOGIN_UNKNOWN 또는 False로 fail-closed 반환(로그인됨으로 오판하지 않음), 자격증명 값은 로그에 남기지 않고 길이만 기록
                 print(f"[로그인] 자동 입력 실패: {e} → 수동 입력 모드")
 
     # 수동 입력 모드 (자격증명 없거나 실패 시)
     try:
         page.focus(id_selector)
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
 
     print("\n[로그인] 아이디/비밀번호를 브라우저에서 직접 입력 후 로그인하세요.")
@@ -509,7 +509,7 @@ def input_credential(
             audit_path=audit_path,
         )
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로그인 상태 감지/자격증명 입력 헬퍼 - 예외 발생 시 LOGIN_UNKNOWN 또는 False로 fail-closed 반환(로그인됨으로 오판하지 않음), 자격증명 값은 로그에 남기지 않고 길이만 기록
         log_action(
             "credential_input_error",
             url=page.url,
@@ -604,7 +604,7 @@ def _extract_host(page) -> str:
         from urllib.parse import urlparse
 
         return urlparse(page.url).netloc
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그인 상태 감지/자격증명 입력 헬퍼 - 예외 발생 시 LOGIN_UNKNOWN 또는 False로 fail-closed 반환(로그인됨으로 오판하지 않음), 자격증명 값은 로그에 남기지 않고 길이만 기록
         return ""
 
 

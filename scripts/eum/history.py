@@ -85,7 +85,7 @@ def _extract_history_table(page) -> list[dict]:
             }
         """)
         return rows or []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 단말기 이력 조회 읽기전용 자동화 - 실패 시 빈 목록 반환
         log.debug("이력 테이블 추출 실패: %s", e)
         return []
 
@@ -122,7 +122,7 @@ def _search_device(page, device_id: str) -> list[dict]:
             if el and el.is_visible():
                 input_sel = sel
                 break
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 단말기 이력 조회 읽기전용 자동화 - 실패 시 빈 목록 반환
             pass
 
     if input_sel:
@@ -142,7 +142,7 @@ def _search_device(page, device_id: str) -> list[dict]:
                     el.click()
                     page.wait_for_load_state("networkidle", timeout=10000)
                     break
-            except Exception:
+            except Exception:  # noqa: BLE001 - EUM 단말기 이력 조회 읽기전용 자동화 - 실패 시 빈 목록 반환
                 pass
     else:
         log.warning("검색 입력 필드를 찾을 수 없음 — 현재 페이지 이력 추출")
@@ -164,7 +164,7 @@ def fetch_history(page, device_id: str | None = None) -> list[dict]:
         try:
             page.goto(HISTORY_URL, timeout=15000)
             page.wait_for_load_state("networkidle", timeout=15000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM 단말기 이력 조회 읽기전용 자동화 - 실패 시 빈 목록 반환
             msg = f"이력 페이지 이동 실패: {e}"
             log.error(msg)
             ctx.set_result(msg=msg, ok=False)
@@ -179,7 +179,7 @@ def fetch_history(page, device_id: str | None = None) -> list[dict]:
                     log.warning(msg)
                     ctx.set_result(msg=msg, ok=False)
                     return []
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 단말기 이력 조회 읽기전용 자동화 - 실패 시 빈 목록 반환
             pass
 
         if device_id:

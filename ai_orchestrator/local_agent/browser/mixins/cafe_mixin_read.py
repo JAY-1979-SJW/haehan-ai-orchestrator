@@ -33,7 +33,7 @@ class CafeReadMixin:
         def _s(sel: str, timeout: int = 800) -> str:
             try:
                 return self._page.locator(sel).first.inner_text(timeout=timeout).strip()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 카페 게시글 읽기 전용 파싱 mixin - 텍스트 추출/게시글 목록 수집 실패 시 빈 문자열 또는 continue로 스킵, 쓰기 없음
                 return ""
 
         raw = self._page.inner_text("body")
@@ -196,7 +196,7 @@ class CafeReadMixin:
                     if href and href not in seen:
                         seen.add(href)
                         all_posts.append(p)
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         return all_posts[:max_posts]
@@ -239,7 +239,7 @@ class CafeReadMixin:
                         if href and href not in seen:
                             seen.add(href)
                             all_posts.append(p)
-                except Exception:  # noqa: S112
+                except Exception:  # noqa: BLE001, S112
                     continue
 
             if not all_posts and page_num == 1:
@@ -285,7 +285,7 @@ class CafeReadMixin:
                     if href and href not in seen:
                         seen.add(href)
                         all_posts.append(p)
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         return all_posts[:max_posts]
@@ -331,7 +331,7 @@ class CafeReadMixin:
                     if href and href not in seen:
                         seen.add(href)
                         all_posts.append(p)
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         # 폴백: 일반 extract_posts.js
@@ -353,7 +353,7 @@ class CafeReadMixin:
                                     "comments": "",
                                 }
                             )
-                except Exception:  # noqa: S112
+                except Exception:  # noqa: BLE001, S112
                     continue
 
         return all_posts[:max_posts]

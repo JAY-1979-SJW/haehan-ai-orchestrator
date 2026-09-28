@@ -117,7 +117,7 @@ def _is_local_execution() -> bool:
                 content = f.read()
             if "docker" in content or "kubepods" in content:
                 return False
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로컬 에이전트 외부 readonly smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
             pass
     # Windows/Mac은 일반적으로 로컬
     return True
@@ -235,7 +235,7 @@ def smoke_one(url: str) -> dict[str, Any]:
 
                 try:
                     body = page.inner_text("body")[:500]
-                except Exception:
+                except Exception:  # noqa: BLE001 - 로컬 에이전트 외부 readonly smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
                     body = ""
                 raw["text_excerpt"] = body
 
@@ -251,13 +251,13 @@ def smoke_one(url: str) -> dict[str, Any]:
                         ):
                             candidates += 1
                     raw["download_candidate_count"] = candidates
-                except Exception:
+                except Exception:  # noqa: BLE001 - 로컬 에이전트 외부 readonly smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
                     raw["links_count"] = 0
                     raw["table_count"] = 0
                     raw["download_candidate_count"] = 0
 
                 raw["verdict"] = "OK_READONLY"
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 로컬 에이전트 외부 readonly smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
                 raw["reachable"] = False
                 raw["verdict"] = "NETWORK_ERROR_OR_TIMEOUT"
                 raw["error_category"] = type(e).__name__
@@ -265,7 +265,7 @@ def smoke_one(url: str) -> dict[str, Any]:
                 # 명시적으로 cookie/storage 추출 안 함
                 browser.close()
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 에이전트 외부 readonly smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
         raw["reachable"] = False
         raw["verdict"] = "PLAYWRIGHT_LAUNCH_ERROR"
         raw["error_category"] = type(e).__name__

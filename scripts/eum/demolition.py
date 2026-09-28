@@ -89,7 +89,7 @@ def _extract_demolition_table(page) -> list[dict]:
             }
         """)
         return rows or []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 단말기 철거 신청 화면 자동화 - 페이지 이동/신청 실패 시 ok:False와 사유를 반환(성공으로 위장하지 않음)
         log.debug("철거 테이블 추출 실패: %s", e)
         return []
 
@@ -114,7 +114,7 @@ def _extract_page_info(page) -> dict:
         """)
             or []
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 단말기 철거 신청 화면 자동화 - 페이지 이동/신청 실패 시 ok:False와 사유를 반환(성공으로 위장하지 않음)
         pass
     return info
 
@@ -129,7 +129,7 @@ def fetch_demolition_list(page) -> dict:
         try:
             page.goto(DEMOLITION_URL, timeout=15000)
             page.wait_for_load_state("networkidle", timeout=15000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM 단말기 철거 신청 화면 자동화 - 페이지 이동/신청 실패 시 ok:False와 사유를 반환(성공으로 위장하지 않음)
             msg = f"철거 페이지 이동 실패: {e}"
             log.error(msg)
             ctx.set_result(msg=msg, ok=False)
@@ -144,7 +144,7 @@ def fetch_demolition_list(page) -> dict:
                     log.warning(msg)
                     ctx.set_result(msg=msg, ok=False)
                     return {"accessible": False, "items": [], "page_info": {}, "error": msg}
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 단말기 철거 신청 화면 자동화 - 페이지 이동/신청 실패 시 ok:False와 사유를 반환(성공으로 위장하지 않음)
             pass
 
         page_info = _extract_page_info(page)
@@ -215,7 +215,7 @@ def request_demolition(page, device_id: str) -> dict:
             ctx.set_result(msg="철거 신청 완료")
             return {"ok": True, "reason": "철거 신청 완료"}
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM 단말기 철거 신청 화면 자동화 - 페이지 이동/신청 실패 시 ok:False와 사유를 반환(성공으로 위장하지 않음)
             msg = f"철거 신청 중 오류: {e}"
             log.error(msg)
             ctx.set_result(msg=msg, ok=False)

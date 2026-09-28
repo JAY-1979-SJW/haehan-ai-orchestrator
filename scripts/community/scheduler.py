@@ -24,7 +24,7 @@ def get_state() -> dict:
         return {"last_run": None, "last_reason": None, "last_count": 0}
     try:
         return json.loads(_STATE_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 커뮤니티/gonobi 백그라운드 스케줄러 시작 및 상태파일 IO - 실패 시 로그만 남기고 기본값/스킵으로 계속
         return {"last_run": None}
 
 
@@ -64,7 +64,7 @@ def run_all_sites(reason: str = "manual", max_posts: int = 40) -> dict[str, Any]
                     "error": rep.get("error"),
                 }
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 커뮤니티/gonobi 백그라운드 스케줄러 시작 및 상태파일 IO - 실패 시 로그만 남기고 기본값/스킵으로 계속
             site_reports.append({"site": name, "url": url, "ok": False, "error": str(e)[:160]})
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -95,7 +95,7 @@ def run_all_sites(reason: str = "manual", max_posts: int = 40) -> dict[str, Any]
             from scripts.community.notifier import notify_report
 
             notify_report(report)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 커뮤니티/gonobi 백그라운드 스케줄러 시작 및 상태파일 IO - 실패 시 로그만 남기고 기본값/스킵으로 계속
             pass
 
     return report
@@ -120,7 +120,7 @@ def list_reports(limit: int = 10) -> list[dict]:
                     "reports": d.get("reports", []),
                 }
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 커뮤니티/gonobi 백그라운드 스케줄러 시작 및 상태파일 IO - 실패 시 로그만 남기고 기본값/스킵으로 계속
             continue
     return out
 
@@ -133,5 +133,5 @@ def seconds_since_last_run() -> float | None:
     try:
         last = datetime.fromisoformat(lr)
         return time.time() - last.timestamp()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 커뮤니티/gonobi 백그라운드 스케줄러 시작 및 상태파일 IO - 실패 시 로그만 남기고 기본값/스킵으로 계속
         return None

@@ -78,7 +78,7 @@ def fetch_targets() -> list[dict]:
             timeout=1.0,
         ) as r:
             data = json.loads(r.read().decode("utf-8") or "[]")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그인 흐름 실시간 감시(WS/CDP 읽기전용) - 쿠키/토큰 원문 출력 금지 명시, 예외 시 빈 목록/False/타임아웃 반환
         return []
     return [t for t in data if isinstance(t, dict)]
 
@@ -90,7 +90,7 @@ def activate_target(target_id: str) -> bool:
             timeout=1.0,
         ):
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그인 흐름 실시간 감시(WS/CDP 읽기전용) - 쿠키/토큰 원문 출력 금지 명시, 예외 시 빈 목록/False/타임아웃 반환
         return False
 
 
@@ -111,7 +111,7 @@ async def _eval_on_target(ws_url: str, expr: str) -> dict | None:
             raw = await asyncio.wait_for(conn.recv(), timeout=3.0)
             r = json.loads(raw)
             return r.get("result", {}).get("result", {}).get("value")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 로그인 흐름 실시간 감시(WS/CDP 읽기전용) - 쿠키/토큰 원문 출력 금지 명시, 예외 시 빈 목록/False/타임아웃 반환
         return {"_err": str(exc)[:120]}
 
 
@@ -157,7 +157,7 @@ async def ws_tail() -> None:
                 raw = await conn.recv()
                 try:
                     ev = json.loads(raw)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 로그인 흐름 실시간 감시(WS/CDP 읽기전용) - 쿠키/토큰 원문 출력 금지 명시, 예외 시 빈 목록/False/타임아웃 반환
                     continue
                 et = ev.get("type", "")
                 if et in WS_TYPES:
@@ -167,7 +167,7 @@ async def ws_tail() -> None:
                 elif et == "system":
                     # 노이즈성 reconnect 메시지는 1회만
                     pass
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 로그인 흐름 실시간 감시(WS/CDP 읽기전용) - 쿠키/토큰 원문 출력 금지 명시, 예외 시 빈 목록/False/타임아웃 반환
         print(f"[A] WS error: {exc}", flush=True)
 
 
@@ -237,7 +237,7 @@ async def page_poll() -> None:
             continue
         try:
             data = json.loads(val) if isinstance(val, str) else val
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로그인 흐름 실시간 감시(WS/CDP 읽기전용) - 쿠키/토큰 원문 출력 금지 명시, 예외 시 빈 목록/False/타임아웃 반환
             data = {"raw": str(val)[:200]}
         sig = (
             f"{data.get('href', '')}|{data.get('title', '')}|"

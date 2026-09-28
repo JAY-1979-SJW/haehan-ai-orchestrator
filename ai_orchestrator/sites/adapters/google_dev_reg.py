@@ -29,7 +29,6 @@ submit 버튼 우선순위:
   특정 selector 출현을 기다리는 방식을 사용한다.
   실제 DOM 에 맞게 선택자를 조정해야 할 수 있다.
 """
-
 from __future__ import annotations
 
 import logging
@@ -55,9 +54,9 @@ _CLIENT_URL = "https://console.cloud.google.com/apis/credentials/oauthclient"
 
 # formcontrolname 기반 선택자 (Angular SPA 안정 속성, 우선순위 2순위 상당)
 _CONSENT_SELECTORS: dict[str, str] = {
-    "app_name": "input[formcontrolname='displayName']",
+    "app_name":      "input[formcontrolname='displayName']",
     "contact_email": "input[formcontrolname='userSupportEmail']",
-    "service_url": "input[formcontrolname='homepageUrl']",
+    "service_url":   "input[formcontrolname='homepageUrl']",
 }
 
 # 개발자 연락처 이메일 (동의 화면 하단 별도 영역) — aria-label 기반(1순위)
@@ -65,7 +64,7 @@ _DEV_EMAIL_SELECTOR = "input[aria-label='Developer contact information email add
 
 # 리다이렉트 URI — Add 버튼(aria-label 1순위) + 입력창(placeholder 3순위)
 _REDIRECT_URI_ADD_BTN = "button[aria-label='Add URI']"
-_REDIRECT_URI_INPUT = "input[placeholder='Enter a URI']"
+_REDIRECT_URI_INPUT   = "input[placeholder='Enter a URI']"
 
 # 제출 버튼: aria-label(1순위) → class 기반 폴백
 _CONSENT_SAVE_BTN_SELECTORS = (
@@ -94,11 +93,8 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
         errors = validate_params(params)
         if errors:
             return FormFillResult(
-                success=False,
-                summary="",
-                field_names=[],
-                target_url="",
-                error="; ".join(errors),
+                success=False, summary="", field_names=[],
+                target_url="", error="; ".join(errors),
                 error_code=ErrorCode.FORM_FIELD_MISSING,
             )
 
@@ -118,23 +114,17 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
         try:
             page.goto(_CONSENT_URL, wait_until="domcontentloaded")
             page.wait_for_selector(_CONSENT_SELECTORS["app_name"], timeout=15000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
             return FormFillResult(
-                success=False,
-                summary="",
-                field_names=[],
-                target_url=_CONSENT_URL,
-                error=f"페이지 로드 실패: {e}",
+                success=False, summary="", field_names=[],
+                target_url=_CONSENT_URL, error=f"페이지 로드 실패: {e}",
                 error_code=ErrorCode.PAGE_LOAD_FAILED,
             )
 
         if _is_login_redirect(page, _LOGIN_HINTS):
             return FormFillResult(
-                success=False,
-                summary="",
-                field_names=[],
-                target_url=_CONSENT_URL,
-                error="로그인이 필요합니다",
+                success=False, summary="", field_names=[],
+                target_url=_CONSENT_URL, error="로그인이 필요합니다",
                 error_code=ErrorCode.LOGIN_REQUIRED,
             )
 
@@ -148,7 +138,7 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
             try:
                 page.fill(selector, str(value))
                 filled.append(field_name)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
                 errors_fill.append(f"{field_name}: {e}")
                 logger.warning("구글 폼 입력 실패 | field=%s | %s", field_name, e)
 
@@ -159,7 +149,7 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
                 page.fill(_DEV_EMAIL_SELECTOR, str(dev_email))
                 if "contact_email" not in filled:
                     filled.append("contact_email")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
                 logger.warning("구글 개발자 이메일 입력 실패: %s", e)
 
         # ── 2단계: 리다이렉트 URI 추가 ──────────────────────────────────
@@ -169,17 +159,14 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
                 page.click(_REDIRECT_URI_ADD_BTN)
                 page.fill(_REDIRECT_URI_INPUT, str(redirect_uri))
                 filled.append("redirect_uri")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
                 errors_fill.append(f"redirect_uri: {e}")
                 logger.warning("구글 redirect_uri 입력 실패: %s", e)
 
         if errors_fill:
             return FormFillResult(
-                success=False,
-                summary="",
-                field_names=filled,
-                target_url=page.url,
-                error="; ".join(errors_fill),
+                success=False, summary="", field_names=filled,
+                target_url=page.url, error="; ".join(errors_fill),
                 error_code=ErrorCode.PROVIDER_LAYOUT_CHANGED,
             )
 
@@ -192,11 +179,12 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
 
     def submit_form(self, page) -> SubmitResult:
         """저장/생성 버튼 클릭 — run_dev_reg 의 승인 확인 후에만 호출된다."""
-        btn_sel = next((s for s in _CONSENT_SAVE_BTN_SELECTORS if _has_element(page, s)), None)
+        btn_sel = next(
+            (s for s in _CONSENT_SAVE_BTN_SELECTORS if _has_element(page, s)), None
+        )
         if btn_sel is None:
             return SubmitResult(
-                success=False,
-                result_summary="",
+                success=False, result_summary="",
                 error="제출 버튼을 찾을 수 없습니다",
                 error_code=ErrorCode.SUBMIT_BUTTON_NOT_FOUND,
             )
@@ -210,7 +198,7 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
                 success=True,
                 result_summary=f"제출 완료 (결과 확인 필요): {result_text[:200]}",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
             logger.error("구글 submit_form 실패: %s", e)
             return SubmitResult(success=False, result_summary="", error=str(e))
 
@@ -218,5 +206,5 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
         """OAuth 설정 페이지 안전 중단."""
         try:
             page.goto("about:blank")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
             logger.warning("구글 abort_form: 페이지 이동 실패 (무시) | %s", e)

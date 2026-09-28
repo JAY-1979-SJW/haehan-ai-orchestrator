@@ -5,7 +5,6 @@ connection. This module keeps that model, but makes tab ownership explicit:
 reuse a matching tab first, create a new tab only when needed, and clean only
 the tabs that belong to the finished task.
 """
-
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -39,7 +38,7 @@ def normalize_host(host: str) -> str:
 def host_from_url(url: str) -> str:
     try:
         return normalize_host(urlparse(url).hostname or "")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 탭/페이지 소유권 관리 유틸 - URL 조회/탭 정리 실패 시 빈 문자열 또는 무시로 폴백
         return ""
 
 
@@ -55,7 +54,7 @@ def host_matches(host: str, allowed_hosts: Iterable[str]) -> bool:
 def page_url(page: Any) -> str:
     try:
         return str(page.url or "")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 탭/페이지 소유권 관리 유틸 - URL 조회/탭 정리 실패 시 빈 문자열 또는 무시로 폴백
         return ""
 
 
@@ -83,7 +82,7 @@ def mark_task_owned(page: Any, policy: BrowserTaskPolicy, *, owned: bool) -> Non
     try:
         setattr(page, "_haehan_task_id", policy.task_id)
         setattr(page, "_haehan_task_owned_page", owned)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 탭/페이지 소유권 관리 유틸 - URL 조회/탭 정리 실패 시 빈 문자열 또는 무시로 폴백
         pass
 
 
@@ -138,7 +137,7 @@ def cleanup_task_pages(context: Any, policy: BrowserTaskPolicy, *, keep_page: An
         try:
             page.close()
             closed += 1
-        except Exception:
+        except Exception:  # noqa: BLE001 - 브라우저 탭/페이지 소유권 관리 유틸 - URL 조회/탭 정리 실패 시 빈 문자열 또는 무시로 폴백
             pass
     return {"closed": closed, "kept": kept}
 
@@ -150,6 +149,6 @@ def close_all_pages(context: Any) -> int:
         try:
             page.close()
             closed += 1
-        except Exception:
+        except Exception:  # noqa: BLE001 - 브라우저 탭/페이지 소유권 관리 유틸 - URL 조회/탭 정리 실패 시 빈 문자열 또는 무시로 폴백
             pass
     return closed

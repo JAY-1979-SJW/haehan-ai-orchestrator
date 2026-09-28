@@ -82,7 +82,7 @@ def _extract_rfp_no(url: str) -> str:
     try:
         q = parse_qs(urlparse(url).query)
         return (q.get("rfpNo") or [""])[0]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 나라장터(g2b) 첨부파일 URL 다운로드 읽기전용 수집 - DB 조회 실패는 캐시로 폴백, 페이지 접근 실패는 오류로 기록(로그인/보안 페이지 감지 목적)
         return ""
 
 
@@ -206,7 +206,7 @@ def _fetch_candidates() -> list[dict[str, Any]]:
     """DB 우선, 실패 시 캐시 fallback."""
     try:
         return _fetch_candidates_via_ssh()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 나라장터(g2b) 첨부파일 URL 다운로드 읽기전용 수집 - DB 조회 실패는 캐시로 폴백, 페이지 접근 실패는 오류로 기록(로그인/보안 페이지 감지 목적)
         print(f"  DB 조회 실패 ({type(e).__name__}), 캐시 사용: {str(e)[:80]}")
         return _fetch_candidates_from_cache()
 
@@ -260,7 +260,7 @@ def _download_one(playwright, candidate: dict[str, Any], out_dir: str, index: in
             with page.expect_download(timeout=30000) as dl_info:
                 try:
                     page.goto(url, timeout=30000, wait_until="domcontentloaded")
-                except Exception:
+                except Exception:  # noqa: BLE001 - 나라장터(g2b) 첨부파일 URL 다운로드 읽기전용 수집 - DB 조회 실패는 캐시로 폴백, 페이지 접근 실패는 오류로 기록(로그인/보안 페이지 감지 목적)
                     pass
             download = dl_info.value
             suggested = download.suggested_filename or file_name
@@ -282,14 +282,14 @@ def _download_one(playwright, candidate: dict[str, Any], out_dir: str, index: in
             result["signature"] = sig
             result["verdict"] = verdict
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 나라장터(g2b) 첨부파일 URL 다운로드 읽기전용 수집 - DB 조회 실패는 캐시로 폴백, 페이지 접근 실패는 오류로 기록(로그인/보안 페이지 감지 목적)
             err_name = type(e).__name__
             err_msg = str(e)[:200]
             # 페이지에 도달했는지 확인 (로그인/보안 페이지 감지)
             try:
                 title = page.title()
                 body = page.inner_text("body")[:300] if page.query_selector("body") else ""
-            except Exception:
+            except Exception:  # noqa: BLE001 - 나라장터(g2b) 첨부파일 URL 다운로드 읽기전용 수집 - DB 조회 실패는 캐시로 폴백, 페이지 접근 실패는 오류로 기록(로그인/보안 페이지 감지 목적)
                 title, body = "", ""
 
             tb_low = (title + body).lower()

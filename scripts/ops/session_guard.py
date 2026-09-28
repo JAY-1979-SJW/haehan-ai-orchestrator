@@ -25,7 +25,7 @@ def _mb(path_str: str) -> float:
         if not p.exists():
             return 0.0
         return p.stat().st_size / (1024 * 1024)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 기록 크기 기반 handoff 강제 훅 - 파일명은 session_guard이나 로그아웃/보안 차단과 무관한 생산성 훅, 자체 문서화된 fail-open(exit 0)으로 세션을 죽이지 않기 위한 의도된 설계이며 실제 차단(exit 2) 경로는 이 except 밖에서 이미 처리됨
         return 0.0
 
 
@@ -85,7 +85,7 @@ def _handle_session_start(payload: dict) -> int:
             age_days = (time.time() - handoff_path.stat().st_mtime) / 86400
             if age_days <= 7:
                 sh.start(apply_cleanup=False)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 기록 크기 기반 handoff 강제 훅 - 파일명은 session_guard이나 로그아웃/보안 차단과 무관한 생산성 훅, 자체 문서화된 fail-open(exit 0)으로 세션을 죽이지 않기 위한 의도된 설계이며 실제 차단(exit 2) 경로는 이 except 밖에서 이미 처리됨
         pass
     return 0
 
@@ -93,7 +93,7 @@ def _handle_session_start(payload: dict) -> int:
 def _handle_quiet_write() -> int:
     try:
         sh.write()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 기록 크기 기반 handoff 강제 훅 - 파일명은 session_guard이나 로그아웃/보안 차단과 무관한 생산성 훅, 자체 문서화된 fail-open(exit 0)으로 세션을 죽이지 않기 위한 의도된 설계이며 실제 차단(exit 2) 경로는 이 except 밖에서 이미 처리됨
         pass
     return 0
 
@@ -102,7 +102,7 @@ def main() -> int:
     try:
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 기록 크기 기반 handoff 강제 훅 - 파일명은 session_guard이나 로그아웃/보안 차단과 무관한 생산성 훅, 자체 문서화된 fail-open(exit 0)으로 세션을 죽이지 않기 위한 의도된 설계이며 실제 차단(exit 2) 경로는 이 except 밖에서 이미 처리됨
         payload = {}
 
     event = payload.get("hook_event_name", "")
@@ -117,7 +117,7 @@ def main() -> int:
         return 0
     except SystemExit:
         raise
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 기록 크기 기반 handoff 강제 훅 - 파일명은 session_guard이나 로그아웃/보안 차단과 무관한 생산성 훅, 자체 문서화된 fail-open(exit 0)으로 세션을 죽이지 않기 위한 의도된 설계이며 실제 차단(exit 2) 경로는 이 except 밖에서 이미 처리됨
         # fail-open — 훅이 세션을 절대 죽이면 안 된다 (차단 경로 제외 이미 위에서 처리됨)
         return 0
 

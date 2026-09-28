@@ -1,5 +1,4 @@
 """네이버 메일 Mixin — auto_structure_builder 자동 생성."""
-
 from __future__ import annotations
 
 import time
@@ -26,7 +25,7 @@ class MailMixin:
         try:
             result = self._page.evaluate(_js("extract_mail_inbox.js"))
             return (result or [])[:max_n]
-        except Exception:
+        except Exception:  # noqa: BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             return []
 
     def mail_read(self, mail_id: str) -> dict:
@@ -38,7 +37,7 @@ class MailMixin:
         time.sleep(2)
         try:
             return self._page.evaluate(_js("extract_mail_detail.js")) or {}
-        except Exception:
+        except Exception:  # noqa: BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             return {}
 
     def mail_search(self, query: str, max_n: int = 30) -> list[dict]:
@@ -65,7 +64,7 @@ class MailMixin:
             return origXhrSend.apply(this, a);
         };
         """
-        if not hasattr(self._page, "_mail_search_hook_added"):
+        if not hasattr(self._page, '_mail_search_hook_added'):
             self._page.add_init_script(HOOK)
             self._page._mail_search_hook_added = True
 
@@ -79,12 +78,12 @@ class MailMixin:
             if sa and sa.is_visible():
                 sa.click()
                 time.sleep(1)
-        except Exception:
+        except Exception:  # noqa: S110, BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             pass
 
         # 검색 input 찾아서 입력 + Enter
         try:
-            search_input = self._page.query_selector("input.search_input")
+            search_input = self._page.query_selector('input.search_input')
             if not search_input or not search_input.is_visible():
                 # 폴백: placeholder 매칭
                 search_input = self._page.query_selector('input[placeholder*="메일 검색"]')
@@ -93,7 +92,7 @@ class MailMixin:
                 search_input.fill(query)
                 self._page.keyboard.press("Enter")
                 time.sleep(4)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             return []
 
         # XHR 후킹된 검색 결과 추출
@@ -107,15 +106,13 @@ class MailMixin:
         result = []
         for m in mail_data[:max_n]:
             from_info = m.get("from") or {}
-            result.append(
-                {
-                    "id": str(m.get("mailSN", "")),
-                    "from": from_info.get("name") or from_info.get("email") or "",
-                    "subject": m.get("subject", ""),
-                    "date": m.get("receivedTime", ""),
-                    "unread": not bool(m.get("isRead", False)) if "isRead" in m else False,
-                }
-            )
+            result.append({
+                "id":      str(m.get("mailSN", "")),
+                "from":    from_info.get("name") or from_info.get("email") or "",
+                "subject": m.get("subject", ""),
+                "date":    m.get("receivedTime", ""),
+                "unread":  not bool(m.get("isRead", False)) if "isRead" in m else False,
+            })
         return result
 
     def mail_folders(self) -> list[dict]:
@@ -142,7 +139,7 @@ class MailMixin:
             return origXhrSend.apply(this, a);
         };
         """
-        if not hasattr(self._page, "_mail_hook_added"):
+        if not hasattr(self._page, '_mail_hook_added'):
             self._page.add_init_script(HOOK)
             self._page._mail_hook_added = True
 
@@ -153,16 +150,13 @@ class MailMixin:
         if not data:
             return []
         folder_list = data.get("folderList", [])
-        return [
-            {
-                "name": f.get("folderName", ""),
-                "count": f.get("unreadMailCount", 0),
-                "mail_count": f.get("mailCount", 0),
-                "folder_sn": f.get("folderSN"),
-                "folder_type": f.get("folderType", ""),
-            }
-            for f in folder_list
-        ]
+        return [{
+            "name":       f.get("folderName", ""),
+            "count":      f.get("unreadMailCount", 0),
+            "mail_count": f.get("mailCount", 0),
+            "folder_sn":  f.get("folderSN"),
+            "folder_type": f.get("folderType", ""),
+        } for f in folder_list]
 
     def mail_unread_count(self) -> int:
         """전체 안읽은 메일 수 — mail_folders XHR 후킹 데이터 활용.
@@ -185,7 +179,6 @@ class MailMixin:
         반환: {ok, draft_url}
         """
         from ai_orchestrator.local_agent.browser.cdp_audit import L2
-
         self.go("https://mail.naver.com/v2/write")
         time.sleep(2)
         try:
@@ -194,5 +187,5 @@ class MailMixin:
             # 본문은 iframe 내에 있을 수 있음
             L2("MAIL_WRITE_PREPARED", "mail_mixin", to=to, subject=subject)
             return {"ok": True, "draft_url": self._page.url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             return {"ok": False, "error": str(e)}

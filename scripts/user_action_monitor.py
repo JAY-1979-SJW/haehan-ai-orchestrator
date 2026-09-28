@@ -125,7 +125,7 @@ def _inject(page) -> bool:
     try:
         page.evaluate(_MONITOR_JS)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
         _log.debug("[user-monitor] inject 실패: %s", e)
         return False
 
@@ -133,7 +133,7 @@ def _inject(page) -> bool:
 def _collect(page) -> list[dict]:
     try:
         return page.evaluate(_COLLECT_JS) or []
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
         return []
 
 
@@ -202,7 +202,7 @@ def watch_user_actions(
                 # 활성 탭 갱신
                 try:
                     current_url = page.url or ""
-                except Exception:
+                except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
                     page = _get_page()
                     current_url = page.url or ""
 
@@ -230,7 +230,7 @@ def watch_user_actions(
                 if current_url not in injected_urls:
                     try:
                         page.wait_for_load_state("domcontentloaded", timeout=3000)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
                         pass
                     if _inject(page):
                         injected_urls.add(current_url)
@@ -252,7 +252,7 @@ def watch_user_actions(
                             detail=json.dumps(ev.get("detail", {}), ensure_ascii=False),
                             url=ev.get("url", ""),
                         )
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
                         pass
 
                     if on_event:
@@ -260,7 +260,7 @@ def watch_user_actions(
 
             except KeyboardInterrupt:
                 raise
-            except Exception as outer:
+            except Exception as outer:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
                 _log.debug("[user-monitor] 루프 오류: %s", outer)
 
             time.sleep(POLL_INTERVAL_S)

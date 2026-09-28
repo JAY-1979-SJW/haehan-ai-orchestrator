@@ -27,7 +27,7 @@ def _cdp_page():
         ctx = browser.contexts[0]
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         return pw, browser, page
-    except Exception:
+    except Exception:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
         return None, None, None
 
 
@@ -39,12 +39,12 @@ def _cdp_call(fn):
     try:
         result = fn(page)
         return result, None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
         return None, str(e)[:200]
     finally:
         try:
             pw.stop()
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
 
@@ -74,7 +74,7 @@ def open_service(
         new.goto(url, wait_until="domcontentloaded", timeout=20000)
         try:
             new.bring_to_front()
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
         return {"ok": True, "url": new.url}
 
@@ -103,7 +103,7 @@ def get_gmail_inbox(
         if items:
             audit("GOOGLE_GMAIL_INBOX", user, status="ok", note=f"count={len(items)} source=oauth")
             return {"ok": True, "source": "oauth", "items": items, "count": len(items), "duration_ms": duration_ms(t0)}
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
 
     # CDP 폴백
@@ -376,7 +376,7 @@ def get_youtube_studio_status(
                 }
         audit("GOOGLE_YOUTUBE_STUDIO_STATUS", user, status="ok")
         return {"ok": True, "channel": channel, "has_upload_scope": True, "duration_ms": duration_ms(t0)}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
         return {"ok": False, "error": str(e)[:200], "duration_ms": duration_ms(t0)}
 
 

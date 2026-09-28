@@ -376,7 +376,7 @@ def api_summary(
     if my_cafes_path.exists():
         try:
             my_cafes_count = len(json.loads(my_cafes_path.read_text(encoding="utf-8")))
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
     raw_path = _latest_file("raw_articles_*.json")
@@ -386,7 +386,7 @@ def api_summary(
         try:
             raw_count = len(json.loads(raw_path.read_text(encoding="utf-8")))
             raw_file = raw_path.name
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
     cls_path = _latest_file("classified_*.json")
@@ -396,7 +396,7 @@ def api_summary(
         try:
             cls_count = len(json.loads(cls_path.read_text(encoding="utf-8")))
             cls_file = cls_path.name
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
     report_path = _latest_file("organized_report_*.txt")
@@ -561,7 +561,7 @@ def cafe_to_haehan_blog(
         except urllib.error.HTTPError as e:
             body_text = e.read().decode(errors="replace")[:200]
             item["error"] = f"HTTP {e.code}: {body_text}"
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 네이버 카페 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환, 파일 통계 읽기 실패는 무시, 쓰기/삭제 없음
             item["error"] = str(exc)[:200]
 
         results.append(item)

@@ -131,7 +131,7 @@ class BlogSEO:
                 search_box = self.page.locator('input[name="query"]').first
                 search_box.click(timeout=3000)
                 time.sleep(0.8)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 블로그 SEO 분석 도구(읽기전용 검색어/AI호출) - 실패 시 빈 목록/기본 dict 반환
                 pass
             items = self.page.evaluate(
                 """
@@ -148,7 +148,7 @@ class BlogSEO:
                 max_items,
             )
             return items
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 블로그 SEO 분석 도구(읽기전용 검색어/AI호출) - 실패 시 빈 목록/기본 dict 반환
             _log.debug("[seo] autocomplete 실패: %s", e)
             return []
 
@@ -174,7 +174,7 @@ class BlogSEO:
             }
             """)
             return related
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 블로그 SEO 분석 도구(읽기전용 검색어/AI호출) - 실패 시 빈 목록/기본 dict 반환
             _log.debug("[seo] related_keywords 실패: %s", e)
             return []
 
@@ -231,7 +231,7 @@ class BlogSEO:
 - 시각장애인이 이해 가능
 """
             return ai._call(system, user, max_tokens=150)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 블로그 SEO 분석 도구(읽기전용 검색어/AI호출) - 실패 시 빈 목록/기본 dict 반환
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 중복 키워드 페널티 감지 ───────────────────────────────────────
@@ -286,7 +286,7 @@ class BlogSEO:
             from scripts.critical_logger import log_critical as _lc
 
             _lc("OTHER", f"SEO 종합 분석: '{title[:30]}'", score=result["final_score"], mode="seo_full")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 블로그 SEO 분석 도구(읽기전용 검색어/AI호출) - 실패 시 빈 목록/기본 dict 반환
             pass
 
         return result
