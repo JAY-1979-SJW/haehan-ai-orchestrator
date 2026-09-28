@@ -76,7 +76,7 @@ def publish_one(page, *, post: dict, img_paths: list[str]) -> dict:
             body_segments=segments if segments else None,
             tags=post["tags"],
             images=img_paths,
-            visibility="public",
+            visibility=post.get("visibility", "public"),
             require_approval=False,
         )
         ok = result.get("ok", False)
