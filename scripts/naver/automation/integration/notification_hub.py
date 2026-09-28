@@ -52,7 +52,7 @@ class NotificationHub:
                 pass
             log_critical("OTHER", "Slack 알림", channel=channel, mode="notify_slack")
             return {"ok": True, "channel": channel}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 슬랙/디스코드 알림 발송 실패를 ok:False 오류로 반환 — best-effort 알림, 실패해도 원 작업에는 영향 없음
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 디스코드 ──────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ class NotificationHub:
                 pass
             log_critical("OTHER", "Discord 알림", mode="notify_discord")
             return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 슬랙/디스코드 알림 발송 실패를 ok:False 오류로 반환 — best-effort 알림, 실패해도 원 작업에는 영향 없음
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 네이버 메일 ──────────────────────────────────────────────────

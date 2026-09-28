@@ -60,7 +60,7 @@ def _cluster_questions(questions: list[dict], sim_threshold: float = 0.35) -> li
     try:
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.metrics.pairwise import cosine_similarity
-    except Exception:
+    except Exception:  # noqa: BLE001 - sklearn 미설치/로드 실패시 군집화 없이 원본 질의를 개별 항목으로 반환 — 읽기전용 텍스트 분석의 안전한 폴백
         # sklearn 미설치/번들 누락(frozen exe의 OSError 포함) → 군집화 없이 개별 반환
         return [
             {
@@ -77,7 +77,7 @@ def _cluster_questions(questions: list[dict], sim_threshold: float = 0.35) -> li
     try:
         vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 3), max_features=5000)
         tfidf = vec.fit_transform(texts)
-    except Exception:
+    except Exception:  # noqa: BLE001 - sklearn 미설치/로드 실패시 군집화 없이 원본 질의를 개별 항목으로 반환 — 읽기전용 텍스트 분석의 안전한 폴백
         return [
             {
                 "representative": q,

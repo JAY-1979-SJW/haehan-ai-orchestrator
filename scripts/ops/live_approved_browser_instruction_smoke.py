@@ -289,7 +289,7 @@ def main(argv: list[str] | None = None) -> int:
                     auth=auth,
                     timeout=10,
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스모크테스트 진행상태 폴링 중 일시적 HTTP 조회 실패는 재시도 루프에서 continue, 테스트용 임시 관리자 계정(codex_browser_smoke_*) 정리 실패는 WARN 출력만(운영 계정이 아닌 테스트 전용 임시계정)
                 continue
             last_status = str(detail.get("status") or last_status)
             if last_status in {"completed", "failed", "cancelled", "expired"}:
@@ -322,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             remote_user("remove", username)
             print("[PASS] temp admin user removed")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스모크테스트 진행상태 폴링 중 일시적 HTTP 조회 실패는 재시도 루프에서 continue, 테스트용 임시 관리자 계정(codex_browser_smoke_*) 정리 실패는 WARN 출력만(운영 계정이 아닌 테스트 전용 임시계정)
             print("[WARN] temp admin user cleanup failed")
 
 

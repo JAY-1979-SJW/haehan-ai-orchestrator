@@ -34,7 +34,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
-
 _JS_DIR = Path(__file__).resolve().parents[4] / "ai_orchestrator/local_agent/browser/_js"
 _DEFAULT_DOWNLOAD_DIR = "data/downloads"
 
@@ -53,12 +52,12 @@ def _ask_save_dir(default: str = _DEFAULT_DOWNLOAD_DIR, timeout_sec: int = 15) -
     import threading
 
     abs_default = str(Path(default).resolve())
-    print(f"\n┌─ 저장 경로 설정 ─────────────────────────────────────────")
+    print("\n┌─ 저장 경로 설정 ─────────────────────────────────────────")
     print(f"│  기본 경로: {abs_default}")
-    print(f"│  다른 경로를 입력하거나 Enter를 누르면 기본 경로에 저장합니다.")
+    print("│  다른 경로를 입력하거나 Enter를 누르면 기본 경로에 저장합니다.")
     print(f"│  ({timeout_sec}초 내 미입력 시 기본 경로 자동 선택)")
-    print(f"└──────────────────────────────────────────────────────────")
-    print(f"저장 경로> ", end="", flush=True)
+    print("└──────────────────────────────────────────────────────────")
+    print("저장 경로> ", end="", flush=True)
 
     result = [default]
     answered = threading.Event()
@@ -67,7 +66,7 @@ def _ask_save_dir(default: str = _DEFAULT_DOWNLOAD_DIR, timeout_sec: int = 15) -
         try:
             line = sys.stdin.readline().strip()
             result[0] = line if line else default
-        except Exception:
+        except Exception:  # noqa: BLE001 - 표준입력 프롬프트 읽기 타임아웃 무시(기본값 사용), 첨부파일 스캔 중 개별 게시글 오류는 출력 후 계속 — 읽기전용 수집
             pass
         answered.set()
 
@@ -130,13 +129,14 @@ def cmd_list(agent: BrowserAgent, article_url: str, as_json: bool):
         return
     print(f"\n첨부파일 {len(attachments)}개:")
     for i, a in enumerate(attachments, 1):
-        size_str = f"  ({a['size']})" if a['size'] else ""
+        size_str = f"  ({a['size']})" if a["size"] else ""
         print(f"  {i}. [{a['ext'].upper():>4}] {a['name']}{size_str}")
         print(f"       {a['url'][:100]}")
 
 
-def cmd_scan(agent: BrowserAgent, cafe_url: str, board: str, pages: int,
-             do_download: bool, out_dir: str, as_json: bool):
+def cmd_scan(
+    agent: BrowserAgent, cafe_url: str, board: str, pages: int, do_download: bool, out_dir: str, as_json: bool
+):
     """게시판 게시글을 스캔해 첨부파일이 있는 것만 수집."""
     from scripts.naver.cafe.cafe_scraper import scrape_posts_page
 
@@ -166,11 +166,15 @@ def cmd_scan(agent: BrowserAgent, cafe_url: str, board: str, pages: int,
 
     for page_num in range(1, pages + 1):
         if menu_id:
-            url = (f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}"
-                   f"&search.menuid={menu_id}&search.boardtype=L&search.page={page_num}")
+            url = (
+                f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}"
+                f"&search.menuid={menu_id}&search.boardtype=L&search.page={page_num}"
+            )
         else:
-            url = (f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}"
-                   f"&search.boardtype=L&search.page={page_num}")
+            url = (
+                f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}"
+                f"&search.boardtype=L&search.page={page_num}"
+            )
 
         print(f"\n[{page_num}/{pages}] 목록 수집: {url}")
         posts = scrape_posts_page(agent, url)
@@ -196,10 +200,10 @@ def cmd_scan(agent: BrowserAgent, cafe_url: str, board: str, pages: int,
                             _do_download(agent, att, save_dir)
                 else:
                     print(" → 첨부파일 없음")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 표준입력 프롬프트 읽기 타임아웃 무시(기본값 사용), 첨부파일 스캔 중 개별 게시글 오류는 출력 후 계속 — 읽기전용 수집
                 print(f" → 오류: {e}")
 
-    print(f"\n\n=== 스캔 완료 ===")
+    print("\n\n=== 스캔 완료 ===")
     print(f"첨부파일 포함 게시글: {len(all_with_attach)}개")
     for p in all_with_attach:
         print(f"  - {p['title'][:50]}")
@@ -266,8 +270,7 @@ def main():
         if args.command == "list":
             cmd_list(agent, args.article_url, args.as_json)
         elif args.command == "scan":
-            cmd_scan(agent, args.cafe, args.board, args.pages,
-                     args.download, args.out, args.as_json)
+            cmd_scan(agent, args.cafe, args.board, args.pages, args.download, args.out, args.as_json)
         elif args.command == "download":
             cmd_download(agent, args.article_url, args.out)
 

@@ -306,7 +306,7 @@ def _cdp_targets() -> list[dict]:
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{CDP_PORT}/json/list", timeout=2.0) as r:
             return [t for t in json.loads(r.read()) if isinstance(t, dict)]
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 탭 목록 조회/JS 평가 실패시 빈 목록·오류 dict를 반환하는 읽기전용 로그인상태 모니터링 — 로그인 상태를 바꾸지 않음
         return []
 
 
@@ -329,7 +329,7 @@ async def _eval_js(ws_url: str, expr: str, timeout: float = 5.0) -> dict | None:
             if isinstance(val, str):
                 return json.loads(val)
             return val
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - CDP 탭 목록 조회/JS 평가 실패시 빈 목록·오류 dict를 반환하는 읽기전용 로그인상태 모니터링 — 로그인 상태를 바꾸지 않음
         return {"_err": str(exc)[:120]}
 
 

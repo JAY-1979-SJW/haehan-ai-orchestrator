@@ -168,7 +168,7 @@ def crawl_shopping(
                 m = json.loads(ws.recv())
                 if m.get("id") == mid:
                     return m
-            except Exception:
+            except Exception:  # noqa: BLE001 - DOM에서 추출한 JSON 파싱 실패시 빈 dict/list로 안전 폴백 — 읽기전용 공개 검색결과 스크래핑
                 return {}
         return {}
 
@@ -181,7 +181,7 @@ def crawl_shopping(
         raw = r.get("result", {}).get("result", {}).get("value", "[]")
         try:
             return json.loads(raw) or []
-        except Exception:
+        except Exception:  # noqa: BLE001 - DOM에서 추출한 JSON 파싱 실패시 빈 dict/list로 안전 폴백 — 읽기전용 공개 검색결과 스크래핑
             return []
 
     collected: dict[str, dict] = {}  # key(link|title) → item
