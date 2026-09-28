@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Iterable
+from contextlib import suppress
 
 from scripts.logger import get_logger
 
@@ -115,10 +116,8 @@ def wait_submit_done(
                 el = page.query_selector(sel)
                 if el and el.is_visible():
                     txt = ""
-                    try:
+                    with suppress(Exception):
                         txt = (el.inner_text() or "").strip()[:200]
-                    except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
-                        pass
                     return {"done": True, "kind": "fail_dom", "detail": txt or sel}
             except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
                 pass

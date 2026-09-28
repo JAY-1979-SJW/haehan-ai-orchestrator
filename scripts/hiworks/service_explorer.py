@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -73,10 +74,8 @@ def extract_service_surface(page, *, limit: int = 120) -> dict[str, Any]:
 
 def scan_service(key: str, target: dict[str, str], *, limit: int = 120) -> dict[str, Any]:
     page = open_hiworks(target["url"])
-    try:
+    with suppress(Exception):
         page.wait_for_timeout(1200)
-    except Exception:  # noqa: BLE001 - 하이웍스 서비스 탐색 자동화 - 페이지 대기 best-effort, 실패해도 추출 로직 계속 진행(읽기전용)
-        pass
     surface = extract_service_surface(page, limit=limit)
     return {
         "key": key,

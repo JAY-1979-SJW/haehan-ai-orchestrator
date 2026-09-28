@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import re
 import time
+from contextlib import suppress
 from typing import Any
 from urllib.parse import urlparse
 
@@ -349,10 +350,8 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale
                                     reacquired,
                                     getattr(page, "url", "?"),
                                 )
-                                try:
+                                with suppress(Exception):
                                     _inject_login_watcher(page)
-                                except Exception:  # noqa: BLE001 - 여러 프레임/신호를 순차 확인하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
-                                    pass
                             else:
                                 _log.warning("[login-detector] page 재획득 실패 — 종료")
                                 elapsed = int(time.time() - start_time)
@@ -642,10 +641,8 @@ def wait_for_login_generic(page, max_wait_s: int = 600, poll_interval: float = 3
             return state
 
         if on_progress and state.get("score", 0) != last_score:
-            try:
+            with suppress(Exception):
                 on_progress(state)
-            except Exception:  # noqa: BLE001 - 여러 프레임/신호를 순차 확인하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
-                pass
             last_score = state.get("score", 0)
 
         time.sleep(poll_interval)

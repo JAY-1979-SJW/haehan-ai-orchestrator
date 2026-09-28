@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import sys
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -290,10 +291,8 @@ def _denial_reason(page) -> str | None:
 def _goto_form_page(page) -> None:
     """Open the deregistration page without waiting for long-polling/network idle."""
     page.goto(DEREGISTRATION_URL, wait_until="domcontentloaded", timeout=30000)
-    try:
+    with suppress(Exception):
         page.wait_for_load_state("load", timeout=5000)
-    except Exception:  # noqa: BLE001 - EUM 단말기 철거신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
-        pass
 
 
 def deregister_device(device_id: str, deregister_date: str | None = None, submit: bool = False) -> dict[str, Any]:
