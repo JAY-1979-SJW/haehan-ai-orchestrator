@@ -19104,6 +19104,14 @@
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/naver/smartstore/register_lucci_ctc_fan.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "smartstore",
+   "reason": "도메인(smartstore) 자동화",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

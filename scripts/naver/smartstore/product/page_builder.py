@@ -66,10 +66,26 @@ SECTION_REGISTRY = {
     "as": {"label": "AS·보증 안내", "required": False, "data_keys": ["as_warranty", "as_contact"]},
     "notice": {"label": "주의 사항", "required": False, "data_keys": ["notice_items"]},
     "delivery": {"label": "배송·교환·반품", "required": True, "data_keys": ["delivery_items"]},
+    "before_after": {
+        "label": "제품 사진 · 비포/애프터",
+        "required": False,
+        "data_keys": ["hero_image", "before_after_pairs", "gallery_images", "before_after_title"],
+    },
+    "price_compare": {
+        "label": "타 판매처 가격 비교",
+        "required": False,
+        "data_keys": ["price_compare_title", "price_compare_rows", "price_compare_caption"],
+    },
+    "consult_flow": {
+        "label": "상담·시안 흐름 안내",
+        "required": False,
+        "data_keys": ["consult_title", "consult_lead", "consult_steps", "consult_cta"],
+    },
 }
 
 DEFAULT_SECTIONS = [
     "hero",
+    "before_after",
     "trust",
     "features",
     "price",
@@ -77,7 +93,9 @@ DEFAULT_SECTIONS = [
     "quality",
     "origin",
     "spec",
+    "price_compare",
     "howto",
+    "consult_flow",
     "as",
     "notice",
     "delivery",
@@ -239,6 +257,23 @@ CSS = """
 .pd-delivery-desc{color:var(--t3);font-size:12px;line-height:1.5;}
 /* 구분선 */
 .pd-divider{height:8px;background:var(--bg);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);}
+/* 제품 사진 / 비포·애프터 (2026-09-28: 설치상담형 나레이티브 상세페이지 스크립트 통합) */
+.pd-photo{width:100%;display:block;border-radius:var(--r-m);margin-bottom:16px;}
+.pd-before-after{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px;}
+.pd-ba-item{text-align:center;}
+.pd-ba-item .pd-photo{margin-bottom:6px;}
+.pd-ba-caption{font-size:12px;color:var(--t4);margin-bottom:16px;}
+.pd-gallery{display:flex;flex-direction:column;gap:16px;margin-top:16px;}
+/* 타 판매처 가격 비교 */
+.pd-pc-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+.pd-pc-label,.pd-pc-price{padding:10px 12px;border-bottom:1px solid var(--bd);font-size:14px;}
+.pd-pc-price{text-align:right;}
+.pd-pc-highlight-label,.pd-pc-highlight-price{padding:10px 12px;background:var(--gold-l);font-weight:700;font-size:15px;}
+.pd-pc-highlight-price{text-align:right;color:var(--gold);font-size:16px;}
+.pd-pc-caption{text-align:center;font-size:13px;color:var(--t3);}
+/* 상담·시안 흐름 안내 */
+.pd-consult{background:var(--green-l);}
+.pd-consult p{text-align:center;}
 </style>
 """.strip()
 
@@ -501,6 +536,107 @@ def render_notice(d: dict) -> str:
 </div>"""
 
 
+def render_before_after(d: dict) -> str:
+    """제품 사진 + 비포/애프터 비교 + 갤러리(설치상담형 나레이티브 상세페이지에서 이관, 2026-09-28).
+
+    data 키:
+        hero_image: {"url", "alt"} — 대표 사진 1장(선택)
+        before_after_pairs: [{"before_url","before_alt","before_caption",
+                               "after_url","after_alt","after_caption"}, ...]
+        gallery_images: [{"url","alt"}, ...] — 후속 라이프스타일 이미지들
+        before_after_title: 섹션 제목(기본값 있음)
+    """
+    parts = []
+    hero = d.get("hero_image")
+    if hero and hero.get("url"):
+        parts.append(f'<img class="pd-photo" src="{_e(hero["url"])}" alt="{_e(hero.get("alt", ""))}" />')
+    for pair in d.get("before_after_pairs", []):
+        parts.append(f"""<div class="pd-before-after">
+  <div class="pd-ba-item">
+    <img class="pd-photo" src="{_e(pair["before_url"])}" alt="{_e(pair.get("before_alt", ""))}" />
+    <div class="pd-ba-caption">{_e(pair.get("before_caption", "BEFORE"))}</div>
+  </div>
+  <div class="pd-ba-item">
+    <img class="pd-photo" src="{_e(pair["after_url"])}" alt="{_e(pair.get("after_alt", ""))}" />
+    <div class="pd-ba-caption">{_e(pair.get("after_caption", "AFTER"))}</div>
+  </div>
+</div>""")
+    gallery = d.get("gallery_images", [])
+    if gallery:
+        items = "\n".join(
+            f'  <img class="pd-photo" src="{_e(g["url"])}" alt="{_e(g.get("alt", ""))}" />' for g in gallery
+        )
+        parts.append(f'<div class="pd-gallery">\n{items}\n</div>')
+    if not parts:
+        return ""
+    body = "\n".join(parts)
+    title = _e(d.get("before_after_title", "설치 전후, 공간은 얼마나 달라질까요?"))
+    return f"""
+<div class="pd-sec">
+  <div class="pd-sec-eyebrow">Before &amp; After</div>
+  <div class="pd-sec-title">{title}</div>
+{body}
+</div>"""
+
+
+def render_price_compare(d: dict) -> str:
+    """타 판매처 가격 비교표(설치상담형 나레이티브 상세페이지에서 이관, 2026-09-28).
+
+    data 키:
+        price_compare_rows: [{"label","price","highlight": bool}, ...]
+        price_compare_title / price_compare_caption: 제목/하단 설명(기본값 있음)
+    """
+    rows = d.get("price_compare_rows", [])
+    if not rows:
+        return ""
+    row_html = []
+    for r in rows:
+        label, price = _e(r.get("label", "")), _e(r.get("price", ""))
+        if r.get("highlight"):
+            row_html.append(
+                f'<tr><td class="pd-pc-highlight-label">{label}</td><td class="pd-pc-highlight-price">{price}</td></tr>'
+            )
+        else:
+            row_html.append(f'<tr><td class="pd-pc-label">{label}</td><td class="pd-pc-price">{price}</td></tr>')
+    caption = d.get("price_compare_caption", "합리적인 제품 가격과 필요한 시공비를 투명하게 안내합니다.")
+    title = _e(d.get("price_compare_title", "온라인 가격도 충분히 비교해 보세요"))
+    return f"""
+<div class="pd-sec">
+  <div class="pd-sec-eyebrow">Price Compare</div>
+  <div class="pd-sec-title">{title}</div>
+  <table class="pd-pc-table">{"".join(row_html)}</table>
+  <p class="pd-pc-caption">{_e(caption)}</p>
+</div>"""
+
+
+def render_consult_flow(d: dict) -> str:
+    """상담·시안 요청 흐름 안내(설치상담형 나레이티브 상세페이지에서 이관, 2026-09-28).
+
+    data 키:
+        consult_steps: ["공간 사진 전송", "검토", "시안 제작", ...] — 화살표로 연결해 렌더링
+        consult_title / consult_lead / consult_cta: 제목/도입 문구/마무리 문구(선택)
+    """
+    steps = d.get("consult_steps", [])
+    if not steps:
+        return ""
+    parts = []
+    lead = d.get("consult_lead")
+    if lead:
+        parts.append(f"<p>{_e(lead)}</p>")
+    parts.append("<p style='font-weight:700;'>" + " → ".join(_e(s) for s in steps) + "</p>")
+    cta = d.get("consult_cta")
+    if cta:
+        parts.append(f"<p style='font-weight:700;'>{_e(cta)}</p>")
+    body = "\n".join(parts)
+    title = _e(d.get("consult_title", "먼저 상담받고 시안부터 확인하세요"))
+    return f"""
+<div class="pd-sec pd-consult">
+  <div class="pd-sec-eyebrow">Consultation</div>
+  <div class="pd-sec-title">{title}</div>
+{body}
+</div>"""
+
+
 def render_delivery(d: dict) -> str:
     items = d.get(
         "delivery_items",
@@ -550,6 +686,9 @@ RENDERERS = {
     "as": render_as,
     "notice": render_notice,
     "delivery": render_delivery,
+    "before_after": render_before_after,
+    "price_compare": render_price_compare,
+    "consult_flow": render_consult_flow,
 }
 
 DIVIDER = '\n<div class="pd-divider"></div>\n'
