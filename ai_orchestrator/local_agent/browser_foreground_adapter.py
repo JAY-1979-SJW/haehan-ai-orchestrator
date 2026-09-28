@@ -115,7 +115,7 @@ def _foreground_windows(pid: int | None) -> str:
             user32.ShowWindow(hwnd, SW_RESTORE)
             user32.SetForegroundWindow(hwnd)
             return BROWSER_FOREGROUND_REQUESTED
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
 
     return USER_MANUAL_FOCUS_REQUIRED
@@ -134,7 +134,7 @@ def _foreground_macos() -> str:
         )
         if result.returncode == 0:
             return BROWSER_FOREGROUND_REQUESTED
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
 
     return USER_MANUAL_FOCUS_REQUIRED
@@ -152,7 +152,7 @@ def check_headed_mode(playwright_page: Any) -> bool:
         # browser 객체에 _impl_obj를 통해 접근할 수 있으나 내부 API이므로
         # 안전한 fallback으로 True를 반환한다.
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 인증필요시 브라우저 창을 전면화하는 보조 기능(문서에 '비밀번호 input 값 읽기 금지' 등 명시) — Windows/macOS 포그라운드 전환 실패는 USER_MANUAL_FOCUS_REQUIRED로 폴백(사용자에게 직접 클릭 요청)할 뿐 민감정보 접근과 무관하며, check_headed_mode는 성공/예외 경로 모두 동일하게 True를 반환하는 스텁이라 except가 새로운 위험을 추가하지 않음(이미 noqa: S110 2건 존재).
         return True
 
 

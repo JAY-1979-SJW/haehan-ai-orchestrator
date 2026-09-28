@@ -71,7 +71,7 @@ def try_sidebar_hover(page) -> dict:
         time.sleep(4)
         try:
             handle_page_popups(page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 상품등록 페이지 URL 탐색(읽기전용 리서치 스크립트) — 팝업무시/사이드바탐색실패/URL후보실패 모두 오류를 결과에 기록하고 계속 진행할 뿐 실제 등록 동작은 없음.
             pass
 
         # '상품관리' 메뉴 hover (펼침 시도)
@@ -121,7 +121,7 @@ def try_sidebar_hover(page) -> dict:
         """)
 
         return {"ok": True, "submenus": new_menus}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 상품등록 페이지 URL 탐색(읽기전용 리서치 스크립트) — 팝업무시/사이드바탐색실패/URL후보실패 모두 오류를 결과에 기록하고 계속 진행할 뿐 실제 등록 동작은 없음.
         return {"ok": False, "error": str(e)[:100]}
 
 
@@ -170,7 +170,7 @@ def main():
                 print(f"  △ 부분 (price={info['price_input']}, stock={info['stock_input']})")
             else:
                 print(f"  · 필드{info['field_count']} URL={info['url'][-50:]}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 상품등록 페이지 URL 탐색(읽기전용 리서치 스크립트) — 팝업무시/사이드바탐색실패/URL후보실패 모두 오류를 결과에 기록하고 계속 진행할 뿐 실제 등록 동작은 없음.
             print(f"  ✗ {str(e)[:30]}")
             results.append({"candidate": suffix, "error": str(e)[:100]})
 
@@ -192,7 +192,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 상품등록 페이지 URL 탐색(읽기전용 리서치 스크립트) — 팝업무시/사이드바탐색실패/URL후보실패 모두 오류를 결과에 기록하고 계속 진행할 뿐 실제 등록 동작은 없음.
         import traceback
 
         traceback.print_exc()

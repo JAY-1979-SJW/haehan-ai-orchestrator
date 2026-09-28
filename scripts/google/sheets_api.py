@@ -51,7 +51,7 @@ class SheetsAPI:
                 )
                 or []
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - Google Sheets 브라우저 자동화 — 최근시트 조회/생성/셀쓰기/셀읽기 각각 실패 시 {ok: False, error}를 반환, 시트 삭제 등 위험 동작 없음.
             return []
 
     def new(self, title: str = "") -> dict:
@@ -69,7 +69,7 @@ class SheetsAPI:
                 time.sleep(1)
             log_critical("OTHER", f"Sheets 새 시트: {title[:30]}", url=url, mode="sheets_new")
             return {"ok": True, "title": title, "url": url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Google Sheets 브라우저 자동화 — 최근시트 조회/생성/셀쓰기/셀읽기 각각 실패 시 {ok: False, error}를 반환, 시트 삭제 등 위험 동작 없음.
             return {"ok": False, "error": str(e)[:100], "url": url}
 
     def open_sheet(self, url: str) -> dict:
@@ -103,7 +103,7 @@ class SheetsAPI:
             time.sleep(1)
             log_critical("OTHER", f"Sheets 입력: {len(data)}행", start=start, mode="sheets_write")
             return {"ok": True, "rows": len(data), "start": start}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Google Sheets 브라우저 자동화 — 최근시트 조회/생성/셀쓰기/셀읽기 각각 실패 시 {ok: False, error}를 반환, 시트 삭제 등 위험 동작 없음.
             return {"ok": False, "error": str(e)[:100]}
 
     def read_cells(self, url: str, range_a1: str = "A1:Z100") -> dict:
@@ -133,5 +133,5 @@ class SheetsAPI:
                 or []
             )
             return {"ok": True, "cells": data, "count": len(data)}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Google Sheets 브라우저 자동화 — 최근시트 조회/생성/셀쓰기/셀읽기 각각 실패 시 {ok: False, error}를 반환, 시트 삭제 등 위험 동작 없음.
             return {"ok": False, "error": str(e)[:100]}

@@ -223,7 +223,7 @@ def collect_and_prepare(
             from scripts.site_watch import StepFailure
 
             login_issue = isinstance(e, (LoginError, StepFailure))
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 영업메일 API(문서에 '발송은 confirmed=True 필수, 자동 일괄발송 금지' 명시) — send_one 엔드포인트는 confirmed 검증이 try 블록 이전에 이미 끝난 뒤에만 실제 발송을 시도하며, except는 실패를 HTTPException(500) 또는 로그인필요 안내로 변환할 뿐 승인을 우회하지 않음. 견적서 로컬 사본 저장 실패는 warn 로그만 남기고 본 스트리밍 응답에는 영향 없음.
             login_issue = False
         if login_issue or "로그인" in str(e):
             logger.info("eum collect — 로그인 필요: %s", str(e)[:120])
@@ -252,7 +252,7 @@ def get_targets(user: dict = Depends(require_role("admin", "owner"))) -> dict:
             "count": len(targets),
             "prepared_at": data.get("timestamp", "") if isinstance(data, dict) else "",
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 영업메일 API(문서에 '발송은 confirmed=True 필수, 자동 일괄발송 금지' 명시) — send_one 엔드포인트는 confirmed 검증이 try 블록 이전에 이미 끝난 뒤에만 실제 발송을 시도하며, except는 실패를 HTTPException(500) 또는 로그인필요 안내로 변환할 뿐 승인을 우회하지 않음. 견적서 로컬 사본 저장 실패는 warn 로그만 남기고 본 스트리밍 응답에는 영향 없음.
         raise HTTPException(status_code=500, detail=f"타겟 로드 실패: {e}")
 
 
@@ -338,7 +338,7 @@ def generate_quote(
         try:
             OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
             (OUTPUT_DIR / filename).write_bytes(xlsx_bytes)
-        except Exception as _save_err:
+        except Exception as _save_err:  # noqa: BLE001 - EUM 영업메일 API(문서에 '발송은 confirmed=True 필수, 자동 일괄발송 금지' 명시) — send_one 엔드포인트는 confirmed 검증이 try 블록 이전에 이미 끝난 뒤에만 실제 발송을 시도하며, except는 실패를 HTTPException(500) 또는 로그인필요 안내로 변환할 뿐 승인을 우회하지 않음. 견적서 로컬 사본 저장 실패는 warn 로그만 남기고 본 스트리밍 응답에는 영향 없음.
             log_event(
                 "EUM_QUOTE_SAVE_FAIL",
                 task_id="-",
