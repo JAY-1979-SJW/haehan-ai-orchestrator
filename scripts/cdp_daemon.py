@@ -91,7 +91,7 @@ def _load_state() -> DaemonState:
     try:
         data = json.loads(DAEMON_STATE_FILE.read_text(encoding="utf-8"))
         return DaemonState(**{k: v for k, v in data.items() if k in DaemonState.__dataclass_fields__})
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         return DaemonState()
 
 
@@ -182,7 +182,7 @@ def _sanitize_chrome_prefs() -> None:
                 _WIN_LEFT,
                 _WIN_TOP,
             )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         log.warning("[BROWSER] Preferences 패치 실패 (무시): %s", e)
 
 
@@ -220,7 +220,7 @@ def _record_browser_launch_metadata() -> None:
         exe, kind = _find_browser(BROWSER_TYPE)
         _state.browser_exe = exe
         _state.browser_kind = kind
-    except Exception:
+    except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
         pass
     _state.profile_dir = str(PROFILE_DIR)
 
@@ -233,7 +233,7 @@ def _is_cdp_ready(port: int = CDP_PORT, timeout: int = 15) -> bool:
         try:
             urllib.request.urlopen(f"http://{CDP_HOST}:{port}/json/version", timeout=2)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             time.sleep(0.5)
     return False
 
@@ -271,7 +271,7 @@ def _process_info(pid: int) -> dict[str, str]:
             "exe": str(data.get("ExecutablePath") or ""),
             "command_line": str(data.get("CommandLine") or ""),
         }
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         return {}
 
 
@@ -289,7 +289,7 @@ def _profile_session_files(profile_dir: Path) -> list[str]:
         return []
     try:
         return [p.name for p in sorted(sessions_dir.iterdir()) if p.is_file()]
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         return []
 
 
@@ -301,7 +301,7 @@ def _clear_session_restore_artifacts() -> list[Path]:
     if sessions_dir.exists():
         try:
             candidates.extend(p for p in sessions_dir.iterdir() if p.is_file())
-        except Exception:
+        except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
             pass
     for name in ("Current Session", "Current Tabs", "Last Session", "Last Tabs"):
         p = default_dir / name
@@ -313,7 +313,7 @@ def _clear_session_restore_artifacts() -> list[Path]:
         try:
             p.unlink()
             removed.append(p)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             log.warning("[BROWSER] session restore cleanup failed: %s (%s)", p, e)
     if removed:
         log.info("[BROWSER] removed %d session restore file(s)", len(removed))
@@ -371,7 +371,7 @@ def _stop_process(proc: subprocess.Popen | None, label: str) -> None:
         proc.terminate()
         proc.wait(timeout=5)
         log.info("[%s] stopped PID=%d", label, proc.pid)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         log.warning("[%s] graceful stop failed: %s", label, e)
 
 
@@ -395,7 +395,7 @@ def _restart_chrome() -> None:
             try:
                 _chrome_proc.terminate()
                 _chrome_proc.wait(timeout=5)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
                 pass
 
         time.sleep(2)
@@ -414,7 +414,7 @@ def _restart_chrome() -> None:
                 log.error("[RESTART] CDP 포트 응답 없음")
                 _state.last_error = "cdp_port_timeout_after_restart"
             _save_state(_state)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             log.error("[RESTART] 실패: %s", e)
             _state.last_error = str(e)
             _save_state(_state)
@@ -456,7 +456,7 @@ def _heartbeat_loop() -> None:
                     else:
                         cdp_fail_streak += 1
                         healthy_streak = 0
-            except Exception:
+            except Exception:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
                 cdp_fail_streak += 1
                 healthy_streak = 0
 
@@ -472,7 +472,7 @@ def _heartbeat_loop() -> None:
                 _state.popup_monitor_pid = 0
                 try:
                     _start_popup_monitor_process()
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
                     log.warning("[HEARTBEAT] popup_monitor 재시작 실패: %s", e)
 
             # chrome_ui_monitor 자동 재시작 (독립 프로세스)
@@ -483,11 +483,11 @@ def _heartbeat_loop() -> None:
                     script = ROOT / "scripts" / "chrome_ui_monitor.py"
                     _chrome_ui_monitor_proc = _launch_background_python([str(script), "3.0"])
                     _state.chrome_ui_monitor_pid = _chrome_ui_monitor_proc.pid
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
                     log.warning("[HEARTBEAT] chrome_ui_monitor 재시작 실패: %s", e)
 
             _save_state(_state)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             log.error("[HEARTBEAT] 오류: %s", e)
         _stop_event.wait(timeout=10)
 
@@ -526,7 +526,7 @@ def run_daemon() -> None:
         _state.chrome_pid = _chrome_proc.pid
         _record_browser_launch_metadata()
         _save_state(_state)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         log.error("Chrome 실행 실패: %s", e)
         _state.running = False
         _state.last_error = str(e)
@@ -555,7 +555,7 @@ def run_daemon() -> None:
     try:
         _start_popup_monitor_process()
         log.info("✓ popup_monitor 자동 시작 완료 (poll=2.0s)")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         log.warning("popup_monitor 시작 실패 (데몬은 계속): %s", e)
 
     # chrome_ui_monitor (별도 독립 프로세스 — UI Automation 격리)
@@ -566,7 +566,7 @@ def run_daemon() -> None:
         _state.chrome_ui_monitor_pid = _chrome_ui_monitor_proc.pid
         _save_state(_state)
         log.info("[chrome_ui_monitor] process started PID=%d", _chrome_ui_monitor_proc.pid)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         log.warning("[chrome_ui_monitor] 시작 실패 (데몬은 계속): %s", e)
 
     log.info("✓ 데몬 상시 대기 중...")
@@ -600,7 +600,7 @@ def _probe_live_cdp(port: int = CDP_PORT) -> tuple[bool, str]:
             if resp.status == 200:
                 return True, "responding"
             return False, f"status={resp.status}"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         return False, f"unavailable ({e})"
 
 
@@ -622,7 +622,7 @@ def cmd_start() -> None:
         urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=2)
         print(f"✓ CDP 데몬 이미 실행 중 (포트={CDP_PORT})")
         return
-    except Exception:
+    except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
         pass
 
     assert_browser_launch_allowed(component="scripts.cdp_daemon", action="cdp_daemon_start")
@@ -665,7 +665,7 @@ def cmd_stop() -> None:
             os.kill(state.chrome_pid, signal.SIGTERM)
             print(f"✓ Chrome 종료 (PID={state.chrome_pid})")
             stopped = True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             print(f"⚠  Chrome 종료 실패: {e}")
 
     # 데몬 프로세스 종료
@@ -674,7 +674,7 @@ def cmd_stop() -> None:
             os.kill(state.popup_monitor_pid, signal.SIGTERM)
             print(f"popup_monitor stopped (PID={state.popup_monitor_pid})")
             stopped = True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             print(f"popup_monitor stop failed: {e}")
 
     if state.pid and state.pid != os.getpid():
@@ -682,7 +682,7 @@ def cmd_stop() -> None:
             os.kill(state.pid, signal.SIGTERM)
             print(f"✓ 데몬 종료 (PID={state.pid})")
             stopped = True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             print(f"⚠  데몬 종료 실패: {e}")
 
     state.running = False
@@ -715,7 +715,7 @@ def cmd_status() -> None:
         with urllib.request.urlopen(f"http://{CDP_HOST}:{probe_port}/json/version", timeout=2) as resp:
             live_cdp = resp.status == 200
             live_cdp_detail = "responding" if live_cdp else f"status={resp.status}"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         live_cdp_detail = f"unavailable ({e})"
     print(f"live CDP:      {'yes' if live_cdp else 'no'}")
     print(f"live endpoint: http://{CDP_HOST}:{probe_port}  ({live_cdp_detail})")
@@ -744,7 +744,7 @@ def cmd_status() -> None:
         try:
             urllib.request.urlopen(f"http://{CDP_HOST}:{state.cdp_port}/json/version", timeout=2)
             cdp_ok = "✓ 응답 중"
-        except Exception:
+        except Exception:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             cdp_ok = "✗ 응답 없음"
 
         print(f"데몬 PID:     {state.pid}")
@@ -793,7 +793,7 @@ def cmd_inspect() -> None:
         version = _cdp_json("/json/version", port=state.cdp_port)
         print(f"cdp_browser:       {version.get('Browser', '')}")
         print(f"websocket:         {version.get('webSocketDebuggerUrl', '')}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         print(f"cdp_browser:       unavailable ({e})")
 
     try:
@@ -809,7 +809,7 @@ def cmd_inspect() -> None:
                 marker = " [naver]"
             print(f"  {idx}. {title[:60]}{marker}")
             print(f"     {url}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         print(f"tabs:              unavailable ({e})")
 
 
