@@ -100,7 +100,7 @@ def extract_posts(page, url: str, max_posts: int = 50, use_gpt: bool = False) ->
     method = "heuristic"
     try:
         h = page.evaluate(_HEURISTIC_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 휴리스틱 페이지 추출(page.evaluate) 실패 시 빈 결과 구조로 폴백 - 읽기전용 스크래핑, 실패해도 빈 게시물 목록만 나올 뿐 쓰기·위험 조작 없음
         h = {"posts": [], "signal": 0}
     posts = _dedup(h.get("posts", []) or [])
 

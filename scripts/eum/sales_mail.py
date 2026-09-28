@@ -349,7 +349,7 @@ def prepare_sales_mail(
                 status=row["status"],
                 metadata=_json_for_db.dumps(row.get("metadata") or {}, ensure_ascii=False),
             )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 영업메일 준비 결과를 cdp_db에 부가 기록(log_automation_run/upsert_mail_queue_item)하는 단계 실패 시 무시 - 실제 큐 파일(json/text/queue)은 이미 write_text로 저장 완료된 뒤이고, 메일은 status=pending으로만 큐잉될 뿐 자동발송 없음, DB 기록 실패가 발송 승인을 우회하지 않음
         pass
     shutil.copyfile(json_path, latest_json)
     shutil.copyfile(text_path, latest_text)

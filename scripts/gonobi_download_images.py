@@ -79,7 +79,7 @@ def download_images():
                         total_downloaded += 1
                     else:
                         total_errors += 1
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 이미지 다운로드 실패를 카운트하고 경고 로그 남긴 뒤 계속 진행 - 읽기전용 다운로드 스크립트, 실패 건수만 집계될 뿐 위험 조작 없음
                     logger.warning("다운로드 실패 %s: %s", url[:60], e)
                     total_errors += 1
 

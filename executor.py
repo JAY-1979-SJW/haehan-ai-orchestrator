@@ -3,6 +3,7 @@
 low / medium 만 실행. high / critical 은 승인돼도 실행 금지.
 결과는 logs/execution.jsonl 에 append 기록 (10MB × 10 rotation).
 """
+
 import json
 import logging
 import os
@@ -58,11 +59,11 @@ def _get_exec_logger() -> logging.Logger:
 
 def _log_execution(task_id: str, status: str, duration_ms: float, error: str = None) -> None:
     entry = {
-        "timestamp":   time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "task_id":     task_id,
-        "status":      status,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "task_id": task_id,
+        "status": status,
         "duration_ms": round(duration_ms, 2),
-        "error":       error,
+        "error": error,
     }
     _get_exec_logger().info(json.dumps(entry, ensure_ascii=False))
 
@@ -81,10 +82,10 @@ def execute_task(task_id: str) -> dict:
         log.warning("execute_task: task_id=%s not found in store", task_id)
         return {"task_id": task_id, "status": "FAIL", "error": "task not found in task_store"}
 
-    task   = ctx["task"]
-    risk   = ctx["risk"]
+    task = ctx["task"]
+    risk = ctx["risk"]
     policy = ctx["policy"]
-    level  = risk.risk_level
+    level = risk.risk_level
 
     # high / critical — 승인돼도 실행 금지
     if level in _BLOCKED_LEVELS:
@@ -111,7 +112,7 @@ def execute_task(task_id: str) -> dict:
 
     try:
         result = execute_allowed(task, risk, plan, policy, approval_valid, actor="dashboard_executor")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - execute_task 실행 중 예외 발생 시 FAIL 상태로 로그·반환 - 이미 실패로 명시 처리, 성공으로 위장하지 않음
         duration = (time.time() - start) * 1000
         _log_execution(task_id, "FAIL", duration, str(exc))
         log.error("execute_task exception: task_id=%s error=%s", task_id, exc)
@@ -119,8 +120,8 @@ def execute_task(task_id: str) -> dict:
 
     duration = (time.time() - start) * 1000
     exec_status = result.get("status", "UNKNOWN")
-    log_status  = "SUCCESS" if exec_status == "EXECUTED" else exec_status
-    error_msg   = "; ".join(result.get("blocked_reasons", [])) if exec_status == "BLOCKED" else None
+    log_status = "SUCCESS" if exec_status == "EXECUTED" else exec_status
+    error_msg = "; ".join(result.get("blocked_reasons", [])) if exec_status == "BLOCKED" else None
 
     _log_execution(task_id, log_status, duration, error_msg)
     log.info("execute_task: task_id=%s status=%s duration_ms=%.1f", task_id, log_status, duration)

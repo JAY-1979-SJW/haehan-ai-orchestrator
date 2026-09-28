@@ -12,31 +12,27 @@
   - CANCELLABLE_TASK_STATUSES: 취소 가능한 상태 집합
   - TERMINAL_TASK_STATUSES: 종료 상태 집합
 """
+
 from __future__ import annotations
 
-from typing import Optional
 from .local_agent_models import LocalAgentTask
-
 
 # ── 상태 상수 ────────────────────────────────────────────────────────────
 
-CANCELLABLE_TASK_STATUSES: frozenset[str] = frozenset({
-    "queued", "waiting_approval", "delivered", "running"
-})
+CANCELLABLE_TASK_STATUSES: frozenset[str] = frozenset({"queued", "waiting_approval", "delivered", "running"})
 
-TERMINAL_TASK_STATUSES: frozenset[str] = frozenset({
-    "completed", "failed", "rejected", "cancelled"
-})
+TERMINAL_TASK_STATUSES: frozenset[str] = frozenset({"completed", "failed", "rejected", "cancelled"})
 
 
 # ── 순수 Helper 함수 ────────────────────────────────────────────────────────
 
-def is_capture_screenshot_task(task: Optional[LocalAgentTask]) -> bool:
+
+def is_capture_screenshot_task(task: LocalAgentTask | None) -> bool:
     """작업이 capture_screenshot 인지 판별."""
     return bool(task is not None and task.action == "capture_screenshot")
 
 
-def task_is_dry_run(task: Optional[LocalAgentTask]) -> bool:
+def task_is_dry_run(task: LocalAgentTask | None) -> bool:
     """작업이 dry-run 모드 인지 판별.
 
     server 는 task.params 를 민감값 제거한 뒤 저장하므로
@@ -47,11 +43,11 @@ def task_is_dry_run(task: Optional[LocalAgentTask]) -> bool:
             return False
         options = task.params.get("options") if isinstance(task.params, dict) else None
         return bool(isinstance(options, dict) and options.get("dry_run"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - task_is_dry_run은 감사로그용 메타데이터 플래그일 뿐 실행을 게이팅하지 않음(호출부는 audit note 기록용) - 예외 시 False 반환해도 실제 승인/차단 로직(can_approve_task 등)에는 영향 없음
         return False
 
 
-def can_approve_task(task: Optional[LocalAgentTask]) -> bool:
+def can_approve_task(task: LocalAgentTask | None) -> bool:
     """작업을 승인할 수 있는지 판별.
 
     승인 가능 조건:
@@ -63,7 +59,7 @@ def can_approve_task(task: Optional[LocalAgentTask]) -> bool:
     return task.status == "waiting_approval" and task.risk_level == "high"
 
 
-def can_reject_task(task: Optional[LocalAgentTask]) -> bool:
+def can_reject_task(task: LocalAgentTask | None) -> bool:
     """작업을 거절할 수 있는지 판별.
 
     거절 가능 조건:

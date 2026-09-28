@@ -374,7 +374,7 @@ class TestRegistrationCodesWrapper:
         yield
         try:
             registration_codes.clear()
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
     def test_wrapper_issue_code(self, reset_store):

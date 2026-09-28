@@ -1,10 +1,12 @@
 """Google Drive 자동화"""
+
 from __future__ import annotations
 
 from typing import Any
 
-from .base import task_context, page_goto, page_wait_click, page_wait_type, page_wait_visible
 from scripts.config import GOOGLE_URLS
+
+from .base import page_goto, page_wait_click, page_wait_type, page_wait_visible, task_context
 
 
 def run(task: str, args: list[str]) -> None:
@@ -83,12 +85,12 @@ def _task_rename(page: Any, args: list[str]) -> None:
     print(f"\n[작업] 파일명 변경: {old_name} → {new_name}")
 
     page_goto(page, GOOGLE_URLS["drive_home"])
-    page_wait_visible(page, '[data-id]', timeout=20000)
+    page_wait_visible(page, "[data-id]", timeout=20000)
 
     # 파일 우클릭
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[data-name]')) {{
-            if (el.getAttribute('data-name') === {repr(old_name)}) {{
+            if (el.getAttribute('data-name') === {old_name!r}) {{
                 el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true }}));
                 break;
             }}
@@ -102,7 +104,7 @@ def _task_rename(page: Any, args: list[str]) -> None:
         if page_wait_visible(page, 'input[type="text"][value]', timeout=5000):
             page_wait_type(page, 'input[type="text"][value]', new_name)
             page.keyboard.press("Enter")
-            page_wait_visible(page, '[data-id]', timeout=5000)
+            page_wait_visible(page, "[data-id]", timeout=5000)
             print("  ✓ 이름 변경 완료")
         else:
             print("  ⚠  이름 입력창 못 찾음")
@@ -120,11 +122,11 @@ def _task_delete(page: Any, args: list[str]) -> None:
     print(f"\n[작업] Drive 파일 삭제: {file_name}")
 
     page_goto(page, GOOGLE_URLS["drive_home"])
-    page_wait_visible(page, '[data-id]', timeout=20000)
+    page_wait_visible(page, "[data-id]", timeout=20000)
 
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[data-name]')) {{
-            if (el.getAttribute('data-name') === {repr(file_name)}) {{
+            if (el.getAttribute('data-name') === {file_name!r}) {{
                 el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true }}));
                 break;
             }}
@@ -133,7 +135,7 @@ def _task_delete(page: Any, args: list[str]) -> None:
 
     if page_wait_visible(page, '[role="menu"]', timeout=5000):
         page_wait_click(page, '[role="menuitem"]:has-text("삭제"), [role="menuitem"]:has-text("Delete")')
-        page_wait_visible(page, '[data-id]', timeout=5000)
+        page_wait_visible(page, "[data-id]", timeout=5000)
         print("  ✓ 삭제 완료")
     else:
         print("  ⚠  컨텍스트 메뉴 못 찾음")
@@ -157,7 +159,7 @@ def _task_upload(page: Any, args: list[str]) -> None:
         # 업로드 진행 표시 대기
         page_wait_visible(page, '[aria-label*="업로드"], [aria-label*="Upload"]', timeout=10000)
         print("  ✓ 업로드 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Drive 파일 업로드(_task_upload) 실패를 경고 메시지로 출력 - CLI 작업 함수이며 실패를 성공으로 위장하지 않고 그대로 사용자에게 알림, 반환값으로 거짓 성공을 전파하지 않음
         print(f"  ⚠  업로드 실패: {e}")
 
 
@@ -171,11 +173,11 @@ def _task_download(page: Any, args: list[str]) -> None:
     print(f"\n[작업] Drive 파일 다운로드: {file_name}")
 
     page_goto(page, GOOGLE_URLS["drive_home"])
-    page_wait_visible(page, '[data-id]', timeout=20000)
+    page_wait_visible(page, "[data-id]", timeout=20000)
 
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[data-name]')) {{
-            if (el.getAttribute('data-name') === {repr(file_name)}) {{
+            if (el.getAttribute('data-name') === {file_name!r}) {{
                 el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true }}));
                 break;
             }}

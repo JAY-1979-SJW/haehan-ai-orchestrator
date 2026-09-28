@@ -30,7 +30,7 @@ for cat_dir in sorted(BASE.iterdir()):
                 reason = f"긴비율({w}x{h}, 1:{ratio:.0f})"
             if reason:
                 problems.append((cat_dir.name, f, w, h, reason))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 이미지 파일 문제 검사 실패(깨진 이미지 등)를 problems 목록에 기록 - 읽기전용 검증 스크립트, 위험 조작 없음
             problems.append((cat_dir.name, f, 0, 0, f"깨짐({e})"))
 
 # 카테고리별 그룹

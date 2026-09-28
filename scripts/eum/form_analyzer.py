@@ -121,7 +121,7 @@ def analyze_page(url: str) -> dict[str, Any]:
         form_data = eval_js(_JS_FORM_EXTRACT)
         form_data["extracted_at"] = str(__import__("datetime").datetime.now())
         return form_data
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 폼 필드 추출 실패를 로그로 남기고 에러 딕셔너리 반환 - 읽기전용 폼 분석, 쓰기·제출 동작 없음
         log.error(f"폼 추출 실패: {e}")
         return {"error": str(e), "url": url}
 

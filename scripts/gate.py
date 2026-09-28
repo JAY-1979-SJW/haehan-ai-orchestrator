@@ -30,11 +30,13 @@ CLAUDE.md 의 "사용자 승인 후 자동 진행" 정책 적용 시 호출자�
     # force=True (승인 흐름에서 사용자 동의 받은 후)
     check("mail_send", risk="approve", force=True, to="vendor@x.com")
 """
+
 from __future__ import annotations
 
 import functools
 import threading
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from scripts.logger import get_logger
 from scripts.schemas import GateResult, GateVerdict, RiskLevel
@@ -45,30 +47,26 @@ _log = get_logger(__name__)
 
 _RISK_REGISTRY: dict[str, RiskLevel] = {
     # 브라우저 탐색 (읽기)
-    "goto":            RiskLevel.NOTIFY,
-    "scan_page":       RiskLevel.AUTO,
-    "scan_links":      RiskLevel.AUTO,
-    "verify_text":     RiskLevel.AUTO,
-    "verify_input":    RiskLevel.AUTO,
-    "is_ready":        RiskLevel.AUTO,
-    "wait_login":      RiskLevel.NOTIFY,
-
+    "goto": RiskLevel.NOTIFY,
+    "scan_page": RiskLevel.AUTO,
+    "scan_links": RiskLevel.AUTO,
+    "verify_text": RiskLevel.AUTO,
+    "verify_input": RiskLevel.AUTO,
+    "is_ready": RiskLevel.AUTO,
+    "wait_login": RiskLevel.NOTIFY,
     # 브라우저 조작 (쓰기)
-    "click_button":    RiskLevel.NOTIFY,
-    "click_link":      RiskLevel.NOTIFY,
-    "type_into":       RiskLevel.NOTIFY,
-    "paste_image":     RiskLevel.NOTIFY,
-
+    "click_button": RiskLevel.NOTIFY,
+    "click_link": RiskLevel.NOTIFY,
+    "type_into": RiskLevel.NOTIFY,
+    "paste_image": RiskLevel.NOTIFY,
     # 세션/저장
-    "save_session":    RiskLevel.NOTIFY,
-
+    "save_session": RiskLevel.NOTIFY,
     # 콘텐츠 생성 (비가역)
     "write_blog_post": RiskLevel.APPROVE,
-    "blog_publish":    RiskLevel.APPROVE,
-
+    "blog_publish": RiskLevel.APPROVE,
     # 메일 발송 (외부 공개)
-    "mail_send":       RiskLevel.APPROVE,
-    "gmail_send":      RiskLevel.APPROVE,
+    "mail_send": RiskLevel.APPROVE,
+    "gmail_send": RiskLevel.APPROVE,
     "naver_mail_send": RiskLevel.APPROVE,
     "naver_mail_delete": RiskLevel.APPROVE,
     "naver_mail_move": RiskLevel.APPROVE,
@@ -79,51 +77,42 @@ _RISK_REGISTRY: dict[str, RiskLevel] = {
     "naver_searchad_budget_update": RiskLevel.BLOCK,
     "naver_payment_method_register": RiskLevel.BLOCK,
     "naver_ad_publish": RiskLevel.BLOCK,
-
     # 결제/이체 (비가역)
-    "payment":         RiskLevel.APPROVE,
-    "bank_transfer":   RiskLevel.APPROVE,
-
+    "payment": RiskLevel.APPROVE,
+    "bank_transfer": RiskLevel.APPROVE,
     # 데이터 삭제
-    "data_delete":     RiskLevel.APPROVE,
-    "file_delete":     RiskLevel.APPROVE,
-
+    "data_delete": RiskLevel.APPROVE,
+    "file_delete": RiskLevel.APPROVE,
     # CDP 이벤트 (읽기)
-    "cdp_nav":         RiskLevel.AUTO,
-    "cdp_request":     RiskLevel.AUTO,
-
+    "cdp_nav": RiskLevel.AUTO,
+    "cdp_request": RiskLevel.AUTO,
     # 팝업 감지 (자동 처리)
-    "popup_detect":    RiskLevel.AUTO,
-    "popup_dismiss":   RiskLevel.NOTIFY,
+    "popup_detect": RiskLevel.AUTO,
+    "popup_dismiss": RiskLevel.NOTIFY,
     "chrome_ui_detect": RiskLevel.AUTO,
     "chrome_ui_dismiss": RiskLevel.NOTIFY,
-
     # 코드 변경 (write는 내부 작업)
-    "file_write":      RiskLevel.AUTO,
-    "file_edit":       RiskLevel.AUTO,
-
+    "file_write": RiskLevel.AUTO,
+    "file_edit": RiskLevel.AUTO,
     # EUM
     "eum_extract_all_devices": RiskLevel.AUTO,
-    "eum_register":    RiskLevel.APPROVE,
+    "eum_register": RiskLevel.APPROVE,
     "eum_register_device": RiskLevel.APPROVE,
-    "eum_remove":      RiskLevel.APPROVE,
+    "eum_remove": RiskLevel.APPROVE,
     "eum_deregister_device": RiskLevel.APPROVE,
-
     # G2B
-    "g2b_discover":    RiskLevel.NOTIFY,
-    "g2b_download":    RiskLevel.NOTIFY,
-    "g2b_suite":       RiskLevel.NOTIFY,
-
+    "g2b_discover": RiskLevel.NOTIFY,
+    "g2b_download": RiskLevel.NOTIFY,
+    "g2b_suite": RiskLevel.NOTIFY,
     # 로컬 에이전트 (고위험 정부/민원)
-    "gov24":           RiskLevel.APPROVE,
-    "minwon":          RiskLevel.APPROVE,
-    "blog_explore":    RiskLevel.AUTO,
-    "blog_scrape":     RiskLevel.AUTO,
-    "create_profile":  RiskLevel.NOTIFY,
-
+    "gov24": RiskLevel.APPROVE,
+    "minwon": RiskLevel.APPROVE,
+    "blog_explore": RiskLevel.AUTO,
+    "blog_scrape": RiskLevel.AUTO,
+    "create_profile": RiskLevel.NOTIFY,
     # 탐색
-    "explore_page":    RiskLevel.AUTO,
-    "explore_tabs":    RiskLevel.AUTO,
+    "explore_page": RiskLevel.AUTO,
+    "explore_tabs": RiskLevel.AUTO,
 }
 
 # thread-local로 force 플래그 전파 가능
@@ -132,8 +121,10 @@ _force_local = threading.local()
 
 # ── 핵심 API ─────────────────────────────────────────────────────────
 
+
 class GateBlocked(RuntimeError):
     """APPROVE/BLOCK 등급 작업을 force=False 로 실행하려 할 때."""
+
     def __init__(self, result: GateResult):
         self.result = result
         super().__init__(f"[gate] {result.op_name} 차단됨 ({result.risk.value}): {result.reason}")
@@ -173,38 +164,45 @@ def check(
     level = RiskLevel(risk) if risk else get_risk(op_name)
 
     if level == RiskLevel.AUTO:
-        result = GateResult(verdict=GateVerdict.ALLOWED, risk=level,
-                            op_name=op_name, metadata=metadata)
+        result = GateResult(verdict=GateVerdict.ALLOWED, risk=level, op_name=op_name, metadata=metadata)
 
     elif level == RiskLevel.NOTIFY:
-        _log.debug("[gate] notify: %s %s", op_name,
-                   " ".join(f"{k}={v}" for k, v in metadata.items()))
-        result = GateResult(verdict=GateVerdict.NOTIFIED, risk=level,
-                            op_name=op_name,
-                            reason="주의 작업 — 로그 기록됨",
-                            metadata=metadata)
+        _log.debug("[gate] notify: %s %s", op_name, " ".join(f"{k}={v}" for k, v in metadata.items()))
+        result = GateResult(
+            verdict=GateVerdict.NOTIFIED,
+            risk=level,
+            op_name=op_name,
+            reason="주의 작업 — 로그 기록됨",
+            metadata=metadata,
+        )
 
     elif level == RiskLevel.APPROVE:
         if force or getattr(_force_local, "active", False):
-            result = GateResult(verdict=GateVerdict.ALLOWED, risk=level,
-                                op_name=op_name,
-                                reason="force=True (사용자 승인 완료)",
-                                metadata=metadata)
+            result = GateResult(
+                verdict=GateVerdict.ALLOWED,
+                risk=level,
+                op_name=op_name,
+                reason="force=True (사용자 승인 완료)",
+                metadata=metadata,
+            )
         else:
-            result = GateResult(verdict=GateVerdict.BLOCKED, risk=level,
-                                op_name=op_name,
-                                reason="외부 공개/비가역 작업 — 사용자 확인 필요",
-                                metadata=metadata)
+            result = GateResult(
+                verdict=GateVerdict.BLOCKED,
+                risk=level,
+                op_name=op_name,
+                reason="외부 공개/비가역 작업 — 사용자 확인 필요",
+                metadata=metadata,
+            )
 
     else:  # BLOCK
-        result = GateResult(verdict=GateVerdict.BLOCKED, risk=level,
-                            op_name=op_name,
-                            reason="항상 차단된 작업",
-                            metadata=metadata)
+        result = GateResult(
+            verdict=GateVerdict.BLOCKED, risk=level, op_name=op_name, reason="항상 차단된 작업", metadata=metadata
+        )
 
     # op_log 기록
     try:
         from scripts.op_log import log_op
+
         log_op(
             f"gate.{result.verdict.value}",
             ok=result.allowed,
@@ -213,7 +211,7 @@ def check(
             reason=result.reason or "",
             **{k: str(v)[:80] for k, v in metadata.items()},
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - op_log 기록(log_op) 실패를 무시 - 실제 게이트 판정(result.blocked/ALLOWED/BLOCKED)은 이 try 블록 이전에 이미 완료되어 있고, 이 except는 보조 감사로그 기록 실패만 삼킴, 판정 결과에 전혀 영향 없음
         pass
 
     if result.blocked:
@@ -224,6 +222,7 @@ def check(
 
 # ── 컨텍스트 매니저 — force 구간 ─────────────────────────────────────
 
+
 class force_approved:
     """with force_approved(): 블록 안에서는 APPROVE 작업도 자동 통과.
 
@@ -233,6 +232,7 @@ class force_approved:
         navigator.write_blog_post(...)   # APPROVE 지만 통과
         gmail.send(...)                  # APPROVE 지만 통과
     """
+
     def __enter__(self):
         _force_local.active = True
         return self
@@ -242,6 +242,7 @@ class force_approved:
 
 
 # ── 데코레이터 ────────────────────────────────────────────────────────
+
 
 def gated(risk: RiskLevel | str, *, op_name: str | None = None) -> Callable:
     """함수에 게이트를 적용하는 데코레이터.
@@ -267,10 +268,12 @@ def gated(risk: RiskLevel | str, *, op_name: str | None = None) -> Callable:
             return fn(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 # ── 조회 ─────────────────────────────────────────────────────────────
+
 
 def list_registry() -> list[dict]:
     """등록된 전체 작업 + 위험 등급 목록 반환."""

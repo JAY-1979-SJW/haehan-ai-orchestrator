@@ -82,7 +82,7 @@ def publish_one(page, *, post: dict, img_paths: list[str]) -> dict:
         ok = result.get("ok", False)
         log_no = result.get("log_no", "")
         print(f"  발행: {'✅ 성공' if ok else '❌ 실패'} log_no={log_no}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 블로그 발행 CDP 작업 실패를 캡처해 ok=False, log_no='' 로 안전하게 처리 - 실패를 성공으로 위장하지 않음
         ok = False
         log_no = ""
         print(f"  발행 오류: {e}")
