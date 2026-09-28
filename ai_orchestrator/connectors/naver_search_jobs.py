@@ -66,9 +66,9 @@ def save_search_record(path: Path, *, source: str, query: str, items: list) -> d
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
+    with tmp.open("w", encoding="utf-8") as f:
         json.dump(record, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, path)
+    tmp.replace(path)
     return record
 
 

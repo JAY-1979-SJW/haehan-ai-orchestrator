@@ -63,7 +63,7 @@ def append_run(record: dict, *, path: Path | None = None) -> None:
     safe = {k: v for k, v in record.items() if k in _SAFE_FIELDS}
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
-        with open(p, "a", encoding="utf-8") as f:
+        with p.open("a", encoding="utf-8") as f:
             f.write(json.dumps(safe, ensure_ascii=False) + "\n")
     except OSError as e:
         logger.warning("dev_reg_audit_log 기록 실패: %s", e)
@@ -76,7 +76,7 @@ def load_recent_runs(n: int = 10, *, path: Path | None = None) -> list[dict]:
         return []
     records: list[dict] = []
     try:
-        with open(p, encoding="utf-8") as f:
+        with p.open(encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:

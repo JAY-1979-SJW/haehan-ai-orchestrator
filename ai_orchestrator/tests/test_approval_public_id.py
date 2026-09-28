@@ -15,13 +15,13 @@ UI/result_data/audit 표시용 외부 식별자다. 본 테스트는:
 
 from __future__ import annotations
 
-import os
 import sys
+from pathlib import Path
 from unittest import mock
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import ai_orchestrator.gates.approval as _ap
 import ai_orchestrator.local_agent_registry as reg

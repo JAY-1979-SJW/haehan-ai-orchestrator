@@ -23,11 +23,12 @@ data/audit/user_browser_cdp_YYYYMMDD.jsonl
         title="한컴디벨로퍼",
     )
 """
+
 from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -35,14 +36,29 @@ _AUDIT_DIR = Path(__file__).resolve().parents[2] / "data" / "audit"
 
 # 마스킹 대상 키 (대소문자 무관 부분 매칭)
 _SENSITIVE_KEY_PATTERNS = (
-    "password", "passwd", "pwd",
-    "card", "cvc", "cvv",
-    "ssn", "rrn", "주민",
-    "otp", "auth_code", "verification_code",
-    "token", "secret", "api_key", "apikey",
-    "cookie", "session", "storage_state",
-    "private_key", "npki",
-    "계좌", "account_number",
+    "password",
+    "passwd",
+    "pwd",
+    "card",
+    "cvc",
+    "cvv",
+    "ssn",
+    "rrn",
+    "주민",
+    "otp",
+    "auth_code",
+    "verification_code",
+    "token",
+    "secret",
+    "api_key",
+    "apikey",
+    "cookie",
+    "session",
+    "storage_state",
+    "private_key",
+    "npki",
+    "계좌",
+    "account_number",
 )
 
 # 마스킹 대상 값 패턴
@@ -84,7 +100,7 @@ def mask_sensitive_data(data: dict) -> dict:
 def get_audit_path(date: str | None = None) -> Path:
     """오늘 날짜의 감사 로그 파일 경로."""
     if date is None:
-        date = datetime.now(timezone.utc).strftime("%Y%m%d")
+        date = datetime.now(UTC).strftime("%Y%m%d")
     _AUDIT_DIR.mkdir(parents=True, exist_ok=True)
     return _AUDIT_DIR / f"user_browser_cdp_{date}.jsonl"
 
@@ -105,7 +121,7 @@ def log_action(
 ) -> dict:
     """액션 1건 기록. 반환: 기록된 entry."""
     entry = {
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "action": action,
         "url": url[:500],  # URL이 너무 길면 truncate
         "intent_id": intent_id,
@@ -125,7 +141,7 @@ def log_action(
 
     path = audit_path or get_audit_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
+    with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     return entry
 
@@ -136,7 +152,7 @@ def read_log(date: str | None = None, audit_path: Path | None = None) -> list[di
     if not path.exists():
         return []
     entries = []
-    with open(path, encoding="utf-8") as f:
+    with path.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
