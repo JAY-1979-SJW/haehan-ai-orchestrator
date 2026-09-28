@@ -27,6 +27,7 @@ ProductRegister 확장 모듈:
 
 from __future__ import annotations
 
+import contextlib
 import time
 from pathlib import Path
 
@@ -238,11 +239,9 @@ class ProductOptionEditor:
             value_input = self.page.locator('input[placeholder*="값"], input[placeholder*="옵션값"]').first
             value_input.fill(",".join(values), timeout=3000, force=True)
             time.sleep(0.5)
-            # 적용 버튼
-            try:
+            # 적용 버튼 - 실패해도 계속 진행(폼 입력 실패일 뿐 결제/발행 확정 없음)
+            with contextlib.suppress(Exception):
                 self.page.get_by_text("옵션목록으로 적용", exact=False).first.click(timeout=2000, force=True)
-            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
-                pass
             time.sleep(1)
             return {"ok": True, "name": name, "values": values}
         except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음

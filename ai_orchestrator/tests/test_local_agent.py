@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import sys
 from datetime import UTC
 from pathlib import Path
@@ -44,10 +45,8 @@ def _isolated_storage(tmp_path, monkeypatch):
         "local_agent_router_cleanup",
         "local_agent_router_ws",
     ):
-        try:
+        with contextlib.suppress(ModuleNotFoundError):
             importlib.reload(importlib.import_module(f"ai_orchestrator.{_m}"))
-        except ModuleNotFoundError:
-            pass
     import ai_orchestrator.local_agent_router as _lar
 
     importlib.reload(_lar)

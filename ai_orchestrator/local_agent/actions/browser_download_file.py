@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -68,10 +69,9 @@ def execute(
             page = context.new_page()
             try:
                 with page.expect_download(timeout=timeout_seconds * 1000) as dl_info:
-                    try:
+                    # goto 실패(리다이렉트 등)는 무시 - 다운로드 이벤트 대기를 계속 진행
+                    with contextlib.suppress(Exception):
                         page.goto(source_url, timeout=timeout_seconds * 1000, wait_until="domcontentloaded")
-                    except Exception:  # noqa: S110, BLE001
-                        pass
                 download = dl_info.value
                 fname = expected_filename or download.suggested_filename or "downloaded"
                 fname = fname.replace("/", "_").replace("\\", "_")[:200]

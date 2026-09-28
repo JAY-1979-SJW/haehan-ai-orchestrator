@@ -1,6 +1,7 @@
 """딥스캔: 버튼 미감지 페이지 + 500 페이지 재점검 (더 긴 대기 + 넓은 셀렉터)"""
 
 import asyncio
+import contextlib
 import json
 import pathlib
 import re
@@ -78,10 +79,9 @@ async def scan_page(pg: Page, path: str, name: str):
     await pg.wait_for_timeout(3000)
 
     ss_path = str(SS_DIR / f"{safe(name)}_page.png")
-    try:
+    # 스크린샷 실패는 무시(위험 버튼 클릭은 SKIP_PATTERNS 로 이미 배제됨)
+    with contextlib.suppress(Exception):
         await pg.screenshot(path=ss_path, full_page=False, timeout=30000)
-    except Exception:  # noqa: BLE001 - 관리자 웹 심층 버튼 클릭 탐색 - SKIP_PATTERNS(삭제/결제 등)로 위험 버튼 클릭을 배제, except 는 클릭/스크린샷 실패를 기록할 뿐
-        pass
 
     print(f"  HTTP {status}")
 

@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import subprocess
 import sys
 import time
@@ -169,10 +170,9 @@ def add_caption(
 # ── 캡처 헬퍼 ────────────────────────────────────────────────────────────────
 def screenshot(page, path: Path, wait_idle: bool = True):
     if wait_idle:
-        try:
+        # 로드 대기 실패해도 스크린샷은 계속 진행(로컬 산출물 mp4, 외부 전송 없음)
+        with contextlib.suppress(Exception):
             page.wait_for_load_state("networkidle", timeout=5000)
-        except Exception:  # noqa: BLE001 - 검측 데모 영상 생성 스크립트 - 로컬 산출물(mp4)일 뿐 외부 전송 없음. mask_dom_element()는 요소 못 찾으면 원본 반환(문서화된 의도) - 비밀번호 필드는 브라우저 native type=password라 마스킹 실패해도 도트로 가려져 노출 안 됨. 단 ID 필드는 실패 시 이론상 로그인ID가 영상에 그대로 남을 수 있음(비밀번호 아님, 낮은 수위 잔존위험, 의도적으로 강화하지 않고 문서화만 함)
-            pass
     page.screenshot(path=str(path), full_page=False)
 
 
@@ -439,10 +439,9 @@ def run():
         else:
             if pw_sel:
                 page.locator(pw_sel).press("Enter")
-        try:
+        # 로드 대기 실패해도 계속 진행(로컬 산출물 mp4, 외부 전송 없음)
+        with contextlib.suppress(Exception):
             page.wait_for_load_state("networkidle", timeout=12000)
-        except Exception:  # noqa: BLE001 - 검측 데모 영상 생성 스크립트 - 로컬 산출물(mp4)일 뿐 외부 전송 없음. mask_dom_element()는 요소 못 찾으면 원본 반환(문서화된 의도) - 비밀번호 필드는 브라우저 native type=password라 마스킹 실패해도 도트로 가려져 노출 안 됨. 단 ID 필드는 실패 시 이론상 로그인ID가 영상에 그대로 남을 수 있음(비밀번호 아님, 낮은 수위 잔존위험, 의도적으로 강화하지 않고 문서화만 함)
-            pass
         time.sleep(1.5)
 
         # ── Scene 7: 로그인 성공 ─────────────────────────────────────────────

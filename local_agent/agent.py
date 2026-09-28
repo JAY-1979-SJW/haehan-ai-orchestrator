@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import os
@@ -100,10 +101,8 @@ def _persist_token(agent_id: str, device_token: str) -> None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"agent_id": agent_id, "device_token": device_token}), encoding="utf-8")
-        try:
-            path.chmod(0o600)
-        except OSError:
-            pass  # Windows 등에서는 별도 ACL 필요
+        with contextlib.suppress(OSError):
+            path.chmod(0o600)  # Windows 등에서는 별도 ACL 필요
     except OSError as e:
         logger.error("device_token 저장 실패: %s", e)
 

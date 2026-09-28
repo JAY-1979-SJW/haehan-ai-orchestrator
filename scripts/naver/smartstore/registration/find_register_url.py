@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 import time
@@ -92,10 +93,9 @@ def main():
         try:
             page.goto(url, timeout=15000, wait_until="domcontentloaded")
             time.sleep(4)
-            try:
+            # 팝업처리 실패 무시(읽기전용 탐색, 개별 후보 실패는 결과 목록에 에러로 기록)
+            with contextlib.suppress(Exception):
                 handle_page_popups(page, timeout_s=1.5)
-            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 URL 후보 탐색 스크립트(읽기전용) — 팝업처리 실패 무시, 개별 후보 URL 실패는 결과 목록에 에러로 기록하고 다음 후보 계속 시도
-                pass
             info = analyze_page(page)
             info["candidate"] = suffix
             results.append(info)

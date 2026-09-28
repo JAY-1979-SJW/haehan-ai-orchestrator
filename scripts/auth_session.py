@@ -22,6 +22,7 @@ CLI:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 from datetime import datetime
@@ -116,10 +117,9 @@ def save_session(host: str, page, *, host_filter: bool = True) -> Path:
         ),
         encoding="utf-8",
     )
-    try:
+    # chmod 실패는 이미 암호화된 파일이라 best-effort (저장/복원만 수행, 로그아웃/쿠키삭제 없음)
+    with contextlib.suppress(Exception):
         fp.chmod(0o600)
-    except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
-        pass
     return fp
 
 
@@ -234,10 +234,9 @@ def cli_load(host: str) -> None:
     # 같은 호스트로 먼저 이동해야 storage 복원 가능
     if host not in (page.url or ""):
         page.goto(f"https://{host}/", timeout=15000)
-        try:
+        # 로드 대기 실패해도 계속 진행 (저장/복원만 수행, 로그아웃/쿠키삭제 없음)
+        with contextlib.suppress(Exception):
             page.wait_for_load_state("domcontentloaded", timeout=5000)
-        except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
-            pass
     r = restore_session(host, page)
     if r["ok"]:
         print(f"✔ 세션 복원 ({r['saved_at']} 저장본)")
