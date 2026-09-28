@@ -124,7 +124,7 @@ def _load_cafe_titles() -> list[str]:
             continue
         try:
             items = json.loads(fp.read_text(encoding="utf-8"))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 블로그 주제 리서치용 캐시 JSON 로드(읽기전용) - 로드 실패 시 경고 로그 후 해당 파일 skip
             _log.warning("[research] 로드 실패 %s: %s", fp, e)
             continue
         for a in items:
