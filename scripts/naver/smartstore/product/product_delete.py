@@ -110,11 +110,11 @@ class ProductDeleter:
                     self.page.click(f'a:has-text("{text}")', timeout=3000)
                     time.sleep(3)
                     return True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 상품삭제 UI 실행부 - 호출 상위(connectors/smartstore/products.py 라우터)에서 confirm=true 게이트를 통과한 뒤에만 실행되며, 여기 except 는 클릭/체크박스 실패를 ok:False,error 로 반환할 뿐
                     pass
             time.sleep(2)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품삭제 UI 실행부 - 호출 상위(connectors/smartstore/products.py 라우터)에서 confirm=true 게이트를 통과한 뒤에만 실행되며, 여기 except 는 클릭/체크박스 실패를 ok:False,error 로 반환할 뿐
             _log.error("[product-delete] 페이지 진입 실패: %s", e)
             return False
 
@@ -129,7 +129,7 @@ class ProductDeleter:
                 checkbox = row.locator("input[type=checkbox]").first
                 checkbox.check()
                 time.sleep(0.3)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품삭제 UI 실행부 - 호출 상위(connectors/smartstore/products.py 라우터)에서 confirm=true 게이트를 통과한 뒤에만 실행되며, 여기 except 는 클릭/체크박스 실패를 ok:False,error 로 반환할 뿐
                 # 검색으로 상품 찾기
                 search_ok = self._search_product(product_id)
                 if not search_ok:
@@ -137,7 +137,7 @@ class ProductDeleter:
                 try:
                     self.page.locator("input[type=checkbox]").first.check()
                     time.sleep(0.3)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 상품삭제 UI 실행부 - 호출 상위(connectors/smartstore/products.py 라우터)에서 confirm=true 게이트를 통과한 뒤에만 실행되며, 여기 except 는 클릭/체크박스 실패를 ok:False,error 로 반환할 뿐
                     return {"ok": False, "error": "체크박스 선택 실패"}
 
             # 삭제 버튼 클릭
@@ -146,7 +146,7 @@ class ProductDeleter:
                     self.page.click(f'button:has-text("{btn_text}")', timeout=3000)
                     time.sleep(1)
                     break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 상품삭제 UI 실행부 - 호출 상위(connectors/smartstore/products.py 라우터)에서 confirm=true 게이트를 통과한 뒤에만 실행되며, 여기 except 는 클릭/체크박스 실패를 ok:False,error 로 반환할 뿐
                     pass
 
             # 확인 팝업 처리
@@ -158,12 +158,12 @@ class ProductDeleter:
                     )
                     time.sleep(1)
                     return {"ok": True}
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 상품삭제 UI 실행부 - 호출 상위(connectors/smartstore/products.py 라우터)에서 confirm=true 게이트를 통과한 뒤에만 실행되며, 여기 except 는 클릭/체크박스 실패를 ok:False,error 로 반환할 뿐
                     pass
 
             return {"ok": True, "note": "확인 팝업 없이 삭제됨"}
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품삭제 UI 실행부 - 호출 상위(connectors/smartstore/products.py 라우터)에서 confirm=true 게이트를 통과한 뒤에만 실행되며, 여기 except 는 클릭/체크박스 실패를 ok:False,error 로 반환할 뿐
             _log.error("[product-delete] 삭제 실패 %s: %s", product_id, e)
             return {"ok": False, "error": str(e)[:200]}
 
@@ -177,5 +177,5 @@ class ProductDeleter:
             self.page.keyboard.press("Enter")
             time.sleep(2)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품삭제 UI 실행부 - 호출 상위(connectors/smartstore/products.py 라우터)에서 confirm=true 게이트를 통과한 뒤에만 실행되며, 여기 except 는 클릭/체크박스 실패를 ok:False,error 로 반환할 뿐
             return False

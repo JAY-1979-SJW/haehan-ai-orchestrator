@@ -1,11 +1,12 @@
 """navigator_interact — 사용자 입력·클릭·이미지 붙여넣기."""
+
 from __future__ import annotations
 
 import time
 
-from scripts.web_connector import get_page
-from scripts.op_log import log_op
 from scripts.navigator_common import _find_element_in_frames
+from scripts.op_log import log_op
+from scripts.web_connector import get_page
 
 
 def type_into(target: str, text: str, clear: bool = True) -> bool:
@@ -22,7 +23,7 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
     page = get_page()
     try:
         page.bring_to_front()  # 키 이벤트가 정확히 이 탭으로 가도록 보장
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
         pass
     print(f"입력 시도: target='{target}' text='{text[:40]}...' ({page.url})")
     print("=" * 60)
@@ -89,7 +90,7 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
             break
         time.sleep(0.5)
     if frame is None:
-        print(f"✗ 매칭 요소 없음 (10초 대기 후에도)")
+        print("✗ 매칭 요소 없음 (10초 대기 후에도)")
         print("=" * 60)
         return False
 
@@ -100,7 +101,8 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
         handle.evaluate("e => e.scrollIntoView({block:'center'})")
         if tag in ("input", "textarea"):
             # Vue.js/React 반응형 폼 대응: nativeInputValueSetter로 value 설정 후 input/change 이벤트 발행
-            handle.evaluate("""(e, val) => {
+            handle.evaluate(
+                """(e, val) => {
                 e.focus();
                 const nativeSetter = Object.getOwnPropertyDescriptor(
                     Object.getPrototypeOf(e), 'value'
@@ -112,7 +114,9 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
                 }
                 e.dispatchEvent(new Event('input',  {bubbles: true}));
                 e.dispatchEvent(new Event('change', {bubbles: true}));
-            }""", text)
+            }""",
+                text,
+            )
             time.sleep(0.15)
         else:
             # contenteditable / Smart Editor paragraph: 클립보드 paste 1순위
@@ -137,6 +141,7 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
             try:
                 import win32clipboard
                 import win32con
+
                 win32clipboard.OpenClipboard()
                 try:
                     win32clipboard.EmptyClipboard()
@@ -144,7 +149,7 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
                 finally:
                     win32clipboard.CloseClipboard()
                 clipboard_ok = True
-            except Exception as ce:
+            except Exception as ce:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
                 print(f"  [경고] 클립보드 설정 실패: {ce}")
                 clipboard_ok = False
 
@@ -160,7 +165,7 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
                     h_text = handle.evaluate("e => e.innerText || e.textContent || ''")
                     if text[:10] in h_text:
                         return True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
                     pass
                 # 폴백: 페이지 전체 검색
                 snippet = text[:30] if len(text) >= 10 else text
@@ -168,7 +173,7 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
                     try:
                         if snippet in fr.evaluate("() => (document.body && document.body.innerText) || ''"):
                             return True
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
                         continue
                 return False
 
@@ -179,11 +184,12 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
                 try:
                     frame.page.keyboard.insert_text(text)
                     time.sleep(0.5)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
                     handle.evaluate("(e, t) => { e.focus(); document.execCommand('insertText', false, t); }", text)
 
         # 입력 결과 검증 — 표준 verify_input 사용 (page 재사용으로 중첩 회피)
         from scripts.navigator_verify import verify_input
+
         v = verify_input(text, timeout_s=3.0, page=page)
         mark = "✓" if v["found"] else "⚠"
         print(f"{mark} 입력 결과: found={v['found']} where={v['where']} ({v['elapsed_ms']}ms)")
@@ -191,7 +197,7 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
             print(f"  실제값: '{v['actual']}'")
         print("=" * 60)
         return v["found"]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
         print(f"⚠ 입력 실패: {e}")
         print("=" * 60)
         return False
@@ -208,23 +214,26 @@ def click_link(text: str, timeout_ms: int = 15000) -> bool:
     print(f"링크 클릭 시도: '{text}' (현재: {page.url})")
     print("=" * 60)
 
-    target = page.evaluate(f"""(needle) => {{
+    target = page.evaluate(
+        """(needle) => {
         const all = Array.from(document.querySelectorAll('a'))
             .filter(a => a.offsetParent && (a.innerText || a.textContent || '').trim());
-        const items = all.map(a => ({{
+        const items = all.map(a => ({
             text: (a.innerText || a.textContent || '').trim(),
             href: a.href,
             target: a.target || '',
-        }}));
+        }));
         const exact   = items.find(i => i.text === needle);
         const starts  = items.find(i => i.text.startsWith(needle));
         const partial = items.find(i => i.text.includes(needle));
         const hit = exact || starts || partial;
         return hit || null;
-    }}""", text)
+    }""",
+        text,
+    )
 
     if not target:
-        print(f"✗ 매칭되는 링크 없음")
+        print("✗ 매칭되는 링크 없음")
         print("=" * 60)
         return False
 
@@ -250,7 +259,7 @@ def click_link(text: str, timeout_ms: int = 15000) -> bool:
             with context.expect_page(timeout=timeout_ms) as new_page_info:
                 page.evaluate(click_js, text)
             new_page = new_page_info.value
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
             print(f"⚠ expect_page 실패: {e}")
     else:
         # 같은 탭 케이스: navigation 이벤트 대기
@@ -258,7 +267,7 @@ def click_link(text: str, timeout_ms: int = 15000) -> bool:
             with page.expect_navigation(timeout=timeout_ms, wait_until="domcontentloaded"):
                 page.evaluate(click_js, text)
             new_page = page
-        except Exception:
+        except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
             if page.url != url_before and page.url != "about:blank":
                 new_page = page
 
@@ -270,12 +279,13 @@ def click_link(text: str, timeout_ms: int = 15000) -> bool:
 
     try:
         new_page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
         pass
     where = "새 탭" if new_page is not page else "현재 탭"
     print(f"✓ 이동 완료 ({where}): {new_page.url}")
     print("=" * 60)
     from scripts.navigator_scan import scan_page
+
     scan_page()
     return True
 
@@ -321,7 +331,7 @@ def click_button(text: str, timeout_ms: int = 10000) -> bool:
 
     frame, handle = _find_element_in_frames(page, finder, text)
     if frame is None:
-        print(f"✗ 매칭 버튼 없음")
+        print("✗ 매칭 버튼 없음")
         print("=" * 60)
         log_op("click_button", ok=False, message="매칭 버튼 없음", text=text, url=page.url)
         return False
@@ -332,8 +342,8 @@ def click_button(text: str, timeout_ms: int = 10000) -> bool:
     try:
         handle.evaluate("e => e.scrollIntoView({block:'center'})")
         handle.evaluate("e => e.click()")
-        print(f"✓ 클릭 완료")
-    except Exception as e:
+        print("✓ 클릭 완료")
+    except Exception as e:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
         print(f"⚠ 클릭 실패: {e}")
         print("=" * 60)
         log_op("click_button", ok=False, message=str(e), text=text, url=page.url)
@@ -342,6 +352,7 @@ def click_button(text: str, timeout_ms: int = 10000) -> bool:
     # 결과 감지 (URL 변경 / 새 탭)
     time.sleep(1)
     from scripts.navigator_scan import scan_page
+
     if page.url != url_before:
         print(f"  → URL 변경: {page.url}")
         log_op("click_button", ok=True, text=text, result="url_change", url=page.url)
@@ -367,6 +378,7 @@ def paste_image(image_path: str, target: str = "body") -> bool:
     target: 'body' (기본), 'title', 또는 contenteditable의 id/aria
     """
     from pathlib import Path as _P
+
     img_path = _P(image_path)
     if not img_path.exists():
         print(f"✗ 이미지 파일 없음: {img_path}")
@@ -406,7 +418,7 @@ def paste_image(image_path: str, target: str = "body") -> bool:
     }"""
     frame, handle = _find_element_in_frames(page, finder, target)
     if frame is None:
-        print(f"✗ 대상 element 없음")
+        print("✗ 대상 element 없음")
         return False
 
     # 2. 클릭으로 활성화
@@ -417,10 +429,12 @@ def paste_image(image_path: str, target: str = "body") -> bool:
 
     # 3. 이미지를 CF_DIB로 클립보드에 설정
     try:
-        from PIL import Image
         import io
+
         import win32clipboard
         import win32con
+        from PIL import Image
+
         img = Image.open(img_path)
         if img.mode != "RGB":
             img = img.convert("RGB")
@@ -435,7 +449,7 @@ def paste_image(image_path: str, target: str = "body") -> bool:
         finally:
             win32clipboard.CloseClipboard()
         print(f"  클립보드 설정 완료 ({img.size[0]}x{img.size[1]}, {len(dib):,} bytes)")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
         print(f"✗ 클립보드 설정 실패: {e}")
         return False
 

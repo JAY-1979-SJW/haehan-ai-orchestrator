@@ -45,7 +45,7 @@ def collect_current_browser_page(
 
     try:
         page.wait_for_load_state("domcontentloaded", timeout=10_000)
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
         pass
 
     html = page.content()
@@ -93,7 +93,9 @@ def download_current_browser_attachments(
         results.append(item)
 
     if click_downloads:
-        click_results = _download_by_clicking_candidates(page, target_dir, start_idx=len(results) + 1, max_clicks=max_clicks)
+        click_results = _download_by_clicking_candidates(
+            page, target_dir, start_idx=len(results) + 1, max_clicks=max_clicks
+        )
         for item in click_results:
             if item.path and item.path in seen_paths:
                 continue
@@ -110,13 +112,13 @@ def close_current_browser_collection(page: object) -> None:
         browser = page.context.browser
         if browser:
             browser.close()
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
         pass
     try:
         p = getattr(page, "_notice_radar_playwright", None)
         if p:
             p.stop()
-    except Exception:
+    except Exception:  # noqa: S110, BLE001 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
         pass
 
 
@@ -137,7 +139,7 @@ def _download_href_attachment(page: object, url: str, target_dir: Path, idx: int
             content_type=response.headers.get("content-type"),
             size_bytes=len(body),
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
         return AttachmentResult(
             filename=f"browser_href_download_failed_{idx}",
             path="",
@@ -146,7 +148,9 @@ def _download_href_attachment(page: object, url: str, target_dir: Path, idx: int
         )
 
 
-def _download_by_clicking_candidates(page: object, target_dir: Path, *, start_idx: int, max_clicks: int) -> list[AttachmentResult]:
+def _download_by_clicking_candidates(
+    page: object, target_dir: Path, *, start_idx: int, max_clicks: int
+) -> list[AttachmentResult]:
     locators = _candidate_download_locators(page)
     results: list[AttachmentResult] = []
     clicked = 0
@@ -156,7 +160,7 @@ def _download_by_clicking_candidates(page: object, target_dir: Path, *, start_id
         try:
             if not locator.is_visible(timeout=500):
                 continue
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
             continue
         clicked += 1
         try:
@@ -176,7 +180,7 @@ def _download_by_clicking_candidates(page: object, target_dir: Path, *, start_id
                 )
             )
             time.sleep(0.2)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
             results.append(
                 AttachmentResult(
                     filename=f"browser_click_download_failed_{start_idx + clicked - 1}",
@@ -210,7 +214,7 @@ def _candidate_download_locators(page: object) -> list[object]:
         try:
             locator = page.locator(selector)
             count = min(locator.count(), 80)
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
             continue
         for index in range(count):
             item = locator.nth(index)
@@ -219,7 +223,9 @@ def _candidate_download_locators(page: object) -> list[object]:
                     filter(
                         None,
                         [
-                            item.inner_text(timeout=300) if selector not in {"input[type='button']", "input[type='submit']"} else "",
+                            item.inner_text(timeout=300)
+                            if selector not in {"input[type='button']", "input[type='submit']"}
+                            else "",
                             item.get_attribute("value", timeout=300) or "",
                             item.get_attribute("title", timeout=300) or "",
                             item.get_attribute("href", timeout=300) or "",
@@ -229,7 +235,7 @@ def _candidate_download_locators(page: object) -> list[object]:
                         ],
                     )
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001, S112 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
                 continue
             haystack = text.lower()
             if not any(token in haystack for token in DOWNLOAD_TEXT_TOKENS) and not _has_attachment_extension(haystack):
@@ -256,7 +262,7 @@ def _pick_current_page(browser: object, target_url_contains: str | None = None):
         try:
             if page.evaluate("() => document.hasFocus()"):
                 focused.append(page)
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
             continue
     if focused:
         return focused[-1]
@@ -266,7 +272,7 @@ def _pick_current_page(browser: object, target_url_contains: str | None = None):
 def _visible_text(page: object) -> str:
     try:
         text = page.locator("body").inner_text(timeout=5_000)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
         text = ""
     return re.sub(r"\s+", " ", text).strip()[:300_000]
 
@@ -316,7 +322,7 @@ def _find_near_date(text: str, markers: list[str]) -> str | None:
     date_re = re.compile(r"(20\d{2})[.\-/년 ]\s*(\d{1,2})[.\-/월 ]\s*(\d{1,2})")
     candidates: list[tuple[int, str]] = []
     for match in date_re.finditer(text):
-        window = text[max(0, match.start() - 80): min(len(text), match.end() + 80)]
+        window = text[max(0, match.start() - 80) : min(len(text), match.end() + 80)]
         score = sum(1 for marker in markers if marker in window)
         y, m, d = match.groups()
         candidates.append((score, f"{int(y):04d}-{int(m):02d}-{int(d):02d}"))

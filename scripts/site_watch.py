@@ -18,6 +18,7 @@
     - StepFailure 예외 발생 (호출자는 잡거나 그대로 전파)
     - 후속 step 실행 안 됨
 """
+
 from __future__ import annotations
 
 import json
@@ -48,6 +49,7 @@ class StepFailure(RuntimeError):
 
 class _BotFlagged(RuntimeError):
     """내부 신호 — step 블록에서 catch 후 step.fail 로 변환."""
+
     def __init__(self, report: dict):
         self.report = report
         super().__init__(f"bot flagged: {report.get('level')} (vendors={report.get('vendors')})")
@@ -55,7 +57,8 @@ class _BotFlagged(RuntimeError):
 
 class _Step:
     """개별 step 핸들. with 블록 안에서 .attach(page), .fail(...) 호출 가능."""
-    def __init__(self, watcher: "StepWatcher", name: str):
+
+    def __init__(self, watcher: StepWatcher, name: str):
         self.watcher = watcher
         self.name = name
         self.page = None
@@ -73,12 +76,12 @@ class _Step:
                 page.on("console", lambda msg: self.watcher._on_console(msg))
                 page.on("requestfailed", lambda req: self.watcher._on_req_failed(req))
                 page._site_watch_hooked = True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
                 pass
         # 봇 레이더 장착 (page 단위 1회)
         try:
             self.watcher.ensure_bot_radar(page)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
             pass
 
     def fail(self, message: str, kind: str = "unknown") -> None:
@@ -100,8 +103,8 @@ class StepWatcher:
         self.steps: list[dict] = []
         self.console_msgs: list[dict] = []
         self.net_failures: list[dict] = []
-        self.bot_reports: list[dict] = []        # step별 봇 감지 누적
-        self._bot_radar = None                    # BotRadar 인스턴스
+        self.bot_reports: list[dict] = []  # step별 봇 감지 누적
+        self._bot_radar = None  # BotRadar 인스턴스
         self.started_at = time.time()
         self._step_idx = 0
         log.info("[site-watch] 시작 site=%s 보고서=%s", site, self.report_dir)
@@ -110,10 +113,11 @@ class StepWatcher:
         if self._bot_radar is None:
             try:
                 from scripts.form.bot_radar import BotRadar
+
                 self._bot_radar = BotRadar(page)
                 self._bot_radar.arm()
                 log.info("[site-watch] BotRadar 장착 site=%s", self.site)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
                 log.debug("[site-watch] BotRadar 장착 실패: %s", e)
 
     def _scan_bot(self, page, step_name: str) -> dict:
@@ -121,9 +125,10 @@ class StepWatcher:
         if page is None:
             return {}
         try:
-            from scripts.form.bot_radar import scan as bot_scan, BotDetected
+            from scripts.form.bot_radar import scan as bot_scan
+
             r = bot_scan(page)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
             log.debug("[site-watch] bot scan 실패: %s", e)
             return {}
         r["step"] = step_name
@@ -139,17 +144,19 @@ class StepWatcher:
             t = msg.type
             if t in ("error", "warning"):
                 self.console_msgs.append({"type": t, "text": (msg.text or "")[:500]})
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
             pass
 
     def _on_req_failed(self, req) -> None:
         try:
-            self.net_failures.append({
-                "url": req.url[:300],
-                "method": getattr(req, "method", ""),
-                "failure": (req.failure or "") if hasattr(req, "failure") else "",
-            })
-        except Exception:
+            self.net_failures.append(
+                {
+                    "url": req.url[:300],
+                    "method": getattr(req, "method", ""),
+                    "failure": (req.failure or "") if hasattr(req, "failure") else "",
+                }
+            )
+        except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
             pass
 
     # ── 단계 컨텍스트 ───────────────────────────────────────────────
@@ -170,18 +177,23 @@ class StepWatcher:
                     self._scan_bot(s.page, full_name)
                 except _BotFlagged as bf:
                     elapsed = round(time.time() - s.started_at, 2)
-                    self._capture(s, ok=False, kind="bot_flagged",
-                                  message=f"level={bf.report['level']} vendors={bf.report.get('vendors',[])}",
-                                  elapsed=elapsed)
-                    self._finalize(failed=True, last_step=full_name,
-                                   kind="bot_flagged",
-                                   message=f"level={bf.report['level']}")
+                    self._capture(
+                        s,
+                        ok=False,
+                        kind="bot_flagged",
+                        message=f"level={bf.report['level']} vendors={bf.report.get('vendors', [])}",
+                        elapsed=elapsed,
+                    )
+                    self._finalize(
+                        failed=True, last_step=full_name, kind="bot_flagged", message=f"level={bf.report['level']}"
+                    )
                     print(f"  ✘ [{self.site}] {full_name} → 봇 감지 (level={bf.report['level']})")
-                    print(f"     vendors={bf.report.get('vendors',[])}")
+                    print(f"     vendors={bf.report.get('vendors', [])}")
                     print(f"     보고서: {self.report_dir}")
                     log_op(f"{self.site}:{full_name}", ok=False, message=f"bot_flagged:{bf.report['level']}")
-                    raise StepFailure(self.site, full_name, "bot_flagged",
-                                      bf.report.get('level',''), self.report_dir) from bf
+                    raise StepFailure(
+                        self.site, full_name, "bot_flagged", bf.report.get("level", ""), self.report_dir
+                    ) from bf
         except StepFailure as e:
             elapsed = round(time.time() - s.started_at, 2)
             self._capture(s, ok=False, kind=e.kind, message=e.message, elapsed=elapsed)
@@ -209,25 +221,28 @@ class StepWatcher:
     # ── 캡처 ────────────────────────────────────────────────────────
     def _capture(self, s: _Step, *, ok: bool, kind: str, message: str, elapsed: float) -> None:
         rec = {
-            "step": s.name, "ok": ok, "elapsed_s": elapsed,
-            "kind": kind, "message": message,
+            "step": s.name,
+            "ok": ok,
+            "elapsed_s": elapsed,
+            "kind": kind,
+            "message": message,
         }
         # 실패 또는 항상 캡처 옵션 — 여기선 실패 시만 시각/DOM 저장
         if not ok and s.page is not None:
             try:
                 rec["url"] = s.page.url
-            except Exception:
+            except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
                 pass
             try:
                 s.page.screenshot(path=str(self.report_dir / f"{s.name}.png"), full_page=True)
                 rec["screenshot"] = f"{s.name}.png"
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
                 rec["screenshot_err"] = str(e)[:120]
             try:
                 html = s.page.content()
                 (self.report_dir / f"{s.name}.html").write_text(html, encoding="utf-8")
                 rec["html"] = f"{s.name}.html"
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
                 rec["html_err"] = str(e)[:120]
         self.steps.append(rec)
 
@@ -237,7 +252,7 @@ class StepWatcher:
         if self._bot_radar is not None:
             try:
                 final_bot = self._bot_radar.report()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
                 pass
         summary = {
             "site": self.site,
@@ -255,10 +270,7 @@ class StepWatcher:
                 "final_level": final_bot.get("level", "unknown"),
                 "final_confidence": final_bot.get("confidence", 0),
                 "final_vendors": final_bot.get("vendors", []),
-                "step_reports": [
-                    {k: v for k, v in r.items() if k != "signals"}
-                    for r in self.bot_reports[-20:]
-                ],
+                "step_reports": [{k: v for k, v in r.items() if k != "signals"} for r in self.bot_reports[-20:]],
             },
         }
         (self.report_dir / "summary.json").write_text(

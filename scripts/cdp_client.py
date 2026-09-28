@@ -41,7 +41,7 @@ def _load_daemon_state() -> dict:
         raise RuntimeError("데몬이 실행 중이지 않습니다. 먼저 'python scripts/cdp_daemon.py start' 실행하세요")
     try:
         return json.loads(DAEMON_STATE_FILE.read_text(encoding="utf-8"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
         raise RuntimeError(f"상태 파일 읽기 실패: {e}")
 
 
@@ -315,7 +315,7 @@ def main() -> None:
                         try:
                             state = _json.loads(STATE_FILE.read_text(encoding="utf-8"))
                             print(_json.dumps(state, ensure_ascii=False, indent=2))
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
                             print(f"✗ 상태 읽기 실패: {e}")
                     else:
                         print("☐ chrome-ui-monitor 미실행")
@@ -327,7 +327,7 @@ def main() -> None:
 
                             os.kill(int(state.get("pid", 0)), 15)
                             print("✓ chrome-ui-monitor 중지 완료")
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
                             print(f"⚠ 종료 시도: {e}")
                     else:
                         print("☐ chrome-ui-monitor 실행 중이 아님")
@@ -400,7 +400,7 @@ def main() -> None:
                 except LoginError as e:
                     print(f"\n✘ {e}")
                     sys.exit(1)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
                     print(f"\n  [오류] {e}")
                     import traceback
 
@@ -443,7 +443,7 @@ def main() -> None:
                 except LoginError as e:
                     print(f"\n✘ {e}")
                     sys.exit(1)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
                     print(f"\n  [오류] {e}")
                     import traceback
 
@@ -477,7 +477,7 @@ def main() -> None:
                         print(f"  사이트맵: {r['saved_to']}")
                     if r.get("aborted_reason"):
                         print(f"  중단: {r['aborted_reason']}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
                     print(f"  [오류] {e}")
                     import traceback
 
@@ -564,7 +564,7 @@ def main() -> None:
                 except LoginError as e:
                     print(f"\n✘ {e}")
                     sys.exit(1)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
                     print(f"\n  [오류] {e}")
                     import traceback
 
@@ -614,7 +614,7 @@ def main() -> None:
                     else:
                         print("\n✗ 로그인 감지 타임아웃 (300초 경과)")
                         sys.exit(1)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
                     print(f"  [오류] {e}")
                     import traceback
 
@@ -706,7 +706,7 @@ def main() -> None:
             case _:
                 print(f"알 수 없는 명령: {cmd}")
                 print(__doc__)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
         print(f"  [오류] {e}")
         import traceback
 

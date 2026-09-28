@@ -153,7 +153,7 @@ def explore_calendar(page, report: dict):
             visible = [e for e in els if e["visible"]]
             if visible:
                 nav_dump[sel] = visible
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             pass
     print(f"  네비 후보 셀렉터: {len(nav_dump)}개 발견")
     report["calendar"]["nav_buttons"] = nav_dump
@@ -174,7 +174,7 @@ def explore_calendar(page, report: dict):
                     report["calendar"]["after_click_apis"] = cap_after
                     clicked = True
                     break
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             pass
     if not clicked:
         print("  ⚠ 네비게이션 클릭 실패 — 추가 분석 필요")
@@ -187,7 +187,7 @@ def explore_calendar(page, report: dict):
             visible = [e for e in els if e["visible"]]
             if visible:
                 view_dump[sel] = visible
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             pass
     report["calendar"]["view_buttons"] = view_dump
 
@@ -253,7 +253,7 @@ def explore_mail_search(page, report: dict):
                     report["mail_search"]["triggered_apis"] = cap_typed
                     print(f"    입력 트리거 성공 셀렉터: {sel} → API {len(cap_typed)}개")
                     break
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             continue
     if not triggered_sel:
         print("    ⚠ 검색 입력 트리거 실패")
@@ -293,7 +293,7 @@ def explore_mybox(page, report: dict):
             visible = [e for e in els if e["visible"] and e["rect"]["w"] > 50 and e["rect"]["h"] > 20]
             if visible and 1 <= len(visible) <= 50:
                 report["mybox"].setdefault("clickable_dumps", {})[sel] = visible
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             pass
 
     # 2) 폴더 트리/사이드바 항목 클릭 시도
@@ -319,7 +319,7 @@ def explore_mybox(page, report: dict):
                     print(f"  사이드바 클릭 성공: {sel} → API {len(cap_after)}개")
                     triggered = True
                     break
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             continue
 
     # 3) 메인 영역 첫 항목 클릭 시도
@@ -339,7 +339,7 @@ def explore_mybox(page, report: dict):
                         print(f"  메인 클릭 성공: {sel} → API {len(cap_after)}개")
                         triggered = True
                         break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
                 continue
 
     if not triggered:
@@ -362,19 +362,19 @@ def main():
     with BrowserAgent() as a:
         try:
             explore_calendar(a._page, report)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             print(f"  캘린더 탐지 오류: {e}")
             report["calendar"]["error"] = str(e)
 
         try:
             explore_mail_search(a._page, report)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             print(f"  메일검색 탐지 오류: {e}")
             report["mail_search"]["error"] = str(e)
 
         try:
             explore_mybox(a._page, report)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 캘린더/메일검색/마이박스 UI 구조 읽기전용 탐색 스크립트(아카이브) - 실패시 report 에 error 기록 후 계속 진행, 쓰기 동작 없음
             print(f"  MyBox 탐지 오류: {e}")
             report["mybox"]["error"] = str(e)
 

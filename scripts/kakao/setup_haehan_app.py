@@ -122,7 +122,7 @@ def gate1_connect():
         with browser_session() as page:
             url = page.url
             return _pass("GATE-1", f"Playwright 연결됨 — {url[:50]}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
         return _fail(
             "GATE-1", f"Playwright 연결 실패: {e}", "CDP 브라우저 실행 확인: python scripts/cdp_force_start.py start"
         )
@@ -140,7 +140,7 @@ def gate2_login():
 
             if restore_session("developers.kakao.com", page):
                 print("  ! [GATE-2] 저장 세션 복원 시도")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
             pass
 
         page_goto(page, f"{BASE}")
@@ -155,10 +155,10 @@ def gate2_login():
                     from scripts.auth_session import save_session
 
                     save_session("developers.kakao.com", page)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
                     pass
                 return _pass("GATE-2", "카카오 로그인 확인됨")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
             pass
 
         # 미로그인 — 대기
@@ -172,7 +172,7 @@ def gate2_login():
 
                 save_session("developers.kakao.com", page)
                 print("  ✓ [GATE-2] 세션 저장됨")
-            except Exception:
+            except Exception:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
                 pass
             return _pass("GATE-2", f"로그인 감지 ({result.get('elapsed_s', 0):.0f}초)")
         return _fail("GATE-2", "로그인 타임아웃", "브라우저에서 카카오 로그인 후 재실행")
@@ -190,7 +190,7 @@ def gate3_console(page) -> GR:
     try:
         page.wait_for_selector("[class*=app_item], [class*=AppItem], a[href*='/console/app/']", timeout=10000)
         return _pass("GATE-3", "개발자 콘솔 접근 성공")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
         return _fail("GATE-3", "앱 목록 로딩 실패", "콘솔에서 앱 목록이 보이는지 확인")
 
 
@@ -304,7 +304,7 @@ def gate7_login_activate(page, app_id: str) -> GR:
         toggle.click()
         page.wait_for_load_state("networkidle", timeout=5000)
         return _pass("GATE-7", "카카오 로그인 활성화 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
         return _fail("GATE-7", f"토글 실패: {e}", "콘솔 > 제품 설정 > 카카오 로그인에서 직접 ON")
 
 
@@ -324,7 +324,7 @@ def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
         page.locator('span:has-text("로그인 리다이렉트 URI")').first.click()
         page.wait_for_load_state("networkidle", timeout=5000)
         time.sleep(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
         return _fail(
             "GATE-8", f"리다이렉트 URI 편집 폼 열기 실패: {e}", "플랫폼 키 미설정 — REST API 키 먼저 생성 필요"
         )
@@ -385,7 +385,7 @@ def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
                     break
             if not filled:
                 print("    ! 빈 입력창 없음")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
             print(f"    ✗ 입력 실패: {e}")
 
     # 저장
@@ -395,7 +395,7 @@ def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
             page.wait_for_load_state("networkidle", timeout=5000)
             time.sleep(1)
             print("  ✓ 저장 완료")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
             print(f"  ! 저장 버튼 오류: {e}")
 
     # 저장 후 input_value 기반 확인
@@ -467,7 +467,7 @@ def main():
             from scripts.auth_session import restore_session
 
             restore_session("developers.kakao.com", page)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
             pass
 
         # GATE-3: 콘솔

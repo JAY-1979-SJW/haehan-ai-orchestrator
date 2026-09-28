@@ -47,7 +47,7 @@ def _check_dns_draft() -> dict[str, bool]:
         safe_d = AUTOWORK_DNS_DRAFT.to_safe_dict()
         forbidden = {"password", "otp", "token", "cookie", "session", "cert_password"}
         result["dns_draft_no_secrets"] = not bool(set(safe_d.keys()) & forbidden)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 서브도메인 DNS 라우팅 기반 정책 자체감사 스크립트 - 예외 발생시 체크 결과를 False 또는 error 로 기록하는 fail-closed 패턴, 이미 안전한 방향
         result["[error]"] = str(e)
     return result
 
@@ -67,7 +67,7 @@ def _check_nginx_plan() -> dict[str, bool]:
         result["nginx_plan_exists"] = NGINX_RECOMMENDED_PLAN is not None
         result["nginx_change_not_allowed_now"] = NGINX_RECOMMENDED_PLAN.get("change_allowed_now") is False
         result["5050_impact_none"] = "없음" in str(NGINX_RECOMMENDED_PLAN.get("5050_impact", ""))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 서브도메인 DNS 라우팅 기반 정책 자체감사 스크립트 - 예외 발생시 체크 결과를 False 또는 error 로 기록하는 fail-closed 패턴, 이미 안전한 방향
         result["[error]"] = str(e)
     return result
 
@@ -80,7 +80,7 @@ def _check_5050_protection() -> bool:
             if r["location"] == "/orchestrator/":
                 return "5050" in r.get("note", "") or "중단 금지" in r.get("note", "")
         return False
-    except Exception:
+    except Exception:  # noqa: BLE001 - 서브도메인 DNS 라우팅 기반 정책 자체감사 스크립트 - 예외 발생시 체크 결과를 False 또는 error 로 기록하는 fail-closed 패턴, 이미 안전한 방향
         return False
 
 
@@ -95,7 +95,7 @@ def _check_ssl_plan() -> dict[str, bool]:
         result["ssl_change_not_allowed"] = SSL_PLAN.get("change_allowed_now") is False
         result["ssl_steps_count"] = len(SSL_PLAN.get("steps", [])) >= 5
         result["ssl_dns_precondition"] = len(SSL_PLAN.get("preconditions", [])) >= 2
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 서브도메인 DNS 라우팅 기반 정책 자체감사 스크립트 - 예외 발생시 체크 결과를 False 또는 error 로 기록하는 fail-closed 패턴, 이미 안전한 방향
         result["[error]"] = str(e)
     return result
 
@@ -119,7 +119,7 @@ def _check_smoke() -> dict[str, bool]:
             "5050" in s.get("check", "") or "legacy" in s.get("check", "").lower() for s in SMOKE_CHECKLIST
         )
         result["smoke_p0_count"] = sum(1 for s in SMOKE_CHECKLIST if s.get("tier") == "P0") >= 3
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 서브도메인 DNS 라우팅 기반 정책 자체감사 스크립트 - 예외 발생시 체크 결과를 False 또는 error 로 기록하는 fail-closed 패턴, 이미 안전한 방향
         result["[error]"] = str(e)
     return result
 
@@ -140,7 +140,7 @@ def _check_rollback() -> dict[str, bool]:
         result["nginx_5050_protection"] = "5050" in str(NGINX_ROLLBACK_PLAN)
         result["ssl_rollback_exists"] = SSL_ROLLBACK_PLAN is not None
         result["ssl_no_cert_delete"] = "삭제하지 않" in str(SSL_ROLLBACK_PLAN)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 서브도메인 DNS 라우팅 기반 정책 자체감사 스크립트 - 예외 발생시 체크 결과를 False 또는 error 로 기록하는 fail-closed 패턴, 이미 안전한 방향
         result["[error]"] = str(e)
     return result
 
@@ -161,7 +161,7 @@ def _check_gabia_flow() -> dict[str, bool]:
         task = make_autowork_dns_task()
         result["browser_task_fqdn_match"] = task.desired_fqdn == "autowork.haehan-ai.kr"
         result["browser_task_final_blocked"] = task.safe_to_click_final_button is False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 서브도메인 DNS 라우팅 기반 정책 자체감사 스크립트 - 예외 발생시 체크 결과를 False 또는 error 로 기록하는 fail-closed 패턴, 이미 안전한 방향
         result["[error]"] = str(e)
     return result
 

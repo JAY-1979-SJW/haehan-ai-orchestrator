@@ -68,7 +68,7 @@ def _extract_nav_links(page) -> list[dict]:
             }
         """)
         return links or []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
         log.debug("nav 링크 추출 실패: %s", e)
         return []
 
@@ -89,7 +89,7 @@ def _extract_page_structure(page, url: str) -> dict:
 
     try:
         info["title"] = page.title()
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
         pass
 
     # 접근 제한 여부 확인
@@ -99,7 +99,7 @@ def _extract_page_structure(page, url: str) -> dict:
             if "로그아웃" not in body_text:  # 로그아웃 버튼이 있으면 정상 접근
                 info["accessible"] = False
                 info["error"] = "접근 제한 또는 권한 없음"
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
         pass
 
     if not info["accessible"]:
@@ -128,7 +128,7 @@ def _extract_page_structure(page, url: str) -> dict:
             }
         """)
         info["tables"] = tables or []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
         log.debug("테이블 추출 실패: url=%s err=%s", url, e)
 
     # 폼 구조 추출
@@ -145,7 +145,7 @@ def _extract_page_structure(page, url: str) -> dict:
             }
         """)
         info["forms"] = forms or []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
         log.debug("폼 추출 실패: url=%s err=%s", url, e)
 
     # 버튼 추출
@@ -162,7 +162,7 @@ def _extract_page_structure(page, url: str) -> dict:
             }
         """)
         info["buttons"] = buttons or []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
         log.debug("버튼 추출 실패: url=%s err=%s", url, e)
 
     # select 필터 추출
@@ -177,7 +177,7 @@ def _extract_page_structure(page, url: str) -> dict:
             }
         """)
         info["selects"] = selects or []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
         log.debug("select 추출 실패: url=%s err=%s", url, e)
 
     return info
@@ -203,7 +203,7 @@ def explore_site(page) -> dict:
         try:
             page.goto(f"{EUM_BASE}/main", timeout=15000)
             page.wait_for_load_state("networkidle", timeout=15000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
             log.warning("메인 페이지 이동 실패: %s", e)
 
         nav_links = _extract_nav_links(page)
@@ -227,7 +227,7 @@ def explore_site(page) -> dict:
             try:
                 page.goto(url, timeout=15000)
                 page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
                 log.warning("페이지 이동 실패: url=%s err=%s", url, e)
                 result["webman_pages"].append(
                     {

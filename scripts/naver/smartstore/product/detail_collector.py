@@ -4,6 +4,7 @@
     from scripts.naver.smartstore.product.detail_collector import collect_product_detail
     result = collect_product_detail(page, product_id="12345678")
 """
+
 from __future__ import annotations
 
 import json
@@ -18,6 +19,7 @@ from playwright.sync_api import Page
 ROOT = Path(__file__).resolve().parents[4]
 
 import sys
+
 sys.path.insert(0, str(ROOT))
 
 from scripts.logger import get_logger
@@ -30,6 +32,7 @@ SMARTSTORE_BASE = "https://sell.smartstore.naver.com"
 
 
 # ── 공개 인터페이스 ──────────────────────────────────────────────────────────
+
 
 def collect_product_detail(page: Page, product_id: str) -> dict:
     """상품 상세 페이지를 CDP로 수집해 캐시에 저장.
@@ -67,12 +70,16 @@ def load_product_detail(product_id: str) -> dict:
     """캐시에서 상품 상세 로드."""
     p = PRODUCTS_DIR / f"{product_id}.json"
     if not p.exists():
-        return {"ok": False, "error": "no_cache", "product_id": product_id,
-                "hint": "POST /smartstore/products/{product_id}/collect 로 수집하세요"}
+        return {
+            "ok": False,
+            "error": "no_cache",
+            "product_id": product_id,
+            "hint": "POST /smartstore/products/{product_id}/collect 로 수집하세요",
+        }
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
         return {"ok": True, "product": data, "source": "cache", "collected_at": data.get("collected_at")}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
         return {"ok": False, "error": str(e), "product_id": product_id}
 
 
@@ -84,6 +91,7 @@ def list_cached_product_ids() -> list[str]:
 
 
 # ── 내부: 페이지 진입 ────────────────────────────────────────────────────────
+
 
 def _navigate_to_detail(page: Page, product_id: str) -> dict:
     """상품 상세 URL로 직접 진입."""
@@ -104,7 +112,7 @@ def _navigate_to_detail(page: Page, product_id: str) -> dict:
         # fallback: 목록에서 클릭
         return _navigate_via_list(page, product_id)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
         log.warning("[detail_collector] 직접 진입 실패: %s", e)
         return _navigate_via_list(page, product_id)
 
@@ -117,25 +125,28 @@ def _navigate_via_list(page: Page, product_id: str) -> dict:
         time.sleep(2)
 
         # 상품번호가 포함된 링크 탐색
-        clicked = page.evaluate(f"""
-        (pid) => {{
+        clicked = page.evaluate(
+            """
+        (pid) => {
             const links = document.querySelectorAll('a[href]');
-            for (const a of links) {{
-                if ((a.href || '').includes(pid) || (a.textContent || '').includes(pid)) {{
+            for (const a of links) {
+                if ((a.href || '').includes(pid) || (a.textContent || '').includes(pid)) {
                     a.click();
                     return true;
-                }}
-            }}
+                }
+            }
             const trs = document.querySelectorAll('tbody tr');
-            for (const tr of trs) {{
-                if ((tr.textContent || '').includes(pid)) {{
+            for (const tr of trs) {
+                if ((tr.textContent || '').includes(pid)) {
                     tr.click();
                     return true;
-                }}
-            }}
+                }
+            }
             return false;
-        }}
-        """, product_id)
+        }
+        """,
+            product_id,
+        )
 
         if clicked:
             time.sleep(2)
@@ -144,54 +155,54 @@ def _navigate_via_list(page: Page, product_id: str) -> dict:
 
         return {"ok": False, "error": f"product_id {product_id} 를 목록에서 찾지 못했습니다"}
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
         return {"ok": False, "error": f"목록 진입 실패: {e}"}
 
 
 # ── 내부: 필드 추출 ─────────────────────────────────────────────────────────
 
+
 def _extract_all_fields(page: Page, product_id: str) -> dict:
     """현재 상세 페이지에서 모든 필드를 추출."""
     product: dict[str, Any] = {"product_id": product_id}
 
-    product["name"]             = _get_input_value(page, SEL.PRODUCT_NAME)
-    product["status"]           = _get_text(page, SEL.PRODUCT_STATUS) or "UNKNOWN"
-    product["category"]         = _get_text(page, SEL.CATEGORY) or _get_input_value(page, SEL.CATEGORY)
+    product["name"] = _get_input_value(page, SEL.PRODUCT_NAME)
+    product["status"] = _get_text(page, SEL.PRODUCT_STATUS) or "UNKNOWN"
+    product["category"] = _get_text(page, SEL.CATEGORY) or _get_input_value(page, SEL.CATEGORY)
     product["channel_product_id"] = _get_text(page, SEL.CHANNEL_PRODUCT_ID)
 
     # 가격·재고
-    product["price"]            = _parse_int(_get_input_value(page, SEL.SALE_PRICE))
-    product["original_price"]   = _parse_int(_get_input_value(page, SEL.ORIGINAL_PRICE))
-    product["stock"]            = _parse_int(_get_input_value(page, SEL.STOCK))
-    product["min_purchase"]     = _parse_int(_get_input_value(page, SEL.MIN_PURCHASE)) or 1
-    product["max_purchase"]     = _parse_int(_get_input_value(page, SEL.MAX_PURCHASE))
+    product["price"] = _parse_int(_get_input_value(page, SEL.SALE_PRICE))
+    product["original_price"] = _parse_int(_get_input_value(page, SEL.ORIGINAL_PRICE))
+    product["stock"] = _parse_int(_get_input_value(page, SEL.STOCK))
+    product["min_purchase"] = _parse_int(_get_input_value(page, SEL.MIN_PURCHASE)) or 1
+    product["max_purchase"] = _parse_int(_get_input_value(page, SEL.MAX_PURCHASE))
 
     # 이미지
-    product["main_image_url"]   = _get_img_src(page, SEL.MAIN_IMAGE)
-    product["images"]           = _get_img_src_list(page, SEL.ADDITIONAL_IMAGES)
+    product["main_image_url"] = _get_img_src(page, SEL.MAIN_IMAGE)
+    product["images"] = _get_img_src_list(page, SEL.ADDITIONAL_IMAGES)
 
     # 옵션
     options = _extract_options(page)
-    product["has_options"]      = len(options) > 0
-    product["options"]          = options
+    product["has_options"] = len(options) > 0
+    product["options"] = options
 
     # 배송
-    product["delivery_fee"]     = _parse_int(_get_input_value(page, SEL.DELIVERY_FEE)) or 0
+    product["delivery_fee"] = _parse_int(_get_input_value(page, SEL.DELIVERY_FEE)) or 0
 
     # 통계 (없으면 None)
-    product["view_count"]       = _parse_int(_get_text(page, SEL.VIEW_COUNT))
-    product["order_count"]      = _parse_int(_get_text(page, SEL.ORDER_COUNT))
-    product["review_count"]     = _parse_int(_get_text(page, SEL.REVIEW_COUNT))
-    product["review_score"]     = _parse_float(_get_text(page, SEL.REVIEW_SCORE))
+    product["view_count"] = _parse_int(_get_text(page, SEL.VIEW_COUNT))
+    product["order_count"] = _parse_int(_get_text(page, SEL.ORDER_COUNT))
+    product["review_count"] = _parse_int(_get_text(page, SEL.REVIEW_COUNT))
+    product["review_score"] = _parse_float(_get_text(page, SEL.REVIEW_SCORE))
 
     # 현재 URL
-    product["detail_url"]       = page.url
-    product["collected_at"]     = datetime.now().isoformat(timespec="seconds")
-    product["source"]           = "cdp"
+    product["detail_url"] = page.url
+    product["collected_at"] = datetime.now().isoformat(timespec="seconds")
+    product["source"] = "cdp"
 
     # 누락 필드 목록
-    missing = [k for k, v in product.items()
-               if v is None and k in ("name", "price", "stock")]
+    missing = [k for k, v in product.items() if v is None and k in ("name", "price", "stock")]
     if missing:
         product["_missing_fields"] = missing
         log.warning("[detail_collector] 누락 필드: %s", missing)
@@ -218,28 +229,31 @@ def _extract_options(page: Page) -> list[dict]:
         }
         """)
         options = []
-        for cells in (rows or []):
+        for cells in rows or []:
             if len(cells) >= 2:
-                options.append({
-                    "option_name":  cells[0] if len(cells) > 0 else "",
-                    "option_value": cells[1] if len(cells) > 1 else "",
-                    "price_diff":   _parse_int(cells[2]) or 0 if len(cells) > 2 else 0,
-                    "stock":        _parse_int(cells[3]) or 0 if len(cells) > 3 else 0,
-                })
+                options.append(
+                    {
+                        "option_name": cells[0] if len(cells) > 0 else "",
+                        "option_value": cells[1] if len(cells) > 1 else "",
+                        "price_diff": _parse_int(cells[2]) or 0 if len(cells) > 2 else 0,
+                        "stock": _parse_int(cells[3]) or 0 if len(cells) > 3 else 0,
+                    }
+                )
         return options
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
         log.debug("[detail_collector] 옵션 추출 실패: %s", e)
         return []
 
 
 # ── 내부: 셀렉터 헬퍼 ────────────────────────────────────────────────────────
 
+
 def _try_sel(page: Page, sels: list[str]) -> bool:
     for sel in sels:
         try:
             if page.locator(sel).count() > 0:
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
             pass
     return False
 
@@ -252,7 +266,7 @@ def _get_text(page: Page, sels: list[str]) -> str | None:
                 txt = el.inner_text(timeout=2000).strip()
                 if txt:
                     return txt
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
             pass
     return None
 
@@ -265,7 +279,7 @@ def _get_input_value(page: Page, sels: list[str]) -> str | None:
                 val = el.input_value(timeout=2000).strip()
                 if val:
                     return val
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
             pass
     return None
 
@@ -278,7 +292,7 @@ def _get_img_src(page: Page, sels: list[str]) -> str | None:
                 src = el.get_attribute("src", timeout=2000)
                 if src:
                     return src
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
             pass
     return None
 
@@ -291,7 +305,7 @@ def _get_img_src_list(page: Page, sels: list[str]) -> list[str]:
             srcs = [s for s in srcs if s]
             if srcs:
                 return srcs
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
             pass
     return []
 
@@ -309,11 +323,12 @@ def _parse_float(val: str | None) -> float | None:
     m = re.search(r"[\d.]+", str(val))
     try:
         return float(m.group()) if m else None
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 상품 상세 읽기전용 수집기(캐시 포함) - 실패시 error dict, None 또는 빈 리스트를 반환, 쓰기 없음
         return None
 
 
 # ── 캐시 저장 ────────────────────────────────────────────────────────────────
+
 
 def _save_cache(product_id: str, product: dict) -> None:
     PRODUCTS_DIR.mkdir(parents=True, exist_ok=True)

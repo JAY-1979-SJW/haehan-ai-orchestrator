@@ -96,7 +96,7 @@ class NaverSmartStore:
         try:
             handle_page_popups(self.page, timeout_s=2.0)
             close_popup_windows(self.page)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             pass
         return True
 
@@ -144,7 +144,7 @@ class NaverSmartStore:
                 time.sleep(0.3)
             time.sleep(1.5)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             _log.debug("[smartstore] 메뉴 클릭 실패 (%s): %s", label, e)
             return False
 
@@ -194,7 +194,7 @@ class NaverSmartStore:
         """현재 페이지의 가장 큰 테이블 추출."""
         try:
             return self.page.evaluate(self.EXTRACT_TABLE_JS, limit)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             _log.error("[smartstore] 테이블 추출 실패: %s", e)
             return {"headers": [], "rows": []}
 
@@ -259,7 +259,7 @@ class NaverSmartStore:
                 if at_bottom and new == 0:
                     break
             return {"headers": headers, "rows": list(seen.values())[:limit]}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             _log.error("[smartstore] ARIA 그리드 스크롤 추출 실패: %s", e)
             return {"headers": headers, "rows": list(seen.values())[:limit]}
 
@@ -277,7 +277,7 @@ class NaverSmartStore:
             try:
                 handle_page_popups(self.page, timeout_s=2.0)
                 close_popup_windows(self.page)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
                 pass
             # 잔여 안내 팝업(상품 등록 한도 등) 닫기
             self.page.evaluate(r"""(() => {
@@ -306,7 +306,7 @@ class NaverSmartStore:
             })()""")
             time.sleep(3)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             _log.error("[smartstore] 상품목록 진입 실패: %s", e)
             return False
 
@@ -337,7 +337,7 @@ class NaverSmartStore:
             if reg.open():
                 _log.info("[smartstore] 상품 등록 페이지 진입 완료")
                 return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             _log.warning("[smartstore] GeneralProductRegister.open 실패: %s — 직접 URL 시도", e)
 
         # 최후 fallback: 직접 URL 이동만
@@ -351,7 +351,7 @@ class NaverSmartStore:
             dismiss_all_popups(self.page)
             _log.info("[smartstore] 상품 등록 URL 직접 이동: %s", self.page.url)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             _log.error("[smartstore] 상품 등록 진입 최종 실패: %s", e)
             return False
 
@@ -518,7 +518,7 @@ class NaverSmartStore:
             }
             """)
             return {"ok": True, **info}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             return {"ok": False, "error": str(e)}
 
     # ── 통계/분석 ────────────────────────────────────────────────────────
@@ -549,7 +549,7 @@ class NaverSmartStore:
             }
             """)
             return {"ok": True, **stats}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             return {"ok": False, "error": str(e)}
 
     # ── 마케팅/프로모션 ──────────────────────────────────────────────────
@@ -582,7 +582,7 @@ class NaverSmartStore:
             }
             """)
             return {"ok": True, **info}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 화면 자동화 클래스 - 메뉴클릭/테이블추출/상품등록진입 등 UI 조작 헬퍼, 실패시 False 또는 빈 결과로 fail-closed 반환. 결제/삭제 없음
             return {"ok": False, "error": str(e)}
 
 

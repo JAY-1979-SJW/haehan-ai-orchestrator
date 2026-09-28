@@ -54,7 +54,7 @@ def load_session_status() -> dict:
         return {"logged_in": False, "user": None, "checked_at": None}
     try:
         return json.loads(SESSION_STATUS_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
         return {"logged_in": False, "user": None, "checked_at": None}
 
 
@@ -97,7 +97,7 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
         log.info("[naver_login_pipeline] CDP 미실행 — 시작 시도")
         try:
             _start_cdp()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
             return _fail(f"CDP 브라우저 시작 실패: {e}")
 
     # ── Step 2: 브라우저 연결 ────────────────────────────────────────────────
@@ -120,7 +120,7 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
 
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
         return _fail(f"브라우저 연결 실패: {e}")
 
     # ── Step 3: 현재 로그인 상태 확인 (계정 전환 요청이면 건너뜀) ──────────────
@@ -141,7 +141,7 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
                     "user": user,
                     "message": f"이미 로그인됨: {user} — 세션 저장 완료",
                 }
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
     # ── Step 4: 네이버 로그인 ────────────────────────────────────────────────
@@ -149,7 +149,7 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
         from scripts.naver.auth import login_naver
 
         result = login_naver(page, naver_id=naver_id)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
         pw.stop()
         return _fail(f"로그인 함수 오류: {e}")
 
@@ -173,7 +173,7 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
         try:
             _save_browser_session(page)
             log.info("[naver_login_pipeline] 브라우저 세션 저장 완료: data/sessions/naver.com.json")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
             log.warning("[naver_login_pipeline] 브라우저 세션 저장 실패: %s", e)
 
     # ── Step 6: 상태 메타 저장 ────────────────────────────────────────────────
@@ -206,7 +206,7 @@ def _is_cdp_alive(timeout: float = 2.0) -> bool:
     try:
         with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout) as r:
             return r.status == 200
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
         return False
 
 
@@ -239,7 +239,7 @@ def _save_browser_session(page) -> None:
         try:
             save_session(subdomain, page, host_filter=True)
             log.info("[naver_login_pipeline] 서브도메인 세션 저장: %s", subdomain)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
             log.warning("[naver_login_pipeline] 서브도메인 세션 저장 실패 %s: %s", subdomain, e)
 
 

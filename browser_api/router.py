@@ -65,7 +65,7 @@ async def naver_blog_write(req: ActionRequest) -> ActionResponse:
     try:
         await run_in_threadpool(_run)
         return _ok("블로그 작성 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 FastAPI 라우터(블로그/Gmail/캘린더/카카오/범용 조회) - 모든 except 가 _err(str(e)) 로 실패 응답 반환, 판정 로직 없음
         return _err(str(e))
 
 
@@ -97,7 +97,7 @@ async def google_mail_list(req: ActionRequest) -> ActionResponse:
     try:
         await run_in_threadpool(_run)
         return _ok("메일 목록 조회 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 FastAPI 라우터(블로그/Gmail/캘린더/카카오/범용 조회) - 모든 except 가 _err(str(e)) 로 실패 응답 반환, 판정 로직 없음
         return _err(str(e))
 
 
@@ -113,7 +113,7 @@ async def google_mail_compose(req: ActionRequest) -> ActionResponse:
     try:
         await run_in_threadpool(_run)
         return _ok("메일 발송 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 FastAPI 라우터(블로그/Gmail/캘린더/카카오/범용 조회) - 모든 except 가 _err(str(e)) 로 실패 응답 반환, 판정 로직 없음
         return _err(str(e))
 
 
@@ -127,7 +127,7 @@ async def google_calendar_today(req: ActionRequest) -> ActionResponse:
     try:
         await run_in_threadpool(_run)
         return _ok("캘린더 조회 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 FastAPI 라우터(블로그/Gmail/캘린더/카카오/범용 조회) - 모든 except 가 _err(str(e)) 로 실패 응답 반환, 판정 로직 없음
         return _err(str(e))
 
 
@@ -159,7 +159,7 @@ async def kakao_dev_list() -> ActionResponse:
     try:
         await run_in_threadpool(_run)
         return _ok("앱 목록 조회 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 FastAPI 라우터(블로그/Gmail/캘린더/카카오/범용 조회) - 모든 except 가 _err(str(e)) 로 실패 응답 반환, 판정 로직 없음
         return _err(str(e))
 
 
@@ -175,7 +175,7 @@ async def kakao_dev_register(req: ActionRequest) -> ActionResponse:
     try:
         await run_in_threadpool(_run)
         return _ok("앱 등록 완료")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 FastAPI 라우터(블로그/Gmail/캘린더/카카오/범용 조회) - 모든 except 가 _err(str(e)) 로 실패 응답 반환, 판정 로직 없음
         return _err(str(e))
 
 
@@ -217,7 +217,7 @@ async def generic_fetch_text(req: FetchTextRequest) -> ActionResponse:
 
         result = await run_in_threadpool(lambda: run_on_browser_thread(_run))
         return _ok("페이지 조회 완료", **result)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 FastAPI 라우터(블로그/Gmail/캘린더/카카오/범용 조회) - 모든 except 가 _err(str(e)) 로 실패 응답 반환, 판정 로직 없음
         return _err(f"{type(e).__name__}: {e}")
 
 
@@ -249,7 +249,7 @@ async def generic_screenshot(req: FetchTextRequest) -> ActionResponse:
 
         result = await run_in_threadpool(lambda: run_on_browser_thread(_run))
         return _ok("스크린샷 완료", **result)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 액션 실행 FastAPI 라우터(블로그/Gmail/캘린더/카카오/범용 조회) - 모든 except 가 _err(str(e)) 로 실패 응답 반환, 판정 로직 없음
         return _err(f"{type(e).__name__}: {e}")
 
 
