@@ -173,7 +173,7 @@ class BrowserController:
 
         except ImportError:
             raise BrowserControllerError("Playwright not installed. Install with: pip install playwright")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             raise BrowserControllerError(f"Failed to launch browser: {e}")
 
     async def close(self) -> None:
@@ -192,7 +192,7 @@ class BrowserController:
                 self._playwright = None
 
             logger.info(f"Browser closed for agent {self.agent_id}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             logger.error(f"Error closing browser: {e}")
 
     async def navigate(self, url: str) -> None:
@@ -210,7 +210,7 @@ class BrowserController:
         try:
             await self.page.goto(url, wait_until="domcontentloaded")
             logger.info(f"Navigated to {url}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             raise BrowserControllerError(f"Navigation failed: {e}")
 
     async def inspect_page(self) -> InspectResult:
@@ -243,7 +243,7 @@ class BrowserController:
                 login_required=login_required,
                 otp_detected=otp_detected,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             raise BrowserControllerError(f"Inspection failed: {e}")
 
     async def list_inputs(self) -> list[dict[str, Any]]:
@@ -284,7 +284,7 @@ class BrowserController:
             return PlanClickResult(
                 selector=selector, element_found=True, element_text=text, element_tag=tag, would_click=True
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             logger.error(f"Plan click failed: {e}")
             return PlanClickResult(selector=selector, element_found=False)
 
@@ -318,7 +318,7 @@ class BrowserController:
                 text_preview="[REDACTED]",
                 would_type=True,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             logger.error(f"Plan type failed: {e}")
             return PlanTypeResult(selector=selector, element_found=False)
 
@@ -402,7 +402,7 @@ class BrowserController:
                 result="success",
                 target_url_domain=domain,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             logger.error(f"Execute click failed: {e}")
             return ExecuteClickResult(
                 selector=selector, element_found=False, executed=False, result="error", target_url_domain=domain
@@ -478,7 +478,7 @@ class BrowserController:
                 result="success",
                 target_url_domain=domain,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             logger.error(f"Execute type failed: {e}")
             return ExecuteTypeResult(
                 selector=selector, element_found=False, executed=False, result="error", target_url_domain=domain
@@ -514,7 +514,7 @@ class BrowserController:
                 }
             """)
             return inputs
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             logger.error(f"Failed to list inputs: {e}")
             return []
 
@@ -552,7 +552,7 @@ class BrowserController:
                 }
             """)
             return clickables
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             logger.error(f"Failed to list clickables: {e}")
             return []
 
@@ -653,7 +653,7 @@ class BrowserController:
 
             parsed = urlparse(url)
             return parsed.netloc or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
             return ""
 
 

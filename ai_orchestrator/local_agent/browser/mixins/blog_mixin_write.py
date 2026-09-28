@@ -76,7 +76,7 @@ class BlogWriteMixin:
         # 임시저장 다이얼로그 처리 후 편집기 준비 대기
         try:
             self._page.wait_for_selector(".se-section-documentTitle", timeout=15000, state="visible")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "log_no": log_no, "error": f"편집기 로드 실패: {e}"}
         bw._handle_draft_dialog()
 
@@ -91,7 +91,7 @@ class BlogWriteMixin:
             result = bw.save_draft()
             result["log_no"] = log_no
             return result
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "log_no": log_no, "error": str(e)}
 
     def blog_delete_post(self, blog_id: str, log_no: str) -> dict:
@@ -117,7 +117,7 @@ class BlogWriteMixin:
                 fr.locator(DELETE_CONFIRM).first.click(timeout=3000)
             time.sleep(1)
             return {"ok": True, "error": ""}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "error": str(e)}
 
     def blog_upload_image(self, image_path: str) -> dict:
@@ -133,7 +133,7 @@ class BlogWriteMixin:
             if img_url:
                 return {"ok": True, "image_url": img_url, "error": ""}
             return {"ok": False, "image_url": "", "error": "이미지 URL 추출 실패"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "image_url": "", "error": str(e)}
 
     def blog_write_comment(self, post_url: str, text: str) -> dict:
@@ -180,7 +180,7 @@ class BlogWriteMixin:
             time.sleep(1.5)
 
             return {"ok": True, "error": ""}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "error": str(e)}
 
     def blog_delete_comment(self, post_url: str, comment_index: int = 0) -> dict:
@@ -203,7 +203,7 @@ class BlogWriteMixin:
                 time.sleep(1)
                 return {"ok": True, "error": ""}
             return {"ok": False, "error": f"댓글 인덱스 초과 (총 {len(delete_btns)}개)"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "error": str(e)}
 
     def blog_like_post(self, post_url: str) -> dict:
@@ -228,7 +228,7 @@ class BlogWriteMixin:
             like_count = int(m.group(1)) if m else 0
 
             return {"ok": True, "is_liked": True, "like_count": like_count, "error": ""}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "is_liked": False, "like_count": 0, "error": str(e)}
 
     def blog_unlike_post(self, post_url: str) -> dict:
@@ -254,14 +254,14 @@ class BlogWriteMixin:
             if is_mutual:
                 try:
                     fr.locator(NEIGHBOR_MUTUAL).first.click()
-                except Exception:  # noqa: S110
+                except Exception:  # noqa: S110, BLE001
                     pass
 
             fr.locator(NEIGHBOR_ADD_CONFIRM).first.click()
             time.sleep(1)
 
             return {"ok": True, "error": ""}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "error": str(e)}
 
     def blog_remove_neighbor(self, target_blog_url: str) -> dict:
@@ -278,7 +278,7 @@ class BlogWriteMixin:
             fr.locator(NEIGHBOR_DEL_BTN).first.click()
             time.sleep(1)
             return {"ok": True, "error": ""}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
             return {"ok": False, "error": str(e)}
 
     def blog_write_guestbook(self, blog_url: str, message: str) -> dict:

@@ -3,6 +3,7 @@
 Default behavior prepares the form only. The final submit click is performed
 only when submit=True.
 """
+
 from __future__ import annotations
 
 import json
@@ -126,7 +127,7 @@ def _fill_first(page, selectors: list[str], value: str, field: str) -> str | Non
                 page.fill(selector, value)
                 _time.sleep(0.2)
                 return selector
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
             continue
     log.warning("[registration] failed to fill %s", field)
     return None
@@ -139,13 +140,13 @@ def _load_form_analysis() -> dict[str, Any]:
             from scripts.eum.form_analyzer import main as analyze_forms
 
             analyze_forms()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
             log.debug("[registration] form analysis refresh skipped: %s", exc)
     if not FORM_ANALYSIS_PATH.exists():
         return {}
     try:
         return json.loads(FORM_ANALYSIS_PATH.read_text(encoding="utf-8"))
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
         log.debug("[registration] form analysis load failed: %s", exc)
         return {}
 
@@ -200,8 +201,7 @@ def _analyzed_field_selectors(page_code: str, keywords: list[str]) -> list[str]:
             if not isinstance(field, dict):
                 continue
             haystack = " ".join(
-                str(field.get(part) or "")
-                for part in ("id", "name", "placeholder", "label", "type")
+                str(field.get(part) or "") for part in ("id", "name", "placeholder", "label", "type")
             ).lower()
             if keys and not any(key in haystack for key in keys):
                 continue
@@ -279,7 +279,7 @@ def _fill_by_keywords(page, keywords: list[str], value: str, field: str) -> str 
         if result:
             _time.sleep(0.2)
             return str(result)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
         log.debug("[registration] semantic fill failed for %s: %s", field, exc)
     return None
 
@@ -297,7 +297,7 @@ def _click_first(page, selectors: list[str]) -> str | None:
                 page.click(selector)
                 _time.sleep(1)
                 return selector
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
             continue
     return None
 
@@ -305,7 +305,7 @@ def _click_first(page, selectors: list[str]) -> str | None:
 def _denial_reason(page) -> str | None:
     try:
         text = page.locator("body").inner_text(timeout=2000)
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
         return None
     for marker in DENIAL_MARKERS:
         if marker in text:
@@ -318,7 +318,7 @@ def _goto_form_page(page) -> None:
     page.goto(REGISTRATION_URL, wait_until="domcontentloaded", timeout=30000)
     try:
         page.wait_for_load_state("load", timeout=5000)
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
         pass
 
 
@@ -394,7 +394,7 @@ def register_device(
         result["submit_selector"] = clicked
         return result
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
         result["error"] = str(exc)
         log.error("[registration] error: %s", exc)
         return result

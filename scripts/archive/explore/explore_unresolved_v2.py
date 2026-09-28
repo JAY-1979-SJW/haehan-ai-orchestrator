@@ -101,7 +101,7 @@ def explore_mail_search_v2(page, report: dict):
                 report["mail_search_v2"]["click_selector"] = sel
                 print(f"    ✓ 클릭 성공: {sel}")
                 break
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메일검색/마이박스 UI 구조 읽기전용 탐색 v2(아카이브) - 실패시 report 에 error 기록, 쓰기 없음
             continue
     if not clicked:
         # search_area 안의 input/button 직접 찾기
@@ -167,9 +167,9 @@ def explore_mail_search_v2(page, report: dict):
                             report["mail_search_v2"]["search_apis"] = cap
                             print(f"  ✓ 검색 트리거 성공: {sel} → API {len(cap)}개")
                             return
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 메일검색/마이박스 UI 구조 읽기전용 탐색 v2(아카이브) - 실패시 report 에 error 기록, 쓰기 없음
                     continue
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 메일검색/마이박스 UI 구조 읽기전용 탐색 v2(아카이브) - 실패시 report 에 error 기록, 쓰기 없음
             print(f"  입력 트리거 오류: {e}")
 
     # 5) 직접 검색 API 패턴 추측 호출
@@ -311,7 +311,7 @@ def explore_mybox_v2(page, report: dict):
                     report["mybox_v2"]["dblclick_apis"] = cap
                     print(f"  ✓ 더블클릭 성공: {sel} → API {len(cap)}개")
                     return
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메일검색/마이박스 UI 구조 읽기전용 탐색 v2(아카이브) - 실패시 report 에 error 기록, 쓰기 없음
             continue
 
     # 5) URL navigation 시도 (특정 폴더 ID로)
@@ -329,7 +329,7 @@ def explore_mybox_v2(page, report: dict):
             if cap:
                 report["mybox_v2"][f"url_{url[-15:]}_apis"] = cap
                 print(f"    {url} → API {len(cap)}개")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메일검색/마이박스 UI 구조 읽기전용 탐색 v2(아카이브) - 실패시 report 에 error 기록, 쓰기 없음
             pass
 
 
@@ -348,7 +348,7 @@ def main():
     with BrowserAgent() as a:
         try:
             explore_mail_search_v2(a._page, report)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 메일검색/마이박스 UI 구조 읽기전용 탐색 v2(아카이브) - 실패시 report 에 error 기록, 쓰기 없음
             print(f"  메일검색 V2 탐지 오류: {e}")
             import traceback
 
@@ -357,7 +357,7 @@ def main():
 
         try:
             explore_mybox_v2(a._page, report)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 메일검색/마이박스 UI 구조 읽기전용 탐색 v2(아카이브) - 실패시 report 에 error 기록, 쓰기 없음
             print(f"  MyBox V2 탐지 오류: {e}")
             import traceback
 

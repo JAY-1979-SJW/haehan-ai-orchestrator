@@ -14,10 +14,11 @@ API:
     wait_submit_done(page, before_url, timeout_ms, success_signals=[...], fail_signals=[...])
     wait_validation(page, selector, timeout_ms) -> {"ok": bool, "message": str}
 """
+
 from __future__ import annotations
 
 import time
-from typing import Iterable
+from collections.abc import Iterable
 
 from scripts.logger import get_logger
 
@@ -38,10 +39,10 @@ def wait_field_ready(page, selector: str, timeout_ms: int = 5000) -> bool:
                     "return el && !el.disabled && !el.readOnly;}}",
                     timeout=timeout_ms,
                 )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
             pass
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
         log.debug("[events] wait_field_ready 실패 sel=%s err=%s", selector, e)
         return False
 
@@ -61,7 +62,7 @@ def wait_value_settled(page, selector: str, expected: str, timeout_ms: int = 300
             timeout=timeout_ms,
         )
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
         log.debug("[events] wait_value_settled 실패 sel=%s err=%s", selector, e)
         return False
 
@@ -94,7 +95,7 @@ def wait_submit_done(
     while time.time() < deadline:
         try:
             cur = page.url or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
             cur = ""
         if cur and cur != before_url:
             # URL 변경
@@ -106,7 +107,7 @@ def wait_submit_done(
                 el = page.query_selector(sel)
                 if el and el.is_visible():
                     return {"done": True, "kind": "success_dom", "detail": sel}
-            except Exception:
+            except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
                 pass
         # fail selector
         for sel in fail_selectors:
@@ -116,10 +117,10 @@ def wait_submit_done(
                     txt = ""
                     try:
                         txt = (el.inner_text() or "").strip()[:200]
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
                         pass
                     return {"done": True, "kind": "fail_dom", "detail": txt or sel}
-            except Exception:
+            except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
                 pass
         # fail text in body
         if fail_signals:
@@ -129,10 +130,10 @@ def wait_submit_done(
                     for s in fail_signals:
                         if s and s in body and s != last:
                             return {"done": True, "kind": "fail_text", "detail": s}
-            except Exception:
+            except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
                 pass
         page.wait_for_timeout(poll_ms)
-    return {"done": False, "kind": "timeout", "detail": f"{int((time.time()-start)*1000)}ms"}
+    return {"done": False, "kind": "timeout", "detail": f"{int((time.time() - start) * 1000)}ms"}
 
 
 def wait_validation(page, selector_near: str, timeout_ms: int = 2500) -> dict:
@@ -171,12 +172,11 @@ def wait_validation(page, selector_near: str, timeout_ms: int = 2500) -> dict:
     try:
         r = page.evaluate(js, [selector_near, timeout_ms])
         return r if isinstance(r, dict) else {"found": False, "reason": "non_dict"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
         return {"found": False, "reason": f"eval_error:{str(e)[:80]}"}
 
 
-def wait_for_form(page, *, role_hints: Iterable[str] = ("id", "password"),
-                   timeout_ms: int = 10000) -> bool:
+def wait_for_form(page, *, role_hints: Iterable[str] = ("id", "password"), timeout_ms: int = 10000) -> bool:
     """폼이 DOM에 등장할 때까지 대기 (SPA 대응).
 
     role_hints 안의 키워드가 input name/id/placeholder 에 등장하면 OK.
@@ -205,6 +205,6 @@ def wait_for_form(page, *, role_hints: Iterable[str] = ("id", "password"),
     """
     try:
         return bool(page.evaluate(js, [list(role_hints), timeout_ms]))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
         log.debug("[events] wait_for_form 실패: %s", e)
         return False

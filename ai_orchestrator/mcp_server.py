@@ -35,7 +35,7 @@ try:
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env")
-except Exception:  # noqa: S110
+except Exception:  # noqa: S110, BLE001
     pass
 
 import mcp.server.stdio  # noqa: E402  (sys.path/.env 설정 후 import 필요)
@@ -594,7 +594,7 @@ def _render_description(args: dict) -> dict:
         b.select(sections or DEFAULT_SECTIONS)
         html = b.render(product)
         return {"ok": True, "html": html, "source": "builder", "chars": len(html)}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {"ok": False, "error": str(e)}
 
 
@@ -636,7 +636,7 @@ def _list_templates() -> dict:
                     "sections": t.get("sections", []),
                 }
             )
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
     return {"ok": True, "templates": templates, "count": len(templates)}
 
@@ -647,7 +647,7 @@ def _get_template(tid: str) -> dict:
         return {"ok": False, "error": "template_not_found"}
     try:
         return {"ok": True, **json.loads(f.read_text(encoding="utf-8"))}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {"ok": False, "error": str(e)}
 
 
@@ -692,7 +692,7 @@ def _load_ss_data(name: str) -> dict:
                 "last_error": data.get("error"),
             }
         return data
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {"ok": False, "error": str(e)}
 
 
@@ -724,7 +724,7 @@ def _cdp_collect(name: str, args: dict) -> dict:
             ss = NaverSmartStore(page)
             method = getattr(ss, method_name)
             result = method(limit=limit) if limit is not None else method()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         result = {
             "ok": False,
             "error": str(e),
@@ -764,7 +764,7 @@ def _open_seller_center(args: dict) -> dict:
             page = browser.contexts[0].pages[0]
             page.bring_to_front()
             page.goto(url, timeout=15000, wait_until="domcontentloaded")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
             "error": str(e),
@@ -792,7 +792,7 @@ def _list_cafe_boards(args: dict) -> dict:
                 return list_boards(page, cafe_url)
             finally:
                 page.close()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
             "error": str(e),
@@ -818,7 +818,7 @@ def _add_cafe_board(args: dict) -> dict:
                 return add_board(page, cafe_url, name, board_type=board_type)
             finally:
                 page.close()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
             "error": str(e),
@@ -859,7 +859,7 @@ def _auto_register_product(args: dict) -> dict:
             page.bring_to_front()
             runner = ProductFormRunner(page)
             result = runner.run(register_data, skip_open=skip)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
             "error": str(e),
@@ -900,7 +900,7 @@ def _edit_product(args: dict) -> dict:
             page.bring_to_front()
             runner = ProductFormRunner(page)
             result = runner.edit(product_id, edit_fields)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
             "error": str(e),

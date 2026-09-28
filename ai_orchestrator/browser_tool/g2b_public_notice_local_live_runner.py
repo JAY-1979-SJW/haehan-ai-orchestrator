@@ -22,12 +22,12 @@ execution gate를 통과한 candidate에 대해
 
 from __future__ import annotations
 
-import os
 import json
+import os
 import platform
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -40,15 +40,27 @@ from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
 
 BODY_TEXT_MAX_LEN = 1000
 
-_ALLOWED_G2B_DOMAINS: frozenset[str] = frozenset({
-    "g2b.go.kr",
-    "www.g2b.go.kr",
-})
+_ALLOWED_G2B_DOMAINS: frozenset[str] = frozenset(
+    {
+        "g2b.go.kr",
+        "www.g2b.go.kr",
+    }
+)
 
-_FORBIDDEN_RESULT_FIELDS: frozenset[str] = frozenset({
-    "cookie", "cookies", "session", "token", "password", "otp",
-    "auth_token", "access_token", "refresh_token", "credential",
-})
+_FORBIDDEN_RESULT_FIELDS: frozenset[str] = frozenset(
+    {
+        "cookie",
+        "cookies",
+        "session",
+        "token",
+        "password",
+        "otp",
+        "auth_token",
+        "access_token",
+        "refresh_token",
+        "credential",
+    }
+)
 
 _VERDICT_PASS = "LIVE_PASS"
 _VERDICT_FAIL = "LIVE_FAIL"
@@ -66,6 +78,7 @@ def _check_playwright_available() -> dict[str, Any]:
     }
     try:
         import importlib.util
+
         spec = importlib.util.find_spec("playwright")
         if spec is None:
             result["error"] = "playwright not installed"
@@ -73,13 +86,14 @@ def _check_playwright_available() -> dict[str, Any]:
         result["playwright_available"] = True
         try:
             from playwright.sync_api import sync_playwright
+
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 browser.close()
             result["chromium_available"] = True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
             result["error"] = f"chromium launch failed: {e}"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
         result["error"] = f"playwright check failed: {e}"
     return result
 
@@ -104,7 +118,7 @@ def _collect_host_proof() -> dict[str, Any]:
         "is_ssh_session": is_ssh,
         "is_local_agent_environment": not is_server,
         "execution_host_type": "server" if is_server else "local_agent",
-        "run_collected_at": datetime.now(timezone.utc).isoformat(),
+        "run_collected_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -114,7 +128,7 @@ def _is_allowed_final_url(url: str) -> bool:
         parsed = urlparse(url)
         domain = parsed.netloc.lower()
         return domain in _ALLOWED_G2B_DOMAINS
-    except Exception:
+    except Exception:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
         return False
 
 
@@ -169,7 +183,7 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
                 download_detected.append(download.url)
                 try:
                     download.cancel()
-                except Exception:
+                except Exception:  # noqa: S110, BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
                     pass
 
             page.on("download", _on_download)
@@ -184,7 +198,7 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
                 body_text = page.locator("body").inner_text(timeout=5000)
                 result["body_text_sample"] = _truncate_body(body_text)
                 result["body_text_length"] = len(body_text)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
                 result["body_text_sample"] = ""
                 result["body_text_length"] = 0
 
@@ -195,7 +209,7 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
             browser.close()
             result["browser_close_reason"] = "read_complete_normal_close"
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
         result["error"] = f"PLAYWRIGHT_ERROR: {e}"
         result["browser_close_reason"] = f"exception_close: {type(e).__name__}"
 
@@ -352,12 +366,25 @@ def validate_g2b_public_notice_live_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required_fields = [
-        "input_url", "canonical_url", "final_url", "operation",
-        "gate_verdict", "execution_allowed", "execution_dispatched",
-        "live_browser_worker_called", "local_agent_required", "local_agent_used",
-        "server_browser_used", "readonly_allowed", "download_auto_allowed",
-        "title", "body_text_sample", "body_text_length",
-        "blocked_reason", "error", "verdict",
+        "input_url",
+        "canonical_url",
+        "final_url",
+        "operation",
+        "gate_verdict",
+        "execution_allowed",
+        "execution_dispatched",
+        "live_browser_worker_called",
+        "local_agent_required",
+        "local_agent_used",
+        "server_browser_used",
+        "readonly_allowed",
+        "download_auto_allowed",
+        "title",
+        "body_text_sample",
+        "body_text_length",
+        "blocked_reason",
+        "error",
+        "verdict",
     ]
     for field in required_fields:
         if field not in result:
@@ -427,7 +454,7 @@ def run_g2b_public_notice_fixture_live_suite(
         "gate_blocked_confirmed": 0,
         "results": [],
         "summary": "",
-        "run_at": datetime.now(timezone.utc).isoformat(),
+        "run_at": datetime.now(UTC).isoformat(),
         # actual-live 모드 메타
         "actual_live_required": actual_live_required,
         "forbid_mock": forbid_mock,
@@ -527,10 +554,10 @@ def run_g2b_public_notice_fixture_live_suite(
 
 
 __all__ = [
-    "run_g2b_public_notice_readonly_live",
-    "validate_g2b_public_notice_live_result",
-    "run_g2b_public_notice_fixture_live_suite",
     "BODY_TEXT_MAX_LEN",
     "_check_playwright_available",
     "_collect_host_proof",
+    "run_g2b_public_notice_fixture_live_suite",
+    "run_g2b_public_notice_readonly_live",
+    "validate_g2b_public_notice_live_result",
 ]

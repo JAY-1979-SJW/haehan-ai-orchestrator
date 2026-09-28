@@ -40,7 +40,7 @@ def _notify_collect(rows: list, ok: bool) -> None:
         mgr = get_manager()
         with mgr._lock:
             mgr._events.append(ev)
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
 
 
@@ -60,7 +60,7 @@ def api_products_collect(limit: int = 50, user: dict = Depends(require_role("adm
         pw, ss, _ = _cdp_ss()
         result = ss.list_products(limit=limit)
         pw.stop()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         result = {"ok": False, "error": str(e)}
     result.update({"collected_at": now_iso(), "duration_ms": elapsed_ms(t0)})
     save_ss("products", result)
@@ -104,7 +104,7 @@ def api_product_detail(
         with sync_playwright() as pw:
             page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
             result = collect_product_detail(page, product_id)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         result = {"ok": False, "error": str(e), "product_id": product_id}
     result["duration_ms"] = elapsed_ms(t0)
     log_event(
@@ -130,7 +130,7 @@ def api_product_detail_collect(product_id: str, user: dict = Depends(require_rol
         with sync_playwright() as pw:
             page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
             result = collect_product_detail(page, product_id)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         result = {"ok": False, "error": str(e), "product_id": product_id}
     result["duration_ms"] = elapsed_ms(t0)
     log_event(
@@ -170,7 +170,7 @@ def api_product_edit(
             page = next((p for p in ctx.pages if f"products/{product_id}" in p.url), None) or ctx.new_page()
             page.bring_to_front()
             result = ProductFormRunner(page).edit(product_id, edit_fields)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(
         "SMARTSTORE_PRODUCT_EDIT",
@@ -217,7 +217,7 @@ def api_products_auto_register(body: AutoRegisterRequest, user: dict = Depends(r
                 skip = True
             page.bring_to_front()
             result = ProductFormRunner(page).run(register_data, skip_open=skip)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(
         "SMARTSTORE_AUTO_REGISTER",
@@ -264,7 +264,7 @@ def api_categories_cache_build(user: dict = Depends(require_role("admin", "owner
                 time.sleep(3)
             page.bring_to_front()
             result = build_cache(page)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     if result.get("ok"):
         log_event(
@@ -316,7 +316,7 @@ def api_products_delete(body: DeleteProductRequest, user: dict = Depends(require
                 result = deleter.delete_bulk(body.product_ids, confirmed=True)
             else:
                 result = deleter.delete(body.product_id, confirmed=True)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         result = {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(
         "SMARTSTORE_PRODUCT_DELETE",

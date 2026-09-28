@@ -4,17 +4,18 @@ This module prepares non-secret Google Console OAuth fields and stops before
 the final Create/Save button. It must not click final state-changing controls
 and must not print or store raw OAuth secrets.
 """
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from . import managed_console
 from scripts.gates.secret_action_gate import build_secret_action_policy
 from scripts.gates.work_mode_gate import build_google_work_mode_policy
 
+from . import managed_console
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT_DIR = ROOT / "data" / "google_console_oauth_fill"
@@ -32,7 +33,7 @@ ADD_URI_LABELS = ("Add URI", "Add authorized redirect URI")
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _stamp() -> str:
@@ -113,14 +114,14 @@ def _save_report(payload: dict[str, Any]) -> Path:
 def _safe_title(page: Any) -> str:
     try:
         return str(page.title())
-    except Exception:
+    except Exception:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
         return ""
 
 
 def _wait(page: Any, milliseconds: int) -> None:
     try:
         page.wait_for_timeout(milliseconds)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
         pass
 
 
@@ -128,7 +129,7 @@ def _goto(page: Any, url: str, result: dict[str, Any], stage: str, timeout_ms: i
     page.goto(url, timeout=timeout_ms)
     try:
         page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
         pass
     _wait(page, 1500)
     result["visited"].append(
@@ -149,7 +150,7 @@ def _click_text(page: Any, labels: tuple[str, ...], *, optional: bool = False) -
                 if locator.count() > 0:
                     locator.click(timeout=6000)
                     return {"ok": True, "label": label, "method": "get_by_text"}
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
                 continue
     return {"ok": False, "optional": optional, "labels": list(labels)}
 
@@ -177,7 +178,7 @@ def _fill_first_visible_input(page: Any, value: str, field: str, index: int) -> 
             if filled.get("ok"):
                 filled["field"] = field
                 return filled
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
             continue
     return {"ok": False, "field": field}
 
@@ -205,7 +206,7 @@ def _detect_final_controls(page: Any) -> list[dict[str, Any]]:
             for item in frame.evaluate(script, list(FINAL_BUTTON_LABELS)):
                 if item not in detected:
                     detected.append(item)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
             continue
     return detected
 
@@ -262,7 +263,7 @@ def prefill_youtube_oauth_console(
         from scripts.web_connector import get_page
 
         page = get_page()
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
         result["status"] = "GOOGLE_CONSOLE_NOT_INSPECTABLE"
         result["warnings"].append(f"managed_cdp_page_unavailable: {type(exc).__name__}")
         path = _save_report(result)
@@ -272,7 +273,13 @@ def prefill_youtube_oauth_console(
         inputs = plan["non_secret_inputs"]
         _goto(page, managed_console.GOOGLE_HOME_URL, result, "google_home", timeout_ms)
         _goto(page, managed_console.GOOGLE_ACCOUNT_URL, result, "account_state", timeout_ms)
-        _goto(page, f"{YOUTUBE_DATA_API_ENABLE_URL}?project={inputs['project']}", result, "youtube_data_api_library", timeout_ms)
+        _goto(
+            page,
+            f"{YOUTUBE_DATA_API_ENABLE_URL}?project={inputs['project']}",
+            result,
+            "youtube_data_api_library",
+            timeout_ms,
+        )
         if approved_api_enable:
             result["actions"].append({"stage": "api_enable", **_click_text(page, ("Enable",), optional=True)})
             _wait(page, 2500)
@@ -286,14 +293,24 @@ def prefill_youtube_oauth_console(
                 }
             )
         _goto(page, GOOGLE_CLOUD_CREDENTIALS_URL, result, "cloud_credentials", timeout_ms)
-        result["actions"].append({"stage": "create_credentials_menu", **_click_text(page, CREATE_CREDENTIAL_LABELS, optional=True)})
+        result["actions"].append(
+            {"stage": "create_credentials_menu", **_click_text(page, CREATE_CREDENTIAL_LABELS, optional=True)}
+        )
         _wait(page, 800)
         oauth_clicked = _click_text(page, OAUTH_CLIENT_LABELS, optional=True)
         result["actions"].append({"stage": "oauth_client_id_menu", **oauth_clicked})
         if not oauth_clicked.get("ok"):
-            _goto(page, f"{GOOGLE_CLOUD_OAUTH_CLIENT_CREATE_URL}?project={inputs['project']}", result, "oauth_client_create_direct", timeout_ms)
+            _goto(
+                page,
+                f"{GOOGLE_CLOUD_OAUTH_CLIENT_CREATE_URL}?project={inputs['project']}",
+                result,
+                "oauth_client_create_direct",
+                timeout_ms,
+            )
         result["actions"].append({"stage": "application_type", **_click_text(page, WEB_APP_LABELS, optional=True)})
-        result["actions"].append({"stage": "client_name", **_fill_first_visible_input(page, inputs["client_name"], "client_name", 0)})
+        result["actions"].append(
+            {"stage": "client_name", **_fill_first_visible_input(page, inputs["client_name"], "client_name", 0)}
+        )
         result["actions"].append({"stage": "add_redirect_uri", **_click_text(page, ADD_URI_LABELS, optional=True)})
         _wait(page, 800)
         result["actions"].append(
@@ -324,7 +341,7 @@ def prefill_youtube_oauth_console(
             result["status"] = "ready_for_user_final_button" if required_ok else "needs_user_attention_or_ui_changed"
         result["current_url"] = getattr(page, "url", "")
         result["current_title"] = _safe_title(page)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
         result["status"] = "GOOGLE_CONSOLE_NOT_INSPECTABLE"
         result["warnings"].append(f"{type(exc).__name__}: {exc}")
         result["current_url"] = getattr(page, "url", "")

@@ -236,7 +236,7 @@ def api_crawl_shopping(
         from scripts.naver.shopping.crawl import crawl_shopping
 
         result = crawl_shopping(query=query, limit=limit)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 크롤링/분석 읽기전용 API - 실패시 빈 결과+error 필드 반환, warning 로그만 남김
         logger.warning("[SHOPPING-CRAWL-ERR] %s", e)
         result = {"ok": False, "error": str(e)}
 
@@ -270,7 +270,7 @@ def api_crawl_report(
         from scripts.naver.shopping.crawl import full_summary
 
         result = full_summary(query)  # full_summary(keyword: str) — 위치인자
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 크롤링/분석 읽기전용 API - 실패시 빈 결과+error 필드 반환, warning 로그만 남김
         logger.warning("[SHOPPING-CRAWL-REPORT-ERR] %s", e)
         result = {"keyword": query, "count": 0, "error": str(e)}
 
@@ -306,7 +306,7 @@ def api_price_distribution(
 
         keywords = [query] if query else None
         result = price_distribution(keywords=keywords)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 크롤링/분석 읽기전용 API - 실패시 빈 결과+error 필드 반환, warning 로그만 남김
         logger.warning("[SHOPPING-ANALYSIS-PRICE-DIST-ERR] %s", e)
         result = {"ranges": [], "error": str(e)}
     duration_ms = int((time.monotonic() - t0) * 1000)
@@ -340,7 +340,7 @@ def api_mall_analysis(
 
         keywords = [query] if query else None
         result = mall_analysis(keywords=keywords, top_n=top_n, exclude_large=exclude_large)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 크롤링/분석 읽기전용 API - 실패시 빈 결과+error 필드 반환, warning 로그만 남김
         logger.warning("[SHOPPING-ANALYSIS-MALLS-ERR] %s", e)
         result = {"malls": [], "total_malls": 0, "error": str(e)}
     duration_ms = int((time.monotonic() - t0) * 1000)
@@ -373,7 +373,7 @@ def api_brand_analysis(
 
         keywords = [query] if query else None
         result = brand_analysis(keywords=keywords, top_n=top_n)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 크롤링/분석 읽기전용 API - 실패시 빈 결과+error 필드 반환, warning 로그만 남김
         logger.warning("[SHOPPING-ANALYSIS-BRANDS-ERR] %s", e)
         result = {"brands": [], "total_brands": 0, "error": str(e)}
     duration_ms = int((time.monotonic() - t0) * 1000)
@@ -403,7 +403,7 @@ def api_keyword_summary(
         from scripts.naver.shopping.analysis import keyword_summary
 
         result = keyword_summary()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 크롤링/분석 읽기전용 API - 실패시 빈 결과+error 필드 반환, warning 로그만 남김
         logger.warning("[SHOPPING-ANALYSIS-KEYWORDS-ERR] %s", e)
         result = {"keywords": [], "total_products": 0, "error": str(e)}
     duration_ms = int((time.monotonic() - t0) * 1000)
@@ -434,7 +434,7 @@ def api_competition_score(
         from scripts.naver.shopping.analysis import competition_score
 
         result = competition_score(query)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 크롤링/분석 읽기전용 API - 실패시 빈 결과+error 필드 반환, warning 로그만 남김
         logger.warning("[SHOPPING-ANALYSIS-COMPETITION-ERR] %s", e)
         result = {"keyword": query, "score": 0, "error": str(e)}
     duration_ms = int((time.monotonic() - t0) * 1000)

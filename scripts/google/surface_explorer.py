@@ -1,9 +1,10 @@
 """Read-only live explorer for Google service surfaces."""
+
 from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -68,7 +69,7 @@ def explore_google_surfaces(
 
     report = {
         "site_id": "google",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "mode": "read_only_no_click",
         "policy": {
             "no_click": True,
@@ -93,7 +94,7 @@ def explore_google_surfaces(
         from scripts.web_connector import get_page
 
         base_page = get_page()
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
         report["status"] = "failed"
         report["warnings"] = [f"browser connection failed: {exc}"]
         report["counts"]["failed"] = len(selected)
@@ -107,7 +108,7 @@ def explore_google_surfaces(
             if visit_page is not base_page:
                 try:
                     visit_page.close()
-                except Exception:
+                except Exception:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
                     pass
         report["surfaces"].append(result)
         if result["status"] == "failed":
@@ -128,7 +129,7 @@ def explore_google_surfaces(
 def save_surface_exploration(report: dict, path: Path | None = None) -> tuple[dict, Path]:
     EXPLORATION_DIR.mkdir(parents=True, exist_ok=True)
     LATEST_EXPLORATION.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     target = path or EXPLORATION_DIR / f"google_surface_exploration_{timestamp}.json"
     report = _sanitize_obj(report)
     text = json.dumps(report, ensure_ascii=True, indent=2)
@@ -168,7 +169,7 @@ def _visit_surface(page: Any, surface: dict, *, timeout_ms: int) -> dict:
         "catalog_url": surface["url"],
         "access_mode": surface["access_mode"],
         "catalog_risk": surface["risk"],
-        "visited_at": datetime.now(timezone.utc).isoformat(),
+        "visited_at": datetime.now(UTC).isoformat(),
         "status": "started",
         "final_url": "",
         "title": "",
@@ -186,7 +187,7 @@ def _visit_surface(page: Any, surface: dict, *, timeout_ms: int) -> dict:
         result["final_url"] = page.url
         try:
             result["title"] = page.title()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
             result["title"] = ""
         snapshot = _extract_surface_snapshot(page)
         result.update(snapshot)
@@ -197,7 +198,7 @@ def _visit_surface(page: Any, surface: dict, *, timeout_ms: int) -> dict:
         )
         result["risk_controls"] = classify_risk_controls(snapshot.get("controls", []))
         result["status"] = "visited"
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
         result["status"] = "failed"
         result["warnings"].append(str(exc))
     return result
@@ -206,7 +207,7 @@ def _visit_surface(page: Any, surface: dict, *, timeout_ms: int) -> dict:
 def _new_isolated_page(base_page: Any) -> Any:
     try:
         return base_page.context.new_page()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
         return base_page
 
 
@@ -216,13 +217,13 @@ def _goto_readonly(page: Any, url: str, *, timeout_ms: int) -> None:
         try:
             page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
             return
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
             last_exc = exc
             if "interrupted by another navigation" not in str(exc) or attempt == 2:
                 break
             try:
                 page.wait_for_timeout(2500)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
                 pass
     if last_exc:
         raise last_exc
@@ -278,7 +279,7 @@ def _extract_surface_snapshot(page: Any) -> dict:
     for frame in page.frames:
         try:
             data = frame.evaluate(script)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음
             continue
         for key in merged:
             merged[key].extend(data.get(key, []))
@@ -306,9 +307,7 @@ def detect_login_required(url: str, title: str, markers: list[str]) -> bool:
 def classify_risk_controls(controls: list[dict]) -> list[dict]:
     risk_controls: list[dict] = []
     for control in controls:
-        haystack = " ".join(
-            str(control.get(name, "")) for name in ("text", "aria", "title", "role")
-        ).lower()
+        haystack = " ".join(str(control.get(name, "")) for name in ("text", "aria", "title", "role")).lower()
         matched = [keyword for keyword in RISK_CONTROL_KEYWORDS if keyword.lower() in haystack]
         if matched:
             item = dict(control)

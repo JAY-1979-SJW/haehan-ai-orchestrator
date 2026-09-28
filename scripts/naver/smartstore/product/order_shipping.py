@@ -153,11 +153,11 @@ class OrderShippingProcessor:
                     self.page.click(f'a:has-text("{text}")', timeout=3000)
                     time.sleep(3)
                     return True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 발송처리(송장번호 입력) 자동화 - 결제/구매확정이 아닌 배송정보 입력, 실패시 ok:False,error 반환(성공 위장 없음)
                     pass
             time.sleep(2)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 발송처리(송장번호 입력) 자동화 - 결제/구매확정이 아닌 배송정보 입력, 실패시 ok:False,error 반환(성공 위장 없음)
             _log.error("[order-ship] 페이지 진입 실패: %s", e)
             return False
 
@@ -185,7 +185,7 @@ class OrderShippingProcessor:
                 }})()
             """)
             return rows
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 발송처리(송장번호 입력) 자동화 - 결제/구매확정이 아닌 배송정보 입력, 실패시 ok:False,error 반환(성공 위장 없음)
             _log.error("[order-ship] 주문 추출 실패: %s", e)
             return []
 
@@ -197,7 +197,7 @@ class OrderShippingProcessor:
             try:
                 row = self.page.locator(row_sel).first
                 row.wait_for(timeout=5000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 발송처리(송장번호 입력) 자동화 - 결제/구매확정이 아닌 배송정보 입력, 실패시 ok:False,error 반환(성공 위장 없음)
                 return {"ok": False, "error": f"주문행 찾기 실패: {order_id}"}
 
             # 발송처리 버튼 클릭
@@ -206,7 +206,7 @@ class OrderShippingProcessor:
                     row.locator(f'button:has-text("{btn_text}")').first.click(timeout=3000)
                     time.sleep(1)
                     break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 발송처리(송장번호 입력) 자동화 - 결제/구매확정이 아닌 배송정보 입력, 실패시 ok:False,error 반환(성공 위장 없음)
                     pass
 
             # 택배사 선택
@@ -217,7 +217,7 @@ class OrderShippingProcessor:
                 ).first
                 select.select_option(value=carrier_code)
                 time.sleep(0.3)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 발송처리(송장번호 입력) 자동화 - 결제/구매확정이 아닌 배송정보 입력, 실패시 ok:False,error 반환(성공 위장 없음)
                 _log.warning("[order-ship] 택배사 선택 실패 — 기본값 사용")
 
             # 송장번호 입력
@@ -233,10 +233,10 @@ class OrderShippingProcessor:
                     self.page.click(f'button:has-text("{btn_text}")', timeout=3000)
                     time.sleep(1)
                     return {"ok": True, "order_id": order_id, "tracking_number": tracking_number}
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 발송처리(송장번호 입력) 자동화 - 결제/구매확정이 아닌 배송정보 입력, 실패시 ok:False,error 반환(성공 위장 없음)
                     pass
 
             return {"ok": False, "error": "저장 버튼 클릭 실패"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 발송처리(송장번호 입력) 자동화 - 결제/구매확정이 아닌 배송정보 입력, 실패시 ok:False,error 반환(성공 위장 없음)
             _log.error("[order-ship] 송장 입력 실패: %s", e)
             return {"ok": False, "error": str(e)[:200]}

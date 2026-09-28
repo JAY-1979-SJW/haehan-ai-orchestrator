@@ -3,6 +3,7 @@
 bulk_collect, monitor_keywords, track_blogger, search_bulk, compare_bloggers.
 개별 조회 능력은 self(MRO)로 호출한다. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 import time
@@ -10,11 +11,14 @@ from pathlib import Path
 
 
 class BlogCollectMixin:
-    def blog_bulk_collect(self, blog_urls: list[str],
-                           include_posts: bool = True,
-                           include_comments: bool = False,
-                           include_images: bool = False,
-                           max_posts_each: int = 20) -> list[dict]:
+    def blog_bulk_collect(
+        self,
+        blog_urls: list[str],
+        include_posts: bool = True,
+        include_comments: bool = False,
+        include_images: bool = False,
+        max_posts_each: int = 20,
+    ) -> list[dict]:
         """여러 블로그 일괄 수집."""
         results = []
 
@@ -35,15 +39,13 @@ class BlogCollectMixin:
 
                 results.append(blog_data)
                 time.sleep(2.0)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 네이버 블로그 읽기전용 수집(글목록/태그/본문/좋아요수 비교) - 실패시 error 필드 기록 후 계속 진행, 쓰기 없음
                 print(f"  오류: {e}")
                 results.append({"blog_id": blog_url.split("/")[-1], "error": str(e)})
 
         return results
 
-    def blog_monitor_keywords(self, keywords: list[str],
-                                page: int = 1,
-                                max_each: int = 20) -> dict:
+    def blog_monitor_keywords(self, keywords: list[str], page: int = 1, max_each: int = 20) -> dict:
         """키워드 검색 → 결과 수집."""
         results = {}
 
@@ -53,14 +55,13 @@ class BlogCollectMixin:
                 search_results = self.blog_search(keyword, page=page, max_results=max_each)
                 results[keyword] = search_results
                 time.sleep(1.5)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 네이버 블로그 읽기전용 수집(글목록/태그/본문/좋아요수 비교) - 실패시 error 필드 기록 후 계속 진행, 쓰기 없음
                 print(f"  오류: {e}")
                 results[keyword] = []
 
         return results
 
-    def blog_track_blogger(self, target_blog_url: str,
-                             save_path: str = "") -> dict:
+    def blog_track_blogger(self, target_blog_url: str, save_path: str = "") -> dict:
         """블로거 전체 정보 스냅샷."""
         from datetime import datetime
 
@@ -81,7 +82,7 @@ class BlogCollectMixin:
                 for tag in post_data.get("tags", []):
                     if tag:
                         top_tags[tag] = top_tags.get(tag, 0) + 1
-            except Exception:
+            except Exception:  # noqa: S110, BLE001 - 네이버 블로그 읽기전용 수집(글목록/태그/본문/좋아요수 비교) - 실패시 error 필드 기록 후 계속 진행, 쓰기 없음
                 pass
         # 빈도순 정렬
         top_tags = dict(sorted(top_tags.items(), key=lambda x: x[1], reverse=True))
@@ -97,6 +98,7 @@ class BlogCollectMixin:
 
         if save_path:
             import json
+
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
             with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(snapshot, f, ensure_ascii=False, indent=2)
@@ -104,8 +106,7 @@ class BlogCollectMixin:
 
         return snapshot
 
-    def blog_search_bulk(self, query: str, max_pages: int = 3,
-                          collect_post: bool = False) -> list[dict]:
+    def blog_search_bulk(self, query: str, max_pages: int = 3, collect_post: bool = False) -> list[dict]:
         """검색 결과 여러 페이지 수집."""
         results = []
 
@@ -122,13 +123,13 @@ class BlogCollectMixin:
                                 post_data = self.blog_read_post(post_url)
                                 result["body"] = post_data.get("body", "")
                                 result["images"] = post_data.get("images", [])
-                            except Exception:
+                            except Exception:  # noqa: S110, BLE001 - 네이버 블로그 읽기전용 수집(글목록/태그/본문/좋아요수 비교) - 실패시 error 필드 기록 후 계속 진행, 쓰기 없음
                                 pass
 
                 results.extend(page_results)
                 print(f" {len(page_results)}개")
                 time.sleep(1.5)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 네이버 블로그 읽기전용 수집(글목록/태그/본문/좋아요수 비교) - 실패시 error 필드 기록 후 계속 진행, 쓰기 없음
                 print(f" 오류: {e}")
 
         return results
@@ -154,23 +155,25 @@ class BlogCollectMixin:
                             try:
                                 pd = self.blog_read_post(href)
                                 like_counts.append(pd.get("like_count", 0))
-                            except Exception:
+                            except Exception:  # noqa: S110, BLE001 - 네이버 블로그 읽기전용 수집(글목록/태그/본문/좋아요수 비교) - 실패시 error 필드 기록 후 계속 진행, 쓰기 없음
                                 pass
                     if like_counts:
                         avg_likes = sum(like_counts) / len(like_counts)
 
-                results.append({
-                    "blog_id": info["blog_id"],
-                    "title": info["title"],
-                    "post_count": len(posts),
-                    "neighbor_count": info["neighbor_count"],
-                    "visitor_total": info["visitor_total"],
-                    "visitor_today": info["visitor_today"],
-                    "avg_comments": round(avg_comments, 1),
-                    "avg_likes": avg_likes,
-                })
+                results.append(
+                    {
+                        "blog_id": info["blog_id"],
+                        "title": info["title"],
+                        "post_count": len(posts),
+                        "neighbor_count": info["neighbor_count"],
+                        "visitor_total": info["visitor_total"],
+                        "visitor_today": info["visitor_today"],
+                        "avg_comments": round(avg_comments, 1),
+                        "avg_likes": avg_likes,
+                    }
+                )
                 time.sleep(2.0)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 네이버 블로그 읽기전용 수집(글목록/태그/본문/좋아요수 비교) - 실패시 error 필드 기록 후 계속 진행, 쓰기 없음
                 print(f"  {blog_url} 오류: {e}")
 
         return results

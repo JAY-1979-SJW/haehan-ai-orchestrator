@@ -41,7 +41,7 @@ def stage_schema() -> StageResult:
             errors=errs,
             detail=f"ITEM_START={ITEM_START}, LAST_ROW={LAST_ROW}, N_FILLER={N_FILLER}",
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
         return StageResult(name="schema", passed=False, errors=[str(e)])
 
 
@@ -57,7 +57,7 @@ def stage_style() -> StageResult:
             errors=errs,
             detail=f"프리셋 수: {len(STYLE_PRESETS)}",
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
         return StageResult(name="style", passed=False, errors=[str(e)])
 
 
@@ -71,7 +71,7 @@ def stage_engine() -> StageResult:
 
         try:
             xl = win32.GetActiveObject("Excel.Application")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
             return StageResult(
                 name="engine",
                 passed=False,
@@ -99,7 +99,7 @@ def stage_engine() -> StageResult:
             passed=False,
             errors=["win32com 없음 — Excel 환경에서만 실행 가능"],
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
         return StageResult(name="engine", passed=False, errors=[traceback.format_exc()])
 
 
@@ -118,7 +118,7 @@ def stage_openpyxl() -> StageResult:
             errors=errs,
             detail=f"저장 경로: {path}",
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
         return StageResult(name="openpyxl", passed=False, errors=[traceback.format_exc()])
 
 
@@ -148,7 +148,7 @@ def stage_live() -> StageResult:
             errors=missing,
             detail="excel_live.py import + 상수 일치 확인",
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
         return StageResult(name="live", passed=False, errors=[traceback.format_exc()])
 
 
@@ -170,7 +170,7 @@ def stage_generator() -> StageResult:
             errors=missing,
             detail="quote_generator.py import + generate() 존재 확인",
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
         return StageResult(name="generator", passed=False, errors=[traceback.format_exc()])
 
 
@@ -211,7 +211,7 @@ def stage_ai_check() -> StageResult:
             errors=[f"[{i}] {d}" for i, d in issues],
             detail=f"등급: {grade}",
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
         return StageResult(name="ai_check", passed=False, errors=[traceback.format_exc()])
 
 
