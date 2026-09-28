@@ -1,31 +1,36 @@
 """카카오 서비스 공통 — 로그인 확인, 작업 컨텍스트"""
+
 from __future__ import annotations
 
 import sys
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import browser_session  # noqa: E402
-from scripts.login_session import is_logged_in, ensure_login  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
+from scripts.login_session import ensure_login, is_logged_in  # noqa: E402
 from scripts.page_helper import (  # noqa: E402
     page_goto,
-    page_wait_visible,
     page_wait_click,
     page_wait_type,
+    page_wait_visible,
 )
+from scripts.web_connector import browser_session  # noqa: E402
 
 log = get_logger(__name__)
 
 KAKAO_DEV_URL = "https://developers.kakao.com/console/app"
 
 __all__ = [
-    "page_goto", "page_wait_visible", "page_wait_click", "page_wait_type",
-    "task_context", "check_session",
+    "check_session",
+    "page_goto",
+    "page_wait_click",
+    "page_wait_type",
+    "page_wait_visible",
+    "task_context",
 ]
 
 
@@ -35,7 +40,7 @@ def check_session() -> dict:
     try:
         with browser_session() as page:
             result["logged_in"] = is_logged_in(page, "kakao")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카카오 서비스 로그인 상태 확인(check_session, 읽기전용) - 실패 시 error 필드만 채우고 logged_in은 None(미확인) 유지, 세션 파기나 자격증명 노출 없음
         result["error"] = str(e)
     return result
 

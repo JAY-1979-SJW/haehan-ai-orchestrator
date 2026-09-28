@@ -125,7 +125,7 @@ class SEOOptimizer:
                 "keywords": keywords,
                 "sample_titles": titles[:10],
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 상품명 SEO 분석(analyze_product_name, 읽기전용) - 분석 실패 시 error 필드가 있는 dict를 반환할 뿐 데이터 변경 없음
             return {"ok": False, "error": str(e)[:80]}
 
     def optimize(self, product: dict) -> dict:

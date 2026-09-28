@@ -194,7 +194,7 @@ def _collect_ohou_posts(seeds: list[str]) -> list[dict]:
     for q in seeds:
         try:
             r = search_community(q)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 커뮤니티 검색 기반 블로그 주제 리서치(읽기전용) - 검색 실패 시 경고 로그 후 해당 검색어만 skip
             _log.warning("[research-lighting] '%s' 검색 실패: %s", q, e)
             continue
         for p in r.get("posts", []):

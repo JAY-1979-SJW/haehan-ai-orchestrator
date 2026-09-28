@@ -56,7 +56,7 @@ def run_scrape(
 
                 if result.total % 50 == 0:
                     logger.info("수집 진행: %d건 (신규:%d)", result.total, result.new)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - gonobi 블로그 포스트 수집 루프 - 개별 포스트 처리 실패는 errors 카운트 증가 후 다음 포스트로 계속 진행(읽기전용 수집)
                 logger.error("포스트 처리 실패 %s: %s", post.log_no, e)
                 result.errors += 1
 

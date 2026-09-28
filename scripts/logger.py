@@ -66,7 +66,7 @@ def _init_root() -> None:
         try:
             # utf-8 로 강제 + 인코딩 불가 문자는 대체(크래시 방지)
             stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-        except Exception:
+        except Exception:  # noqa: BLE001 - 콘솔 로그 스트림 UTF-8 인코딩 재설정 best-effort - 실패해도 로깅 자체(핸들러 등록)는 계속 진행, 단순 콘솔 출력 인코딩 조정
             pass
         ch = logging.StreamHandler(stream)
         ch.setLevel(_resolve_level())

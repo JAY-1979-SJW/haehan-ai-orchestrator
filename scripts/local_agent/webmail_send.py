@@ -201,7 +201,7 @@ def send_email(
 
     except CDPConnectionError as e:
         return {"ok": False, "error": str(e)}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 웹메일 발송 자동화 - 이 except는 세션 전체(CDP 연결 등) 실패 시 최종 폴백으로 ok:False 반환(fail-closed), 발송 성공을 임의로 단정하지 않음
         return {"ok": False, "error": str(e)}
 
 

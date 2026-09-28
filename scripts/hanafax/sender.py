@@ -576,5 +576,5 @@ def _run(
         if not using_external_file:
             try:
                 os.unlink(tmp_path)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 팩스 발송 Playwright 자동화 - 실패 시 success:False로 반환(fail-closed), 두번째 except는 임시파일 정리 best-effort(실패해도 임시파일만 남을 뿐 안전)
                 pass

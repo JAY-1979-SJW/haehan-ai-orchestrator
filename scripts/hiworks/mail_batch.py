@@ -1,4 +1,5 @@
 """Hiworks one-recipient-at-a-time sales mail batch planning and execution."""
+
 from __future__ import annotations
 
 import json
@@ -125,7 +126,7 @@ def execute_send_batch(plan: dict[str, Any], *, page) -> dict[str, Any]:
             else:
                 failed += 1
                 item_result["error"] = send_result.get("error_msg") or "send_failed"
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 하이웍스 메일 일괄발송 결과 집계 루프 - 개별 발송 실패는 failed 카운트와 error 필드에 기록
             failed += 1
             item_result["error"] = str(exc)
 

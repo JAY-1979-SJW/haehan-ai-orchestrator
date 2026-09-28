@@ -201,7 +201,7 @@ def test_live_readonly_smoke(target_url: str):
         print("  Live smoke PASS")
     except ImportError:
         print("  Playwright 미설치 — 실제 접속 스킵")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 실사이트 접속 라이브 스모크 테스트 - 실패는 WARN 메시지 출력만, 자동화 동작 없이 접속 확인 목적
         print(f"  Live smoke WARN: {e}")
 
 

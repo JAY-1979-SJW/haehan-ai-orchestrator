@@ -61,7 +61,7 @@ def is_logged_in_by_cookie(page: Page, site: str) -> bool:
 
     try:
         cookies = page.context.cookies()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 쿠키 마커 기반 로그인 판별(is_logged_in_by_cookie, 읽기전용) - 쿠키 조회 실패 시 False(미로그인 으로 간주)를 반환하는 안전한 방향의 기본값, 자격증명 값 자체는 노출하지 않고 쿠키 이름 존재 여부만 확인
         return False
 
     found_names = {c.get("name", "") for c in cookies if domain in (c.get("domain", "") or "")}
