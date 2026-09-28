@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import subprocess
 import sys
 import time
@@ -35,10 +36,8 @@ def goto(page, url, wait=True):
     try:
         page.goto(url, timeout=20000)
         if wait:
-            try:
+            with contextlib.suppress(Exception):
                 page.wait_for_load_state("domcontentloaded", timeout=10000)
-            except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
-                pass
         time.sleep(2)
     except Exception as e:  # noqa: BLE001 - 홍보 영상 녹화용 브라우저 시나리오 스크립트 — UI 동작 실패해도 나레이션/녹화 흐름은 계속 진행(데모 목적), 결제는 명시적으로 사람이 직접 수행(코드에 없음)(2026-09-28 검토)
         print(f"  goto 실패({url[:50]}): {e}")
@@ -61,15 +60,11 @@ def narration(page, text: str, hold: float = 3.0):
         d.style.display = 'block';
     }})();
     """
-    try:
+    with contextlib.suppress(Exception):
         page.evaluate(js)
-    except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
-        pass
     time.sleep(hold)
-    try:
+    with contextlib.suppress(Exception):
         page.evaluate("let d=document.getElementById('_hn'); if(d) d.style.display='none';")
-    except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
-        pass
 
 
 def title_card(page, title: str, sub: str = "", hold: float = 3.0):
@@ -101,7 +96,7 @@ def title_card(page, title: str, sub: str = "", hold: float = 3.0):
 
 
 def mask_pii(page):
-    try:
+    with contextlib.suppress(Exception):
         page.evaluate("""
         const sels = [
             '[class*=email]','[class*=Email]','[class*=userName]',
@@ -114,8 +109,6 @@ def mask_pii(page):
             });
         });
         """)
-    except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
-        pass
 
 
 def blank_page(page, html_body: str, hold: float = 5.0):
@@ -386,10 +379,8 @@ def scene_gabia(page):
 
     try:
         page.goto("https://www.gabia.com", timeout=20000)
-        try:
+        with contextlib.suppress(Exception):
             page.wait_for_load_state("domcontentloaded", timeout=15000)
-        except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
-            pass
         mask_pii(page)
         time.sleep(3)
         narration(page, "가비아 — 도메인·서버 만료일 AI가 자동 모니터링", 3)
@@ -406,10 +397,8 @@ def scene_public_data(page):
 
     try:
         page.goto("https://www.data.go.kr", timeout=20000)
-        try:
+        with contextlib.suppress(Exception):
             page.wait_for_load_state("domcontentloaded", timeout=12000)
-        except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
-            pass
         mask_pii(page)
         time.sleep(2)
         narration(page, "공공데이터포털 — API 인증키 현황 자동 조회", 3)
@@ -482,10 +471,8 @@ def main():
             traceback.print_exc()
         finally:
             stop_rec()
-            try:
+            with contextlib.suppress(Exception):
                 page.close()
-            except Exception:  # noqa: BLE001 - 화면 요소 숨김/애니메이션 등 연출 보조 동작 — 실패해도 녹화에 지장 없음(2026-09-28 검토)
-                pass
 
     if not RAW_VIDEO.exists() or RAW_VIDEO.stat().st_size < 1_000_000:
         print("❌ 녹화 파일 없음 또는 너무 작음")

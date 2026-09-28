@@ -19,6 +19,7 @@ site 인자는 자격증명/프로필 키로만 사용.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from scripts.form.bot_radar import scan as bot_scan
@@ -159,10 +160,8 @@ def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms
     )
 
     before_url = ""
-    try:
+    with contextlib.suppress(Exception):
         before_url = page.url or ""
-    except Exception:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
-        pass
 
     # 5) ID 입력 (휴먼 타이핑)
     r_id = human_type(page, id_field.selector, nid, label="ID")

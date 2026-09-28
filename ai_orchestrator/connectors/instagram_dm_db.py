@@ -14,7 +14,7 @@ import json
 import sqlite3
 import uuid
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -73,10 +73,8 @@ def init_db() -> None:
         # 일부 계정(과거 Facebook 로그인 연동 이력이 있는 경우)의 webhook entry.id는
         # 구버전 graph.facebook.com 계열 ID로 온다. 두 ID가 달라 계정 매칭이 실패하는 걸 막기 위해
         # 별도 컬럼에 보조 ID를 저장하고 조회 시 OR로 매칭한다.
-        try:
+        with suppress(sqlite3.OperationalError):  # 컬럼이 이미 있음
             con.execute("ALTER TABLE instagram_accounts ADD COLUMN legacy_instagram_user_id TEXT")
-        except sqlite3.OperationalError:
-            pass  # 컬럼이 이미 있음
         con.execute("""
             CREATE TABLE IF NOT EXISTS automation_rules (
                 id TEXT PRIMARY KEY,

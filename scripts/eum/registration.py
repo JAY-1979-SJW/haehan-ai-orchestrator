@@ -6,6 +6,7 @@ only when submit=True.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 import time as _time
@@ -316,10 +317,8 @@ def _denial_reason(page) -> str | None:
 def _goto_form_page(page) -> None:
     """Open the registration page without waiting for long-polling/network idle."""
     page.goto(REGISTRATION_URL, wait_until="domcontentloaded", timeout=30000)
-    try:
+    with contextlib.suppress(Exception):
         page.wait_for_load_state("load", timeout=5000)
-    except Exception:  # noqa: BLE001 - EUM 단말기 설치신청 폼 자동입력(+선택적 제출) - submit 기본값 False, 실패시 result.error 기록하고 success=False 유지(fail-closed)
-        pass
 
 
 def register_device(

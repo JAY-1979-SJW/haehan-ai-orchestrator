@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -96,10 +97,8 @@ def _parse_showinfo_timestamps(stderr: str) -> list[float]:
     for line in stderr.splitlines():
         if "pts_time:" in line:
             part = line.split("pts_time:")[1].split()[0]
-            try:
+            with contextlib.suppress(ValueError):
                 timestamps.append(float(part))
-            except ValueError:
-                pass
     return timestamps
 
 

@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -204,10 +205,8 @@ def expand_all_sections(page: Any, *, max_rounds: int = 4, settle_ms: int = 2200
             break
         n = (r or {}).get("clicked", 0)
         total += n
-        try:
+        with contextlib.suppress(Exception):
             page.wait_for_timeout(settle_ms)
-        except Exception:  # noqa: BLE001 - 상품등록 후 화면 검증(섹션/누락필드/위험옵션 읽기전용) - 실패 시 빈 목록 반환
-            pass
         if not n:
             break
     return total

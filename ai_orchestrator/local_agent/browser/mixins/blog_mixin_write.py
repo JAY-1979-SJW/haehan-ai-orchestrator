@@ -15,6 +15,7 @@ NOTE: blog_write_post / blog_edit_post 는 scripts.naver.blog.core.writer.BlogWr
 
 from __future__ import annotations
 
+import contextlib
 import re
 import time
 
@@ -252,10 +253,8 @@ class BlogWriteMixin:
             time.sleep(1.5)
 
             if is_mutual:
-                try:
+                with contextlib.suppress(Exception):
                     fr.locator(NEIGHBOR_MUTUAL).first.click()
-                except Exception:  # noqa: S110, BLE001
-                    pass
 
             fr.locator(NEIGHBOR_ADD_CONFIRM).first.click()
             time.sleep(1)

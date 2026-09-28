@@ -5,6 +5,7 @@ URL: https://new.smartplace.naver.com/
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 from playwright.sync_api import Page
@@ -27,10 +28,9 @@ class NaverPlace:
             return False
         self.page.goto(PLACE_URL, timeout=20000, wait_until="domcontentloaded")
         time.sleep(3)
-        try:
+        # 팝업 처리 시도 실패는 무시하고 계속 진행 — 읽기전용 조회이므로 팝업이 남아도 조회 로직에는 영향 적음
+        with contextlib.suppress(Exception):
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 팝업 처리 시도 실패는 무시하고 계속 진행 — 읽기전용 조회이므로 팝업이 남아도 조회 로직에는 영향 적음
-            pass
         return True
 
     def list_places(self) -> list[dict]:
