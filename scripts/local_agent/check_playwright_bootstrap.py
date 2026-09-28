@@ -4,22 +4,23 @@ Playwright 설치 상태 진단 스크립트
 로컬 에이전트 실행 전 Playwright 환경을 점검한다.
 사용: python scripts/local_agent/check_playwright_bootstrap.py
 """
+
 from __future__ import annotations
 
 import sys
-import os
+from pathlib import Path
 
 # repo root를 sys.path에 추가
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from ai_orchestrator.local_agent.playwright_bootstrap import (
-    check_playwright_status,
-    ensure_playwright_ready,
-    PLAYWRIGHT_READY,
     PLAYWRIGHT_BROWSER_MISSING,
     PLAYWRIGHT_PACKAGE_MISSING,
+    PLAYWRIGHT_READY,
+    check_playwright_status,
+    ensure_playwright_ready,
 )
 
 

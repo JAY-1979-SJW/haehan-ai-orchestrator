@@ -6,9 +6,9 @@ low / medium 만 실행. high / critical 은 승인돼도 실행 금지.
 
 import json
 import logging
-import os
 import time
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 import approval_manager
 import task_store
@@ -16,8 +16,8 @@ from approval_manager import build_execution_plan, is_token_valid
 from logger import get_logger
 from whitelist_executor import execute_allowed
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_EXEC_LOG_PATH = os.path.join(_BASE_DIR, "logs", "execution.jsonl")
+_BASE_DIR = Path(__file__).resolve().parent
+_EXEC_LOG_PATH = _BASE_DIR / "logs" / "execution.jsonl"
 
 _BLOCKED_LEVELS = {"high", "critical"}
 
@@ -37,14 +37,17 @@ def _get_exec_logger() -> logging.Logger:
     global _exec_logger
     if _exec_logger is not None:
         return _exec_logger
-    os.makedirs(os.path.dirname(_EXEC_LOG_PATH), exist_ok=True)
+    # 모듈 전역 _EXEC_LOG_PATH 를 테스트가 str 로 monkeypatch 하는 경우가 있어
+    # 사용 시점에 Path(...) 로 감싼다 (Path/str 양쪽 다 안전).
+    exec_log_path = Path(_EXEC_LOG_PATH)
+    exec_log_path.parent.mkdir(parents=True, exist_ok=True)
     lg = logging.getLogger("orchestrator.execution_jsonl")
     # 재초기화 시 기존 핸들러 제거 (경로 변경 반영)
     for h in lg.handlers[:]:
         h.close()
         lg.removeHandler(h)
     fh = RotatingFileHandler(
-        _EXEC_LOG_PATH,
+        exec_log_path,
         maxBytes=10 * 1024 * 1024,
         backupCount=10,
         encoding="utf-8",

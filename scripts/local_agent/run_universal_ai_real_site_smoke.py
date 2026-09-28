@@ -8,12 +8,12 @@ mock page_data 기반 7개 scenario와 선택적 실제 외부 사이트 read-on
 from __future__ import annotations
 
 import argparse
-import os
 import sys
+from pathlib import Path
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from ai_orchestrator.local_agent.learned_site_profile_store import clear_all  # noqa: E402
 from ai_orchestrator.local_agent.natural_language_task_api import (  # noqa: E402

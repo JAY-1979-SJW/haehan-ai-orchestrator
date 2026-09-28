@@ -92,7 +92,7 @@ def _empty_record(club_id: str, menu_id: str) -> dict[str, Any]:
 def load_stored(path: Path) -> dict[str, Any]:
     """저장 파일 로드. 없으면 빈 레코드 반환. 파손 시 빈 레코드로 fallback."""
     try:
-        with open(path, encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             data = json.load(f)
     except FileNotFoundError:
         return _empty_record("", "")
@@ -115,9 +115,9 @@ def save_stored(path: Path, record: dict[str, Any]) -> None:
     """저장 파일 쓰기 (atomic replace). 민감 원문 미포함 가정."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
+    with tmp.open("w", encoding="utf-8") as f:
         json.dump(record, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, path)
+    tmp.replace(path)
 
 
 def existing_ids(record: dict[str, Any]) -> set[str]:

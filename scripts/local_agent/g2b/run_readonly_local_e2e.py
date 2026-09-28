@@ -29,13 +29,12 @@ from __future__ import annotations
 
 import datetime
 import json
-import os
 import pathlib
 import sys
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from ai_orchestrator.local_agent.download_upload_manifest import build_manifest  # noqa: E402
 from ai_orchestrator.local_agent.local_session_boundary import enforce_session_boundary  # noqa: E402
@@ -266,7 +265,7 @@ def _save_report(report: dict) -> pathlib.Path:
     _REPORT_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     path = _REPORT_DIR / f"g2b_readonly_local_e2e_{ts}.json"
-    with open(path, "w", encoding="utf-8") as f:
+    with path.open("w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2, default=str)
     return path
 

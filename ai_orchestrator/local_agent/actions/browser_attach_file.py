@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.local_agent.action_evidence_collector import collect_evidence
@@ -34,10 +35,13 @@ def execute(
 
     제출 클릭은 하지 않는다.
     """
-    if not file_path or not os.path.exists(file_path):
+    if not file_path or not Path(file_path).exists():
         return {"ok": False, "verdict": "ERROR", "error": "file_path가 존재하지 않음"}
 
     # 승인 검증 (sanitize된 params hash로 검증)
+    # file_name 은 승인요청 생성측(create_approval_request 호출부)과 동일하게
+    # os.path.basename 방식(trailing slash 시 빈 문자열)을 유지해야 토큰 해시가 일치한다.
+    # Path(...).name 은 trailing slash가 있으면 다르게 동작하므로 전환하지 않는다 (STD-02 예외).
     params_for_verify = {
         "page_url": page_url,
         "file_name": os.path.basename(file_path),
@@ -90,7 +94,7 @@ def execute(
                             target.set_input_files(file_path)
                         raw["ok"] = True
                         raw["verdict"] = "FILE_ATTACHED"
-                        raw["attached_file_name"] = os.path.basename(file_path)
+                        raw["attached_file_name"] = Path(file_path).name
                         raw["attached_at"] = datetime.now(UTC).isoformat()
                         raw["form_state_after"] = {
                             "field_label": form_field_label,

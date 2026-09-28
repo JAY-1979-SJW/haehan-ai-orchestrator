@@ -8,13 +8,12 @@ Playwright 로컬 smoke 테스트 실행 스크립트
 
 from __future__ import annotations
 
-import os
 import pathlib
 import sys
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from ai_orchestrator.local_agent.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_READY,
