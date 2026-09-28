@@ -364,7 +364,7 @@ def test_validator_can_classify_actual_live_json():
         pytest.skip("actual-live JSON 보고서 없음")
 
     latest = report_files[-1]
-    with open(latest, encoding="utf-8") as f:
+    with latest.open(encoding="utf-8") as f:
         data = json.load(f)
 
     results = data.get("results", [])

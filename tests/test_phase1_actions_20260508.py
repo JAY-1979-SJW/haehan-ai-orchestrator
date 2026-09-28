@@ -4,8 +4,6 @@
 Playwright 실제 호출은 mock — 외부 사이트 접속 없음.
 """
 
-import os
-
 import pytest
 
 from ai_orchestrator.local_agent.action_registry import get_handler
@@ -119,7 +117,7 @@ def test_attach_file_token_consumed_once(tmp_path):
     """승인된 토큰은 한 번만 사용 가능 (실제 attach는 mock으로 검증)."""
     f = tmp_path / "a.pdf"
     f.write_bytes(b"%PDF-x")
-    file_name = os.path.basename(str(f))
+    file_name = f.name
     params = {
         "page_url": "https://e.com",
         "file_name": file_name,

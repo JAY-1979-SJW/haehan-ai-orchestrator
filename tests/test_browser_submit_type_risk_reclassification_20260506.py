@@ -12,6 +12,7 @@
 9. read/navigate action 3개 직전 단계 값 유지 확인
 10. BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md 삭제 감지
 """
+
 import json
 from pathlib import Path
 
@@ -36,7 +37,7 @@ READ_NAVIGATE_ACTIONS = [
 
 def load_fixture():
     assert FIXTURE_PATH.exists(), f"fixture not found: {FIXTURE_PATH}"
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -48,6 +49,7 @@ def _action(data, name):
 
 
 # ── 1. browser.plan_submit ────────────────────────────────────────────────
+
 
 def test_plan_submit_risk_level_needs_review():
     """browser.plan_submit은 recommended_risk=high, risk_level_needs_review=true 상태."""
@@ -94,6 +96,7 @@ def test_plan_submit_production_submit_false():
 
 # ── 2. browser.open_type_close_controlled ─────────────────────────────────
 
+
 def test_open_type_close_high_reclassification():
     """browser.open_type_close_controlled은 high 재검토 상태."""
     data = load_fixture()
@@ -138,6 +141,7 @@ def test_open_type_close_production_submit_false():
 
 
 # ── 3. browser.execute_type ───────────────────────────────────────────────
+
 
 def test_execute_type_high_reclassification():
     """browser.execute_type은 HIGH_STATE_CHANGE로 재분류, recommended_risk=high."""
@@ -184,6 +188,7 @@ def test_execute_type_dispatcher_not_connected():
 
 # ── 4. browser.execute_click ──────────────────────────────────────────────
 
+
 def test_execute_click_high_reclassification():
     """browser.execute_click은 HIGH_STATE_CHANGE로 재분류, recommended_risk=high."""
     data = load_fixture()
@@ -214,6 +219,7 @@ def test_execute_click_dispatcher_not_connected():
 
 
 # ── 5~8. type/submit/click 계열 공통 금지 검증 ────────────────────────────
+
 
 @pytest.mark.parametrize("action_name", SUBMIT_TYPE_ACTIONS)
 def test_submit_type_action_not_read_only(action_name):
@@ -249,6 +255,7 @@ def test_submit_type_no_production_submit(action_name):
 
 # ── 9. read/navigate action 3개 직전 단계 값 유지 ─────────────────────────
 
+
 def test_browser_inspect_unchanged():
     """browser.inspect: 직전 단계 값 유지 확인."""
     data = load_fixture()
@@ -280,6 +287,7 @@ def test_browser_plan_open_url_unchanged():
 
 # ── 10. BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md 유지 확인 ─────────
 
+
 def test_untracked_preflight_md_not_deleted():
     """BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md untracked 유지 (삭제 금지)."""
     preflight = Path(__file__).parents[1] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
@@ -290,19 +298,21 @@ def test_untracked_preflight_md_not_deleted():
 
 # ── action_registry.py 연결 없음 확인 ─────────────────────────────────────
 
+
 def test_submit_type_not_in_action_registry():
     """submit/type/click 계열은 action_registry에 미등록 상태 유지."""
     from agent.action_registry import is_known_action
+
     for action in SUBMIT_TYPE_ACTIONS:
         assert not is_known_action(action), (
-            f"{action} must NOT be in action_registry this stage "
-            "(reclassification is metadata-only)"
+            f"{action} must NOT be in action_registry this stage (reclassification is metadata-only)"
         )
 
 
 def test_read_navigate_still_in_action_registry():
     """read/navigate 3개는 action_registry 등록 유지."""
     from agent.action_registry import is_known_action
+
     for action in READ_NAVIGATE_ACTIONS:
         assert is_known_action(action), f"{action} must be in action_registry"
 
@@ -311,9 +321,6 @@ def test_reclassification_stage_documented():
     """재분류 stage가 fixture에 문서화되어 있다."""
     data = load_fixture()
     reclassified = [
-        a for a in data["actions"]
-        if a.get("reclassification_stage") == "BROWSER_SUBMIT_TYPE_RISK_RECLASSIFICATION_1"
+        a for a in data["actions"] if a.get("reclassification_stage") == "BROWSER_SUBMIT_TYPE_RISK_RECLASSIFICATION_1"
     ]
-    assert len(reclassified) >= 5, (
-        f"Expected at least 5 reclassified actions, got {len(reclassified)}"
-    )
+    assert len(reclassified) >= 5, f"Expected at least 5 reclassified actions, got {len(reclassified)}"

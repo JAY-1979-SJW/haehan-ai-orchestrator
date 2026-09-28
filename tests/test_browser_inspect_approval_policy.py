@@ -7,19 +7,23 @@ BROWSER-7C: Verify that browser.inspect action aligns with approval/safety polic
   - dry_run=False: success=False, blocked (actual_browser_execution_not_enabled)
   - Playwright is not imported by the action handlers
 """
+
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
+
 from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
 from ai_orchestrator.local_agent_registry import (
     ACTION_RISK,
-    enqueue_task,
     clear,
+    enqueue_task,
     register_agent,
 )
 from local_agent.actions import (
-    action_browser_inspect,
     ActionResult,
+    action_browser_inspect,
 )
 
 
@@ -37,22 +41,17 @@ class TestBrowserInspectApprovalPolicy:
     def test_browser_inspect_in_auto_execute_via_agent(self):
         """browser.inspect is in AUTO_EXECUTE_VIA_AGENT (server/client agreement)."""
         assert "browser.inspect" in AUTO_EXECUTE_VIA_AGENT, (
-            "browser.inspect must be in AUTO_EXECUTE_VIA_AGENT for server/client "
-            "auto-execution delegation"
+            "browser.inspect must be in AUTO_EXECUTE_VIA_AGENT for server/client auto-execution delegation"
         )
 
     def test_browser_inspect_in_action_risk(self):
         """browser.inspect is registered in ACTION_RISK."""
-        assert "browser.inspect" in ACTION_RISK, (
-            "browser.inspect must be in ACTION_RISK for task policy classification"
-        )
+        assert "browser.inspect" in ACTION_RISK, "browser.inspect must be in ACTION_RISK for task policy classification"
 
     def test_browser_inspect_low_risk_classification(self):
         """browser.inspect is classified as 'low' risk."""
         risk = ACTION_RISK.get("browser.inspect")
-        assert risk == "low", (
-            f"browser.inspect must be 'low' risk, got {risk!r}"
-        )
+        assert risk == "low", f"browser.inspect must be 'low' risk, got {risk!r}"
 
     def test_browser_inspect_low_risk_no_approval_waiting(self):
         """low risk browser.inspect tasks get status=queued, not waiting_approval."""
@@ -71,9 +70,7 @@ class TestBrowserInspectApprovalPolicy:
         )
         # low risk should get status=queued (or completed for server-auto actions)
         # browser.inspect is not in _SERVER_AUTO_COMPLETE, so status should be queued
-        assert task.status == "queued", (
-            f"low risk browser.inspect should have status=queued, got {task.status}"
-        )
+        assert task.status == "queued", f"low risk browser.inspect should have status=queued, got {task.status}"
         assert task.risk_level == "low"
 
     def test_browser_inspect_dry_run_true_success(self):
@@ -88,10 +85,7 @@ class TestBrowserInspectApprovalPolicy:
 
     def test_browser_inspect_dry_run_true_with_url(self):
         """dry_run=True with URL returns success without browser execution."""
-        result = action_browser_inspect({
-            "dry_run": True,
-            "url": "https://example.com"
-        })
+        result = action_browser_inspect({"dry_run": True, "url": "https://example.com"})
         assert isinstance(result, ActionResult)
         assert result.success is True
         assert result.data.get("url") == "https://example.com"
@@ -142,19 +136,16 @@ class TestBrowserInspectApprovalPolicy:
         'playwright' in its imports.
         """
         import local_agent.actions as actions_module
+
         source = actions_module.__file__
 
         # Read the source file and check for Playwright imports
-        with open(source, 'r', encoding='utf-8') as f:
+        with Path(source).open(encoding="utf-8") as f:
             source_code = f.read()
 
         # Should not import playwright directly
-        assert 'from playwright' not in source_code, (
-            "local_agent.actions should not import from playwright"
-        )
-        assert 'import playwright' not in source_code, (
-            "local_agent.actions should not import playwright"
-        )
+        assert "from playwright" not in source_code, "local_agent.actions should not import from playwright"
+        assert "import playwright" not in source_code, "local_agent.actions should not import playwright"
 
     def test_browser_inspect_task_flow_matches_policy(self):
         """Complete task flow: enqueue + execute matches approval policy."""
