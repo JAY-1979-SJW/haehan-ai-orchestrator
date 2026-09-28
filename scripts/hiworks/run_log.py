@@ -48,7 +48,7 @@ def _audit_event(
                 **(metadata or {}),
             },
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 실행 로그 기록용 컨텍스트 매니저 - 예외를 status/error 필드에 기록하는 로깅 목적, 예외를 삼키지 않고 그대로 전파
         pass
 
 
