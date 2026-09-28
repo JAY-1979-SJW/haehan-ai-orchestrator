@@ -8,6 +8,12 @@ staged 변경에서 .py/.ts/.tsx 순삭제(deleted-added) >= 60줄 파일이 있
 import subprocess, sys
 from pathlib import Path
 
+# Windows 기본 코드페이지(cp949)에서 em-dash 등 유니코드 문자를 print() 하면
+# UnicodeEncodeError로 훅 자체가 죽는 문제 방지(2026-09-28 실측 발견 — 대량
+# 삭제 차단 메시지를 출력하려다 훅이 죽어서 정작 차단이 안 되던 버그).
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+
 ROOT = Path(
     subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
