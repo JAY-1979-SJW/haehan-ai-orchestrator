@@ -121,7 +121,7 @@ def main():
             time.sleep(args.interval)
             try:
                 href, digest, text = _fingerprint(cdp)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - CDP 페이지 상태를 주기적으로 출력하는 읽기전용 관찰 도구 — 한 번의 fingerprint 조회 실패를 로그로 남기고 continue로 다음 루프 계속.
                 print(f"[watch:error] {e}", flush=True)
                 continue
             category = classify(href, text)

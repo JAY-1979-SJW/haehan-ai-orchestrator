@@ -4,13 +4,14 @@ The command is meant to be run after the worktree index and before code edits:
 
     python scripts/ops/pre_change_dry_run.py --scope smartstore --reason "router update" -- python -m pytest tests/test_smartstore_actions.py -q
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +25,7 @@ if str(ROOT) not in sys.path:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _git_head() -> str:
@@ -99,7 +100,7 @@ def save_record(record: dict[str, Any], *, latest_path: Path = LATEST_PATH, hist
                 "exit_code": record.get("exit_code"),
             },
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 변경 전 드라이런 증거 기록 — latest/history 파일은 이미 저장 완료된 뒤, 부가적인 실시간 감사 이벤트 전송(emit_event) 실패만 흡수, 기록 자체의 무결성에는 영향 없음.
         pass
     return history_path
 
@@ -132,7 +133,9 @@ def run_dry_run(command: list[str], *, scope: str, reason: str) -> tuple[int, Pa
         check=False,
     )
     print(result.stdout, end="")
-    record = build_record(scope=scope, reason=reason, command=command, exit_code=result.returncode, output=result.stdout)
+    record = build_record(
+        scope=scope, reason=reason, command=command, exit_code=result.returncode, output=result.stdout
+    )
     path = save_record(record)
     print(f"pre-change dry-run evidence: {path}")
     return result.returncode, path
@@ -153,7 +156,10 @@ def main() -> int:
 
     command = [part for part in args.command if part != "--"]
     if not command:
-        print("usage: python scripts/ops/pre_change_dry_run.py --scope <scope> --reason <reason> -- <dry-run command>", file=sys.stderr)
+        print(
+            "usage: python scripts/ops/pre_change_dry_run.py --scope <scope> --reason <reason> -- <dry-run command>",
+            file=sys.stderr,
+        )
         return 2
     exit_code, _path = run_dry_run(command, scope=args.scope, reason=args.reason)
     return exit_code

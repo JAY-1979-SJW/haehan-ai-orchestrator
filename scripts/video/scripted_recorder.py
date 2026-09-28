@@ -227,7 +227,7 @@ async def _run_actions(page, actions: list[dict], t0: float) -> None:
                 await page.evaluate("window.scrollTo({top:0,behavior:'smooth'})")
             elif do == "hover":
                 await page.hover(sel, timeout=8000)
-        except Exception as e:  # 조작 실패해도 녹화는 계속 — 장면을 통째로 잃지 않는다
+        except Exception as e:  # 조작 실패해도 녹화는 계속 — 장면을 통째로 잃지 않는다  # noqa: BLE001 - 녹화 스크립트 동작(클릭/스크롤/호버 등) 실패 시 경고 로그만 남기고 녹화 자체는 계속 진행 — 주석에 명시된 의도된 best-effort(장면을 통째로 잃지 않기 위함).
             _log.warning("[rec] 조작 실패 %s %s: %s", do, sel, str(e)[:90])
 
 

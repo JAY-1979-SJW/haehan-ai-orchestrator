@@ -204,7 +204,7 @@ def router_mod():
         mod = ilu.module_from_spec(spec)
         spec.loader.exec_module(mod)
         yield mod
-    except Exception:
+    except Exception:  # noqa: BLE001 - pytest fixture — 테스트용 router 모듈을 exec_module로 로드하다 실패하면 yield None 하고, 각 테스트는 router_mod is None 이면 pytest.skip 으로 건너뛰는 테스트 전용 폴백(운영 코드 아님).
         yield None
     finally:
         # sys.modules 오염 방지 — 원래 모듈로 복원

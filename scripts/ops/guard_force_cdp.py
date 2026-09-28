@@ -17,7 +17,7 @@ import sys
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except Exception:  # noqa: BLE001 - PreToolUse 훅 진입점 — stdin JSON 파싱 실패 시 exit(0)으로 통과시키는 의도된 fail-open, 실제 차단 판정은 파싱 성공 이후 로직에서 별도 수행.
         return 0
 
     tool_name = payload.get("tool_name", "")

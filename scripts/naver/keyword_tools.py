@@ -1,4 +1,5 @@
 """Naver keyword tool catalog and free-only execution policy."""
+
 from __future__ import annotations
 
 import json
@@ -139,7 +140,7 @@ def assert_paid_actions_blocked() -> dict[str, Any]:
     for item in build_paid_block_plans():
         try:
             gate_check(str(item["gate"]))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 무료정책(FREE_ONLY_POLICY) 자가진단 함수 assert_paid_actions_blocked — 실제 결제/광고 차단은 scripts.gate.check가 수행하며, 여기선 그 호출이 예외를 던졌는지(=차단됨)만 집계하는 읽기전용 감사 카운터. 쓰기/승인 로직 없음.
             blocked.append(str(item["gate"]))
     return {
         "ok": len(blocked) == len(build_paid_block_plans()),

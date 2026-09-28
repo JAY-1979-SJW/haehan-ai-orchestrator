@@ -2,18 +2,19 @@
 텔레그램 승인 요청기 — 환경변수 없으면 mock 모드
 이번 단계: 메시지 송신까지만 구현 (웹훅 수신 미구현)
 """
-import os
+
 import json
+import os
 import time
-from typing import Optional
 
 try:
     import urllib.request
+
     _HAS_URLLIB = True
 except ImportError:
     _HAS_URLLIB = False
 
-from models import TaskRequest, RiskAssessment, ExecutionPlan
+from models import ExecutionPlan, RiskAssessment, TaskRequest
 
 _BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 _CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
@@ -28,18 +29,20 @@ def _send_telegram(text: str) -> dict:
         return {"ok": True, "mock": True, "text": text}
 
     url = f"https://api.telegram.org/bot{_BOT_TOKEN}/sendMessage"
-    payload = json.dumps({
-        "chat_id": _CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown",
-    }).encode("utf-8")
+    payload = json.dumps(
+        {
+            "chat_id": _CHAT_ID,
+            "text": text,
+            "parse_mode": "Markdown",
+        }
+    ).encode("utf-8")
 
     try:
         req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             body = json.loads(resp.read().decode("utf-8"))
             return {"ok": True, "mock": False, "response": body}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 텔레그램 알림 전송 실패를 ok=False, error 필드로 반환하는 best-effort 알림 — 실패해도 알림 못 보냈다는 결과만 리턴, 다른 승인/차단 로직에 영향 없음.
         return {"ok": False, "mock": False, "error": str(e)}
 
 
@@ -47,7 +50,7 @@ def send_approval_request(
     task: TaskRequest,
     risk: RiskAssessment,
     plan: ExecutionPlan,
-    token: Optional[str],
+    token: str | None,
 ) -> dict:
     lines = [
         "🔐 *[승인 요청]*",

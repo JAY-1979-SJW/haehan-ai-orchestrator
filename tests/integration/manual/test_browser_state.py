@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """현재 브라우저 상태 진단."""
+
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
-from ai_orchestrator.local_agent.browser.cdp_session_manager import (
-    is_logged_in, get_logged_in_sites, get_cdp_cookies
-)
+from ai_orchestrator.local_agent.browser.cdp_session_manager import get_cdp_cookies, get_logged_in_sites, is_logged_in
 
 print("=" * 60)
 print("1. 로그인 상태 확인")
@@ -37,8 +36,9 @@ try:
                 print(f"Pages in context 0: {len(pages)}")
                 for i, page in enumerate(pages):
                     print(f"  Page {i}: {page.url}")
-except Exception as e:
+except Exception as e:  # noqa: BLE001 - 수동 통합 테스트 스크립트 — 예외 발생 시 오류 메시지와 traceback을 출력하는 진단용 except, 결과를 숨기지 않음.
     import traceback
+
     print(f"Error: {e}")
     traceback.print_exc()
 

@@ -71,6 +71,6 @@ def get_keyword_stats(keywords: list[str]) -> list[dict]:
         batch = keywords[i : i + _MAX_KEYWORDS_PER_CALL]
         try:
             results.extend(_fetch_batch(batch))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 검색광고 키워드 무료 조회 배치(_fetch_batch) 실패를 경고 로그로 남기고 다음 배치로 계속 진행하는 읽기전용 API 호출.
             _log.warning("[searchad] 키워드 조회 실패 %s: %s", batch, e)
     return results

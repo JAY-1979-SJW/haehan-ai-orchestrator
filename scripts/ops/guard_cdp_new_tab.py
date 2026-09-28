@@ -24,7 +24,7 @@ TRIGGER_PATTERNS = (
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except Exception:  # noqa: BLE001 - PreToolUse 훅 진입점 — stdin JSON 파싱 자체가 실패하면(하네스가 정상 페이로드를 못 준 경우) exit(0)으로 통과시키는 의도된 fail-open. 파싱 성공 후의 실제 차단 로직은 이 except 밖에서 별도로 수행됨.
         return 0
 
     tool_name = payload.get("tool_name", "")

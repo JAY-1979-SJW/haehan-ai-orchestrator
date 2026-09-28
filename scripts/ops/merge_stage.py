@@ -133,7 +133,7 @@ def run_verify_change(base: str, branch: str, json_path: Path) -> dict:
             errors="replace",
         )
         returncode, stderr = proc.returncode, proc.stderr
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - master 병합 전 verify_change 실행 게이트 — 서브프로세스 실행 자체가 실패하면 ok=False 인 실패 리포트를 반환하는 fail-closed 경로(실패 시 병합 진행 안 됨).
         return {
             "ok": False,
             "report": f"[merge_stage] verify_change 실행 자체가 실패했습니다: {type(exc).__name__}: {exc}",

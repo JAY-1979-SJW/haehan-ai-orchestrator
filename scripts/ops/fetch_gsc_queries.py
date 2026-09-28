@@ -81,7 +81,7 @@ def fetch_gsc_queries(range_days: int = 90) -> list[dict]:
         # 표시 행 수를 250으로 늘려 한 페이지에서 모두 수집
         try:
             page.get_by_text("총", exact=False).first.wait_for(timeout=8000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - Google Search Console 실적 표 읽기전용 조회 — 로딩 대기(wait_for) 타임아웃을 경고 로그로 남기고 그대로 진행, 텍스트 파싱은 이후 별도로 수행.
             logger.warning("[gsc] 실적 표 로딩 대기 실패 — 그대로 진행")
 
         text = page.inner_text("body")
