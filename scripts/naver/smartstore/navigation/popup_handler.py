@@ -124,7 +124,7 @@ def dismiss_all_popups(page, check_today_hide: bool = True) -> dict:
 
             fb = handle_page_popups(page)
             closed += fb.get("popups_closed", 0)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 공지팝업/배너 감지·닫기 — 순수 UI 노이즈 제거, 실패는 로그 후 계속 또는 False/0 기본값(2026-09-28 검토)
             _log.debug("[ss-popup] fallback 실패: %s", e)
 
     # 5. 잔여 dimmed/backdrop 정리
@@ -150,10 +150,10 @@ def _detect_notice_popup(page) -> dict:
                 txt = ""
                 try:
                     txt = el.inner_text(timeout=500)[:100]
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
                 return {"detected": True, "selector": sel, "text": txt}
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
     return {"detected": False}
 
@@ -170,7 +170,7 @@ def _close_notice_popup(page, check_today_hide: bool = True) -> bool:
                     cb.click(timeout=2000)
                     time.sleep(0.3)
                     _log.info("[ss-popup] '하루동안 보지 않기' 체크")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 공지팝업/배너 감지·닫기 — 순수 UI 노이즈 제거, 실패는 로그 후 계속 또는 False/0 기본값(2026-09-28 검토)
             _log.debug("[ss-popup] 체크박스 처리 실패: %s", e)
 
     # 닫기 버튼 클릭
@@ -182,7 +182,7 @@ def _close_notice_popup(page, check_today_hide: bool = True) -> bool:
                 time.sleep(0.5)
                 _log.info("[ss-popup] 공지 팝업 닫음: %s", sel)
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
 
     # 텍스트 기반 닫기
@@ -194,7 +194,7 @@ def _close_notice_popup(page, check_today_hide: bool = True) -> bool:
                 time.sleep(0.5)
                 _log.info("[ss-popup] 텍스트 닫기: '%s'", txt)
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
 
     # ESC
@@ -228,9 +228,9 @@ def _detect_general_modals(page) -> dict:
                             continue
                         count += 1
                         found.append({"selector": sel, "index": i})
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
     return {"count": count, "found": found}
 
@@ -253,7 +253,7 @@ def _close_general_modal(page) -> bool:
                         btn.click(timeout=2000)
                         time.sleep(0.5)
                         return True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
 
             # 텍스트 닫기
@@ -264,9 +264,9 @@ def _close_general_modal(page) -> bool:
                         btn.click(timeout=2000)
                         time.sleep(0.5)
                         return True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
 
     page.keyboard.press("Escape")
@@ -283,7 +283,7 @@ def _count_popup_windows(page) -> int:
 
         pages = page.context.pages
         return sum(1 for p in pages if p is not page and _looks_like_popup_window(p)[0])
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 공지팝업/배너 감지·닫기 — 순수 UI 노이즈 제거, 실패는 로그 후 계속 또는 False/0 기본값(2026-09-28 검토)
         return 0
 
 
@@ -292,7 +292,7 @@ def _close_popup_windows(page) -> int:
         from scripts.popup_detector import close_popup_windows
 
         return close_popup_windows(page)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 공지팝업/배너 감지·닫기 — 순수 UI 노이즈 제거, 실패는 로그 후 계속 또는 False/0 기본값(2026-09-28 검토)
         return 0
 
 
@@ -314,5 +314,5 @@ def _cleanup_backdrop(page) -> None:
             document.body.style.overflow = "";
         }
         """)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
         pass

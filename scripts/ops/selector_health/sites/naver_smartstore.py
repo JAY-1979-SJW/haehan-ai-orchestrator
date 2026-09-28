@@ -46,7 +46,7 @@ def _expand_all_sections(page: Any) -> int:
                     return n;
                 }"""
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
             break
         total += n or 0
         time.sleep(3.0)
@@ -76,7 +76,7 @@ def _dismiss_popups(page: Any) -> None:
                     time.sleep(0.7)
                     closed = True
                     break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
                 continue
         if not closed:
             break
@@ -95,7 +95,7 @@ def _enable_tag_direct_input(page: Any) -> bool:
             page.evaluate("() => document.querySelector('input[ng-model=\"vm.viewData.isDirectInput\"]').click()")
             page.wait_for_timeout(1200)
         return bool(cb.is_checked())
-    except Exception:
+    except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
         return False
 
 
@@ -111,7 +111,7 @@ def _open_image_modal(page: Any) -> bool:
     def _has_input() -> bool:
         try:
             return page.locator("input[type=file]").count() > 0
-        except Exception:
+        except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
             return False
 
     if _has_input():
@@ -119,7 +119,7 @@ def _open_image_modal(page: Any) -> bool:
 
     try:
         n = page.locator("a.btn-add-img").count()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
         return False
 
     for i in range(min(n, 5)):
@@ -128,7 +128,7 @@ def _open_image_modal(page: Any) -> bool:
             btn.scroll_into_view_if_needed(timeout=3000)
             time.sleep(0.4)
             btn.click(timeout=4000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
             continue
         time.sleep(2.0)
         if _has_input():
@@ -145,7 +145,7 @@ def _select_any_category(page: Any) -> bool:
     try:
         if page.locator(".info-result.text-info").count() > 0:
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 방법을 순차 시도하는 진단 로직 — 하나 실패해도 다음 확인으로 계속(2026-09-28 검토)
         pass
     try:
         sel = 'input[placeholder*="카테고리"]:not([type="radio"]):not([type="checkbox"])'
@@ -171,7 +171,7 @@ def _select_any_category(page: Any) -> bool:
                 o.click(timeout=3000)
                 time.sleep(2.0)
                 break
-    except Exception:
+    except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
         return False
     # KC인증 모달 닫기
     for _ in range(3):
@@ -182,11 +182,11 @@ def _select_any_category(page: Any) -> bool:
                 time.sleep(0.8)
             else:
                 break
-        except Exception:
+        except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
             break
     try:
         return page.locator(".info-result.text-info").count() > 0
-    except Exception:
+    except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
         return False
 
 
@@ -203,11 +203,11 @@ def _enter_default_mode(page: Any) -> bool:
         time.sleep(0.4)
         el.click(timeout=4000)
         time.sleep(2.0)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 방법을 순차 시도하는 진단 로직 — 하나 실패해도 다음 확인으로 계속(2026-09-28 검토)
         pass
     try:
         return page.locator('button:has-text("스마트 에디터 ONE")').count() > 0
-    except Exception:
+    except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
         return False
 
 
@@ -220,19 +220,19 @@ def _enter_html_mode(page: Any) -> bool:
     try:
         if page.locator('textarea[ng-model="vm.editorContent"]').count() > 0:
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 방법을 순차 시도하는 진단 로직 — 하나 실패해도 다음 확인으로 계속(2026-09-28 검토)
         pass
     try:
         el = page.locator('a:has-text("HTML 작성")').first
         el.scroll_into_view_if_needed(timeout=4000)
         time.sleep(0.5)
         el.click(timeout=5000)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
         return False
     time.sleep(2.5)
     try:
         return page.locator('textarea[ng-model="vm.editorContent"]').count() > 0
-    except Exception:
+    except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
         return False
 
 
