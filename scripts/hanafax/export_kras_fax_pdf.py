@@ -205,7 +205,7 @@ def main():
         for name in DROP_SHEETS:
             try:
                 wb.Sheets(name).Delete()
-            except Exception:
+            except Exception:  # noqa: BLE001 - PDF 변환용 임시 복사본(tmp_xlsx, 원본과 별개)에서 불필요한 시트 삭제 - 원본 파일이나 운영 DB가 아니며 삭제 실패해도 무시 가능
                 pass
 
         for name in KEEP_SHEETS:

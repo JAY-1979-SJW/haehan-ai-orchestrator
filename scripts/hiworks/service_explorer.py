@@ -1,4 +1,5 @@
 """Read-only exploration for Hiworks business service surfaces."""
+
 from __future__ import annotations
 
 import json
@@ -74,7 +75,7 @@ def scan_service(key: str, target: dict[str, str], *, limit: int = 120) -> dict[
     page = open_hiworks(target["url"])
     try:
         page.wait_for_timeout(1200)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 하이웍스 서비스 탐색 자동화 - 페이지 대기 best-effort, 실패해도 추출 로직 계속 진행(읽기전용)
         pass
     surface = extract_service_surface(page, limit=limit)
     return {
@@ -89,7 +90,11 @@ def scan_service(key: str, target: dict[str, str], *, limit: int = 120) -> dict[
 def save_service_report(results: list[dict[str, Any]], output: str | Path | None = None) -> Path:
     path = Path(output) if output else DATA_DIR / "hiworks_service_surfaces_latest.json"
     path.write_text(
-        json.dumps({"generated_at": datetime.now().isoformat(timespec="seconds"), "services": results}, ensure_ascii=False, indent=2),
+        json.dumps(
+            {"generated_at": datetime.now().isoformat(timespec="seconds"), "services": results},
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
     return path
