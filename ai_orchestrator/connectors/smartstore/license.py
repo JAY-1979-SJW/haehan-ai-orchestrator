@@ -37,7 +37,7 @@ def _save(db: dict) -> None:
     LICENSE_DB.parent.mkdir(parents=True, exist_ok=True)
     tmp = LICENSE_DB.with_suffix(LICENSE_DB.suffix + ".tmp")
     tmp.write_text(json.dumps(db, ensure_ascii=False, indent=2), encoding="utf-8")
-    os.replace(tmp, LICENSE_DB)
+    tmp.replace(LICENSE_DB)
 
 
 # ── 라이선스 CRUD ─────────────────────────────────────────────────────────────

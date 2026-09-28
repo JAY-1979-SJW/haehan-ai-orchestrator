@@ -1,7 +1,8 @@
 import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 # 환경변수 제거하여 mock 모드 강제
 os.environ.pop("TELEGRAM_BOT_TOKEN", None)

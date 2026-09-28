@@ -8,11 +8,11 @@ monitor.py 단위 테스트
 """
 
 import json
-import os
 import sys
 import time
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import monitor as mon
 

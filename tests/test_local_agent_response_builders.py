@@ -3,10 +3,10 @@
 API 응답 구조와 응답 키 일관성을 검증한다.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 from ai_orchestrator.local_agent_response_builders import (
     make_get_task_response,

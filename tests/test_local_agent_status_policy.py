@@ -3,10 +3,10 @@
 태스크 상태 상수, 상태 전이 매트릭스, 상태 검증 함수의 정합성을 검증한다.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 from ai_orchestrator.local_agent_status_policy import (
     ACTIVE_TASK_STATUSES,
