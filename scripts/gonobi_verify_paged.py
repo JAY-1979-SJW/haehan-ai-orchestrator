@@ -1,5 +1,6 @@
 """카테고리별 20장씩 페이지 단위로 스크린샷 촬영."""
 
+import contextlib
 import sys
 import time
 from pathlib import Path
@@ -71,9 +72,8 @@ for cat_dir in cats:
     print(f"  → 저장: {cat_out}")
 
 # 임시 파일 삭제
-try:
+# 임시 검증 파일 삭제 실패는 무시(읽기전용 검증 스크립트, 재실행 시 덮어써짐)
+with contextlib.suppress(Exception):
     Path("data/_tmp_verify.html").unlink()
-except Exception:  # noqa: BLE001 - 고노비 페이지 검증 스크립트(읽기 전용, 스크린샷 저장) -- 스크린샷 실패는 콘솔에 출력만 하고 다음 페이지 계속, 임시 검증 파일 삭제 실패는 무시
-    pass
 
 print(f"\n완료 — 스크린샷 위치: {OUT}")

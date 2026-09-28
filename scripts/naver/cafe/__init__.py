@@ -37,6 +37,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 from playwright.sync_api import Page
@@ -73,10 +74,9 @@ class NaverCafe:
             return []
         self.page.goto(MY_CAFES_URL, timeout=20000, wait_until="domcontentloaded")
         time.sleep(2.5)
-        try:
+        # 네이버 카페 읽기전용 조회 - 팝업 닫기 실패는 목록 조회에 영향 없어 무시하고 계속
+        with contextlib.suppress(Exception):
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 네이버 카페 읽기전용 조회(NaverCafe: open_my_cafes/list_posts/read_post) — 각 except는 빈 리스트 또는 오류 dict를 반환하며, 실제 글쓰기(write_post)는 별도 writer 모듈에 위임되어 이 파일에 포함되지 않음.
-            pass
         try:
             return self.page.evaluate("""
             () => {

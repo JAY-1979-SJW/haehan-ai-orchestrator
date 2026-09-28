@@ -46,6 +46,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import difflib
 import re
 import time
@@ -188,10 +189,9 @@ class BlogWriter:
                 cancel_btn = popup.locator(EDITOR_DRAFT_CANCEL).first
                 cancel_btn.click(timeout=2000)
                 # 팝업이 DOM에서 제거될 때까지 대기 (최대 3초)
-                try:
+                # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+                with contextlib.suppress(Exception):
                     popup.wait_for(state="hidden", timeout=3000)
-                except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-                    pass
                 _log.info("[blog-writer] 임시저장 복원 다이얼로그 취소 완료")
                 time.sleep(0.5)
         except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
@@ -992,10 +992,9 @@ class BlogWriter:
             try:
                 self.page.locator('[class*="confirm_btn"]').click(timeout=3000)
             except Exception:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
-                try:
+                # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+                with contextlib.suppress(Exception):
                     self.page.get_by_role("button", name="발행", exact=True).last.click(timeout=3000)
-                except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-                    pass
 
             # 3) URL이 PostWriteForm에서 벗어날 때까지 최대 30초 대기
             deadline = max(wait_verify_s, 30)
@@ -1051,16 +1050,14 @@ class BlogWriter:
         )
 
         title_text = ""
-        try:
+        # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+        with contextlib.suppress(Exception):
             title_text = self.page.title()
-        except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-            pass
 
         result_text = ""
-        try:
+        # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+        with contextlib.suppress(Exception):
             result_text = self.page.evaluate("() => (document.body?.innerText || '').substring(0, 500)")
-        except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-            pass
 
         success = bool(m) or "발행" in result_text or "완료" in result_text
 
@@ -1146,10 +1143,9 @@ def write_post(
     # 게 아니라 브라우저가 이미 띄운 것을 처리만 하므로 no-dialog 원칙과 무관.
     if not getattr(page, "_haehan_dialog_handler_installed", False):
         page.on("dialog", lambda d: d.dismiss())
-        try:
+        # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+        with contextlib.suppress(Exception):
             page._haehan_dialog_handler_installed = True
-        except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-            pass
 
     # Step 1: 로그인 확인
     from scripts.naver.auth import ensure_naver_login
@@ -1281,10 +1277,9 @@ def edit_post(
     """
     if not getattr(page, "_haehan_dialog_handler_installed", False):
         page.on("dialog", lambda d: d.dismiss())
-        try:
+        # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+        with contextlib.suppress(Exception):
             page._haehan_dialog_handler_installed = True
-        except Exception:  # noqa: BLE001 - 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-            pass
 
     from scripts.naver.auth import ensure_naver_login
 

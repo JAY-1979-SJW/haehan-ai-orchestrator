@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sqlite3
 import time
@@ -238,10 +239,9 @@ class BulkRegister:
 
             # 진행 콜백
             if on_progress:
-                try:
+                # 진행 콜백 실패는 무시 — 등록 자체 성공/실패는 result.ok로 이미 표준화되어 보고됨
+                with contextlib.suppress(Exception):
                     on_progress(i, len(products), result)
-                except Exception:  # noqa: BLE001 - 스마트스토어 상품 일괄 등록 — DB저장 실패는 로그만 남김(로컬 sqlite 등록이력 기록용, 운영 DB 아님), retry 래퍼와 register_product 예외 모두 ok=False로 표준화되어 실패가 성공으로 보고되지 않음. 진행 콜백 실패는 무시.
-                    pass
 
             if stop_on_error and not result.ok:
                 _log.warning("[bulk] 실패로 중단 (stop_on_error=True)")

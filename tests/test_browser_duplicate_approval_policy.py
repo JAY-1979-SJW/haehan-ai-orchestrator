@@ -10,28 +10,30 @@ Policy:
 - status (used / revoked) never reset
 - All 3 stores behave identically
 """
+
 from __future__ import annotations
 
+import contextlib
 import tempfile
 import unittest
 from pathlib import Path
 
+from local_agent.browser_approval_db_store import (
+    SQLiteBrowserApprovalStore,
+)
+from local_agent.browser_approval_persistent_store import (
+    PersistentBrowserApprovalStore,
+)
 from local_agent.browser_approval_verifier import (
     BrowserApprovalStore,
     BrowserApprovalVerifier,
     DuplicateApprovalError,
 )
-from local_agent.browser_approval_persistent_store import (
-    PersistentBrowserApprovalStore,
-)
-from local_agent.browser_approval_db_store import (
-    SQLiteBrowserApprovalStore,
-)
-
 
 # ---------------------------------------------------------------------------
 # Per-store rejection
 # ---------------------------------------------------------------------------
+
 
 class TestInMemoryDuplicateRejection(unittest.TestCase):
     def test_in_memory_store_duplicate_approval_id_rejected(self):
@@ -86,14 +88,15 @@ class TestDbStoreDuplicateRejection(unittest.TestCase):
 # State preservation on duplicate rejection
 # ---------------------------------------------------------------------------
 
+
 class TestStatePreservation(unittest.TestCase):
     """Existing record state must NEVER be overwritten by duplicate attempt."""
 
     def _all_stores(self):
         return [
             ("in_memory", BrowserApprovalStore()),
-            ("jsonl",    PersistentBrowserApprovalStore()),
-            ("sqlite",   SQLiteBrowserApprovalStore()),
+            ("jsonl", PersistentBrowserApprovalStore()),
+            ("sqlite", SQLiteBrowserApprovalStore()),
         ]
 
     def test_duplicate_does_not_overwrite_token_hash(self):
@@ -107,8 +110,9 @@ class TestStatePreservation(unittest.TestCase):
                     store.create_approval("appr-th", "browser.execute_click", "#x", "second-token")
 
                 after = store.get("appr-th")
-                self.assertEqual(after.token_hash, original_hash,
-                                 f"{label}: token_hash was overwritten on duplicate attempt")
+                self.assertEqual(
+                    after.token_hash, original_hash, f"{label}: token_hash was overwritten on duplicate attempt"
+                )
 
     def test_duplicate_does_not_reset_used_status(self):
         for label, store in self._all_stores():
@@ -121,8 +125,7 @@ class TestStatePreservation(unittest.TestCase):
                     store.create_approval("appr-u", "browser.execute_click", "#x", "tok2")
 
                 after = store.get("appr-u")
-                self.assertEqual(after.status, "used",
-                                 f"{label}: 'used' status was reset by duplicate attempt")
+                self.assertEqual(after.status, "used", f"{label}: 'used' status was reset by duplicate attempt")
 
     def test_duplicate_does_not_reset_revoked_status(self):
         for label, store in self._all_stores():
@@ -135,8 +138,7 @@ class TestStatePreservation(unittest.TestCase):
                     store.create_approval("appr-rv", "browser.execute_click", "#x", "tok2")
 
                 after = store.get("appr-rv")
-                self.assertEqual(after.status, "revoked",
-                                 f"{label}: 'revoked' status was reset")
+                self.assertEqual(after.status, "revoked", f"{label}: 'revoked' status was reset")
 
     def test_duplicate_does_not_overwrite_action_type_or_selector(self):
         """Action/selector mismatch must also not slip through duplicate path."""
@@ -156,6 +158,7 @@ class TestStatePreservation(unittest.TestCase):
 # Cross-store consistency
 # ---------------------------------------------------------------------------
 
+
 class TestCrossStoreConsistency(unittest.TestCase):
     def test_duplicate_policy_consistent_across_all_stores(self):
         """All 3 stores raise the same exception type with the same message contract."""
@@ -174,43 +177,43 @@ class TestCrossStoreConsistency(unittest.TestCase):
 # Verifier and task handler behave correctly under new policy
 # ---------------------------------------------------------------------------
 
+
 class TestVerifierStillWorks(unittest.TestCase):
     def test_verifier_still_accepts_valid_unique_approval(self):
         """New unique approvals still verify normally with each store."""
-        for store_cls in [BrowserApprovalStore,
-                           PersistentBrowserApprovalStore,
-                           SQLiteBrowserApprovalStore]:
+        for store_cls in [BrowserApprovalStore, PersistentBrowserApprovalStore, SQLiteBrowserApprovalStore]:
             with self.subTest(store=store_cls.__name__):
                 store = store_cls()
                 verifier = BrowserApprovalVerifier(store)
                 store.create_approval("appr-v", "browser.execute_click", "#go", "tok")
-                result = verifier.verify("appr-v", "tok",
-                                         "browser.execute_click", "#go")
-                self.assertTrue(result.valid,
-                                f"{store_cls.__name__}: valid approval rejected")
+                result = verifier.verify("appr-v", "tok", "browser.execute_click", "#go")
+                self.assertTrue(result.valid, f"{store_cls.__name__}: valid approval rejected")
 
     def test_task_handler_still_works_after_duplicate_policy(self):
         """BrowserTaskHandler still validates correctly with each store."""
-        from unittest.mock import MagicMock
         import asyncio
+        from unittest.mock import MagicMock
+
         from local_agent.browser_task_handler import (
-            BrowserTaskHandler, BrowserTaskPayload,
+            BrowserTaskHandler,
+            BrowserTaskPayload,
         )
         from local_agent.server_action_adapter import ServerActionAdapter
 
-        for store_cls in [BrowserApprovalStore,
-                           PersistentBrowserApprovalStore,
-                           SQLiteBrowserApprovalStore]:
+        for store_cls in [BrowserApprovalStore, PersistentBrowserApprovalStore, SQLiteBrowserApprovalStore]:
             with self.subTest(store=store_cls.__name__):
                 store = store_cls()
-                store.create_approval("appr-th", "browser.execute_click",
-                                       "#confirm", "task-tok")
+                store.create_approval("appr-th", "browser.execute_click", "#confirm", "task-tok")
                 verifier = BrowserApprovalVerifier(store)
                 adapter = MagicMock(spec=ServerActionAdapter)
-                adapter.execute_action = MagicMock(return_value=MagicMock(
-                    executed=True, element_found=True,
-                    error_code=None, error_message=None,
-                ))
+                adapter.execute_action = MagicMock(
+                    return_value=MagicMock(
+                        executed=True,
+                        element_found=True,
+                        error_code=None,
+                        error_message=None,
+                    )
+                )
                 handler = BrowserTaskHandler(
                     server_action_adapter=adapter,
                     approval_verifier=verifier,
@@ -223,36 +226,35 @@ class TestVerifierStillWorks(unittest.TestCase):
                     approval_token="task-tok",
                 )
                 result = asyncio.run(handler.handle_task(payload))
-                self.assertNotEqual(result.status, "blocked",
-                                     f"{store_cls.__name__}: blocked unexpectedly: {result.error_code}")
+                self.assertNotEqual(
+                    result.status, "blocked", f"{store_cls.__name__}: blocked unexpectedly: {result.error_code}"
+                )
 
 
 # ---------------------------------------------------------------------------
 # Security invariant: no raw token stored even on duplicate attempt
 # ---------------------------------------------------------------------------
 
+
 class TestNoRawTokenAfterDuplicate(unittest.TestCase):
     def test_no_raw_token_stored_after_duplicate_rejection(self):
         """Failed duplicate must not leak the rejected raw token anywhere."""
         for label, store in [
             ("in_memory", BrowserApprovalStore()),
-            ("jsonl",    PersistentBrowserApprovalStore()),
-            ("sqlite",   SQLiteBrowserApprovalStore()),
+            ("jsonl", PersistentBrowserApprovalStore()),
+            ("sqlite", SQLiteBrowserApprovalStore()),
         ]:
             with self.subTest(store=label):
-                store.create_approval("appr-leak", "browser.execute_click",
-                                      "#x", "first-token-XYZ")
+                store.create_approval("appr-leak", "browser.execute_click", "#x", "first-token-XYZ")
                 rejected_token = "second-token-ABC"
-                try:
-                    store.create_approval("appr-leak", "browser.execute_click",
-                                          "#x", rejected_token)
-                except DuplicateApprovalError:
-                    pass
+                with contextlib.suppress(DuplicateApprovalError):
+                    store.create_approval("appr-leak", "browser.execute_click", "#x", rejected_token)
 
                 # The stored record must still have the FIRST token's hash
                 rec = store.get("appr-leak")
                 import hashlib
-                first_hash = hashlib.sha256("first-token-XYZ".encode()).hexdigest()
+
+                first_hash = hashlib.sha256(b"first-token-XYZ").hexdigest()
                 second_hash = hashlib.sha256(rejected_token.encode()).hexdigest()
                 self.assertEqual(rec.token_hash, first_hash)
                 self.assertNotEqual(rec.token_hash, second_hash)

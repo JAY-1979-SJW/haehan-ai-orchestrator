@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 from scripts.logger import get_logger
@@ -62,10 +63,9 @@ def safe_human_input(
 
         # 1. 현재 값
         current = ""
-        try:
+        # 폼 입력 범용 헬퍼 - 현재값 조회 실패는 빈 문자열로 폴백, 값 검증은 뒤에서 별도 수행
+        with contextlib.suppress(Exception):
             current = el.input_value(timeout=1500) or ""
-        except Exception:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
-            pass
 
         # 2. 동일 → skip
         if current == value:
@@ -99,10 +99,9 @@ def safe_human_input(
 
         # 5. 검증
         final = ""
-        try:
+        # 폼 입력 범용 헬퍼 - 검증값 조회 실패는 빈 문자열로 폴백, 아래에서 불일치로 처리됨
+        with contextlib.suppress(Exception):
             final = el.input_value(timeout=1500) or ""
-        except Exception:  # noqa: BLE001 - 폼 입력 범용 헬퍼(재시도/force클릭 포함) - 최종 실패시 원래 예외를 그대로 raise 하거나 ok:False,reason 반환, 값 검증까지 수행
-            pass
 
         if final != value:
             _log.warning(
