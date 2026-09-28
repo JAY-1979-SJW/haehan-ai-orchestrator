@@ -4,6 +4,7 @@
 """
 
 import base64
+import contextlib
 import json
 import threading
 import time
@@ -89,10 +90,9 @@ class TabCDP:
 
     def close(self):
         self._alive = False
-        try:
+        # WebSocket 연결 close() 실패는 무시 — 이미 종료 중인 리소스 정리 실패일 뿐
+        with contextlib.suppress(Exception):
             self._ws.close()
-        except Exception:  # noqa: BLE001 - WebSocket 연결 close() 실패는 무시 — 이미 종료 중인 리소스 정리 실패일 뿐
-            pass
 
 
 def new_tab(port: int, url: str) -> str:

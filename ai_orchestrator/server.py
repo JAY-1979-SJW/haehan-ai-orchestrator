@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 from contextlib import asynccontextmanager
 
@@ -84,27 +85,20 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await task
-        except asyncio.CancelledError:
-            pass
         if community_task:
             community_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await community_task
-            except asyncio.CancelledError:
-                pass
         if gonobi_task:
             gonobi_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await gonobi_task
-            except asyncio.CancelledError:
-                pass
         if poller:
-            try:
+            # 종료 시 폴러 정리 실패는 무시 — 프로세스가 어차피 종료되는 중
+            with contextlib.suppress(Exception):
                 stop_poller()
-            except Exception:  # noqa: S110, BLE001
-                pass
         logger.info("haehan-ai-orchestrator 종료")
 
 

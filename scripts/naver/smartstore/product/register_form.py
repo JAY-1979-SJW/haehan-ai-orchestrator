@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 from pathlib import Path
 
@@ -260,10 +261,9 @@ class CategorySection(FormSection):
                 if cnt > result_idx:
                     target = items.nth(result_idx)
                     txt = ""
-                    try:
+                    # 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+                    with contextlib.suppress(Exception):
                         txt = target.inner_text(timeout=500)[:80].strip()
-                    except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                        pass
                     if txt and len(txt) < 100:
                         target.click(timeout=3000, force=True)
                         time.sleep(0.5)

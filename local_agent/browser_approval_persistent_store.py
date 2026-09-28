@@ -12,6 +12,7 @@ Design principles:
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -113,16 +114,12 @@ class PersistentBrowserApprovalStore:
 
                     # Parse dates
                     if event.get("expires_at"):
-                        try:
+                        with contextlib.suppress(ValueError, TypeError):
                             rec["expires_at"] = datetime.fromisoformat(event.get("expires_at"))
-                        except (ValueError, TypeError):
-                            pass
 
                     if event.get("created_at"):
-                        try:
+                        with contextlib.suppress(ValueError, TypeError):
                             rec["created_at"] = datetime.fromisoformat(event.get("created_at"))
-                        except (ValueError, TypeError):
-                            pass
 
                     # Create record
                     self._records[approval_id] = BrowserApprovalRecord(**rec)

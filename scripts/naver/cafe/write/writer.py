@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 import time
 
@@ -181,13 +182,13 @@ class CafeWriter:
                 """)
 
             # URL 변경 대기 (글쓰기 페이지 → 게시글 페이지)
-            try:
+            # 네이버 카페 글쓰기 자동화(CafeWriter) - timeout 은 아래 URL 체크로 판정(성공 위장 없음),
+            # 발행은 상위 흐름에서 사용자 확인 후 호출됨
+            with contextlib.suppress(Exception):
                 self.page.wait_for_url(
                     lambda url: "articles/write" not in url and url != before_url,
                     timeout=wait_verify_s * 1000,
                 )
-            except Exception:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
-                pass  # timeout — URL 체크로 판정
 
             final_url = self.page.url
             _log.info("[cafe-write] 발행 후 URL: %s", final_url)

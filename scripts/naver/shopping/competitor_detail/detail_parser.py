@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 import time
 from pathlib import Path
@@ -131,10 +132,8 @@ class CompetitorDetailParser:
         if got.get("review_count"):
             prod.review_count = Field(int(got["review_count"].replace(",", "")), SRC_DOM, CONF_HIGH)
         if got.get("rating"):
-            try:
+            with contextlib.suppress(ValueError):
                 prod.rating = Field(float(got["rating"]), SRC_DOM, CONF_MED)
-            except ValueError:
-                pass
 
     # ── 옵션 ────────────────────────────────────────────────────
     # 실측(2026-08-15)으로 확정한 옵션 UI 구조:
