@@ -1,8 +1,8 @@
-import os
 import sys
 import uuid
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_orchestrator.gates.approval import issue_token
 from ai_orchestrator.models import RiskAssessment, TaskRequest

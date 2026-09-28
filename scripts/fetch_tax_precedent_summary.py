@@ -17,7 +17,6 @@ judgment_note, source_ntstDcmId, fetched_ok 필드를 추가한다.
 
 from __future__ import annotations
 
-import glob
 import json
 import os
 import subprocess
@@ -37,7 +36,7 @@ def _run(cmd: list[str]) -> str:
 
 
 def _latest_html_after(marker_files: set[str]) -> str | None:
-    files = set(glob.glob(str(VISITS_DIR / "*.html")))
+    files = {str(p) for p in VISITS_DIR.glob("*.html")}
     new = files - marker_files
     if not new:
         return None
@@ -56,7 +55,7 @@ def _extract_summary(html_path: str) -> tuple[str, str]:
 
 
 def fetch_one(prec_seq: str) -> dict:
-    before = set(glob.glob(str(VISITS_DIR / "*.html")))
+    before = {str(p) for p in VISITS_DIR.glob("*.html")}
     _run(
         ["python", "scripts/cdp_client.py", "goto", f"https://www.law.go.kr/LSW/precInfoP.do?precSeq={prec_seq}&mode=0"]
     )

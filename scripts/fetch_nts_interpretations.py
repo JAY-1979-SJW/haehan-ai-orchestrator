@@ -16,7 +16,6 @@ board_box 안에 "내용 더보기"를 눌러야 보이는 숨김 span까지 이
 
 from __future__ import annotations
 
-import glob
 import json
 import os
 import subprocess
@@ -41,7 +40,7 @@ def _run(cmd: list[str]) -> str:
 
 
 def _latest_html_after(marker_files: set[str]) -> str | None:
-    files = set(glob.glob(str(VISITS_DIR / "*.html")))
+    files = {str(p) for p in VISITS_DIR.glob("*.html")}
     new = files - marker_files
     if not new:
         return None
@@ -84,7 +83,7 @@ def _extract_interpretations(html_path: str) -> list[dict]:
 
 
 def fetch_keyword(keyword: str) -> list[dict]:
-    before = set(glob.glob(str(VISITS_DIR / "*.html")))
+    before = {str(p) for p in VISITS_DIR.glob("*.html")}
     q = urllib.parse.quote(keyword)
     _run(
         ["python", "scripts/cdp_client.py", "goto", f"https://taxlaw.nts.go.kr/is/USEISA001M.do?schVcb={q}&searchType="]
