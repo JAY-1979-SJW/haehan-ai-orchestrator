@@ -32,7 +32,7 @@ _MODULE_PATH = (
 
 
 def _load_sample_payload() -> dict:
-    with open(_FIXTURE_SAMPLE, encoding="utf-8") as f:
+    with _FIXTURE_SAMPLE.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -304,7 +304,7 @@ def test_no_secret_storage():
 
 def test_existing_fixture_not_modified():
     original_fixture = Path(__file__).resolve().parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
-    with open(original_fixture, encoding="utf-8") as f:
+    with original_fixture.open(encoding="utf-8") as f:
         data = json.load(f)
     # 기존 fixture는 "cases" 키를 가져야 함
     assert "cases" in data

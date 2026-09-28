@@ -4,6 +4,7 @@ policy/fixture/schema만 검증한다.
 실제 브라우저 실행, HTTP 요청, 업무 사이트 접속 금지.
 dispatcher 연결 검증은 "미연결 유지"만 확인한다.
 """
+
 import json
 from pathlib import Path
 
@@ -27,7 +28,7 @@ CLICK_TYPE_SUBMIT_TYPES = {"click", "type", "submit"}
 
 def load_fixture():
     assert FIXTURE_PATH.exists(), f"fixture not found: {FIXTURE_PATH}"
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -39,6 +40,7 @@ def _policy(data, name):
 
 
 # ── 1. fixture schema 필수 필드 검증 ─────────────────────────────────────
+
 
 def test_fixture_schema_required_fields():
     """fixture schema 필수 필드 검증."""
@@ -78,6 +80,7 @@ def test_fixture_task_executor_not_connected():
 
 # ── 2. 모든 policy에 action_name 존재 ─────────────────────────────────────
 
+
 def test_all_policies_have_action_name():
     """모든 policy에 action_name이 존재한다."""
     data = load_fixture()
@@ -88,6 +91,7 @@ def test_all_policies_have_action_name():
 
 # ── 3. 모든 policy에 operation_type 존재 ──────────────────────────────────
 
+
 def test_all_policies_have_operation_type():
     """모든 policy에 operation_type이 존재한다."""
     data = load_fixture()
@@ -97,17 +101,17 @@ def test_all_policies_have_operation_type():
 
 # ── 4. operation_type이 허용 enum 안에 있음 ───────────────────────────────
 
+
 def test_all_operation_types_in_enum():
     """operation_type이 허용 enum 안에 있다."""
     data = load_fixture()
     for p in data["policies"]:
         ot = p.get("operation_type")
-        assert ot in ALLOWED_OPERATION_TYPES, (
-            f"{p.get('policy_name')}: invalid operation_type={ot!r}"
-        )
+        assert ot in ALLOWED_OPERATION_TYPES, f"{p.get('policy_name')}: invalid operation_type={ot!r}"
 
 
 # ── 5. allowlist_required=true action은 domain 또는 url_pattern 필요 ──────
+
 
 def test_allowlist_required_actions_have_domain_or_pattern():
     """allowlist_required=true policy는 domain 또는 url_pattern이 있어야 한다."""
@@ -123,6 +127,7 @@ def test_allowlist_required_actions_have_domain_or_pattern():
 
 # ── 6. wildcard-only domain은 deny ───────────────────────────────────────
 
+
 def test_wildcard_only_domain_deny():
     """wildcard-only domain(*)은 DENY다."""
     data = load_fixture()
@@ -134,6 +139,7 @@ def test_wildcard_only_domain_deny():
 
 # ── 7. unknown domain은 deny ─────────────────────────────────────────────
 
+
 def test_unknown_domain_deny():
     """unknown domain은 DENY다."""
     data = load_fixture()
@@ -143,6 +149,7 @@ def test_unknown_domain_deny():
 
 
 # ── 8. submit operation은 기본 deny ──────────────────────────────────────
+
 
 def test_submit_operation_default_deny():
     """submit operation은 기본 DENY_BY_DEFAULT다."""
@@ -155,6 +162,7 @@ def test_submit_operation_default_deny():
 
 
 # ── 9. click/type operation은 approval_required=true 필요 ─────────────────
+
 
 def test_click_operation_approval_required():
     """click operation policy는 approval_required=true다."""
@@ -173,6 +181,7 @@ def test_type_operation_approval_required():
 
 
 # ── 10. click/type/submit operation은 audit_required=true 필요 ───────────
+
 
 def test_click_operation_audit_required():
     """click operation policy는 audit_required=true다."""
@@ -206,6 +215,7 @@ def test_audit_required_missing_for_type_causes_deny():
 
 # ── 11. production_allowed=true는 DENY ───────────────────────────────────
 
+
 def test_production_allowed_true_is_deny():
     """production_allowed=true policy는 DENY다."""
     data = load_fixture()
@@ -216,6 +226,7 @@ def test_production_allowed_true_is_deny():
 
 # ── 12. dry_run_only=false는 DENY ────────────────────────────────────────
 
+
 def test_dry_run_only_false_is_deny():
     """dry_run_only=false인 policy는 production_allowed=true와 함께 DENY다."""
     data = load_fixture()
@@ -225,6 +236,7 @@ def test_dry_run_only_false_is_deny():
 
 
 # ── 13. tenant_scope 누락 시 deny ─────────────────────────────────────────
+
 
 def test_tenant_scope_missing_deny():
     """tenant_scope=null이면 DENY다."""
@@ -237,6 +249,7 @@ def test_tenant_scope_missing_deny():
 
 # ── 14. secret/password/certificate intent는 deny ────────────────────────
 
+
 def test_password_secret_intent_deny():
     """password/secret intent는 DENY다."""
     data = load_fixture()
@@ -247,6 +260,7 @@ def test_password_secret_intent_deny():
 
 
 # ── 15~19. action별 allowlist_required 매핑 검증 ─────────────────────────
+
 
 @pytest.mark.parametrize("action_name", ALLOWLIST_REQUIRED_ACTIONS)
 def test_action_allowlist_required_in_mapping(action_name):
@@ -301,9 +315,11 @@ def test_browser_open_type_close_controlled_allowlist_required():
 
 # ── 20. read/navigate registry 기존 테스트와 충돌 없음 ────────────────────
 
+
 def test_read_navigate_actions_not_affected():
     """read/navigate 3개 action은 allowlist_required=false or 기존 값 유지."""
     from agent.action_registry import get_meta
+
     for action in ["browser.inspect", "browser.plan_click", "browser.plan_open_url"]:
         meta = get_meta(action)
         assert meta is not None, f"{action} missing from registry"
@@ -313,12 +329,11 @@ def test_read_navigate_actions_not_affected():
 
 # ── 21. submit/type risk reclassification 기존 테스트와 충돌 없음 ──────────
 
+
 def test_reclassification_fixture_unchanged():
     """submit/type risk reclassification fixture의 핵심 값이 유지된다."""
-    reclassification_fixture = (
-        Path(__file__).parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
-    )
-    with open(reclassification_fixture, encoding="utf-8") as f:
+    reclassification_fixture = Path(__file__).parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
+    with reclassification_fixture.open(encoding="utf-8") as f:
         data = json.load(f)
     # execute_type은 HIGH_STATE_CHANGE
     et = next(a for a in data["actions"] if a["action_name"] == "browser.execute_type")
@@ -331,6 +346,7 @@ def test_reclassification_fixture_unchanged():
 
 # ── 22. BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md 유지 ──────────────
 
+
 def test_untracked_preflight_md_not_deleted():
     """BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md untracked 유지 (삭제 금지)."""
     preflight = Path(__file__).parents[1] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
@@ -340,6 +356,7 @@ def test_untracked_preflight_md_not_deleted():
 
 
 # ── 추가: 실행 연결 미연결 확인 ───────────────────────────────────────────
+
 
 def test_no_real_url_in_fixture():
     """fixture에 실제 운영 URL이 없다 (example.com / PLACEHOLDER / localhost만 허용)."""
@@ -358,21 +375,21 @@ def test_no_real_url_in_fixture():
 def test_fixture_min_policy_count():
     """fixture에 최소 10개 이상의 policy가 있다."""
     data = load_fixture()
-    assert len(data["policies"]) >= 10, (
-        f"Expected at least 10 policies, got {len(data['policies'])}"
-    )
+    assert len(data["policies"]) >= 10, f"Expected at least 10 policies, got {len(data['policies'])}"
 
 
 def test_all_verdicts_are_valid():
     """모든 policy의 expected_verdict가 유효한 값이다."""
     valid_verdicts = {
-        "ALLOW", "ALLOW_IF_DOMAIN_ALLOWLISTED", "ALLOW_IF_APPROVED",
-        "ALLOW_IF_APPROVED_AND_NO_SENSITIVE", "DENY", "DENY_BY_DEFAULT",
+        "ALLOW",
+        "ALLOW_IF_DOMAIN_ALLOWLISTED",
+        "ALLOW_IF_APPROVED",
+        "ALLOW_IF_APPROVED_AND_NO_SENSITIVE",
+        "DENY",
+        "DENY_BY_DEFAULT",
         "PENDING_POLICY_DESIGN",
     }
     data = load_fixture()
     for p in data["policies"]:
         v = p.get("expected_verdict")
-        assert v in valid_verdicts, (
-            f"{p.get('policy_name')}: invalid expected_verdict={v!r}"
-        )
+        assert v in valid_verdicts, f"{p.get('policy_name')}: invalid expected_verdict={v!r}"

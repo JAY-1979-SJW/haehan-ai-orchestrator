@@ -10,18 +10,30 @@ Integration test for full flow:
 
 No production submit, no DB write, tmp_path only.
 """
-import pytest
-import json
+
 import base64
+import json
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, timezone
+
+import pytest
 
 try:
     from playwright.sync_api import sync_playwright
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
 
+from ai_orchestrator.browser_tool.controlled_submit import (
+    build_controlled_submit_result,
+)
+from ai_orchestrator.browser_tool.submit_audit_log import (
+    append_submit_audit_event,
+    build_submit_audit_event,
+    read_submit_audit_events,
+    redact_audit_payload,
+)
 from ai_orchestrator.browser_tool.submit_policy import (
     SubmitValidationRequest,
     validate_submit_policy,
@@ -30,22 +42,13 @@ from ai_orchestrator.browser_tool.submit_preview import (
     SubmitPreviewInput,
     build_submit_preview,
 )
-from ai_orchestrator.browser_tool.controlled_submit import (
-    build_controlled_submit_result,
-)
-from ai_orchestrator.browser_tool.submit_audit_log import (
-    build_submit_audit_event,
-    redact_audit_payload,
-    append_submit_audit_event,
-    read_submit_audit_events,
-)
 
 
 @pytest.fixture
 def fixture_html_content():
     """Load fixture HTML content."""
     fixture_path = Path(__file__).parent / "fixtures" / "browser_controlled_submit_form_20260506.html"
-    with open(fixture_path, "r", encoding="utf-8") as f:
+    with fixture_path.open(encoding="utf-8") as f:
         return f.read()
 
 
@@ -61,7 +64,7 @@ def fixture_data_url(fixture_html_content):
 def allowlist():
     """Load allowlist fixture."""
     fixture_path = Path(__file__).parent / "fixtures" / "browser_submit_policy_allowlist_20260506.json"
-    with open(fixture_path, "r", encoding="utf-8") as f:
+    with fixture_path.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -87,9 +90,9 @@ class TestRealBrowserAuditIntegration:
             email_value = "test@internal.mock"
             message_value = "Integration test message"
 
-            page.fill('#sample_text_field', sample_value)
-            page.fill('#email_field', email_value)
-            page.fill('#message_field', message_value)
+            page.fill("#sample_text_field", sample_value)
+            page.fill("#email_field", email_value)
+            page.fill("#message_field", message_value)
 
             # Step 3: Create policy validation request
             policy_request = SubmitValidationRequest(
@@ -105,7 +108,7 @@ class TestRealBrowserAuditIntegration:
                 ],
                 hidden_fields=[
                     {"name": "csrf_token", "value": "safe_token"},
-                    {"name": "timestamp", "value": datetime.now(timezone.utc).isoformat()},
+                    {"name": "timestamp", "value": datetime.now(UTC).isoformat()},
                 ],
                 preview_shown=True,
                 user_confirmed=True,
@@ -128,18 +131,18 @@ class TestRealBrowserAuditIntegration:
                 risk_level="high",
             )
 
-            now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
             policy_dict = {
-                'verdict': policy_result.verdict,
-                'allowlist_verdict': policy_result.allowlist_verdict,
-                'origin_verdict': policy_result.origin_verdict,
-                'form_verdict': policy_result.form_verdict,
-                'intent_verdict': policy_result.intent_verdict,
-                'field_verdict': policy_result.field_verdict,
-                'prompt_injection_verdict': policy_result.prompt_injection_verdict,
-                'preview_verdict': policy_result.preview_verdict,
-                'user_confirm_verdict': policy_result.user_confirm_verdict,
-                'reasons': policy_result.reasons,
+                "verdict": policy_result.verdict,
+                "allowlist_verdict": policy_result.allowlist_verdict,
+                "origin_verdict": policy_result.origin_verdict,
+                "form_verdict": policy_result.form_verdict,
+                "intent_verdict": policy_result.intent_verdict,
+                "field_verdict": policy_result.field_verdict,
+                "prompt_injection_verdict": policy_result.prompt_injection_verdict,
+                "preview_verdict": policy_result.preview_verdict,
+                "user_confirm_verdict": policy_result.user_confirm_verdict,
+                "reasons": policy_result.reasons,
             }
 
             preview_bundle = build_submit_preview(preview_input, policy_dict, now)
@@ -153,21 +156,23 @@ class TestRealBrowserAuditIntegration:
             assert submit_result.submit_result == "success"
 
             # Step 7: Click submit button in real browser
-            page.click('#submit_button_id')
+            page.click("#submit_button_id")
             page.wait_for_timeout(500)
 
             # Step 8: Verify internal submit was recorded
-            submit_state = page.evaluate('() => window.SMOKE_TEST_FORM_STATE')
-            assert submit_state['submitCount'] == 1
-            assert submit_state['lastSubmitData']['sample_text_field'] == sample_value
+            submit_state = page.evaluate("() => window.SMOKE_TEST_FORM_STATE")
+            assert submit_state["submitCount"] == 1
+            assert submit_state["lastSubmitData"]["sample_text_field"] == sample_value
 
             # Step 9: Create audit event with redacted payload
-            redacted_payload = redact_audit_payload({
-                "sample_text_field": sample_value,
-                "email": email_value,
-                "message": message_value,
-                "csrf_token": "safe_token",
-            })
+            redacted_payload = redact_audit_payload(
+                {
+                    "sample_text_field": sample_value,
+                    "email": email_value,
+                    "message": message_value,
+                    "csrf_token": "safe_token",
+                }
+            )
 
             audit_event = build_submit_audit_event(
                 validation_id="audit_int_001",
@@ -180,7 +185,7 @@ class TestRealBrowserAuditIntegration:
                 risk_level="high",
                 preview_hash=preview_bundle.audit.preview_hash,
                 user_confirmed=True,
-                submitted=submit_state['submitCount'] > 0,
+                submitted=submit_state["submitCount"] > 0,
                 submit_result="success",
                 redacted_payload=redacted_payload,
                 result_summary="Real browser integration test - form submitted successfully",
@@ -231,13 +236,13 @@ class TestRealBrowserAuditIntegration:
             page.goto(fixture_data_url)
 
             # First submission
-            page.fill('#sample_text_field', 'SUBMISSION_001')
-            page.fill('#email_field', 'test1@test.com')
-            page.click('#submit_button_id')
+            page.fill("#sample_text_field", "SUBMISSION_001")
+            page.fill("#email_field", "test1@test.com")
+            page.click("#submit_button_id")
             page.wait_for_timeout(500)
 
-            submit_state_1 = page.evaluate('() => window.SMOKE_TEST_FORM_STATE')
-            assert submit_state_1['submitCount'] == 1
+            submit_state_1 = page.evaluate("() => window.SMOKE_TEST_FORM_STATE")
+            assert submit_state_1["submitCount"] == 1
 
             # Create and append first audit event
             audit_event_1 = build_submit_audit_event(
@@ -262,17 +267,17 @@ class TestRealBrowserAuditIntegration:
             assert result_1.event_count == 1
 
             # Reset form for second submission
-            page.click('button.reset-btn')  # Reset button
+            page.click("button.reset-btn")  # Reset button
             page.wait_for_timeout(300)
 
             # Second submission
-            page.fill('#sample_text_field', 'SUBMISSION_002')
-            page.fill('#email_field', 'test2@test.com')
-            page.click('#submit_button_id')
+            page.fill("#sample_text_field", "SUBMISSION_002")
+            page.fill("#email_field", "test2@test.com")
+            page.click("#submit_button_id")
             page.wait_for_timeout(500)
 
-            submit_state_2 = page.evaluate('() => window.SMOKE_TEST_FORM_STATE')
-            assert submit_state_2['submitCount'] == 2
+            submit_state_2 = page.evaluate("() => window.SMOKE_TEST_FORM_STATE")
+            assert submit_state_2["submitCount"] == 2
 
             # Create and append second audit event
             audit_event_2 = build_submit_audit_event(
@@ -318,9 +323,9 @@ class TestRealBrowserAuditIntegration:
 
             page.goto(fixture_data_url)
 
-            page.fill('#sample_text_field', 'COMPLETE_TEST')
-            page.fill('#email_field', 'complete@test.com')
-            page.click('#submit_button_id')
+            page.fill("#sample_text_field", "COMPLETE_TEST")
+            page.fill("#email_field", "complete@test.com")
+            page.click("#submit_button_id")
             page.wait_for_timeout(500)
 
             # Create comprehensive audit event
@@ -340,7 +345,7 @@ class TestRealBrowserAuditIntegration:
                 redacted_payload={"email": "complete@test.com", "msg": "test"},
                 result_summary="Complete test",
                 approved_by="integration_tester",
-                submit_timestamp=datetime.now(timezone.utc).isoformat(),
+                submit_timestamp=datetime.now(UTC).isoformat(),
                 metadata={"test": "complete", "browser": "chromium"},
             )
 
@@ -388,30 +393,32 @@ class TestRealBrowserAuditIntegration:
             requests_made = []
 
             def handle_route(route):
-                requests_made.append({
-                    'url': route.request.url,
-                    'method': route.request.method,
-                })
+                requests_made.append(
+                    {
+                        "url": route.request.url,
+                        "method": route.request.method,
+                    }
+                )
                 route.abort()
 
             page = context.new_page()
-            page.route('**/*', handle_route)
+            page.route("**/*", handle_route)
 
             page.goto(fixture_data_url)
 
-            page.fill('#sample_text_field', 'NO_PRODUCTION_SUBMIT')
-            page.fill('#email_field', 'no@production.com')
+            page.fill("#sample_text_field", "NO_PRODUCTION_SUBMIT")
+            page.fill("#email_field", "no@production.com")
 
             # Click submit
-            page.click('#submit_button_id')
+            page.click("#submit_button_id")
             page.wait_for_timeout(500)
 
             # Verify form submission was internal only
-            submit_state = page.evaluate('() => window.SMOKE_TEST_FORM_STATE')
-            assert submit_state['submitCount'] == 1
+            submit_state = page.evaluate("() => window.SMOKE_TEST_FORM_STATE")
+            assert submit_state["submitCount"] == 1
 
             # Verify no external network requests
-            external_requests = [r for r in requests_made if not r['url'].startswith('data:')]
+            external_requests = [r for r in requests_made if not r["url"].startswith("data:")]
             assert len(external_requests) == 0, f"External requests detected: {external_requests}"
 
             # Create audit event showing internal-only submission

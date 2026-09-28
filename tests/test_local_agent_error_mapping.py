@@ -3,10 +3,10 @@
 에러 타입별 HTTP 상태 코드 매핑과 에러 응답 생성 함수의 정합성을 검증한다.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ai_orchestrator.local_agent_error_mapping import (
     ERROR_STATUS_CODES,

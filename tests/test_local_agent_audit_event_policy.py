@@ -5,10 +5,10 @@ APPROVE_AUDIT_EVENT, REJECT_AUDIT_EVENT 매핑의 정합성,
 그리고 에러 응답 생성 함수의 동작을 검증한다.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ai_orchestrator.local_agent_audit_event_policy import (
     APPROVE_AUDIT_EVENT,
