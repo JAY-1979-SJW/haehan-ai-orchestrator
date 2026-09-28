@@ -7,6 +7,7 @@
   - forms: id/action/method/name
   - headings: h1/h2/h3 텍스트
 """
+
 from __future__ import annotations
 
 import json
@@ -15,8 +16,8 @@ import re
 from datetime import datetime
 from typing import Any
 
-from scripts.web_connector import get_page
 from scripts.logger import get_logger
+from scripts.web_connector import get_page
 
 _log = get_logger(__name__)
 
@@ -86,9 +87,14 @@ def snapshot(page, save_dir: str = "data/sitemap") -> dict[str, Any]:
             info = f.evaluate(_EXTRACT_FRAME_JS)
             counts = {k: len(info[k]) for k in ("links", "inputs", "buttons", "forms", "headings")}
             data["frames"].append({"idx": i, "url": f.url, **info, "counts": counts})
-            _log.debug("[explorer] 프레임[%d] 추출 완료: %d links, %d inputs, %d buttons",
-                      i, counts["links"], counts["inputs"], counts["buttons"])
-        except Exception as e:
+            _log.debug(
+                "[explorer] 프레임[%d] 추출 완료: %d links, %d inputs, %d buttons",
+                i,
+                counts["links"],
+                counts["inputs"],
+                counts["buttons"],
+            )
+        except Exception as e:  # noqa: BLE001 - iframe 프레임 정보 추출(page.evaluate) 실패를 data에 error로 기록하고 다음 프레임 계속 처리 - 읽기전용 페이지 스냅샷, 실패한 프레임만 누락될 뿐 위험 조작 없음
             data["frames"].append({"idx": i, "url": f.url, "error": str(e)})
             _log.warning("[explorer] 프레임[%d] 추출 실패: %s", i, e)
 

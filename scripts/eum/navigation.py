@@ -1,4 +1,5 @@
 """EUM live menu/capability helpers."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -19,7 +20,7 @@ def extract_live_menu(page) -> list[dict[str, Any]]:
                 }));
             }"""
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 사이트 네비게이션 정보 조회(page.evaluate) 실패 시 빈 목록 반환 - 읽기전용 조회 폴백, 쓰기 없음
         return []
     return [row for row in rows if isinstance(row, dict)]
 

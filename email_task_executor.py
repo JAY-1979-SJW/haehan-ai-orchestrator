@@ -8,14 +8,14 @@ email task approval → execution 연결
   high/critical: BLOCKED_POLICY
 - 자동 실행 없음 — execute_email_task() 명시적 호출만
 """
+
 import time
-from typing import Optional
 
 import audit_logger
 import email_task_approval
 import email_task_store
 from logger import get_logger
-from models import TaskRequest, RiskAssessment, ExecutionPlan
+from models import ExecutionPlan, RiskAssessment, TaskRequest
 from whitelist_executor import execute_allowed
 
 log = get_logger("email_task_executor")
@@ -34,8 +34,8 @@ def approve_task(
     task_id: str,
     approved_by: str,
     *,
-    token_path: Optional[str] = None,
-    task_path: Optional[str] = None,
+    token_path: str | None = None,
+    task_path: str | None = None,
 ) -> dict:
     """
     email task의 pending approval 승인 처리.
@@ -98,8 +98,8 @@ def reject_task(
     task_id: str,
     rejected_by: str,
     *,
-    token_path: Optional[str] = None,
-    task_path: Optional[str] = None,
+    token_path: str | None = None,
+    task_path: str | None = None,
 ) -> dict:
     """
     email task의 pending approval 거절 처리.
@@ -151,8 +151,8 @@ def reject_task(
 def execute_email_task(
     task_id: str,
     *,
-    task_path: Optional[str] = None,
-    token_path: Optional[str] = None,
+    task_path: str | None = None,
+    token_path: str | None = None,
     actor: str = "email_task_executor",
 ) -> dict:
     """
@@ -247,7 +247,7 @@ def execute_email_task(
     start = time.time()
     try:
         result = execute_allowed(task_req, risk_obj, plan, _DEFAULT_POLICY, True, actor=actor)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - email task 실행(execute_allowed) 중 예외 발생 시 task 상태를 error로 기록하고 에러 반환 - 승인/실행 판정은 execute_allowed 내부에서 이미 끝났고 이 except는 실행 실패 후처리일 뿐, 성공으로 위장하지 않음
         log.error("email task execution error: task_id=%s error=%s", task_id, exc)
         email_task_store.update_email_task_status(task_id, "error", path=task_path)
         return {"status": "error", "task_id": task_id, "error": str(exc)}
@@ -257,7 +257,9 @@ def execute_email_task(
 
     log.info(
         "email task executed: task_id=%s status=%s duration_ms=%.1f",
-        task_id, result.get("status"), duration_ms,
+        task_id,
+        result.get("status"),
+        duration_ms,
     )
     return {**result, "task_id": task_id, "duration_ms": round(duration_ms, 2)}
 

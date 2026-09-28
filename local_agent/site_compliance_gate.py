@@ -9,6 +9,7 @@ allowlist/blocklist 형태로 압축한다.
   - 단일 평가 함수만 제공. enforcement 는 서버 라우터 1차, 로컬 adapter 2차,
     sender 검증 3차 구조를 유지.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,7 +18,7 @@ try:
     from ai_orchestrator.browser_tool.site_compliance_policy import (
         evaluate_site_compliance as _evaluate,
     )
-except Exception:  # pragma: no cover - import 경로 안전망
+except Exception:  # pragma: no cover - import 경로 안전망  # noqa: BLE001 - site_compliance_policy 모듈 import 실패 시 _evaluate=None 처리 - evaluate_gate()가 _evaluate is None 인 경우 allowed=False, policy=AUTOMATION_BLOCKED 로 fail-closed 반환하도록 아래에서 명시적으로 확인함(차단 방향), 허용으로 폴백하지 않음
     _evaluate = None  # type: ignore[assignment]
 
 
@@ -25,14 +26,18 @@ POLICY_API_ONLY = "API_ONLY"
 POLICY_USER_PRESENT_LOCAL_ONLY = "USER_PRESENT_LOCAL_ONLY"
 POLICY_AUTOMATION_BLOCKED = "AUTOMATION_BLOCKED"
 
-_BLOCKING_DECISIONS = frozenset({
-    "BLOCK",
-    "REQUIRE_API_CONNECTOR",
-})
+_BLOCKING_DECISIONS = frozenset(
+    {
+        "BLOCK",
+        "REQUIRE_API_CONNECTOR",
+    }
+)
 
-_USER_PRESENT_REQUIRED_DECISIONS = frozenset({
-    "REQUIRE_USER_PRESENT_LOCAL",
-})
+_USER_PRESENT_REQUIRED_DECISIONS = frozenset(
+    {
+        "REQUIRE_USER_PRESENT_LOCAL",
+    }
+)
 
 
 def evaluate_gate(payload: dict[str, Any]) -> dict[str, Any]:

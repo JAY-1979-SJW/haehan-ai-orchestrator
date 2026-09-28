@@ -6,15 +6,15 @@
 
 저장(snapshot) 은 이번 단계에서는 최소한 훅만 열어둔다.
 """
+
 from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
 
+from . import registry
 from .connector import ConnectorError
 from .models import SiteHealthStatus
-from . import registry
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class SiteHealthService:
             for c in registry.all_connectors()
         ]
 
-    def check_one(self, site_name: str) -> Optional[SiteHealthStatus]:
+    def check_one(self, site_name: str) -> SiteHealthStatus | None:
         conn = registry.get(site_name)
         if conn is None:
             return None
@@ -59,7 +59,7 @@ class SiteHealthService:
                 warning=e.message or "",
                 latency_ms=int((time.monotonic() - t0) * 1000),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 커넥터 health_check 실패를 캡처해 state=unavailable 로 안전하게 폴백(민감 원문 대신 예외 타입만 로깅) - 헬스체크는 읽기전용 상태조회이며 실패를 정상으로 위장하지 않음
             # 민감 원문이 섞이지 않게 타입 + 요약만 남긴다.
             logger.warning("health_check 실패: site=%s err=%s", site_name, type(e).__name__)
             return SiteHealthStatus(

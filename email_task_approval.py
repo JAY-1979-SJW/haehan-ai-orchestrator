@@ -3,11 +3,11 @@ email task → approval request 연결 모듈
 승인 요청 생성만 수행. 자동 실행 없음.
 storage/email_approval_tokens.json (파일 기반, JSON dict)
 """
+
 import json
 import os
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import audit_logger
 import email_task_store
@@ -24,7 +24,7 @@ def _load_tokens(path: str) -> dict:
         return {}
     try:
         return json.loads(open(path, encoding="utf-8").read())
-    except Exception:
+    except Exception:  # noqa: BLE001 - 승인 토큰 저장 파일 로드 실패 시 빈 dict 반환 - approve/reject/get_approval_for_task는 조회 실패를 'not_found'로 처리(자동승인 아님), request_approval도 자동 실행 없이 pending 상태만 기록하므로 예외가 승인 우회로 이어지지 않음
         return {}
 
 
@@ -34,7 +34,7 @@ def _save_tokens(tokens: dict, path: str) -> None:
         f.write(json.dumps(tokens, indent=2, ensure_ascii=False))
 
 
-def _active_token_for_task(task_id: str, tokens: dict) -> Optional[dict]:
+def _active_token_for_task(task_id: str, tokens: dict) -> dict | None:
     """task_id에 대해 활성(pending) 토큰 반환. 없으면 None."""
     for entry in tokens.values():
         if entry.get("task_id") == task_id and entry.get("status") == "pending":
@@ -45,8 +45,8 @@ def _active_token_for_task(task_id: str, tokens: dict) -> Optional[dict]:
 def request_approval(
     task_id: str,
     *,
-    token_path: Optional[str] = None,
-    task_path: Optional[str] = None,
+    token_path: str | None = None,
+    task_path: str | None = None,
     actor: str = "system",
 ) -> dict:
     """
@@ -86,7 +86,7 @@ def request_approval(
         }
 
     # 3. approval token 생성
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
     token_id = str(uuid.uuid4())
     entry = {
         "token_id": token_id,
@@ -129,7 +129,7 @@ def request_approval(
     }
 
 
-def approve(token_id: str, approved_by: str, *, token_path: Optional[str] = None) -> dict:
+def approve(token_id: str, approved_by: str, *, token_path: str | None = None) -> dict:
     """approval token을 approved 상태로 변경. pending 상태일 때만 처리."""
     tp = token_path or _DEFAULT_TOKEN_PATH
     tokens = _load_tokens(tp)
@@ -138,7 +138,7 @@ def approve(token_id: str, approved_by: str, *, token_path: Optional[str] = None
         return {"status": "not_found", "token_id": token_id}
     if entry["status"] != "pending":
         return {"status": "already_processed", "token_id": token_id, "current_status": entry["status"]}
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
     entry["status"] = "approved"
     entry["approved_by"] = approved_by
     entry["approved_at"] = now
@@ -146,7 +146,7 @@ def approve(token_id: str, approved_by: str, *, token_path: Optional[str] = None
     return {"status": "approved", "token_id": token_id, "task_id": entry["task_id"]}
 
 
-def reject(token_id: str, rejected_by: str, *, token_path: Optional[str] = None) -> dict:
+def reject(token_id: str, rejected_by: str, *, token_path: str | None = None) -> dict:
     """approval token을 rejected 상태로 변경. pending 상태일 때만 처리."""
     tp = token_path or _DEFAULT_TOKEN_PATH
     tokens = _load_tokens(tp)
@@ -155,7 +155,7 @@ def reject(token_id: str, rejected_by: str, *, token_path: Optional[str] = None)
         return {"status": "not_found", "token_id": token_id}
     if entry["status"] != "pending":
         return {"status": "already_processed", "token_id": token_id, "current_status": entry["status"]}
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
     entry["status"] = "rejected"
     entry["rejected_by"] = rejected_by
     entry["rejected_at"] = now
@@ -163,7 +163,7 @@ def reject(token_id: str, rejected_by: str, *, token_path: Optional[str] = None)
     return {"status": "rejected", "token_id": token_id, "task_id": entry["task_id"]}
 
 
-def get_approval_for_task(task_id: str, *, token_path: Optional[str] = None) -> Optional[dict]:
+def get_approval_for_task(task_id: str, *, token_path: str | None = None) -> dict | None:
     """task_id에 대한 approval token 조회. 복수인 경우 최신 우선."""
     tp = token_path or _DEFAULT_TOKEN_PATH
     tokens = _load_tokens(tp)
