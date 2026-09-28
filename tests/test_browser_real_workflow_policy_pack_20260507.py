@@ -24,7 +24,7 @@ class TestBrowserRealWorkflowPolicyPackFixture:
         fixture_path = Path("tests/fixtures/browser_real_workflow_policy_pack_20260507.json")
         assert fixture_path.exists(), f"Fixture file not found: {fixture_path}"
 
-        with open(fixture_path) as f:
+        with fixture_path.open(encoding="utf-8") as f:
             data = json.load(f)
         return data
 
@@ -299,7 +299,7 @@ class TestPolicyPackMetadata:
     @pytest.fixture
     def fixture_data(self):
         fixture_path = Path("tests/fixtures/browser_real_workflow_policy_pack_20260507.json")
-        with open(fixture_path) as f:
+        with fixture_path.open(encoding="utf-8") as f:
             return json.load(f)
 
     def test_fixture_version_recorded(self, fixture_data):

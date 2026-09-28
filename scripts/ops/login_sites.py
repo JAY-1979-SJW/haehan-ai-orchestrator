@@ -6,6 +6,7 @@ import sys
 import time
 import urllib.request
 import uuid
+from pathlib import Path
 
 import websocket
 
@@ -76,13 +77,13 @@ def save_cookies(tabs, tab_id, domains, filename):
         "cookie_count": len(filtered),
         "cookies": filtered,
     }
-    with open(filename, "w", encoding="utf-8") as f:
+    with Path(filename).open("w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
     return len(filtered)
 
 
 def main(captcha_gabia: str):
-    with open(CREDS_FILE, "rb") as f:
+    with Path(CREDS_FILE).open("rb") as f:
         creds = pickle.load(f)
 
     tabs = json.loads(urllib.request.urlopen("http://localhost:9222/json").read())

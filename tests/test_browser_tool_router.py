@@ -5,6 +5,8 @@ Tests for the Browser Tool Protocol router and policy enforcement.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from ai_orchestrator.browser_tool import (
     BrowserResult,
     BrowserTask,
@@ -223,7 +225,7 @@ class TestNoPlaywrightImport:
         source_file = router_module.__file__
         assert source_file is not None
 
-        with open(source_file, encoding="utf-8") as f:
+        with Path(source_file).open(encoding="utf-8") as f:
             source = f.read()
 
         assert "from playwright" not in source
@@ -236,7 +238,7 @@ class TestNoPlaywrightImport:
         source_file = mock_module.__file__
         assert source_file is not None
 
-        with open(source_file, encoding="utf-8") as f:
+        with Path(source_file).open(encoding="utf-8") as f:
             source = f.read()
 
         assert "from playwright" not in source
