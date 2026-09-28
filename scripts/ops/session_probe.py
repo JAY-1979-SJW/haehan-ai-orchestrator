@@ -10,6 +10,7 @@ frozen exe 에서도 in-process 로 동작(서브프로세스/sys.executable 의
 from __future__ import annotations
 
 import json
+from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -110,10 +111,8 @@ def probe_all() -> dict:
                         }
                     )
         finally:
-            try:
+            with suppress(Exception):
                 page.close()
-            except Exception:  # noqa: BLE001 - 사이트 로그인 세션 능동점검(읽기전용) - CLAUDE.md 명시대로 로그인 상태를 바꾸지 않고 쿠키 이름 존재만 bool 로 확인, 실패시 False 또는 ERROR 상태 기록
-                pass
 
     payload = {
         "checked_at": now,

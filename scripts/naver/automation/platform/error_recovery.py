@@ -15,6 +15,7 @@ import sqlite3
 import time
 import traceback
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 
@@ -137,10 +138,8 @@ class ErrorRecovery:
                             except Exception:  # noqa: BLE001 - 세션 복구 시도(SessionManager.check_and_recover 등) 실패는 무시하고 다음 재시도 루프로 진행 — 복구 실패해도 최종적으로 상위에서 예외가 다시 던져짐
                                 pass
                         elif recovery_action:
-                            try:
+                            with suppress(Exception):
                                 recovery_action()
-                            except Exception:  # noqa: BLE001 - 세션 복구 시도(SessionManager.check_and_recover 등) 실패는 무시하고 다음 재시도 루프로 진행 — 복구 실패해도 최종적으로 상위에서 예외가 다시 던져짐
-                                pass
                         time.sleep(delay_s * (backoff ** (attempt - 1)))
 
             # 최종 실패

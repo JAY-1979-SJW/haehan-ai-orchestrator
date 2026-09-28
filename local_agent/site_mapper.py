@@ -19,11 +19,13 @@
 출력 payload 는 LLM 에게 "판단" 만 맡기고, 실행은 별도의 guarded action
 레이어에서만 수행되도록 설계되어 있다.
 """
+
 from __future__ import annotations
 
-from typing import Any, Iterable
+from collections.abc import Iterable
+from contextlib import suppress
+from typing import Any
 from urllib.parse import urlparse
-
 
 # ─── Universal safety terms (도메인 키워드 아님, 안전 정책) ───────────────
 #
@@ -32,49 +34,119 @@ from urllib.parse import urlparse
 # 주입해야 한다.
 
 UNIVERSAL_SAFE_READ_TERMS: tuple[str, ...] = (
-    "조회", "검색", "보기", "목록", "상세",
-    "다음", "이전", "닫기", "확인",
-    "cancel", "close", "search", "view",
-    "list", "detail", "next", "previous",
+    "조회",
+    "검색",
+    "보기",
+    "목록",
+    "상세",
+    "다음",
+    "이전",
+    "닫기",
+    "확인",
+    "cancel",
+    "close",
+    "search",
+    "view",
+    "list",
+    "detail",
+    "next",
+    "previous",
 )
 
 UNIVERSAL_DANGER_WRITE_TERMS: tuple[str, ...] = (
-    "저장", "제출", "등록", "삭제", "수정",
-    "승인", "전송", "결제", "확정", "마감",
-    "신청", "취소",
-    "save", "submit", "register", "delete", "remove",
-    "edit", "approve", "send", "payment",
-    "confirm", "apply", "cancel",
+    "저장",
+    "제출",
+    "등록",
+    "삭제",
+    "수정",
+    "승인",
+    "전송",
+    "결제",
+    "확정",
+    "마감",
+    "신청",
+    "취소",
+    "save",
+    "submit",
+    "register",
+    "delete",
+    "remove",
+    "edit",
+    "approve",
+    "send",
+    "payment",
+    "confirm",
+    "apply",
+    "cancel",
 )
 
 PAGE_ROLE_CANDIDATES: tuple[str, ...] = (
-    "dashboard", "menu_page", "list_page", "detail_page",
-    "search_page", "form_page", "table_page",
-    "login_page", "modal_page", "unknown",
+    "dashboard",
+    "menu_page",
+    "list_page",
+    "detail_page",
+    "search_page",
+    "form_page",
+    "table_page",
+    "login_page",
+    "modal_page",
+    "unknown",
 )
 
 
 # ─── 민감 키/값 토큰 테이블 ────────────────────────────────────────────────
 
-_SENSITIVE_NAME_TOKENS: frozenset[str] = frozenset({
-    "password", "passwd", "pwd",
-    "cookie", "set-cookie",
-    "authorization", "bearer",
-    "session", "sessionid", "session_id",
-    "token", "access_token", "refresh_token", "id_token",
-    "csrf", "xsrf", "csrf_token", "xsrf_token",
-    "api_key", "apikey", "api-key",
-    "device_token", "devicetoken",
-})
+_SENSITIVE_NAME_TOKENS: frozenset[str] = frozenset(
+    {
+        "password",
+        "passwd",
+        "pwd",
+        "cookie",
+        "set-cookie",
+        "authorization",
+        "bearer",
+        "session",
+        "sessionid",
+        "session_id",
+        "token",
+        "access_token",
+        "refresh_token",
+        "id_token",
+        "csrf",
+        "xsrf",
+        "csrf_token",
+        "xsrf_token",
+        "api_key",
+        "apikey",
+        "api-key",
+        "device_token",
+        "devicetoken",
+    }
+)
 
-_ALWAYS_DROP_OBSERVATION_KEYS: frozenset[str] = frozenset({
-    "html", "raw_html", "page_html", "body_html", "outer_html", "inner_html",
-    "screenshot_path", "screenshot_file",
-    "absolute_path", "full_path", "local_path", "file_path",
-    "device_token", "agent_token", "session_token",
-    "cookies", "cookie",
-    "authorization", "auth_header",
-})
+_ALWAYS_DROP_OBSERVATION_KEYS: frozenset[str] = frozenset(
+    {
+        "html",
+        "raw_html",
+        "page_html",
+        "body_html",
+        "outer_html",
+        "inner_html",
+        "screenshot_path",
+        "screenshot_file",
+        "absolute_path",
+        "full_path",
+        "local_path",
+        "file_path",
+        "device_token",
+        "agent_token",
+        "session_token",
+        "cookies",
+        "cookie",
+        "authorization",
+        "auth_header",
+    }
+)
 
 _REDACTED = "<redacted>"
 
@@ -97,7 +169,8 @@ def build_site_map_prompt_payload(
     warnings: list[str] = []
     if not isinstance(page_observation, dict):
         return _empty_payload(
-            user_goal, warning="page_observation_not_dict",
+            user_goal,
+            warning="page_observation_not_dict",
         )
 
     goal = _normalize_goal(user_goal)
@@ -112,15 +185,11 @@ def build_site_map_prompt_payload(
         page_structure = page_observation
 
     title = _coerce_str(
-        page_observation.get("title")
-        or page_structure.get("page_title")
-        or "",
+        page_observation.get("title") or page_structure.get("page_title") or "",
         max_len=300,
     )
     current_url = _coerce_str(
-        page_observation.get("current_url")
-        or page_observation.get("url")
-        or "",
+        page_observation.get("current_url") or page_observation.get("url") or "",
         max_len=500,
     )
     host = ""
@@ -153,7 +222,9 @@ def build_site_map_prompt_payload(
     domain_matches = _score_domain_profile(sanitized, title, profile, goal)
     danger_elements = _collect_danger_elements(sanitized, profile)[:limit]
     safe_navigation = _collect_safe_navigation(
-        sanitized, profile, hints,
+        sanitized,
+        profile,
+        hints,
     )[:limit]
     task_candidates = _build_task_candidates(
         sanitized=sanitized,
@@ -209,19 +280,29 @@ def sanitize_for_gpt_payload(
     limit = _normalize_max_items(max_items)
 
     links = _sanitize_list(
-        page_structure.get("links"), _sanitize_link, limit,
+        page_structure.get("links"),
+        _sanitize_link,
+        limit,
     )
     buttons = _sanitize_list(
-        page_structure.get("buttons"), _sanitize_button, limit,
+        page_structure.get("buttons"),
+        _sanitize_button,
+        limit,
     )
     forms = _sanitize_list(
-        page_structure.get("forms"), _sanitize_form, limit,
+        page_structure.get("forms"),
+        _sanitize_form,
+        limit,
     )
     tables = _sanitize_list(
-        page_structure.get("tables"), _sanitize_table, limit,
+        page_structure.get("tables"),
+        _sanitize_table,
+        limit,
     )
     inputs = _sanitize_list(
-        page_structure.get("inputs"), _sanitize_input, limit,
+        page_structure.get("inputs"),
+        _sanitize_input,
+        limit,
     )
 
     return {
@@ -275,7 +356,9 @@ def _normalize_domain_profile(profile: Any) -> dict | None:
         "description": _coerce_str(profile.get("description", ""), 200),
         "keywords": _coerce_str_list(profile.get("keywords"), 50, 60),
         "preferred_navigation_terms": _coerce_str_list(
-            profile.get("preferred_navigation_terms"), 50, 60,
+            profile.get("preferred_navigation_terms"),
+            50,
+            60,
         ),
         "danger_terms": _coerce_str_list(profile.get("danger_terms"), 50, 60),
         "task_candidates": [],
@@ -286,11 +369,13 @@ def _normalize_domain_profile(profile: Any) -> dict | None:
         task_name = _coerce_str(t.get("task", ""), 80)
         if not task_name:
             continue
-        normalized["task_candidates"].append({
-            "task": task_name,
-            "keywords": _coerce_str_list(t.get("keywords"), 20, 60),
-            "description": _coerce_str(t.get("description", ""), 200),
-        })
+        normalized["task_candidates"].append(
+            {
+                "task": task_name,
+                "keywords": _coerce_str_list(t.get("keywords"), 20, 60),
+                "description": _coerce_str(t.get("description", ""), 200),
+            }
+        )
         if len(normalized["task_candidates"]) >= 50:
             break
     return normalized
@@ -301,8 +386,11 @@ def _normalize_domain_profile(profile: Any) -> dict | None:
 
 def _empty_sanitized() -> dict:
     return {
-        "links": [], "buttons": [], "forms": [],
-        "tables": [], "inputs": [],
+        "links": [],
+        "buttons": [],
+        "forms": [],
+        "tables": [],
+        "inputs": [],
     }
 
 
@@ -368,10 +456,8 @@ def _sanitize_link(item: Any) -> dict | None:
         "risk_hint": _coerce_str(item.get("risk_hint", "safe_read"), 32),
     }
     if "keyword_score" in item:
-        try:
+        with suppress(TypeError, ValueError):
             out["keyword_score"] = int(item.get("keyword_score") or 0)
-        except (TypeError, ValueError):
-            pass
     return out
 
 
@@ -476,9 +562,7 @@ def _score_page_roles(
     tables = sanitized.get("tables") or []
     inputs = sanitized.get("inputs") or []
 
-    has_password_input = any(
-        (i.get("type") == "password") for i in inputs if isinstance(i, dict)
-    )
+    has_password_input = any((i.get("type") == "password") for i in inputs if isinstance(i, dict))
     merged: dict[str, dict[str, Any]] = {}
 
     def _bump(role: str, score: float, reasons: Iterable[str]) -> None:
@@ -486,7 +570,9 @@ def _score_page_roles(
         entry = merged.get(role)
         if entry is None:
             merged[role] = {
-                "role": role, "score": score, "reasons": list(reasons),
+                "role": role,
+                "score": score,
+                "reasons": list(reasons),
             }
             return
         if score > entry["score"]:
@@ -507,9 +593,7 @@ def _score_page_roles(
         _bump("modal_page", 0.7, ["modal_candidates"])
 
     if tables:
-        total_rows = sum(
-            int(t.get("row_count") or 0) for t in tables if isinstance(t, dict)
-        )
+        total_rows = sum(int(t.get("row_count") or 0) for t in tables if isinstance(t, dict))
         reasons = [f"tables:{len(tables)}", f"rows:{total_rows}"]
         _bump(
             "table_page",
@@ -532,7 +616,8 @@ def _score_page_roles(
         )
         has_search_affordance = any(
             _matches_terms(_coerce_str(b.get("text", ""), 200), UNIVERSAL_SAFE_READ_TERMS)
-            for b in buttons if isinstance(b, dict)
+            for b in buttons
+            if isinstance(b, dict)
         )
         if has_search_affordance:
             _bump("search_page", 0.6, reasons + ["safe_read_button"])
@@ -564,7 +649,10 @@ def _score_page_roles(
 
 
 def _score_domain_profile(
-    sanitized: dict, title: str, profile: dict | None, goal: str | None,
+    sanitized: dict,
+    title: str,
+    profile: dict | None,
+    goal: str | None,
 ) -> list[dict]:
     """domain_profile 이 제공된 경우에만 profile keyword 매칭 결과 반환."""
     if not profile:
@@ -585,11 +673,13 @@ def _score_domain_profile(
                 score += 0.15
     if not reasons:
         return []
-    return [{
-        "profile_key": profile.get("profile_key", ""),
-        "score": round(min(score, 0.99), 3),
-        "reasons": reasons[:10],
-    }]
+    return [
+        {
+            "profile_key": profile.get("profile_key", ""),
+            "score": round(min(score, 0.99), 3),
+            "reasons": reasons[:10],
+        }
+    ]
 
 
 def _build_text_blob(sanitized: dict, title: str, goal: str | None) -> str:
@@ -658,12 +748,14 @@ def _collect_danger_elements(sanitized: dict, profile: dict | None) -> list[dict
         text = btn.get("text", "")
         rl = btn.get("risk_level", "unknown")
         if _is_danger(text, rl, extra_danger):
-            out.append({
-                "kind": "button",
-                "text": text,
-                "risk": "high",
-                "reason": btn.get("reason") or _danger_reason(text, rl, extra_danger),
-            })
+            out.append(
+                {
+                    "kind": "button",
+                    "text": text,
+                    "risk": "high",
+                    "reason": btn.get("reason") or _danger_reason(text, rl, extra_danger),
+                }
+            )
 
     for link in sanitized.get("links") or []:
         if not isinstance(link, dict):
@@ -671,12 +763,14 @@ def _collect_danger_elements(sanitized: dict, profile: dict | None) -> list[dict
         text = link.get("text", "")
         rh = link.get("risk_hint", "safe_read")
         if _is_danger(text, rh, extra_danger):
-            out.append({
-                "kind": "link",
-                "text": text,
-                "risk": "high",
-                "reason": _danger_reason(text, rh, extra_danger),
-            })
+            out.append(
+                {
+                    "kind": "link",
+                    "text": text,
+                    "risk": "high",
+                    "reason": _danger_reason(text, rh, extra_danger),
+                }
+            )
 
     for form in sanitized.get("forms") or []:
         if not isinstance(form, dict):
@@ -692,12 +786,14 @@ def _collect_danger_elements(sanitized: dict, profile: dict | None) -> list[dict
                 reason_parts.append("has_password")
             if risk_level == "danger_write":
                 reason_parts.append("form_danger_write")
-            out.append({
-                "kind": "form",
-                "text": f"form[{method.upper()}]",
-                "risk": "high",
-                "reason": ",".join(reason_parts) or "form_write",
-            })
+            out.append(
+                {
+                    "kind": "form",
+                    "text": f"form[{method.upper()}]",
+                    "risk": "high",
+                    "reason": ",".join(reason_parts) or "form_write",
+                }
+            )
 
     return out
 
@@ -713,7 +809,9 @@ def _danger_reason(text: str, risk_level: str, extra_terms: tuple[str, ...]) -> 
 
 
 def _collect_safe_navigation(
-    sanitized: dict, profile: dict | None, hints: list[str],
+    sanitized: dict,
+    profile: dict | None,
+    hints: list[str],
 ) -> list[dict]:
     extra_danger = _profile_danger_terms(profile)
     pref_terms = _profile_nav_terms(profile)
@@ -742,13 +840,15 @@ def _collect_safe_navigation(
             reasons.append(f"safe_read_{kind}")
             score += 1
         if reasons:
-            out.append({
-                "kind": kind,
-                "text": text,
-                "risk": "low",
-                "score": score,
-                "reasons": reasons[:10],
-            })
+            out.append(
+                {
+                    "kind": kind,
+                    "text": text,
+                    "risk": "low",
+                    "score": score,
+                    "reasons": reasons[:10],
+                }
+            )
 
     for link in sanitized.get("links") or []:
         if not isinstance(link, dict):
@@ -801,52 +901,63 @@ def _build_task_candidates(
     tables = sanitized.get("tables") or []
 
     if tables:
-        out.append({
-            "task": "inspect_table",
-            "confidence": 0.6 if "table_page" in roles else 0.4,
-            "reasons": [f"tables:{len(tables)}"],
-            "requires_user_confirmation": True,
-        })
+        out.append(
+            {
+                "task": "inspect_table",
+                "confidence": 0.6 if "table_page" in roles else 0.4,
+                "reasons": [f"tables:{len(tables)}"],
+                "requires_user_confirmation": True,
+            }
+        )
     if forms:
-        out.append({
-            "task": "inspect_form",
-            "confidence": 0.5 if "form_page" in roles else 0.35,
-            "reasons": [f"forms:{len(forms)}"],
-            "requires_user_confirmation": True,
-        })
+        out.append(
+            {
+                "task": "inspect_form",
+                "confidence": 0.5 if "form_page" in roles else 0.35,
+                "reasons": [f"forms:{len(forms)}"],
+                "requires_user_confirmation": True,
+            }
+        )
     if links:
-        out.append({
-            "task": "navigate_to_relevant_section",
-            "confidence": 0.4,
-            "reasons": [f"links:{len(links)}"],
-            "requires_user_confirmation": True,
-        })
+        out.append(
+            {
+                "task": "navigate_to_relevant_section",
+                "confidence": 0.4,
+                "reasons": [f"links:{len(links)}"],
+                "requires_user_confirmation": True,
+            }
+        )
     safe_read_buttons = [
-        b for b in buttons
-        if isinstance(b, dict)
-        and _matches_terms(_coerce_str(b.get("text", ""), 200),
-                           UNIVERSAL_SAFE_READ_TERMS)
+        b
+        for b in buttons
+        if isinstance(b, dict) and _matches_terms(_coerce_str(b.get("text", ""), 200), UNIVERSAL_SAFE_READ_TERMS)
     ]
     if safe_read_buttons:
-        out.append({
-            "task": "search_or_filter",
-            "confidence": 0.5,
-            "reasons": [f"safe_read_buttons:{len(safe_read_buttons)}"],
-            "requires_user_confirmation": True,
-        })
-    out.append({
-        "task": "review_page_structure",
-        "confidence": 0.3,
-        "reasons": ["baseline"],
-        "requires_user_confirmation": False,
-    })
+        out.append(
+            {
+                "task": "search_or_filter",
+                "confidence": 0.5,
+                "reasons": [f"safe_read_buttons:{len(safe_read_buttons)}"],
+                "requires_user_confirmation": True,
+            }
+        )
+    out.append(
+        {
+            "task": "review_page_structure",
+            "confidence": 0.3,
+            "reasons": ["baseline"],
+            "requires_user_confirmation": False,
+        }
+    )
     if not goal:
-        out.append({
-            "task": "ask_user_to_identify_goal",
-            "confidence": 0.8,
-            "reasons": ["user_goal_missing"],
-            "requires_user_confirmation": True,
-        })
+        out.append(
+            {
+                "task": "ask_user_to_identify_goal",
+                "confidence": 0.8,
+                "reasons": ["user_goal_missing"],
+                "requires_user_confirmation": True,
+            }
+        )
 
     # domain_profile 에서만 특정 업무 task 이름을 가져온다. 엔진 자체는
     # 특정 업무 task 를 발명하지 않는다.
@@ -856,18 +967,17 @@ def _build_task_candidates(
             task_name = task_def.get("task")
             if not task_name:
                 continue
-            matched = [
-                kw for kw in task_def.get("keywords") or []
-                if kw and kw in blob
-            ]
+            matched = [kw for kw in task_def.get("keywords") or [] if kw and kw in blob]
             if not matched:
                 continue
-            out.append({
-                "task": task_name,
-                "confidence": round(min(0.5 + 0.1 * len(matched), 0.95), 3),
-                "reasons": [f"profile_keyword:{kw}" for kw in matched[:5]],
-                "requires_user_confirmation": True,
-            })
+            out.append(
+                {
+                    "task": task_name,
+                    "confidence": round(min(0.5 + 0.1 * len(matched), 0.95), 3),
+                    "reasons": [f"profile_keyword:{kw}" for kw in matched[:5]],
+                    "requires_user_confirmation": True,
+                }
+            )
 
     # user_goal 이 주어지면 task 후보 점수를 전체적으로 소폭 상향.
     # (사용자가 방향을 제시했으므로 "baseline 탐색" 의 가치가 높아짐)
@@ -904,7 +1014,9 @@ def _build_task_candidates(
                         c.setdefault("reasons", []).append(f"goal_hint:{kw}")
 
     return sorted(
-        out, key=lambda c: float(c.get("confidence", 0)), reverse=True,
+        out,
+        key=lambda c: float(c.get("confidence", 0)),
+        reverse=True,
     )
 
 
@@ -952,9 +1064,7 @@ def _build_expected_json_schema() -> dict:
             {
                 "task": "string",
                 "confidence": 0.0,
-                "candidate_paths": [
-                    [{"text": "menu label", "risk": "low"}]
-                ],
+                "candidate_paths": [[{"text": "menu label", "risk": "low"}]],
                 "requires_user_confirmation": True,
             }
         ],
@@ -991,16 +1101,16 @@ def _empty_payload(user_goal: Any, *, warning: str) -> dict:
             "login_required_hint": False,
             "has_modal_candidates": False,
             "counts": {
-                "links": 0, "buttons": 0, "forms": 0,
-                "tables": 0, "inputs": 0,
+                "links": 0,
+                "buttons": 0,
+                "forms": 0,
+                "tables": 0,
+                "inputs": 0,
             },
         },
         "sanitized_observation": _empty_sanitized(),
         "heuristic_candidates": {
-            "page_role_candidates": [
-                {"role": "unknown", "score": 0.3,
-                 "reasons": ["no_structural_signal"]}
-            ],
+            "page_role_candidates": [{"role": "unknown", "score": 0.3, "reasons": ["no_structural_signal"]}],
             "domain_profile_matches": [],
             "task_candidates": [],
             "danger_elements": [],
@@ -1013,10 +1123,10 @@ def _empty_payload(user_goal: Any, *, warning: str) -> dict:
 
 
 __all__ = [
+    "GENERIC_TASK_POOL",
+    "PAGE_ROLE_CANDIDATES",
+    "UNIVERSAL_DANGER_WRITE_TERMS",
+    "UNIVERSAL_SAFE_READ_TERMS",
     "build_site_map_prompt_payload",
     "sanitize_for_gpt_payload",
-    "UNIVERSAL_SAFE_READ_TERMS",
-    "UNIVERSAL_DANGER_WRITE_TERMS",
-    "PAGE_ROLE_CANDIDATES",
-    "GENERIC_TASK_POOL",
 ]

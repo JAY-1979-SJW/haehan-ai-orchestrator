@@ -16,6 +16,7 @@ from __future__ import annotations
 import re
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from typing import Any
 
@@ -145,10 +146,8 @@ def click_sso(page, profile: SiteAuthProfile) -> str | None:
 
 
 def _bring_front(page) -> None:
-    try:
+    with suppress(Exception):
         page.bring_to_front()
-    except Exception:  # noqa: BLE001 - 범용 로그인 인증창 감지 엔진 — probe_page/click_sso/_bring_front 실패 시 안전한 기본값(빈 probe, None, 무시)을 반환하며, 보안단계(OTP/캡차)는 자동입력 없이 사용자에게 창을 띄우는 설계이고 단계판정(classify)은 예외를 던지지 않는 순수함수.
-        pass
 
 
 def advance_once(page, profile: SiteAuthProfile, *, click_sso_if_present: bool = True) -> dict[str, Any]:
@@ -216,10 +215,8 @@ def run_auth_gate(
             notified.add(stage)
             _log.warning("[auth-gate:%s] 사용자 입력 대기: %s (%s)", profile.site, stage, st.get("hint"))
             if notify:
-                try:
+                with suppress(Exception):
                     notify({"site": profile.site, "stage": stage, "hint": st.get("hint")})
-                except Exception:  # noqa: BLE001 - 범용 로그인 인증창 감지 엔진 — probe_page/click_sso/_bring_front 실패 시 안전한 기본값(빈 probe, None, 무시)을 반환하며, 보안단계(OTP/캡차)는 자동입력 없이 사용자에게 창을 띄우는 설계이고 단계판정(classify)은 예외를 던지지 않는 순수함수.
-                    pass
 
         time.sleep(poll)
 

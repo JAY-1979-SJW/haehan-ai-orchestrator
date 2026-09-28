@@ -8,6 +8,7 @@ and must not print or store raw OAuth secrets.
 from __future__ import annotations
 
 import json
+from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -119,18 +120,14 @@ def _safe_title(page: Any) -> str:
 
 
 def _wait(page: Any, milliseconds: int) -> None:
-    try:
+    with suppress(Exception):
         page.wait_for_timeout(milliseconds)
-    except Exception:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
-        pass
 
 
 def _goto(page: Any, url: str, result: dict[str, Any], stage: str, timeout_ms: int) -> None:
     page.goto(url, timeout=timeout_ms)
-    try:
+    with suppress(Exception):
         page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
-    except Exception:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록
-        pass
     _wait(page, 1500)
     result["visited"].append(
         {
