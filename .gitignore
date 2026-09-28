@@ -16,6 +16,9 @@ apps/marketing-standalone/config/
 apps/marketing-standalone/data/
 apps/marketing-standalone/draft_*.json
 
+# youtube-analyzer-standalone — 다운로드 영상/오디오/프레임/자막 등 실행 산출물
+apps/youtube-analyzer-standalone/data/
+
 # Python
 __pycache__/
 *.pyc
@@ -269,3 +272,21 @@ data/cdp_chrome_tmp/
 data/mk_catalog/site/images/
 data/mk_catalog/crops/
 data/mk_catalog/detail/
+
+# 정리 작업 중 새로 발견된 산출물 (2026-09-28) — 스크랩 결과/초안/영상/스크린샷/
+# 수동 백업/audit-kit 리포트. code_map/은 scripts/ops/code_map/build.py 가
+# 재생성하는 캐시(정본은 configs/module_registry.json, 이미 추적 중).
+data/code_map/
+data/community/
+data/content_rag/
+data/impact/
+data/blog_drafts/
+data/smartstore_drafts/
+data/youtube_g2b_series/
+data/startup_backup_20260923/
+data/video_recordings/
+data/video_test/
+data/instagram_reels/
+media/
+audit-reports/
+*.vtt
