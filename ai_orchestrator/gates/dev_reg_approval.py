@@ -86,7 +86,7 @@ def _hash_token(token_id: str) -> str:
 def _append_event(event_type: str, rec: dict) -> None:
     try:
         _STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_STORE_PATH, "a", encoding="utf-8") as f:
+        with _STORE_PATH.open("a", encoding="utf-8") as f:
             ev = {"event_timestamp": _now_iso(), "event_type": event_type, **rec}
             f.write(json.dumps(ev, ensure_ascii=False) + "\n")
     except OSError as e:
@@ -99,7 +99,7 @@ def _load() -> None:
     _token_index = {}
     if _STORE_PATH.exists():
         try:
-            with open(_STORE_PATH, encoding="utf-8") as f:
+            with _STORE_PATH.open(encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:

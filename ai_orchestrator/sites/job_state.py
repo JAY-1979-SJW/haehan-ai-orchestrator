@@ -20,14 +20,15 @@ rejected/executed)를 다룬다. 이 모듈은 **사이트 자동화 실행(job)
     storage/site_jobs.jsonl  — append-only 이벤트. 마지막 레코드 기준으로 복구.
     민감 원문 금지 (쿠키/비밀번호/OTP/Authorization 헤더).
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import threading
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
-from typing import Literal, Optional
+from datetime import UTC, datetime
+from typing import Literal
 
 from ..config import LOG_DIR
 
@@ -56,7 +57,7 @@ _loaded = False
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 @dataclass
@@ -77,7 +78,7 @@ class JobRecord:
 def _append_event(event_type: str, rec: dict) -> None:
     try:
         _JOBS_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_JOBS_PATH, "a", encoding="utf-8") as f:
+        with _JOBS_PATH.open("a", encoding="utf-8") as f:
             ev = {"event_timestamp": _now_iso(), "event_type": event_type, **rec}
             f.write(json.dumps(ev, ensure_ascii=False) + "\n")
     except OSError as e:
@@ -90,7 +91,7 @@ def _load() -> None:
     _store = {}
     if _JOBS_PATH.exists():
         try:
-            with open(_JOBS_PATH, "r", encoding="utf-8") as f:
+            with _JOBS_PATH.open(encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -102,10 +103,7 @@ def _load() -> None:
                     jid = ev.get("job_id")
                     if not jid:
                         continue
-                    rec = {
-                        k: ev.get(k)
-                        for k in JobRecord.__dataclass_fields__.keys()
-                    }
+                    rec = {k: ev.get(k) for k in JobRecord.__dataclass_fields__.keys()}
                     rec.setdefault("params", {})
                     _store[jid] = rec
         except OSError as e:
@@ -135,7 +133,7 @@ def start(
     job_id: str,
     site_id: str,
     current_step: str = "",
-    params: Optional[dict] = None,
+    params: dict | None = None,
 ) -> JobRecord:
     """job 시작 — RUNNING 으로 등록. 중복 job_id 는 무시(idempotent).
 
@@ -147,14 +145,19 @@ def start(
             existing = _store[job_id]
             logger.warning(
                 "job_state: 중복 start 무시 | job=%s existing_status=%s",
-                job_id, existing.get("status"),
+                job_id,
+                existing.get("status"),
             )
             return JobRecord(**existing)
         now = _now_iso()
         rec = JobRecord(
-            job_id=job_id, site_id=site_id, status="RUNNING",
-            current_step=current_step, params=dict(params or {}),
-            created_at=now, updated_at=now,
+            job_id=job_id,
+            site_id=site_id,
+            status="RUNNING",
+            current_step=current_step,
+            params=dict(params or {}),
+            created_at=now,
+            updated_at=now,
         )
         _store[job_id] = asdict(rec)
         _append_event("JOB_STARTED", _store[job_id])
@@ -166,11 +169,11 @@ def _transition(
     target: JobStatus,
     *,
     event_type: str,
-    current_step: Optional[str] = None,
-    cursor: Optional[str] = None,
-    paused_reason: Optional[str] = None,
-    result_summary: Optional[str] = None,
-) -> tuple[Optional[JobRecord], str]:
+    current_step: str | None = None,
+    cursor: str | None = None,
+    paused_reason: str | None = None,
+    result_summary: str | None = None,
+) -> tuple[JobRecord | None, str]:
     with _lock:
         _ensure_loaded()
         rec = _store.get(job_id)
@@ -198,30 +201,39 @@ def pause_for_reauth(
     current_step: str,
     cursor: str = "",
     paused_reason: str = "session_expired",
-) -> tuple[Optional[JobRecord], str]:
+) -> tuple[JobRecord | None, str]:
     """RUNNING → PAUSED_FOR_REAUTH. 세션 만료 감지 시 호출."""
     return _transition(
-        job_id, "PAUSED_FOR_REAUTH", event_type="JOB_PAUSED_FOR_REAUTH",
-        current_step=current_step, cursor=cursor, paused_reason=paused_reason,
+        job_id,
+        "PAUSED_FOR_REAUTH",
+        event_type="JOB_PAUSED_FOR_REAUTH",
+        current_step=current_step,
+        cursor=cursor,
+        paused_reason=paused_reason,
     )
 
 
-def mark_resumable(job_id: str) -> tuple[Optional[JobRecord], str]:
+def mark_resumable(job_id: str) -> tuple[JobRecord | None, str]:
     """PAUSED_FOR_REAUTH → RESUMABLE. 재인증 성공 시 호출."""
     return _transition(
-        job_id, "RESUMABLE", event_type="JOB_RESUMABLE",
+        job_id,
+        "RESUMABLE",
+        event_type="JOB_RESUMABLE",
         paused_reason="",
     )
 
 
-def resume(job_id: str) -> tuple[Optional[JobRecord], str]:
+def resume(job_id: str) -> tuple[JobRecord | None, str]:
     """RESUMABLE → RUNNING. 실제 실행 재시작 시 호출."""
     return _transition(job_id, "RUNNING", event_type="JOB_RESUMED")
 
 
-def mark_done(job_id: str, result_summary: str = "") -> tuple[Optional[JobRecord], str]:
+def mark_done(job_id: str, result_summary: str = "") -> tuple[JobRecord | None, str]:
     return _transition(
-        job_id, "DONE", event_type="JOB_DONE", result_summary=result_summary,
+        job_id,
+        "DONE",
+        event_type="JOB_DONE",
+        result_summary=result_summary,
     )
 
 
@@ -229,7 +241,7 @@ def mark_failed(
     job_id: str,
     *,
     reason: str,
-) -> tuple[Optional[JobRecord], str]:
+) -> tuple[JobRecord | None, str]:
     """어느 상태에서든 FAILED 로 전이."""
     with _lock:
         _ensure_loaded()
@@ -245,7 +257,7 @@ def mark_failed(
         return JobRecord(**rec), "failed"
 
 
-def get(job_id: str) -> Optional[JobRecord]:
+def get(job_id: str) -> JobRecord | None:
     with _lock:
         _ensure_loaded()
         rec = _store.get(job_id)
@@ -259,15 +271,15 @@ def list_by_status(status: JobStatus) -> list[JobRecord]:
 
 
 __all__ = [
-    "JobStatus",
     "JobRecord",
-    "start",
-    "pause_for_reauth",
-    "mark_resumable",
-    "resume",
-    "mark_done",
-    "mark_failed",
+    "JobStatus",
+    "clear",
     "get",
     "list_by_status",
-    "clear",
+    "mark_done",
+    "mark_failed",
+    "mark_resumable",
+    "pause_for_reauth",
+    "resume",
+    "start",
 ]

@@ -67,7 +67,7 @@ def record_execution(
     }
     try:
         _HIST_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_HIST_PATH, "a", encoding="utf-8") as f:
+        with _HIST_PATH.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except OSError as e:
         logger.error("실행 이력 기록 실패: %s | entry=%s", e, entry)
@@ -80,7 +80,7 @@ def _read_recent(window_sec: int) -> list[dict]:
     threshold = _now().timestamp() - window_sec
     out: list[dict] = []
     try:
-        with open(_HIST_PATH, encoding="utf-8") as f:
+        with _HIST_PATH.open(encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:

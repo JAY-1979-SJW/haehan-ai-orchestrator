@@ -23,10 +23,11 @@ import os
 import sys
 import uuid
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # ── 테스트 데이터 상수 ────────────────────────────────────────────────
 _TASK_PENDING_1 = "DR-READ-PENDING-1"

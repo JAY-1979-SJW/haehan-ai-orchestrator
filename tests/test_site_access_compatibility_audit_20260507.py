@@ -19,13 +19,13 @@ class TestFixtureCompatibility:
     def test_fixture_loads(self):
         """Fixture loads successfully."""
         assert FIXTURE_PATH.exists()
-        with open(FIXTURE_PATH) as f:
+        with FIXTURE_PATH.open(encoding="utf-8") as f:
             data = json.load(f)
         assert data["fixture_id"] == "SITE_ACCESS_COMPATIBILITY_AUDIT_1"
 
     def test_fixture_targets_valid(self):
         """Fixture targets have required fields."""
-        with open(FIXTURE_PATH) as f:
+        with FIXTURE_PATH.open(encoding="utf-8") as f:
             data = json.load(f)
 
         for target in data["targets"]:
@@ -36,7 +36,7 @@ class TestFixtureCompatibility:
 
     def test_fixture_has_minimum_targets(self):
         """Fixture has minimum required targets."""
-        with open(FIXTURE_PATH) as f:
+        with FIXTURE_PATH.open(encoding="utf-8") as f:
             data = json.load(f)
         assert len(data["targets"]) >= 14
 
