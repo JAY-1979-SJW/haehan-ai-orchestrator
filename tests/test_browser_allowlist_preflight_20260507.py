@@ -211,13 +211,13 @@ class TestFixtureCompatibility:
     def test_fixture_loads(self):
         """Fixture loads successfully."""
         assert FIXTURE_PATH.exists()
-        with open(FIXTURE_PATH) as f:
+        with FIXTURE_PATH.open() as f:
             data = json.load(f)
         assert data["fixture_id"] == "BROWSER_ALLOWLIST_PREFLIGHT_1"
 
     def test_fixture_cases_valid(self):
         """Fixture cases are valid."""
-        with open(FIXTURE_PATH) as f:
+        with FIXTURE_PATH.open() as f:
             data = json.load(f)
 
         for case in data["cases"]:

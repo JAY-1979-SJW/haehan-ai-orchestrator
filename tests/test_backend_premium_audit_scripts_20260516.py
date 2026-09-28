@@ -226,11 +226,10 @@ class TestIntegratedRunner:
 
     def test_runner_no_file_creation(self, tmp_path):
         mod = _load(RUNNER_NAME)
-        import os
 
-        before = set(os.listdir(str(ROOT / "scripts/ops")))
+        before = {p.name for p in (ROOT / "scripts/ops").iterdir()}
         mod.run_integrated_audit()
-        after = set(os.listdir(str(ROOT / "scripts/ops")))
+        after = {p.name for p in (ROOT / "scripts/ops").iterdir()}
         new_files = after - before
         md_files = [f for f in new_files if f.endswith(".md") or f.endswith(".json")]
         assert not md_files, f"감사 중 파일 생성 감지: {md_files}"

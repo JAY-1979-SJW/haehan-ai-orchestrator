@@ -9,16 +9,17 @@
 - production_submit_possible=true 인 action 없음
 - BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md untracked 유지 (삭제 금지)
 """
+
 import json
 from pathlib import Path
 
 import pytest
 
 from agent.action_registry import (
-    get_meta,
-    is_known_action,
     CATEGORY_BROWSER,
     RISK_LOW,
+    get_meta,
+    is_known_action,
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
@@ -38,8 +39,15 @@ EXCLUDED_ACTIONS = [
     "browser.open_type_close_controlled",
 ]
 
-SUBMIT_TYPE_CLICK_PATTERNS = ["submit", "type", "click", "execute", "open_url_controlled",
-                               "open_type_close", "open_click_close"]
+SUBMIT_TYPE_CLICK_PATTERNS = [
+    "submit",
+    "type",
+    "click",
+    "execute",
+    "open_url_controlled",
+    "open_type_close",
+    "open_click_close",
+]
 
 
 @pytest.mark.parametrize("action_name", READ_NAVIGATE_ACTIONS)
@@ -98,9 +106,7 @@ def test_browser_plan_submit_unchanged():
     """browser.plan_submit은 이번 단계에서 변경되지 않았음을 확인 (registry 미등록 상태 유지)."""
     # browser.plan_submit은 이번 단계에서 action_registry에 등록하지 않는다.
     # risk mapping fixture에서만 정의됨.
-    assert not is_known_action("browser.plan_submit"), (
-        "browser.plan_submit must NOT be in action_registry this stage"
-    )
+    assert not is_known_action("browser.plan_submit"), "browser.plan_submit must NOT be in action_registry this stage"
 
 
 def test_browser_open_type_close_controlled_unchanged():
@@ -120,9 +126,7 @@ def test_executor_dispatcher_not_connected():
     for action in READ_NAVIGATE_ACTIONS:
         meta = get_meta(action)
         assert meta is not None
-        assert not hasattr(meta, "dispatcher_connected"), (
-            f"{action}: dispatcher_connected 필드가 추가되면 안 됨"
-        )
+        assert not hasattr(meta, "dispatcher_connected"), f"{action}: dispatcher_connected 필드가 추가되면 안 됨"
 
 
 def test_no_production_submit_in_read_navigate_group():
@@ -142,7 +146,9 @@ def test_allowlist_required_documented_as_todo():
     action_registry.py 소스 내 TODO 주석으로 문서화되어 있어야 한다.
     """
     import inspect
+
     import agent.action_registry as reg_module
+
     source = inspect.getsource(reg_module)
     assert "allowlist" in source.lower(), (
         "browser.plan_open_url allowlist_required TODO must be documented in action_registry.py"
@@ -151,22 +157,18 @@ def test_allowlist_required_documented_as_todo():
 
 def test_risk_mapping_fixture_plan_submit_risk_review_flag():
     """risk mapping fixture에서 browser.plan_submit risk_level_needs_review=true 유지."""
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         data = json.load(f)
-    plan_submit = next(
-        (a for a in data["actions"] if a["action_name"] == "browser.plan_submit"), None
-    )
+    plan_submit = next((a for a in data["actions"] if a["action_name"] == "browser.plan_submit"), None)
     assert plan_submit is not None
     assert plan_submit.get("risk_level_needs_review") is True
 
 
 def test_risk_mapping_fixture_open_type_close_risk_review_flag():
     """risk mapping fixture에서 browser.open_type_close_controlled risk_level_needs_review=true 유지."""
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         data = json.load(f)
-    otc = next(
-        (a for a in data["actions"] if a["action_name"] == "browser.open_type_close_controlled"), None
-    )
+    otc = next((a for a in data["actions"] if a["action_name"] == "browser.open_type_close_controlled"), None)
     assert otc is not None
     assert otc.get("risk_level_needs_review") is True
 

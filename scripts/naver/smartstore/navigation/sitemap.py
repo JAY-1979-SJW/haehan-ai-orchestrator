@@ -49,7 +49,7 @@ class ClickLogger:
         self.log_file = log_file
         log_file.parent.mkdir(parents=True, exist_ok=True)
         # 헤더
-        with open(log_file, "a", encoding="utf-8") as f:
+        with log_file.open("a", encoding="utf-8") as f:
             f.write(f"\n\n{'=' * 70}\n")
             f.write(f"  스마트스토어 탐색 시작: {datetime.now().isoformat(timespec='seconds')}\n")
             f.write(f"{'=' * 70}\n")
@@ -61,7 +61,7 @@ class ClickLogger:
         # 한 줄 텍스트 포맷
         line = f"[{ts}] {event_type:<14} "
         line += " | ".join(f"{k}={v}" for k, v in kwargs.items() if v not in (None, "", []))
-        with open(self.log_file, "a", encoding="utf-8") as f:
+        with self.log_file.open("a", encoding="utf-8") as f:
             f.write(line[:500] + "\n")
         # 콘솔에도 짧게
         print(

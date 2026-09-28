@@ -3,10 +3,10 @@
 진단 정보를 집계하는 helper 함수들의 정합성을 검증한다.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ai_orchestrator.local_agent_diagnostics_helpers import (
     count_agents_by_status,
