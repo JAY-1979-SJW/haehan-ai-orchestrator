@@ -174,7 +174,7 @@ def run_gov24_certificate(
     except CDPConnectionError as e:
         print(f"[오류] CDP 연결 실패: {e}")
         return {"ok": False, "error": str(e)}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 정부24 주민등록등본 발급 자동화 - 신청하기 클릭은 GateApprovalRequired 승인 게이트를 거치며 _ask_user_approval로 사용자 승인 필요, 이 except는 세션 전체 실패 시 최종 폴백으로 ok:False 반환(fail-closed), 승인 없이 진행되는 경로 없음
         print(f"[오류] 예외 발생: {e}")
         return {"ok": False, "error": str(e)}
 

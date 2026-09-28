@@ -61,7 +61,7 @@ def list_inquiries(limit: int = 200) -> list[dict]:
             continue
         try:
             out.append(json.loads(line))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 문의 저장소 JSONL 파일 읽기 - 손상된 줄은 skip하고 나머지만 반환(읽기전용 파싱)
             continue
     out.sort(key=lambda r: r.get("created_at", ""), reverse=True)
     return out[:limit]
