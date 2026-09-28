@@ -8,22 +8,23 @@
   - desktop_config은 비밀 키를 저장하지 않는다 (방어선).
   - redaction.redact()는 sensitive 키를 마스킹한다.
 """
+
 from __future__ import annotations
 
 import json
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 from local_agent import desktop_config as _cfg
-from local_agent import token_store as _ts
 from local_agent import redaction as _red
-
+from local_agent import token_store as _ts
 
 # ─── Fake keyring backend ────────────────────────────────────────────────
+
 
 class _FakeKeyring:
     def __init__(self, *, usable: bool = True):
@@ -33,6 +34,7 @@ class _FakeKeyring:
     def get_keyring(self):
         class _BE:
             pass
+
         be = _BE()
         be.__class__.__name__ = "FakeBackend" if self._usable else "FailKeyring"
         return be
@@ -61,6 +63,7 @@ def no_keyring(monkeypatch):
 
 # ─── token_store ─────────────────────────────────────────────────────────
 
+
 def test_save_and_load_via_keyring(fake_keyring):
     backend = _ts.save_device_token("https://srv.example", "la-abc", "tok-xyz")
     assert backend == "FakeBackend"
@@ -75,14 +78,17 @@ def test_save_fail_closed_without_keyring(no_keyring):
 
 def test_plaintext_fallback_only_when_optin(no_keyring, tmp_path):
     backend = _ts.save_device_token(
-        "https://srv.example", "la-abc", "tok-xyz",
+        "https://srv.example",
+        "la-abc",
+        "tok-xyz",
         allow_plaintext_fallback=True,
         plaintext_base_dir=tmp_path,
     )
     assert backend == "plaintext-fallback"
     # load with same opt-in works
     got = _ts.load_device_token(
-        "https://srv.example", "la-abc",
+        "https://srv.example",
+        "la-abc",
         allow_plaintext_fallback=True,
         plaintext_base_dir=tmp_path,
     )
@@ -106,17 +112,28 @@ def test_describe_backend_does_not_return_token(fake_keyring):
 
 # ─── desktop_config ──────────────────────────────────────────────────────
 
+
 def test_config_save_load_no_secret(tmp_path):
     p = tmp_path / "config.json"
     cfg = _cfg.DesktopConfig(
-        server_url="https://srv", agent_id="la-1",
-        label="jay-laptop", created_at="2026-04-30T12:00:00", version="0.1.0",
+        server_url="https://srv",
+        agent_id="la-1",
+        label="jay-laptop",
+        created_at="2026-04-30T12:00:00",
+        version="0.1.0",
     )
     saved = _cfg.save_config(cfg, path=p)
     raw = json.loads(saved.read_text(encoding="utf-8"))
     assert raw["agent_id"] == "la-1"
-    for forbidden in ("device_token", "registration_code", "password",
-                      "token_hash", "code_hash", "Authorization", "salt"):
+    for forbidden in (
+        "device_token",
+        "registration_code",
+        "password",
+        "token_hash",
+        "code_hash",
+        "Authorization",
+        "salt",
+    ):
         assert forbidden not in raw
 
     loaded = _cfg.load_config(path=p)
@@ -126,11 +143,19 @@ def test_config_save_load_no_secret(tmp_path):
 
 def test_config_strips_unexpected_secret_keys(tmp_path):
     p = tmp_path / "config.json"
-    p.write_text(json.dumps({
-        "server_url": "https://srv", "agent_id": "la-1",
-        "device_token": "should-not-load", "password": "pw",
-        "token_hash": "h", "code_hash": "h",
-    }), encoding="utf-8")
+    p.write_text(
+        json.dumps(
+            {
+                "server_url": "https://srv",
+                "agent_id": "la-1",
+                "device_token": "should-not-load",
+                "password": "pw",
+                "token_hash": "h",
+                "code_hash": "h",
+            }
+        ),
+        encoding="utf-8",
+    )
     cfg = _cfg.load_config(path=p)
     assert cfg.agent_id == "la-1"
     # 강제로 hasattr 체크 — DesktopConfig에 device_token 필드 자체가 없어야 한다.
@@ -139,14 +164,17 @@ def test_config_strips_unexpected_secret_keys(tmp_path):
 
 # ─── redaction ───────────────────────────────────────────────────────────
 
+
 def test_redact_masks_sensitive_keys():
-    out = _red.redact({
-        "agent_id": "la-1",
-        "device_token": "tok",
-        "Authorization": "Basic xxx",
-        "nested": {"registration_code": "rc-secret", "label": "ok"},
-        "list": [{"password": "p", "ok": 1}],
-    })
+    out = _red.redact(
+        {
+            "agent_id": "la-1",
+            "device_token": "tok",
+            "Authorization": "Basic xxx",
+            "nested": {"registration_code": "rc-secret", "label": "ok"},
+            "list": [{"password": "p", "ok": 1}],
+        }
+    )
     assert out["agent_id"] == "la-1"
     assert out["device_token"] == "***REDACTED***"
     assert out["Authorization"] == "***REDACTED***"
@@ -157,8 +185,13 @@ def test_redact_masks_sensitive_keys():
 
 
 def test_safe_summary_excludes_secrets():
-    s = _red.safe_summary({
-        "agent_id": "la-1", "code_id": "rc-1", "label": "x",
-        "device_token": "tok", "registration_code": "rc-secret",
-    })
+    s = _red.safe_summary(
+        {
+            "agent_id": "la-1",
+            "code_id": "rc-1",
+            "label": "x",
+            "device_token": "tok",
+            "registration_code": "rc-secret",
+        }
+    )
     assert s == {"agent_id": "la-1", "code_id": "rc-1", "label": "x"}

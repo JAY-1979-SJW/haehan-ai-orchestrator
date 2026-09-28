@@ -3,30 +3,50 @@
 실제 네이버/외부 웹사이트 접속 금지. 실제 Playwright 실행 금지. 모든 테스트는
 fake Playwright 팩토리 + fake time 모듈을 주입해 deterministic 하게 수행.
 """
+
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 
 # ─── Fake Playwright 계층 ────────────────────────────────────────────────
 
-_FORBIDDEN_METHODS = frozenset({
-    "click", "fill", "type", "press", "dblclick", "hover",
-    "select_option", "set_input_files", "tap",
-    "check", "uncheck", "drag_and_drop",
-    "keyboard", "mouse", "touchscreen",
-    "evaluate", "evaluate_handle",
-    "screenshot", "pdf",
-    "on", "expect_download", "expect_popup",
-    "storage_state", "add_cookies", "cookies",
-    "request", "send_keys",
-})
+_FORBIDDEN_METHODS = frozenset(
+    {
+        "click",
+        "fill",
+        "type",
+        "press",
+        "dblclick",
+        "hover",
+        "select_option",
+        "set_input_files",
+        "tap",
+        "check",
+        "uncheck",
+        "drag_and_drop",
+        "keyboard",
+        "mouse",
+        "touchscreen",
+        "evaluate",
+        "evaluate_handle",
+        "screenshot",
+        "pdf",
+        "on",
+        "expect_download",
+        "expect_popup",
+        "storage_state",
+        "add_cookies",
+        "cookies",
+        "request",
+        "send_keys",
+    }
+)
 
 
 class _ForbiddenCall(AssertionError):
@@ -36,6 +56,7 @@ class _ForbiddenCall(AssertionError):
 def _forbidden(name: str):
     def _raise(*_a, **_kw):
         raise _ForbiddenCall(f"forbidden read-only violation: {name}")
+
     return _raise
 
 
@@ -200,15 +221,19 @@ _POST_LOGIN_HTML = (
 
 # ─── 1. allowed_hosts 외 URL 차단 ────────────────────────────────────────
 
+
 def test_url_outside_allowed_hosts_blocked():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
-    factory, log, _ = _make_probe_factory([
-        {"title": "x", "url": "https://example.com/", "html": "<html></html>"},
-    ])
+    factory, log, _ = _make_probe_factory(
+        [
+            {"title": "x", "url": "https://example.com/", "html": "<html></html>"},
+        ]
+    )
     r = probe_manual_login_flow(
         url="https://example.com/",
-        wait_seconds=5, poll_interval_seconds=1,
+        wait_seconds=5,
+        poll_interval_seconds=1,
         allowed_hosts=["naver.com", "nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -221,19 +246,26 @@ def test_url_outside_allowed_hosts_blocked():
 
 # ─── 2. naver.com / nid.naver.com 허용 ───────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "https://www.naver.com/",
-    "https://nid.naver.com/nidlogin.login",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://www.naver.com/",
+        "https://nid.naver.com/nidlogin.login",
+    ],
+)
 def test_naver_hosts_reach_factory(url):
     from local_agent.browser_login_probe import probe_manual_login_flow
 
-    factory, log, _ = _make_probe_factory([
-        {"title": "Naver", "url": url, "html": _LOGIN_HTML},
-    ])
+    factory, log, _ = _make_probe_factory(
+        [
+            {"title": "Naver", "url": url, "html": _LOGIN_HTML},
+        ]
+    )
     r = probe_manual_login_flow(
         url=url,
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["www.naver.com", "nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -247,50 +279,68 @@ def test_naver_hosts_reach_factory(url):
 
 # ─── 3. file/javascript/data URL 차단 ────────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "file:///etc/passwd",
-    "javascript:alert(1)",
-    "data:text/html,<h1>x</h1>",
-    "about:blank",
-    "chrome://settings",
-    "ftp://example.com/",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc/passwd",
+        "javascript:alert(1)",
+        "data:text/html,<h1>x</h1>",
+        "about:blank",
+        "chrome://settings",
+        "ftp://example.com/",
+    ],
+)
 def test_dangerous_scheme_blocked(url):
     from local_agent.browser_login_probe import probe_manual_login_flow
 
-    factory, log, _ = _make_probe_factory([
-        {"title": "x", "url": url, "html": ""},
-    ])
+    factory, log, _ = _make_probe_factory(
+        [
+            {"title": "x", "url": url, "html": ""},
+        ]
+    )
     r = probe_manual_login_flow(
-        url=url, wait_seconds=3, poll_interval_seconds=1,
+        url=url,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
     )
     assert r["ok"] is False
     assert r["error_code"] in {
-        "URL_SCHEME_BLOCKED", "URL_NO_HOST", "URL_PARSE_FAILED",
+        "URL_SCHEME_BLOCKED",
+        "URL_NO_HOST",
+        "URL_PARSE_FAILED",
     }
     assert log == []
 
 
 # ─── 4. localhost/private IP 기본 차단 ───────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "http://localhost/",
-    "http://127.0.0.1/",
-    "http://10.0.0.5/",
-    "http://192.168.1.1/",
-    "http://169.254.169.254/latest/meta-data/",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://localhost/",
+        "http://127.0.0.1/",
+        "http://10.0.0.5/",
+        "http://192.168.1.1/",
+        "http://169.254.169.254/latest/meta-data/",
+    ],
+)
 def test_private_host_blocked(url):
     from local_agent.browser_login_probe import probe_manual_login_flow
 
-    factory, log, _ = _make_probe_factory([
-        {"title": "x", "url": url, "html": ""},
-    ])
+    factory, log, _ = _make_probe_factory(
+        [
+            {"title": "x", "url": url, "html": ""},
+        ]
+    )
     r = probe_manual_login_flow(
-        url=url, wait_seconds=3, poll_interval_seconds=1,
+        url=url,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -302,18 +352,18 @@ def test_private_host_blocked(url):
 
 # ─── 5. 초기 페이지 password input 감지 ─────────────────────────────────
 
+
 def test_initial_password_input_detected():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "네이버 로그인",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
+        {"title": "네이버 로그인", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -328,25 +378,21 @@ def test_initial_password_input_detected():
 
 # ─── 6. password input 사라짐 → login_completed_hint=True ───────────────
 
+
 def test_password_disappeared_sets_completed_hint():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "네이버 로그인",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
-        {"title": "네이버 로그인",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
+        {"title": "네이버 로그인", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
+        {"title": "네이버 로그인", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
         # password 사라짐 (URL 은 동일하게 유지 가능)
-        {"title": "네이버",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _POST_LOGIN_HTML},
+        {"title": "네이버", "url": "https://nid.naver.com/nidlogin.login", "html": _POST_LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -359,21 +405,19 @@ def test_password_disappeared_sets_completed_hint():
 
 # ─── 7. current_url 변경 → login_completed_hint=True ─────────────────────
 
+
 def test_url_changed_sets_completed_hint():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "네이버 로그인",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
-        {"title": "네이버",
-         "url": "https://www.naver.com/",
-         "html": _POST_LOGIN_HTML},
+        {"title": "네이버 로그인", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
+        {"title": "네이버", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com", "www.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -384,19 +428,19 @@ def test_url_changed_sets_completed_hint():
 
 # ─── 8. success_url_contains 로 완료 감지 ────────────────────────────────
 
+
 def test_success_url_contains_match():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://nid.naver.com/nidlogin.login",
-         "html": "<html><body></body></html>"},
-        {"title": "t", "url": "https://nid.naver.com/dashboard/home",
-         "html": "<html><body></body></html>"},
+        {"title": "t", "url": "https://nid.naver.com/nidlogin.login", "html": "<html><body></body></html>"},
+        {"title": "t", "url": "https://nid.naver.com/dashboard/home", "html": "<html><body></body></html>"},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         success_url_contains=["/dashboard"],
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
@@ -409,19 +453,19 @@ def test_success_url_contains_match():
 
 # ─── 9. success_text_hints 로 완료 감지 ──────────────────────────────────
 
+
 def test_success_text_hints_match():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://nid.naver.com/x",
-         "html": "<html><body></body></html>"},
-        {"title": "t", "url": "https://nid.naver.com/x",
-         "html": "<html><body><h1>환영합니다</h1></body></html>"},
+        {"title": "t", "url": "https://nid.naver.com/x", "html": "<html><body></body></html>"},
+        {"title": "t", "url": "https://nid.naver.com/x", "html": "<html><body><h1>환영합니다</h1></body></html>"},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/x",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         success_text_hints=["환영"],
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
@@ -434,17 +478,18 @@ def test_success_text_hints_match():
 
 # ─── 10. timeout → LOGIN_TIMEOUT ─────────────────────────────────────────
 
+
 def test_timeout_returns_login_timeout():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://nid.naver.com/login",
-         "html": _LOGIN_HTML},
+        {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -455,6 +500,7 @@ def test_timeout_returns_login_timeout():
 
 
 # ─── 11. 결과에 password value 없음 ──────────────────────────────────────
+
 
 def test_result_has_no_password_value():
     from local_agent.browser_login_probe import probe_manual_login_flow
@@ -471,7 +517,8 @@ def test_result_has_no_password_value():
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -480,6 +527,7 @@ def test_result_has_no_password_value():
 
 
 # ─── 12. 결과에 hidden value 없음 ────────────────────────────────────────
+
 
 def test_result_has_no_hidden_value():
     from local_agent.browser_login_probe import probe_manual_login_flow
@@ -496,7 +544,8 @@ def test_result_has_no_hidden_value():
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -506,19 +555,19 @@ def test_result_has_no_hidden_value():
 
 # ─── 13. cookie/token/storage_state 호출 없음 ────────────────────────────
 
+
 def test_no_cookie_or_storage_calls_in_log():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://nid.naver.com/login",
-         "html": _LOGIN_HTML},
-        {"title": "t", "url": "https://nid.naver.com/login",
-         "html": _LOGIN_HTML},
+        {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
+        {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://nid.naver.com/login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -526,34 +575,42 @@ def test_no_cookie_or_storage_calls_in_log():
     for entry in log:
         if isinstance(entry, tuple) and entry:
             tag = str(entry[0]).lower()
-            for bad in ("storage_state", "cookies", "localstorage",
-                        "sessionstorage", "add_cookies"):
+            for bad in ("storage_state", "cookies", "localstorage", "sessionstorage", "add_cookies"):
                 assert bad not in tag, f"forbidden tag in log: {entry}"
 
 
 # ─── 14. page.click/fill/type/press/select_option 호출 없음 ─────────────
 
+
 def test_no_interaction_methods_called():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://nid.naver.com/login",
-         "html": _LOGIN_HTML},
-        {"title": "t", "url": "https://nid.naver.com/login",
-         "html": _LOGIN_HTML},
+        {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
+        {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     # fake page 는 forbidden 메서드 호출 시 AssertionError 를 던진다.
     r = probe_manual_login_flow(
         url="https://nid.naver.com/login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
     )
     assert isinstance(r, dict)
-    forbidden = ("click", "fill", "type", "press", "select_option",
-                 "set_input_files", "evaluate", "screenshot", "dblclick")
+    forbidden = (
+        "click",
+        "fill",
+        "type",
+        "press",
+        "select_option",
+        "set_input_files",
+        "evaluate",
+        "screenshot",
+        "dblclick",
+    )
     for entry in log:
         if isinstance(entry, tuple) and entry:
             tag = str(entry[0]).lower()
@@ -563,17 +620,18 @@ def test_no_interaction_methods_called():
 
 # ─── 15. storage_state/cookies/localStorage/sessionStorage 호출 없음 ───
 
+
 def test_no_session_state_api_calls():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://nid.naver.com/login",
-         "html": _LOGIN_HTML},
+        {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://nid.naver.com/login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -591,17 +649,18 @@ def test_no_session_state_api_calls():
 
 # ─── 16. page/context/browser close 호출 확인 ────────────────────────────
 
+
 def test_close_methods_called():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://nid.naver.com/login",
-         "html": _LOGIN_HTML},
+        {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://nid.naver.com/login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -614,26 +673,26 @@ def test_close_methods_called():
 
 # ─── 17. web_probe_manual_login action 정상 반환 ────────────────────────
 
+
 def test_action_web_probe_manual_login_returns_result():
     from local_agent.actions import execute_action
 
     script = [
-        {"title": "Naver Login",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
-        {"title": "Naver",
-         "url": "https://www.naver.com/",
-         "html": _POST_LOGIN_HTML},
+        {"title": "Naver Login", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
+        {"title": "Naver", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
-    result = execute_action("web_probe_manual_login", {
-        "url": "https://nid.naver.com/nidlogin.login",
-        "wait_seconds": 30,
-        "poll_interval_seconds": 1,
-        "allowed_hosts": ["nid.naver.com", "www.naver.com"],
-        "_browser_factory": factory,
-        "_clock": _FakeTime(),
-    })
+    result = execute_action(
+        "web_probe_manual_login",
+        {
+            "url": "https://nid.naver.com/nidlogin.login",
+            "wait_seconds": 30,
+            "poll_interval_seconds": 1,
+            "allowed_hosts": ["nid.naver.com", "www.naver.com"],
+            "_browser_factory": factory,
+            "_clock": _FakeTime(),
+        },
+    )
     assert result.success is True
     assert result.data.get("login_completed_hint") is True
     assert result.data.get("mode") == "manual_login_probe"
@@ -644,17 +703,21 @@ def test_action_probe_blocks_non_allowed_host():
 
     # allowed_hosts=[naver.com] 에 걸리지 않는 호스트 → HOST_NOT_ALLOWED.
     # 실제 브라우저는 실행되지 않는다 (factory 도 주입하지 않음).
-    result = execute_action("web_probe_manual_login", {
-        "url": "https://example.com/",
-        "wait_seconds": 3,
-        "poll_interval_seconds": 1,
-        "allowed_hosts": ["naver.com"],
-    })
+    result = execute_action(
+        "web_probe_manual_login",
+        {
+            "url": "https://example.com/",
+            "wait_seconds": 3,
+            "poll_interval_seconds": 1,
+            "allowed_hosts": ["naver.com"],
+        },
+    )
     assert result.success is False
     assert result.error_code == "HOST_NOT_ALLOWED"
 
 
 # ─── 18. Playwright 미설치 graceful fail ─────────────────────────────────
+
 
 def test_playwright_missing_graceful():
     from local_agent.browser_login_probe import probe_manual_login_flow
@@ -665,7 +728,8 @@ def test_playwright_missing_graceful():
 
     r = probe_manual_login_flow(
         url="https://nid.naver.com/login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         _browser_factory=bad_factory,
         _clock=_FakeTime(),
@@ -676,19 +740,14 @@ def test_playwright_missing_graceful():
 
 # ─── 19. smoke 스크립트는 pytest 에서 실제 실행하지 않음 ────────────────
 
+
 def test_smoke_script_not_auto_executed():
     """pytest import 만으로 실제 네이버 접속이 발생하지 않아야 한다."""
-    smoke_path = (
-        Path(__file__).resolve().parent.parent.parent
-        / "scripts" / "smoke_naver_manual_login_probe.py"
-    )
+    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "smoke_naver_manual_login_probe.py"
     assert smoke_path.exists(), "smoke script missing"
     src = smoke_path.read_text(encoding="utf-8")
     # 실제 실행은 __main__ 가드 뒤에서만 일어난다.
-    assert (
-        'if __name__ == "__main__":' in src
-        or "if __name__ == '__main__':" in src
-    )
+    assert 'if __name__ == "__main__":' in src or "if __name__ == '__main__':" in src
     # 모듈 최상단에서 probe_manual_login_flow 호출 금지.
     for line in src.splitlines():
         stripped = line.lstrip()
@@ -701,18 +760,18 @@ def test_smoke_script_not_auto_executed():
 
 # ─── 20. production 코드에 네이버 계정/비밀번호/토큰 하드코딩 없음 ────
 
+
 def test_no_credentials_hardcoded():
     root = Path(__file__).resolve().parent.parent.parent
-    probe_src = (root / "local_agent" / "browser_login_probe.py").read_text(
-        encoding="utf-8"
-    )
-    smoke_src = (
-        root / "scripts" / "smoke_naver_manual_login_probe.py"
-    ).read_text(encoding="utf-8")
+    probe_src = (root / "local_agent" / "browser_login_probe.py").read_text(encoding="utf-8")
+    smoke_src = (root / "scripts" / "smoke_naver_manual_login_probe.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
-        "NAVER_ID", "NAVER_PW",
-        "nid_aut", "NID_SES", "NID_AUT",
+        "NAVER_ID",
+        "NAVER_PW",
+        "nid_aut",
+        "NID_SES",
+        "NID_AUT",
         "skyjwshin",
         "Bearer ",
         "sk-",
@@ -726,19 +785,21 @@ def test_no_credentials_hardcoded():
 
     # 실제 입력/자동화 API 흔적도 production 코드에서 발견되면 안 됨.
     for tok in (
-        ".fill(", ".type(", ".click(", ".press(", ".select_option(",
-        ".set_input_files(", ".storage_state(", ".add_cookies(",
+        ".fill(",
+        ".type(",
+        ".click(",
+        ".press(",
+        ".select_option(",
+        ".set_input_files(",
+        ".storage_state(",
+        ".add_cookies(",
     ):
-        assert tok not in probe_src, (
-            f"forbidden interaction API {tok!r} in browser_login_probe.py"
-        )
-        assert tok not in smoke_src, (
-            f"forbidden interaction API {tok!r} in "
-            "smoke_naver_manual_login_probe.py"
-        )
+        assert tok not in probe_src, f"forbidden interaction API {tok!r} in browser_login_probe.py"
+        assert tok not in smoke_src, f"forbidden interaction API {tok!r} in smoke_naver_manual_login_probe.py"
 
 
 # ─── 21. require_visible_confirm: 사용자 확인 전까지 polling 금지 ────────
+
 
 class _RecordingInput:
     """input 호출을 기록하고 scripted response 를 돌려주는 fake."""
@@ -767,13 +828,13 @@ def test_require_visible_confirm_blocks_polling_until_user_presses_enter():
     fake_input = _RecordingInput(raise_on=[0])
     clock = _FakeTime()
     script = [
-        {"title": "Naver", "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
+        {"title": "Naver", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         require_visible_confirm=True,
         _browser_factory=factory,
@@ -796,13 +857,13 @@ def test_require_visible_confirm_sets_flag_when_user_confirms():
     fake_input = _RecordingInput(responses=[""])
     clock = _FakeTime()
     script = [
-        {"title": "Naver", "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
+        {"title": "Naver", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         require_visible_confirm=True,
         _browser_factory=factory,
@@ -816,18 +877,19 @@ def test_require_visible_confirm_sets_flag_when_user_confirms():
 
 # ─── 22. keep_open: 종료 전 사용자 Enter 기다림 ─────────────────────────
 
+
 def test_keep_open_waits_for_enter_before_close():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     script = [
-        {"title": "Naver", "url": "https://www.naver.com/",
-         "html": _POST_LOGIN_HTML},
+        {"title": "Naver", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.naver.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["www.naver.com"],
         keep_open=True,
         _browser_factory=factory,
@@ -846,19 +908,20 @@ def test_keep_open_waits_for_enter_before_close():
 
 # ─── 23. success_url_match 단독으로는 login_completed_hint=True 안 됨 ──
 
+
 def test_success_url_match_alone_does_not_mark_completed():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     # 초기부터 target URL 에 있고, password input 도 없고, URL 도 변하지 않으면
     # success_url_match 는 애초에 발생하지 않으며, 완료로 판정되지도 않는다.
     script = [
-        {"title": "Naver", "url": "https://www.naver.com/",
-         "html": _POST_LOGIN_HTML},
+        {"title": "Naver", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.naver.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         success_url_contains=["naver.com"],
         allowed_hosts=["www.naver.com"],
         _browser_factory=factory,
@@ -873,20 +936,20 @@ def test_success_url_match_alone_does_not_mark_completed():
 
 # ─── 24. already_logged_in_or_public_page 상태 구분 ─────────────────────
 
+
 def test_already_logged_in_state_detected():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     # 초기 URL 이 target 토큰에 매칭 + password input 없음 +
     # login_required_hint 없음 → already_logged_in_or_public_page 로 분류.
     script = [
-        {"title": "Naver",
-         "url": "https://www.naver.com/",
-         "html": "<html><body><h1>메인</h1></body></html>"},
+        {"title": "Naver", "url": "https://www.naver.com/", "html": "<html><body><h1>메인</h1></body></html>"},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.naver.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         success_url_contains=["naver.com"],
         allowed_hosts=["www.naver.com"],
         _browser_factory=factory,
@@ -900,19 +963,19 @@ def test_already_logged_in_state_detected():
 
 # ─── 25. require_user_login_confirm: 사용자 Enter → user_confirmed_login
 
+
 def test_user_confirmed_login_adds_reason_and_completes():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     script = [
-        {"title": "Naver",
-         "url": "https://www.naver.com/",
-         "html": "<html><body><h1>메인</h1></body></html>"},
+        {"title": "Naver", "url": "https://www.naver.com/", "html": "<html><body><h1>메인</h1></body></html>"},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.naver.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         success_url_contains=["naver.com"],
         allowed_hosts=["www.naver.com"],
         require_user_login_confirm=True,
@@ -934,14 +997,13 @@ def test_user_login_confirm_n_response_does_not_mark_completed():
     # 사용자가 "n" 응답 → login_confirmed_by_user=False, hint=False.
     fake_input = _RecordingInput(responses=["n"])
     script = [
-        {"title": "Naver Login",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
+        {"title": "Naver Login", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         require_user_login_confirm=True,
         _browser_factory=factory,
@@ -961,17 +1023,14 @@ def test_require_user_login_confirm_suppresses_auto_completion():
     # 확인하지 않으면 login_completed_hint=True 로 단정하지 않는다.
     fake_input = _RecordingInput(responses=["n"])
     script = [
-        {"title": "Naver Login",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
-        {"title": "Naver",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _POST_LOGIN_HTML},
+        {"title": "Naver Login", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
+        {"title": "Naver", "url": "https://nid.naver.com/nidlogin.login", "html": _POST_LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com"],
         require_user_login_confirm=True,
         _browser_factory=factory,
@@ -987,25 +1046,24 @@ def test_require_user_login_confirm_suppresses_auto_completion():
 
 # ─── 26. browser_channel 파라미터 ─────────────────────────────────────────
 
+
 def test_browser_channel_chrome_forwarded_to_launch():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "Naver", "url": "https://www.naver.com/",
-         "html": _POST_LOGIN_HTML},
+        {"title": "Naver", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://www.naver.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["www.naver.com"],
         browser_channel="chrome",
         _browser_factory=factory,
         _clock=_FakeTime(),
     )
-    launch_entries = [
-        e for e in log if isinstance(e, tuple) and e and e[0] == "launch"
-    ]
+    launch_entries = [e for e in log if isinstance(e, tuple) and e and e[0] == "launch"]
     assert launch_entries
     kwargs = launch_entries[0][1]
     assert kwargs.get("channel") == "chrome"
@@ -1016,21 +1074,19 @@ def test_browser_channel_chromium_does_not_set_channel_kwarg():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "Naver", "url": "https://www.naver.com/",
-         "html": _POST_LOGIN_HTML},
+        {"title": "Naver", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://www.naver.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["www.naver.com"],
         browser_channel="chromium",
         _browser_factory=factory,
         _clock=_FakeTime(),
     )
-    launch_entries = [
-        e for e in log if isinstance(e, tuple) and e and e[0] == "launch"
-    ]
+    launch_entries = [e for e in log if isinstance(e, tuple) and e and e[0] == "launch"]
     kwargs = launch_entries[0][1]
     assert "channel" not in kwargs
 
@@ -1044,7 +1100,8 @@ def test_invalid_browser_channel_returns_error():
     factory, log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.naver.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=["www.naver.com"],
         browser_channel="safari",  # 허용되지 않음
         _browser_factory=factory,
@@ -1058,22 +1115,20 @@ def test_invalid_browser_channel_returns_error():
 
 # ─── 27. 자동 로그인/클릭/입력/쿠키 수집 없음 유지 ──────────────────────
 
+
 def test_no_auto_login_or_cookie_collection_with_new_options():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=["", "", ""])
     script = [
-        {"title": "Naver Login",
-         "url": "https://nid.naver.com/nidlogin.login",
-         "html": _LOGIN_HTML},
-        {"title": "Naver",
-         "url": "https://www.naver.com/",
-         "html": _POST_LOGIN_HTML},
+        {"title": "Naver Login", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
+        {"title": "Naver", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://nid.naver.com/nidlogin.login",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=["nid.naver.com", "www.naver.com"],
         require_visible_confirm=True,
         require_user_login_confirm=True,
@@ -1083,10 +1138,20 @@ def test_no_auto_login_or_cookie_collection_with_new_options():
         _input_reader=fake_input,
     )
     forbidden = (
-        "click", "fill", "type", "press", "select_option",
-        "set_input_files", "evaluate", "screenshot", "dblclick",
-        "storage_state", "cookies", "add_cookies",
-        "localstorage", "sessionstorage",
+        "click",
+        "fill",
+        "type",
+        "press",
+        "select_option",
+        "set_input_files",
+        "evaluate",
+        "screenshot",
+        "dblclick",
+        "storage_state",
+        "cookies",
+        "add_cookies",
+        "localstorage",
+        "sessionstorage",
     )
     for entry in log:
         if isinstance(entry, tuple) and entry:
