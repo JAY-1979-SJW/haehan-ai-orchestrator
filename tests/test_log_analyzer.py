@@ -7,10 +7,10 @@ log_analyzer 단위 테스트 (5단계)
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import log_analyzer
 
@@ -18,8 +18,8 @@ import log_analyzer
 
 
 def _write_jsonl(path: str, records: list) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with Path(path).open("w", encoding="utf-8") as f:
         for r in records:
             f.write(json.dumps(r) + "\n")
 
@@ -302,7 +302,7 @@ def test_ai_summary_contains_pending_warning():
 
 def test_malformed_jsonl_skipped(tmp_path, monkeypatch):
     history_path = str(tmp_path / "history.jsonl")
-    with open(history_path, "w") as f:
+    with Path(history_path).open("w") as f:
         f.write('{"task_id":"good","execution_status":"EXECUTED","action_type":"read_file"}\n')
         f.write("NOT_VALID_JSON\n")
         f.write('{"task_id":"good2","execution_status":"BLOCKED","action_type":"delete_file"}\n')

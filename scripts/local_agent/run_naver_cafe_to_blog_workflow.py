@@ -25,13 +25,12 @@ from __future__ import annotations
 
 import datetime
 import json
-import os
 import pathlib
 import sys
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from ai_orchestrator.local_agent.naver_content_workflow_runner import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     WORKFLOW_PASS,
@@ -53,7 +52,7 @@ def _save_report(report: dict) -> pathlib.Path:
     _REPORT_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     path = _REPORT_DIR / f"naver_cafe_blog_workflow_{ts}.json"
-    with open(path, "w", encoding="utf-8") as f:
+    with path.open("w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2, default=str)
     return path
 
