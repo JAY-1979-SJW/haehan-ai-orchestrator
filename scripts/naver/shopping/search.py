@@ -24,7 +24,7 @@ try:
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env", encoding="utf-8")
-except Exception:
+except Exception:  # noqa: BLE001 - .env 로드 실패 무시(선택적 설정 로딩), API 오류 응답 바디 JSON 파싱 실패시 빈 dict로 폴백 후 오류 로깅
     pass
 
 from .gate import gate_search  # noqa: E402  (sys.path 설정 후 import)
@@ -67,7 +67,7 @@ def search_shopping(
             # 네이버가 주는 errorCode(예: SE05 = 앱에 해당 검색 API 미등록)를 살린다.
             try:
                 body = json.loads(e.read().decode("utf-8", "replace"))
-            except Exception:
+            except Exception:  # noqa: BLE001 - .env 로드 실패 무시(선택적 설정 로딩), API 오류 응답 바디 JSON 파싱 실패시 빈 dict로 폴백 후 오류 로깅
                 body = {}
             _log.warning(
                 "[SHOPPING-SEARCH-HTTP-%s] errorCode=%s message=%s",

@@ -79,12 +79,12 @@ class SessionManager:
             # 사후 체크 (작업 중 만료됐는지)
             post = self.check_and_recover(force=True)  # noqa: F841
             return result
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 세션 만료로 추정되는 예외 발생시 자동 재로그인(login_naver) 시도 후 1회 재시도, 실패시 오류 반환 — 로그아웃/쿠키삭제 없이 재로그인만 수행
             # 만료로 인한 에러일 수 있음
             recover = self.check_and_recover(force=True)
             if recover.get("recovered"):
                 try:
                     return func(*args, **kwargs)
-                except Exception as e2:
+                except Exception as e2:  # noqa: BLE001 - 세션 만료로 추정되는 예외 발생시 자동 재로그인(login_naver) 시도 후 1회 재시도, 실패시 오류 반환 — 로그아웃/쿠키삭제 없이 재로그인만 수행
                     return {"ok": False, "error": f"retry_failed:{e2}"}
             return {"ok": False, "error": str(e)}

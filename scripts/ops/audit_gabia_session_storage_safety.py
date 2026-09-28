@@ -13,10 +13,20 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 VERDICT_SAFE = "GABIA_SESSION_STORAGE_SAFE_WITH_BROWSER_PROFILE_ONLY"
 VERDICT_BLOCKED = "GABIA_SESSION_STORAGE_PLAINTEXT_COOKIE_BLOCKED"
 
-_RISK_COOKIE_KEYS = frozenset({
-    "PHPSESSID", "social-cookie", "confirm_pwd_token", "gasession",
-    "social_login_type", "CDVI", "session", "token", "auth", "login",
-})
+_RISK_COOKIE_KEYS = frozenset(
+    {
+        "PHPSESSID",
+        "social-cookie",
+        "confirm_pwd_token",
+        "gasession",
+        "social_login_type",
+        "CDVI",
+        "session",
+        "token",
+        "auth",
+        "login",
+    }
+)
 
 _FORBIDDEN_CODE_PATTERNS = [
     "context.cookies()",
@@ -53,15 +63,13 @@ def check_gitignore() -> list[str]:
 
 def check_git_tracked() -> list[str]:
     import subprocess
+
     errors = []
     try:
-        r = subprocess.run(
-            ["git", "ls-files", "data/sessions/"],
-            capture_output=True, text=True, cwd=str(REPO_ROOT)
-        )
+        r = subprocess.run(["git", "ls-files", "data/sessions/"], capture_output=True, text=True, cwd=str(REPO_ROOT))
         if r.stdout.strip():
             errors.append(f"data/sessions/ Git 추적 중: {r.stdout.strip()}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 버전관리 추적파일 조회 명령 실행 오류를 감사 오류 목록에 기록, 코드 스캔 중 개별 파일 읽기 실패는 건너뜀(check_web_connector는 현재 main()에서 호출되지 않아 최종 판정에 영향 없음) — 감사 스크립트 자체는 읽기전용
         errors.append(f"git ls-files 실행 오류: {e}")
     return errors
 
@@ -73,7 +81,7 @@ def check_web_connector() -> list[str]:
     for f in target_files:
         try:
             content = f.read_text(encoding="utf-8", errors="ignore")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 버전관리 추적파일 조회 명령 실행 오류를 감사 오류 목록에 기록, 코드 스캔 중 개별 파일 읽기 실패는 건너뜀(check_web_connector는 현재 main()에서 호출되지 않아 최종 판정에 영향 없음) — 감사 스크립트 자체는 읽기전용
             continue
         for pattern in _FORBIDDEN_CODE_PATTERNS:
             if pattern in content and "audit_gabia_session" not in str(f):

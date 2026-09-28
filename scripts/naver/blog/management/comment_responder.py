@@ -74,7 +74,7 @@ class BlogCommentResponder:
                 )
                 if items:
                     return [c for c in items if not c.get("replied")]
-            except Exception:
+            except Exception:  # noqa: BLE001 - 댓글 목록 조회 실패시 다음 소스로 넘어가고, AI 답글 생성 실패시 템플릿 답글로 폴백 — 전송 여부와 무관한 읽기/생성 단계
                 continue
         return []
 
@@ -102,7 +102,7 @@ class BlogCommentResponder:
                         max_tokens=200,
                     )
                     reply = r.get("text", self.templates.get(category, "").format(author=c["author"]))
-                except Exception:
+                except Exception:  # noqa: BLE001 - 댓글 목록 조회 실패시 다음 소스로 넘어가고, AI 답글 생성 실패시 템플릿 답글로 폴백 — 전송 여부와 무관한 읽기/생성 단계
                     reply = self.templates.get(category, "").format(author=c["author"])
             else:
                 template = self.templates.get(category) or ""

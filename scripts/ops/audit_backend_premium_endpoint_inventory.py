@@ -80,7 +80,7 @@ def run_audit() -> dict[str, Any]:
             src = router_file.read_text(encoding="utf-8")
             cnt = _count_router_endpoints(src)
             http_endpoints += cnt
-        except Exception:
+        except Exception:  # noqa: BLE001 - 엔드포인트 카운트 집계 실패한 개별 소스파일은 건너뛰고, pytest 실행 실패는 WARN으로 명시 기록하는 감사 스크립트 — 읽기전용
             pass
     total_endpoints = http_endpoints
 
@@ -196,7 +196,7 @@ def run_audit() -> dict[str, Any]:
             )
         else:
             results.append(item("ei-10", "FAIL", "inventory 테스트 없음"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 엔드포인트 카운트 집계 실패한 개별 소스파일은 건너뛰고, pytest 실행 실패는 WARN으로 명시 기록하는 감사 스크립트 — 읽기전용
         results.append(item("ei-10", "WARN", f"pytest 실행 실패: {e}"))
 
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}

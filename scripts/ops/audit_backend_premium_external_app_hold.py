@@ -90,7 +90,7 @@ def run_audit() -> dict[str, Any]:
     try:
         adapters = importlib.import_module("ai_orchestrator.domain.model_adapters")
         bridges = adapters.get_all_bridges() if hasattr(adapters, "get_all_bridges") else []
-    except Exception:
+    except Exception:  # noqa: BLE001 - 어댑터 모듈 조회 실패시 빈 목록으로 폴백(이후 개수 0으로 FAIL 반영), 개별 체크 실패는 FAIL 항목으로 명시 기록 — 읽기전용 감사
         pass
 
     app_type_map = {b.app_type: b for b in bridges}
@@ -194,7 +194,7 @@ def run_audit() -> dict[str, Any]:
             results.append(item("eh-12", "PASS", f"handoff 생성 가능, status={hf.status}"))
         else:
             results.append(item("eh-12", "FAIL", "ExternalAppHandoff 없음"))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 어댑터 모듈 조회 실패시 빈 목록으로 폴백(이후 개수 0으로 FAIL 반영), 개별 체크 실패는 FAIL 항목으로 명시 기록 — 읽기전용 감사
         results.append(item("eh-12", "FAIL", str(e)))
 
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}

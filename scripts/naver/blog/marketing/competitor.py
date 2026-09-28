@@ -91,7 +91,7 @@ def search_top_posts(cdp: CDP, query: str, top_n: int = 3) -> list[dict]:
     raw = cdp.js(_SEARCH_RESULT_JS)
     try:
         items = json.loads(raw) if raw else []
-    except Exception:
+    except Exception:  # noqa: BLE001 - JSON 캐시 파싱 실패시 빈 목록/None으로 안전 폴백 — 읽기전용 캐시 조회
         items = []
     return items[:top_n]
 
@@ -105,7 +105,7 @@ def analyze_post(cdp: CDP, url: str) -> dict | None:
         return None
     try:
         data = json.loads(raw)
-    except Exception:
+    except Exception:  # noqa: BLE001 - JSON 캐시 파싱 실패시 빈 목록/None으로 안전 폴백 — 읽기전용 캐시 조회
         return None
     data["url"] = url
     return data

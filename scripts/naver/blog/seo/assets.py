@@ -4,6 +4,7 @@ The tools are intentionally rights-aware. They can inventory public blog posts
 and image metadata for review, but any shopping-mall reuse manifest requires an
 explicit rights confirmation from the operator.
 """
+
 from __future__ import annotations
 
 import json
@@ -307,8 +308,7 @@ def analyze_blog_asset_images(inventory: dict[str, Any]) -> dict[str, Any]:
     for post in inventory.get("posts", []):
         images = post.get("images", [])
         analyzed = [
-            classify_blog_image(image, index=index, total=len(images))
-            for index, image in enumerate(images, start=1)
+            classify_blog_image(image, index=index, total=len(images)) for index, image in enumerate(images, start=1)
         ]
         all_items.extend(analyzed)
         posts_out.append(
@@ -402,8 +402,10 @@ def download_blog_asset_images(
                     }
                 )
                 count += 1
-            except Exception as exc:
-                errors.append({"post_index": post_index, "image_index": image_index, "src": src, "error": str(exc)[:200]})
+            except Exception as exc:  # noqa: BLE001 - 이미지 처리/픽셀 분석 실패를 오류 레코드에 담아 계속 진행 — 읽기전용 분석, 쓰기 없음
+                errors.append(
+                    {"post_index": post_index, "image_index": image_index, "src": src, "error": str(exc)[:200]}
+                )
         if count >= limit:
             break
     return {
@@ -445,7 +447,7 @@ def analyze_image_pixels(path: str | Path) -> dict[str, Any]:
     total = max(1, len(pixels))
     mean_luminance = sum(luminance_values) / total
     variance = sum((value - mean_luminance) ** 2 for value in luminance_values) / total
-    contrast_stddev = variance ** 0.5
+    contrast_stddev = variance**0.5
     white_ratio = white_pixels / total
     near_white_ratio = near_white_pixels / total
     dark_ratio = dark_pixels / total
@@ -480,7 +482,7 @@ def analyze_blog_asset_images_with_pixels(
     for item in downloads.get("items", []):
         try:
             metrics = analyze_image_pixels(item["path"])
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 이미지 처리/픽셀 분석 실패를 오류 레코드에 담아 계속 진행 — 읽기전용 분석, 쓰기 없음
             metrics = {"path": item.get("path", ""), "error": str(exc)[:200]}
         by_key[(int(item["post_index"]), int(item["image_index"]))] = {**item, "pixel_metrics": metrics}
 
@@ -498,7 +500,9 @@ def analyze_blog_asset_images_with_pixels(
             if metrics.get("white_on_white_risk"):
                 white_on_white_count += 1
                 image.setdefault("warnings", []).append("white_on_white_risk")
-                image.setdefault("recommendations", []).append("Increase contrast or use a subtle background before using as a representative image.")
+                image.setdefault("recommendations", []).append(
+                    "Increase contrast or use a subtle background before using as a representative image."
+                )
                 image["representative_score"] = max(0, int(image.get("representative_score", 0)) - 20)
             if metrics.get("text_or_spec_like"):
                 text_like_count += 1
@@ -616,7 +620,9 @@ def collect_blog_asset_inventory(
         ],
     }
     if not ok:
-        payload["messages"].append("No post links were collected from the blog index; retry with higher wait/max-index-pages or inspect the blog layout.")
+        payload["messages"].append(
+            "No post links were collected from the blog index; retry with higher wait/max-index-pages or inspect the blog layout."
+        )
     save_blog_asset_inventory(payload)
     return payload
 

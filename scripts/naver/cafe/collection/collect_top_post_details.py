@@ -30,7 +30,7 @@ CLUB_ID = "10445200"
 def _to_int(v) -> int:
     try:
         return int(str(v).replace(",", "").strip() or 0)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 숫자 파싱 실패시 0 반환, 캐시 JSON 파일 로드 실패시 해당 파일만 건너뛰고 계속 — 읽기전용 수집
         return 0
 
 
@@ -44,7 +44,7 @@ def load_all_posts() -> list[dict]:
         board_name = fp.stem.split("_", 1)[1].replace("_", " ") if "_" in fp.stem else fp.stem
         try:
             items = json.loads(fp.read_text(encoding="utf-8"))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 숫자 파싱 실패시 0 반환, 캐시 JSON 파일 로드 실패시 해당 파일만 건너뛰고 계속 — 읽기전용 수집
             _log.warning("[collect_top_post_details] 로드 실패 %s: %s", fp, e)
             continue
         for a in items:

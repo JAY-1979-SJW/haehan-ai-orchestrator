@@ -110,7 +110,7 @@ def _search_name(name: str, search_root: Path, skip_file: Path) -> list[str]:
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except Exception:  # noqa: BLE001 - PreToolUse 훅 진입점 — stdin JSON 파싱 실패 및 내부 오류를 모두 return 0(허용)으로 처리하는 코드 내 주석(# fail-open)으로 이미 의도가 명시된 fail-open 훅
         return 0
 
     try:
@@ -151,7 +151,7 @@ def main() -> int:
             )
         )
         return 0
-    except Exception as exc:  # fail-open
+    except Exception as exc:  # fail-open  # noqa: BLE001 - PreToolUse 훅 진입점 — stdin JSON 파싱 실패 및 내부 오류를 모두 return 0(허용)으로 처리하는 코드 내 주석(# fail-open)으로 이미 의도가 명시된 fail-open 훅
         sys.stderr.write(f"[pre_edit_dup_check] internal error (ignored): {exc}\n")
         return 0
 

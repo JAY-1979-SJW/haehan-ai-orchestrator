@@ -28,7 +28,7 @@ for app in DELETE_APPS:
     try:
         page.locator("button:has-text('앱 영구 삭제')").click()
         time.sleep(3)  # 모달 렌더링 대기
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카카오 개발자콘솔 앱 영구삭제 버튼/확인모달 클릭 브라우저자동화 — 실패시 콘솔에 오류만 출력하고 다음 앱으로 넘어감(추가 삭제나 성공 위장 없음, best-effort)
         print(f"  ✗ 삭제 버튼 없음: {e}")
         continue
 
@@ -72,7 +72,7 @@ for app in DELETE_APPS:
             print("  ✓ 삭제 완료")
         else:
             print(f"  ? 현재 URL: {page.url}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카카오 개발자콘솔 앱 영구삭제 버튼/확인모달 클릭 브라우저자동화 — 실패시 콘솔에 오류만 출력하고 다음 앱으로 넘어감(추가 삭제나 성공 위장 없음, best-effort)
         print(f"  ✗ 확인 처리 실패: {e}")
 
 print("\n완료. 남은 앱: 해한AI (1395337)")

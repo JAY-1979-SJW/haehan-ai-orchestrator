@@ -1,10 +1,10 @@
 """Hiworks CLI router."""
+
 from __future__ import annotations
 
 import json
 
 from scripts.hiworks import gates
-from scripts.hiworks.utils import HELP_TEXT, option_value
 from scripts.hiworks.actions import (
     apply_prepare_values,
     build_action_catalog,
@@ -36,7 +36,13 @@ from scripts.hiworks.mail_batch import (
 from scripts.hiworks.run_log import work_run
 from scripts.hiworks.schemas import DATA_DIR, HIWORKS_DASHBOARD_URL, HIWORKS_MAIL_URL, workflow_for_alias
 from scripts.hiworks.service_explorer import print_service_summary, save_service_report, scan_service, selected_targets
-from scripts.hiworks.workflows import build_and_save_send_plan, load_sales_queue, prepare_sales_mail, record_prepare_success
+from scripts.hiworks.utils import HELP_TEXT, option_value
+from scripts.hiworks.workflows import (
+    build_and_save_send_plan,
+    load_sales_queue,
+    prepare_sales_mail,
+    record_prepare_success,
+)
 
 
 def run_hiworks(task: str | None, sub: str | None, args: list[str]) -> None:
@@ -78,7 +84,7 @@ def _cmd_dashboard() -> None:
         print(f"url: {page.url}")
         try:
             print(f"title: {page.title()}")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 디버그 출력용 page.title() 조회 — 실패해도 해당 줄 출력만 생략, 기능 영향 없음
             pass
         print_apps(extract_dashboard_apps(page)[:30])
 
@@ -109,7 +115,7 @@ def _cmd_mail(sub: str | None) -> None:
         print(f"url: {page.url}")
         try:
             print(f"title: {page.title()}")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 디버그 출력용 page.title() 조회 — 실패해도 해당 줄 출력만 생략, 기능 영향 없음
             pass
         for item in extract_visible_mail_actions(page)[:40]:
             print(f"- {item['text']} {item.get('href') or ''}")
@@ -278,6 +284,7 @@ def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
         with work_run(workflow, [str(limit), f"--delay-min={delay_min}", f"--delay-max={delay_max}", "--approved"]):
             from scripts.hiworks.explorer import open_hiworks
             from scripts.hiworks.schemas import HIWORKS_MAIL_URL
+
             plan, _ = build_and_save_send_plan(limit=limit, delay_min=delay_min, delay_max=delay_max)
             page = open_hiworks(HIWORKS_MAIL_URL)
             result = execute_send_batch(plan, page=page)

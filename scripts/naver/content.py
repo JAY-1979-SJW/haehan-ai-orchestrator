@@ -1,4 +1,5 @@
 """Naver blog/cafe exploration and gated writing helpers."""
+
 from __future__ import annotations
 
 import json
@@ -7,8 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.naver.auth import ensure_naver_login
 from scripts.logger import get_logger
+from scripts.naver.auth import ensure_naver_login
 from scripts.naver.live_safety import ensure_page_safe, throttle_live
 from scripts.site_session_safety import assert_session_integrity
 
@@ -134,7 +135,7 @@ def open_naver_content(page, url: str) -> None:
         page.goto(url, timeout=30000, wait_until="domcontentloaded")
     try:
         page.wait_for_timeout(1500)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 페이지 이동 후 대기(wait_for_timeout) 타임아웃 무시, 탐색 로그 저장 실패 무시 — 읽기전용 탐색의 best-effort 로깅
         pass
     ensure_page_safe(page, site="naver", workflow="content_explore", phase="after_navigation")
 
@@ -249,7 +250,13 @@ def build_action_catalog(surface_report: dict[str, Any] | None = None) -> dict[s
                 {
                     "control_id": f"{key}:input:{idx}",
                     "index": idx,
-                    "field_key": _clean(field.get("name") or field.get("id") or field.get("placeholder") or field.get("aria") or f"field_{idx}"),
+                    "field_key": _clean(
+                        field.get("name")
+                        or field.get("id")
+                        or field.get("placeholder")
+                        or field.get("aria")
+                        or f"field_{idx}"
+                    ),
                     "tag": field.get("tag") or "",
                     "type": field.get("type") or "",
                     "name": field.get("name") or "",
@@ -361,7 +368,7 @@ def save_cafe_submit_record(record: dict[str, Any], output: str | Path | None = 
             artifact_path=str(path),
             metadata={"cafe_url": record.get("cafe_url"), "dry_run": record.get("dry_run")},
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 페이지 이동 후 대기(wait_for_timeout) 타임아웃 무시, 탐색 로그 저장 실패 무시 — 읽기전용 탐색의 best-effort 로깅
         pass
     return path
 

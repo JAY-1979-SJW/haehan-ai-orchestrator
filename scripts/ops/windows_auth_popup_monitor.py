@@ -124,7 +124,7 @@ def _beep_loop(stop_evt: threading.Event, count: int = 5, interval: float = 1.5)
                 break
             winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
             time.sleep(interval)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 알림음(MessageBeep)/토스트 알림 표시 실패 무시 — 사용자 알림 실패일 뿐 Windows 인증 팝업 감지/대기 로직 자체에는 영향 없음
         pass
 
 
@@ -150,7 +150,7 @@ def _toast(title: str, msg: str) -> None:
         doc = wxml.XmlDocument()
         doc.load_xml(xml_str)
         notifier.show(wun.ToastNotification(doc))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 알림음(MessageBeep)/토스트 알림 표시 실패 무시 — 사용자 알림 실패일 뿐 Windows 인증 팝업 감지/대기 로직 자체에는 영향 없음
         pass
 
 
