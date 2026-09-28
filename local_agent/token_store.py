@@ -12,13 +12,13 @@
 
 device_token 원문은 어떤 로그/예외/CLI 출력에도 노출되지 않는다.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ def _key(server_url: str, agent_id: str) -> str:
 def _try_import_keyring():
     try:
         import keyring  # type: ignore
+
         return keyring
     except Exception:  # pragma: no cover - 환경 의존
         return None
@@ -63,18 +64,18 @@ def keyring_available() -> bool:
 
 # ── 평문 fallback (옵트인 전용) ───────────────────────────────────────────
 
-def _plaintext_path(server_url: str, agent_id: str,
-                    base_dir: Optional[Path] = None) -> Path:
-    base = Path(base_dir) if base_dir else Path(
-        os.getenv("HAEHAN_AGENT_TOKEN_DIR",
-                  str(Path.home() / ".haehan_agent" / "tokens"))
+
+def _plaintext_path(server_url: str, agent_id: str, base_dir: Path | None = None) -> Path:
+    base = (
+        Path(base_dir)
+        if base_dir
+        else Path(os.getenv("HAEHAN_AGENT_TOKEN_DIR", str(Path.home() / ".haehan_agent" / "tokens")))
     )
     safe = _key(server_url, agent_id).replace("/", "_").replace(":", "_")
     return base / f"{safe}.token"
 
 
-def _save_plaintext(server_url: str, agent_id: str, token: str,
-                    base_dir: Optional[Path] = None) -> None:
+def _save_plaintext(server_url: str, agent_id: str, token: str, base_dir: Path | None = None) -> None:
     p = _plaintext_path(server_url, agent_id, base_dir=base_dir)
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(p.suffix + ".tmp")
@@ -86,8 +87,7 @@ def _save_plaintext(server_url: str, agent_id: str, token: str,
         pass
 
 
-def _load_plaintext(server_url: str, agent_id: str,
-                    base_dir: Optional[Path] = None) -> Optional[str]:
+def _load_plaintext(server_url: str, agent_id: str, base_dir: Path | None = None) -> str | None:
     p = _plaintext_path(server_url, agent_id, base_dir=base_dir)
     if not p.exists():
         return None
@@ -101,8 +101,7 @@ def _load_plaintext(server_url: str, agent_id: str,
     return tok or None
 
 
-def _delete_plaintext(server_url: str, agent_id: str,
-                      base_dir: Optional[Path] = None) -> bool:
+def _delete_plaintext(server_url: str, agent_id: str, base_dir: Path | None = None) -> bool:
     p = _plaintext_path(server_url, agent_id, base_dir=base_dir)
     if p.exists():
         try:
@@ -115,9 +114,15 @@ def _delete_plaintext(server_url: str, agent_id: str,
 
 # ── public API ────────────────────────────────────────────────────────────
 
-def save_device_token(server_url: str, agent_id: str, token: str, *,
-                      allow_plaintext_fallback: bool = False,
-                      plaintext_base_dir: Optional[Path] = None) -> str:
+
+def save_device_token(
+    server_url: str,
+    agent_id: str,
+    token: str,
+    *,
+    allow_plaintext_fallback: bool = False,
+    plaintext_base_dir: Path | None = None,
+) -> str:
     """저장 후 사용된 backend 이름을 반환. 실패 시 TokenStoreError."""
     if not server_url or not agent_id or not token:
         raise TokenStoreError("server_url/agent_id/token이 비어있습니다.")
@@ -129,17 +134,15 @@ def save_device_token(server_url: str, agent_id: str, token: str, *,
         except Exception as e:  # pragma: no cover - backend 실패 분기
             logger.warning("keyring set_password 실패: %s", type(e).__name__)
     if not allow_plaintext_fallback:
-        raise TokenStoreError(
-            "keyring 사용 불가. 평문 fallback이 비활성화되어 저장을 거부합니다."
-        )
+        raise TokenStoreError("keyring 사용 불가. 평문 fallback이 비활성화되어 저장을 거부합니다.")
     _save_plaintext(server_url, agent_id, token, base_dir=plaintext_base_dir)
     logger.warning("device_token: keyring 사용 불가 — 평문 fallback에 저장됨 (운영 비권장)")
     return "plaintext-fallback"
 
 
-def load_device_token(server_url: str, agent_id: str, *,
-                      allow_plaintext_fallback: bool = False,
-                      plaintext_base_dir: Optional[Path] = None) -> Optional[str]:
+def load_device_token(
+    server_url: str, agent_id: str, *, allow_plaintext_fallback: bool = False, plaintext_base_dir: Path | None = None
+) -> str | None:
     if not server_url or not agent_id:
         return None
     kr = _try_import_keyring()
@@ -155,9 +158,9 @@ def load_device_token(server_url: str, agent_id: str, *,
     return None
 
 
-def delete_device_token(server_url: str, agent_id: str, *,
-                        allow_plaintext_fallback: bool = False,
-                        plaintext_base_dir: Optional[Path] = None) -> bool:
+def delete_device_token(
+    server_url: str, agent_id: str, *, allow_plaintext_fallback: bool = False, plaintext_base_dir: Path | None = None
+) -> bool:
     deleted = False
     kr = _try_import_keyring()
     if kr is not None and keyring_available():
@@ -172,24 +175,33 @@ def delete_device_token(server_url: str, agent_id: str, *,
     return deleted
 
 
-def has_device_token(server_url: str, agent_id: str, *,
-                     allow_plaintext_fallback: bool = False,
-                     plaintext_base_dir: Optional[Path] = None) -> bool:
-    return load_device_token(
-        server_url, agent_id,
-        allow_plaintext_fallback=allow_plaintext_fallback,
-        plaintext_base_dir=plaintext_base_dir,
-    ) is not None
+def has_device_token(
+    server_url: str, agent_id: str, *, allow_plaintext_fallback: bool = False, plaintext_base_dir: Path | None = None
+) -> bool:
+    return (
+        load_device_token(
+            server_url,
+            agent_id,
+            allow_plaintext_fallback=allow_plaintext_fallback,
+            plaintext_base_dir=plaintext_base_dir,
+        )
+        is not None
+    )
 
 
-def describe_backend() -> Tuple[bool, str]:
+def describe_backend() -> tuple[bool, str]:
     """(usable, backend_name) — CLI/status 용. token 원문은 절대 반환하지 않음."""
     return keyring_available(), keyring_backend_name()
 
 
 __all__ = [
-    "SERVICE_NAME", "TokenStoreError",
-    "save_device_token", "load_device_token",
-    "delete_device_token", "has_device_token",
-    "keyring_available", "keyring_backend_name", "describe_backend",
+    "SERVICE_NAME",
+    "TokenStoreError",
+    "delete_device_token",
+    "describe_backend",
+    "has_device_token",
+    "keyring_available",
+    "keyring_backend_name",
+    "load_device_token",
+    "save_device_token",
 ]

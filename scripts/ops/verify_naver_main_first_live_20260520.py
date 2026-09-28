@@ -3,6 +3,7 @@
 site_entry_policy 를 직접 호출하여 각 사이트의 main_url 로 navigate,
 SPA 렌더 대기 후 judge_login_state 로 판정.
 """
+
 from __future__ import annotations
 
 import json
@@ -77,8 +78,7 @@ def _eval_until_signal(target_id, expr, max_wait=18.0):
                 w = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=5)
             except Exception:
                 break
-            ev = _send(w, 1, "Runtime.evaluate",
-                       {"expression": expr, "returnByValue": True}, timeout=6.0)
+            ev = _send(w, 1, "Runtime.evaluate", {"expression": expr, "returnByValue": True}, timeout=6.0)
             w.close()
             last = ev
             val = ev.get("result", {}).get("result", {}).get("value")
@@ -124,7 +124,8 @@ def main():
     target_id = None
     for t in _list_pages():
         if t.get("url") == "about:blank":
-            target_id = t["id"]; break
+            target_id = t["id"]
+            break
     if not target_id:
         bws = websocket.create_connection(_ws_browser(), timeout=8)
         new = _send(bws, 1, "Target.createTarget", {"url": "about:blank"}, timeout=5.0)
@@ -139,7 +140,7 @@ def main():
         time.sleep(2.0)
         data = _eval_until_signal(target_id, PAGE_EXPR, max_wait=20.0)
         if data.get("_no_signal"):
-            print(f"  no_signal (body 미생성)")
+            print("  no_signal (body 미생성)")
         # 정책 판정
         state = sep.judge_login_state(site_key, data)
         out = {
