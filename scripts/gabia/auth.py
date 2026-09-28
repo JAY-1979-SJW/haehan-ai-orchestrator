@@ -6,6 +6,7 @@
 사용:
     from scripts.gabia.auth import is_logged_in, login
 """
+
 from __future__ import annotations
 
 import sys
@@ -42,7 +43,7 @@ def is_logged_in(page) -> bool:
     """
     try:
         url = page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 가비아 로그인 상태 확인(is_logged_in) — 가비아는 OTP/2FA 필수라 자동 로그인 자체가 불가능한 구조이며, 모든 except가 '미로그인'(보수적) 방향으로 폴백해 인증 우회가 아님. login()은 사용자 수동 로그인을 안내할 뿐 자동 인증을 시도하지 않음.
         return False
 
     if _LOGIN_DOMAIN in url:
@@ -56,7 +57,7 @@ def is_logged_in(page) -> bool:
             if el and el.is_visible():
                 log.debug("gabia: 로그아웃 버튼 발견 — 로그인됨")
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 가비아 로그인 상태 확인(is_logged_in) — 가비아는 OTP/2FA 필수라 자동 로그인 자체가 불가능한 구조이며, 모든 except가 '미로그인'(보수적) 방향으로 폴백해 인증 우회가 아님. login()은 사용자 수동 로그인을 안내할 뿐 자동 인증을 시도하지 않음.
             pass
 
     # body 텍스트로 판단
@@ -68,7 +69,7 @@ def is_logged_in(page) -> bool:
         if any(tok in text for tok in _LOGGED_OUT_TOKENS):
             log.debug("gabia: 로그아웃 토큰 발견 — 미로그인")
             return False
-    except Exception:
+    except Exception:  # noqa: BLE001 - 가비아 로그인 상태 확인(is_logged_in) — 가비아는 OTP/2FA 필수라 자동 로그인 자체가 불가능한 구조이며, 모든 except가 '미로그인'(보수적) 방향으로 폴백해 인증 우회가 아님. login()은 사용자 수동 로그인을 안내할 뿐 자동 인증을 시도하지 않음.
         pass
 
     # 보호 URL 패턴
@@ -95,7 +96,7 @@ def login(page) -> dict:
 
     try:
         page.goto(GABIA_LOGIN_URL, timeout=30000)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 로그인 상태 확인(is_logged_in) — 가비아는 OTP/2FA 필수라 자동 로그인 자체가 불가능한 구조이며, 모든 except가 '미로그인'(보수적) 방향으로 폴백해 인증 우회가 아님. login()은 사용자 수동 로그인을 안내할 뿐 자동 인증을 시도하지 않음.
         log.warning("gabia: 로그인 페이지 이동 실패: %s", e)
 
     log.info("gabia: 수동 로그인 대기 (최대 5분)")

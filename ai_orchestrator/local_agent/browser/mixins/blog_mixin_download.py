@@ -3,6 +3,7 @@
 download_images, download_all_images, save_post_html.
 이미지 목록·다운로드 능력은 self(MRO)로 호출한다. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 import re
@@ -11,8 +12,7 @@ from pathlib import Path
 
 
 class BlogDownloadMixin:
-    def blog_download_images(self, post_url: str,
-                               save_dir: str = "data/blog_images") -> dict:
+    def blog_download_images(self, post_url: str, save_dir: str = "data/blog_images") -> dict:
         """단일 포스트 이미지 다운로드."""
         m = re.search(r"blog\.naver\.com/(\w+)/(\d{10,})|blogId=(\w+).*logNo=(\d+)", post_url)
         blog_id = m.group(1) or m.group(3) if m else ""
@@ -40,7 +40,7 @@ class BlogDownloadMixin:
                 else:
                     failed += 1
                     print(f"    이미지 {i}/{len(images)}: ✗ {result['error']}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 내 블로그 이미지/HTML을 로컬로 백업 다운로드(읽기전용, 외부 발행 없음) — 개별 이미지/포스트 다운로드 실패는 failed 카운트에 반영되어 은폐되지 않음.
                 failed += 1
                 print(f"    이미지 {i}/{len(images)}: ✗ {e}")
 
@@ -52,10 +52,9 @@ class BlogDownloadMixin:
             "save_dir": str(post_save_dir),
         }
 
-    def blog_download_all_images(self, blog_url: str,
-                                   save_dir: str = "data/blog_images",
-                                   category_no: str = "",
-                                   max_pages: int = 5) -> dict:
+    def blog_download_all_images(
+        self, blog_url: str, save_dir: str = "data/blog_images", category_no: str = "", max_pages: int = 5
+    ) -> dict:
         """블로그 전체 이미지 다운로드."""
         blog_id = blog_url.rstrip("/").split("/")[-1]
         total_posts = 0
@@ -80,7 +79,7 @@ class BlogDownloadMixin:
                     downloaded += result["downloaded"]
                     failed += result["failed"]
                     time.sleep(1.5)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 내 블로그 이미지/HTML을 로컬로 백업 다운로드(읽기전용, 외부 발행 없음) — 개별 이미지/포스트 다운로드 실패는 failed 카운트에 반영되어 은폐되지 않음.
                     print(f"    오류: {e}")
                     failed += len(self.blog_post_images(post_url))
 
@@ -92,8 +91,7 @@ class BlogDownloadMixin:
             "save_dir": str(Path(save_dir) / blog_id),
         }
 
-    def blog_save_post_html(self, post_url: str,
-                             save_dir: str = "data/blog_html") -> dict:
+    def blog_save_post_html(self, post_url: str, save_dir: str = "data/blog_html") -> dict:
         """포스트를 HTML로 저장."""
         m = re.search(r"blog\.naver\.com/(\w+)/(\d{10,})|blogId=(\w+).*logNo=(\d+)", post_url)
         blog_id = m.group(1) or m.group(3) if m else ""
@@ -114,7 +112,7 @@ class BlogDownloadMixin:
                 "size": save_path.stat().st_size,
                 "error": "",
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 내 블로그 이미지/HTML을 로컬로 백업 다운로드(읽기전용, 외부 발행 없음) — 개별 이미지/포스트 다운로드 실패는 failed 카운트에 반영되어 은폐되지 않음.
             return {
                 "ok": False,
                 "path": "",

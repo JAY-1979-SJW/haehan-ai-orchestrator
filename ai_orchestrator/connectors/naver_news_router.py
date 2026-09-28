@@ -46,7 +46,7 @@ def _naver_openapi_news(query: str, page: int = 1, display: int = 10) -> list[di
     params = urllib.parse.urlencode({"query": query, "display": display, "start": start, "sort": "date"})
     url = f"https://openapi.naver.com/v1/search/news.json?{params}"
 
-    req = urllib.request.Request(  # noqa: S310
+    req = urllib.request.Request(
         url,
         headers={
             "X-Naver-Client-Id": client_id,
@@ -81,7 +81,7 @@ def api_news_main(
     try:
         m = _import_scraper()
         blocks = m.fetch_news()
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 네이버 뉴스 read-only 엔드포인트(문서에 '쓰기 API 없음' 명시) — 3개 엔드포인트 모두 except에서 HTTPException(503)으로 변환해 클라이언트에 오류를 명확히 전달.
         logger.error("news-main error: %s", exc)
         raise HTTPException(status_code=503, detail=f"CDP 브라우저 오류: {exc}")
     duration_ms = int((time.monotonic() - t0) * 1000)
@@ -108,7 +108,7 @@ def api_news_search(
     t0 = time.monotonic()
     try:
         items = _naver_openapi_news(query.strip(), page=page)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 네이버 뉴스 read-only 엔드포인트(문서에 '쓰기 API 없음' 명시) — 3개 엔드포인트 모두 except에서 HTTPException(503)으로 변환해 클라이언트에 오류를 명확히 전달.
         logger.error("news-search error: %s", exc)
         raise HTTPException(status_code=503, detail=f"뉴스 검색 오류: {exc}")
     duration_ms = int((time.monotonic() - t0) * 1000)
@@ -135,7 +135,7 @@ def api_news_article(
     try:
         m = _import_scraper()
         article = m.fetch_article(url.strip())
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 네이버 뉴스 read-only 엔드포인트(문서에 '쓰기 API 없음' 명시) — 3개 엔드포인트 모두 except에서 HTTPException(503)으로 변환해 클라이언트에 오류를 명확히 전달.
         logger.error("news-article error: %s", exc)
         raise HTTPException(status_code=503, detail=f"CDP 브라우저 오류: {exc}")
     if not article:

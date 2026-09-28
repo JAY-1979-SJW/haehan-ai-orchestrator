@@ -12,6 +12,7 @@ Playwright/CDP 비의존. 테스트 가능한 단순 분류기.
   - 사용자 password/OTP/쿠키 원문은 절대 받지 않는다.
   - 분류 결과에는 sub-signals 만 포함 (수치/boolean).
 """
+
 from __future__ import annotations
 
 import re
@@ -42,48 +43,108 @@ GOOGLE_AUTH_HOSTS = (
 )
 
 LOGIN_HOST_HINTS = (
-    "login", "signin", "sign-in", "auth", "nidlogin",
-    "accounts.", "id.", "passport.",
+    "login",
+    "signin",
+    "sign-in",
+    "auth",
+    "nidlogin",
+    "accounts.",
+    "id.",
+    "passport.",
 )
 
 LOGIN_PATH_PATTERNS = (
-    "/login", "/signin", "/sign-in", "/sign_in", "/auth",
-    "/ServiceLogin", "/account/login", "/users/sign_in",
+    "/login",
+    "/signin",
+    "/sign-in",
+    "/sign_in",
+    "/auth",
+    "/ServiceLogin",
+    "/account/login",
+    "/users/sign_in",
 )
 
 ACCOUNT_PICKER_URL_PATTERNS = (
-    "accountchooser", "selectaccount", "select_account", "chooseaccount",
-    "/signin/v2/identifier", "/identifier", "ServiceLogin",
+    "accountchooser",
+    "selectaccount",
+    "select_account",
+    "chooseaccount",
+    "/signin/v2/identifier",
+    "/identifier",
+    "ServiceLogin",
 )
 
 CHALLENGE_URL_PATTERNS = (
-    "/challenge", "/signin/challenge", "/v2/challenge",
-    "/verify", "/2-step", "twofactor", "two-factor", "totp", "/otp",
-    "smsauth", "phone-verification",
+    "/challenge",
+    "/signin/challenge",
+    "/v2/challenge",
+    "/verify",
+    "/2-step",
+    "twofactor",
+    "two-factor",
+    "totp",
+    "/otp",
+    "smsauth",
+    "phone-verification",
 )
 
 CHALLENGE_TEXT_PATTERNS = (
-    "2-Step Verification", "2단계 인증", "2단계인증", "Two-Step",
-    "Verify it's you", "본인 확인", "본인확인", "휴대전화로 받은 코드",
-    "Enter the code", "코드 입력", "OTP", "일회용 비밀번호",
-    "보안 카드", "보안카드", "보안 문자", "기기 승인",
-    "passkey", "패스키", "biometric", "생체 인증", "생체인증",
+    "2-Step Verification",
+    "2단계 인증",
+    "2단계인증",
+    "Two-Step",
+    "Verify it's you",
+    "본인 확인",
+    "본인확인",
+    "휴대전화로 받은 코드",
+    "Enter the code",
+    "코드 입력",
+    "OTP",
+    "일회용 비밀번호",
+    "보안 카드",
+    "보안카드",
+    "보안 문자",
+    "기기 승인",
+    "passkey",
+    "패스키",
+    "biometric",
+    "생체 인증",
+    "생체인증",
 )
 
 CONSENT_URL_PATTERNS = (
-    "/oauth/consent", "/o/oauth2/auth", "/oauth2/auth", "/consent",
-    "/permissions", "/authorize",
+    "/oauth/consent",
+    "/o/oauth2/auth",
+    "/oauth2/auth",
+    "/consent",
+    "/permissions",
+    "/authorize",
 )
 
 CONSENT_TEXT_PATTERNS = (
-    "Grant access", "Allow", "권한을 허용", "권한 허용", "동의",
-    "consent", "permissions", "Sign in to your account to continue",
+    "Grant access",
+    "Allow",
+    "권한을 허용",
+    "권한 허용",
+    "동의",
+    "consent",
+    "permissions",
+    "Sign in to your account to continue",
 )
 
 LOGGED_IN_TEXT_PATTERNS = (
-    "로그아웃", "Sign out", "Log out", "sign out", "logout",
-    "마이페이지", "내정보", "내 정보", "My Page", "My Account",
-    "프로필", "Profile",
+    "로그아웃",
+    "Sign out",
+    "Log out",
+    "sign out",
+    "logout",
+    "마이페이지",
+    "내정보",
+    "내 정보",
+    "My Page",
+    "My Account",
+    "프로필",
+    "Profile",
 )
 
 LOGGED_IN_GREETING_PATTERNS = (
@@ -93,19 +154,35 @@ LOGGED_IN_GREETING_PATTERNS = (
 )
 
 LOGIN_BUTTON_TEXT_PATTERNS = (
-    "Sign in", "Sign In", "Log in", "Log In", "Login",
-    "로그인", "Google로 로그인", "Sign in with Google",
-    "계정 선택", "다른 계정", "Use another account",
+    "Sign in",
+    "Sign In",
+    "Log in",
+    "Log In",
+    "Login",
+    "로그인",
+    "Google로 로그인",
+    "Sign in with Google",
+    "계정 선택",
+    "다른 계정",
+    "Use another account",
 )
 
 LOGIN_FAILED_TEXT_PATTERNS = (
-    "비밀번호가 일치하지 않", "비밀번호를 다시 확인",
-    "Wrong password", "incorrect password", "잘못된 비밀번호",
-    "로그인에 실패", "Login failed", "Couldn't sign you in",
+    "비밀번호가 일치하지 않",
+    "비밀번호를 다시 확인",
+    "Wrong password",
+    "incorrect password",
+    "잘못된 비밀번호",
+    "로그인에 실패",
+    "Login failed",
+    "Couldn't sign you in",
 )
 
 SESSION_EXPIRED_TEXT_PATTERNS = (
-    "세션이 만료", "session expired", "다시 로그인", "Please sign in again",
+    "세션이 만료",
+    "session expired",
+    "다시 로그인",
+    "Please sign in again",
     "Your session has expired",
 )
 
@@ -127,6 +204,7 @@ class DetectionResult:
 
 # ── 유틸 ─────────────────────────────────────────────────────────────
 
+
 def sanitize_url(url: str) -> str:
     """query/fragment 제거. token/code 등 민감 파라미터 노출 방지."""
     if not url:
@@ -138,7 +216,7 @@ def sanitize_url(url: str) -> str:
         scheme = p.scheme or "https"
         port = f":{p.port}" if p.port and p.port not in (80, 443) else ""
         return f"{scheme}://{host}{port}{path}"
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL/텍스트 기반 로그인 상태 순수 분류 헬퍼 — sanitize_url/_host/_path/_query가 파싱 실패 시 빈 문자열을 반환할 뿐, 최종 판정(classify)은 예외를 던지지 않는 별도 순수함수이며 비밀번호/OTP 원문은 다루지 않음.
         return ""
 
 
@@ -155,21 +233,21 @@ def mask_email(text: str) -> str:
 def _host(url: str) -> str:
     try:
         return (urlparse(url).hostname or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL/텍스트 기반 로그인 상태 순수 분류 헬퍼 — sanitize_url/_host/_path/_query가 파싱 실패 시 빈 문자열을 반환할 뿐, 최종 판정(classify)은 예외를 던지지 않는 별도 순수함수이며 비밀번호/OTP 원문은 다루지 않음.
         return ""
 
 
 def _path(url: str) -> str:
     try:
         return (urlparse(url).path or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL/텍스트 기반 로그인 상태 순수 분류 헬퍼 — sanitize_url/_host/_path/_query가 파싱 실패 시 빈 문자열을 반환할 뿐, 최종 판정(classify)은 예외를 던지지 않는 별도 순수함수이며 비밀번호/OTP 원문은 다루지 않음.
         return ""
 
 
 def _query(url: str) -> str:
     try:
         return (urlparse(url).query or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL/텍스트 기반 로그인 상태 순수 분류 헬퍼 — sanitize_url/_host/_path/_query가 파싱 실패 시 빈 문자열을 반환할 뿐, 최종 판정(classify)은 예외를 던지지 않는 별도 순수함수이며 비밀번호/OTP 원문은 다루지 않음.
         return ""
 
 
@@ -191,6 +269,7 @@ def _greeting_user(text: str) -> str:
 
 
 # ── 핵심 분류 ─────────────────────────────────────────────────────────
+
 
 def classify(
     url: str,
@@ -219,9 +298,7 @@ def classify(
 
     is_auth_host = host in GOOGLE_AUTH_HOSTS or any(h in host for h in LOGIN_HOST_HINTS)
     is_login_path = any(p in path for p in LOGIN_PATH_PATTERNS)
-    is_account_picker = any(
-        p in (path + "?" + query) for p in ACCOUNT_PICKER_URL_PATTERNS
-    )
+    is_account_picker = any(p in (path + "?" + query) for p in ACCOUNT_PICKER_URL_PATTERNS)
 
     is_challenge_url = any(p in (path + "?" + query) for p in CHALLENGE_URL_PATTERNS)
     is_challenge_text = _has_any(combined_text, CHALLENGE_TEXT_PATTERNS)
@@ -273,10 +350,7 @@ def classify(
             state = LOGIN_IN_PROGRESS
         else:
             state = LOGIN_REQUIRED
-        reason = (
-            "auth_host" if is_auth_host
-            else ("login_path" if is_login_path else "login_button")
-        )
+        reason = "auth_host" if is_auth_host else ("login_path" if is_login_path else "login_button")
     else:
         state = LOGIN_UNKNOWN
         reason = "no_strong_signal"
