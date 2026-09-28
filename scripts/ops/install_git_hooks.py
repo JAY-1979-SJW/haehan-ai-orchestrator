@@ -23,7 +23,14 @@ PRE_COMMIT = """\
 import subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
+ROOT = Path(
+    subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+)  # __file__ 기준이면 core.hooksPath 공유 시 worktree 에서도 항상 메인 체크아웃을
+# 가리켜 내용을 조용히 훼손한다(2026-09-28 worktree 병렬 세션에서 실측 발견).
+# 실행 시점 cwd(git 이 훅에 주는 실제 worktree 루트) 기준으로 고정.
 
 # staged .py 파일 목록
 # encoding 명시: Windows 기본 코드페이지(cp949)가 diff에 섞인 UTF-8 특수문자에서
@@ -188,7 +195,12 @@ PRE_PUSH = """\
 import subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
+ROOT = Path(
+    subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+)  # worktree-aware (2026-09-28, pre-commit.orig 와 동일 사유)
 
 # Claude Code AI 코드 검수
 result = subprocess.run(
@@ -204,7 +216,12 @@ POST_COMMIT = """\
 import subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
+ROOT = Path(
+    subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+)  # worktree-aware (2026-09-28, pre-commit.orig 와 동일 사유)
 
 # 모든 커밋을 data/ops/worklog.jsonl 에 1줄 기록 (session_handoff_guard).
 # 커밋 자체를 절대 실패시키지 않는다(never fail the commit).

@@ -8,7 +8,14 @@ staged 변경에서 .py/.ts/.tsx 순삭제(deleted-added) >= 60줄 파일이 있
 import subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(
+    subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+)  # __file__ 기준이면 core.hooksPath 공유 시 worktree 에서도 항상 메인 체크아웃을
+# 가리켜 내용을 조용히 훼손한다(2026-09-28 worktree 병렬 세션에서 실측 발견).
+# 실행 시점 cwd(git 이 훅에 주는 실제 worktree 루트) 기준으로 고정.
 THRESHOLD = 60  # 순삭제 줄 수 기준
 
 # 커밋 메시지
