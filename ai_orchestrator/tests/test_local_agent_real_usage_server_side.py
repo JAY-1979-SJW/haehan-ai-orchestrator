@@ -4,10 +4,10 @@
 서버사이드/mock으로 실사용 흐름을 검증한다.
 """
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.insert(0, str(Path(__file__).parent / "../.."))
 
 from ai_orchestrator import local_agent_registry as _reg
 from ai_orchestrator.local_agent_audit_event_policy import (
