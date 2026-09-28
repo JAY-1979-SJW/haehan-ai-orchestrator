@@ -116,7 +116,7 @@ def execute_batch(plan: dict[str, Any]) -> dict[str, Any]:
             else:
                 failed += 1
                 result_item["error"] = r.get("message", "send_failed")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 팩스 일괄발송 결과 집계 루프 - 개별 발송 실패는 failed 카운트 증가와 error 메시지 기록만, 성공으로 잘못 표시하지 않음
             failed += 1
             result_item["error"] = str(e)
 

@@ -42,7 +42,7 @@ def is_stale(idle_timeout_s: int = DEFAULT_IDLE_TIMEOUT_S) -> bool:
             eff_timeout = status.get("idle_timeout_s", idle_timeout_s)
             if elapsed > eff_timeout:
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 유휴(idle) 상태 판정 보조 함수 - 상태 조회 실패 시 False 반환(유휴 아님으로 간주), 판정 실패가 프로세스 강제종료 등으로 이어지지 않는 안전한 기본값
             pass
     return False
 

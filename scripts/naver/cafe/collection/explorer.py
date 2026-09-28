@@ -70,7 +70,7 @@ def _fetch_joined_cafes_via_api(page: Page) -> list[dict]:
                 }
             )
         return out
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가입 카페 목록 API 조회(읽기전용) - 조회 실패 시 빈 리스트 반환
         _log.debug("[explorer] 가입카페 API 오류: %s", str(e)[:100])
         return []
 

@@ -65,7 +65,7 @@ def explore():
                     f"  {i:2}. {c.get('cafeName', '?'):30} | 회원 {c.get('memberCount', '?'):>8}명 | https://cafe.naver.com/{c.get('cafeUrl', '')}"
                 )
             return cafes
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 카페 목록 조회(읽기전용) - GraphQL 호출 실패 시 오류 메시지 출력 후 DOM 직접 파싱으로 폴백, 쓰기 동작 없음
             print("GraphQL 오류:", e)
 
         # 폴백: 페이지 DOM 직접 파싱

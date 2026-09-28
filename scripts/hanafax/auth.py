@@ -6,6 +6,7 @@
 사용:
     from scripts.hanafax.auth import get_credentials, test_login
 """
+
 from __future__ import annotations
 
 from scripts.logger import get_logger
@@ -18,6 +19,7 @@ HANAFAX_BASE = "https://www.hanafax.com"
 def get_credentials() -> tuple[str, str]:
     """저장된 하나팩스 자격증명 반환. (user_id, password)"""
     from scripts.credentials import get_cred
+
     cred = get_cred("hanafax")
     return cred.get("id", ""), cred.get("pw", "")
 
@@ -55,7 +57,7 @@ def test_login(user_id: str | None = None, password: str | None = None) -> dict:
             info = page.evaluate("() => document.body.innerText.substring(0, 600)")
             log.info("[hanafax] 로그인 성공: %s", page.url)
             return {"ok": True, "message": "로그인 성공", "url": page.url, "info": info}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 하나팩스 로그인 자동화 - 로그인 성공 여부 확인 후 실패 시 ok:False로 반환(fail-closed), 크리덴셜 원문은 로그/반환값에 노출하지 않음
             return {"ok": False, "message": str(e)}
         finally:
             browser.close()

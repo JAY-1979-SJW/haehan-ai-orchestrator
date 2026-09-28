@@ -95,7 +95,7 @@ def main() -> None:
             print("발행 완료:", page.url)
         else:
             print("발행 확인 필요 — 현재 URL:", page.url)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 블로그 발행 버튼 클릭 자동화 - 클릭 실패 시 메시지만 출력, 발행 여부는 별도로 현재 URL을 확인해 판단(성공을 임의로 단정하지 않음)
         print("발행 버튼 클릭 실패:", e)
 
     browser.close()

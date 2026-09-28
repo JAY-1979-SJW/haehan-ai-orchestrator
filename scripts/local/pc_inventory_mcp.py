@@ -11,6 +11,7 @@ MCP stdio 서버. .mcp.json 에 등록하면 Claude Code에서 자동 인식.
   pc_list_startup    — 시작프로그램 목록
   pc_inventory_all   — 전체 수집 후 요약 반환
 """
+
 from __future__ import annotations
 
 import json
@@ -20,9 +21,10 @@ from typing import Any
 
 # scripts/local/ 에서 직접 import
 sys.path.insert(0, str(Path(__file__).parent))
-from pc_inventory import SECTIONS, collect_all, collect_processes  # noqa: E402
+from pc_inventory import SECTIONS, collect_all, collect_processes
 
 # ── MCP 최소 구현 (stdio JSON-RPC) ────────────────────────────────────────────
+
 
 def _send(obj: dict) -> None:
     sys.stdout.write(json.dumps(obj, ensure_ascii=False) + "\n")
@@ -137,17 +139,10 @@ def _handle_call(name: str, args: dict) -> dict:
                 "installed_apps_count": len(data.get("apps", [])),
                 "top10_apps": [a["name"] for a in (data.get("apps") or [])[:10]],
                 "processes_count": len(data.get("processes", [])),
-                "top10_processes": [
-                    f"{p['name']} ({p['mem_mb']}MB)"
-                    for p in (data.get("processes") or [])[:10]
-                ],
-                "listen_ports": [
-                    f":{p['port']} ← {p['process']}"
-                    for p in (data.get("ports") or [])
-                ],
+                "top10_processes": [f"{p['name']} ({p['mem_mb']}MB)" for p in (data.get("processes") or [])[:10]],
+                "listen_ports": [f":{p['port']} ← {p['process']}" for p in (data.get("ports") or [])],
                 "services_running": sum(
-                    1 for s in (data.get("services") or [])
-                    if s.get("status", "").upper() == "RUNNING"
+                    1 for s in (data.get("services") or []) if s.get("status", "").upper() == "RUNNING"
                 ),
                 "startup_count": len(data.get("startup", [])),
                 "secret_values_output": False,
@@ -155,7 +150,7 @@ def _handle_call(name: str, args: dict) -> dict:
             return _tool_result(summary)
 
         return _tool_result({"error": f"unknown tool: {name}"}, is_error=True)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - PC 인벤토리 MCP 도구 핸들러 최상위 캐치 - 각 도구는 read-only 조회이며 실패 시 에러 메시지를 결과로 반환할 뿐 상태를 변경하지 않음
         return _tool_result({"error": str(e)[:300]}, is_error=True)
 
 
@@ -173,11 +168,17 @@ def main() -> None:
         method = req.get("method", "")
 
         if method == "initialize":
-            _send({"jsonrpc": "2.0", "id": rid, "result": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {"tools": {}},
-                "serverInfo": {"name": "pc-inventory", "version": "1.0.0"},
-            }})
+            _send(
+                {
+                    "jsonrpc": "2.0",
+                    "id": rid,
+                    "result": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {"tools": {}},
+                        "serverInfo": {"name": "pc-inventory", "version": "1.0.0"},
+                    },
+                }
+            )
 
         elif method == "tools/list":
             _send({"jsonrpc": "2.0", "id": rid, "result": {"tools": TOOLS}})
@@ -192,9 +193,16 @@ def main() -> None:
             pass  # 응답 불필요
 
         else:
-            _send({"jsonrpc": "2.0", "id": rid, "error": {
-                "code": -32601, "message": f"method not found: {method}",
-            }})
+            _send(
+                {
+                    "jsonrpc": "2.0",
+                    "id": rid,
+                    "error": {
+                        "code": -32601,
+                        "message": f"method not found: {method}",
+                    },
+                }
+            )
 
 
 if __name__ == "__main__":

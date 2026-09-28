@@ -1,4 +1,5 @@
 """Read-only Hiworks dashboard and mail exploration helpers."""
+
 from __future__ import annotations
 
 import json
@@ -15,7 +16,7 @@ def open_hiworks(path: str = ""):
         page.goto(path, timeout=30000)
         try:
             page.wait_for_load_state("networkidle", timeout=15000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 하이웍스 탐색 자동화 - 페이지 로드 대기 best-effort, 타임아웃 나도 이후 로직 계속 진행(읽기전용 탐색)
             pass
     return page
 

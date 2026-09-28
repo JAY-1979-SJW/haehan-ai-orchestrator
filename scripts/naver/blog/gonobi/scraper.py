@@ -101,7 +101,7 @@ def _fetch_post_detail(session: requests.Session, log_no: str) -> dict:
         resp = session.get(url, timeout=10)
         if resp.status_code != 200:
             return {}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - gonobi 블로그 포스트 읽기전용 스크래핑 - 요청 실패 시 빈 dict 반환, 쓰기 동작 없음
         logger.warning("포스트 수집 실패 %s: %s", log_no, e)
         return {}
 

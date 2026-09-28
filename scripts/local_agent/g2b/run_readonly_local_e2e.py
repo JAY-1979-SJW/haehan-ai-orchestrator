@@ -298,7 +298,7 @@ def main() -> None:
     else:
         try:
             report = _run_e2e()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 나라장터(G2B) 읽기전용 e2e 스모크 테스트 - 실패 시 예외 정보를 보고서(report)에 기록만, 입찰/제출 등 쓰기 동작 없음
             report = {
                 "run_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
                 "task_id": TASK_ID,

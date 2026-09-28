@@ -348,7 +348,7 @@ def _extract_nouns(text: str) -> list[str]:
         okt = Okt()
         nouns = okt.nouns(text[:1000])
         return [n for n in nouns if len(n) >= 2 and n not in _STOP_NOUNS]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 카페 게시글 텍스트 분류용 형태소 분석(Okt, 읽기전용) - 분석기 실패 시 정규식 기반 한글 단어 추출로 폴백, 데이터 변경 없음
         # fallback: 한글 2글자 이상 단어
         return [w for w in re.findall(r"[가-힣]{2,}", text[:1000]) if w not in _STOP_NOUNS]
 

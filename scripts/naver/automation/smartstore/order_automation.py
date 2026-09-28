@@ -102,7 +102,7 @@ class OrderAutomation:
                 mode="tracking_register",
             )
             return {"ok": True, "order_id": order_id, "tracking_no": tracking_no}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 운송장 등록 자동화(register_tracking) - confirm=True 명시 인자가 없으면 dry_run만 수행하고 실제 등록을 시도하지 않으며, confirm=True로 실제 등록 시도 시 실패하면 ok:False 반환(fail-closed), 구매확정/결제 등은 다루지 않음
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 일괄 발송 처리 ───────────────────────────────────────────────────
