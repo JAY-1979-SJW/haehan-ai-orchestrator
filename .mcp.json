@@ -2,17 +2,18 @@
   "mcpServers": {
     "pc-inventory": {
       "type": "stdio",
-      "command": "python",
+      "command": "py",
       "args": [
+        "-3.14",
         "scripts/local/pc_inventory_mcp.py"
       ],
-      "cwd": "C:\\work\\01. haehan-ai-orchestrator",
       "env": {}
     },
     "haehan-orchestrator": {
       "type": "stdio",
-      "command": "python",
+      "command": "py",
       "args": [
+        "-3.14",
         "-m",
         "ai_orchestrator.mcp_server"
       ],
