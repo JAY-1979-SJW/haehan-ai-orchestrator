@@ -19208,6 +19208,22 @@
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
+  },
+  "scripts/browser_rpc_client.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser_rpc_server.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
