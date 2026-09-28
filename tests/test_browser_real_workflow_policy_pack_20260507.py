@@ -272,7 +272,7 @@ class TestPolicyPack1NoImportantImports:
     def test_fixture_no_task_executor_imports(self):
         """Fixture file must not import task_executor."""
         fixture_path = Path("tests/fixtures/browser_real_workflow_policy_pack_20260507.json")
-        content = fixture_path.read_text()
+        content = fixture_path.read_text(encoding="utf-8")
         # JSON shouldn't have Python imports, but check description/notes don't reference it
         assert "import task_executor" not in content
         assert "from task_executor" not in content
@@ -280,14 +280,14 @@ class TestPolicyPack1NoImportantImports:
     def test_fixture_no_dispatcher_imports(self):
         """Fixture file must not import dispatcher."""
         fixture_path = Path("tests/fixtures/browser_real_workflow_policy_pack_20260507.json")
-        content = fixture_path.read_text()
+        content = fixture_path.read_text(encoding="utf-8")
         assert "import dispatcher" not in content
         assert "from dispatcher" not in content
 
     def test_fixture_no_browser_execution(self):
         """Fixture must not import/reference real browser libraries."""
         fixture_path = Path("tests/fixtures/browser_real_workflow_policy_pack_20260507.json")
-        content = fixture_path.read_text()
+        content = fixture_path.read_text(encoding="utf-8")
         assert "selenium" not in content.lower()
         assert "playwright" not in content.lower()
         assert "webdriver" not in content.lower()

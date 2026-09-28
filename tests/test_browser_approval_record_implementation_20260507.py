@@ -258,14 +258,14 @@ class TestAppendApprovalRecord:
         req1 = build_approval_request(workflow_run_id="wf_001")
         append_approval_record(req1, jsonl_file)
 
-        with jsonl_file.open() as f:
+        with jsonl_file.open(encoding="utf-8") as f:
             original_content = f.read()
 
         # Write second record
         req2 = build_approval_request(workflow_run_id="wf_002")
         append_approval_record(req2, jsonl_file)
 
-        with jsonl_file.open() as f:
+        with jsonl_file.open(encoding="utf-8") as f:
             new_content = f.read()
 
         # Original content should be preserved
@@ -477,7 +477,7 @@ class TestFixtureCompatibility:
         fixture_path = Path("tests/fixtures/browser_audit_module_design_20260506.json")
         assert fixture_path.exists()
 
-        with fixture_path.open() as f:
+        with fixture_path.open(encoding="utf-8") as f:
             fixture = json.load(f)
 
         # All approval_required cases should work with approval records
@@ -504,7 +504,7 @@ class TestFixtureCompatibility:
         fixture_path = Path("tests/fixtures/browser_real_workflow_policy_pack_20260507.json")
         assert fixture_path.exists()
 
-        with fixture_path.open() as f:
+        with fixture_path.open(encoding="utf-8") as f:
             fixture = json.load(f)
 
         # All cases should support approval records if needed

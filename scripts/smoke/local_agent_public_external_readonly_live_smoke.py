@@ -114,7 +114,7 @@ def _is_local_execution() -> bool:
     # systemd-detect-virt 같은 신호 (linux)
     if sys.platform.startswith("linux"):
         try:
-            with Path("/proc/1/cgroup").open() as f:
+            with Path("/proc/1/cgroup").open(encoding="utf-8") as f:
                 content = f.read()
             if "docker" in content or "kubepods" in content:
                 return False

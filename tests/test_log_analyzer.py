@@ -302,7 +302,7 @@ def test_ai_summary_contains_pending_warning():
 
 def test_malformed_jsonl_skipped(tmp_path, monkeypatch):
     history_path = str(tmp_path / "history.jsonl")
-    with Path(history_path).open("w") as f:
+    with Path(history_path).open("w", encoding="utf-8") as f:
         f.write('{"task_id":"good","execution_status":"EXECUTED","action_type":"read_file"}\n')
         f.write("NOT_VALID_JSON\n")
         f.write('{"task_id":"good2","execution_status":"BLOCKED","action_type":"delete_file"}\n')

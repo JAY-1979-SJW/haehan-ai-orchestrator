@@ -11,7 +11,7 @@ print("\n[1] L2 감사 로그 (감사/추적)")
 audit_file = Path("data/audit/L2_audit/browser_audit_20260510.jsonl")
 if audit_file.exists():
     events = []
-    with audit_file.open() as f:
+    with audit_file.open(encoding="utf-8") as f:
         for line in f:
             events.append(json.loads(line))
 
@@ -35,7 +35,7 @@ print("\n[2] L3 세션 로그 (로그인 감지)")
 session_file = Path("data/audit/L3_session/session_events_202605.jsonl")
 if session_file.exists():
     sessions = []
-    with session_file.open() as f:
+    with session_file.open(encoding="utf-8") as f:
         for line in f:
             sessions.append(json.loads(line))
 
@@ -61,7 +61,7 @@ print("\n[3] L1 운영 로그 (운영 정보)")
 runtime_file = Path("data/audit/L1_runtime/browser_runtime_20260510.jsonl")
 if runtime_file.exists():
     runtime = []
-    with runtime_file.open() as f:
+    with runtime_file.open(encoding="utf-8") as f:
         for line in f:
             runtime.append(json.loads(line))
 

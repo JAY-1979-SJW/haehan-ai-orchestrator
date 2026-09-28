@@ -338,7 +338,9 @@ class TestAuditLogMigration:
 
         if migrations_dir.exists():
             migration_files = list(migrations_dir.glob("*.sql"))
-            found_app_audit_log = any("app_audit_log" in f.read_text() for f in migration_files if f.exists())
+            found_app_audit_log = any(
+                "app_audit_log" in f.read_text(encoding="utf-8") for f in migration_files if f.exists()
+            )
 
             if found_app_audit_log:
                 # Migration이 있으면 organization_id 확인
@@ -360,39 +362,39 @@ class TestTenantScopeDesignReport:
     def test_tenant_scope_report_mentions_browser_task(self):
         """보고서에 BrowserTask가 명시되어 있는지 확인"""
         report_file = Path("docs/reports/tenant_1_scope_design_report.md")
-        content = report_file.read_text()
+        content = report_file.read_text(encoding="utf-8")
         assert "BrowserTask" in content
         assert "organization_id" in content
 
     def test_tenant_scope_report_mentions_browser_approval(self):
         """보고서에 BrowserApproval이 명시되어 있는지 확인"""
         report_file = Path("docs/reports/tenant_1_scope_design_report.md")
-        content = report_file.read_text()
+        content = report_file.read_text(encoding="utf-8")
         assert "BrowserApproval" in content
         assert "approval_id" in content
 
     def test_tenant_scope_report_mentions_local_agent(self):
         """보고서에 LocalAgent가 명시되어 있는지 확인"""
         report_file = Path("docs/reports/tenant_1_scope_design_report.md")
-        content = report_file.read_text()
+        content = report_file.read_text(encoding="utf-8")
         assert "LocalAgent" in content
 
     def test_tenant_scope_report_mentions_audit_log(self):
         """보고서에 감사 로그가 명시되어 있는지 확인"""
         report_file = Path("docs/reports/tenant_1_scope_design_report.md")
-        content = report_file.read_text()
+        content = report_file.read_text(encoding="utf-8")
         assert "BrowserAuditEvent" in content or "audit" in content.lower()
 
     def test_tenant_scope_report_mentions_permission_matrix(self):
         """보고서에 권한 매트릭스가 명시되어 있는지 확인"""
         report_file = Path("docs/reports/tenant_1_scope_design_report.md")
-        content = report_file.read_text()
+        content = report_file.read_text(encoding="utf-8")
         assert "Permission Matrix" in content or "permission" in content.lower()
 
     def test_tenant_scope_report_mentions_p1_gaps(self):
         """보고서에 P1 gap이 명시되어 있는지 확인"""
         report_file = Path("docs/reports/tenant_1_scope_design_report.md")
-        content = report_file.read_text()
+        content = report_file.read_text(encoding="utf-8")
         assert "P1 Gap" in content or "P1:" in content
 
 

@@ -36,7 +36,7 @@ def _make_low_read(target: str) -> tuple:
 
 def test_low_read_file_can_execute():
     policy = _make_policy_with_tmp()
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=_TMPDIR) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False, dir=_TMPDIR) as f:
         f.write("hello")
         path = f.name
 
@@ -48,7 +48,7 @@ def test_low_read_file_can_execute():
 
 def test_low_read_file_executes():
     policy = _make_policy_with_tmp()
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=_TMPDIR) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False, dir=_TMPDIR) as f:
         f.write("content")
         path = f.name
 
@@ -60,7 +60,7 @@ def test_low_read_file_executes():
 
 def test_medium_edit_config_preview_only():
     policy = _make_policy_with_tmp()
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, dir=_TMPDIR) as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False, dir=_TMPDIR) as f:
         f.write("old")
         path = f.name
 
@@ -79,7 +79,7 @@ def test_medium_edit_config_preview_only():
     assert result["status"] == "PREVIEW_ONLY", result
     assert result.get("preview_only") is True
 
-    with Path(path).open() as f:
+    with Path(path).open(encoding="utf-8") as f:
         assert f.read() == "old", "file must NOT be modified"
     Path(path).unlink()
 
