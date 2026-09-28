@@ -1,5 +1,6 @@
 """EUM 영업대상 3,297건 개별 메일 발송 (SMTP, 엑셀 본문 그대로)."""
 
+import contextlib
 import json
 import logging
 import os
@@ -192,10 +193,9 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
         try:
             # 100건마다 재연결
             if i % 100 == 0:
-                try:
+                # SMTP 재연결 실패 무시 - 개별 발송 실패는 failed 로그에 별도 기록(성공/실패 은폐 없음)
+                with contextlib.suppress(Exception):
                     server.quit()
-                except Exception:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
-                    pass
                 server = connect_smtp()
                 reconnect_count += 1
 
@@ -217,10 +217,9 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
         except Exception as e:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
             logger.error("[%d/%d] ✗ 발송 실패 %s: %s", i, len(targets), email, e)
             log["failed"].append({"email": email, "reason": str(e), "row": row})
-            try:
+            # SMTP 재연결 실패 무시 - 다음 건은 send_one() 내부에서 다시 실패 처리됨
+            with contextlib.suppress(Exception):
                 server = connect_smtp()
-            except Exception:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
-                pass
 
         # 로그 저장 (10건마다)
         if i % 10 == 0:
@@ -228,10 +227,9 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
 
         time.sleep(1.5)  # 발송 간격 1.5초
 
-    try:
+    # 최종 서버 종료 실패 무시 - 배치는 이미 완료, sent/failed 로그가 실제 결과를 별도로 보존
+    with contextlib.suppress(Exception):
         server.quit()
-    except Exception:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
-        pass
 
     save_log(log)
     logger.info("완료 — 성공:%d 실패:%d 재연결:%d", len(log["sent"]), len(log["failed"]), reconnect_count)

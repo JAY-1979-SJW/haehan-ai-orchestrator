@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import time
 from pathlib import Path
@@ -156,14 +157,12 @@ def pick_3_images(all_images: list[dict], idx: int) -> list[str]:
         path = download_image(img["url"], fn)
         if path:
             paths.append(path)
-        # Unsplash 다운로드 트리거 (정책 준수)
-        try:
+        # Unsplash 다운로드 트리거 (정책 준수) - 실패해도 다음 이미지로 진행(읽기전용 외부 API 호출)
+        with contextlib.suppress(Exception):
             requests.get(
                 img["download_location"],
                 headers={"Authorization": f"Client-ID {_unsplash_key()}"},
                 timeout=5,
             )
-        except Exception:  # noqa: BLE001 - Unsplash 이미지 검색/다운로드 커넥터 — 실패 시 경고 로그만 남기고 다음 이미지로 진행, 읽기전용 외부 API 호출
-            pass
         time.sleep(0.2)
     return paths

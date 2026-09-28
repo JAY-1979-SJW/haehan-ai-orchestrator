@@ -7,6 +7,7 @@ password/OTP/cookie 관련 자동화는 생성하지 않는다.
 
 from __future__ import annotations
 
+import contextlib
 import sys
 from pathlib import Path
 
@@ -69,10 +70,8 @@ def create_site_profile(
 
     # selector pack skeleton 생성
     skeleton = generate_skeleton_pack(site_id)
-    try:
+    with contextlib.suppress(ValueError):  # 이미 등록된 경우
         register_selector_pack(site_id, skeleton["selectors"])
-    except ValueError:
-        pass  # 이미 등록된 경우
 
     return get_site_profile(site_id)
 

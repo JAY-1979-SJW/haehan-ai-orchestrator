@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import time
@@ -168,10 +169,9 @@ def explore_site(
         if cur != url:
             try:
                 page.goto(url, timeout=20000)
-                try:
+                # 로드 대기 실패해도 계속 진행(안전한 기본값 반환 정책)
+                with contextlib.suppress(Exception):
                     page.wait_for_load_state("domcontentloaded", timeout=8000)
-                except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
-                    pass
             except Exception as e:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
                 log.warning("[explorer] goto 실패 %s: %s", url, e)
                 pages_data.append({"url": url, "error": f"goto: {str(e)[:120]}"})
