@@ -17,25 +17,24 @@ G2B 공개 업무 읽기 전용 접근 매트릭스 테스트
 - 브라우저/Playwright 실행 없음
 - DB write 없음
 """
+
 import json
 import os
 import sys
 import unittest
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import warnings
+
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
-from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
-from ai_orchestrator.browser_tool.server_browser_boundary_policy import evaluate_server_browser_allowed
+from ai_orchestrator.browser_tool.server_browser_boundary_policy import evaluate_server_browser_allowed  # noqa: E402
+from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 
-FIXTURE_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "fixtures",
-    "g2b_public_notice_readonly_matrix_20260507.json",
-)
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "g2b_public_notice_readonly_matrix_20260507.json"
 
 _READONLY_VERDICTS = {"READ_ONLY_ALLOWED"}
 _BLOCKED_VERDICTS = {"BLOCKED_LOGIN_REQUIRED", "BLOCKED_CERT_REQUIRED", "BLOCKED_AUTH_REQUIRED", "DOWNLOAD_MANUAL_ONLY"}
@@ -46,7 +45,7 @@ _DOWNLOAD_ID = "g2b_05"
 
 
 def _load_fixture():
-    with open(FIXTURE_PATH, encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -62,7 +61,6 @@ def _build_payload(case: dict) -> dict:
 
 
 class TestG2BFixtureStructure(unittest.TestCase):
-
     def setUp(self):
         self.fixture = _load_fixture()
 
@@ -99,7 +97,6 @@ class TestG2BFixtureStructure(unittest.TestCase):
 
 
 class TestG2BPolicyCompliance(unittest.TestCase):
-
     def setUp(self):
         self.fixture = _load_fixture()
         self.cases = {c["id"]: c for c in self.fixture["cases"]}
@@ -111,8 +108,9 @@ class TestG2BPolicyCompliance(unittest.TestCase):
             payload = _build_payload(case)
             result = evaluate_site_compliance(payload)
             self.assertEqual(
-                result["compliance_decision"], "ALLOW_BROWSER_READONLY",
-                f"{cid} {case['screen_name']}: expected ALLOW_BROWSER_READONLY, got {result['compliance_decision']}"
+                result["compliance_decision"],
+                "ALLOW_BROWSER_READONLY",
+                f"{cid} {case['screen_name']}: expected ALLOW_BROWSER_READONLY, got {result['compliance_decision']}",
             )
 
     # 8. 다운로드 operation compliance_decision = BLOCK
@@ -120,8 +118,11 @@ class TestG2BPolicyCompliance(unittest.TestCase):
         case = self.cases[_DOWNLOAD_ID]
         payload = _build_payload(case)
         result = evaluate_site_compliance(payload)
-        self.assertEqual(result["compliance_decision"], "BLOCK",
-                         f"download operation should be BLOCK, got {result['compliance_decision']}")
+        self.assertEqual(
+            result["compliance_decision"],
+            "BLOCK",
+            f"download operation should be BLOCK, got {result['compliance_decision']}",
+        )
 
     # 9. 로그인/인증 화면 compliance_decision = BLOCK
     def test_09_auth_screens_compliance_block(self):
@@ -129,8 +130,11 @@ class TestG2BPolicyCompliance(unittest.TestCase):
             case = self.cases[cid]
             payload = _build_payload(case)
             result = evaluate_site_compliance(payload)
-            self.assertNotEqual(result["compliance_decision"], "ALLOW_BROWSER_READONLY",
-                                f"{cid} should not be ALLOW, got {result['compliance_decision']}")
+            self.assertNotEqual(
+                result["compliance_decision"],
+                "ALLOW_BROWSER_READONLY",
+                f"{cid} should not be ALLOW, got {result['compliance_decision']}",
+            )
 
     # 10. 모든 compliance 결과 safe_to_execute=False
     def test_10_all_compliance_safe_to_execute_false(self):
@@ -141,7 +145,6 @@ class TestG2BPolicyCompliance(unittest.TestCase):
 
 
 class TestG2BServerBrowserBoundary(unittest.TestCase):
-
     def setUp(self):
         self.fixture = _load_fixture()
         self.cases = {c["id"]: c for c in self.fixture["cases"]}
@@ -152,8 +155,9 @@ class TestG2BServerBrowserBoundary(unittest.TestCase):
             case = self.cases[cid]
             payload = _build_payload(case)
             result = evaluate_server_browser_allowed(payload)
-            self.assertTrue(result["server_browser_allowed"],
-                            f"{cid} {case['screen_name']}: server_browser_allowed should be True")
+            self.assertTrue(
+                result["server_browser_allowed"], f"{cid} {case['screen_name']}: server_browser_allowed should be True"
+            )
 
     # 12. 읽기 화면 execution_location_required = SERVER_BROWSER
     def test_12_readonly_screens_execution_loc_server_browser(self):
@@ -161,8 +165,11 @@ class TestG2BServerBrowserBoundary(unittest.TestCase):
             case = self.cases[cid]
             payload = _build_payload(case)
             result = evaluate_server_browser_allowed(payload)
-            self.assertEqual(result["execution_location_required"], "SERVER_BROWSER",
-                             f"{cid}: execution_loc should be SERVER_BROWSER")
+            self.assertEqual(
+                result["execution_location_required"],
+                "SERVER_BROWSER",
+                f"{cid}: execution_loc should be SERVER_BROWSER",
+            )
 
     # 13. 로그인/인증 화면 server_browser_allowed=False
     def test_13_auth_screens_server_browser_not_allowed(self):
@@ -170,8 +177,7 @@ class TestG2BServerBrowserBoundary(unittest.TestCase):
             case = self.cases[cid]
             payload = _build_payload(case)
             result = evaluate_server_browser_allowed(payload)
-            self.assertFalse(result["server_browser_allowed"],
-                             f"{cid}: server_browser_allowed should be False")
+            self.assertFalse(result["server_browser_allowed"], f"{cid}: server_browser_allowed should be False")
 
     # 14. 인증서 요구 화면 execution_location = USER_PRESENT_ONLY
     def test_14_cert_required_execution_loc_user_present(self):
@@ -179,8 +185,11 @@ class TestG2BServerBrowserBoundary(unittest.TestCase):
             case = self.cases[cid]
             payload = _build_payload(case)
             result = evaluate_server_browser_allowed(payload)
-            self.assertEqual(result["execution_location_required"], "USER_PRESENT_ONLY",
-                             f"{cid}: execution_loc should be USER_PRESENT_ONLY")
+            self.assertEqual(
+                result["execution_location_required"],
+                "USER_PRESENT_ONLY",
+                f"{cid}: execution_loc should be USER_PRESENT_ONLY",
+            )
 
     # 15. 모든 server_browser 결과 safe_to_execute=False
     def test_15_all_server_browser_safe_to_execute_false(self):
@@ -191,7 +200,6 @@ class TestG2BServerBrowserBoundary(unittest.TestCase):
 
 
 class TestG2BSubdomainPolicy(unittest.TestCase):
-
     # 16. www.g2b.go.kr는 allowlist 추가 후 ALLOW_BROWSER_READONLY (G2B_DOMAIN_NORMALIZATION_POLICY_1 수정)
     def test_16_www_subdomain_now_in_allowlist(self):
         payload = {
@@ -200,8 +208,11 @@ class TestG2BSubdomainPolicy(unittest.TestCase):
             "operation_type": "read",
         }
         result = evaluate_site_compliance(payload)
-        self.assertEqual(result["compliance_decision"], "ALLOW_BROWSER_READONLY",
-                         "www.g2b.go.kr should ALLOW_BROWSER_READONLY after normalization fix")
+        self.assertEqual(
+            result["compliance_decision"],
+            "ALLOW_BROWSER_READONLY",
+            "www.g2b.go.kr should ALLOW_BROWSER_READONLY after normalization fix",
+        )
 
     # 17. g2b.go.kr(apex domain)는 allowlist 일치 → ALLOW_BROWSER_READONLY
     def test_17_apex_domain_in_allowlist(self):
@@ -211,8 +222,9 @@ class TestG2BSubdomainPolicy(unittest.TestCase):
             "operation_type": "read",
         }
         result = evaluate_site_compliance(payload)
-        self.assertEqual(result["compliance_decision"], "ALLOW_BROWSER_READONLY",
-                         "g2b.go.kr should be ALLOW_BROWSER_READONLY")
+        self.assertEqual(
+            result["compliance_decision"], "ALLOW_BROWSER_READONLY", "g2b.go.kr should be ALLOW_BROWSER_READONLY"
+        )
 
     # 18. g2b_public_readonly 카테고리 server_browser_allowed=True (domain 무관)
     def test_18_g2b_public_readonly_server_browser_true_regardless_of_www(self):
@@ -223,8 +235,10 @@ class TestG2BSubdomainPolicy(unittest.TestCase):
                 "operation_type": "read",
             }
             result = evaluate_server_browser_allowed(payload)
-            self.assertTrue(result["server_browser_allowed"],
-                            f"g2b_public_readonly + {domain} should have server_browser_allowed=True")
+            self.assertTrue(
+                result["server_browser_allowed"],
+                f"g2b_public_readonly + {domain} should have server_browser_allowed=True",
+            )
 
 
 if __name__ == "__main__":

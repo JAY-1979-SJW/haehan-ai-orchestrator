@@ -7,8 +7,8 @@
 
 from __future__ import annotations
 
-import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.local_agent.action_evidence_collector import collect_evidence
@@ -18,11 +18,12 @@ ACTION_NAME = "browser.download_file"
 
 
 def _file_signature(path: str) -> str:
-    if not os.path.exists(path):
+    p = Path(path)
+    if not p.exists():
         return "MISSING"
-    if os.path.getsize(path) == 0:
+    if p.stat().st_size == 0:
         return "EMPTY"
-    with open(path, "rb") as f:
+    with p.open("rb") as f:
         head = f.read(8)
     if head[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
         return "HWP_OLE2"
@@ -49,7 +50,7 @@ def execute(
     """
     if not source_url:
         return {"ok": False, "verdict": "ERROR", "error": "source_url 필요"}
-    os.makedirs(out_dir, exist_ok=True)
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
 
     started = datetime.now(UTC)  # noqa: F841
 
@@ -74,11 +75,11 @@ def execute(
                 download = dl_info.value
                 fname = expected_filename or download.suggested_filename or "downloaded"
                 fname = fname.replace("/", "_").replace("\\", "_")[:200]
-                save_path = os.path.join(out_dir, fname)
+                save_path = str(Path(out_dir) / fname)
                 download.save_as(save_path)
 
                 raw["saved_path"] = save_path
-                raw["file_size"] = os.path.getsize(save_path) if os.path.exists(save_path) else 0
+                raw["file_size"] = Path(save_path).stat().st_size if Path(save_path).exists() else 0
                 raw["signature"] = _file_signature(save_path)
                 raw["downloaded_at"] = datetime.now(UTC).isoformat()
                 raw["ok"] = True

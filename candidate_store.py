@@ -3,17 +3,17 @@ task 후보(candidate) 파일 기반 저장소 (JSONL)
 경로: storage/candidates.jsonl
 실제 task 생성 없음 — 후보 목록만 관리
 """
+
 import hashlib
 import json
-import os
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
+from pathlib import Path
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_CANDIDATES_PATH = os.path.join(_BASE_DIR, "storage", "candidates.jsonl")
+_BASE_DIR = str(Path(__file__).resolve().parent)
+_CANDIDATES_PATH = Path(_BASE_DIR) / "storage" / "candidates.jsonl"
 
 
-def _candidates_path() -> str:
+def _candidates_path() -> str | Path:
     return _CANDIDATES_PATH
 
 
@@ -22,11 +22,12 @@ def _make_item_id(external_id: str, source_account: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
-def _load_all(path: str) -> list[dict]:
-    if not os.path.exists(path):
+def _load_all(path: str | Path) -> list[dict]:
+    p = Path(path)
+    if not p.exists():
         return []
     items = []
-    with open(path, "r", encoding="utf-8") as f:
+    with p.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:
@@ -37,7 +38,7 @@ def _load_all(path: str) -> list[dict]:
     return items
 
 
-def _is_duplicate(item_id: str, path: str) -> bool:
+def _is_duplicate(item_id: str, path: str | Path) -> bool:
     return any(c.get("item_id") == item_id for c in _load_all(path))
 
 
@@ -48,16 +49,16 @@ def save_candidate(
     category: str,
     priority: str,
     needs_review: bool,
-    candidate_task_type: Optional[str],
+    candidate_task_type: str | None,
     classification_reason: str,
-    path: Optional[str] = None,
+    path: str | None = None,
 ) -> dict:
     """
     분류 결과를 candidate로 저장.
     동일 item_id가 이미 있으면 skip.
     """
-    cand_path = path or _candidates_path()
-    os.makedirs(os.path.dirname(cand_path), exist_ok=True)
+    cand_path = Path(path or _candidates_path())
+    cand_path.parent.mkdir(parents=True, exist_ok=True)
 
     item_id = _make_item_id(external_id, source_account)
 
@@ -73,17 +74,17 @@ def save_candidate(
         "needs_review": needs_review,
         "candidate_task_type": candidate_task_type,
         "classification_reason": classification_reason,
-        "classified_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+        "classified_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S"),
         "linked_task_id": None,
     }
 
-    with open(cand_path, "a", encoding="utf-8") as f:
+    with cand_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     return {"status": "saved", "item_id": item_id}
 
 
-def get_candidate(item_id: str, path: Optional[str] = None) -> Optional[dict]:
+def get_candidate(item_id: str, path: str | None = None) -> dict | None:
     """item_id로 단건 조회. 없으면 None."""
     cand_path = path or _candidates_path()
     for c in _load_all(cand_path):
@@ -96,14 +97,14 @@ def set_linked_task_id(
     item_id: str,
     task_id: str,
     task_created_at: str,
-    path: Optional[str] = None,
+    path: str | None = None,
 ) -> bool:
     """
     candidate의 linked_task_id / task_created_at을 업데이트.
     JSONL 전체 재기록 방식 (파일 크기 작음 가정).
     해당 item_id가 없으면 False 반환.
     """
-    cand_path = path or _candidates_path()
+    cand_path = Path(path or _candidates_path())
     items = _load_all(cand_path)
     updated = False
     for item in items:
@@ -113,17 +114,17 @@ def set_linked_task_id(
             updated = True
             break
     if updated:
-        with open(cand_path, "w", encoding="utf-8") as f:
+        with cand_path.open("w", encoding="utf-8") as f:
             for item in items:
                 f.write(json.dumps(item, ensure_ascii=False) + "\n")
     return updated
 
 
 def list_candidates(
-    category: Optional[str] = None,
-    needs_review: Optional[bool] = None,
+    category: str | None = None,
+    needs_review: bool | None = None,
     limit: int = 50,
-    path: Optional[str] = None,
+    path: str | None = None,
 ) -> list[dict]:
     """후보 목록 반환. category / needs_review 필터 가능."""
     cand_path = path or _candidates_path()

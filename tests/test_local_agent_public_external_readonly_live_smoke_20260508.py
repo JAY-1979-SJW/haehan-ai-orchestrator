@@ -4,23 +4,18 @@ live smoke 스크립트의 정책/구조 검증 (외부 사이트 실제 접속 
 """
 
 import importlib
-import os
 import sys
+from pathlib import Path
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_REPO_ROOT = str(Path(__file__).resolve().parent.parent)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 # 스크립트 모듈 import (모듈로 로드 가능해야 함)
 import importlib.util  # noqa: E402
 
-_SCRIPT_PATH = os.path.join(
-    _REPO_ROOT,
-    "scripts",
-    "smoke",
-    "local_agent_public_external_readonly_live_smoke.py",
-)
-_spec = importlib.util.spec_from_file_location("_lp_smoke", _SCRIPT_PATH)
+_SCRIPT_PATH = Path(_REPO_ROOT) / "scripts" / "smoke" / "local_agent_public_external_readonly_live_smoke.py"
+_spec = importlib.util.spec_from_file_location("_lp_smoke", str(_SCRIPT_PATH))
 _smoke = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_smoke)
 
@@ -210,7 +205,7 @@ def test_is_local_execution_function_exists():
 
 def test_script_no_requests_get():
     """스크립트에 requests.get/post/httpx 등 외부 fetch 직접 호출이 없어야 함."""
-    with open(_SCRIPT_PATH, encoding="utf-8") as f:
+    with _SCRIPT_PATH.open(encoding="utf-8") as f:
         src = f.read()
     forbidden = ["requests.get", "requests.post", "httpx.get", "httpx.post", "urllib.request.urlopen"]
     for pat in forbidden:
@@ -219,14 +214,14 @@ def test_script_no_requests_get():
 
 def test_script_uses_playwright():
     """live smoke는 playwright 사용 (LOCAL_PLAYWRIGHT 경로)."""
-    with open(_SCRIPT_PATH, encoding="utf-8") as f:
+    with _SCRIPT_PATH.open(encoding="utf-8") as f:
         src = f.read()
     assert "from playwright.sync_api import sync_playwright" in src
 
 
 def test_script_no_cookie_extraction():
     """쿠키/storage_state 추출 코드 없음."""
-    with open(_SCRIPT_PATH, encoding="utf-8") as f:
+    with _SCRIPT_PATH.open(encoding="utf-8") as f:
         src = f.read()
     forbidden = ["context.cookies()", "page.cookies()", "context.storage_state()", ".storage_state()"]
     for pat in forbidden:
@@ -235,14 +230,14 @@ def test_script_no_cookie_extraction():
 
 def test_script_no_screenshot_save():
     """screenshot 저장 코드 없음."""
-    with open(_SCRIPT_PATH, encoding="utf-8") as f:
+    with _SCRIPT_PATH.open(encoding="utf-8") as f:
         src = f.read()
     assert ".screenshot(" not in src
 
 
 def test_script_no_login_or_type_password():
     """로그인/패스워드 입력 코드 없음."""
-    with open(_SCRIPT_PATH, encoding="utf-8") as f:
+    with _SCRIPT_PATH.open(encoding="utf-8") as f:
         src = f.read()
     forbidden = ["page.fill(", "page.type(", "page.locator(", "page.click("]
     # 단, 차단 정책의 _BLOCKED_LIVE_ACTIONS 정의 라인은 제외 — 액션 이름 문자열만

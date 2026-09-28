@@ -1,8 +1,8 @@
 import logging
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 
 def _fresh_logger_module(tmp_logs_dir: str):
@@ -28,7 +28,7 @@ def test_logs_dir_created_on_get_logger(tmp_path):
         lg_mod.LOGS_DIR = new_dir
         # 핸들러 없는 새 이름으로 호출
         lg = lg_mod.get_logger("test_init_dir")  # noqa: F841
-        assert os.path.isdir(new_dir), "logs 디렉토리 자동 생성 실패"
+        assert Path(new_dir).is_dir(), "logs 디렉토리 자동 생성 실패"
     finally:
         lg_mod.LOGS_DIR = original
 
@@ -48,9 +48,9 @@ def test_orchestrator_log_written(tmp_path):
         # 핸들러 flush
         for h in lg.handlers:
             h.flush()
-        log_file = os.path.join(new_dir, "orchestrator.log")
-        assert os.path.isfile(log_file), "orchestrator.log 미생성"
-        content = open(log_file, encoding="utf-8").read()
+        log_file = Path(new_dir) / "orchestrator.log"
+        assert log_file.is_file(), "orchestrator.log 미생성"
+        content = log_file.open(encoding="utf-8").read()
         assert "test message hello" in content
         assert "TASK_RECEIVED" in content
     finally:
@@ -71,13 +71,13 @@ def test_error_log_separated(tmp_path):
         )
         for h in lg.handlers:
             h.flush()
-        error_file = os.path.join(new_dir, "orchestrator.error.log")
-        main_file = os.path.join(new_dir, "orchestrator.log")
-        assert os.path.isfile(error_file), "orchestrator.error.log 미생성"
-        err_content = open(error_file, encoding="utf-8").read()
+        error_file = Path(new_dir) / "orchestrator.error.log"
+        main_file = Path(new_dir) / "orchestrator.log"
+        assert error_file.is_file(), "orchestrator.error.log 미생성"
+        err_content = error_file.open(encoding="utf-8").read()
         assert "critical error occurred" in err_content
         # error는 main log에도 포함됨 (INFO+ 핸들러)
-        main_content = open(main_file, encoding="utf-8").read()
+        main_content = main_file.open(encoding="utf-8").read()
         assert "critical error occurred" in main_content
     finally:
         lg_mod.LOGS_DIR = original
@@ -102,7 +102,7 @@ def test_log_event_helper(tmp_path):
         )
         for h in lg.handlers:
             h.flush()
-        content = open(os.path.join(new_dir, "orchestrator.log"), encoding="utf-8").read()
+        content = (Path(new_dir) / "orchestrator.log").open(encoding="utf-8").read()
         assert "PLAN_CREATED" in content
         assert "t-plan" in content
     finally:

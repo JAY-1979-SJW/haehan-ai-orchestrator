@@ -78,7 +78,7 @@ class TestTokenHashing:
             )
 
             # Read JSONL file and verify no raw token
-            with open(store_path) as f:
+            with store_path.open() as f:
                 content = f.read()
                 assert raw_token not in content
                 assert "password-like-secret-value" not in content
@@ -101,7 +101,7 @@ class TestJSONLFormat:
             )
 
             # Read JSONL and verify JSON validity
-            with open(store_path) as f:
+            with store_path.open() as f:
                 for line in f:
                     if line.strip():
                         event = json.loads(line)
@@ -128,7 +128,7 @@ class TestJSONLFormat:
             )
 
             # Count JSONL lines
-            with open(store_path) as f:
+            with store_path.open() as f:
                 lines = [l for l in f if l.strip()]  # noqa: E741
                 assert len(lines) == 2
 
@@ -147,7 +147,7 @@ class TestJSONLFormat:
                 final_approval_required=True,
             )
 
-            with open(store_path) as f:
+            with store_path.open() as f:
                 event = json.loads(f.readline())
                 assert event["approval_id"] == "appr-1"
                 assert event["action_type"] == "browser.execute_click"
@@ -221,7 +221,7 @@ class TestOneTimeUse:
             store.mark_used("appr-1")
 
             # Verify JSONL has APPROVAL_USED event
-            with open(store_path) as f:
+            with store_path.open() as f:
                 lines = [l for l in f if l.strip()]  # noqa: E741
                 events = [json.loads(l) for l in lines]  # noqa: E741
                 used_event = [e for e in events if e.get("event_type") == "APPROVAL_USED"]
@@ -314,7 +314,7 @@ class TestRevocation:
             store.revoke("appr-1")
 
             # Verify JSONL has APPROVAL_REVOKED event
-            with open(store_path) as f:
+            with store_path.open() as f:
                 events = [json.loads(l) for l in f if l.strip()]  # noqa: E741
                 revoked_event = [e for e in events if e.get("event_type") == "APPROVAL_REVOKED"]
                 assert len(revoked_event) > 0
@@ -526,7 +526,7 @@ class TestNoSecretsInFile:
                 approval_token=secret_token,
             )
 
-            with open(store_path) as f:
+            with store_path.open() as f:
                 content = f.read()
                 assert secret_token not in content
 
@@ -544,7 +544,7 @@ class TestNoSecretsInFile:
                 approval_token="some-secret",
             )
 
-            with open(store_path) as f:
+            with store_path.open() as f:
                 lines = f.readlines()
                 for line in lines:
                     if not line.strip():
