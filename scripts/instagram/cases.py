@@ -34,7 +34,7 @@ def load_cache() -> dict:
         return {"posted": []}
     try:
         return json.loads(CACHE_PATH.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 인스타그램 게시 캐시 JSON 로드 - 손상/부재 시 빈 posted 목록으로 안전한 기본값 반환
         return {"posted": []}
 
 

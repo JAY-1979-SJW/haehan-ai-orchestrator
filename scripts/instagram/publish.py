@@ -55,7 +55,7 @@ def publish_case(case: Case, confirmed: bool = False) -> dict:
         try:
             page.get_by_text("다음", exact=True).first.click(timeout=4000)
             page.wait_for_timeout(1500)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 인스타그램 게시 브라우저 자동화 - 버튼 클릭 best-effort, 실패해도 다음 단계(캡션 입력)로 계속 진행
             pass
 
         ta = page.locator(CAPTION_SELECTOR)
