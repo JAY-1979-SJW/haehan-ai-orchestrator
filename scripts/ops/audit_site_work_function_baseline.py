@@ -1,10 +1,10 @@
 """Audit the locked site work function baseline."""
+
 from __future__ import annotations
 
 import importlib
 import sys
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -106,12 +106,12 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("site work baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.router import is_service_cmd
     from scripts.google import live_inputs, workflows
     from scripts.google.cloud.local_browser import dry_run_cloud_readonly_browser_task
     from scripts.hiworks.actions import build_action_catalog as build_hiworks_action_catalog
+    from scripts.naver.smartstore.actions import build_action_catalog as build_smartstore_action_catalog
+    from scripts.router import is_service_cmd
     from scripts.sites.subdomain_registry import validate_registry
-    from scripts.smartstore.actions import build_action_catalog as build_smartstore_action_catalog
     from scripts.youtube import uploader
 
     not_routed = [cmd for cmd in SERVICE_COMMANDS if not is_service_cmd(cmd)]
@@ -170,7 +170,7 @@ def audit() -> tuple[bool, list[str]]:
         total = item.get("total") if isinstance(item, dict) else None
         if total != expected:
             failures.append(f"smartstore {risk} total mismatch: {total}")
-    smart_tasks = _task_status("scripts.smartstore.router")
+    smart_tasks = _task_status("scripts.naver.smartstore.api.router")
     if smart_tasks.get("seo") != "todo" or smart_tasks.get("product register") != "complete_baseline":
         failures.append("smartstore status boundaries changed unexpectedly")
 
@@ -205,7 +205,9 @@ def audit() -> tuple[bool, list[str]]:
     ):
         if key not in youtube_tasks:
             failures.append(f"youtube status missing task: {key}")
-    plan, _path = uploader.prepare_upload_plan(ROOT / "data" / "test_runtime" / "missing_site_work_baseline.mp4", {"title": "baseline"})
+    plan, _path = uploader.prepare_upload_plan(
+        ROOT / "data" / "test_runtime" / "missing_site_work_baseline.mp4", {"title": "baseline"}
+    )
     if plan.get("ready_for_approval") is not False or "local_video_file" not in plan.get("missing_requirements", []):
         failures.append("youtube missing video file must block approval readiness")
 

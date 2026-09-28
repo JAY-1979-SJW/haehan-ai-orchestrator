@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from scripts.smartstore import actions
+from scripts.naver.smartstore import actions
 
 
 def test_action_catalog_has_read_prepare_and_approval_sections():
@@ -54,7 +54,9 @@ def test_save_records(tmp_path):
         actions.build_prepare_plan({"name": "Sample"}, product_type="group"),
         tmp_path / "plan.json",
     )
-    record_path = actions.save_submit_record({"workflow": "product_register", "dry_run": True}, tmp_path / "record.json")
+    record_path = actions.save_submit_record(
+        {"workflow": "product_register", "dry_run": True}, tmp_path / "record.json"
+    )
 
     assert json.loads(catalog_path.read_text(encoding="utf-8"))["site_id"] == "smartstore"
     assert json.loads(plan_path.read_text(encoding="utf-8"))["product_type"] == "group"

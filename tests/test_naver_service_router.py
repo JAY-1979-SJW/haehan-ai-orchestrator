@@ -2,14 +2,25 @@ from __future__ import annotations
 
 import json
 
-from scripts.naver import router
-from scripts.naver import service_catalog
+from scripts.naver import router, service_catalog
 
 
 def test_service_catalog_lists_all_naver_sections(tmp_path):
     catalog = service_catalog.build_catalog()
 
-    for key in ("mail", "blog-assets", "content", "cafe", "keyword-tools", "calendar", "mybox", "pay", "talk", "place", "smartstore"):
+    for key in (
+        "mail",
+        "blog-assets",
+        "content",
+        "cafe",
+        "keyword-tools",
+        "calendar",
+        "mybox",
+        "pay",
+        "talk",
+        "place",
+        "smartstore",
+    ):
         assert key in catalog["features"]
 
     path = service_catalog.save_catalog(catalog, tmp_path / "catalog.json")
@@ -76,7 +87,7 @@ def test_smartstore_alias_routes_to_smartstore_router(monkeypatch):
     def fake_run_smartstore(task, sub, args):
         calls.append((task, sub, args))
 
-    import scripts.smartstore.router as smartstore_router
+    import scripts.naver.smartstore.api.router as smartstore_router
 
     monkeypatch.setattr(smartstore_router, "run_smartstore", fake_run_smartstore)
 
@@ -86,10 +97,13 @@ def test_smartstore_alias_routes_to_smartstore_router(monkeypatch):
 
 
 def test_option_phrase_preserves_korean_query_with_spaces():
-    assert router._option_phrase(
-        ["--query=AI", "업무", "자동화", "--display=20"],
-        "--query=",
-    ) == "AI 업무 자동화"
+    assert (
+        router._option_phrase(
+            ["--query=AI", "업무", "자동화", "--display=20"],
+            "--query=",
+        )
+        == "AI 업무 자동화"
+    )
 
 
 def test_keyword_tools_plan_records_free_only_policy(monkeypatch):
