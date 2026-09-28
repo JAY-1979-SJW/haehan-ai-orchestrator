@@ -103,7 +103,7 @@ class CompetitorDetailParser:
         p = self.shot_dir / f"{name}.png"
         try:
             self.page.screenshot(path=str(p))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return ""
         return str(p)
 
@@ -111,7 +111,7 @@ class CompetitorDetailParser:
     def read_head(self, prod: CompetitorProduct) -> None:
         try:
             got = self.page.evaluate(_HEAD_JS)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             prod.flag(f"헤더 읽기 실패: {type(e).__name__}")
             return
 
@@ -169,13 +169,13 @@ class CompetitorDetailParser:
         """옵션 드롭다운 이름을 DOM 순서대로. 닫혀 있어도 읽을 수 있다."""
         try:
             return list(self.page.evaluate(self._GROUPS_JS) or [])
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return []
 
     def _is_open(self, group: str) -> bool:
         try:
             return self.page.evaluate(self._EXPANDED_JS, group) == "true"
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return False
 
     def _open_dropdown(self, group: str) -> bool:
@@ -189,7 +189,7 @@ class CompetitorDetailParser:
             return True
         try:
             self.page.locator(f'a[role="button"]:has-text("{group}"):visible').first.click(timeout=5000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return False
         for _ in range(10):
             time.sleep(0.4)
@@ -207,7 +207,7 @@ class CompetitorDetailParser:
                      .filter(Boolean)""",
                 group,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return []
         return list(dict.fromkeys(got))
 
@@ -233,7 +233,7 @@ class CompetitorDetailParser:
                     group,
                 )
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return False
 
     def _pick(self, group: str, label: str) -> str | None:
@@ -243,19 +243,19 @@ class CompetitorDetailParser:
         loc = self.page.locator(f'a[role="option"][data-shp-contents-type="{group}"]:visible')
         try:
             n = loc.count()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return None
         for i in range(n):
             item = loc.nth(i)
             try:
                 txt = re.sub(r"\s+", " ", (item.inner_text() or "").strip())
-            except Exception:
+            except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
                 continue
             if label not in txt and txt not in label:
                 continue
             try:
                 item.click(timeout=5000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
                 return None
             for _ in range(8):
                 time.sleep(0.4)
@@ -274,7 +274,7 @@ class CompetitorDetailParser:
                     return m ? m[1] : null;
                 }"""
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return None
         if not txt:
             return None
@@ -299,7 +299,7 @@ class CompetitorDetailParser:
                     return null;
                 }"""
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return None
 
     def collect_options(self, prod: CompetitorProduct, *, max_combos: int = 6) -> None:
@@ -328,7 +328,7 @@ class CompetitorDetailParser:
                 try:
                     self.page.reload(wait_until="domcontentloaded", timeout=45000)
                     self.page.wait_for_timeout(5000)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 재시도 전 상태 초기화 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
                     pass
 
             combo = OptionCombo(labels=[], extra_won=None)
@@ -434,10 +434,10 @@ class CompetitorDetailParser:
                 )
             else:
                 self.page.screenshot(path=str(p))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             try:
                 self.page.screenshot(path=str(p))
-            except Exception:
+            except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
                 return ""
         return str(p)
 
@@ -486,7 +486,7 @@ class CompetitorDetailParser:
         )
         try:
             self.open(url)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             prod.error = f"{type(e).__name__}: {str(e)[:100]}"
             prod.flag("페이지 진입 실패")
             return prod

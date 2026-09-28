@@ -11,14 +11,15 @@
 scripts.human_input.safe_human_input 은 그대로 유지 (단순/안정적 진입점).
 여기는 회원가입처럼 더 자연스러워야 할 때 사용.
 """
+
 from __future__ import annotations
 
 import random
 import time
 
-from scripts.logger import get_logger
-from scripts.human_input import safe_human_input as _safe_basic, find_selector  # noqa: F401
 from scripts.form.events import wait_field_ready, wait_value_settled
+from scripts.human_input import safe_human_input as _safe_basic  # noqa: F401
+from scripts.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -27,9 +28,9 @@ log = get_logger(__name__)
 _DEFAULT_CHAR_DELAY_MS = (50, 150)
 _DEFAULT_WORD_PAUSE_MS = (80, 250)
 _DEFAULT_FIELD_PAUSE_MS = (250, 700)
-_DEFAULT_PRE_CLICK_PAUSE_MS = (400, 800)   # 클릭 후 첫 글자까지 응시 (인지 반응)
-_THINKING_PAUSE_MS = (400, 1000)            # 사고 일시정지
-_THINKING_PROB = 0.06                       # 글자당 사고 일시정지 발생 확률 (~16글자당 1회)
+_DEFAULT_PRE_CLICK_PAUSE_MS = (400, 800)  # 클릭 후 첫 글자까지 응시 (인지 반응)
+_THINKING_PAUSE_MS = (400, 1000)  # 사고 일시정지
+_THINKING_PROB = 0.06  # 글자당 사고 일시정지 발생 확률 (~16글자당 1회)
 
 
 def _rand_ms(rng: tuple[int, int]) -> float:
@@ -72,11 +73,11 @@ def hover_and_scroll(page, selector: str) -> None:
         el = page.locator(selector).first
         try:
             el.scroll_into_view_if_needed(timeout=2500)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스크롤/좌표 조회 등 보조 동작 — 실패해도 다음 단계로 계속(2026-09-28 검토)
             pass
         try:
             box = el.bounding_box()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사람처럼 마우스/타이핑 입력하는 공용 헬퍼 — 실패는 {ok: False, reason} 반환 또는 안전한 폴백(직선 이동 등), 결제·삭제 없음(2026-09-28 검토)
             box = None
         if box:
             cx = box["x"] + box["width"] / 2 + random.uniform(-3, 3)
@@ -95,14 +96,14 @@ def hover_and_scroll(page, selector: str) -> None:
                     page.mouse.move(px, py)
                 page._last_mouse_x = cx
                 page._last_mouse_y = cy
-            except Exception:
+            except Exception:  # noqa: BLE001 - 사람처럼 마우스/타이핑 입력하는 공용 헬퍼 — 실패는 {ok: False, reason} 반환 또는 안전한 폴백(직선 이동 등), 결제·삭제 없음(2026-09-28 검토)
                 # 폴백: 직선 이동
                 try:
                     page.mouse.move(cx, cy, steps=random.randint(6, 14))
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스크롤/좌표 조회 등 보조 동작 — 실패해도 다음 단계로 계속(2026-09-28 검토)
                     pass
         time.sleep(_rand_ms(_DEFAULT_PRE_CLICK_PAUSE_MS))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사람처럼 마우스/타이핑 입력하는 공용 헬퍼 — 실패는 {ok: False, reason} 반환 또는 안전한 폴백(직선 이동 등), 결제·삭제 없음(2026-09-28 검토)
         log.debug("[human] hover_and_scroll 실패 sel=%s err=%s", selector, e)
 
 
@@ -133,7 +134,7 @@ def human_type(
         current = ""
         try:
             current = el.input_value(timeout=1500) or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스크롤/좌표 조회 등 보조 동작 — 실패해도 다음 단계로 계속(2026-09-28 검토)
             pass
 
         if current == value:
@@ -150,7 +151,7 @@ def human_type(
             if not wait_value_settled(page, selector, "", timeout_ms=1500):
                 try:
                     el.fill("", timeout=1500)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스크롤/좌표 조회 등 보조 동작 — 실패해도 다음 단계로 계속(2026-09-28 검토)
                     pass
             action = "replaced"
         else:
@@ -182,20 +183,19 @@ def human_type(
         final = ""
         try:
             final = el.input_value(timeout=1500) or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스크롤/좌표 조회 등 보조 동작 — 실패해도 다음 단계로 계속(2026-09-28 검토)
             pass
 
         if final != value or not settled:
-            log.warning("[human] %s 입력 검증 실패 (기대=%d자, 실제=%d자, settled=%s)",
-                        label, len(value), len(final), settled)
-            return {"ok": False, "action": action, "before": current, "after": final,
-                    "reason": "value_mismatch"}
+            log.warning(
+                "[human] %s 입력 검증 실패 (기대=%d자, 실제=%d자, settled=%s)", label, len(value), len(final), settled
+            )
+            return {"ok": False, "action": action, "before": current, "after": final, "reason": "value_mismatch"}
 
-        log.info("[human] %s 입력 완료 (%s, %d자, 이벤트 정착)",
-                 label, action, len(value))
+        log.info("[human] %s 입력 완료 (%s, %d자, 이벤트 정착)", label, action, len(value))
         return {"ok": True, "action": action, "before": current, "after": final}
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사람처럼 마우스/타이핑 입력하는 공용 헬퍼 — 실패는 {ok: False, reason} 반환 또는 안전한 폴백(직선 이동 등), 결제·삭제 없음(2026-09-28 검토)
         log.error("[human] %s 입력 실패: %s", label, e)
         return {"ok": False, "action": "error", "reason": str(e)[:120]}
 
@@ -210,7 +210,7 @@ def human_click(page, selector: str, *, label: str = "버튼") -> dict:
         el.click(timeout=5000)
         log.info("[human] %s 클릭", label)
         return {"ok": True}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사람처럼 마우스/타이핑 입력하는 공용 헬퍼 — 실패는 {ok: False, reason} 반환 또는 안전한 폴백(직선 이동 등), 결제·삭제 없음(2026-09-28 검토)
         log.error("[human] %s 클릭 실패: %s", label, e)
         return {"ok": False, "reason": str(e)[:120]}
 
@@ -224,7 +224,7 @@ def human_check(page, selector: str, *, checked: bool = True, label: str = "체�
         el = page.locator(selector).first
         try:
             current = el.is_checked()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사람처럼 마우스/타이핑 입력하는 공용 헬퍼 — 실패는 {ok: False, reason} 반환 또는 안전한 폴백(직선 이동 등), 결제·삭제 없음(2026-09-28 검토)
             current = None
         if current == checked:
             log.info("[human] %s 이미 %s — skip", label, "체크됨" if checked else "해제됨")
@@ -240,24 +240,23 @@ def human_check(page, selector: str, *, checked: bool = True, label: str = "체�
                 arg=[selector, checked],
                 timeout=2000,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스크롤/좌표 조회 등 보조 동작 — 실패해도 다음 단계로 계속(2026-09-28 검토)
             pass
         try:
             after = el.is_checked()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사람처럼 마우스/타이핑 입력하는 공용 헬퍼 — 실패는 {ok: False, reason} 반환 또는 안전한 폴백(직선 이동 등), 결제·삭제 없음(2026-09-28 검토)
             after = None
         if after == checked:
             log.info("[human] %s 토글 완료 → %s", label, checked)
             return {"ok": True, "action": "toggled", "before": current, "after": after}
         log.warning("[human] %s 토글 검증 실패 (기대=%s 실제=%s)", label, checked, after)
         return {"ok": False, "reason": "toggle_mismatch", "before": current, "after": after}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사람처럼 마우스/타이핑 입력하는 공용 헬퍼 — 실패는 {ok: False, reason} 반환 또는 안전한 폴백(직선 이동 등), 결제·삭제 없음(2026-09-28 검토)
         log.error("[human] %s 토글 실패: %s", label, e)
         return {"ok": False, "reason": str(e)[:120]}
 
 
-def move_to_next(page, current_selector: str | None = None,
-                 next_selector: str | None = None) -> None:
+def move_to_next(page, current_selector: str | None = None, next_selector: str | None = None) -> None:
     """다음 필드로 이동 — Tab 또는 click."""
     if next_selector:
         hover_and_scroll(page, next_selector)
@@ -265,5 +264,5 @@ def move_to_next(page, current_selector: str | None = None,
     try:
         page.keyboard.press("Tab")
         time.sleep(_rand_ms((150, 350)))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스크롤/좌표 조회 등 보조 동작 — 실패해도 다음 단계로 계속(2026-09-28 검토)
         pass
