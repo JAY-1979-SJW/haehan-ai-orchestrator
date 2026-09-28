@@ -35,7 +35,7 @@ def api_marketing_collect(user: dict = Depends(require_role("admin", "owner"))) 
 
             ss = NaverSmartStore(page)
             result = {"ok": True, "promotions": ss.list_promotions(), "marketing": ss.list_marketing()}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 마케팅 현황 CDP 수집 실패를 {ok: False, error}로 저장 — 읽기 전용 수집
         result = {"ok": False, "error": str(e)}
     result.update({"collected_at": now_iso(), "duration_ms": elapsed_ms(t0)})
     save_ss("marketing", result)

@@ -162,7 +162,7 @@ def revoke_session_permission(session_id: str, permission_id: str) -> bool:
                 if permission_id in perms:
                     perms.remove(permission_id)
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 세션 권한 회수(revoke_session_permission) 중 예외 시 False 반환 — 회수 실패를 알리는 fail-closed, 권한을 추가로 부여하는 동작 없음
         return False
 
 

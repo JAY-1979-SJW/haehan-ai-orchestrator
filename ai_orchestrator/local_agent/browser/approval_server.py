@@ -301,7 +301,7 @@ def ensure_server_running() -> bool:
             urllib.request.urlopen(f"http://{_HOST}:{_PORT}/api/status", timeout=1)
             _server_started = True
             return True
-        except Exception:  # noqa: S112
+        except Exception:  # noqa: BLE001, S112
             continue
     return False
 

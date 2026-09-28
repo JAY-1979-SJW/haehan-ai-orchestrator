@@ -56,5 +56,5 @@ async def gonobi_schedule_loop() -> None:
                 result.new,
                 result.errors,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 서버 lifespan 백그라운드 주기적 수집 루프 — 1회 수집 실패를 로그만 남기고 다음 주기에 재시도, 루프 자체가 죽지 않도록 하는 표준 스케줄러 패턴
             logger.error("gonobi 정기 수집 오류: %s", e)

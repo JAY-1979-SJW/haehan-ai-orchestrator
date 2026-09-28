@@ -29,7 +29,7 @@ def _load() -> dict:
         return {}
     try:
         return json.loads(LICENSE_DB.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 라이선스 DB 로드 실패 시 빈 dict 반환 — verify()에서 빈 db는 무조건 invalid_key(False)로 처리되어 fail-closed, 손상된 파일이 라이선스 통과로 이어지지 않음
         return {}
 
 

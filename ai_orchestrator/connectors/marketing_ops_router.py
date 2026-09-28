@@ -41,7 +41,7 @@ def _load_json(path: Path) -> Any:
         return None
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 리포트 JSON 파일 읽기 실패 시 None 반환 — 읽기 전용 캐시 조회, 실패 시 '리포트 없음'으로 처리
         return None
 
 

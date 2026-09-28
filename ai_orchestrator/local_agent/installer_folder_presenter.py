@@ -82,7 +82,7 @@ def present_installer_in_explorer(
             ),
             opened=True,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 설치파일 폴더 열기 실패 시 PRESENT_FAILED 상태로 폴백 — 전체 경로는 결과에 포함하지 않음(코드 내 주석 명시), fail-closed
         # 실패 시 fallback: 경로 안내 (full path는 결과에 포함하지 않음)
         return _result(
             status=PRESENT_FAILED,
