@@ -43,6 +43,8 @@ import mcp.types as types  # noqa: E402
 import requests  # noqa: E402
 from mcp.server import Server  # noqa: E402
 
+from ai_orchestrator.local_agent.browser import universal_actions  # noqa: E402
+
 app = Server("haehan-ai-orchestrator")
 
 # ── 실행 중인 앱(FastAPI 8401) 실시간 연동 ────────────────────────────────────
@@ -483,6 +485,64 @@ async def list_tools() -> list[types.Tool]:
                 "required": ["endpoint"],
             },
         ),
+        types.Tool(
+            name="snapshot_page",
+            description=(
+                "페이지(또는 이 앱 자신의 창)의 접근성 트리 스냅샷을 찍습니다. "
+                "처음 방문하는 사이트(전용 사이트 모듈이 없는 사이트)에서 무엇을 클릭·입력할 수 "
+                "있는지 파악할 때 씁니다. 반환된 각 항목의 [ref] 값을 act_on_page에 그대로 넘기세요. "
+                "이미 아는 사이트는 이 도구 대신 scripts/ops/capability_check.py로 확인한 전용 "
+                "사이트 모듈을 먼저 쓰세요."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "target": {
+                        "type": "string",
+                        "enum": ["website", "app"],
+                        "description": (
+                            "website(기본)=사용자 Chrome(포트 9222)의 외부 웹사이트. "
+                            "app=이 Electron 앱 자신의 창(admin-web webview, 포트 9333) — "
+                            "앱 UI 자체를 점검·조작할 때"
+                        ),
+                    },
+                    "max_depth": {"type": "integer", "description": "트리 최대 깊이(생략 시 전체)"},
+                },
+            },
+        ),
+        types.Tool(
+            name="act_on_page",
+            description=(
+                "snapshot_page로 받은 ref를 이용해 클릭/입력/선택합니다. "
+                "ref가 오래됐다는 에러가 나면 snapshot_page를 다시 호출하세요."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "target": {
+                        "type": "string",
+                        "enum": ["website", "app"],
+                        "description": "snapshot_page와 동일 대상 지정 — 반드시 같은 target으로 스냅샷 찍은 페이지에만 act 가능",
+                    },
+                    "ref": {"type": "string", "description": "snapshot_page가 준 ref (예: 'e12')"},
+                    "action": {"type": "string", "enum": ["click", "fill", "select"], "description": "수행할 동작"},
+                    "value": {"type": "string", "description": "fill/select에 넣을 값 (click에는 불필요)"},
+                },
+                "required": ["ref", "action"],
+            },
+        ),
+        types.Tool(
+            name="navigate_page",
+            description="지정 URL로 이동시킵니다(웹사이트 또는 앱 자신의 창). 이동 후에는 snapshot_page를 다시 호출해야 합니다(ref 무효화).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "target": {"type": "string", "enum": ["website", "app"], "description": "snapshot_page와 동일"},
+                    "url": {"type": "string", "description": "이동할 URL"},
+                },
+                "required": ["url"],
+            },
+        ),
     ]
 
 
@@ -562,6 +622,15 @@ def _dispatch_sync(name: str, arguments: dict[str, Any]) -> dict:
             arguments.get("query"),
             arguments.get("body"),
         )
+
+    elif name == "snapshot_page":
+        return _snapshot_page(arguments)
+
+    elif name == "act_on_page":
+        return _act_on_page(arguments)
+
+    elif name == "navigate_page":
+        return _navigate_page(arguments)
 
     else:
         return {"ok": False, "error": f"알 수 없는 도구: {name}"}
@@ -910,6 +979,89 @@ def _edit_product(args: dict) -> dict:
     result["duration_ms"] = int((_t.monotonic() - t0) * 1000)
     result["dry_run"] = True
     return result
+
+
+# ── 범용 CDP 액션 (처음 보는 사이트/이 앱 자신의 창, universal_actions.py) ──────
+# _cdp_collect 등은 호출마다 새로 connect_over_cdp 하지만, 여기는 snapshot_page →
+# act_on_page가 서로 다른 MCP 도구 호출(별도 asyncio.to_thread 실행)로 이어지므로
+# 같은 Python page 객체를 유지해야 한다(ref가 페이지 객체에 매핑되므로 매번 재연결하면
+# 유효한 ref를 잃는다) — 이 MCP 서버 프로세스 생존 기간 동안 연결 1개를 재사용한다.
+# target="website"(기본): 사용자 Chrome(포트 9222). target="app": 이 Electron 앱 자신의
+# 창(admin-web webview, 포트 9333) — electron_target.py의 어댑터를 쓴다.
+_universal_browser: dict[str, Any] = {}
+_electron_browser: dict[str, Any] = {}
+
+
+def _get_universal_page() -> Any:
+    page = _universal_browser.get("page")
+    if page is not None:
+        try:
+            _ = page.url  # 연결이 살아있는지 확인
+            return page
+        except Exception:  # noqa: BLE001 - 죽은 연결이면 재연결로 복구
+            _universal_browser.clear()
+
+    from playwright.sync_api import sync_playwright
+
+    pw = sync_playwright().start()
+    browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
+    context = browser.contexts[0]
+    page = context.pages[0] if context.pages else context.new_page()
+    _universal_browser.update({"pw": pw, "browser": browser, "page": page})
+    return page
+
+
+def _get_electron_page() -> Any:
+    page = _electron_browser.get("page")
+    if page is not None:
+        try:
+            _ = page.url
+            return page
+        except Exception:  # noqa: BLE001 - 죽은 연결이면 재연결로 복구
+            _electron_browser.clear()
+
+    from ai_orchestrator.local_agent.browser.electron_target import connect_electron_webview
+
+    page = connect_electron_webview()
+    _electron_browser["page"] = page
+    return page
+
+
+def _get_target_page(target: str) -> Any:
+    return _get_electron_page() if target == "app" else _get_universal_page()
+
+
+def _snapshot_page(args: dict) -> dict:
+    try:
+        page = _get_target_page(args.get("target", "website"))
+        snap = universal_actions.snapshot(page, max_depth=args.get("max_depth"))
+        return {"ok": True, "url": page.url, "node_count": len(snap.nodes), "text": snap.as_text()}
+    except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
+        return {
+            "ok": False,
+            "error": str(e),
+            "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start, 또는 target=app이면 Electron 앱 실행 여부)",
+        }
+
+
+def _act_on_page(args: dict) -> dict:
+    try:
+        page = _get_target_page(args.get("target", "website"))
+        universal_actions.act(page, args["ref"], args["action"], args.get("value"))
+        return {"ok": True, "url": page.url}
+    except universal_actions.UniversalActionError as e:
+        return {"ok": False, "error": str(e)}
+    except Exception as e:  # noqa: BLE001 - 위와 동일한 사유
+        return {"ok": False, "error": str(e)}
+
+
+def _navigate_page(args: dict) -> dict:
+    try:
+        page = _get_target_page(args.get("target", "website"))
+        universal_actions.navigate(page, args["url"])
+        return {"ok": True, "url": page.url}
+    except Exception as e:  # noqa: BLE001 - 위와 동일한 사유
+        return {"ok": False, "error": str(e)}
 
 
 # ── 진입점 ────────────────────────────────────────────────────────────────────

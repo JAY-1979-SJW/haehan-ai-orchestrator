@@ -52,5 +52,7 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset(
         "kras.form.create_session",
         "kras.form.get_session",
         "kras.form.list_forms",
+        # Claude Code 헤드리스 트리거 (docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md §5.1)
+        "run_claude_agent",
     }
 )
