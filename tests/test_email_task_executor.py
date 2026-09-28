@@ -14,12 +14,12 @@ email task approval → execution 테스트
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import email_task_approval
 import email_task_executor
@@ -52,8 +52,8 @@ def _seed_task(task_path: str, task_id: str, risk_level: str = "medium") -> dict
         "created_at": "2026-04-22T10:00:00",
         "linked_candidate_id": f"item-{task_id}",
     }
-    os.makedirs(os.path.dirname(task_path), exist_ok=True)
-    with open(task_path, "a", encoding="utf-8") as f:
+    Path(task_path).parent.mkdir(parents=True, exist_ok=True)
+    with Path(task_path).open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
     return entry
 

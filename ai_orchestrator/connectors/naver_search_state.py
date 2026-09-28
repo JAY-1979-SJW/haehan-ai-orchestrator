@@ -9,14 +9,14 @@
       "naver_shop":  {"키보드": {"last_collected_at": "..."}}
     }
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ _VALID_SOURCES = {SOURCE_BLOG, SOURCE_SHOP}
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def default_state_path() -> Path:
@@ -41,11 +41,11 @@ def _empty() -> dict:
     return {SOURCE_BLOG: {}, SOURCE_SHOP: {}}
 
 
-def load_state(path: Optional[Path] = None) -> dict:
+def load_state(path: Path | None = None) -> dict:
     """상태 파일 로드. 없거나 파손 시 빈 레코드."""
     p = path or default_state_path()
     try:
-        with open(p, "r", encoding="utf-8") as f:
+        with p.open("r", encoding="utf-8") as f:
             data = json.load(f)
     except FileNotFoundError:
         return _empty()
@@ -62,21 +62,21 @@ def load_state(path: Optional[Path] = None) -> dict:
     return out
 
 
-def save_state(path: Optional[Path], state: dict) -> None:
+def save_state(path: Path | None, state: dict) -> None:
     p = path or default_state_path()
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(p.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
+    with tmp.open("w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, p)
+    tmp.replace(p)
 
 
 def mark_query_collected(
     source: str,
     query: str,
     *,
-    collected_at: Optional[str] = None,
-    path: Optional[Path] = None,
+    collected_at: str | None = None,
+    path: Path | None = None,
 ) -> dict:
     """query 에 대한 마지막 수집 시각을 기록하고 최신 상태 반환."""
     if source not in _VALID_SOURCES:
@@ -94,8 +94,8 @@ def get_last_collected_at(
     source: str,
     query: str,
     *,
-    path: Optional[Path] = None,
-) -> Optional[str]:
+    path: Path | None = None,
+) -> str | None:
     if source not in _VALID_SOURCES or not query:
         return None
     state = load_state(path)
@@ -110,8 +110,8 @@ __all__ = [
     "SOURCE_BLOG",
     "SOURCE_SHOP",
     "default_state_path",
-    "load_state",
-    "save_state",
-    "mark_query_collected",
     "get_last_collected_at",
+    "load_state",
+    "mark_query_collected",
+    "save_state",
 ]

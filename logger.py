@@ -5,11 +5,12 @@
 - 감사 로그  : logs/audit.jsonl         (audit_logger.py가 담당)
 - 실행 이력  : storage/execution_history.jsonl (whitelist_executor가 담당)
 """
-import logging
-import os
-from logging.handlers import RotatingFileHandler
 
-LOGS_DIR = os.path.join(os.path.dirname(__file__), "logs")
+import logging
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+LOGS_DIR = Path(__file__).parent / "logs"
 
 # 포맷: 구조화 필드 포함. extra dict로 event_type/task_id/action_type/actor 전달
 _FMT = (
@@ -21,14 +22,15 @@ _DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 _EXTRA_DEFAULTS = {
     "event_type": "-",
-    "task_id":    "-",
+    "task_id": "-",
     "action_type": "-",
-    "actor":      "-",
+    "actor": "-",
 }
 
 
 class _DefaultExtraFormatter(logging.Formatter):
     """extra 필드가 없을 때 기본값 '-' 채움"""
+
     def format(self, record: logging.LogRecord) -> str:
         for k, v in _EXTRA_DEFAULTS.items():
             if not hasattr(record, k):
@@ -42,7 +44,10 @@ def _build_formatter() -> _DefaultExtraFormatter:
 
 def get_logger(name: str) -> logging.Logger:
     """모듈 어디서든 get_logger('모듈명') 으로 운영/에러 로거 획득"""
-    os.makedirs(LOGS_DIR, exist_ok=True)
+    # 모듈 전역 LOGS_DIR 를 테스트가 str 로 monkeypatch 하는 경우가 있어
+    # 사용 시점에 Path(...) 로 감싼다 (Path/str 양쪽 다 안전).
+    logs_dir = Path(LOGS_DIR)
+    logs_dir.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger(f"orchestrator.{name}")
     if logger.handlers:
         return logger
@@ -52,7 +57,7 @@ def get_logger(name: str) -> logging.Logger:
 
     # 운영 로그: INFO+ (5MB × 5)
     fh = RotatingFileHandler(
-        os.path.join(LOGS_DIR, "orchestrator.log"),
+        logs_dir / "orchestrator.log",
         maxBytes=5 * 1024 * 1024,
         backupCount=5,
         encoding="utf-8",
@@ -62,7 +67,7 @@ def get_logger(name: str) -> logging.Logger:
 
     # 에러 로그: ERROR+ (2MB × 3)
     eh = RotatingFileHandler(
-        os.path.join(LOGS_DIR, "orchestrator.error.log"),
+        logs_dir / "orchestrator.error.log",
         maxBytes=2 * 1024 * 1024,
         backupCount=3,
         encoding="utf-8",
@@ -96,9 +101,9 @@ def log_event(
         level,
         message,
         extra={
-            "event_type":   event_type,
-            "task_id":      task_id or "-",
-            "action_type":  action_type or "-",
-            "actor":        actor or "-",
+            "event_type": event_type,
+            "task_id": task_id or "-",
+            "action_type": action_type or "-",
+            "actor": actor or "-",
         },
     )
