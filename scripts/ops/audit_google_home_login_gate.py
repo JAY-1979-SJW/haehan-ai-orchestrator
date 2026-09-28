@@ -4,6 +4,7 @@ Google automation must start from Google Home. Direct navigation to
 accounts.google.com is allowed only as a user/browser redirect after the user
 chooses sign-in, not as an automation entrypoint.
 """
+
 from __future__ import annotations
 
 import sys
@@ -13,10 +14,10 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from local_agent import site_entry_policy
-from scripts.config import LOGIN_PROBE_URLS
-from scripts.google import auth, managed_console
-from scripts.gates.work_mode_gate import build_google_work_mode_policy
+from local_agent import site_entry_policy  # noqa: E402
+from scripts.config import LOGIN_PROBE_URLS  # noqa: E402
+from scripts.gates.work_mode_gate import build_google_work_mode_policy  # noqa: E402
+from scripts.google import auth, managed_console  # noqa: E402
 
 GOOGLE_HOME = "https://www.google.com/"
 FORBIDDEN_ACCOUNTS = "https://accounts.google.com/signin"
@@ -48,7 +49,7 @@ def audit() -> list[str]:
 
     try:
         site_entry_policy.assert_main_page_first(GOOGLE_HOME, site_key="google")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 구글 홈 로그인 게이트 감사 — site_entry_policy.assert_main_page_first 가 예외를 던지면 failures 리스트에 추가해 감사를 실패시키는 fail-closed 경로.
         failures.append(f"Google Home must pass main-page-first gate: {exc}")
 
     try:
@@ -59,11 +60,11 @@ def audit() -> list[str]:
         failures.append("accounts.google.com direct login URL must be blocked")
 
     auth_src = _source("scripts/google/auth.py")
-    if "site_entry_policy.assert_main_page_first(GOOGLE_LOGIN_URL, site_key=\"google\")" not in auth_src:
+    if 'site_entry_policy.assert_main_page_first(GOOGLE_LOGIN_URL, site_key="google")' not in auth_src:
         failures.append("scripts/google/auth.py must enforce main-page-first before page.goto")
 
     login_session_src = _source("scripts/login_session.py")
-    if "site_entry_policy.assert_main_page_first(LOGIN_PROBE_URLS[site], site_key=\"google\")" not in login_session_src:
+    if 'site_entry_policy.assert_main_page_first(LOGIN_PROBE_URLS[site], site_key="google")' not in login_session_src:
         failures.append("scripts/login_session.py must enforce main-page-first for google probe")
 
     plan = managed_console.build_youtube_oauth_console_open_plan()
@@ -87,7 +88,9 @@ def audit() -> list[str]:
         failures.append("background Google work mode must require explicit user approval")
 
     approved_background_mode = build_google_work_mode_policy("background", background_approved=True)
-    if approved_background_mode.get("status") != "ok" or not approved_background_mode.get("headless_or_background_allowed"):
+    if approved_background_mode.get("status") != "ok" or not approved_background_mode.get(
+        "headless_or_background_allowed"
+    ):
         failures.append("approved background Google work mode must be allowed")
 
     if not BASELINE.exists():

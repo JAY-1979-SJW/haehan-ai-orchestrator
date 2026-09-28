@@ -194,7 +194,7 @@ def run(
                 report.bodies.append(br)
                 snapshots.append(snap)
                 report.success_count += 1
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - 네이버 메일 본문 읽기전용 파이프라인 — 개별 메일 처리(스냅샷/열람/PII마스킹/unread 복원) 실패를 failure_count와 error 문자열로 기록만 하고 다음 메일로 계속 진행, 쓰기 없음.
                 report.failure_count += 1
                 report.bodies.append(
                     BodyRecord(

@@ -60,7 +60,7 @@ def test_blog_exploration():
             print("✓ 모든 테스트 완료!")
             print("=" * 60)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 수동 통합 테스트 스크립트 — 예외 발생 시 traceback을 그대로 출력해 사람이 확인하도록 하는 진단용 except, 결과를 숨기지 않음.
         print(f"\n✗ 오류 발생: {e}")
         import traceback
 

@@ -4,15 +4,15 @@ This is a read-only wrapper around verify_runtime_drift. It writes a redacted
 latest JSON file and JSONL history so a systemd timer or cron job can monitor
 runtime drift without printing secrets.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -24,7 +24,7 @@ DEFAULT_HISTORY = ROOT / "data" / "runtime" / "runtime_drift_history.jsonl"
 
 
 def now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def build_payload(args: argparse.Namespace) -> dict[str, Any]:
@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
     try:
         payload = build_payload(args)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 런타임 드리프트 감시 — payload 생성 실패 시 ok=False 인 실패 payload로 대체하는 fail-closed 경로.
         payload = {
             "schema_version": 1,
             "created_at": now(),

@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 """Gmail 모듈 테스트 (직렬 순서 - list_inbox → send)."""
+
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from scripts.web_connector import get_page
 from scripts.google import Google
+from scripts.web_connector import get_page
+
 
 def test_list_inbox():
     """받은편지함 목록 조회."""
@@ -32,13 +34,15 @@ def test_list_inbox():
             print(f"        읽음: {not mail.get('unread', False)}")
 
         return result
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 수동 Gmail 읽기전용 통합 테스트 — 조회 실패 시 오류를 출력하고 빈 리스트를 반환, 쓰기 동작 없음.
         print(f"  ❌ 실패: {e}")
         import traceback
+
         traceback.print_exc()
         return []
     finally:
         page.close()
+
 
 if __name__ == "__main__":
     result = test_list_inbox()

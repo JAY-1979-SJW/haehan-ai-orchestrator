@@ -228,7 +228,7 @@ def execute_allowed(
             adapter_result = command_adapter.run_command(cmd, task.action_type)
         else:
             adapter_result = {"status": "BLOCKED", "reason": f"no adapter for '{task.action_type}'"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 화이트리스트 액션 실행기 — 어댑터 실행 중 예외 발생 시 adapter_result.status를 ERROR로 설정해 exec_status가 BLOCKED로 판정되는 fail-closed 경로(EXECUTED가 아닌 BLOCKED로 귀결).
         log_event(
             log,
             logging.ERROR,

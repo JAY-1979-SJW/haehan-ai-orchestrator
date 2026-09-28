@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 """Gmail 테스트 — CDP 브라우저 (사용자 개인 세션) 사용."""
+
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from scripts.web_connector import get_page
 from scripts.google import Google
+from scripts.web_connector import get_page
 
 
 def test_gmail_serial():
@@ -28,7 +29,7 @@ def test_gmail_serial():
         result = g.gmail.send(
             to="skyjwshin@kakao.com",
             subject="[테스트] Gmail 자동화 모듈 검증",
-            body="Gmail 자동화 모듈이 정상 작동합니다.\n\n발송 시간: " + time.strftime("%Y-%m-%d %H:%M:%S")
+            body="Gmail 자동화 모듈이 정상 작동합니다.\n\n발송 시간: " + time.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         if result.get("ok"):
@@ -38,9 +39,10 @@ def test_gmail_serial():
 
         return result
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 수동 Gmail 발송 테스트 — 실패 시 오류를 출력하고 ok=False 결과를 반환하는 진단용 except, 결과를 숨기지 않음.
         print(f"❌ 오류: {e}")
         import traceback
+
         traceback.print_exc()
         return {"ok": False, "error": str(e)}
 

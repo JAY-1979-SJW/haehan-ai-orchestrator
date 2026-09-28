@@ -3,6 +3,7 @@
 프론트엔드 상태 카드가 실제 read-only API 3개에 연결됐는지 검증한다.
 mutation, secret, POST 없음.
 """
+
 import sys
 from pathlib import Path
 
@@ -49,7 +50,7 @@ def run_audit() -> None:
     _add("/api/v1/app/storage/status 경로", "/api/v1/app/storage/status" in api)
 
     # api.ts — GET만, POST/mutation 없음
-    _add("api.ts POST 없음", "method: \"POST\"" not in api and "method: 'POST'" not in api)
+    _add("api.ts POST 없음", 'method: "POST"' not in api and "method: 'POST'" not in api)
 
     # Dashboard — getAppHealthSummary 연결
     _add("Dashboard getAppHealthSummary 사용", "getAppHealthSummary" in dash)
@@ -69,10 +70,14 @@ def run_audit() -> None:
 
     # 금지 사항
     for label, src in [("api.ts", api), ("Dashboard", dash), ("ExternalSites", ext), ("Storage", stor)]:
-        _add(f"{label} approve/execute/reject 없음",
-             "approve_token" not in src and "execute_url" not in src and "reject_token" not in src)
-        _add(f"{label} raw token/cookie 없음",
-             "approval_token_raw" not in src and "cookie_value" not in src and "password" not in src)
+        _add(
+            f"{label} approve/execute/reject 없음",
+            "approve_token" not in src and "execute_url" not in src and "reject_token" not in src,
+        )
+        _add(
+            f"{label} raw token/cookie 없음",
+            "approval_token_raw" not in src and "cookie_value" not in src and "password" not in src,
+        )
 
     # docker-compose 변경 없음
     compose = _src(COMPOSE_FILE)
@@ -81,10 +86,14 @@ def run_audit() -> None:
     # backend smoke 여전히 PASS
     try:
         from scripts.ops.smoke_app_api_readonly_endpoints import run_smoke
+
         report = run_smoke()
-        _add("backend smoke 여전히 PASS", report.verdict != "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_BLOCKED",
-             report.verdict)
-    except Exception as e:
+        _add(
+            "backend smoke 여전히 PASS",
+            report.verdict != "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_BLOCKED",
+            report.verdict,
+        )
+    except Exception as e:  # noqa: BLE001 - UI 상태카드-API 바인딩 감사 스크립트 — 백엔드 스모크 재실행 실패를 False(실패)로 기록하는 fail-closed 감사 항목.
         _add("backend smoke 여전히 PASS", False, str(e))
 
 

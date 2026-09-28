@@ -885,7 +885,7 @@ class TestCoreFileIntegrity:
         for mod in CORE_MODULES_MUST_IMPORT:
             try:
                 importlib.import_module(mod)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - 핵심 모듈 import 가능 여부를 검증하는 pytest — import 실패를 failed 리스트에 모아 마지막에 assert not failed 로 테스트를 실패시키는 fail-closed 테스트.
                 failed.append(f"{mod}: {exc}")
         assert not failed, f"import 실패: {failed}"
 

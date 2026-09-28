@@ -65,7 +65,7 @@ def run_audit() -> None:
         from ai_orchestrator.external_sites.provider_registry import PROVIDER_REGISTRY
 
         _add("provider 12개 반영", len(PROVIDER_REGISTRY) == 12, f"실제: {len(PROVIDER_REGISTRY)}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 읽기전용 API 엔드포인트 구현 감사 스크립트 — provider 레지스트리 import/카운트 확인 실패를 False(실패)로 기록하는 fail-closed 감사 항목.
         _add("provider 12개 반영", False, str(e))
 
     # 15. cookie_storage_allowed=False 전체

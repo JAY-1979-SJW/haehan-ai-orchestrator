@@ -126,7 +126,7 @@ def _scan_catalog(terms: list[str]) -> list[dict]:
     try:
         sys.path.insert(0, str(ROOT))
         from scripts.naver.service_catalog import FEATURE_CATALOG  # type: ignore
-    except Exception:
+    except Exception:  # noqa: BLE001 - 기존 구현 확인용 카탈로그 검색 — 카탈로그 모듈 import 실패 시 빈 리스트를 반환하는 안전한 기본값(결과 없음), 승인/차단 로직 아님.
         return []
     results = []
     for name, info in FEATURE_CATALOG.items():
