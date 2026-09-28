@@ -21,6 +21,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import sys
@@ -164,10 +165,9 @@ def _save_unknown_snapshot(page, host: str, url: str, classify: dict) -> str:
     base = out_dir / slug
 
     # 1) 스크린샷
-    try:
+    # 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
+    with contextlib.suppress(Exception):
         page.screenshot(path=str(base.with_suffix(".png")), full_page=True)
-    except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
-        pass
     # 2) HTML
     try:
         html = page.content()
@@ -275,10 +275,9 @@ def crawl_site(
         log.info("[crawler] 시작 URL 진입: %s", seed)
         try:
             page.goto(seed, timeout=20000)
-            try:
+            # 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
+            with contextlib.suppress(Exception):
                 page.wait_for_load_state("domcontentloaded", timeout=8000)
-            except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
-                pass
         except Exception as e:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
             log.warning("[crawler] 시작 URL goto 실패: %s", e)
 
@@ -327,10 +326,9 @@ def crawl_site(
         if cur != url:
             try:
                 page.goto(url, timeout=20000)
-                try:
+                # 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
+                with contextlib.suppress(Exception):
                     page.wait_for_load_state("domcontentloaded", timeout=8000)
-                except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
-                    pass
             except Exception as e:  # noqa: BLE001 - 사이트 탐색 크롤러 — 읽기 전용 페이지 순회/스냅샷 저장, 실패는 로그 후 안전한 기본값(빈 문자열/빈 리스트)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
                 log.warning("[crawler] goto 실패 %s: %s", url, e)
                 pages.append({"url": url, "error": f"goto: {str(e)[:120]}"})
@@ -338,10 +336,9 @@ def crawl_site(
 
         # 이동 직후 팝업 자동 닫기 (1라운드만 — BFS 속도 유지)
         if handle_popups:
-            try:
+            # 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
+            with contextlib.suppress(Exception):
                 _dismiss_popups(page, rounds=1)
-            except Exception:  # noqa: BLE001 - 팝업 닫기/스냅샷 저장 등 보조 동작 — 실패해도 크롤링 계속 진행 가능(2026-09-28 검토)
-                pass
 
         # 봇 감지
         if bot_check_each:

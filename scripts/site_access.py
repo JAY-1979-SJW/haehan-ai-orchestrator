@@ -23,6 +23,7 @@ CLI:
 
 from __future__ import annotations
 
+import contextlib
 import sys
 import time
 from pathlib import Path
@@ -366,10 +367,9 @@ def open_site(
                 page.goto(target, timeout=30000)
             except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
                 s.fail(f"goto 실패: {e}", kind="goto_failed")
-            try:
+            # networkidle 미달성은 치명적이지 않음 — 팝업 정리/쿠키 초기화 등 보조 동작, 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+            with contextlib.suppress(Exception):
                 page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:  # noqa: BLE001 - 팝업 정리/쿠키 초기화 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-                pass  # networkidle 미달성은 치명적이지 않음
         if force_login:
             _clear_current_origin_storage(page)
             try:

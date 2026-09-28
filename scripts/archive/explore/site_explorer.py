@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 import time
@@ -190,10 +191,9 @@ def explore_site(page, site: dict, timeout_s: int = 15) -> dict:
             log_critical(site["category"], f"사이트 자동 탐색 시작: {domain}", url=url, mode="explorer")
         page.goto(url, timeout=timeout_s * 1000, wait_until="domcontentloaded")
         time.sleep(2)
-        try:
+        # 팝업 닫기 시도 실패는 탐색에 영향 없어 무시하고 계속 진행 — 읽기전용 탐색
+        with contextlib.suppress(Exception):
             handle_page_popups(page, timeout_s=2.0)
-        except Exception:  # noqa: BLE001 - 팝업 닫기 시도 실패는 탐색에 영향 없어 무시하고 계속 진행 — 읽기전용 탐색
-            pass
         meta = extract_page_meta(page)
         result["meta"] = meta
         result["success"] = True

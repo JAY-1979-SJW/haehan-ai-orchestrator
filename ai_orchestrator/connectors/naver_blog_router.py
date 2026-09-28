@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -107,14 +108,13 @@ def _unsplash_live_search(topic: str, count: int) -> list[str]:
         # Unsplash Production 요건: 사용 시 download 엔드포인트 호출
         photo_id = photo.get("id")
         if photo_id:
-            try:
+            # Unsplash download 트리거 - 실패해도 이미지는 이미 다운로드됨(집계용 API일 뿐)
+            with contextlib.suppress(Exception):
                 _req.get(
                     f"{_UNSPLASH_API}/photos/{photo_id}/download",
                     headers={"Authorization": f"Client-ID {key}"},
                     timeout=5,
                 )
-            except Exception:  # noqa: S110, BLE001
-                pass
         result_names.append(fname)
         time.sleep(0.1)
 

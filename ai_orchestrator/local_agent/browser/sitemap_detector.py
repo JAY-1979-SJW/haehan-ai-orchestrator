@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import time
@@ -91,11 +92,9 @@ def detect_api_endpoints(page_html: str, domain: str) -> list[str]:
 
 def detect_selectors_by_network(page) -> dict[str, list[str]]:
     """Playwright 페이지에서 네트워크 요청 분석하여 API 엔드포인트 탐지."""
-    try:
+    with contextlib.suppress(Exception):
         # Network 요청 히스토리는 직접 접근 불가하므로
         # page.evaluate로 JavaScript에서 추출
-        pass
-    except Exception:  # noqa: S110, BLE001
         pass
 
     return {}

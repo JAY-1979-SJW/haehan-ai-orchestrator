@@ -22,6 +22,7 @@ execution gate를 통과한 candidate에 대해
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import platform
@@ -182,10 +183,9 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
 
             def _on_download(download: Any) -> None:
                 download_detected.append(download.url)
-                try:
+                # 나라장터(G2B) 공고 읽기전용 조회 - 다운로드는 감지 즉시 cancel(), 실패해도 read-only 정책엔 영향 없음
+                with contextlib.suppress(Exception):
                     download.cancel()
-                except Exception:  # noqa: S110, BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
-                    pass
 
             page.on("download", _on_download)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 from datetime import datetime
@@ -133,10 +134,9 @@ def open_naver_content(page, url: str) -> None:
     throttle_live("naver", workflow="content_explore")
     if not (page.url or "").startswith(url):
         page.goto(url, timeout=30000, wait_until="domcontentloaded")
-    try:
+    # 페이지 이동 후 대기(wait_for_timeout) 실패 무시 — 읽기전용 탐색의 best-effort 대기
+    with contextlib.suppress(Exception):
         page.wait_for_timeout(1500)
-    except Exception:  # noqa: BLE001 - 페이지 이동 후 대기(wait_for_timeout) 타임아웃 무시, 탐색 로그 저장 실패 무시 — 읽기전용 탐색의 best-effort 로깅
-        pass
     ensure_page_safe(page, site="naver", workflow="content_explore", phase="after_navigation")
 
 
