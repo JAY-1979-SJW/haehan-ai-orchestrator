@@ -112,7 +112,7 @@ def upsert_images(conn: sqlite3.Connection, log_no: str, images: list[str]) -> i
             )
             if conn.execute("SELECT changes()").fetchone()[0]:
                 added += 1
-        except Exception:
+        except Exception:  # noqa: BLE001 - SQLite 트랜잭션 컨텍스트 매니저 - 예외 발생 시 rollback() 후 raise로 그대로 재발생시켜 예외를 삼키지 않음(운영 DB 스키마 변경이 아닌 gonobi_posts 캐시 테이블 트랜잭션), pass-only 두번째 except는 중복 삽입 등 단건 실패를 skip하는 카운팅 루프
             pass
     return added
 
