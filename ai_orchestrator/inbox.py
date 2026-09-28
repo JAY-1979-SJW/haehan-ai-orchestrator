@@ -1,9 +1,8 @@
 import json
-import uuid
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
-from typing import Optional
+import uuid
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 
 from .config import INBOX_PATH as _INBOX_PATH
 
@@ -13,16 +12,16 @@ logger = logging.getLogger(__name__)
 @dataclass
 class InboxItem:
     item_id: str
-    source_type: str          # telegram_command | email | manual | ...
-    source_account: str       # telegram_user_id, email address, etc.
-    external_id: str          # token_id, message_id, etc.
-    sender: str               # actor name
+    source_type: str  # telegram_command | email | manual | ...
+    source_account: str  # telegram_user_id, email address, etc.
+    external_id: str  # token_id, message_id, etc.
+    sender: str  # actor name
     title: str
     body_raw: str
     body_summary: str
     received_at: str
     saved_at: str
-    status: str               # new | reviewed | task_created | archived
+    status: str  # new | reviewed | task_created | archived
     linked_task_id: str
     metadata: dict = field(default_factory=dict)
 
@@ -36,9 +35,9 @@ def create_inbox_item(
     body_raw: str = "",
     body_summary: str = "",
     linked_task_id: str = "",
-    metadata: Optional[dict] = None,
+    metadata: dict | None = None,
 ) -> InboxItem:
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     item = InboxItem(
         item_id=str(uuid.uuid4()),
         source_type=source_type,
@@ -58,7 +57,7 @@ def create_inbox_item(
     return item
 
 
-def get_inbox_item(item_id: str) -> Optional[InboxItem]:
+def get_inbox_item(item_id: str) -> InboxItem | None:
     for d in _read_all():
         if d.get("item_id") == item_id:
             return InboxItem(**d)
@@ -82,7 +81,7 @@ def read_recent_inbox(limit: int = 20) -> list[dict]:
 def _append(item: InboxItem) -> None:
     try:
         _INBOX_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(_INBOX_PATH, "a", encoding="utf-8") as f:
+        with _INBOX_PATH.open("a", encoding="utf-8") as f:
             f.write(json.dumps(asdict(item), ensure_ascii=False) + "\n")
     except OSError as e:
         logger.error("inbox 저장 실패: %s", e)

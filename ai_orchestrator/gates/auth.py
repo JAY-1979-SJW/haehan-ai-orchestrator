@@ -40,7 +40,7 @@ def _load_users() -> dict[str, dict]:
         logger.warning("HTTP 사용자 파일 없음: %s", path)
         return {}
     try:
-        with open(path, encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             raw = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         logger.error("HTTP 사용자 파일 로드 실패: %s", e)

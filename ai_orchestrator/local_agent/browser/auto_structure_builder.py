@@ -671,7 +671,7 @@ def run(service_name: str):
 
     # 6. 결과 캐시 저장
     cache_file = CACHE_DIR / f"{service_name}_structure.json"
-    with open(cache_file, "w", encoding="utf-8") as f:
+    with cache_file.open("w", encoding="utf-8") as f:
         # PageStructure를 직렬화
         data = {
             "service": structure.service,

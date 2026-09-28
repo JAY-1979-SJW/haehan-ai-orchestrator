@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -48,7 +48,7 @@ def _attached_files_safe(attached_files: list[str] | None) -> list[str]:
     """파일 경로 리스트에서 basename만 추출."""
     if not attached_files:
         return []
-    return [os.path.basename(f) for f in attached_files if f]
+    return [Path(f).name for f in attached_files if f]
 
 
 def execute(**kwargs) -> dict[str, Any]:
