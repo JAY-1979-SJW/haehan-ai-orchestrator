@@ -69,7 +69,7 @@ class CafeArticleMixin:
                     posts.append(p)
                 if posts:
                     break
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         return posts[:max_posts]
@@ -154,7 +154,7 @@ class CafeArticleMixin:
         def _safe(frame, sel: str, timeout: int = 1000) -> str:
             try:
                 return frame.locator(sel).first.inner_text(timeout=timeout).strip()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 카페 게시글 읽기 전용 파싱(본문/첨부파일 추출) — 실패는 안전한 기본값(빈 값/False)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
                 return ""
 
         for frame in ordered:
@@ -177,12 +177,12 @@ class CafeArticleMixin:
                     fb = ""
                     try:
                         fb = frame.inner_text("body")
-                    except Exception:  # noqa: S110
+                    except Exception:  # noqa: S110, BLE001
                         pass
                     if fb and len(fb.strip()) > 50:
                         body = fb.strip()
                         af = frame
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         if not title:
@@ -239,7 +239,7 @@ class CafeArticleMixin:
                         "written_at": comment_date,
                     }
                 )
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return {
@@ -299,7 +299,7 @@ class CafeArticleMixin:
 
                 host = urlparse(href).hostname or ""
                 return any(host == h for h in _CAFE_FILE_HOSTS)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 카페 게시글 읽기 전용 파싱(본문/첨부파일 추출) — 실패는 안전한 기본값(빈 값/False)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
                 return False
 
         for frame in search_frames:
@@ -307,7 +307,7 @@ class CafeArticleMixin:
                 for sel in attach_selectors:
                     try:
                         els = frame.locator(sel).all()
-                    except Exception:  # noqa: S112
+                    except Exception:  # noqa: BLE001, S112
                         continue
                     for el in els:
                         try:
@@ -326,7 +326,7 @@ class CafeArticleMixin:
                                 size_m = re.search(r"(\d+(?:\.\d+)?\s*(?:KB|MB|GB|Bytes?))", parent_text, re.IGNORECASE)
                                 if size_m:
                                     size = size_m.group(1)
-                            except Exception:  # noqa: S110
+                            except Exception:  # noqa: S110, BLE001
                                 pass
                             attachments.append(
                                 {
@@ -336,9 +336,9 @@ class CafeArticleMixin:
                                     "ext": ext,
                                 }
                             )
-                        except Exception:  # noqa: S112
+                        except Exception:  # noqa: BLE001, S112
                             continue
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         # JS 방식 폴백: evaluate로 모든 a 태그 스캔
@@ -373,7 +373,7 @@ class CafeArticleMixin:
                     """)
                     if js_result:
                         break
-                except Exception:  # noqa: S112
+                except Exception:  # noqa: BLE001, S112
                     continue
             for r in js_result:
                 if r.get("url") and r["url"] not in seen_urls:
@@ -449,7 +449,7 @@ class CafeArticleMixin:
             )
             resp.raise_for_status()
             return resp.json()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 게시글 읽기 전용 파싱(본문/첨부파일 추출) — 실패는 안전한 기본값(빈 값/False)으로 폴백, 쓰기·결제 없음(2026-09-28 검토)
             return {"data": None, "errors": [{"message": str(e)}]}
 
     # ── 앨범 (사진 게시글, GraphQL BFF) ──────────────────────────────────────────
