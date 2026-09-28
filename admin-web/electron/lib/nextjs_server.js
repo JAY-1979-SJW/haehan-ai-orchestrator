@@ -57,7 +57,12 @@ async function waitForServer(timeoutMs = HEALTH_TIMEOUT_MS) {
 }
 
 async function startNextServer() {
-  if (await checkHealth()) {
+  // 단발성 checkHealth()(2초 타임아웃) 대신 waitForServer()로 재시도한다.
+  // `next dev`는 첫 요청에서 그 라우트를 온디맨드 컴파일하는데, 콜드스타트에서
+  // 2초를 넘기는 경우가 흔해 한 번만 확인하면 "이미 떠 있는데도 없다"고 오판해
+  // 존재하지 않는 standalone 빌드를 찾다가 "UI 서버 시작 실패"로 이어졌다
+  // (2026-09-28 Electron 셸 복원 후 재현·확인).
+  if (await waitForServer(HEALTH_TIMEOUT_MS)) {
     console.log("[nextjs] 서버 이미 실행 중");
     _ready = true;
     return true;
