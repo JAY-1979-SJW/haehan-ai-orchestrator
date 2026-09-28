@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* head/style/script 가 텍스트로 렌더되던 문제 방지 — UA display:none 강제 보장 */
+  head, style, script, title, meta, link { display: none !important; }
+  html, body { height: 100%; overflow: hidden; display: flex; flex-direction: column; background: #F5F7FA; }
+  webview { flex: 1; width: 100%; border: none; min-height: 0; }
+</style>
+</head>
+<body>
+<webview id="view" allowpopups partition="persist:haehan"></webview>
+
+<script>
+  const params  = new URLSearchParams(location.search);
+  const SERVER  = params.get("server")  || "http://localhost:3000";
+  const LICENSE = params.get("license") || "";
+  const PRELOAD = params.get("preload") || "";
+
+  const view = document.getElementById("view");
+
+  // 로컬 설정 브리지(P1-3) preload 부착 — src 설정 전에 지정해야 적용됨
+  if (PRELOAD) view.setAttribute("preload", PRELOAD);
+
+  // 초기 로드 — Next.js 메인 페이지
+  view.src = SERVER + "/";
+
+  // 서버 내부 링크는 webview 안에서, 외부 링크는 시스템 브라우저로
+  view.addEventListener("new-window", (e) => {
+    if (e.url.startsWith(SERVER)) {
+      view.src = e.url;
+    } else {
+      require("electron").shell.openExternal(e.url);
+    }
+  });
+
+  // YouTube 토큰 상태 확인 (트레이 메뉴 연동용)
+  fetch(SERVER + "/api/v1/oauth/youtube/status", {
+    headers: { "x-license-key": LICENSE }
+  }).then(r => r.json()).then(d => {
+    if (window.electronAPI) {
+      window.electronAPI.onYouTubeStatus && window.electronAPI.onYouTubeStatus(d.ok ? "connected" : "disconnected");
+    }
+  }).catch(() => {});
+</script>
+</body>
+</html>
