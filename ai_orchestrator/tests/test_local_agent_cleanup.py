@@ -3,12 +3,12 @@
 smoke-test residual 정리를 위한 안전한 cleanup endpoint 검증.
 """
 
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.insert(0, str(Path(__file__).parent / "../.."))
 
 from ai_orchestrator import local_agent_registry as _reg
 from ai_orchestrator import registration_codes as _regcodes

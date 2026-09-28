@@ -15,14 +15,13 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 
 @pytest.fixture(autouse=True)

@@ -1,9 +1,9 @@
-import os
 import sys
 import time
 import uuid
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 from ai_orchestrator.config import EXECUTION_HISTORY_PATH
 from ai_orchestrator.execution_limits import (

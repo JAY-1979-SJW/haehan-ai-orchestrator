@@ -6,13 +6,13 @@ AUTH_ENABLED 상태와 http_users.json 경로를 테스트마다 명시적으로
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 from ai_orchestrator import config
 from ai_orchestrator.gates import auth
