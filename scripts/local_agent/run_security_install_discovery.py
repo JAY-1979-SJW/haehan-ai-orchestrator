@@ -73,7 +73,7 @@ def _has_actual_auth_form(page: object) -> bool:
             el = page.query_selector(selector)
             if el and el.is_visible():
                 return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
         pass
     return False
 
@@ -81,7 +81,7 @@ def _has_actual_auth_form(page: object) -> bool:
 def _extract_host(url: str) -> str:
     try:
         return urlparse(url).hostname or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
         return ""
 
 
@@ -150,7 +150,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
             # 텍스트 추출
             try:
                 body_text = page.inner_text("body")[:3000]
-            except Exception:
+            except Exception:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
                 body_text = ""
 
             # 링크 추출 (공식 도메인 내 설치 파일 링크 — a href + onclick + data 속성)
@@ -194,7 +194,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
                                     val = base + val
                                 if val not in links:
                                     links.append(val)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
                 print(f"  링크 추출 오류: {e}")
 
             buttons = []
@@ -203,7 +203,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
                     text = btn.inner_text().strip() if hasattr(btn, "inner_text") else ""
                     if text:
                         buttons.append(text[:50])
-            except Exception:
+            except Exception:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
                 pass
 
             print(f"  설치 링크 후보: {links[:5]}")
@@ -216,7 +216,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
                 try:
                     page.screenshot(path=screenshot_path)
                     print(f"  screenshot: {screenshot_path}")
-                except Exception:
+                except Exception:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
                     pass
 
             # page_data 구성 (security_program_detector용)
@@ -252,7 +252,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
                 **{f: False for f in _SAFE_FIELDS},
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
             print(f"  오류: {e}")
             return {
                 "site_name": site_name,
@@ -298,7 +298,7 @@ def _verify_signature(path: str) -> str:
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, shell=True)
         return result.stdout.strip() or "Unknown"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
         return f"CheckFailed: {e}"
 
 

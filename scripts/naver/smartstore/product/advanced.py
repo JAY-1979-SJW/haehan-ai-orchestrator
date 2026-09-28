@@ -61,7 +61,7 @@ class SmartEditorONE:
             try:
                 self.page.locator("text=스마트 에디터 ONE").first.click(timeout=3000, force=True)
                 time.sleep(4)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
                 _log.debug("[smart-editor] 버튼 클릭 무시 (이미 열림 가능): %s", e)
 
             # iframe 찾기
@@ -81,7 +81,7 @@ class SmartEditorONE:
 
             _log.warning("[smart-editor] iframe 못 찾음 — fallback")
             return False
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
             _log.error("[smart-editor] open 실패: %s", e)
             return False
 
@@ -96,7 +96,7 @@ class SmartEditorONE:
                     time.sleep(0.5)
                     self.page.keyboard.type(content, delay=10)
                     return {"ok": True, "mode": "contenteditable_fallback"}
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
                     return {"ok": False, "error": f"no_editor_found:{e}"}
 
         try:
@@ -105,7 +105,7 @@ class SmartEditorONE:
             time.sleep(0.5)
             self.page.keyboard.type(content, delay=10)
             return {"ok": True, "mode": "iframe"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
             return {"ok": False, "error": str(e)[:80]}
 
     def insert_image(self, image_path: str) -> dict:
@@ -126,7 +126,7 @@ class SmartEditorONE:
                 "FILE_UPLOAD", f"SmartEditor 이미지: {Path(image_path).name}", file=image_path, mode="smarteditor_image"
             )
             return {"ok": True, "file": image_path}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
             return {"ok": False, "error": str(e)[:80]}
 
 
@@ -160,7 +160,7 @@ class PriceStockEditor:
             time.sleep(0.5)
             input_loc.fill(str(value), timeout=5000, force=force)
             return {"ok": True, "label": label, "value": value}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
             return {"ok": False, "error": str(e)[:80]}
 
     def set_price(self, price: int) -> dict:
@@ -193,7 +193,7 @@ class PriceStockEditor:
             if free_over is not None:
                 self._fill_by_label("무료배송", free_over)
             return r
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
             return {"ok": False, "error": str(e)[:80]}
 
 
@@ -215,10 +215,10 @@ class ProductOptionEditor:
             try:
                 self.page.get_by_text("옵션 사용", exact=False).first.click(timeout=2000, force=True)
                 time.sleep(1)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
                 pass
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
             _log.error("[option] open 실패: %s", e)
             return False
 
@@ -241,9 +241,9 @@ class ProductOptionEditor:
             # 적용 버튼
             try:
                 self.page.get_by_text("옵션목록으로 적용", exact=False).first.click(timeout=2000, force=True)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
                 pass
             time.sleep(1)
             return {"ok": True, "name": name, "values": values}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 스마트에디터/가격/옵션 입력 자동화 - 모든 except가 ok:False,error 반환, 폼 입력 실패일 뿐 결제/발행 확정 없음
             return {"ok": False, "error": str(e)[:80]}

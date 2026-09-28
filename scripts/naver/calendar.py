@@ -38,7 +38,7 @@ class NaverCalendar:
         time.sleep(3)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
             pass
         return True
 
@@ -64,7 +64,7 @@ class NaverCalendar:
             }
             """)
             return events
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
             _log.error("[naver-calendar] list 실패: %s", e)
             return []
 
@@ -93,25 +93,25 @@ class NaverCalendar:
             try:
                 start_str = start.strftime("%Y-%m-%d %H:%M")
                 self.page.locator('input[name="start"], input[type="datetime-local"]').first.fill(start_str)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
                 pass
             if end:
                 try:
                     end_str = end.strftime("%Y-%m-%d %H:%M")
                     self.page.locator('input[name="end"]').first.fill(end_str)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
                     pass
 
             # 위치/메모
             if location:
                 try:
                     self.page.locator('input[name="location"], input[placeholder*="위치"]').first.fill(location)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
                     pass
             if memo:
                 try:
                     self.page.locator('textarea[name="memo"], textarea').first.fill(memo)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
                     pass
 
             if confirm:
@@ -120,6 +120,6 @@ class NaverCalendar:
                 log_critical("OTHER", f"캘린더 일정 추가: {title}", start=start.isoformat(), mode="calendar_add")
                 return {"ok": True, "mode": "saved"}
             return {"ok": True, "mode": "filled_not_saved"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
             _log.error("[naver-calendar] add 실패: %s", e)
             return {"ok": False, "error": str(e)}

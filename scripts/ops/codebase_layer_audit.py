@@ -466,7 +466,7 @@ def check_forbidden_imports(rows: list[ClassifiedFile], root: Path = ROOT) -> li
         path = root / row.path
         try:
             source = path.read_text(encoding="utf-8", errors="replace")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 레이어/순환참조/보안패턴 정적감사 스크립트 - 개별 파일 읽기 실패시 해당 파일만 continue 로 건너뛰고 감사 계속, 스키마/모델 검증 오류는 result.error 에 기록
             continue
         for src_prefix, forbidden_prefix, reason in _FORBIDDEN_IMPORT_PAIRS:
             src_mod = row.path.replace("/", ".").removesuffix(".py")
@@ -506,7 +506,7 @@ def check_security_patterns(rows: list[ClassifiedFile], root: Path = ROOT) -> li
         path = root / row.path
         try:
             source = path.read_text(encoding="utf-8", errors="replace")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 레이어/순환참조/보안패턴 정적감사 스크립트 - 개별 파일 읽기 실패시 해당 파일만 continue 로 건너뛰고 감사 계속, 스키마/모델 검증 오류는 result.error 에 기록
             continue
         try:
             tree = ast.parse(source)
@@ -789,7 +789,7 @@ def check_router_thinness(rows: list[ClassifiedFile], root: Path = ROOT) -> list
         path = root / row.path
         try:
             source = path.read_text(encoding="utf-8", errors="replace")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 레이어/순환참조/보안패턴 정적감사 스크립트 - 개별 파일 읽기 실패시 해당 파일만 continue 로 건너뛰고 감사 계속, 스키마/모델 검증 오류는 result.error 에 기록
             continue
         for pattern, msg in compiled:
             for m in pattern.finditer(source):
@@ -870,7 +870,7 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
         path = root / row.path
         try:
             source = path.read_text(encoding="utf-8", errors="replace")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 레이어/순환참조/보안패턴 정적감사 스크립트 - 개별 파일 읽기 실패시 해당 파일만 continue 로 건너뛰고 감사 계속, 스키마/모델 검증 오류는 result.error 에 기록
             continue
         # session 파일 직접 접근 (테스트 파일 제외 — 테스트는 금지 검사 코드 포함 가능)
         if not is_test_file:
@@ -964,7 +964,7 @@ def check_server_browser_guard(rows: list[ClassifiedFile], root: Path = ROOT) ->
         path = root / row.path
         try:
             source = path.read_text(encoding="utf-8", errors="replace")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 레이어/순환참조/보안패턴 정적감사 스크립트 - 개별 파일 읽기 실패시 해당 파일만 continue 로 건너뛰고 감사 계속, 스키마/모델 검증 오류는 result.error 에 기록
             continue
         for pattern, msg in compiled:
             for m in pattern.finditer(source):
@@ -1019,7 +1019,7 @@ def validate_openapi_apps() -> list[dict]:
                     "path_count": len(schema.get("paths") or {}),
                 }
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 레이어/순환참조/보안패턴 정적감사 스크립트 - 개별 파일 읽기 실패시 해당 파일만 continue 로 건너뛰고 감사 계속, 스키마/모델 검증 오류는 result.error 에 기록
             result["error"] = f"{type(exc).__name__}: {exc}"
         results.append(result)
     return results
@@ -1047,7 +1047,7 @@ def validate_pydantic_schema_modules() -> list[dict]:
                 elif hasattr(obj, "schema"):
                     obj.schema()
             result.update({"ok": True, "model_count": model_count})
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 레이어/순환참조/보안패턴 정적감사 스크립트 - 개별 파일 읽기 실패시 해당 파일만 continue 로 건너뛰고 감사 계속, 스키마/모델 검증 오류는 result.error 에 기록
             result["error"] = f"{type(exc).__name__}: {exc}"
         results.append(result)
     return results
@@ -1117,7 +1117,7 @@ def validate_json_yaml_files(root: Path = ROOT) -> list[dict]:
 
                 yaml.safe_load(text)
             item["ok"] = True
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 레이어/순환참조/보안패턴 정적감사 스크립트 - 개별 파일 읽기 실패시 해당 파일만 continue 로 건너뛰고 감사 계속, 스키마/모델 검증 오류는 result.error 에 기록
             item["error"] = f"{type(exc).__name__}: {exc}"
         results.append(item)
     return results

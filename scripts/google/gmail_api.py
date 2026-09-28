@@ -4,6 +4,7 @@ This adapter keeps the legacy public methods but does not click final Send or
 Delete controls. Gmail writes must flow through the Google work approval path
 and remain no-final-submit until a separate approved final action exists.
 """
+
 from __future__ import annotations
 
 import time
@@ -77,7 +78,7 @@ class GmailAPI:
             box.fill(query, timeout=3000)
             self.page.keyboard.press("Enter")
             time.sleep(3.0)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - Gmail 자동화(검색/초안작성/답장/읽기/별표) - 코드에 명시된 대로 최종 발송 버튼은 절대 클릭하지 않음(final_send_clicked 항상 False), star 는 승인게이트 전까지 차단. 실패시 ok:False,error 반환
             _log.error("[gmail] search failed: %s", exc)
             return []
         return self.list_inbox(limit=limit, folder="inbox")
@@ -109,7 +110,7 @@ class GmailAPI:
                 "final_send_clicked": False,
                 "fields_filled": ["to", "subject", "body"],
             }
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - Gmail 자동화(검색/초안작성/답장/읽기/별표) - 코드에 명시된 대로 최종 발송 버튼은 절대 클릭하지 않음(final_send_clicked 항상 False), star 는 승인게이트 전까지 차단. 실패시 ok:False,error 반환
             _log.error("[gmail] draft fill failed: %s", exc)
             return {"ok": False, "error": str(exc)[:100]}
 
@@ -129,7 +130,7 @@ class GmailAPI:
                 "final_send_clicked": False,
                 "mail_index": mail_index,
             }
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - Gmail 자동화(검색/초안작성/답장/읽기/별표) - 코드에 명시된 대로 최종 발송 버튼은 절대 클릭하지 않음(final_send_clicked 항상 False), star 는 승인게이트 전까지 차단. 실패시 ok:False,error 반환
             return {"ok": False, "error": str(exc)[:100]}
 
     def read(self, mail_index: int) -> dict[str, Any]:
@@ -151,7 +152,7 @@ class GmailAPI:
                 }"""
             )
             return {"ok": True, **data}
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - Gmail 자동화(검색/초안작성/답장/읽기/별표) - 코드에 명시된 대로 최종 발송 버튼은 절대 클릭하지 않음(final_send_clicked 항상 False), star 는 승인게이트 전까지 차단. 실패시 ok:False,error 반환
             return {"ok": False, "error": str(exc)[:100]}
 
     def mark_read(self, mail_index: int) -> dict[str, Any]:
@@ -162,7 +163,7 @@ class GmailAPI:
             time.sleep(1.5)
             self.page.goto(GOOGLE_URLS["gmail_inbox"], timeout=10000)
             return {"ok": True, "mail_index": mail_index, "state_change": "gmail_may_mark_read"}
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - Gmail 자동화(검색/초안작성/답장/읽기/별표) - 코드에 명시된 대로 최종 발송 버튼은 절대 클릭하지 않음(final_send_clicked 항상 False), star 는 승인게이트 전까지 차단. 실패시 ok:False,error 반환
             return {"ok": False, "error": str(exc)[:100]}
 
     def star(self, mail_index: int) -> dict[str, Any]:
@@ -198,7 +199,7 @@ class GmailAPI:
             try:
                 if self.page.locator(selector).first.bounding_box(timeout=500) is not None:
                     return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - Gmail 자동화(검색/초안작성/답장/읽기/별표) - 코드에 명시된 대로 최종 발송 버튼은 절대 클릭하지 않음(final_send_clicked 항상 False), star 는 승인게이트 전까지 차단. 실패시 ok:False,error 반환
                 continue
         return False
 
@@ -218,7 +219,7 @@ class GmailAPI:
         try:
             self._click_by_text([label])
             self._fill_recipient(label.lower(), value)
-        except Exception:
+        except Exception:  # noqa: BLE001 - Gmail 자동화(검색/초안작성/답장/읽기/별표) - 코드에 명시된 대로 최종 발송 버튼은 절대 클릭하지 않음(final_send_clicked 항상 False), star 는 승인게이트 전까지 차단. 실패시 ok:False,error 반환
             _log.warning("[gmail] optional recipient field skipped: %s", label)
 
     def _fill_subject(self, value: str) -> None:
@@ -235,6 +236,6 @@ class GmailAPI:
             try:
                 self.page.get_by_text(label, exact=False).first.click(timeout=3000)
                 return
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - Gmail 자동화(검색/초안작성/답장/읽기/별표) - 코드에 명시된 대로 최종 발송 버튼은 절대 클릭하지 않음(final_send_clicked 항상 False), star 는 승인게이트 전까지 차단. 실패시 ok:False,error 반환
                 last_error = exc
         raise RuntimeError(f"Gmail control not found: {'/'.join(labels)}") from last_error

@@ -151,7 +151,7 @@ async def list_approvals(
             approvals=[],
             count=0,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인요청 생성/승인/거부/이력조회 API - approve/reject 처리 중 예외 발생시 승인 상태를 반환하지 않고 HTTPException 500 을 raise 함(fail-loud), 조회 계열만 ok:False 로 폴백
         logger.error("Failed to read approval records: %s", e)
         return ApprovalListResponse(
             ok=False,
@@ -199,7 +199,7 @@ async def get_approval(
         raise HTTPException(status_code=404, detail="Approval not found")
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인요청 생성/승인/거부/이력조회 API - approve/reject 처리 중 예외 발생시 승인 상태를 반환하지 않고 HTTPException 500 을 raise 함(fail-loud), 조회 계열만 ok:False 로 폴백
         logger.error("Failed to get approval: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -252,7 +252,7 @@ async def create_approval(
         }
         return _to_approval_response(record_dict)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인요청 생성/승인/거부/이력조회 API - approve/reject 처리 중 예외 발생시 승인 상태를 반환하지 않고 HTTPException 500 을 raise 함(fail-loud), 조회 계열만 ok:False 로 폴백
         logger.error("Failed to create approval: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -302,7 +302,7 @@ async def approve_request(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인요청 생성/승인/거부/이력조회 API - approve/reject 처리 중 예외 발생시 승인 상태를 반환하지 않고 HTTPException 500 을 raise 함(fail-loud), 조회 계열만 ok:False 로 폴백
         logger.error("Failed to approve request: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -352,7 +352,7 @@ async def reject_request(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인요청 생성/승인/거부/이력조회 API - approve/reject 처리 중 예외 발생시 승인 상태를 반환하지 않고 HTTPException 500 을 raise 함(fail-loud), 조회 계열만 ok:False 로 폴백
         logger.error("Failed to reject request: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -378,7 +378,7 @@ async def get_approval_history_endpoint(
             events=[],
             count=0,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 승인요청 생성/승인/거부/이력조회 API - approve/reject 처리 중 예외 발생시 승인 상태를 반환하지 않고 HTTPException 500 을 raise 함(fail-loud), 조회 계열만 ok:False 로 폴백
         logger.error("Failed to get approval history: %s", e)
         return ApprovalHistoryResponse(
             ok=False,

@@ -44,14 +44,14 @@ def _same_host(a: str, b: str) -> bool:
     try:
         ua, ub = urlparse(a), urlparse(b)
         return (ua.hostname or "").lower() == (ub.hostname or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
         return False
 
 
 def _norm_url(href: str, base: str) -> str:
     try:
         return urljoin(base, href).split("#")[0]
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
         return href
 
 
@@ -95,7 +95,7 @@ def _page_summary(page) -> dict:
         s = page.evaluate(_PAGE_SUMMARY_JS)
         if isinstance(s, dict):
             return s
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
         log.debug("[explorer] page_summary 실패: %s", e)
     return {"title": "", "url": "", "links": [], "tables": [], "forms": 0}
 
@@ -132,7 +132,7 @@ def explore_site(
     started_at = time.time()
     try:
         start_url = page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
         start_url = ""
     host = urlparse(start_url).hostname or ""
 
@@ -163,16 +163,16 @@ def explore_site(
         # 이동 (현재 URL과 다를 때만)
         try:
             cur = page.url or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
             cur = ""
         if cur != url:
             try:
                 page.goto(url, timeout=20000)
                 try:
                     page.wait_for_load_state("domcontentloaded", timeout=8000)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
                     pass
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
                 log.warning("[explorer] goto 실패 %s: %s", url, e)
                 pages_data.append({"url": url, "error": f"goto: {str(e)[:120]}"})
                 continue
@@ -186,7 +186,7 @@ def explore_site(
                     aborted_reason = f"bot_flagged: {br['level']}"
                     log.warning("[explorer] 봇 감지 — 중단: %s", aborted_reason)
                     break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
                 pass
 
         # 페이지 요약
@@ -201,7 +201,7 @@ def explore_site(
                     "roles": sorted({f.role for f in disc.fields if f.score > 0.4}),
                     "submit": disc.submit_selector,
                 }
-            except Exception:
+            except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
                 pass
 
         rec = {

@@ -69,7 +69,7 @@ def _capture_storage(page, host: str) -> dict:
     """
     try:
         return page.evaluate(js) or {"local": {}, "session": {}}
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
         return {"local": {}, "session": {}}
 
 
@@ -119,7 +119,7 @@ def save_session(host: str, page, *, host_filter: bool = True) -> Path:
     )
     try:
         os.chmod(fp, 0o600)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
         pass
     return fp
 
@@ -130,7 +130,7 @@ def _load_bundle(host: str) -> dict | None:
         return None
     try:
         meta = json.loads(fp.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
         return None
     payload = meta.get("encrypted_bundle", "")
     if not payload:
@@ -140,7 +140,7 @@ def _load_bundle(host: str) -> dict | None:
         return None
     try:
         return json.loads(plain)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
         return None
 
 
@@ -158,7 +158,7 @@ def restore_session(host: str, page) -> dict:
     # 쿠키 복원
     try:
         ctx.add_cookies(bundle.get("cookies", []))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
         return {"ok": False, "reason": f"cookie_restore_failed: {e}"}
 
     # storage 복원 — 도메인 페이지 필요
@@ -173,7 +173,7 @@ def restore_session(host: str, page) -> dict:
         # 같은 호스트에 있어야 storage 복원 가능
         if host in (page.url or ""):
             page.evaluate(js, [bundle.get("localStorage", {}), bundle.get("sessionStorage", {})])
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
         # storage 실패해도 쿠키만으로 로그인 유지될 수 있음
         pass
 
@@ -202,7 +202,7 @@ def list_sessions() -> list[dict]:
                     "session_keys": meta.get("session_keys", 0),
                 }
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
             continue
     return out
 
@@ -237,7 +237,7 @@ def cli_load(host: str) -> None:
         page.goto(f"https://{host}/", timeout=15000)
         try:
             page.wait_for_load_state("domcontentloaded", timeout=5000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
             pass
     r = restore_session(host, page)
     if r["ok"]:

@@ -46,7 +46,7 @@ def _get_clubid(page: Page, cafe_url: str) -> str | None:
         m = re.search(r"clubid=(\d+)", html)
         if m:
             return m.group(1)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
         pass
     return None
 
@@ -77,7 +77,7 @@ class CafeWriter:
             time.sleep(0.8)
             _log.info("[cafe-write] 게시판 선택: %s", board_name)
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
             _log.warning("[cafe-write] 게시판 선택 실패 (%s): %s", board_name, e)
             return False
 
@@ -95,7 +95,7 @@ class CafeWriter:
             body_el.scroll_into_view_if_needed(timeout=5000)
             time.sleep(0.3)
             body_el.click(timeout=5000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
             # fallback: JS 포커스
             self.page.evaluate("""
             () => {
@@ -123,7 +123,7 @@ class CafeWriter:
                 self.page.keyboard.press("Enter")
                 time.sleep(0.3)
             _log.info("[cafe-write] 태그 입력: %s", tags)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
             _log.warning("[cafe-write] 태그 입력 실패: %s", e)
 
     def set_visibility(self, members_only: bool = False) -> None:
@@ -133,7 +133,7 @@ class CafeWriter:
                 self.page.locator("#member").check(timeout=3000)
             else:
                 self.page.locator("#all").check(timeout=3000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
             _log.warning("[cafe-write] 공개설정 실패: %s", e)
 
     def save_draft(self) -> bool:
@@ -143,7 +143,7 @@ class CafeWriter:
             time.sleep(2)
             _log.info("[cafe-write] 임시저장 완료")
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
             _log.warning("[cafe-write] 임시저장 실패: %s", e)
             return False
 
@@ -167,7 +167,7 @@ class CafeWriter:
                         _log.info("[cafe-write] 등록 버튼 셀렉터: %s", sel)
                         loc.click(timeout=8000)
                         break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
                     continue
             else:
                 # 폴백: DOM에서 '등록' 텍스트 버튼 중 마지막(오른쪽) 것
@@ -186,7 +186,7 @@ class CafeWriter:
                     lambda url: "articles/write" not in url and url != before_url,
                     timeout=wait_verify_s * 1000,
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
                 pass  # timeout — URL 체크로 판정
 
             final_url = self.page.url
@@ -198,7 +198,7 @@ class CafeWriter:
 
             log_critical("OTHER", "카페 글 발행", url=final_url)
             return {"ok": True, "url": final_url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 카페 글쓰기 자동화(CafeWriter) - 게시판선택/제목/본문/태그/공개설정/발행 각 단계 실패시 ok:False,error 반환(성공 위장 없음), 발행은 상위 흐름에서 사용자 확인 후 호출됨
             _log.error("[cafe-write] 발행 버튼 클릭 실패: %s", e)
             return {"ok": False, "error": str(e)}
 

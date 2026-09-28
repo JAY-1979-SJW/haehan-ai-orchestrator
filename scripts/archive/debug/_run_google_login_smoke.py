@@ -1,6 +1,7 @@
 """Live Google login smoke — production domain only.
 No secret/token/cookie value output. Observe-only for Google auth screen.
 """
+
 from __future__ import annotations
 
 import json
@@ -37,7 +38,7 @@ def cookie_present(ctx, names: list) -> bool:
     try:
         cookies = ctx.cookies()
         return any(c["name"] in names for c in cookies)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
         return False
 
 
@@ -50,7 +51,7 @@ try:
         # 1. Login page
         try:
             page.goto(f"{APP_URL}/login", wait_until="networkidle", timeout=20000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
             page.goto(f"{APP_URL}/login", wait_until="domcontentloaded", timeout=20000)
         page.bring_to_front()
         time.sleep(3)  # React hydration wait
@@ -69,7 +70,7 @@ try:
                 if el.count() > 0:
                     google_btn = el.first
                     break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
                 pass
 
         result["google_button_found"] = google_btn is not None
@@ -80,12 +81,13 @@ try:
         def on_request(req):
             if "accounts.google.com" in req.url and "redirect_uri" in req.url:
                 import urllib.parse as up
+
                 try:
                     qs = up.parse_qs(up.urlparse(req.url).query)
                     uri = qs.get("redirect_uri", [""])[0]
                     if uri:
                         _observed[0] = uri
-                except Exception:
+                except Exception:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
                     pass
 
         page.on("request", on_request)
@@ -98,12 +100,12 @@ try:
                 with page.expect_navigation(wait_until="commit", timeout=15000):
                     google_btn.click(timeout=5000)
                 result["google_button_clicked"] = True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
                 # Navigation may have already completed
                 try:
                     google_btn.click(timeout=3000)
                     result["google_button_clicked"] = True
-                except Exception as e2:
+                except Exception as e2:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
                     result["error_message"] = f"btn_click_error: {str(e2)[:100]}"
 
         if not result["google_button_clicked"]:
@@ -116,6 +118,7 @@ try:
                 }""")
                 if csrf_token:
                     import json as _json
+
                     page.evaluate(f"""() => {{
                         const f = document.createElement('form');
                         f.method = 'POST';
@@ -132,7 +135,7 @@ try:
                         f.submit();
                     }}""")
                     result["google_button_clicked"] = True
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
                 result["error_message"] += f" csrf_fallback: {str(e)[:100]}"
 
         # 5. Wait for accounts.google.com or callback
@@ -154,8 +157,7 @@ try:
         observed_redirect_uri = _observed[0]
         result["redirect_uri_observed"] = observed_redirect_uri
         result["redirect_uri_correct"] = (
-            observed_redirect_uri == EXPECTED_REDIRECT_URI
-            or EXPECTED_REDIRECT_URI in page.url
+            observed_redirect_uri == EXPECTED_REDIRECT_URI or EXPECTED_REDIRECT_URI in page.url
         )
 
         # 7. Observe Google auth screen (no password entry)
@@ -163,13 +165,22 @@ try:
             time.sleep(2)
             try:
                 page_text = page.inner_text("body")[:3000]
-            except Exception:
+            except Exception:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
                 page_text = ""
 
-            has_account_chooser = any(t in page_text for t in [
-                "계정 선택", "Choose an account", "계속", "Continue",
-                "로그인", "Sign in", "@gmail.com", "@",
-            ])
+            has_account_chooser = any(
+                t in page_text
+                for t in [
+                    "계정 선택",
+                    "Choose an account",
+                    "계속",
+                    "Continue",
+                    "로그인",
+                    "Sign in",
+                    "@gmail.com",
+                    "@",
+                ]
+            )
             result["consent_or_account_screen"] = has_account_chooser
 
             # Wait up to 60s for user to complete Google auth manually
@@ -181,7 +192,12 @@ try:
                 if "auth/complete" in url:
                     result["complete_reached"] = True
                     break
-                if url.startswith(APP_URL) and "/login" not in url and "error" not in url.lower() and "accounts.google" not in url:
+                if (
+                    url.startswith(APP_URL)
+                    and "/login" not in url
+                    and "error" not in url.lower()
+                    and "accounts.google" not in url
+                ):
                     break
                 if "error" in url.lower() and "google" not in url:
                     result["error_message"] = f"error_url: {url[:150]}"
@@ -189,9 +205,7 @@ try:
                 time.sleep(1)
 
         # If already skipped to callback directly (existing session)
-        elif result["callback_reached"] or (
-            page.url.startswith(APP_URL) and "/login" not in page.url
-        ):
+        elif result["callback_reached"] or (page.url.startswith(APP_URL) and "/login" not in page.url):
             deadline3 = time.monotonic() + 15
             while time.monotonic() < deadline3:
                 url = page.url
@@ -215,20 +229,17 @@ try:
 
         # 9. Determine success
         final = result["final_url"]
-        result["login_success"] = (
-            result["session_cookie_present"]
-            or (
-                final.startswith(APP_URL)
-                and "/login" not in final
-                and "error" not in final.lower()
-                and result["callback_reached"]
-            )
+        result["login_success"] = result["session_cookie_present"] or (
+            final.startswith(APP_URL)
+            and "/login" not in final
+            and "error" not in final.lower()
+            and result["callback_reached"]
         )
 
         time.sleep(1)
         browser.close()
 
-except Exception as e:
+except Exception as e:  # noqa: BLE001 - 구글 로그인 흐름 UI 스모크 테스트(아카이브 디버그) - 쿠키는 이름 존재 여부만 bool 로 확인(값 노출 없음), 실패시 result 에 error 기록
     result["error_message"] = f"playwright_error: {str(e)[:300]}"
 
 print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -35,9 +35,9 @@ def fetch_robots_txt(domain: str, timeout: float = 5.0) -> str | None:
     """robots.txt 다운로드."""
     try:
         url = f"https://{domain}/robots.txt"
-        with urllib.request.urlopen(url, timeout=timeout) as r:  # noqa: S310
+        with urllib.request.urlopen(url, timeout=timeout) as r:
             return r.read().decode("utf-8", errors="ignore")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 robots.txt/sitemap.xml/DOM 구조 읽기전용 탐지기 - 실패시 None 또는 빈 dict 반환, 쓰기 없음
         return None
 
 
@@ -52,7 +52,7 @@ def fetch_sitemap_xml(sitemap_url: str, timeout: float = 5.0) -> str | None:
     try:
         with urllib.request.urlopen(sitemap_url, timeout=timeout) as r:  # noqa: S310
             return r.read().decode("utf-8", errors="ignore")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 robots.txt/sitemap.xml/DOM 구조 읽기전용 탐지기 - 실패시 None 또는 빈 dict 반환, 쓰기 없음
         return None
 
 
@@ -95,7 +95,7 @@ def detect_selectors_by_network(page) -> dict[str, list[str]]:
         # Network 요청 히스토리는 직접 접근 불가하므로
         # page.evaluate로 JavaScript에서 추출
         pass
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110, BLE001
         pass
 
     return {}
@@ -124,7 +124,7 @@ def detect_dom_selectors(page) -> dict[str, list[str]]:
                 count = len(page.query_selector_all(sel))
                 if count > 0:
                     mail_found.append({"selector": sel, "count": count})
-            except:  # noqa: E722, S110
+            except:  # noqa: S110, E722
                 pass
 
         if mail_found:
@@ -144,7 +144,7 @@ def detect_dom_selectors(page) -> dict[str, list[str]]:
                 count = len(page.query_selector_all(sel))
                 if count > 0:
                     folder_found.append({"selector": sel, "count": count})
-            except:  # noqa: E722, S110
+            except:  # noqa: S110, E722
                 pass
 
         if folder_found:
@@ -152,7 +152,7 @@ def detect_dom_selectors(page) -> dict[str, list[str]]:
 
         return selectors_result
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 robots.txt/sitemap.xml/DOM 구조 읽기전용 탐지기 - 실패시 None 또는 빈 dict 반환, 쓰기 없음
         print(f"  ✗ DOM 셀렉터 탐지 실패: {e}")
         return {}
 
@@ -177,7 +177,7 @@ def detect_page_structure(page) -> dict:
         }"""
         )
         return structure
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 robots.txt/sitemap.xml/DOM 구조 읽기전용 탐지기 - 실패시 None 또는 빈 dict 반환, 쓰기 없음
         return {}
 
 
@@ -218,7 +218,7 @@ def detect_sitemap(domain: str, page=None) -> SitemapInfo:
             structure = detect_page_structure(page)
             info.page_structure = structure
             print(f"✓ (동적={structure.get('isDynamic', False)})")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 robots.txt/sitemap.xml/DOM 구조 읽기전용 탐지기 - 실패시 None 또는 빈 dict 반환, 쓰기 없음
             print(f"✗ {e}")
 
         # 4. DOM 셀렉터
@@ -227,7 +227,7 @@ def detect_sitemap(domain: str, page=None) -> SitemapInfo:
             selectors = detect_dom_selectors(page)
             info.selectors = selectors
             print(f"✓ ({len(selectors)} 타입)")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 robots.txt/sitemap.xml/DOM 구조 읽기전용 탐지기 - 실패시 None 또는 빈 dict 반환, 쓰기 없음
             print(f"✗ {e}")
 
         # 5. API 엔드포인트 (HTML 분석)
@@ -237,7 +237,7 @@ def detect_sitemap(domain: str, page=None) -> SitemapInfo:
             endpoints = detect_api_endpoints(page_html, domain)
             info.api_endpoints = endpoints[:20]  # 처음 20개만
             print(f"✓ ({len(endpoints)} endpoints)")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 robots.txt/sitemap.xml/DOM 구조 읽기전용 탐지기 - 실패시 None 또는 빈 dict 반환, 쓰기 없음
             print(f"✗ {e}")
 
     return info
