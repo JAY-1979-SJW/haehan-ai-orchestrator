@@ -1,11 +1,11 @@
-import { test, expect, _electron as electron } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { launchApp } from "./launch_helper";
 
 // 사용자가 앱에서 직접 클릭하듯 진행하는 E2E.
 // 부작용 액션(메일 발송 / EUM 수집 / 주문 변경)은 제외 — 탐색·렌더·로그인·GPT 경로만 검증.
-const EXE = path.resolve(__dirname, "../../../dist-installer/win-unpacked/Haehan AI.exe");
 const SS = path.resolve(__dirname, "../../../../data/e2e_user_flow");
 
 test.setTimeout(240_000);
@@ -46,7 +46,7 @@ async function clickAndGo(ui: Page, label: string, urlPart: string): Promise<boo
 
 test("사용자 흐름 E2E — 앱 UI 직접 조작", async () => {
   fs.mkdirSync(SS, { recursive: true });
-  const app = await electron.launch({ executablePath: EXE, env: { ...process.env, HAEHAN_OWNER: "1" } });
+  const app = await launchApp({ HAEHAN_OWNER: "1" });
   const shell = await app.firstWindow();
   await shell.waitForLoadState("domcontentloaded", { timeout: 30_000 });
   console.log("✅ Electron 앱 기동");
