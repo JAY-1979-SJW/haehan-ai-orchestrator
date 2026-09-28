@@ -51,7 +51,7 @@ def _get_clubid(page: Page, cafe_url: str) -> str | None:
         m = re.search(r'"clubid"\s*:\s*"?(\d+)"?', html) or re.search(r"clubid=(\d+)", html)
         if m:
             return m.group(1)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 정규식 매칭 실패는 무시하고 None 반환 — 다음 폴백 로직으로 이어짐
         pass
     return None
 
@@ -77,7 +77,7 @@ def list_boards(page: Page, cafe_url: str) -> dict:
     try:
         frame = _goto_menu_management(page, clubid)
         names = frame.eval_on_selector_all(".edit_lst_box .menu_name", "els => els.map(e => e.textContent.trim())")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 카페 게시판 관리 자동화 — URL 파싱 실패는 None 반환, 목록조회/게시판추가 실패는 ok=False 에러 결과 반환할 뿐 삭제 동작 없음
         _log.error("[cafe-board] 목록 조회 실패: %s", e)
         return {"ok": False, "error": str(e)}
 
@@ -127,7 +127,7 @@ def add_board(
 
         frame.locator(".edit_btn_box a.btn_type_edt").first.click(timeout=5000)
         frame.wait_for_timeout(1500)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 네이버 카페 게시판 관리 자동화 — URL 파싱 실패는 None 반환, 목록조회/게시판추가 실패는 ok=False 에러 결과 반환할 뿐 삭제 동작 없음
         _log.error("[cafe-board] 게시판 추가 실패 (%s): %s", name, e)
         return {"ok": False, "error": str(e)}
 

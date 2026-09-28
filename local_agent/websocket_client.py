@@ -371,7 +371,7 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                 if _STATUS_SENDER_AVAILABLE:
                     try:
                         await run_user_present_status_send_once(ws)
-                    except Exception as _exc:
+                    except Exception as _exc:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
                         logger.warning("[ws] status send 실패 (무시): %s", type(_exc).__name__)
                 continue
 
@@ -421,7 +421,7 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                             "running_ack 파싱 실패 — 실행 포기 (task_id=%s)",
                             task_id_inner,
                         )
-                except Exception:
+                except Exception:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
                     logger.warning(
                         "running 전송 실패 — 실행 포기 (task_id=%s)",
                         task_id_inner,
@@ -474,7 +474,7 @@ async def run_forever(agent_id: str, device_token: str) -> None:
             raise
         except WebSocketDependencyMissing:
             raise
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
             logger.warning("WebSocket 세션 실패: %s | backoff=%.1fs", e, backoff)
             log_local_event("ws_session_error", error=str(e)[:200])
             jitter = random.uniform(0.0, backoff * 0.1)  # noqa: S311

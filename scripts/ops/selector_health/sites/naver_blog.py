@@ -24,17 +24,17 @@ def _open_publish_panel(page: Any) -> bool:
             return page.locator('.layer_popup__i0QOY.is_show__TMSLq, input[placeholder*="태그"]').first.is_visible(
                 timeout=800
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 블로그 셀렉터 헬스체크(읽기전용, 발행상태 존재여부만 확인) — 발행상태 확인/버튼클릭 시도 실패 시 False 반환할 뿐 실제 발행을 수행하지 않음
             return False
 
     if _is_open():
         return True
     try:
         page.locator("button.publish_btn__m9KHH").first.click(timeout=4000)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 블로그 셀렉터 헬스체크(읽기전용, 발행상태 존재여부만 확인) — 발행상태 확인/버튼클릭 시도 실패 시 False 반환할 뿐 실제 발행을 수행하지 않음
         try:
             page.get_by_role("button", name="발행", exact=True).first.click(timeout=4000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 블로그 셀렉터 헬스체크(읽기전용, 발행상태 존재여부만 확인) — 발행상태 확인/버튼클릭 시도 실패 시 False 반환할 뿐 실제 발행을 수행하지 않음
             return False
     time.sleep(1.2)
     return _is_open()

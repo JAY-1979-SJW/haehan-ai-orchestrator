@@ -79,7 +79,7 @@ def handle_access_block(
             page.click(f"button:has-text('{target_button}')")
             log.info(f"[EUM] 메시지 닫음: '{target_button}'")
             time.sleep(2)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - EUM 사이트 접근 복구 자동화 — 메시지창 닫기/복구 시도 실패는 무시하고 재시도 로직으로 넘어가거나 최종 실패를 result dict에 기록, 쓰기/삭제 동작 없음
             log.debug(f"[EUM] 메시지 닫기 실패: {e}")
 
     # 2단계: 대기
@@ -113,13 +113,13 @@ def handle_access_block(
                     target_button=target_button,
                     retry_count=retry_count + 1,
                 )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 메시지창 닫기 재시도 중 개별 실패는 무시하고 다음 재시도로 진행 — 읽기전용 접근복구
             pass
 
         result["recovered"] = True
         log.info("[EUM] 접근 복구 성공")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 사이트 접근 복구 자동화 — 메시지창 닫기/복구 시도 실패는 무시하고 재시도 로직으로 넘어가거나 최종 실패를 result dict에 기록, 쓰기/삭제 동작 없음
         result["last_error"] = str(e)
         log.error(f"[EUM] 복구 실패: {e}")
 

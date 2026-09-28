@@ -49,7 +49,7 @@ def check_a4(file_path: str) -> bool:
 
             try:
                 no_grid = not wb.Application.ActiveWindow.DisplayGridlines
-            except Exception:
+            except Exception:  # noqa: BLE001 - 엑셀 A4 인쇄설정 점검 스크립트(COM 자동화, 읽기전용 점검) — 그리드라인 속성 조회 실패는 기본값 True로 폴백, 전체 점검/AI검증 실행 실패는 오류 출력 후 False 반환
                 no_grid = True
 
             results = [
@@ -92,7 +92,7 @@ def check_a4(file_path: str) -> bool:
 
             return all_pass
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 엑셀 A4 인쇄설정 점검 스크립트(COM 자동화, 읽기전용 점검) — 그리드라인 속성 조회 실패는 기본값 True로 폴백, 전체 점검/AI검증 실행 실패는 오류 출력 후 False 반환
         print(f"[check_a4] ❌ 오류: {e}")
         return False
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
                 check=False,
                 env=os.environ.copy(),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 엑셀 A4 인쇄설정 점검 스크립트(COM 자동화, 읽기전용 점검) — 그리드라인 속성 조회 실패는 기본값 True로 폴백, 전체 점검/AI검증 실행 실패는 오류 출력 후 False 반환
             print(f"[check_a4] AI 검증 실행 실패: {e}")
 
     sys.exit(0 if ok else 1)

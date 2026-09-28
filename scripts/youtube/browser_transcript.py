@@ -4,21 +4,20 @@ This module reads only transcript text that is visible in the user's browser.
 It does not call hidden YouTube caption endpoints, unofficial transcript APIs,
 or store a full third-party transcript. The output is a derived summary report.
 """
+
 from __future__ import annotations
 
 import json
 import re
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.cdp_session_selector import select_cdp_session
 from security_utils import safe_preview
 
-from scripts.cdp_session_selector import select_cdp_session
-
 from .research import parse_youtube_video_id
-
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT_DIR = ROOT / "data" / "youtube_research_reports"
@@ -106,7 +105,7 @@ EXTRACT_VISIBLE_TRANSCRIPT_JS = r"""() => {
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _stamp() -> str:
@@ -267,7 +266,7 @@ def collect_visible_transcript_summary(
                 open_result = page.evaluate(OPEN_TRANSCRIPT_JS) or open_result
                 page.wait_for_timeout(1200)
         segments = page.evaluate(EXTRACT_VISIBLE_TRANSCRIPT_JS) or []
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 유튜브 자막 브라우저 추출(읽기전용) — 추출 실패 시 payload status를 blocked로 명시 기록, 브라우저/playwright 종료(cleanup) 실패는 무시할 뿐 쓰기 없음
         payload = summarize_visible_segments([], video_id=video_id, url=url)
         payload.update(
             {
@@ -285,12 +284,12 @@ def collect_visible_transcript_summary(
         try:
             if browser is not None:
                 browser.close()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 브라우저/playwright 종료(cleanup) 단계 실패는 무시 — 이미 작업이 끝난 뒤의 리소스 정리 실패일 뿐
             pass
         try:
             if playwright is not None:
                 playwright.stop()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 브라우저/playwright 종료(cleanup) 단계 실패는 무시 — 이미 작업이 끝난 뒤의 리소스 정리 실패일 뿐
             pass
 
     payload = summarize_visible_segments(list(segments)[:max_segments], video_id=video_id, url=url)

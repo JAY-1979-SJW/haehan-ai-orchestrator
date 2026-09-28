@@ -19,6 +19,7 @@ submit 버튼: button[type='submit']
   - 패스워드·쿠키·세션 토큰을 summary 에 포함 금지.
   - CAPTCHA / 2FA 자동 우회 금지.
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,12 +41,12 @@ _APPLY_URL = "https://developers.hiworks.com/apply"
 
 # name/id 기반 선택자 (selector 우선순위 2순위)
 _SELECTORS: dict[str, str] = {
-    "app_name":      "input[name='app_name']",
-    "company_name":  "input[name='company_name']",
-    "purpose":       "textarea[name='app_purpose']",
+    "app_name": "input[name='app_name']",
+    "company_name": "input[name='company_name']",
+    "purpose": "textarea[name='app_purpose']",
     "contact_email": "input[name='contact_email']",
-    "redirect_uri":  "input[name='redirect_uri']",
-    "service_url":   "input[name='service_url']",
+    "redirect_uri": "input[name='redirect_uri']",
+    "service_url": "input[name='service_url']",
 }
 
 # type=submit 은 Hiworks apply 폼 전용 제출 버튼 (페이지 내 유일)
@@ -72,8 +73,11 @@ class HiworksDevRegAdapter(DevRegAdapterBase):
         errors = validate_params(params)
         if errors:
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url="", error="; ".join(errors),
+                success=False,
+                summary="",
+                field_names=[],
+                target_url="",
+                error="; ".join(errors),
                 error_code=ErrorCode.FORM_FIELD_MISSING,
             )
 
@@ -89,17 +93,23 @@ class HiworksDevRegAdapter(DevRegAdapterBase):
 
         try:
             page.goto(_APPLY_URL, wait_until="networkidle")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 하이웍스 개발자 등록 폼 자동입력 스크립트 — 페이지 로드/필드 입력/제출 실패 시 에러코드가 담긴 실패 결과(dict)를 반환하거나 개별 필드 오류를 누적할 뿐, 결제·삭제·자격증명 노출 없음
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url=_APPLY_URL, error=f"페이지 로드 실패: {e}",
+                success=False,
+                summary="",
+                field_names=[],
+                target_url=_APPLY_URL,
+                error=f"페이지 로드 실패: {e}",
                 error_code=ErrorCode.PAGE_LOAD_FAILED,
             )
 
         if _is_login_redirect(page, _LOGIN_HINTS):
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url=_APPLY_URL, error="로그인이 필요합니다",
+                success=False,
+                summary="",
+                field_names=[],
+                target_url=_APPLY_URL,
+                error="로그인이 필요합니다",
                 error_code=ErrorCode.LOGIN_REQUIRED,
             )
 
@@ -112,14 +122,17 @@ class HiworksDevRegAdapter(DevRegAdapterBase):
             try:
                 page.fill(selector, str(value))
                 filled.append(field_name)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 하이웍스 개발자 등록 폼 자동입력 스크립트 — 페이지 로드/필드 입력/제출 실패 시 에러코드가 담긴 실패 결과(dict)를 반환하거나 개별 필드 오류를 누적할 뿐, 결제·삭제·자격증명 노출 없음
                 errors_fill.append(f"{field_name}: {e}")
                 logger.warning("하이웍스 폼 입력 실패 | field=%s | %s", field_name, e)
 
         if errors_fill:
             return FormFillResult(
-                success=False, summary="", field_names=filled,
-                target_url=page.url, error="; ".join(errors_fill),
+                success=False,
+                summary="",
+                field_names=filled,
+                target_url=page.url,
+                error="; ".join(errors_fill),
                 error_code=ErrorCode.PROVIDER_LAYOUT_CHANGED,
             )
 
@@ -134,7 +147,8 @@ class HiworksDevRegAdapter(DevRegAdapterBase):
         """제출 버튼 클릭 — run_dev_reg 의 승인 확인 후에만 호출된다."""
         if not _has_element(page, _SUBMIT_BTN):
             return SubmitResult(
-                success=False, result_summary="",
+                success=False,
+                result_summary="",
                 error="제출 버튼을 찾을 수 없습니다",
                 error_code=ErrorCode.SUBMIT_BUTTON_NOT_FOUND,
             )
@@ -148,6 +162,6 @@ class HiworksDevRegAdapter(DevRegAdapterBase):
                 success=True,
                 result_summary=f"제출 완료 (결과 확인 필요): {result_text[:200]}",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 하이웍스 개발자 등록 폼 자동입력 스크립트 — 페이지 로드/필드 입력/제출 실패 시 에러코드가 담긴 실패 결과(dict)를 반환하거나 개별 필드 오류를 누적할 뿐, 결제·삭제·자격증명 노출 없음
             logger.error("하이웍스 submit_form 실패: %s", e)
             return SubmitResult(success=False, result_summary="", error=str(e))

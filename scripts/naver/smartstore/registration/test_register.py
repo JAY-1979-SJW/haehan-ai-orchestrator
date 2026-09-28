@@ -34,7 +34,7 @@ def extract_first_product(page) -> dict:
     time.sleep(3)
     try:
         handle_page_popups(page, timeout_s=1.5)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 필드 테스트 스크립트(읽기전용 분석, 저장 버튼 클릭까지만 확인하고 실제 제출 안 함) — 팝업처리 실패 무시, 필드추출 실패는 에러로 기록
         pass
 
     # 상품 목록 추출
@@ -77,7 +77,7 @@ def extract_product_detail(page, product_url: str) -> dict:
     time.sleep(4)
     try:
         handle_page_popups(page, timeout_s=1.5)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 필드 테스트 스크립트(읽기전용 분석, 저장 버튼 클릭까지만 확인하고 실제 제출 안 함) — 팝업처리 실패 무시, 필드추출 실패는 에러로 기록
         pass
 
     # 페이지 스크롤로 모든 컨텐츠 로드
@@ -237,7 +237,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 필드 테스트 스크립트(읽기전용 분석, 저장 버튼 클릭까지만 확인하고 실제 제출 안 함) — 팝업처리 실패 무시, 필드추출 실패는 에러로 기록
         import traceback
 
         traceback.print_exc()

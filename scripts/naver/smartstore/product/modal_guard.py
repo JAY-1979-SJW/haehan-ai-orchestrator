@@ -52,7 +52,7 @@ def peek_modal(page: Any) -> dict | None:
     """현재 떠 있는 모달의 내용. 없으면 None."""
     try:
         return page.evaluate(_PEEK_JS)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 모달(팝업) 감지/닫기 읽기전용 유틸 — 평가/닫기 시도 실패는 None 반환 또는 루프 중단할 뿐 폼 데이터나 결제에 영향 없음
         return None
 
 
@@ -69,7 +69,7 @@ def dismiss_blocking_modals(page: Any, *, max_rounds: int = 15, settle_ms: int =
             break
         try:
             closed = page.evaluate(_DISMISS_ONE_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 모달(팝업) 감지/닫기 읽기전용 유틸 — 평가/닫기 시도 실패는 None 반환 또는 루프 중단할 뿐 폼 데이터나 결제에 영향 없음
             break
         if not closed:
             break
@@ -78,7 +78,7 @@ def dismiss_blocking_modals(page: Any, *, max_rounds: int = 15, settle_ms: int =
             seen.append(text)
         try:
             page.wait_for_timeout(settle_ms)
-        except Exception:
+        except Exception:  # noqa: BLE001 - wait_for_timeout 등 대기 호출 실패는 무시 — 모달 닫기 루프의 보조 대기 동작일 뿐
             pass
     return seen
 
