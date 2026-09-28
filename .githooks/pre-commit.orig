@@ -1,14 +1,16 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
 
 # staged .py 파일 목록
+# encoding 명시: Windows 기본 코드페이지(cp949)가 diff에 섞인 UTF-8 특수문자에서
+# reader 스레드를 죽이는 문제 방지(2026-09-28 실측 발견 — 이 문제로 훅이 크래시했었음).
 r = subprocess.run(
     ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
     cwd=str(ROOT), capture_output=True, text=True,
-    encoding="utf-8", errors="replace",  # Windows 기본 코드페이지(cp949)가 UTF-8 diff에서 깨지는 문제 방지(2026-09-28)
+    encoding="utf-8", errors="replace",
 )
 py_files = [f for f in r.stdout.splitlines() if f.endswith(".py")]
 

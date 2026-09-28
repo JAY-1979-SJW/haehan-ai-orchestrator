@@ -32,15 +32,24 @@ CHK="$TOP/.githooks/commit_checklist.py"
 [ -f "$CHK" ] || CHK="$TOP/scripts/ops/commit_checklist/commit_checklist.py"
 # 워크트리·다른 브랜치엔 사본이 없을 수 있어 설치 시점 원본 절대경로로 대체(없는 브랜치 커밋 전면차단 방지)
 [ -f "$CHK" ] || CHK="__CANON__"
-PY=python
-command -v python >/dev/null 2>&1 || PY=py
+# PATH 순서가 꼬여 bare python/python3 가 엉뚱한(패키지 없는) 인터프리터로 잡히거나
+# python3 가 Windows Store 실행 별칭 스텁으로 연결되는 PC가 있어(2026-09-28 실측),
+# py 런처로 버전을 명시할 수 있으면 그걸 우선한다.
+if command -v py >/dev/null 2>&1 && py -3.14 -c "pass" >/dev/null 2>&1; then
+  PY_BIN=py
+  PY_VER=-3.14
+else
+  PY_BIN=python
+  command -v python >/dev/null 2>&1 || PY_BIN=py
+  PY_VER=
+fi
 if [ -f "$CHK" ]; then
-  "$PY" "$CHK" || exit 1
+  "$PY_BIN" $PY_VER "$CHK" || exit 1
 else
   echo "[커밋 전 체크리스트] 검사기 없음: $CHK — 커밋 차단(설치 확인)"; exit 1
 fi
 if [ -f "$HOOK_DIR/pre-commit.orig" ]; then
-  "$HOOK_DIR/pre-commit.orig" "$@"
+  "$PY_BIN" $PY_VER "$HOOK_DIR/pre-commit.orig" "$@"
   exit $?
 fi
 exit 0
@@ -110,6 +119,8 @@ def main() -> int:
         try:
             print(install(Path(r), a.dry_run))
         except Exception as e:
+            # 여러 저장소를 순회 설치하는 CLI: 한 저장소가 어떤 이유로든(git 오류·권한·I/O 등)
+            # 실패해도 나머지 저장소는 계속 처리해야 한다 — 의도적으로 폭넓게 잡는다.
             print({"repo": r, "error": str(e)})
             rc = 1
     return rc
