@@ -8,33 +8,42 @@ fake 객체는 이번 단계에서도 절대 호출되어서는 안 되는 API �
 업로드, 쿠키, storage_state 등)이 호출되면 예외를 던진다. click/fill/
 select_option/mouse.wheel 은 의도된 실행 경로이므로 **호출만 기록**한다.
 """
+
 from __future__ import annotations
 
 import json
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 
 # ─── Fake Playwright 계층 ─────────────────────────────────────────────────
 
 # 본 단계 guarded 함수가 실수로 호출해서는 안 되는 API.
-_FORBIDDEN_METHODS = frozenset({
-    "set_input_files",
-    "check", "uncheck",
-    "drag_and_drop",
-    "press",
-    "keyboard",
-    "screenshot", "pdf",
-    "storage_state", "add_cookies", "cookies",
-    "expect_download", "save_as",
-    "request",
-    "evaluate", "evaluate_handle",
-    "on",
-})
+_FORBIDDEN_METHODS = frozenset(
+    {
+        "set_input_files",
+        "check",
+        "uncheck",
+        "drag_and_drop",
+        "press",
+        "keyboard",
+        "screenshot",
+        "pdf",
+        "storage_state",
+        "add_cookies",
+        "cookies",
+        "expect_download",
+        "save_as",
+        "request",
+        "evaluate",
+        "evaluate_handle",
+        "on",
+    }
+)
 
 
 class _ForbiddenCall(AssertionError):
@@ -43,9 +52,8 @@ class _ForbiddenCall(AssertionError):
 
 def _forbidden(name: str):
     def _raise(*_a, **_kw):
-        raise _ForbiddenCall(
-            f"forbidden stage-3 violation: {name} should not be called"
-        )
+        raise _ForbiddenCall(f"forbidden stage-3 violation: {name} should not be called")
+
     return _raise
 
 
@@ -180,6 +188,7 @@ def _make_fake_factory(
 
 # ─── 분류기 단위 테스트 ───────────────────────────────────────────────────
 
+
 def test_classify_safe_click_is_low() -> None:
     from local_agent.browser_actions import classify_browser_action
 
@@ -252,12 +261,21 @@ def test_classify_scroll_low() -> None:
     assert r["requires_approval"] is False
 
 
-@pytest.mark.parametrize("action", [
-    "submit_form", "upload_file", "download_file",
-    "delete", "approve", "payment",
-    "credential_submit", "password_fill",
-    "storage_state", "cookies",
-])
+@pytest.mark.parametrize(
+    "action",
+    [
+        "submit_form",
+        "upload_file",
+        "download_file",
+        "delete",
+        "approve",
+        "payment",
+        "credential_submit",
+        "password_fill",
+        "storage_state",
+        "cookies",
+    ],
+)
 def test_classify_blocked_actions(action: str) -> None:
     from local_agent.browser_actions import classify_browser_action
 
@@ -268,6 +286,7 @@ def test_classify_blocked_actions(action: str) -> None:
 
 
 # ─── 실행 게이트 — 성공 경로 ─────────────────────────────────────────────
+
 
 def test_safe_click_calls_page_click() -> None:
     from local_agent.browser_actions import (
@@ -353,6 +372,7 @@ def test_scroll_uses_mouse_wheel_only() -> None:
 
 
 # ─── 실행 게이트 — 차단 경로 ─────────────────────────────────────────────
+
 
 def test_save_button_click_requires_approval_and_never_clicks() -> None:
     from local_agent.browser_actions import (
@@ -469,10 +489,19 @@ def test_form_submit_is_blocked() -> None:
     assert log == []
 
 
-@pytest.mark.parametrize("banned_action", [
-    "upload_file", "download_file", "set_input_files",
-    "delete", "approve", "payment", "storage_state", "cookies",
-])
+@pytest.mark.parametrize(
+    "banned_action",
+    [
+        "upload_file",
+        "download_file",
+        "set_input_files",
+        "delete",
+        "approve",
+        "payment",
+        "storage_state",
+        "cookies",
+    ],
+)
 def test_banned_actions_never_execute(banned_action: str) -> None:
     from local_agent.browser_actions import (
         perform_browser_action_readwrite_guarded,
@@ -492,12 +521,16 @@ def test_banned_actions_never_execute(banned_action: str) -> None:
 
 # ─── URL 안전성 ──────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "http://localhost/",
-    "http://127.0.0.1/",
-    "http://192.168.1.1/",
-    "http://169.254.169.254/",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://localhost/",
+        "http://127.0.0.1/",
+        "http://192.168.1.1/",
+        "http://169.254.169.254/",
+    ],
+)
 def test_url_safety_blocks_private_network_default(url: str) -> None:
     from local_agent.browser_actions import (
         perform_browser_action_readwrite_guarded,
@@ -516,9 +549,14 @@ def test_url_safety_blocks_private_network_default(url: str) -> None:
     assert log == []  # 브라우저도 열리지 않음
 
 
-@pytest.mark.parametrize("url", [
-    "javascript:alert(1)", "file:///etc/passwd", "data:text/html,<h1>x</h1>",
-])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "javascript:alert(1)",
+        "file:///etc/passwd",
+        "data:text/html,<h1>x</h1>",
+    ],
+)
 def test_url_safety_blocks_dangerous_schemes(url: str) -> None:
     from local_agent.browser_actions import (
         perform_browser_action_readwrite_guarded,
@@ -537,6 +575,7 @@ def test_url_safety_blocks_dangerous_schemes(url: str) -> None:
 
 
 # ─── Playwright 미설치 ───────────────────────────────────────────────────
+
 
 def test_playwright_missing_graceful_fail() -> None:
     from local_agent.browser_actions import (
@@ -559,6 +598,7 @@ def test_playwright_missing_graceful_fail() -> None:
 
 
 # ─── 결과 위생 — 쿠키/토큰/비밀번호 값 미포함 ──────────────────────────
+
 
 def test_result_contains_no_sensitive_values() -> None:
     """password 값/쿠키/토큰 후보가 반환 dict 에 절대 포함되지 않는다."""
@@ -583,6 +623,7 @@ def test_result_contains_no_sensitive_values() -> None:
 
 # ─── close 체인 ───────────────────────────────────────────────────────────
 
+
 def test_page_context_browser_all_closed_on_safe_action() -> None:
     from local_agent.browser_actions import (
         perform_browser_action_readwrite_guarded,
@@ -605,8 +646,10 @@ def test_page_context_browser_all_closed_on_safe_action() -> None:
 
 # ─── 정적 검증 — 금지 패턴이 실행 코드에 없어야 한다 ───────────────────
 
+
 def test_browser_actions_source_has_no_mutating_network_calls() -> None:
     from pathlib import Path
+
     import local_agent.browser_actions as mod
 
     src = Path(mod.__file__).read_text(encoding="utf-8")
@@ -626,6 +669,7 @@ def test_browser_actions_source_has_no_mutating_network_calls() -> None:
 
 # ─── action 통합 — execute_action 경로 ──────────────────────────────────
 
+
 def test_action_web_click_guarded_safe(monkeypatch) -> None:
     from local_agent import browser_actions
     from local_agent.actions import execute_action
@@ -638,10 +682,13 @@ def test_action_web_click_guarded_safe(monkeypatch) -> None:
             "ok": True,
             "url": kwargs.get("url"),
             "action": kwargs.get("action"),
-            "risk": "low", "category": "safe_read",
+            "risk": "low",
+            "category": "safe_read",
             "classification": {
-                "risk": "low", "category": "safe_read",
-                "requires_approval": False, "reason": ["click:safe"],
+                "risk": "low",
+                "category": "safe_read",
+                "requires_approval": False,
+                "reason": ["click:safe"],
             },
             "approval_required": False,
             "action_executed": True,
@@ -678,8 +725,10 @@ def test_action_web_type_guarded_password_approval_required(monkeypatch) -> None
             "risk": "high",
             "category": "blocked",
             "classification": {
-                "risk": "high", "category": "blocked",
-                "requires_approval": True, "reason": ["selector_hint:password"],
+                "risk": "high",
+                "category": "blocked",
+                "requires_approval": True,
+                "reason": ["selector_hint:password"],
             },
             "approval_required": True,
             "action_executed": False,
@@ -718,10 +767,13 @@ def test_action_web_scroll_guarded_defaults(monkeypatch) -> None:
             "ok": True,
             "url": kwargs.get("url"),
             "action": "scroll",
-            "risk": "low", "category": "safe_read",
+            "risk": "low",
+            "category": "safe_read",
             "classification": {
-                "risk": "low", "category": "safe_read",
-                "requires_approval": False, "reason": ["scroll:low"],
+                "risk": "low",
+                "category": "safe_read",
+                "requires_approval": False,
+                "reason": ["scroll:low"],
             },
             "approval_required": False,
             "action_executed": True,

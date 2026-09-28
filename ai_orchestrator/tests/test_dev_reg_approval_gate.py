@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 import importlib
-import os
 import sys
 import threading
 import time as _time
@@ -25,7 +24,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────

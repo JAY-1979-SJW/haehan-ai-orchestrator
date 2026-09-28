@@ -1,9 +1,9 @@
-import os
 import sys
 import uuid
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 import ai_orchestrator.sites.gmail_reader as gr
 from ai_orchestrator.inbox import exists_by_external_id

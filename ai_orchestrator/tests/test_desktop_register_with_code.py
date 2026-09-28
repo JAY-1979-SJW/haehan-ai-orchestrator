@@ -7,18 +7,19 @@ mock urlopen으로 서버를 흉내내고:
   - cmd_register_with_code가 config에는 token을 저장하지 않고
     keyring(=fake)에만 저장하는지 확인
 """
+
 from __future__ import annotations
 
 import io
 import json
-import os
 import sys
+from pathlib import Path
 from unittest.mock import patch
 from urllib import error as _urlerr
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 from local_agent import agent as _agent
 from local_agent import desktop_config as _cfg
@@ -32,10 +33,13 @@ from local_agent.registration_client import (
 class _FakeResp:
     def __init__(self, body: bytes):
         self._body = body
+
     def __enter__(self):
         return self
+
     def __exit__(self, *a):
         return False
+
     def read(self):
         return self._body
 
@@ -45,9 +49,10 @@ def _ok_opener(payload: dict):
         assert req.method == "POST"
         assert "/api/v1/local-agents/register-with-code" in req.full_url
         # Authorization 헤더가 절대 들어가지 않아야 한다.
-        for h, _ in (req.headers.items() if hasattr(req.headers, "items") else []):
+        for h, _ in req.headers.items() if hasattr(req.headers, "items") else []:
             assert h.lower() != "authorization"
         return _FakeResp(json.dumps(payload).encode())
+
     return _opener
 
 
@@ -56,13 +61,19 @@ def test_register_with_code_success_returns_agent_id_and_token():
         "agent_id": "la-1234567890ab",
         "device_token": "dt-secret-xxx",
         "code_id": "rc-deadbeef0001",
-        "host": "test-pc", "os_name": "Windows 11", "version": "0.1.0",
+        "host": "test-pc",
+        "os_name": "Windows 11",
+        "version": "0.1.0",
         "registered_at": "2026-04-30T12:00:00",
-        "label": "lab", "allowed_actions": ["open_url"],
+        "label": "lab",
+        "allowed_actions": ["open_url"],
     }
     meta, token = register_with_code(
-        "https://srv.example", "RC-PLAINTEXT-XYZ",
-        host="test-pc", os_name="Windows 11", version="0.1.0",
+        "https://srv.example",
+        "RC-PLAINTEXT-XYZ",
+        host="test-pc",
+        os_name="Windows 11",
+        version="0.1.0",
         _opener=_ok_opener(payload),
     )
     assert meta.agent_id == "la-1234567890ab"
@@ -72,13 +83,21 @@ def test_register_with_code_success_returns_agent_id_and_token():
 
 def test_register_with_code_http_error_is_generic():
     def _err_opener(req, timeout=10):
-        raise _urlerr.HTTPError(req.full_url, 400,
-                                "Bad Request",
-                                {}, io.BytesIO(b'{"detail":{"code":"INVALID","registration_code":"PEEK"}}'))
+        raise _urlerr.HTTPError(
+            req.full_url,
+            400,
+            "Bad Request",
+            {},
+            io.BytesIO(b'{"detail":{"code":"INVALID","registration_code":"PEEK"}}'),
+        )
+
     with pytest.raises(RegistrationError) as ei:
         register_with_code(
-            "https://srv", "RC-X",
-            host="h", os_name="o", version="v",
+            "https://srv",
+            "RC-X",
+            host="h",
+            os_name="o",
+            version="v",
             _opener=_err_opener,
         )
     msg = ei.value.generic_message
@@ -90,26 +109,38 @@ def test_register_with_code_http_error_is_generic():
 def test_register_with_code_invalid_response():
     def _bad(req, timeout=10):
         return _FakeResp(b"not json")
+
     with pytest.raises(RegistrationError):
         register_with_code(
-            "https://srv", "RC-X",
-            host="h", os_name="o", version="v",
+            "https://srv",
+            "RC-X",
+            host="h",
+            os_name="o",
+            version="v",
             _opener=_bad,
         )
 
 
 # ─── cmd_register_with_code ──────────────────────────────────────────────
 
+
 class _FakeKeyring:
     def __init__(self):
         self._store = {}
+
     def get_keyring(self):
         be = type("B", (), {})()
         be.__class__.__name__ = "FakeBackend"
         return be
-    def set_password(self, s, u, p): self._store[(s, u)] = p
-    def get_password(self, s, u): return self._store.get((s, u))
-    def delete_password(self, s, u): self._store.pop((s, u), None)
+
+    def set_password(self, s, u, p):
+        self._store[(s, u)] = p
+
+    def get_password(self, s, u):
+        return self._store.get((s, u))
+
+    def delete_password(self, s, u):
+        self._store.pop((s, u), None)
 
 
 @pytest.fixture
@@ -125,19 +156,27 @@ def test_cmd_register_with_code_writes_config_without_secret(fake_kr, tmp_path, 
         "agent_id": "la-aaaaaaaaaaaa",
         "device_token": "dt-VERY-SECRET",
         "code_id": "rc-aaaaaaaa0001",
-        "host": "pc-1", "os_name": "Windows 11", "version": "0.1.0",
+        "host": "pc-1",
+        "os_name": "Windows 11",
+        "version": "0.1.0",
         "registered_at": "2026-04-30T12:00:00",
-        "label": "demo", "allowed_actions": ["open_url"],
+        "label": "demo",
+        "allowed_actions": ["open_url"],
     }
     with patch("local_agent.agent._register_with_code") as m:
         # m은 (meta, token) 튜플을 반환해야 한다 (실제 구현 시그니처 동일).
         from local_agent.registration_client import RegistrationResult
+
         m.return_value = (
             RegistrationResult(
-                agent_id=payload["agent_id"], code_id=payload["code_id"],
-                host=payload["host"], os_name=payload["os_name"],
-                version=payload["version"], registered_at=payload["registered_at"],
-                label=payload["label"], allowed_actions=payload["allowed_actions"],
+                agent_id=payload["agent_id"],
+                code_id=payload["code_id"],
+                host=payload["host"],
+                os_name=payload["os_name"],
+                version=payload["version"],
+                registered_at=payload["registered_at"],
+                label=payload["label"],
+                allowed_actions=payload["allowed_actions"],
             ),
             payload["device_token"],
         )
@@ -151,15 +190,13 @@ def test_cmd_register_with_code_writes_config_without_secret(fake_kr, tmp_path, 
     raw = cfg_path.read_text(encoding="utf-8")
     assert "dt-VERY-SECRET" not in raw
     assert "RC-PLAINTEXT-NEVER-LOG" not in raw
-    for k in ("device_token", "registration_code", "password",
-              "token_hash", "code_hash", "Authorization"):
+    for k in ("device_token", "registration_code", "password", "token_hash", "code_hash", "Authorization"):
         assert k not in raw
     parsed = json.loads(raw)
     assert parsed["agent_id"] == "la-aaaaaaaaaaaa"
 
     # token은 keyring(=fake)에 저장되어야 한다.
-    assert fake_kr.get_password("haehan-agent",
-                                "https://srv.example::la-aaaaaaaaaaaa") == "dt-VERY-SECRET"
+    assert fake_kr.get_password("haehan-agent", "https://srv.example::la-aaaaaaaaaaaa") == "dt-VERY-SECRET"
 
     out = capsys.readouterr().out
     assert "dt-VERY-SECRET" not in out
@@ -169,9 +206,10 @@ def test_cmd_register_with_code_writes_config_without_secret(fake_kr, tmp_path, 
 
 
 def test_cmd_register_with_code_failure_no_secret(fake_kr, capsys):
-    with patch("local_agent.agent._register_with_code",
-               side_effect=RegistrationError(http_status=400,
-                                             generic_message="invalid_registration_code")):
+    with patch(
+        "local_agent.agent._register_with_code",
+        side_effect=RegistrationError(http_status=400, generic_message="invalid_registration_code"),
+    ):
         rc = _agent.cmd_register_with_code(
             server_url="https://srv.example",
             registration_code="RC-PLAINTEXT-NEVER-LOG",
@@ -183,10 +221,15 @@ def test_cmd_register_with_code_failure_no_secret(fake_kr, capsys):
 
 def test_cmd_status_does_not_print_token(fake_kr, tmp_path, capsys):
     # config 저장
-    _cfg.save_config(_cfg.DesktopConfig(
-        server_url="https://srv.example", agent_id="la-zzz",
-        label="x", created_at="now", version="0.1.0",
-    ))
+    _cfg.save_config(
+        _cfg.DesktopConfig(
+            server_url="https://srv.example",
+            agent_id="la-zzz",
+            label="x",
+            created_at="now",
+            version="0.1.0",
+        )
+    )
     fake_kr.set_password("haehan-agent", "https://srv.example::la-zzz", "secret-token-XYZ")
     rc = _agent.cmd_status()
     assert rc == 0
@@ -199,10 +242,13 @@ def test_cmd_status_does_not_print_token(fake_kr, tmp_path, capsys):
 
 
 def test_cmd_status_token_missing_when_not_saved(fake_kr, capsys):
-    _cfg.save_config(_cfg.DesktopConfig(
-        server_url="https://srv.example", agent_id="la-no-token",
-        version="0.1.0",
-    ))
+    _cfg.save_config(
+        _cfg.DesktopConfig(
+            server_url="https://srv.example",
+            agent_id="la-no-token",
+            version="0.1.0",
+        )
+    )
     rc = _agent.cmd_status()
     assert rc == 0
     parsed = json.loads(capsys.readouterr().out)

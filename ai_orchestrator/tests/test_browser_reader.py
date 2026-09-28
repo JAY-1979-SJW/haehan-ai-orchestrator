@@ -4,15 +4,16 @@
 Playwright 팩토리(아래 ``_FakePlaywrightContext``) 를 ``_playwright_factory``
 로 주입하여 수행한다. Playwright 설치 여부와 무관하게 PASS 해야 한다.
 """
+
 from __future__ import annotations
 
 import json
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 
 # ─── Fake Playwright 계층 ──────────────────────────────────────────────────
@@ -23,17 +24,37 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 # screenshot/evaluate/cookies 등) 를 호출하면 ``_forbidden`` 가 호출되어
 # 테스트가 실패하도록 한다.
 
-_FORBIDDEN_METHODS = frozenset({
-    "click", "fill", "type", "press", "dblclick", "hover",
-    "select_option", "set_input_files", "tap",
-    "check", "uncheck", "drag_and_drop",
-    "keyboard", "mouse", "touchscreen",
-    "evaluate", "evaluate_handle",
-    "screenshot", "pdf",
-    "on", "expect_download", "expect_popup",
-    "storage_state", "add_cookies", "cookies",
-    "request", "send_keys",
-})
+_FORBIDDEN_METHODS = frozenset(
+    {
+        "click",
+        "fill",
+        "type",
+        "press",
+        "dblclick",
+        "hover",
+        "select_option",
+        "set_input_files",
+        "tap",
+        "check",
+        "uncheck",
+        "drag_and_drop",
+        "keyboard",
+        "mouse",
+        "touchscreen",
+        "evaluate",
+        "evaluate_handle",
+        "screenshot",
+        "pdf",
+        "on",
+        "expect_download",
+        "expect_popup",
+        "storage_state",
+        "add_cookies",
+        "cookies",
+        "request",
+        "send_keys",
+    }
+)
 
 
 class _ForbiddenCall(AssertionError):
@@ -42,9 +63,8 @@ class _ForbiddenCall(AssertionError):
 
 def _forbidden(name: str):
     def _raise(*_a, **_kw):
-        raise _ForbiddenCall(
-            f"forbidden read-only violation: {name} should not be called"
-        )
+        raise _ForbiddenCall(f"forbidden read-only violation: {name} should not be called")
+
     return _raise
 
 
@@ -170,15 +190,19 @@ def _make_fake_factory(
 
 # ─── URL 안전성 ────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "file:///etc/passwd",
-    "javascript:alert(1)",
-    "data:text/html,<h1>x</h1>",
-    "about:blank",
-    "chrome://settings",
-    "edge://settings",
-    "ftp://example.com/",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc/passwd",
+        "javascript:alert(1)",
+        "data:text/html,<h1>x</h1>",
+        "about:blank",
+        "chrome://settings",
+        "edge://settings",
+        "ftp://example.com/",
+    ],
+)
 def test_open_url_blocks_dangerous_schemes(url: str) -> None:
     from local_agent.browser_reader import open_url_readonly
 
@@ -186,18 +210,23 @@ def test_open_url_blocks_dangerous_schemes(url: str) -> None:
     r = open_url_readonly(url)
     assert r["ok"] is False
     assert r["error_code"] in {
-        "URL_SCHEME_BLOCKED", "URL_NO_HOST", "URL_PARSE_FAILED",
+        "URL_SCHEME_BLOCKED",
+        "URL_NO_HOST",
+        "URL_PARSE_FAILED",
     }
 
 
-@pytest.mark.parametrize("url", [
-    "http://localhost/",
-    "http://127.0.0.1/",
-    "http://10.0.0.5/",
-    "http://192.168.1.1/",
-    "http://169.254.169.254/latest/meta-data/",
-    "http://[::1]/",
-])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://localhost/",
+        "http://127.0.0.1/",
+        "http://10.0.0.5/",
+        "http://192.168.1.1/",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://[::1]/",
+    ],
+)
 def test_open_url_blocks_private_network_by_default(url: str) -> None:
     from local_agent.browser_reader import open_url_readonly
 
@@ -218,16 +247,19 @@ def test_open_url_private_network_never_reaches_factory() -> None:
 
 # ─── Playwright 미설치 ─────────────────────────────────────────────────────
 
+
 def test_browser_dependency_missing_returns_error_code() -> None:
     from local_agent.browser_reader import (
-        BrowserDependencyMissing, open_url_readonly,
+        BrowserDependencyMissing,
+        open_url_readonly,
     )
 
     def bad_factory():
         raise BrowserDependencyMissing("playwright not installed")
 
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=bad_factory,
+        "https://example.com/",
+        _playwright_factory=bad_factory,
     )
     assert r["ok"] is False
     assert r["error_code"] == "BROWSER_DEPENDENCY_MISSING"
@@ -235,6 +267,7 @@ def test_browser_dependency_missing_returns_error_code() -> None:
 
 
 # ─── 기본 수집 ─────────────────────────────────────────────────────────────
+
 
 def test_basic_title_current_url_and_content_collected() -> None:
     from local_agent.browser_reader import open_url_readonly
@@ -245,7 +278,8 @@ def test_basic_title_current_url_and_content_collected() -> None:
         title="Home",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True
     assert r["title"] == "Home"
@@ -308,7 +342,8 @@ def test_analyze_html_structure_is_wired_in() -> None:
         title="T",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True
     struct = r["page_structure"]
@@ -324,7 +359,9 @@ def test_html_length_truncation() -> None:
 
     big_html = "<html><body>" + ("A" * 2000) + "</body></html>"
     factory, _log = _make_fake_factory(
-        html=big_html, landed_url="https://example.com/", title="T",
+        html=big_html,
+        landed_url="https://example.com/",
+        title="T",
     )
     r = open_url_readonly(
         "https://example.com/",
@@ -337,20 +374,19 @@ def test_html_length_truncation() -> None:
 
 # ─── 로그인 필요 추정 ──────────────────────────────────────────────────────
 
+
 def test_login_password_input_detected() -> None:
     from local_agent.browser_reader import open_url_readonly
 
-    html = (
-        "<html><body>"
-        "<form><input name='user' type='text'>"
-        "<input name='pw' type='password'></form>"
-        "</body></html>"
-    )
+    html = "<html><body><form><input name='user' type='text'><input name='pw' type='password'></form></body></html>"
     factory, _log = _make_fake_factory(
-        html=html, landed_url="https://example.com/login", title="",
+        html=html,
+        landed_url="https://example.com/login",
+        title="",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True
     assert r["login_required_hint"] is True
@@ -360,15 +396,15 @@ def test_login_password_input_detected() -> None:
 def test_login_keyword_detected() -> None:
     from local_agent.browser_reader import open_url_readonly
 
-    html = (
-        "<html><head><title>회원 로그인</title></head>"
-        "<body><h1>로그인</h1></body></html>"
-    )
+    html = "<html><head><title>회원 로그인</title></head><body><h1>로그인</h1></body></html>"
     factory, _log = _make_fake_factory(
-        html=html, landed_url="https://example.com/", title="회원 로그인",
+        html=html,
+        landed_url="https://example.com/",
+        title="회원 로그인",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True
     assert r["login_required_hint"] is True
@@ -380,10 +416,13 @@ def test_no_login_detection_for_plain_page() -> None:
 
     html = "<html><body><h1>Welcome</h1><p>Hello</p></body></html>"
     factory, _log = _make_fake_factory(
-        html=html, landed_url="https://example.com/", title="Welcome",
+        html=html,
+        landed_url="https://example.com/",
+        title="Welcome",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True
     assert r["login_required_hint"] is False
@@ -391,6 +430,7 @@ def test_no_login_detection_for_plain_page() -> None:
 
 
 # ─── 모달 후보 ────────────────────────────────────────────────────────────
+
 
 def test_modal_candidates_detected() -> None:
     from local_agent.browser_reader import open_url_readonly
@@ -404,17 +444,22 @@ def test_modal_candidates_detected() -> None:
         "</body></html>"
     )
     factory, _log = _make_fake_factory(
-        html=html, landed_url="https://example.com/", title="",
+        html=html,
+        landed_url="https://example.com/",
+        title="",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True
     reasons = {c["reason"] for c in r["modal_candidates"]}
     assert "role_dialog" in reasons
-    assert any(reason.startswith("class_or_id:popup") for reason in reasons) \
-        or any(reason.startswith("class_or_id:modal") for reason in reasons) \
+    assert (
+        any(reason.startswith("class_or_id:popup") for reason in reasons)
+        or any(reason.startswith("class_or_id:modal") for reason in reasons)
         or any(reason.startswith("class_or_id:layer") for reason in reasons)
+    )
     assert any(r_.startswith("close_button:") for r_ in reasons)
 
 
@@ -422,16 +467,20 @@ def test_modal_detection_handles_empty_html() -> None:
     from local_agent.browser_reader import open_url_readonly
 
     factory, _log = _make_fake_factory(
-        html="", landed_url="https://example.com/", title="",
+        html="",
+        landed_url="https://example.com/",
+        title="",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True
     assert r["modal_candidates"] == []
 
 
 # ─── 민감정보 미포함 ──────────────────────────────────────────────────────
+
 
 def test_result_contains_no_sensitive_tokens_or_full_html() -> None:
     from local_agent.browser_reader import open_url_readonly
@@ -450,14 +499,17 @@ def test_result_contains_no_sensitive_tokens_or_full_html() -> None:
         "</body></html>"
     )
     factory, _log = _make_fake_factory(
-        html=html, landed_url="https://example.com/", title="",
+        html=html,
+        landed_url="https://example.com/",
+        title="",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     s = json.dumps(r, ensure_ascii=False)
     for leak in (
-        unique_marker,            # body 원문이 그대로 들어가지 않음
+        unique_marker,  # body 원문이 그대로 들어가지 않음
         "TOP_SECRET_PW_9999",
         "Bearer XYZ_TOKEN",
         "SESSION_DEADBEEF",
@@ -471,12 +523,14 @@ def test_result_contains_no_sensitive_tokens_or_full_html() -> None:
 
 # ─── close 체인 ─────────────────────────────────────────────────────────────
 
+
 def test_page_context_browser_all_closed() -> None:
     from local_agent.browser_reader import open_url_readonly
 
     factory, log = _make_fake_factory()
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True
     names = [e[0] for e in log if isinstance(e, tuple)]
@@ -501,7 +555,10 @@ def test_close_chain_called_even_on_goto_failure() -> None:
     # 직접 접근을 위해 fake 체인을 수동 구성한다.
     fail_log: list = []
     page = _FakePage(
-        "<html></html>", "https://example.com/", "T", fail_log,
+        "<html></html>",
+        "https://example.com/",
+        "T",
+        fail_log,
     )
 
     def _goto_fail(*_a, **_kw):
@@ -516,7 +573,8 @@ def test_close_chain_called_even_on_goto_failure() -> None:
         return _FakePlaywrightContext(browser, fail_log)
 
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=fail_factory,
+        "https://example.com/",
+        _playwright_factory=fail_factory,
     )
     assert r["ok"] is False
     assert r["error_code"] == "BROWSER_OPEN_FAILED"
@@ -527,6 +585,7 @@ def test_close_chain_called_even_on_goto_failure() -> None:
 
 
 # ─── 금지 API 미호출 ─────────────────────────────────────────────────────
+
 
 def test_no_forbidden_interaction_methods_invoked_on_fakes() -> None:
     """fake 객체는 read-only 위반 API 가 호출되면 예외를 던진다.
@@ -542,7 +601,8 @@ def test_no_forbidden_interaction_methods_invoked_on_fakes() -> None:
         title="",
     )
     r = open_url_readonly(
-        "https://example.com/", _playwright_factory=factory,
+        "https://example.com/",
+        _playwright_factory=factory,
     )
     assert r["ok"] is True  # 위반이 있었다면 _ForbiddenCall 이 터졌을 것
 
@@ -550,6 +610,7 @@ def test_no_forbidden_interaction_methods_invoked_on_fakes() -> None:
 def test_browser_reader_source_has_no_mutating_calls() -> None:
     """browser_reader.py 에 read-only 위반 API 호출 패턴이 실제로 없어야 한다."""
     from pathlib import Path
+
     import local_agent.browser_reader as br
 
     src = Path(br.__file__).read_text(encoding="utf-8")
@@ -557,10 +618,10 @@ def test_browser_reader_source_has_no_mutating_calls() -> None:
     # NOTE: 아래 토큰들은 read-only 위반이 될 수 있는 API 호출 패턴이다.
     # 이 테스트는 production code 에 이런 호출이 남아있지 않은지 정적으로 검증한다.
     forbidden_patterns = [
-        "." "click" "(",
-        "." "fill" "(",
-        "." "type" "(",
-        "." "press" "(",
+        ".click(",
+        ".fill(",
+        ".type(",
+        ".press(",
         "select_option",
         "set_input_files",
         "storage_state",
@@ -575,6 +636,7 @@ def test_browser_reader_source_has_no_mutating_calls() -> None:
 
 
 # ─── action 통합 ──────────────────────────────────────────────────────────
+
 
 def test_action_web_open_url_readonly_happy_path(monkeypatch) -> None:
     from local_agent import browser_reader
@@ -596,8 +658,12 @@ def test_action_web_open_url_readonly_happy_path(monkeypatch) -> None:
             "page_structure": {
                 "ok": True,
                 "counts": {
-                    "headings": 0, "links": 0, "buttons": 0,
-                    "inputs": 0, "forms": 0, "tables": 0,
+                    "headings": 0,
+                    "links": 0,
+                    "buttons": 0,
+                    "inputs": 0,
+                    "forms": 0,
+                    "tables": 0,
                 },
             },
             "summary": "title=Home links=0 buttons=0 forms=0 tables=0",
@@ -631,11 +697,14 @@ def test_action_default_allow_private_network_false(monkeypatch) -> None:
     def fake_open(**kwargs):
         captured.append(dict(kwargs))
         return {
-            "ok": True, "url": kwargs.get("url"),
-            "current_url": "", "title": "",
+            "ok": True,
+            "url": kwargs.get("url"),
+            "current_url": "",
+            "title": "",
             "html_truncated": False,
             "login_required_hint": False,
-            "login_reason": [], "modal_candidates": [],
+            "login_reason": [],
+            "modal_candidates": [],
             "page_structure": {"ok": True, "counts": {}},
             "summary": "",
         }
@@ -643,7 +712,8 @@ def test_action_default_allow_private_network_false(monkeypatch) -> None:
     monkeypatch.setattr(browser_reader, "open_url_readonly", fake_open)
 
     execute_action(
-        "web_open_url_readonly", {"url": "https://example.com/"},
+        "web_open_url_readonly",
+        {"url": "https://example.com/"},
     )
     assert captured, "factory was never called"
     assert captured[0]["allow_private_network"] is False
@@ -727,7 +797,8 @@ def test_action_web_open_url_readonly_propagates_error_code(monkeypatch) -> None
     monkeypatch.setattr(browser_reader, "open_url_readonly", fake_open)
 
     r = execute_action(
-        "web_open_url_readonly", {"url": "http://127.0.0.1/"},
+        "web_open_url_readonly",
+        {"url": "http://127.0.0.1/"},
     )
     assert r.success is False
     assert r.error_code == "URL_HOST_BLOCKED"
