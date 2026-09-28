@@ -38,7 +38,7 @@ import json
 import urllib.error
 import urllib.request
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -126,10 +126,8 @@ class CDPSession:
         """현재 Chrome의 모든 탭 정보 (URL/title) 반환. 사용자 기존 탭 포함."""
         result = []
         for p in self.context.pages:
-            try:
+            with suppress(Exception):
                 result.append({"url": p.url, "title": p.title()})
-            except Exception:  # noqa: S110, BLE001
-                pass
         return result
 
 
@@ -182,12 +180,8 @@ def open_cdp_session(
         finally:
             # AI가 연 탭만 닫고 Chrome 자체는 유지
             session.close_opened_tabs()
-            try:
+            with suppress(Exception):
                 browser.close()  # CDP 연결만 끊음, Chrome 종료 X
-            except Exception:  # noqa: S110, BLE001
-                pass
     finally:
-        try:
+        with suppress(Exception):
             pw.stop()
-        except Exception:  # noqa: S110, BLE001
-            pass

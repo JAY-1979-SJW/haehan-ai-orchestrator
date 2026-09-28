@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Callable
+from contextlib import suppress
 from typing import Any
 
 from ai_orchestrator.local_agent.generic_selector_discovery import discover_selectors
@@ -216,10 +217,8 @@ def run_agent(
 
     # STEP 10: learned profile 저장
     if save_learned and auto_steps:
-        try:
+        with suppress(Exception):
             _update_learned_profile(host, site_type, plan, selectors)
-        except Exception:  # noqa: S110, BLE001
-            pass  # 학습 저장 실패는 무시
 
     return _build_agent_result(
         task_id=task_id,

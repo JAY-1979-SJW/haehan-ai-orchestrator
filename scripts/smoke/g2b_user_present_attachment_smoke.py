@@ -17,6 +17,7 @@ import json
 import os
 import sys
 import uuid
+from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -122,11 +123,9 @@ def smoke_one(candidate: dict, headed: bool = True) -> dict:
                 url = candidate["file_url"]
                 # download event 대기
                 with page.expect_download(timeout=30000) as dl_info:
-                    try:
+                    # goto 실패해도 download가 트리거됐을 수 있음
+                    with suppress(Exception):
                         page.goto(url, timeout=30000, wait_until="domcontentloaded")
-                    except Exception:  # noqa: BLE001 - 나라장터(G2B) 첨부파일 다운로드 스모크테스트(사용자 입회 하 read-only 검증) — goto 실패해도 download 이벤트가 이미 트리거됐을 수 있어 무시, 차단사유 추정을 위한 페이지 정보 조회 실패는 빈 문자열로 폴백
-                        # goto 실패해도 download가 트리거됐을 수 있음
-                        pass
                 download = dl_info.value
                 # 안전 파일명 — bid_ntce_no + ord + file_ext
                 safe_name = f"{candidate['bid_ntce_no']}_{candidate['bid_ntce_ord']}_{download.suggested_filename}"

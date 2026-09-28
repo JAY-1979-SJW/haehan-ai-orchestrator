@@ -13,6 +13,7 @@ URL: https://mybox.naver.com/
 from __future__ import annotations
 
 import time
+from contextlib import suppress
 from pathlib import Path
 
 from playwright.sync_api import Page
@@ -37,10 +38,8 @@ class NaverMyBox:
             return False
         self.page.goto(MYBOX_URL, timeout=20000, wait_until="domcontentloaded")
         time.sleep(3)
-        try:
+        with suppress(Exception):
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 네이버 마이박스 파일 목록/업로드/검색 — 모든 except가 로그를 남기고 {ok: False} 또는 빈 리스트를 반환, 파일 삭제 등 위험 동작 없음.
-            pass
         return True
 
     def list_files(self, limit: int = 50) -> list[dict]:

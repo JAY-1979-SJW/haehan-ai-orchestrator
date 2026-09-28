@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -374,10 +375,8 @@ def api_summary(
     my_cafes_path = _CAFE_DIR / "my_cafes.json"
     my_cafes_count = 0
     if my_cafes_path.exists():
-        try:
+        with contextlib.suppress(Exception):
             my_cafes_count = len(json.loads(my_cafes_path.read_text(encoding="utf-8")))
-        except Exception:  # noqa: S110, BLE001
-            pass
 
     raw_path = _latest_file("raw_articles_*.json")
     raw_count = 0

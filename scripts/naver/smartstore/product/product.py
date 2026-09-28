@@ -31,6 +31,7 @@ URL: https://sell.smartstore.naver.com/#/products/standard-group-product/create
 from __future__ import annotations
 
 import time
+from contextlib import suppress
 from pathlib import Path
 
 from playwright.sync_api import Page
@@ -92,7 +93,7 @@ class ProductRegister:
         주의: 너무 광범위하게 hide하면 input의 부모도 사라짐.
         '.pc-fixed-area.navbar-fixed-bottom' 정확 조합만 hide.
         """
-        try:
+        with suppress(Exception):
             self.page.evaluate("""
             (() => {
                 // 정확한 조합만 hide
@@ -109,12 +110,10 @@ class ProductRegister:
                 });
             })();
             """)
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
-            pass
 
     def _show_fixed_bar(self) -> None:
         """fixed 저장 바 복원."""
-        try:
+        with suppress(Exception):
             self.page.evaluate("""
             (() => {
                 document.querySelectorAll('.pc-fixed-area.navbar-fixed-bottom').forEach(el => {
@@ -125,8 +124,6 @@ class ProductRegister:
                 });
             })();
             """)
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속(2026-09-28 검토)
-            pass
 
     def _ensure_opened(self) -> bool:
         if self._opened:
