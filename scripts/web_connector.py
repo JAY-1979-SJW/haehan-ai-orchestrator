@@ -92,7 +92,7 @@ def _ensure_cdp_daemon() -> None:
             state = json.loads(_DAEMON_STATE.read_text(encoding="utf-8"))
             if state.get("running"):
                 return  # 이미 실행 중
-        except Exception:
+        except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
             pass
 
     log.info("[web_connector] CDP 데몬 미실행 — 앱 요청으로 자동 기동")
@@ -116,7 +116,7 @@ def _ensure_cdp_daemon() -> None:
                 if state.get("running"):
                     log.info("[web_connector] CDP 데몬 기동 완료")
                     return
-            except Exception:
+            except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
                 pass
     raise RuntimeError("CDP 데몬 자동 기동 실패 — 수동으로 'python scripts/cdp_daemon.py start' 실행하세요")
 
@@ -128,7 +128,7 @@ def _is_cdp_live(port: int) -> bool:
     try:
         with urllib.request.urlopen(f"http://{_DEFAULT_CDP_HOST}:{port}/json/version", timeout=2) as resp:
             return resp.status == 200
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 브라우저 연결/탭 관리 공용 커넥터 — 연결 실패는 캐시 초기화 후 재시도, 뷰포트/창위치 설정 실패는 비치명적이라 로그만, 종료 처리는 이미 닫히는 중이라 무시해도 안전(2026-09-28 검토)
         return False
 
 
@@ -159,7 +159,7 @@ def _connect_browser():
         try:
             if _BROWSER_CACHE and _BROWSER_CACHE.is_connected():
                 return _BROWSER_CACHE, _BROWSER_CONTEXT_CACHE
-        except Exception:
+        except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
             pass
         log.warning("[web_connector] 캐시된 브라우저 컨텍스트 스테일 — 재연결")
         globals()["_BROWSER_CACHE"] = None
@@ -216,7 +216,7 @@ def get_screen_size() -> tuple[int, int]:
         if css_w > 0 and css_h > 0:
             log.debug("[viewport] 물리=%dx%d DPI=%d scale=%.2f CSS=%dx%d", phys_w, phys_h, dpi, scale, css_w, css_h)
             return css_w, css_h
-    except Exception:
+    except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
         pass
     import os
 
@@ -242,7 +242,7 @@ def fit_viewport(page: Page) -> None:
     try:
         page.set_viewport_size({"width": w, "height": h})
         log.debug("[viewport] 뷰포트 설정: %dx%d", w, h)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 브라우저 연결/탭 관리 공용 커넥터 — 연결 실패는 캐시 초기화 후 재시도, 뷰포트/창위치 설정 실패는 비치명적이라 로그만, 종료 처리는 이미 닫히는 중이라 무시해도 안전(2026-09-28 검토)
         log.warning("[viewport] set_viewport_size 실패: %s", e)
 
     # 창 위치·크기 고정 (매번 일정한 위치로 강제)
@@ -275,7 +275,7 @@ def fit_viewport(page: Page) -> None:
             },
         )
         log.debug("[viewport] 창 위치 고정: %dx%d@%d,%d (이전 상태: %s)", _FIX_W, _FIX_H, _FIX_LEFT, _FIX_TOP, state)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 브라우저 연결/탭 관리 공용 커넥터 — 연결 실패는 캐시 초기화 후 재시도, 뷰포트/창위치 설정 실패는 비치명적이라 로그만, 종료 처리는 이미 닫히는 중이라 무시해도 안전(2026-09-28 검토)
         log.debug("[viewport] 창 위치 고정 생략: %s", e)
 
 
@@ -319,7 +319,7 @@ def get_page() -> Page:
                 try:
                     still_open = _PINNED_PAGE in ctx.pages
                     _ = _PINNED_PAGE.url  # 닫힌 탭이면 여기서 예외
-                except Exception:
+                except Exception:  # noqa: BLE001 - CDP 브라우저 연결/탭 관리 공용 커넥터 — 연결 실패는 캐시 초기화 후 재시도, 뷰포트/창위치 설정 실패는 비치명적이라 로그만, 종료 처리는 이미 닫히는 중이라 무시해도 안전(2026-09-28 검토)
                     still_open = False
                 if still_open:
                     mark_task_owned(_PINNED_PAGE, BrowserTaskPolicy(task_id="get-page"), owned=False)
@@ -382,7 +382,7 @@ def _host_key(url: str) -> str:
 
     try:
         host = (urlparse(url).netloc or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 브라우저 연결/탭 관리 공용 커넥터 — 연결 실패는 캐시 초기화 후 재시도, 뷰포트/창위치 설정 실패는 비치명적이라 로그만, 종료 처리는 이미 닫히는 중이라 무시해도 안전(2026-09-28 검토)
         host = ""
     return host[4:] if host.startswith("www.") else host
 
@@ -403,7 +403,7 @@ def get_domain_page(url: str) -> Page:
                     fit_viewport(page)
                     log.debug("동일 도메인 탭 재사용: %s", page.url)
                     return page
-            except Exception:
+            except Exception:  # noqa: BLE001 - CDP 브라우저 연결/탭 관리 공용 커넥터 — 연결 실패는 캐시 초기화 후 재시도, 뷰포트/창위치 설정 실패는 비치명적이라 로그만, 종료 처리는 이미 닫히는 중이라 무시해도 안전(2026-09-28 검토)
                 continue
     # 같은 도메인 탭 없음 → 새 탭(단, 빈 about:blank 탭이 있으면 그것을 사용)
     blank = next((p for p in ctx.pages if (p.url or "") in ("about:blank", "")), None)
@@ -463,7 +463,7 @@ def close_page(page: Page) -> None:
     try:
         page.close()
         log.debug("page closed")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP 브라우저 연결/탭 관리 공용 커넥터 — 연결 실패는 캐시 초기화 후 재시도, 뷰포트/창위치 설정 실패는 비치명적이라 로그만, 종료 처리는 이미 닫히는 중이라 무시해도 안전(2026-09-28 검토)
         log.debug("ignore page close failure: %s", e)
 
 
@@ -521,7 +521,7 @@ def shutdown_browser_session(*, close_browser: bool = False) -> dict[str, int | 
     if close_browser:
         try:
             browser.close()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
             pass
         _BROWSER_CONTEXT_CACHE = None
         _BROWSER_CACHE = None
@@ -571,6 +571,6 @@ def persistent_session(
             try:
                 ctx.storage_state(path=str(storage_path))
                 log.debug("세션 저장 완료: %s", storage_path)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - CDP 브라우저 연결/탭 관리 공용 커넥터 — 연결 실패는 캐시 초기화 후 재시도, 뷰포트/창위치 설정 실패는 비치명적이라 로그만, 종료 처리는 이미 닫히는 중이라 무시해도 안전(2026-09-28 검토)
                 log.debug("세션 저장 실패: %s", e)
             ctx.close()

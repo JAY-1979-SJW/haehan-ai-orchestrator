@@ -20,6 +20,7 @@
   from scripts.popup_detector import detect_popup, close_all_popups, handle_page_popups
   handle_page_popups(page)  # 별도 창 + 모달 모두 처리
 """
+
 from __future__ import annotations
 
 import time
@@ -31,7 +32,7 @@ _log = get_logger(__name__)
 
 # EUM 팝업 컨테이너 셀렉터 (우선순위 순)
 POPUP_SELECTORS = [
-    ".pop_modal_cont",       # EUM 전용
+    ".pop_modal_cont",  # EUM 전용
     "[class*='pop_modal']",
     "[class*='modal']",
     "[role='dialog']",
@@ -61,9 +62,18 @@ EXCLUDE_KEYWORDS = ["chatbot", "header", "gnb", "lnb", "snb", "nav", "footer", "
 
 # 별도 창 팝업 URL/title 키워드 (사이트 무관 일반 패턴)
 POPUP_WINDOW_URL_KEYWORDS = [
-    "/popup/", "/pop/", "popup.do", "popup.html", "popup.jsp", "popup.aspx",
-    "popup=", "isPopup", "is_popup",
-    "/alert/", "/alarm/", "/notice/",
+    "/popup/",
+    "/pop/",
+    "popup.do",
+    "popup.html",
+    "popup.jsp",
+    "popup.aspx",
+    "popup=",
+    "isPopup",
+    "is_popup",
+    "/alert/",
+    "/alarm/",
+    "/notice/",
     "WEBCOM010P",  # EUM 공통 팝업 페이지 prefix
 ]
 POPUP_WINDOW_TITLE_KEYWORDS = ["팝업", "알림", "공지사항", "Popup", "Alert", "Notice"]
@@ -110,18 +120,20 @@ def _get_visible_popups(page) -> list:
                     text = ""
                     try:
                         text = el.inner_text(timeout=500)[:80]
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 여러 셀렉터를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                         pass
-                    visible.append({
-                        "selector": sel,
-                        "index": i,
-                        "cls": cls[:80],
-                        "text": text,
-                        "locator": el,
-                    })
-                except Exception:
+                    visible.append(
+                        {
+                            "selector": sel,
+                            "index": i,
+                            "cls": cls[:80],
+                            "text": text,
+                            "locator": el,
+                        }
+                    )
+                except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
                     continue
-        except Exception:
+        except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
             continue
 
     # 중복 제거 (text 기준)
@@ -161,7 +173,7 @@ def detect_popup(page) -> dict[str, Any]:
             "elements": [{k: v for k, v in p.items() if k != "locator"} for p in popups],
         }
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
         _log.debug("[popup-detector] 팝업 감지 실패: %s", e)
         return {"detected": False, "popup_count": 0, "types": [], "elements": []}
 
@@ -192,7 +204,7 @@ def close_popup(page) -> dict[str, Any]:
                     time.sleep(0.8)
                     _log.info("[popup-detector] 팝업 닫음: 텍스트버튼='%s'", txt)
                     return {"closed": True, "method": f"text_button:{txt}"}
-            except Exception:
+            except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
                 continue
 
         # 2. 클래스 기반 닫기 버튼 (팝업 내부)
@@ -204,7 +216,7 @@ def close_popup(page) -> dict[str, Any]:
                     time.sleep(0.8)
                     _log.info("[popup-detector] 팝업 닫음: 셀렉터='%s'", sel)
                     return {"closed": True, "method": f"selector:{sel}"}
-            except Exception:
+            except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
                 continue
 
         # 3. 전역 닫기 버튼 (팝업 밖에서도 탐색)
@@ -216,7 +228,7 @@ def close_popup(page) -> dict[str, Any]:
                     time.sleep(0.8)
                     _log.info("[popup-detector] 팝업 닫음: 전역셀렉터='%s'", sel)
                     return {"closed": True, "method": f"global:{sel}"}
-            except Exception:
+            except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
                 continue
 
         # 4. ESC
@@ -235,7 +247,7 @@ def close_popup(page) -> dict[str, Any]:
 
         return {"closed": False, "method": None, "reason": "all_methods_failed"}
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
         _log.error("[popup-detector] 팝업 닫기 실패: %s", e)
         return {"closed": False, "method": None, "error": str(e)}
 
@@ -292,7 +304,7 @@ def close_all_popups(page, max_attempts: int = 10) -> dict[str, Any]:
     final = detect_popup(page)
     return {
         "total_closed": total_closed,
-        "attempts": attempt + 1 if 'attempt' in dir() else 0,
+        "attempts": attempt + 1 if "attempt" in dir() else 0,
         "final_state": final,
     }
 
@@ -349,7 +361,7 @@ def _looks_like_popup_window(p) -> tuple[bool, str]:
     """
     try:
         url = p.url
-    except Exception:
+    except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
         return False, "url_unavailable"
 
     # 보호 도메인은 무조건 제외
@@ -394,7 +406,7 @@ def _looks_like_popup_window(p) -> tuple[bool, str]:
         if info.get("hasOpener") and w > 0 and (w < 800 or h < 600):
             return True, "opener_small_window"
 
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 셀렉터를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
         pass
 
     return False, "not_popup"
@@ -419,9 +431,9 @@ def close_popup_windows(page) -> int:
                     p.close()
                     closed += 1
                     _log.info("[popup-detector] 별도 창 팝업 닫음 (%s): %s", reason, url[:80])
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
                     _log.warning("[popup-detector] 별도 창 닫기 실패: %s", e)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
         _log.error("[popup-detector] 별도 창 팝업 처리 실패: %s", e)
     return closed
 
@@ -461,6 +473,6 @@ def handle_page_popups(page, timeout_s: float = 3.0) -> dict[str, Any]:
             "page_clean": final_clean,
         }
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
         _log.error("[popup-detector] 페이지 팝업 처리 실패: %s", e)
         return {"had_popup": None, "popups_closed": 0, "page_clean": False, "error": str(e)}

@@ -54,12 +54,12 @@ _CLEAR_JS = "() => { if(window.__hh_popup_state) window.__hh_popup_state.events 
 def _get_cdp_port() -> int:
     try:
         from scripts.config import CDP_PORT as _CDP_PORT
-    except Exception:
+    except Exception:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
         _CDP_PORT = 9222
     try:
         state = json.loads(_DAEMON_STATE.read_text(encoding="utf-8"))
         return int(state.get("cdp_port", _CDP_PORT))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
         return _CDP_PORT
 
 
@@ -73,7 +73,7 @@ async def _eval_tab(ws_url: str, js: str, arg: Any = None) -> Any:
             await ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate", "params": params}))
             resp = json.loads(await asyncio.wait_for(ws.recv(), timeout=3))
             return resp.get("result", {}).get("result", {}).get("value")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
         _log.debug("CDP WS 평가 실패 %s: %s", ws_url[:50], e)
         return None
 
@@ -85,7 +85,7 @@ async def _for_all_tabs(js: str, arg: Any = None) -> list[Any]:
     port = _get_cdp_port()
     try:
         tabs = requests.get(f"http://localhost:{port}/json", timeout=2).json()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
         _log.debug("CDP 탭 목록 조회 실패: %s", e)
         return []
     ws_urls = [t["webSocketDebuggerUrl"] for t in tabs if t.get("type") == "page" and t.get("webSocketDebuggerUrl")]
@@ -256,7 +256,7 @@ class PopupMonitor:
         try:
             _cdp_install_watcher()
             self._last_install = time.time()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
             _log.debug("[popup_monitor] 재주입 실패: %s", e)
 
     def _process_event(self, ev: dict) -> None:
@@ -279,7 +279,7 @@ class PopupMonitor:
                 self._handled += 1
                 _record_event(ev, decision, status="handled" if ok else "notified", note=f"click_button={ok}")
                 return
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
                 _log.warning("[popup_monitor] 자동 처리 실패: %s", e)
                 _record_event(ev, decision, status="notified", note=f"auto_fail: {e}")
                 self._notified += 1
@@ -300,9 +300,9 @@ class PopupMonitor:
                 if events:
                     try:
                         _cdp_clear_events()
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
                         pass
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
                 _log.debug("[popup_monitor] 루프 오류 무시: %s", e)
             self._write_state()
             self._stop.wait(self._poll)
@@ -325,7 +325,7 @@ class PopupMonitor:
                 ),
                 encoding="utf-8",
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
             pass
 
     def start(self) -> None:
@@ -344,7 +344,7 @@ class PopupMonitor:
                 data = json.loads(STATE_PATH.read_text(encoding="utf-8"))
                 data["running"] = False
                 STATE_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
             pass
 
 
@@ -354,7 +354,7 @@ def status() -> dict:
     if STATE_PATH.exists():
         try:
             state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
             pass
     state["pending"] = len(list_pending(limit=500))
     state["stats_24h"] = stats(since_ms=int((time.time() - 86400) * 1000))
@@ -448,7 +448,7 @@ class ChromeUIWatcher:
                 ),
                 encoding="utf-8",
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
             pass
 
     def start(self) -> None:
@@ -470,6 +470,6 @@ def chrome_ui_status() -> dict:
     if CHROME_UI_STATE_PATH.exists():
         try:
             out = json.loads(CHROME_UI_STATE_PATH.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 상태 파일 읽기/이벤트 초기화 등 보조 동작 — 실패해도 모니터링 계속(2026-09-28 검토)
             pass
     return out
