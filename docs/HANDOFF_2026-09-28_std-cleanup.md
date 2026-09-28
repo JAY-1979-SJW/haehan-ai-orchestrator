@@ -66,8 +66,49 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
 
 ## 다음 세션 후보 작업 (우선순위 순, 미정)
 
-1. **ABS-PATH-LITERAL 172건 재검토** — STD-02의 나머지 절반. 테스트 픽스처(가짜 입력값) vs 진짜 하드코딩 개발자 경로를 구분해야 함. 파일별 상위: `test_admin_ui_capture_screenshot.py`, `test_prewrite_capability_check_blog_gate.py` 등 테스트 파일에 집중돼 있어 보임(오탐 가능성 높음, 미확인).
-2. **DUP-02(중복 코드) 정확한 측정** — audit-kit std 결과(110건)는 신뢰할 만해 보이지만(worktree 오염 전후 동일), 실제 파일별 breakdown은 아직 안 봤음.
+1. ~~**ABS-PATH-LITERAL 172건 재검토**~~ — **완료(2026-09-28 2차 세션)**. 173건 실측 결과:
+   - 테스트 파일 104건 = 전부 가짜 픽스처(`C:\path\file.exe` 류) 확인, 문제 없음.
+   - 비-테스트 69건 중 **실제 버그 1건 발견·수정**: `ai_orchestrator/gates/risk_classifier.py:7`
+     민감 경로 목록에 `"C:/Users/skyjw/.ssh/"`가 사용자명 하드코딩돼 있어, 다른 계정/PC에서 실행하면
+     SSH 디렉터리 보안 감지가 조용히 무력화되던 문제. `Path.home()` 기반 동적 계산으로 수정,
+     `test_risk_classifier.py` 5개 통과·ruff·layer audit 확인. (미커밋 — 다음 세션에서 커밋 필요)
+   - 나머지 68건은 설계 의도로 판정하고 미수정: Chrome/Edge 실행파일 후보 경로·`malgun.ttf`·시스템
+     폴더 차단목록(OS 표준 위치, 계정 무관), `scripts/ops/*`의 `/home/ubuntu/...`(원격 배포 서버
+     고정 경로, 정책과 일치), `scripts/video`·`instagram`·`hanafax`·`mk_catalog`·`yt_upload`·
+     `naver/blog/accounts.py`·`eum/shared/layout_schema.py`(본인 전용 수동 도구, install 대상 아님).
+   - **audit-kit 개선 후보(미수정)**: `ABS_PATH_RE`가 파일 경로가 아닌 **웹 URL 경로**까지 오탐.
+     `scripts/common/auth_window_gate.py:255`(`"/home/about"`), `scripts/grant_radar/scan.py:38`
+     (`"/home/2-2/"`) 둘 다 `/home/`으로 시작하는 URL 문자열인데 파일 경로로 오판됨.
+   - **부수 발견(미수정, 저우선순위)**: `gen_remaining_posts.py`·`e2e_deep_scan.py`×2·
+     `e2e_full_report.py`가 9/27 이전 프로젝트 위치(`C:\work\01. haehan-ai-orchestrator\...`)를
+     참조 — 이미 죽은 경로지만 전부 개발자 수동 도구라 후순위.
+
+2. ~~**DUP-02(중복 코드) 정확한 측정**~~ — **완료(2026-09-28 2차 세션)**. audit-kit
+   `check_func_body_dup`을 직접 호출해 110개 그룹(관여 함수 264개, 이전 보고 건수와 일치)을
+   전수 파일별로 뽑았다(원본 스크립트: 이 세션 스크래치패드, 재실행하려면
+   `audit_kit.std.checks.check_func_body_dup` + `MIN_DUP_STATEMENTS=5` 기준으로 프로젝트
+   전체를 AST 파싱하면 재현됨). 4개 군으로 분류, **파일 수정은 하지 않음**(측정 범위):
+   - **① `apps/marketing-standalone/` ↔ `scripts/naver`·`scripts/instagram` 원본 병렬 구현
+     (최대 군, 약 71개 함수/16개+ 그룹)**: `naver_writer.py`(16개, `scripts/naver/blog/core/writer.py`
+     와), `instagram_graph_api.py`(6개), `content_rules.py`(4개), `cdp_helper.py`(3개),
+     `blog_images.py`(2개), `blog_router.py`(2개), `naver_login_check.py`·`ai_responder.py`(각 1개)
+     — 함수 본문이 사실상 동일. **의도된 설계일 가능성이 높음**: `apps/marketing-standalone`은
+     L10(로컬 PC 앱, `module-separability` 스킬 대상)이라 `ai_orchestrator`/`scripts`에 의존하지
+     않고 독립 배포되도록 일부러 복사했을 수 있다 — 확정하려면 사용자 확인 필요(다음 세션 후보).
+     만약 의도된 게 아니라면 DUP-04(프로젝트 간 복사 금지) 정식 위반이라 공용 모듈 분리 대상.
+   - **② `scripts/eum/registration.py` ↔ `deregistration.py`**(6개 그룹, 12개 함수):
+     `_analysis_entries`·`_selector_from_field`·`_selector_from_button`·`_analyzed_field_selectors`·
+     `_analyzed_submit_selectors`·`_denial_reason`. 이미 `scripts/eum/shared/`가 있는데 이 헬퍼들만
+     못 옮겨간 것으로 보임 — 프로젝트 내부 리팩터링 후보(낮은 리스크, 다음 세션에 시도 가능).
+   - **③ `scripts/video/ig_dm_bot_ep01*.py` ↔ `kakao_skill_bot_ep01*.py`**(8개 그룹, 16개 함수)
+     + `ai_g2b_youtube_ep01_real.py` ↔ `ep02.py`(3개 그룹): 에피소드별 영상 제작 스크립트 복붙 —
+     전부 본인 전용 수동 도구라 후순위.
+   - **④ 나머지 (~4개 함수)**: 테스트 픽스처 보일러플레이트(`_make_test_client`·`_isolated_storage`
+     등, pytest 관례상 흔함·낮은 우선순위), `scripts/ops/audit_backend_premium_*.py` 8개 파일의
+     `main()` 함수(CLI 진입점 보일러플레이트, 통상 무해), `gabia`/`google`/`hiworks`/`youtube`의
+     `validate_*_action_plan`(4-way, 벤더별 검증기라 구조가 비슷한 건 자연스러움) 등 소규모 산발.
+   - **다음 세션 판단 필요**: ①이 의도된 설계인지 사용자에게 확인 — 아니라면 이 프로젝트에서
+     가장 큰 DUP-04 부채. — audit-kit std 결과(110건)는 신뢰할 만해 보이지만(worktree 오염 전후 동일), 실제 파일별 breakdown은 아직 안 봤음.
 3. **32번 도구(전체 ruff 규칙) 재검토** — 노이즈(RUF105 2,939건, preview 모드 noqa 문법 차이)를 뺀 진짜 후보: `PLC0415`(함수 안 import, 1507건), `C901`(복잡도, 354건), `B008`(사실 FastAPI라 0건으로 판명), `ERA001`(죽은 주석 코드, 92건) 등. 사용자가 "나중에 따로 다루자"고 미뤄둔 상태.
 4. **STD-06~10 등 나머지 STD 카테고리** — 이번 세션에서 아예 안 봄(STD-03=print문, STD-06~10 등). audit-kit 번들 기준 카운트가 크지만(수백 건씩), 위 "설정 불일치" 함정이 있으니 프로젝트 자체 config로 먼저 재확인할 것.
 5. **`.claude/settings.json`/`settings.local.json`의 `C:\work\...` 하드코딩 경로** — 이전 세션에서 발견됐으나 이번 세션 범위 밖. install-readiness와 직결(다른 PC/경로에서 hook 전체가 무동작).
