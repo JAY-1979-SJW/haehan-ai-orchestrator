@@ -1393,7 +1393,7 @@ async def post_draft(page, post: dict):
         try:
             await page.click(sel, timeout=1500)
             await asyncio.sleep(0.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 임시저장 전 옵션 요소 클릭 실패는 무시하고 계속 진행 — 발행이 아닌 임시저장 단계
             pass
 
     # 제목 입력
@@ -1447,7 +1447,7 @@ async def post_draft(page, post: dict):
         await page.click(".save_btn__bzc5B", timeout=5000)
         await asyncio.sleep(1.5)
         print("  ✓ 태그 포함 재저장")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 임시저장 CLI 자동화 — 옵션 클릭/태그 재저장 실패는 무시하고 계속하거나 개별 글 실패 시 다음 글로 continue, 임시저장(발행 아님)이며 실패해도 데이터 손실 없음
         print(f"  ⚠ 태그 입력 실패: {e}")
 
     print(f"[{no:02d}/20편] 완료 ✅")
@@ -1473,7 +1473,7 @@ async def main():
             try:
                 await post_draft(page, post)
                 await asyncio.sleep(2)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 블로그 임시저장 CLI 자동화 — 옵션 클릭/태그 재저장 실패는 무시하고 계속하거나 개별 글 실패 시 다음 글로 continue, 임시저장(발행 아님)이며 실패해도 데이터 손실 없음
                 print(f"  ❌ {post['no']}편 오류: {e}")
                 continue
 

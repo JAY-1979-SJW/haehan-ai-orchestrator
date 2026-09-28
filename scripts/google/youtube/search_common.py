@@ -227,7 +227,7 @@ def _oauth_access_token() -> str | None:
         )
         r = urllib.request.urlopen(req, timeout=10)
         return json.loads(r.read()).get("access_token")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 유튜브 검색 토큰/캐시 조회 공용 유틸 — 토큰 획득 실패나 SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 None 반환 또는 무시, 쓰기 실패도 무시(캐시는 성능최적화용 부가기능)
         return None
 
 
@@ -291,7 +291,7 @@ def _search_cache_get(key: str) -> dict[str, Any] | None:
         con.close()
         if row and (time.time() - row[1]) < _CACHE_TTL_SECONDS:
             return json.loads(row[0])
-    except Exception:
+    except Exception:  # noqa: BLE001 - SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 무시 — 캐시는 성능최적화 부가기능일 뿐 핵심 검색 로직에 영향 없음
         pass
     return None
 
@@ -310,7 +310,7 @@ def _search_cache_set(key: str, payload: dict[str, Any]) -> None:
         con.execute("DELETE FROM search_cache WHERE cached_at < ?", (time.time() - 259200,))
         con.commit()
         con.close()
-    except Exception:
+    except Exception:  # noqa: BLE001 - SQLite 캐시 조회/저장 실패는 캐시미스로 간주해 무시 — 캐시는 성능최적화 부가기능일 뿐 핵심 검색 로직에 영향 없음
         pass
 
 

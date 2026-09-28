@@ -82,7 +82,7 @@ def install_watcher(page=None) -> dict:
         try:
             frame.evaluate(js)
             frame_count += 1
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 팝업 감지기 설치/조회/초기화 유틸(읽기전용) — 개별 프레임 주입/조회 실패는 로그 남기고 continue, 쓰기 없음
             _log.debug("[popup_watcher] 프레임 주입 실패: %s", e)
             continue
 
@@ -103,7 +103,7 @@ def poll_events(page=None, since_ms: int = 0) -> list[PopupEvent]:
             if events:
                 _log.debug("[popup_watcher] %d개 팝업 감지", len(events))
                 return events
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 팝업 감지기 설치/조회/초기화 유틸(읽기전용) — 개별 프레임 주입/조회 실패는 로그 남기고 continue, 쓰기 없음
             _log.debug("[popup_watcher] 이벤트 조회 실패: %s", e)
             continue
     return []
@@ -119,7 +119,7 @@ def clear_events(page=None) -> None:
     for frame in page.frames:
         try:
             frame.evaluate("() => { window.__hh_popup_state.events = []; }")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 브라우저 팝업 감지기 설치/조회/초기화 유틸(읽기전용) — 개별 프레임 주입/조회 실패는 로그 남기고 continue, 쓰기 없음
             continue
 
 

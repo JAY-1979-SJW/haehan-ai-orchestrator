@@ -4,6 +4,7 @@ Naver does not provide a dependable official API for the current workflows, so
 browser use must be conservative: dry-run/static work by default, explicit live
 approval for live reads, and immediate stop on robot/captcha/security signals.
 """
+
 from __future__ import annotations
 
 import os
@@ -79,7 +80,7 @@ def _emit(event_type: str, *, site: str, workflow: str, status: str, message: st
             message=message,
             metadata=metadata,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 감사이벤트(emit) 전송은 부가 로깅일 뿐이라 실패해도 안전판정 로직에 영향 없어 무시
         pass
 
 
@@ -125,7 +126,7 @@ def inspect_page(page, *, site: str = "naver", workflow: str = "", phase: str = 
               text: String(document.body?.innerText || '').slice(0, 5000)
             })"""
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 네이버 라이브 브라우저 안전가드(로봇/캡차 감지) — 감사이벤트 emit 실패는 무시(부가 로깅), 페이지 snapshot 평가 실패는 에러를 담아 텍스트 패턴 검사로 계속 보완, 셀렉터 감지 실패는 미탐지로 처리되지만 텍스트패턴 기반 detect_robot_signal이 별도로 최종 판정하며 ensure_page_safe는 result.ok=False면 예외를 던져 차단하는 fail-closed 구조
         snapshot = {"url": getattr(page, "url", ""), "title": "", "text": "", "error": str(exc)[:200]}
 
     result = detect_robot_signal(
@@ -137,7 +138,7 @@ def inspect_page(page, *, site: str = "naver", workflow: str = "", phase: str = 
     selector_detected = False
     try:
         selector_detected = bool(page.evaluate(SECURITY_SELECTOR_JS))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 네이버 라이브 브라우저 안전가드(로봇/캡차 감지) — 감사이벤트 emit 실패는 무시(부가 로깅), 페이지 snapshot 평가 실패는 에러를 담아 텍스트 패턴 검사로 계속 보완, 셀렉터 감지 실패는 미탐지로 처리되지만 텍스트패턴 기반 detect_robot_signal이 별도로 최종 판정하며 ensure_page_safe는 result.ok=False면 예외를 던져 차단하는 fail-closed 구조
         selector_detected = False
     if selector_detected:
         result = {

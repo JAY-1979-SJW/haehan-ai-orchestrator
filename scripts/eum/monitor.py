@@ -54,7 +54,7 @@ def _load_devices() -> list[dict]:
             # 추출기는 all_devices 키로 저장 — devices/data/all_devices 순으로 처리
             return data.get("devices") or data.get("all_devices") or data.get("data") or []
         return []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 단말기 데이터 읽기전용 조회/파싱 — API 응답 파싱 실패 시 빈 리스트/None으로 안전 폴백, 데이터 조회만 하고 쓰기 없음
         log.error("단말기 데이터 로드 실패: %s", e)
         return []
 
@@ -65,7 +65,7 @@ def _parse_days(val) -> int | None:
         return None
     try:
         return int(str(val).replace("일", "").replace(",", "").strip())
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 단말기 데이터 읽기전용 조회/파싱 — API 응답 파싱 실패 시 빈 리스트/None으로 안전 폴백, 데이터 조회만 하고 쓰기 없음
         return None
 
 
@@ -77,7 +77,7 @@ def _parse_date(val: str | None) -> date | None:
     for fmt in ("%Y-%m-%d", "%Y.%m.%d", "%Y/%m/%d", "%Y%m%d"):
         try:
             return datetime.strptime(val, fmt).date()
-        except Exception:
+        except Exception:  # noqa: BLE001 - EUM 단말기 데이터 읽기전용 조회/파싱 — API 응답 파싱 실패 시 빈 리스트/None으로 안전 폴백, 데이터 조회만 하고 쓰기 없음
             pass
     return None
 

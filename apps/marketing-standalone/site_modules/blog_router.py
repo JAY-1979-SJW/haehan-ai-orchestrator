@@ -65,7 +65,7 @@ def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
             })()"""
         )
         info = json.loads(raw) if raw else {}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 CDP 상태조회/사용이미지 이력로드/playwright 종료 처리 — 각 except는 상태확인 실패를 에러 dict로 반환하거나 이력로드 실패를 무시하고 빈 이력으로 계속 진행할 뿐, 발행 자체를 승인 없이 강행하지 않음
         return {"ok": False, "blog_id": "", "reason": f"브라우저/상태 확인 실패: {e}"}
     finally:
         if cdp is not None:
@@ -144,7 +144,7 @@ def collect_images(draft: dict, count: int = 3, blog_id: str | None = None) -> l
         for p in load_cache(blog_id).get("posted", []):
             for path in p.get("img_paths", []) or []:
                 used.add(str(path))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 CDP 상태조회/사용이미지 이력로드/playwright 종료 처리 — 각 except는 상태확인 실패를 에러 dict로 반환하거나 이력로드 실패를 무시하고 빈 이력으로 계속 진행할 뿐, 발행 자체를 승인 없이 강행하지 않음
         _log.debug("[manual] 사용 이미지 이력 로드 실패(무시): %s", e)
 
     slots = max(1, len(pool) // 3)
@@ -180,7 +180,7 @@ def publish(draft: dict, auto_images: bool = True, blog_id: str | None = None) -
     finally:
         try:
             pw.stop()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 블로그 CDP 상태조회/사용이미지 이력로드/playwright 종료 처리 — 각 except는 상태확인 실패를 에러 dict로 반환하거나 이력로드 실패를 무시하고 빈 이력으로 계속 진행할 뿐, 발행 자체를 승인 없이 강행하지 않음
             _log.debug("playwright stop 실패(무시): %s", e)
 
     if result.get("ok") and result.get("log_no"):

@@ -94,7 +94,7 @@ def main():
             time.sleep(4)
             try:
                 handle_page_popups(page, timeout_s=1.5)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 URL 후보 탐색 스크립트(읽기전용) — 팝업처리 실패 무시, 개별 후보 URL 실패는 결과 목록에 에러로 기록하고 다음 후보 계속 시도
                 pass
             info = analyze_page(page)
             info["candidate"] = suffix
@@ -110,7 +110,7 @@ def main():
             else:
                 redirected = info["url"] != url
                 print(f"  · 필드 {info['field_count']}, redirect={redirected}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 URL 후보 탐색 스크립트(읽기전용) — 팝업처리 실패 무시, 개별 후보 URL 실패는 결과 목록에 에러로 기록하고 다음 후보 계속 시도
             print(f"  ✗ {str(e)[:40]}")
             results.append({"candidate": suffix, "error": str(e)[:100]})
 
@@ -143,7 +143,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 URL 후보 탐색 스크립트(읽기전용) — 팝업처리 실패 무시, 개별 후보 URL 실패는 결과 목록에 에러로 기록하고 다음 후보 계속 시도
         import traceback
 
         traceback.print_exc()

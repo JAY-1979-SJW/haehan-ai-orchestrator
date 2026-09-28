@@ -114,7 +114,7 @@ def load_cache(blog_id: str = BLOG_ID) -> dict:
     if path.exists():
         try:
             return json.loads(path.read_text(encoding="utf-8"))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 블로그 발행이력 캐시 파일 읽기/쓰기 — JSON 파싱 실패 시 경고 로그 남기고 빈 캐시/None 폴백할 뿐 쓰기 대상은 로컬 캐시 파일이며 운영 DB 아님
             _log.warning("[post-cache] 캐시 로드 실패, 새로 시작: %s", e)
     return {"posts": []}
 
@@ -139,7 +139,7 @@ def collect_log_nos(cdp: CDP, blog_id: str = BLOG_ID, max_pages: int = 30, per_p
         # 허용되지 않는 이스케이프라 그대로 파싱하면 깨진다(2026-08-23 실측).
         try:
             data = json.loads(raw.replace("\\'", "'"))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 블로그 발행이력 캐시 파일 읽기/쓰기 — JSON 파싱 실패 시 경고 로그 남기고 빈 캐시/None 폴백할 뿐 쓰기 대상은 로컬 캐시 파일이며 운영 DB 아님
             _log.warning("[post-cache] 목록 %d페이지 파싱 실패: %s", page, e)
             break
         items = data.get("postList", [])
@@ -173,7 +173,7 @@ def extract_post(cdp: CDP, log_no: str, blog_id: str = BLOG_ID) -> dict | None:
         return None
     try:
         data = json.loads(raw)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 발행이력 캐시 파일 읽기/쓰기 — JSON 파싱 실패 시 경고 로그 남기고 빈 캐시/None 폴백할 뿐 쓰기 대상은 로컬 캐시 파일이며 운영 DB 아님
         _log.warning("[post-cache] %s JSON 파싱 실패: %s", log_no, e)
         return None
     data["logNo"] = log_no

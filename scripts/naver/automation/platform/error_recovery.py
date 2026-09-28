@@ -121,7 +121,7 @@ class ErrorRecovery:
                     if attempt > 1:
                         _log.info("[recovery] %s 복구 성공 (시도 %d)", func.__name__, attempt)
                     return result
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 자동화 공용 오류복구 데코레이터 — 함수 실행 실패 시 카테고리 분류 후 재시도, 세션복구 시도 자체가 실패해도 무시하고 다음 재시도로 넘어감(복구 실패가 상위 예외 전파를 막지 않음)
                     last_exc = e
                     category = categorize_error(e)
                     _log.warning("[recovery] %s 실패 #%d (%s): %s", func.__name__, attempt, category, str(e)[:80])
@@ -134,12 +134,12 @@ class ErrorRecovery:
 
                                 sm = SessionManager(self.page)
                                 sm.check_and_recover(force=True)
-                            except Exception:
+                            except Exception:  # noqa: BLE001 - 세션 복구 시도(SessionManager.check_and_recover 등) 실패는 무시하고 다음 재시도 루프로 진행 — 복구 실패해도 최종적으로 상위에서 예외가 다시 던져짐
                                 pass
                         elif recovery_action:
                             try:
                                 recovery_action()
-                            except Exception:
+                            except Exception:  # noqa: BLE001 - 세션 복구 시도(SessionManager.check_and_recover 등) 실패는 무시하고 다음 재시도 루프로 진행 — 복구 실패해도 최종적으로 상위에서 예외가 다시 던져짐
                                 pass
                         time.sleep(delay_s * (backoff ** (attempt - 1)))
 

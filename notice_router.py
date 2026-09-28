@@ -7,6 +7,7 @@ POST /api/v1/notices/analyze-url
 POST /api/v1/notices/analyze-folder
 GET  /api/v1/notices/health
 """
+
 from __future__ import annotations
 
 import os
@@ -91,7 +92,7 @@ def analyze_current_browser_route():
             click_downloads=bool(data.get("click_downloads", True)),
             max_clicks=int(data.get("max_clicks", 20)),
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 공고 분석 FastAPI 라우터 — 분석 실패 시 500 에러 응답(_error)으로 안전하게 반환할 뿐 쓰기/승인 우회 없음
         return _error(f"current browser notice analysis failed: {type(exc).__name__}: {exc}", 500)
 
     return _ok({"analysis": analysis.to_dict(), "summary_markdown": analysis.to_markdown()})
@@ -109,7 +110,7 @@ def analyze_url_route():
     try:
         output_root = _safe_output_root(data.get("output_root"))
         analysis = analyze_notice_url(url, source=source, title=title, output_root=output_root)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 공고 분석 FastAPI 라우터 — 분석 실패 시 500 에러 응답(_error)으로 안전하게 반환할 뿐 쓰기/승인 우회 없음
         return _error(f"notice analysis failed: {type(exc).__name__}: {exc}", 500)
 
     return _ok({"analysis": analysis.to_dict(), "summary_markdown": analysis.to_markdown()})
@@ -131,7 +132,7 @@ def analyze_folder_route():
             source=data.get("source") or "local-folder",
             url=data.get("url") or "local://notice-folder",
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 공고 분석 FastAPI 라우터 — 분석 실패 시 500 에러 응답(_error)으로 안전하게 반환할 뿐 쓰기/승인 우회 없음
         return _error(f"notice folder analysis failed: {type(exc).__name__}: {exc}", 500)
 
     return _ok({"analysis": analysis.to_dict(), "summary_markdown": analysis.to_markdown()})

@@ -182,7 +182,7 @@ def _write_analysis(ws, articles, month_label, start_row):
     def _views_int(a):
         try:
             return int(str(a.get("views", 0) or 0).replace(",", ""))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 카페 키워드 엑셀 export(읽기전용 집계) — 조회수 숫자 파싱 실패 시 0으로 폴백, 날짜 파싱 실패 시 '날짜미상'으로 표기할 뿐 원본 데이터를 바꾸지 않음
             return 0
 
     top10 = sorted(articles, key=_views_int, reverse=True)[:10]
@@ -237,7 +237,7 @@ def main():
             a["_ym"] = dt.strftime("%Y-%m")
             a["_label"] = dt.strftime("%Y년 %m월")
             a["_quarter"] = f"{dt.year}년 {(dt.month - 1) // 3 + 1}분기"
-        except Exception:
+        except Exception:  # noqa: BLE001 - 카페 키워드 엑셀 export(읽기전용 집계) — 조회수 숫자 파싱 실패 시 0으로 폴백, 날짜 파싱 실패 시 '날짜미상'으로 표기할 뿐 원본 데이터를 바꾸지 않음
             a["_ym"] = "날짜미상"
             a["_label"] = "날짜미상"
             a["_quarter"] = "날짜미상"
@@ -335,7 +335,7 @@ def main():
     def _vi(a):
         try:
             return int(str(a.get("views", 0) or 0).replace(",", ""))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 카페 키워드 엑셀 export(읽기전용 집계) — 조회수 숫자 파싱 실패 시 0으로 폴백, 날짜 파싱 실패 시 '날짜미상'으로 표기할 뿐 원본 데이터를 바꾸지 않음
             return 0
 
     for rank, a in enumerate(sorted(data, key=_vi, reverse=True)[:15], 1):

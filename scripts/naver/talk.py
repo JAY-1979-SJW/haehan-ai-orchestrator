@@ -31,7 +31,7 @@ class NaverTalk:
         time.sleep(3)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 채팅창 진입 전 팝업 처리 실패는 무시하고 계속 진행
             pass
         return True
 
@@ -58,7 +58,7 @@ class NaverTalk:
                 limit,
             )
             return chats
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 톡톡 채팅 목록조회/메시지전송 자동화 — 팝업처리 실패 무시, 목록조회/전송 실패는 ok=False 에러 결과 반환할 뿐 세션 파기나 삭제 없음
             _log.error("[naver-talk] list_chats 실패: %s", e)
             return []
 
@@ -90,5 +90,5 @@ class NaverTalk:
                 log_critical("OTHER", f"네이버 톡톡 발송: {partner_name}", partner=partner_name, mode="talk_send")
                 return {"ok": True, "mode": "sent"}
             return {"ok": True, "mode": "filled_not_sent"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 톡톡 채팅 목록조회/메시지전송 자동화 — 팝업처리 실패 무시, 목록조회/전송 실패는 ok=False 에러 결과 반환할 뿐 세션 파기나 삭제 없음
             return {"ok": False, "error": str(e)}

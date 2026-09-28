@@ -54,7 +54,7 @@ def _session_edit_files(session_id: str | None) -> list[Path]:
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except Exception:  # noqa: BLE001 - Stop 훅 빠른검증 — stdin 파싱 실패나 개별 파일 검사 실패, 내부 전역 오류 모두 훅 자체를 무해하게 통과시키는 의도된 fail-open(코드 주석에 '# fail-open'으로 명시됨)
         payload = {}
 
     if payload.get("stop_hook_active"):
@@ -85,7 +85,7 @@ def main() -> int:
                     rc = 0
                 if rc != 0:
                     problems.append(str(f.relative_to(ROOT)))
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - Stop 훅 빠른검증 — stdin 파싱 실패나 개별 파일 검사 실패, 내부 전역 오류 모두 훅 자체를 무해하게 통과시키는 의도된 fail-open(코드 주석에 '# fail-open'으로 명시됨)
                 sys.stderr.write(f"[stop_fast_verify] check failed for {f} (ignored): {exc}\n")
                 continue
 
@@ -105,7 +105,7 @@ def main() -> int:
             return 0
 
         return 0
-    except Exception as exc:  # fail-open
+    except Exception as exc:  # fail-open  # noqa: BLE001 - Stop 훅 빠른검증 — stdin 파싱 실패나 개별 파일 검사 실패, 내부 전역 오류 모두 훅 자체를 무해하게 통과시키는 의도된 fail-open(코드 주석에 '# fail-open'으로 명시됨)
         sys.stderr.write(f"[stop_fast_verify] internal error (ignored): {exc}\n")
         return 0
 

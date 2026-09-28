@@ -22,7 +22,7 @@ def load_config() -> dict:
         return {"channel": "telegram", "telegram_token": "", "telegram_chat_id": "", "enabled": False}
     try:
         return json.loads(_CFG.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 텔레그램 알림 설정 로드/전송 유틸 — 설정파일 파싱 실패 시 빈 기본 설정 반환, 전송 실패 시 ok=False 결과 반환, 자격증명(token)은 반환값에 노출하지 않음
         return {"channel": "telegram", "telegram_token": "", "telegram_chat_id": "", "enabled": False}
 
 
@@ -56,7 +56,7 @@ def detect_chat_id(token: str) -> str:
     """봇에게 보낸 최근 메시지에서 chat_id 추출. 없으면 ''."""
     try:
         res = _tg_call(token, "getUpdates", {"limit": 10})
-    except Exception:
+    except Exception:  # noqa: BLE001 - 텔레그램 알림 설정 로드/전송 유틸 — 설정파일 파싱 실패 시 빈 기본 설정 반환, 전송 실패 시 ok=False 결과 반환, 자격증명(token)은 반환값에 노출하지 않음
         return ""
     if not res.get("ok"):
         return ""
@@ -86,7 +86,7 @@ def send_message(text: str, token: str = "", chat_id: str = "") -> dict:
             },
         )
         return {"ok": bool(res.get("ok")), "error": None if res.get("ok") else res.get("description")}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 텔레그램 알림 설정 로드/전송 유틸 — 설정파일 파싱 실패 시 빈 기본 설정 반환, 전송 실패 시 ok=False 결과 반환, 자격증명(token)은 반환값에 노출하지 않음
         return {"ok": False, "error": str(e)[:120]}
 
 

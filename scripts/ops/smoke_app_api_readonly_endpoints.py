@@ -5,6 +5,7 @@ TestClient 기반으로 in-process GET smoke 수행한다.
 
 POST/PUT/PATCH/DELETE 호출 없음. mutation 없음. 외부 HTTP 없음.
 """
+
 from __future__ import annotations
 
 import sys
@@ -23,10 +24,19 @@ VERDICT_WARN = "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_WITH_WARN"
 VERDICT_BLOCKED = "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_BLOCKED"
 
 _FORBIDDEN_FIELDS = {
-    "raw_token", "access_token", "refresh_token",
-    "cookie_value", "session_secret", "password",
-    "approval_token_raw", "private_key", "certificate_password",
-    "secret_value", "execute_url", "deploy_url", "restart_url",
+    "raw_token",
+    "access_token",
+    "refresh_token",
+    "cookie_value",
+    "session_secret",
+    "password",
+    "approval_token_raw",
+    "private_key",
+    "certificate_password",
+    "secret_value",
+    "execute_url",
+    "deploy_url",
+    "restart_url",
 }
 
 ENDPOINTS = [
@@ -66,10 +76,15 @@ class SmokeReport:
 
 def _check_redaction(data: Any, report: SmokeReport, path: str) -> bool:
     import json
+
     serialized = json.dumps(data)
     violations = []
     for field_name in _FORBIDDEN_FIELDS:
-        if f'"{field_name}"' in serialized and f'"{field_name}": false' not in serialized and f'"{field_name}":false' not in serialized:
+        if (
+            f'"{field_name}"' in serialized
+            and f'"{field_name}": false' not in serialized
+            and f'"{field_name}":false' not in serialized
+        ):
             violations.append(field_name)
     if violations:
         report.redaction_violations += len(violations)
@@ -119,7 +134,7 @@ def _smoke_health(client: Any, report: SmokeReport) -> EndpointResult:
         if not res.redaction_ok:
             res.errors.append("redaction violation")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 읽기전용 API 엔드포인트 스모크테스트 — 서버앱/라우트 로드 실패는 환경 의존적 문제로 보고 subprocess 오류를 반환값에 담아 폴백, 실제 API 호출 실패 자체를 테스트가 검증하는 대상
         res.errors.append(str(e))
     return res
 
@@ -168,7 +183,7 @@ def _smoke_providers(client: Any, report: SmokeReport) -> EndpointResult:
 
         res.redaction_ok = _check_redaction(body, report, res.path)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 읽기전용 API 엔드포인트 스모크테스트 — 서버앱/라우트 로드 실패는 환경 의존적 문제로 보고 subprocess 오류를 반환값에 담아 폴백, 실제 API 호출 실패 자체를 테스트가 검증하는 대상
         res.errors.append(str(e))
     return res
 
@@ -211,7 +226,7 @@ def _smoke_storage(client: Any, report: SmokeReport) -> EndpointResult:
 
         res.redaction_ok = _check_redaction(body, report, res.path)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 읽기전용 API 엔드포인트 스모크테스트 — 서버앱/라우트 로드 실패는 환경 의존적 문제로 보고 subprocess 오류를 반환값에 담아 폴백, 실제 API 호출 실패 자체를 테스트가 검증하는 대상
         res.errors.append(str(e))
     return res
 
@@ -220,6 +235,7 @@ def run_smoke() -> SmokeReport:
     report = SmokeReport()
 
     from fastapi.testclient import TestClient
+
     from ai_orchestrator.server import app
 
     with TestClient(app) as client:
