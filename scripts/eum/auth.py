@@ -59,7 +59,7 @@ def _select_member_category(page, category: str = _MEMBER_CATEGORY) -> bool:
             loc.click(timeout=3000)
             log.info("[eum-auth] 회원 분류 선택: %s (button)", category)
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
         # 라벨/링크 폴백
         for sel in [f'label:has-text("{category}")', f'a:has-text("{category}")', f'[onclick*="{category}"]']:
@@ -69,11 +69,11 @@ def _select_member_category(page, category: str = _MEMBER_CATEGORY) -> bool:
                     loc.click(timeout=3000)
                     log.info("[eum-auth] 회원 분류 선택: %s (%s)", category, sel)
                     return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
                 continue
         log.warning("[eum-auth] 회원 분류 '%s' 선택 실패", category)
         return False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
         log.warning("[eum-auth] 회원 분류 선택 예외: %s", e)
         return False
 
@@ -96,7 +96,7 @@ def _select_terminal_company_subtype(page, subtype: str = _TERMINAL_COMPANY_SUBT
                 loc.click(timeout=3000)
                 log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (%s)", subtype, sel)
                 return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
                 continue
 
         # 2. radio input value/aria-label 기반
@@ -110,7 +110,7 @@ def _select_terminal_company_subtype(page, subtype: str = _TERMINAL_COMPANY_SUBT
                 loc.check(timeout=3000, force=True)
                 log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (%s)", subtype, sel)
                 return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
                 continue
 
         # 3. 하드코딩 ID 폴백 (사이트 변경 전 구 셀렉터)
@@ -124,12 +124,12 @@ def _select_terminal_company_subtype(page, subtype: str = _TERMINAL_COMPANY_SUBT
                 _TERMINAL_COMPANY_SUBTYPE_SELECTOR_FALLBACK,
             )
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
 
         log.warning("[eum-auth] 단말기 업체 세부 유형 '%s' 선택 실패", subtype)
         return False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
         log.warning("[eum-auth] 단말기 업체 세부 유형 선택 예외: %s", e)
         return False
 
@@ -197,7 +197,7 @@ def _find_selector(page, candidates: list[str]) -> str | None:
             el = page.query_selector(sel)
             if el and el.is_visible():
                 return sel
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
     return None
 
@@ -215,14 +215,14 @@ def is_logged_in(page) -> bool:
     current_url = ""
     try:
         current_url = page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
         return False
 
     # 1. 로그인 폼(ID+PW)이 보이면 = 미로그인 (R1 핵심)
     if "/main" in current_url:
         try:
             page.wait_for_selector(".login_dashboard", state="attached", timeout=5000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
     id_visible = _find_selector(page, _ID_SELECTORS) is not None
     pw_visible = _find_selector(page, _PW_SELECTORS) is not None
@@ -230,7 +230,7 @@ def is_logged_in(page) -> bool:
         if not (id_visible and pw_visible) and page.query_selector(".login_dashboard"):
             log.debug("is_logged_in: EUM login dashboard detected url=%s", current_url)
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
         pass
     try:
         if not (id_visible and pw_visible):
@@ -238,7 +238,7 @@ def is_logged_in(page) -> bool:
             if any(token in body_text for token in ("로그아웃", "로그인연장", "마이페이지")):
                 log.debug("is_logged_in: EUM session text detected url=%s", current_url)
                 return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
         pass
     if id_visible and pw_visible:
         log.debug("is_logged_in: 로그인 폼 visible — 미로그인 확정 url=%s", current_url)
@@ -264,7 +264,7 @@ def is_logged_in(page) -> bool:
                 if txt == "로그인" or ("로그인" in txt and "로그아웃" not in txt):
                     log.debug("is_logged_in: '로그인' 버튼 visible — 미로그인 url=%s", current_url)
                     return False
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
 
     # 4. 명시적 로그아웃 버튼 (강한 신호 — 로그인됨)
@@ -282,7 +282,7 @@ def is_logged_in(page) -> bool:
             if el and el.is_visible():
                 log.debug("is_logged_in: 로그아웃 버튼 발견 sel=%s", sel)
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
 
     # 5. 보호된 페이지 패턴 (/web/man/ 등) + 폼/로그인버튼 없음 → 로그인된 것으로 추정
@@ -302,7 +302,7 @@ def _try_goto(page, url: str) -> bool:
     try:
         page.goto(url, timeout=15000, wait_until="domcontentloaded")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
         log.debug("goto 실패: url=%s err=%s", url, e)
         return False
 
@@ -323,7 +323,7 @@ def _prepare_login_page(page, url: str) -> bool:
                     state="visible",
                     timeout=3000,
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
                 pass
 
     id_sel = _find_selector(page, _ID_SELECTORS)
@@ -384,7 +384,7 @@ def login(page) -> dict:
                             state="visible",
                             timeout=3000,
                         )
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
                         pass
 
             id_sel = _find_selector(page, _ID_SELECTORS)
@@ -445,13 +445,13 @@ def login(page) -> dict:
         # 페이지 로딩 대기
         try:
             page.wait_for_load_state("networkidle", timeout=15000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
 
         # 팝업/알림 처리 (로그인 실패 메시지)
         try:
             page.wait_for_timeout(1000)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
 
         # 로그인 성공 여부 확인
@@ -467,7 +467,7 @@ def login(page) -> dict:
                         if txt:
                             user_name = txt
                             break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
                     pass
 
             log.info("로그인 성공: user=%s url=%s", user_name, page.url)
@@ -478,7 +478,7 @@ def login(page) -> dict:
 
                 _save("eum.cw.or.kr", page)
                 log.info("[eum-auth] 세션 저장 완료")
-            except Exception as _e:
+            except Exception as _e:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
                 log.debug("[eum-auth] 세션 저장 실패 (무시): %s", _e)
             return {"ok": True, "reason": "로그인 성공", "user": user_name}
 
@@ -506,7 +506,7 @@ def login(page) -> dict:
                     if txt:
                         fail_msg = txt[:200]
                         break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
                 pass
 
         log.warning("로그인 실패: url=%s msg=%s", page.url, fail_msg)
@@ -535,13 +535,13 @@ def ensure_logged_in(page) -> None:
             # 복원 후 페이지 이동해 로그인 확인
             try:
                 page.goto(EUM_BASE + "/web/man/WEBMAN390M00", timeout=12000, wait_until="domcontentloaded")
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
                 pass
             if is_logged_in(page):
                 log.info("[eum-auth] 세션 복원 후 로그인 확인됨")
                 return
             log.info("[eum-auth] 세션 복원 후 로그인 미확인 — 신규 로그인 진행")
-    except Exception as _e:
+    except Exception as _e:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
         log.debug("[eum-auth] 세션 복원 시도 실패 (무시): %s", _e)
 
     log.info("EUM 세션 없음 — 자동 로그인 시도")

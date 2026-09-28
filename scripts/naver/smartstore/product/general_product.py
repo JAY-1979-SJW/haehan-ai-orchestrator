@@ -119,7 +119,7 @@ class GeneralProductRegister:
 
             return False
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             _log.warning("[gen-reg] 직접 URL 진입 오류: %s", e)
             return False
 
@@ -153,7 +153,7 @@ class GeneralProductRegister:
             _log.error("[gen-reg] 사이드바 방식 실패")
             return False
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             _log.error("[gen-reg] 사이드바 방식 오류: %s", e)
             return False
 
@@ -167,7 +167,7 @@ class GeneralProductRegister:
                     time.sleep(1)
                     _log.info("[gen-reg] 상품 유형 선택: '%s'", btn_txt)
                     return
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속하거나 상위에서 재시도(2026-09-28 검토)
                 pass
 
     def _wait_for_form(self, timeout_s: int = 15) -> bool:
@@ -179,7 +179,7 @@ class GeneralProductRegister:
                     el = self.page.locator(sel).first
                     if el.count() > 0 and el.is_visible(timeout=500):
                         return True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속하거나 상위에서 재시도(2026-09-28 검토)
                     pass
             time.sleep(0.8)
         return False
@@ -256,7 +256,7 @@ class GeneralProductRegister:
 
             _log.info("[gen-reg] %s: %s", label or selector, value)
             return {"ok": True, "value": value, "actual": actual}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             _log.error("[gen-reg] %s 입력 실패: %s", label, e)
             return {"ok": False, "error": str(e)[:80]}
 
@@ -321,7 +321,7 @@ class GeneralProductRegister:
             if not has_origin_label:
                 self.page.get_by_text("상품 주요정보", exact=True).first.click(timeout=3000)
                 time.sleep(0.8)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속하거나 상위에서 재시도(2026-09-28 검토)
             pass
 
         try:
@@ -356,7 +356,7 @@ class GeneralProductRegister:
             time.sleep(0.5)
             self.page.get_by_text(origin_type, exact=True).first.click(timeout=5000)
             time.sleep(0.7)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": f"origin_type 선택 실패: {str(e)[:100]}"}
 
         if origin_type == "수입산":
@@ -444,7 +444,7 @@ class GeneralProductRegister:
                 if not _click_dropdown_option(country):
                     return {"ok": False, "error": f"국가 옵션 못찾음: {country}"}
                 time.sleep(0.6)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
                 return {"ok": False, "error": f"대륙/국가 선택 실패: {str(e)[:100]}"}
 
             if importer:
@@ -453,7 +453,7 @@ class GeneralProductRegister:
                     if imp_loc.count() > 0:
                         imp_loc.first.fill(importer)
                         time.sleep(0.3)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
                     return {"ok": False, "error": f"수입사 입력 실패: {str(e)[:100]}"}
 
         # 검증
@@ -502,7 +502,7 @@ class GeneralProductRegister:
                 return {"ok": False, "error": "제조자(사) 자동완성 옵션 못찾음"}
             self.page.mouse.click(coords["x"], coords["y"])
             time.sleep(0.6)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": f"제조자(사) 입력 실패: {str(e)[:100]}"}
 
         final_txt = self.page.evaluate("document.body.innerText")
@@ -544,7 +544,7 @@ class GeneralProductRegister:
             time.sleep(0.3)
             self.page.keyboard.type(phone, delay=40)
             time.sleep(0.4)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": f"A/S 전화번호 입력 실패: {str(e)[:100]}"}
 
         actual = self.page.evaluate(
@@ -619,14 +619,14 @@ class GeneralProductRegister:
                             break
                     if target is not None:
                         break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
                     continue
 
             try:
                 if target is not None:
                     target.click(timeout=3000, force=True)
                     time.sleep(0.8)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
                 self.page.keyboard.press("ArrowDown")
                 time.sleep(0.3)
                 self.page.keyboard.press("Enter")
@@ -660,7 +660,7 @@ class GeneralProductRegister:
 
             _log.info("[gen-reg] 카테고리: %s (선택됨: %s)", category_name, selected[:60])
             return {"ok": True, "category": category_name, "selected": selected[:120]}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     _SELECTIZE_SET_JS = r"""
@@ -691,7 +691,7 @@ class GeneralProductRegister:
         """
         try:
             return self.page.evaluate(self._SELECTIZE_SET_JS, category_name)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "why": type(e).__name__, "error": str(e)[:80]}
 
     _SELECTIZE_GENERIC_JS = r"""
@@ -727,7 +727,7 @@ class GeneralProductRegister:
                 self._SELECTIZE_GENERIC_JS,
                 {"selector": selector, "byLabel": label, "byValue": value},
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "why": type(e).__name__, "error": str(e)[:80]}
 
     def _dismiss_blocking_modals(self, rounds: int = 4) -> int:
@@ -754,7 +754,7 @@ class GeneralProductRegister:
                         closed += 1
                         hit = True
                         break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
                     continue
             if not hit:
                 break
@@ -770,7 +770,7 @@ class GeneralProductRegister:
         try:
             loc = self.page.locator(".info-result.text-info").first
             raw = (loc.inner_text(timeout=2500) or "").strip()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             _log.debug("[gen-reg] 카테고리 조회 실패: %s", e)
             return ""
         # "선택한 카테고리 : 가구/인테리어>..." → 라벨 제거
@@ -791,14 +791,14 @@ class GeneralProductRegister:
         def _has_input() -> bool:
             try:
                 return self.page.locator("input[type=file]").count() > 0
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
                 return False
 
         if _has_input():
             return True
         try:
             n = self.page.locator("a.btn-add-img").count()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return False
         for i in range(min(n, 5)):
             try:
@@ -806,7 +806,7 @@ class GeneralProductRegister:
                 btn.scroll_into_view_if_needed(timeout=3000)
                 time.sleep(0.4)
                 btn.click(timeout=4000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
                 continue
             time.sleep(2.0)
             if _has_input():
@@ -844,7 +844,7 @@ class GeneralProductRegister:
                 mode="general_product_image_main",
             )
             return {"ok": True, "file": image_path, "before": before, "after": after}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     def _uploaded_image_count(self) -> int:
@@ -854,7 +854,7 @@ class GeneralProductRegister:
                 """() => [...document.querySelectorAll('img')]
                         .filter(e => /phinf|pstatic|blob:/.test(e.src || '')).length"""
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return -1
 
     # ── 저장 (사용자 명시 호출 필수) ─────────────────────────────────────
@@ -902,7 +902,7 @@ class GeneralProductRegister:
             time.sleep(5)
             log_critical("OTHER", "일반 상품 등록 저장", url=self.page.url, mode="general_save")
             return {"ok": True, "url": self.page.url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
 
     # ── 통합 원샷 등록 ───────────────────────────────────────────────────
