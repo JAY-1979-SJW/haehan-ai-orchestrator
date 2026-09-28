@@ -30,3 +30,9 @@ websocket-client>=1.8.0
 gunicorn>=21.0.0
 python-dotenv>=1.0.0
 psycopg2-binary>=2.9.0
+# 2026-09-28 audit-kit 치명(ERR-01) 재검증 — import는 있는데 requirements.txt에 없어
+# 새 PC 설치 시 ModuleNotFoundError로 깨지던 실제 의존성 4건 추가.
+beautifulsoup4>=4.12.0
+python-docx>=1.1.0
+matplotlib>=3.8.0
+mcp>=1.0.0
