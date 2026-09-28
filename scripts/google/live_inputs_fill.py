@@ -3,9 +3,11 @@
 셀렉터/클릭/입력/검증 등 저수준 fill 동작. config·cdp(공유 leaf) 의존,
 도메인 filler 들이 공유한다. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 from .live_inputs_config import (
@@ -13,6 +15,7 @@ from .live_inputs_config import (
     LIVE_INPUT_ADAPTERS,
     ROOT,
 )
+
 
 def _safe_to_generic_fill(field: str, value: str) -> bool:
     if not value or value == "[redacted]":
@@ -105,7 +108,15 @@ def _cdp_fill_first(
                 return {ok: true, selector: selector};
             }
             return {ok: false};
-        })(""" + json.dumps(selectors) + ", " + json.dumps(value) + ", " + json.dumps(press_enter) + ", " + json.dumps(contenteditable) + ")"
+        })("""
+        + json.dumps(selectors)
+        + ", "
+        + json.dumps(value)
+        + ", "
+        + json.dumps(press_enter)
+        + ", "
+        + json.dumps(contenteditable)
+        + ")"
     )
     if not err and isinstance(data, dict) and data.get("ok"):
         result["filled_fields"].append(field)
@@ -130,7 +141,9 @@ def _cdp_click_first_selector(session: Any, selectors: list[str], result: dict, 
                 return {ok: true, selector: selector};
             }
             return {ok: false};
-        })(""" + json.dumps(selectors) + ")"
+        })("""
+        + json.dumps(selectors)
+        + ")"
     )
     if not err and isinstance(data, dict) and data.get("ok"):
         result.setdefault("clicked_nonfinal_controls", []).append({"field": field, **data})
@@ -161,7 +174,9 @@ def _cdp_click_text(session: Any, labels: list[str], result: dict, field: str) -
                 }
             }
             return {ok: false};
-        })(""" + json.dumps(labels) + ")"
+        })("""
+        + json.dumps(labels)
+        + ")"
     )
     if not err and isinstance(data, dict) and data.get("ok"):
         result.setdefault("clicked_nonfinal_controls", []).append({"field": field, **data})
@@ -260,13 +275,15 @@ def _cdp_verify_gmail_compose_values(session: Any, values: dict, result: dict) -
                 url: location.href,
                 title: document.title
             };
-        })(""" + json.dumps(
+        })("""
+        + json.dumps(
             {
                 "to": values.get("to", ""),
                 "subject": values.get("subject", ""),
                 "body": values.get("body", ""),
             }
-        ) + ")"
+        )
+        + ")"
     )
     if err or not isinstance(data, dict):
         for field in ("to", "subject", "body"):
@@ -310,6 +327,8 @@ def _detect_final_controls_cdp(session: Any) -> list[dict]:
                 if (matched) results.push({label: matched, text: text.slice(0, 80), aria: aria.slice(0, 80), title: title.slice(0, 80)});
             }
             return results.slice(0, 25);
-        })(""" + json.dumps(list(FINAL_CONTROL_LABELS)) + ")"
+        })("""
+        + json.dumps(list(FINAL_CONTROL_LABELS))
+        + ")"
     )
     return data if not err and isinstance(data, list) else []
