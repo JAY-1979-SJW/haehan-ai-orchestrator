@@ -19224,6 +19224,46 @@
    "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/hanafax/export_kras_fax_pdf.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/hanafax/kras_campaign_template.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "hanafax",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/hanafax/kst_date.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/hanafax/send_kras_campaign.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "hanafax",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/hanafax/send_kras_final_campaign.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "hanafax",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
