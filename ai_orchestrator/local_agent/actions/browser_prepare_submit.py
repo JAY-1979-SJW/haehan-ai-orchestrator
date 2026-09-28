@@ -6,15 +6,16 @@
 - 실제 제출 버튼 클릭 안 함
 - 쿠키/session/storage_state 추출 안 함
 """
+
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.local_agent.action_registry import register_handler
 from ai_orchestrator.local_agent.action_evidence_collector import collect_evidence
+from ai_orchestrator.local_agent.action_registry import register_handler
 
 ACTION_NAME = "browser.prepare_submit"
 
@@ -52,7 +53,7 @@ def execute(
     try:
         parsed_url = urlparse(page_url)
         safe_url = f"{parsed_url.scheme}://{parsed_url.hostname or ''}{parsed_url.path or ''}"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 감사로그 표시용 safe_url 생성 실패 시 '(invalid_url)' 플레이스홀더 사용 — 승인 토큰 검증 등 실제 게이트 판정과 무관, 로그 표시 전용
         safe_url = "(invalid_url)"
 
     # 첨부파일 안전명 (파일명만)
@@ -63,10 +64,12 @@ def execute(
                 safe_files.append(os.path.basename(f))
 
     # 민감 필드 확인 (input params에서)
-    sensitive_keys = _find_sensitive_keys({
-        "form_summary": form_summary,
-        "risk_notes": risk_notes,
-    })
+    sensitive_keys = _find_sensitive_keys(
+        {
+            "form_summary": form_summary,
+            "risk_notes": risk_notes,
+        }
+    )
     if sensitive_keys:
         return {
             "ok": False,
@@ -89,7 +92,7 @@ def execute(
         "organization_name": organization_name or "(no org)",
         "amount": amount or "(no amount)",
         "due_date": due_date or "(no deadline)",
-        "prepared_at": datetime.now(timezone.utc).isoformat(),
+        "prepared_at": datetime.now(UTC).isoformat(),
     }
 
     # 경고: selector 없음

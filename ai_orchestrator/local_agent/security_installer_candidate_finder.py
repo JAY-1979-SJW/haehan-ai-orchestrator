@@ -1,4 +1,5 @@
 """Security Installer Candidate Finder — 공식 사이트 내 설치 링크 후보를 수집한다."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -8,22 +9,50 @@ from urllib.parse import urlparse
 _ALLOWED_EXTENSIONS = frozenset((".exe", ".msi", ".dmg", ".pkg", ".zip"))
 
 # 차단 확장자
-_BLOCKED_EXTENSIONS = frozenset((
-    ".bat", ".cmd", ".ps1", ".js", ".vbs", ".sh",
-    ".pfx", ".p12", ".key", ".pem", ".crt", ".cer",
-    ".jks", ".der", ".p7b",
-))
+_BLOCKED_EXTENSIONS = frozenset(
+    (
+        ".bat",
+        ".cmd",
+        ".ps1",
+        ".js",
+        ".vbs",
+        ".sh",
+        ".pfx",
+        ".p12",
+        ".key",
+        ".pem",
+        ".crt",
+        ".cer",
+        ".jks",
+        ".der",
+        ".p7b",
+    )
+)
 
 # 차단 파일명 키워드
-_BLOCKED_FILENAME_KEYWORDS = frozenset((
-    "password", "secret", "token", "cookie", "session",
-    "credential", "private", "npki",
-))
+_BLOCKED_FILENAME_KEYWORDS = frozenset(
+    (
+        "password",
+        "secret",
+        "token",
+        "cookie",
+        "session",
+        "credential",
+        "private",
+        "npki",
+    )
+)
 
 # 단축 URL 패턴
 _SHORTURL_PATTERNS = (
-    "bit.ly", "tinyurl.com", "goo.gl", "t.co", "ow.ly",
-    "short.link", "url.kr", "me2.do",
+    "bit.ly",
+    "tinyurl.com",
+    "goo.gl",
+    "t.co",
+    "ow.ly",
+    "short.link",
+    "url.kr",
+    "me2.do",
 )
 
 # NPKI 경로 패턴
@@ -149,7 +178,7 @@ def _get_extension(filename: str) -> str:
 def _extract_host(url: str) -> str:
     try:
         return urlparse(url).hostname or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL에서 호스트 추출 실패 시 빈 문자열 반환 — 이후 _is_official_domain 등에서 빈 호스트는 매칭 실패(False)로 처리되어 fail-closed
         return ""
 
 

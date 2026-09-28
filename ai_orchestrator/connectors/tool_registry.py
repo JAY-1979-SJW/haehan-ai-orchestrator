@@ -83,7 +83,7 @@ def all_tools() -> dict[str, list[dict]]:
     for domain, info in _REGISTRY.items():
         try:
             out[domain] = info["tool_defs"]()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 도메인별 tool_defs() 호출 실패 시 해당 도메인만 빈 목록으로 처리 — 다른 도메인 조회에 영향 없는 격리, 실행 권한 부여와 무관한 목록 조회 함수
             out[domain] = []
     return out
 

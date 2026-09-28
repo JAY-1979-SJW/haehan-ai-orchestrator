@@ -78,7 +78,7 @@ class BlogCommonMixin:
                     m2 = re.search(r"blog\.naver\.com/([^/?#]+)", href)
                     if m2 and not m2.group(1).endswith(".naver"):
                         return f"https://blog.naver.com/{m2.group(1)}"
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return ""

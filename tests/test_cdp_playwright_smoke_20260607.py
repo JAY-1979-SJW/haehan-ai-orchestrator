@@ -23,7 +23,7 @@ def _cdp_http_alive() -> bool:
     try:
         with urllib.request.urlopen(f"{CDP_URL}/json/version", timeout=3) as r:
             return r.status == 200
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 연결 상태 확인용 테스트 헬퍼 — 예외 시 False(연결 안 됨) 반환 또는 대체 라우터 함수 호출, 읽기 전용 스모크 테스트
         return False
 
 
@@ -60,7 +60,7 @@ def test_cdp_status_endpoint_matches_reality():
         with urllib.request.urlopen(f"{API_BASE}/api/v1/cdp/status", timeout=3) as r:
             data = json.loads(r.read())
         api_connected = data.get("connected", False)
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 연결 상태 확인용 테스트 헬퍼 — 예외 시 False(연결 안 됨) 반환 또는 대체 라우터 함수 호출, 읽기 전용 스모크 테스트
         # 서버 미실행 시 라우터 함수 직접 호출
         from ai_orchestrator.connectors.cdp_screen_router import _cdp_alive
 

@@ -240,7 +240,7 @@ def record_deploy_dry_run(command: list[str], *, exit_code: int, output: str = "
             artifact_path=str(path),
             metadata={"command": command, "exit_code": exit_code},
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - quality gate 감사 이벤트(emit_event) 전송 실패를 무시하는 best-effort 로깅 — 게이트 판정(errors/warnings)은 except 이전에 이미 계산 완료되어 감사로그 실패가 게이트 결과에 영향 없음
         pass
     return path
 
@@ -354,7 +354,7 @@ def emit_audit(summary: dict[str, Any]) -> None:
             message=f"quality gate: {summary['errors']} errors, {summary['warnings']} warnings",
             metadata=summary,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - quality gate 감사 이벤트(emit_event) 전송 실패를 무시하는 best-effort 로깅 — 게이트 판정(errors/warnings)은 except 이전에 이미 계산 완료되어 감사로그 실패가 게이트 결과에 영향 없음
         pass
 
 

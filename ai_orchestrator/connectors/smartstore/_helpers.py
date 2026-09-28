@@ -44,7 +44,7 @@ def load_ss(name: str) -> dict:
                 "last_collected_at": data.get("collected_at"),
             }
         return data
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 데이터 조회 실패를 {ok: False, error}로 반환 — 읽기 전용 캐시 조회
         return {"ok": False, "error": str(e)}
 
 

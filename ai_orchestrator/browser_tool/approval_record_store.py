@@ -287,7 +287,7 @@ def _redact_url(url: str) -> tuple[str, str]:
         url_hash = hashlib.sha256(redacted_url.encode()).hexdigest()
         return redacted_url, url_hash
 
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL 리다크션 실패 시 원본 대신 [REDACTED_URL] 플레이스홀더와 해시만 반환 — fail-safe, 원본 URL 노출 없음
         url_hash = hashlib.sha256(url.encode()).hexdigest()
         return "[REDACTED_URL]", url_hash
 

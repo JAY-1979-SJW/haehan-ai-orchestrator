@@ -105,6 +105,6 @@ async def call_local_tool(
     except TimeoutError:
         _pending.pop(req_id, None)
         return {"ok": False, "error": "agent_timeout", "hint": "로컬 에이전트 응답 시간 초과"}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 에이전트 WS 요청 실패 시 pending 정리 후 {ok: False, error} 반환 — fail-closed
         _pending.pop(req_id, None)
         return {"ok": False, "error": str(e)}

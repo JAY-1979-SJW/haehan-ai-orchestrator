@@ -3,6 +3,7 @@
 L1 운영, L2 감사, L3 세션 이벤트 분리 저장. JSONL append-only.
 민감정보 자동 마스킹.
 """
+
 from __future__ import annotations
 
 import json
@@ -10,7 +11,7 @@ import os
 import re
 import subprocess
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -25,10 +26,9 @@ _RRN_RE = re.compile(r"\d{6}-\d{7}")
 
 def _git_sha() -> str:
     try:
-        r = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
-                           capture_output=True, text=True, timeout=2)
+        r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=2)
         return r.stdout.strip() if r.returncode == 0 else ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 감사 레코드용 git commit hash 조회 실패 시 빈 문자열 반환 — 부가 정보 실패, 감사 기록 자체 차단과 무관
         return ""
 
 
@@ -38,8 +38,7 @@ def _mask_value(v: Any) -> Any:
         v = _RRN_RE.sub("******-*******", v)
         return v[:8000]
     if isinstance(v, dict):
-        return {k: ("***" if _SENSITIVE_KEYS.search(k) else _mask_value(val))
-                for k, val in v.items()}
+        return {k: ("***" if _SENSITIVE_KEYS.search(k) else _mask_value(val)) for k, val in v.items()}
     if isinstance(v, list):
         return [_mask_value(x) for x in v]
     return v
@@ -76,9 +75,16 @@ def emit(level: str, event: str, actor: str, **fields) -> None:
         f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
-def L1(event: str, actor: str, **fields): emit("L1", event, actor, **fields)
-def L2(event: str, actor: str, **fields): emit("L2", event, actor, **fields)
-def L3(event: str, actor: str, **fields): emit("L3", event, actor, **fields)
+def L1(event: str, actor: str, **fields):
+    emit("L1", event, actor, **fields)
+
+
+def L2(event: str, actor: str, **fields):
+    emit("L2", event, actor, **fields)
+
+
+def L3(event: str, actor: str, **fields):
+    emit("L3", event, actor, **fields)
 
 
 def rotate(retention_days: dict[str, int] | None = None) -> dict:

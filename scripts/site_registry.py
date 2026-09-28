@@ -84,7 +84,7 @@ def _smartstore_is_logged_in(page):
             }"""
         )
         return bool(classify_probe(raw or {}).get("logged_in"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그인 상태 확인 헬퍼 — 예외 시 False(로그인 안 됨)로 fail-closed 반환, 읽기 전용 DOM 텍스트 검사, 쓰기 없음
         return False
 
 
@@ -149,7 +149,7 @@ def _hiworks_is_logged_in(page):
             return False
         text = page.locator("body").inner_text(timeout=2000)
         return any(token in text for token in ("오피스 홈", "메일", "전자결재", "업무관리", "로그아웃"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로그인 상태 확인 헬퍼 — 예외 시 False(로그인 안 됨)로 fail-closed 반환, 읽기 전용 DOM 텍스트 검사, 쓰기 없음
         return False
 
 

@@ -2,6 +2,7 @@
 
 Routes browser tasks to appropriate backend implementations based on action type and policy.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -59,19 +60,20 @@ def route_browser_task(task: BrowserTask) -> BrowserResult:
     if selected_backend == "worker":
         # Route to Browser Worker backend (HTTP)
         from .backends.worker_backend import BrowserWorkerBackend  # lazy import
+
         worker_backend = BrowserWorkerBackend()
         url = params.get("url", "about:blank")
         task_id = params.get("task_id", f"task-{id(task)}")
         dry_run = params.get("dry_run", True)
         try:
             return worker_backend.execute(task, url, task_id, dry_run)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 워커 백엔드 실행 오류를 BrowserResult(success=False, error=...)로 감싸 반환 — fail-closed, 실패를 성공으로 오인하지 않음
             # Handle any unexpected errors
             return BrowserResult(
                 success=False,
                 action=action,
                 data={},
-                error=f"worker backend error: {str(e)}",
+                error=f"worker backend error: {e!s}",
                 error_code="BROWSER_WORKER_ERROR",
                 backend="worker",
             )
@@ -80,9 +82,7 @@ def route_browser_task(task: BrowserTask) -> BrowserResult:
         return mock_backend.handle_task(task)
 
 
-def route_browser_task_with_params(
-    action: str, params: dict[str, Any] | None = None
-) -> BrowserResult:
+def route_browser_task_with_params(action: str, params: dict[str, Any] | None = None) -> BrowserResult:
     """Convenience function to route with action string and params dict.
 
     Args:

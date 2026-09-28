@@ -118,7 +118,7 @@ def main() -> int:
     for r in a.repos:
         try:
             print(install(Path(r), a.dry_run))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 여러 저장소를 순회 설치하는 CLI — 한 저장소 설치 실패 시에도 나머지 저장소를 계속 처리하기 위해 의도적으로 폭넓게 예외를 잡음(코드 내 기존 주석과 동일 취지), 오류는 print로 보고되고 종료코드 1로 반영됨
             # 여러 저장소를 순회 설치하는 CLI: 한 저장소가 어떤 이유로든(git 오류·권한·I/O 등)
             # 실패해도 나머지 저장소는 계속 처리해야 한다 — 의도적으로 폭넓게 잡는다.
             print({"repo": r, "error": str(e)})

@@ -34,7 +34,7 @@ def api_stats_collect(user: dict = Depends(require_role("admin", "owner"))) -> d
             from scripts.naver.smartstore import NaverSmartStore
 
             result = NaverSmartStore(page).stats()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 통계 CDP 수집 실패를 {ok: False, error}로 저장 — 읽기 전용 조회
         result = {"ok": False, "error": str(e)}
     result.update({"collected_at": now_iso(), "duration_ms": elapsed_ms(t0)})
     save_ss("stats", result)

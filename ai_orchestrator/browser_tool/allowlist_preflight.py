@@ -121,7 +121,7 @@ def normalize_url_for_policy(url: str) -> dict:
             "url_redacted": url_redacted,
             "has_sensitive_params": has_sensitive,
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - URL 파싱 실패 시 도메인을 [PARSE_ERROR]로 표시하고 has_sensitive_params=True로 안전한 기본값(민감정보 있다고 가정)을 반환 — fail-safe 리다크션, 차단/허용 판정 함수 아님
         logger.warning(f"URL parsing failed: {e}")
         url_hash = hashlib.sha256(url.encode()).hexdigest()
         return {

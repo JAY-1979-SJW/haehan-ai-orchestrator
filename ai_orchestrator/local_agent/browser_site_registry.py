@@ -103,7 +103,7 @@ def validate_raw_url(raw_url: str) -> dict[str, Any]:
         return {"ok": False, "verdict": "EMPTY_URL"}
     try:
         parsed = urlparse(raw_url)
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL 파싱 실패 시 {ok: False, verdict: URL_PARSE_ERROR} 반환 — fail-closed, 허용되지 않은 것으로 처리
         return {"ok": False, "verdict": "URL_PARSE_ERROR"}
     host = (parsed.hostname or "").lower()
     if not host:

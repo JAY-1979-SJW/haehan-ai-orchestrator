@@ -336,6 +336,6 @@ def _extract_domain(task: dict[str, Any]) -> str:
     if url:
         try:
             return urlparse(url).netloc.lower()
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
     return ""

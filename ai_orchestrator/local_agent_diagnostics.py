@@ -162,7 +162,7 @@ def build_local_agent_diagnostics() -> dict:
             "warnings": warnings,
         }
 
-    except Exception:
+    except Exception:  # noqa: BLE001 - 진단 정보 생성 실패 시 status=error 반환 — 코드 주석대로 원본 예외 텍스트는 노출하지 않음, 읽기 전용 진단
         # 예외 발생 시 상태는 error이지만 raw exception text 반환 금지
         return {
             "status": "error",
