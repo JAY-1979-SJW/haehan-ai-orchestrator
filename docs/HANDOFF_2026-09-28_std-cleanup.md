@@ -108,7 +108,56 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
      `main()` 함수(CLI 진입점 보일러플레이트, 통상 무해), `gabia`/`google`/`hiworks`/`youtube`의
      `validate_*_action_plan`(4-way, 벤더별 검증기라 구조가 비슷한 건 자연스러움) 등 소규모 산발.
    - **다음 세션 판단 필요**: ①이 의도된 설계인지 사용자에게 확인 — 아니라면 이 프로젝트에서
-     가장 큰 DUP-04 부채. — audit-kit std 결과(110건)는 신뢰할 만해 보이지만(worktree 오염 전후 동일), 실제 파일별 breakdown은 아직 안 봤음.
+     가장 큰 DUP-04 부채.
+
+3. ~~**32번 도구(전체 ruff 규칙) 재검토**~~ — **완료(2026-09-28 3차 세션), 판정: 셋 다 지금은 도입 안 함**.
+   `32. Claude 개발표준\project\ruff.toml`(전체 규칙, preview) 로 이 프로젝트를 직접 재검사해
+   3개 후보를 실측했다. B008 은 이전 세션 판정(452건 전부 FastAPI Depends 패턴 오탐, 실제 0건)
+   그대로 재확인됨.
+   - **PLC0415(함수 안 import, 1503건) — 도입 안 함**: 표본 확인 결과 거의 다 의도된 지연 import
+     (순환 참조 회피용 `# lazy import` 명시 주석 포함, stdlib 지연 로딩 등). `standard/rules.toml`
+     에도 없는 규칙이라 원래 STD 대상이 아님 — 추가 안 함.
+   - **ERA001(죽은 주석 코드, 92건) — 도입 보류, 원인 규명**: 20개+ 표본을 직접 대조했는데
+     **실제 죽은 코드 0건, 전부 오탐**이었다. 오탐 원인 2가지: ① 이 프로젝트 자체 파일 헤더
+     관례(`# module_category: ...` / `# primary_trade: ...`, 14개 파일 × 2줄 = 28건) ②
+     콜론으로 구분된 한글/영문 설명 주석("키: 설명" 형태 — 예: `# 기본값: memory (안전)`,
+     `# (pattern, tag, is_blocker)`, dataclass 필드 그룹 헤더 `# Required: Schema & IDs` 등)이
+     코드처럼 보여 오판됨. `rules.toml` STD-10 에 이미 이름만 올라 있으나(severity=improve),
+     이 프로젝트에 켜려면 두 패턴을 전부 예외처리해야 해서 실익이 거의 없다 — 지금은 미도입.
+   - **C901(복잡도, 348건) — 일부만 후속 후보로 채택, 전체 도입은 보류**: `rules.toml` STD-08 에
+     이미 있고(severity=improve, 차단 아님) 분포를 보면 158건(45%)이 임계값(10) 바로 위(11~13)라
+     당장 규칙화하면 노이즈가 큼. 다만 **복잡도 30 이상 극단값 14개**는 실제 리팩터링 후보로
+     가치 있어 보여 따로 남긴다:
+     `scripts/cdp_client.py:main`(**134**, 압도적 1위) · `scripts/ops/code_map/fullmap.py:extend`(44) ·
+     `scripts/naver/blog/community/blog_explorer.py:main`(39) ·
+     `scripts/naver/cafe/collection/cafe_explorer.py:main`(38) ·
+     `scripts/ops/code_map/modules.py:main`(38) · `scripts/ops/codebase_layer_audit.py:classify_path`(35) ·
+     `local_agent_redaction.py:_strip_result_data`(32) ·
+     `scripts/ops/audit_google_automation_baseline_contract.py:audit`(32) ·
+     `scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
+     `scripts/ops/audit_site_sso_subdomain_runtime_baseline.py:audit`(33) ·
+     `scripts/naver/mail/collection/inbox_collector.py:collect_inbox`(34) ·
+     `browser/agent.py:_cli`(30) · `scripts/explorer/site_crawler.py:crawl_site`(31) ·
+     `scripts/ops/audit_backend_operation_final_closeout.py:run_audit`(30).
+     대부분 CLI `main()`의 긴 if/elif 분기라 구조적으로는 이해되지만, `cdp_client.py`(134)와
+     `fullmap.py:extend`(44)는 CLI 분기가 아니라 실질적 복잡도라 우선순위가 높아 보임(미확인 —
+     실제 리팩터링은 하지 않음, 다음 세션 후보).
+   - **코드 변경 없음** — 이번 항목은 순수 검토/판정. `configs/ruff.toml`·`rules.toml` 둘 다 그대로.
+   - **추가 발견·삭제(2026-09-28, 4차 세션)**: ERA001 92건을 전수(92개 전부) 소스라인까지
+     직접 대조하다가 `tests/test_browser_admin_approval_contract.py`의 `TestStatusVocabulary`
+     클래스(테스트 7개)가 **실제 assert문이 하나도 없는 스텁**임을 발견 — `status = "received"
+     # noqa: F841` 처럼 변수만 대입하고, "can_approve = true, can_reject = true" 같은 의도를
+     주석으로만 남겨둔 채 실제 검증 코드가 없어 항상 무조건 통과하던 가짜 테스트였다(사용자
+     지시 "기능적으로 구현이 안되는 코드는 모두 삭제해"로 삭제 확정). 삭제 후 확인:
+     - 같은 의도(상태값 검증)를 실제로 assert 하는 진짜 테스트가 다른 파일에 이미 존재함
+       (`tests/test_browser_websocket_payload_schema.py::TestStatusVocabulary`, 스키마 대상
+       실제 검증) — 커버리지 공백 없음.
+     - 모듈 docstring의 "5. Status vocabulary consistency" 항목 삭제 + 왜 지웠는지 사유 주석 추가.
+     - `pytest tests/test_browser_admin_approval_contract.py` 44→37개로 통과(제거한 7개 제외 전부
+       그대로 통과), ruff 통과, layer audit FORBIDDEN/SECURITY/CIRCULAR 0건 확인.
+     - **범위 한정**: 이번엔 이 파일 1건만 처리. "기능 미구현 코드 전수 삭제"를 코드베이스
+       전체로 확대하려면(assert 없는 테스트, `pass`만 있는 스텁 함수 등) 별도의 전수 스캔이
+       필요 — 이번 세션 범위 밖, 다음 세션 후보로 남김. — audit-kit std 결과(110건)는 신뢰할 만해 보이지만(worktree 오염 전후 동일), 실제 파일별 breakdown은 아직 안 봤음.
 3. **32번 도구(전체 ruff 규칙) 재검토** — 노이즈(RUF105 2,939건, preview 모드 noqa 문법 차이)를 뺀 진짜 후보: `PLC0415`(함수 안 import, 1507건), `C901`(복잡도, 354건), `B008`(사실 FastAPI라 0건으로 판명), `ERA001`(죽은 주석 코드, 92건) 등. 사용자가 "나중에 따로 다루자"고 미뤄둔 상태.
 4. **STD-06~10 등 나머지 STD 카테고리** — 이번 세션에서 아예 안 봄(STD-03=print문, STD-06~10 등). audit-kit 번들 기준 카운트가 크지만(수백 건씩), 위 "설정 불일치" 함정이 있으니 프로젝트 자체 config로 먼저 재확인할 것.
 5. **`.claude/settings.json`/`settings.local.json`의 `C:\work\...` 하드코딩 경로** — 이전 세션에서 발견됐으나 이번 세션 범위 밖. install-readiness와 직결(다른 PC/경로에서 hook 전체가 무동작).
