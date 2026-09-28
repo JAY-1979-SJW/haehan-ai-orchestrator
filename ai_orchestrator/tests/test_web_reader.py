@@ -2,15 +2,16 @@
 
 HTML 문자열 기반 테스트만 사용한다. 실제 외부 사이트 접속은 하지 않는다.
 """
+
 from __future__ import annotations
 
 import json
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 # ─── 공용 샘플 HTML ────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ _HTML_BASIC = """
 
 # ─── 기본 추출 ─────────────────────────────────────────────────────────────
 
+
 def test_title_and_headings_extracted() -> None:
     from local_agent.web_reader import analyze_html_structure
 
@@ -100,6 +102,7 @@ def test_buttons_extracted() -> None:
 
 # ─── 버튼 위험도 ───────────────────────────────────────────────────────────
 
+
 def test_write_buttons_classified_danger_write() -> None:
     from local_agent.web_reader import analyze_html_structure
 
@@ -120,6 +123,7 @@ def test_read_buttons_classified_safe_read() -> None:
 
 
 # ─── 민감정보 차단 ─────────────────────────────────────────────────────────
+
 
 def test_password_value_not_in_result() -> None:
     from local_agent.web_reader import analyze_html_structure
@@ -159,6 +163,7 @@ def test_form_has_password_and_hidden() -> None:
 
 # ─── 표/키워드 ─────────────────────────────────────────────────────────────
 
+
 def test_table_headers_rows_columns() -> None:
     from local_agent.web_reader import analyze_html_structure
 
@@ -190,6 +195,7 @@ def test_business_keyword_scoring_on_links() -> None:
 
 
 # ─── 경계/안전 ─────────────────────────────────────────────────────────────
+
 
 def test_empty_html_returns_safe_empty_result() -> None:
     from local_agent.web_reader import analyze_html_structure
@@ -232,16 +238,20 @@ def test_full_html_body_not_in_result() -> None:
 
 # ─── URL validator ─────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "file:///etc/passwd",
-    "file://C:/Windows/system.ini",
-    "javascript:alert(1)",
-    "data:text/html,<script>alert(1)</script>",
-    "about:blank",
-    "chrome://settings",
-    "edge://settings",
-    "ftp://example.com/",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc/passwd",
+        "file://C:/Windows/system.ini",
+        "javascript:alert(1)",
+        "data:text/html,<script>alert(1)</script>",
+        "about:blank",
+        "chrome://settings",
+        "edge://settings",
+        "ftp://example.com/",
+    ],
+)
 def test_validate_url_blocks_dangerous_schemes(url: str) -> None:
     from local_agent.web_reader import validate_url_for_readonly_open
 
@@ -250,19 +260,22 @@ def test_validate_url_blocks_dangerous_schemes(url: str) -> None:
     assert r["error_code"] in {"URL_SCHEME_BLOCKED", "URL_NO_HOST", "URL_PARSE_FAILED"}
 
 
-@pytest.mark.parametrize("url", [
-    "http://localhost/",
-    "http://localhost:8080/admin",
-    "http://127.0.0.1/",
-    "http://0.0.0.0/",
-    "http://10.0.0.5/",
-    "http://172.16.0.1/",
-    "http://192.168.1.1/",
-    "http://169.254.169.254/latest/meta-data/",
-    "http://[::1]/",
-    "http://[fe80::1]/",
-    "http://[fc00::1]/",
-])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://localhost/",
+        "http://localhost:8080/admin",
+        "http://127.0.0.1/",
+        "http://0.0.0.0/",
+        "http://10.0.0.5/",
+        "http://172.16.0.1/",
+        "http://192.168.1.1/",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://[::1]/",
+        "http://[fe80::1]/",
+        "http://[fc00::1]/",
+    ],
+)
 def test_validate_url_blocks_internal_addresses(url: str) -> None:
     from local_agent.web_reader import validate_url_for_readonly_open
 
@@ -291,6 +304,7 @@ def test_validate_url_allow_private_network_opt_in() -> None:
 
 # ─── action 통합 ───────────────────────────────────────────────────────────
 
+
 def test_execute_action_web_analyze_html() -> None:
     from local_agent.actions import execute_action
 
@@ -314,6 +328,7 @@ def test_execute_action_web_analyze_html_missing_html() -> None:
 
 
 # ─── 민감 토큰 종합 스캔 ───────────────────────────────────────────────────
+
 
 def test_result_contains_no_known_sensitive_tokens() -> None:
     from local_agent.web_reader import analyze_html_structure
@@ -343,20 +358,29 @@ def test_result_contains_no_known_sensitive_tokens() -> None:
 
 # ─── 금지 API / 라이브러리 정적 검사 ───────────────────────────────────────
 
+
 def test_no_browser_automation_or_mutation_apis() -> None:
     """web_reader / 새 action 코드에 클릭·입력·브라우저 자동화 호출이 없는지."""
     from pathlib import Path
-    import local_agent.web_reader as wr
+
     import local_agent.actions as ac
+    import local_agent.web_reader as wr
 
     reader_src = Path(wr.__file__).read_text(encoding="utf-8")
     actions_src = Path(ac.__file__).read_text(encoding="utf-8")
 
     # web_reader 모듈에는 브라우저/자동화 라이브러리 import 나 호출이 없어야 함
     for token in (
-        "playwright", "selenium", "pyppeteer",
-        "webdriver", "ChromeDriver", "geckodriver",
-        ".click(", "type_text", "submit_form", "send_keys",
+        "playwright",
+        "selenium",
+        "pyppeteer",
+        "webdriver",
+        "ChromeDriver",
+        "geckodriver",
+        ".click(",
+        "type_text",
+        "submit_form",
+        "send_keys",
     ):
         assert token not in reader_src, f"{token!r} found in web_reader.py"
 

@@ -17,10 +17,11 @@ import json
 import os
 import sys
 import uuid
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 @pytest.fixture(scope="module")

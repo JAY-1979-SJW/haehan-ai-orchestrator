@@ -3,15 +3,15 @@
 테스트는 pytest tmp_path 만 사용한다. 실제 사용자 폴더 / OneDrive / Downloads /
 C:/Users 등은 절대 스캔하지 않는다.
 """
+
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 @pytest.fixture
@@ -52,6 +52,7 @@ def sample_tree(tmp_path: Path) -> Path:
 
 # ─── 기본 스캔 ──────────────────────────────────────────────────────────────
 
+
 def test_basic_scan_returns_expected_shape(sample_tree: Path) -> None:
     from local_agent.file_scanner import scan_file_tree
 
@@ -81,6 +82,7 @@ def test_items_contain_no_absolute_path(sample_tree: Path) -> None:
 
 
 # ─── 탐색 제한 ──────────────────────────────────────────────────────────────
+
 
 def test_max_depth_limit(tmp_path: Path) -> None:
     from local_agent.file_scanner import scan_file_tree
@@ -122,6 +124,7 @@ def test_max_files_limit(tmp_path: Path) -> None:
 
 # ─── 제외 디렉터리 ──────────────────────────────────────────────────────────
 
+
 def test_excluded_directories(sample_tree: Path) -> None:
     from local_agent.file_scanner import scan_file_tree
 
@@ -135,6 +138,7 @@ def test_excluded_directories(sample_tree: Path) -> None:
 
 
 # ─── preserve 분류 ──────────────────────────────────────────────────────────
+
 
 def test_preserve_by_extension(sample_tree: Path) -> None:
     from local_agent.file_scanner import scan_file_tree
@@ -169,6 +173,7 @@ def test_preserve_by_keyword(tmp_path: Path) -> None:
 
 # ─── candidate_delete 분류 ──────────────────────────────────────────────────
 
+
 def test_candidate_delete_categories(sample_tree: Path) -> None:
     from local_agent.file_scanner import scan_file_tree
 
@@ -200,6 +205,7 @@ def test_preserve_priority_over_candidate_delete(tmp_path: Path) -> None:
 
 
 # ─── 중복 후보 ──────────────────────────────────────────────────────────────
+
 
 def test_strong_duplicate_same_name_and_size(tmp_path: Path) -> None:
     from local_agent.file_scanner import scan_file_tree
@@ -240,6 +246,7 @@ def test_weak_duplicate_same_ext_and_size(tmp_path: Path) -> None:
 
 # ─── 해시 ──────────────────────────────────────────────────────────────────
 
+
 def test_hash_absent_by_default(sample_tree: Path) -> None:
     from local_agent.file_scanner import scan_file_tree
 
@@ -250,6 +257,7 @@ def test_hash_absent_by_default(sample_tree: Path) -> None:
 
 def test_hash_present_when_enabled(tmp_path: Path) -> None:
     import hashlib
+
     from local_agent.file_scanner import scan_file_tree
 
     root = tmp_path / "h"
@@ -278,6 +286,7 @@ def test_hash_skipped_for_large_file(tmp_path: Path) -> None:
 
 
 # ─── 안전 에러 / 차단 ──────────────────────────────────────────────────────
+
 
 def test_missing_root_returns_safe_error(tmp_path: Path) -> None:
     from local_agent.file_scanner import scan_file_tree
@@ -316,6 +325,7 @@ def test_empty_root_path_rejected() -> None:
 
 # ─── local_agent.actions 통합 ──────────────────────────────────────────────
 
+
 def test_execute_action_scan_file_tree(sample_tree: Path) -> None:
     from local_agent.actions import execute_action
 
@@ -345,34 +355,43 @@ def test_execute_action_scan_file_tree_blocks_drive_root() -> None:
 
 # ─── 금지 API 정적 검사 ────────────────────────────────────────────────────
 
+
 def test_no_forbidden_mutation_apis_in_new_code() -> None:
     """새 코드에서 파일 변형/삭제/이동 API 호출 문자열이 전혀 없는지 검사."""
-    import local_agent.file_scanner as fs
     from pathlib import Path as _P
+
+    import local_agent.file_scanner as fs
 
     scanner_src = _P(fs.__file__).read_text(encoding="utf-8")
     action_src = (_P(fs.__file__).parent / "actions.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
-        "os.remove", "os.unlink",
-        "Path.unlink", ".unlink(",
-        "shutil.rmtree", "shutil.move",
-        "os.rename", ".rename(",
+        "os.remove",
+        "os.unlink",
+        "Path.unlink",
+        ".unlink(",
+        "shutil.rmtree",
+        "shutil.move",
+        "os.rename",
+        ".rename(",
         "send2trash",
     )
 
     # scanner 에는 금지 API 자체가 없어야 함
     for token in forbidden_tokens:
-        assert token not in scanner_src, (
-            f"forbidden token {token!r} found in file_scanner.py"
-        )
+        assert token not in scanner_src, f"forbidden token {token!r} found in file_scanner.py"
 
     # actions.py 는 scan_file_tree 블록 범위 내에 금지 토큰이 없어야 함
     # (capture_screenshot 등 기존 구현은 mkdir / save 는 사용하지만
     #  unlink/rename/rmtree/move/send2trash 는 쓰지 않음)
-    for token in ("os.remove", "os.unlink", "shutil.rmtree",
-                  "shutil.move", "os.rename", "send2trash",
-                  ".unlink(", ".rename("):
-        assert token not in action_src, (
-            f"forbidden token {token!r} found in actions.py"
-        )
+    for token in (
+        "os.remove",
+        "os.unlink",
+        "shutil.rmtree",
+        "shutil.move",
+        "os.rename",
+        "send2trash",
+        ".unlink(",
+        ".rename(",
+    ):
+        assert token not in action_src, f"forbidden token {token!r} found in actions.py"

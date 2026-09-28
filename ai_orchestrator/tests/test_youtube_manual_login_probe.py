@@ -7,30 +7,50 @@ fake Playwright 팩토리 + fake time 모듈을 주입해 deterministic 하게 �
 하므로, 본 테스트는 유튜브 smoke 스크립트 경로 (허용 호스트 / 완료 감지)
 를 중심으로 검증한다.
 """
+
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 # ─── Fake Playwright 계층 ────────────────────────────────────────────────
 
-_FORBIDDEN_METHODS = frozenset({
-    "click", "fill", "type", "press", "dblclick", "hover",
-    "select_option", "set_input_files", "tap",
-    "check", "uncheck", "drag_and_drop",
-    "keyboard", "mouse", "touchscreen",
-    "evaluate", "evaluate_handle",
-    "screenshot", "pdf",
-    "on", "expect_download", "expect_popup",
-    "storage_state", "add_cookies", "cookies",
-    "request", "send_keys",
-})
+_FORBIDDEN_METHODS = frozenset(
+    {
+        "click",
+        "fill",
+        "type",
+        "press",
+        "dblclick",
+        "hover",
+        "select_option",
+        "set_input_files",
+        "tap",
+        "check",
+        "uncheck",
+        "drag_and_drop",
+        "keyboard",
+        "mouse",
+        "touchscreen",
+        "evaluate",
+        "evaluate_handle",
+        "screenshot",
+        "pdf",
+        "on",
+        "expect_download",
+        "expect_popup",
+        "storage_state",
+        "add_cookies",
+        "cookies",
+        "request",
+        "send_keys",
+    }
+)
 
 
 class _ForbiddenCall(AssertionError):
@@ -40,6 +60,7 @@ class _ForbiddenCall(AssertionError):
 def _forbidden(name: str):
     def _raise(*_a, **_kw):
         raise _ForbiddenCall(f"forbidden read-only violation: {name}")
+
     return _raise
 
 
@@ -176,8 +197,11 @@ def _make_probe_factory(script: list[dict]):
 
 # 유튜브 smoke 의 기본 허용 호스트 목록.
 _YT_ALLOWED_HOSTS = [
-    "youtube.com", "www.youtube.com", "studio.youtube.com",
-    "accounts.google.com", "myaccount.google.com",
+    "youtube.com",
+    "www.youtube.com",
+    "studio.youtube.com",
+    "accounts.google.com",
+    "myaccount.google.com",
 ]
 
 _GOOGLE_LOGIN_HTML = (
@@ -208,22 +232,29 @@ _STUDIO_HOME_HTML = (
 
 # ─── 1~5. 허용 호스트 ─────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "https://youtube.com/",
-    "https://www.youtube.com/",
-    "https://studio.youtube.com/",
-    "https://accounts.google.com/ServiceLogin",
-    "https://myaccount.google.com/",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://youtube.com/",
+        "https://www.youtube.com/",
+        "https://studio.youtube.com/",
+        "https://accounts.google.com/ServiceLogin",
+        "https://myaccount.google.com/",
+    ],
+)
 def test_allowed_hosts_reach_factory(url):
     from local_agent.browser_login_probe import probe_manual_login_flow
 
-    factory, log, _ = _make_probe_factory([
-        {"title": "t", "url": url, "html": "<html></html>"},
-    ])
+    factory, log, _ = _make_probe_factory(
+        [
+            {"title": "t", "url": url, "html": "<html></html>"},
+        ]
+    )
     r = probe_manual_login_flow(
         url=url,
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -236,20 +267,27 @@ def test_allowed_hosts_reach_factory(url):
 
 # ─── 6. 허용 목록 외 도메인 차단 ─────────────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "https://example.com/",
-    "https://facebook.com/",
-    "https://maps.google.com/",  # 허용 목록에 없음 — accounts/myaccount 만.
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://example.com/",
+        "https://facebook.com/",
+        "https://maps.google.com/",  # 허용 목록에 없음 — accounts/myaccount 만.
+    ],
+)
 def test_outside_allowed_hosts_blocked(url):
     from local_agent.browser_login_probe import probe_manual_login_flow
 
-    factory, log, _ = _make_probe_factory([
-        {"title": "t", "url": url, "html": "<html></html>"},
-    ])
+    factory, log, _ = _make_probe_factory(
+        [
+            {"title": "t", "url": url, "html": "<html></html>"},
+        ]
+    )
     r = probe_manual_login_flow(
         url=url,
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -261,49 +299,67 @@ def test_outside_allowed_hosts_blocked(url):
 
 # ─── 7. file/javascript/data URL 차단 ────────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "file:///etc/passwd",
-    "javascript:alert(1)",
-    "data:text/html,<h1>x</h1>",
-    "about:blank",
-    "chrome://settings",
-    "ftp://example.com/",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc/passwd",
+        "javascript:alert(1)",
+        "data:text/html,<h1>x</h1>",
+        "about:blank",
+        "chrome://settings",
+        "ftp://example.com/",
+    ],
+)
 def test_dangerous_scheme_blocked(url):
     from local_agent.browser_login_probe import probe_manual_login_flow
 
-    factory, log, _ = _make_probe_factory([
-        {"title": "x", "url": url, "html": ""},
-    ])
+    factory, log, _ = _make_probe_factory(
+        [
+            {"title": "x", "url": url, "html": ""},
+        ]
+    )
     r = probe_manual_login_flow(
-        url=url, wait_seconds=3, poll_interval_seconds=1,
+        url=url,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
     )
     assert r["ok"] is False
     assert r["error_code"] in {
-        "URL_SCHEME_BLOCKED", "URL_NO_HOST", "URL_PARSE_FAILED",
+        "URL_SCHEME_BLOCKED",
+        "URL_NO_HOST",
+        "URL_PARSE_FAILED",
     }
     assert log == []
 
 
 # ─── 8. localhost/private IP 기본 차단 ───────────────────────────────────
 
-@pytest.mark.parametrize("url", [
-    "http://localhost/",
-    "http://127.0.0.1/",
-    "http://10.0.0.5/",
-    "http://192.168.1.1/",
-])
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://localhost/",
+        "http://127.0.0.1/",
+        "http://10.0.0.5/",
+        "http://192.168.1.1/",
+    ],
+)
 def test_private_host_blocked(url):
     from local_agent.browser_login_probe import probe_manual_login_flow
 
-    factory, log, _ = _make_probe_factory([
-        {"title": "x", "url": url, "html": ""},
-    ])
+    factory, log, _ = _make_probe_factory(
+        [
+            {"title": "x", "url": url, "html": ""},
+        ]
+    )
     r = probe_manual_login_flow(
-        url=url, wait_seconds=3, poll_interval_seconds=1,
+        url=url,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -315,19 +371,23 @@ def test_private_host_blocked(url):
 
 # ─── 9. 초기 로그인 키워드/password input 감지 ──────────────────────────
 
+
 def test_initial_login_required_hint_detected():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     # Google 로그인 화면 (password input + "Sign in" 제목).
     script = [
-        {"title": "Sign in - Google Accounts",
-         "url": "https://accounts.google.com/ServiceLogin",
-         "html": _GOOGLE_LOGIN_HTML},
+        {
+            "title": "Sign in - Google Accounts",
+            "url": "https://accounts.google.com/ServiceLogin",
+            "html": _GOOGLE_LOGIN_HTML,
+        },
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/ServiceLogin",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -338,29 +398,28 @@ def test_initial_login_required_hint_detected():
     init = r["initial"]
     assert init["login_required_hint"] is True
     # password_input_detected 또는 login_keyword 중 최소 하나.
-    assert any(
-        reason in ("password_input_detected", "login_keyword")
-        for reason in init["login_reason"]
-    )
+    assert any(reason in ("password_input_detected", "login_keyword") for reason in init["login_reason"])
 
 
 # ─── 10. accounts.google.com → www.youtube.com URL 변경 시 완료 ─────────
+
 
 def test_google_to_youtube_redirect_marks_completed():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "Sign in - Google Accounts",
-         "url": "https://accounts.google.com/ServiceLogin?continue=https://www.youtube.com",
-         "html": _GOOGLE_LOGIN_HTML},
-        {"title": "YouTube",
-         "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {
+            "title": "Sign in - Google Accounts",
+            "url": "https://accounts.google.com/ServiceLogin?continue=https://www.youtube.com",
+            "html": _GOOGLE_LOGIN_HTML,
+        },
+        {"title": "YouTube", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/ServiceLogin?continue=https://www.youtube.com",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -372,21 +431,27 @@ def test_google_to_youtube_redirect_marks_completed():
 
 # ─── 11. accounts.google.com → studio.youtube.com URL 변경 시 완료 ──────
 
+
 def test_google_to_studio_redirect_marks_completed():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "Sign in - Google Accounts",
-         "url": "https://accounts.google.com/ServiceLogin?continue=https://studio.youtube.com",
-         "html": _GOOGLE_LOGIN_HTML},
-        {"title": "YouTube Studio",
-         "url": "https://studio.youtube.com/channel/UCxxxx/videos",
-         "html": _STUDIO_HOME_HTML},
+        {
+            "title": "Sign in - Google Accounts",
+            "url": "https://accounts.google.com/ServiceLogin?continue=https://studio.youtube.com",
+            "html": _GOOGLE_LOGIN_HTML,
+        },
+        {
+            "title": "YouTube Studio",
+            "url": "https://studio.youtube.com/channel/UCxxxx/videos",
+            "html": _STUDIO_HOME_HTML,
+        },
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/ServiceLogin?continue=https://studio.youtube.com",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -398,22 +463,24 @@ def test_google_to_studio_redirect_marks_completed():
 
 # ─── 12. password input 사라짐으로 완료 감지 ────────────────────────────
 
+
 def test_password_disappeared_completes():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "Sign in",
-         "url": "https://accounts.google.com/v3/signin/identifier",
-         "html": _GOOGLE_LOGIN_HTML},
+        {"title": "Sign in", "url": "https://accounts.google.com/v3/signin/identifier", "html": _GOOGLE_LOGIN_HTML},
         # 같은 URL 이지만 password input 이 사라짐 (intermediate step 같은 경우).
-        {"title": "Verified",
-         "url": "https://accounts.google.com/v3/signin/identifier",
-         "html": "<html><body><h1>환영합니다</h1></body></html>"},
+        {
+            "title": "Verified",
+            "url": "https://accounts.google.com/v3/signin/identifier",
+            "html": "<html><body><h1>환영합니다</h1></body></html>",
+        },
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/v3/signin/identifier",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -425,19 +492,19 @@ def test_password_disappeared_completes():
 
 # ─── 13. success_url_contains 로 완료 감지 ───────────────────────────────
 
+
 def test_success_url_contains_match():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://accounts.google.com/signin",
-         "html": "<html><body></body></html>"},
-        {"title": "t", "url": "https://www.youtube.com/feed/subscriptions",
-         "html": "<html><body></body></html>"},
+        {"title": "t", "url": "https://accounts.google.com/signin", "html": "<html><body></body></html>"},
+        {"title": "t", "url": "https://www.youtube.com/feed/subscriptions", "html": "<html><body></body></html>"},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/signin",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         success_url_contains=["youtube.com"],
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
@@ -450,20 +517,23 @@ def test_success_url_contains_match():
 
 # ─── 14. success_text_hints 로 완료 감지 ─────────────────────────────────
 
+
 def test_success_text_hints_match():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://www.youtube.com/",
-         "html": "<html><body></body></html>"},
-        {"title": "YouTube",
-         "url": "https://www.youtube.com/",
-         "html": "<html><body><h1>Subscriptions</h1></body></html>"},
+        {"title": "t", "url": "https://www.youtube.com/", "html": "<html><body></body></html>"},
+        {
+            "title": "YouTube",
+            "url": "https://www.youtube.com/",
+            "html": "<html><body><h1>Subscriptions</h1></body></html>",
+        },
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         success_text_hints=["Subscriptions"],
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
@@ -476,18 +546,18 @@ def test_success_text_hints_match():
 
 # ─── 15. timeout 시 LOGIN_TIMEOUT 반환 ───────────────────────────────────
 
+
 def test_timeout_returns_login_timeout():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "Sign in",
-         "url": "https://accounts.google.com/ServiceLogin",
-         "html": _GOOGLE_LOGIN_HTML},
+        {"title": "Sign in", "url": "https://accounts.google.com/ServiceLogin", "html": _GOOGLE_LOGIN_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/ServiceLogin",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -499,6 +569,7 @@ def test_timeout_returns_login_timeout():
 
 # ─── 16. 결과에 password value 없음 ──────────────────────────────────────
 
+
 def test_result_has_no_password_value():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
@@ -509,14 +580,13 @@ def test_result_has_no_password_value():
         "</form></body></html>"
     )
     script = [
-        {"title": "Sign in",
-         "url": "https://accounts.google.com/signin",
-         "html": html},
+        {"title": "Sign in", "url": "https://accounts.google.com/signin", "html": html},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/signin",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -525,6 +595,7 @@ def test_result_has_no_password_value():
 
 
 # ─── 17. hidden value 없음 ───────────────────────────────────────────────
+
 
 def test_result_has_no_hidden_value():
     from local_agent.browser_login_probe import probe_manual_login_flow
@@ -536,14 +607,13 @@ def test_result_has_no_hidden_value():
         "</form></body></html>"
     )
     script = [
-        {"title": "Sign in",
-         "url": "https://accounts.google.com/signin",
-         "html": html},
+        {"title": "Sign in", "url": "https://accounts.google.com/signin", "html": html},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/signin",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -553,19 +623,19 @@ def test_result_has_no_hidden_value():
 
 # ─── 18. cookie/token/storage_state 호출 없음 ────────────────────────────
 
+
 def test_no_cookie_or_storage_calls_in_log():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
-        {"title": "t", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
+        {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -573,33 +643,41 @@ def test_no_cookie_or_storage_calls_in_log():
     for entry in log:
         if isinstance(entry, tuple) and entry:
             tag = str(entry[0]).lower()
-            for bad in ("storage_state", "cookies", "localstorage",
-                        "sessionstorage", "add_cookies"):
+            for bad in ("storage_state", "cookies", "localstorage", "sessionstorage", "add_cookies"):
                 assert bad not in tag, f"forbidden tag in log: {entry}"
 
 
 # ─── 19. page.click/fill/type/press/select_option 호출 없음 ─────────────
 
+
 def test_no_interaction_methods_called():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
-        {"title": "t", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
+        {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
     )
     assert isinstance(r, dict)
-    forbidden = ("click", "fill", "type", "press", "select_option",
-                 "set_input_files", "evaluate", "screenshot", "dblclick")
+    forbidden = (
+        "click",
+        "fill",
+        "type",
+        "press",
+        "select_option",
+        "set_input_files",
+        "evaluate",
+        "screenshot",
+        "dblclick",
+    )
     for entry in log:
         if isinstance(entry, tuple) and entry:
             tag = str(entry[0]).lower()
@@ -609,17 +687,18 @@ def test_no_interaction_methods_called():
 
 # ─── 20. storage_state/cookies/localStorage/sessionStorage 호출 없음 ───
 
+
 def test_no_session_state_api_calls():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -636,17 +715,18 @@ def test_no_session_state_api_calls():
 
 # ─── 21. page/context/browser close 호출 확인 ────────────────────────────
 
+
 def test_close_methods_called():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "t", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -659,17 +739,12 @@ def test_close_methods_called():
 
 # ─── 22. smoke 스크립트는 pytest 에서 실제 실행하지 않음 ───────────────
 
+
 def test_smoke_script_not_auto_executed():
-    smoke_path = (
-        Path(__file__).resolve().parent.parent.parent
-        / "scripts" / "smoke_youtube_manual_login_probe.py"
-    )
+    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "smoke_youtube_manual_login_probe.py"
     assert smoke_path.exists(), "smoke script missing"
     src = smoke_path.read_text(encoding="utf-8")
-    assert (
-        'if __name__ == "__main__":' in src
-        or "if __name__ == '__main__':" in src
-    )
+    assert 'if __name__ == "__main__":' in src or "if __name__ == '__main__':" in src
     # 최상단에서 probe 호출 금지.
     for line in src.splitlines():
         if line.startswith((" ", "\t")) or line.lstrip().startswith("#"):
@@ -679,17 +754,22 @@ def test_smoke_script_not_auto_executed():
 
 # ─── 23. 유튜브/구글 계정/비밀번호/토큰 하드코딩 없음 ──────────────────
 
+
 def test_no_credentials_hardcoded():
     root = Path(__file__).resolve().parent.parent.parent
-    smoke_src = (
-        root / "scripts" / "smoke_youtube_manual_login_probe.py"
-    ).read_text(encoding="utf-8")
+    smoke_src = (root / "scripts" / "smoke_youtube_manual_login_probe.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
-        "YOUTUBE_ID", "YOUTUBE_PW",
-        "GOOGLE_ID", "GOOGLE_PW",
+        "YOUTUBE_ID",
+        "YOUTUBE_PW",
+        "GOOGLE_ID",
+        "GOOGLE_PW",
         # 구글 세션 쿠키 이름.
-        "SID=", "HSID=", "SSID=", "APISID=", "SAPISID=",
+        "SID=",
+        "HSID=",
+        "SSID=",
+        "APISID=",
+        "SAPISID=",
         "LOGIN_INFO=",
         "Bearer ",
         "sk-",
@@ -697,22 +777,24 @@ def test_no_credentials_hardcoded():
         "skyjwshin",
     )
     for tok in forbidden_tokens:
-        assert tok not in smoke_src, (
-            f"forbidden token {tok!r} in smoke_youtube_manual_login_probe.py"
-        )
+        assert tok not in smoke_src, f"forbidden token {tok!r} in smoke_youtube_manual_login_probe.py"
 
     # 실제 상호작용 API 도 smoke 스크립트에 없어야 한다.
     for tok in (
-        ".fill(", ".type(", ".click(", ".press(", ".select_option(",
-        ".set_input_files(", ".storage_state(", ".add_cookies(",
+        ".fill(",
+        ".type(",
+        ".click(",
+        ".press(",
+        ".select_option(",
+        ".set_input_files(",
+        ".storage_state(",
+        ".add_cookies(",
     ):
-        assert tok not in smoke_src, (
-            f"forbidden interaction API {tok!r} in "
-            "smoke_youtube_manual_login_probe.py"
-        )
+        assert tok not in smoke_src, f"forbidden interaction API {tok!r} in smoke_youtube_manual_login_probe.py"
 
 
 # ─── 24. YT: success_url_match:youtube.com 단독으로 완료 단정 금지 ─────
+
 
 class _RecordingInput:
     def __init__(self, responses=None, raise_on=None):
@@ -737,13 +819,13 @@ def test_yt_success_url_match_alone_does_not_mark_completed():
 
     # 초기부터 youtube.com 에 있고 password 없음 → 완료 단정 금지.
     script = [
-        {"title": "YouTube", "url": "https://www.youtube.com/",
-         "html": "<html><body><h1>홈</h1></body></html>"},
+        {"title": "YouTube", "url": "https://www.youtube.com/", "html": "<html><body><h1>홈</h1></body></html>"},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         success_url_contains=["youtube.com", "studio.youtube.com"],
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
@@ -756,21 +838,23 @@ def test_yt_success_url_match_alone_does_not_mark_completed():
 
 # ─── 25. YT: accounts.google.com → youtube.com 이동은 완료 후보 ─────────
 
+
 def test_yt_google_to_youtube_transition_is_completion_candidate():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "Sign in - Google Accounts",
-         "url": "https://accounts.google.com/v3/signin/identifier",
-         "html": _GOOGLE_LOGIN_HTML},
-        {"title": "YouTube",
-         "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {
+            "title": "Sign in - Google Accounts",
+            "url": "https://accounts.google.com/v3/signin/identifier",
+            "html": _GOOGLE_LOGIN_HTML,
+        },
+        {"title": "YouTube", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/v3/signin/identifier",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         success_url_contains=["youtube.com"],
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
@@ -782,8 +866,10 @@ def test_yt_google_to_youtube_transition_is_completion_candidate():
     reasons = r.get("login_completion_reason") or []
     # url_changed 또는 password_input_disappeared 중 최소 하나 (강한 근거).
     assert any(
-        rx in reasons for rx in (
-            "url_changed", "password_input_disappeared",
+        rx in reasons
+        for rx in (
+            "url_changed",
+            "password_input_disappeared",
             "login_required_hint_cleared",
         )
     ), reasons
@@ -791,18 +877,19 @@ def test_yt_google_to_youtube_transition_is_completion_candidate():
 
 # ─── 26. YT: require_user_login_confirm → user_confirmed_login reason ──
 
+
 def test_yt_user_confirmed_login_adds_reason():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     script = [
-        {"title": "YouTube", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {"title": "YouTube", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         success_url_contains=["youtube.com"],
         allowed_hosts=_YT_ALLOWED_HOSTS,
         require_user_login_confirm=True,
@@ -819,17 +906,18 @@ def test_yt_user_confirmed_login_adds_reason():
 
 # ─── 27. YT: already_logged_in_or_public_page 상태 구분 ─────────────────
 
+
 def test_yt_already_logged_in_state():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "YouTube", "url": "https://www.youtube.com/",
-         "html": "<html><body><h1>홈</h1></body></html>"},
+        {"title": "YouTube", "url": "https://www.youtube.com/", "html": "<html><body><h1>홈</h1></body></html>"},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         success_url_contains=["youtube.com", "studio.youtube.com"],
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
@@ -842,21 +930,27 @@ def test_yt_already_logged_in_state():
 
 # ─── 28. YT: password input 있었다가 사라지면 완료 후보 ────────────────
 
+
 def test_yt_password_disappeared_is_completion_candidate():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     script = [
-        {"title": "Sign in - Google Accounts",
-         "url": "https://accounts.google.com/v3/signin/challenge/pwd",
-         "html": _GOOGLE_LOGIN_HTML},
-        {"title": "Google",
-         "url": "https://accounts.google.com/v3/signin/challenge/pwd",
-         "html": "<html><body><h1>환영합니다</h1></body></html>"},
+        {
+            "title": "Sign in - Google Accounts",
+            "url": "https://accounts.google.com/v3/signin/challenge/pwd",
+            "html": _GOOGLE_LOGIN_HTML,
+        },
+        {
+            "title": "Google",
+            "url": "https://accounts.google.com/v3/signin/challenge/pwd",
+            "html": "<html><body><h1>환영합니다</h1></body></html>",
+        },
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://accounts.google.com/v3/signin/challenge/pwd",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         _browser_factory=factory,
         _clock=_FakeTime(),
@@ -869,19 +963,20 @@ def test_yt_password_disappeared_is_completion_candidate():
 
 # ─── 29. YT: require_visible_confirm → 사용자 확인 전에 polling 금지 ──
 
+
 def test_yt_require_visible_confirm_blocks_polling():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(raise_on=[0])
     clock = _FakeTime()
     script = [
-        {"title": "YouTube", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {"title": "YouTube", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, _log, _ = _make_probe_factory(script)
     r = probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         allowed_hosts=_YT_ALLOWED_HOSTS,
         require_visible_confirm=True,
         _browser_factory=factory,
@@ -895,18 +990,19 @@ def test_yt_require_visible_confirm_blocks_polling():
 
 # ─── 30. YT: keep_open → 종료 전 Enter 기다림 ──────────────────────────
 
+
 def test_yt_keep_open_prompts_before_close():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     script = [
-        {"title": "YouTube", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {"title": "YouTube", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://www.youtube.com/",
-        wait_seconds=3, poll_interval_seconds=1,
+        wait_seconds=3,
+        poll_interval_seconds=1,
         success_url_contains=["youtube.com"],
         allowed_hosts=_YT_ALLOWED_HOSTS,
         keep_open=True,
@@ -922,20 +1018,20 @@ def test_yt_keep_open_prompts_before_close():
 
 # ─── 31. YT: 새 옵션이 있어도 자동 클릭/입력/쿠키 수집 없음 유지 ───────
 
+
 def test_yt_no_auto_login_or_cookies_with_new_options():
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=["", "", ""])
     script = [
-        {"title": "Sign in", "url": "https://accounts.google.com/signin",
-         "html": _GOOGLE_LOGIN_HTML},
-        {"title": "YouTube", "url": "https://www.youtube.com/",
-         "html": _YT_HOME_HTML},
+        {"title": "Sign in", "url": "https://accounts.google.com/signin", "html": _GOOGLE_LOGIN_HTML},
+        {"title": "YouTube", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
     ]
     factory, log, _ = _make_probe_factory(script)
     probe_manual_login_flow(
         url="https://accounts.google.com/signin",
-        wait_seconds=30, poll_interval_seconds=1,
+        wait_seconds=30,
+        poll_interval_seconds=1,
         success_url_contains=["youtube.com"],
         allowed_hosts=_YT_ALLOWED_HOSTS,
         require_visible_confirm=True,
@@ -949,10 +1045,20 @@ def test_yt_no_auto_login_or_cookies_with_new_options():
         _input_reader=fake_input,
     )
     forbidden = (
-        "click", "fill", "type", "press", "select_option",
-        "set_input_files", "evaluate", "screenshot", "dblclick",
-        "storage_state", "cookies", "add_cookies",
-        "localstorage", "sessionstorage",
+        "click",
+        "fill",
+        "type",
+        "press",
+        "select_option",
+        "set_input_files",
+        "evaluate",
+        "screenshot",
+        "dblclick",
+        "storage_state",
+        "cookies",
+        "add_cookies",
+        "localstorage",
+        "sessionstorage",
     )
     for entry in log:
         if isinstance(entry, tuple) and entry:
@@ -963,11 +1069,9 @@ def test_yt_no_auto_login_or_cookies_with_new_options():
 
 # ─── 32. smoke 스크립트에 새 옵션이 노출돼 있음 ─────────────────────────
 
+
 def test_smoke_script_exposes_new_options():
-    smoke_path = (
-        Path(__file__).resolve().parent.parent.parent
-        / "scripts" / "smoke_youtube_manual_login_probe.py"
-    )
+    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "smoke_youtube_manual_login_probe.py"
     src = smoke_path.read_text(encoding="utf-8")
     assert "--require-visible-confirm" in src
     assert "--require-user-login-confirm" in src

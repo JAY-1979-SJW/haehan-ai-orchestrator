@@ -17,12 +17,12 @@
 
 from __future__ import annotations
 
-import os
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_orchestrator.persistence.registration_code_store import (
     MAX_TTL_MINUTES,

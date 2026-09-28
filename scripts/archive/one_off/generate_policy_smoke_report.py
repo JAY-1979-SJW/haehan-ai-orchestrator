@@ -7,18 +7,21 @@ Usage:
         --smoke-result tmp/smoke_result_g2b.json \
         --output tmp/report_g2b.md
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ai_orchestrator.local_agent.browser_allowlist_expansion_preflight import (
-    VERDICT_ALLOW, VERDICT_REVIEW, VERDICT_BLOCKED,
+    VERDICT_ALLOW,
+    VERDICT_BLOCKED,
+    VERDICT_REVIEW,
 )
 
 _VERDICT_LABEL = {
@@ -29,45 +32,45 @@ _VERDICT_LABEL = {
 
 
 def generate_report(site_id: str, preflight: dict, smoke: dict) -> str:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     pf_summary = preflight.get("summary", {})
     sm_summary = smoke.get("summary", {})
     constraints = smoke.get("constraints", {})
 
     lines = [
         f"# Site Policy Smoke Report — {site_id}",
-        f"",
+        "",
         f"**생성일시**: {now}",
-        f"**실행 모드**: DRY_RUN (실제 브라우저 접속 없음)",
-        f"",
-        f"---",
-        f"",
-        f"## 1. 제약 조건",
-        f"",
-        f"| 항목 | 값 |",
-        f"|---|---|",
+        "**실행 모드**: DRY_RUN (실제 브라우저 접속 없음)",
+        "",
+        "---",
+        "",
+        "## 1. 제약 조건",
+        "",
+        "| 항목 | 값 |",
+        "|---|---|",
     ]
     for k, v in constraints.items():
         lines.append(f"| {k} | {v} |")
 
     lines += [
-        f"",
-        f"---",
-        f"",
-        f"## 2. Preflight 결과",
-        f"",
-        f"| 항목 | 건수 |",
-        f"|---|---|",
+        "",
+        "---",
+        "",
+        "## 2. Preflight 결과",
+        "",
+        "| 항목 | 건수 |",
+        "|---|---|",
         f"| 총 후보 | {pf_summary.get('total', 0)} |",
         f"| ALLOW_REGISTER | {pf_summary.get('allow', 0)} |",
         f"| REVIEW_REQUIRED | {pf_summary.get('review', 0)} |",
         f"| BLOCKED | {pf_summary.get('blocked', 0)} |",
         f"| 자동 승인 가능 | {pf_summary.get('auto_approve', 0)} |",
-        f"",
-        f"### 후보 상세",
-        f"",
-        f"| # | Verdict | 타입 | 라벨 | 자동승인 |",
-        f"|---|---|---|---|---|",
+        "",
+        "### 후보 상세",
+        "",
+        "| # | Verdict | 타입 | 라벨 | 자동승인 |",
+        "|---|---|---|---|---|",
     ]
     for i, r in enumerate(preflight.get("results", []), 1):
         verdict = r.get("verdict", "?")
@@ -78,21 +81,21 @@ def generate_report(site_id: str, preflight: dict, smoke: dict) -> str:
         lines.append(f"| {i} | {vl} | {ctype} | {label} | {auto} |")
 
     lines += [
-        f"",
-        f"---",
-        f"",
-        f"## 3. Dry-run Smoke 결과",
-        f"",
-        f"| 항목 | 건수 |",
-        f"|---|---|",
+        "",
+        "---",
+        "",
+        "## 3. Dry-run Smoke 결과",
+        "",
+        "| 항목 | 건수 |",
+        "|---|---|",
         f"| 총 단계 | {sm_summary.get('total', 0)} |",
         f"| 통과 | {sm_summary.get('passed', 0)} |",
         f"| 실패 | {sm_summary.get('failed', 0)} |",
-        f"",
-        f"### 단계 상세",
-        f"",
-        f"| # | 결과 | 액션 | 라벨 |",
-        f"|---|---|---|---|",
+        "",
+        "### 단계 상세",
+        "",
+        "| # | 결과 | 액션 | 라벨 |",
+        "|---|---|---|---|",
     ]
     for r in smoke.get("step_results", []):
         icon = "✅" if r["passed"] else "❌"
@@ -103,16 +106,16 @@ def generate_report(site_id: str, preflight: dict, smoke: dict) -> str:
     overall = "✅ PASS" if passed == total and total > 0 else "❌ FAIL"
 
     lines += [
-        f"",
-        f"---",
-        f"",
-        f"## 4. 종합 판정",
-        f"",
+        "",
+        "---",
+        "",
+        "## 4. 종합 판정",
+        "",
         f"**{overall}** — {passed}/{total} 단계 통과",
-        f"",
-        f"---",
-        f"",
-        f"*이 리포트는 자동 생성되었습니다. 실제 사이트 접속 없이 dry-run 시뮬레이션 결과입니다.*",
+        "",
+        "---",
+        "",
+        "*이 리포트는 자동 생성되었습니다. 실제 사이트 접속 없이 dry-run 시뮬레이션 결과입니다.*",
     ]
     return "\n".join(lines)
 
@@ -125,9 +128,9 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
 
-    with open(args.preflight, encoding="utf-8") as f:
+    with args.preflight.open(encoding="utf-8") as f:
         preflight = json.load(f)
-    with open(args.smoke_result, encoding="utf-8") as f:
+    with args.smoke_result.open(encoding="utf-8") as f:
         smoke = json.load(f)
 
     report = generate_report(args.site_id, preflight, smoke)
