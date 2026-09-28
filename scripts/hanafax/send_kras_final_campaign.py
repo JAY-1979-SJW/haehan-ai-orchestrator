@@ -226,7 +226,7 @@ def main():
             for name in DROP_SHEETS:
                 try:
                     wb.Sheets(name).Delete()
-                except Exception:
+                except Exception:  # noqa: BLE001 - 임시 엑셀 시트 삭제·발송후 임시PDF 삭제 등 cleanup 단계 — 실패해도 실제 팩스발송(send_fax) 로직은 이 except로 감싸지 않아 영향 없음
                     pass
 
             content_addrs = {}
@@ -323,7 +323,7 @@ def main():
 
             try:
                 Path(final_pdf).unlink(missing_ok=True)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 임시 엑셀 시트 삭제·발송후 임시PDF 삭제 등 cleanup 단계 — 실패해도 실제 팩스발송(send_fax) 로직은 이 except로 감싸지 않아 영향 없음
                 pass
 
             time.sleep(2)

@@ -62,7 +62,7 @@ def _cdp_alive() -> bool:
 
         with urllib.request.urlopen("http://127.0.0.1:9222/json/version", timeout=3):
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 연결 상태 확인 실패시 False(미연결)로 안전한 기본값 반환하는 읽기전용 헬스체크
         return False
 
 
@@ -78,7 +78,7 @@ def ensure_cdp() -> bool:
             timeout=90,
             cwd=str(ROOT),
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP 연결 상태 확인 실패시 False(미연결)로 안전한 기본값 반환하는 읽기전용 헬스체크
         return False
     return _cdp_alive()
 

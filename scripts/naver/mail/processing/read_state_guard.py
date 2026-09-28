@@ -152,7 +152,7 @@ def attempt_restore_unread(
             else:
                 plan.restore_failed += 1
                 t.restore_error = "mark_unread_returned_false"
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 읽음상태 복원 실패를 restore_failed=True로 명시 기록(fail-closed), 안읽음 카운트 조회 실패시 -1(무효값)로 반환해 성공으로 위장하지 않음
             plan.restore_failed += 1
             t.restored = False
             t.restore_error = str(exc)[:120]
@@ -173,5 +173,5 @@ class UnreadCountSnapshot:
 def snapshot_unread_count(get_count_fn: Callable[[], int]) -> int:
     try:
         return int(get_count_fn())
-    except Exception:
+    except Exception:  # noqa: BLE001 - 읽음상태 복원 실패를 restore_failed=True로 명시 기록(fail-closed), 안읽음 카운트 조회 실패시 -1(무효값)로 반환해 성공으로 위장하지 않음
         return -1

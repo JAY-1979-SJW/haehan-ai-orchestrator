@@ -182,7 +182,7 @@ def load_checkpoint(path: Path) -> dict:
         return {"schema_version": SCHEMA_VERSION, "sn_to_status": {}, "run_id": ""}
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 체크포인트 파일 손상시 run_id를 broken으로 표시한 안전 기본 상태 반환, 메일본문 읽기 실패시 BODY_READ_FAILED 상태로 명시적 실패 처리(fail-closed)
         return {"schema_version": SCHEMA_VERSION, "sn_to_status": {}, "run_id": "broken"}
 
 
@@ -267,7 +267,7 @@ def _process_one(
                 res.status = UNREAD_UNCHANGED
         else:
             res.status = BODY_READ_OK
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 체크포인트 파일 손상시 run_id를 broken으로 표시한 안전 기본 상태 반환, 메일본문 읽기 실패시 BODY_READ_FAILED 상태로 명시적 실패 처리(fail-closed)
         res.status = BODY_READ_FAILED
         res.error = str(exc)[:200]
     res.elapsed_ms = int((time.time() - t0) * 1000)

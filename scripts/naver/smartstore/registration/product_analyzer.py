@@ -213,7 +213,7 @@ def main():
     try:
         handle_page_popups(page, timeout_s=2.0)
         close_popup_windows(page)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 팝업/닫기창 처리 브라우저자동화 실패 무시(best-effort), 최상위 main() 예외는 traceback 출력 후 sys.exit(1)로 명시적 실패 종료
         pass
 
     if not is_logged_in_generic(page):
@@ -247,7 +247,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 팝업/닫기창 처리 브라우저자동화 실패 무시(best-effort), 최상위 main() 예외는 traceback 출력 후 sys.exit(1)로 명시적 실패 종료
         import traceback
 
         traceback.print_exc()

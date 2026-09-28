@@ -20,7 +20,7 @@ try:
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env")
-except Exception:
+except Exception:  # noqa: BLE001 - .env 로드 실패 무시(선택적 설정 로딩), 템플릿 빌더 렌더링 실패한 개별 상품은 건너뛰고 다음 상품으로 계속 진행
     pass
 
 TMPL_DIR = ROOT / "data" / "smartstore" / "desc_templates"
@@ -318,7 +318,7 @@ def generate_all() -> None:
             builder.select(sections)
             html = builder.render(data)
             print(f"  → 빌더 생성 완료 ({len(html):,}자)")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - .env 로드 실패 무시(선택적 설정 로딩), 템플릿 빌더 렌더링 실패한 개별 상품은 건너뛰고 다음 상품으로 계속 진행
             print(f"  ✗ 빌더 실패: {e}")
             continue
 

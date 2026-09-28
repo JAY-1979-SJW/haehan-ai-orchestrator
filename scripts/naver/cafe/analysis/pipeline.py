@@ -45,7 +45,7 @@ def _stage3_tfidf(articles: list[dict], classified: list[dict]) -> list[dict]:
         import numpy as np
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.metrics.pairwise import cosine_similarity
-    except Exception:
+    except Exception:  # noqa: BLE001 - sklearn 미설치/로드 실패시 TF-IDF 보완단계만 생략하고 이미 분류된 결과를 그대로 반환 — 읽기전용 분석
         # sklearn 미설치/번들 누락(frozen exe의 OSError 포함) → TF-IDF 보완 생략
         return classified
 
@@ -86,7 +86,7 @@ def _stage3_tfidf(articles: list[dict], classified: list[dict]) -> list[dict]:
                         "tfidf_similarity": round(best_score, 3),
                     }
                 )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - sklearn 미설치/로드 실패시 TF-IDF 보완단계만 생략하고 이미 분류된 결과를 그대로 반환 — 읽기전용 분석
         print(f"[pipeline] Stage3 TF-IDF 실패 (무시): {e}")
 
     return classified

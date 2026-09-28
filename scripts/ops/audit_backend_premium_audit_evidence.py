@@ -115,7 +115,7 @@ def run_audit() -> dict[str, Any]:
     models_mod = None
     try:
         models_mod = importlib.import_module("ai_orchestrator.audit_evidence.models")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사 대상 모듈 import 실패시 해당 체크항목들을 FAIL로 명시 기록하는 감사 스크립트 — 성공 위장 없음, 읽기전용
         for cid in ["ae-04", "ae-05", "ae-06", "ae-07", "ae-08"]:
             results.append(item(cid, "FAIL", f"import 실패: {e}"))
 
@@ -280,7 +280,7 @@ def run_audit() -> dict[str, Any]:
     adapter_mod = None
     try:
         adapter_mod = importlib.import_module("ai_orchestrator.audit_evidence.adapters")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 감사 대상 모듈 import 실패시 해당 체크항목들을 FAIL로 명시 기록하는 감사 스크립트 — 성공 위장 없음, 읽기전용
         for cid in ["ae-16", "ae-17", "ae-18", "ae-19"]:
             results.append(item(cid, "FAIL", f"import 실패: {e}"))
 

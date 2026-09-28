@@ -217,7 +217,7 @@ class Scheduler:
             else:
                 result = obj(**args)
             return {"ok": True, "result": str(result)[:500]}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 등록된 작업 실행 결과를 ok/error dict로 캡처, tick 루프 내 오류는 로깅 후 다음 tick에서 계속 — 성공 위장 없음
             return {"ok": False, "error": str(e)[:200]}
 
     def tick(self) -> list[dict]:
@@ -258,7 +258,7 @@ class Scheduler:
             while not self._stop.is_set():
                 try:
                     self.tick()
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 등록된 작업 실행 결과를 ok/error dict로 캡처, tick 루프 내 오류는 로깅 후 다음 tick에서 계속 — 성공 위장 없음
                     _log.error("[scheduler] tick 오류: %s", e)
                 self._stop.wait(interval_s)
 

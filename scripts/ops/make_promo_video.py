@@ -137,7 +137,7 @@ def load_fonts():
         font_ko_sm = ImageFont.truetype(FONT_PATH_KO, 18)
         # 좌상단 배지·워터마크: malgun.ttf (한글 지원) — arial은 한글 미지원으로 깨짐
         font_watermark = ImageFont.truetype(FONT_PATH_KO, 13)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 한글 폰트 로드 실패시 기본 폰트로 폴백, 프로모 영상 녹화 중 버튼 클릭 브라우저자동화 실패 무시(best-effort)
         font_ko = font_en = font_ko_sm = font_watermark = ImageFont.load_default()
     return font_ko, font_en, font_ko_sm, font_watermark
 
@@ -217,7 +217,7 @@ def run():
                     try:
                         warn_btn.click(timeout=2000)
                         time.sleep(0.5)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 한글 폰트 로드 실패시 기본 폰트로 폴백, 프로모 영상 녹화 중 버튼 클릭 브라우저자동화 실패 무시(best-effort)
                         pass
                 elif action == "nav_tour":
                     nav_links = [

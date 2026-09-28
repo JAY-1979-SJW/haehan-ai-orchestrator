@@ -93,7 +93,7 @@ class BlogNeighborManager:
             try:
                 self.page.evaluate(f"goPage({page_no})")
                 time.sleep(2)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 이웃목록 페이지네이션 종료 감지(break)로 안전 종료, 이웃추가 실패는 ok:False로 반환 — 성공 위장 없음
                 break
 
         if not results:
@@ -147,5 +147,5 @@ class BlogNeighborManager:
             time.sleep(2)
             log_critical("OTHER", f"이웃 추가: {target_blog_id}", target=target_blog_id, mode="neighbor_add")
             return {"ok": True, "target": target_blog_id}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 이웃목록 페이지네이션 종료 감지(break)로 안전 종료, 이웃추가 실패는 ok:False로 반환 — 성공 위장 없음
             return {"ok": False, "error": str(e)[:80]}

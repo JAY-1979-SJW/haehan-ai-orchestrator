@@ -104,7 +104,7 @@ def publish_one(page, *, post: dict, img_paths: list[str]) -> dict:
         ok = result.get("ok", False)
         log_no = result.get("log_no", "")
         print(f"  발행: {'✅ 성공' if ok else '❌ 실패'} log_no={log_no}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 발행/수정 호출 실패를 ok=False로 기록하고 오류 메시지 출력 — 성공 위장 없음
         ok = False
         log_no = ""
         print(f"  발행 오류: {e}")
@@ -132,7 +132,7 @@ def edit_one(page, *, log_no: str, post: dict, img_paths: list[str], blog_id: st
         ok = result.get("ok", False)
         new_log_no = result.get("log_no", "")
         print(f"  수정 발행: {'✅ 성공' if ok else '❌ 실패'} log_no={new_log_no}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 블로그 발행/수정 호출 실패를 ok=False로 기록하고 오류 메시지 출력 — 성공 위장 없음
         ok = False
         new_log_no = ""
         print(f"  수정 오류: {e}")

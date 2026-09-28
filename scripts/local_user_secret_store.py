@@ -4,6 +4,7 @@ Secrets are stored through the operating-system keyring when available. The
 module intentionally has no plaintext fallback: callers receive status and
 references only, never raw values in command output or reports.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,7 +33,7 @@ class SecretRef:
 def _try_keyring():
     try:
         import keyring  # type: ignore
-    except Exception:
+    except Exception:  # noqa: BLE001 - keyring 라이브러리 부재시 None 반환(호출부에서 blocked 처리)·keyring 삭제 실패시 상태를 missing으로 기록 — 값 자체는 항상 redacted 처리되어 평문 노출 없음
         return None
     return keyring
 
@@ -40,7 +41,7 @@ def _try_keyring():
 def parse_ref(ref: str) -> SecretRef:
     if not ref.startswith(REF_PREFIX):
         raise ValueError("secret reference must start with local-secret://")
-    body = ref[len(REF_PREFIX):].strip("/")
+    body = ref[len(REF_PREFIX) :].strip("/")
     if "/" not in body:
         raise ValueError("secret reference must be local-secret://<kind>/<name>")
     kind, name = body.split("/", 1)
@@ -104,7 +105,7 @@ def delete_secret(ref: str) -> dict:
     try:
         kr.delete_password(parsed.service, parsed.name)
         status = "deleted"
-    except Exception:
+    except Exception:  # noqa: BLE001 - keyring 라이브러리 부재시 None 반환(호출부에서 blocked 처리)·keyring 삭제 실패시 상태를 missing으로 기록 — 값 자체는 항상 redacted 처리되어 평문 노출 없음
         status = "missing"
     return {"ok": True, "status": status, "ref": parsed.ref, "secret_output": "redacted"}
 
