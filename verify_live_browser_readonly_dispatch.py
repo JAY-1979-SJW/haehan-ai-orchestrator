@@ -49,7 +49,7 @@ def _start_worker(server_url: str, log_path: Path) -> subprocess.Popen:
     env["HAEHAN_AGENT_POLL_SEC"] = "2"
     env["PYTHONIOENCODING"] = "utf-8"
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    out = open(log_path, "a", encoding="utf-8")
+    out = log_path.open("a", encoding="utf-8")
     return subprocess.Popen(
         [sys.executable, "-m", "local_agent.agent", "--run", "--server", server_url],
         cwd=ROOT,

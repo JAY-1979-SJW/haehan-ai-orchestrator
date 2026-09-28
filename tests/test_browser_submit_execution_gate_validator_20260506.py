@@ -8,8 +8,9 @@ production submit 실행 없음.
 """
 
 import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 from ai_orchestrator.browser_tool.submit_execution_gate import (
     BlockReason,
@@ -18,14 +19,12 @@ from ai_orchestrator.browser_tool.submit_execution_gate import (
     evaluate_execution_gate,
 )
 
-FIXTURE_PATH = (
-    Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
-)
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
 
 
 @pytest.fixture(scope="module")
 def fixture_data():
-    with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -49,8 +48,8 @@ def _make_input(inp: dict) -> ExecutionGateInput:
 # Return type
 # ---------------------------------------------------------------------------
 
-class TestReturnType:
 
+class TestReturnType:
     def test_returns_execution_gate_result(self, fixture_data):
         inp = _make_input(fixture_data["gate_pass_case"]["input"])
         result = evaluate_execution_gate(inp)
@@ -78,8 +77,8 @@ class TestReturnType:
 # GATE_PASS
 # ---------------------------------------------------------------------------
 
-class TestGatePass:
 
+class TestGatePass:
     def test_gate_pass_verdict(self, fixture_data):
         case = fixture_data["gate_pass_case"]
         result = evaluate_execution_gate(_make_input(case["input"]))
@@ -106,8 +105,8 @@ class TestGatePass:
 # GATE_ALLOW_CONTROLLED
 # ---------------------------------------------------------------------------
 
-class TestGateAllowControlled:
 
+class TestGateAllowControlled:
     def test_gate_allow_controlled_verdict(self, fixture_data):
         result = evaluate_execution_gate(_make_input(fixture_data["gate_allow_controlled_case"]["input"]))
         assert result.gate_verdict == "GATE_ALLOW_CONTROLLED"
@@ -136,8 +135,8 @@ class TestGateAllowControlled:
 # GATE_BLOCK: 핵심 6개 조건 각각
 # ---------------------------------------------------------------------------
 
-class TestGateBlockCoreReasons:
 
+class TestGateBlockCoreReasons:
     def test_block_policy_not_allow(self, fixture_data):
         result = evaluate_execution_gate(_make_input(fixture_data["gate_block_policy_not_allow"]["input"]))
         assert result.gate_verdict == "GATE_BLOCK"
@@ -185,8 +184,8 @@ class TestGateBlockCoreReasons:
 # GATE_BLOCK: 복합 차단
 # ---------------------------------------------------------------------------
 
-class TestGateBlockMultiple:
 
+class TestGateBlockMultiple:
     CORE_REASONS = [
         "POLICY_NOT_ALLOW",
         "PREVIEW_HASH_MISSING",
@@ -215,8 +214,8 @@ class TestGateBlockMultiple:
 # production_submit_enabled 분리 원칙
 # ---------------------------------------------------------------------------
 
-class TestProductionSubmitSeparation:
 
+class TestProductionSubmitSeparation:
     def test_production_disabled_does_not_cause_gate_block(self, fixture_data):
         """production_submit_enabled=False → GATE_BLOCK 아님 (핵심 조건 통과 시)."""
         result = evaluate_execution_gate(_make_input(fixture_data["gate_allow_controlled_case"]["input"]))
@@ -248,8 +247,8 @@ class TestProductionSubmitSeparation:
 # No side effects
 # ---------------------------------------------------------------------------
 
-class TestNoSideEffects:
 
+class TestNoSideEffects:
     def test_no_file_written(self, fixture_data, tmp_path):
         """evaluate_execution_gate는 파일을 생성하지 않는다."""
         before = set(tmp_path.iterdir())
@@ -275,8 +274,8 @@ class TestNoSideEffects:
 # Fixture 전체 케이스 정합성 (fixture expected_output vs 실제 결과)
 # ---------------------------------------------------------------------------
 
-class TestFixtureAlignment:
 
+class TestFixtureAlignment:
     def test_all_fixture_cases_match_expected_verdict(self, fixture_data):
         for case_key in [k for k in fixture_data if k.startswith("gate_")]:
             case = fixture_data[case_key]

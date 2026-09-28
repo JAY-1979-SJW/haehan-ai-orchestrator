@@ -6,11 +6,16 @@ Uses fixture-based validation only (no external network, no actual browser).
 Flow: policy validation → preview generation → user confirmation → controlled submit decision
 No actual submit, no external navigation, no DB write.
 """
-import pytest
-import json
-from pathlib import Path
-from datetime import datetime, timezone
 
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
+
+from ai_orchestrator.browser_tool.controlled_submit import (
+    build_controlled_submit_result,
+)
 from ai_orchestrator.browser_tool.submit_policy import (
     SubmitValidationRequest,
     validate_submit_policy,
@@ -19,16 +24,13 @@ from ai_orchestrator.browser_tool.submit_preview import (
     SubmitPreviewInput,
     build_submit_preview,
 )
-from ai_orchestrator.browser_tool.controlled_submit import (
-    build_controlled_submit_result,
-)
 
 
 @pytest.fixture
 def allowlist():
     """Load allowlist fixture."""
     fixture_path = Path(__file__).parent / "fixtures" / "browser_submit_policy_allowlist_20260506.json"
-    with open(fixture_path, "r", encoding="utf-8") as f:
+    with fixture_path.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -43,7 +45,9 @@ class TestControlledBrowserSmoke:
 
     def test_02_fixture_has_allowed_site(self, allowlist):
         """Test 2: Fixture has allowed_internal_mock_form site."""
-        sites = [s for s in allowlist["submit_sites"] if s.get("site_id") == "allowed_internal_mock_form" and s.get("active")]
+        sites = [
+            s for s in allowlist["submit_sites"] if s.get("site_id") == "allowed_internal_mock_form" and s.get("active")
+        ]
         assert len(sites) > 0
         assert "contact_form" in sites[0]["allowed_form_ids"]
         assert "submit_btn" in sites[0]["allowed_submit_button_ids"]
@@ -95,18 +99,18 @@ class TestControlledBrowserSmoke:
             risk_level="high",
         )
 
-        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
         policy_dict = {
-            'verdict': policy_result.verdict,
-            'allowlist_verdict': policy_result.allowlist_verdict,
-            'origin_verdict': policy_result.origin_verdict,
-            'form_verdict': policy_result.form_verdict,
-            'intent_verdict': policy_result.intent_verdict,
-            'field_verdict': policy_result.field_verdict,
-            'prompt_injection_verdict': policy_result.prompt_injection_verdict,
-            'preview_verdict': policy_result.preview_verdict,
-            'user_confirm_verdict': policy_result.user_confirm_verdict,
-            'reasons': policy_result.reasons,
+            "verdict": policy_result.verdict,
+            "allowlist_verdict": policy_result.allowlist_verdict,
+            "origin_verdict": policy_result.origin_verdict,
+            "form_verdict": policy_result.form_verdict,
+            "intent_verdict": policy_result.intent_verdict,
+            "field_verdict": policy_result.field_verdict,
+            "prompt_injection_verdict": policy_result.prompt_injection_verdict,
+            "preview_verdict": policy_result.preview_verdict,
+            "user_confirm_verdict": policy_result.user_confirm_verdict,
+            "reasons": policy_result.reasons,
         }
 
         preview_bundle = build_submit_preview(preview_input, policy_dict, now)
@@ -158,18 +162,18 @@ class TestControlledBrowserSmoke:
             risk_level="high",
         )
 
-        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
         policy_dict = {
-            'verdict': policy_result.verdict,
-            'allowlist_verdict': policy_result.allowlist_verdict,
-            'origin_verdict': policy_result.origin_verdict,
-            'form_verdict': policy_result.form_verdict,
-            'intent_verdict': policy_result.intent_verdict,
-            'field_verdict': policy_result.field_verdict,
-            'prompt_injection_verdict': policy_result.prompt_injection_verdict,
-            'preview_verdict': policy_result.preview_verdict,
-            'user_confirm_verdict': policy_result.user_confirm_verdict,
-            'reasons': policy_result.reasons,
+            "verdict": policy_result.verdict,
+            "allowlist_verdict": policy_result.allowlist_verdict,
+            "origin_verdict": policy_result.origin_verdict,
+            "form_verdict": policy_result.form_verdict,
+            "intent_verdict": policy_result.intent_verdict,
+            "field_verdict": policy_result.field_verdict,
+            "prompt_injection_verdict": policy_result.prompt_injection_verdict,
+            "preview_verdict": policy_result.preview_verdict,
+            "user_confirm_verdict": policy_result.user_confirm_verdict,
+            "reasons": policy_result.reasons,
         }
 
         preview_bundle = build_submit_preview(preview_input, policy_dict, now)
@@ -249,7 +253,9 @@ class TestControlledBrowserSmoke:
         assert is_controlled_internal_origin("https://internal.mock/form") is True
 
         # Fixture site_id is in allowlist
-        sites = [s for s in allowlist["submit_sites"] if s.get("site_id") == "allowed_internal_mock_form" and s.get("active")]
+        sites = [
+            s for s in allowlist["submit_sites"] if s.get("site_id") == "allowed_internal_mock_form" and s.get("active")
+        ]
         assert len(sites) > 0
 
     def test_13_full_flow_summary(self, allowlist):
@@ -283,18 +289,18 @@ class TestControlledBrowserSmoke:
             risk_level="high",
         )
 
-        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
         policy_dict = {
-            'verdict': policy_result.verdict,
-            'allowlist_verdict': policy_result.allowlist_verdict,
-            'origin_verdict': policy_result.origin_verdict,
-            'form_verdict': policy_result.form_verdict,
-            'intent_verdict': policy_result.intent_verdict,
-            'field_verdict': policy_result.field_verdict,
-            'prompt_injection_verdict': policy_result.prompt_injection_verdict,
-            'preview_verdict': policy_result.preview_verdict,
-            'user_confirm_verdict': policy_result.user_confirm_verdict,
-            'reasons': policy_result.reasons,
+            "verdict": policy_result.verdict,
+            "allowlist_verdict": policy_result.allowlist_verdict,
+            "origin_verdict": policy_result.origin_verdict,
+            "form_verdict": policy_result.form_verdict,
+            "intent_verdict": policy_result.intent_verdict,
+            "field_verdict": policy_result.field_verdict,
+            "prompt_injection_verdict": policy_result.prompt_injection_verdict,
+            "preview_verdict": policy_result.preview_verdict,
+            "user_confirm_verdict": policy_result.user_confirm_verdict,
+            "reasons": policy_result.reasons,
         }
 
         preview_bundle = build_submit_preview(preview_input, policy_dict, now)

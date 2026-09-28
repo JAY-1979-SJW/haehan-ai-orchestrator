@@ -14,16 +14,16 @@ No actual gate module imported. No network, DB, or file I/O outside fixture load
 """
 
 import json
-import pytest
 from pathlib import Path
 
+import pytest
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
 
 
 @pytest.fixture(scope="module")
 def fixture_data():
-    with open(FIXTURE_PATH, "r", encoding="utf-8") as f:
+    with FIXTURE_PATH.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -35,8 +35,8 @@ def _all_gate_cases(fixture_data):
 # ExecutionGateInput schema
 # ---------------------------------------------------------------------------
 
-class TestExecutionGateInputSchema:
 
+class TestExecutionGateInputSchema:
     REQUIRED_FIELDS = [
         "policy_verdict",
         "preview_hash",
@@ -90,8 +90,8 @@ class TestExecutionGateInputSchema:
 # ExecutionGateResult schema
 # ---------------------------------------------------------------------------
 
-class TestExecutionGateResultSchema:
 
+class TestExecutionGateResultSchema:
     REQUIRED_FIELDS = [
         "gate_verdict",
         "controlled_submit_allowed",
@@ -159,8 +159,8 @@ class TestExecutionGateResultSchema:
 # Separation principle: production_submit_enabled does NOT cause GATE_BLOCK
 # ---------------------------------------------------------------------------
 
-class TestProductionSubmitSeparation:
 
+class TestProductionSubmitSeparation:
     def test_production_disabled_does_not_cause_gate_block(self, fixture_data):
         """production_submit_enabled=false → GATE_ALLOW_CONTROLLED (not GATE_BLOCK) when core conditions pass."""
         out = fixture_data["gate_allow_controlled_case"]["expected_output"]
@@ -190,8 +190,8 @@ class TestProductionSubmitSeparation:
 # BlockReason taxonomy (핵심 6종 — PRODUCTION_DISABLED는 block_reasons에 없음)
 # ---------------------------------------------------------------------------
 
-class TestBlockReasonTaxonomy:
 
+class TestBlockReasonTaxonomy:
     CORE_BLOCK_REASONS = [
         "POLICY_NOT_ALLOW",
         "PREVIEW_HASH_MISSING",
@@ -246,8 +246,8 @@ class TestBlockReasonTaxonomy:
 # Fixture consistency
 # ---------------------------------------------------------------------------
 
-class TestFixtureConsistency:
 
+class TestFixtureConsistency:
     def test_fixture_version(self, fixture_data):
         assert fixture_data["version"] == "1.1"
 

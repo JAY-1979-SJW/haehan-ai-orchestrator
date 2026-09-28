@@ -40,7 +40,10 @@ _FIXTURE_PATH = str(_repo_root / "tests" / "fixtures" / "g2b_public_notice_workf
 
 
 def _load_fixture():
-    with open(_FIXTURE_PATH, encoding="utf-8") as f:
+    # _FIXTURE_PATH is kept as str below (passed as-is to
+    # run_g2b_public_notice_fixture_live_suite elsewhere in this file);
+    # only this local read is converted to pathlib.
+    with Path(_FIXTURE_PATH).open(encoding="utf-8") as f:
         return json.load(f)
 
 
