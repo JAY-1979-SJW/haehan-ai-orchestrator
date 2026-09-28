@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 
 from scripts.hiworks import gates
@@ -82,10 +83,9 @@ def _cmd_dashboard() -> None:
         print("Hiworks dashboard")
         print("=" * 60)
         print(f"url: {page.url}")
-        try:
+        # 디버그 출력용 page.title() 조회 실패는 해당 줄 출력만 생략, 기능 영향 없음
+        with contextlib.suppress(Exception):
             print(f"title: {page.title()}")
-        except Exception:  # noqa: BLE001 - 디버그 출력용 page.title() 조회 — 실패해도 해당 줄 출력만 생략, 기능 영향 없음
-            pass
         print_apps(extract_dashboard_apps(page)[:30])
 
 
@@ -113,10 +113,9 @@ def _cmd_mail(sub: str | None) -> None:
         print("Hiworks mail")
         print("=" * 60)
         print(f"url: {page.url}")
-        try:
+        # 디버그 출력용 page.title() 조회 실패는 해당 줄 출력만 생략, 기능 영향 없음
+        with contextlib.suppress(Exception):
             print(f"title: {page.title()}")
-        except Exception:  # noqa: BLE001 - 디버그 출력용 page.title() 조회 — 실패해도 해당 줄 출력만 생략, 기능 영향 없음
-            pass
         for item in extract_visible_mail_actions(page)[:40]:
             print(f"- {item['text']} {item.get('href') or ''}")
 

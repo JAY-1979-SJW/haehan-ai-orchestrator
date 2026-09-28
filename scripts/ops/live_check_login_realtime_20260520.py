@@ -14,6 +14,7 @@ C: 로그인 페이지 Runtime.evaluate 폴링 — 로그인 진행/실패/추�
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import urllib.request
 
@@ -271,7 +272,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(main())
-    except KeyboardInterrupt:
-        pass

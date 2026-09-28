@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 from pathlib import Path
 
@@ -14,10 +15,9 @@ def open_hiworks(path: str = ""):
     page = get_page_by_url(HIWORKS_DOMAIN_HINT, create_url=HIWORKS_DASHBOARD_URL)
     if path and path != page.url:
         page.goto(path, timeout=30000)
-        try:
+        # 페이지 로드 대기 best-effort - 타임아웃 나도 이후 로직 계속 진행(읽기전용 탐색)
+        with contextlib.suppress(Exception):
             page.wait_for_load_state("networkidle", timeout=15000)
-        except Exception:  # noqa: BLE001 - 하이웍스 탐색 자동화 - 페이지 로드 대기 best-effort, 타임아웃 나도 이후 로직 계속 진행(읽기전용 탐색)
-            pass
     return page
 
 

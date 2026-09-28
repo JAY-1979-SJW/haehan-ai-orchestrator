@@ -11,6 +11,7 @@ multi-tenant 확장을 위해 계정(instagram_user_id)별로 별도 키/엔트�
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import sys
@@ -30,10 +31,8 @@ if _USE_KEYRING:
         return keyring.get_password(_SERVICE_NAME, instagram_user_id)
 
     def delete_token(instagram_user_id: str) -> None:
-        try:
+        with contextlib.suppress(keyring.errors.PasswordDeleteError):
             keyring.delete_password(_SERVICE_NAME, instagram_user_id)
-        except keyring.errors.PasswordDeleteError:
-            pass
 
 else:
     from cryptography.fernet import Fernet, InvalidToken
@@ -64,10 +63,8 @@ else:
     def _save_all(data: dict[str, str]) -> None:
         _STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
         _STORE_PATH.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        try:
+        with contextlib.suppress(OSError):
             _STORE_PATH.chmod(0o600)
-        except OSError:
-            pass
 
     def save_token(instagram_user_id: str, token: str) -> None:
         f = _fernet()

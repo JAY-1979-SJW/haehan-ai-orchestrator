@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -424,11 +425,9 @@ def handle_idpw_login(
             except Exception as e:  # noqa: BLE001 - 로그인 상태 감지/자격증명 입력 헬퍼 - 예외 발생 시 LOGIN_UNKNOWN 또는 False로 fail-closed 반환(로그인됨으로 오판하지 않음), 자격증명 값은 로그에 남기지 않고 길이만 기록
                 print(f"[로그인] 자동 입력 실패: {e} → 수동 입력 모드")
 
-    # 수동 입력 모드 (자격증명 없거나 실패 시)
-    try:
+    # 수동 입력 모드 (자격증명 없거나 실패 시) - 포커스 실패해도 계속 진행(UI 편의 동작일 뿐)
+    with contextlib.suppress(Exception):
         page.focus(id_selector)
-    except Exception:  # noqa: S110, BLE001
-        pass
 
     print("\n[로그인] 아이디/비밀번호를 브라우저에서 직접 입력 후 로그인하세요.")
 

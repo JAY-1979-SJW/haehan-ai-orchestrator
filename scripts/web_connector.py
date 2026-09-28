@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Generator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 
 from playwright.sync_api import Page, sync_playwright
@@ -519,10 +519,9 @@ def shutdown_browser_session(*, close_browser: bool = False) -> dict[str, int | 
     browser, ctx = _connect_browser()
     closed = close_all_pages(ctx)
     if close_browser:
-        try:
+        # 브라우저 종료 실패해도 계속 진행(2026-09-28 검토)
+        with suppress(Exception):
             browser.close()
-        except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
-            pass
         _BROWSER_CONTEXT_CACHE = None
         _BROWSER_CACHE = None
     return {"closed_tabs": closed, "browser_closed": close_browser}
