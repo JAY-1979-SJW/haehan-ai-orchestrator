@@ -106,10 +106,10 @@ if __name__ == "__main__":
 
     if ok:
         try:
-            here = os.path.dirname(os.path.abspath(__file__))
-            ai_script = os.path.join(here, "ai_check_a4.py")
+            here = Path(__file__).resolve().parent
+            ai_script = here / "ai_check_a4.py"
             subprocess.run(
-                [sys.executable, ai_script, sys.argv[1]],
+                [sys.executable, str(ai_script), sys.argv[1]],
                 check=False,
                 env=os.environ.copy(),
             )

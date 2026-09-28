@@ -8,10 +8,10 @@
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import candidate_store
 import inbox_store
@@ -247,7 +247,7 @@ def test_candidate_jsonl_format(tmp_path):
         classification_reason=clf["classification_reason"],
         path=cand_path,
     )
-    with open(cand_path, encoding="utf-8") as f:
+    with Path(cand_path).open(encoding="utf-8") as f:
         lines = [l.strip() for l in f if l.strip()]  # noqa: E741
     assert len(lines) == 1
     parsed = json.loads(lines[0])

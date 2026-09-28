@@ -237,13 +237,13 @@ class TestFixtureCompatibility:
     def test_fixture_loads(self):
         """Fixture JSON loads successfully."""
         assert FIXTURE_PATH.exists(), f"Fixture not found: {FIXTURE_PATH}"
-        with open(FIXTURE_PATH) as f:
+        with FIXTURE_PATH.open() as f:
             data = json.load(f)
         assert data["fixture_id"] == "BROWSER_ACTION_REGISTRY_PREFLIGHT_1"
 
     def test_fixture_cases_valid(self):
         """All fixture cases have expected structure."""
-        with open(FIXTURE_PATH) as f:
+        with FIXTURE_PATH.open() as f:
             data = json.load(f)
 
         for case in data["cases"]:
@@ -254,7 +254,7 @@ class TestFixtureCompatibility:
 
     def test_safe_to_execute_all_false_in_fixture(self):
         """All fixture cases have safe_to_execute=false."""
-        with open(FIXTURE_PATH) as f:
+        with FIXTURE_PATH.open() as f:
             data = json.load(f)
 
         for case in data["cases"]:

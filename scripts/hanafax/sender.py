@@ -330,7 +330,7 @@ def _build_docx(subject: str, body: str, receiver_name: str, bid_name: str) -> s
     if not _TEMPLATE_DOCX.exists():
         log.warning("docx 템플릿 없음 — txt 폴백: %s", _TEMPLATE_DOCX)
         txt_path = tmp_path.replace(".docx", ".txt")
-        with open(txt_path, "w", encoding="utf-8") as f:
+        with Path(txt_path).open("w", encoding="utf-8") as f:
             f.write(f"{subject}\n\n{body}")
         return txt_path
 
@@ -397,7 +397,7 @@ def _build_docx(subject: str, body: str, receiver_name: str, bid_name: str) -> s
     except ImportError:
         log.warning("python-docx 미설치 — txt 폴백")
         txt_path = tmp_path.replace(".docx", ".txt")
-        with open(txt_path, "w", encoding="utf-8") as f:
+        with Path(txt_path).open("w", encoding="utf-8") as f:
             f.write(f"{subject}\n\n{body}")
         return txt_path
 
@@ -575,6 +575,6 @@ def _run(
     finally:
         if not using_external_file:
             try:
-                os.unlink(tmp_path)
+                Path(tmp_path).unlink()
             except Exception:  # noqa: BLE001 - 팩스 발송 Playwright 자동화 - 실패 시 success:False로 반환(fail-closed), 두번째 except는 임시파일 정리 best-effort(실패해도 임시파일만 남을 뿐 안전)
                 pass

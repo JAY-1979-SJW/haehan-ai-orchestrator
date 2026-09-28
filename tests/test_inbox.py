@@ -6,17 +6,19 @@ inbox 관련 최소 테스트
 - source_type=email 저장 검증
 - 앱 부팅 가능 여부
 """
+
 import json
-import os
 import sys
+from pathlib import Path
+
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import inbox_store
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def tmp_inbox(tmp_path):
@@ -34,6 +36,7 @@ _SAMPLE = {
 
 
 # ── 1. 메일 1건 inbox 저장 ────────────────────────────────────────────────────
+
 
 def test_save_mail_single(tmp_inbox):
     result = inbox_store.save_mail(**_SAMPLE, path=tmp_inbox)
@@ -55,6 +58,7 @@ def test_save_mail_single(tmp_inbox):
 
 
 # ── 2. 동일 메일 중복 저장 방지 ───────────────────────────────────────────────
+
 
 def test_duplicate_prevention(tmp_inbox):
     r1 = inbox_store.save_mail(**_SAMPLE, path=tmp_inbox)
@@ -82,6 +86,7 @@ def test_different_account_not_duplicate(tmp_inbox):
 
 # ── 3. 필수 필드 누락 방어 ────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize("missing_field", ["external_id", "source_account", "sender", "title"])
 def test_required_field_missing(tmp_inbox, missing_field):
     kwargs = {**_SAMPLE}
@@ -91,6 +96,7 @@ def test_required_field_missing(tmp_inbox, missing_field):
 
 
 # ── 4. source_type=email 저장 검증 ────────────────────────────────────────────
+
 
 def test_source_type_email(tmp_inbox):
     inbox_store.save_mail(**_SAMPLE, path=tmp_inbox)
@@ -108,13 +114,16 @@ def test_source_type_filter(tmp_inbox):
 
 # ── 5. 앱 부팅 가능 여부 ──────────────────────────────────────────────────────
 
+
 def test_app_boot():
     """dashboard.create_app()이 예외 없이 Flask 앱을 반환하는지 확인."""
     import os
+
     os.environ.setdefault("ORCH_DASHBOARD_USER", "test_user")
     os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test_pass")
 
     from dashboard import create_app
+
     app = create_app()
     assert app is not None
 
@@ -125,11 +134,12 @@ def test_app_boot():
 
 # ── 6. JSONL 파일 형식 검증 ───────────────────────────────────────────────────
 
+
 def test_jsonl_format(tmp_inbox):
     """저장 파일이 유효한 JSONL인지 확인."""
     inbox_store.save_mail(**_SAMPLE, path=tmp_inbox)
 
-    with open(tmp_inbox, "r", encoding="utf-8") as f:
+    with Path(tmp_inbox).open("r", encoding="utf-8") as f:
         lines = [l.strip() for l in f if l.strip()]
 
     assert len(lines) == 1
