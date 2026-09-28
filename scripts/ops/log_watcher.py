@@ -31,7 +31,7 @@ SKIP_KEYWORDS = (
 
 def tail_follow(path: Path):
     """파일 끝부터 새 줄만 실시간 스트림."""
-    with open(path, encoding="utf-8", errors="replace") as f:
+    with path.open(encoding="utf-8", errors="replace") as f:
         f.seek(0, 2)  # 파일 끝으로 이동 (기존 로그 무시)
         while True:
             line = f.readline()

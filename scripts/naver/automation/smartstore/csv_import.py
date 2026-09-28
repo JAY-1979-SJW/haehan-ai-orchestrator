@@ -86,7 +86,7 @@ class CSVImporter:
         # UTF-8 BOM 또는 cp949 자동 감지
         for encoding in ("utf-8-sig", "utf-8", "cp949"):
             try:
-                with open(path, encoding=encoding, newline="") as f:
+                with path.open(encoding=encoding, newline="") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
                         normalized = normalize_row(row)

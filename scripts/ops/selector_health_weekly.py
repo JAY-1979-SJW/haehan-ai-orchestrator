@@ -52,7 +52,7 @@ def _run_schtasks(args: list[str], timeout: int = 30) -> tuple[int, str]:
 def _log(record: dict) -> None:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     record["at"] = datetime.now().isoformat(timespec="seconds")
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
+    with LOG_FILE.open("a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 

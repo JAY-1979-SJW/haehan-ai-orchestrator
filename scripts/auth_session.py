@@ -23,7 +23,6 @@ CLI:
 from __future__ import annotations
 
 import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -118,7 +117,7 @@ def save_session(host: str, page, *, host_filter: bool = True) -> Path:
         encoding="utf-8",
     )
     try:
-        os.chmod(fp, 0o600)
+        fp.chmod(0o600)
     except Exception:  # noqa: BLE001 - 브라우저 세션(쿠키/storage) 저장/복원 유틸 - CLAUDE.md 명시된 로그인세션 보존 정책에 따라 저장/복원만 수행, 로그아웃/쿠키삭제 없음. chmod 실패는 이미 암호화된 파일이라 best-effort
         pass
     return fp

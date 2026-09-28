@@ -4,6 +4,7 @@ Usage:
     python scripts/validate_site_policy_config.py configs/site_policies/g2b.json
     python scripts/validate_site_policy_config.py configs/site_policies/  # 디렉터리 일괄 검증
 """
+
 from __future__ import annotations
 
 import json
@@ -11,9 +12,16 @@ import sys
 from pathlib import Path
 
 REQUIRED_FIELDS = (
-    "site_id", "label", "allowed_hosts", "allowed_paths",
-    "blocked_paths", "execution_location", "login_mode",
-    "credential_policy", "capture_policy", "risk_level",
+    "site_id",
+    "label",
+    "allowed_hosts",
+    "allowed_paths",
+    "blocked_paths",
+    "execution_location",
+    "login_mode",
+    "credential_policy",
+    "capture_policy",
+    "risk_level",
 )
 
 ALLOWED_EXECUTION_LOCATIONS = {"LOCAL_AGENT_REQUIRED"}
@@ -74,7 +82,7 @@ def validate_config(data: dict) -> dict:
 
 def validate_file(path: Path) -> dict:
     try:
-        with open(path, encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         return _err(f"JSON 파싱 오류: {e}")

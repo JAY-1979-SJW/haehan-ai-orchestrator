@@ -16,7 +16,6 @@ docs/module_separation_standard.md 기준을 강제한다. 분리한 모듈을 �
 from __future__ import annotations
 
 import argparse
-import glob
 import json
 import re
 from dataclasses import dataclass, field
@@ -175,7 +174,7 @@ def run_gate() -> GateResult:
             )
 
         # 2) leaf 간 직접 import 금지
-        leaf_paths = [Path(p) for p in glob.glob(str(ROOT / mod["leaf_glob"]))]
+        leaf_paths = list(ROOT.glob(mod["leaf_glob"]))
         leaf_keys = {_leaf_key(p, root_stem) for p in leaf_paths}
         shared = set(mod.get("shared_leaves", set()))
         for lp in leaf_paths:

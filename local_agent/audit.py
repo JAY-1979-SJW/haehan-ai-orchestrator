@@ -3,13 +3,14 @@
 Raw secrets are stripped before writing. Raw local audit files remain PC-local;
 the server receives only safe summaries through task results.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import os
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,29 +19,39 @@ from . import config
 logger = logging.getLogger(__name__)
 
 
-_SENSITIVE_KEYS: frozenset[str] = frozenset({
-    "password", "passwd", "pwd",
-    "token", "access_token", "refresh_token", "session_token",
-    "device_token", "cookie", "cookies", "session",
-    "client_secret", "secret", "api_secret", "api_key",
-    "auth", "authorization",
-})
+_SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {
+        "password",
+        "passwd",
+        "pwd",
+        "token",
+        "access_token",
+        "refresh_token",
+        "session_token",
+        "device_token",
+        "cookie",
+        "cookies",
+        "session",
+        "client_secret",
+        "secret",
+        "api_secret",
+        "api_key",
+        "auth",
+        "authorization",
+    }
+)
 
 
 def _strip_sensitive(d: Any) -> Any:
     if isinstance(d, dict):
-        return {
-            k: _strip_sensitive(v)
-            for k, v in d.items()
-            if k.lower() not in _SENSITIVE_KEYS
-        }
+        return {k: _strip_sensitive(v) for k, v in d.items() if k.lower() not in _SENSITIVE_KEYS}
     if isinstance(d, list):
         return [_strip_sensitive(x) for x in d]
     return d
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _fallback_audit_paths() -> list[Path]:
@@ -55,7 +66,7 @@ def _fallback_audit_paths() -> list[Path]:
 
 def _append_jsonl(path: Path, entry: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
+    with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
