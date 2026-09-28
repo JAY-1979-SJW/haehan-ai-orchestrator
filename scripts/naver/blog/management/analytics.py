@@ -76,8 +76,6 @@ class BlogAnalytics:
                 # <visitorcnt id="20260512" cnt="..." /> 형식
                 visitors_today = None
                 visitors_total = 0
-                from datetime import datetime
-
                 today_str = datetime.now().strftime("%Y%m%d")
                 # 오늘 cnt
                 m_today = re.search(rf'id="{today_str}"\s+cnt="(\d+)"', xml_text)
