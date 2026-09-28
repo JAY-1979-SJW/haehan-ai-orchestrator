@@ -23,7 +23,7 @@ import json
 import logging
 import threading
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -230,10 +230,8 @@ def open_persistent_context(
             user_data_dir=str(profile_dir),
             headless=headless,
         )
-        try:
+        with suppress(Exception):  # mock 에서 없을 수 있음
             context.set_default_timeout(default_timeout_ms)
-        except Exception:  # noqa: BLE001 — mock 에서 없을 수 있음
-            pass
         try:
             yield context
         finally:
@@ -242,10 +240,8 @@ def open_persistent_context(
             except Exception:  # noqa: BLE001
                 logger.warning("[SESSION-CLOSE-ERR] site=%s", site_id)
     finally:
-        try:
+        with suppress(Exception):  # playwright 종료 정리, 실패해도 프로세스 종료에 영향 없음
             pw.stop()
-        except Exception:  # noqa: BLE001
-            pass
 
 
 def clear_meta_for_tests(site_id: str) -> None:

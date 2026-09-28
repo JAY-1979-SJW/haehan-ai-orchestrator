@@ -8,6 +8,7 @@ policy:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import threading
@@ -89,10 +90,9 @@ class LogBuffer:
         with self._lock:
             self._buf.append(entry)
         for fn in list(self._subs):
-            try:
+            # 구독자 콜백 예외로 로깅 전체가 죽지 않도록 무시(메시지는 이미 redact됨)
+            with contextlib.suppress(Exception):
                 fn(entry)
-            except Exception:  # noqa: S110, BLE001
-                pass
         return entry
 
     def info(self, msg: str, **kw) -> LogEntry:

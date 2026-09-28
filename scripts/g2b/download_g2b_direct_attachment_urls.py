@@ -15,6 +15,7 @@ DB(attachment_parse_result)의 file_url을 dedupe → headless Playwright로
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -261,10 +262,9 @@ def _download_one(playwright, candidate: dict[str, Any], out_dir: Path, index: i
         page = context.new_page()
         try:
             with page.expect_download(timeout=30000) as dl_info:
-                try:
+                # goto 실패는 무시 - 다운로드 이벤트 대기를 계속 진행(페이지 접근 실패는 별도 오류로 기록)
+                with contextlib.suppress(Exception):
                     page.goto(url, timeout=30000, wait_until="domcontentloaded")
-                except Exception:  # noqa: BLE001 - 나라장터(g2b) 첨부파일 URL 다운로드 읽기전용 수집 - DB 조회 실패는 캐시로 폴백, 페이지 접근 실패는 오류로 기록(로그인/보안 페이지 감지 목적)
-                    pass
             download = dl_info.value
             suggested = download.suggested_filename or file_name
             safe_orig = _sanitize_filename(suggested)

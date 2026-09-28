@@ -25,6 +25,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 import time
@@ -186,11 +187,9 @@ def explore_service(page, svc: dict) -> dict:
     try:
         page.goto(url, timeout=15000, wait_until="domcontentloaded")
         time.sleep(2.5)
-        # 팝업/별도창 정리
-        try:
+        # 팝업/별도창 정리 - 실패는 무시하고 계속 진행(읽기전용 탐색)
+        with contextlib.suppress(Exception):
             handle_page_popups(page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 네이버 개인 서비스 전체 사이트맵 탐색(읽기전용) — 각 except는 팝업 무시 또는 서비스별 오류를 결과 dict의 error 필드에 기록하고 다음 서비스 탐색으로 계속, 최종 예외도 traceback 출력 후 안전 종료.
-            pass
 
         meta = page.evaluate(EXTRACT_JS)
         result["meta"] = meta
@@ -255,11 +254,9 @@ def main():
         marks_str = " " + " ".join(marks) if marks else ""
         print(f"✓  메뉴 {r.get('menu_count', 0):>2}개{marks_str}{user_str}")
 
-        # 별도 창 팝업 정리
-        try:
+        # 별도 창 팝업 정리 - 실패는 무시하고 계속 진행(읽기전용 탐색)
+        with contextlib.suppress(Exception):
             close_popup_windows(page)
-        except Exception:  # noqa: BLE001 - 네이버 개인 서비스 전체 사이트맵 탐색(읽기전용) — 각 except는 팝업 무시 또는 서비스별 오류를 결과 dict의 error 필드에 기록하고 다음 서비스 탐색으로 계속, 최종 예외도 traceback 출력 후 안전 종료.
-            pass
 
     # 결과 정리
     by_cat = {}

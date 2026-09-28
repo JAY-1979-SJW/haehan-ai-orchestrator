@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import sys
 from dataclasses import dataclass
 from datetime import date
@@ -103,10 +104,9 @@ def render(ws, xl_app, layout: list[CellDef] | None = None) -> None:
     # 초기화
     ws.Cells.UnMerge()
     ws.Cells.Clear()
-    try:
+    # 그리드라인 숨김 실패는 무시(기능·데이터에 영향 없는 스타일 설정)
+    with contextlib.suppress(Exception):
         ws.Parent.Windows(1).DisplayGridlines = False
-    except Exception:  # noqa: BLE001 - 엑셀 레이아웃 엔진(로컬 PC 작업) -- 그리드라인 숨김/페이지뷰 전환 등 화면 표시 옵션 설정 실패는 무시(기능·데이터에 영향 없는 스타일 설정)
-        pass
 
     # 열 너비
     for c, w in COL_W.items():
@@ -141,11 +141,9 @@ def render(ws, xl_app, layout: list[CellDef] | None = None) -> None:
     # A4 인쇄 설정
     _apply_page_setup(ws, xl_app)
 
-    # 페이지 레이아웃 뷰
-    try:
+    # 페이지 레이아웃 뷰 전환 실패는 무시(기능·데이터에 영향 없는 스타일 설정)
+    with contextlib.suppress(Exception):
         ws.Parent.Windows(1).View = 2
-    except Exception:  # noqa: BLE001 - 엑셀 레이아웃 엔진(로컬 PC 작업) -- 그리드라인 숨김/페이지뷰 전환 등 화면 표시 옵션 설정 실패는 무시(기능·데이터에 영향 없는 스타일 설정)
-        pass
 
 
 def _apply_page_setup(ws, xl_app) -> None:
