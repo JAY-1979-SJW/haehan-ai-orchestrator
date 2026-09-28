@@ -19,16 +19,19 @@ HOOKS_DIR = ROOT / ".githooks"
 CHECKLIST_MARKER = "# commit-checklist-wrapper v1"  # install_commit_checklist.py MARKER 와 동일
 
 PRE_COMMIT = """\
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
 
 # staged .py 파일 목록
+# encoding 명시: Windows 기본 코드페이지(cp949)가 diff에 섞인 UTF-8 특수문자에서
+# reader 스레드를 죽이는 문제 방지(2026-09-28 실측 발견 — 이 문제로 훅이 크래시했었음).
 r = subprocess.run(
     ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
     cwd=str(ROOT), capture_output=True, text=True,
+    encoding="utf-8", errors="replace",
 )
 py_files = [f for f in r.stdout.splitlines() if f.endswith(".py")]
 
@@ -59,6 +62,7 @@ if _sg_files:
     _sdiff = subprocess.run(
         ["git", "diff", "--cached", "-U0", "--"] + _sg_files,
         cwd=str(ROOT), capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
     )
     _sess_pat = (
         "nidlogin.logout", "logout.naver", "clear_cookies", "delete_cookies",
@@ -123,6 +127,7 @@ if _js_staged:
     _jsdiff = subprocess.run(
         ["git", "diff", "--cached", "-U5", "--"] + _js_staged,
         cwd=str(ROOT), capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
     )
     _chunks, _cur = [], []
     for _ln in _jsdiff.stdout.splitlines():
@@ -169,7 +174,7 @@ if gate.exists():
 """
 
 PRE_PUSH = """\
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import subprocess, sys
 from pathlib import Path
 
@@ -185,7 +190,7 @@ sys.exit(result.returncode)
 
 
 POST_COMMIT = """\
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import subprocess, sys
 from pathlib import Path
 
@@ -197,10 +202,11 @@ try:
     sys.path.insert(0, str(ROOT / "scripts" / "ops"))
     import session_handoff as sh
 
-    h = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
-    subj = subprocess.run(["git", "log", "-1", "--pretty=%s"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
-    branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
-    files_out = subprocess.run(["git", "show", "--stat", "--format=", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout
+    _enc = {"encoding": "utf-8", "errors": "replace"}
+    h = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True, **_enc).stdout.strip()
+    subj = subprocess.run(["git", "log", "-1", "--pretty=%s"], cwd=str(ROOT), capture_output=True, text=True, **_enc).stdout.strip()
+    branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), capture_output=True, text=True, **_enc).stdout.strip()
+    files_out = subprocess.run(["git", "show", "--stat", "--format=", "HEAD"], cwd=str(ROOT), capture_output=True, text=True, **_enc).stdout
     files_changed = len([ln for ln in files_out.splitlines() if "|" in ln])
     sh.log_event("commit", hash=h, subject=subj, branch=branch, files_changed=files_changed)
 except Exception:
