@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 from playwright.sync_api import Page
@@ -41,10 +42,8 @@ class NaverCafe:
             return []
         self.page.goto(MY_CAFES_URL, timeout=20000, wait_until="domcontentloaded")
         time.sleep(2.5)
-        try:
+        with contextlib.suppress(Exception):
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음
-            pass
         try:
             cafes = self.page.evaluate("""
             () => {
@@ -165,10 +164,8 @@ class NaverCafe:
                         return {"ok": True, "mode": "published"}
                     else:
                         # 임시저장
-                        try:
+                        with contextlib.suppress(Exception):
                             f.locator('button:has-text("임시저장"), .btn_temp').first.click(timeout=3000)
-                        except Exception:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음
-                            pass
                         time.sleep(2)
                         return {"ok": True, "mode": "draft"}
                 except Exception as e:  # noqa: BLE001 - 네이버 카페 CDP 자동화(목록/읽기/쓰기) - 실패 시 빈 목록 또는 ok:False 반환, 성공으로 위장하지 않음

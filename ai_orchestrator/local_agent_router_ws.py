@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -123,7 +124,10 @@ async def _send_task_blocked(
     UI 측에서 차단 사유를 사용자에게 표시할 수 있도록 한다.
     민감 필드(token/cookie/authorization 등)는 포함 금지.
     """
-    try:
+    # 로컬 에이전트 WebSocket 서버(인증 후 통신) — 인증(authenticate_agent) 검증은 이 함수 호출 이전
+    # 로직에서 처리되며 실패 시 close(4401)로 명확히 거부된다. 여기서 억제하는 예외는 상태 통지 전송
+    # 실패뿐으로, 인증을 우회하지 않는다.
+    with contextlib.suppress(Exception):
         await ws.send_json(
             {
                 "type": "task_blocked",
@@ -134,8 +138,6 @@ async def _send_task_blocked(
                 "safe_to_execute": False,
             }
         )
-    except Exception:  # noqa: S110, BLE001 - 로컬 에이전트 WebSocket 서버(인증 후 통신) — 인증(authenticate_agent) 검증은 except 처리 이전 로직으로 실패 시 close(4401)로 명확히 거부되며, except는 알림 전송 실패 무시나 예외 발생시 로그 남기고 안전하게 연결 종료(code 1011)할 뿐 인증을 우회하지 않음.
-        pass
 
 
 async def _handle_result(ws: WebSocket, agent_id: str, msg: dict) -> None:
@@ -499,10 +501,9 @@ async def agent_websocket(websocket: WebSocket):
         pass
     except Exception as e:
         logger.exception("agent websocket 예외: %s", e)
-        try:
+        # 이미 예외로 종료 중인 연결의 close() 실패는 무시해도 안전(인증 우회 아님)
+        with contextlib.suppress(Exception):
             await websocket.close(code=1011)
-        except Exception:  # noqa: S110, BLE001 - 로컬 에이전트 WebSocket 서버(인증 후 통신) — 인증(authenticate_agent) 검증은 except 처리 이전 로직으로 실패 시 close(4401)로 명확히 거부되며, except는 알림 전송 실패 무시나 예외 발생시 로그 남기고 안전하게 연결 종료(code 1011)할 뿐 인증을 우회하지 않음.
-            pass
     finally:
         if agent_id:
             _reg.set_agent_disconnected(agent_id)

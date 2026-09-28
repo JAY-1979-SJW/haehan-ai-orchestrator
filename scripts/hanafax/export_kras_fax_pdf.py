@@ -15,6 +15,7 @@ scripts/hanafax/export_kras_fax_pdf.py
 
 from __future__ import annotations
 
+import contextlib
 import shutil
 import sys
 import tempfile
@@ -203,10 +204,9 @@ def main():
     try:
         # 1) 근거자료 시트는 PDF에 넣지 않는다 — 복사본에서 삭제
         for name in DROP_SHEETS:
-            try:
+            # PDF 변환용 임시 복사본(tmp_xlsx, 원본과 별개)에서 불필요한 시트 삭제 - 원본 파일이나 운영 DB가 아니며 삭제 실패해도 무시 가능
+            with contextlib.suppress(Exception):
                 wb.Sheets(name).Delete()
-            except Exception:  # noqa: BLE001 - PDF 변환용 임시 복사본(tmp_xlsx, 원본과 별개)에서 불필요한 시트 삭제 - 원본 파일이나 운영 DB가 아니며 삭제 실패해도 무시 가능
-                pass
 
         for name in KEEP_SHEETS:
             ws = wb.Sheets(name)

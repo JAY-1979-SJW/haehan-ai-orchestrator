@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -299,10 +300,9 @@ def _clear_session_restore_artifacts() -> list[Path]:
     candidates: list[Path] = []
     sessions_dir = default_dir / "Sessions"
     if sessions_dir.exists():
-        try:
+        # 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
+        with contextlib.suppress(Exception):
             candidates.extend(p for p in sessions_dir.iterdir() if p.is_file())
-        except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
-            pass
     for name in ("Current Session", "Current Tabs", "Last Session", "Last Tabs"):
         p = default_dir / name
         if p.exists():
