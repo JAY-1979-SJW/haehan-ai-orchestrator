@@ -19144,6 +19144,70 @@
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
+  },
+  "apps/youtube-analyzer-standalone/connectors/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "youtube",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/youtube-analyzer-standalone/connectors/transcriber.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "youtube",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/youtube-analyzer-standalone/connectors/youtube_data_api.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "youtube",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/youtube-analyzer-standalone/connectors/yt_dlp_downloader.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "youtube",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/youtube-analyzer-standalone/core/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "youtube",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/youtube-analyzer-standalone/core/report_builder.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "youtube",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/youtube-analyzer-standalone/core/url_parser.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "youtube",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "apps/youtube-analyzer-standalone/core/viral_score.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "youtube",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
   }
  }
 }
