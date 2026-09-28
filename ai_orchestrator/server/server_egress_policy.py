@@ -1,4 +1,5 @@
 """Server Egress Policy — 서버 코드의 외부 URL 직접 요청 차단."""
+
 from __future__ import annotations
 
 from urllib.parse import urlparse
@@ -7,16 +8,28 @@ from ai_orchestrator.server.execution_location_guard import _is_internal_host
 
 # 명시적으로 차단하는 외부 host 패턴 (방어 강화)
 _EXPLICIT_BLOCKED_HOSTS = (
-    "naver.com", "g2b.go.kr", "gov.kr", "kbstar.com",
-    "wooribank.com", "hometax.go.kr", "bank", "card",
-    "kakao.com", "daum.net",
+    "naver.com",
+    "g2b.go.kr",
+    "gov.kr",
+    "kbstar.com",
+    "wooribank.com",
+    "hometax.go.kr",
+    "bank",
+    "card",
+    "kakao.com",
+    "daum.net",
 )
 
 # 허용 host (allowlist) — 내부 서비스 + localhost
 # 추가 host는 환경변수나 config로 확장 가능
-_ALLOWLIST_HOSTS = frozenset((
-    "localhost", "127.0.0.1", "::1", "0.0.0.0",
-))
+_ALLOWLIST_HOSTS = frozenset(
+    (
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "0.0.0.0",  # noqa: S104 - 서버 egress 차단 정책의 내부 허용목록(allowlist) 상수 정의 — 실제 소켓 bind() 호출이 아니라 문자열 비교용 상수라 바인딩 위험 없음
+    )
+)
 
 
 def is_internal_url(url: str) -> bool:
@@ -25,7 +38,7 @@ def is_internal_url(url: str) -> bool:
         return False
     try:
         host = (urlparse(url).hostname or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 서버코드의 외부 URL 직접접근 차단 정책 — is_internal_url이 URL 파싱 실패시 False(=내부 아님→외부로 간주→차단) 방향으로 폴백해 fail-closed이며, sanitize_blocked_url_for_log/get_blocked_host_category의 예외는 로그용 문자열·카테고리 라벨링일 뿐 실제 차단 여부(assert_server_egress_allowed)에는 영향 없음.
         return False
     if not host:
         return False
@@ -44,7 +57,7 @@ def is_external_url(url: str) -> bool:
 def assert_server_egress_allowed(url: str) -> None:
     """외부 URL이면 PermissionError raise."""
     if is_external_url(url):
-        host = (urlparse(url).hostname or "")
+        host = urlparse(url).hostname or ""
         raise PermissionError(
             f"BLOCKED_EXTERNAL_URL_FROM_SERVER: 서버에서 외부 URL 직접 접근 금지. "
             f"host={host}. local agent로 handoff 하세요."
@@ -58,7 +71,7 @@ def sanitize_blocked_url_for_log(url: str) -> str:
     try:
         parsed = urlparse(url)
         return f"{parsed.scheme}://{parsed.hostname or ''}{parsed.path or ''}"
-    except Exception:
+    except Exception:  # noqa: BLE001 - 서버코드의 외부 URL 직접접근 차단 정책 — is_internal_url이 URL 파싱 실패시 False(=내부 아님→외부로 간주→차단) 방향으로 폴백해 fail-closed이며, sanitize_blocked_url_for_log/get_blocked_host_category의 예외는 로그용 문자열·카테고리 라벨링일 뿐 실제 차단 여부(assert_server_egress_allowed)에는 영향 없음.
         return "(invalid_url)"
 
 
@@ -68,7 +81,7 @@ def get_blocked_host_category(url: str) -> str:
         return "UNKNOWN"
     try:
         host = (urlparse(url).hostname or "").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 서버코드의 외부 URL 직접접근 차단 정책 — is_internal_url이 URL 파싱 실패시 False(=내부 아님→외부로 간주→차단) 방향으로 폴백해 fail-closed이며, sanitize_blocked_url_for_log/get_blocked_host_category의 예외는 로그용 문자열·카테고리 라벨링일 뿐 실제 차단 여부(assert_server_egress_allowed)에는 영향 없음.
         return "UNKNOWN"
     if not host:
         return "UNKNOWN"

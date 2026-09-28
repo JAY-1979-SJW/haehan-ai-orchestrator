@@ -19,6 +19,7 @@ submit 버튼 우선순위:
   - 패스워드·쿠키·세션 토큰을 summary 에 포함 금지.
   - CAPTCHA / 2FA 자동 우회 금지.
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,8 +41,8 @@ _REGISTER_URL = "https://developers.naver.com/apps/#/register"
 
 # name/id 기반 선택자 (selector 우선순위 2순위)
 _SELECTORS: dict[str, str] = {
-    "app_name":    "input[name='applicationName']",
-    "purpose":     "textarea[name='description']",
+    "app_name": "input[name='applicationName']",
+    "purpose": "textarea[name='description']",
     "service_url": "input[name='webServiceUrl']",
     "redirect_uri": "input[name='callbackUrl']",
 }
@@ -74,8 +75,11 @@ class NaverDevRegAdapter(DevRegAdapterBase):
         errors = validate_params(params)
         if errors:
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url="", error="; ".join(errors),
+                success=False,
+                summary="",
+                field_names=[],
+                target_url="",
+                error="; ".join(errors),
                 error_code=ErrorCode.FORM_FIELD_MISSING,
             )
 
@@ -94,17 +98,23 @@ class NaverDevRegAdapter(DevRegAdapterBase):
 
         try:
             page.goto(_REGISTER_URL, wait_until="networkidle")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 개발자센터 앱 등록 폼 자동입력 — 페이지이동/필드입력/체크박스/제출 실패 시 모두 error 필드를 채운 명시적 실패 결과(FormFillResult/SubmitResult)를 반환, 승인 없이 제출 진행 없음.
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url=_REGISTER_URL, error=f"페이지 로드 실패: {e}",
+                success=False,
+                summary="",
+                field_names=[],
+                target_url=_REGISTER_URL,
+                error=f"페이지 로드 실패: {e}",
                 error_code=ErrorCode.PAGE_LOAD_FAILED,
             )
 
         if _is_login_redirect(page, _LOGIN_HINTS):
             return FormFillResult(
-                success=False, summary="", field_names=[],
-                target_url=_REGISTER_URL, error="로그인이 필요합니다",
+                success=False,
+                summary="",
+                field_names=[],
+                target_url=_REGISTER_URL,
+                error="로그인이 필요합니다",
                 error_code=ErrorCode.LOGIN_REQUIRED,
             )
 
@@ -118,7 +128,7 @@ class NaverDevRegAdapter(DevRegAdapterBase):
             try:
                 page.fill(selector, str(value))
                 filled.append(field_name)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 네이버 개발자센터 앱 등록 폼 자동입력 — 페이지이동/필드입력/체크박스/제출 실패 시 모두 error 필드를 채운 명시적 실패 결과(FormFillResult/SubmitResult)를 반환, 승인 없이 제출 진행 없음.
                 errors_fill.append(f"{field_name}: {e}")
                 logger.warning("네이버 폼 입력 실패 | field=%s | %s", field_name, e)
 
@@ -128,13 +138,16 @@ class NaverDevRegAdapter(DevRegAdapterBase):
                 try:
                     page.check(f"input[type='checkbox'][value='{scope}']")
                     filled.append(f"scope:{scope}")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - 네이버 개발자센터 앱 등록 폼 자동입력 — 페이지이동/필드입력/체크박스/제출 실패 시 모두 error 필드를 채운 명시적 실패 결과(FormFillResult/SubmitResult)를 반환, 승인 없이 제출 진행 없음.
                     logger.warning("네이버 scope 체크 실패 | scope=%s | %s", scope, e)
 
         if errors_fill:
             return FormFillResult(
-                success=False, summary="", field_names=filled,
-                target_url=page.url, error="; ".join(errors_fill),
+                success=False,
+                summary="",
+                field_names=filled,
+                target_url=page.url,
+                error="; ".join(errors_fill),
                 error_code=ErrorCode.PROVIDER_LAYOUT_CHANGED,
             )
 
@@ -147,12 +160,11 @@ class NaverDevRegAdapter(DevRegAdapterBase):
 
     def submit_form(self, page) -> SubmitResult:
         """제출 버튼 클릭 — run_dev_reg 의 승인 확인 후에만 호출된다."""
-        btn_sel = next(
-            (s for s in _SUBMIT_BTN_SELECTORS if _has_element(page, s)), None
-        )
+        btn_sel = next((s for s in _SUBMIT_BTN_SELECTORS if _has_element(page, s)), None)
         if btn_sel is None:
             return SubmitResult(
-                success=False, result_summary="",
+                success=False,
+                result_summary="",
                 error="제출 버튼을 찾을 수 없습니다",
                 error_code=ErrorCode.SUBMIT_BUTTON_NOT_FOUND,
             )
@@ -166,6 +178,6 @@ class NaverDevRegAdapter(DevRegAdapterBase):
                 success=True,
                 result_summary=f"제출 완료 (결과 확인 필요): {result_text[:200]}",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 네이버 개발자센터 앱 등록 폼 자동입력 — 페이지이동/필드입력/체크박스/제출 실패 시 모두 error 필드를 채운 명시적 실패 결과(FormFillResult/SubmitResult)를 반환, 승인 없이 제출 진행 없음.
             logger.error("네이버 submit_form 실패: %s", e)
             return SubmitResult(success=False, result_summary="", error=str(e))

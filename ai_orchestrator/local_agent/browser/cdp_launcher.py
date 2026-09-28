@@ -2,12 +2,13 @@
 
 흐름: probe → 미연결 시 Task Scheduler 기동 → retry probe.
 """
+
 from __future__ import annotations
 
 import subprocess
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 
 from ai_orchestrator.local_agent.browser.cdp_audit import L1, L2
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
@@ -29,44 +30,43 @@ def probe_cdp(host: str = CDP_HOST, port: int = CDP_PORT, timeout: float = 1.5) 
             ok = r.status == 200
     except (urllib.error.URLError, ConnectionError, OSError):
         ok = False
-    L1("CDP_PROBE", ACTOR, host=host, port=port, result=ok,
-       elapsed_ms=int((time.time() - t0) * 1000))
+    L1("CDP_PROBE", ACTOR, host=host, port=port, result=ok, elapsed_ms=int((time.time() - t0) * 1000))
     return ok
 
 
 def is_task_registered(task_name: str = TASK_NAME) -> bool:
     try:
-        r = subprocess.run(["schtasks", "/query", "/tn", task_name],
-                           capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["schtasks", "/query", "/tn", task_name], capture_output=True, text=True, timeout=5)
         return r.returncode == 0
-    except Exception:
+    except Exception:  # noqa: BLE001 - CDP Chrome 기동 보장 유틸 — 작업스케줄러 등록여부/실행 확인 실패 시 False를 반환(등록 안 됨으로 간주해 RuntimeError로 사용자에게 안내), 탭 열기 실패는 RuntimeError로 재발생시켜 은폐되지 않음.
         return False
 
 
 def start_via_scheduler(task_name: str = TASK_NAME) -> tuple[bool, str]:
     try:
-        r = subprocess.run(["schtasks", "/run", "/tn", task_name],
-                           capture_output=True, text=True, timeout=10)
+        r = subprocess.run(["schtasks", "/run", "/tn", task_name], capture_output=True, text=True, timeout=10)
         ok = r.returncode == 0
         msg = ((r.stdout or "") + (r.stderr or "")).strip()
         L2("CDP_TASK_TRIGGER", ACTOR, task_name=task_name, exit_code=r.returncode)
         return ok, msg
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP Chrome 기동 보장 유틸 — 작업스케줄러 등록여부/실행 확인 실패 시 False를 반환(등록 안 됨으로 간주해 RuntimeError로 사용자에게 안내), 탭 열기 실패는 RuntimeError로 재발생시켜 은폐되지 않음.
         L2("CDP_TASK_TRIGGER", ACTOR, task_name=task_name, exit_code=-1, error=str(e))
         return False, str(e)
 
 
-def ensure_cdp(host: str = CDP_HOST, port: int = CDP_PORT,
-               task_name: str = TASK_NAME, timeout: float = PROBE_TIMEOUT) -> str:
+def ensure_cdp(
+    host: str = CDP_HOST, port: int = CDP_PORT, task_name: str = TASK_NAME, timeout: float = PROBE_TIMEOUT
+) -> str:
     t0 = time.time()
     base = f"http://{host}:{port}"
 
     if probe_cdp(host, port):
-        L2("CDP_BOOT_OK", ACTOR, host=host, port=port, retries=0,
-           total_ms=0, reason="already_up")
+        L2("CDP_BOOT_OK", ACTOR, host=host, port=port, retries=0, total_ms=0, reason="already_up")
         return base
 
-    assert_browser_launch_allowed(component="ai_orchestrator.local_agent.browser.cdp_launcher", action="cdp_scheduler_start")
+    assert_browser_launch_allowed(
+        component="ai_orchestrator.local_agent.browser.cdp_launcher", action="cdp_scheduler_start"
+    )
 
     if not is_task_registered(task_name):
         L2("CDP_BOOT_FAIL", ACTOR, reason="task_not_registered", task=task_name)
@@ -86,20 +86,15 @@ def ensure_cdp(host: str = CDP_HOST, port: int = CDP_PORT,
     while time.time() < deadline:
         retries += 1
         if probe_cdp(host, port):
-            L2("CDP_BOOT_OK", ACTOR, host=host, port=port,
-               retries=retries, total_ms=int((time.time() - t0) * 1000))
+            L2("CDP_BOOT_OK", ACTOR, host=host, port=port, retries=retries, total_ms=int((time.time() - t0) * 1000))
             return base
         time.sleep(PROBE_INTERVAL)
 
-    L2("CDP_BOOT_FAIL", ACTOR, reason="probe_timeout",
-       retries=retries, total_ms=int((time.time() - t0) * 1000))
-    raise RuntimeError(
-        f"CDP {base} 응답 없음 ({timeout}초 대기). Chrome 기동 확인 필요."
-    )
+    L2("CDP_BOOT_FAIL", ACTOR, reason="probe_timeout", retries=retries, total_ms=int((time.time() - t0) * 1000))
+    raise RuntimeError(f"CDP {base} 응답 없음 ({timeout}초 대기). Chrome 기동 확인 필요.")
 
 
-def open_url(url: str, host: str = CDP_HOST, port: int = CDP_PORT,
-             activate: bool = True) -> dict:
+def open_url(url: str, host: str = CDP_HOST, port: int = CDP_PORT, activate: bool = True) -> dict:
     """CDP API로 현재 Chrome에 새 탭 열기 — 사용자 수동 입력 불필요.
 
     /json/new?<url> PUT 호출로 즉시 새 탭이 열리고 활성화됨.
@@ -117,10 +112,11 @@ def open_url(url: str, host: str = CDP_HOST, port: int = CDP_PORT,
     try:
         with urllib.request.urlopen(req, timeout=5) as r:
             import json as _json
+
             tab = _json.loads(r.read().decode("utf-8"))
         L2("CDP_OPEN_TAB", ACTOR, url=url, tab_id=tab.get("id", "")[:20])
         return tab
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - CDP Chrome 기동 보장 유틸 — 작업스케줄러 등록여부/실행 확인 실패 시 False를 반환(등록 안 됨으로 간주해 RuntimeError로 사용자에게 안내), 탭 열기 실패는 RuntimeError로 재발생시켜 은폐되지 않음.
         L2("CDP_OPEN_TAB_FAIL", ACTOR, url=url, error=str(e)[:300])
         raise RuntimeError(f"새 탭 열기 실패: {e}")
 
@@ -141,10 +137,13 @@ def open_and_wait_login(
         {"tab": {...}, "logged_in": bool, "elapsed_s": int}
     """
     from ai_orchestrator.local_agent.browser.cdp_session_manager import (
-        is_logged_in, wait_for_login,
+        is_logged_in,
+        wait_for_login,
     )
+
     if domain is None:
         from urllib.parse import urlparse
+
         host_part = urlparse(url if "://" in url else f"https://{url}").hostname or ""
         # www. 제거
         domain = host_part[4:] if host_part.startswith("www.") else host_part
@@ -166,22 +165,27 @@ def open_and_wait_login(
 if __name__ == "__main__":
     # CLI: python -m ...cdp_launcher <url> [--wait-login [domain] [timeout_s]]
     import sys
+
     args = sys.argv[1:]
     if not args:
-        print("Usage: python -m ai_orchestrator.local_agent.browser.cdp_launcher <url> "
-              "[--wait-login [domain] [timeout_s]]")
+        print(
+            "Usage: python -m ai_orchestrator.local_agent.browser.cdp_launcher <url> "
+            "[--wait-login [domain] [timeout_s]]"
+        )
         sys.exit(1)
     target_url = args[0]
     if "--wait-login" in args:
         idx = args.index("--wait-login")
-        rest = args[idx + 1:]
+        rest = args[idx + 1 :]
         dom = rest[0] if len(rest) >= 1 else None
         to = int(rest[1]) if len(rest) >= 2 else 300
         result = open_and_wait_login(target_url, domain=dom, timeout=to)
         print(f"OPENED: {result['tab'].get('url', '')}")
-        print(f"LOGGED_IN: {result['logged_in']}  "
-              f"(already={result.get('already', False)}, "
-              f"elapsed={result['elapsed_s']}s)")
+        print(
+            f"LOGGED_IN: {result['logged_in']}  "
+            f"(already={result.get('already', False)}, "
+            f"elapsed={result['elapsed_s']}s)"
+        )
     else:
         tab = open_url(target_url)
         print(f"OPENED: {tab.get('url', '')}")

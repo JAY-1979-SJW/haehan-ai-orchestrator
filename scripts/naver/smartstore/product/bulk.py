@@ -8,21 +8,26 @@
       {"name": "상품2", "price": 20000, "stock": 50},
   ], product_type="general", save_after=False)
 """
+
 from __future__ import annotations
 
 import json
 import sqlite3
 import time
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Any
+from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 from scripts.naver.smartstore.product.models import (
-    GeneralProductData, GroupProductData, RegisterResult, ValidationError
+    GeneralProductData,
+    GroupProductData,
+    RegisterResult,
+    ValidationError,
 )
 
 _log = get_logger(__name__)
@@ -74,18 +79,18 @@ def _save_log(result: RegisterResult, data: dict) -> None:
                 result.error,
                 result.duration_s,
                 json.dumps(data, ensure_ascii=False),
-                json.dumps([(n, r.get("ok") if isinstance(r, dict) else None) for n, r in result.steps],
-                           ensure_ascii=False),
+                json.dumps(
+                    [(n, r.get("ok") if isinstance(r, dict) else None) for n, r in result.steps], ensure_ascii=False
+                ),
             ),
         )
         conn.commit()
         conn.close()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 일괄 등록 — DB저장 실패는 로그만 남김(로컬 sqlite 등록이력 기록용, 운영 DB 아님), retry 래퍼와 register_product 예외 모두 ok=False로 표준화되어 실패가 성공으로 보고되지 않음. 진행 콜백 실패는 무시.
         _log.error("[bulk] DB 저장 실패: %s", e)
 
 
-def retry(func: Callable, max_attempts: int = 3, delay_s: float = 1.0,
-          backoff: float = 1.5) -> Any:
+def retry(func: Callable, max_attempts: int = 3, delay_s: float = 1.0, backoff: float = 1.5) -> Any:
     """간단한 재시도 래퍼."""
     attempt = 0
     last_err = None
@@ -101,7 +106,7 @@ def retry(func: Callable, max_attempts: int = 3, delay_s: float = 1.0,
                     continue
                 return result
             return result
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 일괄 등록 — DB저장 실패는 로그만 남김(로컬 sqlite 등록이력 기록용, 운영 DB 아님), retry 래퍼와 register_product 예외 모두 ok=False로 표준화되어 실패가 성공으로 보고되지 않음. 진행 콜백 실패는 무시.
             last_err = str(e)
             attempt += 1
             if attempt < max_attempts:
@@ -116,8 +121,9 @@ class BulkRegister:
     def __init__(self, page: Page):
         self.page = page
 
-    def _register_one(self, data: dict, product_type: str = "general",
-                       save_after: bool = False, require_confirm: bool = False) -> RegisterResult:
+    def _register_one(
+        self, data: dict, product_type: str = "general", save_after: bool = False, require_confirm: bool = False
+    ) -> RegisterResult:
         """단일 상품 등록 + 결과 표준화."""
         started = datetime.now()
 
@@ -130,8 +136,11 @@ class BulkRegister:
             validated = pd.to_dict()
         except ValidationError as e:
             return RegisterResult(
-                ok=False, product_name=data.get("name", ""),
-                type=product_type, saved=False, steps=[],
+                ok=False,
+                product_name=data.get("name", ""),
+                type=product_type,
+                saved=False,
+                steps=[],
                 error=f"validation_error: {e}",
                 started_at=started.isoformat(timespec="seconds"),
                 finished_at=datetime.now().isoformat(timespec="seconds"),
@@ -141,14 +150,16 @@ class BulkRegister:
         # 2. 등록 실행
         if product_type == "general":
             from scripts.naver.smartstore.product.general_product import GeneralProductRegister
+
             register = GeneralProductRegister(self.page)
         else:
             from scripts.naver.smartstore.product.product import ProductRegister
+
             register = ProductRegister(self.page)
 
         try:
             r = register.register_product(validated, save_after=save_after, require_confirm=require_confirm)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 일괄 등록 — DB저장 실패는 로그만 남김(로컬 sqlite 등록이력 기록용, 운영 DB 아님), retry 래퍼와 register_product 예외 모두 ok=False로 표준화되어 실패가 성공으로 보고되지 않음. 진행 콜백 실패는 무시.
             r = {"ok": False, "error": str(e)[:200], "steps": []}
 
         finished = datetime.now()
@@ -167,13 +178,16 @@ class BulkRegister:
             duration_s=round(duration, 2),
         )
 
-    def register_all(self, products: list[dict],
-                     product_type: str = "general",
-                     save_after: bool = False,
-                     require_confirm: bool = False,
-                     max_retries: int = 2,
-                     stop_on_error: bool = False,
-                     on_progress: Callable[[int, int, RegisterResult], None] | None = None) -> dict:
+    def register_all(
+        self,
+        products: list[dict],
+        product_type: str = "general",
+        save_after: bool = False,
+        require_confirm: bool = False,
+        max_retries: int = 2,
+        stop_on_error: bool = False,
+        on_progress: Callable[[int, int, RegisterResult], None] | None = None,
+    ) -> dict:
         """여러 상품 일괄 등록.
 
         Args:
@@ -188,8 +202,13 @@ class BulkRegister:
         Returns:
             {ok, total, success, failed, results, db_logged}
         """
-        log_critical("OTHER", f"스마트스토어 일괄 등록 시작: {len(products)}개",
-                     count=len(products), type=product_type, mode="bulk_start")
+        log_critical(
+            "OTHER",
+            f"스마트스토어 일괄 등록 시작: {len(products)}개",
+            count=len(products),
+            type=product_type,
+            mode="bulk_start",
+        )
 
         results = []
         success = 0
@@ -221,7 +240,7 @@ class BulkRegister:
             if on_progress:
                 try:
                     on_progress(i, len(products), result)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 스마트스토어 상품 일괄 등록 — DB저장 실패는 로그만 남김(로컬 sqlite 등록이력 기록용, 운영 DB 아님), retry 래퍼와 register_product 예외 모두 ok=False로 표준화되어 실패가 성공으로 보고되지 않음. 진행 콜백 실패는 무시.
                     pass
 
             if stop_on_error and not result.ok:
@@ -236,8 +255,13 @@ class BulkRegister:
             "results": [r.to_dict() for r in results],
             "db_logged": True,
         }
-        log_critical("OTHER", f"스마트스토어 일괄 등록 완료: {success}/{len(products)}",
-                     success=success, failed=failed, mode="bulk_done")
+        log_critical(
+            "OTHER",
+            f"스마트스토어 일괄 등록 완료: {success}/{len(products)}",
+            success=success,
+            failed=failed,
+            mode="bulk_done",
+        )
         return summary
 
 
@@ -247,8 +271,6 @@ def get_register_history(limit: int = 50, ok_only: bool = False) -> list[dict]:
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     where = "WHERE ok = 1" if ok_only else ""
-    rows = conn.execute(
-        f"SELECT * FROM smartstore_register_log {where} ORDER BY id DESC LIMIT ?", (limit,)
-    ).fetchall()
+    rows = conn.execute(f"SELECT * FROM smartstore_register_log {where} ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
     conn.close()
     return [dict(r) for r in rows]
