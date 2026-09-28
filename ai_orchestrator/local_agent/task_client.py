@@ -109,7 +109,7 @@ def poll_and_run_once(runner_fn: Any) -> dict[str, Any] | None:
     # 실행
     try:
         raw_result = runner_fn(task)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 로컬 에이전트 task 실행(runner_fn) 중 예외를 STATUS_FAILED 결과로 변환 — 이미 validate_task_before_run 보안 가드를 통과한 이후 실행 단계의 오류 처리, 실패를 성공으로 위장하지 않음
         result = build_result(
             task_id=task_id,
             ok=False,

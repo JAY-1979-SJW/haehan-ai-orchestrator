@@ -128,7 +128,7 @@ for step in range(25):
                     cb.click()
                     time.sleep(0.5)
                     print(f"  → 체크 완료, 이제={cb.is_checked()}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 1회성 수동 유지보수 스크립트(YouTube OAuth 재인가) — except는 동의화면 체크박스 상태확인·계속 버튼 클릭 UI 상호작용 실패만 흡수(print 또는 pass 후 계속), 권한삭제·토큰교환 등 실제 보안 동작은 except 밖에서 수행되며 except가 그 판정을 바꾸지 않음
                 print(f"  체크 오류: {e}")
         time.sleep(1)
         for btn in page.locator("button").all():
@@ -138,7 +138,7 @@ for step in range(25):
                     btn.click()
                     print("  → 계속 클릭")
                     break
-            except Exception:
+            except Exception:  # noqa: BLE001 - 1회성 수동 유지보수 스크립트(YouTube OAuth 재인가) — except는 동의화면 체크박스 상태확인·계속 버튼 클릭 UI 상호작용 실패만 흡수(print 또는 pass 후 계속), 권한삭제·토큰교환 등 실제 보안 동작은 except 밖에서 수행되며 except가 그 판정을 바꾸지 않음
                 pass
         continue
 

@@ -44,7 +44,7 @@ class BrowserGateMiddleware(BaseHTTPMiddleware):
         body_bytes = await request.body()
         try:
             body = json.loads(body_bytes) if body_bytes else {}
-        except Exception:
+        except Exception:  # noqa: BLE001 - 요청 body JSON 파싱 실패 시 빈 dict로 대체 — 이후 action_type/url이 빈 문자열이 되어 classify_action()이 intent 없음으로 판단해 NOTIFY를 반환(AUTO 아님), 실제 액션 실행에 필요한 파싱된 body가 없어 하위 핸들러도 정상 동작 불가 — 승인 우회 아님
             body = {}
 
         action_type = body.get("action_type", "")

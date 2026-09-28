@@ -13,7 +13,7 @@ raw target_url 전송 금지 (redacted/hash만 허용).
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 # ── message_type 상수 ─────────────────────────────────────────────────────────
@@ -29,26 +29,47 @@ STATUS_CANCELLED = "CANCELLED"
 STATUS_BLOCKED = "BLOCKED"
 STATUS_FAILED = "FAILED"
 
-_VALID_STATUS_VALUES: frozenset[str] = frozenset({
-    STATUS_WAITING_FOR_USER,
-    STATUS_USER_CONFIRMED,
-    STATUS_CANCELLED,
-    STATUS_BLOCKED,
-    STATUS_FAILED,
-})
+_VALID_STATUS_VALUES: frozenset[str] = frozenset(
+    {
+        STATUS_WAITING_FOR_USER,
+        STATUS_USER_CONFIRMED,
+        STATUS_CANCELLED,
+        STATUS_BLOCKED,
+        STATUS_FAILED,
+    }
+)
 
 # ── 전송 금지 필드 ────────────────────────────────────────────────────────────
 
-_FORBIDDEN_KEYS: frozenset[str] = frozenset({
-    "password", "otp", "certificate_password", "financial_certificate_password",
-    "token", "access_token", "refresh_token", "api_key", "device_token",
-    "cookie", "session", "localStorage", "sessionStorage",
-    "secret", "raw_audit", "audit_raw", "internal_policy", "full_policy",
-    "cross_tenant_data", "other_user_tasks", "other_tenant_data",
-    "raw_validation_errors", "system_trace",
-    # raw URL은 금지 — redacted/hash만 허용
-    "target_url",
-})
+_FORBIDDEN_KEYS: frozenset[str] = frozenset(
+    {
+        "password",
+        "otp",
+        "certificate_password",
+        "financial_certificate_password",
+        "token",
+        "access_token",
+        "refresh_token",
+        "api_key",
+        "device_token",
+        "cookie",
+        "session",
+        "localStorage",
+        "sessionStorage",
+        "secret",
+        "raw_audit",
+        "audit_raw",
+        "internal_policy",
+        "full_policy",
+        "cross_tenant_data",
+        "other_user_tasks",
+        "other_tenant_data",
+        "raw_validation_errors",
+        "system_trace",
+        # raw URL은 금지 — redacted/hash만 허용
+        "target_url",
+    }
+)
 
 # ── auth_method 한글 라벨 ─────────────────────────────────────────────────────
 
@@ -78,7 +99,7 @@ _SITE_CATEGORY_MESSAGES: dict[str, str] = {
 
 
 def _now_iso() -> str:
-    return datetime.now(tz=timezone.utc).isoformat()
+    return datetime.now(tz=UTC).isoformat()
 
 
 def _hash_url(url: str) -> str:
@@ -92,9 +113,10 @@ def _redact_url(url: str) -> str:
         return ""
     try:
         from urllib.parse import urlparse
+
         parsed = urlparse(url)
         return f"{parsed.scheme}://{parsed.netloc}/***"
-    except Exception:
+    except Exception:  # noqa: BLE001 - URL 마스킹 실패 시 '***' 로 완전 마스킹 반환 — fail-safe, 원본 URL 노출 없음
         return "***"
 
 
@@ -137,9 +159,8 @@ def build_user_present_ws_task_message(payload: dict[str, Any]) -> dict[str, Any
     if isinstance(auth_methods, str):
         auth_methods = [auth_methods]
     auth_label_parts = [_AUTH_METHOD_LABELS.get(m, m) for m in auth_methods]
-    auth_method_label = (
-        clean.get("auth_method_label")
-        or (", ".join(auth_label_parts) if auth_label_parts else "사용자 직접 인증")
+    auth_method_label = clean.get("auth_method_label") or (
+        ", ".join(auth_label_parts) if auth_label_parts else "사용자 직접 인증"
     )
 
     message: dict[str, Any] = {
@@ -155,16 +176,22 @@ def build_user_present_ws_task_message(payload: dict[str, Any]) -> dict[str, Any
         "target_url_hash": clean.get("target_url_hash", ""),
         "auth_method_label": auth_method_label,
         "user_message_ko": clean.get("user_message_ko") or default_msg,
-        "required_user_actions": clean.get("required_user_actions", [
-            "브라우저에서 직접 로그인/인증을 완료하세요.",
-            "완료 후 UI에서 '인증 완료' 버튼을 클릭하세요.",
-        ]),
-        "blocked_ai_actions": clean.get("blocked_ai_actions", [
-            "비밀번호 자동 입력 금지",
-            "OTP 자동 입력 금지",
-            "인증서 비밀번호 자동 입력 금지",
-            "자동 클릭/폼 제출 금지",
-        ]),
+        "required_user_actions": clean.get(
+            "required_user_actions",
+            [
+                "브라우저에서 직접 로그인/인증을 완료하세요.",
+                "완료 후 UI에서 '인증 완료' 버튼을 클릭하세요.",
+            ],
+        ),
+        "blocked_ai_actions": clean.get(
+            "blocked_ai_actions",
+            [
+                "비밀번호 자동 입력 금지",
+                "OTP 자동 입력 금지",
+                "인증서 비밀번호 자동 입력 금지",
+                "자동 클릭/폼 제출 금지",
+            ],
+        ),
         "safe_to_execute": False,
         "created_at": clean.get("created_at") or _now_iso(),
     }
@@ -196,12 +223,21 @@ def validate_user_present_ws_task_message(message: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required = [
-        "message_type", "workflow_run_id", "tenant_id", "user_id",
-        "site_id", "site_category", "target_domain",
-        "target_url_redacted", "target_url_hash",
-        "auth_method_label", "user_message_ko",
-        "required_user_actions", "blocked_ai_actions",
-        "safe_to_execute", "created_at",
+        "message_type",
+        "workflow_run_id",
+        "tenant_id",
+        "user_id",
+        "site_id",
+        "site_category",
+        "target_domain",
+        "target_url_redacted",
+        "target_url_hash",
+        "auth_method_label",
+        "user_message_ko",
+        "required_user_actions",
+        "blocked_ai_actions",
+        "safe_to_execute",
+        "created_at",
     ]
     for field in required:
         if field not in message:
@@ -235,8 +271,15 @@ def validate_user_present_ws_status_event(event: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required = [
-        "message_type", "workflow_run_id", "tenant_id", "user_id",
-        "site_id", "status", "status_reason", "safe_to_execute", "created_at",
+        "message_type",
+        "workflow_run_id",
+        "tenant_id",
+        "user_id",
+        "site_id",
+        "status",
+        "status_reason",
+        "safe_to_execute",
+        "created_at",
     ]
     for field in required:
         if field not in event:

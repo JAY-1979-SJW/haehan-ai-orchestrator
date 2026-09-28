@@ -40,7 +40,7 @@ _POLICY_PATH = Path(__file__).resolve().parents[3] / "data" / "gate_policy.json"
 def _load_policy() -> dict:
     try:
         return json.loads(_POLICY_PATH.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - _load_policy(): gate_policy.json 로드 실패 시 빈 dict 반환 — 이후 _pt()가 각 카테고리 키워드를 코드 내 하드코딩된 전체 기본값(fallback)으로 사용하므로 정책 파일 손상 시에도 APPROVE 키워드 목록이 비지 않고 그대로 유지됨(fail-closed 유지)
         return {}
 
 

@@ -161,7 +161,7 @@ def start_login_watch():
             message="로그인 감지 시작됨. 브라우저에서 가비아 로그인을 진행하세요. (최대 5분 대기)",
             pid=proc.pid,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 로그인 감지 프로세스 시작 실패를 LoginWatchResponse(ok=False, message=...)로 반환 — fail-closed, 사용자에게 실패를 알림
         return LoginWatchResponse(ok=False, message=f"시작 실패: {e}")
 
 
