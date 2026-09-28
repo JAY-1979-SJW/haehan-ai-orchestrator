@@ -13,11 +13,10 @@ dict 를 만드는지, 민감정보가 차단되는지, 특정 도메인 키워�
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 # ─── 샘플 fixture ─────────────────────────────────────────────────────────

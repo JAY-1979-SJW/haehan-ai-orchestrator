@@ -150,7 +150,7 @@ def main() -> None:
     suffix = "actual_live" if actual_live else "live"
     json_path = _REPORT_JSON_DIR / f"g2b_public_notice_{suffix}_execution_{ts_file}.json"
     safe_result = {k: v for k, v in suite_result.items()}
-    with open(json_path, "w", encoding="utf-8") as f:
+    with json_path.open("w", encoding="utf-8") as f:
         json.dump(safe_result, f, ensure_ascii=False, indent=2)
     print(f"[G2B Live Suite] JSON 저장: {json_path}")
 
@@ -158,7 +158,7 @@ def main() -> None:
     _REPORT_MD_DIR.mkdir(parents=True, exist_ok=True)
     md_path = _REPORT_MD_DIR / f"g2b_public_notice_{suffix}_execution_{ts_date}.md"
     md_content = _build_markdown_report(suite_result, run_ts)
-    with open(md_path, "w", encoding="utf-8") as f:
+    with md_path.open("w", encoding="utf-8") as f:
         f.write(md_content)
     print(f"[G2B Live Suite] Markdown 저장: {md_path}")
 
