@@ -103,7 +103,7 @@ def collect_all(
                 menu_id=b["menu_id"],
                 save_path=str(out_path),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 카페 게시판별 전체 수집 루프(읽기전용) - 개별 게시판 수집 실패는 경고 로그 후 continue로 다음 게시판 계속 진행
             _log.warning("[collect_all_boards] 수집 실패 %s: %s", b["name"], e)
             continue
 

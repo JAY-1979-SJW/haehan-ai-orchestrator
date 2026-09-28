@@ -48,7 +48,7 @@ def explore_cafe(page, name, url):
         skip_words = ["새 창에서", "로그인", "댓글", "좋아요", "더보기", "Copyright", "이전", "다음", "NAVER"]
         content = [l for l in lines if len(l) > 4 and not any(w in l for w in skip_words)]  # noqa: E741
         print("\n".join(content[:40]))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카페 콘텐츠 목록 콘솔 출력(읽기전용 디버그 유틸) - 오류 발생 시 메시지만 출력
         print(f"  오류: {e}")
 
 
