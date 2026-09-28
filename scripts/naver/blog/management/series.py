@@ -45,7 +45,7 @@ class BlogSeries:
                 """)
                 if items:
                     return items
-            except Exception:
+            except Exception:  # noqa: BLE001 - 블로그 시리즈 조회 - 여러 셀렉터를 순차 시도하며 실패한 셀렉터는 continue로 다음 시도(읽기전용 조회), 실제 수정 동작(add_post_to_series)은 별도 confirm 파라미터로 게이트됨
                 continue
         return []
 
