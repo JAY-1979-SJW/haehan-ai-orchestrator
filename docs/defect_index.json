@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 36,
+  "next_no": 37,
   "items": [
     {
       "no": 1,
@@ -483,6 +483,20 @@
       "status": "fixed",
       "no": 35,
       "fix_note": "2026-09-29: 두 파일 모두 삭제 직전 커밋에서 복원 + 신규 의존성 uiautomation 패키지 설치(requirements.txt에 pywin32와 같은 Windows 전용 마커로 추가). 실제 subprocess로 기동해 5초간 크래시 없이 폴링 루프가 도는 것, 관련 테스트(test_chrome_ui_monitor_runtime_path.py) 통과 확인."
+    },
+    {
+      "id": "audit.unknown_layers_over_threshold",
+      "category": 3,
+      "title": "codebase_layer_audit.py 의 threshold.unknown_layers 가 항상 FAIL 상태 — 49건 vs 허용 20건, 그런데 어디서도 차단으로 안 쓰임",
+      "where": [
+        "configs/codebase_layer_audit.json",
+        "scripts/ops/codebase_layer_audit.py"
+      ],
+      "evidence": "2026-09-29 GitHub Actions CI 첫 실행에서 발견: codebase_layer_audit.py 를 원래 종료코드 그대로 CI 단계로 썼더니 매번 FAIL — max_unknown_layer_files=20인데 실제 UNKNOWN 레이어 파일이 49개. consistency.checks 15개 중 이 1개만 FAIL, 나머지(circular_imports 포함)는 전부 PASS. 그런데 로컬 pre-commit 훅도, 이 세션 내내 반복 실행한 codebase_layer_audit.py 호출도 이 exit code를 차단 조건으로 쓴 적이 없었음(CLAUDE.md \"게이트 실행 의무\"에 명시된 forbidden_imports/security_patterns/circular_imports 3개만 실제로 확인해옴) — 그래서 아무도 못 보고 지나쳐온 것으로 보임.",
+      "stage": "AUDIT",
+      "status": "open",
+      "no": 36,
+      "fix_note": "2026-09-29: CI(.github/workflows/ci.yml)는 scripts/ops/ci_layer_gate_check.py로 우회(CLAUDE.md 명시 3개 지표만 판정) — 이 결함 자체는 미해결로 남김. 49개 파일을 실제 레이어로 분류하거나 threshold를 재검토하는 작업 필요."
     }
   ]
 }
