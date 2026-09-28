@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import re
 import sys
@@ -141,11 +142,9 @@ def _save_post(page, frame) -> None:
             break
         except Exception:  # noqa: BLE001 - 네이버 블로그 기존 글의 마크다운 서식 일괄 수정 스크립트 — 문단 수정 실패는 개별 warning 로그 후 다음 문단으로 계속, 발행 확인 팝업 클릭 실패도 무시(팝업 없으면 그냥 넘어감), 건별 실패는 failed 리스트에 기록되어 은폐되지 않으며 --apply 플래그로만 실제 저장됨.
             continue
-    # 발행 확인 팝업
-    try:
+    # 발행 확인 팝업 — 클릭 실패도 무시(팝업 없으면 그냥 넘어감), 건별 실패는 failed 리스트에 기록되어 은폐되지 않음
+    with contextlib.suppress(Exception):
         frame.get_by_text("발행", exact=True).last.click(timeout=6000)
-    except Exception:  # noqa: BLE001 - 네이버 블로그 기존 글의 마크다운 서식 일괄 수정 스크립트 — 문단 수정 실패는 개별 warning 로그 후 다음 문단으로 계속, 발행 확인 팝업 클릭 실패도 무시(팝업 없으면 그냥 넘어감), 건별 실패는 failed 리스트에 기록되어 은폐되지 않으며 --apply 플래그로만 실제 저장됨.
-        pass
     page.wait_for_timeout(4000)
 
 

@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import time
 import traceback
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime
 from pathlib import Path
 
@@ -79,10 +79,8 @@ class _Step:
             except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
                 pass
         # 봇 레이더 장착 (page 단위 1회)
-        try:
+        with suppress(Exception):
             self.watcher.ensure_bot_radar(page)
-        except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
-            pass
 
     def fail(self, message: str, kind: str = "unknown") -> None:
         """이 단계 실패 처리 — StepFailure 발생 후 watcher가 종료."""
@@ -148,7 +146,7 @@ class StepWatcher:
             pass
 
     def _on_req_failed(self, req) -> None:
-        try:
+        with suppress(Exception):
             self.net_failures.append(
                 {
                     "url": req.url[:300],
@@ -156,8 +154,6 @@ class StepWatcher:
                     "failure": (req.failure or "") if hasattr(req, "failure") else "",
                 }
             )
-        except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
-            pass
 
     # ── 단계 컨텍스트 ───────────────────────────────────────────────
     @contextmanager
@@ -229,10 +225,8 @@ class StepWatcher:
         }
         # 실패 또는 항상 캡처 옵션 — 여기선 실패 시만 시각/DOM 저장
         if not ok and s.page is not None:
-            try:
+            with suppress(Exception):
                 rec["url"] = s.page.url
-            except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
-                pass
             try:
                 s.page.screenshot(path=str(self.report_dir / f"{s.name}.png"), full_page=True)
                 rec["screenshot"] = f"{s.name}.png"
@@ -250,10 +244,8 @@ class StepWatcher:
         # 마지막 종합 봇 리포트
         final_bot = {}
         if self._bot_radar is not None:
-            try:
+            with suppress(Exception):
                 final_bot = self._bot_radar.report()
-            except Exception:  # noqa: BLE001 - 사이트 자동화 단계별 실행 래퍼(스크린샷/HTML덤프/봇감지 기록) - 예외 발생시 실패로 기록하고 finalize(failed=True)로 이어지는 흐름 유지, 정책 판정 로직 아님
-                pass
         summary = {
             "site": self.site,
             "started_at": self.started_at,

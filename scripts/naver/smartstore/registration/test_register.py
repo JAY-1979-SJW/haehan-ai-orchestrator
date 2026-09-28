@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 import time
@@ -32,10 +33,8 @@ def extract_first_product(page) -> dict:
     """스토어에서 첫번째 상품 정보 추출."""
     page.goto(STORE_URL, timeout=20000, wait_until="domcontentloaded")
     time.sleep(3)
-    try:
+    with contextlib.suppress(Exception):
         handle_page_popups(page, timeout_s=1.5)
-    except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 필드 테스트 스크립트(읽기전용 분석, 저장 버튼 클릭까지만 확인하고 실제 제출 안 함) — 팝업처리 실패 무시, 필드추출 실패는 에러로 기록
-        pass
 
     # 상품 목록 추출
     products = page.evaluate("""
@@ -75,10 +74,8 @@ def extract_product_detail(page, product_url: str) -> dict:
     """상품 상세 페이지에서 정보 추출 (셀렉터 다양화)."""
     page.goto(product_url, timeout=20000, wait_until="domcontentloaded")
     time.sleep(4)
-    try:
+    with contextlib.suppress(Exception):
         handle_page_popups(page, timeout_s=1.5)
-    except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 필드 테스트 스크립트(읽기전용 분석, 저장 버튼 클릭까지만 확인하고 실제 제출 안 함) — 팝업처리 실패 무시, 필드추출 실패는 에러로 기록
-        pass
 
     # 페이지 스크롤로 모든 컨텐츠 로드
     page.evaluate("window.scrollTo(0, 500)")

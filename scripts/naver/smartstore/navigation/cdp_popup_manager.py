@@ -32,6 +32,7 @@ API 엔드포인트:
 
 from __future__ import annotations
 
+import contextlib
 import threading
 import time
 from collections.abc import Callable
@@ -304,10 +305,8 @@ class CdpPopupManager:
     def detach(self) -> dict:
         """감시 리스너 해제."""
         if self._context and self._watching:
-            try:
+            with contextlib.suppress(Exception):
                 self._context.remove_listener("page", self._on_new_page)
-            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                pass
         self._watching = False
         _log.info("[popup-mgr] 감시 해제")
         return {"ok": True, "watching": False}
@@ -393,10 +392,8 @@ class CdpPopupManager:
 
                         # 전체 내용 추출 (잘림 없음)
                         full_text = ""
-                        try:
+                        with contextlib.suppress(Exception):
                             full_text = el.inner_text(timeout=500).strip()
-                        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                            pass
                         clean_text = _clean_popup_text(full_text)
 
                         # 버튼 목록
@@ -870,7 +867,7 @@ def _click_close_in(modal_el) -> bool:
 
 
 def _cleanup_backdrop(page) -> None:
-    try:
+    with contextlib.suppress(Exception):
         page.evaluate("""
         () => {
             const sels = [
@@ -889,8 +886,6 @@ def _cleanup_backdrop(page) -> None:
             document.body.style.paddingRight = '';
         }
         """)
-    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-        pass
 
 
 # ══════════════════════════════════════════════════════════════════════════════

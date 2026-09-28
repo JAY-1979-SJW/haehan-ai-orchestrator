@@ -69,10 +69,8 @@ def excel_session(file_path: str):
                 wb.Close(False)
         except Exception:  # noqa: BLE001 - 로컬 Excel 파일 COM 자동화 유틸 — GetActiveObject 실패 시 새 인스턴스 Dispatch로 폴백, 세션 종료(wb.Close(False)=저장안함, xl.Quit()) 실패는 무시하는 표준 COM 리소스 정리 패턴, 저장하지 않는 방향이라 데이터 유실 위험 없음.
             pass
-        try:
+        with contextlib.suppress(Exception):
             xl.Quit()
-        except Exception:  # noqa: BLE001 - 로컬 Excel 파일 COM 자동화 유틸 — GetActiveObject 실패 시 새 인스턴스 Dispatch로 폴백, 세션 종료(wb.Close(False)=저장안함, xl.Quit()) 실패는 무시하는 표준 COM 리소스 정리 패턴, 저장하지 않는 방향이라 데이터 유실 위험 없음.
-            pass
 
 
 # ── 계산 헬퍼 ─────────────────────────────────────────────────────────────────

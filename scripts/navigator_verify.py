@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 from scripts.navigator_common import _normalize_text
 from scripts.web_connector import get_page
 
@@ -311,10 +313,8 @@ def handle_draft_restore_popup(timeout_s: float = 5.0, page=None) -> dict:
         return false;
     }"""
     clicked = False
-    try:
+    with contextlib.suppress(Exception):
         clicked = detected_in_frame.evaluate(click_js)
-    except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
-        pass
     _t.sleep(0.5)
 
     return {

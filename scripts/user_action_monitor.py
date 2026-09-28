@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 import time
@@ -228,10 +229,8 @@ def watch_user_actions(
 
                 # JS 주입 (URL별 1회)
                 if current_url not in injected_urls:
-                    try:
+                    with contextlib.suppress(Exception):
                         page.wait_for_load_state("domcontentloaded", timeout=3000)
-                    except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
-                        pass
                     if _inject(page):
                         injected_urls.add(current_url)
 

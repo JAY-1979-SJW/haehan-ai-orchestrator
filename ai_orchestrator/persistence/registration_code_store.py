@@ -16,6 +16,7 @@ Backend selection:
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -599,10 +600,8 @@ class _PostgresDbExecutor:
     def close(self) -> None:
         """DB 연결 종료."""
         if self._conn is not None:
-            try:
+            with contextlib.suppress(Exception):
                 self._conn.close()
-            except Exception:  # noqa: S110, BLE001
-                pass
             self._conn = None
 
 
