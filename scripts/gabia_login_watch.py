@@ -73,7 +73,7 @@ def _get_page():
 def _current_url(page) -> str:
     try:
         return page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
         return ""
 
 
@@ -112,7 +112,7 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                 if not current_url or "about:blank" in current_url:
                     page = _get_page()
                     current_url = _current_url(page)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
                 page = _get_page()
                 current_url = _current_url(page)
 
@@ -140,7 +140,7 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                             goto(GABIA_DNS_MGMT_URL)
                             dns_navigated = True
                             print(f"  → DNS 관리 화면 이동 완료: {GABIA_DNS_MGMT_URL}")
-                        except Exception as nav_err:
+                        except Exception as nav_err:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
                             print(f"  ⚠ DNS 화면 자동 이동 실패: {nav_err}")
                             print(f"    수동으로 이동하세요: {GABIA_DNS_MGMT_URL}")
 
@@ -156,12 +156,12 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                         "url": current_url,
                         "navigated_to_dns": dns_navigated,
                     }
-            except Exception as js_err:
+            except Exception as js_err:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
                 # 탭 닫힘 등 예외 → 재획득
                 if "has been closed" in str(js_err) or "Target" in str(js_err):
                     page = _get_page()
 
-        except Exception as outer_err:
+        except Exception as outer_err:  # noqa: BLE001 - 가비아 로그인 상태 감시(읽기전용) - URL/JS 평가 실패 시 재획득/재시도, 실제 DNS 변경 없음
             if tick % 10 == 0:
                 print(f"  [{elapsed:>3}s] 대기 중... ({str(outer_err)[:50]})")
 

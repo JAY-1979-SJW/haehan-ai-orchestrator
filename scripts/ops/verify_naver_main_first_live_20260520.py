@@ -55,11 +55,11 @@ def _send(ws, msg_id, method, params=None, timeout=5.0):
         ws.settimeout(max(0.5, deadline - time.time()))
         try:
             raw = ws.recv()
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메인 first-live 검증 smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
             return {"id": msg_id, "_timeout": True}
         try:
             m = json.loads(raw)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 메인 first-live 검증 smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
             continue
         if m.get("id") == msg_id:
             return m
@@ -75,7 +75,7 @@ def _eval_until_signal(target_id, expr, max_wait=18.0):
                 continue
             try:
                 w = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=5)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 메인 first-live 검증 smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
                 break
             ev = _send(w, 1, "Runtime.evaluate",
                        {"expression": expr, "returnByValue": True}, timeout=6.0)
@@ -85,7 +85,7 @@ def _eval_until_signal(target_id, expr, max_wait=18.0):
             if isinstance(val, str) and val:
                 try:
                     obj = json.loads(val)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 네이버 메인 first-live 검증 smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
                     obj = None
                 if obj and obj.get("href") and not obj["href"].startswith("about:") and obj.get("body_len", 0) > 50:
                     return obj
@@ -97,7 +97,7 @@ def _eval_until_signal(target_id, expr, max_wait=18.0):
         if isinstance(val, str):
             try:
                 return json.loads(val)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 메인 first-live 검증 smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
                 pass
     return {"_no_signal": True}
 
@@ -124,7 +124,8 @@ def main():
     target_id = None
     for t in _list_pages():
         if t.get("url") == "about:blank":
-            target_id = t["id"]; break
+            target_id = t["id"]
+            break
     if not target_id:
         bws = websocket.create_connection(_ws_browser(), timeout=8)
         new = _send(bws, 1, "Target.createTarget", {"url": "about:blank"}, timeout=5.0)
@@ -133,13 +134,13 @@ def main():
 
     results = []
     for site_key in SITES:
-        first_url, follow = sep.resolve_entry(site_key)
+        first_url, _follow = sep.resolve_entry(site_key)
         print(f"\n[SITE] {site_key} → first={first_url}")
         _navigate(target_id, first_url)
         time.sleep(2.0)
         data = _eval_until_signal(target_id, PAGE_EXPR, max_wait=20.0)
         if data.get("_no_signal"):
-            print(f"  no_signal (body 미생성)")
+            print("  no_signal (body 미생성)")
         # 정책 판정
         state = sep.judge_login_state(site_key, data)
         out = {

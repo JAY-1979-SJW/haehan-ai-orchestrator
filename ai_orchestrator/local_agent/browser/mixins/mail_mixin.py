@@ -25,7 +25,7 @@ class MailMixin:
         try:
             result = self._page.evaluate(_js("extract_mail_inbox.js"))
             return (result or [])[:max_n]
-        except Exception:
+        except Exception:  # noqa: BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             return []
 
     def mail_read(self, mail_id: str) -> dict:
@@ -37,7 +37,7 @@ class MailMixin:
         time.sleep(2)
         try:
             return self._page.evaluate(_js("extract_mail_detail.js")) or {}
-        except Exception:
+        except Exception:  # noqa: BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             return {}
 
     def mail_search(self, query: str, max_n: int = 30) -> list[dict]:
@@ -78,7 +78,7 @@ class MailMixin:
             if sa and sa.is_visible():
                 sa.click()
                 time.sleep(1)
-        except Exception:
+        except Exception:  # noqa: S110, BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             pass
 
         # 검색 input 찾아서 입력 + Enter
@@ -92,7 +92,7 @@ class MailMixin:
                 search_input.fill(query)
                 self._page.keyboard.press("Enter")
                 time.sleep(4)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             return []
 
         # XHR 후킹된 검색 결과 추출
@@ -187,5 +187,5 @@ class MailMixin:
             # 본문은 iframe 내에 있을 수 있음
             L2("MAIL_WRITE_PREPARED", "mail_mixin", to=to, subject=subject)
             return {"ok": True, "draft_url": self._page.url}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 메일 읽기/검색/초안작성(발송 아님) mixin - 실패 시 빈 목록 또는 ok:False 반환
             return {"ok": False, "error": str(e)}

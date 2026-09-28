@@ -49,7 +49,7 @@ def _is_cdp_alive(timeout: float = 2.0) -> bool:
     try:
         with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout) as r:
             return r.status == 200
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내
         return False
 
 
@@ -106,7 +106,7 @@ def _sanitize_prefs() -> None:
         if changed:
             prefs.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
             print(f"  [PREFS] 정상화 완료 (window={_WIN_W}x{_WIN_H}@{_WIN_LEFT},{_WIN_TOP})")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내
         print(f"  [PREFS] 패치 실패 (무시): {e}")
 
 
@@ -186,7 +186,7 @@ def _show_info() -> None:
             info = json.loads(r.read())
         print(f"  브라우저: {info.get('Browser', '?')}")
         print(f"  WebSocket: {info.get('webSocketDebuggerUrl', '?')}")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내
         pass
 
 
@@ -199,7 +199,7 @@ def cmd_status() -> None:
     if PID_FILE.exists():
         try:
             pid_data = json.loads(PID_FILE.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내
             pass
     if pid_data.get("pid"):
         print(f"Chrome PID: {pid_data['pid']}")
@@ -214,7 +214,7 @@ def cmd_stop() -> None:
                 os.kill(pid, 9 if sys.platform == "win32" else 15)
                 print(f"✓ Chrome 종료 (PID={pid})")
             PID_FILE.unlink(missing_ok=True)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내
             print(f"종료 실패: {e}")
     else:
         print("PID 파일 없음 — 수동으로 Chrome 닫으세요.")

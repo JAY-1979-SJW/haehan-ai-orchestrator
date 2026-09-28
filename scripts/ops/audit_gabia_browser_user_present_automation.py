@@ -50,7 +50,7 @@ def _check_task_contract() -> dict[str, bool]:
         safe_d = task.to_safe_dict()
         forbidden = {"password", "otp", "cert_password", "token", "cookie", "session"}
         result["safe_dict_no_secrets"] = not bool(set(safe_d.keys()) & forbidden)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 브라우저 자동화 정책 계약(task/state machine/정책) 자체검증 스크립트 - import/호출 실패 시 체크리스트 항목을 실패로 기록(통과로 위장하지 않음), 실제 런타임 게이트가 아닌 감사 리포트
         result["[error]"] = str(e)
     return result
 
@@ -87,7 +87,7 @@ def _check_state_machine() -> dict[str, bool]:
         result["transition_draft_to_preview"] = tr.allowed
         tr2 = evaluate_transition(STATE_FINAL_APPROVAL_REQUIRED, STATE_DNS_RECORD_DRAFTED)
         result["transition_final_to_draft_blocked"] = not tr2.allowed
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 브라우저 자동화 정책 계약(task/state machine/정책) 자체검증 스크립트 - import/호출 실패 시 체크리스트 항목을 실패로 기록(통과로 위장하지 않음), 실제 런타임 게이트가 아닌 감사 리포트
         result["[error]"] = str(e)
     return result
 
@@ -103,7 +103,7 @@ def _check_policies() -> dict[str, bool]:
         result["SECRET_STORAGE_FORBIDDEN"] = get_policy("SECRET_STORAGE_FORBIDDEN") is not None
         result["DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED"] = get_policy("DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED") is not None
         result["FINAL_APPROVAL_GATE_REQUIRED"] = get_policy("FINAL_APPROVAL_GATE_REQUIRED") is not None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 브라우저 자동화 정책 계약(task/state machine/정책) 자체검증 스크립트 - import/호출 실패 시 체크리스트 항목을 실패로 기록(통과로 위장하지 않음), 실제 런타임 게이트가 아닌 감사 리포트
         result["[error]"] = str(e)
     return result
 
@@ -143,7 +143,7 @@ def _check_policy_service() -> dict[str, bool]:
 
         result["gabia_dns_blocked"] = svc.is_gabia_browser_action_blocked("dns_final_save")
         result["gabia_dns_user_direct"] = svc.is_gabia_browser_action_user_direct("dns_save")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 브라우저 자동화 정책 계약(task/state machine/정책) 자체검증 스크립트 - import/호출 실패 시 체크리스트 항목을 실패로 기록(통과로 위장하지 않음), 실제 런타임 게이트가 아닌 감사 리포트
         result["[error]"] = str(e)
     return result
 
@@ -161,7 +161,7 @@ def _check_audit_events() -> dict[str, bool]:
             "GABIA_SECURITY_AUTOMATION_BLOCKED",
         ]:
             result[ev] = ev in AUDIT_EVENT_TYPES
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 가비아 브라우저 자동화 정책 계약(task/state machine/정책) 자체검증 스크립트 - import/호출 실패 시 체크리스트 항목을 실패로 기록(통과로 위장하지 않음), 실제 런타임 게이트가 아닌 감사 리포트
         result["[error]"] = str(e)
     return result
 
@@ -176,7 +176,7 @@ def _check_domain_profile() -> bool:
             and "dns_final_save" in profile.get("blocked_actions", [])
             and "dns_save" in profile.get("user_direct_actions", [])
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - 가비아 브라우저 자동화 정책 계약(task/state machine/정책) 자체검증 스크립트 - import/호출 실패 시 체크리스트 항목을 실패로 기록(통과로 위장하지 않음), 실제 런타임 게이트가 아닌 감사 리포트
         return False
 
 

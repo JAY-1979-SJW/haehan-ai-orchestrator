@@ -74,10 +74,10 @@ class _Handler(socketserver.StreamRequestHandler):
             with _page_lock:
                 result = self._dispatch(cmd, req)
             self.wfile.write((json.dumps(result, ensure_ascii=False) + "\n").encode("utf-8"))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 RPC 서버 - 명령 처리 실패를 JSON 에러 응답으로 변환, 탭 재사용 실패 시 새 탭으로 대체
             try:
                 self.wfile.write((json.dumps({"ok": False, "error": str(e)}) + "\n").encode("utf-8"))
-            except Exception:
+            except Exception:  # noqa: BLE001 - 브라우저 RPC 서버 - 명령 처리 실패를 JSON 에러 응답으로 변환, 탭 재사용 실패 시 새 탭으로 대체
                 pass
 
     def _dispatch(self, cmd: str, req: dict) -> dict:
@@ -128,7 +128,7 @@ class _Handler(socketserver.StreamRequestHandler):
                     return {"ok": True, "result": out}
 
             return {"ok": False, "error": f"unknown cmd: {cmd}"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 브라우저 RPC 서버 - 명령 처리 실패를 JSON 에러 응답으로 변환, 탭 재사용 실패 시 새 탭으로 대체
             return {"ok": False, "error": str(e)}
 
 
@@ -151,7 +151,7 @@ def _is_alive() -> bool:
             s.sendall((json.dumps({"cmd": "ping"}) + "\n").encode())
             resp = s.recv(4096)
             return b"pong" in resp
-    except Exception:
+    except Exception:  # noqa: BLE001 - 브라우저 RPC 서버 - 명령 처리 실패를 JSON 에러 응답으로 변환, 탭 재사용 실패 시 새 탭으로 대체
         return False
 
 
@@ -216,7 +216,7 @@ def cmd_stop():
     try:
         os.kill(data["pid"], 9 if sys.platform == "win32" else 15)
         print(f"정지됨 PID={data['pid']}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 브라우저 RPC 서버 - 명령 처리 실패를 JSON 에러 응답으로 변환, 탭 재사용 실패 시 새 탭으로 대체
         print(f"정지 실패(무시): {e}")
     PID_FILE.unlink(missing_ok=True)
 

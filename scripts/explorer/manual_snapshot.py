@@ -15,9 +15,9 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
-from scripts.logger import get_logger
 from scripts.explorer.page_classifier import classify_page
 from scripts.form.bot_radar import scan as bot_scan
+from scripts.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -37,7 +37,7 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
     """현재 page 1회 분석 + 저장."""
     try:
         url = page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 페이지 스냅샷(스크린샷/HTML/인덱스) 저장 도구 - 실패 시 조용히 스킵(pass/continue), 읽기전용 진단 도구
         url = ""
     if not url or url.startswith("chrome://"):
         return {"ok": False, "reason": f"invalid_url:{url}"}
@@ -53,7 +53,7 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
     info = classify_page(page)
     try:
         br = bot_scan(page)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 페이지 스냅샷(스크린샷/HTML/인덱스) 저장 도구 - 실패 시 조용히 스킵(pass/continue), 읽기전용 진단 도구
         br = {"level": "unknown"}
 
     # 스크린샷
@@ -63,7 +63,7 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
             sp = out_dir / f"{slug}__{ts}.png"
             page.screenshot(path=str(sp), full_page=True)
             screenshot_path = sp.name
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 페이지 스냅샷(스크린샷/HTML/인덱스) 저장 도구 - 실패 시 조용히 스킵(pass/continue), 읽기전용 진단 도구
             log.debug("screenshot 실패: %s", e)
 
     # HTML
@@ -74,7 +74,7 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
             hp = out_dir / f"{slug}__{ts}.html"
             hp.write_text(html, encoding="utf-8")
             html_path = hp.name
-        except Exception:
+        except Exception:  # noqa: BLE001 - 페이지 스냅샷(스크린샷/HTML/인덱스) 저장 도구 - 실패 시 조용히 스킵(pass/continue), 읽기전용 진단 도구
             pass
 
     # 페이지 메타
@@ -114,7 +114,7 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
     if idx_path.exists():
         try:
             idx = json.loads(idx_path.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 페이지 스냅샷(스크린샷/HTML/인덱스) 저장 도구 - 실패 시 조용히 스킵(pass/continue), 읽기전용 진단 도구
             idx = []
     idx.append({
         "captured_at": record["captured_at"],
@@ -148,12 +148,14 @@ def cli_list(host: str = "") -> None:
         dirs = list(VISITS_DIR.iterdir()) if VISITS_DIR.exists() else []
     total = 0
     for d in dirs:
-        if not d.is_dir(): continue
+        if not d.is_dir():
+            continue
         idx_path = d / "_index.json"
-        if not idx_path.exists(): continue
+        if not idx_path.exists():
+            continue
         try:
             idx = json.loads(idx_path.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception:  # noqa: BLE001 - 페이지 스냅샷(스크린샷/HTML/인덱스) 저장 도구 - 실패 시 조용히 스킵(pass/continue), 읽기전용 진단 도구
             continue
         print(f"\n[{d.name}] {len(idx)} 페이지")
         # 페이지 타입 통계
@@ -177,7 +179,8 @@ def main() -> None:
         print("사용법: python -m scripts.explorer.manual_snapshot <snap|list> [host]")
         return
     cmd = sys.argv[1]
-    if cmd == "snap": cli_snapshot()
+    if cmd == "snap":
+        cli_snapshot()
     elif cmd == "list":
         host = sys.argv[2] if len(sys.argv) > 2 else ""
         cli_list(host)

@@ -96,7 +96,7 @@ def build_cache(page) -> dict:
         _log.info("[cat-cache] 캐시 구축 완료: %d개 → %s", len(cats), CACHE_PATH)
         return {"ok": True, "count": len(cats), "path": str(CACHE_PATH)}
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 카테고리 캐시 조회/구축 - 실패 시 빈 목록/False 반환
         _log.warning("[cat-cache] 구축 실패: %s", e)
         return {"ok": False, "error": str(e)[:120]}
 
@@ -133,7 +133,7 @@ def _fetch_via_angular(page) -> list | None:
                 if c["id"] not in seen_ids:
                     seen_ids.add(c["id"])
                     results.append(c)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 스마트스토어 카테고리 캐시 조회/구축 - 실패 시 빈 목록/False 반환
             pass
 
     return results or None
@@ -151,7 +151,7 @@ def load_cache() -> list[dict]:
     try:
         data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
         return data.get("categories", [])
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 카테고리 캐시 조회/구축 - 실패 시 빈 목록/False 반환
         return []
 
 
@@ -208,7 +208,7 @@ def cache_info() -> dict:
             "built_at": data.get("built_at"),
             "path": str(CACHE_PATH),
         }
-    except Exception:
+    except Exception:  # noqa: BLE001 - 스마트스토어 카테고리 캐시 조회/구축 - 실패 시 빈 목록/False 반환
         return {"exists": False, "count": 0, "built_at": None}
 
 
@@ -258,6 +258,6 @@ def set_by_id(page, category_id: str) -> bool:
         }})()
         """)
         return bool(result)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 카테고리 캐시 조회/구축 - 실패 시 빈 목록/False 반환
         _log.debug("[cat-cache] set_by_id 실패: %s", e)
         return False

@@ -132,10 +132,10 @@ class ReviewAutoResponder:
                     self.page.click(sel, timeout=3000)
                     time.sleep(3)
                     return True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 팝업/스크롤 등 부수 UI 동작 실패는 무시해도 진행에 영향 없음
                     pass
             return True  # 상위 메뉴만 열려도 진행
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 상품 리뷰 답변 자동화 - 페이지 진입/추출/저장 실패 시 False 또는 ok:False 반환
             _log.error("[review-reply] 페이지 진입 실패: %s", e)
             return False
 
@@ -148,7 +148,7 @@ class ReviewAutoResponder:
                     self.page.click(sel, timeout=2000)
                     time.sleep(2)
                     break
-                except Exception:
+                except Exception:  # noqa: BLE001 - 팝업/스크롤 등 부수 UI 동작 실패는 무시해도 진행에 영향 없음
                     pass
 
             rows = self.page.evaluate(f"""
@@ -176,7 +176,7 @@ class ReviewAutoResponder:
                 }})()
             """)
             return rows
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 상품 리뷰 답변 자동화 - 페이지 진입/추출/저장 실패 시 False 또는 ok:False 반환
             _log.error("[review-reply] 리뷰 추출 실패: %s", e)
             return []
 
@@ -203,7 +203,7 @@ class ReviewAutoResponder:
             self.page.click('button:has-text("등록"), button:has-text("저장")', timeout=5000)
             time.sleep(1)
             return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 상품 리뷰 답변 자동화 - 페이지 진입/추출/저장 실패 시 False 또는 ok:False 반환
             _log.error("[review-reply] 답변 저장 실패: %s", e)
             return {"ok": False, "error": str(e)[:200]}
 

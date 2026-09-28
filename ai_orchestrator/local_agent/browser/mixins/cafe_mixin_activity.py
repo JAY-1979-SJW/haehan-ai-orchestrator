@@ -45,7 +45,7 @@ class CafeActivityMixin:
         def _safe(sel: str) -> str:
             try:
                 return frame.locator(sel).first.inner_text(timeout=1500).strip()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 네이버 카페 활동내역 읽기 전용 파싱 - 실패 시 빈 dict/list 반환
                 return ""
 
         date_txt = _safe(".month_tit") or _safe(".date_area") or _safe("h4")
@@ -96,7 +96,7 @@ class CafeActivityMixin:
                             }
                         )
                     i += 1
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return {"date": date_txt, "today_count": today_count, "records": records}
@@ -181,7 +181,7 @@ class CafeActivityMixin:
                     i = j
                 else:
                     i += 1
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110, BLE001
             pass
 
         return posts[:max_posts]
@@ -211,7 +211,7 @@ class CafeActivityMixin:
         body_txt = ""
         try:
             body_txt = cafe_main.inner_text("body")
-        except Exception:
+        except Exception:  # noqa: BLE001 - 네이버 카페 활동내역 읽기 전용 파싱 - 실패 시 빈 dict/list 반환
             return {"my_stats": {}, "applications": [], "can_apply": False}
 
         # 내 활동 정보 파싱
@@ -330,7 +330,7 @@ class CafeActivityMixin:
 
                 if posts:
                     break
-            except Exception:  # noqa: S112
+            except Exception:  # noqa: BLE001, S112
                 continue
 
         return posts[:max_posts]

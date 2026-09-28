@@ -66,10 +66,10 @@ def http_post_json(url: str, body: dict, timeout: float = 10.0) -> dict:
     except urllib.error.HTTPError as e:
         try:
             body_text = e.read().decode("utf-8")[:300]
-        except Exception:
+        except Exception:  # noqa: BLE001 - 로컬 에이전트 외부 접근 smoke 테스트 - HTTP/WS 실패를 에러 dict로 반환
             body_text = ""
         return {"status": e.code, "error": str(e.reason), "body_excerpt": body_text}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 에이전트 외부 접근 smoke 테스트 - HTTP/WS 실패를 에러 dict로 반환
         return {"status": -1, "error": str(e)[:200]}
 
 
@@ -82,7 +82,7 @@ def http_get(url: str, timeout: float = 8.0) -> dict:
             return {"status": r.status, "body_excerpt": body[:300]}
     except urllib.error.HTTPError as e:
         return {"status": e.code, "error": str(e.reason)}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 에이전트 외부 접근 smoke 테스트 - HTTP/WS 실패를 에러 dict로 반환
         return {"status": -1, "error": str(e)[:200]}
 
 
@@ -136,7 +136,7 @@ async def ws_auth_flow(agent_id: str, device_token: str, *, send_bad: bool = Fal
                 else:
                     res["steps"].append(f"hb_{i}_unexpected:{m.get('type', '')}")
             res["ok"] = True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 로컬 에이전트 외부 접근 smoke 테스트 - HTTP/WS 실패를 에러 dict로 반환
         res["error"] = str(e)[:200]
     return res
 
@@ -158,7 +158,7 @@ def main():
             raw_code = open(code_path).read().strip()
         else:
             raw_code = os.environ.get("SMOKE_REGISTRATION_CODE", "").strip()
-    except Exception:
+    except Exception:  # noqa: BLE001 - 로컬 에이전트 외부 접근 smoke 테스트 - HTTP/WS 실패를 에러 dict로 반환
         raw_code = ""
     if not raw_code:
         # /tmp 가 ssh server-side 경로일 수 있음 — fetch via ssh

@@ -200,13 +200,13 @@ def expand_all_sections(page: Any, *, max_rounds: int = 4, settle_ms: int = 2200
     for _ in range(max_rounds):
         try:
             r = page.evaluate(_EXPAND_JS)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 상품등록 후 화면 검증(섹션/누락필드/위험옵션 읽기전용) - 실패 시 빈 목록 반환
             break
         n = (r or {}).get("clicked", 0)
         total += n
         try:
             page.wait_for_timeout(settle_ms)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 상품등록 후 화면 검증(섹션/누락필드/위험옵션 읽기전용) - 실패 시 빈 목록 반환
             pass
         if not n:
             break
@@ -216,7 +216,7 @@ def expand_all_sections(page: Any, *, max_rounds: int = 4, settle_ms: int = 2200
 def read_sections(page: Any) -> list[SectionState]:
     try:
         raw = page.evaluate(_SECTIONS_JS) or []
-    except Exception:
+    except Exception:  # noqa: BLE001 - 상품등록 후 화면 검증(섹션/누락필드/위험옵션 읽기전용) - 실패 시 빈 목록 반환
         return []
     return [
         SectionState(
@@ -234,7 +234,7 @@ def read_sections(page: Any) -> list[SectionState]:
 def read_missing(page: Any) -> list[MissingField]:
     try:
         raw = page.evaluate(_MISSING_JS) or []
-    except Exception:
+    except Exception:  # noqa: BLE001 - 상품등록 후 화면 검증(섹션/누락필드/위험옵션 읽기전용) - 실패 시 빈 목록 반환
         return []
     return [
         MissingField(
@@ -252,7 +252,7 @@ def read_risky_settings(page: Any) -> list[str]:
     """조용히 상품 성격을 바꾸는 설정을 경고로 올린다."""
     try:
         r = page.evaluate(_RISKY_JS) or {}
-    except Exception:
+    except Exception:  # noqa: BLE001 - 상품등록 후 화면 검증(섹션/누락필드/위험옵션 읽기전용) - 실패 시 빈 목록 반환
         return []
     warnings: list[str] = []
     for opt in r.get("preOrder") or []:

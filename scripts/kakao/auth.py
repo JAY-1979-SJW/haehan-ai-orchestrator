@@ -37,7 +37,7 @@ def is_logged_in(page) -> bool:
     """
     try:
         url = page.url or ""
-    except Exception:
+    except Exception:  # noqa: BLE001 - 카카오 로그인 상태 감지 - 예외 시 항상 False(미로그인)로 fail-closed 반환
         return False
 
     if _LOGIN_DOMAIN in url:
@@ -51,7 +51,7 @@ def is_logged_in(page) -> bool:
             if el and el.is_visible():
                 log.debug("kakao: 로그아웃 버튼 발견 — 로그인됨")
                 return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - 선택자 탐색 중 개별 실패는 무시하고 다음 신호를 계속 확인
             pass
 
     # 로그인 폼 visible → 미로그인
@@ -61,7 +61,7 @@ def is_logged_in(page) -> bool:
             if el and el.is_visible():
                 log.debug("kakao: 로그인 폼 visible — 미로그인")
                 return False
-        except Exception:
+        except Exception:  # noqa: BLE001 - 선택자 탐색 중 개별 실패는 무시하고 다음 신호를 계속 확인
             pass
 
     # body 텍스트 토큰
@@ -70,7 +70,7 @@ def is_logged_in(page) -> bool:
         if any(tok in text for tok in _LOGGED_IN_TOKENS):
             log.debug("kakao: 로그인 토큰 발견 — 로그인됨")
             return True
-    except Exception:
+    except Exception:  # noqa: BLE001 - 선택자 탐색 중 개별 실패는 무시하고 다음 신호를 계속 확인
         pass
 
     log.debug("kakao: 로그인 신호 없음 — 미로그인 처리 url=%s", url)
@@ -91,7 +91,7 @@ def login(page) -> dict:
 
     try:
         page.goto(KAKAO_LOGIN_URL, timeout=30000)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 카카오 로그인 상태 감지 - 예외 시 항상 False(미로그인)로 fail-closed 반환
         log.warning("kakao: 로그인 페이지 이동 실패: %s", e)
 
     log.info("kakao: 수동 로그인 대기 (최대 5분)")
