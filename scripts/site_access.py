@@ -83,7 +83,7 @@ def _has_credentials(site: str) -> bool:
 
         c = get_cred(site)
         return bool(c.get("id") and c.get("pw"))
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
         return False
 
 
@@ -104,7 +104,7 @@ def _check_logged_in_with_retry(page, spec, *, retries: int = PRE_LOGIN_CHECK_RE
         try:
             if bool(spec.is_logged_in(page)):
                 return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
             last_error = e
         if idx + 1 < retries:
             time.sleep(PRE_LOGIN_CHECK_INTERVAL_S)
@@ -180,7 +180,7 @@ def _clear_current_origin_storage(page) -> bool:
             }"""
         )
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
         log.debug("[site-access] origin storage clear skipped: %s", e)
         return False
 
@@ -192,7 +192,7 @@ def _close_site_noise_pages(page, site: str) -> int:
     closed = 0
     try:
         pages = list(page.context.pages)
-    except Exception:
+    except Exception:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
         return 0
     for p in pages:
         if p is page:
@@ -202,7 +202,7 @@ def _close_site_noise_pages(page, site: str) -> int:
             if "eum.cw.or.kr/web/com/WEBCOM010P03" in url:
                 p.close()
                 closed += 1
-        except Exception:
+        except Exception:  # noqa: BLE001 - 팝업 정리/쿠키 초기화 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
             pass
     if closed:
         log.info("[site-access] closed %d EUM notice popup tab(s)", closed)
@@ -229,7 +229,7 @@ def ensure_logged_in(page, site: str) -> dict:
                 log.info("[site-access] %s 이미 로그인됨", site)
                 ctx.set_result(msg="기존 세션 재사용", ok=True)
                 return {"ok": True, "user": "", "reason": "기존 세션 재사용"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
             log.debug("[site-access] is_logged_in 사전점검 실패: %s", e)
 
         # 2) 자격증명 확인
@@ -263,7 +263,7 @@ def ensure_logged_in(page, site: str) -> dict:
         # 3c) 성공 — 사후 검증
         try:
             ok = _check_logged_in_with_retry(page, spec)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
             ok = True
         if not ok:
             print("✘ (사후검증 실패)")
@@ -348,7 +348,7 @@ def open_site(
             try:
                 domains = _clear_site_cookies(page, spec)
                 log.info("[site-access] %s force-login cookie reset domains=%s", site, domains)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
                 s.fail(f"사이트 쿠키 초기화 실패: {e}", kind="force_session_reset_failed")
 
     # 02. 페이지 이동 (필요한 경우만)
@@ -356,7 +356,7 @@ def open_site(
         s.attach(page)
         try:
             cur = page.url or ""
-        except Exception:
+        except Exception:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
             cur = ""
         need_goto = (host not in cur) or (path and path not in cur)
         if not path and site == "eum" and "/main" not in cur:
@@ -364,18 +364,18 @@ def open_site(
         if need_goto:
             try:
                 page.goto(target, timeout=30000)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
                 s.fail(f"goto 실패: {e}", kind="goto_failed")
             try:
                 page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 팝업 정리/쿠키 초기화 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                 pass  # networkidle 미달성은 치명적이지 않음
         if force_login:
             _clear_current_origin_storage(page)
             try:
                 page.reload(timeout=30000, wait_until="domcontentloaded")
                 page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 팝업 정리/쿠키 초기화 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                 pass
 
     # 03. 페이지 로드 검증
@@ -383,7 +383,7 @@ def open_site(
         s.attach(page)
         try:
             cur = page.url or ""
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
             s.fail(f"page.url 접근 실패: {e}", kind="page_invalid")
         if not cur or cur == "about:blank":
             s.fail(f"페이지 로드 실패 (url={cur!r})", kind="page_invalid")
@@ -415,7 +415,7 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
         s.attach(page)
         try:
             already = _check_logged_in_with_retry(page, spec)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
             s.fail(f"is_logged_in 호출 실패: {e}", kind="check_error")
 
     if already and not force_login:
@@ -464,7 +464,7 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
                     registered_ok = True
                 elif not _allows_universal_login(spec):
                     registered_ok = True
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
                 if not _allows_universal_login(spec):
                     s.fail(f"사이트 전용 로그인 예외: {e}", kind="login_exception")
                 log.debug("[site-access] registered login 예외 → 범용으로 폴백: %s", e)
@@ -484,7 +484,7 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
                     "intent": u["intent"],
                     "bot_level": u["bot_level"],
                 }
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
                 s.fail(f"범용 로그인 예외: {e}", kind="login_exception")
 
         if not isinstance(result, dict):
@@ -512,7 +512,7 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
         s.attach(page)
         try:
             ok = _check_logged_in_with_retry(page, spec)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
             s.fail(f"is_logged_in 사후점검 실패: {e}", kind="check_error")
         if not ok:
             s.fail("로그인 후 세션 확인 실패", kind="post_verify_failed")

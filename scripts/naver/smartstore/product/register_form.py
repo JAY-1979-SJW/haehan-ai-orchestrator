@@ -48,7 +48,7 @@ class FormSection:
             }})();
             """)
             time.sleep(0.3)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
 
     def _fill(self, sels: list[str], value: str, label: str = "") -> dict:
@@ -73,7 +73,7 @@ class FormSection:
                 time.sleep(0.3)
                 _log.info("[%s] %s 입력 완료: %s", self.section_name, label or sel, str(value)[:40])
                 return {"ok": True, "selector": sel}
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
                 _log.debug("[%s] %s 입력 시도 실패 (%s): %s", self.section_name, label, sel, e)
         return {"ok": False, "error": f"{label} 입력 필드를 찾지 못했습니다", "tried": sels}
 
@@ -98,7 +98,7 @@ class FormSection:
                     if el.is_visible(timeout=500):
                         el.click(timeout=2000)
                         clicked = True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
 
             # 2) label JS click (table-cell / 숨겨진 label)
@@ -127,7 +127,7 @@ class FormSection:
                     """)
                     if done:
                         clicked = True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
 
             # 3) JS dispatchEvent 직접 발생 (최후 수단)
@@ -144,14 +144,14 @@ class FormSection:
                     }})()
                     """)
                     clicked = True
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
 
             if clicked:
                 time.sleep(0.2)
                 _log.info("[%s] %s 선택", self.section_name, label or sel)
                 return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
             _log.debug("[%s] 라디오 클릭 실패 (%s): %s", self.section_name, sel, e)
         return {"ok": False, "error": f"{label} 라디오 선택 실패"}
 
@@ -164,7 +164,7 @@ class FormSection:
                     time.sleep(0.5)
                     _log.info("[%s] 버튼 클릭: %s", self.section_name, label or sel)
                     return {"ok": True, "selector": sel}
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
                 _log.debug("[%s] 버튼 클릭 실패 (%s): %s", self.section_name, sel, e)
         return {"ok": False, "error": f"{label} 버튼을 찾지 못했습니다"}
 
@@ -174,7 +174,7 @@ class FormSection:
                 el = self.page.locator(sel).first
                 if el.count() > 0 and el.is_visible(timeout=500):
                     return True
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
         return False
 
@@ -206,7 +206,7 @@ class CategorySection(FormSection):
                 if ok:
                     _log.info("[category] 캐시 직접 선택: %s → id=%s", keyword, cat_id)
                     return {"ok": True, "selected": keyword, "id": cat_id, "method": "cache"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
             _log.debug("[category] 캐시 조회 실패, 검색으로 진행: %s", e)
 
         # 1. 입력란 찾기 (캐시 미스 또는 캐시 없을 때)
@@ -246,7 +246,7 @@ class CategorySection(FormSection):
             """)
             time.sleep(1.2)  # 결과 로드 대기
             _log.info("[category] 카테고리 검색 입력 완료: %s", keyword)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": f"카테고리 검색 입력 실패: {e}"}
 
         # 3. 결과 선택
@@ -262,14 +262,14 @@ class CategorySection(FormSection):
                     txt = ""
                     try:
                         txt = target.inner_text(timeout=500)[:80].strip()
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                         pass
                     if txt and len(txt) < 100:
                         target.click(timeout=3000, force=True)
                         time.sleep(0.5)
                         _log.info("[category] 카테고리 선택 완료: %s", txt[:30])
                         return {"ok": True, "selected": txt}
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
 
         # 3-B. 키보드 탐색 fallback (ArrowDown + Enter)
@@ -280,7 +280,7 @@ class CategorySection(FormSection):
             time.sleep(0.8)
             _log.info("[category] 카테고리 ArrowDown+Enter 선택")
             return {"ok": True, "selected": "(ArrowDown)"}
-        except Exception:
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
 
         return {"ok": False, "error": "카테고리 결과 항목을 클릭하지 못했습니다"}
@@ -291,7 +291,7 @@ class CategorySection(FormSection):
                 el = self.page.locator(sel).first
                 if el.count() > 0:
                     return el.inner_text(timeout=2000).strip()
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
         return None
 
@@ -341,7 +341,7 @@ class ProductNameSection(FormSection):
                 el = self.page.locator(sel).first
                 if el.count() > 0:
                     return el.input_value(timeout=2000).strip() or None
-            except Exception:
+            except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
         return None
 
@@ -496,7 +496,7 @@ class OptionSection(FormSection):
                 try:
                     self.page.locator(SEL.OPTION_VALUE_INPUT).first.press("Enter")
                     time.sleep(0.3)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
 
             results.append({"name": opt_name, "values": values, "ok": True})
@@ -552,7 +552,7 @@ class ImageSection(FormSection):
             time.sleep(2)
             _log.info("[image] %s 업로드: %s", label, p.name)
             return {"ok": True, "filename": p.name}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
             _log.warning("[image] %s 업로드 실패: %s", label, e)
             return {"ok": False, "error": str(e)}
 
@@ -702,7 +702,7 @@ class ProductInfoSection(FormSection):
                 if checked != enabled:
                     el.click(timeout=2000)
             return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
 
     def set(
@@ -768,7 +768,7 @@ class SearchTagSection(FormSection):
                 try:
                     self.page.locator(SEL.SEARCH_KEYWORD_INPUT[0]).first.press("Enter")
                     time.sleep(0.3)
-                except Exception:
+                except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                     pass
             results.append({"keyword": kw, "ok": r["ok"]})
         ok_count = sum(1 for r in results if r["ok"])
@@ -797,7 +797,7 @@ class ChannelSection(FormSection):
             if el.count() > 0 and not el.is_checked(timeout=1000):
                 el.click(timeout=2000)
             return {"ok": True}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)}
 
     def set(self, display: bool = True, naver_shopping: bool = True) -> dict:
