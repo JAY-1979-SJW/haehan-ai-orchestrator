@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 from typing import Any
 
@@ -118,10 +119,9 @@ def _get_visible_popups(page) -> list:
                     if _is_excluded(cls):
                         continue
                     text = ""
-                    try:
+                    # 여러 셀렉터를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+                    with contextlib.suppress(Exception):
                         text = el.inner_text(timeout=500)[:80]
-                    except Exception:  # noqa: BLE001 - 여러 셀렉터를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                        pass
                     visible.append(
                         {
                             "selector": sel,

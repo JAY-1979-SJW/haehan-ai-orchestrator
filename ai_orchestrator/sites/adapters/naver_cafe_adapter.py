@@ -19,6 +19,7 @@
     - 홈/게시판 1페이지 URL 로 이동 (읽기 전용)
     - 공개 필드 최소 세트 파싱: post_id, title, author, date, url
 """
+
 from __future__ import annotations
 
 import logging
@@ -194,7 +195,9 @@ class NaverCafeAdapter(SiteAdapter):
         target = cursor or self.HOME_URL
         logger.info(
             "[NAVER-CAFE-LIST-GOTO] url=%s page_num=%d max_pages=%d",
-            target, page_num, bounded_max,
+            target,
+            page_num,
+            bounded_max,
         )
         page.goto(target)
 
@@ -202,7 +205,8 @@ class NaverCafeAdapter(SiteAdapter):
         if not check.is_logged_in:
             logger.info(
                 "[NAVER-CAFE-LIST-BLOCKED] reason=%s detected_path=%s",
-                check.reason, self._safe_path(check.detected_url),
+                check.reason,
+                self._safe_path(check.detected_url),
             )
             return {
                 "items": [],
@@ -216,13 +220,15 @@ class NaverCafeAdapter(SiteAdapter):
 
         items = self._parse_article_list(page)
         logger.info(
-            "[NAVER-CAFE-LIST-PARSED] page_num=%d count=%d", page_num, len(items),
+            "[NAVER-CAFE-LIST-PARSED] page_num=%d count=%d",
+            page_num,
+            len(items),
         )
         return {
             "items": items,
             "cursor": cursor,
             "page_num": page_num,
-            "pages_read": 1,   # 1페이지만 순회 (bounded_max 보호)
+            "pages_read": 1,  # 1페이지만 순회 (bounded_max 보호)
             "done": True,
             "status": STATUS_LIST_PARSE_OK,
         }
@@ -249,13 +255,15 @@ class NaverCafeAdapter(SiteAdapter):
                 post_id = self._extract_post_id(href)
                 url = urljoin(self.HOME_URL, href)
 
-                out.append({
-                    "post_id": post_id,
-                    "title": title,
-                    "author": author,
-                    "date": date,
-                    "url": url,
-                })
+                out.append(
+                    {
+                        "post_id": post_id,
+                        "title": title,
+                        "author": author,
+                        "date": date,
+                        "url": url,
+                    }
+                )
             except Exception:  # noqa: BLE001 — 단일 행 파싱 실패는 전체 실패가 아님
                 continue
         return out
@@ -311,22 +319,22 @@ class NaverCafeAdapter(SiteAdapter):
             parsed = urlparse(href)
             qs = parse_qs(parsed.query)
             for key in ("articleid", "articleId", "ARTICLEID"):
-                if key in qs and qs[key]:
+                if qs.get(key):
                     return qs[key][0]
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110 - URL에서 게시글 ID 추출하는 읽기전용 파서, 파싱 실패시 빈 문자열 반환(fail-safe), 자격증명·세션·정책 판정과 무관
             pass
         return ""
 
 
 __all__ = [
-    "NaverCafeAdapter",
-    "STATUS_SESSION_ACTIVE",
-    "STATUS_SESSION_EXPIRED",
-    "STATUS_REAUTH_REQUIRED",
-    "STATUS_REAUTH_IN_PROGRESS",
-    "STATUS_REAUTH_SUCCESS_RESUMING",
     "STATUS_JOB_RESUMED",
-    "STATUS_LOGIN_CHECK_FAILED",
     "STATUS_LIST_PAGE_READY",
     "STATUS_LIST_PARSE_OK",
+    "STATUS_LOGIN_CHECK_FAILED",
+    "STATUS_REAUTH_IN_PROGRESS",
+    "STATUS_REAUTH_REQUIRED",
+    "STATUS_REAUTH_SUCCESS_RESUMING",
+    "STATUS_SESSION_ACTIVE",
+    "STATUS_SESSION_EXPIRED",
+    "NaverCafeAdapter",
 ]

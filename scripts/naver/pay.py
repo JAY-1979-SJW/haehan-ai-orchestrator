@@ -6,6 +6,7 @@ URL: https://pay.naver.com/
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 from playwright.sync_api import Page
@@ -27,10 +28,9 @@ class NaverPay:
             return False
         self.page.goto("https://pay.naver.com/", timeout=20000, wait_until="domcontentloaded")
         time.sleep(3)
-        try:
+        # 네이버페이 — 문서에 '실제 결제는 자동화 금지. 조회만.' 이라고 명시된 조회전용 모듈, 팝업처리 실패는 무시(결제 동작 없음)
+        with contextlib.suppress(Exception):
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 네이버페이 — 문서에 '실제 결제는 자동화 금지. 조회만.' 이라고 명시된 조회전용 모듈, except는 팝업처리 무시 및 조회 실패 시 로그와 빈 결과 반환뿐 결제 동작 없음.
-            pass
         return True
 
     def list_orders(self, limit: int = 30) -> list[dict]:
@@ -40,10 +40,9 @@ class NaverPay:
             return []
         self.page.goto("https://order.pay.naver.com/home", timeout=20000, wait_until="domcontentloaded")
         time.sleep(3)
-        try:
+        # 네이버페이 — 문서에 '실제 결제는 자동화 금지. 조회만.' 이라고 명시된 조회전용 모듈, 팝업처리 실패는 무시(결제 동작 없음)
+        with contextlib.suppress(Exception):
             handle_page_popups(self.page, timeout_s=1.5)
-        except Exception:  # noqa: BLE001 - 네이버페이 — 문서에 '실제 결제는 자동화 금지. 조회만.' 이라고 명시된 조회전용 모듈, except는 팝업처리 무시 및 조회 실패 시 로그와 빈 결과 반환뿐 결제 동작 없음.
-            pass
 
         try:
             orders = self.page.evaluate(

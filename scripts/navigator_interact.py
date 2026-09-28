@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 from scripts.navigator_common import _find_element_in_frames
@@ -21,10 +22,9 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
     """
     print("=" * 60)
     page = get_page()
-    try:
+    # 범용 페이지 상호작용 헬퍼 - 탭 포커스 실패시 폴백 방법 시도, 클립보드 내용은 로그에 남기지 않음
+    with contextlib.suppress(Exception):
         page.bring_to_front()  # 키 이벤트가 정확히 이 탭으로 가도록 보장
-    except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
-        pass
     print(f"입력 시도: target='{target}' text='{text[:40]}...' ({page.url})")
     print("=" * 60)
 
@@ -277,10 +277,9 @@ def click_link(text: str, timeout_ms: int = 15000) -> bool:
         print("=" * 60)
         return False
 
-    try:
+    # 범용 페이지 상호작용 헬퍼 - 로딩 대기 실패시 무시하고 계속 진행(폴백)
+    with contextlib.suppress(Exception):
         new_page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
-    except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
-        pass
     where = "새 탭" if new_page is not page else "현재 탭"
     print(f"✓ 이동 완료 ({where}): {new_page.url}")
     print("=" * 60)

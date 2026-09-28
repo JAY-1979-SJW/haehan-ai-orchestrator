@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 from datetime import datetime
@@ -87,10 +88,9 @@ def _extract_page_structure(page, url: str) -> dict:
         "error": "",
     }
 
-    try:
+    # EUM 사이트 구조 읽기전용 탐색기 - 실패시 title 빈 문자열로 유지, 쓰기 없음
+    with contextlib.suppress(Exception):
         info["title"] = page.title()
-    except Exception:  # noqa: BLE001 - EUM 사이트 구조 읽기전용 탐색기(nav/table/form/button 추출) - 실패시 빈 리스트/dict 반환 또는 debug 로그만 남김, 쓰기 없음
-        pass
 
     # 접근 제한 여부 확인
     try:

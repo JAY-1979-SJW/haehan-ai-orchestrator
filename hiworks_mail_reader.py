@@ -6,6 +6,7 @@
 읽기 전용: DELE 명령 미사용, 메일 상태 변경 없음
 """
 
+import contextlib
 import email
 import email.header
 import os
@@ -177,9 +178,7 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
         log.error("하이웍스 메일 수집 중 예외: %s", e)
     finally:
         if pop is not None:
-            try:
+            with contextlib.suppress(Exception):
                 pop.quit()
-            except Exception:  # noqa: S110, BLE001
-                pass
 
     return results

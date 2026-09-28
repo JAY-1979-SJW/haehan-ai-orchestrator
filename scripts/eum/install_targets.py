@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from datetime import datetime
@@ -67,10 +68,9 @@ def _row_to_dict(headers: list[str], cells: list[str]) -> dict[str, str]:
 def run_default_search(page) -> dict[str, Any]:
     """Set broad date filters and click the search button."""
     actions: list[str] = []
-    try:
+    # EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
+    with contextlib.suppress(Exception):
         page.locator("#__loading__").wait_for(state="hidden", timeout=10000)
-    except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
-        pass
     for selector in (
         "input[name='WEBMAN370M00_regDateRadio'][value='thisYear']",
         "input[name='WEBMAN370M00_planDateRadio'][value='thisYear']",
@@ -212,14 +212,13 @@ def collect_all_install_targets(page, *, max_pages: int = 50, save: bool = True)
         prev = _first_row_text()
         if not _click_page_button(page, target):
             break
-        try:
+        # EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
+        with contextlib.suppress(Exception):
             page.wait_for_function(
                 "(prev) => { const r = document.querySelector('tbody tr'); return r && (r.innerText || '').slice(0, 40) !== prev; }",
                 arg=prev,
                 timeout=8000,
             )
-        except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
-            pass
         page.wait_for_timeout(800)
         if _accumulate() == 0:  # 같은 페이지 재추출(더 이상 진행 안 됨) → 종료
             break
