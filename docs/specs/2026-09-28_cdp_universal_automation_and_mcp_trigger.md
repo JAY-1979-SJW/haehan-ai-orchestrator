@@ -322,8 +322,30 @@
      자동 스폰하는 건 별개의 구 스마트스토어 에이전트, `scripts/local_agent.py`), FastAPI 서버가
      재시작되면 인메모리 레지스트리가 초기화돼 재등록(`--register-with-code`)이 필요함 — 상시
      자동 기동·영속화는 다음 세션 후보로 남김(§10에 신규 항목 4로 추가).
-4. (신규, 2026-09-29) 로컬 에이전트(`local_agent/agent.py --run`)를 Electron 앱이 자동 스폰하지
-   않음 — 현재는 사람이 터미널에서 수동 기동. Electron의 `lib/agent.js`가 스폰하는
-   `scripts/local_agent.py`(스마트스토어 전용 구 에이전트)와 통합하거나, `lib/agent.js`가 이
-   에이전트도 함께 기동하도록 확장하는 게 다음 후보. 또한 FastAPI 재시작마다 인메모리
-   에이전트 레지스트리가 초기화되는 문제(영속화 없음)도 함께 검토 필요.
+4. ~~로컬 에이전트(`local_agent/agent.py --run`)를 Electron 앱이 자동 스폰하지 않음~~
+   **2026-09-29 완료.** 사용자 요청("자동으로 연결이 되게 해야 하고")으로 착수·완료:
+   - **서버 쪽 영속화**: `ai_orchestrator/local_agent_registry_common.py`에
+     `_save_agents_to_disk()`/`_load_agents_from_disk()` 추가 — 등록 정체성(agent_id/
+     token_hash 등, device_token 원문 제외)을 `data/local_agent_registry_state.json`에
+     저장. FastAPI 프로세스가 재시작돼도(이 세션에서 여러 번 발생) 인메모리 레지스트리가
+     디스크에서 복원돼 기존 에이전트가 재등록 없이 재인증됨. 부수 발견: pre-push AI 리뷰가
+     `_save_agents_to_disk()`의 락 없는 순회(경쟁조건)를 지적 — 수정하며 `cleanup_agent_and_
+     tasks()`가 이미 `_lock`을 쥔 채 호출하고 있어 그대로 락을 추가하면 교착이 났을 것(비
+     재진입 `threading.Lock`) — 함수 자체가 짧게 락을 잡아 스냅샷만 뜨고 파일 I/O는 락 밖에서
+     수행하도록 재설계, 호출부도 락 블록 밖으로 이동.
+   - **클라이언트 쪽 자동 등록**: `local_agent/agent.py`에 `--auto-connect` 플래그 추가 —
+     미등록(keyring에 device_token 없음)이면 `POST /api/v1/local-agents/registration-codes`를
+     인증 없이 호출해(AUTH_ENABLED=False 로컬 개발 서버 전제, `ai_orchestrator/gates/auth.py`
+     `get_current_user` 확인) 코드를 자동 발급받고 `--register-with-code`로 등록, 이미
+     등록돼 있으면 바로 `--run`과 동일하게 연결. 운영(AUTH_ENABLED=True) 서버에서는 자동
+     발급이 401로 실패하고 안내 메시지만 출력 — 안전하게 수동 등록으로 폴백.
+   - **Electron 자동 기동**: `admin-web/electron/lib/agent.js`에 `startMcpAgent()`/
+     `stopMcpAgent()` 추가 — 기존 `startAgent()`(스마트스토어 전용 구 에이전트,
+     `/smartstore/agent/ws`)와 완전히 별개 프로세스로 `local_agent.agent --auto-connect`
+     (`/local-agents/ws`)를 `HAEHAN_AGENT_WS_ENABLED=true`로 스폰. 패키징 빌드는 아직
+     미지원(별도 exe 번들 파이프라인 필요 — 개발 모드에서만 자동 기동, 로그로 명시).
+   - **실측 검증**: (1) 격리된 config 경로(`HAEHAN_AGENT_DESKTOP_CONFIG`)로 "완전 미등록"
+     상태를 재현해 `--auto-connect`가 등록코드 자동 발급→등록→WS `auth_ok`까지 성공 확인.
+     (2) Electron을 처음부터 재기동해 `[mcp-agent] 시작(auto-connect)` → `auth_ok` 로그로
+     자동 스폰 확인. (3) FastAPI를 재시작하고 **아무 조작도 없이** `GET /local-agents`로
+     `agent_status:"idle"`, `connected_at`이 재시작 직후 시각임을 확인(완전 자동 재연결).

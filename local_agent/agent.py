@@ -204,6 +204,58 @@ def cmd_register_with_code(*, server_url: str, registration_code: str, allow_pla
     return 0
 
 
+def cmd_auto_connect(*, server_url: str, allow_plaintext: bool = False) -> int:
+    """상태 확인 -> 미등록이면 등록코드 자동 발급+소비 -> WebSocket 세션 시작.
+
+    2026-09-29 추가: Electron(lib/agent.js) 등 자동 기동 경로 전용 — 사용자가 매번
+    수동으로 --register-with-code를 실행하지 않아도 되게 한다. 등록코드 발급은
+    AUTH_ENABLED=False(로컬 개발) 서버에서만 인증 없이 성공한다(ai_orchestrator/gates/
+    auth.py get_current_user 확인) — 운영(AUTH_ENABLED=True) 서버에서는 401로 실패하며,
+    그 경우 관리자가 수동으로 등록코드를 발급해 --register-with-code로 등록해야 한다.
+    이미 등록돼 있으면(keyring에 device_token 존재) 발급 자체를 시도하지 않고 바로
+    --run과 동일하게 동작한다.
+    """
+    if not server_url:
+        print("--server <URL> 이 필요합니다.", file=sys.stderr)
+        return 2
+
+    cfg = _desk_cfg.load_config()
+    already_registered = bool(
+        cfg.agent_id
+        and _token_store.has_device_token(server_url, cfg.agent_id, allow_plaintext_fallback=allow_plaintext)
+    )
+
+    if not already_registered:
+        host = platform.node()
+        try:
+            code_resp = _http_post(
+                f"{server_url.rstrip('/')}/api/v1/local-agents/registration-codes",
+                {
+                    "label": f"auto-{host}",
+                    "expires_in_minutes": 10,
+                    "allowed_actions": ["run_claude_agent"],
+                    "note": "local_agent --auto-connect 자동 발급",
+                },
+            )
+        except _urlerr.URLError as e:
+            print(
+                f"등록코드 자동 발급 실패({e}) — 운영 서버라면 관리자가 등록코드를 발급해 "
+                "--register-with-code로 등록해야 합니다.",
+                file=sys.stderr,
+            )
+            return 1
+        code = code_resp.get("registration_code", "")
+        if not code:
+            print("등록코드 발급 응답이 비었습니다.", file=sys.stderr)
+            return 1
+        rc = cmd_register_with_code(server_url=server_url, registration_code=code, allow_plaintext=allow_plaintext)
+        del code
+        if rc != 0:
+            return rc
+
+    return run_websocket(server_url=server_url, allow_plaintext=allow_plaintext)
+
+
 def cmd_status(*, server_url: str | None = None, allow_plaintext: bool = False) -> int:
     """--status — token 원문은 절대 출력하지 않는다."""
     cfg = _desk_cfg.load_config()
@@ -320,6 +372,11 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--run", action="store_true", help="WebSocket 세션 기동 (HAEHAN_AGENT_WS_ENABLED=true 필요)")
     p.add_argument("--once", action="store_true", help="WebSocket 1회 처리 후 종료 (--run의 단발 변형)")
     p.add_argument(
+        "--auto-connect",
+        action="store_true",
+        help="미등록이면 등록코드 자동 발급+등록 후 WebSocket 기동 (HAEHAN_AGENT_WS_ENABLED=true 필요, Electron 자동 기동 전용)",
+    )
+    p.add_argument(
         "--allow-plaintext-token-store",
         dest="allow_plaintext",
         action="store_true",
@@ -375,8 +432,12 @@ def main() -> int:
             os.environ.setdefault("HAEHAN_AGENT_WS_ONCE", "true")
         return run_websocket(server_url=server_arg or None, allow_plaintext=args.allow_plaintext)
 
+    if args.auto_connect:
+        return cmd_auto_connect(server_url=server_arg, allow_plaintext=args.allow_plaintext)
+
     print(
-        "사용법: python -m local_agent.agent --register-with-code <CODE> --server <URL> | --status | --run | --once",
+        "사용법: python -m local_agent.agent --register-with-code <CODE> --server <URL> | "
+        "--status | --run | --once | --auto-connect",
         file=sys.stderr,
     )
     return 2
