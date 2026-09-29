@@ -8,7 +8,16 @@ name: CI
 # (scripts/ops/verify_change.py — base/head를 같은 방식으로 재서 "기준 대비 새로 생긴
 # 문제"만 FAIL로 잡는다. 신선한 CI 환경에서 흔한 플레이키/외부서비스 실패를 base·head
 # 양쪽에서 동일하게 겪으므로 상쇄된다). win32com·uiautomation 등 Windows 전용 의존성 때문에
-# windows-latest 러너를 쓴다(Linux 러너에서는 import 단계부터 실패).
+# Windows 러너를 쓴다(Linux 러너에서는 import 단계부터 실패).
+#
+# 2026-09-29 추가: GitHub 결제 문제로 호스팅 러너(windows-latest)가 막혀
+# 자체 호스팅 러너(haehan-orchestrator-pc)로 전환(cad-program/g2b와 동일 조치,
+# self-hosted 러너는 저장소별로 각각 등록해야 함 — 공유 안 됨). actions/setup-python은
+# 이 PC의 self-hosted 러너에서 관리자 권한 필요 단계로 추정되어 응답 없이 멈출 수 있음
+# (cad-program 2026-09-29 실측) — 이 PC에 이미 설치된 py -3.14(CLAUDE.md 기본 버전)를
+# 그대로 쓰고 설치 단계를 생략한다. bare "python"은 PATH상 3.11을 가리켜(admin-web/
+# electron/lib/agent.js resolvePython(), docs/defect_index.json #78과 동일 사유) 매
+# 단계에서 명시적으로 py -3.14 를 쓴다.
 
 on:
   push:
@@ -19,7 +28,7 @@ on:
 
 jobs:
   verify:
-    runs-on: windows-latest
+    runs-on: [self-hosted, haehan-ai-orchestrator]
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -27,15 +36,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.14"
+      - name: Python 3.14 확인
+        run: py -3.14 --version
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          py -3.14 -m pip install --upgrade pip
+          py -3.14 -m pip install -r requirements.txt
 
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
@@ -45,11 +52,11 @@ jobs:
         # ci_layer_gate_check.py 가 CLAUDE.md "게이트 실행 의무"에 명시된 3개 지표만 판정한다.
         shell: bash
         run: |
-          python scripts/ops/codebase_layer_audit.py || true
-          python scripts/ops/ci_layer_gate_check.py
+          py -3.14 scripts/ops/codebase_layer_audit.py || true
+          py -3.14 scripts/ops/ci_layer_gate_check.py
 
       - name: Layer audit self-test
-        run: python -m pytest tests/test_codebase_layer_audit.py -q
+        run: py -3.14 -m pytest tests/test_codebase_layer_audit.py -q
 
       - name: Determine base/head refs
         id: refs
@@ -69,7 +76,7 @@ jobs:
 
       - name: Verify change (ruff + 영향 테스트 + 라우트/구조 대조, 기준 대비 새 문제만 FAIL)
         run: >
-          python scripts/ops/verify_change.py
+          py -3.14 scripts/ops/verify_change.py
           --base ${{ steps.refs.outputs.base }}
           --head ${{ steps.refs.outputs.head }}
           --json verify_change_result.json
