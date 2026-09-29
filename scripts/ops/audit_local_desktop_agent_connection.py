@@ -50,28 +50,16 @@ def _resolve(modname: str, sym: str):
         return None
 
 
-def judge_connection(
-    *,
-    e2e_results: dict | None = None,  # {register_ok, auth_ok, heartbeat_ok, bad_token_4401, reconnect_ok, ...}
-    token_leak_detected: bool = False,
-    proxy_doc_present: bool = False,
-    desktop_client_detected: bool = True,
-) -> ConnectionVerdict:
-    e2e = dict(e2e_results or {})
-    metrics = {
-        "e2e": e2e,
-        "token_leak_detected": token_leak_detected,
-        "proxy_doc_present": proxy_doc_present,
-        "desktop_client_detected": desktop_client_detected,
-    }
-
-    # FAIL — token leak
+def _check_token_leak(token_leak_detected: bool, metrics: dict) -> ConnectionVerdict | None:
     if token_leak_detected:
         return ConnectionVerdict(
             False, "FAIL_DEVICE_TOKEN_LEAK", reasons=["device_token surface detected"], metrics=metrics
         )
+    return None
 
-    # 서버 심볼 누락 → FAIL_REGISTRATION_FLOW_BROKEN / FAIL_WS_AUTH_BROKEN
+
+def _check_server_symbols(metrics: dict) -> ConnectionVerdict | None:
+    # 서버 심볼 누락 → FAIL_REGISTRATION_FLOW_BROKEN
     missing_server = [f"{m}.{s}" for m, s in _SERVER_REQUIRED if _resolve(m, s) is None]
     if missing_server:
         return ConnectionVerdict(
@@ -80,7 +68,10 @@ def judge_connection(
             reasons=[f"missing_server_symbols:{missing_server[:5]}"],
             metrics=metrics,
         )
+    return None
 
+
+def _check_client_symbols(metrics: dict) -> ConnectionVerdict | None:
     missing_client = [f"{m}.{s}" for m, s in _CLIENT_REQUIRED if _resolve(m, s) is None]
     if missing_client:
         return ConnectionVerdict(
@@ -89,8 +80,10 @@ def judge_connection(
             reasons=[f"missing_client_symbols:{missing_client[:5]}"],
             metrics=metrics,
         )
+    return None
 
-    # E2E 결과 평가
+
+def _check_e2e_results(e2e: dict, metrics: dict) -> ConnectionVerdict | None:
     if e2e.get("register_ok") is False:
         return ConnectionVerdict(False, "FAIL_REGISTRATION_FLOW_BROKEN", reasons=["register_ok=False"], metrics=metrics)
     if e2e.get("auth_ok") is False:
@@ -99,8 +92,12 @@ def judge_connection(
         return ConnectionVerdict(False, "FAIL_HEARTBEAT_BROKEN", reasons=["heartbeat_ok=False"], metrics=metrics)
     if e2e.get("reconnect_ok") is False:
         return ConnectionVerdict(False, "FAIL_RECONNECT_BROKEN", reasons=["reconnect_ok=False"], metrics=metrics)
+    return None
 
-    # WARN
+
+def _check_warnings(
+    e2e: dict, desktop_client_detected: bool, proxy_doc_present: bool, metrics: dict
+) -> ConnectionVerdict | None:
     if not desktop_client_detected:
         return ConnectionVerdict(
             False, "WARN_DESKTOP_CLIENT_NOT_FOUND", reasons=["desktop installer code not located"], metrics=metrics
@@ -113,6 +110,41 @@ def judge_connection(
         return ConnectionVerdict(
             False, "WARN_INSTALLER_FLOW_INCOMPLETE", reasons=["e2e results partial"], metrics=metrics
         )
+    return None
+
+
+def judge_connection(
+    *,
+    e2e_results: dict | None = None,  # {register_ok, auth_ok, heartbeat_ok, bad_token_4401, reconnect_ok, ...}
+    token_leak_detected: bool = False,
+    proxy_doc_present: bool = False,
+    desktop_client_detected: bool = True,
+) -> ConnectionVerdict:
+    # 2026-09-29 STD-08(복잡도) 리팩터: 각 FAIL/WARN 게이트를 _check_*(...) -> Verdict|None
+    # 함수로 분리 — 첫 실패에서 즉시 반환하는 원본 의미론 그대로(#64 와 동일 패턴).
+    e2e = dict(e2e_results or {})
+    metrics = {
+        "e2e": e2e,
+        "token_leak_detected": token_leak_detected,
+        "proxy_doc_present": proxy_doc_present,
+        "desktop_client_detected": desktop_client_detected,
+    }
+
+    result = _check_token_leak(token_leak_detected, metrics)
+    if result:
+        return result
+    result = _check_server_symbols(metrics)
+    if result:
+        return result
+    result = _check_client_symbols(metrics)
+    if result:
+        return result
+    result = _check_e2e_results(e2e, metrics)
+    if result:
+        return result
+    result = _check_warnings(e2e, desktop_client_detected, proxy_doc_present, metrics)
+    if result:
+        return result
 
     return ConnectionVerdict(True, "PASS_LOCAL_DESKTOP_AGENT_CONNECTION_REPAIR", reasons=[], metrics=metrics)
 
