@@ -260,7 +260,8 @@
       ],
       "evidence": "기본값 '' vs 'http://127.0.0.1:8400'",
       "stage": "B",
-      "status": "open"
+      "status": "fixed",
+      "fix_note": "2026-09-30: 사용자 질문(\"포트 주소를 남는건 자동 탐지해서 쓰게 하는 방법 없나?\")으로 근본까지 조사 -> \"단일 소스\"여야 할 ai_orchestrator/config.py의 APP_PORT 기본값 자체가 8400(실제 운영 8401)이었음이 진짜 근본원인 -> 8401로 수정. 추가로 자동탐지 계층 신설: ai_orchestrator/server.py lifespan()이 기동 시 실제 host:port를 data/runtime/server_info.json에 기록, local_agent/config.py의 _discover_server_base_url()이 HAEHAN_AGENT_SERVER 환경변수 > 자동탐지 파일 > 하드코딩 기본값(8401) 순으로 결정. host=0.0.0.0 -> 127.0.0.1 접속주소 변환도 처리. 검증: 4개 시나리오(파일없음/자동탐지/환경변수우선/0.0.0.0변환) 전부 통과, gitignore로 discovery 파일 보호 확인, layer_audit 3종 0, quality_gate 통과."
     },
     {
       "no": 19,
