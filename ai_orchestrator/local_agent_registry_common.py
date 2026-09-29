@@ -80,8 +80,16 @@ _REGISTRY_STATE_PATH = Path(__file__).resolve().parents[1] / "data" / "local_age
 
 
 def _save_agents_to_disk() -> None:
-    try:
-        _REGISTRY_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    """등록된 에이전트 정체성을 디스크에 저장.
+
+    2026-09-29 pre-push AI 리뷰 지적 반영: 처음엔 _lock 없이 _agents.items()를 순회해
+    동시 수정(register_agent/cleanup_agent_and_tasks) 중 경쟁 가능성이 있었다. _lock은
+    재진입 불가(threading.Lock)라 "락을 쥔 채로 이 함수를 부르는" 설계는 데드락 위험이 —
+    그래서 이 함수 자체가 짧게 락을 잡아 스냅샷만 뜨고, 실제 파일 I/O(느릴 수 있음)는
+    락 밖에서 수행한다. 호출부(register_agent/cleanup_agent_and_tasks)는 반드시 자신의
+    with _lock 블록을 벗어난 뒤에 이 함수를 불러야 한다(안 그러면 아래 with _lock에서 교착).
+    """
+    with _lock:
         payload = {
             aid: {
                 "agent_id": a.agent_id,
@@ -95,6 +103,8 @@ def _save_agents_to_disk() -> None:
             }
             for aid, a in _agents.items()
         }
+    try:
+        _REGISTRY_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
         tmp = _REGISTRY_STATE_PATH.with_suffix(".tmp")
         tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         tmp.replace(_REGISTRY_STATE_PATH)
