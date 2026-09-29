@@ -1,9 +1,11 @@
 """Gmail 엔드포인트 (/api/v1/gmail/*).
 
-- GET  /inbox        : Gmail API 수신 (OAuth2 credentials 필요)
-- POST /collect      : 최근 메일 inbox 저장
-- POST /compose      : Gmail 웹 작성 (브라우저 자동화, dry_run 지원)
-- POST /send         : 발송 (confirmed=True 필수)
+- GET  /inbox           : Gmail API 수신 (OAuth2 credentials 필요)
+- POST /collect         : 최근 메일 inbox 저장
+- POST /compose         : Gmail 웹 작성 (브라우저 자동화, dry_run 지원)
+- POST /reply           : 특정 메일에 회신 초안 작성 (dry_run 지원)
+- POST /ai-draft-unread : 안 읽은 메일을 AI(헤드리스 Claude Code)로 요약+회신초안 생성 (읽기전용)
+- POST /send            : 발송 (confirmed=True 필수, /compose 또는 /reply 다음에 호출)
 """
 
 from __future__ import annotations
@@ -33,6 +35,17 @@ class GmailComposeRequest(BaseModel):
 
 class GmailSendRequest(BaseModel):
     confirmed: bool = False
+
+
+class GmailReplyRequest(BaseModel):
+    mail_index: int
+    body: str
+    reply_all: bool = False
+    dry_run: bool = True
+
+
+class GmailAiDraftRequest(BaseModel):
+    limit: int = 5  # 처리할 안읽은 메일 수 상한(응답 파싱 안정성을 위해 작게 유지)
 
 
 @gmail_router.get("/inbox")
@@ -146,6 +159,160 @@ def api_compose(
     except Exception as e:
         logger.exception("gmail compose error")
         raise HTTPException(status_code=500, detail=f"Gmail 작성 실패: {e}")
+
+
+@gmail_router.post("/reply")
+def api_reply(
+    req: GmailReplyRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """특정 메일(mail_index, /ai-draft-unread 또는 GmailAPI.list_inbox 기준)에 회신 초안
+    작성. dry_run=True(기본)면 브라우저 미실행. 실제 발송은 이 다음에 /send(confirmed=True)
+    별도 호출 필요 — 이 엔드포인트 자체는 발송하지 않는다(GmailAPI.reply는 초안만 채움)."""
+    log_event(
+        "GMAIL_REPLY_REQUESTED",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok" if req.dry_run else "pending_browser",
+        note=f"mail_index={req.mail_index} dry_run={req.dry_run}",
+    )
+
+    if req.dry_run:
+        return {
+            "ok": True,
+            "dry_run": True,
+            "mail_index": req.mail_index,
+            "body_preview": req.body[:200],
+            "detail": "dry_run=True: 실행하려면 dry_run=False로 재요청",
+            "requires_send_approval": True,
+        }
+
+    try:
+        from scripts.google.gmail_api import GmailAPI
+        from scripts.web_connector import get_page, run_on_browser_thread
+
+        result = run_on_browser_thread(
+            lambda: GmailAPI(get_page()).reply(req.mail_index, req.body, req.reply_all),
+            timeout=60,
+        )
+        if not result.get("ok"):
+            raise HTTPException(status_code=500, detail=f"회신 초안 작성 실패: {result.get('error')}")
+        return {
+            "ok": True,
+            "dry_run": False,
+            "mail_index": req.mail_index,
+            "detail": "회신 초안 작성 완료 (발송하려면 /send 호출)",
+            "requires_send_approval": True,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("gmail reply error")
+        raise HTTPException(status_code=500, detail=f"Gmail 회신 실패: {e}")
+
+
+@gmail_router.post("/ai-draft-unread")
+def api_ai_draft_unread(
+    req: GmailAiDraftRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """안 읽은 메일을 읽어 AI(run_claude_agent, 헤드리스 Claude Code)로 요약+회신초안 생성.
+
+    읽기전용 — 이 엔드포인트는 발송 능력이 전혀 없다(local_agent.actions.action_run_claude_agent
+    를 allowed_tools 없이 호출해 순수 텍스트 생성만 시킨다 — MCP 도구 호출 자체가 불가능한
+    구조적 안전장치, 프롬프트 준수에 기대지 않음). 결과 초안은 /reply(dry_run) 로 미리보기 후
+    /send(confirmed=True) 를 사람이 별도로 눌러야 실제 발송된다.
+    """
+    limit = max(1, min(req.limit, 10))
+    t0 = time.monotonic()
+
+    try:
+        from scripts.google.gmail_api import GmailAPI
+        from scripts.web_connector import get_page, run_on_browser_thread
+
+        def _collect() -> list[dict]:
+            g = GmailAPI(get_page())
+            rows = g.list_inbox(limit=30)
+            unread_rows = [r for r in rows if r.get("unread")][:limit]
+            collected = []
+            for r in unread_rows:
+                detail = g.read(r["index"])
+                if detail.get("ok"):
+                    collected.append(
+                        {
+                            "mail_index": r["index"],
+                            "from": detail.get("sender_preview") or r.get("from_preview", ""),
+                            "subject": detail.get("subject_preview") or r.get("subject_preview", ""),
+                            "body": detail.get("body_preview", ""),
+                        }
+                    )
+            return collected
+
+        mails = run_on_browser_thread(_collect, timeout=120)
+    except Exception as e:
+        logger.exception("gmail ai-draft collect error")
+        raise HTTPException(status_code=500, detail=f"메일 수집 오류: {e}")
+
+    if not mails:
+        return {"ok": True, "items": [], "count": 0, "duration_ms": int((time.monotonic() - t0) * 1000)}
+
+    import json as _json
+
+    from local_agent.actions import action_run_claude_agent
+
+    mail_block = "\n\n".join(
+        f"[{m['mail_index']}] 발신: {m['from']}\n제목: {m['subject']}\n본문: {m['body'][:600]}" for m in mails
+    )
+    prompt = (
+        "다음은 Gmail 안 읽은 메일 목록이다. 각 메일에 대해 1) 한국어 한 줄 요약, "
+        "2) 회신이 필요한지(needs_reply), 3) 필요하면 정중한 한국어 회신 초안(3~5문장)을 작성해라. "
+        "광고/뉴스레터/알림성 메일은 needs_reply=false, draft_reply는 빈 문자열로. "
+        "다른 설명 없이 아래 JSON 배열 형식으로만 답하라(마크다운 코드블록 금지):\n"
+        '[{"mail_index": 0, "summary": "...", "needs_reply": true, "draft_reply": "..."}]\n\n'
+        f"{mail_block}"
+    )
+
+    result = action_run_claude_agent({"prompt": prompt, "timeout": 180, "max_budget_usd": 1.0})
+    if not result.success:
+        raise HTTPException(status_code=502, detail=f"AI 초안 생성 실패: {result.error}")
+
+    raw = result.data.get("result", "")
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.strip("`")
+        cleaned = cleaned[cleaned.find("[") : cleaned.rfind("]") + 1]
+    try:
+        drafts = _json.loads(cleaned)
+    except _json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail=f"AI 응답 파싱 실패: {raw[:200]}")
+
+    by_index = {m["mail_index"]: m for m in mails}
+    items = []
+    for d in drafts if isinstance(drafts, list) else []:
+        idx = d.get("mail_index")
+        base = by_index.get(idx, {})
+        items.append(
+            {
+                "mail_index": idx,
+                "from": base.get("from", ""),
+                "subject": base.get("subject", ""),
+                "summary": d.get("summary", ""),
+                "needs_reply": bool(d.get("needs_reply")),
+                "draft_reply": d.get("draft_reply", ""),
+            }
+        )
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "GMAIL_AI_DRAFT_UNREAD",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"count={len(items)} duration_ms={duration_ms} cost_usd={result.data.get('cost_usd')}",
+    )
+    return {"ok": True, "items": items, "count": len(items), "duration_ms": duration_ms}
 
 
 @gmail_router.post("/send")

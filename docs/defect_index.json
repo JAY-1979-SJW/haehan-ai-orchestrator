@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 85,
+  "next_no": 86,
   "items": [
     {
       "no": 1,
@@ -1132,6 +1132,17 @@
       "stage": "RUN",
       "status": "fixed",
       "no": 84
+    },
+    {
+      "no": 85,
+      "id": "GMAIL-READ-SENDER-UNSCOPED-QUERYSELECTOR-BUG",
+      "category": 1,
+      "title": "GmailAPI.read()의 sender_preview가 항상 받은편지함 목록 첫 행 발신자로 고정되던 버그",
+      "where": "scripts/google/gmail_api.py",
+      "evidence": "메일 AI 비서(/gmail/ai-draft-unread) 실측 검증 중 발견: 서로 다른 메일 3건을 read()해도 sender_preview가 전부 'Anthropic'으로 동일하게 나옴. 원인: document.querySelector('[email], .gD') 가 document 전체를 스코프 없이 검색해 열린 메일이 아니라 받은편지함 목록의 첫 행(다른 메일)의 [email] 요소를 항상 먼저 매칭(DOM에 목록이 뒤에 계속 남아있음). subject/body는 이미 올바른 셀렉터로 정상 동작 확인됨(같은 열린메일 컨테이너 .adn.ads 안에서 스코프 확인).",
+      "fix_note": "sender 조회를 document.querySelector('.adn.ads')?.querySelector('[email], .gD') 로 스코프(열린 메일 컨테이너 안에서만 검색), 컨테이너 못 찾으면 기존 동작으로 폴백. 실측 재검증: 실제 브라우저 클릭으로 5건 서로 다른 발신자(Microsoft 계정 팀/Anthropic/Google Cloud Platform 등) 정확히 구분됨 확인.",
+      "stage": "RUN",
+      "status": "fixed"
     }
   ]
 }

@@ -141,8 +141,14 @@ class GmailAPI:
             time.sleep(2.5)
             data = self.page.evaluate(
                 """() => {
+                    // sender는 반드시 열린 메일 컨테이너(.adn.ads) 안에서만 찾는다 —
+                    // 스코프 없이 document 전체에서 [email]을 찾으면(구 코드) 받은편지함
+                    // 목록의 첫 행(다른 메일)의 발신자를 항상 잘못 집어온다(2026-09-29
+                    // 실측 확인: 3개 메일을 read()해도 sender_preview가 매번 목록 첫
+                    // 행 발신자로 고정됨).
+                    const openMsg = document.querySelector('.adn.ads');
                     const subj = document.querySelector('h2[data-thread-perm-id], h2.hP')?.innerText || '';
-                    const sender = document.querySelector('[email], .gD')?.innerText || '';
+                    const sender = (openMsg?.querySelector('[email], .gD') || document.querySelector('[email], .gD'))?.innerText || '';
                     const body = document.querySelector('[role="article"] [dir="ltr"], .a3s')?.innerText || '';
                     return {
                         subject_preview: subj.slice(0, 120),
