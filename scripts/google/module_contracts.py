@@ -1,8 +1,8 @@
 """Locked Google module ownership and implementation contracts."""
+
 from __future__ import annotations
 
 from typing import Any
-
 
 GOOGLE_TOP_MODULE = {
     "key": "google_manager",
@@ -104,7 +104,7 @@ SURFACE_IMPLEMENTATION_MODULES: dict[str, str] = {
     "cloud_sql": "scripts.google.cloud.sql",
     "pubsub": "scripts.google.cloud.pubsub",
     "secret_manager": "scripts.google.cloud.secret_manager",
-    "cloud_logging": "scripts.google.cloud.logging",
+    "cloud_logging": "scripts.google.cloud.cloud_logging_catalog",
     "cloud_monitoring": "scripts.google.cloud.monitoring",
     "youtube": "scripts.google.youtube.search",
     "youtube_studio": "scripts.google.youtube_upload",

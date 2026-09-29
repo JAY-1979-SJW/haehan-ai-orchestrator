@@ -243,6 +243,49 @@ def get_fallback_message() -> dict[str, Any]:
     }
 
 
+_MAIL_SAFE_TITLE = "새 메일이 도착했습니다"
+_MAIL_SAFE_BODY = "메일함에서 직접 확인해 주세요."
+
+
+def notify_new_mail(sender: str = "", subject: str = "", count: int = 1) -> dict[str, Any]:
+    """
+    새 메일 도착 알림을 발송하는 편의 함수.
+
+    send_notification()의 안전 문구는 "인증 필요" 알림 전용이라 그대로 못 쓴다
+    (민감어 필터에 걸리면 엉뚱하게 "인증이 필요합니다"로 바뀜) — 메일 알림은
+    자체적으로 발신자/제목만 짧게 보여주고, 민감해 보이면 제목·발신자를 아예
+    빼고 개수만 알린다(2026-09-29, docs/specs 메일 알림 기준서).
+
+    실패해도 작업은 계속된다 (WARN 처리, notify_auth_required와 동일한 관례).
+    """
+    if count > 1:
+        title = f"새 메일 {count}건 도착"
+        body = _MAIL_SAFE_BODY
+    else:
+        safe_sender = (sender or "").strip()[:60]
+        safe_subject = (subject or "").strip().replace("\n", " ")[:120]
+        if safe_sender and safe_subject and not _contains_sensitive(f"{safe_sender} {safe_subject}"):
+            title = "새 메일이 도착했습니다"
+            body = f"{safe_sender}: {safe_subject}"
+        else:
+            title = _MAIL_SAFE_TITLE
+            body = _MAIL_SAFE_BODY
+
+    status = _try_send_os_notification(title, body)
+
+    if status in (NOTIFICATION_UNAVAILABLE, NOTIFICATION_FAILED):
+        fallback = get_fallback_message()
+        return {
+            "status": FALLBACK_MESSAGE_ONLY,
+            "title_used": title,
+            "message_used": body,
+            "fallback_used": True,
+            "fallback_message": fallback["message_used"],
+        }
+
+    return {"status": status, "title_used": title, "message_used": body}
+
+
 def notify_auth_required(auth_signal: str = "") -> dict[str, Any]:
     """
     인증 필요 알림을 발송하는 편의 함수.
