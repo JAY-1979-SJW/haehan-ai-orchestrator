@@ -14,7 +14,10 @@ from dataclasses import dataclass, field
 from playwright.async_api import Locator, Page, async_playwright
 
 BASE = "http://127.0.0.1:3000"
-SS_DIR = pathlib.Path("C:/work/01. haehan-ai-orchestrator/data/e2e_report")
+# 저장소 루트 기준 상대경로(2026-09-29 defect: 하드코딩된 구 경로 C:/work/... 가 이미
+# 이 PC에서도 깨져 있었음 — 프로젝트가 C:\Users\skyjw\claude-dev-handoff\... 로 이동됨).
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+SS_DIR = ROOT / "data" / "e2e_report"
 SS_DIR.mkdir(parents=True, exist_ok=True)
 REPORT = SS_DIR / "report.json"
 
