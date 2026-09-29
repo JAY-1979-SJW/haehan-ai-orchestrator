@@ -2,6 +2,12 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<!-- 2026-09-29 electron-verifier 검증(FAIL) 대응: 이 창엔 원격/신뢰 안 된 콘텐츠가 직접
+     로드되지 않지만(항상 SERVER + "/" 로만 이동, 실제 콘텐츠는 <webview> 안에서 격리됨),
+     Electron 공식 체크리스트 6번이 모든 창에 CSP를 요구한다. object-src 'none' + 자기 자신
+     외 스크립트/스타일 금지. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none';">
+<title>Haehan AI</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   /* head/style/script 가 텍스트로 렌더되던 문제 방지 — UA display:none 강제 보장 */
@@ -27,14 +33,11 @@
   // 초기 로드 — Next.js 메인 페이지
   view.src = SERVER + "/";
 
-  // 서버 내부 링크는 webview 안에서, 외부 링크는 시스템 브라우저로
-  view.addEventListener("new-window", (e) => {
-    if (e.url.startsWith(SERVER)) {
-      view.src = e.url;
-    } else {
-      require("electron").shell.openExternal(e.url);
-    }
-  });
+  // 2026-09-29: 팝업/외부링크 분기(구 new-window 이벤트)는 메인 프로세스로 이동했다
+  // (main.js의 app.on("web-contents-created", ...)) — 이 창은 nodeIntegration:false라
+  // require가 없어 여기서 직접 shell.openExternal을 부르면 항상 ReferenceError였다
+  // (electron-verifier 검증 실측 발견). will-navigate(같은 탭 이동) 가드도 같은 곳에서
+  // 함께 처리한다.
 
   // YouTube 토큰 상태 확인 (트레이 메뉴 연동용)
   fetch(SERVER + "/api/v1/oauth/youtube/status", {

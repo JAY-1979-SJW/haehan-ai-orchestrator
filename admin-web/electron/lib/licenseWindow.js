@@ -22,6 +22,9 @@ function createLicenseWindow() {
 <html>
 <head>
 <meta charset="utf-8">
+<title>Haehan AI — 라이선스 입력</title>
+<!-- 2026-09-29 electron-verifier 검증(FAIL) 대응: 공식 체크리스트 6번(CSP) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none';">
 <style>
   * { box-sizing: border-box; font-family: -apple-system, 'Malgun Gothic', sans-serif; margin: 0; }
   body { background: #F9FAFB; display: flex; align-items: center; justify-content: center; height: 100vh; }

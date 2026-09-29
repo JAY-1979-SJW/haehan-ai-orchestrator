@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 82,
+  "next_no": 85,
   "items": [
     {
       "no": 1,
@@ -1099,6 +1099,39 @@
       "fix_note": "커스텀 shell 절대경로 지정을 되돌리고(shell: bash 로 복원), 대신 잡 초반에 GITHUB_PATH 파일에 Git Bash 폴더(C:\\Program Files\\Git\\usr\\bin)를 추가하는 GitHub Actions 공식 메커니즘 사용 — 이후 모든 shell: bash 스텝이 PATH 우선순위로 Git Bash를 찾는다(WSL 스텁보다 앞섬). 공백 포함 경로를 YAML 커스텀 shell 필드에 직접 넣는 방식은 이 self-hosted 러너에서 신뢰 불가로 확인, 재발 방지로 기록.",
       "stage": "RUN",
       "status": "fixed"
+    },
+    {
+      "id": "ELECTRON-WEBVIEW-NAVIGATION-GUARD-MISSING",
+      "category": 1,
+      "title": "Electron webview에 will-navigate 가드 부재 + 외부링크 방어 코드가 require() 미존재로 죽어있던 버그",
+      "where": "admin-web/electron/main.js, admin-web/electron/shell.html",
+      "evidence": "electron-verifier 서브에이전트 검증(공식 Electron 보안 체크리스트): (1) FAIL — <webview>(shell.html) 에 will-navigate 가드가 없어, 내부 콘텐츠의 오픈리다이렉트 등으로 SERVER_URL 밖으로 같은 탭 이동 시 webview_preload.js가 노출한 window.haehanLocal(사이트 설정 변경, 파일 선택 등)이 그 외부 오리진에서도 계속 접근 가능. (2) FAIL(실측 버그) — shell.html:35 require('electron').shell.openExternal(...) 가 nodeIntegration:false 창에서 실행돼 항상 ReferenceError, '외부링크는 시스템브라우저로' 방어가 죽은 코드였음.",
+      "fix_note": "main.js에 app.on('web-contents-created', ...) + contents.getType()==='webview' 필터로 메인 프로세스에서 setWindowOpenHandler(팝업)와 will-navigate(같은탭이동) 둘 다 처리(Electron 공식 권고 위치) — SERVER_URL 밖이면 차단+shell.openExternal, 내부면 기존 동작대로 webview 자신을 이동(contents.loadURL). shell.html의 죽은 new-window 렌더러 코드 제거. 실측 검증: electron . 로 실제 앱 기동, CDP(9333)로 main/webview 둘 다 정상 로드 확인(webview가 실제 Next.js 콘텐츠 표시).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 82
+    },
+    {
+      "id": "ELECTRON-MISSING-CSP",
+      "category": 1,
+      "title": "Electron 창(shell.html, 라이선스 창) 어디에도 CSP 없음",
+      "where": "admin-web/electron/shell.html, admin-web/electron/lib/licenseWindow.js",
+      "evidence": "electron-verifier 검증 FAIL — 공식 체크리스트 6번(CSP) 미충족, 두 창 모두 해당.",
+      "fix_note": "두 창 모두 Content-Security-Policy meta 태그 추가(default-src 'self'/'none' + object-src 'none' + base-uri 'none'). shell.html은 부수적으로 <title> 도 없어서 (html-validate 실측 pre-existing 확인) 같이 추가.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 83
+    },
+    {
+      "id": "ELECTRON-IPC-VALIDATION-AND-PERMISSION-HANDLER",
+      "category": 1,
+      "title": "IPC 입력 검증 일관성 부족 + 권한 요청 핸들러 미설정(암묵적 기본값 의존)",
+      "where": "admin-web/electron/main.js, admin-web/electron/lib/config.js",
+      "evidence": "electron-verifier 검증 WARN 2건: (1) getSiteSettings(siteId) 타입 검증 없음(setSiteSettings는 있음, 비일관), (2) license-submit의 key를 타입검증 없이 바로 verifyLicense(URL 조각으로 사용)에 전달, (3) CONDITIONAL — session.setPermissionRequestHandler 미설정, Electron 버전별 기본 동작에 암묵 의존(공식 체크리스트 9번).",
+      "fix_note": "getSiteSettings에 setSiteSettings와 동일한 타입 가드 추가. license-submit 핸들러에 key 타입/길이 검증 추가(실패 시 license-error). session.defaultSession +session.fromPartition('persist:haehan') 양쪽에 setPermissionRequestHandler로 전부 deny(카메라/마이크/알림 등 이 앱은 필요 없음). 실측 검증: electron . 재기동 후 YouTube OAuth 등 기존 흐름에 영향 없이 정상 로드 확인.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 84
     }
   ]
 }
