@@ -43,8 +43,8 @@ def _stage3_tfidf(articles: list[dict], classified: list[dict]) -> list[dict]:
     """Stage 3: TF-IDF 코사인 유사도로 미분류 보완."""
     try:
         import numpy as np
-        from sklearn.feature_extraction.text import (
-            TfidfVectorizer,  # type: ignore[import-not-found]  # 선택적 무거운 의존성(docs_registry.toml 등록)
+        from sklearn.feature_extraction.text import (  # type: ignore[import-not-found]  # 선택적 무거운 의존성(docs_registry.toml 등록)
+            TfidfVectorizer,
         )
         from sklearn.metrics.pairwise import cosine_similarity  # type: ignore[import-not-found]
     except Exception:  # noqa: BLE001 - sklearn 미설치/로드 실패시 TF-IDF 보완단계만 생략하고 이미 분류된 결과를 그대로 반환 — 읽기전용 분석

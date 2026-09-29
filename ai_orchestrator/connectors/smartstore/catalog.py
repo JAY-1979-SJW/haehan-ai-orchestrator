@@ -116,8 +116,8 @@ def api_product_form_fields(user: dict = Depends(require_role("admin", "owner"))
     sys.path.insert(0, str(ROOT))
     required, optional = REQUIRED_FIELDS, OPTIONAL_FIELDS
     try:
-        from scripts.naver.smartstore.product.models import (
-            OPTIONAL_FIELDS as OF,  # type: ignore[attr-defined]  # 실제 없음(2026-09-29 defect_index #39 확인) — 바로 아래 except ImportError 로 안전하게 fallback, 조용한 저하로 남겨둠(저우선순위)
+        from scripts.naver.smartstore.product.models import (  # type: ignore[attr-defined]  # 실제 없음(2026-09-29 defect_index #39 확인) — 바로 아래 except ImportError 로 안전하게 fallback, 조용한 저하로 남겨둠(저우선순위)
+            OPTIONAL_FIELDS as OF,
         )
         from scripts.naver.smartstore.product.models import REQUIRED_FIELDS as RF  # type: ignore[attr-defined]
 

@@ -14,4 +14,16 @@ result = subprocess.run(
     [sys.executable, str(ROOT / "scripts" / "ops" / "ai_code_review_gate.py")],
     cwd=str(ROOT),
 )
-sys.exit(result.returncode)
+if result.returncode != 0:
+    sys.exit(result.returncode)
+
+# audit-kit std --fail-on critical (2026-09-29 defect_index #41 — 618건 정리 후 편입).
+# audit-kit 자체의 `pre-push` 서브커맨드(pytest 전체 + std)는 안 쓴다 — 이 프로젝트는
+# 전체 pytest 가 tests/test_local_agent_installer_package.py 에서 멈추는 기존 결함이
+# 있어(CLAUDE.md "반복 실수" 항목) std 만 별도로 부른다. audit_kit 은 전역 editable
+# 설치라 이 스크립트의 실행 파이썬(sys.executable)에서 바로 import 가능.
+audit_result = subprocess.run(
+    [sys.executable, "-m", "audit_kit", "std", "--path", str(ROOT), "--solo", "--fail-on", "critical"],
+    cwd=str(ROOT),
+)
+sys.exit(audit_result.returncode)
