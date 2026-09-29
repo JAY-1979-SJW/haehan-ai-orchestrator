@@ -79,39 +79,36 @@ def _check_forbidden(d: dict) -> list[str]:
     return found
 
 
-def run_audit() -> dict[str, Any]:
-    results: list[dict[str, Any]] = []
+def _item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
+    meta = next(c for c in CHECKLIST if c["id"] == cid)
+    return {
+        "id": cid,
+        "title": meta["title"],
+        "required": meta["required"],
+        "status": status,
+        "evidence": evidence,
+        "details": details or {},
+    }
 
-    def item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
-        meta = next(c for c in CHECKLIST if c["id"] == cid)
-        return {
-            "id": cid,
-            "title": meta["title"],
-            "required": meta["required"],
-            "status": status,
-            "evidence": evidence,
-            "details": details or {},
-        }
 
-    # eb-01: get_all_bridges 존재
-    adapters_mod = None
-    bridges = []
+def _import_bridges() -> tuple[list, dict]:
     try:
         adapters_mod = importlib.import_module("ai_orchestrator.domain.model_adapters")
         fn = getattr(adapters_mod, "get_all_bridges", None)
-        if fn:
-            bridges = fn()
-            results.append(item("eb-01", "PASS", f"get_all_bridges 존재, count={len(bridges)}"))
-        else:
-            results.append(item("eb-01", "FAIL", "get_all_bridges 없음"))
+        if not fn:
+            return [], _item("eb-01", "FAIL", "get_all_bridges 없음")
+        bridges = fn()
+        return bridges, _item("eb-01", "PASS", f"get_all_bridges 존재, count={len(bridges)}")
     except Exception as e:  # noqa: BLE001 - 브릿지/핸드오프 모듈 조회 실패를 FAIL 항목으로 명시 기록하는 감사 스크립트 — 성공 위장 없음, 읽기전용
-        results.append(item("eb-01", "FAIL", str(e)))
+        return [], _item("eb-01", "FAIL", str(e))
 
-    # eb-02: 6개
-    results.append(item("eb-02", "PASS" if len(bridges) >= 6 else "FAIL", f"bridge 수={len(bridges)}/6"))
 
-    # eb-03~08: 개별 app_type 존재
-    app_type_map = {b.app_type: b for b in bridges}
+def _check_bridge_count(bridges: list) -> dict:
+    return _item("eb-02", "PASS" if len(bridges) >= 6 else "FAIL", f"bridge 수={len(bridges)}/6")
+
+
+def _check_app_types_present(app_type_map: dict) -> list[dict]:
+    results = []
     for cid, app_type in [
         ("eb-03", "CAD"),
         ("eb-04", "HWPX"),
@@ -121,151 +118,167 @@ def run_audit() -> dict[str, Any]:
         ("eb-08", "DOCUMENT_AUTOMATION"),
     ]:
         found = app_type in app_type_map
-        results.append(item(cid, "PASS" if found else "FAIL", f"{app_type}: {'found' if found else 'not found'}"))
+        results.append(_item(cid, "PASS" if found else "FAIL", f"{app_type}: {'found' if found else 'not found'}"))
+    return results
 
-    # eb-09: approval_required=True
+
+def _check_all_approval_required(bridges: list) -> dict:
     not_approved = [b.bridge_id for b in bridges if not b.approval_required]
-    results.append(
-        item(
-            "eb-09",
-            "PASS" if not not_approved else "FAIL",
-            f"approval_required=False: {not_approved}" if not_approved else "전체 승인 필요",
-        )
+    return _item(
+        "eb-09",
+        "PASS" if not not_approved else "FAIL",
+        f"approval_required=False: {not_approved}" if not_approved else "전체 승인 필요",
     )
 
-    # eb-10: is_implemented=False
+
+def _check_none_implemented(bridges: list) -> dict:
     implemented = [b.bridge_id for b in bridges if b.is_implemented()]
-    results.append(
-        item(
-            "eb-10",
-            "PASS" if not implemented else "FAIL",
-            f"is_implemented=True: {implemented}" if implemented else "전체 미구현 상태",
-        )
+    return _item(
+        "eb-10",
+        "PASS" if not implemented else "FAIL",
+        f"is_implemented=True: {implemented}" if implemented else "전체 미구현 상태",
     )
 
-    # eb-11: LOCAL_AGENT_REQUIRED
+
+def _check_local_agent_required(bridges: list) -> dict:
     violations = [
         b.bridge_id
         for b in bridges
         if b.app_type in LOCAL_AGENT_TYPES and "LOCAL_AGENT_REQUIRED" not in b.execution_location
     ]
-    results.append(
-        item(
-            "eb-11",
-            "PASS" if not violations else "FAIL",
-            f"위반: {violations}" if violations else "LOCAL_AGENT_REQUIRED 확인",
-        )
+    return _item(
+        "eb-11",
+        "PASS" if not violations else "FAIL",
+        f"위반: {violations}" if violations else "LOCAL_AGENT_REQUIRED 확인",
     )
 
-    # eb-12: USER_DIRECT_REQUIRED
+
+def _check_user_direct_required(bridges: list) -> dict:
     violations2 = [
         b.bridge_id
         for b in bridges
         if b.app_type in USER_DIRECT_TYPES and "USER_DIRECT_REQUIRED" not in b.execution_location
     ]
-    results.append(
-        item(
-            "eb-12",
-            "PASS" if not violations2 else "FAIL",
-            f"위반: {violations2}" if violations2 else "USER_DIRECT_REQUIRED 확인",
-        )
+    return _item(
+        "eb-12",
+        "PASS" if not violations2 else "FAIL",
+        f"위반: {violations2}" if violations2 else "USER_DIRECT_REQUIRED 확인",
     )
 
-    # eb-13: BID no_bid_auto_execute
-    bid_bridge = app_type_map.get("BID")
-    if bid_bridge:
-        policy_str = " ".join(bid_bridge.safety_policy_ids)
-        has_no_bid = "no-bid-auto-execute" in policy_str or "no_bid_auto_execute" in policy_str
-        results.append(
-            item("eb-13", "PASS" if has_no_bid else "FAIL", f"safety_policy_ids={bid_bridge.safety_policy_ids}")
-        )
-    else:
-        results.append(item("eb-13", "FAIL", "BID bridge 없음"))
 
-    # eb-14~16: ExternalAppHandoff
+def _check_bid_no_auto_execute(app_type_map: dict) -> dict:
+    bid_bridge = app_type_map.get("BID")
+    if not bid_bridge:
+        return _item("eb-13", "FAIL", "BID bridge 없음")
+    policy_str = " ".join(bid_bridge.safety_policy_ids)
+    has_no_bid = "no-bid-auto-execute" in policy_str or "no_bid_auto_execute" in policy_str
+    return _item("eb-13", "PASS" if has_no_bid else "FAIL", f"safety_policy_ids={bid_bridge.safety_policy_ids}")
+
+
+def _check_external_app_handoff() -> list[dict]:
     try:
         hf_mod = importlib.import_module("ai_orchestrator.audit_evidence.models")
         hf_cls = getattr(hf_mod, "ExternalAppHandoff", None)
-        if hf_cls:
-            hf = hf_cls.create(
-                task_id="t_audit",
-                bridge_id="cad-bridge",
-                app_type="CAD",
-                handoff_mode="file_drop",
-                status="handoff_recorded",
-                approval_required=True,
-                user_direct_required=False,
-                input_artifact_refs=("ar_001",),
-                auto_execute_allowed=False,
-            )
-            results.append(item("eb-14", "PASS", f"status={hf.status}"))
-            results.append(
-                item(
-                    "eb-15",
-                    "PASS" if "ar_001" in hf.input_artifact_refs else "FAIL",
-                    f"input_artifact_refs={hf.input_artifact_refs}",
-                )
-            )
-            results.append(
-                item(
-                    "eb-16",
-                    "PASS" if hf.output_artifact_refs == () else "FAIL",
-                    f"output_artifact_refs={hf.output_artifact_refs}",
-                )
-            )
-        else:
-            for cid in ["eb-14", "eb-15", "eb-16"]:
-                results.append(item(cid, "FAIL", "ExternalAppHandoff 없음"))
+        if not hf_cls:
+            return [_item(cid, "FAIL", "ExternalAppHandoff 없음") for cid in ["eb-14", "eb-15", "eb-16"]]
+        hf = hf_cls.create(
+            task_id="t_audit",
+            bridge_id="cad-bridge",
+            app_type="CAD",
+            handoff_mode="file_drop",
+            status="handoff_recorded",
+            approval_required=True,
+            user_direct_required=False,
+            input_artifact_refs=("ar_001",),
+            auto_execute_allowed=False,
+        )
+        eb14 = _item("eb-14", "PASS", f"status={hf.status}")
+        eb15 = _item(
+            "eb-15",
+            "PASS" if "ar_001" in hf.input_artifact_refs else "FAIL",
+            f"input_artifact_refs={hf.input_artifact_refs}",
+        )
+        eb16 = _item(
+            "eb-16",
+            "PASS" if hf.output_artifact_refs == () else "FAIL",
+            f"output_artifact_refs={hf.output_artifact_refs}",
+        )
+        return [eb14, eb15, eb16]
     except Exception as e:  # noqa: BLE001 - 브릿지/핸드오프 모듈 조회 실패를 FAIL 항목으로 명시 기록하는 감사 스크립트 — 성공 위장 없음, 읽기전용
-        for cid in ["eb-14", "eb-15", "eb-16"]:
-            results.append(item(cid, "FAIL", str(e)))
+        return [_item(cid, "FAIL", str(e)) for cid in ["eb-14", "eb-15", "eb-16"]]
 
-    # eb-17: safe dict forbidden
+
+def _check_safe_dict_forbidden(bridges: list) -> dict:
     violations_sec = []
     for b in bridges:
         forbidden = _check_forbidden(b.to_safe_dict())
         if forbidden:
             violations_sec.append(f"{b.bridge_id}: {forbidden}")
-    results.append(
-        item(
-            "eb-17",
-            "PASS" if not violations_sec else "FAIL",
-            f"위반: {violations_sec}" if violations_sec else "secret 미포함 확인",
-        )
+    return _item(
+        "eb-17",
+        "PASS" if not violations_sec else "FAIL",
+        f"위반: {violations_sec}" if violations_sec else "secret 미포함 확인",
     )
 
-    # eb-18: 실제 외부 앱 import 없음
+
+def _load_bridge_source() -> str:
     bridge_src = ""
     for fp in [ROOT / "ai_orchestrator/domain/model_adapters.py", ROOT / "ai_orchestrator/domain/models.py"]:
         if fp.exists():
             bridge_src += fp.read_text(encoding="utf-8")
+    return bridge_src
+
+
+def _check_no_real_app_imports(bridge_src: str) -> dict:
     real_imports = [k for k in FORBIDDEN_REAL_IMPORTS if k in bridge_src.lower()]
-    results.append(
-        item(
-            "eb-18",
-            "PASS" if not real_imports else "FAIL",
-            f"실제 앱 import 감지: {real_imports}" if real_imports else "실제 앱 import 없음",
-        )
+    return _item(
+        "eb-18",
+        "PASS" if not real_imports else "FAIL",
+        f"실제 앱 import 감지: {real_imports}" if real_imports else "실제 앱 import 없음",
     )
 
-    # eb-19: 절대경로 하드코딩 없음
+
+def _check_no_hardcoded_paths(bridge_src: str) -> dict:
     hardcoded = []
     for line in bridge_src.splitlines():
         if any(pat in line for pat in [r"C:\Program Files", "/Applications/", "autocad.exe", "hwpx.exe"]):
             hardcoded.append(line.strip()[:80])
-    results.append(
-        item("eb-19", "PASS" if not hardcoded else "FAIL", f"하드코딩: {hardcoded}" if hardcoded else "절대경로 없음")
+    return _item(
+        "eb-19", "PASS" if not hardcoded else "FAIL", f"하드코딩: {hardcoded}" if hardcoded else "절대경로 없음"
     )
 
-    # eb-20: FUTURE_INTEGRATION 상태
+
+def _check_future_integration_status(bridges: list) -> dict:
     non_future = [b.bridge_id for b in bridges if b.status not in ("FUTURE_INTEGRATION", "EXTERNAL_APP_HOLD")]
-    results.append(
-        item(
-            "eb-20",
-            "PASS" if not non_future else "FAIL",
-            f"비정상 status: {non_future}" if non_future else "전체 FUTURE_INTEGRATION/HOLD 상태",
-        )
+    return _item(
+        "eb-20",
+        "PASS" if not non_future else "FAIL",
+        f"비정상 status: {non_future}" if non_future else "전체 FUTURE_INTEGRATION/HOLD 상태",
     )
+
+
+def run_audit() -> dict[str, Any]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: eb-01~20 체크 블록을 _check_*()/_import_*() 함수로
+    # 분리(순서·조건·문자열 그대로). bridges/app_type_map/bridge_src 는 명시적 인자로 전달.
+    results: list[dict[str, Any]] = []
+    bridges, eb01 = _import_bridges()
+    results.append(eb01)
+    results.append(_check_bridge_count(bridges))
+
+    app_type_map = {b.app_type: b for b in bridges}
+    results.extend(_check_app_types_present(app_type_map))
+    results.append(_check_all_approval_required(bridges))
+    results.append(_check_none_implemented(bridges))
+    results.append(_check_local_agent_required(bridges))
+    results.append(_check_user_direct_required(bridges))
+    results.append(_check_bid_no_auto_execute(app_type_map))
+    results.extend(_check_external_app_handoff())
+    results.append(_check_safe_dict_forbidden(bridges))
+
+    bridge_src = _load_bridge_source()
+    results.append(_check_no_real_app_imports(bridge_src))
+    results.append(_check_no_hardcoded_paths(bridge_src))
+    results.append(_check_future_integration_status(bridges))
 
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}
     for r in results:

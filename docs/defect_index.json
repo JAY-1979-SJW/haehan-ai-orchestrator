@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 58,
+  "next_no": 59,
   "items": [
     {
       "no": 1,
@@ -808,6 +808,20 @@
       ],
       "evidence": "run_audit()(C901=21) — dc-01~18 체크 블록, models_mod 공유 상태를 여러 블록이 재사용.",
       "fix_note": "2026-09-29: item() 클로저를 _item() 으로 hoist, dc-01~18 을 _check_*()/_import_*() 함수로 분리, models_mod 는 명시적 인자로 전달(#56 과 동일 기법). 검증: ruff 0 errors, 실제 실행을 원본과 대조 — dc-17 의 covered=set() 출력 순서가 실행마다 다른 건 기존 Python set 반복 순서 비결정성(#47 에서 이미 확인한 것과 동일 원인)일 뿐, 나머지 17개 체크 결과는 완전 동일함을 확인.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 58,
+      "id": "run.std08_audit_checklist_batch_4",
+      "category": 2,
+      "title": "STD-08 11~19 범위 배치 4: audit_backend_premium_{endpoint_inventory,external_app_bridge}.py 리팩터",
+      "where": [
+        "scripts/ops/audit_backend_premium_endpoint_inventory.py",
+        "scripts/ops/audit_backend_premium_external_app_bridge.py"
+      ],
+      "evidence": "#56/#57 과 동일 계열 — ei-01~10(C901=14), eb-01~20(C901=17) 체크 블록, bridges/app_type_map/bridge_src 공유 상태.",
+      "fix_note": "2026-09-29: _check_*()/_import_*() 함수로 분리, 공유 상태는 명시적 인자로 전달(#56/#57 과 동일 기법). 검증: ruff 0 errors, 실제 실행을 원본과 대조 — endpoint_inventory 는 pytest 타이밍 문자열 1건만 다르고 나머지 동일, external_app_bridge 는 20개 체크 결과 완전 동일.",
       "stage": "RUN",
       "status": "fixed"
     }
