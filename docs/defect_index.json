@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 81,
+  "next_no": 82,
   "items": [
     {
       "no": 1,
@@ -1086,6 +1086,17 @@
       "where": ".github/workflows/ci.yml",
       "evidence": "self-hosted 전환 후 첫 실제 CI 실행에서 'Codebase layer audit' 스텝이 '/bin/bash: C:actions-runnershaehan-ai-orchestrator_work_temp....sh: No such file or directory' 로 실패(백슬래시가 전부 사라진 경로). 로그에 찍힌 실제 shell이 'C:\\Windows\\system32\\bash.EXE' — WSL 런처 스텁. `where bash` 로 확인: 이 PC PATH에서 System32\\bash.exe 가 Git\\usr\\bin\\bash.exe 보다 먼저 잡힘.",
       "fix_note": "shell: bash 두 곳을 shell: 'C:\\Program Files\\Git\\bin\\bash.exe --noprofile --norc -e -o pipefail {0}' 로 명시(GitHub Actions 커스텀 셸 문법, Git Bash 절대경로). 로컬에서 동일 바이너리 직접 호출로 사전 검증(정상 실행 확인) 후 push, 실제 CI 재실행 결과는 후속 확인.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 81,
+      "id": "CI-SELF-HOSTED-SHELL-BASH-FIX-VIA-GITHUB-PATH",
+      "category": 1,
+      "title": "#80의 shell: 절대경로 지정이 러너에서 별도 오류 유발 -> GITHUB_PATH로 공식 해결",
+      "where": ".github/workflows/ci.yml",
+      "evidence": "#80 수정(shell: 'C:\\Program Files\\Git\\bin\\bash.exe ... {0}')을 push해 재실행하니 새 오류: 'Second path fragment must not be a drive or UNC name.' — 공백 포함 절대경로(Program Files)를 러너가 셸 커맨드 파싱 중 잘못 분해한 것으로 추정. 같은 스텝에서 2연속 다른 실패.",
+      "fix_note": "커스텀 shell 절대경로 지정을 되돌리고(shell: bash 로 복원), 대신 잡 초반에 GITHUB_PATH 파일에 Git Bash 폴더(C:\\Program Files\\Git\\usr\\bin)를 추가하는 GitHub Actions 공식 메커니즘 사용 — 이후 모든 shell: bash 스텝이 PATH 우선순위로 Git Bash를 찾는다(WSL 스텁보다 앞섬). 공백 포함 경로를 YAML 커스텀 shell 필드에 직접 넣는 방식은 이 self-hosted 러너에서 신뢰 불가로 확인, 재발 방지로 기록.",
       "stage": "RUN",
       "status": "fixed"
     }
