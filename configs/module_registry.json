@@ -19544,6 +19544,70 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/app/google/components/GoogleToolsPanel.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "google",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/google/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "google",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mail/components/GmailInboxPanel.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "google",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mail/components/MailAssistantPanel.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mail/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/sites/calendar_reader.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/sites/drive_reader.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/sites/google_oauth.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "google",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

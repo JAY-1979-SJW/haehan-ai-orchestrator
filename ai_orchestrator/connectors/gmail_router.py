@@ -38,9 +38,13 @@ class GmailSendRequest(BaseModel):
 
 
 class GmailReplyRequest(BaseModel):
-    mail_index: int
+    # 2026-09-29: CDP(mail_index, DOM 위치) 대신 Gmail API 기반으로 전환 —
+    # thread_id/in_reply_to는 /ai-draft-unread 응답을 그대로 넘기면 된다.
+    thread_id: str
+    in_reply_to: str = ""
+    to: str
+    subject: str
     body: str
-    reply_all: bool = False
     dry_run: bool = True
 
 
@@ -166,50 +170,59 @@ def api_reply(
     req: GmailReplyRequest,
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict:
-    """특정 메일(mail_index, /ai-draft-unread 또는 GmailAPI.list_inbox 기준)에 회신 초안
-    작성. dry_run=True(기본)면 브라우저 미실행. 실제 발송은 이 다음에 /send(confirmed=True)
-    별도 호출 필요 — 이 엔드포인트 자체는 발송하지 않는다(GmailAPI.reply는 초안만 채움)."""
+    """특정 메일(/ai-draft-unread 응답의 thread_id/in_reply_to 그대로 사용)에 회신.
+
+    2026-09-29: CDP(화면 조작 2단계: 초안작성 후 /send로 버튼 클릭) 대신 Gmail API
+    (gmail.send 스코프)로 전환 — API는 발송이 원자적 1회 호출이라(공식 가이드:
+    users.messages.send 요청 자체가 곧 발송) dry_run=False 호출이 이 자리에서
+    바로 최종 발송된다. 그래서 dry_run=True(미리보기)와 사람의 명시적 재확인
+    (프런트 confirm 대화상자)이 이 엔드포인트 앞단의 유일한 안전장치 — 별도
+    /send 호출은 더 이상 필요 없다(이 회신 경로에 한해서. /compose 로 만드는
+    새 메일 작성은 여전히 CDP+/send 조합 그대로 유지).
+    """
     log_event(
         "GMAIL_REPLY_REQUESTED",
         task_id="-",
         actor=user["actor"],
         role=user["role"],
-        decision="ok" if req.dry_run else "pending_browser",
-        note=f"mail_index={req.mail_index} dry_run={req.dry_run}",
+        decision="ok" if req.dry_run else "sending",
+        note=f"thread_id={req.thread_id} to={req.to} dry_run={req.dry_run}",
     )
 
     if req.dry_run:
         return {
             "ok": True,
             "dry_run": True,
-            "mail_index": req.mail_index,
+            "thread_id": req.thread_id,
             "body_preview": req.body[:200],
-            "detail": "dry_run=True: 실행하려면 dry_run=False로 재요청",
+            "detail": "dry_run=True: 실행하려면 dry_run=False로 재요청(그 즉시 실제 발송됨)",
             "requires_send_approval": True,
         }
 
     try:
-        from scripts.google.gmail_api import GmailAPI
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from ai_orchestrator.sites.gmail_reader import send_reply
 
-        result = run_on_browser_thread(
-            lambda: GmailAPI(get_page()).reply(req.mail_index, req.body, req.reply_all),
-            timeout=60,
+        result = send_reply(
+            thread_id=req.thread_id,
+            in_reply_to=req.in_reply_to,
+            to=req.to,
+            subject=req.subject,
+            body=req.body,
         )
-        if not result.get("ok"):
-            raise HTTPException(status_code=500, detail=f"회신 초안 작성 실패: {result.get('error')}")
-        return {
-            "ok": True,
-            "dry_run": False,
-            "mail_index": req.mail_index,
-            "detail": "회신 초안 작성 완료 (발송하려면 /send 호출)",
-            "requires_send_approval": True,
-        }
+        log_event(
+            "GMAIL_SEND_SUCCESS",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
+            note=f"gmail_message_id={result.get('id')}",
+        )
+        return {"ok": True, "dry_run": False, "detail": "Gmail 회신 발송 완료", **result}
     except HTTPException:
         raise
     except Exception as e:
         logger.exception("gmail reply error")
-        raise HTTPException(status_code=500, detail=f"Gmail 회신 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"Gmail 회신 발송 실패: {e}")
 
 
 @gmail_router.post("/ai-draft-unread")
@@ -222,34 +235,32 @@ def api_ai_draft_unread(
     읽기전용 — 이 엔드포인트는 발송 능력이 전혀 없다(local_agent.actions.action_run_claude_agent
     를 allowed_tools 없이 호출해 순수 텍스트 생성만 시킨다 — MCP 도구 호출 자체가 불가능한
     구조적 안전장치, 프롬프트 준수에 기대지 않음). 결과 초안은 /reply(dry_run) 로 미리보기 후
-    /send(confirmed=True) 를 사람이 별도로 눌러야 실제 발송된다.
+    다시 dry_run=False 로 호출해야 실제 발송된다(사람이 화면에서 재확인 후).
+
+    2026-09-29: 메일 수집을 CDP(화면 스크래핑) 대신 Gmail API(gmail.readonly)로 전환 —
+    thread_id/message_id_header가 API 응답에 이미 있어 /reply(API 기반)에 그대로
+    넘길 수 있다. CDP 방식은 DOM 위치(mail_index)만 줘서 회신 발송에 못 썼다.
     """
     limit = max(1, min(req.limit, 10))
     t0 = time.monotonic()
 
     try:
-        from scripts.google.gmail_api import GmailAPI
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from ai_orchestrator.sites.gmail_reader import fetch_unread_emails
 
-        def _collect() -> list[dict]:
-            g = GmailAPI(get_page())
-            rows = g.list_inbox(limit=30)
-            unread_rows = [r for r in rows if r.get("unread")][:limit]
-            collected = []
-            for r in unread_rows:
-                detail = g.read(r["index"])
-                if detail.get("ok"):
-                    collected.append(
-                        {
-                            "mail_index": r["index"],
-                            "from": detail.get("sender_preview") or r.get("from_preview", ""),
-                            "subject": detail.get("subject_preview") or r.get("subject_preview", ""),
-                            "body": detail.get("body_preview", ""),
-                        }
-                    )
-            return collected
-
-        mails = run_on_browser_thread(_collect, timeout=120)
+        raw_mails = fetch_unread_emails(max_results=limit)
+        mails = [
+            {
+                "key": m["message_id"],
+                "from": m["from"],
+                "subject": m["subject"],
+                "body": m["body_summary"] or m["body"][:600],
+                "thread_id": m["thread_id"],
+                "in_reply_to": m["message_id_header"],
+            }
+            for m in raw_mails
+        ]
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=f"Gmail credentials 없음: {e}")
     except Exception as e:
         logger.exception("gmail ai-draft collect error")
         raise HTTPException(status_code=500, detail=f"메일 수집 오류: {e}")
@@ -262,14 +273,15 @@ def api_ai_draft_unread(
     from local_agent.actions import action_run_claude_agent
 
     mail_block = "\n\n".join(
-        f"[{m['mail_index']}] 발신: {m['from']}\n제목: {m['subject']}\n본문: {m['body'][:600]}" for m in mails
+        f"[{m['key']}] 발신: {m['from']}\n제목: {m['subject']}\n본문: {m['body'][:600]}" for m in mails
     )
     prompt = (
         "다음은 Gmail 안 읽은 메일 목록이다. 각 메일에 대해 1) 한국어 한 줄 요약, "
         "2) 회신이 필요한지(needs_reply), 3) 필요하면 정중한 한국어 회신 초안(3~5문장)을 작성해라. "
         "광고/뉴스레터/알림성 메일은 needs_reply=false, draft_reply는 빈 문자열로. "
+        "각 메일의 key(대괄호 안 문자열)를 응답에 그대로 포함해라. "
         "다른 설명 없이 아래 JSON 배열 형식으로만 답하라(마크다운 코드블록 금지):\n"
-        '[{"mail_index": 0, "summary": "...", "needs_reply": true, "draft_reply": "..."}]\n\n'
+        '[{"key": "...", "summary": "...", "needs_reply": true, "draft_reply": "..."}]\n\n'
         f"{mail_block}"
     )
 
@@ -287,14 +299,16 @@ def api_ai_draft_unread(
     except _json.JSONDecodeError:
         raise HTTPException(status_code=502, detail=f"AI 응답 파싱 실패: {raw[:200]}")
 
-    by_index = {m["mail_index"]: m for m in mails}
+    by_key = {m["key"]: m for m in mails}
     items = []
     for d in drafts if isinstance(drafts, list) else []:
-        idx = d.get("mail_index")
-        base = by_index.get(idx, {})
+        key = d.get("key")
+        base = by_key.get(key, {})
         items.append(
             {
-                "mail_index": idx,
+                "message_id": key,
+                "thread_id": base.get("thread_id", ""),
+                "in_reply_to": base.get("in_reply_to", ""),
                 "from": base.get("from", ""),
                 "subject": base.get("subject", ""),
                 "summary": d.get("summary", ""),
