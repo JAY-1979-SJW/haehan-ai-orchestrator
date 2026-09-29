@@ -156,7 +156,14 @@ def main() -> int:
             stream.reconfigure(encoding="utf-8")
 
     if not _enabled():
-        print("[ai-review] AI_REVIEW_ENABLED=false — 검수 건너뜀")
+        # 2026-09-30 수정(defect_index #5): 예전엔 콘솔 출력만 하고 아무 흔적도 안 남겨서
+        # "누가 언제 왜 껐는지" 사후 확인이 불가능했다. 강제 사유 입력(대화형 프롬프트)은
+        # 비대화형 자동화 push에서 항상 막힐 위험이 있어 요구하지 않되, 최소한 우회 사실
+        # 자체를 리포트 파일에 남겨 조용한 우회는 막는다 — 사유는 선택적 환경변수
+        # AI_REVIEW_BYPASS_REASON 으로 남길 수 있게(안 남기면 "(사유 미기록)"으로 기록).
+        reason = os.environ.get("AI_REVIEW_BYPASS_REASON", "").strip() or "(사유 미기록)"
+        print(f"[ai-review] AI_REVIEW_ENABLED=false — 검수 건너뜀 (사유: {reason})")
+        save_report({"verdict": "SKIPPED", "reason": "ai_review_disabled", "bypass_reason": reason})
         return 0
 
     print("[ai-review] diff 추출 중...")

@@ -73,6 +73,21 @@ def changed_lines_staged() -> dict[str, set[int]] | None:
     return _parse_diff_hunks(p.stdout)
 
 
+def changed_lines_between(base_ref: str, head_ref: str | None) -> dict[str, set[int]] | None:
+    """임의의 두 커밋/브랜치 사이 바뀐 줄. verify_change.py(CI) 재사용용 —
+    2026-09-30 발견: CI의 "바뀐 파일 ruff" 체크가 이 함수 없이 head 쪽 ruff 결과를
+    그대로 "새 문제"로 보고해, 손 안 댄 줄의 기존(pre-existing) 위반까지 전부 이번
+    커밋 탓으로 돌려 FAIL시키고 있었다(defect_index 신규 항목). 같은 hunk 파싱
+    알고리즘을 base/head 커밋 비교로 일반화해 재사용한다.
+    head_ref 가 없으면(verify_change.py --head 생략 = 현재 작업트리) 커밋되지 않은
+    변경까지 포함해 작업트리 대비로 비교한다."""
+    ref_spec = f"{base_ref}..{head_ref}" if head_ref else base_ref
+    p = _run_git(["diff", ref_spec, "--unified=0"])
+    if p.returncode != 0:
+        return None
+    return _parse_diff_hunks(p.stdout)
+
+
 def run_ruff_json(cfg: str, files: list[str]) -> list[dict]:
     p = subprocess.run(
         [sys.executable, "-m", "ruff", "check", "--config", cfg, "--output-format=json", *files],

@@ -33,6 +33,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PY = sys.executable
+
+# 2026-09-30 수정(defect_index 신규 항목): "바뀐 파일 ruff" 체크가 head 쪽 ruff 결과를
+# base 와 비교 없이 그대로 "새로 생긴 문제"로 보고해, 손 안 댄 줄의 기존(pre-existing)
+# 위반까지 전부 이번 커밋 탓으로 돌려 CI를 FAIL시키고 있었다(실측: dry_run_approved_
+# browser_instruction_api.py 에 docstring 5줄만 추가한 커밋이 그 함수의 기존 복잡도
+# 위반 3건 때문에 CI FAIL — 로컬 pre-commit 훅은 이미 ruff_new_only_gate.py 로 같은
+# 문제를 정확히 처리하고 있어 그 로직을 재사용한다.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ruff_new_only_gate import changed_lines_between  # noqa: E402
+
 ENV = {
     **os.environ,
     "PYTHONDONTWRITEBYTECODE": "1",
@@ -403,6 +413,37 @@ def _build_verify_report(
     return ok, "\n".join(lines)
 
 
+def _new_ruff_findings(
+    ruff: subprocess.CompletedProcess | None, head_tree: Path, base_ref: str, head_ref: str | None
+) -> list[str]:
+    """head 쪽 ruff(JSON) 결과에서 "이번 커밋으로 새로 생긴" finding만 골라 문자열로 반환.
+
+    로컬 pre-commit 훅의 ruff_new_only_gate.py 와 동일 원칙(git diff hunk 기준 바뀐 줄
+    번호에 걸리는 finding만 new로 판정) — 단순히 head 쪽 ruff 결과를 통째로 쓰면 그
+    파일의 기존 부채까지 전부 이번 커밋 탓이 된다(2026-09-30 실측 발견 버그).
+    """
+    try:
+        findings = json.loads(ruff.stdout) if ruff and ruff.stdout else []
+    except json.JSONDecodeError:
+        findings = []
+    changed_lines = changed_lines_between(base_ref, head_ref)
+    result = []
+    for f in findings:
+        try:
+            rel = Path(f["filename"]).resolve().relative_to(head_tree).as_posix()
+        except ValueError:
+            rel = f["filename"]
+        row = f.get("location", {}).get("row")
+        # 2026-09-30 pre-push AI 리뷰 지적 반영: row 가 None(위치를 특정 못하는 ruff
+        # 진단, 드물지만 가능)이면 "None in set[int]"가 항상 False라 조용히 pre-existing
+        # 으로 숨겨져 진짜 새 문제를 놓칠 위험이 있었다 — 위치 불명은 안전한 쪽(새 문제로
+        # 간주해 사람이 보게)으로 처리한다.
+        is_new = row is None or changed_lines is None or (rel in changed_lines and row in changed_lines[rel])
+        if is_new:
+            result.append(f"{rel}:{row}:{f.get('location', {}).get('column')}: {f.get('code')} {f.get('message')}")
+    return result
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="master", help="비교 기준 커밋/브랜치")
@@ -442,7 +483,7 @@ def main() -> int:
         ruff_cfg = ["--config", str(ROOT / CFG["ruff_config"])] if CFG["ruff_config"] else []
         ruff = (
             run(
-                [PY, "-m", "ruff", "check", *ruff_cfg, "--no-cache", "--output-format", "concise", *py_changed],
+                [PY, "-m", "ruff", "check", *ruff_cfg, "--no-cache", "--output-format", "json", *py_changed],
                 head_tree,
             )
             if py_changed
@@ -455,11 +496,7 @@ def main() -> int:
         for dest in trees:
             run(["git", "worktree", "remove", "--force", str(dest)], ROOT)
         shutil.rmtree(tmp, ignore_errors=True)
-    ruff_errors = [
-        ln
-        for ln in (ruff.stdout.splitlines() if ruff else [])
-        if ":" in ln and not ln.startswith(("Found", "All checks", "No fixes", "["))
-    ]
+    ruff_errors = _new_ruff_findings(ruff, head_tree, a.base, a.head)
 
     moved = renames(a.base, a.head)
     # 순환은 모듈(폴더) 단위라 이동을 받은 폴더가 끼면 이름만 바뀐 것과 진짜 새 순환을 가를 수 없다
