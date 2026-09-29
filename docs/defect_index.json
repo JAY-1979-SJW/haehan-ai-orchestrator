@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 72,
+  "next_no": 75,
   "items": [
     {
       "no": 1,
@@ -989,6 +989,39 @@
       "fix_note": "URL 문자열 매칭을 urlsplit(page.url).hostname != 'mail.google.com' (실제 도메인 리다이렉트만 감지) + DOM 잔존 로그인폼(input[type=email], #identifierId, #accountList) 이중 확인으로 교체. 실측 재검증: 동일 로그인 세션으로 GET /api/v1/gmail/inbox -> 200 실제 메일 5건(제목/발신자/날짜 포함) 정상 응답. 이어서 실제 브라우저로 localhost:3000/ops 접속 -> '받은편지함 조회' 버튼 실클릭 -> 화면에 실제 메일 10건 렌더링까지 종단 확인(버튼→프록시→백엔드→CDP→화면 전체 체인 최초 실증).",
       "stage": "RUN",
       "status": "fixed"
+    },
+    {
+      "id": "GOOGLE-DOCS-SHEETS-DATAID-SCRIPT-TAG-BUG",
+      "category": 1,
+      "title": "docs_api/sheets_api recent() 선택자가 WIZ_global_data 스크립트 태그를 문서명으로 오추출",
+      "where": "scripts/google/docs_api.py, scripts/google/sheets_api.py",
+      "evidence": "GoogleToolsPanel '문서/시트: 최근 목록' 버튼 배선 후 실행하니 항상 1건, name이 'window.WIZ_global_data = {...' 로 시작하는 원문 JS. 원인: querySelectorAll('[data-id]') 가 홈스크린 문서 항목뿐 아니라 <script data-id=\"_gd\"> 전역데이터 태그도 매칭.",
+      "fix_note": "el.tagName==='SCRIPT' 제외 + name이 'window.'로 시작하면 제외. 실측 재검증: ok:true, 정상 응답(더는 스크립트 오추출 없음).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 72
+    },
+    {
+      "id": "GOOGLE-ACTIONS-CDP-PAGE-TAB-HIJACK-AND-LEAK",
+      "category": 2,
+      "title": "google/actions.py _cdp_page() 가 임의의 첫 탭을 덮어쓰고, 실패 시 Playwright 드라이버를 정리 안 함",
+      "where": "ai_orchestrator/connectors/google/actions.py",
+      "evidence": "(1) ctx.pages[0](순서 미보장)을 그대로 재사용 — Docs→Sheets→GCP 연속 호출 후 같은 탭 제목이 'Google Sheets'인데 URL은 GCP 콘솔로 확인, admin-web 자체 탭이나 사용자 작업 탭을 하이재킹할 위험. (2) 연결 실패 시(특히 new_page 단계에서 예외) pw.stop() 미호출 — 좀비 Playwright 드라이버(node.exe run-driver) 누적 확인됨(tasklist 실측: 2개), 이후 호출이 8~13초에서 180초로 점점 느려지는 원인이었음(원시 CDP HTTP /json/new 는 항상 0.5초 이내 — 브라우저 자체는 정상, 드라이버 계층 문제).",
+      "fix_note": "매 호출마다 새 탭(ctx.new_page()) 생성 후 finally에서 close, 실패 경로에서도 pw.stop() 보장. 좀비 드라이버 2개 수동 종료 후 재검증: 정상 8~14초대로 복귀.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 73
+    },
+    {
+      "id": "GOOGLE-CALENDAR-GCP-GOTO-LOAD-TIMEOUT",
+      "category": 1,
+      "title": "캘린더 week/GCP 콘솔 goto가 기본 wait_until=load라 끝없는 SPA 폴링에 20s 타임아웃",
+      "where": "ai_orchestrator/connectors/google/actions.py (gcp/status), scripts/google/calendar_api.py (list_today/list_week)",
+      "evidence": "GCP 콘솔·캘린더 week 버튼이 20s 'Page.goto: Timeout exceeded, waiting until load' 로 항상 실패. 두 페이지 다 백그라운드 폴링이 끊이지 않는 SPA라 load 이벤트가 사실상 오지 않음.",
+      "fix_note": "wait_until='domcontentloaded' 로 변경. 실측 재검증: GCP ok:true(project=haehan-ai), 캘린더 today/week 둘 다 ok:true·8~15초대로 정상 응답.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 74
     }
   ]
 }

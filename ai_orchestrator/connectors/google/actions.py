@@ -19,21 +19,39 @@ _CDP_PORT = 9222
 
 
 def _cdp_page():
-    """CDP 세션에서 첫 번째 page 반환. 실패 시 None."""
+    """CDP 세션에 새 탭을 열어 반환. 실패 시 None.
+
+    2026-09-29 수정: 기존엔 `ctx.pages[0]`(브라우저의 임의의 첫 탭, 순서 보장 없음)을
+    그대로 재사용해서, 이 함수를 쓰는 여러 액션(캘린더/드라이브/문서/시트/GCP 등)을
+    연달아 호출하면 같은 탭을 서로 덮어써 이전 페이지의 무거운 백그라운드 요청이 남은
+    채로 다음 goto를 실행하는 문제가 있었다(실측: Docs→Sheets→GCP 연속 호출 후 탭
+    제목이 "Google Sheets"인데 URL은 GCP 콘솔로 바뀌어 있음 확인, GCP 콘솔 타임아웃과
+    상관관계 있음). 항상 새 탭을 열어 다른 열려있는 탭(사용자 작업 중인 탭, admin-web
+    자체 탭 포함)에 영향 주지 않도록 수정.
+    """
+    # 2026-09-29 추가 수정: 실패 시(특히 connect_over_cdp/new_page 단계) pw.stop() 을
+    # 안 부르고 return 하면 매 실패마다 sync_playwright() 가 띄운 Node 드라이버
+    # 프로세스가 좀비로 남는다 — 실측: 반복 실패 후 후속 호출이 8~13초에서 180초로
+    # 점점 느려지는 걸 확인(원시 CDP HTTP API는 항상 0.5초 이내로 응답해 브라우저
+    # 자체 문제가 아님을 확인함). pw 는 try 진입 직후 생성되므로 except 에서도 정리한다.
+    pw = None
     try:
         from playwright.sync_api import sync_playwright
 
         pw = sync_playwright().start()
         browser = pw.chromium.connect_over_cdp(f"http://127.0.0.1:{_CDP_PORT}")
         ctx = browser.contexts[0]
-        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        page = ctx.new_page()
         return pw, browser, page
     except Exception:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
+        if pw is not None:
+            with contextlib.suppress(Exception):
+                pw.stop()
         return None, None, None
 
 
 def _cdp_call(fn):
-    """CDP 세션 연결 → fn(page) 실행 → 정리."""
+    """CDP 세션에 새 탭을 열어 fn(page) 실행 → 탭 정리."""
     pw, _browser, page = _cdp_page()
     if not page:
         return None, "CDP 브라우저 미연결 — 먼저 브라우저를 실행하세요."
@@ -43,6 +61,8 @@ def _cdp_call(fn):
     except Exception as e:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
         return None, str(e)[:200]
     finally:
+        with contextlib.suppress(Exception):
+            page.close()
         with contextlib.suppress(Exception):
             pw.stop()
 
@@ -388,7 +408,9 @@ def get_gcp_status(
     t0 = time.monotonic()
 
     def _fn(page):
-        page.goto("https://console.cloud.google.com/?project=haehan-ai", timeout=20000)
+        # GCP 콘솔은 백그라운드 폴링이 끊이지 않는 SPA라 기본 wait_until="load" 가
+        # 절대 안 끝나 매번 20s 타임아웃(2026-09-29 실측 확인) — DOM 로드 시점까지만 대기.
+        page.goto("https://console.cloud.google.com/?project=haehan-ai", timeout=20000, wait_until="domcontentloaded")
         import time as _t
 
         _t.sleep(4)

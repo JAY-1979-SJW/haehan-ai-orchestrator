@@ -31,14 +31,23 @@ class CalendarAPI:
 
     def list_today(self) -> list[dict]:
         """오늘 일정."""
-        self.page.goto(GOOGLE_URLS.get("calendar_day", "https://calendar.google.com/calendar/u/0/r/day"), timeout=20000)
+        # 캘린더는 백그라운드 폴링이 끊이지 않는 SPA라 기본 wait_until="load" 가
+        # 안 끝날 수 있음(2026-09-29 실측: list_week 에서 20s 타임아웃 확인,
+        # GCP 콘솔과 동일 원인) — DOM 로드 시점까지만 대기.
+        self.page.goto(
+            GOOGLE_URLS.get("calendar_day", "https://calendar.google.com/calendar/u/0/r/day"),
+            timeout=20000,
+            wait_until="domcontentloaded",
+        )
         time.sleep(2.5)
         return self._extract_events()
 
     def list_week(self) -> list[dict]:
         """이번 주 일정."""
         self.page.goto(
-            GOOGLE_URLS.get("calendar_week", "https://calendar.google.com/calendar/u/0/r/week"), timeout=20000
+            GOOGLE_URLS.get("calendar_week", "https://calendar.google.com/calendar/u/0/r/week"),
+            timeout=20000,
+            wait_until="domcontentloaded",
         )
         time.sleep(2.5)
         return self._extract_events()
