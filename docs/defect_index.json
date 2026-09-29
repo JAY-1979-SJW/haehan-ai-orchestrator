@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 62,
+  "next_no": 63,
   "items": [
     {
       "no": 1,
@@ -862,6 +862,19 @@
       ],
       "evidence": "run_audit()(C901=24) — #48/#49/#51 과 동일한 번호형(1.~7.) 체크리스트 패턴.",
       "fix_note": "2026-09-29: 1.~7. 섹션을 _check_*() 함수로 분리(순서·조건·문자열 그대로). 검증: ruff 0 errors, 실제 실행을 원본과 대조해 완전 동일 확인.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 62,
+      "id": "run.std08_audit_checklist_batch_8",
+      "category": 2,
+      "title": "STD-08 11~19 범위 배치 8: audit_google_cloud_module_baseline_contract.py 리팩터",
+      "where": [
+        "scripts/ops/audit_google_cloud_module_baseline_contract.py"
+      ],
+      "evidence": "audit()(C901=12) — cloud tab 관련 독립 체크(surfaces/approval_actions/counts/hosts/live_input)를 하나에 담음. #48 과 같은 계열.",
+      "fix_note": "2026-09-29: _check_*() 함수로 분리(순서·조건·문자열 그대로). 검증: ruff 0 errors, 실제 실행을 원본과 대조해 완전 동일.",
       "stage": "RUN",
       "status": "fixed"
     }
