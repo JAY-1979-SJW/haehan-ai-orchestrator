@@ -130,7 +130,10 @@ class OrderAutomation:
     def monitor_cancellations(self) -> dict:
         """취소/반품 요청 모니터링."""
         # 취소 관리 페이지
-        from scripts.naver.smartstore.bulk import _init_db
+        # scripts.naver.smartstore.bulk 는 product/bulk.py 로 옮겨진 뒤 남은 `import *` shim
+        # 이라 __all__ 없이는 밑줄시작 이름(_init_db)을 재노출 못 함(2026-09-29 defect_index
+        # #39, #32/#38 과 동일한 패턴) — 실제 모듈에서 바로 가져온다.
+        from scripts.naver.smartstore.product.bulk import _init_db
 
         _init_db()  # DB 활성화 (필요시)
         # 추후 구현: 취소 요청 자동 알림 / DB 기록

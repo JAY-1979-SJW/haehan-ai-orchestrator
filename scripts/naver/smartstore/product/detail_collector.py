@@ -168,7 +168,12 @@ def _extract_all_fields(page: Page, product_id: str) -> dict:
 
     product["name"] = _get_input_value(page, SEL.PRODUCT_NAME)
     product["status"] = _get_text(page, SEL.PRODUCT_STATUS) or "UNKNOWN"
-    product["category"] = _get_text(page, SEL.CATEGORY) or _get_input_value(page, SEL.CATEGORY)
+    # SEL.CATEGORY/MAIN_IMAGE/ADDITIONAL_IMAGES 는 존재한 적 없는 이름 — 셀렉터 리네임 후
+    # 이 호출부만 갱신 안 됐던 것으로 보임(2026-09-29 defect_index #39, 각 셀렉터의 실제
+    # CSS 값·한글 주석·용도가 아래 이름과 정확히 일치함을 selectors.py 에서 직접 확인).
+    product["category"] = _get_text(page, SEL.CATEGORY_PATH_DISPLAY) or _get_input_value(
+        page, SEL.CATEGORY_PATH_DISPLAY
+    )
     product["channel_product_id"] = _get_text(page, SEL.CHANNEL_PRODUCT_ID)
 
     # 가격·재고
@@ -179,8 +184,8 @@ def _extract_all_fields(page: Page, product_id: str) -> dict:
     product["max_purchase"] = _parse_int(_get_input_value(page, SEL.MAX_PURCHASE))
 
     # 이미지
-    product["main_image_url"] = _get_img_src(page, SEL.MAIN_IMAGE)
-    product["images"] = _get_img_src_list(page, SEL.ADDITIONAL_IMAGES)
+    product["main_image_url"] = _get_img_src(page, SEL.MAIN_IMAGE_PREVIEW)
+    product["images"] = _get_img_src_list(page, SEL.ADDITIONAL_IMAGES_PREVIEW)
 
     # 옵션
     options = _extract_options(page)

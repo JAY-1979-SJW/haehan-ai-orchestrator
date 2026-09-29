@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 40,
+  "next_no": 41,
   "items": [
     {
       "no": 1,
@@ -561,9 +561,26 @@
         "tests/test_naver_cafe_list_collector.py",
         "tests/test_app_action_coverage.py"
       ],
-      "evidence": "#38 조사 중 발견했지만 값을 추측해 고치면 더 위험하다고 판단해 보류: (1) scripts/naver/cafe.py(단일 파일)와 scripts/naver/cafe/__init__.py(패키지)가 같은 이름으로 동시 존재 — Python 은 패키지를 우선 해석해 cafe.py 는 완전히 도달 불가능한 죽은 코드가 됐는데, router_cafe.py:305 write_post() 호출은 여전히 옛 cafe.py 시절 kwarg(board_no, send) 를 씀. 실제(패키지) 시그니처는 board_name(str, board_no 와 다른 값 종류)+require_approval(bool, send 와 반대 의미방향) — 단순 이름치환이 아니라 값 변환·의미 재해석이 필요해 라이브 검증 없이 고치면 승인 없이 발행되는 등 더 위험할 수 있음. (2) mail_automation.py MailAutomation.__init__ 이 존재한 적 없는 NaverMail 을 즉시 생성 — 코드맵상 어디서도 인스턴스화되지 않는 완전 UNREACHED 코드라 우선순위 낮음(#38 notification_hub.py 와 동일 근본원인이나 그쪽만 도달 가능해 먼저 고침). (3) scripts.cdp_client 에 eval_js/goto_url 없음(eum/form_analyzer.py:115 에서 사용 시도) — 어떤 이름이 맞는 대체재인지 확신 없음. (4) scripts.navigator 에 get_page 없음(popup_watcher.py 4곳, 실제로는 goto/resolve 등 다른 이름들만 존재) — 마찬가지로 의도된 대체재 불명확. (5) smartstore selectors.py 에 SEL.CATEGORY/MAIN_IMAGE/ADDITIONAL_IMAGES 없음(detail_collector.py:171,182,183) — 비슷한 이름(CATEGORY_PATH_DISPLAY/MAIN_IMAGE_PREVIEW/ADDITIONAL_IMAGES_PREVIEW 등)은 있어 셀렉터 리네임 후 호출부 미갱신으로 보이나 실제 DOM 확인 없이 매핑 확정 위험. (6) scripts.naver.smartstore.bulk 에 _init_db 없음(order_automation.py:133) — 취소/반품 모니터링 기능. (7) smartstore/catalog.py:119 는 이미 except ImportError: pass 로 안전하게 감싸져 조용히 정적 fallback 사용 중(크래시 안 함, 저우선순위). 추가로 #38 회귀테스트 대조 중 아래 21건이 제 변경과 무관하게 이미(수정 전부터) 실패 중인 것으로 확인(git stash 전/후 동일 21 failed/118 passed) — 별도 조사 필요: tests/test_app_action_coverage.py 2건, tests/test_local_agent_router_split.py 7건, tests/test_naver_service_router.py 4건, tests/test_naver_cafe_list_collector.py 7건, tests/test_naver_mail_action_gate_policy.py 1건(mail.send_mail 자체가 없음 — #37/#38 과 같은 메일 발송 미구현 패턴의 또 다른 사례로 추정).",
+      "evidence": "#38 조사 중 발견했지만 값을 추측해 고치면 더 위험하다고 판단해 일부 보류했었음. 2026-09-29 후속 조사로 다음을 해결: (2) mail_automation.py 와 동일 근본원인이던 scripts.naver.mail.send_mail 부재(#37/#38 계열) — 패키지에 send_mail() 을 신설, 승인게이트(naver_mail_send)를 page 접근보다 먼저 통과시키고 그 뒤는 NotImplementedError 로 정직하게 막음(실제 발송 로직은 미구현, 게이트만 존재) → tests/test_naver_mail_action_gate_policy.py 1건 fixed(29 passed). (3)(4) 는 실제로는 같은 원인: scripts.navigator.get_page 는 애초에 scripts.web_connector.get_page 를 잘못된 모듈에서 import 하려던 것 — navigator_nav.py 가 이미 올바른 경로로 이 함수를 쓰고 있어 확인 가능했음. popup_watcher.py 4곳 + tests/test_popup_watcher.py 의 mock.patch 대상 10곳을 scripts.web_connector.get_page 로 수정(12/12 passed, 이전 10 failed). eum/form_analyzer.py 의 cdp_client.eval_js/goto_url 는 EUM 관련이라 사용자 지시(#13)에 따라 계속 보류 — 이미 try/except 로 안전하게 감싸져 있어(크래시 아님) 우선순위 낮음. (5) smartstore selectors 3건은 실제 CSS 값·한글주석·호출부 함수타입(_get_text/_get_img_src/_get_img_src_list) 3중 대조로 CATEGORY→CATEGORY_PATH_DISPLAY, MAIN_IMAGE→MAIN_IMAGE_PREVIEW, ADDITIONAL_IMAGES→ADDITIONAL_IMAGES_PREVIEW 확정, detail_collector.py 수정(전용 테스트 없음, import+구조 검증까지). (6) scripts.naver.smartstore.bulk._init_db 부재는 이 파일도 product/bulk.py 로 옮겨진 뒤 남은 `import *` shim(__all__ 없어 밑줄이름 미재노출, #32/#38 과 동일 3번째 사례)이었음 — order_automation.py 를 실제 모듈 경로로 수정. 그런데 product/bulk.py 의 _init_db 자체도 ROOT = parents[3](같은 폴더 다른 8개 파일 전부 parents[4] — product/ 로 이동 후 미반영된 실버그) 라 DB_PATH 가 scripts/data/cdp.db(없는 경로)로 잘못 계산돼 크래시하던 걸 발견·수정 — 수정 후 실제 운영 DB(data/cdp.db, 3.2MB, 15개 테이블)에 정상 연결·조회 확인. (7) smartstore/catalog.py:119 는 그대로 유지(이미 안전, 저우선순위). #38 규정 검증 중 대조했던 21건 중 test_naver_mail_action_gate_policy.py(1)/test_app_action_coverage.py(2, 더 깊이 조사해 #40 으로 별도 등록·해결) 는 이번에 해결. tests/test_local_agent_router_split.py(7)·test_naver_service_router.py(4)·test_naver_cafe_list_collector.py(7) 는 이번에도 미조사— router_cafe.py 의 board_no/send→board_name/require_approval 매핑(값 종류가 달라 추측 위험, 여전히 보류)과 연관 가능성 있음, 다음 라운드 후보.",
+      "fix_note": "2026-09-29: 위 evidence의 (2)(3)(4)(5)(6) 해결. (1)(router_cafe.py board_no/send 매핑) 은 여전히 라이브 검증 없이 고치기엔 위험해 보류, (7) 은 조치 불필요로 판정, EUM(#13) 관련 1건은 사용자 지시로 계속 보류. 관련 테스트 tests/test_naver_mail_action_gate_policy.py(29 passed)·tests/test_popup_watcher.py(12 passed) 확인.",
       "stage": "RUN",
       "status": "open"
+    },
+    {
+      "no": 40,
+      "id": "run.fastapi_included_router_lazy_break_route_introspection",
+      "category": 1,
+      "title": "FastAPI 0.137+ 의 지연 include_router(_IncludedRouter) 로 app.routes 직접 순회 코드 최소 4곳이 라우트를 거의 못 찾게 됨 — 그중 한 안전검사는 그동안 공허하게 통과 중이었음",
+      "where": [
+        "ai_orchestrator/routers/app_actions.py",
+        "scripts/ops/audit_backend_runtime_contract.py",
+        "tests/test_backend_router_server_cycle_break_20260516.py",
+        "tests/test_app_action_coverage.py"
+      ],
+      "evidence": "#39 의 test_app_action_coverage.py 2건 조사 중 발견: app_actions.build_manifest() 가 계속 빈 리스트를 반환하고 있었음. 원인: FastAPI 0.137.0(설치본 0.141.1, Starlette 1.6.0) 부터 include_router() 가 서브라우터를 즉시 펼치지 않고 _IncludedRouter 라는 지연 래퍼로 저장 — app.routes 를 isinstance(r, APIRoute) 로 직접 순회하던 기존 코드는 이제 최상위 몇 개(openapi/docs 등)만 보고 나머지 40여개 서브라우터의 진짜 라우트를 전혀 못 찾음(공식 GitHub discussion #15782 + fastapi/fastapi 저장소 소스 fastapi/routing.py 의 RouteContext/iter_route_contexts 실측 확인, WebFetch 로 등록된 FastAPI 공식문서 열람 완료). 영향 범위 확인: app_actions.py(122건→0건이었음, 아직 어디서도 실제로 호출되지 않는 미연결 모듈로 확인 — 실사용 중인 라이브 기능이 막혀있던 게 아니라 완성된 기능이 연결 전 상태였음), audit_backend_runtime_contract.py(EXPECTED_RUNTIME_ROUTES=206 락 검사가 실제로는 0건과 비교 중 — main() 은 fail-loud라 공허하게 통과하진 않았지만 왜 실패하는지 원인이 이번에야 밝혀짐), test_backend_router_server_cycle_break_20260516.py(자체 동일 필터링 로직 중복, 같은 원인으로 항상 실패). test_app_action_coverage.py::test_destructive_actions_never_auto_safe 는 `bad = [x for x in build_manifest() if ...]; assert not bad` 패턴이라 build_manifest() 가 빈 리스트인 동안 비교대상 0건으로 계속 공허하게(vacuously) 통과 — 실제로 수정해서 데이터가 채워지자 register/upload/setup/reset/publish 계열 위험동작이 SAFE(자동실행)로 오분류되고 있던 진짜 문제가 처음으로 드러남.",
+      "fix_note": "2026-09-29: 공식 fastapi.routing.iter_route_contexts() 로 3개 파일 전부 수정(app_actions.py/_post_routes, audit_backend_runtime_contract.py/iter_runtime_routes, test_backend_router_server_cycle_break_20260516.py 는 중복 로직 제거하고 audit 모듈 재사용). 웹소켓 라우트는 RouteContext.path/path_format 이 빈 문자열을 반환하는 별도 한계가 있어(fastapi 0.141.1 실측) ctx._effective_route.starlette_route.path 로 보완(비공개 속성 의존 — 주석에 향후 제거 조건 명시). EXPECTED_RUNTIME_ROUTES 를 실측 정확값 284 로 재고정. app_actions.py 의 _DESTRUCTIVE 정규식에 register|upload|setup|reset|export|publish|발행 추가(공허 통과 중 숨어있던 15건의 SAFE 오분류 중 13건 해결, 나머지 2건은 '게시글'(명사)이 '게시'(동사=publish)와 겹치는 한국어 동형이의어 오탐으로 코드 직접 확인 후 테스트에 알려진 예외로 명시). test_destructive_actions_never_auto_safe 에 공허통과 방지 가드(assert len(man) > 50) 추가. 관련 테스트 22개 전부 통과, ruff clean. 조사 과정에서 이 클래스의 문제(빈 컬렉션 기반 assert가 조용히 항상 통과)를 다른 프로젝트의 감사도구(32. Claude 개발표준/audit-kit)에도 규칙화할지 사용자와 논의 중.",
+      "stage": "RUN",
+      "status": "fixed"
     }
   ]
 }
