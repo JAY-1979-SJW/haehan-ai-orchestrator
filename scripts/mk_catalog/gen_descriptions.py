@@ -264,7 +264,8 @@ def room_hint(led, features):
 def pick(seq, salt):
     if not seq:
         return ""
-    idx = int(hashlib.md5(salt.encode("utf-8")).hexdigest(), 16) % len(seq)
+    # salt 기반 결정적 선택일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+    idx = int(hashlib.md5(salt.encode("utf-8"), usedforsecurity=False).hexdigest(), 16) % len(seq)
     return seq[idx]
 
 

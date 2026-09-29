@@ -90,7 +90,8 @@ def _extract_rfp_no(url: str) -> str:
 
 
 def _hash_url(url: str) -> str:
-    return hashlib.sha1((url or "").encode("utf-8")).hexdigest()[:8]
+    # 파일명용 짧은 지문일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+    return hashlib.sha1((url or "").encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
 
 
 def _file_signature(path: str | Path) -> tuple[str, str]:

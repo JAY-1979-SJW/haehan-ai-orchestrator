@@ -5,7 +5,6 @@ from importlib import import_module
 from scripts.google.cloud import registry, router
 from scripts.google.cloud.local_browser import dry_run_cloud_readonly_browser_task
 
-
 CLOUD_APPROVAL_ACTIONS = [
     "maps_platform_change_key_or_quota",
     "cloud_create_api_credential",
@@ -57,11 +56,7 @@ def test_cloud_registry_surfaces_are_expected() -> None:
 
 
 def test_cloud_registry_approval_actions_are_expected() -> None:
-    approval_actions = [
-        action["key"]
-        for action in registry.list_actions()
-        if action["requires_approval"]
-    ]
+    approval_actions = [action["key"] for action in registry.list_actions() if action["requires_approval"]]
 
     assert approval_actions == CLOUD_APPROVAL_ACTIONS
 
@@ -99,7 +94,7 @@ def test_cloud_wrappers_are_catalog_only_and_do_not_execute() -> None:
         "sql": "cloud_sql",
         "pubsub": "pubsub",
         "secret_manager": "secret_manager",
-        "logging": "cloud_logging",
+        "cloud_logging_catalog": "cloud_logging",  # 파일명: scripts/google/cloud/cloud_logging_catalog.py (2026-09-29 stdlib logging 섀도잉 방지 리네임)
         "monitoring": "cloud_monitoring",
     }
 

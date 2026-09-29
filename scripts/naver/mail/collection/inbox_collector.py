@@ -438,7 +438,8 @@ def collect_inbox(
         import hashlib
 
         sns = sorted((it.get("sn") or "") for it in (payload or {}).get("items", []))
-        return hashlib.sha1("|".join(sns).encode()).hexdigest()[:12]
+        # 변경 감지용 지문일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+        return hashlib.sha1("|".join(sns).encode(), usedforsecurity=False).hexdigest()[:12]
 
     def _next_state() -> dict:
         return actions.evaluate(NEXT_STATE_EXPR) or {}

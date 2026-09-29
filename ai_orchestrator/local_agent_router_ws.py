@@ -525,4 +525,6 @@ async def agent_websocket(websocket: WebSocket):
             )
 
 
-__all__ = ["local_agent_router"]
+__all__ = [
+    "ws_router"
+]  # 2026-09-29 defect_index #38: 실제 정의된 이름과 다른 이름을 선언하고 있었음(존재한 적 없는 local_agent_router)

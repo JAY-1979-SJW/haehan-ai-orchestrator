@@ -70,7 +70,10 @@ async def prepare_upload(
         },
     )
 
-    audit("YOUTUBE_UPLOAD_PLAN_CREATED", user, status="ok", metadata={"plan_path": str(plan_path)})
+    # audit() 는 metadata= 가 아니라 note=(문자열) 를 받음(2026-09-29 defect_index #38 —
+    # 이 kwarg 불일치 때문에 업로드 플랜 생성이 실제로 성공해도 이 감사로그 호출에서
+    # TypeError 로 요청 전체가 500 으로 끝나던 실사용 버그).
+    audit("YOUTUBE_UPLOAD_PLAN_CREATED", user, status="ok", note=f"plan_path={plan_path}")
     return {"ok": True, "plan": plan, "plan_path": str(plan_path)}
 
 
@@ -90,14 +93,12 @@ def execute_upload(
         dry_run=body.dry_run,
     )
 
+    # audit() 는 metadata= 가 아니라 note=(문자열) 를 받음(2026-09-29 defect_index #38,
+    # 위 PLAN_CREATED 와 동일 원인 — 실제 업로드가 성공해도 감사로그에서 TypeError).
     audit(
         "YOUTUBE_UPLOAD_EXECUTED",
         user,
         status=result.get("status", "unknown"),
-        metadata={
-            "video_id": result.get("video_id", ""),
-            "dry_run": body.dry_run,
-            "result_path": str(result_path),
-        },
+        note=f"video_id={result.get('video_id', '')} dry_run={body.dry_run} result_path={result_path}",
     )
     return {"ok": result.get("status") in ("ok", "dry_run_ok"), "result": result}

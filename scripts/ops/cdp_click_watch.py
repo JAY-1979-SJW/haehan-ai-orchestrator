@@ -102,7 +102,8 @@ def extract_counts(cdp: CDP, category: str) -> dict:
 def _fingerprint(cdp: CDP) -> tuple[str, str, str]:
     href = cdp.js("location.href") or ""
     text = (cdp.js(_INNER_TEXT_JS) or "")[:4000]
-    digest = hashlib.sha1(text.encode("utf-8", "ignore")).hexdigest()[:12]
+    # 페이지 변경 감지용 지문일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+    digest = hashlib.sha1(text.encode("utf-8", "ignore"), usedforsecurity=False).hexdigest()[:12]
     return href, digest, text
 
 
