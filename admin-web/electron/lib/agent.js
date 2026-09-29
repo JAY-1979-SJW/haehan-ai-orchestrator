@@ -9,6 +9,7 @@ const { spawn, execSync } = require("child_process");
 const { FASTAPI_URL, getEnabledSites } = require("./config");
 
 let agentProc = null;
+let mcpAgentProc = null;
 
 function resolvePython() {
   // Windows py 런처로 프로젝트 고정 버전(3.14)을 우선 찾는다 — PATH의 "python"이
@@ -72,9 +73,67 @@ function startAgent(licenseKey) {
   agentProc.stdout.on("data", (d) => console.log("[agent]", d.toString().trim()));
   agentProc.stderr.on("data", (d) => console.error("[agent]", d.toString().trim()));
   agentProc.on("exit", (code) => { console.log("[agent] 종료:", code); agentProc = null; });
+
+  startMcpAgent();
+}
+
+// 2026-09-29 추가: 앱 내 "AI 상담"(run_claude_agent, MCP)이 실제 동작하려면
+// local_agent/agent.py(--auto-connect, /api/v1/local-agents/ws 대상)가 상시 연결돼
+// 있어야 한다. 이건 위 agentProc(scripts/local_agent.py, 스마트스토어 전용 구
+// 에이전트, /api/v1/smartstore/agent/ws 대상)와는 완전히 별개 프로세스·별개 서버
+// 엔드포인트다 — 사용자가 매번 터미널에서 수동으로 등록·기동해야 했던 걸 자동화한다.
+// --auto-connect: 미등록이면 등록코드 자동 발급+등록(AUTH_ENABLED=False 로컬 개발
+// 서버 전제, ai_orchestrator/gates/auth.py 확인) 후 WebSocket 기동, 이미 등록돼
+// 있으면(keyring) 바로 연결 — 자체 재시도 루프 내장(5초 간격, local_agent/agent.py).
+function startMcpAgent() {
+  stopMcpAgent();
+
+  if (app.isPackaged) {
+    // 패키징 배포판에는 아직 local_agent.agent 전용 번들이 없다(별도 exe 빌드 파이프라인
+    // 필요 — docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md §10 참고).
+    // 개발 모드에서만 자동 기동하고, 배포판은 다음 세션 후보로 남긴다.
+    console.log("[mcp-agent] 패키징 빌드는 아직 미지원 — 개발 모드에서만 자동 기동");
+    return;
+  }
+
+  const python = resolvePython();
+  if (!python) { console.error("[mcp-agent] Python을 찾을 수 없습니다"); return; }
+  const scriptDir = path.join(__dirname, "..", "..", "..");
+
+  console.log("[mcp-agent] 시작(auto-connect):", python.cmd);
+  mcpAgentProc = spawn(python.cmd, [
+    ...python.prefixArgs, "-m", "local_agent.agent",
+    "--auto-connect",
+    "--server", FASTAPI_URL,
+  ], {
+    cwd: scriptDir,
+    detached: false,
+    windowsHide: true,
+    env: { ...process.env, HAEHAN_AGENT_WS_ENABLED: "true" },
+  });
+
+  mcpAgentProc.stdout.on("data", (d) => console.log("[mcp-agent]", d.toString().trim()));
+  mcpAgentProc.stderr.on("data", (d) => console.error("[mcp-agent]", d.toString().trim()));
+  mcpAgentProc.on("exit", (code) => { console.log("[mcp-agent] 종료:", code); mcpAgentProc = null; });
+}
+
+function stopMcpAgent() {
+  if (!mcpAgentProc) return;
+  const pid = mcpAgentProc.pid;
+  try {
+    if (process.platform === "win32" && pid) {
+      execSync(`taskkill /pid ${pid} /T /F`, { stdio: "ignore" });
+    } else {
+      mcpAgentProc.kill();
+    }
+  } catch {
+    try { mcpAgentProc.kill(); } catch {}
+  }
+  mcpAgentProc = null;
 }
 
 function stopAgent() {
+  stopMcpAgent();
   if (!agentProc) return;
   const pid = agentProc.pid;
   try {
