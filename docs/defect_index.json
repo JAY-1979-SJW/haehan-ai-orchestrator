@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 49,
+  "next_no": 50,
   "items": [
     {
       "no": 1,
@@ -688,6 +688,19 @@
       ],
       "evidence": "#42 STD-08 극단값 목록 7위. audit() 하나에 서로 상태를 공유하지 않는 독립 체크 블록(baseline 문구/provider 루프/blocked operation/occasional login/subdomain logic/tab logic)을 전부 담고 있어 C901=33.",
       "fix_note": "2026-09-29: 각 체크 블록을 _check_*() 함수로 분리(baseline_phrases/provider_metadata/provider_service/provider/blocked_operation/occasional_site_login/google_subdomain_logic/google_tab_logic) — 전부 failures 리스트를 반환하고 audit() 가 extend() 로 모은다(순서·조건·문자열 그대로, 순수 추출). provider 체크는 처음 분리해도 C901=13 으로 여전히 넘어 provider_metadata/provider_service 로 한 번 더 나눔. 검증: ruff 0 errors(자동수정된 import 정렬 1건 포함), 실제 실행(read-only, 외부 API 호출 없음)을 원본과 대조해 exit code·출력 문자열 완전 동일(7개 체크 전부 PASS) 확인. layer audit 신규 위반 없음.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 49,
+      "id": "run.std08_audit_post_tasks_preflight_complexity_fix",
+      "category": 2,
+      "title": "STD-08 극단값 8위 scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py:run_audit()(C901=32) 리팩터",
+      "where": [
+        "scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py"
+      ],
+      "evidence": "#42 STD-08 극단값 목록 8위. run_audit() 하나가 원본 주석의 10개 번호 섹션(운영안전플래그/router상태/executor상태/핵심발견/medium경로/isolation smoke/preflight gate/대표승인/router무수정/HTTP import)을 전부 담고 있어 C901=32 — #48(audit_site_sso)과 같은 계열의 독립 체크리스트 패턴.",
+      "fix_note": "2026-09-29: 각 섹션을 _check_*() 함수로 분리(safety_flags/router_state_findings/executor_state_findings/design_docs_consistency/preflight_gate_conditions) — 전부 errors/warnings 리스트만 반환, run_audit() 가 extend() 로 모은다(순서·조건·문자열 그대로). 결과 dict 조립부의 smoke/gate 로컬 별칭은 원래 모듈 상수 그대로라 MEDIUM_ISOLATION_SMOKE_DESIGN/PREFLIGHT_GATE_STATUS 직접 참조로 바꿔도 값 동일. 검증: ruff 0 errors, 실제 실행을 원본과 대조(PYTHONIOENCODING=utf-8 — 이 파일도 cp949 터미널 em-dash 인코딩 문제가 원본에도 동일하게 있었음, 리팩터로 늘어난 줄수 때문에 트레이스백 줄번호만 다르고 나머지 동일) — UTF-8 강제 시 exit 0, 출력 완전히 동일함을 확인. layer audit 신규 위반 없음.",
       "stage": "RUN",
       "status": "fixed"
     }

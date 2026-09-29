@@ -7,22 +7,23 @@ approve → execute_task 연결 경로 preflight.
 DB write / router.py 수정 / 서버 반영 전면 금지.
 이번 공정은 medium approve gate 진입 조건 확정까지만.
 """
+
 import ast
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
-AUDIT_ID   = "POST_TASKS_MEDIUM_APPROVE_GATE_PREFLIGHT"
+AUDIT_ID = "POST_TASKS_MEDIUM_APPROVE_GATE_PREFLIGHT"
 AUDIT_DATE = "2026-05-18"
 
 # ── 운영 안전 플래그 ─────────────────────────────────────────────────────────
 APPROVAL_TOKEN_ISSUE_ALLOWED = False
-APPROVE_CALL_ALLOWED         = False
-EXECUTE_TASK_CALL_ALLOWED    = False
-DB_WRITE_ALLOWED             = False
-ROUTER_MODIFICATION_ALLOWED  = False
-SERVER_DEPLOY_ALLOWED        = False
-PREFLIGHT_ONLY               = True
+APPROVE_CALL_ALLOWED = False
+EXECUTE_TASK_CALL_ALLOWED = False
+DB_WRITE_ALLOWED = False
+ROUTER_MODIFICATION_ALLOWED = False
+SERVER_DEPLOY_ALLOWED = False
+PREFLIGHT_ONLY = True
 
 # ── 1. 핵심 발견: approve → execute_task 연결 현황 ───────────────────────────
 APPROVE_EXECUTE_CONNECTION_ANALYSIS = {
@@ -70,10 +71,7 @@ MEDIUM_PATH_CURRENT_STATE = {
             "audit_logs.jsonl 1회 (APPROVAL_GRANTED)",
         ],
     },
-    "gap": (
-        "approve 이후 execute_task 미호출 → 실제 작업 실행 없음. "
-        "'PENDING_APPROVAL' 상태의 task는 영구 미실행."
-    ),
+    "gap": ("approve 이후 execute_task 미호출 → 실제 작업 실행 없음. 'PENDING_APPROVAL' 상태의 task는 영구 미실행."),
 }
 
 # ── 3. Phase 1-R guard 현황 (approve 경로) ───────────────────────────────────
@@ -121,8 +119,7 @@ EXECUTE_TASK_WHITELIST_ANALYSIS = {
         "medium 전용 whitelist 별도 설계 필요."
     ),
     "recommended_action": (
-        "medium approve 경로 전용 whitelist를 executor.py에 별도 정의. "
-        "현재 ALLOWED_ACTIONS와 혼용 금지."
+        "medium approve 경로 전용 whitelist를 executor.py에 별도 정의. 현재 ALLOWED_ACTIONS와 혼용 금지."
     ),
     "design_status": "PENDING",
 }
@@ -325,9 +322,7 @@ PREFLIGHT_GATE_STATUS = {
 
 
 def _check_router_state() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "execute_task_imported": "execute_task" in content and "import" in content,
         "execute_imported": "from .executor import execute" in content,
@@ -338,16 +333,14 @@ def _check_router_state() -> dict:
         "task_approve_flag_false": "LEGACY_5050_TASK_APPROVE_ROUTE_WIRING_ENABLED = False" in content,
         "dry_run_flag_not_present": "POST_TASKS_DRY_RUN_ENABLED" not in content,
         "touch_phase_1r": (
-            "LEGACY_5050_ROUTER_TOUCH_PHASE = \"PHASE_1R\"" in content
+            'LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"' in content
             or "LEGACY_5050_ROUTER_TOUCH_PHASE = 'PHASE_1R'" in content
         ),
     }
 
 
 def _check_executor_state() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/executor.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    content = (REPO_ROOT / "ai_orchestrator/executor.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "execute_task_defined": "def execute_task(" in content,
         "allowed_actions_defined": "ALLOWED_ACTIONS" in content,
@@ -376,11 +369,9 @@ def _verify_no_http_import() -> tuple[bool, str]:
     return True, "OK"
 
 
-def run_audit() -> dict:
+def _check_safety_flags() -> list[str]:
+    """1. 운영 안전 플래그."""
     errors = []
-    warnings = []
-
-    # 1. 운영 안전 플래그
     if APPROVAL_TOKEN_ISSUE_ALLOWED:
         errors.append("APPROVAL_TOKEN_ISSUE_ALLOWED must be False")
     if APPROVE_CALL_ALLOWED:
@@ -393,9 +384,13 @@ def run_audit() -> dict:
         errors.append("ROUTER_MODIFICATION_ALLOWED must be False")
     if not PREFLIGHT_ONLY:
         errors.append("PREFLIGHT_ONLY must be True")
+    return errors
 
-    # 2. router.py 상태
-    rs = _check_router_state()
+
+def _check_router_state_findings(rs: dict) -> tuple[list[str], list[str]]:
+    """2. router.py 상태."""
+    errors: list[str] = []
+    warnings: list[str] = []
     if rs["execute_task_imported"]:
         errors.append("execute_task가 router.py에 import됨 — 연결 경로 열림 위험")
     if not rs["execute_imported"]:
@@ -408,9 +403,13 @@ def run_audit() -> dict:
         warnings.append("POST_TASKS_DRY_RUN_ENABLED 이미 존재 — 이번 공정 범위 초과 여부 확인")
     if not rs["touch_phase_1r"]:
         errors.append("ROUTER_TOUCH_PHASE != PHASE_1R")
+    return errors, warnings
 
-    # 3. executor.py 상태
-    es = _check_executor_state()
+
+def _check_executor_state_findings(es: dict) -> tuple[list[str], list[str]]:
+    """3. executor.py 상태."""
+    errors: list[str] = []
+    warnings: list[str] = []
     if not es["execute_task_defined"]:
         errors.append("execute_task 함수 없음")
     if not es["allowed_actions_defined"]:
@@ -421,27 +420,42 @@ def run_audit() -> dict:
         errors.append("fetch_web_page whitelist 누락")
     if not es["medium_whitelist_not_separate"]:
         warnings.append("ALLOWED_ACTIONS_MEDIUM 이미 존재 — 설계 충돌 여부 확인")
+    return errors, warnings
 
-    # 4. 핵심 발견 분석 결과
+
+def _check_design_docs_consistency() -> list[str]:
+    """4·5·6·8·9: 이 모듈의 설계 딕셔너리 자기 일관성 검사."""
+    errors = []
     finding = APPROVE_EXECUTE_CONNECTION_ANALYSIS
     if finding["current_safety"] != "SAFE_BY_INCOMPLETENESS":
         errors.append("approve→execute 연결 안전 상태 분류 오류")
 
-    # 5. medium 경로 분석
     medium = MEDIUM_PATH_CURRENT_STATE
     if medium["step_1"]["execute_task_called"]:
         errors.append("step_1에서 execute_task 호출됨 — 설계 오류")
     if medium["step_2"]["execute_task_called"]:
         errors.append("step_2에서 execute_task 호출됨 — 현재 미연결 전제 위반")
 
-    # 6. isolation smoke 설계 완전성
     smoke = MEDIUM_ISOLATION_SMOKE_DESIGN
     if smoke["status"] != "DESIGN_ONLY":
         errors.append("isolation smoke status must be DESIGN_ONLY")
     if len(smoke["test_cases"]) < 6:
         errors.append("isolation smoke test cases < 6")
 
-    # 7. preflight gate 조건
+    approval = REPRESENTATIVE_APPROVAL_CONDITIONS
+    if approval["approval_received"]:
+        errors.append("approval_received must be False (이번 공정에서 승인 없음)")
+    if approval["current_approval_status"] != "BLOCKED_DESIGN_ONLY":
+        errors.append("approval status must be BLOCKED_DESIGN_ONLY")
+
+    if ROUTER_MODIFICATION_ASSESSMENT["current_phase_modification"]:
+        errors.append("이번 공정에서 router.py 수정됨 — preflight 범위 초과")
+    return errors
+
+
+def _check_preflight_gate_conditions() -> list[str]:
+    """7. preflight gate 조건."""
+    errors = []
     gate = PREFLIGHT_GATE_STATUS
     if not gate["all_conditions_met"]:
         errors.append("preflight gate conditions not all met")
@@ -457,17 +471,30 @@ def run_audit() -> dict:
     for c in conditions:
         if gate.get(c, {}).get("status") != "COMPLETE":
             errors.append(f"preflight condition 미완료: {c}")
+    return errors
 
-    # 8. 대표 승인 조건
-    approval = REPRESENTATIVE_APPROVAL_CONDITIONS
-    if approval["approval_received"]:
-        errors.append("approval_received must be False (이번 공정에서 승인 없음)")
-    if approval["current_approval_status"] != "BLOCKED_DESIGN_ONLY":
-        errors.append("approval status must be BLOCKED_DESIGN_ONLY")
 
-    # 9. router.py 수정 없음 확인
-    if ROUTER_MODIFICATION_ASSESSMENT["current_phase_modification"]:
-        errors.append("이번 공정에서 router.py 수정됨 — preflight 범위 초과")
+def run_audit() -> dict:
+    # 2026-09-29 STD-08(복잡도) 리팩터: 이 함수 하나(C901=32)에 있던 10개 번호 섹션(원본
+    # 주석 1.~10.)을 위 _check_*() 함수로 분리했다. 각 섹션이 errors/warnings 에만 추가하는
+    # 독립 검사라 순서·조건·문자열을 그대로 유지한 채 나누는 것이 안전했다.
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    errors.extend(_check_safety_flags())
+
+    rs = _check_router_state()
+    e, w = _check_router_state_findings(rs)
+    errors.extend(e)
+    warnings.extend(w)
+
+    es = _check_executor_state()
+    e, w = _check_executor_state_findings(es)
+    errors.extend(e)
+    warnings.extend(w)
+
+    errors.extend(_check_design_docs_consistency())
+    errors.extend(_check_preflight_gate_conditions())
 
     # 10. HTTP import 없음
     ok, msg = _verify_no_http_import()
@@ -491,9 +518,9 @@ def run_audit() -> dict:
         "approve_guard_active": rs["task_approve_guard_active"],
         "dry_run_flag_present": not rs["dry_run_flag_not_present"],
         "medium_whitelist_separate": not es["medium_whitelist_not_separate"],
-        "isolation_smoke_cases": len(smoke["test_cases"]),
-        "preflight_conditions_met": gate["all_conditions_met"],
-        "next_phase": gate["next_phase"],
+        "isolation_smoke_cases": len(MEDIUM_ISOLATION_SMOKE_DESIGN["test_cases"]),
+        "preflight_conditions_met": PREFLIGHT_GATE_STATUS["all_conditions_met"],
+        "next_phase": PREFLIGHT_GATE_STATUS["next_phase"],
         "router_modified_this_phase": ROUTER_MODIFICATION_ASSESSMENT["current_phase_modification"],
         "preflight_only": PREFLIGHT_ONLY,
         "errors": errors,
@@ -503,6 +530,7 @@ def run_audit() -> dict:
 
 if __name__ == "__main__":
     import json
+
     result = run_audit()
     print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     print(f"\n=== Medium Approve Gate Preflight: {result['verdict']} ===")
