@@ -78,15 +78,27 @@ def _check_module_entries_and_paths(modules: list) -> list[Finding]:
     return findings
 
 
-def _check_github_actions_disabled() -> Finding:
+def _check_github_actions_disabled(config: dict) -> Finding:
+    # 2026-09-29 수정(defect_index.json 참고): "GitHub 기능 안 씀" 결정이 커밋 a941e09a
+    # (사용자 승인)로 번복돼 .github/workflows/ci.yml 이 정식 도입됐는데, 이 검사가
+    # 갱신 안 돼 항상 FAIL을 내고 있었음. 전면 금지 대신 승인된 파일만 허용하는
+    # 화이트리스트로 변경 — configs/module_boundaries.json 의 allowed_exceptions.
     workflow_dir = ROOT / ".github" / "workflows"
     workflow_files = []
     if workflow_dir.exists():
         workflow_files = [
             p.name for p in workflow_dir.iterdir() if p.is_file() and p.suffix.lower() in {".yml", ".yaml"}
         ]
+    allowed: set[str] = set()
+    for rule in config.get("forbidden_cross_boundary") or []:
+        if rule.get("rule") == "github_actions_disabled":
+            allowed = set(rule.get("allowed_exceptions") or [])
+            break
+    unexpected = sorted(set(workflow_files) - allowed)
+    if unexpected:
+        return Finding("FAIL", "github_actions_disabled", ", ".join(unexpected))
     if workflow_files:
-        return Finding("FAIL", "github_actions_disabled", ", ".join(sorted(workflow_files)))
+        return Finding("PASS", "github_actions_disabled", f"approved only: {', '.join(sorted(workflow_files))}")
     return Finding("PASS", "github_actions_disabled", "no workflow files")
 
 
@@ -112,7 +124,7 @@ def audit() -> list[Finding]:
     modules = config.get("modules") or []
     findings.append(_check_required_module_names(modules))
     findings.extend(_check_module_entries_and_paths(modules))
-    findings.append(_check_github_actions_disabled())
+    findings.append(_check_github_actions_disabled(config))
     findings.append(_check_archive_runtime_state())
 
     return findings

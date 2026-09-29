@@ -106,7 +106,9 @@
   "forbidden_cross_boundary": [
     {
       "rule": "github_actions_disabled",
-      "forbidden_path_glob": ".github/workflows/*.yml"
+      "forbidden_path_glob": ".github/workflows/*.yml",
+      "allowed_exceptions": ["ci.yml"],
+      "exception_note": "2026-09-29 커밋 a941e09a, 사용자 승인으로 'GitHub 기능 안 씀' 결정 번복 — ci.yml만 허용(docs/specs 참고), 그 외 신규 workflow 파일은 계속 금지"
     },
     {
       "rule": "archive_runtime_state_write_forbidden",

@@ -30,8 +30,11 @@ tests/test_module_boundaries.py
 
 ## Rules
 
-- GitHub Actions workflow files remain disabled; required checks are local
-  scripts plus pre-commit/pre-push hooks.
+- GitHub Actions is limited to the single approved `.github/workflows/ci.yml`
+  (introduced 2026-09-29, commit a941e09a, user-approved reversal of the prior
+  "no GitHub Actions" decision); any other workflow file is still forbidden.
+  Required checks remain local scripts plus pre-commit/pre-push hooks, reused
+  by ci.yml itself (`scripts/ops/verify_change.py`).
 - Browser runtime state must stay under `data/runtime/`, not under
   `scripts/archive/data/`.
 - Legacy root Python scripts are accepted residuals only. New root-level Python
