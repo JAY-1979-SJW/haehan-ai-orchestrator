@@ -37,13 +37,20 @@ class SheetsAPI:
                 self.page.evaluate(
                     """(limit) => {
                     const out = [];
+                    // [data-id] 는 홈스크린 시트 항목뿐 아니라 전역 데이터를 담은
+                    // <script data-id="_gd"> 요소도 매칭한다(2026-09-29 실측 확인,
+                    // window.WIZ_global_data 텍스트가 시트명으로 오추출됨) — script 태그와
+                    // window. 로 시작하는 값을 제외해 실제 시트 항목만 남긴다.
                     document.querySelectorAll('[data-id]').forEach(el => {
                         if (out.length >= limit) return;
+                        if (el.tagName === 'SCRIPT') return;
                         const name = el.querySelector('[data-tooltip], .docs-homescreen-list-item-title')?.innerText
                                     || (el.innerText || '').split('\\n')[0];
                         const id = el.getAttribute('data-id') || '';
-                        if (name) out.push({name: name.substring(0, 80), id,
-                                            url: `https://docs.google.com/spreadsheets/d/${id}/edit`});
+                        if (name && !name.trim().startsWith('window.')) {
+                            out.push({name: name.substring(0, 80), id,
+                                      url: `https://docs.google.com/spreadsheets/d/${id}/edit`});
+                        }
                     });
                     return out;
                 }""",
