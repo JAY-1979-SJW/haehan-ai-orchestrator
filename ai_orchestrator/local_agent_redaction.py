@@ -12,6 +12,8 @@ result_data는 명시적 허용 목록만 저장하는 정책을 정의한다.
   - _strip_result_data(): result_data 필터링 (저장 전, 이중 방어)
 """
 
+from collections.abc import Callable
+
 # params / result 에서 절대 저장·노출 금지인 키
 _SENSITIVE_KEYS: frozenset[str] = frozenset(
     {
@@ -552,6 +554,30 @@ def _strip_lifecycle(value: object) -> "dict | None":
     return out if out else None
 
 
+def _strip_inspection_mode(v: object) -> object | None:
+    """inspection_mode 특별 처리: enum 검증(2026-09-29 STD-08 분리, 로직 동일)."""
+    return v if isinstance(v, str) and v in _INSPECTION_MODE_ALLOWED else None
+
+
+# k_low(소문자 key) → 그 값을 필터링하는 함수. _strip_result_data() 의 원래 "if k_low ==
+# 'X': 특별 처리; continue" 체인을 그대로 옮긴 것 — 함수가 None 을 반환하면 원본처럼 그 키를
+# 버린다(2026-09-29 STD-08: C901=32 를 벗어나기 위해 if/elif 12개를 dict 조회로 바꿨다).
+_RESULT_DATA_SPECIAL_HANDLERS: dict[str, Callable[[object], object | None]] = {
+    "capabilities": _strip_capabilities,
+    "apps": _strip_apps,
+    "plan": _strip_plan,
+    "target": _strip_target,
+    "inspection_mode": _strip_inspection_mode,
+    "browser": _strip_browser,
+    "click_target": _strip_click_target,
+    "clicked_target": _strip_click_target,  # click_target 과 동일 처리(원본과 동일)
+    "url_info": _strip_url_info,
+    "navigation": _strip_navigation,
+    "cleanup": _strip_cleanup,
+    "lifecycle": _strip_lifecycle,
+}
+
+
 def _strip_result_data(data: object) -> "dict | None":
     """agent result data를 안전 필터 후 반환.
 
@@ -572,76 +598,11 @@ def _strip_result_data(data: object) -> "dict | None":
             continue
         if k_low not in _RESULT_DATA_ALLOWED_KEYS:
             continue
-        # capabilities 특별 처리: nested boolean allowlist
-        if k_low == "capabilities":
-            capabilities = _strip_capabilities(v)
-            if capabilities is not None:
-                out[k] = capabilities
-            continue
-        # apps 특별 처리: nested list allowlist
-        if k_low == "apps":
-            apps = _strip_apps(v)
-            if apps is not None:
-                out[k] = apps
-            continue
-        # plan 특별 처리: nested allowlist
-        if k_low == "plan":
-            plan = _strip_plan(v)
-            if plan is not None:
-                out[k] = plan
-            continue
-        # target 특별 처리: nested allowlist
-        if k_low == "target":
-            target = _strip_target(v)
-            if target is not None:
-                out[k] = target
-            continue
-        # inspection_mode 특별 처리: enum 검증
-        if k_low == "inspection_mode":
-            if isinstance(v, str) and v in _INSPECTION_MODE_ALLOWED:
-                out[k] = v
-            continue
-        # browser 특별 처리: nested boolean allowlist
-        if k_low == "browser":
-            browser = _strip_browser(v)
-            if browser is not None:
-                out[k] = browser
-            continue
-        # click_target 특별 처리: nested enum allowlist
-        if k_low == "click_target":
-            click_target = _strip_click_target(v)
-            if click_target is not None:
-                out[k] = click_target
-            continue
-        # clicked_target 특별 처리: click_target과 동일
-        if k_low == "clicked_target":
-            clicked_target = _strip_click_target(v)
-            if clicked_target is not None:
-                out[k] = clicked_target
-            continue
-        # url_info 특별 처리: nested allowlist
-        if k_low == "url_info":
-            url_info = _strip_url_info(v)
-            if url_info is not None:
-                out[k] = url_info
-            continue
-        # navigation 특별 처리: nested allowlist
-        if k_low == "navigation":
-            navigation = _strip_navigation(v)
-            if navigation is not None:
-                out[k] = navigation
-            continue
-        # cleanup 특별 처리: nested allowlist
-        if k_low == "cleanup":
-            cleanup = _strip_cleanup(v)
-            if cleanup is not None:
-                out[k] = cleanup
-            continue
-        # lifecycle 특별 처리: nested allowlist
-        if k_low == "lifecycle":
-            lifecycle = _strip_lifecycle(v)
-            if lifecycle is not None:
-                out[k] = lifecycle
+        handler = _RESULT_DATA_SPECIAL_HANDLERS.get(k_low)
+        if handler is not None:
+            stripped = handler(v)
+            if stripped is not None:
+                out[k] = stripped
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):
