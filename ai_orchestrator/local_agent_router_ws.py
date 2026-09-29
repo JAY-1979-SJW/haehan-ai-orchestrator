@@ -507,7 +507,7 @@ async def agent_websocket(websocket: WebSocket):
     finally:
         if agent_id:
             _reg.set_agent_disconnected(agent_id)
-            failed_on_disconnect = _reg.fail_active_tasks_for_agent(agent_id)
+            failed_on_disconnect, requeued_on_disconnect = _reg.fail_active_tasks_for_agent(agent_id)
             for t in failed_on_disconnect:
                 log_event(
                     "LOCAL_AGENT_TASK_FAILED",
@@ -517,6 +517,19 @@ async def agent_websocket(websocket: WebSocket):
                     actor="ws-disconnect",
                     decision="failed",
                     note=(f"agent_id={agent_id} failure_reason={t.failure_reason} status=failed"),
+                )
+            for t in requeued_on_disconnect:
+                # 2026-09-30: 연결 끊김 자체는 실패가 아니라 재큐잉 — 재연결 시
+                # _push_queued()가 자동으로 다시 전달한다(local_agent_registry_task_lifecycle.py
+                # fail_active_tasks_for_agent 참고).
+                log_event(
+                    "LOCAL_AGENT_TASK_REQUEUED",
+                    t.task_id,
+                    risk_level=t.risk_level,
+                    action_type=t.action,
+                    actor="ws-disconnect",
+                    decision="requeued",
+                    note=(f"agent_id={agent_id} retry_count={t.retry_count}"),
                 )
             log_event(
                 "LOCAL_AGENT_WS_DISCONNECTED",

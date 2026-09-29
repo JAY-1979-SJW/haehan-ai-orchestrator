@@ -25,13 +25,22 @@ HEARTBEAT_STALE_SECONDS: int = 90
 # active task 로 간주하는 상태 집합
 ACTIVE_TASK_STATUSES: frozenset[str] = frozenset({"delivered", "running", "cancel_requested"})
 
+# WS 연결 끊김(websocket_disconnected)으로 실패할 뻔한 작업을 재큐잉 허용할 최대 횟수.
+# 이 횟수를 넘으면 더 재시도하지 않고 failed 로 종결(작업 자체가 매번 agent를 죽이는
+# 경우 등 무한 재시도 방지). 2026-09-30: 사용자가 실제로 AI 채팅에서 겪은
+# "작업 실패: websocket_disconnected"(에이전트 재기동 도중 들어온 요청이 그 자리에서
+# 바로 실패 처리되던 문제)를 고치며 추가.
+MAX_WS_DISCONNECT_RETRIES: int = 2
+
 
 # ── 상태 전이 매트릭스 ───────────────────────────────────────────────────
 
 VALID_TASK_TRANSITIONS: dict[str, set[str]] = {
     "queued": {"delivered", "failed", "cancelled"},
-    "delivered": {"running", "failed", "cancel_requested"},
-    "running": {"completed", "failed", "cancel_requested"},
+    # "queued" 로의 역행은 WS 연결 끊김 재큐잉 전용(fail_active_tasks_for_agent) — 사람이나
+    # 일반 흐름이 delivered/running에서 queued 로 되돌리는 다른 경로는 없다.
+    "delivered": {"running", "failed", "cancel_requested", "queued"},
+    "running": {"completed", "failed", "cancel_requested", "queued"},
     "cancel_requested": {"cancelled", "failed", "completed"},
     "completed": set(),
     "failed": set(),

@@ -912,11 +912,15 @@ def test_ws_idle_timeout_triggers_expire_and_audit(admin_user, monkeypatch):
     assert task.failure_reason == "delivered_timeout"
 
 
-# ── 12. disconnect 처리 — delivered/running → failed ────────────────────
+# ── 12. disconnect 처리 — delivered/running → 재큐잉(재시도 소진 시 failed) ──
+# 2026-09-30: 기존엔 delivered/running 중 disconnect되면 무조건 즉시 failed였다.
+# 실사용 중 "에이전트 재기동 도중 몇 초 사이 들어온 요청이 그 자리에서 실패 처리"되는
+# 증상이 실제로 재현돼(docs/defect_index.json), MAX_WS_DISCONNECT_RETRIES 만큼은
+# queued로 되돌려 재연결 시 자동 재전달하도록 바뀌었다 — 아래 테스트도 이에 맞춰 갱신.
 
 
-def test_delivered_task_failed_on_disconnect(admin_user):
-    """delivered 상태 task는 WS disconnect 후 failed가 된다."""
+def test_delivered_task_requeued_on_first_disconnect(admin_user):
+    """delivered 상태 task는 첫 WS disconnect 후 재큐잉(queued, retry_count=1)된다."""
     import ai_orchestrator.local_agent_registry as _reg
 
     client = _make_test_client(admin_user)
@@ -931,11 +935,13 @@ def test_delivered_task_failed_on_disconnect(admin_user):
         # disconnect — delivered 상태로 종료
 
     task = _reg.find_task_by_id(task_id)
-    assert task.status == "failed"
+    assert task.status == "queued"
+    assert task.retry_count == 1
+    assert task.delivered_at == ""
 
 
-def test_running_task_failed_on_disconnect(admin_user):
-    """running 상태 task는 WS disconnect 후 failed가 된다."""
+def test_running_task_requeued_on_first_disconnect(admin_user):
+    """running 상태 task는 첫 WS disconnect 후 재큐잉(queued, retry_count=1)된다."""
     import ai_orchestrator.local_agent_registry as _reg
 
     client = _make_test_client(admin_user)
@@ -952,26 +958,61 @@ def test_running_task_failed_on_disconnect(admin_user):
         # disconnect — running 상태로 종료
 
     task = _reg.find_task_by_id(task_id)
-    assert task.status == "failed"
+    assert task.status == "queued"
+    assert task.retry_count == 1
+    assert task.started_at == ""
 
 
-def test_disconnect_failure_reason_websocket_disconnected(admin_user):
-    """disconnect 처리 후 failure_reason = websocket_disconnected."""
+def test_requeued_task_redelivered_on_reconnect(admin_user):
+    """재큐잉된 task는 같은 agent가 재연결하면 자동으로 다시 delivered 된다."""
     import ai_orchestrator.local_agent_registry as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
-    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d3"})
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d5"})
     task_id = created["task_id"]
 
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
         ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         assert ws.receive_json()["type"] == "task"
+    assert _reg.find_task_by_id(task_id).status == "queued"
+
+    # 같은 agent_id/token으로 재연결 — 재큐잉된 task가 자동으로 다시 push돼야 한다.
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws2:
+        ws2.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws2.receive_json()["type"] == "auth_ok"
+        pushed = ws2.receive_json()
+        assert pushed["type"] == "task"
+        assert pushed["task"]["task_id"] == task_id
 
     task = _reg.find_task_by_id(task_id)
+    assert task.status == "queued"  # 두 번째 disconnect도 재큐잉(retry_count=2, 상한 미도달)
+    assert task.retry_count == 2
+
+
+def test_disconnect_fails_after_retries_exhausted(admin_user):
+    """MAX_WS_DISCONNECT_RETRIES 만큼 재큐잉 후 또 disconnect되면 최종 failed가 된다."""
+    import ai_orchestrator.local_agent_registry as _reg
+    from ai_orchestrator.local_agent_registry_common import MAX_WS_DISCONNECT_RETRIES
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d6"})
+    task_id = created["task_id"]
+
+    # MAX_WS_DISCONNECT_RETRIES + 1 번 연속으로 delivered → disconnect 반복
+    for _ in range(MAX_WS_DISCONNECT_RETRIES + 1):
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+            assert ws.receive_json()["type"] == "auth_ok"
+            assert ws.receive_json()["type"] == "task"
+
+    task = _reg.find_task_by_id(task_id)
+    assert task.status == "failed"
     assert task.failure_reason == "websocket_disconnected"
     assert task.timed_out_at == ""  # timeout 아님
+    assert task.retry_count == MAX_WS_DISCONNECT_RETRIES
 
 
 def test_queued_task_unchanged_on_disconnect(admin_user):
@@ -1053,8 +1094,13 @@ def test_failed_task_unchanged_on_disconnect(admin_user):
     assert task.failure_reason == "agent_error"  # disconnect로 덮어쓰면 안 됨
 
 
-def test_disconnect_audit_task_failed_event(admin_user):
-    """disconnect 처리 시 LOCAL_AGENT_TASK_FAILED audit 이벤트가 기록된다."""
+def test_disconnect_audit_task_requeued_event(admin_user):
+    """첫 disconnect 처리 시 LOCAL_AGENT_TASK_REQUEUED audit 이벤트가 기록된다.
+
+    2026-09-30: 기존엔 첫 disconnect부터 LOCAL_AGENT_TASK_FAILED였으나, 재큐잉-재시도
+    도입 후 첫 disconnect는 REQUEUED로 기록되고 FAILED는 재시도 소진 후에만 발생한다
+    (재시도 소진 케이스는 test_disconnect_fails_after_retries_exhausted 참고).
+    """
     import ai_orchestrator.audit_logger as _al
 
     client = _make_test_client(admin_user)
@@ -1069,14 +1115,14 @@ def test_disconnect_audit_task_failed_event(admin_user):
         # disconnect
 
     logs = _al.read_recent_logs(limit=200)
-    disconnect_failed = [
+    disconnect_requeued = [
         e
         for e in logs
-        if e["event_type"] == "LOCAL_AGENT_TASK_FAILED"
+        if e["event_type"] == "LOCAL_AGENT_TASK_REQUEUED"
         and e.get("task_id") == task_id
-        and "websocket_disconnected" in e.get("note", "")
+        and "retry_count=1" in e.get("note", "")
     ]
-    assert len(disconnect_failed) >= 1
+    assert len(disconnect_requeued) >= 1
 
 
 # ── Stage 11-6B: WS 상태 갱신 테스트 ──────────────────────────────────

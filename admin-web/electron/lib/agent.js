@@ -10,6 +10,10 @@ const { FASTAPI_URL, getEnabledSites } = require("./config");
 
 let agentProc = null;
 let mcpAgentProc = null;
+let mcpAgentStopRequested = false; // stopMcpAgent()가 의도적으로 부른 건지 구분(재기동 여부 판단용)
+let mcpAgentRestartCount = 0;
+let mcpAgentRestartTimer = null;
+const MCP_AGENT_MAX_RESTARTS = 5; // 연속 크래시(예: 파이썬 없음) 시 무한 재시도 방지
 
 function resolvePython() {
   // Windows py 런처로 프로젝트 고정 버전(3.14)을 우선 찾는다 — PATH의 "python"이
@@ -87,6 +91,7 @@ function startAgent(licenseKey) {
 // 있으면(keyring) 바로 연결 — 자체 재시도 루프 내장(5초 간격, local_agent/agent.py).
 function startMcpAgent() {
   stopMcpAgent();
+  mcpAgentStopRequested = false;
 
   if (app.isPackaged) {
     // 패키징 배포판에는 아직 local_agent.agent 전용 번들이 없다(별도 exe 빌드 파이프라인
@@ -114,10 +119,41 @@ function startMcpAgent() {
 
   mcpAgentProc.stdout.on("data", (d) => console.log("[mcp-agent]", d.toString().trim()));
   mcpAgentProc.stderr.on("data", (d) => console.error("[mcp-agent]", d.toString().trim()));
-  mcpAgentProc.on("exit", (code) => { console.log("[mcp-agent] 종료:", code); mcpAgentProc = null; });
+
+  const spawnedProc = mcpAgentProc;
+  // 60초 이상 안 죽고 살아있으면 "안정적으로 떴다"로 보고 재시도 카운터 리셋 — 어쩌다 한 번
+  // 크래시가 이후의 진짜 영구 실패(파이썬 없음 등) 감지를 방해하지 않게 함.
+  const stableTimer = setTimeout(() => {
+    if (mcpAgentProc === spawnedProc) mcpAgentRestartCount = 0;
+  }, 60000);
+
+  mcpAgentProc.on("exit", (code) => {
+    clearTimeout(stableTimer);
+    console.log("[mcp-agent] 종료:", code);
+    mcpAgentProc = null;
+
+    // 2026-09-30 추가: 이 프로세스가 죽어도 기존엔 재기동 로직이 없어 Electron을 통째로
+    // 재시작해야만 MCP 파이프라인(버튼→AI 채팅→헤드리스 claude -p)이 복구됐다
+    // (docs/defect_index.json — 세션 내 FastAPI 재기동 등으로 실제 재현·확인).
+    // stopMcpAgent()로 의도적으로 멈춘 경우(앱 종료 등)는 재기동하지 않는다.
+    if (mcpAgentStopRequested) return;
+    if (mcpAgentRestartCount >= MCP_AGENT_MAX_RESTARTS) {
+      console.error(`[mcp-agent] ${MCP_AGENT_MAX_RESTARTS}회 연속 재기동 실패 — 자동 재시도 중단`);
+      return;
+    }
+    mcpAgentRestartCount += 1;
+    const delayMs = Math.min(3000 * mcpAgentRestartCount, 15000); // 3s,6s,9s,12s,15s 백오프
+    console.log(`[mcp-agent] ${delayMs}ms 후 재기동 시도 (${mcpAgentRestartCount}/${MCP_AGENT_MAX_RESTARTS})`);
+    clearTimeout(mcpAgentRestartTimer);
+    mcpAgentRestartTimer = setTimeout(() => {
+      if (!mcpAgentStopRequested) startMcpAgent();
+    }, delayMs);
+  });
 }
 
 function stopMcpAgent() {
+  mcpAgentStopRequested = true;
+  clearTimeout(mcpAgentRestartTimer);
   if (!mcpAgentProc) return;
   const pid = mcpAgentProc.pid;
   try {

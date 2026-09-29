@@ -1820,8 +1820,9 @@ def test_fail_active_tasks_for_agent_includes_cancel_requested():
     reg.cancel_task(agent_id, task.task_id, actor="admin")
     assert reg.find_task_by_id(task.task_id).status == "cancel_requested"
 
-    failed = reg.fail_active_tasks_for_agent(agent_id)
+    failed, requeued = reg.fail_active_tasks_for_agent(agent_id)
     assert any(t.task_id == task.task_id for t in failed)
+    assert not requeued  # cancel_requested는 재큐잉 대상 아님(사용자 취소 의도 보존)
     assert reg.find_task_by_id(task.task_id).status == "failed"
 
 

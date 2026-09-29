@@ -1,20 +1,26 @@
 """Task lifecycle transitions: delivered, running, result application, timeouts."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from .local_agent_models import LocalAgentTask
 from .local_agent_redaction import _strip_result_data
 from .local_agent_registry_common import (
-    _lock, _tasks, _now_iso, _ensure_task_transition,
-    ACTIVE_TASK_STATUSES, DELIVERED_TIMEOUT_SECONDS, RUNNING_TIMEOUT_SECONDS,
+    ACTIVE_TASK_STATUSES,
+    DELIVERED_TIMEOUT_SECONDS,
+    MAX_WS_DISCONNECT_RETRIES,
+    RUNNING_TIMEOUT_SECONDS,
     InvalidTaskTransitionError,
+    _ensure_task_transition,
+    _lock,
+    _now_iso,
+    _tasks,
 )
-from .local_agent_registry_sanitize import _build_observe_summary, _build_audit_summary
-
+from .local_agent_registry_sanitize import _build_audit_summary, _build_observe_summary
 
 # ── 실패 처리 internal helper ───────────────────────────────────────────
+
 
 def _mark_task_failed(
     task: LocalAgentTask,
@@ -42,7 +48,8 @@ def _mark_task_failed(
 
 # ── Stage 2 전달/결과 ───────────────────────────────────────────────────
 
-def mark_delivered(agent_id: str, task_id: str) -> Optional[LocalAgentTask]:
+
+def mark_delivered(agent_id: str, task_id: str) -> LocalAgentTask | None:
     """queued → delivered. 다른 상태에서는 변경 없음."""
     with _lock:
         t = _tasks.get(task_id)
@@ -58,7 +65,7 @@ def mark_delivered(agent_id: str, task_id: str) -> Optional[LocalAgentTask]:
         return t
 
 
-def mark_running(agent_id: str, task_id: str) -> Optional[LocalAgentTask]:
+def mark_running(agent_id: str, task_id: str) -> LocalAgentTask | None:
     """delivered → running."""
     with _lock:
         t = _tasks.get(task_id)
@@ -83,10 +90,10 @@ def apply_result(
     summary: str = "",
     error: str = "",
     error_code: str = "",
-    observe_summary: Optional[dict] = None,
-    audit_summary: Optional[dict] = None,
-    data: Optional[dict] = None,
-) -> Optional[LocalAgentTask]:
+    observe_summary: dict | None = None,
+    audit_summary: dict | None = None,
+    data: dict | None = None,
+) -> LocalAgentTask | None:
     """에이전트가 보고한 결과 반영. running/delivered/cancel_requested 에서 동작.
 
     - success=True  → running/cancel_requested → completed
@@ -129,8 +136,9 @@ def apply_result(
 
 # ── timeout 만료 ─────────────────────────────────────────────────────────
 
+
 def expire_stale_tasks(
-    now: Optional[datetime] = None,
+    now: datetime | None = None,
 ) -> list[LocalAgentTask]:
     """delivered/running/cancel_requested 상태 중 timeout 초과 task 를 failed 로 전환.
 
@@ -140,7 +148,7 @@ def expire_stale_tasks(
     - 만료 처리된 task 목록을 반환한다.
     """
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
     now_iso = now.isoformat()
 
     expired: list[LocalAgentTask] = []
@@ -188,40 +196,63 @@ def expire_stale_tasks(
 def fail_active_tasks_for_agent(
     agent_id: str,
     reason: str = "websocket_disconnected",
-    now: Optional[datetime] = None,
-) -> list[LocalAgentTask]:
-    """agent WebSocket 연결 종료 시 ACTIVE_TASK_STATUSES 작업을 failed 처리.
+    now: datetime | None = None,
+) -> tuple[list[LocalAgentTask], list[LocalAgentTask]]:
+    """agent WebSocket 연결 종료 시 ACTIVE_TASK_STATUSES 작업을 처리.
 
     - ACTIVE_TASK_STATUSES = delivered / running / cancel_requested
     - queued / completed / failed / waiting_approval 등은 변경하지 않는다.
-    - 처리된 task 목록을 반환한다.
+    - delivered/running 은 MAX_WS_DISCONNECT_RETRIES 미만이면 **재큐잉**(queued로 되돌려
+      retry_count 증가)한다 — 에이전트가 재연결하면 기존 "queued → delivered on connect"
+      로직(_push_queued)이 그대로 다시 전달한다. 사람이 겪은 실제 증상(2026-09-30: 짧은
+      재연결 몇 초 사이 들어온 요청이 그 자리에서 즉시 실패로 끝나던 것)을 고치기 위함.
+    - cancel_requested 는 재큐잉하지 않고 기존처럼 즉시 failed — 사용자가 명시적으로
+      취소를 요청한 작업을 연결 문제를 핑계로 되살리면 사용자 의도를 거스르게 된다.
+    - retry_count 가 MAX_WS_DISCONNECT_RETRIES 이상이면(같은 작업이 매번 agent를 죽이는
+      등) 더 재큐잉하지 않고 failed 로 종결 — 무한 재시도 방지.
+    - (failed 목록, requeued 목록) 튜플을 반환한다.
     """
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
     now_iso = now.isoformat()
 
-    affected: list[LocalAgentTask] = []
+    failed: list[LocalAgentTask] = []
+    requeued: list[LocalAgentTask] = []
     with _lock:
         for task in list(_tasks.values()):
             if task.agent_id != agent_id:
                 continue
             if task.status not in ACTIVE_TASK_STATUSES:
                 continue
+
+            can_retry = task.status in ("delivered", "running") and task.retry_count < MAX_WS_DISCONNECT_RETRIES
             try:
-                _mark_task_failed(
-                    task,
-                    failure_reason=reason,
-                    now=now_iso,
-                    timed_out=False,
-                )
-                affected.append(task)
+                if can_retry:
+                    _ensure_task_transition(task, "queued")
+                    task.status = "queued"
+                    task.retry_count += 1
+                    task.delivered_at = ""
+                    task.started_at = ""
+                    task.updated_at = now_iso
+                    requeued.append(task)
+                else:
+                    _mark_task_failed(
+                        task,
+                        failure_reason=reason,
+                        now=now_iso,
+                        timed_out=False,
+                    )
+                    failed.append(task)
             except InvalidTaskTransitionError:
                 continue
-    return affected
+    return failed, requeued
 
 
 __all__ = [
     "_mark_task_failed",
-    "mark_delivered", "mark_running", "apply_result",
-    "expire_stale_tasks", "fail_active_tasks_for_agent",
+    "apply_result",
+    "expire_stale_tasks",
+    "fail_active_tasks_for_agent",
+    "mark_delivered",
+    "mark_running",
 ]
