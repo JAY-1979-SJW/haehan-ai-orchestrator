@@ -1,9 +1,9 @@
 """Read-only audit for the locked Google automation baseline."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -72,28 +72,16 @@ def _missing(text: str, phrases: tuple[str, ...]) -> list[str]:
     return [phrase for phrase in phrases if phrase not in text]
 
 
-def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not BASELINE.exists():
-        return False, ["docs/baseline/GOOGLE_AUTOMATION_BASELINE.md missing"]
-
+def _check_baseline_phrases() -> list[str]:
     text = BASELINE.read_text(encoding="utf-8", errors="replace")
     missing = _missing(text, REQUIRED_PHRASES)
-    if missing:
-        failures.append("Google baseline missing phrase(s): " + ", ".join(missing))
+    return ["Google baseline missing phrase(s): " + ", ".join(missing)] if missing else []
 
-    from scripts.gates import secret_action_gate
-    from scripts.google import (
-        domain_readiness_audit,
-        live_surface_explorer,
-        subdomain_logic,
-        tab_logic,
-        vision_usage_gate,
-        workflows,
-    )
-    from scripts.ops import audit_google_prefill_maturity
+
+def _check_tab_registry() -> list[str]:
     from scripts.google.tab_registry import GOOGLE_TABS, build_google_tab_summary
 
+    failures: list[str] = []
     tab_keys = tuple(tab.key for tab in GOOGLE_TABS)
     if tab_keys != REQUIRED_TABS:
         failures.append("Google tab order or keys changed: " + ", ".join(tab_keys))
@@ -113,7 +101,13 @@ def audit() -> tuple[bool, list[str]]:
 
     if summary["host_warnings"]:
         failures.append(f"Google host warnings must be zero, got {len(summary['host_warnings'])}")
+    return failures
 
+
+def _check_subdomain_and_tab_logic() -> list[str]:
+    from scripts.google import subdomain_logic, tab_logic
+
+    failures: list[str] = []
     subdomain_catalog = subdomain_logic.build_google_subdomain_logic_catalog()
     if subdomain_catalog.get("credential_replay_allowed") is not False:
         failures.append("Google subdomain logic must block credential replay")
@@ -125,11 +119,22 @@ def audit() -> tuple[bool, list[str]]:
         failures.append("Google tab logic must expose 9 locked tabs")
     if not all(tab.get("user_guidance", {}).get("user_can_request") for tab in tab_catalog.get("tabs", [])):
         failures.append("Google tab logic must expose user guidance for every tab")
+    return failures
+
+
+def _check_live_surface() -> list[str]:
+    from scripts.google import live_surface_explorer
 
     live_logic = live_surface_explorer.build_google_surface_live_logic()
     if live_logic.get("surface_count") != 50:
-        failures.append(f"Google live logic surface count mismatch: {live_logic.get('surface_count')}")
+        return [f"Google live logic surface count mismatch: {live_logic.get('surface_count')}"]
+    return []
 
+
+def _check_undeveloped_report() -> list[str]:
+    from scripts.google import workflows
+
+    failures: list[str] = []
     undeveloped = workflows.build_undeveloped_report()
     expected_undeveloped_counts = {
         "actions": 96,
@@ -154,7 +159,14 @@ def audit() -> tuple[bool, list[str]]:
             failures.append(f"Google generic live-input lock missing supported action: {key}")
     if prepare_only:
         failures.append("Google prepare/open-only backlog must be empty after generic handoff adapter lock")
+    return failures
 
+
+def _check_domain_readiness_and_secret_gate() -> list[str]:
+    from scripts.gates import secret_action_gate
+    from scripts.google import domain_readiness_audit
+
+    failures: list[str] = []
     readiness = domain_readiness_audit.build_google_domain_readiness_audit()
     if readiness.get("ok") is not True:
         failures.append("Google domain readiness audit must pass")
@@ -167,7 +179,13 @@ def audit() -> tuple[bool, list[str]]:
         failures.append("Google agent secret issue click must require explicit approval")
     if secret_policy.get("raw_secret_output_allowed") is not False:
         failures.append("Google secret action gate must block raw secret output")
+    return failures
 
+
+def _check_vision_usage_gate() -> list[str]:
+    from scripts.google import vision_usage_gate
+
+    failures: list[str] = []
     if vision_usage_gate.MONTHLY_FREE_LIMIT_UNITS != 1000:
         failures.append("Google Vision monthly free-unit limit must stay 1000")
     if vision_usage_gate.WARNING_THRESHOLD_UNITS != 800:
@@ -181,7 +199,13 @@ def audit() -> tuple[bool, list[str]]:
         failures.append("Google Vision must block projected usage above free units")
     if vision_gate.get("secret_values_output") is not False:
         failures.append("Google Vision gate must not output raw secret values")
+    return failures
 
+
+def _check_prefill_maturity() -> list[str]:
+    from scripts.ops import audit_google_prefill_maturity
+
+    failures: list[str] = []
     prefill_maturity = audit_google_prefill_maturity.build_report()
     expected_prefill_counts = {
         "approval_actions": 46,
@@ -201,6 +225,24 @@ def audit() -> tuple[bool, list[str]]:
     priority_ready = {item["action_key"] for item in prefill_maturity.get("priority_ready", [])}
     if priority_ready != {"cloud_create_api_credential", "ai_studio_create_api_key"}:
         failures.append("Google API key issuance actions must be marked final-click-ready")
+    return failures
+
+
+def audit() -> tuple[bool, list[str]]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: 이 함수 하나(C901=32)에 있던 독립 체크 블록들을
+    # 위 _check_*() 함수로 분리(순서·조건·문자열 그대로, 순수 추출) — #48 과 같은 패턴.
+    failures: list[str] = []
+    if not BASELINE.exists():
+        return False, ["docs/baseline/GOOGLE_AUTOMATION_BASELINE.md missing"]
+
+    failures.extend(_check_baseline_phrases())
+    failures.extend(_check_tab_registry())
+    failures.extend(_check_subdomain_and_tab_logic())
+    failures.extend(_check_live_surface())
+    failures.extend(_check_undeveloped_report())
+    failures.extend(_check_domain_readiness_and_secret_gate())
+    failures.extend(_check_vision_usage_gate())
+    failures.extend(_check_prefill_maturity())
 
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",
