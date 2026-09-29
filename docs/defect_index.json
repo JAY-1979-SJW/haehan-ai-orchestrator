@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 86,
+  "next_no": 90,
   "items": [
     {
       "no": 1,
@@ -1143,6 +1143,50 @@
       "fix_note": "sender 조회를 document.querySelector('.adn.ads')?.querySelector('[email], .gD') 로 스코프(열린 메일 컨테이너 안에서만 검색), 컨테이너 못 찾으면 기존 동작으로 폴백. 실측 재검증: 실제 브라우저 클릭으로 5건 서로 다른 발신자(Microsoft 계정 팀/Anthropic/Google Cloud Platform 등) 정확히 구분됨 확인.",
       "stage": "RUN",
       "status": "fixed"
+    },
+    {
+      "id": "ENV-GMAIL-CREDENTIALS-PATH-STALE-OLD-LOCATION",
+      "category": 1,
+      "title": ".env의 GMAIL_CREDENTIALS_PATH/GMAIL_TOKEN_PATH가 프로젝트 이전 전 옛 경로로 고정돼 있었음",
+      "where": ".env",
+      "evidence": "Gmail OAuth 스코프 확장(Calendar/Drive/gmail.send 추가) 작업 중 API 호출이 'Google OAuth credentials 없음' 오류로 실패, 경로가 프로젝트 이전 전 옛 절대경로(C 드라이브의 work 폴더 하위)를 가리키고 있었음. 실제 파일은 현재 프로젝트 위치(claude-dev-handoff 하위 storage/secrets/)에 있는데, .env가 프로젝트 이전 전 절대경로를 그대로 갖고 있었음(프로젝트 자체가 예전에 다른 위치에서 옮겨진 이력).",
+      "fix_note": ".env의 두 경로를 현재 프로젝트 절대경로로 수정. gitignore된 로컬 설정 파일이라 커밋 대상 아님, 기록만.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 86
+    },
+    {
+      "id": "GOOGLE-OAUTH-STALE-TOKEN-INVALID-GRANT",
+      "category": 1,
+      "title": "구 gmail_token.json(readonly 스코프)의 refresh_token이 무효화되어 있었음(invalid_grant)",
+      "where": "ai_orchestrator/storage/secrets/gmail_token.json",
+      "evidence": "google_oauth.py의 스코프-부족 재동의 로직이 (creds.scopes 가 비어있어) 우회되고 그대로 refresh() 시도 -> 'invalid_grant: Bad Request' 발생. 오래된 토큰이라 Google 쪽에서 refresh_token 자체가 이미 만료/무효화된 것으로 추정.",
+      "fix_note": "토큰 파일 백업 후 삭제 -> InstalledAppFlow 전체 재실행으로 새 토큰(4개 스코프 포함) 정상 발급 확인.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 87
+    },
+    {
+      "id": "GOOGLE-GMAIL-CALENDAR-DRIVE-DOCS-SHEETS-OAUTH-API-MIGRATION",
+      "category": 2,
+      "title": "Gmail/Calendar/Drive/Docs/Sheets를 CDP 화면 스크래핑에서 공식 OAuth API로 전환(2단계)",
+      "where": "ai_orchestrator/sites/google_oauth.py(신규), calendar_reader.py(신규), drive_reader.py(신규), gmail_reader.py, ai_orchestrator/connectors/gmail_router.py, ai_orchestrator/connectors/google/actions.py",
+      "evidence": "사용자 확인: 'CDP 대신 구글 API를 쓸 수 있는건 다 쓰자'. 기존엔 Gmail 조회만 OAuth API(gmail.readonly)였고, Calendar/Drive/Docs/Sheets는 전부 CDP 화면 스크래핑(scripts/google/calendar_api.py 등)이었음. Gmail 발송(reply/send)도 CDP였음.",
+      "fix_note": "공용 OAuth 모듈(google_oauth.py, project=haehan-ai 기존 자격증명 재사용, 스코프 확장: gmail.readonly+gmail.send+calendar.readonly+drive.readonly) 신설. Calendar API(calendar_reader.py)·Drive API(drive_reader.py, Docs/Sheets 목록도 Drive files.list의 mimeType 필터로 커버)로 각 엔드포인트에 source=api(신규 기본값)/cdp(fallback) 파라미터 추가. Gmail 발송은 gmail_reader.send_reply()(MIME+base64url, users.messages.send)로 전환, /gmail/reply 가 thread_id 기반으로 원자적 1회 발송(기존 CDP의 compose+send 2단계 대체). Google Cloud Console에서 Calendar API/Drive API 활성화(무료, CDP로 직접 클릭)도 같이 수행. 실측 재검증(전부 실제 API): Calendar today(0건, 정상), Drive recent(실제 파일 12건), Docs/Sheets recent(실제 데이터), Gmail ai-draft-unread(실제 스레드ID 포함 3건, 정확한 발신자/요약/회신불요 판정), /gmail/reply dry_run 정상. 실제 브라우저 클릭으로도 메일/구글 페이지에서 전부 재확인.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 88
+    },
+    {
+      "id": "ADMIN-WEB-OPS-PAGE-DOMAIN-SPLIT",
+      "category": 2,
+      "title": "운영센터(ops) 1페이지에 몰려있던 실행형 패널을 도메인별 화면(메일/구글)으로 분리",
+      "where": "admin-web/src/app/mail/(신규), admin-web/src/app/google/(신규), admin-web/src/app/ops/page.tsx, admin-web/src/lib/nav.ts",
+      "evidence": "사용자 지적: '운영센터 항목에 모든게 있으니 안되고 메뉴 구성 및 항목을 분류하자'. ops 페이지 1개에 상태 확인용 패널과 실행형 패널(Gmail/메일비서/구글도구)이 섞여있었음. lib/nav.ts에 예전 도메인별 메뉴(NAV_GROUPS_ALL, 구글 허브 등 포함)가 채팅 중심 UI 전환 과정에서 비활성 상태로 보존만 돼 있던 것을 발견 — 그 채팅(UniversalChat)은 이후 실제로 미완성 상태로 남아있어(오늘 별도 확인) 메뉴도 채팅도 없는 상태였음.",
+      "fix_note": "GmailInboxPanel/MailAssistantPanel/GoogleToolsPanel을 ops/components/에서 mail/components/, google/components/로 이동 + 각각 전용 page.tsx 신설. ops/page.tsx에서 제거(상태 패널만 유지). nav.ts NAV_GROUPS에 메일 비서, 구글 허브 항목 추가(예전 NAV_GROUPS_ALL의 구글 허브를 실제로 되살림). 실측: 실제 브라우저로 메일/구글/운영 3개 라우트 전부 정상 로드 + 대상 패널 존재 확인.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 89
     }
   ]
 }

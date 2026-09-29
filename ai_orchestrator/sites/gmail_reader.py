@@ -61,7 +61,13 @@ def _extract_body(payload: dict) -> str:
 
 
 def _parse_message(msg: dict) -> dict | None:
-    """Gmail 메시지 dict → 내부 포맷으로 변환."""
+    """Gmail 메시지 dict → 내부 포맷으로 변환.
+
+    2026-09-29 확장: thread_id/message_id_header 필드 추가(회신 발송 API에 필요 —
+    users.messages.send 로 스레드에 묶으려면 References/In-Reply-To 헤더에 원본의
+    RFC Message-ID가 필요하다, 공식 가이드 확인). 기존 필드는 그대로라 기존 호출부
+    (fetch_recent_emails/collect_to_inbox)는 영향 없음.
+    """
     try:
         headers = {h["name"].lower(): h["value"] for h in msg.get("payload", {}).get("headers", [])}
         message_id = msg.get("id", "")
@@ -87,6 +93,8 @@ def _parse_message(msg: dict) -> dict | None:
             "body": body[:_BODY_MAX],
             "body_summary": body_summary,
             "received_at": received_at,
+            "thread_id": msg.get("threadId", ""),
+            "message_id_header": headers.get("message-id", ""),
         }
     except Exception as e:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
         logger.error("메시지 파싱 실패 | id=%s | %s", msg.get("id", "?"), e)
@@ -117,6 +125,57 @@ def fetch_recent_emails(max_results: int = 50, hours: int = 24) -> list[dict]:
     except Exception as e:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
         logger.error("Gmail 수집 실패: %s", e)
         return []
+
+
+def fetch_unread_emails(max_results: int = 10) -> list[dict]:
+    """Gmail API로 안 읽은 메일 조회(CDP 대체). google_oauth 공용 자격증명 사용
+    (gmail.readonly 스코프로 충분 — 이 함수는 읽기전용)."""
+    from ai_orchestrator.sites import google_oauth
+
+    service = google_oauth.build_service("gmail", "v1")
+    response = service.users().messages().list(userId="me", q="is:unread", maxResults=max_results).execute()
+    msg_refs = response.get("messages", [])
+    result = []
+    for ref in msg_refs:
+        msg = service.users().messages().get(userId="me", id=ref["id"], format="full").execute()
+        parsed = _parse_message(msg)
+        if parsed:
+            result.append(parsed)
+    logger.info("Gmail 안읽은메일 조회: %d건", len(result))
+    return result
+
+
+def send_reply(*, thread_id: str, in_reply_to: str, to: str, subject: str, body: str) -> dict:
+    """Gmail API로 회신 발송(CDP GmailAPI.reply+send 대체). gmail.send 스코프 필요.
+
+    RFC 2822 MIME 메시지를 만들어 base64url 인코딩 후 users.messages.send 호출
+    (공식 가이드: 요청 바디는 {"raw": ...} 하나뿐). 스레드에 묶으려면 Subject를
+    원본과 동일하게, In-Reply-To/References 헤더에 원본 Message-ID를 넣어야 한다
+    (threadId는 별도로도 전달 — 공식 가이드 확인).
+    """
+    from email.mime.text import MIMEText
+
+    from ai_orchestrator.sites import google_oauth
+
+    service = google_oauth.build_service("gmail", "v1")
+
+    mime_subject = subject if subject.lower().startswith("re:") else f"Re: {subject}"
+    message = MIMEText(body, _charset="utf-8")
+    message["to"] = to
+    message["subject"] = mime_subject
+    if in_reply_to:
+        message["In-Reply-To"] = in_reply_to
+        message["References"] = in_reply_to
+
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
+    sent = (
+        service.users()
+        .messages()
+        .send(userId="me", body={"raw": raw, "threadId": thread_id} if thread_id else {"raw": raw})
+        .execute()
+    )
+    logger.info("Gmail API 회신 발송 완료: id=%s thread=%s", sent.get("id"), sent.get("threadId"))
+    return {"ok": True, "id": sent.get("id", ""), "thread_id": sent.get("threadId", "")}
 
 
 def collect_to_inbox(max_results: int = 50, hours: int = 24) -> dict:

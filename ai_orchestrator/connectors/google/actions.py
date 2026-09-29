@@ -143,10 +143,22 @@ def search_gmail(
 
 @router.get("/calendar/today")
 def get_calendar_today(
+    source: str = "api",  # "api"(기본, OAuth Calendar API) | "cdp"(구 CDP 화면 스크래핑)
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict[str, Any]:
-    """오늘 일정 (CDP)."""
+    """오늘 일정. 2026-09-29: 기본을 Gmail과 동일한 OAuth API로 전환(2단계) — CDP는
+    fallback으로 유지."""
     t0 = time.monotonic()
+
+    if source == "api":
+        try:
+            from ai_orchestrator.sites.calendar_reader import list_today
+
+            events = list_today()
+        except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
+            return {"ok": False, "error": str(e)[:300], "duration_ms": duration_ms(t0)}
+        audit("GOOGLE_CALENDAR_TODAY", user, status="ok", note=f"source=api count={len(events)}")
+        return {"ok": True, "events": events, "count": len(events), "duration_ms": duration_ms(t0), "source": "api"}
 
     def _fn(page):
         from scripts.google.calendar_api import CalendarAPI
@@ -156,16 +168,27 @@ def get_calendar_today(
     events, err = _cdp_call(_fn)
     if err:
         return {"ok": False, "error": err, "duration_ms": duration_ms(t0)}
-    audit("GOOGLE_CALENDAR_TODAY", user, status="ok", note=f"count={len(events)}")
-    return {"ok": True, "events": events, "count": len(events), "duration_ms": duration_ms(t0)}
+    audit("GOOGLE_CALENDAR_TODAY", user, status="ok", note=f"source=cdp count={len(events)}")
+    return {"ok": True, "events": events, "count": len(events), "duration_ms": duration_ms(t0), "source": "cdp"}
 
 
 @router.get("/calendar/week")
 def get_calendar_week(
+    source: str = "api",
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict[str, Any]:
-    """이번 주 일정 (CDP)."""
+    """이번 주 일정. 2026-09-29: 기본을 OAuth API로 전환(2단계) — CDP는 fallback."""
     t0 = time.monotonic()
+
+    if source == "api":
+        try:
+            from ai_orchestrator.sites.calendar_reader import list_week
+
+            events = list_week()
+        except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
+            return {"ok": False, "error": str(e)[:300], "duration_ms": duration_ms(t0)}
+        audit("GOOGLE_CALENDAR_WEEK", user, status="ok", note=f"source=api count={len(events)}")
+        return {"ok": True, "events": events, "count": len(events), "duration_ms": duration_ms(t0), "source": "api"}
 
     def _fn(page):
         from scripts.google.calendar_api import CalendarAPI
@@ -175,8 +198,8 @@ def get_calendar_week(
     events, err = _cdp_call(_fn)
     if err:
         return {"ok": False, "error": err, "duration_ms": duration_ms(t0)}
-    audit("GOOGLE_CALENDAR_WEEK", user, status="ok", note=f"count={len(events)}")
-    return {"ok": True, "events": events, "count": len(events), "duration_ms": duration_ms(t0)}
+    audit("GOOGLE_CALENDAR_WEEK", user, status="ok", note=f"source=cdp count={len(events)}")
+    return {"ok": True, "events": events, "count": len(events), "duration_ms": duration_ms(t0), "source": "cdp"}
 
 
 class CreateEventRequest(BaseModel):
@@ -219,10 +242,21 @@ def create_calendar_event(
 @router.get("/drive/recent")
 def get_drive_recent(
     limit: int = 20,
+    source: str = "api",
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict[str, Any]:
-    """Drive 최근 파일 목록 (CDP)."""
+    """Drive 최근 파일 목록. 2026-09-29: 기본을 OAuth Drive API로 전환(2단계) — CDP는 fallback."""
     t0 = time.monotonic()
+
+    if source == "api":
+        try:
+            from ai_orchestrator.sites.drive_reader import list_recent
+
+            files = list_recent(limit=limit)
+        except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
+            return {"ok": False, "error": str(e)[:300], "duration_ms": duration_ms(t0)}
+        audit("GOOGLE_DRIVE_RECENT", user, status="ok", note=f"source=api count={len(files)}")
+        return {"ok": True, "files": files, "count": len(files), "duration_ms": duration_ms(t0), "source": "api"}
 
     def _fn(page):
         from scripts.google.drive_api import DriveAPI
@@ -232,8 +266,8 @@ def get_drive_recent(
     files, err = _cdp_call(_fn)
     if err:
         return {"ok": False, "error": err, "duration_ms": duration_ms(t0)}
-    audit("GOOGLE_DRIVE_RECENT", user, status="ok", note=f"count={len(files)}")
-    return {"ok": True, "files": files, "count": len(files), "duration_ms": duration_ms(t0)}
+    audit("GOOGLE_DRIVE_RECENT", user, status="ok", note=f"source=cdp count={len(files)}")
+    return {"ok": True, "files": files, "count": len(files), "duration_ms": duration_ms(t0), "source": "cdp"}
 
 
 @router.get("/drive/search")
@@ -263,10 +297,22 @@ def search_drive(
 @router.get("/docs/recent")
 def get_docs_recent(
     limit: int = 15,
+    source: str = "api",
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict[str, Any]:
-    """최근 Google Docs 목록 (CDP)."""
+    """최근 Google Docs 목록. 2026-09-29: 기본을 OAuth Drive API로 전환(2단계, Docs
+    "목록"은 실제로는 Drive API의 mimeType 필터 — 공식 가이드 확인). CDP는 fallback."""
     t0 = time.monotonic()
+
+    if source == "api":
+        try:
+            from ai_orchestrator.sites.drive_reader import list_recent_docs
+
+            docs = list_recent_docs(limit=limit)
+        except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
+            return {"ok": False, "error": str(e)[:300], "duration_ms": duration_ms(t0)}
+        audit("GOOGLE_DOCS_RECENT", user, status="ok", note=f"source=api count={len(docs)}")
+        return {"ok": True, "docs": docs, "count": len(docs), "duration_ms": duration_ms(t0), "source": "api"}
 
     def _fn(page):
         from scripts.google.docs_api import DocsAPI
@@ -276,8 +322,8 @@ def get_docs_recent(
     docs, err = _cdp_call(_fn)
     if err:
         return {"ok": False, "error": err, "duration_ms": duration_ms(t0)}
-    audit("GOOGLE_DOCS_RECENT", user, status="ok", note=f"count={len(docs)}")
-    return {"ok": True, "docs": docs, "count": len(docs), "duration_ms": duration_ms(t0)}
+    audit("GOOGLE_DOCS_RECENT", user, status="ok", note=f"source=cdp count={len(docs)}")
+    return {"ok": True, "docs": docs, "count": len(docs), "duration_ms": duration_ms(t0), "source": "cdp"}
 
 
 # ── Google Sheets ─────────────────────────────────────────────────────────────
@@ -286,10 +332,21 @@ def get_docs_recent(
 @router.get("/sheets/recent")
 def get_sheets_recent(
     limit: int = 15,
+    source: str = "api",
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict[str, Any]:
-    """최근 Google Sheets 목록 (CDP)."""
+    """최근 Google Sheets 목록. 2026-09-29: 기본을 OAuth Drive API로 전환(2단계). CDP는 fallback."""
     t0 = time.monotonic()
+
+    if source == "api":
+        try:
+            from ai_orchestrator.sites.drive_reader import list_recent_sheets
+
+            sheets = list_recent_sheets(limit=limit)
+        except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
+            return {"ok": False, "error": str(e)[:300], "duration_ms": duration_ms(t0)}
+        audit("GOOGLE_SHEETS_RECENT", user, status="ok", note=f"source=api count={len(sheets)}")
+        return {"ok": True, "sheets": sheets, "count": len(sheets), "duration_ms": duration_ms(t0), "source": "api"}
 
     def _fn(page):
         from scripts.google.sheets_api import SheetsAPI
@@ -299,8 +356,8 @@ def get_sheets_recent(
     sheets, err = _cdp_call(_fn)
     if err:
         return {"ok": False, "error": err, "duration_ms": duration_ms(t0)}
-    audit("GOOGLE_SHEETS_RECENT", user, status="ok", note=f"count={len(sheets)}")
-    return {"ok": True, "sheets": sheets, "count": len(sheets), "duration_ms": duration_ms(t0)}
+    audit("GOOGLE_SHEETS_RECENT", user, status="ok", note=f"source=cdp count={len(sheets)}")
+    return {"ok": True, "sheets": sheets, "count": len(sheets), "duration_ms": duration_ms(t0), "source": "cdp"}
 
 
 # ── YouTube (Data API) ────────────────────────────────────────────────────────
