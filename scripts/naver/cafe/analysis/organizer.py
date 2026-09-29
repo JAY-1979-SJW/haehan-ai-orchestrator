@@ -58,8 +58,8 @@ def _cluster_questions(questions: list[dict], sim_threshold: float = 0.35) -> li
         return []
 
     try:
-        from sklearn.feature_extraction.text import (
-            TfidfVectorizer,  # type: ignore[import-not-found]  # 선택적 무거운 의존성(docs_registry.toml 등록)
+        from sklearn.feature_extraction.text import (  # type: ignore[import-not-found]  # 선택적 무거운 의존성(docs_registry.toml 등록)
+            TfidfVectorizer,
         )
         from sklearn.metrics.pairwise import cosine_similarity  # type: ignore[import-not-found]
     except Exception:  # noqa: BLE001 - sklearn 미설치/로드 실패시 군집화 없이 원본 질의를 개별 항목으로 반환 — 읽기전용 텍스트 분석의 안전한 폴백

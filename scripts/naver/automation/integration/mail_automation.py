@@ -22,8 +22,8 @@ class MailAutomation:
 
     def __init__(self, page: Page):
         self.page = page
-        from scripts.naver.mail import (
-            NaverMail,  # type: ignore[attr-defined]  # 실제 없음(2026-09-29 defect_index #39 확인, #37/#38 과 동일 계열) — 이 클래스 자체가 코드맵상 완전 UNREACHED(어디서도 인스턴스화 안 됨), 저우선순위로 보류
+        from scripts.naver.mail import (  # type: ignore[attr-defined]  # 실제 없음(2026-09-29 defect_index #39 확인, #37/#38 과 동일 계열) — 이 클래스 자체가 코드맵상 완전 UNREACHED(어디서도 인스턴스화 안 됨), 저우선순위로 보류
+            NaverMail,
         )
 
         self.mail = NaverMail(page)
