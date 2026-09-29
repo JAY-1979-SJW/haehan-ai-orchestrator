@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 63,
+  "next_no": 64,
   "items": [
     {
       "no": 1,
@@ -875,6 +875,20 @@
       ],
       "evidence": "audit()(C901=12) — cloud tab 관련 독립 체크(surfaces/approval_actions/counts/hosts/live_input)를 하나에 담음. #48 과 같은 계열.",
       "fix_note": "2026-09-29: _check_*() 함수로 분리(순서·조건·문자열 그대로). 검증: ruff 0 errors, 실제 실행을 원본과 대조해 완전 동일.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 63,
+      "id": "run.std08_audit_checklist_batch_9",
+      "category": 2,
+      "title": "STD-08 11~19 범위 배치 9: audit_google_{gmail_function_contract,domain_module_boundaries}.py 리팩터",
+      "where": [
+        "scripts/ops/audit_google_gmail_function_contract.py",
+        "scripts/ops/audit_google_domain_module_boundaries.py"
+      ],
+      "evidence": "#48 과 같은 계열 — 독립 체크 블록들이 audit() 하나에 담겨 C901=11~14.",
+      "fix_note": "2026-09-29: _check_*() 함수로 분리(순서·조건·문자열 그대로). domain_module_boundaries 는 main() 이 work_records.checkpoint() 로 실제 기록 파일을 쓰므로, 검증은 그 부작용을 피해 audit() 함수만 직접 호출해 원본과 대조(완전 동일). gmail_function_contract 는 main() 전체 실행이 순수 read-only 라 그대로 대조.",
       "stage": "RUN",
       "status": "fixed"
     }

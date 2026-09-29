@@ -23,22 +23,15 @@ EXPECTED_COUNTS = {
 }
 
 
-def audit() -> dict[str, Any]:
-    from scripts.google import module_check
+def _check_counts(payload: dict) -> list[str]:
+    return [
+        f"{key} {payload.get(key)} != {expected}"
+        for key, expected in EXPECTED_COUNTS.items()
+        if payload.get(key) != expected
+    ]
 
-    payload = module_check.build_google_module_index()
-    failures: list[str] = []
-    warnings: list[str] = []
 
-    if not payload.get("ok"):
-        failures.append("google module index ok=false")
-
-    for key, expected in EXPECTED_COUNTS.items():
-        actual = payload.get(key)
-        if actual != expected:
-            failures.append(f"{key} {actual} != {expected}")
-
-    checks = payload.get("checks") or {}
+def _check_required_true_checks(checks: dict) -> list[str]:
     required_true_checks = (
         "catalog_matches_taxonomy",
         "all_groups_have_owner",
@@ -52,22 +45,26 @@ def audit() -> dict[str, Any]:
         "no_final_control_allows_ai_click",
         "no_evidence_module_stores_raw_secret",
     )
-    for key in required_true_checks:
-        if checks.get(key) is not True:
-            failures.append(f"check failed: {key}")
+    return [f"check failed: {key}" for key in required_true_checks if checks.get(key) is not True]
 
-    final_controls = payload.get("final_control_modules") or []
+
+def _check_final_controls(final_controls: list) -> list[str]:
     bad_controls = [
         item["key"] for item in final_controls if item.get("ai_click_allowed") or not item.get("user_click_required")
     ]
     if bad_controls:
-        failures.append("unsafe final controls: " + ", ".join(bad_controls[:20]))
+        return ["unsafe final controls: " + ", ".join(bad_controls[:20])]
+    return []
 
-    evidence_modules = payload.get("evidence_modules") or []
+
+def _check_raw_secret_evidence(evidence_modules: list) -> list[str]:
     raw_secret_evidence = [item["key"] for item in evidence_modules if item.get("store_raw_secret")]
     if raw_secret_evidence:
-        failures.append("raw secret evidence modules: " + ", ".join(raw_secret_evidence[:20]))
+        return ["raw secret evidence modules: " + ", ".join(raw_secret_evidence[:20])]
+    return []
 
+
+def _check_approval_actions_have_final_controls(payload: dict, final_controls: list) -> list[str]:
     approval_actions = [item for item in payload.get("work_action_modules", []) if item.get("requires_approval")]
     control_keys = {item["key"] for item in final_controls}
     missing_controls = [
@@ -76,19 +73,48 @@ def audit() -> dict[str, Any]:
         if f"{action['key']}.final_control" not in control_keys
     ]
     if missing_controls:
-        failures.append("approval actions missing final controls: " + ", ".join(missing_controls[:20]))
+        return ["approval actions missing final controls: " + ", ".join(missing_controls[:20])]
+    return []
 
+
+def _check_secret_tabs_gate(payload: dict) -> list[str]:
     secret_tabs = [
         item["key"]
         for item in payload.get("page_tab_modules", [])
         if item.get("secret_sensitive") and item.get("gate") != "secret_value_export_blocked"
     ]
     if secret_tabs:
-        failures.append("secret tabs without export block gate: " + ", ".join(secret_tabs[:20]))
+        return ["secret tabs without export block gate: " + ", ".join(secret_tabs[:20])]
+    return []
 
-    for key in ("domain_modules", "page_tab_modules", "work_action_modules"):
-        if not payload.get(key):
-            failures.append(f"{key} empty")
+
+def _check_non_empty_module_lists(payload: dict) -> list[str]:
+    return [
+        f"{key} empty" for key in ("domain_modules", "page_tab_modules", "work_action_modules") if not payload.get(key)
+    ]
+
+
+def audit() -> dict[str, Any]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: 독립 체크들을 _check_*() 함수로 분리(순서·조건·문자열
+    # 그대로) — #48 과 같은 계열.
+    from scripts.google import module_check
+
+    payload = module_check.build_google_module_index()
+    failures: list[str] = []
+    warnings: list[str] = []
+
+    if not payload.get("ok"):
+        failures.append("google module index ok=false")
+
+    failures.extend(_check_counts(payload))
+    failures.extend(_check_required_true_checks(payload.get("checks") or {}))
+
+    final_controls = payload.get("final_control_modules") or []
+    failures.extend(_check_final_controls(final_controls))
+    failures.extend(_check_raw_secret_evidence(payload.get("evidence_modules") or []))
+    failures.extend(_check_approval_actions_have_final_controls(payload, final_controls))
+    failures.extend(_check_secret_tabs_gate(payload))
+    failures.extend(_check_non_empty_module_lists(payload))
 
     return {
         "ok": not failures,
