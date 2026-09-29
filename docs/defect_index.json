@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 44,
+  "next_no": 45,
   "items": [
     {
       "no": 1,
@@ -623,6 +623,19 @@
       ],
       "evidence": "#42 에서 도입한 STD-08 검사의 극단값(30+) 목록 2위. extend() 하나가 그래프 빌드의 모든 단계(edges/import_edges 초기화, contains 구성, ts import+path_ref 스캔, 진입점(roots) 구성, bfs 를 위한 3개 nested def, 노드 분류, 폴더 대표분류)를 다 갖고 있었고 nested def(dir_children_noncode/is_doc/bfs) 내부 분기까지 ruff mccabe 가 합산해 44로 잡혔다.",
       "fix_note": "2026-09-29: 각 단계를 모듈 레벨 함수로 분리(_build_contains/_scan_text_refs/_ref_scan_text/_build_roots/_is_doc/_dir_children_noncode/_bfs_live/_classify_node/_classify_nodes/_build_dir_nodes) — extend() 는 이제 그 함수들을 순서대로 호출만 한다. 로직 변경 없음(순수 추출). 검증: ruff check 0 errors(C901 등 STD-08 findings 0), py_compile 통과, 이 함수를 실제로 쓰는 scripts/ops/code_map/build.py 를 저장소 전체(2140+ 파일) 대상으로 리팩터 전/후 git stash 대조 실행 — 결과 map.json (3,158,522 bytes) 이 generated_at 타임스탬프 1줄만 다르고 나머지 전부(nodes/dirs/edges/import_edges/edge_kinds/roots/hash/class_counts) 완전히 동일함을 확인. layer audit 신규 FORBIDDEN_IMPORT/CIRCULAR_IMPORT/SECURITY_PATTERN 없음, quality_gate --staged 0 errors.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 44,
+      "id": "run.std08_blog_explorer_complexity_fix",
+      "category": 2,
+      "title": "STD-08 극단값 3위 scripts/naver/blog/community/blog_explorer.py:main()(C901=39) + cmd_visit_and_comment(PLR0913=7) 리팩터",
+      "where": [
+        "scripts/naver/blog/community/blog_explorer.py"
+      ],
+      "evidence": "#42 STD-08 극단값 목록 3위. main() 이 if/elif cmd == ... 19개(각각 url 검증 + cmd_* 호출)를 그대로 갖고 있어 C901=39. 같은 파일의 cmd_visit_and_comment 도 인자 7개(PLR0913, 6 초과)로 별도 findings.",
+      "fix_note": "2026-09-29: cdp_client.py(#42)와 동일 패턴 — if/elif 19개를 _run_*(agent, parser, args) 함수 19개로 분리하고 _RUNNERS dict 로 조회. cmd_visit_and_comment 는 유일한 호출부(이 파일 안의 _run_visit_and_comment)를 같이 고쳐 argparse.Namespace 하나로 인자를 묶음(다른 _run_* 와 동일 패턴, 외부에서 이 함수를 쓰는 곳 없음을 grep 으로 확인). 로직 변경 없음(순수 추출+위임). 검증: ruff 0 errors, py_compile 통과. BrowserAgent() 는 실제 브라우저를 띄우므로 전체 CLI 실행 대신 MagicMock 으로 19개 명령 전부의 blog_url/text/tag 공백 시 parser.error 메시지가 원본 elif 블록과 문자열까지 정확히 일치하는지 단위 검증 + cmd_visit_and_comment(agent, args) 가 원본과 동일한 위치/키워드 인자로 agent.blog_visit_and_comment 를 호출하는지 assert_called_once_with 로 검증(스크립트: 세션 스크래치패드, 저장소에 남기지 않음). layer audit·quality_gate 신규 위반 없음.",
       "stage": "RUN",
       "status": "fixed"
     }

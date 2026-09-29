@@ -66,6 +66,7 @@
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
@@ -266,15 +267,17 @@ def cmd_like_neighbors(agent: BrowserAgent, blog_url: str, max_neighbors: int, d
     print(f"공감: {success}/{len(results)}")
 
 
-def cmd_visit_and_comment(
-    agent: BrowserAgent,
-    blog_url: str,
-    comment_text: str,
-    max_neighbors: int,
-    also_like: bool,
-    delay: float,
-    as_json: bool,
-):
+def cmd_visit_and_comment(agent: BrowserAgent, args: argparse.Namespace):
+    # 2026-09-29 STD-08: PLR0913(인자 7>6) — 나머지 _run_* 와 같은 방식으로 argparse.Namespace
+    # 하나로 묶었다(호출부가 이 파일 안의 _run_visit_and_comment 하나뿐이라 안전, 값은 동일).
+    blog_url, comment_text, max_neighbors, also_like, delay, as_json = (
+        args.blog_url,
+        args.text,
+        args.max,
+        args.like,
+        args.delay,
+        args.as_json,
+    )
     print(f"이웃 {max_neighbors}명 방문/공감/댓글 시작...")
     results = agent.blog_visit_and_comment(
         blog_url, comment_text, max_neighbors=max_neighbors, also_like=also_like, delay=delay
@@ -357,6 +360,145 @@ _ALL_COMMANDS = [
 ]
 
 
+def _run_info(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("info 명령에는 블로그 URL이 필요합니다")
+    cmd_info(agent, args.blog_url, args.as_json)
+
+
+def _run_categories(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("categories 명령에는 블로그 URL이 필요합니다")
+    cmd_categories(agent, args.blog_url, args.as_json)
+
+
+def _run_posts(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("posts 명령에는 블로그 URL이 필요합니다")
+    cmd_posts(agent, args.blog_url, args.category, args.page, args.max, args.as_json)
+
+
+def _run_post(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("post 명령에는 포스트 URL이 필요합니다")
+    cmd_post(agent, args.blog_url, args.as_json)
+
+
+def _run_images(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("images 명령에는 포스트 URL이 필요합니다")
+    cmd_images(agent, args.blog_url, args.as_json)
+
+
+def _run_search(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("search 명령에는 검색어가 필요합니다")
+    cmd_search(agent, args.blog_url, args.page, args.max, args.as_json)
+
+
+def _run_guestbook(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("guestbook 명령에는 블로그 URL이 필요합니다")
+    cmd_guestbook(agent, args.blog_url, args.max, args.as_json)
+
+
+def _run_neighbors(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("neighbors 명령에는 블로그 URL이 필요합니다")
+    cmd_neighbors(agent, args.blog_url, args.max, args.as_json)
+
+
+def _run_post_comments(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("post-comments 명령에는 포스트 URL이 필요합니다")
+    cmd_post_comments(agent, args.blog_url, args.max, args.as_json)
+
+
+def _run_all_comments(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("all-comments 명령에는 블로그 URL이 필요합니다")
+    cmd_all_comments(agent, args.blog_url, args.category, args.pages, args.max, args.as_json)
+
+
+def _run_stats(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("stats 명령에는 블로그 URL이 필요합니다")
+    cmd_stats(agent, args.blog_url, args.as_json)
+
+
+def _run_tag_posts(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url or not args.tag:
+        parser.error("tag-posts 명령에는 블로그 URL과 --tag이 필요합니다")
+    cmd_tag_posts(agent, args.blog_url, args.tag, args.max, args.as_json)
+
+
+def _run_visit_neighbors(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("visit-neighbors 명령에는 블로그 URL이 필요합니다")
+    cmd_visit_neighbors(agent, args.blog_url, args.max, args.delay, args.as_json)
+
+
+def _run_comment_neighbors(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url or not args.text:
+        parser.error("comment-neighbors 명령에는 블로그 URL과 --text이 필요합니다")
+    cmd_comment_neighbors(agent, args.blog_url, args.text, args.max, args.delay, args.as_json)
+
+
+def _run_like_neighbors(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("like-neighbors 명령에는 블로그 URL이 필요합니다")
+    cmd_like_neighbors(agent, args.blog_url, args.max, args.delay, args.as_json)
+
+
+def _run_visit_and_comment(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url or not args.text:
+        parser.error("visit-and-comment 명령에는 블로그 URL과 --text이 필요합니다")
+    cmd_visit_and_comment(agent, args)
+
+
+def _run_neighbor_activity(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("neighbor-activity 명령에는 블로그 URL이 필요합니다")
+    cmd_neighbor_activity(agent, args.blog_url, args.days, args.as_json)
+
+
+def _run_download_images(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("download-images 명령에는 포스트 URL이 필요합니다")
+    cmd_download_images(agent, args.blog_url, args.out, args.as_json)
+
+
+def _run_download_all(agent: BrowserAgent, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if not args.blog_url:
+        parser.error("download-all 명령에는 블로그 URL이 필요합니다")
+    cmd_download_all(agent, args.blog_url, args.out, args.category, args.pages, args.as_json)
+
+
+# cmd 문자열 → 실행 함수. 원래 main() 의 if/elif cmd == ... 순서를 그대로 옮긴 것 — 동작은 동일하다.
+# (2026-09-29 STD-08: if/elif 19개가 mccabe/pylint 에 "분기 19개"로 그대로 잡혀 dict 조회로 바꿨다.)
+_RUNNERS: dict[str, Callable[[BrowserAgent, argparse.ArgumentParser, argparse.Namespace], None]] = {
+    "info": _run_info,
+    "categories": _run_categories,
+    "posts": _run_posts,
+    "post": _run_post,
+    "images": _run_images,
+    "search": _run_search,
+    "guestbook": _run_guestbook,
+    "neighbors": _run_neighbors,
+    "post-comments": _run_post_comments,
+    "all-comments": _run_all_comments,
+    "stats": _run_stats,
+    "tag-posts": _run_tag_posts,
+    "visit-neighbors": _run_visit_neighbors,
+    "comment-neighbors": _run_comment_neighbors,
+    "like-neighbors": _run_like_neighbors,
+    "visit-and-comment": _run_visit_and_comment,
+    "neighbor-activity": _run_neighbor_activity,
+    "download-images": _run_download_images,
+    "download-all": _run_download_all,
+}
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="네이버 블로그 탐색 스크립트",
@@ -380,85 +522,7 @@ def main():
     args = parser.parse_args()
 
     with BrowserAgent() as agent:
-        cmd = args.command
-        url = args.blog_url
-
-        if cmd == "info":
-            if not url:
-                parser.error("info 명령에는 블로그 URL이 필요합니다")
-            cmd_info(agent, url, args.as_json)
-        elif cmd == "categories":
-            if not url:
-                parser.error("categories 명령에는 블로그 URL이 필요합니다")
-            cmd_categories(agent, url, args.as_json)
-        elif cmd == "posts":
-            if not url:
-                parser.error("posts 명령에는 블로그 URL이 필요합니다")
-            cmd_posts(agent, url, args.category, args.page, args.max, args.as_json)
-        elif cmd == "post":
-            if not url:
-                parser.error("post 명령에는 포스트 URL이 필요합니다")
-            cmd_post(agent, url, args.as_json)
-        elif cmd == "images":
-            if not url:
-                parser.error("images 명령에는 포스트 URL이 필요합니다")
-            cmd_images(agent, url, args.as_json)
-        elif cmd == "search":
-            if not url:
-                parser.error("search 명령에는 검색어가 필요합니다")
-            cmd_search(agent, url, args.page, args.max, args.as_json)
-        elif cmd == "guestbook":
-            if not url:
-                parser.error("guestbook 명령에는 블로그 URL이 필요합니다")
-            cmd_guestbook(agent, url, args.max, args.as_json)
-        elif cmd == "neighbors":
-            if not url:
-                parser.error("neighbors 명령에는 블로그 URL이 필요합니다")
-            cmd_neighbors(agent, url, args.max, args.as_json)
-        elif cmd == "post-comments":
-            if not url:
-                parser.error("post-comments 명령에는 포스트 URL이 필요합니다")
-            cmd_post_comments(agent, url, args.max, args.as_json)
-        elif cmd == "all-comments":
-            if not url:
-                parser.error("all-comments 명령에는 블로그 URL이 필요합니다")
-            cmd_all_comments(agent, url, args.category, args.pages, args.max, args.as_json)
-        elif cmd == "stats":
-            if not url:
-                parser.error("stats 명령에는 블로그 URL이 필요합니다")
-            cmd_stats(agent, url, args.as_json)
-        elif cmd == "tag-posts":
-            if not url or not args.tag:
-                parser.error("tag-posts 명령에는 블로그 URL과 --tag이 필요합니다")
-            cmd_tag_posts(agent, url, args.tag, args.max, args.as_json)
-        elif cmd == "visit-neighbors":
-            if not url:
-                parser.error("visit-neighbors 명령에는 블로그 URL이 필요합니다")
-            cmd_visit_neighbors(agent, url, args.max, args.delay, args.as_json)
-        elif cmd == "comment-neighbors":
-            if not url or not args.text:
-                parser.error("comment-neighbors 명령에는 블로그 URL과 --text이 필요합니다")
-            cmd_comment_neighbors(agent, url, args.text, args.max, args.delay, args.as_json)
-        elif cmd == "like-neighbors":
-            if not url:
-                parser.error("like-neighbors 명령에는 블로그 URL이 필요합니다")
-            cmd_like_neighbors(agent, url, args.max, args.delay, args.as_json)
-        elif cmd == "visit-and-comment":
-            if not url or not args.text:
-                parser.error("visit-and-comment 명령에는 블로그 URL과 --text이 필요합니다")
-            cmd_visit_and_comment(agent, url, args.text, args.max, args.like, args.delay, args.as_json)
-        elif cmd == "neighbor-activity":
-            if not url:
-                parser.error("neighbor-activity 명령에는 블로그 URL이 필요합니다")
-            cmd_neighbor_activity(agent, url, args.days, args.as_json)
-        elif cmd == "download-images":
-            if not url:
-                parser.error("download-images 명령에는 포스트 URL이 필요합니다")
-            cmd_download_images(agent, url, args.out, args.as_json)
-        elif cmd == "download-all":
-            if not url:
-                parser.error("download-all 명령에는 블로그 URL이 필요합니다")
-            cmd_download_all(agent, url, args.out, args.category, args.pages, args.as_json)
+        _RUNNERS[args.command](agent, parser, args)
 
 
 if __name__ == "__main__":
