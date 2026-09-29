@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 54,
+  "next_no": 55,
   "items": [
     {
       "no": 1,
@@ -753,6 +753,19 @@
       ],
       "evidence": "#42 STD-08 극단값 목록 12위. _cli()(대화형 REPL) 가 cdp_client.py(#42)와 같은 if/elif action == ... 14개 CLI 디스패치 패턴이라 C901=30, PLR0915=109. 같은 파일의 download_attachment(C901=13, PLR0915=57)·wait_for(RUF013) 는 원본에도 있던 별개 findings — 이번 범위(30+ 극단값) 밖이라 건드리지 않음(재실측으로 사전 확인).",
       "fix_note": "2026-09-29: if/elif 14개를 _cli_*(agent, arg) 함수 14개로 분리 + _CLI_ACTIONS dict 조회(quit/exit/q 는 while 루프 직접 break 필요해 그대로 둠). 로직 변경 없음(순수 추출). 검증: ruff 0 errors(cli 관련 findings 만 해소, download_attachment 등 별개 findings 는 원본에도 동일하게 있었음을 git stash 대조로 확인). 관련 테스트 2개 파일 37개 통과. _cli() 자체는 테스트가 없어(대화형 REPL) builtins.input 을 mock 해 14개 명령+공백+미지의명령+quit 시나리오를 실제 _cli() 함수로 end-to-end 실행 후 원본과 git stash 대조 — 출력 완전 동일 확인. layer audit 신규 위반 없음.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 54,
+      "id": "run.std08_google_router_complexity_fix",
+      "category": 2,
+      "title": "STD-08 11~19 범위 착수 1번째: scripts/google/router.py 4개 함수(run_google/_cmd_surfaces/_cmd_youtube/_cmd_work) 리팩터",
+      "where": [
+        "scripts/google/router.py"
+      ],
+      "evidence": "875건(30 이상 극단값 12건 정리 후 잔여) 중 파일당 findings 최다(11건) 파일. run_google()(match task: 32 case, C901=25/PLR0912=25/PLR0915=58), _cmd_surfaces(C901=18/PLR0912=17), _cmd_youtube(C901=22/PLR0912=21/PLR0915=117!), _cmd_work(C901=20/PLR0912=19/PLR0915=76) — 전부 cdp_client.py(#42)와 동일한 sub-command dict 디스패치 패턴.",
+      "fix_note": "2026-09-29: 4개 함수를 전부 동일 패턴으로 리팩터 — task/sub 문자열 → 핸들러 함수 dict(_TASK_HANDLERS/_SURFACES_HANDLERS/_YOUTUBE_HANDLERS/_WORK_HANDLERS), 각 핸들러가 원본 if/elif·match 본문을 그대로 담음(로직 변경 없음). 검증: ruff 0 errors(import 정렬 자동수정 포함), 기존 테스트 3개 파일 25개 통과, 안전한 read-only 카탈로그류 11개 명령(subdomains/tabs/ai/vision/android/domains/work/surfaces/youtube — 정상+에러(unknown) 분기 포함)을 실제로 실행해 원본과 대조 — 파일명의 타임스탬프 1건씩만 다르고(기대된 차이) 나머지 출력 전부 완전 동일함을 확인. 브라우저/CDP 필요한 명령(mail/drive/live-read 등)은 이번 검증 범위 밖(별도 실사이트 접속 필요, 로직 추출 자체는 안전 패턴이라 위험 낮음). layer audit 신규 위반 없음.",
       "stage": "RUN",
       "status": "fixed"
     }
