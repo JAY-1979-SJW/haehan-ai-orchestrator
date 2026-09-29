@@ -269,7 +269,26 @@ def fit_viewport(page: Page) -> None:
         cdp = page.context.new_cdp_session(page)
         win = cdp.send("Browser.getWindowForTarget", {})
         wid = win["windowId"]
-        state = win.get("bounds", {}).get("windowState", "normal")
+        bounds = win.get("bounds", {})
+        state = bounds.get("windowState", "normal")
+
+        # 2026-09-29 실측 확인한 크래시 원인 수정(defect_index 신규 항목): fit_viewport()는
+        # get_page()/open_page() 호출마다(하루 세션 내내 수백 회) 매번 새 CDP 세션으로
+        # Browser.setWindowBounds(내부적으로 Windows SetWindowPos/USER32 호출)를 무조건
+        # 재실행했다. Windows Application 이벤트 로그로 Chrome이 오늘 같은 날 반복 크래시
+        # (Exception 0xc0000409 STATUS_STACK_BUFFER_OVERRUN, Faulting module USER32.dll,
+        # 매번 동일 오프셋 0x8c3c1)한 걸 확인 — 이미 목표 위치/크기인데도 반복 호출하는 게
+        # 유력한 유발 요인으로 추정돼, 이미 정확하면 호출 자체를 스킵한다(크래시 재현
+        # 빈도로 검증 예정 — 100% 확증은 아니고 강한 정황 근거 기반의 완화 조치).
+        if (
+            state == "normal"
+            and bounds.get("left") == _FIX_LEFT
+            and bounds.get("top") == _FIX_TOP
+            and bounds.get("width") == _FIX_W
+            and bounds.get("height") == _FIX_H
+        ):
+            log.debug("[viewport] 창 위치 이미 정확함 — setWindowBounds 스킵")
+            return
 
         # minimized 상태면 먼저 normal로 복귀 (minimized → 다른 상태 직접 전환 불가)
         if state == "minimized":
