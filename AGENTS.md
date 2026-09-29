@@ -477,7 +477,7 @@ python scripts/cdp_force_start.py stop
 ## 환경변수 (.env 기준)
 
 ```
-YOUTUBE_DATA_API_KEY=AIzaSyBpS_1f20-MXjgaB7_0wLyIQ-SFX1bPwgM
+YOUTUBE_DATA_API_KEY=<.env 파일의 실제 값 참조 — 문서에 원문 기록 금지, 2026-09-30 유출 정정>
 YOUTUBE_CLIENT_SECRETS_FILE=ai_orchestrator/storage/secrets/youtube_oauth_client.json
 YOUTUBE_OAUTH_TOKEN_FILE=ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json
 YOUTUBE_OAUTH_REDIRECT_URI=https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback

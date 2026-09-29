@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 98,
+  "next_no": 99,
   "items": [
     {
       "no": 1,
@@ -1275,6 +1275,17 @@
       "stage": "RUN",
       "status": "fixed",
       "no": 97
+    },
+    {
+      "id": "DOCS-YOUTUBE-API-KEY-PLAINTEXT-LEAK",
+      "category": 1,
+      "title": "CLAUDE.md/AGENTS.md에 실제 YouTube Data API 키가 평문으로 커밋돼 있었음 (문서 정정)",
+      "where": "CLAUDE.md, AGENTS.md",
+      "evidence": "사용자 요청 '현재 깃허브 공개로 변경해서 깃 ci 처리해'를 실행하기 전 안전 점검으로 git grep -nIE 로 알려진 API 키 프리픽스(AIza/sk-/AKIA/ya29) 패턴 스캔 -> CLAUDE.md:634, AGENTS.md:480 에 실제 값(YOUTUBE_DATA_API_KEY=AIzaSyBpS_1f20-MXjgaB7_0wLyIQ-SFX1bPwgM)이 그대로 커밋돼 있는 걸 발견. .env 자체는 .gitignore로 잘 보호되고 있고 git log --all --full-history 로도 .env가 커밋된 적 없음을 확인 — 문제는 오직 문서 파일 2곳에 예시가 아니라 실제 값을 그대로 적어놓은 것. 저장소가 비공개였어서 즉시 위험은 아니었으나, 공개 전환 시점에 노출될 뻔함.",
+      "fix_note": "CLAUDE.md/AGENTS.md의 YOUTUBE_DATA_API_KEY 값을 실제 문자열에서 '<.env 파일의 실제 값 참조 — 문서에 원문 기록 금지>' 플레이스홀더로 교체. git grep으로 워킹트리 전체에서 해당 키 문자열이 더 없음을 재확인. 사용자 판단으로 공개 전환은 보류하고 비공개 유지 — 키 자체는 YouTube Data API (공개 데이터 조회 전용, 계정 접근 권한 없음)라 상대적 저위험으로 판단해 즉시 재발급은안 하기로 함(비공개 유지로 노출 경로 자체가 없으므로). 향후 공개 전환을 다시 고려할 때는 (1) git 히스토리 과거 커밋에도 이 값이 남아있는지 전체 스캔, (2) 이 기회에 재발급 여부 재검토가 필요.",
+      "stage": "GATE",
+      "status": "fixed",
+      "no": 98
     }
   ]
 }
