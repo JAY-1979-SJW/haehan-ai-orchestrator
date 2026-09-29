@@ -15,6 +15,10 @@ select = [
     "UP",   # pyupgrade (구버전 문법)
     "RUF",  # ruff 전용 규칙
     "BLE",  # flake8-blind-except (STD-04: except Exception 남용 금지, 2026-09-28 추가)
+    "C901",     # mccabe 복잡도 (STD-08: CLAUDE.md 4장 "복잡도 10... 넘으면 나눈다" 를 실제로 검사, 2026-09-29 추가)
+    "PLR0912",  # too-many-branches (STD-08 동일 근거)
+    "PLR0913",  # too-many-arguments (STD-08, CLAUDE.md 4장 "인자 6개")
+    "PLR0915",  # too-many-statements (STD-08)
 ]
 ignore = [
     "E501",   # line too long — 120자 제한으로 완화
@@ -31,8 +35,18 @@ ignore = [
     "RUF003", # ambiguous unicode in comment — 동일
 ]
 
+[lint.mccabe]
+# 32. Claude 개발표준/project/ruff.toml 과 동일 임계값(2026-09-29 신규 도입, STD-08).
+max-complexity = 10
+
+[lint.pylint]
+max-args = 6
+max-branches = 12
+max-returns = 6
+max-statements = 50
+
 [lint.per-file-ignores]
-"tests/**" = ["S", "B"]
+"tests/**" = ["S", "B", "PLR0913", "PLR0915"]     # 테스트 함수는 fixture 인자·단계가 많은 게 정상 (32번 표준의 tests/** 완화와 동일 취지)
 "scripts/**" = ["S", "B"]
 
 [lint.flake8-bugbear]
