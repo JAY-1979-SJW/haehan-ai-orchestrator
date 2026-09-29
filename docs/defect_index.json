@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 92,
+  "next_no": 93,
   "items": [
     {
       "no": 1,
@@ -1209,6 +1209,17 @@
       "stage": "RUN",
       "status": "fixed",
       "no": 91
+    },
+    {
+      "id": "E2E-DIAGNOSE-MAIL-GOOGLE-ROUTES-AND-BUTTON-CLICKS",
+      "category": 3,
+      "title": "electron e2e diagnose.spec.ts에 신설 mail/google 라우트 + 조회버튼 클릭 검증 + 오류문구 정규식 보강 누락",
+      "where": "admin-web/electron/e2e-electron/diagnose.spec.ts",
+      "evidence": "기존 diagnose.spec.ts는 dashboard/smartstore_products/smartstore_home/ops 4개 라우트만 '페이지 로드'만 확인했다(버튼 클릭 없음). 오늘 실제로 발견한 GCP 상태 버그(defect_index #91, Playwright 인스턴스 leak)는 페이지 로드만으로는 절대 안 드러나고 '조회' 버튼을 실제로 눌러야만 재현됐다 — 즉 기존 e2e 도구로는 이런 부류의 버그를 원천적으로 못 잡는 구조였다. 또한 그 버그의 실제 노출 문구('It looks like you are using Playwright Sync API inside the asyncio loop...')는 domErrors()의 기존 정규식(오류/실패/에러/error/failed/...) 어느 것도 매칭하지 않아, 설령 버튼을 눌렀어도 자동 감지가 안 됐을 것.",
+      "fix_note": "diagnose.spec.ts에 mail/google 라우트 추가 + clickQueryButtons 옵션으로 화면에 보이는 '조회' 버튼을 전부 순차 클릭 후 대기(API/CDP 호출 완료까지)하도록 확장. domErrors() 정규식에 asyncio/Traceback/Exception/raise /playwright sync api 키워드 추가(백엔드 내부 예외 문구가 그대로 화면에 새는 케이스 포착용). 실행 검증: 전체 electron 인스턴스를 새로 띄워 google 페이지의 조회 버튼 7개(캘린더 today/week, 드라이브, 문서, 시트, 유튜브, GCP)를 전부 클릭 -> DOM오류문구/ 콘솔에러/4xx-5xx 네트워크 전부 0건으로 #91 수정이 실제로 유효함을 자동화 테스트로 확증(3분 소요, 1 passed).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 92
     }
   ]
 }
