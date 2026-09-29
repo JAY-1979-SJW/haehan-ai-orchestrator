@@ -15,6 +15,7 @@ import { WebTaskPanel } from "./components/WebTaskPanel";
 import { ExternalWebTaskSummaryPanel } from "./components/ExternalWebTaskSummary";
 import { AgentStatusPanel } from "./components/AgentStatusPanel";
 import { GmailInboxPanel } from "./components/GmailInboxPanel";
+import { MailAssistantPanel } from "./components/MailAssistantPanel";
 import { GoogleToolsPanel } from "./components/GoogleToolsPanel";
 import { AuditEventTable } from "./components/AuditEventTable";
 import { IntegrationStatusPanel } from "./components/IntegrationStatusPanel";
@@ -104,6 +105,7 @@ export default async function OpsPage() {
         <ExternalWebTaskSummaryPanel summaries={externalSummaries} />
         <AgentStatusPanel agents={agentStatuses.data} />
         <GmailInboxPanel />
+        <MailAssistantPanel />
         <GoogleToolsPanel />
         <IntegrationStatusPanel integrations={integrations.data} />
         <AuditEventTable events={auditEvents.data} />

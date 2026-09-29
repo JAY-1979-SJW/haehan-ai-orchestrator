@@ -19536,6 +19536,14 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/app/ops/components/MailAssistantPanel.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
