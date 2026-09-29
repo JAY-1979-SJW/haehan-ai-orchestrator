@@ -145,6 +145,15 @@ def fetch_unread_emails(max_results: int = 10) -> list[dict]:
     return result
 
 
+def _reject_header_injection(value: str, field: str) -> str:
+    """MIME 헤더에 그대로 들어갈 값에 CR/LF가 섞여있으면 거부(헤더 인젝션 방지 —
+    예: to="a@b.com\\nBcc: x@evil.com" 로 임의 헤더 추가/수신자 은닉 시도).
+    2026-09-29 pre-push AI 리뷰 지적 반영."""
+    if "\r" in value or "\n" in value:
+        raise ValueError(f"{field}에 줄바꿈 문자를 포함할 수 없습니다(헤더 인젝션 방지)")
+    return value
+
+
 def send_reply(*, thread_id: str, in_reply_to: str, to: str, subject: str, body: str) -> dict:
     """Gmail API로 회신 발송(CDP GmailAPI.reply+send 대체). gmail.send 스코프 필요.
 
@@ -156,6 +165,10 @@ def send_reply(*, thread_id: str, in_reply_to: str, to: str, subject: str, body:
     from email.mime.text import MIMEText
 
     from ai_orchestrator.sites import google_oauth
+
+    to = _reject_header_injection(to, "to")
+    subject = _reject_header_injection(subject, "subject")
+    in_reply_to = _reject_header_injection(in_reply_to, "in_reply_to")
 
     service = google_oauth.build_service("gmail", "v1")
 
