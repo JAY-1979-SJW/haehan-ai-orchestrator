@@ -88,6 +88,8 @@ function setEnabledSites(siteIds) {
 
 /** 특정 사이트의 비민감 설정 조회 (없으면 {}). */
 function getSiteSettings(siteId, cfg = loadConfig()) {
+  // 2026-09-29 electron-verifier 검증(WARN) 대응: setSiteSettings와 동일하게 타입 검증.
+  if (typeof siteId !== "string" || !siteId) return {};
   const all = cfg.site_settings || {};
   return all[siteId] ? { ...all[siteId] } : {};
 }

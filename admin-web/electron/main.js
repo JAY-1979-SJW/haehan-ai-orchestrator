@@ -14,7 +14,7 @@
  *       → 라이선스 게이트 생략, 메인 화면(자유 네비게이션) 바로 진입(상시 로그인)
  *   - 일반 클라이언트: 라이선스 키 입력·검증 후 진입
  */
-const { app, ipcMain } = require("electron");
+const { app, ipcMain, shell: electronShell } = require("electron");
 
 // Electron 앱 자신의 창(webview 포함)을 CDP로 제어할 수 있게 원격 디버깅 포트를 연다.
 // ready 이벤트 이전에 호출해야 한다(공식 문서: code.electronjs.org/docs/latest/api/command-line-switches).
@@ -27,6 +27,7 @@ const {
   getEnabledSites, setEnabledSites, getSiteSettings, setSiteSettings,
   getAuthToken, isAutoStartEnabled, setAutoStartEnabled,
   ENV_KEYS, saveUserEnv, maskedUserEnv, connectClaudeDesktop,
+  SERVER_URL,
 } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
@@ -49,6 +50,37 @@ setWindowProvider(getMainWindow);
 // 앱 이름 고정 (userData = AppData\Roaming\Haehan AI), 상단 메뉴바 제거
 app.setName("Haehan AI");
 Menu.setApplicationMenu(null);
+
+// ── webview(shell.html의 <webview>, Next.js UI) 탐색 보안 ──────────────────────
+// mainWindow.webContents.setWindowOpenHandler(lib/mainWindow.js)는 메인 창 자체의
+// window.open 만 막는다 — <webview> 태그가 만드는 별도 webContents는 범위 밖이라
+// 따로 처리해야 한다(Electron 공식 권고: 이런 보안 판단은 렌더러가 아니라 메인
+// 프로세스에서). 기존엔 shell.html 렌더러 스크립트가 new-window 이벤트에서
+// require("electron")로 직접 열었는데, 이 창은 nodeIntegration:false 라 require가
+// 없어 실행 시 ReferenceError로 항상 실패하고 있었다(2026-09-29 electron-verifier
+// 검증 실측 발견 — "외부 링크는 시스템 브라우저로" 방어가 죽은 코드였음). 그리고
+// will-navigate 가드가 전혀 없어서, webview 내부 콘텐츠(Next.js)의 오픈리다이렉트나
+// 잘못된 링크로 SERVER_URL 밖으로 같은 탭 네비게이션이 일어나면 webview_preload.js가
+// 노출한 window.haehanLocal(사이트 설정 변경, 파일 선택 등)이 그 외부 오리진에서도
+// 계속 접근 가능한 상태였다(같은 검증에서 지적된 최우선 항목) — 여기서 두 가지를
+// 한 번에 막는다: 팝업(setWindowOpenHandler)과 같은 탭 이동(will-navigate) 둘 다
+// SERVER_URL 밖이면 차단하고 시스템 브라우저로만 연다.
+app.on("web-contents-created", (_event, contents) => {
+  if (contents.getType() !== "webview") return;
+  contents.setWindowOpenHandler(({ url }) => {
+    // 기존 렌더러 로직(new-window 이벤트)과 동일한 분기 유지: 내부 링크는 webview
+    // 자신을 그 주소로 이동, 외부 링크만 시스템 브라우저로.
+    if (url.startsWith(SERVER_URL)) contents.loadURL(url);
+    else electronShell.openExternal(url);
+    return { action: "deny" };
+  });
+  contents.on("will-navigate", (navEvent, url) => {
+    if (!url.startsWith(SERVER_URL)) {
+      navEvent.preventDefault();
+      electronShell.openExternal(url);
+    }
+  });
+});
 
 // ── 버스 구독 (컴포지션 루트) ──────────────────────────────────────────────────
 // 발행자(tray 등)는 sibling 모듈을 직접 부르지 않고 이벤트만 emit 하며,
@@ -98,6 +130,15 @@ if (!gotLock) {
     // 값으로 관리한다(isAutoStartEnabled/setAutoStartEnabled). 시작프로그램 폴더의
     // start_haehan_ai.ps1(전체 스택 런처)이 같은 값을 읽어 꺼져 있으면 기동을 건너뛴다.
     // 트레이 메뉴(TOGGLE_AUTO_LAUNCH)에서 켜고 끌 수 있다.
+
+    // 권한 요청 기본 거부(Electron 공식 체크리스트 9번) — 카메라/마이크/알림 등 이
+    // 앱은 필요로 하는 게 없으므로 명시적으로 전부 deny. 미설정 시 Electron 버전별
+    // 기본 동작에 암묵적으로 의존하게 되던 것을 명시적으로 고정(2026-09-29
+    // electron-verifier 검증 CONDITIONAL 대응). 웹뷰(persist:haehan)와 라이선스/유튜브
+    // 창(defaultSession) 둘 다 적용.
+    for (const s of [session.defaultSession, session.fromPartition("persist:haehan")]) {
+      s.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+    }
 
     // webview 파티션의 Service Worker/캐시 정리 — 빌드 변경 시 옛 SW가 cache-first로
     // 깨진 자원을 서빙해 화면이 RSC 원문으로 깨지는 문제 방지. 쿠키(로그인)는 보존.
@@ -180,6 +221,12 @@ function startLicenseFlow() {
   // on(반복 허용) — 첫 시도가 틀렸을 때도 사용자가 다시 제출할 수 있어야 하므로 once() 는 부적합.
   // 성공 시에만 리스너를 해제한다(창이 닫히므로 이후 제출 불가).
   const onSubmit = async (_, key) => {
+    // 2026-09-29 electron-verifier 검증(WARN) 대응: key를 검증 없이 바로 verifyLicense
+    // (내부에서 URL 조각으로 사용)에 넘기던 것을 타입/길이 확인 후 거부하도록.
+    if (typeof key !== "string" || !key.trim() || key.length > 200) {
+      licWin.webContents.send("license-error");
+      return;
+    }
     let ok = false;
     try {
       const res = await verifyLicense(key);
