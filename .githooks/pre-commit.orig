@@ -179,6 +179,31 @@ from pathlib import Path as _P
 import importlib.util, os
 gate = ROOT / "scripts" / "quality_gate.py"
 if gate.exists():
+    # 2026-09-30 수정(defect_index #2): 이 훅이 --allow-existing-code-change 를 항상
+    # 넘겨서 configs/quality_gate.json 의 existing_code_change_requires_flag(true,
+    # severity=error) 안전장치가 사실상 영구 무력화돼 있었다. 완전 차단(대화형 확인)은
+    # 이 저장소의 실제 워크플로우(기존 코드 수정이 정상적으로 매우 잦음, 자동화 세션
+    # 다수 동시 실행)에서 비현실적이라 그대로 두되, 최소한 "이번 커밋에 기존 활성
+    # 코드가 몇 개 수정됐는지"를 콘솔에 드러내 무음 우회는 막는다(가시성 확보).
+    try:
+        _diff = subprocess.run(
+            ["git", "diff", "--cached", "--name-status"],
+            cwd=str(ROOT), capture_output=True, text=True, check=True,
+        ).stdout
+        _modified = [
+            line.split("\t", 1)[1] for line in _diff.splitlines()
+            if line.startswith("M\t") and line.split("\t", 1)[1].endswith(".py")
+        ]
+        if _modified:
+            print(f"[quality_gate] 기존 코드 수정 {len(_modified)}개 파일 감지 "
+                  f"(--allow-existing-code-change 자동 적용됨):")
+            for _m in _modified[:10]:
+                print(f"    {_m}")
+            if len(_modified) > 10:
+                print(f"    ... 외 {len(_modified) - 10}개")
+    except (subprocess.CalledProcessError, OSError):
+        pass  # 가시성 로그 실패는 커밋을 막지 않음
+
     result = subprocess.run(
         [*_pyexe(), str(gate), "--staged", "--enforce", "--allow-existing-code-change"],
         cwd=str(ROOT),

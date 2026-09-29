@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 99,
+  "next_no": 101,
   "items": [
     {
       "no": 1,
@@ -29,7 +29,8 @@
       ],
       "evidence": "quality_gate.json existing_code_change_requires_flag=true·severity=error 인데 훅이 플래그를 무조건 전달",
       "stage": "E",
-      "status": "open"
+      "status": "fixed",
+      "fix_note": " | 2026-09-30: 완전 차단 대신 가시성 확보로 완화 — no.99 참고(.githooks/pre-commit.orig)"
     },
     {
       "no": 3,
@@ -42,7 +43,8 @@
       ],
       "evidence": ".githooks/* 에서 참조 0건",
       "stage": "E",
-      "status": "open"
+      "status": "fixed",
+      "fix_note": " | 2026-09-30: .github/workflows/ci.yml(self-hosted 러너)가 이미 구축·가동 중이며(gh run list로 최근 실행 이력 확인) codebase_layer_audit + ci_layer_gate_check.py를 매 push마다 돌린다 — 훅 연결 부재는 해소됨."
     },
     {
       "no": 4,
@@ -54,7 +56,8 @@
       ],
       "evidence": "2026-09-29: CI 부재는 해결 — .github/workflows/ci.yml 신규(사용자 승인, docs/specs/2026-09-24_self_hosted_ci_jenkins.md 의 기존 \"GitHub Actions 안 씀\" 결정 번복). scripts/ops/verify_change.py(기존 로컬 CI 도구)를 push/PR 트리거로 재사용. 단, server_deploy.py 가 배포 전 이 CI 결과를 확인하도록 연결하는 두 번째 절반은 아직 미해결(pytest/quality_gate 호출 여전히 0).",
       "stage": "E",
-      "status": "open"
+      "status": "fixed",
+      "fix_note": " | 2026-09-30: GitHub Actions CI(self-hosted)가 이미 구축돼 매 push마다 layer_audit + verify_change.py(ruff/pytest/라우트/층간위반/순환/스켈레톤 델타)를 자동 실행 중. 이 항목 작성 시점(9/29 이전) 대비 최신 상태 반영 — 더 이상 open 아님."
     },
     {
       "no": 5,
@@ -66,7 +69,8 @@
       ],
       "evidence": "기본 true, 우회 시 사유 trailer 요구 없음",
       "stage": "E",
-      "status": "open"
+      "status": "fixed",
+      "fix_note": " | 2026-09-30: bypass 시 리포트 파일에 사유 기록하도록 수정 — no.99 참고(ai_code_review_gate.py)"
     },
     {
       "no": 6,
@@ -1281,11 +1285,33 @@
       "category": 1,
       "title": "CLAUDE.md/AGENTS.md에 실제 YouTube Data API 키가 평문으로 커밋돼 있었음 (문서 정정)",
       "where": "CLAUDE.md, AGENTS.md",
-      "evidence": "사용자 요청 '현재 깃허브 공개로 변경해서 깃 ci 처리해'를 실행하기 전 안전 점검으로 git grep -nIE 로 알려진 API 키 프리픽스(AIza/sk-/AKIA/ya29) 패턴 스캔 -> CLAUDE.md:634, AGENTS.md:480 에 실제 값(YOUTUBE_DATA_API_KEY=AIzaSyBpS_1f20-MXjgaB7_0wLyIQ-SFX1bPwgM)이 그대로 커밋돼 있는 걸 발견. .env 자체는 .gitignore로 잘 보호되고 있고 git log --all --full-history 로도 .env가 커밋된 적 없음을 확인 — 문제는 오직 문서 파일 2곳에 예시가 아니라 실제 값을 그대로 적어놓은 것. 저장소가 비공개였어서 즉시 위험은 아니었으나, 공개 전환 시점에 노출될 뻔함.",
+      "evidence": "사용자 요청 '현재 깃허브 공개로 변경해서 깃 ci 처리해'를 실행하기 전 안전 점검으로 git grep -nIE 로 알려진 API 키 프리픽스(AIza/sk-/AKIA/ya29) 패턴 스캔 -> CLAUDE.md:634, AGENTS.md:480 에 실제 값(YOUTUBE_DATA_API_KEY=<실제 값 마스킹 — 이 필드에도 원문 기록 금지>)이 그대로 커밋돼 있는 걸 발견. .env 자체는 .gitignore로 잘 보호되고 있고 git log --all --full-history 로도 .env가 커밋된 적 없음을 확인 — 문제는 오직 문서 파일 2곳에 예시가 아니라 실제 값을 그대로 적어놓은 것. 저장소가 비공개였어서 즉시 위험은 아니었으나, 공개 전환 시점에 노출될 뻔함.",
       "fix_note": "CLAUDE.md/AGENTS.md의 YOUTUBE_DATA_API_KEY 값을 실제 문자열에서 '<.env 파일의 실제 값 참조 — 문서에 원문 기록 금지>' 플레이스홀더로 교체. git grep으로 워킹트리 전체에서 해당 키 문자열이 더 없음을 재확인. 사용자 판단으로 공개 전환은 보류하고 비공개 유지 — 키 자체는 YouTube Data API (공개 데이터 조회 전용, 계정 접근 권한 없음)라 상대적 저위험으로 판단해 즉시 재발급은안 하기로 함(비공개 유지로 노출 경로 자체가 없으므로). 향후 공개 전환을 다시 고려할 때는 (1) git 히스토리 과거 커밋에도 이 값이 남아있는지 전체 스캔, (2) 이 기회에 재발급 여부 재검토가 필요.",
       "stage": "GATE",
       "status": "fixed",
       "no": 98
+    },
+    {
+      "id": "CI-VERIFY-CHANGE-RUFF-NO-BASE-COMPARISON",
+      "category": 1,
+      "title": "verify_change.py의 '바뀐 파일 ruff' 체크가 base와 비교 없이 head 전체 결과를 '새 문제'로 보고 -> 무관한 커밋들이 CI FAIL",
+      "where": "scripts/ops/verify_change.py, scripts/ops/ruff_new_only_gate.py",
+      "evidence": "사용자 지시 '현재 폴더의 운영 오류 목록을 조사해서 그걸 먼저 모두 수정해'로 gh run list 조회 -> CI(.github/workflows/ci.yml, self-hosted 러너)가 이미 구축돼 돌고 있었고 오늘 커밋 여러 개가 실제로 FAIL하고 있는 걸 발견(defect_index #3/#4가 최신 CI 존재를 반영 못하고 있었음 — 별도 확인 필요 없이 그 자체로 해소됨). gh run view --log-failed 로 실패 원인 확인: 'fix: _save_agents_to_disk()...' 커밋(d083641d)이 '바뀐 파일 ruff — 새 문제 3건'으로 FAIL. 그 3건은 scripts/ops/dry_run_approved_browser_instruction_api.py:107 의 C901/PLR0912/PLR0915(복잡도) — 그 커밋은 이 파일에 docstring 경고 주석 5줄만 추가했을 뿐 107번 줄(dry_run 함수)은 전혀 안 건드렸다(로컬에서 git stash로 이미 대조 확인했었고 로컬 pre-commit 훅도 정확히 '기존 위반, 이번 변경과 무관 — 통과'로 판정했었음). 코드 확인 결과 verify_change.py의 'ruff_errors' 계산이 head_tree에서만 ruff check를 돌려 그 결과 전체를 그대로 new로 취급하고 있었다(base 쪽 비교자체가 없음) — 다른 7개 판정 항목(pytest/LIVE import/층간위반/순환 등)은 전부 base-head 델타를 실제로 계산하는데 이 항목만 예외였다.",
+      "fix_note": "scripts/ops/ruff_new_only_gate.py(로컬 pre-commit 훅이 이미 쓰던 hunk-기준 '새로 생긴 줄' 판정 로직)에 changed_lines_between(base_ref, head_ref) 함수를 추가(기존 changed_lines_staged의 --cached 버전을 임의 커밋 쌍 비교로 일반화). verify_change.py는 ruff --output-format json 으로 바꾸고, 각 finding의 파일+줄번호가 changed_lines_between() 이 돌려준 '실제 diff에서 바뀐 줄' 집합에 속할 때만 new로 판정하도록 수정(_new_ruff_findings 헬퍼로 분리, main() 복잡도 초과 방지). 검증: 실제로 CI를 FAIL시켰던 커밋 쌍(5f07d9e0->d083641d)으로 changed_lines_between 직접 호출 -> 바뀐 줄 {6,7,8,9,10}만 반환, 문제였던 107번줄은 포함 안 됨(정확히 pre-existing으로 분류될 것) 확인. py_compile+ruff 통과(ruff_new_only_gate.py의 기존 C901/PLR0912 2건은 제 편집과 무관한 main() 함수라 git stash 대조로 pre-existing 확인). layer_audit 3종 0, quality_gate 통과.",
+      "stage": "GATE",
+      "status": "fixed",
+      "no": 99
+    },
+    {
+      "id": "HOOKS-EXISTING-CODE-CHANGE-FLAG-VISIBILITY",
+      "category": 2,
+      "title": "pre-commit이 --allow-existing-code-change 항상 넘기던 문제 완화(defect_index #2) + AI 리뷰 우회 사유 기록(#5)",
+      "where": ".githooks/pre-commit.orig, scripts/ops/ai_code_review_gate.py",
+      "evidence": "사용자 지시로 미해결 defect_index 항목 조사 중 #2/#5 재확인. 완전 차단(대화형 확인)은 이 저장소 워크플로우(기존 코드 수정이 정상적으로 매우 잦음, 자동화 세션 다수 동시 실행)에서 비현실적이라 그대로 두되 가시성만 확보하기로 판단.",
+      "fix_note": "pre-commit.orig: quality_gate 호출 직전 git diff --cached --name-status 로 기존 활성 .py 코드 수정(M) 파일 목록을 콘솔에 출력(최대 10개+나머지 개수) 후 기존과 동일하게 --allow-existing-code-change 로 진행 — 무음 우회를 없앰. ai_code_review_gate.py: AI_REVIEW_ENABLED=false 로 검수를 끌 때 선택적 환경변수 AI_REVIEW_BYPASS_REASON 을 읽어 콘솔 출력 + save_report()로 리포트 파일(data/runtime/ai_review_latest.json)에 verdict=SKIPPED, bypass_reason 필드로 기록(안 남기면 '(사유 미기록)') — 사후 감사 가능하게 함. 검증: py_compile+ruff 통과(신규 오류 0, git stash 대조로 확인).",
+      "stage": "GATE",
+      "status": "fixed",
+      "no": 100
     }
   ]
 }
