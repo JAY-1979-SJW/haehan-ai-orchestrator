@@ -30,7 +30,9 @@ class SheetsAPI:
 
     def recent(self, limit: int = 20) -> list[dict]:
         """최근 시트."""
-        self.page.goto(self.SHEETS_HOME, timeout=20000)
+        # 2026-09-29: _cdp_page() 가 매번 새(콜드) 탭을 여는 것으로 바뀌어(탭 하이재킹
+        # 버그 수정) 기존 20000ms/wait_until 기본값(load)로는 종종 타임아웃 — 완화.
+        self.page.goto(self.SHEETS_HOME, timeout=45000, wait_until="domcontentloaded")
         time.sleep(3)
         try:
             return (

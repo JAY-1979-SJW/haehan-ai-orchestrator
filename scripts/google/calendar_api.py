@@ -36,7 +36,7 @@ class CalendarAPI:
         # GCP 콘솔과 동일 원인) — DOM 로드 시점까지만 대기.
         self.page.goto(
             GOOGLE_URLS.get("calendar_day", "https://calendar.google.com/calendar/u/0/r/day"),
-            timeout=20000,
+            timeout=45000,
             wait_until="domcontentloaded",
         )
         time.sleep(2.5)
@@ -46,7 +46,7 @@ class CalendarAPI:
         """이번 주 일정."""
         self.page.goto(
             GOOGLE_URLS.get("calendar_week", "https://calendar.google.com/calendar/u/0/r/week"),
-            timeout=20000,
+            timeout=45000,
             wait_until="domcontentloaded",
         )
         time.sleep(2.5)
