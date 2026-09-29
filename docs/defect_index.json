@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 104,
+  "next_no": 111,
   "items": [
     {
       "no": 1,
@@ -1349,16 +1349,114 @@
     {
       "id": "CDP-POPUP-POLLER-REPEATED-EMPTY-CREDENTIAL-LOGIN-CONTENDS-WITH-API",
       "category": 1,
-      "title": "cdp_popup_manager poller가 빈 자격증명(ID/PW empty)으로 반복 네이버 로그인 시도 + 공유 브라우저 스레드에서 API 요청과 경합 -> 스마트스토어 API 지연",
+      "title": "[정정 2026-09-30] 원 제목 '빈 자격증명 로그인'은 로그 오독으로 판명 — 실제로는 공유 단일 워커 스레드에서 poller 틱과 API 요청이 경합하는 구조적 사실만 유효",
       "where": [
         "scripts/naver/smartstore/navigation/cdp_popup_manager.py",
-        "scripts/naver/auth.py"
+        "scripts/naver/auth.py",
+        "scripts/naver/automation/platform/session_manager.py"
       ],
-      "evidence": "smartstore CDP 리팩터(위 항목) 실측 검증 중 발견: FastAPI 로그에 poller가 '[poller] 새 new_tab 감지' -> 'ID 입력 완료 (empty, 10자)' -> 'PW 입력 완료 (empty, 10자)' -> 'login button normal click failed(3000ms 타임아웃)' -> '로그인 성공: 회원' 시퀀스를 수 차례 반복하는 걸 확인. 빈 문자열로 로그인 폼을 채우고도 '로그인 성공'으로 로그가 남는 것 자체가 의심스러움(오탐 가능성). 이 시퀀스가 run_on_browser_thread(단일 워커 스레드)를 점유하는 동안 같은 스레드를 쓰는 smartstore API 요청(orders/pending 등, 위 항목에서 방금 이 공유 스레드로 전환)이 대기하게 됨 -> curl 20초 타임아웃 재현. 예전(각 API가 독자적 Playwright 연결)에는 poller와 자원을 안 나눠 써서 이 경합이 드러나지 않았음 — 이번 리팩터로 처음 드러난 상호작용.",
-      "fix_note": "이번 세션에서는 미수정 — 원인 2가지(①poller가 왜 빈 자격증명으로 반복 로그인을 시도하는지, '새 탭 감지' 판정이 오탐인지 ②공유 브라우저 스레드의 poller/API 자원 경합을 어떻게 완화할지, 예: poller 주기 조정·우선순위 분리·별도 스레드 재검토)는 추측 없이 라이브 재현·로그 추적이 더 필요해 다음 세션으로 남김. 스마트스토어 계정 자격증명이 실제로 어떻게 poller에 전달되는지부터 확인 필요.",
+      "evidence": "2026-09-30 코드 추적(로그 문구가 아니라 실제 함수 본문 확인)으로 원 진단 2가지를 정정함. (1) '빈 자격증명' 오독: auth.py:187 로그 포맷은 '%s 입력 완료 (%s, %d자)' — 가운데 %s는 _safe_human_input()의 action 값('skip'|'empty'|'replaced')이지 자격증명 내용이 아님. action='empty'는 '입력 전 필드가 비어 있었음'(정상 최초 입력)이라는 뜻이고 뒤의 '10자'가 실제로 타이핑된 자격증명 길이 — 즉 10자짜리 실제 자격증명이 정상 입력된 것이며 빈 문자열이 입력된 게 아니었다. (2) '클릭 실패에도 로그인 성공은 오탐' 의심: auth.py의 _submit_login_form()은 일반 Playwright 클릭이 3000ms 타임아웃 나면(경고 로그) 곧바로 page.evaluate() JS 클릭 폴백을 쓰는 2단계 구조이고, 이 폴백이 조용히 성공하면 이후 detect_login_state()로 실제 로그인 상태를 재확인한 뒤에만 '로그인 성공' 로그를 남긴다 — 설계된 폴백이 정상 동작한 것이지 오탐이 아니다. (3) 'poller가 새 탭에 반응해 로그인을 건다'는 원 추정도 틀림: cdp_popup_manager.py의 이벤트 핸들러(_on_new_page, 337~338행)와 폴러 틱(_tick_work, 976~982행) 모두 kind=='new_tab'이면 로그만 남기고 ev.handled=True로 끝 — login_naver/ensure_naver_login 호출 코드가 이 파일 안에 전혀 없음(grep 0건, 재확인 완료). login_naver 실제 호출부는 세션 만료 자동복구(session_manager.py의 SessionManager.check_and_recover, 로그인 페이지/API 라우터/블로그·카페 writer 등 20여 곳)이며, 이들이 poller와 무관하게 자기 작업(스마트스토어 API 호출 등) 시작 직전 세션 만료를 감지해 독립적으로 login_naver를 호출한 것 — 로그 파일에 두 독립 프로세스의 5초 간격 로그가 우연히 인접해 찍힌 것을 인과관계로 오판했었음. 남은 사실(정정 후에도 유효): CdpPopupPoller._tick_work()는 scripts/web_connector.run_on_browser_thread의 단일 워커 스레드를 매 5초 점유(탭 목록 조회 + smartstore 탭이면 배너/모달 스캔)하므로, 같은 틱 실행 중 들어온 API 요청(orders/pending 등)은 물리적으로 대기해야 하는 구조는 실제다.",
+      "fix_note": "정정만 하고 코드는 미변경(추측 없이 코드 직접 추적으로 검증했고, '빈 자격증명 반복 로그인'이라는 원인 자체가 사실이 아니었으므로 그 부분은 고칠 대상이 없음). 남은 구조적 사실(poller 5초 틱이 단일 워커 스레드를 점유해 그 순간의 API 요청이 대기)은 여전히 유효하나 이번 조사에선 실제 체감 지연폭을 재실측하지 않았음 — 필요시 poller interval 조정 또는 API 요청에 짧은 우선순위/타임아웃 부여를 다음 세션에서 검토.",
+      "stage": "RUN",
+      "status": "closed_misdiagnosis",
+      "no": 103
+    },
+    {
+      "id": "NEXTJS-DEV-STALE-WEBPACK-CACHE-500-AFTER-FILE-MOVE",
+      "category": 1,
+      "title": "admin-web restructuring(파일 이동) 후 Next.js dev 서버의 webpack HMR 캐시가 깨져 전 페이지 500 -> 재기동으로 확인·해소",
+      "where": [
+        "admin-web/.next (빌드 캐시, git 비대상)"
+      ],
+      "evidence": "사용자 지시 '앱 관련해서 운영 오류를 더 찾아봐' 로 실행 중인 admin-web(포트 3000)을 curl로 직접 확인: GET / -> 500, 본문에 \"Cannot find module './8948.js'\" (admin-web/.next/server/webpack-runtime.js 경유). 원인: GmailInboxPanel/GoogleToolsPanel/MailAssistantPanel 을 ops/components/ 에서 mail/components/, google/components/ 로 옮긴 리팩터(커밋 d3773e1f, #89) 이후 dev 서버가 재기동 없이 살아있어 webpack 모듈 ID가 옛 파일 경로를 계속 참조 -> 청크 조회 실패. FastAPI(8401)는 정상(별도로 /health 루트에 404 났던 건 실제 경로가 /api/v1/health 라 내 테스트 경로가 틀렸던 것 — 코드 문제 아님, 재확인 완료).",
+      "fix_note": "PID 확인(netstat -ano, wmic) 후 Next.js dev 프로세스 종료 -> admin-web/.next 삭제 -> npm run dev 재기동. 재기동 로그에 '⚠ Fast Refresh had to perform a full reload due to a runtime error' 확인(증상과 일치). 재기동 후 GET / -> 200, /mail /google /ops 등 전부 정상 재확인. 재발 방지책은 없음(파일 이동 + 장시간 dev 서버 유지 조합에서 나오는 Next.js 자체의 known HMR 한계) — 유사 증상 재발 시 dev 서버 재기동이 정답.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 104
+    },
+    {
+      "id": "ADMIN-WEB-NAV-DEAD-LINKS-MARKETING-ADMIN-GROUP",
+      "category": 1,
+      "title": "실제 렌더링되는 좌측 메뉴(NAV_GROUPS) 3개 항목이 존재하지 않는 페이지를 가리켜 클릭 시 404 -- 마케팅 자료 / 관리자(회원승인·라이선스관리)",
+      "where": [
+        "admin-web/src/lib/nav.ts"
+      ],
+      "evidence": "nav.ts의 NAV_GROUPS(실제 렌더링, 주석: '채팅 중심 UI — 좌측 nav는 보고/확인용만')와 NAV_GROUPS_ALL(주석: '전체 목록 보존 — nav에는 미표시')을 구분해, 실제 노출되는 NAV_GROUPS의 href 11개 전부를 실행 중인 admin-web(3000)에 curl로 직접 검증. 3개가 404: /marketing('마케팅 자료', 콘텐츠 그룹), /admin/users('회원 승인', 관리자 그룹, adminOnly), /admin/licenses('라이선스 관리', 관리자 그룹, adminOnly). admin-web/src/app/ 에 marketing/, admin/ 디렉터리 자체가 없고, ai_orchestrator/routers/ 에도 이 기능들의 백엔드 라우터가 전혀 없음(grep 0건) — 프론트/백엔드 모두 미구현 상태에서 메뉴만 먼저 노출돼 있었음. (참고: NAV_GROUPS_ALL 쪽의 나머지 15개 미구현 라우트 /local-agents, /server, /eum, /bid 등은 코드 주석대로 현재 화면에 노출되지 않아 사용자가 실제로 밟을 수 없는 경로라 이번엔 사용자 영향 없는 것으로 판단해 후순위 — 향후 그 그룹을 복원할 때 페이지 구현이 선행돼야 함.)",
+      "fix_note": "즉시 조치: nav.ts의 NAV_GROUPS에서 이 3개 항목만 제거(주석으로 사유·복원 조건 명시), NAV_GROUPS_ALL은 그대로 보존(복원 참조용이라는 기존 설계 의도 유지). typecheck(tsc --noEmit) 통과, 재기동된 dev 서버에서 GET / -> 200 재확인. 페이지 자체를 새로 만드는 건 이번 범위 밖(신규 기능 — 기준서→드라이런→승인 절차 대상)이라 제외했고, 사용자 승인 시 다음 세션에서 실제 구현 진행.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 105
+    },
+    {
+      "id": "ADMIN-WEB-NAV-GROUPS-ALL-DEAD-CONSTANT-REMOVED",
+      "category": 1,
+      "title": "nav.ts의 NAV_GROUPS_ALL(구 '전체 목록 보존')은 실사용 0건 + 안의 라우트 전부 2026-09-23 대청소에서 이미 삭제된 페이지 -- 죽은 코드로 확인 후 삭제",
+      "where": [
+        "admin-web/src/lib/nav.ts",
+        "admin-web/src/app/page.tsx"
+      ],
+      "evidence": "사용자 지시 '죽은거나 안되는건 확인해서 지금 당장 바로 삭제해'. NAV_GROUPS_ALL grep 결과 실제 import/사용 0건(주석 2곳 언급뿐). 안에 있던 라우트(/local-agents, /server, /eum, /bid, /gabia, /hanafax, /dataportal, /external-tasks, /file-map, /market-research, /youtube, /settings/sites, /admin/inquiries 등)를 docs/deleted_code_index.md와 대조한 결과 전부 admin-web/src/app/(legacy)/... 경로로 2026-09-23 대청소(commit 889e4003)에서 이미 삭제된 페이지였음 -- 즉 '미완성 예정 기능'이 아니라 '이미 지운 것의 낡은 참조 사본'. 복원 경로는 deleted_code_index.md가 이미 git checkout 절차로 정확히 들고 있어 NAV_GROUPS_ALL은 그 정보를 중복·구식으로 갖고 있었을 뿐 별도 가치가 없었음.",
+      "fix_note": "NAV_GROUPS_ALL 상수 전체 삭제, nav.ts에 삭제 사유·복원 경로(deleted_code_index.md) 주석으로 남김. page.tsx의 '코드/라우트는 보존' 주석도 실제와 달라 정정. tsc --noEmit 통과, 재기동된 dev 서버에서 / 200 재확인.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 106
+    },
+    {
+      "id": "ROOT-ANALYZE-WORK-ITEMS-DEAD-SCRIPT-DELETED",
+      "category": 1,
+      "title": "루트의 analyze_work_items.py -- 0 import·0 test·0 docs·0 scheduler 확인 후 삭제 (나머지 36개 루트 스크립트는 실사용 확인돼 유지)",
+      "where": [
+        "analyze_work_items.py (삭제됨)",
+        "configs/root_legacy_scripts.json"
+      ],
+      "evidence": "configs/root_legacy_scripts.json(잠긴 정본 레지스트리)에 37개 루트 파이썬 스크립트가 category별로 분류돼 있음을 확인 -- runtime_entrypoint/shared_legacy_module/workflow_legacy_module(활발히 import되는 실사용 코드, layer audit이 '루트에 있으면 안 됨'이라고 경고하는 건 '위치'가 틀렸다는 뜻이지 '죽었다'는 뜻이 아님) / verification_tool(설계상 import 0건이 정상 -- 사람이 python <파일>.py로 직접 실행하는 CLI 검증 도구) 로 나뉘어 있어, '루트에 있다'만으로 죽은 코드로 오판하면 안 됨을 먼저 확인. 이 중 category가 'archive_candidate'인 2개(analyze_work_items.py, log_analyzer.py)만 실제 사용 여부가 불확실 -- 교차검증 결과 log_analyzer.py는 tests/test_log_analyzer.py가 있어 실사용 확인, 유지. analyze_work_items.py는 전체 저장소에서 import 0건(자기 자신 제외), 테스트 0건, docs/scheduler/CI 실행 언급 0건, git log에 최근 커밋(2026-09-28)은 있으나 다른 파일에서의 호출은 전혀 없음을 grep으로 재확인 -- EUM 사이트맵 스냅샷을 분석하는 1회성 스크립트였고 현재 EUM 자동화는 scripts/eum/daily_check.py로 이관됨(이 저장소 CLAUDE.md 'EUM 자동화 로직' 절).",
+      "fix_note": "analyze_work_items.py 삭제, configs/root_legacy_scripts.json에서 해당 항목 제거(레지스트리 정합성 유지). 나머지 36개는 실사용 증거(실제 import 또는 registry의 명시적 'Keep until ... migration is complete' 근거)가 있어 삭제하지 않음 -- 위치 재배치는 이번 범위 밖(별도 리팩터 과제, registry의 next_action이 이미 방향 명시).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 107
+    },
+    {
+      "id": "MCP-AGENT-PROCESS-NO-CRASH-SUPERVISION",
+      "category": 1,
+      "title": "Electron이 스폰하는 local_agent.agent(MCP 파이프라인) 프로세스가 죽으면 재기동 로직이 없어 Electron 전체 재시작 전까지 AI 채팅이 영구 오프라인",
+      "where": [
+        "admin-web/electron/lib/agent.js"
+      ],
+      "evidence": "사용자 지시 '내일은 ai 대화창에서 mcp로 지시하면 업무가 바로 되게' 확인 중 GET /api/v1/local-agents 조회 결과 두 등록 에이전트 모두 agent_status=offline. 프로세스 목록(wmic)에 python -m local_agent.agent 자체가 없었음 — 이 긴 세션 동안 FastAPI를 여러 번 재기동한 부작용으로 연결이 끊긴 뒤 재기동되지 않은 것으로 추정. startMcpAgent()의 mcpAgentProc.on('exit') 핸들러가 로그만 남기고 아무 것도 안 함을 코드로 확인 — Electron 자체를 재시작해야만 복구되는 구조였음.",
+      "fix_note": "agent.js에 크래시 시 자동 재기동 추가: mcpAgentStopRequested 플래그로 의도적 정지(stopMcpAgent 명시 호출)와 예기치 않은 종료를 구분, 후자만 3~15초 백오프로 최대 5회(MCP_AGENT_MAX_RESTARTS) 재시도. 60초 이상 안정적으로 떠 있으면 재시도 카운터 리셋. 검증: (1) Electron 재기동 후 정상 auto-connect 확인, (2) 실제 프로세스(taskkill)를 강제 종료해 크래시 재현 -> 3000ms 후 자동 재기동 -> auth_ok 재연결 -> 이어서 실제 run_claude_agent 작업 큐잉->완료(result:9)까지 재확인. node -c 문법 검사 통과, eslint는 이 파일의 기존 require() 스타일 관련 사전 존재 오류 5건만(내 변경으로 생긴 신규 오류 0건, 비교 확인).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 108
+    },
+    {
+      "id": "WS-DISCONNECT-IMMEDIATELY-FAILS-INFLIGHT-TASK-NO-RETRY",
+      "category": 1,
+      "title": "로컬 에이전트 WS 연결이 끊기면 그 순간 delivered/running 상태였던 작업이 재시도 없이 즉시 failed(websocket_disconnected) -> 사용자가 AI 채팅에서 실제로 '작업 실패' 목격",
+      "where": [
+        "ai_orchestrator/local_agent_registry_task_lifecycle.py",
+        "ai_orchestrator/local_agent_registry_common.py",
+        "ai_orchestrator/local_agent_router_ws.py",
+        "ai_orchestrator/local_agent_models.py"
+      ],
+      "evidence": "사용자가 AI 작업 콘솔에서 직접 '야~~'를 입력했다가 '작업 실패: websocket_disconnected'를 실시간으로 목격(사용자 제보). 원인 추적: 마침 그 직전에 이 세션에서 mcp-agent 크래시 복구 로직(위 항목)을 테스트하려고 프로세스를 강제 종료한 순간과 겹쳤음. 코드 확인 결과 local_agent_router_ws.py의 WS 핸들러 finally 블록이 연결 종료 시 fail_active_tasks_for_agent()를 호출하는데, 이 함수가 delivered/running 상태 작업을 재시도 없이 무조건 failed 처리하는 구조였음(local_agent_registry_task_lifecycle.py) — 즉 '상시 연결'이어도 재연결하는 그 몇 초 사이에 걸린 작업은 항상 사용자에게 실패로 보였다.",
+      "fix_note": "LocalAgentTask에 retry_count 필드 추가. VALID_TASK_TRANSITIONS에 delivered/running -> queued 전이 허용 추가(MAX_WS_DISCONNECT_RETRIES=2, local_agent_registry_common.py). fail_active_tasks_for_agent()를 (failed, requeued) 튜플 반환으로 변경 — delivered/running은 retry_count < 상한이면 queued로 되돌리고 retry_count 증가(재연결 시 기존 '_push_queued' 로직이 자동 재전달, 신규 디스패치 코드 불필요), 상한 도달 시에만 기존처럼 failed. cancel_requested는 재큐잉 대상에서 제외(사용자의 명시적 취소 의도 보존). local_agent_router_ws.py 로그를 failed/requeued로 분리, audit_logger.py에 LOCAL_AGENT_TASK_REQUEUED 이벤트 타입 등록. tests/test_local_agent_ws.py 관련 테스트 3개를 새 동작에 맞게 갱신 + 재큐잉->재전달, 재시도 소진->최종 failed 신규 테스트 2개 추가(총 5개), test_local_agent.py의 cancel_requested 테스트도 튜플 언패킹에 맞게 수정. 검증: pytest test_local_agent.py+test_local_agent_ws.py 251개 중 my change로 새로 깨진 테스트 0건(사전 실패 5건은 git stash로 대조해 기존 결함임을 별도 확인 — 3건은 local_agent_registry 파사드의 _strip_result_data 재노출 누락 ImportError, 2건은 _WS_RECV_TIMEOUT_SEC/_SERVER_AUTO_COMPLETE 관련 기존 결함, 전부 이번 변경과 무관). ruff_new_only_gate.py로 신규 위반 0건 확인(기존 위반 20건은 무관 참고용). 실사용 재현: FastAPI+Electron 재기동 후 실제 작업 큐잉 중 mcp-agent 프로세스를 강제 종료 -> 즉시 조회 시 failed 아닌 running(retry_count=1)으로 재큐잉·재전달 확인 -> 자동 재연결 후 정상 완료(result:9)까지 실측.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 109
+    },
+    {
+      "id": "LOCAL-AGENT-REGISTRY-FACADE-MISSING-STRIP-RESULT-DATA-REEXPORT",
+      "category": 3,
+      "title": "local_agent_registry 파사드가 _strip_result_data 재노출 누락 -> 관련 테스트 3개 ImportError (facade 재노출 누락 패턴 4번째 사례, #33/#93과 동일 클래스)",
+      "where": [
+        "ai_orchestrator/local_agent_registry.py",
+        "ai_orchestrator/tests/test_local_agent.py"
+      ],
+      "evidence": "WS 재큐잉 수정(위 항목) 검증 중 전체 test_local_agent.py 실행에서 발견: test_strip_result_data_url_query_removed/_empty_returns_none/_sensitive_key_dropped 3개가 'ImportError: cannot import name _strip_result_data from ai_orchestrator.local_agent_registry'로 실패. git stash로 이번 세션 변경 전 상태에서도 동일하게 실패함을 확인 — 이번 작업과 무관한 기존 결함. 이 저장소가 이미 여러 번 겪은 '파사드 재노출 누락'(#33 ruff --fix가 재노출 삭제, #93 local_agent_registry의 task-count 함수 3종 누락) 과 같은 클래스의 4번째 사례로 보임 — 실제 함수는 local_agent_redaction.py에 있고 프로덕션 코드에서는 그 경로로 직접 import하므로 런타임 영향은 없음(테스트 전용 import 경로 문제).",
+      "fix_note": "이번 세션 범위 밖(발견만, 미수정) — 다음 세션에서 재노출 추가 또는 테스트 import 경로 수정.",
       "stage": "RUN",
       "status": "open",
-      "no": 103
+      "no": 110
     }
   ]
 }
