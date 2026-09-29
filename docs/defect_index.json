@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 52,
+  "next_no": 53,
   "items": [
     {
       "no": 1,
@@ -727,6 +727,19 @@
       ],
       "evidence": "#42 STD-08 극단값 목록 10위. #48/#49/#50 과 같은 계열(독립 체크리스트 패턴) — 0.~8. 번호 섹션(안전플래그/router상태/docker-compose/external registry/완료공정/POST tasks gate/known warnings/배포SOP/앱착공)이 run_audit() 하나에 다 있어 C901=30.",
       "fix_note": "2026-09-29: 9개 블록을 _check_*() 함수로 분리, run_audit() 는 extend() 로 모으기만 함 (순서·조건·문자열 그대로). 반환 dict 의 로컬 별칭 gate 는 POST_TASKS_GATE_STATUS 직접 참조로 교체(값 동일). 검증: ruff 0 errors, 실제 실행을 원본과 UTF-8 강제 대조해 exit 0·출력 완전 동일 확인. layer audit 신규 위반 없음.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 52,
+      "id": "run.std08_local_agent_redaction_complexity_fix",
+      "category": 2,
+      "title": "STD-08 극단값 11위 ai_orchestrator/local_agent_redaction.py:_strip_result_data()(C901=32) 리팩터",
+      "where": [
+        "ai_orchestrator/local_agent_redaction.py"
+      ],
+      "evidence": "#42 STD-08 극단값 목록 11위. 보안 관련 모듈(민감정보 제거 정책)이라 다른 파일보다 신중하게 검토 — _strip_result_data() 가 k_low 별 \"if k_low == X: 특별 처리; continue\" 체인 12개(capabilities/apps/plan/target/inspection_mode/browser/click_target/clicked_target/url_info/navigation/cleanup/lifecycle)를 다 갖고 있어 C901=32.",
+      "fix_note": "2026-09-29: cdp_client.py(#42)와 동일한 dict 디스패치 패턴 — k_low → 필터 함수 매핑(_RESULT_DATA_SPECIAL_HANDLERS)으로 바꿈. inspection_mode 는 별도 함수(_strip_inspection_mode)로 추출해 같은 테이블에 편입. clicked_target 은 원본처럼 click_target 과 같은 함수를 그대로 매핑. 로직 변경 없음(순수 추출). 검증: ruff 0 errors, 기존 테스트 4개 파일 146개 전부 통과(ai_orchestrator/tests/test_local_agent_redaction.py 45개 포함), 보안 함수라 추가로 12개 특수 키를 전부 포함한 22종 입력(dict 아님/빈 dict/각 특수키 정상값·오염값/normalized_url 쿼리제거/password 등 민감키 이중방어/타입별 값 등)으로 직접 fuzz 실행해 원본과 git stash 대조 — 완전히 동일한 출력 확인. layer audit 신규 위반 없음.",
       "stage": "RUN",
       "status": "fixed"
     }
