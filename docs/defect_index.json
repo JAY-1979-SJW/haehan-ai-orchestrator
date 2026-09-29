@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 37,
+  "next_no": 38,
   "items": [
     {
       "no": 1,
@@ -186,7 +186,8 @@
       ],
       "evidence": "로그 마지막 줄들 전부 '스킵: cdp_unavailable'",
       "stage": "F",
-      "status": "open"
+      "status": "open",
+      "fix_note": "2026-09-29: 조사 중 사용자 결정으로 보류 — EUM 사이트 관련 작업은 이번 정리 라운드에서 다루지 않음. daily_check.py가 archive/eum_legacy 모듈을 import하는 게 실제 CDP 문제를 가리는지 여부까지는 확인 못함, 다음에 재검토."
     },
     {
       "no": 14,
@@ -213,7 +214,8 @@
       ],
       "evidence": "data/youtube_search_cache.db 두 작성자",
       "stage": "C",
-      "status": "open"
+      "status": "fixed",
+      "fix_note": "2026-09-29: scripts/common/youtube_search_cache.py 로 통합, 실행 검증 완료(두 도메인이 실제로 같은 캐시를 공유하는지 실측), 커밋 a00e0cfa. 이 항목만 status 갱신을 놓쳤던 걸 오늘(완전성 점검 중) 발견해 바로잡음."
     },
     {
       "no": 16,
@@ -293,7 +295,8 @@
       ],
       "evidence": "같은 함수에서 .get(a) or .get(b) 3곳",
       "stage": "A",
-      "status": "open"
+      "status": "fixed",
+      "fix_note": "2026-09-29: scripts/g2b/validators.py 에 _get_dual()/_has_dual() 헬퍼 신설, 이 파일 안의 인라인 dual-key 조회 5곳(bidNtceNo/bid_ntce_no,bidNtceOrd/bid_ntce_ord, attachment_id/attachmentId, attachment_path/attachmentPath, bid_ntce_no 존재검사 2곳)을 전부 이걸로 교체 — 동작은 완전히 동일(각 사이트의 원래 or-순서·falsy-폴백까지 보존), 정규화 지점을 한 곳으로 명시. 테스트 33개 통과 + camelCase/snake_case/falsy-폴백 3가지 수동 검증."
     },
     {
       "no": 22,
@@ -306,7 +309,7 @@
         "media/",
         "docs/architecture/APP_TREEMAP.md"
       ],
-      "evidence": "골격 점검 G 축 + 직접 확인(config 0파일, storage·media importers 0)",
+      "evidence": "골격 점검 G 축 + 직접 확인(config 0파일, storage·media importers 0) | 2026-09-29 재확인: config/ 는 이미 없어짐(해결됨). storage/ 는 실측 결과 \"참조 0\" 주장이 틀림 — candidates.jsonl/execution_history.jsonl(90KB, 9/28 19:55 최신 기록)/inbox.jsonl 등 실제로 계속 쓰이고 있음, 삭제 대상 아님(이 결함의 evidence 자체가 stale). media/ 는 images/texts/videos 빈 서브폴더만 있어 정말 미사용으로 보이나 우선순위 낮음. \"APP_TREEMAP에 없는 16개 폴더\"는 이번엔 재조사 안 함.",
       "stage": "G",
       "status": "open"
     },
@@ -386,8 +389,9 @@
       ],
       "evidence": "5973ebd2 에서 shim 삭제",
       "stage": "docs",
-      "status": "open",
-      "no": 28
+      "status": "fixed",
+      "no": 28,
+      "fix_note": "2026-09-29: CLAUDE.md는 이전에 정정, AGENTS.md도 같은 내용으로 오늘 정정 완료(daily_check.py로 안내)."
     },
     {
       "id": "deploy.orphan_file_map_container",
@@ -425,8 +429,9 @@
       ],
       "evidence": "runcheck R0 에서 자기 폴더를 경로에 넣자 57건 실패로 재현",
       "stage": "RUN",
-      "status": "open",
-      "no": 31
+      "status": "fixed",
+      "no": 31,
+      "fix_note": "2026-09-29: 14개 중 위험도 \"높음\" 판정된 2개만 이름 변경 — scripts/google/cloud/logging.py -> cloud_logging_catalog.py, scripts/youtube/http.py -> youtube_http_client.py (각각 1곳/4곳 참조 갱신, 테스트 통과 확인). 나머지 profile.py(5개)/calendar.py(2개)/selectors.py(2개)/types.py(1개)/gabia,hiworks profile.py(2개)는 조사 결과 정상 실행 경로에서 충돌 안 나고(전부 절대 패키지 import 관행) 실행 트리거(같은 폴더 내 __main__)가 없거나 드물어 위험이 낮음 — 컨벤션 통일 목적이면 나중에, 지금은 미변경."
     },
     {
       "id": "run.r0_import_failures",
@@ -497,6 +502,19 @@
       "status": "open",
       "no": 36,
       "fix_note": "2026-09-29: CI(.github/workflows/ci.yml)는 scripts/ops/ci_layer_gate_check.py로 우회(CLAUDE.md 명시 3개 지표만 판정) — 이 결함 자체는 미해결로 남김. 49개 파일을 실제 레이어로 분류하거나 threshold를 재검토하는 작업 필요."
+    },
+    {
+      "id": "run.naver_mail_send_compose_missing",
+      "category": 1,
+      "title": "naver_mail_router.py 의 실제 발송 경로가 존재하지 않는 함수를 import — 네이버메일 발송 100% 크래시",
+      "where": [
+        "ai_orchestrator/connectors/naver_mail_router.py"
+      ],
+      "evidence": "2026-09-29 audit-kit ERR-02 표본검증에서 발견: dry_run=False 실제 발송 경로가 `from scripts.naver.mail import compose` / `from scripts.naver.mail import send_mail`를 하는데 scripts.naver.mail 패키지에 그 이름의 함수가 없음(런타임 확인: dir(scripts.naver.mail) 에 'compose'/'send_mail' 없음). API 라우트 자체는 등록돼 있어(POST /api/v1/naver-mail/compose, /send) 정상으로 보이지만 실제 호출하면 ImportError. 발견만 하고 이번 세션에서 수정 안 함 — defect_index에도 누락돼 있었음(완전성 점검 중 발견).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 37,
+      "fix_note": "2026-09-29: 근본 조사 — compose()/send_mail() 함수는 이 저장소 git 히스토리 전체에 존재한 적이 없음(2026-09-23에 지워진 scripts/naver_mail 구 호환 패키지도 2줄짜리 재노출 shim이었을 뿐, 가리키던 scripts.naver.mail 자체가 처음부터 읽기전용 설계 — 모듈 docstring에 \"발송/답장/삭제/이동 금지\" 명시). \"복원할 삭제된 코드\"가 아니라 \"원래 없던 기능을 라우터가 먼저 가정해버린 경우\"였음. ImportError로 크래시하던 걸 501 Not Implemented로 정직하게 응답 하도록 고침(ai_orchestrator/connectors/naver_mail_router.py) — 실제 발송 자동화(Gmail 라우터처럼 CDP로 작성창 직접 조작)는 별도 기준서로 새로 설계 필요, 이번엔 미구현."
     }
   ]
 }

@@ -10,16 +10,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.youtube.http import (
+from scripts.youtube.youtube_http_client import (
     api_key as _resolve_api_key,
 )
-from scripts.youtube.http import (
+from scripts.youtube.youtube_http_client import (
     get_json as _http_get_json,
 )
-from scripts.youtube.http import (
+from scripts.youtube.youtube_http_client import (
     get_text as _http_get_text,
 )
-from scripts.youtube.http import (
+from scripts.youtube.youtube_http_client import (
     oauth_token as _resolve_oauth_token,
 )
 

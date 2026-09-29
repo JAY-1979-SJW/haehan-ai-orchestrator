@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import logging
-import time
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -63,7 +62,6 @@ def api_compose(
     dry_run=False: 네이버 메일 작성 페이지에 실제로 필드를 채워 준비 상태로 대기.
     발송(send)은 별도 /send 엔드포인트 + 사용자 명시 승인 필요.
     """
-    t0 = time.monotonic()
     body_preview = req.body[:100] if req.body else ""
 
     log_event(
@@ -88,44 +86,21 @@ def api_compose(
         )
 
     # dry_run=False: 실제 브라우저 자동화
-    try:
-        from scripts.naver.mail import compose as naver_compose
-        from scripts.web_connector import get_page, run_on_browser_thread
-
-        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
-        result = run_on_browser_thread(
-            lambda: naver_compose(
-                page=get_page(),
-                to=req.to,
-                cc=req.cc,
-                subject=req.subject,
-                body=req.body,
-                send=False,
-            ),
-            timeout=180,
-        )
-        duration_ms = int((time.monotonic() - t0) * 1000)
-        log_event(
-            "NAVER_MAIL_COMPOSE_DONE",
-            task_id="-",
-            actor=user["actor"],
-            role=user["role"],
-            decision="ok",
-            note=f"to={req.to} chips={result.get('final_chip_count')} duration_ms={duration_ms}",
-        )
-        return MailComposeResponse(
-            ok=True,
-            dry_run=False,
-            to=req.to,
-            cc=req.cc,
-            subject=req.subject,
-            body_preview=body_preview,
-            detail=f"브라우저 작성 완료. 수신인 {result.get('final_chip_count', 0)}명. 발송하려면 /send 호출.",
-            requires_send_approval=True,
-        )
-    except Exception as e:
-        logger.exception("naver mail compose error")
-        raise HTTPException(status_code=500, detail=f"작성 실패: {e}")
+    # 2026-09-29 정정(docs/defect_index.json #37): 예전엔 여기서 scripts.naver.mail의
+    # compose()/send_mail()을 import 했는데, 그 함수들은 이 저장소 히스토리 전체를 뒤져도
+    # 존재한 적이 없다(2026-09-23에 지워진 scripts/naver_mail 구 호환 패키지도 2줄짜리
+    # 재노출 shim이었을 뿐, 실제 구현은 처음부터 없었음 — 이 라우터가 아직 없는 기능을
+    # 미리 가정하고 쓰여 있던 것). scripts.naver.mail 패키지 자체도 "발송/답장/삭제/이동
+    # 금지"를 모듈 docstring에 명시한 읽기전용 설계라, 그 자리에 억지로 send 함수를
+    # 끼워넣는 대신 아직 미구현임을 정직하게 알린다. 실제 발송 자동화(Gmail 라우터처럼
+    # CDP로 작성창을 직접 조작하는 방식)는 별도 기준서로 새로 설계해야 한다.
+    raise HTTPException(
+        status_code=501,
+        detail=(
+            "네이버메일 브라우저 자동 작성(dry_run=False)은 아직 구현되지 않았습니다. "
+            "dry_run=True 로 초안 검증만 가능합니다."
+        ),
+    )
 
 
 class MailSendRequest(BaseModel):
@@ -157,26 +132,8 @@ def api_send(
         note="user confirmed send",
     )
 
-    try:
-        from scripts.naver.mail import send_mail
-        from scripts.web_connector import get_page, run_on_browser_thread
-
-        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
-        result = run_on_browser_thread(lambda: send_mail(get_page()), timeout=120)
-        if result.get("success"):
-            log_event(
-                "NAVER_MAIL_SEND_SUCCESS",
-                task_id="-",
-                actor=user["actor"],
-                role=user["role"],
-                decision="ok",
-                note=f"recipient={result.get('recipient')} subject={result.get('subject', '')[:30]}",
-            )
-            return {"ok": True, "detail": "발송 완료", **result}
-        else:
-            raise HTTPException(status_code=500, detail=result.get("error_msg", "발송 실패"))
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("naver mail send error")
-        raise HTTPException(status_code=500, detail=f"발송 오류: {e}")
+    # 2026-09-29 정정(docs/defect_index.json #37): /compose 와 같은 이유로 아직 미구현.
+    raise HTTPException(
+        status_code=501,
+        detail="네이버메일 자동 발송은 아직 구현되지 않았습니다.",
+    )

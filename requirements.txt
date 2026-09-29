@@ -24,6 +24,10 @@ pywin32>=306; sys_platform == "win32"
 uiautomation>=2.0.0; sys_platform == "win32"
 # Desktop agent device_token 저장 (Windows Credential Manager 등 OS 자격증명 저장소).
 keyring>=24.0; sys_platform == "win32"
+# 데스크톱 OS 알림(새 메일 도착 등) — ai_orchestrator/local_agent/user_notification_adapter.py.
+# plyer/win10toast 는 설치는 됐다고 코드에 있었지만 실제로 이 환경에 설치돼 있던 적이 없어
+# 알림이 한 번도 실제로 뜬 적이 없었음(2026-09-29 실측 발견). winotify 를 우선 설치.
+winotify>=1.1.0; sys_platform == "win32"
 # Desktop tray app (DESK-3) — Windows system tray icon.
 pystray>=0.19.5; sys_platform == "win32"
 Pillow>=10.0; sys_platform == "win32"

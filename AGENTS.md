@@ -350,24 +350,16 @@ eum.cw.or.kr
 
 ## 자동화 로직
 
-### 스크립트 구조
-```
-scripts/eum_extract_all_devices.py   ← 데이터 추출 (주 1회)
-├── extract_page_devices()  - table.querySelectorAll('tr'), 2행→1단말기
-├── get_page_count()        - 페이지네이션 감지
-├── click_page()            - 페이지 이동
-└── main()                  - 전 페이지 순회 + data/eum_all_devices_complete.json 저장
+> 2026-09-29 정정(docs/defect_index.json #28): 아래에서 예전에 안내하던
+> `scripts/eum_extract_all_devices.py` / `scripts/eum_business_dashboard.py` /
+> `scripts/archive/eum_legacy/eum_device_inventory_automation.py` 는 2026-09-23
+> 정리에서 삭제됨(`docs/deleted_code_index.md`의 `scripts` 항목, 복원은 그 문서 안내
+> 그대로 `git checkout backup/pre-cleanup-20260923 -- <경로>`). 삭제 후에도 실행법을
+> 계속 안내하고 있었던 걸 바로잡는다(CLAUDE.md는 9/29에 먼저 정정, 이 파일은 누락돼
+> 있던 걸 뒤늦게 정정). 현재 단말기설치현황(WEBMAN390M00) 자동 점검의 실제 진입점은
+> `scripts/eum/daily_check.py`.
 
-scripts/eum_business_dashboard.py   ← 업무 분석 + 홍보 메일 초안 생성
-├── analyze_devices()       - 통신단절/미사용/장기설치 분류
-├── build_pending_tasks()   - 우선순위별 미처리 업무 목록
-├── generate_promo_email()  - 홍보 메일 초안
-└── main()                  - 종합 대시보드 출력 + 파일 저장
-
-scripts/archive/eum_legacy/eum_device_inventory_automation.py  ← 구 버전 (보존)
-```
-
-### 올바른 추출 로직
+### 올바른 추출 로직 (WEBMAN390M00, 삭제된 스크립트가 실측으로 확인했던 내용 — 여전히 유효)
 ```python
 # table.querySelectorAll('tr') 로 전체 TR (tbody 아닌 table 전체)
 # 2행씩 묶기: 14열(주정보) + 13열(보조정보) → 단말기 1개
@@ -376,14 +368,7 @@ scripts/archive/eum_legacy/eum_device_inventory_automation.py  ← 구 버전 (�
 
 ### 실행 방법
 ```bash
-# 1. 데이터 추출 (브라우저 필요)
-python scripts/eum_extract_all_devices.py
-# → data/eum_all_devices_complete.json
-
-# 2. 업무 대시보드 + 홍보 메일 초안 (브라우저 불필요)
-python scripts/eum_business_dashboard.py
-# → data/business_dashboard_YYYYMMDD.json
-# → data/promo_mails_YYYYMMDD.txt
+python scripts/eum/daily_check.py
 ```
 
 ## 사이트맵 파일
