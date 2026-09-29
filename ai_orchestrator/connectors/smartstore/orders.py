@@ -11,10 +11,9 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 
 from ...audit_logger import log_event
-from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, save_ss
+from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, run_with_cdp_page, save_ss
 
 router = APIRouter()
-_CDP = "http://127.0.0.1:9222"
 
 
 @router.get("/orders")
@@ -28,13 +27,9 @@ def api_orders_collect(limit: int = 50, user: dict = Depends(require_role("admin
     sys.path.insert(0, str(ROOT))
     t0 = _t.monotonic()
     try:
-        from playwright.sync_api import sync_playwright
+        from scripts.naver.smartstore import NaverSmartStore
 
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            from scripts.naver.smartstore import NaverSmartStore
-
-            result = NaverSmartStore(page).list_orders(limit=limit)
+        result = run_with_cdp_page(lambda page: NaverSmartStore(page).list_orders(limit=limit))
     except Exception as e:  # noqa: BLE001 - 주문 조회/발송처리 엔드포인트 — 발송(ship) 엔드포인트는 body.confirm 검증이 try 블록 이전에 이미 끝난 뒤에만 실제 처리하며, except는 CDP 브라우저 연결 실패 등을 {ok: False, error, hint}로 반환할 뿐 confirm 검증을 우회하지 않음.
         result = {"ok": False, "error": str(e)}
     result.update({"collected_at": now_iso(), "duration_ms": elapsed_ms(t0)})
@@ -60,11 +55,7 @@ def api_orders_pending(limit: int = 50, user: dict = Depends(require_role("admin
     from scripts.naver.smartstore.product.order_shipping import OrderShippingProcessor
 
     try:
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            result = OrderShippingProcessor(page).get_pending_orders(limit=limit)
+        result = run_with_cdp_page(lambda page: OrderShippingProcessor(page).get_pending_orders(limit=limit))
     except Exception as e:  # noqa: BLE001 - 주문 조회/발송처리 엔드포인트 — 발송(ship) 엔드포인트는 body.confirm 검증이 try 블록 이전에 이미 끝난 뒤에만 실제 처리하며, except는 CDP 브라우저 연결 실패 등을 {ok: False, error, hint}로 반환할 뿐 confirm 검증을 우회하지 않음.
         result = {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(
@@ -108,16 +99,14 @@ def api_orders_ship(
     from scripts.naver.smartstore.product.order_shipping import OrderShippingProcessor
 
     try:
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            result = OrderShippingProcessor(page).process_order(
+        result = run_with_cdp_page(
+            lambda page: OrderShippingProcessor(page).process_order(
                 order_id=order_id,
                 tracking_number=body.tracking_number,
                 carrier=body.carrier,
                 confirmed=True,
             )
+        )
     except Exception as e:  # noqa: BLE001 - 주문 조회/발송처리 엔드포인트 — 발송(ship) 엔드포인트는 body.confirm 검증이 try 블록 이전에 이미 끝난 뒤에만 실제 처리하며, except는 CDP 브라우저 연결 실패 등을 {ok: False, error, hint}로 반환할 뿐 confirm 검증을 우회하지 않음.
         result = {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(

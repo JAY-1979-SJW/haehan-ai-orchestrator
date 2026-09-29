@@ -11,24 +11,11 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 
 from ...audit_logger import log_event
-from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, save_ss
+from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, run_with_cdp_context, run_with_cdp_page, save_ss
 
 router = APIRouter()
 
-_CDP = "http://127.0.0.1:9222"
 _REGISTER_URL = "https://sell.smartstore.naver.com/#/products/create"
-
-
-def _cdp_ss():
-    from playwright.sync_api import sync_playwright
-
-    pw = sync_playwright().start()
-    browser = pw.chromium.connect_over_cdp(_CDP)
-    page = browser.contexts[0].pages[0]
-    sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore import NaverSmartStore
-
-    return pw, NaverSmartStore(page), browser.contexts[0]
 
 
 def _notify_collect(rows: list, ok: bool) -> None:
@@ -55,11 +42,12 @@ def api_products(user: dict = Depends(require_role("admin", "owner"))) -> dict:
 
 @router.post("/products/collect")
 def api_products_collect(limit: int = 50, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    sys.path.insert(0, str(ROOT))
     t0 = _t.monotonic()
     try:
-        pw, ss, _ = _cdp_ss()
-        result = ss.list_products(limit=limit)
-        pw.stop()
+        from scripts.naver.smartstore import NaverSmartStore
+
+        result = run_with_cdp_page(lambda page: NaverSmartStore(page).list_products(limit=limit))
     except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         result = {"ok": False, "error": str(e)}
     result.update({"collected_at": now_iso(), "duration_ms": elapsed_ms(t0)})
@@ -99,11 +87,7 @@ def api_product_detail(
         return result
     t0 = _t.monotonic()
     try:
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            result = collect_product_detail(page, product_id)
+        result = run_with_cdp_page(lambda page: collect_product_detail(page, product_id))
     except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         result = {"ok": False, "error": str(e), "product_id": product_id}
     result["duration_ms"] = elapsed_ms(t0)
@@ -125,11 +109,7 @@ def api_product_detail_collect(product_id: str, user: dict = Depends(require_rol
 
     t0 = _t.monotonic()
     try:
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            result = collect_product_detail(page, product_id)
+        result = run_with_cdp_page(lambda page: collect_product_detail(page, product_id))
     except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         result = {"ok": False, "error": str(e), "product_id": product_id}
     result["duration_ms"] = elapsed_ms(t0)
@@ -162,14 +142,14 @@ def api_product_edit(
     from scripts.naver.smartstore.product.form_runner import ProductFormRunner
 
     edit_fields = {**body.fields, "save": False}
-    try:
-        from playwright.sync_api import sync_playwright
 
-        with sync_playwright() as pw:
-            ctx = pw.chromium.connect_over_cdp(_CDP).contexts[0]
-            page = next((p for p in ctx.pages if f"products/{product_id}" in p.url), None) or ctx.new_page()
-            page.bring_to_front()
-            result = ProductFormRunner(page).edit(product_id, edit_fields)
+    def _edit(ctx):
+        page = next((p for p in ctx.pages if f"products/{product_id}" in p.url), None) or ctx.new_page()
+        page.bring_to_front()
+        return ProductFormRunner(page).edit(product_id, edit_fields)
+
+    try:
+        result = run_with_cdp_context(_edit)
     except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(
@@ -204,19 +184,19 @@ def api_products_auto_register(body: AutoRegisterRequest, user: dict = Depends(r
     from scripts.naver.smartstore.product.form_runner import ProductFormRunner
 
     register_data = {**body.data, "save": False, "require_confirm": False}
-    try:
-        from playwright.sync_api import sync_playwright
 
-        with sync_playwright() as pw:
-            ctx = pw.chromium.connect_over_cdp(_CDP).contexts[0]
-            page = next((p for p in ctx.pages if "products/create" in p.url or "products/register" in p.url), None)
-            skip = body.skip_open
-            if page is None:
-                page = ctx.new_page()
-                page.goto(_REGISTER_URL, timeout=20000, wait_until="domcontentloaded")
-                skip = True
-            page.bring_to_front()
-            result = ProductFormRunner(page).run(register_data, skip_open=skip)
+    def _register(ctx):
+        page = next((p for p in ctx.pages if "products/create" in p.url or "products/register" in p.url), None)
+        skip = body.skip_open
+        if page is None:
+            page = ctx.new_page()
+            page.goto(_REGISTER_URL, timeout=20000, wait_until="domcontentloaded")
+            skip = True
+        page.bring_to_front()
+        return ProductFormRunner(page).run(register_data, skip_open=skip)
+
+    try:
+        result = run_with_cdp_context(_register)
     except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(
@@ -250,20 +230,19 @@ def api_categories_cache_build(user: dict = Depends(require_role("admin", "owner
 
     from scripts.naver.smartstore.product.category_cache import build_cache
 
-    try:
-        from playwright.sync_api import sync_playwright
+    def _build(ctx):
+        page = next((p for p in ctx.pages if "products/create" in p.url), None)
+        if not page:
+            page = ctx.new_page()
+            page.goto(
+                "https://sell.smartstore.naver.com/#/products/create", timeout=20000, wait_until="domcontentloaded"
+            )
+            time.sleep(3)
+        page.bring_to_front()
+        return build_cache(page)
 
-        with sync_playwright() as pw:
-            ctx = pw.chromium.connect_over_cdp(_CDP).contexts[0]
-            page = next((p for p in ctx.pages if "products/create" in p.url), None)
-            if not page:
-                page = ctx.new_page()
-                page.goto(
-                    "https://sell.smartstore.naver.com/#/products/create", timeout=20000, wait_until="domcontentloaded"
-                )
-                time.sleep(3)
-            page.bring_to_front()
-            result = build_cache(page)
+    try:
+        result = run_with_cdp_context(_build)
     except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     if result.get("ok"):
@@ -306,16 +285,14 @@ def api_products_delete(body: DeleteProductRequest, user: dict = Depends(require
     sys.path.insert(0, str(ROOT))
     from scripts.naver.smartstore.product.product_delete import ProductDeleter
 
-    try:
-        from playwright.sync_api import sync_playwright
+    def _delete(page):
+        deleter = ProductDeleter(page)
+        if body.product_ids:
+            return deleter.delete_bulk(body.product_ids, confirmed=True)
+        return deleter.delete(body.product_id, confirmed=True)
 
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            deleter = ProductDeleter(page)
-            if body.product_ids:
-                result = deleter.delete_bulk(body.product_ids, confirmed=True)
-            else:
-                result = deleter.delete(body.product_id, confirmed=True)
+    try:
+        result = run_with_cdp_page(_delete)
     except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 CRUD API 라우터 - 상품삭제는 상위 로직에서 confirm=true, dry_run 게이트와 admin/owner 권한검증을 통과해야만 도달, except 는 CDP 연결 실패 등을 ok:False,error 로 반환할 뿐 승인 로직 우회 없음
         result = {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(

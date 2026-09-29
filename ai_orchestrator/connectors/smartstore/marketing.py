@@ -10,10 +10,9 @@ from fastapi import APIRouter, Depends
 from ai_orchestrator.gates.auth import require_role
 
 from ...audit_logger import log_event
-from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, save_ss
+from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, run_with_cdp_page, save_ss
 
 router = APIRouter()
-_CDP = "http://127.0.0.1:9222"
 
 
 @router.get("/marketing")
@@ -26,15 +25,15 @@ def api_marketing(user: dict = Depends(require_role("admin", "owner"))) -> dict:
 def api_marketing_collect(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
     t0 = _t.monotonic()
+
+    def _collect(page):
+        from scripts.naver.smartstore import NaverSmartStore
+
+        ss = NaverSmartStore(page)
+        return {"ok": True, "promotions": ss.list_promotions(), "marketing": ss.list_marketing()}
+
     try:
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            from scripts.naver.smartstore import NaverSmartStore
-
-            ss = NaverSmartStore(page)
-            result = {"ok": True, "promotions": ss.list_promotions(), "marketing": ss.list_marketing()}
+        result = run_with_cdp_page(_collect)
     except Exception as e:  # noqa: BLE001 - 스마트스토어 마케팅 현황 CDP 수집 실패를 {ok: False, error}로 저장 — 읽기 전용 수집
         result = {"ok": False, "error": str(e)}
     result.update({"collected_at": now_iso(), "duration_ms": elapsed_ms(t0)})
