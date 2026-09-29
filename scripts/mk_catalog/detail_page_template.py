@@ -89,7 +89,7 @@ def _paste_fit(path, box_w, box_h):
     p = Image.open(path).convert("RGBA")
     ratio = min(box_w / p.width, box_h / p.height)
     nw, nh = int(p.width * ratio), int(p.height * ratio)
-    return p.resize((nw, nh), Image.LANCZOS), nw, nh
+    return p.resize((nw, nh), Image.Resampling.LANCZOS), nw, nh
 
 
 def _same_image_bytes(path_a: str, path_b: str) -> bool:

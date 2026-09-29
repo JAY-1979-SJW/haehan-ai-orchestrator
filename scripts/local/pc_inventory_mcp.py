@@ -21,7 +21,11 @@ from typing import Any
 
 # scripts/local/ 에서 직접 import
 sys.path.insert(0, str(Path(__file__).parent))
-from pc_inventory import SECTIONS, collect_all, collect_processes
+from pc_inventory import (  # type: ignore[import-not-found]  # 같은 폴더 sys.path 추가 후 직접실행 지원(위 sys.path.insert) — 정적 분석 범위 밖
+    SECTIONS,
+    collect_all,
+    collect_processes,
+)
 
 # ── MCP 최소 구현 (stdio JSON-RPC) ────────────────────────────────────────────
 

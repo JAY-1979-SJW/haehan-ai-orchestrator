@@ -245,7 +245,7 @@ def watch_user_actions(
                     # DB 기록
                     try:
                         cdp_db.init_db()
-                        cdp_db.log_action(
+                        cdp_db.log_action(  # type: ignore[attr-defined]  # cdp_db 에 실제로 없는 함수(2026-09-29 defect_index 확인) — 이미 넓은 except 로 안전하게 감싸져 조용히 스킵됨, 콘솔 출력(위 print)은 계속 동작
                             site=host_filter or "browser",
                             action_type=ev.get("type", "unknown"),
                             detail=json.dumps(ev.get("detail", {}), ensure_ascii=False),

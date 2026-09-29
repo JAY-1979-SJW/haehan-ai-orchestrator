@@ -13,7 +13,12 @@ from pathlib import Path
 try:
     from scripts.module_quality_gate_common import ROOT, _run_check_command, normalize_path, redact
 except ModuleNotFoundError:
-    from module_quality_gate_common import ROOT, _run_check_command, normalize_path, redact  # type: ignore[no-redef]
+    from module_quality_gate_common import (  # type: ignore[no-redef, import-not-found]
+        ROOT,
+        _run_check_command,
+        normalize_path,
+        redact,
+    )
 
 sys.dont_write_bytecode = True
 

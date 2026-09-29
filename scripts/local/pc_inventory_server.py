@@ -24,7 +24,11 @@ from typing import Any
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from pc_inventory import SECTIONS, collect_all, save
+from pc_inventory import (  # type: ignore[import-not-found]  # 직접실행 시 스크립트 자기 폴더가 sys.path[0] — 정적 분석 범위 밖
+    SECTIONS,
+    collect_all,
+    save,
+)
 
 app = FastAPI(title="PC Inventory", version="1.0.0")
 

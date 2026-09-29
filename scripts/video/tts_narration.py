@@ -134,7 +134,7 @@ AI가 매일 정부24, 중소벤처기업부,
 
 
 async def generate_scene(scene: dict) -> Path:
-    import edge_tts
+    import edge_tts  # type: ignore[import-not-found]  # 선택적 의존성(docs_registry.toml 등록)
 
     output_dir = _output_dir()
     output_dir.mkdir(parents=True, exist_ok=True)

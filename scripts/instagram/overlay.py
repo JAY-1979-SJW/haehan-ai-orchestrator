@@ -30,7 +30,7 @@ def _fit_cover(img: Image.Image) -> Image.Image:
     else:
         nw = W
         nh = int(nw / src_ratio)
-    img = img.resize((nw, nh), Image.LANCZOS)
+    img = img.resize((nw, nh), Image.Resampling.LANCZOS)
     left = (nw - W) // 2
     top = (nh - H) // 2
     return img.crop((left, top, left + W, top + H))

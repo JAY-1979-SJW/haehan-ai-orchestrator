@@ -21,8 +21,10 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv()
 
 from openpyxl.utils import get_column_letter  # noqa: E402
-from shared.constants import DATA_COLUMN_COUNT  # noqa: E402
-from shared.excel_utils import (  # noqa: E402
+from shared.constants import (  # type: ignore[import-not-found]  # noqa: E402  # 이식 전 원본 참조(docs/defect_index.json #32) — GPT 호출 승인 대기로 미복원, hook_check_a4.py 에서 건너뜀
+    DATA_COLUMN_COUNT,
+)
+from shared.excel_utils import (  # type: ignore[import-not-found]  # noqa: E402
     cell_borders,
     column_widths,
     excel_session,

@@ -343,7 +343,7 @@ def _classify_stage1(title: str, body: str) -> dict:
 def _extract_nouns(text: str) -> list[str]:
     """KoNLPy Okt 형태소 분석 — 명사 추출."""
     try:
-        from konlpy.tag import Okt
+        from konlpy.tag import Okt  # type: ignore[import-not-found]  # 선택적 무거운 의존성(docs_registry.toml 등록)
 
         okt = Okt()
         nouns = okt.nouns(text[:1000])

@@ -18,7 +18,7 @@ from uuid import uuid4
 try:
     from scripts.runtime_temp import usable_temp_base
 except ModuleNotFoundError:  # direct script execution: sys.path[0] == scripts/
-    from runtime_temp import usable_temp_base
+    from runtime_temp import usable_temp_base  # type: ignore[import-not-found]
 
 
 ROOT = Path(__file__).resolve().parents[1]

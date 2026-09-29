@@ -112,7 +112,7 @@ def list_scenes() -> None:
 
 
 async def _gen_one(scene: dict) -> Path:
-    import edge_tts
+    import edge_tts  # type: ignore[import-not-found]  # 선택적 의존성(docs_registry.toml 등록)
 
     out = _output_dir() / f"scene_{scene['id']:02d}_{scene['name']}.mp3"
     communicate = edge_tts.Communicate(scene["text"], VOICE, rate=TTS_RATE)

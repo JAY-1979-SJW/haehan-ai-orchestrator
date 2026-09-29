@@ -118,14 +118,14 @@ def check_old_models_not_broken() -> list[str]:
     try:
         import ai_orchestrator.gabia.gabia_browser_task as m
 
-        _ = m.GabiaBrowserTask
-        _ = m.make_autowork_dns_task
+        _ = m.GabiaBrowserTask  # type: ignore[attr-defined]  # 이 스크립트 자체가 "실제 있는지" 검증 대상 — 없으면 위 except 가 errors 에 기록
+        _ = m.make_autowork_dns_task  # type: ignore[attr-defined]
     except Exception as e:  # noqa: BLE001 - 가비아 도메인 정본 레지스트리 import/조회 자체검증 스크립트 - 실패를 errors 목록에 추가(감사 리포트, 런타임 게이트 아님)
         errors.append(f"gabia_browser_task import 실패: {e}")
     try:
         import ai_orchestrator.gabia.gabia_dns_work_registry as m
 
-        _ = m.GABIA_DNS_WORK_TRADE
+        _ = m.GABIA_DNS_WORK_TRADE  # type: ignore[attr-defined]  # 이 스크립트 자체가 "실제 있는지" 검증 대상 — 없으면 위 except 가 errors 에 기록
     except Exception as e:  # noqa: BLE001 - 가비아 도메인 정본 레지스트리 import/조회 자체검증 스크립트 - 실패를 errors 목록에 추가(감사 리포트, 런타임 게이트 아님)
         errors.append(f"gabia_dns_work_registry import 실패: {e}")
     return errors

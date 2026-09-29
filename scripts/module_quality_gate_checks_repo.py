@@ -19,7 +19,7 @@ try:
         normalize_path,
     )
 except ModuleNotFoundError:
-    from module_quality_gate_common import (  # type: ignore[no-redef]
+    from module_quality_gate_common import (  # type: ignore[no-redef, import-not-found]
         PY,
         ROOT,
         _run_check_command,

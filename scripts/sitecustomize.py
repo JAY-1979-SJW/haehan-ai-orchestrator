@@ -1,12 +1,12 @@
 """Keep direct script execution on repo-local temp and bytecode paths."""
+
 from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
 
-from runtime_temp import usable_temp_base
-
+from runtime_temp import usable_temp_base  # type: ignore[import-not-found]
 
 ROOT = Path(__file__).resolve().parents[1]
 
