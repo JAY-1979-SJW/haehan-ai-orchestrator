@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from urllib.parse import urlsplit
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +34,16 @@ def fetch_gmail_via_cdp(max_results: int = 20) -> list[dict]:
         with contextlib.suppress(PWTimeout):
             page.wait_for_load_state("domcontentloaded", timeout=15000)
 
-        # 로그인 여부 확인 (URL 대소문자 무관 — 예: flowName=GlifWebSignIn 은 소문자 "signin" 검사로 못 잡음)
-        url_lower = page.url.lower()
-        if "accounts.google.com" in url_lower or "signin" in url_lower:
+        # 로그인 여부 확인. 호스트 기반(실제 accounts.google.com 리다이렉트만 감지) —
+        # Gmail 자체 URL의 flowName=GlifWebSignIn 같은 진입 파라미터는 로그인 성공 후에도
+        # 주소창에 남아있을 수 있어(SPA가 URL을 갱신 안 함) URL 문자열 검사는 신뢰 불가로
+        # 확인됨(2026-09-29 실측: 로그인 완료·받은편지함 50건 표시 상태에서도 URL에
+        # "GlifWebSignIn" 잔존). 호스트 + DOM(로그인 폼 잔존 여부) 이중 확인으로 대체.
+        host = urlsplit(page.url).hostname or ""
+        if host != "mail.google.com":
+            raise RuntimeError("Gmail 로그인 필요 — CDP 브라우저에서 Google 계정 로그인 후 재시도")
+        still_signin = page.evaluate("!!document.querySelector('input[type=\"email\"], #identifierId, #accountList')")
+        if still_signin:
             raise RuntimeError("Gmail 로그인 필요 — CDP 브라우저에서 Google 계정 로그인 후 재시도")
 
         # inbox 로 이동 (다른 페이지였으면)

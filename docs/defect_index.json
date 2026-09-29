@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 71,
+  "next_no": 72,
   "items": [
     {
       "no": 1,
@@ -976,6 +976,17 @@
       "where": "ai_orchestrator/connectors/gmail_cdp_reader.py",
       "evidence": "admin-web 'Gmail 받은편지함 조회' 버튼 배선 후 실제 CDP 브라우저(9222)로 실행하니 탭 URL이 'mail.google.com/.../?flowName=GlifWebSignIn&flowEntry=AccountChooser#inbox' (계정선택 화면)인데 로그인 감지 조건 `\"signin\" in page.url` 이 대소문자 구분이라 'SignIn'(대문자)을 못 잡아 로그인 필요 상태를 조용히 통과, tr.zA 0건으로 ok:true/items:[] 오응답.",
       "fix_note": "page.url.lower() 로 비교하도록 1줄 수정. 수정 전/후 동일 요청(GET /api/v1/gmail/inbox, 미로그인 CDP 세션)으로 실측 재검증: 수정 전 200 ok:true items:[](오탐), 수정 후 503 'Gmail 로그인 필요 — ...'(정상).",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 71,
+      "id": "GMAIL-CDP-LOGIN-CHECK-URL-UNRELIABLE-FIX",
+      "category": 1,
+      "title": "#70 수정(URL substring)이 실사용 중 정상 로그인 상태를 오탐 — 호스트+DOM 기준으로 재수정",
+      "where": "ai_orchestrator/connectors/gmail_cdp_reader.py",
+      "evidence": "#70 수정(page.url.lower()에 'signin' 포함 여부) 배포 후 사용자가 실제 CDP 브라우저에서 Google 로그인 완료(제목 '받은편지함 (685) - skyjwshin@gmail.com', tr.zA 50행 확인됨)했는데도 여전히 503 '로그인 필요' 오응답. 원인: Gmail이 로그인 성공 후에도 진입 URL의 flowName=GlifWebSignIn 쿼리를 주소창에서 갱신하지 않아(SPA) URL 문자열 기반 검사가 로그인 성공 상태에도 항상 오탐.",
+      "fix_note": "URL 문자열 매칭을 urlsplit(page.url).hostname != 'mail.google.com' (실제 도메인 리다이렉트만 감지) + DOM 잔존 로그인폼(input[type=email], #identifierId, #accountList) 이중 확인으로 교체. 실측 재검증: 동일 로그인 세션으로 GET /api/v1/gmail/inbox -> 200 실제 메일 5건(제목/발신자/날짜 포함) 정상 응답. 이어서 실제 브라우저로 localhost:3000/ops 접속 -> '받은편지함 조회' 버튼 실클릭 -> 화면에 실제 메일 10건 렌더링까지 종단 확인(버튼→프록시→백엔드→CDP→화면 전체 체인 최초 실증).",
       "stage": "RUN",
       "status": "fixed"
     }
