@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 70,
+  "next_no": 71,
   "items": [
     {
       "no": 1,
@@ -965,6 +965,17 @@
       "where": "scripts/ops/verify_change.py",
       "evidence": "measure()가 C901=16/PLR0912=17/PLR0915=55, main() 후반부가 C901=18/PLR0912=13/PLR0915=68 -> measure()를 _measure_collect_errors/_measure_code_map_and_import_fail/_measure_routes/_measure_violations/_measure_skeleton_and_cycles/_measure_affected_test_results 로, main()의 리포트 생성부를 _diff_key(원래 new() 클로저 대체)와 _build_verify_report로 분리. 실행 검증: py -3.14 scripts/ops/verify_change.py --base 8cada27f --head 75118ae6 -> PASS, 9개 항목 모두 새로 생긴 문제 0건.",
       "fix_note": "순서/조건/문자열 변경 없이 순수 추출. _build_verify_report 최초 시그니처가 9개 파라미터로 PLR0913을 새로 유발해 before/after/ruff_errors/loc_deps/moved/receiving을 measurements dict로 묶어 해결.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 70,
+      "id": "GMAIL-CDP-LOGIN-CHECK-CASE-SENSITIVE",
+      "category": 1,
+      "title": "gmail_cdp_reader 로그인 감지가 대소문자 구분해 GlifWebSignIn URL을 놓침",
+      "where": "ai_orchestrator/connectors/gmail_cdp_reader.py",
+      "evidence": "admin-web 'Gmail 받은편지함 조회' 버튼 배선 후 실제 CDP 브라우저(9222)로 실행하니 탭 URL이 'mail.google.com/.../?flowName=GlifWebSignIn&flowEntry=AccountChooser#inbox' (계정선택 화면)인데 로그인 감지 조건 `\"signin\" in page.url` 이 대소문자 구분이라 'SignIn'(대문자)을 못 잡아 로그인 필요 상태를 조용히 통과, tr.zA 0건으로 ok:true/items:[] 오응답.",
+      "fix_note": "page.url.lower() 로 비교하도록 1줄 수정. 수정 전/후 동일 요청(GET /api/v1/gmail/inbox, 미로그인 CDP 세션)으로 실측 재검증: 수정 전 200 ok:true items:[](오탐), 수정 후 503 'Gmail 로그인 필요 — ...'(정상).",
       "stage": "RUN",
       "status": "fixed"
     }
