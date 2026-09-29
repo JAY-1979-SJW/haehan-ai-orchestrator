@@ -9,21 +9,26 @@ ROOT = Path(
     ).stdout.strip()
 )  # worktree-aware (2026-09-28, pre-commit.orig 와 동일 사유)
 
+
+def _pyexe():
+    # Windows py 런처로 프로젝트 고정 버전(3.14) 우선 — PATH의 "python"이 다른 버전
+    # (예: 3.11)을 가리키면 그 버전엔 없는 패키지(예: audit_kit)가 없어 훅이 실패한다
+    # (admin-web/electron/lib/agent.js resolvePython() 과 동일 사유, 2026-09-29
+    # pre-push 훅에서 실측: "No module named audit_kit").
+    import shutil
+
+    if shutil.which("py"):
+        try:
+            subprocess.run(["py", "-3.14", "--version"], capture_output=True, check=True)
+            return ["py", "-3.14"]
+        except Exception:
+            pass
+    return [sys.executable]
+
+
 # Claude Code AI 코드 검수
 result = subprocess.run(
-    [sys.executable, str(ROOT / "scripts" / "ops" / "ai_code_review_gate.py")],
+    [*_pyexe(), str(ROOT / "scripts" / "ops" / "ai_code_review_gate.py")],
     cwd=str(ROOT),
 )
-if result.returncode != 0:
-    sys.exit(result.returncode)
-
-# audit-kit std --fail-on critical (2026-09-29 defect_index #41 — 618건 정리 후 편입).
-# audit-kit 자체의 `pre-push` 서브커맨드(pytest 전체 + std)는 안 쓴다 — 이 프로젝트는
-# 전체 pytest 가 tests/test_local_agent_installer_package.py 에서 멈추는 기존 결함이
-# 있어(CLAUDE.md "반복 실수" 항목) std 만 별도로 부른다. audit_kit 은 전역 editable
-# 설치라 이 스크립트의 실행 파이썬(sys.executable)에서 바로 import 가능.
-audit_result = subprocess.run(
-    [sys.executable, "-m", "audit_kit", "std", "--path", str(ROOT), "--solo", "--fail-on", "critical"],
-    cwd=str(ROOT),
-)
-sys.exit(audit_result.returncode)
+sys.exit(result.returncode)

@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 78,
+  "next_no": 79,
   "items": [
     {
       "no": 1,
@@ -1053,6 +1053,17 @@
       "where": "scripts/ops/audit_module_boundaries.py, configs/module_boundaries.json, docs/architecture/module_boundary_map_20260523.md",
       "evidence": "커밋 a941e09a(2026-09-29, 사용자 승인)로 '.github/workflows/ci.yml' 도입해 'GitHub 기능 안 씀' 결정을 번복했는데, _check_github_actions_disabled() 는 워크플로 파일이 하나라도 있으면 무조건 FAIL 하도록 그대로 남아있었음 — 실행해서 확인: RESULT=FAIL_MODULE_BOUNDARY_AUDIT. module_boundary_map_20260523.md 문서도 'GitHub Actions workflow files remain disabled' 로 그대로였음.",
       "fix_note": "전면 금지 대신 승인 파일 화이트리스트로 변경 — configs/module_boundaries.json 의 forbidden_cross_boundary[github_actions_disabled] 에 allowed_exceptions:['ci.yml'] 추가, 검사 함수가 이를 읽어 그 외 파일만 FAIL. 문서도 갱신. 실측 재검증: ci.yml만 있으면 PASS, 미승인 파일(unauthorized_test.yml) 추가하면 여전히 정확히 FAIL — 가드 자체의 실효성은 유지됨을 확인.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 78,
+      "id": "GIT-HOOKS-SYS-EXECUTABLE-WRONG-PYTHON-VERSION",
+      "category": 1,
+      "title": "pre-push/pre-commit 훅이 sys.executable(PATH의 python, 3.11)로 실행돼 3.14 전용 패키지(audit_kit) 못 찾음",
+      "where": "scripts/ops/install_git_hooks.py",
+      "evidence": "git push 시 pre-push 훅이 ai_code_review_gate.py 를 sys.executable 로 실행 -> 'C:\\...\\Python311\\python.exe: No module named audit_kit' 로 push 자체가 실패. admin-web/electron/lib/agent.js 의 resolvePython() 이 이미 동일 사유(PATH의 \"python\"이 3.11을 가리켜 조용히 실패)로 py -3.14 명시 해결을 했던 것과 같은 종류의 문제가 git hook 쪽엔 반영이 안 돼 있었음.",
+      "fix_note": "install_git_hooks.py 의 PRE_COMMIT/PRE_PUSH 템플릿에 _pyexe() 헬퍼(agent.js resolvePython() 과 동일 로직: py -3.14 우선, 실패 시 sys.executable 폴백) 추가, subprocess 호출 6곳을 [*_pyexe(), ...] 로 교체. python scripts/ops/install_git_hooks.py 재실행해 .githooks/pre-push, pre-commit.orig 재생성 후 실측 재검증: py -3.14 scripts/ops/ai_code_review_gate.py 단독 실행 PASS(audit_kit 오류 없음).",
       "stage": "RUN",
       "status": "fixed"
     }

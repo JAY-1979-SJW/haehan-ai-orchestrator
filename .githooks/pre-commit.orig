@@ -11,6 +11,23 @@ ROOT = Path(
 # 가리켜 내용을 조용히 훼손한다(2026-09-28 worktree 병렬 세션에서 실측 발견).
 # 실행 시점 cwd(git 이 훅에 주는 실제 worktree 루트) 기준으로 고정.
 
+
+def _pyexe():
+    # Windows py 런처로 프로젝트 고정 버전(3.14) 우선 — PATH의 "python"이 다른 버전
+    # (예: 3.11)을 가리키면 그 버전엔 없는 패키지(예: audit_kit)가 없어 훅이 실패한다
+    # (admin-web/electron/lib/agent.js resolvePython() 과 동일 사유, 2026-09-29
+    # pre-push 훅에서 실측: "No module named audit_kit").
+    import shutil
+
+    if shutil.which("py"):
+        try:
+            subprocess.run(["py", "-3.14", "--version"], capture_output=True, check=True)
+            return ["py", "-3.14"]
+        except Exception:
+            pass
+    return [sys.executable]
+
+
 # staged .py 파일 목록
 # encoding 명시: Windows 기본 코드페이지(cp949)가 diff에 섞인 UTF-8 특수문자에서
 # reader 스레드를 죽이는 문제 방지(2026-09-28 실측 발견 — 이 문제로 훅이 크래시했었음).
@@ -25,12 +42,12 @@ if py_files:
     cfg = str(ROOT / "configs" / "ruff.toml")
     # 1. ruff check (자동 수정)
     subprocess.run(
-        [sys.executable, "-m", "ruff", "check", "--fix", "--config", cfg] + py_files,
+        [*_pyexe(), "-m", "ruff", "check", "--fix", "--config", cfg] + py_files,
         cwd=str(ROOT),
     )
     # 2. ruff format
     subprocess.run(
-        [sys.executable, "-m", "ruff", "format", "--config", cfg] + py_files,
+        [*_pyexe(), "-m", "ruff", "format", "--config", cfg] + py_files,
         cwd=str(ROOT),
     )
     # ruff check 이 수정한 파일을 다시 stage
@@ -42,7 +59,7 @@ if py_files:
     gate = ROOT / "scripts" / "ops" / "ruff_new_only_gate.py"
     if gate.exists():
         gate_result = subprocess.run(
-            [sys.executable, str(gate), "--config", cfg] + py_files,
+            [*_pyexe(), str(gate), "--config", cfg] + py_files,
             cwd=str(ROOT),
         )
         if gate_result.returncode != 0:
@@ -153,7 +170,7 @@ if _js_staged:
 # 우회: SKELETON_GATE_SKIP_REASON="사유" 환경변수 (감사 로그 기록됨).
 _sg = ROOT / "scripts" / "ops" / "code_map" / "skeleton_gate.py"
 if _sg.exists():
-    _sg_result = subprocess.run([sys.executable, str(_sg)], cwd=str(ROOT))
+    _sg_result = subprocess.run([*_pyexe(), str(_sg)], cwd=str(ROOT))
     if _sg_result.returncode != 0:
         sys.exit(_sg_result.returncode)
 
@@ -163,7 +180,7 @@ import importlib.util, os
 gate = ROOT / "scripts" / "quality_gate.py"
 if gate.exists():
     result = subprocess.run(
-        [sys.executable, str(gate), "--staged", "--enforce", "--allow-existing-code-change"],
+        [*_pyexe(), str(gate), "--staged", "--enforce", "--allow-existing-code-change"],
         cwd=str(ROOT),
     )
     sys.exit(result.returncode)
