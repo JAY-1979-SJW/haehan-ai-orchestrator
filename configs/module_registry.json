@@ -19528,6 +19528,14 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/app/ops/components/GoogleToolsPanel.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "google",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
