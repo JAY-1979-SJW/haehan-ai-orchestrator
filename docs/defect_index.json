@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 90,
+  "next_no": 91,
   "items": [
     {
       "no": 1,
@@ -1187,6 +1187,17 @@
       "stage": "RUN",
       "status": "fixed",
       "no": 89
+    },
+    {
+      "id": "GMAIL-REPLY-HEADER-INJECTION",
+      "category": 1,
+      "title": "Gmail API 회신 발송(send_reply) to/subject/in_reply_to 미검증 -> MIME 헤더 인젝션 가능",
+      "where": "ai_orchestrator/sites/gmail_reader.py (send_reply, _reject_header_injection 신설), ai_orchestrator/connectors/gmail_router.py (/reply 엔드포인트)",
+      "evidence": "커밋 d3773e1f(구글 API 전면 전환) 직후 pre-push 훅(ai_code_review_gate.py)이 2건 지적. (1) 'gmail_reader.py에 base64 import 누락' -> 직접 파일 확인 결과 1번째 줄에 import base64 존재, ast.parse로 모듈 최상위 import 추출 시 base64 포함 확인, ruff --select F821 결과 All checks passed -> 오탐으로 판정, 코드 변경 없음. (2) 실제 문제: send_reply()가 req.to/req.subject를 그대로 message['to']/message['subject']에 대입 -> 호출자가 to 값에 개행(\\r\\n)을 섞으면 임의 헤더(예: 위조 Bcc) 주입 가능.",
+      "fix_note": "gmail_reader.py에 _reject_header_injection() 추가 -> send_reply() 진입 시 to/subject/in_reply_to에 \\r 또는 \\n 포함되면 ValueError. gmail_router.py의 /reply 엔드포인트에서 ValueError를 별도로 잡아 HTTPException 400(요청측 오류)으로 응답(기존엔 일반 Exception으로 묶여 500 반환). 검증: py_compile + ruff --config configs/ruff.toml 통과, codebase_layer_audit.py FORBIDDEN_IMPORT/CIRCULAR_IMPORT/SECURITY_PATTERN 전부 0, quality_gate.py --staged --enforce --allow-existing-code-change 통과(warning 1건: CODE_WITHOUT_TEST_OR_DOC, 소규모 보안 패치라 수용). 실제 발송(dry_run=False) 엔드투엔드 테스트는 사용자 승인 전까지 미실행.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 90
     }
   ]
 }

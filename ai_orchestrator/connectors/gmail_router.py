@@ -220,6 +220,9 @@ def api_reply(
         return {"ok": True, "dry_run": False, "detail": "Gmail 회신 발송 완료", **result}
     except HTTPException:
         raise
+    except ValueError as e:
+        # send_reply()의 헤더 인젝션 방지 검증 실패(입력값에 CR/LF 포함) — 요청측 잘못이므로 400.
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.exception("gmail reply error")
         raise HTTPException(status_code=500, detail=f"Gmail 회신 발송 실패: {e}")
