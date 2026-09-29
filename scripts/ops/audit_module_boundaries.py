@@ -1,11 +1,11 @@
 """Audit the locked module boundary map."""
+
 from __future__ import annotations
 
 import argparse
 import json
 from dataclasses import dataclass
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs" / "module_boundaries.json"
@@ -32,20 +32,13 @@ def _path_exists(path: str) -> bool:
     return (ROOT / rel).exists()
 
 
-def audit() -> list[Finding]:
-    findings: list[Finding] = []
-    if not CONFIG.exists():
-        return [Finding("FAIL", "config", "configs/module_boundaries.json missing")]
-    if not DOC.exists():
-        findings.append(Finding("FAIL", "doc", "module boundary map doc missing"))
-
-    config = _load_config()
+def _check_status_locked(config: dict) -> Finding:
     if config.get("status") == "locked":
-        findings.append(Finding("PASS", "status", "locked"))
-    else:
-        findings.append(Finding("FAIL", "status", "module boundary config must be locked"))
+        return Finding("PASS", "status", "locked")
+    return Finding("FAIL", "status", "module boundary config must be locked")
 
-    modules = config.get("modules") or []
+
+def _check_required_module_names(modules: list) -> Finding:
     names = [str(module.get("name", "")) for module in modules]
     required_names = {
         "repo_guard",
@@ -59,10 +52,12 @@ def audit() -> list[Finding]:
     }
     missing_names = sorted(required_names - set(names))
     if missing_names:
-        findings.append(Finding("FAIL", "modules", "missing: " + ", ".join(missing_names)))
-    else:
-        findings.append(Finding("PASS", "modules", f"{len(modules)} modules registered"))
+        return Finding("FAIL", "modules", "missing: " + ", ".join(missing_names))
+    return Finding("PASS", "modules", f"{len(modules)} modules registered")
 
+
+def _check_module_entries_and_paths(modules: list) -> list[Finding]:
+    findings: list[Finding] = []
     seen_paths: dict[str, str] = {}
     overlaps: list[str] = []
     for module in modules:
@@ -80,21 +75,45 @@ def audit() -> list[Finding]:
         findings.append(Finding("FAIL", "path_overlaps", "; ".join(overlaps)))
     else:
         findings.append(Finding("PASS", "path_overlaps", "none"))
+    return findings
 
+
+def _check_github_actions_disabled() -> Finding:
     workflow_dir = ROOT / ".github" / "workflows"
     workflow_files = []
     if workflow_dir.exists():
-        workflow_files = [p.name for p in workflow_dir.iterdir() if p.is_file() and p.suffix.lower() in {".yml", ".yaml"}]
+        workflow_files = [
+            p.name for p in workflow_dir.iterdir() if p.is_file() and p.suffix.lower() in {".yml", ".yaml"}
+        ]
     if workflow_files:
-        findings.append(Finding("FAIL", "github_actions_disabled", ", ".join(sorted(workflow_files))))
-    else:
-        findings.append(Finding("PASS", "github_actions_disabled", "no workflow files"))
+        return Finding("FAIL", "github_actions_disabled", ", ".join(sorted(workflow_files)))
+    return Finding("PASS", "github_actions_disabled", "no workflow files")
 
+
+def _check_archive_runtime_state() -> Finding:
     archive_state = ROOT / "scripts" / "archive" / "data" / "chrome_ui_monitor_state.json"
     if archive_state.exists() and archive_state.stat().st_size != 120:
-        findings.append(Finding("FAIL", "archive_runtime_state", "archive chrome monitor state changed shape"))
-    else:
-        findings.append(Finding("PASS", "archive_runtime_state", "not active runtime target"))
+        return Finding("FAIL", "archive_runtime_state", "archive chrome monitor state changed shape")
+    return Finding("PASS", "archive_runtime_state", "not active runtime target")
+
+
+def audit() -> list[Finding]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: 독립 체크들을 _check_*() 함수로 분리(순서·조건·문자열
+    # 그대로) — #48 과 같은 계열.
+    findings: list[Finding] = []
+    if not CONFIG.exists():
+        return [Finding("FAIL", "config", "configs/module_boundaries.json missing")]
+    if not DOC.exists():
+        findings.append(Finding("FAIL", "doc", "module boundary map doc missing"))
+
+    config = _load_config()
+    findings.append(_check_status_locked(config))
+
+    modules = config.get("modules") or []
+    findings.append(_check_required_module_names(modules))
+    findings.extend(_check_module_entries_and_paths(modules))
+    findings.append(_check_github_actions_disabled())
+    findings.append(_check_archive_runtime_state())
 
     return findings
 
