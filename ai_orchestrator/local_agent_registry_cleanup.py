@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .local_agent_registry_agent import get_agent_status
-from .local_agent_registry_common import _agents, _lock, _tasks
+from .local_agent_registry_common import _agents, _lock, _save_agents_to_disk, _tasks
 
 
 def get_agent_cleanup_preview(agent_id: str) -> dict:
@@ -114,6 +114,7 @@ def cleanup_agent_and_tasks(
             }
 
         del _agents[agent_id]
+        _save_agents_to_disk()  # 2026-09-29: 삭제된 에이전트가 재시작 후 되살아나지 않게 반영
         tasks_deleted = 0
         for task_id in list(_tasks.keys()):
             if _tasks[task_id].agent_id == agent_id:

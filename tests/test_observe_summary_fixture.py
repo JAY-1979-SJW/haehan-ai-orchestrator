@@ -3,18 +3,23 @@
 외부 URL 접속, 브라우저 실행, 실제 HTTP 요청 없음.
 _build_observe_summary() sanitize 로직과 apply_result() 저장 흐름만 검증.
 """
+
 from __future__ import annotations
 
 import pytest
 
 from ai_orchestrator import local_agent_registry as _reg
-
+from ai_orchestrator import local_agent_registry_common as _reg_common
 
 # ── 공통 fixture ──────────────────────────────────────────────────────────
 
+
 @pytest.fixture(autouse=True)
-def isolated_registry():
+def isolated_registry(tmp_path, monkeypatch):
     """각 테스트 전 registry 메모리 초기화."""
+    # 2026-09-29 영속화 추가 후 필수: 안 하면 _reg.clear()가 실제 개발 세션의
+    # data/local_agent_registry_state.json(실제 등록된 로컬 에이전트 상태)을 테스트마다 지운다.
+    monkeypatch.setattr(_reg_common, "_REGISTRY_STATE_PATH", tmp_path / "local_agent_registry_state.json")
     _reg.clear()
     yield
     _reg.clear()
@@ -23,12 +28,15 @@ def isolated_registry():
 def _make_task(action: str = "web_open_url_readonly") -> _reg.LocalAgentTask:
     """테스트용 task 등록 후 반환."""
     result = _reg.register_agent(
-        host="test-host", os_name="TestOS", version="0.1.0",
+        host="test-host",
+        os_name="TestOS",
+        version="0.1.0",
         requested_by="tester",
     )
     agent_id = result.agent.agent_id
     task = _reg.enqueue_task(
-        agent_id=agent_id, action="open_url",
+        agent_id=agent_id,
+        action="open_url",
         params={"url": "http://127.0.0.1:9876/__haehan_test__/readonly"},
         requested_by="tester",
     )
@@ -56,8 +64,12 @@ def _make_full_observe_summary(**overrides) -> dict:
         "browser_keep_open_ms": 0,
         "browser_channel": "chromium",
         "page_structure_counts": {
-            "headings": 1, "links": 0, "buttons": 0,
-            "inputs": 0, "forms": 0, "tables": 0,
+            "headings": 1,
+            "links": 0,
+            "buttons": 0,
+            "inputs": 0,
+            "forms": 0,
+            "tables": 0,
         },
         "observed_at": "2026-04-29T10:00:00+00:00",
     }
@@ -66,6 +78,7 @@ def _make_full_observe_summary(**overrides) -> dict:
 
 
 # ── 1. 기본값: observe_summary 없는 task ─────────────────────────────────
+
 
 class TestObserveSummaryDefault:
     def test_new_task_observe_summary_none(self):
@@ -81,8 +94,10 @@ class TestObserveSummaryDefault:
     def test_apply_result_no_observe_summary(self):
         task = _make_task()
         updated = _reg.apply_result(
-            agent_id=task.agent_id, task_id=task.task_id,
-            success=True, summary="ok",
+            agent_id=task.agent_id,
+            task_id=task.task_id,
+            success=True,
+            summary="ok",
         )
         assert updated.observe_summary is None
         assert updated.to_safe()["observe_summary"] is None
@@ -90,8 +105,10 @@ class TestObserveSummaryDefault:
     def test_result_summary_still_works(self):
         task = _make_task()
         updated = _reg.apply_result(
-            agent_id=task.agent_id, task_id=task.task_id,
-            success=True, summary="summary text",
+            agent_id=task.agent_id,
+            task_id=task.task_id,
+            success=True,
+            summary="summary text",
         )
         assert updated.result_summary == "summary text"
 
@@ -103,13 +120,17 @@ class TestObserveSummaryDefault:
 
 # ── 2. observe_summary 저장 ───────────────────────────────────────────────
 
+
 class TestObserveSummaryStore:
     def test_apply_result_stores_observe_summary(self):
         task = _make_task()
         obs = _make_full_observe_summary()
         updated = _reg.apply_result(
-            agent_id=task.agent_id, task_id=task.task_id,
-            success=True, summary="ok", observe_summary=obs,
+            agent_id=task.agent_id,
+            task_id=task.task_id,
+            success=True,
+            summary="ok",
+            observe_summary=obs,
         )
         assert updated.observe_summary is not None
         assert updated.observe_summary["status_category"] == "ok"
@@ -119,8 +140,11 @@ class TestObserveSummaryStore:
         task = _make_task()
         obs = _make_full_observe_summary()
         updated = _reg.apply_result(
-            agent_id=task.agent_id, task_id=task.task_id,
-            success=True, summary="ok", observe_summary=obs,
+            agent_id=task.agent_id,
+            task_id=task.task_id,
+            success=True,
+            summary="ok",
+            observe_summary=obs,
         )
         safe = updated.to_safe()
         assert safe["observe_summary"] is not None
@@ -144,8 +168,11 @@ class TestObserveSummaryStore:
         task = _make_task()
         obs = _make_full_observe_summary(status_category="failed")
         updated = _reg.apply_result(
-            agent_id=task.agent_id, task_id=task.task_id,
-            success=False, error="err", error_code="SOME_ERR",
+            agent_id=task.agent_id,
+            task_id=task.task_id,
+            success=False,
+            error="err",
+            error_code="SOME_ERR",
             observe_summary=obs,
         )
         # failure path 에서는 observe_summary 저장하지 않음
@@ -153,6 +180,7 @@ class TestObserveSummaryStore:
 
 
 # ── 3. final_url_sanitized sanitize ──────────────────────────────────────
+
 
 class TestFinalUrlSanitize:
     def test_about_blank_preserved(self):
@@ -206,6 +234,7 @@ class TestFinalUrlSanitize:
 
 # ── 4. modal_candidates — count 만 저장 ──────────────────────────────────
 
+
 class TestModalCandidates:
     def test_modal_count_stored(self):
         obs = _make_full_observe_summary(modal_candidates_count=3)
@@ -221,11 +250,11 @@ class TestModalCandidates:
 
 # ── 5. page_structure — counts 만 저장 ───────────────────────────────────
 
+
 class TestPageStructureCounts:
     def test_page_structure_counts_stored(self):
         obs = _make_full_observe_summary(
-            page_structure_counts={"headings": 2, "links": 5, "buttons": 1,
-                                   "inputs": 0, "forms": 0, "tables": 1}
+            page_structure_counts={"headings": 2, "links": 5, "buttons": 1, "inputs": 0, "forms": 0, "tables": 1}
         )
         result = _reg._build_observe_summary(obs)
         assert result["page_structure_counts"]["headings"] == 2
@@ -239,8 +268,7 @@ class TestPageStructureCounts:
 
     def test_negative_counts_floored_to_zero(self):
         obs = _make_full_observe_summary(
-            page_structure_counts={"headings": -1, "links": 0, "buttons": 0,
-                                   "inputs": 0, "forms": 0, "tables": 0}
+            page_structure_counts={"headings": -1, "links": 0, "buttons": 0, "inputs": 0, "forms": 0, "tables": 0}
         )
         result = _reg._build_observe_summary(obs)
         assert result["page_structure_counts"]["headings"] == 0
@@ -248,26 +276,30 @@ class TestPageStructureCounts:
 
 # ── 6. 금지 키 차단 ──────────────────────────────────────────────────────
 
+
 class TestForbiddenKeys:
-    @pytest.mark.parametrize("bad_key,bad_val", [
-        ("cookie", "session_abc"),
-        ("session", "sess_xyz"),
-        ("token", "tok_123"),
-        ("authorization", "Bearer abc"),
-        ("password", "pw123"),
-        ("localstorage", {"key": "val"}),
-        ("sessionstorage", {"key": "val"}),
-        ("html", "<html>..."),
-        ("content", "page content"),
-        ("body", "<body>..."),
-        ("query", "?token=secret"),
-        ("fragment", "#hash"),
-        ("headers", {"set-cookie": "..."}),
-        ("login_reason", ["password_input_detected"]),
-        ("modal_candidates", [{"text": "닫기"}]),
-        ("page_structure", {"inputs": []}),
-        ("current_url", "http://127.0.0.1:9876/path?q=1"),
-    ])
+    @pytest.mark.parametrize(
+        "bad_key,bad_val",
+        [
+            ("cookie", "session_abc"),
+            ("session", "sess_xyz"),
+            ("token", "tok_123"),
+            ("authorization", "Bearer abc"),
+            ("password", "pw123"),
+            ("localstorage", {"key": "val"}),
+            ("sessionstorage", {"key": "val"}),
+            ("html", "<html>..."),
+            ("content", "page content"),
+            ("body", "<body>..."),
+            ("query", "?token=secret"),
+            ("fragment", "#hash"),
+            ("headers", {"set-cookie": "..."}),
+            ("login_reason", ["password_input_detected"]),
+            ("modal_candidates", [{"text": "닫기"}]),
+            ("page_structure", {"inputs": []}),
+            ("current_url", "http://127.0.0.1:9876/path?q=1"),
+        ],
+    )
     def test_forbidden_key_removed(self, bad_key, bad_val):
         obs = _make_full_observe_summary()
         obs[bad_key] = bad_val
@@ -283,6 +315,7 @@ class TestForbiddenKeys:
 
 
 # ── 7. title sanitize ─────────────────────────────────────────────────────
+
 
 class TestTitleSanitize:
     def test_title_length_limited(self):
@@ -306,6 +339,7 @@ class TestTitleSanitize:
 
 
 # ── 8. sanitize_final_url_value 직접 테스트 ──────────────────────────────
+
 
 class TestSanitizeFinalUrlValue:
     def test_about_blank(self):
