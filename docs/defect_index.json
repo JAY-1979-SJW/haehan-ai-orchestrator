@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 79,
+  "next_no": 80,
   "items": [
     {
       "no": 1,
@@ -1064,6 +1064,17 @@
       "where": "scripts/ops/install_git_hooks.py",
       "evidence": "git push 시 pre-push 훅이 ai_code_review_gate.py 를 sys.executable 로 실행 -> 'C:\\...\\Python311\\python.exe: No module named audit_kit' 로 push 자체가 실패. admin-web/electron/lib/agent.js 의 resolvePython() 이 이미 동일 사유(PATH의 \"python\"이 3.11을 가리켜 조용히 실패)로 py -3.14 명시 해결을 했던 것과 같은 종류의 문제가 git hook 쪽엔 반영이 안 돼 있었음.",
       "fix_note": "install_git_hooks.py 의 PRE_COMMIT/PRE_PUSH 템플릿에 _pyexe() 헬퍼(agent.js resolvePython() 과 동일 로직: py -3.14 우선, 실패 시 sys.executable 폴백) 추가, subprocess 호출 6곳을 [*_pyexe(), ...] 로 교체. python scripts/ops/install_git_hooks.py 재실행해 .githooks/pre-push, pre-commit.orig 재생성 후 실측 재검증: py -3.14 scripts/ops/ai_code_review_gate.py 단독 실행 PASS(audit_kit 오류 없음).",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 79,
+      "id": "CI-GITHUB-HOSTED-RUNNER-BILLING-BLOCKED-SWITCH-SELF-HOSTED",
+      "category": 2,
+      "title": "GitHub 호스팅 러너(windows-latest) 결제 문제로 CI 실행 자체가 안 됨 -> 자체 호스팅 러너로 전환",
+      "where": ".github/workflows/ci.yml",
+      "evidence": "git push 후 CI 실행 확인(gh run view) 결과: 'The job was not started because recent account payments have failed or your spending limit needs to be increased.' — 계정(JAY-1979-SJW) 전체의 GitHub 호스팅 러너 결제 차단. cad-quantity-calculator/g2b-fire-bid 가 이미 겪은 것과 동일 원인이 이 저장소도 막고 있었음(어제 9/28 마지막 성공 실행 이후 발생).",
+      "fix_note": "C:\u0007ctions-runners\\haehan-ai-orchestrator 에 신규 self-hosted 러너 등록(GitHub 러너는 저장소별로 각각 등록해야 함, 공유 안 됨 — 사용자 지적으로 확인). ci.yml: runs-on windows-latest -> [self-hosted, haehan-ai-orchestrator], actions/setup-python 제거(cad-program 2026-09-29 실측: self-hosted에서 관리자 권한 필요 단계로 추정되어 응답없이 멈춤) 후 이 PC에 이미 있는 py -3.14 직접 사용, 모든 python 호출을 py -3.14 로 명시(bare python은 PATH상 3.11 — #78과 동일 사유). 실측: gh api runners 조회로 haehan-orchestrator-pc status=online 확인 후 push, 실제 CI 실행 결과는 후속 확인.",
       "stage": "RUN",
       "status": "fixed"
     }
