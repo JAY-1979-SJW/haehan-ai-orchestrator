@@ -33,8 +33,9 @@ def fetch_gmail_via_cdp(max_results: int = 20) -> list[dict]:
         with contextlib.suppress(PWTimeout):
             page.wait_for_load_state("domcontentloaded", timeout=15000)
 
-        # 로그인 여부 확인
-        if "accounts.google.com" in page.url or "signin" in page.url:
+        # 로그인 여부 확인 (URL 대소문자 무관 — 예: flowName=GlifWebSignIn 은 소문자 "signin" 검사로 못 잡음)
+        url_lower = page.url.lower()
+        if "accounts.google.com" in url_lower or "signin" in url_lower:
             raise RuntimeError("Gmail 로그인 필요 — CDP 브라우저에서 Google 계정 로그인 후 재시도")
 
         # inbox 로 이동 (다른 페이지였으면)

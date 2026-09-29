@@ -19520,6 +19520,14 @@
    "reason": "도메인(naver_mail) 자동화",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/app/ops/components/GmailInboxPanel.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "google",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
