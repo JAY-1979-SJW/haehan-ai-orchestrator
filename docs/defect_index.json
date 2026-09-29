@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 42,
+  "next_no": 43,
   "items": [
     {
       "no": 1,
@@ -598,6 +598,20 @@
       "fix_note": "2026-09-29: `audit-kit std --fail-on critical` 실제 종료코드 0 확인(치명 618→0, 개선 3038, 참고 79). 관련 테스트(register_form/form_runner/cdp_popup_manager 대상 test_register.py 2개, test_app_action_coverage.py, test_fetch_web_page.py)를 git stash 로 수정 전/후 대조 — 기존 실패 10건(test_fetch_web_page.py, 이번 변경과 무관)은 그대로, 새 회귀 0건, 오히려 4건 추가로 통과. mypy `# type: ignore` 코멘트 순서 실수(noqa 뒤에 붙이면 mypy 가 인식 못함, 공식 문서로 확인: type:ignore 는 항상 첫 코멘트여야 함) 1건 발견·수정. quality_gate --staged 45개 파일 PASS, 레이어 게이트(FORBIDDEN_IMPORT/SECURITY_PATTERN/CIRCULAR_IMPORT) PASS. 이 라운드에서 표준 자체(32. Claude 개발표준)에 2건 개선(scripts/**+RUF012 tests/** 완화, audit-kit extend-immutable-calls 프로젝트별 병합 기능) + docs_registry.toml 10개 항목 추가 — 다른 프로젝트에도 이득이 전파됨. 다음 단계로 haehan pre-push 훅에 `audit-kit std --fail-on critical` 편입(진행 중).",
       "stage": "RUN",
       "status": "fixed"
+    },
+    {
+      "no": 42,
+      "id": "run.std08_complexity_gate_enabled_and_first_fix",
+      "category": 2,
+      "title": "STD-08(복잡도) 검사를 configs/ruff.toml 에 신규 도입 — 사용자 지시(\"복잡도 검사를 만들어서 반영해서 조사하고 조치해\")",
+      "where": [
+        "configs/ruff.toml (select C901/PLR0912/PLR0913/PLR0915 + [lint.mccabe]/[lint.pylint] 임계값 추가)",
+        "scripts/cdp_client.py (main() 리팩터)"
+      ],
+      "evidence": "이 프로젝트는 지금까지 STD-08(복잡도 10/인자 6/분기 12/문장 50, CLAUDE.md 4장에 이미 문서화된 자체 컨벤션)을 검사하는 ruff select 가 전혀 없었다(C90/PLR09* 미선택, [lint.mccabe]/[lint.pylint] 섹션 자체가 없었음) — 32. Claude 개발표준/project/ruff.toml 은 이미 이 임계값을 갖고 있었다. 2026-09-28 다른 세션이 이 간극을 조사해 \"전체 도입 보류, 극단값(30+)만 기록\"으로 결론냈던 바 있으나 (14건), 이번엔 사용자가 명시적으로 \"만들어서 반영해서 조사하고 조치해\"로 재지시해 정식 도입했다. 도입 직후 haehan 코드베이스 전체 재검사 결과 총 913건(C901 349 / PLR0912 205 / PLR0913 190 / PLR0915 169), C901 30 이상 극단값 14건(9/28 조사와 정확히 일치) / 20~29 61건 / 11~19 274건.",
+      "fix_note": "2026-09-29: STD-08 severity=improve(critical 아님, rules.toml 그대로) — pre-push 게이트는 막지 않고 추적 대상으로만 등록. 극단값 1위(scripts/cdp_client.py:main, C901=134, 이 프로젝트 전체에서 가장 복잡한 함수)를 실제로 리팩터: 670줄짜리 match cmd: 안의 case 40개를 _cmd_*() 개별 함수로 전부 분리(로직·문자열·예외처리 변경 없음, 순수 추출), 그 다음 match/case 자체가 mccabe/pylint 에 \"40개 분기\"로 그대로 잡히는 것(C901=40, PLR0912=40, PLR0915=82) 을 확인해 dict 기반 핸들러 테이블(_HANDLERS)로 재작성 — 결과 scripts/cdp_client.py 의 C901/PLR09* findings 134->0(파일 전체 0건). 원본에 있던 도달불가 코드(\"gabia\" 가 _SITE_ROUTER_CMDS 가드에 이미 포함돼 뒤의 case \"gabia\": 전체가 원래도 실행되지 않음)를 발견했으나 동작을 바꾸지 않는 게 이번 범위라 그대로 보존(주석으로만 기록, 별도 승인 필요). 검증: py_compile, ruff check(0 errors), 관련 테스트 15개 pytest 통과, git stash 로 원본 대조해 \"no-args/알수없는명령\" 실행시 UnicodeEncodeError(cp949 터미널, em-dash 문자) 가 원본에도 동일하게 있던 환경 문제임을 확인(리팩터로 생긴 회귀 아님) — services/gate list/cred/session 4개 실제 명령을 CDP 데몬 없이 직접 실행해 실제 운영 데이터(자격증명 11개, 세션 25개 등)로 출력 일치 확인. layer audit·quality_gate --staged 모두 새 FORBIDDEN_IMPORT/SECURITY_PATTERN/CIRCULAR_IMPORT 없음. 남은 912건(약 200+ 파일)은 이번 세션에 전부 손대지 않음 — 규모가 커서 한 파일씩 안전하게(리팩터 후 실행 검증) 처리해야 하는 다음 세션 작업으로 남긴다.",
+      "stage": "RUN",
+      "status": "measure"
     }
   ]
 }
