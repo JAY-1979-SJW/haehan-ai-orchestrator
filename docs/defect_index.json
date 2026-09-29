@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 57,
+  "next_no": 58,
   "items": [
     {
       "no": 1,
@@ -795,6 +795,19 @@
       ],
       "evidence": "run_audit() 안의 nested item() 클로저(CHECKLIST 전역만 읽음, 상태 공유 없음)가 ac-01~14 / ae-01~20 체크 블록을 전부 담고 있어 C901=17~24. 일부 블록은 models_mod/adapter_mod/router_src 같은 공유 상태를 다음 블록이 재사용.",
       "fix_note": "2026-09-29: item() 클로저를 _item() 모듈 함수로 hoist(상태 의존 없어 안전), 각 ac-*/ae-* 체크를 _check_*()/_import_*() 함수로 분리, 공유 상태(models_mod 등)는 명시적 인자로 전달. import 실패 시 관련 체크 전부 FAIL 처리하는 원본 분기도 그대로 보존. 검증: ruff 0 errors, api_contract 는 ac-14(pytest 서브프로세스 실행 포함) 실제 실행을 원본과 대조해 타이밍 문자열 1건만 다르고 나머지 동일, audit_evidence 는 전체 실행 결과 완전 동일 확인.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 57,
+      "id": "run.std08_audit_checklist_batch_3",
+      "category": 2,
+      "title": "STD-08 11~19 범위 배치 3: audit_backend_premium_domain_core.py 리팩터",
+      "where": [
+        "scripts/ops/audit_backend_premium_domain_core.py"
+      ],
+      "evidence": "run_audit()(C901=21) — dc-01~18 체크 블록, models_mod 공유 상태를 여러 블록이 재사용.",
+      "fix_note": "2026-09-29: item() 클로저를 _item() 으로 hoist, dc-01~18 을 _check_*()/_import_*() 함수로 분리, models_mod 는 명시적 인자로 전달(#56 과 동일 기법). 검증: ruff 0 errors, 실제 실행을 원본과 대조 — dc-17 의 covered=set() 출력 순서가 실행마다 다른 건 기존 Python set 반복 순서 비결정성(#47 에서 이미 확인한 것과 동일 원인)일 뿐, 나머지 17개 체크 결과는 완전 동일함을 확인.",
       "stage": "RUN",
       "status": "fixed"
     }

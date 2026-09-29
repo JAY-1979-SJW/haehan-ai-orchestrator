@@ -85,29 +85,27 @@ def _check(title: str) -> dict[str, Any]:
     return {"title": title, "status": "PASS", "evidence": "", "details": {}}
 
 
-def run_audit() -> dict[str, Any]:
-    results: list[dict[str, Any]] = []
+def _item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
+    meta = next(c for c in CHECKLIST if c["id"] == cid)
+    return {
+        "id": cid,
+        "title": meta["title"],
+        "required": meta["required"],
+        "status": status,
+        "evidence": evidence,
+        "details": details or {},
+    }
 
-    def item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
-        meta = next(c for c in CHECKLIST if c["id"] == cid)
-        return {
-            "id": cid,
-            "title": meta["title"],
-            "required": meta["required"],
-            "status": status,
-            "evidence": evidence,
-            "details": details or {},
-        }
 
-    # dc-01
+def _check_domain_files_exist() -> tuple[dict, dict]:
     p1 = ROOT / "ai_orchestrator/domain/models.py"
-    results.append(item("dc-01", "PASS" if p1.exists() else "FAIL", str(p1), {"exists": p1.exists()}))
-
-    # dc-02
     p2 = ROOT / "ai_orchestrator/domain/model_adapters.py"
-    results.append(item("dc-02", "PASS" if p2.exists() else "FAIL", str(p2), {"exists": p2.exists()}))
+    dc01 = _item("dc-01", "PASS" if p1.exists() else "FAIL", str(p1), {"exists": p1.exists()})
+    dc02 = _item("dc-02", "PASS" if p2.exists() else "FAIL", str(p2), {"exists": p2.exists()})
+    return dc01, dc02
 
-    # dc-03 ~ dc-10: 모델 import
+
+def _import_domain_models() -> tuple[Any, list[dict]]:
     model_checks = [
         ("dc-03", "Task"),
         ("dc-04", "WorkTrade"),
@@ -118,41 +116,46 @@ def run_audit() -> dict[str, Any]:
         ("dc-09", "ExternalAppBridge"),
         ("dc-10", "AuditEvent"),
     ]
-    models_mod = None
     try:
         models_mod = importlib.import_module("ai_orchestrator.domain.models")
     except Exception as e:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
-        for cid, _ in model_checks:
-            results.append(item(cid, "FAIL", f"import 실패: {e}"))
-    else:
-        for cid, name in model_checks:
-            obj = getattr(models_mod, name, None)
-            if obj is None and name == "AuditEvent":
-                # audit_evidence 패키지에서도 확인
-                try:
-                    ae_mod = importlib.import_module("ai_orchestrator.audit_evidence.models")
-                    obj = getattr(ae_mod, "StandardAuditEvent", None)
-                except Exception:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
-                    pass
-            st = "PASS" if obj is not None else "FAIL"
-            results.append(item(cid, st, f"{name}={'found' if obj else 'not found'}"))
+        return None, [_item(cid, "FAIL", f"import 실패: {e}") for cid, _ in model_checks]
 
-    # dc-11, dc-12, dc-13: enum
+    results = []
+    for cid, name in model_checks:
+        obj = getattr(models_mod, name, None)
+        if obj is None and name == "AuditEvent":
+            # audit_evidence 패키지에서도 확인
+            try:
+                ae_mod = importlib.import_module("ai_orchestrator.audit_evidence.models")
+                obj = getattr(ae_mod, "StandardAuditEvent", None)
+            except Exception:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
+                pass
+        st = "PASS" if obj is not None else "FAIL"
+        results.append(_item(cid, st, f"{name}={'found' if obj else 'not found'}"))
+    return models_mod, results
+
+
+def _check_enums(models_mod: Any) -> list[dict]:
+    results = []
     for cid, name in [("dc-11", "WorkTradeScope"), ("dc-12", "HandoffMode"), ("dc-13", "SafetyDecision")]:
         obj = getattr(models_mod, name, None) if models_mod else None
         st = "PASS" if obj else ("WARN" if not next(c for c in CHECKLIST if c["id"] == cid)["required"] else "FAIL")
-        results.append(item(cid, st, f"{name}={'found' if obj else 'not found'}"))
+        results.append(_item(cid, st, f"{name}={'found' if obj else 'not found'}"))
+    return results
 
-    # dc-14: to_safe_dict
+
+def _check_safe_serialization(models_mod: Any) -> dict:
     found_safe = []
     if models_mod:
         for name in ["Task", "ExternalAppBridge", "AuditEvent", "Artifact"]:
             cls = getattr(models_mod, name, None)
             if cls and hasattr(cls, "to_safe_dict"):
                 found_safe.append(name)
-    results.append(item("dc-14", "PASS" if found_safe else "FAIL", f"to_safe_dict 보유 클래스: {found_safe}"))
+    return _item("dc-14", "PASS" if found_safe else "FAIL", f"to_safe_dict 보유 클래스: {found_safe}")
 
-    # dc-15: secret 필드 직접 정의 없음
+
+def _check_no_secret_fields(models_mod: Any) -> dict:
     violations: list[str] = []
     if models_mod:
         for name, obj in inspect.getmembers(models_mod, inspect.isclass):
@@ -160,23 +163,24 @@ def run_audit() -> dict[str, Any]:
                 for f in dc_fields(obj):
                     if f.name.lower() in FORBIDDEN_FIELD_NAMES:
                         violations.append(f"{name}.{f.name}")
-    results.append(
-        item("dc-15", "PASS" if not violations else "FAIL", f"위반: {violations}" if violations else "secret 필드 없음")
+    return _item(
+        "dc-15", "PASS" if not violations else "FAIL", f"위반: {violations}" if violations else "secret 필드 없음"
     )
 
-    # dc-16: get_all_bridges adapter
+
+def _check_get_all_bridges() -> dict:
     try:
         adapters = importlib.import_module("ai_orchestrator.domain.model_adapters")
         fn = getattr(adapters, "get_all_bridges", None)
-        if fn:
-            bridges = fn()
-            results.append(item("dc-16", "PASS", f"bridge 수={len(bridges)}", {"count": len(bridges)}))
-        else:
-            results.append(item("dc-16", "FAIL", "get_all_bridges 없음"))
+        if not fn:
+            return _item("dc-16", "FAIL", "get_all_bridges 없음")
+        bridges = fn()
+        return _item("dc-16", "PASS", f"bridge 수={len(bridges)}", {"count": len(bridges)})
     except Exception as e:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
-        results.append(item("dc-16", "FAIL", str(e)))
+        return _item("dc-16", "FAIL", str(e))
 
-    # dc-17: EXTERNAL_APP_HOLD 표현
+
+def _check_external_app_hold_coverage() -> dict:
     try:
         adapters = importlib.import_module("ai_orchestrator.domain.model_adapters")
         bridges = adapters.get_all_bridges() if hasattr(adapters, "get_all_bridges") else []
@@ -184,25 +188,42 @@ def run_audit() -> dict[str, Any]:
         required_types = {"CAD", "HWPX", "OFFICE", "TAX", "BID"}
         covered = required_types & app_types
         st = "PASS" if required_types <= app_types else "FAIL"
-        results.append(item("dc-17", st, f"covered={covered}, missing={required_types - app_types}"))
+        return _item("dc-17", st, f"covered={covered}, missing={required_types - app_types}")
     except Exception as e:  # noqa: BLE001 - read-only 도메인모델 감사 스크립트(문서에 '외부호출/DB접속/파일수정 금지' 명시) — 각 except는 해당 체크리스트 항목을 FAIL로 표시할 뿐 성공으로 위장하지 않으며, 감사 결과 산출일 뿐 실행 동작이 없음.
-        results.append(item("dc-17", "FAIL", str(e)))
+        return _item("dc-17", "FAIL", str(e))
 
+
+def _check_domain_independence(models_file: Path) -> dict:
     # dc-18: domain이 router/server를 import하지 않음
-    models_src = p1.read_text(encoding="utf-8") if p1.exists() else ""
+    models_src = models_file.read_text(encoding="utf-8") if models_file.exists() else ""
     forbidden_imports = [
         line.strip()
         for line in models_src.splitlines()
         if "import" in line
         and any(x in line for x in ["fastapi", "flask", "ai_orchestrator.server", "ai_orchestrator.router"])
     ]
-    results.append(
-        item(
-            "dc-18",
-            "PASS" if not forbidden_imports else "FAIL",
-            f"금지 import: {forbidden_imports}" if forbidden_imports else "독립 도메인 확인",
-        )
+    return _item(
+        "dc-18",
+        "PASS" if not forbidden_imports else "FAIL",
+        f"금지 import: {forbidden_imports}" if forbidden_imports else "독립 도메인 확인",
     )
+
+
+def run_audit() -> dict[str, Any]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: dc-01~18 체크 블록을 _check_*()/_import_*() 함수로
+    # 분리(순서·조건·문자열 그대로). models_mod 는 명시적으로 인자로 전달.
+    results: list[dict[str, Any]] = []
+    dc01, dc02 = _check_domain_files_exist()
+    results.extend([dc01, dc02])
+
+    models_mod, model_import_results = _import_domain_models()
+    results.extend(model_import_results)
+    results.extend(_check_enums(models_mod))
+    results.append(_check_safe_serialization(models_mod))
+    results.append(_check_no_secret_fields(models_mod))
+    results.append(_check_get_all_bridges())
+    results.append(_check_external_app_hold_coverage())
+    results.append(_check_domain_independence(ROOT / "ai_orchestrator/domain/models.py"))
 
     # 집계
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}
