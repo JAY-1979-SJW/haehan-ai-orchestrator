@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 46,
+  "next_no": 47,
   "items": [
     {
       "no": 1,
@@ -649,6 +649,19 @@
       ],
       "evidence": "#42 STD-08 극단값 목록 4위. main() 이 원본 주석의 5단계(레이어 역전/금지import위반/레이어판정불가/모듈경계대조/실행교차) + 모듈 지도 집계 + 결과 조립 + 마크다운 렌더를 전부 한 함수에 갖고 있어 C901=38.",
       "fix_note": "2026-09-29: 각 단계를 함수로 분리(_load_map_data/_load_layer_and_module_maps/_find_layer_inversions(+_layer_inversion_target)/_count_legacy_inversions/_find_forbidden_import_hits/_crosscheck_declared_modules/_make_module_accumulator/_accumulate_module_file_stats/_accumulate_module_edges/_summarize_modules/_module_edges_and_cycles/_build_result/_render_markdown_report). 분리 직후 3개의 새 findings 발생 — _find_layer_inversions(C901=11, 안쪽 for 문 분리로 해소), _build_result(PLR0913=15, ctx dict 로 묶어 해소), _render_markdown_report(PLR0913=9, result[\"crosscheck\"] 안에 이미 있는 값을 재사용하도록 바꿔 해소) — 전부 추가 조치 완료. 로직 변경 없음(순수 추출). 검증: ruff 0 errors, 실제 실행(build.py 로 만든 map.json 대상)을 원본과 대조 — Counter 키 순서가 실행마다 다른 게 원본 코드 자체의 기존 비결정성(PYTHONHASHSEED 프로세스별 랜덤)임을 원본만 2번 재실행해 별도로 확인, 키 순서를 정규화(정렬)하고 나면 값 차이는 정확히 1건 — scripts/ops/code_map 모듈의 lines(2701→2799, 리팩터로 파일이 실제로 길어진 것과 정확히 일치, 기대된 변화) 뿐, 나머지 전부(레이어역전/금지import/모듈경계/실행교차/모듈지도/순환) 완전히 동일함을 확인. layer audit·quality_gate 신규 위반 없음.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 46,
+      "id": "run.std08_cafe_explorer_complexity_fix",
+      "category": 2,
+      "title": "STD-08 극단값 5위 scripts/naver/cafe/collection/cafe_explorer.py:main()(C901=38) + cmd_posts(PLR0913=7) 리팩터",
+      "where": [
+        "scripts/naver/cafe/collection/cafe_explorer.py"
+      ],
+      "evidence": "#42 STD-08 극단값 목록 5위. blog_explorer.py(#44)와 동일한 if/elif cmd == ... 19개 CLI 디스패치 패턴 + cmd_posts 인자 7개.",
+      "fix_note": "2026-09-29: #44 와 동일 패턴 — if/elif 19개를 _run_*(agent, parser, args) 로 분리 + _RUNNERS dict 조회. cmd_posts(인자 7>6) 는 유일한 호출부(_run_posts)와 함께 argparse.Namespace 하나로 인자를 묶되, board 기본값(전체글보기) 계산을 _run_posts 에서 cmd_posts 안으로 옮겨 동일한 값을 만들도록 함(다른 곳에서 이 함수를 쓰지 않음을 grep 으로 확인). 검증: ruff 0 errors, MagicMock 으로 19개 명령 전부(mycafes 포함) 원본과 동일한 검증/에러 메시지 확인 + cmd_posts 가 board 기본값과 max_pages>1 분기(cafe_posts vs cafe_posts_all_pages) 모두 원본과 동일한 kwargs 로 위임하는지 assert_called_once_with 로 확인. layer audit·quality_gate 신규 위반 없음.",
       "stage": "RUN",
       "status": "fixed"
     }
