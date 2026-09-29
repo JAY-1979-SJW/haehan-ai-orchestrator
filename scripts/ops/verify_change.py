@@ -193,11 +193,13 @@ def _checkout(ref: str, dest: Path) -> bool:
     return True
 
 
-def measure(tree: Path, tests: list[str]) -> dict:
-    """한 작업트리에서 판정 항목을 잰다."""
-    r: dict = {}
+def _measure_collect_errors(tree: Path) -> list[str]:
     col = run([PY, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"], tree)
-    r["collect_errors"] = sorted(ln.split()[1] for ln in col.stdout.splitlines() if ln.startswith("ERROR "))
+    return sorted(ln.split()[1] for ln in col.stdout.splitlines() if ln.startswith("ERROR "))
+
+
+def _measure_code_map_and_import_fail(tree: Path) -> tuple[dict, dict | None, list[str]]:
+    """code_map 빌드 + classify + runcheck 실행 후 (map.json, 커밋된 정본, import_fail 목록)."""
     run([PY, "scripts/ops/code_map/build.py"], tree)
     reg_p = tree / "configs/module_registry.json"
     # 커밋된 정본(골격) — classify.py 가 다시 쓰기 전 상태로 대조해야 '정본 갱신 누락'이 보인다
@@ -208,13 +210,20 @@ def measure(tree: Path, tests: list[str]) -> dict:
     led_p = tree / "data/code_map/run_ledger.json"
     led = json.loads(led_p.read_text(encoding="utf-8"))["nodes"] if led_p.exists() else {}
     m = json.loads((tree / "data/code_map/map.json").read_text(encoding="utf-8"))
-    r["import_fail"] = sorted(p for p, v in led.items() if v.get("R0", {}).get("status") == "FAIL")
+    import_fail = sorted(p for p, v in led.items() if v.get("R0", {}).get("status") == "FAIL")
+    return m, committed, import_fail
+
+
+def _measure_routes(tree: Path) -> str:
     if CFG["route_check"]:  # 서버 앱의 라우트 수를 출력하는 파이썬 한 줄
         routes = run([PY, "-c", CFG["route_check"]], tree)
-        r["routes"] = (routes.stdout.strip().splitlines() or ["?"])[-1]
-    else:
-        r["routes"] = "-"
-    # 층간 위반 — configs/module_registry.json 의 allowed_deps 기준
+        return (routes.stdout.strip().splitlines() or ["?"])[-1]
+    return "-"
+
+
+def _measure_violations(tree: Path, m: dict) -> list[str]:
+    """층간 위반 — configs/module_registry.json 의 allowed_deps 기준."""
+    reg_p = tree / "configs/module_registry.json"
     viol = set()
     if reg_p.exists():
         reg = json.loads(reg_p.read_text(encoding="utf-8"))
@@ -226,25 +235,29 @@ def measure(tree: Path, tests: list[str]) -> dict:
                         lt = files[t]["layer"]
                         if lt in allowed and lt not in allowed[files[s]["layer"]]:
                             viol.add(f"{s} -> {t}")
-    r["violations"] = sorted(viol)
-    # 지도 ↔ 골격 대조 — 분류 정본(골격)이 실제 파일(지도)과 어긋난 곳
+    return sorted(viol)
+
+
+def _measure_skeleton_and_cycles(tree: Path, m: dict, committed: dict | None) -> tuple[list[str], list[str]]:
+    """지도 ↔ 골격 대조(분류 정본이 실제 파일과 어긋난 곳) + 모듈 순환·금지 import·선언 모듈 경로."""
     skel = []
     if committed is not None:
         code = {p for p in m.get("all_nodes", {}) if p.endswith(CODE_EXT)}
         skel += [f"정본에만 있음(파일 없음): {p}" for p in committed if not (tree / p).exists()]
         skel += [f"정본 누락(분류 안 됨): {p}" for p in sorted(code - set(committed))]
-    # 모듈 순환·금지 import·선언 모듈 경로
+    cycles: list[str] = []
     if (tree / "scripts/ops/code_map/modules.py").exists():
         run([PY, "scripts/ops/code_map/modules.py"], tree)
         cc = json.loads((tree / "data/code_map/modules.json").read_text(encoding="utf-8"))["crosscheck"]
-        r["cycles"] = [" <-> ".join(c) for c in cc["module_cycles"]]
+        cycles = [" <-> ".join(c) for c in cc["module_cycles"]]
         skel += [f"금지 import: {h['src']} -> {h['dst']}" for h in cc.get("forbidden_import_hits", [])]
         for d in cc.get("declared_modules", []):
             skel += [f"선언 모듈 {d['name']} 경로 없음: {x}" for x in d.get("missing_paths", [])]
-    else:
-        r["cycles"] = []
-    r["skeleton"] = sorted(set(skel))
-    # 영향 테스트 — CHUNK 파일씩 묶어 한 프로세스로(속도), 묶음이 시간 상한을 넘으면 그 묶음만 파일별로 재실행(멈춤 차단)
+    return sorted(set(skel)), cycles
+
+
+def _measure_affected_test_results(tree: Path, tests: list[str]) -> tuple[list[str], list[str]]:
+    """영향 테스트 — CHUNK 파일씩 묶어 한 프로세스로(속도), 묶음이 시간 상한을 넘으면 그 묶음만 파일별로 재실행(멈춤 차단)."""
     present = [t for t in tests if (tree / t).exists()]
     fails, timeouts = [], []
     for i in range(0, len(present), CHUNK):
@@ -257,8 +270,22 @@ def measure(tree: Path, tests: list[str]) -> dict:
                     fails += _pytest(tree, [t], TEST_TIMEOUT)
                 except subprocess.TimeoutExpired:
                     timeouts.append(t)
-    r["test_failures"] = sorted(set(fails))
-    r["test_timeouts"] = timeouts
+    return sorted(set(fails)), timeouts
+
+
+def measure(tree: Path, tests: list[str]) -> dict:
+    """한 작업트리에서 판정 항목을 잰다.
+
+    2026-09-29 STD-08(복잡도) 리팩터: 각 판정 항목을 _measure_*() 함수로 분리(순서·조건·
+    문자열 그대로, m/committed 등 다음 단계가 쓰는 값은 반환해 넘긴다).
+    """
+    r: dict = {}
+    r["collect_errors"] = _measure_collect_errors(tree)
+    m, committed, r["import_fail"] = _measure_code_map_and_import_fail(tree)
+    r["routes"] = _measure_routes(tree)
+    r["violations"] = _measure_violations(tree, m)
+    r["skeleton"], r["cycles"] = _measure_skeleton_and_cycles(tree, m, committed)
+    r["test_failures"], r["test_timeouts"] = _measure_affected_test_results(tree, tests)
     return r
 
 
@@ -297,6 +324,83 @@ def affected_tests(changed: list[str]) -> list[str]:
         return p.endswith(".py") and (p.startswith("tests/") or "/tests/" in p) and n.startswith("test_")
 
     return sorted(p for p in seen if is_test(p))
+
+
+def _diff_key(key: str, before: dict, after: dict, after_n: dict, moved: dict[str, str], receiving: set) -> list[str]:
+    """new() 클로저 분리(2026-09-29 STD-08) — before/after/moved/receiving 을 인자로 받는다."""
+    if key == "violations":
+        return sorted(set(after_n[key]) - set(before[key]))
+    if key == "skeleton":  # 이동 파일은 옛 경로로 바꿔 비교
+
+        def old(x: str) -> str:
+            for n, o in moved.items():
+                x = x.replace(n, o)
+            return x
+
+        return sorted({old(x) for x in after.get(key, [])} - set(before.get(key, [])))
+    if key == "cycles":
+        raw = sorted(set(after[key]) - set(before[key]))
+        extra = [c for c in raw if not receiving & set(c.split(" <-> "))]
+        if len(after[key]) > len(before[key]):
+            extra += [f"순환 수 증가 {len(before[key])} → {len(after[key])} (이동 폴더 관련: {len(raw) - len(extra)})"]
+        return extra
+    return sorted(set(after[key]) - set(before[key]))
+
+
+def _build_verify_report(
+    a: argparse.Namespace,
+    changed: list[str],
+    tests: list[str],
+    measurements: dict,
+) -> tuple[bool, str]:
+    """checks 표 + 새 문제 섹션 조립 — main() 의 리포트 조립부 분리(2026-09-29 STD-08:
+    PLR0913=9>6 라서 before/after/ruff_errors/loc_deps/moved/receiving 을 dict 하나로 묶었다)."""
+    before = measurements["before"]
+    after = measurements["after"]
+    ruff_errors = measurements["ruff_errors"]
+    loc_deps = measurements["loc_deps"]
+    moved = measurements["moved"]
+    receiving = measurements["receiving"]
+    after_n = normalize_renamed(after, moved)
+
+    def new(key: str) -> list[str]:
+        return _diff_key(key, before, after, after_n, moved, receiving)
+
+    new_timeouts = [f"TIMEOUT {t}" for t in after["test_timeouts"] if t not in before["test_timeouts"]]
+    if a.expect_routes:  # 기준서가 약속한 라우트 수로 판정(의도된 추가·삭제)
+        ok_routes = str(after["routes"]) == str(a.expect_routes)
+        route_diff = [] if ok_routes else [f"라우트 수 {after['routes']} ≠ 기준서 약속 {a.expect_routes}"]
+    else:
+        route_diff = [] if before["routes"] == after["routes"] else ["라우트 수 변경"]
+    checks = [
+        ("pytest 수집 오류", len(before["collect_errors"]), len(after["collect_errors"]), new("collect_errors")),
+        ("LIVE import 실패", len(before["import_fail"]), len(after["import_fail"]), new("import_fail")),
+        ("서버 라우트", before["routes"], after["routes"], route_diff),
+        (
+            f"영향 테스트 실패({len(tests)}파일)",
+            len(before["test_failures"]),
+            len(after["test_failures"]),
+            new("test_failures") + new_timeouts,
+        ),
+        ("층간 위반", len(before["violations"]), len(after["violations"]), new("violations")),
+        ("모듈 순환", len(before["cycles"]), len(after["cycles"]), new("cycles")),
+        ("지도↔골격 대조", len(before.get("skeleton", [])), len(after.get("skeleton", [])), new("skeleton")),
+        ("바뀐 파일 ruff", "-", len(ruff_errors), ruff_errors),
+        ("이동 파일 위치의존 미조정", "-", len(loc_deps), loc_deps),
+    ]
+    ok = all(not c[3] for c in checks)
+    lines = [
+        f"## 변경 검증: {'PASS' if ok else 'FAIL'} (기준 {a.base} → {a.head or '작업트리'}, 바뀐 파일 {len(changed)})",
+        "",
+        "| 항목 | 기준 | 변경 후 | 새로 생긴 문제 |",
+        "|---|---|---|---|",
+    ]
+    for name, b, af, nw in checks:
+        lines.append(f"| {name} | {b} | {af} | {len(nw)} |")
+    for name, _, _, nw in checks:
+        if nw:
+            lines += ["", f"### {name} — 새 문제", *[f"- {x}" for x in nw[:30]]]
+    return ok, "\n".join(lines)
 
 
 def main() -> int:
@@ -358,67 +462,18 @@ def main() -> int:
     ]
 
     moved = renames(a.base, a.head)
-    after_n = normalize_renamed(after, moved)
     # 순환은 모듈(폴더) 단위라 이동을 받은 폴더가 끼면 이름만 바뀐 것과 진짜 새 순환을 가를 수 없다
     # → 그런 순환은 '순환 수가 늘었을 때만' FAIL, 이동과 무관한 폴더끼리의 새 순환은 항상 FAIL
     receiving = {_mod_dir(n) for n in moved}
-
-    def new(key: str) -> list[str]:
-        if key == "violations":
-            return sorted(set(after_n[key]) - set(before[key]))
-        if key == "skeleton":  # 이동 파일은 옛 경로로 바꿔 비교
-
-            def old(x: str) -> str:
-                for n, o in moved.items():
-                    x = x.replace(n, o)
-                return x
-
-            return sorted({old(x) for x in after.get(key, [])} - set(before.get(key, [])))
-        if key == "cycles":
-            raw = sorted(set(after[key]) - set(before[key]))
-            extra = [c for c in raw if not receiving & set(c.split(" <-> "))]
-            if len(after[key]) > len(before[key]):
-                extra += [
-                    f"순환 수 증가 {len(before[key])} → {len(after[key])} (이동 폴더 관련: {len(raw) - len(extra)})"
-                ]
-            return extra
-        return sorted(set(after[key]) - set(before[key]))
-
-    new_timeouts = [f"TIMEOUT {t}" for t in after["test_timeouts"] if t not in before["test_timeouts"]]
-    if a.expect_routes:  # 기준서가 약속한 라우트 수로 판정(의도된 추가·삭제)
-        ok_routes = str(after["routes"]) == str(a.expect_routes)
-        route_diff = [] if ok_routes else [f"라우트 수 {after['routes']} ≠ 기준서 약속 {a.expect_routes}"]
-    else:
-        route_diff = [] if before["routes"] == after["routes"] else ["라우트 수 변경"]
-    checks = [
-        ("pytest 수집 오류", len(before["collect_errors"]), len(after["collect_errors"]), new("collect_errors")),
-        ("LIVE import 실패", len(before["import_fail"]), len(after["import_fail"]), new("import_fail")),
-        ("서버 라우트", before["routes"], after["routes"], route_diff),
-        (
-            f"영향 테스트 실패({len(tests)}파일)",
-            len(before["test_failures"]),
-            len(after["test_failures"]),
-            new("test_failures") + new_timeouts,
-        ),
-        ("층간 위반", len(before["violations"]), len(after["violations"]), new("violations")),
-        ("모듈 순환", len(before["cycles"]), len(after["cycles"]), new("cycles")),
-        ("지도↔골격 대조", len(before.get("skeleton", [])), len(after.get("skeleton", [])), new("skeleton")),
-        ("바뀐 파일 ruff", "-", len(ruff_errors), ruff_errors),
-        ("이동 파일 위치의존 미조정", "-", len(loc_deps), loc_deps),
-    ]
-    ok = all(not c[3] for c in checks)
-    lines = [
-        f"## 변경 검증: {'PASS' if ok else 'FAIL'} (기준 {a.base} → {a.head or '작업트리'}, 바뀐 파일 {len(changed)})",
-        "",
-        "| 항목 | 기준 | 변경 후 | 새로 생긴 문제 |",
-        "|---|---|---|---|",
-    ]
-    for name, b, af, nw in checks:
-        lines.append(f"| {name} | {b} | {af} | {len(nw)} |")
-    for name, _, _, nw in checks:
-        if nw:
-            lines += ["", f"### {name} — 새 문제", *[f"- {x}" for x in nw[:30]]]
-    report = "\n".join(lines)
+    measurements = {
+        "before": before,
+        "after": after,
+        "ruff_errors": ruff_errors,
+        "loc_deps": loc_deps,
+        "moved": moved,
+        "receiving": receiving,
+    }
+    ok, report = _build_verify_report(a, changed, tests, measurements)
     print(report)
     if a.json:
         Path(a.json).write_text(

@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 69,
+  "next_no": 70,
   "items": [
     {
       "no": 1,
@@ -954,6 +954,17 @@
       ],
       "evidence": "audit()(C901=14) — status/필수모듈명/모듈엔트리+경로+겹침/github actions/archive 상태 검사가 하나에 담김. #48 계열.",
       "fix_note": "2026-09-29: _check_*() 함수로 분리(순서·조건·문자열 그대로). 검증: ruff 0 errors, 실제 실행을 원본과 대조해 완전 동일(둘 다 기존 FAIL 상태 유지).",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 69,
+      "id": "STD08-VERIFY-CHANGE-MEASURE-MAIN-SPLIT",
+      "category": 2,
+      "title": "scripts/ops/verify_change.py measure()/main() 복잡도(STD-08) 분리",
+      "where": "scripts/ops/verify_change.py",
+      "evidence": "measure()가 C901=16/PLR0912=17/PLR0915=55, main() 후반부가 C901=18/PLR0912=13/PLR0915=68 -> measure()를 _measure_collect_errors/_measure_code_map_and_import_fail/_measure_routes/_measure_violations/_measure_skeleton_and_cycles/_measure_affected_test_results 로, main()의 리포트 생성부를 _diff_key(원래 new() 클로저 대체)와 _build_verify_report로 분리. 실행 검증: py -3.14 scripts/ops/verify_change.py --base 8cada27f --head 75118ae6 -> PASS, 9개 항목 모두 새로 생긴 문제 0건.",
+      "fix_note": "순서/조건/문자열 변경 없이 순수 추출. _build_verify_report 최초 시그니처가 9개 파라미터로 PLR0913을 새로 유발해 before/after/ruff_errors/loc_deps/moved/receiving을 measurements dict로 묶어 해결.",
       "stage": "RUN",
       "status": "fixed"
     }
