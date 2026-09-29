@@ -14,6 +14,7 @@ from .local_agent_registry_common import (
     _agents,
     _lock,
     _now_iso,
+    _save_agents_to_disk,
     _tasks,
 )
 
@@ -53,6 +54,7 @@ def register_agent(
     )
     with _lock:
         _agents[agent_id] = agent
+    _save_agents_to_disk()  # 2026-09-29: 재시작 후에도 재인증되도록 정체성 영속화
     return RegisterResult(agent=agent, device_token=device_token)
 
 

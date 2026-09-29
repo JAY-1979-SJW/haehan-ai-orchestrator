@@ -297,9 +297,13 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.local_agent_registry_common as _reg_common
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
+    # 2026-09-29 영속화 추가 후 필수: 안 하면 _reg.clear()가 실제 개발 세션의
+    # data/local_agent_registry_state.json(실제 등록된 로컬 에이전트 상태)을 테스트마다 지운다.
+    monkeypatch.setattr(_reg_common, "_REGISTRY_STATE_PATH", tmp_path / "local_agent_registry_state.json")
 
     _reg.clear()
     _ap._store.clear()

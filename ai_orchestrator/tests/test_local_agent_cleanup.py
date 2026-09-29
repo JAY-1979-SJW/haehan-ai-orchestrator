@@ -11,13 +11,17 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent / "../.."))
 
 from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator import local_agent_registry_common as _reg_common
 from ai_orchestrator import registration_codes as _regcodes
 from ai_orchestrator.local_agent_cleanup_policy import is_smoke_test_agent, validate_cleanup_request
 
 
 @pytest.fixture(autouse=True)
-def clear_stores():
+def clear_stores(tmp_path, monkeypatch):
     """Clear in-memory stores before each test."""
+    # 2026-09-29 영속화 추가 후 필수: 안 하면 _reg.clear()가 실제 개발 세션의
+    # data/local_agent_registry_state.json(실제 등록된 로컬 에이전트 상태)을 테스트마다 지운다.
+    monkeypatch.setattr(_reg_common, "_REGISTRY_STATE_PATH", tmp_path / "local_agent_registry_state.json")
     _reg.clear()
     _regcodes.clear()
     yield

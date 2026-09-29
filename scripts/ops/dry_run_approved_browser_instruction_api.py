@@ -3,6 +3,11 @@
 This script runs the FastAPI router in memory through TestClient. It does not
 start a server, launch a browser, call the network, deploy, build, stage files,
 or print secrets.
+
+주의(2026-09-29): local_agent_registry._reg.clear() 는 이제 실제 영속화 파일
+(data/local_agent_registry_state.json — 실제 등록된 로컬 에이전트 상태)도 함께 지운다.
+이 스크립트를 개발 중인 FastAPI 서버와 같은 작업 디렉터리에서 실행하면 그 상태가
+지워진다 — 실행 전 로컬 에이전트가 등록돼 있다면 재등록이 필요할 수 있다.
 """
 
 from __future__ import annotations
