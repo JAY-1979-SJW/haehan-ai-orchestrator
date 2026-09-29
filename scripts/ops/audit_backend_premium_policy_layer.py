@@ -72,104 +72,94 @@ def _now() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def run_audit() -> dict[str, Any]:
-    results: list[dict[str, Any]] = []
+def _item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
+    meta = next(c for c in CHECKLIST if c["id"] == cid)
+    return {
+        "id": cid,
+        "title": meta["title"],
+        "required": meta["required"],
+        "status": status,
+        "evidence": evidence,
+        "details": details or {},
+    }
 
-    def item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
-        meta = next(c for c in CHECKLIST if c["id"] == cid)
-        return {
-            "id": cid,
-            "title": meta["title"],
-            "required": meta["required"],
-            "status": status,
-            "evidence": evidence,
-            "details": details or {},
-        }
 
-    # pl-01~03: 파일 존재
+def _check_policy_files_exist() -> list[dict]:
     files = {
         "pl-01": ROOT / "ai_orchestrator/safety_policy/__init__.py",
         "pl-02": ROOT / "ai_orchestrator/safety_policy/safety_policy_registry.py",
         "pl-03": ROOT / "ai_orchestrator/safety_policy/secret_redaction.py",
     }
-    for cid, p in files.items():
-        results.append(item(cid, "PASS" if p.exists() else "FAIL", str(p)))
+    return [_item(cid, "PASS" if p.exists() else "FAIL", str(p)) for cid, p in files.items()]
 
-    # pl-04~12: policy registry
-    registry_mod = None
+
+def _check_policy_registry() -> list[dict]:
+    pl_ids = ["pl-04", "pl-05", "pl-06", "pl-07", "pl-08", "pl-09", "pl-10", "pl-11", "pl-12"]
     try:
         registry_mod = importlib.import_module("ai_orchestrator.safety_policy.safety_policy_registry")
     except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
-        for cid in ["pl-04", "pl-05", "pl-06", "pl-07", "pl-08", "pl-09", "pl-10", "pl-11", "pl-12"]:
-            results.append(item(cid, "FAIL", f"import 실패: {e}"))
+        return [_item(cid, "FAIL", f"import 실패: {e}") for cid in pl_ids]
 
-    if registry_mod:
-        # list_all_policies 또는 get_all_policies 시도
-        list_fn = getattr(registry_mod, "list_all_policies", getattr(registry_mod, "get_all_policies", None))
-        getattr(registry_mod, "get_policy", None)
-        policies = list_fn() if list_fn else []
-        policy_ids = {p.policy_id for p in policies} if policies else set()
+    # list_all_policies 또는 get_all_policies 시도
+    list_fn = getattr(registry_mod, "list_all_policies", getattr(registry_mod, "get_all_policies", None))
+    getattr(registry_mod, "get_policy", None)
+    policies = list_fn() if list_fn else []
+    policy_ids = {p.policy_id for p in policies} if policies else set()
 
-        found_count = sum(1 for pid in REQUIRED_POLICY_IDS if pid in policy_ids)
-        results.append(
-            item("pl-04", "PASS" if found_count >= 8 else "FAIL", f"발견={found_count}/8, ids={sorted(policy_ids)}")
-        )
+    found_count = sum(1 for pid in REQUIRED_POLICY_IDS if pid in policy_ids)
+    results = [
+        _item("pl-04", "PASS" if found_count >= 8 else "FAIL", f"발견={found_count}/8, ids={sorted(policy_ids)}")
+    ]
+    for cid, pid in _POLICY_ID_MAP.items():
+        found = pid in policy_ids
+        results.append(_item(cid, "PASS" if found else "FAIL", f"{pid}: {'found' if found else 'not found'}"))
+    return results
 
-        for cid, pid in _POLICY_ID_MAP.items():
-            found = pid in policy_ids
-            results.append(item(cid, "PASS" if found else "FAIL", f"{pid}: {'found' if found else 'not found'}"))
 
-    # pl-13~15: secret redaction
-    redact_mod = None
+def _check_secret_redaction() -> list[dict]:
     try:
         redact_mod = importlib.import_module("ai_orchestrator.safety_policy.secret_redaction")
     except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
-        for cid in ["pl-13", "pl-14", "pl-15"]:
-            results.append(item(cid, "FAIL", f"import 실패: {e}"))
+        return [_item(cid, "FAIL", f"import 실패: {e}") for cid in ["pl-13", "pl-14", "pl-15"]]
 
-    if redact_mod:
-        forbidden = getattr(redact_mod, "FORBIDDEN_SECRET_FIELDS", None)
-        results.append(
-            item(
-                "pl-13",
-                "PASS" if (forbidden and len(forbidden) >= 35) else "FAIL",
-                f"forbidden 키 수={len(forbidden) if forbidden else 0}",
-                {"count": len(forbidden) if forbidden else 0},
-            )
-        )
+    forbidden = getattr(redact_mod, "FORBIDDEN_SECRET_FIELDS", None)
+    pl13 = _item(
+        "pl-13",
+        "PASS" if (forbidden and len(forbidden) >= 35) else "FAIL",
+        f"forbidden 키 수={len(forbidden) if forbidden else 0}",
+        {"count": len(forbidden) if forbidden else 0},
+    )
 
-        redact_fn = getattr(redact_mod, "redact_sensitive_fields", None)
-        if redact_fn:
-            test_data = {"password": "FAKE_PASS", "note": "ok"}
-            out = redact_fn(test_data)
-            ok = out.get("password") == "[REDACTED]" and out.get("note") == "ok"
-            results.append(item("pl-14", "PASS" if ok else "FAIL", f"redact 결과: password→{out.get('password')}"))
+    redact_fn = getattr(redact_mod, "redact_sensitive_fields", None)
+    if not redact_fn:
+        return [
+            pl13,
+            _item("pl-14", "FAIL", "redact_sensitive_fields 없음"),
+            _item("pl-15", "FAIL", "redact_sensitive_fields 없음"),
+        ]
 
-            # nested
-            nested = {"outer": {"token": "FAKE_TOKEN", "note": "ok"}}
-            out2 = redact_fn(nested)
-            nested_ok = out2.get("outer", {}).get("token") == "[REDACTED]"
-            results.append(
-                item(
-                    "pl-15",
-                    "PASS" if nested_ok else "FAIL",
-                    f"nested redact: token→{out2.get('outer', {}).get('token')}",
-                )
-            )
-        else:
-            results.append(item("pl-14", "FAIL", "redact_sensitive_fields 없음"))
-            results.append(item("pl-15", "FAIL", "redact_sensitive_fields 없음"))
+    test_data = {"password": "FAKE_PASS", "note": "ok"}
+    out = redact_fn(test_data)
+    ok = out.get("password") == "[REDACTED]" and out.get("note") == "ok"
+    pl14 = _item("pl-14", "PASS" if ok else "FAIL", f"redact 결과: password→{out.get('password')}")
 
-    # pl-16: ExecutionPolicyService 연결
+    nested = {"outer": {"token": "FAKE_TOKEN", "note": "ok"}}
+    out2 = redact_fn(nested)
+    nested_ok = out2.get("outer", {}).get("token") == "[REDACTED]"
+    pl15 = _item("pl-15", "PASS" if nested_ok else "FAIL", f"nested redact: token→{out2.get('outer', {}).get('token')}")
+    return [pl13, pl14, pl15]
+
+
+def _check_execution_policy_service_linked() -> dict:
     try:
         eps = importlib.import_module("ai_orchestrator.services.execution_policy_service")
         has_eps = hasattr(eps, "ExecutionPolicyService")
-        results.append(
-            item("pl-16", "PASS" if has_eps else "WARN", "ExecutionPolicyService 존재" if has_eps else "미연결")
-        )
+        return _item("pl-16", "PASS" if has_eps else "WARN", "ExecutionPolicyService 존재" if has_eps else "미연결")
     except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
-        results.append(item("pl-16", "WARN", str(e)))
+        return _item("pl-16", "WARN", str(e))
 
+
+def _check_cad_bid_blocked() -> dict:
     # pl-17: CAD/Tax/Bid 차단 — decide_execution_policy(classification) 사용
     try:
         eps = importlib.import_module("ai_orchestrator.services.execution_policy_service")
@@ -177,31 +167,41 @@ def run_audit() -> dict[str, Any]:
         d_cad = svc.decide_execution_policy("EXTERNAL_APP_HOLD")
         d_bid = svc.decide_execution_policy("USER_DIRECT_REQUIRED")
         both_blocked = not d_cad.server_executable and not d_bid.server_executable
-        results.append(
-            item(
-                "pl-17",
-                "PASS" if both_blocked else "FAIL",
-                f"CAD is_external_app_hold={d_cad.is_external_app_hold} is_blocked={d_cad.is_blocked}, "
-                f"BID server_executable={d_bid.server_executable}",
-            )
+        return _item(
+            "pl-17",
+            "PASS" if both_blocked else "FAIL",
+            f"CAD is_external_app_hold={d_cad.is_external_app_hold} is_blocked={d_cad.is_blocked}, "
+            f"BID server_executable={d_bid.server_executable}",
         )
     except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
-        results.append(item("pl-17", "WARN", f"판정 호출 실패: {e}"))
+        return _item("pl-17", "WARN", f"판정 호출 실패: {e}")
 
+
+def _check_oauth_blocked() -> dict:
     # pl-18: OAuth 차단 — decide_execution_policy(classification) 사용
     try:
         eps = importlib.import_module("ai_orchestrator.services.execution_policy_service")
         svc = eps.ExecutionPolicyService()
         d = svc.decide_execution_policy("OFFICIAL_API_OR_OAUTH_REQUIRED")
-        results.append(
-            item(
-                "pl-18",
-                "PASS" if d.requires_oauth_setup or d.is_blocked else "FAIL",
-                f"requires_oauth_setup={d.requires_oauth_setup} is_blocked={d.is_blocked}",
-            )
+        return _item(
+            "pl-18",
+            "PASS" if d.requires_oauth_setup or d.is_blocked else "FAIL",
+            f"requires_oauth_setup={d.requires_oauth_setup} is_blocked={d.is_blocked}",
         )
     except Exception as e:  # noqa: BLE001 - 정책 레지스트리/비밀 마스킹 계약 자체검증 스크립트 - import/판정 호출 실패를 체크리스트 WARN/FAIL로 기록(실제 정책 강제가 아닌 감사 리포트)
-        results.append(item("pl-18", "WARN", f"판정 호출 실패: {e}"))
+        return _item("pl-18", "WARN", f"판정 호출 실패: {e}")
+
+
+def run_audit() -> dict[str, Any]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: pl-01~18 체크 블록을 _check_*() 함수로 분리(순서·조건·
+    # 문자열 그대로).
+    results: list[dict[str, Any]] = []
+    results.extend(_check_policy_files_exist())
+    results.extend(_check_policy_registry())
+    results.extend(_check_secret_redaction())
+    results.append(_check_execution_policy_service_linked())
+    results.append(_check_cad_bid_blocked())
+    results.append(_check_oauth_blocked())
 
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}
     for r in results:
