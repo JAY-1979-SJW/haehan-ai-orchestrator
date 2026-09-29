@@ -6,26 +6,27 @@ ASSISTANT_BACKEND_RUNTIME_STORAGE_PERSISTENCE_AUDIT_01
 실제 docker-compose 수정 / volume 변경 / 컨테이너 재시작 / 서버 반영 전면 금지.
 파일 경로·존재 여부·크기·민감도 확인만 수행.
 """
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
-AUDIT_ID   = "BACKEND_RUNTIME_STORAGE_PERSISTENCE_AUDIT"
+AUDIT_ID = "BACKEND_RUNTIME_STORAGE_PERSISTENCE_AUDIT"
 AUDIT_DATE = "2026-05-18"
 
 # ── 운영 안전 플래그 ─────────────────────────────────────────────────────────
-SERVER_APPLY_ALLOWED         = False
-DOCKER_MODIFICATION_ALLOWED  = False
-CONTAINER_RESTART_ALLOWED    = False
-SECRET_VALUE_OUTPUT_ALLOWED  = False
-READ_ONLY_AUDIT              = True
+SERVER_APPLY_ALLOWED = False
+DOCKER_MODIFICATION_ALLOWED = False
+CONTAINER_RESTART_ALLOWED = False
+SECRET_VALUE_OUTPUT_ALLOWED = False
+READ_ONLY_AUDIT = True
 
 # ── 분류 코드 ─────────────────────────────────────────────────────────────────
-EPHEMERAL_SECURITY_SENSITIVE    = "EPHEMERAL_SECURITY_SENSITIVE"
-PERSISTENT_AUDIT_REQUIRED       = "PERSISTENT_AUDIT_REQUIRED"
-PERSISTENT_OPERATION_REQUIRED   = "PERSISTENT_OPERATION_REQUIRED"
-RUNTIME_CACHE_DISPOSABLE        = "RUNTIME_CACHE_DISPOSABLE"
-FORBIDDEN_PLAINTEXT_SECRET      = "FORBIDDEN_PLAINTEXT_SECRET"
+EPHEMERAL_SECURITY_SENSITIVE = "EPHEMERAL_SECURITY_SENSITIVE"
+PERSISTENT_AUDIT_REQUIRED = "PERSISTENT_AUDIT_REQUIRED"
+PERSISTENT_OPERATION_REQUIRED = "PERSISTENT_OPERATION_REQUIRED"
+RUNTIME_CACHE_DISPOSABLE = "RUNTIME_CACHE_DISPOSABLE"
+FORBIDDEN_PLAINTEXT_SECRET = "FORBIDDEN_PLAINTEXT_SECRET"
 
 # ── docker mount 현황 (컨테이너 inspect 결과 기준) ───────────────────────────
 DOCKER_MOUNTS_SUMMARY = {
@@ -263,11 +264,9 @@ SECURITY_FINDINGS = {
 }
 
 
-def run_audit() -> dict:
+def _check_safety_flags() -> list[str]:
+    """1. 운영 안전 플래그."""
     errors = []
-    warnings = []
-
-    # 1. 운영 안전 플래그
     if SERVER_APPLY_ALLOWED:
         errors.append("SERVER_APPLY_ALLOWED must be False")
     if DOCKER_MODIFICATION_ALLOWED:
@@ -278,16 +277,23 @@ def run_audit() -> dict:
         errors.append("SECRET_VALUE_OUTPUT_ALLOWED must be False")
     if not READ_ONLY_AUDIT:
         errors.append("READ_ONLY_AUDIT must be True")
+    return errors
 
-    # 2. 보안 — 평문 secret 출력 없음
+
+def _check_no_plaintext_secret_output() -> list[str]:
+    """2. 보안 — 평문 secret 출력 없음."""
+    errors = []
     if SECURITY_FINDINGS["plaintext_secret_detected"]:
         errors.append("FORBIDDEN: 평문 secret 감지됨 — 즉시 STOP")
     if SECURITY_FINDINGS["token_value_output"]:
         errors.append("FORBIDDEN: token 원문 출력됨")
     if SECURITY_FINDINGS["cookie_value_output"]:
         errors.append("FORBIDDEN: cookie 원문 출력됨")
+    return errors
 
-    # 3. 필수 분류 항목 존재
+
+def _check_required_classification_keys() -> list[str]:
+    """3. 필수 분류 항목 존재."""
     required_keys = [
         "approval_tokens_jsonl",
         "execution_history_jsonl",
@@ -295,12 +301,13 @@ def run_audit() -> dict:
         "chrome_ui_monitor_state",
         "task_states_jsonl",
     ]
-    for k in required_keys:
-        if k not in STORAGE_CLASSIFICATION:
-            errors.append(f"분류 누락: {k}")
+    return [f"분류 누락: {k}" for k in required_keys if k not in STORAGE_CLASSIFICATION]
 
-    # 4. 분류 정확성
+
+def _check_classification_accuracy() -> list[str]:
+    """4. 분류 정확성."""
     sc = STORAGE_CLASSIFICATION
+    errors = []
     if sc.get("audit_logs_jsonl", {}).get("current_classification") != PERSISTENT_AUDIT_REQUIRED:
         errors.append("audit_logs는 PERSISTENT_AUDIT_REQUIRED여야 함")
     if sc.get("task_states_jsonl", {}).get("current_classification") != PERSISTENT_OPERATION_REQUIRED:
@@ -311,21 +318,41 @@ def run_audit() -> dict:
         errors.append("approval_tokens_jsonl는 EPHEMERAL_SECURITY_SENSITIVE여야 함")
     if sc.get("execution_history_jsonl", {}).get("current_classification") != PERSISTENT_OPERATION_REQUIRED:
         errors.append("execution_history는 PERSISTENT_OPERATION_REQUIRED여야 함")
+    return errors
 
-    # 5. persistence_risk 항목 — warning
-    for key, item in sc.items():
-        if item.get("verdict") == "PERSISTENCE_RISK":
-            warnings.append(f"PERSISTENCE_RISK: {key} → {item.get('recommended_storage','')}")
 
-    # 6. docker mount 요약 존재
+def _check_persistence_risks() -> list[str]:
+    """5. persistence_risk 항목 — warning."""
+    return [
+        f"PERSISTENCE_RISK: {key} → {item.get('recommended_storage', '')}"
+        for key, item in STORAGE_CLASSIFICATION.items()
+        if item.get("verdict") == "PERSISTENCE_RISK"
+    ]
+
+
+def _check_docker_mounts_and_followup() -> list[str]:
+    """6. docker mount 요약 존재, 7. 후속 설계 존재."""
+    errors = []
     if not DOCKER_MOUNTS_SUMMARY.get("mounts"):
         errors.append("docker mount 요약 없음")
-
-    # 7. 후속 설계 존재
     if not RECOMMENDED_BIND_MOUNT_PLAN.get("next_phase"):
         errors.append("후속 공정 정의 없음")
     if RECOMMENDED_BIND_MOUNT_PLAN.get("implementation_allowed_this_phase"):
         errors.append("이번 공정에서 docker-compose 구현 금지")
+    return errors
+
+
+def run_audit() -> dict:
+    # 2026-09-29 STD-08(복잡도) 리팩터: 원본 주석의 1.~7. 번호 섹션을 _check_*() 함수로
+    # 분리(순서·조건·문자열 그대로) — #48/#49/#51 과 같은 계열.
+    errors: list[str] = []
+    warnings: list[str] = []
+    errors.extend(_check_safety_flags())
+    errors.extend(_check_no_plaintext_secret_output())
+    errors.extend(_check_required_classification_keys())
+    errors.extend(_check_classification_accuracy())
+    warnings.extend(_check_persistence_risks())
+    errors.extend(_check_docker_mounts_and_followup())
 
     if errors:
         verdict = "RUNTIME_STORAGE_PERSISTENCE_AUDIT_BLOCKED"
@@ -356,7 +383,9 @@ def run_audit() -> dict:
         },
         "classification_counts": classification_counts,
         "persistence_risks": [k for k, v in STORAGE_CLASSIFICATION.items() if v.get("verdict") == "PERSISTENCE_RISK"],
-        "correctly_persisted": [k for k, v in STORAGE_CLASSIFICATION.items() if v.get("verdict") == "CORRECTLY_PERSISTED"],
+        "correctly_persisted": [
+            k for k, v in STORAGE_CLASSIFICATION.items() if v.get("verdict") == "CORRECTLY_PERSISTED"
+        ],
         "flagged_for_review": SECURITY_FINDINGS["flagged_for_review"],
         "recommended_bind_mount_additions": len(RECOMMENDED_BIND_MOUNT_PLAN["recommended_additions"]),
         "next_phase": RECOMMENDED_BIND_MOUNT_PLAN["next_phase"],
@@ -367,6 +396,7 @@ def run_audit() -> dict:
 
 if __name__ == "__main__":
     import json
+
     result = run_audit()
     print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     print(f"\n=== Runtime Storage Persistence Audit: {result['verdict']} ===")
