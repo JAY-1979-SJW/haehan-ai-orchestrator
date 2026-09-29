@@ -29,6 +29,7 @@ import contextlib
 import re
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -587,6 +588,140 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
 
 # ── CLI (대화형 REPL) ──────────────────────────────────────────────────────────
+def _cli_go(agent: BrowserAgent, arg: str) -> None:
+    r = agent.go(arg)
+    print("→", agent.page.url, "✓" if r else f"✗ {r.error}")
+
+
+def _cli_click(agent: BrowserAgent, arg: str) -> None:
+    r = agent.click_text(arg)
+    print("클릭", "✓" if r else f"✗ {r.error}")
+    if r:
+        print("현재:", agent.page.url)
+
+
+def _cli_read(agent: BrowserAgent, arg: str) -> None:
+    print(agent.read()[:2000])
+
+
+def _cli_links(agent: BrowserAgent, arg: str) -> None:
+    links = agent.extract_links(filter_href=arg)
+    for l in links[:30]:  # noqa: E741
+        print(f"  [{l['text'][:40]:40}] {l['href']}")
+    print(f"  총 {len(links)}개")
+
+
+def _cli_back(agent: BrowserAgent, arg: str) -> None:
+    agent.back()
+    print("→", agent.page.url)
+
+
+def _cli_scroll(agent: BrowserAgent, arg: str) -> None:
+    agent.scroll(arg or "down")
+
+
+def _cli_cafes(agent: BrowserAgent, arg: str) -> None:
+    cafes = agent.naver_cafe_list()
+    for i, c in enumerate(cafes, 1):
+        print(f"  {i:2}. {c['text'][:45]:45} | {c['href']}")
+    print(f"  총 {len(cafes)}개")
+
+
+def _cli_info(agent: BrowserAgent, arg: str) -> None:
+    url = arg or agent.page.url
+    info = agent.cafe_info(url)
+    print(f"카페명   : {info['name']}")
+    print(f"운영자   : {info['manager']}")
+    print(f"개설일   : {info['opened_at']}")
+    print(f"등급     : {info['grade']}")
+    print(f"멤버수   : {info['member_count']}")
+    print(f"게시판   : {len(info['boards'])}개")
+    for b in info["boards"][:20]:
+        print(f"  - {b['name'][:30]:30} | {b['href'][:80]}")
+
+
+def _cli_boards(agent: BrowserAgent, arg: str) -> None:
+    url = arg or agent.page.url
+    boards = agent.cafe_boards(url)
+    for i, b in enumerate(boards, 1):
+        print(f"  {i:2}. {b['name'][:35]:35} | menuid={b['menu_id']}")
+    print(f"  총 {len(boards)}개")
+
+
+def _cli_posts(agent: BrowserAgent, arg: str) -> None:
+    parts2 = arg.split(None, 1)
+    url = parts2[0] if parts2 else agent.page.url
+    board = parts2[1] if len(parts2) > 1 else "전체글보기"
+    posts = agent.cafe_posts(url, board)
+    for i, p in enumerate(posts, 1):
+        cmt = f"[{p.get('comments', '?')}]" if p.get("comments") else ""
+        print(f"  {i:2}. {p['title'][:45]:45} {cmt} {p.get('date', '')}")
+    print(f"  총 {len(posts)}개")
+
+
+def _cli_popular(agent: BrowserAgent, arg: str) -> None:
+    url = arg or agent.page.url
+    posts = agent.cafe_popular(url)
+    for i, p in enumerate(posts, 1):
+        cmt = f"[{p.get('comments', '?')}]" if p.get("comments") else ""
+        print(f"  {i:2}. {p['title'][:45]:45} {cmt} {p.get('views', '')}조회")
+    print(f"  총 {len(posts)}개")
+
+
+def _cli_search(agent: BrowserAgent, arg: str) -> None:
+    parts2 = arg.split(None, 1)
+    if len(parts2) < 2:
+        print("사용법: search <카페URL> <검색어>")
+    else:
+        posts = agent.cafe_search(parts2[0], parts2[1])
+        for i, p in enumerate(posts, 1):
+            print(f"  {i:2}. {p['title'][:50]:50} {p.get('date', '')}")
+        print(f"  총 {len(posts)}개")
+
+
+def _cli_article(agent: BrowserAgent, arg: str) -> None:
+    r = agent.read_article(arg or agent.page.url)
+    print(f"제목   : {r['title']}")
+    print(f"작성자 : {r['author']} | {r['written_at']}")
+    print(f"조회수 : {r['view_count']} | 좋아요: {r['like_count']} | 댓글: {r['comment_count']}")
+    print(f"태그   : {r['tags']}")
+    print(f"본문({len(r['body'])}자):")
+    print(r["body"][:1000])
+    if r["comments"]:
+        print(f"\n댓글 {len(r['comments'])}개:")
+        for c in r["comments"]:
+            print(f"  [{c['author']}] {c['written_at']}: {c['body'][:80]}")
+
+
+def _cli_pageinfo(agent: BrowserAgent, arg: str) -> None:
+    info = agent.page_info()
+    print(f"URL  : {info.url}")
+    print(f"제목 : {info.title}")
+    print(f"텍스트 ({len(info.text)}자):")
+    print(info.text[:800])
+
+
+# action 문자열 → 실행 함수. 원래 _cli() 의 if/elif action == ... 순서를 그대로 옮긴 것 —
+# 동작은 동일하다(2026-09-29 STD-08: if/elif 14개가 mccabe/pylint 에 "분기 14개"로 그대로
+# 잡혀 dict 조회로 바꿨다). quit/exit/q 는 while 루프를 직접 break 해야 해서 그대로 남김.
+_CLI_ACTIONS: dict[str, Callable[[BrowserAgent, str], None]] = {
+    "go": _cli_go,
+    "click": _cli_click,
+    "read": _cli_read,
+    "links": _cli_links,
+    "back": _cli_back,
+    "scroll": _cli_scroll,
+    "cafes": _cli_cafes,
+    "info": _cli_info,
+    "boards": _cli_boards,
+    "posts": _cli_posts,
+    "popular": _cli_popular,
+    "search": _cli_search,
+    "article": _cli_article,
+    "pageinfo": _cli_pageinfo,
+}
+
+
 def _cli():
     """간단한 대화형 브라우저 제어 REPL."""
     print("BrowserAgent CLI — CDP Chrome 제어")
@@ -621,93 +756,11 @@ def _cli():
 
             if action in ("quit", "exit", "q"):
                 break
-            elif action == "go":
-                r = agent.go(arg)
-                print("→", agent.page.url, "✓" if r else f"✗ {r.error}")
-            elif action == "click":
-                r = agent.click_text(arg)
-                print("클릭", "✓" if r else f"✗ {r.error}")
-                if r:
-                    print("현재:", agent.page.url)
-            elif action == "read":
-                print(agent.read()[:2000])
-            elif action == "links":
-                links = agent.extract_links(filter_href=arg)
-                for l in links[:30]:  # noqa: E741
-                    print(f"  [{l['text'][:40]:40}] {l['href']}")
-                print(f"  총 {len(links)}개")
-            elif action == "back":
-                agent.back()
-                print("→", agent.page.url)
-            elif action == "scroll":
-                agent.scroll(arg or "down")
-            elif action == "cafes":
-                cafes = agent.naver_cafe_list()
-                for i, c in enumerate(cafes, 1):
-                    print(f"  {i:2}. {c['text'][:45]:45} | {c['href']}")
-                print(f"  총 {len(cafes)}개")
-            elif action == "info":
-                url = arg or agent.page.url
-                info = agent.cafe_info(url)
-                print(f"카페명   : {info['name']}")
-                print(f"운영자   : {info['manager']}")
-                print(f"개설일   : {info['opened_at']}")
-                print(f"등급     : {info['grade']}")
-                print(f"멤버수   : {info['member_count']}")
-                print(f"게시판   : {len(info['boards'])}개")
-                for b in info["boards"][:20]:
-                    print(f"  - {b['name'][:30]:30} | {b['href'][:80]}")
-            elif action == "boards":
-                url = arg or agent.page.url
-                boards = agent.cafe_boards(url)
-                for i, b in enumerate(boards, 1):
-                    print(f"  {i:2}. {b['name'][:35]:35} | menuid={b['menu_id']}")
-                print(f"  총 {len(boards)}개")
-            elif action == "posts":
-                parts2 = arg.split(None, 1)
-                url = parts2[0] if parts2 else agent.page.url
-                board = parts2[1] if len(parts2) > 1 else "전체글보기"
-                posts = agent.cafe_posts(url, board)
-                for i, p in enumerate(posts, 1):
-                    cmt = f"[{p.get('comments', '?')}]" if p.get("comments") else ""
-                    print(f"  {i:2}. {p['title'][:45]:45} {cmt} {p.get('date', '')}")
-                print(f"  총 {len(posts)}개")
-            elif action == "popular":
-                url = arg or agent.page.url
-                posts = agent.cafe_popular(url)
-                for i, p in enumerate(posts, 1):
-                    cmt = f"[{p.get('comments', '?')}]" if p.get("comments") else ""
-                    print(f"  {i:2}. {p['title'][:45]:45} {cmt} {p.get('views', '')}조회")
-                print(f"  총 {len(posts)}개")
-            elif action == "search":
-                parts2 = arg.split(None, 1)
-                if len(parts2) < 2:
-                    print("사용법: search <카페URL> <검색어>")
-                else:
-                    posts = agent.cafe_search(parts2[0], parts2[1])
-                    for i, p in enumerate(posts, 1):
-                        print(f"  {i:2}. {p['title'][:50]:50} {p.get('date', '')}")
-                    print(f"  총 {len(posts)}개")
-            elif action == "article":
-                r = agent.read_article(arg or agent.page.url)
-                print(f"제목   : {r['title']}")
-                print(f"작성자 : {r['author']} | {r['written_at']}")
-                print(f"조회수 : {r['view_count']} | 좋아요: {r['like_count']} | 댓글: {r['comment_count']}")
-                print(f"태그   : {r['tags']}")
-                print(f"본문({len(r['body'])}자):")
-                print(r["body"][:1000])
-                if r["comments"]:
-                    print(f"\n댓글 {len(r['comments'])}개:")
-                    for c in r["comments"]:
-                        print(f"  [{c['author']}] {c['written_at']}: {c['body'][:80]}")
-            elif action == "pageinfo":
-                info = agent.page_info()
-                print(f"URL  : {info.url}")
-                print(f"제목 : {info.title}")
-                print(f"텍스트 ({len(info.text)}자):")
-                print(info.text[:800])
-            else:
+            handler = _CLI_ACTIONS.get(action)
+            if handler is None:
                 print(f"알 수 없는 명령: {action}")
+                continue
+            handler(agent, arg)
 
 
 if __name__ == "__main__":
