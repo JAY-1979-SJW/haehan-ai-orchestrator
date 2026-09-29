@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 BLUEPRINT = ROOT / "docs" / "baseline" / "AI_AGENT_UI_STRUCTURE_BLUEPRINT.md"
 APP_BASELINE = ROOT / "docs" / "baseline" / "AI_AGENT_APP_STRUCTURE_DESIGN_BASELINE.md"
@@ -40,36 +39,44 @@ REQUIRED_HOME_TOKENS = [
 ]
 
 
-def audit() -> tuple[bool, list[str]]:
+def _check_tokens(text: str, tokens: list[str], missing_msg: str, pass_msg: str) -> tuple[bool, list[str]]:
+    """공통 토큰 검사(2026-09-29 STD-08 분리) — 없는 토큰마다 실패 기록, 전부 있으면 PASS 1건."""
     ok = True
     findings: list[str] = []
+    for token in tokens:
+        if token not in text:
+            ok = False
+            findings.append(f"[FAIL] {missing_msg}: {token}")
+    if all(token in text for token in tokens):
+        findings.append(f"[PASS] {pass_msg}")
+    return ok, findings
+
+
+def audit() -> tuple[bool, list[str]]:
     if not BLUEPRINT.exists():
         return False, [f"[FAIL] missing UI blueprint: {BLUEPRINT}"]
     blueprint = BLUEPRINT.read_text(encoding="utf-8")
-    for token in REQUIRED_BLUEPRINT_TOKENS:
-        if token not in blueprint:
-            ok = False
-            findings.append(f"[FAIL] missing UI blueprint token: {token}")
-    if all(token in blueprint for token in REQUIRED_BLUEPRINT_TOKENS):
-        findings.append("[PASS] AI agent UI structure blueprint is locked")
+    ok1, f1 = _check_tokens(
+        blueprint, REQUIRED_BLUEPRINT_TOKENS, "missing UI blueprint token", "AI agent UI structure blueprint is locked"
+    )
 
     app_text = APP_BASELINE.read_text(encoding="utf-8") if APP_BASELINE.exists() else ""
-    for token in REQUIRED_APP_TOKENS:
-        if token not in app_text:
-            ok = False
-            findings.append(f"[FAIL] app baseline missing UI blueprint token: {token}")
-    if all(token in app_text for token in REQUIRED_APP_TOKENS):
-        findings.append("[PASS] app baseline references UI structure blueprint")
+    ok2, f2 = _check_tokens(
+        app_text,
+        REQUIRED_APP_TOKENS,
+        "app baseline missing UI blueprint token",
+        "app baseline references UI structure blueprint",
+    )
 
     home_text = HOME_PAGE.read_text(encoding="utf-8") if HOME_PAGE.exists() else ""
-    for token in REQUIRED_HOME_TOKENS:
-        if token not in home_text:
-            ok = False
-            findings.append(f"[FAIL] home dashboard missing UI blueprint token: {token}")
-    if all(token in home_text for token in REQUIRED_HOME_TOKENS):
-        findings.append("[PASS] home dashboard exposes UI blueprint artifact")
+    ok3, f3 = _check_tokens(
+        home_text,
+        REQUIRED_HOME_TOKENS,
+        "home dashboard missing UI blueprint token",
+        "home dashboard exposes UI blueprint artifact",
+    )
 
-    return ok, findings
+    return ok1 and ok2 and ok3, f1 + f2 + f3
 
 
 def main() -> int:

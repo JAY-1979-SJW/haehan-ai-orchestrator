@@ -3,11 +3,12 @@
 앱 MVP용 read-only endpoint 후보와 계약이 안전한지 검증한다.
 실제 구현 공정이 아님 — 계약·schema·보안경계 확정 prep 공정.
 """
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -177,8 +178,14 @@ ENDPOINT_CONTRACT_MATRIX = [
         "error_schema": {"ok": False, "error_code": "string", "message": "string", "detail_redacted": True},
         "redaction_required": True,
         "sensitive_fields_forbidden": [
-            "raw_token", "access_token", "refresh_token", "cookie",
-            "session_secret", "password", "approval_token_raw", "private_key",
+            "raw_token",
+            "access_token",
+            "refresh_token",
+            "cookie",
+            "session_secret",
+            "password",
+            "approval_token_raw",
+            "private_key",
         ],
         "next_phase": "APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_PLAN_01",
         "status": "FUTURE_ENDPOINT_REQUIRED",
@@ -223,8 +230,12 @@ ENDPOINT_CONTRACT_MATRIX = [
         "error_schema": {"ok": False, "error_code": "string", "message": "string", "detail_redacted": True},
         "redaction_required": True,
         "sensitive_fields_forbidden": [
-            "approval_token_raw", "raw_token", "cookie", "password",
-            "execute_url", "approve_action_url",
+            "approval_token_raw",
+            "raw_token",
+            "cookie",
+            "password",
+            "execute_url",
+            "approve_action_url",
         ],
         "approval_token_raw_forbidden": True,
         "execute_url_forbidden": True,
@@ -335,38 +346,38 @@ ENDPOINT_CONTRACT_MATRIX = [
 # ── forbidden endpoint matrix ─────────────────────────────────────────────────
 
 FORBIDDEN_ENDPOINT_MATRIX = [
-    {"endpoint": "POST /api/v1/app/tasks",           "reason": "task 실행 금지"},
+    {"endpoint": "POST /api/v1/app/tasks", "reason": "task 실행 금지"},
     {"endpoint": "POST /api/v1/app/tasks/{id}/execute", "reason": "execute 금지"},
     {"endpoint": "POST /api/v1/app/tasks/{id}/approve", "reason": "approve→execute 금지"},
-    {"endpoint": "POST /api/v1/app/tasks/{id}/reject",  "reason": "reject 금지"},
-    {"endpoint": "POST /api/v1/app/deploy",          "reason": "배포 trigger 금지"},
-    {"endpoint": "POST /api/v1/app/restart",         "reason": "서버 재시작 금지"},
-    {"endpoint": "POST /api/v1/app/docker-compose",  "reason": "docker compose 조작 금지"},
+    {"endpoint": "POST /api/v1/app/tasks/{id}/reject", "reason": "reject 금지"},
+    {"endpoint": "POST /api/v1/app/deploy", "reason": "배포 trigger 금지"},
+    {"endpoint": "POST /api/v1/app/restart", "reason": "서버 재시작 금지"},
+    {"endpoint": "POST /api/v1/app/docker-compose", "reason": "docker compose 조작 금지"},
     {"endpoint": "POST /api/v1/app/external-sites/{id}/submit", "reason": "외부 사이트 submit 금지"},
-    {"endpoint": "POST /api/v1/app/dns/save",        "reason": "DNS 저장 금지"},
-    {"endpoint": "POST /api/v1/app/payment",         "reason": "결제 금지"},
-    {"endpoint": "POST /api/v1/app/execute",         "reason": "실행 금지"},
-    {"endpoint": "POST /api/v1/inbox/email/fetch",   "reason": "inbox fetch mutation 금지"},
-    {"endpoint": "DELETE /api/v1/app/tasks/{id}",    "reason": "task 삭제 금지"},
-    {"endpoint": "PUT /api/v1/app/tasks/{id}",       "reason": "task 수정 금지"},
+    {"endpoint": "POST /api/v1/app/dns/save", "reason": "DNS 저장 금지"},
+    {"endpoint": "POST /api/v1/app/payment", "reason": "결제 금지"},
+    {"endpoint": "POST /api/v1/app/execute", "reason": "실행 금지"},
+    {"endpoint": "POST /api/v1/inbox/email/fetch", "reason": "inbox fetch mutation 금지"},
+    {"endpoint": "DELETE /api/v1/app/tasks/{id}", "reason": "task 삭제 금지"},
+    {"endpoint": "PUT /api/v1/app/tasks/{id}", "reason": "task 수정 금지"},
 ]
 
 # ── redaction policy matrix ────────────────────────────────────────────────────
 
 REDACTION_POLICY_MATRIX = [
-    {"field": "raw_token",            "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "access_token",         "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "refresh_token",        "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "cookie",               "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "session_secret",       "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "password",             "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "approval_token_raw",   "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "private_key",          "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "certificate_password", "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "all endpoints"},
-    {"field": "approval_token_id",    "policy": "REDACTED_OR_NULL",       "applies_to": "tasks endpoint"},
-    {"field": "audit_log_payload",    "policy": "REDACTED_SUMMARY_ONLY",  "applies_to": "audit logs endpoint"},
-    {"field": "execute_url",          "policy": "FORBIDDEN_IN_RESPONSE",  "applies_to": "tasks endpoint"},
-    {"field": "approve_action_url",   "policy": "FORBIDDEN_AS_ACTION",    "applies_to": "tasks endpoint"},
+    {"field": "raw_token", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "access_token", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "refresh_token", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "cookie", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "session_secret", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "password", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "approval_token_raw", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "private_key", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "certificate_password", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all endpoints"},
+    {"field": "approval_token_id", "policy": "REDACTED_OR_NULL", "applies_to": "tasks endpoint"},
+    {"field": "audit_log_payload", "policy": "REDACTED_SUMMARY_ONLY", "applies_to": "audit logs endpoint"},
+    {"field": "execute_url", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "tasks endpoint"},
+    {"field": "approve_action_url", "policy": "FORBIDDEN_AS_ACTION", "applies_to": "tasks endpoint"},
 ]
 
 # ── priority matrix ─────────────────────────────────────────────────────────────
@@ -418,12 +429,23 @@ NEXT_PHASE_MATRIX = [
 ]
 
 PROVIDERS_REQUIRED = [
-    "GABIA", "KAKAO", "NAVER", "NAVER_SMARTSTORE", "GOOGLE", "HIWORKS",
-    "G2B_NARA", "HOMETAX", "WETAX", "GOVERNMENT24", "EMAIL_GENERIC", "BANK_GENERIC",
+    "GABIA",
+    "KAKAO",
+    "NAVER",
+    "NAVER_SMARTSTORE",
+    "GOOGLE",
+    "HIWORKS",
+    "G2B_NARA",
+    "HOMETAX",
+    "WETAX",
+    "GOVERNMENT24",
+    "EMAIL_GENERIC",
+    "BANK_GENERIC",
 ]
 
 
 # ── audit logic ────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class CheckResult:
@@ -454,8 +476,7 @@ class AuditReport:
             "warned": warned,
             "failed": failed,
             "total": len(self.checks),
-            "checks": [{"name": c.name, "status": c.status, "message": c.message}
-                       for c in self.checks],
+            "checks": [{"name": c.name, "status": c.status, "message": c.message} for c in self.checks],
         }
 
 
@@ -467,13 +488,19 @@ def check_global_flags(report: AuditReport) -> None:
         (SERVER_ACTION_ALLOWED, False, "server_action_allowed=false"),
     ]:
         if flag == val:
-            report.add(f"flag_{name.replace('=','_').replace('.','_')}", "PASS", name)
+            report.add(f"flag_{name.replace('=', '_').replace('.', '_')}", "PASS", name)
         else:
-            report.add(f"flag_{name.replace('=','_').replace('.','_')}", "FAIL",
-                       f"{name} 위반 — 값={flag}")
+            report.add(f"flag_{name.replace('=', '_').replace('.', '_')}", "FAIL", f"{name} 위반 — 값={flag}")
 
 
-def check_endpoint_matrix(report: AuditReport) -> None:
+def _check_endpoint_count(endpoints: list[str], report: AuditReport) -> None:
+    if len(endpoints) >= 5:
+        report.add("endpoint_count_5plus", "PASS", f"endpoint {len(endpoints)}개 정의")
+    else:
+        report.add("endpoint_count_5plus", "FAIL", f"endpoint {len(endpoints)}개 — 5개 미만")
+
+
+def _check_required_endpoints_present(endpoints: list[str], report: AuditReport) -> None:
     required_endpoints = [
         "GET /api/v1/app/health/summary",
         "GET /api/v1/app/providers",
@@ -482,54 +509,49 @@ def check_endpoint_matrix(report: AuditReport) -> None:
         "GET /api/v1/app/tasks",
         "GET /api/v1/app/deployment/status",
     ]
-    endpoints = [e["endpoint"] for e in ENDPOINT_CONTRACT_MATRIX]
-    if len(endpoints) >= 5:
-        report.add("endpoint_count_5plus", "PASS", f"endpoint {len(endpoints)}개 정의")
-    else:
-        report.add("endpoint_count_5plus", "FAIL", f"endpoint {len(endpoints)}개 — 5개 미만")
-
     for req in required_endpoints:
+        slug = req.replace("/", "_").replace(" ", "_").lower()
         if req in endpoints:
-            slug = req.replace("/", "_").replace(" ", "_").lower()
             report.add(f"endpoint_{slug[:50]}", "PASS", f"{req} 존재")
         else:
-            slug = req.replace("/", "_").replace(" ", "_").lower()
             report.add(f"endpoint_{slug[:50]}", "FAIL", f"{req} 없음")
 
-    # 전체 GET 검증
+
+def _check_all_endpoints_get(report: AuditReport) -> None:
     non_get = [e["endpoint"] for e in ENDPOINT_CONTRACT_MATRIX if e.get("method") != "GET"]
     if not non_get:
         report.add("all_endpoints_get", "PASS", "모든 endpoint method=GET")
     else:
         report.add("all_endpoints_get", "FAIL", f"GET 아닌 endpoint: {non_get}")
 
-    # mutation_allowed=false
-    mutation_violations = [e["endpoint"] for e in ENDPOINT_CONTRACT_MATRIX if e.get("mutation_allowed") is not False]
-    if not mutation_violations:
-        report.add("all_mutation_allowed_false", "PASS", "전체 mutation_allowed=false")
-    else:
-        report.add("all_mutation_allowed_false", "FAIL", f"mutation_allowed 위반: {mutation_violations}")
 
-    # side_effect_allowed=false
-    side_violations = [e["endpoint"] for e in ENDPOINT_CONTRACT_MATRIX if e.get("side_effect_allowed") is not False]
-    if not side_violations:
-        report.add("all_side_effect_false", "PASS", "전체 side_effect_allowed=false")
+def _check_endpoint_flag_all_false(report: AuditReport, attr: str, check_name: str, pass_msg: str) -> None:
+    """mutation_allowed/side_effect_allowed/implementation_allowed_now/frontend_wiring_allowed_now
+    전부 False 여야 하는 4개 검사가 같은 모양이라 하나로 묶었다(2026-09-29 STD-08 분리)."""
+    violations = [e["endpoint"] for e in ENDPOINT_CONTRACT_MATRIX if e.get(attr) is not False]
+    if not violations:
+        report.add(check_name, "PASS", pass_msg)
     else:
-        report.add("all_side_effect_false", "FAIL", f"side_effect_allowed 위반: {side_violations}")
+        report.add(check_name, "FAIL", f"{attr} 위반: {violations}")
 
-    # implementation_allowed_now=false
-    impl_violations = [e["endpoint"] for e in ENDPOINT_CONTRACT_MATRIX if e.get("implementation_allowed_now") is not False]
-    if not impl_violations:
-        report.add("all_impl_not_allowed", "PASS", "전체 implementation_allowed_now=false")
-    else:
-        report.add("all_impl_not_allowed", "FAIL", f"implementation_allowed_now 위반: {impl_violations}")
 
-    # frontend_wiring_allowed_now=false
-    wiring_violations = [e["endpoint"] for e in ENDPOINT_CONTRACT_MATRIX if e.get("frontend_wiring_allowed_now") is not False]
-    if not wiring_violations:
-        report.add("all_wiring_not_allowed", "PASS", "전체 frontend_wiring_allowed_now=false")
-    else:
-        report.add("all_wiring_not_allowed", "FAIL", f"frontend_wiring_allowed_now 위반: {wiring_violations}")
+def check_endpoint_matrix(report: AuditReport) -> None:
+    endpoints = [e["endpoint"] for e in ENDPOINT_CONTRACT_MATRIX]
+    _check_endpoint_count(endpoints, report)
+    _check_required_endpoints_present(endpoints, report)
+    _check_all_endpoints_get(report)
+    _check_endpoint_flag_all_false(
+        report, "mutation_allowed", "all_mutation_allowed_false", "전체 mutation_allowed=false"
+    )
+    _check_endpoint_flag_all_false(
+        report, "side_effect_allowed", "all_side_effect_false", "전체 side_effect_allowed=false"
+    )
+    _check_endpoint_flag_all_false(
+        report, "implementation_allowed_now", "all_impl_not_allowed", "전체 implementation_allowed_now=false"
+    )
+    _check_endpoint_flag_all_false(
+        report, "frontend_wiring_allowed_now", "all_wiring_not_allowed", "전체 frontend_wiring_allowed_now=false"
+    )
 
 
 def check_forbidden_matrix(report: AuditReport) -> None:
@@ -547,17 +569,24 @@ def check_forbidden_matrix(report: AuditReport) -> None:
     forbidden_endpoints = [e["endpoint"] for e in FORBIDDEN_ENDPOINT_MATRIX]
     for req in required_forbidden:
         if req in forbidden_endpoints:
-            report.add(f"forbidden_{req.replace('/', '_').replace(' ', '_').lower()[:50]}",
-                       "PASS", f"{req} forbidden 등록")
+            report.add(
+                f"forbidden_{req.replace('/', '_').replace(' ', '_').lower()[:50]}", "PASS", f"{req} forbidden 등록"
+            )
         else:
-            report.add(f"forbidden_{req.replace('/', '_').replace(' ', '_').lower()[:50]}",
-                       "FAIL", f"{req} forbidden 미등록")
+            report.add(
+                f"forbidden_{req.replace('/', '_').replace(' ', '_').lower()[:50]}", "FAIL", f"{req} forbidden 미등록"
+            )
 
 
 def check_redaction_policy(report: AuditReport) -> None:
     required_fields = [
-        "raw_token", "access_token", "refresh_token", "cookie",
-        "session_secret", "password", "approval_token_raw",
+        "raw_token",
+        "access_token",
+        "refresh_token",
+        "cookie",
+        "session_secret",
+        "password",
+        "approval_token_raw",
     ]
     redaction_fields = [r["field"] for r in REDACTION_POLICY_MATRIX]
     for field in required_fields:
@@ -575,8 +604,7 @@ def check_redaction_policy(report: AuditReport) -> None:
 
 
 def check_providers_schema(report: AuditReport) -> None:
-    provider_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX
-                        if "providers" in e["endpoint"]), None)
+    provider_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX if "providers" in e["endpoint"]), None)
     if not provider_ep:
         report.add("providers_schema", "FAIL", "providers endpoint 없음")
         return
@@ -598,8 +626,7 @@ def check_providers_schema(report: AuditReport) -> None:
 
 
 def check_storage_schema(report: AuditReport) -> None:
-    storage_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX
-                       if "storage" in e["endpoint"]), None)
+    storage_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX if "storage" in e["endpoint"]), None)
     if not storage_ep:
         report.add("storage_schema", "FAIL", "storage endpoint 없음")
         return
@@ -614,8 +641,7 @@ def check_storage_schema(report: AuditReport) -> None:
 
 
 def check_deployment_schema(report: AuditReport) -> None:
-    deploy_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX
-                      if "deployment" in e["endpoint"]), None)
+    deploy_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX if "deployment" in e["endpoint"]), None)
     if not deploy_ep:
         report.add("deployment_schema", "FAIL", "deployment endpoint 없음")
         return
@@ -627,8 +653,7 @@ def check_deployment_schema(report: AuditReport) -> None:
 
 
 def check_task_schema(report: AuditReport) -> None:
-    task_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX
-                    if e["endpoint"] == "GET /api/v1/app/tasks"), None)
+    task_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX if e["endpoint"] == "GET /api/v1/app/tasks"), None)
     if not task_ep:
         report.add("task_schema", "FAIL", "tasks endpoint 없음")
         return
@@ -647,8 +672,7 @@ def check_task_schema(report: AuditReport) -> None:
 
 
 def check_audit_logs_redaction(report: AuditReport) -> None:
-    audit_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX
-                     if "logs/audit" in e["endpoint"]), None)
+    audit_ep = next((e for e in ENDPOINT_CONTRACT_MATRIX if "logs/audit" in e["endpoint"]), None)
     if not audit_ep:
         report.add("audit_logs_schema", "FAIL", "audit logs endpoint 없음")
         return
@@ -665,19 +689,20 @@ def check_priority_matrix(report: AuditReport) -> None:
         report.add("priority_matrix_exists", "FAIL", "priority matrix 없음")
 
     priority1_eps = PRIORITY_MATRIX.get(1, {}).get("endpoints", [])
-    required_p1 = ["GET /api/v1/app/health/summary", "GET /api/v1/app/providers",
-                   "GET /api/v1/app/storage/status"]
+    required_p1 = ["GET /api/v1/app/health/summary", "GET /api/v1/app/providers", "GET /api/v1/app/storage/status"]
     for ep in required_p1:
         if ep in priority1_eps:
-            report.add(f"p1_{ep.replace('/','_').replace(' ','_').lower()[:40]}", "PASS",
-                       f"Priority 1에 {ep.split('/')[-1]} 포함")
+            report.add(
+                f"p1_{ep.replace('/', '_').replace(' ', '_').lower()[:40]}",
+                "PASS",
+                f"Priority 1에 {ep.split('/')[-1]} 포함",
+            )
         else:
-            report.add(f"p1_{ep.replace('/','_').replace(' ','_').lower()[:40]}", "WARN",
-                       f"Priority 1에 {ep} 미포함")
+            report.add(f"p1_{ep.replace('/', '_').replace(' ', '_').lower()[:40]}", "WARN", f"Priority 1에 {ep} 미포함")
 
 
 def run_audit() -> AuditReport:
-    report = AuditReport(generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    report = AuditReport(generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
     check_global_flags(report)
     check_endpoint_matrix(report)
     check_forbidden_matrix(report)
