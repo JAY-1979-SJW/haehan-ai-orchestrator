@@ -6,36 +6,42 @@ ASSISTANT_BACKEND_OPERATION_FINAL_CLOSEOUT_01
 실제 코드 기능 추가 / docker-compose 수정 / 서버 반영 / 컨테이너 재시작 전면 금지.
 현재 운영 기준선을 machine-readable로 확정하는 감사 공정.
 """
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
-AUDIT_ID   = "BACKEND_OPERATION_FINAL_CLOSEOUT"
+AUDIT_ID = "BACKEND_OPERATION_FINAL_CLOSEOUT"
 AUDIT_DATE = "2026-05-18"
-PHASE      = "PHASE_1_CLOSEOUT"
+PHASE = "PHASE_1_CLOSEOUT"
 
 # ── 운영 안전 플래그 ─────────────────────────────────────────────────────────
-ROUTER_MODIFY_ALLOWED        = False
+ROUTER_MODIFY_ALLOWED = False
 DOCKER_COMPOSE_MODIFY_ALLOWED = False
-SERVER_APPLY_ALLOWED          = False
-CONTAINER_RESTART_ALLOWED     = False
-DB_WRITE_ALLOWED              = False
-EXTERNAL_HTTP_ALLOWED         = False
-CLOSEOUT_ONLY                 = True
+SERVER_APPLY_ALLOWED = False
+CONTAINER_RESTART_ALLOWED = False
+DB_WRITE_ALLOWED = False
+EXTERNAL_HTTP_ALLOWED = False
+CLOSEOUT_ONLY = True
 
 # ── Phase 1 완료 공정 이력 ────────────────────────────────────────────────────
 COMPLETED_PHASES = [
-    {"phase": "SERVER_DEPLOY_AND_POST_RESTART_SMOKE",         "commit": "4ae9d18", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "POST_TASKS_SIDE_EFFECT_GATE_DESIGN",           "commit": "4cdab7a", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "POST_TASKS_MEDIUM_APPROVE_GATE_PREFLIGHT",     "commit": "319aee7", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "POST_TASKS_DRY_RUN_FLAG_IMPLEMENTATION",       "commit": "fe17642", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "POST_TASKS_MEDIUM_ISOLATION_SMOKE",            "commit": "b031994", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "POST_TASKS_SERVER_SYNC_AND_POST_SMOKE",        "commit": "b031994", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "IMAGE_REBUILD_AND_RUNTIME_SMOKE_RECOVERY",     "commit": "b031994", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "POST_TASKS_RUNTIME_DRY_RUN_GATE_PASS",         "commit": "b031994", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "RUNTIME_STORAGE_PERSISTENCE_AUDIT",            "commit": "e175444", "date": "2026-05-18", "verdict": "PASS_WITH_WARN"},
-    {"phase": "RUNTIME_STORAGE_BIND_MOUNT_DESIGN",            "commit": "6bc3fdc", "date": "2026-05-18", "verdict": "PASS"},
-    {"phase": "RUNTIME_STORAGE_BIND_MOUNT_APPLY",             "commit": "8e72025", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "SERVER_DEPLOY_AND_POST_RESTART_SMOKE", "commit": "4ae9d18", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "POST_TASKS_SIDE_EFFECT_GATE_DESIGN", "commit": "4cdab7a", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "POST_TASKS_MEDIUM_APPROVE_GATE_PREFLIGHT", "commit": "319aee7", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "POST_TASKS_DRY_RUN_FLAG_IMPLEMENTATION", "commit": "fe17642", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "POST_TASKS_MEDIUM_ISOLATION_SMOKE", "commit": "b031994", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "POST_TASKS_SERVER_SYNC_AND_POST_SMOKE", "commit": "b031994", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "IMAGE_REBUILD_AND_RUNTIME_SMOKE_RECOVERY", "commit": "b031994", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "POST_TASKS_RUNTIME_DRY_RUN_GATE_PASS", "commit": "b031994", "date": "2026-05-18", "verdict": "PASS"},
+    {
+        "phase": "RUNTIME_STORAGE_PERSISTENCE_AUDIT",
+        "commit": "e175444",
+        "date": "2026-05-18",
+        "verdict": "PASS_WITH_WARN",
+    },
+    {"phase": "RUNTIME_STORAGE_BIND_MOUNT_DESIGN", "commit": "6bc3fdc", "date": "2026-05-18", "verdict": "PASS"},
+    {"phase": "RUNTIME_STORAGE_BIND_MOUNT_APPLY", "commit": "8e72025", "date": "2026-05-18", "verdict": "PASS"},
 ]
 
 # ── 1. 서버/배포 기준선 ──────────────────────────────────────────────────────
@@ -100,7 +106,13 @@ STORAGE_PERSISTENCE_STATUS = {
         "path": "/app/ai_orchestrator/storage",
         "volume": "haehan-ai-orchestrator-api-storage",
         "persisted": True,
-        "contains": ["audit_logs.jsonl", "approval_tokens.jsonl", "task_states.jsonl", "app.log", "execution_history.jsonl (생성 시)"],
+        "contains": [
+            "audit_logs.jsonl",
+            "approval_tokens.jsonl",
+            "task_states.jsonl",
+            "app.log",
+            "execution_history.jsonl (생성 시)",
+        ],
     },
     "app_logs_bind_mount": {
         "path": "/app/logs",
@@ -223,9 +235,7 @@ APP_FOUNDATION_CONDITIONS = {
 
 
 def _verify_router_state() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "dry_run_flag_true": "POST_TASKS_DRY_RUN_ENABLED = True" in content,
         "phase_1r": (
@@ -270,11 +280,9 @@ def _verify_external_site_registry() -> dict:
     }
 
 
-def run_audit() -> dict:
+def _check_safety_flags_and_closeout() -> list[str]:
+    """0. 운영 안전 플래그."""
     errors = []
-    warnings = []
-
-    # 0. 운영 안전 플래그
     for flag, name in [
         (ROUTER_MODIFY_ALLOWED, "ROUTER_MODIFY_ALLOWED"),
         (DOCKER_COMPOSE_MODIFY_ALLOWED, "DOCKER_COMPOSE_MODIFY_ALLOWED"),
@@ -287,9 +295,12 @@ def run_audit() -> dict:
             errors.append(f"{name} must be False")
     if not CLOSEOUT_ONLY:
         errors.append("CLOSEOUT_ONLY must be True")
+    return errors
 
-    # 1. router 상태
-    rs = _verify_router_state()
+
+def _check_router_state_findings(rs: dict) -> list[str]:
+    """1. router 상태."""
+    errors = []
     if not rs["dry_run_flag_true"]:
         errors.append("POST_TASKS_DRY_RUN_ENABLED != True")
     if not rs["phase_1r"]:
@@ -306,9 +317,12 @@ def run_audit() -> dict:
         errors.append("dry-run 분기 없음")
     if not rs["dry_run_log_event"]:
         errors.append("DRY_RUN_GATE_BLOCKED 이벤트 없음")
+    return errors
 
-    # 2. docker-compose 스토리지 상태
-    dc = _verify_docker_compose()
+
+def _check_docker_compose_findings(dc: dict) -> list[str]:
+    """2. docker-compose 스토리지 상태."""
+    errors = []
     if not dc["storage_named_volume"]:
         errors.append("storage named volume 없음")
     if not dc["app_logs_bind_mount"]:
@@ -317,21 +331,32 @@ def run_audit() -> dict:
         errors.append("secrets bind mount 없음")
     if not dc["log_dir_env"]:
         errors.append("LOG_DIR 환경변수 없음")
+    return errors
 
-    # 3. external site registry
-    ex = _verify_external_site_registry()
+
+def _check_external_site_registry_findings(ex: dict) -> tuple[list[str], list[str]]:
+    """3. external site registry."""
+    errors: list[str] = []
+    warnings: list[str] = []
     if not ex["registry_dir_exists"]:
         warnings.append("external site registry 디렉터리 없음 — 경로 확인 필요")
     if not ex["audit_script_exists"]:
         errors.append("external site registry audit 스크립트 없음")
     if not ex["test_file_exists"]:
         errors.append("external site registry 테스트 없음")
+    return errors, warnings
 
-    # 4. 완료 공정 수
+
+def _check_completed_phases() -> list[str]:
+    """4. 완료 공정 수."""
     if len(COMPLETED_PHASES) < 10:
-        errors.append("완료 공정 기록 부족")
+        return ["완료 공정 기록 부족"]
+    return []
 
-    # 5. POST tasks gate 상태
+
+def _check_post_tasks_gate() -> list[str]:
+    """5. POST tasks gate 상태."""
+    errors = []
     gate = POST_TASKS_GATE_STATUS
     if not gate["runtime_verified"]:
         errors.append("runtime smoke 미검증")
@@ -339,23 +364,62 @@ def run_audit() -> dict:
         errors.append("smoke 결과 approval_token_id != null")
     if not gate["approve_execute_not_connected"]:
         errors.append("approve → execute 연결됨 — blocker 해소 전 허용 불가")
+    return errors
 
-    # 6. known baseline warnings 확인
-    for w in KNOWN_BASELINE_ISSUES["known_warnings"]:
-        if w["risk"] == "MEDIUM":
-            warnings.append(f"KNOWN_WARN [{w['id']}]: {w['description']}")
 
-    # 7. 배포 SOP 확정
+def _check_known_baseline_warnings() -> list[str]:
+    """6. known baseline warnings 확인."""
+    return [
+        f"KNOWN_WARN [{w['id']}]: {w['description']}"
+        for w in KNOWN_BASELINE_ISSUES["known_warnings"]
+        if w["risk"] == "MEDIUM"
+    ]
+
+
+def _check_deployment_sop() -> list[str]:
+    """7. 배포 SOP 확정."""
     sop = DEPLOYMENT_BASELINE["deploy_sop"]
     if len(sop["steps"]) < 5:
-        errors.append("배포 SOP 단계 부족")
+        return ["배포 SOP 단계 부족"]
+    return []
 
-    # 8. 앱 착공 조건
+
+def _check_app_foundation() -> list[str]:
+    """8. 앱 착공 조건."""
+    errors = []
     app = APP_FOUNDATION_CONDITIONS
     if not app["app_can_start"]:
         errors.append("앱 착공 불가 — 조건 미충족")
     if len(app["conditions_met"]) < 5:
         errors.append("앱 착공 완료 조건 부족")
+    return errors
+
+
+def run_audit() -> dict:
+    # 2026-09-29 STD-08(복잡도) 리팩터: 이 함수 하나(C901=30)에 있던 원본 주석의 0.~8. 번호
+    # 섹션을 위 _check_*() 함수로 분리(순서·조건·문자열 그대로, 순수 추출) — #48/#49/#50 과
+    # 같은 계열의 독립 체크리스트 패턴.
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    errors.extend(_check_safety_flags_and_closeout())
+
+    rs = _verify_router_state()
+    errors.extend(_check_router_state_findings(rs))
+
+    dc = _verify_docker_compose()
+    errors.extend(_check_docker_compose_findings(dc))
+
+    ex = _verify_external_site_registry()
+    e, w = _check_external_site_registry_findings(ex)
+    errors.extend(e)
+    warnings.extend(w)
+
+    errors.extend(_check_completed_phases())
+    errors.extend(_check_post_tasks_gate())
+    warnings.extend(_check_known_baseline_warnings())
+    errors.extend(_check_deployment_sop())
+    errors.extend(_check_app_foundation())
 
     if errors:
         verdict = "BACKEND_PHASE1_CLOSEOUT_FAIL"
@@ -376,7 +440,7 @@ def run_audit() -> dict:
         "docker_compose_storage": dc,
         "external_site_registry": ex,
         "dry_run_gate_active": rs["dry_run_flag_true"],
-        "dry_run_gate_runtime_verified": gate["runtime_verified"],
+        "dry_run_gate_runtime_verified": POST_TASKS_GATE_STATUS["runtime_verified"],
         "storage_all_persisted": STORAGE_PERSISTENCE_STATUS["all_critical_paths_persisted"],
         "post_tasks_blockers_count": len(POST_TASKS_REMAINING_BLOCKERS["blockers"]),
         "app_can_start": APP_FOUNDATION_CONDITIONS["app_can_start"],
@@ -391,6 +455,7 @@ def run_audit() -> dict:
 
 if __name__ == "__main__":
     import json
+
     result = run_audit()
     print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     print(f"\n=== Backend Phase 1 Final Closeout: {result['verdict']} ===")
