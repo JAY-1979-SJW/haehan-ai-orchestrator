@@ -15,56 +15,37 @@ from ._helpers import audit, duration_ms
 
 router = APIRouter()
 
-_CDP_PORT = 9222
 
+def _cdp_call(fn, *, reason: str = "google-tools-action"):
+    """공유 CDP 연결로 새 탭을 열어 fn(page) 실행 → 탭 정리.
 
-def _cdp_page():
-    """CDP 세션에 새 탭을 열어 반환. 실패 시 None.
-
-    2026-09-29 수정: 기존엔 `ctx.pages[0]`(브라우저의 임의의 첫 탭, 순서 보장 없음)을
-    그대로 재사용해서, 이 함수를 쓰는 여러 액션(캘린더/드라이브/문서/시트/GCP 등)을
-    연달아 호출하면 같은 탭을 서로 덮어써 이전 페이지의 무거운 백그라운드 요청이 남은
-    채로 다음 goto를 실행하는 문제가 있었다(실측: Docs→Sheets→GCP 연속 호출 후 탭
-    제목이 "Google Sheets"인데 URL은 GCP 콘솔로 바뀌어 있음 확인, GCP 콘솔 타임아웃과
-    상관관계 있음). 항상 새 탭을 열어 다른 열려있는 탭(사용자 작업 중인 탭, admin-web
-    자체 탭 포함)에 영향 주지 않도록 수정.
+    2026-09-29 완전 재작성: 기존엔 이 함수를 부를 때마다 독자적으로
+    sync_playwright().start() + connect_over_cdp() 를 새로 맺었다. 실측 결과
+    이 핸드셰이크가(웹소켓 자체는 즉시 연결되는데도 — <ws connected> 로그 확인)
+    Playwright 내부 타겟 핸드셰이크 단계에서 반복적으로 정확히 180000ms(고정값)
+    멈추는 현상을 확인(원시 CDP HTTP /json 은 항상 0.5초 이내 응답 — 브라우저
+    자체는 정상, "매 호출마다 새로 연결"하는 방식 자체가 문제). Gmail(gmail_cdp_
+    reader.py)은 처음부터 scripts.web_connector 의 공유·캐시된 단일 연결
+    (run_on_browser_thread, 프로세스 생애주기 동안 1회만 connect_over_cdp)을
+    써서 이 세션 내내 이 문제를 한 번도 겪지 않았다 — 동일 패턴으로 통일.
+    (CLAUDE.md '반복 실수' 참고.)
     """
-    # 2026-09-29 추가 수정: 실패 시(특히 connect_over_cdp/new_page 단계) pw.stop() 을
-    # 안 부르고 return 하면 매 실패마다 sync_playwright() 가 띄운 Node 드라이버
-    # 프로세스가 좀비로 남는다 — 실측: 반복 실패 후 후속 호출이 8~13초에서 180초로
-    # 점점 느려지는 걸 확인(원시 CDP HTTP API는 항상 0.5초 이내로 응답해 브라우저
-    # 자체 문제가 아님을 확인함). pw 는 try 진입 직후 생성되므로 except 에서도 정리한다.
-    pw = None
-    try:
-        from playwright.sync_api import sync_playwright
+    from scripts.web_connector import open_page, run_on_browser_thread
 
-        pw = sync_playwright().start()
-        browser = pw.chromium.connect_over_cdp(f"http://127.0.0.1:{_CDP_PORT}")
-        ctx = browser.contexts[0]
-        page = ctx.new_page()
-        return pw, browser, page
-    except Exception:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
-        if pw is not None:
+    def _work():
+        page = open_page(allow_new_tab=True, reason=reason)
+        try:
+            return fn(page), None
+        except Exception as e:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
+            return None, str(e)[:200]
+        finally:
             with contextlib.suppress(Exception):
-                pw.stop()
-        return None, None, None
+                page.close()
 
-
-def _cdp_call(fn):
-    """CDP 세션에 새 탭을 열어 fn(page) 실행 → 탭 정리."""
-    pw, _browser, page = _cdp_page()
-    if not page:
-        return None, "CDP 브라우저 미연결 — 먼저 브라우저를 실행하세요."
     try:
-        result = fn(page)
-        return result, None
+        return run_on_browser_thread(_work)
     except Exception as e:  # noqa: BLE001 - Google 서비스(Gmail/Calendar/YouTube Studio 등) CDP 브라우저 자동화 헬퍼 - 연결/액션 실패 시 None 또는 에러 메시지(200자 절단)를 반환하는 best-effort 폴백, 인증 우회나 정책 판정 없음
         return None, str(e)[:200]
-    finally:
-        with contextlib.suppress(Exception):
-            page.close()
-        with contextlib.suppress(Exception):
-            pw.stop()
 
 
 # ── 서비스 열기 (로그인된 CDP 브라우저에서) ──────────────────────────────────

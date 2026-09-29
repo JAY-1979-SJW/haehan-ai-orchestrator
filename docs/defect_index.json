@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 76,
+  "next_no": 77,
   "items": [
     {
       "no": 1,
@@ -1033,6 +1033,17 @@
       "fix_note": "코드 수정은 반영(45s+domcontentloaded, 4개 파일). 문서/GCP 잔여 간헐적 타임아웃은 이 세션에서 원인을 완전히 특정하지 못함 — Google 쪽 SPA 로딩 자체의 환경적 변동성 (네트워크/서버 응답시간)으로 추정되나 미확정. 사용자에게 투명하게 보고, 추가 조사는 필요시 별도 진행.",
       "stage": "RUN",
       "status": "partial"
+    },
+    {
+      "no": 76,
+      "id": "GOOGLE-ACTIONS-SHARED-CDP-CONNECTION-ROOT-FIX",
+      "category": 2,
+      "title": "#72~#75(타임아웃/탭 격리)는 증상 완화였을 뿐 — 진짜 원인은 호출마다 새로 맺던 독자 CDP 연결 + 장시간 세션의 브라우저 오염",
+      "where": "ai_orchestrator/connectors/google/actions.py, ai_orchestrator/connectors/gmail_cdp_reader.py, CLAUDE.md",
+      "evidence": "#75까지 타임아웃을 45s로 늘려도 문서/GCP가 간헐적으로 실패 → 실측 결과 connect_over_cdp() 가 웹소켓은 즉시 붙는데(<ws connected>) Playwright 내부 핸드셰이크가 정확히 180000ms(고정값) 멈추는 걸 재확인. 공유 연결(scripts.web_connector, Gmail이 이미 쓰던 방식)로 바꿔도 처음엔 'Playwright Sync API inside the asyncio loop' 오류 + 연쇄로 Gmail까지 깨짐(gmail_cdp_reader.py의 잠복 버그 open_page(url) 위치인자 오류가 이때 처음 실행되며 노출) — FastAPI 재시작만으로는 안 고쳐짐. scripts/cdp_force_start.py stop→start(브라우저 프로세스만 재시작, 프로필/로그인 세션 유지)로 브라우저 자체를 정리하니 Gmail·문서·GCP·시트·캘린더·드라이브·유튜브스튜디오 7개 전부 즉시 정상화(7초~13초대, 실제 브라우저 클릭 재검증 포함).",
+      "fix_note": "(1) google/actions.py: 호출마다 독자적 sync_playwright().start()+connect_over_cdp() 대신 scripts.web_connector의 공유 연결(run_on_browser_thread+open_page)로 전면 재작성. (2) gmail_cdp_reader.py: except 폴백의 open_page(url) 위치인자 오류(수십 개월 잠복, 이번에 최초로 실행되며 발견) 수정. (3) CLAUDE.md 반복 실수(gotcha)에 두 가지 기록: ①CDP 연결은 항상 공유 연결 사용 ②광범위 CDP 타임아웃 시 코드보다 브라우저 재시작을 먼저 시도. #72(선택자)·#74(wait_until)는 별도로 유효한 수정이라 유지, #73(탭 격리)·#75(타임아웃 연장)는 이 커밋의 공유연결 재작성으로 사실상 대체됨(과잉이었던 부분은 코드에서 자연히 제거됨).",
+      "stage": "RUN",
+      "status": "fixed"
     }
   ]
 }
