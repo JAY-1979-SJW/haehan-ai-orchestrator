@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 48,
+  "next_no": 49,
   "items": [
     {
       "no": 1,
@@ -675,6 +675,19 @@
       ],
       "evidence": "#42 STD-08 극단값 목록 6위. classify_path() 가 먼저 맞는 규칙이 이기는 순차 if/return 체인 하나에 26개 규칙을 다 갖고 있어 C901=35. 리팩터 도중 이 파일에서 추가로 드러난 borderline findings: check_storage_boundary(C901=12), find_cycles(C901=11, Tarjan SCC 재귀 알고리즘), _strip_jsonc(C901=11, 문자 단위 상태기계) — 뒤 2개는 정교한 알고리즘이라 이번 범위(30+ 극단값) 밖으로 보고 건드리지 않음.",
       "fix_note": "2026-09-29: classify_path() 를 9개 _classify_*() 단계 함수로 분리 — 각 함수는 자기 규칙이 안 맞으면 None 을 반환, classify_path() 는 순서대로 호출해 첫 non-None 을 반환(원본의 순차 if/return 과 동일한 첫 매치 승리 의미론). check_storage_boundary(C901=12)도 같이 정리: 앞쪽 continue 조건(_storage_boundary_skip)과 두 스캔 블록(_scan_session_patterns/_scan_db_patterns)을 분리. find_cycles·_strip_jsonc 는 정교한 알고리즘(Tarjan SCC, 문자 단위 JSONC 파서)이라 이번엔 그대로 둠(borderline 11, 위험 대비 이득 낮다고 판단). 로직 변경 없음(순수 추출). 검증: ruff 0 errors, tests/test_codebase_layer_audit.py 18개 전부 통과, 실제 저장소 전체(수천 파일) 대상 실행을 원본과 대조 — 유일한 차이는 이 파일 자신의 mtime(편집으로 당연히 달라짐)과 generated_at 타임스탬프뿐, 그 외 모든 파일의 레이어 분류·STORAGE_BOUNDARY 위반 목록 완전히 동일함을 확인(중간에 FastAPI 중복 OperationID 경고 텍스트가 실행마다 달라지는 것을 발견했으나 원본만 2번 재실행해도 나타나는 무관한 import-time 노이즈임을 별도 확인). layer audit 자기 검사 FORBIDDEN_IMPORT/CIRCULAR_IMPORT/SECURITY_PATTERN 없음.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 48,
+      "id": "run.std08_audit_sso_subdomain_complexity_fix",
+      "category": 2,
+      "title": "STD-08 극단값 7위 scripts/ops/audit_site_sso_subdomain_runtime_baseline.py:audit()(C901=33) 리팩터",
+      "where": [
+        "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py"
+      ],
+      "evidence": "#42 STD-08 극단값 목록 7위. audit() 하나에 서로 상태를 공유하지 않는 독립 체크 블록(baseline 문구/provider 루프/blocked operation/occasional login/subdomain logic/tab logic)을 전부 담고 있어 C901=33.",
+      "fix_note": "2026-09-29: 각 체크 블록을 _check_*() 함수로 분리(baseline_phrases/provider_metadata/provider_service/provider/blocked_operation/occasional_site_login/google_subdomain_logic/google_tab_logic) — 전부 failures 리스트를 반환하고 audit() 가 extend() 로 모은다(순서·조건·문자열 그대로, 순수 추출). provider 체크는 처음 분리해도 C901=13 으로 여전히 넘어 provider_metadata/provider_service 로 한 번 더 나눔. 검증: ruff 0 errors(자동수정된 import 정렬 1건 포함), 실제 실행(read-only, 외부 API 호출 없음)을 원본과 대조해 exit code·출력 문자열 완전 동일(7개 체크 전부 PASS) 확인. layer audit 신규 위반 없음.",
       "stage": "RUN",
       "status": "fixed"
     }
