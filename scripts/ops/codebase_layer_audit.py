@@ -207,18 +207,23 @@ LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
 }
 
 
-def classify_path(path: str) -> tuple[str, str]:
-    p = path.replace("\\", "/")
-    name = Path(p).name
-    suffix = Path(p).suffix.lower()
-    parts = p.split("/")
+# 2026-09-29 STD-08(복잡도) 리팩터: classify_path() 하나(C901=35)에 있던 규칙을 "먼저 맞는
+# 규칙이 이긴다"는 순서를 그대로 유지한 채 단계별 함수로 쪼갰다. 각 함수는 자기 담당 규칙이
+# 안 맞으면 None 을 반환 — 원본의 순차 if/return 체인과 동일하게 동작한다(조건·순서·반환값
+# 한 글자도 안 바꿈).
 
+
+def _classify_overrides_and_special(p: str, name: str) -> tuple[str, str] | None:
     if p in LAYER_OVERRIDES:
         return LAYER_OVERRIDES[p]
     if name in {".gitignore", ".gitattributes", ".dockerignore"}:
         return "L1", "repository configuration or policy"
     if p.startswith(("docs/", "scripts/archive/")) or name.startswith(("BOOTSTRAP", "HANDOVER")):
         return "L12", "documentation/report/archive path"
+    return None
+
+
+def _classify_root_level_python(p: str, name: str, suffix: str) -> tuple[str, str] | None:
     if "/" not in p and suffix == ".py":
         if name.startswith("test_"):
             return "L11", "root-level legacy test"
@@ -229,14 +234,26 @@ def classify_path(path: str) -> tuple[str, str]:
         if name.startswith(("debug_", "check_", "close_")) or name in {"list_tabs.py", "eum_docs.py"}:
             return "L12", "root one-off utility or probe pending archive"
         return "L4", "root generic automation script"
+    return None
+
+
+def _classify_tests(p: str, parts: list[str]) -> tuple[str, str] | None:
     if parts[0] in {"tests"} or "/tests/" in p or "/__tests__/" in p:
         return "L11", "test path"
     if p.startswith("agent/tests/") or p.startswith("ai_orchestrator/tests/"):
         return "L11", "test path"
+    return None
+
+
+def _classify_ui_and_persistence(p: str, name: str) -> tuple[str, str] | None:
     if p.startswith(("admin-web/", "ui/")):
         return "L9", "admin or desktop UI path"
     if p.startswith(("migrations/",)) or "audit" in name or "cdp_db" in name or "op_log" in name:
         return "L7", "persistence or audit path"
+    return None
+
+
+def _classify_server_and_browser(p: str, name: str) -> tuple[str, str] | None:
     if p.startswith(("browser_api/", "ai_orchestrator/server/")):
         return "L8", "server API path"
     if p.startswith("ai_orchestrator/") and ("router" in name or name in {"app.py"}):
@@ -251,38 +268,90 @@ def classify_path(path: str) -> tuple[str, str]:
         return "L4", "generic browser automation path"
     if p.startswith("ai_orchestrator/local_agent/browser/") or p.startswith("local_agent/browser_"):
         return "L4", "local browser automation path"
-    if p.startswith("scripts/"):
-        if len(parts) > 1 and parts[1] in SITE_MODULES:
-            if name in {"sales_mail.py", "workspace.py", "workflows.py", "mail_batch.py"}:
-                return "L6", "site business workflow"
-            return "L5", "site module"
-        if name in {"schemas.py", "security.py"}:
-            return "L1", "shared contract/security helper"
-        if name in {"gate.py"} or "policy" in name:
-            return "L2", "gate or policy"
-        if name in {"web_connector.py", "credentials.py", "config.py", "logger.py"}:
-            return "L3", "shared connector/config"
-        if p.startswith("scripts/ops/"):
-            return "L7", "ops/audit tooling"
-        return "L4", "generic script automation"
-    if p.startswith("ai_orchestrator/"):
-        if any(token in name for token in ("schema", "model")):
-            return "L1", "platform contract/model"
-        if any(token in name for token in ("policy", "gate", "approval", "auth")):
-            return "L2", "platform policy/security"
-        if any(token in name for token in ("connector", "client")):
-            return "L3", "platform connector/client"
-        return "L8", "platform application code"
+    return None
+
+
+def _classify_scripts(p: str, parts: list[str], name: str) -> tuple[str, str] | None:
+    if not p.startswith("scripts/"):
+        return None
+    if len(parts) > 1 and parts[1] in SITE_MODULES:
+        if name in {"sales_mail.py", "workspace.py", "workflows.py", "mail_batch.py"}:
+            return "L6", "site business workflow"
+        return "L5", "site module"
+    if name in {"schemas.py", "security.py"}:
+        return "L1", "shared contract/security helper"
+    if name in {"gate.py"} or "policy" in name:
+        return "L2", "gate or policy"
+    if name in {"web_connector.py", "credentials.py", "config.py", "logger.py"}:
+        return "L3", "shared connector/config"
+    if p.startswith("scripts/ops/"):
+        return "L7", "ops/audit tooling"
+    return "L4", "generic script automation"
+
+
+def _classify_ai_orchestrator(p: str, name: str) -> tuple[str, str] | None:
+    if not p.startswith("ai_orchestrator/"):
+        return None
+    if any(token in name for token in ("schema", "model")):
+        return "L1", "platform contract/model"
+    if any(token in name for token in ("policy", "gate", "approval", "auth")):
+        return "L2", "platform policy/security"
+    if any(token in name for token in ("connector", "client")):
+        return "L3", "platform connector/client"
+    return "L8", "platform application code"
+
+
+def _classify_agent_and_service(p: str, name: str) -> tuple[str, str] | None:
     if p.startswith(("agent/", "local_agent/")):
         if any(token in name for token in ("policy", "approval")):
             return "L2", "agent policy"
         return "L10", "agent/local automation"
     if p.startswith("services/"):
         return "L8", "standalone service path"
+    return None
+
+
+def _classify_by_suffix(suffix: str) -> tuple[str, str] | None:
     if suffix in {".md"}:
         return "L12", "markdown documentation"
     if suffix in {".yml", ".yaml", ".json", ".sql"}:
         return "L1", "configuration or structured contract"
+    return None
+
+
+def classify_path(path: str) -> tuple[str, str]:
+    p = path.replace("\\", "/")
+    name = Path(p).name
+    suffix = Path(p).suffix.lower()
+    parts = p.split("/")
+
+    result = _classify_overrides_and_special(p, name)
+    if result is not None:
+        return result
+    result = _classify_root_level_python(p, name, suffix)
+    if result is not None:
+        return result
+    result = _classify_tests(p, parts)
+    if result is not None:
+        return result
+    result = _classify_ui_and_persistence(p, name)
+    if result is not None:
+        return result
+    result = _classify_server_and_browser(p, name)
+    if result is not None:
+        return result
+    result = _classify_scripts(p, parts, name)
+    if result is not None:
+        return result
+    result = _classify_ai_orchestrator(p, name)
+    if result is not None:
+        return result
+    result = _classify_agent_and_service(p, name)
+    if result is not None:
+        return result
+    result = _classify_by_suffix(suffix)
+    if result is not None:
+        return result
     return "UNKNOWN", "no matching layer rule"
 
 
@@ -843,6 +912,58 @@ _SESSION_SCAN_SKIP = {
 }
 
 
+def _storage_boundary_skip(row: ClassifiedFile) -> bool:
+    """check_storage_boundary 의 앞쪽 continue 조건들(2026-09-29 STD-08: C901=12>10 분리)."""
+    if not row.path.endswith(".py"):
+        return True
+    if any(row.path.startswith(p) for p in ("docs/", "scripts/archive/")):
+        return True
+    return row.path in _SESSION_SCAN_SKIP
+
+
+def _scan_session_patterns(
+    row: ClassifiedFile, source: str, session_compiled: list, is_known_debt: bool, issues: list[AuditIssue]
+) -> None:
+    """session 파일 직접 접근 스캔(2026-09-29 STD-08 리팩터로 분리, 로직 동일)."""
+    for pattern, msg in session_compiled:
+        for m in pattern.finditer(source):
+            lineno = source[: m.start()].count("\n") + 1
+            severity = "info" if is_known_debt else "warn"
+            issues.append(
+                AuditIssue(
+                    severity,
+                    "STORAGE_BOUNDARY",
+                    f"{row.path}:{lineno}",
+                    f"{'[KNOWN_DEBT] ' if is_known_debt else ''}{msg}",
+                    row.layer,
+                )
+            )
+
+
+def _scan_db_patterns(
+    row: ClassifiedFile,
+    source: str,
+    db_compiled: list,
+    is_known_debt: bool,
+    is_test: bool,
+    issues: list[AuditIssue],
+) -> None:
+    """DB 직접 접근 스캔(2026-09-29 STD-08 리팩터로 분리, 로직 동일)."""
+    for pattern, msg in db_compiled:
+        for m in pattern.finditer(source):
+            lineno = source[: m.start()].count("\n") + 1
+            severity = "info" if (is_known_debt or is_test) else "warn"
+            issues.append(
+                AuditIssue(
+                    severity,
+                    "STORAGE_BOUNDARY",
+                    f"{row.path}:{lineno}",
+                    f"{'[KNOWN_DEBT] ' if (is_known_debt or is_test) else ''}{msg}",
+                    row.layer,
+                )
+            )
+
+
 def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
     """STORAGE_BOUNDARY: session 파일 직접 접근 및 비storage 계층의 DB 직접 접근 금지.
 
@@ -857,11 +978,7 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
     db_compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg) for pat, msg in _DB_DIRECT_ACCESS_PATTERNS]
     all_known_debt = _STORAGE_BOUNDARY_KNOWN_DEBT | _STORAGE_BOUNDARY_TEST_KNOWN_DEBT
     for row in rows:
-        if not row.path.endswith(".py"):
-            continue
-        if any(row.path.startswith(p) for p in ("docs/", "scripts/archive/")):
-            continue
-        if row.path in _SESSION_SCAN_SKIP:
+        if _storage_boundary_skip(row):
             continue
         # 테스트 파일은 세션 금지 패턴을 assert로 포함하므로 session 패턴 스캔 제외
         is_test_file = row.path.startswith("tests/") or "/tests/" in row.path
@@ -874,34 +991,10 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
             continue
         # session 파일 직접 접근 (테스트 파일 제외 — 테스트는 금지 검사 코드 포함 가능)
         if not is_test_file:
-            for pattern, msg in session_compiled:
-                for m in pattern.finditer(source):
-                    lineno = source[: m.start()].count("\n") + 1
-                    severity = "info" if is_known_debt else "warn"
-                    issues.append(
-                        AuditIssue(
-                            severity,
-                            "STORAGE_BOUNDARY",
-                            f"{row.path}:{lineno}",
-                            f"{'[KNOWN_DEBT] ' if is_known_debt else ''}{msg}",
-                            row.layer,
-                        )
-                    )
+            _scan_session_patterns(row, source, session_compiled, is_known_debt, issues)
         # DB 직접 접근 (storage 계층 외, test 파일 별도 처리)
         if not any(row.path.startswith(p) for p in _STORAGE_ALLOWED_PREFIXES):
-            for pattern, msg in db_compiled:
-                for m in pattern.finditer(source):
-                    lineno = source[: m.start()].count("\n") + 1
-                    severity = "info" if (is_known_debt or is_test) else "warn"
-                    issues.append(
-                        AuditIssue(
-                            severity,
-                            "STORAGE_BOUNDARY",
-                            f"{row.path}:{lineno}",
-                            f"{'[KNOWN_DEBT] ' if (is_known_debt or is_test) else ''}{msg}",
-                            row.layer,
-                        )
-                    )
+            _scan_db_patterns(row, source, db_compiled, is_known_debt, is_test, issues)
     return issues
 
 
