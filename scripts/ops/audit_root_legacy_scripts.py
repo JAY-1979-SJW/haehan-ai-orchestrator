@@ -2,13 +2,13 @@
 
 This is a read-only guard. It does not move, delete, or rewrite files.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 from dataclasses import dataclass
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs" / "root_legacy_scripts.json"
@@ -33,14 +33,9 @@ def load_config(path: Path = CONFIG) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def audit(root: Path = ROOT, config_path: Path = CONFIG) -> list[Finding]:
+def _validate_config_schema(config: dict) -> tuple[list[Finding], list]:
     findings: list[Finding] = []
-    if not config_path.exists():
-        return [Finding("FAIL", "CONFIG_MISSING", normalize(config_path.relative_to(root)))]
-
-    config = load_config(config_path)
     scripts = config.get("scripts")
-    allowed_categories = set(config.get("allowed_categories") or [])
     if config.get("schema_version") != 1:
         findings.append(Finding("FAIL", "SCHEMA_VERSION", "schema_version must be 1"))
     if config.get("status") != "locked":
@@ -48,7 +43,11 @@ def audit(root: Path = ROOT, config_path: Path = CONFIG) -> list[Finding]:
     if not isinstance(scripts, list):
         findings.append(Finding("FAIL", "SCRIPTS_SCHEMA", "scripts must be a list"))
         scripts = []
+    return findings, scripts
 
+
+def _validate_script_entries(scripts: list, allowed_categories: set) -> tuple[list[Finding], list[str]]:
+    findings: list[Finding] = []
     configured: list[str] = []
     for index, item in enumerate(scripts):
         path = str(item.get("path", ""))
@@ -62,17 +61,37 @@ def audit(root: Path = ROOT, config_path: Path = CONFIG) -> list[Finding]:
             findings.append(Finding("FAIL", "INVALID_CATEGORY", f"{path}: {category!r}"))
         if not next_action:
             findings.append(Finding("FAIL", "MISSING_NEXT_ACTION", path))
+    return findings, configured
 
+
+def _check_duplicate_entries(configured: list[str]) -> list[Finding]:
     duplicates = sorted({path for path in configured if configured.count(path) > 1})
-    for path in duplicates:
-        findings.append(Finding("FAIL", "DUPLICATE_ENTRY", path))
+    return [Finding("FAIL", "DUPLICATE_ENTRY", path) for path in duplicates]
+
+
+def _check_root_script_set_matches(actual: set, configured_set: set) -> list[Finding]:
+    findings = [Finding("FAIL", "UNCLASSIFIED_ROOT_SCRIPT", path) for path in sorted(actual - configured_set)]
+    findings += [Finding("FAIL", "MISSING_ROOT_SCRIPT", path) for path in sorted(configured_set - actual)]
+    return findings
+
+
+def audit(root: Path = ROOT, config_path: Path = CONFIG) -> list[Finding]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: 독립 검증 단계를 _validate_*()/_check_*() 함수로 분리
+    # (순서·조건·문자열 그대로) — #48 과 같은 계열.
+    if not config_path.exists():
+        return [Finding("FAIL", "CONFIG_MISSING", normalize(config_path.relative_to(root)))]
+
+    config = load_config(config_path)
+    allowed_categories = set(config.get("allowed_categories") or [])
+    findings, scripts = _validate_config_schema(config)
+
+    entry_findings, configured = _validate_script_entries(scripts, allowed_categories)
+    findings.extend(entry_findings)
+    findings.extend(_check_duplicate_entries(configured))
 
     actual = set(root_python_files(root))
     configured_set = set(configured)
-    for path in sorted(actual - configured_set):
-        findings.append(Finding("FAIL", "UNCLASSIFIED_ROOT_SCRIPT", path))
-    for path in sorted(configured_set - actual):
-        findings.append(Finding("FAIL", "MISSING_ROOT_SCRIPT", path))
+    findings.extend(_check_root_script_set_matches(actual, configured_set))
 
     if not any(finding.status == "FAIL" for finding in findings):
         findings.append(Finding("PASS", "ROOT_LEGACY_LOCKED", f"{len(actual)} root scripts classified"))
