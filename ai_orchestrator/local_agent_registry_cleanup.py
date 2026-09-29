@@ -114,23 +114,27 @@ def cleanup_agent_and_tasks(
             }
 
         del _agents[agent_id]
-        _save_agents_to_disk()  # 2026-09-29: 삭제된 에이전트가 재시작 후 되살아나지 않게 반영
         tasks_deleted = 0
         for task_id in list(_tasks.keys()):
             if _tasks[task_id].agent_id == agent_id:
                 del _tasks[task_id]
                 tasks_deleted += 1
 
-        return {
-            "agent_id": agent_id,
-            "dry_run": dry_run,
-            "eligible": policy.eligible,
-            "reason": policy.reason,
-            "status": "cleaned",
-            "deleted": True,
-            "task_count": policy.task_count,
-            "tasks_deleted": tasks_deleted,
-        }
+    # 2026-09-29 pre-push AI 리뷰 지적 반영: _save_agents_to_disk()는 자체적으로 _lock을
+    # 잡는다(재진입 불가 threading.Lock) — 위 with _lock 블록을 벗어난 뒤에 불러야 교착이
+    # 안 생긴다. 삭제된 에이전트가 재시작 후 되살아나지 않게 반영.
+    _save_agents_to_disk()
+
+    return {
+        "agent_id": agent_id,
+        "dry_run": dry_run,
+        "eligible": policy.eligible,
+        "reason": policy.reason,
+        "status": "cleaned",
+        "deleted": True,
+        "task_count": policy.task_count,
+        "tasks_deleted": tasks_deleted,
+    }
 
 
 __all__ = ["cleanup_agent_and_tasks", "get_agent_cleanup_preview"]
