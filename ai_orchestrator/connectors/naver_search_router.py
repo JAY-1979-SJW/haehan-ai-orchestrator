@@ -235,7 +235,10 @@ def api_crawl_shopping(
     try:
         from scripts.naver.shopping.crawl import crawl_shopping
 
-        result = crawl_shopping(query=query, limit=limit)
+        # crawl_shopping 의 실제 파라미터명은 keyword(query 아님) — kwarg 이름이 어긋나 있어
+        # 매 호출마다 TypeError 로 실패하고 있었음(2026-09-29 defect_index #38, except 절이
+        # 넓게 잡아 크래시 대신 조용히 빈 결과를 반환해 왔음 — 기능 자체가 한 번도 동작한 적 없었음).
+        result = crawl_shopping(keyword=query, limit=limit)
     except Exception as e:  # noqa: BLE001 - 네이버 쇼핑 크롤링/분석 읽기전용 API - 실패시 빈 결과+error 필드 반환, warning 로그만 남김
         logger.warning("[SHOPPING-CRAWL-ERR] %s", e)
         result = {"ok": False, "error": str(e)}

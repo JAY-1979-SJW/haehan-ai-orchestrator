@@ -12,6 +12,7 @@ VENDOR_MAINTENANCE_WARN 관리 규칙 이행용.
     WARN  - 파일 수/내용 차이 발생
     SKIP  - 원본 경로 없음 (로컬 전용)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -27,8 +28,12 @@ ORIGIN_CANDIDATES = [
 ]
 
 EXCLUDE_PATTERNS = {
-    "node_modules", ".next", "storybook-static", ".git",
-    ".tsbuildinfo", "__pycache__",
+    "node_modules",
+    ".next",
+    "storybook-static",
+    ".git",
+    ".tsbuildinfo",
+    "__pycache__",
 }
 
 SOURCE_EXTENSIONS = {".ts", ".tsx", ".css", ".mjs", ".json"}
@@ -48,7 +53,8 @@ def _collect(base: Path) -> dict[str, str]:
         if f.name in EXCLUDE_FILES:
             continue
         rel = str(f.relative_to(base)).replace("\\", "/")
-        result[rel] = hashlib.md5(f.read_bytes()).hexdigest()
+        # 파일 변경 감지용 체크섬일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+        result[rel] = hashlib.md5(f.read_bytes(), usedforsecurity=False).hexdigest()
     return result
 
 
@@ -72,9 +78,7 @@ def main() -> None:
 
     only_origin = sorted(set(origin_files) - set(vendor_files))
     only_vendor = sorted(set(vendor_files) - set(origin_files))
-    modified = sorted(
-        f for f in origin_files if f in vendor_files and origin_files[f] != vendor_files[f]
-    )
+    modified = sorted(f for f in origin_files if f in vendor_files and origin_files[f] != vendor_files[f])
 
     report = {
         "origin": str(origin),

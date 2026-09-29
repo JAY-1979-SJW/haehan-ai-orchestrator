@@ -133,7 +133,10 @@ class RealPlaywrightBackend:
                         browser_started=True,
                         backend="real_playwright_worker",
                         status="ok",
-                        data={
+                        # WorkerBrowserResponse 의 실제 필드명은 metadata(data 아님) —
+                        # 이 분기(browser.open_url_controlled)가 실행되면 항상 TypeError로
+                        # 크래시하고 있었음(2026-09-29 defect_index #38).
+                        metadata={
                             "execution_mode": "isolated_sample_open",
                             "approval_required": True,
                             "target": {

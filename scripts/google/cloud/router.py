@@ -1,15 +1,16 @@
 """Router for Google Cloud catalog-only wrappers."""
+
 from __future__ import annotations
 
 from . import (
     api_credentials,
     bigquery,
     billing,
+    cloud_logging_catalog,
     compute,
     console,
     gke,
     iam,
-    logging,
     maps_platform,
     monitoring,
     pubsub,
@@ -42,8 +43,8 @@ _RUNNERS = {
     "cloud_sql": sql.run,
     "pubsub": pubsub.run,
     "secret_manager": secret_manager.run,
-    "logging": logging.run,
-    "cloud_logging": logging.run,
+    "logging": cloud_logging_catalog.run,
+    "cloud_logging": cloud_logging_catalog.run,
     "monitoring": monitoring.run,
     "cloud_monitoring": monitoring.run,
 }
@@ -57,4 +58,3 @@ def run_cloud(service: str, task: str = "open", args: list[str] | None = None) -
     if runner is None:
         return {"ok": False, "reason": "unknown_cloud_service", "service": service}
     return runner(task or "open", args or [])
-

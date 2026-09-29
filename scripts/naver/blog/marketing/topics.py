@@ -88,7 +88,8 @@ def save_cache(cache: dict, blog_id: str | None = None) -> None:
 
 
 def topic_key(title: str) -> str:
-    return hashlib.md5(title.strip().lower().encode()).hexdigest()[:12]
+    # 중복 판별용 키일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+    return hashlib.md5(title.strip().lower().encode(), usedforsecurity=False).hexdigest()[:12]
 
 
 def is_duplicate(title: str, cache: dict) -> bool:

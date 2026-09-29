@@ -83,10 +83,12 @@ class NotificationHub:
     def send_email(self, to: str, subject: str, body: str) -> dict:
         if not self.page:
             return {"ok": False, "error": "page_required"}
-        from scripts.naver.mail import NaverMail
-
-        mail = NaverMail(self.page)
-        return mail.compose(to, subject, body, send=True)
+        # scripts.naver.mail 은 설계상 읽기전용(패키지 __init__.py 문서화: 발송/답장/삭제 등
+        # 쓰기 동작을 모듈 레벨에서 금지) 이라 NaverMail(발송용 클래스)이 애초에 존재한 적이
+        # 없음 — 예전엔 여기서 바로 ImportError 로 죽었음(2026-09-29 defect_index #38,
+        # mail_automation.py의 동일 패턴과 함께 발견). 다른 send_* 메서드들과 같은
+        # {"ok": False, "error": ...} 계약으로 맞춰 명확히 실패시킨다.
+        return {"ok": False, "error": "naver_mail_send_not_implemented"}
 
     # ── 네이버 톡톡 ──────────────────────────────────────────────────
 

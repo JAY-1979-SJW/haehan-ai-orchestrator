@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 38,
+  "next_no": 40,
   "items": [
     {
       "no": 1,
@@ -519,6 +519,51 @@
       "status": "fixed",
       "no": 37,
       "fix_note": "2026-09-29: 근본 조사 — compose()/send_mail() 함수는 이 저장소 git 히스토리 전체에 존재한 적이 없음(2026-09-23에 지워진 scripts/naver_mail 구 호환 패키지도 2줄짜리 재노출 shim이었을 뿐, 가리키던 scripts.naver.mail 자체가 처음부터 읽기전용 설계 — 모듈 docstring에 \"발송/답장/삭제/이동 금지\" 명시). \"복원할 삭제된 코드\"가 아니라 \"원래 없던 기능을 라우터가 먼저 가정해버린 경우\"였음. ImportError로 크래시하던 걸 501 Not Implemented로 정직하게 응답 하도록 고침(ai_orchestrator/connectors/naver_mail_router.py) — 실제 발송 자동화(Gmail 라우터처럼 CDP로 작성창 직접 조작)는 별도 기준서로 새로 설계 필요, 이번엔 미구현."
+    },
+    {
+      "no": 38,
+      "id": "run.audit_kit_critical_77_triaged",
+      "category": 1,
+      "title": "audit-kit run 치명 77건 전수 조사 — 실제 크래시 버그 다수 확인·수정, 오탐 다수 확인",
+      "where": [
+        "audit-reports/20260929_093556/findings.json",
+        "scripts/naver/router.py",
+        "scripts/naver/automation/integration/notification_hub.py",
+        "scripts/google/cloud/router.py",
+        "ai_orchestrator/connectors/naver_search_router.py",
+        "ai_orchestrator/connectors/youtube/upload.py",
+        "browser_worker/backends/real_playwright_backend.py",
+        "ai_orchestrator/local_agent_router_ws.py"
+      ],
+      "evidence": "77건(mypy attr-defined 30, bandit B608 30, bandit B324 8, mypy call-arg 7, bandit B602 1, ruff F822 1)을 전부 개별 확인. B608(SQLi 가능성) 30건 전수 확인 결과 전부 오탐 — table/order/cols 는 항상 고정 상수·enum 분기 결과이고 실사용자 값은 전부 ?/params 로 바인딩(안전한 파라미터화 패턴). B602(subprocess shell=True, scripts/local_agent/start_chrome_with_cdp.py) 는 이미 코드에 정당한 사유 주석 있음(로컬 CLI, 유일한 외부입력이 실행자 본인 값). LANCZOS attr-defined 7건은 Pillow 12.3.0 런타임에 실제로 존재함(hasattr 확인) — mypy 스텁만 누락된 오탐. Gabia attr-defined 3건은 그 자체가 self-check 감사스크립트의 의도된 try/except 검증 대상. urlopen_for_server call-arg 1건은 삼항연산자로 대입된 open_fn 의 두 가능 타입을 mypy가 분기별로 재좁히기 못하는 한계(런타임은 두 분기 모두 정확).",
+      "fix_note": "2026-09-29 실제 수정 8건: (1) scripts/google/cloud/router.py — 같은 세션에서 한 로그 모듈 리네임(logging.py→cloud_logging_catalog.py) 반영을 이 파일에서 빠뜨려 생긴 회귀, import/사용 갱신 + tests/test_google_cloud_wrapper.py 의 동적 import 키도 동기화(제가 만든 회귀, 즉시 수정). (2) scripts/naver/router.py — CLI mail 분기가 존재한 적 없는 mail.run() 을 호출(크래시), __status__ 표도 \"mail send: done\" 이라고 거짓 주장 — 명확한 안내 메시지로 교체 + 표 정정. (3) notification_hub.py send_email — 존재한 적 없는 NaverMail(#37과 동일 근본원인)을 생성자에서 바로 호출, {ok:False} 계약으로 통일. (4) naver_search_router.py — crawl_shopping(query=) 호출이 실제 시그니처(keyword=) 와 달라 매번 TypeError, except 가 넓어 조용히 빈 결과만 반환하던 상태(기능이 한 번도 동작한 적 없었음) → keyword= 로 수정. (5)(6) youtube/upload.py 의 audit() 호출 2곳 — 실제 시그니처엔 없는 metadata= kwarg 사용, 성공적으로 끝난 업로드/플랜생성 마지막 감사로그 기록에서 매번 TypeError 로 요청 전체가 500 이 되던 실사용 버그 → note=(문자열) 로 교체. (7) real_playwright_backend.py — WorkerBrowserResponse(data=...) 는 실제 필드명이 metadata, browser.open_url_controlled 분기 실행 시 항상 크래시 → metadata= 로 수정. (8) local_agent_router_ws.py — __all__ = [\"local_agent_router\"] 인데 실제 정의된 이름은 ws_router(와일드카드 임포트하는 곳은 현재 없어 잠재적 위험이었음) → 실제 이름으로 정정. 추가로 hashlib 8건에 usedforsecurity=False 명시(비보안 용도 확정: URL/텍스트 지문·중복방지 키·결정적 시드·변경감지 체크섬), e2e 스크립트 3개의 구경로(C:/work/...) 하드코딩도 같은 라운드에서 별도 커밋으로 수정. 영향 테스트 9개 파일(118 passed 기준선)을 git stash 로 수정 전/후 대조해 회귀 0건 확인.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 39,
+      "id": "run.audit_kit_critical_77_remaining_open",
+      "category": 1,
+      "title": "audit-kit run 조사 중 발견, 이번엔 미수정 — 도메인 지식·라이브 검증 필요한 실제 버그 후보",
+      "where": [
+        "scripts/naver/router_cafe.py:305",
+        "scripts/naver/cafe.py",
+        "scripts/naver/cafe/__init__.py",
+        "scripts/naver/automation/integration/mail_automation.py",
+        "scripts/eum/form_analyzer.py:115",
+        "scripts/popup_watcher.py",
+        "scripts/naver/smartstore/product/detail_collector.py",
+        "scripts/naver/automation/smartstore/order_automation.py:133",
+        "ai_orchestrator/connectors/smartstore/catalog.py:119",
+        "tests/test_naver_mail_action_gate_policy.py",
+        "tests/test_local_agent_router_split.py",
+        "tests/test_naver_service_router.py",
+        "tests/test_naver_cafe_list_collector.py",
+        "tests/test_app_action_coverage.py"
+      ],
+      "evidence": "#38 조사 중 발견했지만 값을 추측해 고치면 더 위험하다고 판단해 보류: (1) scripts/naver/cafe.py(단일 파일)와 scripts/naver/cafe/__init__.py(패키지)가 같은 이름으로 동시 존재 — Python 은 패키지를 우선 해석해 cafe.py 는 완전히 도달 불가능한 죽은 코드가 됐는데, router_cafe.py:305 write_post() 호출은 여전히 옛 cafe.py 시절 kwarg(board_no, send) 를 씀. 실제(패키지) 시그니처는 board_name(str, board_no 와 다른 값 종류)+require_approval(bool, send 와 반대 의미방향) — 단순 이름치환이 아니라 값 변환·의미 재해석이 필요해 라이브 검증 없이 고치면 승인 없이 발행되는 등 더 위험할 수 있음. (2) mail_automation.py MailAutomation.__init__ 이 존재한 적 없는 NaverMail 을 즉시 생성 — 코드맵상 어디서도 인스턴스화되지 않는 완전 UNREACHED 코드라 우선순위 낮음(#38 notification_hub.py 와 동일 근본원인이나 그쪽만 도달 가능해 먼저 고침). (3) scripts.cdp_client 에 eval_js/goto_url 없음(eum/form_analyzer.py:115 에서 사용 시도) — 어떤 이름이 맞는 대체재인지 확신 없음. (4) scripts.navigator 에 get_page 없음(popup_watcher.py 4곳, 실제로는 goto/resolve 등 다른 이름들만 존재) — 마찬가지로 의도된 대체재 불명확. (5) smartstore selectors.py 에 SEL.CATEGORY/MAIN_IMAGE/ADDITIONAL_IMAGES 없음(detail_collector.py:171,182,183) — 비슷한 이름(CATEGORY_PATH_DISPLAY/MAIN_IMAGE_PREVIEW/ADDITIONAL_IMAGES_PREVIEW 등)은 있어 셀렉터 리네임 후 호출부 미갱신으로 보이나 실제 DOM 확인 없이 매핑 확정 위험. (6) scripts.naver.smartstore.bulk 에 _init_db 없음(order_automation.py:133) — 취소/반품 모니터링 기능. (7) smartstore/catalog.py:119 는 이미 except ImportError: pass 로 안전하게 감싸져 조용히 정적 fallback 사용 중(크래시 안 함, 저우선순위). 추가로 #38 회귀테스트 대조 중 아래 21건이 제 변경과 무관하게 이미(수정 전부터) 실패 중인 것으로 확인(git stash 전/후 동일 21 failed/118 passed) — 별도 조사 필요: tests/test_app_action_coverage.py 2건, tests/test_local_agent_router_split.py 7건, tests/test_naver_service_router.py 4건, tests/test_naver_cafe_list_collector.py 7건, tests/test_naver_mail_action_gate_policy.py 1건(mail.send_mail 자체가 없음 — #37/#38 과 같은 메일 발송 미구현 패턴의 또 다른 사례로 추정).",
+      "stage": "RUN",
+      "status": "open"
     }
   ]
 }

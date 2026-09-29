@@ -217,7 +217,8 @@ def collect_images(draft: dict, count: int = 3, blog_id: str | None = None) -> l
         _log.debug("[manual] 사용 이미지 이력 로드 실패(무시): %s", e)
 
     slots = max(1, len(pool) // 3)
-    base = int(hashlib.md5(draft["title"].encode("utf-8")).hexdigest()[:8], 16) % slots
+    # 제목 기반 결정적 구간 선택일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+    base = int(hashlib.md5(draft["title"].encode("utf-8"), usedforsecurity=False).hexdigest()[:8], 16) % slots
     for offset in range(slots):  # 이미 쓴 조합이면 다음 구간으로 밀어서 재시도
         picked = pick_3_images(pool, (base + offset) % slots)[:count]
         if not picked or not used.intersection(str(p) for p in picked):

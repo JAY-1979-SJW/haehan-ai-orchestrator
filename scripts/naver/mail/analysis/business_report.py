@@ -389,7 +389,8 @@ def classify_mail(item: MailItem) -> tuple[str, str, list[str]]:
 
 
 def _make_action_id(sn: str, category: str) -> str:
-    h = hashlib.sha1(f"{sn}|{category}".encode()).hexdigest()[:10]
+    # 액션 항목 식별용 ID일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+    h = hashlib.sha1(f"{sn}|{category}".encode(), usedforsecurity=False).hexdigest()[:10]
     return f"act_{h}"
 
 
