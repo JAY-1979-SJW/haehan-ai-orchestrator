@@ -60,7 +60,17 @@ python scripts/ops/capability_check.py naver mail
 - 사유: 서버 배포는 docker compose가 정당하게 필요(서버는 docker로 구동). 배포 스크립트를 repo에 두어 버전관리·리뷰 대상으로 유지하기 위함.
 - 안전장치: 스크립트 최상단 `_guard_server_only()` 가 docker 미설치(=로컬 PC) 시 `exit 3`로 즉시 차단 → 로컬에서 절대 실행 불가.
 - 이 예외는 **이 파일 1개에만** 적용. 다른 파일의 docker 호출은 그대로 차단.
-- 배포 데몬(`scripts/ops/deploy_trigger_daemon.py`)이 이 스크립트를 호출(삭제된 `deploy_api_with_runtime_gates.py` 대체).
+- ⚠️ **정정(2026-09-29, docs/defect_index.json #6):** 이 스크립트를 호출하던 배포 데몬
+  `scripts/ops/deploy_trigger_daemon.py`는 2026-06-02 커밋 `b4ad2f70`에서 "좀비 스크립트"로
+  **삭제됨**(`deploy_router.py`의 관련 참조도 같은 커밋에서 제거). 그런데 `ai_orchestrator/routers/deploy_router.py`의
+  GitHub webhook 핸들러(`/api/v1/deploy/webhook`)는 여전히 호스트의 `TRIGGER_URL`
+  (`host.docker.internal:8401/trigger`)로 전달을 시도한다 — 그 주소를 리슨하는 데몬이
+  더 이상 없으므로 **현재 webhook 자동배포는 끊긴 상태로 추정**(운영 서버 직접 확인 전까지
+  "추정"). 상세 배경은 `docs/architecture/PROD_DEPLOY_PLAN.md`(2026-06-02, 운영 HEAD가
+  origin보다 23커밋 밀려 있던 걸 실측한 문서, 그 이후 최신 상태 미확인)와
+  `docs/architecture/DEPLOY_PIPELINE_REPAIR.md` 참고. 실제 배포는 여전히 `server_deploy.py`를
+  운영 서버에서 직접 실행(SSH 등)하는 방식으로 우회 가능 — 데몬 복구/재설계는 운영 서버
+  접근이 필요해 별도 사용자 승인 후 진행(docs/defect_index.json #4 와 동일 범위).
 
 ---
 

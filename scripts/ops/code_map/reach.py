@@ -96,10 +96,25 @@ class Resolver:
                     return sorted(set(hits + extra)), "internal"
         if level:
             return [], "failed"
-        # 어떤 루트에서든 첫 세그먼트가 내부 패키지/모듈이면 해석 실패, 아니면 외부 라이브러리
-        top = module.split(".")[0]
+        # 저장소 루트('')에서는 첫 세그먼트 단독 일치만으로 "내부인데 깨짐"으로 본다 —
+        # 이 프로젝트의 절대 import 관례가 항상 저장소 루트 기준(scripts.xxx, ai_orchestrator.xxx)
+        # 이라 최상위 세그먼트 하나가 저장소 루트의 실제 패키지/모듈과 겹치는 건 강한 근거.
+        # 그 외 중간 경로(base != "")에서는 최상위 세그먼트 단독 일치가 약한 근거다 —
+        # 예: scripts/youtube/uploader.py 의 `from google.oauth2.credentials import ...`
+        # (실제 외부 google-auth 패키지) 가 이 프로젝트 자체의 scripts/google/ 패키지와
+        # 이름만 겹쳐 "내부 import 실패"로 오판되던 사례(2026-09-29, defect_index #26).
+        # 중간 경로에서는 최소 2단계까지 실제로 존재해야 내부로 판정한다.
+        segments = module.split(".")
+        top = segments[0]
         for base in bases:
-            if self._module_file(base, top) or self._pkg_exists(base, top):
+            if base == "":
+                if self._module_file(base, top) or self._pkg_exists(base, top):
+                    return [], "failed"
+            elif len(segments) >= 2:
+                two = ".".join(segments[:2])
+                if self._module_file(base, two) or self._pkg_exists(base, two):
+                    return [], "failed"
+            elif self._module_file(base, top) or self._pkg_exists(base, top):
                 return [], "failed"
         return [], "external"
 

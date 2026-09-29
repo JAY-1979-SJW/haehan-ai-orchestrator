@@ -1,9 +1,42 @@
 # Haehan AI Orchestrator — App Treemap
 
 Status: LIVING DOCUMENT  
-Last updated: 2026-06-01  
+Last updated: 2026-09-29 (0번 섹션 추가)  
 Generated from: 조사 에이전트 4개 병렬 분석 결과  
 Related: `docs/architecture/APP_STRUCTURE.md`, `data/codebase_layer_audit_latest.json`
+
+---
+
+## 0. 최상위 폴더 맵 (2026-09-29 추가, docs/defect_index.json #22)
+
+`configs/module_registry.json`이 코드 레이어 배치의 정본이고, 아래는 그걸 보완하는
+최상위 디렉터리 1줄 요약(이 문서에 없던 폴더들 — #22가 지적한 "빈/미문서화 폴더"
+16개를 실측 재확인한 결과, `config/`는 이미 삭제되어 없고 나머지는 전부 실제
+사용 중인 폴더였음 — 아래 표에 실측 근거 명시):
+
+| 폴더 | 용도 | 비고 |
+|------|------|------|
+| `adapters/` | L3 외부 연동 어댑터(예: command_adapter.py) | |
+| `agent/` | action_registry.py 등 승인정책 기반 액션 레지스트리 | 자체 tests/ 보유 |
+| `apps/` | L10 로컬 PC 앱(`*-standalone`) | |
+| `audit-reports/` | `audit-kit std` 실행 리포트 산출물 | 최신 = `LATEST.txt` |
+| `browser_api/`, `browser_worker/` | L4 브라우저 엔진(CDP 세션/워커) | |
+| `configs/` | 정책·게이트·레지스트리 설정(JSON/YAML) | 레이어 배치 정본(`module_registry.json`) 포함 |
+| `data/` | 런타임 데이터·캐시·리포트 산출물(런타임 생성, 350+ 항목) | |
+| `docker/` | 원격 서버 배포용 compose 파일 | 로컬 Docker CLI 사용 금지(CLAUDE.md) |
+| `local_agent/` | 로컬 에이전트(데스크톱 실행기) 구현 | |
+| `logs/` | 실행 로그(런타임 생성) | |
+| `media/` | 자동수집 이미지/텍스트(svg)/영상 캐시 | 2026-09-29 재확인: 실제 파일 존재, 비어있지 않음 |
+| `memory/` | 세션 간 피드백/정책 메모(md) | |
+| `migrations/` | DB 스키마 마이그레이션 스크립트 | #14(스키마 버전 장치 부재)와 연관 |
+| `notice_radar/` | 공고 수집·분석 파이프라인(collector/parsers/analyzer) | |
+| `policies/` | `default_policy.yaml` 등 정책 파일 | |
+| `services/` | `file_map_executor` 등 백그라운드 서비스 | |
+| `storage/` | 실행 이력·후보 데이터(jsonl, 런타임 생성) | 2026-09-29 재확인: candidates/execution_history/inbox 모두 활발히 갱신 중(실데이터) |
+| `tmp/` | 테스트/작업 세션 임시 산출물 | |
+| `config/`(단수) | ~~2026-05월경 존재~~ | 2026-09-29 확인: 이미 삭제됨, git ls-files 에도 없음 — #22 원 제보 시점엔 있었을 수 있으나 현재는 해소됨 |
+
+이 아래 섹션들(1~)은 폴더 트리가 아니라 **런타임 프로세스/통신/레이어** 관점의 맵이다.
 
 ---
 

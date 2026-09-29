@@ -79,8 +79,9 @@
         "docs/architecture/DEPLOY_PIPELINE_REPAIR.md"
       ],
       "evidence": "git ls-files 에 없음, 문서 5곳 참조",
+      "fix_note": "2026-09-29: 근본원인 확인 — deploy_trigger_daemon.py 는 2026-06-02 커밋 b4ad2f70 에서 '좀비 스크립트' 로 의도적으로 삭제됐고 deploy_router.py 의 관련 참조도 같은 커밋에서 제거됨. 그런데 deploy_router.py 의 GitHub webhook 핸들러는 여전히 host.docker.internal:8401/trigger 로 전달을 시도해(그 주소를 리슨하는 데몬이 이제 없음) webhook 자동배포가 끊긴 상태로 추정됨(운영 서버 직접 확인 전까지 '추정'). CLAUDE.md/AGENTS.md 의 잘못된 서술('배포 데몬이 이 스크립트를 호출')을 실제 상태로 정정하고 docs/architecture/PROD_DEPLOY_PLAN.md·DEPLOY_PIPELINE_REPAIR.md 참조를 추가함. 데몬 자체의 복구/재설계는 운영 서버 접근이 필요해 #4 와 동일하게 별도 사용자 승인 후 진행 — 이번엔 문서 정정만 수행.",
       "stage": "E",
-      "status": "open"
+      "status": "fixed"
     },
     {
       "no": 7,
@@ -309,9 +310,10 @@
         "media/",
         "docs/architecture/APP_TREEMAP.md"
       ],
-      "evidence": "골격 점검 G 축 + 직접 확인(config 0파일, storage·media importers 0) | 2026-09-29 재확인: config/ 는 이미 없어짐(해결됨). storage/ 는 실측 결과 \"참조 0\" 주장이 틀림 — candidates.jsonl/execution_history.jsonl(90KB, 9/28 19:55 최신 기록)/inbox.jsonl 등 실제로 계속 쓰이고 있음, 삭제 대상 아님(이 결함의 evidence 자체가 stale). media/ 는 images/texts/videos 빈 서브폴더만 있어 정말 미사용으로 보이나 우선순위 낮음. \"APP_TREEMAP에 없는 16개 폴더\"는 이번엔 재조사 안 함.",
+      "evidence": "골격 점검 G 축 + 직접 확인(config 0파일, storage·media importers 0) | 2026-09-29 재확인: config/ 는 이미 없어짐(해결됨). storage/ 는 실측 결과 \"참조 0\" 주장이 틀림 — candidates.jsonl/execution_history.jsonl(90KB, 9/28 19:55 최신 기록)/inbox.jsonl 등 실제로 계속 쓰이고 있음, 삭제 대상 아님(이 결함의 evidence 자체가 stale). media/ 도 재확인 결과 이번엔 texts/ 서브폴더에 실제 svg 파일 다수 존재 — 완전히 빈 폴더가 아님(이전 확인 시점과 상태가 달랐던 것으로 보임). \"APP_TREEMAP에 없는 16개 폴더\"는 docs/architecture/APP_TREEMAP.md 에 '0. 최상위 폴더 맵' 섹션을 신설해 최상위 폴더 전체에 1줄 용도를 명시하는 것으로 해결.",
+      "fix_note": "2026-09-29: 3개 폴더(config/storage/media) 전부 삭제 대상 아님으로 확인(실사용 중이거나 이미 해소됨) — 폴더 삭제는 수행하지 않음. APP_TREEMAP.md 0번 섹션 추가로 문서화 공백만 해결.",
       "stage": "G",
-      "status": "open"
+      "status": "fixed"
     },
     {
       "no": 23,
@@ -361,8 +363,9 @@
         "scripts/ops/code_map/reach.py"
       ],
       "evidence": "import 실패 106건 중 1건 확인 — 실패 집계 과대 가능 → 정리 후 import 실패 4건",
+      "fix_note": "2026-09-29: resolve_import() 의 failed/external 판정부를 수정 — 저장소 루트(base='')에서는 최상위 세그먼트 단독 일치로 '내부인데 깨짐' 판정을 유지(이 프로젝트의 절대 import 관례가 항상 저장소 루트 기준이라 강한 근거)하되, 그 외 중간 경로(base != '', 예: 'scripts')에서는 최상위 세그먼트 단독 일치가 약한 근거이므로 최소 2단계까지 실제 존재해야 내부로 판정하도록 강화. Resolver를 직접 호출해 5개 시나리오로 검증: google.oauth2.credentials(외부, 이전엔 오판됐던 사례)→external 정상화, local_agent.nonexistent_module(저장소 루트 기준 진짜 깨진 내부 import)→failed 유지, local_agent.config(정상 내부)→internal 유지, os.path(stdlib)→external 유지, scripts.google.nonexistent(중간경로에서도 진짜 깨진 경우)→failed 유지. ruff 통과.",
       "stage": "S2",
-      "status": "open"
+      "status": "fixed"
     },
     {
       "id": "cafe.analyze_posts_removed",
@@ -441,9 +444,10 @@
         "scripts/ops/report_naver_mail_inbox_consolidated.py",
         "scripts/ops/check_excel_live.py"
       ],
-      "evidence": "runcheck R0(2026-09-29 재확인): scripts/audit_dev_reg_approvals.py 는 a1f4de20 삭제 전 커밋에서 복원 + persistence/clients 이동 경로 2곳 갱신으로 해결(테스트 35개 통과). scripts/ops/check_a4.py 는 shared.constants/excel_utils 실제 구현을 다른 저장소(42. excel-ai-agent)에서 scripts/common/excel_a4_constants.py·excel_a4_utils.py 로 이식해 해결 — xlsx 편집마다 도는 PostToolUse 훅이 다시 정상 동작 확인(실제 xlsx 파일 대상 COM 자동화 실행 검증). 단, 이 훅의 2단계(ai_check_a4.py, GPT-4o-mini 호출)는 \"외부 유료 AI API 호출 승인제\"+2026-09-24 \"유료 AI 호출 0\" 결정과 충돌해 복원하지 않고 hook_check_a4.py에서 의도적으로 건너뛰도록 함(별도 사용자 승인 필요 사안). 나머지 2개는 미해결: report_naver_mail_inbox_consolidated.py 는 batch_runner shim이 private 함수를 재노출 안 함(호출하는 곳 없음, 낮은 우선순위). check_excel_live.py 는 __main__ 가드 없는 수동 진단 스크립트라 runcheck 오탐에 가까움.",
+      "evidence": "runcheck R0(2026-09-29 재확인): scripts/audit_dev_reg_approvals.py 는 a1f4de20 삭제 전 커밋에서 복원 + persistence/clients 이동 경로 2곳 갱신으로 해결(테스트 35개 통과). scripts/ops/check_a4.py 는 shared.constants/excel_utils 실제 구현을 다른 저장소(42. excel-ai-agent)에서 scripts/common/excel_a4_constants.py·excel_a4_utils.py 로 이식해 해결 — xlsx 편집마다 도는 PostToolUse 훅이 다시 정상 동작 확인(실제 xlsx 파일 대상 COM 자동화 실행 검증). 단, 이 훅의 2단계(ai_check_a4.py, GPT-4o-mini 호출)는 \"외부 유료 AI API 호출 승인제\"+2026-09-24 \"유료 AI 호출 0\" 결정과 충돌해 복원하지 않고 hook_check_a4.py에서 의도적으로 건너뛰도록 함(별도 사용자 승인 필요 사안). 2026-09-29 나머지 2개도 해결: report_naver_mail_inbox_consolidated.py — batch_runner.py 는 processing/batch_runner.py 로 이동한 얇은 `import *` shim인데 __all__ 이 없어 밑줄시작 이름(_classify_priority 등)이 재노출 안 되는 Python 기본 동작 때문에 깨져 있었음, 호출부를 실제 모듈 경로에서 직접 import 하도록 수정해 해결. check_excel_live.py — __main__ 가드 없는 최상위 스크립트라 import만 해도 GetActiveObject COM 호출이 즉시 실행돼 '임포트 실패'로 보였을 뿐 결함은 아니었음(Excel 미실행이 전제조건), main()+`if __name__=='__main__'` 가드로 감싸 Excel 미실행 시 안내 메시지를 출력하도록 개선.",
+      "fix_note": "2026-09-29: 위 evidence에 상세 기술 — 2개 파일 모두 해결.",
       "stage": "RUN",
-      "status": "open",
+      "status": "fixed",
       "no": 32
     },
     {
