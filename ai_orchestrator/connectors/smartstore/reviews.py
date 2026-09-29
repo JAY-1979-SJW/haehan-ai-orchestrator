@@ -11,10 +11,9 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 
 from ...audit_logger import log_event
-from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, save_ss
+from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, run_with_cdp_page, save_ss
 
 router = APIRouter()
-_CDP = "http://127.0.0.1:9222"
 
 
 @router.get("/reviews")
@@ -28,13 +27,9 @@ def api_reviews_collect(limit: int = 30, user: dict = Depends(require_role("admi
     sys.path.insert(0, str(ROOT))
     t0 = _t.monotonic()
     try:
-        from playwright.sync_api import sync_playwright
+        from scripts.naver.smartstore import NaverSmartStore
 
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            from scripts.naver.smartstore import NaverSmartStore
-
-            result = NaverSmartStore(page).list_reviews(limit=limit)
+        result = run_with_cdp_page(lambda page: NaverSmartStore(page).list_reviews(limit=limit))
     except Exception as e:  # noqa: BLE001 - 리뷰 조회/자동답변 엔드포인트 — reply 엔드포인트는 body.confirm 검증이 try 블록 이전에 끝난 뒤에만 실제 저장하며, except는 CDP 실패를 {ok: False, error, hint}로 반환할 뿐 confirm 검증을 우회하지 않음.
         result = {"ok": False, "error": str(e)}
     result.update({"collected_at": now_iso(), "duration_ms": elapsed_ms(t0)})
@@ -59,14 +54,14 @@ def api_reviews_pending(limit: int = 20, user: dict = Depends(require_role("admi
     sys.path.insert(0, str(ROOT))
     from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder
 
-    try:
-        from playwright.sync_api import sync_playwright
+    def _fetch_pending(page):
+        result = ReviewAutoResponder(page).get_pending(limit=limit)
+        if result.get("ok") and result.get("pending"):
+            result["pending"] = ReviewAutoResponder(None).generate_replies(result["pending"])
+        return result
 
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            result = ReviewAutoResponder(page).get_pending(limit=limit)
-            if result.get("ok") and result.get("pending"):
-                result["pending"] = ReviewAutoResponder(None).generate_replies(result["pending"])
+    try:
+        result = run_with_cdp_page(_fetch_pending)
     except Exception as e:  # noqa: BLE001 - 리뷰 조회/자동답변 엔드포인트 — reply 엔드포인트는 body.confirm 검증이 try 블록 이전에 끝난 뒤에만 실제 저장하며, except는 CDP 실패를 {ok: False, error, hint}로 반환할 뿐 confirm 검증을 우회하지 않음.
         result = {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(
@@ -102,11 +97,9 @@ def api_reviews_reply(body: ReplyReviewsRequest, user: dict = Depends(require_ro
     from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder
 
     try:
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            result = ReviewAutoResponder(page).reply_pending(limit=body.limit, confirmed=True)
+        result = run_with_cdp_page(
+            lambda page: ReviewAutoResponder(page).reply_pending(limit=body.limit, confirmed=True)
+        )
     except Exception as e:  # noqa: BLE001 - 리뷰 조회/자동답변 엔드포인트 — reply 엔드포인트는 body.confirm 검증이 try 블록 이전에 끝난 뒤에만 실제 저장하며, except는 CDP 실패를 {ok: False, error, hint}로 반환할 뿐 confirm 검증을 우회하지 않음.
         result = {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(

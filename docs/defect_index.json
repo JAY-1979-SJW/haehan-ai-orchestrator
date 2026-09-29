@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 101,
+  "next_no": 104,
   "items": [
     {
       "no": 1,
@@ -1313,6 +1313,52 @@
       "stage": "GATE",
       "status": "fixed",
       "no": 100
+    },
+    {
+      "id": "SMARTSTORE-9FILES-INDEPENDENT-SYNC-PLAYWRIGHT-TIMEOUT",
+      "category": 1,
+      "title": "ai_orchestrator/connectors/smartstore/ 9개 파일 21곳이 매 호출마다 독자적 Playwright 연결 -> 180초 고정 타임아웃 위험(실측: 15초+ 무응답)",
+      "where": [
+        "ai_orchestrator/connectors/smartstore/orders.py",
+        "ai_orchestrator/connectors/smartstore/reviews.py",
+        "ai_orchestrator/connectors/smartstore/popup.py",
+        "ai_orchestrator/connectors/smartstore/products.py",
+        "ai_orchestrator/connectors/smartstore/marketing.py",
+        "ai_orchestrator/connectors/smartstore/seller_center.py",
+        "ai_orchestrator/connectors/smartstore/settlements.py",
+        "ai_orchestrator/connectors/smartstore/stats.py",
+        "ai_orchestrator/connectors/smartstore/_helpers.py"
+      ],
+      "evidence": "사용자 지시 '오류 항목을 모두 수집해서 코드 문제인거는 다 수정' -> 137개 GET 엔드포인트 전체 라이브 스윕으로 발견: /smartstore/orders/pending, /smartstore/reviews/pending 이 15초 타임아웃. 코드 확인 결과 9개 파일 21곳이 with sync_playwright() as pw: pw.chromium.connect_over_cdp(...) 를 매 호출마다 독자적으로 맺고 있었음 — 이 저장소 CLAUDE.md '반복 실수' 항목(2026-09-29, #72~#76, google/actions.py에서 이미 같은 패턴을 고쳤던 것)이 경고한 정확히 180000ms 고정 타임아웃 위험을 다른 파일들(smartstore)에서는 여전히 갖고 있었음.",
+      "fix_note": "_helpers.py에 run_with_cdp_page(fn)/run_with_cdp_context(fn) 신설 — scripts.web_connector의 공유 연결(run_on_browser_thread+get_page/get_context) 재사용. scripts/web_connector.py에 get_context() 공개 함수 추가(popup.py/products.py처럼 ctx.pages 전체를 훑어야 하는 호출자용). 9개 파일 21곳 전부 인라인 with sync_playwright()... 패턴을 이 헬퍼 호출로 교체, 죽은 코드(cdp_connect, 호출부 0건 확인 후) 삭제. 검증: FastAPI 재기동 후 orders/pending 연속 호출 -> CDP 연결 실패 시 6~8초 내 명확한 에러(이전엔 15초+ 무응답) 확인. py_compile+ruff 전부 통과, layer_audit 3종 0, quality_gate 통과.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 101
+    },
+    {
+      "id": "ADMIN-LOCAL-AGENTS-REDIRECT-404-WRONG-PATH",
+      "category": 1,
+      "title": "GET /api/v1/admin/local-agents 가 존재하지 않는 경로로 303 리다이렉트 -> 항상 404",
+      "where": "ai_orchestrator/routers/admin_ui_router.py",
+      "evidence": "137개 GET 엔드포인트 라이브 스윕(4xx 19건) 중 유일하게 특이했던 404 — 실측: '/orchestrator/admin-web/local-agents' 로 리다이렉트하는데 이 경로 자체가 존재하지 않음. admin-web/src/lib/nav.ts의 NAV_GROUPS_ALL 실제 라우트는 prefix 없는 '/local-agents'.",
+      "fix_note": "리다이렉트 대상을 '/local-agents'로 수정. py_compile+ruff 통과.",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 102
+    },
+    {
+      "id": "CDP-POPUP-POLLER-REPEATED-EMPTY-CREDENTIAL-LOGIN-CONTENDS-WITH-API",
+      "category": 1,
+      "title": "cdp_popup_manager poller가 빈 자격증명(ID/PW empty)으로 반복 네이버 로그인 시도 + 공유 브라우저 스레드에서 API 요청과 경합 -> 스마트스토어 API 지연",
+      "where": [
+        "scripts/naver/smartstore/navigation/cdp_popup_manager.py",
+        "scripts/naver/auth.py"
+      ],
+      "evidence": "smartstore CDP 리팩터(위 항목) 실측 검증 중 발견: FastAPI 로그에 poller가 '[poller] 새 new_tab 감지' -> 'ID 입력 완료 (empty, 10자)' -> 'PW 입력 완료 (empty, 10자)' -> 'login button normal click failed(3000ms 타임아웃)' -> '로그인 성공: 회원' 시퀀스를 수 차례 반복하는 걸 확인. 빈 문자열로 로그인 폼을 채우고도 '로그인 성공'으로 로그가 남는 것 자체가 의심스러움(오탐 가능성). 이 시퀀스가 run_on_browser_thread(단일 워커 스레드)를 점유하는 동안 같은 스레드를 쓰는 smartstore API 요청(orders/pending 등, 위 항목에서 방금 이 공유 스레드로 전환)이 대기하게 됨 -> curl 20초 타임아웃 재현. 예전(각 API가 독자적 Playwright 연결)에는 poller와 자원을 안 나눠 써서 이 경합이 드러나지 않았음 — 이번 리팩터로 처음 드러난 상호작용.",
+      "fix_note": "이번 세션에서는 미수정 — 원인 2가지(①poller가 왜 빈 자격증명으로 반복 로그인을 시도하는지, '새 탭 감지' 판정이 오탐인지 ②공유 브라우저 스레드의 poller/API 자원 경합을 어떻게 완화할지, 예: poller 주기 조정·우선순위 분리·별도 스레드 재검토)는 추측 없이 라이브 재현·로그 추적이 더 필요해 다음 세션으로 남김. 스마트스토어 계정 자격증명이 실제로 어떻게 poller에 전달되는지부터 확인 필요.",
+      "stage": "RUN",
+      "status": "open",
+      "no": 103
     }
   ]
 }

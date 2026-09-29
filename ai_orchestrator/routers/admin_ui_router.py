@@ -720,7 +720,11 @@ def admin_local_agents_page(
     """
     if not _legacy_admin_ui_fallback_enabled():
         # 레거시 비활성: admin-web local-agents 페이지로 안내(404 대신 303 리다이렉트).
-        return RedirectResponse(url="/orchestrator/admin-web/local-agents", status_code=303)
+        # 2026-09-30 수정(실측 발견): "/orchestrator/admin-web/local-agents" 로 리다이렉트
+        # 하고 있었는데 그 경로 자체가 존재하지 않아 매번 404 — admin-web/src/lib/nav.ts의
+        # 실제 라우트는 prefix 없는 "/local-agents"(NAV_GROUPS_ALL의 "Local Agents" 항목,
+        # href: "/local-agents"). 실제 엔드포인트 스윕(137개 GET)으로 발견.
+        return RedirectResponse(url="/local-agents", status_code=303)
     return HTMLResponse(content=_LOCAL_AGENTS_HTML, status_code=200)
 
 

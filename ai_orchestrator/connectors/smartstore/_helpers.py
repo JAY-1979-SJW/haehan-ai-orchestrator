@@ -58,14 +58,48 @@ def tmpl_dir() -> Path:
     return _TMPL_DIR
 
 
-def cdp_connect():
-    """CDP 브라우저에 연결하고 첫 번째 page를 반환합니다."""
-    from playwright.sync_api import sync_playwright
+def run_with_cdp_page(fn):
+    """공유 CDP 연결(scripts.web_connector)의 기존 탭에서 fn(page)를 실행하고 결과를 반환.
 
-    pw = sync_playwright().start()
-    browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
-    page = browser.contexts[0].pages[0]
-    return pw, browser, page
+    2026-09-30 이전엔 이 파일에 cdp_connect()가 있었는데, 호출마다 독자적으로
+    sync_playwright().start()+connect_over_cdp()를 새로 맺는 패턴이라 이 저장소 CLAUDE.md
+    '반복 실수' 항목(2026-09-29, #72~#76)이 이미 경고한 정확히 180000ms 고정 타임아웃
+    위험을 그대로 갖고 있었다 — smartstore 라우터 9개 파일 21곳에서 이 패턴을 그대로
+    복붙해 쓰고 있었고, 실제로 /orders/pending 등에서 15초 이상 응답 없음을 실측 확인해
+    전부 이 함수로 교체(호출부가 하나도 안 남아 cdp_connect() 자체는 삭제).
+    scripts/web_connector.py의 전용 브라우저 스레드(run_on_browser_thread)와 캐시된
+    단일 연결(get_page)을 재사용해 매 호출마다 새 Playwright 드라이버를 띄우던 문제를 없앤다.
+    """
+    import sys
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from scripts.web_connector import get_page, run_on_browser_thread
+
+    def _work():
+        page = get_page()
+        return fn(page)
+
+    return run_on_browser_thread(_work)
+
+
+def run_with_cdp_context(fn):
+    """공유 CDP 연결(scripts.web_connector)의 BrowserContext(여러 탭)로 fn(ctx)를 실행.
+
+    run_with_cdp_page()와 같은 목적이지만, 팝업 관리처럼 ctx.pages 전체를 훑어 URL
+    패턴으로 활성 탭을 골라야 하는 호출자(smartstore/popup.py)를 위한 컨텍스트 레벨 버전.
+    """
+    import sys
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from scripts.web_connector import get_context, run_on_browser_thread
+
+    def _work():
+        ctx = get_context()
+        return fn(ctx)
+
+    return run_on_browser_thread(_work)
 
 
 def now_iso() -> str:

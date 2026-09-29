@@ -7,9 +7,9 @@ from fastapi import APIRouter, Depends
 from ai_orchestrator.gates.auth import require_role
 
 from ...audit_logger import log_event
+from ._helpers import run_with_cdp_page
 
 router = APIRouter()
-_CDP = "http://127.0.0.1:9222"
 
 SELLER_CENTER_URLS: dict[str, str] = {
     "register": "https://sell.smartstore.naver.com/#/products/new",
@@ -27,13 +27,13 @@ def api_open_seller_center(page_key: str = "dashboard", user: dict = Depends(req
     url = SELLER_CENTER_URLS.get(page_key)
     if not url:
         return {"ok": False, "error": f"알 수 없는 page_key: {page_key}", "available": list(SELLER_CENTER_URLS.keys())}
-    try:
-        from playwright.sync_api import sync_playwright
 
-        with sync_playwright() as pw:
-            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
-            page.bring_to_front()
-            page.goto(url, timeout=15000, wait_until="domcontentloaded")
+    def _navigate(page):
+        page.bring_to_front()
+        page.goto(url, timeout=15000, wait_until="domcontentloaded")
+
+    try:
+        run_with_cdp_page(_navigate)
     except Exception as e:  # noqa: BLE001 - CDP 브라우저로 셀러센터 페이지 열기 실패를 {ok: False, error, hint}로 반환 — 읽기 전용 네비게이션
         return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
     log_event(

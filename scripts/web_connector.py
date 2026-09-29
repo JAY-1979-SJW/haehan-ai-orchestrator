@@ -314,6 +314,18 @@ def fit_viewport(page: Page) -> None:
         log.debug("[viewport] 창 위치 고정 생략: %s", e)
 
 
+def get_context():
+    """공유 CDP 연결의 BrowserContext를 반환(여러 탭을 동시에 다뤄야 하는 호출자용).
+
+    2026-09-30 추가 — 팝업 관리처럼 ctx.pages 전체를 훑어 URL 패턴으로 활성 탭을
+    고르는 코드(예: smartstore/popup.py)가 매 호출마다 독자적으로 sync_playwright()를
+    새로 맺던 걸 이 공유 연결로 옮기기 위한 공개 진입점. open_page()/get_page()와
+    동일한 캐시된 연결을 재사용 — 별도 연결을 새로 맺지 않는다.
+    """
+    _, ctx = _connect_browser()
+    return ctx
+
+
 def open_page(*, allow_new_tab: bool = False, reason: str | None = None) -> Page:
     """CDP 브라우저에 연결해 새 페이지 반환."""
     _, ctx = _connect_browser()
