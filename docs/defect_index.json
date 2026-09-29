@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 94,
+  "next_no": 95,
   "items": [
     {
       "no": 1,
@@ -1231,6 +1231,17 @@
       "stage": "RUN",
       "status": "fixed",
       "no": 93
+    },
+    {
+      "id": "AI-AGENT-CHAT-UI-RUN-CLAUDE-AGENT-WIRED",
+      "category": 2,
+      "title": "앱 내 AI 상담 채팅을 실제 run_claude_agent(MCP) 파이프라인에 연결(REQ-3 UI 구현)",
+      "where": "ai_orchestrator/routers/ai_agent_router.py(신규), ai_orchestrator/router.py, admin-web/src/components/chat/UniversalChat.tsx",
+      "evidence": "사용자 요청: '앱 내부에 mcp를 연결해서 ai를 이용해서 작업이 되게 해줘'. docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md 확인 결과 run_claude_agent 액션·MCP 도구 3종·Electron 창 제어까지 백엔드는 이미 구현·실기 검증 완료 상태였고, 유일하게 남은 건 §10 item 3 '버튼 UI는 범위 밖'이었음. UniversalChat.tsx/SmartStoreChat.tsx는 2026-09-24에 'AI 작업은 Claude Code(MCP)로 합니다'라는 정적 안내로 비워져 있었음(개발자 자신의 Claude Code 세션 전제) — 사용자가 이 결정을 명시적으로 뒤집음.",
+      "fix_note": "(1) ai_agent_router.py 신규: POST /api/v1/ai-agent/run — 등록된 로컬 에이전트 자동 선택(idle 우선) 후 기존 local_agent_registry.enqueue_task(action=run_claude_agent) 재사용. 신규 실행/큐/폴링 로직 없음, 기존 GET /local-agents/{id}/tasks/{id} 그대로 재사용. (2) UniversalChat.tsx 재구현: 입력창 -> /ai-agent/run POST -> task 폴링(2s 간격, 최대 5분) -> 결과 표시. 모든 도메인 페이지(AiDock, smartstore 제외)에 자동 노출. 실측 검증: local_agent.agent --run 재등록(agent_id=la-058275583ae7) 후 '숫자 7만 답해' 프롬프트로 POST /ai-agent/run -> GET task 폴링 -> status=completed, result_summary='7' (약 21초) 확인. 부수 발견 버그 2건: local_agent_registry.py facade의 get_task_count 등 3개 재노출 누락 (defect_index #93), web_connector.py Playwright 인스턴스 leak(defect_index #91) — 둘 다 이번 작업 도중 실기로 발견·별도 커밋으로 수정. 게이트: py_compile+ruff+eslint+tsc 전부 통과, layer_audit 3종 0, skeleton_gate PASS(registry_sync --fix 실행), quality_gate 통과(경고 1건, 소규모 신규 기능이라 수용).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 94
     }
   ]
 }

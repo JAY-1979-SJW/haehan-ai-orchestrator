@@ -19608,6 +19608,14 @@
    "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/routers/ai_agent_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
