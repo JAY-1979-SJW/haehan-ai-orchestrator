@@ -61,17 +61,26 @@ def build_local_agent_diagnostics() -> dict:
     - secret/token/password/cookie/session 반환 금지
     """
     try:
-        agents_dict = _reg._agents  # locked by caller
-        tasks_dict = _reg._tasks
+        # 2026-09-29 수정(defect_index 신규 항목, 치명적 데드락과 함께 발견): 예전엔 호출부
+        # (local_agent_router_query.py)가 _reg._lock 을 잡은 채로 이 함수를 불렀는데, 그
+        # 락을 없앤 뒤에도 여기서 _agents/_tasks 를 락 없이 그대로 순회하면 다른 스레드의
+        # register_agent()/cleanup_agent_and_tasks() 가 동시에 항목을 추가·삭제할 때
+        # "dictionary changed size during iteration" RuntimeError 위험이 있다. 락을 아주
+        # 짧게만 잡아 스냅샷(list)을 뜨고, 무거운 집계는 락 밖에서 스냅샷을 순회한다 —
+        # get_agent_status()/get_active_task_count() 는 각자 필요할 때 _lock 을 다시 짧게
+        # 잡으므로(이 시점엔 바깥 락이 이미 풀려 있어) 재진입 데드락도 없다.
+        with _reg._lock:
+            agents_snapshot = list(_reg._agents.items())
+            tasks_snapshot = list(_reg._tasks.values())
 
         # 1. Agent 상태 집계
         agent_statuses = {}
-        for agent_id, agent in agents_dict.items():  # noqa: B007
+        for agent_id, agent in agents_snapshot:  # noqa: B007
             status = _reg.get_agent_status(agent_id)
             agent_statuses[agent_id] = status
 
         agent_counts = {
-            "total": len(agents_dict),
+            "total": len(agents_snapshot),
             "online": sum(1 for s in agent_statuses.values() if s == "idle" or s == "busy"),
             "offline": sum(1 for s in agent_statuses.values() if s == "offline"),
             "stale": sum(1 for s in agent_statuses.values() if s == "stale"),
@@ -79,7 +88,7 @@ def build_local_agent_diagnostics() -> dict:
 
         # 2. Task 상태 집계
         task_counts = {
-            "total": len(tasks_dict),
+            "total": len(tasks_snapshot),
             "queued": 0,
             "pending": 0,
             "running": 0,
@@ -102,7 +111,7 @@ def build_local_agent_diagnostics() -> dict:
         has_observe_summary = False
         has_audit_summary = False
 
-        for task in tasks_dict.values():
+        for task in tasks_snapshot:
             # Task 상태 count
             if task.status in task_counts:
                 task_counts[task.status] += 1
