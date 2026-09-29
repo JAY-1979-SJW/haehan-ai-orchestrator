@@ -7,7 +7,7 @@ import sys
 try:
     from scripts.module_quality_gate_common import PY, GateModule, GateStep
 except ModuleNotFoundError:
-    from module_quality_gate_common import PY, GateModule, GateStep  # type: ignore[no-redef]
+    from module_quality_gate_common import PY, GateModule, GateStep  # type: ignore[no-redef, import-not-found]
 
 sys.dont_write_bytecode = True
 

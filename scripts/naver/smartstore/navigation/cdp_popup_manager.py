@@ -36,6 +36,7 @@ import contextlib
 import threading
 import time
 from collections.abc import Callable
+from typing import ClassVar
 
 from scripts.logger import get_logger
 
@@ -442,7 +443,12 @@ class CdpPopupManager:
 
     # ── 보류 팝업 큐 (사용자 확인 대기) ──────────────────────────────────────
     # {id: {popup_data, page_ref, action_fn}}
-    _pending: dict = {}
+    # ClassVar 명시(2026-09-29 defect_index): CdpPopupManager() 가 여러 곳(최소 9곳)에서
+    # 그때그때 새로 생성되는데 이 딕셔너리는 클래스 속성이라 그 인스턴스들이 전부 같은
+    # 큐를 공유한다 — 실제 사용자에게는 브라우저 팝업이 항상 하나뿐이라 현재는 문제없이
+    # 동작 중으로 보이나, 인스턴스별로 독립돼야 하는지는 별도 확인 필요(동작은 바꾸지 않고
+    # 현재 상태를 타입으로만 명시 — RUF012).
+    _pending: ClassVar[dict] = {}
 
     def handle_page(self, page, auto_confirm: bool = True) -> dict:
         """현재 페이지 팝업 스캔 + 자동 처리.

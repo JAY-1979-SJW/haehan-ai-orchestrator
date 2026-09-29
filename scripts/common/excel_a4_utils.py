@@ -51,26 +51,26 @@ def excel_session(file_path: str):
     # 경로였다. 항상 **별도 인스턴스**(DispatchEx)를 새로 띄우고, Quit 은 그
     # 인스턴스에만 한다. 사용자 Excel 에는 닿지 않는다.
     xl = win32.DispatchEx("Excel.Application")
-    try:
+    with contextlib.suppress(
+        Exception
+    ):  # 검사용 Excel 인스턴스 속성 설정 실패는 무시하고 계속(읽기전용 점검, 실패해도 아래 Open()에서 진짜 오류면 드러남)
         xl.Visible = False
         xl.DisplayAlerts = False
-    except Exception:  # noqa: BLE001 - 검사용 Excel 인스턴스 속성 설정 실패는 무시하고 계속(읽기전용 점검, 실패해도 아래 Open()에서 진짜 오류면 드러남)
-        pass
     wb = None
     try:
         wb = xl.Workbooks.Open(str(Path(file_path).resolve()))
         ws = wb.Sheets(1)
         yield wb, ws, ws.PageSetup
     finally:
-        try:
-            if wb is not None:
+        if wb is not None:
+            with contextlib.suppress(
+                Exception
+            ):  # 검사 끝에 워크북 닫기 실패 무시(읽기전용 점검 인스턴스, 아래 Quit()으로 최종 정리)
                 wb.Close(False)
-        except Exception:  # noqa: BLE001 - 검사 끝에 워크북 닫기 실패 무시(읽기전용 점검 인스턴스, 아래 Quit()으로 최종 정리)
-            pass
-        try:
+        with contextlib.suppress(
+            Exception
+        ):  # 검사 끝에 Excel 인스턴스 종료 실패 무시(별도 DispatchEx 인스턴스라 사용자 Excel에는 영향 없음)
             xl.Quit()
-        except Exception:  # noqa: BLE001 - 검사 끝에 Excel 인스턴스 종료 실패 무시(별도 DispatchEx 인스턴스라 사용자 Excel에는 영향 없음)
-            pass
 
 
 # ── 계산 헬퍼 ─────────────────────────────────────────────────────────────────

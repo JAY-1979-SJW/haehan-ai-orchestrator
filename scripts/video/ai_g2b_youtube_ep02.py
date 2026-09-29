@@ -30,7 +30,7 @@ TTS_RATE = "+25%"
 
 def _fit_image(img: Image.Image, max_w: int, max_h: int) -> Image.Image:
     ratio = min(max_w / img.width, max_h / img.height)
-    return img.resize((int(img.width * ratio), int(img.height * ratio)), Image.LANCZOS)
+    return img.resize((int(img.width * ratio), int(img.height * ratio)), Image.Resampling.LANCZOS)
 
 
 def _caption_frame(screenshot_path: Path | None, caption_lines: list[str], caption_sub: str = "") -> Image.Image:
@@ -191,7 +191,7 @@ def _probe_duration(path: Path) -> float:
 
 
 async def _tts(text: str, out_path: Path, rate: str) -> None:
-    import edge_tts
+    import edge_tts  # type: ignore[import-not-found]  # 선택적 의존성(docs_registry.toml 등록)
 
     comm = edge_tts.Communicate(text=text, voice="ko-KR-InJoonNeural", rate=rate)
     await comm.save(str(out_path))

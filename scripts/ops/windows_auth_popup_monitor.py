@@ -131,15 +131,15 @@ def _beep_loop(stop_evt: threading.Event, count: int = 5, interval: float = 1.5)
 def _toast(title: str, msg: str) -> None:
     """Windows 토스트 알림 (win10toast 또는 winrt 사용)."""
     try:
-        from win10toast import ToastNotifier
+        from win10toast import ToastNotifier  # type: ignore[import-not-found]  # 선택적 의존성(docs_registry.toml 등록)
 
         ToastNotifier().show_toast(title, msg, duration=8, threaded=True)
         return
     except ImportError:
         pass
     try:
-        import winrt.windows.data.xml.dom as wxml
-        import winrt.windows.ui.notifications as wun
+        import winrt.windows.data.xml.dom as wxml  # type: ignore[import-not-found]  # 선택적 의존성(docs_registry.toml 등록)
+        import winrt.windows.ui.notifications as wun  # type: ignore[import-not-found]
 
         mgr = wun.ToastNotificationManager
         notifier = mgr.create_toast_notifier("Chrome")

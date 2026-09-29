@@ -182,7 +182,7 @@ def _probe_duration(path: Path) -> float:
 
 
 async def _tts(text: str, out_path: Path, rate: str) -> None:
-    import edge_tts
+    import edge_tts  # type: ignore[import-not-found]  # 선택적 의존성(docs_registry.toml 등록)
 
     comm = edge_tts.Communicate(text=text, voice="ko-KR-InJoonNeural", rate=rate)
     await comm.save(str(out_path))

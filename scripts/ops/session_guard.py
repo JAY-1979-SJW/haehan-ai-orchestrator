@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import session_handoff as sh
+import session_handoff as sh  # type: ignore[import-not-found]  # 직접실행 시 스크립트 자기 폴더가 sys.path[0]
 
 
 def _mb(path_str: str) -> float:

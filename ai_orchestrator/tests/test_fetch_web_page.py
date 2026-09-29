@@ -134,8 +134,8 @@ class _FakePlaywrightCtx:
 
 def _install_fake_playwright(monkeypatch, *, page: _FakePage):
     fake_mod = types.ModuleType("playwright.sync_api")
-    fake_mod.sync_playwright = lambda: _FakePlaywrightCtx(page)
-    fake_mod.TimeoutError = _FakeTimeout
+    fake_mod.sync_playwright = lambda: _FakePlaywrightCtx(page)  # type: ignore[attr-defined]  # 테스트용 가짜 모듈에 동적으로 속성 부여(mypy가 ModuleType에 없다고 오탐)
+    fake_mod.TimeoutError = _FakeTimeout  # type: ignore[attr-defined]
     fake_pkg = types.ModuleType("playwright")
     monkeypatch.setitem(sys.modules, "playwright", fake_pkg)
     monkeypatch.setitem(sys.modules, "playwright.sync_api", fake_mod)

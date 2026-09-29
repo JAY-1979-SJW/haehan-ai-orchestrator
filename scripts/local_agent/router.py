@@ -1,4 +1,5 @@
 """로컬 에이전트 서비스 라우터 — 고위험 정부/민원 자동화."""
+
 from __future__ import annotations
 
 from scripts.gate import check as gate_check
@@ -7,11 +8,11 @@ from scripts.logger import get_logger
 __status__ = {
     "tasks": {
         "gov24 (주민등록등본)": "partial",
-        "minwon (민원24)":      "partial",
-        "blog-explore":         "done",
-        "blog-scrape":          "done",
-        "check (playwright)":   "done",
-        "create-profile":       "partial",
+        "minwon (민원24)": "partial",
+        "blog-explore": "done",
+        "blog-scrape": "done",
+        "check (playwright)": "done",
+        "create-profile": "partial",
     },
     "note": "gov24/minwon = 승인(APPROVE) 필수 고위험. 개인정보 관련 작업",
 }
@@ -46,6 +47,7 @@ def _cmd_gov24(sub: str | None, args: list[str]) -> None:
     gate_check("eum_register", force=False)  # APPROVE 등급
     print("[로컬에이전트] 정부24 주민등록등본 발급")
     from scripts.local_agent.gov.gov24_certificate import main
+
     main()
 
 
@@ -53,6 +55,7 @@ def _cmd_minwon(sub: str | None, args: list[str]) -> None:
     gate_check("eum_register", force=False)  # APPROVE 등급
     print("[로컬에이전트] 민원24 온라인 민원 접수")
     from scripts.local_agent.gov.minwon_submit import main
+
     main()
 
 
@@ -61,6 +64,7 @@ def _cmd_blog_explore(args: list[str]) -> None:
     blog_id = args[0] if args else ""
     print(f"[로컬에이전트] 네이버 블로그 탐색: {blog_id or '(ID 미지정)'}")
     from scripts.local_agent.naver.blog_explorer import main
+
     main()
 
 
@@ -69,13 +73,15 @@ def _cmd_blog_scrape(args: list[str]) -> None:
     blog_id = args[0] if args else ""
     print(f"[로컬에이전트] 네이버 블로그 수집: {blog_id or '(ID 미지정)'}")
     from scripts.local_agent.naver.blog_scraper import main
+
     main()
 
 
-def _cmd_check(args: list[str] = []) -> None:
+def _cmd_check() -> None:
     gate_check("goto")
     print("[로컬에이전트] Playwright 환경 점검")
     from scripts.local_agent.check_playwright_bootstrap import main
+
     main()
 
 
@@ -84,6 +90,7 @@ def _cmd_create_profile(args: list[str]) -> None:
     site = args[0] if args else ""
     print(f"[로컬에이전트] 사이트 프로파일 생성: {site or '(URL 미지정)'}")
     from scripts.local_agent.create_site_profile import main
+
     main()
 
 

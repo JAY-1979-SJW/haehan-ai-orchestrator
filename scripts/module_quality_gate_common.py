@@ -15,7 +15,7 @@ from uuid import uuid4
 try:
     from scripts.runtime_temp import usable_temp_base
 except ModuleNotFoundError:  # direct script execution: sys.path[0] == scripts/
-    from runtime_temp import usable_temp_base
+    from runtime_temp import usable_temp_base  # type: ignore[import-not-found]
 
 sys.dont_write_bytecode = True
 
@@ -165,5 +165,5 @@ def all_steps() -> list[GateStep]:
     try:
         from scripts.module_quality_gate_modules import MODULES as _MODULES
     except ModuleNotFoundError:
-        from module_quality_gate_modules import MODULES as _MODULES  # type: ignore[no-redef]
+        from module_quality_gate_modules import MODULES as _MODULES  # type: ignore[no-redef, import-not-found]
     return [step for module in _MODULES for step in module.steps]

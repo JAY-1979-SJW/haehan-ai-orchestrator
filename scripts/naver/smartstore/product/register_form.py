@@ -20,6 +20,7 @@ from __future__ import annotations
 import contextlib
 import time
 from pathlib import Path
+from typing import ClassVar
 
 from playwright.sync_api import Page
 
@@ -400,7 +401,7 @@ class TaxSection(FormSection):
 
     section_name = "tax"
 
-    TAX_MAP = {
+    TAX_MAP: ClassVar[dict] = {
         "과세": SEL.TAX_TAXABLE,
         "TAX": SEL.TAX_TAXABLE,
         "면세": SEL.TAX_EXEMPT,

@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 41,
+  "next_no": 42,
   "items": [
     {
       "no": 1,
@@ -579,6 +579,23 @@
       ],
       "evidence": "#39 의 test_app_action_coverage.py 2건 조사 중 발견: app_actions.build_manifest() 가 계속 빈 리스트를 반환하고 있었음. 원인: FastAPI 0.137.0(설치본 0.141.1, Starlette 1.6.0) 부터 include_router() 가 서브라우터를 즉시 펼치지 않고 _IncludedRouter 라는 지연 래퍼로 저장 — app.routes 를 isinstance(r, APIRoute) 로 직접 순회하던 기존 코드는 이제 최상위 몇 개(openapi/docs 등)만 보고 나머지 40여개 서브라우터의 진짜 라우트를 전혀 못 찾음(공식 GitHub discussion #15782 + fastapi/fastapi 저장소 소스 fastapi/routing.py 의 RouteContext/iter_route_contexts 실측 확인, WebFetch 로 등록된 FastAPI 공식문서 열람 완료). 영향 범위 확인: app_actions.py(122건→0건이었음, 아직 어디서도 실제로 호출되지 않는 미연결 모듈로 확인 — 실사용 중인 라이브 기능이 막혀있던 게 아니라 완성된 기능이 연결 전 상태였음), audit_backend_runtime_contract.py(EXPECTED_RUNTIME_ROUTES=206 락 검사가 실제로는 0건과 비교 중 — main() 은 fail-loud라 공허하게 통과하진 않았지만 왜 실패하는지 원인이 이번에야 밝혀짐), test_backend_router_server_cycle_break_20260516.py(자체 동일 필터링 로직 중복, 같은 원인으로 항상 실패). test_app_action_coverage.py::test_destructive_actions_never_auto_safe 는 `bad = [x for x in build_manifest() if ...]; assert not bad` 패턴이라 build_manifest() 가 빈 리스트인 동안 비교대상 0건으로 계속 공허하게(vacuously) 통과 — 실제로 수정해서 데이터가 채워지자 register/upload/setup/reset/publish 계열 위험동작이 SAFE(자동실행)로 오분류되고 있던 진짜 문제가 처음으로 드러남.",
       "fix_note": "2026-09-29: 공식 fastapi.routing.iter_route_contexts() 로 3개 파일 전부 수정(app_actions.py/_post_routes, audit_backend_runtime_contract.py/iter_runtime_routes, test_backend_router_server_cycle_break_20260516.py 는 중복 로직 제거하고 audit 모듈 재사용). 웹소켓 라우트는 RouteContext.path/path_format 이 빈 문자열을 반환하는 별도 한계가 있어(fastapi 0.141.1 실측) ctx._effective_route.starlette_route.path 로 보완(비공개 속성 의존 — 주석에 향후 제거 조건 명시). EXPECTED_RUNTIME_ROUTES 를 실측 정확값 284 로 재고정. app_actions.py 의 _DESTRUCTIVE 정규식에 register|upload|setup|reset|export|publish|발행 추가(공허 통과 중 숨어있던 15건의 SAFE 오분류 중 13건 해결, 나머지 2건은 '게시글'(명사)이 '게시'(동사=publish)와 겹치는 한국어 동형이의어 오탐으로 코드 직접 확인 후 테스트에 알려진 예외로 명시). test_destructive_actions_never_auto_safe 에 공허통과 방지 가드(assert len(man) > 50) 추가. 관련 테스트 22개 전부 통과, ruff clean. 조사 과정에서 이 클래스의 문제(빈 컬렉션 기반 assert가 조용히 항상 통과)를 다른 프로젝트의 감사도구(32. Claude 개발표준/audit-kit)에도 규칙화할지 사용자와 논의 중.",
+      "stage": "RUN",
+      "status": "fixed"
+    },
+    {
+      "no": 41,
+      "id": "run.audit_kit_std_critical_618_to_zero",
+      "category": 2,
+      "title": "audit-kit std 치명 618건 → 0건 — 사용자 지시(\"618건 먼저 정리 후 절대-0 게이트로 강제\")로 전수 triage",
+      "where": [
+        "configs/ruff.toml",
+        "32. Claude 개발표준/project/ruff.toml",
+        "32. Claude 개발표준/standard/docs_registry.toml",
+        "audit-kit/src/audit_kit/std/run.py (effective_ruff_config 신설)",
+        "scripts/local_agent/router.py, scripts/naver/smartstore/*, scripts/video/*, scripts/module_quality_gate_*, 등 45개 파일"
+      ],
+      "evidence": "618건 전수를 조항별로 근본원인까지 추적: (1) STD-04 265건 — 264건이 scripts/** 의 S110(try-except-pass), 표준 번들 ruff.toml 의 scripts/** per-file-ignore 가 T20 만 있고 tests/** 처럼 S 를 안 뺐던 간극(표준 자체를 수정, 다른 프로젝트도 이득). (2) STD-05 257건 — 214건이 Depends(require_role(...)) 처럼 프로젝트 고유 팩토리 함수가 Depends() 안에 중첩된 경우 extend-immutable-calls(fastapi.Depends 만 있음)가 안쪽 호출은 못 덮는 걸 실제 재현으로 확인 → audit-kit 에 프로젝트별 extend-immutable-calls 병합 기능(effective_ruff_config) 신설 + 이 프로젝트 configs/ruff.toml 에 실제 qualified name 등록. 나머지 43건 중 39건은 tests/** 의 RUF012(Fake 목객체·상수 리스트, 인스턴스 간 공유 위험 없음 확인 후 표준의 tests/** 완화 목록에 RUF012 추가), 4건은 실제 코드(B006 미사용 파라미터 제거, RUF012 3곳은 ClassVar 로 의도 명시 — cdp_popup_manager._pending 은 실제로 9곳에서 생성되는 인스턴스가 공유하고 있어 의도적 설계인지 추가 확인 필요라고 코멘트 남김). (3) DOC-02 2건(winotify/uiautomation) — 등록부 등재로 해결. (4) STD-12 2건 — 기존 STD-12 패턴과 동일(subprocess text=True 인코딩 누락), 122건 수정 라운드에서 빠졌던 2곳. (5) ERR-01 72건 — matplotlib 는 requirements.txt 에 선언돼 있었으나 실제 미설치 상태(설치로 해결), plyer/win10toast/winrt/PyQt6/yt_dlp/faster_whisper/konlpy/sklearn/edge_tts/manim 총 10개는 전부 실제 PyPI 패키지(WebFetch 로 각각 확인)인데 docs_registry.toml 에 없어 '환각 import' 로 오분류(critical) 되고 있었음 — 등록으로 severity 를 review 로 정정. 등록 후에도 남은 mypy 자체의 import-not-found(등록부를 모르는 별도 정적분석)는 각 지점이 이미 try/except 폴백 또는 standalone 앱 격리(apps/**)로 안전하게 처리되고 있음을 개별 확인한 뒤 `# type: ignore[import-not-found]` 로 명시(런타임 동작 변경 없음). module_quality_gate_*/pc_inventory/session_handoff/runtime_temp 류(11건)는 '스크립트 자기 폴더가 sys.path[0]' 직접실행 패턴(audit-kit 자체 로컬이름 인식은 이미 정상, mypy 만의 한계)로 확인. (6) ERR-02 19건 — LANCZOS 8곳은 Pillow 9.1.0(2022) 부터 공식 deprecated 된 Image.LANCZOS 를 Image.Resampling.LANCZOS(공식 대체 API, WebFetch 로 deprecation 확정 확인)로 실제 코드 교체(단순 억제 아님). Gabia self-check 3건은 스크립트 자체가 검증 대상이라 의도된 설계. catalog.py 2건은 이미 안전한 except ImportError fallback. mail_automation.py NaverMail 1건은 완전 UNREACHED(어디서도 인스턴스화 안 됨). form_analyzer.py 2건은 EUM 관련이라 사용자 지시(#13)로 계속 보류. test_fetch_web_page.py 2건은 테스트 모킹 패턴(ModuleType 동적 속성). user_action_monitor.py 1건은 cdp_db.log_action 실제 미구현이나 이미 넓은 except 로 안전하게 감싸짐 — 나머지는 전부 type: ignore 로 명시.",
+      "fix_note": "2026-09-29: `audit-kit std --fail-on critical` 실제 종료코드 0 확인(치명 618→0, 개선 3038, 참고 79). 관련 테스트(register_form/form_runner/cdp_popup_manager 대상 test_register.py 2개, test_app_action_coverage.py, test_fetch_web_page.py)를 git stash 로 수정 전/후 대조 — 기존 실패 10건(test_fetch_web_page.py, 이번 변경과 무관)은 그대로, 새 회귀 0건, 오히려 4건 추가로 통과. mypy `# type: ignore` 코멘트 순서 실수(noqa 뒤에 붙이면 mypy 가 인식 못함, 공식 문서로 확인: type:ignore 는 항상 첫 코멘트여야 함) 1건 발견·수정. quality_gate --staged 45개 파일 PASS, 레이어 게이트(FORBIDDEN_IMPORT/SECURITY_PATTERN/CIRCULAR_IMPORT) PASS. 이 라운드에서 표준 자체(32. Claude 개발표준)에 2건 개선(scripts/**+RUF012 tests/** 완화, audit-kit extend-immutable-calls 프로젝트별 병합 기능) + docs_registry.toml 10개 항목 추가 — 다른 프로젝트에도 이득이 전파됨. 다음 단계로 haehan pre-push 훅에 `audit-kit std --fail-on critical` 편입(진행 중).",
       "stage": "RUN",
       "status": "fixed"
     }

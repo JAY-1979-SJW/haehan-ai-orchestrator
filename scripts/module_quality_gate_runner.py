@@ -61,7 +61,7 @@ try:
     )
     from scripts.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules
 except ModuleNotFoundError:
-    from module_quality_gate_checks_audit import (  # type: ignore[no-redef]
+    from module_quality_gate_checks_audit import (  # type: ignore[no-redef, import-not-found]
         check_app_baseline_contract,
         check_approval_flow_baseline_contract,
         check_backend_core_baseline_contract,
@@ -88,7 +88,7 @@ except ModuleNotFoundError:
         check_site_work_function_baseline,
         check_standard_workflow_contract,
     )
-    from module_quality_gate_checks_repo import (  # type: ignore[no-redef]
+    from module_quality_gate_checks_repo import (  # type: ignore[no-redef, import-not-found]
         check_forbidden_command_matrix,
         check_local_agent_browser_runtime_rules,
         check_module_boundary_contract,
@@ -96,13 +96,13 @@ except ModuleNotFoundError:
         check_required_local_gate_wiring,
         check_root_legacy_script_contract,
     )
-    from module_quality_gate_checks_web import (  # type: ignore[no-redef]
+    from module_quality_gate_checks_web import (  # type: ignore[no-redef, import-not-found]
         check_active_source_secret_scan,
         check_admin_web_audit,
         check_admin_web_lint,
         check_admin_web_typecheck,
     )
-    from module_quality_gate_common import (  # type: ignore[no-redef]
+    from module_quality_gate_common import (  # type: ignore[no-redef, import-not-found]
         ROOT,
         GateStep,
         command_is_forbidden,
@@ -110,7 +110,7 @@ except ModuleNotFoundError:
         redact,
         workspace_temp_root,
     )
-    from module_quality_gate_modules import (  # type: ignore[no-redef]
+    from module_quality_gate_modules import (  # type: ignore[no-redef, import-not-found]
         MODULES,
         iter_selected_steps,
         module_names,

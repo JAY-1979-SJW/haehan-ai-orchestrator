@@ -112,7 +112,10 @@ def analyze_page(url: str) -> dict[str, Any]:
 
     try:
         # CDP 클라이언트 사용 (기존 세션 재사용)
-        from scripts.cdp_client import eval_js, goto_url
+        # type: ignore 근거: eval_js/goto_url 실제 없음(2026-09-29 defect_index #39 확인) —
+        # EUM 관련 작업은 사용자 지시(#13)로 보류 중. 바로 아래 except Exception 이 안전하게
+        # {"error":...} 를 반환해 크래시하지 않음(읽기전용 폼 분석, 쓰기·제출 없음).
+        from scripts.cdp_client import eval_js, goto_url  # type: ignore[attr-defined]
 
         goto_url(url)
         time.sleep(1)

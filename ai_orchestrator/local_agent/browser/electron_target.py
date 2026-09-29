@@ -39,6 +39,7 @@ websocket-client 공식 문서(threading.html): recv() 루프와 send() 호출�
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import threading
 import time
@@ -130,10 +131,8 @@ class _RawCDPSession:
     def close(self) -> None:
         """진짜 websocket 연결을 끊는다 — ElectronTargetPage.close()에서만 호출."""
         self._alive = False
-        try:
+        with contextlib.suppress(Exception):  # 종료 시 소켓 close 실패는 무시해도 안전(이미 끊긴 연결일 수 있음)
             self._ws.close()
-        except Exception:  # noqa: S110, BLE001 - 종료 시 소켓 close 실패는 무시해도 안전(이미 끊긴 연결일 수 있음)
-            pass
 
 
 class _CDPSessionHandle:

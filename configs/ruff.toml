@@ -35,6 +35,18 @@ ignore = [
 "tests/**" = ["S", "B"]
 "scripts/**" = ["S", "B"]
 
+[lint.flake8-bugbear]
+# audit-kit std(32. Claude 개발표준 기준서 검사)가 이 항목을 읽어 표준 번들 ruff.toml 의
+# extend-immutable-calls(fastapi.Depends 등)에 병합한다(2026-09-29, docs/incidents 참고).
+# 이 프로젝트 위의 B008 블랭킷 ignore 와 별개로, Depends(require_role(...)) 처럼 Depends()
+# 안에 중첩된 이 프로젝트 고유 팩토리 호출을 정밀하게 예외 처리하기 위한 항목.
+extend-immutable-calls = [
+    "ai_orchestrator.gates.auth.require_role",
+    # LoginRequest(): 요청 바디 기본값으로만 쓰이고 핸들러 안에서 읽기만 함(변형 없음,
+    # 2026-09-29 확인) — naver_session_router.py:trigger_login.
+    "ai_orchestrator.connectors.naver_session_router.LoginRequest",
+]
+
 [format]
 quote-style = "double"
 indent-style = "space"

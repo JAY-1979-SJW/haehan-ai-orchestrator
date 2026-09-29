@@ -46,7 +46,7 @@ def _cover(img: Image.Image, w: int, h: int, focus_y: float = 0.5) -> Image.Imag
     else:
         nw = w
         nh = int(nw / src_ratio)
-    img = img.resize((nw, nh), Image.LANCZOS)
+    img = img.resize((nw, nh), Image.Resampling.LANCZOS)
     left = int((nw - w) * 0.5)
     top = int((nh - h) * focus_y)
     top = max(0, min(top, nh - h))
@@ -63,7 +63,7 @@ def _letterbox(img: Image.Image, w: int, h: int, bg=CREAM) -> Image.Image:
     else:
         nh = h
         nw = int(nh * src_ratio)
-    img = img.resize((nw, nh), Image.LANCZOS)
+    img = img.resize((nw, nh), Image.Resampling.LANCZOS)
     canvas = Image.new("RGB", (w, h), bg)
     canvas.paste(img, ((w - nw) // 2, (h - nh) // 2))
     return canvas
@@ -219,7 +219,7 @@ def _letterbox_transparent(img: Image.Image, target_w: int) -> Image.Image:
     """원본 비율을 유지한 채 target_w 너비로 리사이즈 (알파 채널 포함, 배경 없음)."""
     ratio = img.height / img.width
     nh = int(target_w * ratio)
-    resized = img.resize((target_w, nh), Image.LANCZOS).convert("RGBA")
+    resized = img.resize((target_w, nh), Image.Resampling.LANCZOS).convert("RGBA")
     return resized
 
 

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 from playwright.sync_api import Page
 
@@ -141,7 +141,7 @@ class ProductFormRunner:
     결과를 step별로 기록합니다.
     """
 
-    SECTION_ORDER = [
+    SECTION_ORDER: ClassVar[list[str]] = [
         "open",  # 1. 페이지 진입
         "category",  # 2. 카테고리
         "pre_order",  # 3. 예약구매

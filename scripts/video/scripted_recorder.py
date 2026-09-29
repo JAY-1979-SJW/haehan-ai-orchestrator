@@ -81,7 +81,7 @@ def load_script(path: str | Path) -> dict:
 
 
 async def _tts_one(text: str, out: Path) -> None:
-    import edge_tts
+    import edge_tts  # type: ignore[import-not-found]  # 선택적 의존성(docs_registry.toml 등록)
 
     await edge_tts.Communicate(text, VOICE).save(str(out))
 

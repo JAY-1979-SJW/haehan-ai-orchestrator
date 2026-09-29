@@ -347,6 +347,7 @@ def test_json_output_valid():
         capture_output=True,
         text=True,
         timeout=15,
+        encoding="utf-8",
     )
     assert result.returncode == 0
     parsed = json.loads(result.stdout)
@@ -388,6 +389,7 @@ def test_check_only_exits_zero():
         capture_output=True,
         text=True,
         timeout=10,
+        encoding="utf-8",
     )
     assert result.returncode == 0
     assert "check-only" in result.stdout.lower() or "CHECK-ONLY" in result.stdout

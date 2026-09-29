@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from manim import (
+from manim import (  # type: ignore[import-not-found]  # 선택적 무거운 의존성(docs_registry.toml 등록), 필요시에만 설치
     DOWN,
     LEFT,
     RIGHT,
