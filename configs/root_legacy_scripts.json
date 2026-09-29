@@ -10,7 +10,6 @@
     "archive_candidate"
   ],
   "scripts": [
-    {"path": "analyze_work_items.py", "category": "archive_candidate", "next_action": "Move under scripts/archive or scripts/ops if still used."},
     {"path": "app.py", "category": "runtime_entrypoint", "next_action": "Keep until Flask-to-FastAPI entrypoint migration is complete."},
     {"path": "approval_manager.py", "category": "shared_legacy_module", "next_action": "Move approval state into ai_orchestrator policy module."},
     {"path": "audit_logger.py", "category": "shared_legacy_module", "next_action": "Move audit facade behind ai_orchestrator audit package."},

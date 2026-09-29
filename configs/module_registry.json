@@ -6249,14 +6249,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "analyze_work_items.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "app.py": {
    "layer": "L8",
    "role": "api",
@@ -19518,30 +19510,6 @@
    "role": "site_module",
    "domain": "naver_mail",
    "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/ops/components/GmailInboxPanel.tsx": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "google",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/ops/components/GoogleToolsPanel.tsx": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "google",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/ops/components/MailAssistantPanel.tsx": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "common",
-   "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
   },

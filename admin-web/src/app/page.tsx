@@ -4,7 +4,9 @@
  *
  * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은
  * CDP 브라우저에서 AI 에이전트가 수행하고, 진행·결과는 이 콘솔에 출력된다.
- * 복잡한 탭별 수동 UI는 숨김(코드/라우트는 보존 — URL 직접 접근 가능). nav.ts NAV_GROUPS_ALL 로 복원.
+ * 복잡한 탭별 수동 UI는 숨김. (2026-09-30 정정: 예전 주석은 "코드/라우트 보존"이라 했으나 실제로는
+ * 2026-09-23 대청소(docs/deleted_code_index.md)에서 대부분 삭제됨 — nav.ts의 구 NAV_GROUPS_ALL도
+ * 그 죽은 참조만 들고 있어 같이 삭제함. 복원은 deleted_code_index.md의 git checkout 절차 참고.)
  */
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
