@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 91,
+  "next_no": 92,
   "items": [
     {
       "no": 1,
@@ -1198,6 +1198,17 @@
       "stage": "RUN",
       "status": "fixed",
       "no": 90
+    },
+    {
+      "id": "WEB-CONNECTOR-PLAYWRIGHT-INSTANCE-LEAK-POISONS-BROWSER-THREAD",
+      "category": 1,
+      "title": "_connect_browser()에서 connect_over_cdp 실패 시 Playwright 인스턴스 미정리 -> 전용 브라우저 스레드가 영구 오염되어 이후 모든 CDP 호출이 'Sync API inside asyncio loop'로 실패",
+      "where": "scripts/web_connector.py (_connect_browser)",
+      "evidence": "사용자가 일렉트론 앱을 직접 클릭해 구글 허브의 'GCP 프로젝트 상태' 조회 시 화면에 'It looks like you are using Playwright Sync API inside the asyncio loop. Please use the Async API instead.'가 그대로 노출된 것을 CDP로 webview에 연결해 발견. FastAPI 프로세스를 새로 띄워도 즉시 재현되어(캐시 오염이 아님을 확인) web_connector.py에 임시 진단 로그를 넣어 browser_0 스레드의 asyncio.get_running_loop() 상태를 실측: 최초 1회는 정상(no running event loop) -> connect_over_cdp가 CDP 브라우저 미기동으로 ECONNREFUSED 실패 -> 그 이후 모든 호출에서 영구적으로 'has_running_loop: True, ProactorEventLoop running=True' 로 고정됨. Playwright 공식 소스(playwright/sync_api/_context_manager.py PlaywrightContextManager.__enter__) 확인: sync_playwright().start()는 내부적으로 새 이벤트루프+그린렛 펌프를 띄우고 asyncio.get_running_loop()가 성공하면 즉시 위 에러를 던진다. 기존 코드는 'p = sync_playwright().start(); globals()[\"_PLAYWRIGHT_INSTANCE\"] = p; browser = p.chromium.connect_over_cdp(...)' 순서라, connect_over_cdp가 실패해도 이미 만들어진 p(내부 이벤트루프+그린렛 펌프 포함)가 전역변수에 저장돼 GC도 안 되고 p.stop() 호출도 없어 그 스레드에 영구히 '실행 중'으로 남는다. CDP 브라우저가 아주 잠깐이라도 내려가 있던 순간에 이 경로를 단 한 번만 타면, 그 이후로는 CDP 브라우저가 멀쩡히 떠 있어도 이 프로세스 안에서는 영구히 복구 불가 — 이 세션 내내 반복됐던 'CDP가 광범위하게 느려지거나 멈춘다' 증상들의 실제 근본 원인일 가능성이 높음(기존엔 '브라우저 재시작'으로 우연히 같이 뜬 FastAPI 프로세스 재시작이 실제 원인이었을 것으로 추정).",
+      "fix_note": "_connect_browser()에서 sync_playwright().start() 이후 connect_over_cdp/컨텍스트 탐색을 try 블록으로 감싸고, 실패 시 except에서 p.stop()을 반드시 호출 + _PLAYWRIGHT_INSTANCE=None으로 정리한 뒤 재raise. 성공했을 때만 _PLAYWRIGHT_INSTANCE에 저장. 검증: 격리된 스크립트로 (1) CDP 다운 상태에서 같은 browser_0 스레드로 3회 연속 시도 -> 매번 깨끗한 ECONNREFUSED(오염 없음) 확인, (2) 같은 프로세스 안에서 CDP 다운(2회 실패) -> CDP 기동 -> 같은 스레드에서 재시도 -> 정상 복구(수정 전이라면 여기서 영구 실패) 확인. 실제 FastAPI 프로세스 재기동 후 /api/v1/google/tools/gcp/status 2회 연속 호출로 ok:true 확인. codebase_layer_audit FORBIDDEN_IMPORT/CIRCULAR_IMPORT/SECURITY_PATTERN 전부 0, quality_gate --staged --enforce 통과(경고 1건 CODE_WITHOUT_TEST_OR_DOC, 소규모 버그 수정이라 수용).",
+      "stage": "RUN",
+      "status": "fixed",
+      "no": 91
     }
   ]
 }

@@ -169,19 +169,35 @@ def _connect_browser():
     log.debug("CDP 연결 시도: port=%s", port)
 
     p = sync_playwright().start()
-    globals()["_PLAYWRIGHT_INSTANCE"] = p  # GC 수거 방지 — 전역 보관
-    browser = p.chromium.connect_over_cdp(f"http://{_DEFAULT_CDP_HOST}:{port}")
+    try:
+        browser = p.chromium.connect_over_cdp(f"http://{_DEFAULT_CDP_HOST}:{port}")
 
-    ctx = None
-    for _ in range(10):
-        if browser.contexts:
-            ctx = browser.contexts[0]
-            break
-        time.sleep(1)
+        ctx = None
+        for _ in range(10):
+            if browser.contexts:
+                ctx = browser.contexts[0]
+                break
+            time.sleep(1)
 
-    if not ctx:
-        log.error("CDP 브라우저 컨텍스트 생성 실패")
-        raise RuntimeError("CDP 브라우저 컨텍스트 생성 실패")
+        if not ctx:
+            log.error("CDP 브라우저 컨텍스트 생성 실패")
+            raise RuntimeError("CDP 브라우저 컨텍스트 생성 실패")
+    except Exception:
+        # 2026-09-29 실측 확인한 심각한 버그 수정(defect_index 신규 항목): 여기서 p.stop()을
+        # 안 하고 그냥 raise만 하면, sync_playwright().start()가 이미 만들어 둔 내부
+        # 이벤트루프+그린렛 펌프가 이 전용 브라우저 스레드에 "실행 중"으로 영구히 남는다
+        # (Playwright sync API는 asyncio.get_running_loop()가 성공하면 즉시
+        # "Sync API inside the asyncio loop" 에러를 던짐 — 공식 소스 playwright/sync_api/
+        # _context_manager.py PlaywrightContextManager.__enter__ 확인). CDP 브라우저가
+        # 아주 잠깐이라도 안 떠 있던 순간에 이 경로를 한 번만 타면, 그 이후 이 스레드의
+        # 모든 sync_playwright().start() 호출이 CDP 브라우저 상태와 무관하게 영구 실패한다
+        # (실측: 최초 1회 clean → connect_over_cdp ECONNREFUSED → 이후 전부 오염 재현).
+        with suppress(Exception):
+            p.stop()
+        globals()["_PLAYWRIGHT_INSTANCE"] = None
+        raise
+
+    globals()["_PLAYWRIGHT_INSTANCE"] = p  # GC 수거 방지 — 전역 보관 (연결 성공 후에만)
 
     # 캐싱 (전역 변수 업데이트)
     globals()["_BROWSER_CACHE"] = browser
