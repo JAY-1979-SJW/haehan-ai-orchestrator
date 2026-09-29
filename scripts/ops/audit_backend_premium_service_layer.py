@@ -46,30 +46,29 @@ def _now() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def run_audit() -> dict[str, Any]:
-    results: list[dict[str, Any]] = []
+def _item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
+    meta = next(c for c in CHECKLIST if c["id"] == cid)
+    return {
+        "id": cid,
+        "title": meta["title"],
+        "required": meta["required"],
+        "status": status,
+        "evidence": evidence,
+        "details": details or {},
+    }
 
-    def item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
-        meta = next(c for c in CHECKLIST if c["id"] == cid)
-        return {
-            "id": cid,
-            "title": meta["title"],
-            "required": meta["required"],
-            "status": status,
-            "evidence": evidence,
-            "details": details or {},
-        }
 
-    # sl-01~03: 파일 존재
+def _check_service_files_exist() -> list[dict]:
     files = {
         "sl-01": ROOT / "ai_orchestrator/services/__init__.py",
         "sl-02": ROOT / "ai_orchestrator/services/task_queue_service.py",
         "sl-03": ROOT / "ai_orchestrator/services/execution_policy_service.py",
     }
-    for cid, p in files.items():
-        results.append(item(cid, "PASS" if p.exists() else "FAIL", str(p)))
+    return [_item(cid, "PASS" if p.exists() else "FAIL", str(p)) for cid, p in files.items()]
 
-    # sl-04~07: import
+
+def _import_services() -> tuple[Any, Any, list[dict]]:
+    results = []
     tqs_mod = eps_mod = None
     for cid, mod_name, cls_name in [
         ("sl-04", "ai_orchestrator.services.task_queue_service", "TaskQueueService"),
@@ -84,121 +83,123 @@ def run_audit() -> dict[str, Any]:
                 tqs_mod = mod
             if cls_name == "ExecutionPolicyService":
                 eps_mod = mod
-            results.append(item(cid, "PASS" if obj else "FAIL", f"{cls_name}={'found' if obj else 'not found'}"))
+            results.append(_item(cid, "PASS" if obj else "FAIL", f"{cls_name}={'found' if obj else 'not found'}"))
         except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
-            results.append(item(cid, "FAIL", str(e)))
+            results.append(_item(cid, "FAIL", str(e)))
+    return tqs_mod, eps_mod, results
 
-    # sl-08: pending task 조회
-    if tqs_mod:
-        tqs_cls = getattr(tqs_mod, "TaskQueueService", None)
-        has_pending = tqs_cls and (
-            hasattr(tqs_cls, "get_pending_tasks")
-            or hasattr(tqs_cls, "list_pending")
-            or hasattr(tqs_cls, "get_queue_summary")
-        )
-        methods = [m for m in dir(tqs_cls or object()) if "pending" in m or "queue" in m or "summary" in m]
-        results.append(item("sl-08", "PASS" if has_pending else "FAIL", f"pending 관련 메서드: {methods}"))
-    else:
-        results.append(item("sl-08", "FAIL", "TaskQueueService import 실패"))
 
-    # sl-09: execution_location count
-    if tqs_mod:
-        tqs_cls = getattr(tqs_mod, "TaskQueueService", None)
-        summary_cls = getattr(tqs_mod, "TaskQueueSummary", None)
-        has_loc = summary_cls and any(
-            "location" in f.lower() or "count" in f.lower()
-            for f in (summary_cls.__dataclass_fields__ if hasattr(summary_cls, "__dataclass_fields__") else {})
-        )
-        results.append(
-            item(
-                "sl-09",
-                "PASS" if has_loc else "WARN",
-                f"TaskQueueSummary fields: {list(getattr(summary_cls, '__dataclass_fields__', {}).keys())}",
-            )
-        )
-    else:
-        results.append(item("sl-09", "FAIL", "TaskQueueService import 실패"))
+def _check_pending_task_query(tqs_mod: Any) -> dict:
+    if not tqs_mod:
+        return _item("sl-08", "FAIL", "TaskQueueService import 실패")
+    tqs_cls = getattr(tqs_mod, "TaskQueueService", None)
+    has_pending = tqs_cls and (
+        hasattr(tqs_cls, "get_pending_tasks")
+        or hasattr(tqs_cls, "list_pending")
+        or hasattr(tqs_cls, "get_queue_summary")
+    )
+    methods = [m for m in dir(tqs_cls or object()) if "pending" in m or "queue" in m or "summary" in m]
+    return _item("sl-08", "PASS" if has_pending else "FAIL", f"pending 관련 메서드: {methods}")
 
-    # sl-10: forbidden field redaction 연계
+
+def _check_execution_location_count(tqs_mod: Any) -> dict:
+    if not tqs_mod:
+        return _item("sl-09", "FAIL", "TaskQueueService import 실패")
+    summary_cls = getattr(tqs_mod, "TaskQueueSummary", None)
+    has_loc = summary_cls and any(
+        "location" in f.lower() or "count" in f.lower()
+        for f in (summary_cls.__dataclass_fields__ if hasattr(summary_cls, "__dataclass_fields__") else {})
+    )
+    return _item(
+        "sl-09",
+        "PASS" if has_loc else "WARN",
+        f"TaskQueueSummary fields: {list(getattr(summary_cls, '__dataclass_fields__', {}).keys())}",
+    )
+
+
+def _check_redaction_linked() -> dict:
     src = (
         (ROOT / "ai_orchestrator/services/task_queue_service.py").read_text(encoding="utf-8")
         if (ROOT / "ai_orchestrator/services/task_queue_service.py").exists()
         else ""
     )
     has_redact = "redact" in src or "forbidden" in src.lower() or "secret_redaction" in src or "strip_sensitive" in src
-    results.append(
-        item(
-            "sl-10",
-            "PASS" if has_redact else "WARN",
-            "redaction 연계 있음" if has_redact else "명시적 연계 없음 (상위 레이어 위임 가능)",
-        )
+    return _item(
+        "sl-10",
+        "PASS" if has_redact else "WARN",
+        "redaction 연계 있음" if has_redact else "명시적 연계 없음 (상위 레이어 위임 가능)",
     )
 
-    # sl-11~14: PolicyDecision 판정
-    if eps_mod:
-        eps_cls = getattr(eps_mod, "ExecutionPolicyService", None)
-        pd_cls = getattr(eps_mod, "PolicyDecision", None)
-        if eps_cls and pd_cls:
-            svc = eps_cls()
-            # LOCAL_AGENT_REQUIRED — decide_execution_policy(classification) 사용
-            try:
-                d = svc.decide_execution_policy("LOCAL_AGENT_REQUIRED")
-                results.append(
-                    item(
-                        "sl-11",
-                        "PASS" if not d.server_executable else "FAIL",
-                        f"execution_location={d.execution_location} server_executable={d.server_executable}",
-                    )
-                )
-            except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
-                results.append(item("sl-11", "WARN", f"decide_execution_policy 호출 실패: {e}"))
 
-            # USER_DIRECT_REQUIRED
-            try:
-                d = svc.decide_execution_policy("USER_DIRECT_REQUIRED")
-                results.append(
-                    item(
-                        "sl-12",
-                        "PASS" if not d.server_executable else "FAIL",
-                        f"execution_location={d.execution_location} server_executable={d.server_executable}",
-                    )
-                )
-            except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
-                results.append(item("sl-12", "WARN", f"호출 실패: {e}"))
+def _check_policy_decisions(eps_mod: Any) -> list[dict]:
+    cids = ["sl-11", "sl-12", "sl-13", "sl-14"]
+    if not eps_mod:
+        return [_item(cid, "FAIL", "module import 실패") for cid in cids]
 
-            # BLOCKED (QUARANTINE_OR_HOLD)
-            try:
-                d = svc.decide_execution_policy("QUARANTINE_OR_HOLD")
-                results.append(
-                    item(
-                        "sl-13",
-                        "PASS" if d.is_blocked else "FAIL",
-                        f"execution_location={d.execution_location} is_blocked={d.is_blocked}",
-                    )
-                )
-            except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
-                results.append(item("sl-13", "WARN", f"호출 실패: {e}"))
+    eps_cls = getattr(eps_mod, "ExecutionPolicyService", None)
+    pd_cls = getattr(eps_mod, "PolicyDecision", None)
+    if not (eps_cls and pd_cls):
+        return [_item(cid, "FAIL", "ExecutionPolicyService 또는 PolicyDecision 없음") for cid in cids]
 
-            # OAUTH
-            try:
-                d = svc.decide_execution_policy("OFFICIAL_API_OR_OAUTH_REQUIRED")
-                results.append(
-                    item(
-                        "sl-14",
-                        "PASS" if d.requires_oauth_setup or d.is_blocked else "FAIL",
-                        f"execution_location={d.execution_location} requires_oauth_setup={d.requires_oauth_setup} is_blocked={d.is_blocked}",
-                    )
-                )
-            except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
-                results.append(item("sl-14", "WARN", f"호출 실패: {e}"))
-        else:
-            for cid in ["sl-11", "sl-12", "sl-13", "sl-14"]:
-                results.append(item(cid, "FAIL", "ExecutionPolicyService 또는 PolicyDecision 없음"))
-    else:
-        for cid in ["sl-11", "sl-12", "sl-13", "sl-14"]:
-            results.append(item(cid, "FAIL", "module import 실패"))
+    svc = eps_cls()
+    results = []
 
-    # sl-15: router 비의존
+    # LOCAL_AGENT_REQUIRED — decide_execution_policy(classification) 사용
+    try:
+        d = svc.decide_execution_policy("LOCAL_AGENT_REQUIRED")
+        results.append(
+            _item(
+                "sl-11",
+                "PASS" if not d.server_executable else "FAIL",
+                f"execution_location={d.execution_location} server_executable={d.server_executable}",
+            )
+        )
+    except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
+        results.append(_item("sl-11", "WARN", f"decide_execution_policy 호출 실패: {e}"))
+
+    # USER_DIRECT_REQUIRED
+    try:
+        d = svc.decide_execution_policy("USER_DIRECT_REQUIRED")
+        results.append(
+            _item(
+                "sl-12",
+                "PASS" if not d.server_executable else "FAIL",
+                f"execution_location={d.execution_location} server_executable={d.server_executable}",
+            )
+        )
+    except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
+        results.append(_item("sl-12", "WARN", f"호출 실패: {e}"))
+
+    # BLOCKED (QUARANTINE_OR_HOLD)
+    try:
+        d = svc.decide_execution_policy("QUARANTINE_OR_HOLD")
+        results.append(
+            _item(
+                "sl-13",
+                "PASS" if d.is_blocked else "FAIL",
+                f"execution_location={d.execution_location} is_blocked={d.is_blocked}",
+            )
+        )
+    except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
+        results.append(_item("sl-13", "WARN", f"호출 실패: {e}"))
+
+    # OAUTH
+    try:
+        d = svc.decide_execution_policy("OFFICIAL_API_OR_OAUTH_REQUIRED")
+        results.append(
+            _item(
+                "sl-14",
+                "PASS" if d.requires_oauth_setup or d.is_blocked else "FAIL",
+                f"execution_location={d.execution_location} requires_oauth_setup={d.requires_oauth_setup} is_blocked={d.is_blocked}",
+            )
+        )
+    except Exception as e:  # noqa: BLE001 - ExecutionPolicyService 계약 자체검증 스크립트 - 판정 호출 실패를 WARN으로 기록(실제 런타임 게이트가 아닌 감사 리포트)
+        results.append(_item("sl-14", "WARN", f"호출 실패: {e}"))
+
+    return results
+
+
+def _check_router_independence() -> dict:
     svc_src = (
         (ROOT / "ai_orchestrator/services/task_queue_service.py").read_text(encoding="utf-8")
         if (ROOT / "ai_orchestrator/services/task_queue_service.py").exists()
@@ -214,13 +215,26 @@ def run_audit() -> dict[str, Any]:
         for line in (svc_src + eps_src).splitlines()
         if "import" in line and any(x in line for x in ["fastapi", "flask", "router.py", "ai_orchestrator.router"])
     ]
-    results.append(
-        item(
-            "sl-15",
-            "PASS" if not bad_imports else "FAIL",
-            f"금지 import: {bad_imports}" if bad_imports else "router 비의존 확인",
-        )
+    return _item(
+        "sl-15",
+        "PASS" if not bad_imports else "FAIL",
+        f"금지 import: {bad_imports}" if bad_imports else "router 비의존 확인",
     )
+
+
+def run_audit() -> dict[str, Any]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: sl-01~15 체크 블록을 _check_*()/_import_*() 함수로
+    # 분리(순서·조건·문자열 그대로). tqs_mod/eps_mod 는 명시적 인자로 전달.
+    results: list[dict[str, Any]] = []
+    results.extend(_check_service_files_exist())
+
+    tqs_mod, eps_mod, import_results = _import_services()
+    results.extend(import_results)
+    results.append(_check_pending_task_query(tqs_mod))
+    results.append(_check_execution_location_count(tqs_mod))
+    results.append(_check_redaction_linked())
+    results.extend(_check_policy_decisions(eps_mod))
+    results.append(_check_router_independence())
 
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}
     for r in results:
