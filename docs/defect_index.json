@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 75,
+  "next_no": 76,
   "items": [
     {
       "no": 1,
@@ -1022,6 +1022,17 @@
       "stage": "RUN",
       "status": "fixed",
       "no": 74
+    },
+    {
+      "no": 75,
+      "id": "GOOGLE-CDP-COLD-TAB-TIMEOUT-BUDGET-AND-RESIDUAL-FLAKINESS",
+      "category": 1,
+      "title": "탭 하이재킹 수정(#73)으로 매번 콜드탭이 되며 20s 타임아웃 부족 — 45s로 완화, 일부 잔여 불안정성 확인됨",
+      "where": "scripts/google/docs_api.py, scripts/google/sheets_api.py, scripts/google/calendar_api.py, ai_orchestrator/connectors/google/actions.py",
+      "evidence": "#73 수정(매 호출 새 탭)의 부작용으로 기존 탭 재사용 대비 콜드 네비게이션이 돼 20s로는 부족한 경우 다수 확인. 45000ms + wait_until=domcontentloaded로 완화 후 실제 브라우저 버튼 클릭 재검증: 캘린더 오늘/이번주는 안정적으로 성공(예: '일정이 없습니다'). 문서/GCP는 같은 45s 설정으로도 간헐적으로 여전히 타임아웃(같은 세션 내 다른 시점엔 curl 단독 호출로 성공한 적도 있음 — 재현이 결정적이지 않음, 좀비탭/드라이버 누수는 아님(정리 로직 정상 동작 재확인: 실패해도 탭/드라이버 잔존 0건)).",
+      "fix_note": "코드 수정은 반영(45s+domcontentloaded, 4개 파일). 문서/GCP 잔여 간헐적 타임아웃은 이 세션에서 원인을 완전히 특정하지 못함 — Google 쪽 SPA 로딩 자체의 환경적 변동성 (네트워크/서버 응답시간)으로 추정되나 미확정. 사용자에게 투명하게 보고, 추가 조사는 필요시 별도 진행.",
+      "stage": "RUN",
+      "status": "partial"
     }
   ]
 }

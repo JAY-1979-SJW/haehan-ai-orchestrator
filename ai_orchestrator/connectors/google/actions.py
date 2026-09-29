@@ -410,7 +410,7 @@ def get_gcp_status(
     def _fn(page):
         # GCP 콘솔은 백그라운드 폴링이 끊이지 않는 SPA라 기본 wait_until="load" 가
         # 절대 안 끝나 매번 20s 타임아웃(2026-09-29 실측 확인) — DOM 로드 시점까지만 대기.
-        page.goto("https://console.cloud.google.com/?project=haehan-ai", timeout=20000, wait_until="domcontentloaded")
+        page.goto("https://console.cloud.google.com/?project=haehan-ai", timeout=45000, wait_until="domcontentloaded")
         import time as _t
 
         _t.sleep(4)
