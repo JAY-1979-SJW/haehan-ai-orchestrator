@@ -299,6 +299,31 @@
    조사에서 발견된 별개 과제)
 2. `electron_target.py`의 `_KeyboardAdapter.press()` — Control+A 등 조합키 CDP 구현(현재 no-op,
    §9). 앱 창 안의 입력 필드를 `fill`로 덮어써야 하는 실사용 사례가 생기면 우선순위 상향
-3. 기준서 §5.3에서 언급한 `snapshot_page`/`act_on_page`/`navigate_page`의 `target` 파라미터가
-   현재 코드에는 있지만, admin-web 쪽에 이 기능을 실제로 트리거하는 버튼 UI는 아직 없음 — 버튼을
-   실제로 만들지는 이번 기준서 범위 밖(REQ-3 "앱에서 버튼을 누르면"의 UI 쪽은 별도 승인 필요)
+3. ~~기준서 §5.3에서 언급한 `snapshot_page`/`act_on_page`/`navigate_page`의 `target` 파라미터가
+   현재 코드에는 있지만, admin-web 쪽에 이 기능을 실제로 트리거하는 버튼 UI는 아직 없음~~
+   **2026-09-29 완료.** 사용자 명시 요청("앱 내부에 mcp를 연결해서 ai를 이용해서 작업이 되게
+   해줘")으로 REQ-3의 UI 쪽 착수·완료:
+   - 신규 `ai_orchestrator/routers/ai_agent_router.py` (`POST /api/v1/ai-agent/run`) — 등록된
+     로컬 에이전트를 자동 선택(idle 우선)해 기존 `run_claude_agent` 작업을 큐잉하는 얇은 편의
+     계층. 신규 실행 로직·신규 큐·신규 폴링 엔드포인트 없음(기존
+     `GET /api/v1/local-agents/{agent_id}/tasks/{task_id}` 그대로 재사용).
+   - `admin-web/src/components/chat/UniversalChat.tsx` 재구현 — 2026-09-24에 "AI 작업은 Claude
+     Code(MCP)로 합니다"라는 정적 안내로 비워졌던 결정을 사용자 요청으로 뒤집고, 실제 입력창 +
+     작업 큐잉 + 폴링 + 결과 표시로 복원(`AiDock`을 통해 smartstore 제외 전 도메인에 노출).
+   - **실측 검증**(로컬 에이전트 재연결·재등록 과정에서 수행): `run_claude_agent` 작업 실제 큐잉→
+     WS 전달→`claude -p` 실행→완료까지 확인("숫자 7만 답해" → `result_summary:"7"`, 약 21초).
+   - **부수 발견·수정 버그 2건**(모두 이 작업 도중 실기로 발견): (a) `local_agent_registry.py`
+     facade가 `get_task_count`/`get_completed_task_count`/`get_failed_task_count` 재노출을
+     누락해 `GET /local-agents`가 상시 500이었음(에이전트가 1개라도 등록되면 재현) — 수정 완료.
+     (b) `scripts/web_connector.py`의 `_connect_browser()`가 `connect_over_cdp()` 실패 시
+     Playwright 인스턴스를 정리 안 해 전용 브라우저 스레드가 영구 오염되는 버그 — 별도 커밋으로
+     이미 수정(defect_index #91).
+   - **남은 것**: `python -m local_agent.agent --run`을 사람이 별도로 기동해둬야 하며(Electron이
+     자동 스폰하는 건 별개의 구 스마트스토어 에이전트, `scripts/local_agent.py`), FastAPI 서버가
+     재시작되면 인메모리 레지스트리가 초기화돼 재등록(`--register-with-code`)이 필요함 — 상시
+     자동 기동·영속화는 다음 세션 후보로 남김(§10에 신규 항목 4로 추가).
+4. (신규, 2026-09-29) 로컬 에이전트(`local_agent/agent.py --run`)를 Electron 앱이 자동 스폰하지
+   않음 — 현재는 사람이 터미널에서 수동 기동. Electron의 `lib/agent.js`가 스폰하는
+   `scripts/local_agent.py`(스마트스토어 전용 구 에이전트)와 통합하거나, `lib/agent.js`가 이
+   에이전트도 함께 기동하도록 확장하는 게 다음 후보. 또한 FastAPI 재시작마다 인메모리
+   에이전트 레지스트리가 초기화되는 문제(영속화 없음)도 함께 검토 필요.
