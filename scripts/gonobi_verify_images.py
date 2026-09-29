@@ -4,17 +4,20 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
 agent = BrowserAgent()
 agent.connect()
 page = agent._page
 
-OUT = Path("data/gonobi_verify_screenshots")
+OUT = ROOT / "data" / "gonobi_verify_screenshots"
 OUT.mkdir(parents=True, exist_ok=True)
 
-GALLERY = "file:///C:/work/01.%20haehan-ai-orchestrator/data/gonobi_gallery.html"
+# 저장소 루트 기준 상대경로(2026-09-29 defect: 하드코딩된 구 경로 C:/work/... 가 이미
+# 이 PC에서도 깨져 있었음 — 프로젝트가 C:\Users\skyjw\claude-dev-handoff\... 로 이동됨).
+GALLERY = ROOT.as_uri() + "/data/gonobi_gallery.html"
 page.goto(GALLERY)
 time.sleep(2)
 
