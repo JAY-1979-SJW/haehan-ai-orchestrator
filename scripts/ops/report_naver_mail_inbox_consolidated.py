@@ -20,7 +20,12 @@ from pathlib import Path
 
 from scripts.naver.mail import business_report as br
 from scripts.naver.mail import pii_mask
-from scripts.naver.mail.batch_runner import (
+
+# scripts/naver/mail/batch_runner.py 는 `from ...processing.batch_runner import *` 인
+# 얇은 이동 shim이라 __all__ 이 없으면 밑줄 시작 이름(_classify_priority 등)은
+# 재노출되지 않는다(Python의 import * 기본 규칙). 여기서 필요한 두 이름은 밑줄
+# 시작이라 shim을 거치지 않고 실제 모듈에서 바로 가져온다(2026-09-29, defect #32).
+from scripts.naver.mail.processing.batch_runner import (
     BODY_READ_OK,
     UNREAD_CHANGED_RESTORED,
     BatchReport,
