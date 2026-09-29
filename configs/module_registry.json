@@ -8537,7 +8537,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/cloud/logging.py": {
+  "scripts/google/cloud/cloud_logging_catalog.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -14553,7 +14553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/youtube/http.py": {
+  "scripts/youtube/youtube_http_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -19510,6 +19510,14 @@
    "role": "ops_tool",
    "domain": "common",
    "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/watch_new_mail.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
    "confidence": "high",
    "source": "rule"
   }
