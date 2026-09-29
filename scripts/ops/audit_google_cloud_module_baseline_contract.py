@@ -1,9 +1,9 @@
 """Read-only audit for the locked Google Cloud module baseline."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -85,7 +85,59 @@ def _missing(text: str, phrases: tuple[str, ...]) -> list[str]:
     return [phrase for phrase in phrases if phrase not in text]
 
 
+def _check_cloud_surfaces(cloud: dict) -> list[str]:
+    surfaces = tuple(surface["key"] for surface in cloud["surfaces"])
+    if surfaces != CLOUD_SURFACES:
+        return ["Cloud surfaces changed: " + ", ".join(surfaces)]
+    return []
+
+
+def _check_cloud_approval_actions(cloud: dict) -> list[str]:
+    approval_actions = tuple(action["key"] for action in cloud["actions"] if action["requires_approval"])
+    if approval_actions != CLOUD_APPROVAL_ACTIONS:
+        return ["Cloud approval actions changed: " + ", ".join(approval_actions)]
+    return []
+
+
+def _check_cloud_counts(cloud: dict) -> list[str]:
+    expected_counts = {
+        "surface_count": 15,
+        "action_count": 29,
+        "read_action_count": 15,
+        "approval_action_count": 14,
+    }
+    return [
+        f"Cloud count mismatch {key}: expected {expected}, got {cloud.get(key)}"
+        for key, expected in expected_counts.items()
+        if cloud.get(key) != expected
+    ]
+
+
+def _check_cloud_hosts(cloud: dict, summary: dict) -> list[str]:
+    failures = []
+    if cloud.get("hosts") != ["console.cloud.google.com"]:
+        failures.append(f"Cloud hosts changed: {cloud.get('hosts')!r}")
+    if summary["host_warnings"]:
+        failures.append(f"Google host warnings must stay zero, got {len(summary['host_warnings'])}")
+    return failures
+
+
+def _check_cloud_live_input(cloud: dict) -> list[str]:
+    from scripts.google.live_inputs import build_live_input_coverage
+
+    failures = []
+    live_supported = {item["action_key"] for item in build_live_input_coverage()["supported"]}
+    cloud_live = tuple(action["key"] for action in cloud["actions"] if action["key"] in live_supported)
+    if cloud_live != CLOUD_LIVE_INPUT_ACTIONS:
+        failures.append("Cloud live-input-supported actions changed: " + ", ".join(cloud_live))
+    if set(CLOUD_APPROVAL_ACTIONS) - set(cloud_live):
+        failures.append("Cloud prepare/open-only approval action count must be 0")
+    return failures
+
+
 def audit() -> tuple[bool, list[str]]:
+    # 2026-09-29 STD-08(복잡도) 리팩터: cloud tab 관련 독립 체크들을 _check_*() 함수로 분리
+    # (순서·조건·문자열 그대로) — #48 과 같은 계열.
     failures: list[str] = []
     if not BASELINE.exists():
         return False, ["docs/baseline/GOOGLE_CLOUD_MODULE_BASELINE.md missing"]
@@ -95,7 +147,6 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google Cloud baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google.live_inputs import build_live_input_coverage
     from scripts.google.tab_registry import build_google_tab_summary
 
     summary = build_google_tab_summary()
@@ -104,37 +155,11 @@ def audit() -> tuple[bool, list[str]]:
         failures.append("Google cloud tab missing")
         return False, failures
 
-    surfaces = tuple(surface["key"] for surface in cloud["surfaces"])
-    if surfaces != CLOUD_SURFACES:
-        failures.append("Cloud surfaces changed: " + ", ".join(surfaces))
-
-    approval_actions = tuple(action["key"] for action in cloud["actions"] if action["requires_approval"])
-    if approval_actions != CLOUD_APPROVAL_ACTIONS:
-        failures.append("Cloud approval actions changed: " + ", ".join(approval_actions))
-
-    expected_counts = {
-        "surface_count": 15,
-        "action_count": 29,
-        "read_action_count": 15,
-        "approval_action_count": 14,
-    }
-    for key, expected in expected_counts.items():
-        if cloud.get(key) != expected:
-            failures.append(f"Cloud count mismatch {key}: expected {expected}, got {cloud.get(key)}")
-
-    if cloud.get("hosts") != ["console.cloud.google.com"]:
-        failures.append(f"Cloud hosts changed: {cloud.get('hosts')!r}")
-
-    if summary["host_warnings"]:
-        failures.append(f"Google host warnings must stay zero, got {len(summary['host_warnings'])}")
-
-    live_supported = {item["action_key"] for item in build_live_input_coverage()["supported"]}
-    cloud_live = tuple(action["key"] for action in cloud["actions"] if action["key"] in live_supported)
-    if cloud_live != CLOUD_LIVE_INPUT_ACTIONS:
-        failures.append("Cloud live-input-supported actions changed: " + ", ".join(cloud_live))
-
-    if set(CLOUD_APPROVAL_ACTIONS) - set(cloud_live):
-        failures.append("Cloud prepare/open-only approval action count must be 0")
+    failures.extend(_check_cloud_surfaces(cloud))
+    failures.extend(_check_cloud_approval_actions(cloud))
+    failures.extend(_check_cloud_counts(cloud))
+    failures.extend(_check_cloud_hosts(cloud, summary))
+    failures.extend(_check_cloud_live_input(cloud))
 
     return not failures, failures or [
         "GOOGLE_CLOUD_MODULE_BASELINE exists and is locked",
@@ -148,7 +173,9 @@ def main() -> int:
     ok, findings = audit()
     for finding in findings:
         print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_GOOGLE_CLOUD_MODULE_BASELINE_CONTRACT' if ok else 'FAIL_GOOGLE_CLOUD_MODULE_BASELINE_CONTRACT'}")
+    print(
+        f"RESULT={'PASS_GOOGLE_CLOUD_MODULE_BASELINE_CONTRACT' if ok else 'FAIL_GOOGLE_CLOUD_MODULE_BASELINE_CONTRACT'}"
+    )
     return 0 if ok else 1
 
 
