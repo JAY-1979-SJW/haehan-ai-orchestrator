@@ -77,13 +77,18 @@ if _is_desktop and _env_host in ("", "0.0.0.0", "::"):  # noqa: S104
 else:
     APP_HOST = _env_host or "127.0.0.1"
 
-# APP_PORT — 범위 밖이거나 숫자 아니면 기본값 8400
+# APP_PORT — 범위 밖이거나 숫자 아니면 기본값 8401
+# 2026-09-30 수정(defect_index #18): 이 파일이 "진짜 단일 소스"여야 하는데 기본값 자체가
+# 8400 이었다 — 실제 운영 포트는 8401(CLAUDE.md "로컬 개발 스택 포트 구성" 문서, 오늘까지
+# uvicorn 기동 시 매번 --port 8401 을 명령줄에서 명시해 이 잘못된 기본값을 계속 우회해왔다).
+# local_agent/config.py 등 다른 파일들의 기본값 불일치(같은 defect_index #18)도 결국 이
+# "정본" 자체가 틀렸던 게 근본 원인이었다.
 try:
-    APP_PORT = int(os.environ.get("APP_PORT", "8400"))
+    APP_PORT = int(os.environ.get("APP_PORT", "8401"))
     if not (1 <= APP_PORT <= 65535):
         raise ValueError(f"포트 범위 초과: {APP_PORT}")
 except (ValueError, TypeError):
-    APP_PORT = 8400
+    APP_PORT = 8401
 
 # ── JWT 인증 ────────────────────────────────────────────────────────────────
 JWT_SECRET = os.environ.get("JWT_SECRET", "").strip() or _secrets.token_hex(32)

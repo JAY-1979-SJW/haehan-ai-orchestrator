@@ -37,10 +37,36 @@ def _hide_own_console() -> None:
 _hide_own_console()
 
 
+def _write_server_discovery_file() -> None:
+    """실제로 기동한 host:port를 파일에 기록 — 클라이언트(local_agent 등)가 포트 리터럴을
+    직접 하드코딩하는 대신 이 파일을 먼저 읽어 자동으로 찾아가게 한다(2026-09-30 추가,
+    defect_index #18: 파일마다 다른 포트 기본값이 흩어져 있던 문제의 근본 대책 — 단일
+    소스(config.py APP_PORT)를 고치는 것과 별개로, "지금 실제로 뜬 서버가 어디 있는지"를
+    가장 확실하게 아는 쪽은 그 서버 자신이므로 시작 시점에 직접 알린다).
+    lifespan startup 시점엔 uvicorn이 이미 소켓 바인딩을 마친 뒤이므로 이 값을 그대로
+    믿어도 안전하다. 쓰기 실패는 비치명적(기존 하드코딩 기본값으로 폴백됨) — 서버 기동을
+    막지 않는다."""
+    import json
+    import os
+    import time
+    from pathlib import Path
+
+    try:
+        path = Path(__file__).resolve().parents[1] / "data" / "runtime" / "server_info.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"host": APP_HOST, "port": APP_PORT, "pid": os.getpid(), "started_at": time.time()}
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(path)
+    except OSError as e:
+        logger.warning("[server-discovery] server_info.json 기록 실패(비치명적): %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("haehan-ai-orchestrator 시작 | host=%s port=%s", APP_HOST, APP_PORT)
+    _write_server_discovery_file()
     _LOOPBACK_ONLY = {"127.0.0.1", "::1", "localhost"}
     if APP_HOST not in _LOOPBACK_ONLY:
         logger.warning(

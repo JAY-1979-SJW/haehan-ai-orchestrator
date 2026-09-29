@@ -3,14 +3,44 @@
 환경 변수로 오버라이드 가능하지만 기본값은 모두 안전 모드 — 외부 호출 금지,
 read-only 디렉터리만 화이트리스트.
 """
+
 from __future__ import annotations
 
 import os
 from pathlib import Path
 
 
-# 서버 오케스트레이터 base URL (사용자가 명시적으로 설정해야 함)
-SERVER_BASE_URL: str = os.getenv("HAEHAN_AGENT_SERVER", "http://127.0.0.1:8400")
+def _discover_server_base_url() -> str:
+    """서버 base URL 결정 우선순위(2026-09-30, defect_index #18 근본 대책):
+    1) HAEHAN_AGENT_SERVER 환경변수 — 명시적 지정은 항상 최우선 존중.
+    2) data/runtime/server_info.json — 실제로 지금 뜬 FastAPI 서버가 자기 자신의
+       host:port를 기록해둔 자동탐지 파일(ai_orchestrator/server.py lifespan 에서 기록).
+       포트 충돌로 다른 포트에 뜨거나 여러 인스턴스가 떠 있어도 하드코딩 없이 찾아간다.
+    3) 위 둘 다 없으면 기존 하드코딩 기본값(8401)으로 폴백 — 완전히 새 환경(서버를 아직
+       한 번도 안 띄워본 상태)에서도 동작해야 하므로 폴백 자체는 유지한다.
+    """
+    env_val = os.getenv("HAEHAN_AGENT_SERVER", "").strip()
+    if env_val:
+        return env_val
+    try:
+        import json
+
+        discovery_path = Path(__file__).resolve().parents[1] / "data" / "runtime" / "server_info.json"
+        if discovery_path.exists():
+            info = json.loads(discovery_path.read_text(encoding="utf-8"))
+            host, port = info.get("host"), info.get("port")
+            if host and port:
+                # server.py 는 APP_HOST=0.0.0.0 으로도 기동할 수 있는데, 로컬 클라이언트가
+                # 접속할 땐 0.0.0.0(바인딩 전용 주소)이 아니라 127.0.0.1 로 접속해야 한다.
+                connect_host = "127.0.0.1" if host in ("0.0.0.0", "::") else host  # noqa: S104
+                return f"http://{connect_host}:{port}"
+    except (OSError, ValueError, TypeError):
+        pass  # 자동탐지 실패는 비치명적 — 아래 하드코딩 기본값으로 폴백
+    return "http://127.0.0.1:8401"
+
+
+# 서버 오케스트레이터 base URL. 자동탐지 우선순위는 _discover_server_base_url() 참고.
+SERVER_BASE_URL: str = _discover_server_base_url()
 
 # 1단계는 폴링 모드. WebSocket 푸시는 2단계에서 활성화.
 WEBSOCKET_ENABLED: bool = os.getenv("HAEHAN_AGENT_WS_ENABLED", "false").lower() == "true"
@@ -29,14 +59,10 @@ READ_ONLY_DIRS: list[Path] = [
 ]
 
 # 로컬 감사 로그 파일 (PC 내부 보관, 서버에는 요약만 보고)
-LOCAL_AUDIT_PATH: Path = Path(
-    os.getenv("HAEHAN_AGENT_AUDIT", str(Path.home() / ".haehan_agent" / "audit.jsonl"))
-)
+LOCAL_AUDIT_PATH: Path = Path(os.getenv("HAEHAN_AGENT_AUDIT", str(Path.home() / ".haehan_agent" / "audit.jsonl")))
 
 # device_token 보관 위치 (사용자 홈, 권한 600 권장 — Windows 는 ACL 별도 안내)
-TOKEN_STORE_PATH: Path = Path(
-    os.getenv("HAEHAN_AGENT_TOKEN", str(Path.home() / ".haehan_agent" / "device_token"))
-)
+TOKEN_STORE_PATH: Path = Path(os.getenv("HAEHAN_AGENT_TOKEN", str(Path.home() / ".haehan_agent" / "device_token")))
 
 # open_url 허용 스킴
 URL_ALLOWED_SCHEMES: frozenset[str] = frozenset({"http", "https"})
@@ -53,9 +79,14 @@ LOCAL_AGENT_SCREENSHOT_DIR: Path = Path(
 
 
 __all__ = [
-    "SERVER_BASE_URL", "WEBSOCKET_ENABLED", "POLL_INTERVAL_SEC",
-    "ALLOWED_APPS", "APPS_EXECUTABLE_STAGE1",
-    "READ_ONLY_DIRS", "LOCAL_AUDIT_PATH", "TOKEN_STORE_PATH",
-    "URL_ALLOWED_SCHEMES",
+    "ALLOWED_APPS",
+    "APPS_EXECUTABLE_STAGE1",
     "LOCAL_AGENT_SCREENSHOT_DIR",
+    "LOCAL_AUDIT_PATH",
+    "POLL_INTERVAL_SEC",
+    "READ_ONLY_DIRS",
+    "SERVER_BASE_URL",
+    "TOKEN_STORE_PATH",
+    "URL_ALLOWED_SCHEMES",
+    "WEBSOCKET_ENABLED",
 ]
