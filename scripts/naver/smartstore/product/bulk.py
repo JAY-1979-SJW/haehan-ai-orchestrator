@@ -33,7 +33,9 @@ from scripts.naver.smartstore.product.models import (
 
 _log = get_logger(__name__)
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = (
+    Path(__file__).resolve().parents[4]
+)  # 2026-09-29 defect_index #39: 이 파일만 [3]으로 남아있었음(같은 폴더의 다른 파일 전부 [4] — product/ 하위로 이동 후 미반영, DB_PATH 가 scripts/data/ 로 잘못 계산되던 실버그)
 DB_PATH = ROOT / "data" / "cdp.db"
 
 

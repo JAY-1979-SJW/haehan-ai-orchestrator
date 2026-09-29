@@ -10,7 +10,9 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-EXPECTED_RUNTIME_ROUTES = 206  # 업데이트: 신규 커넥터(gabia/hanafax/user_auth/kakao/naver_blog) 추가 후
+EXPECTED_RUNTIME_ROUTES = 284  # 업데이트(2026-09-29): FastAPI _IncludedRouter 지연평가 버그로
+# 206 이후 실제 신규 라우트 다수가 계속 감지 안 되고 있었음(defect_index #39·#40) — 이번에
+# iter_route_contexts 로 introspection 을 고친 뒤 실측한 정확한 현재 값으로 재고정.
 
 REQUIRED_ROUTES = {
     ("GET", "/api/v1/auth/me"),
@@ -38,18 +40,31 @@ FORBIDDEN_BACKEND_PATTERNS = (
 
 
 def iter_runtime_routes() -> list[tuple[str, str, str]]:
-    from fastapi.routing import APIRoute, APIWebSocketRoute
+    # FastAPI 0.137+ 부터 include_router() 가 즉시 라우트를 펼치지 않고 지연 래퍼
+    # (_IncludedRouter) 로 저장해 app.routes 를 바로 순회하면 서브라우터의 실제 라우트를
+    # 거의 못 찾는다(2026-09-29 defect_index #39·#40, ai_orchestrator/routers/app_actions.py
+    # 와 동일 근본원인 — 공식 fastapi.routing.iter_route_contexts 로 해결).
+    from fastapi.routing import APIRoute, APIWebSocketRoute, iter_route_contexts
 
     from ai_orchestrator.server import app
 
     routes: list[tuple[str, str, str]] = []
-    for route in app.routes:
+    for ctx in iter_route_contexts(app.routes):
+        route = ctx.original_route
         if isinstance(route, APIRoute):
-            methods = sorted(method.upper() for method in (route.methods or []))
+            methods = sorted(ctx.methods or set())
             method_label = methods[0] if len(methods) == 1 else ",".join(methods)
-            routes.append((method_label, route.path, route.name))
+            routes.append((method_label, ctx.path, ctx.name or ""))
         elif isinstance(route, APIWebSocketRoute):
-            routes.append(("WEBSOCKET", route.path, route.name))
+            # RouteContext.path/path_format 이 웹소켓 라우트에서는 빈 문자열을 반환함
+            # (2026-09-29 실측, fastapi 0.141.1 — APIRoute 는 정상). 내부 _effective_route
+            # (_EffectiveRouteContext).starlette_route 에는 실제 prefix 가 반영된 경로가
+            # 있어 그걸로 보완(비공개 속성 의존 — 이후 fastapi 버전에서 바뀔 수 있음,
+            # RouteContext.path 가 웹소켓도 정상화되면 이 분기는 제거 가능).
+            eff = getattr(ctx, "_effective_route", None)
+            starlette_route = getattr(eff, "starlette_route", None)
+            full_path = getattr(starlette_route, "path", None) or route.path
+            routes.append(("WEBSOCKET", full_path, route.name))
     return sorted(routes)
 
 

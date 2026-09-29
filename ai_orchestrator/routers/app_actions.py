@@ -11,10 +11,17 @@ import inspect
 import re
 
 # 파괴적 동작만 차단: 발송·결제·삭제·투찰·입찰·팩스·환불 등 되돌릴 수 없는 외부 영향
+# 2026-09-29 defect_index #39 확장: build_manifest() 가 FastAPI _IncludedRouter 버그로
+# 계속 빈 리스트를 반환해(수정 완료) tests/test_app_action_coverage.py 의
+# test_destructive_actions_never_auto_safe 가 그동안 공허하게(비교 대상 0건) 통과하고
+# 있었음 — 실제 데이터로 처음 돌려보니 register/upload/setup/reset/publish 계열이
+# 전부 SAFE로 새는 게 드러남(디바이스 토큰 발급, 실제 발행 가능한 blog write-to-naver
+# 의 publish=True 분기, 외부에서 인증없이 가져갈 수 있는 public-media 업로드 등).
 _DESTRUCTIVE = re.compile(
     r"send|발송|전송|보내|결제|구매|주문하기|송금|이체|삭제|delete|remove|탈퇴|투찰|입찰|낙찰|"
     r"submit|제출|approve|승인|reject|거절|배포|deploy|webhook|"
-    r"login|signup|revoke|cancel|취소|환불|fax|팩스|dispatch|consent|확정",
+    r"login|signup|revoke|cancel|취소|환불|fax|팩스|dispatch|consent|확정|"
+    r"register|upload|setup|reset|export|publish|발행",
     re.IGNORECASE,
 )
 
@@ -30,14 +37,21 @@ def _get_app():
 
 
 def _post_routes() -> list[tuple]:
+    # FastAPI 0.137+ 부터 include_router() 가 즉시 라우트를 펼치지 않고 지연 래퍼
+    # (_IncludedRouter) 로 저장한다 — app.routes 를 바로 순회하면 각 서브라우터가
+    # path/methods 없는 래퍼 1개로만 보여 실제 POST 라우트를 거의 못 찾았음
+    # (2026-09-29 defect_index #39, 공식 fastapi.routing.iter_route_contexts 로 해결
+    # — pip 설치본 site-packages/fastapi/routing.py 소스로 RouteContext 시그니처 직접 확인).
+    from fastapi.routing import iter_route_contexts
+
     routes = getattr(_get_app(), "routes", [])
     out = []
-    for r in routes:
-        methods = getattr(r, "methods", None) or set()
-        ep = getattr(r, "endpoint", None)
-        path = getattr(r, "path", None)
+    for ctx in iter_route_contexts(routes):
+        methods = ctx.methods or set()
+        ep = getattr(ctx.original_route, "endpoint", None)
+        path = ctx.path
         if ep and path and "POST" in methods:
-            out.append((path, ep, getattr(r, "name", "")))
+            out.append((path, ep, ctx.name or ""))
     return out
 
 
