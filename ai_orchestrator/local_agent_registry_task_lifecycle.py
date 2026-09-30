@@ -202,10 +202,12 @@ def fail_active_tasks_for_agent(
 
     - ACTIVE_TASK_STATUSES = delivered / running / cancel_requested
     - queued / completed / failed / waiting_approval 등은 변경하지 않는다.
-    - delivered/running 은 MAX_WS_DISCONNECT_RETRIES 미만이면 **재큐잉**(queued로 되돌려
+    - delivered 는 MAX_WS_DISCONNECT_RETRIES 미만이면 **재큐잉**(queued로 되돌려
       retry_count 증가)한다 — 에이전트가 재연결하면 기존 "queued → delivered on connect"
       로직(_push_queued)이 그대로 다시 전달한다. 사람이 겪은 실제 증상(2026-09-30: 짧은
       재연결 몇 초 사이 들어온 요청이 그 자리에서 즉시 실패로 끝나던 것)을 고치기 위함.
+    - running 은 이미 실행이 시작됐을 수 있어(비멱등 작업 중복 실행 위험) 재큐잉하지 않고
+      기존처럼 failed 처리한다.
     - cancel_requested 는 재큐잉하지 않고 기존처럼 즉시 failed — 사용자가 명시적으로
       취소를 요청한 작업을 연결 문제를 핑계로 되살리면 사용자 의도를 거스르게 된다.
     - retry_count 가 MAX_WS_DISCONNECT_RETRIES 이상이면(같은 작업이 매번 agent를 죽이는
@@ -225,7 +227,8 @@ def fail_active_tasks_for_agent(
             if task.status not in ACTIVE_TASK_STATUSES:
                 continue
 
-            can_retry = task.status in ("delivered", "running") and task.retry_count < MAX_WS_DISCONNECT_RETRIES
+            # running 은 에이전트가 이미 실행을 시작했을 수 있어 재큐잉하면 중복 실행 위험 — 제외.
+            can_retry = task.status == "delivered" and task.retry_count < MAX_WS_DISCONNECT_RETRIES
             try:
                 if can_retry:
                     _ensure_task_transition(task, "queued")

@@ -245,7 +245,11 @@ def test_approved_capture_dispatched_via_ws_with_approved_flag(admin_user):
 
 
 def test_approved_capture_not_redelivered_on_reconnect(admin_user):
-    """동일 task 재실행 금지 — 이미 delivered 된 작업은 재접속 후에도 재전송되지 않는다."""
+    """동일 task 재실행 금지 — 이미 running 이던 작업은 재접속 후에도 재전송되지 않는다.
+
+    (delivered 만 되고 running 신호가 없던 작업은 재큐잉·재전송되지만, running 이면 실행이
+    시작됐을 수 있어 재전송하지 않는다.)
+    """
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
     created = _enqueue_capture(client, agent_id)
@@ -256,11 +260,13 @@ def test_approved_capture_not_redelivered_on_reconnect(admin_user):
         json={"token_id": token_id},
     )
 
-    # 1회차 — delivered
+    # 1회차 — delivered → running
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
         ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         assert ws.receive_json()["type"] == "task"
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
 
     # 2회차 — 재접속해도 추가 task 없음
     with client.websocket_connect("/api/v1/local-agents/ws") as ws2:

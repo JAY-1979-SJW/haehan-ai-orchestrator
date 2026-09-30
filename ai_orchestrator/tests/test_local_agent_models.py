@@ -183,6 +183,7 @@ def test_local_agent_task_to_safe_shape():
         "observe_summary",
         "audit_summary",
         "result_data",
+        "retry_count",
     }
     assert set(safe.keys()) == expected_keys
 
