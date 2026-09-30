@@ -149,16 +149,16 @@ def test_candidate_duplicate_skip(tmp_path):
     cand_path = str(tmp_path / "candidates.jsonl")
     item = _item("입찰공고 안내")
     clf = classify(item)
-    kwargs = dict(
-        external_id=item["external_id"],
-        source_account=item["source_account"],
-        category=clf["category"],
-        priority=clf["priority"],
-        needs_review=clf["needs_review"],
-        candidate_task_type=clf["candidate_task_type"],
-        classification_reason=clf["classification_reason"],
-        path=cand_path,
-    )
+    kwargs = {
+        "external_id": item["external_id"],
+        "source_account": item["source_account"],
+        "category": clf["category"],
+        "priority": clf["priority"],
+        "needs_review": clf["needs_review"],
+        "candidate_task_type": clf["candidate_task_type"],
+        "classification_reason": clf["classification_reason"],
+        "path": cand_path,
+    }
     r1 = candidate_store.save_candidate(**kwargs)
     r2 = candidate_store.save_candidate(**kwargs)
     assert r1["status"] == "saved"

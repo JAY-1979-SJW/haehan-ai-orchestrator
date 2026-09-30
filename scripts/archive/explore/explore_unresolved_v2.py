@@ -299,7 +299,7 @@ def explore_mybox_v2(page, report: dict):
 
     # 4) 첫 폴더/파일 더블클릭으로 진입 시도 (실제 list API 호출 트리거)
     _reset_cap(page)
-    for sel in file_grid.keys():
+    for sel in file_grid:
         try:
             el = page.query_selector(sel)
             if el and el.is_visible():

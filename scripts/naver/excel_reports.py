@@ -72,7 +72,7 @@ def _write_list(ws, rows: list[Any], *, start_row: int = 1) -> int:
     if all(isinstance(row, dict) for row in rows):
         keys: list[str] = []
         for row in rows:
-            for key in row.keys():
+            for key in row:
                 if key not in keys:
                     keys.append(key)
         for col, key in enumerate(keys, start=1):

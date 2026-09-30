@@ -63,12 +63,14 @@ class TestRequestForeground:
         assert result["sensitive_data_read"] is False
 
     def test_windows_foreground_with_mock_pid(self):
-        with patch("sys.platform", "win32"):
-            with patch(
+        with (
+            patch("sys.platform", "win32"),
+            patch(
                 "ai_orchestrator.local_agent.browser_foreground_adapter._foreground_windows",
                 return_value=BROWSER_FOREGROUND_REQUESTED,
-            ):
-                result = request_foreground(is_headed=True, browser_pid=1234)
+            ),
+        ):
+            result = request_foreground(is_headed=True, browser_pid=1234)
         assert result["status"] == BROWSER_FOREGROUND_REQUESTED
         assert result["sensitive_data_read"] is False
 

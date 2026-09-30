@@ -32,17 +32,17 @@ class TestTaskModel:
     def _make_task(self, **kwargs):
         from ai_orchestrator.domain.models import Task
 
-        defaults = dict(
-            task_id="task-001",
-            title="Naver 블로그 포스팅",
-            provider="naver",
-            action_type="blog_post",
-            execution_location="LOCAL_AGENT_REQUIRED",
-            risk_level="high",
-            approval_required=True,
-            status="pending",
-            summary="테스트 포스팅",
-        )
+        defaults = {
+            "task_id": "task-001",
+            "title": "Naver 블로그 포스팅",
+            "provider": "naver",
+            "action_type": "blog_post",
+            "execution_location": "LOCAL_AGENT_REQUIRED",
+            "risk_level": "high",
+            "approval_required": True,
+            "status": "pending",
+            "summary": "테스트 포스팅",
+        }
         defaults.update(kwargs)
         return Task(**defaults)
 
@@ -562,19 +562,19 @@ class TestAuditEventModel:
     def _make_event(self, **kwargs):
         from ai_orchestrator.domain.models import AuditEvent, _now_iso
 
-        defaults = dict(
-            event_id="evt-001",
-            event_type="TASK_RECEIVED",
-            task_id="task-001",
-            provider="naver",
-            action_type="search",
-            risk_level="low",
-            execution_location="SERVER_INTERNAL_ONLY",
-            actor="server",
-            timestamp=_now_iso(),
-            verdict="PASS",
-            summary="검색 작업 수신",
-        )
+        defaults = {
+            "event_id": "evt-001",
+            "event_type": "TASK_RECEIVED",
+            "task_id": "task-001",
+            "provider": "naver",
+            "action_type": "search",
+            "risk_level": "low",
+            "execution_location": "SERVER_INTERNAL_ONLY",
+            "actor": "server",
+            "timestamp": _now_iso(),
+            "verdict": "PASS",
+            "summary": "검색 작업 수신",
+        }
         defaults.update(kwargs)
         return AuditEvent(**defaults)
 

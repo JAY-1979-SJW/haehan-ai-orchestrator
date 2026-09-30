@@ -165,11 +165,10 @@ def _close_notice_popup(page, check_today_hide: bool = True) -> bool:
     if check_today_hide:
         try:
             cb = page.locator(TODAY_HIDE_SEL).first
-            if cb.count() > 0 and cb.is_visible(timeout=300):
-                if not cb.is_checked(timeout=300):
-                    cb.click(timeout=2000)
-                    time.sleep(0.3)
-                    _log.info("[ss-popup] '하루동안 보지 않기' 체크")
+            if cb.count() > 0 and cb.is_visible(timeout=300) and not cb.is_checked(timeout=300):
+                cb.click(timeout=2000)
+                time.sleep(0.3)
+                _log.info("[ss-popup] '하루동안 보지 않기' 체크")
         except Exception as e:  # noqa: BLE001 - 스마트스토어 공지팝업/배너 감지·닫기 — 순수 UI 노이즈 제거, 실패는 로그 후 계속 또는 False/0 기본값(2026-09-28 검토)
             _log.debug("[ss-popup] 체크박스 처리 실패: %s", e)
 

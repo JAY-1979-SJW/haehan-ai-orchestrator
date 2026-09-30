@@ -282,9 +282,8 @@ class TestRegistryPolicyConsistency:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     imports.add(alias.name)
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imports.add(node.module)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imports.add(node.module)
 
         assert not any("task_executor" in imp for imp in imports)
 

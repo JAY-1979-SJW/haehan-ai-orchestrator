@@ -7,12 +7,16 @@ business.execute_with_user_approval의 profile scope 검증 테스트 (2026-05-0
 - forbidden field 미포함
 - profile 변경 감지
 """
+
 from __future__ import annotations
 
 import pytest
+
 from ai_orchestrator.local_agent.actions import business_execute_with_user_approval
 from ai_orchestrator.local_agent.user_approval_gate import (
-    create_approval_request, approve_request, clear_all,
+    approve_request,
+    clear_all,
+    create_approval_request,
 )
 
 
@@ -32,11 +36,7 @@ def test_valid_token_creates_handoff():
         "notice_id": "공고 12345",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -57,11 +57,7 @@ def test_handoff_payload_has_evidence_policy():
         "notice_id": "공고 12345",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -83,11 +79,7 @@ def test_response_has_evidence_policy():
         "notice_id": "공고 12345",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -108,11 +100,7 @@ def test_forbidden_fields_excluded_from_payload():
         "notice_id": "공고 12345",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -122,7 +110,7 @@ def test_forbidden_fields_excluded_from_payload():
 
     payload = res["handoff_payload"]
     forbidden_keys = {"password", "otp", "cert_password", "cookie", "session", "private_key"}
-    for key in payload.keys():
+    for key in payload:
         if key == "approval_token":
             continue
         for forbidden in forbidden_keys:
@@ -138,11 +126,7 @@ def test_token_one_time_use():
         "notice_id": "공고 12345",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     # 첫 번째 사용 — 성공
@@ -171,11 +155,7 @@ def test_erp_save_profile_execution():
         "record_type": "PO",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -197,11 +177,7 @@ def test_esign_request_profile_execution():
         "signer_name": "홍길동",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -222,11 +198,7 @@ def test_approval_status_approved_and_consumed():
         "notice_id": "공고 12345",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -246,11 +218,7 @@ def test_handoff_payload_action_name():
         "notice_id": "공고 12345",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -270,11 +238,7 @@ def test_handoff_payload_business_profile():
         "notice_id": "공고 12345",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(

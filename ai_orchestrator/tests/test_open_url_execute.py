@@ -609,22 +609,21 @@ def test_open_url_execute_ws_result_without_running_fails(tmp_path):
         json={"token_id": token_id},
     )
 
-    with pytest.raises(WebSocketDisconnect):
-        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-            ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": reg_resp["device_token"]})
-            assert ws.receive_json()["type"] == "auth_ok"
-            assert ws.receive_json()["type"] == "task"
+    with pytest.raises(WebSocketDisconnect), client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": reg_resp["device_token"]})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
 
-            # running 없이 바로 result(success=True) 전송 → delivered → completed 시도
-            ws.send_json(
-                {
-                    "type": "result",
-                    "task_id": task_id,
-                    "success": True,
-                    "summary": "open_url_execute_ok",
-                }
-            )
-            ws.receive_json()  # 여기서 WebSocketDisconnect(1011) 발생해야 함
+        # running 없이 바로 result(success=True) 전송 → delivered → completed 시도
+        ws.send_json(
+            {
+                "type": "result",
+                "task_id": task_id,
+                "success": True,
+                "summary": "open_url_execute_ok",
+            }
+        )
+        ws.receive_json()  # 여기서 WebSocketDisconnect(1011) 발생해야 함
 
 
 def test_build_result_message_includes_action_data():

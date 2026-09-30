@@ -122,16 +122,15 @@ def test_ws_auth_bad_token(admin_user):
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)
 
-    with pytest.raises(WebSocketDisconnect) as exc_info:
-        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-            ws.send_json(
-                {
-                    "type": "auth",
-                    "agent_id": agent_id,
-                    "device_token": "not_the_real_token_at_all",
-                }
-            )
-            ws.receive_json()  # 서버가 즉시 close
+    with pytest.raises(WebSocketDisconnect) as exc_info, client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json(
+            {
+                "type": "auth",
+                "agent_id": agent_id,
+                "device_token": "not_the_real_token_at_all",
+            }
+        )
+        ws.receive_json()  # 서버가 즉시 close
     assert exc_info.value.code == 4401
 
 
@@ -141,16 +140,15 @@ def test_ws_auth_bad_token(admin_user):
 def test_ws_auth_unknown_agent_id(admin_user):
     client = _make_test_client(admin_user)
     # 등록된 에이전트 없이 임의 agent_id 로 접속 시도
-    with pytest.raises(WebSocketDisconnect) as exc_info:
-        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-            ws.send_json(
-                {
-                    "type": "auth",
-                    "agent_id": "la-ghost000000",
-                    "device_token": "any",
-                }
-            )
-            ws.receive_json()
+    with pytest.raises(WebSocketDisconnect) as exc_info, client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json(
+            {
+                "type": "auth",
+                "agent_id": "la-ghost000000",
+                "device_token": "any",
+            }
+        )
+        ws.receive_json()
     assert exc_info.value.code == 4401
 
 
@@ -161,16 +159,15 @@ def test_ws_auth_agent_id_mismatch(admin_user):
     agent_b, _ = _register(client)
     assert agent_a != agent_b
 
-    with pytest.raises(WebSocketDisconnect) as exc_info:
-        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-            ws.send_json(
-                {
-                    "type": "auth",
-                    "agent_id": agent_b,  # 다른 agent 의 id
-                    "device_token": token_a,  # A 의 토큰
-                }
-            )
-            ws.receive_json()
+    with pytest.raises(WebSocketDisconnect) as exc_info, client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json(
+            {
+                "type": "auth",
+                "agent_id": agent_b,  # 다른 agent 의 id
+                "device_token": token_a,  # A 의 토큰
+            }
+        )
+        ws.receive_json()
     assert exc_info.value.code == 4401
 
 
@@ -178,11 +175,10 @@ def test_ws_first_message_must_be_auth(admin_user):
     client = _make_test_client(admin_user)
     _register(client)
 
-    with pytest.raises(WebSocketDisconnect) as exc_info:
-        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-            # auth 가 아닌 heartbeat 로 시작
-            ws.send_json({"type": "heartbeat"})
-            ws.receive_json()
+    with pytest.raises(WebSocketDisconnect) as exc_info, client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        # auth 가 아닌 heartbeat 로 시작
+        ws.send_json({"type": "heartbeat"})
+        ws.receive_json()
     assert exc_info.value.code == 4401
 
 

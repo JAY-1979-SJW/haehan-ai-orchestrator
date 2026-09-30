@@ -236,7 +236,7 @@ def test_no_sensitive_material_in_job_state():
     )
     # params 에 민감 키가 들어있지 않은지 확인 (설계상 요구)
     rec = job_state.get("job-s")
-    low_keys = {k.lower() for k in rec.params.keys()}
+    low_keys = {k.lower() for k in rec.params}
     assert "password" not in low_keys
     assert "otp" not in low_keys
     assert "cookie" not in low_keys

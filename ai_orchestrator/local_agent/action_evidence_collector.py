@@ -1,21 +1,38 @@
 """Action Evidence Collector — 사후 실행 증거 수집 (민감정보 redaction)."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from ai_orchestrator.local_agent.action_schemas import all_specs
 
-_SENSITIVE_KEYS = frozenset((
-    "password", "otp", "cert_password", "certificate_password",
-    "cookie", "session", "token", "storage_state", "private_key",
-    "npki", "auth_header", "Authorization", "raw_html",
-))
+_SENSITIVE_KEYS = frozenset(
+    (
+        "password",
+        "otp",
+        "cert_password",
+        "certificate_password",
+        "cookie",
+        "session",
+        "token",
+        "storage_state",
+        "private_key",
+        "npki",
+        "auth_header",
+        "Authorization",
+        "raw_html",
+    )
+)
 
 _SAFE_FIELDS = (
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 )
 
 
@@ -45,7 +62,7 @@ def collect_evidence(
         return {
             "action_name": action_name,
             "error": "UNKNOWN_ACTION",
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
 
     evidence: dict[str, Any] = {}
@@ -83,13 +100,13 @@ def collect_evidence(
             else:
                 evidence[field_name] = ""
         elif field_name == "downloaded_at":
-            evidence[field_name] = raw_result.get("downloaded_at") or datetime.now(timezone.utc).isoformat()
+            evidence[field_name] = raw_result.get("downloaded_at") or datetime.now(UTC).isoformat()
         elif field_name == "attached_at":
-            evidence[field_name] = raw_result.get("attached_at") or datetime.now(timezone.utc).isoformat()
+            evidence[field_name] = raw_result.get("attached_at") or datetime.now(UTC).isoformat()
         elif field_name == "submitted_at":
-            evidence[field_name] = raw_result.get("submitted_at") or datetime.now(timezone.utc).isoformat()
+            evidence[field_name] = raw_result.get("submitted_at") or datetime.now(UTC).isoformat()
         elif field_name == "signed_at":
-            evidence[field_name] = raw_result.get("signed_at") or datetime.now(timezone.utc).isoformat()
+            evidence[field_name] = raw_result.get("signed_at") or datetime.now(UTC).isoformat()
         elif field_name == "document_hash_safe":
             h = raw_result.get("document_hash") or ""
             evidence[field_name] = h[:16] + "..." if len(h) > 16 else h
@@ -116,7 +133,7 @@ def collect_evidence(
         evidence[f] = False
 
     evidence["action_name"] = action_name
-    evidence["collected_at"] = datetime.now(timezone.utc).isoformat()
+    evidence["collected_at"] = datetime.now(UTC).isoformat()
     return evidence
 
 
@@ -126,7 +143,7 @@ def check_evidence_no_sensitive(evidence: dict[str, Any]) -> list[str]:
     7개 safe field(cookie_exported 등 boolean 표시)는 예외 — 값이 False면 OK.
     """
     violations = []
-    for k, v in evidence.items():
+    for k, _v in evidence.items():
         if k in _SAFE_FIELDS:
             continue  # boolean 표시 필드는 별도 처리
         if _is_sensitive_key(k):

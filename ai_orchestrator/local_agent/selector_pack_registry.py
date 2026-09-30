@@ -5,25 +5,29 @@ Selector Pack Registry
 자동 로그인/비밀번호/OTP 입력에 사용하지 않는다.
 password/OTP/cert_password selector는 저장하지 않는다.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
 # ── 금지 selector 키 ──────────────────────────────────────────────────────────
 
-_FORBIDDEN_SELECTOR_KEYS: frozenset[str] = frozenset({
-    "password_input", "otp_input", "cert_password_input",
-    "login_id_input",     # ID는 허용, 비밀번호는 금지
-    "login_form_fill",    # 자동 로그인 폼 전체 금지
-    "captcha_input",
-    "credit_card_input",
-    "npki_selector",
-})
+_FORBIDDEN_SELECTOR_KEYS: frozenset[str] = frozenset(
+    {
+        "password_input",
+        "otp_input",
+        "cert_password_input",
+        "login_id_input",  # ID는 허용, 비밀번호는 금지
+        "login_form_fill",  # 자동 로그인 폼 전체 금지
+        "captcha_input",
+        "credit_card_input",
+        "npki_selector",
+    }
+)
 
 # ── Selector Pack 예시 ────────────────────────────────────────────────────────
 
 _PACKS: dict[str, dict[str, Any]] = {
-
     "naver_blog": {
         "site_id": "naver_blog",
         "selectors": {
@@ -38,7 +42,6 @@ _PACKS: dict[str, dict[str, Any]] = {
             "auth_signal_markers": ["로그인이 필요합니다", "로그인 후 이용"],
         },
     },
-
     "naver_cafe": {
         "site_id": "naver_cafe",
         "selectors": {
@@ -51,7 +54,6 @@ _PACKS: dict[str, dict[str, Any]] = {
             "auth_signal_markers": ["로그인이 필요합니다", "카페 가입이 필요합니다"],
         },
     },
-
     "g2b_public": {
         "site_id": "g2b_public",
         "selectors": {
@@ -63,7 +65,6 @@ _PACKS: dict[str, dict[str, Any]] = {
             "auth_signal_markers": ["로그인이 필요합니다", "공동인증서"],
         },
     },
-
     "generic_content_site": {
         "site_id": "generic_content_site",
         "selectors": {
@@ -99,8 +100,7 @@ def register_selector_pack(site_id: str, selectors: dict[str, list[str]]) -> Non
     forbidden_found = set(selectors.keys()) & _FORBIDDEN_SELECTOR_KEYS
     if forbidden_found:
         raise ValueError(
-            f"금지된 selector 키 포함: {forbidden_found}. "
-            "password/OTP/cert_password selector는 저장 불가."
+            f"금지된 selector 키 포함: {forbidden_found}. password/OTP/cert_password selector는 저장 불가."
         )
     _PACKS[site_id] = {"site_id": site_id, "selectors": selectors}
 
@@ -108,7 +108,7 @@ def register_selector_pack(site_id: str, selectors: dict[str, list[str]]) -> Non
 def validate_selector_pack(selectors: dict[str, list[str]]) -> list[str]:
     """selector pack 유효성 검사. 위반 목록 반환."""
     violations = []
-    for key in selectors.keys():
+    for key in selectors:
         if key in _FORBIDDEN_SELECTOR_KEYS:
             violations.append(f"금지 selector 키: {key}")
     return violations

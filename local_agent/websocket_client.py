@@ -174,22 +174,21 @@ def process_task(task: dict) -> dict:
             "error": "금지 액션 (파일 수정/삭제/전송/shell)",
         }
 
-    if risk_level == "high":
-        if not (approved and action in _APPROVAL_REQUIRED_ACTIONS):
-            log_local_event(
-                "ws_task_high_risk_refused",
-                task_id=task_id,
-                action=action,
-                approved=approved,
-            )
-            return {
-                "type": "result",
-                "task_id": task_id,
-                "success": False,
-                "summary": f"{action} 승인 필요",
-                "error_code": "NOT_IMPLEMENTED_STAGE2",
-                "error": "high risk 작업은 승인 게이트 통과 후에만 실행된다",
-            }
+    if risk_level == "high" and not (approved and action in _APPROVAL_REQUIRED_ACTIONS):
+        log_local_event(
+            "ws_task_high_risk_refused",
+            task_id=task_id,
+            action=action,
+            approved=approved,
+        )
+        return {
+            "type": "result",
+            "task_id": task_id,
+            "success": False,
+            "summary": f"{action} 승인 필요",
+            "error_code": "NOT_IMPLEMENTED_STAGE2",
+            "error": "high risk 작업은 승인 게이트 통과 후에만 실행된다",
+        }
 
     if action not in _AUTO_EXECUTE_VIA_AGENT:
         log_local_event("ws_task_not_auto_executable", task_id=task_id, action=action)

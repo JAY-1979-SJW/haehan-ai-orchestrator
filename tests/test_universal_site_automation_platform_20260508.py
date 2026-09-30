@@ -103,19 +103,19 @@ class TestPolicyConsistency:
 
 class TestSafeResultInvariant:
     def _make_result(self, **kwargs):
-        defaults = dict(
-            task_id="t-inv",
-            site_id="naver",
-            workflow_id="readonly_site_explore",
-            status=STATUS_COMPLETED,
-            execution_used=1,
-            actions_executed=[],
-            actions_pending_permission=[],
-            actions_user_direct_required=[],
-            blocked_actions=[],
-            safe_outputs={},
-            audit_log_ids=[],
-        )
+        defaults = {
+            "task_id": "t-inv",
+            "site_id": "naver",
+            "workflow_id": "readonly_site_explore",
+            "status": STATUS_COMPLETED,
+            "execution_used": 1,
+            "actions_executed": [],
+            "actions_pending_permission": [],
+            "actions_user_direct_required": [],
+            "blocked_actions": [],
+            "safe_outputs": {},
+            "audit_log_ids": [],
+        }
         defaults.update(kwargs)
         return build_universal_result(**defaults)
 

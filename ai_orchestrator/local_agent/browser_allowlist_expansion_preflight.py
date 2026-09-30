@@ -209,9 +209,8 @@ def preflight_expansion(
         if not site_id:
             return _block("site_candidate에 site_id 없음")
         existing = get_site(site_id)
-        if existing:
-            if existing.execution_location != EXECUTION_LOCAL_AGENT_REQUIRED:
-                return _block("execution_location이 LOCAL_AGENT_REQUIRED 아님")
+        if existing and existing.execution_location != EXECUTION_LOCAL_AGENT_REQUIRED:
+            return _block("execution_location이 LOCAL_AGENT_REQUIRED 아님")
 
     # 5. 자동 등록 가능 조건
     if selector_candidate:

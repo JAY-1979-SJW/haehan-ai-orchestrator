@@ -226,7 +226,7 @@ def list_naver_accounts() -> list[str]:
 
 
 def list_sites() -> list[str]:
-    return [site for site in _load().keys() if not _is_password_login_disabled(site)]
+    return [site for site in _load() if not _is_password_login_disabled(site)]
 
 
 def delete_cred(site: str) -> bool:

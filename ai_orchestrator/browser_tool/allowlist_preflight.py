@@ -217,11 +217,10 @@ def evaluate_allowlist_preflight(payload: dict) -> dict:
         return result
 
     # Check context
-    if payload.get("allowlist_required"):
-        if not payload.get("tenant_id"):
-            result["block_reason"] = "TENANT_CONTEXT_MISSING"
-            result["message_ko"] = "테넌트 context 누락"
-            return result
+    if payload.get("allowlist_required") and not payload.get("tenant_id"):
+        result["block_reason"] = "TENANT_CONTEXT_MISSING"
+        result["message_ko"] = "테넌트 context 누락"
+        return result
 
     # Get operation policy
     op_policy = DEFAULT_OPERATION_POLICIES.get(operation_type, {})

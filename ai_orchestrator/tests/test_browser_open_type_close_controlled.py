@@ -180,11 +180,11 @@ class TestBrowserOpenTypeCloseControlledMock:
         assert required_keys.issubset(result.data.keys())
 
         # 모든 응답 key가 허용 목록에 포함되는지 확인
-        for key in result.data.keys():
+        for key in result.data:
             if key == "lifecycle":
                 # lifecycle은 nested dict 이므로 특별 처리
                 assert isinstance(result.data[key], dict)
-                for nested_key in result.data[key].keys():
+                for nested_key in result.data[key]:
                     assert nested_key.lower() in ("opened", "typed", "closed"), f"lifecycle.{nested_key} not allowed"
             else:
                 assert key in _RESULT_DATA_ALLOWED_KEYS or key == "timestamp", f"'{key}' not in allowlist"
@@ -254,8 +254,8 @@ class TestBrowserOpenTypeCloseControlledSecurity:
             }
         )
         assert result.success is True
-        assert "element" not in result.data.keys()
-        assert "selector" not in result.data.keys()
+        assert "element" not in result.data
+        assert "selector" not in result.data
         assert "dom" not in str(result.data).lower()
 
     def test_no_url_in_params_response(self):

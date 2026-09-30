@@ -5,6 +5,7 @@
 - 미구현 액션은 SiteExecutionResult(status="not_implemented" 또는 "unsupported_action") 로 반환.
 - 커넥터별 예외는 ConnectorError 로 공통화한다.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -32,7 +33,7 @@ class SiteConnector(ABC):
     """
 
     name: ClassVar[str] = "base"
-    supported_actions: ClassVar[tuple[str, ...]] = tuple()
+    supported_actions: ClassVar[tuple[str, ...]] = ()
 
     @classmethod
     def supports_action(cls, action: str) -> bool:
@@ -68,10 +69,7 @@ class SiteConnector(ABC):
     def _dry_run_summary(self, task: SiteTask) -> str:
         """dry_run 요약 문자열. 민감 params 값은 키만 노출."""
         keys = sorted((task.params or {}).keys())
-        return (
-            f"{self.name} | action={task.action} | mode={task.execution_mode} "
-            f"| param_keys={keys}"
-        )
+        return f"{self.name} | action={task.action} | mode={task.execution_mode} | param_keys={keys}"
 
     def execute(self, task: SiteTask) -> SiteExecutionResult:
         """1단계에서는 기본적으로 실행 금지 (NOT_IMPLEMENTED).
@@ -88,4 +86,4 @@ class SiteConnector(ABC):
         )
 
 
-__all__ = ["SiteConnector", "ConnectorError"]
+__all__ = ["ConnectorError", "SiteConnector"]

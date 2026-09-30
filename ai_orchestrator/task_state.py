@@ -90,7 +90,7 @@ def _load() -> None:
                 tid = ev.get("task_id")
                 if not tid:
                     continue
-                rec = {k: ev.get(k) for k in TaskRecord.__dataclass_fields__.keys()}
+                rec = {k: ev.get(k) for k in TaskRecord.__dataclass_fields__}
                 rec.setdefault("task_snapshot", {})
                 _store[tid] = rec
     except OSError as e:
