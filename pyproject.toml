@@ -1,0 +1,11 @@
+# audit-kit(프로그램 건강도 검사) 설정 전용. 이 저장소의 패키지 설치/빌드 설정이 아니다 —
+# 의존성은 requirements.txt, ruff 는 configs/ruff.toml 을 그대로 쓴다(이 파일에는 ruff 설정을 넣지 않는다).
+[tool.audit-kit]
+# 전체 pytest 는 tests/test_local_agent_installer_package.py 에서 멈추는 기존 결함이 있어(CLAUDE.md gotcha)
+# audit-kit 안에서 돌리지 않는다. 테스트는 CI 의 verify(영향 테스트)가 맡는다.
+run_tests = false
+
+# 기본값은 B105/B106/B107(하드코딩 비밀번호 의심)을 '개선'으로 올린다. 2026-09-30 이 앱 414건을
+# 전수 확인한 결과 전부 테스트 더미 값('pw-owner', 'redacted' 등)·불리언/None 상수·공개 URL 이라
+# 실제 비밀값이 아니었다. 실제 비밀값 검사는 CI gitleaks 와 audit-kit std 의 SEC 규칙이 맡는다.
+bandit_promote = []
