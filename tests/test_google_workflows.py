@@ -11,6 +11,16 @@ def _test_dir() -> Path:
     return path
 
 
+def _patch(monkeypatch, name, value):
+    """워크플로 경로 상수는 workflows_common 에서 각 하위 모듈로 복사돼 있어, 창구(workflows)만
+    바꾸면 실제 함수가 진짜 data/ 경로에 쓴다. 그 이름을 가진 모든 workflows*/live_inputs* 모듈에 함께 바꾼다."""
+    import sys
+
+    for mod_name, mod in list(sys.modules.items()):
+        if mod_name.startswith(("scripts.google.workflows", "scripts.google.live_inputs")) and hasattr(mod, name):
+            monkeypatch.setattr(mod, name, value)
+
+
 def test_google_work_action_catalog_covers_business_surfaces():
     catalog = workflows.build_action_catalog()
     keys = {item["key"] for item in catalog["actions"]}
@@ -33,8 +43,8 @@ def test_google_work_prepare_saves_approval_plan(monkeypatch):
     root = _test_dir()
     latest = root / "latest.json"
     prepare_dir = root / "prepares"
-    monkeypatch.setattr(workflows, "LATEST_PREPARE", latest)
-    monkeypatch.setattr(workflows, "PREPARE_DIR", prepare_dir)
+    _patch(monkeypatch, "LATEST_PREPARE", latest)
+    _patch(monkeypatch, "PREPARE_DIR", prepare_dir)
 
     plan, path = workflows.prepare_action(
         "youtube_studio_upload_video",
@@ -59,9 +69,9 @@ def test_google_work_execute_blocks_without_approval(monkeypatch):
     root = _test_dir()
     prepare_dir = root / "prepares"
     execution_dir = root / "executions"
-    monkeypatch.setattr(workflows, "PREPARE_DIR", prepare_dir)
-    monkeypatch.setattr(workflows, "LATEST_PREPARE", root / "latest.json")
-    monkeypatch.setattr(workflows, "EXECUTION_DIR", execution_dir)
+    _patch(monkeypatch, "PREPARE_DIR", prepare_dir)
+    _patch(monkeypatch, "LATEST_PREPARE", root / "latest.json")
+    _patch(monkeypatch, "EXECUTION_DIR", execution_dir)
     _, plan_path = workflows.prepare_action(
         "gmail_send_email",
         {"to": "a@example.com", "subject": "s", "body": "b"},
@@ -80,10 +90,10 @@ def test_google_work_execute_approved_handoff_has_adapter_and_verifies(monkeypat
     prepare_dir = root / "prepares"
     execution_dir = root / "executions"
     verification_dir = root / "verifications"
-    monkeypatch.setattr(workflows, "PREPARE_DIR", prepare_dir)
-    monkeypatch.setattr(workflows, "LATEST_PREPARE", root / "latest.json")
-    monkeypatch.setattr(workflows, "EXECUTION_DIR", execution_dir)
-    monkeypatch.setattr(workflows, "VERIFICATION_DIR", verification_dir)
+    _patch(monkeypatch, "PREPARE_DIR", prepare_dir)
+    _patch(monkeypatch, "LATEST_PREPARE", root / "latest.json")
+    _patch(monkeypatch, "EXECUTION_DIR", execution_dir)
+    _patch(monkeypatch, "VERIFICATION_DIR", verification_dir)
     _, plan_path = workflows.prepare_action(
         "cloud_iam_change_role",
         {
@@ -112,8 +122,8 @@ def test_google_adapter_catalog_has_profile_for_every_action(monkeypatch):
     root = _test_dir()
     latest = root / "latest.json"
     report_dir = root / "reports"
-    monkeypatch.setattr(workflows, "LATEST_ADAPTER_CATALOG", latest)
-    monkeypatch.setattr(workflows, "ADAPTER_CATALOG_DIR", report_dir)
+    _patch(monkeypatch, "LATEST_ADAPTER_CATALOG", latest)
+    _patch(monkeypatch, "ADAPTER_CATALOG_DIR", report_dir)
 
     catalog = workflows.build_adapter_catalog()
     path = workflows.save_adapter_catalog(catalog)
@@ -128,8 +138,8 @@ def test_google_adapter_catalog_has_profile_for_every_action(monkeypatch):
 
 def test_google_undeveloped_report_separates_live_input_from_prepare_only(monkeypatch):
     root = _test_dir()
-    monkeypatch.setattr(workflows, "LATEST_UNDEVELOPED_REPORT", root / "latest_undeveloped.json")
-    monkeypatch.setattr(workflows, "UNDEVELOPED_REPORT_DIR", root / "undeveloped")
+    _patch(monkeypatch, "LATEST_UNDEVELOPED_REPORT", root / "latest_undeveloped.json")
+    _patch(monkeypatch, "UNDEVELOPED_REPORT_DIR", root / "undeveloped")
 
     report = workflows.build_undeveloped_report()
     path = workflows.save_undeveloped_report(report)
@@ -156,8 +166,8 @@ def test_google_work_action_catalog_save_writes_latest(monkeypatch):
     root = _test_dir()
     latest = root / "latest.json"
     report_dir = root / "reports"
-    monkeypatch.setattr(workflows, "LATEST_ACTION_CATALOG", latest)
-    monkeypatch.setattr(workflows, "ACTION_CATALOG_DIR", report_dir)
+    _patch(monkeypatch, "LATEST_ACTION_CATALOG", latest)
+    _patch(monkeypatch, "ACTION_CATALOG_DIR", report_dir)
 
     path = workflows.save_action_catalog()
 
@@ -172,8 +182,8 @@ def test_google_live_input_manifest_requires_no_final_submit(monkeypatch):
     root = _test_dir()
     manifest_path = root / "manifest.json"
     manifest_path.write_text(json.dumps({"items": []}, ensure_ascii=False), encoding="utf-8")
-    monkeypatch.setattr(live_inputs, "LIVE_INPUT_MANIFEST_DIR", root / "manifest_results")
-    monkeypatch.setattr(live_inputs, "LATEST_LIVE_INPUT_MANIFEST", root / "latest_manifest.json")
+    _patch(monkeypatch, "LIVE_INPUT_MANIFEST_DIR", root / "manifest_results")
+    _patch(monkeypatch, "LATEST_LIVE_INPUT_MANIFEST", root / "latest_manifest.json")
 
     summary, path = live_inputs.run_live_input_manifest(manifest_path, no_final_submit=False)
 
@@ -189,12 +199,12 @@ def test_google_live_input_manifest_records_blocked_missing_inputs(monkeypatch):
         json.dumps({"items": [{"action_key": "gmail_send_email", "values": {}}]}, ensure_ascii=False),
         encoding="utf-8",
     )
-    monkeypatch.setattr(workflows, "PREPARE_DIR", root / "prepares")
-    monkeypatch.setattr(workflows, "LATEST_PREPARE", root / "latest_prepare.json")
-    monkeypatch.setattr(live_inputs, "LIVE_INPUT_DIR", root / "live_inputs")
-    monkeypatch.setattr(live_inputs, "LATEST_LIVE_INPUT", root / "latest_live.json")
-    monkeypatch.setattr(live_inputs, "LIVE_INPUT_MANIFEST_DIR", root / "manifest_results")
-    monkeypatch.setattr(live_inputs, "LATEST_LIVE_INPUT_MANIFEST", root / "latest_manifest.json")
+    _patch(monkeypatch, "PREPARE_DIR", root / "prepares")
+    _patch(monkeypatch, "LATEST_PREPARE", root / "latest_prepare.json")
+    _patch(monkeypatch, "LIVE_INPUT_DIR", root / "live_inputs")
+    _patch(monkeypatch, "LATEST_LIVE_INPUT", root / "latest_live.json")
+    _patch(monkeypatch, "LIVE_INPUT_MANIFEST_DIR", root / "manifest_results")
+    _patch(monkeypatch, "LATEST_LIVE_INPUT_MANIFEST", root / "latest_manifest.json")
 
     summary, path = live_inputs.run_live_input_manifest(manifest_path, no_final_submit=True)
 
@@ -283,20 +293,14 @@ def test_google_cloud_iam_live_input_target_includes_project():
 def test_youtube_upload_retry_requires_verified_video_input():
     action = {"key": "youtube_studio_upload_video"}
 
-    assert (
-        live_inputs._needs_direct_cdp_retry(action, {"filled_fields": [], "skipped_fields": ["video_path"]})
-        is True
-    )
-    assert (
-        live_inputs._needs_direct_cdp_retry(action, {"filled_fields": ["video_path"], "skipped_fields": []})
-        is False
-    )
+    assert live_inputs._needs_direct_cdp_retry(action, {"filled_fields": [], "skipped_fields": ["video_path"]}) is True
+    assert live_inputs._needs_direct_cdp_retry(action, {"filled_fields": ["video_path"], "skipped_fields": []}) is False
 
 
 def test_google_live_input_coverage_tracks_supported_and_remaining(monkeypatch):
     root = _test_dir()
-    monkeypatch.setattr(live_inputs, "LIVE_INPUT_COVERAGE_DIR", root / "coverage")
-    monkeypatch.setattr(live_inputs, "LATEST_LIVE_INPUT_COVERAGE", root / "latest_coverage.json")
+    _patch(monkeypatch, "LIVE_INPUT_COVERAGE_DIR", root / "coverage")
+    _patch(monkeypatch, "LATEST_LIVE_INPUT_COVERAGE", root / "latest_coverage.json")
 
     coverage = live_inputs.build_live_input_coverage()
     path = live_inputs.save_live_input_coverage(coverage)
