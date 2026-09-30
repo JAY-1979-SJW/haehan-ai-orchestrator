@@ -8,17 +8,17 @@ from scripts.site_engine.types import GateDecision, SiteCapability
 
 
 def _inp(**kwargs) -> CapabilityDetectionInput:
-    defaults = dict(
-        page_url="https://example.com",
-        page_title="",
-        button_labels=[],
-        input_types=[],
-        has_file_input=False,
-        has_form=False,
-        has_table=False,
-        has_search_input=False,
-        page_text_snippet="",
-    )
+    defaults = {
+        "page_url": "https://example.com",
+        "page_title": "",
+        "button_labels": [],
+        "input_types": [],
+        "has_file_input": False,
+        "has_form": False,
+        "has_table": False,
+        "has_search_input": False,
+        "page_text_snippet": "",
+    }
     defaults.update(kwargs)
     return CapabilityDetectionInput(**defaults)
 

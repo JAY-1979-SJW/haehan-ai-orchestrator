@@ -267,7 +267,7 @@ def build_prepare_plan(
     dry_run: bool = True,
 ) -> dict[str, Any]:
     validation = _validate_product_data(product_type, data)
-    fields = sorted(str(key) for key in data.keys())
+    fields = sorted(str(key) for key in data)
     action_id = f"product.{product_type}.prepare"
     save_action_id = f"product.{product_type}.save"
     return {

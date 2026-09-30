@@ -103,11 +103,10 @@ class FakeActions:
             return list(self.page_buttons)
         if "page_link" in expr and "btns[i].click" in expr:
             for pg in self.page_buttons:
-                if f"==='{pg}'" in expr:
-                    if pg in self.page_responses:
-                        self.current_page = pg
-                        self.click_log.append(f"page:{pg}")
-                        return True
+                if f"==='{pg}'" in expr and pg in self.page_responses:
+                    self.current_page = pg
+                    self.click_log.append(f"page:{pg}")
+                    return True
             return False
         if "page_navigation_next" in expr and "nx.click" in expr:
             # next-arrow click — current_page 다음 번호로 이동 (있으면)

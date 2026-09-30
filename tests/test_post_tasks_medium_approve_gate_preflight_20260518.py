@@ -8,10 +8,12 @@ approve → execute_task 연결 경로 preflight 설계 검증.
 실제 token 발행 / approve 호출 / execute_task 호출 / DB write /
 router.py 수정 / 서버 반영 전면 금지.
 """
+
 import ast
 import importlib.util
-import pytest
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).parent.parent
 
@@ -99,6 +101,7 @@ def executor_content():
 
 # ── 1~2. import ──────────────────────────────────────────────────────────────
 
+
 def test_01_audit_script_importable(audit_mod):
     assert audit_mod is not None
 
@@ -108,6 +111,7 @@ def test_02_run_audit_function_exists(audit_mod):
 
 
 # ── 3~8. 운영 안전 플래그 ────────────────────────────────────────────────────
+
 
 def test_03_approval_token_issue_not_allowed(audit_mod):
     assert audit_mod.APPROVAL_TOKEN_ISSUE_ALLOWED is False
@@ -135,6 +139,7 @@ def test_08_preflight_only_true(audit_mod):
 
 # ── 9~14. 핵심 발견: approve → execute_task 미연결 ───────────────────────────
 
+
 def test_09_connection_finding_id_correct(connection_analysis):
     assert connection_analysis["finding_id"] == "APPROVE_EXECUTE_NOT_CONNECTED"
 
@@ -144,8 +149,10 @@ def test_10_current_safety_safe_by_incompleteness(connection_analysis):
 
 
 def test_11_router_import_check_no_execute_task(connection_analysis):
-    assert "execute_task" not in connection_analysis["router_import_check"] or \
-           "execute만 import" in connection_analysis["router_import_check"]
+    assert (
+        "execute_task" not in connection_analysis["router_import_check"]
+        or "execute만 import" in connection_analysis["router_import_check"]
+    )
 
 
 def test_12_execute_task_not_imported_in_router(router_content):
@@ -163,7 +170,7 @@ def test_13_approve_task_does_not_call_execute_task(router_content):
     lines = router_content.splitlines()
     in_approve = False
     for line in lines:
-        if "@router.post(\"/tasks/{task_id}/approve\")" in line or "@router.post('/tasks/{task_id}/approve')" in line:
+        if '@router.post("/tasks/{task_id}/approve")' in line or "@router.post('/tasks/{task_id}/approve')" in line:
             in_approve = True
         if in_approve and "@router.post(" in line and "approve" not in line:
             in_approve = False
@@ -176,6 +183,7 @@ def test_14_risk_if_connected_documented(connection_analysis):
 
 
 # ── 15~20. medium 경로 현재 상태 ─────────────────────────────────────────────
+
 
 def test_15_step1_execute_task_not_called(medium_path):
     assert medium_path["step_1"]["execute_task_called"] is False
@@ -205,6 +213,7 @@ def test_20_gap_documented(medium_path):
 
 # ── 21~25. Phase 1-R guard 현황 ──────────────────────────────────────────────
 
+
 def test_21_task_approve_guard_safe(guard_status):
     assert guard_status["TASK_APPROVE_guard"]["safe"] is True
 
@@ -233,14 +242,17 @@ def test_25_guard_conclusion_additional_gate_needed(guard_status):
 
 # ── 26~30. execute_task whitelist 분석 ───────────────────────────────────────
 
+
 def test_26_whitelist_has_two_actions(whitelist_analysis):
     assert len(whitelist_analysis["current_whitelist"]) >= 2
 
 
 def test_27_whitelist_medium_gap_identified(whitelist_analysis):
     assert whitelist_analysis.get("whitelist_gap")
-    assert "medium" in whitelist_analysis["whitelist_gap"].lower() or \
-           "write" in whitelist_analysis["whitelist_gap"].lower()
+    assert (
+        "medium" in whitelist_analysis["whitelist_gap"].lower()
+        or "write" in whitelist_analysis["whitelist_gap"].lower()
+    )
 
 
 def test_28_whitelist_separate_recommended(whitelist_analysis):
@@ -265,12 +277,13 @@ def test_30_executor_whitelist_medium_action_not_included(executor_content):
             if "]" in line:
                 break
     for medium_action in ["write", "edit", "create_patch", "generate"]:
-        assert f'"{medium_action}"' not in whitelist_section and \
-               f"'{medium_action}'" not in whitelist_section, \
-               f"medium action '{medium_action}'이 whitelist에 포함됨"
+        assert f'"{medium_action}"' not in whitelist_section and f"'{medium_action}'" not in whitelist_section, (
+            f"medium action '{medium_action}'이 whitelist에 포함됨"
+        )
 
 
 # ── 31~36. dry-run flag 범위 ─────────────────────────────────────────────────
+
 
 def test_31_dry_run_flag_name_defined(dry_run_scope):
     assert dry_run_scope["flag_name"] == "POST_TASKS_DRY_RUN_ENABLED"
@@ -289,8 +302,9 @@ def test_34_dry_run_flag_implemented_as_true_if_present(router_content):
     # preflight 기준: 미구현이 원칙. DRY_RUN_FLAG_IMPLEMENTATION 공정에서 대표 승인 후 구현.
     # 구현된 경우 반드시 default=True(차단 방향)여야 함.
     if "POST_TASKS_DRY_RUN_ENABLED" in router_content:
-        assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content, \
+        assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content, (
             "POST_TASKS_DRY_RUN_ENABLED가 True(차단)가 아닌 값으로 설정됨 — 안전 방향 위반"
+        )
 
 
 def test_35_dry_run_implementation_next_phase(dry_run_scope):
@@ -303,6 +317,7 @@ def test_36_dry_run_router_modification_required(dry_run_scope):
 
 
 # ── 37~42. medium isolation smoke 설계 ───────────────────────────────────────
+
 
 def test_37_smoke_design_only_status(smoke_design):
     assert smoke_design["status"] == "DESIGN_ONLY"
@@ -337,6 +352,7 @@ def test_42_smoke_implementation_next_phase(smoke_design):
 
 # ── 43~47. token 격리 조건 ───────────────────────────────────────────────────
 
+
 def test_43_token_isolation_design_only(token_isolation):
     assert token_isolation["status"] == "DESIGN_ONLY"
 
@@ -346,9 +362,7 @@ def test_44_isolation_has_three_conditions(token_isolation):
 
 
 def test_45_dry_run_on_no_token(token_isolation):
-    dry_run_cond = next(
-        (c for c in token_isolation["conditions"] if "dry-run flag ON" in c["condition"]), None
-    )
+    dry_run_cond = next((c for c in token_isolation["conditions"] if "dry-run flag ON" in c["condition"]), None)
     assert dry_run_cond is not None
     assert dry_run_cond["token_issued"] is False
 
@@ -362,6 +376,7 @@ def test_47_target_isolation_level_3(token_isolation):
 
 
 # ── 48~52. router.py 수정 판단 ───────────────────────────────────────────────
+
 
 def test_48_no_modification_this_phase(router_assessment):
     assert router_assessment["current_phase_modification"] is False
@@ -388,14 +403,14 @@ def test_52_router_modification_safety_check(router_content):
     # 핵심 안전 검증: execute_task import 없음 (승인되지 않은 연결 경로 차단).
     if "from .executor import" in router_content:
         import_line = router_content.split("from .executor import")[1].split("\n")[0]
-        assert "execute_task" not in import_line, \
-            "execute_task가 router.py에 import됨 — 미승인 연결 경로 열림"
+        assert "execute_task" not in import_line, "execute_task가 router.py에 import됨 — 미승인 연결 경로 열림"
     # 플래그가 있으면 반드시 True(차단 방향)여야 함
     if "POST_TASKS_DRY_RUN_ENABLED" in router_content:
         assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content
 
 
 # ── 53~57. 대표 승인 조건 ────────────────────────────────────────────────────
+
 
 def test_53_approval_received_false(approval_conditions):
     assert approval_conditions["approval_received"] is False
@@ -415,8 +430,7 @@ def test_56_execute_connect_approval_conditions_gte_5(approval_conditions):
 
 def test_57_representative_approval_in_conditions(approval_conditions):
     all_conditions = (
-        approval_conditions["for_dry_run_flag_implementation"]
-        + approval_conditions["for_execute_task_connection"]
+        approval_conditions["for_dry_run_flag_implementation"] + approval_conditions["for_execute_task_connection"]
     )
     combined = " ".join(all_conditions)
     assert "대표" in combined or "승인" in combined
@@ -424,21 +438,25 @@ def test_57_representative_approval_in_conditions(approval_conditions):
 
 # ── 58~60. preflight gate ────────────────────────────────────────────────────
 
+
 def test_58_all_preflight_conditions_met(gate_status):
     assert gate_status["all_conditions_met"] is True
 
 
 def test_59_all_seven_conditions_complete(gate_status):
     for i in range(1, 8):
-        key = f"condition_{i}_" + [
-            "approve_execute_connection_analyzed",
-            "execute_task_whitelist_reviewed",
-            "dry_run_flag_scope_confirmed",
-            "medium_isolation_smoke_designed",
-            "token_isolation_conditions_designed",
-            "router_modification_scope_confirmed",
-            "representative_approval_conditions_fixed",
-        ][i - 1]
+        key = (
+            f"condition_{i}_"
+            + [
+                "approve_execute_connection_analyzed",
+                "execute_task_whitelist_reviewed",
+                "dry_run_flag_scope_confirmed",
+                "medium_isolation_smoke_designed",
+                "token_isolation_conditions_designed",
+                "router_modification_scope_confirmed",
+                "representative_approval_conditions_fixed",
+            ][i - 1]
+        )
         assert gate_status.get(key, {}).get("status") == "COMPLETE", f"{key} not COMPLETE"
 
 
@@ -448,10 +466,11 @@ def test_60_next_phase_dry_run_implementation(gate_status):
 
 # ── 61. no HTTP import ───────────────────────────────────────────────────────
 
+
 def test_61_no_http_import_in_audit_script():
-    content = (
-        REPO_ROOT / "scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py"
-    ).read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py").read_text(
+        encoding="utf-8", errors="ignore"
+    )
     try:
         tree = ast.parse(content)
     except SyntaxError:
@@ -462,14 +481,14 @@ def test_61_no_http_import_in_audit_script():
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported.add(alias.name.split(".")[0])
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imported.add(node.module.split(".")[0])
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module.split(".")[0])
     for bad in ["requests", "httpx", "aiohttp", "urllib3"]:
         assert bad not in imported, f"HTTP client imported: {bad}"
 
 
 # ── 62~65. audit verdict ─────────────────────────────────────────────────────
+
 
 def test_62_audit_verdict_ready(audit_result):
     assert audit_result["verdict"] in (

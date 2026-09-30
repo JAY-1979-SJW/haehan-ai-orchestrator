@@ -174,29 +174,31 @@ def validate_url_for_readonly_open(
             "reason": "호스트 누락",
         }
 
-    if host in {"localhost", "localhost.localdomain", "ip6-localhost"}:
-        if not allow_private_network:
-            return {
-                "ok": False,
-                "error_code": "URL_HOST_BLOCKED",
-                "reason": f"localhost 기본 차단: {host}",
-            }
+    if host in {"localhost", "localhost.localdomain", "ip6-localhost"} and not allow_private_network:
+        return {
+            "ok": False,
+            "error_code": "URL_HOST_BLOCKED",
+            "reason": f"localhost 기본 차단: {host}",
+        }
 
     ip_obj = _try_parse_ip(host)
-    if ip_obj is not None and not allow_private_network:
-        if (
+    if (
+        ip_obj is not None
+        and not allow_private_network
+        and (
             ip_obj.is_loopback
             or ip_obj.is_private
             or ip_obj.is_link_local
             or ip_obj.is_multicast
             or ip_obj.is_unspecified
             or ip_obj.is_reserved
-        ):
-            return {
-                "ok": False,
-                "error_code": "URL_HOST_BLOCKED",
-                "reason": f"내부/loopback IP 기본 차단: {host}",
-            }
+        )
+    ):
+        return {
+            "ok": False,
+            "error_code": "URL_HOST_BLOCKED",
+            "reason": f"내부/loopback IP 기본 차단: {host}",
+        }
 
     return {
         "ok": True,

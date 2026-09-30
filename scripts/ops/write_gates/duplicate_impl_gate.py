@@ -56,9 +56,8 @@ def extract_keywords(path: str) -> list[str]:
     keywords: list[str] = []
     for part in dir_parts:
         word = part.lower().replace("-", "")
-        if word and word not in _SKIP_PARTS and len(word) >= 3:
-            if word not in keywords:
-                keywords.append(word)
+        if word and word not in _SKIP_PARTS and len(word) >= 3 and word not in keywords:
+            keywords.append(word)
         if len(keywords) >= 2:
             break
     return keywords

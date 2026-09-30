@@ -96,9 +96,8 @@ class ServerApprovalAction:
             return False, "selector must be non-empty string"
 
         # approval_token is required for execution
-        if self.action_type.startswith("browser.execute_"):
-            if not self.approval_token:
-                return False, "approval_token required for execute actions"
+        if self.action_type.startswith("browser.execute_") and not self.approval_token:
+            return False, "approval_token required for execute actions"
 
         return True, None
 

@@ -64,7 +64,7 @@ def test_valid_task_transitions_structure():
     """상태 전이 매트릭스 구조 검증."""
     assert isinstance(VALID_TASK_TRANSITIONS, dict)
     # 모든 KNOWN_TASK_STATUSES가 매트릭스 키이거나 정규 흐름에 없어야 함
-    for status in VALID_TASK_TRANSITIONS.keys():
+    for status in VALID_TASK_TRANSITIONS:
         assert status in KNOWN_TASK_STATUSES
 
 

@@ -614,9 +614,8 @@ class TestEvaluateGateApprovalPreflight:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     imports.add(alias.name)
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imports.add(node.module)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imports.add(node.module)
 
         forbidden = {"task_executor", "dispatcher", "action_registry", "browser"}
         found = [imp for imp in imports if any(f in imp for f in forbidden)]  # noqa: F841

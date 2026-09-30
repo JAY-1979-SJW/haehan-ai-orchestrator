@@ -496,9 +496,8 @@ def test_39_no_http_import_in_audit_script():
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported.add(alias.name.split(".")[0])
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imported.add(node.module.split(".")[0])
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module.split(".")[0])
     for bad in ["requests", "httpx", "aiohttp", "urllib3"]:
         assert bad not in imported, f"HTTP client imported: {bad}"
 

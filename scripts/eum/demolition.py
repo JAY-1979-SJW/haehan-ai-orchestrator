@@ -138,12 +138,11 @@ def fetch_demolition_list(page) -> dict:
         # 접근 제한 확인
         try:
             body = page.inner_text("body")
-            if any(kw in body for kw in ["접근", "권한 없", "403"]):
-                if "로그아웃" not in body:
-                    msg = "WEBMAN382M00 접근 제한 (권한 없음)"
-                    log.warning(msg)
-                    ctx.set_result(msg=msg, ok=False)
-                    return {"accessible": False, "items": [], "page_info": {}, "error": msg}
+            if any(kw in body for kw in ["접근", "권한 없", "403"]) and "로그아웃" not in body:
+                msg = "WEBMAN382M00 접근 제한 (권한 없음)"
+                log.warning(msg)
+                ctx.set_result(msg=msg, ok=False)
+                return {"accessible": False, "items": [], "page_info": {}, "error": msg}
         except Exception:  # noqa: BLE001 - EUM 단말기 철거 신청 화면 자동화 - 페이지 이동/신청 실패 시 ok:False와 사유를 반환(성공으로 위장하지 않음)
             pass
 

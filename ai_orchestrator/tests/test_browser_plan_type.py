@@ -109,7 +109,7 @@ class TestBrowserPlanTypeMock:
         assert required_keys.issubset(result.data.keys())
 
         # 모든 응답 key가 허용 목록에 포함되는지 확인
-        for key in result.data.keys():
+        for key in result.data:
             assert key in _RESULT_DATA_ALLOWED_KEYS or key == "timestamp", f"'{key}' not in allowlist"
 
 

@@ -113,7 +113,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
             "site_name": site_name,
             "status": "PLAYWRIGHT_NOT_AVAILABLE",
             "message_ko": "Playwright 미설치",
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
 
     with sync_playwright() as pw:
@@ -144,7 +144,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
                     "site_name": site_name,
                     "status": "LOGIN_FORM_DETECTED",
                     "message_ko": f"{site_name} 설치 안내 페이지에 로그인 폼이 있습니다.",
-                    **{f: False for f in _SAFE_FIELDS},
+                    **dict.fromkeys(_SAFE_FIELDS, False),
                 }
 
             # 텍스트 추출
@@ -249,7 +249,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
                 "detection": detection,
                 "installer_candidates": candidates_result,
                 "screenshot": screenshot_path,
-                **{f: False for f in _SAFE_FIELDS},
+                **dict.fromkeys(_SAFE_FIELDS, False),
             }
 
         except Exception as e:  # noqa: BLE001 - 보안 프로그램 설치파일 탐색(공식 도메인 링크/버튼 읽기전용 수집) - 실패시 ACCESS_ERROR 상태 또는 빈 결과 반환
@@ -258,7 +258,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
                 "site_name": site_name,
                 "status": "ACCESS_ERROR",
                 "error": str(e)[:200],
-                **{f: False for f in _SAFE_FIELDS},
+                **dict.fromkeys(_SAFE_FIELDS, False),
             }
         finally:
             browser.close()
@@ -348,7 +348,7 @@ def run_full_discovery(take_screenshot: bool = False) -> dict:
             "installer_allowed_count": len((selected or {}).get("installer_candidates", {}).get("allowed", [])),
             "installer_allowed": (selected or {}).get("installer_candidates", {}).get("allowed", []),
         },
-        **{f: False for f in _SAFE_FIELDS},
+        **dict.fromkeys(_SAFE_FIELDS, False),
     }
 
     return report

@@ -314,17 +314,16 @@ def _prepare_login_page(page, url: str) -> bool:
         return False
     current = page.url
 
-    if "WEBLOG400M00" in current:
-        if _select_member_category(page, _MEMBER_CATEGORY):
-            _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
-            # 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-            with contextlib.suppress(Exception):
-                page.wait_for_selector(
-                    "input[type='password']:visible",
-                    state="visible",
-                    timeout=3000,
-                )
-                pass
+    if "WEBLOG400M00" in current and _select_member_category(page, _MEMBER_CATEGORY):
+        _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
+        # 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
+        with contextlib.suppress(Exception):
+            page.wait_for_selector(
+                "input[type='password']:visible",
+                state="visible",
+                timeout=3000,
+            )
+            pass
 
     id_sel = _find_selector(page, _ID_SELECTORS)
     if id_sel:
@@ -374,17 +373,16 @@ def login(page) -> dict:
             current = page.url
 
             # WEBLOG400M00 진입 시 회원 분류 (단말기 업체) 선택 필요
-            if "WEBLOG400M00" in current:
-                if _select_member_category(page, _MEMBER_CATEGORY):
-                    _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
-                    # 폼이 visible 로 바뀔 때까지 잠깐 대기 (best-effort, 실패해도 다음 신호로 계속, 2026-09-28 검토)
-                    with contextlib.suppress(Exception):
-                        page.wait_for_selector(
-                            "input[type='password']:visible",
-                            state="visible",
-                            timeout=3000,
-                        )
-                        pass
+            if "WEBLOG400M00" in current and _select_member_category(page, _MEMBER_CATEGORY):
+                _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
+                # 폼이 visible 로 바뀔 때까지 잠깐 대기 (best-effort, 실패해도 다음 신호로 계속, 2026-09-28 검토)
+                with contextlib.suppress(Exception):
+                    page.wait_for_selector(
+                        "input[type='password']:visible",
+                        state="visible",
+                        timeout=3000,
+                    )
+                    pass
 
             id_sel = _find_selector(page, _ID_SELECTORS)
             if id_sel:

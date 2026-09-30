@@ -22,14 +22,14 @@ _SAFE_FIELDS = [
 
 
 def _clean_result(**kwargs):
-    defaults = dict(
-        task_id="t1",
-        site_id="test",
-        workflow_id="w1",
-        status=STATUS_COMPLETED,
-        actions_executed=["test_action"],
-        audit_log_ids=["log1"],
-    )
+    defaults = {
+        "task_id": "t1",
+        "site_id": "test",
+        "workflow_id": "w1",
+        "status": STATUS_COMPLETED,
+        "actions_executed": ["test_action"],
+        "audit_log_ids": ["log1"],
+    }
     defaults.update(kwargs)
     return build_universal_result(**defaults)
 

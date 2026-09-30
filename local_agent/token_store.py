@@ -168,9 +168,8 @@ def delete_device_token(
             deleted = True
         except Exception:  # pragma: no cover  # noqa: S110, BLE001 - keyring 미가용/실패 시 조용히 폴백 경로로 진행, 토큰 값은 노출하지 않음
             pass
-    if allow_plaintext_fallback:
-        if _delete_plaintext(server_url, agent_id, base_dir=plaintext_base_dir):
-            deleted = True
+    if allow_plaintext_fallback and _delete_plaintext(server_url, agent_id, base_dir=plaintext_base_dir):
+        deleted = True
     return deleted
 
 
