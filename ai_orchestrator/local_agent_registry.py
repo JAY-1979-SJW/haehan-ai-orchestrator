@@ -11,6 +11,14 @@ from .local_agent_actions import AUTO_EXECUTE_VIA_AGENT
 # ── 모델 (기존 sub-모듈에서 re-export) ──────────────────────────────────────
 from .local_agent_models import LocalAgent, LocalAgentTask, RegisterResult
 
+# ── 마스킹/정책 내부 이름 (레지스트리를 쪼갤 때 옛 창구에서 빠져, 이 이름을 창구로 참조하는
+#    테스트 약 50건이 AttributeError/ImportError 였음 — 2026-09-30 복원) ─────────────
+from .local_agent_redaction import (  # noqa: F401
+    _RESULT_DATA_ALLOWED_KEYS,
+    _SENSITIVE_KEYS,
+    _strip_result_data,
+)
+
 # ── 에이전트 생명주기 ──────────────────────────────────────────────────────
 from .local_agent_registry_agent import (
     authenticate_agent,
@@ -89,7 +97,11 @@ from .local_agent_registry_task_queue import (
     mark_expired,
     mark_rejected,
 )
-from .local_agent_risk_policy import ACTION_RISK, ALLOWED_APPS
+from .local_agent_risk_policy import (
+    _SERVER_AUTO_COMPLETE,  # noqa: F401
+    ACTION_RISK,
+    ALLOWED_APPS,
+)
 
 __all__ = [
     "ACTION_RISK",
