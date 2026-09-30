@@ -277,8 +277,8 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
                 raise CodeExchangeError("used")
             try:
                 exp = datetime.fromisoformat(target.expires_at)
-            except (TypeError, ValueError):
-                raise CodeExchangeError("expired")
+            except (TypeError, ValueError) as exc:
+                raise CodeExchangeError("expired") from exc
             if now >= exp:
                 raise CodeExchangeError("expired")
             target.used_at = now.isoformat()
@@ -381,8 +381,8 @@ class _PostgresDbExecutor:
         try:
             import psycopg2
             import psycopg2.extras
-        except ImportError:
-            raise RuntimeError("psycopg2 not installed. Install via: pip install psycopg2-binary>=2.9.0")
+        except ImportError as exc:
+            raise RuntimeError("psycopg2 not installed. Install via: pip install psycopg2-binary>=2.9.0") from exc
 
         self.conn_str = connection_string
         self._lock = threading.Lock()
@@ -395,12 +395,12 @@ class _PostgresDbExecutor:
             conn = self._psycopg2.connect(self.conn_str)
             conn.autocommit = False
             return conn
-        except (self._psycopg2.OperationalError, self._psycopg2.InterfaceError):
+        except (self._psycopg2.OperationalError, self._psycopg2.InterfaceError) as exc:
             logger.error("PostgreSQL connection failed")
-            raise RuntimeError("Cannot connect to PostgreSQL")
-        except Exception:  # noqa: BLE001 - 등록코드 저장소 - 나머지 except는 이미 fail-closed(재raise) 또는 안전한 폴백(빈 dict/리스트) 패턴, update_used_at/revoked_at/used_by_agent_id/clear()는 이번 재검토로 조용한 실패가 재사용 위험을 만든다는 걸 발견해 raise로 고쳤음(별도 커밋 사유 참조)
+            raise RuntimeError("Cannot connect to PostgreSQL") from exc
+        except Exception as exc:
             logger.error("Unexpected error connecting to PostgreSQL")
-            raise RuntimeError("Unexpected error connecting to PostgreSQL")
+            raise RuntimeError("Unexpected error connecting to PostgreSQL") from exc
 
     def insert(self, rec: RegistrationCode) -> None:
         """INSERT registration_codes."""
@@ -702,8 +702,8 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
 
         try:
             exp = datetime.fromisoformat(target.expires_at)
-        except (TypeError, ValueError):
-            raise CodeExchangeError("expired")
+        except (TypeError, ValueError) as exc:
+            raise CodeExchangeError("expired") from exc
 
         if now >= exp:
             raise CodeExchangeError("expired")

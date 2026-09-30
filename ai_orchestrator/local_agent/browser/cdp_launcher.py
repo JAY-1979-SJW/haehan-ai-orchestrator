@@ -120,9 +120,9 @@ def open_url(url: str, host: str = CDP_HOST, port: int = CDP_PORT, activate: boo
             tab = _json.loads(r.read().decode("utf-8"))
         L2("CDP_OPEN_TAB", ACTOR, url=url, tab_id=tab.get("id", "")[:20])
         return tab
-    except Exception as e:  # noqa: BLE001 - CDP Chrome 기동 보장 유틸 — 작업스케줄러 등록여부/실행 확인 실패 시 False를 반환(등록 안 됨으로 간주해 RuntimeError로 사용자에게 안내), 탭 열기 실패는 RuntimeError로 재발생시켜 은폐되지 않음.
+    except Exception as e:
         L2("CDP_OPEN_TAB_FAIL", ACTOR, url=url, error=str(e)[:300])
-        raise RuntimeError(f"새 탭 열기 실패: {e}")
+        raise RuntimeError(f"새 탭 열기 실패: {e}") from e
 
 
 def open_and_wait_login(

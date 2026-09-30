@@ -135,10 +135,10 @@ def run_with_timeout(func: Callable[[], str], timeout_sec: int) -> str:
         future = pool.submit(func)
         try:
             return future.result(timeout=timeout_sec)
-        except FutureTimeout:
+        except FutureTimeout as exc:
             # 스레드풀은 with-block 종료 시 shutdown 되며 남은 future 를
             # 취소할 수 없지만 daemon 으로 돌아 프로세스 종료 시 정리됨.
-            raise TimeoutError(f"execution exceeded {timeout_sec}s")
+            raise TimeoutError(f"execution exceeded {timeout_sec}s") from exc
 
 
 # 편의: 윈도우/카운트/타임아웃 설정 조회

@@ -149,8 +149,8 @@ def get_queue(_: dict = Depends(require_role("admin", "owner"))):
             )
             for r in rows
         ]
-    except Exception as e:  # noqa: BLE001 - 팩스 발신이력 목록 조회 실패를 HTTPException 500으로 변환 — 조회 실패를 사용자에게 알리는 fail-closed, 발신(send) 로직과 무관
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @hanafax_router.post("/send", response_model=SendResponse)

@@ -72,7 +72,7 @@ def create_inquiry(body: InquiryCreate, request: Request) -> dict:
     try:
         rec = add_inquiry(body.model_dump())
     except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+        raise HTTPException(status_code=400, detail=str(ve)) from ve
 
     # 새 문의 텔레그램 알림 (설정된 경우 best-effort)
     try:

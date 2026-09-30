@@ -171,10 +171,10 @@ class BrowserController:
             self.page = await self.browser.new_page()
             logger.info(f"Browser launched for agent {self.agent_id}")
 
-        except ImportError:
-            raise BrowserControllerError("Playwright not installed. Install with: pip install playwright")
-        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
-            raise BrowserControllerError(f"Failed to launch browser: {e}")
+        except ImportError as exc:
+            raise BrowserControllerError("Playwright not installed. Install with: pip install playwright") from exc
+        except Exception as e:
+            raise BrowserControllerError(f"Failed to launch browser: {e}") from e
 
     async def close(self) -> None:
         """Close browser and clean up resources."""
@@ -210,8 +210,8 @@ class BrowserController:
         try:
             await self.page.goto(url, wait_until="domcontentloaded")
             logger.info(f"Navigated to {url}")
-        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
-            raise BrowserControllerError(f"Navigation failed: {e}")
+        except Exception as e:
+            raise BrowserControllerError(f"Navigation failed: {e}") from e
 
     async def inspect_page(self) -> InspectResult:
         """Inspect current page (safe).
@@ -243,8 +243,8 @@ class BrowserController:
                 login_required=login_required,
                 otp_detected=otp_detected,
             )
-        except Exception as e:  # noqa: BLE001 - Playwright 기반 브라우저 자동화 컨트롤러 - plan_*/execute_* 모두 실패시 executed=False/found=False 로 fail-closed 반환, 실제 클릭/입력 실행은 이미 approval_token 검증을 거친 뒤에만 수행됨
-            raise BrowserControllerError(f"Inspection failed: {e}")
+        except Exception as e:
+            raise BrowserControllerError(f"Inspection failed: {e}") from e
 
     async def list_inputs(self) -> list[dict[str, Any]]:
         """List input fields (safe)."""

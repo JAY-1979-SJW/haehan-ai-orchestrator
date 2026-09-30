@@ -77,7 +77,7 @@ def collect_my_cafes(user: dict = Depends(require_role("admin", "owner"))) -> di
         return {"ok": True, "count": len(cafes), "cafes": cafes}
     except Exception as e:
         logger.exception("collect my-cafes error")
-        raise HTTPException(status_code=500, detail=f"카페 목록 수집 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"카페 목록 수집 실패: {e}") from e
 
 
 @naver_cafe_router.post("/collect")
@@ -120,7 +120,7 @@ def collect_cafe_articles(
         return {"ok": True, "collected": len(articles)}
     except Exception as e:
         logger.exception("collect cafe articles error")
-        raise HTTPException(status_code=500, detail=f"게시글 수집 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"게시글 수집 실패: {e}") from e
 
 
 @naver_cafe_router.get("/my-cafes")

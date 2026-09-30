@@ -92,6 +92,6 @@ def run_agent(
             requested_by=user["actor"],
         )
     except _reg.UnknownActionError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     return {"ok": True, "agent_id": agent_id, "task_id": task.task_id, "status": task.status}

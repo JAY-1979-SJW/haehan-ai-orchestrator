@@ -86,7 +86,7 @@ def submit_browser_readonly_instruction(
         raise HTTPException(
             status_code=400,
             detail={"error": "UNKNOWN_ACTION", "message": str(e)},
-        )
+        ) from e
 
     log_event(
         "LOCAL_AGENT_BROWSER_READONLY_INSTRUCTION_QUEUED",
