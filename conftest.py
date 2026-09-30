@@ -51,6 +51,16 @@ def _isolate_runtime_state(monkeypatch, tmp_path):
         ("ai_orchestrator.local_agent_registry_common", "_REGISTRY_STATE_PATH", "local_agent_registry_state.json"),
         ("ai_orchestrator.chat_sessions", "_STORE_PATH", "chat_sessions.json"),
     )
+    # 마스터 키는 기본이 OS 자격 증명 관리자(keyring)다. 테스트가 이 PC 의 진짜 키를 만들거나 건드리지
+    # 않도록 파일 방식으로 강제한다(키 보관 자체를 시험하는 테스트는 이 값을 스스로 바꾼다).
+    monkeypatch.setenv("HAEHAN_CRED_KEY_BACKEND", "file")
+    # 저장소가 첫 로드 때 흡수하는 평문 레거시 파일(data/.env_naver)도 실제 위치를 읽지 못하게 한다.
+    try:
+        from scripts import credentials as _cred
+
+        monkeypatch.setattr(_cred, "_LEGACY_ENV_FILES", {"naver": tmp_path / ".env_naver_legacy"})
+    except Exception:  # noqa: BLE001, S110 - scripts.credentials 를 import 못 하는 환경은 격리 대상 아님
+        pass
     for module_name, attr, filename in targets:
         try:
             module = __import__(module_name, fromlist=[attr])
