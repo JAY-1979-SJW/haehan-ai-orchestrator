@@ -8,11 +8,12 @@
 - 응답은 ``SearchResult`` 로 표준화.
 - 헤더의 client_id/secret 은 절대 로그에 남기지 않는다 (키 목록만).
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlencode
 
 from . import naver_openapi_config as cfg_mod
@@ -22,7 +23,8 @@ logger = logging.getLogger(__name__)
 
 def _requests_transport(method: str, url: str, headers: dict, params: dict) -> tuple:
     """기본 HTTP transport — requests 라이브러리 사용."""
-    import requests  # noqa: PLC0415
+    import requests
+
     resp = requests.request(method, url, headers=headers, timeout=10)
     try:
         body = resp.json()
@@ -44,13 +46,13 @@ START_MIN, START_MAX = 1, 1000
 
 @dataclass
 class SearchResult:
-    source: str                       # SOURCE_BLOG / SOURCE_SHOP
-    status: str                       # "ok" | "dry_run" | "unconfigured" | "error"
+    source: str  # SOURCE_BLOG / SOURCE_SHOP
+    status: str  # "ok" | "dry_run" | "unconfigured" | "error"
     items: list = field(default_factory=list)
     item_count: int = 0
-    raw: Optional[dict] = None
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
+    raw: dict | None = None
+    error_code: str | None = None
+    error_message: str | None = None
     request_summary: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -119,8 +121,8 @@ class NaverSearchClient:
 
     def __init__(
         self,
-        config: Optional[cfg_mod.NaverOpenApiConfig] = None,
-        transport: Optional[Any] = None,
+        config: cfg_mod.NaverOpenApiConfig | None = None,
+        transport: Any | None = None,
     ):
         self._config = config or cfg_mod.load_config()
         self._transport = transport if transport is not None else _requests_transport
@@ -163,17 +165,17 @@ class NaverSearchClient:
         path: str,
         params: dict,
         method: str = "GET",
-        dry_run: Optional[bool] = None,
-        mock_body: Optional[dict] = None,
+        dry_run: bool | None = None,
+        mock_body: dict | None = None,
     ) -> SearchResult:
         method_u = method.upper()
         if method_u != "GET":
             return SearchResult(
-                source=source, status="error",
+                source=source,
+                status="error",
                 error_code="METHOD_NOT_ALLOWED",
                 error_message=f"method={method_u} 는 비허용 (GET only)",
-                request_summary={"method": method_u, "path": path,
-                                 "param_keys": sorted(params.keys())},
+                request_summary={"method": method_u, "path": path, "param_keys": sorted(params.keys())},
             )
 
         url = self.build_url(path, params)
@@ -189,13 +191,17 @@ class NaverSearchClient:
         if effective_dry_run:
             logger.info(
                 "[NAVER-SEARCH-DRY-RUN] source=%s path=%s param_keys=%s",
-                source, path, summary["param_keys"],
+                source,
+                path,
+                summary["param_keys"],
             )
             body = dict(mock_body or {})
             items = list(body.get("items", []))
             return SearchResult(
-                source=source, status="dry_run",
-                items=items, item_count=len(items),
+                source=source,
+                status="dry_run",
+                items=items,
+                item_count=len(items),
                 raw={"note": "dry_run mock", "url": url, "body": body},
                 request_summary=summary,
             )
@@ -205,7 +211,8 @@ class NaverSearchClient:
         except cfg_mod.NaverOpenApiConfigError as e:
             logger.warning("[NAVER-SEARCH-UNCONFIGURED] %s", str(e))
             return SearchResult(
-                source=source, status="unconfigured",
+                source=source,
+                status="unconfigured",
                 error_code="MISSING_CREDENTIALS",
                 error_message=str(e),
                 request_summary=summary,
@@ -213,7 +220,8 @@ class NaverSearchClient:
 
         if self._transport is None:
             return SearchResult(
-                source=source, status="error",
+                source=source,
+                status="error",
                 error_code="TRANSPORT_NOT_WIRED",
                 error_message="HTTP 전송 계층 미연결",
                 request_summary=summary,
@@ -221,13 +229,16 @@ class NaverSearchClient:
 
         try:
             http_status, body = self._transport(
-                method=method_u, url=url,
-                headers=self.build_headers(), params=params,
+                method=method_u,
+                url=url,
+                headers=self.build_headers(),
+                params=params,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.exception("[NAVER-SEARCH-TRANSPORT-ERR] type=%s", type(e).__name__)
             return SearchResult(
-                source=source, status="error",
+                source=source,
+                status="error",
                 error_code="TRANSPORT_EXCEPTION",
                 error_message=type(e).__name__,
                 request_summary=summary,
@@ -236,18 +247,23 @@ class NaverSearchClient:
         if 200 <= int(http_status) < 300 and isinstance(body, dict):
             items = list(body.get("items", []))
             return SearchResult(
-                source=source, status="ok",
-                items=items, item_count=len(items),
-                raw={"http_status": int(http_status),
-                     "lastBuildDate": body.get("lastBuildDate"),
-                     "total": body.get("total"),
-                     "start": body.get("start"),
-                     "display": body.get("display")},
+                source=source,
+                status="ok",
+                items=items,
+                item_count=len(items),
+                raw={
+                    "http_status": int(http_status),
+                    "lastBuildDate": body.get("lastBuildDate"),
+                    "total": body.get("total"),
+                    "start": body.get("start"),
+                    "display": body.get("display"),
+                },
                 request_summary=summary,
             )
 
         return SearchResult(
-            source=source, status="error",
+            source=source,
+            status="error",
             error_code=f"HTTP_{http_status}",
             error_message="non-2xx response",
             raw={"http_status": int(http_status) if isinstance(http_status, int) else None},
@@ -262,12 +278,15 @@ class NaverSearchClient:
         display: int = 10,
         start: int = 1,
         sort: str = "sim",
-        dry_run: Optional[bool] = None,
+        dry_run: bool | None = None,
     ) -> SearchResult:
         params = self._normalize_params(query, display, start, sort)
         return self._request(
-            source=SOURCE_BLOG, path=PATH_BLOG, params=params,
-            dry_run=dry_run, mock_body=_BLOG_MOCK_BODY,
+            source=SOURCE_BLOG,
+            path=PATH_BLOG,
+            params=params,
+            dry_run=dry_run,
+            mock_body=_BLOG_MOCK_BODY,
         )
 
     def search_shop(
@@ -277,20 +296,23 @@ class NaverSearchClient:
         display: int = 10,
         start: int = 1,
         sort: str = "sim",
-        dry_run: Optional[bool] = None,
+        dry_run: bool | None = None,
     ) -> SearchResult:
         params = self._normalize_params(query, display, start, sort)
         return self._request(
-            source=SOURCE_SHOP, path=PATH_SHOP, params=params,
-            dry_run=dry_run, mock_body=_SHOP_MOCK_BODY,
+            source=SOURCE_SHOP,
+            path=PATH_SHOP,
+            params=params,
+            dry_run=dry_run,
+            mock_body=_SHOP_MOCK_BODY,
         )
 
 
 __all__ = [
-    "NaverSearchClient",
-    "SearchResult",
-    "SOURCE_BLOG",
-    "SOURCE_SHOP",
     "PATH_BLOG",
     "PATH_SHOP",
+    "SOURCE_BLOG",
+    "SOURCE_SHOP",
+    "NaverSearchClient",
+    "SearchResult",
 ]

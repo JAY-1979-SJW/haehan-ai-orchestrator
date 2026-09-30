@@ -6,16 +6,17 @@
 기존 endpoint에는 아직 적용하지 않는다 (LEGACY_UI_DEPENDENT 보호).
 다음 API_CONTRACT 공정에서 신규/내부 endpoint에 적용한다.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from .response_envelope import ApiError, ApiMeta, ApiResponse, api_error, api_success
 
 
 def wrap_legacy_dict(
     data: dict[str, Any],
-    meta: Optional[ApiMeta] = None,
+    meta: ApiMeta | None = None,
 ) -> ApiResponse:
     """기존 dict 반환값을 ApiResponse.data로 감싼다.
 
@@ -27,9 +28,9 @@ def wrap_legacy_dict(
 
 def wrap_legacy_list(
     items: list[Any],
-    total: Optional[int] = None,
-    page: Optional[int] = None,
-    page_size: Optional[int] = None,
+    total: int | None = None,
+    page: int | None = None,
+    page_size: int | None = None,
 ) -> ApiResponse:
     """기존 list 반환값을 ApiResponse.data로 감싼다."""
     meta = None
@@ -45,20 +46,20 @@ def wrap_legacy_list(
 def wrap_http_exception(
     code: str,
     message: str,
-    details: Optional[dict[str, Any]] = None,
-    meta: Optional[ApiMeta] = None,
+    details: dict[str, Any] | None = None,
+    meta: ApiMeta | None = None,
 ) -> ApiResponse:
     """HTTPException detail을 ApiResponse.error로 변환한다."""
     return api_error(code=code, message=message, details=details, meta=meta)
 
 
 __all__ = [
-    "wrap_legacy_dict",
-    "wrap_legacy_list",
-    "wrap_http_exception",
-    "api_success",
-    "api_error",
-    "ApiResponse",
     "ApiError",
     "ApiMeta",
+    "ApiResponse",
+    "api_error",
+    "api_success",
+    "wrap_http_exception",
+    "wrap_legacy_dict",
+    "wrap_legacy_list",
 ]

@@ -3,9 +3,8 @@
 기존 scripts/site_registry.py를 대체하지 않는다.
 이 레지스트리는 신규 site_engine 구조에서만 사용된다.
 """
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 from scripts.site_engine.profiles import SiteProfile
 
@@ -21,7 +20,7 @@ class SiteProfileRegistry:
             raise ValueError(f"Profile already registered: {profile.key!r}")
         self._store[profile.key] = profile
 
-    def get(self, key: str) -> Optional[SiteProfile]:
+    def get(self, key: str) -> SiteProfile | None:
         return self._store.get(key)
 
     def get_or_raise(self, key: str) -> SiteProfile:

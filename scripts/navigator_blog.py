@@ -1,4 +1,5 @@
 """navigator_blog — Naver 블로그 글 자동 작성 워크플로우."""
+
 from __future__ import annotations
 
 import subprocess
@@ -6,8 +7,8 @@ import sys
 import time
 
 from scripts.logger import get_logger
-from scripts.op_log import log_op
 from scripts.navigator_common import ROOT
+from scripts.op_log import log_op
 
 _log = get_logger(__name__)
 
@@ -24,7 +25,7 @@ def write_blog_post(
     발행은 절대 자동 안 함. 임시저장까지만 수행.
     """
     print("=" * 60)
-    print(f"블로그 글 작성 시작")
+    print("블로그 글 작성 시작")
     print(f"  제목: {title!r}  본문: {body[:40]!r}  이미지: {image_path or '없음'}  임시저장: {save_draft}")
     print("=" * 60)
     _log.info("write_blog_post: title=%s image=%s", title[:40], image_path)
@@ -48,9 +49,10 @@ def write_blog_post(
     time.sleep(2)
 
     # 1.5. 헬스 프로브 — Smart Editor 로드 완료까지 대기
-    if not _run(["is-ready", "url_contains:blog.naver", "readystate",
-                 "has_element:.se-text-paragraph", "has_button:저장"],
-                "에디터 준비 헬스 체크"):
+    if not _run(
+        ["is-ready", "url_contains:blog.naver", "readystate", "has_element:.se-text-paragraph", "has_button:저장"],
+        "에디터 준비 헬스 체크",
+    ):
         print("\n⛔ 에디터 로드 안 됨 — 후속 단계 중단")
         return False
 
@@ -63,7 +65,7 @@ def write_blog_post(
     time.sleep(0.5)
     ok_t_v = _run(["verify-input", title[:15]], "제목 즉시 검증") if ok_t else False
     if not (ok_t and ok_t_v):
-        print(f"\n⛔ 제목 입력/검증 실패 → 후속 단계 중단 (본문/이미지/저장 실행 안 함)")
+        print("\n⛔ 제목 입력/검증 실패 → 후속 단계 중단 (본문/이미지/저장 실행 안 함)")
         print("=" * 60)
         return False
 
@@ -72,7 +74,7 @@ def write_blog_post(
     time.sleep(0.5)
     ok_b_v = _run(["verify-input", body[:15]], "본문 즉시 검증") if ok_b else False
     if not (ok_b and ok_b_v):
-        print(f"\n⛔ 본문 입력/검증 실패 → 이미지/저장 중단")
+        print("\n⛔ 본문 입력/검증 실패 → 이미지/저장 중단")
         print("=" * 60)
         return False
 
@@ -90,6 +92,5 @@ def write_blog_post(
     print("\n" + "=" * 60)
     print("✓ 블로그 글 작성 흐름 완료")
     print("=" * 60)
-    log_op("write_blog_post", ok=True, duration_ms=elapsed_blog,
-           title=title[:60], has_image=image_path is not None)
+    log_op("write_blog_post", ok=True, duration_ms=elapsed_blog, title=title[:60], has_image=image_path is not None)
     return True
