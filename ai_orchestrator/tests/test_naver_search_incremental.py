@@ -1,22 +1,32 @@
 """Naver 검색 3단계 — 실제 증분 수집 검증 (핵심 케이스만)."""
+
 from __future__ import annotations
 
 import sqlite3
 
 from ai_orchestrator.connectors import (
     naver_openapi_config as cfg_mod,
+)
+from ai_orchestrator.connectors import (
     naver_search_client,
-    naver_search_db as db_mod,
     naver_search_jobs,
+)
+from ai_orchestrator.connectors import (
+    naver_search_db as db_mod,
+)
+from ai_orchestrator.connectors import (
     naver_search_state as state_mod,
 )
 
 
 def _clear_env(monkeypatch):
     for k in (
-        cfg_mod.ENV_BASE_URL, cfg_mod.ENV_CLIENT_ID,
-        cfg_mod.ENV_CLIENT_SECRET, cfg_mod.ENV_DRY_RUN,
-        "NAVER_SEARCH_DB_ENABLED", "NAVER_SEARCH_DB_PATH",
+        cfg_mod.ENV_BASE_URL,
+        cfg_mod.ENV_CLIENT_ID,
+        cfg_mod.ENV_CLIENT_SECRET,
+        cfg_mod.ENV_DRY_RUN,
+        "NAVER_SEARCH_DB_ENABLED",
+        "NAVER_SEARCH_DB_PATH",
         "NAVER_SEARCH_STATE_PATH",
     ):
         monkeypatch.delenv(k, raising=False)
@@ -41,6 +51,7 @@ def _blog_page_transport(pages):
         state["idx"] += 1
         items = pages[i] if i < len(pages) else []
         return 200, {"total": len(items), "start": i, "display": 10, "items": items}
+
     return transport
 
 
@@ -52,24 +63,37 @@ def _shop_page_transport(pages):
         state["idx"] += 1
         items = pages[i] if i < len(pages) else []
         return 200, {"items": items}
+
     return transport
 
 
 def _blog_item(link: str, postdate: str, title: str = "t"):
     return {
-        "title": title, "link": link,
-        "description": "", "bloggername": "n", "bloggerlink": "bl",
+        "title": title,
+        "link": link,
+        "description": "",
+        "bloggername": "n",
+        "bloggerlink": "bl",
         "postdate": postdate,
     }
 
 
 def _shop_item(pid: str, title: str = "t"):
     return {
-        "title": title, "link": f"https://shop.example.invalid/{pid}",
-        "image": "", "lprice": "10000", "hprice": "",
-        "mallName": "m", "productId": pid, "productType": "1",
-        "brand": "", "maker": "",
-        "category1": "", "category2": "", "category3": "", "category4": "",
+        "title": title,
+        "link": f"https://shop.example.invalid/{pid}",
+        "image": "",
+        "lprice": "10000",
+        "hprice": "",
+        "mallName": "m",
+        "productId": pid,
+        "productType": "1",
+        "brand": "",
+        "maker": "",
+        "category1": "",
+        "category2": "",
+        "category3": "",
+        "category4": "",
     }
 
 
@@ -85,7 +109,8 @@ def test_blog_date_cutoff_stops_loop(tmp_path, monkeypatch):
 
     # state 에 2026-05-01 수집 기록을 심어둔다 → cutoff = "2026-05-01".
     state_mod.mark_query_collected(
-        "naver_blog", "파이썬",
+        "naver_blog",
+        "파이썬",
         collected_at="2026-05-01T00:00:00+00:00",
         path=state_path,
     )
@@ -104,9 +129,12 @@ def test_blog_date_cutoff_stops_loop(tmp_path, monkeypatch):
     client = naver_search_client.NaverSearchClient(transport=transport)
 
     out = naver_search_jobs.run_naver_blog_search_job(
-        "파이썬", client=client, max_pages=3,
+        "파이썬",
+        client=client,
+        max_pages=3,
         store_path=tmp_path / "blog.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out.status == "ok"
     assert out.early_stop_reason == "date_cutoff"
@@ -119,7 +147,7 @@ def test_blog_date_cutoff_stops_loop(tmp_path, monkeypatch):
     conn = sqlite3.connect(str(db_path))
     try:
         n = conn.execute(
-            f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}"
+            f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}"  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         ).fetchone()[0]
         assert n == 2
     finally:
@@ -142,14 +170,17 @@ def test_shopping_duplicate_threshold_stops_paging(tmp_path, monkeypatch):
         transport=_shop_page_transport([seed]),
     )
     naver_search_jobs.run_naver_shopping_search_job(
-        "키보드", client=seed_client, max_pages=1,
+        "키보드",
+        client=seed_client,
+        max_pages=1,
         store_path=tmp_path / "s_seed.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
 
     # 본 실행: threshold=3 으로 낮춰서 테스트. 페이지1 전부 중복 → 페이지2 호출 안 됨.
     page1 = [_shop_item(f"PID-{i}") for i in range(3)]  # 모두 중복
-    page2 = [_shop_item("PID-NEW")]                     # 호출되면 안 됨
+    page2 = [_shop_item("PID-NEW")]  # 호출되면 안 됨
     tracker = {"count": 0}
 
     def t(method, url, headers, params):
@@ -161,10 +192,13 @@ def test_shopping_duplicate_threshold_stops_paging(tmp_path, monkeypatch):
 
     client = naver_search_client.NaverSearchClient(transport=t)
     out = naver_search_jobs.run_naver_shopping_search_job(
-        "키보드", client=client, max_pages=5,
+        "키보드",
+        client=client,
+        max_pages=5,
         duplicate_stop_threshold=3,
         store_path=tmp_path / "s_run.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out.status == "ok"
     assert out.early_stop_reason == "duplicate_threshold"
@@ -192,14 +226,18 @@ def test_state_not_updated_when_no_insert(tmp_path, monkeypatch):
         transport=_blog_page_transport([items]),
     )
     out1 = naver_search_jobs.run_naver_blog_search_job(
-        "파이썬", client=client1,
+        "파이썬",
+        client=client1,
         store_path=tmp_path / "blog1.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out1.inserted_count == 1
     assert out1.state_updated is True
     ts_first = state_mod.get_last_collected_at(
-        "naver_blog", "파이썬", path=state_path,
+        "naver_blog",
+        "파이썬",
+        path=state_path,
     )
     assert ts_first
 
@@ -208,15 +246,19 @@ def test_state_not_updated_when_no_insert(tmp_path, monkeypatch):
         transport=_blog_page_transport([items]),
     )
     out2 = naver_search_jobs.run_naver_blog_search_job(
-        "파이썬", client=client2,
+        "파이썬",
+        client=client2,
         store_path=tmp_path / "blog2.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out2.inserted_count == 0
     assert out2.duplicate_count == 1
     assert out2.state_updated is False
     ts_second = state_mod.get_last_collected_at(
-        "naver_blog", "파이썬", path=state_path,
+        "naver_blog",
+        "파이썬",
+        path=state_path,
     )
     assert ts_second == ts_first  # 갱신 없음
 
@@ -229,7 +271,8 @@ def test_dry_run_unchanged_by_incremental_layer(tmp_path, monkeypatch):
     state_path = tmp_path / "state.json"
     # state 에 이미 미래 기록이 있어도 dry_run 결과에는 영향 없어야 한다.
     state_mod.mark_query_collected(
-        "naver_blog", "파이썬",
+        "naver_blog",
+        "파이썬",
         collected_at="9999-12-31T00:00:00+00:00",
         path=state_path,
     )

@@ -273,6 +273,6 @@ def get_register_history(limit: int = 50, ok_only: bool = False) -> list[dict]:
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     where = "WHERE ok = 1" if ok_only else ""
-    rows = conn.execute(f"SELECT * FROM smartstore_register_log {where} ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+    rows = conn.execute(f"SELECT * FROM smartstore_register_log {where} ORDER BY id DESC LIMIT ?", (limit,)).fetchall()  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
     conn.close()
     return [dict(r) for r in rows]
