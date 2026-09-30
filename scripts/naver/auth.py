@@ -214,15 +214,6 @@ def _redact_input_result(result: dict) -> dict:
     return redacted
 
 
-def _human_type(page, selector: str, text: str, delay_ms: int = 80) -> None:
-    """[deprecated] _safe_human_input 사용 권장. 호환성 유지용."""
-    el = page.locator(selector).first
-    el.click(timeout=3000)
-    time.sleep(0.4)
-    for ch in text:
-        page.keyboard.type(ch, delay=delay_ms)
-
-
 # ── 캡차/보안문자 감지 ─────────────────────────────────────────────────────
 
 

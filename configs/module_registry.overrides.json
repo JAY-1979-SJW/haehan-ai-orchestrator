@@ -126,11 +126,6 @@
   "role": "browser_engine",
   "reason": "CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
  },
- "ai_orchestrator/local_agent/browser/secure_login.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "approval_server.py(L8)를 직접 호출하는 승인 연동 로그인 흐름 — 순수 L1 계약 아님"
- },
  "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
   "layer": "L4",
   "role": "browser_engine",

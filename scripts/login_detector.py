@@ -11,7 +11,6 @@
   - is_logged_in_generic(page) -> bool
   - get_logged_in_user(page) -> str | None
   - wait_for_login_generic(page, max_wait_s) -> dict
-  - wait_for_logout(page, max_wait_s) -> dict
 
 판정 기준 (score):
   >= 3: 로그인 / 1-2: 모호 / 0: 비로그인
@@ -758,15 +757,3 @@ def wait_for_login_generic(page, max_wait_s: int = 600, poll_interval: float = 3
         time.sleep(poll_interval)
 
     return {**detect_login_state(page), "timeout": True, "elapsed_s": int(time.time() - start)}
-
-
-def wait_for_logout(page, max_wait_s: int = 60, poll_interval: float = 2.0) -> dict[str, Any]:
-    """로그아웃(세션 만료) 감지 대기."""
-    start = time.time()
-    while time.time() - start < max_wait_s:
-        state = detect_login_state(page)
-        if not state.get("logged_in"):
-            state["elapsed_s"] = int(time.time() - start)
-            return state
-        time.sleep(poll_interval)
-    return {**detect_login_state(page), "timeout": True}

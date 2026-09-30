@@ -4137,14 +4137,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/secure_login.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "local_agent",
-   "reason": "approval_server.py(L8)를 직접 호출하는 승인 연동 로그인 흐름 — 순수 L1 계약 아님",
-   "confidence": "high",
-   "source": "confirmed"
-  },
   "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
@@ -10798,14 +10790,6 @@
    "role": "policy",
    "domain": "naver",
    "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/cafe.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_cafe",
-   "reason": "도메인(naver_cafe) 자동화",
    "confidence": "high",
    "source": "rule"
   },

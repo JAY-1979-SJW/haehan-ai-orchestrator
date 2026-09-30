@@ -997,3 +997,16 @@ git checkout pre-openai-removal -- <경로>
 ### 2026-09-24 범위 확장 — Anthropic 유료 API 호출 경로 (사용자 승인)
 - `ai_orchestrator/connectors/ai_reply_caller.py` — 복원: `git checkout pre-openai-removal -- ai_orchestrator/connectors/ai_reply_caller.py`
 - (파일 유지·호출부만 제거) `scripts/naver/smartstore/product/ai_description_writer.py`, `scripts/naver/automation/integration/ai_responder.py`, `ai_orchestrator/connectors/kakao_skill_router.py` — 원본: `git show pre-openai-removal:<경로>`
+
+## 2026-10-01 추가 정리 — 네이버 로그인 죽은 코드
+
+호출자 0건(텍스트 검색으로 확인 — 문자열 지연 import 포함)이라 삭제. 복원은 이 정리 커밋의 **부모**에서 한다:
+`git checkout <이 커밋>^ -- <경로>` (커밋 해시는 `git log -1 --grep="네이버 로그인 죽은 코드 삭제"` 로 확인).
+
+- `scripts/naver/cafe.py` — 같은 이름의 `scripts/naver/cafe/` 패키지가 가려 import 불가(실제 import 가 패키지로 해석됨을 확인)
+- `ai_orchestrator/local_agent/browser/secure_login.py` (+ `browser/__init__.py` 의 재내보내기 26개) — 가져다 쓰는 곳도 테스트도 없음
+- `scripts/naver/auth.py::_human_type` — deprecated, 호출자 없음
+- `scripts/login_detector.py::wait_for_logout` — 호출자 없음(독스트링에만 이름)
+- `scripts/credentials.py::list_naver_accounts` — 호출자 없음(세션 라우터 `list_accounts` 가 같은 일을 따로 구현)
+
+삭제하지 않고 남긴 것: `scripts/ops/make_inspection_video.py`(검측 데모 영상 도구 — 네이버 로그인 씬이 존재하지 않는 `_ID_SELECTORS` 등을 import 해 실행하면 ImportError. 고칠지 지울지 사용자 결정 필요).
