@@ -371,3 +371,89 @@ def test_hex_rule_requires_a_digit(token):
 @pytest.mark.parametrize("token", ["8f3a9c2d7e1b", "a1b2c3d4e5f6"])
 def test_hex_hash_tokens_are_detected(token):
     assert pa.looks_hashed(token) is True
+
+
+# ── 실제 네이버 로그인 화면 검증(2026-09-30)에서 드러난 캡차 오탐 ─────────────────
+
+
+def test_login_page_with_alternative_login_link_is_not_captcha():
+    """로그인 화면의 '일회용 로그인' 같은 대체 수단 링크 하나로 화면 전체를 캡차로 보면 안 된다."""
+    snap = _snap(
+        url="https://nid.naver.com/nidlogin.login?mode=form",
+        links=[
+            {"text": "일회용 번호", "href": "/otp", "target": ""},
+            {"text": "비밀번호 찾기", "href": "/find", "target": ""},
+        ],
+        inputs=[
+            {"tag": "INPUT", "type": "text", "name": "id", "id": "id", "placeholder": "", "aria": "", "visible": True},
+            {
+                "tag": "INPUT",
+                "type": "password",
+                "name": "pw",
+                "id": "pw",
+                "placeholder": "",
+                "aria": "",
+                "visible": True,
+            },
+        ],
+        buttons=[{"text": "로그인", "id": "log.login", "aria": "", "cls": "", "visible": True}],
+    )
+    assert pa.classify_page_state(snap)["state"] == "login_required"
+
+
+def test_captcha_needs_a_blocking_signal_not_a_lone_link():
+    only_link = _snap(links=[{"text": "일회용 번호로 로그인", "href": "/otp", "target": ""}], buttons=[_button("확인")])
+    assert pa.classify_page_state(only_link)["state"] != "captcha"
+
+
+def test_captcha_from_visible_heading_still_detected():
+    snap = _snap(headings=[{"level": "H2", "text": "보안문자를 입력해 주세요"}])
+    assert pa.classify_page_state(snap)["state"] == "captcha"
+
+
+def test_captcha_from_visible_dialog_text_still_detected():
+    snap = _snap(dialogs=[{"role": "dialog", "text": "자동입력 방지 문자를 입력하세요", "visible": True}])
+    assert pa.classify_page_state(snap)["state"] == "captcha"
+
+
+def test_captcha_from_captcha_input_or_image_still_detected():
+    snap = _snap(
+        inputs=[
+            {
+                "tag": "INPUT",
+                "type": "text",
+                "name": "captcha",
+                "id": "captchaInput",
+                "placeholder": "",
+                "aria": "",
+                "visible": True,
+            }
+        ]
+    )
+    assert pa.classify_page_state(snap)["state"] == "captcha"
+
+
+def test_hidden_captcha_text_does_not_trigger():
+    snap = _snap(
+        dialogs=[{"role": "dialog", "text": "자동입력 방지 문자", "visible": False}], buttons=[_button("저장")]
+    )
+    assert pa.classify_page_state(snap)["state"] == "ok"
+
+
+def test_hidden_captcha_input_does_not_trigger():
+    """화면에 보이지 않는 캡차 입력칸(미리 렌더링된 숨김 요소)은 캡차 상태가 아니다."""
+    snap = _snap(
+        inputs=[
+            {
+                "tag": "INPUT",
+                "type": "text",
+                "name": "captcha",
+                "id": "captchaInput",
+                "placeholder": "",
+                "aria": "",
+                "visible": False,
+            }
+        ],
+        buttons=[_button("저장")],
+    )
+    assert pa.classify_page_state(snap)["state"] == "ok"
