@@ -1,7 +1,10 @@
 """자격증명 통합 저장소 — data/credentials.json (암호화)
 
 - pw 는 Fernet 대칭 암호화 (cryptography.Fernet)
-- 키 파일: data/.cred.key (자동 생성, 0o600, .gitignore 필수)
+- 마스터 키: Windows 자격 증명 관리자(keyring, 서비스 haehan-ai/credentials) — 같은 OS 계정만 복호화.
+  기존 data/.cred.key 가 있으면 첫 사용 시 keyring 으로 이전하고 .cred.key.migrated 로 이름만 바꾼다(삭제 안 함).
+  keyring 을 못 쓰면 오류로 중단(fail-closed). 개발용은 HAEHAN_CRED_KEY_BACKEND=file 로 명시할 때만
+  data/.cred.key 파일 방식(옛 동작)을 쓴다.
 - pw_enc 필드에 토큰 저장; 로드 시 자동 복호화
 - 평문 pw 가 있으면 첫 로드 시 자동으로 암호화하고 재저장 (마이그레이션)
 - .env_naver / .env_google 파일이 있으면 첫 로드 시 흡수 후 archive
@@ -23,6 +26,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -35,7 +39,14 @@ if str(ROOT) not in sys.path:
 from security_utils import mask_identifier  # noqa: E402
 
 CRED_FILE = ROOT / "data" / "credentials.json"
-KEY_FILE = ROOT / "data" / ".cred.key"
+KEY_FILE = ROOT / "data" / ".cred.key"  # keyring 이전 원본 / HAEHAN_CRED_KEY_BACKEND=file 개발용 경로
+KEY_SERVICE = "haehan-ai/credentials"
+KEY_ACCOUNT = "master-key"
+
+
+class CredentialKeyError(RuntimeError):
+    """마스터 키를 OS 자격 증명 관리자에서 다룰 수 없을 때. 메시지에 키·비밀번호 값은 넣지 않는다."""
+
 
 # 레거시 평문 파일 (마이그레이션 후 archive)
 _LEGACY_ENV_FILES = {
@@ -51,8 +62,21 @@ def _is_password_login_disabled(site: str) -> bool:
     return (site or "").strip().lower() in _PASSWORD_LOGIN_DISABLED_SITES
 
 
-def _get_or_create_key() -> bytes:
-    """암호화 키 로드. 없으면 신규 생성."""
+def _key_backend() -> str:
+    """'file' 은 환경변수로 명시했을 때만. 기본은 OS 자격 증명 관리자(keyring)."""
+    return "file" if os.environ.get("HAEHAN_CRED_KEY_BACKEND", "").strip().lower() == "file" else "keyring"
+
+
+def _keyring_module():
+    try:
+        import keyring  # type: ignore
+    except ImportError as e:
+        raise CredentialKeyError("keyring 패키지가 없어 마스터 키를 안전하게 보관할 수 없음") from e
+    return keyring
+
+
+def _file_key() -> bytes:
+    """옛 방식: data/.cred.key. 없으면 신규 생성."""
     if KEY_FILE.exists():
         return KEY_FILE.read_bytes().strip()
     KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -61,6 +85,59 @@ def _get_or_create_key() -> bytes:
     # chmod 권한 강화 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
     with contextlib.suppress(Exception):
         KEY_FILE.chmod(0o600)
+    return key
+
+
+def _all_entries_decrypt_with(key: bytes) -> bool:
+    """credentials.json 의 모든 pw_enc 가 이 키로 풀리는지(값은 다루지 않고 성공 여부만)."""
+    if not CRED_FILE.exists():
+        return True
+    try:
+        data = json.loads(CRED_FILE.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 - 깨진 파일이면 이전 후 검증을 통과시키지 않아 원본 키 파일을 지우지/바꾸지 않는다(fail-safe)
+        return False
+    f = Fernet(key)
+    for entry in data.values():
+        token = entry.get("pw_enc") if isinstance(entry, dict) else None
+        if token:
+            try:
+                f.decrypt(token.encode("ascii"))
+            except (InvalidToken, ValueError):
+                return False
+    return True
+
+
+def _get_or_create_key() -> bytes:
+    """마스터 키 로드. keyring 우선 → 없으면 .cred.key 이전 → 둘 다 없으면 신규 생성 후 keyring 저장."""
+    if _key_backend() == "file":
+        return _file_key()
+    kr = _keyring_module()
+    try:
+        stored = kr.get_password(KEY_SERVICE, KEY_ACCOUNT)
+    except (
+        Exception
+    ) as e:  # 자격 증명 관리자 접근 실패(잠김/권한): 파일로 조용히 넘어가지 않고 중단(fail-closed), 원인 예외에 값 없음
+        raise CredentialKeyError("OS 자격 증명 관리자에 접근할 수 없음") from e
+    if stored:
+        return stored.encode("ascii")
+    try:
+        if KEY_FILE.exists():
+            key = KEY_FILE.read_bytes().strip()
+            migrated = True
+        else:
+            key = Fernet.generate_key()
+            migrated = False
+        kr.set_password(KEY_SERVICE, KEY_ACCOUNT, key.decode("ascii"))
+        if kr.get_password(KEY_SERVICE, KEY_ACCOUNT) != key.decode("ascii"):
+            raise CredentialKeyError("마스터 키 저장 확인에 실패")
+    except CredentialKeyError:
+        raise
+    except Exception as e:  # 저장 실패도 fail-closed. 원본 키 파일은 그대로 둔다
+        raise CredentialKeyError("OS 자격 증명 관리자에 마스터 키를 저장할 수 없음") from e
+    if migrated and _all_entries_decrypt_with(key):
+        # 삭제하지 않고 이름만 바꾼다. 사용자가 확인 후 직접 지운다.
+        with contextlib.suppress(OSError):
+            KEY_FILE.rename(KEY_FILE.with_name(KEY_FILE.name + ".migrated"))
     return key
 
 

@@ -1,7 +1,7 @@
 """네이버 자격증명 안전 등록 (대화형).
 
 비밀번호는 getpass로 화면에 표시 안 됨.
-저장 위치: data/.env_naver (권한 0o600, gitignore 등록됨)
+저장 위치: data/credentials.json (Fernet 암호화, 마스터 키는 Windows 자격 증명 관리자)
 
 사용:
   python scripts/naver/register_credentials.py
@@ -15,15 +15,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.naver.auth import ENV_FILE, _load_credentials, save_credentials
+from scripts.credentials import CRED_FILE
+from scripts.naver.auth import _load_credentials, save_credentials
 
 
 def main():
     print("=" * 60)
     print("  네이버 자격증명 등록")
     print("=" * 60)
-    print(f"  저장 위치: {ENV_FILE}")
-    print("  보안: 파일 권한 0o600 (소유자 전용) + gitignore")
+    print(f"  저장 위치: {CRED_FILE}")
+    print("  보안: 비밀번호 Fernet 암호화 + 마스터 키는 Windows 자격 증명 관리자(같은 Windows 계정만 복호화)")
     print()
 
     existing_id, existing_pw = _load_credentials()
