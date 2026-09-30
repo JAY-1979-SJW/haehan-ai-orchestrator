@@ -34,7 +34,7 @@ def _click_field(el, *, label: str, timeout: int = 3000) -> None:
             raise first_error
 
 
-def safe_human_input(
+def safe_human_input(  # noqa: PLR0913 - 공개 시그니처(키워드 전용 옵션 4개) — 기존 호출자 호환 유지
     page,
     selector: str,
     value: str,
@@ -42,6 +42,7 @@ def safe_human_input(
     label: str = "필드",
     delay_ms: int = 80,
     visible_timeout: int = 5000,
+    click_timeout_ms: int = 3000,
 ) -> dict:
     """사람처럼 한 글자씩 입력 + 검증.
 
@@ -52,6 +53,8 @@ def safe_human_input(
         label: 로그용 이름 (예: "ID", "PW")
         delay_ms: 글자 간 지연
         visible_timeout: 필드가 visible 상태가 될 때까지 최대 대기 ms
+        click_timeout_ms: 입력 칸 클릭 대기 ms(기본 3000). 느린 PC 에서 네이버 로그인 폼이 2초를 넘겨 시간 초과된 적이 있어
+            네이버는 8000 을 넘긴다.
 
     Returns:
         dict{ok, action: "skip"|"empty"|"replaced"|"error",
@@ -59,7 +62,11 @@ def safe_human_input(
     """
     try:
         el = page.locator(selector).first
-        el.wait_for(state="visible", timeout=visible_timeout)
+        try:
+            el.wait_for(state="visible", timeout=visible_timeout)
+        except Exception:  # 네이버 로그인 폼은 보안 스크립트가 붙는 동안 wait_for 가 시간 초과되지만 실제로는 보이는 경우가 있다 — 보이면 진행, 안 보이면 원래 예외
+            if not el.is_visible():
+                raise
 
         # 1. 현재 값
         current = ""
@@ -75,7 +82,7 @@ def safe_human_input(
         # 3. 기존 값 제거
         if current:
             _log.info("[human-input] %s 다른 값 존재(%d자) — 삭제 후 재입력", label, len(current))
-            _click_field(el, label=label)
+            _click_field(el, label=label, timeout=click_timeout_ms)
             time.sleep(0.3)
             page.keyboard.press("Control+a")
             time.sleep(0.15)
@@ -91,7 +98,7 @@ def safe_human_input(
             action = "empty"
 
         # 4. 한 글자씩 입력
-        _click_field(el, label=label)
+        _click_field(el, label=label, timeout=click_timeout_ms)
         time.sleep(0.4)
         for ch in value:
             page.keyboard.type(ch, delay=delay_ms)

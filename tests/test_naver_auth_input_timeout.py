@@ -1,66 +1,81 @@
-"""네이버 로그인 입력 칸 — 클릭 대기 시간과 입력 분기. 실제 브라우저·자격증명을 쓰지 않는다(가짜 페이지)."""
+"""네이버 로그인 폼 입력 — 8초 클릭 대기, 자동 채우기 값 교체, 실패 시 비밀번호 미접촉. 실제 브라우저·자격증명은 쓰지 않는다."""
 
 from __future__ import annotations
 
 import pytest
 
+from scripts import human_input as H
 from scripts.naver import auth as A
 
 
 class FakeElement:
-    def __init__(self, value: str = "", click_error: Exception | None = None):
+    def __init__(self, value=""):
         self.value = value
         self.click_timeouts: list[int] = []
-        self.click_error = click_error
+        self.fail_clicks = False
 
     def wait_for(self, state, timeout):
         return None
 
-    def is_visible(self, timeout=0):
+    def is_visible(self):
         return True
 
     def input_value(self, timeout=0):
         return self.value
 
-    def click(self, timeout):
+    def click(self, timeout, force=False):
         self.click_timeouts.append(timeout)
-        if self.click_error:
-            raise self.click_error
+        if self.fail_clicks:
+            raise RuntimeError("Timeout exceeded")
 
     def fill(self, value, timeout=0):
         self.value = value
 
 
 class FakeKeyboard:
-    def __init__(self, element: FakeElement):
-        self.element = element
+    def __init__(self, page):
+        self.page = page
 
     def press(self, key):
         if key == "Delete":
-            self.element.value = ""
+            self.page.focused_value("")
 
     def type(self, ch, delay=0):
-        self.element.value += ch
+        self.page.focused_value(self.page.focused.value + ch)
 
 
 class FakePage:
-    def __init__(self, element: FakeElement):
-        self.element = element
-        self.keyboard = FakeKeyboard(element)
+    """#id, #pw 두 칸. 마지막으로 클릭한 칸에 키 입력이 들어간다."""
+
+    def __init__(self, id_value="", pw_value=""):
+        self.elements = {"#id": FakeElement(id_value), "#pw": FakeElement(pw_value)}
+        self.focused = self.elements["#id"]
+        self.keyboard = FakeKeyboard(self)
+
+    def focused_value(self, value):
+        self.focused.value = value
 
     def locator(self, selector):
-        first = self.element
+        page, el = self, self.elements[selector]
+        original_click = el.click
 
-        class _Loc:
+        def click(timeout, force=False):
+            page.focused = el
+            return original_click(timeout, force)
+
+        el.click = click
+
+        class Loc:
             pass
 
-        loc = _Loc()
-        loc.first = first
+        loc = Loc()
+        loc.first = el
         return loc
 
 
 @pytest.fixture(autouse=True)
 def no_sleep(monkeypatch):
+    monkeypatch.setattr(H.time, "sleep", lambda s: None)
     monkeypatch.setattr(A.time, "sleep", lambda s: None)
 
 
@@ -69,31 +84,41 @@ def test_click_timeout_is_generous_enough_for_a_slow_pc():
     assert A._INPUT_CLICK_TIMEOUT_MS >= 5000
 
 
-def test_empty_field_is_typed_with_the_generous_timeout():
-    el = FakeElement("")
-    result = A._safe_human_input(FakePage(el), "#id", "skyjwsin", "ID", delay_ms=0)
-    assert result["ok"] and result["action"] == "empty" and el.value == "skyjwsin"
-    assert el.click_timeouts == [A._INPUT_CLICK_TIMEOUT_MS]
+def test_login_form_types_both_fields_with_the_generous_timeout():
+    page = FakePage()
+    assert A._fill_login_form(page, "skyjwsin", "secret-pw") is None
+    assert page.elements["#id"].value == "skyjwsin" and page.elements["#pw"].value == "secret-pw"
+    for element in page.elements.values():
+        assert element.click_timeouts == [A._INPUT_CLICK_TIMEOUT_MS]
 
 
-def test_prefilled_other_value_is_cleared_and_replaced():
-    """브라우저 자동 채우기로 다른 값이 들어 있으면 지우고 다시 입력한다(다른 계정 값이 그대로 제출되면 안 됨)."""
-    el = FakeElement("otherAcct1")
-    result = A._safe_human_input(FakePage(el), "#id", "skyjwsin", "ID", delay_ms=0)
-    assert result["ok"] and result["action"] == "replaced" and el.value == "skyjwsin"
-    assert el.click_timeouts == [A._INPUT_CLICK_TIMEOUT_MS] * 2
+def test_autofilled_other_account_is_replaced_in_both_fields():
+    """2026-09-30 실측: 아이디 칸에 기본 저장 계정(bigsun2024)이 미리 채워져 있었다. 제출 전에 지우고 대상 계정으로 다시 입력해야 한다."""
+    page = FakePage(id_value="bigsun2024", pw_value="other-account-pw")
+    assert A._fill_login_form(page, "skyjwsin", "secret-pw") is None
+    assert page.elements["#id"].value == "skyjwsin" and page.elements["#pw"].value == "secret-pw"
 
 
-def test_same_value_is_skipped_without_clicking():
-    el = FakeElement("skyjwsin")
-    result = A._safe_human_input(FakePage(el), "#id", "skyjwsin", "ID", delay_ms=0)
-    assert result["ok"] and result["action"] == "skip" and el.click_timeouts == []
+def test_id_failure_stops_before_touching_the_password_field():
+    page = FakePage()
+    page.elements["#id"].fail_clicks = True
+    result = A._fill_login_form(page, "skyjwsin", "secret-pw")
+    assert result["ok"] is False and result["reason"].startswith("id_input_failed")
+    assert page.elements["#pw"].click_timeouts == [] and page.elements["#pw"].value == ""
 
 
-def test_click_failure_is_a_failed_result_not_an_exception():
-    el = FakeElement("", click_error=RuntimeError("Timeout 8000ms exceeded"))
-    result = A._safe_human_input(FakePage(el), "#id", "skyjwsin", "ID", delay_ms=0)
-    assert result["ok"] is False and result["action"] == "error"
+def test_password_failure_result_never_contains_the_raw_password():
+    page = FakePage()
+    page.elements["#pw"].fail_clicks = True
+    result = A._fill_login_form(page, "skyjwsin", "secret-pw")
+    assert result["ok"] is False and result["reason"].startswith("pw_input_failed")
+    assert "secret-pw" not in str(result)
+
+
+def test_naver_no_longer_keeps_its_own_copy_of_the_input_helper():
+    """공용 scripts/human_input.py 로 통합했다 — 자체 사본이 다시 생기면 안 된다."""
+    assert not hasattr(A, "_safe_human_input")
+    assert A.safe_human_input is H.safe_human_input
 
 
 def test_redaction_helper_hides_raw_values():

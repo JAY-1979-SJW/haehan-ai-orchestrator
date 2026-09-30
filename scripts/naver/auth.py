@@ -24,11 +24,11 @@ from __future__ import annotations
 
 import os
 import time
-from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
 from scripts.critical_logger import log_critical
+from scripts.human_input import safe_human_input
 from scripts.logger import get_logger
 from scripts.login_detector import detect_login_state, wait_for_login_generic
 from security_utils import mask_identifier
@@ -123,84 +123,6 @@ def save_credentials(naver_id: str, naver_pw: str) -> Path:
 # 입력 칸 클릭 대기 시간. 2초는 PC 가 느릴 때(메모리 부족·다른 작업 부하) 네이버 로그인 폼의 안정화·페이지 이동 대기를
 # 못 기다려 아이디/비밀번호 칸 클릭이 번갈아 시간 초과됐다(2026-09-30 실측). 실패해도 제출 전이라 안전하므로 넉넉히 둔다.
 _INPUT_CLICK_TIMEOUT_MS = 8000
-
-
-def _safe_human_input(page, selector: str, value: str, label: str = "필드", delay_ms: int = 80) -> dict:
-    """입력 전 필드 검사 → 기존 값 처리 후 사람처럼 타이핑.
-
-    동작:
-      1. 현재 입력 값 확인
-      2. 비어있음 → 바로 입력
-      3. 같은 값 → skip
-      4. 다른 값 → 전체 선택 + 삭제 후 새 값 입력
-      5. 입력 후 검증 (실제 값이 들어갔는지)
-
-    Returns:
-        {ok, action: "skip"|"empty"|"replaced", before, after}
-    """
-    try:
-        el = page.locator(selector).first
-        try:
-            el.wait_for(state="visible", timeout=5000)
-        except Exception:
-            # Naver can report the input as visible in the call log while
-            # wait_for still times out during dynamic security script setup.
-            if not el.is_visible(timeout=1000):
-                raise
-
-        # 1. 현재 값 확인
-        current = ""
-        with suppress(Exception):
-            current = el.input_value(timeout=1500) or ""
-
-        # 2. 분기
-        if current == value:
-            _log.info("[naver-auth] %s 동일 값 — skip", label)
-            return {"ok": True, "action": "skip", "before": current, "after": current}
-
-        if current:
-            # 다른 값 있음 → 전체 선택 + 삭제
-            _log.warning("[naver-auth] %s 에 다른 값 존재 (%d자) — 삭제 후 재입력", label, len(current))
-            el.click(timeout=_INPUT_CLICK_TIMEOUT_MS)
-            time.sleep(0.3)
-            page.keyboard.press("Control+a")
-            time.sleep(0.15)
-            page.keyboard.press("Delete")
-            time.sleep(0.3)
-            # 삭제 확인
-            after_clear = ""
-            with suppress(Exception):
-                after_clear = el.input_value(timeout=1000) or ""
-            if after_clear:
-                # 여전히 남아있으면 fill로 한번 더
-                with suppress(Exception):
-                    el.fill("", timeout=1500)
-            action = "replaced"
-        else:
-            action = "empty"
-
-        # 3. 새 값 입력 (사람처럼 한 글자씩)
-        el.click(timeout=_INPUT_CLICK_TIMEOUT_MS)
-        time.sleep(0.4)
-        for ch in value:
-            page.keyboard.type(ch, delay=delay_ms)
-        time.sleep(0.3)
-
-        # 4. 입력 검증
-        final = ""
-        with suppress(Exception):
-            final = el.input_value(timeout=1500) or ""
-
-        if final != value:
-            _log.warning("[naver-auth] %s 입력 검증 실패 (기대=%d자, 실제=%d자)", label, len(value), len(final))
-            return {"ok": False, "action": action, "before": current, "after": final, "reason": "value_mismatch"}
-
-        _log.info("[naver-auth] %s 입력 완료 (%s, %d자)", label, action, len(value))
-        return {"ok": True, "action": action, "before": current, "after": final}
-
-    except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
-        _log.error("[naver-auth] %s 입력 실패: %s", label, e)
-        return {"ok": False, "action": "error", "reason": str(e)[:80]}
 
 
 def _redact_input_result(result: dict) -> dict:
@@ -362,13 +284,13 @@ def _wait_for_user_challenge(page, nid: str, wait_for_user_s: int) -> dict[str, 
 
 def _fill_login_form(page, nid: str, pw: str) -> dict[str, Any] | None:
     """아이디·비밀번호 칸 입력(브라우저 자동 채우기 값은 지우고 다시 입력). 성공이면 None, 실패면 오류 결과."""
-    id_result = _safe_human_input(page, "#id", nid, label="ID", delay_ms=70)
+    id_result = safe_human_input(page, "#id", nid, label="ID", delay_ms=70, click_timeout_ms=_INPUT_CLICK_TIMEOUT_MS)
     if not id_result["ok"]:
         _log.error("[naver-auth] ID 입력 실패: %s", id_result.get("reason"))
         return {"ok": False, "reason": f"id_input_failed:{id_result.get('reason', 'unknown')}", "id_result": id_result}
     time.sleep(0.6)
 
-    pw_result = _safe_human_input(page, "#pw", pw, label="PW", delay_ms=80)
+    pw_result = safe_human_input(page, "#pw", pw, label="PW", delay_ms=80, click_timeout_ms=_INPUT_CLICK_TIMEOUT_MS)
     if not pw_result["ok"]:
         _log.error("[naver-auth] PW 입력 실패: %s", pw_result.get("reason"))
         return {
