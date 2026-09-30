@@ -188,7 +188,7 @@ def test_health_endpoint_unchanged():
     """GET /health 응답이 기존 {"status":"ok","service":...} 구조를 유지한다."""
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     client = TestClient(app, raise_server_exceptions=False)
     r = client.get("/api/v1/health")

@@ -119,7 +119,7 @@ class Resolver:
         return [], "external"
 
     def resolve_dotted(self, rel: str, dotted: str) -> list[str]:
-        """문자열 속 점표기(scripts.x.y, ai_orchestrator.server:app) → 내부 모듈 파일(루트 기준만)."""
+        """문자열 속 점표기(scripts.x.y, ai_orchestrator.asgi:app) → 내부 모듈 파일(루트 기준만)."""
         if dotted.split(".")[0] in STDLIB:
             return []
         f = self._module_file("", dotted)

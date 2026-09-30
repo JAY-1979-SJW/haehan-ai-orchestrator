@@ -110,7 +110,7 @@ class TestBackendInvariant:
     def test_endpoint_count_63(self):
         from fastapi.routing import APIRoute, APIWebSocketRoute
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         assert len(routes) == 63
@@ -118,7 +118,7 @@ class TestBackendInvariant:
     def test_post_count_27(self):
         from fastapi.routing import APIRoute
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         posts = [r for r in app.routes if isinstance(r, APIRoute) and "POST" in (r.methods or set())]
         assert len(posts) == 27

@@ -31,7 +31,7 @@ def _classify(blob: str) -> str:
 
 
 def _get_app():
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     return app
 

@@ -838,7 +838,7 @@ class TestNoContractBreak:
         """runtime endpoint 수가 60개로 변경되지 않았다."""
         from fastapi.routing import APIRoute, APIWebSocketRoute
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         # APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63
@@ -848,7 +848,7 @@ class TestNoContractBreak:
         """health endpoint 응답 구조가 변경되지 않았다."""
         from fastapi.testclient import TestClient
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         client = TestClient(app, raise_server_exceptions=False)
         r = client.get("/api/v1/health")

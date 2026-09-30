@@ -2,6 +2,7 @@
 
 로그·감사 화면 read-only 정책 준수 및 보안 경계 검증.
 """
+
 import sys
 from pathlib import Path
 
@@ -242,27 +243,35 @@ class TestSecurity:
 class TestApiContract:
     def test_ops_audit_events_200(self):
         from fastapi.testclient import TestClient
-        from ai_orchestrator.server import app
+
+        from ai_orchestrator.asgi import app
+
         client = TestClient(app, raise_server_exceptions=False)
         r = client.get("/api/v1/ops/audit-events")
         assert r.status_code == 200
 
     def test_ops_summary_200(self):
         from fastapi.testclient import TestClient
-        from ai_orchestrator.server import app
+
+        from ai_orchestrator.asgi import app
+
         client = TestClient(app, raise_server_exceptions=False)
         r = client.get("/api/v1/ops/summary")
         assert r.status_code == 200
 
     def test_endpoint_count_still_63(self):
-        from ai_orchestrator.server import app
         from fastapi.routing import APIRoute, APIWebSocketRoute
+
+        from ai_orchestrator.asgi import app
+
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         assert len(routes) == 63
 
     def test_no_new_post_endpoint(self):
-        from ai_orchestrator.server import app
         from fastapi.routing import APIRoute
+
+        from ai_orchestrator.asgi import app
+
         # 기존 POST 27개 — logs 공정 추가로 증가 없음 확인
         posts = [r for r in app.routes if isinstance(r, APIRoute) and "POST" in (r.methods or set())]
         assert len(posts) == 27

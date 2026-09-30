@@ -14,7 +14,7 @@ def _discover_server_base_url() -> str:
     """서버 base URL 결정 우선순위(2026-09-30, defect_index #18 근본 대책):
     1) HAEHAN_AGENT_SERVER 환경변수 — 명시적 지정은 항상 최우선 존중.
     2) data/runtime/server_info.json — 실제로 지금 뜬 FastAPI 서버가 자기 자신의
-       host:port를 기록해둔 자동탐지 파일(ai_orchestrator/server.py lifespan 에서 기록).
+       host:port를 기록해둔 자동탐지 파일(ai_orchestrator/asgi.py lifespan 에서 기록).
        포트 충돌로 다른 포트에 뜨거나 여러 인스턴스가 떠 있어도 하드코딩 없이 찾아간다.
     3) 위 둘 다 없으면 기존 하드코딩 기본값(8401)으로 폴백 — 완전히 새 환경(서버를 아직
        한 번도 안 띄워본 상태)에서도 동작해야 하므로 폴백 자체는 유지한다.

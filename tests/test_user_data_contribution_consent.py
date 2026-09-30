@@ -1,4 +1,5 @@
 """Consent-gated development material export contract."""
+
 from __future__ import annotations
 
 import json
@@ -6,8 +7,8 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
+from ai_orchestrator.asgi import app
 from ai_orchestrator.server import user_data_contribution_store as store
-from ai_orchestrator.server import app
 
 
 @pytest.fixture(autouse=True)
