@@ -37,6 +37,7 @@ AUTO_PUBLISH_BLOCKERS = {
     "mode_draft_only": "규칙이 draft_only 이거나 승인이 없음/무효(규칙이 승인 뒤 수정됨)",
     "account_not_auto_publish": "이 계정은 자동 발행 대상이 아님(사람 검수 필요)",
     "research_not_fresh": "리서치가 없거나 30일을 넘어 주제를 검증할 수 없음",
+    "local_draft_run": "네이버에 접근하지 않는 로컬 초안 실행(발행 불가)",
 }
 
 
@@ -124,18 +125,26 @@ class RunDecision:
     publish_blockers: tuple[str, ...]  # run 은 되지만 발행은 막는 이유
 
 
-def _run_blockers(rule: Rule, ctx: RunContext, slot: str | None) -> list[str]:
+def _naver_blockers(ctx: RunContext) -> list[str]:
+    """네이버에 접근하는 실행의 사전 조건 — 로그인이 확인돼야 하고 대상 계정과 일치해야 한다."""
+    blockers: list[str] = []
+    if ctx.login_state != "in":
+        blockers.append(f"login_{ctx.login_state}")
+    if ctx.blog_alias_matches is not True:
+        blockers.append("blog_account_mismatch" if ctx.blog_alias_matches is False else "blog_account_unknown")
+    return blockers
+
+
+def _run_blockers(rule: Rule, ctx: RunContext, slot: str | None, *, scheduled: bool, uses_naver: bool) -> list[str]:
     blockers: list[str] = []
     if rule.paused:
         blockers.append("paused")
     if consecutive_failures(ctx.history, rule.id) >= MAX_CONSECUTIVE_FAILURES:
         blockers.append("auto_paused_failures")
-    if slot is None:
+    if scheduled and slot is None:
         blockers.append("not_due")
-    if ctx.login_state != "in":
-        blockers.append(f"login_{ctx.login_state}")
-    if ctx.blog_alias_matches is not True:
-        blockers.append("blog_account_mismatch" if ctx.blog_alias_matches is False else "blog_account_unknown")
+    if uses_naver:
+        blockers += _naver_blockers(ctx)
     if not ctx.claude_available:
         blockers.append("claude_unavailable")
     if rule.use_research and not _research_fresh(ctx):
@@ -170,12 +179,27 @@ def _publish_blockers(rule: Rule, ctx: RunContext, auto_publish_blog_ids: frozen
 
 
 def evaluate_run(
-    rule: Rule, ctx: RunContext, *, auto_publish_blog_ids: frozenset[str] = AUTO_PUBLISH_BLOG_IDS
+    rule: Rule,
+    ctx: RunContext,
+    *,
+    auto_publish_blog_ids: frozenset[str] = AUTO_PUBLISH_BLOG_IDS,
+    scheduled: bool = True,
+    uses_naver: bool = True,
 ) -> RunDecision:
-    """이 규칙을 지금 실행해도 되는지, 실행하면 발행까지 가도 되는지 판정한다."""
+    """이 규칙을 지금 실행해도 되는지, 실행하면 발행까지 가도 되는지 판정한다.
+
+    scheduled=False: 사용자가 "지금 실행"을 눌렀을 때 — 예정 시각을 보지 않는다.
+    uses_naver=False: 네이버에 접근하지 않는 실행(로컬 초안 생성) — 로그인 조건을 보지 않고, 발행은 항상 막는다.
+    한도·간격·일시정지·연속 실패·Claude·리서치 조건은 어느 경우에도 그대로 적용한다.
+    """
     slot = due_slot(rule, ctx.now, ctx.history)
-    blockers = [*_run_blockers(rule, ctx, slot), *_limit_blockers(rule, ctx)]
+    blockers = [
+        *_run_blockers(rule, ctx, slot, scheduled=scheduled, uses_naver=uses_naver),
+        *_limit_blockers(rule, ctx),
+    ]
     publish_blockers = _publish_blockers(rule, ctx, auto_publish_blog_ids)
+    if not uses_naver:
+        publish_blockers.append("local_draft_run")
     run = not blockers
     return RunDecision(
         run=run,
@@ -299,6 +323,17 @@ def is_duplicate_or_pending(title: str, entries: Iterable[dict[str, Any]], key_f
         if entry.get("key") == key or str(entry.get("title", "")).strip().lower() == lowered:
             return True
     return False
+
+
+def is_topic_used(topic: str, history: Iterable[dict[str, Any]]) -> bool:
+    """이 주제(원문 문자열)로 이미 글을 만들었는가 — 초안 저장·발행 시도·발행 모두 포함.
+
+    초안만 만들고 발행하지 않은 주제를 다음 회차가 또 고르면 같은 주제 초안이 쌓이므로,
+    사용자가 초안을 버리거나 발행하기 전까지는 그 주제를 다시 쓰지 않는다. 실패(failed)는 재시도 허용.
+    """
+    wanted = topic.strip().lower()
+    used = DEDUP_STATUSES | {"draft_saved"}
+    return any(e.get("status") in used and str(e.get("topic", "")).strip().lower() == wanted for e in history)
 
 
 def stale_pending(

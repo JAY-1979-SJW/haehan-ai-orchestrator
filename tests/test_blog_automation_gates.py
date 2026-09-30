@@ -232,6 +232,31 @@ def test_user_only_rule_with_stale_research_drafts_but_does_not_publish():
     assert "research_not_fresh" in decision.publish_blockers
 
 
+def test_manual_local_draft_run_ignores_schedule_and_login_but_never_publishes():
+    """ "지금 실행"(로컬 초안): 예정 시각·로그인을 보지 않고, 발행은 항상 막는다."""
+    off_schedule = ctx(now=datetime(2026, 10, 6, 15, 0), login_state="out", blog_alias_matches=None)
+    decision = G.evaluate_run(approved(), off_schedule, scheduled=False, uses_naver=False)
+    assert decision.run and not decision.publish
+    assert decision.publish_blockers[-1] == "local_draft_run"
+
+
+def test_manual_run_still_honors_pause_limits_claude_and_research():
+    r = approved()
+    assert "paused" in G.evaluate_run(replace(r, paused=True), ctx(), scheduled=False, uses_naver=False).blockers
+    assert (
+        "claude_unavailable"
+        in G.evaluate_run(r, ctx(claude_available=False), scheduled=False, uses_naver=False).blockers
+    )
+    assert "research_stale" in G.evaluate_run(r, ctx(research_age_days=99), scheduled=False, uses_naver=False).blockers
+    today = (entry("draft_saved", MONDAY_9_03 - timedelta(hours=1), slot="a"),)
+    assert "daily_limit" in G.evaluate_run(r, ctx(history=today), scheduled=False, uses_naver=False).blockers
+
+
+def test_scheduled_run_with_naver_default_is_unchanged():
+    decision = G.evaluate_run(approved(), ctx(login_state="out"))
+    assert "login_out" in decision.blockers
+
+
 # ── 주제 검증·선정 ───────────────────────────────────────────────────────
 
 RESEARCH = {
@@ -351,6 +376,20 @@ def test_duplicate_counts_published_and_pending_but_not_failed():
 
 def test_duplicate_matches_by_title_case_insensitive_even_without_key():
     assert G.is_duplicate_or_pending(" Hello ", [{"status": "published", "title": "hello"}], key_fn)
+
+
+def test_topic_used_after_draft_publish_or_attempt_but_not_after_failure():
+    history = [
+        entry("draft_saved", MONDAY_9_03, slot="a", topic="초안 주제"),
+        entry("pending", MONDAY_9_03, slot="b", topic="시도 주제"),
+        entry("published", MONDAY_9_03, slot="c", topic="발행 주제"),
+        entry("failed", MONDAY_9_03, slot="d", topic="실패 주제"),
+        entry("skipped", MONDAY_9_03, slot="e", topic="건너뜀 주제"),
+    ]
+    for used in ("초안 주제", "시도 주제", "발행 주제", "  발행 주제 "):
+        assert G.is_topic_used(used, history)
+    for free in ("실패 주제", "건너뜀 주제", "없는 주제"):
+        assert not G.is_topic_used(free, history)
 
 
 def test_stale_pending_flags_only_old_pending():

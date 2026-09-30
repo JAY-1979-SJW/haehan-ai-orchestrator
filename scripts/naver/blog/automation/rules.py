@@ -61,6 +61,11 @@ class Rule:
 # ── 검증 ─────────────────────────────────────────────────────────────────
 
 
+def is_valid_rule_id(rule_id: Any) -> bool:
+    """규칙 id 는 파일 이름으로 쓰인다 — 경로 문자가 들어간 값은 어디서든 거부한다."""
+    return isinstance(rule_id, str) and bool(_ID_RE.match(rule_id))
+
+
 def _is_int(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
@@ -170,7 +175,7 @@ def _check_approval(approval: Any) -> list[str]:
 def _check_identity(data: dict[str, Any], known_blog_ids: frozenset[str] | None) -> list[str]:
     errors: list[str] = []
     rule_id, name, blog_id = data.get("id"), data.get("name"), data.get("blog_id", DEFAULT_BLOG_ID)
-    if not (isinstance(rule_id, str) and _ID_RE.match(rule_id)):
+    if not is_valid_rule_id(rule_id):
         errors.append("id 는 영문·숫자·_·- 1~64자(파일 이름으로 쓰임)")
     if not (isinstance(name, str) and name.strip() and len(name) <= 80):
         errors.append("name 은 1~80자 문자열")
