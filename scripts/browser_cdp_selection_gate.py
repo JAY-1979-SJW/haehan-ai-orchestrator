@@ -532,6 +532,38 @@ def _parse_ports(raw: str) -> list[int]:
     return out
 
 
+def _pick_naver_session_when_readonly_mixed(
+    selection: SelectionReport,
+    sessions: Iterable[CdpSession],
+) -> CdpSession | None:
+    """읽기 전용이면 네이버 페이지가 섞여 있는 세션도 허용할 때, 네이버 페이지가 있는 세션을 고른다."""
+    if selection.code != CODE_MIXED_DOMAIN_SESSION:
+        return None
+    for session in sessions:
+        if any("naver.com" in page.host for page in session.pages):
+            return session
+    return None
+
+
+def select_naver_session(
+    *,
+    sessions: Iterable[CdpSession] | None = None,
+    allow_mixed_readonly: bool = False,
+) -> tuple[CdpSession | None, SelectionReport]:
+    """네이버 작업에 쓸 CDP 세션을 고른다(카페·메일 백그라운드 러너 공용 — 예전엔 두 러너에 복사돼 있었다)."""
+    discovered = list(sessions) if sessions is not None else discover_sessions()
+    selection = evaluate_sessions("naver", discovered)
+    if selection.ok and selection.selected_port is not None:
+        for session in discovered:
+            if session.port == selection.selected_port:
+                return session, selection
+    if allow_mixed_readonly:
+        mixed_session = _pick_naver_session_when_readonly_mixed(selection, discovered)
+        if mixed_session is not None:
+            return mixed_session, selection
+    return None, selection
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Select a running CDP session by task domain.")
     parser.add_argument("--task", required=True, choices=sorted(TASK_DOMAIN_GROUPS))
