@@ -1,24 +1,17 @@
-# server package
-# server.py(FastAPI app)가 server/ 패키지로 가려진 문제를 해소한다.
+# server 패키지 — 서버 보조 모듈(작업 큐·정책·스토어) 모음.
+# FastAPI 앱 본체는 ai_orchestrator/asgi.py 에 있다. 기존 진입점 표기
+# `ai_orchestrator.server:app` 은 그대로 동작하도록 여기서 lazy 로 넘겨준다.
 #
-# 기존 즉시 로딩 방식은 다음 순환 import를 유발했다:
+# 즉시 import 하지 않는 이유(순환 방지):
 #   router.py → action_router.py → server/action_task_api.py
-#   → server/__init__.py (server.py 즉시 실행)
-#   → server.py → from .router import router (아직 초기화 중) → ImportError
-#
-# __getattr__로 lazy load하여 순환 import를 방지한다.
-# from ai_orchestrator.server import app 패턴은 그대로 동작한다.
-import importlib.util as _ilu
-import pathlib as _pl
+#   → server/__init__.py → (즉시) asgi.py → from .router import router (초기화 중) → ImportError
+# 앱은 실제로 `app` 을 요청받을 때 처음 불러온다.
 
 
 def __getattr__(name: str):
     if name == "app":
-        _server_py = _pl.Path(__file__).parent.parent / "server.py"
-        _spec = _ilu.spec_from_file_location("ai_orchestrator._server_module", _server_py)
-        _mod = _ilu.module_from_spec(_spec)
-        _spec.loader.exec_module(_mod)
-        # 이후 접근 시 __getattr__ 재호출 없이 바로 반환되도록 캐시
-        globals()["app"] = _mod.app
-        return _mod.app
+        from ai_orchestrator.asgi import app
+
+        globals()["app"] = app  # 이후 접근은 __getattr__ 없이 바로 반환
+        return app
     raise AttributeError(f"module 'ai_orchestrator.server' has no attribute {name!r}")
