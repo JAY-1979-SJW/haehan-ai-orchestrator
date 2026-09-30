@@ -9,3 +9,8 @@ run_tests = false
 # 전수 확인한 결과 전부 테스트 더미 값('pw-owner', 'redacted' 등)·불리언/None 상수·공개 URL 이라
 # 실제 비밀값이 아니었다. 실제 비밀값 검사는 CI gitleaks 와 audit-kit std 의 SEC 규칙이 맡는다.
 bandit_promote = []
+
+# B008(함수 기본값 안의 함수 호출)은 FastAPI 의존성 주입 표준 패턴(Depends/require_role/File/Body)이라
+# 2026-09-30 이 앱 468건 전수 확인 결과 전부 오탐. 프로젝트 ruff 설정(configs/ruff.toml)도 같은 이유로 제외 중.
+# 아래 목록은 audit-kit 기본값(E1,E2,E3,E5,W,I,N,D,Q,COM)에 B008 만 더한 것 — 기본값을 덮어쓰므로 유지할 것.
+ruff_ignore = ["E1", "E2", "E3", "E5", "W", "I", "N", "D", "Q", "COM", "B008"]
