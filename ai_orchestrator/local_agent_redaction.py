@@ -123,6 +123,12 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset(
         "cleanup",
         # browser.open_type_close_controlled result metadata
         "lifecycle",
+        # run_claude_agent result metadata (2026-09-30, 대화 이어가기/비용 표시용)
+        # — session_id는 자격증명이 아니라 Claude Code 대화 연속성 식별자(claude -r 재사용),
+        #   cost_usd/num_turns는 UI 비용 표시용. 전부 credential/PII 아님.
+        "session_id",
+        "cost_usd",
+        "num_turns",
     }
 )
 

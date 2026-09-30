@@ -9,6 +9,7 @@ from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 from ai_orchestrator.routers.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
 from ai_orchestrator.routers.auth_router import auth_router
+from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
 from ai_orchestrator.routers.ops_router import ops_router
 from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router
@@ -98,6 +99,7 @@ router.include_router(hiworks_mail_router)  # hiworks mail inbox/compose/send
 router.include_router(eum_router)  # EUM 신규현장 수집 + 영업메일(하이웍스 발송)
 router.include_router(gmail_router)  # gmail inbox/collect/compose/send
 router.include_router(ai_agent_router)  # AI 에이전트 실행(run_claude_agent 자동 dispatch)
+router.include_router(chat_router)  # AI 채팅 대화기록 CRUD(사용자 지시 '대화기록 저장')
 router.include_router(ops_router)  # read-only ops center API
 router.include_router(
     app_status_router
