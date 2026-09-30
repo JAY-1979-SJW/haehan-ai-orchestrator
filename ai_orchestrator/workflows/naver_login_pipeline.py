@@ -101,48 +101,16 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
             return _fail(f"CDP 브라우저 시작 실패: {e}")
 
     # ── Step 2: 브라우저 연결 ────────────────────────────────────────────────
-    try:
-        from playwright.sync_api import sync_playwright
-
-        pw = sync_playwright().start()
-        browser = pw.chromium.connect_over_cdp(f"http://{CDP_HOST}:{CDP_PORT}")
-
-        ctx = None
-        for _ in range(10):
-            if browser.contexts:
-                ctx = browser.contexts[0]
-                break
-            time.sleep(1)
-
-        if not ctx:
-            pw.stop()
-            return _fail("브라우저 컨텍스트 없음")
-
-        page = ctx.pages[0] if ctx.pages else ctx.new_page()
-
-    except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
-        return _fail(f"브라우저 연결 실패: {e}")
+    pw, page, err = _connect_page()
+    if err:
+        return err
 
     # ── Step 3: 현재 로그인 상태 확인 (계정 전환 요청이면 건너뜀) ──────────────
     if not naver_id:
-        try:
-            from scripts.login_detector import detect_login_state
-
-            current = detect_login_state(page)
-            if current.get("logged_in"):
-                user = current.get("user")
-                log.info("[naver_login_pipeline] 이미 로그인됨: %s — 세션 저장", user)
-                _save_browser_session(page)
-                _save_status({"logged_in": True, "user": user, "checked_at": _now(), "source": "existing"})
-                pw.stop()
-                return {
-                    "ok": True,
-                    "logged_in": True,
-                    "user": user,
-                    "message": f"이미 로그인됨: {user} — 세션 저장 완료",
-                }
-        except Exception:  # noqa: S110, BLE001
-            pass
+        early = _check_existing_login(page)
+        if early:
+            pw.stop()
+            return early
 
     # ── Step 4: 네이버 로그인 ────────────────────────────────────────────────
     try:
@@ -153,50 +121,7 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
         pw.stop()
         return _fail(f"로그인 함수 오류: {e}")
 
-    logged_in = bool(result and result.get("ok"))
-    user = result.get("user") if result else None
-
-    # CAPTCHA — 세션 저장 불가, 대기 상태 기록
-    if not logged_in and result and result.get("captcha_required"):
-        _save_status({"logged_in": False, "user": None, "checked_at": _now(), "pending_captcha": True})
-        pw.stop()
-        return {
-            "ok": False,
-            "logged_in": False,
-            "user": None,
-            "captcha": True,
-            "message": "CAPTCHA/2FA 감지 — 브라우저에서 직접 완료 후 다시 실행하세요",
-        }
-
-    # ── Step 5: 세션 저장 (로그인 성공 시 최우선) ─────────────────────────────
-    if logged_in:
-        try:
-            _save_browser_session(page)
-            log.info("[naver_login_pipeline] 브라우저 세션 저장 완료: data/sessions/naver.com.json")
-        except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
-            log.warning("[naver_login_pipeline] 브라우저 세션 저장 실패: %s", e)
-
-    # ── Step 6: 상태 메타 저장 ────────────────────────────────────────────────
-    status = {
-        "logged_in": logged_in,
-        "user": user,
-        "checked_at": _now(),
-        "source": "login",
-        "browser_session_saved": logged_in and has_saved_browser_session(),
-    }
-    if not logged_in:
-        status["error"] = result.get("reason", "로그인 실패") if result else "로그인 실패"
-    _save_status(status)
-
-    log.info("[naver_login_pipeline] 완료: logged_in=%s user=%s", logged_in, user)
-    pw.stop()
-
-    return {
-        "ok": logged_in,
-        "logged_in": logged_in,
-        "user": user,
-        "message": f"로그인 성공, 세션 저장 완료: {user}" if logged_in else status.get("error", "로그인 실패"),
-    }
+    return _finish_login(pw, page, result)
 
 
 # ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
@@ -246,6 +171,105 @@ def _save_browser_session(page) -> None:
 def _save_status(state: dict) -> None:
     SESSION_STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
     SESSION_STATUS_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _connect_page():
+    """CDP 브라우저에 연결해 (playwright, page, 오류결과) 를 돌려준다. 성공 시 오류결과는 None."""
+    try:
+        from playwright.sync_api import sync_playwright
+
+        pw = sync_playwright().start()
+        browser = pw.chromium.connect_over_cdp(f"http://{CDP_HOST}:{CDP_PORT}")
+
+        ctx = None
+        for _ in range(10):
+            if browser.contexts:
+                ctx = browser.contexts[0]
+                break
+            time.sleep(1)
+
+        if not ctx:
+            pw.stop()
+            return None, None, _fail("브라우저 컨텍스트 없음")
+
+        return pw, (ctx.pages[0] if ctx.pages else ctx.new_page()), None
+
+    except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
+        return None, None, _fail(f"브라우저 연결 실패: {e}")
+
+
+def _finish_login(pw, page, result: dict | None) -> dict:
+    """로그인 결과 처리: CAPTCHA 대기 기록 → 세션 저장 → 상태 메타 저장 → 결과 반환."""
+    logged_in = bool(result and result.get("ok"))
+    user = result.get("user") if result else None
+
+    # CAPTCHA — 세션 저장 불가, 대기 상태 기록
+    if not logged_in and result and result.get("captcha_required"):
+        _save_status({"logged_in": False, "user": None, "checked_at": _now(), "pending_captcha": True})
+        pw.stop()
+        return {
+            "ok": False,
+            "logged_in": False,
+            "user": None,
+            "captcha": True,
+            "message": "CAPTCHA/2FA 감지 — 브라우저에서 직접 완료 후 다시 실행하세요",
+        }
+
+    # ── Step 5: 세션 저장 (로그인 성공 시 최우선) ─────────────────────────────
+    if logged_in:
+        try:
+            _save_browser_session(page)
+            log.info("[naver_login_pipeline] 브라우저 세션 저장 완료: data/sessions/naver.com.json")
+        except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
+            log.warning("[naver_login_pipeline] 브라우저 세션 저장 실패: %s", e)
+
+    # ── Step 6: 상태 메타 저장 ────────────────────────────────────────────────
+    status = {
+        "logged_in": logged_in,
+        "user": user,
+        "checked_at": _now(),
+        "source": "login",
+        "browser_session_saved": logged_in and has_saved_browser_session(),
+    }
+    if not logged_in:
+        status["error"] = result.get("reason", "로그인 실패") if result else "로그인 실패"
+    _save_status(status)
+
+    log.info("[naver_login_pipeline] 완료: logged_in=%s user=%s", logged_in, user)
+    pw.stop()
+
+    return {
+        "ok": logged_in,
+        "logged_in": logged_in,
+        "user": user,
+        "message": f"로그인 성공, 세션 저장 완료: {user}" if logged_in else status.get("error", "로그인 실패"),
+    }
+
+
+def _check_existing_login(page) -> dict | None:
+    """이미 로그인됨 → 성공 결과, 판정 불가(쿠키는 있는데 화면 근거 충돌) → 실패 결과, 그 외 None(로그인 진행)."""
+    try:
+        from scripts.login_detector import detect_login_state
+
+        current = detect_login_state(page)
+        if current.get("logged_in"):
+            user = current.get("user")
+            log.info("[naver_login_pipeline] 이미 로그인됨: %s — 세션 저장", user)
+            _save_browser_session(page)
+            _save_status({"logged_in": True, "user": user, "checked_at": _now(), "source": "existing"})
+            return {
+                "ok": True,
+                "logged_in": True,
+                "user": user,
+                "message": f"이미 로그인됨: {user} — 세션 저장 완료",
+            }
+        evidence = current.get("evidence") or {}
+        if current.get("state") == "unknown" and evidence.get("session_cookie") is True:
+            # 세션 쿠키는 있는데 화면 근거가 없거나 충돌 — 새로 로그인하면 기존 세션을 흔들 수 있어 멈추고 보고
+            return _fail(f"로그인 상태 확인 불가(세션 쿠키는 있으나 화면 근거 충돌): {evidence}")
+    except Exception:  # noqa: S110, BLE001 - 상태 확인 실패는 로그인 진행으로 넘김(종전 동작)
+        pass
+    return None
 
 
 def _fail(msg: str) -> dict:

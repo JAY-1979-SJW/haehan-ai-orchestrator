@@ -122,6 +122,8 @@ def score_selector(selector: str) -> tuple[int, str]:
 # 먼저 나온 역할이 우선한다(예: "임시저장" 이 "저장" 보다, "발행" 이 "등록" 류보다 먼저).
 _BUTTON_ROLES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("login", ("로그인", "sign in", "signin", "log in", "login")),
+    ("logout", ("로그아웃", "sign out", "signout", "log out", "logout")),
+    ("account", ("내정보", "내 정보", "내 블로그", "마이페이지", "my page", "mypage", "my account")),
     ("publish", ("발행", "게시", "공개", "publish")),
     ("save", ("임시저장", "저장", "save", "draft")),
     ("write", ("글쓰기", "작성", "새 글", "write", "compose")),
@@ -467,6 +469,39 @@ def analyze_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
         "page_state": classify_page_state(snapshot),
         "elements": elements,
         "summary": _summarize(elements),
+    }
+
+
+# ── 로그인 상태 근거(눈에 보이는 요소만) ──────────────────────────────────
+
+_SIGNAL_LABEL_MAX = 20  # 이보다 긴 라벨은 문장·캘린더 링크 등이라 로그인 버튼으로 세지 않는다
+
+
+def element_login_signals(analysis: dict[str, Any]) -> dict[str, Any]:
+    """분석 결과에서 로그인 상태 근거를 센다. 숨은 요소(visible=False)는 세지 않는다.
+
+    반환: {login_visible, in_visible, login_hidden, in_hidden, labels:{login,in}}
+    상태(in/out)를 확정하는 건 호출자 몫 — 쿠키 등 독립 신호와 합쳐 판단해야 하기 때문.
+    """
+    count = {"login": [0, 0], "in": [0, 0]}  # [보임, 숨김]
+    labels: dict[str, list[str]] = {"login": [], "in": []}
+    for el in analysis.get("elements", []):
+        if el.get("kind") not in ("button", "link"):
+            continue
+        role = el.get("role")
+        group = "login" if role == "login" else "in" if role in ("logout", "account") else ""
+        if not group or len(str(el.get("label", ""))) > _SIGNAL_LABEL_MAX:
+            continue
+        idx = 0 if el.get("visible") else 1
+        count[group][idx] += 1
+        if idx == 0 and len(labels[group]) < 3:
+            labels[group].append(str(el.get("label", "")))
+    return {
+        "login_visible": count["login"][0],
+        "in_visible": count["in"][0],
+        "login_hidden": count["login"][1],
+        "in_hidden": count["in"][1],
+        "labels": labels,
     }
 
 
