@@ -1300,6 +1300,42 @@ def action_cdp_run(params: dict) -> ActionResult:
         )
 
 
+def _build_claude_command(
+    *,
+    root: Path,
+    prompt: str,
+    max_budget_usd: float,
+    model: str,
+    resume_session_id: str,
+    allowed_tools: list[str],
+) -> list[str]:
+    """action_run_claude_agent()의 claude -p 커맨드 조립 — 분리 이유는 순수 가독성/복잡도
+    관리(C901)이며, 동작(옵션 순서·"--" 구분자 등)은 기존과 동일하게 유지한다.
+    """
+    cmd = [
+        "claude",
+        "-p",
+        "--mcp-config",
+        str(root / ".mcp.json"),
+        "--output-format",
+        "json",
+        "--max-budget-usd",
+        str(max_budget_usd),
+    ]
+    if model:
+        cmd += ["--model", model]
+    if resume_session_id:
+        cmd += ["--resume", resume_session_id]
+    if allowed_tools:
+        cmd += ["--allowedTools", ",".join(allowed_tools)]
+    # "--" 로 옵션 파싱을 끊는다: --allowedTools 는 실측상 다음 토큰들을 계속
+    # 도구 이름으로 먹어치우는 greedy 옵션이라(공식 --help의 "<tools...>" 표기와
+    # 일치), 구분자 없이 prompt를 바로 이어 붙이면 "prompt 인자가 없다" 오류가 난다
+    # (2026-09-28 실측 확인).
+    cmd += ["--", prompt]
+    return cmd
+
+
 def action_run_claude_agent(params: dict) -> ActionResult:
     """Claude Code를 헤드리스로 실행해 MCP(haehan-orchestrator)로 앱 작업을 시킨다.
 
@@ -1322,9 +1358,19 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         MCP 도구 호출은 전부 거부된다 — 이 액션의 호출자가 이번 작업에 실제로
         필요한 도구만 명시적으로 골라 넣어야 한다(--dangerously-skip-permissions
         같은 전체 우회는 쓰지 않음, 이 프로젝트 승인 원칙에 위배).
+      model         (str, 선택) — 공식 --model 플래그에 그대로 전달(별칭 "sonnet"/
+        "opus"/"haiku"/"fable" 또는 전체 모델명). 비우면 CLI 기본값 사용.
+      resume_session_id (str, 선택) — 공식 -r/--resume 플래그. 같은 대화의 후속
+        메시지에 이전 응답의 session_id를 넘기면 --system-prompt-snapshot(기본
+        on) 덕분에 시스템 프롬프트/CLAUDE.md 재렌더링 없이 이어서 답해 매 요청마다
+        수만 토큰을 새로 캐시 생성하던 지연을 줄인다(2026-09-30 실측: 콜드 스타트
+        cache_creation_input_tokens 36172 vs resume 시 캐시 재사용 — 공식 문서
+        code.claude.com/docs/en/cli-reference 확인, --help의 --system-prompt-snapshot
+        설명 "a resume sends the record as-is" 근거).
 
     반환:
       ActionResult.data = {"result": "...", "session_id": "...", "cost_usd": 0.0, "num_turns": N}
+      session_id는 다음 호출의 resume_session_id로 재사용할 수 있다.
     """
     prompt = str(params.get("prompt", "")).strip()
     if not prompt:
@@ -1346,24 +1392,18 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         raw_allowed_tools = [raw_allowed_tools]
     allowed_tools = [str(t).strip() for t in raw_allowed_tools if str(t).strip()]
 
+    model = str(params.get("model", "")).strip()
+    resume_session_id = str(params.get("resume_session_id", "")).strip()
+
     root = Path(__file__).parents[1]
-    cmd = [
-        "claude",
-        "-p",
-        "--mcp-config",
-        str(root / ".mcp.json"),
-        "--output-format",
-        "json",
-        "--max-budget-usd",
-        str(max_budget_usd),
-    ]
-    if allowed_tools:
-        cmd += ["--allowedTools", ",".join(allowed_tools)]
-    # "--" 로 옵션 파싱을 끊는다: --allowedTools 는 실측상 다음 토큰들을 계속
-    # 도구 이름으로 먹어치우는 greedy 옵션이라(공식 --help의 "<tools...>" 표기와
-    # 일치), 구분자 없이 prompt를 바로 이어 붙이면 "prompt 인자가 없다" 오류가 난다
-    # (2026-09-28 실측 확인).
-    cmd += ["--", prompt]
+    cmd = _build_claude_command(
+        root=root,
+        prompt=prompt,
+        max_budget_usd=max_budget_usd,
+        model=model,
+        resume_session_id=resume_session_id,
+        allowed_tools=allowed_tools,
+    )
 
     try:
         proc = subprocess.run(

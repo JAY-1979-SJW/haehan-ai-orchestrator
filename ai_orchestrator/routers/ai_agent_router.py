@@ -17,7 +17,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from .. import chat_sessions as _chat_store
 from .. import local_agent_registry as _reg
+from .. import mcp_tool_names as _tool_names
 from ..gates.auth import require_role
 
 ai_agent_router = APIRouter(prefix="/ai-agent", tags=["ai-agent"])
@@ -25,13 +27,8 @@ ai_agent_router = APIRouter(prefix="/ai-agent", tags=["ai-agent"])
 # 이 앱 자신의 MCP 도구(mcp_server.py, 설계문서 §5.3) — run_claude_agent가 기본으로 허용할
 # 화이트리스트. --allowedTools 없이는 claude -p 헤드리스에서 MCP 도구 호출이 전부 거부되므로
 # (설계문서 §5.1 실측 확인) 앱을 실제로 조작하려면 이 목록이 필요하다.
-_DEFAULT_ALLOWED_TOOLS = [
-    "mcp__haehan-orchestrator__list_api_endpoints",
-    "mcp__haehan-orchestrator__call_api",
-    "mcp__haehan-orchestrator__snapshot_page",
-    "mcp__haehan-orchestrator__act_on_page",
-    "mcp__haehan-orchestrator__navigate_page",
-]
+# 이름 정의는 mcp_tool_names.py 한 곳(삭제/설정 변경 도구는 제외 — 그 파일 RESTRICTED 참고).
+_DEFAULT_ALLOWED_TOOLS = _tool_names.qualified(_tool_names.DEFAULT_ALLOWED)
 
 
 class RunAgentRequest(BaseModel):
@@ -39,6 +36,8 @@ class RunAgentRequest(BaseModel):
     allowed_tools: list[str] | None = None  # None이면 기본 화이트리스트 사용
     timeout: int = 300
     max_budget_usd: float = 2.0
+    chat_id: str = ""  # 주어지면 그 세션의 claude_session_id로 --resume(대화 이어가기, 속도 개선)
+    model: str = ""  # 공식 --model 그대로 전달("sonnet"/"opus"/"haiku"/"fable" 또는 전체 모델명)
 
 
 @ai_agent_router.post("/run")
@@ -69,16 +68,27 @@ def run_agent(
     timeout = max(30, min(1800, body.timeout))
     max_budget = max(0.1, min(20.0, body.max_budget_usd))
 
+    params: dict = {
+        "prompt": prompt,
+        "allowed_tools": allowed_tools,
+        "timeout": timeout,
+        "max_budget_usd": max_budget,
+    }
+    if body.model.strip():
+        params["model"] = body.model.strip()
+    if body.chat_id:
+        # 같은 채팅의 이전 대화가 있으면 그 claude_session_id로 이어간다(--resume) —
+        # 공식 --system-prompt-snapshot 문서 근거로 콜드 스타트 지연을 줄인다
+        # (local_agent/actions.py::action_run_claude_agent 참고).
+        chat_session = _chat_store.get_session(body.chat_id)
+        if chat_session and chat_session.claude_session_id:
+            params["resume_session_id"] = chat_session.claude_session_id
+
     try:
         task = _reg.enqueue_task(
             agent_id=agent_id,
             action="run_claude_agent",
-            params={
-                "prompt": prompt,
-                "allowed_tools": allowed_tools,
-                "timeout": timeout,
-                "max_budget_usd": max_budget,
-            },
+            params=params,
             requested_by=user["actor"],
         )
     except _reg.UnknownActionError as e:
