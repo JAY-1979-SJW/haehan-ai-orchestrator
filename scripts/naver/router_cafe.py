@@ -1,4 +1,5 @@
 """네이버 카페/캘린더/마이박스 명령 핸들러"""
+
 from __future__ import annotations
 
 import json
@@ -6,13 +7,13 @@ import json
 from scripts.gate import check as gate_check
 
 from .router_common import (
-    _option_value,
-    _option_phrase,
     _flag,
     _int_option,
-    _save_latest,
-    _print_saved,
+    _option_phrase,
+    _option_value,
     _parse_datetime_arg,
+    _print_saved,
+    _save_latest,
 )
 
 
@@ -20,7 +21,6 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
     from datetime import datetime
     from pathlib import Path
 
-    from scripts.web_connector import get_page
     from scripts.naver.cafe import NaverCafe
     from scripts.naver.content import (
         APPROVAL_CONFIRM_TEXT,
@@ -28,6 +28,7 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
         save_cafe_submit_record,
         save_cafe_write_plan,
     )
+    from scripts.web_connector import get_page
 
     if sub in ("list", "cafes"):
         gate_check("scan_page")
@@ -116,8 +117,10 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
     if sub in ("join-submit", "join-approve"):
         from scripts.naver.cafe.join_request import APPROVAL_CONFIRM_TEXT
 
-        cafe_url = _option_value(args, "--cafe-url=") or _option_value(args, "--cafe=") or (
-            args[0] if args and not str(args[0]).startswith("--") else ""
+        cafe_url = (
+            _option_value(args, "--cafe-url=")
+            or _option_value(args, "--cafe=")
+            or (args[0] if args and not str(args[0]).startswith("--") else "")
         )
         approved = "--approved" in args
         confirm = _option_value(args, "--confirm=") or ""
@@ -157,8 +160,10 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
         from scripts.naver.cafe import list_background_runner
 
         strict_domain = "--strict-domain" in args
-        cafe_url = _option_value(args, "--cafe-url=") or _option_value(args, "--cafe=") or (
-            args[0] if args and not str(args[0]).startswith("--") else ""
+        cafe_url = (
+            _option_value(args, "--cafe-url=")
+            or _option_value(args, "--cafe=")
+            or (args[0] if args and not str(args[0]).startswith("--") else "")
         )
         if not cafe_url:
             raise SystemExit("cafe join-request requires --cafe-url=CAFE")
@@ -204,8 +209,10 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
         from scripts.naver.cafe import list_background_runner
 
         strict_domain = "--strict-domain" in args
-        cafe_url = _option_value(args, "--cafe-url=") or _option_value(args, "--cafe=") or (
-            args[0] if args and not str(args[0]).startswith("--") else "soho"
+        cafe_url = (
+            _option_value(args, "--cafe-url=")
+            or _option_value(args, "--cafe=")
+            or (args[0] if args and not str(args[0]).startswith("--") else "soho")
         )
         mode = "boards" if sub in ("boards", "collect-boards") or "--boards" in args else "home"
         report = list_background_runner.collect_joined_cafe_background(
@@ -252,8 +259,10 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
 
     if sub in ("read", "read-post", "post"):
         gate_check("scan_page")
-        post_url = _option_value(args, "--post-url=") or _option_value(args, "--url=") or (
-            args[0] if args and not str(args[0]).startswith("--") else ""
+        post_url = (
+            _option_value(args, "--post-url=")
+            or _option_value(args, "--url=")
+            or (args[0] if args and not str(args[0]).startswith("--") else "")
         )
         if not post_url:
             raise SystemExit("cafe read requires --post-url=URL")
@@ -264,11 +273,15 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
         return
 
     if sub not in ("write", "prepare-post", "publish"):
-        print("usage: python scripts/cdp_client.py naver cafe [list|home|topic-search|join-request|collect|boards|posts|read|write|publish] ...")
+        print(
+            "usage: python scripts/cdp_client.py naver cafe [list|home|topic-search|join-request|collect|boards|posts|read|write|publish] ..."
+        )
         return
 
     cafe_url = _option_value(args, "--cafe-url=") or ""
     board_no = _option_value(args, "--board-no=") or ""
+    # 새 글쓰기 구현(cafe/write/writer.py)은 게시판을 번호가 아니라 이름으로 고른다.
+    board_name = _option_value(args, "--board-name=") or ""
     title = _option_value(args, "--title=") or ""
     body = _option_value(args, "--body=") or ""
     dry_run = "--dry-run" in args
@@ -277,8 +290,10 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
     confirm = _option_value(args, "--confirm=") or ""
     approved_by = _option_value(args, "--approved-by=") or "operator"
 
-    if not cafe_url or not board_no or not title:
-        raise SystemExit("cafe write requires --cafe-url, --board-no, --title, and optional --body")
+    if not cafe_url or not (board_no or board_name) or not title:
+        raise SystemExit("cafe write requires --cafe-url, --board-name, --title, and optional --body")
+    if not dry_run and not board_name:
+        raise SystemExit("cafe write requires --board-name=게시판이름 (--board-no 만으로는 게시판을 고를 수 없음)")
     if publish and (not approved or confirm != APPROVAL_CONFIRM_TEXT):
         raise SystemExit(f"cafe publish requires --approved --confirm={APPROVAL_CONFIRM_TEXT}")
 
@@ -302,12 +317,17 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
         record = {**plan, "ok": True, "prepared": False, "published": False, "note": "dry-run only; no browser write"}
     else:
         page = get_page()
-        result = NaverCafe(page).write_post(cafe_url=cafe_url, board_no=board_no, title=title, body=body, send=publish)
+        # publish 는 위에서 --approved + 확인 문구를 통과한 경우에만 True — 그때만 승인 대기 없이 발행한다.
+        result = NaverCafe(page).write_post(
+            cafe_url=cafe_url, board_name=board_name, title=title, body=body, require_approval=not publish
+        )
+        ok = bool(result.get("ok"))
         record = {
             **plan,
-            "ok": bool(result.get("ok")),
-            "prepared": bool(result.get("ok")),
-            "published": result.get("mode") == "published",
+            "ok": ok,
+            "prepared": ok,
+            # 임시저장 경로는 mode=awaiting_approval, 직접 발행 성공은 {"ok": True, "url": ...}
+            "published": ok and publish and result.get("mode") != "awaiting_approval",
             "result": result,
         }
     path = save_cafe_submit_record(record)
@@ -318,8 +338,8 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
 def _cmd_calendar(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
-    from scripts.web_connector import get_page
     from scripts.naver.calendar import NaverCalendar
+    from scripts.web_connector import get_page
 
     if sub in ("list", "events"):
         gate_check("scan_page")
@@ -329,7 +349,9 @@ def _cmd_calendar(sub: str, args: list[str]) -> None:
         return
 
     if sub not in ("add", "prepare", "save"):
-        print("usage: python scripts/cdp_client.py naver calendar [list|add] --title=TITLE --start=ISO [--end=ISO] [--dry-run|--execute] [--save --approved --confirm=NAVER_APPROVED_SAVE]")
+        print(
+            "usage: python scripts/cdp_client.py naver calendar [list|add] --title=TITLE --start=ISO [--end=ISO] [--dry-run|--execute] [--save --approved --confirm=NAVER_APPROVED_SAVE]"
+        )
         return
 
     title = _option_value(args, "--title=") or ""
@@ -381,8 +403,8 @@ def _cmd_mybox(sub: str, args: list[str]) -> None:
     from datetime import datetime
     from pathlib import Path
 
-    from scripts.web_connector import get_page
     from scripts.naver.mybox import NaverMyBox
+    from scripts.web_connector import get_page
 
     if sub in ("list", "files"):
         gate_check("scan_page")
@@ -406,8 +428,10 @@ def _cmd_mybox(sub: str, args: list[str]) -> None:
         print("usage: python scripts/cdp_client.py naver mybox [list|search|upload] ...")
         return
 
-    local_path = _option_value(args, "--file=") or _option_value(args, "--path=") or (
-        args[0] if args and not str(args[0]).startswith("--") else ""
+    local_path = (
+        _option_value(args, "--file=")
+        or _option_value(args, "--path=")
+        or (args[0] if args and not str(args[0]).startswith("--") else "")
     )
     dry_run = _flag(args, "--dry-run") or not _flag(args, "--execute")
     approved = _flag(args, "--approved")
