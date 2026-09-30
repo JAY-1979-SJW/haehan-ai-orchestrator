@@ -326,8 +326,8 @@ def query_recent(op_name: str | None = None, limit: int = 50, status: str | None
             params.append(status)
         params.append(limit)
         rows = con.execute(
-            f"SELECT * FROM ops_log WHERE {' AND '.join(clauses)} ORDER BY id DESC LIMIT ?",
-            params,  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+            f"SELECT * FROM ops_log WHERE {' AND '.join(clauses)} ORDER BY id DESC LIMIT ?",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+            params,
         ).fetchall()
         con.close()
         return [dict(r) for r in rows]

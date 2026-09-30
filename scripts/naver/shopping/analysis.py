@@ -128,8 +128,8 @@ def search_products(
         order_sql = _SORT_MAP.get(sort, "collected_at DESC")
 
         total_row = conn.execute(
-            f"SELECT COUNT(*) FROM {TABLE}{where_sql}",
-            tuple(params),  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+            f"SELECT COUNT(*) FROM {TABLE}{where_sql}",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+            tuple(params),
         ).fetchone()
         total = int(total_row[0]) if total_row else 0
 
@@ -354,8 +354,8 @@ def competition_score(keyword: str) -> dict:
 
     try:
         row = conn.execute(
-            f"SELECT COUNT(*) FROM {TABLE} WHERE query = ?",
-            (keyword,),  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+            f"SELECT COUNT(*) FROM {TABLE} WHERE query = ?",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+            (keyword,),
         ).fetchone()
         kw_count = int(row[0]) if row else 0
 
@@ -377,8 +377,8 @@ def competition_score(keyword: str) -> dict:
             std_price = 0.0
 
         row = conn.execute(
-            f"SELECT COUNT(DISTINCT mall_name) FROM {TABLE} WHERE query = ?",
-            (keyword,),  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+            f"SELECT COUNT(DISTINCT mall_name) FROM {TABLE} WHERE query = ?",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+            (keyword,),
         ).fetchone()
         kw_malls = int(row[0]) if row else 0
 
