@@ -1,6 +1,6 @@
-# 페이지 구조 분석 계층 기준서 v2 (신규 화면 대응 — HTML 탐색·분석 보완)
+# 페이지 구조 분석 계층 기준서 v3 (신규 화면 대응 — HTML 탐색·분석 보완)
 
-작성: 2026-09-30 · v2 개정(신규 화면 대응 확대) · 상태: **승인 대기 (코드 미작성)** · 범위: A~C 단계(§3)
+작성: 2026-09-30 · v3 개정(중복 확인 결과·레이어 규칙 반영) · 상태: **승인 대기 (코드 미작성)** · 범위: A~C 단계(§3)
 
 ## 1. 배경과 목적
 
@@ -35,13 +35,36 @@
 | 위험 동작 표시 없음 | 버튼 위험도 분류 없음 | 결제·삭제·발행을 자동으로 누를 위험 |
 | 동적 로딩 대응 없음 | 즉시 1회 추출 | 스피너 중 추출하면 빈 화면 |
 
+### 2-2. 중복 확인 결과와 재사용 결정 (v3 추가 — `projects/CLAUDE.md` §1 준수)
+
+`dup-checker` 서브에이전트 조사 후, 재사용 후보 3곳은 **직접 열어 사실 확인**했다.
+
+| 기능 | 기존 구현 (확인) | 결정 |
+|---|---|---|
+| 셀렉터 안정성 점수 | 없음(`selector_health/core.py` 는 존재·가시성만) | **새로 작성** |
+| 요소 역할 분류(버튼/링크) | 입력칸 전용 `scripts/form/discovery.py::_ROLE_KEYWORDS`(L1), 버튼 전용 없음 | **새로 작성**, 키워드 구조는 참고 |
+| 위험 버튼 분류 | `ai_orchestrator/local_agent/generic_selector_discovery.py::_RISK_BUTTON_KEYWORDS`(L4, 14개 항목: 결제·서명·입찰·송금·이체·계약 제출·최종 제출·삭제) | **재사용(import)**. 없는 범주(발행·전송·탈퇴)는 이 목록을 확장하지 않고 우리 쪽에서 **추가 키워드로 덧붙임**(기존 모듈 수정 없음) |
+| 로그인/캡차 상태 판정 | `local_agent/login_state_detector.py::classify(url, title, body_sample, ...)` — 순수 함수, LOGIN_REQUIRED·CHALLENGE_REQUIRED·LOGGED_IN·SESSION_EXPIRED·POPUP_WAITING 등 판정 (**L10**) | 아래 레이어 문제로 **직접 import 불가** → 아래 결정 |
+| 권한 없음(permission_denied) | 없음 | **새로 작성** |
+| 팝업 판정 | `scripts/popup_detector.py`(페이지 필요), 우리는 스냅샷 기반 | 새로 작성(스냅샷 입력) |
+
+**레이어 제약(실측):** `module_registry.json` 기준 L4 는 L1·L2·L3·L4·L7 만 import 할 수 있다. `login_state_detector.py` 는 **L10**(로컬 에이전트)이라
+L4 인 `scripts/explorer/page_analysis.py` 가 직접 import 하면 역방향 import(`FORBIDDEN_IMPORT`)다.
+
+**결정 (택1 — 사용자 승인 사항):**
+- **(가) 권장:** 이번에는 상태 판정 중 로그인/캡차 부분을 **새로 쓰지 않고 판정 결과 어휘만 맞춘다**. `page_analysis` 는 `page_state` 를
+  `login_required / captcha / permission_denied / popup_blocking / ok / unknown` 으로 내되, 로그인·캡차는 단순 규칙(URL 패턴·비밀번호 입력칸·문구)만 쓰고,
+  **L10 의 정교한 판정은 호출하는 쪽(L10/L6)에서 `classify()` 결과와 합치도록** 남긴다. 중복은 규칙 범위 최소화로 억제한다.
+- (나) `classify()` 의 URL·문구 패턴 상수(`LOGIN_HOST_HINTS`, `CHALLENGE_TEXT_PATTERNS` 등)를 L1(공용 계약)로 옮겨 양쪽이 import.
+  중복은 없어지나 **기존 파일 수정**이며 파급이 커서(L10 모듈 변경, 관련 테스트 다수) 별도 기준서로 분리하는 것을 권장.
+
 ## 3. 변경 범위
 
 레이어: **L4 Browser Engine (범용)**, 신규 파일 위치 `scripts/explorer/`. 기존 파일은 수정하지 않는다.
 
 | 파일 | 변경 |
 |---|---|
-| `scripts/explorer/page_analysis.py` (신규) | 스냅샷 dict → 분석 dict. **순수 함수**(브라우저·네트워크·파일 쓰기 없음) |
+| `scripts/explorer/page_analysis.py` (신규) | 스냅샷 dict → 분석 dict. **순수 함수**(브라우저·네트워크·파일 쓰기 없음). import: `ai_orchestrator.local_agent.generic_selector_discovery._RISK_BUTTON_KEYWORDS`(L4→L4, 허용) |
 | `tests/test_page_analysis.py` (신규) | 합성 스냅샷과 실제 깨진 셀렉터 사례로 검증. 브라우저 불필요 |
 | `configs/module_registry.json` | 신규 파일 등록(게이트 요구) |
 
@@ -112,12 +135,12 @@ Playwright 1.63 은 `get_by_role / get_by_label / get_by_test_id / get_by_text /
 - 근거(`evidence`)는 어떤 규칙으로 판정했는지만 기록하고, **입력값·텍스트 원문 전체를 저장하지 않는다**(문구 키워드만).
 
 ### 4.4-1 위험 동작 분류 (C단계)
-버튼·링크·폼 제출 요소의 텍스트/aria/id/name 을 한국어·영어 키워드 사전으로 분류해 `risk` 를 붙인다.
+버튼·링크·폼 제출 요소의 텍스트/aria/id/name 을 분류해 `risk` 를 붙인다. **기존 `_RISK_BUTTON_KEYWORDS`(결제·서명·입찰·송금·이체·계약 제출·삭제)를 import 해 그대로 쓰고**, 그 목록에 없는 `publish`·`send`·탈퇴 류만 이 모듈의 추가 사전으로 덧붙인다.
 
 | 위험 | 키워드 예 | 이 프로젝트 정책과의 연결 |
 |---|---|---|
-| `payment` | 결제, 구매, 주문하기, 송금, pay, purchase | 결제·과금은 항상 사용자 확인 |
-| `destructive` | 삭제, 탈퇴, 해지, 초기화, delete, remove | 데이터 삭제는 승인 후 |
+| `payment` | 기존: 결제·pay·송금·이체 / 추가: 구매, 주문하기, purchase | 결제·과금은 항상 사용자 확인 |
+| `destructive` | 기존: 삭제 / 추가: 탈퇴, 해지, 초기화, delete, remove | 데이터 삭제는 승인 후 |
 | `publish` | 발행, 게시, 등록, 공개, publish, post | 외부 공개 발행은 매번 재확인 |
 | `send` | 전송, 발송, 보내기, send, submit | 메일·메시지 전송은 매번 재확인 |
 | `safe` | 그 외 | |
@@ -166,5 +189,5 @@ Playwright 1.63 은 `get_by_role / get_by_label / get_by_test_id / get_by_text /
 롤백: 신규 파일 3개 삭제(다른 파일 미수정).
 
 ## 8. 승인 요청
-A→B→C 순서로 진행한다. **A단계**(`page_analysis.py` + 테스트 + 레지스트리 등록, 순수 함수)부터 승인을 요청하고,
+**§2-2 의 (가)/(나) 중 선택**과 함께, A→B→C 순서로 진행한다. **A단계**(`page_analysis.py` + 테스트 + 레지스트리 등록, 순수 함수)부터 승인을 요청하고,
 A 완료·검증 후 B(수집 강화, 실측)와 C(위험 분류)는 각각 결과를 보고 다시 승인받는다.
