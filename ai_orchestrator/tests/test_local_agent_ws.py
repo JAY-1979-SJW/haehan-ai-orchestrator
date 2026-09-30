@@ -940,8 +940,8 @@ def test_delivered_task_requeued_on_first_disconnect(admin_user):
     assert task.delivered_at == ""
 
 
-def test_running_task_requeued_on_first_disconnect(admin_user):
-    """running 상태 task는 첫 WS disconnect 후 재큐잉(queued, retry_count=1)된다."""
+def test_running_task_failed_on_disconnect_not_requeued(admin_user):
+    """running 상태 task는 이미 실행됐을 수 있어 disconnect 시 재큐잉 없이 failed 된다."""
     import ai_orchestrator.local_agent_registry as _reg
 
     client = _make_test_client(admin_user)
@@ -958,9 +958,9 @@ def test_running_task_requeued_on_first_disconnect(admin_user):
         # disconnect — running 상태로 종료
 
     task = _reg.find_task_by_id(task_id)
-    assert task.status == "queued"
-    assert task.retry_count == 1
-    assert task.started_at == ""
+    assert task.status == "failed"
+    assert task.failure_reason == "websocket_disconnected"
+    assert task.retry_count == 0
 
 
 def test_requeued_task_redelivered_on_reconnect(admin_user):

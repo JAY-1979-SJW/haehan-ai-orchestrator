@@ -28,11 +28,12 @@ def test_ai_agent_app_baseline_locks_internal_module_default() -> None:
     assert "approval gate before final state-changing action" in baseline
 
 
-def test_market_research_nav_surface_is_registered() -> None:
+def test_market_research_nav_not_registered_while_page_missing() -> None:
+    # 2026-09-30: /market-research 페이지가 없어 클릭 시 404 → nav 항목 제거됨(b769231d).
     nav = Path("admin-web/src/lib/nav.ts").read_text(encoding="utf-8")
+    page_exists = Path("admin-web/src/app/market-research").exists()
 
-    assert 'key: "market-research"' in nav
-    assert 'href: "/market-research"' in nav
+    assert ('href: "/market-research"' in nav) == page_exists
 
 
 def test_home_dashboard_exposes_ai_runtime_contract() -> None:
