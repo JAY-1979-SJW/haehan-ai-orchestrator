@@ -21,7 +21,46 @@ on:
     branches: [master]
   workflow_dispatch: {}
 
+# 공개 저장소 기본값: 토큰 권한 최소화 + 같은 브랜치의 이전 실행은 새 푸시가 오면 취소
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # 비밀값(API 키·토큰) 커밋 검사 — 저장소가 공개이고 과거 키 유출 이력(2026-09-29)이 있음.
+  # 이번 푸시/PR 의 커밋 범위만 검사한다(과거 기록의 이미 노출된 키로 영구 실패하지 않도록).
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 프런트(admin-web) 타입체크 — 화면 코드가 CI 에서 검증되지 않던 공백을 메운다.
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: admin-web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: admin-web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+
   verify:
     runs-on: windows-latest
     timeout-minutes: 30
@@ -35,6 +74,7 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.14"
+          cache: pip
 
       - name: Install dependencies
         run: |
