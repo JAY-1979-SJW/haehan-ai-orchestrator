@@ -6,13 +6,14 @@ Generates preview data for user approval before submit execution.
 This module contains ONLY preview schema and generation logic.
 No side effects, stateless, pure functions.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -107,11 +108,11 @@ class AuditPreviewRecord:
     # Submit status
     submitted: bool = False
     submit_timestamp: str = ""
-    submit_result: Optional[str] = None
+    submit_result: str | None = None
 
     # Approval info
-    approved_by: Optional[str] = None
-    approved_at: Optional[str] = None
+    approved_by: str | None = None
+    approved_at: str | None = None
     approval_notes: str = ""
 
 
@@ -307,9 +308,7 @@ def _build_validation_checks(policy_result: dict) -> dict[str, str]:
         "form_verdict": policy_result.get("form_verdict", "UNKNOWN"),
         "intent_verdict": policy_result.get("intent_verdict", "UNKNOWN"),
         "field_verdict": policy_result.get("field_verdict", "UNKNOWN"),
-        "prompt_injection_verdict": policy_result.get(
-            "prompt_injection_verdict", "UNKNOWN"
-        ),
+        "prompt_injection_verdict": policy_result.get("prompt_injection_verdict", "UNKNOWN"),
         "preview_verdict": policy_result.get("preview_verdict", "UNKNOWN"),
         "user_confirm_verdict": policy_result.get("user_confirm_verdict", "UNKNOWN"),
     }

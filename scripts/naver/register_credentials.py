@@ -6,6 +6,7 @@
 사용:
   python scripts/naver/register_credentials.py
 """
+
 from __future__ import annotations
 
 import getpass
@@ -14,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.naver.auth import save_credentials, _load_credentials, ENV_FILE
+from scripts.naver.auth import ENV_FILE, _load_credentials, save_credentials
 
 
 def main():
@@ -22,7 +23,7 @@ def main():
     print("  네이버 자격증명 등록")
     print("=" * 60)
     print(f"  저장 위치: {ENV_FILE}")
-    print(f"  보안: 파일 권한 0o600 (소유자 전용) + gitignore")
+    print("  보안: 파일 권한 0o600 (소유자 전용) + gitignore")
     print()
 
     existing_id, existing_pw = _load_credentials()

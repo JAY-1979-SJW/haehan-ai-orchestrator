@@ -13,6 +13,7 @@ ASSISTANT_WEB_PROJECT_PROVISIONING_SCRIPT_FACTORY_01
     서버 접속 금지 / DB write 금지 / UI 변경 금지
     secret/token/password 출력 금지
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,11 +27,11 @@ sys.path.insert(0, str(ROOT))
 
 # ── 전역 상수 ────────────────────────────────────────────────────────────────
 
-DEFAULT_ROOT_DOMAIN     = "haehan-ai.kr"
-DEFAULT_SERVER_IP_VAR   = "SERVER_PUBLIC_IP"
-LEGACY_5050_TARGET      = "172.18.0.1:5050"
+DEFAULT_ROOT_DOMAIN = "haehan-ai.kr"
+DEFAULT_SERVER_IP_VAR = "SERVER_PUBLIC_IP"
+LEGACY_5050_TARGET = "172.18.0.1:5050"
 LEGACY_ORCHESTRATOR_API = "haehan-ai-orchestrator-api:8400"
-BASE_API_PATH           = "/orchestrator/api/"
+BASE_API_PATH = "/orchestrator/api/"
 
 # API 전략 선택지
 API_STRATEGIES = {
@@ -53,21 +54,22 @@ API_STRATEGIES = {
 
 # 안전 경계 (절대 변경 금지)
 SAFE_BOUNDARY = {
-    "actual_dns_write":        False,
-    "actual_nginx_change":     False,
-    "actual_certbot":          False,
-    "actual_gabia_access":     False,
-    "actual_server_access":    False,
-    "actual_db_write":         False,
-    "actual_ui_change":        False,
-    "secret_output":           False,
-    "5050_stop":               False,
-    "nginx_reload":            False,
-    "docker_restart":          False,
+    "actual_dns_write": False,
+    "actual_nginx_change": False,
+    "actual_certbot": False,
+    "actual_gabia_access": False,
+    "actual_server_access": False,
+    "actual_db_write": False,
+    "actual_ui_change": False,
+    "secret_output": False,
+    "5050_stop": False,
+    "nginx_reload": False,
+    "docker_restart": False,
 }
 
 
 # ── 모델 ─────────────────────────────────────────────────────────────────────
+
 
 def _split_fqdn(fqdn: str) -> tuple[str, str]:
     """fqdn → (host, root_domain). 예: autowork.haehan-ai.kr → ('autowork', 'haehan-ai.kr')"""
@@ -86,19 +88,19 @@ def make_dns_draft(
     ttl: int = 600,
 ) -> dict[str, Any]:
     return {
-        "fqdn":                  fqdn,
-        "root_domain":           root_domain,
-        "host":                  host,
-        "record_type":           record_type,
-        "value_source":          value_source,
-        "ttl":                   ttl,
-        "value_note":            f"{value_source} — 실제 값은 사용자가 확인 후 입력",
-        "final_save_required":   True,
-        "ai_may_prepare_only":   True,
+        "fqdn": fqdn,
+        "root_domain": root_domain,
+        "host": host,
+        "record_type": record_type,
+        "value_source": value_source,
+        "ttl": ttl,
+        "value_note": f"{value_source} — 실제 값은 사용자가 확인 후 입력",
+        "final_save_required": True,
+        "ai_may_prepare_only": True,
         "user_must_click_final_save": True,
-        "gabia_workflow":        "사용자 직접 가비아 DNS 관리 화면에서 최종 저장 클릭 필요",
-        "safe_to_prepare":       True,
-        "actual_dns_write":      False,
+        "gabia_workflow": "사용자 직접 가비아 DNS 관리 화면에서 최종 저장 클릭 필요",
+        "safe_to_prepare": True,
+        "actual_dns_write": False,
     }
 
 
@@ -109,46 +111,46 @@ def make_nginx_routing_plan(
 ) -> dict[str, Any]:
     api_strat = API_STRATEGIES.get(api_strategy_key, API_STRATEGIES["existing-orchestrator-api"])
     return {
-        "fqdn":                    fqdn,
-        "frontend_proxy_target":   frontend_target,
+        "fqdn": fqdn,
+        "frontend_proxy_target": frontend_target,
         "http_block": {
-            "listen":      80,
+            "listen": 80,
             "server_name": fqdn,
             "acme_challenge_root": "/var/www/certbot",
-            "redirect":    f"https://{fqdn}$request_uri",
+            "redirect": f"https://{fqdn}$request_uri",
             "change_allowed_now": False,
-            "note":        "nginx 파일 수정은 사용자 승인 후 별도 공정으로 진행",
+            "note": "nginx 파일 수정은 사용자 승인 후 별도 공정으로 진행",
         },
         "https_block": {
-            "listen":             443,
-            "server_name":        fqdn,
-            "ssl_certificate":    f"/etc/nginx/ssl/{fqdn.split('.')[0]}/fullchain.pem",
+            "listen": 443,
+            "server_name": fqdn,
+            "ssl_certificate": f"/etc/nginx/ssl/{fqdn.split('.')[0]}/fullchain.pem",
             "ssl_certificate_key": f"/etc/nginx/ssl/{fqdn.split('.')[0]}/privkey.pem",
-            "proxy_pass":         f"http://{frontend_target}",
+            "proxy_pass": f"http://{frontend_target}",
             "change_allowed_now": False,
-            "note":               "nginx 파일 수정은 사용자 승인 후 별도 공정으로 진행",
+            "note": "nginx 파일 수정은 사용자 승인 후 별도 공정으로 진행",
         },
-        "api_base_strategy":    api_strat,
+        "api_base_strategy": api_strat,
         "legacy_preservation": {
-            "orchestrator_api":        f"/orchestrator/api/ → {LEGACY_ORCHESTRATOR_API}",
-            "orchestrator_legacy":     f"/orchestrator/ → {LEGACY_5050_TARGET}",
-            "do_not_stop_5050":        True,
+            "orchestrator_api": f"/orchestrator/api/ → {LEGACY_ORCHESTRATOR_API}",
+            "orchestrator_legacy": f"/orchestrator/ → {LEGACY_5050_TARGET}",
+            "do_not_stop_5050": True,
             "orchestrator_api_8400_required": True,
-            "note":                    "기존 /orchestrator 구조 무변경 — 5050 중단 금지",
+            "note": "기존 /orchestrator 구조 무변경 — 5050 중단 금지",
         },
-        "change_allowed_now":   False,
-        "actual_nginx_change":  False,
+        "change_allowed_now": False,
+        "actual_nginx_change": False,
     }
 
 
 def make_ssl_plan(fqdn: str, host: str) -> dict[str, Any]:
     return {
-        "fqdn":                          fqdn,
-        "certificate_required":          True,
-        "certbot_method":                "webroot",
-        "webroot_path":                  "/home/ubuntu/app/nginx/webroot",
-        "certbot_execution_allowed":     False,
-        "dns_must_resolve_first":        True,
+        "fqdn": fqdn,
+        "certificate_required": True,
+        "certbot_method": "webroot",
+        "webroot_path": "/home/ubuntu/app/nginx/webroot",
+        "certbot_execution_allowed": False,
+        "dns_must_resolve_first": True,
         "nginx_http_block_must_exist_first": True,
         "certbot_command_candidate": (
             f"sudo certbot certonly --webroot "
@@ -157,9 +159,9 @@ def make_ssl_plan(fqdn: str, host: str) -> dict[str, Any]:
             f"--non-interactive --agree-tos"
             f"  # [사용자 승인 후 별도 공정에서 실행]"
         ),
-        "cert_path_after_issue":         f"/home/ubuntu/app/nginx/ssl/{host}/fullchain.pem",
-        "change_allowed_now":            False,
-        "actual_certbot":                False,
+        "cert_path_after_issue": f"/home/ubuntu/app/nginx/ssl/{host}/fullchain.pem",
+        "change_allowed_now": False,
+        "actual_certbot": False,
         "steps": [
             "1. DNS A 레코드 저장 (사용자 가비아 직접 클릭)",
             "2. DNS 전파 확인 (host/dig 명령)",
@@ -176,70 +178,70 @@ def make_ssl_plan(fqdn: str, host: str) -> dict[str, Any]:
 def make_smoke_checklist(fqdn: str, root_domain: str) -> list[dict[str, str]]:
     return [
         {
-            "tier":  "P0",
+            "tier": "P0",
             "check": "DNS resolve",
-            "cmd":   f"host {fqdn} 8.8.8.8",
+            "cmd": f"host {fqdn} 8.8.8.8",
             "expect": "IP 주소 반환",
         },
         {
-            "tier":  "P0",
+            "tier": "P0",
             "check": "HTTP 301 redirect",
-            "cmd":   f"curl -sI http://{fqdn}/",
+            "cmd": f"curl -sI http://{fqdn}/",
             "expect": "301 Moved Permanently",
         },
         {
-            "tier":  "P0",
+            "tier": "P0",
             "check": "HTTPS 200",
-            "cmd":   f"curl -sI https://{fqdn}/",
+            "cmd": f"curl -sI https://{fqdn}/",
             "expect": "200 OK",
         },
         {
-            "tier":  "P0",
+            "tier": "P0",
             "check": "TLS verify",
-            "cmd":   f"echo | openssl s_client -connect {fqdn}:443 -servername {fqdn} 2>&1 | grep 'Verify return'",
+            "cmd": f"echo | openssl s_client -connect {fqdn}:443 -servername {fqdn} 2>&1 | grep 'Verify return'",
             "expect": "Verify return code: 0 (ok)",
         },
         {
-            "tier":  "P0",
+            "tier": "P0",
             "check": "TLS CN/SAN 확인",
-            "cmd":   f"echo | openssl s_client -connect {fqdn}:443 -servername {fqdn} 2>&1 | grep subject",
+            "cmd": f"echo | openssl s_client -connect {fqdn}:443 -servername {fqdn} 2>&1 | grep subject",
             "expect": f"CN = {fqdn}",
         },
         {
-            "tier":  "P1",
+            "tier": "P1",
             "check": "기존 orchestrator API 유지",
-            "cmd":   f"curl -sI https://{root_domain}/orchestrator/api/v1/health",
+            "cmd": f"curl -sI https://{root_domain}/orchestrator/api/v1/health",
             "expect": "200 또는 403(auth) — 5xx 아님",
         },
         {
-            "tier":  "P1",
+            "tier": "P1",
             "check": "5050 Flask legacy 유지",
-            "cmd":   "ss -tlnp | grep 5050",
+            "cmd": "ss -tlnp | grep 5050",
             "expect": "LISTEN (pid 존재)",
         },
         {
-            "tier":  "P1",
+            "tier": "P1",
             "check": "frontend 응답 no 5xx",
-            "cmd":   f"curl -sI https://{fqdn}/ 2>&1 | grep -v '5[0-9][0-9]'",
+            "cmd": f"curl -sI https://{fqdn}/ 2>&1 | grep -v '5[0-9][0-9]'",
             "expect": "5xx 없음",
         },
         {
-            "tier":  "P2",
+            "tier": "P2",
             "check": "nginx error log 확인",
-            "cmd":   "docker logs nginx --tail 20 2>&1 | grep -iE 'emerg|crit|error'",
+            "cmd": "docker logs nginx --tail 20 2>&1 | grep -iE 'emerg|crit|error'",
             "expect": "fatal error 없음",
         },
         {
-            "tier":  "P2",
+            "tier": "P2",
             "check": "인증서 만료일 확인",
-            "cmd":   f"openssl x509 -in /home/ubuntu/app/nginx/ssl/{fqdn.split('.')[0]}/fullchain.pem -noout -dates",
+            "cmd": f"openssl x509 -in /home/ubuntu/app/nginx/ssl/{fqdn.split('.')[0]}/fullchain.pem -noout -dates",
             "expect": "notAfter 90일 이상 남음",
         },
     ]
 
 
 def make_rollback_plan(fqdn: str, host: str) -> dict[str, Any]:
-    ts_placeholder = "YYYYMMDD_HHMMSS_pre_{host}".format(host=host)
+    ts_placeholder = f"YYYYMMDD_HHMMSS_pre_{host}"
     return {
         "requires_user_approval": True,
         "rollback_forbidden_now": True,
@@ -251,13 +253,13 @@ def make_rollback_plan(fqdn: str, host: str) -> dict[str, Any]:
             "admin-web 접근 장애",
         ],
         "dns_rollback": {
-            "action":    "가비아 DNS 관리 화면에서 해당 레코드 직접 삭제",
-            "who":       "사용자 직접 수행",
-            "approval":  "사용자 명시 승인 필요",
+            "action": "가비아 DNS 관리 화면에서 해당 레코드 직접 삭제",
+            "who": "사용자 직접 수행",
+            "approval": "사용자 명시 승인 필요",
         },
         "nginx_rollback": {
             "default_conf_backup": f"default.conf.bak.{ts_placeholder}",
-            "acme_conf_backup":    f"acme.conf.bak.{ts_placeholder}",
+            "acme_conf_backup": f"acme.conf.bak.{ts_placeholder}",
             "command": (
                 f"cp /home/ubuntu/app/nginx/conf.d/default.conf.bak.{ts_placeholder} "
                 f"/home/ubuntu/app/nginx/conf.d/default.conf && "
@@ -266,9 +268,9 @@ def make_rollback_plan(fqdn: str, host: str) -> dict[str, Any]:
             "note": "백업 파일명은 실제 공정 시작 시 확정됨",
         },
         "ssl_rollback": {
-            "command":  f"sudo certbot delete --cert-name {fqdn}  # [사용자 승인 필요]",
+            "command": f"sudo certbot delete --cert-name {fqdn}  # [사용자 승인 필요]",
             "cert_dir": f"/home/ubuntu/app/nginx/ssl/{host}/",
-            "note":     "인증서 삭제 시 기존 SSL 블록에 영향 없도록 nginx config 먼저 원복",
+            "note": "인증서 삭제 시 기존 SSL 블록에 영향 없도록 nginx config 먼저 원복",
         },
         "rollback_steps": [
             "1. nginx config 백업 파일로 원복",
@@ -297,6 +299,7 @@ def make_next_steps(fqdn: str) -> list[str]:
 
 # ── 메인 계획 생성 ────────────────────────────────────────────────────────────
 
+
 def create_provisioning_plan(
     fqdn: str,
     project_id: str,
@@ -308,34 +311,34 @@ def create_provisioning_plan(
 ) -> dict[str, Any]:
     host, root_domain = _split_fqdn(fqdn)
 
-    dns_draft   = make_dns_draft(fqdn, host, root_domain, record_type, value_source)
-    nginx_plan  = make_nginx_routing_plan(fqdn, frontend_target, api_strategy)
-    ssl_plan    = make_ssl_plan(fqdn, host)
-    smoke       = make_smoke_checklist(fqdn, root_domain)
-    rollback    = make_rollback_plan(fqdn, host)
-    next_steps  = make_next_steps(fqdn)
+    dns_draft = make_dns_draft(fqdn, host, root_domain, record_type, value_source)
+    nginx_plan = make_nginx_routing_plan(fqdn, frontend_target, api_strategy)
+    ssl_plan = make_ssl_plan(fqdn, host)
+    smoke = make_smoke_checklist(fqdn, root_domain)
+    rollback = make_rollback_plan(fqdn, host)
+    next_steps = make_next_steps(fqdn)
 
     api_strat = API_STRATEGIES.get(api_strategy, API_STRATEGIES["existing-orchestrator-api"])
 
     provisioning_request = {
-        "project_id":              project_id,
-        "display_name":            display_name,
-        "fqdn":                    fqdn,
-        "root_domain":             root_domain,
-        "host":                    host,
-        "purpose":                 display_name,
-        "frontend_target":         frontend_target,
-        "api_strategy":            api_strategy,
+        "project_id": project_id,
+        "display_name": display_name,
+        "fqdn": fqdn,
+        "root_domain": root_domain,
+        "host": host,
+        "purpose": display_name,
+        "frontend_target": frontend_target,
+        "api_strategy": api_strategy,
         "api_base_url_short_term": api_strat["base_url"],
-        "legacy_strategy":         "orchestrator 구조 무변경 유지",
+        "legacy_strategy": "orchestrator 구조 무변경 유지",
         "requires_final_approval": True,
     }
 
     boundary_violations = [k for k, v in SAFE_BOUNDARY.items() if v is True]
     safety_boundary = {
         **SAFE_BOUNDARY,
-        "violations":    boundary_violations,
-        "boundary_ok":   len(boundary_violations) == 0,
+        "violations": boundary_violations,
+        "boundary_ok": len(boundary_violations) == 0,
     }
 
     all_ok = (
@@ -349,30 +352,31 @@ def create_provisioning_plan(
     )
 
     return {
-        "audit_id":              "ASSISTANT_WEB_PROJECT_PROVISIONING_SCRIPT_FACTORY_01",
-        "verdict":               "PLAN_READY" if all_ok else "PLAN_FAIL",
-        "all_ok":                all_ok,
-        "provisioning_request":  provisioning_request,
-        "dns_draft":             dns_draft,
-        "nginx_plan":            nginx_plan,
-        "ssl_plan":              ssl_plan,
-        "smoke_checklist":       smoke,
-        "rollback_plan":         rollback,
-        "safety_boundary":       safety_boundary,
-        "next_steps":            next_steps,
+        "audit_id": "ASSISTANT_WEB_PROJECT_PROVISIONING_SCRIPT_FACTORY_01",
+        "verdict": "PLAN_READY" if all_ok else "PLAN_FAIL",
+        "all_ok": all_ok,
+        "provisioning_request": provisioning_request,
+        "dns_draft": dns_draft,
+        "nginx_plan": nginx_plan,
+        "ssl_plan": ssl_plan,
+        "smoke_checklist": smoke,
+        "rollback_plan": rollback,
+        "safety_boundary": safety_boundary,
+        "next_steps": next_steps,
     }
 
 
 # ── 출력 ─────────────────────────────────────────────────────────────────────
 
+
 def _print_plan(plan: dict) -> None:
     print("=" * 70)
-    print(f"WEB PROJECT PROVISIONING PLAN")
+    print("WEB PROJECT PROVISIONING PLAN")
     print(f"VERDICT: {plan['verdict']}")
     print("=" * 70)
 
     req = plan["provisioning_request"]
-    print(f"\n[프로젝트]")
+    print("\n[프로젝트]")
     print(f"  ID         : {req['project_id']}")
     print(f"  이름       : {req['display_name']}")
     print(f"  FQDN       : {req['fqdn']}")
@@ -381,7 +385,7 @@ def _print_plan(plan: dict) -> None:
     print(f"  API 전략   : {req['api_strategy']} → {req['api_base_url_short_term']}")
 
     dns = plan["dns_draft"]
-    print(f"\n[DNS 초안]")
+    print("\n[DNS 초안]")
     print(f"  {dns['record_type']} {dns['host']}.{dns['root_domain']} → {dns['value_source']}")
     print(f"  final_save_required  : {dns['final_save_required']}")
     print(f"  ai_may_prepare_only  : {dns['ai_may_prepare_only']}")
@@ -389,7 +393,7 @@ def _print_plan(plan: dict) -> None:
 
     ng = plan["nginx_plan"]
     lp = ng["legacy_preservation"]
-    print(f"\n[nginx 계획]")
+    print("\n[nginx 계획]")
     print(f"  frontend proxy : {ng['frontend_proxy_target']}")
     print(f"  5050 중단 금지 : {lp['do_not_stop_5050']}")
     print(f"  /orchestrator/api/ : {lp['orchestrator_api']}")
@@ -397,7 +401,7 @@ def _print_plan(plan: dict) -> None:
     print(f"  change_allowed_now : {ng['change_allowed_now']}")
 
     ssl = plan["ssl_plan"]
-    print(f"\n[SSL 계획]")
+    print("\n[SSL 계획]")
     print(f"  certbot_execution_allowed : {ssl['certbot_execution_allowed']}")
     print(f"  dns_must_resolve_first    : {ssl['dns_must_resolve_first']}")
     print(f"  steps: {len(ssl['steps'])}개")
@@ -407,21 +411,21 @@ def _print_plan(plan: dict) -> None:
         print(f"  [{item['tier']}] {item['check']}  # {item['expect']}")
 
     rb = plan["rollback_plan"]
-    print(f"\n[Rollback 계획]")
+    print("\n[Rollback 계획]")
     print(f"  requires_user_approval       : {rb['requires_user_approval']}")
     print(f"  5050_must_survive_rollback   : {rb['5050_must_survive_rollback']}")
     print(f"  rollback_steps               : {len(rb['rollback_steps'])}개")
 
-    print(f"\n[다음 단계]")
+    print("\n[다음 단계]")
     for step in plan["next_steps"]:
         print(f"  {step}")
 
     sb = plan["safety_boundary"]
-    print(f"\n[안전 경계]")
+    print("\n[안전 경계]")
     if sb["violations"]:
         print(f"  ❌ 위반: {sb['violations']}")
     else:
-        print(f"  ✅ 위반 없음")
+        print("  ✅ 위반 없음")
 
     print("=" * 70)
     print(f"VERDICT: {plan['verdict']}")
@@ -431,35 +435,32 @@ def _print_plan(plan: dict) -> None:
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="신규 웹/서브도메인 착공 표준 계획 생성기 — plan-only, 실제 변경 없음"
+    parser = argparse.ArgumentParser(description="신규 웹/서브도메인 착공 표준 계획 생성기 — plan-only, 실제 변경 없음")
+    parser.add_argument("--fqdn", default="autowork.haehan-ai.kr", help="대상 FQDN (예: newservice.haehan-ai.kr)")
+    parser.add_argument("--project-id", default="autowork", help="프로젝트 ID (영소문자, 하이픈 허용)")
+    parser.add_argument("--display-name", default="AI 자동업무 본관", help="프로젝트 표시명")
+    parser.add_argument(
+        "--frontend-target", default="admin-web:3000", help="nginx proxy_pass 대상 (예: admin-web:3000)"
     )
-    parser.add_argument("--fqdn",             default="autowork.haehan-ai.kr",
-                        help="대상 FQDN (예: newservice.haehan-ai.kr)")
-    parser.add_argument("--project-id",       default="autowork",
-                        help="프로젝트 ID (영소문자, 하이픈 허용)")
-    parser.add_argument("--display-name",     default="AI 자동업무 본관",
-                        help="프로젝트 표시명")
-    parser.add_argument("--frontend-target",  default="admin-web:3000",
-                        help="nginx proxy_pass 대상 (예: admin-web:3000)")
-    parser.add_argument("--api-strategy",     default="existing-orchestrator-api",
-                        choices=list(API_STRATEGIES.keys()),
-                        help="API base URL 전략")
-    parser.add_argument("--record-type",      default="A",
-                        choices=["A", "CNAME", "AAAA"],
-                        help="DNS 레코드 타입")
-    parser.add_argument("--value-source",     default="SERVER_PUBLIC_IP",
-                        help="DNS 레코드 값 출처 표시 (실제 IP는 사용자 확인 필요)")
-    parser.add_argument("--json",             action="store_true",
-                        help="JSON 출력")
-    parser.add_argument("--check-only",       action="store_true",
-                        help="생성 없이 입력 파라미터 유효성만 확인")
+    parser.add_argument(
+        "--api-strategy",
+        default="existing-orchestrator-api",
+        choices=list(API_STRATEGIES.keys()),
+        help="API base URL 전략",
+    )
+    parser.add_argument("--record-type", default="A", choices=["A", "CNAME", "AAAA"], help="DNS 레코드 타입")
+    parser.add_argument(
+        "--value-source", default="SERVER_PUBLIC_IP", help="DNS 레코드 값 출처 표시 (실제 IP는 사용자 확인 필요)"
+    )
+    parser.add_argument("--json", action="store_true", help="JSON 출력")
+    parser.add_argument("--check-only", action="store_true", help="생성 없이 입력 파라미터 유효성만 확인")
     args = parser.parse_args()
 
     if args.check_only:
         host, root_domain = _split_fqdn(args.fqdn)
-        print(f"CHECK-ONLY:")
+        print("CHECK-ONLY:")
         print(f"  fqdn        : {args.fqdn}")
         print(f"  host        : {host}")
         print(f"  root_domain : {root_domain}")

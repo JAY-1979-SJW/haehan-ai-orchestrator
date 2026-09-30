@@ -6,11 +6,12 @@
 기존 scripts/cdp_client.py를 대체하지 않는다.
 이 모듈은 site_engine 구조에서의 추상화 계층이다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from scripts.site_engine.types import GateDecision, SiteCapability
 
@@ -27,17 +28,35 @@ class BrowserActionKind(str, Enum):
     WAIT = "WAIT"
 
 
-_APPROVAL_REQUIRED_KINDS = frozenset({
-    BrowserActionKind.SUBMIT,
-    BrowserActionKind.UPLOAD,
-})
+_APPROVAL_REQUIRED_KINDS = frozenset(
+    {
+        BrowserActionKind.SUBMIT,
+        BrowserActionKind.UPLOAD,
+    }
+)
 
-_SENSITIVE_INPUT_KEYWORDS = frozenset({
-    "password", "passwd", "otp", "pin", "secret", "token",
-    "certificate", "cert", "private_key", "credential",
-    "session", "cookie", "auth",
-    "비밀번호", "인증서", "쿠키", "세션", "인증",
-})
+_SENSITIVE_INPUT_KEYWORDS = frozenset(
+    {
+        "password",
+        "passwd",
+        "otp",
+        "pin",
+        "secret",
+        "token",
+        "certificate",
+        "cert",
+        "private_key",
+        "credential",
+        "session",
+        "cookie",
+        "auth",
+        "비밀번호",
+        "인증서",
+        "쿠키",
+        "세션",
+        "인증",
+    }
+)
 
 
 @dataclass
@@ -56,7 +75,7 @@ class BrowserActionPlan:
 class BrowserActionResult:
     plan: BrowserActionPlan
     executed: bool = False
-    success: Optional[bool] = None
+    success: bool | None = None
     detail: str = ""
 
 
@@ -91,10 +110,7 @@ def build_input_plan(selector: str, *, field_name: str = "") -> BrowserActionPla
         kind=BrowserActionKind.INPUT,
         target=selector,
         capability=SiteCapability.FORM_FILL,
-        required_gate=(
-            GateDecision.USER_DIRECT_REQUIRED if sensitive
-            else GateDecision.SERVER_BROWSER_ALLOWED
-        ),
+        required_gate=(GateDecision.USER_DIRECT_REQUIRED if sensitive else GateDecision.SERVER_BROWSER_ALLOWED),
         is_sensitive=sensitive,
         sensitive_reason=f"field_name={field_name!r} matches sensitive keyword" if sensitive else "",
         metadata={"field_name": field_name} if field_name else {},

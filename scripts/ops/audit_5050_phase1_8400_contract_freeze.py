@@ -13,6 +13,7 @@ Phase 1 대상 5개 route의 8400 계약을 machine-readable로 고정한다.
     실제 HTTP 호출 금지 / approve/reject 실행 금지 / execute 호출 금지
     5050 중단 금지 / nginx 변경 금지 / DB write 금지 / secret 출력 금지
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,102 +28,98 @@ sys.path.insert(0, str(ROOT))
 # ── Phase 1 대상 contract freeze matrix ──────────────────────────────────────
 
 PHASE1_CONTRACTS: list[dict[str, Any]] = [
-
     {
-        "phase":              "PHASE_1",
-        "legacy_method":      "GET",
-        "legacy_path":        "/api/v1/inbox",
-        "fastapi_method":     "GET",
-        "fastapi_path":       "/api/v1/inbox",
-        "overlap_class":      "SAME_CONTRACT",
-        "contract_status":    "FROZEN_CANDIDATE",
-        "adapter_required":   False,
-        "auth_expected":      True,
+        "phase": "PHASE_1",
+        "legacy_method": "GET",
+        "legacy_path": "/api/v1/inbox",
+        "fastapi_method": "GET",
+        "fastapi_path": "/api/v1/inbox",
+        "overlap_class": "SAME_CONTRACT",
+        "contract_status": "FROZEN_CANDIDATE",
+        "adapter_required": False,
+        "auth_expected": True,
         "side_effect_allowed": False,
-        "do_not_call_live":   True,
-        "live_call_allowed":  False,
-        "do_not_stop_5050":   True,
-        "nginx_unchanged":    True,
-        "risk_level":         "LOW",
-        "migration_action":   "FREEZE_8400_CONTRACT_FIRST",
-        "freeze_verdict":     "READY_FOR_COMPAT_TEST",
+        "do_not_call_live": True,
+        "live_call_allowed": False,
+        "do_not_stop_5050": True,
+        "nginx_unchanged": True,
+        "risk_level": "LOW",
+        "migration_action": "FREEZE_8400_CONTRACT_FIRST",
+        "freeze_verdict": "READY_FOR_COMPAT_TEST",
         "note": (
             "nginx /orchestrator/api/ 경유 시 8400 응답. "
             "GET 조회 전용 — side effect 없음. "
             "8400 response schema 고정 후 5050 직접 경로 비활성화 가능."
         ),
     },
-
     {
-        "phase":              "PHASE_1",
-        "legacy_method":      "POST",
-        "legacy_path":        "/api/v1/inbox/email/fetch",
-        "fastapi_method":     "POST",
-        "fastapi_path":       "/api/v1/inbox/email/fetch",
-        "overlap_class":      "COMPATIBLE_WITH_ADAPTER",
-        "contract_status":    "FROZEN_CANDIDATE",
-        "adapter_required":   True,
-        "adapter_note":       "외부 이메일 서버 접속 포함 — 실행 환경/credential adapter 필요",
-        "auth_expected":      True,
+        "phase": "PHASE_1",
+        "legacy_method": "POST",
+        "legacy_path": "/api/v1/inbox/email/fetch",
+        "fastapi_method": "POST",
+        "fastapi_path": "/api/v1/inbox/email/fetch",
+        "overlap_class": "COMPATIBLE_WITH_ADAPTER",
+        "contract_status": "FROZEN_CANDIDATE",
+        "adapter_required": True,
+        "adapter_note": "외부 이메일 서버 접속 포함 — 실행 환경/credential adapter 필요",
+        "auth_expected": True,
         "side_effect_allowed": False,
-        "do_not_call_live":   True,
-        "live_call_allowed":  False,
-        "do_not_stop_5050":   True,
-        "nginx_unchanged":    True,
-        "risk_level":         "MEDIUM",
-        "migration_action":   "FREEZE_ADAPTER_CONTRACT_FIRST",
-        "freeze_verdict":     "READY_FOR_COMPAT_TEST",
+        "do_not_call_live": True,
+        "live_call_allowed": False,
+        "do_not_stop_5050": True,
+        "nginx_unchanged": True,
+        "risk_level": "MEDIUM",
+        "migration_action": "FREEZE_ADAPTER_CONTRACT_FIRST",
+        "freeze_verdict": "READY_FOR_COMPAT_TEST",
         "note": (
             "외부 이메일 서버 접속 포함. "
             "5050 → 8400 이관 시 credential/env adapter 필요. "
             "실제 fetch 실행 금지 — contract만 고정."
         ),
     },
-
     {
-        "phase":              "PHASE_1",
-        "legacy_method":      "POST",
-        "legacy_path":        "/api/v1/tasks",
-        "fastapi_method":     "POST",
-        "fastapi_path":       "/api/v1/tasks",
-        "overlap_class":      "SAME_CONTRACT",
-        "contract_status":    "FROZEN_CANDIDATE",
-        "adapter_required":   False,
-        "auth_expected":      True,
+        "phase": "PHASE_1",
+        "legacy_method": "POST",
+        "legacy_path": "/api/v1/tasks",
+        "fastapi_method": "POST",
+        "fastapi_path": "/api/v1/tasks",
+        "overlap_class": "SAME_CONTRACT",
+        "contract_status": "FROZEN_CANDIDATE",
+        "adapter_required": False,
+        "auth_expected": True,
         "side_effect_allowed": False,
-        "do_not_call_live":   True,
-        "live_call_allowed":  False,
-        "do_not_stop_5050":   True,
-        "nginx_unchanged":    True,
-        "risk_level":         "MEDIUM",
-        "migration_action":   "FREEZE_8400_CONTRACT_FIRST",
-        "freeze_verdict":     "READY_FOR_COMPAT_TEST",
+        "do_not_call_live": True,
+        "live_call_allowed": False,
+        "do_not_stop_5050": True,
+        "nginx_unchanged": True,
+        "risk_level": "MEDIUM",
+        "migration_action": "FREEZE_8400_CONTRACT_FIRST",
+        "freeze_verdict": "READY_FOR_COMPAT_TEST",
         "note": (
             "task 생성 POST. nginx 경유 시 8400 응답. "
             "8400 request/response schema 고정 후 5050 직접 경로 비활성화 가능. "
             "실제 task 생성 실행 금지 — contract만 고정."
         ),
     },
-
     {
-        "phase":              "PHASE_1",
-        "legacy_method":      "POST",
-        "legacy_path":        "/api/v1/tasks/<task_id>/approve",
-        "fastapi_method":     "POST",
-        "fastapi_path":       "/api/v1/tasks/{task_id}/approve",
-        "overlap_class":      "COMPATIBLE_WITH_ADAPTER",
-        "contract_status":    "FROZEN_CANDIDATE",
-        "adapter_required":   True,
-        "adapter_note":       "path param 표기 차이 (<task_id> vs {task_id}) + auth policy 비교 필요",
-        "auth_expected":      True,
+        "phase": "PHASE_1",
+        "legacy_method": "POST",
+        "legacy_path": "/api/v1/tasks/<task_id>/approve",
+        "fastapi_method": "POST",
+        "fastapi_path": "/api/v1/tasks/{task_id}/approve",
+        "overlap_class": "COMPATIBLE_WITH_ADAPTER",
+        "contract_status": "FROZEN_CANDIDATE",
+        "adapter_required": True,
+        "adapter_note": "path param 표기 차이 (<task_id> vs {task_id}) + auth policy 비교 필요",
+        "auth_expected": True,
         "side_effect_allowed": False,
-        "do_not_call_live":   True,
-        "live_call_allowed":  False,
-        "do_not_stop_5050":   True,
-        "nginx_unchanged":    True,
-        "risk_level":         "HIGH",
-        "migration_action":   "FREEZE_ADAPTER_CONTRACT_FIRST",
-        "freeze_verdict":     "READY_FOR_COMPAT_TEST",
+        "do_not_call_live": True,
+        "live_call_allowed": False,
+        "do_not_stop_5050": True,
+        "nginx_unchanged": True,
+        "risk_level": "HIGH",
+        "migration_action": "FREEZE_ADAPTER_CONTRACT_FIRST",
+        "freeze_verdict": "READY_FOR_COMPAT_TEST",
         "note": (
             "승인 실행 — 실제 호출 절대 금지. "
             "5050 path param 표기가 Flask 방식(<>). "
@@ -130,26 +127,25 @@ PHASE1_CONTRACTS: list[dict[str, Any]] = [
             "auth policy 비교 필요 — adapter compat 공정 대기."
         ),
     },
-
     {
-        "phase":              "PHASE_1",
-        "legacy_method":      "POST",
-        "legacy_path":        "/api/v1/tasks/<task_id>/reject",
-        "fastapi_method":     "POST",
-        "fastapi_path":       "/api/v1/tasks/{task_id}/reject",
-        "overlap_class":      "COMPATIBLE_WITH_ADAPTER",
-        "contract_status":    "FROZEN_CANDIDATE",
-        "adapter_required":   True,
-        "adapter_note":       "path param 표기 차이 (<task_id> vs {task_id}) + auth policy 비교 필요",
-        "auth_expected":      True,
+        "phase": "PHASE_1",
+        "legacy_method": "POST",
+        "legacy_path": "/api/v1/tasks/<task_id>/reject",
+        "fastapi_method": "POST",
+        "fastapi_path": "/api/v1/tasks/{task_id}/reject",
+        "overlap_class": "COMPATIBLE_WITH_ADAPTER",
+        "contract_status": "FROZEN_CANDIDATE",
+        "adapter_required": True,
+        "adapter_note": "path param 표기 차이 (<task_id> vs {task_id}) + auth policy 비교 필요",
+        "auth_expected": True,
         "side_effect_allowed": False,
-        "do_not_call_live":   True,
-        "live_call_allowed":  False,
-        "do_not_stop_5050":   True,
-        "nginx_unchanged":    True,
-        "risk_level":         "HIGH",
-        "migration_action":   "FREEZE_ADAPTER_CONTRACT_FIRST",
-        "freeze_verdict":     "READY_FOR_COMPAT_TEST",
+        "do_not_call_live": True,
+        "live_call_allowed": False,
+        "do_not_stop_5050": True,
+        "nginx_unchanged": True,
+        "risk_level": "HIGH",
+        "migration_action": "FREEZE_ADAPTER_CONTRACT_FIRST",
+        "freeze_verdict": "READY_FOR_COMPAT_TEST",
         "note": (
             "거부 실행 — 실제 호출 절대 금지. "
             "approve와 동일한 adapter 요건. "
@@ -161,43 +157,42 @@ PHASE1_CONTRACTS: list[dict[str, Any]] = [
 # ── 명시적 제외 목록 (Phase 1 범위 밖) ────────────────────────────────────────
 
 PHASE1_EXCLUDED = {
-    "HOLD_DANGEROUS":  ["/api/v1/tasks/<task_id>/execute"],
-    "DO_NOT_TOUCH":    ["/api/v1/webhooks/kakaowork",
-                        "/api/v1/webhooks/kakaotalk-channel"],
-    "HOLD_DASHBOARD":  ["/dashboard", "/dashboard/tasks/<task_id>",
-                        "/dashboard/approve", "/dashboard/reject"],
+    "HOLD_DANGEROUS": ["/api/v1/tasks/<task_id>/execute"],
+    "DO_NOT_TOUCH": ["/api/v1/webhooks/kakaowork", "/api/v1/webhooks/kakaotalk-channel"],
+    "HOLD_DASHBOARD": ["/dashboard", "/dashboard/tasks/<task_id>", "/dashboard/approve", "/dashboard/reject"],
 }
 
 # ── 안전 경계 ─────────────────────────────────────────────────────────────────
 
 SAFE_BOUNDARY = {
-    "5050_stop":              False,
-    "nginx_change":           False,
-    "actual_http_call":       False,
-    "actual_approve_reject":  False,
-    "actual_execute":         False,
-    "actual_webhook_call":    False,
-    "actual_db_write":        False,
-    "actual_ui_change":       False,
-    "secret_output":          False,
-    "server_deploy":          False,
+    "5050_stop": False,
+    "nginx_change": False,
+    "actual_http_call": False,
+    "actual_approve_reject": False,
+    "actual_execute": False,
+    "actual_webhook_call": False,
+    "actual_db_write": False,
+    "actual_ui_change": False,
+    "secret_output": False,
+    "server_deploy": False,
 }
 
 
 # ── 감사 함수 ─────────────────────────────────────────────────────────────────
 
+
 def run_audit() -> dict[str, Any]:
     contracts = PHASE1_CONTRACTS
 
-    total                = len(contracts)
-    same_contract        = sum(1 for r in contracts if r["overlap_class"] == "SAME_CONTRACT")
-    compat_adapter       = sum(1 for r in contracts if r["overlap_class"] == "COMPATIBLE_WITH_ADAPTER")
+    total = len(contracts)
+    same_contract = sum(1 for r in contracts if r["overlap_class"] == "SAME_CONTRACT")
+    compat_adapter = sum(1 for r in contracts if r["overlap_class"] == "COMPATIBLE_WITH_ADAPTER")
     adapter_required_cnt = sum(1 for r in contracts if r["adapter_required"] is True)
-    side_effect_false    = sum(1 for r in contracts if r["side_effect_allowed"] is False)
-    do_not_call_true     = sum(1 for r in contracts if r["do_not_call_live"] is True)
-    do_not_stop_true     = sum(1 for r in contracts if r["do_not_stop_5050"] is True)
+    side_effect_false = sum(1 for r in contracts if r["side_effect_allowed"] is False)
+    do_not_call_true = sum(1 for r in contracts if r["do_not_call_live"] is True)
+    do_not_stop_true = sum(1 for r in contracts if r["do_not_stop_5050"] is True)
     nginx_unchanged_true = sum(1 for r in contracts if r["nginx_unchanged"] is True)
-    freeze_ready         = sum(1 for r in contracts if r["freeze_verdict"] == "READY_FOR_COMPAT_TEST")
+    freeze_ready = sum(1 for r in contracts if r["freeze_verdict"] == "READY_FOR_COMPAT_TEST")
 
     # /execute, webhook, dashboard가 Phase 1에 포함되지 않았는지 확인
     phase1_paths = [r["legacy_path"] for r in contracts]
@@ -224,23 +219,23 @@ def run_audit() -> dict[str, Any]:
     )
 
     return {
-        "audit_id":              "ASSISTANT_BACKEND_5050_LEGACY_PHASE1_8400_CONTRACT_FREEZE_01",
-        "verdict":               "PHASE1_CONTRACT_FREEZE_READY" if success else "FAIL",
-        "success":               success,
-        "contracts":             contracts,
-        "excluded":              PHASE1_EXCLUDED,
-        "safe_boundary":         {**SAFE_BOUNDARY, "violations": boundary_violations},
+        "audit_id": "ASSISTANT_BACKEND_5050_LEGACY_PHASE1_8400_CONTRACT_FREEZE_01",
+        "verdict": "PHASE1_CONTRACT_FREEZE_READY" if success else "FAIL",
+        "success": success,
+        "contracts": contracts,
+        "excluded": PHASE1_EXCLUDED,
+        "safe_boundary": {**SAFE_BOUNDARY, "violations": boundary_violations},
         "summary": {
-            "total_routes":              total,
-            "same_contract":             same_contract,
-            "compatible_with_adapter":   compat_adapter,
-            "adapter_required":          adapter_required_cnt,
+            "total_routes": total,
+            "same_contract": same_contract,
+            "compatible_with_adapter": compat_adapter,
+            "adapter_required": adapter_required_cnt,
             "side_effect_allowed_false": side_effect_false,
-            "do_not_call_live_true":     do_not_call_true,
-            "do_not_stop_5050_true":     do_not_stop_true,
-            "nginx_unchanged_true":      nginx_unchanged_true,
-            "freeze_ready":              freeze_ready,
-            "excluded_clean":            excluded_clean,
+            "do_not_call_live_true": do_not_call_true,
+            "do_not_stop_5050_true": do_not_stop_true,
+            "nginx_unchanged_true": nginx_unchanged_true,
+            "freeze_ready": freeze_ready,
+            "excluded_clean": excluded_clean,
         },
     }
 
@@ -258,11 +253,11 @@ def _print_report(audit: dict) -> None:
     for r in audit["contracts"]:
         print(
             f"  {r['legacy_method']:<6} {r['legacy_path']:<42} "
-            f"{r['overlap_class']:<26} {str(r['adapter_required']):<8} {r['risk_level']}"
+            f"{r['overlap_class']:<26} {r['adapter_required']!s:<8} {r['risk_level']}"
         )
 
     s = audit["summary"]
-    print(f"\n[집계]")
+    print("\n[집계]")
     print(f"  총 route 수             : {s['total_routes']} (기준: 5)")
     print(f"  SAME_CONTRACT           : {s['same_contract']} (기준: 2)")
     print(f"  COMPATIBLE_WITH_ADAPTER : {s['compatible_with_adapter']} (기준: 3)")
@@ -274,13 +269,13 @@ def _print_report(audit: dict) -> None:
     print(f"  freeze_ready            : {s['freeze_ready']} (기준: 5)")
     print(f"  excluded_clean          : {s['excluded_clean']}")
 
-    print(f"\n[제외 확인]")
+    print("\n[제외 확인]")
     for label, paths in audit["excluded"].items():
         for p in paths:
             print(f"  ✅ 제외됨: [{label}] {p}")
 
     sb = audit["safe_boundary"]
-    print(f"\n[SAFE BOUNDARY]")
+    print("\n[SAFE BOUNDARY]")
     if sb["violations"]:
         print(f"  ❌ 위반: {sb['violations']}")
     else:

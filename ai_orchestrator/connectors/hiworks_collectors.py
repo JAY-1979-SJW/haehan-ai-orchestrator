@@ -13,13 +13,13 @@
 - 본 모듈은 직접 네트워크를 타지 않는다 — HiworksClient 로 위임.
 - mock 응답에는 가짜 개인정보/시크릿을 넣지 않는다 (필드 키만 noting).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from .hiworks_client import HiworksClient, HiworksResponse
-
 
 # 공식 문서 확인 후 갱신될 placeholder.
 # 실제 경로는 https://developers.hiworks.com 의 공식 OpenAPI 스펙에 맞춰 교체.
@@ -34,11 +34,12 @@ ENDPOINTS: dict[str, str] = {
 @dataclass
 class CollectorResult:
     """모든 collector 가 따르는 공통 응답 스키마."""
+
     collector: str
     status: str  # "ok" | "dry_run" | "unconfigured" | "error"
     items: list = field(default_factory=list)
     item_count: int = 0
-    raw: Optional[dict] = None  # 원본 응답의 redacted 요약
+    raw: dict | None = None  # 원본 응답의 redacted 요약
     error_code: str = ""
     error_message: str = ""
 
@@ -112,27 +113,27 @@ def _from_response(name: str, resp: HiworksResponse) -> CollectorResult:
     )
 
 
-def _client_or_default(client: Optional[HiworksClient]) -> HiworksClient:
+def _client_or_default(client: HiworksClient | None) -> HiworksClient:
     return client if client is not None else HiworksClient()
 
 
 # ── public collectors ───────────────────────────────────────────
-def collect_my_profile(client: Optional[HiworksClient] = None) -> CollectorResult:
+def collect_my_profile(client: HiworksClient | None = None) -> CollectorResult:
     c = _client_or_default(client)
     resp = c.request("GET", ENDPOINTS["my_profile"])
     return _from_response("my_profile", resp)
 
 
-def collect_org_units(client: Optional[HiworksClient] = None) -> CollectorResult:
+def collect_org_units(client: HiworksClient | None = None) -> CollectorResult:
     c = _client_or_default(client)
     resp = c.request("GET", ENDPOINTS["org_units"])
     return _from_response("org_units", resp)
 
 
 def collect_org_members(
-    client: Optional[HiworksClient] = None,
+    client: HiworksClient | None = None,
     *,
-    unit_id: Optional[str] = None,
+    unit_id: str | None = None,
 ) -> CollectorResult:
     c = _client_or_default(client)
     params: dict[str, Any] = {}
@@ -143,10 +144,10 @@ def collect_org_members(
 
 
 def collect_attendance_summary(
-    client: Optional[HiworksClient] = None,
+    client: HiworksClient | None = None,
     *,
-    user_id: Optional[str] = None,
-    period: Optional[str] = None,
+    user_id: str | None = None,
+    period: str | None = None,
 ) -> CollectorResult:
     c = _client_or_default(client)
     params: dict[str, Any] = {}
@@ -161,8 +162,8 @@ def collect_attendance_summary(
 __all__ = [
     "ENDPOINTS",
     "CollectorResult",
-    "collect_my_profile",
-    "collect_org_units",
-    "collect_org_members",
     "collect_attendance_summary",
+    "collect_my_profile",
+    "collect_org_members",
+    "collect_org_units",
 ]

@@ -1,10 +1,12 @@
 """Google Sheets 자동화"""
+
 from __future__ import annotations
 
 from typing import Any
 
-from .base import task_context, page_goto, page_wait_click, page_wait_type, page_wait_visible
 from scripts.config import GOOGLE_URLS
+
+from .base import page_goto, page_wait_click, page_wait_type, page_wait_visible, task_context
 
 
 def run(task: str, args: list[str]) -> None:
@@ -94,7 +96,7 @@ def _task_open(page: Any, args: list[str]) -> None:
 
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[role="listitem"]')) {{
-            if (el.textContent.includes({repr(sheet_name)})) {{
+            if (el.textContent.includes({sheet_name!r})) {{
                 el.click();
                 break;
             }}
@@ -102,7 +104,7 @@ def _task_open(page: Any, args: list[str]) -> None:
     }}""")
 
     # 시트 에디터 로드 대기
-    page_wait_visible(page, '#docs-editor, .docs-editor-container', timeout=20000)
+    page_wait_visible(page, "#docs-editor, .docs-editor-container", timeout=20000)
     print("  ✓ 시트 열기 완료")
 
 
@@ -120,7 +122,7 @@ def _task_delete(page: Any, args: list[str]) -> None:
 
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[role="listitem"]')) {{
-            if (el.textContent.includes({repr(sheet_name)})) {{
+            if (el.textContent.includes({sheet_name!r})) {{
                 el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true }}));
                 break;
             }}
@@ -148,7 +150,7 @@ def _task_insert(page: Any, args: list[str]) -> None:
     sheet_name = args[0]
     data = args[1:]
 
-    print(f"\n[작업] Sheets 행 추가")
+    print("\n[작업] Sheets 행 추가")
     print(f"  시트: {sheet_name}")
     print(f"  데이터: {', '.join(data)}")
 
@@ -158,7 +160,7 @@ def _task_insert(page: Any, args: list[str]) -> None:
     # 시트 찾아 열기
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[role="listitem"]')) {{
-            if (el.textContent.includes({repr(sheet_name)})) {{
+            if (el.textContent.includes({sheet_name!r})) {{
                 el.click();
                 break;
             }}
@@ -166,7 +168,7 @@ def _task_insert(page: Any, args: list[str]) -> None:
     }}""")
 
     # 에디터 로드 대기
-    if not page_wait_visible(page, '#docs-editor, .docs-editor-container', timeout=20000):
+    if not page_wait_visible(page, "#docs-editor, .docs-editor-container", timeout=20000):
         print("  ⚠  시트 에디터 못 열림")
         return
 
@@ -210,14 +212,14 @@ def _task_edit(page: Any, args: list[str]) -> None:
 
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[role="listitem"]')) {{
-            if (el.textContent.includes({repr(sheet_name)})) {{
+            if (el.textContent.includes({sheet_name!r})) {{
                 el.click();
                 break;
             }}
         }}
     }}""")
 
-    if not page_wait_visible(page, '#docs-editor, .docs-editor-container', timeout=20000):
+    if not page_wait_visible(page, "#docs-editor, .docs-editor-container", timeout=20000):
         print("  ⚠  시트 에디터 못 열림")
         return
 
@@ -225,7 +227,8 @@ def _task_edit(page: Any, args: list[str]) -> None:
     if page_wait_type(
         page,
         '.docs-spreadsheet-name-box input, [aria-label*="이름 상자"], [aria-label*="Name Box"]',
-        cell_pos, timeout=8000
+        cell_pos,
+        timeout=8000,
     ):
         page.keyboard.press("Enter")
         page.wait_for_timeout(400)
@@ -233,7 +236,7 @@ def _task_edit(page: Any, args: list[str]) -> None:
         # Ctrl+G fallback
         page.keyboard.press("Control+g")
         page.wait_for_timeout(500)
-        page_wait_type(page, 'input', cell_pos, timeout=5000)
+        page_wait_type(page, "input", cell_pos, timeout=5000)
         page.keyboard.press("Enter")
         page.wait_for_timeout(400)
 

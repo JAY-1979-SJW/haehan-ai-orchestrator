@@ -12,7 +12,9 @@ HAEHAN_SINGLE_EXE_MODE_CONSOLIDATION_SPEC_01 감리.
   FAIL_SECURITY_POLICY_MISSING
   FAIL_NEXT_PLAN_MISSING
 """
+
 from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -23,13 +25,21 @@ P = "\033[32m[PASS]\033[0m"
 W = "\033[33m[WARN]\033[0m"
 F = "\033[31m[FAIL]\033[0m"
 
-issues   = []
+issues = []
 warnings = []
-passes   = []
+passes = []
 
-def fail(code, msg): issues.append(f"{F} {code} — {msg}")
-def warn(code, msg): warnings.append(f"{W} {code} — {msg}")
-def ok(msg):         passes.append(f"{P} {msg}")
+
+def fail(code, msg):
+    issues.append(f"{F} {code} — {msg}")
+
+
+def warn(code, msg):
+    warnings.append(f"{W} {code} — {msg}")
+
+
+def ok(msg):
+    passes.append(f"{P} {msg}")
 
 
 # ── 1. 설계서 존재 ─────────────────────────────────────────────────────────
@@ -96,20 +106,17 @@ else:
 
 
 # ── 7. deprecated 대상 분류 ──────────────────────────────────────────────
-deprecated_keys = ["deprecated", "DEPRECATED", "HaehanAI-Agent.spec",
-                   "build_desktop_agent_windows", "폐기 후보"]
+deprecated_keys = ["deprecated", "DEPRECATED", "HaehanAI-Agent.spec", "build_desktop_agent_windows", "폐기 후보"]
 matched = [k for k in deprecated_keys if k in text]
 if len(matched) >= 3:
     ok(f"deprecated 분류: {matched}")
-    warn("WARN_AGENT_EXE_DEPRECATION_PENDING",
-         "Agent.exe deprecated — 별도 cleanup 공정에서 삭제 예정")
+    warn("WARN_AGENT_EXE_DEPRECATION_PENDING", "Agent.exe deprecated — 별도 cleanup 공정에서 삭제 예정")
 else:
     fail("FAIL_DEPRECATED_PLAN_MISSING", "deprecated 대상 명시 부족")
 
 
 # ── 8. 보안 정책 ─────────────────────────────────────────────────────────
-sec_keys = ["device_token", "registration_code", "redaction",
-            "Chrome profile cookie", "server proxy"]
+sec_keys = ["device_token", "registration_code", "redaction", "Chrome profile cookie", "server proxy"]
 matched = [k for k in sec_keys if k in text]
 if len(matched) >= 4:
     ok(f"보안 정책 명시: {matched}")
@@ -118,8 +125,7 @@ else:
 
 
 # ── 9. lifecycle 정책 ────────────────────────────────────────────────────
-lifecycle_keys = ["lifecycle", "consent", "token 로드", "local_server",
-                  "단일 인스턴스", "종료"]
+lifecycle_keys = ["lifecycle", "consent", "token 로드", "local_server", "단일 인스턴스", "종료"]
 matched = [k for k in lifecycle_keys if k in text]
 if len(matched) >= 4:
     ok(f"lifecycle 정책: {matched}")
@@ -128,8 +134,7 @@ else:
 
 
 # ── 10. build policy ────────────────────────────────────────────────────
-build_keys = ["onefolder", "Playwright", "ui_dist", "HaehanAI.spec",
-              "pythonnet", "collect_all"]
+build_keys = ["onefolder", "Playwright", "ui_dist", "HaehanAI.spec", "pythonnet", "collect_all"]
 matched = [k for k in build_keys if k in text]
 if len(matched) >= 3:
     ok(f"build policy: {matched}")
@@ -159,12 +164,11 @@ matched = [s for s in steps if s in text]
 if len(matched) >= 5:
     ok(f"단계별 구현 계획 ({len(matched)}/6): 모두 명시")
 else:
-    fail("FAIL_NEXT_PLAN_MISSING", f"단계 누락: {set(steps)-set(matched)}")
+    fail("FAIL_NEXT_PLAN_MISSING", f"단계 누락: {set(steps) - set(matched)}")
 
 
 # ── 13. 즉시 삭제 금지 명시 ───────────────────────────────────────────────
-no_delete_keys = ["즉시 삭제 금지", "즉시 폐기 금지", "삭제 금지",
-                  "즉시 Agent.exe 삭제", "cleanup 공정"]
+no_delete_keys = ["즉시 삭제 금지", "즉시 폐기 금지", "삭제 금지", "즉시 Agent.exe 삭제", "cleanup 공정"]
 matched = [k for k in no_delete_keys if k in text]
 if len(matched) >= 2:
     ok(f"즉시 삭제 금지 명시: {matched}")
@@ -186,8 +190,7 @@ forbidden = ["device_token=", "registration_code=", "sk-", "openai_api_key="]
 leaks = []
 for f in forbidden:
     # 정책 설명 컨텍스트에 등장하는 것은 허용 (REDACTED 처리 문구)
-    lines = [ln for ln in text.split("\n")
-             if f in ln and "REDACTED" not in ln and "금지" not in ln]
+    lines = [ln for ln in text.split("\n") if f in ln and "REDACTED" not in ln and "금지" not in ln]
     if lines:
         leaks.append(f)
 if leaks:
@@ -201,13 +204,16 @@ print()
 print("=" * 68)
 print("  HAEHAN_SINGLE_EXE_MODE_CONSOLIDATION_SPEC_01 감리")
 print("=" * 68)
-for p in passes:   print(p)
-for w in warnings: print(w)
-for i in issues:   print(i)
+for p in passes:
+    print(p)
+for w in warnings:
+    print(w)
+for i in issues:
+    print(i)
 print("-" * 68)
 print(f"PASS: {len(passes)}  WARN: {len(warnings)}  FAIL: {len(issues)}")
 if not issues:
-    print(f"\033[32m✅ PASS_HAEHAN_SINGLE_EXE_MODE_CONSOLIDATION_SPEC\033[0m")
+    print("\033[32m✅ PASS_HAEHAN_SINGLE_EXE_MODE_CONSOLIDATION_SPEC\033[0m")
 else:
     print(f"\033[31m❌ FAIL — {len(issues)}건 수정 필요\033[0m")
 print("=" * 68)
