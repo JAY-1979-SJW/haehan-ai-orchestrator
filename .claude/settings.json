@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\install_git_hooks.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\install_git_hooks.py\"",
             "statusMessage": "git hook 설치 중 (ruff + AI 검수)..."
           }
         ]
@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\prewrite_capability_check.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\prewrite_capability_check.py\"",
             "statusMessage": "기존 구현 조회 중 (capability-gate)..."
           }
         ]
@@ -32,22 +32,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_openai_call.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_openai_call.py\"",
             "statusMessage": "외부 유료 AI API 호출 여부 검사 중..."
           },
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_cdp_new_tab.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_cdp_new_tab.py\"",
             "statusMessage": "CDP 새 탭 생성 여부 검사 중..."
           },
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_instagram_publish.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_instagram_publish.py\"",
             "statusMessage": "인스타그램 실제 발행 여부 검사 중..."
           },
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_youtube_upload.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_youtube_upload.py\"",
             "statusMessage": "유튜브 업로드/채널 확인 여부 검사 중..."
           }
         ]
@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_force_cdp.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_force_cdp.py\"",
             "statusMessage": "claude-in-chrome 사용 금지, CDP 강제 전환 중..."
           }
         ]
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\pre_edit_dup_check.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\pre_edit_dup_check.py\"",
             "statusMessage": "중복 구현 가능성 검사 중..."
           }
         ]
@@ -79,7 +79,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','log_code_change.py')],stdin=sys.stdin).returncode)\""
+            "command": "py -3.14 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','log_code_change.py')],stdin=sys.stdin).returncode)\""
           }
         ]
       },
@@ -88,7 +88,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\post_edit_fast_gate.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\post_edit_fast_gate.py\"",
             "statusMessage": "빠른 게이트(ruff+영향테스트) 실행 중..."
           }
         ]
@@ -98,7 +98,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\hook_check_a4.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\hook_check_a4.py\"",
             "statusMessage": "A4 서식 자동 검사 + AI 품질 검증 중..."
           }
         ]
@@ -109,7 +109,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\behavior_gate.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\behavior_gate.py\"",
             "statusMessage": "행동 게이트 검사 중..."
           }
         ]
@@ -118,7 +118,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\stop_fast_verify.py\"",
+            "command": "py -3.14 \"C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\scripts\\ops\\stop_fast_verify.py\"",
             "statusMessage": "세션 변경분 최종 게이트 확인 중..."
           }
         ]
