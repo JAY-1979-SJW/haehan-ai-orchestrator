@@ -248,6 +248,29 @@ def _has_password_input(snapshot: dict[str, Any]) -> bool:
     return False
 
 
+_CAPTCHA_FIELD_HINT = ("captcha", "캡차", "보안문자")
+
+
+def _captcha_texts(snapshot: dict[str, Any]) -> list[str]:
+    """캡차 판정에 쓰는 문구 — 화면을 막는 곳(제목·머리글·보이는 다이얼로그)만. 링크·일반 버튼은 제외한다.
+    (로그인 화면의 '일회용 로그인' 같은 대체 수단 링크가 캡차로 오판되던 문제, 2026-09-30 실제 화면 검증)"""
+    texts = [str(snapshot.get("title", ""))]
+    for frame in _frames(snapshot):
+        texts += [str(h.get("text", "")) for h in frame.get("headings") or []]
+        texts += [str(d.get("text", "")) for d in frame.get("dialogs") or [] if d.get("visible", True)]
+    return [t.lower() for t in texts if t]
+
+
+def _has_captcha_field(snapshot: dict[str, Any]) -> bool:
+    """캡차 입력칸(이름·id 에 captcha)이 화면에 보이면 캡차 화면이다."""
+    for frame in _frames(snapshot):
+        for field in frame.get("inputs") or []:
+            hay = f"{field.get('name', '')} {field.get('id', '')} {field.get('placeholder', '')}".lower()
+            if field.get("visible", True) and any(h in hay for h in _CAPTCHA_FIELD_HINT):
+                return True
+    return False
+
+
 def _has_visible_dialog(snapshot: dict[str, Any]) -> bool:
     return any(d.get("visible", True) for frame in _frames(snapshot) for d in frame.get("dialogs") or [])
 
@@ -268,7 +291,9 @@ def _login_evidence(snapshot: dict[str, Any]) -> list[str]:
 
 def _blocking_state(snapshot: dict[str, Any], texts: list[str]) -> dict[str, Any] | None:
     """캡차 > 권한 없음 > 로그인 요구 > 팝업 순으로 화면을 막는 상태를 찾는다. 없으면 None."""
-    if _match_words(texts, _CAPTCHA_WORDS):
+    if _has_captcha_field(snapshot):
+        return {"state": "captcha", "evidence": ["captcha_field"]}
+    if _match_words(_captcha_texts(snapshot), _CAPTCHA_WORDS):
         return {"state": "captcha", "evidence": ["captcha_keyword"]}
     if _match_words(texts, _DENIED_WORDS):
         return {"state": "permission_denied", "evidence": ["denied_keyword"]}
