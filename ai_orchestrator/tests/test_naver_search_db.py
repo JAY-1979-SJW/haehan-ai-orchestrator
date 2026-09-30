@@ -209,7 +209,7 @@ def test_blog_duplicate_link_is_ignored(tmp_path, monkeypatch):
     # 총 row 수 3
     conn = sqlite3.connect(str(db_path))
     try:
-        n = conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}").fetchone()[0]
+        n = conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}").fetchone()[0]  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         assert n == 3
     finally:
         conn.close()
@@ -294,7 +294,7 @@ def test_shopping_duplicate_product_id_and_missing_skipped(tmp_path, monkeypatch
 
     conn = sqlite3.connect(str(db_path))
     try:
-        n = conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}").fetchone()[0]
+        n = conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}").fetchone()[0]  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         assert n == 1
     finally:
         conn.close()

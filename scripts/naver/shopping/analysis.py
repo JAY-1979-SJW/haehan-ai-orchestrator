@@ -3,13 +3,13 @@
 read-only URI 모드 (file:...?mode=ro) — 쓰기 없음, 스키마 변경 없음.
 stdlib sqlite3 만 사용 (외부 의존성 없음).
 """
+
 from __future__ import annotations
 
 import logging
 import math
 import sqlite3
 from pathlib import Path
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,28 +17,41 @@ logger = logging.getLogger(__name__)
 
 TABLE = "naver_shopping_items"
 
-_LARGE_MALLS = frozenset({
-    "네이버", "쿠팡", "G마켓", "옥션", "11번가", "롯데ON", "위메프", "티몬",
-    "GS샵", "CJ온스타일", "홈앤쇼핑", "현대Hmall",
-})
+_LARGE_MALLS = frozenset(
+    {
+        "네이버",
+        "쿠팡",
+        "G마켓",
+        "옥션",
+        "11번가",
+        "롯데ON",
+        "위메프",
+        "티몬",
+        "GS샵",
+        "CJ온스타일",
+        "홈앤쇼핑",
+        "현대Hmall",
+    }
+)
 
 PRICE_RANGES = [
-    ("~1만",   0,       10_000),
-    ("1~3만",  10_001,  30_000),
-    ("3~5만",  30_001,  50_000),
-    ("5~10만", 50_001,  100_000),
-    ("10만~",  100_001, None),
+    ("~1만", 0, 10_000),
+    ("1~3만", 10_001, 30_000),
+    ("3~5만", 30_001, 50_000),
+    ("5~10만", 50_001, 100_000),
+    ("10만~", 100_001, None),
 ]
 
 
 # ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
+
 
 def _db_path() -> Path:
     """repo root / data / naver_search.db"""
     return Path(__file__).resolve().parents[3] / "data" / "naver_search.db"
 
 
-def _connect() -> Optional[sqlite3.Connection]:
+def _connect() -> sqlite3.Connection | None:
     p = _db_path()
     if not p.is_file():
         logger.warning("[ANALYSIS] DB 파일 없음: %s", p)
@@ -53,7 +66,7 @@ def _connect() -> Optional[sqlite3.Connection]:
         return None
 
 
-def _where_keywords(keywords: Optional[List[str]]) -> tuple:
+def _where_keywords(keywords: list[str] | None) -> tuple:
     """키워드 리스트 → (WHERE 절 문자열, params 리스트)"""
     if not keywords:
         return "", []
@@ -63,12 +76,13 @@ def _where_keywords(keywords: Optional[List[str]]) -> tuple:
 
 # ── 공개 함수 ────────────────────────────────────────────────────────────────
 
+
 def search_products(
-    keyword: Optional[str] = None,
-    min_price: Optional[int] = None,
-    max_price: Optional[int] = None,
-    brand: Optional[str] = None,
-    mall: Optional[str] = None,
+    keyword: str | None = None,
+    min_price: int | None = None,
+    max_price: int | None = None,
+    brand: str | None = None,
+    mall: str | None = None,
     limit: int = 50,
     offset: int = 0,
     sort: str = "collected_at_desc",
@@ -86,8 +100,8 @@ def search_products(
         return {"total": 0, "items": [], "limit": limit, "offset": offset}
 
     try:
-        where: List[str] = []
-        params: List = []
+        where: list[str] = []
+        params: list = []
         if keyword:
             where.append("(query LIKE ? OR title LIKE ?)")
             like = f"%{keyword}%"
@@ -114,12 +128,13 @@ def search_products(
         order_sql = _SORT_MAP.get(sort, "collected_at DESC")
 
         total_row = conn.execute(
-            f"SELECT COUNT(*) FROM {TABLE}{where_sql}", tuple(params)
+            f"SELECT COUNT(*) FROM {TABLE}{where_sql}",
+            tuple(params),  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         ).fetchone()
         total = int(total_row[0]) if total_row else 0
 
         rows = conn.execute(
-            f"SELECT query, title, link, lprice, hprice, mall_name, brand, maker, "
+            f"SELECT query, title, link, lprice, hprice, mall_name, brand, maker, "  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             f"product_id, collected_at, source "
             f"FROM {TABLE}{where_sql} ORDER BY {order_sql} LIMIT ? OFFSET ?",
             tuple(params) + (limit, offset),
@@ -136,7 +151,7 @@ def search_products(
         conn.close()
 
 
-def price_distribution(keywords: Optional[List[str]] = None) -> dict:
+def price_distribution(keywords: list[str] | None = None) -> dict:
     """가격 구간별 상품 수 집계.
 
     구간: ~1만 / 1~3만 / 3~5만 / 5~10만 / 10만~
@@ -150,7 +165,7 @@ def price_distribution(keywords: Optional[List[str]] = None) -> dict:
         where_sql, params = _where_keywords(keywords)
         sep = " AND " if where_sql else " WHERE "
         rows = conn.execute(
-            f"SELECT lprice FROM {TABLE}{where_sql}{sep}lprice IS NOT NULL",
+            f"SELECT lprice FROM {TABLE}{where_sql}{sep}lprice IS NOT NULL",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             tuple(params),
         ).fetchall()
         prices = [r[0] for r in rows if r[0] is not None]
@@ -173,7 +188,7 @@ def price_distribution(keywords: Optional[List[str]] = None) -> dict:
 
 
 def mall_analysis(
-    keywords: Optional[List[str]] = None,
+    keywords: list[str] | None = None,
     top_n: int = 30,
     exclude_large: bool = False,
 ) -> dict:
@@ -189,7 +204,7 @@ def mall_analysis(
     try:
         where_sql, params = _where_keywords(keywords)
         rows = conn.execute(
-            f"SELECT mall_name, lprice, brand FROM {TABLE}{where_sql}",
+            f"SELECT mall_name, lprice, brand FROM {TABLE}{where_sql}",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             tuple(params),
         ).fetchall()
 
@@ -209,15 +224,17 @@ def mall_analysis(
         result_all = []
         for name, d in agg.items():
             prices = d["prices"]
-            result_all.append({
-                "mall_name": name,
-                "count": d["count"],
-                "min_price": min(prices) if prices else None,
-                "avg_price": int(sum(prices) / len(prices)) if prices else None,
-                "max_price": max(prices) if prices else None,
-                "brand_count": len(d["brands"]),
-                "is_large": name in _LARGE_MALLS,
-            })
+            result_all.append(
+                {
+                    "mall_name": name,
+                    "count": d["count"],
+                    "min_price": min(prices) if prices else None,
+                    "avg_price": int(sum(prices) / len(prices)) if prices else None,
+                    "max_price": max(prices) if prices else None,
+                    "brand_count": len(d["brands"]),
+                    "is_large": name in _LARGE_MALLS,
+                }
+            )
 
         large = [m for m in result_all if m["is_large"]]
         specialist = [m for m in result_all if not m["is_large"]]
@@ -242,7 +259,7 @@ def mall_analysis(
 
 
 def brand_analysis(
-    keywords: Optional[List[str]] = None,
+    keywords: list[str] | None = None,
     top_n: int = 20,
 ) -> dict:
     """브랜드별 집계: 상품수, 가격 범위, 판매몰 수."""
@@ -253,7 +270,7 @@ def brand_analysis(
     try:
         where_sql, params = _where_keywords(keywords)
         rows = conn.execute(
-            f"SELECT brand, lprice, mall_name FROM {TABLE}{where_sql}",
+            f"SELECT brand, lprice, mall_name FROM {TABLE}{where_sql}",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             tuple(params),
         ).fetchall()
 
@@ -275,13 +292,15 @@ def brand_analysis(
         brands = []
         for name, d in agg.items():
             prices = d["prices"]
-            brands.append({
-                "brand": name,
-                "count": d["count"],
-                "min_price": min(prices) if prices else None,
-                "max_price": max(prices) if prices else None,
-                "mall_count": len(d["malls"]),
-            })
+            brands.append(
+                {
+                    "brand": name,
+                    "count": d["count"],
+                    "min_price": min(prices) if prices else None,
+                    "max_price": max(prices) if prices else None,
+                    "mall_count": len(d["malls"]),
+                }
+            )
 
         brands_sorted = sorted(brands, key=lambda x: x["count"], reverse=True)[:top_n]
         return {
@@ -301,11 +320,11 @@ def category_analysis() -> dict:
 
     try:
         rows1 = conn.execute(
-            f"SELECT category1, COUNT(*) as cnt FROM {TABLE} "
+            f"SELECT category1, COUNT(*) as cnt FROM {TABLE} "  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             f"WHERE category1 != '' GROUP BY category1 ORDER BY cnt DESC"
         ).fetchall()
         rows2 = conn.execute(
-            f"SELECT category1, category2, COUNT(*) as cnt FROM {TABLE} "
+            f"SELECT category1, category2, COUNT(*) as cnt FROM {TABLE} "  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             f"WHERE category2 != '' GROUP BY category1, category2 ORDER BY cnt DESC LIMIT 50"
         ).fetchall()
         return {
@@ -335,17 +354,18 @@ def competition_score(keyword: str) -> dict:
 
     try:
         row = conn.execute(
-            f"SELECT COUNT(*) FROM {TABLE} WHERE query = ?", (keyword,)
+            f"SELECT COUNT(*) FROM {TABLE} WHERE query = ?",
+            (keyword,),  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         ).fetchone()
         kw_count = int(row[0]) if row else 0
 
         row = conn.execute(
-            f"SELECT MAX(cnt) FROM (SELECT COUNT(*) AS cnt FROM {TABLE} GROUP BY query)"
+            f"SELECT MAX(cnt) FROM (SELECT COUNT(*) AS cnt FROM {TABLE} GROUP BY query)"  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         ).fetchone()
         max_count = int(row[0]) if row and row[0] else 1
 
         rows = conn.execute(
-            f"SELECT lprice FROM {TABLE} WHERE query = ? AND lprice IS NOT NULL",
+            f"SELECT lprice FROM {TABLE} WHERE query = ? AND lprice IS NOT NULL",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             (keyword,),
         ).fetchall()
         prices = [r[0] for r in rows]
@@ -357,15 +377,16 @@ def competition_score(keyword: str) -> dict:
             std_price = 0.0
 
         row = conn.execute(
-            f"SELECT COUNT(DISTINCT mall_name) FROM {TABLE} WHERE query = ?", (keyword,)
+            f"SELECT COUNT(DISTINCT mall_name) FROM {TABLE} WHERE query = ?",
+            (keyword,),  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         ).fetchone()
         kw_malls = int(row[0]) if row else 0
 
-        row = conn.execute(f"SELECT COUNT(DISTINCT mall_name) FROM {TABLE}").fetchone()
+        row = conn.execute(f"SELECT COUNT(DISTINCT mall_name) FROM {TABLE}").fetchone()  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         total_malls = int(row[0]) if row and row[0] else 1
 
         n_count = min(kw_count / max_count, 1.0) if max_count else 0.0
-        n_std   = min(std_price / 100_000, 1.0)
+        n_std = min(std_price / 100_000, 1.0)
         n_malls = min(kw_malls / total_malls, 1.0) if total_malls else 0.0
         score_100 = round((n_count * 0.4 + n_std * 0.3 + n_malls * 0.3) * 100, 1)
 
@@ -387,7 +408,7 @@ def competition_score(keyword: str) -> dict:
         conn.close()
 
 
-def keyword_summary(keywords: Optional[List[str]] = None) -> dict:
+def keyword_summary(keywords: list[str] | None = None) -> dict:
     """키워드별 요약: 상품수, 가격 min/avg/max, 업체수, 브랜드수."""
     conn = _connect()
     if conn is None:
@@ -397,7 +418,7 @@ def keyword_summary(keywords: Optional[List[str]] = None) -> dict:
         if keywords:
             placeholders = ", ".join("?" for _ in keywords)
             rows = conn.execute(
-                f"SELECT query, COUNT(*) AS cnt, "
+                f"SELECT query, COUNT(*) AS cnt, "  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
                 f"MIN(lprice) AS min_p, MAX(lprice) AS max_p, "
                 f"COUNT(DISTINCT mall_name) AS malls, "
                 f"COUNT(DISTINCT brand) AS brands "
@@ -406,7 +427,7 @@ def keyword_summary(keywords: Optional[List[str]] = None) -> dict:
             ).fetchall()
         else:
             rows = conn.execute(
-                f"SELECT query, COUNT(*) AS cnt, "
+                f"SELECT query, COUNT(*) AS cnt, "  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
                 f"MIN(lprice) AS min_p, MAX(lprice) AS max_p, "
                 f"COUNT(DISTINCT mall_name) AS malls, "
                 f"COUNT(DISTINCT brand) AS brands "
@@ -417,21 +438,23 @@ def keyword_summary(keywords: Optional[List[str]] = None) -> dict:
         for r in rows:
             q = r["query"]
             avg_row = conn.execute(
-                f"SELECT AVG(lprice) FROM {TABLE} WHERE query = ? AND lprice IS NOT NULL",
+                f"SELECT AVG(lprice) FROM {TABLE} WHERE query = ? AND lprice IS NOT NULL",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
                 (q,),
             ).fetchone()
             avg_price = int(avg_row[0]) if avg_row and avg_row[0] is not None else None
-            result.append({
-                "query": q,
-                "count": r["cnt"],
-                "min_price": r["min_p"],
-                "avg_price": avg_price,
-                "max_price": r["max_p"],
-                "mall_count": r["malls"],
-                "brand_count": r["brands"],
-            })
+            result.append(
+                {
+                    "query": q,
+                    "count": r["cnt"],
+                    "min_price": r["min_p"],
+                    "avg_price": avg_price,
+                    "max_price": r["max_p"],
+                    "mall_count": r["malls"],
+                    "brand_count": r["brands"],
+                }
+            )
 
-        total_row = conn.execute(f"SELECT COUNT(*) FROM {TABLE}").fetchone()
+        total_row = conn.execute(f"SELECT COUNT(*) FROM {TABLE}").fetchone()  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         total = int(total_row[0]) if total_row else 0
         return {"keywords": result, "total_products": total}
     finally:
@@ -439,11 +462,11 @@ def keyword_summary(keywords: Optional[List[str]] = None) -> dict:
 
 
 __all__ = [
-    "search_products",
-    "price_distribution",
-    "mall_analysis",
     "brand_analysis",
     "category_analysis",
     "competition_score",
     "keyword_summary",
+    "mall_analysis",
+    "price_distribution",
+    "search_products",
 ]
