@@ -93,6 +93,41 @@ def test_logged_out_screen_is_out_and_user_is_none(use_snapshot):
     assert (result["state"], result["logged_in"], result["user"], result["method"]) == ("out", False, None, "element")
 
 
+LOGGED_IN_FIXTURE = Path(__file__).parent / "fixtures" / "login_state" / "naver_logged_in_home.json"
+
+
+def _logged_in_fixture() -> dict:
+    return json.loads(LOGGED_IN_FIXTURE.read_text(encoding="utf-8"))
+
+
+def test_real_logged_in_screen_is_in(use_snapshot):
+    """2026-09-30 실제 로그인 화면: 보이는 로그아웃 + 세션 쿠키. 화면에만 있는 "로그인 보호 설정" 링크는 로그인 버튼이 아니다."""
+    use_snapshot(_logged_in_fixture())
+    result = ld.detect_login_state(_LoginProbePage(cookies=("NID_AUT", "NID_SES")))
+    assert (result["state"], result["logged_in"], result["user"]) == ("in", True, None)
+    assert result["evidence"]["login_button_visible"] == 0
+    assert result["evidence"]["logout_or_account_visible"] == 1
+
+
+def test_real_logged_in_screen_without_cookies_is_a_conflict(use_snapshot):
+    use_snapshot(_logged_in_fixture())
+    assert ld.detect_login_state(_LoginProbePage())["state"] == "unknown"
+
+
+@pytest.mark.parametrize(
+    "label", ["로그인 보호 설정", "로그인 도움말", "로그인 상태 유지", "로그인 기록", "로그인 방법 안내"]
+)
+def test_links_that_only_mention_login_are_not_login_buttons(label):
+    snap = _snapshot(links=[{"text": label, "href": "/x", "visible": True}])
+    assert page_analysis.element_login_signals(page_analysis.analyze_snapshot(snap))["login_visible"] == 0
+
+
+@pytest.mark.parametrize("label", ["로그인", "로그인하기", "NAVER 로그인", "패스키 로그인", "Log in"])
+def test_real_login_buttons_still_count(label):
+    snap = _snapshot(buttons=[{"text": label, "visible": True}])
+    assert page_analysis.element_login_signals(page_analysis.analyze_snapshot(snap))["login_visible"] == 1
+
+
 def test_session_cookie_conflict_is_unknown_not_logged_in(use_snapshot):
     use_snapshot(_fixture())
     result = ld.detect_login_state(_LoginProbePage(cookies=("NID_AUT", "NID_SES")))

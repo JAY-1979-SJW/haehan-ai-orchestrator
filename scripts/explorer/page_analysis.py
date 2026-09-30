@@ -475,6 +475,19 @@ def analyze_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
 # ── 로그인 상태 근거(눈에 보이는 요소만) ──────────────────────────────────
 
 _SIGNAL_LABEL_MAX = 20  # 이보다 긴 라벨은 문장·캘린더 링크 등이라 로그인 버튼으로 세지 않는다
+# "로그인"이라는 글자만 들어 있고 로그인 동작이 아닌 링크 — 예: 로그인된 화면의 "로그인 보호 설정"(2026-09-30 실제 화면에서 확인)
+_NOT_A_LOGIN_ACTION = ("보호", "설정", "도움", "유지", "찾기", "안내", "방법", "실패", "오류", "약관", "기록", "내역")
+
+
+def _signal_group(el: dict[str, Any]) -> str:
+    """로그인 상태 근거로 셀 요소의 묶음: "login"(로그인 버튼) / "in"(로그아웃·계정) / ""(세지 않음)."""
+    label = str(el.get("label", ""))
+    if el.get("kind") not in ("button", "link") or len(label) > _SIGNAL_LABEL_MAX:
+        return ""
+    role = el.get("role")
+    if role == "login":
+        return "" if any(token in label for token in _NOT_A_LOGIN_ACTION) else "login"
+    return "in" if role in ("logout", "account") else ""
 
 
 def element_login_signals(analysis: dict[str, Any]) -> dict[str, Any]:
@@ -486,11 +499,8 @@ def element_login_signals(analysis: dict[str, Any]) -> dict[str, Any]:
     count = {"login": [0, 0], "in": [0, 0]}  # [보임, 숨김]
     labels: dict[str, list[str]] = {"login": [], "in": []}
     for el in analysis.get("elements", []):
-        if el.get("kind") not in ("button", "link"):
-            continue
-        role = el.get("role")
-        group = "login" if role == "login" else "in" if role in ("logout", "account") else ""
-        if not group or len(str(el.get("label", ""))) > _SIGNAL_LABEL_MAX:
+        group = _signal_group(el)
+        if not group:
             continue
         idx = 0 if el.get("visible") else 1
         count[group][idx] += 1
