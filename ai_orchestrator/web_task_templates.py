@@ -50,7 +50,7 @@ class WebTaskTemplate:
 
 
 def _assert_no_secrets(template_id: str, default_params: dict) -> None:
-    for k in default_params.keys():
+    for k in default_params:
         if k.lower() in _FORBIDDEN_KEYS:
             raise ValueError(f"템플릿 {template_id}: default_params 에 민감 키({k}) 저장 금지")
 

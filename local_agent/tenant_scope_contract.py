@@ -350,15 +350,14 @@ def assert_audit_task_same_org(audit_event: BrowserAuditEventScope, task: Browse
         audit_event: BrowserAuditEventScope
         task: BrowserTaskScope
     """
-    if audit_event.organization_id and task.organization_id:
-        if audit_event.organization_id != task.organization_id:
-            logger.warning(
-                f"audit scope mismatch: audit.org={audit_event.organization_id} != "
-                f"task.org={task.organization_id} "
-                f"(audit_id={audit_event.event_id}, task={task.task_id})"
-            )
-            # Warning only (blocking 아님)
-            return
+    if audit_event.organization_id and task.organization_id and audit_event.organization_id != task.organization_id:
+        logger.warning(
+            f"audit scope mismatch: audit.org={audit_event.organization_id} != "
+            f"task.org={task.organization_id} "
+            f"(audit_id={audit_event.event_id}, task={task.task_id})"
+        )
+        # Warning only (blocking 아님)
+        return
 
     logger.debug(
         f"audit scope check PASS: event={audit_event.event_id}, task={task.task_id}, org={task.organization_id}"

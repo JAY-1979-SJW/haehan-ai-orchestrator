@@ -30,10 +30,7 @@ def test_work_run_writes_success_record_and_audit_events(monkeypatch, tmp_path):
     assert data["status"] == "ok"
     assert data["args"] == ["2", "--dry-run"]
 
-    events = [
-        json.loads(line)
-        for line in realtime_audit.AUDIT_JSONL.read_text(encoding="utf-8").splitlines()
-    ]
+    events = [json.loads(line) for line in realtime_audit.AUDIT_JSONL.read_text(encoding="utf-8").splitlines()]
     assert [event["event_type"] for event in events] == [
         "HIWORKS_WORK_STARTED",
         "HIWORKS_WORK_COMPLETED",
@@ -45,9 +42,8 @@ def test_work_run_writes_failure_record(monkeypatch, tmp_path):
     monkeypatch.setattr(run_log, "RUNS_DIR", tmp_path / "runs")
     workflow = {"key": "mail", "title": "Mail", "risk": "read"}
 
-    with pytest.raises(RuntimeError):
-        with run_log.work_run(workflow):
-            raise RuntimeError("boom")
+    with pytest.raises(RuntimeError), run_log.work_run(workflow):
+        raise RuntimeError("boom")
 
     files = list((tmp_path / "runs" / "mail").glob("*.json"))
     data = json.loads(files[0].read_text(encoding="utf-8"))

@@ -78,7 +78,7 @@ def execute_natural_language_task(
             "status": STATUS_FAILED,
             "message_ko": "지시문이 비어 있습니다.",
             "task_id": task_id or str(uuid.uuid4()),
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
 
     task_id = task_id or str(uuid.uuid4())
@@ -92,7 +92,7 @@ def execute_natural_language_task(
                 "status": STATUS_FAILED,
                 "message_ko": "url 또는 page_data가 필요합니다.",
                 "task_id": task_id,
-                **{f: False for f in _SAFE_FIELDS},
+                **dict.fromkeys(_SAFE_FIELDS, False),
             }
 
     result = run_agent(

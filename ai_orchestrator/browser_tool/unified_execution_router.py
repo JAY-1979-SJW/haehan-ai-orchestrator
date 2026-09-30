@@ -190,16 +190,15 @@ def route_browser_task(
         )
 
     # 7. SERVER_ONLY (내부 전용)
-    if location == SERVER_ONLY:
-        if server_result is None:
-            return build_safe_result(
-                task_id=task_id,
-                ok=True,
-                execution_used=EXEC_SERVER_BROWSER,
-                final_status=STATUS_SUCCESS,
-                message_ko="서버 내부에서 처리합니다.",
-                extra={"execution_location": SERVER_ONLY, "dryrun": True},
-            )
+    if location == SERVER_ONLY and server_result is None:
+        return build_safe_result(
+            task_id=task_id,
+            ok=True,
+            execution_used=EXEC_SERVER_BROWSER,
+            final_status=STATUS_SUCCESS,
+            message_ko="서버 내부에서 처리합니다.",
+            extra={"execution_location": SERVER_ONLY, "dryrun": True},
+        )
 
     # 8. SERVER_ALLOWED / SERVER_FIRST (내부/공개 API)
     if server_result is None:

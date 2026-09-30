@@ -90,9 +90,9 @@ def _count_naver_catalog_categories() -> set[str]:
         if key:
             categories.add(str(key))
     if not categories and isinstance(catalog.get("actions"), dict):
-        categories.update(str(key) for key in catalog["actions"].keys())
+        categories.update(str(key) for key in catalog["actions"])
     if isinstance(catalog.get("features"), dict):
-        categories.update(str(key) for key in catalog["features"].keys())
+        categories.update(str(key) for key in catalog["features"])
     return categories
 
 

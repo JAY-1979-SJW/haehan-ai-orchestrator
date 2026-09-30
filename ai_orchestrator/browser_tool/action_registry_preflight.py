@@ -370,12 +370,11 @@ def evaluate_action_registry_preflight(
         return result
 
     # If no approval required, allow dry-run dispatch
-    if not result["approval_required"]:
-        if operation_type in {"read", "navigate", "open_url", "click"}:
-            result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
-            result["safe_to_dispatch"] = True
-            result["message_ko"] = f"{action_name}: dry-run dispatch 허용"
-            return result
+    if not result["approval_required"] and operation_type in {"read", "navigate", "open_url", "click"}:
+        result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
+        result["safe_to_dispatch"] = True
+        result["message_ko"] = f"{action_name}: dry-run dispatch 허용"
+        return result
 
     # Approval required: evaluate gate preflight
     if result["approval_required"]:

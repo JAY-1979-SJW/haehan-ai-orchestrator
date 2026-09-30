@@ -67,9 +67,8 @@ def get_inbox_item(item_id: str) -> InboxItem | None:
 def exists_by_external_id(external_id: str, source_type: str = "") -> bool:
     """외부 ID 중복 여부 확인. source_type 지정 시 해당 타입 내에서만 검사."""
     for d in _read_all():
-        if d.get("external_id") == external_id:
-            if not source_type or d.get("source_type") == source_type:
-                return True
+        if d.get("external_id") == external_id and (not source_type or d.get("source_type") == source_type):
+            return True
     return False
 
 

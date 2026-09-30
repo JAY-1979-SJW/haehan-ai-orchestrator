@@ -282,7 +282,7 @@ def run_full_smoke(write_report: bool = True) -> dict[str, Any]:
         return {
             "verdict": "BLOCKED_NOT_LOCAL_EXECUTION",
             "message": "이 스크립트는 로컬 PC에서만 실행 가능합니다 (docker/server 환경 감지됨)",
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
 
     print("=" * 60)
@@ -324,7 +324,7 @@ def run_full_smoke(write_report: bool = True) -> dict[str, Any]:
         "results": results,
         "blocked_action_check": blocked_check,
         "all_blocked_or_user_direct": all(c["blocked_or_user_direct"] for c in blocked_check),
-        **{f: False for f in _SAFE_FIELDS},
+        **dict.fromkeys(_SAFE_FIELDS, False),
     }
 
     if write_report:

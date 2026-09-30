@@ -103,7 +103,7 @@ def _load() -> None:
                     jid = ev.get("job_id")
                     if not jid:
                         continue
-                    rec = {k: ev.get(k) for k in JobRecord.__dataclass_fields__.keys()}
+                    rec = {k: ev.get(k) for k in JobRecord.__dataclass_fields__}
                     rec.setdefault("params", {})
                     _store[jid] = rec
         except OSError as e:

@@ -126,7 +126,7 @@ def test_no_secret_keys_in_template_default_params():
     from ai_orchestrator.web_task_templates import _FORBIDDEN_KEYS, _TEMPLATES
 
     for t in _TEMPLATES.values():
-        keys = {k.lower() for k in t.default_params.keys()}
+        keys = {k.lower() for k in t.default_params}
         leaked = keys & _FORBIDDEN_KEYS
         assert not leaked, f"템플릿 {t.template_id} 에 민감 키 노출: {leaked}"
 

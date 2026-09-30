@@ -173,12 +173,11 @@ def fetch_history(page, device_id: str | None = None) -> list[dict]:
         # 접근 제한 확인
         try:
             body = page.inner_text("body")
-            if any(kw in body for kw in ["접근", "권한 없", "로그인", "403"]):
-                if "로그아웃" not in body:
-                    msg = "WEBMAN400M00 접근 제한"
-                    log.warning(msg)
-                    ctx.set_result(msg=msg, ok=False)
-                    return []
+            if any(kw in body for kw in ["접근", "권한 없", "로그인", "403"]) and "로그아웃" not in body:
+                msg = "WEBMAN400M00 접근 제한"
+                log.warning(msg)
+                ctx.set_result(msg=msg, ok=False)
+                return []
         except Exception:  # noqa: BLE001 - EUM 단말기 이력 조회 읽기전용 자동화 - 실패 시 빈 목록 반환
             pass
 

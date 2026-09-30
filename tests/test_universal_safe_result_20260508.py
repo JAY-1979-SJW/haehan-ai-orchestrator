@@ -26,18 +26,18 @@ _SAFE_FIELDS = [
 
 
 def _base_result(**kwargs):
-    defaults = dict(
-        task_id="t-001",
-        site_id="naver_blog",
-        workflow_id="blog_publish_with_permission",
-        status=STATUS_COMPLETED,
-        actions_executed=["readonly_explore"],
-        actions_pending_permission=[],
-        actions_user_direct_required=[],
-        blocked_actions=[],
-        safe_outputs={"text": "hello"},
-        audit_log_ids=["log-001"],
-    )
+    defaults = {
+        "task_id": "t-001",
+        "site_id": "naver_blog",
+        "workflow_id": "blog_publish_with_permission",
+        "status": STATUS_COMPLETED,
+        "actions_executed": ["readonly_explore"],
+        "actions_pending_permission": [],
+        "actions_user_direct_required": [],
+        "blocked_actions": [],
+        "safe_outputs": {"text": "hello"},
+        "audit_log_ids": ["log-001"],
+    }
     defaults.update(kwargs)
     return build_universal_result(**defaults)
 

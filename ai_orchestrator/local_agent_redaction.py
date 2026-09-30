@@ -387,9 +387,8 @@ def _strip_plan(value: object) -> "dict | None":
             "will_access_dom",
             "will_capture_screenshot",
             "requires_approval",
-        ):
-            if isinstance(v, bool):
-                out[k] = v
+        ) and isinstance(v, bool):
+            out[k] = v
     return out if out else None
 
 

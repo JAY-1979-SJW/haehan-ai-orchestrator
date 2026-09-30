@@ -121,16 +121,16 @@ def test_kakaowork_via_api(client):
 
 def test_kakaowork_duplicate_prevention(tmp_inbox):
     msg = kakaowork_reader.parse_webhook_payload(_KAKAOWORK_PAYLOAD)
-    kwargs = dict(
-        source_type=msg["source_type"],
-        external_id=msg["external_id"],
-        source_account=msg["source_account"],
-        sender=msg["sender"],
-        title=msg["title"],
-        body_raw=msg["body_raw"],
-        received_at=msg["received_at"],
-        path=tmp_inbox,
-    )
+    kwargs = {
+        "source_type": msg["source_type"],
+        "external_id": msg["external_id"],
+        "source_account": msg["source_account"],
+        "sender": msg["sender"],
+        "title": msg["title"],
+        "body_raw": msg["body_raw"],
+        "received_at": msg["received_at"],
+        "path": tmp_inbox,
+    }
     r1 = inbox_store.save_message(**kwargs)
     r2 = inbox_store.save_message(**kwargs)
 

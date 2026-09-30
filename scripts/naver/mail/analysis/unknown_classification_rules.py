@@ -8,15 +8,15 @@ HIGH/MEDIUM confidence 매칭만 자동 승격, LOW 는 UNKNOWN 유지.
   - 출력: ReclassifyResult (per-item promotion plan)
   - 부작용 없음 (순수 함수). caller 가 결과를 적용 여부 결정.
 """
+
 from __future__ import annotations
 
 import re
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
-from typing import Iterable
 
 from . import business_report as br
-
 
 # ── confidence 상수 ────────────────────────────────────────────────
 
@@ -54,74 +54,120 @@ def _domain_match(sender_domain: str, brand_key: str) -> bool:
 _ENHANCED_RULES = [
     # ── HIGH confidence: 도메인 + 명확한 제목 marker ──
     # 카드/은행 명세서/이용대금 → BILLING
-    (br.CAT_BILLING, CONF_HIGH,
-     re.compile(r"이용대금명세서|월\s*명세서|체크카드 ?내역서"
-                r"|이용대금 ?내역|카드 ?이용\s?내역서", re.IGNORECASE),
-     ("kbcard", "hanacard", "shinhancard"),
-     "card_statement_high"),
+    (
+        br.CAT_BILLING,
+        CONF_HIGH,
+        re.compile(
+            r"이용대금명세서|월\s*명세서|체크카드 ?내역서"
+            r"|이용대금 ?내역|카드 ?이용\s?내역서",
+            re.IGNORECASE,
+        ),
+        ("kbcard", "hanacard", "shinhancard"),
+        "card_statement_high",
+    ),
     # 쿠팡 와우 월회비 결제 → BILLING
-    (br.CAT_BILLING, CONF_HIGH,
-     re.compile(r"와우.{0,4}멤버십.{0,8}월회비|월회비가? ?결제",
-                re.IGNORECASE),
-     ("coupang_seller",),
-     "coupang_wow_membership"),
+    (
+        br.CAT_BILLING,
+        CONF_HIGH,
+        re.compile(r"와우.{0,4}멤버십.{0,8}월회비|월회비가? ?결제", re.IGNORECASE),
+        ("coupang_seller",),
+        "coupang_wow_membership",
+    ),
     # 구독 업데이트 → BILLING
-    (br.CAT_BILLING, CONF_HIGH,
-     re.compile(r"구독을 ?업데이트|subscription updated", re.IGNORECASE),
-     ("google_account",),
-     "subscription_update"),
+    (
+        br.CAT_BILLING,
+        CONF_HIGH,
+        re.compile(r"구독을 ?업데이트|subscription updated", re.IGNORECASE),
+        ("google_account",),
+        "subscription_update",
+    ),
     # 약관 개정/변경 (loosened pattern — 사이에 단어 허용)
-    (br.CAT_POLICY_NOTICE, CONF_HIGH,
-     re.compile(r"약관.{0,20}(개정|변경)|개정.{0,10}안내"
-                r"|기본약관.{0,15}(개정|변경)",
-                re.IGNORECASE),
-     None,
-     "terms_revision"),
-
+    (
+        br.CAT_POLICY_NOTICE,
+        CONF_HIGH,
+        re.compile(
+            r"약관.{0,20}(개정|변경)|개정.{0,10}안내"
+            r"|기본약관.{0,15}(개정|변경)",
+            re.IGNORECASE,
+        ),
+        None,
+        "terms_revision",
+    ),
     # ── MEDIUM confidence: 도메인 + 키워드 ──
     # 카드 발급/신청 안내
-    (br.CAT_ACCOUNT_OR_SERVICE_NOTICE, CONF_MEDIUM,
-     re.compile(r"카드 ?신청 ?안내|발급 ?신청|발급 ?안내", re.IGNORECASE),
-     ("kbcard",),
-     "card_application_notice"),
+    (
+        br.CAT_ACCOUNT_OR_SERVICE_NOTICE,
+        CONF_MEDIUM,
+        re.compile(r"카드 ?신청 ?안내|발급 ?신청|발급 ?안내", re.IGNORECASE),
+        ("kbcard",),
+        "card_application_notice",
+    ),
     # 회원 정보 삭제 예정 / 장기 미사용 정지
-    (br.CAT_ACCOUNT_OR_SERVICE_NOTICE, CONF_MEDIUM,
-     re.compile(r"회원 ?정보 ?삭제|장기 ?미사용.{0,10}정지"
-                r"|데이터 ?보관처리", re.IGNORECASE),
-     None,
-     "account_inactive_notice"),
+    (
+        br.CAT_ACCOUNT_OR_SERVICE_NOTICE,
+        CONF_MEDIUM,
+        re.compile(
+            r"회원 ?정보 ?삭제|장기 ?미사용.{0,10}정지"
+            r"|데이터 ?보관처리",
+            re.IGNORECASE,
+        ),
+        None,
+        "account_inactive_notice",
+    ),
     # 본인 인증 완료
-    (br.CAT_ACCOUNT_OR_SERVICE_NOTICE, CONF_MEDIUM,
-     re.compile(r"본인 ?인증.{0,8}(완료|되었)", re.IGNORECASE),
-     None,
-     "identity_verification_done"),
+    (
+        br.CAT_ACCOUNT_OR_SERVICE_NOTICE,
+        CONF_MEDIUM,
+        re.compile(r"본인 ?인증.{0,8}(완료|되었)", re.IGNORECASE),
+        None,
+        "identity_verification_done",
+    ),
     # 우대서비스등급 / VIP 등급 적용
-    (br.CAT_ACCOUNT_OR_SERVICE_NOTICE, CONF_MEDIUM,
-     re.compile(r"우대 ?서비스 ?등급|등급 ?적용|등급 ?안내",
-                re.IGNORECASE),
-     ("wooribank",),
-     "tier_grade_applied"),
+    (
+        br.CAT_ACCOUNT_OR_SERVICE_NOTICE,
+        CONF_MEDIUM,
+        re.compile(r"우대 ?서비스 ?등급|등급 ?적용|등급 ?안내", re.IGNORECASE),
+        ("wooribank",),
+        "tier_grade_applied",
+    ),
     # 클라우드 정기 점검/출시 안내
-    (br.CAT_ACCOUNT_OR_SERVICE_NOTICE, CONF_MEDIUM,
-     re.compile(r"정기 ?상품 ?출시|점검 ?안내|cloud product"
-                r"|product update", re.IGNORECASE),
-     ("navercorp_cloud", "google_account"),
-     "cloud_release_notice"),
+    (
+        br.CAT_ACCOUNT_OR_SERVICE_NOTICE,
+        CONF_MEDIUM,
+        re.compile(
+            r"정기 ?상품 ?출시|점검 ?안내|cloud product"
+            r"|product update",
+            re.IGNORECASE,
+        ),
+        ("navercorp_cloud", "google_account"),
+        "cloud_release_notice",
+    ),
     # 판매자 기능 안내 (쿠팡 등)
-    (br.CAT_ACCOUNT_OR_SERVICE_NOTICE, CONF_MEDIUM,
-     re.compile(r"판매자.{0,15}(기능|가이드|업데이트|중요)"
-                r"|아이템 ?위너|판매자 ?자동", re.IGNORECASE),
-     ("coupang_seller",),
-     "seller_feature_notice"),
-
+    (
+        br.CAT_ACCOUNT_OR_SERVICE_NOTICE,
+        CONF_MEDIUM,
+        re.compile(
+            r"판매자.{0,15}(기능|가이드|업데이트|중요)"
+            r"|아이템 ?위너|판매자 ?자동",
+            re.IGNORECASE,
+        ),
+        ("coupang_seller",),
+        "seller_feature_notice",
+    ),
     # Gemini / Google Play 마케팅
-    (br.CAT_PROMO, CONF_MEDIUM,
-     re.compile(r"gemini|ai ?메모리|채팅 ?기록을? ?gemini"
-                r"|간편한 ?로그인.{0,10}팁|gemini drop"
-                r"|google play.{0,15}(앱|게임).{0,15}(출시|확인|준비)"
-                r"|생산적인 ?하루", re.IGNORECASE),
-     ("google_account",),
-     "google_marketing"),
+    (
+        br.CAT_PROMO,
+        CONF_MEDIUM,
+        re.compile(
+            r"gemini|ai ?메모리|채팅 ?기록을? ?gemini"
+            r"|간편한 ?로그인.{0,10}팁|gemini drop"
+            r"|google play.{0,15}(앱|게임).{0,15}(출시|확인|준비)"
+            r"|생산적인 ?하루",
+            re.IGNORECASE,
+        ),
+        ("google_account",),
+        "google_marketing",
+    ),
 ]
 
 
@@ -189,9 +235,8 @@ def reclassify_one(action: dict) -> ReclassifyDecision:
         if not pat.search(title or ""):
             continue
         # 도메인 매칭 — brands None 이면 도메인 무관 룰
-        if brands is not None:
-            if not any(_domain_match(sender_domain, b) for b in brands):
-                continue
+        if brands is not None and not any(_domain_match(sender_domain, b) for b in brands):
+            continue
         # 룰 매칭 — confidence 정책 적용
         dec.evidence_markers = [
             f"rule:{marker}",
@@ -218,8 +263,7 @@ def reclassify_one(action: dict) -> ReclassifyDecision:
 
 def reclassify(actions: Iterable[dict]) -> ReclassifyReport:
     actions_list = list(actions)
-    unknown_actions = [a for a in actions_list
-                       if a.get("category") == br.CAT_UNKNOWN_REVIEW_REQUIRED]
+    unknown_actions = [a for a in actions_list if a.get("category") == br.CAT_UNKNOWN_REVIEW_REQUIRED]
     report = ReclassifyReport(previous_unknown_count=len(unknown_actions))
     promoted_counter: Counter[str] = Counter()
     for a in unknown_actions:
@@ -227,20 +271,16 @@ def reclassify(actions: Iterable[dict]) -> ReclassifyReport:
         report.decisions.append(dec)
         if dec.promoted:
             promoted_counter[dec.promoted_category] += 1
-        elif dec.kept_unknown:
-            if dec.confidence == CONF_LOW:
-                report.low_confidence_kept_unknown += 1
+        elif dec.kept_unknown and dec.confidence == CONF_LOW:
+            report.low_confidence_kept_unknown += 1
     report.promoted_by_category = dict(promoted_counter)
     report.resolved_unknown_count = sum(promoted_counter.values())
-    report.new_unknown_count = (
-        report.previous_unknown_count - report.resolved_unknown_count
-    )
+    report.new_unknown_count = report.previous_unknown_count - report.resolved_unknown_count
     report.unresolved_unknown_count = report.new_unknown_count
     return report
 
 
-def apply_promotions(actions: list[dict],
-                     report: ReclassifyReport) -> list[dict]:
+def apply_promotions(actions: list[dict], report: ReclassifyReport) -> list[dict]:
     """ReclassifyReport 결정대로 actions 의 category 를 in-place 업데이트한 새 리스트 반환.
 
     원본 actions 는 변경하지 않는다.
@@ -254,9 +294,7 @@ def apply_promotions(actions: list[dict],
             new_a["category"] = dec.promoted_category
             # priority 는 기존 LOW 유지 (자동 승격이 우선순위까지 끌어올리지 않음)
             # 기존 evidence_markers + 신규 결합
-            new_a["evidence_markers"] = list(
-                a.get("evidence_markers", [])
-            ) + list(dec.evidence_markers)
+            new_a["evidence_markers"] = list(a.get("evidence_markers", [])) + list(dec.evidence_markers)
         out.append(new_a)
     return out
 
@@ -270,9 +308,9 @@ HIGH_REQUIRED_MARKERS = {
 }
 
 
-def assert_high_preserved(actions_before: list[dict],
-                          actions_after: list[dict]) -> dict[str, bool]:
+def assert_high_preserved(actions_before: list[dict], actions_after: list[dict]) -> dict[str, bool]:
     """HIGH 액션 3건이 분류 변경 없이 유지되는지 검증."""
+
     def _has_high_with_keywords(actions, keywords):
         for a in actions:
             if a.get("priority") != "HIGH":
@@ -289,7 +327,7 @@ def assert_high_preserved(actions_before: list[dict],
     for key, kws in HIGH_REQUIRED_MARKERS.items():
         before_ok = _has_high_with_keywords(actions_before, kws)
         after_ok = _has_high_with_keywords(actions_after, kws)
-        out[key] = (before_ok == after_ok and after_ok is True)
+        out[key] = before_ok == after_ok and after_ok is True
     return out
 
 
@@ -309,8 +347,7 @@ def render_unknown_classification_markdown(
         "",
         "## promoted_by_category",
     ]
-    for cat, n in sorted(report.promoted_by_category.items(),
-                         key=lambda x: -x[1]):
+    for cat, n in sorted(report.promoted_by_category.items(), key=lambda x: -x[1]):
         lines.append(f"- {cat}: {n}건")
     lines += ["", "## per-item decisions"]
     for d in report.decisions:
@@ -320,8 +357,5 @@ def render_unknown_classification_markdown(
                 f"({d.confidence}) | evidence: {d.evidence_markers}"
             )
         else:
-            lines.append(
-                f"- `{d.actionId}` UNKNOWN _kept_ "
-                f"({d.confidence}) | evidence: {d.evidence_markers}"
-            )
+            lines.append(f"- `{d.actionId}` UNKNOWN _kept_ ({d.confidence}) | evidence: {d.evidence_markers}")
     return "\n".join(lines)

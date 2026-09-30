@@ -129,7 +129,7 @@ def _now_iso() -> str:
 
 def _has_sensitive_keys(params: dict[str, Any]) -> list[str]:
     found: list[str] = []
-    for k in params.keys():
+    for k in params:
         kl = k.lower()
         if any(s in kl for s in _SENSITIVE_PARAM_KEY_HINTS):
             found.append(k)
@@ -237,7 +237,7 @@ def validate_handoff_payload(payload: dict[str, Any]) -> list[str]:
     if not isinstance(params_safe, dict):
         violations.append("params_safe 타입 오류")
     else:
-        for k in params_safe.keys():
+        for k in params_safe:
             kl = k.lower()
             if any(s in kl for s in _SENSITIVE_PARAM_KEY_HINTS):
                 violations.append(f"params_safe에 민감 키 노출: {k!r}")

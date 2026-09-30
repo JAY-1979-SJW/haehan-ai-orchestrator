@@ -623,7 +623,7 @@ class TestAuditWiring:
             "content",
         }
         for e in captured_audit:
-            for k in e.keys():
+            for k in e:
                 assert k.lower() not in forbidden_keys, f"forbidden key {k!r} in audit event {e['event_type']}"
 
     def test_url_categorize_helper(self):

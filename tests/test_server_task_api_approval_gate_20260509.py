@@ -5,15 +5,15 @@
 - browser.attach_file: 승인 요청 생성, 승인 전 실행 차단,
   승인 후 params_hash 일치 시 handoff 생성, 불일치/만료/재사용/action 불일치 차단.
 """
+
 from __future__ import annotations
 
 import time
 
 import pytest
 
-from ai_orchestrator.server import action_task_handoff as ath
 from ai_orchestrator.local_agent import user_approval_gate as gate
-
+from ai_orchestrator.server import action_task_handoff as ath
 
 _ATTACH_PARAMS = {
     "url": "https://www.g2b.go.kr/form",
@@ -49,14 +49,16 @@ def test_attach_file_creates_approval_request_when_no_token():
 def test_attach_file_blocked_until_approval():
     # token 없이 호출하면 절대 handoff_payload가 만들어지지 않음
     res = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
     )
     assert res["handoff_payload"] is None
 
 
 def test_attach_file_handoff_after_valid_approval():
     pending = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
     )
     rid = pending["approval_request_id"]
     ok = gate.approve_request(rid, approver_user_id="user-1")
@@ -76,7 +78,8 @@ def test_attach_file_handoff_after_valid_approval():
 
 def test_params_hash_mismatch_rejected():
     pending = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
     )
     rid = pending["approval_request_id"]
     token = gate.approve_request(rid, approver_user_id="u")["approval_token"]
@@ -95,7 +98,8 @@ def test_params_hash_mismatch_rejected():
 
 def test_action_name_mismatch_rejected():
     pending = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
     )
     rid = pending["approval_request_id"]
     token = gate.approve_request(rid, approver_user_id="u")["approval_token"]
@@ -111,17 +115,22 @@ def test_action_name_mismatch_rejected():
 
 def test_token_single_use():
     pending = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
     )
     token = gate.approve_request(pending["approval_request_id"], approver_user_id="u")["approval_token"]
 
     first = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS, approval_token=token,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
+        approval_token=token,
     )
     assert first["verdict"] == ath.VERDICT_HANDOFF_READY
 
     second = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS, approval_token=token,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
+        approval_token=token,
     )
     assert second["verdict"] == ath.VERDICT_APPROVAL_INVALID
 
@@ -136,7 +145,9 @@ def test_token_expiry(monkeypatch):
     token = gate.approve_request(pending["approval_request_id"], approver_user_id="u")["approval_token"]
     time.sleep(1.5)
     res = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS, approval_token=token,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
+        approval_token=token,
     )
     assert res["verdict"] == ath.VERDICT_APPROVAL_INVALID
 
@@ -152,15 +163,18 @@ def test_invalid_token():
 
 def test_attach_file_handoff_payload_no_secrets():
     pending = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
     )
     token = gate.approve_request(pending["approval_request_id"], approver_user_id="u")["approval_token"]
     consumed = ath.prepare_action_task(
-        action_name="browser.attach_file", params=_ATTACH_PARAMS, approval_token=token,
+        action_name="browser.attach_file",
+        params=_ATTACH_PARAMS,
+        approval_token=token,
     )
     payload = consumed["handoff_payload"]
     violations = ath.validate_handoff_payload(payload)
     assert violations == []
     # params_safe에 민감 키 없음
-    for k in payload["params_safe"].keys():
+    for k in payload["params_safe"]:
         assert k.lower() not in ("password", "otp", "cookie", "session", "storage_state", "private_key")

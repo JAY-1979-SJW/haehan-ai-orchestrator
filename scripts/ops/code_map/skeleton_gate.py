@@ -122,12 +122,11 @@ def check_staged_adr(name_status: list[tuple[str, str, str]], reg_files: set[str
         elif status.startswith("D"):
             if PurePosixPath(path).suffix in CODE_SUFFIX and path in reg_files:
                 fails.append(f"삭제된 코드 파일 '{path}' 가 정본에 아직 남아 있습니다")
-        elif status.startswith("R"):
-            if PurePosixPath(path2).suffix in CODE_SUFFIX:
-                if path in reg_files:
-                    fails.append(f"이동된 파일의 옛 키 '{path}' 가 정본에 남아 있습니다")
-                if path2 not in reg_files:
-                    fails.append(f"이동된 파일의 새 키 '{path2}' 가 정본에 없습니다")
+        elif status.startswith("R") and PurePosixPath(path2).suffix in CODE_SUFFIX:
+            if path in reg_files:
+                fails.append(f"이동된 파일의 옛 키 '{path}' 가 정본에 남아 있습니다")
+            if path2 not in reg_files:
+                fails.append(f"이동된 파일의 새 키 '{path2}' 가 정본에 없습니다")
     return fails
 
 

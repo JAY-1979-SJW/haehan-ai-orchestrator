@@ -360,9 +360,8 @@ def _verify_no_http_import() -> tuple[bool, str]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported.add(alias.name.split(".")[0])
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imported.add(node.module.split(".")[0])
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module.split(".")[0])
     for bad in ["requests", "httpx", "aiohttp", "urllib3"]:
         if bad in imported:
             return False, f"HTTP client imported: {bad}"

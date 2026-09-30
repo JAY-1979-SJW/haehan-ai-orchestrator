@@ -91,9 +91,8 @@ def validate_permission(
         return _invalid("installer_name 불일치")
 
     # 해시 검증 (제공된 경우)
-    if installer_hash and permission.get("installer_hash"):
-        if installer_hash != permission["installer_hash"]:
-            return _invalid("installer hash 불일치")
+    if installer_hash and permission.get("installer_hash") and installer_hash != permission["installer_hash"]:
+        return _invalid("installer hash 불일치")
 
     # 만료 확인
     try:

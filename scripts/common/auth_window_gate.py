@@ -207,9 +207,8 @@ def run_auth_gate(
             )
             last_stage = stage
 
-        if st.get("action") == "logged_in":
-            if logged_in_check is None or logged_in_check(page):
-                return {"ok": True, "stage": STAGE_LOGGED_IN, "site": profile.site}
+        if st.get("action") == "logged_in" and (logged_in_check is None or logged_in_check(page)):
+            return {"ok": True, "stage": STAGE_LOGGED_IN, "site": profile.site}
 
         if st.get("action") == "needs_user" and stage not in notified:
             notified.add(stage)

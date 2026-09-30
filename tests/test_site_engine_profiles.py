@@ -12,13 +12,13 @@ from scripts.site_engine.types import (
 
 
 def _minimal_profile(**overrides) -> SiteProfile:
-    defaults = dict(
-        key="test_site",
-        base_url="https://test.example.com",
-        display_name="Test Site",
-        login_domain_hints=("test.example.com",),
-        allowed_capabilities=(SiteCapability.READ,),
-    )
+    defaults = {
+        "key": "test_site",
+        "base_url": "https://test.example.com",
+        "display_name": "Test Site",
+        "login_domain_hints": ("test.example.com",),
+        "allowed_capabilities": (SiteCapability.READ,),
+    }
     defaults.update(overrides)
     return SiteProfile(**defaults)
 

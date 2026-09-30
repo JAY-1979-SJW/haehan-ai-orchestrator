@@ -67,7 +67,7 @@ def block_external_fetch_from_server(url: str, purpose: str = "") -> dict[str, A
             "execution_location": "SERVER_INTERNAL_ONLY",
             "url_safe": sanitize_blocked_url_for_log(url),
             "blocked": False,
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
 
     return {
@@ -79,7 +79,7 @@ def block_external_fetch_from_server(url: str, purpose: str = "") -> dict[str, A
         "url_safe": sanitize_blocked_url_for_log(url),
         "message_ko": _DEFAULT_MESSAGE_KO,
         "blocked": True,
-        **{f: False for f in _SAFE_FIELDS},
+        **dict.fromkeys(_SAFE_FIELDS, False),
     }
 
 
@@ -95,7 +95,7 @@ def guard_server_browser_action(action: str, target_url: str) -> dict[str, Any]:
             "url_safe": sanitize_blocked_url_for_log(target_url),
             "message_ko": _DEFAULT_MESSAGE_KO,
             "blocked": True,
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
     return {
         "ok": True,
@@ -103,7 +103,7 @@ def guard_server_browser_action(action: str, target_url: str) -> dict[str, Any]:
         "execution_location": "SERVER_INTERNAL_ONLY",
         "action": action,
         "blocked": False,
-        **{f: False for f in _SAFE_FIELDS},
+        **dict.fromkeys(_SAFE_FIELDS, False),
     }
 
 
@@ -125,9 +125,9 @@ def guard_server_playwright_invocation(module_name: str, call_name: str) -> dict
                 "외부 웹 자동화는 local agent에서만 실행하세요."
             ),
             "blocked": True,
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
-    return {"ok": True, "blocked": False, **{f: False for f in _SAFE_FIELDS}}
+    return {"ok": True, "blocked": False, **dict.fromkeys(_SAFE_FIELDS, False)}
 
 
 def is_browser_module_call_blocked(module_name: str, call_name: str = "") -> bool:
