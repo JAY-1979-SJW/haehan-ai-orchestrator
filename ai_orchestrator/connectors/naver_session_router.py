@@ -1,8 +1,10 @@
 """네이버 세션 관리 라우터 (L8).
 
 엔드포인트:
-  POST /api/v1/naver/session/login   — CDP 시작 + 로그인 파이프라인 실행
-  GET  /api/v1/naver/session/status  — 저장된 세션 상태 조회
+  POST /api/v1/naver/session/login   — CDP 시작 + 로그인 파이프라인 실행 (계정 미지정 시 기본 저장 계정)
+  GET  /api/v1/naver/session/status  — 저장된 세션 상태 조회(파일)
+  GET  /api/v1/naver/session/live    — 실제 상태·계정 확인(읽기 전용, 아무것도 바꾸지 않음)
+  POST /api/v1/naver/session/ensure  — 로그아웃(out)일 때만 대상 계정으로 자동 로그인 1회 (기준서 2026-10-01_electron_naver_auto_login)
 """
 
 from __future__ import annotations
@@ -10,7 +12,7 @@ from __future__ import annotations
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
@@ -39,6 +41,30 @@ class LoginResponse(BaseModel):
     user: str | None
     message: str
     captcha: bool = False
+
+
+class EnsureRequest(BaseModel):
+    username: str = "skyjwsin"  # 대상 블로그 계정(기본 skyjwsin)
+    allow_attempt: bool = True  # False 면 상태만 확인하고 로그인은 시도하지 않는다
+
+
+def get_guard_deps():
+    """세션 지킴이의 실제 부품(브라우저·파이프라인·시도 기록). 테스트에서 dependency_overrides 로 바꾼다."""
+    from ai_orchestrator.workflows.naver_session_guard import default_deps
+
+    return default_deps()
+
+
+def _known_targets() -> set[str]:
+    from scripts.naver.blog.accounts import BLOG_ACCOUNTS
+
+    return set(BLOG_ACCOUNTS)
+
+
+def _valid_target_or_400(username: str) -> str:
+    if username not in _known_targets():
+        raise HTTPException(status_code=400, detail=f"등록되지 않은 블로그 계정: {username}")
+    return username
 
 
 class AccountRequest(BaseModel):
@@ -118,3 +144,39 @@ async def trigger_login(req: LoginRequest = LoginRequest(), _: None = Depends(re
         message=result.get("message", ""),
         captcha=result.get("captcha", False),
     )
+
+
+@router.get("/live")
+async def live_status(
+    target: str = "skyjwsin",
+    _: None = Depends(require_role("admin", "owner")),
+    deps=Depends(get_guard_deps),
+):
+    """실제 로그인 상태와 계정을 확인한다(읽기 전용 — 로그인·로그아웃·쿠키 변경 없음)."""
+    from functools import partial
+
+    from ai_orchestrator.workflows.naver_session_guard import observe
+
+    loop = asyncio.get_running_loop()
+    seen = await loop.run_in_executor(_executor, partial(observe, _valid_target_or_400(target), deps))
+    return {**seen, "targets": sorted(_known_targets())}  # 화면의 계정 선택 목록
+
+
+@router.post("/ensure")
+async def ensure_session(
+    req: EnsureRequest = EnsureRequest(),
+    _: None = Depends(require_role("admin", "owner")),
+    deps=Depends(get_guard_deps),
+):
+    """상태 확인 후 로그아웃(out)으로 확정될 때만 대상 계정으로 자동 로그인 1회.
+
+    이미 로그인·상태 불명확·다른 계정이면 건드리지 않는다. 시도는 직전 시도 후 5분 대기·하루 3회로 제한한다.
+    수 분 걸릴 수 있다(로그인 파이프라인). 같은 실행기에서 직렬로 돈다.
+    """
+    from functools import partial
+
+    from ai_orchestrator.workflows.naver_session_guard import ensure_login
+
+    loop = asyncio.get_running_loop()
+    fn = partial(ensure_login, _valid_target_or_400(req.username), deps, allow_attempt=req.allow_attempt)
+    return await loop.run_in_executor(_executor, fn)

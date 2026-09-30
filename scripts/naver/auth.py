@@ -323,6 +323,74 @@ def _detect_captcha(page) -> bool:
 # ── 메인 로그인 함수 ────────────────────────────────────────────────────────
 
 
+def _existing_login_verdict(page, nid: str, force_relogin: bool) -> dict[str, Any] | None:
+    """이미 로그인돼 있을 때의 결과. 로그인이 안 돼 있거나 판정에 실패하면 None(로그인 절차로 진행).
+
+    사용자명을 모르면(요소 기준 판정은 화면에 이름이 없으면 None) "다른 사용자"라고 단정하지 않고
+    `logged_in_account_unknown` 으로 알린다 — 올바르게 로그인된 세션을 다른 사용자로 오판하지 않기 위해(2026-10-01).
+    """
+    try:
+        state = detect_login_state(page)
+        if not state.get("logged_in") or "naver" not in page.url or force_relogin:
+            return None
+        current_user = state.get("user") or ""
+    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
+        return None
+    if (current_user and nid in current_user) or current_user == nid:
+        _log.info("[naver-auth] 동일 사용자 이미 로그인됨: %s", current_user)
+        return {"ok": True, "user": current_user, "reason": "already_logged_in"}
+    if not current_user:
+        _log.info("[naver-auth] 이미 로그인됨 — 화면에서 사용자명을 알 수 없음 (목표: %s)", nid)
+        return {
+            "ok": False,
+            "reason": "logged_in_account_unknown",
+            "target_user": nid,
+            "hint": "이미 로그인돼 있으나 어느 계정인지 화면에서 확인할 수 없음. 계정 확인 후 필요하면 직접 로그아웃.",
+        }
+    _log.warning("[naver-auth] 다른 사용자 로그인 상태: %s (목표: %s)", current_user, nid)
+    return {
+        "ok": False,
+        "reason": "different_user_logged_in",
+        "current_user": current_user,
+        "target_user": nid,
+        "hint": "현재 다른 사용자로 로그인됨. 먼저 로그아웃 필요.",
+    }
+
+
+def _wait_for_user_challenge(page, nid: str, wait_for_user_s: int) -> dict[str, Any]:
+    """캡차·2차인증이 떴을 때: 자동으로 넘기지 않고 사용자가 브라우저에서 처리할 때까지 기다린다."""
+    _log.warning("[naver-auth] 캡차/2차인증 감지 → 사용자 수동 처리 대기")
+    log_critical("AUTH_FAIL", "네이버 로그인 캡차/2차인증", user=nid, mode="captcha_detected")
+    state = wait_for_login_generic(page, max_wait_s=wait_for_user_s, poll_interval=3.0)
+    if state.get("logged_in"):
+        user = state.get("user") or nid
+        log_critical("AUTH_SUCCESS", "네이버 로그인 성공 (사용자 처리)", user=user, mode="auto_login_done_manual")
+        return {"ok": True, "user": user, "reason": "user_handled_captcha"}
+    return {"ok": False, "reason": "captcha_timeout", "captcha_required": True, "needs_manual": True}
+
+
+def _fill_login_form(page, nid: str, pw: str) -> dict[str, Any] | None:
+    """아이디·비밀번호 칸 입력(브라우저 자동 채우기 값은 지우고 다시 입력). 성공이면 None, 실패면 오류 결과."""
+    id_result = _safe_human_input(page, "#id", nid, label="ID", delay_ms=70)
+    if not id_result["ok"]:
+        _log.error("[naver-auth] ID 입력 실패: %s", id_result.get("reason"))
+        return {"ok": False, "reason": f"id_input_failed:{id_result.get('reason', 'unknown')}", "id_result": id_result}
+    time.sleep(0.6)
+
+    pw_result = _safe_human_input(page, "#pw", pw, label="PW", delay_ms=80)
+    if not pw_result["ok"]:
+        _log.error("[naver-auth] PW 입력 실패: %s", pw_result.get("reason"))
+        return {
+            "ok": False,
+            "reason": f"pw_input_failed:{pw_result.get('reason', 'unknown')}",
+            "pw_result": _redact_input_result(pw_result),
+        }
+    time.sleep(0.5)
+
+    _log.info("[naver-auth] 입력 완료 — ID:%s, PW:%s", id_result["action"], pw_result["action"])
+    return None
+
+
 def login_naver(
     page,
     naver_id: str | None = None,
@@ -352,27 +420,10 @@ def login_naver(
 
     log_critical("AUTH_SUCCESS", "네이버 로그인 시도", user=nid, mode="auto_login_start")
 
-    # 2. 이미 로그인 상태 확인 (같은 사용자/다른 사용자)
-    try:
-        state = detect_login_state(page)
-        if state.get("logged_in") and "naver" in page.url and not force_relogin:
-            current_user = state.get("user", "")
-            if (current_user and nid in current_user) or current_user == nid:
-                _log.info("[naver-auth] 동일 사용자 이미 로그인됨: %s", current_user)
-                return {"ok": True, "user": current_user, "reason": "already_logged_in"}
-            else:
-                _log.warning("[naver-auth] 다른 사용자 로그인 상태: %s (목표: %s)", current_user, nid)
-                # 로그아웃 후 재로그인 필요
-                # 일단 알림 후 진행 (사용자가 결정)
-                return {
-                    "ok": False,
-                    "reason": "different_user_logged_in",
-                    "current_user": current_user,
-                    "target_user": nid,
-                    "hint": "현재 다른 사용자로 로그인됨. 먼저 로그아웃 필요.",
-                }
-    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
-        pass
+    # 2. 이미 로그인 상태 확인 (같은 사용자 / 다른 사용자 / 사용자 불명)
+    existing = _existing_login_verdict(page, nid, force_relogin)
+    if existing is not None:
+        return existing
 
     # 3. 로그인 페이지 진입
     _log.info("[naver-auth] 로그인 페이지 진입")
@@ -387,23 +438,9 @@ def login_naver(
     time.sleep(1)
 
     # 4. ID/PW 입력 — 안전 입력 (기존 자동완성 값 처리)
-    id_result = _safe_human_input(page, "#id", nid, label="ID", delay_ms=70)
-    if not id_result["ok"]:
-        _log.error("[naver-auth] ID 입력 실패: %s", id_result.get("reason"))
-        return {"ok": False, "reason": f"id_input_failed:{id_result.get('reason', 'unknown')}", "id_result": id_result}
-    time.sleep(0.6)
-
-    pw_result = _safe_human_input(page, "#pw", pw, label="PW", delay_ms=80)
-    if not pw_result["ok"]:
-        _log.error("[naver-auth] PW 입력 실패: %s", pw_result.get("reason"))
-        return {
-            "ok": False,
-            "reason": f"pw_input_failed:{pw_result.get('reason', 'unknown')}",
-            "pw_result": _redact_input_result(pw_result),
-        }
-    time.sleep(0.5)
-
-    _log.info("[naver-auth] 입력 완료 — ID:%s, PW:%s", id_result["action"], pw_result["action"])
+    input_failure = _fill_login_form(page, nid, pw)
+    if input_failure is not None:
+        return input_failure
 
     # 5. 로그인 버튼 클릭
     try:
@@ -417,15 +454,7 @@ def login_naver(
 
     # 6. 캡차/2차인증 감지
     if _detect_captcha(page):
-        _log.warning("[naver-auth] 캡차/2차인증 감지 → 사용자 수동 처리 대기")
-        log_critical("AUTH_FAIL", "네이버 로그인 캡차/2차인증", user=nid, mode="captcha_detected")
-        # 사용자가 수동으로 처리할 때까지 대기
-        state = wait_for_login_generic(page, max_wait_s=wait_for_user_s, poll_interval=3.0)
-        if state.get("logged_in"):
-            user = state.get("user") or nid
-            log_critical("AUTH_SUCCESS", "네이버 로그인 성공 (사용자 처리)", user=user, mode="auto_login_done_manual")
-            return {"ok": True, "user": user, "reason": "user_handled_captcha"}
-        return {"ok": False, "reason": "captcha_timeout", "captcha_required": True, "needs_manual": True}
+        return _wait_for_user_challenge(page, nid, wait_for_user_s)
 
     # 7. 일반 성공 검증
     time.sleep(2)

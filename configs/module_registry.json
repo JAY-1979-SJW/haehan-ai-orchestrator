@@ -19832,6 +19832,38 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/workflows/naver_session_guard.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "naver",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/account_probe.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_naver_session_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_naver_session_router_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
