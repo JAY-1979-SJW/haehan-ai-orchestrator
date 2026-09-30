@@ -7,6 +7,7 @@
     hanafax batch-send N               — N건 dry-run
     hanafax batch-send --approved --confirm=HANAFAX_APPROVED_BATCH  — 실 발송
 """
+
 from __future__ import annotations
 
 from scripts.hanafax.batch import (
@@ -44,7 +45,7 @@ def _cmd_status() -> None:
     print("=" * 60)
     result = test_login()
     if result["ok"]:
-        print(f"✔ 로그인 성공")
+        print("✔ 로그인 성공")
         info = result.get("info", "")
         for keyword in ["잔액", "팩스번호", "요금제", "회원상태", "신재우", "skyjwshin"]:
             for line in info.splitlines():
@@ -75,7 +76,7 @@ def _cmd_send(sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_batch_send(sub: str | None, args: list[str]) -> None:
-    dry_run = "--dry-run" in args or sub in (None, "dry-run") or not ("--approved" in args)
+    dry_run = "--dry-run" in args or sub in (None, "dry-run") or "--approved" not in args
     approved = "--approved" in args
     confirm = next((a.split("=", 1)[1] for a in args if a.startswith("--confirm=")), "")
 
@@ -112,16 +113,21 @@ def _cmd_queue(sub: str | None) -> None:
     limit = int(sub) if sub and sub.isdigit() else 10
     if not DEFAULT_QUEUE.exists():
         print(f"큐 파일 없음: {DEFAULT_QUEUE}")
-        print("큐 파일 형식(JSONL): {\"receiver_fax\":\"02-XXXX-XXXX\", \"receiver_name\":\"업체명\", \"subject\":\"공고명 외주 문의\", \"bid_name\":\"공고명\"}")
+        print(
+            '큐 파일 형식(JSONL): {"receiver_fax":"02-XXXX-XXXX", "receiver_name":"업체명", "subject":"공고명 외주 문의", "bid_name":"공고명"}'
+        )
         return
 
     from scripts.hanafax.batch import load_queue
+
     rows = load_queue(limit=limit)
     print("=" * 60)
     print(f"하나팩스 큐 ({len(rows)}건)")
     print("=" * 60)
     for i, row in enumerate(rows, 1):
-        print(f"  {i:>2}. {row.get('receiver_name',''):<16} {row.get('receiver_fax','')}  | {row.get('subject','')[:40]}")
+        print(
+            f"  {i:>2}. {row.get('receiver_name', ''):<16} {row.get('receiver_fax', '')}  | {row.get('subject', '')[:40]}"
+        )
 
 
 def _print_help() -> None:

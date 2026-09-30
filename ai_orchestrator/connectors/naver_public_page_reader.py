@@ -11,12 +11,14 @@
 - robots.txt 우회 / fingerprint 조작 금지.
 - 인증 필요 / 차단 / 비-HTML 응답이면 즉시 중단 (blocked / unsupported / error).
 """
+
 from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -27,7 +29,7 @@ _LOGIN_REQUIRED_HOST_HINTS = (
     "nid.naver.com",
     "mail.naver.com",
     "calendar.naver.com",
-    "cafe.naver.com",     # 비공개 게시판 가능성 — 보수적으로 차단
+    "cafe.naver.com",  # 비공개 게시판 가능성 — 보수적으로 차단
     "band.us",
     "checkout.naver.com",
     "order.pay.naver.com",
@@ -53,10 +55,10 @@ _LINK_RE = re.compile(
 class PublicPageSummary:
     status: str  # "ok" | "blocked" | "unsupported" | "error"
     url: str
-    title: Optional[str] = None
-    meta_description: Optional[str] = None
-    canonical_url: Optional[str] = None
-    error_code: Optional[str] = None
+    title: str | None = None
+    meta_description: str | None = None
+    canonical_url: str | None = None
+    error_code: str | None = None
     request_summary: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -89,7 +91,7 @@ def _is_login_required_host(url: str) -> bool:
     return any(hint in host for hint in _LOGIN_REQUIRED_HOST_HINTS)
 
 
-def _extract_title(html_text: str) -> Optional[str]:
+def _extract_title(html_text: str) -> str | None:
     m = _TITLE_RE.search(html_text)
     if m:
         title = re.sub(r"\s+", " ", m.group(1)).strip()
@@ -98,10 +100,10 @@ def _extract_title(html_text: str) -> Optional[str]:
     return None
 
 
-def _extract_meta_and_canonical(html_text: str) -> tuple[Optional[str], Optional[str]]:
-    description: Optional[str] = None
-    og_title: Optional[str] = None
-    canonical: Optional[str] = None
+def _extract_meta_and_canonical(html_text: str) -> tuple[str | None, str | None]:
+    description: str | None = None
+    og_title: str | None = None
+    canonical: str | None = None
 
     for m in _META_RE.finditer(html_text):
         attrs = _parse_attrs(m.group(1))
@@ -129,7 +131,7 @@ def _extract_meta_and_canonical(html_text: str) -> tuple[Optional[str], Optional
 def fetch_public_page_summary(
     url: str,
     *,
-    transport: Optional[Callable[..., Any]] = None,
+    transport: Callable[..., Any] | None = None,
     max_bytes: int = 256 * 1024,
 ) -> PublicPageSummary:
     """공개 페이지 메타 요약. 로그인/세션/대량 본문 수집을 하지 않는다.
@@ -143,14 +145,17 @@ def fetch_public_page_summary(
 
     if not url or not url.lower().startswith(("http://", "https://")):
         return PublicPageSummary(
-            status="error", url=url,
-            error_code="INVALID_URL", request_summary=summary,
+            status="error",
+            url=url,
+            error_code="INVALID_URL",
+            request_summary=summary,
         )
 
     if _is_login_required_host(url):
         logger.info("[NAVER-PUBLIC-READER-BLOCKED] host=%s", summary["url_host"])
         return PublicPageSummary(
-            status="blocked", url=url,
+            status="blocked",
+            url=url,
             error_code="LOGIN_REQUIRED_HOST",
             request_summary=summary,
         )
@@ -158,23 +163,26 @@ def fetch_public_page_summary(
     if transport is None:
         # 외부 의존성을 강제 주입식으로 둔다. wiring 전이면 unsupported.
         return PublicPageSummary(
-            status="unsupported", url=url,
+            status="unsupported",
+            url=url,
             error_code="TRANSPORT_NOT_WIRED",
             request_summary=summary,
         )
 
     try:
         http_status, headers, body = transport(
-            method="GET", url=url,
+            method="GET",
+            url=url,
             headers={
                 "Accept": "text/html,application/xhtml+xml",
                 "User-Agent": "haehan-ai-orchestrator/public-reader (read-only)",
             },
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.exception("[NAVER-PUBLIC-READER-ERR] type=%s", type(e).__name__)
         return PublicPageSummary(
-            status="error", url=url,
+            status="error",
+            url=url,
             error_code="TRANSPORT_EXCEPTION",
             request_summary=summary,
         )
@@ -182,13 +190,15 @@ def fetch_public_page_summary(
     status_int = int(http_status)
     if status_int in (401, 403):
         return PublicPageSummary(
-            status="blocked", url=url,
+            status="blocked",
+            url=url,
             error_code=f"HTTP_{status_int}",
             request_summary=summary,
         )
     if not (200 <= status_int < 300):
         return PublicPageSummary(
-            status="error", url=url,
+            status="error",
+            url=url,
             error_code=f"HTTP_{status_int}",
             request_summary=summary,
         )
@@ -201,13 +211,16 @@ def fetch_public_page_summary(
                 break
     if content_type and "html" not in content_type:
         return PublicPageSummary(
-            status="unsupported", url=url,
+            status="unsupported",
+            url=url,
             error_code="NON_HTML_CONTENT",
             request_summary=summary,
         )
 
-    text = body if isinstance(body, str) else (
-        body.decode("utf-8", errors="replace") if isinstance(body, (bytes, bytearray)) else ""
+    text = (
+        body
+        if isinstance(body, str)
+        else (body.decode("utf-8", errors="replace") if isinstance(body, (bytes, bytearray)) else "")
     )
     if len(text) > max_bytes:
         text = text[:max_bytes]
@@ -215,7 +228,8 @@ def fetch_public_page_summary(
     title = _extract_title(text)
     description, canonical, og_title = _extract_meta_and_canonical(text)
     return PublicPageSummary(
-        status="ok", url=url,
+        status="ok",
+        url=url,
         title=title or og_title,
         meta_description=description,
         canonical_url=canonical,

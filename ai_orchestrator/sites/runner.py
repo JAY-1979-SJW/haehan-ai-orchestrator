@@ -10,11 +10,13 @@
 이 러너는 **의존성 주입 중심**이다: Page/SiteAdapter/시간 함수를 모두 주입 받아
 테스트에서 Playwright 없이 동작할 수 있다.
 """
+
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 from . import job_state, session_manager
 from .site_adapter import LoginCheckResult, SiteAdapter
@@ -25,10 +27,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EnsureSessionResult:
     """ensure_session 결과. ok=True 면 세션이 ACTIVE 이고 작업 진행 가능."""
+
     ok: bool
-    status_message: str          # 사용자/UI 에 노출 가능한 짧은 메시지 (민감 원문 없음)
-    login_check: Optional[LoginCheckResult] = None
-    paused: bool = False         # 세션 만료로 job 이 PAUSED 상태로 전이됐는가
+    status_message: str  # 사용자/UI 에 노출 가능한 짧은 메시지 (민감 원문 없음)
+    login_check: LoginCheckResult | None = None
+    paused: bool = False  # 세션 만료로 job 이 PAUSED 상태로 전이됐는가
 
 
 # 사용자/대시보드에 그대로 노출해도 되는 상태 메시지 (민감 원문 미포함).
@@ -46,7 +49,7 @@ def ensure_session(
     *,
     job_id: str,
     auto_reauth: bool = True,
-    reauth_timeout_sec: Optional[int] = None,
+    reauth_timeout_sec: int | None = None,
     sleeper: Any = None,
     clock: Any = None,
 ) -> EnsureSessionResult:
@@ -68,11 +71,12 @@ def ensure_session(
     try:
         adapter.open_home(page)
     except Exception as e:  # noqa: BLE001
-        logger.warning("[ENSURE-SESSION] open_home 실패 site=%s err=%s",
-                       site_id, type(e).__name__)
+        logger.warning("[ENSURE-SESSION] open_home 실패 site=%s err=%s", site_id, type(e).__name__)
         session_manager.mark_expired(site_id, reason="open_home_failed")
         return EnsureSessionResult(
-            ok=False, status_message=MSG_SESSION_EXPIRED, paused=False,
+            ok=False,
+            status_message=MSG_SESSION_EXPIRED,
+            paused=False,
         )
 
     check = adapter.check_logged_in(page)
@@ -81,7 +85,9 @@ def ensure_session(
     if check.is_logged_in:
         session_manager.mark_active(site_id, detected_url=check.detected_url)
         return EnsureSessionResult(
-            ok=True, status_message=MSG_SESSION_ACTIVE, login_check=check,
+            ok=True,
+            status_message=MSG_SESSION_ACTIVE,
+            login_check=check,
         )
 
     # 4. 미로그인
@@ -93,8 +99,10 @@ def ensure_session(
             paused_job_id=job_id,
         )
         return EnsureSessionResult(
-            ok=False, status_message=MSG_SESSION_EXPIRED,
-            login_check=check, paused=False,
+            ok=False,
+            status_message=MSG_SESSION_EXPIRED,
+            login_check=check,
+            paused=False,
         )
 
     # 4-a. 재인증 유도 + 대기
@@ -107,15 +115,15 @@ def ensure_session(
     try:
         adapter.open_login_page(page)
     except Exception as e:  # noqa: BLE001
-        logger.warning("[ENSURE-SESSION] open_login_page 실패 site=%s err=%s",
-                       site_id, type(e).__name__)
+        logger.warning("[ENSURE-SESSION] open_login_page 실패 site=%s err=%s", site_id, type(e).__name__)
         return EnsureSessionResult(
-            ok=False, status_message=MSG_SESSION_EXPIRED,
-            login_check=check, paused=False,
+            ok=False,
+            status_message=MSG_SESSION_EXPIRED,
+            login_check=check,
+            paused=False,
         )
 
-    logger.info("[ENSURE-SESSION] %s site=%s job=%s",
-                MSG_REAUTH_IN_PROGRESS, site_id, job_id)
+    logger.info("[ENSURE-SESSION] %s site=%s job=%s", MSG_REAUTH_IN_PROGRESS, site_id, job_id)
     wait = adapter.wait_for_human_reauth(
         page,
         timeout_sec=reauth_timeout_sec,
@@ -124,10 +132,12 @@ def ensure_session(
     )
     if wait.succeeded and wait.last_check:
         session_manager.mark_reauth_success(
-            site_id, detected_url=wait.last_check.detected_url,
+            site_id,
+            detected_url=wait.last_check.detected_url,
         )
         return EnsureSessionResult(
-            ok=True, status_message=MSG_REAUTH_SUCCESS,
+            ok=True,
+            status_message=MSG_REAUTH_SUCCESS,
             login_check=wait.last_check,
         )
 
@@ -139,8 +149,10 @@ def ensure_session(
         paused_job_id=job_id,
     )
     return EnsureSessionResult(
-        ok=False, status_message=MSG_REAUTH_TIMED_OUT,
-        login_check=wait.last_check, paused=False,
+        ok=False,
+        status_message=MSG_REAUTH_TIMED_OUT,
+        login_check=wait.last_check,
+        paused=False,
     )
 
 
@@ -152,9 +164,9 @@ def run_with_session(
     site_id: str,
     work: Callable[[Any], str],
     current_step: str = "main",
-    params: Optional[dict] = None,
+    params: dict | None = None,
     auto_reauth: bool = True,
-    reauth_timeout_sec: Optional[int] = None,
+    reauth_timeout_sec: int | None = None,
     sleeper: Any = None,
     clock: Any = None,
 ) -> str:
@@ -168,8 +180,10 @@ def run_with_session(
     """
     # job 등록 (idempotent)
     rec = job_state.start(
-        job_id=job_id, site_id=site_id,
-        current_step=current_step, params=params or {},
+        job_id=job_id,
+        site_id=site_id,
+        current_step=current_step,
+        params=params or {},
     )
 
     # 재개 경로: 이미 RESUMABLE 이면 RUNNING 으로 전이
@@ -177,11 +191,13 @@ def run_with_session(
         job_state.resume(job_id)
 
     ensured = ensure_session(
-        adapter, page,
+        adapter,
+        page,
         job_id=job_id,
         auto_reauth=auto_reauth,
         reauth_timeout_sec=reauth_timeout_sec,
-        sleeper=sleeper, clock=clock,
+        sleeper=sleeper,
+        clock=clock,
     )
     if not ensured.ok:
         # 세션이 없거나 재인증 타임아웃 — job 은 PAUSED_FOR_REAUTH 로 보존
@@ -211,8 +227,7 @@ def run_with_session(
         )
         return MSG_SESSION_EXPIRED
     except Exception as ex:  # noqa: BLE001
-        logger.error("[RUN-FAIL] job=%s site=%s err=%s",
-                     job_id, site_id, type(ex).__name__)
+        logger.error("[RUN-FAIL] job=%s site=%s err=%s", job_id, site_id, type(ex).__name__)
         job_state.mark_failed(job_id, reason=f"work_exception:{type(ex).__name__}")
         return "JOB_FAILED"
 
@@ -226,8 +241,7 @@ class _ReauthRequired(Exception):
     민감 원문을 담지 말 것. reason 은 짧은 코드.
     """
 
-    def __init__(self, *, reason: str = "session_expired_mid_job",
-                 current_step: str = "", cursor: str = ""):
+    def __init__(self, *, reason: str = "session_expired_mid_job", current_step: str = "", cursor: str = ""):
         super().__init__(reason)
         self.reason = reason
         self.current_step = current_step
@@ -244,7 +258,7 @@ def resume_job(
     *,
     job_id: str,
     work: Callable[[Any], str],
-    reauth_timeout_sec: Optional[int] = None,
+    reauth_timeout_sec: int | None = None,
     sleeper: Any = None,
     clock: Any = None,
 ) -> str:
@@ -261,11 +275,13 @@ def resume_job(
         return f"JOB_NOT_RESUMABLE:{rec.status}"
 
     ensured = ensure_session(
-        adapter, page,
+        adapter,
+        page,
         job_id=job_id,
         auto_reauth=True,
         reauth_timeout_sec=reauth_timeout_sec,
-        sleeper=sleeper, clock=clock,
+        sleeper=sleeper,
+        clock=clock,
     )
     if not ensured.ok:
         return ensured.status_message
@@ -296,15 +312,15 @@ def resume_job(
 
 
 __all__ = [
-    "EnsureSessionResult",
-    "ensure_session",
-    "run_with_session",
-    "resume_job",
-    "SessionExpiredMidJob",
-    "MSG_SESSION_ACTIVE",
-    "MSG_SESSION_EXPIRED",
+    "MSG_JOB_RESUMED",
     "MSG_REAUTH_IN_PROGRESS",
     "MSG_REAUTH_SUCCESS",
-    "MSG_JOB_RESUMED",
     "MSG_REAUTH_TIMED_OUT",
+    "MSG_SESSION_ACTIVE",
+    "MSG_SESSION_EXPIRED",
+    "EnsureSessionResult",
+    "SessionExpiredMidJob",
+    "ensure_session",
+    "resume_job",
+    "run_with_session",
 ]

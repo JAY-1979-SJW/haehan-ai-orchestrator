@@ -19,26 +19,43 @@ Core Flow:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
-from typing import Optional, Any, Dict
 import logging
+from dataclasses import asdict, dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 # Risk level thresholds
-_CRITICAL_RISK_KEYWORDS = frozenset({
-    "submit", "delete", "remove", "결제", "삭제", "등록", "가입", "제출",
-    "payment", "checkout", "댓글", "저장", "송금", "register", "comment",
-})
+_CRITICAL_RISK_KEYWORDS = frozenset(
+    {
+        "submit",
+        "delete",
+        "remove",
+        "결제",
+        "삭제",
+        "등록",
+        "가입",
+        "제출",
+        "payment",
+        "checkout",
+        "댓글",
+        "저장",
+        "송금",
+        "register",
+        "comment",
+    }
+)
 
-_SUPPORTED_ACTIONS = frozenset({
-    "browser.execute_click",
-    "browser.execute_type",
-    "browser.plan_click",
-    "browser.plan_type",
-    "browser.inspect",
-})
+_SUPPORTED_ACTIONS = frozenset(
+    {
+        "browser.execute_click",
+        "browser.execute_type",
+        "browser.plan_click",
+        "browser.plan_type",
+        "browser.inspect",
+    }
+)
 
 
 @dataclass
@@ -54,15 +71,16 @@ class ServerApprovalAction:
         approval_token: Short-lived approval token (None if not approved)
         final_approval_token: Final approval for critical actions (None if not approved)
     """
+
     task_id: str
     action_type: str
     selector: str
-    value: Optional[str] = None
-    approval_id: Optional[str] = None
-    approval_token: Optional[str] = None
-    final_approval_token: Optional[str] = None
+    value: str | None = None
+    approval_id: str | None = None
+    approval_token: str | None = None
+    final_approval_token: str | None = None
 
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> tuple[bool, str | None]:
         """Validate action structure.
 
         Returns:
@@ -104,6 +122,7 @@ class ExecutionResult:
         screenshot_taken: Whether screenshot was captured
         screenshot_ref: Reference to screenshot storage (if any)
     """
+
     task_id: str
     action: str
     selector: str
@@ -116,9 +135,9 @@ class ExecutionResult:
     text_length: int = 0
     text_preview: str = "[REDACTED]"
     screenshot_taken: bool = False
-    screenshot_ref: Optional[str] = None
+    screenshot_ref: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to safe dict for JSON serialization."""
         data = asdict(self)
         # Ensure no secrets leak
@@ -131,7 +150,7 @@ class ExecutionResult:
         return f"ExecutionResult({', '.join(f'{k}={v}' for k, v in d.items())})"
 
 
-def assess_action_risk(action_type: str, selector: str, value: Optional[str] = None) -> tuple[str, bool]:
+def assess_action_risk(action_type: str, selector: str, value: str | None = None) -> tuple[str, bool]:
     """Assess risk level of an action.
 
     Returns:
@@ -155,7 +174,7 @@ def assess_action_risk(action_type: str, selector: str, value: Optional[str] = N
         return "low", False
 
 
-def validate_execution_result(result: ExecutionResult) -> tuple[bool, Optional[str]]:
+def validate_execution_result(result: ExecutionResult) -> tuple[bool, str | None]:
     """Validate that result_data contains no secrets.
 
     Returns:
@@ -164,9 +183,18 @@ def validate_execution_result(result: ExecutionResult) -> tuple[bool, Optional[s
     result_str = str(result)
 
     forbidden_keywords = [
-        "password", "token", "approval_token", "final_approval_token",
-        "cookie", "session", "localStorage", "sessionStorage",
-        "base64", "Authorization", "Bearer", "secret",
+        "password",
+        "token",
+        "approval_token",
+        "final_approval_token",
+        "cookie",
+        "session",
+        "localStorage",
+        "sessionStorage",
+        "base64",
+        "Authorization",
+        "Bearer",
+        "secret",
     ]
 
     for keyword in forbidden_keywords:

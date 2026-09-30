@@ -7,10 +7,11 @@
 이번 표준화 단계에서 AgentRequest 는 웹/시크릿 양쪽 호출 패턴을 하나의
 구조로 수렴시키기 위해 필드가 늘었다. 호환을 위해 기존 ``params`` 는 남겨둔다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -43,9 +44,9 @@ class AgentRequest:
         *,
         site_key: str = "",
         target_url: str = "",
-        options: Optional[dict] = None,
+        options: dict | None = None,
         **_ignored: Any,
-    ) -> "AgentRequest":
+    ) -> AgentRequest:
         """app.run(...) 의 가변 kwargs 를 표준 request 로 정규화."""
         return cls(
             action=str(action) if action is not None else "",
@@ -61,7 +62,7 @@ class AgentResult:
     ok: bool
     action: str
     data: dict = field(default_factory=dict)
-    error: Optional[str] = None
+    error: str | None = None
 
     def to_dict(self) -> dict:
         return {

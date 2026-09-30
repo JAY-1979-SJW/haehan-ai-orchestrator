@@ -8,12 +8,13 @@ Next.js dev 서버 없이 TSX 파일 정적 분석으로 smoke 검측:
 - DryRunNotice / ForbiddenActionBanner 사용 확인
 - mutation (fetch POST/PUT/DELETE) 없음
 """
+
 from __future__ import annotations
 
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -88,8 +89,18 @@ SECRET_PATTERNS = [
 ]
 
 REQUIRED_PROVIDERS = [
-    "GABIA", "KAKAO", "NAVER", "NAVER_SMARTSTORE", "GOOGLE", "HIWORKS",
-    "G2B_NARA", "HOMETAX", "WETAX", "GOVERNMENT24", "EMAIL_GENERIC", "BANK_GENERIC",
+    "GABIA",
+    "KAKAO",
+    "NAVER",
+    "NAVER_SMARTSTORE",
+    "GOOGLE",
+    "HIWORKS",
+    "G2B_NARA",
+    "HOMETAX",
+    "WETAX",
+    "GOVERNMENT24",
+    "EMAIL_GENERIC",
+    "BANK_GENERIC",
 ]
 
 
@@ -222,7 +233,7 @@ def check_mock_providers(report: SmokeReport) -> None:
     content = MOCK_FILE.read_text(encoding="utf-8")
     missing = [p for p in REQUIRED_PROVIDERS if p not in content]
     if not missing:
-        report.add("mock_providers_12", "PASS", f"12개 provider 모두 존재")
+        report.add("mock_providers_12", "PASS", "12개 provider 모두 존재")
     else:
         report.add("mock_providers_12", "FAIL", f"누락: {missing}")
 
@@ -257,9 +268,7 @@ def check_approval_no_execute_connection(report: SmokeReport) -> None:
         report.add("approval_no_execute_connection", "FAIL", "approval/page.tsx 없음")
         return
     content = approval_page.read_text(encoding="utf-8")
-    ok = ("approve→execute 미연결" in content
-          or "display" in content.lower()
-          or "ForbiddenActionBanner" in content)
+    ok = "approve→execute 미연결" in content or "display" in content.lower() or "ForbiddenActionBanner" in content
     if ok:
         report.add("approval_no_execute_connection", "PASS", "approve→execute 미연결 표시 확인")
     else:
@@ -287,7 +296,7 @@ def check_console_error_markers(report: SmokeReport) -> None:
 
 
 def run_smoke() -> SmokeReport:
-    report = SmokeReport(generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    report = SmokeReport(generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
     check_routes_exist(report)
     check_heading_markers(report)
     check_forbidden_actions(report)

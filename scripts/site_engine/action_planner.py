@@ -3,11 +3,12 @@
 실제 실행 없음. 브라우저 호출 없음. 파일/DB write 없음.
 execution_gate 결과가 있어야 비가역 action이 executable 상태가 된다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from scripts.site_engine.execution_gate import (
     ExecutionDecision,
@@ -31,29 +32,58 @@ class ActionPlanRisk(str, Enum):
     CRITICAL = "CRITICAL"
 
 
-_IRREVERSIBLE_CAPABILITIES = frozenset({
-    SiteCapability.SUBMIT,
-    SiteCapability.UPLOAD,
-    SiteCapability.DELETE,
-    SiteCapability.PUBLISH,
-    SiteCapability.SEND,
-    SiteCapability.SIGN,
-})
+_IRREVERSIBLE_CAPABILITIES = frozenset(
+    {
+        SiteCapability.SUBMIT,
+        SiteCapability.UPLOAD,
+        SiteCapability.DELETE,
+        SiteCapability.PUBLISH,
+        SiteCapability.SEND,
+        SiteCapability.SIGN,
+    }
+)
 
-_USER_DIRECT_CAPABILITIES = frozenset({
-    SiteCapability.SIGN,
-})
+_USER_DIRECT_CAPABILITIES = frozenset(
+    {
+        SiteCapability.SIGN,
+    }
+)
 
-_SENSITIVE_FIELD_KEYWORDS = frozenset({
-    "password", "passwd", "otp", "pin", "secret", "token",
-    "certificate", "cert", "private_key", "credential",
-    "session", "cookie", "비밀번호", "인증서", "쿠키", "세션",
-})
+_SENSITIVE_FIELD_KEYWORDS = frozenset(
+    {
+        "password",
+        "passwd",
+        "otp",
+        "pin",
+        "secret",
+        "token",
+        "certificate",
+        "cert",
+        "private_key",
+        "credential",
+        "session",
+        "cookie",
+        "비밀번호",
+        "인증서",
+        "쿠키",
+        "세션",
+    }
+)
 
-_CREDENTIAL_EXTRACT_KEYWORDS = frozenset({
-    "extract", "get", "read", "dump", "export", "fetch",
-    "추출", "가져오기", "읽기", "내보내기",
-})
+_CREDENTIAL_EXTRACT_KEYWORDS = frozenset(
+    {
+        "extract",
+        "get",
+        "read",
+        "dump",
+        "export",
+        "fetch",
+        "추출",
+        "가져오기",
+        "읽기",
+        "내보내기",
+    }
+)
 
 
 def _is_credential_extraction(action: str) -> bool:
@@ -88,7 +118,7 @@ class ActionPlanStep:
     required_gate: GateDecision
     is_sensitive: bool = False
     sensitive_reason: str = ""
-    gate_result: Optional[ExecutionGateResult] = None
+    gate_result: ExecutionGateResult | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     # value 필드 없음 — 민감값 저장 금지
 
@@ -136,70 +166,80 @@ def build_action_plan(
 
         # 자격증명 추출 시도 → BLOCKED
         if _is_credential_extraction(action):
-            steps.append(ActionPlanStep(
-                step_id=step_id,
-                capability=cap,
-                action=action,
-                status=ActionPlanStatus.BLOCKED,
-                risk=ActionPlanRisk.CRITICAL,
-                required_gate=GateDecision.BLOCKED,
-                is_sensitive=True,
-                sensitive_reason="credential extraction is forbidden",
-            ))
+            steps.append(
+                ActionPlanStep(
+                    step_id=step_id,
+                    capability=cap,
+                    action=action,
+                    status=ActionPlanStatus.BLOCKED,
+                    risk=ActionPlanRisk.CRITICAL,
+                    required_gate=GateDecision.BLOCKED,
+                    is_sensitive=True,
+                    sensitive_reason="credential extraction is forbidden",
+                )
+            )
             continue
 
         # 민감 필드 입력 → USER_ACTION_REQUIRED
         if cap == SiteCapability.FORM_FILL and _is_sensitive_field(field_name):
-            steps.append(ActionPlanStep(
-                step_id=step_id,
-                capability=cap,
-                action=action,
-                status=ActionPlanStatus.USER_ACTION_REQUIRED,
-                risk=ActionPlanRisk.HIGH,
-                required_gate=GateDecision.USER_DIRECT_REQUIRED,
-                is_sensitive=True,
-                sensitive_reason=f"sensitive field: {field_name!r}",
-                metadata={"field_name": field_name},
-            ))
+            steps.append(
+                ActionPlanStep(
+                    step_id=step_id,
+                    capability=cap,
+                    action=action,
+                    status=ActionPlanStatus.USER_ACTION_REQUIRED,
+                    risk=ActionPlanRisk.HIGH,
+                    required_gate=GateDecision.USER_DIRECT_REQUIRED,
+                    is_sensitive=True,
+                    sensitive_reason=f"sensitive field: {field_name!r}",
+                    metadata={"field_name": field_name},
+                )
+            )
             continue
 
         # 비가역 작업 → GATE_REQUIRED
         if cap in _IRREVERSIBLE_CAPABILITIES:
-            steps.append(ActionPlanStep(
-                step_id=step_id,
-                capability=cap,
-                action=action,
-                status=ActionPlanStatus.GATE_REQUIRED,
-                risk=_capability_risk(cap),
-                required_gate=GateDecision.APPROVAL_REQUIRED,
-                metadata=spec.get("metadata", {}),
-            ))
+            steps.append(
+                ActionPlanStep(
+                    step_id=step_id,
+                    capability=cap,
+                    action=action,
+                    status=ActionPlanStatus.GATE_REQUIRED,
+                    risk=_capability_risk(cap),
+                    required_gate=GateDecision.APPROVAL_REQUIRED,
+                    metadata=spec.get("metadata", {}),
+                )
+            )
             continue
 
         # USER_DIRECT only
         if cap in _USER_DIRECT_CAPABILITIES:
-            steps.append(ActionPlanStep(
-                step_id=step_id,
-                capability=cap,
-                action=action,
-                status=ActionPlanStatus.USER_ACTION_REQUIRED,
-                risk=ActionPlanRisk.CRITICAL,
-                required_gate=GateDecision.USER_DIRECT_REQUIRED,
-            ))
+            steps.append(
+                ActionPlanStep(
+                    step_id=step_id,
+                    capability=cap,
+                    action=action,
+                    status=ActionPlanStatus.USER_ACTION_REQUIRED,
+                    risk=ActionPlanRisk.CRITICAL,
+                    required_gate=GateDecision.USER_DIRECT_REQUIRED,
+                )
+            )
             continue
 
         # 일반 읽기/탐색
-        steps.append(ActionPlanStep(
-            step_id=step_id,
-            capability=cap,
-            action=action,
-            status=ActionPlanStatus.READY,
-            risk=_capability_risk(cap),
-            required_gate=GateDecision.READ_ONLY_ALLOWED
-            if cap in (SiteCapability.READ, SiteCapability.SEARCH)
-            else GateDecision.SERVER_BROWSER_ALLOWED,
-            metadata=spec.get("metadata", {}),
-        ))
+        steps.append(
+            ActionPlanStep(
+                step_id=step_id,
+                capability=cap,
+                action=action,
+                status=ActionPlanStatus.READY,
+                risk=_capability_risk(cap),
+                required_gate=GateDecision.READ_ONLY_ALLOWED
+                if cap in (SiteCapability.READ, SiteCapability.SEARCH)
+                else GateDecision.SERVER_BROWSER_ALLOWED,
+                metadata=spec.get("metadata", {}),
+            )
+        )
 
     plan = ActionPlan(plan_id=plan_id, site_key=site_key, steps=steps)
     _update_overall_status(plan)

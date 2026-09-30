@@ -1,10 +1,12 @@
 """Google Calendar 자동화"""
+
 from __future__ import annotations
 
 from typing import Any
 
-from .base import task_context, page_goto, page_wait_click, page_wait_type, page_wait_visible
 from scripts.config import GOOGLE_URLS
+
+from .base import page_goto, page_wait_click, page_wait_type, page_wait_visible, task_context
 
 
 def run(task: str, args: list[str]) -> None:
@@ -83,7 +85,7 @@ def _task_create(page: Any, args: list[str]) -> None:
     date_str = args[1] if len(args) > 1 else ""
     time_str = args[2] if len(args) > 2 else ""
 
-    print(f"\n[작업] Google Calendar 이벤트 생성")
+    print("\n[작업] Google Calendar 이벤트 생성")
     print(f"  제목: {title}")
     if date_str:
         print(f"  날짜: {date_str}")
@@ -100,7 +102,9 @@ def _task_create(page: Any, args: list[str]) -> None:
         return
 
     # 이벤트 생성 폼 나타날 때까지 대기
-    if not page_wait_visible(page, 'input[type="text"], input[placeholder*="제목"], input[placeholder*="Title"]', timeout=10000):
+    if not page_wait_visible(
+        page, 'input[type="text"], input[placeholder*="제목"], input[placeholder*="Title"]', timeout=10000
+    ):
         print("  ⚠  이벤트 입력 폼 못 찾음")
         return
 
@@ -119,9 +123,7 @@ def _task_create(page: Any, args: list[str]) -> None:
 
     # 저장 버튼 대기 후 클릭
     saved = page_wait_click(
-        page,
-        'button:has-text("저장"), button:has-text("Save"), '
-        'button[aria-label*="저장"], button[aria-label*="Save"]'
+        page, 'button:has-text("저장"), button:has-text("Save"), button[aria-label*="저장"], button[aria-label*="Save"]'
     )
     if saved:
         # 저장 후 캘린더 화면으로 복귀 대기
@@ -146,7 +148,7 @@ def _task_delete(page: Any, args: list[str]) -> None:
     # 이벤트 찾아 우클릭
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[role="button"]')) {{
-            if (el.textContent.includes({repr(event_name)})) {{
+            if (el.textContent.includes({event_name!r})) {{
                 el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true }}));
                 break;
             }}

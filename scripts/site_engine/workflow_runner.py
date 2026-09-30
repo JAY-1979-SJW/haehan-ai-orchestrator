@@ -3,11 +3,12 @@
 실제 실행 없음. 브라우저 호출 없음. DB/file write 없음.
 approval required step은 gate 없이 executable 상태가 될 수 없다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from scripts.site_engine.action_planner import ActionPlan, ActionPlanStatus
 from scripts.site_engine.execution_gate import ExecutionGateResult
@@ -26,8 +27,8 @@ class WorkflowStatus(str, Enum):
 class WorkflowStep:
     step_id: str
     name: str
-    action_plan: Optional[ActionPlan] = None
-    gate_result: Optional[ExecutionGateResult] = None
+    action_plan: ActionPlan | None = None
+    gate_result: ExecutionGateResult | None = None
     order: int = 0
     is_optional: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -38,7 +39,7 @@ class WorkflowDefinition:
     workflow_id: str
     name: str
     site_key: str
-    profile_key: Optional[str] = None
+    profile_key: str | None = None
     steps: list[WorkflowStep] = field(default_factory=list)
     description: str = ""
 
@@ -121,9 +122,7 @@ def validate_workflow_plan(plan: WorkflowRunPlan) -> WorkflowRunResult:
                 and s.status == ActionPlanStatus.READY
                 and s.gate_result is None
             ):
-                errors.append(
-                    f"step {s.step_id!r} is READY but has no gate_result for APPROVAL_REQUIRED action"
-                )
+                errors.append(f"step {s.step_id!r} is READY but has no gate_result for APPROVAL_REQUIRED action")
 
     return WorkflowRunResult(
         run_plan=plan,

@@ -12,15 +12,16 @@ smoke-test residual 정리를 위한 안전장치 기반 cleanup API.
   - confirm 형식: CLEANUP_SMOKE_TEST_{agent_id}
   - response/audit 민감값 미포함
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class CleanupPolicy:
     """cleanup 판정 결과."""
+
     eligible: bool
     reason: str  # eligible | non_smoke | not_offline | blocking_tasks | missing_confirm | confirm_mismatch | ...
     task_count: int = 0
@@ -70,7 +71,7 @@ def validate_cleanup_request(
     task_statuses: list[str],
     dry_run: bool,
     force: bool,
-    confirm: Optional[str],
+    confirm: str | None,
     smoke_test: bool = False,
 ) -> CleanupPolicy:
     """cleanup 요청 검증.
@@ -111,10 +112,7 @@ def validate_cleanup_request(
 
     # Rule 4: dry_run=true이면 이 시점에서 eligible로 판정
     if dry_run:
-        task_status_counts = {
-            status: task_statuses.count(status)
-            for status in set(task_statuses)
-        }
+        task_status_counts = {status: task_statuses.count(status) for status in set(task_statuses)}
         eligible_tasks = get_cleanup_eligible_tasks(task_statuses)
         return CleanupPolicy(
             eligible=True,
@@ -148,10 +146,7 @@ def validate_cleanup_request(
         )
 
     # All rules passed
-    task_status_counts = {
-        status: task_statuses.count(status)
-        for status in set(task_statuses)
-    }
+    task_status_counts = {status: task_statuses.count(status) for status in set(task_statuses)}
     eligible_tasks = get_cleanup_eligible_tasks(task_statuses)
     return CleanupPolicy(
         eligible=True,

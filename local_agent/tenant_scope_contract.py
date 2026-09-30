@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +27,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # Auth Context (G1, G4)
 # ============================================================================
+
 
 @dataclass
 class AuthTenantContext:
@@ -48,7 +48,7 @@ class AuthTenantContext:
     (owner|admin|manager|operator|viewer|auditor|local_agent)
     """
 
-    organization_ids: List[str] = field(default_factory=list)
+    organization_ids: list[str] = field(default_factory=list)
     """사용자가 소속된 모든 조직 ID"""
 
     active_organization_id: str = ""
@@ -57,7 +57,7 @@ class AuthTenantContext:
     is_local_agent: bool = False
     """local agent로 접속했는지 여부"""
 
-    agent_id: Optional[str] = None
+    agent_id: str | None = None
     """agent로 접속한 경우에만 유입"""
 
     def __post_init__(self):
@@ -71,9 +71,7 @@ class AuthTenantContext:
     def require_access_to_organization(self, org_id: str) -> None:
         """해당 조직 접근 권한 필수, 없으면 raise ValueError"""
         if not self.has_access_to_organization(org_id):
-            raise ValueError(
-                f"User {self.actor_user_id} has no access to organization {org_id}"
-            )
+            raise ValueError(f"User {self.actor_user_id} has no access to organization {org_id}")
 
     def can_perform_action(self, action: str, org_id: str) -> bool:
         """특정 조직에서 action 가능 여부 (향후 permission matrix 확장)"""
@@ -90,8 +88,7 @@ def validate_auth_context(ctx: AuthTenantContext) -> None:
         raise ValueError("active_organization_id required")
     if ctx.active_organization_id not in ctx.organization_ids:
         raise ValueError(
-            f"active_organization_id {ctx.active_organization_id} "
-            f"not in organization_ids {ctx.organization_ids}"
+            f"active_organization_id {ctx.active_organization_id} not in organization_ids {ctx.organization_ids}"
         )
 
 
@@ -104,14 +101,13 @@ def require_active_organization(ctx: AuthTenantContext) -> str:
 def require_membership(ctx: AuthTenantContext, org_id: str) -> None:
     """특정 조직 membership 필수"""
     if not ctx.has_access_to_organization(org_id):
-        raise ValueError(
-            f"User {ctx.actor_user_id} not member of organization {org_id}"
-        )
+        raise ValueError(f"User {ctx.actor_user_id} not member of organization {org_id}")
 
 
 # ============================================================================
 # Core Entity Scope Contracts
 # ============================================================================
+
 
 @dataclass
 class LocalAgentScope:
@@ -124,12 +120,12 @@ class LocalAgentScope:
     organization_id: str
     """G10: Required - agent belongs to exactly one organization"""
 
-    registered_by_user_id: Optional[str] = None
+    registered_by_user_id: str | None = None
     host_name_hash: str = ""
     """SHA256(hostname)[:12] - never raw hostname"""
 
     agent_version: str = ""
-    capabilities: List[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
     status: str = "ready"
 
     def __post_init__(self):
@@ -164,7 +160,7 @@ class BrowserTaskScope:
     """G5: Required - task belongs to exactly one organization"""
 
     requested_by_user_id: str
-    agent_id: Optional[str] = None
+    agent_id: str | None = None
     action_type: str = ""
     risk_level: str = "low"
     status: str = "pending"
@@ -189,7 +185,7 @@ class BrowserApprovalScope:
     """G6: Required - must match task.organization_id"""
 
     requested_by_user_id: str
-    approved_by_user_id: Optional[str] = None
+    approved_by_user_id: str | None = None
     risk_level: str = ""
     status: str = "pending"
     approval_token_hash: str = ""
@@ -201,8 +197,7 @@ class BrowserApprovalScope:
         if not self.approval_token_hash:
             raise ValueError("BrowserApproval requires approval_token_hash (not plaintext)")
         # Simple check: token should be hash format, not plaintext
-        if "approval_token=" in self.approval_token_hash or \
-           self.approval_token_hash.startswith("token:"):
+        if "approval_token=" in self.approval_token_hash or self.approval_token_hash.startswith("token:"):
             raise ValueError("plaintext approval_token not allowed; use SHA256 hash")
 
 
@@ -218,7 +213,7 @@ class BrowserResultScope:
     organization_id: str
     """G7: Required - must match task.organization_id"""
 
-    agent_id: Optional[str] = None
+    agent_id: str | None = None
     status: str = "completed"
 
     def __post_init__(self):
@@ -239,23 +234,22 @@ class BrowserAuditEventScope:
     event_type: str
     """BROWSER_TASK_*, BROWSER_APPROVAL_*, etc."""
 
-    task_id: Optional[str] = None
-    approval_id: Optional[str] = None
-    organization_id: Optional[str] = None
+    task_id: str | None = None
+    approval_id: str | None = None
+    organization_id: str | None = None
     """G8: Required for browser tasks, None for system events"""
 
-    actor_user_id: Optional[str] = None
-    actor_role: Optional[str] = None
-    risk_level: Optional[str] = None
-    decision: Optional[str] = None
+    actor_user_id: str | None = None
+    actor_role: str | None = None
+    risk_level: str | None = None
+    decision: str | None = None
     """approved|rejected|auto-allowed|blocked"""
 
     def __post_init__(self):
         # G8: browser task event는 organization_id 필수
         if self.event_type.startswith("BROWSER_") and not self.organization_id:
             raise ValueError(
-                f"BrowserAuditEvent {self.event_type} requires organization_id (G8) "
-                f"for task {self.task_id}"
+                f"BrowserAuditEvent {self.event_type} requires organization_id (G8) for task {self.task_id}"
             )
         # system event (AGENT_*, etc.)는 organization_id nullable
 
@@ -269,30 +263,27 @@ class AppAuditLogScope:
 
     log_id: str
     event_type: str
-    organization_id: Optional[str] = None
+    organization_id: str | None = None
     """None: system events, not None: user/task events"""
 
-    actor_user_id: Optional[str] = None
-    actor_role: Optional[str] = None
+    actor_user_id: str | None = None
+    actor_role: str | None = None
     target_type: str = ""
     target_id: str = ""
 
     def __post_init__(self):
         # G11: browser task 관련 event는 organization_id 필수
         if self.event_type.startswith("BROWSER_") and not self.organization_id:
-            raise ValueError(
-                f"AppAuditLog {self.event_type} requires organization_id (G11)"
-            )
+            raise ValueError(f"AppAuditLog {self.event_type} requires organization_id (G11)")
 
 
 # ============================================================================
 # Cross-Organization Scope Rules
 # ============================================================================
 
+
 def assert_task_approval_agent_same_org(
-    task: BrowserTaskScope,
-    approval: BrowserApprovalScope,
-    agent: LocalAgentScope
+    task: BrowserTaskScope, approval: BrowserApprovalScope, agent: LocalAgentScope
 ) -> None:
     """RULE: task.org_id == approval.org_id == agent.org_id
 
@@ -327,10 +318,7 @@ def assert_task_approval_agent_same_org(
     )
 
 
-def assert_result_task_same_org(
-    result: BrowserResultScope,
-    task: BrowserTaskScope
-) -> None:
+def assert_result_task_same_org(result: BrowserResultScope, task: BrowserTaskScope) -> None:
     """RULE: result.org_id == task.org_id
 
     위반 시: ValueError 발생 → result 저장 거부
@@ -349,16 +337,10 @@ def assert_result_task_same_org(
             f"(result={result.result_id}, task={task.task_id})"
         )
 
-    logger.debug(
-        f"result scope check PASS: result={result.result_id}, "
-        f"task={task.task_id}, org={task.organization_id}"
-    )
+    logger.debug(f"result scope check PASS: result={result.result_id}, task={task.task_id}, org={task.organization_id}")
 
 
-def assert_audit_task_same_org(
-    audit_event: BrowserAuditEventScope,
-    task: BrowserTaskScope
-) -> None:
+def assert_audit_task_same_org(audit_event: BrowserAuditEventScope, task: BrowserTaskScope) -> None:
     """RULE: audit.org_id == task.org_id
 
     위반 시: WARNING log → audit에 SCOPE_MISMATCH event 기록
@@ -379,14 +361,14 @@ def assert_audit_task_same_org(
             return
 
     logger.debug(
-        f"audit scope check PASS: event={audit_event.event_id}, "
-        f"task={task.task_id}, org={task.organization_id}"
+        f"audit scope check PASS: event={audit_event.event_id}, task={task.task_id}, org={task.organization_id}"
     )
 
 
 # ============================================================================
 # Safe Dict / Sanitization
 # ============================================================================
+
 
 def safe_tenant_scope_dict(data: dict) -> dict:
     """Remove forbidden fields from dict recursively.
@@ -403,20 +385,27 @@ def safe_tenant_scope_dict(data: dict) -> dict:
         dict with forbidden fields removed
     """
     forbidden_patterns = {
-        "approval_token", "final_approval_token", "token_hash",
-        "password", "otp", "cookie", "session", "authorization",
-        "localstorage", "sessionstorage",
-        "hostname", "username", "user_name", "ip_address",
-        "machine_id", "device_id",
+        "approval_token",
+        "final_approval_token",
+        "token_hash",
+        "password",
+        "otp",
+        "cookie",
+        "session",
+        "authorization",
+        "localstorage",
+        "sessionstorage",
+        "hostname",
+        "username",
+        "user_name",
+        "ip_address",
+        "machine_id",
+        "device_id",
     }
 
     def _clean(obj):
         if isinstance(obj, dict):
-            return {
-                k: _clean(v)
-                for k, v in obj.items()
-                if k.lower() not in forbidden_patterns
-            }
+            return {k: _clean(v) for k, v in obj.items() if k.lower() not in forbidden_patterns}
         elif isinstance(obj, (list, tuple)):
             return type(obj)(_clean(item) for item in obj)
         return obj
@@ -465,7 +454,7 @@ PERMISSION_MATRIX = {
     "manager": {
         "task_create": True,
         "task_approve": True,  # partial (own tasks)
-        "task_reject": True,   # partial (own tasks)
+        "task_reject": True,  # partial (own tasks)
         "task_view_all": False,
         "task_view_own": True,
         "result_view": True,
@@ -546,19 +535,19 @@ PERMISSION_MATRIX = {
 
 
 __all__ = [
-    "AuthTenantContext",
-    "LocalAgentScope",
-    "BrowserTaskScope",
-    "BrowserApprovalScope",
-    "BrowserResultScope",
-    "BrowserAuditEventScope",
+    "PERMISSION_MATRIX",
     "AppAuditLogScope",
-    "validate_auth_context",
+    "AuthTenantContext",
+    "BrowserApprovalScope",
+    "BrowserAuditEventScope",
+    "BrowserResultScope",
+    "BrowserTaskScope",
+    "LocalAgentScope",
+    "assert_audit_task_same_org",
+    "assert_result_task_same_org",
+    "assert_task_approval_agent_same_org",
     "require_active_organization",
     "require_membership",
-    "assert_task_approval_agent_same_org",
-    "assert_result_task_same_org",
-    "assert_audit_task_same_org",
     "safe_tenant_scope_dict",
-    "PERMISSION_MATRIX",
+    "validate_auth_context",
 ]

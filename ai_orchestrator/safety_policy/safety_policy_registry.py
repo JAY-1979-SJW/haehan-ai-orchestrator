@@ -17,102 +17,117 @@
 - API 응답 변경 금지
 - DB write 금지
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 정책 분류 상수
 # ---------------------------------------------------------------------------
 
 # execution_location 값 (execution_location_guard 호환)
-LOC_SERVER   = "SERVER_INTERNAL_ONLY"
-LOC_AGENT    = "LOCAL_AGENT_REQUIRED"
-LOC_USER     = "USER_DIRECT_REQUIRED"
-LOC_BLOCKED  = "BLOCKED"
+LOC_SERVER = "SERVER_INTERNAL_ONLY"
+LOC_AGENT = "LOCAL_AGENT_REQUIRED"
+LOC_USER = "USER_DIRECT_REQUIRED"
+LOC_BLOCKED = "BLOCKED"
 
 # external work classification (external_work_registry 호환)
-CLS_SERVER_READONLY   = "SERVER_READONLY_ALLOWED"
-CLS_OAUTH_REQUIRED    = "OFFICIAL_API_OR_OAUTH_REQUIRED"
-CLS_LOCAL_AGENT       = "LOCAL_AGENT_REQUIRED"
-CLS_USER_DIRECT       = "USER_DIRECT_REQUIRED"
-CLS_WEB_TASK          = "WEB_TASK_REGISTRY"
-CLS_QUARANTINE        = "QUARANTINE_OR_HOLD"
+CLS_SERVER_READONLY = "SERVER_READONLY_ALLOWED"
+CLS_OAUTH_REQUIRED = "OFFICIAL_API_OR_OAUTH_REQUIRED"
+CLS_LOCAL_AGENT = "LOCAL_AGENT_REQUIRED"
+CLS_USER_DIRECT = "USER_DIRECT_REQUIRED"
+CLS_WEB_TASK = "WEB_TASK_REGISTRY"
+CLS_QUARANTINE = "QUARANTINE_OR_HOLD"
 CLS_EXTERNAL_APP_HOLD = "EXTERNAL_APP_HOLD"
-CLS_FUTURE            = "FUTURE_INTEGRATION"
-CLS_IN_SCOPE          = "IN_SCOPE"
+CLS_FUTURE = "FUTURE_INTEGRATION"
+CLS_IN_SCOPE = "IN_SCOPE"
 
 # SafetyDecision 값 (domain/models.SafetyDecision 호환)
-DECISION_ALLOW            = "allow"
-DECISION_BLOCK            = "block"
-DECISION_HOLD             = "hold"
+DECISION_ALLOW = "allow"
+DECISION_BLOCK = "block"
+DECISION_HOLD = "hold"
 DECISION_REQUIRE_APPROVAL = "require_approval"
-DECISION_REQUIRE_AGENT    = "require_local_agent"
-DECISION_REQUIRE_USER     = "require_user_direct"
+DECISION_REQUIRE_AGENT = "require_local_agent"
+DECISION_REQUIRE_USER = "require_user_direct"
 
 # severity
 SEV_CRITICAL = "critical"
-SEV_HIGH     = "high"
-SEV_MEDIUM   = "medium"
-SEV_LOW      = "low"
+SEV_HIGH = "high"
+SEV_MEDIUM = "medium"
+SEV_LOW = "low"
 
 # ---------------------------------------------------------------------------
 # 신뢰 세션 / 최종 승인 게이트 — TRUSTED_SESSION_AND_USER_APPROVAL v1.0
 # ---------------------------------------------------------------------------
 
 # AuthMode — 인증 방식 상수
-AUTH_MODE_USER_PRESENT  = "USER_PRESENT_AUTH"     # 최초 1회 사용자 직접 인증
-AUTH_MODE_TRUSTED_REUSE = "TRUSTED_SESSION_REUSE" # 승인된 세션 재사용
-AUTH_MODE_OAUTH_API     = "OAUTH_API"             # OAuth/공식 API
+AUTH_MODE_USER_PRESENT = "USER_PRESENT_AUTH"  # 최초 1회 사용자 직접 인증
+AUTH_MODE_TRUSTED_REUSE = "TRUSTED_SESSION_REUSE"  # 승인된 세션 재사용
+AUTH_MODE_OAUTH_API = "OAUTH_API"  # OAuth/공식 API
 
 # SessionTrustLevel — 세션 신뢰 등급
-SESSION_TRUST_NONE      = "NONE"         # 세션 없음/만료
-SESSION_TRUST_PRESENT   = "USER_PRESENT" # 사용자 직접 로그인한 세션
-SESSION_TRUST_REUSABLE  = "REUSABLE"     # AI 재사용 허용 세션
+SESSION_TRUST_NONE = "NONE"  # 세션 없음/만료
+SESSION_TRUST_PRESENT = "USER_PRESENT"  # 사용자 직접 로그인한 세션
+SESSION_TRUST_REUSABLE = "REUSABLE"  # AI 재사용 허용 세션
 
 # FinalActionType — 사용자 승인 없이 자동 클릭 절대 금지 행위
-FINAL_ACTION_SAVE          = "SAVE"
-FINAL_ACTION_SUBMIT        = "SUBMIT"
-FINAL_ACTION_PAY           = "PAYMENT"
-FINAL_ACTION_SIGN          = "ELECTRONIC_SIGN"
+FINAL_ACTION_SAVE = "SAVE"
+FINAL_ACTION_SUBMIT = "SUBMIT"
+FINAL_ACTION_PAY = "PAYMENT"
+FINAL_ACTION_SIGN = "ELECTRONIC_SIGN"
 FINAL_ACTION_DOMAIN_CHANGE = "DOMAIN_DNS_CHANGE"
-FINAL_ACTION_SEND          = "SEND"
-FINAL_ACTION_BID           = "BID_SUBMIT"
-FINAL_ACTION_TRANSFER      = "BANK_TRANSFER"
+FINAL_ACTION_SEND = "SEND"
+FINAL_ACTION_BID = "BID_SUBMIT"
+FINAL_ACTION_TRANSFER = "BANK_TRANSFER"
 
-FINAL_ACTION_TYPES: frozenset[str] = frozenset({
-    FINAL_ACTION_SAVE, FINAL_ACTION_SUBMIT, FINAL_ACTION_PAY,
-    FINAL_ACTION_SIGN, FINAL_ACTION_DOMAIN_CHANGE, FINAL_ACTION_SEND,
-    FINAL_ACTION_BID, FINAL_ACTION_TRANSFER,
-})
+FINAL_ACTION_TYPES: frozenset[str] = frozenset(
+    {
+        FINAL_ACTION_SAVE,
+        FINAL_ACTION_SUBMIT,
+        FINAL_ACTION_PAY,
+        FINAL_ACTION_SIGN,
+        FINAL_ACTION_DOMAIN_CHANGE,
+        FINAL_ACTION_SEND,
+        FINAL_ACTION_BID,
+        FINAL_ACTION_TRANSFER,
+    }
+)
 
 # ApprovalGate — 실행 단계 게이트
-GATE_PREPARE_ALLOWED      = "PREPARE_ALLOWED"       # AI 준비/폼 입력 허용
-GATE_FINAL_BLOCKED        = "FINAL_BLOCKED"         # 최종 버튼 자동 클릭 금지
+GATE_PREPARE_ALLOWED = "PREPARE_ALLOWED"  # AI 준비/폼 입력 허용
+GATE_FINAL_BLOCKED = "FINAL_BLOCKED"  # 최종 버튼 자동 클릭 금지
 GATE_USER_APPROVAL_NEEDED = "USER_APPROVAL_NEEDED"  # 사용자 승인 게이트
-GATE_REAUTH_REQUIRED      = "REAUTH_REQUIRED"       # 재인증 필요
+GATE_REAUTH_REQUIRED = "REAUTH_REQUIRED"  # 재인증 필요
 
 # 신뢰 세션/최종행위 분류 scope 상수
 CLS_TRUSTED_SESSION = "TRUSTED_SESSION_SCOPE"
-CLS_FINAL_ACTION    = "FINAL_ACTION_SCOPE"
-CLS_CERT_AUTH       = "CERT_AUTH_SCOPE"
-CLS_DOMAIN_CHANGE   = "DOMAIN_DNS_CHANGE_SCOPE"
-CLS_SECRET_STORAGE  = "SECRET_STORAGE_SCOPE"
+CLS_FINAL_ACTION = "FINAL_ACTION_SCOPE"
+CLS_CERT_AUTH = "CERT_AUTH_SCOPE"
+CLS_DOMAIN_CHANGE = "DOMAIN_DNS_CHANGE_SCOPE"
+CLS_SECRET_STORAGE = "SECRET_STORAGE_SCOPE"  # noqa: S105 - 분류 이름 상수(비밀값 아님)
 
 
 # ---------------------------------------------------------------------------
 # SafetyPolicyRecord — registry 레코드 (frozen dict 대용)
 # ---------------------------------------------------------------------------
 
+
 class SafetyPolicyRecord:
     """Registry에 저장되는 정책 레코드."""
 
     __slots__ = (
-        "policy_id", "name", "category", "severity",
-        "applies_to", "decision", "reason",
+        "applies_to",
+        "blocked_scopes",
+        "category",
+        "decision",
+        "name",
+        "policy_id",
+        "reason",
         "required_execution_location",
-        "blocked_scopes", "test_required",
         "safe_to_execute_on_server",
+        "severity",
+        "test_required",
     )
 
     def __init__(
@@ -124,7 +139,7 @@ class SafetyPolicyRecord:
         applies_to: tuple[str, ...],
         decision: str,
         reason: str,
-        required_execution_location: Optional[str] = None,
+        required_execution_location: str | None = None,
         blocked_scopes: tuple[str, ...] = (),
         test_required: bool = True,
         safe_to_execute_on_server: bool = False,
@@ -168,7 +183,6 @@ class SafetyPolicyRecord:
 # ---------------------------------------------------------------------------
 
 _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
-
     # 1. EXTERNAL_APP_HOLD_BLOCK
     "EXTERNAL_APP_HOLD_BLOCK": SafetyPolicyRecord(
         policy_id="EXTERNAL_APP_HOLD_BLOCK",
@@ -186,16 +200,12 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
             "DOCUMENT_AUTOMATION_EXTERNAL_APP_BRIDGE",
         ),
         decision=DECISION_HOLD,
-        reason=(
-            "CAD/HWPX/Excel/Tax/Bid/문서자동화 등 외부 전문 앱 연동은 "
-            "계약·bridge 구현 전까지 실행 불가."
-        ),
+        reason=("CAD/HWPX/Excel/Tax/Bid/문서자동화 등 외부 전문 앱 연동은 계약·bridge 구현 전까지 실행 불가."),
         required_execution_location=LOC_BLOCKED,
         blocked_scopes=(CLS_EXTERNAL_APP_HOLD, CLS_FUTURE),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 2. OAUTH_API_REQUIRED_BLOCK
     "OAUTH_API_REQUIRED_BLOCK": SafetyPolicyRecord(
         policy_id="OAUTH_API_REQUIRED_BLOCK",
@@ -213,7 +223,6 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 3. USER_DIRECT_REQUIRED_BLOCK
     "USER_DIRECT_REQUIRED_BLOCK": SafetyPolicyRecord(
         policy_id="USER_DIRECT_REQUIRED_BLOCK",
@@ -231,7 +240,6 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 4. LOCAL_AGENT_REQUIRED_SERVER_BLOCK
     "LOCAL_AGENT_REQUIRED_SERVER_BLOCK": SafetyPolicyRecord(
         policy_id="LOCAL_AGENT_REQUIRED_SERVER_BLOCK",
@@ -241,15 +249,13 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         applies_to=(CLS_LOCAL_AGENT, LOC_AGENT),
         decision=DECISION_REQUIRE_AGENT,
         reason=(
-            "블로그 작성/카페 게시/외부 브라우저 자동화 등 로컬 에이전트가 필요한 작업은 "
-            "서버에서 직접 실행할 수 없다."
+            "블로그 작성/카페 게시/외부 브라우저 자동화 등 로컬 에이전트가 필요한 작업은 서버에서 직접 실행할 수 없다."
         ),
         required_execution_location=LOC_AGENT,
         blocked_scopes=(CLS_LOCAL_AGENT,),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 5. BLOCKED_ACTION_DENY
     "BLOCKED_ACTION_DENY": SafetyPolicyRecord(
         policy_id="BLOCKED_ACTION_DENY",
@@ -258,16 +264,12 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         severity=SEV_CRITICAL,
         applies_to=(LOC_BLOCKED, CLS_QUARANTINE),
         decision=DECISION_BLOCK,
-        reason=(
-            "BLOCKED 또는 QUARANTINE_OR_HOLD 분류 항목은 "
-            "어떤 실행 주체도 실행할 수 없다."
-        ),
+        reason=("BLOCKED 또는 QUARANTINE_OR_HOLD 분류 항목은 어떤 실행 주체도 실행할 수 없다."),
         required_execution_location=LOC_BLOCKED,
         blocked_scopes=(LOC_BLOCKED, CLS_QUARANTINE),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 6. SECRET_REDACTION_REQUIRED
     "SECRET_REDACTION_REQUIRED": SafetyPolicyRecord(
         policy_id="SECRET_REDACTION_REQUIRED",
@@ -285,46 +287,44 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         test_required=True,
         safe_to_execute_on_server=True,  # 정책 자체는 서버에서 집행 가능
     ),
-
     # 7. SERVER_EXTERNAL_WEB_BLOCK
     "SERVER_EXTERNAL_WEB_BLOCK": SafetyPolicyRecord(
         policy_id="SERVER_EXTERNAL_WEB_BLOCK",
         name="서버 외부 웹 브라우저 실행 차단",
         category="server_egress",
         severity=SEV_CRITICAL,
-        applies_to=("open_url", "read_page", "fill_form", "navigate", "login",
-                    "screenshot", "extract_text", "extract_tables"),
-        decision=DECISION_BLOCK,
-        reason=(
-            "서버에서 외부 사이트 브라우저 자동화 실행은 절대 금지. "
-            "반드시 local agent로 handoff해야 한다."
+        applies_to=(
+            "open_url",
+            "read_page",
+            "fill_form",
+            "navigate",
+            "login",
+            "screenshot",
+            "extract_text",
+            "extract_tables",
         ),
+        decision=DECISION_BLOCK,
+        reason=("서버에서 외부 사이트 브라우저 자동화 실행은 절대 금지. 반드시 local agent로 handoff해야 한다."),
         required_execution_location=LOC_AGENT,
         blocked_scopes=(),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 8. APPROVAL_REQUIRED_GATE
     "APPROVAL_REQUIRED_GATE": SafetyPolicyRecord(
         policy_id="APPROVAL_REQUIRED_GATE",
         name="승인 필요 작업 무단 실행 차단",
         category="approval_gate",
         severity=SEV_HIGH,
-        applies_to=("blog_publish", "cafe_post_write", "send_email", "send_message",
-                    "form_submit", "file_upload"),
+        applies_to=("blog_publish", "cafe_post_write", "send_email", "send_message", "form_submit", "file_upload"),
         decision=DECISION_REQUIRE_APPROVAL,
-        reason=(
-            "게시/발송/제출 등 외부 가시적 작업은 사용자 명시적 승인 없이 실행할 수 없다."
-        ),
+        reason=("게시/발송/제출 등 외부 가시적 작업은 사용자 명시적 승인 없이 실행할 수 없다."),
         required_execution_location=None,
         blocked_scopes=(),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # ── 신뢰 세션 / 최종 승인 게이트 정책 (9~18) ──────────────────────────
-
     # 9. USER_PRESENT_AUTH_REQUIRED
     "USER_PRESENT_AUTH_REQUIRED": SafetyPolicyRecord(
         policy_id="USER_PRESENT_AUTH_REQUIRED",
@@ -333,20 +333,21 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         severity=SEV_CRITICAL,
         applies_to=(
             AUTH_MODE_USER_PRESENT,
-            "login_new_session", "otp_input", "cert_login",
-            "password_input", "captcha_solve",
+            "login_new_session",
+            "otp_input",
+            "cert_login",
+            "password_input",
+            "captcha_solve",
         ),
         decision=DECISION_REQUIRE_USER,
         reason=(
-            "신규 세션 생성 시 최초 로그인/OTP/인증서 비밀번호 입력은 "
-            "반드시 사용자가 직접 수행한다. AI 자동화 금지."
+            "신규 세션 생성 시 최초 로그인/OTP/인증서 비밀번호 입력은 반드시 사용자가 직접 수행한다. AI 자동화 금지."
         ),
         required_execution_location=LOC_USER,
         blocked_scopes=("login_new_session", "otp_input", "cert_login"),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 10. TRUSTED_SESSION_REUSE_ALLOWED
     "TRUSTED_SESSION_REUSE_ALLOWED": SafetyPolicyRecord(
         policy_id="TRUSTED_SESSION_REUSE_ALLOWED",
@@ -356,19 +357,17 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         applies_to=(
             AUTH_MODE_TRUSTED_REUSE,
             CLS_TRUSTED_SESSION,
-            "navigate_to_work_screen", "fill_form", "read_page",
+            "navigate_to_work_screen",
+            "fill_form",
+            "read_page",
         ),
         decision=DECISION_ALLOW,
-        reason=(
-            "사용자가 직접 로그인한 이후 승인된 신뢰 세션은 "
-            "AI가 재사용하여 업무 화면까지 자동 진입할 수 있다."
-        ),
+        reason=("사용자가 직접 로그인한 이후 승인된 신뢰 세션은 AI가 재사용하여 업무 화면까지 자동 진입할 수 있다."),
         required_execution_location=LOC_AGENT,
         blocked_scopes=(),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 11. SECRET_STORAGE_FORBIDDEN
     "SECRET_STORAGE_FORBIDDEN": SafetyPolicyRecord(
         policy_id="SECRET_STORAGE_FORBIDDEN",
@@ -377,10 +376,16 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         severity=SEV_CRITICAL,
         applies_to=(
             CLS_SECRET_STORAGE,
-            "store_password", "store_otp", "store_cert_password",
-            "store_token", "store_cookie", "store_session",
-            "store_credential", "store_private_key",
-            "dump_cookie", "extract_session",
+            "store_password",
+            "store_otp",
+            "store_cert_password",
+            "store_token",
+            "store_cookie",
+            "store_session",
+            "store_credential",
+            "store_private_key",
+            "dump_cookie",
+            "extract_session",
         ),
         decision=DECISION_BLOCK,
         reason=(
@@ -390,13 +395,15 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         required_execution_location=LOC_BLOCKED,
         blocked_scopes=(
             CLS_SECRET_STORAGE,
-            "store_password", "store_otp", "store_cert_password",
-            "dump_cookie", "extract_session",
+            "store_password",
+            "store_otp",
+            "store_cert_password",
+            "dump_cookie",
+            "extract_session",
         ),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 12. SERVER_SECURITY_LOGIN_BLOCKED
     "SERVER_SECURITY_LOGIN_BLOCKED": SafetyPolicyRecord(
         policy_id="SERVER_SECURITY_LOGIN_BLOCKED",
@@ -404,8 +411,10 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         category="server_security",
         severity=SEV_CRITICAL,
         applies_to=(
-            "server_browser_login", "server_cert_login",
-            "server_otp_automation", "server_password_submit",
+            "server_browser_login",
+            "server_cert_login",
+            "server_otp_automation",
+            "server_password_submit",
         ),
         decision=DECISION_BLOCK,
         reason=(
@@ -414,13 +423,14 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         ),
         required_execution_location=LOC_BLOCKED,
         blocked_scopes=(
-            "server_browser_login", "server_cert_login",
-            "server_otp_automation", "server_password_submit",
+            "server_browser_login",
+            "server_cert_login",
+            "server_otp_automation",
+            "server_password_submit",
         ),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 13. LOCAL_AGENT_SECURE_LOGIN_REQUIRED
     "LOCAL_AGENT_SECURE_LOGIN_REQUIRED": SafetyPolicyRecord(
         policy_id="LOCAL_AGENT_SECURE_LOGIN_REQUIRED",
@@ -429,7 +439,8 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         severity=SEV_HIGH,
         applies_to=(
             CLS_CERT_AUTH,
-            "cert_based_login_local", "browser_session_local",
+            "cert_based_login_local",
+            "browser_session_local",
         ),
         decision=DECISION_REQUIRE_AGENT,
         reason=(
@@ -441,7 +452,6 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 14. FINAL_APPROVAL_GATE_REQUIRED
     "FINAL_APPROVAL_GATE_REQUIRED": SafetyPolicyRecord(
         policy_id="FINAL_APPROVAL_GATE_REQUIRED",
@@ -450,12 +460,22 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         severity=SEV_CRITICAL,
         applies_to=(
             CLS_FINAL_ACTION,
-            FINAL_ACTION_SAVE, FINAL_ACTION_SUBMIT, FINAL_ACTION_PAY,
-            FINAL_ACTION_SIGN, FINAL_ACTION_DOMAIN_CHANGE, FINAL_ACTION_SEND,
-            FINAL_ACTION_BID, FINAL_ACTION_TRANSFER,
-            "click_save_button", "click_submit_button", "click_pay_button",
-            "click_sign_button", "click_apply_dns", "click_send_button",
-            "click_bid_submit", "click_transfer_confirm",
+            FINAL_ACTION_SAVE,
+            FINAL_ACTION_SUBMIT,
+            FINAL_ACTION_PAY,
+            FINAL_ACTION_SIGN,
+            FINAL_ACTION_DOMAIN_CHANGE,
+            FINAL_ACTION_SEND,
+            FINAL_ACTION_BID,
+            FINAL_ACTION_TRANSFER,
+            "click_save_button",
+            "click_submit_button",
+            "click_pay_button",
+            "click_sign_button",
+            "click_apply_dns",
+            "click_send_button",
+            "click_bid_submit",
+            "click_transfer_confirm",
         ),
         decision=DECISION_REQUIRE_APPROVAL,
         reason=(
@@ -467,7 +487,6 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 15. CERTIFICATE_PASSWORD_NEVER_STORED
     "CERTIFICATE_PASSWORD_NEVER_STORED": SafetyPolicyRecord(
         policy_id="CERTIFICATE_PASSWORD_NEVER_STORED",
@@ -475,23 +494,23 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         category="secret_storage",
         severity=SEV_CRITICAL,
         applies_to=(
-            "cert_password_store", "cert_password_transmit",
-            "cert_password_log", "cert_file_server_copy",
+            "cert_password_store",
+            "cert_password_transmit",
+            "cert_password_log",
+            "cert_file_server_copy",
         ),
         decision=DECISION_BLOCK,
-        reason=(
-            "전자서명 인증서 비밀번호는 AI/서버/로그 어디에도 저장·전달·출력 불가. "
-            "인증서 파일 서버 복사 금지."
-        ),
+        reason=("전자서명 인증서 비밀번호는 AI/서버/로그 어디에도 저장·전달·출력 불가. 인증서 파일 서버 복사 금지."),
         required_execution_location=LOC_BLOCKED,
         blocked_scopes=(
-            "cert_password_store", "cert_password_transmit",
-            "cert_password_log", "cert_file_server_copy",
+            "cert_password_store",
+            "cert_password_transmit",
+            "cert_password_log",
+            "cert_file_server_copy",
         ),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 16. OAUTH_REFRESH_TOKEN_SECURE_STORE_ONLY
     "OAUTH_REFRESH_TOKEN_SECURE_STORE_ONLY": SafetyPolicyRecord(
         policy_id="OAUTH_REFRESH_TOKEN_SECURE_STORE_ONLY",
@@ -500,16 +519,12 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         severity=SEV_HIGH,
         applies_to=("oauth_refresh_token_plain_store", "oauth_token_log"),
         decision=DECISION_BLOCK,
-        reason=(
-            "OAuth refresh token은 암호화된 보안 저장소 외에 저장 금지. "
-            "로그/응답/파일에 plain text 출력 금지."
-        ),
+        reason=("OAuth refresh token은 암호화된 보안 저장소 외에 저장 금지. 로그/응답/파일에 plain text 출력 금지."),
         required_execution_location=LOC_BLOCKED,
         blocked_scopes=("oauth_refresh_token_plain_store", "oauth_token_log"),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 17. DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED
     "DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED": SafetyPolicyRecord(
         policy_id="DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED",
@@ -518,20 +533,20 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         severity=SEV_CRITICAL,
         applies_to=(
             CLS_DOMAIN_CHANGE,
-            "gabia_dns_apply", "gabia_domain_modify",
-            "dns_record_change", "nameserver_change",
+            "gabia_dns_apply",
+            "gabia_domain_modify",
+            "dns_record_change",
+            "nameserver_change",
         ),
         decision=DECISION_REQUIRE_APPROVAL,
         reason=(
-            "도메인/DNS 변경은 서비스 전체에 영향을 주므로 "
-            "사용자 명시적 승인 없이 AI가 적용 버튼을 클릭할 수 없다."
+            "도메인/DNS 변경은 서비스 전체에 영향을 주므로 사용자 명시적 승인 없이 AI가 적용 버튼을 클릭할 수 없다."
         ),
         required_execution_location=LOC_USER,
         blocked_scopes=(CLS_DOMAIN_CHANGE,),
         test_required=True,
         safe_to_execute_on_server=False,
     ),
-
     # 18. TRUSTED_SESSION_EXPIRE_REAUTH_REQUIRED
     "TRUSTED_SESSION_EXPIRE_REAUTH_REQUIRED": SafetyPolicyRecord(
         policy_id="TRUSTED_SESSION_EXPIRE_REAUTH_REQUIRED",
@@ -539,14 +554,13 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         category="auth_session",
         severity=SEV_HIGH,
         applies_to=(
-            "trusted_session_expired", "session_timeout",
-            "auth_cookie_expired", "login_redirect_detected",
+            "trusted_session_expired",
+            "session_timeout",
+            "auth_cookie_expired",
+            "login_redirect_detected",
         ),
         decision=DECISION_REQUIRE_USER,
-        reason=(
-            "신뢰 세션이 만료되면 AI가 자동으로 재로그인하지 않는다. "
-            "사용자에게 재인증을 요청하고 대기한다."
-        ),
+        reason=("신뢰 세션이 만료되면 AI가 자동으로 재로그인하지 않는다. 사용자에게 재인증을 요청하고 대기한다."),
         required_execution_location=LOC_USER,
         blocked_scopes=("trusted_session_expired",),
         test_required=True,
@@ -559,7 +573,8 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
 # Public API
 # ---------------------------------------------------------------------------
 
-def get_policy(policy_id: str) -> Optional[SafetyPolicyRecord]:
+
+def get_policy(policy_id: str) -> SafetyPolicyRecord | None:
     """policy_id로 정책을 조회한다."""
     return _POLICY_REGISTRY.get(policy_id)
 
@@ -601,7 +616,7 @@ def get_enforcement_decision(classification: str) -> str:
         DECISION_REQUIRE_AGENT: 4,
         DECISION_ALLOW: 5,
     }
-    best: Optional[str] = None
+    best: str | None = None
     for policy in _POLICY_REGISTRY.values():
         if classification in policy.applies_to or classification in policy.blocked_scopes:
             if best is None or priority.get(policy.decision, 99) < priority.get(best, 99):
@@ -612,70 +627,100 @@ def get_enforcement_decision(classification: str) -> str:
 def get_safe_to_execute_on_server(classification: str) -> bool:
     """classification이 서버 실행 안전한지 모든 관련 정책을 검토하여 반환한다."""
     for policy in _POLICY_REGISTRY.values():
-        if (classification in policy.applies_to or
-                classification in policy.blocked_scopes):
+        if classification in policy.applies_to or classification in policy.blocked_scopes:
             if not policy.safe_to_execute_on_server:
                 return False
     return True
 
 
 # External app hold 분류 집합 (STEP 6 대상)
-EXTERNAL_APP_HOLD_SCOPES: frozenset[str] = frozenset({
-    CLS_EXTERNAL_APP_HOLD,
-    CLS_FUTURE,
-    "CAD_EXTERNAL_APP_BRIDGE",
-    "HWPX_EXTERNAL_APP_BRIDGE",
-    "OFFICE_EXTERNAL_APP_BRIDGE",
-    "TAX_EXTERNAL_APP_BRIDGE",
-    "BID_EXTERNAL_APP_BRIDGE",
-    "DOCUMENT_AUTOMATION_EXTERNAL_APP_BRIDGE",
-})
+EXTERNAL_APP_HOLD_SCOPES: frozenset[str] = frozenset(
+    {
+        CLS_EXTERNAL_APP_HOLD,
+        CLS_FUTURE,
+        "CAD_EXTERNAL_APP_BRIDGE",
+        "HWPX_EXTERNAL_APP_BRIDGE",
+        "OFFICE_EXTERNAL_APP_BRIDGE",
+        "TAX_EXTERNAL_APP_BRIDGE",
+        "BID_EXTERNAL_APP_BRIDGE",
+        "DOCUMENT_AUTOMATION_EXTERNAL_APP_BRIDGE",
+    }
+)
 
 # OAuth/API 필요 분류 집합 (STEP 7 대상)
-OAUTH_REQUIRED_SCOPES: frozenset[str] = frozenset({
-    CLS_OAUTH_REQUIRED,
-})
+OAUTH_REQUIRED_SCOPES: frozenset[str] = frozenset(
+    {
+        CLS_OAUTH_REQUIRED,
+    }
+)
 
 # user direct 분류 집합 (STEP 8 대상)
-USER_DIRECT_SCOPES: frozenset[str] = frozenset({
-    CLS_USER_DIRECT,
-    LOC_USER,
-})
+USER_DIRECT_SCOPES: frozenset[str] = frozenset(
+    {
+        CLS_USER_DIRECT,
+        LOC_USER,
+    }
+)
 
 # local agent 분류 집합 (STEP 9 대상)
-LOCAL_AGENT_SCOPES: frozenset[str] = frozenset({
-    CLS_LOCAL_AGENT,
-    LOC_AGENT,
-})
+LOCAL_AGENT_SCOPES: frozenset[str] = frozenset(
+    {
+        CLS_LOCAL_AGENT,
+        LOC_AGENT,
+    }
+)
 
 # 신뢰 세션 관련 분류 집합
-TRUSTED_SESSION_SCOPES: frozenset[str] = frozenset({
-    AUTH_MODE_TRUSTED_REUSE,
-    CLS_TRUSTED_SESSION,
-    "navigate_to_work_screen", "fill_form",
-})
+TRUSTED_SESSION_SCOPES: frozenset[str] = frozenset(
+    {
+        AUTH_MODE_TRUSTED_REUSE,
+        CLS_TRUSTED_SESSION,
+        "navigate_to_work_screen",
+        "fill_form",
+    }
+)
 
 # 최종 승인 게이트 분류 집합
-FINAL_ACTION_SCOPES: frozenset[str] = frozenset({
-    CLS_FINAL_ACTION,
-    *FINAL_ACTION_TYPES,
-    "click_save_button", "click_submit_button", "click_pay_button",
-    "click_sign_button", "click_apply_dns", "click_send_button",
-    "click_bid_submit", "click_transfer_confirm",
-})
+FINAL_ACTION_SCOPES: frozenset[str] = frozenset(
+    {
+        CLS_FINAL_ACTION,
+        *FINAL_ACTION_TYPES,
+        "click_save_button",
+        "click_submit_button",
+        "click_pay_button",
+        "click_sign_button",
+        "click_apply_dns",
+        "click_send_button",
+        "click_bid_submit",
+        "click_transfer_confirm",
+    }
+)
 
 # 시크릿 저장 금지 집합
-SECRET_STORAGE_SCOPES: frozenset[str] = frozenset({
-    CLS_SECRET_STORAGE,
-    "store_password", "store_otp", "store_cert_password",
-    "store_token", "store_cookie", "dump_cookie", "extract_session",
-    "cert_password_store", "cert_password_transmit",
-    "cert_file_server_copy", "oauth_refresh_token_plain_store",
-})
+SECRET_STORAGE_SCOPES: frozenset[str] = frozenset(
+    {
+        CLS_SECRET_STORAGE,
+        "store_password",
+        "store_otp",
+        "store_cert_password",
+        "store_token",
+        "store_cookie",
+        "dump_cookie",
+        "extract_session",
+        "cert_password_store",
+        "cert_password_transmit",
+        "cert_file_server_copy",
+        "oauth_refresh_token_plain_store",
+    }
+)
 
 # 도메인/DNS 변경 분류 집합
-DOMAIN_CHANGE_SCOPES: frozenset[str] = frozenset({
-    CLS_DOMAIN_CHANGE,
-    "gabia_dns_apply", "gabia_domain_modify",
-    "dns_record_change", "nameserver_change",
-})
+DOMAIN_CHANGE_SCOPES: frozenset[str] = frozenset(
+    {
+        CLS_DOMAIN_CHANGE,
+        "gabia_dns_apply",
+        "gabia_domain_modify",
+        "dns_record_change",
+        "nameserver_change",
+    }
+)

@@ -6,12 +6,11 @@
 - DRY_RUN 기본값 True. 실제 호출은 명시적 false 전환 필요.
 - 본 모듈은 비로그인 공개 검색 API 전용. 사용자 동의/OAuth/세션 흐름 없음.
 """
+
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Optional
-
 
 ENV_BASE_URL = "NAVER_OPENAPI_BASE_URL"
 ENV_CLIENT_ID = "NAVER_OPENAPI_CLIENT_ID"
@@ -43,6 +42,7 @@ class NaverOpenApiConfig:
     def redacted(self) -> dict:
         def _mask(v: str) -> str:
             return f"***len={len(v)}" if v else ""
+
         return {
             "base_url": self.base_url,
             "client_id": _mask(self.client_id),
@@ -51,13 +51,13 @@ class NaverOpenApiConfig:
         }
 
 
-def _to_bool(v: Optional[str], default: bool) -> bool:
+def _to_bool(v: str | None, default: bool) -> bool:
     if v is None:
         return default
     return v.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def load_config(env: Optional[dict] = None) -> NaverOpenApiConfig:
+def load_config(env: dict | None = None) -> NaverOpenApiConfig:
     src = env if env is not None else os.environ
     return NaverOpenApiConfig(
         base_url=(src.get(ENV_BASE_URL) or "").strip() or DEFAULT_BASE_URL,
@@ -75,17 +75,15 @@ def require_live(cfg: NaverOpenApiConfig) -> None:
     if not cfg.client_secret:
         missing.append(ENV_CLIENT_SECRET)
     if missing:
-        raise NaverOpenApiConfigError(
-            "Naver OpenAPI live 호출에 필요한 환경변수 누락: " + ", ".join(missing)
-        )
+        raise NaverOpenApiConfigError("Naver OpenAPI live 호출에 필요한 환경변수 누락: " + ", ".join(missing))
 
 
 __all__ = [
+    "DEFAULT_BASE_URL",
     "ENV_BASE_URL",
     "ENV_CLIENT_ID",
     "ENV_CLIENT_SECRET",
     "ENV_DRY_RUN",
-    "DEFAULT_BASE_URL",
     "REQUIRED_KEYS_FOR_LIVE",
     "NaverOpenApiConfig",
     "NaverOpenApiConfigError",
