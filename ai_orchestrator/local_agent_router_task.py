@@ -114,12 +114,12 @@ def cancel_local_agent_task(
         raise HTTPException(
             status_code=409,
             detail={"error": "CANCEL_NOT_ALLOWED", "message": str(e)},
-        )
+        ) from e
     except ValueError as e:
         raise HTTPException(
             status_code=404,
             detail={"error": "TASK_NOT_FOUND", "message": str(e)},
-        )
+        ) from e
 
     audit_event = "LOCAL_AGENT_TASK_CANCELLED" if cancel_action == "cancelled" else "LOCAL_AGENT_TASK_CANCEL_REQUESTED"
     log_event(
@@ -386,7 +386,7 @@ def submit_local_agent_task(
         raise HTTPException(
             status_code=400,
             detail={"error": "UNKNOWN_ACTION", "message": str(e)},
-        )
+        ) from e
 
     # high risk → 승인 토큰 발행 + waiting_approval 이벤트
     if task.risk_level == "high":

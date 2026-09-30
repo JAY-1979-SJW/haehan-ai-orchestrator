@@ -246,7 +246,7 @@ def create_app(
         try:
             updated = _store.mark_user_confirmed(workflow_run_id)
         except ValueError as exc:
-            raise HTTPException(status_code=409, detail=str(exc))
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
         sanitized = _store.sanitize_user_present_task_for_user(updated)
         if html_ui_enabled:
             from fastapi.responses import RedirectResponse
@@ -266,7 +266,7 @@ def create_app(
         try:
             updated = _store.mark_user_cancelled(workflow_run_id)
         except ValueError as exc:
-            raise HTTPException(status_code=409, detail=str(exc))
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
         sanitized = _store.sanitize_user_present_task_for_user(updated)
         if html_ui_enabled:
             from fastapi.responses import RedirectResponse
@@ -294,8 +294,8 @@ def run_server(
 
     try:
         import uvicorn
-    except ImportError:
-        raise RuntimeError("uvicorn이 설치되어 있지 않습니다. pip install uvicorn 후 재시도하세요.")
+    except ImportError as exc:
+        raise RuntimeError("uvicorn이 설치되어 있지 않습니다. pip install uvicorn 후 재시도하세요.") from exc
 
     app = create_app(store)
     logger.info("[user-present-ui] 서버 시작: http://%s:%s", host, port)

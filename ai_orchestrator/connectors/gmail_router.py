@@ -81,12 +81,12 @@ def api_inbox(
         )
         return {"ok": True, "items": items, "count": len(items), "duration_ms": duration_ms, "source": source}
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=f"Gmail credentials 없음: {e}")
+        raise HTTPException(status_code=503, detail=f"Gmail credentials 없음: {e}") from e
     except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     except Exception as e:
         logger.exception("gmail inbox error")
-        raise HTTPException(status_code=500, detail=f"Gmail 수신 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"Gmail 수신 오류: {e}") from e
 
 
 @gmail_router.post("/collect")
@@ -111,7 +111,7 @@ def api_collect(
         return {"ok": True, **result}
     except Exception as e:
         logger.exception("gmail collect error")
-        raise HTTPException(status_code=500, detail=f"Gmail 수집 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"Gmail 수집 오류: {e}") from e
 
 
 @gmail_router.post("/compose")
@@ -162,7 +162,7 @@ def api_compose(
         }
     except Exception as e:
         logger.exception("gmail compose error")
-        raise HTTPException(status_code=500, detail=f"Gmail 작성 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"Gmail 작성 실패: {e}") from e
 
 
 @gmail_router.post("/reply")
@@ -222,10 +222,10 @@ def api_reply(
         raise
     except ValueError as e:
         # send_reply()의 헤더 인젝션 방지 검증 실패(입력값에 CR/LF 포함) — 요청측 잘못이므로 400.
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.exception("gmail reply error")
-        raise HTTPException(status_code=500, detail=f"Gmail 회신 발송 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"Gmail 회신 발송 실패: {e}") from e
 
 
 @gmail_router.post("/ai-draft-unread")
@@ -263,10 +263,10 @@ def api_ai_draft_unread(
             for m in raw_mails
         ]
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=f"Gmail credentials 없음: {e}")
+        raise HTTPException(status_code=503, detail=f"Gmail credentials 없음: {e}") from e
     except Exception as e:
         logger.exception("gmail ai-draft collect error")
-        raise HTTPException(status_code=500, detail=f"메일 수집 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"메일 수집 오류: {e}") from e
 
     if not mails:
         return {"ok": True, "items": [], "count": 0, "duration_ms": int((time.monotonic() - t0) * 1000)}
@@ -299,8 +299,8 @@ def api_ai_draft_unread(
         cleaned = cleaned[cleaned.find("[") : cleaned.rfind("]") + 1]
     try:
         drafts = _json.loads(cleaned)
-    except _json.JSONDecodeError:
-        raise HTTPException(status_code=502, detail=f"AI 응답 파싱 실패: {raw[:200]}")
+    except _json.JSONDecodeError as exc:
+        raise HTTPException(status_code=502, detail=f"AI 응답 파싱 실패: {raw[:200]}") from exc
 
     by_key = {m["key"]: m for m in mails}
     items = []
@@ -389,4 +389,4 @@ def api_send(
         raise
     except Exception as e:
         logger.exception("gmail send error")
-        raise HTTPException(status_code=500, detail=f"Gmail 발송 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"Gmail 발송 오류: {e}") from e

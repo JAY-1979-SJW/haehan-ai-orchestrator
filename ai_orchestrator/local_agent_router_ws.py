@@ -408,8 +408,8 @@ async def agent_websocket(websocket: WebSocket):
                     )
                 try:
                     await websocket.send_json({"type": "idle"})
-                except Exception:  # noqa: BLE001 - 로컬 에이전트 WebSocket 서버(인증 후 통신) — 인증(authenticate_agent) 검증은 except 처리 이전 로직으로 실패 시 close(4401)로 명확히 거부되며, except는 알림 전송 실패 무시나 예외 발생시 로그 남기고 안전하게 연결 종료(code 1011)할 뿐 인증을 우회하지 않음.
-                    raise WebSocketDisconnect()
+                except Exception as exc:
+                    raise WebSocketDisconnect() from exc
                 continue
 
             if not isinstance(msg, dict):

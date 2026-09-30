@@ -70,4 +70,4 @@ def youtube_market_research(
         return {"ok": True, "data": payload}
     except Exception as e:
         logger.exception("youtube market research error")
-        raise HTTPException(status_code=500, detail=f"시장조사 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"시장조사 실패: {e}") from e
