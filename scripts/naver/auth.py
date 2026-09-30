@@ -120,6 +120,11 @@ def save_credentials(naver_id: str, naver_pw: str) -> Path:
 # ── 봇 감지 회피 타이핑 + 안전 입력 ────────────────────────────────────────
 
 
+# 입력 칸 클릭 대기 시간. 2초는 PC 가 느릴 때(메모리 부족·다른 작업 부하) 네이버 로그인 폼의 안정화·페이지 이동 대기를
+# 못 기다려 아이디/비밀번호 칸 클릭이 번갈아 시간 초과됐다(2026-09-30 실측). 실패해도 제출 전이라 안전하므로 넉넉히 둔다.
+_INPUT_CLICK_TIMEOUT_MS = 8000
+
+
 def _safe_human_input(page, selector: str, value: str, label: str = "필드", delay_ms: int = 80) -> dict:
     """입력 전 필드 검사 → 기존 값 처리 후 사람처럼 타이핑.
 
@@ -156,7 +161,7 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
         if current:
             # 다른 값 있음 → 전체 선택 + 삭제
             _log.warning("[naver-auth] %s 에 다른 값 존재 (%d자) — 삭제 후 재입력", label, len(current))
-            el.click(timeout=2000)
+            el.click(timeout=_INPUT_CLICK_TIMEOUT_MS)
             time.sleep(0.3)
             page.keyboard.press("Control+a")
             time.sleep(0.15)
@@ -175,7 +180,7 @@ def _safe_human_input(page, selector: str, value: str, label: str = "필드", de
             action = "empty"
 
         # 3. 새 값 입력 (사람처럼 한 글자씩)
-        el.click(timeout=2000)
+        el.click(timeout=_INPUT_CLICK_TIMEOUT_MS)
         time.sleep(0.4)
         for ch in value:
             page.keyboard.type(ch, delay=delay_ms)
