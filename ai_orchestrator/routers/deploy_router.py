@@ -74,10 +74,10 @@ def _forward_to_daemon(body: bytes) -> dict[str, Any]:
     except urllib.error.HTTPError as e:
         detail = e.read().decode("utf-8", "replace")[:200]
         if e.code == 409:
-            raise HTTPException(status_code=409, detail="deploy_already_running")
-        raise HTTPException(status_code=502, detail=f"trigger_daemon_error:{e.code}:{detail}")
-    except Exception as exc:  # noqa: BLE001 - GitHub Webhook 배포 트리거(문서에 'HMAC-SHA256 서명 검증 실패시 401' 명시) — 서명검증은 except와 무관한 명시적 hmac.compare_digest 로직이며, except는 데몬 연결실패/JSON파싱실패/상태파일 읽기실패를 각각 HTTPException 또는 명확한 실패 dict로 반환.
-        raise HTTPException(status_code=503, detail=f"trigger_daemon_unreachable:{exc}")
+            raise HTTPException(status_code=409, detail="deploy_already_running") from e
+        raise HTTPException(status_code=502, detail=f"trigger_daemon_error:{e.code}:{detail}") from e
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"trigger_daemon_unreachable:{exc}") from exc
 
 
 @router.post("/webhook", status_code=status.HTTP_202_ACCEPTED)
@@ -95,8 +95,8 @@ async def github_webhook(
 
     try:
         payload = json.loads(body)
-    except Exception:  # noqa: BLE001 - GitHub Webhook 배포 트리거(문서에 'HMAC-SHA256 서명 검증 실패시 401' 명시) — 서명검증은 except와 무관한 명시적 hmac.compare_digest 로직이며, except는 데몬 연결실패/JSON파싱실패/상태파일 읽기실패를 각각 HTTPException 또는 명확한 실패 dict로 반환.
-        raise HTTPException(status_code=400, detail="invalid_json")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="invalid_json") from exc
 
     ref = payload.get("ref", "")
     if ref != "refs/heads/master":

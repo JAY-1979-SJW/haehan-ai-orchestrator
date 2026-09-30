@@ -431,7 +431,7 @@ def read_approval_records(jsonl_path: Path | str) -> list[dict]:
                 record = json.loads(line)
                 records.append(record)
             except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON at line {line_num}: {e}")
+                raise ValueError(f"Invalid JSON at line {line_num}: {e}") from e
 
     return records
 

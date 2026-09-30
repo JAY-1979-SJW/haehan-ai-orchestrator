@@ -107,7 +107,7 @@ def issue_registration_code(
                 "code": "INVALID_TTL",
                 "message": str(e),
             },
-        )
+        ) from e
     except ValueError as e:
         raise HTTPException(
             status_code=400,
@@ -115,7 +115,7 @@ def issue_registration_code(
                 "code": "INVALID_REQUEST",
                 "message": str(e),
             },
-        )
+        ) from e
 
     # 감사 로그 — code 원문/hash/salt 절대 기록 금지. code_id 만.
     log_event(
@@ -197,7 +197,7 @@ def register_with_code(body: RegisterWithCodeRequest):
                 "code": "INVALID_REGISTRATION_CODE",
                 "message": _regcodes.INVALID_CODE_MESSAGE,
             },
-        )
+        ) from e
 
     result = _reg.register_agent(
         host=body.host,
