@@ -72,7 +72,7 @@ def api_inbox(
         return {"ok": True, "items": items, "count": len(items), "duration_ms": duration_ms}
     except Exception as e:
         logger.exception("hiworks inbox error")
-        raise HTTPException(status_code=500, detail=f"하이웍스 수신 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"하이웍스 수신 오류: {e}") from e
 
 
 @hiworks_mail_router.post("/compose")
@@ -122,7 +122,7 @@ def api_compose(
         }
     except Exception as e:
         logger.exception("hiworks compose error")
-        raise HTTPException(status_code=500, detail=f"작성 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"작성 실패: {e}") from e
 
 
 @hiworks_mail_router.post("/send")
@@ -164,4 +164,4 @@ def api_send(
         raise
     except Exception as e:
         logger.exception("hiworks send error")
-        raise HTTPException(status_code=500, detail=f"발송 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"발송 오류: {e}") from e

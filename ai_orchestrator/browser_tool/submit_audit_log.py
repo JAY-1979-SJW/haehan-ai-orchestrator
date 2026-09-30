@@ -430,6 +430,6 @@ def read_submit_audit_events(path: Path) -> list[dict]:
                 event = json.loads(line)
                 events.append(event)
             except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON at line {line_num}: {e!s}")
+                raise ValueError(f"Invalid JSON at line {line_num}: {e!s}") from e
 
     return events

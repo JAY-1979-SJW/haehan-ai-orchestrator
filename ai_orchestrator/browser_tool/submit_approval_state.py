@@ -163,7 +163,7 @@ def read_approval_state_events(log_path: Path) -> list[dict]:
                 event = json.loads(line)
                 events.append(event)
             except json.JSONDecodeError as e:
-                raise ApprovalStateError(f"Invalid JSON at line {line_num}: {e}")
+                raise ApprovalStateError(f"Invalid JSON at line {line_num}: {e}") from e
 
     return events
 

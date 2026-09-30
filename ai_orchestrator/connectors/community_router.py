@@ -81,7 +81,7 @@ def extract(req: ExtractRequest, user: dict = Depends(require_role("admin", "own
         return result
     except Exception as e:
         logger.exception("community extract error")
-        raise HTTPException(status_code=500, detail=f"추출 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"추출 실패: {e}") from e
 
 
 # ── 사이트 레지스트리 ────────────────────────────────────────────────────────
@@ -106,7 +106,7 @@ def add_site(req: SiteAddRequest, user: dict = Depends(require_role("admin", "ow
     try:
         site = _add(req.url, req.name, req.note)
     except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+        raise HTTPException(status_code=400, detail=str(ve)) from ve
     log_event(
         "COMMUNITY_SITE_ADD",
         task_id="-",
@@ -160,7 +160,7 @@ def analyze(req: AnalyzeRequest, user: dict = Depends(require_role("admin", "own
             raise
         except Exception as e:
             logger.exception("analyze extract error")
-            raise HTTPException(status_code=500, detail=f"추출 실패: {e}")
+            raise HTTPException(status_code=500, detail=f"추출 실패: {e}") from e
 
     if not posts:
         raise HTTPException(status_code=400, detail="분석할 게시글(url 또는 posts)이 필요합니다")
@@ -169,7 +169,7 @@ def analyze(req: AnalyzeRequest, user: dict = Depends(require_role("admin", "own
         report = prepare_posts_for_review(posts, context=context)
     except Exception as e:
         logger.exception("analyze error")
-        raise HTTPException(status_code=500, detail=f"분석 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"분석 실패: {e}") from e
 
     log_event(
         "COMMUNITY_ANALYZE",
@@ -204,7 +204,7 @@ def run_now(user: dict = Depends(require_role("admin", "owner"))) -> dict:
         rep = run_all_sites(reason="manual")
     except Exception as e:
         logger.exception("community run-now error")
-        raise HTTPException(status_code=500, detail=f"실행 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"실행 실패: {e}") from e
     log_event(
         "COMMUNITY_RUN_NOW",
         task_id="-",

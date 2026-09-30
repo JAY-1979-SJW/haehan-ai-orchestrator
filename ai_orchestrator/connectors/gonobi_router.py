@@ -83,8 +83,8 @@ async def list_posts(
         with open_db() as conn:
             posts = get_posts(conn, our_category=category or "", limit=limit, offset=offset)
         return {"posts": posts, "count": len(posts)}
-    except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @gonobi_router.get("/posts/{log_no}")
@@ -100,8 +100,8 @@ async def get_post_detail(log_no: str):
         return post
     except HTTPException:
         raise
-    except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @gonobi_router.get("/stats")
@@ -113,8 +113,8 @@ async def get_stats():
         with open_db() as conn:
             stats = count_posts(conn)
         return stats
-    except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @gonobi_router.post("/classify")
@@ -126,5 +126,5 @@ async def reclassify(limit: int = Query(100, description="재분류할 미분류
         with open_db() as conn:
             updated = reclassify_untagged(conn, limit=limit)
         return {"updated": updated}
-    except Exception as e:  # noqa: BLE001 - gonobi 블로그 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환(내부 오류 메시지 포함), DB 읽기 API로 쓰기/삭제 없음
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e

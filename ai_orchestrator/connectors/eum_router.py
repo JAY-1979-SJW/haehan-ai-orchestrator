@@ -235,7 +235,7 @@ def collect_and_prepare(
                 "duration_ms": int((time.monotonic() - t0) * 1000),
             }
         logger.exception("eum collect error")
-        raise HTTPException(status_code=500, detail=f"EUM 수집 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"EUM 수집 실패: {e}") from e
 
 
 @eum_router.get("/sales-mail/targets")
@@ -252,8 +252,8 @@ def get_targets(user: dict = Depends(require_role("admin", "owner"))) -> dict:
             "count": len(targets),
             "prepared_at": data.get("timestamp", "") if isinstance(data, dict) else "",
         }
-    except Exception as e:  # noqa: BLE001 - EUM 영업메일 API(문서에 '발송은 confirmed=True 필수, 자동 일괄발송 금지' 명시) — send_one 엔드포인트는 confirmed 검증이 try 블록 이전에 이미 끝난 뒤에만 실제 발송을 시도하며, except는 실패를 HTTPException(500) 또는 로그인필요 안내로 변환할 뿐 승인을 우회하지 않음. 견적서 로컬 사본 저장 실패는 warn 로그만 남기고 본 스트리밍 응답에는 영향 없음.
-        raise HTTPException(status_code=500, detail=f"타겟 로드 실패: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"타겟 로드 실패: {e}") from e
 
 
 @eum_router.post("/sales-mail/send")
@@ -294,7 +294,7 @@ def send_one(
         raise
     except Exception as e:
         logger.exception("eum send error")
-        raise HTTPException(status_code=500, detail=f"발송 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"발송 오류: {e}") from e
 
 
 @eum_router.post("/quote/generate")
@@ -365,4 +365,4 @@ def generate_quote(
         raise
     except Exception as e:
         logger.exception("quote generate error")
-        raise HTTPException(status_code=500, detail=f"견적서 생성 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"견적서 생성 실패: {e}") from e
