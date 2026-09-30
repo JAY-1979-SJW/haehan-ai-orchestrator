@@ -1,6 +1,7 @@
 # 블로그 자동 작성 자동화 (오케스트레이터 앱) — 기준서 v2
 
-- 날짜: 2026-09-30 / 상태: **v2 — 기존 기준서·코드를 정독한 뒤 전면 개정, 승인 대기(A단계부터)**
+- 날짜: 2026-09-30 / 상태: **v2 — A단계 구현 완료(2026-09-30, `scripts/naver/blog/automation/{rules,gates}.py` + 테스트 111개), B단계 승인 대기**
+- A단계 구현 시 확인·추가한 것: 조명 계정 `skyjwshin` 은 README 상 "발행 전 사람 검수 필요"라 **승인이 있어도 자동 발행 불가**(`AUTO_PUBLISH_BLOG_IDS={"skyjwsin"}`로 코드 강제), 리서치 파일은 계정별(`data/blog_topic_research_latest.json` / `_lighting_latest.json`), 규칙 `id` 는 파일 이름이라 경로 문자 거부, 예정 시각 뒤 10분 창 안에서만 실행(따라잡지 않음), `management/schedule.py` 는 네이버 예약 발행 DB 큐라 재사용 대상 아님.
 - 이전 판(v1/v1.1)은 `docs/specs/naver_blog_content_standard.md`·`scripts/naver/blog/` 를 읽지 않고 써서 여러 곳이 틀렸다(§10 정정 이력, git 이력 `8cc9a409`·`30653ffe`).
 - 사용자 결정(2026-09-30): ① 대상 = **오케스트레이터 앱**(Haehan AI 데스크 앱 `/naver/blog`, 소유자 블로그 `skyjwsin`) ② 글쓰기 엔진 = **Claude 연동**(`claude -p` 텍스트 생성만) ③ 주제 = **사용자 목록 + 리서치 결과 함께** ④ 발행 = **사용자가 승인한 규칙 안에서 자동 발행**.
 - 작성 기준은 `docs/specs/naver_blog_content_standard.md`(이하 "기준서")를 그대로 따른다. 코드가 기준서와 어긋나면 코드가 틀린 것이라는 기준서 원칙(첫머리)을 이 문서도 따른다.

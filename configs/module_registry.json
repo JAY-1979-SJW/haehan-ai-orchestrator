@@ -19704,6 +19704,46 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/naver/blog/automation/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/gates.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "naver_blog",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/rules.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_blog_automation_gates.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_blog_automation_rules.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
