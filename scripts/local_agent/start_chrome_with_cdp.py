@@ -89,7 +89,7 @@ def main() -> None:
     # 로컬 CLI 도구 — cmd는 이 스크립트가 조립하고, 유일한 외부입력(args.url)도
     # 실행한 사용자 본인이 커맨드라인으로 직접 넘긴 값이라 권한 경계를 넘는
     # 주입 경로가 아님(scripts/** 는 S 카테고리 자체가 이미 완화돼 있어 noqa 불필요).
-    subprocess.Popen(cmd, shell=True)
+    subprocess.Popen(cmd, shell=True)  # nosec B602 - 로컬 CLI: 실행한 사용자 본인이 넘긴 인자만 사용(권한 경계 없음)
 
     print(f"[CDP] Chrome 기동 대기 중 ({args.wait}초)...")
     for i in range(args.wait * 2):

@@ -122,14 +122,14 @@ def search_blog_posts(
         where_sql = (" WHERE " + " AND ".join(where)) if where else ""
 
         total_row = conn.execute(
-            f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}{where_sql}",
+            f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}{where_sql}",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             tuple(params),
         ).fetchone()
         total = int(total_row[0]) if total_row else 0
 
         cols_csv = ", ".join(_BLOG_SELECT_COLS)
         rows = conn.execute(
-            f"SELECT {cols_csv} FROM {db_mod.TABLE_BLOG}{where_sql} "
+            f"SELECT {cols_csv} FROM {db_mod.TABLE_BLOG}{where_sql} "  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             f"ORDER BY CASE WHEN post_date IS NULL OR post_date = '' THEN 1 ELSE 0 END, "
             f"post_date DESC, collected_at DESC "
             f"LIMIT ? OFFSET ?",
@@ -196,7 +196,7 @@ def search_shopping_items(
         where_sql = (" WHERE " + " AND ".join(where)) if where else ""
 
         total_row = conn.execute(
-            f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}{where_sql}",
+            f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}{where_sql}",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             tuple(params),
         ).fetchone()
         total = int(total_row[0]) if total_row else 0
@@ -210,7 +210,7 @@ def search_shopping_items(
 
         cols_csv = ", ".join(_SHOP_SELECT_COLS)
         rows = conn.execute(
-            f"SELECT {cols_csv} FROM {db_mod.TABLE_SHOP}{where_sql} ORDER BY {order} LIMIT ? OFFSET ?",
+            f"SELECT {cols_csv} FROM {db_mod.TABLE_SHOP}{where_sql} ORDER BY {order} LIMIT ? OFFSET ?",  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
             tuple(params) + (lim, off),  # noqa: RUF005
         ).fetchall()
         items = [dict(r) for r in rows]
@@ -263,9 +263,17 @@ class SearchStatus:
         }
 
 
+def _check_table(table: str) -> str:
+    """f-string SQL 에 들어가는 테이블명은 허용 목록(블로그/쇼핑 테이블) 값만 통과시킨다."""
+    if table not in (db_mod.TABLE_BLOG, db_mod.TABLE_SHOP):
+        raise ValueError(f"unknown table: {table!r}")
+    return table
+
+
 def _top_queries(conn: sqlite3.Connection, table: str, n: int = 5) -> list:
+    table = _check_table(table)
     rows = conn.execute(
-        f"SELECT query, MAX(collected_at) AS last_collected_at "
+        f"SELECT query, MAX(collected_at) AS last_collected_at "  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
         f"FROM {table} WHERE query IS NOT NULL AND query != '' "
         f"GROUP BY query ORDER BY last_collected_at DESC LIMIT ?",
         (int(n),),
@@ -274,7 +282,8 @@ def _top_queries(conn: sqlite3.Connection, table: str, n: int = 5) -> list:
 
 
 def _max_collected_at(conn: sqlite3.Connection, table: str) -> str | None:
-    row = conn.execute(f"SELECT MAX(collected_at) FROM {table}").fetchone()
+    table = _check_table(table)
+    row = conn.execute(f"SELECT MAX(collected_at) FROM {table}").fetchone()  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
     v = row[0] if row else None
     return v if isinstance(v, str) and v else None
 
@@ -335,8 +344,8 @@ def get_search_status(
         else:
             try:
                 row_counts = {
-                    db_mod.TABLE_BLOG: int(conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}").fetchone()[0]),
-                    db_mod.TABLE_SHOP: int(conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}").fetchone()[0]),
+                    db_mod.TABLE_BLOG: int(conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}").fetchone()[0]),  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
+                    db_mod.TABLE_SHOP: int(conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}").fetchone()[0]),  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
                 }
                 latest["blog"] = _max_collected_at(conn, db_mod.TABLE_BLOG)
                 latest["shopping"] = _max_collected_at(conn, db_mod.TABLE_SHOP)
