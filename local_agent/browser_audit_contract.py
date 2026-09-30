@@ -24,15 +24,16 @@ Lifecycle event types (browser.*):
 - task.failed                 (FAIL — execution error)
 - result.callback_built       (PASS — safe callback emitted to bridge)
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -41,41 +42,42 @@ logger = logging.getLogger(__name__)
 # Event types
 # ---------------------------------------------------------------------------
 
+
 class BrowserAuditEventType(str, Enum):
-    TASK_RECEIVED          = "browser.task.received"
+    TASK_RECEIVED = "browser.task.received"
     TASK_VALIDATION_FAILED = "browser.task.validation_failed"
-    APPROVAL_REQUESTED     = "browser.approval.requested"
-    APPROVAL_APPROVED      = "browser.approval.approved"
-    APPROVAL_REJECTED      = "browser.approval.rejected"
-    APPROVAL_EXPIRED       = "browser.approval.expired"
-    APPROVAL_USED          = "browser.approval.used"
-    TASK_BLOCKED           = "browser.task.blocked"
-    TASK_EXECUTED          = "browser.task.executed"
-    TASK_FAILED            = "browser.task.failed"
-    RESULT_CALLBACK_BUILT  = "browser.result.callback_built"
+    APPROVAL_REQUESTED = "browser.approval.requested"
+    APPROVAL_APPROVED = "browser.approval.approved"
+    APPROVAL_REJECTED = "browser.approval.rejected"
+    APPROVAL_EXPIRED = "browser.approval.expired"
+    APPROVAL_USED = "browser.approval.used"
+    TASK_BLOCKED = "browser.task.blocked"
+    TASK_EXECUTED = "browser.task.executed"
+    TASK_FAILED = "browser.task.failed"
+    RESULT_CALLBACK_BUILT = "browser.result.callback_built"
 
 
 class BrowserAuditStatus(str, Enum):
-    PASS  = "PASS"
-    WARN  = "WARN"
-    FAIL  = "FAIL"
-    SKIP  = "SKIP"
+    PASS = "PASS"  # noqa: S105 - 판정 결과 라벨(비밀번호 아님)
+    WARN = "WARN"
+    FAIL = "FAIL"
+    SKIP = "SKIP"
     ERROR = "ERROR"
 
 
 # Status mapping per instruction (BROWSER-AUDIT-1, section 5)
-_EVENT_TYPE_STATUS: Dict[BrowserAuditEventType, BrowserAuditStatus] = {
-    BrowserAuditEventType.TASK_RECEIVED:          BrowserAuditStatus.PASS,
-    BrowserAuditEventType.APPROVAL_REQUESTED:     BrowserAuditStatus.PASS,
-    BrowserAuditEventType.APPROVAL_APPROVED:      BrowserAuditStatus.PASS,
-    BrowserAuditEventType.APPROVAL_USED:          BrowserAuditStatus.PASS,
-    BrowserAuditEventType.TASK_EXECUTED:          BrowserAuditStatus.PASS,
-    BrowserAuditEventType.RESULT_CALLBACK_BUILT:  BrowserAuditStatus.PASS,
+_EVENT_TYPE_STATUS: dict[BrowserAuditEventType, BrowserAuditStatus] = {
+    BrowserAuditEventType.TASK_RECEIVED: BrowserAuditStatus.PASS,
+    BrowserAuditEventType.APPROVAL_REQUESTED: BrowserAuditStatus.PASS,
+    BrowserAuditEventType.APPROVAL_APPROVED: BrowserAuditStatus.PASS,
+    BrowserAuditEventType.APPROVAL_USED: BrowserAuditStatus.PASS,
+    BrowserAuditEventType.TASK_EXECUTED: BrowserAuditStatus.PASS,
+    BrowserAuditEventType.RESULT_CALLBACK_BUILT: BrowserAuditStatus.PASS,
     BrowserAuditEventType.TASK_VALIDATION_FAILED: BrowserAuditStatus.WARN,
-    BrowserAuditEventType.TASK_BLOCKED:           BrowserAuditStatus.WARN,
-    BrowserAuditEventType.APPROVAL_EXPIRED:       BrowserAuditStatus.WARN,
-    BrowserAuditEventType.APPROVAL_REJECTED:      BrowserAuditStatus.SKIP,
-    BrowserAuditEventType.TASK_FAILED:            BrowserAuditStatus.FAIL,
+    BrowserAuditEventType.TASK_BLOCKED: BrowserAuditStatus.WARN,
+    BrowserAuditEventType.APPROVAL_EXPIRED: BrowserAuditStatus.WARN,
+    BrowserAuditEventType.APPROVAL_REJECTED: BrowserAuditStatus.SKIP,
+    BrowserAuditEventType.TASK_FAILED: BrowserAuditStatus.FAIL,
 }
 
 
@@ -88,74 +90,111 @@ def status_for_event(event_type: BrowserAuditEventType) -> BrowserAuditStatus:
 # ---------------------------------------------------------------------------
 
 # Fields that MUST never appear in audit metadata, payload_hash input, or message
-FORBIDDEN_AUDIT_FIELDS: frozenset[str] = frozenset({
-    # Token material
-    "approval_token", "final_approval_token", "token_hash", "device_token",
-    "raw_token", "secret",
-    # User input / credentials
-    "typed_text", "password", "otp", "credential",
-    # HTTP / browser state
-    "cookie", "cookies", "session", "session_id", "authorization",
-    "auth", "headers", "request_headers", "browser_storage",
-    "localstorage", "sessionstorage",
-    # Visual / DOM
-    "raw_screenshot", "screenshot_data", "screenshot_b64", "base64",
-    "full_dom", "raw_dom", "html",
-    # Internal exception detail
-    "stack_trace", "stacktrace", "traceback", "raw_exception",
-})
+FORBIDDEN_AUDIT_FIELDS: frozenset[str] = frozenset(
+    {
+        # Token material
+        "approval_token",
+        "final_approval_token",
+        "token_hash",
+        "device_token",
+        "raw_token",
+        "secret",
+        # User input / credentials
+        "typed_text",
+        "password",
+        "otp",
+        "credential",
+        # HTTP / browser state
+        "cookie",
+        "cookies",
+        "session",
+        "session_id",
+        "authorization",
+        "auth",
+        "headers",
+        "request_headers",
+        "browser_storage",
+        "localstorage",
+        "sessionstorage",
+        # Visual / DOM
+        "raw_screenshot",
+        "screenshot_data",
+        "screenshot_b64",
+        "base64",
+        "full_dom",
+        "raw_dom",
+        "html",
+        # Internal exception detail
+        "stack_trace",
+        "stacktrace",
+        "traceback",
+        "raw_exception",
+    }
+)
 
 
 # Allowed metadata fields per BROWSER-AUDIT-1 §2
-_ALLOWED_METADATA_FIELDS: frozenset[str] = frozenset({
-    "task_id", "action_type", "selector", "selector_hash",
-    "risk_level", "final_approval_required",
-    "executed", "result",
-    "target_url_domain",
-    "text_length", "text_preview",       # text_preview MUST be "[REDACTED]"
-    "screenshot_taken", "screenshot_ref",
-    "approval_id", "approval_status",
-    "store_type", "bridge_status",
-})
+_ALLOWED_METADATA_FIELDS: frozenset[str] = frozenset(
+    {
+        "task_id",
+        "action_type",
+        "selector",
+        "selector_hash",
+        "risk_level",
+        "final_approval_required",
+        "executed",
+        "result",
+        "target_url_domain",
+        "text_length",
+        "text_preview",  # text_preview MUST be "[REDACTED]"
+        "screenshot_taken",
+        "screenshot_ref",
+        "approval_id",
+        "approval_status",
+        "store_type",
+        "bridge_status",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
 # Metadata
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BrowserAuditMetadata:
     """Safe metadata payload — keys constrained to _ALLOWED_METADATA_FIELDS."""
-    task_id: Optional[str] = None
-    action_type: Optional[str] = None
-    selector: Optional[str] = None
-    selector_hash: Optional[str] = None
-    risk_level: Optional[str] = None
-    final_approval_required: Optional[bool] = None
-    executed: Optional[bool] = None
-    result: Optional[str] = None
-    target_url_domain: Optional[str] = None
-    text_length: Optional[int] = None
-    text_preview: str = "[REDACTED]"
-    screenshot_taken: Optional[bool] = None
-    screenshot_ref: Optional[str] = None
-    approval_id: Optional[str] = None
-    approval_status: Optional[str] = None
-    store_type: Optional[str] = None
-    bridge_status: Optional[str] = None
 
-    def to_safe_dict(self) -> Dict[str, Any]:
+    task_id: str | None = None
+    action_type: str | None = None
+    selector: str | None = None
+    selector_hash: str | None = None
+    risk_level: str | None = None
+    final_approval_required: bool | None = None
+    executed: bool | None = None
+    result: str | None = None
+    target_url_domain: str | None = None
+    text_length: int | None = None
+    text_preview: str = "[REDACTED]"
+    screenshot_taken: bool | None = None
+    screenshot_ref: str | None = None
+    approval_id: str | None = None
+    approval_status: str | None = None
+    store_type: str | None = None
+    bridge_status: str | None = None
+
+    def to_safe_dict(self) -> dict[str, Any]:
         """Return dict with only allowed, non-None fields. text_preview always REDACTED."""
         raw = asdict(self)
-        out = {k: v for k, v in raw.items()
-               if k in _ALLOWED_METADATA_FIELDS and v is not None}
+        out = {k: v for k, v in raw.items() if k in _ALLOWED_METADATA_FIELDS and v is not None}
         # text_preview hard-fixed
         if "text_preview" in out:
             out["text_preview"] = "[REDACTED]"
         return out
 
 
-def sanitize_browser_audit_metadata(raw: Dict[str, Any]) -> Dict[str, Any]:
+def sanitize_browser_audit_metadata(raw: dict[str, Any]) -> dict[str, Any]:
     """Strip forbidden keys (case-insensitive) and unknown keys.
 
     Returns only the intersection of (input keys) ∩ _ALLOWED_METADATA_FIELDS,
@@ -165,7 +204,7 @@ def sanitize_browser_audit_metadata(raw: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(raw, dict):
         return {}
     forbidden_lower = {f.lower() for f in FORBIDDEN_AUDIT_FIELDS}
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
     for k, v in raw.items():
         kl = k.lower()
         if kl in forbidden_lower:
@@ -184,6 +223,7 @@ def sanitize_browser_audit_metadata(raw: Dict[str, Any]) -> Dict[str, Any]:
 # Hashing
 # ---------------------------------------------------------------------------
 
+
 def hash_safe_payload(payload: Any) -> str:
     """SHA256 over canonical JSON of a SANITIZED payload.
 
@@ -192,15 +232,14 @@ def hash_safe_payload(payload: Any) -> str:
     """
     if isinstance(payload, dict):
         forbidden_lower = {f.lower() for f in FORBIDDEN_AUDIT_FIELDS}
-        clean = {k: v for k, v in payload.items()
-                 if k.lower() not in forbidden_lower}
+        clean = {k: v for k, v in payload.items() if k.lower() not in forbidden_lower}
     else:
         clean = payload
     blob = json.dumps(clean, sort_keys=True, ensure_ascii=False, default=str)
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
-def hash_event(event_dict: Dict[str, Any], previous_event_hash: Optional[str] = None) -> str:
+def hash_event(event_dict: dict[str, Any], previous_event_hash: str | None = None) -> str:
     """SHA256 chaining hash for audit row integrity."""
     canonical = json.dumps(event_dict, sort_keys=True, ensure_ascii=False, default=str)
     chained = (previous_event_hash or "") + "|" + canonical
@@ -212,15 +251,24 @@ def hash_event(event_dict: Dict[str, Any], previous_event_hash: Optional[str] = 
 # ---------------------------------------------------------------------------
 
 # Required columns that any LOG-2B-compatible writer must consume
-REQUIRED_AUDIT_COLUMNS: frozenset[str] = frozenset({
-    "event_type", "event_at",
-    "actor_user_id", "actor_role", "organization_id",
-    "target_type", "target_id", "request_id",
-    "status", "error_code", "error_message",
-    "elapsed_ms",
-    "payload_hash",
-    "metadata_json",
-})
+REQUIRED_AUDIT_COLUMNS: frozenset[str] = frozenset(
+    {
+        "event_type",
+        "event_at",
+        "actor_user_id",
+        "actor_role",
+        "organization_id",
+        "target_type",
+        "target_id",
+        "request_id",
+        "status",
+        "error_code",
+        "error_message",
+        "elapsed_ms",
+        "payload_hash",
+        "metadata_json",
+    }
+)
 
 
 @dataclass
@@ -231,30 +279,31 @@ class BrowserAuditEvent:
     factories. Direct construction with unsafe data is the caller's
     responsibility — prefer the factories.
     """
+
     event_type: str
     event_at: str = ""
     status: str = BrowserAuditStatus.PASS.value
-    actor_user_id: Optional[str] = None
-    actor_role: Optional[str] = None
-    organization_id: Optional[str] = None
+    actor_user_id: str | None = None
+    actor_role: str | None = None
+    organization_id: str | None = None
     target_type: str = "browser_task"
-    target_id: Optional[str] = None
-    request_id: Optional[str] = None
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
-    elapsed_ms: Optional[int] = None
-    payload_hash: Optional[str] = None
-    prompt_hash: Optional[str] = None      # always None for browser
-    response_hash: Optional[str] = None    # always None for browser
-    event_hash: Optional[str] = None
-    previous_event_hash: Optional[str] = None
-    metadata_json: Dict[str, Any] = field(default_factory=dict)
+    target_id: str | None = None
+    request_id: str | None = None
+    error_code: str | None = None
+    error_message: str | None = None
+    elapsed_ms: int | None = None
+    payload_hash: str | None = None
+    prompt_hash: str | None = None  # always None for browser
+    response_hash: str | None = None  # always None for browser
+    event_hash: str | None = None
+    previous_event_hash: str | None = None
+    metadata_json: dict[str, Any] = field(default_factory=dict)
     # Forward-compat columns (schema headroom for LOG-2B 22-column target)
     log_version: str = "browser-audit-1"
     source: str = "local_agent.browser"
     environment: str = "local"
 
-    def to_audit_row(self) -> Dict[str, Any]:
+    def to_audit_row(self) -> dict[str, Any]:
         """Convert to dict suitable for app_audit_log INSERT or JSONL append.
 
         Defensive: strips any forbidden top-level keys that may have leaked in.
@@ -272,8 +321,9 @@ class BrowserAuditEvent:
 # Factories
 # ---------------------------------------------------------------------------
 
+
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def build_browser_task_audit_event(
@@ -288,40 +338,42 @@ def build_browser_task_audit_event(
     result: str = "",
     target_url_domain: str = "",
     text_length: int = 0,
-    error_code: Optional[str] = None,
-    error_message: Optional[str] = None,
-    elapsed_ms: Optional[int] = None,
-    actor_user_id: Optional[str] = None,
-    actor_role: Optional[str] = None,
-    organization_id: Optional[str] = None,
-    request_id: Optional[str] = None,
-    approval_id: Optional[str] = None,
-    approval_status: Optional[str] = None,
-    store_type: Optional[str] = None,
-    bridge_status: Optional[str] = None,
+    error_code: str | None = None,
+    error_message: str | None = None,
+    elapsed_ms: int | None = None,
+    actor_user_id: str | None = None,
+    actor_role: str | None = None,
+    organization_id: str | None = None,
+    request_id: str | None = None,
+    approval_id: str | None = None,
+    approval_status: str | None = None,
+    store_type: str | None = None,
+    bridge_status: str | None = None,
     screenshot_taken: bool = False,
-    screenshot_ref: Optional[str] = None,
-    previous_event_hash: Optional[str] = None,
+    screenshot_ref: str | None = None,
+    previous_event_hash: str | None = None,
 ) -> BrowserAuditEvent:
     """Factory for browser task lifecycle events."""
-    metadata = sanitize_browser_audit_metadata({
-        "task_id": task_id,
-        "action_type": action_type,
-        "selector": selector,
-        "risk_level": risk_level,
-        "final_approval_required": final_approval_required,
-        "executed": executed,
-        "result": result,
-        "target_url_domain": target_url_domain,
-        "text_length": text_length,
-        "text_preview": "[REDACTED]",
-        "screenshot_taken": screenshot_taken,
-        "screenshot_ref": screenshot_ref,
-        "approval_id": approval_id,
-        "approval_status": approval_status,
-        "store_type": store_type,
-        "bridge_status": bridge_status,
-    })
+    metadata = sanitize_browser_audit_metadata(
+        {
+            "task_id": task_id,
+            "action_type": action_type,
+            "selector": selector,
+            "risk_level": risk_level,
+            "final_approval_required": final_approval_required,
+            "executed": executed,
+            "result": result,
+            "target_url_domain": target_url_domain,
+            "text_length": text_length,
+            "text_preview": "[REDACTED]",
+            "screenshot_taken": screenshot_taken,
+            "screenshot_ref": screenshot_ref,
+            "approval_id": approval_id,
+            "approval_status": approval_status,
+            "store_type": store_type,
+            "bridge_status": bridge_status,
+        }
+    )
     payload_hash = hash_safe_payload(metadata)
 
     event = BrowserAuditEvent(
@@ -357,13 +409,13 @@ def build_browser_approval_audit_event(
     selector: str,
     risk_level: str = "low",
     approval_status: str = "approved",
-    actor_user_id: Optional[str] = None,
-    actor_role: Optional[str] = None,
-    organization_id: Optional[str] = None,
-    request_id: Optional[str] = None,
-    error_code: Optional[str] = None,
-    error_message: Optional[str] = None,
-    previous_event_hash: Optional[str] = None,
+    actor_user_id: str | None = None,
+    actor_role: str | None = None,
+    organization_id: str | None = None,
+    request_id: str | None = None,
+    error_code: str | None = None,
+    error_message: str | None = None,
+    previous_event_hash: str | None = None,
 ) -> BrowserAuditEvent:
     """Factory for approval lifecycle events (requested/approved/rejected/expired/used)."""
     return build_browser_task_audit_event(
@@ -388,12 +440,12 @@ def build_browser_result_audit_event(
     *,
     task_result: Any,
     bridge_status: str = "callback_built",
-    request_id: Optional[str] = None,
-    actor_user_id: Optional[str] = None,
-    actor_role: Optional[str] = None,
-    organization_id: Optional[str] = None,
-    elapsed_ms: Optional[int] = None,
-    previous_event_hash: Optional[str] = None,
+    request_id: str | None = None,
+    actor_user_id: str | None = None,
+    actor_role: str | None = None,
+    organization_id: str | None = None,
+    elapsed_ms: int | None = None,
+    previous_event_hash: str | None = None,
 ) -> BrowserAuditEvent:
     """Factory for terminal result events from a BrowserTaskResult.
 
@@ -406,8 +458,8 @@ def build_browser_result_audit_event(
     status = getattr(task_result, "status", "")
     mapping = {
         "executed": BrowserAuditEventType.TASK_EXECUTED,
-        "blocked":  BrowserAuditEventType.TASK_BLOCKED,
-        "failed":   BrowserAuditEventType.TASK_FAILED,
+        "blocked": BrowserAuditEventType.TASK_BLOCKED,
+        "failed": BrowserAuditEventType.TASK_FAILED,
     }
     event_type = mapping.get(status, BrowserAuditEventType.RESULT_CALLBACK_BUILT)
     return build_browser_task_audit_event(
@@ -437,7 +489,8 @@ def build_browser_result_audit_event(
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _safe_error_summary(message: Optional[str]) -> Optional[str]:
+
+def _safe_error_summary(message: str | None) -> str | None:
     """Return a short, secret-stripped error summary or None.
 
     Caller-supplied error_message may contain sensitive data — we drop any
@@ -458,6 +511,7 @@ def _safe_error_summary(message: Optional[str]) -> Optional[str]:
 # Mock writer (for tests / local validation)
 # ---------------------------------------------------------------------------
 
+
 class MockAuditWriter:
     """Collects BrowserAuditEvent rows and validates safety invariants.
 
@@ -466,10 +520,10 @@ class MockAuditWriter:
     """
 
     def __init__(self) -> None:
-        self.records: List[Dict[str, Any]] = []
-        self._previous_event_hash: Optional[str] = None
+        self.records: list[dict[str, Any]] = []
+        self._previous_event_hash: str | None = None
 
-    def write(self, event: BrowserAuditEvent) -> Dict[str, Any]:
+    def write(self, event: BrowserAuditEvent) -> dict[str, Any]:
         row = event.to_audit_row()
         # Defensive secret check — abort if any forbidden key slipped through
         self._assert_no_secrets(row)
@@ -481,10 +535,10 @@ class MockAuditWriter:
         self._previous_event_hash = event.event_hash
         return row
 
-    def last(self) -> Optional[Dict[str, Any]]:
+    def last(self) -> dict[str, Any] | None:
         return self.records[-1] if self.records else None
 
-    def previous_event_hash(self) -> Optional[str]:
+    def previous_event_hash(self) -> str | None:
         return self._previous_event_hash
 
     def assert_no_secrets(self) -> None:
@@ -505,18 +559,18 @@ class MockAuditWriter:
 
 
 __all__ = [
-    "BrowserAuditEventType",
-    "BrowserAuditStatus",
-    "BrowserAuditMetadata",
-    "BrowserAuditEvent",
     "FORBIDDEN_AUDIT_FIELDS",
     "REQUIRED_AUDIT_COLUMNS",
-    "status_for_event",
-    "sanitize_browser_audit_metadata",
-    "hash_safe_payload",
-    "hash_event",
-    "build_browser_task_audit_event",
+    "BrowserAuditEvent",
+    "BrowserAuditEventType",
+    "BrowserAuditMetadata",
+    "BrowserAuditStatus",
+    "MockAuditWriter",
     "build_browser_approval_audit_event",
     "build_browser_result_audit_event",
-    "MockAuditWriter",
+    "build_browser_task_audit_event",
+    "hash_event",
+    "hash_safe_payload",
+    "sanitize_browser_audit_metadata",
+    "status_for_event",
 ]

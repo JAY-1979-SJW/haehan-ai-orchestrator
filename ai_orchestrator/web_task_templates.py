@@ -11,20 +11,32 @@ override_params 만 넘기면 기존 web-task /run 흐름을 재사용할 수 �
     노출하고 원문 값은 응답에 포함하지 않는다.
   - 템플릿 기반 실행은 기존 승인 게이트와 dry_run 흐름을 그대로 사용한다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
-
 
 # default_params 에 절대 들어가서는 안 되는 키 (저장 시점 차단)
-_FORBIDDEN_KEYS: frozenset[str] = frozenset({
-    "password", "passwd", "pwd",
-    "token", "access_token", "refresh_token", "session_token",
-    "cookie", "cookies", "session",
-    "client_secret", "secret", "api_secret", "api_key",
-    "auth", "authorization",
-})
+_FORBIDDEN_KEYS: frozenset[str] = frozenset(
+    {
+        "password",
+        "passwd",
+        "pwd",
+        "token",
+        "access_token",
+        "refresh_token",
+        "session_token",
+        "cookie",
+        "cookies",
+        "session",
+        "client_secret",
+        "secret",
+        "api_secret",
+        "api_key",
+        "auth",
+        "authorization",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -40,9 +52,7 @@ class WebTaskTemplate:
 def _assert_no_secrets(template_id: str, default_params: dict) -> None:
     for k in default_params.keys():
         if k.lower() in _FORBIDDEN_KEYS:
-            raise ValueError(
-                f"템플릿 {template_id}: default_params 에 민감 키({k}) 저장 금지"
-            )
+            raise ValueError(f"템플릿 {template_id}: default_params 에 민감 키({k}) 저장 금지")
 
 
 def _build_templates() -> dict[str, WebTaskTemplate]:
@@ -95,7 +105,7 @@ def _build_templates() -> dict[str, WebTaskTemplate]:
 _TEMPLATES: dict[str, WebTaskTemplate] = _build_templates()
 
 
-def get_template(template_id: str) -> Optional[WebTaskTemplate]:
+def get_template(template_id: str) -> WebTaskTemplate | None:
     """template_id 로 조회. 미등록 시 None."""
     if not template_id:
         return None

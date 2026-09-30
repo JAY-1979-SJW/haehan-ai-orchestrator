@@ -1,8 +1,9 @@
 """Security Program Permission Gate — 설치 권한 객체 생성 및 검증."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 # 허용 action
@@ -42,9 +43,7 @@ def create_install_permission(
     _validate_domain(domain)
     _validate_source_host(source_host)
 
-    expires_at = (
-        datetime.now(timezone.utc) + timedelta(seconds=duration_seconds)
-    ).isoformat()
+    expires_at = (datetime.now(UTC) + timedelta(seconds=duration_seconds)).isoformat()
 
     return {
         "permission_id": str(uuid.uuid4()),
@@ -86,7 +85,7 @@ def validate_permission(
         return _invalid(f"domain 불일치: {permission.get('domain')} != {domain}")
 
     if permission.get("source_host") != source_host:
-        return _invalid(f"source_host 불일치")
+        return _invalid("source_host 불일치")
 
     if _safe_filename(installer_name) != permission.get("installer_name"):
         return _invalid("installer_name 불일치")
@@ -99,7 +98,7 @@ def validate_permission(
     # 만료 확인
     try:
         expires_at = datetime.fromisoformat(permission["expires_at"])
-        if datetime.now(timezone.utc) > expires_at:
+        if datetime.now(UTC) > expires_at:
             return _invalid("권한 만료")
     except (KeyError, ValueError):
         return _invalid("만료 시각 파싱 오류")

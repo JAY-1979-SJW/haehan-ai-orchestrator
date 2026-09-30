@@ -6,6 +6,7 @@
   data/inspection/naver_mail_action_item_dashboard/
     action_dashboard.json / .md / summary.json / audit.json
 """
+
 from __future__ import annotations
 
 import json
@@ -16,8 +17,7 @@ from scripts.ops import audit_naver_mail_action_item_dashboard as audit
 
 
 def main():
-    src = Path("data/inspection/naver_mail_inbox_consolidated_report"
-               "/action_items.json")
+    src = Path("data/inspection/naver_mail_inbox_consolidated_report/action_items.json")
     out_dir = Path("data/inspection/naver_mail_action_item_dashboard")
     actions = aid.load_action_items(src)
     print(f"[input] {src}: {len(actions)}건 action_items")
@@ -36,18 +36,19 @@ def main():
     js = paths["dashboard"].read_text(encoding="utf-8")
     v = audit.judge_dashboard(dash, summary, md_text=md, json_text=js)
     (out_dir / "audit_result.json").write_text(
-        json.dumps({"verdict": v.code, "passed": v.passed,
-                    "reasons": v.reasons, "metrics": v.metrics},
-                   ensure_ascii=False, indent=2),
+        json.dumps(
+            {"verdict": v.code, "passed": v.passed, "reasons": v.reasons, "metrics": v.metrics},
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
     print(f"\n=== AUDIT ===\nverdict: {v.code}  passed: {v.passed}")
     if v.reasons:
         print(f"reasons: {v.reasons}")
-    print(f"\n=== SUMMARY ===")
+    print("\n=== SUMMARY ===")
     print(f"total: {summary.total_items}")
-    print(f"HIGH/MEDIUM/LOW: {summary.high_count}/{summary.medium_count}/"
-          f"{summary.low_count}")
+    print(f"HIGH/MEDIUM/LOW: {summary.high_count}/{summary.medium_count}/{summary.low_count}")
     print(f"unknown_review: {summary.unknown_review_count}")
     print(f"due_date_candidates: {summary.due_date_candidate_count}")
     print(f"risk_type_counts: {summary.risk_type_counts}")

@@ -16,6 +16,7 @@ FastAPI 로 최소 구현. 인메모리 큐 + 결과 저장소. 상용 서버 �
 
 큐/결과는 프로세스 메모리에만 저장된다. 서버 재시작 시 초기화됨.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,24 +24,21 @@ import logging
 import os
 import threading
 from collections import deque
-from typing import Optional
 
 try:
-    from fastapi import FastAPI, Header, HTTPException, Request
     import uvicorn
+    from fastapi import FastAPI, Header, HTTPException, Request
 except ImportError as e:  # pragma: no cover - dev env 필수 dep
-    raise SystemExit(
-        "fastapi / uvicorn 이 필요합니다. requirements.txt 를 설치하세요."
-    ) from e
+    raise SystemExit("fastapi / uvicorn 이 필요합니다. requirements.txt 를 설치하세요.") from e
 
 
 def build_app(expected_token: str) -> FastAPI:
     app = FastAPI(title="local-agent-mock-api")
-    pending: "deque[dict]" = deque()
+    pending: deque[dict] = deque()
     results: list[dict] = []
     lock = threading.Lock()
 
-    def _check_auth(authorization: Optional[str]) -> None:
+    def _check_auth(authorization: str | None) -> None:
         if not expected_token:
             return  # 토큰 미설정이면 anonymous 허용 (개발 편의)
         if not authorization or not authorization.startswith("Bearer "):
@@ -54,7 +52,7 @@ def build_app(expected_token: str) -> FastAPI:
         return {"ok": True, "pending": len(pending), "results": len(results)}
 
     @app.get("/tasks/poll")
-    def poll(authorization: Optional[str] = Header(default=None)):
+    def poll(authorization: str | None = Header(default=None)):
         _check_auth(authorization)
         with lock:
             if pending:
@@ -65,7 +63,7 @@ def build_app(expected_token: str) -> FastAPI:
     @app.post("/tasks/result")
     async def result(
         request: Request,
-        authorization: Optional[str] = Header(default=None),
+        authorization: str | None = Header(default=None),
     ):
         _check_auth(authorization)
         body = await request.json()
@@ -109,8 +107,7 @@ def main(argv=None) -> int:
     )
     args = parser.parse_args(argv)
 
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     app = build_app(args.token)
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
     return 0

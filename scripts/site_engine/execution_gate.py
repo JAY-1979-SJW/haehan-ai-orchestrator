@@ -13,11 +13,12 @@
 
 실제 실행, 브라우저 호출, DB write는 없다. 순수 판단 함수만 포함한다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from scripts.site_engine.types import (
     ExecutionLocation,
@@ -25,8 +26,8 @@ from scripts.site_engine.types import (
     SiteCapability,
 )
 
-
 # ── 추가 열거형 ──────────────────────────────────────────────────────
+
 
 class ExecutionDecision(str, Enum):
     ALLOWED = "ALLOWED"
@@ -61,6 +62,7 @@ class GateReason(str, Enum):
 
 # ── 입출력 데이터 클래스 ──────────────────────────────────────────────
 
+
 @dataclass
 class ExecutionGateInput:
     site_key: str
@@ -88,30 +90,66 @@ class ExecutionGateResult:
 
 # ── 민감 작업 분류 ────────────────────────────────────────────────────
 
-_IRREVERSIBLE_CAPABILITIES = frozenset({
-    SiteCapability.SUBMIT,
-    SiteCapability.UPLOAD,
-    SiteCapability.DELETE,
-    SiteCapability.PUBLISH,
-    SiteCapability.SEND,
-    SiteCapability.SIGN,
-})
+_IRREVERSIBLE_CAPABILITIES = frozenset(
+    {
+        SiteCapability.SUBMIT,
+        SiteCapability.UPLOAD,
+        SiteCapability.DELETE,
+        SiteCapability.PUBLISH,
+        SiteCapability.SEND,
+        SiteCapability.SIGN,
+    }
+)
 
-_IRREVERSIBLE_ACTION_KEYWORDS = frozenset({
-    "submit", "publish", "send", "upload", "delete", "sign",
-    "상신", "투찰", "발행", "전송", "삭제", "서명",
-})
+_IRREVERSIBLE_ACTION_KEYWORDS = frozenset(
+    {
+        "submit",
+        "publish",
+        "send",
+        "upload",
+        "delete",
+        "sign",
+        "상신",
+        "투찰",
+        "발행",
+        "전송",
+        "삭제",
+        "서명",
+    }
+)
 
-_CREDENTIAL_ACTION_KEYWORDS = frozenset({
-    "password", "passwd", "otp", "certificate", "private_key",
-    "session", "cookie", "credential", "auth_token",
-    "비밀번호", "인증서", "쿠키", "세션",
-})
+_CREDENTIAL_ACTION_KEYWORDS = frozenset(
+    {
+        "password",
+        "passwd",
+        "otp",
+        "certificate",
+        "private_key",
+        "session",
+        "cookie",
+        "credential",
+        "auth_token",
+        "비밀번호",
+        "인증서",
+        "쿠키",
+        "세션",
+    }
+)
 
-_CREDENTIAL_EXTRACT_KEYWORDS = frozenset({
-    "extract", "get", "read", "dump", "export", "fetch",
-    "추출", "가져오기", "읽기", "내보내기",
-})
+_CREDENTIAL_EXTRACT_KEYWORDS = frozenset(
+    {
+        "extract",
+        "get",
+        "read",
+        "dump",
+        "export",
+        "fetch",
+        "추출",
+        "가져오기",
+        "읽기",
+        "내보내기",
+    }
+)
 
 
 def classify_action_sensitivity(action: str, capability: SiteCapability) -> ActionSensitivity:
@@ -135,6 +173,7 @@ def classify_action_sensitivity(action: str, capability: SiteCapability) -> Acti
 
 
 # ── 핵심 판단 함수 ────────────────────────────────────────────────────
+
 
 def evaluate_execution_gate(
     gate_input: ExecutionGateInput,
@@ -263,7 +302,7 @@ def block_for_sensitive_credential_action(action: str) -> bool:
 
 def resolve_execution_location(
     profile=None,
-    capability: Optional[SiteCapability] = None,
+    capability: SiteCapability | None = None,
 ) -> ExecutionLocation:
     """SiteProfile과 capability 기반으로 적절한 실행 위치를 반환."""
     if profile is None:

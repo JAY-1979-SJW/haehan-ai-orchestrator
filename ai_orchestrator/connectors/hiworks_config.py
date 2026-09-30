@@ -7,12 +7,11 @@
 - Hiworks 공식 앱 등록(https://developers.hiworks.com 참고) 전 단계에서도
   코드가 import/검증만으로 깨지지 않도록 graceful fallback 을 제공한다.
 """
+
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Optional
-
 
 # 환경변수 키 (값은 .env / 운영 시크릿 매니저에서 주입).
 ENV_BASE_URL = "HIWORKS_BASE_URL"
@@ -50,6 +49,7 @@ class HiworksConfig:
 
     def redacted(self) -> dict:
         """로그/응답용 안전 표현 — 시크릿은 길이만 노출."""
+
         def _mask(v: str) -> str:
             if not v:
                 return ""
@@ -64,13 +64,13 @@ class HiworksConfig:
         }
 
 
-def _to_bool(v: Optional[str], default: bool) -> bool:
+def _to_bool(v: str | None, default: bool) -> bool:
     if v is None:
         return default
     return v.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def load_config(env: Optional[dict] = None) -> HiworksConfig:
+def load_config(env: dict | None = None) -> HiworksConfig:
     """환경변수에서 Hiworks 설정을 로드한다.
 
     누락된 키가 있어도 즉시 실패시키지 않는다 (dry_run 기본 True).
@@ -99,18 +99,16 @@ def require_live(cfg: HiworksConfig) -> None:
     if not cfg.office_token:
         missing.append(ENV_OFFICE_TOKEN)
     if missing:
-        raise HiworksConfigError(
-            "Hiworks live 호출에 필요한 환경변수 누락: " + ", ".join(missing)
-        )
+        raise HiworksConfigError("Hiworks live 호출에 필요한 환경변수 누락: " + ", ".join(missing))
 
 
 __all__ = [
+    "DEFAULT_BASE_URL",
     "ENV_BASE_URL",
     "ENV_CLIENT_ID",
     "ENV_CLIENT_SECRET",
-    "ENV_OFFICE_TOKEN",
     "ENV_DRY_RUN",
-    "DEFAULT_BASE_URL",
+    "ENV_OFFICE_TOKEN",
     "REQUIRED_KEYS_FOR_LIVE",
     "HiworksConfig",
     "HiworksConfigError",

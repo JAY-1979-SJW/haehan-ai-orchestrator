@@ -10,11 +10,12 @@
 이번 단계는 "골격" 이 목표. 실제 엔드포인트 매핑은 공식 앱 등록/문서 확인 뒤
 hiworks_collectors 에서 path 만 바꾸면 되도록 generic 한 ``request()`` 만 둔다.
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from . import hiworks_config
 
@@ -28,7 +29,7 @@ ResponseStatus = str  # "ok" | "dry_run" | "error" | "unconfigured"
 @dataclass
 class HiworksResponse:
     status: ResponseStatus
-    http_status: Optional[int] = None
+    http_status: int | None = None
     data: Any = None
     error_code: str = ""
     error_message: str = ""
@@ -55,8 +56,8 @@ class HiworksClient:
 
     def __init__(
         self,
-        config: Optional[hiworks_config.HiworksConfig] = None,
-        transport: Optional[Any] = None,
+        config: hiworks_config.HiworksConfig | None = None,
+        transport: Any | None = None,
     ):
         self._config = config or hiworks_config.load_config()
         self._transport = transport
@@ -92,9 +93,9 @@ class HiworksClient:
         method: str,
         path: str,
         *,
-        params: Optional[dict] = None,
-        json: Optional[dict] = None,
-        dry_run: Optional[bool] = None,
+        params: dict | None = None,
+        json: dict | None = None,
+        dry_run: bool | None = None,
     ) -> HiworksResponse:
         """공통 요청 래퍼.
 
@@ -124,7 +125,9 @@ class HiworksClient:
         if effective_dry_run:
             logger.info(
                 "[HIWORKS-DRY-RUN] method=%s path=%s param_keys=%s",
-                method_u, path, summary["param_keys"],
+                method_u,
+                path,
+                summary["param_keys"],
             )
             return HiworksResponse(
                 status="dry_run",
@@ -161,7 +164,7 @@ class HiworksClient:
                 params=params or {},
                 json=json,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # 예외 메시지에 요청 본문/시크릿이 섞일 가능성 — 타입만 노출.
             logger.exception("[HIWORKS-TRANSPORT-ERROR] type=%s", type(e).__name__)
             return HiworksResponse(

@@ -1,10 +1,10 @@
 """네이버 블로그 검색 collector — 비로그인 공개 API 전용."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
-from .naver_search_client import NaverSearchClient, SearchResult, SOURCE_BLOG
+from .naver_search_client import SOURCE_BLOG, NaverSearchClient, SearchResult
 from .naver_search_utils import normalize_post_date, strip_html
 
 
@@ -36,9 +36,9 @@ class BlogSearchResult:
     query: str
     items: list = field(default_factory=list)
     item_count: int = 0
-    raw: Optional[dict] = None
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
+    raw: dict | None = None
+    error_code: str | None = None
+    error_message: str | None = None
     source: str = SOURCE_BLOG
 
     def to_dict(self) -> dict:
@@ -69,13 +69,17 @@ def _from_search_result(query: str, sr: SearchResult) -> BlogSearchResult:
     if sr.status in {"dry_run", "ok"}:
         items = [_normalize_blog_item(it) if isinstance(it, dict) else {} for it in sr.items]
         return BlogSearchResult(
-            status=sr.status, query=query,
-            items=items, item_count=len(items),
+            status=sr.status,
+            query=query,
+            items=items,
+            item_count=len(items),
             raw=sr.raw,
         )
     return BlogSearchResult(
-        status=sr.status, query=query,
-        error_code=sr.error_code, error_message=sr.error_message,
+        status=sr.status,
+        query=query,
+        error_code=sr.error_code,
+        error_message=sr.error_message,
         raw=sr.raw,
     )
 
@@ -86,7 +90,7 @@ def collect_blog_search(
     display: int = 10,
     start: int = 1,
     sort: str = "sim",
-    client: Optional[NaverSearchClient] = None,
+    client: NaverSearchClient | None = None,
 ) -> BlogSearchResult:
     c = client if client is not None else NaverSearchClient()
     sr = c.search_blog(query, display=display, start=start, sort=sort)
