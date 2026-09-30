@@ -204,7 +204,7 @@ class TestStoreSanitize:
         assert "otp" not in result
 
     def test_sanitize_removes_all_forbidden_keys(self, store):
-        task = {k: "val" for k in _USER_FORBIDDEN_KEYS}
+        task = dict.fromkeys(_USER_FORBIDDEN_KEYS, "val")
         task["workflow_run_id"] = "x"
         result = store.sanitize_user_present_task_for_user(task)
         for key in _USER_FORBIDDEN_KEYS:

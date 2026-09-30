@@ -46,9 +46,8 @@ def load_user_map() -> list[dict]:
 
 def get_mapped_user(telegram_user_id: str) -> dict | None:
     for user in load_user_map():
-        if str(user.get("telegram_user_id", "")) == str(telegram_user_id):
-            if user.get("enabled", False):
-                return user
+        if str(user.get("telegram_user_id", "")) == str(telegram_user_id) and user.get("enabled", False):
+            return user
     return None
 
 

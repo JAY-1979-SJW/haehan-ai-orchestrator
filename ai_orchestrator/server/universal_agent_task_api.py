@@ -1,4 +1,5 @@
 """Universal Agent Task API — server task 생성/조회. 외부 URL은 항상 local agent handoff."""
+
 from __future__ import annotations
 
 import threading
@@ -6,22 +7,29 @@ import uuid
 from typing import Any
 
 from ai_orchestrator.server.execution_location_guard import (
-    LOCAL_AGENT_REQUIRED, build_local_agent_handoff,
-)
-from ai_orchestrator.server.universal_agent_models import (
-    UniversalAgentTask, build_task_from_input, validate_task_model,
+    LOCAL_AGENT_REQUIRED,
+    build_local_agent_handoff,
 )
 from ai_orchestrator.server.external_url_blocker import (
     block_external_fetch_from_server,
+)
+from ai_orchestrator.server.universal_agent_models import (
+    UniversalAgentTask,
+    build_task_from_input,
+    validate_task_model,
 )
 
 _LOCK = threading.Lock()
 _TASKS: dict[str, UniversalAgentTask] = {}
 
 _SAFE_FIELDS = (
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 )
 
 
@@ -55,7 +63,7 @@ def create_task(
             "task_id": task_id,
             "blocked_reason": v.get("blocked_reason", "VALIDATION_ERROR"),
             "reason": v["reason"],
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
 
     with _LOCK:
@@ -66,11 +74,13 @@ def create_task(
 
     if task.execution_location == LOCAL_AGENT_REQUIRED:
         # handoff payload 추가
-        handoff = build_local_agent_handoff({
-            "task_id": task_id,
-            "target_url": target_url,
-            "action": action,
-        })
+        handoff = build_local_agent_handoff(
+            {
+                "task_id": task_id,
+                "target_url": target_url,
+                "action": action,
+            }
+        )
         result["local_agent_handoff"] = handoff
         result["status"] = "WAITING_LOCAL_AGENT"
 
@@ -115,9 +125,9 @@ def list_pending_local_agent_tasks() -> list[dict[str, Any]]:
     """local agent가 처리해야 할 대기 중 task 목록."""
     with _LOCK:
         tasks = [
-            t.to_dict() for t in _TASKS.values()
-            if t.execution_location == LOCAL_AGENT_REQUIRED
-            and t.status == "WAITING_LOCAL_AGENT"
+            t.to_dict()
+            for t in _TASKS.values()
+            if t.execution_location == LOCAL_AGENT_REQUIRED and t.status == "WAITING_LOCAL_AGENT"
         ]
     return tasks
 

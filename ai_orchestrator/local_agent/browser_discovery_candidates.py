@@ -203,7 +203,7 @@ def validate_candidate_safety(candidate: dict[str, Any]) -> dict[str, Any]:
         "outer_html",
         "inner_html",
     }
-    for key in candidate.keys():
+    for key in candidate:
         kl = key.lower()
         for fk in forbidden_keys:
             if fk in kl:

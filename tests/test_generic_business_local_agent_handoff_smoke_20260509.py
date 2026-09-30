@@ -352,7 +352,7 @@ class TestHandoffSecurityPolicies:
             "access_token",
             "refresh_token",
         }
-        for key in payload.keys():
+        for key in payload:
             if key == "approval_token":
                 continue
             for forbidden in forbidden_keys:
@@ -444,6 +444,6 @@ class TestMockRunnerSecurityNone:
                 "otp",
                 "cert_password",
             }
-            for key in result_fields.keys():
+            for key in result_fields:
                 for forbidden in forbidden_keys:
                     assert forbidden not in key.lower(), f"{profile}: {key}에 {forbidden} 포함"

@@ -161,9 +161,8 @@ def _detect_auth_methods(text: str) -> list[str]:
     """페이지 텍스트에서 인증 방법을 감지한다."""
     detected: list[str] = []
     for pattern, tag in _AUTH_METHOD_PATTERNS:
-        if re.search(pattern, text, re.IGNORECASE):
-            if tag not in detected:
-                detected.append(tag)
+        if re.search(pattern, text, re.IGNORECASE) and tag not in detected:
+            detected.append(tag)
     return detected
 
 

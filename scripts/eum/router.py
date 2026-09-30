@@ -474,14 +474,13 @@ def _execute_approval_workflow(workflow: dict, args: list[str]) -> None:
     print(f"EUM approval execute: {key}")
     print("=" * 60)
 
-    with work_run(workflow, args):
-        with force_approved():
-            if key == "device_registration":
-                _cmd_registration(args[0], args[1:], submit=True)
-            elif key == "device_deregistration":
-                _cmd_deregistration(args[0], args[1:], submit=True)
-            else:
-                raise SystemExit(f"No approval executor is registered for {key}.")
+    with work_run(workflow, args), force_approved():
+        if key == "device_registration":
+            _cmd_registration(args[0], args[1:], submit=True)
+        elif key == "device_deregistration":
+            _cmd_deregistration(args[0], args[1:], submit=True)
+        else:
+            raise SystemExit(f"No approval executor is registered for {key}.")
 
 
 def _prepare_approval_workflow(workflow: dict, args: list[str]) -> None:

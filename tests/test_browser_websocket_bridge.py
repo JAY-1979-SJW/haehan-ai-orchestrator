@@ -9,6 +9,7 @@ Verifies BrowserLocalWebSocketBridge contract:
 - Bridge dispatches via BrowserTaskHandler (not BrowserController directly)
 - Persistent + DB store integration
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -34,16 +35,18 @@ from local_agent.browser_websocket_bridge import (
 from local_agent.browser_websocket_schema import RESULT_DATA_FORBIDDEN_KEYS
 from local_agent.server_action_adapter import ServerActionAdapter
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_adapter_returning(executed: bool = True,
-                             element_found: bool = True,
-                             action: str = "browser.execute_click",
-                             selector: str = "#btn",
-                             result_code: str = "success") -> MagicMock:
+
+def _make_adapter_returning(
+    executed: bool = True,
+    element_found: bool = True,
+    action: str = "browser.execute_click",
+    selector: str = "#btn",
+    result_code: str = "success",
+) -> MagicMock:
     """Build a mock ServerActionAdapter whose execute_action returns ExecutionResult."""
     adapter = MagicMock(spec=ServerActionAdapter)
     exec_result = ExecutionResult(
@@ -58,7 +61,10 @@ def _make_adapter_returning(executed: bool = True,
         target_url_domain="example.com",
         text_length=0,
     )
-    async def _execute(_): return exec_result
+
+    async def _execute(_):
+        return exec_result
+
     adapter.execute_action = _execute
     return adapter
 
@@ -67,17 +73,21 @@ def _make_bridge(store=None, adapter=None, collector=None):
     store = store or BrowserApprovalStore()
     adapter = adapter or _make_adapter_returning()
     verifier = BrowserApprovalVerifier(store)
-    handler = BrowserTaskHandler(server_action_adapter=adapter,
-                                  approval_verifier=verifier)
+    handler = BrowserTaskHandler(server_action_adapter=adapter, approval_verifier=verifier)
     collector = collector or MockResultCallbackCollector()
-    bridge = BrowserLocalWebSocketBridge(task_handler=handler,
-                                          callback=collector.append)
+    bridge = BrowserLocalWebSocketBridge(task_handler=handler, callback=collector.append)
     return bridge, store, collector
 
 
-def _create_appr(store, *, approval_id="appr-1", token="tok-1",
-                  action_type="browser.execute_click", selector="#btn",
-                  expires_in_seconds=None):
+def _create_appr(
+    store,
+    *,
+    approval_id="appr-1",
+    token="tok-1",
+    action_type="browser.execute_click",
+    selector="#btn",
+    expires_in_seconds=None,
+):
     return store.create_approval(
         approval_id=approval_id,
         action_type=action_type,
@@ -87,9 +97,15 @@ def _create_appr(store, *, approval_id="appr-1", token="tok-1",
     )
 
 
-def _valid_msg(*, task_id="t1", approval_id="appr-1", token="tok-1",
-                action_type="browser.execute_click", selector="#btn",
-                value=None) -> dict:
+def _valid_msg(
+    *,
+    task_id="t1",
+    approval_id="appr-1",
+    token="tok-1",
+    action_type="browser.execute_click",
+    selector="#btn",
+    value=None,
+) -> dict:
     msg = {
         "task_id": task_id,
         "task_type": "browser_action",
@@ -107,6 +123,7 @@ def _valid_msg(*, task_id="t1", approval_id="appr-1", token="tok-1",
 # 1-2: Valid message executes
 # ---------------------------------------------------------------------------
 
+
 class TestValidExecution(unittest.TestCase):
     def test_valid_execute_click_message_executes_and_callbacks_safe_result(self):
         bridge, store, coll = _make_bridge()
@@ -118,12 +135,10 @@ class TestValidExecution(unittest.TestCase):
         coll.assert_no_secrets()
 
     def test_valid_execute_type_message_executes_and_callbacks_safe_result(self):
-        adapter = _make_adapter_returning(action="browser.execute_type",
-                                           selector="#input")
+        adapter = _make_adapter_returning(action="browser.execute_type", selector="#input")
         bridge, store, coll = _make_bridge(adapter=adapter)
         _create_appr(store, action_type="browser.execute_type", selector="#input")
-        msg = _valid_msg(action_type="browser.execute_type",
-                          selector="#input", value="hello")
+        msg = _valid_msg(action_type="browser.execute_type", selector="#input", value="hello")
         result = bridge.handle_inbound_message_sync(msg)
         self.assertEqual(result["status"], "executed")
         # Raw value never propagates
@@ -135,17 +150,16 @@ class TestValidExecution(unittest.TestCase):
 # 3-5: Schema validation failures
 # ---------------------------------------------------------------------------
 
+
 class TestSchemaInvalid(unittest.TestCase):
     def test_invalid_schema_message_rejected_before_handler(self):
         # Use a real handler-but-with-tracking adapter to detect dispatch
         adapter = MagicMock(spec=ServerActionAdapter)
         adapter.execute_action = MagicMock()
         verifier = BrowserApprovalVerifier(BrowserApprovalStore())
-        handler = BrowserTaskHandler(server_action_adapter=adapter,
-                                      approval_verifier=verifier)
+        handler = BrowserTaskHandler(server_action_adapter=adapter, approval_verifier=verifier)
         collector = MockResultCallbackCollector()
-        bridge = BrowserLocalWebSocketBridge(task_handler=handler,
-                                              callback=collector.append)
+        bridge = BrowserLocalWebSocketBridge(task_handler=handler, callback=collector.append)
 
         # Missing task_id
         result = bridge.handle_inbound_message_sync({"task_type": "browser_action"})
@@ -175,6 +189,7 @@ class TestSchemaInvalid(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # 6-10: Approval verification failures
 # ---------------------------------------------------------------------------
+
 
 class TestApprovalRejection(unittest.TestCase):
     def test_missing_approval_rejected(self):
@@ -231,14 +246,14 @@ class TestApprovalRejection(unittest.TestCase):
 # is in handler/adapter; the bridge just propagates the result.status).
 # ---------------------------------------------------------------------------
 
+
 class TestRiskyAction(unittest.TestCase):
     def test_risky_delete_message_blocked_when_handler_blocks(self):
         """If handler returns a non-executed result for a risky action,
         the bridge propagates 'blocked' status without leaking detail."""
-        adapter = _make_adapter_returning(executed=False,
-                                           action="browser.execute_click",
-                                           selector="#delete-btn",
-                                           result_code="risky_element")
+        adapter = _make_adapter_returning(
+            executed=False, action="browser.execute_click", selector="#delete-btn", result_code="risky_element"
+        )
         bridge, store, coll = _make_bridge(adapter=adapter)
         _create_appr(store, selector="#delete-btn")
         msg = _valid_msg(selector="#delete-btn")
@@ -251,6 +266,7 @@ class TestRiskyAction(unittest.TestCase):
 # 12-18: Callback content / security
 # ---------------------------------------------------------------------------
 
+
 class TestCallbackContent(unittest.TestCase):
     def setUp(self):
         self.bridge, self.store, self.coll = _make_bridge()
@@ -262,10 +278,10 @@ class TestCallbackContent(unittest.TestCase):
         self.assertEqual(self.coll.last_message()["task_id"], "t1")
 
     def test_result_callback_contains_only_safe_fields(self):
-        for k in self.result.keys():
-            self.assertNotIn(k.lower(),
-                             {fk.lower() for fk in RESULT_DATA_FORBIDDEN_KEYS},
-                             f"forbidden key in callback: {k}")
+        for k in self.result:
+            self.assertNotIn(
+                k.lower(), {fk.lower() for fk in RESULT_DATA_FORBIDDEN_KEYS}, f"forbidden key in callback: {k}"
+            )
 
     def test_result_callback_does_not_include_approval_token(self):
         self.assertNotIn("approval_token", self.result)
@@ -278,20 +294,17 @@ class TestCallbackContent(unittest.TestCase):
         self.assertNotIn("token_hash", self.result)
 
     def test_result_callback_does_not_include_raw_typed_text(self):
-        adapter = _make_adapter_returning(action="browser.execute_type",
-                                           selector="#in")
+        adapter = _make_adapter_returning(action="browser.execute_type", selector="#in")
         bridge, store, coll = _make_bridge(adapter=adapter)
         _create_appr(store, action_type="browser.execute_type", selector="#in")
-        msg = _valid_msg(action_type="browser.execute_type",
-                          selector="#in", value="my-secret-input")
+        msg = _valid_msg(action_type="browser.execute_type", selector="#in", value="my-secret-input")
         result = bridge.handle_inbound_message_sync(msg)
         self.assertNotIn("my-secret-input", str(result))
         self.assertNotIn("typed_text", result)
         coll.assert_no_secrets()
 
     def test_result_callback_does_not_include_cookie_session_storage_base64(self):
-        for forbidden in ["cookie", "session", "localStorage",
-                           "sessionStorage", "base64", "Authorization"]:
+        for forbidden in ["cookie", "session", "localStorage", "sessionStorage", "base64", "Authorization"]:
             self.assertNotIn(forbidden, self.result)
 
 
@@ -299,11 +312,14 @@ class TestCallbackContent(unittest.TestCase):
 # 19-21: Bridge contract guarantees
 # ---------------------------------------------------------------------------
 
+
 class TestBridgeContract(unittest.TestCase):
     @staticmethod
     def _strip_strings_and_comments(src: str) -> str:
         """Drop docstrings, string literals, and comments — leaving only executable code."""
-        import io, tokenize
+        import io
+        import tokenize
+
         out = []
         for tok in tokenize.generate_tokens(io.StringIO(src).readline):
             tt, ts, *_ = tok
@@ -315,44 +331,46 @@ class TestBridgeContract(unittest.TestCase):
     def test_bridge_never_connects_to_real_websocket(self):
         """Executable code (not docstrings) must not call websockets/aiohttp ws clients."""
         from local_agent import browser_websocket_bridge as bwb
+
         code = self._strip_strings_and_comments(inspect.getsource(bwb))
-        for forbidden in ["websockets.connect", "aiohttp.ClientSession",
-                           "websockets.client"]:
-            self.assertNotIn(forbidden, code,
-                             f"Bridge must not use real WebSocket: {forbidden}")
+        for forbidden in ["websockets.connect", "aiohttp.ClientSession", "websockets.client"]:
+            self.assertNotIn(forbidden, code, f"Bridge must not use real WebSocket: {forbidden}")
 
     def test_bridge_uses_schema_before_handler(self):
         """Schema validation MUST appear before handler dispatch in source order."""
         from local_agent import browser_websocket_bridge as bwb
+
         src = inspect.getsource(bwb)
         idx_schema = src.find("BrowserWebSocketTaskPayloadSchema.from_dict(")
         idx_handler = src.find("self._handler.handle_task(")
         self.assertGreater(idx_schema, 0)
         self.assertGreater(idx_handler, 0)
-        self.assertLess(idx_schema, idx_handler,
-                        "Schema validation must appear BEFORE handler dispatch")
+        self.assertLess(idx_schema, idx_handler, "Schema validation must appear BEFORE handler dispatch")
 
     def test_bridge_uses_task_handler_not_controller_directly(self):
         """Executable code must not reference BrowserController."""
         from local_agent import browser_websocket_bridge as bwb
+
         code = self._strip_strings_and_comments(inspect.getsource(bwb))
-        self.assertNotIn("BrowserController", code,
-                         "Bridge must not call BrowserController directly")
+        self.assertNotIn("BrowserController", code, "Bridge must not call BrowserController directly")
 
 
 # ---------------------------------------------------------------------------
 # 22: Handler exception → safe failed result
 # ---------------------------------------------------------------------------
 
+
 class TestHandlerExceptionHandling(unittest.TestCase):
     def test_handler_exception_returns_safe_failed_result(self):
         """If task handler raises, bridge returns failed result without stack trace."""
         bad_handler = MagicMock()
-        async def _raises(_): raise RuntimeError("super-secret-internal-detail-xyz")
+
+        async def _raises(_):
+            raise RuntimeError("super-secret-internal-detail-xyz")
+
         bad_handler.handle_task = _raises
         coll = MockResultCallbackCollector()
-        bridge = BrowserLocalWebSocketBridge(task_handler=bad_handler,
-                                              callback=coll.append)
+        bridge = BrowserLocalWebSocketBridge(task_handler=bad_handler, callback=coll.append)
         result = bridge.handle_inbound_message_sync(_valid_msg())
         self.assertEqual(result["status"], "failed")
         self.assertEqual(result["error_code"], "handler_exception")
@@ -364,6 +382,7 @@ class TestHandlerExceptionHandling(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # 23-24: Persistent + DB store integration
 # ---------------------------------------------------------------------------
+
 
 class TestStoreIntegration(unittest.TestCase):
     def test_persistent_store_integration(self):
@@ -389,6 +408,7 @@ class TestStoreIntegration(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Async direct path (verifies asyncio.run wrapper is sane)
 # ---------------------------------------------------------------------------
+
 
 class TestAsyncEntrypoint(unittest.TestCase):
     def test_handle_inbound_message_async(self):

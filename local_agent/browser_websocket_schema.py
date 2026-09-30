@@ -211,7 +211,7 @@ class BrowserWebSocketTaskPayloadSchema:
         # Validate metadata
         if metadata and isinstance(metadata, dict):
             forbidden_keys_lower = {k.lower() for k in METADATA_FORBIDDEN_KEYS}
-            for key in metadata.keys():
+            for key in metadata:
                 if key.lower() in forbidden_keys_lower:
                     raise ValueError(f"Forbidden metadata key: {key}")
 

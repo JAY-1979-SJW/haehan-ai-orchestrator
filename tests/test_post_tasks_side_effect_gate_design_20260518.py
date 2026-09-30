@@ -8,10 +8,12 @@ ASSISTANT_BACKEND_POST_TASKS_SIDE_EFFECT_GATE_DESIGN_01
 실제 POST /tasks 실행 / execute 호출 / approval_token 발행 / DB write /
 router.py 수정 / 서버 반영 전면 금지.
 """
+
 import ast
 import importlib.util
-import pytest
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).parent.parent
 
@@ -79,6 +81,7 @@ def router_content():
 
 # ── 1~2. import ──────────────────────────────────────────────────────────────
 
+
 def test_01_audit_script_importable(audit_mod):
     assert audit_mod is not None
 
@@ -88,6 +91,7 @@ def test_02_run_audit_function_exists(audit_mod):
 
 
 # ── 3~8. 운영 안전 플래그 ────────────────────────────────────────────────────
+
 
 def test_03_route_execution_not_allowed(audit_mod):
     assert audit_mod.ROUTE_EXECUTION_ALLOWED is False
@@ -114,6 +118,7 @@ def test_08_design_only_true(audit_mod):
 
 
 # ── 9~14. call chain 분석 ────────────────────────────────────────────────────
+
 
 def test_09_call_chain_gte_5_steps(call_chain):
     assert len(call_chain) >= 5
@@ -145,6 +150,7 @@ def test_14_blocking_steps_identified(call_chain):
 
 
 # ── 15~22. side-effect catalog ───────────────────────────────────────────────
+
 
 def test_15_side_effect_catalog_gte_6(side_effects):
     assert len(side_effects) >= 6
@@ -183,6 +189,7 @@ def test_22_external_execution_whitelist_has_two_actions(side_effects):
 
 # ── 23~30. risk level 경로 분석 ──────────────────────────────────────────────
 
+
 def test_23_risk_levels_all_present(risk_paths):
     for level in ("low", "medium", "high", "critical"):
         assert level in risk_paths
@@ -220,6 +227,7 @@ def test_30_medium_gate_gap_identified(risk_paths):
 
 # ── 31~38. approval gate 설계 ────────────────────────────────────────────────
 
+
 def test_31_gate_design_only_status(gate):
     assert gate["status"] == "DESIGN_ONLY"
 
@@ -254,6 +262,7 @@ def test_38_gate_has_approval_gate_not_designed(gate):
 
 # ── 39~43. dry-run 정책 ──────────────────────────────────────────────────────
 
+
 def test_39_dry_run_policy_design_only(dry_run):
     assert dry_run["status"] == "DESIGN_ONLY"
 
@@ -276,11 +285,13 @@ def test_43_dry_run_flag_implemented_or_not_in_design_scope(router_content):
     # 구현된 경우 default=True(차단 방향)인지 확인.
     flag_name = "POST_TASKS_DRY_RUN_ENABLED"
     if flag_name in router_content:
-        assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content, \
+        assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content, (
             f"{flag_name}이 True(차단)가 아닌 값으로 설정됨 — 안전 방향 위반"
+        )
 
 
 # ── 44~48. rollback 기준 ─────────────────────────────────────────────────────
+
 
 def test_44_rollback_triggers_exist(rollback):
     assert len(rollback.get("trigger_conditions", [])) >= 3
@@ -306,6 +317,7 @@ def test_48_rollback_note_design_only(rollback):
 
 # ── 49~53. 다음 Phase 조건 ───────────────────────────────────────────────────
 
+
 def test_49_next_phase_defined(next_phase):
     assert next_phase.get("phase")
 
@@ -329,6 +341,7 @@ def test_53_next_phase_requires_router_approval(next_phase):
 
 
 # ── 54~58. router.py Phase 1-R 안전장치 유지 ─────────────────────────────────
+
 
 def test_54_task_approve_guard_active(router_content):
     assert (
@@ -361,10 +374,11 @@ def test_58_touch_phase_still_1r(router_content):
 
 # ── 59. no HTTP import ───────────────────────────────────────────────────────
 
+
 def test_59_no_http_import_in_audit_script():
-    content = (
-        REPO_ROOT / "scripts/ops/audit_post_tasks_side_effect_gate_design.py"
-    ).read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "scripts/ops/audit_post_tasks_side_effect_gate_design.py").read_text(
+        encoding="utf-8", errors="ignore"
+    )
     try:
         tree = ast.parse(content)
     except SyntaxError:
@@ -375,14 +389,14 @@ def test_59_no_http_import_in_audit_script():
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported.add(alias.name.split(".")[0])
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imported.add(node.module.split(".")[0])
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module.split(".")[0])
     for bad in ["requests", "httpx", "aiohttp", "urllib3"]:
         assert bad not in imported, f"HTTP client imported: {bad}"
 
 
 # ── 60. audit verdict ────────────────────────────────────────────────────────
+
 
 def test_60_audit_verdict_ready(audit_result):
     assert audit_result["verdict"] in (

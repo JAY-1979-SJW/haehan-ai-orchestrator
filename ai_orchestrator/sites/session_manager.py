@@ -76,7 +76,7 @@ def _meta_read(site_id: str) -> SessionMeta:
         logger.warning("[SESSION-META-READ-FAIL] site=%s err=%s", site_id, type(e).__name__)
         return SessionMeta(site_id=site_id, status="UNKNOWN", last_reason="meta_read_failed")
     # 알 수 없는 필드는 무시, 누락 필드는 기본값으로.
-    allowed = {f for f in SessionMeta.__dataclass_fields__.keys()}
+    allowed = {f for f in SessionMeta.__dataclass_fields__}
     data = {k: v for k, v in raw.items() if k in allowed}
     data["site_id"] = site_id
     return SessionMeta(**data)

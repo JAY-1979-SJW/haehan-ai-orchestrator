@@ -366,7 +366,7 @@ class BotRadar:
                 ("imperva_incapsula", ["x-iinfo", "x-cdn"]),
             ]:
                 for h in pats:
-                    if any(h.lower() in (k or "").lower() for k in headers.keys()):
+                    if any(h.lower() in (k or "").lower() for k in headers):
                         self.responses.append(
                             {
                                 "kind": "vendor_header",

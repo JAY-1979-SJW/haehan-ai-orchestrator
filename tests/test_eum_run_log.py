@@ -37,9 +37,8 @@ def test_work_run_writes_failure_record(monkeypatch, tmp_path):
     monkeypatch.setattr(run_log, "RUNS_DIR", tmp_path)
     workflow = {"key": "monitor", "title": "Monitor", "risk": "read"}
 
-    with pytest.raises(ValueError):
-        with run_log.work_run(workflow):
-            raise ValueError("boom")
+    with pytest.raises(ValueError), run_log.work_run(workflow):
+        raise ValueError("boom")
 
     files = list((tmp_path / "monitor").glob("*.json"))
     data = json.loads(files[0].read_text(encoding="utf-8"))

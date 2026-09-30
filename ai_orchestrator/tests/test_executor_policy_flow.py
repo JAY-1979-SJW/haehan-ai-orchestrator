@@ -13,15 +13,15 @@ from ai_orchestrator.models import ExecutionPlan, TaskRequest
 
 def _req(task_id="task-1", action="test_action", **kwargs):
     """테스트용 TaskRequest 생성 헬퍼"""
-    defaults = dict(
-        task_id=task_id,
-        source="manual",
-        action_type=action,
-        target="target",
-        description="test",
-        requested_by="user",
-        payload={},
-    )
+    defaults = {
+        "task_id": task_id,
+        "source": "manual",
+        "action_type": action,
+        "target": "target",
+        "description": "test",
+        "requested_by": "user",
+        "payload": {},
+    }
     defaults.update(kwargs)
     return TaskRequest(**defaults)
 

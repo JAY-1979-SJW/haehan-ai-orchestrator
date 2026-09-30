@@ -6,20 +6,21 @@ POST_TASKS_DRY_RUN_ENABLED=True 플래그 및 submit_task 분기 구현 검증.
 실제 approval token 발행 / approve 호출 / execute_task 호출 /
 DB write / 서버 반영 전면 금지.
 """
+
 import ast
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
-AUDIT_ID   = "POST_TASKS_DRY_RUN_FLAG_IMPLEMENTATION"
+AUDIT_ID = "POST_TASKS_DRY_RUN_FLAG_IMPLEMENTATION"
 AUDIT_DATE = "2026-05-18"
 
 # ── 운영 안전 플래그 ─────────────────────────────────────────────────────────
 APPROVAL_TOKEN_ISSUE_ALLOWED = False
-EXECUTE_TASK_CALL_ALLOWED    = False
-DB_WRITE_ALLOWED             = False
-SERVER_DEPLOY_ALLOWED        = False
-IMPLEMENTATION_SCOPE         = "DRY_RUN_FLAG_AND_SUBMIT_BRANCH_ONLY"
+EXECUTE_TASK_CALL_ALLOWED = False
+DB_WRITE_ALLOWED = False
+SERVER_DEPLOY_ALLOWED = False
+IMPLEMENTATION_SCOPE = "DRY_RUN_FLAG_AND_SUBMIT_BRANCH_ONLY"
 
 # ── 구현 확정 사항 ────────────────────────────────────────────────────────────
 IMPLEMENTATION_RECORD = {
@@ -33,17 +34,10 @@ IMPLEMENTATION_RECORD = {
         "'DRY_RUN: would issue token — gate active' 상태 반환. "
         "issue_token() 미호출 — 토큰 발행 없음."
     ),
-    "low_path_unaffected": (
-        "requires_approval=False인 low 경로는 dry-run 분기를 통과하지 않음 "
-        "→ 기존 동작 그대로."
-    ),
-    "blocked_path_unaffected": (
-        "ep.allowed=False인 차단 경로도 dry-run 분기 미적용 "
-        "→ BLOCKED 반환 그대로."
-    ),
+    "low_path_unaffected": ("requires_approval=False인 low 경로는 dry-run 분기를 통과하지 않음 → 기존 동작 그대로."),
+    "blocked_path_unaffected": ("ep.allowed=False인 차단 경로도 dry-run 분기 미적용 → BLOCKED 반환 그대로."),
     "approve_route_impact": (
-        "approve_task는 dry-run 상태에서 토큰이 발행되지 않으므로 "
-        "토큰 조회 시 not_found 반환 — 자연 격리."
+        "approve_task는 dry-run 상태에서 토큰이 발행되지 않으므로 토큰 조회 시 not_found 반환 — 자연 격리."
     ),
     "router_modification_approved": True,
     "approved_by": "대표 명시 승인 2026-05-18",
@@ -94,9 +88,7 @@ NEXT_PHASE_CONDITIONS = {
 
 
 def _check_router_implementation() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "dry_run_flag_present": "POST_TASKS_DRY_RUN_ENABLED = True" in content,
         "dry_run_flag_default_true": "POST_TASKS_DRY_RUN_ENABLED = True" in content,
@@ -106,7 +98,8 @@ def _check_router_implementation() -> dict:
         "dry_run_field_in_response": '"dry_run": True' in content or "'dry_run': True" in content,
         "issue_token_still_present": "issue_token(req, risk" in content,
         "execute_task_not_imported": "execute_task" not in content.split("from .executor import")[1].split("\n")[0]
-            if "from .executor import" in content else True,
+        if "from .executor import" in content
+        else True,
         "phase_1r_guards_intact": (
             "LEGACY_5050_TASK_APPROVE_ROUTE_WIRING_ENABLED = False" in content
             and "LEGACY_5050_TASK_REJECT_ROUTE_WIRING_ENABLED = False" in content
@@ -128,9 +121,8 @@ def _verify_no_http_import() -> tuple[bool, str]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported.add(alias.name.split(".")[0])
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imported.add(node.module.split(".")[0])
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module.split(".")[0])
     for bad in ["requests", "httpx", "aiohttp", "urllib3"]:
         if bad in imported:
             return False, f"HTTP client imported: {bad}"
@@ -180,8 +172,12 @@ def run_audit() -> dict:
         errors.append("flag_default must be True")
 
     # 4. 경로 영향 분석 완전성
-    for path_key in ("medium_requires_approval_True_allowed_True", "low_requires_approval_False",
-                     "blocked_allowed_False", "high_critical"):
+    for path_key in (
+        "medium_requires_approval_True_allowed_True",
+        "low_requires_approval_False",
+        "blocked_allowed_False",
+        "high_critical",
+    ):
         if path_key not in PATH_IMPACT_ANALYSIS:
             errors.append(f"경로 분석 누락: {path_key}")
 
@@ -218,6 +214,7 @@ def run_audit() -> dict:
 
 if __name__ == "__main__":
     import json
+
     result = run_audit()
     print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     print(f"\n=== Dry-Run Flag Implementation: {result['verdict']} ===")

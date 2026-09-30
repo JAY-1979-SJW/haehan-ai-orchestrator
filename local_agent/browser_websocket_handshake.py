@@ -274,7 +274,7 @@ def validate_agent_hello_message(msg: dict) -> tuple[bool, str | None]:
         "typed_text",
         "base64",
     }
-    for key in msg.keys():
+    for key in msg:
         if key.lower() in forbidden:
             return False, f"forbidden field: {key}"
 

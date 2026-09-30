@@ -7,12 +7,16 @@
 - handoff_payload 생성 (safe fields만)
 - 토큰 재사용 차단
 """
+
 from __future__ import annotations
 
 import pytest
+
 from ai_orchestrator.local_agent.actions import business_execute_with_user_approval
 from ai_orchestrator.local_agent.user_approval_gate import (
-    create_approval_request, approve_request, clear_all,
+    approve_request,
+    clear_all,
+    create_approval_request,
 )
 
 
@@ -61,11 +65,7 @@ def test_valid_token_creates_handoff():
     }
 
     # 1단계: 승인 요청 생성
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     req_id = req["request_id"]
 
     # 2단계: 승인 토큰 발급
@@ -96,11 +96,7 @@ def test_handoff_payload_structure():
         "due_date": "2026-05-31",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -128,11 +124,7 @@ def test_handoff_payload_excludes_forbidden_fields():
         "organization_name": "기관명",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -143,7 +135,7 @@ def test_handoff_payload_excludes_forbidden_fields():
     payload = res["handoff_payload"]
     forbidden_keys = {"password", "otp", "cert_password", "cookie", "session", "private_key"}
     # approval_token은 의도적으로 포함되어야 함
-    for key in payload.keys():
+    for key in payload:
         if key == "approval_token":
             continue
         for forbidden in forbidden_keys:
@@ -158,11 +150,7 @@ def test_token_one_time_use():
         "business_profile": "bid_submission",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     # 첫 번째 사용 — 성공
@@ -238,11 +226,7 @@ def test_response_has_evidence():
         "business_profile": "bid_submission",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -266,11 +250,7 @@ def test_response_has_evidence_policy():
         "business_profile": "bid_submission",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(
@@ -294,11 +274,7 @@ def test_handoff_payload_has_evidence_policy():
         "business_profile": "bid_submission",
     }
 
-    req = create_approval_request(
-        "business.execute_with_user_approval",
-        params,
-        {}
-    )
+    req = create_approval_request("business.execute_with_user_approval", params, {})
     token = approve_request(req["request_id"], "test_user")["approval_token"]
 
     res = business_execute_with_user_approval.execute(

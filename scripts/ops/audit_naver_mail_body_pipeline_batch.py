@@ -1,4 +1,5 @@
 """NAVER-MAIL-BODY-PIPELINE-BATCH-01 audit."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -14,14 +15,12 @@ class BatchVerdict:
     metrics: dict = field(default_factory=dict)
 
 
-_FORBIDDEN_HOSTS = ("api.anthropic.com", "api.openai.com",
-                    "claude.ai", "generativelanguage.googleapis.com")
+_FORBIDDEN_HOSTS = ("api.anthropic.com", "api.openai.com", "claude.ai", "generativelanguage.googleapis.com")
 
 
-def judge_batch(rep: "br.BatchReport",
-                *, network_log: list[str] | None = None,
-                checkpoint_dict: dict | None = None
-                ) -> BatchVerdict:
+def judge_batch(  # noqa: C901 - 기존 복잡도(13->12), 중첩 if 병합으로 오히려 줄어듦
+    rep: br.BatchReport, *, network_log: list[str] | None = None, checkpoint_dict: dict | None = None
+) -> BatchVerdict:
     network_log = network_log or []
     metrics = {
         "target_total": rep.target_total,
@@ -45,85 +44,89 @@ def judge_batch(rep: "br.BatchReport",
 
     # FAIL_RAW_BODY_LEAK
     if rep.raw_body_leak_count > 0:
-        return BatchVerdict(False, "FAIL_RAW_BODY_LEAK",
-                            reasons=[f"leak_count={rep.raw_body_leak_count}"],
-                            metrics=metrics)
+        return BatchVerdict(
+            False, "FAIL_RAW_BODY_LEAK", reasons=[f"leak_count={rep.raw_body_leak_count}"], metrics=metrics
+        )
     # 결과 record 에 raw body 필드가 들어있는지도 검사
     for r in rep.results:
         d = r.to_dict()
         if "raw_body" in d or "body_raw" in d:
-            return BatchVerdict(False, "FAIL_RAW_BODY_LEAK",
-                                reasons=[f"raw_body_field_in_record:sn={r.sn}"],
-                                metrics=metrics)
+            return BatchVerdict(
+                False, "FAIL_RAW_BODY_LEAK", reasons=[f"raw_body_field_in_record:sn={r.sn}"], metrics=metrics
+            )
 
     # FAIL_ATTACHMENT_DOWNLOADED
     if rep.attachment_download_count > 0:
-        return BatchVerdict(False, "FAIL_ATTACHMENT_DOWNLOADED",
-                            reasons=[f"count={rep.attachment_download_count}"],
-                            metrics=metrics)
+        return BatchVerdict(
+            False, "FAIL_ATTACHMENT_DOWNLOADED", reasons=[f"count={rep.attachment_download_count}"], metrics=metrics
+        )
 
     # FAIL_EXTERNAL_AI_CALL_USED
-    ai_hits = [n for n in network_log
-               if any(h in n for h in _FORBIDDEN_HOSTS)]
+    ai_hits = [n for n in network_log if any(h in n for h in _FORBIDDEN_HOSTS)]
     if ai_hits or rep.external_ai_call_count > 0:
-        return BatchVerdict(False, "FAIL_EXTERNAL_AI_CALL_USED",
-                            reasons=[f"ai_calls:{ai_hits[:3]}"],
-                            metrics=metrics)
+        return BatchVerdict(False, "FAIL_EXTERNAL_AI_CALL_USED", reasons=[f"ai_calls:{ai_hits[:3]}"], metrics=metrics)
 
     # FAIL_UNREAD_RESTORE_FAILED
     if rep.unread_restore_failed > 0:
-        return BatchVerdict(False, "FAIL_UNREAD_RESTORE_FAILED",
-                            reasons=[f"restore_failed={rep.unread_restore_failed} "
-                                     f"halt_reason={rep.halt_reason}"],
-                            metrics=metrics)
+        return BatchVerdict(
+            False,
+            "FAIL_UNREAD_RESTORE_FAILED",
+            reasons=[f"restore_failed={rep.unread_restore_failed} halt_reason={rep.halt_reason}"],
+            metrics=metrics,
+        )
 
     # FAIL_CHECKPOINT_BROKEN
-    if checkpoint_dict is not None:
-        if checkpoint_dict.get("run_id") == "broken":
-            return BatchVerdict(False, "FAIL_CHECKPOINT_BROKEN",
-                                reasons=["checkpoint_file_invalid"],
-                                metrics=metrics)
+    if checkpoint_dict is not None and checkpoint_dict.get("run_id") == "broken":
+        return BatchVerdict(False, "FAIL_CHECKPOINT_BROKEN", reasons=["checkpoint_file_invalid"], metrics=metrics)
 
     # FAIL_DUPLICATE_REPROCESSING — skipped 가 있어야 하는데 같은 sn 이 두 번 처리됨
     sns = [r.sn for r in rep.results if r.status != br.SKIPPED_ALREADY_DONE]
     sn_dup = [s for s, c in __counts(sns).items() if c > 1]
     if sn_dup:
-        return BatchVerdict(False, "FAIL_DUPLICATE_REPROCESSING",
-                            reasons=[f"duplicate_sns:{sn_dup[:5]}"],
-                            metrics=metrics)
+        return BatchVerdict(
+            False, "FAIL_DUPLICATE_REPROCESSING", reasons=[f"duplicate_sns:{sn_dup[:5]}"], metrics=metrics
+        )
 
     # WARN_BODY_READ_FAILURES
     if rep.failed > 0:
-        return BatchVerdict(False, "WARN_BODY_READ_FAILURES",
-                            reasons=[f"failed={rep.failed}"],
-                            metrics=metrics)
+        return BatchVerdict(False, "WARN_BODY_READ_FAILURES", reasons=[f"failed={rep.failed}"], metrics=metrics)
 
     # WARN_PARTIAL_BATCH_COMPLETED
     if rep.halted_early or (rep.limit > 0 and rep.attempted + rep.skipped_already_done < rep.target_total):
-        return BatchVerdict(False, "WARN_PARTIAL_BATCH_COMPLETED",
-                            reasons=[f"halted_early={rep.halted_early} "
-                                     f"attempted+skipped={rep.attempted + rep.skipped_already_done} "
-                                     f"target_total={rep.target_total}"],
-                            metrics=metrics)
+        return BatchVerdict(
+            False,
+            "WARN_PARTIAL_BATCH_COMPLETED",
+            reasons=[
+                f"halted_early={rep.halted_early} "
+                f"attempted+skipped={rep.attempted + rep.skipped_already_done} "
+                f"target_total={rep.target_total}"
+            ],
+            metrics=metrics,
+        )
 
     # WARN_RATE_LIMIT_SUSPECTED — avg < 1s 또는 너무 빠른 진행
     if rep.attempted > 5 and rep.avg_seconds_per_message < 0.5:
-        return BatchVerdict(False, "WARN_RATE_LIMIT_SUSPECTED",
-                            reasons=[f"avg={rep.avg_seconds_per_message}s_too_fast"],
-                            metrics=metrics)
+        return BatchVerdict(
+            False,
+            "WARN_RATE_LIMIT_SUSPECTED",
+            reasons=[f"avg={rep.avg_seconds_per_message}s_too_fast"],
+            metrics=metrics,
+        )
 
-    return BatchVerdict(True, "PASS_NAVER_MAIL_BODY_PIPELINE_BATCH",
-                        reasons=[], metrics=metrics)
+    return BatchVerdict(True, "PASS_NAVER_MAIL_BODY_PIPELINE_BATCH", reasons=[], metrics=metrics)
 
 
 def __counts(lst):
     from collections import Counter
+
     return Counter(lst)
 
 
 def main(argv=None) -> int:
-    import argparse, json
+    import argparse
+    import json
     from pathlib import Path
+
     ap = argparse.ArgumentParser()
     ap.add_argument("report_json", type=Path)
     args = ap.parse_args(argv)
@@ -159,12 +162,17 @@ def main(argv=None) -> int:
     for rr in d.get("results", []):
         rep.results.append(br.MailResult(**rr))
     v = judge_batch(rep)
-    print(json.dumps({"verdict": v.code, "passed": v.passed,
-                      "reasons": v.reasons, "metrics": v.metrics},
-                     ensure_ascii=False, indent=2))
+    print(
+        json.dumps(
+            {"verdict": v.code, "passed": v.passed, "reasons": v.reasons, "metrics": v.metrics},
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return 0 if v.passed else 1
 
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

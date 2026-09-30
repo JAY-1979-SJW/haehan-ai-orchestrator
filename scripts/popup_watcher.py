@@ -39,7 +39,7 @@ class PopupEvent(TypedDict):
 
 def build_watcher_js(markers: dict) -> str:
     """마커 카탈로그를 JS 코드 문자열로 변환."""
-    marker_list = json.dumps([{"key": k} for k in markers.keys()])
+    marker_list = json.dumps([{"key": k} for k in markers])
 
     js_template = f"""(() => {{
   if (window.__hh_popup_state && window.__hh_popup_state.installed) return;

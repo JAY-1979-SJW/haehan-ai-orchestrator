@@ -80,7 +80,7 @@ def run_task_in_session(
             "status": "FAILED",
             "message_ko": f"세션 없음: {session_id}",
             "task_id": str(uuid.uuid4()),
-            **{f: False for f in _SAFE_FIELDS},
+            **dict.fromkeys(_SAFE_FIELDS, False),
         }
 
     # 세션의 권한 map 구성
