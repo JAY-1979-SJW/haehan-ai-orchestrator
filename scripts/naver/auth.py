@@ -31,6 +31,7 @@ from typing import Any
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 from scripts.login_detector import detect_login_state, wait_for_login_generic
+from security_utils import mask_identifier
 
 _log = get_logger(__name__)
 
@@ -75,8 +76,11 @@ def _load_credentials(
     if not pw:
         pw = os.environ.get("NAVER_PW")
 
-    # 3. 레거시 평문 파일 (백업 경로)
+    # 3. 레거시 평문 파일 (백업 경로) — 폐지 예정. 값은 로그에 남기지 않는다.
     if (not nid or not pw) and ENV_FILE.exists():
+        _log.warning(
+            "[naver-auth] 평문 자격증명 파일을 사용 중 — `python scripts/credentials.py migrate` 로 암호화 저장소로 이전하세요"
+        )
         try:
             for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
                 line = line.strip()
@@ -98,17 +102,19 @@ def _load_credentials(
 
 
 def save_credentials(naver_id: str, naver_pw: str) -> Path:
-    """자격증명 파일 저장 (data/.env_naver). git ignore 필수.
+    """네이버 자격증명을 통합 암호화 저장소(scripts.credentials)에 저장한다.
 
-    파일 권한: 0o600 (소유자만 읽기/쓰기)
+    예전에는 data/.env_naver 에 평문으로 썼으나(2026-09-30 폐지), 이제 계정별 키 "naver:<id>" 로
+    암호화 저장한다. 기본 계정 "naver" 가 아직 없으면 같은 값을 기본으로도 둔다.
+    반환값은 하위 호환을 위해 저장소 파일 경로다. 비밀번호는 로그에 남기지 않는다.
     """
-    ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
-    content = f"NAVER_ID={naver_id}\nNAVER_PW={naver_pw}\n"
-    ENV_FILE.write_text(content, encoding="utf-8")
-    with suppress(Exception):
-        ENV_FILE.chmod(0o600)
-    _log.info("[naver-auth] 자격증명 저장: %s", ENV_FILE)
-    return ENV_FILE
+    from scripts.credentials import CRED_FILE, get_cred, set_cred
+
+    set_cred(f"naver:{naver_id}", id=naver_id, pw=naver_pw)
+    if not get_cred("naver").get("id"):
+        set_cred("naver", id=naver_id, pw=naver_pw)
+    _log.info("[naver-auth] 자격증명 저장(암호화): naver:%s", mask_identifier(naver_id))
+    return CRED_FILE
 
 
 # ── 봇 감지 회피 타이핑 + 안전 입력 ────────────────────────────────────────
