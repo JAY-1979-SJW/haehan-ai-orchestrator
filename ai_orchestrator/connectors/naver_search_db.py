@@ -9,16 +9,17 @@
 - 쓰기 경로는 Jobs 레이어가 live + 기능 플래그 on 일 때만 호출한다.
 - 본 모듈은 네트워크 / 시크릿 / 세션과 무관 — 민감정보 로그 없음.
 """
+
 from __future__ import annotations
 
 import logging
 import os
 import sqlite3
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable, Iterator, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ class InsertStats:
     skipped_count: int = 0  # unique 키 공란 등 insert 대상 제외
     # 3단계 증분용 — 호출자가 consecutive duplicate 를 페이지 경계 넘어 추적할 때 사용.
     consecutive_duplicates: int = 0  # 이 호출이 종료될 때의 연속 duplicate 카운터.
-    stopped_early: bool = False      # threshold 에 걸려서 조기 종료됐는지.
+    stopped_early: bool = False  # threshold 에 걸려서 조기 종료됐는지.
 
     def to_dict(self) -> dict:
         return {
@@ -104,12 +105,12 @@ def default_db_path() -> Path:
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 # ── 연결 + 스키마 ───────────────────────────────────────────────
 @contextmanager
-def open_db(path: Optional[Path] = None) -> Iterator[sqlite3.Connection]:
+def open_db(path: Path | None = None) -> Iterator[sqlite3.Connection]:
     """sqlite 연결 + 스키마 초기화. 호출자가 commit/rollback 을 관리할 필요 없음
     (컨텍스트 종료 시 commit, 예외 시 rollback)."""
     p = path or default_db_path()
@@ -133,21 +134,41 @@ def open_db(path: Optional[Path] = None) -> Iterator[sqlite3.Connection]:
 def count_rows(conn: sqlite3.Connection, table: str) -> int:
     if table not in (TABLE_BLOG, TABLE_SHOP):
         raise ValueError(f"unknown table: {table!r}")
-    cur = conn.execute(f"SELECT COUNT(*) FROM {table}")
+    cur = conn.execute(f"SELECT COUNT(*) FROM {table}")  # nosec B608 - 테이블명은 모듈 상수, 조건/정렬은 고정 조각이고 값은 ? 바인딩(사용자 입력 미결합)
     row = cur.fetchone()
     return int(row[0]) if row else 0
 
 
 # ── INSERT (중복 방지) ──────────────────────────────────────────
 _BLOG_COLS = (
-    "query", "title", "link", "blogger_name", "blogger_link",
-    "description", "post_date", "collected_at", "source",
+    "query",
+    "title",
+    "link",
+    "blogger_name",
+    "blogger_link",
+    "description",
+    "post_date",
+    "collected_at",
+    "source",
 )
 _SHOP_COLS = (
-    "query", "title", "link", "image", "lprice", "hprice", "mall_name",
-    "product_id", "product_type", "brand", "maker",
-    "category1", "category2", "category3", "category4",
-    "collected_at", "source",
+    "query",
+    "title",
+    "link",
+    "image",
+    "lprice",
+    "hprice",
+    "mall_name",
+    "product_id",
+    "product_type",
+    "brand",
+    "maker",
+    "category1",
+    "category2",
+    "category3",
+    "category4",
+    "collected_at",
+    "source",
 )
 
 
@@ -162,7 +183,7 @@ def insert_blog_items(
     query: str,
     items: Iterable[dict],
     *,
-    collected_at: Optional[str] = None,
+    collected_at: str | None = None,
 ) -> InsertStats:
     """blog 결과를 link 기준 UNIQUE 로 적재.
 
@@ -204,8 +225,8 @@ def insert_shopping_items(
     query: str,
     items: Iterable[dict],
     *,
-    collected_at: Optional[str] = None,
-    stop_after_consecutive_duplicates: Optional[int] = None,
+    collected_at: str | None = None,
+    stop_after_consecutive_duplicates: int | None = None,
     consecutive_duplicates_start: int = 0,
 ) -> InsertStats:
     """shopping 결과를 product_id 기준 UNIQUE 로 적재.
@@ -262,10 +283,7 @@ def insert_shopping_items(
         else:
             stats.duplicate_count += 1
             consecutive += 1
-            if (
-                stop_after_consecutive_duplicates is not None
-                and consecutive >= stop_after_consecutive_duplicates
-            ):
+            if stop_after_consecutive_duplicates is not None and consecutive >= stop_after_consecutive_duplicates:
                 stats.consecutive_duplicates = consecutive
                 stats.stopped_early = True
                 return stats
@@ -278,10 +296,10 @@ __all__ = [
     "TABLE_BLOG",
     "TABLE_SHOP",
     "InsertStats",
-    "is_db_enabled",
-    "default_db_path",
-    "open_db",
     "count_rows",
+    "default_db_path",
     "insert_blog_items",
     "insert_shopping_items",
+    "is_db_enabled",
+    "open_db",
 ]
