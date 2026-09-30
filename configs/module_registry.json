@@ -19656,6 +19656,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_mcp_naver_login_registry.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

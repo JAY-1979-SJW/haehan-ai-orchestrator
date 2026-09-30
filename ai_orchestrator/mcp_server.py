@@ -55,6 +55,20 @@ API_BASE = "http://127.0.0.1:8401"
 
 API_REGISTRY: dict[str, dict[str, str]] = {
     # 세션 상태
+    # 네이버 자동 로그인 (저장된 계정으로 CDP 로그인. 비밀번호는 이 경로로 오가지 않는다)
+    "naver.session.status": {
+        "method": "GET",
+        "path": "/api/v1/naver/session/status",
+        "desc": "네이버 로그인 상태 조회(읽기 전용). 로그인 여부·캡차 대기 여부",
+    },
+    "naver.login": {
+        "method": "POST",
+        "path": "/api/v1/naver/session/login",
+        "desc": (
+            "⚠️ 저장된 계정으로 네이버 자동 로그인 1회 시도. body={'username': '<계정>'}. "
+            "실패·캡차·2단계 인증이면 즉시 중단하고 재시도하지 말 것(반복 실패는 계정 잠금 위험)"
+        ),
+    },
     "sessions.status": {
         "method": "GET",
         "path": "/api/v1/sessions/status",
