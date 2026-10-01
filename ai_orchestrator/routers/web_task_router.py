@@ -83,7 +83,7 @@ def _classify_validation(params: dict) -> tuple[list[str], list[str], list[str]]
     return errors, missing, invalid
 
 
-def _raise_validation_error(
+def _raise_validation_error(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     action_type: str,
     provider: str,

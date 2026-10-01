@@ -36,7 +36,7 @@ from ai_orchestrator.persistence.registration_code_store import (
 # Public API 래퍼 (기존 호출처 호환성 유지)
 
 
-def issue_code(
+def issue_code(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     label: str,
     expires_in_minutes: int = DEFAULT_TTL_MINUTES,

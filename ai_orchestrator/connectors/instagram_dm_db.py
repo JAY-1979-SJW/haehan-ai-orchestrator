@@ -273,7 +273,7 @@ def set_account_status(account_id: str, status: str) -> None:
 # ---- automation_rules ----
 
 
-def create_rule(
+def create_rule(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     instagram_account_id: str,
     name: str,
@@ -385,7 +385,7 @@ def delete_rule(rule_id: str) -> None:
 # ---- comment events / dedup ----
 
 
-def insert_comment_event_if_new(
+def insert_comment_event_if_new(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     instagram_account_id: str,
     comment_id: str,
@@ -487,7 +487,7 @@ def try_reserve_reply_slot(
             return (row["id"] if row else ""), False
 
 
-def update_reply_result(
+def update_reply_result(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     reply_log_id: str,
     *,
     status: str,
@@ -535,7 +535,7 @@ def list_reply_logs(instagram_account_id: str, limit: int = 100) -> list[sqlite3
 # ---- webhook_events (audit) ----
 
 
-def log_webhook_event(
+def log_webhook_event(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     event_type: str | None,
     external_account_id: str | None,
