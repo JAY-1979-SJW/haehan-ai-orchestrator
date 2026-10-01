@@ -263,7 +263,67 @@ def _fetch_article_detail_once(page: Page, url: str) -> dict:
     return detail or {}
 
 
-def collect_articles(
+def _new_article(aid: str, item: dict, d) -> dict:
+    """목록 항목 1건 -> 게시글 dict(상세 필드는 기본값)."""
+    return (
+    {
+        "article_id": aid,
+        "title": item.get("title", ""),
+        "href": item.get("href", ""),
+        "author": item.get("author", ""),
+        "date_str": item.get("date_str", ""),
+        "date": d.isoformat() if d else "",
+        "board": item.get("board", ""),
+        "view_count": item.get("views", "0") or "0",
+        "like_count": "0",
+        "comment_count": item.get("comments", "0") or "0",
+        "tags": [],
+        "body": "",
+    }
+    )
+
+
+def _visit_details(page: Page, clubid: str, articles: list[dict], max_detail: int) -> None:
+    """상세 방문(max_detail > 0 일 때) — articles 를 제자리 갱신."""
+    if max_detail > 0:
+        detail_targets = articles[:max_detail]
+        _log.info("[cafe-collect] 상세 방문 시작: %d건", len(detail_targets))
+        for i, art in enumerate(detail_targets, 1):
+            detail = _fetch_article_detail(page, clubid, art["article_id"])
+            if detail:
+                art.update(
+                    {
+                        "board": detail.get("board") or art.get("board", ""),
+                        "author": detail.get("author") or art.get("author", ""),
+                        "view_count": detail.get("view_count") or art.get("view_count", "0"),
+                        "like_count": detail.get("like_count", "0"),
+                        "comment_count": str(detail.get("comment_count") or art.get("comment_count", "0")),
+                        "tags": detail.get("tags", []),
+                        "body": detail.get("body", ""),
+                        "written_at": detail.get("written_at", ""),
+                        "comments": detail.get("comments", []),
+                        "comments_loaded_count": detail.get("comments_loaded_count", 0),
+                    }
+                )
+            if i % 10 == 0:
+                _log.info("[cafe-collect] 상세 %d/%d 완료", i, len(detail_targets))
+
+
+def _save_articles(articles: list[dict], save_path: str | None, kw: str) -> None:
+    """수집 결과를 JSON 으로 저장."""
+    _OUT_DIR.mkdir(parents=True, exist_ok=True)
+    if save_path is None:
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if kw:
+            slug = re.sub(r"[^\w가-힣]", "_", kw)[:30]
+            save_path = str(_OUT_DIR / f"keyword_{slug}_raw_articles_{ts}.json")
+        else:
+            save_path = str(_OUT_DIR / f"raw_articles_{ts}.json")
+    Path(save_path).write_text(json.dumps(articles, ensure_ascii=False, indent=2), encoding="utf-8")
+    _log.info("[cafe-collect] 저장 완료: %s (%d건)", save_path, len(articles))
+
+
+def collect_articles(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     page: Page,
     cafe_url: str,
     days: int = 90,
@@ -331,22 +391,7 @@ def collect_articles(
                 break
 
             seen_ids.add(aid)
-            articles.append(
-                {
-                    "article_id": aid,
-                    "title": item.get("title", ""),
-                    "href": item.get("href", ""),
-                    "author": item.get("author", ""),
-                    "date_str": item.get("date_str", ""),
-                    "date": d.isoformat() if d else "",
-                    "board": item.get("board", ""),
-                    "view_count": item.get("views", "0") or "0",
-                    "like_count": "0",
-                    "comment_count": item.get("comments", "0") or "0",
-                    "tags": [],
-                    "body": "",
-                }
-            )
+            articles.append(_new_article(aid, item, d))
             new_in_page += 1
 
         _log.info("[cafe-collect] p%d: +%d건 (누계 %d건)", page_no, new_in_page, len(articles))
@@ -358,38 +403,8 @@ def collect_articles(
     _log.info("[cafe-collect] 목록 수집 완료: %d건", len(articles))
 
     # 상세 방문
-    if max_detail > 0:
-        detail_targets = articles[:max_detail]
-        _log.info("[cafe-collect] 상세 방문 시작: %d건", len(detail_targets))
-        for i, art in enumerate(detail_targets, 1):
-            detail = _fetch_article_detail(page, clubid, art["article_id"])
-            if detail:
-                art.update(
-                    {
-                        "board": detail.get("board") or art.get("board", ""),
-                        "author": detail.get("author") or art.get("author", ""),
-                        "view_count": detail.get("view_count") or art.get("view_count", "0"),
-                        "like_count": detail.get("like_count", "0"),
-                        "comment_count": str(detail.get("comment_count") or art.get("comment_count", "0")),
-                        "tags": detail.get("tags", []),
-                        "body": detail.get("body", ""),
-                        "written_at": detail.get("written_at", ""),
-                        "comments": detail.get("comments", []),
-                        "comments_loaded_count": detail.get("comments_loaded_count", 0),
-                    }
-                )
-            if i % 10 == 0:
-                _log.info("[cafe-collect] 상세 %d/%d 완료", i, len(detail_targets))
+    _visit_details(page, clubid, articles, max_detail)
 
     # 저장
-    _OUT_DIR.mkdir(parents=True, exist_ok=True)
-    if save_path is None:
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        if kw:
-            slug = re.sub(r"[^\w가-힣]", "_", kw)[:30]
-            save_path = str(_OUT_DIR / f"keyword_{slug}_raw_articles_{ts}.json")
-        else:
-            save_path = str(_OUT_DIR / f"raw_articles_{ts}.json")
-    Path(save_path).write_text(json.dumps(articles, ensure_ascii=False, indent=2), encoding="utf-8")
-    _log.info("[cafe-collect] 저장 완료: %s (%d건)", save_path, len(articles))
+    _save_articles(articles, save_path, kw)
     return articles
