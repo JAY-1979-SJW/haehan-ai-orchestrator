@@ -78,6 +78,28 @@ def _scan_routers(terms: list[str]) -> list[dict]:
 # ── 2. Python 진입점 (__init__.py __all__ + docstring) ───────────────
 
 
+def _extract_all_names(tree):
+    all_names: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name) and t.id == "__all__":
+                    if isinstance(node.value, ast.List):
+                        all_names = [
+                            elt.value
+                            for elt in node.value.elts
+                            if isinstance(elt, ast.Constant) and isinstance(elt.value, str)
+                        ]
+    return all_names
+
+
+def _first_doc_line(tree):
+    docstring = ""
+    if tree.body and isinstance(tree.body[0], ast.Expr) and isinstance(tree.body[0].value, ast.Constant):
+        docstring = str(tree.body[0].value.value).strip().split("\n")[0]
+    return docstring
+
+
 def _scan_init(terms: list[str]) -> list[dict]:
     results = []
     for init in ROOT.rglob("__init__.py"):
@@ -93,21 +115,9 @@ def _scan_init(terms: list[str]) -> list[dict]:
         except SyntaxError:
             continue
         # __all__ 추출
-        all_names: list[str] = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Assign):
-                for t in node.targets:
-                    if isinstance(t, ast.Name) and t.id == "__all__":
-                        if isinstance(node.value, ast.List):
-                            all_names = [
-                                elt.value
-                                for elt in node.value.elts
-                                if isinstance(elt, ast.Constant) and isinstance(elt.value, str)
-                            ]
+        all_names = _extract_all_names(tree)
         # docstring 첫 줄
-        docstring = ""
-        if tree.body and isinstance(tree.body[0], ast.Expr) and isinstance(tree.body[0].value, ast.Constant):
-            docstring = str(tree.body[0].value.value).strip().split("\n")[0]
+        docstring = _first_doc_line(tree)
         if all_names:
             results.append(
                 {
@@ -171,26 +181,14 @@ def _hr(char: str = "─", width: int = 60) -> str:
     return char * width
 
 
-def run(argv: list[str]) -> None:
-    terms = _search_terms(argv)
-    label = " + ".join(terms) if any(terms) else "(전체)"
-    print(f"\n{'═' * 60}")
-    print(f"  capability_check  키워드: {label}")
-    print(f"{'═' * 60}\n")
-
-    # 0. 벤더 공식 API — 저장소 안이 아니라 **밖**을 먼저 본다.
-    #    이 도구는 원래 '저장소 내 구현' 만 찾았다. 그래서 네이버 커머스API 가
-    #    무료로 제공하는 상품등록을 CDP 로 만들다 하루를 버렸다(2026-08-15).
-    #    "API가 있으면 API 호출, CDP는 최후 수단"(CLAUDE.md)을 실제로 지키려면
-    #    맨 앞에 있어야 한다.
-    vendors = find_vendor_apis(terms)
+def _print_vendors(vendors):
     if vendors:
         print(f"[0] 벤더 공식 API  ({len(vendors)}건)  ★ CDP 착수 전 필독")
         print(_hr())
         print(format_vendor_report(vendors))
 
-    # 1. service_catalog
-    catalog = _scan_catalog(terms)
+
+def _print_catalog(catalog):
     if catalog:
         print(f"[1] CLI / 서비스 카탈로그  ({len(catalog)}건)")
         print(_hr())
@@ -211,8 +209,8 @@ def run(argv: list[str]) -> None:
                 print(f"  정책:    {c['policy']}")
             print()
 
-    # 2. API 엔드포인트
-    routers = _scan_routers(terms)
+
+def _print_routers(routers):
     if routers:
         print(f"[2] API 엔드포인트  ({len(routers)}건)")
         print(_hr())
@@ -224,8 +222,8 @@ def run(argv: list[str]) -> None:
             print(f"    {r['method']:<6} {r['path']}")
         print()
 
-    # 3. Python __init__ exports
-    inits = _scan_init(terms)
+
+def _print_inits(inits):
     if inits:
         print(f"[3] Python 패키지 진입점  ({len(inits)}건)")
         print(_hr())
@@ -236,8 +234,8 @@ def run(argv: list[str]) -> None:
             print(f"     exports: {', '.join(i['exports'])}")
             print()
 
-    # 4. 데이터 파일
-    data_files = _scan_data_files(terms)
+
+def _print_data_files(data_files):
     if data_files:
         print(f"[4] 최근 데이터 파일  ({len(data_files)}건)")
         print(_hr())
@@ -245,12 +243,48 @@ def run(argv: list[str]) -> None:
             print(f"  {f}")
         print()
 
-    warn = vendor_cdp_warning(vendors)
+
+def _print_cdp_warn(warn):
     if warn:
         print(_hr("═"))
         print(warn)
         print(_hr("═"))
         print()
+
+
+def run(argv: list[str]) -> None:
+    terms = _search_terms(argv)
+    label = " + ".join(terms) if any(terms) else "(전체)"
+    print(f"\n{'═' * 60}")
+    print(f"  capability_check  키워드: {label}")
+    print(f"{'═' * 60}\n")
+
+    # 0. 벤더 공식 API — 저장소 안이 아니라 **밖**을 먼저 본다.
+    #    이 도구는 원래 '저장소 내 구현' 만 찾았다. 그래서 네이버 커머스API 가
+    #    무료로 제공하는 상품등록을 CDP 로 만들다 하루를 버렸다(2026-08-15).
+    #    "API가 있으면 API 호출, CDP는 최후 수단"(CLAUDE.md)을 실제로 지키려면
+    #    맨 앞에 있어야 한다.
+    vendors = find_vendor_apis(terms)
+    _print_vendors(vendors)
+
+    # 1. service_catalog
+    catalog = _scan_catalog(terms)
+    _print_catalog(catalog)
+
+    # 2. API 엔드포인트
+    routers = _scan_routers(terms)
+    _print_routers(routers)
+
+    # 3. Python __init__ exports
+    inits = _scan_init(terms)
+    _print_inits(inits)
+
+    # 4. 데이터 파일
+    data_files = _scan_data_files(terms)
+    _print_data_files(data_files)
+
+    warn = vendor_cdp_warning(vendors)
+    _print_cdp_warn(warn)
 
     if not catalog and not routers and not inits and not data_files:
         if vendors:

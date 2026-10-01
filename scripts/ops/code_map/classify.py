@@ -107,11 +107,7 @@ def _signals(text: str) -> set[str]:
     return s
 
 
-def classify_one(p: str, text: str, main_file: bool) -> tuple[str, str, str, str]:
-    """(layer, role, reason, confidence)."""
-    pp = PurePosixPath(p)
-    name, stem, low = pp.name, pp.stem, p.lower()
-    sig = _signals(text) if text else set()
+def _classify_by_path(low, name):
     if (
         low.startswith("tests/")
         or "/tests/" in low
@@ -127,6 +123,10 @@ def classify_one(p: str, text: str, main_file: bool) -> tuple[str, str, str, str
         r"^(verify_|audit_|check_|smoke_|probe_)", name
     ):
         return "L12", "ops_tool", "운영·감사 도구", "high"
+    return None
+
+
+def _classify_by_name(pp, low, name, stem, sig):
     if low.startswith("admin-web/"):
         return "L9", "ui_bff" if "/api/" in low and name.startswith("route.") else "ui", "admin-web", "high"
     if "api" in sig and pp.suffix == ".py":
@@ -137,7 +137,10 @@ def classify_one(p: str, text: str, main_file: bool) -> tuple[str, str, str, str
         return "L7", "persistence", "DB·저장 신호", "high" if "db" in sig else "low"
     if re.search(r"workflow|pipeline|scheduler|runner|campaign|daily|batch|orchestrat", stem):
         return "L6", "workflow", "업무 흐름 이름", "high"
-    dom = _domain(p)
+    return None
+
+
+def _classify_by_domain(low, stem, dom, sig):
     if re.search(r"polic|gate|approval|allowlist|guard|permission|safety|risk|consent|auth", stem):
         return "L2", "policy", "정책·게이트 이름", "high"
     if low.startswith(("local_agent/", "agent/")) and dom in ("local_agent", "common", "browser"):
@@ -146,6 +149,24 @@ def classify_one(p: str, text: str, main_file: bool) -> tuple[str, str, str, str
         sig & {"browser", "http"} or low.startswith(("scripts/", "ai_orchestrator/connectors/"))
     ):
         return "L5", "site_module", f"도메인({dom}) 자동화", "high" if sig & {"browser", "http"} else "low"
+    return None
+
+
+def classify_one(p: str, text: str, main_file: bool) -> tuple[str, str, str, str]:
+    """(layer, role, reason, confidence)."""
+    pp = PurePosixPath(p)
+    name, stem, low = pp.name, pp.stem, p.lower()
+    sig = _signals(text) if text else set()
+    _early = _classify_by_path(low, name)
+    if _early is not None:
+        return _early
+    _early = _classify_by_name(pp, low, name, stem, sig)
+    if _early is not None:
+        return _early
+    dom = _domain(p)
+    _early = _classify_by_domain(low, stem, dom, sig)
+    if _early is not None:
+        return _early
     if "browser" in sig or dom == "browser":
         return "L4", "browser_engine", "범용 브라우저·CDP", "high"
     if "http" in sig:

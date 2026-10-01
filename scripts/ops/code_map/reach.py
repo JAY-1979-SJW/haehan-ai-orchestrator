@@ -74,28 +74,37 @@ class Resolver:
             dotted_candidates = [module]
         for base in bases:
             for dotted in dotted_candidates:
-                hits: list[str] = []
-                mod_file = (
-                    self._module_file(base, dotted)
-                    if dotted
-                    else (f"{base}/__init__.py" if f"{base}/__init__.py" in self.py else None)
-                )
-                if mod_file:
-                    hits.append(mod_file)
-                # from X import Y — Y 가 하위 모듈이면 그 파일도
-                for n in names:
-                    if n == "*":
-                        continue
-                    sub = self._module_file(base, f"{dotted}.{n}" if dotted else n)
-                    if sub:
-                        hits.append(sub)
-                if hits or (dotted and self._pkg_exists(base, dotted)):
-                    extra = []
-                    for h in hits:
-                        extra += [i for i in self._parent_inits(h, base) if i in self.py]
-                    return sorted(set(hits + extra)), "internal"
+                found = self._internal_hits(base, dotted, names)
+                if found is not None:
+                    return found
         if level:
             return [], "failed"
+        return self._failed_or_external(bases, module)
+
+    def _internal_hits(self, base: str, dotted: str, names: tuple[str, ...]) -> tuple[list[str], str] | None:
+        hits: list[str] = []
+        mod_file = (
+            self._module_file(base, dotted)
+            if dotted
+            else (f"{base}/__init__.py" if f"{base}/__init__.py" in self.py else None)
+        )
+        if mod_file:
+            hits.append(mod_file)
+        # from X import Y — Y 가 하위 모듈이면 그 파일도
+        for n in names:
+            if n == "*":
+                continue
+            sub = self._module_file(base, f"{dotted}.{n}" if dotted else n)
+            if sub:
+                hits.append(sub)
+        if hits or (dotted and self._pkg_exists(base, dotted)):
+            extra = []
+            for h in hits:
+                extra += [i for i in self._parent_inits(h, base) if i in self.py]
+            return sorted(set(hits + extra)), "internal"
+        return None
+
+    def _failed_or_external(self, bases: list[str], module: str) -> tuple[list[str], str]:
         # 저장소 루트('')에서는 첫 세그먼트 단독 일치만으로 "내부인데 깨짐"으로 본다 —
         # 이 프로젝트의 절대 import 관례가 항상 저장소 루트 기준(scripts.xxx, ai_orchestrator.xxx)
         # 이라 최상위 세그먼트 하나가 저장소 루트의 실제 패키지/모듈과 겹치는 건 강한 근거.
@@ -144,6 +153,69 @@ class Resolver:
         return [p for p in options if p == cand or cand.endswith("/" + p) or p.endswith("/" + cand)]
 
 
+def _add_import_edges(res, rel, pf, edges, import_edges, stats, failed_samples):  # noqa: PLR0913 - build_graph 누적 상태를 그대로 넘기는 private 헬퍼(동작 불변 분리)
+    for module, level, names in pf.imports:
+        targets, status = res.resolve_import(rel, module, level, names)
+        stats[f"import_{status}"] += 1
+        if status == "failed" and len(failed_samples) < 60:
+            failed_samples.append(f"{rel}: {'.' * level}{module}")
+        edges[rel].update(t for t in targets if t != rel)
+        import_edges[rel].update(t for t in targets if t != rel)
+
+
+def _add_dynamic_edges(res, rel, pf, edges, import_edges, stats, dynamic_files):  # noqa: PLR0913 - build_graph 누적 상태를 그대로 넘기는 private 헬퍼(동작 불변 분리)
+    for dotted in pf.dynamic_literal:
+        stats["dynamic_literal"] += 1
+        edges[rel].update(res.resolve_dotted(rel, dotted))
+        import_edges[rel].update(t for t in res.resolve_dotted(rel, dotted) if t != rel)
+    if pf.dynamic_unresolved:
+        stats["dynamic_unresolved"] += pf.dynamic_unresolved
+        dynamic_files[rel] = pf.dynamic_unresolved
+
+
+def _add_string_edges(res, rel, pf, edges, stats):
+    for s in pf.strings:
+        paths, dotted_set = scan.string_refs(s)
+        tg = set()
+        for c in paths:
+            tg.update(res.resolve_path(rel, c))
+        for d in dotted_set:
+            tg.update(res.resolve_dotted(rel, d))
+        tg.discard(rel)
+        stats["string_edges"] += len(tg - edges[rel])
+        edges[rel].update(tg)
+
+
+def _collect_file_launchers(res, files, add_root):
+    for rel in files:
+        if rel.endswith(".py") or not scan.is_launcher(rel):
+            continue
+        try:
+            text = (scan.ROOT / rel).read_text(encoding="utf-8-sig", errors="replace")
+        except OSError:
+            continue
+        paths, dotted_set = scan.string_refs(text)
+        for c in paths:
+            for t in res.resolve_path(rel, c):
+                add_root(t, rel)
+        for d in dotted_set:
+            for t in res.resolve_dotted(rel, d):
+                add_root(t, rel)
+
+
+def _collect_skill_launchers(res, add_root):
+    skills = Path.home() / ".claude" / "skills"
+    if skills.is_dir():
+        for md in sorted(skills.glob("*/SKILL.md")):
+            paths, dotted_set = scan.string_refs(md.read_text(encoding="utf-8", errors="replace"))
+            for c in paths:
+                for t in res.resolve_path("", c):
+                    add_root(t, f"skill:{md.parent.name}")
+            for d in dotted_set:
+                for t in res.resolve_dotted("", d):
+                    add_root(t, f"skill:{md.parent.name}")
+
+
 def build_graph(files: list[str], manual: dict) -> dict:
     py_files = [f for f in files if f.endswith(".py")]
     res = Resolver(py_files)
@@ -170,30 +242,9 @@ def build_graph(files: list[str], manual: dict) -> dict:
             continue
         if pf.has_main:
             has_main.add(rel)
-        for module, level, names in pf.imports:
-            targets, status = res.resolve_import(rel, module, level, names)
-            stats[f"import_{status}"] += 1
-            if status == "failed" and len(failed_samples) < 60:
-                failed_samples.append(f"{rel}: {'.' * level}{module}")
-            edges[rel].update(t for t in targets if t != rel)
-            import_edges[rel].update(t for t in targets if t != rel)
-        for dotted in pf.dynamic_literal:
-            stats["dynamic_literal"] += 1
-            edges[rel].update(res.resolve_dotted(rel, dotted))
-            import_edges[rel].update(t for t in res.resolve_dotted(rel, dotted) if t != rel)
-        if pf.dynamic_unresolved:
-            stats["dynamic_unresolved"] += pf.dynamic_unresolved
-            dynamic_files[rel] = pf.dynamic_unresolved
-        for s in pf.strings:
-            paths, dotted_set = scan.string_refs(s)
-            tg = set()
-            for c in paths:
-                tg.update(res.resolve_path(rel, c))
-            for d in dotted_set:
-                tg.update(res.resolve_dotted(rel, d))
-            tg.discard(rel)
-            stats["string_edges"] += len(tg - edges[rel])
-            edges[rel].update(tg)
+        _add_import_edges(res, rel, pf, edges, import_edges, stats, failed_samples)
+        _add_dynamic_edges(res, rel, pf, edges, import_edges, stats, dynamic_files)
+        _add_string_edges(res, rel, pf, edges, stats)
 
     # 런처 루트: 비파이썬 실행 파일에서 참조된 파이썬 파일
     launcher_roots: dict[str, set[str]] = {}
@@ -201,35 +252,13 @@ def build_graph(files: list[str], manual: dict) -> dict:
     def add_root(target: str, source: str) -> None:
         launcher_roots.setdefault(target, set()).add(source)
 
-    for rel in files:
-        if rel.endswith(".py") or not scan.is_launcher(rel):
-            continue
-        try:
-            text = (scan.ROOT / rel).read_text(encoding="utf-8-sig", errors="replace")
-        except OSError:
-            continue
-        paths, dotted_set = scan.string_refs(text)
-        for c in paths:
-            for t in res.resolve_path(rel, c):
-                add_root(t, rel)
-        for d in dotted_set:
-            for t in res.resolve_dotted(rel, d):
-                add_root(t, rel)
+    _collect_file_launchers(res, files, add_root)
     # 수기 진입점(작업 스케줄러·시작프로그램 등)
     for item in manual.get("entrypoints", []):
         for t in res.resolve_path("", item["path"]):
             add_root(t, f"manual:{item['kind']}")
     # 사용자 스킬(~/.claude/skills/*/SKILL.md)
-    skills = Path.home() / ".claude" / "skills"
-    if skills.is_dir():
-        for md in sorted(skills.glob("*/SKILL.md")):
-            paths, dotted_set = scan.string_refs(md.read_text(encoding="utf-8", errors="replace"))
-            for c in paths:
-                for t in res.resolve_path("", c):
-                    add_root(t, f"skill:{md.parent.name}")
-            for d in dotted_set:
-                for t in res.resolve_dotted("", d):
-                    add_root(t, f"skill:{md.parent.name}")
+    _collect_skill_launchers(res, add_root)
 
     return {
         "py_files": py_files,

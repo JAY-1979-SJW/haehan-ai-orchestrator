@@ -57,7 +57,7 @@ def _hdr(ws, row, cols, fill, font, heights=22):
     ws.row_dimensions[row].height = heights
 
 
-def _cell(ws, row, col, val, fill=None, font=None, align=None, bold=False):
+def _cell(ws, row, col, val, fill=None, font=None, align=None, bold=False):  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     c = ws.cell(row=row, column=col, value=val)
     c.border = BDR
     c.font = Font(bold=bold, size=10) if not font else font
@@ -122,19 +122,7 @@ def _write_articles(ws, articles, start_row=2):
     return start_row + len(articles) + 1
 
 
-def _write_analysis(ws, articles, month_label, start_row):
-    """월 분석 블록을 start_row 아래에 작성. 다음 빈 행 번호 반환."""
-    r = start_row
-
-    # ── 제목 ───────────────────────────────────────────────────────
-    ws.merge_cells(f"A{r}:H{r}")
-    c = ws.cell(row=r, column=1, value=f"📊  {month_label} 분석 요약")
-    c.font = Font(bold=True, size=12, color="1F4E79")
-    c.alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[r].height = 24
-    r += 1
-
-    # ── 키워드별 건수 ───────────────────────────────────────────────
+def _analysis_counts(ws, r, articles):
     kw_c = Counter(kw for a in articles for kw in a.get("matched_kw", []))
     type_c = Counter(_classify_type(a.get("title", "")) for a in articles)
 
@@ -167,10 +155,10 @@ def _write_analysis(ws, articles, month_label, start_row):
                 if bg:
                     cx.fill = PatternFill("solid", fgColor=bg)
         r += 1
+    return r
 
-    r += 1
 
-    # ── 조회수 TOP 10 ──────────────────────────────────────────────
+def _analysis_top10(ws, r, articles):
     ws.merge_cells(f"A{r}:H{r}")
     ws.cell(row=r, column=1, value="🔥  조회수 TOP 10").font = Font(bold=True, size=11, color="C00000")
     ws.row_dimensions[r].height = 20
@@ -205,10 +193,10 @@ def _write_analysis(ws, articles, month_label, start_row):
             lc = ws.cell(row=r, column=8, value="링크")
             lc.hyperlink, lc.font = href, HLNK
         r += 1
+    return r
 
-    r += 1
 
-    # ── 주요 키워드 조합 패턴 ──────────────────────────────────────
+def _analysis_combos(ws, r, articles):
     ws.merge_cells(f"A{r}:H{r}")
     ws.cell(row=r, column=1, value="📌  자주 나오는 키워드 조합").font = Font(bold=True, size=11, color="2E75B6")
     ws.row_dimensions[r].height = 20
@@ -224,13 +212,38 @@ def _write_analysis(ws, articles, month_label, start_row):
         pct.border = BDR
         pct.alignment = Alignment(horizontal="center")
         r += 1
+    return r
+
+
+def _write_analysis(ws, articles, month_label, start_row):
+    """월 분석 블록을 start_row 아래에 작성. 다음 빈 행 번호 반환."""
+    r = start_row
+
+    # ── 제목 ───────────────────────────────────────────────────────
+    ws.merge_cells(f"A{r}:H{r}")
+    c = ws.cell(row=r, column=1, value=f"📊  {month_label} 분석 요약")
+    c.font = Font(bold=True, size=12, color="1F4E79")
+    c.alignment = Alignment(horizontal="left", vertical="center")
+    ws.row_dimensions[r].height = 24
+    r += 1
+
+    # ── 키워드별 건수 ───────────────────────────────────────────────
+    r = _analysis_counts(ws, r, articles)
+
+    r += 1
+
+    # ── 조회수 TOP 10 ──────────────────────────────────────────────
+    r = _analysis_top10(ws, r, articles)
+
+    r += 1
+
+    # ── 주요 키워드 조합 패턴 ──────────────────────────────────────
+    r = _analysis_combos(ws, r, articles)
 
     return r + 1
 
 
-def main():
-    data = json.loads(Path(DATA_PATH).read_text(encoding="utf-8"))
-
+def _annotate_dates(data):
     for a in data:
         try:
             dt = datetime.strptime(a["date"], "%Y-%m-%d")
@@ -242,6 +255,8 @@ def main():
             a["_label"] = "날짜미상"
             a["_quarter"] = "날짜미상"
 
+
+def _group_months(data):
     by_month: dict[str, list] = defaultdict(list)
     for a in data:
         by_month[a["_ym"]].append(a)
@@ -249,10 +264,10 @@ def main():
     months_sorted = sorted([m for m in by_month if m != "날짜미상"], reverse=True)
     if "날짜미상" in by_month:
         months_sorted.append("날짜미상")
+    return by_month, months_sorted
 
-    wb = Workbook()
 
-    # ── 전체 요약 시트 ────────────────────────────────────────────────
+def _summary_header(wb, data):
     ws_s = wb.active
     ws_s.title = "전체요약"
 
@@ -270,10 +285,10 @@ def main():
     ).font = Font(italic=True, color="595959", size=10)
     ws_s.merge_cells("A2:H2")
     ws_s["A2"].alignment = Alignment(horizontal="center")
+    return ws_s
 
-    # 월별 요약
-    _hdr(ws_s, 4, ["월", "건수", "내역서", "적산", "산출", "단가", "주요카테고리", "주요유형"], H1_FILL, H1_FONT)
 
+def _summary_month_rows(ws_s, months_sorted, by_month):
     for ri, ym in enumerate(months_sorted, 5):
         arts = by_month[ym]
         kw_c = Counter(kw for a in arts for kw in a.get("matched_kw", []))
@@ -298,6 +313,8 @@ def main():
             cx.font = BASE_FONT
             cx.alignment = Alignment(horizontal="left" if ci in (1, 7, 8) else "center", vertical="center")
 
+
+def _summary_totals(ws_s, data, months_sorted):
     total_row = 5 + len(months_sorted)
     kw_all = Counter(kw for a in data for kw in a.get("matched_kw", []))
     _hdr(
@@ -322,8 +339,10 @@ def main():
         ws_s.column_dimensions[col].width = 10
     ws_s.column_dimensions["G"].width = 16
     ws_s.column_dimensions["H"].width = 12
+    return total_row
 
-    # 전체 TOP 15
+
+def _summary_top15(ws_s, data, total_row):
     r_off = total_row + 2
     ws_s.merge_cells(f"A{r_off}:H{r_off}")
     ws_s.cell(row=r_off, column=1, value="🔥  전체 기간 조회수 TOP 15").font = Font(bold=True, size=12, color="C00000")
@@ -357,9 +376,8 @@ def main():
             lc.hyperlink, lc.font = href, HLNK
         r_off += 1
 
-    ws_s.freeze_panes = "A5"
 
-    # ── 월별 시트 (목록 + 분석) ───────────────────────────────────────
+def _write_month_sheets(wb, months_sorted, by_month):
     for ym in months_sorted:
         arts = by_month[ym]
         label = arts[0]["_label"] if arts else ym
@@ -384,6 +402,34 @@ def main():
 
         # 게시글 목록
         _write_articles(ws, sorted(arts, key=lambda x: x.get("date", ""), reverse=True), start_row=next_r)
+
+
+def main():
+    data = json.loads(Path(DATA_PATH).read_text(encoding="utf-8"))
+
+    _annotate_dates(data)
+
+    by_month, months_sorted = _group_months(data)
+
+    wb = Workbook()
+
+    # ── 전체 요약 시트 ────────────────────────────────────────────────
+    ws_s = _summary_header(wb, data)
+
+    # 월별 요약
+    _hdr(ws_s, 4, ["월", "건수", "내역서", "적산", "산출", "단가", "주요카테고리", "주요유형"], H1_FILL, H1_FONT)
+
+    _summary_month_rows(ws_s, months_sorted, by_month)
+
+    total_row = _summary_totals(ws_s, data, months_sorted)
+
+    # 전체 TOP 15
+    _summary_top15(ws_s, data, total_row)
+
+    ws_s.freeze_panes = "A5"
+
+    # ── 월별 시트 (목록 + 분석) ───────────────────────────────────────
+    _write_month_sheets(wb, months_sorted, by_month)
 
     # ── 저장 ──────────────────────────────────────────────────────────
     wb.save(OUT_PATH)

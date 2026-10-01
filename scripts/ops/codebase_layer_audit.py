@@ -738,6 +738,18 @@ def parse_import_edges(rows: list[ClassifiedFile], root: Path = ROOT) -> dict[st
     return graph
 
 
+def _pop_component(stack: list[str], on_stack: set[str], node: str, components: list[list[str]]) -> None:
+    component = []
+    while True:
+        item = stack.pop()
+        on_stack.remove(item)
+        component.append(item)
+        if item == node:
+            break
+    if len(component) > 1:
+        components.append(sorted(component))
+
+
 def find_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
     index = 0
     stack: list[str] = []
@@ -762,15 +774,7 @@ def find_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
                 lowlinks[node] = min(lowlinks[node], indexes[target])
 
         if lowlinks[node] == indexes[node]:
-            component = []
-            while True:
-                item = stack.pop()
-                on_stack.remove(item)
-                component.append(item)
-                if item == node:
-                    break
-            if len(component) > 1:
-                components.append(sorted(component))
+            _pop_component(stack, on_stack, node, components)
 
     for node in sorted(graph):
         if node not in indexes:
@@ -1152,6 +1156,19 @@ def validate_pydantic_schema_modules() -> list[dict]:
     return results
 
 
+def _skip_jsonc_string(text: str, i: int, n: int) -> int:
+    j = i + 1
+    while j < n:
+        if text[j] == "\\" and j + 1 < n:
+            j += 2
+            continue
+        if text[j] == '"':
+            j += 1
+            break
+        j += 1
+    return j
+
+
 def _strip_jsonc(text: str) -> str:
     out = []
     i = 0
@@ -1159,15 +1176,7 @@ def _strip_jsonc(text: str) -> str:
     while i < n:
         c = text[i]
         if c == '"':
-            j = i + 1
-            while j < n:
-                if text[j] == "\\" and j + 1 < n:
-                    j += 2
-                    continue
-                if text[j] == '"':
-                    j += 1
-                    break
-                j += 1
+            j = _skip_jsonc_string(text, i, n)
             out.append(text[i:j])
             i = j
             continue

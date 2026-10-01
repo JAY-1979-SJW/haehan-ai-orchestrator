@@ -182,6 +182,47 @@ def write_frames(img: Image.Image, frame_dir: Path, start_idx: int, count: int) 
     return start_idx + count
 
 
+def _apply_actions(page, scene, frame_idx, fonts):
+    for action in scene.get("actions", []):
+        if action == "scroll_down":
+            page.mouse.wheel(0, 400)
+            time.sleep(0.6)
+        elif action == "click_filter":
+            btns = page.locator("button").all()
+            if len(btns) > 1:
+                btns[1].click(timeout=1000)
+                time.sleep(0.5)
+        elif action == "click_filter_warn":
+            warn_btn = page.locator("button", has_text="WARN").first
+            try:
+                warn_btn.click(timeout=2000)
+                time.sleep(0.5)
+            except Exception:  # noqa: BLE001 - 한글 폰트 로드 실패시 기본 폰트로 폴백, 프로모 영상 녹화 중 버튼 클릭 브라우저자동화 실패 무시(best-effort)
+                pass
+        elif action == "nav_tour":
+            nav_links = [
+                "/assistant/tasks",
+                "/assistant/approval",
+                "/assistant/external-sites",
+                "/assistant/logs",
+                "/assistant/storage",
+                "/assistant/deployment",
+                "/assistant",
+            ]
+            for link in nav_links:
+                page.goto(BASE_URL + link)
+                page.wait_for_load_state("domcontentloaded")
+                time.sleep(0.7)
+                ss_path = FRAMES_DIR / f"_tmp_{frame_idx:05d}.png"
+                take_screenshot(page, ss_path)
+                raw = Image.open(ss_path)
+                captioned = add_caption(raw, scene["caption_ko"], scene["caption_en"], fonts)
+                frame_idx = write_frames(captioned, FRAMES_DIR, frame_idx, FPS)
+                ss_path.unlink(missing_ok=True)
+            continue
+    return frame_idx
+
+
 def run():
     from playwright.sync_api import sync_playwright
 
@@ -203,43 +244,7 @@ def run():
             time.sleep(1.2)
 
             # 액션 처리
-            for action in scene.get("actions", []):
-                if action == "scroll_down":
-                    page.mouse.wheel(0, 400)
-                    time.sleep(0.6)
-                elif action == "click_filter":
-                    btns = page.locator("button").all()
-                    if len(btns) > 1:
-                        btns[1].click(timeout=1000)
-                        time.sleep(0.5)
-                elif action == "click_filter_warn":
-                    warn_btn = page.locator("button", has_text="WARN").first
-                    try:
-                        warn_btn.click(timeout=2000)
-                        time.sleep(0.5)
-                    except Exception:  # noqa: BLE001 - 한글 폰트 로드 실패시 기본 폰트로 폴백, 프로모 영상 녹화 중 버튼 클릭 브라우저자동화 실패 무시(best-effort)
-                        pass
-                elif action == "nav_tour":
-                    nav_links = [
-                        "/assistant/tasks",
-                        "/assistant/approval",
-                        "/assistant/external-sites",
-                        "/assistant/logs",
-                        "/assistant/storage",
-                        "/assistant/deployment",
-                        "/assistant",
-                    ]
-                    for link in nav_links:
-                        page.goto(BASE_URL + link)
-                        page.wait_for_load_state("domcontentloaded")
-                        time.sleep(0.7)
-                        ss_path = FRAMES_DIR / f"_tmp_{frame_idx:05d}.png"
-                        take_screenshot(page, ss_path)
-                        raw = Image.open(ss_path)
-                        captioned = add_caption(raw, scene["caption_ko"], scene["caption_en"], fonts)
-                        frame_idx = write_frames(captioned, FRAMES_DIR, frame_idx, FPS)
-                        ss_path.unlink(missing_ok=True)
-                    continue
+            frame_idx = _apply_actions(page, scene, frame_idx, fonts)
 
             # 스크린샷
             ss_path = FRAMES_DIR / f"_tmp_{frame_idx:05d}.png"
