@@ -46,6 +46,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "tasks",    label: "작업 목록",   shortLabel: "작업", href: "/assistant/tasks" },
       { key: "approval", label: "승인 게이트", shortLabel: "승인", href: "/assistant/approval" },
+      { key: "scheduled", label: "예약 작업", shortLabel: "예약", href: "/scheduled" },
     ],
   },
   // "관리자" 그룹("회원 승인" /admin/users, "라이선스 관리" /admin/licenses) 임시 제거

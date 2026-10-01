@@ -62,6 +62,23 @@ def _write_server_discovery_file() -> None:
         logger.warning("[server-discovery] server_info.json 기록 실패(비치명적): %s", e)
 
 
+def _start_scheduled_job_loop() -> asyncio.Task | None:
+    try:
+        from .connectors.scheduled_job_scheduler import scheduled_job_loop
+
+        return asyncio.create_task(scheduled_job_loop())
+    except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동 시 백그라운드 스케줄러 시작 실패 처리 - 로그만 남기고 해당 기능 비활성화, 보안 판정과 무관
+        logger.warning("예약 작업 루프 시작 실패 (무시): %s", e)
+        return None
+
+
+async def _stop_task(task: asyncio.Task | None) -> None:
+    if task:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
@@ -93,6 +110,9 @@ async def lifespan(app: FastAPI):
         gonobi_task = None
         logger.warning("gonobi 스케줄러 시작 실패 (무시): %s", e)
 
+    # 사용자 예약 작업 루프 (앱 화면에서 만든 예약을 실행 시각에 실행)
+    scheduled_job_task = _start_scheduled_job_loop()
+
     # CDP 팝업 백그라운드 폴러 시작 (CDP 미연결 시 자동 재시도)
     try:
         import pathlib
@@ -121,6 +141,7 @@ async def lifespan(app: FastAPI):
             gonobi_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await gonobi_task
+        await _stop_task(scheduled_job_task)
         if poller:
             # 종료 시 폴러 정리 실패는 무시 — 프로세스가 어차피 종료되는 중
             with contextlib.suppress(Exception):
