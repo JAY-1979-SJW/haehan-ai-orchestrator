@@ -129,6 +129,58 @@ def _error_payload(
     }
 
 
+def _build_success_payload(
+    page,
+    response,
+    requested_url: str,
+    timeout_ms: int,
+    snippet_max_chars: int,
+    timeout_exc: type[BaseException],
+) -> dict:
+    """goto 성공 후 페이지에서 메타·본문 스니펫을 읽어 success payload 를 만든다."""
+    try:
+        http_status = (
+            int(response.status) if response is not None else None
+        )
+    except Exception:  # noqa: BLE001
+        http_status = None
+    try:
+        final_url = page.url or requested_url
+    except Exception:  # noqa: BLE001
+        final_url = requested_url
+    try:
+        title = (page.title() or "").strip()
+    except Exception:  # noqa: BLE001
+        title = ""
+    snippet = ""
+    try:
+        body_text = page.locator("body").inner_text(
+            timeout=timeout_ms
+        ) or ""
+        snippet = body_text[:snippet_max_chars]
+    except timeout_exc:
+        # 본문 추출 타임아웃 — 페이지는 받았으나 부분 결과.
+        logger.warning(
+            "body innerText timeout | url=%s", requested_url,
+        )
+    except Exception as body_err:  # noqa: BLE001
+        logger.warning(
+            "body innerText 추출 실패: %s", body_err,
+        )
+    return {
+        "status": "success",
+        "data": {
+            "url": requested_url,
+            "final_url": final_url,
+            "title": title,
+            "snippet": snippet,
+            "http_status": http_status,
+            "fetched_at": _iso_utc_now(),
+            "timed_out": False,
+        },
+    }
+
+
 def fetch_web_page(
     url: str,
     *,
@@ -201,47 +253,9 @@ def fetch_web_page(
                                 timed_out=True,
                             )
                         else:
-                            try:
-                                http_status = (
-                                    int(response.status) if response is not None else None
-                                )
-                            except Exception:  # noqa: BLE001
-                                http_status = None
-                            try:
-                                final_url = page.url or requested_url
-                            except Exception:  # noqa: BLE001
-                                final_url = requested_url
-                            try:
-                                title = (page.title() or "").strip()
-                            except Exception:  # noqa: BLE001
-                                title = ""
-                            snippet = ""
-                            try:
-                                body_text = page.locator("body").inner_text(
-                                    timeout=timeout_ms
-                                ) or ""
-                                snippet = body_text[:snippet_max_chars]
-                            except PwTimeoutError:
-                                # 본문 추출 타임아웃 — 페이지는 받았으나 부분 결과.
-                                logger.warning(
-                                    "body innerText timeout | url=%s", requested_url,
-                                )
-                            except Exception as body_err:  # noqa: BLE001
-                                logger.warning(
-                                    "body innerText 추출 실패: %s", body_err,
-                                )
-                            result = {
-                                "status": "success",
-                                "data": {
-                                    "url": requested_url,
-                                    "final_url": final_url,
-                                    "title": title,
-                                    "snippet": snippet,
-                                    "http_status": http_status,
-                                    "fetched_at": _iso_utc_now(),
-                                    "timed_out": False,
-                                },
-                            }
+                            result = _build_success_payload(
+                                page, response, requested_url, timeout_ms, snippet_max_chars, PwTimeoutError
+                            )
                     finally:
                         page.close()
                 finally:
