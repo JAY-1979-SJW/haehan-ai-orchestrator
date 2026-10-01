@@ -13,6 +13,63 @@ from contextlib import suppress
 from .blog_mixin_common import _js
 
 
+_BLOG_POSTS_DOM_JS = """
+            (() => {
+              const res = [];
+              const seen = new Set();
+
+              // 방법1: td.p12 구조 (구형 Naver Blog - URL 링크 + 제목 td)
+              const p12cells = document.querySelectorAll('td.p12');
+              for (const td of p12cells) {
+                const urlA = td.querySelector('p.url a, a[href*="blog.naver.com"]');
+                if (!urlA) continue;
+                const href = urlA.href || '';
+                const m = href.match(/[/](\\d{10,})/) || href.match(/logNo=(\\d+)/);
+                const logNo = m ? m[1] : '';
+                if (!logNo || seen.has(logNo)) continue;
+                seen.add(logNo);
+                // 제목: td innerText 첫 줄 (카테고리명 제거 - "제목  카테고리" 형식)
+                const lines = td.innerText.trim().split('\\n').map(l => l.trim()).filter(Boolean);
+                const rawTitle = lines[0] || '';
+                const title = rawTitle.split(/\\s{2,}/)[0].trim();
+                if (!title || title.length < 2) continue;
+                // 날짜: YYYY. M. D. HH:MM 패턴
+                const dateM = td.innerText.match(/(\\d{4}\\.\\s*\\d{1,2}\\.\\s*\\d{1,2}\\..*)/);
+                const date = dateM ? dateM[1].trim().slice(0,20) : '';
+                res.push({log_no: logNo, title: title.slice(0,100), date, summary:'', thumb_url:'', href, comment_count:0});
+              }
+              if (res.length) return res;
+
+              // 방법2: blog.naver.com/{blogId}/{logNo} 직접 링크
+              for (const a of document.querySelectorAll('a[href*="blog.naver.com"]')) {
+                const href = a.href || '';
+                const m = href.match(/blog\\.naver\\.com\\/\\w+\\/(\\d{10,})/);
+                if (!m || seen.has(m[1])) continue;
+                seen.add(m[1]);
+                // 부모 td/li에서 제목 추출
+                const container = a.closest('td') || a.closest('li') || a.parentElement;
+                const lines = container ? container.innerText.trim().split('\\n').map(l=>l.trim()).filter(Boolean) : [];
+                const title = lines.find(l => l.length > 2 && !l.startsWith('http') && !l.match(/^\\d{4}\\./) ) || '';
+                if (!title) continue;
+                res.push({log_no: m[1], title: title.slice(0,100), date:'', summary:'', thumb_url:'', href, comment_count:0});
+              }
+              if (res.length) return res;
+
+              // 방법3: PostView.naver?blogId=...&logNo=... 쿼리스트링 형식
+              for (const a of document.querySelectorAll('a[href*="logNo="]')) {
+                const href = a.href || '';
+                const m = href.match(/logNo=(\\d{10,})/);
+                if (!m || seen.has(m[1])) continue;
+                seen.add(m[1]);
+                const title = a.textContent.trim();
+                if (!title || title.length < 2) continue;
+                res.push({log_no: m[1], title: title.slice(0,100), date:'', summary:'', thumb_url:'', href, comment_count:0});
+              }
+              return res;
+            })()
+            """
+
+
 class BlogReadMixin:
     def blog_info(self, blog_url: str) -> dict:
         """블로그 기본정보 조회."""
@@ -197,6 +254,66 @@ class BlogReadMixin:
 
         return all_posts
 
+    def _blog_posts_dom_fallback(self, blog_id: str, posts: list, seen: set[str]) -> object:
+        """API 실패 시 DOM 폴백 1~2단계. posts/seen 을 갱신하고 사용한 frame 을 반환."""
+        # PostList 프레임에서 포스트 추출
+        frame = self._get_blog_post_frame(blog_id) or self._page
+        try:
+            result = frame.evaluate(_BLOG_POSTS_DOM_JS)
+            for p in result:
+                if p["log_no"] not in seen:
+                    seen.add(p["log_no"])
+                    posts.append(p)
+        except Exception:  # noqa: S110, BLE001
+            pass
+
+        # 폴백: extract_blog_posts.js (카드형 레이아웃)
+        if not posts:
+            try:
+                result = frame.evaluate(_js("extract_blog_posts.js"))
+                for p in result:
+                    if p.get("log_no") and p["log_no"] not in seen:
+                        seen.add(p["log_no"])
+                        posts.append(p)
+            except Exception:  # noqa: S110, BLE001
+                pass
+        return frame
+
+    def _blog_posts_link_fallback(self, blog_id: str, max_posts: int, posts: list) -> None:
+        links = self.extract_links(filter_href=f"blog.naver.com/{blog_id}/")
+        for lk in links[:max_posts]:
+            m = re.search(r"/(\d{10,})", lk.get("href", ""))
+            if m:
+                posts.append(
+                    {
+                        "log_no": m.group(1),
+                        "title": lk.get("text", "")[:100],
+                        "date": "",
+                        "summary": "",
+                        "thumb_url": "",
+                        "href": lk.get("href", ""),
+                        "comment_count": 0,
+                    }
+                )
+
+    def _blog_posts_mobile_fallback(self, blog_id: str, category_no: str, posts: list, seen: set[str]) -> None:
+        """최종 폴백: 모바일 URL (m.blog.naver.com)."""
+        try:
+            mobile_url = f"https://m.blog.naver.com/{blog_id}"
+            if category_no:
+                mobile_url += f"?categoryNo={category_no}"
+            self.go(mobile_url)
+            time.sleep(2.5)
+            self.scroll_to_bottom(max_scrolls=3)
+            time.sleep(1.5)
+            result = self._page.evaluate(_js("extract_blog_posts_mobile.js"))
+            for p in result:
+                if p.get("log_no") and p["log_no"] not in seen:
+                    seen.add(p["log_no"])
+                    posts.append(p)
+        except Exception:  # noqa: S110, BLE001
+            pass
+
     def blog_posts(self, blog_url: str, category_no: str = "", page: int = 1, max_posts: int = 30) -> list[dict]:
         """블로그 포스트 목록.
 
@@ -221,142 +338,22 @@ class BlogReadMixin:
         self.go(url)
         time.sleep(2.5)
 
-        posts = []
+        posts: list = []
         seen: set[str] = set()
 
-        # PostList 프레임에서 포스트 추출
-        frame = self._get_blog_post_frame(blog_id) or self._page
-        try:
-            result = frame.evaluate("""
-            (() => {
-              const res = [];
-              const seen = new Set();
-
-              // 방법1: td.p12 구조 (구형 Naver Blog - URL 링크 + 제목 td)
-              const p12cells = document.querySelectorAll('td.p12');
-              for (const td of p12cells) {
-                const urlA = td.querySelector('p.url a, a[href*="blog.naver.com"]');
-                if (!urlA) continue;
-                const href = urlA.href || '';
-                const m = href.match(/[/](\\d{10,})/) || href.match(/logNo=(\\d+)/);
-                const logNo = m ? m[1] : '';
-                if (!logNo || seen.has(logNo)) continue;
-                seen.add(logNo);
-                // 제목: td innerText 첫 줄 (카테고리명 제거 - "제목  카테고리" 형식)
-                const lines = td.innerText.trim().split('\\n').map(l => l.trim()).filter(Boolean);
-                const rawTitle = lines[0] || '';
-                const title = rawTitle.split(/\\s{2,}/)[0].trim();
-                if (!title || title.length < 2) continue;
-                // 날짜: YYYY. M. D. HH:MM 패턴
-                const dateM = td.innerText.match(/(\\d{4}\\.\\s*\\d{1,2}\\.\\s*\\d{1,2}\\..*)/);
-                const date = dateM ? dateM[1].trim().slice(0,20) : '';
-                res.push({log_no: logNo, title: title.slice(0,100), date, summary:'', thumb_url:'', href, comment_count:0});
-              }
-              if (res.length) return res;
-
-              // 방법2: blog.naver.com/{blogId}/{logNo} 직접 링크
-              for (const a of document.querySelectorAll('a[href*="blog.naver.com"]')) {
-                const href = a.href || '';
-                const m = href.match(/blog\\.naver\\.com\\/\\w+\\/(\\d{10,})/);
-                if (!m || seen.has(m[1])) continue;
-                seen.add(m[1]);
-                // 부모 td/li에서 제목 추출
-                const container = a.closest('td') || a.closest('li') || a.parentElement;
-                const lines = container ? container.innerText.trim().split('\\n').map(l=>l.trim()).filter(Boolean) : [];
-                const title = lines.find(l => l.length > 2 && !l.startsWith('http') && !l.match(/^\\d{4}\\./) ) || '';
-                if (!title) continue;
-                res.push({log_no: m[1], title: title.slice(0,100), date:'', summary:'', thumb_url:'', href, comment_count:0});
-              }
-              if (res.length) return res;
-
-              // 방법3: PostView.naver?blogId=...&logNo=... 쿼리스트링 형식
-              for (const a of document.querySelectorAll('a[href*="logNo="]')) {
-                const href = a.href || '';
-                const m = href.match(/logNo=(\\d{10,})/);
-                if (!m || seen.has(m[1])) continue;
-                seen.add(m[1]);
-                const title = a.textContent.trim();
-                if (!title || title.length < 2) continue;
-                res.push({log_no: m[1], title: title.slice(0,100), date:'', summary:'', thumb_url:'', href, comment_count:0});
-              }
-              return res;
-            })()
-            """)
-            for p in result:
-                if p["log_no"] not in seen:
-                    seen.add(p["log_no"])
-                    posts.append(p)
-        except Exception:  # noqa: S110, BLE001
-            pass
-
-        # 폴백: extract_blog_posts.js (카드형 레이아웃)
-        if not posts:
-            try:
-                result = frame.evaluate(_js("extract_blog_posts.js"))
-                for p in result:
-                    if p.get("log_no") and p["log_no"] not in seen:
-                        seen.add(p["log_no"])
-                        posts.append(p)
-            except Exception:  # noqa: S110, BLE001
-                pass
+        self._blog_posts_dom_fallback(blog_id, posts, seen)
 
         if not posts:
-            links = self.extract_links(filter_href=f"blog.naver.com/{blog_id}/")
-            for lk in links[:max_posts]:
-                m = re.search(r"/(\d{10,})", lk.get("href", ""))
-                if m:
-                    posts.append(
-                        {
-                            "log_no": m.group(1),
-                            "title": lk.get("text", "")[:100],
-                            "date": "",
-                            "summary": "",
-                            "thumb_url": "",
-                            "href": lk.get("href", ""),
-                            "comment_count": 0,
-                        }
-                    )
+            self._blog_posts_link_fallback(blog_id, max_posts, posts)
 
         # 최종 폴백: 모바일 URL (m.blog.naver.com) — PC 추출이 2개 미만이면 실행
         if len(posts) < 2:
-            try:
-                mobile_url = f"https://m.blog.naver.com/{blog_id}"
-                if category_no:
-                    mobile_url += f"?categoryNo={category_no}"
-                self.go(mobile_url)
-                time.sleep(2.5)
-                self.scroll_to_bottom(max_scrolls=3)
-                time.sleep(1.5)
-                result = self._page.evaluate(_js("extract_blog_posts_mobile.js"))
-                for p in result:
-                    if p.get("log_no") and p["log_no"] not in seen:
-                        seen.add(p["log_no"])
-                        posts.append(p)
-            except Exception:  # noqa: S110, BLE001
-                pass
+            self._blog_posts_mobile_fallback(blog_id, category_no, posts, seen)
 
         return posts[:max_posts]
 
-    def blog_read_post(self, post_url: str) -> dict:
-        """블로그 포스트 본문 읽기."""
-        m_id = re.search(r"blog\.naver\.com/(\w+)/(\d{10,})|blogId=(\w+)[^&]*logNo=(\d+)", post_url)
-        blog_id = (m_id.group(1) or m_id.group(3)) if m_id else ""
-        log_no = (m_id.group(2) or m_id.group(4)) if m_id else ""
-
-        self.go(post_url)
-        time.sleep(3)
-
-        title = ""
-        author = ""
-        written_at = ""
-        body = ""
-        tags = []
-        comment_count = 0
-        like_count = 0
-        images = []
-        comments = []
-
-        # PostView 프레임 우선 탐색 (본문 내용 있는 iframe)
+    def _pick_post_frame(self, log_no: str) -> object:
+        """PostView 프레임 우선 탐색 (본문 내용 있는 iframe)."""
         frame = self._page
         if log_no:
             # PostView.naver 프레임 우선 (실제 본문)
@@ -374,52 +371,86 @@ class BlogReadMixin:
                             pass
             if _f:
                 frame = _f
+        return frame
+
+    @staticmethod
+    def _fill_author_and_date(frame: object, info: dict) -> None:
+        # 작성자 + 작성일: .writer 선택자 → "닉네임 ・ YYYY. MM. DD. HH:MM"
+        try:
+            writer_txt = frame.locator(".writer").first.inner_text(timeout=1000).strip()
+            parts = re.split(r"[·・•]", writer_txt, maxsplit=1)
+            info["author"] = parts[0].strip() if parts else ""
+            if len(parts) > 1:
+                date_m = re.search(r"(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}:\d{2})", parts[1])
+                info["written_at"] = date_m.group(1).strip() if date_m else parts[1].strip()
+        except Exception:  # noqa: BLE001 - 블로그 콘텐츠 읽기 전용 스크래핑 — 사이트 구조 변경 시 추출만 실패하고 빈 값/기본값으로 폴백, 쓰기·결제·인증 없음(2026-09-28 검토)
+            body_txt = frame.inner_text("body")
+            m_date = re.search(r"(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}:\d{2})", body_txt)
+            info["written_at"] = m_date.group(1) if m_date else ""
+
+    @staticmethod
+    def _fill_author_fallback(frame: object, info: dict, blog_id: str) -> None:
+        """작성자 폴백: .nick 선택자 또는 blogId."""
+        if info["author"]:
+            return
+        for auth_sel in [".nick", ".blog_author", ".author_name"]:
+            try:
+                nick = frame.locator(auth_sel).first.inner_text(timeout=500).strip().split("\n")[0]
+                if nick:
+                    info["author"] = nick
+                    break
+            except Exception:  # noqa: S110, BLE001
+                pass
+        if not info["author"]:
+            info["author"] = blog_id
+
+    def _fill_post_text_fields(self, frame: object, blog_id: str, info: dict) -> None:
+        """제목/작성자/작성일/공감·댓글 수/본문을 info 에 단계별로 채운다 (예외 시 이미 채운 값은 유지)."""
+        # 제목: <title> 파싱 후 " : 네이버 블로그", " - 네이버 블로그" 제거
+        raw_title = re.search(r"<title>(.+?)</title>", frame.content())
+        if raw_title:
+            info["title"] = re.sub(r"\s*[:\-–]\s*네이버\s*블로그\s*$", "", raw_title.group(1)).strip()[:200]
+
+        self._fill_author_and_date(frame, info)
+        self._fill_author_fallback(frame, info, blog_id)
+
+        # 공감/댓글 수
+        page_txt = frame.inner_text("body")
+        m_like = re.search(r"공감\s+(\d+)", page_txt)
+        info["like_count"] = int(m_like.group(1)) if m_like else 0
+        m_cmt = re.search(r"댓글\s+(\d+)", page_txt)
+        info["comment_count"] = int(m_cmt.group(1)) if m_cmt else 0
+
+        # 본문
+        info["body"] = (
+            frame.locator(".se-main-container, #postViewArea, .post_ct").first.inner_text(timeout=2000).strip()[:8000]
+        )
+
+    def blog_read_post(self, post_url: str) -> dict:
+        """블로그 포스트 본문 읽기."""
+        m_id = re.search(r"blog\.naver\.com/(\w+)/(\d{10,})|blogId=(\w+)[^&]*logNo=(\d+)", post_url)
+        blog_id = (m_id.group(1) or m_id.group(3)) if m_id else ""
+        log_no = (m_id.group(2) or m_id.group(4)) if m_id else ""
+
+        self.go(post_url)
+        time.sleep(3)
+
+        info: dict = {
+            "title": "",
+            "author": "",
+            "written_at": "",
+            "body": "",
+            "comment_count": 0,
+            "like_count": 0,
+        }
+        tags = []
+        images = []
+        comments = []
+
+        frame = self._pick_post_frame(log_no)
 
         try:
-            # 제목: <title> 파싱 후 " : 네이버 블로그", " - 네이버 블로그" 제거
-            raw_title = re.search(r"<title>(.+?)</title>", frame.content())
-            if raw_title:
-                title = re.sub(r"\s*[:\-–]\s*네이버\s*블로그\s*$", "", raw_title.group(1)).strip()[:200]
-
-            # 작성자 + 작성일: .writer 선택자 → "닉네임 ・ YYYY. MM. DD. HH:MM"
-            try:
-                writer_txt = frame.locator(".writer").first.inner_text(timeout=1000).strip()
-                parts = re.split(r"[·・•]", writer_txt, maxsplit=1)
-                author = parts[0].strip() if parts else ""
-                if len(parts) > 1:
-                    date_m = re.search(r"(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}:\d{2})", parts[1])
-                    written_at = date_m.group(1).strip() if date_m else parts[1].strip()
-            except Exception:  # noqa: BLE001 - 블로그 콘텐츠 읽기 전용 스크래핑 — 사이트 구조 변경 시 추출만 실패하고 빈 값/기본값으로 폴백, 쓰기·결제·인증 없음(2026-09-28 검토)
-                body_txt = frame.inner_text("body")
-                m_date = re.search(r"(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}:\d{2})", body_txt)
-                written_at = m_date.group(1) if m_date else ""
-
-            # 작성자 폴백: .nick 선택자 또는 blogId
-            if not author:
-                for auth_sel in [".nick", ".blog_author", ".author_name"]:
-                    try:
-                        nick = frame.locator(auth_sel).first.inner_text(timeout=500).strip().split("\n")[0]
-                        if nick:
-                            author = nick
-                            break
-                    except Exception:  # noqa: S110, BLE001
-                        pass
-                if not author:
-                    author = blog_id
-
-            # 공감/댓글 수
-            page_txt = frame.inner_text("body")
-            m_like = re.search(r"공감\s+(\d+)", page_txt)
-            like_count = int(m_like.group(1)) if m_like else 0
-            m_cmt = re.search(r"댓글\s+(\d+)", page_txt)
-            comment_count = int(m_cmt.group(1)) if m_cmt else 0
-
-            # 본문
-            body = (
-                frame.locator(".se-main-container, #postViewArea, .post_ct")
-                .first.inner_text(timeout=2000)
-                .strip()[:8000]
-            )
+            self._fill_post_text_fields(frame, blog_id, info)
         except Exception:  # noqa: S110, BLE001
             pass
 
@@ -443,14 +474,14 @@ class BlogReadMixin:
         return {
             "blog_id": blog_id,
             "log_no": log_no,
-            "title": title,
-            "author": author,
-            "written_at": written_at,
-            "body": body,
+            "title": info["title"],
+            "author": info["author"],
+            "written_at": info["written_at"],
+            "body": info["body"],
             "images": [img.get("src", "") if isinstance(img, dict) else "" for img in images],
             "tags": tags,
-            "comment_count": comment_count,
-            "like_count": like_count,
+            "comment_count": info["comment_count"],
+            "like_count": info["like_count"],
             "comments": comments,
         }
 
