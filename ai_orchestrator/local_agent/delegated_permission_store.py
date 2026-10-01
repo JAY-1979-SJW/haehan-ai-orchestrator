@@ -23,7 +23,7 @@ _lock = threading.Lock()
 _store: dict[str, dict[str, Any]] = {}
 
 
-def grant_permission(
+def grant_permission(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     action: str,
     domain: str,
     account: str = "",

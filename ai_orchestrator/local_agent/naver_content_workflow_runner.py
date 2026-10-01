@@ -34,7 +34,7 @@ WORKFLOW_WARN_PERMISSION = "WORKFLOW_WARN_PERMISSION_REQUIRED"
 WORKFLOW_FAIL = "WORKFLOW_FAIL"
 
 
-def run_cafe_to_blog_workflow(
+def run_cafe_to_blog_workflow(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     cafe_url: str,
     cafe_search_query: str = "",
     blog_domain: str = "blog.naver.com",

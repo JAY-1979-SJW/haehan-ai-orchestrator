@@ -82,7 +82,7 @@ def mark_running(agent_id: str, task_id: str) -> LocalAgentTask | None:
         return t
 
 
-def apply_result(
+def apply_result(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     *,
     agent_id: str,
     task_id: str,

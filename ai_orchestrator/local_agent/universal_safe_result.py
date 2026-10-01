@@ -45,7 +45,7 @@ _REMOVE_FIELDS: frozenset[str] = frozenset({
 })
 
 
-def build_universal_result(
+def build_universal_result(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     task_id: str | None = None,
     site_id: str = "",
     workflow_id: str = "",
