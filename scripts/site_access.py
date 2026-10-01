@@ -284,6 +284,100 @@ def _find_or_open_tab(page_get_fn, target_url: str):
     return page_get_fn()
 
 
+def _resolve_target(spec, path):
+    if path:
+        # Git Bash가 잘못 확장한 절대경로 정정 (예: C:/Program Files/Git/web/log/X → /web/log/X)
+        if path.lower().startswith(("c:/", "c:\\")):
+            idx = path.lower().find("/web/")
+            if idx == -1:
+                idx = path.lower().find("/log/")
+            if idx > 0:
+                path = path[idx:]
+        if path.startswith("http"):
+            target = path
+        else:
+            host_url = "{0.scheme}://{0.hostname}".format(urlparse(spec.base_url))
+            target = host_url + (path if path.startswith("/") else "/" + path)
+    else:
+        target = spec.base_url
+    return path, target
+
+
+def _step_get_page(w):
+    with w.step("cdp_get_page") as s:
+        from scripts.web_connector import get_page
+
+        page = get_page()
+        if page is None:
+            s.fail("CDP 페이지 획득 실패 (데몬 미실행?)", kind="cdp_unavailable")
+        s.attach(page)
+    return page
+
+
+def _step_force_reset(w, page, spec, site, force_login):
+    if force_login:
+        with w.step("force_session_reset") as s:
+            s.attach(page)
+            try:
+                domains = _clear_site_cookies(page, spec)
+                log.info("[site-access] %s force-login cookie reset domains=%s", site, domains)
+            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
+                s.fail(f"사이트 쿠키 초기화 실패: {e}", kind="force_session_reset_failed")
+
+
+def _step_goto(w, page, host, path, site, target, force_login):  # noqa: PLR0913 - open_site 상태를 그대로 넘기는 private 헬퍼(동작 불변 분리)
+    with w.step("goto") as s:
+        s.attach(page)
+        try:
+            cur = page.url or ""
+        except Exception:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
+            cur = ""
+        need_goto = (host not in cur) or (path and path not in cur)
+        if not path and site == "eum" and "/main" not in cur:
+            need_goto = True
+        if need_goto:
+            try:
+                page.goto(target, timeout=30000)
+            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
+                s.fail(f"goto 실패: {e}", kind="goto_failed")
+            # networkidle 미달성은 치명적이지 않음 — 팝업 정리/쿠키 초기화 등 보조 동작, 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+            with contextlib.suppress(Exception):
+                page.wait_for_load_state("networkidle", timeout=15000)
+        if force_login:
+            _clear_current_origin_storage(page)
+            try:
+                page.reload(timeout=30000, wait_until="domcontentloaded")
+                page.wait_for_load_state("networkidle", timeout=15000)
+            except Exception:  # noqa: BLE001 - 팝업 정리/쿠키 초기화 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+                pass
+
+
+def _step_page_loaded(w, page):
+    with w.step("page_loaded") as s:
+        s.attach(page)
+        try:
+            cur = page.url or ""
+        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
+            s.fail(f"page.url 접근 실패: {e}", kind="page_invalid")
+        if not cur or cur == "about:blank":
+            s.fail(f"페이지 로드 실패 (url={cur!r})", kind="page_invalid")
+
+
+def _step_ensure_login(w, page, site, spec, ensure_login, force_login):
+    if ensure_login:
+        # 04~. 로그인 흐름
+        try:
+            _ensure_logged_in_watched(page, site, spec, w, force_login=force_login)
+        except StepFailure:
+            raise
+        except LoginError as e:
+            # 분류된 LoginError → 마지막 step 으로 기록
+            with w.step("login_error") as s:
+                s.attach(page)
+                s.fail(e.message, kind=e.kind)
+            raise
+
+
 def open_site(
     site: str,
     path: str = "",
@@ -310,21 +404,7 @@ def open_site(
         raise LoginError(site, "unknown", f"미등록 사이트: {site}. 지원: {list_sites()}")
 
     # path 가 절대 URL 이면 그대로, 아니면 host + path 로 합성
-    if path:
-        # Git Bash가 잘못 확장한 절대경로 정정 (예: C:/Program Files/Git/web/log/X → /web/log/X)
-        if path.lower().startswith(("c:/", "c:\\")):
-            idx = path.lower().find("/web/")
-            if idx == -1:
-                idx = path.lower().find("/log/")
-            if idx > 0:
-                path = path[idx:]
-        if path.startswith("http"):
-            target = path
-        else:
-            host_url = "{0.scheme}://{0.hostname}".format(urlparse(spec.base_url))
-            target = host_url + (path if path.startswith("/") else "/" + path)
-    else:
-        target = spec.base_url
+    path, target = _resolve_target(spec, path)
     host = urlparse(spec.base_url).hostname or spec.base_url.split("/")[2]
     log.info("[site-access] open %s → %s (dry_run=%s force_login=%s)", site, target, _dry_run(), force_login)
 
@@ -335,81 +415,25 @@ def open_site(
     w = StepWatcher(site)
 
     # 01. CDP 페이지 획득
-    with w.step("cdp_get_page") as s:
-        from scripts.web_connector import get_page
+    page = _step_get_page(w)
 
-        page = get_page()
-        if page is None:
-            s.fail("CDP 페이지 획득 실패 (데몬 미실행?)", kind="cdp_unavailable")
-        s.attach(page)
-
-    if force_login:
-        with w.step("force_session_reset") as s:
-            s.attach(page)
-            try:
-                domains = _clear_site_cookies(page, spec)
-                log.info("[site-access] %s force-login cookie reset domains=%s", site, domains)
-            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
-                s.fail(f"사이트 쿠키 초기화 실패: {e}", kind="force_session_reset_failed")
+    _step_force_reset(w, page, spec, site, force_login)
 
     # 02. 페이지 이동 (필요한 경우만)
-    with w.step("goto") as s:
-        s.attach(page)
-        try:
-            cur = page.url or ""
-        except Exception:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
-            cur = ""
-        need_goto = (host not in cur) or (path and path not in cur)
-        if not path and site == "eum" and "/main" not in cur:
-            need_goto = True
-        if need_goto:
-            try:
-                page.goto(target, timeout=30000)
-            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
-                s.fail(f"goto 실패: {e}", kind="goto_failed")
-            # networkidle 미달성은 치명적이지 않음 — 팝업 정리/쿠키 초기화 등 보조 동작, 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-            with contextlib.suppress(Exception):
-                page.wait_for_load_state("networkidle", timeout=15000)
-        if force_login:
-            _clear_current_origin_storage(page)
-            try:
-                page.reload(timeout=30000, wait_until="domcontentloaded")
-                page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:  # noqa: BLE001 - 팝업 정리/쿠키 초기화 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-                pass
+    _step_goto(w, page, host, path, site, target, force_login)
 
     # 03. 페이지 로드 검증
-    with w.step("page_loaded") as s:
-        s.attach(page)
-        try:
-            cur = page.url or ""
-        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
-            s.fail(f"page.url 접근 실패: {e}", kind="page_invalid")
-        if not cur or cur == "about:blank":
-            s.fail(f"페이지 로드 실패 (url={cur!r})", kind="page_invalid")
+    _step_page_loaded(w, page)
 
     _close_site_noise_pages(page, site)
 
-    if ensure_login:
-        # 04~. 로그인 흐름
-        try:
-            _ensure_logged_in_watched(page, site, spec, w, force_login=force_login)
-        except StepFailure:
-            raise
-        except LoginError as e:
-            # 분류된 LoginError → 마지막 step 으로 기록
-            with w.step("login_error") as s:
-                s.attach(page)
-                s.fail(e.message, kind=e.kind)
-            raise
+    _step_ensure_login(w, page, site, spec, ensure_login, force_login)
 
     w.finish_ok()
     return page
 
 
-def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_login: bool = False) -> None:
-    """로그인 단계들을 watcher로 감싸 실행."""
-    # 04. 사전 로그인 점검
+def _step_pre_login_check(w, page, spec):
     already = False
     with w.step("pre_login_check") as s:
         s.attach(page)
@@ -417,14 +441,10 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
             already = _check_logged_in_with_retry(page, spec)
         except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
             s.fail(f"is_logged_in 호출 실패: {e}", kind="check_error")
+    return already
 
-    if already and not force_login:
-        log.info("[site-access] %s 기존 세션 재사용", site)
-        return
-    if already and force_login:
-        log.info("[site-access] %s force-login requested; existing session ignored", site)
 
-    # 05. 자격증명 확인
+def _step_credential_check(w, page, spec, site):
     with w.step("credential_check") as s:
         s.attach(page)
         if _login_strategy(spec) == LOGIN_STRATEGY_MANUAL_ONLY:
@@ -434,6 +454,93 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
                 f"자격증명 없음. 입력: python scripts/credentials.py set {site}",
                 kind="cred_missing",
             )
+
+
+def _try_registered_login(s, page, spec, result, registered_ok, force_login):
+    try:
+        try:
+            result = spec.login(page, force_login=force_login)
+        except TypeError:
+            result = spec.login(page)
+        if isinstance(result, dict) and (result.get("ok") or result.get("needs_manual")):
+            registered_ok = True
+        elif _registered_login_failure_is_terminal(result):
+            registered_ok = True
+        elif not _allows_universal_login(spec):
+            registered_ok = True
+    except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
+        if not _allows_universal_login(spec):
+            s.fail(f"사이트 전용 로그인 예외: {e}", kind="login_exception")
+        log.debug("[site-access] registered login 예외 → 범용으로 폴백: %s", e)
+    return result, registered_ok
+
+
+def _try_universal_login(s, page, site, result):
+    try:
+        from scripts.form.orchestrator import universal_login
+
+        u = universal_login(page, site)
+        result = {
+            "ok": u["ok"],
+            "reason": u["reason"],
+            "user": u["user"],
+            "needs_manual": u["needs_manual"],
+            "via": "universal",
+            "intent": u["intent"],
+            "bot_level": u["bot_level"],
+        }
+    except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
+        s.fail(f"범용 로그인 예외: {e}", kind="login_exception")
+    return result
+
+
+def _check_login_result(s, result, site):
+    if not isinstance(result, dict):
+        s.fail(f"login() 반환 비정상: {result!r}", kind="login_invalid_return")
+    if result.get("needs_manual"):
+        log.info("[site-access] %s 추가 인증 필요 — B방식 fallback", site)
+    elif not result.get("ok"):
+        reason = result.get("reason", "")
+        kind = "form_not_found" if ("찾을 수 없" in reason or "form" in reason.lower()) else "bad_credentials"
+        s.fail(reason or "로그인 실패 (사유 불명)", kind=kind)
+
+
+def _step_manual_fallback(w, page, site):
+    with w.step("manual_fallback") as s:
+        s.attach(page)
+        print(f"  [{site}] 추가 인증 — 브라우저에서 수동 진행 (최대 {B_MODE_FALLBACK_TIMEOUT_S}초)")
+        from scripts.login_detector import monitor_for_login
+
+        detected = monitor_for_login(page, check_interval=1, timeout_s=B_MODE_FALLBACK_TIMEOUT_S)
+        if not detected.get("detected"):
+            s.fail(f"B방식 감지 타임아웃 ({B_MODE_FALLBACK_TIMEOUT_S}초)", kind="needs_manual")
+
+
+def _step_post_login_verify(w, page, spec):
+    with w.step("post_login_verify") as s:
+        s.attach(page)
+        try:
+            ok = _check_logged_in_with_retry(page, spec)
+        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
+            s.fail(f"is_logged_in 사후점검 실패: {e}", kind="check_error")
+        if not ok:
+            s.fail("로그인 후 세션 확인 실패", kind="post_verify_failed")
+
+
+def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_login: bool = False) -> None:
+    """로그인 단계들을 watcher로 감싸 실행."""
+    # 04. 사전 로그인 점검
+    already = False
+    already = _step_pre_login_check(w, page, spec)
+
+    if already and not force_login:
+        log.info("[site-access] %s 기존 세션 재사용", site)
+        return
+    if already and force_login:
+        log.info("[site-access] %s force-login requested; existing session ignored", site)
+
+    # 05. 자격증명 확인
+    _step_credential_check(w, page, spec, site)
 
     # 06. A방식 자동 로그인 — 사이트별 전략에 따라 registry login 또는 universal fallback.
     result = {}
@@ -453,69 +560,20 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
 
         # 1) 사이트별 등록된 login 함수 우선 시도 (검증된 사이트)
         if not registered_ok:
-            try:
-                try:
-                    result = spec.login(page, force_login=force_login)
-                except TypeError:
-                    result = spec.login(page)
-                if isinstance(result, dict) and (result.get("ok") or result.get("needs_manual")):
-                    registered_ok = True
-                elif _registered_login_failure_is_terminal(result):
-                    registered_ok = True
-                elif not _allows_universal_login(spec):
-                    registered_ok = True
-            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
-                if not _allows_universal_login(spec):
-                    s.fail(f"사이트 전용 로그인 예외: {e}", kind="login_exception")
-                log.debug("[site-access] registered login 예외 → 범용으로 폴백: %s", e)
+            result, registered_ok = _try_registered_login(s, page, spec, result, registered_ok, force_login)
 
         # 2) 등록된 함수가 실패/없고 정책상 허용된 경우에만 범용 오케스트레이터 시도
         if not registered_ok:
-            try:
-                from scripts.form.orchestrator import universal_login
+            result = _try_universal_login(s, page, site, result)
 
-                u = universal_login(page, site)
-                result = {
-                    "ok": u["ok"],
-                    "reason": u["reason"],
-                    "user": u["user"],
-                    "needs_manual": u["needs_manual"],
-                    "via": "universal",
-                    "intent": u["intent"],
-                    "bot_level": u["bot_level"],
-                }
-            except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
-                s.fail(f"범용 로그인 예외: {e}", kind="login_exception")
-
-        if not isinstance(result, dict):
-            s.fail(f"login() 반환 비정상: {result!r}", kind="login_invalid_return")
-        if result.get("needs_manual"):
-            log.info("[site-access] %s 추가 인증 필요 — B방식 fallback", site)
-        elif not result.get("ok"):
-            reason = result.get("reason", "")
-            kind = "form_not_found" if ("찾을 수 없" in reason or "form" in reason.lower()) else "bad_credentials"
-            s.fail(reason or "로그인 실패 (사유 불명)", kind=kind)
+        _check_login_result(s, result, site)
 
     # 07. B방식 fallback (필요 시)
     if result.get("needs_manual"):
-        with w.step("manual_fallback") as s:
-            s.attach(page)
-            print(f"  [{site}] 추가 인증 — 브라우저에서 수동 진행 (최대 {B_MODE_FALLBACK_TIMEOUT_S}초)")
-            from scripts.login_detector import monitor_for_login
-
-            detected = monitor_for_login(page, check_interval=1, timeout_s=B_MODE_FALLBACK_TIMEOUT_S)
-            if not detected.get("detected"):
-                s.fail(f"B방식 감지 타임아웃 ({B_MODE_FALLBACK_TIMEOUT_S}초)", kind="needs_manual")
+        _step_manual_fallback(w, page, site)
 
     # 08. 사후 검증
-    with w.step("post_login_verify") as s:
-        s.attach(page)
-        try:
-            ok = _check_logged_in_with_retry(page, spec)
-        except Exception as e:  # noqa: BLE001 - 사이트 로그인 보장 오케스트레이션 — 대부분 fail-closed(실패시 False/0)이거나 로그로 남기고 계속, 단 1곳(사후검증 예외시 ok=True)은 이미 확정된 1차 로그인 성공 결과를 신뢰하는 의도적 설계(2026-09-28 검토, 별도 보고)
-            s.fail(f"is_logged_in 사후점검 실패: {e}", kind="check_error")
-        if not ok:
-            s.fail("로그인 후 세션 확인 실패", kind="post_verify_failed")
+    _step_post_login_verify(w, page, spec)
 
 
 def _dry_run_open(site: str, target: str, spec, *, ensure_login: bool, force_login: bool = False) -> dict:

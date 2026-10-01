@@ -40,6 +40,53 @@ def _append_history(entry: dict) -> None:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
+def _path_starts(child: str, parent: str) -> bool:
+    # os.path.abspath 유지(STD-02 pathlib 전환 예외): Path.resolve()는 심볼릭 링크를
+    # 따라가는데, 이 함수는 allowed/blocked 경로 포함 여부를 판정하는 보안 경계
+    # 로직이다 — 심볼릭 링크로 우회 가능한 다른 정규화로 바꾸면 판정 의미가
+    # 바뀔 위험이 있어 기존 동작(symlink 미해석)을 그대로 유지한다.
+    p = os.path.normcase(os.path.normpath(os.path.abspath(parent)))
+    c = os.path.normcase(os.path.normpath(os.path.abspath(child)))
+    return c == p or c.startswith(p + os.sep)
+
+
+def _blocked_command_hit(policy: dict, task: TaskRequest) -> str | None:
+    blocked_cmds = policy.get("blocked_commands", [])
+    for bc in blocked_cmds:
+        if bc.lower() in task.target.lower() or bc.lower() in task.action_type.lower():
+            return bc
+    return None
+
+
+def _blocked_path_hit(policy: dict, task: TaskRequest) -> str | None:
+    blocked_paths = policy.get("blocked_paths", [])
+    for bp in blocked_paths:
+        if task.target.startswith(bp):
+            return bp
+    return None
+
+
+def _can_execute_low(task: TaskRequest, policy: dict) -> tuple[bool, list[str]]:
+    reasons: list[str] = []
+    if task.action_type not in _EXECUTABLE_LOW_ACTIONS:
+        reasons.append(
+            f"low action '{task.action_type}' is not in executable set (may be AI-only like summarize_text)"
+        )
+        return False, reasons
+    if os.path.sep in task.target or "/" in task.target:
+        allowed_paths = policy.get("allowed_paths", [])
+        blocked_paths = policy.get("blocked_paths", [])
+        for bp in blocked_paths:
+            if _path_starts(task.target, bp):
+                reasons.append(f"target matches blocked path: '{bp}'")
+                return False, reasons
+        if allowed_paths:
+            if not any(_path_starts(task.target, ap) for ap in allowed_paths):
+                reasons.append(f"target path not in allowed_paths: {task.target}")
+                return False, reasons
+    return True, []
+
+
 def can_execute(
     task: TaskRequest,
     risk: RiskAssessment,
@@ -58,17 +105,15 @@ def can_execute(
         reasons.extend(plan.blocked_reasons)
         return False, reasons
 
-    blocked_cmds = policy.get("blocked_commands", [])
-    for bc in blocked_cmds:
-        if bc.lower() in task.target.lower() or bc.lower() in task.action_type.lower():
-            reasons.append(f"blocked command pattern: '{bc}'")
-            return False, reasons
+    bc = _blocked_command_hit(policy, task)
+    if bc is not None:
+        reasons.append(f"blocked command pattern: '{bc}'")
+        return False, reasons
 
-    blocked_paths = policy.get("blocked_paths", [])
-    for bp in blocked_paths:
-        if task.target.startswith(bp):
-            reasons.append(f"target matches blocked path: '{bp}'")
-            return False, reasons
+    bp = _blocked_path_hit(policy, task)
+    if bp is not None:
+        reasons.append(f"target matches blocked path: '{bp}'")
+        return False, reasons
 
     if level == "medium":
         if not approval_valid:
@@ -77,32 +122,7 @@ def can_execute(
         return True, []
 
     if level == "low":
-        if task.action_type not in _EXECUTABLE_LOW_ACTIONS:
-            reasons.append(
-                f"low action '{task.action_type}' is not in executable set (may be AI-only like summarize_text)"
-            )
-            return False, reasons
-        if os.path.sep in task.target or "/" in task.target:
-            allowed_paths = policy.get("allowed_paths", [])
-
-            def _starts(child: str, parent: str) -> bool:
-                # os.path.abspath 유지(STD-02 pathlib 전환 예외): Path.resolve()는 심볼릭 링크를
-                # 따라가는데, 이 함수는 allowed/blocked 경로 포함 여부를 판정하는 보안 경계
-                # 로직이다 — 심볼릭 링크로 우회 가능한 다른 정규화로 바꾸면 판정 의미가
-                # 바뀔 위험이 있어 기존 동작(symlink 미해석)을 그대로 유지한다.
-                p = os.path.normcase(os.path.normpath(os.path.abspath(parent)))
-                c = os.path.normcase(os.path.normpath(os.path.abspath(child)))
-                return c == p or c.startswith(p + os.sep)
-
-            for bp in blocked_paths:
-                if _starts(task.target, bp):
-                    reasons.append(f"target matches blocked path: '{bp}'")
-                    return False, reasons
-            if allowed_paths:
-                if not any(_starts(task.target, ap) for ap in allowed_paths):
-                    reasons.append(f"target path not in allowed_paths: {task.target}")
-                    return False, reasons
-        return True, []
+        return _can_execute_low(task, policy)
 
     reasons.append(f"unhandled risk level: {level}")
     return False, reasons
