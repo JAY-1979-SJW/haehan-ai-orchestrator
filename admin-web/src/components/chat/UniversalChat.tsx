@@ -5,6 +5,8 @@ import { FaxApprovalCard } from "./FaxApprovalCard";
 
 interface Props {
   domain?: string;
+  /** 에이전트에 보내는 프롬프트 앞에 붙이는 지침(화면에 보이는 메시지는 그대로). 화면별 사용법 안내용. */
+  agentHint?: string;
   title?: string;
   className?: string;
 }
@@ -104,7 +106,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
  * `claude -p --mcp-config .mcp.json` → 이 앱 자신의 MCP 서버(haehan-orchestrator) 호출.
  * 설계·실측 검증: docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md
  */
-export function UniversalChat({ title, className = "" }: Props) {
+export function UniversalChat({ title, agentHint, className = "" }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -241,7 +243,9 @@ export function UniversalChat({ title, className = "" }: Props) {
       );
 
       const data = await postJson<RunAgentResponse>("/api/proxy/api/v1/ai-agent/run", {
-        prompt,
+        prompt: agentHint ? `${agentHint}
+
+사용자 요청: ${prompt}` : prompt,
         chat_id: activeChatId,
         model,
       });

@@ -15,6 +15,13 @@ import { faxApi, parseRecipients, type Authorization, type LogRow, type RunStatu
 
 const POLL_MS = 4000;
 
+// AI 창 지침 — 에이전트가 앱 허용 API(call_api)로 승인 대기 초안만 만들고, 승인은 사람이 카드 버튼으로 하게 한다.
+const AGENT_HINT =
+  "[하나팩스 지침] 팩스 발송 요청이면 mcp__haehan-orchestrator__call_api 로 endpoint 'hanafax.draft' 를 호출해 승인 대기 초안만 만든다 " +
+  "(body: name, subject, document_ref=첨부 파일 전체 경로, recipients=[{fax,name}] 또는 recipients_file=주소록 엑셀/CSV 경로). " +
+  "Python·Bash 로 직접 만들거나 발송하지 않는다(권한 없음). 응답의 id 로 답변 끝에 [[fax-approve:<id>]] 를 그대로 적고 " +
+  "'아래 승인 버튼을 눌러 주세요'라고 안내한다. 승인·발송은 사용자가 버튼으로만 한다. 주소록을 쓰면 응답의 import_summary 건수를 알린다.";
+
 function statusLabel(a: Authorization): { text: string; cls: string } {
   if (a.revoked) return { text: "취소됨", cls: "bg-gray-200 text-gray-700" };
   if (!a.approved) return { text: "승인 대기", cls: "bg-amber-100 text-amber-800" };
@@ -258,7 +265,7 @@ export function HanafaxApp() {
       </section>
 
       <section className="h-[calc(100dvh-170px)] min-h-[420px]">
-        <UniversalChat domain="hanafax" title="AI 창 — 첨부 파일 경로와 받는 사람을 알려주세요" className="h-full" />
+        <UniversalChat domain="hanafax" agentHint={AGENT_HINT} title="AI 창 — 첨부 파일 경로와 받는 사람을 알려주세요" className="h-full" />
       </section>
     </div>
   );

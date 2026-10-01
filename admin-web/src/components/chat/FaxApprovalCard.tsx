@@ -44,6 +44,19 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
     }
   }
 
+  async function sendNow() {
+    setBusy(true);
+    setError(null);
+    try {
+      await faxApi.run(authId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+      await refresh();
+    }
+  }
+
   async function revoke() {
     setBusy(true);
     try {
@@ -101,6 +114,15 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
         <div className="border-t pt-1">
           {auth.revoked ? "취소됨" : auth.live ? "승인됨 · 실전송" : "승인됨 · 드라이런"}
           {run?.running && " · 발송 중…"}
+          {!auth.revoked && !run?.running && !run?.last && (
+            <button
+              className="ml-2 rounded bg-[#2563EB] px-2 py-0.5 text-white disabled:opacity-50"
+              disabled={busy}
+              onClick={sendNow}
+            >
+              지금 발송
+            </button>
+          )}
           {run?.last && <div>마지막 실행: {run.last.message}</div>}
         </div>
       )}
