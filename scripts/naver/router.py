@@ -90,6 +90,13 @@ def run_naver(task: str, sub: str, args: list[str]) -> None:
             print(
                 "[mail] CLI 진입점(run())이 아직 구현되지 않았습니다 — scripts/naver/mail/ 은 API 라우터(naver_mail_router.py)로만 접근 가능합니다."
             )
+        case _:
+            _run_naver_content_task(task, sub, args)
+
+
+def _run_naver_content_task(task: str, sub: str, args: list[str]) -> None:
+    """run_naver 의 중간 단계 라우팅(blog-assets/content/seo/developers/shopping/keyword-tools/excel)."""
+    match task:
         case "blog-assets" | "blog-media":
             _cmd_blog_assets(sub or "plan", args)
         case "content":
@@ -104,6 +111,13 @@ def run_naver(task: str, sub: str, args: list[str]) -> None:
             _cmd_keyword_tools(sub or "catalog", args)
         case "excel" | "report":
             _cmd_excel(sub or "report", args)
+        case _:
+            _run_naver_service_task(task, sub, args)
+
+
+def _run_naver_service_task(task: str, sub: str, args: list[str]) -> None:
+    """run_naver 의 나머지 서비스 라우팅(cafe/calendar/mybox/pay/talk/place/smartstore/...)."""
+    match task:
         case "cafe":
             _cmd_cafe(sub or "list", args)
         case "calendar":
@@ -118,6 +132,13 @@ def run_naver(task: str, sub: str, args: list[str]) -> None:
             _cmd_place(sub or "list", args)
         case "smartstore":
             _cmd_smartstore(sub or "actions", args)
+        case _:
+            _run_naver_system_task(task)
+
+
+def _run_naver_system_task(task: str) -> None:
+    """run_naver 의 마지막 단계 라우팅(catalog/session-check/login)."""
+    match task:
         case "catalog" | "actions" | "index":
             _cmd_catalog()
         case "session-check":
