@@ -117,9 +117,9 @@
   "reason": "BrowserAgent(L4)를 구동해 사이트맵을 탐지하는 실행기 — L1 contract 오분류"
  },
  "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py": {
-  "layer": "L4",
-  "role": "browser_engine",
-  "reason": "BlogReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "네이버 블로그 전용 동작을 하드코딩한 믹스인(domain=naver_blog) — L4 로 오분류"
  },
  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py": {
   "layer": "L4",
@@ -616,8 +616,8 @@
  },
  "scripts/local_agent/router.py": {
   "layer": "L6",
-  "role": "browser_engine",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "role": "workflow",
+  "reason": "minwon_submit·webmail_send·사이트 모듈(blog_explorer 등)을 디스패치하는 로컬 에이전트 라우터 — 호출 대상이 L5·L6 이라 L6"
  },
  "scripts/local_agent/run_playwright_smoke.py": {
   "layer": "L6",
@@ -678,5 +678,140 @@
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 웹메일 설정 화면을 CDP 로 읽고 바꾸는 사이트 모듈 — 파일명 settings 때문에 L1 shared 로 오분류"
+ },
+ "ai_orchestrator/workflows/naver_session_guard.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "로그인 파이프라인을 호출하고 상태를 판정·시도 기록까지 하는 업무 흐름 — 'guard' 이름 규칙이 L2 policy 로 오분류 (2026-10-01 층간 위반 정리)"
+ },
+ "scripts/site_engine/action_planner.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "ExecutionDecision·ExecutionGateResult 로 실행 가능 여부를 가르는 계획·게이트 판정 — 정의 위주 규칙이 L1 contract 로 오분류"
+ },
+ "scripts/site_engine/validators.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "ActionPlan·WorkflowRunPlan 에 대한 순수 검증 함수(실행·브라우저·DB 없음) — L1 contract 로 오분류"
+ },
+ "scripts/site_engine/workflow_runner.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "실행 없이 계획만 조립하는 순수 모듈(docstring: 실제 실행 없음·브라우저 호출 없음·DB/file write 없음) — 'runner' 이름 규칙이 L6 으로 오분류"
+ },
+ "scripts/naver/blog/automation/rules.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "frozen dataclass·검증·승인 해시만 있는 순수 모듈(I/O 없음). store(L7)·gates(L2)·runner(L6) 가 공용으로 import — L5 로 오분류"
+ },
+ "scripts/naver/blog/accounts.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "블로그 계정 상수 표(BLOG_ACCOUNTS·DEFAULT_ACCOUNT)와 조회 헬퍼 — 공용 상수라 L1. rules.py(L1)가 import 하므로 함께 L1"
+ },
+ "scripts/naver/blog/gonobi/classifier.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "외부 import 없는 키워드 규칙 분류 함수(_rule_based 뿐) — L5 로 오분류, db.py(L7)가 import"
+ },
+ "scripts/naver/automation/platform/error_recovery.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류"
+ },
+ "scripts/naver/blog/management/schedule.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "BlogWriter 로 Playwright 발행을 수행하는 발행 큐 워크플로 — 작은 sqlite 큐 때문에 L7 로 오분류"
+ },
+ "scripts/g2b/discover_valid_public_notice_urls.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "L6 로 확정된 g2b_public_notice_* 를 호출하는 argparse 러너·리포트 작성 — g2b 이름 규칙이 L5 로 오분류"
+ },
+ "scripts/g2b/run_public_notice_readonly_live_suite.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "g2b_public_notice_local_live_runner(L6) 를 호출하는 argparse 러너 — L5 로 오분류"
+ },
+ "scripts/g2b/router.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "g2b CLI 라우터가 위 두 러너(L6)의 main 을 호출하는 디스패처 — 호출 대상과 같은 층"
+ },
+ "scripts/naver/mail/collection/background_runner.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "CDP 선택 게이트·메일 폴더 탐색·설정 패널 등 메일 사이트 코드를 다루는 모듈 — 'runner' 이름 규칙이 L6 으로 오분류"
+ },
+ "scripts/form/orchestrator.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "사이트에 의존하지 않는 범용 폼·로그인 오케스트레이터(bot_radar·discovery·human 등 범용 프리미티브만 사용) — 'flow' 이름 규칙이 L6 으로 오분류"
+ },
+ "scripts/gabia_login_watch.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "JS 평가로 로그인 상태만 폴링하는 읽기 전용 감시 CLI(자체 _get_page) — 이름 규칙이 L5 로 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/approval_server.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "request_approval 은 approval_api_client(L2)로 승인 요청을 보내는 얇은 게이트이고 Flask UI 는 로컬 폴백 — 서버 API 가 아니라 승인 게이트라 L8 이 아님"
+ },
+ "scripts/local_agent/gov/minwon_submit.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "민원 제출을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류"
+ },
+ "scripts/local_agent/webmail_send.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "웹메일 발송을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/blog_mixin_collect.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/blog_mixin_common.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/blog_mixin_download.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/blog_mixin_neighbor.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/blog_mixin_read.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "writer.py·selectors.py(L5)를 호출하는 네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ },
+ "scripts/site_registry.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "SiteSpec 외에는 사이트별 로그인·세션 함수(eum·gabia·google·kakao·naver·smartstore)를 이름으로 디스패치하는 사이트 등록표 — L1 contract 로 오분류. 이를 import 하는 L4 범용 엔진(cdp_client·login_session·site_access) 3건은 구조 부채로 결함 등록"
+ },
+ "scripts/naver/smartstore/product/bulk.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "스마트스토어 상품 일괄 등록(Playwright Page)이 본체이고 DB 기록은 부수적 — 'DB 기록' 규칙이 L7 로 오분류. L5 smartstore 모듈들이 import"
+ },
+ "scripts/youtube/research_search.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "YouTube 검색·댓글 수집 사이트 모듈이고 캐시는 조회만 한다 — '저장 신호' 규칙이 L7 로 오분류"
  }
 }
