@@ -61,7 +61,10 @@ def test_modal_dismisser_exists_and_is_safe():
 
 def test_set_category_does_not_blindly_click_first():
     """자동완성 첫 항목 맹목 클릭 금지 — 1순위가 'LED모듈' 인 사례가 실측됨."""
-    src = inspect.getsource(GeneralProductRegister.set_category)
+    # 옵션 탐색 로직은 복잡도 분리로 _find_category_option 헬퍼에 있다(결함 #42).
+    src = inspect.getsource(GeneralProductRegister.set_category) + inspect.getsource(
+        GeneralProductRegister._find_category_option
+    )
     assert ".first" not in src.split("자동완성 첫 항목")[0] or "rsplit" in src, "첫 항목을 그대로 쓰는 흔적이 있다"
     # 경로형(>) 필터링과 마지막 노드 일치 검사가 있어야 한다
     assert '">"' in src or "'>'" in src, "경로형(>) 필터링이 없다"
