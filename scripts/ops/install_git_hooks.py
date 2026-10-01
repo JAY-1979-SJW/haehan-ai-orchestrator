@@ -61,18 +61,33 @@ py_files = [f for f in r.stdout.splitlines() if f.endswith(".py")]
 
 if py_files:
     cfg = str(ROOT / "configs" / "ruff.toml")
-    # 1. ruff check (자동 수정)
-    subprocess.run(
-        [*_pyexe(), "-m", "ruff", "check", "--fix", "--config", cfg] + py_files,
-        cwd=str(ROOT),
+    # 자동 수정·포맷은 이번 커밋에서 "새로 추가된(A)" 파일에만 적용한다.
+    # 기존 파일에 적용하면 한 줄 수정도 파일 전체 기존 오류 정리·재포맷을 강제해
+    # 대량 서식 변경과 커밋 차단이 생긴다(defect_index #30, 2026-10-01).
+    # 기존 파일은 아래 3단계의 "새로 생긴 위반만 차단"으로 충분하다.
+    _ra = subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "--diff-filter=A"],
+        cwd=str(ROOT), capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
     )
-    # 2. ruff format
-    subprocess.run(
-        [*_pyexe(), "-m", "ruff", "format", "--config", cfg] + py_files,
-        cwd=str(ROOT),
-    )
-    # ruff check 이 수정한 파일을 다시 stage
-    subprocess.run(["git", "add"] + py_files, cwd=str(ROOT))
+    _added = set(_ra.stdout.splitlines())
+    fix_files = [f for f in py_files if f in _added]
+    if fix_files:
+        # 1. ruff check (자동 수정). F401 은 자동수정 제외 — 파사드의 재노출 import
+        #    (mock.patch 대상·하위 호환 이름)를 '미사용'으로 지워 조용히 깨뜨린다
+        #    (defect_index #33, #93, #110 에서 반복 발생).
+        subprocess.run(
+            [*_pyexe(), "-m", "ruff", "check", "--fix", "--unfixable", "F401",
+             "--config", cfg] + fix_files,
+            cwd=str(ROOT),
+        )
+        # 2. ruff format
+        subprocess.run(
+            [*_pyexe(), "-m", "ruff", "format", "--config", cfg] + fix_files,
+            cwd=str(ROOT),
+        )
+        # ruff 가 수정한 신규 파일을 다시 stage
+        subprocess.run(["git", "add"] + fix_files, cwd=str(ROOT))
     # 3. 자동수정 안 되는 나머지 위반은 "이번 커밋으로 새로 생긴 것"만 차단한다.
     #    (BLE001 같은 대규모 기존 부채가 있는 파일을 조금만 건드려도 매번 전체가
     #    막히면 사실상 개발이 정지된다 — CLAUDE.md "새 훅은 새로 생긴 오류만
@@ -200,6 +215,29 @@ from pathlib import Path as _P
 import importlib.util, os
 gate = ROOT / "scripts" / "quality_gate.py"
 if gate.exists():
+    # 2026-09-30 수정(defect_index #2): 이 훅이 --allow-existing-code-change 를 항상
+    # 넘겨서 existing_code_change_requires_flag 안전장치가 영구 무력화돼 있었다.
+    # 완전 차단은 비현실적이라 최소한 기존 활성 코드 수정 개수를 콘솔에 드러낸다.
+    # (이 블록이 설치 원본에 없어 세션마다 .orig 가 덮어써져 사라지던 것을 2026-10-01 복원)
+    try:
+        _diff = subprocess.run(
+            ["git", "diff", "--cached", "--name-status"],
+            cwd=str(ROOT), capture_output=True, text=True, check=True,
+        ).stdout
+        _modified = [
+            line.split("\t", 1)[1] for line in _diff.splitlines()
+            if line.startswith("M\t") and line.split("\t", 1)[1].endswith(".py")
+        ]
+        if _modified:
+            print(f"[quality_gate] 기존 코드 수정 {len(_modified)}개 파일 감지 "
+                  f"(--allow-existing-code-change 자동 적용됨):")
+            for _m in _modified[:10]:
+                print(f"    {_m}")
+            if len(_modified) > 10:
+                print(f"    ... 외 {len(_modified) - 10}개")
+    except (subprocess.CalledProcessError, OSError):
+        pass  # 가시성 로그 실패는 커밋을 막지 않음
+
     result = subprocess.run(
         [*_pyexe(), str(gate), "--staged", "--enforce", "--allow-existing-code-change"],
         cwd=str(ROOT),

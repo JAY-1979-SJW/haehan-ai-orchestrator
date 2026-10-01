@@ -308,6 +308,12 @@ def _classify_agent_and_service(p: str, name: str) -> tuple[str, str] | None:
         return "L10", "agent/local automation"
     if p.startswith("services/"):
         return "L8", "standalone service path"
+    if p.startswith("apps/"):
+        return "L10", "standalone local PC app (apps/*-standalone)"
+    if p.startswith(".githooks/"):
+        return "L7", "git hook tooling"
+    if p.startswith("notice_radar/"):
+        return "L6", "notice radar business workflow"
     return None
 
 

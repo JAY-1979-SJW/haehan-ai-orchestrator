@@ -422,8 +422,9 @@
       ],
       "evidence": "정리 1·2·5회차에서 기존 오류 503·496·90건이 커밋 차단",
       "stage": "E",
-      "status": "open",
-      "no": 30
+      "status": "fixed",
+      "no": 30,
+      "fix_note": "2026-10-01 install_git_hooks.py PRE_COMMIT: ruff --fix·format 을 이번 커밋의 신규(A) 파일에만 적용, 기존 파일은 새로 생긴 위반만 차단(ruff_new_only_gate). 임시 repo 로 검증(기존 파일 무변경, 신규 파일만 포맷)."
     },
     {
       "id": "py.stdlib_shadow_files",
@@ -465,8 +466,9 @@
       ],
       "evidence": "허브 분리 2단계: local_agent_router 의 요청모델·검증헬퍼 등 20여 이름 삭제 → tests/test_local_agent_router_split import 실패(리뷰가 검출, d6ad7b27 복원). 파사드는 '# ruff: noqa: F401' 로 표시해 방어. 근본 대책(훅에서 F401 자동수정 제외 또는 재노출 목록 선언) 미결",
       "stage": "GATE",
-      "status": "open",
-      "no": 33
+      "status": "fixed",
+      "no": 33,
+      "fix_note": "2026-10-01 PRE_COMMIT 의 ruff check 에 --unfixable F401 추가 + 기존 파일 자동수정 제외로 재노출 import 삭제 차단. 임시 repo 로 검증. (부수: #2 가시성 로그가 설치 원본에 없어 세션마다 .orig 가 덮어써져 사라지던 것도 원본에 복원)"
     },
     {
       "id": "verify.cross_check_registry",
@@ -508,9 +510,9 @@
       ],
       "evidence": "2026-09-29 GitHub Actions CI 첫 실행에서 발견: codebase_layer_audit.py 를 원래 종료코드 그대로 CI 단계로 썼더니 매번 FAIL — max_unknown_layer_files=20인데 실제 UNKNOWN 레이어 파일이 49개. consistency.checks 15개 중 이 1개만 FAIL, 나머지(circular_imports 포함)는 전부 PASS. 그런데 로컬 pre-commit 훅도, 이 세션 내내 반복 실행한 codebase_layer_audit.py 호출도 이 exit code를 차단 조건으로 쓴 적이 없었음(CLAUDE.md \"게이트 실행 의무\"에 명시된 forbidden_imports/security_patterns/circular_imports 3개만 실제로 확인해옴) — 그래서 아무도 못 보고 지나쳐온 것으로 보임.",
       "stage": "AUDIT",
-      "status": "open",
+      "status": "fixed",
       "no": 36,
-      "fix_note": "2026-09-29: CI(.github/workflows/ci.yml)는 scripts/ops/ci_layer_gate_check.py로 우회(CLAUDE.md 명시 3개 지표만 판정) — 이 결함 자체는 미해결로 남김. 49개 파일을 실제 레이어로 분류하거나 threshold를 재검토하는 작업 필요."
+      "fix_note": "2026-10-01 codebase_layer_audit.py classify 규칙 추가: apps/→L10, .githooks/→L7, notice_radar/→L6. UNKNOWN 49→0, consistency 15개 전부 ok, test_codebase_layer_audit 18 passed. (종료코드 1은 untracked_warning_count 별건)"
     },
     {
       "id": "run.naver_mail_send_compose_missing",
@@ -1453,9 +1455,9 @@
         "ai_orchestrator/tests/test_local_agent.py"
       ],
       "evidence": "WS 재큐잉 수정(위 항목) 검증 중 전체 test_local_agent.py 실행에서 발견: test_strip_result_data_url_query_removed/_empty_returns_none/_sensitive_key_dropped 3개가 'ImportError: cannot import name _strip_result_data from ai_orchestrator.local_agent_registry'로 실패. git stash로 이번 세션 변경 전 상태에서도 동일하게 실패함을 확인 — 이번 작업과 무관한 기존 결함. 이 저장소가 이미 여러 번 겪은 '파사드 재노출 누락'(#33 ruff --fix가 재노출 삭제, #93 local_agent_registry의 task-count 함수 3종 누락) 과 같은 클래스의 4번째 사례로 보임 — 실제 함수는 local_agent_redaction.py에 있고 프로덕션 코드에서는 그 경로로 직접 import하므로 런타임 영향은 없음(테스트 전용 import 경로 문제).",
-      "fix_note": "이번 세션 범위 밖(발견만, 미수정) — 다음 세션에서 재노출 추가 또는 테스트 import 경로 수정.",
+      "fix_note": "2026-09-30 local_agent_registry.py 에 _strip_result_data·_SENSITIVE_KEYS·_RESULT_DATA_ALLOWED_KEYS 재노출 복원(# noqa: F401). 2026-10-01 test_local_agent.py -k strip_result_data 3 passed 로 확인.",
       "stage": "RUN",
-      "status": "open",
+      "status": "fixed",
       "no": 110
     }
   ]
