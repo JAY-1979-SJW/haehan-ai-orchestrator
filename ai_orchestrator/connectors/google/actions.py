@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import logging
 import time
 from typing import Any
 
@@ -12,6 +13,8 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 
 from ._helpers import audit, duration_ms
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -101,7 +104,8 @@ def get_gmail_inbox(
         if items:
             audit("GOOGLE_GMAIL_INBOX", user, status="ok", note=f"count={len(items)} source=oauth")
             return {"ok": True, "source": "oauth", "items": items, "count": len(items), "duration_ms": duration_ms(t0)}
-    except Exception:  # noqa: S110, BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Gmail OAuth 조회(CDP 폴백) 실패: %s", type(exc).__name__)
         pass
 
     # CDP 폴백

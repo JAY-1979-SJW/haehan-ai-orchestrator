@@ -16,8 +16,11 @@ g2b.go.kr / www.g2b.go.kr 공개 read-only 경로를 정규화하고
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 # ── G2B 공개 허용 도메인 ───────────────────────────────────────────────────────
 
@@ -287,7 +290,8 @@ def classify_g2b_url(
         parsed = urlparse(url) if url else None
         domain = parsed.netloc if parsed else ""
         path = parsed.path if parsed else ""
-    except Exception:  # noqa: BLE001 - classify_g2b_url(): URL 파싱 실패 시 blocked_reason=URL_PARSE_ERROR로 설정 후 반환 — 결과 dict의 safe_to_dispatch/safe_to_execute/readonly_allowed는 초기값 False 그대로 유지되어 fail-closed
+    except Exception as exc:  # noqa: BLE001 - classify_g2b_url(): URL 파싱 실패 시 blocked_reason=URL_PARSE_ERROR로 설정 후 반환 — 결과 dict의 safe_to_dispatch/safe_to_execute/readonly_allowed는 초기값 False 그대로 유지되어 fail-closed
+        logger.warning("G2B URL 분류(URL 파싱) 실패: %s", type(exc).__name__)
         result["blocked_reason"] = "URL_PARSE_ERROR"
         result["message_ko"] = "URL 파싱 오류."
         return result

@@ -7,12 +7,15 @@ POST /api/v1/sessions/refresh  — 모니터 스크립트 즉시 실행 후 결�
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 session_status_router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -145,7 +148,8 @@ def refresh_session_status():
         from scripts.ops.session_probe import probe_all
 
         data = probe_all()
-    except Exception:  # noqa: BLE001 - 세션 상태 조회 라우터 -- 읽기 전용, 파일 파싱 실패는 None, 프로버 실패는 마지막 저장 결과 파일로 폴백
+    except Exception as exc:  # noqa: BLE001 - 세션 상태 조회 라우터 -- 읽기 전용, 파일 파싱 실패는 None, 프로버 실패는 마지막 저장 결과 파일로 폴백
+        logger.warning("세션 프로버 실행(파일 폴백) 실패: %s", type(exc).__name__)
         # 프로버 실패 시 마지막 결과 파일로 폴백
         data = _load_file() or {"checked_at": "", "cdp_available": False, "sites": []}
     return _build_response(data)

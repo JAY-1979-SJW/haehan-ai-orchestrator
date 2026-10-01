@@ -385,7 +385,8 @@ def api_summary(
         try:
             raw_count = len(json.loads(raw_path.read_text(encoding="utf-8")))
             raw_file = raw_path.name
-        except Exception:  # noqa: S110, BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("카페 raw 건수 파일 읽기 실패(무시): %s", type(exc).__name__)
             pass
 
     cls_path = _latest_file("classified_*.json")
@@ -395,7 +396,8 @@ def api_summary(
         try:
             cls_count = len(json.loads(cls_path.read_text(encoding="utf-8")))
             cls_file = cls_path.name
-        except Exception:  # noqa: S110, BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("카페 분류 건수 파일 읽기 실패(무시): %s", type(exc).__name__)
             pass
 
     report_path = _latest_file("organized_report_*.txt")
