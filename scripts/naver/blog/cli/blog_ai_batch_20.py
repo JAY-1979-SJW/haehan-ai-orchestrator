@@ -42,17 +42,8 @@ from scripts.naver.blog.marketing.topics import generate_topics, load_cache
 _log = get_logger(__name__)
 
 
-def run(count: int = 20, dry_run: bool = False) -> None:
-    print(f"\n{'=' * 60}")
-    print(f"  블로그 AI 일괄 작성 {'[DRY-RUN]' if dry_run else '[실행]'}")
-    print(f"  대상 계정: {TARGET_BLOG_ID}  |  목표: {count}편")
-    print(f"{'=' * 60}\n")
-
-    # 1. 캐시 로드
-    cache = load_cache()
-    print(f"[캐시] 기존 발행 주제: {len(cache.get('posted', []))}개")
-
-    # 2. 이미지 수집
+def _collect_images(dry_run: bool) -> list:
+    """Unsplash 이미지 수집(dry-run 이면 기존 이미지 사용)."""
     print("\n[이미지] Unsplash 수집 중...")
     if dry_run:
         print("  [DRY-RUN] Unsplash API 호출 스킵 — 기존 images 사용")
@@ -65,13 +56,66 @@ def run(count: int = 20, dry_run: bool = False) -> None:
     if len(all_images) < 3 and not dry_run:
         print("  경고: 이미지 부족. 기존 파일 보충...")
         all_images += existing_unsplash_fallback()
+    return all_images
 
-    # 3. 주제 선정
+
+def _select_topics(cache: dict, count: int, dry_run: bool) -> list:
+    """주제 선정 + 목록 출력."""
     print(f"\n[주제] 선정 중 ({count}개)...")
     topics = generate_topics(cache, count, dry_run=dry_run)
     print(f"  선정된 주제: {len(topics)}개")
     for i, t in enumerate(topics):
         print(f"  {i + 1:2d}. {t['topic']}")
+    return topics
+
+
+def _print_post_summary(post: dict) -> None:
+    """생성된 포스트 요약 출력(제목/본문 길이/태그/SEO)."""
+    segs = post.get("body_segments", [])
+    print(f"  제목: {post['title']}")
+    print(f"  본문: {len(post['body'])}자 ({len(segs)}구간)  태그: {post['tags']}")
+    seo = post.get("seo")
+    if seo:
+        print(f"  SEO: {'✅ 통과' if seo['ok'] else '⚠ ' + ' / '.join(seo['warnings'])}")
+
+
+def _print_run_summary(results: list, dry_run: bool) -> None:
+    """완료 요약 출력."""
+    print(f"\n{'=' * 60}")
+    print(f"  완료 요약 ({'DRY-RUN' if dry_run else '실제 발행'})")
+    print(f"{'=' * 60}")
+    success = sum(1 for r in results if r.get("ok"))
+    print(f"  성공: {success}/{len(results)}")
+    for r in results:
+        status = "✅" if r.get("ok") else "❌"
+        tag = " [DRY]" if r.get("dry_run") else ""
+        print(f"  {status} {r.get('title', r.get('topic', '?'))[:50]}{tag}")
+
+
+def _pick_images(dry_run: bool, all_images: list, idx: int) -> list:
+    """이미지 3장 선택/다운로드(dry-run 이면 더미 경로)."""
+    if dry_run:
+        img_paths = [f"[DRY] image{j + 1}.jpg" for j in range(3)]
+    else:
+        img_paths = pick_3_images(all_images, idx)
+    return img_paths
+
+
+def run(count: int = 20, dry_run: bool = False) -> None:
+    print(f"\n{'=' * 60}")
+    print(f"  블로그 AI 일괄 작성 {'[DRY-RUN]' if dry_run else '[실행]'}")
+    print(f"  대상 계정: {TARGET_BLOG_ID}  |  목표: {count}편")
+    print(f"{'=' * 60}\n")
+
+    # 1. 캐시 로드
+    cache = load_cache()
+    print(f"[캐시] 기존 발행 주제: {len(cache.get('posted', []))}개")
+
+    # 2. 이미지 수집
+    all_images = _collect_images(dry_run)
+
+    # 3. 주제 선정
+    topics = _select_topics(cache, count, dry_run)
 
     if not topics:
         print("주제 선정 실패. 종료.")
@@ -99,18 +143,10 @@ def run(count: int = 20, dry_run: bool = False) -> None:
             results.append({"topic": topic, "ok": False, "reason": "content_gen_failed"})
             continue
 
-        segs = post.get("body_segments", [])
-        print(f"  제목: {post['title']}")
-        print(f"  본문: {len(post['body'])}자 ({len(segs)}구간)  태그: {post['tags']}")
-        seo = post.get("seo")
-        if seo:
-            print(f"  SEO: {'✅ 통과' if seo['ok'] else '⚠ ' + ' / '.join(seo['warnings'])}")
+        _print_post_summary(post)
 
         # 이미지 3장 선택/다운로드
-        if dry_run:
-            img_paths = [f"[DRY] image{j + 1}.jpg" for j in range(3)]
-        else:
-            img_paths = pick_3_images(all_images, idx)
+        img_paths = _pick_images(dry_run, all_images, idx)
         print(f"  이미지: {len(img_paths)}장 — {[Path(p).name for p in img_paths]}")
 
         if dry_run:
@@ -146,15 +182,7 @@ def run(count: int = 20, dry_run: bool = False) -> None:
             wait_between_posts(90)
 
     # 6. 결과 요약
-    print(f"\n{'=' * 60}")
-    print(f"  완료 요약 ({'DRY-RUN' if dry_run else '실제 발행'})")
-    print(f"{'=' * 60}")
-    success = sum(1 for r in results if r.get("ok"))
-    print(f"  성공: {success}/{len(results)}")
-    for r in results:
-        status = "✅" if r.get("ok") else "❌"
-        tag = " [DRY]" if r.get("dry_run") else ""
-        print(f"  {status} {r.get('title', r.get('topic', '?'))[:50]}{tag}")
+    _print_run_summary(results, dry_run)
 
     if not dry_run and browser:
         browser.close()

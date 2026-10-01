@@ -96,6 +96,13 @@ def parse_list_payload(payload: dict) -> list[ListItem]:
     return out
 
 
+def _merge_items(merged: dict[str, ListItem], items) -> None:
+    for it in items:
+        key = it.sn or f"{it.subject}|{it.sender_name}"
+        if key and key not in merged:
+            merged[key] = it
+
+
 def collect_all_pages(target_id: str, *,
                       max_pages: int = 20,
                       max_items: int = 200) -> tuple[list[ListItem], dict]:
@@ -103,10 +110,7 @@ def collect_all_pages(target_id: str, *,
     merged: dict[str, ListItem] = {}
 
     def _merge(items):
-        for it in items:
-            key = it.sn or f"{it.subject}|{it.sender_name}"
-            if key and key not in merged:
-                merged[key] = it
+        _merge_items(merged, items)
 
     # page 1 수집
     cdp.wait_dom(target_id, "document.querySelector('li.mail_item')", timeout=15.0)

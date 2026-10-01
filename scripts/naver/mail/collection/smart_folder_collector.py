@@ -81,6 +81,36 @@ def snapshot_ui_counts(actions: _Actions) -> dict:
     }
 
 
+def _build_folder_coverage(f: Any, result: Any) -> FolderCoverage:
+    """폴더 f 와 collect_inbox 결과 -> FolderCoverage."""
+    fc = FolderCoverage(
+        folder_id=f.folder_id,
+        folder_name=f.name,
+        kind=f.kind,
+        ui_unread_count=f.unread_count,
+        collected_total=len(result.items),
+        collected_unread=sum(1 for it in result.items if it.read_state == "UNREAD"),
+        pages_visited=list(result.pages_visited),
+        pagination_strategy_used=result.pagination_strategy_used,
+        last_page_evidence=list(set(result.last_page_evidence)),
+        last_page_reached=result.last_page_reached,
+        warn_limit_reached=result.warn_limit_reached,
+        page_records=list(result.page_records),
+        items=[asdict(it) for it in result.items],
+        notes=list(result.notes),
+    )
+    return fc
+
+
+def _check_folder_coverage(fc: FolderCoverage, f: Any, warnings: list[str]) -> None:
+    """폴더별 mismatch/증거 부족 판정 (fc.mismatch_reason, warnings 갱신)."""
+    if fc.ui_unread_count >= 0 and fc.collected_total != fc.ui_unread_count:
+        fc.mismatch_reason = f"ui({fc.ui_unread_count})!=collected({fc.collected_total})"
+        warnings.append(f"folder_mismatch:{f.name}:{fc.mismatch_reason}")
+    if len(fc.last_page_evidence) < 2:
+        warnings.append(f"folder_evidence_insufficient:{f.name}:{fc.last_page_evidence}")
+
+
 def collect_all(actions: _Actions, *,
                 max_pages: int = 200,
                 max_items_per_folder: int = 5000,
@@ -125,28 +155,9 @@ def collect_all(actions: _Actions, *,
             it.folder_name = f.name
             sn_to_folders.setdefault(it.sn or "", []).append(f.name)
 
-        fc = FolderCoverage(
-            folder_id=f.folder_id,
-            folder_name=f.name,
-            kind=f.kind,
-            ui_unread_count=f.unread_count,
-            collected_total=len(result.items),
-            collected_unread=sum(1 for it in result.items if it.read_state == "UNREAD"),
-            pages_visited=list(result.pages_visited),
-            pagination_strategy_used=result.pagination_strategy_used,
-            last_page_evidence=list(set(result.last_page_evidence)),
-            last_page_reached=result.last_page_reached,
-            warn_limit_reached=result.warn_limit_reached,
-            page_records=list(result.page_records),
-            items=[asdict(it) for it in result.items],
-            notes=list(result.notes),
-        )
+        fc = _build_folder_coverage(f, result)
         # 폴더별 mismatch 판정
-        if fc.ui_unread_count >= 0 and fc.collected_total != fc.ui_unread_count:
-            fc.mismatch_reason = f"ui({fc.ui_unread_count})!=collected({fc.collected_total})"
-            warnings.append(f"folder_mismatch:{f.name}:{fc.mismatch_reason}")
-        if len(fc.last_page_evidence) < 2:
-            warnings.append(f"folder_evidence_insufficient:{f.name}:{fc.last_page_evidence}")
+        _check_folder_coverage(fc, f, warnings)
         folder_results.append(fc)
 
     # 4) 중복 across folders

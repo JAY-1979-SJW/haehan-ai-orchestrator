@@ -214,6 +214,62 @@ def _classify_flags(f: FolderInfo) -> None:
         f.requires_click_probe = True
 
 
+def _folder_from_raw(nm: str, r: dict) -> FolderInfo:
+    """LNB 원시 dict 한 건 -> FolderInfo."""
+    f = FolderInfo(
+        name=nm,
+        kind=r.get("kind", "unknown"),
+        cls=r.get("cls", ""),
+        title=r.get("title", ""),
+        unread_text=r.get("unread_text", ""),
+        unread_count=int(r.get("unread_count", -1)),
+        href_attr=r.get("href_attr", ""),
+        parent_group=r.get("parent_group", ""),
+        depth=int(r.get("depth", 0)),
+        selector_evidence=r.get("selector_evidence") or {},
+        raw_kind=r.get("raw_kind", ""),
+        is_support_menu=bool(r.get("is_support_menu", False)),
+        folder_evidence_count=int(r.get("folder_evidence_count", 0)),
+        unread_count_evidence=r.get("unread_count_evidence", ""),
+    )
+    return f
+
+
+def _learn_folder_ids(
+    actions: _ActionsP, folders: list[FolderInfo], click_delay_s: float, learn_kinds: tuple[str, ...]
+) -> None:
+    """folder_id 학습 (받은편지함 id=0 설정 + unread>0 폴더 클릭 학습 + 받은편지함 복귀)."""
+    # 받은편지함 id=0 은 잘 알려진 라우트 — 클릭 없이 설정
+    for f in folders:
+        if f.kind == "inbox":
+            f.folder_id = "0"
+            f.folder_url = "https://mail.naver.com/v2/folders/0"
+            f.folder_key = f"{f.name}::{f.kind}::0"
+            break
+    # unread>0 + learn_kinds 인 폴더만 클릭 학습 (스팸/휴지통은 기본 학습 안 함)
+    for f in folders:
+        if f.folder_id:
+            continue
+        if f.unread_count > 0 and f.kind in learn_kinds:
+            clicked = actions.evaluate(_click_folder_expr(f.name))
+            if clicked:
+                time.sleep(min(click_delay_s, 0.2))
+                actions.wait_dom(
+                    "document.querySelector('li.mail_item, .mail_list_wrap')",
+                    timeout_s=8.0,
+                )
+                cur = actions.evaluate(CURRENT_URL_EXPR) or {}
+                url = (cur or {}).get("url", "") if isinstance(cur, dict) else ""
+                fid = parse_folder_id_from_url(url)
+                if fid:
+                    f.folder_id = fid
+                    f.folder_url = f"https://mail.naver.com/v2/folders/{fid}"
+                    f.folder_key = f"{f.name}::{f.kind}::{fid}"
+    # 받은편지함으로 복귀
+    actions.navigate("https://mail.naver.com/v2/folders/0/all")
+    time.sleep(0.2)
+
+
 def discover_folders(actions: _ActionsP,
                      *, learn_ids: bool = True,
                      click_delay_s: float = 2.0,
@@ -231,56 +287,13 @@ def discover_folders(actions: _ActionsP,
         if not nm or nm in seen_names:
             continue
         seen_names.add(nm)
-        f = FolderInfo(
-            name=nm,
-            kind=r.get("kind", "unknown"),
-            cls=r.get("cls", ""),
-            title=r.get("title", ""),
-            unread_text=r.get("unread_text", ""),
-            unread_count=int(r.get("unread_count", -1)),
-            href_attr=r.get("href_attr", ""),
-            parent_group=r.get("parent_group", ""),
-            depth=int(r.get("depth", 0)),
-            selector_evidence=r.get("selector_evidence") or {},
-            raw_kind=r.get("raw_kind", ""),
-            is_support_menu=bool(r.get("is_support_menu", False)),
-            folder_evidence_count=int(r.get("folder_evidence_count", 0)),
-            unread_count_evidence=r.get("unread_count_evidence", ""),
-        )
+        f = _folder_from_raw(nm, r)
         _classify_flags(f)
         f.folder_key = f"{f.name}::{f.kind}"
         folders.append(f)
 
     if learn_ids:
-        # 받은편지함 id=0 은 잘 알려진 라우트 — 클릭 없이 설정
-        for f in folders:
-            if f.kind == "inbox":
-                f.folder_id = "0"
-                f.folder_url = "https://mail.naver.com/v2/folders/0"
-                f.folder_key = f"{f.name}::{f.kind}::0"
-                break
-        # unread>0 + learn_kinds 인 폴더만 클릭 학습 (스팸/휴지통은 기본 학습 안 함)
-        for f in folders:
-            if f.folder_id:
-                continue
-            if f.unread_count > 0 and f.kind in learn_kinds:
-                clicked = actions.evaluate(_click_folder_expr(f.name))
-                if clicked:
-                    time.sleep(min(click_delay_s, 0.2))
-                    actions.wait_dom(
-                        "document.querySelector('li.mail_item, .mail_list_wrap')",
-                        timeout_s=8.0,
-                    )
-                    cur = actions.evaluate(CURRENT_URL_EXPR) or {}
-                    url = (cur or {}).get("url", "") if isinstance(cur, dict) else ""
-                    fid = parse_folder_id_from_url(url)
-                    if fid:
-                        f.folder_id = fid
-                        f.folder_url = f"https://mail.naver.com/v2/folders/{fid}"
-                        f.folder_key = f"{f.name}::{f.kind}::{fid}"
-        # 받은편지함으로 복귀
-        actions.navigate("https://mail.naver.com/v2/folders/0/all")
-        time.sleep(0.2)
+        _learn_folder_ids(actions, folders, click_delay_s, learn_kinds)
 
     # adapter 자동 선택
     from . import folder_policy as fp
