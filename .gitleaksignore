@@ -1,0 +1,51 @@
+# gitleaks 배제 목록 (2026-10-01) — CI 전체 이력 검사 검출 46건 중 가짜 값 45건만 배제한다.
+# 형식: <커밋>:<파일>:<규칙>:<줄>  (gitleaks-action 이 저장소 루트의 이 파일을 읽는다)
+#
+# 배제 사유: 테스트 고정값(abc123…, dev…, sk-…), 문서 예시(resourceKey·approval_token), 네이버 앱 ID(공개 값),
+#           테스트 중 발급된 임시 승인 토큰(audit_logs.jsonl, 2026-04-18), curl 예시(오탐).
+# 의도적으로 배제하지 않은 1건: 커밋 5977212e 의 CLAUDE.md(YouTube Data API 키, 이력에만 남음) — GCP 에서 키 교체 후 별도 처리.
+20bec5cd1a93dba8418119da83c91df1e2644915:ai_orchestrator/tests/test_audit_dev_reg_approvals.py:generic-api-key:175
+20bec5cd1a93dba8418119da83c91df1e2644915:ai_orchestrator/tests/test_alert_dev_reg.py:generic-api-key:230
+c3025ed1b8009a99468a7b1eca75ecc1da1e77bc:tests/test_server_side_external_web_execution_guard_20260508.py:generic-api-key:48
+8fc617d8773e8e8fa737d581055c5f584e162d95:admin-web/src/app/(legacy)/settings/page.tsx:generic-api-key:8
+7504b0e62c6d1c5ff20a9da23a9188b8be3886c2:scripts/ops/audit_haehan_admin_mode_webview_lazy_load.py:generic-api-key:399
+2017d12787c76f62d1bd35ef56e61d8799febb6a:tests/test_haehan_single_exe_launcher_foundation.py:generic-api-key:290
+2017d12787c76f62d1bd35ef56e61d8799febb6a:tests/test_haehan_single_exe_launcher_foundation.py:generic-api-key:292
+2017d12787c76f62d1bd35ef56e61d8799febb6a:tests/test_haehan_single_exe_launcher_foundation.py:generic-api-key:293
+76c4d62b0259060a110d343ed6ca7a63b5a62316:scripts/ops/audit_desktop_webview_pyinstaller_package.py:generic-api-key:178
+126b23a12f7561b83550072cce30c5fc3802d355:scripts/ops/audit_desktop_webview_local_e2e_smoke.py:generic-api-key:139
+4d1700c42df08d17e268ba7d4299add1ba5f9804:scripts/ops/audit_desktop_webview_release_install.py:generic-api-key:186
+126b23a12f7561b83550072cce30c5fc3802d355:tests/test_desktop_webview_local_e2e_smoke.py:generic-api-key:151
+596494fd34beea691d54ab0e5a5c6c79852a622d:scripts/ops/audit_agent_ai_chat_api_client.py:generic-api-key:98
+596494fd34beea691d54ab0e5a5c6c79852a622d:tests/test_agent_ai_chat_api_client.py:generic-api-key:162
+596494fd34beea691d54ab0e5a5c6c79852a622d:tests/test_agent_ai_chat_api_client.py:generic-api-key:187
+596494fd34beea691d54ab0e5a5c6c79852a622d:tests/test_agent_ai_chat_api_client.py:generic-api-key:204
+788054ee38b9ef8740755a44a1ec2b7db8a9a2b3:scripts/ops/audit_local_agent_gui_implementation.py:generic-api-key:63
+788054ee38b9ef8740755a44a1ec2b7db8a9a2b3:scripts/ops/audit_local_agent_gui_implementation.py:generic-api-key:73
+788054ee38b9ef8740755a44a1ec2b7db8a9a2b3:tests/test_local_agent_gui_pages.py:generic-api-key:34
+3600f9e4b67e4953b4d2cf80ec494f81dbf598ca:tests/test_desktop_task_receiver_20260516.py:generic-api-key:102
+12dd97bae0bae9f1000554944aedd8138d644c9e:tests/test_google_site_engine.py:generic-api-key:106
+e26a708a877838934317586765755a396d7fd880:docs/HAIKU_NAVER_API_FIX_DESIGN_V2.md:generic-api-key:365
+e26a708a877838934317586765755a396d7fd880:docs/HAIKU_NAVER_API_FIX_DESIGN_V2.md:generic-api-key:377
+70e7f2e9936254182c02d7fb6dab9be44b07e0cb:tests/test_server_side_external_web_execution_guard_20260508.py:generic-api-key:45
+b7423167597c52402bd41cacb116c93722c206eb:tests/test_browser_gate_approval_preflight_20260507.py:generic-api-key:591
+7fd08bb0b73d604c976e816d13590837936401bb:tests/test_browser_submit_audit_log_persistence_20260506.py:generic-api-key:144
+8ae3d18ebf9ddc10365156611feeb4bc0ff8bed2:docs/local_inventory_baseline.md:generic-api-key:835
+88324a1e4d8b914d5f1fa5ebdff7482bbf40c4e7:agent/tests/test_excel_original_save_policy.py:generic-api-key:63
+2036f62090e90bb6339541d1f1f09fa96e08649e:tests/test_browser_websocket_contract.py:generic-api-key:289
+1d151dd213c1b97e19532603715c7cc7169035f8:docs/cad_mcp_container_split.md:curl-auth-user:247
+83e3e81634de44fc7f74f04d1c4e7478fb833fcd:ai_orchestrator/tests/test_audit_dev_reg_approvals.py:generic-api-key:176
+83e3e81634de44fc7f74f04d1c4e7478fb833fcd:ai_orchestrator/tests/test_alert_dev_reg.py:generic-api-key:216
+41c9cd7fddb6566ada7bd0c997a3dbe319f05d36:ai_orchestrator/tests/test_alert_dev_reg.py:generic-api-key:216
+41c9cd7fddb6566ada7bd0c997a3dbe319f05d36:ai_orchestrator/tests/test_audit_dev_reg_approvals.py:generic-api-key:176
+3ffd35947a1fca2335c959fafbb2ea44d04cbfa0:ai_orchestrator/tests/test_observe_kakao_apps.py:generic-api-key:154
+37ae89e4cb9e92f35ca0be3030dab9c9e9b2189e:ai_orchestrator/tests/test_local_file_indexer.py:generic-api-key:125
+37ae89e4cb9e92f35ca0be3030dab9c9e9b2189e:ai_orchestrator/tests/test_local_file_indexer.py:generic-api-key:274
+157b02090ab2b00740ce2a5e49762eab56572a2a:ai_orchestrator/tests/test_observe_kakao_apps.py:generic-api-key:438
+ab86bc85bfd1fe04a863261a14a5f27c56411290:ai_orchestrator/tests/test_observe_kakao_developers_console.py:generic-api-key:118
+ab86bc85bfd1fe04a863261a14a5f27c56411290:ai_orchestrator/tests/test_observe_kakao_developers_console.py:generic-api-key:215
+ab86bc85bfd1fe04a863261a14a5f27c56411290:ai_orchestrator/tests/test_observe_kakao_developers_console.py:generic-api-key:297
+00f4260367e0fd60c8e31bcd2ee11e5a4b65fa73:ai_orchestrator/storage/audit_logs.jsonl:generic-api-key:8
+00f4260367e0fd60c8e31bcd2ee11e5a4b65fa73:ai_orchestrator/storage/audit_logs.jsonl:generic-api-key:9
+00f4260367e0fd60c8e31bcd2ee11e5a4b65fa73:ai_orchestrator/storage/audit_logs.jsonl:generic-api-key:13
+00f4260367e0fd60c8e31bcd2ee11e5a4b65fa73:ai_orchestrator/storage/audit_logs.jsonl:generic-api-key:14
