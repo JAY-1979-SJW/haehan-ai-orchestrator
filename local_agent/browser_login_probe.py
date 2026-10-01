@@ -85,7 +85,7 @@ _USER_LOGIN_CONFIRM_PROMPT = (
 _KEEP_OPEN_PROMPT = "\n[manual-login-probe] 브라우저를 닫으려면 Enter 를 누르세요.\n> "
 
 
-def probe_manual_login_flow(
+def probe_manual_login_flow(  # noqa: PLR0913 - 공개 API keyword-only 시그니처 유지(호출부·테스트 다수)
     url: str,
     *,
     wait_seconds: int = 120,
@@ -237,7 +237,7 @@ def probe_manual_login_flow(
 # ── 내부 ────────────────────────────────────────────────────────────────
 
 
-def _run_probe(
+def _run_probe(  # noqa: PLR0913 - keyword-only 내부 함수, 호출 1곳(probe_manual_login_flow)
     *,
     factory: Callable[[], Any],
     time_mod: Any,
@@ -258,11 +258,7 @@ def _run_probe(
     keep_open: bool,
     warnings: list[str],
 ) -> dict[str, Any]:
-    launch_kwargs: dict[str, Any] = {"headless": False}
-    if slow_mo_ms > 0:
-        launch_kwargs["slow_mo"] = slow_mo_ms
-    if browser_channel and browser_channel != "chromium":
-        launch_kwargs["channel"] = browser_channel
+    launch_kwargs = _build_launch_kwargs(slow_mo_ms, browser_channel)
 
     context_kwargs: dict[str, Any] = {}
     if viewport:
@@ -310,50 +306,21 @@ def _run_probe(
                             )
 
                     # 4) 관찰 루프.
-                    deadline_ts = time_mod.monotonic() + wait_seconds
-                    last_obs = initial
-                    completed_reasons: list[str] = []
-
-                    while True:
-                        now = time_mod.monotonic()
-                        if now >= deadline_ts:
-                            break
-                        sleep_for = min(
-                            poll_interval_seconds,
-                            deadline_ts - now,
-                        )
-                        if sleep_for > 0:
-                            time_mod.sleep(sleep_for)
-                        last_obs = _observe(
-                            page,
-                            max_html_chars=max_html_chars,
-                        )
-                        completed_reasons = _detect_completion(
-                            initial=initial,
-                            current=last_obs,
-                            success_urls=success_urls,
-                            success_texts=success_texts,
-                        )
-                        if _has_strong_reason(completed_reasons):
-                            break
+                    last_obs, completed_reasons = _poll_for_completion(
+                        page,
+                        time_mod,
+                        initial,
+                        (wait_seconds, poll_interval_seconds, max_html_chars),
+                        (success_urls, success_texts),
+                    )
 
                     # 5) require_user_login_confirm 이면 사용자 Enter 수신.
                     login_confirmed_by_user = False
                     if require_user_login_confirm:
-                        try:
-                            answer = input_reader(
-                                _USER_LOGIN_CONFIRM_PROMPT,
-                            )
-                        except (KeyboardInterrupt, EOFError):
-                            answer = None
-                        if answer is not None:
-                            stripped = (answer or "").strip().lower()
-                            if stripped not in {"n", "no", "아니오"}:
-                                login_confirmed_by_user = True
-                                if "user_confirmed_login" not in completed_reasons:
-                                    completed_reasons.append(
-                                        "user_confirmed_login",
-                                    )
+                        login_confirmed_by_user = _ask_user_login_confirm(
+                            input_reader,
+                            completed_reasons,
+                        )
 
                     # 6) 상태 분류.
                     initial_is_already_logged_in = _initial_is_already_logged_in(
@@ -375,21 +342,12 @@ def _run_probe(
                     #    read-only 로만 수집해 집계한다. fake context 에서는
                     #    `pages` 속성이 없으므로 getattr default=None 로 안전
                     #    fallback 된다.
-                    pages_observed_count, success_url_across_pages = _scan_context_pages_aggregate(
-                        context=context,
-                        success_urls=success_urls,
+                    pages_observed_count, success_url_across_pages = _scan_pages_and_warn(
+                        context,
+                        success_urls,
+                        login_confirmed_by_user,
+                        warnings,
                     )
-                    if success_url_across_pages and not login_confirmed_by_user:
-                        # 사용자 확인이 없는데 다른 탭에 target 이 열려 있는
-                        # 상태는 자동 단정하지 않는다 (§5.3, §8.4 WARN).
-                        if "success_url_observed_across_pages" not in (warnings or []):
-                            warnings.append("success_url_observed_across_pages")
-                    if login_confirmed_by_user and not success_url_across_pages:
-                        # 사용자 확인은 있는데 스크립트가 target URL 을 어느
-                        # 탭에서도 관측하지 못한 경우 — §8.4 "PASS with
-                        # measurement caveat" 케이스.
-                        if "script_observed_without_target_url" not in (warnings or []):
-                            warnings.append("script_observed_without_target_url")
 
                     # 8) keep_open 시 닫기 전에 사용자 Enter 를 기다림.
                     if keep_open:
@@ -417,7 +375,136 @@ def _run_probe(
             _safe_close(browser)
 
 
-def _build_result(
+def _build_launch_kwargs(slow_mo_ms: int, browser_channel: str | None) -> dict[str, Any]:
+    launch_kwargs: dict[str, Any] = {"headless": False}
+    if slow_mo_ms > 0:
+        launch_kwargs["slow_mo"] = slow_mo_ms
+    if browser_channel and browser_channel != "chromium":
+        launch_kwargs["channel"] = browser_channel
+    return launch_kwargs
+
+
+def _poll_for_completion(
+    page: Any,
+    time_mod: Any,
+    initial: dict[str, Any],
+    limits: tuple[int, int, int],
+    success: tuple[list[str], list[str]],
+) -> tuple[dict[str, Any], list[str]]:
+    """관찰 루프. limits=(wait_seconds, poll_interval_seconds, max_html_chars), success=(urls, texts)."""
+    wait_seconds, poll_interval_seconds, max_html_chars = limits
+    success_urls, success_texts = success
+    deadline_ts = time_mod.monotonic() + wait_seconds
+    last_obs = initial
+    completed_reasons: list[str] = []
+
+    while True:
+        now = time_mod.monotonic()
+        if now >= deadline_ts:
+            break
+        sleep_for = min(
+            poll_interval_seconds,
+            deadline_ts - now,
+        )
+        if sleep_for > 0:
+            time_mod.sleep(sleep_for)
+        last_obs = _observe(
+            page,
+            max_html_chars=max_html_chars,
+        )
+        completed_reasons = _detect_completion(
+            initial=initial,
+            current=last_obs,
+            success_urls=success_urls,
+            success_texts=success_texts,
+        )
+        if _has_strong_reason(completed_reasons):
+            break
+    return last_obs, completed_reasons
+
+
+def _ask_user_login_confirm(
+    input_reader: Callable[[str], str],
+    completed_reasons: list[str],
+) -> bool:
+    """사용자 Enter 수신. 확인되면 completed_reasons 에 user_confirmed_login 추가."""
+    login_confirmed_by_user = False
+    try:
+        answer = input_reader(
+            _USER_LOGIN_CONFIRM_PROMPT,
+        )
+    except (KeyboardInterrupt, EOFError):
+        answer = None
+    if answer is not None:
+        stripped = (answer or "").strip().lower()
+        if stripped not in {"n", "no", "아니오"}:
+            login_confirmed_by_user = True
+            if "user_confirmed_login" not in completed_reasons:
+                completed_reasons.append(
+                    "user_confirmed_login",
+                )
+    return login_confirmed_by_user
+
+
+def _scan_pages_and_warn(
+    context: Any,
+    success_urls: list[str],
+    login_confirmed_by_user: bool,
+    warnings: list[str],
+) -> tuple[int, bool]:
+    """7) 다중 탭 스캔 (measurement gap 보완) + 경고 누적.
+
+    Studio/OAuth flow 가 window.open/팝업으로 target 페이지를
+    별도 탭에 열었을 경우, 단일 `page` 기준으로는 놓친다.
+    context.pages 전수 스캔으로 각 탭의 url/title 을
+    read-only 로만 수집해 집계한다. fake context 에서는
+    `pages` 속성이 없으므로 getattr default=None 로 안전
+    fallback 된다.
+    """
+    pages_observed_count, success_url_across_pages = _scan_context_pages_aggregate(
+        context=context,
+        success_urls=success_urls,
+    )
+    if success_url_across_pages and not login_confirmed_by_user:
+        # 사용자 확인이 없는데 다른 탭에 target 이 열려 있는
+        # 상태는 자동 단정하지 않는다 (§5.3, §8.4 WARN).
+        if "success_url_observed_across_pages" not in (warnings or []):
+            warnings.append("success_url_observed_across_pages")
+    if login_confirmed_by_user and not success_url_across_pages:
+        # 사용자 확인은 있는데 스크립트가 target URL 을 어느
+        # 탭에서도 관측하지 못한 경우 — §8.4 "PASS with
+        # measurement caveat" 케이스.
+        if "script_observed_without_target_url" not in (warnings or []):
+            warnings.append("script_observed_without_target_url")
+    return pages_observed_count, success_url_across_pages
+
+
+def _success_url_reason(success_urls: list[str], init_url: str, cur_url: str) -> str | None:
+    init_url_lc = init_url.lower()
+    cur_url_lc = cur_url.lower()
+    for tok in success_urls:
+        tok_lc = (tok or "").lower()
+        if not tok_lc:
+            continue
+        # 초기에 이미 토큰이 포함돼 있었다면 success_url_match 는 약한
+        # 신호가 아니라 "처음부터 그 상태" 이므로 reason 에 추가하지 않는다.
+        if tok_lc in cur_url_lc and tok_lc not in init_url_lc:
+            return f"success_url_match:{tok[:60]}"
+    return None
+
+
+def _success_text_reason(success_texts: list[str], initial: dict[str, Any], current: dict[str, Any]) -> str | None:
+    text_blob_current = _visible_text_blob(current.get("page_structure") or {})
+    text_blob_initial = _visible_text_blob(initial.get("page_structure") or {})
+    for tok in success_texts:
+        if not tok:
+            continue
+        if tok in text_blob_current and tok not in text_blob_initial:
+            return f"success_text_match:{tok[:60]}"
+    return None
+
+
+def _build_result(  # noqa: PLR0913 - keyword-only 내부 결과 빌더, 호출 1곳
     *,
     url: str,
     initial: dict[str, Any],
@@ -624,26 +711,13 @@ def _detect_completion(
     if initial.get("login_required_hint") and not current.get("login_required_hint"):
         reasons.append("login_required_hint_cleared")
 
-    init_url_lc = init_url.lower()
-    cur_url_lc = cur_url.lower()
-    for tok in success_urls:
-        tok_lc = (tok or "").lower()
-        if not tok_lc:
-            continue
-        # 초기에 이미 토큰이 포함돼 있었다면 success_url_match 는 약한
-        # 신호가 아니라 "처음부터 그 상태" 이므로 reason 에 추가하지 않는다.
-        if tok_lc in cur_url_lc and tok_lc not in init_url_lc:
-            reasons.append(f"success_url_match:{tok[:60]}")
-            break
+    url_reason = _success_url_reason(success_urls, init_url, cur_url)
+    if url_reason is not None:
+        reasons.append(url_reason)
 
-    text_blob_current = _visible_text_blob(current.get("page_structure") or {})
-    text_blob_initial = _visible_text_blob(initial.get("page_structure") or {})
-    for tok in success_texts:
-        if not tok:
-            continue
-        if tok in text_blob_current and tok not in text_blob_initial:
-            reasons.append(f"success_text_match:{tok[:60]}")
-            break
+    text_reason = _success_text_reason(success_texts, initial, current)
+    if text_reason is not None:
+        reasons.append(text_reason)
 
     # de-dup, keep order.
     seen: set[str] = set()

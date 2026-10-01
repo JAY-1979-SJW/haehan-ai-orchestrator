@@ -89,7 +89,7 @@ class BrowserApprovalStore:
         """Initialize approval store."""
         self._records: dict[str, BrowserApprovalRecord] = {}
 
-    def create_approval(
+    def create_approval(  # noqa: PLR0913 - 공개 API 시그니처 유지(저장소 3종 공통 인터페이스)
         self,
         approval_id: str,
         action_type: str,
@@ -195,6 +195,32 @@ class BrowserApprovalVerifier:
         """
         self.store = approval_store
 
+    @staticmethod
+    def _status_error(record: BrowserApprovalRecord) -> ApprovalVerificationResult | None:
+        """record.status 검사 (used/revoked/그 외 비-approved 거절)."""
+        if record.status == "used":
+            return ApprovalVerificationResult(
+                valid=False,
+                error_code="approval_used",
+                error_message="Approval has already been used",
+                record=record,
+            )
+        elif record.status == "revoked":
+            return ApprovalVerificationResult(
+                valid=False,
+                error_code="approval_revoked",
+                error_message="Approval has been revoked",
+                record=record,
+            )
+        elif record.status != "approved":
+            return ApprovalVerificationResult(
+                valid=False,
+                error_code="approval_invalid",
+                error_message=f"Approval status is {record.status}",
+                record=record,
+            )
+        return None
+
     def verify(
         self,
         approval_id: str | None,
@@ -238,27 +264,9 @@ class BrowserApprovalVerifier:
             )
 
         # Check status first
-        if record.status == "used":
-            return ApprovalVerificationResult(
-                valid=False,
-                error_code="approval_used",
-                error_message="Approval has already been used",
-                record=record,
-            )
-        elif record.status == "revoked":
-            return ApprovalVerificationResult(
-                valid=False,
-                error_code="approval_revoked",
-                error_message="Approval has been revoked",
-                record=record,
-            )
-        elif record.status != "approved":
-            return ApprovalVerificationResult(
-                valid=False,
-                error_code="approval_invalid",
-                error_message=f"Approval status is {record.status}",
-                record=record,
-            )
+        status_err = self._status_error(record)
+        if status_err is not None:
+            return status_err
 
         # Check expiration
         if record.expires_at and datetime.utcnow() > record.expires_at:

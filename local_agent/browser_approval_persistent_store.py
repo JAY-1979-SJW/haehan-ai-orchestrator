@@ -152,7 +152,7 @@ class PersistentBrowserApprovalStore:
         except Exception as e:  # noqa: BLE001 - 브라우저 승인 영구 저장소 -- 저장소 로드 실패 시 빈 레코드로 초기화(존재하지 않는 승인은 이후 로직에서 미승인으로 처리되어 fail-closed), 이벤트 append 실패는 로깅만
             logger.error("Failed to append approval event: %s", e)
 
-    def create_approval(
+    def create_approval(  # noqa: PLR0913 - 공개 API 시그니처 유지(저장소 3종 공통 인터페이스)
         self,
         approval_id: str,
         action_type: str,

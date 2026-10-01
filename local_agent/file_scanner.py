@@ -139,32 +139,9 @@ def scan_file_tree(
     if not isinstance(root_path, str) or not root_path.strip():
         return _error("ROOT_INVALID", "root_path 누락 또는 잘못된 타입")
 
-    block = _check_blocked_root(root_path)
-    if block is not None:
-        code, msg = block
-        return _error(code, msg)
-
-    try:
-        root = Path(root_path).expanduser()
-    except (OSError, ValueError):
-        return _error("ROOT_INVALID", "root_path 해석 실패")
-
-    try:
-        exists = root.exists()
-    except OSError:
-        return _error("ROOT_INVALID", "root_path 상태 조회 실패")
-    if not exists:
-        return _error("ROOT_NOT_FOUND", "root_path 가 존재하지 않음")
-
-    # resolve 이후 시스템 폴더 재검증 (사용자가 상대 경로로 차단 회피 시도 방어)
-    try:
-        root_resolved = root.resolve()
-    except OSError:
-        root_resolved = root
-    block = _check_blocked_root(str(root_resolved))
-    if block is not None:
-        code, msg = block
-        return _error(code, msg)
+    root_resolved, root_err = _resolve_scan_root(root_path)
+    if root_err is not None:
+        return root_err
 
     warnings: list[str] = []
 
@@ -215,6 +192,37 @@ def scan_file_tree(
 # ─── 내부 구현 ──────────────────────────────────────────────────────────────
 
 
+def _resolve_scan_root(root_path: str) -> tuple[Path, None] | tuple[None, dict[str, Any]]:
+    """root_path 차단/존재/해석 검증. (resolved_root, None) 또는 (None, 오류 dict)."""
+    block = _check_blocked_root(root_path)
+    if block is not None:
+        code, msg = block
+        return None, _error(code, msg)
+
+    try:
+        root = Path(root_path).expanduser()
+    except (OSError, ValueError):
+        return None, _error("ROOT_INVALID", "root_path 해석 실패")
+
+    try:
+        exists = root.exists()
+    except OSError:
+        return None, _error("ROOT_INVALID", "root_path 상태 조회 실패")
+    if not exists:
+        return None, _error("ROOT_NOT_FOUND", "root_path 가 존재하지 않음")
+
+    # resolve 이후 시스템 폴더 재검증 (사용자가 상대 경로로 차단 회피 시도 방어)
+    try:
+        root_resolved = root.resolve()
+    except OSError:
+        root_resolved = root
+    block = _check_blocked_root(str(root_resolved))
+    if block is not None:
+        code, msg = block
+        return None, _error(code, msg)
+    return root_resolved, None
+
+
 def _error(code: str, summary: str) -> dict[str, Any]:
     return {
         "ok": False,
@@ -245,7 +253,39 @@ def _check_blocked_root(raw: str) -> tuple[str, str] | None:
     return None
 
 
-def _walk(
+def _list_dir(cur: Path, warnings: list[str]) -> list[Path]:
+    """디렉터리 항목 정렬 목록. 읽기 실패 시 경고 기록 후 빈 목록."""
+    try:
+        return sorted(cur.iterdir(), key=lambda p: p.name)
+    except (PermissionError, OSError) as exc:
+        warnings.append(f"iterdir_failed:{cur.name}:{type(exc).__name__}")
+        return []
+
+
+def _append_item(items: list[dict[str, Any]], item: dict[str, Any] | None) -> None:
+    if item is not None:
+        items.append(item)
+
+
+def _safe_flag(fn: Any) -> bool:
+    """is_symlink/is_dir/is_file 호출. OSError 이면 False."""
+    try:
+        return fn()
+    except OSError:
+        return False
+
+
+def _is_skipped_entry(entry: Path, hidden: bool, include_hidden: bool, warnings: list[str]) -> bool:
+    """숨김(미포함 시) / 심볼릭 링크 항목은 제외 대상. 링크는 경고 기록."""
+    if hidden and not include_hidden:
+        return True
+    if _safe_flag(entry.is_symlink):
+        warnings.append(f"skipped_symlink:{entry.name}")
+        return True
+    return False
+
+
+def _walk(  # noqa: PLR0913 - keyword-only 내부 함수, 호출 1곳
     root: Path,
     *,
     max_depth: int,
@@ -265,11 +305,7 @@ def _walk(
         cur, depth = stack.pop()
         scanned_dirs += 1
 
-        try:
-            entries = sorted(cur.iterdir(), key=lambda p: p.name)
-        except (PermissionError, OSError) as exc:
-            warnings.append(f"iterdir_failed:{cur.name}:{type(exc).__name__}")
-            continue
+        entries = _list_dir(cur, warnings)
 
         for entry in entries:
             if len(items) >= max_files:
@@ -278,39 +314,18 @@ def _walk(
 
             name = entry.name
             hidden = _is_hidden(entry)
-            if hidden and not include_hidden:
+            if _is_skipped_entry(entry, hidden, include_hidden, warnings):
                 excluded_count += 1
                 continue
 
-            try:
-                is_symlink = entry.is_symlink()
-            except OSError:
-                is_symlink = False
-            if is_symlink:
-                excluded_count += 1
-                warnings.append(f"skipped_symlink:{name}")
-                continue
-
-            try:
-                is_dir = entry.is_dir()
-            except OSError:
-                is_dir = False
-
-            if is_dir:
-                if name in EXCLUDED_DIRS:
-                    excluded_count += 1
-                    continue
-                if depth + 1 > max_depth:
+            if _safe_flag(entry.is_dir):
+                if name in EXCLUDED_DIRS or depth + 1 > max_depth:
                     excluded_count += 1
                     continue
                 stack.append((entry, depth + 1))
                 continue
 
-            try:
-                is_file = entry.is_file()
-            except OSError:
-                is_file = False
-            if not is_file:
+            if not _safe_flag(entry.is_file):
                 continue
 
             item = _build_item(
@@ -322,8 +337,7 @@ def _walk(
                 warnings=warnings,
                 is_hidden=hidden,
             )
-            if item is not None:
-                items.append(item)
+            _append_item(items, item)
 
         if truncated:
             break
@@ -334,7 +348,7 @@ def _walk(
     return items, scanned_dirs, excluded_count
 
 
-def _build_item(
+def _build_item(  # noqa: PLR0913 - keyword-only 내부 함수, 호출 2곳
     path: Path,
     root: Path,
     *,
@@ -525,25 +539,23 @@ def _is_hidden(path: Path) -> bool:
     return False
 
 
+_FILE_TYPE_TABLE: tuple[tuple[frozenset[str], str], ...] = (
+    (frozenset({".pem", ".key", ".env", ".pfx", ".p12", ".kdbx"}), "secret"),
+    (frozenset({".docx", ".doc", ".hwp", ".hwpx", ".pdf", ".rtf", ".txt", ".md"}), "document"),
+    (frozenset({".xlsx", ".xls", ".csv"}), "spreadsheet"),
+    (frozenset({".ppt", ".pptx"}), "presentation"),
+    (frozenset({".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tif", ".tiff", ".webp"}), "image"),
+    (frozenset({".dwg", ".dxf"}), "cad"),
+    (frozenset({".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"}), "archive"),
+    (frozenset({".py", ".js", ".ts", ".tsx", ".java", ".c", ".cpp", ".go", ".rs", ".rb"}), "code"),
+    (frozenset({".db", ".sqlite", ".json", ".xml", ".yaml", ".yml"}), "data"),
+)
+
+
 def _file_type(ext: str) -> str:
-    if ext in {".pem", ".key", ".env", ".pfx", ".p12", ".kdbx"}:
-        return "secret"
-    if ext in {".docx", ".doc", ".hwp", ".hwpx", ".pdf", ".rtf", ".txt", ".md"}:
-        return "document"
-    if ext in {".xlsx", ".xls", ".csv"}:
-        return "spreadsheet"
-    if ext in {".ppt", ".pptx"}:
-        return "presentation"
-    if ext in {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tif", ".tiff", ".webp"}:
-        return "image"
-    if ext in {".dwg", ".dxf"}:
-        return "cad"
-    if ext in {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"}:
-        return "archive"
-    if ext in {".py", ".js", ".ts", ".tsx", ".java", ".c", ".cpp", ".go", ".rs", ".rb"}:
-        return "code"
-    if ext in {".db", ".sqlite", ".json", ".xml", ".yaml", ".yml"}:
-        return "data"
+    for exts, kind in _FILE_TYPE_TABLE:
+        if ext in exts:
+            return kind
     if ext in DELETE_CANDIDATE_EXTENSIONS:
         return "temporary"
     return "other"
