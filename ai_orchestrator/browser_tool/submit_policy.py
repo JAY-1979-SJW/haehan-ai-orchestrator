@@ -180,8 +180,8 @@ def contains_denied_field(fields: list[dict], denied_field_names: list[str]) -> 
     denied_lower = {name.lower() for name in denied_field_names}
     found = []
 
-    for _field in fields:
-        field_name = field.get("name", "").lower()
+    for field_item in fields:
+        field_name = field_item.get("name", "").lower()
         if field_name in denied_lower:
             found.append(field_name)
 
