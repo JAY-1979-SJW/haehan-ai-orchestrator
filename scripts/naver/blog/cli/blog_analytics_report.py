@@ -77,14 +77,8 @@ def run_compare(blog_ids: list[str]) -> dict:
     return reports
 
 
-def _print_summary(report: dict) -> None:
-    print(f"\n{'=' * 60}")
-    print(f"  블로그 분석 — {report['blog_id']}  ({report['generated_at']})")
-    print(f"{'=' * 60}\n")
-
-    today = report.get("today", {})
-    print(f"[오늘] 방문 {today.get('visitors_today', '-')}  |  누적 {today.get('visitors_total', '-')}\n")
-
+def _print_referer(report: dict) -> None:
+    """유입경로 출력."""
     referer = report.get("referer", {})
     if referer.get("ok"):
         print("[유입경로]")
@@ -96,6 +90,9 @@ def _print_summary(report: dict) -> None:
                 print(f"    {t['term']:<20} {t['pct']:>5.2f}%")
         print()
 
+
+def _print_rank(report: dict) -> None:
+    """글별 조회수 순위 출력."""
     rank = report.get("rank_pv", {})
     if rank.get("ok"):
         print(f"[글별 조회수 순위 — {rank.get('period')}]")
@@ -103,6 +100,9 @@ def _print_summary(report: dict) -> None:
             print(f"  {p['rank']:>2}. ({p['pv']:>3}회) {p['title'][:45]}")
         print()
 
+
+def _print_trend(report: dict) -> None:
+    """방문 추이 출력."""
     trend = report.get("visit_trend", {})
     if trend.get("ok"):
         print(f"[방문 추이 — 최근 {len(trend.get('trend', []))}일]")
@@ -110,11 +110,17 @@ def _print_summary(report: dict) -> None:
             print(f"  {t['date']}  {t['total']:>4}")
         print()
 
+
+def _print_device(report: dict) -> None:
+    """기기별 출력."""
     device = report.get("device", {})
     if device.get("ok") and device.get("device"):
         d = device["device"]
         print(f"[기기별] 모바일 {d.get('mobile', '-')}%  |  PC {d.get('pc', '-')}%\n")
 
+
+def _print_demo(report: dict) -> None:
+    """성별·연령별 분포 출력."""
     demo = report.get("demo", {})
     if demo.get("ok"):
         rows = [r for r in demo.get("breakdown", []) if r["age"] != "전체" and r["count"] > 0]
@@ -123,6 +129,25 @@ def _print_summary(report: dict) -> None:
             for r in sorted(rows, key=lambda r: -r["count"]):
                 print(f"  {r['age']:<6} {r['gender']}  {r['count']:>3}건 ({r['pct']:.1f}%)")
             print()
+
+
+def _print_summary(report: dict) -> None:
+    print(f"\n{'=' * 60}")
+    print(f"  블로그 분석 — {report['blog_id']}  ({report['generated_at']})")
+    print(f"{'=' * 60}\n")
+
+    today = report.get("today", {})
+    print(f"[오늘] 방문 {today.get('visitors_today', '-')}  |  누적 {today.get('visitors_total', '-')}\n")
+
+    _print_referer(report)
+
+    _print_rank(report)
+
+    _print_trend(report)
+
+    _print_device(report)
+
+    _print_demo(report)
 
     print(f"저장: {report.get('_file')}")
 

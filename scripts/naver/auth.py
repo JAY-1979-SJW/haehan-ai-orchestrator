@@ -44,16 +44,8 @@ NAVER_LOGIN_URL = "https://www.naver.com/"
 # ── 자격증명 로드 ──────────────────────────────────────────────────────────
 
 
-def _load_credentials(
-    naver_id: str | None = None,
-    naver_pw: str | None = None,
-) -> tuple[str | None, str | None]:
-    """ID/PW 조회. 파라미터 → 통합 저장소(credentials.json, 암호화) → 환경변수 → 레거시 파일."""
-    nid = naver_id
-    pw = naver_pw
-
-    # 1. 통합 저장소 (암호화) — 계정별 "naver:ID" 키 우선, 없으면 기본 "naver"
-    # 단, nid가 명시된 경우 기본 "naver" 계정으로 폴백하지 않음 (다른 계정 PW 혼용 방지)
+def _load_from_cred_store(nid: str | None, pw: str | None) -> tuple[str | None, str | None]:
+    """통합 저장소(암호화)에서 ID/PW 보충."""
     if not pw:
         try:
             from scripts.credentials import get_cred
@@ -69,14 +61,11 @@ def _load_credentials(
                 pw = cred["pw"]
         except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
             _log.debug("통합 자격증명 로드 실패: %s", e)
+    return nid, pw
 
-    # 2. 환경변수
-    if not nid:
-        nid = os.environ.get("NAVER_ID")
-    if not pw:
-        pw = os.environ.get("NAVER_PW")
 
-    # 3. 레거시 평문 파일 (백업 경로) — 폐지 예정. 값은 로그에 남기지 않는다.
+def _load_from_legacy_file(nid: str | None, pw: str | None) -> tuple[str | None, str | None]:
+    """레거시 평문 파일에서 ID/PW 보충."""
     if (not nid or not pw) and ENV_FILE.exists():
         _log.warning(
             "[naver-auth] 평문 자격증명 파일을 사용 중 — `python scripts/credentials.py migrate` 로 암호화 저장소로 이전하세요"
@@ -97,6 +86,29 @@ def _load_credentials(
                     pw = v
         except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
             _log.debug("자격증명 파일 읽기 실패: %s", e)
+    return nid, pw
+
+
+def _load_credentials(
+    naver_id: str | None = None,
+    naver_pw: str | None = None,
+) -> tuple[str | None, str | None]:
+    """ID/PW 조회. 파라미터 → 통합 저장소(credentials.json, 암호화) → 환경변수 → 레거시 파일."""
+    nid = naver_id
+    pw = naver_pw
+
+    # 1. 통합 저장소 (암호화) — 계정별 "naver:ID" 키 우선, 없으면 기본 "naver"
+    # 단, nid가 명시된 경우 기본 "naver" 계정으로 폴백하지 않음 (다른 계정 PW 혼용 방지)
+    nid, pw = _load_from_cred_store(nid, pw)
+
+    # 2. 환경변수
+    if not nid:
+        nid = os.environ.get("NAVER_ID")
+    if not pw:
+        pw = os.environ.get("NAVER_PW")
+
+    # 3. 레거시 평문 파일 (백업 경로) — 폐지 예정. 값은 로그에 남기지 않는다.
+    nid, pw = _load_from_legacy_file(nid, pw)
 
     return nid, pw
 
@@ -430,13 +442,8 @@ def _naver_auth_cookies_present(page) -> bool:
         return False
 
 
-def ensure_naver_login(
-    page,
-    naver_id: str | None = None,
-    naver_pw: str | None = None,
-    return_url: str | None = None,
-) -> dict[str, Any]:
-    """현재 페이지의 네이버 도메인 로그인 확인 → 미로그인이면 자동 로그인 → 원래 페이지 복귀."""
+def _ensure_on_naver_domain(page) -> None:
+    """현재 페이지가 네이버 도메인이 아니면 네이버로 이동."""
     # 현재 페이지가 네이버 도메인이 아니면 로그인 판정 전에 네이버로 이동
     # (호출처가 about:blank/타 사이트에 있어도 쿠키 기반 로그인을 올바로 감지하기 위함)
     try:
@@ -450,7 +457,9 @@ def ensure_naver_login(
         except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
 
-    state = detect_login_state(page)
+
+def _handle_logged_in_state(page, state: dict, naver_id: str | None, naver_pw: str | None) -> dict[str, Any] | None:
+    """이미 로그인된 상태 처리(계정 전환 필요 시 재로그인). 로그인 상태가 아니면 None."""
     current_user = (state.get("user") or "").strip().lower()
     target_user = (naver_id or "").strip().lower()
 
@@ -475,14 +484,11 @@ def ensure_naver_login(
                 return login_naver(page, naver_id=naver_id, naver_pw=naver_pw, force_relogin=True)
             return {"ok": False, "reason": f"{naver_id} 비밀번호를 찾을 수 없습니다"}
         return {"ok": True, "user": state.get("user"), "reason": "already_logged_in"}
+    return None
 
-    # 폴백: 범용 JS 감지 실패해도 네이버 인증 쿠키(NID_AUT+NID_SES)가 있으면 로그인으로 인정.
-    # 이 쿠키는 httpOnly 라 detect_login_state 의 document.cookie 신호로는 안 잡힌다.
-    if _naver_auth_cookies_present(page):
-        _log.info("[naver-auth] JS 감지 실패했으나 네이버 인증 쿠키 확인 → 로그인 인정")
-        return {"ok": True, "user": state.get("user"), "reason": "naver_cookie"}
 
-    # pw 미전달 시 자격증명 자동 탐색
+def _fill_naver_pw(naver_id: str | None, naver_pw: str | None) -> str | None:
+    """pw 미전달 시 자격증명 자동 탐색."""
     if naver_id and not naver_pw:
         try:
             from scripts.credentials import get_naver_cred
@@ -491,12 +497,11 @@ def ensure_naver_login(
             naver_pw = cred.get("pw", "")
         except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
+    return naver_pw
 
-    original_url = return_url or page.url
 
-    # ── 순차 인증창 게이트 (SSO 우선) ──────────────────────────────────────────
-    # 네이버 세션이 있으면 커머스 SSO(간편 로그인)를 자동 클릭한다. 그 결과 2단계 인증(2FA)·
-    # 캡차가 뜨면 자동 입력이 불가능한 보안 단계이므로 명확한 사유로 반환(섹션 실패로 묻히지 않게).
+def _try_auth_window_gate(page) -> dict[str, Any] | None:
+    """순차 인증창 게이트(SSO 우선). 결과를 확정할 수 있으면 dict, 아니면 None."""
     try:
         from scripts.naver.auth_window_gate import (
             STAGE_CAPTCHA,
@@ -527,6 +532,40 @@ def ensure_naver_login(
             }
     except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         _log.debug("[naver-auth] auth-gate 스킵: %s", str(e)[:100])
+    return None
+
+
+def ensure_naver_login(
+    page,
+    naver_id: str | None = None,
+    naver_pw: str | None = None,
+    return_url: str | None = None,
+) -> dict[str, Any]:
+    """현재 페이지의 네이버 도메인 로그인 확인 → 미로그인이면 자동 로그인 → 원래 페이지 복귀."""
+    _ensure_on_naver_domain(page)
+
+    state = detect_login_state(page)
+    handled = _handle_logged_in_state(page, state, naver_id, naver_pw)
+    if handled is not None:
+        return handled
+
+    # 폴백: 범용 JS 감지 실패해도 네이버 인증 쿠키(NID_AUT+NID_SES)가 있으면 로그인으로 인정.
+    # 이 쿠키는 httpOnly 라 detect_login_state 의 document.cookie 신호로는 안 잡힌다.
+    if _naver_auth_cookies_present(page):
+        _log.info("[naver-auth] JS 감지 실패했으나 네이버 인증 쿠키 확인 → 로그인 인정")
+        return {"ok": True, "user": state.get("user"), "reason": "naver_cookie"}
+
+    # pw 미전달 시 자격증명 자동 탐색
+    naver_pw = _fill_naver_pw(naver_id, naver_pw)
+
+    original_url = return_url or page.url
+
+    # ── 순차 인증창 게이트 (SSO 우선) ──────────────────────────────────────────
+    # 네이버 세션이 있으면 커머스 SSO(간편 로그인)를 자동 클릭한다. 그 결과 2단계 인증(2FA)·
+    # 캡차가 뜨면 자동 입력이 불가능한 보안 단계이므로 명확한 사유로 반환(섹션 실패로 묻히지 않게).
+    gate_result = _try_auth_window_gate(page)
+    if gate_result is not None:
+        return gate_result
 
     # ── fallback: 기존 자격증명 기반 로그인 ────────────────────────────────────
     result = login_naver(page, naver_id, naver_pw)
