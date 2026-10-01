@@ -185,8 +185,159 @@ def _update_state_if_inserted(
         logger.warning("[NAVER-STATE-UPDATE-FAIL] type=%s", type(e).__name__)
 
 
+def _blog_collect_with_cutoff(items: list, cutoff_date: str, accumulated: list) -> tuple[int, bool]:
+    """cutoff 이전 post_date 가 나오면 중단. (scanned 증가분, cutoff_hit) 반환."""
+    page_scanned = 0
+    for item in items:
+        page_scanned += 1
+        pd = (item.get("post_date") or "").strip()
+        if pd and pd < cutoff_date:
+            return page_scanned, True
+        accumulated.append(item)
+    return page_scanned, False
+
+
+def _blog_apply_db(
+    outcome: JobOutcome,
+    final_status: str,
+    query: str,
+    accumulated: list,
+    db_path: Path | None,
+    state_path: Path | None,
+) -> None:
+    """블로그 결과의 DB 적재 상태를 outcome 에 반영."""
+    if final_status == "dry_run":
+        outcome.db_status = "skipped_dry_run"
+    elif final_status == "ok" and db_mod.is_db_enabled():
+        try:
+            stats = save_blog_items_to_db(query, accumulated, db_path=db_path)
+        except Exception as e:
+            logger.exception("[NAVER-BLOG-DB-ERR] type=%s", type(e).__name__)
+            outcome.db_status = "error"
+            outcome.db_error = type(e).__name__
+        else:
+            outcome.db_status = "ok"
+            outcome.inserted_count = stats.inserted_count
+            outcome.duplicate_count = stats.duplicate_count
+            outcome.skipped_count = stats.skipped_count
+            outcome.db_path = str(db_path or db_mod.default_db_path())
+            _update_state_if_inserted(
+                outcome=outcome,
+                source=SOURCE_BLOG,
+                query=query,
+                state_path=state_path,
+            )
+    else:
+        outcome.db_status = "disabled"
+
+
+def _log_job_outcome(
+    tag: str,
+    outcome: JobOutcome,
+    query: str,
+    scanned: int,
+    kept: int,
+    saved: object,
+) -> None:
+    logger.info(
+        tag + " status=%s query_len=%d scanned=%d kept=%d saved=%s "
+        "db=%s inserted=%d dup=%d skipped=%d early_stop=%s",
+        outcome.status,
+        len(query or ""),
+        scanned,
+        kept,
+        bool(saved),
+        outcome.db_status,
+        outcome.inserted_count,
+        outcome.duplicate_count,
+        outcome.skipped_count,
+        outcome.early_stop_reason or "-",
+    )
+
+
+class _ShopRun:
+    """쇼핑 Job 루프의 DB 적재 상태(연결·누적 통계·연속 중복 카운터)."""
+
+    def __init__(self) -> None:
+        self.agg = db_mod.InsertStats()
+        self.consecutive = 0
+        self.conn_cm = None
+        self.conn = None
+        self.db_error_name: str | None = None
+        self.early_stop_reason: str | None = None
+
+
+def _shop_insert_page(run: _ShopRun, query: str, items: list, db_path: Path | None, threshold: int | None) -> bool:
+    """페이지를 DB 에 적재. 루프를 중단해야 하면 True."""
+    if run.conn_cm is None:
+        try:
+            run.conn_cm = db_mod.open_db(db_path)
+            run.conn = run.conn_cm.__enter__()
+        except Exception as e:
+            run.db_error_name = type(e).__name__
+            logger.exception(
+                "[NAVER-SHOPPING-DB-OPEN-ERR] type=%s",
+                run.db_error_name,
+            )
+            return True
+    try:
+        page_stats = db_mod.insert_shopping_items(
+            run.conn,
+            query,
+            items,
+            stop_after_consecutive_duplicates=threshold,
+            consecutive_duplicates_start=run.consecutive,
+        )
+    except Exception as e:
+        run.db_error_name = type(e).__name__
+        logger.exception(
+            "[NAVER-SHOPPING-DB-ERR] type=%s",
+            run.db_error_name,
+        )
+        return True
+    run.agg.inserted_count += page_stats.inserted_count
+    run.agg.duplicate_count += page_stats.duplicate_count
+    run.agg.skipped_count += page_stats.skipped_count
+    run.consecutive = page_stats.consecutive_duplicates
+    if page_stats.stopped_early:
+        run.early_stop_reason = "duplicate_threshold"
+        return True
+    return False
+
+
+def _shop_apply_db(
+    outcome: JobOutcome,
+    run: _ShopRun,
+    use_db: bool,
+    query: str,
+    db_path: Path | None,
+    state_path: Path | None,
+) -> None:
+    """쇼핑 결과의 DB 적재 상태를 outcome 에 반영."""
+    if outcome.status == "dry_run":
+        outcome.db_status = "skipped_dry_run"
+    elif outcome.status == "ok" and use_db:
+        if run.db_error_name is not None:
+            outcome.db_status = "error"
+            outcome.db_error = run.db_error_name
+        else:
+            outcome.db_status = "ok"
+            outcome.inserted_count = run.agg.inserted_count
+            outcome.duplicate_count = run.agg.duplicate_count
+            outcome.skipped_count = run.agg.skipped_count
+            outcome.db_path = str(db_path or db_mod.default_db_path())
+            _update_state_if_inserted(
+                outcome=outcome,
+                source=SOURCE_SHOP,
+                query=query,
+                state_path=state_path,
+            )
+    else:
+        outcome.db_status = "disabled"
+
+
 # ── Job 진입점 ──────────────────────────────────────────────────
-def run_naver_blog_search_job(
+def run_naver_blog_search_job(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     query: str,
     *,
     display: int = 10,
@@ -234,14 +385,8 @@ def run_naver_blog_search_job(
 
         # cutoff 는 live(ok) 에서만 의미. dry_run 은 mock 이라 필터 skip.
         if result.status == "ok" and cutoff_date:
-            cutoff_hit = False
-            for item in result.items:
-                scanned += 1
-                pd = (item.get("post_date") or "").strip()
-                if pd and pd < cutoff_date:
-                    cutoff_hit = True
-                    break
-                accumulated.append(item)
+            page_scanned, cutoff_hit = _blog_collect_with_cutoff(result.items, cutoff_date, accumulated)
+            scanned += page_scanned
             if cutoff_hit:
                 early_stop_reason = "date_cutoff"
                 break
@@ -277,48 +422,13 @@ def run_naver_blog_search_job(
     )
 
     # DB 적재 — status=="ok" + flag on 일 때만. dry_run/에러 skip.
-    if final_status == "dry_run":
-        outcome.db_status = "skipped_dry_run"
-    elif final_status == "ok" and db_mod.is_db_enabled():
-        try:
-            stats = save_blog_items_to_db(query, accumulated, db_path=db_path)
-        except Exception as e:
-            logger.exception("[NAVER-BLOG-DB-ERR] type=%s", type(e).__name__)
-            outcome.db_status = "error"
-            outcome.db_error = type(e).__name__
-        else:
-            outcome.db_status = "ok"
-            outcome.inserted_count = stats.inserted_count
-            outcome.duplicate_count = stats.duplicate_count
-            outcome.skipped_count = stats.skipped_count
-            outcome.db_path = str(db_path or db_mod.default_db_path())
-            _update_state_if_inserted(
-                outcome=outcome,
-                source=SOURCE_BLOG,
-                query=query,
-                state_path=state_path,
-            )
-    else:
-        outcome.db_status = "disabled"
+    _blog_apply_db(outcome, final_status, query, accumulated, db_path, state_path)
 
-    logger.info(
-        "[NAVER-BLOG-JOB] status=%s query_len=%d scanned=%d kept=%d saved=%s "
-        "db=%s inserted=%d dup=%d skipped=%d early_stop=%s",
-        final_status,
-        len(query or ""),
-        scanned,
-        len(accumulated),
-        bool(saved),
-        outcome.db_status,
-        outcome.inserted_count,
-        outcome.duplicate_count,
-        outcome.skipped_count,
-        outcome.early_stop_reason or "-",
-    )
+    _log_job_outcome("[NAVER-BLOG-JOB]", outcome, query, scanned, len(accumulated), saved)
     return outcome
 
 
-def run_naver_shopping_search_job(
+def run_naver_shopping_search_job(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     query: str,
     *,
     display: int = 10,
@@ -344,17 +454,12 @@ def run_naver_shopping_search_job(
 
     accumulated: list = []
     scanned = 0
-    early_stop_reason: str | None = None
     final_status = "ok"
     final_err_code: str | None = None
     final_err_msg: str | None = None
     cur_start = int(start)
 
-    agg = db_mod.InsertStats()
-    consecutive = 0
-    conn_cm = None
-    conn = None
-    db_error_name: str | None = None
+    run = _ShopRun()
 
     try:
         for _ in range(pages_cap):
@@ -376,40 +481,12 @@ def run_naver_shopping_search_job(
             accumulated.extend(result.items)
 
             # live + flag on: 이 페이지를 바로 DB 에 적재해 duplicate 추이 관찰.
-            if result.status == "ok" and use_db:
-                if conn_cm is None:
-                    try:
-                        conn_cm = db_mod.open_db(db_path)
-                        conn = conn_cm.__enter__()
-                    except Exception as e:
-                        db_error_name = type(e).__name__
-                        logger.exception(
-                            "[NAVER-SHOPPING-DB-OPEN-ERR] type=%s",
-                            db_error_name,
-                        )
-                        break
-                try:
-                    page_stats = db_mod.insert_shopping_items(
-                        conn,
-                        query,
-                        result.items,
-                        stop_after_consecutive_duplicates=duplicate_stop_threshold,
-                        consecutive_duplicates_start=consecutive,
-                    )
-                except Exception as e:
-                    db_error_name = type(e).__name__
-                    logger.exception(
-                        "[NAVER-SHOPPING-DB-ERR] type=%s",
-                        db_error_name,
-                    )
-                    break
-                agg.inserted_count += page_stats.inserted_count
-                agg.duplicate_count += page_stats.duplicate_count
-                agg.skipped_count += page_stats.skipped_count
-                consecutive = page_stats.consecutive_duplicates
-                if page_stats.stopped_early:
-                    early_stop_reason = "duplicate_threshold"
-                    break
+            if (
+                result.status == "ok"
+                and use_db
+                and _shop_insert_page(run, query, result.items, db_path, duplicate_stop_threshold)
+            ):
+                break
 
             # dry_run mock 은 페이지네이션 없음 — 1페이지만.
             if result.status == "dry_run":
@@ -418,9 +495,9 @@ def run_naver_shopping_search_job(
                 break
             cur_start += display
     finally:
-        if conn_cm is not None:
+        if run.conn_cm is not None:
             try:
-                conn_cm.__exit__(None, None, None)
+                run.conn_cm.__exit__(None, None, None)
             except Exception:  # noqa: BLE001 - 네이버 검색 수집 잡 -- 상태 파일 갱신/DB 저장·열기·닫기 실패를 로깅하고 outcome에 에러 상태만 기록, 수집 자체(읽기전용 검색 + 로컬 DB 적재)의 성공 여부 판정에는 영향 없음
                 logger.warning("[NAVER-SHOPPING-DB-CLOSE-ERR]")
 
@@ -439,45 +516,13 @@ def run_naver_shopping_search_job(
         saved_path=saved,
         error_code=final_err_code,
         error_message=final_err_msg,
-        early_stop_reason=early_stop_reason,
+        early_stop_reason=run.early_stop_reason,
         scanned_count=scanned,
     )
 
-    if final_status == "dry_run":
-        outcome.db_status = "skipped_dry_run"
-    elif final_status == "ok" and use_db:
-        if db_error_name is not None:
-            outcome.db_status = "error"
-            outcome.db_error = db_error_name
-        else:
-            outcome.db_status = "ok"
-            outcome.inserted_count = agg.inserted_count
-            outcome.duplicate_count = agg.duplicate_count
-            outcome.skipped_count = agg.skipped_count
-            outcome.db_path = str(db_path or db_mod.default_db_path())
-            _update_state_if_inserted(
-                outcome=outcome,
-                source=SOURCE_SHOP,
-                query=query,
-                state_path=state_path,
-            )
-    else:
-        outcome.db_status = "disabled"
+    _shop_apply_db(outcome, run, use_db, query, db_path, state_path)
 
-    logger.info(
-        "[NAVER-SHOPPING-JOB] status=%s query_len=%d scanned=%d kept=%d saved=%s "
-        "db=%s inserted=%d dup=%d skipped=%d early_stop=%s",
-        final_status,
-        len(query or ""),
-        scanned,
-        len(accumulated),
-        bool(saved),
-        outcome.db_status,
-        outcome.inserted_count,
-        outcome.duplicate_count,
-        outcome.skipped_count,
-        outcome.early_stop_reason or "-",
-    )
+    _log_job_outcome("[NAVER-SHOPPING-JOB]", outcome, query, scanned, len(accumulated), saved)
     return outcome
 
 
