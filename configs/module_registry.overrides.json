@@ -833,5 +833,10 @@
   "layer": "L8",
   "role": "api",
   "reason": "서버 lifespan 에서 도는 예약 작업 루프(서버 API 레이어의 기동 코드) — routers/ 에 두어 루트(server.py)와의 모듈 순환을 만들지 않는다. 파일명 규칙은 L4 generic 으로 분류하므로 classify.py 가 레지스트리를 다시 쓸 때 되돌아가지 않도록 overrides 에 확정"
+ },
+ "ai_orchestrator/workflows/hanafax_auto_send.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "하나팩스 승인서→정책 판정→발송기 호출→이력 기록의 업무 흐름(워크플로) — 파일명의 `send` 가 L1 contract 로 오분류 (2026-10-02)"
  }
 }
