@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import secrets
 import uuid
 from datetime import datetime
@@ -17,6 +18,8 @@ from .local_agent_registry_common import (
     _save_agents_to_disk,
     _tasks,
 )
+
+logger = logging.getLogger(__name__)
 
 # ── 등록 / 조회 ──────────────────────────────────────────────────────────
 
@@ -92,7 +95,8 @@ def authenticate_agent(agent_id: str, device_token: str) -> LocalAgent | None:
         return None
     try:
         candidate_hash = hashlib.sha256(device_token.encode("utf-8")).hexdigest()
-    except Exception:  # noqa: BLE001 - device_token 해시 계산 실패 시 인증 실패(None)로 폴백 - 이미 fail-closed(허용 아님), secrets.compare_digest 상수시간 비교 로직 앞단 가드
+    except Exception as exc:  # noqa: BLE001 - device_token 해시 계산 실패 시 인증 실패(None)로 폴백 - 이미 fail-closed(허용 아님), secrets.compare_digest 상수시간 비교 로직 앞단 가드
+        logger.warning("디바이스 토큰 해시 계산 실패: %s", type(exc).__name__)
         return None
     if not secrets.compare_digest(candidate_hash, agent.token_hash):
         return None

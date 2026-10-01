@@ -84,7 +84,8 @@ def _has_element(page, selector: str) -> bool:
     """
     try:
         return page.query_selector(selector) is not None
-    except Exception:  # noqa: BLE001 - 개발자 등록 폼 입력 공통 유틸 — _has_element/_is_login_redirect는 판정 실패 시 False(보수적 방향)로 폴백하며 실제 제출은 별도 승인 토큰 체계(dev_reg_runner)로 게이트되어 이 폴백이 승인 우회로 이어지지 않음. abort_form/capture_screenshot 실패는 로그만 남기고 무시.
+    except Exception as exc:  # noqa: BLE001 - 개발자 등록 폼 입력 공통 유틸 — _has_element/_is_login_redirect는 판정 실패 시 False(보수적 방향)로 폴백하며 실제 제출은 별도 승인 토큰 체계(dev_reg_runner)로 게이트되어 이 폴백이 승인 우회로 이어지지 않음. abort_form/capture_screenshot 실패는 로그만 남기고 무시.
+        logger.debug("요소 존재 확인 실패: %s", type(exc).__name__)
         return False
 
 
@@ -93,7 +94,8 @@ def _is_login_redirect(page, hints: tuple[str, ...]) -> bool:
     try:
         url = str(page.url or "").lower()
         return any(h.lower() in url for h in hints)
-    except Exception:  # noqa: BLE001 - 개발자 등록 폼 입력 공통 유틸 — _has_element/_is_login_redirect는 판정 실패 시 False(보수적 방향)로 폴백하며 실제 제출은 별도 승인 토큰 체계(dev_reg_runner)로 게이트되어 이 폴백이 승인 우회로 이어지지 않음. abort_form/capture_screenshot 실패는 로그만 남기고 무시.
+    except Exception as exc:  # noqa: BLE001 - 개발자 등록 폼 입력 공통 유틸 — _has_element/_is_login_redirect는 판정 실패 시 False(보수적 방향)로 폴백하며 실제 제출은 별도 승인 토큰 체계(dev_reg_runner)로 게이트되어 이 폴백이 승인 우회로 이어지지 않음. abort_form/capture_screenshot 실패는 로그만 남기고 무시.
+        logger.warning("로그인 리다이렉트 판정 실패: %s", type(exc).__name__)
         return False
 
 

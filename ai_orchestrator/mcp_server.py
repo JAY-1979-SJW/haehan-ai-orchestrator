@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import logging
 import os
 import re
 import sys
@@ -44,6 +45,8 @@ import requests  # noqa: E402
 from mcp.server import Server  # noqa: E402
 
 from ai_orchestrator.local_agent.browser import universal_actions  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 app = Server("haehan-ai-orchestrator")
 
@@ -670,7 +673,8 @@ def _list_templates() -> dict:
                     "sections": t.get("sections", []),
                 }
             )
-        except Exception:  # noqa: S110, BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("템플릿 파일 읽기 실패: %s", type(exc).__name__)
             pass
     return {"ok": True, "templates": templates, "count": len(templates)}
 
@@ -963,7 +967,8 @@ def _get_universal_page() -> Any:
         try:
             _ = page.url  # 연결이 살아있는지 확인
             return page
-        except Exception:  # noqa: BLE001 - 죽은 연결이면 재연결로 복구
+        except Exception as exc:  # noqa: BLE001 - 죽은 연결이면 재연결로 복구
+            logger.debug("범용 브라우저 연결 확인 실패: %s", type(exc).__name__)
             _universal_browser.clear()
 
     from playwright.sync_api import sync_playwright
@@ -982,7 +987,8 @@ def _get_electron_page() -> Any:
         try:
             _ = page.url
             return page
-        except Exception:  # noqa: BLE001 - 죽은 연결이면 재연결로 복구
+        except Exception as exc:  # noqa: BLE001 - 죽은 연결이면 재연결로 복구
+            logger.debug("Electron 브라우저 연결 확인 실패: %s", type(exc).__name__)
             _electron_browser.clear()
 
     from ai_orchestrator.local_agent.browser.electron_target import connect_electron_webview

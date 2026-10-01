@@ -8,6 +8,7 @@ IXcloud 콘솔에서 하던 서버 상태 점검을 앱 안에서 보기 위한 
 from __future__ import annotations
 
 import json
+import logging
 import socket
 import urllib.error
 import urllib.request
@@ -17,6 +18,8 @@ from typing import Any
 from fastapi import APIRouter, Depends
 
 from ai_orchestrator.gates.auth import require_role
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/server", tags=["server"])
 
@@ -67,7 +70,8 @@ def _tcp_open(host: str, port: int, timeout: float = 2.0) -> bool:
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
-    except Exception:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
+    except Exception as exc:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
+        logger.debug("TCP 포트 확인 실패: %s", type(exc).__name__)
         return False
 
 
@@ -84,7 +88,8 @@ def _http_status(url: str, timeout: float = 6.0) -> int | None:
             return r.status
     except urllib.error.HTTPError as e:
         return e.code
-    except Exception:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
+    except Exception as exc:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
+        logger.debug("HTTP 상태 확인 실패: %s", type(exc).__name__)
         return None
 
 
@@ -100,7 +105,8 @@ def _read_deploy_status() -> dict[str, Any]:
             "created_at": d.get("created_at"),
             "service": d.get("service"),
         }
-    except Exception:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
+    except Exception as exc:  # noqa: BLE001 - 서버 상태 read-only 집계 API(문서에 '비밀 응답에 포함 안 함', '쓰기 작업 없음' 명시) — TCP 포트체크/HTTP헬스체크/배포상태읽기 실패 시 모두 False/None/unavailable로 안전 폴백.
+        logger.warning("배포 상태 파일 읽기 실패: %s", type(exc).__name__)
         return {"available": False, "status": "status_file_unreadable"}
 
 

@@ -236,7 +236,8 @@ class NaverCafeAdapter(SiteAdapter):
     def _parse_article_list(self, page: Any) -> list[dict[str, str]]:
         try:
             rows = page.query_selector_all(self.ROW_SELECTOR) or []
-        except Exception:  # noqa: BLE001 — 선택자 실패/페이지 이탈
+        except Exception as exc:  # noqa: BLE001 — 선택자 실패/페이지 이탈
+            logger.warning("카페 글 목록 선택자 조회 실패: %s", type(exc).__name__)
             return []
 
         out: list[dict[str, str]] = []
@@ -264,7 +265,8 @@ class NaverCafeAdapter(SiteAdapter):
                         "url": url,
                     }
                 )
-            except Exception:  # noqa: BLE001 — 단일 행 파싱 실패는 전체 실패가 아님
+            except Exception as exc:  # noqa: BLE001 — 단일 행 파싱 실패는 전체 실패가 아님
+                logger.debug("카페 글 행 파싱 실패: %s", type(exc).__name__)
                 continue
         return out
 
@@ -273,19 +275,22 @@ class NaverCafeAdapter(SiteAdapter):
         try:
             u = page.url
             return u if isinstance(u, str) else ""
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("페이지 URL 읽기 실패: %s", type(exc).__name__)
             return ""
 
     def _safe_path(self, url: str) -> str:
         try:
             return urlparse(url).path or "/"
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("URL 경로 파싱 실패: %s", type(exc).__name__)
             return ""
 
     def _has_selector(self, page: Any, selector: str) -> bool:
         try:
             return page.query_selector(selector) is not None
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("selector 존재 확인 실패: %s", type(exc).__name__)
             return False
 
     def _safe_text(self, el: Any) -> str:
@@ -294,7 +299,8 @@ class NaverCafeAdapter(SiteAdapter):
         try:
             txt = el.inner_text()
             return (txt or "").strip()
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("요소 텍스트 읽기 실패: %s", type(exc).__name__)
             return ""
 
     def _safe_attr(self, el: Any, name: str) -> str:
@@ -303,7 +309,8 @@ class NaverCafeAdapter(SiteAdapter):
         try:
             v = el.get_attribute(name)
             return v or ""
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("요소 속성 읽기 실패: %s", type(exc).__name__)
             return ""
 
     _POST_ID_RE = re.compile(r"/articles/(\d+)")
@@ -321,7 +328,8 @@ class NaverCafeAdapter(SiteAdapter):
             for key in ("articleid", "articleId", "ARTICLEID"):
                 if qs.get(key):
                     return qs[key][0]
-        except Exception:  # noqa: BLE001, S110 - URL에서 게시글 ID 추출하는 읽기전용 파서, 파싱 실패시 빈 문자열 반환(fail-safe), 자격증명·세션·정책 판정과 무관
+        except Exception as exc:  # noqa: BLE001 - URL에서 게시글 ID 추출하는 읽기전용 파서, 파싱 실패시 빈 문자열 반환(fail-safe), 자격증명·세션·정책 판정과 무관
+            logger.debug("게시글 ID 추출 실패: %s", type(exc).__name__)
             pass
         return ""
 
