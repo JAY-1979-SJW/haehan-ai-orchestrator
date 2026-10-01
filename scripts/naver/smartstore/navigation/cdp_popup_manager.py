@@ -364,76 +364,9 @@ class CdpPopupManager:
                 for i in range(min(n, 5)):
                     el = els.nth(i)
                     try:
-                        if not el.is_visible(timeout=500):
-                            continue
-                        # 닫힘 애니메이션 중인 요소 제외 (opacity/display 확인)
-                        opacity = page.evaluate(
-                            f"(() => {{ const e = document.querySelectorAll('{sel}')[{i}]; "
-                            f"if (!e) return '0'; "
-                            f"const s = window.getComputedStyle(e); "
-                            f"return s.opacity + '|' + s.display; }})() || '0|none'"
-                        )
-                        if opacity.startswith("0|") or "|none" in opacity:
-                            continue
-                        cls = el.get_attribute("class") or ""
-                        if any(x in cls for x in EXCLUDE_CLASSES):
-                            continue
-
-                        # 중복 제거: outerHTML 앞 80자를 키로 사용
-                        try:
-                            key = (
-                                page.evaluate(f"document.querySelectorAll('{sel}')[{i}]?.outerHTML?.slice(0,80) || ''")
-                                or ""
-                            )
-                        except Exception:  # noqa: BLE001 - 팝업/배너 감지·해제 — Playwright 요소 조회 실패 종류가 다양해 일괄 로그 후 계속 진행, 실제 업무 액션(결제·DB쓰기) 아닌 UI 노이즈 제거 전용(2026-09-28 검토)
-                            key = f"{sel}:{i}"
-                        if key in seen_outer_html_keys:
-                            continue
-                        seen_outer_html_keys.add(key)
-
-                        # 전체 내용 추출 (잘림 없음)
-                        full_text = ""
-                        with contextlib.suppress(Exception):
-                            full_text = el.inner_text(timeout=500).strip()
-                        clean_text = _clean_popup_text(full_text)
-
-                        # 버튼 목록
-                        buttons: list[str] = []
-                        try:
-                            btns = el.locator("button, a.btn, .btn").all()
-                            buttons = [
-                                b.inner_text(timeout=200).strip() for b in btns if b.inner_text(timeout=200).strip()
-                            ]
-                        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                            pass
-
-                        # 링크 목록 (공지 URL 등)
-                        links: list[str] = []
-                        try:
-                            hrefs = (
-                                page.evaluate(
-                                    f"[...document.querySelectorAll('{sel}')[{i}]"
-                                    f"?.querySelectorAll('a[href]') || []]"
-                                    f".map(a => ({{text: a.textContent.trim().slice(0,40), href: a.href.slice(0,100)}}))"
-                                )
-                                or []
-                            )
-                            links = [f"{ln['text']} → {ln['href']}" for ln in hrefs if ln.get("href")]
-                        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                            pass
-
-                        has_close = _has_close_button(el)
-                        found.append(
-                            {
-                                "selector": sel,
-                                "index": i,
-                                "text": clean_text,  # 정제된 요약
-                                "full_text": full_text,  # 전체 원문
-                                "buttons": buttons,
-                                "links": links,
-                                "has_close_btn": has_close,
-                            }
-                        )
+                        entry = _scan_one_popup(page, sel, i, el, seen_outer_html_keys)
+                        if entry is not None:
+                            found.append(entry)
                     except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                         pass
             except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
@@ -468,106 +401,7 @@ class CdpPopupManager:
         dismissed: list[str] = []
 
         for popup in before["popups"]:
-            sel = popup["selector"]
-            text = popup.get("text", "")
-            full_text = popup.get("full_text", text)
-            buttons = popup.get("buttons", [])
-            links = popup.get("links", [])
-            ok = False
-
-            level = _classify_popup(text)
-
-            _log.info("[popup-mgr] 팝업 감지 — level=%s text='%s' buttons=%s", level, text[:60], buttons)
-            if links:
-                _log.info("[popup-mgr] 팝업 링크: %s", links[:3])
-
-            try:
-                modal = page.locator(sel).first
-                if not modal.count():
-                    continue
-
-                if level == "review":
-                    # ── 사용자 확인 필요 → AI 요약 후 보류 큐 등록 ──────────
-                    pending_id = f"{time.strftime('%H%M%S')}-{len(self._pending)}"
-                    summary = _summarize_popup(full_text)
-                    pending_item = {
-                        "id": pending_id,
-                        "text": text,
-                        "full_text": full_text,
-                        "summary": summary,
-                        "buttons": buttons,
-                        "links": links,
-                        "level": level,
-                        "ts": time.strftime("%H:%M:%S"),
-                        "status": "pending",  # pending | approved | dismissed
-                    }
-                    self._pending[pending_id] = pending_item
-
-                    # 알림 이벤트에 보류 팝업 기록
-                    ev = PopupEvent(
-                        "review",
-                        {
-                            "pending_id": pending_id,
-                            "text": text,
-                            "summary": summary,
-                            "full_text": full_text,
-                            "buttons": buttons,
-                            "links": links,
-                        },
-                    )
-                    ev.handled = False  # 아직 미처리
-                    with self._lock:
-                        self._events.append(ev)
-
-                    _log.info("[popup-mgr] 팝업 보류 — id=%s summary='%s'", pending_id, summary[:60])
-                    # 팝업은 닫지 않음 — 사용자 결정 대기
-                    continue
-
-                elif level == "auto" and auto_confirm:
-                    ok = _click_confirm_in(modal, page)
-                    if ok:
-                        approved.append(
-                            {
-                                "text": text,
-                                "full_text": full_text,
-                                "buttons": buttons,
-                                "links": links,
-                                "action": "confirm",
-                            }
-                        )
-                        _log.info("[popup-mgr] 팝업 자동 승인: '%s'", text[:40])
-
-                if not ok:
-                    ok = _click_close_in(modal)
-                    if ok:
-                        dismissed.append(
-                            {
-                                "text": text,
-                                "full_text": full_text,
-                                "buttons": buttons,
-                                "links": links,
-                                "action": "close",
-                            }
-                        )
-                        _log.info("[popup-mgr] 팝업 닫기: '%s'", text[:40])
-
-                # ESC fallback
-                if not ok:
-                    page.keyboard.press("Escape")
-                    time.sleep(0.3)
-                    ok = True
-                    dismissed.append(
-                        {
-                            "text": text,
-                            "full_text": full_text,
-                            "buttons": buttons,
-                            "links": links,
-                            "action": "esc",
-                        }
-                    )
-            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                pass
-
+            ok = self._process_popup(page, popup, auto_confirm, approved, dismissed)
             if ok:
                 closed += 1
                 time.sleep(0.8)
@@ -607,6 +441,88 @@ class CdpPopupManager:
             "detail": before["popups"],
         }
 
+    def _process_popup(self, page, popup: dict, auto_confirm: bool, approved: list, dismissed: list) -> bool:
+        """팝업 1개 처리. 닫힘/승인 성공 여부 반환(보류·실패는 False)."""
+        sel = popup["selector"]
+        text = popup.get("text", "")
+        full_text = popup.get("full_text", text)
+        buttons = popup.get("buttons", [])
+        links = popup.get("links", [])
+        ok = False
+
+        level = _classify_popup(text)
+
+        _log.info("[popup-mgr] 팝업 감지 — level=%s text='%s' buttons=%s", level, text[:60], buttons)
+        if links:
+            _log.info("[popup-mgr] 팝업 링크: %s", links[:3])
+
+        try:
+            modal = page.locator(sel).first
+            if not modal.count():
+                return ok
+
+            if level == "review":
+                self._queue_review_popup(text, full_text, buttons, links, level)
+                # 팝업은 닫지 않음 — 사용자 결정 대기
+                return ok
+
+            if level == "auto" and auto_confirm:
+                ok = _click_confirm_in(modal, page)
+                if ok:
+                    approved.append(_popup_record(text, full_text, buttons, links, "confirm"))
+                    _log.info("[popup-mgr] 팝업 자동 승인: '%s'", text[:40])
+
+            if not ok:
+                ok = _click_close_in(modal)
+                if ok:
+                    dismissed.append(_popup_record(text, full_text, buttons, links, "close"))
+                    _log.info("[popup-mgr] 팝업 닫기: '%s'", text[:40])
+
+            # ESC fallback
+            if not ok:
+                page.keyboard.press("Escape")
+                time.sleep(0.3)
+                ok = True
+                dismissed.append(_popup_record(text, full_text, buttons, links, "esc"))
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+            pass
+        return ok
+
+    def _queue_review_popup(self, text: str, full_text: str, buttons: list, links: list, level: str) -> None:
+        """사용자 확인 필요 → AI 요약 후 보류 큐 등록."""
+        pending_id = f"{time.strftime('%H%M%S')}-{len(self._pending)}"
+        summary = _summarize_popup(full_text)
+        pending_item = {
+            "id": pending_id,
+            "text": text,
+            "full_text": full_text,
+            "summary": summary,
+            "buttons": buttons,
+            "links": links,
+            "level": level,
+            "ts": time.strftime("%H:%M:%S"),
+            "status": "pending",  # pending | approved | dismissed
+        }
+        self._pending[pending_id] = pending_item
+
+        # 알림 이벤트에 보류 팝업 기록
+        ev = PopupEvent(
+            "review",
+            {
+                "pending_id": pending_id,
+                "text": text,
+                "summary": summary,
+                "full_text": full_text,
+                "buttons": buttons,
+                "links": links,
+            },
+        )
+        ev.handled = False  # 아직 미처리
+        with self._lock:
+            self._events.append(ev)
+
+        _log.info("[popup-mgr] 팝업 보류 — id=%s summary='%s'", pending_id, summary[:60])
+
     # ══════════════════════════════════════════════════════════════════════════
     # 3-B. 인라인 배너 처리
     # ══════════════════════════════════════════════════════════════════════════
@@ -639,63 +555,16 @@ class CdpPopupManager:
 
         for banner in result["banners"]:
             action = banner.get("action", "dismiss")
-            sel = banner["selector"]
-            idx = banner["index"]
 
             if action == "dismiss":
-                # ESC 또는 배너 외부 클릭으로 dismiss
-                dismissed = False
-
-                # 1) 배너 내 ×/닫기 버튼
-                try:
-                    el = page.locator(sel).nth(idx)
-                    if _click_close_in(el):
-                        dismissed = True
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                    pass
-
-                # 2) JS로 배너 요소 직접 제거 (닫기 버튼 없는 경우)
-                if not dismissed:
-                    try:
-                        page.evaluate(f"""
-                        (() => {{
-                            const els = document.querySelectorAll('{sel}');
-                            const el = els[{idx}];
-                            if (el) {{
-                                el.style.display = 'none';
-                                el.setAttribute('aria-hidden', 'true');
-                            }}
-                        }})();
-                        """)
-                        dismissed = True
-                        _log.info("[popup-mgr] 배너 JS 제거: %s", banner["text"][:40])
-                    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                        pass
-
-                # 3) ESC
-                if not dismissed:
-                    try:
-                        page.keyboard.press("Escape")
-                        dismissed = True
-                    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                        pass
-
-                if dismissed:
+                if _dismiss_banner(page, banner):
                     closed += 1
                     time.sleep(0.3)
 
-            elif action == "load":
-                # 불러오기 링크 클릭
-                try:
-                    el = page.locator(sel).nth(idx)
-                    link = el.locator("a.link-area, a[href]").first
-                    if link.count() > 0:
-                        link.click(timeout=2000)
-                        closed += 1
-                        _log.info("[popup-mgr] 배너 불러오기 클릭: %s", banner["text"][:40])
-                        time.sleep(1)
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                    pass
+            elif action == "load" and _load_banner(page, banner):
+                closed += 1
+                _log.info("[popup-mgr] 배너 불러오기 클릭: %s", banner["text"][:40])
+                time.sleep(1)
 
         return closed
 
@@ -799,6 +668,162 @@ def _classify_popup(text: str) -> str:
     return "review" if len(text) > 30 else "auto"
 
 
+def _popup_record(text: str, full_text: str, buttons: list, links: list, action: str) -> dict:
+    return {
+        "text": text,
+        "full_text": full_text,
+        "buttons": buttons,
+        "links": links,
+        "action": action,
+    }
+
+
+def _popup_dedup_key(page, sel: str, i: int) -> str:
+    # 중복 제거: outerHTML 앞 80자를 키로 사용
+    try:
+        return page.evaluate(f"document.querySelectorAll('{sel}')[{i}]?.outerHTML?.slice(0,80) || ''") or ""
+    except Exception:  # noqa: BLE001 - 팝업/배너 감지·해제 — Playwright 요소 조회 실패 종류가 다양해 일괄 로그 후 계속 진행, 실제 업무 액션(결제·DB쓰기) 아닌 UI 노이즈 제거 전용(2026-09-28 검토)
+        return f"{sel}:{i}"
+
+
+def _popup_buttons(el) -> list[str]:
+    buttons: list[str] = []
+    try:
+        btns = el.locator("button, a.btn, .btn").all()
+        buttons = [b.inner_text(timeout=200).strip() for b in btns if b.inner_text(timeout=200).strip()]
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+        pass
+    return buttons
+
+
+def _popup_links(page, sel: str, i: int) -> list[str]:
+    links: list[str] = []
+    try:
+        hrefs = (
+            page.evaluate(
+                f"[...document.querySelectorAll('{sel}')[{i}]"
+                f"?.querySelectorAll('a[href]') || []]"
+                f".map(a => ({{text: a.textContent.trim().slice(0,40), href: a.href.slice(0,100)}}))"
+            )
+            or []
+        )
+        links = [f"{ln['text']} → {ln['href']}" for ln in hrefs if ln.get("href")]
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+        pass
+    return links
+
+
+def _scan_one_popup(page, sel: str, i: int, el, seen_outer_html_keys: set) -> dict | None:
+    """팝업 요소 1개 스캔. 숨김/제외/중복이면 None. 예외는 호출부에서 처리."""
+    if not el.is_visible(timeout=500):
+        return None
+    # 닫힘 애니메이션 중인 요소 제외 (opacity/display 확인)
+    opacity = page.evaluate(
+        f"(() => {{ const e = document.querySelectorAll('{sel}')[{i}]; "
+        f"if (!e) return '0'; "
+        f"const s = window.getComputedStyle(e); "
+        f"return s.opacity + '|' + s.display; }})() || '0|none'"
+    )
+    if opacity.startswith("0|") or "|none" in opacity:
+        return None
+    cls = el.get_attribute("class") or ""
+    if any(x in cls for x in EXCLUDE_CLASSES):
+        return None
+
+    key = _popup_dedup_key(page, sel, i)
+    if key in seen_outer_html_keys:
+        return None
+    seen_outer_html_keys.add(key)
+
+    # 전체 내용 추출 (잘림 없음)
+    full_text = ""
+    with contextlib.suppress(Exception):
+        full_text = el.inner_text(timeout=500).strip()
+    clean_text = _clean_popup_text(full_text)
+
+    buttons = _popup_buttons(el)
+    links = _popup_links(page, sel, i)  # 링크 목록 (공지 URL 등)
+    has_close = _has_close_button(el)
+    return {
+        "selector": sel,
+        "index": i,
+        "text": clean_text,  # 정제된 요약
+        "full_text": full_text,  # 전체 원문
+        "buttons": buttons,
+        "links": links,
+        "has_close_btn": has_close,
+    }
+
+
+def _dismiss_banner(page, banner: dict) -> bool:
+    """배너 dismiss: 닫기 버튼 → JS 제거 → ESC 순서로 시도. 성공 시 True."""
+    sel = banner["selector"]
+    idx = banner["index"]
+    dismissed = False
+
+    # 1) 배너 내 ×/닫기 버튼
+    try:
+        el = page.locator(sel).nth(idx)
+        if _click_close_in(el):
+            dismissed = True
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+        pass
+
+    # 2) JS로 배너 요소 직접 제거 (닫기 버튼 없는 경우)
+    if not dismissed:
+        try:
+            page.evaluate(f"""
+            (() => {{
+                const els = document.querySelectorAll('{sel}');
+                const el = els[{idx}];
+                if (el) {{
+                    el.style.display = 'none';
+                    el.setAttribute('aria-hidden', 'true');
+                }}
+            }})();
+            """)
+            dismissed = True
+            _log.info("[popup-mgr] 배너 JS 제거: %s", banner["text"][:40])
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+            pass
+
+    # 3) ESC
+    if not dismissed:
+        try:
+            page.keyboard.press("Escape")
+            dismissed = True
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+            pass
+    return dismissed
+
+
+def _load_banner(page, banner: dict) -> bool:
+    """배너의 불러오기 링크 클릭. 클릭했으면 True."""
+    try:
+        el = page.locator(banner["selector"]).nth(banner["index"])
+        link = el.locator("a.link-area, a[href]").first
+        if link.count() > 0:
+            link.click(timeout=2000)
+            return True
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+        pass
+    return False
+
+
+def _click_visible(locate, vis_timeout: int, log_fmt: str, key: str) -> bool:
+    """locate() 결과의 첫 요소가 보이면 클릭. 성공 True, 실패/예외 False."""
+    try:
+        btn = locate().first
+        if btn.count() > 0 and btn.is_visible(timeout=vis_timeout):
+            btn.click(timeout=2000)
+            time.sleep(0.4)
+            _log.info(log_fmt, key)
+            return True
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+        pass
+    return False
+
+
 def _click_confirm_in(modal_el, page=None) -> bool:
     """모달 내 확인/승인 버튼 클릭. 성공 시 True.
 
@@ -809,40 +834,23 @@ def _click_confirm_in(modal_el, page=None) -> bool:
     """
     # 1. btn-primary 먼저
     for sel in CONFIRM_BTN_SELS:
-        try:
-            btn = modal_el.locator(sel).first
-            if btn.count() > 0 and btn.is_visible(timeout=300):
-                btn.click(timeout=2000)
-                time.sleep(0.4)
-                _log.info("[popup-mgr] 승인 버튼 클릭: %s", sel)
-                return True
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-            pass
+        if _click_visible(lambda sel=sel: modal_el.locator(sel), 300, "[popup-mgr] 승인 버튼 클릭: %s", sel):
+            return True
 
     # 2. 텍스트 기반 확인 버튼
     for txt in CONFIRM_TEXTS:
-        try:
-            btn = modal_el.get_by_text(txt, exact=True).first
-            if btn.count() > 0 and btn.is_visible(timeout=200):
-                btn.click(timeout=2000)
-                time.sleep(0.4)
-                _log.info("[popup-mgr] 텍스트 승인: '%s'", txt)
-                return True
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-            pass
+        if _click_visible(
+            lambda txt=txt: modal_el.get_by_text(txt, exact=True), 200, "[popup-mgr] 텍스트 승인: '%s'", txt
+        ):
+            return True
 
     # 3. 페이지 전체에서 텍스트 검색 (모달이 복잡한 경우)
     if page:
         for txt in CONFIRM_TEXTS:
-            try:
-                btn = page.get_by_text(txt, exact=True).first
-                if btn.count() > 0 and btn.is_visible(timeout=200):
-                    btn.click(timeout=2000)
-                    time.sleep(0.4)
-                    _log.info("[popup-mgr] 페이지 텍스트 승인: '%s'", txt)
-                    return True
-            except Exception:  # noqa: BLE001 - 여러 셀렉터/방법을 순차 시도하는 best-effort 패턴 — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                pass
+            if _click_visible(
+                lambda txt=txt: page.get_by_text(txt, exact=True), 200, "[popup-mgr] 페이지 텍스트 승인: '%s'", txt
+            ):
+                return True
 
     return False
 

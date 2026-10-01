@@ -110,16 +110,8 @@ EXTRACT_FIELDS_JS = r"""
 """
 
 
-def main():
-    page = get_page()
-    print(f"\n{'=' * 70}")
-    print("  일반 상품 등록 페이지 전체 필드 정밀 분석")
-    print(f"{'=' * 70}\n")
-
-    r = ensure_naver_login(page)
-    if not r.get("ok"):
-        return
-
+def _enter_dashboard(page) -> None:
+    """대시보드 진입 + 팝업 처리."""
     print("[1] 대시보드 진입")
     page.goto(DASHBOARD, timeout=20000, wait_until="domcontentloaded")
     time.sleep(5)
@@ -129,17 +121,24 @@ def main():
     except Exception:  # noqa: BLE001 - 팝업/닫기창 처리 브라우저자동화 실패 무시(best-effort), 최상위 main() 예외는 traceback 출력으로 진단정보 남김
         pass
 
+
+def _open_register_page(page) -> bool:
+    """'상품관리' → '상품 등록' 클릭. 실패 시 False."""
     print("[2] '상품관리' 클릭")
     if not click_text_by_coord(page, "상품관리"):
         print("  ✗ 실패")
-        return
+        return False
 
     print("[3] '상품 등록' 클릭")
     if not click_text_by_coord(page, "상품 등록"):
         print("  ✗ 실패")
-        return
+        return False
     time.sleep(4)  # 동적 페이지 로드 대기
+    return True
 
+
+def _collect_fields(page):
+    """페이지 전체 스크롤하며 필드 수집."""
     print("[4] 페이지 전체 스크롤하며 필드 수집")
     all_fields = {}
     for y in range(0, 15000, 500):
@@ -155,9 +154,11 @@ def main():
         if end:
             print(f"    페이지 끝 도달 (y={y})")
             break
+    return all_fields
 
-    print(f"  총 필드: {len(all_fields)}")
 
+def _classify_by_keyword(all_fields):
+    """핵심 필드 분류."""
     # 핵심 필드 분류
     keywords = {
         "price": ["salePrice", "sellPrice", "originalPrice", "원가", "판매가"],
@@ -179,7 +180,11 @@ def main():
             if any(t.lower() in text for t in terms):
                 by_kw[kw].append(f)
                 break
+    return by_kw
 
+
+def _report_classified(by_kw) -> None:
+    """분류 결과 출력."""
     print("\n  [핵심 필드 분류]")
     for kw, items in by_kw.items():
         if not items:
@@ -189,6 +194,30 @@ def main():
             print(
                 f"      - {f['type']:<10} name={f['name'][:30]:<32} placeholder='{f['placeholder'][:25]}' label='{f['label'][:25]}'"
             )
+
+
+def main():
+    page = get_page()
+    print(f"\n{'=' * 70}")
+    print("  일반 상품 등록 페이지 전체 필드 정밀 분석")
+    print(f"{'=' * 70}\n")
+
+    r = ensure_naver_login(page)
+    if not r.get("ok"):
+        return
+
+    _enter_dashboard(page)
+
+    if not _open_register_page(page):
+        return
+
+    all_fields = _collect_fields(page)
+
+    print(f"  총 필드: {len(all_fields)}")
+
+    by_kw = _classify_by_keyword(all_fields)
+
+    _report_classified(by_kw)
 
     # 저장
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
