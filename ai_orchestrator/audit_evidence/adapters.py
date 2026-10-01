@@ -110,7 +110,7 @@ def evidence_dict_to_artifact_ref(raw: dict[str, Any]) -> ArtifactEvidenceRef:
     )
 
 
-def build_external_app_handoff(
+def build_external_app_handoff(  # noqa: PLR0913 - 감사 증거 핸드오프 빌더, 공개 시그니처 유지
     task_id: str,
     bridge_id: str,
     app_type: str,
