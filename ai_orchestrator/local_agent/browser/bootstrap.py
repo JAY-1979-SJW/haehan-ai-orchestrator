@@ -254,6 +254,28 @@ def verify_import() -> bool:
         return False
 
 
+def _wait_for_naver_login(login_status: dict) -> bool:
+    """기본 로그인 미감지 시 자동 재감지(최대 5회). 최종 로그인 여부 반환."""
+    print("\n⚠️  기본 로그인 필요: https://naver.com")
+    print("   (쿠키 자동 감지 대기 중...)\n")
+
+    # 자동 재감지 (최대 5회, 30초 간격)
+    for attempt in range(1, 6):
+        time.sleep(10)
+        print(f"  [{attempt}/5] 로그인 상태 재확인 중...", end=" ", flush=True)
+        login_status = check_naver_login()
+        if login_status.get("naver.com", False):
+            print("\n  ✓ 기본 로그인 감지됨!")
+            break
+        print("(미로그인)")
+
+        if attempt < 5:
+            time.sleep(20)
+
+    # 마지막 확인
+    return bool(login_status.get("naver.com", False))
+
+
 def main():
     """자동 감지 및 초기화 실행."""
     print("\n" + "=" * 60)
@@ -268,27 +290,9 @@ def main():
     # 2. 네이버 기본 로그인 확인 (메일/캘린더/MyBox는 기본 로그인으로 통합 접근 가능)
     login_status = check_naver_login()
 
-    if not login_status.get("naver.com", False):
-        print("\n⚠️  기본 로그인 필요: https://naver.com")
-        print("   (쿠키 자동 감지 대기 중...)\n")
-
-        # 자동 재감지 (최대 5회, 30초 간격)
-        for attempt in range(1, 6):
-            time.sleep(10)
-            print(f"  [{attempt}/5] 로그인 상태 재확인 중...", end=" ", flush=True)
-            login_status = check_naver_login()
-            if login_status.get("naver.com", False):
-                print("\n  ✓ 기본 로그인 감지됨!")
-                break
-            print("(미로그인)")
-
-            if attempt < 5:
-                time.sleep(20)
-
-        # 마지막 확인
-        if not login_status.get("naver.com", False):
-            print_err("\n[FATAL] 로그인 타임아웃. 중단.")
-            return False
+    if not login_status.get("naver.com", False) and not _wait_for_naver_login(login_status):
+        print_err("\n[FATAL] 로그인 타임아웃. 중단.")
+        return False
 
     # 3. Phase 0: Mixin 생성
     print_step("Phase 0: Mixin 골격 생성", "🔧")
