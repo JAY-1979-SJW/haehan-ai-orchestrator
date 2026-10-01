@@ -72,6 +72,10 @@ class Resolver:
                 return [], "external"
             bases = self._roots(rel)
             dotted_candidates = [module]
+        if not level:
+            found = self._resolve_by_submodule_names(bases, module, names)
+            if found is not None:
+                return found
         for base in bases:
             for dotted in dotted_candidates:
                 found = self._internal_hits(base, dotted, names)
@@ -80,6 +84,23 @@ class Resolver:
         if level:
             return [], "failed"
         return self._failed_or_external(bases, module)
+
+    def _resolve_by_submodule_names(
+        self, bases: list[str], module: str, names: tuple[str, ...]
+    ) -> tuple[list[str], str] | None:
+        """`from X import Y` 에서 Y 가 서브모듈로 실제 존재하는 가장 가까운 base 를 우선한다.
+
+        같은 이름이 여러 곳에 있을 때(루트 local_agent/ 패키지와 scripts/local_agent.py 모듈) "가까운 폴더의 첫 일치"만 보면
+        이름이 겹치는 엉뚱한 파일로 해석된다(결함 #114: 가짜 층간 위반). Y 가 어느 위치의 서브모듈이면 그 위치가 진짜 대상이다.
+        서브모듈 이름이 없는 import(클래스·함수·`import X`)는 여기서 처리하지 않고 기존 순서를 그대로 쓴다.
+        """
+        wanted = [n for n in names if n != "*"]
+        if not module or not wanted:
+            return None
+        for base in bases:
+            if any(self._module_file(base, f"{module}.{n}") for n in wanted):
+                return self._internal_hits(base, module, names)
+        return None
 
     def _internal_hits(self, base: str, dotted: str, names: tuple[str, ...]) -> tuple[list[str], str] | None:
         hits: list[str] = []

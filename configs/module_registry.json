@@ -9594,12 +9594,12 @@
    "source": "rule"
   },
   "scripts/local_agent.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "서버 WebSocket 으로 CDP 명령을 받아 사이트 도구(ProductFormRunner·CdpPopupManager 등)를 호출하는 로컬 에이전트 디스패처 — L4 browser_engine 이 아니라 사이트 모듈을 조합하는 흐름. 코드맵이 `from local_agent import …` 를 이 파일로 잘못 해석하던 가짜 간선은 reach.py 해석기 수정으로 제거(결함 #114)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/local_agent/__init__.py": {
    "layer": "L4",
@@ -19974,6 +19974,14 @@
    "role": "site_module",
    "domain": "naver_blog",
    "reason": "도메인(naver_blog) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_code_map_reach_resolver.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   }
