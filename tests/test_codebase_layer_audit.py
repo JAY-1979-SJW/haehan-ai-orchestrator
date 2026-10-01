@@ -279,12 +279,23 @@ def test_hardcoded_user_path_flags_new_file_as_warn(tmp_path):
     assert {i.code for i in issues} == {"HARDCODED_USER_PATH"}
 
 
-def test_hardcoded_user_path_known_debt_is_info(tmp_path):
+def test_hardcoded_user_path_known_debt_is_info(tmp_path, monkeypatch):
+    # 알려진 부채 목록은 현재 비어 있다(2026-10-01 전부 해소). 메커니즘만 검증하려고 임시 항목을 넣는다.
+    from scripts.ops import codebase_layer_audit as audit_module
+
+    monkeypatch.setattr(audit_module, "_HARDCODED_USER_PATH_KNOWN_DEBT", {"scripts/legacy_tool.py"})
     rows = _hardcoded_rows_and_source(
-        tmp_path, "scripts/mk_catalog/pipeline.py", ['A = "' + _win("C:", "Users", "someone", "x") + '"']
+        tmp_path, "scripts/legacy_tool.py", ['A = "' + _win("C:", "Users", "someone", "x") + '"']
     )
     issues = check_hardcoded_user_path(rows, root=tmp_path)
     assert [i.severity for i in issues] == ["info"]
+
+
+def test_hardcoded_user_path_known_debt_list_is_empty():
+    # 신규 하드코딩은 전부 경고여야 한다 — 부채 목록이 다시 늘어나지 않게 고정
+    from scripts.ops import codebase_layer_audit as audit_module
+
+    assert audit_module._HARDCODED_USER_PATH_KNOWN_DEBT == set()
 
 
 def test_hardcoded_user_path_ignores_placeholders_comments_and_os_locations(tmp_path):

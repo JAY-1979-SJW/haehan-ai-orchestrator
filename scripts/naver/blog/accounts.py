@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+from scripts.app_paths import onedrive_root, resolve_external
+
 DEFAULT_ACCOUNT = "skyjwsin"
 
 BLOG_ACCOUNTS: dict[str, dict] = {
@@ -65,7 +67,9 @@ BLOG_ACCOUNTS: dict[str, dict] = {
             "전기공사산업기사 · 소방전기기사 보유\n"
             "판교 R&D센터, 위례 오벨리스크, 동탄 골든아이타워 등 대형현장 전기·소방 시공 20년 이상"
         ),
-        "author_photo": r"C:\Users\skyjw\OneDrive\전등 이미지\images\blog_ai_batch\author_shinjaewoo.jpg",
+        "author_photo": str(
+            resolve_external("HAEHAN_AUTHOR_PHOTO", "전등 이미지", "images", "blog_ai_batch", "author_shinjaewoo.jpg", base=onedrive_root())
+        ),
     },
 }
 

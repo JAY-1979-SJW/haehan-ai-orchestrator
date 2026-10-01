@@ -198,3 +198,38 @@ def known_folder(name: str) -> Path:
         if found is not None:
             return found
     return Path.home() / _HOME_FALLBACK[key]
+
+
+# ── 이전 PC 경로 대체: 형제 프로젝트·OneDrive·환경변수 우선 해석 ─────────────────────
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def sibling_project(name: str) -> Path:
+    """저장소와 같은 부모 폴더에 있는 형제 프로젝트 폴더(예: '05. g2b', '30. 해한 AI 홈페이지').
+
+    예전에는 드라이브 루트의 작업 폴더(work 아래 NN. 프로젝트)로 하드코딩했다. 프로젝트 루트가 어디든 저장소 기준으로 찾는다.
+    존재 여부는 확인하지 않는다(호출부가 필요할 때 검사).
+    """
+    return _REPO_ROOT.parent / name
+
+
+def onedrive_root() -> Path | None:
+    """OneDrive 동기화 루트(%OneDrive% 계열 환경변수). 없으면 None."""
+    for var in ("OneDrive", "OneDriveConsumer", "OneDriveCommercial"):
+        value = os.environ.get(var, "").strip()
+        if value:
+            return Path(value)
+    return None
+
+
+def resolve_external(env_var: str, *default_parts: str, base: Path | None = None) -> Path:
+    """외부 자료 경로: 환경변수 → (base 또는 사용자 문서 폴더)/default_parts.
+
+    컴퓨터마다 다른 위치의 이미지·영상·내보내기 폴더처럼 코드에 박을 수 없는 경로용. 환경변수로 바꿀 수 있다.
+    """
+    override = os.environ.get(env_var, "").strip()
+    if override:
+        return Path(override)
+    root = base if base is not None else known_folder("documents")
+    return root.joinpath(*default_parts)

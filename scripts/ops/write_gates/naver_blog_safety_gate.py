@@ -35,7 +35,7 @@ _CTRL_A_FONT_SIZE_RE = re.compile(
 
 
 def is_reviewed_blog_path(path: str) -> bool:
-    """상대경로("scripts/naver/...")·절대경로("C:/work/.../scripts/naver/...") 모두 인식."""
+    """상대경로("scripts/naver/...")·절대경로("<저장소 경로>/scripts/naver/...") 모두 인식."""
     p = path.replace("\\", "/")
     return any(p.startswith(d) or f"/{d}" in p for d in REVIEWED_BLOG_PATHS)
 

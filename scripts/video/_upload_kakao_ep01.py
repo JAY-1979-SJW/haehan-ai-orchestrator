@@ -4,9 +4,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
+from scripts.app_paths import onedrive_root, resolve_external  # noqa: E402
 from scripts.youtube.uploader import APPROVAL_PHRASE, execute_upload_plan, prepare_upload_plan  # noqa: E402
 
-video_path = r"C:\Users\skyjw\OneDrive\전등 이미지\video\kakao_skill_bot_ep01\final.mp4"
+video_path = str(
+    resolve_external("HAEHAN_VIDEO_DIR", "전등 이미지", "video", base=onedrive_root()) / "kakao_skill_bot_ep01" / "final.mp4"
+)
 values = {
     "title": "퇴근 후 카톡 문의, AI로 24시간 자동상담 직접 만들었습니다 (추가 AI비용 0원)",
     "description": (

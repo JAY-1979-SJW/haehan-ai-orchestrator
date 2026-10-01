@@ -39,7 +39,7 @@ _SKIP_PARTS = {
 
 
 def is_automation_path(path: str) -> bool:
-    """상대경로("scripts/naver/...")·절대경로("C:/work/.../scripts/naver/...") 모두 인식.
+    """상대경로("scripts/naver/...")·절대경로("<저장소 경로>/scripts/naver/...") 모두 인식.
 
     (2026-08-14: 절대경로 입력 시 startswith만으로는 항상 False가 되어 게이트가
     조용히 무력화되는 버그가 있었음 — 부분일치("/scripts/naver/" in path)를 추가)

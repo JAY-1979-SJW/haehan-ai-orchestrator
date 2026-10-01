@@ -23,16 +23,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from ai_orchestrator.config import get_local_data_dir  # noqa: E402
+from scripts.browser_paths import find_ffmpeg  # noqa: E402
 
 
 NARR_DIR = get_local_data_dir() / "video" / "narration"
 RAW_DIR = get_local_data_dir() / "video" / "raw"
 FINAL = get_local_data_dir() / "video" / "final_promo.mp4"
-FFMPEG = (
-    r"C:\Users\skyjw\AppData\Local\Microsoft\WinGet\Packages"
-    r"\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe"
-    r"\ffmpeg-8.1-full_build\bin\ffmpeg.exe"
-)
+FFMPEG = find_ffmpeg() or "ffmpeg"  # 못 찾으면 이름만 넘겨 subprocess 가 FileNotFoundError 로 분명히 알린다
 APP_BASE = "http://localhost:3000"
 CDP_URL = "http://127.0.0.1:9222"
 

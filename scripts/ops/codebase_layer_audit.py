@@ -1013,25 +1013,8 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
 # ── P1 Gate: HARDCODED_USER_PATH ─────────────────────────────────────────────
 
 # 사용자 계정 이름이 들어간 절대경로(드라이브:\Users\<이름>\...)나 옛 작업 폴더(드라이브:\work)를 코드에 박으면
-# 컴퓨터·계정이 바뀔 때 깨진다(결함 #17). 아래는 2026-10-01 기준 이미 존재하던 파일 — 신규 추가 금지, 고치면 목록에서 뺀다.
-_HARDCODED_USER_PATH_KNOWN_DEBT: set[str] = {
-    "scripts/eum/shared/layout_schema.py",
-    "scripts/hanafax/bulk_send.py",
-    "scripts/hanafax/export_kras_fax_pdf.py",
-    "scripts/hanafax/send_kras_final_campaign.py",
-    "scripts/instagram/__init__.py",
-    "scripts/mk_catalog/append_rows.py",
-    "scripts/mk_catalog/organize_site_images.py",
-    "scripts/mk_catalog/pipeline.py",
-    "scripts/mk_catalog/public_catalog.py",
-    "scripts/naver/blog/accounts.py",
-    "scripts/ops/write_gates/duplicate_impl_gate.py",
-    "scripts/ops/write_gates/naver_blog_safety_gate.py",
-    "scripts/video/_upload_kakao_ep01.py",
-    "scripts/video/record_promo.py",
-    "scripts/yt_upload/runner.py",
-    "scripts/yt_upload/step3_set_file.py",
-}
+# 컴퓨터·계정이 바뀔 때 깨진다(결함 #17). 기존 16개 파일은 2026-10-01 에 모두 고쳐 목록을 비웠다 — 새로 생기면 경고.
+_HARDCODED_USER_PATH_KNOWN_DEBT: set[str] = set()  # 2026-10-01 전부 해소 — 신규는 모두 경고
 
 # 따옴표로 시작하는 문자열 안의 `드라이브:\Users\<실제 이름>` 또는 `드라이브:\work`. <user>·%USERNAME% 같은 자리표시자는 제외.
 _HARDCODED_USER_PATH_RE = re.compile(
