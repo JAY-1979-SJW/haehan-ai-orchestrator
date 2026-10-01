@@ -35,6 +35,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from scripts.browser_paths import find_chrome, find_edge  # noqa: E402
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
 from scripts.config import CDP_HOST, CDP_PORT  # noqa: E402
 
@@ -97,35 +98,21 @@ def _load_state() -> DaemonState:
 
 # ── 브라우저 탐색 & 실행 ─────────────────────────────────────────────
 def _find_browser(browser_type: str = "auto") -> tuple[str, str]:
-    chrome_candidates = [
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
-    ]
-    edge_candidates = [
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe"),
-    ]
-
-    def _find(candidates: list[str]) -> str | None:
-        return next((p for p in candidates if Path(p).exists()), None)
-
     if browser_type == "chrome":
-        exe = _find(chrome_candidates)
+        exe = find_chrome()
         if not exe:
             raise FileNotFoundError("Chrome을 찾을 수 없습니다.")
         return exe, "chrome"
     elif browser_type == "edge":
-        exe = _find(edge_candidates)
+        exe = find_edge()
         if not exe:
             raise FileNotFoundError("Edge를 찾을 수 없습니다.")
         return exe, "edge"
     else:
-        exe = _find(chrome_candidates)
+        exe = find_chrome()
         if exe:
             return exe, "chrome"
-        exe = _find(edge_candidates)
+        exe = find_edge()
         if exe:
             return exe, "edge"
         raise FileNotFoundError("Chrome 또는 Edge를 찾을 수 없습니다.")

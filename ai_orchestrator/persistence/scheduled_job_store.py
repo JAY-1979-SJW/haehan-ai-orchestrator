@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.persistence.sqlite_schema import add_column_if_missing, apply_schema
+from .sqlite_schema import add_column_if_missing, apply_schema
 
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "scheduled_jobs.db"
 

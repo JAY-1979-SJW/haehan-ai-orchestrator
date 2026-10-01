@@ -1009,6 +1009,65 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
     return issues
 
 
+# ── P1 Gate: HARDCODED_USER_PATH ─────────────────────────────────────────────
+
+# 사용자 계정 이름이 들어간 절대경로(드라이브:\Users\<이름>\...)나 옛 작업 폴더(드라이브:\work)를 코드에 박으면
+# 컴퓨터·계정이 바뀔 때 깨진다(결함 #17). 아래는 2026-10-01 기준 이미 존재하던 파일 — 신규 추가 금지, 고치면 목록에서 뺀다.
+_HARDCODED_USER_PATH_KNOWN_DEBT: set[str] = {
+    "scripts/eum/shared/layout_schema.py",
+    "scripts/hanafax/bulk_send.py",
+    "scripts/hanafax/export_kras_fax_pdf.py",
+    "scripts/hanafax/send_kras_final_campaign.py",
+    "scripts/instagram/__init__.py",
+    "scripts/mk_catalog/append_rows.py",
+    "scripts/mk_catalog/organize_site_images.py",
+    "scripts/mk_catalog/pipeline.py",
+    "scripts/mk_catalog/public_catalog.py",
+    "scripts/naver/blog/accounts.py",
+    "scripts/ops/write_gates/duplicate_impl_gate.py",
+    "scripts/ops/write_gates/naver_blog_safety_gate.py",
+    "scripts/video/_upload_kakao_ep01.py",
+    "scripts/video/record_promo.py",
+    "scripts/yt_upload/runner.py",
+    "scripts/yt_upload/step3_set_file.py",
+}
+
+# 따옴표로 시작하는 문자열 안의 `드라이브:\Users\<실제 이름>` 또는 `드라이브:\work`. <user>·%USERNAME% 같은 자리표시자는 제외.
+_HARDCODED_USER_PATH_RE = re.compile(
+    r"""["'][A-Za-z]:[\\/]+(?:Users[\\/]+(?![<%])[^\\/"'<%]+|work)(?![A-Za-z0-9_])""",
+    re.IGNORECASE,
+)
+
+
+def check_hardcoded_user_path(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
+    """HARDCODED_USER_PATH: 사용자 계정·옛 작업 폴더가 박힌 절대경로 리터럴.
+
+    known debt 파일은 INFO로 분류, 신규 위반만 WARN. 테스트·archive·docs 는 제외.
+    """
+    issues: list[AuditIssue] = []
+    for row in rows:
+        path_str = row.path
+        if not path_str.endswith(".py") or path_str.startswith(("tests/", "docs/", "scripts/archive/")) or "/tests/" in path_str:
+            continue
+        try:
+            source = (root / path_str).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        severity = "info" if path_str in _HARDCODED_USER_PATH_KNOWN_DEBT else "warn"
+        for lineno, line in enumerate(source.splitlines(), start=1):
+            if line.lstrip().startswith("#") or not _HARDCODED_USER_PATH_RE.search(line):
+                continue
+            issues.append(
+                AuditIssue(
+                    severity,
+                    "HARDCODED_USER_PATH",
+                    f"{path_str}:{lineno}",
+                    "사용자 계정/옛 작업 폴더가 박힌 절대경로 — 환경변수·scripts/common/data_paths·ai_orchestrator/config 경로 해석을 쓸 것",
+                )
+            )
+    return issues
+
+
 # ── P1 Gate: SERVER_BROWSER_GUARD ─────────────────────────────────────────────
 
 # 서버 사이드에서 실행 금지 사이트 목록 (로그인/인증/결제/투찰 필요 사이트)
@@ -1455,11 +1514,13 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
     router_thinness_issues = check_router_thinness(rows, root)
     storage_boundary_issues = check_storage_boundary(rows, root)
     server_browser_guard_issues = check_server_browser_guard(rows, root)
+    hardcoded_user_path_issues = check_hardcoded_user_path(rows, root)
     issues.extend(forbidden_import_issues)
     issues.extend(security_pattern_issues)
     issues.extend(router_thinness_issues)
     issues.extend(storage_boundary_issues)
     issues.extend(server_browser_guard_issues)
+    issues.extend(hardcoded_user_path_issues)
     for cycle in circular_imports["cycles"]:
         issues.append(
             AuditIssue(
@@ -1498,6 +1559,7 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
             "router_thinness": len(router_thinness_issues),
             "storage_boundary": len(storage_boundary_issues),
             "server_browser_guard": len(server_browser_guard_issues),
+            "hardcoded_user_path": len(hardcoded_user_path_issues),
         },
         "summary": {
             "file_count": len(rows),
