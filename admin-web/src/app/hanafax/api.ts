@@ -77,7 +77,8 @@ export const faxApi = {
   list: () => call<Authorization[]>("authorizations"),
   get: (id: string) => call<Authorization>(`authorizations/${id}`),
   create: (input: CreateInput) => post<Authorization>("authorizations", input),
-  approve: (id: string, live: boolean) => post<Authorization>(`authorizations/${id}/approve`, { confirmed: true, live }),
+  approve: (id: string, live: boolean, startNow = false) =>
+    post<Authorization>(`authorizations/${id}/approve`, { confirmed: true, live, start_now: startNow }),
   revoke: (id: string) => post<Authorization>(`authorizations/${id}/revoke`),
   run: (id: string) => post<RunStatus>(`authorizations/${id}/run`),
   runStatus: (id: string) => call<RunStatus>(`authorizations/${id}/run`),

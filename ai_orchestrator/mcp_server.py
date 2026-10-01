@@ -78,8 +78,11 @@ API_REGISTRY: dict[str, dict[str, str]] = {
         "path": "/api/v1/hanafax/authorizations",
         "desc": (
             "팩스 발송 승인 대기 초안 생성(전송하지 않음). body={name, subject, document_ref(첨부 파일 전체 경로: "
-            "pdf/docx/doc), recipients:[{fax,name}]}. 만든 뒤 사용자에게 '앱의 하나팩스 탭에서 미리보기를 확인하고 "
-            "승인해야 발송됩니다'라고 안내할 것. 승인·발송을 대신 시도하지 말 것"
+            "pdf/docx/doc), recipients_file(주소록 엑셀/CSV 경로 — 사용자가 주소록 파일을 알려주면 이것을 쓴다. 잘못된 번호·중복·"
+            "수신거부·이미 보낸 번호는 자동 제외되고 응답의 import_summary 에 건수가 나온다) 또는 recipients:[{fax,name}]}. 만든 뒤 "
+            "import_summary 가 있으면 건수를 알리고, 답변 끝에 응답의 id 로 '[[fax-approve:<id>]]' 를 그대로 적어 "
+            "(AI 창에 승인 버튼 카드가 나타난다) '아래 승인 버튼을 눌러 주세요'라고 안내할 것. 승인·발송은 사용자가 "
+            "버튼으로만 한다 — 대신 시도하지 말 것"
         ),
     },
     "hanafax.authorizations": {

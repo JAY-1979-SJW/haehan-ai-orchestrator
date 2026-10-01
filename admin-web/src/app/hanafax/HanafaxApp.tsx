@@ -200,6 +200,13 @@ export function HanafaxApp() {
                 >
                   이 내용으로 승인
                 </button>
+                <button
+                  className="ml-2 rounded bg-[#2563EB] px-3 py-1.5 text-white disabled:opacity-50"
+                  disabled={busy || detail.document_matches === false || killed}
+                  onClick={() => act(() => faxApi.approve(detail.id, live, true))}
+                >
+                  승인하고 바로 발송
+                </button>
               </div>
             )}
 

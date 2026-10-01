@@ -7,9 +7,12 @@
 
 from __future__ import annotations
 
+import csv
+import json
 import re
 import threading
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.connectors import hanafax_auto_sender as adapter
@@ -17,9 +20,9 @@ from ai_orchestrator.gates import fax_send_policy as policy
 from ai_orchestrator.persistence import fax_authorization_store as store
 from ai_orchestrator.workflows import scheduled_job_actions as actions
 
-MAX_RECIPIENTS = 500
-MAX_PER_RUN_CAP = 100
-MAX_PER_DAY_CAP = 300
+MAX_RECIPIENTS = 1000
+MAX_PER_RUN_CAP = 1000
+MAX_PER_DAY_CAP = 1000
 MAX_TOTAL_CAP = 5000
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
@@ -41,6 +44,86 @@ def _clean_recipients(raw: Any) -> list[dict[str, str]]:
         seen.add(number)
         cleaned.append({"fax": number, "name": str(item.get("name", "")).strip()[:50]})
     return cleaned
+
+
+# ── 주소록 파일(엑셀·CSV) 가져오기 ────────────────────────────────────────────────
+_FAX_HEADERS = ("팩스", "fax")  # 우선순위 순 — 없으면 전화·연락처 열을 쓴다
+_PHONE_HEADERS = ("수신번호", "연락처", "전화")
+_NAME_HEADERS = ("업체명", "상호", "회사", "수신자", "이름", "name")
+_OLD_LOG = Path(__file__).resolve().parents[2] / "data" / "hanafax_sent_log.json"
+_OLD_OK = {"sent", "전송 성공"}  # 예전 이력에서 이미 성공한 상태
+
+
+def _read_rows(path: Path) -> list[list[str]]:
+    suffix = path.suffix.lower()
+    if suffix in (".xlsx", ".xlsm"):
+        import openpyxl
+
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        try:
+            return [["" if c is None else str(c).strip() for c in row] for row in wb.active.iter_rows(values_only=True)]
+        finally:
+            wb.close()
+    if suffix in (".csv", ".txt"):
+        for enc in ("utf-8-sig", "cp949"):
+            try:
+                with path.open(encoding=enc, newline="") as fh:
+                    return [[c.strip() for c in row] for row in csv.reader(fh)]
+            except UnicodeDecodeError:
+                continue
+    raise ValueError("주소록은 .xlsx 또는 .csv 파일이어야 합니다")
+
+
+def _find_col(header: list[str], keys: tuple[str, ...]) -> int | None:
+    for key in keys:
+        for i, h in enumerate(header):
+            if key in h.lower():
+                return i
+    return None
+
+
+def already_sent_numbers() -> set[str]:
+    """예전(앱 이전) 발송 이력에서 이미 성공한 번호 — 같은 영업 공문을 다시 보내지 않기 위해 가져오기 때 제외한다."""
+    try:
+        records = json.loads(_OLD_LOG.read_text(encoding="utf-8"))["records"]
+    except (OSError, ValueError, KeyError):
+        return set()
+    return {policy.normalize_number(r.get("fax_number_digits", "")) for r in records if r.get("status") in _OLD_OK}
+
+
+def import_recipients(path_text: str, *, exclude_already_sent: bool = True) -> tuple[list[dict[str, str]], dict[str, int]]:
+    """주소록 파일에서 수신자를 읽는다. 잘못된 번호·중복·수신거부·이미 발송한 번호는 **빼고 건수를 알려 준다**."""
+    path = Path(path_text.strip().strip('"'))
+    if not path.is_file():
+        raise ValueError(f"주소록 파일을 찾을 수 없습니다: {path_text}")
+    rows = _read_rows(path)
+    if len(rows) < 2:
+        raise ValueError("주소록에 데이터가 없습니다")
+    header = [h.lower() for h in rows[0]]
+    fax_col = _find_col(header, _FAX_HEADERS)
+    if fax_col is None:
+        fax_col = _find_col(header, _PHONE_HEADERS)
+    if fax_col is None:
+        raise ValueError("주소록에서 팩스번호 열('팩스'·'연락처' 등)을 찾지 못했습니다")
+    name_col = _find_col(header, _NAME_HEADERS)
+    skip_numbers = store.opt_out_numbers() | (already_sent_numbers() if exclude_already_sent else set())
+    summary = {"rows": len(rows) - 1, "invalid": 0, "duplicate": 0, "opted_out_or_already_sent": 0}
+    seen: set[str] = set()
+    recipients: list[dict[str, str]] = []
+    for row in rows[1:]:
+        number = policy.normalize_number(row[fax_col] if fax_col < len(row) else "")
+        if not policy.is_valid_number(number):
+            summary["invalid"] += 1
+        elif number in seen:
+            summary["duplicate"] += 1
+        elif number in skip_numbers:
+            summary["opted_out_or_already_sent"] += 1
+        else:
+            seen.add(number)
+            name = row[name_col] if name_col is not None and name_col < len(row) else ""
+            recipients.append({"fax": number, "name": name[:50]})
+    summary["to_send"] = len(recipients)
+    return recipients, summary
 
 
 def _limit(value: Any, label: str, cap: int) -> int:
@@ -76,9 +159,19 @@ def create(payload: dict[str, Any], *, user: str) -> dict[str, Any]:
     )
     if start >= end:
         raise ValueError("허용 시작 시각이 종료 시각보다 빨라야 합니다")
-    recipients = _clean_recipients(payload.get("recipients"))
+    import_summary: dict[str, int] | None = None
+    if payload.get("recipients_file"):
+        recipients, import_summary = import_recipients(
+            str(payload["recipients_file"]), exclude_already_sent=bool(payload.get("exclude_already_sent", True))
+        )
+        if not recipients:
+            raise ValueError(f"보낼 수신자가 없습니다 ({import_summary})")
+        if len(recipients) > MAX_RECIPIENTS:
+            raise ValueError(f"수신자는 최대 {MAX_RECIPIENTS}명입니다 — 주소록을 나눠 주세요 (현재 {len(recipients)}명)")
+    else:
+        recipients = _clean_recipients(payload.get("recipients"))
     document_hash = adapter.file_sha256(document_ref)
-    return store.create_authorization(
+    row = store.create_authorization(
         store.NewAuthorization(
             name=name[:80],
             recipients=recipients,
@@ -86,9 +179,9 @@ def create(payload: dict[str, Any], *, user: str) -> dict[str, Any]:
             document_hash=document_hash,
             document_ref=document_ref,
             scope_hash=policy.scope_hash(recipients, subject, document_hash),
-            max_per_run=_limit(payload.get("max_per_run", 10), "1회 최대 건수", MAX_PER_RUN_CAP),
-            max_per_day=_limit(payload.get("max_per_day", 50), "1일 최대 건수", MAX_PER_DAY_CAP),
-            max_total=_limit(payload.get("max_total", len(recipients)), "총 최대 건수", MAX_TOTAL_CAP),
+            max_per_run=_limit(payload.get("max_per_run") or len(recipients), "1회 최대 건수", MAX_PER_RUN_CAP),
+            max_per_day=_limit(payload.get("max_per_day") or len(recipients), "1일 최대 건수", MAX_PER_DAY_CAP),
+            max_total=_limit(payload.get("max_total") or len(recipients), "총 최대 건수", MAX_TOTAL_CAP),
             allowed_start=start,
             allowed_end=end,
             valid_from=payload.get("valid_from") or None,
@@ -96,6 +189,7 @@ def create(payload: dict[str, Any], *, user: str) -> dict[str, Any]:
             created_by=user,
         )
     )
+    return {**row, "import_summary": import_summary}  # import_summary 는 저장하지 않고 호출자(AI·화면)에게 알리기만 한다
 
 
 def preview(auth_id: str) -> dict[str, Any]:

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { FaxApprovalCard } from "./FaxApprovalCard";
 
 interface Props {
   domain?: string;
@@ -48,6 +49,22 @@ interface RunAgentResponse {
   agent_id: string;
   task_id: string;
   detail?: string | { message?: string };
+}
+
+const FAX_APPROVE_MARK = /\[\[fax-approve:([0-9a-f]{32})\]\]/g;
+
+/** 답변 본문. "[[fax-approve:<id>]]" 표시는 팩스 승인 카드(버튼)로 바꿔 보여 준다. */
+function MessageBody({ text }: { text: string }) {
+  const ids = [...text.matchAll(FAX_APPROVE_MARK)].map((m) => m[1]);
+  if (ids.length === 0) return <>{text}</>;
+  return (
+    <>
+      {text.replace(FAX_APPROVE_MARK, "").trim()}
+      {[...new Set(ids)].map((id) => (
+        <FaxApprovalCard key={id} authId={id} />
+      ))}
+    </>
+  );
 }
 
 function errorMessage(e: unknown): string {
@@ -315,7 +332,7 @@ export function UniversalChat({ title, className = "" }: Props) {
                   <span className="animate-pulse">●</span> {m.text}
                 </span>
               ) : (
-                m.text
+                <MessageBody text={m.text} />
               )}
             </div>
           </div>

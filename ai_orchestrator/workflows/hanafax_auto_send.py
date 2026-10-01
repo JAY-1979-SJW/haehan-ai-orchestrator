@@ -29,6 +29,10 @@ logger = logging.getLogger(__name__)
 # 발송기: (수신번호 숫자, 수신자 이름, 제목) -> {"success": bool, "job_id": str|None, "message": str, "simulated": bool}
 # 요청이 나가기 전의 명확한 실패는 {"success": False, "definite_failure": True, ...} 로 알린다.
 Sender = Callable[[str, str, str], dict[str, Any]]
+# 묶음 발송기(하나팩스 단체발송: 로그인·업로드 1회로 여러 번호): (수신자 목록[{fax,name}], 제목) ->
+# {"success": bool, "job_id": str|None, "sent_faxes": [번호], "missing_faxes": [번호], "message": str, "definite_failure": bool?}
+BulkSender = Callable[[list[dict[str, str]], str], dict[str, Any]]
+BULK_CHUNK = 50
 
 
 @dataclass
@@ -186,4 +190,69 @@ def run(auth_id: str, sender: Sender, now: datetime) -> RunResult:
             result.failed += 1
         else:
             result.unknown += 1
+    return result
+
+
+def _send_chunk(sender: BulkSender, auth: policy.Authorization, chunk: list[dict[str, str]]) -> tuple[int, int, int]:
+    """한 묶음을 단체발송하고 (성공, 실패, 불명) 건수를 돌려준다. 재전송은 하지 않는다."""
+    numbers = [r["fax"] for r in chunk]
+    try:
+        result = sender(chunk, auth.subject)
+    except Exception as exc:  # noqa: BLE001 - 요청이 나갔는지 알 수 없는 예외 — 묶음 전체를 unknown 으로 멈춘다(중복 발송 방지)
+        logger.warning("팩스 단체발송 결과 불명(%d건): %s", len(numbers), type(exc).__name__)
+        for n in numbers:
+            _record(auth.id, auth.document_hash, n, store.UNKNOWN, None, f"예외: {type(exc).__name__}")
+        return 0, 0, len(numbers)
+    job_id = result.get("job_id")
+    message = str(result.get("message", ""))
+    if result.get("success") and job_id:
+        accepted = {policy.normalize_number(n) for n in result.get("sent_faxes", [])}
+        sent = failed = 0
+        for n in numbers:
+            if n in accepted:
+                _record(auth.id, auth.document_hash, n, store.SENT, str(job_id), message)
+                sent += 1
+            else:  # 사이트가 번호를 받아들이지 않아 접수 목록에 없다 — 전송 요청에 포함되지 않았다
+                _record(auth.id, auth.document_hash, n, store.FAILED, None, "하나팩스에 등록되지 않은 번호")
+                failed += 1
+        return sent, failed, 0
+    status = store.FAILED if result.get("definite_failure") else store.UNKNOWN
+    for n in numbers:
+        _record(auth.id, auth.document_hash, n, status, None, message or "결과 확인 불가")
+    return (0, len(numbers), 0) if status == store.FAILED else (0, 0, len(numbers))
+
+
+def run_bulk(auth_id: str, sender: BulkSender, now: datetime, chunk_size: int = BULK_CHUNK) -> RunResult:
+    """`run` 과 같은 정책 판정을 거치되, 허용된 수신자를 묶음(chunk)으로 단체발송한다. 묶음마다 정지·취소를 다시 확인한다."""
+    row = store.get_authorization(auth_id)
+    if row is None:
+        return RunResult(auth_id, policy.DENY, policy.NOT_APPROVED)
+    auth = _to_policy_authorization(row)
+    decision = policy.evaluate(auth, _state(auth_id, auth.document_hash, now))
+    result = RunResult(
+        auth_id,
+        decision.action,
+        decision.reason,
+        dry_run=decision.dry_run,
+        skipped=[{"number": n, "reason": r} for n, r in decision.skipped],
+    )
+    if decision.action != policy.SEND:
+        return result
+    if decision.dry_run:
+        for recipient in decision.to_send:
+            _record(auth_id, auth.document_hash, recipient["fax"], store.DRY_RUN, None, "드라이런 — 전송하지 않음")
+        return result
+    targets = list(decision.to_send)
+    for start in range(0, len(targets), chunk_size):
+        if not _still_allowed(auth_id):
+            result.stopped_midway = True
+            logger.warning("팩스 자동 발송 중단(정지 또는 취소): %s", auth_id)
+            break
+        sent, failed, unknown = _send_chunk(sender, auth, targets[start : start + chunk_size])
+        result.sent += sent
+        result.failed += failed
+        result.unknown += unknown
+        if unknown:  # 결과 불명 — 다음 묶음도 보내지 않고 사람이 확인할 때까지 멈춘다
+            result.stopped_midway = True
+            break
     return result

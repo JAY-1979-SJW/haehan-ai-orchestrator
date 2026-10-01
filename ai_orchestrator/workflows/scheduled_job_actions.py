@@ -313,13 +313,16 @@ def _run_hanafax_send(params: dict[str, Any]) -> str:
     def _never(*_args: Any) -> dict[str, Any]:  # 드라이런은 발송기를 부르지 않는다 — 불렸다면 버그이므로 멈춘다
         raise RuntimeError("드라이런 승인서는 전송할 수 없습니다")
 
-    sender = _never
+    bulk = len(row["recipients"]) > 1  # 여러 명이면 하나팩스 단체발송(로그인·업로드 1회)으로 묶음 전송
+    sender: Any = _never
     if row["live"]:
+        build = adapter.build_bulk_sender if bulk else adapter.build_sender
         try:
-            sender = adapter.build_sender(row["document_ref"], row["document_hash"])
+            sender = build(row["document_ref"], row["document_hash"])
         except adapter.DocumentChanged as exc:
             raise RuntimeError(str(exc)) from exc
-    result = fax_flow.run(auth_id, sender, datetime.now().astimezone())
+    runner = fax_flow.run_bulk if bulk else fax_flow.run
+    result = runner(auth_id, sender, datetime.now().astimezone())
     if result.decision == "deny":
         raise RuntimeError(f"발송하지 않음({result.reason})")
     text = (

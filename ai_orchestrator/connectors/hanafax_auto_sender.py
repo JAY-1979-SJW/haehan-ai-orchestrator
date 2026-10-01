@@ -18,6 +18,7 @@ from typing import Any
 
 # 워크플로의 `Sender` 와 같은 모양 (L3 → L6 import 는 역방향이라 여기서 따로 선언한다)
 Sender = Callable[[str, str, str], dict[str, Any]]
+BulkSender = Callable[[list[dict[str, str]], str], dict[str, Any]]
 
 # send_fax 가 "팩스보내기" 버튼을 누르기 전에 돌려주는 실패 메시지의 시작 문구 (scripts/hanafax/sender.py 와 맞춘다)
 _PRE_SEND_FAILURES = (
@@ -30,6 +31,7 @@ _PRE_SEND_FAILURES = (
     "팩스 페이지 이동 실패",
     "팩스번호 추가 실패",
     "TIF 변환 실패",
+    "첨부파일 미지정",
 )
 
 
@@ -58,18 +60,41 @@ def is_pre_send_failure(result: dict[str, Any]) -> bool:
     return not result.get("success") and not result.get("job_id") and message.startswith(_PRE_SEND_FAILURES)
 
 
-def build_sender(document_ref: str, expected_document_hash: str) -> Sender:
-    """승인된 문서 하나를 보내는 발송기를 만든다. 문서가 승인 때와 다르면 `DocumentChanged`."""
+def _check_document(document_ref: str, expected_document_hash: str) -> None:
     error = validate_document(document_ref)
     if error:
         raise DocumentChanged(error)
     if file_sha256(document_ref) != expected_document_hash:
         raise DocumentChanged("승인 뒤에 문서 내용이 바뀌었습니다 — 새 승인서가 필요합니다")
 
+
+def build_sender(document_ref: str, expected_document_hash: str) -> Sender:
+    """승인된 문서 하나를 보내는 발송기를 만든다. 문서가 승인 때와 다르면 `DocumentChanged`."""
+    _check_document(document_ref, expected_document_hash)
+
     def _send(number: str, name: str, subject: str) -> dict[str, Any]:
         from scripts.hanafax.sender import send_fax
 
         result = send_fax(receiver_fax=number, subject=subject, body="", receiver_name=name, attach_file=document_ref)
+        if is_pre_send_failure(result):
+            result = {**result, "definite_failure": True}
+        return result
+
+    return _send
+
+
+def build_bulk_sender(document_ref: str, expected_document_hash: str) -> BulkSender:
+    """승인된 문서 하나를 여러 번호에 단체발송하는 발송기(하나팩스 단체발송: 로그인·업로드 1회). 문서가 바뀌었으면 `DocumentChanged`."""
+    _check_document(document_ref, expected_document_hash)
+
+    def _send(recipients: list[dict[str, str]], subject: str) -> dict[str, Any]:
+        from scripts.hanafax.sender import send_fax_bulk
+
+        result = send_fax_bulk(
+            [{"receiver_fax": r["fax"], "receiver_name": r.get("name", "")} for r in recipients],
+            subject,
+            attach_file=document_ref,
+        )
         if is_pre_send_failure(result):
             result = {**result, "definite_failure": True}
         return result

@@ -186,9 +186,11 @@ class AuthorizationCreate(BaseModel):
     name: str
     subject: str
     document_ref: str
-    recipients: list[FaxRecipient]
-    max_per_run: int = 10
-    max_per_day: int = 50
+    recipients: list[FaxRecipient] = []
+    recipients_file: str | None = None  # 주소록 엑셀/CSV 경로 — 주면 수신자 목록 대신 파일에서 읽는다
+    exclude_already_sent: bool = True  # 예전 발송 이력에서 이미 성공한 번호 제외
+    max_per_run: int | None = None  # 비우면 수신자 수만큼
+    max_per_day: int | None = None
     max_total: int | None = None
     allowed_start: str = "09:00"
     allowed_end: str = "18:00"
@@ -198,6 +200,7 @@ class AuthorizationCreate(BaseModel):
 
 class AuthorizationApprove(BaseModel):
     confirmed: bool = False
+    start_now: bool = False  # 승인과 동시에 발송 시작(사용자가 한 번 승인하면 끝까지 자동)
     live: bool = False  # 기본 드라이런 — 실전송은 명시해야 한다
 
 
@@ -227,12 +230,9 @@ def _bad_request(exc: ValueError) -> HTTPException:
 @hanafax_router.post("/authorizations", response_model=dict)
 def create_authorization(body: AuthorizationCreate, user: dict = Depends(require_role("admin", "owner"))):
     service = _auth_service()
-    payload = body.model_dump()
-    if payload["max_total"] is None:
-        payload["max_total"] = len(payload["recipients"]) or 1
     try:
-        row = service.create(payload, user=_actor(user))
-        return service.preview(row["id"])
+        row = service.create(body.model_dump(), user=_actor(user))
+        return {**service.preview(row["id"]), "import_summary": row["import_summary"]}
     except ValueError as exc:
         raise _bad_request(exc) from exc
 
@@ -262,6 +262,8 @@ def approve_authorization(auth_id: str, body: AuthorizationApprove, user: dict =
     try:
         service = _auth_service()
         service.approve(auth_id, user=_actor(user), live=body.live)
+        if body.start_now:
+            service.run_now(auth_id)
         return service.preview(auth_id)
     except ValueError as exc:
         raise _bad_request(exc) from exc
