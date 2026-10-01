@@ -15,15 +15,11 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+from .browser_approval_errors import (
+    DuplicateApprovalError,  # 재노출: 저장소(L7)가 검증기(L2)를 거치지 않도록 분리, 기존 import 호환
+)
+
 logger = logging.getLogger(__name__)
-
-
-class DuplicateApprovalError(ValueError):
-    """Raised when create_approval() is called with an existing approval_id.
-
-    Prevents silent overwrite of token_hash, status, or any record fields.
-    Applies uniformly across in-memory, JSONL, and DB stores.
-    """
 
 
 @dataclass

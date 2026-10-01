@@ -11,8 +11,9 @@ LocalAgent, LocalAgentTask, RegisterResult 데이터클래스와
 
 from __future__ import annotations
 
-import importlib
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -30,11 +31,14 @@ class LocalAgent:
     last_seen_at: str = ""
     disconnected_at: str = ""
 
-    def to_safe(self) -> dict:
-        """API 응답용 (token_hash 제외, 연결 상태 계산값 포함)."""
-        # Late binding: circular import 회피
-        registry = importlib.import_module("ai_orchestrator.local_agent_registry")
+    def to_safe(self, stats: Mapping[str, Any] | None = None) -> dict:
+        """API 응답용 (token_hash 제외, 연결 상태 계산값 포함).
 
+        연결 상태·작업 통계(agent_status, active_task_count, current_task_id, task_count, completed_task_count,
+        failed_task_count)는 레지스트리가 계산해 `stats` 로 넘긴다 — 모델(L1)이 레지스트리를 import 하지 않도록
+        의존 방향을 뒤집었다(2026-10-01 층간 위반 정리). `stats` 가 없으면 기본값(offline·0·"")이다.
+        """
+        stats = stats or {}
         return {
             "agent_id": self.agent_id,
             "host": self.host,
@@ -42,16 +46,16 @@ class LocalAgent:
             "version": self.version,
             "registered_at": self.registered_at,
             "requested_by": self.requested_by,
-            "agent_status": registry.get_agent_status(self.agent_id),
+            "agent_status": stats.get("agent_status", "offline"),
             "smoke_test": self.smoke_test,
             "connected_at": self.connected_at,
             "last_seen_at": self.last_seen_at,
             "disconnected_at": self.disconnected_at,
-            "active_task_count": registry.get_active_task_count(self.agent_id),
-            "current_task_id": registry.get_current_task_id(self.agent_id),
-            "task_count": registry.get_task_count(self.agent_id),
-            "completed_task_count": registry.get_completed_task_count(self.agent_id),
-            "failed_task_count": registry.get_failed_task_count(self.agent_id),
+            "active_task_count": stats.get("active_task_count", 0),
+            "current_task_id": stats.get("current_task_id", ""),
+            "task_count": stats.get("task_count", 0),
+            "completed_task_count": stats.get("completed_task_count", 0),
+            "failed_task_count": stats.get("failed_task_count", 0),
         }
 
 

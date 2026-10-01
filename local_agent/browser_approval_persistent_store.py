@@ -169,7 +169,7 @@ class PersistentBrowserApprovalStore:
                 Existing record is never overwritten — token_hash and status preserved.
         """
         # Import here to avoid circular import at module load
-        from .browser_approval_verifier import DuplicateApprovalError
+        from .browser_approval_errors import DuplicateApprovalError
 
         token_hash = _hash_token(approval_token)
 

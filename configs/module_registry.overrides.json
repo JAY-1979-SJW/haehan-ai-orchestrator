@@ -813,5 +813,10 @@
   "layer": "L5",
   "role": "site_module",
   "reason": "YouTube 검색·댓글 수집 사이트 모듈이고 캐시는 조회만 한다 — '저장 신호' 규칙이 L7 로 오분류"
+ },
+ "local_agent/browser_approval_errors.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "저장소(L7)·검증기가 함께 쓰는 공용 예외 클래스만 정의(로직 없음) — 'approval' 이름 규칙이 L2 policy 로 오분류. L7 저장소가 import 하려면 L1 이어야 함"
  }
 }

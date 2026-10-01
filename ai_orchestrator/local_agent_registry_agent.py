@@ -62,8 +62,20 @@ def get_agent(agent_id: str) -> LocalAgent | None:
     return _agents.get(agent_id)
 
 
+def agent_stats(agent_id: str) -> dict:
+    """LocalAgent.to_safe() 에 넘기는 연결 상태·작업 통계(레지스트리가 계산)."""
+    return {
+        "agent_status": get_agent_status(agent_id),
+        "active_task_count": get_active_task_count(agent_id),
+        "current_task_id": get_current_task_id(agent_id),
+        "task_count": get_task_count(agent_id),
+        "completed_task_count": get_completed_task_count(agent_id),
+        "failed_task_count": get_failed_task_count(agent_id),
+    }
+
+
 def list_agents() -> list[dict]:
-    return [a.to_safe() for a in _agents.values()]
+    return [a.to_safe(agent_stats(a.agent_id)) for a in _agents.values()]
 
 
 def authenticate_agent(agent_id: str, device_token: str) -> LocalAgent | None:

@@ -268,3 +268,60 @@ def test_local_agent_task_to_safe_includes_params():
 
     assert "params" in safe
     assert isinstance(safe["params"], dict)
+
+
+# 층간 위반 정리(2026-10-01): 모델(L1)이 레지스트리를 import 하지 않고, 레지스트리가 통계를 계산해 to_safe 에 넘긴다.
+
+_STAT_KEYS = ("agent_status", "active_task_count", "current_task_id", "task_count", "completed_task_count", "failed_task_count")
+
+
+def test_to_safe_without_stats_uses_safe_defaults_and_keeps_the_shape():
+    result = register_agent(host="h", os_name="Windows 11", version="0.1.0", requested_by="u")
+    safe = result.agent.to_safe()
+    assert safe["agent_status"] == "offline" and safe["current_task_id"] == ""
+    assert all(safe[k] == 0 for k in ("active_task_count", "task_count", "completed_task_count", "failed_task_count"))
+    assert all(k in safe for k in _STAT_KEYS)
+
+
+def test_to_safe_uses_the_stats_it_is_given():
+    result = register_agent(host="h", os_name="Windows 11", version="0.1.0", requested_by="u")
+    stats = {
+        "agent_status": "online",
+        "active_task_count": 2,
+        "current_task_id": "t-1",
+        "task_count": 5,
+        "completed_task_count": 3,
+        "failed_task_count": 1,
+    }
+    safe = result.agent.to_safe(stats)
+    assert {k: safe[k] for k in _STAT_KEYS} == stats
+
+
+def test_list_agents_fills_the_stats_from_the_registry():
+    from ai_orchestrator import local_agent_registry as reg
+
+    result = register_agent(host="h", os_name="Windows 11", version="0.1.0", requested_by="u")
+    agent_id = result.agent.agent_id
+    enqueue_task(agent_id=agent_id, action="ping", params={}, requested_by="u")
+    (item,) = reg.list_agents()
+    assert item["agent_id"] == agent_id and item["task_count"] == 1
+    assert item["agent_status"] == reg.get_agent_status(agent_id) == "offline"  # 아직 연결되지 않았다
+    assert item["active_task_count"] == reg.get_active_task_count(agent_id)
+    assert item["current_task_id"] == reg.get_current_task_id(agent_id)
+    assert item["completed_task_count"] == reg.get_completed_task_count(agent_id)
+    assert item["failed_task_count"] == reg.get_failed_task_count(agent_id)
+
+
+def test_models_module_does_not_import_the_registry():
+    import ast
+    import pathlib
+
+    tree = ast.parse((pathlib.Path(__file__).resolve().parents[1] / "local_agent_models.py").read_text(encoding="utf-8"))
+    imported = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported += [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            imported.append(node.module or "")
+    assert not any("registry" in name for name in imported), imported
+    assert "importlib" not in imported
