@@ -29,11 +29,3 @@ def get_state(domain: str) -> dict:
     return dict(_STATE.get(domain, {}))
 
 
-def clear_state(domain: str) -> None:
-    """도메인 세션 상태 초기화."""
-    _STATE.pop(domain, None)
-
-
-def all_states() -> dict[str, dict]:
-    """전체 도메인 세션 상태 스냅샷."""
-    return dict(_STATE)

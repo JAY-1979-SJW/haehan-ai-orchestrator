@@ -93,7 +93,3 @@ def clear_all() -> None:
         _store.clear()
 
 
-def get_store_snapshot() -> dict[str, dict[str, Any]]:
-    """테스트용 저장소 스냅샷 반환."""
-    with _lock:
-        return dict(_store)

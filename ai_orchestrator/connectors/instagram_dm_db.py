@@ -231,15 +231,6 @@ def get_account_by_ig_user_id(instagram_user_id: str) -> sqlite3.Row | None:
         ).fetchone()
 
 
-def set_legacy_ig_user_id(account_id: str, legacy_instagram_user_id: str) -> None:
-    with _conn() as con:
-        con.execute(
-            "UPDATE instagram_accounts SET legacy_instagram_user_id=?, updated_at=? WHERE id=?",
-            (legacy_instagram_user_id, _now(), account_id),
-        )
-        con.commit()
-
-
 def list_accounts() -> list[sqlite3.Row]:
     with _conn() as con:
         return con.execute("SELECT * FROM instagram_accounts ORDER BY created_at DESC").fetchall()

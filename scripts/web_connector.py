@@ -35,7 +35,6 @@ from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: 
 from scripts.browser_task_session import (  # noqa: E402
     BrowserTaskPolicy,
     cleanup_task_pages,
-    close_all_pages,
     get_or_create_task_page,
     mark_task_owned,
 )
@@ -558,20 +557,6 @@ def browser_task_session(
             keep_page=page,
             max_tabs=max_tabs,
         )
-
-
-def shutdown_browser_session(*, close_browser: bool = False) -> dict[str, int | bool]:
-    """Close every tab, and optionally close the cached CDP browser object."""
-    global _BROWSER_CONTEXT_CACHE, _BROWSER_CACHE
-    browser, ctx = _connect_browser()
-    closed = close_all_pages(ctx)
-    if close_browser:
-        # 브라우저 종료 실패해도 계속 진행(2026-09-28 검토)
-        with suppress(Exception):
-            browser.close()
-        _BROWSER_CONTEXT_CACHE = None
-        _BROWSER_CACHE = None
-    return {"closed_tabs": closed, "browser_closed": close_browser}
 
 
 SESSION_BASE_DIR = ROOT / "data" / "browser_sessions"

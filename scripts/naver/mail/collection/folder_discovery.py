@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 
@@ -341,5 +341,3 @@ def filter_collectable(folders: list[FolderInfo],
     return out
 
 
-def folders_to_dicts(folders: list[FolderInfo]) -> list[dict]:
-    return [asdict(f) for f in folders]

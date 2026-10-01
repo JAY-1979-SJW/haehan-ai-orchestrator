@@ -776,11 +776,3 @@ def get_registration_code_store() -> RegistrationCodeStore:
     return _store
 
 
-def reset_store_for_tests(backend: str = "memory") -> RegistrationCodeStore:
-    """테스트 전용: store 재설정."""
-    global _store
-    if backend == "memory":
-        _store = InMemoryRegistrationCodeStore()
-    else:
-        raise ValueError(f"unsupported backend in tests: {backend}")
-    return _store

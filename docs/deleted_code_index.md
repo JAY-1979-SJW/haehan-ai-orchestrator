@@ -1034,3 +1034,27 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/site_access.py` — `_find_or_open_tab`
 - `scripts/video/ig_dm_bot_ep01_visuals.py` — `_diagram_card`
 - `scripts/video/record_promo.py` — `_video_dir`
+
+---
+
+## 2026-10-01 추가 삭제(2차) — 미사용 공개 함수·클래스 22개
+
+근거: 저장소 전체 텍스트(코드·설정·문서·스크립트)에서 정의 외 참조 0(삭제 직전 재확인), vulture 미사용. 사용자 승인("D만 삭제")을 받은 분류 D. 삭제로 미사용이 된 import(`time`, `asdict`, `close_all_pages`)는 함께 제거. 보류 분류는 `docs/dead_code_candidates_20261001.md`.
+복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용).
+
+- `ai_orchestrator/connectors/instagram_dm_db.py` — `set_legacy_ig_user_id`
+- `ai_orchestrator/gates/auth.py` — `get_tenant_context`(build_tenant_context 의 별칭)
+- `ai_orchestrator/local_agent/delegated_permission_store.py` — `get_store_snapshot`
+- `ai_orchestrator/local_agent/task_client.py` — `poll_loop`
+- `ai_orchestrator/openai_client.py` — `generate_plan_explanation`(호출되지 않는 유료 AI 호출 경로)
+- `ai_orchestrator/persistence/registration_code_store.py` — `reset_store_for_tests`
+- `ai_orchestrator/router.py` — `TelegramWebhookBody`
+- `local_agent/agent.py` — `poll_task`
+- `local_agent/browser_controller.py` — `BrowserApprovalError`, `BrowserSensitiveFieldError`, `create_and_inspect`
+- `scripts/browser_tab_monitor.py` — `ensure_single_tab`
+- `scripts/instagram/kotara_ctc_reel.py` — `render_thumbnail`, `render_all_frames`, `strip_audio`, `extract_check_frames`
+- `scripts/naver/mail/collection/folder_discovery.py` — `folders_to_dicts`
+- `scripts/naver/smartstore/product/detail_collector.py` — `list_cached_product_ids`
+- `scripts/ops/codebase_layer_audit.py` — `issue_key`
+- `scripts/session_tracker.py` — `clear_state`, `all_states`
+- `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)

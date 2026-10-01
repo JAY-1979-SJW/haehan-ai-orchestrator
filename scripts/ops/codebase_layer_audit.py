@@ -1300,12 +1300,6 @@ def validate_config(config: dict) -> list[ConsistencyCheck]:
     return checks
 
 
-def issue_key(issue: dict | AuditIssue) -> tuple[str, str]:
-    if isinstance(issue, AuditIssue):
-        return issue.code, issue.path
-    return str(issue.get("code", "")), str(issue.get("path", ""))
-
-
 def tracked_residual_matches(item: dict, issue: AuditIssue) -> bool:
     code = str(item.get("code", ""))
     path = str(item.get("path", ""))

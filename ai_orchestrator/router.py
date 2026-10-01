@@ -159,14 +159,6 @@ class RejectRequest(BaseModel):
     reason: str = ""
 
 
-class TelegramWebhookBody(BaseModel):
-    telegram_user_id: str
-    action: str
-    task_id: str
-    token_id: str
-    reason: str = ""
-
-
 _REJECT_STATUS_HTTP = {
     "rejected": 200,
     "not_found": 404,
