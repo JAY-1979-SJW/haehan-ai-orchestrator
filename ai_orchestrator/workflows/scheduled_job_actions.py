@@ -281,6 +281,58 @@ def _run_naver_mail_send(params: dict[str, Any]) -> str:
     return f"메일을 보냈습니다 (수신자 {len(result['recipients'])}명)"
 
 
+def _fax_send_params(params: dict[str, Any]) -> dict[str, Any]:
+    """승인서 id 하나만 받는다. 수신자·제목·문서는 승인서에서 읽는다(여기서 바꿀 수 없다)."""
+    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+
+    extra = set(params) - {"authorization_id"}
+    if extra:
+        raise ValueError(f"알 수 없는 설정값: {sorted(extra)}")
+    auth_id = str(params.get("authorization_id") or "").strip()
+    row = fax_store.get_authorization(auth_id) if auth_id else None
+    if row is None:
+        raise ValueError("팩스 발송 승인서를 찾을 수 없습니다")
+    if not row["approved"] or row["revoked"]:
+        raise ValueError("승인되지 않았거나 취소된 팩스 발송 승인서입니다")
+    return {"authorization_id": auth_id}
+
+
+def _run_hanafax_send(params: dict[str, Any]) -> str:
+    """승인서 범위 안에서 팩스를 자동 발송한다. 승인서가 드라이런이면 전송하지 않고 계획만 기록한다."""
+    from datetime import datetime
+
+    from ai_orchestrator.connectors import hanafax_auto_sender as adapter
+    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+    from ai_orchestrator.workflows import hanafax_auto_send as fax_flow
+
+    auth_id = params["authorization_id"]
+    row = fax_store.get_authorization(auth_id)
+    if row is None:
+        raise ValueError("팩스 발송 승인서를 찾을 수 없습니다")
+
+    def _never(*_args: Any) -> dict[str, Any]:  # 드라이런은 발송기를 부르지 않는다 — 불렸다면 버그이므로 멈춘다
+        raise RuntimeError("드라이런 승인서는 전송할 수 없습니다")
+
+    sender = _never
+    if row["live"]:
+        try:
+            sender = adapter.build_sender(row["document_ref"], row["document_hash"])
+        except adapter.DocumentChanged as exc:
+            raise RuntimeError(str(exc)) from exc
+    result = fax_flow.run(auth_id, sender, datetime.now().astimezone())
+    if result.decision == "deny":
+        raise RuntimeError(f"발송하지 않음({result.reason})")
+    text = (
+        f"{'드라이런 ' if result.dry_run else ''}발송 {result.sent}건, 실패 {result.failed}건, "
+        f"확인 필요 {result.unknown}건, 건너뜀 {len(result.skipped)}건"
+    )
+    if result.decision == "skip":
+        return f"보낼 대상 없음({result.reason})"
+    if result.failed or result.unknown or result.stopped_midway:
+        raise RuntimeError(text + (" — 정지·취소로 중단됨" if result.stopped_midway else ""))
+    return text
+
+
 ACTIONS: dict[str, ActionSpec] = {
     "community_analysis": ActionSpec(
         key="community_analysis",
@@ -344,6 +396,15 @@ ACTIONS: dict[str, ActionSpec] = {
         needs_browser=False,
         validate=_mail_send_params,
         run=_run_naver_mail_send,
+    ),
+    "hanafax_send": ActionSpec(
+        key="hanafax_send",
+        label="하나팩스 자동 발송",
+        description="미리 승인한 발송 승인서(수신자·제목·문서·한도)의 범위 안에서만 팩스를 보냅니다. 승인 후 내용이 바뀌면 멈춥니다. 승인서가 드라이런이면 전송하지 않습니다.",
+        risk_action="fax_send_authorized",
+        needs_browser=False,
+        validate=_fax_send_params,
+        run=_run_hanafax_send,
     ),
     "telegram_notify": ActionSpec(
         key="telegram_notify",
@@ -425,6 +486,20 @@ def catalog() -> list[dict[str, Any]]:
                 {"name": "subject", "label": "제목", "type": "line", "options": [], "default": ""},
                 {"name": "body", "label": "본문", "type": "text", "options": [], "default": ""},
             ]
+        if spec.validate is _fax_send_params:
+            from ai_orchestrator.persistence import fax_authorization_store as fax_store
+
+            approved = [a for a in fax_store.list_authorizations() if a["approved"] and not a["revoked"]]
+            fields.append(
+                {
+                    "name": "authorization_id",
+                    "label": "발송 승인서",
+                    "type": "select",
+                    "options": [a["id"] for a in approved],
+                    "option_labels": {a["id"]: f"{a['name']} ({'실전송' if a['live'] else '드라이런'})" for a in approved},
+                    "default": "",
+                }
+            )
         if spec.validate is _telegram_params:
             fields.append(
                 {"name": "text", "label": "보낼 문구", "type": "text", "options": [], "default": ""}

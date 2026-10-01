@@ -173,6 +173,129 @@ def send_fax(body: SendRequest, _: dict = Depends(require_role("admin", "owner")
     )
 
 
+# ── 자동 발송 승인서 (기준서: docs/specs/2026-10-02_hanafax_auto_send.md) ─────────────
+# 승인서는 사람이 미리보기를 확인하고 승인해야 효력이 생기고, 승인 뒤에는 수정할 수 없다.
+
+
+class FaxRecipient(BaseModel):
+    fax: str
+    name: str = ""
+
+
+class AuthorizationCreate(BaseModel):
+    name: str
+    subject: str
+    document_ref: str
+    recipients: list[FaxRecipient]
+    max_per_run: int = 10
+    max_per_day: int = 50
+    max_total: int | None = None
+    allowed_start: str = "09:00"
+    allowed_end: str = "18:00"
+    valid_from: str | None = None
+    valid_until: str | None = None
+
+
+class AuthorizationApprove(BaseModel):
+    confirmed: bool = False
+    live: bool = False  # 기본 드라이런 — 실전송은 명시해야 한다
+
+
+class KillSwitchRequest(BaseModel):
+    on: bool
+
+
+class OptOutRequest(BaseModel):
+    fax: str
+    reason: str = ""
+
+
+def _actor(user: dict) -> str:
+    return str(user.get("username") or user.get("sub") or user.get("role") or "admin")
+
+
+def _auth_service():
+    from ai_orchestrator.services import hanafax_authorization_service as service
+
+    return service
+
+
+def _bad_request(exc: ValueError) -> HTTPException:
+    return HTTPException(status_code=400, detail=str(exc))
+
+
+@hanafax_router.post("/authorizations", response_model=dict)
+def create_authorization(body: AuthorizationCreate, user: dict = Depends(require_role("admin", "owner"))):
+    service = _auth_service()
+    payload = body.model_dump()
+    if payload["max_total"] is None:
+        payload["max_total"] = len(payload["recipients"]) or 1
+    try:
+        row = service.create(payload, user=_actor(user))
+        return service.preview(row["id"])
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
+@hanafax_router.get("/authorizations", response_model=list[dict])
+def list_authorizations(_: dict = Depends(require_role("admin", "owner"))):
+    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+
+    return [
+        {k: v for k, v in a.items() if k != "recipients"} | {"recipient_count": len(a["recipients"])}
+        for a in fax_store.list_authorizations()
+    ]
+
+
+@hanafax_router.get("/authorizations/{auth_id}", response_model=dict)
+def get_authorization(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    try:
+        return _auth_service().preview(auth_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@hanafax_router.post("/authorizations/{auth_id}/approve", response_model=dict)
+def approve_authorization(auth_id: str, body: AuthorizationApprove, user: dict = Depends(require_role("admin", "owner"))):
+    if not body.confirmed:
+        raise HTTPException(status_code=400, detail="승인은 confirmed=true (미리보기 확인 후)가 필요합니다")
+    try:
+        service = _auth_service()
+        service.approve(auth_id, user=_actor(user), live=body.live)
+        return service.preview(auth_id)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
+@hanafax_router.post("/authorizations/{auth_id}/revoke", response_model=dict)
+def revoke_authorization(auth_id: str, user: dict = Depends(require_role("admin", "owner"))):
+    try:
+        service = _auth_service()
+        service.revoke(auth_id, user=_actor(user))
+        return service.preview(auth_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@hanafax_router.get("/authorizations/{auth_id}/log", response_model=list[dict])
+def authorization_log(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    return _auth_service().send_log(auth_id)
+
+
+@hanafax_router.post("/kill-switch", response_model=dict)
+def kill_switch(body: KillSwitchRequest, user: dict = Depends(require_role("admin", "owner"))):
+    """전역 정지 — 켜면 모든 자동 발송이 즉시 멈춘다."""
+    return _auth_service().set_kill_switch(body.on, user=_actor(user))
+
+
+@hanafax_router.post("/opt-out", response_model=dict)
+def add_opt_out(body: OptOutRequest, user: dict = Depends(require_role("admin", "owner"))):
+    try:
+        return {"masked": _auth_service().add_opt_out(body.fax, reason=body.reason, user=_actor(user))}
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
 @hanafax_router.post("/batch/plan", response_model=BatchPlan)
 def batch_plan(body: BatchExecuteRequest, _: dict = Depends(require_role("admin", "owner"))):
     from scripts.hanafax.batch import build_batch_plan

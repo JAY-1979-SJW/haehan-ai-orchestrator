@@ -20144,6 +20144,30 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/connectors/hanafax_auto_sender.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/hanafax_authorization_service.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "hanafax",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hanafax_p3.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
