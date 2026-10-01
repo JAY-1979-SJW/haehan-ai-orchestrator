@@ -906,6 +906,7 @@ _DB_DIRECT_ACCESS_PATTERNS = [
 # 이 경로들은 storage 계층이므로 DB 직접 접근 허용
 _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/storage/",
+    "ai_orchestrator/persistence/",  # L7 Persistence 계층 자체 — DB 접근이 이 계층의 책임이다(2026-10-01)
     "storage/",
     "migrations/",
     "scripts/ops/",

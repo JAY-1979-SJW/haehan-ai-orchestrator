@@ -206,7 +206,8 @@
       ],
       "evidence": "PRAGMA user_version·마이그레이션 0, CREATE TABLE IF NOT EXISTS 산재",
       "stage": "C",
-      "status": "open"
+      "status": "partial",
+      "fix_note": "2026-10-01 공용 도우미 ai_orchestrator/persistence/sqlite_schema.py(PRAGMA user_version 기반 순차 단계·BEGIN IMMEDIATE·실패 시 롤백·DB 가 코드보다 새로우면 거부·이미 최신이면 PRAGMA 한 번만) + 테스트 25개, 설계: docs/specs/2026-10-01_sqlite_schema_versioning.md. 시범 적용 2곳(파일 단독 소유): scheduled_jobs.db(persistence/scheduled_job_store.py, v1 생성→v2 runs.decided_by), instagram_dm.db(connectors/instagram_dm_db.py, v1 생성→v2 legacy_instagram_user_id). 실DB 복사본 드라이런: 스키마·인덱스·행·데이터 동일, user_version 0→2, 신규 DB 도 동일 최종 스키마. 남음: (1) data/cdp.db — scripts/cdp_db.py 와 scripts/popup_monitor.py 가 한 파일을 나눠 써서(user_version 은 파일당 하나) 스키마 소유자를 cdp_db.py 하나로 합친 뒤 적용, popup_events 의 ALTER(source) 포함. (2) scripts/naver/shopping/crawl.py 의 shopping_items.is_ad ALTER — 사이트 작업 보류 방침으로 보류. (3) 나머지 약 20개 DB 는 소유 모듈 확인 후 단계 1(현재 스키마)만 붙이면 됨."
     },
     {
       "no": 15,

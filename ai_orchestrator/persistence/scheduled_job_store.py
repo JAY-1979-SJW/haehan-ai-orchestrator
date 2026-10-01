@@ -15,6 +15,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.persistence.sqlite_schema import add_column_if_missing, apply_schema
+
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "scheduled_jobs.db"
 
 _JOB_FIELDS = {
@@ -34,43 +36,54 @@ def iso(dt: datetime) -> str:
     return dt.astimezone(UTC).isoformat(timespec="seconds")
 
 
+def _schema_v1(con: sqlite3.Connection) -> None:
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS jobs (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            action TEXT NOT NULL,
+            params TEXT NOT NULL DEFAULT '{}',
+            recurrence TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active',
+            next_run_at TEXT,
+            last_run_at TEXT,
+            last_status TEXT,
+            last_message TEXT,
+            created_by TEXT,
+            created_at TEXT NOT NULL
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS runs (
+            id TEXT PRIMARY KEY,
+            job_id TEXT NOT NULL,
+            scheduled_for TEXT NOT NULL,
+            started_at TEXT NOT NULL,
+            finished_at TEXT,
+            status TEXT NOT NULL,
+            message TEXT NOT NULL DEFAULT '',
+            decided_by TEXT
+        )
+    """)
+    con.execute("CREATE INDEX IF NOT EXISTS idx_runs_job ON runs(job_id, started_at)")
+
+
+def _schema_v2_runs_decided_by(con: sqlite3.Connection) -> None:
+    # 승인 흐름 도입 전에 만든 DB 보정
+    add_column_if_missing(con, "runs", "decided_by", "TEXT")
+
+
+# 한 번 배포된 단계는 수정하지 않고 새 단계를 뒤에 추가한다(docs/specs/2026-10-01_sqlite_schema_versioning.md)
+_SCHEMA_STEPS = [_schema_v1, _schema_v2_runs_decided_by]
+
+
 @contextmanager
 def _conn():
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(_DB_PATH), timeout=30, isolation_level=None)  # 자동 커밋, 선점만 명시 트랜잭션
     con.row_factory = sqlite3.Row
     try:
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS jobs (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                action TEXT NOT NULL,
-                params TEXT NOT NULL DEFAULT '{}',
-                recurrence TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT 'active',
-                next_run_at TEXT,
-                last_run_at TEXT,
-                last_status TEXT,
-                last_message TEXT,
-                created_by TEXT,
-                created_at TEXT NOT NULL
-            )
-        """)
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS runs (
-                id TEXT PRIMARY KEY,
-                job_id TEXT NOT NULL,
-                scheduled_for TEXT NOT NULL,
-                started_at TEXT NOT NULL,
-                finished_at TEXT,
-                status TEXT NOT NULL,
-                message TEXT NOT NULL DEFAULT '',
-                decided_by TEXT
-            )
-        """)
-        if "decided_by" not in {r["name"] for r in con.execute("PRAGMA table_info(runs)")}:
-            con.execute("ALTER TABLE runs ADD COLUMN decided_by TEXT")  # 승인 흐름 도입 전에 만든 DB
-        con.execute("CREATE INDEX IF NOT EXISTS idx_runs_job ON runs(job_id, started_at)")
+        apply_schema(con, _SCHEMA_STEPS)
         yield con
     finally:
         con.close()
