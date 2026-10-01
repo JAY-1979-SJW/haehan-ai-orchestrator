@@ -104,7 +104,24 @@ def hover_and_scroll(page, selector: str) -> None:
         log.debug("[human] hover_and_scroll 실패 sel=%s err=%s", selector, e)
 
 
-def human_type(
+def _type_chars(page, value: str, char_delay_ms: tuple[int, int], word_pause_ms: tuple[int, int], simulate_typo: bool) -> None:
+    """value 를 한 글자씩 사람 리듬으로 입력(사고 일시정지·단어 쉼·선택적 오타)."""
+    for i, ch in enumerate(value):
+        # 사고 일시정지 — 글자 입력 전 (3글자 이후부터, 마지막 직전 제외)
+        if 3 <= i < len(value) - 1:
+            _thinking_pause_if_due()
+        d = int(random.uniform(char_delay_ms[0], char_delay_ms[1]))
+        page.keyboard.type(ch, delay=d)
+        if ch in " -_@.":
+            time.sleep(_rand_ms(word_pause_ms))
+        if simulate_typo and i > 2 and random.random() < 0.02:
+            wrong = chr(random.randint(97, 122))
+            page.keyboard.type(wrong, delay=int(random.uniform(60, 120)))
+            time.sleep(_rand_ms((180, 350)))
+            page.keyboard.press("Backspace")
+
+
+def human_type(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     page,
     selector: str,
     value: str,
@@ -155,19 +172,7 @@ def human_type(
         time.sleep(_rand_ms(_DEFAULT_PRE_CLICK_PAUSE_MS))
 
         # 4) 한 글자씩 입력 (사람 타이핑 리듬)
-        for i, ch in enumerate(value):
-            # 사고 일시정지 — 글자 입력 전 (3글자 이후부터, 마지막 직전 제외)
-            if 3 <= i < len(value) - 1:
-                _thinking_pause_if_due()
-            d = int(random.uniform(char_delay_ms[0], char_delay_ms[1]))
-            page.keyboard.type(ch, delay=d)
-            if ch in " -_@.":
-                time.sleep(_rand_ms(word_pause_ms))
-            if simulate_typo and i > 2 and random.random() < 0.02:
-                wrong = chr(random.randint(97, 122))
-                page.keyboard.type(wrong, delay=int(random.uniform(60, 120)))
-                time.sleep(_rand_ms((180, 350)))
-                page.keyboard.press("Backspace")
+        _type_chars(page, value, char_delay_ms, word_pause_ms, simulate_typo)
 
         # 5) 입력 정착 대기 — 이벤트 기반 (blind sleep 제거)
         settled = wait_value_settled(page, selector, value, timeout_ms=2500)

@@ -266,25 +266,32 @@ def _score_field(attrs: dict) -> tuple[str, float]:
 
     # 2) type hint — 단, placeholder/label에 더 명확한 역할 키워드가 있으면 override
     if t in _TYPE_HINTS:
-        base_role = _TYPE_HINTS[t]
-        # type=password 인데 confirm/재입력 → password_confirm
-        if base_role == "password":
-            for src in (name, el_id, ph, label, aria):
-                if any(k in src for k in ["confirm", "check", "재입력", "확인", "2"]):
-                    return "password_confirm", 0.88
-        # type=search 이지만 placeholder/label/aria에 "아이디"/"id"/"user" 가 있으면 id 로 override
-        if base_role == "search_query":
-            for src in (ph, label, aria, name, el_id):
-                if any(
-                    k in src for k in ["아이디", "userid", "user_id", "loginid", "login_id", "username", "user_name"]
-                ):
-                    return "id", 0.92
-                if any(k in src for k in ["이메일", "메일주소", "email"]):
-                    return "email", 0.92
-        return base_role, 0.85
+        return _score_by_type_hint(_TYPE_HINTS[t], name, el_id, ph, label, aria)
 
     # 3) 키워드 매칭 (name > id > autocomplete > placeholder > label > aria > near)
     sources = [(name, 0.9), (el_id, 0.85), (ph, 0.75), (label, 0.7), (aria, 0.65), (near, 0.55)]
+    return _score_by_keywords(sources)
+
+
+def _score_by_type_hint(base_role: str, name: str, el_id: str, ph: str, label: str, aria: str) -> tuple[str, float]:
+    """type 속성 힌트 기반 (role, score). 속성 키워드가 더 명확하면 override."""
+    # type=password 인데 confirm/재입력 → password_confirm
+    if base_role == "password":
+        for src in (name, el_id, ph, label, aria):
+            if any(k in src for k in ["confirm", "check", "재입력", "확인", "2"]):
+                return "password_confirm", 0.88
+    # type=search 이지만 placeholder/label/aria에 "아이디"/"id"/"user" 가 있으면 id 로 override
+    if base_role == "search_query":
+        for src in (ph, label, aria, name, el_id):
+            if any(k in src for k in ["아이디", "userid", "user_id", "loginid", "login_id", "username", "user_name"]):
+                return "id", 0.92
+            if any(k in src for k in ["이메일", "메일주소", "email"]):
+                return "email", 0.92
+    return base_role, 0.85
+
+
+def _score_by_keywords(sources: list[tuple[str, float]]) -> tuple[str, float]:
+    """속성 문자열별 가중치로 키워드 매칭 (role, score)."""
     best_role = "other"
     best_score = 0.0
     for src, weight in sources:
@@ -299,6 +306,63 @@ def _score_field(attrs: dict) -> tuple[str, float]:
                         best_score = s
                         best_role = role
     return best_role, round(best_score, 2)
+
+
+def _classify_checkbox(chk: dict) -> FormField:
+    """체크박스 라벨 키워드로 동의 역할을 분류."""
+    lab = (chk.get("label") or "").lower()
+    role = "other"
+    score = 0.5
+    # 마케팅이 먼저 (더 구체적)
+    for keyword_role in ("agree_marketing", "agree_privacy", "agree_terms", "agree_age"):
+        for kw in _ROLE_KEYWORDS[keyword_role]:
+            if kw in lab:
+                role = keyword_role
+                score = 0.85
+                break
+        if role != "other":
+            break
+    return FormField(
+        role=role,
+        selector=chk.get("selector", ""),
+        score=score,
+        element_type="checkbox",
+        raw=chk,
+    )
+
+
+def _select_submit(result: FormDiscovery, submits: list[dict]) -> None:
+    """제출 버튼 선택 (가장 의미있는 텍스트 우선) + intent 설정."""
+    # 회원가입 우선순위 추정
+    for s in submits:
+        txt = s.get("text", "")
+        if any(k in txt for k in ["회원가입", "Sign up", "Sign Up", "가입"]):
+            result.submit_selector = s["selector"]
+            result.intent = "signup"
+            break
+    if not result.submit_selector:
+        for s in submits:
+            txt = s.get("text", "")
+            if any(k in txt for k in ["로그인", "Sign in", "Sign In", "Log in"]):
+                result.submit_selector = s["selector"]
+                result.intent = "login"
+                break
+    if not result.submit_selector:
+        result.submit_selector = submits[0]["selector"]
+
+
+def _infer_intent(result: FormDiscovery) -> None:
+    """필드 구성으로 intent 추가 추론."""
+    has_pw_confirm = any(f.role == "password_confirm" for f in result.fields)
+    has_email = any(f.role == "email" for f in result.fields)
+    has_phone = any(f.role == "phone" for f in result.fields)
+    has_birth = any(f.role.startswith("birth") for f in result.fields)
+    if has_pw_confirm or (has_email and has_phone) or has_birth:
+        result.intent = "signup"
+    elif any(f.role == "id" for f in result.fields) and any(f.role == "password" for f in result.fields):
+        result.intent = "login"
+    elif any(f.role == "search_query" for f in result.fields):
+        result.intent = "search"
 
 
 def discover_form(page) -> FormDiscovery:
@@ -326,60 +390,16 @@ def discover_form(page) -> FormDiscovery:
 
     # 체크박스도 별도로 분류
     for chk in data.get("checkboxes", []):
-        lab = (chk.get("label") or "").lower()
-        role = "other"
-        score = 0.5
-        # 마케팅이 먼저 (더 구체적)
-        for keyword_role in ("agree_marketing", "agree_privacy", "agree_terms", "agree_age"):
-            for kw in _ROLE_KEYWORDS[keyword_role]:
-                if kw in lab:
-                    role = keyword_role
-                    score = 0.85
-                    break
-            if role != "other":
-                break
-        result.fields.append(
-            FormField(
-                role=role,
-                selector=chk.get("selector", ""),
-                score=score,
-                element_type="checkbox",
-                raw=chk,
-            )
-        )
+        result.fields.append(_classify_checkbox(chk))
 
     # 제출 버튼 선택 (가장 의미있는 텍스트 우선)
     submits = data.get("submits", [])
     if submits:
-        # 회원가입 우선순위 추정
-        for s in submits:
-            txt = s.get("text", "")
-            if any(k in txt for k in ["회원가입", "Sign up", "Sign Up", "가입"]):
-                result.submit_selector = s["selector"]
-                result.intent = "signup"
-                break
-        if not result.submit_selector:
-            for s in submits:
-                txt = s.get("text", "")
-                if any(k in txt for k in ["로그인", "Sign in", "Sign In", "Log in"]):
-                    result.submit_selector = s["selector"]
-                    result.intent = "login"
-                    break
-        if not result.submit_selector:
-            result.submit_selector = submits[0]["selector"]
+        _select_submit(result, submits)
 
     # intent 추가 추론 (없으면)
     if result.intent == "unknown":
-        has_pw_confirm = any(f.role == "password_confirm" for f in result.fields)
-        has_email = any(f.role == "email" for f in result.fields)
-        has_phone = any(f.role == "phone" for f in result.fields)
-        has_birth = any(f.role.startswith("birth") for f in result.fields)
-        if has_pw_confirm or (has_email and has_phone) or has_birth:
-            result.intent = "signup"
-        elif any(f.role == "id" for f in result.fields) and any(f.role == "password" for f in result.fields):
-            result.intent = "login"
-        elif any(f.role == "search_query" for f in result.fields):
-            result.intent = "search"
+        _infer_intent(result)
 
     log.info(
         "[form-discovery] intent=%s fields=%d submit=%s",
