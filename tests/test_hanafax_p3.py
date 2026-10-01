@@ -209,3 +209,40 @@ def test_run_unknown_result_raises_and_does_not_resend(doc, sent, monkeypatch):
     with pytest.raises(RuntimeError):  # 다음 회차: 불명 번호는 건너뛰고 다음 번호만
         actions.get_action("hanafax_send").run({"authorization_id": row["id"]})
     assert len({s["receiver_fax"] for s in sent}) == len(sent)  # 같은 번호로 다시 보내지 않았다
+
+
+# ── 지금 발송 · AI 허용목록 ──────────────────────────────────────────────────
+
+
+def test_run_now_requires_approval(doc):
+    row = service.create(_payload(doc), user="u")
+    with pytest.raises(ValueError, match="승인"):
+        service.run_now(row["id"])  # 승인 전 발송 불가
+    service.approve(row["id"], user="a", live=True)
+    service.revoke(row["id"], user="a")
+    with pytest.raises(ValueError, match="취소"):
+        service.run_now(row["id"])
+
+
+def test_run_now_runs_in_background_and_reports(doc, sent):
+    import time
+
+    row = service.create(_payload(doc), user="u")
+    service.approve(row["id"], user="a", live=True)
+    assert service.run_now(row["id"])["running"] is True or service.run_status(row["id"])["last"]
+    for _ in range(100):
+        last = service.run_status(row["id"])["last"]
+        if last:
+            break
+        time.sleep(0.05)
+    assert last and last["status"] == "done" and len(sent) == 2
+
+
+def test_ai_registry_exposes_draft_only_not_approve_or_run():
+    """AI(MCP call_api)는 승인 대기 초안만 만들 수 있다 — 승인·발송·정지·수신거부 경로는 허용목록에 없어야 한다."""
+    from ai_orchestrator.mcp_server import API_REGISTRY
+
+    fax = {k: v for k, v in API_REGISTRY.items() if "/hanafax/" in v["path"]}
+    assert set(fax) == {"hanafax.draft", "hanafax.authorizations"}
+    for spec in fax.values():
+        assert not any(w in spec["path"] for w in ("approve", "/run", "kill-switch", "opt-out", "revoke", "/send", "batch"))

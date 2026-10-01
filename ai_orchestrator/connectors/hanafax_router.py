@@ -211,7 +211,7 @@ class OptOutRequest(BaseModel):
 
 
 def _actor(user: dict) -> str:
-    return str(user.get("username") or user.get("sub") or user.get("role") or "admin")
+    return str(user.get("actor") or user.get("username") or "admin")
 
 
 def _auth_service():
@@ -275,6 +275,27 @@ def revoke_authorization(auth_id: str, user: dict = Depends(require_role("admin"
         return service.preview(auth_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@hanafax_router.post("/authorizations/{auth_id}/run", response_model=dict)
+def run_authorization(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    """승인된 승인서를 지금 발송한다(백그라운드). 승인 전·취소·정지 상태면 정책이 거부한다."""
+    try:
+        return _auth_service().run_now(auth_id)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
+@hanafax_router.get("/authorizations/{auth_id}/run", response_model=dict)
+def run_status(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    return _auth_service().run_status(auth_id)
+
+
+@hanafax_router.get("/kill-switch", response_model=dict)
+def kill_switch_state(_: dict = Depends(require_role("admin", "owner"))):
+    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+
+    return {"kill_switch": fax_store.kill_switch_on()}
 
 
 @hanafax_router.get("/authorizations/{auth_id}/log", response_model=list[dict])

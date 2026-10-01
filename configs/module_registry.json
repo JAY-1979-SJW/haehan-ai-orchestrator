@@ -20168,6 +20168,30 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/app/hanafax/HanafaxApp.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/hanafax/api.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/hanafax/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

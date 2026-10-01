@@ -21,6 +21,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "home", label: "AI 콘솔", shortLabel: "AI", href: "/", exact: true },
       { key: "ops",  label: "운영센터", shortLabel: "운영", href: "/ops" },
       { key: "mail", label: "메일 비서", shortLabel: "메일", href: "/mail" },
+      { key: "hanafax", label: "하나팩스", shortLabel: "팩스", href: "/hanafax" },
       { key: "google", label: "구글 허브", shortLabel: "구글", href: "/google" },
       { key: "login-status", label: "로그인 현황", shortLabel: "로그인", href: "/login-status" },
       { key: "mypage", label: "설정", shortLabel: "설정", href: "/mypage" },

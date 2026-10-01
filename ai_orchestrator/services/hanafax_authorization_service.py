@@ -8,11 +8,14 @@
 from __future__ import annotations
 
 import re
+import threading
+from datetime import UTC, datetime
 from typing import Any
 
 from ai_orchestrator.connectors import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as policy
 from ai_orchestrator.persistence import fax_authorization_store as store
+from ai_orchestrator.workflows import scheduled_job_actions as actions
 
 MAX_RECIPIENTS = 500
 MAX_PER_RUN_CAP = 100
@@ -148,3 +151,46 @@ def add_opt_out(number: str, *, reason: str, user: str) -> str:
         raise ValueError("팩스번호 형식이 올바르지 않습니다")
     store.add_opt_out(digits, reason=reason, user=user)
     return policy.mask_number(digits)
+
+
+# ── 지금 발송 (승인된 승인서만) ────────────────────────────────────────────────
+# 팩스 1건이 수십 초 걸리므로 백그라운드 스레드로 돌리고, 화면은 상태·이력을 조회한다. 같은 승인서의 동시 실행은 막는다.
+_run_lock = threading.Lock()
+_running: set[str] = set()
+_last_run: dict[str, dict[str, str]] = {}
+
+
+def _run_job(auth_id: str) -> None:
+    try:
+        message = actions.get_action("hanafax_send").run({"authorization_id": auth_id})  # type: ignore[union-attr]
+        outcome = {"status": "done", "message": message}
+    except Exception as exc:  # noqa: BLE001 - 실패 사유를 화면에 보여 주기 위해 기록한다(발송 재시도는 하지 않는다)
+        outcome = {"status": "failed", "message": str(exc)[:300] or type(exc).__name__}
+    with _run_lock:
+        _last_run[auth_id] = {**outcome, "finished_at": datetime.now(UTC).isoformat(timespec="seconds")}
+        _running.discard(auth_id)
+
+
+def run_now(auth_id: str) -> dict[str, Any]:
+    """승인된 승인서를 지금 한 번 실행한다. 승인되지 않았거나 취소됐으면 거부한다(발송 전 승인 필수)."""
+    row = store.get_authorization(auth_id)
+    if row is None:
+        raise ValueError("승인서를 찾을 수 없습니다")
+    if not row["approved"]:
+        raise ValueError("승인되지 않은 승인서는 발송할 수 없습니다 — 미리보기를 확인하고 먼저 승인하세요")
+    if row["revoked"]:
+        raise ValueError("취소된 승인서입니다")
+    with _run_lock:
+        if auth_id in _running:
+            raise ValueError("이미 발송 중입니다")
+        _running.add(auth_id)
+        _last_run.pop(auth_id, None)
+    threading.Thread(target=_run_job, args=(auth_id,), daemon=True, name=f"fax-run-{auth_id[:8]}").start()
+    return run_status(auth_id)
+
+
+def run_status(auth_id: str) -> dict[str, Any]:
+    with _run_lock:
+        running = auth_id in _running
+        last = dict(_last_run.get(auth_id, {}))
+    return {"running": running, "last": last or None}

@@ -72,6 +72,21 @@ API_REGISTRY: dict[str, dict[str, str]] = {
             "실패·캡차·2단계 인증이면 즉시 중단하고 재시도하지 말 것(반복 실패는 계정 잠금 위험)"
         ),
     },
+    # 하나팩스 — AI 는 '승인 대기 초안'만 만들 수 있다. 승인·발송·정지는 앱 화면(하나팩스 탭)에서 사람이 한다.
+    "hanafax.draft": {
+        "method": "POST",
+        "path": "/api/v1/hanafax/authorizations",
+        "desc": (
+            "팩스 발송 승인 대기 초안 생성(전송하지 않음). body={name, subject, document_ref(첨부 파일 전체 경로: "
+            "pdf/docx/doc), recipients:[{fax,name}]}. 만든 뒤 사용자에게 '앱의 하나팩스 탭에서 미리보기를 확인하고 "
+            "승인해야 발송됩니다'라고 안내할 것. 승인·발송을 대신 시도하지 말 것"
+        ),
+    },
+    "hanafax.authorizations": {
+        "method": "GET",
+        "path": "/api/v1/hanafax/authorizations",
+        "desc": "팩스 발송 승인서 목록·상태 조회(읽기 전용)",
+    },
     "sessions.status": {
         "method": "GET",
         "path": "/api/v1/sessions/status",
