@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
+from ai_orchestrator.gates import mail_new_policy
 from scripts.naver.blog.accounts import BLOG_ACCOUNTS
 from scripts.naver.mail_imap import attachments as att
 from scripts.naver.mail_imap import mailbox, sender
@@ -187,3 +188,13 @@ def confirm_send(token: str) -> dict[str, Any]:
 def cancel_send(token: str) -> bool:
     with _lock:
         return _pending.pop(token, None) is not None
+
+
+def inbox_watch(account: str, prev_uidnext: int | None = None, prev_uidvalidity: int | None = None) -> dict[str, Any]:
+    """새 메일 알림용 받은편지함 상태 + 이전 확인값 대비 새 메일 수(읽기 전용, AI 기준점과 무관)."""
+    cur = mailbox.inbox_status(require_account(account))
+    if not cur.get("ok"):
+        return cur
+    prev = None if prev_uidnext is None or prev_uidvalidity is None else {"uidnext": prev_uidnext, "uidvalidity": prev_uidvalidity}
+    verdict = mail_new_policy.new_since(prev, cur)
+    return {**cur, "reset": verdict["reset"], "new_count": verdict["count"], "new_label": mail_new_policy.count_label(verdict["count"])}

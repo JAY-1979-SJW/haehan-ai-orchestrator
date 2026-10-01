@@ -10,6 +10,28 @@ import { FolderTree } from "./FolderTree";
 import { MailAiPanel } from "./MailAiPanel";
 import { MessageList, type MailFilter } from "./MessageList";
 import { MessageView } from "./MessageView";
+import { NewMailToast, type NewMailToastData } from "./NewMailToast";
+import { useNewMailWatch, type NewMailEvent } from "../lib/useNewMailWatch";
+
+const ALERT_KEY = "mailbox.newMailAlert";
+const NOTIFY_KEY = "mailbox.browserNotify";
+
+function readPref(key: string, fallback: boolean): boolean {
+  try {
+    const v = window.localStorage.getItem(key);
+    return v === null ? fallback : v === "1";
+  } catch {
+    return fallback;
+  }
+}
+
+function writePref(key: string, on: boolean) {
+  try {
+    window.localStorage.setItem(key, on ? "1" : "0");
+  } catch {
+    /* 저장이 막혀도 화면은 동작한다 */
+  }
+}
 
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -47,6 +69,10 @@ export function MailboxApp() {
   const [aiOpen, setAiOpen] = useState(false);
   const [aiDrafts, setAiDrafts] = useState<Draft[]>([]);
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [alertOn, setAlertOn] = useState(true);
+  const [notifyOn, setNotifyOn] = useState(false);
+  const [toast, setToast] = useState<NewMailToastData | null>(null);
+  const [newCount, setNewCount] = useState(0);
   const listSeq = useRef(0);
   const detailSeq = useRef(0);
   // 열어 본(또는 마우스를 올려 미리 받은) 메일 — 같은 메일을 다시 열면 서버를 거치지 않고 바로 보여 준다
@@ -132,6 +158,67 @@ export function MailboxApp() {
     const timer = setInterval(() => void loadDrafts(), aiOpen ? 5000 : 20000);
     return () => clearInterval(timer);
   }, [loadDrafts, aiOpen]);
+
+  useEffect(() => {
+    setAlertOn(readPref(ALERT_KEY, true));
+    setNotifyOn(readPref(NOTIFY_KEY, false) && typeof Notification !== "undefined" && Notification.permission === "granted");
+  }, []);
+
+  /** 새 메일 도착 — 토스트·목차 안 읽음 수·(받은편지함을 보는 중이면) 목록·탭 제목을 갱신한다. 읽음 표시는 바꾸지 않는다. */
+  const handleNewMail = useCallback(
+    async (e: NewMailEvent) => {
+      setFolders((prev) => prev.map((f) => (f.id === "INBOX" ? { ...f, unseen: e.unseen } : f)));
+      if (e.count === 0) return;
+      setNewCount((n) => n + e.count);
+      let from = "";
+      let subject = "";
+      try {
+        const first = await mailboxApi.messages(account, "INBOX", 1, "all", "");
+        const fresh = first.messages.filter((m) => m.uid >= e.sinceUid);
+        const top = fresh[0] ?? first.messages[0];
+        if (top) {
+          from = top.from.name || top.from.address;
+          subject = top.subject;
+        }
+      } catch {
+        /* 내용을 못 읽어도 개수는 알린다 */
+      }
+      setToast({ label: e.label, from, subject });
+      if (folder === "INBOX" && page === 1) void loadList(true);
+      if (notifyOn && document.visibilityState !== "visible") {
+        new Notification(`새 메일 ${e.label}통`, { body: [from, subject].filter(Boolean).join(" — ") });
+      }
+    },
+    [account, folder, page, loadList, notifyOn],
+  );
+
+  useNewMailWatch(account, alertOn, (e) => void handleNewMail(e));
+
+  useEffect(() => {
+    const base = "메일함";
+    document.title = newCount > 0 ? `(${newCount}) ${base}` : base;
+    const clear = () => {
+      if (document.visibilityState === "visible") setNewCount(0);
+    };
+    document.addEventListener("visibilitychange", clear);
+    return () => {
+      document.removeEventListener("visibilitychange", clear);
+      document.title = base;
+    };
+  }, [newCount]);
+
+  async function toggleNotify() {
+    if (notifyOn) {
+      setNotifyOn(false);
+      writePref(NOTIFY_KEY, false);
+      return;
+    }
+    if (typeof Notification === "undefined") return;
+    const perm = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+    const on = perm === "granted";
+    setNotifyOn(on);
+    writePref(NOTIFY_KEY, on);
+  }
 
   const detailKey = useCallback((u: number) => `${account}|${folder}|${u}`, [account, folder]);
 
@@ -333,6 +420,13 @@ export function MailboxApp() {
 
   return (
     <div className="flex h-[calc(100dvh-132px)] min-h-[520px] flex-col gap-2">
+      {toast && (
+        <NewMailToast
+          data={toast}
+          onClose={() => setToast(null)}
+          onOpen={() => { setToast(null); selectFolder("INBOX"); setNewCount(0); }}
+        />
+      )}
       <div className="flex shrink-0 items-center gap-3">
         <label className="flex items-center gap-2 text-[12px] text-[#6B7280]">
           계정
@@ -354,6 +448,16 @@ export function MailboxApp() {
           🤖 AI 업무 창
           {aiDrafts.length > 0 && <span className="rounded-full bg-[#F97316] px-[7px] py-px text-[10px] font-bold text-white">{aiDrafts.length}</span>}
         </button>
+        <label className="hidden shrink-0 items-center gap-1 text-[12px] text-[#6B7280] lg:flex">
+          <input type="checkbox" checked={alertOn} onChange={(e) => { setAlertOn(e.target.checked); writePref(ALERT_KEY, e.target.checked); }} />
+          새 메일 알림
+        </label>
+        {alertOn && (
+          <label className="hidden shrink-0 items-center gap-1 text-[12px] text-[#6B7280] lg:flex">
+            <input type="checkbox" checked={notifyOn} onChange={() => void toggleNotify()} />
+            브라우저 알림
+          </label>
+        )}
         {notice && (
           <div role="status" className="min-w-0 flex-1 truncate rounded-lg px-3 py-1 text-[12px]" style={{ background: notice.kind === "ok" ? "#ECFDF5" : "#FEF2F2", color: notice.kind === "ok" ? "#047857" : "#B91C1C" }}>
             {notice.text}

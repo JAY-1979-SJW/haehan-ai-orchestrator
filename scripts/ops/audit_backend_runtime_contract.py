@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-EXPECTED_RUNTIME_ROUTES = 350  # 재고정(2026-10-02): 네이버 메일함 탭 라우트 22개 추가 확인(삭제 0) — /naver-mailbox* 조회·첨부·삭제/이동·보내기 2단계 13 + AI 업무 창(새 메일·가벼운 상세·초안·업무 지침) 9. HEAD 실측 328 → 350.
+EXPECTED_RUNTIME_ROUTES = 351  # 2026-10-02 새 메일 알림 /inbox-watch +1; 재고정(2026-10-02): 네이버 메일함 탭 라우트 22개 추가 확인(삭제 0) — /naver-mailbox* 조회·첨부·삭제/이동·보내기 2단계 13 + AI 업무 창(새 메일·가벼운 상세·초안·업무 지침) 9. HEAD 실측 328 → 350.
 # 이전 재고정(2026-10-01): 신규 기능 라우트 25개 추가 확인(삭제 0) — 예약 작업 12(/scheduled-jobs*)·블로그 자동화 11(/blog-automation*)·네이버 세션 2(/live·/ensure). 전 292→후 317.
 # 이전 재고정(2026-09-30): 채팅 세션 라우트 5개(/chat/sessions*) 추가 + 로컬 FastAPI 를
 # 0.142(iter_route_contexts 지원)로 올려 이 검사가 다시 실행되며 확인한 실측값(전 287→후 292).

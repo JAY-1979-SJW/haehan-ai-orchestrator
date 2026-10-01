@@ -299,6 +299,15 @@ def new_mail(account: str, limit: int = 20, advance: bool = False, _: dict = _AD
         raise _bad(e) from e
 
 
+@naver_mailbox_router.get("/inbox-watch")
+def inbox_watch(account: str, prev_uidnext: int | None = None, prev_uidvalidity: int | None = None, _: dict = _ADMIN):
+    """화면의 새 메일 알림용 — 받은편지함 UIDNEXT·안 읽음 수만(AI 기준점·읽음 표시 불변)."""
+    try:
+        return _ok(service.inbox_watch(account, prev_uidnext, prev_uidvalidity))
+    except service.ServiceError as e:
+        raise _bad(e) from e
+
+
 @naver_mailbox_router.get("/message/compact")
 def get_message_compact(account: str, folder: str, uid: int, _: dict = _ADMIN):
     try:

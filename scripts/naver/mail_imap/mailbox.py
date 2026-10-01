@@ -320,6 +320,25 @@ def list_folders(
         return failure(e)
 
 
+def inbox_status(
+    account: str, *, password: str | None = None, factory: Callable[..., Any] | None = None
+) -> dict[str, Any]:
+    """새 메일 알림용 — 받은편지함을 선택하지 않고 STATUS 한 줄만 보낸다(읽음 표시·캐시 불변)."""
+    try:
+        with session(account, None, password=password, factory=factory) as conn:
+            _, status = conn.status("INBOX", "(UIDNEXT UIDVALIDITY UNSEEN)")
+            line = status[0].decode("utf-8", "replace") if status and status[0] else ""
+            words = line.split("(")[-1].rstrip(") ").split()
+            nums = {words[i]: int(words[i + 1]) for i in range(0, len(words) - 1, 2) if words[i + 1].isdigit()}
+            if "UIDNEXT" not in nums or "UIDVALIDITY" not in nums:
+                return {"ok": False, "error": "bad_status", "message": "받은편지함 상태를 해석하지 못했습니다"}
+            return {"ok": True, "uidnext": nums["UIDNEXT"], "uidvalidity": nums["UIDVALIDITY"], "unseen": nums.get("UNSEEN", 0)}
+    except MailboxError as e:
+        return failure(e)
+    except (imaplib.IMAP4.error, OSError):
+        return {"ok": False, "error": "connect_failed", "message": "받은편지함 상태를 확인하지 못했습니다"}
+
+
 # ── 목록 ────────────────────────────────────────────────────────────────
 
 

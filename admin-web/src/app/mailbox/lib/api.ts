@@ -38,6 +38,15 @@ export interface MessageRow {
   has_attachment: boolean;
 }
 
+export interface InboxWatch {
+  uidnext: number;
+  uidvalidity: number;
+  unseen: number;
+  reset: boolean;
+  new_count: number;
+  new_label: string;
+}
+
 export interface MessageList {
   page: number;
   per_page: number;
@@ -133,6 +142,9 @@ export const mailboxApi = {
   folders: (account: string) => getJson<{ folders: Folder[] }>("folders", { account }).then((r) => r.folders),
   messages: (account: string, folder: string, page: number, filter: string, q: string) =>
     getJson<MessageList>("messages", { account, folder, page, filter, q }),
+  /** 새 메일 알림용 — 받은편지함 상태와 이전 확인값 대비 새 메일 수(읽기 전용). */
+  inboxWatch: (account: string, prev: { uidnext: number; uidvalidity: number } | null) =>
+    getJson<InboxWatch>("inbox-watch", { account, prev_uidnext: prev?.uidnext, prev_uidvalidity: prev?.uidvalidity }),
   message: (account: string, folder: string, uid: number) =>
     getJson<MessageDetail>("message", { account, folder, uid }),
   setSeen: (account: string, folder: string, uids: number[], seen: boolean) =>
