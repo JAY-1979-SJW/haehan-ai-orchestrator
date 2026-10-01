@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import os
 import platform
 import sys
@@ -37,6 +38,8 @@ from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
     GATE_READONLY_EXECUTION_CANDIDATE,
     validate_g2b_execution_gate_result,
 )
+
+logger = logging.getLogger(__name__)
 
 # ── 상수 ──────────────────────────────────────────────────────────────────────
 
@@ -130,7 +133,8 @@ def _is_allowed_final_url(url: str) -> bool:
         parsed = urlparse(url)
         domain = parsed.netloc.lower()
         return domain in _ALLOWED_G2B_DOMAINS
-    except Exception:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
+    except Exception as exc:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
+        logger.warning("G2B 허용 도메인 검사 실패: %s", type(exc).__name__)
         return False
 
 
@@ -199,7 +203,8 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
                 body_text = page.locator("body").inner_text(timeout=5000)
                 result["body_text_sample"] = _truncate_body(body_text)
                 result["body_text_length"] = len(body_text)
-            except Exception:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
+            except Exception as exc:  # noqa: BLE001 - 나라장터(G2B) 공고 읽기전용 조회 - 허용 도메인 화이트리스트 검사 실패시 False(거부) 반환, 다운로드는 감지 즉시 cancel(), 입찰/서명/결제 없음
+                logger.warning("G2B 공고 본문 텍스트 읽기 실패: %s", type(exc).__name__)
                 result["body_text_sample"] = ""
                 result["body_text_length"] = 0
 

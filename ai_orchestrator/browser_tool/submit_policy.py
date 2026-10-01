@@ -9,9 +9,12 @@ No side effects, stateless, pure functions.
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -123,7 +126,8 @@ def extract_origin(url: str) -> str:
     try:
         p = urlparse(url)
         return f"{p.scheme}://{p.netloc}"
-    except Exception:  # noqa: BLE001 - 폼 제출 정책 allowlist 검사 -- origin/path 파싱 실패 시 매치 실패(False)로 처리되어 결과적으로 차단 방향(fail-closed)
+    except Exception as exc:  # noqa: BLE001 - 폼 제출 정책 allowlist 검사 -- origin/path 파싱 실패 시 매치 실패(False)로 처리되어 결과적으로 차단 방향(fail-closed)
+        logger.warning("제출 정책 origin 추출 실패: %s", type(exc).__name__)
         return ""
 
 
@@ -235,7 +239,8 @@ def validate_path_match(url: str, allowed_paths: list[str]) -> bool:
         p = urlparse(url)
         actual_path = p.path or "/"
         return path_matches_allowlist(actual_path, allowed_paths)
-    except Exception:  # noqa: BLE001 - 폼 제출 정책 allowlist 검사 -- origin/path 파싱 실패 시 매치 실패(False)로 처리되어 결과적으로 차단 방향(fail-closed)
+    except Exception as exc:  # noqa: BLE001 - 폼 제출 정책 allowlist 검사 -- origin/path 파싱 실패 시 매치 실패(False)로 처리되어 결과적으로 차단 방향(fail-closed)
+        logger.warning("제출 정책 path allowlist 검사 실패: %s", type(exc).__name__)
         return False
 
 

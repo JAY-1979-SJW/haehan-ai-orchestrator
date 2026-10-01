@@ -8,6 +8,7 @@ POST /api/v1/kakao/setup/gate/:n  — 특정 게이트 단독 실행
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,6 +16,8 @@ from pathlib import Path
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -61,7 +64,8 @@ def _load_state() -> SetupState:
     if STATE_PATH.exists():
         try:
             return SetupState(**json.loads(STATE_PATH.read_text(encoding="utf-8")))
-        except Exception:  # noqa: S110, BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("카카오 설정 상태 파일 로드 실패(무시): %s", type(exc).__name__)
             pass
     return SetupState(gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()])
 

@@ -85,7 +85,8 @@ def _parse_attrs(attrs_blob: str) -> dict[str, str]:
 def _is_login_required_host(url: str) -> bool:
     try:
         host = urlparse(url).hostname or ""
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("로그인 필요 호스트 판정(URL 파싱) 실패(무시): %s", type(exc).__name__)
         return False
     host = host.lower()
     return any(hint in host for hint in _LOGIN_REQUIRED_HOST_HINTS)

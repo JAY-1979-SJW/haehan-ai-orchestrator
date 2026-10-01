@@ -142,15 +142,18 @@ def _build_success_payload(
         http_status = (
             int(response.status) if response is not None else None
         )
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("HTTP 상태 읽기 실패(무시): %s", type(exc).__name__)
         http_status = None
     try:
         final_url = page.url or requested_url
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("최종 URL 읽기 실패(무시): %s", type(exc).__name__)
         final_url = requested_url
     try:
         title = (page.title() or "").strip()
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("페이지 제목 읽기 실패(무시): %s", type(exc).__name__)
         title = ""
     snippet = ""
     try:

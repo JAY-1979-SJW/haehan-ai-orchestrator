@@ -310,7 +310,8 @@ def list_drafts(
                     "published_url": d.get("published_url"),
                 }
             )
-        except Exception:  # noqa: S110, BLE001
+        except Exception as exc:  # noqa: BLE001
+            _log.debug("블로그 초안 파일 읽기 실패(무시): %s", type(exc).__name__)
             pass
     return {"ok": True, "total": len(files), "items": drafts}
 

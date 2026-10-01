@@ -9,10 +9,13 @@ No side effects, stateless, pure functions.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -121,7 +124,8 @@ def is_controlled_internal_origin(
 
         return False
 
-    except Exception:  # noqa: BLE001 - is_controlled_internal_origin(): URL 파싱 실패 시 False(내부 신뢰 오리진 아님)로 fail-closed 반환 — 더 안전한 방향의 기본값
+    except Exception as exc:  # noqa: BLE001 - is_controlled_internal_origin(): URL 파싱 실패 시 False(내부 신뢰 오리진 아님)로 fail-closed 반환 — 더 안전한 방향의 기본값
+        logger.warning("내부 오리진 판정(URL 파싱) 실패: %s", type(exc).__name__)
         return False
 
 

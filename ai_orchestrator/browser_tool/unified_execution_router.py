@@ -24,6 +24,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from urllib.parse import urlparse
 
@@ -70,6 +71,8 @@ from ai_orchestrator.browser_tool.unified_browser_task_schema import (
     build_safe_task,
     validate_task_input,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _server_external_web_block(task: dict[str, Any], task_id: str) -> dict[str, Any] | None:
@@ -366,6 +369,7 @@ def _extract_domain(task: dict[str, Any]) -> str:
     if url:
         try:
             return urlparse(url).netloc.lower()
-        except Exception:  # noqa: S110, BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("대상 URL 도메인 추출 실패(무시): %s", type(exc).__name__)
             pass
     return ""
