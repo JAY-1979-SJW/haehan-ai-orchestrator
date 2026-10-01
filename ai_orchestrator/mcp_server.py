@@ -563,91 +563,42 @@ async def list_tools() -> list[types.Tool]:
 # ── 도구 실행 ─────────────────────────────────────────────────────────────────
 
 
+# 도구 이름 → 실행 람다. 람다 안에서 전역 이름을 호출 시점에 조회하므로 구현 함수가 뒤에 정의돼도 된다.
+_SYNC_TOOL_HANDLERS: dict[str, Any] = {
+    "save_template": lambda a: _save_template(a),
+    "list_templates": lambda a: _list_templates(),
+    "get_template": lambda a: _get_template(a["id"]),
+    "delete_template": lambda a: _delete_template(a["id"]),
+    "render_description": lambda a: _render_description(a),
+    "list_products": lambda a: _list_products(),
+    "collect_products": lambda a: _cdp_collect("products", a),
+    "list_orders": lambda a: _load_ss_data("orders"),
+    "collect_orders": lambda a: _cdp_collect("orders", a),
+    "list_settlements": lambda a: _load_ss_data("settlements"),
+    "collect_settlements": lambda a: _cdp_collect("settlements", a),
+    "list_reviews": lambda a: _load_ss_data("reviews"),
+    "collect_reviews": lambda a: _cdp_collect("reviews", a),
+    "list_stats": lambda a: _load_ss_data("stats"),
+    "collect_stats": lambda a: _cdp_collect("stats", a),
+    "open_seller_center": lambda a: _open_seller_center(a),
+    "auto_register_product": lambda a: _auto_register_product(a),
+    "edit_product": lambda a: _edit_product(a),
+    "list_cafe_boards": lambda a: _list_cafe_boards(a),
+    "add_cafe_board": lambda a: _add_cafe_board(a),
+    "list_api_endpoints": lambda a: {"ok": True, "base_url": API_BASE, "endpoints": API_REGISTRY},
+    "call_api": lambda a: _api_call(a["endpoint"], a.get("path_params"), a.get("query"), a.get("body")),
+    "snapshot_page": lambda a: _snapshot_page(a),
+    "act_on_page": lambda a: _act_on_page(a),
+    "navigate_page": lambda a: _navigate_page(a),
+}
+
+
 def _dispatch_sync(name: str, arguments: dict[str, Any]) -> dict:
     """동기 도구 실행 (Playwright sync API 사용 — asyncio 루프 밖 스레드에서 실행 필요)."""
-
-    if name == "save_template":
-        return _save_template(arguments)
-
-    elif name == "list_templates":
-        return _list_templates()
-
-    elif name == "get_template":
-        return _get_template(arguments["id"])
-
-    elif name == "delete_template":
-        return _delete_template(arguments["id"])
-
-    elif name == "render_description":
-        return _render_description(arguments)
-
-    elif name == "list_products":
-        return _list_products()
-
-    elif name == "collect_products":
-        return _cdp_collect("products", arguments)
-
-    elif name == "list_orders":
-        return _load_ss_data("orders")
-
-    elif name == "collect_orders":
-        return _cdp_collect("orders", arguments)
-
-    elif name == "list_settlements":
-        return _load_ss_data("settlements")
-
-    elif name == "collect_settlements":
-        return _cdp_collect("settlements", arguments)
-
-    elif name == "list_reviews":
-        return _load_ss_data("reviews")
-
-    elif name == "collect_reviews":
-        return _cdp_collect("reviews", arguments)
-
-    elif name == "list_stats":
-        return _load_ss_data("stats")
-
-    elif name == "collect_stats":
-        return _cdp_collect("stats", arguments)
-
-    elif name == "open_seller_center":
-        return _open_seller_center(arguments)
-
-    elif name == "auto_register_product":
-        return _auto_register_product(arguments)
-
-    elif name == "edit_product":
-        return _edit_product(arguments)
-
-    elif name == "list_cafe_boards":
-        return _list_cafe_boards(arguments)
-
-    elif name == "add_cafe_board":
-        return _add_cafe_board(arguments)
-
-    elif name == "list_api_endpoints":
-        return {"ok": True, "base_url": API_BASE, "endpoints": API_REGISTRY}
-
-    elif name == "call_api":
-        return _api_call(
-            arguments["endpoint"],
-            arguments.get("path_params"),
-            arguments.get("query"),
-            arguments.get("body"),
-        )
-
-    elif name == "snapshot_page":
-        return _snapshot_page(arguments)
-
-    elif name == "act_on_page":
-        return _act_on_page(arguments)
-
-    elif name == "navigate_page":
-        return _navigate_page(arguments)
-
-    else:
+    handler = _SYNC_TOOL_HANDLERS.get(name)
+    if handler is None:
         return {"ok": False, "error": f"알 수 없는 도구: {name}"}
+    return handler(arguments)
 
 
 @app.call_tool()
