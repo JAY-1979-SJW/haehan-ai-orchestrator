@@ -68,3 +68,37 @@
 - **중복 발송**: 성공 이력 조회 + 불명확 결과는 재시도 금지.
 - **사이트 변경으로 자동화 깨짐**: 하나팩스는 공개 API 가 없어 화면 의존. 발송 직전 사전 점검(로그인·잔액)을 하고, 결과를 확정 못 하면 "확인 필요" 로 멈춘다.
 - **다른 세션과의 충돌**: `scheduled_job_actions.py`·`router.py`·`nav.ts` 는 메일 세션이 수정하는 파일 — 착수 전 겹침 확인, 커밋은 파일 지정.
+
+## 9. 하나팩스 전체 기능 조사와 범위 확정 (2026-10-02, 저장된 사이트 화면 `data/hanafax_bulk_page.html` 분석)
+사용자 요청: "앱 목록에 반영하고, 즉시 발송·그룹 발송·예약 발송 등 하나팩스 기능을 다 받아오고, 수신 팩스는 어떻게 할 것인가?"
+
+### 9.1 사이트에 있는 기능 (화면 URL 기준, 로그인 상태에서 입력 항목은 실사 필요)
+| 기능 | 화면 | 앱 상태 |
+|---|---|---|
+| 국내 팩스(즉시) | `HanaFax/tHanaFax_country.asp` | 구현됨 — `scripts/hanafax/sender.py::send_fax` |
+| 대량 발송 | `HanaFax/tHanaFax_manysenddata.asp` | 구현됨 — `scripts/hanafax/bulk_send.py` |
+| **예약 발송** | `hanafax/pop_ReserveSel.asp`, `fax/pop_calendar.asp` | 없음 |
+| **주소록·그룹** | `addressBook/address_List.asp`, `HanaFax/pop_manyaddress_country.asp` | 없음 |
+| 발신 목록 | `HanaFax/HanaFax_SendList_combin.asp`, `pop_sendbox.asp` | 없음 |
+| 수신 팩스함 | `HanaFax/HanaFax_RcvList.asp`, `Active/pop_faxviewer_OverView_s.asp`, `popup/pop_Receive_change.asp`(수신번호 변경) | **이번 범위 제외** |
+| 팩스 표지 | `HanaFax/pop_FaxCover.asp` | 없음 |
+| 파일함 | `Filedata/File_List.asp`, `HanaFax/pop_databox.asp` | 없음 |
+| 국제 팩스 | `HanaFax/tHanaFax_world.asp` | 없음 |
+| 문자(SMS/MMS) | `HanaFax/tHanaSms_*.asp`, `mms/tHanaMms_*.asp` | 이번 범위 제외 |
+| 계정·충전 | `Account/acc_*.asp` | 잔액 조회만 — **충전은 자동화하지 않음(결제)** |
+| 발신번호 등록 | `hanafax/pop_CallbakNumReg_faxnum.asp` | 없음 |
+
+### 9.2 사용자 결정
+- **수신 팩스는 지금 다루지 않는다.** (후보였던 "수신함 읽기 전용 수집·보관" 은 다음 단계로 미룸. 사이트에 수신함·뷰어 화면이 있으므로 나중에 읽기 전용으로 붙일 수 있다.)
+- **순서: 발송 먼저 — 즉시 → 예약 → 그룹(주소록).** 수신·조회 기능은 다음.
+- 앱 목록(메뉴)에는 하나팩스 항목을 반영한다.
+
+### 9.3 구현 계획
+1. **즉시 발송**: 승인서(사전 승인)로 자동 발송하는 P1·P2 완료. 남은 것 — 실제 발송기 어댑터(`send_fax` 호출, `definite_failure` 구분), 승인서 API, 승인 화면.
+2. **예약 발송**: 두 가지 방법 중 선택 필요 — (a) 앱 예약 작업 프레임워크의 시각에 발송(앱이 켜져 있어야 함, 이미 구현됨), (b) 하나팩스 사이트의 자체 예약 기능(`pop_ReserveSel.asp`)에 예약 등록(앱이 꺼져도 발송됨, 사이트 화면 실사 필요). (a) 로 먼저 하고 (b) 는 실사 후 판단.
+3. **그룹 발송**: 하나팩스 주소록(`address_List.asp`)을 앱의 수신자 그룹으로 가져오거나 앱 자체 그룹을 승인서의 수신자 목록으로 쓴다 — 주소록 화면 실사 필요.
+4. **실사(읽기 전용)**: 하나팩스에 로그인된 브라우저가 필요하다. **로그인은 사용자만 가능**(프로젝트 규칙). CDP 브라우저를 켜고 사용자가 한 번 로그인하면 이후 화면 탐색은 AI 가 읽기 전용으로 수행한다.
+
+### 9.4 다음 세션 시작점
+- 완료·푸시: P1·P2 (커밋 `216ba23b`, 테스트 75개). 다음은 P3(예약 작업 연결·API·발송기 어댑터) 또는 실사.
+- 실제 팩스는 한 건도 보내지 않았다. 실전송 검증은 본인 번호 1건으로 사용자 승인·과금 확인 후.
