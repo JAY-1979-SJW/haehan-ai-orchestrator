@@ -79,52 +79,57 @@ class _Handler(socketserver.StreamRequestHandler):
             with suppress(Exception):
                 self.wfile.write((json.dumps({"ok": False, "error": str(e)}) + "\n").encode("utf-8"))
 
-    def _dispatch(self, cmd: str, req: dict) -> dict:
+    @staticmethod
+    def _cmd_goto(req: dict) -> dict:
         global _current_page
+        url = req["url"]
+        try:
+            page = _get_page(url)
+        except Exception as e:
+            if "detached" not in str(e).lower():
+                raise
+            # 재사용하려던 탭이 죽어있음(2026-08-22 실측) — 새 탭으로 강제 교체.
+            _log.warning("[browser-rpc] 탭 detached — 새 탭으로 재시도: %s", url)
+            from scripts.web_connector import open_page
+
+            page = open_page(allow_new_tab=True, reason="rpc-detached-retry")
+            page.goto(url, timeout=30000)
+            _current_page = page
+        time.sleep(float(req.get("wait", 1.5)))
+        return {"ok": True, "result": page.url}
+
+    @staticmethod
+    def _cmd_page(cmd: str, req: dict) -> dict:
+        page = _current_page or _get_page()
+        if cmd == "text":
+            return {"ok": True, "result": page.inner_text("body")}
+        if cmd == "eval":
+            return {"ok": True, "result": page.evaluate(req["js"])}
+        if cmd == "click":
+            sel = req["selector"]
+            if sel.startswith("text="):
+                page.get_by_text(sel[5:], exact=req.get("exact", False)).first.click(timeout=req.get("timeout", 5000))
+            else:
+                page.locator(sel).first.click(timeout=req.get("timeout", 5000))
+            return {"ok": True, "result": "clicked"}
+        if cmd == "fill":
+            page.fill(req["selector"], req["value"])
+            return {"ok": True, "result": "filled"}
+        # screenshot
+        out = req.get("path", str(ROOT / "data" / "browser_rpc_shot.png"))
+        page.screenshot(path=out, timeout=req.get("timeout", 15000))
+        return {"ok": True, "result": out}
+
+    def _dispatch(self, cmd: str, req: dict) -> dict:
         try:
             if cmd == "ping":
                 return {"ok": True, "result": "pong"}
 
             if cmd == "goto":
-                url = req["url"]
-                try:
-                    page = _get_page(url)
-                except Exception as e:
-                    if "detached" not in str(e).lower():
-                        raise
-                    # 재사용하려던 탭이 죽어있음(2026-08-22 실측) — 새 탭으로 강제 교체.
-                    _log.warning("[browser-rpc] 탭 detached — 새 탭으로 재시도: %s", url)
-                    from scripts.web_connector import open_page
-
-                    global _current_page
-                    page = open_page(allow_new_tab=True, reason="rpc-detached-retry")
-                    page.goto(url, timeout=30000)
-                    _current_page = page
-                time.sleep(float(req.get("wait", 1.5)))
-                return {"ok": True, "result": page.url}
+                return self._cmd_goto(req)
 
             if cmd in ("text", "eval", "click", "fill", "screenshot"):
-                page = _current_page or _get_page()
-                if cmd == "text":
-                    return {"ok": True, "result": page.inner_text("body")}
-                if cmd == "eval":
-                    return {"ok": True, "result": page.evaluate(req["js"])}
-                if cmd == "click":
-                    sel = req["selector"]
-                    if sel.startswith("text="):
-                        page.get_by_text(sel[5:], exact=req.get("exact", False)).first.click(
-                            timeout=req.get("timeout", 5000)
-                        )
-                    else:
-                        page.locator(sel).first.click(timeout=req.get("timeout", 5000))
-                    return {"ok": True, "result": "clicked"}
-                if cmd == "fill":
-                    page.fill(req["selector"], req["value"])
-                    return {"ok": True, "result": "filled"}
-                if cmd == "screenshot":
-                    out = req.get("path", str(ROOT / "data" / "browser_rpc_shot.png"))
-                    page.screenshot(path=out, timeout=req.get("timeout", 15000))
-                    return {"ok": True, "result": out}
+                return self._cmd_page(cmd, req)
 
             return {"ok": False, "error": f"unknown cmd: {cmd}"}
         except Exception as e:  # noqa: BLE001 - 브라우저 RPC 서버 - 명령 처리 실패를 JSON 에러 응답으로 변환, 탭 재사용 실패 시 새 탭으로 대체

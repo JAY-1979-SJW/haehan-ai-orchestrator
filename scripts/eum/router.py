@@ -50,58 +50,49 @@ def _get_page():
     return page
 
 
+def _command_table() -> dict:
+    """task 별칭 -> (sub, args) 를 받는 실행 함수 표. 호출 시점에 _cmd_* 를 조회한다."""
+    table: dict = {}
+    for names, fn in (
+        (("extract",), lambda sub, args: _cmd_extract(sub, args)),
+        (("mail", "promo-mail", "sales-mail"), lambda sub, args: _cmd_mail(sub, args)),
+        (("new-sites",), lambda sub, args: _cmd_new_sites()),
+        (("install-targets", "verify-install-targets"), lambda sub, args: _cmd_install_targets(sub, args)),
+        # 신규 추가 (2026-05-12)
+        (("login",), lambda sub, args: _cmd_login()),
+        (("monitor",), lambda sub, args: _cmd_monitor()),
+        (("history",), lambda sub, args: _cmd_history(sub, args)),
+        (("demolition",), lambda sub, args: _cmd_demolition(sub, args)),
+        (("labor-test",), lambda sub, args: _cmd_labor_test()),
+        (("test-workers",), lambda sub, args: _cmd_test_workers()),
+        (("site-devices",), lambda sub, args: _cmd_site_devices()),
+        (("explore",), lambda sub, args: _cmd_explore()),
+        (("explore-accessible", "access-map"), lambda sub, args: _cmd_explore_accessible(sub, args)),
+        (("capabilities",), lambda sub, args: _cmd_capabilities()),
+        (("build-capabilities", "catalog"), lambda sub, args: _cmd_build_capabilities()),
+        (("page-info", "info"), lambda sub, args: _cmd_page_info(sub, args)),
+        (("open-menu", "page"), lambda sub, args: _cmd_open_menu(sub, args)),
+        (("work-index", "workspace", "map"), lambda sub, args: _cmd_work_index()),
+        (("work",), lambda sub, args: _cmd_work(sub, args)),
+        (("registration",), lambda sub, args: _cmd_registration(sub, args)),
+        (("deregistration",), lambda sub, args: _cmd_deregistration(sub, args)),
+    ):
+        for name in names:
+            table[name] = fn
+    return table
+
+
 def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
     """EUM 서비스 라우팅.
 
     task: extract | dashboard | mail | new-sites | task-run
     sub:  하위 옵션 (extract: full/quick, mail: preview/send)
     """
-    match task or "help":
-        case "extract":
-            _cmd_extract(sub, args)
-        case "mail" | "promo-mail" | "sales-mail":
-            _cmd_mail(sub, args)
-        case "new-sites":
-            _cmd_new_sites()
-        case "install-targets" | "verify-install-targets":
-            _cmd_install_targets(sub, args)
-        # 신규 추가 (2026-05-12)
-        case "login":
-            _cmd_login()
-        case "monitor":
-            _cmd_monitor()
-        case "history":
-            _cmd_history(sub, args)
-        case "demolition":
-            _cmd_demolition(sub, args)
-        case "labor-test":
-            _cmd_labor_test()
-        case "test-workers":
-            _cmd_test_workers()
-        case "site-devices":
-            _cmd_site_devices()
-        case "explore":
-            _cmd_explore()
-        case "explore-accessible" | "access-map":
-            _cmd_explore_accessible(sub, args)
-        case "capabilities":
-            _cmd_capabilities()
-        case "build-capabilities" | "catalog":
-            _cmd_build_capabilities()
-        case "page-info" | "info":
-            _cmd_page_info(sub, args)
-        case "open-menu" | "page":
-            _cmd_open_menu(sub, args)
-        case "work-index" | "workspace" | "map":
-            _cmd_work_index()
-        case "work":
-            _cmd_work(sub, args)
-        case "registration":
-            _cmd_registration(sub, args)
-        case "deregistration":
-            _cmd_deregistration(sub, args)
-        case _:
-            _print_help()
+    handler = _command_table().get(task or "help")
+    if handler is None:
+        _print_help()
+        return
+    handler(sub, args)
 
 
 # ── 명령 구현 ─────────────────────────────────────────────────────────
@@ -387,6 +378,42 @@ def _cmd_open_menu(sub: str | None, args: list[str]) -> None:
         raise SystemExit(1)
 
 
+def _handle_non_auto_workflow(workflow: dict, pass_args: list[str], *, prepare: bool, submit: bool) -> None:
+    """읽기 전용 자동 실행 대상이 아닌 workflow 처리 — 준비/실행 플래그가 없으면 안내만 출력."""
+    if prepare:
+        _prepare_approval_workflow(workflow, pass_args)
+    elif submit:
+        _execute_approval_workflow(workflow, pass_args)
+    else:
+        print("approval/action workflow: command was not executed automatically.")
+        print("Use --dry-run to create a plan, --prepare to fill the form without submit, or --submit to execute.")
+
+
+def _run_auto_workflow(key: str, pass_args: list[str]) -> None:
+    """읽기 전용 workflow key 에 맞는 자동 실행기를 호출."""
+    if key == "device_inventory":
+        _cmd_extract(None, [])
+    elif key == "new_sites":
+        _cmd_new_sites()
+    elif key == "sales_mail":
+        _cmd_mail(None, pass_args)
+    elif key == "device_history":
+        device_id = pass_args[0] if pass_args else None
+        _cmd_history(device_id, [])
+    elif key == "demolition_lookup":
+        _cmd_demolition(None, [])
+    elif key == "monitor":
+        _cmd_monitor()
+    elif key == "labor_test":
+        _cmd_labor_test()
+    elif key == "test_workers":
+        _cmd_test_workers()
+    elif key == "site_devices":
+        _cmd_site_devices()
+    else:
+        print("No auto executor is registered for this workflow.")
+
+
 def _cmd_work(sub: str | None, args: list[str]) -> None:
     """Resolve an EUM work alias and execute safe read-only workflows."""
     from scripts.eum.run_log import work_run
@@ -419,13 +446,7 @@ def _cmd_work(sub: str | None, args: list[str]) -> None:
         return
 
     if workflow.get("risk") != "read" or not workflow.get("auto_execute"):
-        if prepare:
-            _prepare_approval_workflow(workflow, pass_args)
-        elif submit:
-            _execute_approval_workflow(workflow, pass_args)
-        else:
-            print("approval/action workflow: command was not executed automatically.")
-            print("Use --dry-run to create a plan, --prepare to fill the form without submit, or --submit to execute.")
+        _handle_non_auto_workflow(workflow, pass_args, prepare=prepare, submit=submit)
         return
 
     key = workflow["key"]
@@ -434,27 +455,7 @@ def _cmd_work(sub: str | None, args: list[str]) -> None:
     print("=" * 60)
 
     with work_run(workflow, pass_args):
-        if key == "device_inventory":
-            _cmd_extract(None, [])
-        elif key == "new_sites":
-            _cmd_new_sites()
-        elif key == "sales_mail":
-            _cmd_mail(None, pass_args)
-        elif key == "device_history":
-            device_id = pass_args[0] if pass_args else None
-            _cmd_history(device_id, [])
-        elif key == "demolition_lookup":
-            _cmd_demolition(None, [])
-        elif key == "monitor":
-            _cmd_monitor()
-        elif key == "labor_test":
-            _cmd_labor_test()
-        elif key == "test_workers":
-            _cmd_test_workers()
-        elif key == "site_devices":
-            _cmd_site_devices()
-        else:
-            print("No auto executor is registered for this workflow.")
+        _run_auto_workflow(key, pass_args)
 
 
 def _execute_approval_workflow(workflow: dict, args: list[str]) -> None:
