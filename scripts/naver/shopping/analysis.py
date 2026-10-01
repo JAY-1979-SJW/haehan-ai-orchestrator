@@ -77,7 +77,7 @@ def _where_keywords(keywords: list[str] | None) -> tuple:
 # ── 공개 함수 ────────────────────────────────────────────────────────────────
 
 
-def search_products(
+def search_products(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     keyword: str | None = None,
     min_price: int | None = None,
     max_price: int | None = None,

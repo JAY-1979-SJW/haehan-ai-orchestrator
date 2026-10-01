@@ -116,127 +116,122 @@ _COMPOUND_PAIRS = [
 ]
 
 
+
+_KO_SUFFIXES = (
+    "으로써",
+    "으로서",
+    "이라는",
+    "에서는",
+    "에서도",
+    "으로도",
+    "으로는",
+    "합니다",
+    "했습니다",
+    "입니다",
+    "됩니다",
+    "있습니다",
+    "없습니다",
+    "습니다",
+    "ㅂ니다",
+    "하여서",
+    "하지만",
+    "하지",
+    "하여",
+    "하고",
+    "하는",
+    "하며",
+    "하면",
+    "되어서",
+    "되어",
+    "되는",
+    "되고",
+    "되며",
+    "있어요",
+    "없어요",
+    "해요",
+    "해서",
+    "해도",
+    "하면서",
+    "하면",
+    "할수",
+    "할 수",
+    "입니다",
+    "이에요",
+    "예요",
+    "했어요",
+    "했는데",
+    "했는지",
+    "라는",
+    "라도",
+    "라고",
+    "이라",
+    "이며",
+    "이고",
+    "부터",
+    "까지",
+    "마다",
+    "에서",
+    "으로",
+    "과의",
+    "와의",
+    "과를",
+    "와를",
+    "에도",
+    "에는",
+    "에서",
+    "이를",
+    "가를",
+    "를",
+    "을",
+    "이",
+    "가",
+    "은",
+    "는",
+    "의",
+    "에",
+    "와",
+    "과",
+    "도",
+    "만",
+    "로",
+    "해서",
+    "해도",
+    "해",
+)
+
+
+def _add_tag(tag: str, tags: list[str], seen: set[str], max_tags: int) -> None:
+    t = tag.strip().replace(" ", "")
+    if t and len(t) >= 2 and t not in seen and len(tags) < max_tags:
+        seen.add(t)
+        tags.append(t)
+
+
+def _top_body_tokens(body_tokens: list[str], seen: set[str]) -> list[str]:
+    freq: dict[str, int] = {}
+    for t in body_tokens:
+        if t not in seen:
+            freq[t] = freq.get(t, 0) + 1
+    return sorted(freq, key=lambda x: -freq[x])[:10]
+
+
 def suggest_tags(title: str, body: str, brand_tags: list[str] | None = None, max_tags: int = 20) -> list[str]:
     brands = brand_tags or []
     tags: list[str] = []
     seen: set[str] = set()
 
     def _add(tag: str) -> None:
-        t = tag.strip().replace(" ", "")
-        if t and len(t) >= 2 and t not in seen and len(tags) < max_tags:
-            seen.add(t)
-            tags.append(t)
+        _add_tag(tag, tags, seen, max_tags)
 
     for b in brands:
         _add(b)
-
-    _KO_SUFFIXES = (
-        "으로써",
-        "으로서",
-        "이라는",
-        "에서는",
-        "에서도",
-        "으로도",
-        "으로는",
-        "합니다",
-        "했습니다",
-        "입니다",
-        "됩니다",
-        "있습니다",
-        "없습니다",
-        "습니다",
-        "ㅂ니다",
-        "하여서",
-        "하지만",
-        "하지",
-        "하여",
-        "하고",
-        "하는",
-        "하며",
-        "하면",
-        "되어서",
-        "되어",
-        "되는",
-        "되고",
-        "되며",
-        "있어요",
-        "없어요",
-        "해요",
-        "해서",
-        "해도",
-        "하면서",
-        "하면",
-        "할수",
-        "할 수",
-        "입니다",
-        "이에요",
-        "예요",
-        "했어요",
-        "했는데",
-        "했는지",
-        "라는",
-        "라도",
-        "라고",
-        "이라",
-        "이며",
-        "이고",
-        "부터",
-        "까지",
-        "마다",
-        "에서",
-        "으로",
-        "과의",
-        "와의",
-        "과를",
-        "와를",
-        "에도",
-        "에는",
-        "에서",
-        "이를",
-        "가를",
-        "를",
-        "을",
-        "이",
-        "가",
-        "은",
-        "는",
-        "의",
-        "에",
-        "와",
-        "과",
-        "도",
-        "만",
-        "로",
-        "해서",
-        "해도",
-        "해",
-    )
-
-    def _tokenize(text: str) -> list[str]:
-        cleaned = re.sub(r"[^\w가-힣a-zA-Z0-9\s]", " ", text)
-        raw_tokens = [w.strip() for w in cleaned.split() if len(w.strip()) >= 2]
-        result = []
-        for tok in raw_tokens:
-            stripped = tok
-            for suffix in _KO_SUFFIXES:
-                if stripped.endswith(suffix) and len(stripped) - len(suffix) >= 2:
-                    stripped = stripped[: len(stripped) - len(suffix)]
-                    break
-            if stripped and len(stripped) >= 2 and stripped not in _STOPWORDS:
-                result.append(stripped)
-        return result
 
     title_tokens = _tokenize(title)
     for t in title_tokens:
         _add(t)
 
     body_tokens = _tokenize(body)
-    freq: dict[str, int] = {}
-    for t in body_tokens:
-        if t not in seen:
-            freq[t] = freq.get(t, 0) + 1
-    top_body = sorted(freq, key=lambda x: -freq[x])[:10]
-    for t in top_body:
+    for t in _top_body_tokens(body_tokens, seen):
         _add(t)
 
     all_words = set(title_tokens) | set(body_tokens)
@@ -251,3 +246,18 @@ def suggest_tags(title: str, body: str, brand_tags: list[str] | None = None, max
 
     _log.info("[suggest_tags] 태그 %d개 추출: %s", len(tags), tags)
     return tags
+
+
+def _tokenize(text: str) -> list[str]:
+    cleaned = re.sub(r"[^\w가-힣a-zA-Z0-9\s]", " ", text)
+    raw_tokens = [w.strip() for w in cleaned.split() if len(w.strip()) >= 2]
+    result = []
+    for tok in raw_tokens:
+        stripped = tok
+        for suffix in _KO_SUFFIXES:
+            if stripped.endswith(suffix) and len(stripped) - len(suffix) >= 2:
+                stripped = stripped[: len(stripped) - len(suffix)]
+                break
+        if stripped and len(stripped) >= 2 and stripped not in _STOPWORDS:
+            result.append(stripped)
+    return result
