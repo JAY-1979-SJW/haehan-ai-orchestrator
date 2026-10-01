@@ -19865,13 +19865,13 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/scheduled_job_scheduler.py": {
-   "layer": "L6",
-   "role": "workflow",
+  "ai_orchestrator/routers/scheduled_job_loop.py": {
+   "layer": "L8",
+   "role": "api",
    "domain": "common",
-   "reason": "업무 흐름 이름",
+   "reason": "서버 lifespan 에서 도는 예약 작업 루프(서버 API 레이어의 기동 코드)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/persistence/scheduled_job_store.py": {
    "layer": "L7",
@@ -19890,20 +19890,20 @@
    "source": "rule"
   },
   "ai_orchestrator/services/scheduled_job_service.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "예약 작업 반복 계산·선점·실행을 조율하는 업무 흐름 서비스 — L4 generic 오분류",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/workflows/scheduled_job_actions.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "common",
-   "reason": "범용 브라우저·CDP",
+   "reason": "예약 가능한 작업 허용 목록과 실행 연결(워크플로), CDP 보장은 헬퍼일 뿐 — L4 browser_engine 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "tests/test_community_scheduler_cdp.py": {
    "layer": "L11",

@@ -22,7 +22,7 @@
 | L7 | `ai_orchestrator/persistence/scheduled_job_store.py` | SQLite `storage/scheduled_jobs.db` — `jobs`·`runs`, 원자적 선점 `claim_due` |
 | L6 | `ai_orchestrator/services/scheduled_job_service.py` | 반복 계산(once/daily/weekly/interval), 생성·수정·검증, `tick()`, 실행·기록 |
 | L6 | `ai_orchestrator/workflows/scheduled_job_actions.py` | 허용 목록, 브라우저 작업 전 CDP 보장 |
-| L3 | `ai_orchestrator/connectors/scheduled_job_scheduler.py` | 서버 lifespan 루프(30초 틱) — 기존 `*_scheduler.py` 와 같은 패턴 |
+| L8 | `ai_orchestrator/routers/scheduled_job_loop.py` | 서버 lifespan 루프(30초 틱). `connectors/` 가 아니라 `routers/` 에 둔 이유: 지도에서 `ai_orchestrator.*` 절대 import 는 루트 패키지 연결로 잡혀, 루트(`server.py`)가 가져오는 새 폴더가 모듈 순환을 만든다. `routers/` 는 이미 루트와 상호 import 관계라 새 순환이 없다 |
 | L8 | `ai_orchestrator/routers/scheduled_job_router.py` | `/scheduled-jobs` (admin·owner). PATCH 는 CORS 에서 허용 안 돼 POST 사용 |
 | L9 | `admin-web/src/app/scheduled/page.tsx`, `src/lib/nav.ts` | "예약 작업" 화면·메뉴 |
 
