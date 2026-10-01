@@ -109,7 +109,8 @@ class ExamplePortalAdapter(SiteAdapter):
         try:
             url = page.url
             return url if isinstance(url, str) else ""
-        except Exception:  # noqa: BLE001 — 연결 끊김/페이지 닫힘 등
+        except Exception as exc:  # noqa: BLE001 — 연결 끊김/페이지 닫힘 등
+            logger.debug("페이지 URL 읽기 실패: %s", type(exc).__name__)
             return ""
 
     def _has_selector(self, page: Any, selector: str) -> bool:
@@ -121,7 +122,8 @@ class ExamplePortalAdapter(SiteAdapter):
         try:
             el = page.query_selector(selector)
             return el is not None
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("selector 존재 확인 실패: %s", type(exc).__name__)
             return False
 
 

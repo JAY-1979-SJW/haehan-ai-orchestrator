@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import threading
 import time
 from collections.abc import Callable
@@ -26,6 +27,8 @@ from pathlib import Path
 from typing import Any
 
 from scripts.naver.blog.automation.account_probe import alias_to_blog_id
+
+logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
 ATTEMPTS_FILE = ROOT / "data" / "naver_login_attempts.json"
@@ -180,7 +183,8 @@ def default_deps() -> GuardDeps:
                 }
 
             return run_on_browser_thread(job, timeout=90)
-        except Exception:  # noqa: BLE001 - 브라우저를 못 쓰는 경우는 "연결 불가"로 알리고 아무것도 시도하지 않는다(fail-closed)
+        except Exception as exc:  # noqa: BLE001 - 브라우저를 못 쓰는 경우는 "연결 불가"로 알리고 아무것도 시도하지 않는다(fail-closed)
+            logger.warning("세션 상태 감지 실패: %s", type(exc).__name__)
             return {"state": "unavailable", "cookie": None}
 
     def alias_in_new_tab() -> str | None:
@@ -194,7 +198,8 @@ def default_deps() -> GuardDeps:
 
         try:
             return run_on_browser_thread(job, timeout=60)
-        except Exception:  # noqa: BLE001 - 계정 확인 실패는 "계정 미확인"으로 표시(동작은 막지 않음)
+        except Exception as exc:  # noqa: BLE001 - 계정 확인 실패는 "계정 미확인"으로 표시(동작은 막지 않음)
+            logger.warning("계정 별칭 확인 실패: %s", type(exc).__name__)
             return None
 
     return GuardDeps(

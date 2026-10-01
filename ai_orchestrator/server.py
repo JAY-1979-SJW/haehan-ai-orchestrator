@@ -30,7 +30,8 @@ def _hide_own_console() -> None:
         print(
             f"[console] hwnd={hwnd} (자식 상속용 콘솔 {'있음·숨김' if hwnd else '없음!'})", file=sys.stderr, flush=True
         )
-    except Exception:  # noqa: S110, BLE001 — 콘솔 숨김 실패는 무시(기능 영향 없음)
+    except Exception as exc:  # noqa: BLE001 — 콘솔 숨김 실패는 무시(기능 영향 없음)
+        logger.debug("콘솔 숨김 실패: %s", type(exc).__name__)
         pass
 
 

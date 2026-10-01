@@ -131,7 +131,8 @@ def _is_cdp_alive(timeout: float = 2.0) -> bool:
     try:
         with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout) as r:
             return r.status == 200
-    except Exception:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
+    except Exception as exc:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
+        log.debug("CDP 가동 확인 실패: %s", type(exc).__name__)
         return False
 
 
@@ -267,7 +268,8 @@ def _check_existing_login(page) -> dict | None:
         if current.get("state") == "unknown" and evidence.get("session_cookie") is True:
             # 세션 쿠키는 있는데 화면 근거가 없거나 충돌 — 새로 로그인하면 기존 세션을 흔들 수 있어 멈추고 보고
             return _fail(f"로그인 상태 확인 불가(세션 쿠키는 있으나 화면 근거 충돌): {evidence}")
-    except Exception:  # noqa: S110, BLE001 - 상태 확인 실패는 로그인 진행으로 넘김(종전 동작)
+    except Exception as exc:  # noqa: BLE001 - 상태 확인 실패는 로그인 진행으로 넘김(종전 동작)
+        log.warning("로그인 상태 사전 확인 실패: %s", type(exc).__name__)
         pass
     return None
 
