@@ -328,31 +328,6 @@ def _try_goto(page, url: str) -> bool:
         return False
 
 
-def _prepare_login_page(page, url: str) -> bool:
-    """Navigate to one EUM login candidate and return True when the form is ready."""
-    ok = _try_goto(page, url)
-    if not ok:
-        return False
-    current = page.url
-
-    if "WEBLOG400M00" in current and _select_member_category(page, _MEMBER_CATEGORY):
-        _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
-        # 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-        with contextlib.suppress(Exception):
-            page.wait_for_selector(
-                "input[type='password']:visible",
-                state="visible",
-                timeout=3000,
-            )
-            pass
-
-    id_sel = _find_selector(page, _ID_SELECTORS)
-    if id_sel:
-        log.info("login page found: url=%s id_sel=%s", current, id_sel)
-        return True
-    return False
-
-
 _USER_NAME_SELECTORS = [".user-name", ".login-user", "[class*='user-nm']", ".name"]
 
 def _first_selector_text(page, selectors: list[str]) -> str | None:

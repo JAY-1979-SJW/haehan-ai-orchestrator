@@ -78,14 +78,6 @@ class BrowserGateReport:
         }
 
 
-def _norm_path(value: str | Path) -> str:
-    text = os.path.expandvars(str(value)).strip().strip('"').strip("'")
-    # STD-02 SKIP(의도적): 경로 정규화 결과가 향후 containment/식별 비교에 쓰일 수 있는
-    # 형태(abspath+normcase 조합)라 Path.resolve()로 바꾸면 symlink를 따라가는 의미
-    # 차이가 생긴다. 안전이 검증되지 않아 그대로 유지.
-    return os.path.normcase(os.path.abspath(text)).replace("\\", "/")
-
-
 def _extract_arg(command_line: str, name: str) -> str:
     pattern = rf"--{re.escape(name)}(?:=|\s+)(\"[^\"]+\"|'[^']+'|\S+)"
     match = re.search(pattern, command_line)

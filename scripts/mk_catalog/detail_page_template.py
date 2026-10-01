@@ -100,15 +100,6 @@ def _same_image_bytes(path_a: str, path_b: str) -> bool:
     return a.read_bytes() == b.read_bytes()
 
 
-def _rounded_photo(path, box_w, box_h, radius=20):
-    p, nw, nh = _paste_fit(path, box_w, box_h)
-    mask = Image.new("L", (nw, nh), 0)
-    ImageDraw.Draw(mask).rounded_rectangle([0, 0, nw, nh], radius=radius, fill=255)
-    out = Image.new("RGBA", (nw, nh), (0, 0, 0, 0))
-    out.paste(p, (0, 0), mask)
-    return out, nw, nh
-
-
 def build_detail_pages(
     *,
     name: str,

@@ -12,10 +12,8 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
-import platform
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
@@ -52,17 +50,6 @@ class Capability(str, Enum):
     SYSTEM_INFO = "system.info"
     LIST_ALLOWED_APPS = "list.allowed_apps"
     OPEN_URL = "open.url"
-
-
-def _get_hostname_hash() -> str:
-    """Return hashed hostname (never raw hostname)."""
-    try:
-        hostname = platform.node()
-        if not hostname:
-            return "unknown"
-        return hashlib.sha256(hostname.encode()).hexdigest()[:12]
-    except Exception:  # noqa: BLE001 - 호스트명 해시 생성 실패 시 'error' 플레이스홀더 반환 - 원문 hostname은 애초에 노출하지 않는 진단용 식별자, 인증/승인 판정과 무관
-        return "error"
 
 
 def safe_dict(data: dict) -> dict:

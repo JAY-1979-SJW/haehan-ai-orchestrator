@@ -700,19 +700,3 @@ def _scroll_blog_post(target_id: str, *, port: int, steps: int) -> None:
         time.sleep(0.25)
 
 
-def _click_next_blog_index(target_id: str, *, port: int) -> bool:
-    payload = cdp.evaluate(
-        target_id,
-        r"""JSON.stringify((() => {
-          const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
-          const controls = Array.from(document.querySelectorAll('a, button'));
-          const next = controls.find((el) => /\uB2E4\uC74C|next|>/i.test(clean(el.innerText || el.textContent || el.getAttribute('aria-label') || el.getAttribute('title'))));
-          if (!next) return {ok: false};
-          next.scrollIntoView({block:'center', inline:'nearest'});
-          next.click();
-          return {ok: true};
-        })())""",
-        timeout=5.0,
-        port=port,
-    )
-    return bool(isinstance(payload, dict) and payload.get("ok"))

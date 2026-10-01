@@ -21,14 +21,6 @@ def _utc() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def _host_from_surface(surface: dict[str, Any]) -> str:
-    return (
-        surface.get("host") or surface.get("final_url", "").split("/")[2]
-        if "://" in surface.get("final_url", "")
-        else ""
-    )
-
-
 def _load_manifest() -> dict[str, Any]:
     source = live_inputs.LATEST_LIVE_INPUT_MANIFEST
     if not source.exists():

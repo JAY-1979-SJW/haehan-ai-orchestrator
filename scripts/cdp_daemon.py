@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import json
 import logging
 import os
@@ -292,32 +291,6 @@ def _profile_session_files(profile_dir: Path) -> list[str]:
         return [p.name for p in sorted(sessions_dir.iterdir()) if p.is_file()]
     except Exception:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         return []
-
-
-def _clear_session_restore_artifacts() -> list[Path]:
-    """Remove Chrome session files from the daemon-only profile before launch."""
-    default_dir = PROFILE_DIR / "Default"
-    candidates: list[Path] = []
-    sessions_dir = default_dir / "Sessions"
-    if sessions_dir.exists():
-        # 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
-        with contextlib.suppress(Exception):
-            candidates.extend(p for p in sessions_dir.iterdir() if p.is_file())
-    for name in ("Current Session", "Current Tabs", "Last Session", "Last Tabs"):
-        p = default_dir / name
-        if p.exists():
-            candidates.append(p)
-
-    removed: list[Path] = []
-    for p in candidates:
-        try:
-            p.unlink()
-            removed.append(p)
-        except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
-            log.warning("[BROWSER] session restore cleanup failed: %s (%s)", p, e)
-    if removed:
-        log.info("[BROWSER] removed %d session restore file(s)", len(removed))
-    return removed
 
 
 # ── 데몬 본체 ─────────────────────────────────────────────────────────

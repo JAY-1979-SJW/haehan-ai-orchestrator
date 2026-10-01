@@ -277,13 +277,6 @@ def ensure_logged_in(page, site: str) -> dict:
         return {"ok": True, "user": user, "reason": "auto_login_ok"}
 
 
-def _find_or_open_tab(page_get_fn, target_url: str):
-    """기존 탭 중 동일 호스트가 있으면 재사용, 없으면 신규."""
-    # 기본 구현: get_page() 가 활성 탭 반환. 호출자가 활성탭이 EUM 인지는 검사 안함.
-    # cdp_client 의 page 선택 로직과 일관성을 위해 단순화: 그냥 get_page 후 goto.
-    return page_get_fn()
-
-
 def _resolve_target(spec, path):
     if path:
         # Git Bash가 잘못 확장한 절대경로 정정 (예: C:/Program Files/Git/web/log/X → /web/log/X)

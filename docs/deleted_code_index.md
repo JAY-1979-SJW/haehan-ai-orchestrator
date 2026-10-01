@@ -1010,3 +1010,27 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/credentials.py::list_naver_accounts` — 호출자 없음(세션 라우터 `list_accounts` 가 같은 일을 따로 구현)
 
 삭제하지 않고 남긴 것: `scripts/ops/make_inspection_video.py`(검측 데모 영상 도구 — 네이버 로그인 씬이 존재하지 않는 `_ID_SELECTORS` 등을 import 해 실행하면 ImportError. 고칠지 지울지 사용자 결정 필요).
+
+---
+
+## 2026-10-01 추가 삭제 — 미사용 비공개 도우미 함수 17개
+
+근거: 저장소 전체 텍스트(코드·설정·문서·스크립트)에서 정의 외 참조 0, vulture 미사용, 모듈 최상위 비공개(`_`) 함수. 삭제로 새로 미사용이 된 import 는 함께 제거. 후보 선정 과정과 보류 목록: `docs/dead_code_candidates_20261001.md`.
+복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용). 함수 단위 삭제라 파일 전체 복원은 `git checkout <삭제 커밋>^ -- <경로>` 로 한다.
+
+- `local_agent/browser_websocket_handshake.py` — `_get_hostname_hash`
+- `local_agent/kras_connector.py` — `_http_error_detail`
+- `scripts/cdp_client.py` — `_load_daemon_state`
+- `scripts/cdp_daemon.py` — `_clear_session_restore_artifacts`
+- `scripts/eum/auth.py` — `_prepare_login_page`
+- `scripts/eum/shared/layout_openpyxl.py` — `_pt_to_px`, `_make_border`
+- `scripts/google/precision_report.py` — `_host_from_surface`
+- `scripts/mk_catalog/detail_page_template.py` — `_rounded_photo`
+- `scripts/module_quality_gate_checks_web.py` — `_npm_audit_command`
+- `scripts/naver/blog/seo/assets.py` — `_click_next_blog_index`
+- `scripts/naver/browser_gate.py` — `_norm_path`
+- `scripts/ops/export_cafe_keywords_excel.py` — `_cell`
+- `scripts/ops/windows_auth_popup_monitor.py` — `_get_foreground_title`
+- `scripts/site_access.py` — `_find_or_open_tab`
+- `scripts/video/ig_dm_bot_ep01_visuals.py` — `_diagram_card`
+- `scripts/video/record_promo.py` — `_video_dir`

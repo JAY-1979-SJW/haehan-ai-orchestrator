@@ -40,10 +40,6 @@ from .style_presets import PRINT_MARGINS, get_preset
 _PT_TO_EMU = 12700  # 1pt = 12700 EMU (사용 안 하지만 참고)
 
 
-def _pt_to_px(pt: float) -> float:
-    return pt * 96 / 72
-
-
 def _color_hex(rgb: tuple[int, int, int] | None) -> str | None:
     if rgb is None:
         return None
@@ -54,14 +50,6 @@ def _make_fill(rgb: tuple[int, int, int] | None) -> PatternFill | None:
     if rgb is None:
         return None
     return PatternFill(fill_type="solid", fgColor=_color_hex(rgb))
-
-
-def _make_border(weight: str | None) -> Border | None:
-    if weight is None:
-        return None
-    style = "medium" if weight == "medium" else "thin"
-    s = Side(style=style)
-    return Border(left=s, right=s, top=s, bottom=s)
 
 
 def _halign_map(h: str) -> str:

@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 116,
+  "next_no": 117,
   "items": [
     {
       "no": 1,
@@ -232,7 +232,8 @@
       ],
       "evidence": "data/cdp.db site_requests·task_logs·mail_sends·security_events 0행 (2026-09-23 조회)",
       "stage": "C",
-      "status": "measure"
+      "status": "measure",
+      "fix_note": "2026-10-01 원인 확인: scripts/cdp_db.py 의 log_request·log_mail_send·update_mail_send·update_automation_run·log_security_event 가 저장소 어디에서도 호출되지 않음 → #116 에서 연결/삭제 판단."
     },
     {
       "no": 17,
@@ -1537,6 +1538,26 @@
       "stage": "RUN",
       "status": "fixed",
       "fix_note": "2026-10-01 루프 변수를 field_item 으로 바꾸고 본문도 일치시킴. submit_policy 관련 테스트 86 passed."
+    },
+    {
+      "no": 116,
+      "id": "gates.unwired_safety_and_logging_functions",
+      "category": 3,
+      "title": "호출되지 않는 안전 검사·검증·기록 함수 21개 — 게이트가 연결되지 않았을 가능성(주문·가격변경·게시·제출·G2B 검증) 및 cdp_db 기록 함수 미연결(#16 항상 0행 테이블의 원인)",
+      "where": [
+        "scripts/naver/shopping/gate.py (gate_order_write, gate_price_change)",
+        "scripts/google/gates.py (gate_google_search, gate_google_publish_plan)",
+        "scripts/youtube/gates.py (gate_youtube_read)",
+        "scripts/g2b/validators.py (validate_* 5개)",
+        "ai_orchestrator/browser_tool/policy.py (requires_dry_run_only)",
+        "ai_orchestrator/server/external_url_blocker.py (guard_server_playwright_invocation, is_browser_module_call_blocked)",
+        "scripts/naver/cafe/write/join_request.py (approve_join_submit)",
+        "scripts/cdp_db.py (log_request, log_mail_send, update_mail_send, update_automation_run, log_security_event)"
+      ],
+      "evidence": "2026-10-01 죽은 코드 후보 측정(vulture + 저장소 전체 텍스트 참조 0): 이름이 정의 한 곳에만 나온다. 삭제하면 '보호가 연결되지 않았다'는 사실이 묻히므로 삭제하지 않고 등록. 전체 목록: docs/dead_code_candidates_20261001.md 2단계.",
+      "stage": "AUDIT",
+      "status": "open",
+      "fix_note": "각 함수가 (a) 다른 방식으로 이미 보호/기록되고 있어 정말 불필요한지, (b) 호출을 연결해야 하는지 도메인 확인 필요. 주문·가격·게시·제출 쪽 게이트부터. (b)이면 연결 후 테스트, (a)이면 삭제."
     }
   ]
 }

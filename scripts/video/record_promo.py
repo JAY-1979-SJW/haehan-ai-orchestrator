@@ -25,10 +25,6 @@ sys.path.insert(0, str(ROOT))
 from ai_orchestrator.config import get_local_data_dir  # noqa: E402
 
 
-def _video_dir():
-    return get_local_data_dir() / "video"
-
-
 NARR_DIR = get_local_data_dir() / "video" / "narration"
 RAW_DIR = get_local_data_dir() / "video" / "raw"
 FINAL = get_local_data_dir() / "video" / "final_promo.mp4"

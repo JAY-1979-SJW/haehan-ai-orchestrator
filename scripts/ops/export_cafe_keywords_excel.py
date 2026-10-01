@@ -57,16 +57,6 @@ def _hdr(ws, row, cols, fill, font, heights=22):
     ws.row_dimensions[row].height = heights
 
 
-def _cell(ws, row, col, val, fill=None, font=None, align=None, bold=False):  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
-    c = ws.cell(row=row, column=col, value=val)
-    c.border = BDR
-    c.font = Font(bold=bold, size=10) if not font else font
-    c.alignment = align or Alignment(vertical="center")
-    if fill:
-        c.fill = fill
-    return c
-
-
 def _classify_type(title: str) -> str:
     q_words = ["?", "질문", "궁금", "어떻게", "어디서", "얼마", "어떤", "가능한가요", "되나요", "맞나요", "인가요"]
     ad_words = ["홍보", "모집", "강의", "학원", "교육", "무료", "안내드립니다", "알려드립니다", "합니다", "드립니다"]
