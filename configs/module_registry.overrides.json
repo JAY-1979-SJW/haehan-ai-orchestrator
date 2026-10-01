@@ -828,5 +828,10 @@
   "layer": "L5",
   "role": "site_module",
   "reason": "eum·naver·smartstore·google·hiworks·gabia·kakao 의 사이트별 로그인·상태 확인 래퍼와 등록 항목 — 코어가 첫 조회 때 문자열 로더로 불러 등록한다. 코어를 import 하지 않음"
+ },
+ "ai_orchestrator/routers/scheduled_job_loop.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "서버 lifespan 에서 도는 예약 작업 루프(서버 API 레이어의 기동 코드) — routers/ 에 두어 루트(server.py)와의 모듈 순환을 만들지 않는다. 파일명 규칙은 L4 generic 으로 분류하므로 classify.py 가 레지스트리를 다시 쓸 때 되돌아가지 않도록 overrides 에 확정"
  }
 }

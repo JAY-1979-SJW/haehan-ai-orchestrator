@@ -19869,7 +19869,7 @@
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "서버 lifespan 에서 도는 예약 작업 루프(서버 API 레이어의 기동 코드)",
+   "reason": "서버 lifespan 에서 도는 예약 작업 루프(서버 API 레이어의 기동 코드) — routers/ 에 두어 루트(server.py)와의 모듈 순환을 만들지 않는다. 파일명 규칙은 L4 generic 으로 분류하므로 classify.py 가 레지스트리를 다시 쓸 때 되돌아가지 않도록 overrides 에 확정",
    "confidence": "high",
    "source": "confirmed"
   },
