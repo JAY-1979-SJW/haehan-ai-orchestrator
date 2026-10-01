@@ -135,6 +135,15 @@ def _record(auth_id: str, document_hash: str, number: str, status: str, job_id: 
     )
 
 
+# 하나팩스 결과 화면의 성공 문구 — 엔진(`sender._run`)이 이 문구를 확인했을 때만 이 메시지로 돌려준다.
+# 접수번호는 화면에서 못 읽는 경우가 있어(실측 2026-10-02) 필수로 두지 않는다. 사이트의 명시적 성공 확인이 있어야만 성공으로 본다.
+SITE_SUCCESS_MESSAGE = "팩스 전송 완료"
+
+
+def _confirmed(result: dict[str, Any]) -> bool:
+    return bool(result.get("success")) and (bool(result.get("job_id")) or str(result.get("message", "")) == SITE_SUCCESS_MESSAGE)
+
+
 def _send_one(sender: Sender, auth: policy.Authorization, recipient: dict[str, str]) -> str:
     """한 건 발송하고 이력 상태를 돌려준다(sent | failed | unknown). 재전송은 하지 않는다."""
     number = recipient["fax"]
@@ -146,8 +155,8 @@ def _send_one(sender: Sender, auth: policy.Authorization, recipient: dict[str, s
         return store.UNKNOWN
     job_id = result.get("job_id")
     message = str(result.get("message", ""))
-    if result.get("success") and job_id:
-        _record(auth.id, auth.document_hash, number, store.SENT, str(job_id), message)
+    if _confirmed(result):
+        _record(auth.id, auth.document_hash, number, store.SENT, str(job_id) if job_id else None, message)
         return store.SENT
     if result.get("definite_failure"):
         _record(auth.id, auth.document_hash, number, store.FAILED, None, message)
@@ -205,12 +214,12 @@ def _send_chunk(sender: BulkSender, auth: policy.Authorization, chunk: list[dict
         return 0, 0, len(numbers)
     job_id = result.get("job_id")
     message = str(result.get("message", ""))
-    if result.get("success") and job_id:
+    if _confirmed(result):
         accepted = {policy.normalize_number(n) for n in result.get("sent_faxes", [])}
         sent = failed = 0
         for n in numbers:
             if n in accepted:
-                _record(auth.id, auth.document_hash, n, store.SENT, str(job_id), message)
+                _record(auth.id, auth.document_hash, n, store.SENT, str(job_id) if job_id else None, message)
                 sent += 1
             else:  # 사이트가 번호를 받아들이지 않아 접수 목록에 없다 — 전송 요청에 포함되지 않았다
                 _record(auth.id, auth.document_hash, n, store.FAILED, None, "하나팩스에 등록되지 않은 번호")

@@ -189,6 +189,14 @@ def test_unknown_number_is_skipped_on_next_run_until_a_human_checks():
     assert any(item["reason"] == pol.UNKNOWN_RESULT_PENDING for item in result.skipped)
 
 
+def test_site_success_message_without_job_id_counts_as_sent():
+    # 사이트가 "팩스 전송 완료"를 명시했으면 접수번호를 못 읽어도 성공으로 기록한다(실측: 접수번호가 화면에 없는 경우가 있다)
+    auth_id = _make()
+    sender = FakeSender(results=[{"success": True, "job_id": None, "message": "팩스 전송 완료"}] * 3)
+    result = flow.run(auth_id, sender, NOW)
+    assert result.sent == 3 and result.unknown == 0
+
+
 def test_result_without_job_id_is_unknown_not_success():
     # success 라고 해도 접수번호(job_id)가 없으면 확정하지 못한 것으로 본다
     auth_id = _make()
