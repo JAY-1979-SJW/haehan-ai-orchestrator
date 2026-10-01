@@ -40,33 +40,22 @@ def run_smartstore(task: str | None, sub: str | None, args: list[str]) -> None:
     task: actions | prepare | submit | product | order | inventory | seo |
           ai | competitor | csv | analytics | session-check
     """
-    match task or "help":
-        case "actions" | "action-catalog":
-            _cmd_actions(sub or "catalog", args)
-        case "prepare":
-            _cmd_prepare(sub or "product", args)
-        case "submit":
-            _cmd_submit(sub or "product", args)
-        case "product":
-            _cmd_product(sub, args)
-        case "order":
-            _cmd_order(sub, args)
-        case "inventory":
-            _cmd_inventory(sub, args)
-        case "seo":
-            _cmd_seo(sub, args)
-        case "ai":
-            _cmd_ai(sub, args)
-        case "competitor":
-            _cmd_competitor(sub, args)
-        case "csv":
-            _cmd_csv(sub, args)
-        case "analytics":
-            _cmd_analytics(sub, args)
-        case "session-check":
-            _cmd_session_check()
-        case _:
-            _print_help()
+    handlers = {
+        "actions": lambda: _cmd_actions(sub or "catalog", args),
+        "action-catalog": lambda: _cmd_actions(sub or "catalog", args),
+        "prepare": lambda: _cmd_prepare(sub or "product", args),
+        "submit": lambda: _cmd_submit(sub or "product", args),
+        "product": lambda: _cmd_product(sub, args),
+        "order": lambda: _cmd_order(sub, args),
+        "inventory": lambda: _cmd_inventory(sub, args),
+        "seo": lambda: _cmd_seo(sub, args),
+        "ai": lambda: _cmd_ai(sub, args),
+        "competitor": lambda: _cmd_competitor(sub, args),
+        "csv": lambda: _cmd_csv(sub, args),
+        "analytics": lambda: _cmd_analytics(sub, args),
+        "session-check": _cmd_session_check,
+    }
+    handlers.get(task or "help", _print_help)()
 
 
 def _option_value(args: list[str], prefix: str) -> str | None:

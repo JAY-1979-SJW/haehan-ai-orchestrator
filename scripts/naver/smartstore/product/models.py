@@ -52,14 +52,19 @@ class GeneralProductData:
         for img in self.additional_images:
             if not Path(img).exists():
                 errors.append(f"additional_images: 파일 없음 ({img})")
+        errors.extend(self._choice_errors())
+        if errors:
+            raise ValidationError("\n  ".join(["상품 데이터 검증 실패:"] + errors))  # noqa: RUF005
+
+    def _choice_errors(self) -> list[str]:
+        errors: list[str] = []
         if self.vat_type and self.vat_type not in ("과세상품", "면세상품", "영세상품"):
             errors.append(f"vat_type: 잘못된 값 ({self.vat_type})")
         if self.product_status and self.product_status not in ("신상품", "중고상품"):
             errors.append(f"product_status: 잘못된 값 ({self.product_status})")
         if self.kc_exemption and self.kc_exemption not in ("구매대행", "안전기준 준수", "KC 안전관리대상 아님"):
             errors.append(f"kc_exemption: 잘못된 값 ({self.kc_exemption})")
-        if errors:
-            raise ValidationError("\n  ".join(["상품 데이터 검증 실패:"] + errors))  # noqa: RUF005
+        return errors
 
     def to_dict(self) -> dict:
         return {k: v for k, v in asdict(self).items() if v is not None and v != [] and v != ""}
