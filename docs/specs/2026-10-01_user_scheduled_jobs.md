@@ -40,11 +40,24 @@
 | `gonobi_collect` | `scripts.naver.blog.gonobi.runner.run_scrape` | 안 씀 | `extract_text` |
 - 네이버 검색 수집(`run_scheduled_collection`)은 `NAVER_SEARCH_SCHEDULE_ENABLED` 가 꺼져 있으면 아무것도 안 하고 성공처럼 보이므로 이번에는 넣지 않는다.
 
-## 6. 2단계(별도 커밋)
-회차 승인 흐름(승인 대기→승인/거부, 30분 안 승인 없으면 건너뜀)과 발행·전송 작업 등록. 기존 실행 함수의 시그니처를 확인한 뒤에만 등록한다.
+## 6. 2단계 — 회차별 승인과 발행·전송 작업 (구현됨)
+- **승인 상태 기계**(`runs.status`): `awaiting_approval` → 사용자가 승인하면 `running` → `ok`/`failed`. 거부 `rejected`, 30분 안에 승인 없으면 `expired`, 예약 내용을 수정하면 `cancelled`, 예정보다 10분 넘게 늦으면 `missed`. 전이는 `UPDATE … WHERE status=?` 로 원자 처리해 한 회차를 두 번 승인할 수 없다. `decided_by` 에 승인·거부한 사용자를 남긴다.
+- **무엇이 승인되는가:** 승인 화면은 저장된 설정(제목·본문·문구 등)을 그대로 보여 준다. 예약을 수정하면 대기 중 회차를 취소해 "본 내용 = 실행되는 내용"을 보장한다. 실행 시점에도 위험 등급을 다시 판정하고, 승인 없이는 `USER_DELEGATED` 작업을 실행하지 않는다(`_execute(approved=False)` → `skipped`).
+- **"지금 실행"도 같은 규칙:** 승인형 작업은 "승인 대기" 회차만 만들고 실행하지 않는다.
+- **계획 대비 변경:** 계획서는 `gates/approval.py` 토큰 재사용을 제안했으나, 그 토큰 저장소는 `TaskRequest`·`RiskAssessment` 와 결합돼 있고 서버 재시작 시 대기 중 승인을 잃기 쉬워, 같은 30분 TTL 을 `runs` 테이블(SQLite, 재시작 후에도 유지)에 두는 방식으로 구현했다.
+- API: `GET /scheduled-jobs/approvals`, `POST /scheduled-jobs/runs/{run_id}/approve | reject` (admin·owner, 이미 처리된 회차는 409).
+
+### 등록된 승인형 작업
+| 키 | 실행 | 비고 |
+|---|---|---|
+| `telegram_notify` | `ai_orchestrator.clients.telegram_sender.send_message` | 문구만 설정. 토큰·chat id 가 없으면 조용히 건너뛰지 않고 **실패**로 기록. 오류 원문(요청 주소에 토큰 포함 가능)은 기록·화면에 남기지 않는다 |
+| `blog_publish` | `scripts.naver.blog.core.writer.write_post(require_approval=False)` | 제목·본문·태그·공개범위. 발행 전에 `read_alias` 로 대상 계정 확인 — 로그아웃이거나 다른 계정이면 **전환·로그인하지 않고 중단**(세션 보존). 이미지는 지원하지 않음 |
+
+### 등록하지 못한 것
+- **메일 보내기:** `scripts/naver/mail/__init__.py::send_mail` 은 승인 게이트만 있고 실제 발송 로직이 `NotImplementedError`(defect #39)다. 새 발송 자동화를 만드는 일은 이 작업 범위 밖이라 등록하지 않았다. 발송 수단(네이버 메일 UI 자동화·Gmail API·SMTP 등)을 정한 뒤 별도 작업으로 한다.
 
 ## 7. 검증
 단위 테스트(반복 계산·원자 선점·놓침·허용 목록·위험 등급 거부·CDP 호출 조건·라우터 권한), 게이트 3종, `npm run typecheck`·`lint`. 서버 재시작(승인 필요) 후 Electron 화면에서 실제 회차 확인.
 
 ## 8. 한계
-서버가 꺼져 있으면 예약은 실행되지 않는다. 승인 알림은 앱 화면뿐이다(2단계). 사용자의 수동 브라우저 작업과 CDP 를 함께 쓴다.
+서버가 꺼져 있으면 예약은 실행되지 않는다. 승인 알림은 앱 화면뿐이다(30초마다 갱신, 앱이 꺼져 있으면 승인할 수 없고 그 회차는 건너뛴다). 사용자의 수동 브라우저 작업과 CDP 를 함께 쓴다.

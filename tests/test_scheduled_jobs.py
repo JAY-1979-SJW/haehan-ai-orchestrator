@@ -127,10 +127,14 @@ def test_create_stores_normalized_job_and_first_run(env):
     assert job["created_by"] == "tester" and job["params"] == {}
 
 
-@pytest.mark.parametrize("action", ["nope", "fake_publish", "fake_sign"])
-def test_actions_outside_the_allowlist_or_needing_approval_are_rejected(env, action):
+@pytest.mark.parametrize("action", ["nope", "fake_sign"])
+def test_actions_outside_the_allowlist_or_user_direct_are_rejected(env, action):
     with pytest.raises(ValueError):
         make(action=action)
+
+
+def test_delegated_actions_can_be_scheduled_but_need_approval(env):
+    assert make(action="fake_publish")["status"] == "active"
 
 
 @pytest.mark.parametrize("name", ["", "   ", "가" * 81])
@@ -144,11 +148,14 @@ def test_once_in_the_past_is_rejected(env):
         make(recurrence={"kind": "once", "at": (NOW - timedelta(hours=1)).isoformat()})
 
 
-def test_real_catalog_actions_are_all_auto_allowed_and_validate_params():
-    from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, classify_action
+def test_real_catalog_grades_and_param_validation():
+    from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
 
-    for spec in actions.ACTIONS.values():
-        assert classify_action(spec.risk_action) == GRADE_AUTO_ALLOWED
+    for key, spec in actions.ACTIONS.items():
+        if key.startswith("fake"):
+            continue
+        expected = GRADE_USER_DELEGATED if key in ("telegram_notify", "blog_publish") else GRADE_AUTO_ALLOWED
+        assert classify_action(spec.risk_action) == expected, key
     with pytest.raises(ValueError):
         actions.ACTIONS["naver_login_check"].validate({"target": "bigsun2024"})  # 등록되지 않은 계정
     with pytest.raises(ValueError):
@@ -236,13 +243,162 @@ def test_cdp_is_ensured_only_for_browser_actions(env):
     assert env.cdp_calls == 1
 
 
-def test_action_that_needs_approval_is_skipped_at_run_time(env, monkeypatch):
-    """생성 뒤 허용 목록의 위험 등급이 올라간 상황 — 실행 시점에도 다시 판정해 실행하지 않는다."""
+def test_action_that_became_user_direct_is_skipped_at_run_time(env, monkeypatch):
+    """생성 뒤 허용 목록의 위험 등급이 '직접 해야 함'으로 올라간 상황 — 실행 시점에도 다시 판정해 실행하지 않는다."""
     job = make()
-    monkeypatch.setitem(actions.ACTIONS, "fake", fake_spec(env, "fake", risk="blog_publish"))
+    monkeypatch.setitem(actions.ACTIONS, "fake", fake_spec(env, "fake", risk="e_sign"))
     due(job, NOW - timedelta(minutes=1))
     result = svc.tick(NOW)
     assert [r["status"] for r in result] == ["skipped"] and env.runs == []
+
+
+# ── 승인 흐름 (발행·전송 등 USER_DELEGATED) ─────────────────────────────────
+
+
+def awaiting_run(env):
+    """승인이 필요한 작업이 실행 시각이 되어 '승인 대기' 회차가 만들어진 상태."""
+    job = make(action="fake_publish")
+    due(job, NOW - timedelta(minutes=1))
+    (run,) = svc.tick(NOW)
+    return job, run
+
+
+def test_delegated_job_waits_for_approval_and_is_not_executed(env):
+    job, run = awaiting_run(env)
+    assert run["status"] == "awaiting_approval" and env.runs == []
+    after = store.get_job(job["id"])
+    assert after["last_status"] == "awaiting_approval" and after["next_run_at"] == store.iso(NOW + timedelta(minutes=5))
+    assert store.get_run(run["id"])["status"] == "awaiting_approval"
+
+
+def test_approve_executes_exactly_once_and_records_who(env):
+    job, run = awaiting_run(env)
+    result = svc.approve(run["id"], "kim", now=NOW + timedelta(minutes=1))
+    assert result["status"] == "ok" and env.runs == ["fake_publish"]
+    saved = store.get_run(run["id"])
+    assert saved["status"] == "ok" and saved["decided_by"] == "kim"
+    assert store.get_job(job["id"])["last_status"] == "ok"
+    with pytest.raises(ValueError):
+        svc.approve(run["id"], "lee", now=NOW + timedelta(minutes=2))  # 두 번째 승인은 거부
+    assert env.runs == ["fake_publish"]
+
+
+def test_reject_never_executes_and_blocks_later_approval(env):
+    job, run = awaiting_run(env)
+    assert svc.reject(run["id"], "kim")["status"] == "rejected"
+    assert store.get_job(job["id"])["last_status"] == "rejected" and env.runs == []
+    with pytest.raises(ValueError):
+        svc.approve(run["id"], "kim", now=NOW + timedelta(minutes=1))
+    with pytest.raises(ValueError):
+        svc.reject(run["id"], "kim")
+
+
+def test_unapproved_run_expires_after_the_ttl_and_cannot_be_approved(env):
+    job, run = awaiting_run(env)
+    assert svc.pending_approvals(NOW + svc.APPROVAL_TTL + timedelta(minutes=1)) == []  # 조회만 해도 만료 처리된다
+    assert store.get_run(run["id"])["status"] == "expired" and store.get_job(job["id"])["last_status"] == "expired"
+    with pytest.raises(ValueError):
+        svc.approve(run["id"], "kim", now=NOW + svc.APPROVAL_TTL + timedelta(minutes=2))
+    assert env.runs == []
+
+
+def test_approving_after_the_ttl_marks_it_expired_without_running(env):
+    _, run = awaiting_run(env)
+    with pytest.raises(ValueError):
+        svc.approve(run["id"], "kim", now=NOW + svc.APPROVAL_TTL + timedelta(seconds=1))
+    assert store.get_run(run["id"])["status"] == "expired" and env.runs == []
+
+
+def test_editing_the_job_cancels_pending_approval_so_what_was_shown_is_what_runs(env):
+    job, run = awaiting_run(env)
+    svc.update(job["id"], name="바뀜", params={}, recurrence={"kind": "interval", "minutes": 30}, now=NOW)
+    assert store.get_run(run["id"])["status"] == "cancelled"
+    with pytest.raises(ValueError):
+        svc.approve(run["id"], "kim", now=NOW + timedelta(minutes=1))
+    assert env.runs == []
+
+
+def test_run_now_on_a_delegated_job_only_creates_a_pending_approval(env):
+    job = make(action="fake_publish")
+    run = svc.run_now(job["id"])
+    assert run["status"] == "awaiting_approval" and env.runs == []
+    assert [a["run_id"] for a in svc.pending_approvals()] == [run["id"]]
+
+
+def test_pending_approvals_show_what_will_run_and_when_it_expires(env):
+    job = make(action="fake_publish", params={"x": 1}, name="공지")
+    due(job, NOW - timedelta(minutes=1))
+    svc.tick(NOW)
+    (item,) = svc.pending_approvals(NOW + timedelta(minutes=1))
+    assert item["job_name"] == "공지" and item["action"] == "fake_publish" and item["params"] == {"x": 1}
+    assert item["expires_at"] == store.iso(NOW + svc.APPROVAL_TTL)
+
+
+def test_delegated_run_that_is_too_late_is_missed_not_pending(env):
+    job = make(action="fake_publish")
+    due(job, NOW - timedelta(minutes=30))
+    assert [r["status"] for r in svc.tick(NOW)] == ["missed"] and svc.pending_approvals(NOW) == []
+
+
+def test_delegated_action_is_never_executed_without_approval_even_if_called_directly(env):
+    job = make(action="fake_publish")
+    run = store.create_run(job["id"], scheduled_for=store.iso(NOW), started_at=store.iso(NOW))
+    assert svc._execute(job, run)["status"] == "skipped" and env.runs == []
+
+
+def test_database_created_before_the_approval_feature_is_migrated(db):
+    import sqlite3
+
+    store._DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(str(store._DB_PATH))
+    con.execute(
+        "CREATE TABLE runs (id TEXT PRIMARY KEY, job_id TEXT NOT NULL, scheduled_for TEXT NOT NULL,"
+        " started_at TEXT NOT NULL, finished_at TEXT, status TEXT NOT NULL, message TEXT NOT NULL DEFAULT '')"
+    )
+    con.commit()
+    con.close()
+    assert store.list_runs("아무거나") == []  # 연결을 열면서 decided_by 열이 추가된다
+    with store._conn() as c:
+        assert "decided_by" in {r["name"] for r in c.execute("PRAGMA table_info(runs)")}
+
+
+# ── 텔레그램 알림 작업 ──────────────────────────────────────────────────────
+
+
+def test_telegram_params_are_validated():
+    validate = actions.ACTIONS["telegram_notify"].validate
+    assert validate({"text": "  안녕  "}) == {"text": "안녕"}
+    for bad in ({}, {"text": "  "}, {"text": "가" * 1001}, {"text": "a", "chat_id": "1"}):
+        with pytest.raises(ValueError):
+            validate(bad)
+
+
+def test_telegram_success_escapes_html_and_sends_the_text(monkeypatch):
+    sent = []
+    monkeypatch.setattr(
+        "ai_orchestrator.clients.telegram_sender.send_message", lambda text, **kw: sent.append(text) or {"ok": True}
+    )
+    assert "보냈습니다" in actions.ACTIONS["telegram_notify"].run({"text": "<b>안녕</b> & 확인"})
+    assert sent == ["&lt;b&gt;안녕&lt;/b&gt; &amp; 확인"]
+
+
+def test_telegram_missing_config_fails_loudly_not_silently(monkeypatch):
+    monkeypatch.setattr(
+        "ai_orchestrator.clients.telegram_sender.send_message", lambda text, **kw: {"ok": False, "skipped": True}
+    )
+    with pytest.raises(RuntimeError, match="TELEGRAM_BOT_TOKEN"):
+        actions.ACTIONS["telegram_notify"].run({"text": "x"})
+
+
+def test_telegram_error_text_is_never_copied_into_the_run_record(monkeypatch):
+    leaked_url = "https://api.telegram.org/bot123:SECRET-TOKEN/sendMessage"
+    monkeypatch.setattr(
+        "ai_orchestrator.clients.telegram_sender.send_message",
+        lambda text, **kw: {"ok": False, "error": f"Client error 401 for url '{leaked_url}'"},
+    )
+    with pytest.raises(RuntimeError) as err:
+        actions.ACTIONS["telegram_notify"].run({"text": "x"})
+    assert "SECRET-TOKEN" not in str(err.value) and "api.telegram.org" not in str(err.value)
 
 
 def test_run_now_records_a_run_without_touching_the_schedule(env):
@@ -313,7 +469,7 @@ def test_router_crud_flow(api):
 @pytest.mark.parametrize(
     "over",
     [
-        {"action": "fake_publish"},
+        {"action": "fake_sign"},
         {"action": "없는작업"},
         {"recurrence": {"kind": "interval", "minutes": 1}},
         {"name": ""},
@@ -343,3 +499,116 @@ def test_router_catalog_lists_real_actions_with_fields(db):
     assert {"community_analysis", "naver_login_check", "gonobi_collect"} <= set(items)
     assert items["naver_login_check"]["fields"][0]["name"] == "target"
     assert "skyjwsin" in items["naver_login_check"]["fields"][0]["options"]
+
+
+# ── 승인 API ────────────────────────────────────────────────────────────
+
+
+def _pending_run_id(client):
+    job = client.post("/scheduled-jobs", json=_body(action="fake_publish")).json()
+    run = client.post(f"/scheduled-jobs/{job['id']}/run-now").json()
+    assert run["status"] == "awaiting_approval"
+    return job, run["id"]
+
+
+def test_approval_api_lists_approves_once_and_records_the_approver(api, env):
+    client, _ = api
+    _, run_id = _pending_run_id(client)
+    (item,) = client.get("/scheduled-jobs/approvals").json()["approvals"]
+    assert item["run_id"] == run_id and item["action"] == "fake_publish"
+    done = client.post(f"/scheduled-jobs/runs/{run_id}/approve")
+    assert done.status_code == 200 and done.json()["status"] == "ok" and env.runs == ["fake_publish"]
+    assert done.json()["decided_by"] == "tester"
+    assert client.post(f"/scheduled-jobs/runs/{run_id}/approve").status_code == 409  # 두 번째는 거부
+    assert client.get("/scheduled-jobs/approvals").json()["approvals"] == []
+    assert env.runs == ["fake_publish"]
+
+
+def test_reject_api_never_runs_and_unknown_runs_are_404(api, env):
+    client, _ = api
+    _, run_id = _pending_run_id(client)
+    assert client.post(f"/scheduled-jobs/runs/{run_id}/reject").json()["status"] == "rejected"
+    assert client.post(f"/scheduled-jobs/runs/{run_id}/approve").status_code == 409 and env.runs == []
+    assert client.post("/scheduled-jobs/runs/없음/approve").status_code == 404
+    assert client.post("/scheduled-jobs/runs/없음/reject").status_code == 404
+
+
+def test_approval_api_requires_admin_or_owner(api):
+    client, role = api
+    _, run_id = _pending_run_id(client)
+    role["role"] = "viewer"
+    assert client.get("/scheduled-jobs/approvals").status_code == 403
+    assert client.post(f"/scheduled-jobs/runs/{run_id}/approve").status_code == 403
+    assert client.post(f"/scheduled-jobs/runs/{run_id}/reject").status_code == 403
+
+
+# ── 블로그 발행 작업 ────────────────────────────────────────────────────
+
+
+GOOD_POST = {"target": "skyjwsin", "title": "제목", "body": "본문", "tags": " 조명, 인테리어 ,,", "visibility": "private"}
+
+
+def test_blog_publish_params_are_normalized_and_validated():
+    validate = actions.ACTIONS["blog_publish"].validate
+    assert validate(GOOD_POST) == {**GOOD_POST, "tags": "조명, 인테리어"}
+    assert validate({"title": "t", "body": "b"})["visibility"] == "public"  # 기본값
+    too_many = ",".join(f"t{i}" for i in range(31))
+    for bad in (
+        {**GOOD_POST, "title": ""},
+        {**GOOD_POST, "title": "가" * 101},
+        {**GOOD_POST, "body": "  "},
+        {**GOOD_POST, "body": "가" * 20001},
+        {**GOOD_POST, "tags": too_many},
+        {**GOOD_POST, "tags": "가" * 41},
+        {**GOOD_POST, "visibility": "everyone"},
+        {**GOOD_POST, "target": "bigsun2024"},
+        {**GOOD_POST, "password": "x"},
+    ):
+        with pytest.raises(ValueError):
+            validate(bad)
+
+
+class FakeBlog:
+    def __init__(self, monkeypatch, alias="skyjwsin", result=None):
+        self.calls: list[dict] = []
+        self.result = result or {"ok": True, "log_no": "123"}
+        monkeypatch.setattr("scripts.web_connector.get_page", lambda: object())
+        monkeypatch.setattr("scripts.naver.blog.automation.account_probe.read_alias", lambda page: alias)
+        monkeypatch.setattr("scripts.naver.blog.core.writer.write_post", self._write)
+
+    def _write(self, page, **kwargs):
+        self.calls.append(kwargs)
+        return self.result
+
+
+def test_blog_publish_posts_with_the_approved_content_when_logged_in_as_the_target(monkeypatch):
+    fake = FakeBlog(monkeypatch)
+    message = actions.ACTIONS["blog_publish"].run(actions.ACTIONS["blog_publish"].validate(GOOD_POST))
+    assert "123" in message
+    (call,) = fake.calls
+    assert call["title"] == "제목" and call["body"] == "본문" and call["tags"] == ["조명", "인테리어"]
+    assert call["visibility"] == "private" and call["auto_tags"] is False and call["require_approval"] is False
+
+
+@pytest.mark.parametrize("alias", [None, "bigsun2024"])
+def test_blog_publish_never_posts_when_logged_out_or_as_another_account(monkeypatch, alias):
+    fake = FakeBlog(monkeypatch, alias=alias)
+    with pytest.raises(RuntimeError):
+        actions.ACTIONS["blog_publish"].run(actions.ACTIONS["blog_publish"].validate(GOOD_POST))
+    assert fake.calls == []  # 계정을 전환하거나 로그인하려 하지 않고 중단한다
+
+
+def test_blog_publish_failure_is_reported_not_hidden(monkeypatch):
+    FakeBlog(monkeypatch, result={"ok": False, "error": "login_failed"})
+    with pytest.raises(RuntimeError, match="실패"):
+        actions.ACTIONS["blog_publish"].run(actions.ACTIONS["blog_publish"].validate(GOOD_POST))
+
+
+def test_blog_publish_job_waits_for_approval_and_publishes_only_after_it(env, monkeypatch):
+    fake = FakeBlog(monkeypatch)
+    job = make(action="blog_publish", params=GOOD_POST)
+    due(job, NOW - timedelta(minutes=1))
+    (run,) = svc.tick(NOW)
+    assert run["status"] == "awaiting_approval" and fake.calls == []
+    assert svc.approve(run["id"], "kim", now=NOW + timedelta(minutes=1))["status"] == "ok"
+    assert len(fake.calls) == 1 and env.cdp_calls == 1  # 브라우저 작업이라 CDP 도 보장한다

@@ -64,9 +64,12 @@ def _conn():
                 started_at TEXT NOT NULL,
                 finished_at TEXT,
                 status TEXT NOT NULL,
-                message TEXT NOT NULL DEFAULT ''
+                message TEXT NOT NULL DEFAULT '',
+                decided_by TEXT
             )
         """)
+        if "decided_by" not in {r["name"] for r in con.execute("PRAGMA table_info(runs)")}:
+            con.execute("ALTER TABLE runs ADD COLUMN decided_by TEXT")  # 승인 흐름 도입 전에 만든 DB
         con.execute("CREATE INDEX IF NOT EXISTS idx_runs_job ON runs(job_id, started_at)")
         yield con
     finally:
@@ -135,34 +138,41 @@ def delete_job(job_id: str) -> bool:
     return cur.rowcount > 0
 
 
-def _new_run(con: sqlite3.Connection, job_id: str, scheduled_for: str, started_at: str) -> dict[str, Any]:
+def _new_run(
+    con: sqlite3.Connection, job_id: str, scheduled_for: str, started_at: str, status: str = "running", message: str = ""
+) -> dict[str, Any]:
     run = {
         "id": uuid.uuid4().hex,
         "job_id": job_id,
         "scheduled_for": scheduled_for,
         "started_at": started_at,
         "finished_at": None,
-        "status": "running",
-        "message": "",
+        "status": status,
+        "message": message,
+        "decided_by": None,
     }
     con.execute(
-        "INSERT INTO runs (id, job_id, scheduled_for, started_at, status, message) VALUES (?, ?, ?, ?, 'running', '')",
-        (run["id"], job_id, scheduled_for, started_at),
+        "INSERT INTO runs (id, job_id, scheduled_for, started_at, status, message) VALUES (?, ?, ?, ?, ?, ?)",
+        (run["id"], job_id, scheduled_for, started_at, status, message),
     )
     return run
 
 
-def create_run(job_id: str, scheduled_for: str, started_at: str) -> dict[str, Any]:
+def create_run(
+    job_id: str, scheduled_for: str, started_at: str, status: str = "running", message: str = ""
+) -> dict[str, Any]:
     with _conn() as con:
-        return _new_run(con, job_id, scheduled_for, started_at)
+        return _new_run(con, job_id, scheduled_for, started_at, status, message)
 
 
 def claim_due(
-    now: str, advance: Callable[[dict[str, Any], str], str | None]
+    now: str,
+    advance: Callable[[dict[str, Any], str], str | None],
+    initial: Callable[[dict[str, Any]], tuple[str, str]] = lambda job: ("running", ""),
 ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
     """실행 시각이 된 활성 작업을 한 트랜잭션으로 선점한다.
 
-    각 작업의 다음 실행 시각을 먼저 갱신(`advance` 가 None 이면 done)하고 `running` 회차를 만든다.
+    각 작업의 다음 실행 시각을 먼저 갱신(`advance` 가 None 이면 done)하고 회차를 만든다(`initial` 이 정한 상태·메시지, 기본 running).
     다른 프로세스·틱이 같은 작업을 다시 집지 못한다.
     """
     claimed: list[tuple[dict[str, Any], dict[str, Any]]] = []
@@ -181,7 +191,8 @@ def claim_due(
                     con.execute("UPDATE jobs SET next_run_at=NULL, status='done' WHERE id=?", (job["id"],))
                 else:
                     con.execute("UPDATE jobs SET next_run_at=? WHERE id=?", (nxt, job["id"]))
-                claimed.append((job, _new_run(con, job["id"], job["next_run_at"], now)))
+                status, message = initial(job)
+                claimed.append((job, _new_run(con, job["id"], job["next_run_at"], now, status, message)))
             con.execute("COMMIT")
         except BaseException:
             con.execute("ROLLBACK")
@@ -214,3 +225,44 @@ def recover_stale_runs(finished_at: str) -> int:
             (finished_at,),
         )
     return cur.rowcount
+
+
+def get_run(run_id: str) -> dict[str, Any] | None:
+    with _conn() as con:
+        row = con.execute("SELECT * FROM runs WHERE id=?", (run_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def transition_run(
+    run_id: str,
+    *,
+    from_status: str,
+    to_status: str,
+    message: str = "",
+    decided_by: str | None = None,
+    finished_at: str | None = None,
+) -> bool:
+    """회차 상태를 `from_status` 일 때만 바꾼다(원자적). 이미 다른 상태면 False — 같은 회차를 두 번 승인하지 못하게 한다."""
+    with _conn() as con:
+        cur = con.execute(
+            "UPDATE runs SET status=?, message=?, decided_by=COALESCE(?, decided_by), finished_at=COALESCE(?, finished_at)"
+            " WHERE id=? AND status=?",
+            (to_status, message[:500], decided_by, finished_at, run_id, from_status),
+        )
+    return cur.rowcount == 1
+
+
+def list_runs_with_status(status: str) -> list[dict[str, Any]]:
+    """해당 상태의 회차를 작업 정보와 함께(오래된 순)."""
+    with _conn() as con:
+        rows = con.execute(
+            "SELECT r.*, j.name AS job_name, j.action AS job_action, j.params AS job_params"
+            " FROM runs r JOIN jobs j ON j.id = r.job_id WHERE r.status=? ORDER BY r.started_at",
+            (status,),
+        ).fetchall()
+    result = []
+    for row in rows:
+        d = dict(row)
+        d["job_params"] = json.loads(d["job_params"])
+        result.append(d)
+    return result

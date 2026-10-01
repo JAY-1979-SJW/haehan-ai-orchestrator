@@ -8,6 +8,8 @@
   POST   /scheduled-jobs/{id}/pause | resume | run-now
   DELETE /scheduled-jobs/{id}
   GET    /scheduled-jobs/{id}/runs    — 실행 기록
+  GET    /scheduled-jobs/approvals    — 승인 대기 중인 회차(발행·전송 등)
+  POST   /scheduled-jobs/runs/{run_id}/approve | reject — 회차마다 승인·거부(승인하면 바로 실행)
 
 SQLite·브라우저는 블로킹이라 엔드포인트를 `def` 로 둔다(FastAPI 가 스레드풀에서 실행).
 """
@@ -57,6 +59,35 @@ def list_jobs(_: dict = _ADMIN):
     return {"jobs": jobs}
 
 
+def _actor(user: dict) -> str:
+    return str(user.get("actor") or user.get("email") or "unknown")
+
+
+@scheduled_job_router.get("/approvals")
+def list_approvals(_: dict = _ADMIN):
+    return {"approvals": service.pending_approvals()}
+
+
+@scheduled_job_router.post("/runs/{run_id}/approve")
+def approve_run(run_id: str, user: dict = _ADMIN):
+    try:
+        return service.approve(run_id, _actor(user))
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail="회차를 찾을 수 없습니다") from e
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+
+
+@scheduled_job_router.post("/runs/{run_id}/reject")
+def reject_run(run_id: str, user: dict = _ADMIN):
+    try:
+        return service.reject(run_id, _actor(user))
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail="회차를 찾을 수 없습니다") from e
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+
+
 @scheduled_job_router.get("/actions")
 def list_actions(_: dict = _ADMIN):
     return {"actions": actions.catalog()}
@@ -70,7 +101,7 @@ def create_job(body: JobCreate, user: dict = _ADMIN):
             action=body.action,
             params=body.params,
             recurrence=body.recurrence,
-            created_by=str(user.get("actor") or user.get("email") or "unknown"),
+            created_by=_actor(user),
         )
     except ValueError as e:
         raise _bad_request(e) from e

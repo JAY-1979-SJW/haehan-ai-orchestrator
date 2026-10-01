@@ -5,6 +5,7 @@
  *
  * 사용자가 작업과 시각(한 번/매일/매주/N분마다)을 정해 예약하고, 서버가 그 시각에 실행한다.
  * 브라우저가 필요한 작업은 실행 시 서버가 CDP 를 자동으로 띄운다. 예약 가능한 작업은 서버가 정한 목록뿐이다.
+ * 발행·전송처럼 승인이 필요한 작업은 예약 시각이 되면 "승인 대기"가 되고, 사용자가 30분 안에 승인해야 실행된다.
  * 기준서: docs/specs/2026-10-01_user_scheduled_jobs.md
  */
 
@@ -38,8 +39,9 @@ interface Job {
 interface ActionField {
   name: string;
   label: string;
-  type: "select";
+  type: "select" | "text" | "line";
   options: string[];
+  option_labels?: Record<string, string>;
   default: string;
 }
 
@@ -48,7 +50,18 @@ interface ActionInfo {
   label: string;
   description: string;
   needs_browser: boolean;
+  requires_approval: boolean;
   fields: ActionField[];
+}
+
+interface Approval {
+  run_id: string;
+  job_id: string;
+  job_name: string;
+  action: string;
+  params: Record<string, string>;
+  requested_at: string;
+  expires_at: string;
 }
 
 interface Run {
@@ -93,6 +106,10 @@ const PILL_CLASS: Record<string, string> = {
   missed: "bg-yellow-100 text-yellow-800 border-yellow-200",
   skipped: "bg-yellow-100 text-yellow-800 border-yellow-200",
   running: "bg-orange-100 text-orange-800 border-orange-200",
+  awaiting_approval: "bg-purple-100 text-purple-800 border-purple-200",
+  rejected: "bg-red-100 text-red-700 border-red-200",
+  expired: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  cancelled: "bg-gray-100 text-gray-600 border-gray-200",
 };
 
 const PILL_LABEL: Record<string, string> = {
@@ -104,6 +121,10 @@ const PILL_LABEL: Record<string, string> = {
   missed: "놓침",
   skipped: "건너뜀",
   running: "실행중",
+  awaiting_approval: "승인대기",
+  rejected: "거부",
+  expired: "만료",
+  cancelled: "취소",
 };
 
 function Pill({ status }: { status: string }) {
@@ -166,6 +187,7 @@ function recurrenceFromForm(f: Form): Record<string, unknown> {
 
 export default function ScheduledJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [approvals, setApprovals] = useState<Approval[]>([]);
   const [actions, setActions] = useState<ActionInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -181,12 +203,14 @@ export default function ScheduledJobsPage() {
 
   const load = useCallback(async () => {
     try {
-      const [j, a] = await Promise.all([
+      const [j, a, ap] = await Promise.all([
         apiFetch<{ jobs: Job[] }>("/scheduled-jobs"),
         apiFetch<{ actions: ActionInfo[] }>("/scheduled-jobs/actions"),
+        apiFetch<{ approvals: Approval[] }>("/scheduled-jobs/approvals"),
       ]);
       setJobs(j.jobs);
       setActions(a.actions);
+      setApprovals(ap.approvals);
     } catch (e) {
       setMessage({ text: `예약 목록을 불러오지 못했습니다: ${errorText(e)}`, ok: false });
     } finally {
@@ -288,6 +312,24 @@ export default function ScheduledJobsPage() {
     }
   };
 
+  const decide = async (item: Approval, verb: "approve" | "reject") => {
+    setBusyId(item.run_id);
+    if (verb === "approve") setMessage({ text: `"${item.job_name}" 승인했습니다. 실행 중입니다...`, ok: true });
+    try {
+      const run = await apiFetch<Run>(`/scheduled-jobs/runs/${item.run_id}/${verb}`, { method: "POST" });
+      setMessage({
+        text: verb === "approve" ? `실행 결과: ${PILL_LABEL[run.status] ?? run.status} — ${run.message}` : "거부했습니다. 실행하지 않습니다.",
+        ok: verb === "reject" || run.status === "ok",
+      });
+      await load();
+    } catch (e) {
+      setMessage({ text: errorText(e), ok: false });
+      await load();
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!deleting) return;
     const job = deleting;
@@ -322,6 +364,39 @@ export default function ScheduledJobsPage() {
           </div>
         )}
 
+        {approvals.length > 0 && (
+          <div className="bg-[#F5F3FF] border border-[#DDD6FE] rounded-xl p-5 space-y-3">
+            <p className="text-sm font-medium text-[#5B21B6]">승인 대기 {approvals.length}건 — 승인해야 실행됩니다</p>
+            {approvals.map((item) => {
+              const label = actions.find((a) => a.key === item.action)?.label ?? item.action;
+              return (
+                <div key={item.run_id} className="bg-white border border-[#DDD6FE] rounded-lg p-3 space-y-2">
+                  <div className="text-sm">
+                    <span className="font-medium">{item.job_name}</span>
+                    <span className="text-xs text-[#6B7280]"> · {label}</span>
+                  </div>
+                  {Object.keys(item.params).length > 0 && (
+                    <pre className="text-xs bg-[#F9FAFB] border border-[#E5E7EB] rounded p-2 whitespace-pre-wrap max-h-[240px] overflow-y-auto">
+                      {Object.entries(item.params)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join("\n")}
+                    </pre>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Btn size="sm" variant="primary" disabled={busyId === item.run_id} onClick={() => void decide(item, "approve")}>
+                      승인하고 실행
+                    </Btn>
+                    <Btn size="sm" disabled={busyId === item.run_id} onClick={() => void decide(item, "reject")}>
+                      거부
+                    </Btn>
+                    <span className="text-xs text-[#6B7280]">{formatTime(item.expires_at)} 까지</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
           <AdminTable>
             <AdminThead>
@@ -349,6 +424,10 @@ export default function ScheduledJobsPage() {
                   <AdminTd>
                     {job.action_label}
                     {job.params.target ? <span className="text-xs text-[#6B7280]"> ({job.params.target})</span> : null}
+                    {job.params.title ? <div className="text-xs text-[#6B7280] max-w-[200px] truncate">{job.params.title}</div> : null}
+                    {actions.find((a) => a.key === job.action)?.requires_approval && (
+                      <span className="ml-1 text-[10px] text-[#5B21B6] border border-[#DDD6FE] rounded px-1">승인 필요</span>
+                    )}
                   </AdminTd>
                   <AdminTd>{describeRecurrence(job.recurrence)}</AdminTd>
                   <AdminTd>{formatTime(job.next_run_at)}</AdminTd>
@@ -400,7 +479,7 @@ export default function ScheduledJobsPage() {
 
         <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-xl p-4 text-xs text-[#92400E] space-y-1">
           <p>서버(앱)가 켜져 있을 때만 실행됩니다. 꺼져 있는 동안 지나간 예약은 10분이 넘으면 &quot;놓침&quot;으로 기록하고 건너뜁니다.</p>
-          <p>발행·전송처럼 승인이 필요한 작업은 아직 예약할 수 없습니다(읽기·수집·로그인 확인만 가능).</p>
+          <p>발행·전송처럼 승인이 필요한 작업은 예약 시각마다 위 &quot;승인 대기&quot;에서 승인해야 실행됩니다(30분 안에 승인하지 않으면 건너뜁니다).</p>
         </div>
       </div>
 
@@ -445,10 +524,32 @@ export default function ScheduledJobsPage() {
               <span className="text-xs text-[#6B7280]">
                 {currentAction.description}
                 {currentAction.needs_browser ? " (브라우저 사용)" : ""}
+                {currentAction.requires_approval ? " (실행 시각마다 승인 필요)" : ""}
               </span>
             )}
           </label>
-          {(currentAction?.fields ?? []).map((f) => (
+          {(currentAction?.fields ?? []).map((f) =>
+            f.type === "text" ? (
+              <label key={f.name} className="block text-sm">
+                <span className="text-[#374151] font-medium">{f.label}</span>
+                <textarea
+                  className={inputCls}
+                  rows={f.name === "body" ? 10 : 4}
+                  maxLength={f.name === "body" ? 20000 : 1000}
+                  value={form.params[f.name] ?? f.default}
+                  onChange={(e) => setForm({ ...form, params: { ...form.params, [f.name]: e.target.value } })}
+                />
+              </label>
+            ) : f.type === "line" ? (
+              <label key={f.name} className="block text-sm">
+                <span className="text-[#374151] font-medium">{f.label}</span>
+                <input
+                  className={inputCls}
+                  value={form.params[f.name] ?? f.default}
+                  onChange={(e) => setForm({ ...form, params: { ...form.params, [f.name]: e.target.value } })}
+                />
+              </label>
+            ) : (
             <label key={f.name} className="block text-sm">
               <span className="text-[#374151] font-medium">{f.label}</span>
               <select
@@ -458,12 +559,13 @@ export default function ScheduledJobsPage() {
               >
                 {f.options.map((o) => (
                   <option key={o} value={o}>
-                    {o}
+                    {f.option_labels?.[o] ?? o}
                   </option>
                 ))}
               </select>
             </label>
-          ))}
+            ),
+          )}
           <label className="block text-sm">
             <span className="text-[#374151] font-medium">반복</span>
             <select className={inputCls} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as Form["kind"] })}>
