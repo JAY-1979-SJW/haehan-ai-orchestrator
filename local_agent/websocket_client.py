@@ -302,6 +302,104 @@ def _load_websockets_module():
         ) from e
 
 
+async def _authenticate(ws: Any, agent_id: str, device_token: str) -> bool:
+    """auth 전송 + 첫 응답 검증. auth_ok 가 아니면 False."""
+    # 1) 인증
+    await ws.send(
+        json.dumps(
+            {
+                "type": "auth",
+                "agent_id": agent_id,
+                "device_token": device_token,
+                "version": __version__,
+            }
+        )
+    )
+
+    # 첫 응답 — auth_ok 또는 close
+    try:
+        raw = await asyncio.wait_for(ws.recv(), timeout=15.0)
+    except TimeoutError:
+        logger.error("auth 응답 없음")
+        return False
+
+    try:
+        first = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        logger.error("auth 응답 파싱 실패")
+        return False
+
+    if first.get("type") != "auth_ok":
+        logger.error("auth 실패: %s", first.get("type"))
+        log_local_event("ws_auth_failed", reason=first.get("type", "unknown"))
+        return False
+    return True
+
+
+async def _send_heartbeat(ws: Any, agent_id: str) -> None:
+    """수신 timeout 시: heartbeat 전송 + pending USER_PRESENT_STATUS 자동 전송."""
+    # 주기적 heartbeat 로 서버에 pull 기회 부여
+    await ws.send(
+        json.dumps(
+            {
+                "type": "heartbeat",
+                "agent_id": agent_id,
+            }
+        )
+    )
+    # pending USER_PRESENT_STATUS 자동 전송 (실패해도 agent 계속 실행)
+    if _STATUS_SENDER_AVAILABLE:
+        try:
+            await run_user_present_status_send_once(ws)
+        except Exception as _exc:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
+            logger.warning("[ws] status send 실패 (무시): %s", type(_exc).__name__)
+
+
+async def _send_running_and_wait_ack(ws: Any, agent_id: str, task_id_inner: str) -> bool:
+    """running 전송 후 running_ack 대기. 실행해도 되면 True."""
+    # 1) running 전송 후 running_ack 대기
+    # 서버 상태 기계 요구사항: delivered → running → completed
+    # running_ack 없이 result 를 보내면 delivered → completed 가
+    # InvalidTaskTransitionError 를 일으키므로 반드시 대기한다.
+    run_ok = False
+    try:
+        await ws.send(
+            json.dumps(
+                {
+                    "type": "running",
+                    "agent_id": agent_id,
+                    "task_id": task_id_inner,
+                }
+            )
+        )
+        try:
+            ack_raw = await asyncio.wait_for(ws.recv(), timeout=10.0)
+            ack = json.loads(ack_raw)
+            run_ok = ack.get("type") == "running_ack"
+            if not run_ok:
+                logger.warning(
+                    "running_ack 대신 %s 수신 — 실행 포기 (task_id=%s)",
+                    ack.get("type"),
+                    task_id_inner,
+                )
+        except TimeoutError:
+            logger.warning(
+                "running_ack timeout — 실행 포기 (task_id=%s)",
+                task_id_inner,
+            )
+        except (TypeError, json.JSONDecodeError):
+            logger.warning(
+                "running_ack 파싱 실패 — 실행 포기 (task_id=%s)",
+                task_id_inner,
+            )
+    except Exception:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
+        logger.warning(
+            "running 전송 실패 — 실행 포기 (task_id=%s)",
+            task_id_inner,
+        )
+    return run_ok
+
+
 async def _run_session(agent_id: str, device_token: str) -> None:
     """한 번의 WebSocket 세션 실행. 종료 시 재접속은 호출자가 담당."""
     websockets = _load_websockets_module()
@@ -314,34 +412,7 @@ async def _run_session(agent_id: str, device_token: str) -> None:
         ping_timeout=20,
         **websocket_connect_kwargs(config.SERVER_BASE_URL),
     ) as ws:
-        # 1) 인증
-        await ws.send(
-            json.dumps(
-                {
-                    "type": "auth",
-                    "agent_id": agent_id,
-                    "device_token": device_token,
-                    "version": __version__,
-                }
-            )
-        )
-
-        # 첫 응답 — auth_ok 또는 close
-        try:
-            raw = await asyncio.wait_for(ws.recv(), timeout=15.0)
-        except TimeoutError:
-            logger.error("auth 응답 없음")
-            return
-
-        try:
-            first = json.loads(raw)
-        except (TypeError, json.JSONDecodeError):
-            logger.error("auth 응답 파싱 실패")
-            return
-
-        if first.get("type") != "auth_ok":
-            logger.error("auth 실패: %s", first.get("type"))
-            log_local_event("ws_auth_failed", reason=first.get("type", "unknown"))
+        if not await _authenticate(ws, agent_id, device_token):
             return
 
         log_local_event("ws_connected", agent_id=agent_id)
@@ -357,21 +428,7 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                     timeout=heartbeat_interval,
                 )
             except TimeoutError:
-                # 주기적 heartbeat 로 서버에 pull 기회 부여
-                await ws.send(
-                    json.dumps(
-                        {
-                            "type": "heartbeat",
-                            "agent_id": agent_id,
-                        }
-                    )
-                )
-                # pending USER_PRESENT_STATUS 자동 전송 (실패해도 agent 계속 실행)
-                if _STATUS_SENDER_AVAILABLE:
-                    try:
-                        await run_user_present_status_send_once(ws)
-                    except Exception as _exc:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
-                        logger.warning("[ws] status send 실패 (무시): %s", type(_exc).__name__)
+                await _send_heartbeat(ws, agent_id)
                 continue
 
             try:
@@ -385,47 +442,7 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                 task = msg.get("task") or {}
                 task_id_inner = task.get("task_id", "")
 
-                # 1) running 전송 후 running_ack 대기
-                # 서버 상태 기계 요구사항: delivered → running → completed
-                # running_ack 없이 result 를 보내면 delivered → completed 가
-                # InvalidTaskTransitionError 를 일으키므로 반드시 대기한다.
-                run_ok = False
-                try:
-                    await ws.send(
-                        json.dumps(
-                            {
-                                "type": "running",
-                                "agent_id": agent_id,
-                                "task_id": task_id_inner,
-                            }
-                        )
-                    )
-                    try:
-                        ack_raw = await asyncio.wait_for(ws.recv(), timeout=10.0)
-                        ack = json.loads(ack_raw)
-                        run_ok = ack.get("type") == "running_ack"
-                        if not run_ok:
-                            logger.warning(
-                                "running_ack 대신 %s 수신 — 실행 포기 (task_id=%s)",
-                                ack.get("type"),
-                                task_id_inner,
-                            )
-                    except TimeoutError:
-                        logger.warning(
-                            "running_ack timeout — 실행 포기 (task_id=%s)",
-                            task_id_inner,
-                        )
-                    except (TypeError, json.JSONDecodeError):
-                        logger.warning(
-                            "running_ack 파싱 실패 — 실행 포기 (task_id=%s)",
-                            task_id_inner,
-                        )
-                except Exception:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
-                    logger.warning(
-                        "running 전송 실패 — 실행 포기 (task_id=%s)",
-                        task_id_inner,
-                    )
-
+                run_ok = await _send_running_and_wait_ack(ws, agent_id, task_id_inner)
                 if not run_ok:
                     # running 상태로 전환됐을 수 있으므로 서버 timeout 에 맡긴다.
                     continue
