@@ -93,6 +93,11 @@ def _blog_publish_params(params: dict[str, Any]) -> dict[str, Any]:
     return {"target": target, "title": title, "body": body, "tags": ", ".join(tags), "visibility": visibility}
 
 
+def _mail_account_params(params: dict[str, Any]) -> dict[str, Any]:
+    """네이버 메일 작업 공통: 대상 계정(등록된 네이버 계정만)."""
+    return _blog_target(params)
+
+
 # ── 실행 ────────────────────────────────────────────────────────────────
 
 
@@ -172,6 +177,59 @@ def _run_blog_publish(params: dict[str, Any]) -> str:
     return run_on_browser_thread(job, timeout=900)
 
 
+def _in_new_tab(fn: Callable[[Any], Any]) -> Any:
+    """공유 CDP 연결에서 새 탭을 열어 `fn(page)` 를 실행하고 탭을 닫는다(사용자가 보던 탭은 건드리지 않는다)."""
+
+    def job() -> Any:
+        import contextlib
+
+        from scripts.web_connector import open_page
+
+        page = open_page(allow_new_tab=True, reason="naver-mail-imap-setting")
+        try:
+            return fn(page)
+        finally:
+            with contextlib.suppress(Exception):  # 탭 정리 실패는 결과에 영향 없음
+                page.close()
+
+    from scripts.web_connector import run_on_browser_thread
+
+    return run_on_browser_thread(job, timeout=180)
+
+
+def _run_naver_mail_check(params: dict[str, Any]) -> str:
+    """웹메일 'IMAP/SMTP 사용' 설정 상태 + IMAP/SMTP 로그인 점검(읽기 전용). 하나라도 안 되면 해결 방법과 함께 실패로 기록."""
+    from scripts.naver.mail_imap import protocol, settings
+
+    account = params["target"]
+    state = _in_new_tab(settings.read_state)
+    protocol_result = protocol.check(account)
+    enabled = {True: "사용함", False: "사용 안 함"}.get(state["enabled"], "확인 못함(" + str(state["reason"]) + ")")
+    line = f"웹메일 IMAP/SMTP 설정: {enabled} | " + protocol.describe(protocol_result)
+    if state["enabled"] is False:
+        raise RuntimeError(line + " → '네이버 메일 IMAP/SMTP 켜기' 작업을 실행(승인)하세요")
+    if not protocol_result["ok"]:
+        raise RuntimeError(line)
+    return line
+
+
+def _run_naver_mail_enable(params: dict[str, Any]) -> str:
+    """웹메일에서 'IMAP/SMTP 사용'을 '사용함'으로 저장한다(이미 사용함이면 변경 없음). 승인 후에만 실행된다."""
+    from scripts.naver.mail_imap import settings
+
+    account = params["target"]
+    result = _in_new_tab(lambda page: settings.enable(page, account))
+    reasons = {
+        "not_logged_in": "네이버에 로그인돼 있지 않아 설정을 바꾸지 않았습니다(먼저 '네이버 로그인 확인' 작업으로 로그인하세요)",
+        "page_not_ready": "설정 화면을 읽지 못해 바꾸지 않았습니다(화면 구조가 바뀌었을 수 있습니다)",
+        "other_account": f"다른 계정({result.get('account')})으로 로그인돼 있어 바꾸지 않았습니다(계정은 자동 전환하지 않습니다)",
+        "not_saved": "저장했지만 반영이 확인되지 않았습니다. 네이버 메일 환경설정을 직접 확인하세요",
+    }
+    if not result["ok"]:
+        raise RuntimeError(reasons.get(result["reason"], "설정을 켜지 못했습니다: " + str(result["reason"])))
+    return "이미 사용함으로 설정돼 있습니다(변경 없음)" if not result["changed"] else "IMAP/SMTP 를 '사용함'으로 저장하고 반영을 확인했습니다"
+
+
 ACTIONS: dict[str, ActionSpec] = {
     "community_analysis": ActionSpec(
         key="community_analysis",
@@ -199,6 +257,24 @@ ACTIONS: dict[str, ActionSpec] = {
         needs_browser=False,
         validate=_no_params,
         run=_run_gonobi,
+    ),
+    "naver_mail_check": ActionSpec(
+        key="naver_mail_check",
+        label="네이버 메일 IMAP/SMTP 점검",
+        description="웹메일의 IMAP/SMTP 사용 설정과 IMAP·SMTP 로그인을 읽기 전용으로 점검합니다(메일을 읽음 처리하거나 보내지 않습니다).",
+        risk_action="read_page",
+        needs_browser=True,
+        validate=_mail_account_params,
+        run=_run_naver_mail_check,
+    ),
+    "naver_mail_enable": ActionSpec(
+        key="naver_mail_enable",
+        label="네이버 메일 IMAP/SMTP 켜기",
+        description="웹메일 환경설정에서 'IMAP/SMTP 사용'을 '사용함'으로 저장합니다. 계정 보안 설정 변경이라 실행할 때마다 승인이 필요합니다.",
+        risk_action="enable_mail_protocol",
+        needs_browser=True,
+        validate=_mail_account_params,
+        run=_run_naver_mail_enable,
     ),
     "telegram_notify": ActionSpec(
         key="telegram_notify",
@@ -240,13 +316,13 @@ def catalog() -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     for spec in ACTIONS.values():
         fields: list[dict[str, Any]] = []
-        if spec.validate is _blog_target:
+        if spec.validate in (_blog_target, _mail_account_params):
             from scripts.naver.blog.accounts import BLOG_ACCOUNTS
 
             fields.append(
                 {
                     "name": "target",
-                    "label": "블로그 계정",
+                    "label": "네이버 계정" if spec.validate is _mail_account_params else "블로그 계정",
                     "type": "select",
                     "options": sorted(BLOG_ACCOUNTS),
                     "default": DEFAULT_BLOG_TARGET,
