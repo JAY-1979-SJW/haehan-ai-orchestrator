@@ -105,7 +105,7 @@ def get_gmail_inbox(
             audit("GOOGLE_GMAIL_INBOX", user, status="ok", note=f"count={len(items)} source=oauth")
             return {"ok": True, "source": "oauth", "items": items, "count": len(items), "duration_ms": duration_ms(t0)}
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Gmail OAuth 조회(CDP 폴백) 실패: %s", type(exc).__name__)
+        logger.debug("Gmail OAuth 조회(CDP 폴백) 실패: %s", type(exc).__name__)
         pass
 
     # CDP 폴백

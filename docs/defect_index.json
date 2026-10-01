@@ -275,7 +275,8 @@
       ],
       "evidence": "골격 점검 F 축 grep 추정, 표본 1건 과장 확인(eum_send_mail_batch) — 코드맵 S2 에서 재측정",
       "stage": "F",
-      "status": "measure"
+      "status": "partial",
+      "fix_note": "2026-10-01 서버 경로(ai_orchestrator/{routers,connectors,services,workflows,sites,browser_tool}·루트·browser_api) 예외 삼킴 161곳을 분류·처리: 로그 추가 63곳(warning 31·debug 32, 예외 클래스명만 기록 — str(exc)·URL·토큰·exc_info 미사용), 오류를 호출자에게 이미 돌려주는 곳(삼킴 아님)·정당한 사유 주석이 있는 best-effort·마스킹/redaction 함수 안(로깅 위험)은 의도적으로 제외. 동작 불변, 독립 리뷰 확정 결함 없음, 기준 대비 새 테스트 실패 0. 남음: 브라우저 화면 탐색 코드(local_agent/browser, scripts/naver 팝업·요소 탐색 등 약 1,100곳)는 의도된 '실패해도 계속'이 많아 이번 범위에서 제외 — 필요 시 경로별로 재분류."
     },
     {
       "no": 20,
