@@ -907,6 +907,7 @@ _DB_DIRECT_ACCESS_PATTERNS = [
 _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/storage/",
     "ai_orchestrator/persistence/",  # L7 Persistence 계층 자체 — DB 접근이 이 계층의 책임이다(2026-10-01)
+    "scripts/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
     "storage/",
     "migrations/",
     "scripts/ops/",

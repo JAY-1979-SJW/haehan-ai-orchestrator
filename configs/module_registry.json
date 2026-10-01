@@ -20064,6 +20064,38 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/app_paths.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "공용 기반 이름(app_paths)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/app_paths_migrate.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_app_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_app_paths_migrate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
