@@ -317,6 +317,58 @@ def get_media(
     return FileResponse(str(path))
 
 
+def _write_sections(bw, req: BlogWriteRequest) -> dict | None:
+    """섹션별 배치 — 지정한 순서 그대로 텍스트/사진을 섞어서 삽입. 실패 시 응답 dict, 성공 시 None."""
+    # 이미지 경로는 업로드 폴더 기준으로 해석(존재하지 않으면 그대로 URL 취급).
+    blocks: list[dict[str, str]] = []
+    for section in req.sections:
+        if section.get("type") == "image":
+            name = section.get("value", "")
+            resolved = UPLOADS_DIR / Path(name).name
+            blocks.append({"type": "image", "value": str(resolved) if resolved.exists() else name})
+        else:
+            blocks.append(section)
+    ok = bw.write_mixed_content(blocks)
+    if not ok:
+        return {
+            "ok": False,
+            "error": "섹션별 본문/사진 삽입 실패 — 실제 화면에 반영되지 않음",
+            "verify": bw.verify_body(req.body),
+        }
+    return None
+
+
+def _write_plain_body(bw, req: BlogWriteRequest) -> dict | None:
+    """본문 + 이미지 배치 후 검증. 실패 시 응답 dict, 성공 시 None."""
+    resolved_media = _resolve_unsplash_images(
+        req.title + " " + req.body[:100], req.media, count=max(0, min(req.image_count, 10))
+    )
+    media_paths = [UPLOADS_DIR / Path(m).name for m in resolved_media if (UPLOADS_DIR / Path(m).name).exists()]
+
+    def _insert(mp):
+        (bw.insert_video if mp.suffix.lower() in _VID_EXT else bw.insert_image)(str(mp))
+
+    # 배치: 첫 이미지 → 본문 전체 → 나머지 이미지(중간·끝 순)
+    # 이미지 삽입 후 write_body(append=True)로 커서 위치에 이어써야
+    # BODY_SEL 클릭으로 커서가 이미지 위 텍스트 블록으로 돌아가는 문제 방지
+    if media_paths:
+        _insert(media_paths[0])  # 맨 처음 이미지
+        bw.write_body(req.body, append=True)  # 이미지 바로 아래에 본문 이어쓰기
+    else:
+        bw.write_body(req.body)  # 이미지 없으면 기존 방식
+    for mp in media_paths[1:]:  # 나머지 이미지는 본문 뒤(중간·끝)
+        _insert(mp)
+
+    verify = bw.verify_body(req.body)
+    if not verify["ok"]:
+        return {
+            "ok": False,
+            "error": "본문 검증 실패 — 실제 화면에 입력한 내용이 반영되지 않음",
+            "verify": verify,
+        }
+    return None
+
+
 @naver_blog_router.post("/write-to-naver")
 def write_to_naver(
     req: BlogWriteRequest,
@@ -341,51 +393,9 @@ def write_to_naver(
             }
         bw.set_title(req.title)
 
-        if req.sections:
-            # 섹션별 배치 — 지정한 순서 그대로 텍스트/사진을 섞어서 삽입.
-            # 이미지 경로는 업로드 폴더 기준으로 해석(존재하지 않으면 그대로 URL 취급).
-            blocks: list[dict[str, str]] = []
-            for section in req.sections:
-                if section.get("type") == "image":
-                    name = section.get("value", "")
-                    resolved = UPLOADS_DIR / Path(name).name
-                    blocks.append({"type": "image", "value": str(resolved) if resolved.exists() else name})
-                else:
-                    blocks.append(section)
-            ok = bw.write_mixed_content(blocks)
-            if not ok:
-                return {
-                    "ok": False,
-                    "error": "섹션별 본문/사진 삽입 실패 — 실제 화면에 반영되지 않음",
-                    "verify": bw.verify_body(req.body),
-                }
-        else:
-            resolved_media = _resolve_unsplash_images(
-                req.title + " " + req.body[:100], req.media, count=max(0, min(req.image_count, 10))
-            )
-            media_paths = [UPLOADS_DIR / Path(m).name for m in resolved_media if (UPLOADS_DIR / Path(m).name).exists()]
-
-            def _insert(mp):
-                (bw.insert_video if mp.suffix.lower() in _VID_EXT else bw.insert_image)(str(mp))
-
-            # 배치: 첫 이미지 → 본문 전체 → 나머지 이미지(중간·끝 순)
-            # 이미지 삽입 후 write_body(append=True)로 커서 위치에 이어써야
-            # BODY_SEL 클릭으로 커서가 이미지 위 텍스트 블록으로 돌아가는 문제 방지
-            if media_paths:
-                _insert(media_paths[0])  # 맨 처음 이미지
-                bw.write_body(req.body, append=True)  # 이미지 바로 아래에 본문 이어쓰기
-            else:
-                bw.write_body(req.body)  # 이미지 없으면 기존 방식
-            for mp in media_paths[1:]:  # 나머지 이미지는 본문 뒤(중간·끝)
-                _insert(mp)
-
-            verify = bw.verify_body(req.body)
-            if not verify["ok"]:
-                return {
-                    "ok": False,
-                    "error": "본문 검증 실패 — 실제 화면에 입력한 내용이 반영되지 않음",
-                    "verify": verify,
-                }
+        failure = _write_sections(bw, req) if req.sections else _write_plain_body(bw, req)
+        if failure is not None:
+            return failure
 
         if req.category:
             bw.set_category(req.category)
