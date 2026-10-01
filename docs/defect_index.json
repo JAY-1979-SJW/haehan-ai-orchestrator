@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 113,
+  "next_no": 115,
   "items": [
     {
       "no": 1,
@@ -1488,6 +1488,39 @@
       "stage": "RUN",
       "status": "fixed",
       "fix_note": "2026-10-01 load_session_edits 에서 .claude/worktrees/ 하위 경로 제외(워크트리 브랜치는 자체 커밋 훅이 검증). 관련 테스트 20 passed."
+    },
+    {
+      "no": 113,
+      "id": "layering.generic_engine_imports_site_registry",
+      "category": 2,
+      "title": "[층간] site_registry(L5)를 부르는 L4 범용 엔진 3건 — scripts/cdp_client.py·login_session.py·site_access.py → scripts/site_registry.py (L4→L5)",
+      "where": [
+        "scripts/cdp_client.py",
+        "scripts/login_session.py",
+        "scripts/site_access.py",
+        "scripts/site_registry.py"
+      ],
+      "evidence": "2026-10-01 layering-violations-fix 세션 측정: 범용 엔진이 사이트 등록표를 직접 import. 라벨(cdp_client 등을 L5 로 올리기)로는 explorer/site_crawler·site_base 에서 새 위반이 연쇄해 풀리지 않음. 해결안: 사이트가 로그인·세션 함수를 스스로 등록(의존 역전)하거나 site_registry 의 SiteSpec 만 L1 로 분리. 주의: site_access.ensure_logged_in 시그니처·LoginError(kind) 불변.",
+      "stage": "AUDIT",
+      "status": "open",
+      "priority": "low (구조 부채)"
+    },
+    {
+      "no": 114,
+      "id": "layering.local_agent_dispatcher_and_codemap_name_collision",
+      "category": 3,
+      "title": "[층간·도구] scripts/local_agent.py(L4 디스패처) → smartstore cdp_popup_manager(L5)·product/form_runner(L6) 2건 + 코드맵 import 해석기가 루트 local_agent/ 패키지를 scripts/local_agent.py 로 오해석",
+      "where": [
+        "scripts/local_agent.py",
+        "scripts/ops/code_map/",
+        "scripts/login_session.py",
+        "scripts/google/auth.py",
+        "scripts/naver/mail_read/entry"
+      ],
+      "evidence": "2026-10-01 layering-violations-fix 세션 측정: scripts/local_agent.py 는 사이트 도구 디스패처라 L4 가 아니지만 L6 으로 올리면 지도의 가짜 간선 때문에 새 위반 3건 발생 — `from local_agent import site_entry_policy` 는 루트 local_agent/ 패키지인데 코드맵 해석기가 이름이 같은 scripts/local_agent.py 로 잘못 해석. 해결안: 코드맵 import 해석기가 루트 패키지를 우선하게 고친 뒤 scripts/local_agent.py 를 L6 으로 보정.",
+      "stage": "AUDIT",
+      "status": "open",
+      "priority": "low (구조 부채)"
     }
   ]
 }
