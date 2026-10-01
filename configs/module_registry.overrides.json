@@ -838,5 +838,23 @@
   "layer": "L6",
   "role": "workflow",
   "reason": "하나팩스 승인서→정책 판정→발송기 호출→이력 기록의 업무 흐름(워크플로) — 파일명의 `send` 가 L1 contract 로 오분류 (2026-10-02)"
+ },
+ "ai_orchestrator/workflows/naver_mailbox_flow.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "네이버 메일함 화면의 업무 흐름(계정 확인·조회 위임·보내기 2단계 확인 토큰) — 정의 위주(dataclass·재노출)로 L1 contract 로 오분류. 같은 L6 의 scheduled_job_actions 처럼 scripts 어댑터를 쓴다.",
+  "source": "manual"
+ },
+ "ai_orchestrator/workflows/naver_mail_drafts.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "메일 AI 초안 업무 흐름(초안 생성→사람 승인 후 보내기→결과 기록) — 이름 규칙으로 L4 generic 오분류. scripts 어댑터와 L2 정책·L7 저장소를 조합하는 L6 워크플로.",
+  "source": "manual"
+ },
+ "ai_orchestrator/gates/mail_draft_policy.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "메일 AI 초안 정책(상태 전이·한도·첨부 경로 안전) — 저장·네트워크 부작용 없는 순수 판정이라 L2. 파일명의 draft 때문에 L7 persistence 로 오분류.",
+  "source": "manual"
  }
 }

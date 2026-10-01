@@ -12,6 +12,7 @@ from ai_orchestrator.routers.auth_router import auth_router
 from ai_orchestrator.routers.blog_automation_router import blog_automation_router
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
+from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
 from ai_orchestrator.routers.ops_router import ops_router
 from ai_orchestrator.routers.scheduled_job_router import scheduled_job_router
 from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router
@@ -112,6 +113,7 @@ router.include_router(google_router)
 router.include_router(smartstore_router)  # read-only smartstore catalog/history/form-fields
 router.include_router(naver_blog_router)  # naver blog compose/drafts/seo
 router.include_router(blog_automation_router)  # 블로그 자동 작성 규칙·승인·1회 실행(B단계: 로컬 초안까지)
+router.include_router(naver_mailbox_router)  # 네이버 메일함 탭(폴더·목록·상세·첨부·보내기 2단계)
 router.include_router(scheduled_job_router)  # 사용자 예약 작업(목록·생성·일시중지·지금 실행·기록)
 router.include_router(public_media_router)  # 외부 플랫폼(IG Graph API 등) 공개 미디어 서빙
 router.include_router(user_auth_router)  # user signup/login/mypage

@@ -1,9 +1,30 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import type { ReactNode } from "react";
 import { FaxApprovalCard } from "./FaxApprovalCard";
 
+/**
+ * 답변 속 "[[종류:<id>]]" 표시를 카드(버튼)로 바꿔 보여 주는 규칙 — 화면(메일함 등)이 주입한다.
+ * 공용 채팅이 각 화면의 카드를 직접 import 하면 화면↔채팅 순환이 생기므로 의존을 뒤집었다.
+ */
+export interface ExtraCard {
+  /** `/g` 정규식. 첫 번째 캡처 그룹이 카드에 넘길 id 다. */
+  mark: RegExp;
+  render: (id: string) => ReactNode;
+}
+
+/** 입력창에 채워 주는 지시 단축 칩 — 누르면 입력창에 문장이 들어가고 사용자가 고쳐서 보낸다. */
+export interface ChatPreset {
+  label: string;
+  prompt: string;
+}
+
 interface Props {
+  /** 입력창 위에 보일 지시 칩(선택) */
+  presets?: ChatPreset[];
+  /** 화면이 주입하는 추가 카드 규칙(선택) — 예: 메일함의 [[mail-draft:<id>]] */
+  extraCards?: ExtraCard[];
   domain?: string;
   /** 에이전트에 보내는 프롬프트 앞에 붙이는 지침(화면에 보이는 메시지는 그대로). 화면별 사용법 안내용. */
   agentHint?: string;
@@ -55,16 +76,22 @@ interface RunAgentResponse {
 
 const FAX_APPROVE_MARK = /\[\[fax-approve:([0-9a-f]{32})\]\]/g;
 
-/** 답변 본문. "[[fax-approve:<id>]]" 표시는 팩스 승인 카드(버튼)로 바꿔 보여 준다. */
-function MessageBody({ text }: { text: string }) {
-  const ids = [...text.matchAll(FAX_APPROVE_MARK)].map((m) => m[1]);
-  if (ids.length === 0) return <>{text}</>;
+/**
+ * 답변 본문. "[[fax-approve:<id>]]" 는 팩스 승인 카드로, 화면이 주입한 규칙(`extraCards`, 예: "[[mail-draft:<id>]]" 메일 발송 승인 카드)은
+ * 그 카드로 바꿔 보여 준다. 보내기는 카드 버튼(사람)으로만 된다 — AI 는 승인·발송 API 를 쓸 수 없다.
+ */
+function MessageBody({ text, extraCards = [] }: { text: string; extraCards?: ExtraCard[] }) {
+  const faxIds = [...text.matchAll(FAX_APPROVE_MARK)].map((m) => m[1]);
+  const extras = extraCards.map((c) => ({ card: c, ids: [...new Set([...text.matchAll(c.mark)].map((m) => m[1]))] }));
+  if (faxIds.length === 0 && extras.every((e) => e.ids.length === 0)) return <>{text}</>;
+  const cleaned = extras.reduce((acc, e) => acc.replace(e.card.mark, ""), text.replace(FAX_APPROVE_MARK, "")).trim();
   return (
     <>
-      {text.replace(FAX_APPROVE_MARK, "").trim()}
-      {[...new Set(ids)].map((id) => (
+      {cleaned}
+      {[...new Set(faxIds)].map((id) => (
         <FaxApprovalCard key={id} authId={id} />
       ))}
+      {extras.flatMap((e) => e.ids.map((id) => <span key={`${e.card.mark.source}:${id}`}>{e.card.render(id)}</span>))}
     </>
   );
 }
@@ -106,7 +133,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
  * `claude -p --mcp-config .mcp.json` → 이 앱 자신의 MCP 서버(haehan-orchestrator) 호출.
  * 설계·실측 검증: docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md
  */
-export function UniversalChat({ title, agentHint, className = "" }: Props) {
+export function UniversalChat({ title, agentHint, presets, extraCards, className = "" }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -336,7 +363,7 @@ export function UniversalChat({ title, agentHint, className = "" }: Props) {
                   <span className="animate-pulse">●</span> {m.text}
                 </span>
               ) : (
-                <MessageBody text={m.text} />
+                <MessageBody text={m.text} extraCards={extraCards} />
               )}
             </div>
           </div>
@@ -348,6 +375,22 @@ export function UniversalChat({ title, agentHint, className = "" }: Props) {
         )}
       </div>
 
+      {presets && presets.length > 0 && (
+        <div className="shrink-0 border-t border-[#F3F4F6] px-2 pt-2 flex flex-wrap gap-1" aria-label="지시 단축 칩">
+          {presets.map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              disabled={sending}
+              onClick={() => setInput(p.prompt)}
+              title={p.prompt}
+              className="text-[10px] px-2 py-1 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151] hover:bg-[#FFF7ED] hover:border-[#FED7AA] disabled:opacity-40"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="shrink-0 border-t border-[#F3F4F6] p-2 flex gap-2">
         <input
           value={input}
