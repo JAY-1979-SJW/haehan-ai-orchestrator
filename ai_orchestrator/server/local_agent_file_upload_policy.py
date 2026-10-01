@@ -58,6 +58,15 @@ _MANIFEST_FORBIDDEN_FIELDS: frozenset[str] = frozenset({
 SERVER_MAX_FILE_SIZE_BYTES: int = 50 * 1024 * 1024
 
 
+def _forbidden_field_violations(obj: dict[str, Any], label: str) -> list[str]:
+    """obj 내 민감 필드 값이 채워져 있으면 위반 메시지 목록을 반환한다."""
+    return [
+        f"{label} 민감 필드: {field!r}"
+        for field in _MANIFEST_FORBIDDEN_FIELDS
+        if obj.get(field) not in (None, False, "", [], {})
+    ]
+
+
 def validate_upload_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     """
     서버가 수신한 manifest를 검증한다.
@@ -70,10 +79,7 @@ def validate_upload_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     violations: list[str] = []
 
     # manifest 최상위 민감 필드 검사
-    for field in _MANIFEST_FORBIDDEN_FIELDS:
-        val = manifest.get(field)
-        if val not in (None, False, "", [], {}):
-            violations.append(f"manifest 민감 필드: {field!r}")
+    violations.extend(_forbidden_field_violations(manifest, "manifest"))
 
     # 인증서 감지 여부
     if manifest.get("certificate_file_detected"):
@@ -87,10 +93,7 @@ def validate_upload_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
             continue
 
         # 파일 항목 내 민감 필드
-        for field in _MANIFEST_FORBIDDEN_FIELDS:
-            val = entry.get(field)
-            if val not in (None, False, "", [], {}):
-                violations.append(f"files[{i}] 민감 필드: {field!r}")
+        violations.extend(_forbidden_field_violations(entry, f"files[{i}]"))
 
         # 업로드 허용 여부
         if not entry.get("upload_allowed"):

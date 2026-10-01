@@ -128,6 +128,15 @@ def _extract_meta_and_canonical(html_text: str) -> tuple[str | None, str | None]
     return description, canonical, og_title  # type: ignore[return-value]
 
 
+def _content_type_of(headers: Any) -> str:
+    """응답 헤더 dict 에서 content-type(소문자)을 찾는다. 없으면 빈 문자열."""
+    if isinstance(headers, dict):
+        for k, v in headers.items():
+            if k.lower() == "content-type":
+                return str(v or "").lower()
+    return ""
+
+
 def fetch_public_page_summary(
     url: str,
     *,
@@ -203,12 +212,7 @@ def fetch_public_page_summary(
             request_summary=summary,
         )
 
-    content_type = ""
-    if isinstance(headers, dict):
-        for k, v in headers.items():
-            if k.lower() == "content-type":
-                content_type = str(v or "").lower()
-                break
+    content_type = _content_type_of(headers)
     if content_type and "html" not in content_type:
         return PublicPageSummary(
             status="unsupported",

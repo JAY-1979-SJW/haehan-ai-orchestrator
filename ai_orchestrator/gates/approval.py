@@ -80,6 +80,26 @@ _TOKEN_FIELDS = (
 _STALE_AFTER = timedelta(hours=24)
 
 
+def _apply_store_line(line: str) -> None:
+    """JSONL 1줄을 파싱해 _store 에 token_id 별 last-wins 로 반영."""
+    line = line.strip()
+    if not line:
+        return
+    try:
+        event = json.loads(line)
+    except json.JSONDecodeError as e:
+        logger.warning("승인 토큰 이벤트 파싱 실패: %s | line=%r", e, line)
+        return
+    token_id = event.get("token_id")
+    if not token_id:
+        return
+    entry = {k: event.get(k) for k in _TOKEN_FIELDS}
+    entry.setdefault("used_at", None)
+    entry["result"] = entry.get("result") or ""
+    entry["public_id"] = entry.get("public_id") or ""
+    _store[token_id] = entry
+
+
 def _load_store() -> None:
     """append-only JSONL 이벤트를 재생하여 _store 를 복구한다.
 
@@ -93,22 +113,7 @@ def _load_store() -> None:
     try:
         with _STORE_PATH.open(encoding="utf-8") as f:
             for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    event = json.loads(line)
-                except json.JSONDecodeError as e:
-                    logger.warning("승인 토큰 이벤트 파싱 실패: %s | line=%r", e, line)
-                    continue
-                token_id = event.get("token_id")
-                if not token_id:
-                    continue
-                entry = {k: event.get(k) for k in _TOKEN_FIELDS}
-                entry.setdefault("used_at", None)
-                entry["result"] = entry.get("result") or ""
-                entry["public_id"] = entry.get("public_id") or ""
-                _store[token_id] = entry
+                _apply_store_line(line)
     except OSError as e:
         logger.error("승인 토큰 저장소 로드 실패: %s", e)
         _store = {}
