@@ -21,9 +21,11 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
+
 MODES = ("draft_only", "auto_publish")
 VISIBILITIES = ("public", "neighbors", "mutual", "private")
-DEFAULT_BLOG_ID = "skyjwsin"
+DEFAULT_BLOG_ID = DEFAULT_ACCOUNT
 AUTO_PUBLISH_BLOG_IDS = frozenset({"skyjwsin"})
 
 MAX_PER_DAY = 5

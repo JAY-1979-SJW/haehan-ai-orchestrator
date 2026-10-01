@@ -12,7 +12,9 @@ import asyncio
 
 from playwright.async_api import async_playwright
 
-BLOG_ID = "skyjwsin"
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
+
+BLOG_ID = DEFAULT_ACCOUNT
 NEW_POST_URL = f"https://blog.naver.com/PostWriteForm.naver?blogId={BLOG_ID}"
 CDP_URL = "http://127.0.0.1:9222"
 

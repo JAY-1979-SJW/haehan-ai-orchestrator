@@ -18,6 +18,7 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
 from scripts.naver.blog.marketing import content, gpt_writer
 
 SYSTEM_PROMPT = "당신은 한국 실무 블로그 작가입니다. 요청받은 JSON 형식으로만 답하고 다른 설명은 붙이지 않습니다."
@@ -72,7 +73,7 @@ def draft_post(
     *,
     llm: Callable[..., dict[str, Any]],
     cta_block: str | None = None,
-    blog_id: str = "skyjwsin",
+    blog_id: str = DEFAULT_ACCOUNT,
     web: bool = False,
 ) -> dict[str, Any] | None:
     """주제 → {title, body(CTA 포함), body_segments, tags, seo, cost_usd?}. 생성·파싱에 실패하면 None.

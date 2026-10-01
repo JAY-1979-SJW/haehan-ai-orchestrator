@@ -15,6 +15,8 @@ from __future__ import annotations
 import argparse
 import sys
 
+from scripts.naver.blog.accounts import BLOG_ACCOUNTS, DEFAULT_ACCOUNT
+
 sys.path.insert(0, ".")
 
 from scripts.logger import get_logger
@@ -23,7 +25,7 @@ from scripts.naver.blog.management.analytics import BlogAnalytics
 _log = get_logger(__name__)
 
 
-def run(blog_id: str = "skyjwsin", ensure_login: bool = False) -> dict:
+def run(blog_id: str = DEFAULT_ACCOUNT, ensure_login: bool = False) -> dict:
     """blog_id 리포트 1건. ensure_login=True면 다른 계정이 로그인돼 있어도
     이 계정으로 전환한 뒤 조회한다(--compare에서 계정을 오갈 때 필요)."""
     from playwright.sync_api import sync_playwright
@@ -127,10 +129,10 @@ def _print_summary(report: dict) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--blog-id", default="skyjwsin")
+    parser.add_argument("--blog-id", default=DEFAULT_ACCOUNT)
     parser.add_argument("--compare", action="store_true", help="skyjwsin·skyjwshin 두 계정을 순서대로 조회해 비교")
     args = parser.parse_args()
     if args.compare:
-        run_compare(["skyjwsin", "skyjwshin"])
+        run_compare(list(BLOG_ACCOUNTS))
     else:
         run(blog_id=args.blog_id)

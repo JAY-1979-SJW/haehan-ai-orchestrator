@@ -289,7 +289,8 @@
       ],
       "evidence": "골격 점검 A 축",
       "stage": "A",
-      "status": "open"
+      "status": "partial",
+      "fix_note": "2026-10-01 블로그 패키지 11개 파일의 기본 계정·계정 선택지 리터럴을 accounts.py(DEFAULT_ACCOUNT/BLOG_ACCOUNTS)로 통일. 블로그 테스트 333 passed. 남김: 계정별 데이터 딕셔너리(gpt_writer·images 키), topics.py 의 분류 결과 리터럴, ai_orchestrator 쪽(naver_session_router·scheduled_job_actions — L8→scripts 방향 import 검토 필요), 로그인 스크립트(login_sites 등)."
     },
     {
       "no": 21,
