@@ -423,6 +423,94 @@ class CafeToHaehanBlogRequest(BaseModel):
     status: str = "draft"  # "draft" | "published"
 
 
+def _pick_blog_topics(articles: list[dict]) -> list[str]:
+    """무료 결정론 규칙: 조회수 상위 제목을 중복 제거해 그대로 후보로 사용."""
+
+    def _views(a: dict) -> int:
+        try:
+            return int(str(a.get("view_count", "0")).replace(",", "") or 0)
+        except (ValueError, TypeError):
+            return 0
+
+    top_articles = sorted(articles, key=_views, reverse=True)[:200]
+
+    seen_norm: set[str] = set()
+    raw_topics: list[str] = []
+    for a in top_articles:
+        title = (a.get("title") or "").strip()
+        if len(title) < 6:
+            continue
+        norm = " ".join(title.lower().split())
+        if norm in seen_norm:
+            continue
+        seen_norm.add(norm)
+        raw_topics.append(title)
+    return raw_topics
+
+
+def _generate_and_save_post(topic: str, haehan_url: str, headers_common: dict, post_status: str) -> dict:
+    """주제 1개를 blog-generate 로 생성하고 /api/admin/blog 에 저장. 결과 item dict 반환."""
+    import urllib.error
+    import urllib.request
+
+    item: dict = {"topic": topic, "generate": None, "save": None, "error": None}
+    try:
+        # 3. blog-generate 호출 (Claude + Unsplash)
+        gen_payload = json.dumps({"topic": topic}, ensure_ascii=False).encode()
+        gen_req = urllib.request.Request(  # noqa: S310
+            f"{haehan_url}/api/admin/blog-generate",
+            data=gen_payload,
+            headers=headers_common,
+            method="POST",
+        )
+        with urllib.request.urlopen(gen_req, timeout=60) as resp:  # noqa: S310
+            generated = json.loads(resp.read().decode())
+        item["generate"] = {
+            "ok": True,
+            "title": generated.get("title"),
+            "slug": generated.get("slug"),
+        }
+
+        # 4. blog 저장
+        save_payload = json.dumps(
+            {
+                "slug": generated["slug"],
+                "title": generated["title"],
+                "summary": generated["summary"],
+                "category": generated["category"],
+                "published_at": generated.get("publishedAt"),
+                "status": post_status,
+                "featured": False,
+                "thumbnail": generated.get("thumbnail"),
+                "thumbnail_credit": generated.get("thumbnailCredit"),
+                "thumbnail_credit_url": generated.get("thumbnailCreditUrl"),
+                "tags": generated.get("tags", []),
+                "content": generated.get("content", []),
+            },
+            ensure_ascii=False,
+        ).encode()
+        save_req = urllib.request.Request(  # noqa: S310
+            f"{haehan_url}/api/admin/blog",
+            data=save_payload,
+            headers=headers_common,
+            method="POST",
+        )
+        with urllib.request.urlopen(save_req, timeout=30) as resp:  # noqa: S310
+            saved = json.loads(resp.read().decode())
+        item["save"] = {
+            "ok": True,
+            "id": saved.get("post", {}).get("id"),
+            "status": post_status,
+        }
+
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode(errors="replace")[:200]
+        item["error"] = f"HTTP {e.code}: {body_text}"
+    except Exception as exc:  # noqa: BLE001 - 네이버 카페 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환, 파일 통계 읽기 실패는 무시, 쓰기/삭제 없음
+        item["error"] = str(exc)[:200]
+    return item
+
+
 @naver_cafe_router.post("/cafe-to-haehan-blog")
 def cafe_to_haehan_blog(
     body: CafeToHaehanBlogRequest,
@@ -435,9 +523,6 @@ def cafe_to_haehan_blog(
     3. 각 주제를 해한Ai /api/admin/blog-generate 에 전송 (Claude + Unsplash)
     4. 생성된 포스트를 /api/admin/blog 에 저장 (draft 또는 published)
     """
-    import urllib.error
-    import urllib.request
-
     t0 = time.monotonic()
 
     # ── 환경 변수 ──────────────────────────────────────────────────────────────
@@ -471,26 +556,7 @@ def cafe_to_haehan_blog(
     if not articles:
         raise HTTPException(status_code=404, detail="조건에 맞는 게시글이 없습니다")
 
-    def _views(a: dict) -> int:
-        try:
-            return int(str(a.get("view_count", "0")).replace(",", "") or 0)
-        except (ValueError, TypeError):
-            return 0
-
-    top_articles = sorted(articles, key=_views, reverse=True)[:200]
-
-    # ── 2. 블로그 주제 추출 (무료 결정론 규칙: 조회수 상위 제목을 그대로 사용) ──────
-    seen_norm: set[str] = set()
-    raw_topics: list[str] = []
-    for a in top_articles:
-        title = (a.get("title") or "").strip()
-        if len(title) < 6:
-            continue
-        norm = " ".join(title.lower().split())
-        if norm in seen_norm:
-            continue
-        seen_norm.add(norm)
-        raw_topics.append(title)
+    raw_topics = _pick_blog_topics(articles)
 
     topics = raw_topics[:max_topics]
     if not topics:
@@ -507,63 +573,7 @@ def cafe_to_haehan_blog(
     }
 
     for topic in topics:
-        item: dict = {"topic": topic, "generate": None, "save": None, "error": None}
-        try:
-            # 3. blog-generate 호출 (Claude + Unsplash)
-            gen_payload = json.dumps({"topic": topic}, ensure_ascii=False).encode()
-            gen_req = urllib.request.Request(  # noqa: S310
-                f"{haehan_url}/api/admin/blog-generate",
-                data=gen_payload,
-                headers=headers_common,
-                method="POST",
-            )
-            with urllib.request.urlopen(gen_req, timeout=60) as resp:  # noqa: S310
-                generated = json.loads(resp.read().decode())
-            item["generate"] = {
-                "ok": True,
-                "title": generated.get("title"),
-                "slug": generated.get("slug"),
-            }
-
-            # 4. blog 저장
-            save_payload = json.dumps(
-                {
-                    "slug": generated["slug"],
-                    "title": generated["title"],
-                    "summary": generated["summary"],
-                    "category": generated["category"],
-                    "published_at": generated.get("publishedAt"),
-                    "status": post_status,
-                    "featured": False,
-                    "thumbnail": generated.get("thumbnail"),
-                    "thumbnail_credit": generated.get("thumbnailCredit"),
-                    "thumbnail_credit_url": generated.get("thumbnailCreditUrl"),
-                    "tags": generated.get("tags", []),
-                    "content": generated.get("content", []),
-                },
-                ensure_ascii=False,
-            ).encode()
-            save_req = urllib.request.Request(  # noqa: S310
-                f"{haehan_url}/api/admin/blog",
-                data=save_payload,
-                headers=headers_common,
-                method="POST",
-            )
-            with urllib.request.urlopen(save_req, timeout=30) as resp:  # noqa: S310
-                saved = json.loads(resp.read().decode())
-            item["save"] = {
-                "ok": True,
-                "id": saved.get("post", {}).get("id"),
-                "status": post_status,
-            }
-
-        except urllib.error.HTTPError as e:
-            body_text = e.read().decode(errors="replace")[:200]
-            item["error"] = f"HTTP {e.code}: {body_text}"
-        except Exception as exc:  # noqa: BLE001 - 네이버 카페 수집 FastAPI 라우터 - 예외를 HTTPException 500으로 변환, 파일 통계 읽기 실패는 무시, 쓰기/삭제 없음
-            item["error"] = str(exc)[:200]
-
-        results.append(item)
+        results.append(_generate_and_save_post(topic, haehan_url, headers_common, post_status))
 
     success = [r for r in results if r["error"] is None]
     failed = [r for r in results if r["error"] is not None]
