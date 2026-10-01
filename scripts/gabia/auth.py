@@ -31,6 +31,18 @@ _LOGGED_IN_TOKENS = ("로그아웃", "내정보", "마이가비아", "계정관�
 _LOGGED_OUT_TOKENS = ("로그인", "아이디", "비밀번호")
 
 
+def _logout_button_visible(page) -> bool:
+    """로그아웃 버튼/링크가 보이는지(강한 로그인 신호). 탐색 실패는 무시(보수적)."""
+    for sel in ("a:has-text('로그아웃')", "button:has-text('로그아웃')", "[href*='logout']"):
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                return True
+        except Exception:  # noqa: BLE001 - 가비아 로그인 상태 확인 - 가비아는 OTP/2FA 필수라 자동 로그인 불가, 예외는 '미로그인'(보수적) 방향 폴백이며 인증 우회 아님
+            pass
+    return False
+
+
 def is_logged_in(page) -> bool:
     """가비아 로그인 상태 확인.
 
@@ -51,14 +63,9 @@ def is_logged_in(page) -> bool:
         return False
 
     # 로그아웃 버튼 (강한 신호)
-    for sel in ("a:has-text('로그아웃')", "button:has-text('로그아웃')", "[href*='logout']"):
-        try:
-            el = page.query_selector(sel)
-            if el and el.is_visible():
-                log.debug("gabia: 로그아웃 버튼 발견 — 로그인됨")
-                return True
-        except Exception:  # noqa: BLE001 - 가비아 로그인 상태 확인(is_logged_in) — 가비아는 OTP/2FA 필수라 자동 로그인 자체가 불가능한 구조이며, 모든 except가 '미로그인'(보수적) 방향으로 폴백해 인증 우회가 아님. login()은 사용자 수동 로그인을 안내할 뿐 자동 인증을 시도하지 않음.
-            pass
+    if _logout_button_visible(page):
+        log.debug("gabia: 로그아웃 버튼 발견 — 로그인됨")
+        return True
 
     # body 텍스트로 판단
     try:

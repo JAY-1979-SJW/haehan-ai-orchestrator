@@ -75,7 +75,7 @@ def _valign_map(v: str) -> str:
 # ── 렌더 엔진 ─────────────────────────────────────────────────────────────────
 
 
-def render_to_wb(
+def render_to_wb(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     recipient: str = "",
     qty1: int = 1,
     mo1: int = 24,
@@ -154,7 +154,7 @@ def render_to_wb(
     return wb
 
 
-def _apply_dynamic_values(
+def _apply_dynamic_values(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     ws,
     recipient: str,
     qty1: int,
@@ -227,7 +227,7 @@ def _apply_print_setup(ws) -> None:
     ws.print_area = f"A1:J{LAST_ROW}"
 
 
-def render_to_file(
+def render_to_file(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     output_path: str,
     recipient: str = "",
     qty1: int = 1,

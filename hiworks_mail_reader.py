@@ -45,8 +45,17 @@ def _decode_header_value(raw) -> str:
     return "".join(decoded).strip()
 
 
-def _extract_body(msg: email.message.Message) -> str:
-    """text/plain 우선, 없으면 text/html 태그 제거, 그 외 빈 문자열."""
+def _decode_payload(part: email.message.Message) -> str | None:
+    """파트 payload 를 디코드. payload 가 없으면 None."""
+    payload = part.get_payload(decode=True)
+    if not payload:
+        return None
+    charset = part.get_content_charset() or "utf-8"
+    return payload.decode(charset, errors="replace")
+
+
+def _collect_body_parts(msg: email.message.Message) -> tuple[list[str], list[str]]:
+    """메일에서 (text/plain 조각, text/html 조각) 목록을 수집한다."""
     plain_parts: list[str] = []
     html_parts: list[str] = []
 
@@ -56,24 +65,26 @@ def _extract_body(msg: email.message.Message) -> str:
             cd = str(part.get("Content-Disposition", ""))
             if "attachment" in cd:
                 continue
-            payload = part.get_payload(decode=True)
-            if not payload:
+            text = _decode_payload(part)
+            if text is None:
                 continue
-            charset = part.get_content_charset() or "utf-8"
-            text = payload.decode(charset, errors="replace")
             if ct == "text/plain":
                 plain_parts.append(text)
             elif ct == "text/html":
                 html_parts.append(text)
     else:
-        payload = msg.get_payload(decode=True)
-        if payload:
-            charset = msg.get_content_charset() or "utf-8"
-            text = payload.decode(charset, errors="replace")
+        text = _decode_payload(msg)
+        if text is not None:
             if msg.get_content_type() == "text/html":
                 html_parts.append(text)
             else:
                 plain_parts.append(text)
+    return plain_parts, html_parts
+
+
+def _extract_body(msg: email.message.Message) -> str:
+    """text/plain 우선, 없으면 text/html 태그 제거, 그 외 빈 문자열."""
+    plain_parts, html_parts = _collect_body_parts(msg)
 
     if plain_parts:
         return "\n".join(plain_parts).strip()
@@ -105,6 +116,40 @@ def _build_external_id(msg: email.message.Message, uidl: str) -> str:
     return f"uidl:{uidl}"
 
 
+def _load_uidl_map(pop: poplib.POP3) -> dict[int, str]:
+    """UIDL 번호→고유 ID 맵. UIDL 미지원 시 빈 맵(fallback)."""
+    uidl_map: dict[int, str] = {}
+    try:
+        _, uidl_lines, _ = pop.uidl()
+        for line in uidl_lines:
+            parts = line.decode("ascii", errors="replace").split(" ", 1)
+            if len(parts) == 2:
+                uidl_map[int(parts[0])] = parts[1].strip()
+    except Exception:  # noqa: S110, BLE001
+        pass  # UIDL 미지원 시 fallback
+    return uidl_map
+
+
+def _fetch_one_mail(pop: poplib.POP3, idx: int, uidl_map: dict[int, str], account: str) -> dict:
+    """POP3 에서 idx 번 메일 1건을 읽어 수집 dict 로 변환."""
+    _, raw_lines, _ = pop.retr(idx)
+    raw = b"\r\n".join(raw_lines)
+    msg = email.message_from_bytes(raw)
+
+    uidl = uidl_map.get(idx, str(idx))
+    external_id = _build_external_id(msg, uidl)
+    _, sender_addr = parseaddr(msg.get("From", ""))
+
+    return {
+        "external_id": external_id,
+        "sender": sender_addr or msg.get("From", ""),
+        "title": _decode_header_value(msg.get("Subject", "(제목 없음)")),
+        "body_raw": _extract_body(msg),
+        "received_at": _parse_received_at(msg),
+        "source_account": account,
+    }
+
+
 def fetch_recent_mails(limit: int = 20) -> list[dict]:
     """
     하이웍스 POP3에서 최근 limit건 읽기.
@@ -130,15 +175,7 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
             return []
 
         # UIDL로 안정적인 고유 ID 확보
-        uidl_map: dict[int, str] = {}
-        try:
-            _, uidl_lines, _ = pop.uidl()
-            for line in uidl_lines:
-                parts = line.decode("ascii", errors="replace").split(" ", 1)
-                if len(parts) == 2:
-                    uidl_map[int(parts[0])] = parts[1].strip()
-        except Exception:  # noqa: S110, BLE001
-            pass  # UIDL 미지원 시 fallback
+        uidl_map = _load_uidl_map(pop)
 
         # 최신 limit건 (번호 역순)
         start = max(1, num_messages - limit + 1)
@@ -146,24 +183,7 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
 
         for idx in indices:
             try:
-                _, raw_lines, _ = pop.retr(idx)
-                raw = b"\r\n".join(raw_lines)
-                msg = email.message_from_bytes(raw)
-
-                uidl = uidl_map.get(idx, str(idx))
-                external_id = _build_external_id(msg, uidl)
-                _, sender_addr = parseaddr(msg.get("From", ""))
-
-                results.append(
-                    {
-                        "external_id": external_id,
-                        "sender": sender_addr or msg.get("From", ""),
-                        "title": _decode_header_value(msg.get("Subject", "(제목 없음)")),
-                        "body_raw": _extract_body(msg),
-                        "received_at": _parse_received_at(msg),
-                        "source_account": account,
-                    }
-                )
+                results.append(_fetch_one_mail(pop, idx, uidl_map, account))
             except Exception as e:  # noqa: BLE001 - 하이웍스 POP3 메일 읽기전용 수집 - 개별 메일 파싱 실패는 continue, 연결 종료 실패는 무시
                 log.warning("메일 파싱 오류 idx=%d: %s", idx, e)
                 continue

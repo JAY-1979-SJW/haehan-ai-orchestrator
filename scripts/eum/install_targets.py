@@ -173,6 +173,26 @@ def _click_page_button(page, num: int) -> bool:
         return False
 
 
+def _accumulate_rows(page, seen: dict[str, dict[str, str]]) -> int:
+    """현재 화면 행을 공사번호 기준으로 seen 에 누적하고 신규 추가 건수를 반환."""
+    added = 0
+    for row in extract_screen_rows(page).get("rows", []):
+        key = row.get("공사번호") or row.get("공제가입번호")
+        if key and key not in seen:
+            seen[key] = row
+            added += 1
+    return added
+
+
+def _first_row_text(page) -> str:
+    try:
+        return page.evaluate(
+            "() => { const r = document.querySelector('tbody tr'); return r ? (r.innerText || '').slice(0, 40) : ''; }"
+        )
+    except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
+        return ""
+
+
 def collect_all_install_targets(page, *, max_pages: int = 50, save: bool = True) -> dict[str, Any]:
     """WEBMAN370M00 신규현장 설치대상 '전 페이지' 전수 수집 (상시 수집).
 
@@ -188,28 +208,11 @@ def collect_all_install_targets(page, *, max_pages: int = 50, save: bool = True)
 
     seen: dict[str, dict[str, str]] = {}
 
-    def _accumulate() -> int:
-        added = 0
-        for row in extract_screen_rows(page).get("rows", []):
-            key = row.get("공사번호") or row.get("공제가입번호")
-            if key and key not in seen:
-                seen[key] = row
-                added += 1
-        return added
-
-    def _first_row_text() -> str:
-        try:
-            return page.evaluate(
-                "() => { const r = document.querySelector('tbody tr'); return r ? (r.innerText || '').slice(0, 40) : ''; }"
-            )
-        except Exception:  # noqa: BLE001 - EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
-            return ""
-
-    _accumulate()  # 1페이지
+    _accumulate_rows(page, seen)  # 1페이지
     target = 2
     pages_visited = 1
     for _ in range(max_pages):
-        prev = _first_row_text()
+        prev = _first_row_text(page)
         if not _click_page_button(page, target):
             break
         # EUM 신규현장 설치대상 전 페이지 읽기전용 수집 + 엑셀 다운로드 - 실패시 False/빈 문자열/ok:False 반환, 삭제/제출 없음
@@ -220,7 +223,7 @@ def collect_all_install_targets(page, *, max_pages: int = 50, save: bool = True)
                 timeout=8000,
             )
         page.wait_for_timeout(800)
-        if _accumulate() == 0:  # 같은 페이지 재추출(더 이상 진행 안 됨) → 종료
+        if _accumulate_rows(page, seen) == 0:  # 같은 페이지 재추출(더 이상 진행 안 됨) → 종료
             break
         pages_visited = target
         target += 1

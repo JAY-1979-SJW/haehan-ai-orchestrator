@@ -87,7 +87,7 @@ def get_logger(name: str) -> logging.Logger:
     return logger
 
 
-def log_event(
+def log_event(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     logger: logging.Logger,
     level: int,
     message: str,

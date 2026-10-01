@@ -44,7 +44,7 @@ def _sanitize(data: dict[str, Any]) -> dict[str, Any]:
 # ── 상태 파일 ──────────────────────────────────────────────────────────
 
 
-def write_status(
+def write_status(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     running: bool,
     task_id: str = "",
     domain: str = "",

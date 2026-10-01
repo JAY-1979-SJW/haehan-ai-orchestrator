@@ -42,7 +42,7 @@ def _is_duplicate(item_id: str, path: str | Path) -> bool:
     return any(c.get("item_id") == item_id for c in _load_all(path))
 
 
-def save_candidate(
+def save_candidate(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     external_id: str,
     source_account: str,
