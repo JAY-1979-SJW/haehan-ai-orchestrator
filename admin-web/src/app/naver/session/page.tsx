@@ -5,7 +5,7 @@
  *
  * 화면을 열면 실제 로그인 상태와 계정을 읽기 전용으로 확인하고, **로그아웃(out)일 때만** 자동 로그인을 1회 시도한다.
  * 이미 로그인됨·상태 불명확·다른 계정이면 아무것도 건드리지 않는다(세션을 파기하지 않는다).
- * 서버가 시도를 제한한다: 직전 시도 후 5분 대기, 하루 3회. 캡차·2단계 인증은 사용자가 브라우저에서 처리한다.
+ * 시도 횟수 제한은 없다(2026-10-01 사용자 지시). 캡차·2단계 인증은 사용자가 브라우저에서 처리한다.
  * 기준서: docs/specs/2026-10-01_electron_naver_auto_login.md
  */
 
@@ -106,13 +106,13 @@ export default function NaverSessionPage() {
     }
   }, []);
 
-  // 화면을 열 때: 읽기 전용 확인 → 로그아웃(out)일 때만 자동 로그인 1회. (개발 모드의 이중 실행은 ref 로 막는다)
+  // 화면을 열 때: 상태 확인 → 로그인돼 있지 않으면(out·unknown) 바로 자동 로그인. (개발 모드의 이중 실행은 ref 로 막는다)
   useEffect(() => {
     if (autoTried.current) return;
     autoTried.current = true;
     void (async () => {
       const data = await check(DEFAULT_TARGET);
-      if (data && data.state === "out") await ensure(DEFAULT_TARGET, true);
+      if (data && (data.state === "out" || data.state === "unknown")) await ensure(DEFAULT_TARGET, true);
     })();
   }, [check, ensure]);
 
@@ -191,8 +191,8 @@ export default function NaverSessionPage() {
           <div>
             <p className="text-sm font-medium text-[#374151]">자동 로그인</p>
             <p className="text-xs text-[#6B7280] mt-1">
-              화면을 열 때 로그아웃 상태면 자동으로 1회 시도합니다. 이미 로그인돼 있으면 아무것도 하지 않습니다.
-              시도는 직전 시도 후 5분 대기, 하루 3회로 제한됩니다.
+              화면을 열 때 로그인돼 있지 않으면 바로 자동 로그인합니다. 이미 로그인돼 있으면 아무것도 하지 않습니다.
+              다른 계정으로 로그인돼 있으면 전환하지 않습니다.
             </p>
           </div>
           <button

@@ -53,3 +53,9 @@
 - 계정 확인은 블로그 관리 주소를 새 탭으로 읽는다 — 블로그가 없는 계정이면 확인 불가로 표시(동작은 안 막음).
 - 저장된 `naver:skyjswin`(오타 추정)은 삭제하지 않는다(데이터 삭제는 별도 승인).
 - 화면 종단 확인은 서버 재시작 뒤에 한다(위 4-1).
+
+## 6. 정책 변경 (2026-10-01, 사용자 지시: "안전성은 삭제하고 사용자가 요청한 사이트면 바로 로그인")
+- **제거:** 시도 제한(직전 시도 후 5분 대기·하루 3회), `unknown` 상태에서의 시도 금지. `may_attempt`·`AttemptVerdict`·`load_attempts` 삭제. 시도 기록 파일(`data/naver_login_attempts.json`)은 기록용으로만 남긴다.
+- **새 동작:** 로그인돼 있지 않으면(`out`·`unknown`) 사이트 호출 즉시 자동 로그인. 화면(`/naver/session`)도 `unknown` 에서 자동 시도. `login_session.ensure_login`(구글·카카오 등)은 대기 전에 `site_access.ensure_logged_in` 으로 먼저 자동 로그인하고, 캡차·자격증명 없음이면 기존 대기로 폴백. `site_access.open_site` 는 원래 자동 로그인 구조라 변경 없음.
+- **유지(기술적·세션 보호):** `in`(다른 계정 포함)은 건드리지 않음 — 계정 전환은 로그아웃·쿠키 삭제가 필요하고 프로젝트 session-guard 훅이 금지. 캡차·2단계 인증은 사용자 처리. 브라우저 연결 불가(`unavailable`)는 시도 불가.
+- 영향 파일: `naver_session_guard.py`, `scripts/login_session.py`, `admin-web/.../naver/session/page.tsx`, 테스트 2개.

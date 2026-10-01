@@ -38,7 +38,6 @@ class Fake:
             detect=detect,
             read_alias=lambda: self.alias,
             run_login=run_login,
-            load_attempts=lambda: list(self.attempts),
             save_attempt=self.attempts.append,
         )
 
@@ -83,8 +82,8 @@ def test_ensure_uses_the_requested_account(api):
     assert fake.login_calls == ["skyjwshin"] and body["account"] == "verified"
 
 
-@pytest.mark.parametrize("state", ["in", "unknown", "unavailable"])
-def test_ensure_leaves_non_out_sessions_alone(api, state):
+@pytest.mark.parametrize("state", ["in", "unavailable"])
+def test_ensure_leaves_logged_in_or_unreachable_sessions_alone(api, state):
     client, fake, _ = api
     fake.state = state
     body = client.post("/naver/session/ensure").json()
@@ -97,14 +96,14 @@ def test_ensure_with_allow_attempt_false_only_observes(api):
     assert fake.login_calls == [] and body["reason"] == "attempt_not_allowed"
 
 
-def test_second_ensure_within_cooldown_waits(api):
+def test_second_ensure_logs_in_again_without_throttling(api):
     client, fake, _ = api
     client.post("/naver/session/ensure")
     fake.login_calls.clear()
     fake.after_login = "out"  # 첫 시도 후에도 out 인 상황을 다시 만든다
     fake.state = "out"
     body = client.post("/naver/session/ensure").json()
-    assert fake.login_calls == [] and body["action"] == "wait" and body["reason"] == "cooldown"
+    assert fake.login_calls != [] and body["action"] != "wait"
 
 
 @pytest.mark.parametrize("name", ["bigsun2024", "naver", "skyjswin", "../x", ""])

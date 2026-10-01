@@ -1,8 +1,8 @@
-"""네이버 세션 지킴이 — out 일 때만 자동 로그인, 시도 제한, 계정 확인, 이미 로그인된 세션 보호. 브라우저·자격증명을 쓰지 않는다."""
+"""네이버 세션 지킴이 — 로그인 안 돼 있으면 바로 자동 로그인, 시도 제한 없음, 계정 확인, 이미 로그인된 세션 보호. 브라우저·자격증명을 쓰지 않는다."""
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 
@@ -47,48 +47,9 @@ class Env:
             detect=detect,
             read_alias=read_alias,
             run_login=run_login,
-            load_attempts=lambda: list(self.attempts),
             save_attempt=self.attempts.append,
             sleep=self.sleeps.append,
         )
-
-
-# ── 시도 제한 ────────────────────────────────────────────────────────────
-
-
-def test_first_attempt_is_allowed():
-    assert G.may_attempt([], NOW, "skyjwsin") == G.AttemptVerdict(True, "", 0)
-
-
-def test_cooldown_after_a_recent_attempt_regardless_of_result():
-    for result in ("ok", "failed", "captcha"):
-        verdict = G.may_attempt([attempt(NOW - timedelta(minutes=2), result=result)], NOW, "skyjwsin")
-        assert not verdict.ok and verdict.reason == "cooldown"
-        assert 170 <= verdict.wait_seconds <= 190
-
-
-def test_attempt_allowed_again_after_the_cooldown():
-    assert G.may_attempt([attempt(NOW - timedelta(minutes=G.COOLDOWN_MINUTES, seconds=1))], NOW, "skyjwsin").ok
-
-
-def test_daily_limit_blocks_until_midnight():
-    tries = [attempt(NOW - timedelta(minutes=10 * (i + 1))) for i in range(G.DAILY_MAX)]
-    verdict = G.may_attempt(tries, NOW, "skyjwsin")
-    assert (verdict.ok, verdict.reason) == (False, "daily_limit")
-    assert verdict.wait_seconds == 15 * 3600  # 09:00 → 24:00
-
-
-def test_yesterdays_attempts_do_not_count_toward_today_limit():
-    old = [attempt(datetime(2026, 9, 30, 23, 50) - timedelta(minutes=i)) for i in range(5)]
-    assert G.may_attempt(old, NOW, "skyjwsin").ok
-
-
-def test_other_accounts_attempts_do_not_block_this_one():
-    assert G.may_attempt([attempt(NOW - timedelta(minutes=1), target="skyjwshin")], NOW, "skyjwsin").ok
-
-
-def test_corrupt_attempt_records_are_ignored():
-    assert G.may_attempt([{"target": "skyjwsin"}, {"target": "skyjwsin", "at": "not a date"}], NOW, "skyjwsin").ok
 
 
 # ── 관찰 ─────────────────────────────────────────────────────────────────
@@ -128,13 +89,30 @@ def test_out_triggers_exactly_one_login_for_the_target_account():
     assert len(env.attempts) == 1 and env.attempts[0]["result"] == "ok" and env.attempts[0]["target"] == "skyjwsin"
 
 
-@pytest.mark.parametrize("state", ["in", "unknown", "unavailable"])
-def test_login_is_never_attempted_unless_state_is_out(state):
-    """이미 로그인·상태 불명확·브라우저 없음 — 살아 있는 세션을 건드리지 않는다."""
+@pytest.mark.parametrize("state", ["in", "unavailable"])
+def test_login_is_not_attempted_when_logged_in_or_browser_unavailable(state):
     env = Env([state])
     result = G.ensure_login("skyjwsin", env.deps())
     assert env.login_calls == [] and env.attempts == []
     assert result["action"] == "none"
+
+
+def test_unknown_state_also_logs_in_right_away():
+    """2026-10-01 사용자 지시: 로그인돼 있지 않으면 사이트 호출 즉시 로그인(상태 불명확도 시도)."""
+    env = Env(["unknown", "in"])
+    result = G.ensure_login("skyjwsin", env.deps())
+    assert env.login_calls == ["skyjwsin"] and result["action"] == "logged_in"
+
+
+def test_repeated_calls_are_never_throttled():
+    env = Env(
+        ["out", "out"],
+        attempts=[attempt(NOW, result="failed") for _ in range(10)],
+        login_result={"ok": False, "logged_in": False, "message": "x"},
+    )
+    G.ensure_login("skyjwsin", env.deps())
+    G.ensure_login("skyjwsin", env.deps())
+    assert env.login_calls == ["skyjwsin", "skyjwsin"]
 
 
 def test_other_account_logged_in_is_reported_not_switched():
@@ -144,29 +122,10 @@ def test_other_account_logged_in_is_reported_not_switched():
     assert "bigsun2024" in result["message"] and "전환하지 않습니다" in result["message"]
 
 
-def test_unknown_state_message_explains_why_nothing_was_tried():
-    result = G.ensure_login("skyjwsin", Env(["unknown"]).deps())
-    assert "불명확" in result["message"] and "시도하지 않았습니다" in result["message"]
-
-
 def test_allow_attempt_false_only_observes():
     env = Env(["out"])
     result = G.ensure_login("skyjwsin", env.deps(), allow_attempt=False)
     assert env.login_calls == [] and result["reason"] == "attempt_not_allowed"
-
-
-def test_cooldown_blocks_the_login_and_reports_the_wait():
-    env = Env(["out"], attempts=[attempt(NOW - timedelta(minutes=1))])
-    result = G.ensure_login("skyjwsin", env.deps())
-    assert env.login_calls == [] and result["action"] == "wait" and result["reason"] == "cooldown"
-    assert result["wait_seconds"] > 0 and "5분" in result["message"]
-
-
-def test_daily_limit_blocks_the_login():
-    tries = [attempt(NOW - timedelta(hours=i + 1)) for i in range(G.DAILY_MAX)]
-    env = Env(["out"], attempts=tries)
-    result = G.ensure_login("skyjwsin", env.deps())
-    assert env.login_calls == [] and result["reason"] == "daily_limit" and "3회" in result["message"]
 
 
 def test_failed_login_is_recorded_and_reported():
