@@ -260,63 +260,12 @@ def validate_intent(intent: str, allowed_intents: list[str]) -> bool:
     return intent in allowed_intents
 
 
-def validate_submit_policy(request: SubmitValidationRequest, allowlist: dict) -> SubmitPolicyResult:
-    """Validate submit request against policy fixture.
-
-    Main validator function. Checks all conditions sequentially.
-    Returns DENY on first failure (AND logic).
-    """
-    result = SubmitPolicyResult(
-        verdict="DENY",  # Default to deny
-        risk_level="high",
-        requires_approval=True,
-        audit_required=True,
-    )
-
-    # STEP 1: Check if allowlist has site_id
-    allowlist_exists, policy_entry = validate_allowlist_exists(request.site_id, allowlist)
-    result.allowlist_verdict = "FOUND" if allowlist_exists else "NOT_FOUND"
-
-    if not allowlist_exists:
-        result.reasons.append(f"allowlist에 site_id '{request.site_id}' 없음")
-        return result
-
-    # Now we have a policy entry
-    result.matched_case_id = request.site_id
-    result.matched_policy_entry = policy_entry or {}
-    result.preview_required = policy_entry.get("requires_preview", False) if policy_entry else False
-    result.user_confirm_required = policy_entry.get("requires_user_confirm", False) if policy_entry else False
-
-    # STEP 2: Check origin match
-    allowed_origins = policy_entry.get("allowed_origins", []) if policy_entry else []
-    origin_match = validate_origin_match(request.url, allowed_origins)
-    result.origin_verdict = "MATCH" if origin_match else "MISMATCH"
-
-    if not origin_match:
-        actual_origin = extract_origin(request.url)
-        result.reasons.append(f"origin 불일치: {actual_origin} not in {allowed_origins}")
-        return result
-
-    # STEP 3: Check path match (if specified)
-    allowed_paths = policy_entry.get("allowed_paths", []) if policy_entry else []
-    if allowed_paths:  # Only check if paths are defined
-        path_match = validate_path_match(request.url, allowed_paths)
-        if not path_match:
-            from urllib.parse import urlparse
-
-            actual_path = urlparse(request.url).path or "/"
-            result.reasons.append(f"path 불일치: {actual_path} not in {allowed_paths}")
-            return result
-
-    # STEP 4: Check form_id match
-    allowed_form_ids = policy_entry.get("allowed_form_ids", []) if policy_entry else []
-    form_match = validate_form_id(request.form_id, allowed_form_ids)
-    result.form_verdict = "FOUND" if form_match else "NOT_FOUND"
-
-    if not form_match:
-        result.reasons.append(f"form_id 불일치: '{request.form_id}' not in {allowed_form_ids}")
-        return result
-
+def _validate_button_through_confirmation(
+    request: SubmitValidationRequest,
+    result: SubmitPolicyResult,
+    policy_entry: dict | None,
+) -> SubmitPolicyResult:
+    """STEP 5~12 순차 검사 (첫 실패 시 DENY 반환, 모두 통과 시 ALLOW)."""
     # STEP 5: Check submit_button_id match
     allowed_button_ids = policy_entry.get("allowed_submit_button_ids", []) if policy_entry else []
     button_match = validate_submit_button_id(request.submit_button_id, allowed_button_ids)
@@ -379,3 +328,66 @@ def validate_submit_policy(request: SubmitValidationRequest, allowlist: dict) ->
     result.reasons = ["모든 조건 충족"]
 
     return result
+
+
+def validate_submit_policy(request: SubmitValidationRequest, allowlist: dict) -> SubmitPolicyResult:
+    """Validate submit request against policy fixture.
+
+    Main validator function. Checks all conditions sequentially.
+    Returns DENY on first failure (AND logic).
+    """
+    result = SubmitPolicyResult(
+        verdict="DENY",  # Default to deny
+        risk_level="high",
+        requires_approval=True,
+        audit_required=True,
+    )
+
+    # STEP 1: Check if allowlist has site_id
+    allowlist_exists, policy_entry = validate_allowlist_exists(request.site_id, allowlist)
+    result.allowlist_verdict = "FOUND" if allowlist_exists else "NOT_FOUND"
+
+    if not allowlist_exists:
+        result.reasons.append(f"allowlist에 site_id '{request.site_id}' 없음")
+        return result
+
+    # Now we have a policy entry
+    result.matched_case_id = request.site_id
+    result.matched_policy_entry = policy_entry or {}
+    result.preview_required = policy_entry.get("requires_preview", False) if policy_entry else False
+    result.user_confirm_required = policy_entry.get("requires_user_confirm", False) if policy_entry else False
+
+    # STEP 2: Check origin match
+    allowed_origins = policy_entry.get("allowed_origins", []) if policy_entry else []
+    origin_match = validate_origin_match(request.url, allowed_origins)
+    result.origin_verdict = "MATCH" if origin_match else "MISMATCH"
+
+    if not origin_match:
+        actual_origin = extract_origin(request.url)
+        result.reasons.append(f"origin 불일치: {actual_origin} not in {allowed_origins}")
+        return result
+
+    # STEP 3: Check path match (if specified)
+    allowed_paths = policy_entry.get("allowed_paths", []) if policy_entry else []
+    if allowed_paths:  # Only check if paths are defined
+        path_match = validate_path_match(request.url, allowed_paths)
+        if not path_match:
+            from urllib.parse import urlparse
+
+            actual_path = urlparse(request.url).path or "/"
+            result.reasons.append(f"path 불일치: {actual_path} not in {allowed_paths}")
+            return result
+
+    # STEP 4: Check form_id match
+    allowed_form_ids = policy_entry.get("allowed_form_ids", []) if policy_entry else []
+    form_match = validate_form_id(request.form_id, allowed_form_ids)
+    result.form_verdict = "FOUND" if form_match else "NOT_FOUND"
+
+    if not form_match:
+        result.reasons.append(f"form_id 불일치: '{request.form_id}' not in {allowed_form_ids}")
+        return result
+
+    # STEP 5~12: button / intent / field / injection / preview / confirm
+    return _validate_button_through_confirmation(request, result, policy_entry)
+
+

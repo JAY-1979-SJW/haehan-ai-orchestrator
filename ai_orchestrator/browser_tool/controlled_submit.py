@@ -141,6 +141,50 @@ def _contains_blocked_domain_keyword(text: str) -> tuple[bool, str]:
     return False, ""
 
 
+def _resolve_preview_url(preview_bundle: Any) -> str:
+    """Try to get URL from details or reconstruct from audit."""
+    url = ""
+    if hasattr(preview_bundle, "details") and hasattr(preview_bundle.details, "url"):
+        url = preview_bundle.details.url
+    elif hasattr(preview_bundle, "audit") and hasattr(preview_bundle.audit, "site_id"):
+        # For smoke tests, use internal.mock as default controlled URL
+        url = "https://internal.mock/form"
+    return url
+
+
+def _blocked_keyword_reason_in_payload(redacted: dict) -> str | None:
+    """redacted payload 의 문자열/리스트(dict) 값에서 차단 키워드를 찾아 사유를 반환한다."""
+    for key, value in redacted.items():
+        if isinstance(value, str):
+            has_keyword, keyword = _contains_blocked_domain_keyword(value)
+            if has_keyword:
+                return f"blocked keyword '{keyword}' in {key}"
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    for item_key, item_value in item.items():
+                        if isinstance(item_value, str):
+                            has_keyword, keyword = _contains_blocked_domain_keyword(item_value)
+                            if has_keyword:
+                                return f"blocked keyword '{keyword}' in {key}[{item_key}]"
+    return None
+
+
+def _blocked_keyword_reason_in_details(details: Any) -> str | None:
+    """form_id / submit_button_id 의 차단 키워드 사유를 반환한다."""
+    form_id = details.form_id or ""
+    button_id = details.submit_button_id or ""
+
+    has_keyword, keyword = _contains_blocked_domain_keyword(form_id)
+    if has_keyword:
+        return f"blocked keyword '{keyword}' in form_id"
+
+    has_keyword, keyword = _contains_blocked_domain_keyword(button_id)
+    if has_keyword:
+        return f"blocked keyword '{keyword}' in submit_button_id"
+    return None
+
+
 def get_blocking_reason(
     preview_bundle: Any,
     user_confirmed: bool,
@@ -166,13 +210,7 @@ def get_blocking_reason(
         return True, f"policy_verdict not ALLOW: {audit.policy_verdict}"
 
     # 4. Check origin
-    # Try to get URL from details or reconstruct from audit
-    url = ""
-    if hasattr(preview_bundle, "details") and hasattr(preview_bundle.details, "url"):
-        url = preview_bundle.details.url
-    elif hasattr(preview_bundle, "audit") and hasattr(preview_bundle.audit, "site_id"):
-        # For smoke tests, use internal.mock as default controlled URL
-        url = "https://internal.mock/form"
+    url = _resolve_preview_url(preview_bundle)
 
     if not url:
         return True, "url missing"
@@ -187,36 +225,16 @@ def get_blocking_reason(
 
     # 5. Check redacted payload for blocked keywords
     redacted = audit.redacted_payload if hasattr(audit, "redacted_payload") else {}
-    for key, value in redacted.items():
-        if isinstance(value, str):
-            has_keyword, keyword = _contains_blocked_domain_keyword(value)
-            if has_keyword:
-                return True, f"blocked keyword '{keyword}' in {key}"
-        elif isinstance(value, list):
-            for item in value:
-                if isinstance(item, dict):
-                    for item_key, item_value in item.items():
-                        if isinstance(item_value, str):
-                            has_keyword, keyword = _contains_blocked_domain_keyword(item_value)
-                            if has_keyword:
-                                return (
-                                    True,
-                                    f"blocked keyword '{keyword}' in {key}[{item_key}]",
-                                )
+    payload_reason = _blocked_keyword_reason_in_payload(redacted)
+    if payload_reason:
+        return True, payload_reason
 
     # 6. Check form_id and submit_button_id don't match denied patterns
     details = preview_bundle.details if hasattr(preview_bundle, "details") else None
     if details:
-        form_id = details.form_id or ""
-        button_id = details.submit_button_id or ""
-
-        has_keyword, keyword = _contains_blocked_domain_keyword(form_id)
-        if has_keyword:
-            return True, f"blocked keyword '{keyword}' in form_id"
-
-        has_keyword, keyword = _contains_blocked_domain_keyword(button_id)
-        if has_keyword:
-            return True, f"blocked keyword '{keyword}' in submit_button_id"
+        details_reason = _blocked_keyword_reason_in_details(details)
+        if details_reason:
+            return True, details_reason
 
     # All checks passed
     return False, ""

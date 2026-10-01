@@ -144,6 +144,68 @@ def is_g2b_public_notice_content_valid(
     return len(pos) >= 2
 
 
+def _judge_content_verdict(
+    domain_valid: bool,
+    reachable: bool,
+    final_netloc: str,
+    positive_signals: list[str],
+    negative_signals: list[str],
+) -> tuple[str, str, bool]:
+    """(content_verdict, invalid_reason, content_valid) 판정."""
+    if not domain_valid:
+        return CONTENT_INVALID, f"final_url 도메인 이탈: {final_netloc!r}", False
+    if not reachable:
+        return CONTENT_UNKNOWN, "live 실행 결과 없음", False
+    if negative_signals:
+        return REACHABLE_BUT_NOT_CONTENT_VALID, "; ".join(negative_signals), False
+    if len(positive_signals) >= 2:
+        return CONTENT_VALID_PASS, "", True
+    if positive_signals:
+        return LIVE_REACHABLE, "positive signal 부족 (2개 미만)", False
+    return CONTENT_UNKNOWN, "signal 판단 기준 부족", False
+
+
+def _classify_candidate_links(
+    raw_links: list[str], final_netloc: str
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """(candidate, safe, blocked, needs_verification) 후보 URL 분류."""
+    candidate_urls: list[str] = []
+    safe_candidate_urls: list[str] = []
+    blocked_candidate_urls: list[str] = []
+    needs_verification_candidate_urls: list[str] = []
+
+    for href in raw_links:
+        if not isinstance(href, str):
+            continue
+        href = href.strip()
+        if not href or href.startswith("#") or href.startswith("javascript"):
+            continue
+        parsed_href = urlparse(href)
+        # 상대 경로는 final_url 도메인 기준
+        netloc = parsed_href.netloc or final_netloc
+        lower_href = href.lower()
+
+        if netloc in _NEEDS_VERIFICATION_DOMAINS:
+            needs_verification_candidate_urls.append(href)
+        elif netloc not in _ALLOWED_CONTENT_DOMAINS:
+            # g2b 도메인 외부 → 후보 아님
+            continue
+        elif any(p in lower_href for p in _BLOCKED_HREF_PATTERNS):
+            blocked_candidate_urls.append(href)
+        elif any(p in lower_href for p in _DOWNLOAD_HREF_PATTERNS):
+            blocked_candidate_urls.append(href)
+        else:
+            candidate_urls.append(href)
+            safe_candidate_urls.append(href)
+
+    return (
+        candidate_urls,
+        safe_candidate_urls,
+        blocked_candidate_urls,
+        needs_verification_candidate_urls,
+    )
+
+
 def classify_g2b_public_notice_content(result: dict[str, Any]) -> dict[str, Any]:
     """
     live runner 결과 dict를 받아 content verdict 및 보강 필드를 반환한다.
@@ -176,61 +238,18 @@ def classify_g2b_public_notice_content(result: dict[str, Any]) -> dict[str, Any]
     negative_signals = _extract_negative_signals(combined)
 
     # content_verdict 판정
-    if not domain_valid:
-        content_verdict = CONTENT_INVALID
-        invalid_reason = f"final_url 도메인 이탈: {parsed_final.netloc!r}"
-        content_valid = False
-    elif not reachable:
-        content_verdict = CONTENT_UNKNOWN
-        invalid_reason = "live 실행 결과 없음"
-        content_valid = False
-    elif negative_signals:
-        content_verdict = REACHABLE_BUT_NOT_CONTENT_VALID
-        invalid_reason = "; ".join(negative_signals)
-        content_valid = False
-    elif len(positive_signals) >= 2:
-        content_verdict = CONTENT_VALID_PASS
-        invalid_reason = ""
-        content_valid = True
-    elif positive_signals:
-        content_verdict = LIVE_REACHABLE
-        invalid_reason = "positive signal 부족 (2개 미만)"
-        content_valid = False
-    else:
-        content_verdict = CONTENT_UNKNOWN
-        invalid_reason = "signal 판단 기준 부족"
-        content_valid = False
+    content_verdict, invalid_reason, content_valid = _judge_content_verdict(
+        domain_valid, reachable, parsed_final.netloc, positive_signals, negative_signals
+    )
 
     # 후보 URL 분류 (links 필드가 있을 경우)
     raw_links: list[str] = result.get("links", []) or []
-    candidate_urls: list[str] = []
-    safe_candidate_urls: list[str] = []
-    blocked_candidate_urls: list[str] = []
-    needs_verification_candidate_urls: list[str] = []
-
-    for href in raw_links:
-        if not isinstance(href, str):
-            continue
-        href = href.strip()
-        if not href or href.startswith("#") or href.startswith("javascript"):
-            continue
-        parsed_href = urlparse(href)
-        # 상대 경로는 final_url 도메인 기준
-        netloc = parsed_href.netloc or parsed_final.netloc
-        lower_href = href.lower()
-
-        if netloc in _NEEDS_VERIFICATION_DOMAINS:
-            needs_verification_candidate_urls.append(href)
-        elif netloc not in _ALLOWED_CONTENT_DOMAINS:
-            # g2b 도메인 외부 → 후보 아님
-            continue
-        elif any(p in lower_href for p in _BLOCKED_HREF_PATTERNS):
-            blocked_candidate_urls.append(href)
-        elif any(p in lower_href for p in _DOWNLOAD_HREF_PATTERNS):
-            blocked_candidate_urls.append(href)
-        else:
-            candidate_urls.append(href)
-            safe_candidate_urls.append(href)
+    (
+        candidate_urls,
+        safe_candidate_urls,
+        blocked_candidate_urls,
+        needs_verification_candidate_urls,
+    ) = _classify_candidate_links(raw_links, parsed_final.netloc)
 
     return {
         "input_url": input_url,

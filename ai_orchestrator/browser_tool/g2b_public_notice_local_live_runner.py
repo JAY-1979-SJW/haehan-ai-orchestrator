@@ -217,6 +217,45 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
     return result
 
 
+def _apply_playwright_result(result: dict[str, Any], pw_result: dict[str, Any]) -> None:
+    """playwright 읽기 결과를 live result 에 반영한다."""
+    result["local_agent_used"] = True
+    result["mock_used"] = False
+    result["live_browser_worker_called"] = True
+    result["execution_dispatched"] = True
+    result["title"] = pw_result.get("title", "")
+    result["body_text_sample"] = pw_result.get("body_text_sample", "")
+    result["body_text_length"] = pw_result.get("body_text_length", 0)
+    result["final_url"] = pw_result.get("final_url", "")
+    result["error"] = pw_result.get("error", "")
+    result["browser_headless"] = pw_result.get("browser_headless", False)
+    result["browser_close_reason"] = pw_result.get("browser_close_reason", "")
+
+
+def _judge_live_result(result: dict[str, Any]) -> dict[str, Any]:
+    """읽기 결과에 대한 verdict 판정 (download → 도메인 이탈 → 성공 조건 순)."""
+    # download 감지 시 FAIL
+    if "DOWNLOAD_DETECTED" in result.get("error", ""):
+        result["verdict"] = _VERDICT_FAIL
+        result["blocked_reason"] = "DOWNLOAD_DETECTED"
+        return result
+
+    # final_url 도메인 이탈 확인
+    if result["final_url"] and not _is_allowed_final_url(result["final_url"]):
+        result["verdict"] = _VERDICT_FAIL
+        result["blocked_reason"] = f"FINAL_URL_DOMAIN_ESCAPED: {result['final_url']}"
+        return result
+
+    # 성공 조건: title 또는 body_text_sample 확보
+    if result["title"] or result["body_text_sample"]:
+        result["verdict"] = _VERDICT_PASS
+    else:
+        result["verdict"] = _VERDICT_WARN
+        result["error"] = result["error"] or "title/body_text_sample 모두 비어 있음"
+
+    return result
+
+
 def run_g2b_public_notice_readonly_live(
     candidate: dict[str, Any],
     forbid_mock: bool = False,
@@ -325,38 +364,9 @@ def run_g2b_public_notice_readonly_live(
             result["verdict"] = _VERDICT_WARN
         return result
 
-    result["local_agent_used"] = True
-    result["mock_used"] = False
-    result["live_browser_worker_called"] = True
-    result["execution_dispatched"] = True
-    result["title"] = pw_result.get("title", "")
-    result["body_text_sample"] = pw_result.get("body_text_sample", "")
-    result["body_text_length"] = pw_result.get("body_text_length", 0)
-    result["final_url"] = pw_result.get("final_url", "")
-    result["error"] = pw_result.get("error", "")
-    result["browser_headless"] = pw_result.get("browser_headless", False)
-    result["browser_close_reason"] = pw_result.get("browser_close_reason", "")
+    _apply_playwright_result(result, pw_result)
 
-    # download 감지 시 FAIL
-    if "DOWNLOAD_DETECTED" in result.get("error", ""):
-        result["verdict"] = _VERDICT_FAIL
-        result["blocked_reason"] = "DOWNLOAD_DETECTED"
-        return result
-
-    # final_url 도메인 이탈 확인
-    if result["final_url"] and not _is_allowed_final_url(result["final_url"]):
-        result["verdict"] = _VERDICT_FAIL
-        result["blocked_reason"] = f"FINAL_URL_DOMAIN_ESCAPED: {result['final_url']}"
-        return result
-
-    # 성공 조건: title 또는 body_text_sample 확보
-    if result["title"] or result["body_text_sample"]:
-        result["verdict"] = _VERDICT_PASS
-    else:
-        result["verdict"] = _VERDICT_WARN
-        result["error"] = result["error"] or "title/body_text_sample 모두 비어 있음"
-
-    return result
+    return _judge_live_result(result)
 
 
 def validate_g2b_public_notice_live_result(result: dict[str, Any]) -> list[str]:
@@ -391,14 +401,13 @@ def validate_g2b_public_notice_live_result(result: dict[str, Any]) -> list[str]:
         if field not in result:
             errors.append(f"필수 필드 누락: {field}")
 
-    if result.get("server_browser_used") is not False:
-        errors.append("server_browser_used는 항상 False여야 한다")
-
-    if result.get("download_auto_allowed") is not False:
-        errors.append("download_auto_allowed는 항상 False여야 한다")
-
-    if result.get("local_agent_required") is not True:
-        errors.append("local_agent_required는 항상 True여야 한다")
+    for key, expected, message in (
+        ("server_browser_used", False, "server_browser_used는 항상 False여야 한다"),
+        ("download_auto_allowed", False, "download_auto_allowed는 항상 False여야 한다"),
+        ("local_agent_required", True, "local_agent_required는 항상 True여야 한다"),
+    ):
+        if result.get(key) is not expected:
+            errors.append(message)
 
     # 금지 필드 포함 여부
     for field in _FORBIDDEN_RESULT_FIELDS:
@@ -421,6 +430,81 @@ def validate_g2b_public_notice_live_result(result: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _run_suite_case(
+    case: dict[str, Any],
+    suite_result: dict[str, Any],
+    forbid_mock: bool,
+    actual_live_required: bool,
+) -> None:
+    """fixture 케이스 1건을 실행/검증하고 suite_result 에 누적한다."""
+    from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
+        build_g2b_readonly_execution_candidate,
+    )
+
+    case_id = case.get("id", "")
+    label = case.get("label", "")
+    url = case.get("url", "")
+    op = case.get("operation", "read")
+    expected = case.get("expected", {})
+    expected_verdict = expected.get("verdict", "")
+
+    case_result: dict[str, Any] = {
+        "id": case_id,
+        "label": label,
+        "url": url,
+        "operation": op,
+        "expected_verdict": expected_verdict,
+    }
+
+    candidate = build_g2b_readonly_execution_candidate(url, op)
+
+    if expected_verdict == "ALLOWED":
+        suite_result["allowed_cases"] += 1
+        # live 실행 (actual_live_required/forbid_mock 전달)
+        live_result = run_g2b_public_notice_readonly_live(
+            candidate,
+            forbid_mock=forbid_mock,
+            actual_live_required=actual_live_required,
+        )
+        case_result["live_result"] = live_result
+        case_result["case_verdict"] = live_result.get("verdict", "")
+        # actual_live_required 모드에서는 LIVE_PASS만 성공 카운트
+        if actual_live_required or forbid_mock:
+            if live_result.get("verdict") == _VERDICT_PASS:
+                suite_result["live_executed"] += 1
+        else:
+            if live_result.get("verdict") in (_VERDICT_PASS, _VERDICT_WARN):
+                suite_result["live_executed"] += 1
+
+    elif expected_verdict in ("BLOCKED",):
+        suite_result["blocked_cases"] += 1
+        # gate BLOCK 확인만 (브라우저 실행 안 함)
+        gate_verdict = candidate.get("gate_verdict", "")
+        case_result["gate_verdict"] = gate_verdict
+        case_result["execution_allowed"] = candidate.get("execution_allowed", False)
+        is_blocked = not candidate.get("execution_allowed", False)
+        case_result["case_verdict"] = "GATE_BLOCK_CONFIRMED" if is_blocked else "GATE_BLOCK_FAILED"
+        if is_blocked:
+            suite_result["gate_blocked_confirmed"] += 1
+
+    elif expected_verdict in ("NEEDS_VERIFICATION",):
+        suite_result["needs_verification_cases"] += 1
+        case_result["gate_verdict"] = candidate.get("gate_verdict", "")
+        case_result["requires_url_verification"] = candidate.get("requires_url_verification", False)
+        case_result["case_verdict"] = "NEEDS_VERIFICATION_CONFIRMED"
+
+    else:
+        # 기타 - gate 판정만
+        case_result["gate_verdict"] = candidate.get("gate_verdict", "")
+        case_result["case_verdict"] = "SKIPPED"
+
+    suite_result["results"].append(case_result)
+
+    # 케이스 간 대기 (live 실행 후)
+    if expected_verdict == "ALLOWED":
+        time.sleep(2)
+
+
 def run_g2b_public_notice_fixture_live_suite(
     fixture_path: str,
     forbid_mock: bool = False,
@@ -441,10 +525,6 @@ def run_g2b_public_notice_fixture_live_suite(
     - results
     - summary
     """
-    from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
-        build_g2b_readonly_execution_candidate,
-    )
-
     suite_result: dict[str, Any] = {
         "fixture_path": fixture_path,
         "total_cases": 0,
@@ -481,68 +561,7 @@ def run_g2b_public_notice_fixture_live_suite(
     suite_result["total_cases"] = len(cases)
 
     for case in cases:
-        case_id = case.get("id", "")
-        label = case.get("label", "")
-        url = case.get("url", "")
-        op = case.get("operation", "read")
-        expected = case.get("expected", {})
-        expected_verdict = expected.get("verdict", "")
-
-        case_result: dict[str, Any] = {
-            "id": case_id,
-            "label": label,
-            "url": url,
-            "operation": op,
-            "expected_verdict": expected_verdict,
-        }
-
-        candidate = build_g2b_readonly_execution_candidate(url, op)
-
-        if expected_verdict == "ALLOWED":
-            suite_result["allowed_cases"] += 1
-            # live 실행 (actual_live_required/forbid_mock 전달)
-            live_result = run_g2b_public_notice_readonly_live(
-                candidate,
-                forbid_mock=forbid_mock,
-                actual_live_required=actual_live_required,
-            )
-            case_result["live_result"] = live_result
-            case_result["case_verdict"] = live_result.get("verdict", "")
-            # actual_live_required 모드에서는 LIVE_PASS만 성공 카운트
-            if actual_live_required or forbid_mock:
-                if live_result.get("verdict") == _VERDICT_PASS:
-                    suite_result["live_executed"] += 1
-            else:
-                if live_result.get("verdict") in (_VERDICT_PASS, _VERDICT_WARN):
-                    suite_result["live_executed"] += 1
-
-        elif expected_verdict in ("BLOCKED",):
-            suite_result["blocked_cases"] += 1
-            # gate BLOCK 확인만 (브라우저 실행 안 함)
-            gate_verdict = candidate.get("gate_verdict", "")
-            case_result["gate_verdict"] = gate_verdict
-            case_result["execution_allowed"] = candidate.get("execution_allowed", False)
-            is_blocked = not candidate.get("execution_allowed", False)
-            case_result["case_verdict"] = "GATE_BLOCK_CONFIRMED" if is_blocked else "GATE_BLOCK_FAILED"
-            if is_blocked:
-                suite_result["gate_blocked_confirmed"] += 1
-
-        elif expected_verdict in ("NEEDS_VERIFICATION",):
-            suite_result["needs_verification_cases"] += 1
-            case_result["gate_verdict"] = candidate.get("gate_verdict", "")
-            case_result["requires_url_verification"] = candidate.get("requires_url_verification", False)
-            case_result["case_verdict"] = "NEEDS_VERIFICATION_CONFIRMED"
-
-        else:
-            # 기타 - gate 판정만
-            case_result["gate_verdict"] = candidate.get("gate_verdict", "")
-            case_result["case_verdict"] = "SKIPPED"
-
-        suite_result["results"].append(case_result)
-
-        # 케이스 간 대기 (live 실행 후)
-        if expected_verdict == "ALLOWED":
-            time.sleep(2)
+        _run_suite_case(case, suite_result, forbid_mock, actual_live_required)
 
     suite_result["summary"] = (
         f"총 {suite_result['total_cases']}개 케이스: "

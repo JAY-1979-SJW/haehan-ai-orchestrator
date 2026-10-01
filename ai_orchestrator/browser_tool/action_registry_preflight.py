@@ -251,6 +251,73 @@ def build_action_preflight_context(payload: dict) -> dict:
     }
 
 
+_DRY_RUN_DISPATCH_OPERATIONS = {"read", "navigate", "open_url", "click"}
+
+# gate 판정 → (block_reason 기본값, 메시지 접미사)
+_GATE_DECISION_BLOCKS: dict[str, tuple[str, str]] = {
+    "BLOCK": ("GATE_BLOCKED", "gate 정책 차단"),
+    "DENY_BY_DEFAULT": ("DENY_BY_DEFAULT", "기본 차단"),
+    "REQUIRE_APPROVAL": ("APPROVAL_REQUIRED", "승인 필요"),
+}
+
+
+# operation_type → (preflight_decision, block_reason, 메시지 접미사)
+_OPERATION_TYPE_DENIALS: dict[str, tuple[str, str, str]] = {
+    "submit": ("DENY_BY_DEFAULT", "SUBMIT_DENY_BY_DEFAULT", "submit 전면 차단"),
+    "type": ("BLOCK", "TYPE_BLOCKED", "type 전면 차단"),
+}
+
+
+def _finish_blocked(
+    result: dict, decision: str, block_reason: str, message_ko: str, audit: bool = True
+) -> dict:
+    """차단/거부 결과 필드를 채워 반환한다."""
+    result["preflight_decision"] = decision
+    result["block_reason"] = block_reason
+    result["message_ko"] = message_ko
+    if audit:
+        result["should_write_audit"] = True
+    return result
+
+
+def _evaluate_approval_gate(
+    result: dict,
+    payload: dict,
+    approval_store_path: str | Path | None,
+    action_name: str,
+    operation_type: str,
+) -> dict | None:
+    """승인 필요 action 의 gate preflight 평가. 최종 결과면 result, 계속 진행이면 None."""
+    gate_result = evaluate_gate_approval_preflight(payload, approval_store_path)
+    result["gate_preflight_decision"] = gate_result.get("preflight_decision", "BLOCK")
+
+    # Extract approval status
+    approval_status = gate_result.get("approval_status", "NOT_FOUND")
+    result["approval_status"] = approval_status
+
+    gate_decision = gate_result.get("preflight_decision", "BLOCK")
+
+    # Check gate decision
+    if gate_decision in _GATE_DECISION_BLOCKS:
+        default_reason, message_suffix = _GATE_DECISION_BLOCKS[gate_decision]
+        return _finish_blocked(
+            result,
+            gate_decision,
+            gate_result.get("block_reason", default_reason),
+            f"{action_name}: {message_suffix}",
+        )
+
+    # Gate approved
+    if gate_decision == "ALLOW_DRY_RUN_DISPATCH" and operation_type in _DRY_RUN_DISPATCH_OPERATIONS:
+        result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
+        result["safe_to_dispatch"] = True
+        result["message_ko"] = f"{action_name}: 승인됨, dry-run dispatch 허용"
+        result["should_write_audit"] = True
+        return result
+
+    return None
+
+
 def evaluate_action_registry_preflight(
     payload: dict,
     approval_store_path: str | Path | None = None,
@@ -339,38 +406,22 @@ def evaluate_action_registry_preflight(
 
     # Check production mode
     if payload.get("production_mode"):
-        result["preflight_decision"] = "BLOCK"
-        result["block_reason"] = "PRODUCTION_MODE_BLOCKED"
-        result["message_ko"] = f"{action_name}: production mode 차단"
-        result["should_write_audit"] = True
-        return result
+        return _finish_blocked(
+            result, "BLOCK", "PRODUCTION_MODE_BLOCKED", f"{action_name}: production mode 차단"
+        )
 
     # Operation type specific checks (priority before blocked_by_default)
-    if operation_type == "submit":
-        result["preflight_decision"] = "DENY_BY_DEFAULT"
-        result["block_reason"] = "SUBMIT_DENY_BY_DEFAULT"
-        result["message_ko"] = f"{action_name}: submit 전면 차단"
-        result["should_write_audit"] = True
-        return result
-
-    if operation_type == "type":
-        result["preflight_decision"] = "BLOCK"
-        result["block_reason"] = "TYPE_BLOCKED"
-        result["message_ko"] = f"{action_name}: type 전면 차단"
-        result["should_write_audit"] = True
-        return result
+    if operation_type in _OPERATION_TYPE_DENIALS:
+        decision, reason, message_suffix = _OPERATION_TYPE_DENIALS[operation_type]
+        return _finish_blocked(result, decision, reason, f"{action_name}: {message_suffix}")
 
     # Check blocked by default
     if policy.get("blocked_by_default"):
         block_reason = policy.get("block_reason", "ACTION_BLOCKED")
-        result["preflight_decision"] = "DENY_BY_DEFAULT"
-        result["block_reason"] = block_reason
-        result["message_ko"] = f"{action_name}: {block_reason}"
-        result["should_write_audit"] = True
-        return result
+        return _finish_blocked(result, "DENY_BY_DEFAULT", block_reason, f"{action_name}: {block_reason}")
 
     # If no approval required, allow dry-run dispatch
-    if not result["approval_required"] and operation_type in {"read", "navigate", "open_url", "click"}:
+    if not result["approval_required"] and operation_type in _DRY_RUN_DISPATCH_OPERATIONS:
         result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
         result["safe_to_dispatch"] = True
         result["message_ko"] = f"{action_name}: dry-run dispatch 허용"
@@ -378,58 +429,21 @@ def evaluate_action_registry_preflight(
 
     # Approval required: evaluate gate preflight
     if result["approval_required"]:
-        gate_result = evaluate_gate_approval_preflight(payload, approval_store_path)
-        result["gate_preflight_decision"] = gate_result.get("preflight_decision", "BLOCK")
-
-        # Extract approval status
-        approval_status = gate_result.get("approval_status", "NOT_FOUND")
-        result["approval_status"] = approval_status
-
-        gate_decision = gate_result.get("preflight_decision", "BLOCK")
-
-        # Check gate decision
-        if gate_decision == "BLOCK":
-            result["preflight_decision"] = "BLOCK"
-            result["block_reason"] = gate_result.get("block_reason", "GATE_BLOCKED")
-            result["message_ko"] = f"{action_name}: gate 정책 차단"
-            result["should_write_audit"] = True
-            return result
-
-        if gate_decision == "DENY_BY_DEFAULT":
-            result["preflight_decision"] = "DENY_BY_DEFAULT"
-            result["block_reason"] = gate_result.get("block_reason", "DENY_BY_DEFAULT")
-            result["message_ko"] = f"{action_name}: 기본 차단"
-            result["should_write_audit"] = True
-            return result
-
-        if gate_decision == "REQUIRE_APPROVAL":
-            result["preflight_decision"] = "REQUIRE_APPROVAL"
-            result["block_reason"] = gate_result.get("block_reason", "APPROVAL_REQUIRED")
-            result["message_ko"] = f"{action_name}: 승인 필요"
-            result["should_write_audit"] = True
-            return result
-
-        # Gate approved
-        if gate_decision == "ALLOW_DRY_RUN_DISPATCH":
-            if operation_type in {"read", "navigate", "open_url", "click"}:
-                result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
-                result["safe_to_dispatch"] = True
-                result["message_ko"] = f"{action_name}: 승인됨, dry-run dispatch 허용"
-                result["should_write_audit"] = True
-                return result
+        gate_outcome = _evaluate_approval_gate(
+            result, payload, approval_store_path, action_name, operation_type
+        )
+        if gate_outcome is not None:
+            return gate_outcome
 
     # Default: allow if all checks passed
-    if operation_type in {"read", "navigate", "open_url", "click"}:
+    if operation_type in _DRY_RUN_DISPATCH_OPERATIONS:
         result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
         result["safe_to_dispatch"] = True
         result["message_ko"] = f"{action_name}: dry-run dispatch 허용"
         return result
 
     # Fallback: block
-    result["preflight_decision"] = "BLOCK"
-    result["block_reason"] = "ACTION_NOT_ALLOWED"
-    result["message_ko"] = f"{action_name}: 실행 불가"
-    return result
+    return _finish_blocked(result, "BLOCK", "ACTION_NOT_ALLOWED", f"{action_name}: 실행 불가", audit=False)
 
 
 def validate_action_preflight_result(result: dict) -> list[str]:

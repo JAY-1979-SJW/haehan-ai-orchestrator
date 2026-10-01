@@ -216,25 +216,16 @@ def normalize_g2b_domain(domain: str) -> dict[str, Any]:
 def _classify_path(path: str) -> str:
     p = path.lower()
 
-    for kw in _LOGIN_PATH_KEYWORDS:
-        if kw in p:
-            return PATH_BLOCKED_LOGIN
-
-    for kw in _CERT_PATH_KEYWORDS:
-        if kw in p:
-            return PATH_BLOCKED_CERT
-
-    for kw in _BID_SUBMIT_PATH_KEYWORDS:
-        if kw in p:
-            return PATH_BLOCKED_BID_SUBMIT
-
-    for kw in _CONTRACT_PATH_KEYWORDS:
-        if kw in p:
-            return PATH_BLOCKED_CONTRACT
-
-    for kw in _PAYMENT_PATH_KEYWORDS:
-        if kw in p:
-            return PATH_BLOCKED_PAYMENT
+    # 판정 우선순위 순서 고정 (앞쪽이 먼저 차단)
+    for keywords, decision in (
+        (_LOGIN_PATH_KEYWORDS, PATH_BLOCKED_LOGIN),
+        (_CERT_PATH_KEYWORDS, PATH_BLOCKED_CERT),
+        (_BID_SUBMIT_PATH_KEYWORDS, PATH_BLOCKED_BID_SUBMIT),
+        (_CONTRACT_PATH_KEYWORDS, PATH_BLOCKED_CONTRACT),
+        (_PAYMENT_PATH_KEYWORDS, PATH_BLOCKED_PAYMENT),
+    ):
+        if any(kw in p for kw in keywords):
+            return decision
 
     return PATH_READONLY_ALLOWED
 
