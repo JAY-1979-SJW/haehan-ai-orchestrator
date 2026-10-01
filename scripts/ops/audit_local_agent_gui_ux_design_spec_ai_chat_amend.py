@@ -23,6 +23,61 @@ def _read(p: Path) -> str:
     return p.read_text(encoding="utf-8") if p.exists() else ""
 
 
+def _amend_chat_status(text, metrics):
+    # FAIL_CHAT_REQUIREMENT_MISSING — Chat 관련 키워드
+    chat_keywords = ("AI 채팅", "Chat 탭", "메시지 목록", "사용자 입력창", "작업 위임", "Enter 전송")
+    missing_chat = [k for k in chat_keywords if k not in text]
+    if missing_chat:
+        return AmendVerdict(
+            False, "FAIL_CHAT_REQUIREMENT_MISSING", reasons=[f"missing chat UX: {missing_chat[:3]}"], metrics=metrics
+        )
+
+    # FAIL_STATUS_DIAGNOSTICS_MISSING — Status / Diagnostics 탭
+    for tab in ("Status 탭", "Diagnostics 탭", "agent_id 마스킹", "재연결", "재등록"):
+        if tab not in text:
+            return AmendVerdict(False, "FAIL_STATUS_DIAGNOSTICS_MISSING", reasons=[f"missing: {tab}"], metrics=metrics)
+    return None
+
+
+def _amend_security_next(text, metrics):
+    # FAIL_SECURITY_UX_MISSING
+    sec_keywords = ("device_token", "registration_code", "마스킹", "redact", "대화 로그", "민감정보")
+    missing_sec = [k for k in sec_keywords if k not in text]
+    if missing_sec:
+        return AmendVerdict(
+            False, "FAIL_SECURITY_UX_MISSING", reasons=[f"missing security UX: {missing_sec[:3]}"], metrics=metrics
+        )
+
+    # 다음 공정명 명시
+    if NEXT_IMPL_API not in text or NEXT_IMPL_UI not in text:
+        return AmendVerdict(
+            False,
+            "FAIL_CHAT_REQUIREMENT_MISSING",
+            reasons=[f"next process names missing: {NEXT_IMPL_API} / {NEXT_IMPL_UI}"],
+            metrics=metrics,
+        )
+    return None
+
+
+def _amend_options(text, metrics):
+    # 4안 비교 명시
+    for opt in (
+        "A. wizard + tray only",
+        "B. wizard + tray + Chat 단일창",
+        "C. wizard + tray + 3탭 미니창",
+        "D. React desktop/ui",
+    ):
+        if opt not in text:
+            return AmendVerdict(
+                False, "FAIL_CHAT_REQUIREMENT_MISSING", reasons=[f"missing option: {opt}"], metrics=metrics
+            )
+
+    # 권장 C 명시
+    if not ("권장" in text and "C" in text):
+        return AmendVerdict(False, "FAIL_CHAT_REQUIREMENT_MISSING", reasons=["권장 C 명시 없음"], metrics=metrics)
+    return None
+
+
 def judge_amend(
     *,
     spec_path: Path | None = None,
@@ -43,51 +98,17 @@ def judge_amend(
     if not desktop_ui_unchanged:
         return AmendVerdict(False, "FAIL_DESKTOP_UI_SCOPE_VIOLATION", reasons=["desktop/ui touched"], metrics=metrics)
 
-    # FAIL_CHAT_REQUIREMENT_MISSING — Chat 관련 키워드
-    chat_keywords = ("AI 채팅", "Chat 탭", "메시지 목록", "사용자 입력창", "작업 위임", "Enter 전송")
-    missing_chat = [k for k in chat_keywords if k not in text]
-    if missing_chat:
-        return AmendVerdict(
-            False, "FAIL_CHAT_REQUIREMENT_MISSING", reasons=[f"missing chat UX: {missing_chat[:3]}"], metrics=metrics
-        )
+    _early = _amend_chat_status(text, metrics)
+    if _early is not None:
+        return _early
 
-    # FAIL_STATUS_DIAGNOSTICS_MISSING — Status / Diagnostics 탭
-    for tab in ("Status 탭", "Diagnostics 탭", "agent_id 마스킹", "재연결", "재등록"):
-        if tab not in text:
-            return AmendVerdict(False, "FAIL_STATUS_DIAGNOSTICS_MISSING", reasons=[f"missing: {tab}"], metrics=metrics)
+    _early = _amend_security_next(text, metrics)
+    if _early is not None:
+        return _early
 
-    # FAIL_SECURITY_UX_MISSING
-    sec_keywords = ("device_token", "registration_code", "마스킹", "redact", "대화 로그", "민감정보")
-    missing_sec = [k for k in sec_keywords if k not in text]
-    if missing_sec:
-        return AmendVerdict(
-            False, "FAIL_SECURITY_UX_MISSING", reasons=[f"missing security UX: {missing_sec[:3]}"], metrics=metrics
-        )
-
-    # 다음 공정명 명시
-    if NEXT_IMPL_API not in text or NEXT_IMPL_UI not in text:
-        return AmendVerdict(
-            False,
-            "FAIL_CHAT_REQUIREMENT_MISSING",
-            reasons=[f"next process names missing: {NEXT_IMPL_API} / {NEXT_IMPL_UI}"],
-            metrics=metrics,
-        )
-
-    # 4안 비교 명시
-    for opt in (
-        "A. wizard + tray only",
-        "B. wizard + tray + Chat 단일창",
-        "C. wizard + tray + 3탭 미니창",
-        "D. React desktop/ui",
-    ):
-        if opt not in text:
-            return AmendVerdict(
-                False, "FAIL_CHAT_REQUIREMENT_MISSING", reasons=[f"missing option: {opt}"], metrics=metrics
-            )
-
-    # 권장 C 명시
-    if not ("권장" in text and "C" in text):
-        return AmendVerdict(False, "FAIL_CHAT_REQUIREMENT_MISSING", reasons=["권장 C 명시 없음"], metrics=metrics)
+    _early = _amend_options(text, metrics)
+    if _early is not None:
+        return _early
 
     metrics["spec_length"] = len(text)
     metrics["next_processes"] = [NEXT_IMPL_API, NEXT_IMPL_UI]

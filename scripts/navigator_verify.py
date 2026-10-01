@@ -156,6 +156,80 @@ def verify_text(needle: str) -> list[dict]:
     return all_results
 
 
+_HAS_BUTTON_JS = """(needle) => {
+                    const btns = document.querySelectorAll('button, [role=button]');
+                    for (const b of btns) {
+                        const t = (b.innerText || b.textContent || '').trim();
+                        if (t === needle || t.split('\\n').some(l => l.trim() === needle)) return true;
+                    }
+                    return false;
+                }"""
+
+
+def _check_readystate(page) -> tuple[bool, str]:
+    states = []
+    for fr in page.frames:
+        try:
+            states.append(fr.evaluate("() => document.readyState"))
+        except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
+            states.append("error")
+    ok = all(s == "complete" for s in states)
+    return (ok, f"states={states}")
+
+
+def _check_has_text(page, arg) -> tuple[bool, str]:
+    for fr in page.frames:
+        try:
+            t = fr.evaluate("() => (document.body && document.body.innerText) || ''")
+            if arg in t:
+                return (True, f"frame={fr.name or 'main'}")
+        except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
+            continue
+    return (False, "not found in any frame")
+
+
+def _check_has_button(page, arg) -> tuple[bool, str]:
+    for fr in page.frames:
+        try:
+            if fr.evaluate(_HAS_BUTTON_JS, arg):
+                return (True, f"frame={fr.name or 'main'}")
+        except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
+            continue
+    return (False, "button not found")
+
+
+def _check_has_element(page, arg) -> tuple[bool, str]:
+    for fr in page.frames:
+        try:
+            ok = fr.evaluate(f"() => !!document.querySelector({arg!r})")
+            if ok:
+                return (True, f"frame={fr.name or 'main'}")
+        except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
+            continue
+    return (False, "element not found")
+
+
+def _eval_check_spec(page, spec: str) -> tuple[bool, str]:
+    if ":" in spec:
+        kind, arg = spec.split(":", 1)
+    else:
+        kind, arg = spec, ""
+    try:
+        if kind == "url_contains":
+            return (arg in page.url, page.url)
+        if kind == "readystate":
+            return _check_readystate(page)
+        if kind == "has_text":
+            return _check_has_text(page, arg)
+        if kind == "has_button":
+            return _check_has_button(page, arg)
+        if kind == "has_element":
+            return _check_has_element(page, arg)
+        return (False, f"unknown check kind: {kind}")
+    except Exception as e:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
+        return (False, f"error: {e}")
+
+
 def is_ready(checks: list[str], timeout_s: float = 2.0, page=None) -> dict:
     """페이지가 지정 조건을 모두 만족할 때까지 짧게 폴링.
 
@@ -176,59 +250,7 @@ def is_ready(checks: list[str], timeout_s: float = 2.0, page=None) -> dict:
     deadline = start + timeout_s
 
     def _eval_check(spec: str) -> tuple[bool, str]:
-        if ":" in spec:
-            kind, arg = spec.split(":", 1)
-        else:
-            kind, arg = spec, ""
-        try:
-            if kind == "url_contains":
-                return (arg in page.url, page.url)
-            if kind == "readystate":
-                states = []
-                for fr in page.frames:
-                    try:
-                        states.append(fr.evaluate("() => document.readyState"))
-                    except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
-                        states.append("error")
-                ok = all(s == "complete" for s in states)
-                return (ok, f"states={states}")
-            if kind == "has_text":
-                for fr in page.frames:
-                    try:
-                        t = fr.evaluate("() => (document.body && document.body.innerText) || ''")
-                        if arg in t:
-                            return (True, f"frame={fr.name or 'main'}")
-                    except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
-                        continue
-                return (False, "not found in any frame")
-            if kind == "has_button":
-                js = """(needle) => {
-                    const btns = document.querySelectorAll('button, [role=button]');
-                    for (const b of btns) {
-                        const t = (b.innerText || b.textContent || '').trim();
-                        if (t === needle || t.split('\\n').some(l => l.trim() === needle)) return true;
-                    }
-                    return false;
-                }"""
-                for fr in page.frames:
-                    try:
-                        if fr.evaluate(js, arg):
-                            return (True, f"frame={fr.name or 'main'}")
-                    except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
-                        continue
-                return (False, "button not found")
-            if kind == "has_element":
-                for fr in page.frames:
-                    try:
-                        ok = fr.evaluate(f"() => !!document.querySelector({arg!r})")
-                        if ok:
-                            return (True, f"frame={fr.name or 'main'}")
-                    except Exception:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
-                        continue
-                return (False, "element not found")
-            return (False, f"unknown check kind: {kind}")
-        except Exception as e:  # noqa: BLE001 - 페이지/프레임 상태 검증 헬퍼(텍스트/버튼/엘리먼트 존재 확인) - 모든 except 가 (False, 사유) 형태 결과를 반환, 읽기전용 검증 로직
-            return (False, f"error: {e}")
+        return _eval_check_spec(page, spec)
 
     results: dict = {}
     while _t.time() < deadline:

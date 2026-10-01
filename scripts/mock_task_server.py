@@ -32,6 +32,22 @@ except ImportError as e:  # pragma: no cover - dev env 필수 dep
     raise SystemExit("fastapi / uvicorn 이 필요합니다. requirements.txt 를 설치하세요.") from e
 
 
+def _verify_bearer(expected_token: str, authorization: str | None) -> None:
+    if not expected_token:
+        return  # 토큰 미설정이면 anonymous 허용 (개발 편의)
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="missing_bearer")
+    supplied = authorization.split(" ", 1)[1].strip()
+    if supplied != expected_token:
+        raise HTTPException(status_code=403, detail="bad_token")
+
+
+def _require_object_body(body) -> dict:
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="body_must_be_object")
+    return body
+
+
 def build_app(expected_token: str) -> FastAPI:
     app = FastAPI(title="local-agent-mock-api")
     pending: deque[dict] = deque()
@@ -39,13 +55,7 @@ def build_app(expected_token: str) -> FastAPI:
     lock = threading.Lock()
 
     def _check_auth(authorization: str | None) -> None:
-        if not expected_token:
-            return  # 토큰 미설정이면 anonymous 허용 (개발 편의)
-        if not authorization or not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="missing_bearer")
-        supplied = authorization.split(" ", 1)[1].strip()
-        if supplied != expected_token:
-            raise HTTPException(status_code=403, detail="bad_token")
+        _verify_bearer(expected_token, authorization)
 
     @app.get("/healthz")
     def healthz():
@@ -66,9 +76,7 @@ def build_app(expected_token: str) -> FastAPI:
         authorization: str | None = Header(default=None),
     ):
         _check_auth(authorization)
-        body = await request.json()
-        if not isinstance(body, dict):
-            raise HTTPException(status_code=400, detail="body_must_be_object")
+        body = _require_object_body(await request.json())
         with lock:
             results.append(body)
         return {"stored": True, "count": len(results)}
@@ -76,9 +84,7 @@ def build_app(expected_token: str) -> FastAPI:
     # ── 검증 helper (익명) ─────────────────────────────────────────
     @app.post("/tasks/enqueue")
     async def enqueue(request: Request):
-        body = await request.json()
-        if not isinstance(body, dict):
-            raise HTTPException(status_code=400, detail="body_must_be_object")
+        body = _require_object_body(await request.json())
         with lock:
             pending.append(body)
         return {"queued": True, "pending": len(pending)}

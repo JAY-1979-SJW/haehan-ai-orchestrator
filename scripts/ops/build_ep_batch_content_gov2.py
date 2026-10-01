@@ -49,11 +49,7 @@ def make_chart(idx: int, topic_short: str) -> str:
     return fname
 
 
-def build_body(item: dict, idx: int) -> tuple[str, str]:
-    title = item["title"]
-    topic_short = item.get("short") or title.split(",")[0]
-
-    parts = []
+def _body_part_intro(parts, item):
     parts.append(item["hook"])
     parts.append("")
     parts.append(
@@ -70,6 +66,9 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
     parts.append("")
     parts.append("■ 기본 실무 정리")
     parts.append("")
+
+
+def _body_part_compare(parts, item):
     parts.append(item["a"])
     parts.append(
         "\n이 확인을 한 번만 하고 끝내면 다음 달, 다음 현장에서 같은 문제가 반복됩니다. "
@@ -94,6 +93,9 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
         "부분과 '위법 여부를 결론 내리는' 부분은 여전히 사람과 전문가의 몫입니다. AI는 법적 결론을 "
         "내리지 않고, 확인이 필요한 항목을 찾아 정리해주는 역할까지만 합니다."
     )
+
+
+def _body_part_prompt(parts, item):
     parts.append("")
     parts.append("■ AI로 확인하는 방법 — 실제 사용 프롬프트")
     parts.append("")
@@ -114,6 +116,9 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
         "AI가 만들어낸 내용은 아닌지 교차 검증합니다. 이 두 단계를 매주·매달 반복하는 것이 "
         "'상시 AI 자체점검'의 기본 구조입니다."
     )
+
+
+def _body_part_chart_tips(parts):
     parts.append("")
     parts.append("■ 확인 단계별 소요시간 비교(예시)")
     parts.append("")
@@ -134,6 +139,9 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
         "3. AI 답변은 '1차 확인용 초안'으로만 쓰고, 실제 조치 전에는 반드시 사람이 원문과 다시 대조하세요.\n"
         "4. 여러 현장을 관리한다면 현장별로 같은 프롬프트를 재사용해 점검 주기를 통일하세요."
     )
+
+
+def _body_part_pitfalls(parts):
     parts.append("")
     parts.append("■ AI 자체점검 도입 시 놓치기 쉬운 주의사항")
     parts.append("")
@@ -150,6 +158,18 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
         "이런 식으로 정부점검에 대비한 자체점검 포인트들을 AI로 상시 정리하는 방법을 계속 소개하고 "
         "있습니다. 비슷한 고민이 있는 항목이 있으시면 댓글로 남겨주세요."
     )
+
+
+def build_body(item: dict, idx: int) -> tuple[str, str]:
+    title = item["title"]
+    topic_short = item.get("short") or title.split(",")[0]
+
+    parts = []
+    _body_part_intro(parts, item)
+    _body_part_compare(parts, item)
+    _body_part_prompt(parts, item)
+    _body_part_chart_tips(parts)
+    _body_part_pitfalls(parts)
 
     body = "\n".join(parts) + DISCLAIMER + CTA
     return body, topic_short

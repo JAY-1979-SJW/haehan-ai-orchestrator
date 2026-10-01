@@ -187,7 +187,7 @@ class VerifyResult:
         return f"[{status}] {' | '.join(parts)}" + (f" | 에러={self.error_msg}" if self.error_msg else "")
 
 
-def page_submit_and_verify(
+def page_submit_and_verify(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     page: Page,
     submit_selector: str,
     *,

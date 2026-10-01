@@ -153,7 +153,7 @@ def _diagram_card(active: int, desc: str, inset_path: Path | None = None, inset_
     return img
 
 
-def _speech_bubble(
+def _speech_bubble(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     draw: ImageDraw.ImageDraw,
     text: str,
     center_x: int,
