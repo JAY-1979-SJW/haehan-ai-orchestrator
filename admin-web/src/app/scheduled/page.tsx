@@ -138,8 +138,10 @@ function Pill({ status }: { status: string }) {
 
 function errorText(e: unknown): string {
   if (e instanceof ApiError) {
-    const detail = typeof e.detail === "string" ? e.detail : JSON.stringify(e.detail);
-    return `${e.status} ${detail}`;
+    // 사용자에게는 서버가 알려 준 사유만 보여 준다(상태 코드·JSON 원문은 숨김). FastAPI 오류는 { detail: "사유" } 형태다.
+    const body = e.detail as { detail?: unknown } | string | null;
+    const reason = typeof body === "string" ? body : typeof body?.detail === "string" ? body.detail : null;
+    return reason ?? `${e.status} ${JSON.stringify(e.detail)}`;
   }
   return e instanceof Error ? e.message : String(e);
 }
