@@ -14266,10 +14266,10 @@
    "source": "confirmed"
   },
   "scripts/site_registry.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "common",
-   "reason": "SiteSpec 외에는 사이트별 로그인·세션 함수(eum·gabia·google·kakao·naver·smartstore)를 이름으로 디스패치하는 사이트 등록표 — L1 contract 로 오분류. 이를 import 하는 L4 범용 엔진(cdp_client·login_session·site_access) 3건은 구조 부채로 결함 등록",
+   "reason": "SiteSpec 와 사이트 조회·등록·지연 로더만 가진 코어(사이트별 로그인 지식은 scripts/site_registry_sites.py 로 분리) — L4 범용 엔진(cdp_client·login_session·site_access)이 import. 코어→사이트 모듈 결합은 변수에 담은 문자열 로더(데이터 주도)라 정적 간선이 없고, 결합이 0 은 아님(결함 #113 종결 메모)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -19978,6 +19978,22 @@
    "source": "rule"
   },
   "tests/test_code_map_reach_resolver.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/site_registry_sites.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "common",
+   "reason": "eum·naver·smartstore·google·hiworks·gabia·kakao 의 사이트별 로그인·상태 확인 래퍼와 등록 항목 — 코어가 첫 조회 때 문자열 로더로 불러 등록한다. 코어를 import 하지 않음",
+   "confidence": "low",
+   "source": "confirmed"
+  },
+  "tests/test_site_registry_core.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

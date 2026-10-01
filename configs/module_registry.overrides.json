@@ -800,9 +800,9 @@
   "reason": "writer.py·selectors.py(L5)를 호출하는 네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
  },
  "scripts/site_registry.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "SiteSpec 외에는 사이트별 로그인·세션 함수(eum·gabia·google·kakao·naver·smartstore)를 이름으로 디스패치하는 사이트 등록표 — L1 contract 로 오분류. 이를 import 하는 L4 범용 엔진(cdp_client·login_session·site_access) 3건은 구조 부채로 결함 등록"
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "SiteSpec 와 사이트 조회·등록·지연 로더만 가진 코어(사이트별 로그인 지식은 scripts/site_registry_sites.py 로 분리) — L4 범용 엔진(cdp_client·login_session·site_access)이 import. 코어→사이트 모듈 결합은 변수에 담은 문자열 로더(데이터 주도)라 정적 간선이 없고, 결합이 0 은 아님(결함 #113 종결 메모)"
  },
  "scripts/naver/smartstore/product/bulk.py": {
   "layer": "L5",
@@ -823,5 +823,10 @@
   "layer": "L6",
   "role": "workflow",
   "reason": "서버 WebSocket 으로 CDP 명령을 받아 사이트 도구(ProductFormRunner·CdpPopupManager 등)를 호출하는 로컬 에이전트 디스패처 — L4 browser_engine 이 아니라 사이트 모듈을 조합하는 흐름. 코드맵이 `from local_agent import …` 를 이 파일로 잘못 해석하던 가짜 간선은 reach.py 해석기 수정으로 제거(결함 #114)"
+ },
+ "scripts/site_registry_sites.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "eum·naver·smartstore·google·hiworks·gabia·kakao 의 사이트별 로그인·상태 확인 래퍼와 등록 항목 — 코어가 첫 조회 때 문자열 로더로 불러 등록한다. 코어를 import 하지 않음"
  }
 }
