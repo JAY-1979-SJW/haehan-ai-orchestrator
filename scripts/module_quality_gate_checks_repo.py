@@ -114,6 +114,10 @@ def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
     return True, "browser runtime operating rules are locked by policy, dry-run, and pytest"
 
 
+# 서버 CI 는 사용자 지시(2026-09-29)로 GitHub Actions 의 ci.yml 하나만 허용한다. 그 외 워크플로 파일은 계속 금지.
+_ALLOWED_WORKFLOW_FILES = frozenset({"ci.yml"})
+
+
 def _local_gate_file_failure(required_gate, pre_commit, pre_push) -> tuple[bool, str] | None:
     workflows_dir = ROOT / ".github" / "workflows"
     workflow_files = []
@@ -121,7 +125,7 @@ def _local_gate_file_failure(required_gate, pre_commit, pre_push) -> tuple[bool,
         workflow_files = [
             normalize_path(str(path.relative_to(ROOT)))
             for path in workflows_dir.iterdir()
-            if path.is_file() and path.suffix.lower() in {".yml", ".yaml"}
+            if path.is_file() and path.suffix.lower() in {".yml", ".yaml"} and path.name not in _ALLOWED_WORKFLOW_FILES
         ]
     if workflow_files:
         return False, "GitHub Actions workflow files are forbidden: " + ", ".join(sorted(workflow_files))

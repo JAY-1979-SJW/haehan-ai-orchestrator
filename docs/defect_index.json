@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 117,
+  "next_no": 120,
   "items": [
     {
       "no": 1,
@@ -1475,7 +1475,8 @@
       ],
       "evidence": "2026-10-01 #42 병합 검증 중 발견. 테스트가 local_agent_router._WS_RECV_TIMEOUT_SEC 를 monkeypatch 하지만 이름은 local_agent_router_ws.py:63 에만 있음. 병합 전 커밋 fc5d60e9 에서도 동일(변경과 무관).",
       "stage": "RUN",
-      "status": "open"
+      "status": "fixed",
+      "fix_note": "2026-10-01 코드 결함이 아니라 테스트가 낡았음: WS 수신 timeout 상수(_WS_RECV_TIMEOUT_SEC)는 WS 엔드포인트를 분리한 local_agent_router_ws 모듈이 소유하는데 테스트가 파사드(local_agent_router)를 패치. 테스트의 패치 대상을 local_agent_router_ws 로 수정(파사드 재노출로는 해결 안 됨 — ws 모듈이 자기 전역을 읽음). ai_orchestrator/tests/test_local_agent_ws.py 57 passed."
     },
     {
       "no": 112,
@@ -1558,6 +1559,51 @@
       "stage": "AUDIT",
       "status": "open",
       "fix_note": "각 함수가 (a) 다른 방식으로 이미 보호/기록되고 있어 정말 불필요한지, (b) 호출을 연결해야 하는지 도메인 확인 필요. 주문·가격·게시·제출 쪽 게이트부터. (b)이면 연결 후 테스트, (a)이면 삭제."
+    },
+    {
+      "no": 117,
+      "id": "legacy.dashboard_html_templates_removed",
+      "category": 1,
+      "title": "루트 dashboard.py(Flask 레거시 대시보드)의 HTML 템플릿(ui/templates)이 2026-05-23 '레거시 ui 제거' 커밋에서 삭제돼 HTML 화면 6개가 TemplateNotFound — JSON 라우트는 정상",
+      "where": [
+        "dashboard.py",
+        "ui/templates (삭제됨)",
+        "tests/test_dashboard_routes.py"
+      ],
+      "evidence": "2026-10-01 실패 테스트 정리 중 확인. dashboard.py 는 configs/root_legacy_scripts.json 에 runtime_entrypoint('대시보드 경로 이전 전까지 유지')로 등록돼 있고 app.py --dashboard 및 테스트 10여 개가 create_app 을 사용. test_dashboard_routes 6건(test_dashboard_200 등)이 TemplateNotFound: dashboard.html 로 실패.",
+      "stage": "RUN",
+      "status": "open",
+      "fix_note": "사용자 결정 필요: (a) 템플릿을 git 이력(3f48a9f5^)에서 복구, (b) 레거시 5050 대시보드를 폐기하고 dashboard.py·테스트 정리. 이 결정 전에는 건드리지 않음."
+    },
+    {
+      "no": 118,
+      "id": "gates.required_local_gate_wiring_stale",
+      "category": 3,
+      "title": "module_quality_gate 의 required_local_gate_wiring 검사가 '.githooks/pre-commit 이 python scripts/required_quality_gate.py 를 호출해야 함'을 요구하나 현재 훅 구조(commit_checklist 래퍼 + pre-commit.orig, install_git_hooks.py 생성)와 불일치",
+      "where": [
+        "scripts/module_quality_gate_checks_repo.py",
+        "tests/test_module_quality_gate.py::test_required_local_gate_wiring_passes_current_sources",
+        ".githooks/pre-commit"
+      ],
+      "evidence": "2026-10-01 확인: 메시지 '.githooks/pre-commit does not delegate to scripts/required_quality_gate.py'. 같은 테스트 파일의 root_legacy 검사는 로컬 작업 폴더의 미추적 임시 파일 tmpnzbjosab.py(2026-09-30 이전 세션 산출물, 읽기 전용 분석 스크립트)가 루트에 있어 UNCLASSIFIED_ROOT_SCRIPT 로 실패 — 깨끗한 체크아웃(CI)에서는 해당 없음.",
+      "stage": "AUDIT",
+      "status": "open",
+      "fix_note": "훅 구조가 바뀐 만큼 검사 기준을 현재 구조(래퍼→pre-commit.orig→quality_gate)에 맞출지, 훅이 required_quality_gate 를 호출하게 할지 결정 필요(커밋 동작 전체에 영향). tmpnzbjosab.py 는 소유자 확인 후 삭제."
+    },
+    {
+      "no": 119,
+      "id": "ops_router.write_endpoint_in_read_only_router",
+      "category": 2,
+      "title": "ops_router(운영 대시보드 읽기 전용 라우터)에 POST /ops/approvals/gc(대기 중 승인을 만료 처리)가 있어 '읽기 전용' 계약 테스트 4건과 충돌 — 일반 JWT 사용자 권한으로 호출 가능해 보임",
+      "where": [
+        "ai_orchestrator/routers/ops_router.py:83",
+        "tests/test_ops_router_read_only_20260516.py",
+        "admin-web/src/lib/ops-api(fallback·cad_external_app 목 데이터 기대)"
+      ],
+      "evidence": "2026-10-01 확인: 라우트는 2026-09-24 허브 분리(e9c7144b)에서 옮겨짐. Depends(get_jwt_user) 만 있고 관리자 권한 검사가 없음. 테스트 4건(test_no_post_endpoint 등)은 읽기 전용 계약과 프런트 api.ts 의 fallback 문구·mock 데이터를 기대하는데 둘 다 변경됨.",
+      "stage": "RUN",
+      "status": "open",
+      "fix_note": "설계·보안 판단 필요: (a) gc 를 승인 라우터로 옮기고 관리자 권한을 요구, (b) 읽기 전용 계약을 완화하고 테스트 갱신. 승인 상태 변경 API 의 권한 범위부터 확인."
     }
   ]
 }
