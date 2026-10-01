@@ -154,7 +154,7 @@ def test_real_catalog_grades_and_param_validation():
     for key, spec in actions.ACTIONS.items():
         if key.startswith("fake"):
             continue
-        expected = GRADE_USER_DELEGATED if key in ("telegram_notify", "blog_publish", "naver_mail_enable") else GRADE_AUTO_ALLOWED
+        expected = GRADE_USER_DELEGATED if key in ("telegram_notify", "blog_publish", "naver_mail_enable", "naver_mail_send") else GRADE_AUTO_ALLOWED
         assert classify_action(spec.risk_action) == expected, key
     with pytest.raises(ValueError):
         actions.ACTIONS["naver_login_check"].validate({"target": "bigsun2024"})  # 등록되지 않은 계정

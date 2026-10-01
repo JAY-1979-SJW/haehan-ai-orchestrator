@@ -20040,6 +20040,30 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/naver/mail_imap/reader.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "네이버 메일 IMAP 수신(읽기 전용) 사이트 모듈",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/naver/mail_imap/sender.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "네이버 메일 SMTP 발송 사이트 모듈",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_naver_mail_rw.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

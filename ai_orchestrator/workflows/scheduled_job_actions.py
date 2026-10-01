@@ -98,6 +98,35 @@ def _mail_account_params(params: dict[str, Any]) -> dict[str, Any]:
     return _blog_target(params)
 
 
+def _mail_fetch_params(params: dict[str, Any]) -> dict[str, Any]:
+    extra = set(params) - {"target", "unseen_only", "limit"}
+    if extra:
+        raise ValueError(f"알 수 없는 설정값: {sorted(extra)}")
+    base = _blog_target({"target": params["target"]} if "target" in params else {})
+    unseen = params.get("unseen_only", True)
+    if isinstance(unseen, str):
+        unseen = unseen.strip().lower() not in ("false", "0", "no", "all")
+    try:
+        limit = int(params["limit"]) if params.get("limit") not in (None, "") else 20
+    except (TypeError, ValueError) as e:
+        raise ValueError("가져올 개수는 숫자여야 합니다") from e
+    if not 1 <= limit <= 50:
+        raise ValueError("가져올 개수는 1~50 이어야 합니다")
+    return {**base, "unseen_only": bool(unseen), "limit": limit}
+
+
+def _mail_send_params(params: dict[str, Any]) -> dict[str, Any]:
+    from scripts.naver.mail_imap import sender
+
+    extra = set(params) - {"target", "to", "subject", "body"}
+    if extra:
+        raise ValueError(f"알 수 없는 설정값: {sorted(extra)}")
+    base = _blog_target({"target": params["target"]} if "target" in params else {})
+    to = sender.parse_recipients(str(params.get("to") or ""))
+    subject, body = sender.validate_content(str(params.get("subject") or ""), str(params.get("body") or ""))
+    return {**base, "to": ", ".join(to), "subject": subject, "body": body}
+
+
 # ── 실행 ────────────────────────────────────────────────────────────────
 
 
@@ -230,6 +259,28 @@ def _run_naver_mail_enable(params: dict[str, Any]) -> str:
     return "이미 사용함으로 설정돼 있습니다(변경 없음)" if not result["changed"] else "IMAP/SMTP 를 '사용함'으로 저장하고 반영을 확인했습니다"
 
 
+def _run_naver_mail_fetch(params: dict[str, Any]) -> str:
+    """IMAP 으로 받은편지함 최근 메일 헤더를 읽는다(읽음 표시는 바뀌지 않는다)."""
+    from scripts.naver.mail_imap import reader
+
+    result = reader.list_messages(params["target"], unseen_only=params["unseen_only"], limit=params["limit"])
+    if not result["ok"]:
+        raise RuntimeError(reader.describe(result))
+    return reader.describe(result)
+
+
+def _run_naver_mail_send(params: dict[str, Any]) -> str:
+    """SMTP 로 메일 1통을 보낸다. 회차 승인을 받은 뒤에만 호출된다."""
+    from scripts.naver.mail_imap import sender
+
+    result = sender.send_mail(params["target"], params["to"], params["subject"], params["body"])
+    if not result["ok"]:
+        raise RuntimeError(result["message"])
+    if result["refused"]:
+        raise RuntimeError(f"일부 수신자에게 전달되지 않았습니다: {result['refused']}")
+    return f"메일을 보냈습니다 (수신자 {len(result['recipients'])}명)"
+
+
 ACTIONS: dict[str, ActionSpec] = {
     "community_analysis": ActionSpec(
         key="community_analysis",
@@ -276,6 +327,24 @@ ACTIONS: dict[str, ActionSpec] = {
         validate=_mail_account_params,
         run=_run_naver_mail_enable,
     ),
+    "naver_mail_fetch": ActionSpec(
+        key="naver_mail_fetch",
+        label="네이버 메일 받은편지함 읽기",
+        description="IMAP 으로 받은편지함 최근 메일의 보낸 사람·제목·날짜를 가져옵니다(읽음 표시는 바뀌지 않습니다).",
+        risk_action="read_page",
+        needs_browser=False,
+        validate=_mail_fetch_params,
+        run=_run_naver_mail_fetch,
+    ),
+    "naver_mail_send": ActionSpec(
+        key="naver_mail_send",
+        label="네이버 메일 보내기",
+        description="정한 수신자·제목·본문으로 메일을 보냅니다. 실행 시각마다 앱에서 내용을 확인하고 승인해야 전송됩니다.",
+        risk_action="send_email",
+        needs_browser=False,
+        validate=_mail_send_params,
+        run=_run_naver_mail_send,
+    ),
     "telegram_notify": ActionSpec(
         key="telegram_notify",
         label="텔레그램 알림 보내기",
@@ -316,13 +385,13 @@ def catalog() -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     for spec in ACTIONS.values():
         fields: list[dict[str, Any]] = []
-        if spec.validate in (_blog_target, _mail_account_params):
+        if spec.validate in (_blog_target, _mail_account_params, _mail_fetch_params, _mail_send_params):
             from scripts.naver.blog.accounts import BLOG_ACCOUNTS
 
             fields.append(
                 {
                     "name": "target",
-                    "label": "네이버 계정" if spec.validate is _mail_account_params else "블로그 계정",
+                    "label": "블로그 계정" if spec.validate is _blog_target else "네이버 계정",
                     "type": "select",
                     "options": sorted(BLOG_ACCOUNTS),
                     "default": DEFAULT_BLOG_TARGET,
@@ -344,6 +413,17 @@ def catalog() -> list[dict[str, Any]]:
                     "option_labels": VISIBILITIES,
                     "default": "public",
                 },
+            ]
+        if spec.validate is _mail_fetch_params:
+            fields += [
+                {"name": "unseen_only", "label": "안 읽은 메일만", "type": "select", "options": ["true", "false"], "option_labels": {"true": "안 읽은 메일만", "false": "전체"}, "default": "true"},
+                {"name": "limit", "label": "가져올 개수 (1~50)", "type": "line", "options": [], "default": "20"},
+            ]
+        if spec.validate is _mail_send_params:
+            fields += [
+                {"name": "to", "label": "받는 사람 (쉼표로 구분, 최대 10명)", "type": "line", "options": [], "default": ""},
+                {"name": "subject", "label": "제목", "type": "line", "options": [], "default": ""},
+                {"name": "body", "label": "본문", "type": "text", "options": [], "default": ""},
             ]
         if spec.validate is _telegram_params:
             fields.append(
