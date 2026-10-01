@@ -88,9 +88,13 @@ def load_session_edits(session_id: str | None) -> list[str]:
     if not path.exists():
         return []
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        edits = json.loads(path.read_text(encoding="utf-8"))
     except Exception:  # noqa: BLE001 - 훅(hook) 스크립트 — 보조 기록/캐시/영향테스트 조회 실패로 저장 자체를 막으면 안 되므로 의도적 fail-open(코드 주석에 이미 명시됨), 이 저장소 rules.toml ERR-06(훅 진입점은 넓은 예외로 감싼다)과 일치(2026-09-28 검토)
         return []
+    # 서브에이전트 격리 워크트리(.claude/worktrees/) 파일은 제외한다 — 기준선(HEAD 의 같은 경로)이
+    # 없어 기존 ruff 오류가 전부 "새 오류"로 집계되는 오탐이 나고, 그 파일은 해당 워크트리 브랜치의
+    # 커밋 훅이 따로 검증한다(defect_index #112, 2026-10-01).
+    return [e for e in edits if not str(e).replace("\\", "/").startswith(".claude/worktrees/")]
 
 
 def cleanup_old_session_edit_files(max_age_seconds: float = SESSION_EDITS_MAX_AGE_SECONDS) -> None:

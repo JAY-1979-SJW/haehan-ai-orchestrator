@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-29",
-  "next_no": 112,
+  "next_no": 113,
   "items": [
     {
       "no": 1,
@@ -1474,6 +1474,20 @@
       "evidence": "2026-10-01 #42 병합 검증 중 발견. 테스트가 local_agent_router._WS_RECV_TIMEOUT_SEC 를 monkeypatch 하지만 이름은 local_agent_router_ws.py:63 에만 있음. 병합 전 커밋 fc5d60e9 에서도 동일(변경과 무관).",
       "stage": "RUN",
       "status": "open"
+    },
+    {
+      "no": 112,
+      "id": "hooks.stop_gate_worktree_false_positive",
+      "category": 3,
+      "title": "Stop/PostToolUse 빠른 게이트가 서브에이전트 격리 워크트리(.claude/worktrees/) 파일의 기존 ruff 오류를 '새 오류'로 오탐해 세션 종료를 반복 차단",
+      "where": [
+        "scripts/ops/post_edit_fast_gate.py",
+        "scripts/ops/stop_fast_verify.py"
+      ],
+      "evidence": "2026-10-01 #42 후속 중 G1·G4a 에이전트 워크트리 파일(S110 등 기존 오류)이 반복 차단. 기준선을 HEAD 의 같은 경로에서 찾는데 워크트리 경로는 HEAD 에 없어 전부 신규로 집계됨.",
+      "stage": "RUN",
+      "status": "fixed",
+      "fix_note": "2026-10-01 load_session_edits 에서 .claude/worktrees/ 하위 경로 제외(워크트리 브랜치는 자체 커밋 훅이 검증). 관련 테스트 20 passed."
     }
   ]
 }
