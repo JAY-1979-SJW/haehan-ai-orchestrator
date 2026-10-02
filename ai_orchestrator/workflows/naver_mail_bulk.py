@@ -198,7 +198,7 @@ def run(
     now_fn: Callable[[], datetime],
     *,
     uploads: list[att.Upload] | None = None,
-    sleep: Callable[[float], None] = time.sleep,
+    sleep: Callable[[float], None] | None = None,
     rand: Callable[[], float] = random.random,
 ) -> RunResult:
     """승인서 하나를 한 번 실행한다. 정책이 허용한 수신자에게만, 한도 안에서, 한 명씩 차례로 보낸다."""
@@ -217,6 +217,7 @@ def run(
     if decision.action != policy.SEND:
         return out
 
+    wait = sleep or time.sleep  # 호출 시점에 해석한다(기본값으로 묶으면 시험에서 time.sleep 을 바꿔도 먹히지 않는다)
     streak, sent_any = 0, False
     for recipient in decision.to_send:
         email = recipient["email"]
@@ -224,7 +225,7 @@ def run(
             _record(auth, row["document_hash"], email, store.DRY_RUN, "드라이런 — 전송하지 않음")
             continue
         if sent_any:
-            sleep(policy.next_delay_sec(row["interval_sec"], rand()))
+            wait(policy.next_delay_sec(row["interval_sec"], rand()))
         if not _still_allowed(auth_id, now_fn()):
             out.stopped_midway = True
             break

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { mailboxApi, type Account, type Folder, type MessageDetail, type MessageList as MessageListData, type MessageRow } from "../lib/api";
@@ -448,6 +449,9 @@ export function MailboxApp() {
           🤖 AI 업무 창
           {aiDrafts.length > 0 && <span className="rounded-full bg-[#F97316] px-[7px] py-px text-[10px] font-bold text-white">{aiDrafts.length}</span>}
         </button>
+        <Link href="/mailbox/bulk" className="hidden shrink-0 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1 text-[12px] text-[#374151] lg:block">
+          📨 대량 발송
+        </Link>
         <label className="hidden shrink-0 items-center gap-1 text-[12px] text-[#6B7280] lg:flex">
           <input type="checkbox" checked={alertOn} onChange={(e) => { setAlertOn(e.target.checked); writePref(ALERT_KEY, e.target.checked); }} />
           새 메일 알림
