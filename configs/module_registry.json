@@ -20808,6 +20808,78 @@
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/app/gongmu/GongmuApp.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/gongmu/api.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/gongmu/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/gongmu_task_policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/gongmu_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/gongmu_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/gongmu_service.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_gongmu_policy.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_gongmu_service.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

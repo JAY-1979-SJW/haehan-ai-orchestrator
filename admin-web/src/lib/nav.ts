@@ -23,6 +23,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "mail", label: "메일 비서", shortLabel: "메일", href: "/mail" },
       { key: "mailbox", label: "메일함", shortLabel: "함", href: "/mailbox" },
       { key: "hanafax", label: "하나팩스", shortLabel: "팩스", href: "/hanafax" },
+      { key: "gongmu", label: "건설업 공무", shortLabel: "공무", href: "/gongmu", adminOnly: true },
       { key: "google", label: "구글 허브", shortLabel: "구글", href: "/google" },
       { key: "login-status", label: "로그인 현황", shortLabel: "로그인", href: "/login-status" },
       { key: "mypage", label: "설정", shortLabel: "설정", href: "/mypage" },

@@ -324,6 +324,14 @@ def _run_naver_mail_bulk_send(params: dict[str, Any]) -> str:
     return "차례 발송을 시작했습니다. 진행 상황은 메일함의 대량 발송 화면에서 확인하세요"
 
 
+def _run_gongmu_due_notice(_: dict[str, Any]) -> str:
+    """새 기간(월·연) 업무를 앱 안 DB 에 추가하고 지연·임박 업무를 요약한다. 외부 접속·발송 없음(읽기 전용 요약)."""
+    from ai_orchestrator.services import gongmu_service as gongmu
+
+    gongmu.generate_all(actor="scheduled")
+    return gongmu.notice_text()
+
+
 def _run_hanafax_send(params: dict[str, Any]) -> str:
     """승인서 범위 안에서 팩스를 자동 발송한다. 승인서가 드라이런이면 전송하지 않고 계획만 기록한다."""
     from datetime import datetime
@@ -444,6 +452,15 @@ ACTIONS: dict[str, ActionSpec] = {
         needs_browser=False,
         validate=_mail_bulk_params,
         run=_run_naver_mail_bulk_send,
+    ),
+    "gongmu_due_notice": ActionSpec(
+        key="gongmu_due_notice",
+        label="공무 업무 기한 알림",
+        description="공무 업무판에서 기한이 지났거나 임박한 업무를 요약합니다(새 달·해 업무도 앱 안에 자동 추가). 외부 사이트 접속·발송은 하지 않습니다.",
+        risk_action="read_page",
+        needs_browser=False,
+        validate=_no_params,
+        run=_run_gongmu_due_notice,
     ),
     "telegram_notify": ActionSpec(
         key="telegram_notify",
