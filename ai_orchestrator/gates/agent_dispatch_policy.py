@@ -3,15 +3,19 @@
 기준서: docs/specs/2026-10-02_app_agent_dispatch.md §2·§4 (P2).
 
 하위 작업이 선언한 자원(resources)으로 "같이 돌려도 되는가"를 판정한다.
-- 전역 직렬 자원(git/db/server/deploy/delete/permission/secret): 그 작업이 도는 동안 다른 작업은 시작하지 않는다.
-- 배타 자원(ui, cdp:<사이트>, path:<경로>): 같은 토큰(경로는 포함 관계)끼리만 동시 실행 금지.
-- 읽기 전용 + 자원 선언 없음: 자유롭게 병렬.
+- 전역 직렬 자원(git/db/server/deploy/delete/permission/secret): 그 작업이 도는 동안 다른 작업(읽기 전용 포함)은 시작하지 않고,
+  다른 작업이 도는 동안에는 시작하지 않는다(단독 실행).
+- 배타 자원(ui, cdp:<사이트>, path:<경로>): 같은 토큰(경로는 정규화한 뒤 포함 관계)끼리만 동시 실행 금지.
+- 읽기 전용 + 자원 선언 없음: 전역 직렬 작업이 아니면 자유롭게 병렬.
 - 자원을 선언하지 않았거나 모르는 토큰이면 전역 직렬로 취급한다(fail-closed).
 """
 
 from __future__ import annotations
 
+import posixpath
+import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 # ── 한도(기준서 §5·§8 확정값) ────────────────────────────────────────────
@@ -40,12 +44,79 @@ class ResourceClaim:
 
     tokens: frozenset[str]
     is_global: bool
-    free: bool  # 읽기 전용 + 선언 없음 → 충돌 판정 대상 아님
+    free: bool  # 읽기 전용 + 선언 없음 → 전역 직렬이 아닌 작업과는 충돌 판정 대상 아님
 
 
-def _norm_path(token: str) -> str:
-    value = token[len("path:") :].replace("\\", "/").strip().lower().rstrip("/")
-    return "path:" + value
+# 상대 경로의 기준 폴더(= 로컬 에이전트가 claude 를 실행하는 저장소 루트). 순수 계산이며 파일 시스템을 읽지 않는다.
+WORKDIR = Path(__file__).resolve().parents[2].as_posix().lower()
+
+_DRIVE_ABS = re.compile(r"^([a-z]:)/")
+_DRIVE_REL = re.compile(r"^[a-z]:(?!/)")
+_BAD_PATH_CHARS = re.compile(r'[\x00-\x1f*?"<>|]')
+_SHORT_NAME = re.compile(r"~\d")
+
+
+def _clean_segments(value: str) -> str | None:
+    """세그먼트별 Windows 정규화: 끝의 점·공백 제거(`src.` == `src`), 8.3 짧은 이름은 판정 불가라 거부."""
+    segs = []
+    for seg in value.split("/"):
+        if seg in ("", ".", ".."):
+            segs.append(seg)
+            continue
+        cleaned = seg.rstrip(". ")
+        if not cleaned or _SHORT_NAME.search(cleaned):
+            return None
+        segs.append(cleaned)
+    return "/".join(segs)
+
+
+def _norm_path(token: str) -> str | None:
+    """`path:<경로>` 를 비교 가능한 표준형(`path:c:/dir/sub` 또는 `path://host/share/dir`)으로 바꾼다.
+
+    같은 위치를 가리키는 서로 다른 표기(`src`·`./src`·`SRC/`·`src.`·`src/../src`·절대/상대·슬래시 방향·`\\\\?\\` 접두)를
+    하나로 모은다. 판정할 수 없는 표기(드라이브 상대 `C:src`, 앞 슬래시만 있는 `/x`, 와일드카드, 제어문자,
+    대체 데이터 스트림 `a:b`, 8.3 짧은 이름, 기준을 벗어나는 `..`)는 None → 호출자가 전역 직렬로 처리한다(fail-closed).
+    심볼릭 링크·정션은 이름만으로 알 수 없다(격리 worktree 실행으로 보완 — 기준서 P4).
+    """
+    raw = token[len("path:") :].strip()
+    if not raw or _BAD_PATH_CHARS.search(raw):
+        return None
+    value = raw.replace("\\", "/").lower()
+    if value.startswith("//?/unc/"):
+        value = "//" + value[len("//?/unc/") :]
+    elif value.startswith(("//?/", "//./")):
+        value = value[4:]
+
+    anchored = _anchor_of(value)
+    if anchored is None:
+        return None
+    anchor, value = anchored
+    cleaned = _clean_segments(value)
+    if cleaned is None:
+        return None
+    normalized = posixpath.normpath(cleaned)
+    if normalized != anchor and not normalized.startswith(anchor + "/"):
+        return None  # `..` 로 드라이브/공유 루트 밖으로 벗어남
+    return "path:" + normalized
+
+
+def _anchor_of(value: str) -> tuple[str, str] | None:
+    """경로의 뿌리(드라이브 `c:` 또는 UNC `//host/share`)와 절대화한 경로를 돌려준다. 판정 불가면 None."""
+    if value.startswith("//"):  # UNC: //host/share/...
+        host_share = value[2:].split("/")[:2]
+        if len(host_share) < 2 or not all(host_share):
+            return None
+        return "//" + "/".join(host_share), value
+    if _DRIVE_REL.match(value) or value.startswith("/"):
+        return None
+    m = _DRIVE_ABS.match(value)
+    if m is not None:
+        return (m.group(1), value) if ":" not in value[len(m.group(1)) :] else None
+    if ":" in value:
+        return None  # 대체 데이터 스트림 등
+    absolute = f"{WORKDIR}/{value}"
+    base = _DRIVE_ABS.match(absolute)
+    return (base.group(1), absolute) if base else None  # 기준 폴더가 드라이브 경로가 아니면 판정 불가
 
 
 def _valid_token(token: str) -> bool:
@@ -54,33 +125,34 @@ def _valid_token(token: str) -> bool:
     return any(token.startswith(p) and len(token) > len(p) for p in _EXCLUSIVE_PREFIXES)
 
 
+def _normalize_token(item: str) -> str | None:
+    token = item.strip()
+    if token.lower().startswith("path:"):
+        token = _norm_path(token) or ""
+    else:
+        token = token.lower()
+    return token if token and _valid_token(token) else None
+
+
+_UNKNOWN_CLAIM = ResourceClaim(frozenset({"unknown"}), True, False)
+
+
 def claim_of(task: dict[str, Any]) -> ResourceClaim:
     """하위 작업 dict 에서 자원 선언을 읽어 정규화한다. 모호하면 전역 직렬."""
     raw = task.get("resources")
     read_only = task.get("read_only") is True
-    if raw is None or not isinstance(raw, (list, tuple, set, frozenset)):
-        raw_list: list[Any] = []
-        declared = False
-    else:
-        raw_list = list(raw)
-        declared = True
-
+    declared = isinstance(raw, (list, tuple, set, frozenset))
     tokens: set[str] = set()
-    for item in raw_list:
-        if not isinstance(item, str):
-            return ResourceClaim(frozenset({"unknown"}), True, False)
-        token = item.strip().lower() if not item.strip().lower().startswith("path:") else item.strip()
-        if token.lower().startswith("path:"):
-            token = _norm_path(token)
-        if not _valid_token(token):
-            return ResourceClaim(frozenset({"unknown"}), True, False)
+    for item in raw if declared else []:
+        token = _normalize_token(item) if isinstance(item, str) else None
+        if token is None:
+            return _UNKNOWN_CLAIM
         tokens.add(token)
 
     if not tokens:
         if read_only and declared:
             return ResourceClaim(frozenset(), False, True)
-        # 선언 없음(또는 쓰기 작업인데 빈 선언) → fail-closed
-        return ResourceClaim(frozenset({"unknown"}), True, False)
+        return _UNKNOWN_CLAIM  # 선언 없음(또는 쓰기 작업인데 빈 선언) → fail-closed
     return ResourceClaim(frozenset(tokens), bool(tokens & GLOBAL_SERIAL_RESOURCES), False)
 
 
@@ -90,11 +162,15 @@ def _paths_overlap(a: str, b: str) -> bool:
 
 
 def conflicts(a: ResourceClaim, b: ResourceClaim) -> bool:
-    """두 작업을 동시에 돌리면 안 되면 True."""
-    if a.free or b.free:
-        return False
+    """두 작업을 동시에 돌리면 안 되면 True.
+
+    전역 직렬 작업은 읽기 전용(free) 작업을 포함해 **모든** 작업과 충돌한다(그 작업이 도는 동안 다른 작업은 시작하지 않고,
+    그 작업은 다른 작업이 도는 동안 시작하지 않는다). 읽기 전용+선언 없음 작업끼리, 그리고 비전역 작업과는 병렬이다.
+    """
     if a.is_global or b.is_global:
         return True
+    if a.free or b.free:
+        return False
     for ta in a.tokens:
         for tb in b.tokens:
             if ta.startswith("path:") and tb.startswith("path:"):

@@ -29,11 +29,14 @@ def test_global_resources_conflict_with_everything_non_free(res):
     assert pol.conflicts(g, g)
 
 
-def test_read_only_without_resources_is_free():
+def test_read_only_without_resources_is_free_except_against_global():
     free = pol.claim_of(T("r", [], read_only=True))
     assert free.free
-    assert not pol.conflicts(free, pol.claim_of(T("g", ["git"])))
     assert not pol.conflicts(free, free)
+    assert not pol.conflicts(free, pol.claim_of(T("p", ["path:C:/a"])))  # 비전역 작업과는 병렬
+    # 전역 직렬 작업은 읽기 전용 작업과도 동시에 돌지 않는다(기준서 §4 — 리뷰어 재현: 둘이 같이 시작됐음)
+    assert pol.conflicts(free, pol.claim_of(T("g", ["git"])))
+    assert pol.conflicts(pol.claim_of(T("g", ["git"])), free)
 
 
 @pytest.mark.parametrize(
@@ -150,3 +153,13 @@ def test_preview_waves():
     tasks = [ok("a"), ok("b"), T("g", ["deploy"], deps=["a", "b"]), ok("c", deps=["g"])]
     assert pol.preview_waves(tasks, 2) == [["a", "b"], ["g"], ["c"]]
     assert pol.preview_waves([ok("a"), ok("b")], 1) == [["a"], ["b"]]
+
+
+def test_global_task_never_overlaps_read_only_in_scheduler():
+    r = T("r", [], read_only=True)
+    g = T("g", ["git"])
+    assert pol.next_step([r, g], {}, 3)[0] == ["r"]  # g 는 r 이 도는 동안 시작하지 않는다
+    assert pol.next_step([g, r], {}, 3)[0] == ["g"]  # g 가 시작되면 r 은 대기
+    assert pol.next_step([g, r], {"g": pol.RUNNING}, 3)[0] == []
+    assert pol.next_step([r, g], {"r": pol.RUNNING}, 3)[0] == []
+    assert pol.next_step([r, g], {"r": pol.DONE}, 3)[0] == ["g"]
