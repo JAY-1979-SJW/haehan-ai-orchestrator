@@ -278,14 +278,20 @@ def unknown_numbers(document_hash: str) -> set[str]:
 
 
 def count_sent(authorization_id: str, *, since_iso: str | None = None) -> int:
-    """이 승인서로 보낸 건수(성공 + 결과 불명 — 불명도 이미 나갔을 수 있어 한도에 포함한다)."""
-    sql = "SELECT COUNT(*) FROM send_log WHERE authorization_id=? AND status IN (?, ?)"
-    params: list[Any] = [authorization_id, SENT, UNKNOWN]
+    """이 승인서로 보낸 건수 — **번호별 가장 최근 상태**가 성공·결과 불명·선점(전송 요청 직전)인 번호 수.
+
+    불명·선점도 이미 나갔을 수 있어 한도에 포함한다. 사람이 '발송되지 않음'으로 해소하면(failed 기록) 그 번호는 빠지고,
+    '발송됨'으로 해소하면(sent 기록) 같은 번호가 두 번 세어지지 않는다. since_iso 가 있으면 그 시각 이후 기록만 본다.
+    """
+    sql = "SELECT fax_digits, status FROM send_log WHERE authorization_id=? AND status != ?"
+    params: list[Any] = [authorization_id, DRY_RUN]
     if since_iso:
         sql += " AND created_at >= ?"
         params.append(since_iso)
     with _conn() as con:
-        return int(con.execute(sql, params).fetchone()[0])
+        rows = con.execute(sql + " ORDER BY rowid", params).fetchall()
+    latest = {r["fax_digits"]: r["status"] for r in rows}
+    return sum(1 for status in latest.values() if status in (SENT, UNKNOWN, CLAIMED))
 
 
 def list_send_log(authorization_id: str, limit: int = 200) -> list[dict[str, Any]]:

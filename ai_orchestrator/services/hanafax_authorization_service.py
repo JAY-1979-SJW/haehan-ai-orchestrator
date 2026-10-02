@@ -12,7 +12,7 @@ import json
 import os
 import re
 import threading
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -246,12 +246,53 @@ def preview(auth_id: str) -> dict[str, Any]:
     row = store.get_authorization(auth_id)
     if row is None:
         raise ValueError("승인서를 찾을 수 없습니다")
+    pending = store.unknown_numbers(row["document_hash"])
     return {
         **row,
         "recipient_count": len(row["recipients"]),
         "document_name": re.split(r"[\\/]", row["document_ref"])[-1],
         "document_matches": _document_matches(row),
+        "draft_expired": _draft_expired(row),
+        "pending_numbers": [r["fax"] for r in row["recipients"] if r["fax"] in pending],  # 결과 확인이 필요한 번호
     }
+
+
+DRAFT_TTL_HOURS = 24  # 승인 대기 초안은 만든 지 이 시간이 지나면 승인할 수 없다(오래된 초안으로 카드를 다시 띄워 승인을 유도하는 것 방지)
+
+
+def _draft_expired(row: dict[str, Any]) -> bool:
+    if row["approved"]:
+        return False
+    created = datetime.fromisoformat(row["created_at"])
+    return datetime.now(UTC) - created > timedelta(hours=DRAFT_TTL_HOURS)
+
+
+def resolve_pending(auth_id: str, fax: str, outcome: str, *, pin: str, user: str) -> dict[str, Any]:
+    """'확인 필요'(결과 불명) 번호를 사람이 하나팩스 발송 내역에서 확인한 뒤 해소한다. **승인 PIN 이 필요하다.**
+
+    outcome: "sent"(실제로 발송됨 → 성공으로 기록, 다시 보내지 않음) | "not_sent"(발송되지 않음 → 실패로 기록, 다시 보낼 수 있음).
+    """
+    approval_pin.verify(pin)
+    if outcome not in ("sent", "not_sent"):
+        raise ValueError("outcome 은 sent 또는 not_sent 여야 합니다")
+    row = store.get_authorization(auth_id)
+    if row is None:
+        raise ValueError("승인서를 찾을 수 없습니다")
+    number = policy.parse_number(fax)
+    if number is None or number not in store.unknown_numbers(row["document_hash"]):
+        raise ValueError("확인 필요 상태인 번호가 아닙니다")
+    sent = outcome == "sent"
+    store.record_send(
+        store.SendRecord(
+            auth_id,
+            number,
+            row["document_hash"],
+            store.SENT if sent else store.FAILED,
+            None,
+            f"사람이 확인({user}): {'발송됨' if sent else '발송되지 않음'}",
+        )
+    )
+    return preview(auth_id)
 
 
 def _document_matches(row: dict[str, Any]) -> bool:
@@ -270,6 +311,8 @@ def approve(auth_id: str, *, user: str, live: bool, pin: str) -> dict[str, Any]:
     row = store.get_authorization(auth_id)
     if row is None:
         raise ValueError("승인서를 찾을 수 없습니다")
+    if _draft_expired(row):
+        raise ValueError(f"초안을 만든 지 {DRAFT_TTL_HOURS}시간이 지나 만료되었습니다 — 새로 요청하세요")
     if not _document_matches(row):
         raise ValueError("문서가 승인서를 만든 뒤 바뀌었거나 없습니다 — 새 승인서를 만드세요")
     return store.approve(auth_id, user=user, live=live)

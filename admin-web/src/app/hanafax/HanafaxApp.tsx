@@ -247,6 +247,33 @@ export function HanafaxApp() {
                 마지막 실행: {run.last.message}
               </div>
             )}
+            {detail.pending_numbers && detail.pending_numbers.length > 0 && (
+              <div className="space-y-1 rounded border border-amber-300 bg-amber-50 p-2" data-testid="fax-pending">
+                <b>확인 필요 {detail.pending_numbers.length}건</b> — 결과를 확정하지 못해 다시 보내지 않고 멈춘 번호입니다.
+                하나팩스 &quot;전송결과&quot; 메뉴에서 실제로 나갔는지 확인한 뒤 처리하세요(승인 PIN 필요).
+                {detail.pending_numbers.map((n) => (
+                  <div key={n} className="flex items-center justify-between gap-2">
+                    <span>{n}</span>
+                    <span className="space-x-1">
+                      <button
+                        className="rounded border bg-white px-2 py-0.5 disabled:opacity-50"
+                        disabled={busy || !pin}
+                        onClick={() => act(() => faxApi.resolvePending(detail.id, n, "sent", pin))}
+                      >
+                        발송됨 확인
+                      </button>
+                      <button
+                        className="rounded border bg-white px-2 py-0.5 disabled:opacity-50"
+                        disabled={busy || !pin}
+                        onClick={() => act(() => faxApi.resolvePending(detail.id, n, "not_sent", pin))}
+                      >
+                        발송 안 됨(재전송 허용)
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             {log.length > 0 && (
               <table className="w-full text-xs">
                 <thead>

@@ -79,6 +79,11 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
     <div className="mt-2 space-y-2 rounded-lg border border-[#FDBA74] bg-white p-2 text-[11px] text-[#111827]" data-testid="fax-approval-card">
       <div className="font-semibold">팩스 발송 승인 — {auth.name}</div>
       <div>제목: {auth.subject}</div>
+      <div className="text-gray-500">
+        요청 시각: {new Date(auth.created_at).toLocaleString("ko-KR")}
+        {auth.created_by ? ` · 요청자: ${auth.created_by}` : ""}
+      </div>
+      {auth.draft_expired && <div className="text-red-600">초안을 만든 지 24시간이 지나 만료되었습니다 — 새로 요청하세요.</div>}
       <div className="break-all">첨부: {auth.document_ref}</div>
       <div>
         수신 {auth.recipient_count}곳 —{" "}
@@ -109,7 +114,7 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
           <div className="flex gap-2">
             <button
               className="rounded bg-[#F97316] px-3 py-1 text-white disabled:opacity-50"
-              disabled={busy || !pin || auth.document_matches === false}
+              disabled={busy || !pin || auth.document_matches === false || auth.draft_expired}
               onClick={approve}
             >
               승인하고 발송

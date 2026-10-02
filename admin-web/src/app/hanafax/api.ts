@@ -13,6 +13,8 @@ export interface Authorization {
   document_ref: string;
   document_name?: string;
   document_matches?: boolean;
+  draft_expired?: boolean;
+  pending_numbers?: string[];
   recipients?: Recipient[];
   recipient_count: number;
   approved: boolean;
@@ -90,6 +92,8 @@ export const faxApi = {
   revoke: (id: string) => post<Authorization>(`authorizations/${id}/revoke`),
   run: (id: string) => post<RunStatus>(`authorizations/${id}/run`),
   runStatus: (id: string) => call<RunStatus>(`authorizations/${id}/run`),
+  resolvePending: (id: string, fax: string, outcome: "sent" | "not_sent", pin: string) =>
+    post<Authorization>(`authorizations/${id}/resolve`, { fax, outcome, pin }),
   startPreview: (id: string) => post<PreviewStatus>(`authorizations/${id}/preview`),
   previewStatus: (id: string) => call<PreviewStatus>(`authorizations/${id}/preview`),
   previewImageUrl: (id: string, stamp: string) => `${BASE}/authorizations/${id}/preview.png?t=${encodeURIComponent(stamp)}`,

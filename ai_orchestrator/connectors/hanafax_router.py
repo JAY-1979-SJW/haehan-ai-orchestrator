@@ -213,6 +213,12 @@ class KillSwitchRequest(BaseModel):
     pin: str = ""  # 정지 해제(on=false)에만 필요
 
 
+class ResolveRequest(BaseModel):
+    fax: str
+    outcome: str  # "sent"(실제로 발송됨) | "not_sent"(발송되지 않음)
+    pin: str = ""
+
+
 class PinRequest(BaseModel):
     pin: str
     old_pin: str = ""
@@ -342,6 +348,15 @@ def kill_switch_state(_: dict = Depends(require_role("admin", "owner"))):
     from ai_orchestrator.persistence import fax_authorization_store as fax_store
 
     return {"kill_switch": fax_store.kill_switch_on()}
+
+
+@hanafax_router.post("/authorizations/{auth_id}/resolve", response_model=dict)
+def resolve_pending(auth_id: str, body: ResolveRequest, user: dict = Depends(require_role("admin", "owner"))):
+    """'확인 필요' 번호를 사람이 하나팩스 발송 내역에서 확인한 뒤 해소한다(발송됨/발송되지 않음). 승인 PIN 필요."""
+    try:
+        return _auth_service().resolve_pending(auth_id, body.fax, body.outcome, pin=body.pin, user=_actor(user))
+    except ValueError as exc:
+        raise HTTPException(status_code=403 if "PIN" in str(exc) else 400, detail=str(exc)) from exc
 
 
 @hanafax_router.get("/authorizations/{auth_id}/log", response_model=list[dict])
