@@ -856,5 +856,10 @@
   "role": "policy",
   "reason": "메일 AI 초안 정책(상태 전이·한도·첨부 경로 안전) — 저장·네트워크 부작용 없는 순수 판정이라 L2. 파일명의 draft 때문에 L7 persistence 로 오분류.",
   "source": "manual"
+ },
+ "ai_orchestrator/services/agent_dispatch_service.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "작업 분배(계획 제안·승인·병렬 실행)를 조율하는 업무 흐름 서비스 — 'agent' 이름 때문에 L4 generic 오분류"
  }
 }
