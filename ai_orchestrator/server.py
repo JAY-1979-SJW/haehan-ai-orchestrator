@@ -73,6 +73,23 @@ def _start_scheduled_job_loop() -> asyncio.Task | None:
         return None
 
 
+def _resume_agent_dispatch() -> None:
+    """서버 재시작 전에 승인된 채 끝나지 않은 AI 작업 분배가 있으면 러너를 다시 띄운다(실패해도 기동을 막지 않음)."""
+    try:
+        from .workflows.agent_dispatch_runner import resume_running
+
+        if resume_running():
+            logger.info("AI 작업 분배 러너 재개(승인된 진행 중 분배안 있음)")
+    except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동 시 작업 분배 러너 재개 실패 처리 - 로그만 남기고 기동 계속, 보안 판정과 무관
+        logger.warning("AI 작업 분배 러너 재개 실패 (무시): %s", e)
+
+
+def _start_user_job_loops() -> asyncio.Task | None:
+    """사용자 작업 계열 백그라운드 시작: 예약 작업 루프 + 승인된 AI 작업 분배 재개."""
+    _resume_agent_dispatch()
+    return _start_scheduled_job_loop()
+
+
 async def _stop_task(task: asyncio.Task | None) -> None:
     if task:
         task.cancel()
@@ -112,7 +129,7 @@ async def lifespan(app: FastAPI):
         logger.warning("gonobi 스케줄러 시작 실패 (무시): %s", e)
 
     # 사용자 예약 작업 루프 (앱 화면에서 만든 예약을 실행 시각에 실행)
-    scheduled_job_task = _start_scheduled_job_loop()
+    scheduled_job_task = _start_user_job_loops()
 
     # CDP 팝업 백그라운드 폴러 시작 (CDP 미연결 시 자동 재시도)
     try:

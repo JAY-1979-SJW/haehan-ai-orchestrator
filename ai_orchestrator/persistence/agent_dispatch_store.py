@@ -197,9 +197,15 @@ def approve(did: str, approved_by: str) -> bool:
 
 
 # ── 하위 작업 진행 ───────────────────────────────────────────────────────
-def update_subtask(did: str, tid: str, **fields: Any) -> None:
-    allowed = {"state", "agent_id", "task_id", "result_text", "error", "started_at", "finished_at"}
-    bad = set(fields) - allowed
+_UPDATABLE_FIELDS = {"state", "agent_id", "task_id", "result_text", "error", "started_at", "finished_at"}
+
+
+def update_subtask(did: str, tid: str, *, expect_states: tuple[str, ...] | None = None, **fields: Any) -> bool:
+    """하위 작업 필드 갱신. expect_states 를 주면 현재 상태가 그중 하나일 때만 바꾼다.
+
+    오래된 스냅샷으로 이미 바뀐 상태(예: 취소로 skipped)를 덮어쓰는 것을 막는다. 바뀌었으면 True.
+    """
+    bad = set(fields) - _UPDATABLE_FIELDS
     if bad:
         raise ValueError(f"갱신할 수 없는 필드: {sorted(bad)}")
     if "result_text" in fields:
@@ -207,10 +213,37 @@ def update_subtask(did: str, tid: str, **fields: Any) -> None:
     if "error" in fields:
         fields["error"] = str(fields["error"])[:500]
     if not fields:
-        return
+        return False
     sets = ", ".join(f"{k}=?" for k in fields)
+    sql = f"UPDATE subtasks SET {sets} WHERE dispatch_id=? AND tid=?"
+    args: list[Any] = [*fields.values(), did, tid]
+    if expect_states:
+        sql += f" AND state IN ({','.join('?' * len(expect_states))})"
+        args += list(expect_states)
     with _conn() as con:
-        con.execute(f"UPDATE subtasks SET {sets} WHERE dispatch_id=? AND tid=?", [*fields.values(), did, tid])
+        return con.execute(sql, args).rowcount == 1
+
+
+def claim_subtask(did: str, tid: str) -> bool:
+    """pending → starting 선점. 분배안이 running 이고 하위 작업이 pending 일 때만 성공한다.
+
+    큐에 넣기 *전에* 선점해서, 큐 등록 뒤 기록이 실패해도 같은 작업이 다시 큐에 들어가지 않게 하고,
+    취소된 분배안에서는 시작 자체가 DB 수준에서 거부된다.
+    """
+    with _conn() as con:
+        return (
+            con.execute(
+                "UPDATE subtasks SET state='starting', started_at=? WHERE dispatch_id=? AND tid=? AND state='pending'"
+                " AND EXISTS (SELECT 1 FROM dispatches WHERE id=? AND status=?)",
+                (_now(), did, tid, did, RUNNING),
+            ).rowcount
+            == 1
+        )
+
+
+def mark_subtask_running(did: str, tid: str, agent_id: str, task_id: str) -> bool:
+    """starting → running(큐 작업 id 기록). starting 일 때만 성공한다."""
+    return update_subtask(did, tid, expect_states=("starting",), state="running", agent_id=agent_id, task_id=task_id)
 
 
 def running_dispatch_ids() -> list[str]:

@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -55,6 +56,7 @@ def _min_free_memory_mb() -> int:
 
 MIN_FREE_MEMORY_MB = _min_free_memory_mb()
 GOAL_MAX_CHARS = 2000
+DISPATCH_TIMEOUT_SEC = 7200  # 승인 후 분배 전체 제한(2시간). 큐 작업이 끝나지 않는 경우의 안전망
 RESULT_MAX_CHARS = 20000
 _DEP_RESULT_CHARS = 3000
 
@@ -258,21 +260,34 @@ def _cancel_queue_task(agent_id: str, task_id: str, actor: str) -> None:
         logger.debug("큐 작업 취소 무시: %s", type(exc).__name__)
 
 
-def cancel(did: str, actor: str) -> dict[str, Any]:
-    d = store.get_dispatch(did)
-    if d is None:
-        raise DispatchError("분배안을 찾을 수 없습니다")
-    if not store.set_status(
-        did, store.CANCELLED, note=f"취소({actor})", only_from=(store.PLANNING, store.PROPOSED, store.RUNNING)
-    ):
-        raise DispatchError(f"취소할 수 없는 상태입니다({d['status']})")
-    for t in d["subtasks"]:
-        if t["state"] == pol.RUNNING and t["task_id"]:
+_LIVE_SUBTASK_STATES = (pol.PENDING, pol.STARTING, pol.RUNNING)
+
+
+def _stop_subtasks(did: str, tasks: list[dict[str, Any]], actor: str, reason: str) -> None:
+    """아직 끝나지 않은 하위 작업을 건너뜀 처리하고, 큐에 들어간 작업은 취소를 요청한다. 이미 끝난 상태는 덮지 않는다."""
+    for t in tasks:
+        if t["state"] not in _LIVE_SUBTASK_STATES:
+            continue
+        if t["task_id"]:
             _cancel_queue_task(t["agent_id"], t["task_id"], actor)
-        if t["state"] in (pol.PENDING, pol.RUNNING):
-            store.update_subtask(did, t["tid"], state=pol.SKIPPED, error="분배 취소", finished_at=_now())
-    if d["status"] == store.PLANNING and d["planner_task_id"]:
-        _cancel_queue_task(d["planner_agent_id"], d["planner_task_id"], actor)
+        store.update_subtask(
+            did, t["tid"], expect_states=_LIVE_SUBTASK_STATES, state=pol.SKIPPED, error=reason, finished_at=_now()
+        )
+
+
+def cancel(did: str, actor: str) -> dict[str, Any]:
+    # tick 과 같은 락을 잡는다: 진행 중인 tick 이 끝난 뒤의 최신 상태로 취소해야, tick 이 큐에 넣은 작업도 함께 취소된다.
+    with _lock_for(did):
+        d = store.get_dispatch(did)
+        if d is None:
+            raise DispatchError("분배안을 찾을 수 없습니다")
+        if not store.set_status(
+            did, store.CANCELLED, note=f"취소({actor})", only_from=(store.PLANNING, store.PROPOSED, store.RUNNING)
+        ):
+            raise DispatchError(f"취소할 수 없는 상태입니다({d['status']})")
+        _stop_subtasks(did, d["subtasks"], actor, "분배 취소")
+        if d["status"] == store.PLANNING and d["planner_task_id"]:
+            _cancel_queue_task(d["planner_agent_id"], d["planner_task_id"], actor)
     return {"id": did, "status": store.CANCELLED}
 
 
@@ -307,20 +322,42 @@ def _subtask_prompt(sub: dict[str, Any], by_tid: dict[str, dict[str, Any]]) -> s
 
 
 def _sync_running(did: str, tasks: list[dict[str, Any]]) -> None:
-    """실행 중인 하위 작업의 큐 상태를 읽어 done/failed 로 반영한다."""
+    """실행 중인 하위 작업의 큐 상태를 읽어 done/failed 로 반영한다. 이미 바뀐 상태는 덮어쓰지 않는다."""
     for t in tasks:
+        if t["state"] == pol.STARTING:
+            # 선점만 하고 큐 작업 id 를 남기지 못한 채 끊김(프로세스 중단 등). 비용 중복을 피하려고 재시도하지 않는다.
+            store.update_subtask(
+                did,
+                t["tid"],
+                expect_states=(pol.STARTING,),
+                state=pol.FAILED,
+                error="시작 중 중단 — 자동 재시도하지 않음",
+                finished_at=_now(),
+            )
+            continue
         if t["state"] != pol.RUNNING:
             continue
         rt = _reg.get_task(t["agent_id"], t["task_id"])
+        run = (pol.RUNNING,)
         if rt is None:
-            store.update_subtask(did, t["tid"], state=pol.FAILED, error="작업을 찾을 수 없음", finished_at=_now())
+            store.update_subtask(
+                did, t["tid"], expect_states=run, state=pol.FAILED, error="작업을 찾을 수 없음", finished_at=_now()
+            )
         elif rt.status == "completed":
-            store.update_subtask(did, t["tid"], state=pol.DONE, result_text=_result_text(rt), finished_at=_now())
+            store.update_subtask(
+                did, t["tid"], expect_states=run, state=pol.DONE, result_text=_result_text(rt), finished_at=_now()
+            )
         elif rt.status in ("failed", "rejected", "cancelled"):
-            store.update_subtask(did, t["tid"], state=pol.FAILED, error=rt.error or rt.status, finished_at=_now())
+            store.update_subtask(
+                did, t["tid"], expect_states=run, state=pol.FAILED, error=rt.error or rt.status, finished_at=_now()
+            )
 
 
 def _start_subtask(did: str, sub: dict[str, Any], by_tid: dict[str, dict[str, Any]], agent_id: str) -> None:
+    """선점(pending→starting) → 큐 등록 → 기록(starting→running). 어느 단계에서 실패해도 같은 작업을 다시 큐에 넣지 않는다."""
+    if not store.claim_subtask(did, sub["tid"]):
+        return  # 이미 취소·종료됐거나 다른 곳에서 시작됨
+    starting = (pol.STARTING,)
     try:
         task_id = _enqueue(
             agent_id=agent_id,
@@ -334,10 +371,30 @@ def _start_subtask(did: str, sub: dict[str, Any], by_tid: dict[str, dict[str, An
     except Exception as exc:  # noqa: BLE001 - 큐 등록 실패는 그 하위 작업만 실패로 기록(다른 작업 계속)
         logger.warning("하위 작업 시작 실패 (%s): %s", sub["tid"], type(exc).__name__)
         store.update_subtask(
-            did, sub["tid"], state=pol.FAILED, error=f"시작 실패: {type(exc).__name__}", finished_at=_now()
+            did,
+            sub["tid"],
+            expect_states=starting,
+            state=pol.FAILED,
+            error=f"시작 실패: {type(exc).__name__}",
+            finished_at=_now(),
         )
         return
-    store.update_subtask(did, sub["tid"], state=pol.RUNNING, agent_id=agent_id, task_id=task_id, started_at=_now())
+    try:
+        recorded = store.mark_subtask_running(did, sub["tid"], agent_id, task_id)
+    except Exception as exc:  # noqa: BLE001 - 기록 실패: 큐 작업은 이미 있으므로 취소를 요청하고 실패 처리(재큐잉 금지)
+        logger.warning("하위 작업 시작 기록 실패 (%s): %s", sub["tid"], type(exc).__name__)
+        recorded = False
+    if not recorded:
+        _cancel_queue_task(agent_id, task_id, "dispatch")
+        with contextlib.suppress(Exception):
+            store.update_subtask(
+                did,
+                sub["tid"],
+                expect_states=starting,
+                state=pol.FAILED,
+                error="시작 기록 실패 — 큐 작업 취소를 요청함",
+                finished_at=_now(),
+            )
 
 
 def _finish_if_done(did: str) -> str:
@@ -345,7 +402,7 @@ def _finish_if_done(did: str) -> str:
     if d is None or d["status"] != store.RUNNING:
         return d["status"] if d else "missing"
     states = [t["state"] for t in d["subtasks"]]
-    if any(s in (pol.PENDING, pol.RUNNING) for s in states):
+    if any(s in _LIVE_SUBTASK_STATES for s in states):
         return store.RUNNING
     bad = sum(1 for s in states if s == pol.FAILED)
     skipped = sum(1 for s in states if s == pol.SKIPPED)
@@ -356,14 +413,29 @@ def _finish_if_done(did: str) -> str:
     return store.COMPLETED
 
 
+def _timed_out(d: dict[str, Any]) -> bool:
+    """승인 시각부터 DISPATCH_TIMEOUT_SEC 가 지났으면 True(큐 작업이 영원히 끝나지 않는 경우의 안전망)."""
+    try:
+        approved = datetime.fromisoformat(d["approved_at"])
+    except (TypeError, ValueError):
+        return False
+    return (datetime.now(UTC) - approved).total_seconds() > DISPATCH_TIMEOUT_SEC
+
+
 def tick(did: str) -> str:
-    """분배 실행을 한 걸음 진행하고 분배안 상태를 돌려준다. 같은 분배안의 동시 호출은 직렬화한다."""
+    """분배 실행을 한 걸음 진행하고 분배안 상태를 돌려준다. 같은 분배안의 tick·취소는 직렬화한다."""
     with _lock_for(did):
         d = store.get_dispatch(did)
         if d is None or d["status"] != store.RUNNING:
             return d["status"] if d else "missing"
         _sync_running(did, d["subtasks"])
         d = store.get_dispatch(did) or d
+        if _timed_out(d):
+            _stop_subtasks(did, d["subtasks"], "dispatch-timeout", "분배 전체 시간 초과")
+            store.set_status(
+                did, store.FAILED, note=f"분배 전체 시간 초과({DISPATCH_TIMEOUT_SEC}초)", only_from=(store.RUNNING,)
+            )
+            return store.FAILED
         tasks = d["subtasks"]
         states = {t["tid"]: t["state"] for t in tasks}
 
@@ -373,7 +445,14 @@ def tick(did: str) -> str:
             cap = min(cap, _reg.get_agent_capacity(agent["agent_id"]))
         start, skipped = pol.next_step([_policy_task(t) for t in tasks], states, cap)
         for tid in skipped:
-            store.update_subtask(did, tid, state=pol.SKIPPED, error="앞선 작업 실패·건너뜀", finished_at=_now())
+            store.update_subtask(
+                did,
+                tid,
+                expect_states=(pol.PENDING,),
+                state=pol.SKIPPED,
+                error="앞선 작업 실패·건너뜀",
+                finished_at=_now(),
+            )
         if start and agent is not None and not _low_memory():
             by_tid = {t["tid"]: t for t in tasks}
             for tid in start:

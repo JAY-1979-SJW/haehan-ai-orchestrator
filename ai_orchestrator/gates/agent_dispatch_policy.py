@@ -30,7 +30,7 @@ _EXCLUSIVE_EXACT = frozenset({"ui"})
 _EXCLUSIVE_PREFIXES = ("cdp:", "path:")
 
 # 작업 상태
-PENDING, RUNNING, DONE, FAILED, SKIPPED = "pending", "running", "done", "failed", "skipped"
+PENDING, STARTING, RUNNING, DONE, FAILED, SKIPPED = "pending", "starting", "running", "done", "failed", "skipped"
 _FINISHED_BAD = (FAILED, SKIPPED)
 
 
@@ -262,7 +262,7 @@ def next_step(
             skipped.append(tid)
 
     skipped_set = set(skipped)
-    active = [tid for tid, s in states.items() if s == RUNNING and tid in by_id]
+    active = [tid for tid, s in states.items() if s in (STARTING, RUNNING) and tid in by_id]
     start: list[str] = []
     for tid, t in by_id.items():
         if len(active) + len(start) >= cap:
@@ -294,13 +294,13 @@ def preview_waves(tasks: list[dict[str, Any]], max_parallel: int = DEFAULT_PARAL
 __all__ = [
     "DEFAULT_PARALLEL",
     "GLOBAL_SERIAL_RESOURCES",
-    "READ_ONLY_ROLES",
-    "ROLES",
-    "WRITE_ROLES",
     "MAX_PARALLEL",
     "MAX_SUBTASKS",
+    "READ_ONLY_ROLES",
+    "ROLES",
     "TASK_BUDGET_USD",
     "TOTAL_BUDGET_USD",
+    "WRITE_ROLES",
     "ResourceClaim",
     "claim_of",
     "clamp_parallel",
