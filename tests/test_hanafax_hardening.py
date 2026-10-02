@@ -14,18 +14,15 @@ import pytest
 from ai_orchestrator.connectors import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as pol
 from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import fax_approval_pin as approval_pin
 from ai_orchestrator.services import hanafax_authorization_service as service
 from ai_orchestrator.workflows import hanafax_auto_send as flow
 
-PIN = "test-pin-123"
 _REAL_SAFE_PATH = service._safe_path
 
 
 @pytest.fixture(autouse=True)
 def _temp_db(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "_DB_PATH", tmp_path / "fax_authorizations.db")
-    approval_pin.set_pin(PIN)
 
 
 @pytest.fixture(autouse=True)
@@ -66,7 +63,7 @@ def _approved(doc, recipients, **over):
         **over,
     }
     row = service.create(payload, user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     return row
 
 
@@ -227,14 +224,3 @@ def test_path_policy_blocks_unc_relative_hidden_and_outside_roots(tmp_path, monk
     (hidden / "k.pdf").write_bytes(b"%PDF")
     with pytest.raises(ValueError, match="설정·키"):
         _REAL_SAFE_PATH(str(hidden / "k.pdf"), "문서")
-
-
-def test_legacy_send_endpoints_require_pin():
-    from fastapi import HTTPException
-
-    from ai_orchestrator.connectors import hanafax_router as router
-
-    with pytest.raises(HTTPException) as exc:
-        router._require_pin("wrong")
-    assert exc.value.status_code == 403
-    router._require_pin(PIN)  # 맞으면 통과

@@ -10,18 +10,15 @@ import pytest
 from ai_orchestrator.connectors import hanafax_auto_sender as adapter
 from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, classify_action
 from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import fax_approval_pin as approval_pin
 from ai_orchestrator.services import hanafax_authorization_service as service
 from ai_orchestrator.workflows import scheduled_job_actions as actions
 
-PIN = "test-pin-123"
 RECIPIENTS = [{"fax": "02-111-2222", "name": "가나다"}, {"fax": "031-333-4444", "name": "라마바"}]
 
 
 @pytest.fixture(autouse=True)
 def _temp_db(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "_DB_PATH", tmp_path / "fax_authorizations.db")
-    approval_pin.set_pin(PIN)  # 승인에는 PIN 이 필요하다 — 테스트 DB 에 미리 설정
 
 
 @pytest.fixture(autouse=True)
@@ -111,7 +108,7 @@ def test_approve_refuses_when_document_changed(doc):
     row = service.create(_payload(doc), user="u")
     doc.write_bytes(b"%PDF-1.4 changed")
     with pytest.raises(ValueError, match="바뀌"):
-        service.approve(row["id"], user="a", live=True, pin=PIN)
+        service.approve(row["id"], user="a", live=True)
 
 
 def test_send_log_masks_numbers(doc):
@@ -170,7 +167,7 @@ def test_validate_requires_approved_authorization(doc):
         spec.validate({"authorization_id": "nope"})
     with pytest.raises(ValueError):
         spec.validate({"authorization_id": row["id"], "to": "x"})  # 승인서 밖 값 금지
-    service.approve(row["id"], user="a", live=False, pin=PIN)
+    service.approve(row["id"], user="a", live=False)
     assert spec.validate({"authorization_id": row["id"]}) == {"authorization_id": row["id"]}
     service.revoke(row["id"], user="a")
     with pytest.raises(ValueError):
@@ -179,7 +176,7 @@ def test_validate_requires_approved_authorization(doc):
 
 def test_run_dry_run_sends_nothing(doc, sent):
     row = service.create(_payload(doc), user="u")
-    service.approve(row["id"], user="a", live=False, pin=PIN)
+    service.approve(row["id"], user="a", live=False)
     message = actions.get_action("hanafax_send").run({"authorization_id": row["id"]})
     assert "드라이런" in message and sent == []
     assert {r["status"] for r in store.list_send_log(row["id"])} == {store.DRY_RUN}
@@ -187,7 +184,7 @@ def test_run_dry_run_sends_nothing(doc, sent):
 
 def test_run_live_sends_within_scope(doc, sent):
     row = service.create(_payload(doc, max_per_run=1), user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     message = actions.get_action("hanafax_send").run({"authorization_id": row["id"]})
     assert "발송 1건" in message and len(sent) == 1  # 1회 한도
     assert sent[0]["attach_file"] == str(doc)
@@ -195,7 +192,7 @@ def test_run_live_sends_within_scope(doc, sent):
 
 def test_run_live_stops_when_document_changed(doc, sent):
     row = service.create(_payload(doc), user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     doc.write_bytes(b"%PDF-1.4 changed")
     with pytest.raises(RuntimeError, match="바뀌"):
         actions.get_action("hanafax_send").run({"authorization_id": row["id"]})
@@ -204,7 +201,7 @@ def test_run_live_stops_when_document_changed(doc, sent):
 
 def test_run_denied_by_kill_switch(doc, sent):
     row = service.create(_payload(doc), user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     service.set_kill_switch(True, user="a")
     with pytest.raises(RuntimeError, match="kill_switch"):
         actions.get_action("hanafax_send").run({"authorization_id": row["id"]})
@@ -220,7 +217,7 @@ def test_run_unknown_result_raises_and_does_not_resend(doc, sent, monkeypatch):
         engine, "send_fax_bulk", lambda receivers, subject, attach_file=None, **_: sent.extend({"receiver_fax": r["receiver_fax"]} for r in receivers) or timeout
     )
     row = service.create(_payload(doc, max_per_run=1), user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     with pytest.raises(RuntimeError, match="확인 필요 1건"):
         actions.get_action("hanafax_send").run({"authorization_id": row["id"]})
     with pytest.raises(RuntimeError):  # 다음 회차: 불명 번호는 건너뛰고 다음 번호만
@@ -235,7 +232,7 @@ def test_run_now_requires_approval(doc):
     row = service.create(_payload(doc), user="u")
     with pytest.raises(ValueError, match="승인"):
         service.run_now(row["id"])  # 승인 전 발송 불가
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     service.revoke(row["id"], user="a")
     with pytest.raises(ValueError, match="취소"):
         service.run_now(row["id"])
@@ -245,7 +242,7 @@ def test_run_now_runs_in_background_and_reports(doc, sent):
     import time
 
     row = service.create(_payload(doc), user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     assert service.run_now(row["id"])["running"] is True or service.run_status(row["id"])["last"]
     for _ in range(100):
         last = service.run_status(row["id"])["last"]
@@ -314,7 +311,7 @@ def test_bulk_run_sends_in_chunks_via_group_sender(doc, monkeypatch):
     monkeypatch.setattr("ai_orchestrator.workflows.hanafax_auto_send.BULK_CHUNK", 2)
     recipients = [{"fax": f"02-400-{1000 + i}", "name": f"업체{i}"} for i in range(5)]
     row = service.create(_payload(doc, recipients=recipients, max_per_run=10), user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     from datetime import datetime
 
     from ai_orchestrator.workflows import hanafax_auto_send as flow
@@ -335,7 +332,7 @@ def test_bulk_unknown_chunk_stops_remaining_chunks(doc, monkeypatch):
     )
     recipients = [{"fax": f"02-500-{1000 + i}", "name": ""} for i in range(4)]
     row = service.create(_payload(doc, recipients=recipients, max_per_run=10), user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     result = flow.run_bulk(row["id"], adapter.build_bulk_sender(str(doc), row["document_hash"]), datetime.now().astimezone(), chunk_size=2)
     assert result.unknown == 2 and result.stopped_midway and len(calls) == 1  # 첫 묶음 결과 불명 → 다음 묶음은 보내지 않는다
 
@@ -423,7 +420,7 @@ def test_run_denies_when_stored_validity_is_unreadable(doc, sent):
     from ai_orchestrator.workflows import hanafax_auto_send as flow
 
     row = service.create(_payload(doc), user="u")
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     con = sqlite3.connect(str(store._DB_PATH))
     con.execute("UPDATE authorizations SET valid_until='내일' WHERE id=?", (row["id"],))
     con.commit()
@@ -432,54 +429,12 @@ def test_run_denies_when_stored_validity_is_unreadable(doc, sent):
     assert result.decision == "deny" and result.reason == "invalid_validity_period" and sent == []
 
 
-# ── 승인 PIN (사람만 아는 값) ────────────────────────────────────────────────────
+# ── 승인·정지 해제에는 PIN 이 필요 없다(사용자 결정으로 PIN 제거) ───────────────────────────────
 
 
-def test_approve_requires_correct_pin(doc):
+def test_approve_and_kill_switch_need_no_pin(doc):
     row = service.create(_payload(doc), user="u")
-    for bad in ("", "wrong-pin", None):
-        with pytest.raises(ValueError, match="PIN"):
-            service.approve(row["id"], user="a", live=True, pin=bad)
-    assert not store.get_authorization(row["id"])["approved"]
-    assert service.approve(row["id"], user="a", live=True, pin=PIN)["approved"]
-
-
-def test_approve_refused_when_no_pin_configured(doc, monkeypatch, tmp_path):
-    monkeypatch.setattr(store, "_DB_PATH", tmp_path / "other.db")  # PIN 이 없는 새 DB
-    row = service.create(_payload(doc), user="u")
-    with pytest.raises(ValueError, match="아직 없습니다"):
-        service.approve(row["id"], user="a", live=True, pin=PIN)
-
-
-def test_pin_locks_after_repeated_failures(doc):
-    row = service.create(_payload(doc), user="u")
-    for _ in range(approval_pin.MAX_FAILURES - 1):
-        with pytest.raises(ValueError, match="남은 시도"):
-            service.approve(row["id"], user="a", live=True, pin="no")
-    with pytest.raises(ValueError, match="잠겼"):
-        service.approve(row["id"], user="a", live=True, pin="no")
-    with pytest.raises(ValueError, match="잠겼"):  # 잠금 중에는 맞는 PIN 도 거부
-        service.approve(row["id"], user="a", live=True, pin=PIN)
-    assert not store.get_authorization(row["id"])["approved"]
-
-
-def test_set_pin_rules_and_change_needs_old_pin():
-    with pytest.raises(ValueError, match="자 이상"):
-        approval_pin.set_pin("123")
-    with pytest.raises(ValueError, match="PIN"):
-        approval_pin.set_pin("new-pin-456", old_pin="wrong")
-    approval_pin.set_pin("new-pin-456", old_pin=PIN)
-    approval_pin.verify("new-pin-456")
-
-
-def test_pin_is_stored_hashed_not_plaintext():
-    raw = store.get_flag("approval_pin")
-    assert raw.startswith("scrypt$") and PIN not in raw
-
-
-def test_kill_switch_on_is_free_but_off_needs_pin():
-    service.set_kill_switch(True, user="anyone")  # 정지는 안전 방향이라 PIN 없이
-    with pytest.raises(ValueError, match="PIN"):
-        service.set_kill_switch(False, user="anyone", pin="no")
+    assert service.approve(row["id"], user="a", live=False)["approved"]
+    service.set_kill_switch(True, user="a")
     assert store.kill_switch_on()
-    assert service.set_kill_switch(False, user="a", pin=PIN) == {"kill_switch": False}
+    assert service.set_kill_switch(False, user="a") == {"kill_switch": False}

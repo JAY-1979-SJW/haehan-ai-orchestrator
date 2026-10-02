@@ -19,7 +19,6 @@ from typing import Any
 from ai_orchestrator.connectors import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as policy
 from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import fax_approval_pin as approval_pin
 from ai_orchestrator.services import hanafax_attachments as attachments
 from ai_orchestrator.workflows import scheduled_job_actions as actions
 
@@ -286,12 +285,11 @@ def _draft_expired(row: dict[str, Any]) -> bool:
     return datetime.now(UTC) - created > timedelta(hours=DRAFT_TTL_HOURS)
 
 
-def resolve_pending(auth_id: str, fax: str, outcome: str, *, pin: str, user: str) -> dict[str, Any]:
-    """'확인 필요'(결과 불명) 번호를 사람이 하나팩스 발송 내역에서 확인한 뒤 해소한다. **승인 PIN 이 필요하다.**
+def resolve_pending(auth_id: str, fax: str, outcome: str, *, user: str) -> dict[str, Any]:
+    """'확인 필요'(결과 불명) 번호를 사람이 하나팩스 발송 내역에서 확인한 뒤 해소한다.
 
     outcome: "sent"(실제로 발송됨 → 성공으로 기록, 다시 보내지 않음) | "not_sent"(발송되지 않음 → 실패로 기록, 다시 보낼 수 있음).
     """
-    approval_pin.verify(pin)
     if outcome not in ("sent", "not_sent"):
         raise ValueError("outcome 은 sent 또는 not_sent 여야 합니다")
     row = store.get_authorization(auth_id)
@@ -324,9 +322,8 @@ def _document_matches(row: dict[str, Any]) -> bool:
         return False
 
 
-def approve(auth_id: str, *, user: str, live: bool, pin: str) -> dict[str, Any]:
-    """승인한다. **승인 PIN 이 맞아야 한다**(사람만 아는 값). 승인 순간에도 문서가 생성 때와 같은지 확인한다."""
-    approval_pin.verify(pin)
+def approve(auth_id: str, *, user: str, live: bool) -> dict[str, Any]:
+    """승인한다. 승인 순간에도 문서가 생성 때와 같은지 확인한다."""
     row = store.get_authorization(auth_id)
     if row is None:
         raise ValueError("승인서를 찾을 수 없습니다")
@@ -341,10 +338,8 @@ def revoke(auth_id: str, *, user: str) -> dict[str, Any]:
     return store.revoke(auth_id, user=user)
 
 
-def set_kill_switch(on: bool, *, user: str, pin: str = "") -> dict[str, Any]:
-    """정지는 누구나 켤 수 있다(안전 방향). **해제는 승인 PIN 이 필요하다.**"""
-    if not on:
-        approval_pin.verify(pin)
+def set_kill_switch(on: bool, *, user: str) -> dict[str, Any]:
+    """전역 정지를 켜거나 끈다."""
     store.set_kill_switch(on, user=user)
     return {"kill_switch": store.kill_switch_on()}
 

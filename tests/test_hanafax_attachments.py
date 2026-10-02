@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 from ai_orchestrator.connectors.hanafax_router import hanafax_router
 from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import fax_approval_pin as approval_pin
 from ai_orchestrator.services import hanafax_attachments as att
 from ai_orchestrator.services import hanafax_authorization_service as service
 
@@ -27,7 +26,6 @@ def _isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(att, "_UPLOAD_DIR", tmp_path / "uploads")
     monkeypatch.setattr(service, "_allowed_roots", lambda: [tmp_path.resolve()])  # 임시 폴더를 허용 폴더로
     monkeypatch.setattr(service, "_BLOCKED_PARTS", {".ssh"})  # AppData 아래 임시 폴더 때문에 기본 차단 목록은 푼다
-    approval_pin.set_pin("test-pin-123")
 
 
 @pytest.fixture

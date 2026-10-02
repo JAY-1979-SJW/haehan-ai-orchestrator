@@ -9,11 +9,9 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import fax_approval_pin as approval_pin
 from ai_orchestrator.services import hanafax_authorization_service as service
 from scripts.hanafax import address_book
 
-PIN = "test-pin-123"
 HEADER = ["", "이름", "회사", "팩스번호", "휴대전화", "일반전화", "이메일"]
 
 
@@ -27,7 +25,6 @@ def _isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(service, "_safe_path", lambda text, label: str(text).strip().strip('"'))
     monkeypatch.setattr(service, "already_sent_numbers", lambda: set())
     monkeypatch.setattr(address_book, "_session", boom)
-    approval_pin.set_pin(PIN)
 
 
 @pytest.fixture

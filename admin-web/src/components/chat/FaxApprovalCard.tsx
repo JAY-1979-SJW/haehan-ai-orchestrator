@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { faxApi, type Authorization, type RunStatus } from "@/app/hanafax/api";
-import { FaxPinField } from "./FaxPinField";
 import { FaxSitePreview } from "./FaxSitePreview";
 
 /**
@@ -13,7 +12,6 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
   const [auth, setAuth] = useState<Authorization | null>(null);
   const [run, setRun] = useState<RunStatus | null>(null);
   const [live, setLive] = useState(false); // 기본 드라이런 — 실제 전송은 사람이 체크해야 한다
-  const [pin, setPin] = useState("");
   const [preview, setPreview] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +36,7 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
     setBusy(true);
     setError(null);
     try {
-      await faxApi.approve(authId, live, true, pin); // 승인 + 바로 발송(PIN 이 맞아야 승인된다)
+      await faxApi.approve(authId, live, true); // 승인 + 바로 발송
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -110,11 +108,10 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
             <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} />
             실제로 전송 (체크하지 않으면 전송 없이 계획만 기록하는 드라이런)
           </label>
-          <FaxPinField value={pin} onChange={setPin} />
           <div className="flex gap-2">
             <button
               className="rounded bg-[#F97316] px-3 py-1 text-white disabled:opacity-50"
-              disabled={busy || !pin || auth.document_matches === false || auth.draft_expired}
+              disabled={busy || auth.document_matches === false || auth.draft_expired}
               onClick={approve}
             >
               승인하고 발송

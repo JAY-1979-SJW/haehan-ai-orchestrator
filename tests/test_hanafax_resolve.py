@@ -8,11 +8,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import fax_approval_pin as approval_pin
 from ai_orchestrator.services import hanafax_authorization_service as service
 from ai_orchestrator.workflows import hanafax_auto_send as flow
-
-PIN = "test-pin-123"
 
 
 @pytest.fixture(autouse=True)
@@ -26,7 +23,6 @@ def _isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(service, "_safe_path", lambda text, label: str(text).strip().strip('"'))
     monkeypatch.setattr(engine, "send_fax", boom)
     monkeypatch.setattr(engine, "send_fax_bulk", boom)
-    approval_pin.set_pin(PIN)
 
 
 @pytest.fixture
@@ -51,7 +47,7 @@ def _row(doc, fax="02-777-1001"):
 
 
 def _make_unknown(row):
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     flow.run(
         row["id"], lambda *a: {"success": False, "job_id": None, "message": "타임아웃"}, datetime.now().astimezone()
     )
@@ -68,7 +64,7 @@ def test_unknown_number_appears_as_pending_and_blocks_resend(doc):
 def test_resolve_sent_marks_success_and_never_resends(doc):
     row = _row(doc)
     _make_unknown(row)
-    detail = service.resolve_pending(row["id"], "027771001", "sent", pin=PIN, user="a")
+    detail = service.resolve_pending(row["id"], "027771001", "sent", user="a")
     assert detail["pending_numbers"] == []
     assert store.sent_numbers(row["document_hash"]) == {"027771001"}
     assert store.count_sent(row["id"]) == 1  # 같은 번호가 불명 + 확인된 성공으로 두 번 세어지지 않는다
@@ -79,7 +75,7 @@ def test_resolve_sent_marks_success_and_never_resends(doc):
 def test_resolve_not_sent_allows_retry(doc):
     row = _row(doc)
     _make_unknown(row)
-    service.resolve_pending(row["id"], "027771001", "not_sent", pin=PIN, user="a")
+    service.resolve_pending(row["id"], "027771001", "not_sent", user="a")
     sent: list[tuple] = []
     result = flow.run(
         row["id"],
@@ -89,15 +85,13 @@ def test_resolve_not_sent_allows_retry(doc):
     assert result.sent == 1 and len(sent) == 1
 
 
-def test_resolve_requires_pin_and_pending_number(doc):
+def test_resolve_requires_pending_number_and_valid_outcome(doc):
     row = _row(doc)
     _make_unknown(row)
-    with pytest.raises(ValueError, match="PIN"):
-        service.resolve_pending(row["id"], "027771001", "sent", pin="wrong", user="a")
     with pytest.raises(ValueError, match="확인 필요"):
-        service.resolve_pending(row["id"], "031-000-0000", "sent", pin=PIN, user="a")  # 대기 상태가 아닌 번호
+        service.resolve_pending(row["id"], "031-000-0000", "sent", user="a")  # 대기 상태가 아닌 번호
     with pytest.raises(ValueError, match="outcome"):
-        service.resolve_pending(row["id"], "027771001", "maybe", pin=PIN, user="a")
+        service.resolve_pending(row["id"], "027771001", "maybe", user="a")
     assert service.preview(row["id"])["pending_numbers"] == ["027771001"]  # 거부된 시도는 상태를 바꾸지 않는다
 
 
@@ -110,14 +104,14 @@ def test_stale_draft_cannot_be_approved(doc):
     con.close()
     assert service.preview(row["id"])["draft_expired"] is True
     with pytest.raises(ValueError, match="만료"):
-        service.approve(row["id"], user="a", live=False, pin=PIN)
+        service.approve(row["id"], user="a", live=False)
     assert not store.get_authorization(row["id"])["approved"]
 
 
 def test_fresh_draft_is_not_expired_and_approved_never_expires(doc):
     row = _row(doc)
     assert service.preview(row["id"])["draft_expired"] is False
-    service.approve(row["id"], user="a", live=False, pin=PIN)
+    service.approve(row["id"], user="a", live=False)
     old = (datetime.now(UTC) - timedelta(days=30)).isoformat(timespec="seconds")
     con = sqlite3.connect(str(store._DB_PATH))
     con.execute("UPDATE authorizations SET created_at=? WHERE id=?", (old, row["id"]))
@@ -131,8 +125,8 @@ def test_scheduler_catalog_labels_distinguish_and_flag_live_authorizations(doc):
 
     dry = _row(doc, "02-777-2001")
     live = _row(doc, "02-777-2002")
-    service.approve(dry["id"], user="a", live=False, pin=PIN)
-    service.approve(live["id"], user="a", live=True, pin=PIN)
+    service.approve(dry["id"], user="a", live=False)
+    service.approve(live["id"], user="a", live=True)
     entry = next(i for i in actions.catalog() if i["key"] == "hanafax_send")
     field = next(f for f in entry["fields"] if f["name"] == "authorization_id")
     assert "⚠ 실전송" in field["option_labels"][live["id"]] and "1곳" in field["option_labels"][live["id"]]

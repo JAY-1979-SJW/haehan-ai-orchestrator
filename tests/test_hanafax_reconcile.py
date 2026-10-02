@@ -8,13 +8,11 @@ from datetime import datetime, timedelta
 import pytest
 
 from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import fax_approval_pin as approval_pin
 from ai_orchestrator.services import hanafax_authorization_service as service
 from ai_orchestrator.services import hanafax_reconcile as rec
 from ai_orchestrator.workflows import hanafax_auto_send as flow
 from scripts.hanafax import send_result
 
-PIN = "test-pin-123"
 NOW = datetime(2026, 10, 2, 15, 0).astimezone()
 
 # 실제 전송결과 화면(2026-10-02 실사)에서 읽은 안쪽 행의 셀 구조 — 번호는 가짜
@@ -151,7 +149,6 @@ NOISE_ROW = [
 def _isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "_DB_PATH", tmp_path / "fax_authorizations.db")
     monkeypatch.setattr(service, "_safe_path", lambda text, label: str(text).strip().strip('"'))
-    approval_pin.set_pin(PIN)
 
 
 @pytest.fixture
@@ -249,7 +246,7 @@ def test_all_failed_marks_delivery_failed_and_blocks_auto_resend(doc):
     assert out["delivery_failed"] == 3 and out["delivered"] == 0 and out["unmatched"] == 0
     assert store.unknown_numbers(row["document_hash"]) == {"021110001", "021110002", "021110003"}
     assert store.sent_numbers(row["document_hash"]) == set()
-    service.approve(row["id"], user="a", live=True, pin=PIN)
+    service.approve(row["id"], user="a", live=True)
     again = flow.run_bulk(
         row["id"],
         lambda *a: pytest.fail("전송 실패 확인된 번호는 사람이 해소하기 전에는 다시 보내지 않는다"),
@@ -262,7 +259,7 @@ def test_human_can_resolve_delivery_failed_to_allow_retry(doc):
     row = _sent_batch(doc, NUMS)
     rec.reconcile(row["id"], fetch=lambda: [_site()])
     assert len(service.preview(row["id"])["pending_numbers"]) == 3  # '확인 필요' 목록에 나타난다
-    service.resolve_pending(row["id"], "021110001", "not_sent", pin=PIN, user="a")
+    service.resolve_pending(row["id"], "021110001", "not_sent", user="a")
     assert "021110001" not in store.unknown_numbers(row["document_hash"]) and "021110001" not in store.sent_numbers(
         row["document_hash"]
     )
