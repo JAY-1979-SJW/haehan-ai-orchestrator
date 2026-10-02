@@ -13,9 +13,10 @@ import csv
 import hashlib
 import json
 import threading
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from ai_orchestrator.gates import mail_bulk_policy as policy
 from ai_orchestrator.gates import mail_draft_policy as draft_policy
@@ -318,8 +319,20 @@ _running: set[str] = set()
 _last_run: dict[str, dict[str, Any]] = {}
 
 
+def _korea_tz() -> timezone | ZoneInfo:
+    """한국 표준시. 시간대 데이터가 없는 PC 에서는 UTC+9 고정 오프셋(한국은 서머타임이 없다)."""
+    try:
+        return ZoneInfo("Asia/Seoul")
+    except ZoneInfoNotFoundError:
+        return timezone(timedelta(hours=9), "KST")
+
+
+KST = _korea_tz()
+
+
 def _now_local() -> datetime:
-    return datetime.now().astimezone()
+    """허용 시간대·'오늘' 판정에 쓰는 현재 시각 — PC 시간대와 무관하게 항상 한국 시간."""
+    return datetime.now(KST)
 
 
 def _execute(auth_id: str) -> dict[str, Any]:

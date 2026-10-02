@@ -155,3 +155,19 @@ export const PAUSE_REASON: Record<string, string> = {
   unknown_result: "마지막 메일이 서버에 전달됐는지 확인하지 못했습니다. 보낸메일함을 확인하세요(이 주소는 다시 보내지 않습니다).",
   manual: "사용자가 멈췄습니다.",
 };
+
+/** 서버는 시각을 UTC 로 저장한다 — 화면에는 항상 한국 시간(KST)으로 보여 준다(보는 PC 의 시간대와 무관). */
+export function formatKst(iso: string | null | undefined, withSeconds = false): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    ...(withSeconds ? { second: "2-digit" } : {}),
+    hour12: false,
+  });
+}

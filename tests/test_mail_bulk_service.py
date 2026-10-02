@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfoNotFoundError
 
 import pytest
 
@@ -252,3 +253,22 @@ def test_scheduled_action_validates_and_starts(env, monkeypatch):
 def test_ai_registry_has_no_bulk_mail_paths():
     text = " ".join(f"{v.get('path', '')} {v.get('method', '')}" for v in mcp_server.API_REGISTRY.values())
     assert "mail-bulk" not in text
+
+
+# ── 한국 시간 ─────────────────────────────────────────────────────────
+
+
+def test_korea_time_is_utc_plus_9_regardless_of_pc_timezone():
+    assert datetime.now(service.KST).utcoffset() == timedelta(hours=9)
+    # 허용 시간대(09~18)는 이 시각의 시·분으로 판정한다 — UTC 02:00 은 한국 11:00 이다
+    kst_11 = datetime(2026, 10, 5, 2, 0, tzinfo=UTC).astimezone(service.KST)
+    assert kst_11.hour == 11
+
+
+def test_korea_tz_falls_back_to_fixed_offset_without_tzdata(monkeypatch):
+    def missing(_name):
+        raise ZoneInfoNotFoundError("no tzdata")
+
+    monkeypatch.setattr(service, "ZoneInfo", missing)
+    tz = service._korea_tz()
+    assert datetime(2026, 10, 5, 2, 0, tzinfo=UTC).astimezone(tz).hour == 11

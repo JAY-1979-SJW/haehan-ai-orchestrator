@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   bulkApi,
   estimate,
+  formatKst,
   PAUSE_REASON,
   STATUS_LABEL,
   stateOf,
@@ -133,7 +134,7 @@ export function BulkDetail({ id, onChanged }: { id: string; onChanged: () => voi
 
       {!auth.approved && !auth.revoked && (
         <section className="rounded-xl border border-[#E5E7EB] p-3 text-[12px]">
-          <div className="mb-1 font-semibold text-[#111827]">① 본인 주소로 시험 발송 {auth.test_sent_at ? "✓ 완료" : "(실전송 승인의 필수 단계)"}</div>
+          <div className="mb-1 font-semibold text-[#111827]">① 본인 주소로 시험 발송 {auth.test_sent_at ? `✓ 완료 (${formatKst(auth.test_sent_at)} KST)` : "(실전송 승인의 필수 단계)"}</div>
           <div className="flex flex-wrap gap-2">
             <input className="min-w-[240px] flex-1 rounded-lg border border-[#E5E7EB] px-3 py-1.5" value={selfTo} onChange={(e) => setSelfTo(e.target.value)} placeholder="내가 받아 볼 메일 주소" />
             <button type="button" className={btn} disabled={busy || !selfTo.includes("@")} onClick={() => void act(() => bulkApi.selfTest(id, selfTo.trim()), "시험 메일을 1통 보냈습니다. 받은 메일함에서 모양을 확인하세요")}>
@@ -202,7 +203,7 @@ export function BulkDetail({ id, onChanged }: { id: string; onChanged: () => voi
       </section>
 
       <section className="rounded-xl border border-[#E5E7EB] p-3">
-        <div className="mb-1 text-[12px] font-semibold text-[#111827]">발송 이력 (최근 200건, 주소는 가림)</div>
+        <div className="mb-1 text-[12px] font-semibold text-[#111827]">발송 이력 (최근 200건, 한국 시간, 주소는 가림)</div>
         {log.length === 0 ? (
           <p className="text-[12px] text-[#9CA3AF]">아직 이력이 없습니다.</p>
         ) : (
@@ -210,7 +211,7 @@ export function BulkDetail({ id, onChanged }: { id: string; onChanged: () => voi
             <tbody>
               {log.map((r, i) => (
                 <tr key={`${r.created_at}-${i}`} className="border-t border-[#F3F4F6]">
-                  <td className="py-1 pr-2 text-[#6B7280]">{new Date(r.created_at).toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+                  <td className="py-1 pr-2 text-[#6B7280]">{formatKst(r.created_at, true)}</td>
                   <td className="py-1 pr-2">{r.email}</td>
                   <td className="py-1 pr-2 font-medium">{STATUS_LABEL[r.status] ?? r.status}</td>
                   <td className="py-1 text-[#9CA3AF]">{r.message}</td>

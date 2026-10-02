@@ -6,24 +6,40 @@ export function formatSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
 }
 
-/** 네이버 목록처럼: 오늘이면 시:분, 올해면 월.일, 그 외 연.월.일 */
+const KST_PARTS = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Seoul",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** 시각을 한국 시간(KST)의 연·월·일·시·분 문자열로 나눈다 — 보는 PC 의 시간대와 무관하다. */
+function kstParts(d: Date): { y: string; mo: string; d: string; h: string; mi: string } {
+  const p = Object.fromEntries(KST_PARTS.formatToParts(d).map((x) => [x.type, x.value]));
+  return { y: p.year, mo: p.month, d: p.day, h: p.hour, mi: p.minute };
+}
+
+/** 네이버 목록처럼(한국 시간 기준): 오늘이면 시:분, 올해면 월.일, 그 외 연.월.일 */
 export function formatListDate(iso: string, fallback: string): string {
   if (!iso) return fallback;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return fallback;
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  if (d.toDateString() === now.toDateString()) return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  if (d.getFullYear() === now.getFullYear()) return `${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
-  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
+  const t = kstParts(d);
+  const n = kstParts(new Date());
+  if (t.y === n.y && t.mo === n.mo && t.d === n.d) return `${t.h}:${t.mi}`;
+  if (t.y === n.y) return `${t.mo}.${t.d}`;
+  return `${t.y}.${t.mo}.${t.d}`;
 }
 
 export function formatFullDate(iso: string, fallback: string): string {
   if (!iso) return fallback;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return fallback;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const t = kstParts(d);
+  return `${t.y}.${t.mo}.${t.d} ${t.h}:${t.mi}`;
 }
 
 export function displayAddress(a: Address): string {
