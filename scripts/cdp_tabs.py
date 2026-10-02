@@ -183,7 +183,8 @@ def open_tab(  # noqa: PLR0913 - 칸·이유·대기·재시도·시계 주입�
         _close_quietly(lane_obj, tab_id)
         with _lock:
             _owned.pop((lane, tab_id), None)
-    raise CdpTabError(f"새 탭 열기 실패: {last_error}")
+    hint = " — 같은 칸의 다른 사이트는 열리는데 이 사이트만 안 열리면 오래 켜 둔 브라우저 세션 문제일 수 있음(프로필 유지 재시작 권장, 2026-10-02 사례)"
+    raise CdpTabError(f"새 탭 열기 실패: {last_error}{hint}")
 
 
 def close_tab(handle: TabHandle) -> None:
