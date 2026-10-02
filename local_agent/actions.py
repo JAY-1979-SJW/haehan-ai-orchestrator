@@ -1380,7 +1380,7 @@ def action_cdp_run(params: dict) -> ActionResult:
         )
 
 
-def _build_claude_command(
+def _build_claude_command(  # noqa: PLR0913 - 키워드 전용 인자(옵션 조립 순수 함수), 묶으면 호출부만 복잡해짐
     *,
     root: Path,
     prompt: str,
@@ -1388,32 +1388,46 @@ def _build_claude_command(
     model: str,
     resume_session_id: str,
     allowed_tools: list[str],
+    restricted: bool = False,
 ) -> list[str]:
     """action_run_claude_agent()의 claude -p 커맨드 조립 — 분리 이유는 순수 가독성/복잡도
     관리(C901)이며, 동작(옵션 순서·"--" 구분자 등)은 기존과 동일하게 유지한다.
     """
-    cmd = [
-        "claude",
-        "-p",
-        "--mcp-config",
-        str(root / ".mcp.json"),
-        "--output-format",
-        "json",
-        "--max-budget-usd",
-        str(max_budget_usd),
-    ]
+    cmd = ["claude", "-p"]
+    if restricted:
+        # 읽기 전용 호출(작업 분배의 계획자·조사/검토/종합): --allowedTools 는 "권한 확인 없이 허용"일 뿐
+        # 사용 가능 도구를 제한하지 않는다(2026-10-02 실측: Read/Grep/Glob 만 허용했는데 Bash 가 실행됨,
+        # 프로젝트 설정이 bypassPermissions). 그래서 도구 집합 자체를 닫는다.
+        #  --restricted         : 코드 실행 도구·WebFetch 제거, 사용자/프로젝트 설정(bypass 포함) 무시, 파일 도구를 작업 폴더로 제한
+        #  --strict-mcp-config  : --mcp-config 를 주지 않으므로 MCP 서버를 하나도 로드하지 않는다
+        #  --tools              : 쓸 수 있는 내장 도구를 목록으로 한정
+        cmd += ["--restricted", "--strict-mcp-config"]
+    else:
+        cmd += ["--mcp-config", str(root / ".mcp.json")]
+    cmd += ["--output-format", "json", "--max-budget-usd", str(max_budget_usd)]
     if model:
         cmd += ["--model", model]
     if resume_session_id:
         cmd += ["--resume", resume_session_id]
     if allowed_tools:
-        cmd += ["--allowedTools", ",".join(allowed_tools)]
+        joined = ",".join(allowed_tools)
+        if restricted:
+            cmd += ["--tools", joined]
+        cmd += ["--allowedTools", joined]
     # "--" 로 옵션 파싱을 끊는다: --allowedTools 는 실측상 다음 토큰들을 계속
     # 도구 이름으로 먹어치우는 greedy 옵션이라(공식 --help의 "<tools...>" 표기와
     # 일치), 구분자 없이 prompt를 바로 이어 붙이면 "prompt 인자가 없다" 오류가 난다
     # (2026-09-28 실측 확인).
     cmd += ["--", prompt]
     return cmd
+
+
+def _apply_restricted(params: dict, allowed_tools: list[str]) -> tuple[bool, list[str]]:
+    """restricted 파라미터 해석. 제한 모드에서는 MCP 도구(mcp__*)를 쓸 수 없으므로 내장 도구 이름만 남긴다."""
+    restricted = params.get("restricted") is True
+    if restricted:
+        allowed_tools = [t for t in allowed_tools if not t.startswith("mcp__")]
+    return restricted, allowed_tools
 
 
 _RESULT_FULL_MAX_CHARS = 20000  # result_max_chars 상한(서버 필터 _RESULT_DATA_LONG_KEYS 와 같은 값)
@@ -1443,6 +1457,9 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         같은 전체 우회는 쓰지 않음, 이 프로젝트 승인 원칙에 위배).
       model         (str, 선택) — 공식 --model 플래그에 그대로 전달(별칭 "sonnet"/
         "opus"/"haiku"/"fable" 또는 전체 모델명). 비우면 CLI 기본값 사용.
+      restricted (bool, 선택, 기본 False) — True 면 읽기 전용 제한 모드로 실행한다: --restricted(코드 실행 도구
+        제거·설정 무시·bypassPermissions 거부) + --strict-mcp-config(MCP 없음) + --tools(allowed_tools 로 도구 집합 한정).
+        allowed_tools 의 mcp__* 이름은 무시한다. 작업 분배의 계획자·읽기 전용 역할이 사용한다.
       result_max_chars (int, 선택, 기본 0=사용 안 함, 최대 20000) — 주면 data["result_full"] 에 결과
         전문(이 길이까지)을 추가로 담는다. data["result"] 는 기존대로 2000자 제한(채팅 등 기존 호출 불변).
       resume_session_id (str, 선택) — 공식 -r/--resume 플래그. 같은 대화의 후속
@@ -1476,6 +1493,7 @@ def action_run_claude_agent(params: dict) -> ActionResult:
     if not isinstance(raw_allowed_tools, list):
         raw_allowed_tools = [raw_allowed_tools]
     allowed_tools = [str(t).strip() for t in raw_allowed_tools if str(t).strip()]
+    restricted, allowed_tools = _apply_restricted(params, allowed_tools)
 
     model = str(params.get("model", "")).strip()
     resume_session_id = str(params.get("resume_session_id", "")).strip()
@@ -1492,6 +1510,7 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         model=model,
         resume_session_id=resume_session_id,
         allowed_tools=allowed_tools,
+        restricted=restricted,
     )
 
     try:

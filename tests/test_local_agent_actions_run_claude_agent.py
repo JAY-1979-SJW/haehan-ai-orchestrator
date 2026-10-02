@@ -124,3 +124,40 @@ def test_result_full_is_opt_in_and_default_behavior_unchanged() -> None:
     assert len(wanted.data["result"]) == 2000 and len(wanted.data["result_full"]) == 4000
     assert len(capped.data["result_full"]) == 5000  # 20000 상한 안에서 전문
     assert "result_full" not in bad.data
+
+
+def _capture_cmd(params: dict) -> list[str]:
+    captured: dict = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return _FakeCompletedProcess(_ok_payload("1"))
+
+    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+        action_run_claude_agent({"prompt": "조사해", **params})
+    return captured["cmd"]
+
+
+def test_restricted_mode_closes_tool_set_and_mcp() -> None:
+    """실측(2026-10-02): --allowedTools 만으로는 Bash 가 실행됐다 — 읽기 전용 호출은 도구 집합 자체를 닫는다."""
+    cmd = _capture_cmd(
+        {"restricted": True, "allowed_tools": ["Read", "Grep", "Glob", "mcp__haehan-orchestrator__call_api"]}
+    )
+    assert "--restricted" in cmd and "--strict-mcp-config" in cmd
+    assert "--mcp-config" not in cmd  # MCP 서버를 하나도 싣지 않는다
+    assert cmd[cmd.index("--tools") + 1] == "Read,Grep,Glob"  # 도구 집합 한정, mcp__ 이름은 제거됨
+    assert cmd[cmd.index("--allowedTools") + 1] == "Read,Grep,Glob"
+    assert "--dangerously-skip-permissions" not in cmd
+    assert cmd[-2:] == ["--", "조사해"]
+
+
+def test_default_mode_command_unchanged_by_restricted_support() -> None:
+    cmd = _capture_cmd({"allowed_tools": ["Read"]})
+    assert "--mcp-config" in cmd and "--restricted" not in cmd and "--strict-mcp-config" not in cmd
+    assert "--tools" not in cmd
+
+
+def test_restricted_requires_literal_true() -> None:
+    for value in ("true", 1, "yes", None):
+        cmd = _capture_cmd({"restricted": value, "allowed_tools": ["Read"]})
+        assert "--restricted" not in cmd  # 느슨한 값으로 제한 모드를 켜거나 끄는 혼동 방지(True 만 인정)
