@@ -60,7 +60,7 @@ const MODEL_LABELS: Record<string, string> = {
 
 interface TaskStatusResponse {
   status: string;
-  result_data?: { result?: string; session_id?: string } | null;
+  result_data?: { result?: string; result_full?: string; session_id?: string } | null;
   result_summary?: string;
   failure_reason?: string;
   error_summary?: string;
@@ -214,7 +214,8 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
       }
 
       if (data.status === "completed") {
-        const resultText = data.result_data?.result ?? data.result_summary ?? "(결과 없음)";
+        // result 는 서버 필터가 500자로 자르므로, 전문이 담긴 result_full 을 먼저 쓴다.
+        const resultText = data.result_data?.result_full ?? data.result_data?.result ?? data.result_summary ?? "(결과 없음)";
         const claudeSessionId = data.result_data?.session_id ?? "";
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, text: String(resultText), status: "done" } : m)),

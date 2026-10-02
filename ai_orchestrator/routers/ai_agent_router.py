@@ -31,6 +31,9 @@ ai_agent_router = APIRouter(prefix="/ai-agent", tags=["ai-agent"])
 _DEFAULT_ALLOWED_TOOLS = _tool_names.qualified(_tool_names.DEFAULT_ALLOWED)
 
 
+CHAT_RESULT_MAX_CHARS = 20000  # result_full 상한(local_agent.actions._RESULT_FULL_MAX_CHARS)과 같다
+
+
 class RunAgentRequest(BaseModel):
     prompt: str
     allowed_tools: list[str] | None = None  # None이면 기본 화이트리스트 사용
@@ -38,6 +41,9 @@ class RunAgentRequest(BaseModel):
     max_budget_usd: float = 2.0
     chat_id: str = ""  # 주어지면 그 세션의 claude_session_id로 --resume(대화 이어가기, 속도 개선)
     model: str = ""  # 공식 --model 그대로 전달("sonnet"/"opus"/"haiku"/"fable" 또는 전체 모델명)
+    # 결과 전문 길이. 서버 결과 필터가 result 를 500자로 자르므로 result_full 로 받는다.
+    # 기본값은 대화기록 저장 상한(chat_sessions._MAX_MESSAGE_TEXT_LEN)과 같게 맞춘다.
+    result_max_chars: int = CHAT_RESULT_MAX_CHARS
 
 
 @ai_agent_router.post("/run")
@@ -71,6 +77,7 @@ def run_agent(
         "allowed_tools": allowed_tools,
         "timeout": timeout,
         "max_budget_usd": max_budget,
+        "result_max_chars": max(0, min(20000, body.result_max_chars)),
     }
     if body.model.strip():
         params["model"] = body.model.strip()
