@@ -63,13 +63,29 @@ export interface ReconcileStatus {
   } | null;
 }
 
+export interface AddressGroup {
+  name: string;
+  intid: string;
+  members: number;
+  fax_count: number;
+}
+
+export interface GroupSyncStatus {
+  running: boolean;
+  cached: boolean;
+  state: { ok: boolean | null; page?: number; pages?: number; members?: number; message?: string } | null;
+}
+
 export interface CreateInput {
   name: string;
   subject: string;
   document_ref: string;
   recipients: Recipient[];
-  max_per_run: number;
-  max_per_day: number;
+  site_group?: string;
+  group_offset?: number;
+  group_limit?: number;
+  max_per_run?: number;
+  max_per_day?: number;
   allowed_start: string;
   allowed_end: string;
 }
@@ -108,6 +124,9 @@ export const faxApi = {
   runStatus: (id: string) => call<RunStatus>(`authorizations/${id}/run`),
   resolvePending: (id: string, fax: string, outcome: "sent" | "not_sent", pin: string) =>
     post<Authorization>(`authorizations/${id}/resolve`, { fax, outcome, pin }),
+  addressGroups: () => call<AddressGroup[]>("address-groups"),
+  startGroupSync: (intid: string) => post<GroupSyncStatus>(`address-groups/${intid}/sync`),
+  groupSyncStatus: (intid: string) => call<GroupSyncStatus>(`address-groups/${intid}/sync`),
   startReconcile: (id: string) => post<ReconcileStatus>(`authorizations/${id}/reconcile`),
   reconcileStatus: (id: string) => call<ReconcileStatus>(`authorizations/${id}/reconcile`),
   startPreview: (id: string) => post<PreviewStatus>(`authorizations/${id}/preview`),

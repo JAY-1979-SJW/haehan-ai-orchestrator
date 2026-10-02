@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FaxPinField } from "@/components/chat/FaxPinField";
 import { FaxSitePreview } from "@/components/chat/FaxSitePreview";
 import { UniversalChat } from "@/components/chat/UniversalChat";
-import { faxApi, parseRecipients, type Authorization, type LogRow, type ReconcileStatus, type RunStatus } from "./api";
+import { faxApi, parseRecipients, type AddressGroup, type Authorization, type GroupSyncStatus, type LogRow, type ReconcileStatus, type RunStatus } from "./api";
 
 /**
  * 하나팩스 화면 — 왼쪽: 승인서 목록·상세(미리보기·승인·발송·이력), 오른쪽: AI 창.
@@ -31,7 +31,9 @@ const STATUS_LABEL: Record<string, string> = {
 // AI 창 지침 — 에이전트가 앱 허용 API(call_api)로 승인 대기 초안만 만들고, 승인은 사람이 카드 버튼으로 하게 한다.
 const AGENT_HINT =
   "[하나팩스 지침] 팩스 발송 요청이면 mcp__haehan-orchestrator__call_api 로 endpoint 'hanafax.draft' 를 호출해 승인 대기 초안만 만든다 " +
-  "(body: name, subject, document_ref=첨부 파일 전체 경로, recipients=[{fax,name}] 또는 recipients_file=주소록 엑셀/CSV 경로). " +
+  "(body: name, subject, document_ref=첨부 파일 전체 경로, recipients=[{fax,name}] 또는 recipients_file=주소록 엑셀/CSV 경로 또는 site_group=하나팩스 주소록 그룹 번호). " +
+  "사용자가 하나팩스 주소록 그룹 이름을 말하면: ① call_api 'hanafax.address_groups' 로 그룹 목록(intid·이름·인원) 확인 → ② 'hanafax.address_group_sync' (path_params={intid})로 가져오기 시작 → " +
+  "③ 'hanafax.address_group_sync_status' 를 몇 초마다 조회해 state.ok 가 true(cached=true) 가 될 때까지 기다림(큰 그룹은 몇 분) → ④ 'hanafax.draft' 에 site_group=<intid> (1000명이 넘는 그룹은 group_offset/group_limit 로 1000명씩 구간) 로 초안 생성. " +
   "Python·Bash 로 직접 만들거나 발송하지 않는다(권한 없음). 응답의 id 로 답변 끝에 [[fax-approve:<id>]] 를 그대로 적고 " +
   "'아래 승인 버튼을 눌러 주세요'라고 안내한다. 승인·발송은 사용자가 버튼으로만 한다. 주소록을 쓰면 응답의 import_summary 건수를 알린다.";
 
@@ -345,24 +347,76 @@ function NewForm({ onCreated }: { onCreated: (id: string) => void }) {
   const [subject, setSubject] = useState("");
   const [path, setPath] = useState("");
   const [recipients, setRecipients] = useState("");
+  const [mode, setMode] = useState<"manual" | "group">("manual");
+  const [groups, setGroups] = useState<AddressGroup[] | null>(null);
+  const [groupId, setGroupId] = useState("");
+  const [sync, setSync] = useState<GroupSyncStatus | null>(null);
+  const [rangeStart, setRangeStart] = useState(1);
+  const [rangeCount, setRangeCount] = useState(1000);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const group = groups?.find((g) => g.intid === groupId) ?? null;
+
+  // 그룹 읽기 진행 상황 확인(백그라운드 — 큰 그룹은 몇 분)
+  useEffect(() => {
+    if (!groupId || !sync?.running) return;
+    const t = setInterval(async () => {
+      try {
+        setSync(await faxApi.groupSyncStatus(groupId));
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : String(e));
+      }
+    }, 3000);
+    return () => clearInterval(t);
+  }, [groupId, sync?.running]);
+
+  async function loadGroups() {
+    setBusy(true);
+    setErr(null);
+    try {
+      setGroups(await faxApi.addressGroups());
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function pickGroup(id: string) {
+    setGroupId(id);
+    setSync(null);
+    setRangeStart(1);
+    if (id) {
+      try {
+        setSync(await faxApi.groupSyncStatus(id));
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : String(e));
+      }
+    }
+  }
+
+  async function startSync() {
+    setErr(null);
+    try {
+      setSync(await faxApi.startGroupSync(groupId));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    }
+  }
 
   async function submit() {
     setBusy(true);
     setErr(null);
     try {
-      const rows = parseRecipients(recipients);
-      const created = await faxApi.create({
-        name: name || subject,
-        subject,
-        document_ref: path.trim().replace(/^"|"$/g, ""),
-        recipients: rows,
-        max_per_run: Math.min(Math.max(rows.length, 1), 100),
-        max_per_day: Math.min(Math.max(rows.length, 1), 300),
-        allowed_start: "09:00",
-        allowed_end: "18:00",
-      });
+      const base = { name: name || subject, subject, document_ref: path.trim().replace(/^"|"$/g, ""), allowed_start: "09:00", allowed_end: "18:00" };
+      const created =
+        mode === "group"
+          ? await faxApi.create({ ...base, recipients: [], site_group: groupId, group_offset: Math.max(rangeStart - 1, 0), group_limit: Math.min(Math.max(rangeCount, 1), 1000) })
+          : await (async () => {
+              const rows = parseRecipients(recipients);
+              return faxApi.create({ ...base, recipients: rows, max_per_run: Math.min(Math.max(rows.length, 1), 100), max_per_day: Math.min(Math.max(rows.length, 1), 300) });
+            })();
       onCreated(created.id);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -372,20 +426,71 @@ function NewForm({ onCreated }: { onCreated: (id: string) => void }) {
   }
 
   const input = "w-full rounded border border-[#D1D5DB] px-2 py-1 text-sm";
+  const tab = (active: boolean) => `rounded px-2 py-1 text-xs ${active ? "bg-[#2563EB] text-white" : "border"}`;
+  const ready = mode === "manual" ? !!recipients : !!groupId && !!sync?.cached && !sync.running;
   return (
     <div className="space-y-2 border-b p-3">
       <input className={input} placeholder="이름 (예: 10월 영업 안내)" value={name} onChange={(e) => setName(e.target.value)} />
       <input className={input} placeholder="팩스 제목" value={subject} onChange={(e) => setSubject(e.target.value)} />
       <input className={input} placeholder="첨부 파일 경로 (pdf/docx/doc 전체 경로)" value={path} onChange={(e) => setPath(e.target.value)} />
-      <textarea
-        className={input}
-        rows={4}
-        placeholder={"받는 사람 — 한 줄에 하나: 번호, 이름\n02-123-4567, 홍길동건설"}
-        value={recipients}
-        onChange={(e) => setRecipients(e.target.value)}
-      />
+      <div className="flex gap-2">
+        <button className={tab(mode === "manual")} onClick={() => setMode("manual")}>
+          직접 입력
+        </button>
+        <button className={tab(mode === "group")} onClick={() => setMode("group")}>
+          하나팩스 주소록 그룹
+        </button>
+      </div>
+      {mode === "manual" ? (
+        <textarea
+          className={input}
+          rows={4}
+          placeholder={"받는 사람 — 한 줄에 하나: 번호, 이름\n02-123-4567, 홍길동건설"}
+          value={recipients}
+          onChange={(e) => setRecipients(e.target.value)}
+        />
+      ) : (
+        <div className="space-y-2 rounded bg-gray-50 p-2 text-xs" data-testid="fax-group-picker">
+          {!groups ? (
+            <button className="rounded border bg-white px-2 py-1 disabled:opacity-50" disabled={busy} onClick={loadGroups}>
+              {busy ? "하나팩스 주소록을 읽는 중… (수십 초)" : "주소록 그룹 불러오기"}
+            </button>
+          ) : (
+            <>
+              <select className={input} value={groupId} onChange={(e) => pickGroup(e.target.value)}>
+                <option value="">그룹을 고르세요</option>
+                {groups.map((g) => (
+                  <option key={g.intid} value={g.intid} disabled={g.members === 0}>
+                    {g.name} · {g.members}명 (팩스번호 {g.fax_count}개)
+                  </option>
+                ))}
+              </select>
+              {group && (
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button className="rounded border bg-white px-2 py-1 disabled:opacity-50" disabled={!!sync?.running} onClick={startSync}>
+                      {sync?.running ? `읽는 중… ${sync.state?.page ?? 0}/${sync.state?.pages ?? "?"}쪽` : sync?.cached ? "다시 가져오기" : "이 그룹 가져오기 (읽기 전용)"}
+                    </button>
+                    {sync?.cached && !sync.running && <span className="text-green-700">가져옴 ✓ (24시간 안에 사용)</span>}
+                    {sync?.state?.ok === false && <span className="text-red-600">{sync.state.message}</span>}
+                  </div>
+                  {sync?.cached && !sync.running && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>승인할 구간:</span>
+                      <input type="number" min={1} max={group.members} className="w-20 rounded border px-1 py-0.5" value={rangeStart} onChange={(e) => setRangeStart(Number(e.target.value))} />
+                      <span>번째부터</span>
+                      <input type="number" min={1} max={1000} className="w-20 rounded border px-1 py-0.5" value={rangeCount} onChange={(e) => setRangeCount(Number(e.target.value))} />
+                      <span>명 (한 번에 최대 1000명 — 큰 그룹은 구간을 나눠 승인)</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
       {err && <div className="text-sm text-red-600">{err}</div>}
-      <button className="rounded bg-[#2563EB] px-3 py-1.5 text-sm text-white disabled:opacity-50" disabled={busy || !subject || !path || !recipients} onClick={submit}>
+      <button className="rounded bg-[#2563EB] px-3 py-1.5 text-sm text-white disabled:opacity-50" disabled={busy || !subject || !path || !ready} onClick={submit}>
         승인 대기로 올리기 (전송되지 않음)
       </button>
     </div>

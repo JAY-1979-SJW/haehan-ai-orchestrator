@@ -90,6 +90,25 @@ API_REGISTRY: dict[str, dict[str, str]] = {
         "path": "/api/v1/hanafax/authorizations",
         "desc": "팩스 발송 승인서 목록·상태 조회(읽기 전용)",
     },
+    # 하나팩스 사이트 주소록 그룹 — 읽기 전용(사이트에 로그인해 목록·연락처를 읽어 로컬 캐시에 둔다). 발송·승인과 무관.
+    "hanafax.address_groups": {
+        "method": "GET",
+        "path": "/api/v1/hanafax/address-groups",
+        "desc": "하나팩스 주소록 그룹 목록(이름·인원·intid) 조회(읽기 전용, 수십 초 걸릴 수 있음)",
+    },
+    "hanafax.address_group_sync": {
+        "method": "POST",
+        "path": "/api/v1/hanafax/address-groups/{intid}/sync",
+        "desc": (
+            "그룹 연락처를 하나팩스에서 읽어 로컬 캐시에 저장(읽기 전용, 백그라운드 — 큰 그룹은 몇 분). path_params={'intid': '<그룹 번호>'}. "
+            "진행은 같은 경로 GET(hanafax.address_group_sync_status). 끝난 뒤 hanafax.draft 에 site_group=<intid>(+group_offset/group_limit 로 1000명씩 구간)을 쓴다"
+        ),
+    },
+    "hanafax.address_group_sync_status": {
+        "method": "GET",
+        "path": "/api/v1/hanafax/address-groups/{intid}/sync",
+        "desc": "그룹 가져오기 진행 상태(쪽 n/전체, 완료 여부, 캐시 유무) — path_params={'intid': '<그룹 번호>'}",
+    },
     # 네이버 메일함 — AI 는 '읽기 + 승인 대기 초안'만. 발송·삭제·이동·읽음 변경은 이 목록에 없다(앱 화면에서 사람이 한다).
     "mailbox.folders": {
         "method": "GET",

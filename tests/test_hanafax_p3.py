@@ -260,7 +260,7 @@ def test_ai_registry_exposes_draft_only_not_approve_or_run():
     from ai_orchestrator.mcp_server import API_REGISTRY
 
     fax = {k: v for k, v in API_REGISTRY.items() if "/hanafax/" in v["path"]}
-    assert set(fax) == {"hanafax.draft", "hanafax.authorizations"}
+    assert set(fax) == {"hanafax.draft", "hanafax.authorizations", "hanafax.address_groups", "hanafax.address_group_sync", "hanafax.address_group_sync_status"}
     for spec in fax.values():
         assert not any(w in spec["path"] for w in ("approve", "/run", "kill-switch", "opt-out", "revoke", "/send", "batch"))
 

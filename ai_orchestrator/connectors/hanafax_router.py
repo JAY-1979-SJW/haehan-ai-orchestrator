@@ -191,6 +191,9 @@ class AuthorizationCreate(BaseModel):
     document_ref: str
     recipients: list[FaxRecipient] = []
     recipients_file: str | None = None  # 주소록 엑셀/CSV 경로 — 주면 수신자 목록 대신 파일에서 읽는다
+    site_group: str | None = None  # 하나팩스 주소록 그룹 번호(intid) — 미리 '그룹 가져오기'를 해 둔 캐시에서 읽는다
+    group_offset: int = 0  # 큰 그룹은 구간을 나눠 승인(시작 위치, 0부터)
+    group_limit: int = 1000  # 한 번에 승인할 인원(최대 1000)
     exclude_already_sent: bool = True  # 예전 발송 이력에서 이미 성공한 번호 제외
     max_per_run: int | None = None  # 비우면 수신자 수만큼
     max_per_day: int | None = None
@@ -251,6 +254,32 @@ def _require_pin(pin: str) -> None:
 
 def _bad_request(exc: ValueError) -> HTTPException:
     return HTTPException(status_code=400, detail=str(exc))
+
+
+@hanafax_router.get("/address-groups", response_model=list[dict])
+def address_groups(_: dict = Depends(require_role("admin", "owner"))):
+    """하나팩스 주소록 그룹 목록(이름·인원) — 읽기 전용."""
+    try:
+        return _auth_service().list_site_groups()
+    except Exception as exc:  # 사이트 읽기 실패 사유를 알린다
+        raise HTTPException(status_code=502, detail=f"주소록 그룹을 읽지 못했습니다: {type(exc).__name__}") from exc
+
+
+@hanafax_router.post("/address-groups/{intid}/sync", response_model=dict)
+def start_group_sync(intid: str, _: dict = Depends(require_role("admin", "owner"))):
+    """그룹 연락처를 읽어 로컬 캐시에 둔다(백그라운드, 읽기 전용). 이후 승인서 생성에 site_group 으로 쓴다."""
+    try:
+        return _auth_service().start_group_sync(intid)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
+@hanafax_router.get("/address-groups/{intid}/sync", response_model=dict)
+def group_sync_status(intid: str, _: dict = Depends(require_role("admin", "owner"))):
+    try:
+        return _auth_service().group_sync_status(intid)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
 
 
 @hanafax_router.post("/authorizations", response_model=dict)

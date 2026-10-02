@@ -140,12 +140,21 @@ def import_recipients(path_text: str, *, exclude_already_sent: bool = True) -> t
     if fax_col is None:
         raise ValueError("주소록에서 팩스번호 열('팩스'·'연락처' 등)을 찾지 못했습니다")
     name_col = _find_col(header, _NAME_HEADERS)
+    pairs = [
+        (row[fax_col] if fax_col < len(row) else "", row[name_col] if name_col is not None and name_col < len(row) else "")
+        for row in rows[1:]
+    ]
+    return _screen(pairs, exclude_already_sent=exclude_already_sent)
+
+
+def _screen(pairs: list[tuple[str, str]], *, exclude_already_sent: bool) -> tuple[list[dict[str, str]], dict[str, int]]:
+    """(팩스번호, 이름) 목록을 검수한다 — 잘못된 번호·중복·수신거부·예전 이력에서 이미 보낸 번호는 빼고 건수를 알려 준다."""
     skip_numbers = store.opt_out_numbers() | (already_sent_numbers() if exclude_already_sent else set())
-    summary = {"rows": len(rows) - 1, "invalid": 0, "duplicate": 0, "opted_out_or_already_sent": 0}
+    summary = {"rows": len(pairs), "invalid": 0, "duplicate": 0, "opted_out_or_already_sent": 0}
     seen: set[str] = set()
     recipients: list[dict[str, str]] = []
-    for row in rows[1:]:
-        number = policy.parse_number(row[fax_col] if fax_col < len(row) else "")
+    for raw, name in pairs:
+        number = policy.parse_number(raw)
         if number is None:
             summary["invalid"] += 1
         elif number in seen:
@@ -154,8 +163,7 @@ def import_recipients(path_text: str, *, exclude_already_sent: bool = True) -> t
             summary["opted_out_or_already_sent"] += 1
         else:
             seen.add(number)
-            name = row[name_col] if name_col is not None and name_col < len(row) else ""
-            recipients.append({"fax": number, "name": name[:50]})
+            recipients.append({"fax": number, "name": str(name)[:50]})
     summary["to_send"] = len(recipients)
     return recipients, summary
 
@@ -217,6 +225,15 @@ def create(payload: dict[str, Any], *, user: str) -> dict[str, Any]:
             raise ValueError(f"보낼 수신자가 없습니다 ({import_summary})")
         if len(recipients) > MAX_RECIPIENTS:
             raise ValueError(f"수신자는 최대 {MAX_RECIPIENTS}명입니다 — 주소록을 나눠 주세요 (현재 {len(recipients)}명)")
+    elif payload.get("site_group"):
+        recipients, import_summary = recipients_from_site_group(
+            str(payload["site_group"]),
+            offset=int(payload.get("group_offset") or 0),
+            limit=int(payload.get("group_limit") or MAX_RECIPIENTS),
+            exclude_already_sent=bool(payload.get("exclude_already_sent", True)),
+        )
+        if not recipients:
+            raise ValueError(f"보낼 수신자가 없습니다 ({import_summary})")
     else:
         recipients = _clean_recipients(payload.get("recipients"))
     document_hash = adapter.file_sha256(document_ref)
@@ -490,3 +507,97 @@ def _auto_reconcile(auth_id: str) -> None:
 def reconcile_status(auth_id: str) -> dict[str, Any]:
     with _run_lock:
         return {"running": auth_id in _reconciling, "state": dict(_reconcile_state.get(auth_id, {})) or None}
+
+
+# ── 하나팩스 사이트 주소록 그룹 가져오기 (읽기 전용) ─────────────────────────────────
+# 그룹 연락처는 사이트에서 10명씩 넘겨 가며 읽으므로(1천 명대는 몇 분) 백그라운드로 읽어 **로컬 캐시**에 두고,
+# 승인서를 만들 때 그 캐시를 쓴다(`site_group`=그룹 번호). 캐시에는 개인정보(번호·이름)가 있어 `storage/`(커밋 제외)에만 둔다.
+GROUP_CACHE_TTL_HOURS = 24
+_CACHE_DIR = Path(__file__).resolve().parents[1] / "storage" / "fax_address_cache"
+_group_syncing: set[str] = set()
+_group_state: dict[str, dict[str, Any]] = {}
+
+
+def _valid_intid(intid: str) -> str:
+    text = str(intid).strip()
+    if not re.fullmatch(r"\d{1,12}", text):
+        raise ValueError("그룹 번호가 올바르지 않습니다")
+    return text
+
+
+def _cache_path(intid: str) -> Path:
+    return _CACHE_DIR / f"{_valid_intid(intid)}.json"
+
+
+def list_site_groups() -> list[dict[str, Any]]:
+    """하나팩스 주소록 그룹 목록(이름·인원) — 사이트에 로그인해 읽는다(수십 초 걸릴 수 있다)."""
+    from scripts.hanafax.address_book import list_groups
+
+    return list_groups()
+
+
+def _group_sync_job(intid: str) -> None:
+    from scripts.hanafax import address_book
+
+    def progress(page: int, pages: int) -> None:
+        with _run_lock:
+            _group_state[intid] = {"ok": None, "page": page, "pages": pages}
+
+    try:
+        members = address_book.fetch_group(intid, progress=progress)
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        _cache_path(intid).write_text(
+            json.dumps({"intid": intid, "fetched_at": datetime.now(UTC).isoformat(timespec="seconds"), "members": members}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        state: dict[str, Any] = {"ok": True, "members": len(members)}
+    except Exception as exc:  # noqa: BLE001 - 읽기 실패는 사유만 알린다
+        state = {"ok": False, "message": f"그룹을 읽지 못했습니다: {type(exc).__name__}"}
+    with _run_lock:
+        _group_state[intid] = {**state, "finished_at": datetime.now(UTC).isoformat(timespec="seconds")}
+        _group_syncing.discard(intid)
+
+
+def start_group_sync(intid: str) -> dict[str, Any]:
+    intid = _valid_intid(intid)
+    with _run_lock:
+        if intid in _group_syncing:
+            raise ValueError("이 그룹을 읽는 중입니다")
+        _group_syncing.add(intid)
+        _group_state[intid] = {"ok": None, "page": 0, "pages": 0}
+    threading.Thread(target=_group_sync_job, args=(intid,), daemon=True, name=f"fax-group-{intid[-4:]}").start()
+    return group_sync_status(intid)
+
+
+def group_sync_status(intid: str) -> dict[str, Any]:
+    intid = _valid_intid(intid)
+    with _run_lock:
+        running = intid in _group_syncing
+        state = dict(_group_state.get(intid, {}))
+    cached = _cache_path(intid).is_file()
+    return {"running": running, "state": state or None, "cached": cached}
+
+
+def _read_group_cache(intid: str) -> list[dict[str, str]]:
+    path = _cache_path(intid)
+    if not path.is_file():
+        raise ValueError("이 그룹을 아직 가져오지 않았습니다 — 먼저 그룹을 가져오세요(그룹 가져오기)")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if datetime.now(UTC) - datetime.fromisoformat(data["fetched_at"]) > timedelta(hours=GROUP_CACHE_TTL_HOURS):
+        raise ValueError(f"가져온 지 {GROUP_CACHE_TTL_HOURS}시간이 지났습니다 — 그룹을 다시 가져오세요")
+    return list(data["members"])
+
+
+def recipients_from_site_group(
+    intid: str, *, offset: int = 0, limit: int = MAX_RECIPIENTS, exclude_already_sent: bool = True
+) -> tuple[list[dict[str, str]], dict[str, int]]:
+    """가져온 그룹 캐시에서 `offset` 번째부터 `limit` 명을 수신자로 읽는다(큰 그룹은 구간을 나눠 승인). 검수 결과를 함께 돌려준다."""
+    members = _read_group_cache(intid)
+    if offset < 0 or limit < 1 or limit > MAX_RECIPIENTS:
+        raise ValueError(f"구간은 시작 0 이상, 인원 1~{MAX_RECIPIENTS} 이어야 합니다")
+    part = members[offset : offset + limit]
+    if not part:
+        raise ValueError(f"그룹 인원({len(members)}명)을 벗어난 구간입니다")
+    recipients, summary = _screen([(m["fax"], m.get("name", "")) for m in part], exclude_already_sent=exclude_already_sent)
+    summary.update({"group_total": len(members), "range_start": offset + 1, "range_end": offset + len(part)})
+    return recipients, summary
