@@ -376,10 +376,12 @@ def _run_job(auth_id: str) -> None:
     with _run_lock:
         _last_run[auth_id] = {**outcome, "finished_at": datetime.now(UTC).isoformat(timespec="seconds")}
         _running.discard(auth_id)
-    # 사이트가 최종 결과를 확정할 시간을 준 뒤 전송결과와 자동 대조한다(읽기 전용, 실패해도 발송과 무관)
-    timer = threading.Timer(AUTO_RECONCILE_DELAY_SECONDS, _auto_reconcile, args=(auth_id,))
-    timer.daemon = True
-    timer.start()
+    # 사이트가 최종 결과를 확정할 시간을 준 뒤 전송결과와 자동 대조한다(읽기 전용, 실패해도 발송과 무관).
+    # 응답 없음은 사이트가 몇 분간 재시도한 뒤 확정하므로(실측: 접수 9분 뒤 완료) 3분·15분 두 번 확인한다.
+    for delay in AUTO_RECONCILE_DELAYS_SECONDS:
+        timer = threading.Timer(delay, _auto_reconcile, args=(auth_id,))
+        timer.daemon = True
+        timer.start()
 
 
 def run_now(auth_id: str) -> dict[str, Any]:
@@ -468,7 +470,7 @@ def preview_status(auth_id: str) -> dict[str, Any]:
 
 # ── 전송결과 대조 (최종 성공/실패 확정, 읽기 전용) ─────────────────────────────────
 # 앱의 sent 는 '접수'일 뿐이다 — 하나팩스 전송결과 화면과 대조해 delivered/delivery_failed 로 확정한다(hanafax_reconcile).
-AUTO_RECONCILE_DELAY_SECONDS = 180
+AUTO_RECONCILE_DELAYS_SECONDS = (180, 900)
 _reconciling: set[str] = set()
 _reconcile_state: dict[str, dict[str, Any]] = {}
 

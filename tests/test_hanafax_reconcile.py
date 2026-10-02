@@ -350,3 +350,78 @@ def test_unknown_authorization_and_nothing_pending(doc):
         user="u",
     )
     assert rec.reconcile(row["id"], fetch=lambda: pytest.fail("대상이 없으면 사이트를 읽지 않는다"))["checked"] == 0
+
+
+# ── 혼합 결과: 세부내역(번호별)으로 건별 확정 ───────────────────────────────────────
+
+
+@pytest.fixture(autouse=True)
+def _no_real_detail_fetch(monkeypatch):
+    def boom(*_a, **_k):
+        raise AssertionError("실제 하나팩스 세부내역을 읽으려 했습니다")
+
+    monkeypatch.setattr(send_result, "fetch_job_detail", boom)
+
+
+def _mixed_site(**over):
+    return _site(success=2, failure=1, status="전송 성공", job_id="12345", **over)
+
+
+def _detail(outcomes, numbers=None, labels=None):
+    return lambda job_id: {
+        "numbers": list(numbers if numbers is not None else outcomes),
+        "outcomes": outcomes,
+        "labels": labels or {n: ("완료" if v == "success" else "응답 없음") for n, v in outcomes.items()},
+    }
+
+
+def test_mixed_result_is_resolved_per_number_from_detail(doc):
+    row = _sent_batch(doc, NUMS)
+    outcomes = {"021110001": "success", "021110002": "success", "021110003": "fail"}
+    out = rec.reconcile(row["id"], fetch=lambda: [_mixed_site()], fetch_detail=_detail(outcomes))
+    assert out["delivered"] == 2 and out["delivery_failed"] == 1 and out["partial"] == 0
+    assert store.sent_numbers(row["document_hash"]) == {"021110001", "021110002"}
+    assert store.unknown_numbers(row["document_hash"]) == {"021110003"}  # 실패 번호만 '확인 필요'
+
+
+@pytest.mark.parametrize(
+    "detail",
+    [
+        _detail({"021110001": "success", "021110002": "fail"}),  # 번호가 모자란다(결과 미확인 번호 있음)
+        _detail({"021110001": "success", "021110002": "success", "029999999": "fail"}),  # 다른 번호가 섞였다
+        _detail({"021110001": "success", "021110002": "success", "021110003": "fail"}, numbers=["021110001", "029999999"]),  # 기본정보 번호 불일치
+    ],
+)
+def test_mixed_result_with_unverifiable_detail_changes_nothing(doc, detail):
+    row = _sent_batch(doc, NUMS)
+    out = rec.reconcile(row["id"], fetch=lambda: [_mixed_site()], fetch_detail=detail)
+    assert out["partial"] == 3 and out["delivered"] == 0 and out["delivery_failed"] == 0
+    assert store.sent_numbers(row["document_hash"]) == {"021110001", "021110002", "021110003"}
+
+
+def test_mixed_result_without_job_id_or_with_failing_detail_stays_partial(doc):
+    row = _sent_batch(doc, NUMS)
+    no_job = {**_mixed_site(), "job_id": ""}
+    assert rec.reconcile(row["id"], fetch=lambda: [no_job], fetch_detail=lambda j: pytest.fail("건 ID 가 없으면 읽지 않는다"))["partial"] == 3
+
+    def failing(job_id):
+        raise RuntimeError("site down")
+
+    assert rec.reconcile(row["id"], fetch=lambda: [_mixed_site()], fetch_detail=failing)["partial"] == 3
+
+
+def test_detail_helpers_classify_and_parse():
+    assert send_result.classify_label("완료") == "success"
+    assert send_result.classify_label("일부 페이지 전송 완료") == "success"
+    assert send_result.classify_label("사람, 자동응답기 받음 (참조)") == "success"
+    for label in ("통화 중", "잘못된 전화번호", "응답 없음", "상대방 수신거부", "회선불량으로 인한 실패", "기타"):
+        assert send_result.classify_label(label) == "fail"
+    text = "응답없음\n이름\t수신팩스번호\t전송완료시간\n02-111-0001\t2026-10-02 09:08:44\n0311110002 2026-10-02 09:08:43\n02-111-0001 중복"
+    assert send_result.parse_numbers(text) == ["021110001", "0311110002"]  # 숫자만·중복 제거
+
+
+def test_parse_rows_keeps_job_id_marker():
+    (row,) = send_result.parse_rows([[*DIRECT_ROW, "#job=100000001"]], NOW)
+    assert row["job_id"] == "100000001" and row["total"] == 3
+    (plain,) = send_result.parse_rows([DIRECT_ROW], NOW)
+    assert plain["job_id"] == ""
