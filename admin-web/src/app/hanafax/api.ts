@@ -83,8 +83,10 @@ export const faxApi = {
   list: () => call<Authorization[]>("authorizations"),
   get: (id: string) => call<Authorization>(`authorizations/${id}`),
   create: (input: CreateInput) => post<Authorization>("authorizations", input),
-  approve: (id: string, live: boolean, startNow = false) =>
-    post<Authorization>(`authorizations/${id}/approve`, { confirmed: true, live, start_now: startNow }),
+  approve: (id: string, live: boolean, startNow: boolean, pin: string) =>
+    post<Authorization>(`authorizations/${id}/approve`, { confirmed: true, live, start_now: startNow, pin }),
+  pinStatus: () => call<{ configured: boolean; locked_until: string | null }>("approval-pin"),
+  setPin: (pin: string, oldPin = "") => post<{ configured: boolean }>("approval-pin", { pin, old_pin: oldPin }),
   revoke: (id: string) => post<Authorization>(`authorizations/${id}/revoke`),
   run: (id: string) => post<RunStatus>(`authorizations/${id}/run`),
   runStatus: (id: string) => call<RunStatus>(`authorizations/${id}/run`),
@@ -93,7 +95,7 @@ export const faxApi = {
   previewImageUrl: (id: string, stamp: string) => `${BASE}/authorizations/${id}/preview.png?t=${encodeURIComponent(stamp)}`,
   log: (id: string) => call<LogRow[]>(`authorizations/${id}/log`),
   killSwitch: () => call<{ kill_switch: boolean }>("kill-switch"),
-  setKillSwitch: (on: boolean) => post<{ kill_switch: boolean }>("kill-switch", { on }),
+  setKillSwitch: (on: boolean, pin = "") => post<{ kill_switch: boolean }>("kill-switch", { on, pin }),
 };
 
 /** "번호, 이름" 한 줄씩 → 수신자 목록 */

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { faxApi, type Authorization, type RunStatus } from "@/app/hanafax/api";
+import { FaxPinField } from "./FaxPinField";
 import { FaxSitePreview } from "./FaxSitePreview";
 
 /**
@@ -11,7 +12,8 @@ import { FaxSitePreview } from "./FaxSitePreview";
 export function FaxApprovalCard({ authId }: { authId: string }) {
   const [auth, setAuth] = useState<Authorization | null>(null);
   const [run, setRun] = useState<RunStatus | null>(null);
-  const [live, setLive] = useState(true);
+  const [live, setLive] = useState(false); // 기본 드라이런 — 실제 전송은 사람이 체크해야 한다
+  const [pin, setPin] = useState("");
   const [preview, setPreview] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
     setBusy(true);
     setError(null);
     try {
-      await faxApi.approve(authId, live, true); // 승인 + 바로 발송
+      await faxApi.approve(authId, live, true, pin); // 승인 + 바로 발송(PIN 이 맞아야 승인된다)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -76,8 +78,12 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
   return (
     <div className="mt-2 space-y-2 rounded-lg border border-[#FDBA74] bg-white p-2 text-[11px] text-[#111827]" data-testid="fax-approval-card">
       <div className="font-semibold">팩스 발송 승인 — {auth.name}</div>
+      <div>제목: {auth.subject}</div>
+      <div className="break-all">첨부: {auth.document_ref}</div>
       <div>
-        제목: {auth.subject} · 수신 {auth.recipient_count}곳 · 첨부: {auth.document_name}
+        수신 {auth.recipient_count}곳 —{" "}
+        {auth.recipients?.slice(0, 3).map((r) => `${r.name || "(이름 없음)"} ${r.fax}`).join(", ")}
+        {auth.recipient_count > 3 ? ` 외 ${auth.recipient_count - 3}곳` : ""}
       </div>
       {auth.document_matches === false && <div className="text-red-600">첨부 파일이 바뀌었거나 없습니다 — 승인할 수 없습니다.</div>}
       <FaxSitePreview authId={authId} />
@@ -97,12 +103,13 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
         <div className="space-y-1 border-t pt-1">
           <label className="flex items-center gap-1">
             <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} />
-            실제로 전송 (해제하면 전송 없이 계획만 기록)
+            실제로 전송 (체크하지 않으면 전송 없이 계획만 기록하는 드라이런)
           </label>
+          <FaxPinField value={pin} onChange={setPin} />
           <div className="flex gap-2">
             <button
               className="rounded bg-[#F97316] px-3 py-1 text-white disabled:opacity-50"
-              disabled={busy || auth.document_matches === false}
+              disabled={busy || !pin || auth.document_matches === false}
               onClick={approve}
             >
               승인하고 발송

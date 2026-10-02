@@ -16,9 +16,11 @@
 from __future__ import annotations
 
 import logging
+import re
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, time
+from datetime import UTC, datetime, time
 from typing import Any
 
 from ai_orchestrator.gates import fax_send_policy as policy
@@ -70,12 +72,10 @@ def _parse_hhmm(value: str, default: time) -> time:
 
 
 def _parse_dt(value: str | None) -> datetime | None:
+    """값이 있는데 읽지 못하면 예외 — 만료를 조용히 무시하지 않는다(fail-closed, 호출부가 deny 처리)."""
     if not value:
         return None
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        return None
+    return datetime.fromisoformat(value)
 
 
 def _to_policy_authorization(row: dict[str, Any]) -> policy.Authorization:
@@ -99,7 +99,9 @@ def _to_policy_authorization(row: dict[str, Any]) -> policy.Authorization:
 
 
 def _day_start_iso(now: datetime) -> str:
-    return now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat(timespec="seconds")
+    """오늘 현지 자정을 **UTC 문자열**로 — 저장소 created_at(UTC)과 같은 형식이라 문자열 비교가 맞는다(날짜 경계 어긋남 방지)."""
+    local_midnight = now.astimezone().replace(hour=0, minute=0, second=0, microsecond=0)
+    return local_midnight.astimezone(UTC).isoformat(timespec="seconds")
 
 
 def _state(auth_id: str, document_hash: str, now: datetime) -> policy.State:
@@ -115,11 +117,29 @@ def _state(auth_id: str, document_hash: str, now: datetime) -> policy.State:
 
 
 def _still_allowed(auth_id: str) -> bool:
-    """건마다 호출 — 정지되었거나 취소되었으면 즉시 멈춘다(저장소를 다시 읽는다)."""
+    """건·묶음마다 호출 — 정지·취소뿐 아니라 허용 시간대·유효기간이 지났어도 멈춘다(저장소를 다시 읽는다)."""
     if store.kill_switch_on():
         return False
     row = store.get_authorization(auth_id)
-    return bool(row) and row["approved"] and not row["revoked"]
+    if not row or not row["approved"] or row["revoked"]:
+        return False
+    try:
+        return not policy.recheck(_to_policy_authorization(row), datetime.now().astimezone())
+    except ValueError:
+        return False
+
+
+_PHONE_LIKE = re.compile(r"\d{8,}")
+
+
+def _safe_message(message: str) -> str:
+    """이력에 남기는 메시지 — 사이트 본문이 섞여도 길이를 줄이고 긴 숫자열(번호·계정)은 가린다."""
+    return _PHONE_LIKE.sub("********", " ".join(str(message).split()))[:120]
+
+
+def _claim(auth_id: str, document_hash: str, number: str) -> None:
+    """전송 직전 선점 기록. 기록하지 못하면 예외가 나므로 발송하지 않는다(fail-closed)."""
+    _record(auth_id, document_hash, number, store.CLAIMED, None, "전송 요청 직전")
 
 
 def _record(auth_id: str, document_hash: str, number: str, status: str, job_id: str | None, message: str) -> None:
@@ -130,7 +150,7 @@ def _record(auth_id: str, document_hash: str, number: str, status: str, job_id: 
             document_hash=document_hash,
             status=status,
             job_id=job_id,
-            message=message,
+            message=_safe_message(message),
         )
     )
 
@@ -147,6 +167,7 @@ def _confirmed(result: dict[str, Any]) -> bool:
 def _send_one(sender: Sender, auth: policy.Authorization, recipient: dict[str, str]) -> str:
     """한 건 발송하고 이력 상태를 돌려준다(sent | failed | unknown). 재전송은 하지 않는다."""
     number = recipient["fax"]
+    _claim(auth.id, auth.document_hash, number)
     try:
         result = sender(number, recipient.get("name", ""), auth.subject)
     except Exception as exc:  # noqa: BLE001 - 요청이 나갔는지 알 수 없는 예외 — 재전송하지 않고 unknown 으로 멈춘다(중복 발송 방지)
@@ -167,12 +188,15 @@ def _send_one(sender: Sender, auth: policy.Authorization, recipient: dict[str, s
     return store.UNKNOWN
 
 
-def run(auth_id: str, sender: Sender, now: datetime) -> RunResult:
+def _run(auth_id: str, sender: Sender, now: datetime) -> RunResult:
     """승인서 하나를 한 번 실행한다. 정책이 허용한 수신자에게만, 한도 안에서 발송한다."""
     row = store.get_authorization(auth_id)
     if row is None:
         return RunResult(auth_id, policy.DENY, policy.NOT_APPROVED)
-    auth = _to_policy_authorization(row)
+    try:
+        auth = _to_policy_authorization(row)
+    except ValueError:  # 유효기간 값을 읽지 못함 — 발송하지 않는다
+        return RunResult(auth_id, policy.DENY, "invalid_validity_period")
     decision = policy.evaluate(auth, _state(auth_id, auth.document_hash, now))
     result = RunResult(
         auth_id,
@@ -192,6 +216,9 @@ def run(auth_id: str, sender: Sender, now: datetime) -> RunResult:
             result.stopped_midway = True
             logger.warning("팩스 자동 발송 중단(정지 또는 취소): %s", auth_id)
             break
+        if recipient["fax"] in store.opt_out_numbers():  # 실행 중에 추가된 수신거부
+            result.skipped.append({"number": policy.mask_number(recipient["fax"]), "reason": policy.OPTED_OUT})
+            continue
         status = _send_one(sender, auth, recipient)
         if status == store.SENT:
             result.sent += 1
@@ -205,6 +232,8 @@ def run(auth_id: str, sender: Sender, now: datetime) -> RunResult:
 def _send_chunk(sender: BulkSender, auth: policy.Authorization, chunk: list[dict[str, str]]) -> tuple[int, int, int]:
     """한 묶음을 단체발송하고 (성공, 실패, 불명) 건수를 돌려준다. 재전송은 하지 않는다."""
     numbers = [r["fax"] for r in chunk]
+    for n in numbers:
+        _claim(auth.id, auth.document_hash, n)
     try:
         result = sender(chunk, auth.subject)
     except Exception as exc:  # noqa: BLE001 - 요청이 나갔는지 알 수 없는 예외 — 묶음 전체를 unknown 으로 멈춘다(중복 발송 방지)
@@ -231,12 +260,15 @@ def _send_chunk(sender: BulkSender, auth: policy.Authorization, chunk: list[dict
     return (0, len(numbers), 0) if status == store.FAILED else (0, 0, len(numbers))
 
 
-def run_bulk(auth_id: str, sender: BulkSender, now: datetime, chunk_size: int = BULK_CHUNK) -> RunResult:
+def _run_bulk(auth_id: str, sender: BulkSender, now: datetime, chunk_size: int) -> RunResult:
     """`run` 과 같은 정책 판정을 거치되, 허용된 수신자를 묶음(chunk)으로 단체발송한다. 묶음마다 정지·취소를 다시 확인한다."""
     row = store.get_authorization(auth_id)
     if row is None:
         return RunResult(auth_id, policy.DENY, policy.NOT_APPROVED)
-    auth = _to_policy_authorization(row)
+    try:
+        auth = _to_policy_authorization(row)
+    except ValueError:  # 유효기간 값을 읽지 못함 — 발송하지 않는다
+        return RunResult(auth_id, policy.DENY, "invalid_validity_period")
     decision = policy.evaluate(auth, _state(auth_id, auth.document_hash, now))
     result = RunResult(
         auth_id,
@@ -257,7 +289,11 @@ def run_bulk(auth_id: str, sender: BulkSender, now: datetime, chunk_size: int = 
             result.stopped_midway = True
             logger.warning("팩스 자동 발송 중단(정지 또는 취소): %s", auth_id)
             break
-        sent, failed, unknown = _send_chunk(sender, auth, targets[start : start + chunk_size])
+        opted_out = store.opt_out_numbers()  # 실행 중에 추가된 수신거부도 남은 묶음에 적용한다
+        chunk = [r for r in targets[start : start + chunk_size] if r["fax"] not in opted_out]
+        if not chunk:
+            continue
+        sent, failed, unknown = _send_chunk(sender, auth, chunk)
         result.sent += sent
         result.failed += failed
         result.unknown += unknown
@@ -265,3 +301,26 @@ def run_bulk(auth_id: str, sender: BulkSender, now: datetime, chunk_size: int = 
             result.stopped_midway = True
             break
     return result
+
+
+# 같은 프로세스에서 발송 실행은 한 번에 하나만 — 사람이 '지금 발송'을 누르는 것과 예약 작업이 겹쳐도 같은 번호에 두 번 나가지 않는다.
+# (멀티 프로세스로 띄우는 구성이면 이 락은 무의미하다 — 선점(claimed) 기록이 2차 방어선이지만 완전하지 않으므로 단일 프로세스로만 운영한다.)
+_SEND_LOCK = threading.Lock()
+
+
+def run(auth_id: str, sender: Sender, now: datetime) -> RunResult:
+    if not _SEND_LOCK.acquire(blocking=False):
+        return RunResult(auth_id, policy.DENY, "already_running")
+    try:
+        return _run(auth_id, sender, now)
+    finally:
+        _SEND_LOCK.release()
+
+
+def run_bulk(auth_id: str, sender: BulkSender, now: datetime, chunk_size: int = BULK_CHUNK) -> RunResult:
+    if not _SEND_LOCK.acquire(blocking=False):
+        return RunResult(auth_id, policy.DENY, "already_running")
+    try:
+        return _run_bulk(auth_id, sender, now, chunk_size)
+    finally:
+        _SEND_LOCK.release()

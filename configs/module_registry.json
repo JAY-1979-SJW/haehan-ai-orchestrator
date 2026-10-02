@@ -20536,6 +20536,30 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/components/chat/FaxPinField.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/fax_approval_pin.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "hanafax",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hanafax_hardening.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

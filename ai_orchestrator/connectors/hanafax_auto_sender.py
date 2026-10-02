@@ -68,12 +68,24 @@ def _check_document(document_ref: str, expected_document_hash: str) -> None:
         raise DocumentChanged("승인 뒤에 문서 내용이 바뀌었습니다 — 새 승인서가 필요합니다")
 
 
+def _changed_result(document_ref: str, expected_document_hash: str) -> dict[str, Any] | None:
+    """전송 직전 재검증. 바뀌었으면 '요청 전 명확한 실패' 결과를 돌려준다(전송하지 않음)."""
+    try:
+        _check_document(document_ref, expected_document_hash)
+    except (DocumentChanged, OSError) as exc:
+        return {"success": False, "job_id": None, "definite_failure": True, "message": f"문서 검증 실패로 전송 중단: {exc}"}
+    return None
+
+
 def build_sender(document_ref: str, expected_document_hash: str) -> Sender:
     """승인된 문서 하나를 보내는 발송기를 만든다. 문서가 승인 때와 다르면 `DocumentChanged`."""
     _check_document(document_ref, expected_document_hash)
 
     def _send(number: str, name: str, subject: str) -> dict[str, Any]:
         from scripts.hanafax.sender import send_fax
+
+        if (changed := _changed_result(document_ref, expected_document_hash)) is not None:
+            return changed  # 승인 뒤 파일이 바뀌었다 — 건마다 다시 확인한다(시간차 교체 방지)
 
         result = send_fax(receiver_fax=number, subject=subject, body="", receiver_name=name, attach_file=document_ref)
         if is_pre_send_failure(result):
@@ -89,6 +101,9 @@ def build_bulk_sender(document_ref: str, expected_document_hash: str) -> BulkSen
 
     def _send(recipients: list[dict[str, str]], subject: str) -> dict[str, Any]:
         from scripts.hanafax.sender import send_fax_bulk
+
+        if (changed := _changed_result(document_ref, expected_document_hash)) is not None:
+            return changed
 
         result = send_fax_bulk(
             [{"receiver_fax": r["fax"], "receiver_name": r.get("name", "")} for r in recipients],

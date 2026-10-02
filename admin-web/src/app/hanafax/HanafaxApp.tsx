@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { FaxPinField } from "@/components/chat/FaxPinField";
 import { FaxSitePreview } from "@/components/chat/FaxSitePreview";
 import { UniversalChat } from "@/components/chat/UniversalChat";
 import { faxApi, parseRecipients, type Authorization, type LogRow, type RunStatus } from "./api";
@@ -40,6 +41,7 @@ export function HanafaxApp() {
   const [killed, setKilled] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [live, setLive] = useState(false);
+  const [pin, setPin] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -112,10 +114,15 @@ export function HanafaxApp() {
           <button
             className="rounded border px-3 py-1 text-sm"
             disabled={busy}
-            onClick={() => act(() => faxApi.setKillSwitch(!killed))}
+            onClick={() => act(() => faxApi.setKillSwitch(!killed, pin))}
           >
             {killed ? "정지 해제" : "모든 발송 정지"}
           </button>
+        </div>
+
+        <div className="rounded border border-[#E5E7EB] bg-white p-3 text-sm">
+          <FaxPinField value={pin} onChange={setPin} />
+          <div className="mt-1 text-xs text-gray-500">승인과 정지 해제에는 이 PIN 이 필요합니다(사람만 아는 값).</div>
         </div>
 
         {error && <div className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-700">{error}</div>}
@@ -204,15 +211,15 @@ export function HanafaxApp() {
                 </label>
                 <button
                   className="rounded bg-green-600 px-3 py-1.5 text-white disabled:opacity-50"
-                  disabled={busy || detail.document_matches === false}
-                  onClick={() => act(() => faxApi.approve(detail.id, live))}
+                  disabled={busy || !pin || detail.document_matches === false}
+                  onClick={() => act(() => faxApi.approve(detail.id, live, false, pin))}
                 >
                   이 내용으로 승인
                 </button>
                 <button
                   className="ml-2 rounded bg-[#2563EB] px-3 py-1.5 text-white disabled:opacity-50"
-                  disabled={busy || detail.document_matches === false || killed}
-                  onClick={() => act(() => faxApi.approve(detail.id, live, true))}
+                  disabled={busy || !pin || detail.document_matches === false || killed}
+                  onClick={() => act(() => faxApi.approve(detail.id, live, true, pin))}
                 >
                   승인하고 바로 발송
                 </button>

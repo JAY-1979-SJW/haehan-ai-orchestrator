@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 import threading
 from datetime import UTC, datetime
@@ -18,6 +19,7 @@ from typing import Any
 from ai_orchestrator.connectors import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as policy
 from ai_orchestrator.persistence import fax_authorization_store as store
+from ai_orchestrator.services import fax_approval_pin as approval_pin
 from ai_orchestrator.workflows import scheduled_job_actions as actions
 
 MAX_RECIPIENTS = 1000
@@ -25,6 +27,37 @@ MAX_PER_RUN_CAP = 1000
 MAX_PER_DAY_CAP = 1000
 MAX_TOTAL_CAP = 5000
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+# ── 첨부 문서·주소록 경로 제한 ────────────────────────────────────────────────────
+# AI 가 만든 초안의 경로를 그대로 믿으면 민감한 파일을 외부 번호로 보내거나(유출) 네트워크 경로로 접속하게 만들 수 있다.
+# 허용: 홈 폴더·이 저장소·`HAEHAN_FAX_ALLOWED_DIRS`(os.pathsep 로 구분). 거부: UNC·상대 경로·점(.)으로 시작하는 폴더·키/설정 폴더.
+_BLOCKED_PARTS = {"appdata", ".ssh", ".aws", ".gnupg", ".claude", ".git", "node_modules", "secrets"}
+
+
+def _allowed_roots() -> list[Path]:
+    roots = [Path.home(), Path(__file__).resolve().parents[2]]
+    roots += [Path(p) for p in os.environ.get("HAEHAN_FAX_ALLOWED_DIRS", "").split(os.pathsep) if p.strip()]
+    return [r.resolve() for r in roots if r.exists()]
+
+
+def _safe_path(path_text: str, label: str) -> str:
+    """허용된 위치의 실제 파일 경로만 돌려준다(심볼릭 링크는 실제 위치로 풀어서 검사). 아니면 ValueError."""
+    text = str(path_text or "").strip().strip('"')
+    if text.startswith(("\\\\", "//")):
+        raise ValueError(f"{label}: 네트워크(UNC) 경로는 사용할 수 없습니다")
+    path = Path(text)
+    if not text or not path.is_absolute():
+        raise ValueError(f"{label}: 전체(절대) 경로가 필요합니다")
+    try:
+        real = path.resolve(strict=True)
+    except OSError:
+        raise ValueError(f"{label}: 파일을 찾을 수 없습니다") from None
+    if any(part.lower() in _BLOCKED_PARTS or part.startswith(".") for part in real.parts[1:]):
+        raise ValueError(f"{label}: 설정·키·시스템 폴더의 파일은 사용할 수 없습니다")
+    if not any(real == root or root in real.parents for root in _allowed_roots()):
+        raise ValueError(f"{label}: 허용된 폴더(내 문서·다운로드 등 홈 폴더, 앱 폴더) 밖의 파일입니다 — 필요하면 HAEHAN_FAX_ALLOWED_DIRS 에 폴더를 추가하세요")
+    return str(real)
 
 
 def _clean_recipients(raw: Any) -> list[dict[str, str]]:
@@ -36,9 +69,10 @@ def _clean_recipients(raw: Any) -> list[dict[str, str]]:
     seen: set[str] = set()
     cleaned: list[dict[str, str]] = []
     for item in raw:
-        number = policy.normalize_number(item.get("fax", "") if isinstance(item, dict) else "")
-        if not policy.is_valid_number(number):
-            raise ValueError(f"팩스번호 형식이 올바르지 않습니다: {policy.mask_number(number)}")
+        raw = item.get("fax", "") if isinstance(item, dict) else ""
+        number = policy.parse_number(raw)
+        if number is None:
+            raise ValueError(f"팩스번호 형식이 올바르지 않습니다(숫자·하이픈만, 국제·휴대폰·내선 표기 불가): {policy.mask_number(str(raw))}")
         if number in seen:
             continue
         seen.add(number)
@@ -111,8 +145,8 @@ def import_recipients(path_text: str, *, exclude_already_sent: bool = True) -> t
     seen: set[str] = set()
     recipients: list[dict[str, str]] = []
     for row in rows[1:]:
-        number = policy.normalize_number(row[fax_col] if fax_col < len(row) else "")
-        if not policy.is_valid_number(number):
+        number = policy.parse_number(row[fax_col] if fax_col < len(row) else "")
+        if number is None:
             summary["invalid"] += 1
         elif number in seen:
             summary["duplicate"] += 1
@@ -143,14 +177,26 @@ def _hhmm(value: Any, label: str) -> str:
     return text
 
 
+def _iso(value: Any, label: str) -> str | None:
+    """유효기간 값 검증 — 비어 있으면 None, 형식이 틀리면 거부한다(조용히 무시하면 만료 없는 승인서가 된다)."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        datetime.fromisoformat(text)
+    except ValueError:
+        raise ValueError(f"{label}은(는) 2026-12-31T18:00:00 같은 ISO 형식이어야 합니다") from None
+    return text
+
+
 def create(payload: dict[str, Any], *, user: str) -> dict[str, Any]:
     """승인 대기 승인서를 만든다. 문서는 허용 형식의 실제 파일이어야 하고, 내용 해시가 범위에 고정된다."""
     name = str(payload.get("name", "")).strip()
     subject = str(payload.get("subject", "")).strip()
     if not name or not subject:
         raise ValueError("이름과 제목은 필수입니다")
-    document_ref = str(payload.get("document_ref", "")).strip()
-    error = adapter.validate_document(document_ref) if document_ref else "문서 경로가 필요합니다"
+    document_ref = _safe_path(str(payload.get("document_ref", "")), "첨부 문서")
+    error = adapter.validate_document(document_ref)
     if error:
         raise ValueError(error)
     start, end = (
@@ -159,10 +205,13 @@ def create(payload: dict[str, Any], *, user: str) -> dict[str, Any]:
     )
     if start >= end:
         raise ValueError("허용 시작 시각이 종료 시각보다 빨라야 합니다")
+    valid_from, valid_until = _iso(payload.get("valid_from"), "유효 시작"), _iso(payload.get("valid_until"), "유효 종료")
+    if valid_from and valid_until and datetime.fromisoformat(valid_from) >= datetime.fromisoformat(valid_until):
+        raise ValueError("유효 시작이 종료보다 빨라야 합니다")
     import_summary: dict[str, int] | None = None
     if payload.get("recipients_file"):
         recipients, import_summary = import_recipients(
-            str(payload["recipients_file"]), exclude_already_sent=bool(payload.get("exclude_already_sent", True))
+            _safe_path(str(payload["recipients_file"]), "주소록 파일"), exclude_already_sent=bool(payload.get("exclude_already_sent", True))
         )
         if not recipients:
             raise ValueError(f"보낼 수신자가 없습니다 ({import_summary})")
@@ -184,8 +233,8 @@ def create(payload: dict[str, Any], *, user: str) -> dict[str, Any]:
             max_total=_limit(payload.get("max_total") or len(recipients), "총 최대 건수", MAX_TOTAL_CAP),
             allowed_start=start,
             allowed_end=end,
-            valid_from=payload.get("valid_from") or None,
-            valid_until=payload.get("valid_until") or None,
+            valid_from=valid_from,
+            valid_until=valid_until,
             created_by=user,
         )
     )
@@ -215,8 +264,9 @@ def _document_matches(row: dict[str, Any]) -> bool:
         return False
 
 
-def approve(auth_id: str, *, user: str, live: bool) -> dict[str, Any]:
-    """승인한다. 승인 순간에도 문서가 생성 때와 같은지 확인한다."""
+def approve(auth_id: str, *, user: str, live: bool, pin: str) -> dict[str, Any]:
+    """승인한다. **승인 PIN 이 맞아야 한다**(사람만 아는 값). 승인 순간에도 문서가 생성 때와 같은지 확인한다."""
+    approval_pin.verify(pin)
     row = store.get_authorization(auth_id)
     if row is None:
         raise ValueError("승인서를 찾을 수 없습니다")
@@ -229,7 +279,10 @@ def revoke(auth_id: str, *, user: str) -> dict[str, Any]:
     return store.revoke(auth_id, user=user)
 
 
-def set_kill_switch(on: bool, *, user: str) -> dict[str, Any]:
+def set_kill_switch(on: bool, *, user: str, pin: str = "") -> dict[str, Any]:
+    """정지는 누구나 켤 수 있다(안전 방향). **해제는 승인 PIN 이 필요하다.**"""
+    if not on:
+        approval_pin.verify(pin)
     store.set_kill_switch(on, user=user)
     return {"kill_switch": store.kill_switch_on()}
 
@@ -240,8 +293,8 @@ def send_log(auth_id: str) -> list[dict[str, Any]]:
 
 
 def add_opt_out(number: str, *, reason: str, user: str) -> str:
-    digits = policy.normalize_number(number)
-    if not policy.is_valid_number(digits):
+    digits = policy.parse_number(number)
+    if digits is None:
         raise ValueError("팩스번호 형식이 올바르지 않습니다")
     store.add_opt_out(digits, reason=reason, user=user)
     return policy.mask_number(digits)

@@ -48,8 +48,28 @@ def normalize_number(raw: str) -> str:
 
 
 def is_valid_number(raw: str) -> bool:
+    """국내 일반 팩스번호인지. 국제 접두(00)·휴대폰(01x)·유료 부가서비스(060/080)는 거부한다(요금·오발송 방지)."""
     digits = normalize_number(raw)
-    return _MIN_DIGITS <= len(digits) <= _MAX_DIGITS and digits.startswith("0")
+    return (
+        _MIN_DIGITS <= len(digits) <= _MAX_DIGITS
+        and digits.startswith("0")
+        and not digits.startswith(("00", "01", "060", "080"))
+    )
+
+
+_ALLOWED_INPUT = re.compile(r"^[0-9\s().\-]+$")
+
+
+def parse_number(raw: object) -> str | None:
+    """사용자·파일 입력의 팩스번호를 검증해 숫자만 돌려준다. 못 쓰는 입력이면 None.
+
+    숫자·공백·하이픈·괄호·점만 허용한다 — '#5'(내선)·'+82'·글자가 섞이면 숫자만 남겨 다른 번호가 되므로 통째로 거부한다.
+    """
+    text = str(raw or "").strip()
+    if not _ALLOWED_INPUT.match(text):
+        return None
+    digits = normalize_number(text)
+    return digits if is_valid_number(digits) else None
 
 
 def mask_number(raw: str) -> str:
@@ -160,6 +180,12 @@ def _gate_authorization(auth: Authorization, state: State) -> Decision | None:
     if not _within_hours(state.now, auth.allowed_start, auth.allowed_end):
         return Decision(SKIP, OUTSIDE_HOURS)
     return None
+
+
+def recheck(auth: Authorization, now: datetime) -> str:
+    """긴 실행 도중 다시 확인한다 — 승인·취소·기간·범위·허용 시간대. 막아야 하면 사유, 계속해도 되면 빈 문자열."""
+    blocked = _gate_authorization(auth, State(now, False, 0, 0, (), (), ()))
+    return blocked.reason if blocked is not None else ""
 
 
 def _recipient_skip_reason(number: str, state: State) -> str:

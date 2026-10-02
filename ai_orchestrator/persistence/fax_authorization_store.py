@@ -29,6 +29,7 @@ SENT = "sent"  # 접수번호까지 확인된 성공
 FAILED = "failed"  # 요청이 나가기 전에 명확히 실패(재시도 가능)
 UNKNOWN = "unknown"  # 요청은 나갔으나 결과를 확정하지 못함 — 재전송 금지, 사람이 확인
 DRY_RUN = "dry_run"  # 드라이런(실제 전송 없음)
+CLAIMED = "claimed"  # 전송 직전 선점 기록 — 결과 기록 전에 프로세스가 죽거나 기록이 실패해도 재전송하지 않게 한다
 
 _KILL_SWITCH_KEY = "kill_switch"
 
@@ -233,7 +234,7 @@ class SendRecord:
 
 
 def record_send(record: SendRecord) -> str:
-    if record.status not in (SENT, FAILED, UNKNOWN, DRY_RUN):
+    if record.status not in (SENT, FAILED, UNKNOWN, DRY_RUN, CLAIMED):
         raise ValueError(f"알 수 없는 발송 상태: {record.status}")
     log_id = uuid.uuid4().hex
     with _conn() as con:
@@ -264,12 +265,16 @@ def sent_numbers(document_hash: str) -> set[str]:
 
 
 def unknown_numbers(document_hash: str) -> set[str]:
-    """요청은 나갔으나 결과를 확정하지 못한 수신번호 — 사람이 확인하기 전에는 재전송하지 않는다."""
+    """결과를 확정하지 못한 수신번호 — 번호별 **가장 최근 상태**가 unknown·claimed(선점만 하고 결과 미기록)인 번호.
+
+    사람이 확인하기 전에는 재전송하지 않는다. 이후 sent/failed 가 기록되면 더 이상 pending 이 아니다.
+    """
     with _conn() as con:
         rows = con.execute(
-            "SELECT DISTINCT fax_digits FROM send_log WHERE document_hash=? AND status=?", (document_hash, UNKNOWN)
+            "SELECT fax_digits, status FROM send_log WHERE document_hash=? ORDER BY rowid", (document_hash,)
         ).fetchall()
-    return {r["fax_digits"] for r in rows}
+    latest = {r["fax_digits"]: r["status"] for r in rows if r["status"] != DRY_RUN}
+    return {n for n, status in latest.items() if status in (UNKNOWN, CLAIMED)}
 
 
 def count_sent(authorization_id: str, *, since_iso: str | None = None) -> int:
@@ -307,6 +312,25 @@ def opt_out_numbers() -> set[str]:
     with _conn() as con:
         rows = con.execute("SELECT fax_digits FROM opt_out").fetchall()
     return {r["fax_digits"] for r in rows}
+
+
+# ── 일반 플래그(승인 PIN 해시·실패 횟수 등) ─────────────────────────────────────
+
+
+def get_flag(key: str) -> str | None:
+    with _conn() as con:
+        row = con.execute("SELECT value FROM flags WHERE key=?", (key,)).fetchone()
+    return row["value"] if row else None
+
+
+def set_flag(key: str, value: str, *, user: str = "") -> None:
+    with _conn() as con:
+        con.execute(
+            "INSERT INTO flags (key, value, updated_by, updated_at) VALUES (?,?,?,?)"
+            " ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_by=excluded.updated_by,"
+            " updated_at=excluded.updated_at",
+            (key, value, user, _now()),
+        )
 
 
 # ── 전역 정지(킬 스위치) ─────────────────────────────────────────────────────

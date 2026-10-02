@@ -55,6 +55,7 @@ class SendRequest(BaseModel):
     body: str
     receiver_name: str = ""
     confirmed: bool = False  # 사용자 명시 승인 필수
+    pin: str = ""  # 승인 PIN — 승인서 없이 보내는 경로라 사람만 아는 PIN 이 필요하다
 
 
 class SendResponse(BaseModel):
@@ -78,6 +79,7 @@ class BatchPlan(BaseModel):
 
 
 class BatchExecuteRequest(BaseModel):
+    pin: str = ""  # 승인 PIN (실 발송 경로)
     confirmed: bool = False
     confirm_text: str = ""
     limit: int = 10
@@ -157,6 +159,7 @@ def get_queue(_: dict = Depends(require_role("admin", "owner"))):
 def send_fax(body: SendRequest, _: dict = Depends(require_role("admin", "owner"))):
     if not body.confirmed:
         raise HTTPException(status_code=400, detail="팩스 발송은 confirmed=true 승인이 필요합니다")
+    _require_pin(body.pin)
     from scripts.hanafax.sender import send_fax as _send
 
     result = _send(
@@ -201,11 +204,18 @@ class AuthorizationCreate(BaseModel):
 class AuthorizationApprove(BaseModel):
     confirmed: bool = False
     start_now: bool = False  # 승인과 동시에 발송 시작(사용자가 한 번 승인하면 끝까지 자동)
+    pin: str = ""  # 승인 PIN — 사람만 아는 값(없거나 틀리면 승인되지 않는다)
     live: bool = False  # 기본 드라이런 — 실전송은 명시해야 한다
 
 
 class KillSwitchRequest(BaseModel):
     on: bool
+    pin: str = ""  # 정지 해제(on=false)에만 필요
+
+
+class PinRequest(BaseModel):
+    pin: str
+    old_pin: str = ""
 
 
 class OptOutRequest(BaseModel):
@@ -221,6 +231,16 @@ def _auth_service():
     from ai_orchestrator.services import hanafax_authorization_service as service
 
     return service
+
+
+def _require_pin(pin: str) -> None:
+    """승인서 없이 보내는 레거시 경로 — 승인 PIN 이 맞아야 한다(없거나 틀리면 403)."""
+    from ai_orchestrator.services import fax_approval_pin
+
+    try:
+        fax_approval_pin.verify(pin)
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
 
 
 def _bad_request(exc: ValueError) -> HTTPException:
@@ -261,12 +281,12 @@ def approve_authorization(auth_id: str, body: AuthorizationApprove, user: dict =
         raise HTTPException(status_code=400, detail="승인은 confirmed=true (미리보기 확인 후)가 필요합니다")
     try:
         service = _auth_service()
-        service.approve(auth_id, user=_actor(user), live=body.live)
+        service.approve(auth_id, user=_actor(user), live=body.live, pin=body.pin)
         if body.start_now:
             service.run_now(auth_id)
         return service.preview(auth_id)
     except ValueError as exc:
-        raise _bad_request(exc) from exc
+        raise HTTPException(status_code=403 if "PIN" in str(exc) else 400, detail=str(exc)) from exc
 
 
 @hanafax_router.post("/authorizations/{auth_id}/revoke", response_model=dict)
@@ -332,7 +352,29 @@ def authorization_log(auth_id: str, _: dict = Depends(require_role("admin", "own
 @hanafax_router.post("/kill-switch", response_model=dict)
 def kill_switch(body: KillSwitchRequest, user: dict = Depends(require_role("admin", "owner"))):
     """전역 정지 — 켜면 모든 자동 발송이 즉시 멈춘다."""
-    return _auth_service().set_kill_switch(body.on, user=_actor(user))
+    try:
+        return _auth_service().set_kill_switch(body.on, user=_actor(user), pin=body.pin)
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+
+@hanafax_router.get("/approval-pin", response_model=dict)
+def approval_pin_status(_: dict = Depends(require_role("admin", "owner"))):
+    from ai_orchestrator.services import fax_approval_pin
+
+    return fax_approval_pin.status()
+
+
+@hanafax_router.post("/approval-pin", response_model=dict)
+def set_approval_pin(body: PinRequest, user: dict = Depends(require_role("admin", "owner"))):
+    """승인 PIN 을 처음 설정하거나 바꾼다(바꿀 때는 기존 PIN 필요). 승인·정지 해제는 이 PIN 이 맞아야 한다."""
+    from ai_orchestrator.services import fax_approval_pin
+
+    try:
+        fax_approval_pin.set_pin(body.pin, old_pin=body.old_pin, user=_actor(user))
+    except ValueError as exc:
+        raise HTTPException(status_code=403 if "PIN" in str(exc) and "자 이상" not in str(exc) else 400, detail=str(exc)) from exc
+    return fax_approval_pin.status()
 
 
 @hanafax_router.post("/opt-out", response_model=dict)
@@ -364,6 +406,7 @@ def batch_plan(body: BatchExecuteRequest, _: dict = Depends(require_role("admin"
 def batch_execute(body: BatchExecuteRequest, _: dict = Depends(require_role("admin", "owner"))):
     from scripts.hanafax.batch import APPROVAL_CONFIRM_TEXT, build_batch_plan, execute_batch
 
+    _require_pin(body.pin)
     if not body.confirmed or body.confirm_text != APPROVAL_CONFIRM_TEXT:
         raise HTTPException(
             status_code=400,
