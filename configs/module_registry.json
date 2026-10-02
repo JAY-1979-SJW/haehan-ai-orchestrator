@@ -20464,6 +20464,22 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/components/chat/FaxSitePreview.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/hanafax/preview.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

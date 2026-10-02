@@ -41,6 +41,12 @@ export interface RunStatus {
   last: { status: string; message: string; finished_at: string } | null;
 }
 
+export interface PreviewStatus {
+  running: boolean;
+  state: { ok: boolean; message: string; shown?: number; total?: number; missing?: string[]; finished_at: string } | null;
+  image_ready: boolean;
+}
+
 export interface CreateInput {
   name: string;
   subject: string;
@@ -82,6 +88,9 @@ export const faxApi = {
   revoke: (id: string) => post<Authorization>(`authorizations/${id}/revoke`),
   run: (id: string) => post<RunStatus>(`authorizations/${id}/run`),
   runStatus: (id: string) => call<RunStatus>(`authorizations/${id}/run`),
+  startPreview: (id: string) => post<PreviewStatus>(`authorizations/${id}/preview`),
+  previewStatus: (id: string) => call<PreviewStatus>(`authorizations/${id}/preview`),
+  previewImageUrl: (id: string, stamp: string) => `${BASE}/authorizations/${id}/preview.png?t=${encodeURIComponent(stamp)}`,
   log: (id: string) => call<LogRow[]>(`authorizations/${id}/log`),
   killSwitch: () => call<{ kill_switch: boolean }>("kill-switch"),
   setKillSwitch: (on: boolean) => post<{ kill_switch: boolean }>("kill-switch", { on }),

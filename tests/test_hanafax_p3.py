@@ -329,3 +329,49 @@ def test_bulk_unknown_chunk_stops_remaining_chunks(doc, monkeypatch):
     service.approve(row["id"], user="a", live=True)
     result = flow.run_bulk(row["id"], adapter.build_bulk_sender(str(doc), row["document_hash"]), datetime.now().astimezone(), chunk_size=2)
     assert result.unknown == 2 and result.stopped_midway and len(calls) == 1  # 첫 묶음 결과 불명 → 다음 묶음은 보내지 않는다
+
+
+# ── 하나팩스 실제 화면 미리보기(전송 없음) ──────────────────────────────────────
+
+
+def test_preview_module_never_presses_send_button():
+    """미리보기 모듈에는 '팩스보내기' 버튼 셀렉터가 없고, 결과(전송) 페이지 이동을 차단하며 대화상자를 취소한다."""
+    from pathlib import Path
+
+    src = (Path(__file__).resolve().parents[1] / "scripts" / "hanafax" / "preview.py").read_text(encoding="utf-8")
+    assert "e_money_chk" not in src
+    assert "submit_Result*" in src and "route.abort()" in src
+    assert "d.dismiss()" in src and "d.accept()" not in src
+
+
+def test_start_preview_runs_in_background_and_reports(doc, monkeypatch, tmp_path):
+    import time
+
+    import scripts.hanafax.preview as preview_mod
+
+    monkeypatch.setattr(service, "_PREVIEW_DIR", tmp_path / "pv")
+
+    def fake_capture(fax_nos, subject, attach_file, out_path):
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_bytes(b"fake png")
+        return {"ok": True, "message": "미리보기 완료 — 전송하지 않았습니다", "shown": len(fax_nos), "total": len(fax_nos), "missing": []}
+
+    monkeypatch.setattr(preview_mod, "capture_preview", fake_capture)
+    row = service.create(_payload(doc), user="u")
+    service.start_preview(row["id"])
+    status = service.preview_status(row["id"])
+    for _ in range(100):
+        status = service.preview_status(row["id"])
+        if status["state"]:
+            break
+        time.sleep(0.05)
+    assert status["state"]["ok"] and status["image_ready"] and not status["running"]
+
+
+def test_preview_rejected_for_changed_document_or_unknown_id(doc):
+    row = service.create(_payload(doc), user="u")
+    doc.write_bytes(b"%PDF-1.4 changed")
+    with pytest.raises(ValueError, match="달라"):
+        service.start_preview(row["id"])
+    with pytest.raises(ValueError, match="찾을 수"):
+        service.start_preview("nope")

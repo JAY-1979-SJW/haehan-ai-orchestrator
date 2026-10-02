@@ -293,6 +293,30 @@ def run_status(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
     return _auth_service().run_status(auth_id)
 
 
+@hanafax_router.post("/authorizations/{auth_id}/preview", response_model=dict)
+def start_preview(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    """하나팩스 접수 화면에 채워 보는 미리보기를 만든다(백그라운드, 전송하지 않음). 보기는 사용자의 선택."""
+    try:
+        return _auth_service().start_preview(auth_id)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
+@hanafax_router.get("/authorizations/{auth_id}/preview", response_model=dict)
+def preview_status(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    return _auth_service().preview_status(auth_id)
+
+
+@hanafax_router.get("/authorizations/{auth_id}/preview.png")
+def preview_image(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    from fastapi.responses import FileResponse
+
+    path = _auth_service().preview_image_path(auth_id)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="미리보기 이미지가 없습니다")
+    return FileResponse(path, media_type="image/png", headers={"Cache-Control": "no-store"})
+
+
 @hanafax_router.get("/kill-switch", response_model=dict)
 def kill_switch_state(_: dict = Depends(require_role("admin", "owner"))):
     from ai_orchestrator.persistence import fax_authorization_store as fax_store

@@ -288,3 +288,62 @@ def run_status(auth_id: str) -> dict[str, Any]:
         running = auth_id in _running
         last = dict(_last_run.get(auth_id, {}))
     return {"running": running, "last": last or None}
+
+
+# ── 하나팩스 실제 화면 미리보기 (전송 없음) ─────────────────────────────────────
+# 승인서의 수신번호·제목·첨부를 하나팩스 접수 화면에 채워 스크린샷만 만든다(`scripts/hanafax/preview.py`).
+# 보내기 버튼은 누르지 않는다. 사용자가 볼지 말지 정하며, 승인에는 필요하지 않다.
+# 스크린샷에 수신번호가 보이므로 로컬 `data/` 에만 두고 커밋하지 않는다.
+_PREVIEW_DIR = Path(__file__).resolve().parents[2] / "data" / "hanafax_preview"
+_previewing: set[str] = set()
+_preview_state: dict[str, dict[str, Any]] = {}
+
+
+def preview_image_path(auth_id: str) -> Path:
+    return _PREVIEW_DIR / f"{re.sub(r'[^0-9a-f]', '', auth_id)}.png"
+
+
+def _preview_job(auth_id: str, fax_nos: list[str], subject: str, document_ref: str) -> None:
+    from scripts.hanafax.preview import capture_preview
+
+    try:
+        outcome = capture_preview(fax_nos, subject, document_ref, preview_image_path(auth_id))
+    except Exception as exc:  # noqa: BLE001 - 미리보기 실패는 사유만 알린다(전송과 무관)
+        outcome = {"ok": False, "message": f"미리보기 실패: {type(exc).__name__}"}
+    with _run_lock:
+        _preview_state[auth_id] = {**outcome, "finished_at": datetime.now(UTC).isoformat(timespec="seconds")}
+        _previewing.discard(auth_id)
+
+
+def start_preview(auth_id: str) -> dict[str, Any]:
+    row = store.get_authorization(auth_id)
+    if row is None:
+        raise ValueError("승인서를 찾을 수 없습니다")
+    if row["revoked"]:
+        raise ValueError("취소된 승인서입니다")
+    if not _document_matches(row):
+        raise ValueError("문서가 요청 때와 달라졌거나 없습니다")
+    with _run_lock:
+        if auth_id in _previewing:
+            raise ValueError("미리보기를 만드는 중입니다")
+        _previewing.add(auth_id)
+        _preview_state.pop(auth_id, None)
+    numbers = [r["fax"] for r in row["recipients"]]
+    threading.Thread(
+        target=_preview_job,
+        args=(auth_id, numbers, row["subject"], row["document_ref"]),
+        daemon=True,
+        name=f"fax-preview-{auth_id[:8]}",
+    ).start()
+    return preview_status(auth_id)
+
+
+def preview_status(auth_id: str) -> dict[str, Any]:
+    with _run_lock:
+        running = auth_id in _previewing
+        state = dict(_preview_state.get(auth_id, {}))
+    return {
+        "running": running,
+        "state": state or None,
+        "image_ready": preview_image_path(auth_id).is_file() and bool(state.get("ok")),
+    }

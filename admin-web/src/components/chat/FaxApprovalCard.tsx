@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { faxApi, type Authorization, type RunStatus } from "@/app/hanafax/api";
+import { FaxSitePreview } from "./FaxSitePreview";
 
 /**
  * AI 창 안의 팩스 발송 승인 카드. AI 가 승인 대기 초안을 만들고 "[[fax-approve:<id>]]" 를 답에 넣으면 나타난다.
@@ -79,8 +80,9 @@ export function FaxApprovalCard({ authId }: { authId: string }) {
         제목: {auth.subject} · 수신 {auth.recipient_count}곳 · 첨부: {auth.document_name}
       </div>
       {auth.document_matches === false && <div className="text-red-600">첨부 파일이 바뀌었거나 없습니다 — 승인할 수 없습니다.</div>}
+      <FaxSitePreview authId={authId} />
       <button className="text-[#2563EB] underline" onClick={() => setPreview((v) => !v)}>
-        {preview ? "미리보기 접기" : "미리보기 보기 (선택)"}
+        {preview ? "목록 접기" : "수신자 목록 보기 (선택)"}
       </button>
       {preview && (
         <ul className="max-h-32 list-disc overflow-auto pl-4">

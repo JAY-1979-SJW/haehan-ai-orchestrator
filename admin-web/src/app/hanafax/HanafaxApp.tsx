@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { FaxSitePreview } from "@/components/chat/FaxSitePreview";
 import { UniversalChat } from "@/components/chat/UniversalChat";
 import { faxApi, parseRecipients, type Authorization, type LogRow, type RunStatus } from "./api";
 
@@ -170,8 +171,9 @@ export function HanafaxApp() {
               <div className="rounded bg-red-50 p-2 text-red-700">첨부 파일이 요청 때와 달라졌거나 없습니다 — 승인·발송할 수 없습니다.</div>
             )}
 
+            <FaxSitePreview key={detail.id} authId={detail.id} />
             <button className="text-[#2563EB] underline" onClick={() => setShowPreview((v) => !v)}>
-              {showPreview ? "미리보기 접기" : "미리보기 보기 (선택)"}
+              {showPreview ? "목차 접기" : "내용 목차 보기 (선택)"}
             </button>
             {showPreview && (
               <div className="space-y-1 rounded bg-gray-50 p-2" data-testid="fax-preview">
