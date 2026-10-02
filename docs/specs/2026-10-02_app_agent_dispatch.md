@@ -22,6 +22,7 @@
 ## 3. 구성 (단계 P1~P5, 직렬 진행)
 | 단계 | 내용 | 계층·파일 |
 |---|---|---|
+| **P0 CDP 칸 분리 + 안전한 새 탭 열기** | §9 참조. 브라우저 작업의 병렬 실행 전제 | `scripts/cdp_lanes.py`(신규 등록표), `scripts/cdp_force_start.py`(칸 단위 확장, 기본값은 기존과 동일), `scripts/web_connector.py`(`open_tab` 추가) |
 | **P1 동시 실행** | 로컬 에이전트가 `LOCAL_AGENT_MAX_PARALLEL`(기본 1=현재와 동일, 설정 2~3) 개 작업을 동시에 처리. 작업마다 스레드, 결과 전송은 락으로 직렬화, 하트비트 유지, `capacity`/`active_task_count` 보고. 서버는 용량이 남은 에이전트를 우선 선택 | `local_agent/websocket_client.py`(수정, 병렬 수 1 이면 기존 경로 그대로), `local_agent_registry_agent.py`(capacity 필드 추가), `routers/ai_agent_router.py`(선택 규칙) |
 | **P2 충돌 정책(순수)** | 작업이 선언하는 자원 `{git, db, server, deploy, ui, cdp:<사이트>, path:<경로>}` 로 서로 겹치면 직렬, 겹치지 않으면 병렬. 읽기 전용 작업은 자유. 금지선(§4) 하드코딩. 스케줄 순서 계산 | `gates/agent_dispatch_policy.py`(신규, L2, I/O 없음) |
 | **P3 분배 서비스·API** | `POST /ai-agent/dispatch {goal}` → 계획 단계(읽기 전용 `claude -p` 가 하위 작업·자원·예상 비용을 JSON 으로 제안, **미승인 상태로 저장**) → `POST /dispatch/{id}/approve`(사람) → 정책이 허용한 만큼 동시 실행 → `GET /dispatch/{id}` 진행 상황, `POST /dispatch/{id}/cancel`. 종료 시 결과 요약 | `services/agent_dispatch_service.py`, `persistence/agent_dispatch_store.py`(sqlite), `routers/agent_dispatch_router.py`(관리자 전용) |
@@ -56,3 +57,38 @@
 2. 쓰기 작업은 **worktree 격리 + 병합은 사람이 승인** — 권장.
 3. 비용 상한 전체 **$6**, 작업당 $1 — 권장(앱 기존 기본값 $2/작업보다 낮게).
 4. 로컬 에이전트가 현재 꺼져 있다 — P1 시험·운영에는 `python -m local_agent.agent --run` 실행이 필요(제가 필요할 때만 켜고 끝나면 끈다).
+
+
+## 9. P0 — CDP 칸 분리와 안전한 새 탭 열기 (2026-10-02 추가, 사용자 확인: "네")
+### 9-1. 배경(오늘 실측)
+- Playwright `ctx.new_page()` 는 `about:blank` 으로 만들고 이어지는 `goto` 가 20초 타임아웃으로 멈췄다. 같은 브라우저에서 `PUT /json/new?주소` 는 3초 안에 정상 이동했다(결함 #72~#76 과 같은 유형 — 새 연결을 매번 맺는 방식의 문제).
+- 공용 헬퍼 `CDP(port=9222)` 는 항상 첫 번째 탭에 붙어 그 탭을 덮어쓴다 → 다른 작업의 탭이 가로채기당한다(오늘 하이웍스 탭이 `localhost:3000/scheduled` 로 바뀐 사례).
+- 포트는 `CDP_PORT = 9222` 단일 상수, 파이썬 파일 75개에 `9222` 가 직접 적혀 있다. 프로필은 환경변수 하나(`HAEHAN_CDP_PROFILE`).
+
+### 9-2. 칸(lane) 등록표 — `scripts/cdp_lanes.py` (단일 출처)
+| 필드 | 설명 |
+|---|---|
+| `name` | 칸 이름. 기본 3칸: `general`(범용, 9222, 기존 `ai_chrome` 프로필 — **로그인 세션 그대로 보존**), `naver`(9223), `groupware`(하이웍스·EUM, 9224) |
+| `port` / `profile_dir` | 칸마다 별도 포트·프로필(`data/cdp_profile/<name>`). 앱 창(Electron 9333)은 별개로 두고 건드리지 않음 |
+| `sites` | 이 칸이 맡는 사이트(예: naver, hiworks, eum). **한 계정은 한 칸에만 배정**(같은 계정 동시 로그인으로 세션이 끊기는 것을 방지) |
+| 규칙 | 칸은 필요할 때만 켠다(기본은 `general` 만). 동시에 켜는 칸은 최대 3개(메모리 부족 이력). 새 칸은 처음 로그인이 필요하며 OTP·2단계 인증은 사용자가 한다 |
+- 조회: `lane_for_site("hiworks")` → 칸 → 포트. **새 하드코딩 금지**, 기존 9222 호출은 호환 경로(`general`)로 유지하고 필요한 곳부터 옮긴다(75개 일괄 치환 안 함).
+- 분배 기능(§3 P2)의 `cdp:<사이트>` 자원이 이 칸 이름과 같다: 같은 칸 작업은 직렬, 다른 칸은 병렬.
+
+### 9-3. `web_connector.open_tab(url, *, lane, reason)` — 새 탭 안전 열기
+1. **주소와 함께 만든다**: `PUT /json/new?<url>` 로 탭을 만들어 `about:blank` 단계 자체를 없앤다(Playwright `new_page()` 미사용).
+2. **도착 확인**: 최대 N초(기본 10) 동안 그 탭의 URL 이 목표 도메인으로 바뀌었는지 확인. 실패하면 **그 탭을 닫고** 한 번만 재시도, 그래도 실패하면 명확한 오류(빈 탭을 남기지 않는다).
+3. **소유권**: 만든 탭의 id 를 `reason`(작업 이름)·칸과 함께 기록. `open_tab`·후속 조작은 **자기가 만든 탭만** 다루고, 남의 탭을 덮어쓰지 않는다(첫 번째 탭 가로채기 방지).
+4. **붙기**: 탭 id 로 직접 붙는다(Playwright 는 이미 열린 탭을 URL/ID 로 찾기만, 새 탭 생성에는 쓰지 않음). 붙기 핸드셰이크가 지연되면 짧은 타임아웃 뒤 원시 CDP(`/json`·웹소켓) 폴백.
+5. **정리**: 작업 종료·실패 시 자기가 만든 탭만 닫는다(사용자 탭·로그인 탭은 닫지 않음 — 로그인 세션 보존 원칙).
+6. 브라우저 세션이 오염돼 전반적으로 느려지면 코드 수정 전에 칸 재시작을 안내(프로필 유지, 사용자 허락 후).
+
+### 9-4. 시험(드라이런)
+- 가짜 `/json` 서버로: 주소 포함 생성, 이동 실패 시 탭 정리·1회 재시도, 소유권(남의 탭 불가침), 칸 조회·동시 칸 상한.
+- 실제 브라우저(내 탭만): 새 탭 10개 연속 생성·정리 시 `about:blank` 잔존 0, 기존 탭 불변. 로그인 필요 사이트는 시험하지 않는다.
+- 기본 칸(`general`)에서 기존 `web_connector`/`cdp_helper` 호출 결과가 달라지지 않음을 기존 테스트로 확인.
+
+### 9-5. 결정 대기(권장안)
+1. 기본 3칸: `general`·`naver`·`groupware` — 권장(필요한 칸만 켠다).
+2. 칸별 프로필은 `data/cdp_profile/<name>` — 권장(`general` 은 기존 `ai_chrome` 유지).
+3. 새 칸 첫 로그인은 사용자가 한다(제가 감시만) — 권장.
