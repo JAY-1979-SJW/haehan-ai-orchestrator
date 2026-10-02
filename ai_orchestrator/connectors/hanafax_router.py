@@ -15,7 +15,7 @@ import re
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
@@ -222,6 +222,10 @@ class ResolveRequest(BaseModel):
     pin: str = ""
 
 
+class AttachmentCheck(BaseModel):
+    path: str
+
+
 class PinRequest(BaseModel):
     pin: str
     old_pin: str = ""
@@ -254,6 +258,27 @@ def _require_pin(pin: str) -> None:
 
 def _bad_request(exc: ValueError) -> HTTPException:
     return HTTPException(status_code=400, detail=str(exc))
+
+
+@hanafax_router.post("/attachments", response_model=dict)
+def upload_attachment(file: UploadFile = File(...), _: dict = Depends(require_role("admin", "owner"))):
+    """첨부 파일을 올려 앱 전용 폴더에 저장하고 경로를 돌려준다(pdf/docx/doc, 10MB 이하, 내용 검사)."""
+    from ai_orchestrator.services import hanafax_attachments as limits
+
+    data = file.file.read(limits.MAX_BYTES + 1)  # 한도 +1 바이트만 읽어 거대한 업로드가 메모리를 채우지 않게 한다
+    try:
+        return _auth_service().upload_attachment(file.filename or "", data)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
+@hanafax_router.post("/attachments/check", response_model=dict)
+def check_attachment(body: AttachmentCheck, _: dict = Depends(require_role("admin", "owner"))):
+    """첨부 파일 경로를 미리 검사한다(허용 폴더·형식·크기·내용) — 승인서 만들 때와 같은 규칙."""
+    try:
+        return _auth_service().check_attachment(body.path)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
 
 
 @hanafax_router.get("/address-groups", response_model=list[dict])

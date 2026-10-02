@@ -20648,6 +20648,30 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/app/hanafax/AttachmentField.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/hanafax_attachments.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "hanafax",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_hanafax_attachments.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

@@ -76,6 +76,13 @@ export interface GroupSyncStatus {
   state: { ok: boolean | null; page?: number; pages?: number; members?: number; message?: string } | null;
 }
 
+export interface AttachmentInfo {
+  path: string;
+  name: string;
+  size: number;
+  size_text: string;
+}
+
 export interface CreateInput {
   name: string;
   subject: string;
@@ -90,22 +97,24 @@ export interface CreateInput {
   allowed_end: string;
 }
 
+async function readError(res: Response): Promise<Error> {
+  let detail = `HTTP ${res.status}`;
+  try {
+    const body = await res.json();
+    if (body && typeof body.detail === "string") detail = body.detail;
+  } catch {
+    /* JSON 이 아니면 상태 코드만 */
+  }
+  return new Error(detail);
+}
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}/${path}`, {
     cache: "no-store",
     headers: { "Content-Type": "application/json" },
     ...init,
   });
-  if (!res.ok) {
-    let detail = `HTTP ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body && typeof body.detail === "string") detail = body.detail;
-    } catch {
-      /* JSON 이 아니면 상태 코드만 */
-    }
-    throw new Error(detail);
-  }
+  if (!res.ok) throw await readError(res);
   return (await res.json()) as T;
 }
 
@@ -124,6 +133,14 @@ export const faxApi = {
   runStatus: (id: string) => call<RunStatus>(`authorizations/${id}/run`),
   resolvePending: (id: string, fax: string, outcome: "sent" | "not_sent", pin: string) =>
     post<Authorization>(`authorizations/${id}/resolve`, { fax, outcome, pin }),
+  checkAttachment: (path: string) => post<AttachmentInfo>("attachments/check", { path }),
+  uploadAttachment: async (file: File): Promise<AttachmentInfo> => {
+    const form = new FormData(); // 멀티파트 — Content-Type 은 브라우저가 경계값과 함께 정한다
+    form.append("file", file);
+    const res = await fetch(`${BASE}/attachments`, { method: "POST", body: form, cache: "no-store" });
+    if (!res.ok) throw await readError(res);
+    return (await res.json()) as AttachmentInfo;
+  },
   addressGroups: () => call<AddressGroup[]>("address-groups"),
   startGroupSync: (intid: string) => post<GroupSyncStatus>(`address-groups/${intid}/sync`),
   groupSyncStatus: (intid: string) => call<GroupSyncStatus>(`address-groups/${intid}/sync`),

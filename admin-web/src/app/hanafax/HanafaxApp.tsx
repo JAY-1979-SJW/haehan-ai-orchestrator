@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FaxPinField } from "@/components/chat/FaxPinField";
 import { FaxSitePreview } from "@/components/chat/FaxSitePreview";
 import { UniversalChat } from "@/components/chat/UniversalChat";
+import { AttachmentField } from "./AttachmentField";
 import { faxApi, parseRecipients, type AddressGroup, type Authorization, type GroupSyncStatus, type LogRow, type ReconcileStatus, type RunStatus } from "./api";
 
 /**
@@ -34,6 +35,7 @@ const AGENT_HINT =
   "(body: name, subject, document_ref=첨부 파일 전체 경로, recipients=[{fax,name}] 또는 recipients_file=주소록 엑셀/CSV 경로 또는 site_group=하나팩스 주소록 그룹 번호). " +
   "사용자가 하나팩스 주소록 그룹 이름을 말하면: ① call_api 'hanafax.address_groups' 로 그룹 목록(intid·이름·인원) 확인 → ② 'hanafax.address_group_sync' (path_params={intid})로 가져오기 시작 → " +
   "③ 'hanafax.address_group_sync_status' 를 몇 초마다 조회해 state.ok 가 true(cached=true) 가 될 때까지 기다림(큰 그룹은 몇 분) → ④ 'hanafax.draft' 에 site_group=<intid> (1000명이 넘는 그룹은 group_offset/group_limit 로 1000명씩 구간) 로 초안 생성. " +
+  "사용자가 알려 준 첨부 파일 경로(화면에서 올린 파일은 앱 폴더의 전체 경로)를 document_ref 에 그대로 쓴다. " +
   "Python·Bash 로 직접 만들거나 발송하지 않는다(권한 없음). 응답의 id 로 답변 끝에 [[fax-approve:<id>]] 를 그대로 적고 " +
   "'아래 승인 버튼을 눌러 주세요'라고 안내한다. 승인·발송은 사용자가 버튼으로만 한다. 주소록을 쓰면 응답의 import_summary 건수를 알린다.";
 
@@ -52,6 +54,7 @@ export function HanafaxApp() {
   const [log, setLog] = useState<LogRow[]>([]);
   const [run, setRun] = useState<RunStatus | null>(null);
   const [recon, setRecon] = useState<ReconcileStatus | null>(null);
+  const [aiAttach, setAiAttach] = useState("");
   const [killed, setKilled] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [live, setLive] = useState(false);
@@ -335,8 +338,17 @@ export function HanafaxApp() {
         )}
       </section>
 
-      <section className="h-[calc(100dvh-170px)] min-h-[420px]">
+      <section className="flex h-[calc(100dvh-170px)] min-h-[420px] flex-col gap-2">
+        <details className="rounded border border-[#E5E7EB] bg-white p-2 text-xs" data-testid="fax-ai-attachment">
+          <summary className="cursor-pointer font-medium">AI에게 줄 첨부 파일 올리기 (선택)</summary>
+          <div className="mt-2 space-y-1">
+            <AttachmentField value={aiAttach} onChange={setAiAttach} showCopy />
+            <div className="text-gray-500">올린 뒤 &quot;경로 복사&quot;를 눌러 AI 창에 붙여 넣고 &quot;이 파일을 ○○에게 팩스로 보내줘&quot;라고 말하면 됩니다.</div>
+          </div>
+        </details>
+        <div className="min-h-0 flex-1">
         <UniversalChat domain="hanafax" agentHint={AGENT_HINT} title="AI 창 — 첨부 파일 경로와 받는 사람을 알려주세요" className="h-full" />
+        </div>
       </section>
     </div>
   );
@@ -432,7 +444,7 @@ function NewForm({ onCreated }: { onCreated: (id: string) => void }) {
     <div className="space-y-2 border-b p-3">
       <input className={input} placeholder="이름 (예: 10월 영업 안내)" value={name} onChange={(e) => setName(e.target.value)} />
       <input className={input} placeholder="팩스 제목" value={subject} onChange={(e) => setSubject(e.target.value)} />
-      <input className={input} placeholder="첨부 파일 경로 (pdf/docx/doc 전체 경로)" value={path} onChange={(e) => setPath(e.target.value)} />
+      <AttachmentField value={path} onChange={setPath} />
       <div className="flex gap-2">
         <button className={tab(mode === "manual")} onClick={() => setMode("manual")}>
           직접 입력

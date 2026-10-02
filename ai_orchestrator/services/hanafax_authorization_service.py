@@ -20,6 +20,7 @@ from ai_orchestrator.connectors import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as policy
 from ai_orchestrator.persistence import fax_authorization_store as store
 from ai_orchestrator.services import fax_approval_pin as approval_pin
+from ai_orchestrator.services import hanafax_attachments as attachments
 from ai_orchestrator.workflows import scheduled_job_actions as actions
 
 MAX_RECIPIENTS = 1000
@@ -207,6 +208,7 @@ def create(payload: dict[str, Any], *, user: str) -> dict[str, Any]:
     error = adapter.validate_document(document_ref)
     if error:
         raise ValueError(error)
+    attachments.inspect_file(document_ref)  # 크기(10MB)·내용 머리(이름만 바꾼 파일 거부)
     start, end = (
         _hhmm(payload.get("allowed_start", "09:00"), "허용 시작 시각"),
         _hhmm(payload.get("allowed_end", "18:00"), "허용 종료 시각"),
@@ -603,3 +605,20 @@ def recipients_from_site_group(
     recipients, summary = _screen([(m["fax"], m.get("name", "")) for m in part], exclude_already_sent=exclude_already_sent)
     summary.update({"group_total": len(members), "range_start": offset + 1, "range_end": offset + len(part)})
     return recipients, summary
+
+
+# ── 첨부 파일: 경로 확인·올리기 (화면의 파일 선택·경로 확인 버튼) ─────────────────────────
+def check_attachment(path_text: str) -> dict[str, Any]:
+    """경로를 승인서 만들 때와 같은 규칙으로 미리 검사한다(허용 폴더·형식·크기·내용). 문제 있으면 ValueError."""
+    real = _safe_path(str(path_text or ""), "첨부 문서")
+    error = adapter.validate_document(real)
+    if error:
+        raise ValueError(error)
+    return {"path": real, **attachments.inspect_file(real)}
+
+
+def upload_attachment(filename: str, data: bytes) -> dict[str, Any]:
+    """화면에서 고른 파일을 앱 폴더에 저장한다. 승인서가 참조하지 않는 오래된 업로드는 함께 정리한다."""
+    saved = attachments.save_upload(filename, data)
+    attachments.purge_old({a["document_ref"] for a in store.list_authorizations()})
+    return saved
