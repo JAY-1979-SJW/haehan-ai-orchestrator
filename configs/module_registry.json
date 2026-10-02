@@ -20480,6 +20480,62 @@
    "reason": "도메인(hanafax) 자동화",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/routers/naver_mail_bulk_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "naver_mail",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/mail_bulk_service.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/workflows/naver_mail_bulk.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "naver_mail",
+   "reason": "정의 위주(모델·스키마·dataclass)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/bulk_sender.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_mail_bulk_run.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mail_bulk_service.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mail_bulk_smtp.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

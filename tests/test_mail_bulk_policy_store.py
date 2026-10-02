@@ -62,6 +62,8 @@ def test_email_helpers():
     assert not pol.is_valid_email("a@b")
     assert not pol.is_valid_email("")
     assert pol.mask_email("kim.chulsoo@naver.com") == "ki*********@naver.com"
+    assert pol.mask_email("u0@example.com") == "u*@example.com"
+    assert pol.mask_email("abc@example.com") == "a**@example.com"
 
 
 def test_scope_hash_ignores_order_and_case_but_not_content():

@@ -298,3 +298,8 @@ def set_instructions(account: str, text: str) -> str:
         raise ServiceError(f"업무 지침은 {policy.INSTRUCTIONS_MAX_CHARS}자 이하여야 합니다")
     store.set_instructions(require_account(account), cleaned)
     return cleaned
+
+
+# 대량 발송 실행기가 쓰는 공개 이름(같은 L6) — 첨부 경로 안전 검사와 sha256 재확인을 그대로 재사용한다
+path_attachment = _path_attachment
+rebuild_uploads = _rebuild_uploads

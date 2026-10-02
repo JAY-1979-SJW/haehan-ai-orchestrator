@@ -297,6 +297,33 @@ def _fax_send_params(params: dict[str, Any]) -> dict[str, Any]:
     return {"authorization_id": auth_id}
 
 
+def _mail_bulk_params(params: dict[str, Any]) -> dict[str, Any]:
+    """승인서 id 하나만 받는다. 수신자·내용·첨부는 승인서에서 읽는다(여기서 바꿀 수 없다)."""
+    from ai_orchestrator.persistence import mail_bulk_store as bulk_store
+
+    extra = set(params) - {"authorization_id"}
+    if extra:
+        raise ValueError(f"알 수 없는 설정값: {sorted(extra)}")
+    auth_id = str(params.get("authorization_id") or "").strip()
+    row = bulk_store.get_authorization(auth_id) if auth_id else None
+    if row is None:
+        raise ValueError("메일 대량 발송 승인서를 찾을 수 없습니다")
+    if not row["approved"] or row["revoked"]:
+        raise ValueError("승인되지 않았거나 취소된 메일 대량 발송 승인서입니다")
+    return {"authorization_id": auth_id}
+
+
+def _run_naver_mail_bulk_send(params: dict[str, Any]) -> str:
+    """승인서 범위 안에서 메일을 한 명씩 차례로 보내는 백그라운드 실행을 시작한다(오래 걸려 예약 루프를 막지 않는다)."""
+    from ai_orchestrator.services import mail_bulk_service as bulk_service
+
+    auth_id = params["authorization_id"]
+    if bulk_service.status(auth_id)["running"]:
+        return "이미 발송 중입니다(이번 실행은 건너뜀)"
+    bulk_service.start(auth_id)  # 멈춘·취소된 승인서면 ValueError 로 회차가 실패로 기록된다
+    return "차례 발송을 시작했습니다. 진행 상황은 메일함의 대량 발송 화면에서 확인하세요"
+
+
 def _run_hanafax_send(params: dict[str, Any]) -> str:
     """승인서 범위 안에서 팩스를 자동 발송한다. 승인서가 드라이런이면 전송하지 않고 계획만 기록한다."""
     from datetime import datetime
@@ -408,6 +435,15 @@ ACTIONS: dict[str, ActionSpec] = {
         needs_browser=False,
         validate=_fax_send_params,
         run=_run_hanafax_send,
+    ),
+    "naver_mail_bulk_send": ActionSpec(
+        key="naver_mail_bulk_send",
+        label="네이버 메일 순차 대량 발송",
+        description="미리 승인한 대량 발송 승인서(수신자·내용·첨부·한도)의 범위 안에서만 메일을 한 명씩 간격을 두고 보냅니다. 승인 후 내용이 바뀌거나 멈춘 승인서는 보내지 않습니다. 드라이런 승인서는 전송하지 않습니다.",
+        risk_action="mail_send_authorized",
+        needs_browser=False,
+        validate=_mail_bulk_params,
+        run=_run_naver_mail_bulk_send,
     ),
     "telegram_notify": ActionSpec(
         key="telegram_notify",

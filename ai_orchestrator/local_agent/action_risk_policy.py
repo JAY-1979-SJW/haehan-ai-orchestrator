@@ -33,6 +33,9 @@ _AUTO_ALLOWED: frozenset[str] = frozenset({
     # 하나팩스 자동 발송 — 사용자가 수신자·제목·문서·한도를 미리 승인한 승인서의 범위 안에서만 실행한다.
     # 승인서가 없거나 범위가 바뀌면 워크플로(gates/fax_send_policy)가 발송을 거부한다(fail-closed).
     "fax_send_authorized",
+    # 메일 순차 대량 발송 — 같은 방식: 사용자가 수신자·내용·첨부·한도를 미리 승인한 승인서 범위 안에서만 실행한다.
+    # 승인서가 없거나 범위가 바뀌거나 멈춘 상태면 gates/mail_bulk_policy 가 발송을 거부한다(fail-closed).
+    "mail_send_authorized",
 })
 
 # ── USER_DELEGATED_PERMISSION_REQUIRED ────────────────────────────────────────

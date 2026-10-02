@@ -86,17 +86,21 @@ def is_valid_email(raw: str) -> bool:
 
 
 def mask_email(raw: str) -> str:
-    """로그·화면 표시용: 아이디 앞 2글자와 도메인만 남긴다."""
+    """로그·화면 표시용: 아이디의 앞부분만 남기고(3글자 이하는 1글자, 그 이상은 2글자) 도메인은 그대로 둔다."""
     value = normalize_email(raw)
     local, _, domain = value.partition("@")
     if not domain:
         return "*" * len(value)
-    return local[:2] + "*" * max(1, len(local) - 2) + "@" + domain
+    keep = 1 if len(local) <= 3 else 2
+    return local[:keep] + "*" * max(1, len(local) - keep) + "@" + domain
 
 
 def scope_hash(recipients: Iterable[dict[str, str]], subject: str, body: str, attachments_hash: str, kind: str) -> str:
     """승인 범위 해시. 수신자·제목·본문·첨부·성격 중 하나라도 달라지면 달라진다(순서·대소문자·공백은 무시)."""
-    normalized = sorted((normalize_email(r.get("email", "")), str(r.get("name", "")).strip()) for r in recipients)
+    normalized = sorted(
+        (normalize_email(r.get("email", "")), str(r.get("name", "")).strip(), str(r.get("company", "")).strip())
+        for r in recipients
+    )
     payload = json.dumps(
         {
             "recipients": normalized,
@@ -235,6 +239,11 @@ def _within_hours(now: datetime, start: time, end: time) -> bool:
     return current >= start or current <= end
 
 
+def in_allowed_hours(now: datetime, start: time, end: time) -> bool:
+    """실행기가 건마다 허용 시간대를 다시 확인할 때 쓴다."""
+    return _within_hours(now, start, end)
+
+
 def _compare_aware(value: datetime, now: datetime) -> tuple[datetime, datetime]:
     if value.tzinfo is None and now.tzinfo is not None:
         return value.replace(tzinfo=now.tzinfo), now
@@ -315,7 +324,13 @@ def evaluate(auth: Authorization, state: State) -> Decision:
         if len(to_send) >= capacity:
             skipped.append((mask_email(address), LIMIT_REACHED))
             continue
-        to_send.append({"email": address, "name": str(recipient.get("name", "")).strip()})
+        to_send.append(
+            {
+                "email": address,
+                "name": str(recipient.get("name", "")).strip(),
+                "company": str(recipient.get("company", "")).strip(),
+            }
+        )
 
     if not to_send:
         return Decision(SKIP, LIMIT_REACHED if capacity == 0 else "nothing_to_send", skipped=tuple(skipped))
