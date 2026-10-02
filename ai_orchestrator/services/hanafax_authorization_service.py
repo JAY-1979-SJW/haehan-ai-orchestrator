@@ -359,6 +359,10 @@ def _run_job(auth_id: str) -> None:
     with _run_lock:
         _last_run[auth_id] = {**outcome, "finished_at": datetime.now(UTC).isoformat(timespec="seconds")}
         _running.discard(auth_id)
+    # 사이트가 최종 결과를 확정할 시간을 준 뒤 전송결과와 자동 대조한다(읽기 전용, 실패해도 발송과 무관)
+    timer = threading.Timer(AUTO_RECONCILE_DELAY_SECONDS, _auto_reconcile, args=(auth_id,))
+    timer.daemon = True
+    timer.start()
 
 
 def run_now(auth_id: str) -> dict[str, Any]:
@@ -443,3 +447,46 @@ def preview_status(auth_id: str) -> dict[str, Any]:
         "state": state or None,
         "image_ready": preview_image_path(auth_id).is_file() and bool(state.get("ok")),
     }
+
+
+# ── 전송결과 대조 (최종 성공/실패 확정, 읽기 전용) ─────────────────────────────────
+# 앱의 sent 는 '접수'일 뿐이다 — 하나팩스 전송결과 화면과 대조해 delivered/delivery_failed 로 확정한다(hanafax_reconcile).
+AUTO_RECONCILE_DELAY_SECONDS = 180
+_reconciling: set[str] = set()
+_reconcile_state: dict[str, dict[str, Any]] = {}
+
+
+def _reconcile_job(auth_id: str) -> None:
+    from ai_orchestrator.services import hanafax_reconcile
+
+    try:
+        state: dict[str, Any] = {"ok": True, **hanafax_reconcile.reconcile(auth_id)}
+    except Exception as exc:  # noqa: BLE001 - 대조 실패는 사유만 알린다(발송·이력은 그대로)
+        state = {"ok": False, "message": f"전송결과 확인 실패: {type(exc).__name__}"}
+    with _run_lock:
+        _reconcile_state[auth_id] = {**state, "finished_at": datetime.now(UTC).isoformat(timespec="seconds")}
+        _reconciling.discard(auth_id)
+
+
+def start_reconcile(auth_id: str) -> dict[str, Any]:
+    if store.get_authorization(auth_id) is None:
+        raise ValueError("승인서를 찾을 수 없습니다")
+    with _run_lock:
+        if auth_id in _reconciling:
+            raise ValueError("전송결과를 확인하는 중입니다")
+        _reconciling.add(auth_id)
+        _reconcile_state.pop(auth_id, None)
+    threading.Thread(target=_reconcile_job, args=(auth_id,), daemon=True, name=f"fax-reconcile-{auth_id[:8]}").start()
+    return reconcile_status(auth_id)
+
+
+def _auto_reconcile(auth_id: str) -> None:
+    try:
+        start_reconcile(auth_id)
+    except ValueError:
+        pass  # 이미 확인 중이면 건너뛴다
+
+
+def reconcile_status(auth_id: str) -> dict[str, Any]:
+    with _run_lock:
+        return {"running": auth_id in _reconciling, "state": dict(_reconcile_state.get(auth_id, {})) or None}

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FaxPinField } from "@/components/chat/FaxPinField";
 import { FaxSitePreview } from "@/components/chat/FaxSitePreview";
 import { UniversalChat } from "@/components/chat/UniversalChat";
-import { faxApi, parseRecipients, type Authorization, type LogRow, type RunStatus } from "./api";
+import { faxApi, parseRecipients, type Authorization, type LogRow, type ReconcileStatus, type RunStatus } from "./api";
 
 /**
  * 하나팩스 화면 — 왼쪽: 승인서 목록·상세(미리보기·승인·발송·이력), 오른쪽: AI 창.
@@ -16,6 +16,17 @@ import { faxApi, parseRecipients, type Authorization, type LogRow, type RunStatu
  */
 
 const POLL_MS = 4000;
+
+// 이력 상태 한글 표시 — sent 는 '접수'일 뿐이고 최종 성공/실패는 전송결과 대조(delivered/delivery_failed)로 확정된다.
+const STATUS_LABEL: Record<string, string> = {
+  sent: "접수됨(최종 결과 대기)",
+  delivered: "전달 확인(성공)",
+  delivery_failed: "전달 실패",
+  unknown: "확인 필요",
+  failed: "실패(재시도 가능)",
+  dry_run: "드라이런",
+  claimed: "전송 요청 중",
+};
 
 // AI 창 지침 — 에이전트가 앱 허용 API(call_api)로 승인 대기 초안만 만들고, 승인은 사람이 카드 버튼으로 하게 한다.
 const AGENT_HINT =
@@ -38,6 +49,7 @@ export function HanafaxApp() {
   const [detail, setDetail] = useState<Authorization | null>(null);
   const [log, setLog] = useState<LogRow[]>([]);
   const [run, setRun] = useState<RunStatus | null>(null);
+  const [recon, setRecon] = useState<ReconcileStatus | null>(null);
   const [killed, setKilled] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [live, setLive] = useState(false);
@@ -58,10 +70,11 @@ export function HanafaxApp() {
 
   const refreshDetail = useCallback(async (id: string) => {
     try {
-      const [d, l, r] = await Promise.all([faxApi.get(id), faxApi.log(id), faxApi.runStatus(id)]);
+      const [d, l, r, c] = await Promise.all([faxApi.get(id), faxApi.log(id), faxApi.runStatus(id), faxApi.reconcileStatus(id)]);
       setDetail(d);
       setLog(l);
       setRun(r);
+      setRecon(c);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -275,6 +288,26 @@ export function HanafaxApp() {
               </div>
             )}
             {log.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="fax-reconcile">
+                <button
+                  className="rounded border px-2 py-1 disabled:opacity-50"
+                  disabled={busy || recon?.running}
+                  onClick={() => act(() => faxApi.startReconcile(detail.id))}
+                >
+                  {recon?.running ? "전송결과 확인 중…" : "전송결과 확인 (최종 성공/실패)"}
+                </button>
+                <span className="text-gray-500">접수된 건을 하나팩스 전송결과와 대조합니다(읽기 전용, 발송 3분 뒤 자동 실행).</span>
+                {recon?.state && recon.state.ok && (
+                  <span>
+                    확인 {recon.state.checked}건 → 성공 {recon.state.delivered}, 전달 실패 {recon.state.delivery_failed}
+                    {recon.state.partial ? `, 일부 실패(상세 확인 필요) ${recon.state.partial}` : ""}
+                    {recon.state.unmatched ? `, 대조 못 함 ${recon.state.unmatched}` : ""}
+                  </span>
+                )}
+                {recon?.state && !recon.state.ok && <span className="text-red-600">{recon.state.message}</span>}
+              </div>
+            )}
+            {log.length > 0 && (
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-left text-gray-500">
@@ -288,7 +321,7 @@ export function HanafaxApp() {
                   {log.slice(0, 30).map((r, i) => (
                     <tr key={i}>
                       <td>{r.fax_digits}</td>
-                      <td>{r.status}</td>
+                      <td>{STATUS_LABEL[r.status] ?? r.status}</td>
                       <td>{r.job_id ?? "-"}</td>
                       <td>{r.created_at.replace("T", " ").slice(0, 16)}</td>
                     </tr>

@@ -29,6 +29,8 @@ SENT = "sent"  # 접수번호까지 확인된 성공
 FAILED = "failed"  # 요청이 나가기 전에 명확히 실패(재시도 가능)
 UNKNOWN = "unknown"  # 요청은 나갔으나 결과를 확정하지 못함 — 재전송 금지, 사람이 확인
 DRY_RUN = "dry_run"  # 드라이런(실제 전송 없음)
+DELIVERED = "delivered"  # 전송결과 화면에서 최종 성공을 확인
+DELIVERY_FAILED = "delivery_failed"  # 전송결과 화면에서 최종 실패를 확인(접수 후 전달 실패) — 사람이 확인하기 전에는 자동 재전송하지 않는다
 CLAIMED = "claimed"  # 전송 직전 선점 기록 — 결과 기록 전에 프로세스가 죽거나 기록이 실패해도 재전송하지 않게 한다
 
 _KILL_SWITCH_KEY = "kill_switch"
@@ -234,7 +236,7 @@ class SendRecord:
 
 
 def record_send(record: SendRecord) -> str:
-    if record.status not in (SENT, FAILED, UNKNOWN, DRY_RUN, CLAIMED):
+    if record.status not in (SENT, FAILED, UNKNOWN, DRY_RUN, CLAIMED, DELIVERED, DELIVERY_FAILED):
         raise ValueError(f"알 수 없는 발송 상태: {record.status}")
     log_id = uuid.uuid4().hex
     with _conn() as con:
@@ -255,26 +257,37 @@ def record_send(record: SendRecord) -> str:
     return log_id
 
 
-def sent_numbers(document_hash: str) -> set[str]:
-    """이 문서로 이미 성공(sent)하거나 결과 불명(unknown)이 아닌, **성공한** 수신번호."""
-    with _conn() as con:
-        rows = con.execute(
-            "SELECT DISTINCT fax_digits FROM send_log WHERE document_hash=? AND status=?", (document_hash, SENT)
-        ).fetchall()
-    return {r["fax_digits"] for r in rows}
-
-
-def unknown_numbers(document_hash: str) -> set[str]:
-    """결과를 확정하지 못한 수신번호 — 번호별 **가장 최근 상태**가 unknown·claimed(선점만 하고 결과 미기록)인 번호.
-
-    사람이 확인하기 전에는 재전송하지 않는다. 이후 sent/failed 가 기록되면 더 이상 pending 이 아니다.
-    """
+def _latest_by_number(document_hash: str) -> dict[str, str]:
+    """이 문서의 번호별 **가장 최근 상태**(드라이런 제외)."""
     with _conn() as con:
         rows = con.execute(
             "SELECT fax_digits, status FROM send_log WHERE document_hash=? ORDER BY rowid", (document_hash,)
         ).fetchall()
-    latest = {r["fax_digits"]: r["status"] for r in rows if r["status"] != DRY_RUN}
-    return {n for n, status in latest.items() if status in (UNKNOWN, CLAIMED)}
+    return {r["fax_digits"]: r["status"] for r in rows if r["status"] != DRY_RUN}
+
+
+def sent_numbers(document_hash: str) -> set[str]:
+    """이 문서로 이미 보낸(접수 sent·최종 성공 delivered) 수신번호 — 번호별 가장 최근 상태 기준(해소·재전송 이후 상태 반영)."""
+    return {n for n, status in _latest_by_number(document_hash).items() if status in (SENT, DELIVERED)}
+
+
+def unknown_numbers(document_hash: str) -> set[str]:
+    """사람이 확인해야 하는 수신번호 — 번호별 **가장 최근 상태**가 unknown·claimed(선점만 하고 결과 미기록)·delivery_failed(전송결과상 최종 실패)인 번호.
+
+    사람이 확인하기 전에는 자동으로 다시 보내지 않는다. 이후 sent/failed 가 기록되면(사람이 해소) 더 이상 pending 이 아니다.
+    """
+    return {n for n, status in _latest_by_number(document_hash).items() if status in (UNKNOWN, CLAIMED, DELIVERY_FAILED)}
+
+
+def pending_sent(authorization_id: str) -> list[dict[str, Any]]:
+    """전송결과 대조 대상 — 번호별 가장 최근 상태가 sent(접수됨)이고 아직 최종 결과가 없는 기록(번호·시각·문서 해시)."""
+    with _conn() as con:
+        rows = con.execute(
+            "SELECT fax_digits, status, created_at, document_hash FROM send_log WHERE authorization_id=? AND status != ? ORDER BY rowid",
+            (authorization_id, DRY_RUN),
+        ).fetchall()
+    latest = {r["fax_digits"]: dict(r) for r in rows}
+    return [r for r in latest.values() if r["status"] == SENT]
 
 
 def count_sent(authorization_id: str, *, since_iso: str | None = None) -> int:
@@ -291,7 +304,7 @@ def count_sent(authorization_id: str, *, since_iso: str | None = None) -> int:
     with _conn() as con:
         rows = con.execute(sql + " ORDER BY rowid", params).fetchall()
     latest = {r["fax_digits"]: r["status"] for r in rows}
-    return sum(1 for status in latest.values() if status in (SENT, UNKNOWN, CLAIMED))
+    return sum(1 for status in latest.values() if status in (SENT, UNKNOWN, CLAIMED, DELIVERED, DELIVERY_FAILED))
 
 
 def list_send_log(authorization_id: str, limit: int = 200) -> list[dict[str, Any]]:

@@ -350,6 +350,20 @@ def kill_switch_state(_: dict = Depends(require_role("admin", "owner"))):
     return {"kill_switch": fax_store.kill_switch_on()}
 
 
+@hanafax_router.post("/authorizations/{auth_id}/reconcile", response_model=dict)
+def start_reconcile(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    """하나팩스 전송결과와 대조해 접수된 건의 최종 성공/실패를 확정한다(읽기 전용, 백그라운드)."""
+    try:
+        return _auth_service().start_reconcile(auth_id)
+    except ValueError as exc:
+        raise _bad_request(exc) from exc
+
+
+@hanafax_router.get("/authorizations/{auth_id}/reconcile", response_model=dict)
+def reconcile_status(auth_id: str, _: dict = Depends(require_role("admin", "owner"))):
+    return _auth_service().reconcile_status(auth_id)
+
+
 @hanafax_router.post("/authorizations/{auth_id}/resolve", response_model=dict)
 def resolve_pending(auth_id: str, body: ResolveRequest, user: dict = Depends(require_role("admin", "owner"))):
     """'확인 필요' 번호를 사람이 하나팩스 발송 내역에서 확인한 뒤 해소한다(발송됨/발송되지 않음). 승인 PIN 필요."""
