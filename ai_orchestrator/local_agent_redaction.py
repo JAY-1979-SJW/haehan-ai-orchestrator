@@ -88,6 +88,7 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset(
         "risk_level",
         "final_approval_required",
         "result",
+        "result_full",  # 작업 분배용 긴 결과(run_claude_agent result_max_chars)
         "target_url_domain",
         "text_length",
         "text_preview",
@@ -583,6 +584,10 @@ _RESULT_DATA_SPECIAL_HANDLERS: dict[str, Callable[[object], object | None]] = {
 }
 
 
+# 문자열 값 기본 상한은 500자. 긴 결과가 정당한 키만 예외로 둔다.
+_RESULT_DATA_LONG_KEYS: dict[str, int] = {"result_full": 20000}
+
+
 def _strip_result_data(data: object) -> "dict | None":
     """agent result data를 안전 필터 후 반환.
 
@@ -616,7 +621,7 @@ def _strip_result_data(data: object) -> "dict | None":
         if isinstance(v, (bool, int, float, type(None))):
             out[k] = v
         elif isinstance(v, str):
-            out[k] = v[:500]
+            out[k] = v[: _RESULT_DATA_LONG_KEYS.get(k_low, 500)]
         else:
             out[k] = str(v)[:500]
     return out or None

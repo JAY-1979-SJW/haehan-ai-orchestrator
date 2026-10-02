@@ -45,10 +45,13 @@ class FakeReg:
         self.cancelled.append(task_id)
 
     # 시험 헬퍼
-    def finish(self, task_id, text="결과", ok=True):
+    def finish(self, task_id, text="결과", ok=True, *, truncate_result=False):
         t = self.tasks[task_id]
         t.status = "completed" if ok else "failed"
-        t.result_data = {"result": text} if ok else None
+        # truncate_result: 실제 서버 필터처럼 result 는 500자로 잘리고 전문은 result_full 에만 남는다
+        t.result_data = (
+            ({"result": text[:500], "result_full": text} if truncate_result else {"result": text}) if ok else None
+        )
         t.error = "" if ok else "boom"
 
 
@@ -265,3 +268,24 @@ def test_store_guards(env):
 
 def test_not_exposed_to_ai():
     assert not any("dispatch" in str(k).lower() for k in mcp_server.API_REGISTRY)
+
+
+def test_long_plan_survives_server_truncation_via_result_full(env):
+    """종단 시험(2026-10-02)에서 발견: 계획 JSON 이 result(500자)에서 잘려 파싱 실패했다."""
+    tasks = [T(f"t{i}", prompt_pad="가" * 400) for i in range(3)]
+    did = svc.create_dispatch("목표", "tester")["id"]
+    assert env.enqueued[0]["params"]["result_max_chars"] == svc.RESULT_MAX_CHARS
+    env.finish(env.enqueued[0]["task_id"], plan_json(*tasks), truncate_result=True)
+    assert len(plan_json(*tasks)) > 500
+    assert svc.view(did)["status"] == store.PROPOSED
+
+
+def test_view_explains_why_waiting_on_low_memory(env, monkeypatch):
+    """종단 시험(2026-10-02): 메모리 부족으로 170초간 시작이 보류됐는데 화면에는 사유가 없었다."""
+    did = make_proposed(env, T("a"))
+    svc.approve(did, "admin")
+    monkeypatch.setattr(svc, "_low_memory", lambda: True)
+    svc.tick(did)
+    assert "메모리" in svc.view(did)["waiting_reason"]
+    monkeypatch.setattr(svc, "_low_memory", lambda: False)
+    assert "waiting_reason" not in svc.view(did)

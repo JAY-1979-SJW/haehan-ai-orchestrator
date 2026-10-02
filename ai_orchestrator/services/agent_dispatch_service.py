@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 from datetime import UTC, datetime
 from typing import Any
@@ -42,8 +43,19 @@ WRITE_ISOLATION_READY = False
 
 PLANNER_TIMEOUT_SEC = 180
 PLANNER_BUDGET_USD = 0.5
-MIN_FREE_MEMORY_MB = 1500  # 기준서 §2-4: PC 여유 메모리가 이보다 적으면 새 작업을 시작하지 않는다
+
+
+def _min_free_memory_mb() -> int:
+    """기준서 §2-4: PC 여유 메모리가 이보다 적으면 새 작업을 시작하지 않는다(환경변수로 조정, 기본 1500)."""
+    try:
+        return max(0, int(os.getenv("AGENT_DISPATCH_MIN_FREE_MB", "1500")))
+    except ValueError:
+        return 1500
+
+
+MIN_FREE_MEMORY_MB = _min_free_memory_mb()
 GOAL_MAX_CHARS = 2000
+RESULT_MAX_CHARS = 20000
 _DEP_RESULT_CHARS = 3000
 
 _locks: dict[str, threading.Lock] = {}
@@ -102,6 +114,7 @@ def _enqueue(*, agent_id: str, prompt: str, tools: tuple[str, ...], timeout: int
             "allowed_tools": list(tools),
             "timeout": timeout,
             "max_budget_usd": budget,
+            "result_max_chars": RESULT_MAX_CHARS,  # 계획 JSON·하위 작업 결과가 500자에서 잘리지 않게
         },
         requested_by=by,
     )
@@ -160,7 +173,7 @@ def parse_plan(text: str) -> tuple[list[dict[str, Any]], list[str]]:
 
 def _result_text(task: Any) -> str:
     data = task.result_data if isinstance(task.result_data, dict) else {}
-    return str(data.get("result") or task.result_summary or "")
+    return str(data.get("result_full") or data.get("result") or task.result_summary or "")
 
 
 def refresh_plan(did: str) -> None:
@@ -209,6 +222,8 @@ def view(did: str) -> dict[str, Any] | None:
     if d["status"] == store.PROPOSED:
         d["waves"] = pol.preview_waves([_policy_task(t) for t in tasks], d["max_parallel"])
         d["blocked_reason"] = _approval_block_reason(tasks)
+    if d["status"] == store.RUNNING and any(t["state"] == pol.PENDING for t in tasks) and _low_memory():
+        d["waiting_reason"] = f"PC 여유 메모리가 {MIN_FREE_MEMORY_MB}MB 미만이라 새 작업 시작을 보류 중입니다"
     summary = next((t for t in tasks if t["role"] == pol.SUMMARIZE_ROLE and t["state"] == pol.DONE), None)
     if summary is not None:
         d["final_result"] = summary["result_text"]

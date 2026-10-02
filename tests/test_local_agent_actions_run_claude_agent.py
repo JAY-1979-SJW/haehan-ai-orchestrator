@@ -105,3 +105,22 @@ def test_claude_cli_not_found_returns_error_code() -> None:
         result = action_run_claude_agent({"prompt": "p"})
     assert result.success is False
     assert result.error_code == "CLAUDE_CLI_NOT_FOUND"
+
+
+def test_result_full_is_opt_in_and_default_behavior_unchanged() -> None:
+    """작업 분배 종단 시험(2026-10-02)에서 계획 JSON 이 잘려 파싱 실패 → 긴 결과는 선택 키로만 제공."""
+    long_text = "가" * 5000
+
+    def fake_run(cmd, **kwargs):
+        return _FakeCompletedProcess(_ok_payload(long_text))
+
+    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+        default = action_run_claude_agent({"prompt": "x"})
+        wanted = action_run_claude_agent({"prompt": "x", "result_max_chars": 4000})
+        capped = action_run_claude_agent({"prompt": "x", "result_max_chars": 10**9})
+        bad = action_run_claude_agent({"prompt": "x", "result_max_chars": "abc"})
+
+    assert len(default.data["result"]) == 2000 and "result_full" not in default.data  # 기존 호출 불변
+    assert len(wanted.data["result"]) == 2000 and len(wanted.data["result_full"]) == 4000
+    assert len(capped.data["result_full"]) == 5000  # 20000 상한 안에서 전문
+    assert "result_full" not in bad.data

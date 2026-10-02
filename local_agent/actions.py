@@ -1416,6 +1416,9 @@ def _build_claude_command(
     return cmd
 
 
+_RESULT_FULL_MAX_CHARS = 20000  # result_max_chars 상한(서버 필터 _RESULT_DATA_LONG_KEYS 와 같은 값)
+
+
 def action_run_claude_agent(params: dict) -> ActionResult:
     """Claude Code를 헤드리스로 실행해 MCP(haehan-orchestrator)로 앱 작업을 시킨다.
 
@@ -1440,6 +1443,8 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         같은 전체 우회는 쓰지 않음, 이 프로젝트 승인 원칙에 위배).
       model         (str, 선택) — 공식 --model 플래그에 그대로 전달(별칭 "sonnet"/
         "opus"/"haiku"/"fable" 또는 전체 모델명). 비우면 CLI 기본값 사용.
+      result_max_chars (int, 선택, 기본 0=사용 안 함, 최대 20000) — 주면 data["result_full"] 에 결과
+        전문(이 길이까지)을 추가로 담는다. data["result"] 는 기존대로 2000자 제한(채팅 등 기존 호출 불변).
       resume_session_id (str, 선택) — 공식 -r/--resume 플래그. 같은 대화의 후속
         메시지에 이전 응답의 session_id를 넘기면 --system-prompt-snapshot(기본
         on) 덕분에 시스템 프롬프트/CLAUDE.md 재렌더링 없이 이어서 답해 매 요청마다
@@ -1474,6 +1479,10 @@ def action_run_claude_agent(params: dict) -> ActionResult:
 
     model = str(params.get("model", "")).strip()
     resume_session_id = str(params.get("resume_session_id", "")).strip()
+    try:
+        result_max_chars = max(0, min(int(params.get("result_max_chars", 0) or 0), _RESULT_FULL_MAX_CHARS))
+    except (TypeError, ValueError):
+        result_max_chars = 0
 
     root = Path(__file__).parents[1]
     cmd = _build_claude_command(
@@ -1518,18 +1527,24 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         payload = {}
 
     is_error = bool(payload.get("is_error", proc.returncode != 0))
-    result_text = str(payload.get("result", "") or "")[:2000]
+    full_text = str(payload.get("result", "") or "")
+    result_text = full_text[:2000]
     success = proc.returncode == 0 and not is_error
+
+    data = {
+        "result": result_text,
+        "session_id": payload.get("session_id", ""),
+        "cost_usd": payload.get("total_cost_usd"),
+        "num_turns": payload.get("num_turns"),
+    }
+    if result_max_chars:
+        # 작업 분배(계획 JSON·하위 작업 결과)처럼 긴 결과가 필요한 호출자만 선택한다. 기존 호출은 변화 없음.
+        data["result_full"] = full_text[:result_max_chars]
 
     return ActionResult(
         success=success,
         summary=(result_text[:300] if success else f"실패(exit={proc.returncode})"),
-        data={
-            "result": result_text,
-            "session_id": payload.get("session_id", ""),
-            "cost_usd": payload.get("total_cost_usd"),
-            "num_turns": payload.get("num_turns"),
-        },
+        data=data,
         error="" if success else ((proc.stderr or "")[:400] or result_text[:400]),
         error_code="" if success else "CLAUDE_AGENT_ERROR",
     )
