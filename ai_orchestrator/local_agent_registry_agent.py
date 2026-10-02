@@ -164,6 +164,19 @@ def get_active_task_count(agent_id: str) -> int:
         return sum(1 for t in _tasks.values() if t.agent_id == agent_id and t.status in ACTIVE_TASK_STATUSES)
 
 
+def select_agent(agents: list[dict]) -> dict | None:
+    """작업을 보낼 에이전트 선택: idle → 동시 처리 용량이 남은 busy → 첫 번째(큐에 쌓임). 없으면 None."""
+    if not agents:
+        return None
+    idle = next((a for a in agents if a.get("agent_status") == "idle"), None)
+    if idle is not None:
+        return idle
+    for a in agents:
+        if a.get("agent_status") == "busy" and get_active_task_count(a["agent_id"]) < get_agent_capacity(a["agent_id"]):
+            return a
+    return agents[0]
+
+
 def get_current_task_id(agent_id: str) -> str:
     """running task 중 started_at 또는 updated_at 기준 최신 1개의 task_id."""
     with _lock:
@@ -221,6 +234,7 @@ __all__ = [
     "MAX_AGENT_PARALLEL",
     "clear_agent_capacity",
     "get_agent_capacity",
+    "select_agent",
     "set_agent_capacity",
     "authenticate_agent",
     "get_active_task_count",

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from ai_orchestrator.routers.action_router import action_router
 from ai_orchestrator.routers.admin_ui_router import admin_ui_router
+from ai_orchestrator.routers.agent_dispatch_router import agent_dispatch_router
 from ai_orchestrator.routers.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
 from ai_orchestrator.routers.auth_router import auth_router
@@ -102,6 +103,7 @@ router.include_router(naver_session_router)  # naver session login pipeline
 router.include_router(hiworks_mail_router)  # hiworks mail inbox/compose/send
 router.include_router(eum_router)  # EUM 신규현장 수집 + 영업메일(하이웍스 발송)
 router.include_router(gmail_router)  # gmail inbox/collect/compose/send
+router.include_router(agent_dispatch_router)  # AI 작업 분배(계획 제안·사람 승인·병렬 실행, 관리자 전용, AI 허용 아님)
 router.include_router(ai_agent_router)  # AI 에이전트 실행(run_claude_agent 자동 dispatch)
 router.include_router(chat_router)  # AI 채팅 대화기록 CRUD(사용자 지시 '대화기록 저장')
 router.include_router(ops_router)  # read-only ops center API

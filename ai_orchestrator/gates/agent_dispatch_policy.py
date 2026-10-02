@@ -105,6 +105,60 @@ def conflicts(a: ResourceClaim, b: ResourceClaim) -> bool:
     return False
 
 
+# ── 역할(기준서 P3) ──────────────────────────────────────────────────────
+# 읽기 전용 여부는 AI 가 아니라 역할이 결정한다(AI 가 스스로 read_only 를 선언해 충돌 검사를 피하지 못하게).
+READ_ONLY_ROLES = frozenset({"explore", "review", "summarize"})
+WRITE_ROLES = frozenset({"implement"})
+ROLES = READ_ONLY_ROLES | WRITE_ROLES
+SUMMARIZE_ROLE = "summarize"
+
+
+def normalize_plan(raw_tasks: Any) -> tuple[list[dict[str, Any]], list[str]]:
+    """AI 가 제안한 하위 작업 목록을 표준 형태로 바꾼다. (작업 목록, 오류 목록).
+
+    - role 이 없거나 모르는 값이면 오류.
+    - 읽기 전용 역할은 resources 를 비운다(선언해도 무시). implement 는 resources 가 필수(없으면 validate 에서 직렬 취급).
+    - summarize 는 최대 1개이며 다른 모든 작업에 의존하도록 고정한다.
+    """
+    if not isinstance(raw_tasks, list) or not raw_tasks:
+        return [], ["tasks 가 비어 있거나 목록이 아닙니다"]
+    tasks: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for index, raw in enumerate(raw_tasks):
+        if not isinstance(raw, dict):
+            errors.append(f"{index + 1}번째 하위 작업이 객체가 아닙니다")
+            continue
+        tid = str(raw.get("id") or f"t{index + 1}").strip()
+        role = str(raw.get("role", "")).strip().lower()
+        if role not in ROLES:
+            errors.append(f"{tid}: 알 수 없는 역할({role or '없음'})")
+            continue
+        prompt = str(raw.get("prompt", "")).strip()
+        if not prompt:
+            errors.append(f"{tid}: prompt 가 비어 있습니다")
+            continue
+        read_only = role in READ_ONLY_ROLES
+        task: dict[str, Any] = {
+            "id": tid,
+            "title": str(raw.get("title") or tid).strip()[:80],
+            "role": role,
+            "prompt": prompt[:4000],
+            "read_only": read_only,
+            "resources": [] if read_only else raw.get("resources"),
+            "depends_on": [str(d) for d in (raw.get("depends_on") or []) if isinstance(d, (str, int))],
+            "budget_usd": raw.get("budget_usd", TASK_BUDGET_USD),
+            "timeout_sec": raw.get("timeout_sec", DEFAULT_TASK_TIMEOUT_SEC),
+        }
+        tasks.append(task)
+
+    summaries = [t for t in tasks if t["role"] == SUMMARIZE_ROLE]
+    if len(summaries) > 1:
+        errors.append("summarize 작업은 최대 1개입니다")
+    elif summaries:
+        summaries[0]["depends_on"] = [t["id"] for t in tasks if t is not summaries[0]]
+    return tasks, errors
+
+
 # ── 계획 검증 ────────────────────────────────────────────────────────────
 def validate_plan(tasks: list[dict[str, Any]]) -> list[str]:
     """분배안 검증. 오류 문자열 목록(비어 있으면 통과)."""
@@ -240,6 +294,9 @@ def preview_waves(tasks: list[dict[str, Any]], max_parallel: int = DEFAULT_PARAL
 __all__ = [
     "DEFAULT_PARALLEL",
     "GLOBAL_SERIAL_RESOURCES",
+    "READ_ONLY_ROLES",
+    "ROLES",
+    "WRITE_ROLES",
     "MAX_PARALLEL",
     "MAX_SUBTASKS",
     "TASK_BUDGET_USD",
@@ -249,6 +306,7 @@ __all__ = [
     "clamp_parallel",
     "conflicts",
     "next_step",
+    "normalize_plan",
     "preview_waves",
     "validate_plan",
 ]
