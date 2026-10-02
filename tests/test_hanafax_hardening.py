@@ -199,7 +199,7 @@ def test_optout_added_during_run_applies_to_remaining(doc):
 
 
 def test_log_message_is_shortened_and_digits_masked():
-    msg = flow._safe_message("결과 불명확: 계정 skyjwshin 전송잔액 12345678원 번호 0212345678 " + "x" * 300)
+    msg = flow._safe_message("결과 불명확: 계정 exampleuser 전송잔액 12345678원 번호 0212345678 " + "x" * 300)
     assert len(msg) <= 120 and "0212345678" not in msg and "12345678" not in msg
 
 
