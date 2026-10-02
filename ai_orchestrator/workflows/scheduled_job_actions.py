@@ -535,8 +535,16 @@ def catalog() -> list[dict[str, Any]]:
                     "label": "발송 승인서",
                     "type": "select",
                     "options": [a["id"] for a in approved],
-                    "option_labels": {a["id"]: f"{a['name']} ({'실전송' if a['live'] else '드라이런'})" for a in approved},
-                    "default": "",
+                    # 이름이 같은 승인서를 구분하도록 수신 곳 수·승인 날짜를 붙이고, 실제로 전송하는 승인서는 눈에 띄게 표시한다
+                    "option_labels": {
+                        a["id"]: (
+                            f"{a['name']} · {len(a['recipients'])}곳 · {str(a.get('approved_at') or '')[:10]} 승인 · "
+                            + ("⚠ 실전송" if a["live"] else "드라이런")
+                        )
+                        for a in approved
+                    },
+                    # 화면은 첫 항목을 보여 주므로 기본값도 같게 한다(선택을 건드리지 않고 저장해도 빈 값이 가지 않도록)
+                    "default": approved[0]["id"] if approved else "",
                 }
             )
         if spec.validate is _telegram_params:

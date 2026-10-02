@@ -124,3 +124,17 @@ def test_fresh_draft_is_not_expired_and_approved_never_expires(doc):
     con.commit()
     con.close()
     assert service.preview(row["id"])["draft_expired"] is False  # 이미 승인된 건은 만료 대상이 아니다
+
+
+def test_scheduler_catalog_labels_distinguish_and_flag_live_authorizations(doc):
+    from ai_orchestrator.workflows import scheduled_job_actions as actions
+
+    dry = _row(doc, "02-777-2001")
+    live = _row(doc, "02-777-2002")
+    service.approve(dry["id"], user="a", live=False, pin=PIN)
+    service.approve(live["id"], user="a", live=True, pin=PIN)
+    entry = next(i for i in actions.catalog() if i["key"] == "hanafax_send")
+    field = next(f for f in entry["fields"] if f["name"] == "authorization_id")
+    assert "⚠ 실전송" in field["option_labels"][live["id"]] and "1곳" in field["option_labels"][live["id"]]
+    assert "드라이런" in field["option_labels"][dry["id"]] and "⚠" not in field["option_labels"][dry["id"]]
+    assert field["default"] == field["options"][0]  # 화면이 보여 주는 첫 항목과 기본값이 같다(빈 값 저장 방지)

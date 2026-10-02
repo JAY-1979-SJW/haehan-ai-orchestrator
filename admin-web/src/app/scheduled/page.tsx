@@ -427,6 +427,18 @@ export default function ScheduledJobsPage() {
                     {job.action_label}
                     {job.params.target ? <span className="text-xs text-[#6B7280]"> ({job.params.target})</span> : null}
                     {job.params.title ? <div className="text-xs text-[#6B7280] max-w-[200px] truncate">{job.params.title}</div> : null}
+                    {job.params.authorization_id ? (
+                      <div className="text-xs max-w-[260px]">
+                        {(() => {
+                          // 팩스 승인서 이름(수신 곳 수·승인 날짜·실전송 표시). 취소돼 목록에서 사라졌으면 경고한다.
+                          const label = actions
+                            .find((a) => a.key === job.action)
+                            ?.fields.find((f) => f.name === "authorization_id")?.option_labels?.[job.params.authorization_id];
+                          if (!label) return <span className="text-[#B91C1C]">승인서가 취소되었거나 없습니다 — 실행되지 않습니다</span>;
+                          return <span className={label.includes("실전송") ? "text-[#B91C1C] font-medium" : "text-[#6B7280]"}>{label}</span>;
+                        })()}
+                      </div>
+                    ) : null}
                     {actions.find((a) => a.key === job.action)?.requires_approval && (
                       <span className="ml-1 text-[10px] text-[#5B21B6] border border-[#DDD6FE] rounded px-1">승인 필요</span>
                     )}
@@ -482,6 +494,10 @@ export default function ScheduledJobsPage() {
         <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-xl p-4 text-xs text-[#92400E] space-y-1">
           <p>서버(앱)가 켜져 있을 때만 실행됩니다. 꺼져 있는 동안 지나간 예약은 10분이 넘으면 &quot;놓침&quot;으로 기록하고 건너뜁니다.</p>
           <p>발행·전송처럼 승인이 필요한 작업은 예약 시각마다 위 &quot;승인 대기&quot;에서 승인해야 실행됩니다(30분 안에 승인하지 않으면 건너뜁니다).</p>
+          <p>
+            단, <b>하나팩스 자동 발송</b>은 예약 시각마다 승인하지 않습니다. 하나팩스 탭에서 승인 PIN 으로 승인서(수신자·문서·제목·한도·시간대)를 승인할 때 한 번만 승인하며,
+            예약은 그 승인 범위 안에서만 실행합니다. 실전송 승인서를 걸면 그 시각에 자동 발송되고, 승인서를 취소하면 즉시 멈춥니다.
+          </p>
         </div>
       </div>
 
@@ -565,6 +581,11 @@ export default function ScheduledJobsPage() {
                   </option>
                 ))}
               </select>
+              {f.name === "authorization_id" && (f.option_labels?.[form.params[f.name] ?? f.default] ?? "").includes("실전송") && (
+                <span className="mt-1 block rounded bg-[#FEF2F2] p-2 text-xs text-[#B91C1C]">
+                  이 승인서는 <b>실제로 전송</b>합니다. 예약 시각에 사람 확인 없이 팩스가 발송됩니다(승인한 수신자·문서·한도·시간대 안에서만).
+                </span>
+              )}
             </label>
             ),
           )}
