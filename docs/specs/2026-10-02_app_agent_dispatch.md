@@ -93,3 +93,8 @@
 1. 기본 3칸: `general`·`naver`·`groupware` — 권장(필요한 칸만 켠다).
 2. 칸별 프로필은 `data/cdp_profile/<name>` — 권장(`general` 은 기존 `ai_chrome` 유지).
 3. 새 칸 첫 로그인은 사용자가 한다(제가 감시만) — 권장.
+
+### 9-6. P0 구현·검증 기록 (2026-10-02)
+- 신규: `scripts/cdp_lanes.py`(칸 등록표·충돌 검사·동시 칸 상한), `scripts/cdp_tabs.py`(`open_tab`·`close_tab`·`close_owned`·`list_tabs`, HTTP 전용·소유권·실패 시 탭 정리), `scripts/cdp_lane_start.py`(칸 단위 시작·상태·종료·목록 CLI). **기존 `cdp_force_start.py`·`web_connector.py` 는 수정하지 않았다**(다른 모듈이 import, 다른 창과 같은 파일 충돌 방지) — `general` 칸은 기존 동작 그대로.
+- 시험: 가짜 CDP 서버 17건(등록표 일관성, 사이트→칸, 상한, 새 탭 이동·재시도·정리, 오류 페이지, 소유권, 사용자 탭 불가침, 칸 꺼짐 보고, 입력 검증, CLI). 실제 브라우저(9222, 내 탭만): 10회 연속 열기·닫기 10/10 성공(열기 약 0.05초), 진행 중 `about:blank` 관찰 0회, 동시 3개 열기·정리 정상, 시험 전후 사용자 탭 불변.
+- 아직 안 한 것: 기존 호출부(75개 파일의 `9222`)를 칸 조회로 옮기는 작업(필요한 곳부터 점진), `naver`·`groupware` 칸의 실제 기동과 첫 로그인(사용자 로그인 필요), 분배 서비스(P3)와의 연결(`cdp:<칸>` 자원).
