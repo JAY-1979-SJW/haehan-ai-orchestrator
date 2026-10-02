@@ -17,8 +17,11 @@ from scripts import cdp_lane_start, cdp_lanes, cdp_tabs
 class FakeChrome:
     """가짜 CDP HTTP 서버. mode: navigate(주소로 이동) | blank(about:blank 에 머묾) | error(오류 페이지)."""
 
-    def __init__(self, mode: str = "navigate"):
+    def __init__(self, mode: str = "navigate", lag: int = 0, ready: str = "complete"):
         self.mode = mode
+        self.lag = lag  # 탭 안 페이지가 목표 주소로 바뀌기 전까지 about:blank 로 보이는 확인 횟수
+        self.ready = ready
+        self.probes: dict[str, int] = {}
         self.tabs: dict[str, str] = {"USER01": "https://example.org/mine", "USER02": "http://localhost:3000/scheduled"}
         self.closed: list[str] = []
         self.created = 0
@@ -77,6 +80,18 @@ class FakeChrome:
         self.port = self.server.server_address[1]
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
+    def probe(self, ws_url: str) -> tuple[str, str]:
+        """탭 안의 실제 상태(location.href, readyState) — /json/list 의 미리 채워진 주소와 다를 수 있다."""
+        tab_id = ws_url.rsplit("/", 1)[1]
+        n = self.probes[tab_id] = self.probes.get(tab_id, 0) + 1
+        if self.mode == "blank":
+            return "about:blank", "complete"
+        if self.mode == "error":
+            return "chrome-error://chromewebdata/", "complete"
+        if n <= self.lag:
+            return "about:blank", "complete"
+        return self.tabs.get(tab_id, ""), self.ready
+
     def stop(self):
         self.server.shutdown()
         self.server.server_close()
@@ -86,8 +101,8 @@ class FakeChrome:
 def chrome(monkeypatch, tmp_path):
     made: list[FakeChrome] = []
 
-    def make(mode="navigate"):
-        fake = FakeChrome(mode)
+    def make(mode="navigate", **kw):
+        fake = FakeChrome(mode, **kw)
         made.append(fake)
         monkeypatch.setitem(cdp_lanes.LANES, "fake", cdp_lanes.Lane("fake", fake.port, tmp_path / "p", ()))
         return fake
@@ -98,9 +113,10 @@ def chrome(monkeypatch, tmp_path):
         f.stop()
 
 
-def _open(**kw):
+def _open(fake, **kw):
+    kw.setdefault("wait_sec", 0.6)
     return cdp_tabs.open_tab(
-        "https://developers.hiworks.com/", lane="fake", reason="test", wait_sec=0.6, sleep=lambda _s: None, **kw
+        "https://developers.hiworks.com/", lane="fake", reason="test", probe=fake.probe, sleep=lambda _s: None, **kw
     )
 
 
@@ -176,7 +192,7 @@ def test_is_alive_uses_http_only():
 
 def test_open_tab_navigates_immediately_and_records_ownership(chrome):
     fake = chrome("navigate")
-    h = _open()
+    h = _open(fake)
     assert h.url == "https://developers.hiworks.com/"
     assert fake.tabs[h.tab_id] == "https://developers.hiworks.com/"
     assert not any(u == "about:blank" for u in fake.tabs.values())
@@ -184,10 +200,28 @@ def test_open_tab_navigates_immediately_and_records_ownership(chrome):
     assert [t["owned_reason"] for t in cdp_tabs.list_tabs("fake") if t["id"] == h.tab_id] == ["test"]
 
 
+def test_does_not_report_success_while_page_inside_tab_is_still_blank(chrome):
+    """목록(/json/list)은 목표 주소를 미리 보여 주지만 탭 안은 아직 about:blank — 이때 성공을 돌려주면 '사이트가 안 열린' 상태가 된다."""
+    fake = chrome("navigate", lag=4)
+    h = _open(fake, wait_sec=5.0)
+    listed = [t["url"] for t in cdp_tabs.list_tabs("fake") if t["id"] == h.tab_id]
+    assert listed == ["https://developers.hiworks.com/"]  # 목록은 처음부터 목표 주소
+    assert fake.probes[h.tab_id] == 5  # 탭 안 실제 상태를 4번 about:blank 로 본 뒤 5번째에 성공으로 판정
+    assert h.url == "https://developers.hiworks.com/"
+
+
+def test_loading_state_is_not_arrival_but_interactive_is(chrome):
+    fake = chrome("navigate", ready="loading")
+    with pytest.raises(cdp_tabs.CdpTabError):
+        _open(fake, retries=0)
+    fake2 = chrome("navigate", ready="interactive")
+    assert _open(fake2).url == "https://developers.hiworks.com/"
+
+
 def test_stuck_blank_tab_is_closed_retried_and_never_left_behind(chrome):
     fake = chrome("blank")
-    with pytest.raises(cdp_tabs.CdpTabError, match="이동하지 못함"):
-        _open(retries=1)
+    with pytest.raises(cdp_tabs.CdpTabError, match="페이지가 뜨지 않음"):
+        _open(fake, retries=1)
     assert fake.created == 2  # 1회 재시도
     assert len(fake.closed) == 2  # 만든 탭을 모두 닫음
     assert "about:blank" not in fake.tabs.values()
@@ -198,13 +232,13 @@ def test_stuck_blank_tab_is_closed_retried_and_never_left_behind(chrome):
 def test_error_page_fails_fast_without_waiting(chrome):
     fake = chrome("error")
     with pytest.raises(cdp_tabs.CdpTabError):
-        _open(retries=0)
+        _open(fake, retries=0)
     assert set(fake.tabs) == {"USER01", "USER02"}
 
 
 def test_user_tabs_are_never_closed(chrome):
     fake = chrome("navigate")
-    h = _open()
+    h = _open(fake)
     with pytest.raises(cdp_tabs.NotOwned):
         cdp_tabs.close_tab(cdp_tabs.TabHandle("USER01", "fake", "x", "t"))
     assert "USER01" in fake.tabs
@@ -215,8 +249,8 @@ def test_user_tabs_are_never_closed(chrome):
 
 def test_close_owned_closes_only_my_tabs(chrome):
     fake = chrome("navigate")
-    a = _open()
-    b = cdp_tabs.open_tab("https://example.com/", lane="fake", reason="other", wait_sec=0.6, sleep=lambda _s: None)
+    a = _open(fake)
+    b = cdp_tabs.open_tab("https://example.com/", lane="fake", reason="other", wait_sec=0.6, probe=fake.probe, sleep=lambda _s: None)
     assert cdp_tabs.close_owned("fake", reason="test") == 1
     assert a.tab_id not in fake.tabs
     assert b.tab_id in fake.tabs
@@ -245,7 +279,7 @@ def test_input_validation(chrome):
 def test_url_with_query_and_hash_survives(chrome):
     fake = chrome("navigate")
     target = "https://example.com/a?x=1&y=한글#frag"
-    h = cdp_tabs.open_tab(target, lane="fake", reason="t", wait_sec=0.6, sleep=lambda _s: None)
+    h = cdp_tabs.open_tab(target, lane="fake", reason="t", wait_sec=0.6, probe=fake.probe, sleep=lambda _s: None)
     assert urllib.parse.unquote(fake.tabs[h.tab_id]) == target or fake.tabs[h.tab_id] == target
 
 

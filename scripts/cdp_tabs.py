@@ -100,6 +100,24 @@ def _arrived(url: str) -> bool:
     return bool(url) and not url.startswith(_BLANK_PREFIXES) and not url.startswith(_ERROR_PREFIXES)
 
 
+def probe_page(ws_url: str, timeout: float = 3.0) -> tuple[str, str]:
+    """탭 안의 **실제** 상태 `(location.href, document.readyState)`. 탭 목록(`/json/list`)의 주소·제목은 이동 완료 신호가 아니다
+    (실측 2026-10-02: 목록은 이동 전에 목표 주소·방문 기록 제목을 미리 보여 주고 탭 안은 약 2초간 about:blank 였다)."""
+    import websocket  # 의존성: websocket-client(requirements.txt)
+
+    ws = websocket.create_connection(ws_url, timeout=timeout, suppress_origin=True)
+    try:
+        ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": "JSON.stringify([location.href, document.readyState])", "returnByValue": True}}))
+        while True:
+            msg = json.loads(ws.recv())
+            if msg.get("id") == 1:
+                value = msg.get("result", {}).get("result", {}).get("value")
+                href, ready = json.loads(value) if value else ("", "")
+                return str(href), str(ready)
+    finally:
+        ws.close()
+
+
 def _create(lane: cdp_lanes.Lane, url: str) -> dict[str, Any]:
     # Chrome 은 `/json/new?<주소>` 를 PUT 으로 받는다(구버전은 GET). 주소 안의 ?·&·# 은 그대로 둔다.
     target = urllib.parse.quote(url, safe=":/?&=#%@+,;~")
@@ -125,6 +143,7 @@ def open_tab(  # noqa: PLR0913 - 칸·이유·대기·재시도·시계 주입�
     reason: str,
     wait_sec: float = DEFAULT_WAIT_SEC,
     retries: int = 1,
+    probe: Callable[[str], tuple[str, str]] | None = None,
     sleep: Callable[[float], None] = time.sleep,
     clock: Callable[[], float] = time.monotonic,
 ) -> TabHandle:
@@ -146,16 +165,21 @@ def open_tab(  # noqa: PLR0913 - 칸·이유·대기·재시도·시계 주입�
             continue
         with _lock:
             _owned[(lane, tab_id)] = reason  # 만든 즉시 소유로 기록 — 실패 정리 때도 우리 탭임을 안다
+        ws_url = str((created or {}).get("webSocketDebuggerUrl", ""))
+        check = probe or probe_page
         deadline = clock() + wait_sec
         current = ""
         while clock() < deadline:
-            current = next((t.get("url", "") for t in list_tabs(lane) if t.get("id") == tab_id), "")
-            if _arrived(current):
-                return TabHandle(tab_id, lane, current, reason, str((created or {}).get("webSocketDebuggerUrl", "")))
+            try:
+                current, ready = check(ws_url) if ws_url else ("", "")
+            except Exception:  # noqa: BLE001 - 소켓이 아직 안 열렸거나 탭이 이동 중 — 다음 확인 때 다시 본다
+                current, ready = "", ""
+            if _arrived(current) and ready in ("interactive", "complete"):
+                return TabHandle(tab_id, lane, current, reason, ws_url)  # 탭 안의 실제 페이지가 떴다
             if current.startswith(_ERROR_PREFIXES):
                 break  # 오류 페이지는 기다려도 나아지지 않는다
             sleep(POLL_SEC)
-        last_error = f"{wait_sec:g}초 안에 이동하지 못함(현재 {current or '탭 없음'}), 시도 {attempt + 1}/{retries + 1}"
+        last_error = f"{wait_sec:g}초 안에 페이지가 뜨지 않음(탭 안 주소 {current or '확인 불가'}), 시도 {attempt + 1}/{retries + 1}"
         _close_quietly(lane_obj, tab_id)
         with _lock:
             _owned.pop((lane, tab_id), None)
