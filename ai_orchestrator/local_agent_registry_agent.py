@@ -21,6 +21,9 @@ from .local_agent_registry_common import (
 
 logger = logging.getLogger(__name__)
 
+MAX_AGENT_PARALLEL = 3  # 에이전트 1대가 동시에 처리할 수 있는 작업 수 상한(기준서 P1)
+_agent_capacity: dict[str, int] = {}
+
 # ── 등록 / 조회 ──────────────────────────────────────────────────────────
 
 
@@ -134,6 +137,28 @@ def set_agent_disconnected(agent_id: str, now: str | None = None) -> None:
         a.disconnected_at = now if now is not None else _now_iso()
 
 
+def set_agent_capacity(agent_id: str, max_parallel: object) -> int:
+    """에이전트가 auth 때 알린 동시 처리 수를 저장(1~3으로 제한, 잘못된 값은 1)."""
+    try:
+        value = int(max_parallel)  # type: ignore[call-overload]
+    except (TypeError, ValueError):
+        value = 1
+    value = max(1, min(MAX_AGENT_PARALLEL, value))
+    with _lock:
+        _agent_capacity[agent_id] = value
+    return value
+
+
+def get_agent_capacity(agent_id: str) -> int:
+    with _lock:
+        return _agent_capacity.get(agent_id, 1)
+
+
+def clear_agent_capacity(agent_id: str) -> None:
+    with _lock:
+        _agent_capacity.pop(agent_id, None)
+
+
 def get_active_task_count(agent_id: str) -> int:
     with _lock:
         return sum(1 for t in _tasks.values() if t.agent_id == agent_id and t.status in ACTIVE_TASK_STATUSES)
@@ -193,6 +218,10 @@ def get_agent_status(agent_id: str, now: str | None = None) -> str:
 
 
 __all__ = [
+    "MAX_AGENT_PARALLEL",
+    "clear_agent_capacity",
+    "get_agent_capacity",
+    "set_agent_capacity",
     "authenticate_agent",
     "get_active_task_count",
     "get_agent",

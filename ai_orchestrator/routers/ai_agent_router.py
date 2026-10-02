@@ -60,8 +60,16 @@ def run_agent(
             status_code=503,
             detail=("연결된 로컬 에이전트가 없습니다. python -m local_agent.agent --run 이 실행 중인지 확인하세요."),
         )
-    # idle 상태 에이전트 우선, 없으면 첫 번째(다른 작업 처리 중이어도 큐에는 쌓임)
-    agent = next((a for a in agents if a.get("agent_status") == "idle"), agents[0])
+    # idle 우선 → 동시 처리 용량이 남은 busy 에이전트 → 첫 번째(큐에 쌓임)
+    agent = next((a for a in agents if a.get("agent_status") == "idle"), None) or next(
+        (
+            a
+            for a in agents
+            if a.get("agent_status") == "busy"
+            and _reg.get_active_task_count(a["agent_id"]) < _reg.get_agent_capacity(a["agent_id"])
+        ),
+        agents[0],
+    )
     agent_id = agent["agent_id"]
 
     allowed_tools = body.allowed_tools if body.allowed_tools is not None else _DEFAULT_ALLOWED_TOOLS

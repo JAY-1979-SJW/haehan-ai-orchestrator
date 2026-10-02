@@ -68,14 +68,15 @@ def _safe_str(value) -> str:
 
 
 async def _push_queued(ws: WebSocket, agent_id: str) -> int:
-    """해당 에이전트의 queued 작업을 최대 1개 delivered 로 전환하며 push. 전송 개수 반환."""
-    # A single local-agent WebSocket session is sequential:
-    # task -> running_ack -> result -> next task.
-    if _reg.get_active_task_count(agent_id) > 0:
+    """해당 에이전트의 queued 작업을 빈 용량만큼 delivered 로 전환하며 push. 전송 개수 반환."""
+    # 기본 용량 1 = 기존과 동일(task -> running_ack -> result -> next task).
+    # 에이전트가 auth 때 max_parallel(2~3)을 알리면 그 수까지 동시에 내려보낸다.
+    free = _reg.get_agent_capacity(agent_id) - _reg.get_active_task_count(agent_id)
+    if free <= 0:
         return 0
     pending = _reg.list_pending_for_agent(agent_id)
     sent = 0
-    for t in pending[:1]:
+    for t in pending[:free]:
         updated = _reg.mark_delivered(agent_id, t.task_id)
         if updated is None or updated.status != "delivered":
             continue
@@ -353,6 +354,7 @@ async def _authenticate_ws(websocket: WebSocket):
         await websocket.close(code=4401)
         return None
 
+    _reg.set_agent_capacity(authed.agent_id, auth_msg.get("max_parallel", 1))
     return authed
 
 
@@ -482,6 +484,7 @@ async def _dispatch_ws_message(websocket: WebSocket, agent_id: str, msg: dict) -
 
 
 def _cleanup_ws_disconnect(agent_id: str) -> None:
+    _reg.clear_agent_capacity(agent_id)
     _reg.set_agent_disconnected(agent_id)
     failed_on_disconnect, requeued_on_disconnect = _reg.fail_active_tasks_for_agent(agent_id)
     for t in failed_on_disconnect:
