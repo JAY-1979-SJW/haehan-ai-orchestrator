@@ -154,6 +154,12 @@ def test_live_approval_needs_self_test_and_self_test_sends_one_mail(env):
     assert service.approve(a["id"], user="t", live=True)["live"] is True
 
 
+def test_self_test_subject_does_not_double_the_test_mark(env):
+    a = service.create(_payload(subject="[시험] {업체명} 안내"), user="t")
+    service.send_self_test(a["id"], "me@example.com")
+    assert FakeSmtp.sent[0].subject == "[시험] 회사0 안내"
+
+
 def test_failed_self_test_does_not_unlock_live_approval(env):
     a = service.create(_payload(), user="t")
     FakeSmtp.results = [{"ok": False, "error": "send_failed", "message": "denied"}]

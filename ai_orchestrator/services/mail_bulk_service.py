@@ -242,6 +242,11 @@ def _smtp(account: str) -> bulk_sender.BulkSmtp:
     return bulk_sender.BulkSmtp(account)
 
 
+def _test_subject(subject: str) -> str:
+    """시험 메일임을 제목에 표시한다(이미 `[시험]` 으로 시작하면 중복하지 않는다)."""
+    return subject if subject.lstrip().startswith("[시험]") else "[시험] " + subject
+
+
 def send_self_test(auth_id: str, to_self: str) -> dict[str, Any]:
     """승인서의 첫 수신자 값으로 내용을 채워 **지정한 본인 주소 1통**만 보낸다. 성공하면 시험 발송 완료로 기록한다."""
     row = store.get_authorization(auth_id)
@@ -257,7 +262,7 @@ def send_self_test(auth_id: str, to_self: str) -> dict[str, Any]:
     draft = smtp_draft.make_draft(
         row["account"],
         policy.normalize_email(to_self),
-        "[시험] " + policy.render(row["subject"], fields),
+        _test_subject(policy.render(row["subject"], fields)),
         policy.render(row["body"], fields),
         uploads=uploads,
     )
