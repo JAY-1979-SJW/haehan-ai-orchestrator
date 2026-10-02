@@ -65,14 +65,14 @@
 
 ### 창 A — 배포 마무리 (master 병합 → 운영 서버 → 로컬 서버)
 **목표**: 지금까지의 작업을 master 로 병합하고 운영·로컬에 반영.
-**현재 막힌 이유**
-- master 는 **보호 브랜치**: 필수 검사 `verify`, `frontend`, `secrets`. 지금까지 병합은 모두 Pull Request. CI 는 `pull_request`(master 대상) 때 GitHub 서버에서 돈다.
-- 이 브랜치는 `secrets` 검사가 계속 실패(CLAUDE.md 이력의 YouTube 키 — 사용자가 직접 교체하기로 한 알려진 상태, 메모리 `youtube-key-history-leak-user-handles`). **보호 규칙 우회 금지** — 사용자 결정 필요.
-- 이 브랜치는 master 보다 145+커밋 앞서고 **다른 세션 작업(CDP 칸 분리, 스마트스토어 조사, 하이웍스 문서, 건설업 공무 문서 등)이 섞여 있다.** 병합 범위를 사용자가 정해야 한다.
-- `merge_stage.py` 는 master 체크아웃이 필요 → 공유 폴더에서 브랜치 전환 금지. 별도 worktree 에서 하거나 PR 로.
-- `verify_change.py --base origin/master --head <sha>` 는 145커밋 규모에서 **메모리 부족으로 중단**됨(약 25분 진행). 앱·프로그램을 닫고 재실행하거나, 범위를 줄인 영향 시험으로 대체.
+**현재 상태 (2026-10-02 저녁)**
+- **초안 PR #57**(`feat/login-state-by-element` → master) 생성됨. GitHub 서버에서 필수 검사가 자동 실행됨: `frontend` **통과**, `secrets` **통과**(PR 기준), `verify` **진행 중이었음**(확인 필요: `gh pr checks 57`). 앞서 `secrets` 가 실패하던 것은 수동 실행(`workflow_dispatch`) 기준 — PR 기준으로는 통과했으니 최종 결과를 다시 확인할 것.
+- master 는 **보호 브랜치**: 필수 검사 `verify`, `frontend`, `secrets`, 병합은 Pull Request. **보호 규칙 우회 금지.**
+- 이 브랜치는 master 보다 145+커밋 앞서고 **다른 세션 작업(CDP 칸 분리, 스마트스토어 조사, 하이웍스 문서, 건설업 공무 문서 등)이 섞여 있다.** PR 은 그것까지 포함 — 병합 범위를 사용자가 정해야 한다(필요하면 이 작업만 따로 추려 새 브랜치로 PR).
+- `merge_stage.py` 는 master 체크아웃이 필요 → 공유 폴더에서 브랜치 전환 금지. PR 병합이 정식 경로.
+- 로컬 `verify_change.py --base origin/master --head <sha>` 는 145커밋 규모에서 **메모리 부족으로 중단**됨 → GitHub `verify` 결과로 대체.
 - 운영 배포: 서버는 `origin/master` 만 pull(`scripts/ops/server_deploy.py`). webhook 자동배포는 끊긴 것으로 추정(`defect_index #6`) → 운영 서버에서 직접 실행해야 하며 **서버 접근 방법·별도 승인 필요**.
-**할 일(승인 후)**: ① PR 생성/갱신 → ② GitHub 검사 결과 확인(`verify`, `frontend`) → ③ `secrets` 처리 방침 확정 → ④ 병합 → ⑤ 운영 서버 `server_deploy.py` → ⑥ 로컬 서버(8401) 재시작(앱 안 쓸 때) + 실제 채팅 긴 답변·`/ai-agent/dispatch` 확인 → ⑦ 임시 worktree·`verify_base_*` 정리(사용자 확인 후).
+**할 일(승인 후)**: ① PR #57 확인(초안 해제 여부 포함) → ② GitHub 검사 3개 결과 확인 → ③ 병합 범위 결정(다른 세션 작업 포함 여부) → ④ 병합 → ⑤ 운영 서버 `server_deploy.py` → ⑥ 로컬 서버(8401) 재시작(앱 안 쓸 때) + 실제 채팅 긴 답변·`/ai-agent/dispatch` 확인 → ⑦ 임시 worktree·`verify_base_*` 정리(사용자 확인 후).
 **시작 문구**: "docs/specs/HANDOFF_2026-10-02_agent-dispatch.md 의 창 A 를 이어서 해줘. 승인 없이 master 병합·서버 재시작·운영 배포는 하지 마."
 
 ### 창 B — P4 쓰기 작업 격리(worktree) + 병합 승인
