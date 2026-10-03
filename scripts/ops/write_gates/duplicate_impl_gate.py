@@ -51,6 +51,13 @@ def is_automation_path(path: str) -> bool:
 def extract_keywords(path: str) -> list[str]:
     """경로에서 capability_check 검색 키워드 추출."""
     p = path.replace("\\", "/")
+    # 절대경로면 저장소 위쪽 폴더명(예: C:/work/…)이 키워드로 섞이지 않게 자동화 경로부터만 본다
+    for d in AUTO_DIRS:
+        if p.startswith(d):
+            break
+        if f"/{d}" in p:
+            p = p[p.index(f"/{d}") + 1 :]
+            break
     # 경로 조각(디렉터리명)에서만 추출 — 파일명 제외 (신규 파일이라 의미 없음)
     dir_parts = p.split("/")[:-1]  # 파일명(마지막) 제외
     keywords: list[str] = []

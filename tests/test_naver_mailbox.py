@@ -378,7 +378,8 @@ def test_a_failed_operation_never_returns_its_connection_to_the_pool(server, mon
     monkeypatch.setattr(att, "MAX_MESSAGE_BYTES", 10)
     bad = mb.get_message("skyjwsin", "INBOX", 1)  # 메일이 너무 큼 → 작업 도중 오류
     assert bad["error"] == "too_large" and server[0].logged_out
-    monkeypatch.undo()
+    monkeypatch.undo()  # fixture 가 건 설정까지 함께 풀리므로 비밀번호를 다시 건다(실제 저장소 자격증명에 의존하지 않게)
+    monkeypatch.setenv("NAVER_MAIL_PW_SKYJWSIN", PW)
     monkeypatch.setattr(imaplib, "IMAP4_SSL", lambda h, p: server.append(FakeIMAP()) or server[-1])
     assert mb.get_message("skyjwsin", "INBOX", 1)["ok"] and len(server) == 2
 
