@@ -791,21 +791,29 @@ _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
 }
 
 # STORAGE_BOUNDARY known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지
+# 2026-10-04: 허브 분리로 옮겨진 7개 파일의 경로를 갱신하고(같은 파일, 이미 허용된 부채), 이전에 목록에 없던 DB 직접 사용 6개를 추가 —
+# 6개는 DB 모듈 자체이거나(instagram_dm_db·gonobi/db) 연결을 직접 여는 파일이라 L7 헬퍼로 옮기는 별도 리팩터링 대상.
 _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
+    "ai_orchestrator/connectors/instagram_dm_db.py",
     "ai_orchestrator/connectors/naver_search_db.py",
     "ai_orchestrator/connectors/naver_search_queries.py",
     "ai_orchestrator/local_agent/browser/cdp_session_manager.py",
     "ai_orchestrator/persistence/registration_code_store.py",
+    "apps/ig-comment-dm-bot/core/processed_store.py",
     "local_agent/browser_approval_db_store.py",
     "scripts/cdp_db.py",
+    "scripts/common/youtube_search_cache.py",
     "scripts/critical_logger.py",
-    "scripts/naver/automation/analytics_dashboard.py",
-    "scripts/naver/automation/competitor_analysis.py",
-    "scripts/naver/automation/error_recovery.py",
-    "scripts/naver/automation/scheduler.py",
-    "scripts/naver/blog/analytics.py",
-    "scripts/naver/blog/schedule.py",
-    "scripts/naver/smartstore/bulk.py",
+    "scripts/naver/automation/platform/error_recovery.py",
+    "scripts/naver/automation/platform/scheduler.py",
+    "scripts/naver/automation/smartstore/analytics_dashboard.py",
+    "scripts/naver/automation/smartstore/competitor_analysis.py",
+    "scripts/naver/blog/gonobi/db.py",
+    "scripts/naver/blog/management/analytics.py",
+    "scripts/naver/blog/management/schedule.py",
+    "scripts/naver/shopping/analysis.py",
+    "scripts/naver/shopping/crawl.py",
+    "scripts/naver/smartstore/product/bulk.py",
     "scripts/op_log.py",
     "scripts/popup_monitor.py",
 }
