@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -30,6 +31,23 @@ TSC_CACHE_FILE = ROOT / "data" / ".post_edit_gate_tsc_cache.json"
 TSC_CACHE_SECONDS = 5 * 60
 OVERALL_BUDGET_SECONDS = 20.0
 MAX_TESTS = 3
+
+
+PROJECT_PYTHON_VERSION = (3, 14)
+
+
+def _project_python() -> list[str]:
+    """게이트가 띄우는 하위 프로세스(ruff·query·pytest)용 인터프리터.
+
+    이 훅이 PATH 의 `python`(3.11 등)으로 호출돼도 프로젝트 버전(3.14)으로 돌린다 — 3.11 에는
+    websocket-client·psutil 등 requirements 패키지가 없어 정상 코드도 수집 오류로 차단됐다
+    (2026-09-30). 이미 3.14 이거나 py 런처가 없으면 현재 인터프리터를 그대로 쓴다.
+    """
+    if sys.version_info[:2] == PROJECT_PYTHON_VERSION or not shutil.which("py"):
+        return [sys.executable]
+    probe = subprocess.run(["py", "-3.14", "-c", "pass"], capture_output=True, timeout=10, check=False)
+    return ["py", "-3.14"] if probe.returncode == 0 else [sys.executable]
+
 
 # 세션별 편집 파일 기록 — stop_fast_verify.py 가 "이 세션에서 바뀐 파일만" 검사할 수
 # 있도록 한다. git status 전체를 쓰면 다른 세션의 미커밋 변경분까지 차단 사유에
@@ -121,7 +139,7 @@ def _ruff_errors(file_text: str, suffix: str) -> set[tuple[str, str]]:
     try:
         proc = _run(
             [
-                sys.executable,
+                *_project_python(),
                 "-m",
                 "ruff",
                 "check",
@@ -199,7 +217,7 @@ def _check_python(file_path: Path, start: float) -> int:
         return 0
     try:
         proc = _run(
-            [sys.executable, "-m", QUERY_MOD, "tests-for", rel_path],
+            [*_project_python(), "-m", QUERY_MOD, "tests-for", rel_path],
             timeout=min(5, _remaining(start)),
         )
         # query.py 출력 형식: "  경로" 들여쓰기 라인
@@ -223,7 +241,7 @@ def _check_python(file_path: Path, start: float) -> int:
 
     try:
         test_proc = _run(
-            [sys.executable, "-m", "pytest", "-x", "-q", *candidates],
+            [*_project_python(), "-m", "pytest", "-x", "-q", *candidates],
             timeout=_remaining(start),
         )
         if test_proc.returncode not in (0, 5):  # 5=collected 0 items
