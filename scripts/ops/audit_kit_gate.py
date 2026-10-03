@@ -23,6 +23,7 @@ import re
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -35,11 +36,11 @@ _NOISE = ("import-not-found", "import-untyped")  # audit-kit 가상환경에 프
 _EXE_NAMES = ("audit-kit.exe", "audit-kit")
 
 
-def find_audit_kit(root: Path | None = None, env: dict[str, str] | None = None) -> list[str] | None:
+def find_audit_kit(root: Path | None = None, env: Mapping[str, str] | None = None) -> list[str] | None:
     """audit-kit 실행 명령(리스트). 못 찾으면 None. `.py` 로 지정하면 현재 파이썬으로 실행한다(시험용)."""
     root = root or ROOT  # 호출 시점의 ROOT(시험에서 바꿀 수 있게 기본값을 import 때 고정하지 않는다)
-    env = os.environ if env is None else env
-    explicit = (env.get("AUDIT_KIT_BIN") or "").strip()
+    environ: Mapping[str, str] = os.environ if env is None else env
+    explicit = (environ.get("AUDIT_KIT_BIN") or "").strip()
     if explicit:
         path = Path(explicit)
         if path.is_file():
@@ -192,7 +193,7 @@ def _eligible(path: Path, root: Path | None = None) -> bool:
 def _utf8_streams() -> None:
     for stream in (sys.stdout, sys.stderr):
         with contextlib.suppress(Exception):
-            stream.reconfigure(encoding="utf-8", errors="replace")
+            getattr(stream, "reconfigure")(encoding="utf-8", errors="replace")
 
 
 def run_post_edit(stdin_text: str) -> int:
