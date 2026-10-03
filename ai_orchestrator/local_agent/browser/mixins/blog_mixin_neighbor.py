@@ -9,9 +9,14 @@ from __future__ import annotations
 
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
 
 class BlogNeighborMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드를 self(MRO)로 호출한다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def blog_visit_neighbors(self, blog_url: str, max_neighbors: int = 20, delay: float = 2.0) -> list[dict]:
         """이웃 블로그 순차 방문 + 정보 수집."""
         neighbors = self.blog_neighbors(blog_url, max_neighbors=max_neighbors)

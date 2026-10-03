@@ -350,7 +350,7 @@ def _sync_running(did: str, tasks: list[dict[str, Any]]) -> None:
             )
         elif rt.status in ("failed", "rejected", "cancelled"):
             store.update_subtask(
-                did, t["tid"], expect_states=run, state=pol.FAILED, error=rt.error or rt.status, finished_at=_now()
+                did, t["tid"], expect_states=run, state=pol.FAILED, error=rt.error_summary or rt.status, finished_at=_now()
             )
 
 
