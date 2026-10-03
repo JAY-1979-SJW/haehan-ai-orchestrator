@@ -27,6 +27,15 @@ _ADMIN = Depends(require_role("admin", "owner"))
 _ID = PathParam(..., pattern=r"^[0-9a-f]{32}$")
 
 
+def resume_on_startup() -> bool:
+    """서버가 다시 켜질 때, 승인된 채 끝나지 않은 분배안이 있으면 러너를 다시 띄운다. 재개했으면 True.
+
+    server.py 가 workflows/ 를 직접 가져오면 루트 모듈↔workflows 순환이 생기므로, 이미 이 라우터를 가져오는
+    server.py 가 이 함수를 거쳐 부른다(예약 작업 루프를 routers/ 에 둔 것과 같은 이유).
+    """
+    return runner.resume_running()
+
+
 def _user(claims: dict) -> str:
     return str(claims.get("actor") or claims.get("username") or "admin")
 
