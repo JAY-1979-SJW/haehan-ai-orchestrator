@@ -40,11 +40,7 @@ def _load_report() -> dict:
 
 
 def _audit_issues() -> list[dict]:
-    # 기존 동작 유지(이번 변경 범위 밖): 저장소 안 리포트가 없으면 [] — 생성 리포트는 gate_results 키 확인에만 쓴다.
-    report_path = ROOT / "data" / "codebase_layer_audit_latest.json"
-    if not report_path.exists():
-        return []
-    return json.loads(report_path.read_text(encoding="utf-8")).get("issues", [])
+    return _load_report().get("issues", [])
 
 
 def _gate_results() -> dict:
