@@ -1,0 +1,276 @@
+"""사이트 업무 지도 — 분류·위험 등급·병합·저장·변환. 브라우저·네트워크 없이 가상 스냅샷만 사용."""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from ai_orchestrator.domain import site_task_map as tm
+from ai_orchestrator.persistence import site_task_map_store as store
+from scripts.explorer import task_mapper
+
+NOW = "2026-10-03T12:00:00+09:00"
+LATER = "2026-10-04T09:00:00+09:00"
+
+
+def _snap(url="https://www.example-kiscon.test/gongsi/ksc_dft.asp", *, inputs=None, buttons=None, links=None, forms=None):
+    """공개 업체검색 화면과 같은 모양의 가상 스냅샷(page_snapshot.collect 형식)."""
+    return {
+        "url": url,
+        "title": "업체정보입력검색",
+        "frames": [
+            {
+                "idx": 0,
+                "url": url,
+                "inputs": inputs
+                if inputs is not None
+                else [
+                    {"tag": "INPUT", "type": "text", "name": "txtSangHo", "id": "", "placeholder": "업체명", "aria": "", "required": False, "visible": True},
+                    {"tag": "INPUT", "type": "text", "name": "txtCeo", "id": "", "placeholder": "대표자", "aria": "", "required": False, "visible": True},
+                    {"tag": "INPUT", "type": "hidden", "name": "EP_STATUS", "id": "", "placeholder": "", "aria": "", "required": False, "visible": False},
+                ],
+                "buttons": buttons or [],
+                "links": links if links is not None else [{"text": "검색", "href": "#", "target": "", "visible": True}],
+                "forms": forms if forms is not None else [{"id": "", "action": url, "method": "get", "name": "frm1"}],
+                "headings": [],
+            }
+        ],
+    }
+
+
+# ── 위험 등급 ─────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("texts", "risk"),
+    [
+        (["검색"], "read"),
+        (["조회", "다음"], "read"),
+        (["저장"], "write"),
+        (["수정 완료"], "write"),
+        (["등록"], "write"),
+        (["제출"], "submit"),
+        (["신고하기"], "submit"),
+        (["삭제"], "submit"),
+        (["로그아웃"], "submit"),
+        (["저장", "제출"], "submit"),  # 가장 높은 등급이 이긴다
+        (["submitForm"], "submit"),
+        (["display"], "read"),  # 'pay' 로 오인하지 않는다
+        (["/pay/confirm.do"], "submit"),
+        ([], "read"),
+    ],
+)
+def test_risk_of(texts, risk):
+    assert tm.risk_of(texts) == risk
+
+
+# ── 스냅샷 → 업무 ─────────────────────────────────────────────────────────
+
+
+def test_public_search_form_becomes_read_search_task():
+    (t,) = tm.tasks_from_snapshot(_snap(), now=NOW)
+    assert (t["category"], t["risk"], t["auth"], t["state"]) == ("search", "read", "public", "observed")
+    assert [f["name"] for f in t["fields"]] == ["txtSangHo", "txtCeo"]  # hidden 은 제외
+    assert t["control"] == "검색"
+    # Recorder 호환 단계: navigate → change(매개변수 자리) → click
+    assert [s["type"] for s in t["steps"]] == ["navigate", "change", "change", "click"]
+    assert t["steps"][1]["value"] == "{{txtSangHo}}"
+    assert t["steps"][1]["selectors"][0] == ["[name='txtSangHo']"]
+    assert t["steps"][1]["selectors"][1] == ["aria/업체명"]
+    assert t["steps"][-1]["selectors"][0] == ["aria/검색"]
+
+
+def test_no_values_are_stored():
+    snap = _snap()
+    snap["frames"][0]["inputs"][0]["value"] = "비밀 업체명"  # 혹시 스냅샷에 값이 섞여 들어와도
+    text = json.dumps(tm.tasks_from_snapshot(snap, now=NOW), ensure_ascii=False)
+    assert "비밀 업체명" not in text
+
+
+def test_submit_and_write_tasks_have_no_click_step():
+    sub = tm.tasks_from_snapshot(_snap(links=[{"text": "신고", "href": "#", "target": "", "visible": True}]), now=NOW)[0]
+    wr = tm.tasks_from_snapshot(_snap(links=[], buttons=[{"text": "저장", "id": "", "aria": "", "cls": "", "visible": True}]), now=NOW)[0]
+    assert (sub["risk"], sub["category"]) == ("submit", "submit")
+    assert (wr["risk"], wr["category"]) == ("write", "input")
+    for t in (sub, wr):
+        assert t["steps"][-1]["type"] == "change"  # 마지막 클릭(제출·저장)은 사람 몫
+
+
+def test_password_form_is_login_and_never_read():
+    snap = _snap(
+        inputs=[
+            {"tag": "INPUT", "type": "text", "name": "id", "id": "", "placeholder": "아이디", "aria": "", "required": True, "visible": True},
+            {"tag": "INPUT", "type": "password", "name": "pw", "id": "", "placeholder": "", "aria": "", "required": True, "visible": True},
+        ],
+        links=[],
+        buttons=[{"text": "로그인", "id": "", "aria": "", "cls": "", "visible": True}],
+    )
+    (t,) = tm.tasks_from_snapshot(snap, now=NOW)
+    assert (t["category"], t["risk"], t["auth"]) == ("login", "submit", "login")
+    assert not any(s["type"] == "click" for s in t["steps"])
+
+
+def test_menu_only_page_and_error_frames_are_skipped():
+    assert tm.tasks_from_snapshot(_snap(inputs=[]), now=NOW) == []
+    snap = _snap()
+    snap["frames"].append({"idx": 1, "url": "x", "error": "boom"})
+    assert len(tm.tasks_from_snapshot(snap, now=NOW)) == 1
+
+
+def test_inputs_grouped_by_form_key_when_present():
+    snap = _snap()
+    snap["frames"][0]["inputs"][0]["form"] = "frm1"
+    snap["frames"][0]["inputs"][1]["form"] = "headerSearch"
+    ids = sorted(t["id"] for t in tm.tasks_from_snapshot(snap, now=NOW))
+    assert ids == ["gongsi_ksc_dft_asp#frm1", "gongsi_ksc_dft_asp#headersearch"]
+
+
+# ── 병합·상태 ─────────────────────────────────────────────────────────────
+
+
+def _map_with(task_snapshot=None):
+    m = tm.empty_map("www.example-kiscon.test", now=NOW)
+    return tm.merge_tasks(m, tm.tasks_from_snapshot(task_snapshot or _snap(), now=NOW), now=NOW)
+
+
+def test_merge_same_structure_keeps_verified_state():
+    m = _map_with()
+    tid = m["tasks"][0]["id"]
+    m = tm.mark_verified(m, tid, now=NOW)
+    again = tm.merge_tasks(m, tm.tasks_from_snapshot(_snap(), now=LATER), now=LATER)
+    t = again["tasks"][0]
+    assert (t["state"], t["verified_at"], t["observed_at"]) == ("verified", NOW, LATER)
+    assert len(again["tasks"]) == 1
+
+
+def test_merge_changed_structure_resets_verification_and_keeps_human_edits():
+    m = _map_with()
+    tid = m["tasks"][0]["id"]
+    m = tm.set_classification(m, tid, name="업체정보 검색", purpose="협력업체 상태 확인", category="search")
+    m = tm.mark_verified(m, tid, now=NOW)
+    changed = _snap(inputs=[{"tag": "INPUT", "type": "text", "name": "newName", "id": "", "placeholder": "상호", "aria": "", "required": False, "visible": True}])
+    out = tm.merge_tasks(m, tm.tasks_from_snapshot(changed, now=LATER), now=LATER)
+    t = out["tasks"][0]
+    assert t["state"] == "observed" and [f["name"] for f in t["fields"]] == ["newName"]
+    assert (t["name"], t["purpose"]) == ("업체정보 검색", "협력업체 상태 확인")  # 사람이 정한 값 유지
+    assert t["changes"][-1]["was"] == "verified"
+
+
+def test_risk_never_lowered_by_reobservation():
+    m = _map_with(_snap(links=[{"text": "신고", "href": "#", "target": "", "visible": True}]))
+    assert m["tasks"][0]["risk"] == "submit"
+    safer = _snap(links=[{"text": "검색", "href": "#", "target": "", "visible": True}], inputs=[{"tag": "INPUT", "type": "text", "name": "q", "id": "", "placeholder": "", "aria": "", "required": False, "visible": True}])
+    out = tm.merge_tasks(m, tm.tasks_from_snapshot(safer, now=LATER), now=LATER)
+    assert out["tasks"][0]["risk"] == "submit"
+
+
+def test_mark_failed_goes_stale_and_counts():
+    m = _map_with()
+    tid = m["tasks"][0]["id"]
+    m = tm.mark_failed(tm.mark_failed(m, tid, now=LATER), tid, now=LATER)
+    assert (m["tasks"][0]["state"], m["tasks"][0]["failures"]) == ("stale", 2)
+    assert tm.mark_verified(m, tid, now=LATER)["tasks"][0]["failures"] == 0
+    with pytest.raises(ValueError, match="찾을 수 없"):
+        tm.mark_failed(m, "nope", now=LATER)
+
+
+def test_set_classification_rejects_unknown_category_and_cannot_touch_risk():
+    m = _map_with()
+    tid = m["tasks"][0]["id"]
+    with pytest.raises(ValueError, match="분류"):
+        tm.set_classification(m, tid, category="bogus")
+    with pytest.raises(TypeError):
+        tm.set_classification(m, tid, risk="read")  # type: ignore[call-arg]  # 위험 등급은 사람도 이 경로로 낮추지 못한다
+
+
+def test_lookup_ranks_and_empty_query():
+    m = _map_with()
+    assert [t["id"] for t in tm.lookup(m, "txtsangho 업체")] == [m["tasks"][0]["id"]]
+    assert tm.lookup(m, "전혀없는말") == []
+    assert len(tm.lookup(m, "")) == 1
+
+
+def test_functions_do_not_mutate_inputs():
+    m = _map_with()
+    before = json.dumps(m, sort_keys=True)
+    tid = m["tasks"][0]["id"]
+    tm.mark_verified(m, tid, now=LATER)
+    tm.merge_tasks(m, tm.tasks_from_snapshot(_snap(), now=LATER), now=LATER)
+    tm.set_classification(m, tid, name="x")
+    assert json.dumps(m, sort_keys=True) == before
+
+
+def test_validate_map_rejects_bad_shapes():
+    for bad in (None, {"version": 99, "host": "a", "tasks": []}, {"version": 1, "host": "a", "tasks": [{"id": "x", "risk": "nope", "state": "observed"}]}):
+        with pytest.raises(ValueError):
+            tm.validate_map(bad)
+
+
+# ── 저장소 ────────────────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def isolated_store(tmp_path, monkeypatch):
+    monkeypatch.setattr(store, "_DIR", tmp_path / "site_task_map")
+    return tmp_path
+
+
+def test_store_roundtrip_atomic_and_listing(isolated_store):
+    m = _map_with()
+    path = store.save(m)
+    assert path.exists() and not list(path.parent.glob("*.tmp"))
+    assert store.load("www.example-kiscon.test") == m
+    assert store.list_hosts() == ["www.example-kiscon.test"]
+    assert store.load("other.example.test")["tasks"] == []  # 없으면 빈 지도
+
+
+def test_store_rejects_bad_host_and_corrupt_file(isolated_store):
+    for host in ("../etc", "a/b", "", "bad host", "x..y"):
+        with pytest.raises(ValueError):
+            store.load(host)
+    store.save(_map_with())
+    (isolated_store / "site_task_map" / "www.example-kiscon.test.json").write_text("{깨짐", encoding="utf-8")
+    with pytest.raises(ValueError, match="읽을 수 없"):
+        store.load("www.example-kiscon.test")  # 조용히 빈 지도로 덮어쓰지 않는다
+
+
+def test_failed_save_keeps_previous_map(isolated_store, monkeypatch):
+    m = _map_with()
+    store.save(m)
+    bad = dict(m, tasks=[{"id": "x"}])
+    with pytest.raises(ValueError):
+        store.save(bad)
+    assert store.load("www.example-kiscon.test") == m
+
+
+# ── 변환 어댑터 ───────────────────────────────────────────────────────────
+
+
+def test_merge_snapshots_ignores_other_hosts(isolated_store):
+    out = task_mapper.merge_snapshots("www.example-kiscon.test", [_snap(), _snap(url="https://evil.test/x")])
+    assert out["observed"] == 1 and out["skipped_other_host"] == 1
+    assert store.load("www.example-kiscon.test")["tasks"][0]["risk"] == "read"
+
+
+def test_import_auto_sitemap_creates_unclassified_tasks_only_for_form_pages(isolated_store, tmp_path):
+    f = tmp_path / "auto.json"
+    f.write_text(
+        json.dumps(
+            {
+                "host": "www.example-kiscon.test",
+                "pages": [
+                    {"url": "https://www.example-kiscon.test/a/list.asp", "title": "목록", "forms_count": 1, "form_summary": {"submit": "#btn"}},
+                    {"url": "https://www.example-kiscon.test/b/delete.asp", "title": "삭제", "forms_count": 1, "form_summary": {}},
+                    {"url": "https://www.example-kiscon.test/c", "title": "메뉴만", "forms_count": 0},
+                    {"url": "https://www.example-kiscon.test/d", "error": "goto"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = task_mapper.import_auto_sitemap(f)
+    by_url = {t["url"].rsplit("/", 1)[-1]: t for t in out["map"]["tasks"]}
+    assert set(by_url) == {"list.asp", "delete.asp"}
+    assert by_url["list.asp"]["category"] == "unclassified" and by_url["list.asp"]["risk"] == "read"
+    assert by_url["delete.asp"]["risk"] == "submit"
