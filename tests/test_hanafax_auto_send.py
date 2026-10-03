@@ -27,6 +27,28 @@ def _temp_db(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "_DB_PATH", tmp_path / "fax_authorizations.db")
 
 
+class _FrozenDatetime(datetime):
+    """워크플로가 발송 도중 부르는 datetime.now() 를 NOW 로 고정한다.
+
+    고정하지 않으면 허용 시간대(09:00~18:00) 재검사가 시험을 돌리는 컴퓨터의 실제 시각·시간대에 따라 달라져,
+    UTC 서버에서 오전 9시(KST 18시) 전에 돌리면 발송이 막혀 시험이 실패했다. astimezone() 인자 없는 호출은
+    컴퓨터 현지 시간대로 바뀌지 않게 그대로 둔다.
+    """
+
+    @classmethod
+    def now(cls, tz=None):
+        base = cls(NOW.year, NOW.month, NOW.day, NOW.hour, NOW.minute, tzinfo=KST)
+        return base if tz is None else base.astimezone(tz)
+
+    def astimezone(self, tz=None):
+        return self if tz is None else super().astimezone(tz)
+
+
+@pytest.fixture(autouse=True)
+def _frozen_clock(monkeypatch):
+    monkeypatch.setattr(flow, "datetime", _FrozenDatetime)
+
+
 class FakeSender:
     """호출을 기록하는 가짜 발송기. 실제 전송 없음."""
 
