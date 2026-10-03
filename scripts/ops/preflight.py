@@ -218,6 +218,14 @@ def check_hook_interpreter(env: Env) -> Check:
     return Check("훅 인터프리터", PASS if code == 0 else FAIL, "py -3 사용 가능" if code == 0 else "py -3 실행 실패 — Python Launcher 설치 필요")
 
 
+def check_ruff(env: Env) -> Check:
+    """git pre-commit 의 ruff 단계는 훅이 고른 파이썬(`py -3`)에 ruff 가 있어야 돈다. 없으면 `No module named ruff` 만 출력하고 **조용히 건너뛴다**."""
+    code, out = env.run(["py", "-3", "-m", "ruff", "--version"]) if env.which("py") else env.run([sys.executable, "-m", "ruff", "--version"])
+    if code == 0:
+        return Check("ruff(커밋 훅)", PASS, out.splitlines()[0] if out else "설치됨")
+    return Check("ruff(커밋 훅)", WARN, "훅이 쓰는 파이썬에 ruff 가 없어 커밋 시 ruff 검사가 조용히 생략됩니다 — py -3 -m pip install ruff")
+
+
 def check_node(env: Env) -> Check:
     if not env.which("node") or not env.which("npm"):
         return Check("Node/npm(관리 화면)", WARN, "node 또는 npm 이 없습니다 — admin-web 을 쓰지 않으면 무시")
@@ -262,6 +270,7 @@ CHECKS: tuple[Callable[[Env], Check], ...] = (
     check_cdp_port,
     check_writable,
     check_hook_interpreter,
+    check_ruff,
     check_node,
     check_git_hooks,
     check_env_file,

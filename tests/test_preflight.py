@@ -148,3 +148,13 @@ def test_exit_code_and_json_output(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(pf, "Env", lambda: make_env(tmp_path))
     assert pf.main([]) == 0
     assert "결과: PASS" in capsys.readouterr().out
+
+
+def test_ruff_check_warns_when_commit_hook_interpreter_lacks_ruff(tmp_path):
+    missing = make_env(tmp_path, run=lambda cmd: (1, "No module named ruff") if "ruff" in cmd else (0, ""))
+    got = pf.check_ruff(missing)
+    assert got.status == pf.WARN and "조용히 생략" in got.detail and "pip install ruff" in got.detail
+    present = make_env(tmp_path, run=lambda cmd: (0, "ruff 0.16.10") if "ruff" in cmd else (0, ""))
+    assert pf.check_ruff(present).status == pf.PASS
+    no_launcher = make_env(tmp_path, which=lambda _n: None, run=lambda cmd: (0, "ruff 0.16.10") if cmd[0] != "py" else (127, ""))
+    assert pf.check_ruff(no_launcher).status == pf.PASS  # py 런처가 없으면 현재 파이썬으로 확인
