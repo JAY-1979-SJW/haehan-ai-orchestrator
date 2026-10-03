@@ -101,7 +101,7 @@
 
 ### 9.4 다음 세션 시작점
 - 완료·푸시: P1·P2 (커밋 `216ba23b`, 테스트 75개).
-- **P3 완료(2026-10-02, 테스트 98개 통과, 실제 발송 없음)**: 발송기 어댑터 `connectors/hanafax_auto_sender.py`(발송 직전 문서 해시 재검증, 요청 전 실패만 definite_failure), 승인서 서비스 `services/hanafax_authorization_service.py`, API `/hanafax/authorizations*`·`/kill-switch`·`/opt-out`, 예약 작업 `hanafax_send`(승인서 id 만 받음, risk_action `fax_send_authorized` 를 AUTO_ALLOWED 에 등록 — 회차 승인 대신 승인서가 승인 역할, 정책이 매번 재검증).
+- **P3 완료(2026-10-02, 테스트 98개 통과, 실제 발송 없음)**: 발송기 어댑터 `sites/hanafax_auto_sender.py`(발송 직전 문서 해시 재검증, 요청 전 실패만 definite_failure), 승인서 서비스 `services/hanafax_authorization_service.py`, API `/hanafax/authorizations*`·`/kill-switch`·`/opt-out`, 예약 작업 `hanafax_send`(승인서 id 만 받음, risk_action `fax_send_authorized` 를 AUTO_ALLOWED 에 등록 — 회차 승인 대신 승인서가 승인 역할, 정책이 매번 재검증).
 - 다음: P4(승인 화면 admin-web) → P5(본인 번호 1건 실전송, 사용자 승인·과금 확인) 또는 하나팩스 실사(예약·주소록, 로그인은 사용자).
 - 실제 팩스는 한 건도 보내지 않았다. 실전송 검증은 본인 번호 1건으로 사용자 승인·과금 확인 후.
 

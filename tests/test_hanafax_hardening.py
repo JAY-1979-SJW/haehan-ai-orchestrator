@@ -11,7 +11,7 @@ from datetime import datetime
 
 import pytest
 
-from ai_orchestrator.connectors import hanafax_auto_sender as adapter
+from ai_orchestrator.sites import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as pol
 from ai_orchestrator.persistence import fax_authorization_store as store
 from ai_orchestrator.services import hanafax_authorization_service as service

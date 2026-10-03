@@ -17,7 +17,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.connectors import hanafax_auto_sender as adapter
+from ai_orchestrator.sites import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as policy
 from ai_orchestrator.persistence import fax_authorization_store as store
 from ai_orchestrator.services import hanafax_attachments as attachments

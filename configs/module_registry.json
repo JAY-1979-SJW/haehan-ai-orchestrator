@@ -20145,7 +20145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/hanafax_auto_sender.py": {
+  "ai_orchestrator/sites/hanafax_auto_sender.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hanafax",

@@ -336,7 +336,7 @@ def _run_hanafax_send(params: dict[str, Any]) -> str:
     """승인서 범위 안에서 팩스를 자동 발송한다. 승인서가 드라이런이면 전송하지 않고 계획만 기록한다."""
     from datetime import datetime
 
-    from ai_orchestrator.connectors import hanafax_auto_sender as adapter
+    from ai_orchestrator.sites import hanafax_auto_sender as adapter
     from ai_orchestrator.persistence import fax_authorization_store as fax_store
     from ai_orchestrator.workflows import hanafax_auto_send as fax_flow
 
