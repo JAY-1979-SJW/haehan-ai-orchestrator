@@ -133,7 +133,7 @@ def run_live_input_manifest(
     path = Path(manifest_path)
     manifest = json.loads(path.read_text(encoding="utf-8"))
     entries = manifest.get("items", [])
-    summary = {
+    summary: dict[str, Any] = {
         "site_id": "google",
         "manifest_path": str(path),
         "started_at": datetime.now(UTC).isoformat(),
