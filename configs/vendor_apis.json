@@ -290,6 +290,29 @@
         "기존 화면 자동화(CDP, scripts/hiworks)는 읽기용 폴백으로 남아 있음",
         "상태 변경 호출(결재 기안·발송·문자)은 승인 게이트 뒤에서만"
       ]
+    },
+    {
+      "name": "KISCON 건설산업지식정보시스템 / 건설공사대장 전자통보(CWS)",
+      "keywords": [
+        "kiscon",
+        "키스콘",
+        "건설공사대장",
+        "하도급 통보",
+        "공사대장",
+        "cws"
+      ],
+      "docs": "https://www.kiscon.net , https://cws.kiscon.net",
+      "cost": "무료(이용)",
+      "status": "no_public_api_found",
+      "auth": "건설업체 로그인 = 공동인증서(사용자만 가능)",
+      "supported": [],
+      "not_supported": [
+        "공개 OpenAPI·연계 문서를 2026-10-03 웹 검색에서 찾지 못함(확정 부재 아님)"
+      ],
+      "caveats": [
+        "CDP 가 정당한 경로. 착수 전 헬프데스크 공지에서 연계 안내 재확인",
+        "제출·서명은 자동화 금지"
+      ]
     }
   ]
 }
