@@ -76,10 +76,13 @@ def lookup(host: str, query: str = "", *, limit: int = 5) -> dict[str, Any]:
         explored = site_map.get("explored")
         if explored:  # 탐색은 했지만 입력창이 있는 조회 업무를 찾지 못한 사이트 — '미탐색'으로 오해해 같은 탐색을 되풀이하지 않게 한다
             hint = f"이 사이트는 {str(explored.get('at', ''))[:10]} 에 {explored.get('pages', 0)}쪽을 탐색했지만 입력창이 있는 조회 업무를 찾지 못했습니다. 같은 탐색을 되풀이하지 말고 사용자에게 알리세요."
+            warning = (explored.get("coverage") or {}).get("warning")
+            if warning:
+                hint = f"{hint} 주의: {warning}"
             return {"host": site_map["host"], "known": False, "explored": True, "count": 0, "tasks": [], "rules": RULES, "hint": hint}
         return {"host": site_map["host"], "known": False, "count": 0, "tasks": [], "rules": RULES, "hint": "이 사이트는 아직 탐색된 적이 없습니다. 사용자에게 탐색을 요청하세요."}
     found = tm.lookup(site_map, query, limit=limit)
-    return {
+    out = {
         "host": site_map["host"],
         "known": True,
         "auth": site_map["auth"],
@@ -88,6 +91,10 @@ def lookup(host: str, query: str = "", *, limit: int = 5) -> dict[str, Any]:
         "tasks": found,
         "rules": RULES,
     }
+    warning = ((site_map.get("explored") or {}).get("coverage") or {}).get("warning")
+    if warning:  # 탐색이 불완전했다 — AI 가 업무가 없다고 단정하지 않고 사용자에게 알리게 한다
+        out["warning"] = warning
+    return out
 
 
 def classify(host: str, task_id: str, *, name: str | None = None, purpose: str | None = None, category: str | None = None) -> dict[str, Any]:

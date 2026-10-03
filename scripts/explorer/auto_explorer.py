@@ -82,10 +82,12 @@ _PAGE_SUMMARY_JS = r"""
   });
   // 폼 개수 (간단)
   const forms = document.querySelectorAll('form').length;
+  // 폼 없이 버튼·편집 영역으로만 동작하는 화면도 업무 화면이다(글쓰기·발행·이체 등)
+  const controls = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], [contenteditable="true"], [role="textbox"]')).filter(e => e.offsetParent !== null).length;
   return {
     title: document.title || '',
     url: location.href,
-    links, tables, forms,
+    links, tables, forms, controls,
   };
 }
 """
@@ -283,6 +285,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
             "title": s.get("title", "")[:120],
             "tables": s.get("tables", [])[:10],
             "forms_count": s.get("forms", 0),
+            "controls_count": s.get("controls", 0),
             "form_summary": form_summary,
             "links_out": [],
         }

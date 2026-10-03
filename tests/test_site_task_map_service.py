@@ -177,3 +177,16 @@ def test_lookup_distinguishes_explored_empty_site_from_unexplored(env):
     assert got["known"] is False and got["explored"] is True and "7쪽을 탐색했지만" in got["hint"] and "되풀이하지 말고" in got["hint"]
     never = service.lookup("never.example.test", "검색")
     assert never["known"] is False and "explored" not in never and "탐색을 요청" in never["hint"]  # 탐색한 적 없는 사이트는 그대로
+
+
+def test_lookup_exposes_coverage_warning_so_ai_does_not_assume_no_tasks(env):
+    cov = {"pages_read": 3, "tasks": 0, "editable": 0, "buttons_only": 0, "unrecognized": 3, "warning": "화면은 읽었지만 업무를 하나도 인식하지 못했습니다 — 탐색이 불완전하니"}
+    store.save(tm.note_exploration(tm.empty_map("cov.example.test", now=NOW), pages=3, auth="login", now=NOW, coverage=cov))
+    got = service.lookup("cov.example.test", "글쓰기")
+    assert got["explored"] is True and "주의: 화면은 읽었지만" in got["hint"]
+    from scripts.explorer import task_mapper
+
+    snap = {"url": "https://part.example.test/a", "title": "t", "frames": [{"url": "https://part.example.test/a", "inputs": [], "links": [], "forms": [], "buttons": [{"text": "조회", "visible": True}]}]}
+    task_mapper.merge_snapshots("part.example.test", [snap, {"url": "https://part.example.test/b", "title": "", "frames": [{"url": "https://part.example.test/b", "inputs": [{"type": "hidden", "name": "x", "visible": False}], "buttons": [{"text": " ", "visible": True}], "links": [], "forms": []}]}], explored_pages=4)
+    found = service.lookup("part.example.test", "조회")
+    assert found["known"] is True and "1쪽에서 업무를 인식하지 못했습니다" in found["warning"]  # 업무가 있어도 불완전하면 알린다

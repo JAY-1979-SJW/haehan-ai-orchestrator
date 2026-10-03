@@ -33,13 +33,14 @@ AUTH_PUBLIC, AUTH_LOGIN, AUTH_CERT = "public", "login", "certificate"
 AUTHS = (AUTH_PUBLIC, AUTH_LOGIN, AUTH_CERT)
 
 # 한글은 부분 문자열, 영문은 단어 앞부분(`display` 가 `pay` 로 걸리지 않게)으로 맞춘다.
-_SUBMIT_KO = ("제출", "신고", "통보", "결제", "송금", "이체", "삭제", "제거", "탈퇴", "서명", "전송", "발송", "발급", "승인", "확정", "취소", "로그아웃")
+_SUBMIT_KO = ("제출", "신고", "통보", "결제", "송금", "이체", "삭제", "제거", "탈퇴", "서명", "전송", "발송", "발급", "승인", "확정", "취소", "로그아웃", "출금", "발행", "인증서", "납부", "지급")
 _SUBMIT_EN = ("submit", "delete", "remove", "pay", "send", "logout", "signout", "sign", "approve", "confirm", "withdraw", "cancel")
-_WRITE_KO = ("저장", "수정", "등록", "추가", "변경", "업로드", "첨부", "신청", "작성")
+_WRITE_KO = ("저장", "수정", "등록", "추가", "변경", "업로드", "첨부", "신청", "작성", "글쓰기")
 _WRITE_EN = ("save", "update", "add", "edit", "upload", "create", "register", "apply", "insert")
 
 _SKIP_INPUT_TYPES = {"hidden", "submit", "button", "image", "reset"}
 _SHORT_ACTION_LINK = 12  # href 가 '#'·javascript: 인 링크는 동작 버튼으로 본다(글자 수 제한)
+_BUTTON_TASKS_MAX = 6  # 한 화면에서 버튼 업무로 기록하는 최대 개수(위험한 것부터)
 _NEAR = 80  # 입력창에서 문서 순서로 이만큼(요소 수) 안의 컨트롤만 그 업무의 동작 버튼으로 본다
 
 
@@ -190,6 +191,7 @@ def tasks_from_snapshot(snapshot: dict[str, Any], *, auth: str = AUTH_PUBLIC, no
         if "error" in frame:
             continue
         frame_url = str(frame.get("url") or url)
+        used_controls: set[str] = set()
         for form_key, raws in _group_inputs(frame):
             kept = [(r, f) for r in raws if (f := _field(r))]
             fields = _dedupe_fields([f for _, f in kept])
@@ -209,6 +211,7 @@ def tasks_from_snapshot(snapshot: dict[str, Any], *, auth: str = AUTH_PUBLIC, no
             else:
                 category = CAT_SEARCH
             control = _primary_control(controls)
+            used_controls.update(controls)
             tid = f"{slug(path)}#{slug(form_key) if form_key else 'page'}"
             tasks.append(
                 {
@@ -232,7 +235,75 @@ def tasks_from_snapshot(snapshot: dict[str, Any], *, auth: str = AUTH_PUBLIC, no
                     "changes": [],
                 }
             )
+        tasks.extend(_button_tasks(frame, frame_url, host, path, title, used_controls, auth=auth, now=now))
     return tasks
+
+
+def _button_tasks(  # noqa: PLR0913 - 한 프레임의 버튼 업무를 만드는 데 필요한 값들(주소·제목·이미 쓰인 버튼·접근·시각)
+    frame: dict[str, Any], frame_url: str, host: str, path: str, title: str, used: set[str], *, auth: str, now: str
+) -> list[dict[str, Any]]:
+    """입력창 업무에 쓰이지 않은 **버튼**을 버튼 업무로 기록한다(발행·조회·이체처럼 누르는 것이 곧 업무인 화면).
+
+    위험 등급은 버튼 글자와 주소로 정하며(불확실하면 높게), 읽기가 아니면 클릭 단계를 만들지 않는다.
+    """
+    seen: set[str] = set()
+    ranked: list[tuple[str, str]] = []
+    for b in frame.get("buttons", []):
+        text = str(b.get("text") or b.get("aria") or "").strip()
+        if not text or text in used or text in seen or not b.get("visible", True):
+            continue
+        seen.add(text)
+        risk = risk_of([text, path])
+        ranked.append((risk, text))
+    ranked.sort(key=lambda x: -_RISK_RANK[x[0]])  # 위험한 버튼부터 남긴다(상한이 있어도 놓치지 않게)
+    tasks = []
+    for risk, text in ranked[:_BUTTON_TASKS_MAX]:
+        category = CAT_SUBMIT if risk == RISK_SUBMIT else CAT_INPUT if risk == RISK_WRITE else CAT_NAVIGATE
+        digest = hashlib.sha1(text.encode("utf-8")).hexdigest()[:6]  # noqa: S324 - 이름 충돌 방지용, 보안 용도 아님(한글 버튼 이름은 slug 로 지워진다)
+        tasks.append(
+            {
+                "id": f"{slug(path)}#btn_{digest}",
+                "name": f"{text} ({title or path})"[:80],
+                "category": category,
+                "purpose": "",
+                "risk": risk,
+                "auth": auth,
+                "state": STATE_OBSERVED,
+                "url": frame_url,
+                "host": host,
+                "fields": [],
+                "control": text,
+                "outputs": [],
+                "steps": recorder_steps(frame_url, [], risk=risk, control=text),
+                "fingerprint": fingerprint([{"name": text, "type": "button"}]),
+                "observed_at": now,
+                "verified_at": "",
+                "failures": 0,
+                "changes": [],
+            }
+        )
+    return tasks
+
+
+def coverage_of(per_snapshot: list[tuple[dict[str, Any], list[dict[str, Any]]]]) -> dict[str, Any]:
+    """탐색 점검표: 읽은 화면 수·편집 영역 수·버튼 업무 수·업무를 못 찾은 화면 수. 불완전하면 warning."""
+    editable = unrecognized = 0
+    total = 0
+    buttons_only = 0
+    for snap, found in per_snapshot:
+        total += len(found)
+        buttons_only += sum(1 for t in found if not t["fields"])
+        frames = [f for f in snap.get("frames", []) if "error" not in f]
+        editable += sum(1 for f in frames for i in f.get("inputs", []) if i.get("type") == "editable" and i.get("visible", True))
+        has_controls = any(f.get("inputs") or f.get("buttons") for f in frames)
+        if has_controls and not found:
+            unrecognized += 1
+    cov: dict[str, Any] = {"pages_read": len(per_snapshot), "tasks": total, "editable": editable, "buttons_only": buttons_only, "unrecognized": unrecognized}
+    if per_snapshot and total == 0:
+        cov["warning"] = "화면은 읽었지만 업무를 하나도 인식하지 못했습니다 — 탐색이 불완전하니 업무가 없다고 단정하지 말고 사용자에게 알리세요."
+    elif unrecognized:
+        cov["warning"] = f"읽은 화면 중 {unrecognized}쪽에서 업무를 인식하지 못했습니다 — 지도가 불완전할 수 있습니다."
+    return cov
 
 
 # ── 지도 ──────────────────────────────────────────────────────────────────
@@ -246,9 +317,12 @@ def stronger_auth(current: str, observed: str) -> str:
     return observed if _AUTH_RANK.get(observed, 0) > _AUTH_RANK.get(current, 0) else current
 
 
-def note_exploration(site_map: dict[str, Any], *, pages: int, auth: str, now: str) -> dict[str, Any]:
-    """탐색을 했다는 사실(시각·방문 쪽수)과 접근 구분을 기록한다. 업무가 하나도 없어도 '탐색한 사이트'임이 남는다."""
-    return dict(site_map, auth=stronger_auth(site_map.get("auth", AUTH_PUBLIC), auth), explored={"at": now, "pages": int(pages)}, updated_at=now)
+def note_exploration(site_map: dict[str, Any], *, pages: int, auth: str, now: str, coverage: dict[str, Any] | None = None) -> dict[str, Any]:
+    """탐색을 했다는 사실(시각·방문 쪽수)과 접근 구분, 점검표를 기록한다. 업무가 하나도 없어도 '탐색한 사이트'임이 남는다."""
+    explored: dict[str, Any] = {"at": now, "pages": int(pages)}
+    if coverage is not None:
+        explored["coverage"] = coverage
+    return dict(site_map, auth=stronger_auth(site_map.get("auth", AUTH_PUBLIC), auth), explored=explored, updated_at=now)
 
 
 def empty_map(host: str, *, auth: str = AUTH_PUBLIC, now: str = "") -> dict[str, Any]:

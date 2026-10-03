@@ -14,6 +14,7 @@ STATUS_GUIDE = {
     "available": "바로 쓸 수 있음 — 앱에 이미 연결돼 있다(list_api_endpoints 로 호출 방법 확인)",
     "registered": "앱 등록 완료 — 연결돼 있다(list_api_endpoints 로 확인)",
     "not_registered": "공식 API 는 있으나 아직 신청하지 않음 — 사용자에게 신청이 필요하다고 알린다(화면 조작으로 우회하지 않는다)",
+    "paid_declined": "공식 API 는 있으나 유료라 사용하지 않기로 사용자가 결정함 — API 신청을 권하지 말고 사이트 지도(sitemap.lookup)의 화면 조작으로 처리한다. 최종 실행(송금·결제·서명·신고)은 사람이 한다",
     "unknown": "공식 API 가 확인되지 않았거나 미확인 — 사이트 지도(sitemap.lookup)로 처리하거나 탐색을 제안한다",
 }
 RULE = "공식 API 가 있으면 그것을 쓰고, 없을 때만 사이트 지도·화면 자동화를 쓴다. 이 목록은 낡았을 수 있으니 docs 주소로 최종 확인은 사람이 한다."

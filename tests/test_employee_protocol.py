@@ -158,3 +158,12 @@ def test_protocol_is_prepended_for_every_chat_window():
 
 def test_protocol_size_stays_reasonable():
     assert len(_protocol_text()) < 3500  # 모든 요청 앞에 붙는 글이라 길어지면 비용·집중도에 영향
+
+
+def test_paid_declined_vendors_tell_ai_to_use_screen_map_not_api_signup():
+    guide = vd.STATUS_GUIDE["paid_declined"]
+    assert "신청을 권하지 말고" in guide and "사람이 한다" in guide
+    for q in ("홈택스", "세금계산서", "오픈뱅킹", "계좌"):
+        found = service.lookup(q)["vendors"]
+        assert found and all(v["status"] == "paid_declined" for v in found), q
+        assert all(v["status_meaning"] == guide for v in found)

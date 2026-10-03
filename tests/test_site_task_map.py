@@ -365,3 +365,70 @@ def test_merge_snapshots_marks_login_site_and_remembers_empty_exploration(isolat
     assert out["map"]["auth"] == "login" and saved["auth"] == "login" and saved["explored"]["pages"] == 5 and saved["tasks"] == []
     again = task_mapper.merge_snapshots("www.example-kiscon.test", [], auth="public", explored_pages=2)  # 나중에 공개로 탐색해도
     assert again["map"]["auth"] == "login"  # 더 엄격한 구분이 유지된다
+
+
+# ── M6-a: 버튼 업무·편집 영역·위험 키워드·점검표 ───────────────────────────
+
+
+def _btn(text, **kw):
+    return {"text": text, "id": "", "aria": "", "cls": "", "visible": True, "form": "", "pos": 1, **kw}
+
+
+@pytest.mark.parametrize(
+    ("label", "risk"),
+    [("출금", "submit"), ("세금계산서 발행", "submit"), ("발행하기", "submit"), ("공동인증서 로그인", "submit"), ("인증서 선택", "submit"), ("납부", "submit"),
+     ("글쓰기", "write"), ("이체", "submit"), ("조회", "read"), ("거래내역 조회", "read"), ("검색", "read"), ("다운로드", "read"), ("다음", "read")],
+)
+def test_business_risk_words(label, risk):
+    assert tm.risk_of([label]) == risk
+
+
+def test_button_only_screen_becomes_button_tasks_with_risk_and_no_click_for_non_read():
+    snap = _snap("https://tax.example.test/issue", inputs=[], links=[], forms=[], buttons=[_btn("세금계산서 발행"), _btn("거래내역 조회"), _btn("")])
+    tasks = tm.tasks_from_snapshot(snap, now=NOW)
+    by = {t["control"]: t for t in tasks}
+    assert set(by) == {"세금계산서 발행", "거래내역 조회"}  # 이름 없는 버튼은 건너뛴다
+    issue, look = by["세금계산서 발행"], by["거래내역 조회"]
+    assert (issue["risk"], issue["category"], issue["fields"]) == ("submit", "submit", [])
+    assert [s["type"] for s in issue["steps"]] == ["navigate"]  # 제출 버튼은 클릭 단계를 만들지 않는다
+    assert (look["risk"], look["category"]) == ("read", "navigate") and [s["type"] for s in look["steps"]] == ["navigate", "click"]
+    assert issue["id"] != look["id"] and tm.validate_map(dict(tm.empty_map("tax.example.test", now=NOW), tasks=tasks))  # 한글 이름도 id 가 겹치지 않는다
+
+
+def test_buttons_used_by_a_field_task_are_not_repeated_and_cap_keeps_risky_first():
+    snap = _snap(buttons=[_btn("검색")])
+    snap["frames"][0]["links"] = []
+    assert [t["control"] for t in tm.tasks_from_snapshot(snap, now=NOW)] == ["검색"]  # 입력창 업무가 쓴 버튼은 따로 만들지 않는다
+    many = _snap("https://x.example.test/p", inputs=[], links=[], forms=[], buttons=[_btn(f"보기{i}") for i in range(10)] + [_btn("송금")])
+    got = tm.tasks_from_snapshot(many, now=NOW)
+    assert len(got) == tm._BUTTON_TASKS_MAX and "송금" in [t["control"] for t in got]  # 상한이 있어도 위험한 버튼은 놓치지 않는다
+
+
+def test_editable_area_counts_as_input_field():
+    editable = {"tag": "EDITABLE", "type": "editable", "name": "editable_1", "id": "", "placeholder": "", "aria": "본문", "required": False, "visible": True}
+    snap = _snap("https://blog.example.test/write", inputs=[editable], links=[], forms=[], buttons=[_btn("발행")])
+    (task,) = tm.tasks_from_snapshot(snap, now=NOW)
+    assert task["fields"][0]["type"] == "editable" and task["risk"] == "submit"
+
+
+def test_coverage_warns_when_screens_read_but_no_task():
+    empty = {"url": "https://x.example.test/", "title": "", "frames": [{"idx": 0, "url": "https://x.example.test/", "inputs": [{"type": "hidden", "name": "a", "visible": False}], "buttons": [_btn("   ")], "links": [], "forms": []}]}
+    cov = tm.coverage_of([(empty, tm.tasks_from_snapshot(empty, now=NOW))])
+    assert cov["tasks"] == 0 and cov["unrecognized"] == 1 and "단정하지 말고" in cov["warning"]
+    good = _snap()
+    ok = tm.coverage_of([(good, tm.tasks_from_snapshot(good, now=NOW))])
+    assert ok["tasks"] == 1 and "warning" not in ok and ok["pages_read"] == 1
+    assert tm.coverage_of([])["pages_read"] == 0 and "warning" not in tm.coverage_of([])  # 읽은 화면이 없으면 경고하지 않는다(폼 화면이 없는 사이트)
+
+
+def test_merge_snapshots_stores_coverage_with_exploration(isolated_store):
+    out = task_mapper.merge_snapshots("tax.example.test", [_snap("https://tax.example.test/a", inputs=[], links=[], forms=[], buttons=[_btn("발행")])], auth="login", explored_pages=3)
+    cov = store.load("tax.example.test")["explored"]["coverage"]
+    assert out["observed"] == 1 and cov["buttons_only"] == 1 and cov["tasks"] == 1
+
+
+def test_other_host_snapshots_are_reported_not_silently_dropped(isolated_store):
+    other = _snap("https://other.example.test/a")
+    out = task_mapper.merge_snapshots("tax.example.test", [other], auth="public", explored_pages=2)
+    cov = store.load("tax.example.test")["explored"]["coverage"]
+    assert out["skipped_other_host"] == 1 and cov["skipped_other_host"] == 1 and "다른 호스트" in cov["warning"]

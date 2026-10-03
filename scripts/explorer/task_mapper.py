@@ -27,6 +27,11 @@ def _now() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
+def _has_inputs(page_rec: dict[str, Any]) -> bool:
+    """폼이 있거나(forms_count) 폼 없이 버튼·편집 영역이 있는(controls_count) 화면."""
+    return bool(page_rec.get("forms_count") or page_rec.get("controls_count"))
+
+
 def merge_snapshots(
     host: str,
     snapshots: list[dict[str, Any]],
@@ -39,15 +44,21 @@ def merge_snapshots(
     now = _now()
     site_map = store.load(host, now=now)
     observed: list[dict[str, Any]] = []
+    per_snapshot: list[tuple[dict[str, Any], list[dict[str, Any]]]] = []
     skipped = 0
     for snap in snapshots:
         if (urlparse(str(snap.get("url") or "")).hostname or "") != site_map["host"]:
             skipped += 1
             continue
-        observed.extend(tm.tasks_from_snapshot(snap, auth=auth, now=now))
+        found = tm.tasks_from_snapshot(snap, auth=auth, now=now)
+        per_snapshot.append((snap, found))
+        observed.extend(found)
     merged = tm.merge_tasks(site_map, observed, now=now)
     if explored_pages is not None:  # 탐색 실행(explore_to_map)에서만: 탐색했다는 사실과 접근 구분(로그인 세션이면 '공개'로 남기지 않음)
-        merged = tm.note_exploration(merged, pages=explored_pages, auth=auth, now=now)
+        coverage = tm.coverage_of(per_snapshot)
+        if skipped:  # 읽었지만 이 호스트 화면이 아니라 버려진 것 — 조용히 0건이 되지 않게 알린다
+            coverage = dict(coverage, skipped_other_host=skipped, warning=coverage.get("warning") or f"읽은 화면 {skipped}쪽이 다른 호스트라 지도에 넣지 못했습니다 — 지도가 불완전합니다.")
+        merged = tm.note_exploration(merged, pages=explored_pages, auth=auth, now=now, coverage=coverage)
     if save:
         store.save(merged)
     return {"map": merged, "observed": len(observed), "skipped_other_host": skipped}
@@ -78,7 +89,7 @@ def import_auto_sitemap(path: str | Path, *, auth: str = tm.AUTH_PUBLIC, save: b
     site_map = store.load(host, now=now)
     observed = []
     for p in data.get("pages", []):
-        if "error" in p or not p.get("forms_count"):
+        if "error" in p or not _has_inputs(p):
             continue
         url = str(p.get("url") or "")
         summary = p.get("form_summary") or {}
@@ -125,6 +136,13 @@ def _default_collect() -> Callable[[Any], dict[str, Any]]:
     return collect
 
 
+def _note_redirect(requested: str, actual: str, *, auth: str) -> None:
+    """요청한 호스트의 지도에 '실제 탐색은 다른 호스트에서 했다'를 남겨, 요청 호스트로 조회해도 어디를 봐야 하는지 알게 한다."""
+    now = _now()
+    note = {"pages": 0, "redirected_to": actual, "warning": f"{requested} 는 {actual} 로 이동합니다 — 업무는 {actual} 지도에 있습니다(sitemap.lookup 에 {actual} 를 넣으세요)."}
+    store.save(tm.note_exploration(store.load(requested, now=now), pages=0, auth=auth, now=now, coverage=note))
+
+
 def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험용 주입 3개는 모두 호출부가 정하는 독립 옵션
     page: Any,
     start_url: str,
@@ -146,7 +164,7 @@ def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험�
     explore = explore_fn or _default_explore()
     collect = collect_fn or _default_collect()
 
-    host = urlparse(start_url).hostname or ""
+    requested_host = urlparse(start_url).hostname or ""
     result = explore(
         page,
         depth=depth,
@@ -157,7 +175,11 @@ def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험�
         skip_url_patterns=tm.EXPLORE_SKIP_URL,
         delay_s=delay_s,
     )
-    form_pages = [p["url"] for p in result.get("pages", []) if p.get("forms_count") and "error" not in p]
+    # 시작 주소가 다른 호스트로 이동하면(blog.naver.com → section.blog.naver.com) 실제로 탐색한 호스트의 지도에 담는다
+    host = str(result.get("host") or requested_host)
+    if host != requested_host and requested_host:
+        _note_redirect(requested_host, host, auth=auth)
+    form_pages = [p["url"] for p in result.get("pages", []) if _has_inputs(p) and "error" not in p]
     snapshots: list[dict[str, Any]] = []
     for url in form_pages:
         if result.get("aborted_reason"):
@@ -171,6 +193,7 @@ def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험�
     pages_visited = int(result.get("visited_count", len(result.get("pages", []))))
     merged = merge_snapshots(host, snapshots, auth=auth, explored_pages=pages_visited)
     return {
+        "host": host,
         "pages": int(result.get("visited_count", len(result.get("pages", [])))),
         "form_pages": len(form_pages),
         "tasks": len(merged["map"]["tasks"]),

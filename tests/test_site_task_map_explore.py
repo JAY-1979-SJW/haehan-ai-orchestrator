@@ -323,3 +323,32 @@ def test_router_explore_flow_and_auth(env, monkeypatch):
     assert client.post(f"/site-map/explore/requests/{r['id']}/approve").status_code == 400
     assert client.get("/site-map/explore/requests/" + "0" * 32).status_code == 404
     assert client.get("/site-map/explore/requests/not-an-id").status_code == 422
+
+
+def test_explore_reads_screens_with_controls_even_without_form(env):
+    """<form> 없이 버튼·편집 영역으로만 동작하는 화면(controls_count)도 다시 읽는다 — 블로그 글쓰기·발행 화면."""
+    pages = [
+        {"url": "https://www.example-kiscon.test/write", "forms_count": 0, "controls_count": 4},
+        {"url": "https://www.example-kiscon.test/menu", "forms_count": 0, "controls_count": 0},
+    ]
+    page = FakePage()
+    out = task_mapper.explore_to_map(page, URL, explore_fn=_explore_result(pages), collect_fn=lambda p: _form_snapshot(p.visited[-1]), sleep_fn=lambda s: None)
+    assert page.visited == ["https://www.example-kiscon.test/write"] and out["form_pages"] == 1
+
+
+def test_redirected_start_host_is_mapped_under_actual_host_and_noted_on_requested(env):
+    """blog.naver.com → section.blog.naver.com 처럼 시작 주소가 다른 호스트로 이동하면 실제 호스트 지도에 담고, 요청 호스트에는 안내를 남긴다."""
+    actual = "https://www.example-kiscon.test/a"
+
+    def fake_explore(page, **kw):
+        return {"host": "www.example-kiscon.test", "visited_count": 1, "aborted_reason": "", "pages": [{"url": actual, "forms_count": 1}]}
+
+    out = task_mapper.explore_to_map(
+        FakePage(), "https://start.example.test/", explore_fn=fake_explore, collect_fn=lambda p: _form_snapshot(p.visited[-1]), sleep_fn=lambda s: None
+    )
+    assert out["host"] == "www.example-kiscon.test" and out["tasks"] == 1
+    note = store.load("start.example.test")
+    assert note["tasks"] == [] and "www.example-kiscon.test 지도에 있습니다" in note["explored"]["coverage"]["warning"]
+    from ai_orchestrator.services import site_task_map_service as service
+
+    assert "주의:" in service.lookup("start.example.test", "검색")["hint"]  # 요청 호스트로 물어도 어디를 봐야 하는지 알려 준다

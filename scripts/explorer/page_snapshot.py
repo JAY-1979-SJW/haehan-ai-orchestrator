@@ -52,6 +52,20 @@ _EXTRACT_FRAME_JS = r"""
         form: formKey(e),
         pos: order.get(e),
     }));
+    // 편집 영역(contenteditable·role=textbox)도 입력창이다(블로그 에디터 등). 이름이 없어 문서 순번으로 정한다.
+    const editables = Array.from(document.querySelectorAll('[contenteditable="true"], [role="textbox"]')).filter(e => !e.closest('input, textarea')).map((e, i) => ({
+        tag: 'EDITABLE',
+        type: 'editable',
+        name: e.getAttribute('name') || 'editable_' + (i + 1),
+        id: e.id || '',
+        placeholder: e.getAttribute('data-placeholder') || e.getAttribute('placeholder') || '',
+        aria: e.getAttribute('aria-label') || '',
+        required: false,
+        visible: e.offsetParent !== null,
+        form: formKey(e),
+        pos: order.get(e),
+    }));
+    inputs.push(...editables);
     // <input type="submit|button|image"> 도 버튼이다(흔한 검색 폼: 입력창 + submit 입력). 글자는 value·alt·title 에서 읽는다.
     const buttons = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], input[type="image"]')).map(b => ({
         text: (b.innerText || b.value || b.alt || b.title || '').trim().slice(0, 60),
