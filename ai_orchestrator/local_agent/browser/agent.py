@@ -158,27 +158,30 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
     @property
     def page(self) -> Page:
+        """현재 페이지. connect() 전에는 RuntimeError(예전엔 None 을 돌려줘 호출부에서 영문 AttributeError 가 났음)."""
+        if self._page is None:
+            raise RuntimeError("브라우저에 연결되지 않았습니다 — connect() 를 먼저 호출하세요")
         return self._page
 
     # ── 이동 ─────────────────────────────────────────────────────────────────
     def go(self, url: str, wait: float = DEFAULT_WAIT) -> ActionResult:
         """URL로 이동. SPA 렌더링 완료까지 대기."""
         try:
-            self._page.goto(url, timeout=20000)
+            self.page.goto(url, timeout=20000)
             self._wait_render(wait)
-            return ActionResult(ok=True, data=self._page.url)
+            return ActionResult(ok=True, data=self.page.url)
         except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return ActionResult(ok=False, error=str(e))
 
     def back(self):
-        self._page.go_back()
+        self.page.go_back()
         self._wait_render()
 
     # ── 클릭 ─────────────────────────────────────────────────────────────────
     def click(self, selector: str, wait: float = DEFAULT_WAIT) -> ActionResult:
         """CSS 셀렉터로 클릭."""
         try:
-            self._page.click(selector, timeout=5000)
+            self.page.click(selector, timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
         except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
@@ -188,7 +191,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         """텍스트로 요소 찾아 클릭. 없으면 링크 href 매칭 시도."""
         # 1. Playwright 텍스트 로케이터
         try:
-            loc = self._page.get_by_text(text, exact=exact).first
+            loc = self.page.get_by_text(text, exact=exact).first
             loc.click(timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
@@ -197,7 +200,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
         # 2. 링크 텍스트 포함 매칭
         try:
-            self._page.locator(f"a:has-text('{text}')").first.click(timeout=5000)
+            self.page.locator(f"a:has-text('{text}')").first.click(timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
         except Exception:  # noqa: S110, BLE001
@@ -205,7 +208,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
         # 3. 버튼 텍스트
         try:
-            self._page.locator(f"button:has-text('{text}')").first.click(timeout=3000)
+            self.page.locator(f"button:has-text('{text}')").first.click(timeout=3000)
             self._wait_render(wait)
             return ActionResult(ok=True)
         except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
@@ -214,7 +217,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
     def click_link(self, href_contains: str, wait: float = DEFAULT_WAIT) -> ActionResult:
         """href에 특정 문자열이 포함된 링크 클릭."""
         try:
-            self._page.locator(f"a[href*='{href_contains}']").first.click(timeout=5000)
+            self.page.locator(f"a[href*='{href_contains}']").first.click(timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
         except Exception as e:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
@@ -224,7 +227,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
     def type(self, selector: str, text: str, clear: bool = True) -> ActionResult:
         """필드에 텍스트 입력."""
         try:
-            el = self._page.locator(selector).first
+            el = self.page.locator(selector).first
             if clear:
                 el.clear()
             el.type(text, delay=30)
@@ -233,29 +236,29 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             return ActionResult(ok=False, error=str(e))
 
     def press(self, key: str):
-        self._page.keyboard.press(key)
+        self.page.keyboard.press(key)
         time.sleep(0.5)
 
     # ── 스크롤 ───────────────────────────────────────────────────────────────
     def scroll(self, direction: str = "down", amount: int = 500):
         dy = amount if direction == "down" else -amount
-        self._page.mouse.wheel(0, dy)
+        self.page.mouse.wheel(0, dy)
         time.sleep(0.4)
 
     def scroll_to_bottom(self, max_scrolls: int = 10):
         """페이지 끝까지 스크롤."""
         for _ in range(max_scrolls):
-            prev = self._page.evaluate("document.body.scrollHeight")
-            self._page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            prev = self.page.evaluate("document.body.scrollHeight")
+            self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             time.sleep(0.8)
-            curr = self._page.evaluate("document.body.scrollHeight")
+            curr = self.page.evaluate("document.body.scrollHeight")
             if curr == prev:
                 break
 
     # ── 읽기 ─────────────────────────────────────────────────────────────────
     def read(self, clean: bool = True) -> str:
         """현재 페이지 텍스트. clean=True면 노이즈 제거."""
-        text = self._page.inner_text("body")
+        text = self.page.inner_text("body")
         if clean:
             text = self._clean_text(text)
         return text
@@ -263,15 +266,15 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
     def read_selector(self, selector: str) -> str:
         """특정 셀렉터의 텍스트."""
         try:
-            return self._page.locator(selector).first.inner_text()
+            return self.page.locator(selector).first.inner_text()
         except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             return ""
 
     def page_info(self) -> PageInfo:
         """현재 페이지의 URL·제목·텍스트·링크·폼 정보."""
         return PageInfo(
-            url=self._page.url,
-            title=self._page.title(),
+            url=self.page.url,
+            title=self.page.title(),
             text=self.read(),
             links=self.extract_links(),
             forms=self.extract_forms(),
@@ -280,7 +283,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
     # ── 데이터 추출 ───────────────────────────────────────────────────────────
     def extract_links(self, filter_href: str = "", filter_text: str = "", frame: Frame | None = None) -> list[dict]:
         """페이지 링크 목록 추출. frame 지정 시 해당 프레임에서 추출."""
-        target = frame or self._page
+        target = frame or self.page
         links = target.evaluate(_js("extract_links.js"))
         if filter_href:
             links = [l for l in links if filter_href in l["href"]]  # noqa: E741
@@ -292,7 +295,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
     def extract_table(self, selector: str = "table") -> list[list[str]]:
         """테이블 데이터 추출."""
         try:
-            return self._page.evaluate(f"""
+            return self.page.evaluate(f"""
 () => {{
     const table = document.querySelector('{selector}');
     if (!table) return [];
@@ -306,7 +309,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
     def extract_forms(self) -> list[dict]:
         """페이지 폼 필드 목록."""
-        return self._page.evaluate("""
+        return self.page.evaluate("""
 () => Array.from(document.querySelectorAll('input,textarea,select')).map(el => ({
     tag: el.tagName.toLowerCase(),
     type: el.type || '',
@@ -321,7 +324,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         candidates = []
         # 텍스트 매칭
         try:
-            locs = self._page.get_by_text(description).all()
+            locs = self.page.get_by_text(description).all()
             for loc in locs[:5]:
                 tag = loc.evaluate("el => el.tagName.toLowerCase()")
                 candidates.append(f"{tag}:has-text('{description}')")
@@ -340,9 +343,9 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         while time.time() < deadline:
             try:
                 if selector:
-                    self._page.wait_for_selector(selector, timeout=1000)
+                    self.page.wait_for_selector(selector, timeout=1000)
                     return True
-                if text and text in self._page.inner_text("body"):
+                if text and text in self.page.inner_text("body"):
                     return True
             except Exception:  # noqa: S110, BLE001
                 pass
@@ -356,10 +359,10 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         """다음 버튼을 클릭하며 모든 페이지의 아이템 텍스트 수집."""
         all_items: list[Any] = []
         for _ in range(max_pages):
-            items = self._page.locator(item_selector).all_inner_texts()
+            items = self.page.locator(item_selector).all_inner_texts()
             all_items.extend(items)
             try:
-                self._page.locator(next_selector).first.click(timeout=3000)
+                self.page.locator(next_selector).first.click(timeout=3000)
                 self._wait_render()
             except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
                 break
@@ -370,13 +373,13 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         """SPA 렌더링 완료 대기: DOM 안정화 + 추가 대기."""
         # 렌더 대기 best-effort - 실패해도 아래 DOM 크기 안정화 루프로 계속 진행
         with contextlib.suppress(Exception):
-            self._page.wait_for_load_state("domcontentloaded", timeout=8000)
+            self.page.wait_for_load_state("domcontentloaded", timeout=8000)
         # DOM 크기 안정화 확인
         prev_len = 0
         deadline = time.time() + RENDER_MAX
         while time.time() < deadline:
             try:
-                curr_len = len(self._page.inner_text("body"))
+                curr_len = len(self.page.inner_text("body"))
                 if curr_len == prev_len and curr_len > 0:
                     break
                 prev_len = curr_len
@@ -418,7 +421,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         time.sleep(4)
 
         def _parse_names() -> list[str]:
-            raw = self._page.inner_text("body")
+            raw = self.page.inner_text("body")
             names = []
             for line in raw.splitlines():
                 if not line.startswith("\t"):
@@ -437,7 +440,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             all_names.extend(new)
             if pnum < 7:
                 next_n = pnum + 1
-                clicked = self._page.evaluate(f"""
+                clicked = self.page.evaluate(f"""
 () => {{
     for (const el of document.querySelectorAll('a.page_item, span.page_item')) {{
         if ((el.innerText || el.textContent || '').trim() === '{next_n}') {{
@@ -471,7 +474,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         all_posts: list[dict] = []
         seen: set[str] = set()
 
-        for frame in self._page.frames:
+        for frame in self.page.frames:
             try:
                 posts = frame.evaluate(_js("extract_posts.js"))
                 for p in posts:
@@ -551,7 +554,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         """3차: 새 탭. 성공 시 결과 dict, 실패 시 None."""
         try:
             with self._ctx.expect_page() as new_page_info:
-                self._page.evaluate(f"window.open({file_url!r}, '_blank')")
+                self.page.evaluate(f"window.open({file_url!r}, '_blank')")
             new_page = new_page_info.value
             try:
                 with new_page.expect_download(timeout=30000) as dl_info:
@@ -591,8 +594,8 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
         # ── 2차: Playwright download 이벤트 ─────────────────────────────────
         try:
-            with self._page.expect_download(timeout=30000) as dl_info:
-                self._page.evaluate(f"window.location.href = {file_url!r}")
+            with self.page.expect_download(timeout=30000) as dl_info:
+                self.page.evaluate(f"window.location.href = {file_url!r}")
             download = dl_info.value
             suggested = filename or download.suggested_filename or Path(file_url.split("?")[0]).name or "file"
             dest = save_path / suggested
