@@ -43,7 +43,8 @@ def by_name(results, name):
 def test_all_good_environment_has_no_fail(tmp_path):
     (tmp_path / ".env").write_text("A=1\n# c\nB=2\n", encoding="utf-8")
     results = pf.run_checks(make_env(tmp_path))
-    assert len(results) == len(pf.CHECKS)  # 비어 있지 않음(모든 점검이 돌았다)
+    assert results  # 원본이 비어 있지 않다(비어 있으면 아래 '실패 없음' 비교가 항상 통과해 버린다)
+    assert len(results) == len(pf.CHECKS)  # 모든 점검이 돌았다
     assert [r.name for r in results if r.status == pf.FAIL] == []
     assert by_name(results, ".env").detail.startswith("키 2개")  # 이름만 센다
 
