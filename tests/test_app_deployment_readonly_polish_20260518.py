@@ -8,7 +8,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "deployment" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+PAGE = assistant_route("deployment", "page.tsx")
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 
 
