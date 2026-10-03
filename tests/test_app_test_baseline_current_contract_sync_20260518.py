@@ -14,9 +14,10 @@ sys.path.insert(0, str(ROOT))
 
 TESTS_DIR = ROOT / "tests"
 FRONTEND_SRC = ROOT / "admin-web" / "src"
+from tests.app_ui_paths import assistant_route  # noqa: E402
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 APP_STATUS_ROUTER = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
-DASHBOARD_PAGE = FRONTEND_SRC / "app" / "assistant" / "page.tsx"
+DASHBOARD_PAGE = assistant_route("page.tsx")
 
 TASK_QUEUE_POLISH_ALLOWLIST = [
     "tasks/page.tsx",
