@@ -79,7 +79,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          # constraints.txt = 검증된 환경(Windows, Python 3.14)의 버전 집합 — 설치 시점마다 버전이 달라지지 않게 고정한다
+          # (scripts/ops/make_constraints.py 로 재생성, docs/specs/2026-10-04_portability_standard.md)
+          python -m pip install -r requirements.txt -c constraints.txt
 
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한

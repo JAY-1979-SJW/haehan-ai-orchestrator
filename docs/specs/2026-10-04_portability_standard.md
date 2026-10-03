@@ -36,3 +36,18 @@
 - Playwright 연결 방식 전면 교체(`launch_persistent_context`/`connect`)는 공유 브라우저 구조를 바꾸는 큰 설계 변경이라 별도 승인 사안.
 - 브라우저·로그인 세션을 지우거나 프로필을 옮기는 일.
 - 다른 PC 에 실제 설치/배포(서버 배포는 `server_deploy.py` 영역).
+
+## 5. 처리 결과 (2026-10-04, 사용자 "모두 진행해" 반영)
+| 항목 | 결과 |
+|---|---|
+| preflight / constraints.txt / 훅 `py -3` / 탭 열기 교정 / 이식성 시험 | 완료(§3 1~5). 새 설치 해석 시험: 109개 패키지 충돌 없음 |
+| `core.hooksPath` | **원인 규명 후 근본 수정**: 세션 시작마다 도는 `scripts/ops/install_git_hooks.py` 가 훅 *파일*만 쓰고 *설정*은 하지 않아, 새로 복제한 저장소·다른 PC 에서 훅이 "설치됨"으로 출력되면서 실제로는 git 이 실행하지 않았다. 이제 `ensure_hooks_path()` 가 비어 있으면 `.githooks` 로 설정하고, 이미 다른 값이면 덮어쓰지 않고 알린다. 시험 4건 |
+| Chrome 경로 중복 | `scripts/naver/browser_gate.py` 의 복사본을 `browser_paths.find_chrome()` 단일 정본 호출로 교체. 비표준 위치 설치 PC 를 위해 환경변수 `HAEHAN_CHROME_PATH` 를 최우선으로 인식(없는 경로면 기본 탐색으로 복귀). 기존 시험 155건 통과 |
+| CI | `verify` 잡(windows-latest, Python 3.14 — 제약 파일을 만든 환경과 같음)이 `-c constraints.txt` 로 설치. 푸시 후 수동 실행으로 확인 |
+| `.githooks` 의 `py -3.14` | 변경하지 않음 — `py -3.14` 가 없으면 다른 파이썬으로 **스스로 대체**하는 구조라 안전하게 저하된다(주석에 이유 기록). settings.json 훅은 대체 경로가 없어 교정했다 |
+
+### 5-1. Playwright 연결 방식 전면 교체를 하지 않는 이유 (결정 기록)
+- 후보는 `launch_persistent_context`(프로필 하나를 한 프로세스가 **독점 잠금**)와 `connect`(Playwright 서버 프로토콜 — 영속 프로필을 지원하지 않는 `launch_server` 기반).
+- 이 앱은 FastAPI·로컬 에이전트·스크립트·여러 Claude 창이 **같은 로그인 세션의 브라우저를 공유**한다. 전자는 공유를 깨고 후자는 로그인 유지를 깬다. 사용자 요구(로그인 세션 보존)와 충돌한다.
+- 대신 표준 권고 중 이 구조에서 가능한 것을 적용했다: 연결·탭 열기를 검증된 단일 경로로 한정, 시작 전 상태 점검(preflight), 칸(lane) 분리로 다른 작업과의 충돌 회피(로그인이 필요 없는 시험은 Playwright 가 격리 실행하는 헤드리스 Chrome 사용).
+- 재검토 조건: 공유 브라우저가 계속 병목이면 *칸 분리를 더 세분화*(작업별 칸)하는 쪽이 이 구조에 맞는 다음 단계다.

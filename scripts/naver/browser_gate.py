@@ -153,14 +153,13 @@ def evaluate_conditions(
 
 
 def _find_chrome_exe() -> str:
-    candidates = [
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
-    ]
-    for candidate in candidates:
-        if Path(candidate).exists():
-            return candidate
+    from scripts.browser_paths import (
+        find_chrome,  # 후보 목록의 단일 정본(결함 #17) — 여기에 같은 목록을 따로 두지 않는다
+    )
+
+    chrome = find_chrome()
+    if chrome:
+        return chrome
     raise FileNotFoundError("Chrome executable was not found.")
 
 
