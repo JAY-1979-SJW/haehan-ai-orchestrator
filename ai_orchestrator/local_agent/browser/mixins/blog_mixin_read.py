@@ -6,12 +6,12 @@ BlogMixin 다중상속의 기본 읽기 능력. [docs/module_separation_standard
 
 from __future__ import annotations
 
+import contextlib
 import re
 import time
 from contextlib import suppress
 
 from .blog_mixin_common import _js
-
 
 _BLOG_POSTS_DOM_JS = """
             (() => {
@@ -449,10 +449,8 @@ class BlogReadMixin:
 
         frame = self._pick_post_frame(log_no)
 
-        try:
+        with contextlib.suppress(Exception):
             self._fill_post_text_fields(frame, blog_id, info)
-        except Exception:  # noqa: S110, BLE001
-            pass
 
         # 이미지 (본문 프레임에서 추출, 프로필 이미지 제외)
         try:

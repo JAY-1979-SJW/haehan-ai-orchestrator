@@ -164,7 +164,7 @@ async def live_status(
 
 @router.post("/ensure")
 async def ensure_session(
-    req: EnsureRequest = EnsureRequest(),
+    req: EnsureRequest | None = None,
     _: None = Depends(require_role("admin", "owner")),
     deps=Depends(get_guard_deps),
 ):
@@ -177,6 +177,7 @@ async def ensure_session(
 
     from ai_orchestrator.workflows.naver_session_guard import ensure_login
 
+    req = req or EnsureRequest()
     loop = asyncio.get_running_loop()
     fn = partial(ensure_login, _valid_target_or_400(req.username), deps, allow_attempt=req.allow_attempt)
     return await loop.run_in_executor(_executor, fn)

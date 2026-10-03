@@ -16,6 +16,7 @@ session_id를 저장해뒀다가, 같은 세션의 다음 메시지에서 --resu
 
 from __future__ import annotations
 
+import contextlib
 import json
 import threading
 import uuid
@@ -223,10 +224,8 @@ def clear() -> None:
     """테스트 전용: 메모리 + 디스크 초기화."""
     with _lock:
         _sessions.clear()
-    try:
+    with contextlib.suppress(OSError):
         _STORE_PATH.unlink(missing_ok=True)
-    except OSError:
-        pass
 
 
 __all__ = [

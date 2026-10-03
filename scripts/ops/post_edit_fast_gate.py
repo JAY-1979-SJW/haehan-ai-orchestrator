@@ -234,7 +234,7 @@ def _head_snapshot() -> Path | None:
     """HEAD 커밋의 추적 파일을 캐시 폴더에 풀어 둔다(HEAD 별 1회). 실패하면 None."""
     try:
         sha = subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True, timeout=5, check=False
+            ["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5, check=False
         ).stdout.strip()
         if not sha:
             return None

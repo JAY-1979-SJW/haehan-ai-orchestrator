@@ -13,7 +13,6 @@ from pathlib import Path
 
 from .cafe_mixin_common import _js
 
-
 # 네이버 카페 파일 호스트만 첨부파일로 인정
 _CAFE_FILE_HOSTS = (
     "downapi.cafe.naver.com",
@@ -400,10 +399,8 @@ class CafeArticleMixin:
 
         # ── 댓글 파싱 ────────────────────────────────────────────────────────
         comments: list[dict] = []
-        try:
+        with contextlib.suppress(Exception):
             _parse_article_comments(meta_frame, comments)
-        except Exception:  # noqa: S110, BLE001
-            pass
 
         return {
             "title": title,

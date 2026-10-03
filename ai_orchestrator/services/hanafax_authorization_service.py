@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import csv
 import json
 import os
@@ -497,10 +498,8 @@ def start_reconcile(auth_id: str) -> dict[str, Any]:
 
 
 def _auto_reconcile(auth_id: str) -> None:
-    try:
+    with contextlib.suppress(ValueError):  # 이미 확인 중이면 건너뛴다
         start_reconcile(auth_id)
-    except ValueError:
-        pass  # 이미 확인 중이면 건너뛴다
 
 
 def reconcile_status(auth_id: str) -> dict[str, Any]:

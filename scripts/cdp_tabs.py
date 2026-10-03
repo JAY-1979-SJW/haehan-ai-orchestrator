@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import http.client
 import json
 import threading
@@ -130,10 +131,8 @@ def _create(lane: cdp_lanes.Lane, url: str) -> dict[str, Any]:
 
 
 def _close_quietly(lane: cdp_lanes.Lane, tab_id: str) -> None:
-    try:
+    with contextlib.suppress(OSError):  # 이미 닫혔거나 칸이 꺼짐 — 정리 실패는 결과에 영향 없음
         _http(lane, "GET", f"/json/close/{tab_id}", timeout=3.0)
-    except OSError:
-        pass  # 이미 닫혔거나 칸이 꺼짐 — 정리 실패는 결과에 영향 없음
 
 
 def open_tab(  # noqa: PLR0913 - 칸·이유·대기·재시도·시계 주입은 모두 호출부가 정하는 독립 옵션
