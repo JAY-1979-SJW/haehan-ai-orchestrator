@@ -156,6 +156,33 @@ API_REGISTRY: dict[str, dict[str, str]] = {
         "path": "/api/v1/naver-mailbox/drafts",
         "desc": "승인 대기 초안 목록·상태 조회(읽기 전용). query={account, all(true 면 보낸·취소된 것까지)}",
     },
+    # 건설업 공무 — AI 는 '읽기 + 승인 대기 초안'만. 상태 변경·서류 체크·확정·취소는 이 목록에 없다(앱 화면에서 사람이 한다).
+    "gongmu.sites": {
+        "method": "GET",
+        "path": "/api/v1/gongmu/sites",
+        "desc": "공무 현장 목록(이름·지위·도급금액·기간, 읽기 전용)",
+    },
+    "gongmu.tasks": {
+        "method": "GET",
+        "path": "/api/v1/gongmu/tasks",
+        "desc": "공무 업무 목록(기한순, 지연·임박 등급 포함, 읽기 전용). query={site_id, status}",
+    },
+    "gongmu.task": {
+        "method": "GET",
+        "path": "/api/v1/gongmu/tasks/{task_id}",
+        "desc": "공무 업무 1건 상세(근거 문구·필요 서류 준비 현황·메모, 읽기 전용). path_params={'task_id': '<업무 id>'}",
+    },
+    "gongmu.draft": {
+        "method": "POST",
+        "path": "/api/v1/gongmu/drafts",
+        "desc": (
+            "공무 문서 승인 대기 초안 생성(확정하지 않음). body={kind: progress_billing(기성 청구 내역서)|hq_report(본사 정기 보고서)|"
+            "subcontract_review(하도급 계약 검토 체크리스트)|safety_checklist(안전서류 점검표)|missing_docs(서류 누락 요약), "
+            "title, body(본문 텍스트), site_id, task_id(있으면 확정 시 그 업무 메모에 덧붙음)}. 만든 뒤 답변 끝에 응답의 id 로 "
+            "'[[gongmu-draft:<id>]]' 를 그대로 적어(AI 창에 승인 카드가 나타난다) '아래 카드에서 확인 후 확정해 주세요'라고 안내할 것. "
+            "확정·취소는 사용자가 카드 버튼으로만 한다 — 대신 시도하지 말 것"
+        ),
+    },
     "sessions.status": {
         "method": "GET",
         "path": "/api/v1/sessions/status",
