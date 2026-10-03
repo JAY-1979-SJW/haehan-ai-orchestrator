@@ -161,3 +161,9 @@ def test_ruff_check_warns_when_commit_hook_interpreter_lacks_ruff(tmp_path):
     assert pf.check_ruff(present).status == pf.PASS
     no_launcher = make_env(tmp_path, which=lambda _n: None, run=lambda cmd: (0, "ruff 0.16.10") if cmd[0] != "py" else (127, ""))
     assert pf.check_ruff(no_launcher).status == pf.PASS  # py 런처가 없으면 현재 파이썬으로 확인
+
+
+def test_claude_cli_check_warns_when_push_review_would_be_skipped(tmp_path):
+    missing = pf.check_claude_cli(make_env(tmp_path, which=lambda name: None if name == "claude" else "/bin/x"))
+    assert missing.status == pf.WARN and "검수 없이 건너뛰어집니다" in missing.detail
+    assert pf.check_claude_cli(make_env(tmp_path, which=lambda _name: "/bin/claude")).status == pf.PASS

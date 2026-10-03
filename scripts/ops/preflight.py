@@ -226,6 +226,13 @@ def check_ruff(env: Env) -> Check:
     return Check("ruff(커밋 훅)", WARN, "훅이 쓰는 파이썬에 ruff 가 없어 커밋 시 ruff 검사가 조용히 생략됩니다 — py -3 -m pip install ruff")
 
 
+def check_claude_cli(env: Env) -> Check:
+    """pre-push AI 코드 검수는 `claude` 명령을 PATH 에서 찾는다. 못 찾으면 **검수 없이 PASS 로 건너뛴다**(2026-10-04 푸시에서 실측)."""
+    if env.which("claude"):
+        return Check("claude CLI(푸시 AI 검수)", PASS, "PATH 에서 찾음")
+    return Check("claude CLI(푸시 AI 검수)", WARN, "claude 명령을 PATH 에서 찾지 못해 푸시 때 AI 검수가 검수 없이 건너뛰어집니다 — 훅은 자기 PATH 로 실행되므로 설치 경로를 시스템 PATH 에 넣으세요")
+
+
 def check_node(env: Env) -> Check:
     if not env.which("node") or not env.which("npm"):
         return Check("Node/npm(관리 화면)", WARN, "node 또는 npm 이 없습니다 — admin-web 을 쓰지 않으면 무시")
@@ -271,6 +278,7 @@ CHECKS: tuple[Callable[[Env], Check], ...] = (
     check_writable,
     check_hook_interpreter,
     check_ruff,
+    check_claude_cli,
     check_node,
     check_git_hooks,
     check_env_file,
