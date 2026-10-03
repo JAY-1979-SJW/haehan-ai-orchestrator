@@ -6,7 +6,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-LAYOUT = ROOT / "admin-web" / "src" / "app" / "assistant" / "layout.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+LAYOUT = assistant_route("layout.tsx")
 NAVBAR = ROOT / "admin-web" / "src" / "components" / "assistant" / "AssistantNavBar.tsx"
 
 def _src(p: Path) -> str:
@@ -52,13 +54,13 @@ class TestLayoutBadges:
 
 class TestBaselineRegression:
     def test_dashboard_still_uses_get_app_health_summary(self):
-        dashboard = ROOT / "admin-web" / "src" / "app" / "assistant" / "page.tsx"
+        dashboard = assistant_route("page.tsx")
         assert "getAppHealthSummary" in _src(dashboard)
 
     def test_task_queue_still_uses_task_table(self):
-        tasks = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "page.tsx"
+        tasks = assistant_route("tasks", "page.tsx")
         assert "TaskTable" in _src(tasks)
 
     def test_logs_page_still_exists(self):
-        logs = ROOT / "admin-web" / "src" / "app" / "assistant" / "logs" / "page.tsx"
+        logs = assistant_route("logs", "page.tsx")
         assert logs.exists()

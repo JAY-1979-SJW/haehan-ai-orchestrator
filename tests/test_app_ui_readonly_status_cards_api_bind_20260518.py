@@ -9,10 +9,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
 API_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "api.ts"
-DASHBOARD_FILE = ROOT / "admin-web" / "src" / "app" / "assistant" / "page.tsx"
-EXTERNAL_FILE = ROOT / "admin-web" / "src" / "app" / "assistant" / "external-sites" / "page.tsx"
-STORAGE_FILE = ROOT / "admin-web" / "src" / "app" / "assistant" / "storage" / "page.tsx"
+DASHBOARD_FILE = assistant_route("page.tsx")
+EXTERNAL_FILE = assistant_route("external-sites", "page.tsx")
+STORAGE_FILE = assistant_route("storage", "page.tsx")
 
 
 def _read(path: Path) -> str:

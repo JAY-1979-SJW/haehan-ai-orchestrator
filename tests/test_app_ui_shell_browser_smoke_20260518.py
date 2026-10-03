@@ -17,6 +17,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = REPO_ROOT / "admin-web" / "src"
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
+from tests.app_ui_paths import assistant_route  # noqa: E402
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 MOCK_FILE = FRONTEND_ROOT / "lib" / "assistant" / "mock.ts"
 
@@ -34,7 +35,7 @@ MOCK_FILE = FRONTEND_ROOT / "lib" / "assistant" / "mock.ts"
     "deployment/page.tsx",
 ])
 def test_route_exists(route: str):
-    assert (ASSISTANT_APP / route).exists(), f"/assistant/{route} 없음"
+    assert (assistant_route(*route.split("/"))).exists(), f"/assistant/{route} 없음"
 
 
 # ── 2. heading 마커 ────────────────────────────────────────────────────────────
@@ -53,7 +54,7 @@ HEADING_MARKERS = {
 
 @pytest.mark.parametrize("route,markers", list(HEADING_MARKERS.items()))
 def test_heading_marker(route: str, markers: list):
-    path = ASSISTANT_APP / route
+    path = assistant_route(*route.split("/"))
     if not path.exists():
         pytest.skip(f"{route} 없음")
     content = path.read_text(encoding="utf-8")
@@ -143,19 +144,19 @@ def test_mock_provider_present(provider: str):
 # ── 8. DryRunNotice / ForbiddenActionBanner ────────────────────────────────
 
 def test_dry_run_notice_in_tasks():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "DryRunNotice" in content
 
 
 def test_forbidden_banner_in_tasks():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "ForbiddenActionBanner" in content
 
 
 # ── 9. approval no execute ────────────────────────────────────────────────────
 
 def test_approval_no_execute_connection():
-    content = (ASSISTANT_APP / "approval" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("approval", "page.tsx")).read_text(encoding="utf-8")
     ok = ("approve→execute 미연결" in content
           or "display" in content.lower()
           or "ForbiddenActionBanner" in content)
@@ -165,7 +166,7 @@ def test_approval_no_execute_connection():
 # ── 10. deployment no restart button ─────────────────────────────────────────
 
 def test_deployment_no_restart_button():
-    content = (ASSISTANT_APP / "deployment" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("deployment", "page.tsx")).read_text(encoding="utf-8")
     assert not re.search(r"<[Bb]utton[^>]*>서버\s*재시작", content)
 
 

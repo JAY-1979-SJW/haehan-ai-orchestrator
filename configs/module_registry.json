@@ -20920,6 +20920,14 @@
    "reason": "L1 공유 계약 끝점 폴더(import 없음) — 루트/persistence 양방향 순환 방지",
    "confidence": "high",
    "source": "confirmed"
+  },
+  "tests/app_ui_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

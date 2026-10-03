@@ -10,7 +10,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-DETAIL_PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "[id]" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+DETAIL_PAGE = assistant_route("tasks", "[id]", "page.tsx")
 DETAIL_PANEL = ROOT / "admin-web" / "src" / "components" / "assistant" / "TaskDetailPanel.tsx"
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
@@ -201,7 +203,7 @@ class TestBackendUnchanged:
 # ── 회귀: baseline sync 기준선 유지 ─────────────────────────────────────────
 class TestBaselineRegression:
     def test_dashboard_health_uses_get_app_health_summary(self):
-        dashboard = ROOT / "admin-web" / "src" / "app" / "assistant" / "page.tsx"
+        dashboard = assistant_route("page.tsx")
         content = _src(dashboard)
         assert "getAppHealthSummary" in content
 
