@@ -20912,6 +20912,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/contracts/__init__.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "L1 공유 계약 끝점 폴더(import 없음) — 루트/persistence 양방향 순환 방지",
+   "confidence": "high",
+   "source": "confirmed"
   }
  }
 }
