@@ -9,6 +9,7 @@ execution_history 경로 미확정을 해결하기 위한 bind mount 설계.
 docker-compose.yml 실제 수정 / 컨테이너 재시작 / 서버 반영 금지.
 """
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -275,7 +276,7 @@ def _audit_next_phase(errors):
 
 
 def run_audit() -> dict:
-    errors = []
+    errors: list[Any] = []
     warnings = []
 
     # 1. 운영 안전 플래그

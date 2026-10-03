@@ -20944,6 +20944,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_browser_agent_page_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

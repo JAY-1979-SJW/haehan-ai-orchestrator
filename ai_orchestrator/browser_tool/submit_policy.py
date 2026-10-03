@@ -146,7 +146,7 @@ def path_matches_allowlist(actual_path: str, allowed_paths: list[str]) -> bool:
     return False
 
 
-def detect_prompt_injection(prompt_text: str, field_values: dict = None) -> list[str]:  # noqa: RUF013
+def detect_prompt_injection(prompt_text: str, field_values: dict | None = None) -> list[str]:
     """Detect prompt injection patterns.
 
     Returns list of matched patterns. Empty if none detected.

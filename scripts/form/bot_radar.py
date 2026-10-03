@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import contextlib
 import re
+from typing import Any
 
 from scripts.logger import get_logger
 
@@ -125,8 +126,8 @@ _BLOCK_URL_PATTERNS = [
 
 
 def _scan_cookies(page) -> tuple[list[str], list[dict]]:
-    vendors_found = []
-    signals = []
+    vendors_found: list[Any] = []
+    signals: list[Any] = []
     try:
         cookies = page.context.cookies()
     except Exception:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
