@@ -22,7 +22,7 @@ load_dotenv()
 
 agent = BrowserAgent()
 agent.connect()
-page = agent._page
+page = agent.page
 
 # 해한AI 권한 삭제 페이지
 page.goto("https://myaccount.google.com/connections/overview/AcbYNTdqkQbDmr4kr37bklGx6gPcjC")

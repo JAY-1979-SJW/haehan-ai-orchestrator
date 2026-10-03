@@ -12,7 +12,7 @@ from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
 agent = BrowserAgent()
 agent.connect()
-page = agent._page
+page = agent.page
 
 BASE = get_local_data_dir() / "gonobi_images_v2"
 OUT = Path("data/gonobi_verify_screenshots")

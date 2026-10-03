@@ -57,7 +57,7 @@ def scrape_category(agent: BrowserAgent, name: str, cat_no: str) -> list[dict]:
         url = f"https://blog.naver.com/PostList.naver?blogId=gonobi&categoryNo={cat_no}&currentPage={page}"
         agent.go(url)
         time.sleep(2.5)
-        html = agent._page.content()
+        html = agent.page.content()
         found = extract_posts_from_html(html)
         if not found:
             break
