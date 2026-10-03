@@ -29,11 +29,13 @@ def _hook_commands() -> list[str]:
 
 def test_hooks_do_not_pin_python_minor_version():
     """`py -3.14` 처럼 마이너 버전을 박으면 그 버전이 없는 PC 에서 안전 훅(호출 차단·세션 보호)이 전부 실패한다."""
+    assert _hook_commands()  # 훅 명령을 실제로 읽었다(비어 있으면 아래 검사가 항상 통과해 버린다)
     pinned = [c[:80] for c in _hook_commands() if re.search(r"\bpy -3\.\d+", c)]
     assert pinned == []
 
 
 def test_hooks_have_no_machine_specific_absolute_paths():
+    assert _hook_commands()
     bad = [c[:80] for c in _hook_commands() if re.search(r"[A-Za-z]:[\\/]+(Users|work)[\\/]", c) or "skyjw" in c]
     assert bad == []  # 저장소 위치는 git rev-parse 로 찾는다
 

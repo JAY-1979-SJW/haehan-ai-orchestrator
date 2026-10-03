@@ -327,3 +327,25 @@ def test_verify_includes_mypy_diff_against_base(tmp_path, tree_aware_kit, monkey
     found, _ = vc._audit_kit_new_findings(["pkg/a.py", "pkg/new.py"], base, head)
     assert seen == {"a.py": "a.py", "new.py": None}  # 기준 트리에 있는 파일은 그 파일과, 새 파일은 기준 없이 비교
     assert "pkg/a.py: [mypy] a.py: 새 타입 오류" in found and "pkg/new.py: [mypy] new.py: 새 타입 오류" in found
+
+
+def test_mypy_keys_retries_once_on_internal_error_and_serializes(monkeypatch, tmp_path):
+    """병렬 검사에서 mypy 자체 오류(종료코드 2)가 한 번 나도 다시 시도해 결과를 얻는다 — verify_change 에서 실측된 일시 실패."""
+    class Proc:
+        def __init__(self, rc, out):
+            self.returncode, self.stdout = rc, out
+
+    answers = [Proc(2, b"cache error"), Proc(1, b"a.py:1: error: Missing return statement  [return]")]
+    calls = []
+
+    def fake_run(*_a, **_k):
+        calls.append(1)
+        return answers[len(calls) - 1]
+
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+    assert gate.mypy_keys("py", tmp_path / "a.py", tmp_path) == {"Missing return statement  [return]"}
+    assert len(calls) == 2
+    calls.clear()
+    answers[:] = [Proc(2, b"x"), Proc(2, b"x")]
+    assert gate.mypy_keys("py", tmp_path / "a.py", tmp_path) is None  # 두 번 다 실패하면 '오류 없음'이 아니라 실행 못 함
+    assert len(calls) == 2

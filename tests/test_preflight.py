@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -20,7 +21,7 @@ def make_env(tmp_path: Path, **over) -> pf.Env:
     (tmp_path / "admin-web" / "node_modules").mkdir(parents=True, exist_ok=True)
     (tmp_path / ".claude").mkdir(exist_ok=True)
     (tmp_path / ".claude" / "settings.json").write_text(json.dumps({"hooks": {"Stop": [{"hooks": [{"command": 'py -3 -c "pass"'}]}]}}), encoding="utf-8")
-    base = {
+    base: dict[str, Any] = {
         "root": tmp_path,
         "python_version": (3, 14, 0),
         "environ": {},
@@ -29,7 +30,7 @@ def make_env(tmp_path: Path, **over) -> pf.Env:
         "run": lambda cmd: (0, "154.0.1.2" if cmd and "powershell" in cmd[0].lower() else ("/repo/.githooks" if "core.hooksPath" in cmd else "ok")),
         "http_get": lambda _url: (200, "{}"),
         "port_in_use": lambda _h, _p: False,
-        "find_chrome": lambda: "C:/chrome/chrome.exe",
+        "find_chrome": lambda: "chrome-bin/chrome.exe",
     }
     base.update(over)
     return REAL_ENV(**base)
@@ -42,6 +43,7 @@ def by_name(results, name):
 def test_all_good_environment_has_no_fail(tmp_path):
     (tmp_path / ".env").write_text("A=1\n# c\nB=2\n", encoding="utf-8")
     results = pf.run_checks(make_env(tmp_path))
+    assert len(results) == len(pf.CHECKS)  # 비어 있지 않음(모든 점검이 돌았다)
     assert [r.name for r in results if r.status == pf.FAIL] == []
     assert by_name(results, ".env").detail.startswith("키 2개")  # 이름만 센다
 

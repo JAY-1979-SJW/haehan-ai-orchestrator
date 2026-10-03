@@ -153,13 +153,14 @@ def evaluate_conditions(
 
 
 def _find_chrome_exe() -> str:
-    from scripts.browser_paths import (
-        find_chrome,  # 후보 목록의 단일 정본(결함 #17) — 여기에 같은 목록을 따로 두지 않는다
-    )
-
-    chrome = find_chrome()
-    if chrome:
-        return chrome
+    # 이 파일은 정책(L2)으로 분류돼 L4 인 scripts.browser_paths 를 import 할 수 없다(층 위반) → 같은 후보 순서를 여기에 유지한다.
+    # 경로는 Windows 가 알려 주는 환경변수로 만든다(C: 가 아닌 드라이브에 설치된 PC 도 맞음). HAEHAN_CHROME_PATH 가 있으면 최우선.
+    relative = Path("Google") / "Chrome" / "Application" / "chrome.exe"
+    roots = [os.environ.get(name, "") for name in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA")]
+    candidates = [os.environ.get("HAEHAN_CHROME_PATH", "").strip(), *(str(Path(root) / relative) for root in roots if root)]
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return candidate
     raise FileNotFoundError("Chrome executable was not found.")
 
 

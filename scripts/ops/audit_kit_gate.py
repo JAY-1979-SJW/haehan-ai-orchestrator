@@ -23,6 +23,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -30,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 PER_FILE_TIMEOUT_S = 60
+_MYPY_LOCK = threading.Lock()  # verify_change 가 파일을 병렬로 검사해도 mypy 는 한 번에 하나만(같은 .mypy_cache 를 동시에 쓰면 자체 오류가 난다)
 STOP_BUDGET_S = 90
 MAX_SHOWN = 30
 _NOISE = ("import-not-found", "import-untyped")  # audit-kit 가상환경에 프로젝트 의존성이 없어 생기는 잡음
@@ -113,11 +115,16 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
     """
     root = root or ROOT
     cmd = [py, "-m", "mypy", "--ignore-missing-imports", "--follow-imports=silent", "--no-error-summary", "--no-color-output", str(path)]
-    try:
-        proc = subprocess.run(cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False)
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    if proc.returncode not in (0, 1):  # 2 이상 = mypy 자체 오류
+    proc = None
+    with _MYPY_LOCK:
+        for _attempt in range(2):  # 자체 오류(종료코드 2 이상)는 일시적일 수 있어 한 번 다시 시도한다
+            try:
+                proc = subprocess.run(cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False)
+            except (OSError, subprocess.TimeoutExpired):
+                return None
+            if proc.returncode in (0, 1):
+                break
+    if proc is None or proc.returncode not in (0, 1):  # 2 이상 = mypy 자체 오류
         return None
     found = set()
     for line in proc.stdout.decode("utf-8", errors="replace").splitlines():

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from scripts.ops import install_git_hooks as ih
 
 
 def fake_git(initial: str | None, fail_set: bool = False):
-    state = {"value": initial, "calls": []}
+    state: dict[str, Any] = {"value": initial, "calls": []}
 
     def run(_root, *args):
         state["calls"].append(args)
@@ -37,8 +38,8 @@ def test_leaves_correct_value_alone():
 
 
 def test_never_overrides_a_different_value(capsys):
-    run, state = fake_git("C:/my/own/hooks")
-    assert ih.ensure_hooks_path(Path("."), run) == "other" and state["value"] == "C:/my/own/hooks"
+    run, state = fake_git("custom-hooks-dir")
+    assert ih.ensure_hooks_path(Path("."), run) == "other" and state["value"] == "custom-hooks-dir"
     assert "바꾸지 않았습니다" in capsys.readouterr().out
 
 
