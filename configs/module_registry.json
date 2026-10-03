@@ -20177,7 +20177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "admin-web/src/app/hanafax/api.ts": {
+  "admin-web/src/lib/hanafaxApi.ts": {
    "layer": "L9",
    "role": "ui",
    "domain": "hanafax",

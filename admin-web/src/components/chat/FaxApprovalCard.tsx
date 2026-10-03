@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { faxApi, type Authorization, type RunStatus } from "@/app/hanafax/api";
+import { faxApi, type Authorization, type RunStatus } from "@/lib/hanafaxApi";
 import { FaxSitePreview } from "./FaxSitePreview";
 
 /**

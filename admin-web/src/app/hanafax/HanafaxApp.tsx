@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FaxSitePreview } from "@/components/chat/FaxSitePreview";
 import { UniversalChat } from "@/components/chat/UniversalChat";
 import { AttachmentField } from "./AttachmentField";
-import { faxApi, parseRecipients, type AddressGroup, type Authorization, type GroupSyncStatus, type LogRow, type ReconcileStatus, type RunStatus } from "./api";
+import { faxApi, parseRecipients, type AddressGroup, type Authorization, type GroupSyncStatus, type LogRow, type ReconcileStatus, type RunStatus } from "@/lib/hanafaxApi";
 
 /**
  * 하나팩스 화면 — 왼쪽: 승인서 목록·상세(미리보기·승인·발송·이력), 오른쪽: AI 창.

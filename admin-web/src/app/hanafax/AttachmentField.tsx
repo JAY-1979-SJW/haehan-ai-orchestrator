@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { faxApi, type AttachmentInfo } from "./api";
+import { faxApi, type AttachmentInfo } from "@/lib/hanafaxApi";
 
 /**
  * 팩스 첨부 파일 입력 — ① 파일 선택·끌어놓기(앱 전용 폴더에 저장되고 경로가 자동으로 채워진다) ② 경로 직접 입력 + "경로 확인"(형식·크기·허용 폴더를 미리 검사).

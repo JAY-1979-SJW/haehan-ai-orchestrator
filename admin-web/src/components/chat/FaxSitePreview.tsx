@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { faxApi, type PreviewStatus } from "@/app/hanafax/api";
+import { faxApi, type PreviewStatus } from "@/lib/hanafaxApi";
 
 /**
  * 하나팩스 실제 접수 화면 미리보기 — 수신번호·제목·첨부를 사이트 화면에 채운 스크린샷(전송하지 않음).
