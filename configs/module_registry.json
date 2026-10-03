@@ -10705,7 +10705,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/blog/seo.py": {
+  "scripts/archive/shadowed_modules/naver_blog_seo_stub.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -10801,7 +10801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/cafe.py": {
+  "scripts/archive/shadowed_modules/naver_cafe_legacy_module.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_cafe",
@@ -12001,7 +12001,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/smartstore/product.py": {
+  "scripts/archive/shadowed_modules/naver_smartstore_product_stub.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
