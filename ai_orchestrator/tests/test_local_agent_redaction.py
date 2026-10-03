@@ -904,3 +904,50 @@ def test_strip_result_data_removes_raw_url_from_browser_open_url_controlled():
     assert result.get("action") == "browser.open_url_controlled"
     assert "target" in result
     assert "browser" in result
+
+
+# ── 값 수준 비밀 마스킹 ──
+# 실제 키 형식 문자열을 소스에 그대로 쓰면 gitleaks 가 잡으므로 조각을 코드에서 조립한다.
+def _fake(prefix: str, n: int) -> str:
+    return prefix + ("x9Y8z7W6v5" * (n // 10 + 1))[:n]
+
+
+def test_strip_result_data_masks_secret_values_in_result_full():
+    """result_full 본문에 섞인 sk-/AIza/Bearer/KEY= 값이 저장 전에 가려진다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    sk = _fake("s" + "k-", 30)
+    aiza = _fake("AI" + "za", 35)
+    bearer = _fake("", 30)
+    env_val = _fake("", 16)
+    text = f"키 {sk} 와 {aiza}, Authorization: Bearer {bearer}, OPENAI_API_KEY={env_val} 끝"
+    out = _strip_result_data({"result_full": text, "result": text})
+    for field in ("result_full", "result"):
+        masked = out[field]
+        for secret in (sk, aiza, bearer, env_val):
+            assert secret not in masked
+        assert "[REDACTED]" in masked
+        assert "OPENAI_API_KEY=[REDACTED]" in masked
+        assert "Bearer [REDACTED]" in masked
+        assert masked.startswith("키 ") and masked.endswith(" 끝")
+
+
+def test_strip_result_data_mask_happens_before_truncation():
+    """상한 경계에 걸친 비밀도 일부가 남지 않는다(자르기 전에 마스킹)."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    sk = _fake("s" + "k-", 40)
+    text = "x" * 489 + " " + sk  # 비밀이 500자 경계에 걸침
+    out = _strip_result_data({"result": text})["result"]
+    assert len(out) <= 500
+    assert "x9Y8z7" not in out  # 비밀 본문 조각이 남지 않는다
+    assert "s" + "k-" not in out
+
+
+def test_strip_result_data_does_not_overmask_plain_text():
+    """일반 문장·짧은 값·소문자 변수는 건드리지 않는다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    text = "task-id sk-short, key=value, token: required, MAX_TOKENS=4096, Bearer short"
+    out = _strip_result_data({"result_full": text})["result_full"]
+    assert out == text
