@@ -115,3 +115,11 @@ def test_render_is_sorted_stable_and_has_header():
     text = mc.render({"zlib": "1.0", "alpha": "2.0"}, today=date(2026, 10, 4))
     body = [ln for ln in text.splitlines() if not ln.startswith("#")]
     assert body == ["alpha==2.0", "zlib==1.0"] and text.splitlines()[1].startswith("# 생성: 2026-10-04")
+
+
+def test_mcp_config_does_not_pin_python_minor_version():
+    """`.mcp.json` 이 AI 에게 도구를 연결하는 명령도 `py -3.14` 로 박으면 그 버전이 없는 PC 에서 AI 가 앱 도구를 전혀 못 쓴다."""
+    servers = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]
+    assert servers  # 설정을 실제로 읽었다
+    pinned = [name for name, cfg in servers.items() if any(re.fullmatch(r"-3\.\d+", str(a)) for a in cfg.get("args", []))]
+    assert pinned == []

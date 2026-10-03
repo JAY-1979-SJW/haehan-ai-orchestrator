@@ -52,8 +52,9 @@ _EXTRACT_FRAME_JS = r"""
         form: formKey(e),
         pos: order.get(e),
     }));
-    const buttons = Array.from(document.querySelectorAll('button, [role="button"]')).map(b => ({
-        text: (b.innerText || '').trim().slice(0, 60),
+    // <input type="submit|button|image"> 도 버튼이다(흔한 검색 폼: 입력창 + submit 입력). 글자는 value·alt·title 에서 읽는다.
+    const buttons = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], input[type="image"]')).map(b => ({
+        text: (b.innerText || b.value || b.alt || b.title || '').trim().slice(0, 60),
         id: b.id || '',
         aria: b.getAttribute('aria-label') || '',
         cls: (b.className || '').toString().slice(0, 80),

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
+import { EMPLOYEE_PROTOCOL } from "./employeeProtocol";
 import { FaxApprovalCard } from "./FaxApprovalCard";
 
 /**
@@ -271,9 +272,8 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
       );
 
       const data = await postJson<RunAgentResponse>("/api/proxy/api/v1/ai-agent/run", {
-        prompt: agentHint ? `${agentHint}
-
-사용자 요청: ${prompt}` : prompt,
+        // 모든 AI 창 공통 직원 업무 원칙 → 창별 지침 → 사용자 요청 순서로 붙인다(기준서 2026-10-04_ai_employee.md)
+        prompt: [EMPLOYEE_PROTOCOL, agentHint, `사용자 요청: ${prompt}`].filter(Boolean).join("\n\n"),
         chat_id: activeChatId,
         model,
       });

@@ -195,13 +195,17 @@ def make_page(browser, html):
     return context, context.new_page()
 
 
-def explored_task(page):
+def explored_task_for(page, field_name):
     """실제로 화면을 읽어(page_snapshot) 지도 업무를 만든다 — 탐색 결과를 그대로 실행에 쓰는 왕복."""
     from scripts.explorer.page_snapshot import collect
 
     page.goto(f"http://{HOST}/search")
     tasks = tm.tasks_from_snapshot(collect(page), now=NOW)
-    return next(t for t in tasks if any(f["name"] == "txtName" for f in t["fields"]))
+    return next(t for t in tasks if any(f["name"] == field_name for f in t["fields"]))
+
+
+def explored_task(page):
+    return explored_task_for(page, "txtName")
 
 
 def test_roundtrip_explore_then_run_clicks_nearest_search_and_reads_table(browser, tmp_path, monkeypatch):
@@ -250,5 +254,29 @@ def test_real_run_never_leaves_the_map_host(browser):
             tr.execute_task(page, HOST, foreign, {})
         with pytest.raises(tr.StepFailed, match="실행할 수 없는 단계"):
             tr.execute_task(page, HOST, _task(steps=[{"type": "keyDown"}]), {})
+    finally:
+        context.close()
+
+
+SUBMIT_INPUT_HTML = """<!doctype html><html><head><meta charset="utf-8"><title>팀검색</title></head><body>
+<form method="GET" action="/teams" onsubmit="show();return false;"><label for="q">팀 이름</label>
+<input type="text" name="q" id="q" placeholder="팀 이름 검색"><input type="submit" value="조회"></form>
+<div id="out"></div>
+<script>function show(){var q=document.getElementById('q').value;
+document.getElementById('out').innerHTML='<table><tr><th>팀</th><th>승</th></tr><tr><td>'+q+'</td><td>44</td></tr></table>';}</script>
+</body></html>"""
+
+
+def test_submit_input_button_is_collected_so_the_search_can_be_clicked(browser, tmp_path, monkeypatch):
+    """실사이트(크롤링 연습 사이트) 실측 회귀: <input type=submit value=Search> 를 버튼으로 모으지 않아 control 이 비고 클릭 단계가 빠졌다."""
+    monkeypatch.setattr(store, "_DIR", tmp_path / "maps")
+    context, page = make_page(browser, SUBMIT_INPUT_HTML)
+    try:
+        task = explored_task_for(page, "q")
+        assert task["control"] == "조회" and task["risk"] == "read"
+        assert [s["type"] for s in task["steps"]] == ["navigate", "change", "click"]  # 클릭 단계가 있다
+        page.goto("about:blank")
+        result = tr.execute_task(page, HOST, task, tm.validate_run_request(task, {"q": "보스턴"}))
+        assert result["tables"][0]["rows"] == [["보스턴", "44"]]
     finally:
         context.close()

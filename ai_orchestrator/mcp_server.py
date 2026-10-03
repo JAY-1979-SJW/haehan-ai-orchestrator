@@ -198,6 +198,16 @@ API_REGISTRY: dict[str, dict[str, str]] = {
             "응답의 rules 를 지킬 것: risk 가 read 인 업무만 steps 대로 실행, write·submit 은 참고만 하고 실행은 사람 승인"
         ),
     },
+    "vendors.lookup": {
+        "method": "GET",
+        "path": "/api/v1/vendors/lookup",
+        "desc": (
+            "외부 서비스·사이트의 **벤더 공식 API** 가 있는지 조회한다(읽기 전용). query={q: 서비스/사이트 이름, 공백 구분, 비우면 전체 목록}. "
+            "외부 사이트 작업 전에 먼저 부를 것. 응답의 status_meaning 대로 행동한다: available/registered 면 앱 기능(list_api_endpoints)을 쓰고, "
+            "not_registered 면 사용자에게 신청이 필요하다고 알리며(화면 조작으로 우회 금지), unknown/목록에 없음이면 sitemap.lookup 으로 넘어간다. "
+            "목록에 없다고 공식 API 가 없다는 뜻은 아니다(미조사)"
+        ),
+    },
     "sitemap.run": {
         "method": "POST",
         "path": "/api/v1/site-map/{host}/run",
