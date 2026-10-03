@@ -15,7 +15,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import sqlite3
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -264,8 +263,8 @@ class _ShopRun:
     def __init__(self) -> None:
         self.agg = db_mod.InsertStats()
         self.consecutive = 0
-        self.conn_cm: AbstractContextManager[sqlite3.Connection] | None = None
-        self.conn: Any = None  # conn_cm.__enter__() 결과(sqlite3.Connection) — 연결 열기 성공 후에만 사용
+        self.conn_cm: AbstractContextManager[Any] | None = None
+        self.conn: Any = None  # conn_cm.__enter__() 결과(DB 연결) — 연결 열기 성공 후에만 사용
         self.db_error_name: str | None = None
         self.early_stop_reason: str | None = None
 
