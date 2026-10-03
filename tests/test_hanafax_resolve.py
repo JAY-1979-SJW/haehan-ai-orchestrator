@@ -121,7 +121,7 @@ def test_fresh_draft_is_not_expired_and_approved_never_expires(doc):
 
 
 def test_scheduler_catalog_labels_distinguish_and_flag_live_authorizations(doc):
-    from ai_orchestrator.workflows import scheduled_job_actions as actions
+    from ai_orchestrator.services import scheduled_job_actions as actions
 
     dry = _row(doc, "02-777-2001")
     live = _row(doc, "02-777-2002")

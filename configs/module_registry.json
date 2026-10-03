@@ -19897,7 +19897,7 @@
    "confidence": "low",
    "source": "confirmed"
   },
-  "ai_orchestrator/workflows/scheduled_job_actions.py": {
+  "ai_orchestrator/services/scheduled_job_actions.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -20705,7 +20705,7 @@
    "confidence": "low",
    "source": "confirmed"
   },
-  "ai_orchestrator/workflows/agent_dispatch_runner.py": {
+  "ai_orchestrator/services/agent_dispatch_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",

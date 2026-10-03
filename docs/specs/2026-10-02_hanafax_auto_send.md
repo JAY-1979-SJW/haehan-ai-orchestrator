@@ -13,7 +13,7 @@
 - 발송 엔진 `scripts/hanafax/sender.py` — `send_fax(receiver_fax, subject, body, receiver_name, bid_name, attach_file)` → `{success, job_id, message, simulated}`. 2026-03-31 실전송 검증. 로그인은 저장된 자격증명(`scripts.credentials`, 평문 노출 없음).
 - 대량 `scripts/hanafax/bulk_send.py`(엑셀+배치 JSON), 큐 `scripts/hanafax/batch.py`, API `ai_orchestrator/connectors/hanafax_router.py`(`/send`·`/batch/plan`·`/batch/execute` — 모두 `confirmed=true`·관리자 권한).
 - 발송 이력 `data/hanafax_sent_log.json`(349건, 수신번호·상대·제목) — 중복 방지에 재사용.
-- 예약 작업 프레임워크 `ai_orchestrator/workflows/scheduled_job_actions.py`·`services/scheduled_job_service.py`·`persistence/scheduled_job_store.py` — **발송류(`USER_DELEGATED`)는 회차마다 승인**. 이 규칙은 **약화·우회하지 않는다**(다른 작업의 안전 기준).
+- 예약 작업 프레임워크 `ai_orchestrator/services/scheduled_job_actions.py`·`services/scheduled_job_service.py`·`persistence/scheduled_job_store.py` — **발송류(`USER_DELEGATED`)는 회차마다 승인**. 이 규칙은 **약화·우회하지 않는다**(다른 작업의 안전 기준).
 
 ## 3. 핵심 설계: 발송 승인서 (Fax Authorization)
 "미리 승인"은 기존 회차 승인과 다른 개념이므로 **별도 승인서**로 만든다. 승인서가 가리킨 정확한 범위 안에서만 자동 발송한다.

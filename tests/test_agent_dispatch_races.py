@@ -14,7 +14,7 @@ import pytest
 from ai_orchestrator.gates import agent_dispatch_policy as pol
 from ai_orchestrator.persistence import agent_dispatch_store as store
 from ai_orchestrator.services import agent_dispatch_service as svc
-from ai_orchestrator.workflows import agent_dispatch_runner as runner
+from ai_orchestrator.services import agent_dispatch_runner as runner
 from tests.test_agent_dispatch_service import FakeReg, T, make_proposed
 
 

@@ -77,7 +77,7 @@ def test_validation_and_not_found(reg):
 
 
 def test_runner_ticks_running_dispatches_and_stops_when_idle(monkeypatch):
-    from ai_orchestrator.workflows import agent_dispatch_runner as runner
+    from ai_orchestrator.services import agent_dispatch_runner as runner
 
     monkeypatch.setattr(runner, "TICK_INTERVAL_SEC", 0.01)
     queue = [["d1"], ["d1", "d2"], [], []]  # 마지막 []는 두 번째 기동용

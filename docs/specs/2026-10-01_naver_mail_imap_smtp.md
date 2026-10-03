@@ -50,7 +50,7 @@
 |---|---|
 | `scripts/naver/mail_imap/protocol.py` | IMAP/SMTP 로그인 점검(읽기 전용). 비밀번호는 `.env` 에서만 읽고 결과·오류에 남기지 않는다. IMAP `STATUS` 만 써서 읽음 표시를 바꾸지 않고, SMTP 는 로그인만 하고 보내지 않는다 |
 | `scripts/naver/mail_imap/settings.py` | 웹메일 "IMAP/SMTP 사용" 읽기·켜기(CDP). 로그인 안 됨·화면 못 읽음·다른 계정이면 바꾸지 않는다. 저장 뒤 새로 읽어 반영을 확인 |
-| `ai_orchestrator/workflows/scheduled_job_actions.py` | 위 두 기능을 앱 "예약 작업"에 `naver_mail_check`(무인)·`naver_mail_enable`(승인형)로 등록 |
+| `ai_orchestrator/services/scheduled_job_actions.py` | 위 두 기능을 앱 "예약 작업"에 `naver_mail_check`(무인)·`naver_mail_enable`(승인형)로 등록 |
 | `configs/vendor_apis.json` | 벤더 공식 API 목록에 "네이버 메일 IMAP/SMTP" 추가 → `capability_check` `[0]` 에 표시 |
 | `tests/test_naver_mail_imap.py` | 가짜 IMAP/SMTP·가짜 웹메일 화면으로 검증(네이버 서버·브라우저 불필요) |
 

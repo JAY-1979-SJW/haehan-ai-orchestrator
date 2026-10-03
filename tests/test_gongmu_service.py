@@ -16,7 +16,7 @@ from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.persistence import gongmu_store as store
 from ai_orchestrator.routers.gongmu_router import gongmu_router
 from ai_orchestrator.services import gongmu_service as service
-from ai_orchestrator.workflows import scheduled_job_actions as actions
+from ai_orchestrator.services import scheduled_job_actions as actions
 
 TODAY = date(2026, 10, 2)
 

@@ -13,7 +13,7 @@ from ai_orchestrator.gates import mail_bulk_policy as pol
 from ai_orchestrator.gates import mail_draft_policy as draft_policy
 from ai_orchestrator.persistence import mail_bulk_store as store
 from ai_orchestrator.services import mail_bulk_service as service
-from ai_orchestrator.workflows import scheduled_job_actions as actions
+from ai_orchestrator.services import scheduled_job_actions as actions
 
 
 class FakeSmtp:

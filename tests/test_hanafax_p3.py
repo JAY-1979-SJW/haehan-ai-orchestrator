@@ -11,7 +11,7 @@ from ai_orchestrator.sites import hanafax_auto_sender as adapter
 from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, classify_action
 from ai_orchestrator.persistence import fax_authorization_store as store
 from ai_orchestrator.services import hanafax_authorization_service as service
-from ai_orchestrator.workflows import scheduled_job_actions as actions
+from ai_orchestrator.services import scheduled_job_actions as actions
 
 RECIPIENTS = [{"fax": "02-111-2222", "name": "가나다"}, {"fax": "031-333-4444", "name": "라마바"}]
 

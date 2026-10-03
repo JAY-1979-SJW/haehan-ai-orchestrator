@@ -21,7 +21,7 @@ from ai_orchestrator.sites import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as policy
 from ai_orchestrator.persistence import fax_authorization_store as store
 from ai_orchestrator.services import hanafax_attachments as attachments
-from ai_orchestrator.workflows import scheduled_job_actions as actions
+from ai_orchestrator.services import scheduled_job_actions as actions
 
 MAX_RECIPIENTS = 1000
 MAX_PER_RUN_CAP = 1000

@@ -24,7 +24,7 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.persistence import scheduled_job_store as store
 from ai_orchestrator.services import scheduled_job_service as service
-from ai_orchestrator.workflows import scheduled_job_actions as actions
+from ai_orchestrator.services import scheduled_job_actions as actions
 
 scheduled_job_router = APIRouter(prefix="/scheduled-jobs", tags=["scheduled-jobs"])
 

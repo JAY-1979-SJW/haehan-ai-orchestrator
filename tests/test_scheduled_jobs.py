@@ -12,7 +12,7 @@ from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.persistence import scheduled_job_store as store
 from ai_orchestrator.routers.scheduled_job_router import scheduled_job_router
 from ai_orchestrator.services import scheduled_job_service as svc
-from ai_orchestrator.workflows import scheduled_job_actions as actions
+from ai_orchestrator.services import scheduled_job_actions as actions
 
 NOW = datetime(2026, 10, 1, 0, 0, 0, tzinfo=UTC)
 
