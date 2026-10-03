@@ -73,6 +73,10 @@ def lookup(host: str, query: str = "", *, limit: int = 5) -> dict[str, Any]:
     limit = max(1, min(int(limit), LOOKUP_LIMIT_MAX))
     site_map = store.load(host)
     if not site_map["tasks"]:
+        explored = site_map.get("explored")
+        if explored:  # 탐색은 했지만 입력창이 있는 조회 업무를 찾지 못한 사이트 — '미탐색'으로 오해해 같은 탐색을 되풀이하지 않게 한다
+            hint = f"이 사이트는 {str(explored.get('at', ''))[:10]} 에 {explored.get('pages', 0)}쪽을 탐색했지만 입력창이 있는 조회 업무를 찾지 못했습니다. 같은 탐색을 되풀이하지 말고 사용자에게 알리세요."
+            return {"host": site_map["host"], "known": False, "explored": True, "count": 0, "tasks": [], "rules": RULES, "hint": hint}
         return {"host": site_map["host"], "known": False, "count": 0, "tasks": [], "rules": RULES, "hint": "이 사이트는 아직 탐색된 적이 없습니다. 사용자에게 탐색을 요청하세요."}
     found = tm.lookup(site_map, query, limit=limit)
     return {

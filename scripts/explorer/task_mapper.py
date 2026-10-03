@@ -27,7 +27,14 @@ def _now() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
-def merge_snapshots(host: str, snapshots: list[dict[str, Any]], *, auth: str = tm.AUTH_PUBLIC, save: bool = True) -> dict[str, Any]:
+def merge_snapshots(
+    host: str,
+    snapshots: list[dict[str, Any]],
+    *,
+    auth: str = tm.AUTH_PUBLIC,
+    save: bool = True,
+    explored_pages: int | None = None,
+) -> dict[str, Any]:
     """스냅샷 여러 장을 호스트 지도에 합친다. 다른 호스트의 스냅샷은 무시한다(같은 호스트만)."""
     now = _now()
     site_map = store.load(host, now=now)
@@ -39,6 +46,8 @@ def merge_snapshots(host: str, snapshots: list[dict[str, Any]], *, auth: str = t
             continue
         observed.extend(tm.tasks_from_snapshot(snap, auth=auth, now=now))
     merged = tm.merge_tasks(site_map, observed, now=now)
+    if explored_pages is not None:  # 탐색 실행(explore_to_map)에서만: 탐색했다는 사실과 접근 구분(로그인 세션이면 '공개'로 남기지 않음)
+        merged = tm.note_exploration(merged, pages=explored_pages, auth=auth, now=now)
     if save:
         store.save(merged)
     return {"map": merged, "observed": len(observed), "skipped_other_host": skipped}
@@ -159,7 +168,8 @@ def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험�
             snapshots.append(collect(page))
         except Exception as e:  # noqa: BLE001 - 한 화면의 읽기 실패가 전체 탐색을 막지 않게 기록만 하고 계속한다
             result.setdefault("snapshot_errors", []).append({"url": url, "error": str(e)[:120]})
-    merged = merge_snapshots(host, snapshots, auth=auth)
+    pages_visited = int(result.get("visited_count", len(result.get("pages", []))))
+    merged = merge_snapshots(host, snapshots, auth=auth, explored_pages=pages_visited)
     return {
         "pages": int(result.get("visited_count", len(result.get("pages", [])))),
         "form_pages": len(form_pages),

@@ -169,3 +169,11 @@ def test_run_task_without_runner_and_router_flow(env, monkeypatch):
         assert client.post(f"/site-map/{HOST}/run", json={"task_id": tid, "params": {"txtSangHo": "a"}}).status_code == 403
     finally:
         service.configure_runner(None)
+
+
+def test_lookup_distinguishes_explored_empty_site_from_unexplored(env):
+    store.save(tm.note_exploration(tm.empty_map("empty.example.test", now=NOW), pages=7, auth="public", now=NOW))
+    got = service.lookup("empty.example.test", "검색")
+    assert got["known"] is False and got["explored"] is True and "7쪽을 탐색했지만" in got["hint"] and "되풀이하지 말고" in got["hint"]
+    never = service.lookup("never.example.test", "검색")
+    assert never["known"] is False and "explored" not in never and "탐색을 요청" in never["hint"]  # 탐색한 적 없는 사이트는 그대로

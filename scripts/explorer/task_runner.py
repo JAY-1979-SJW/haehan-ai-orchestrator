@@ -107,26 +107,71 @@ def _pick_nearest(page: Any, candidates: list[Any], anchor: Any | None) -> Any:
 # ── 결과 표 읽기 ───────────────────────────────────────────────────────────
 
 _TABLE_JS = """([rowsMax, cellMax]) => {
-  const clean = t => (t || '').replace(/\\s+/g, ' ').trim().slice(0, cellMax);
+  const clean = x => (x || '').replace(/\\s+/g, ' ').trim().slice(0, cellMax);
   let best = null, bestScore = 0;
   for (const table of document.querySelectorAll('table')) {
     const rows = Array.from(table.rows);
     if (rows.length < 2) continue;
-    const headCells = Array.from(rows[0].cells);
-    if (headCells.length < 2) continue;
-    const score = rows.length * headCells.length;
-    if (score > bestScore) { bestScore = score; best = { table, rows, headCells }; }
+    // 머리글: thead 첫 행 → 전부 th 인 첫 행 → (th 가 전혀 없으면) 첫 행을 머리글로 추정
+    let headRow = null, guessed = false;
+    if (table.tHead && table.tHead.rows[0]) headRow = table.tHead.rows[0];
+    else if (Array.from(rows[0].cells).length && Array.from(rows[0].cells).every(c => c.tagName === 'TH')) headRow = rows[0];
+    else if (!table.querySelector('th')) { headRow = rows[0]; guessed = true; }
+    const bodyRows = rows.filter(r => r !== headRow && !(table.tHead && table.tHead.contains(r)));
+    if (!bodyRows.length) continue;
+    const width = Math.max(...bodyRows.slice(0, 5).map(r => r.cells.length));
+    if (width < 2) continue;
+    const score = bodyRows.length * width;
+    if (score > bestScore) { bestScore = score; best = { bodyRows, headRow, width, guessed }; }
   }
   if (!best) return null;
-  const headers = best.headCells.map(c => clean(c.innerText));
-  const data = best.rows.slice(1, rowsMax + 1).map(r => Array.from(r.cells).map(c => clean(c.innerText)));
-  return { headers, rows: data, truncated: best.rows.length - 1 > rowsMax };
+  // 머리글의 칸 병합(colspan)을 펼쳐 데이터 칸과 맞춘다: "제목"이 2칸이면 ["제목", "제목(2)"]
+  let headers = [];
+  if (best.headRow) {
+    for (const c of Array.from(best.headRow.cells)) {
+      const label = clean(c.innerText);
+      headers.push(label);
+      for (let k = 2; k <= (c.colSpan || 1); k++) headers.push(label ? label + '(' + k + ')' : '');
+    }
+  }
+  if (headers.length < best.width) { for (let i = headers.length; i < best.width; i++) headers.push('칸' + (i + 1)); }
+  if (headers.length > best.width) headers = headers.slice(0, best.width);
+  const data = best.bodyRows.slice(0, rowsMax).map(r => Array.from(r.cells).map(c => clean(c.innerText)));
+  const sig = best.bodyRows.length + '|' + best.bodyRows.slice(0, 2).map(r => clean(r.innerText).slice(0, 60)).join('/');
+  return { headers, rows: data, truncated: best.bodyRows.length > rowsMax, total: best.bodyRows.length, header_guessed: best.guessed, signature: sig };
 }"""
+
+RESULT_WAIT_S = 8.0  # 클릭 뒤 결과 표가 갱신되기를 기다리는 최대 시간(비동기로 그려지는 사이트)
+RESULT_POLL_MS = 400
 
 
 def read_result_table(page: Any) -> dict[str, Any] | None:
     result = page.evaluate(_TABLE_JS, [ROWS_MAX, CELL_MAX])
     return result if isinstance(result, dict) else None
+
+
+def wait_for_result_table(
+    page: Any,
+    before_signature: str | None,
+    *,
+    clock: Callable[[], float] = time.monotonic,
+    timeout_s: float = RESULT_WAIT_S,
+) -> tuple[dict[str, Any] | None, str]:
+    """결과 표를 읽는다. 클릭 전 화면에도 표가 있었다면 **내용이 바뀐 표**가 나타날 때까지 기다린다(비동기 갱신).
+
+    반환 (표, 상태): 상태는 'fresh'(새로 그려진 표 또는 이동 후 표) / 'unchanged'(제한 시간 안에 갱신을 확인하지 못함 — 표는 이전 화면의 것일 수 있어
+    결과로 내놓지 않는다) / 'none'(표 없음).
+    """
+    deadline = clock() + timeout_s
+    seen: dict[str, Any] | None = None
+    while True:
+        seen = read_result_table(page)
+        if seen and (before_signature is None or seen.get("signature") != before_signature):
+            return seen, "fresh"
+        if clock() >= deadline:
+            break
+        page.wait_for_timeout(RESULT_POLL_MS)
+    return (None, "unchanged") if seen else (None, "none")
 
 
 # ── 절차 재생 ──────────────────────────────────────────────────────────────
@@ -193,6 +238,7 @@ def execute_task(
     deadline = clock() + RUN_BUDGET_S
     anchor: Any | None = None
     done = 0
+    before_signature: str | None = None  # 마지막 클릭 직전의 표 지문(없으면 None)
     for step in task["steps"]:
         _check_deadline(deadline, clock)
         kind = step.get("type")
@@ -201,12 +247,16 @@ def execute_task(
         elif kind == "change":
             anchor = _step_change(page, step, values) or anchor
         elif kind == "click":
+            previous = read_result_table(page)
+            before_signature = previous.get("signature") if previous else None
             _step_click(page, host, step, anchor)
         else:
             raise StepFailed(f"실행할 수 없는 단계 종류: {kind}")
         done += 1
-    table = read_result_table(page)
-    return {"steps_done": done, "url": page.url, "tables": [table] if table else []}
+    table, freshness = wait_for_result_table(page, before_signature, clock=clock)
+    if table:
+        table = {k: v for k, v in table.items() if k != "signature"}  # 내부 비교용 값은 응답에 싣지 않는다
+    return {"steps_done": done, "url": page.url, "tables": [table] if table else [], "result_state": freshness}
 
 
 # ── 기록과 실행 ────────────────────────────────────────────────────────────
@@ -264,7 +314,11 @@ def run_task(
             store.save(updated)
             outcome["state"] = tm.STATE_VERIFIED
         else:
-            outcome.update(state=task["state"], note="절차는 모두 실행했지만 결과 표가 없습니다(조회 결과가 없거나 표가 아닌 화면) — 상태는 바꾸지 않았습니다")
+            if outcome.get("result_state") == "unchanged":
+                note = "절차는 실행했지만 결과 화면이 갱신됐는지 확인하지 못했습니다(이전 화면의 표일 수 있어 결과로 내놓지 않았습니다) — 상태는 바꾸지 않았습니다"
+            else:
+                note = "절차는 모두 실행했지만 결과 표가 없습니다(조회 결과가 없거나 표가 아닌 화면) — 상태는 바꾸지 않았습니다"
+            outcome.update(state=task["state"], note=note)
         return outcome
     finally:
         lock.release()

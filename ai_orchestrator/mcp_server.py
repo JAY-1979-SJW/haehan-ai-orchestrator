@@ -222,7 +222,7 @@ API_REGISTRY: dict[str, dict[str, str]] = {
         "method": "POST",
         "path": "/api/v1/site-map/explore/requests",
         "desc": (
-            "사이트 탐색 '승인 대기 요청'만 만든다(탐색하지 않음). body={start_url(전체 주소), depth(1~4, 기본 2), max_pages(1~200, 기본 20), reason}. "
+            "사이트 탐색 '승인 대기 요청'만 만든다(탐색하지 않음). body={start_url(전체 주소), depth(1~4, 기본 2), max_pages(1~200, 기본 20), reason, auth('public' 기본 | 'login': 사용자가 이미 로그인해 둔 사이트를 탐색할 때)}. "
             "사이트 지도가 없는(sitemap.lookup 이 known=false) 사이트에서만, 사용자가 탐색을 원할 때 쓴다. 만든 뒤 답변 끝에 응답의 id 로 "
             "'[[sitemap-explore:<id>]]' 를 그대로 적어(AI 창에 승인 카드가 나타난다) '아래 카드에서 승인하면 읽기 전용으로 탐색합니다'라고 안내할 것. "
             "로그인이 필요한 사이트는 사용자가 먼저 브라우저에서 로그인해 있어야 한다. 승인·취소는 사용자가 카드 버튼으로만 한다 — 대신 시도하지 말 것"

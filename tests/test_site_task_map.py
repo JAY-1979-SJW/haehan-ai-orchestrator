@@ -338,3 +338,30 @@ def test_import_auto_sitemap_creates_unclassified_tasks_only_for_form_pages(isol
     assert set(by_url) == {"list.asp", "delete.asp"}
     assert by_url["list.asp"]["category"] == "unclassified" and by_url["list.asp"]["risk"] == "read"
     assert by_url["delete.asp"]["risk"] == "submit"
+
+
+# ── 탐색 기록: 접근 구분 승격·탐색한 사실 ───────────────────────────────────
+
+
+def test_stronger_auth_only_moves_up():
+    assert tm.stronger_auth("public", "login") == "login"
+    assert tm.stronger_auth("login", "public") == "login"  # 공개로 되돌리지 않는다
+    assert tm.stronger_auth("login", "certificate") == "certificate"
+    assert tm.stronger_auth("certificate", "login") == "certificate"
+    assert tm.stronger_auth("public", "알수없음") == "public"
+
+
+def test_note_exploration_records_fact_without_mutating_input():
+    base = tm.empty_map("a.test", now=NOW)
+    out = tm.note_exploration(base, pages=8, auth="login", now=LATER)
+    assert out["auth"] == "login" and out["explored"] == {"at": LATER, "pages": 8} and out["updated_at"] == LATER
+    assert base["auth"] == "public" and "explored" not in base
+    assert tm.validate_map(out)  # 저장 형식 검증을 통과한다
+
+
+def test_merge_snapshots_marks_login_site_and_remembers_empty_exploration(isolated_store):
+    out = task_mapper.merge_snapshots("www.example-kiscon.test", [], auth="login", explored_pages=5)
+    saved = store.load("www.example-kiscon.test")
+    assert out["map"]["auth"] == "login" and saved["auth"] == "login" and saved["explored"]["pages"] == 5 and saved["tasks"] == []
+    again = task_mapper.merge_snapshots("www.example-kiscon.test", [], auth="public", explored_pages=2)  # 나중에 공개로 탐색해도
+    assert again["map"]["auth"] == "login"  # 더 엄격한 구분이 유지된다

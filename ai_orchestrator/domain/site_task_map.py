@@ -238,6 +238,19 @@ def tasks_from_snapshot(snapshot: dict[str, Any], *, auth: str = AUTH_PUBLIC, no
 # ── 지도 ──────────────────────────────────────────────────────────────────
 
 
+_AUTH_RANK = {AUTH_PUBLIC: 0, AUTH_LOGIN: 1, AUTH_CERT: 2}
+
+
+def stronger_auth(current: str, observed: str) -> str:
+    """사이트의 접근 구분은 더 엄격한 쪽으로만 올라간다(공개 → 로그인 → 인증서). 로그인한 세션으로 탐색하면 '공개'로 남지 않게 한다."""
+    return observed if _AUTH_RANK.get(observed, 0) > _AUTH_RANK.get(current, 0) else current
+
+
+def note_exploration(site_map: dict[str, Any], *, pages: int, auth: str, now: str) -> dict[str, Any]:
+    """탐색을 했다는 사실(시각·방문 쪽수)과 접근 구분을 기록한다. 업무가 하나도 없어도 '탐색한 사이트'임이 남는다."""
+    return dict(site_map, auth=stronger_auth(site_map.get("auth", AUTH_PUBLIC), auth), explored={"at": now, "pages": int(pages)}, updated_at=now)
+
+
 def empty_map(host: str, *, auth: str = AUTH_PUBLIC, now: str = "") -> dict[str, Any]:
     return {"version": SCHEMA_VERSION, "host": host, "auth": auth, "updated_at": now, "tasks": []}
 

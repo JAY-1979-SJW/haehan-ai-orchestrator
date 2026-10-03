@@ -280,3 +280,62 @@ def test_submit_input_button_is_collected_so_the_search_can_be_clicked(browser, 
         assert result["tables"][0]["rows"] == [["보스턴", "44"]]
     finally:
         context.close()
+
+
+# ── 결과 표 읽기: 비동기 갱신·칸 병합·낡은 표 방지 (실제 브라우저) ─────────────────────
+
+CAFE_LIKE_HTML = """<!doctype html><html><head><meta charset="utf-8"><title>게시판</title></head><body>
+<form onsubmit="return false;"><input name="q" placeholder="검색어"><input type="submit" value="검색" onclick="search();return false;"></form>
+<div id="board"><table><thead><tr><th colspan="2">제목</th><th>작성자</th><th>작성일</th><th>조회수</th></tr></thead>
+<tbody><tr><td>공지</td><td>이전 목록 글</td><td>운영자</td><td>10.01</td><td>9</td></tr>
+<tr><td>1</td><td>다른 이전 글</td><td>관리</td><td>10.02</td><td>5</td></tr></tbody></table></div>
+<script>function search(){var q=document.getElementsByName('q')[0].value;var b=document.getElementById('board');b.innerHTML='';
+setTimeout(function(){b.innerHTML='<table><thead><tr><th colspan="2">제목</th><th>작성자</th><th>작성일</th><th>조회수</th></tr></thead><tbody>'
++'<tr><td>7</td><td>'+q+' 관련 글 하나</td><td>김공무</td><td>10.03</td><td>31</td></tr><tr><td>6</td><td>'+q+' 관련 글 둘</td><td>이현장</td><td>10.04</td><td>12</td></tr></tbody></table>';},1800);}</script>
+</body></html>"""
+
+NO_REFRESH_HTML = CAFE_LIKE_HTML.replace("setTimeout(function(){", "setTimeout(function(){return;").replace("b.innerHTML='';", "")  # 클릭해도 화면이 갱신되지 않는 사이트
+
+NO_TH_HTML = """<!doctype html><html><head><meta charset="utf-8"><title>목록</title></head><body>
+<form onsubmit="return false;"><input name="q"><input type="submit" value="조회" onclick="go();return false;"></form><div id="out"></div>
+<script>function go(){document.getElementById('out').innerHTML='<table><tr><td>이름</td><td>상태</td></tr><tr><td>가</td><td>정상</td></tr></table>';}</script></body></html>"""
+
+
+def _run_fixture(browser, html, query, tmp_path, monkeypatch):
+    monkeypatch.setattr(store, "_DIR", tmp_path / "maps")
+    context, page = make_page(browser, html)
+    try:
+        task = explored_task_for(page, "q")
+        values = tm.validate_run_request(task, {"q": query})
+        page.goto("about:blank")
+        return tr.execute_task(page, HOST, task, values)
+    finally:
+        context.close()
+
+
+def test_async_result_is_awaited_and_colspan_headers_align_with_cells(browser, tmp_path, monkeypatch):
+    """실사이트(카페) 실측 회귀: 클릭 직후 화면이 비동기로 다시 그려지는데 0.8초만 기다려 '결과 없음'이 됐고, 제목이 2칸(colspan)이라 열이 밀렸다."""
+    result = _run_fixture(browser, CAFE_LIKE_HTML, "공사대장", tmp_path, monkeypatch)
+    assert result["result_state"] == "fresh"
+    (table,) = result["tables"]
+    assert table["headers"] == ["제목", "제목(2)", "작성자", "작성일", "조회수"]  # 병합된 머리글을 펼쳐 데이터 칸(5)과 맞춘다
+    assert table["rows"][0] == ["7", "공사대장 관련 글 하나", "김공무", "10.03", "31"]
+    assert table["rows"][0][1] != "이전 목록 글" and table["total"] == 2 and "signature" not in table  # 이전 표가 아니라 갱신된 표, 내부 값 미노출
+
+
+def test_unchanged_screen_is_not_reported_as_a_result(browser, tmp_path, monkeypatch):
+    """클릭해도 화면이 갱신되지 않으면 이전 화면의 표를 결과로 내놓지 않는다(틀린 답을 내지 않기 위해)."""
+    monkeypatch.setattr(tr, "RESULT_WAIT_S", 1.2)
+    result = _run_fixture(browser, NO_REFRESH_HTML, "공사대장", tmp_path, monkeypatch)
+    assert result["tables"] == [] and result["result_state"] == "unchanged"
+
+
+def test_table_without_th_still_uses_first_row_as_headers(browser, tmp_path, monkeypatch):
+    result = _run_fixture(browser, NO_TH_HTML, "x", tmp_path, monkeypatch)
+    (table,) = result["tables"]
+    assert table["headers"] == ["이름", "상태"] and table["rows"] == [["가", "정상"]] and table["header_guessed"] is True
+
+
+def test_unchanged_note_is_reported_by_run_task(saved_map, monkeypatch):
+    out = run({"txtName": "x"}, monkeypatch, result={"steps_done": 3, "url": "u", "tables": [], "result_state": "unchanged"})
+    assert out["ok"] is True and "갱신됐는지 확인하지 못했습니다" in out["note"] and state_of()["state"] == "observed"
