@@ -183,6 +183,21 @@ API_REGISTRY: dict[str, dict[str, str]] = {
             "확정·취소는 사용자가 카드 버튼으로만 한다 — 대신 시도하지 말 것"
         ),
     },
+    # 사이트 업무 지도 — AI 는 '읽기'만. 지도 확정·결과 기록·탐색 실행은 이 목록에 없다.
+    "sitemap.list": {
+        "method": "GET",
+        "path": "/api/v1/site-map/hosts",
+        "desc": "이미 탐색해 저장한 사이트 지도 목록(호스트·업무 수·검증된 수, 읽기 전용). 사이트 작업 전에 먼저 확인할 것",
+    },
+    "sitemap.lookup": {
+        "method": "GET",
+        "path": "/api/v1/site-map/{host}/lookup",
+        "desc": (
+            "사이트 업무 지도에서 업무 후보와 절차(steps, 입력 필드, 위험 등급)를 찾는다(읽기 전용). path_params={'host': 'www.example.com'}, "
+            "query={q: 키워드(공백 구분, 비우면 전부), limit}. known=false 면 탐색된 적 없는 사이트 → 사용자에게 탐색을 요청. "
+            "응답의 rules 를 지킬 것: risk 가 read 인 업무만 steps 대로 실행, write·submit 은 참고만 하고 실행은 사람 승인"
+        ),
+    },
     "sessions.status": {
         "method": "GET",
         "path": "/api/v1/sessions/status",
