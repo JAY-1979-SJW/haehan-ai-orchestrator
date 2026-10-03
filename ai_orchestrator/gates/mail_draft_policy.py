@@ -13,47 +13,31 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..domain.mail_draft_states import (  # noqa: F401  (정책을 거쳐 쓰던 기존 이름을 그대로 다시 내보낸다)
+    CANCELLED,
+    DRAFT_TTL_DAYS,
+    EXPIRED,
+    FAILED,
+    OPEN_STATUSES,
+    PENDING,
+    SENDING,
+    SENT,
+    STATUSES,
+    UNKNOWN,
+    can_transition,
+)
+
 MAX_PENDING_DRAFTS = 50
 MAX_RECIPIENTS = 20
 DEFAULT_DAILY_SEND_CAP = 100
-DRAFT_TTL_DAYS = 7
 INSTRUCTIONS_MAX_CHARS = 4000
 MAX_ATTACH_FILES = 10
 MAX_ATTACH_BYTES = 20 * 1024 * 1024
-
-# 초안 상태
-PENDING, SENDING, SENT, FAILED, UNKNOWN, CANCELLED, EXPIRED = (
-    "pending",
-    "sending",
-    "sent",
-    "failed",
-    "unknown",
-    "cancelled",
-    "expired",
-)
-STATUSES = (PENDING, SENDING, SENT, FAILED, UNKNOWN, CANCELLED, EXPIRED)
-OPEN_STATUSES = (PENDING, FAILED)  # 사람이 아직 처리할 수 있는 초안
-
-# sending → unknown 은 "전송 요청이 나간 뒤 결과를 알 수 없음" — 자동 재시도 금지, 사람이 확인(중복 발송 방지)
-_TRANSITIONS: dict[str, frozenset[str]] = {
-    PENDING: frozenset({SENDING, CANCELLED, EXPIRED}),
-    SENDING: frozenset({SENT, FAILED, UNKNOWN}),
-    FAILED: frozenset({SENDING, CANCELLED, EXPIRED}),  # 명확한 실패(전송 전)는 사람이 다시 눌러 재시도할 수 있다
-    SENT: frozenset(),
-    UNKNOWN: frozenset(),
-    CANCELLED: frozenset(),
-    EXPIRED: frozenset(),
-}
-
 
 @dataclass(frozen=True)
 class Decision:
     allowed: bool
     reason: str = ""
-
-
-def can_transition(current: str, target: str) -> bool:
-    return target in _TRANSITIONS.get(current, frozenset())
 
 
 def daily_cap() -> int:

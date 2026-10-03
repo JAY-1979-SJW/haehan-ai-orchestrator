@@ -20880,6 +20880,22 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/domain/gongmu_defaults.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "저장소(L7)와 정책(L2)이 함께 읽는 공무 업무 상태 어휘·기준값·PlannedTask(순수 값, 부작용 없음) — L7 은 L1 만 읽을 수 있어 정책에서 분리한 L1 계약. dataclass 규칙에 우연히 기대지 않고 명시한다",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/domain/mail_draft_states.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "저장소(L7)와 정책(L2)이 함께 읽는 메일 초안 상태 어휘·전이표(순수 값, 부작용 없음) — L7 은 L1 만 읽을 수 있어 정책에서 분리한 L1 계약. 이름 신호가 없어 기본값 L4 로 오분류되는 것을 막는다",
+   "confidence": "high",
+   "source": "confirmed"
   }
  }
 }

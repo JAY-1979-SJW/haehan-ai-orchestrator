@@ -20,7 +20,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ..gates import mail_draft_policy as policy
+from ..domain import mail_draft_states as states
 from .sqlite_schema import apply_schema
 
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "naver_mail_drafts.db"
@@ -147,7 +147,7 @@ def create_draft(  # noqa: PLR0913 - 초안 한 통의 필드(받는 사람·참
 ) -> dict[str, Any]:
     draft_id = uuid.uuid4().hex
     now = _now()
-    expires = (datetime.now(UTC) + timedelta(days=policy.DRAFT_TTL_DAYS)).isoformat(timespec="seconds")
+    expires = (datetime.now(UTC) + timedelta(days=states.DRAFT_TTL_DAYS)).isoformat(timespec="seconds")
     with _conn() as con:
         con.execute(
             "INSERT INTO drafts (id, account, to_json, cc_json, bcc_json, subject, body_text, body_html, attachments_json, "
@@ -156,7 +156,7 @@ def create_draft(  # noqa: PLR0913 - 초안 한 통의 필드(받는 사람·참
             (
                 draft_id, account, json.dumps(to, ensure_ascii=False), json.dumps(cc or [], ensure_ascii=False),
                 json.dumps(bcc or [], ensure_ascii=False), subject, body_text, body_html,
-                json.dumps(attachments or [], ensure_ascii=False), in_reply_to, references, policy.PENDING,
+                json.dumps(attachments or [], ensure_ascii=False), in_reply_to, references, states.PENDING,
                 created_by, now, now, expires,
             ),
         )  # fmt: skip
@@ -192,14 +192,14 @@ def count_pending(account: str) -> int:
     with _conn() as con:
         return int(
             con.execute(
-                "SELECT COUNT(*) FROM drafts WHERE account = ? AND status IN (?, ?)", (account, *policy.OPEN_STATUSES)
+                "SELECT COUNT(*) FROM drafts WHERE account = ? AND status IN (?, ?)", (account, *states.OPEN_STATUSES)
             ).fetchone()[0]
         )
 
 
 def transition(draft_id: str, to_status: str, *, only_from: tuple[str, ...], **fields: Any) -> bool:
     """상태를 `only_from` 중 하나일 때만 바꾼다(원자적). 바뀌었으면 True — 동시에 두 번 눌러도 한 쪽만 True."""
-    allowed = [s for s in only_from if policy.can_transition(s, to_status)]
+    allowed = [s for s in only_from if states.can_transition(s, to_status)]
     if not allowed:
         return False
     now = _now()
@@ -234,10 +234,10 @@ def expire_old() -> int:
         ids = [
             r[0]
             for r in con.execute(
-                "SELECT id FROM drafts WHERE status IN (?, ?) AND expires_at < ?", (*policy.OPEN_STATUSES, now)
+                "SELECT id FROM drafts WHERE status IN (?, ?) AND expires_at < ?", (*states.OPEN_STATUSES, now)
             ).fetchall()
         ]
-    return sum(1 for i in ids if transition(i, policy.EXPIRED, only_from=policy.OPEN_STATUSES))
+    return sum(1 for i in ids if transition(i, states.EXPIRED, only_from=states.OPEN_STATUSES))
 
 
 def is_expired(draft: dict[str, Any]) -> bool:

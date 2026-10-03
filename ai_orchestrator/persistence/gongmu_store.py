@@ -19,8 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.gates import gongmu_task_policy as policy
-
+from ..domain import gongmu_defaults as defaults
 from .sqlite_schema import apply_schema
 
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "gongmu.db"
@@ -116,7 +115,7 @@ def _conn():
 
 def _seed_catalog(con: sqlite3.Connection) -> None:
     """없는 코드만 넣는다. 화면이 요청 여러 개를 동시에 보내면 연결마다 시드가 겹치므로 INSERT OR IGNORE 로 경합을 흡수한다."""
-    for item in policy.DEFAULT_CATALOG:
+    for item in defaults.DEFAULT_CATALOG:
         con.execute(
             "INSERT OR IGNORE INTO task_catalog(code,name,category,trigger,description,basis,condition,due_rule,docs,"
             "submit_to,verify_law,enabled) VALUES(?,?,?,?,?,?,?,?,?,?,?,1)",
@@ -162,7 +161,7 @@ def _contract_row(row: sqlite3.Row) -> dict[str, Any]:
 def get_settings() -> dict[str, int]:
     with _conn() as con:
         stored = {r["key"]: r["value"] for r in con.execute("SELECT key,value FROM settings")}
-    return policy.merged_settings(stored)
+    return defaults.merged_settings(stored)
 
 
 def update_settings(values: dict[str, int], *, actor: str) -> dict[str, int]:
@@ -279,7 +278,7 @@ def list_contracts(site_id: str) -> list[dict[str, Any]]:
 # ── 업무 ──────────────────────────────────────────────────────────────────
 
 
-def insert_planned(planned: list[policy.PlannedTask], *, actor: str) -> list[str]:
+def insert_planned(planned: list[defaults.PlannedTask], *, actor: str) -> list[str]:
     """계획된 업무를 넣는다. dedupe_key 가 이미 있으면 건너뛴다. 새로 만든 task id 목록을 돌려준다."""
     created: list[str] = []
     with _conn() as con:
@@ -298,7 +297,7 @@ def insert_planned(planned: list[policy.PlannedTask], *, actor: str) -> list[str
                         item.catalog_code,
                         item.period,
                         item.due_date.isoformat() if item.due_date else None,
-                        policy.TODO,
+                        defaults.TODO,
                         item.reason,
                         now,
                         now,
@@ -357,10 +356,10 @@ def get_task(task_id: str) -> dict[str, Any] | None:
 
 
 def set_task_status(task_id: str, status: str, *, actor: str) -> bool:
-    if status not in policy.STATUSES:
+    if status not in defaults.STATUSES:
         raise ValueError(f"알 수 없는 상태: {status}")
     with _conn() as con:
-        done_at = _now() if status == policy.DONE else None
+        done_at = _now() if status == defaults.DONE else None
         cur = con.execute(
             "UPDATE tasks SET status=?, completed_at=?, updated_at=? WHERE id=?", (status, done_at, _now(), task_id)
         )
