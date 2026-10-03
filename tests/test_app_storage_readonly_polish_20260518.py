@@ -6,7 +6,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "storage" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+PAGE = assistant_route("storage", "page.tsx")
 
 def _src(p: Path) -> str:
     return p.read_text(encoding="utf-8") if p.exists() else ""

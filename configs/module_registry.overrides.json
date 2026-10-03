@@ -901,5 +901,17 @@
   "role": "workflow",
   "reason": "메일 순차 대량 발송 워크플로(승인서→정책 판정→한 명씩 발송→이력 기록, docstring 1행이 'L6 워크플로') — 파일 안 dataclass 때문에 정의 위주 L1 contract 로 오분류. 같은 폴더 naver_mail_drafts·naver_mailbox_flow 와 같은 유형",
   "source": "manual"
+ },
+ "ai_orchestrator/contracts/agent_result_limits.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "파일 docstring이 'L1 공유 계약 — 순수 상수' 선언, 에이전트 결과 전문 길이 상한 단일 정본 — L4 generic 오분류 방지",
+  "source": "manual"
+ },
+ "ai_orchestrator/contracts/__init__.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "L1 공유 계약 끝점 폴더(import 없음) — 루트/persistence 양방향 순환 방지",
+  "source": "manual"
  }
 }

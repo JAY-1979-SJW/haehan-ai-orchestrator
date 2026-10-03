@@ -10,7 +10,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-LOGS_PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "logs" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+LOGS_PAGE = assistant_route("logs", "page.tsx")
 AUDIT_LIST = ROOT / "admin-web" / "src" / "components" / "assistant" / "AuditLogList.tsx"
 API_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "api.ts"
 TYPES_FILE = ROOT / "admin-web" / "src" / "types" / "assistant.ts"
@@ -286,11 +288,11 @@ class TestMockDiversity:
 # ── 회귀: baseline sync 유지 ─────────────────────────────────────────────────
 class TestBaselineRegression:
     def test_dashboard_uses_get_app_health_summary(self):
-        dashboard = ROOT / "admin-web" / "src" / "app" / "assistant" / "page.tsx"
+        dashboard = assistant_route("page.tsx")
         assert "getAppHealthSummary" in _src(dashboard)
 
     def test_task_queue_uses_task_table(self):
-        tasks = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "page.tsx"
+        tasks = assistant_route("tasks", "page.tsx")
         assert "TaskTable" in _src(tasks)
 
     def test_task_detail_read_only_panel(self):
