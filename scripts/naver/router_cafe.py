@@ -17,10 +17,286 @@ from .router_common import (
 )
 
 
-def _cmd_cafe(sub: str, args: list[str]) -> None:
+def _cafe_list(args: list[str]) -> None:
+    """cafe list/cafes."""
     from datetime import datetime
     from pathlib import Path
 
+    gate_check("scan_page")
+    from scripts.naver.cafe import list_background_runner
+
+    strict_domain = "--strict-domain" in args
+    report = list_background_runner.collect_background(
+        allow_mixed_readonly=not strict_domain,
+        per_page=_int_option(args, "--per-page=", 100),
+    )
+    if not report.ok:
+        raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+    out = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "cafes": report.cafes,
+        "favorites": report.favorites,
+        "manages": report.manages,
+        "joined_total": report.joined_total,
+        "favorite_total": report.favorite_total,
+        "manage_total": report.manage_total,
+        "readonly": True,
+        "attach_only": True,
+        "browser_launch": False,
+        "browser_close": False,
+    }
+    path = Path("data/naver_cafes_latest.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    print(f"saved: {path}")
+
+
+def _cafe_home(args: list[str]) -> None:
+    """cafe home/main."""
+    from datetime import datetime
+    from pathlib import Path
+
+    gate_check("scan_page")
+    from scripts.naver.cafe import list_background_runner
+
+    strict_domain = "--strict-domain" in args
+    report = list_background_runner.collect_main_background(
+        allow_mixed_readonly=not strict_domain,
+    )
+    if not report.ok:
+        raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+    out = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        **report.to_dict(),
+        "readonly": True,
+        "attach_only": True,
+        "browser_launch": False,
+        "browser_close": False,
+    }
+    path = Path("data/naver_cafe_main_latest.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    print(f"saved: {path}")
+
+
+def _cafe_topic_search(args: list[str]) -> None:
+    """cafe topic-search."""
+    from datetime import datetime
+    from pathlib import Path
+
+    gate_check("scan_page")
+    from scripts.naver.cafe import list_background_runner
+
+    strict_domain = "--strict-domain" in args
+    query = _option_phrase(args, "--query=") or _option_value(args, "--keywords=") or ""
+    report = list_background_runner.collect_topic_search_background(
+        allow_mixed_readonly=not strict_domain,
+        keywords=query,
+        limit_per_keyword=_int_option(args, "--limit=", 10),
+    )
+    if not report.ok:
+        raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+    out = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        **report.to_dict(),
+        "readonly": True,
+        "attach_only": True,
+        "browser_launch": False,
+        "browser_close": False,
+    }
+    path = Path("data/naver_cafe_topic_search_latest.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    print(f"saved: {path}")
+
+
+def _cafe_join_submit(args: list[str]) -> None:
+    """cafe join-submit(승인 게이트)."""
+    from datetime import datetime
+    from pathlib import Path
+
+    from scripts.naver.cafe.join_request import APPROVAL_CONFIRM_TEXT
+
+    cafe_url = (
+        _option_value(args, "--cafe-url=")
+        or _option_value(args, "--cafe=")
+        or (args[0] if args and not str(args[0]).startswith("--") else "")
+    )
+    approved = "--approved" in args
+    confirm = _option_value(args, "--confirm=") or ""
+    approved_by = _option_value(args, "--approved-by=") or "operator"
+    if not cafe_url:
+        raise SystemExit("cafe join-submit requires --cafe-url=CAFE")
+    if not approved or confirm != APPROVAL_CONFIRM_TEXT:
+        raise SystemExit(f"cafe join-submit requires --approved --confirm={APPROVAL_CONFIRM_TEXT}")
+    gate_check(
+        "naver_cafe_join_submit",
+        risk="approve",
+        force=True,
+        service="naver_cafe",
+        cafe_url=cafe_url,
+        approved_by=approved_by,
+    )
+    out = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "ok": True,
+        "cafe_url": cafe_url,
+        "approval_gate": "naver_cafe_join_submit",
+        "approved_by": approved_by,
+        "browser_submit_executed": False,
+        "final_click_adapter_required": True,
+        "message": "Join submit approval gate passed; final browser click must be executed by a visible-form adapter.",
+    }
+    safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
+    path = Path(f"data/naver_cafe_{safe_cafe}_join_submit_latest.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    print(f"saved: {path}")
+
+
+def _cafe_join_request(args: list[str]) -> None:
+    """cafe join-request(준비 전용)."""
+    from datetime import datetime
+    from pathlib import Path
+
+    gate_check("scan_page")
+    from scripts.naver.cafe import list_background_runner
+
+    strict_domain = "--strict-domain" in args
+    cafe_url = (
+        _option_value(args, "--cafe-url=")
+        or _option_value(args, "--cafe=")
+        or (args[0] if args and not str(args[0]).startswith("--") else "")
+    )
+    if not cafe_url:
+        raise SystemExit("cafe join-request requires --cafe-url=CAFE")
+    nickname = _option_phrase(args, "--nickname=") or ""
+    purpose = _option_phrase(args, "--purpose=") or ""
+    answers = {}
+    for arg in args:
+        text = str(arg)
+        if text.startswith("--answer=") and ":" in text:
+            key, value = text.split("=", 1)[1].split(":", 1)
+            answers[key.strip()] = value.strip()
+    report = list_background_runner.collect_joined_cafe_background(
+        cafe_url=cafe_url,
+        mode="join-request",
+        allow_mixed_readonly=not strict_domain,
+        nickname=nickname,
+        purpose=purpose,
+        answers=answers,
+    )
+    if not report.ok:
+        raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+    out = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        **report.to_dict(),
+        "readonly": False,
+        "prepare_only": True,
+        "approval_required": True,
+        "final_submit_blocked": True,
+        "attach_only": True,
+        "browser_launch": False,
+        "browser_close": False,
+    }
+    safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
+    path = Path(f"data/naver_cafe_{safe_cafe}_join_request_latest.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    print(f"saved: {path}")
+
+
+def _cafe_collect(sub: str, args: list[str]) -> None:
+    """cafe collect/boards."""
+    from datetime import datetime
+    from pathlib import Path
+
+    gate_check("scan_page")
+    from scripts.naver.cafe import list_background_runner
+
+    strict_domain = "--strict-domain" in args
+    cafe_url = (
+        _option_value(args, "--cafe-url=")
+        or _option_value(args, "--cafe=")
+        or (args[0] if args and not str(args[0]).startswith("--") else "soho")
+    )
+    mode = "boards" if sub in ("boards", "collect-boards") or "--boards" in args else "home"
+    report = list_background_runner.collect_joined_cafe_background(
+        cafe_url=cafe_url,
+        mode=mode,
+        allow_mixed_readonly=not strict_domain,
+    )
+    if not report.ok:
+        raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+    out = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        **report.to_dict(),
+        "readonly": True,
+        "attach_only": True,
+        "browser_launch": False,
+        "browser_close": False,
+    }
+    suffix = "boards" if mode == "boards" else "collect"
+    safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
+    path = Path(f"data/naver_cafe_{safe_cafe}_{suffix}_latest.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    print(f"saved: {path}")
+
+
+def _cafe_posts(args: list[str]) -> None:
+    """cafe posts."""
+    from datetime import datetime
+
+    from scripts.naver.cafe import NaverCafe
+    from scripts.web_connector import get_page
+
+    gate_check("scan_page")
+    cafe_url = _option_value(args, "--cafe-url=") or (args[0] if args and not str(args[0]).startswith("--") else "")
+    board_no = _option_value(args, "--board-no=") or _option_value(args, "--board=") or ""
+    limit = _int_option(args, "--limit=", 30)
+    if not cafe_url:
+        raise SystemExit("cafe posts requires --cafe-url=URL [--board-no=N] [--limit=30]")
+    page = get_page()
+    posts = NaverCafe(page).list_posts(cafe_url=cafe_url, board_no=board_no, limit=limit)
+    out = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "cafe_url": cafe_url,
+        "board_no": board_no,
+        "posts": posts,
+    }
+    _print_saved(out, _save_latest("naver_cafe_posts_latest.json", out))
+
+
+def _cafe_read(args: list[str]) -> None:
+    """cafe read."""
+    from datetime import datetime
+
+    from scripts.naver.cafe import NaverCafe
+    from scripts.web_connector import get_page
+
+    gate_check("scan_page")
+    post_url = (
+        _option_value(args, "--post-url=")
+        or _option_value(args, "--url=")
+        or (args[0] if args and not str(args[0]).startswith("--") else "")
+    )
+    if not post_url:
+        raise SystemExit("cafe read requires --post-url=URL")
+    page = get_page()
+    post = NaverCafe(page).read_post(post_url)
+    out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "post_url": post_url, "post": post}
+    _print_saved(out, _save_latest("naver_cafe_post_latest.json", out))
+
+
+def _cafe_write(sub: str, args: list[str]) -> None:
+    """cafe write/prepare-post/publish (승인 게이트 포함)."""
     from scripts.naver.cafe import NaverCafe
     from scripts.naver.content import (
         APPROVAL_CONFIRM_TEXT,
@@ -29,248 +305,6 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
         save_cafe_write_plan,
     )
     from scripts.web_connector import get_page
-
-    if sub in ("list", "cafes"):
-        gate_check("scan_page")
-        from scripts.naver.cafe import list_background_runner
-
-        strict_domain = "--strict-domain" in args
-        report = list_background_runner.collect_background(
-            allow_mixed_readonly=not strict_domain,
-            per_page=_int_option(args, "--per-page=", 100),
-        )
-        if not report.ok:
-            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
-        out = {
-            "generated_at": datetime.now().isoformat(timespec="seconds"),
-            "cafes": report.cafes,
-            "favorites": report.favorites,
-            "manages": report.manages,
-            "joined_total": report.joined_total,
-            "favorite_total": report.favorite_total,
-            "manage_total": report.manage_total,
-            "readonly": True,
-            "attach_only": True,
-            "browser_launch": False,
-            "browser_close": False,
-        }
-        path = Path("data/naver_cafes_latest.json")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        print(f"saved: {path}")
-        return
-
-    if sub in ("home", "main", "main-page"):
-        gate_check("scan_page")
-        from scripts.naver.cafe import list_background_runner
-
-        strict_domain = "--strict-domain" in args
-        report = list_background_runner.collect_main_background(
-            allow_mixed_readonly=not strict_domain,
-        )
-        if not report.ok:
-            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
-        out = {
-            "generated_at": datetime.now().isoformat(timespec="seconds"),
-            **report.to_dict(),
-            "readonly": True,
-            "attach_only": True,
-            "browser_launch": False,
-            "browser_close": False,
-        }
-        path = Path("data/naver_cafe_main_latest.json")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        print(f"saved: {path}")
-        return
-
-    if sub in ("topic-search", "search", "topics"):
-        gate_check("scan_page")
-        from scripts.naver.cafe import list_background_runner
-
-        strict_domain = "--strict-domain" in args
-        query = _option_phrase(args, "--query=") or _option_value(args, "--keywords=") or ""
-        report = list_background_runner.collect_topic_search_background(
-            allow_mixed_readonly=not strict_domain,
-            keywords=query,
-            limit_per_keyword=_int_option(args, "--limit=", 10),
-        )
-        if not report.ok:
-            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
-        out = {
-            "generated_at": datetime.now().isoformat(timespec="seconds"),
-            **report.to_dict(),
-            "readonly": True,
-            "attach_only": True,
-            "browser_launch": False,
-            "browser_close": False,
-        }
-        path = Path("data/naver_cafe_topic_search_latest.json")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        print(f"saved: {path}")
-        return
-
-    if sub in ("join-submit", "join-approve"):
-        from scripts.naver.cafe.join_request import APPROVAL_CONFIRM_TEXT
-
-        cafe_url = (
-            _option_value(args, "--cafe-url=")
-            or _option_value(args, "--cafe=")
-            or (args[0] if args and not str(args[0]).startswith("--") else "")
-        )
-        approved = "--approved" in args
-        confirm = _option_value(args, "--confirm=") or ""
-        approved_by = _option_value(args, "--approved-by=") or "operator"
-        if not cafe_url:
-            raise SystemExit("cafe join-submit requires --cafe-url=CAFE")
-        if not approved or confirm != APPROVAL_CONFIRM_TEXT:
-            raise SystemExit(f"cafe join-submit requires --approved --confirm={APPROVAL_CONFIRM_TEXT}")
-        gate_check(
-            "naver_cafe_join_submit",
-            risk="approve",
-            force=True,
-            service="naver_cafe",
-            cafe_url=cafe_url,
-            approved_by=approved_by,
-        )
-        out = {
-            "generated_at": datetime.now().isoformat(timespec="seconds"),
-            "ok": True,
-            "cafe_url": cafe_url,
-            "approval_gate": "naver_cafe_join_submit",
-            "approved_by": approved_by,
-            "browser_submit_executed": False,
-            "final_click_adapter_required": True,
-            "message": "Join submit approval gate passed; final browser click must be executed by a visible-form adapter.",
-        }
-        safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
-        path = Path(f"data/naver_cafe_{safe_cafe}_join_submit_latest.json")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        print(f"saved: {path}")
-        return
-
-    if sub in ("join", "join-request", "join-prepare", "approval-request"):
-        gate_check("scan_page")
-        from scripts.naver.cafe import list_background_runner
-
-        strict_domain = "--strict-domain" in args
-        cafe_url = (
-            _option_value(args, "--cafe-url=")
-            or _option_value(args, "--cafe=")
-            or (args[0] if args and not str(args[0]).startswith("--") else "")
-        )
-        if not cafe_url:
-            raise SystemExit("cafe join-request requires --cafe-url=CAFE")
-        nickname = _option_phrase(args, "--nickname=") or ""
-        purpose = _option_phrase(args, "--purpose=") or ""
-        answers = {}
-        for arg in args:
-            text = str(arg)
-            if text.startswith("--answer=") and ":" in text:
-                key, value = text.split("=", 1)[1].split(":", 1)
-                answers[key.strip()] = value.strip()
-        report = list_background_runner.collect_joined_cafe_background(
-            cafe_url=cafe_url,
-            mode="join-request",
-            allow_mixed_readonly=not strict_domain,
-            nickname=nickname,
-            purpose=purpose,
-            answers=answers,
-        )
-        if not report.ok:
-            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
-        out = {
-            "generated_at": datetime.now().isoformat(timespec="seconds"),
-            **report.to_dict(),
-            "readonly": False,
-            "prepare_only": True,
-            "approval_required": True,
-            "final_submit_blocked": True,
-            "attach_only": True,
-            "browser_launch": False,
-            "browser_close": False,
-        }
-        safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
-        path = Path(f"data/naver_cafe_{safe_cafe}_join_request_latest.json")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        print(f"saved: {path}")
-        return
-
-    if sub in ("collect", "collect-home", "member-collect", "boards", "collect-boards"):
-        gate_check("scan_page")
-        from scripts.naver.cafe import list_background_runner
-
-        strict_domain = "--strict-domain" in args
-        cafe_url = (
-            _option_value(args, "--cafe-url=")
-            or _option_value(args, "--cafe=")
-            or (args[0] if args and not str(args[0]).startswith("--") else "soho")
-        )
-        mode = "boards" if sub in ("boards", "collect-boards") or "--boards" in args else "home"
-        report = list_background_runner.collect_joined_cafe_background(
-            cafe_url=cafe_url,
-            mode=mode,
-            allow_mixed_readonly=not strict_domain,
-        )
-        if not report.ok:
-            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
-        out = {
-            "generated_at": datetime.now().isoformat(timespec="seconds"),
-            **report.to_dict(),
-            "readonly": True,
-            "attach_only": True,
-            "browser_launch": False,
-            "browser_close": False,
-        }
-        suffix = "boards" if mode == "boards" else "collect"
-        safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
-        path = Path(f"data/naver_cafe_{safe_cafe}_{suffix}_latest.json")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(json.dumps(out, ensure_ascii=False, indent=2))
-        print(f"saved: {path}")
-        return
-
-    if sub in ("posts", "list-posts", "articles"):
-        gate_check("scan_page")
-        cafe_url = _option_value(args, "--cafe-url=") or (args[0] if args and not str(args[0]).startswith("--") else "")
-        board_no = _option_value(args, "--board-no=") or _option_value(args, "--board=") or ""
-        limit = _int_option(args, "--limit=", 30)
-        if not cafe_url:
-            raise SystemExit("cafe posts requires --cafe-url=URL [--board-no=N] [--limit=30]")
-        page = get_page()
-        posts = NaverCafe(page).list_posts(cafe_url=cafe_url, board_no=board_no, limit=limit)
-        out = {
-            "generated_at": datetime.now().isoformat(timespec="seconds"),
-            "cafe_url": cafe_url,
-            "board_no": board_no,
-            "posts": posts,
-        }
-        _print_saved(out, _save_latest("naver_cafe_posts_latest.json", out))
-        return
-
-    if sub in ("read", "read-post", "post"):
-        gate_check("scan_page")
-        post_url = (
-            _option_value(args, "--post-url=")
-            or _option_value(args, "--url=")
-            or (args[0] if args and not str(args[0]).startswith("--") else "")
-        )
-        if not post_url:
-            raise SystemExit("cafe read requires --post-url=URL")
-        page = get_page()
-        post = NaverCafe(page).read_post(post_url)
-        out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "post_url": post_url, "post": post}
-        _print_saved(out, _save_latest("naver_cafe_post_latest.json", out))
-        return
 
     if sub not in ("write", "prepare-post", "publish"):
         print(
@@ -333,6 +367,42 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
     path = save_cafe_submit_record(record)
     print(json.dumps(record, ensure_ascii=False, indent=2))
     print(f"saved: {path}")
+
+
+def _cmd_cafe(sub: str, args: list[str]) -> None:
+    if sub in ("list", "cafes"):
+        _cafe_list(args)
+        return
+
+    if sub in ("home", "main", "main-page"):
+        _cafe_home(args)
+        return
+
+    if sub in ("topic-search", "search", "topics"):
+        _cafe_topic_search(args)
+        return
+
+    if sub in ("join-submit", "join-approve"):
+        _cafe_join_submit(args)
+        return
+
+    if sub in ("join", "join-request", "join-prepare", "approval-request"):
+        _cafe_join_request(args)
+        return
+
+    if sub in ("collect", "collect-home", "member-collect", "boards", "collect-boards"):
+        _cafe_collect(sub, args)
+        return
+
+    if sub in ("posts", "list-posts", "articles"):
+        _cafe_posts(args)
+        return
+
+    if sub in ("read", "read-post", "post"):
+        _cafe_read(args)
+        return
+
+    _cafe_write(sub, args)
 
 
 def _cmd_calendar(sub: str, args: list[str]) -> None:

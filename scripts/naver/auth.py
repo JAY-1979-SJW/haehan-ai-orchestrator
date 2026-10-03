@@ -24,11 +24,11 @@ from __future__ import annotations
 
 import os
 import time
-from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
 from scripts.critical_logger import log_critical
+from scripts.human_input import safe_human_input
 from scripts.logger import get_logger
 from scripts.login_detector import detect_login_state, wait_for_login_generic
 from security_utils import mask_identifier
@@ -44,16 +44,8 @@ NAVER_LOGIN_URL = "https://www.naver.com/"
 # ── 자격증명 로드 ──────────────────────────────────────────────────────────
 
 
-def _load_credentials(
-    naver_id: str | None = None,
-    naver_pw: str | None = None,
-) -> tuple[str | None, str | None]:
-    """ID/PW 조회. 파라미터 → 통합 저장소(credentials.json, 암호화) → 환경변수 → 레거시 파일."""
-    nid = naver_id
-    pw = naver_pw
-
-    # 1. 통합 저장소 (암호화) — 계정별 "naver:ID" 키 우선, 없으면 기본 "naver"
-    # 단, nid가 명시된 경우 기본 "naver" 계정으로 폴백하지 않음 (다른 계정 PW 혼용 방지)
+def _load_from_cred_store(nid: str | None, pw: str | None) -> tuple[str | None, str | None]:
+    """통합 저장소(암호화)에서 ID/PW 보충."""
     if not pw:
         try:
             from scripts.credentials import get_cred
@@ -69,14 +61,11 @@ def _load_credentials(
                 pw = cred["pw"]
         except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
             _log.debug("통합 자격증명 로드 실패: %s", e)
+    return nid, pw
 
-    # 2. 환경변수
-    if not nid:
-        nid = os.environ.get("NAVER_ID")
-    if not pw:
-        pw = os.environ.get("NAVER_PW")
 
-    # 3. 레거시 평문 파일 (백업 경로) — 폐지 예정. 값은 로그에 남기지 않는다.
+def _load_from_legacy_file(nid: str | None, pw: str | None) -> tuple[str | None, str | None]:
+    """레거시 평문 파일에서 ID/PW 보충."""
     if (not nid or not pw) and ENV_FILE.exists():
         _log.warning(
             "[naver-auth] 평문 자격증명 파일을 사용 중 — `python scripts/credentials.py migrate` 로 암호화 저장소로 이전하세요"
@@ -97,6 +86,29 @@ def _load_credentials(
                     pw = v
         except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
             _log.debug("자격증명 파일 읽기 실패: %s", e)
+    return nid, pw
+
+
+def _load_credentials(
+    naver_id: str | None = None,
+    naver_pw: str | None = None,
+) -> tuple[str | None, str | None]:
+    """ID/PW 조회. 파라미터 → 통합 저장소(credentials.json, 암호화) → 환경변수 → 레거시 파일."""
+    nid = naver_id
+    pw = naver_pw
+
+    # 1. 통합 저장소 (암호화) — 계정별 "naver:ID" 키 우선, 없으면 기본 "naver"
+    # 단, nid가 명시된 경우 기본 "naver" 계정으로 폴백하지 않음 (다른 계정 PW 혼용 방지)
+    nid, pw = _load_from_cred_store(nid, pw)
+
+    # 2. 환경변수
+    if not nid:
+        nid = os.environ.get("NAVER_ID")
+    if not pw:
+        pw = os.environ.get("NAVER_PW")
+
+    # 3. 레거시 평문 파일 (백업 경로) — 폐지 예정. 값은 로그에 남기지 않는다.
+    nid, pw = _load_from_legacy_file(nid, pw)
 
     return nid, pw
 
@@ -120,82 +132,9 @@ def save_credentials(naver_id: str, naver_pw: str) -> Path:
 # ── 봇 감지 회피 타이핑 + 안전 입력 ────────────────────────────────────────
 
 
-def _safe_human_input(page, selector: str, value: str, label: str = "필드", delay_ms: int = 80) -> dict:
-    """입력 전 필드 검사 → 기존 값 처리 후 사람처럼 타이핑.
-
-    동작:
-      1. 현재 입력 값 확인
-      2. 비어있음 → 바로 입력
-      3. 같은 값 → skip
-      4. 다른 값 → 전체 선택 + 삭제 후 새 값 입력
-      5. 입력 후 검증 (실제 값이 들어갔는지)
-
-    Returns:
-        {ok, action: "skip"|"empty"|"replaced", before, after}
-    """
-    try:
-        el = page.locator(selector).first
-        try:
-            el.wait_for(state="visible", timeout=5000)
-        except Exception:
-            # Naver can report the input as visible in the call log while
-            # wait_for still times out during dynamic security script setup.
-            if not el.is_visible(timeout=1000):
-                raise
-
-        # 1. 현재 값 확인
-        current = ""
-        with suppress(Exception):
-            current = el.input_value(timeout=1500) or ""
-
-        # 2. 분기
-        if current == value:
-            _log.info("[naver-auth] %s 동일 값 — skip", label)
-            return {"ok": True, "action": "skip", "before": current, "after": current}
-
-        if current:
-            # 다른 값 있음 → 전체 선택 + 삭제
-            _log.warning("[naver-auth] %s 에 다른 값 존재 (%d자) — 삭제 후 재입력", label, len(current))
-            el.click(timeout=2000)
-            time.sleep(0.3)
-            page.keyboard.press("Control+a")
-            time.sleep(0.15)
-            page.keyboard.press("Delete")
-            time.sleep(0.3)
-            # 삭제 확인
-            after_clear = ""
-            with suppress(Exception):
-                after_clear = el.input_value(timeout=1000) or ""
-            if after_clear:
-                # 여전히 남아있으면 fill로 한번 더
-                with suppress(Exception):
-                    el.fill("", timeout=1500)
-            action = "replaced"
-        else:
-            action = "empty"
-
-        # 3. 새 값 입력 (사람처럼 한 글자씩)
-        el.click(timeout=2000)
-        time.sleep(0.4)
-        for ch in value:
-            page.keyboard.type(ch, delay=delay_ms)
-        time.sleep(0.3)
-
-        # 4. 입력 검증
-        final = ""
-        with suppress(Exception):
-            final = el.input_value(timeout=1500) or ""
-
-        if final != value:
-            _log.warning("[naver-auth] %s 입력 검증 실패 (기대=%d자, 실제=%d자)", label, len(value), len(final))
-            return {"ok": False, "action": action, "before": current, "after": final, "reason": "value_mismatch"}
-
-        _log.info("[naver-auth] %s 입력 완료 (%s, %d자)", label, action, len(value))
-        return {"ok": True, "action": action, "before": current, "after": final}
-
-    except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
-        _log.error("[naver-auth] %s 입력 실패: %s", label, e)
-        return {"ok": False, "action": "error", "reason": str(e)[:80]}
+# 입력 칸 클릭 대기 시간. 2초는 PC 가 느릴 때(메모리 부족·다른 작업 부하) 네이버 로그인 폼의 안정화·페이지 이동 대기를
+# 못 기다려 아이디/비밀번호 칸 클릭이 번갈아 시간 초과됐다(2026-09-30 실측). 실패해도 제출 전이라 안전하므로 넉넉히 둔다.
+_INPUT_CLICK_TIMEOUT_MS = 8000
 
 
 def _redact_input_result(result: dict) -> dict:
@@ -207,15 +146,6 @@ def _redact_input_result(result: dict) -> dict:
             redacted[f"{key}_len"] = len(value)
             redacted[key] = "[REDACTED]" if value else ""
     return redacted
-
-
-def _human_type(page, selector: str, text: str, delay_ms: int = 80) -> None:
-    """[deprecated] _safe_human_input 사용 권장. 호환성 유지용."""
-    el = page.locator(selector).first
-    el.click(timeout=3000)
-    time.sleep(0.4)
-    for ch in text:
-        page.keyboard.type(ch, delay=delay_ms)
 
 
 # ── 캡차/보안문자 감지 ─────────────────────────────────────────────────────
@@ -318,6 +248,74 @@ def _detect_captcha(page) -> bool:
 # ── 메인 로그인 함수 ────────────────────────────────────────────────────────
 
 
+def _existing_login_verdict(page, nid: str, force_relogin: bool) -> dict[str, Any] | None:
+    """이미 로그인돼 있을 때의 결과. 로그인이 안 돼 있거나 판정에 실패하면 None(로그인 절차로 진행).
+
+    사용자명을 모르면(요소 기준 판정은 화면에 이름이 없으면 None) "다른 사용자"라고 단정하지 않고
+    `logged_in_account_unknown` 으로 알린다 — 올바르게 로그인된 세션을 다른 사용자로 오판하지 않기 위해(2026-10-01).
+    """
+    try:
+        state = detect_login_state(page)
+        if not state.get("logged_in") or "naver" not in page.url or force_relogin:
+            return None
+        current_user = state.get("user") or ""
+    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
+        return None
+    if (current_user and nid in current_user) or current_user == nid:
+        _log.info("[naver-auth] 동일 사용자 이미 로그인됨: %s", current_user)
+        return {"ok": True, "user": current_user, "reason": "already_logged_in"}
+    if not current_user:
+        _log.info("[naver-auth] 이미 로그인됨 — 화면에서 사용자명을 알 수 없음 (목표: %s)", nid)
+        return {
+            "ok": False,
+            "reason": "logged_in_account_unknown",
+            "target_user": nid,
+            "hint": "이미 로그인돼 있으나 어느 계정인지 화면에서 확인할 수 없음. 계정 확인 후 필요하면 직접 로그아웃.",
+        }
+    _log.warning("[naver-auth] 다른 사용자 로그인 상태: %s (목표: %s)", current_user, nid)
+    return {
+        "ok": False,
+        "reason": "different_user_logged_in",
+        "current_user": current_user,
+        "target_user": nid,
+        "hint": "현재 다른 사용자로 로그인됨. 먼저 로그아웃 필요.",
+    }
+
+
+def _wait_for_user_challenge(page, nid: str, wait_for_user_s: int) -> dict[str, Any]:
+    """캡차·2차인증이 떴을 때: 자동으로 넘기지 않고 사용자가 브라우저에서 처리할 때까지 기다린다."""
+    _log.warning("[naver-auth] 캡차/2차인증 감지 → 사용자 수동 처리 대기")
+    log_critical("AUTH_FAIL", "네이버 로그인 캡차/2차인증", user=nid, mode="captcha_detected")
+    state = wait_for_login_generic(page, max_wait_s=wait_for_user_s, poll_interval=3.0)
+    if state.get("logged_in"):
+        user = state.get("user") or nid
+        log_critical("AUTH_SUCCESS", "네이버 로그인 성공 (사용자 처리)", user=user, mode="auto_login_done_manual")
+        return {"ok": True, "user": user, "reason": "user_handled_captcha"}
+    return {"ok": False, "reason": "captcha_timeout", "captcha_required": True, "needs_manual": True}
+
+
+def _fill_login_form(page, nid: str, pw: str) -> dict[str, Any] | None:
+    """아이디·비밀번호 칸 입력(브라우저 자동 채우기 값은 지우고 다시 입력). 성공이면 None, 실패면 오류 결과."""
+    id_result = safe_human_input(page, "#id", nid, label="ID", delay_ms=70, click_timeout_ms=_INPUT_CLICK_TIMEOUT_MS)
+    if not id_result["ok"]:
+        _log.error("[naver-auth] ID 입력 실패: %s", id_result.get("reason"))
+        return {"ok": False, "reason": f"id_input_failed:{id_result.get('reason', 'unknown')}", "id_result": id_result}
+    time.sleep(0.6)
+
+    pw_result = safe_human_input(page, "#pw", pw, label="PW", delay_ms=80, click_timeout_ms=_INPUT_CLICK_TIMEOUT_MS)
+    if not pw_result["ok"]:
+        _log.error("[naver-auth] PW 입력 실패: %s", pw_result.get("reason"))
+        return {
+            "ok": False,
+            "reason": f"pw_input_failed:{pw_result.get('reason', 'unknown')}",
+            "pw_result": _redact_input_result(pw_result),
+        }
+    time.sleep(0.5)
+
+    _log.info("[naver-auth] 입력 완료 — ID:%s, PW:%s", id_result["action"], pw_result["action"])
+    return None
+
+
 def login_naver(
     page,
     naver_id: str | None = None,
@@ -347,27 +345,10 @@ def login_naver(
 
     log_critical("AUTH_SUCCESS", "네이버 로그인 시도", user=nid, mode="auto_login_start")
 
-    # 2. 이미 로그인 상태 확인 (같은 사용자/다른 사용자)
-    try:
-        state = detect_login_state(page)
-        if state.get("logged_in") and "naver" in page.url and not force_relogin:
-            current_user = state.get("user", "")
-            if (current_user and nid in current_user) or current_user == nid:
-                _log.info("[naver-auth] 동일 사용자 이미 로그인됨: %s", current_user)
-                return {"ok": True, "user": current_user, "reason": "already_logged_in"}
-            else:
-                _log.warning("[naver-auth] 다른 사용자 로그인 상태: %s (목표: %s)", current_user, nid)
-                # 로그아웃 후 재로그인 필요
-                # 일단 알림 후 진행 (사용자가 결정)
-                return {
-                    "ok": False,
-                    "reason": "different_user_logged_in",
-                    "current_user": current_user,
-                    "target_user": nid,
-                    "hint": "현재 다른 사용자로 로그인됨. 먼저 로그아웃 필요.",
-                }
-    except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
-        pass
+    # 2. 이미 로그인 상태 확인 (같은 사용자 / 다른 사용자 / 사용자 불명)
+    existing = _existing_login_verdict(page, nid, force_relogin)
+    if existing is not None:
+        return existing
 
     # 3. 로그인 페이지 진입
     _log.info("[naver-auth] 로그인 페이지 진입")
@@ -382,23 +363,9 @@ def login_naver(
     time.sleep(1)
 
     # 4. ID/PW 입력 — 안전 입력 (기존 자동완성 값 처리)
-    id_result = _safe_human_input(page, "#id", nid, label="ID", delay_ms=70)
-    if not id_result["ok"]:
-        _log.error("[naver-auth] ID 입력 실패: %s", id_result.get("reason"))
-        return {"ok": False, "reason": f"id_input_failed:{id_result.get('reason', 'unknown')}", "id_result": id_result}
-    time.sleep(0.6)
-
-    pw_result = _safe_human_input(page, "#pw", pw, label="PW", delay_ms=80)
-    if not pw_result["ok"]:
-        _log.error("[naver-auth] PW 입력 실패: %s", pw_result.get("reason"))
-        return {
-            "ok": False,
-            "reason": f"pw_input_failed:{pw_result.get('reason', 'unknown')}",
-            "pw_result": _redact_input_result(pw_result),
-        }
-    time.sleep(0.5)
-
-    _log.info("[naver-auth] 입력 완료 — ID:%s, PW:%s", id_result["action"], pw_result["action"])
+    input_failure = _fill_login_form(page, nid, pw)
+    if input_failure is not None:
+        return input_failure
 
     # 5. 로그인 버튼 클릭
     try:
@@ -412,15 +379,7 @@ def login_naver(
 
     # 6. 캡차/2차인증 감지
     if _detect_captcha(page):
-        _log.warning("[naver-auth] 캡차/2차인증 감지 → 사용자 수동 처리 대기")
-        log_critical("AUTH_FAIL", "네이버 로그인 캡차/2차인증", user=nid, mode="captcha_detected")
-        # 사용자가 수동으로 처리할 때까지 대기
-        state = wait_for_login_generic(page, max_wait_s=wait_for_user_s, poll_interval=3.0)
-        if state.get("logged_in"):
-            user = state.get("user") or nid
-            log_critical("AUTH_SUCCESS", "네이버 로그인 성공 (사용자 처리)", user=user, mode="auto_login_done_manual")
-            return {"ok": True, "user": user, "reason": "user_handled_captcha"}
-        return {"ok": False, "reason": "captcha_timeout", "captcha_required": True, "needs_manual": True}
+        return _wait_for_user_challenge(page, nid, wait_for_user_s)
 
     # 7. 일반 성공 검증
     time.sleep(2)
@@ -483,13 +442,8 @@ def _naver_auth_cookies_present(page) -> bool:
         return False
 
 
-def ensure_naver_login(
-    page,
-    naver_id: str | None = None,
-    naver_pw: str | None = None,
-    return_url: str | None = None,
-) -> dict[str, Any]:
-    """현재 페이지의 네이버 도메인 로그인 확인 → 미로그인이면 자동 로그인 → 원래 페이지 복귀."""
+def _ensure_on_naver_domain(page) -> None:
+    """현재 페이지가 네이버 도메인이 아니면 네이버로 이동."""
     # 현재 페이지가 네이버 도메인이 아니면 로그인 판정 전에 네이버로 이동
     # (호출처가 about:blank/타 사이트에 있어도 쿠키 기반 로그인을 올바로 감지하기 위함)
     try:
@@ -503,7 +457,9 @@ def ensure_naver_login(
         except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
 
-    state = detect_login_state(page)
+
+def _handle_logged_in_state(page, state: dict, naver_id: str | None, naver_pw: str | None) -> dict[str, Any] | None:
+    """이미 로그인된 상태 처리(계정 전환 필요 시 재로그인). 로그인 상태가 아니면 None."""
     current_user = (state.get("user") or "").strip().lower()
     target_user = (naver_id or "").strip().lower()
 
@@ -528,14 +484,11 @@ def ensure_naver_login(
                 return login_naver(page, naver_id=naver_id, naver_pw=naver_pw, force_relogin=True)
             return {"ok": False, "reason": f"{naver_id} 비밀번호를 찾을 수 없습니다"}
         return {"ok": True, "user": state.get("user"), "reason": "already_logged_in"}
+    return None
 
-    # 폴백: 범용 JS 감지 실패해도 네이버 인증 쿠키(NID_AUT+NID_SES)가 있으면 로그인으로 인정.
-    # 이 쿠키는 httpOnly 라 detect_login_state 의 document.cookie 신호로는 안 잡힌다.
-    if _naver_auth_cookies_present(page):
-        _log.info("[naver-auth] JS 감지 실패했으나 네이버 인증 쿠키 확인 → 로그인 인정")
-        return {"ok": True, "user": state.get("user"), "reason": "naver_cookie"}
 
-    # pw 미전달 시 자격증명 자동 탐색
+def _fill_naver_pw(naver_id: str | None, naver_pw: str | None) -> str | None:
+    """pw 미전달 시 자격증명 자동 탐색."""
     if naver_id and not naver_pw:
         try:
             from scripts.credentials import get_naver_cred
@@ -544,12 +497,11 @@ def ensure_naver_login(
             naver_pw = cred.get("pw", "")
         except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
+    return naver_pw
 
-    original_url = return_url or page.url
 
-    # ── 순차 인증창 게이트 (SSO 우선) ──────────────────────────────────────────
-    # 네이버 세션이 있으면 커머스 SSO(간편 로그인)를 자동 클릭한다. 그 결과 2단계 인증(2FA)·
-    # 캡차가 뜨면 자동 입력이 불가능한 보안 단계이므로 명확한 사유로 반환(섹션 실패로 묻히지 않게).
+def _try_auth_window_gate(page) -> dict[str, Any] | None:
+    """순차 인증창 게이트(SSO 우선). 결과를 확정할 수 있으면 dict, 아니면 None."""
     try:
         from scripts.naver.auth_window_gate import (
             STAGE_CAPTCHA,
@@ -580,6 +532,40 @@ def ensure_naver_login(
             }
     except Exception as e:  # noqa: BLE001 - 네이버 로그인 자동화 — 실패 시 항상 {ok: False, reason} 구조로 상위에 알리거나 안전한 기본값(False/빈문자열)으로 폴백(fail-closed), 자격증명 값은 로그에 남기지 않음, 로그인 우회·세션 위조 없음(2026-09-28 검토)
         _log.debug("[naver-auth] auth-gate 스킵: %s", str(e)[:100])
+    return None
+
+
+def ensure_naver_login(
+    page,
+    naver_id: str | None = None,
+    naver_pw: str | None = None,
+    return_url: str | None = None,
+) -> dict[str, Any]:
+    """현재 페이지의 네이버 도메인 로그인 확인 → 미로그인이면 자동 로그인 → 원래 페이지 복귀."""
+    _ensure_on_naver_domain(page)
+
+    state = detect_login_state(page)
+    handled = _handle_logged_in_state(page, state, naver_id, naver_pw)
+    if handled is not None:
+        return handled
+
+    # 폴백: 범용 JS 감지 실패해도 네이버 인증 쿠키(NID_AUT+NID_SES)가 있으면 로그인으로 인정.
+    # 이 쿠키는 httpOnly 라 detect_login_state 의 document.cookie 신호로는 안 잡힌다.
+    if _naver_auth_cookies_present(page):
+        _log.info("[naver-auth] JS 감지 실패했으나 네이버 인증 쿠키 확인 → 로그인 인정")
+        return {"ok": True, "user": state.get("user"), "reason": "naver_cookie"}
+
+    # pw 미전달 시 자격증명 자동 탐색
+    naver_pw = _fill_naver_pw(naver_id, naver_pw)
+
+    original_url = return_url or page.url
+
+    # ── 순차 인증창 게이트 (SSO 우선) ──────────────────────────────────────────
+    # 네이버 세션이 있으면 커머스 SSO(간편 로그인)를 자동 클릭한다. 그 결과 2단계 인증(2FA)·
+    # 캡차가 뜨면 자동 입력이 불가능한 보안 단계이므로 명확한 사유로 반환(섹션 실패로 묻히지 않게).
+    gate_result = _try_auth_window_gate(page)
+    if gate_result is not None:
+        return gate_result
 
     # ── fallback: 기존 자격증명 기반 로그인 ────────────────────────────────────
     result = login_naver(page, naver_id, naver_pw)

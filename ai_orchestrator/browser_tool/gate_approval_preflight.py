@@ -77,6 +77,199 @@ def build_gate_approval_context(
         return {}
 
 
+def _finish(
+    result: dict,
+    decision: str,
+    block_reason: str,
+    message_ko: str,
+    *,
+    audit: bool = True,
+    audit_event_type: str | None = None,
+    **extra: object,
+) -> dict:
+    """차단/요구 결과 필드를 채워 반환한다 (인라인 대입과 동일한 최종 값)."""
+    result["preflight_decision"] = decision
+    result["block_reason"] = block_reason
+    if audit_event_type is not None:
+        result["audit_event_type"] = audit_event_type
+    result["message_ko"] = message_ko
+    if audit:
+        result["should_write_audit"] = True
+    result.update(extra)
+    return result
+
+
+# approval_required=true 일 때 필수 context (검사 순서 고정)
+_REQUIRED_CONTEXT_CHECKS: tuple[tuple[str, str, str], ...] = (
+    ("tenant_id", "TENANT_CONTEXT_MISSING", "테넌트 context 누락: approval 평가 불가"),
+    ("user_id", "USER_CONTEXT_MISSING", "사용자 context 누락: approval 평가 불가"),
+    ("site_id", "SITE_CONTEXT_MISSING", "사이트 context 누락: approval 평가 불가"),
+)
+
+
+def _check_required_context(payload: dict, result: dict) -> dict | None:
+    """tenant → user → site 순으로 누락 context 를 BLOCK 한다. 모두 있으면 None."""
+    for key, reason, message_ko in _REQUIRED_CONTEXT_CHECKS:
+        if not payload.get(key):
+            return _finish(result, "BLOCK", reason, message_ko)
+    return None
+
+
+def _check_blocking_policies(payload: dict, result: dict, operation_type: str) -> dict | None:
+    """production_mode → 상위 gate_decision(BLOCK/DENY) → submit/type 전면 차단 (순서 고정)."""
+    # Check production mode
+    if payload.get("production_mode"):
+        return _finish(result, "BLOCK", "PRODUCTION_MODE_BLOCKED", "production_mode=true: 실행 차단")
+
+    # Check gate_decision from upstream policy
+    gate_decision = payload.get("gate_decision", "ALLOW")
+    if gate_decision == "BLOCK":
+        return _finish(
+            result, "BLOCK", "GATE_BLOCKED", "게이트 정책: 실행 차단", gate_decision="BLOCK"
+        )
+
+    if gate_decision == "DENY_BY_DEFAULT":
+        block_reason = payload.get("block_reason", "DENY_BY_DEFAULT")
+        return _finish(
+            result, "DENY_BY_DEFAULT", block_reason, f"기본 차단 정책: {block_reason}",
+            gate_decision="DENY_BY_DEFAULT",
+        )
+
+    # Check blocked operations regardless of approval status
+    if operation_type == "submit":
+        return _finish(
+            result, "DENY_BY_DEFAULT", "SUBMIT_DENY_BY_DEFAULT", "submit operation: 현 단계 전면 차단"
+        )
+
+    if operation_type == "type":
+        return _finish(result, "BLOCK", "TYPE_BLOCKED", "type operation: 전면 차단")
+    return None
+
+
+def _judge_approval_status(
+    result: dict, approval_status: str, operation_type: str
+) -> dict | None:
+    """승인 상태별 판정. 최종 결과면 result, 계속 진행이면 None."""
+    if approval_status == "PENDING":
+        return _finish(
+            result, "REQUIRE_APPROVAL", "APPROVAL_PENDING",
+            f"approval {result['approval_id']}: 승인 대기 중",
+            audit_event_type="APPROVAL_CHECKED",
+        )
+
+    if approval_status in {"REJECTED", "EXPIRED", "REVOKED"}:
+        return _finish(
+            result, "BLOCK", f"APPROVAL_{approval_status}",
+            f"approval {result['approval_id']}: {approval_status}",
+            audit_event_type="APPROVAL_CHECKED",
+        )
+
+    if approval_status == "APPROVED":
+        # Approved, but still apply operation-level restrictions
+        # submit and type are permanently blocked even with approval
+        # Check operation_type again for safety
+        if operation_type == "submit":
+            return _finish(
+                result, "DENY_BY_DEFAULT", "SUBMIT_DENY_BY_DEFAULT",
+                "submit operation: 승인 있어도 전면 차단", approval_valid=True,
+            )
+
+        if operation_type == "type":
+            return _finish(
+                result, "BLOCK", "TYPE_BLOCKED",
+                "type operation: 승인 있어도 전면 차단", approval_valid=True,
+            )
+
+        # Approved for other operations: allow dry-run dispatch
+        if operation_type in {"read", "navigate", "open_url", "click"}:
+            result["approval_valid"] = True
+            result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
+            result["safe_to_dispatch"] = True
+            result["audit_event_type"] = "APPROVAL_CHECKED"
+            result["message_ko"] = (
+                f"approval {result['approval_id']}: 승인됨, {operation_type} dry-run dispatch 허용"
+            )
+            result["should_write_audit"] = True
+            return result
+    return None
+
+
+def _evaluate_approval_record(
+    payload: dict,
+    result: dict,
+    approval_store_path: str | Path | None,
+    operation_type: str,
+) -> dict | None:
+    """approval record 조회 후 판정. 최종 결과면 result, 계속 진행이면 None (오류는 fail-closed BLOCK)."""
+    if approval_store_path is None:
+        from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+
+        approval_store_path = APPROVAL_RECORD_STORE_PATH
+
+    try:
+        latest = get_latest_approval_status(result["approval_id"], approval_store_path)
+        if not latest:
+            return _finish(
+                result, "REQUIRE_APPROVAL", "APPROVAL_NOT_FOUND",
+                f"approval_id {result['approval_id']}: record 없음",
+                audit_event_type="APPROVAL_CHECKED", approval_found=False,
+            )
+
+        result["approval_found"] = True
+        result["approval_context"] = build_gate_approval_context(payload, approval_store_path)
+        approval_status = latest.get("approval_status", "").upper()
+        result["approval_status"] = approval_status
+
+        # Check approval status
+        return _judge_approval_status(result, approval_status, operation_type)
+
+    except FileNotFoundError:
+        return _finish(
+            result, "REQUIRE_APPROVAL", "APPROVAL_NOT_FOUND", "approval store 없음: 승인 필요",
+            audit_event_type="APPROVAL_CHECKED", approval_found=False,
+        )
+    except Exception as e:  # noqa: BLE001 - 브라우저 승인 프리플라이트 게이트 -- 기본값이 이미 BLOCK이고 approval context 조회 실패는 감사용 부가정보만 비우는 것(판정에 영향 없음), 승인 상태 조회 중 예외 발생 시에도 명시적으로 BLOCK 처리(fail-closed)
+        logger.error(f"Error evaluating approval: {e}")
+        return _finish(
+            result, "BLOCK", "APPROVAL_NOT_FOUND", f"approval 평가 오류: {e!s}",
+            audit_event_type="APPROVAL_CHECKED",
+        )
+
+
+def _allow_without_approval(result: dict, operation_type: str) -> dict | None:
+    """승인 불필요 시 read/navigate/open_url/click 은 dry-run dispatch 허용. 해당 없으면 None."""
+    if operation_type in {"read", "navigate", "open_url"}:
+        result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
+        result["safe_to_dispatch"] = True
+        result["audit_event_type"] = "GATE_EVALUATED"
+        result["message_ko"] = f"{operation_type} operation: dry-run dispatch 허용"
+        return result
+
+    if operation_type == "click":
+        result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
+        result["safe_to_dispatch"] = True
+        result["audit_event_type"] = "GATE_EVALUATED"
+        result["message_ko"] = "click operation (승인 불필요): dry-run dispatch 허용"
+        return result
+    return None
+
+
+def _fallback_decision(result: dict, operation_type: str) -> dict:
+    """어떤 분기도 확정하지 못했을 때의 최종 판정."""
+    # Fallback: no approval required, operation is allowed
+    if operation_type in {"read", "navigate", "open_url", "click"}:
+        result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
+        result["safe_to_dispatch"] = True
+        result["message_ko"] = f"{operation_type} operation: 승인 불필요, dry-run dispatch 허용"
+        return result
+
+    # Fallback: default block
+    result["preflight_decision"] = "BLOCK"
+    result["block_reason"] = "UNKNOWN_OPERATION_TYPE"
+    result["message_ko"] = f"결정 불가능: {operation_type}"
+    return result
+
+
 def evaluate_gate_approval_preflight(
     payload: dict,
     approval_store_path: str | Path | None = None,
@@ -156,203 +349,45 @@ def evaluate_gate_approval_preflight(
 
     # Validate required context fields
     if result["approval_required"]:
-        if not payload.get("tenant_id"):
-            result["block_reason"] = "TENANT_CONTEXT_MISSING"
-            result["preflight_decision"] = "BLOCK"
-            result["message_ko"] = "테넌트 context 누락: approval 평가 불가"
-            result["should_write_audit"] = True
-            return result
-
-        if not payload.get("user_id"):
-            result["block_reason"] = "USER_CONTEXT_MISSING"
-            result["preflight_decision"] = "BLOCK"
-            result["message_ko"] = "사용자 context 누락: approval 평가 불가"
-            result["should_write_audit"] = True
-            return result
-
-        if not payload.get("site_id"):
-            result["block_reason"] = "SITE_CONTEXT_MISSING"
-            result["preflight_decision"] = "BLOCK"
-            result["message_ko"] = "사이트 context 누락: approval 평가 불가"
-            result["should_write_audit"] = True
-            return result
+        context_missing = _check_required_context(payload, result)
+        if context_missing is not None:
+            return context_missing
 
     # Check operation_type validity
     operation_type = payload.get("operation_type", "").lower()
     valid_ops = {"read", "navigate", "open_url", "click", "type", "submit"}
     if operation_type not in valid_ops:
-        result["block_reason"] = "UNKNOWN_OPERATION_TYPE"
-        result["preflight_decision"] = "BLOCK"
-        result["message_ko"] = f"알 수 없는 operation_type: {operation_type}"
-        return result
+        return _finish(
+            result, "BLOCK", "UNKNOWN_OPERATION_TYPE", f"알 수 없는 operation_type: {operation_type}", audit=False
+        )
 
-    # Check production mode
-    if payload.get("production_mode"):
-        result["preflight_decision"] = "BLOCK"
-        result["block_reason"] = "PRODUCTION_MODE_BLOCKED"
-        result["message_ko"] = "production_mode=true: 실행 차단"
-        result["should_write_audit"] = True
-        return result
-
-    # Check gate_decision from upstream policy
-    gate_decision = payload.get("gate_decision", "ALLOW")
-    if gate_decision == "BLOCK":
-        result["gate_decision"] = "BLOCK"
-        result["preflight_decision"] = "BLOCK"
-        result["block_reason"] = "GATE_BLOCKED"
-        result["message_ko"] = "게이트 정책: 실행 차단"
-        result["should_write_audit"] = True
-        return result
-
-    if gate_decision == "DENY_BY_DEFAULT":
-        result["gate_decision"] = "DENY_BY_DEFAULT"
-        result["preflight_decision"] = "DENY_BY_DEFAULT"
-        result["block_reason"] = payload.get("block_reason", "DENY_BY_DEFAULT")
-        result["message_ko"] = f"기본 차단 정책: {result['block_reason']}"
-        result["should_write_audit"] = True
-        return result
-
-    # Check blocked operations regardless of approval status
-    if operation_type == "submit":
-        result["preflight_decision"] = "DENY_BY_DEFAULT"
-        result["block_reason"] = "SUBMIT_DENY_BY_DEFAULT"
-        result["message_ko"] = "submit operation: 현 단계 전면 차단"
-        result["should_write_audit"] = True
-        return result
-
-    if operation_type == "type":
-        result["preflight_decision"] = "BLOCK"
-        result["block_reason"] = "TYPE_BLOCKED"
-        result["message_ko"] = "type operation: 전면 차단"
-        result["should_write_audit"] = True
-        return result
+    # production / upstream gate_decision / submit·type 전면 차단
+    blocked = _check_blocking_policies(payload, result, operation_type)
+    if blocked is not None:
+        return blocked
 
     # If approval not required, allow dry-run dispatch
     if not result["approval_required"]:
-        if operation_type in {"read", "navigate", "open_url"}:
-            result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
-            result["safe_to_dispatch"] = True
-            result["audit_event_type"] = "GATE_EVALUATED"
-            result["message_ko"] = f"{operation_type} operation: dry-run dispatch 허용"
-            return result
+        allowed = _allow_without_approval(result, operation_type)
+        if allowed is not None:
+            return allowed
 
-        if operation_type == "click":
-            result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
-            result["safe_to_dispatch"] = True
-            result["audit_event_type"] = "GATE_EVALUATED"
-            result["message_ko"] = "click operation (승인 불필요): dry-run dispatch 허용"
-            return result
+    if result["approval_required"]:
+        # Approval required: check if approval_id is provided
+        if not result["approval_id"]:
+            return _finish(
+                result, "REQUIRE_APPROVAL", "APPROVAL_MISSING", "approval_id 누락: 승인 필요",
+                audit_event_type="APPROVAL_CHECKED",
+            )
 
-    # Approval required: check if approval_id is provided
-    if result["approval_required"] and not result["approval_id"]:
-        result["preflight_decision"] = "REQUIRE_APPROVAL"
-        result["block_reason"] = "APPROVAL_MISSING"
-        result["audit_event_type"] = "APPROVAL_CHECKED"
-        result["message_ko"] = "approval_id 누락: 승인 필요"
-        result["should_write_audit"] = True
-        return result
+        # Approval required: fetch approval record
+        record_outcome = _evaluate_approval_record(
+            payload, result, approval_store_path, operation_type
+        )
+        if record_outcome is not None:
+            return record_outcome
 
-    # Approval required: fetch approval record
-    if result["approval_required"] and result["approval_id"]:
-        if approval_store_path is None:
-            from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
-
-            approval_store_path = APPROVAL_RECORD_STORE_PATH
-
-        try:
-            latest = get_latest_approval_status(result["approval_id"], approval_store_path)
-            if not latest:
-                result["preflight_decision"] = "REQUIRE_APPROVAL"
-                result["block_reason"] = "APPROVAL_NOT_FOUND"
-                result["approval_found"] = False
-                result["audit_event_type"] = "APPROVAL_CHECKED"
-                result["message_ko"] = f"approval_id {result['approval_id']}: record 없음"
-                result["should_write_audit"] = True
-                return result
-
-            result["approval_found"] = True
-            result["approval_context"] = build_gate_approval_context(payload, approval_store_path)
-            approval_status = latest.get("approval_status", "").upper()
-            result["approval_status"] = approval_status
-
-            # Check approval status
-            if approval_status == "PENDING":
-                result["preflight_decision"] = "REQUIRE_APPROVAL"
-                result["block_reason"] = "APPROVAL_PENDING"
-                result["audit_event_type"] = "APPROVAL_CHECKED"
-                result["message_ko"] = f"approval {result['approval_id']}: 승인 대기 중"
-                result["should_write_audit"] = True
-                return result
-
-            if approval_status in {"REJECTED", "EXPIRED", "REVOKED"}:
-                result["preflight_decision"] = "BLOCK"
-                result["block_reason"] = f"APPROVAL_{approval_status}"
-                result["audit_event_type"] = "APPROVAL_CHECKED"
-                result["message_ko"] = f"approval {result['approval_id']}: {approval_status}"
-                result["should_write_audit"] = True
-                return result
-
-            if approval_status == "APPROVED":
-                # Approved, but still apply operation-level restrictions
-                # submit and type are permanently blocked even with approval
-                # Check operation_type again for safety
-                if operation_type == "submit":
-                    result["preflight_decision"] = "DENY_BY_DEFAULT"
-                    result["block_reason"] = "SUBMIT_DENY_BY_DEFAULT"
-                    result["approval_valid"] = True
-                    result["message_ko"] = "submit operation: 승인 있어도 전면 차단"
-                    result["should_write_audit"] = True
-                    return result
-
-                if operation_type == "type":
-                    result["preflight_decision"] = "BLOCK"
-                    result["block_reason"] = "TYPE_BLOCKED"
-                    result["approval_valid"] = True
-                    result["message_ko"] = "type operation: 승인 있어도 전면 차단"
-                    result["should_write_audit"] = True
-                    return result
-
-                # Approved for other operations: allow dry-run dispatch
-                if operation_type in {"read", "navigate", "open_url", "click"}:
-                    result["approval_valid"] = True
-                    result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
-                    result["safe_to_dispatch"] = True
-                    result["audit_event_type"] = "APPROVAL_CHECKED"
-                    result["message_ko"] = (
-                        f"approval {result['approval_id']}: 승인됨, {operation_type} dry-run dispatch 허용"
-                    )
-                    result["should_write_audit"] = True
-                    return result
-
-        except FileNotFoundError:
-            result["preflight_decision"] = "REQUIRE_APPROVAL"
-            result["block_reason"] = "APPROVAL_NOT_FOUND"
-            result["approval_found"] = False
-            result["audit_event_type"] = "APPROVAL_CHECKED"
-            result["message_ko"] = "approval store 없음: 승인 필요"
-            result["should_write_audit"] = True
-            return result
-        except Exception as e:  # noqa: BLE001 - 브라우저 승인 프리플라이트 게이트 -- 기본값이 이미 BLOCK이고 approval context 조회 실패는 감사용 부가정보만 비우는 것(판정에 영향 없음), 승인 상태 조회 중 예외 발생 시에도 명시적으로 BLOCK 처리(fail-closed)
-            logger.error(f"Error evaluating approval: {e}")
-            result["preflight_decision"] = "BLOCK"
-            result["block_reason"] = "APPROVAL_NOT_FOUND"
-            result["audit_event_type"] = "APPROVAL_CHECKED"
-            result["message_ko"] = f"approval 평가 오류: {e!s}"
-            result["should_write_audit"] = True
-            return result
-
-    # Fallback: no approval required, operation is allowed
-    if operation_type in {"read", "navigate", "open_url", "click"}:
-        result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
-        result["safe_to_dispatch"] = True
-        result["message_ko"] = f"{operation_type} operation: 승인 불필요, dry-run dispatch 허용"
-        return result
-
-    # Fallback: default block
-    result["preflight_decision"] = "BLOCK"
-    result["block_reason"] = "UNKNOWN_OPERATION_TYPE"
-    result["message_ko"] = f"결정 불가능: {operation_type}"
-    return result
+    return _fallback_decision(result, operation_type)
 
 
 def validate_gate_approval_result(result: dict) -> list[str]:

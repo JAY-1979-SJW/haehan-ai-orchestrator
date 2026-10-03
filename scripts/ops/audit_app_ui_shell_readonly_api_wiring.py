@@ -36,6 +36,18 @@ API_CLIENT = FRONTEND_ROOT / "lib" / "assistant" / "api.ts"
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 
+
+def _route_page(rel: str) -> Path:
+    """`app/assistant/tasks/page.tsx` 형태의 경로를 찾는다.
+
+    Next.js 의 라우트 그룹 `(legacy)` 는 URL 에 나타나지 않으므로, 그 안으로 옮겨진 화면도 같은 화면이다.
+    """
+    direct = FRONTEND_ROOT / rel
+    if direct.exists():
+        return direct
+    grouped = FRONTEND_ROOT / rel.replace("app/assistant/", "app/assistant/(legacy)/", 1)
+    return grouped if grouped.exists() else direct
+
 REQUIRED_ROUTES = [
     "app/assistant/page.tsx",
     "app/assistant/tasks/page.tsx",
@@ -181,7 +193,7 @@ def check_health_wired_in_dashboard(report: AuditReport) -> None:
 
 
 def check_inbox_wired_in_tasks(report: AuditReport) -> None:
-    tasks = ASSISTANT_APP / "tasks" / "page.tsx"
+    tasks = _route_page("app/assistant/tasks/page.tsx")
     if not tasks.exists():
         report.add("inbox_wired_tasks", "FAIL", "tasks/page.tsx 없음")
         return
@@ -250,7 +262,7 @@ def check_secret_free(report: AuditReport) -> None:
 
 
 def check_routes_present(report: AuditReport) -> None:
-    missing = [r for r in REQUIRED_ROUTES if not (FRONTEND_ROOT / r).exists()]
+    missing = [r for r in REQUIRED_ROUTES if not _route_page(r).exists()]
     if not missing:
         report.add("routes_8_present", "PASS", "8개 route 유지")
     else:
@@ -279,7 +291,7 @@ def check_backend_unchanged(report: AuditReport) -> None:
 
 def check_read_only_badges(report: AuditReport) -> None:
     dashboard = ASSISTANT_APP / "page.tsx"
-    tasks = ASSISTANT_APP / "tasks" / "page.tsx"
+    tasks = _route_page("app/assistant/tasks/page.tsx")
     ok = True
     for page, name in [(dashboard, "Dashboard"), (tasks, "Task Queue")]:
         if not page.exists():

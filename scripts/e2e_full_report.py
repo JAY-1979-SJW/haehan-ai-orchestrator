@@ -129,24 +129,8 @@ def should_skip(label: str) -> bool:
 # ── 페이지별 버튼 테스트 ─────────────────────────────────────────────────────
 
 
-async def test_page(pg: Page, path: str, page_name: str) -> PageResult:
-    print(f"\n{'─' * 50}")
-    print(f"  {page_name}  ({path})")
-
-    status = await goto(pg, path)
-    title = await pg.title()
-    ss_name = f"page_{safe_name(page_name)}"
-    ss = await shot(pg, ss_name)
-    pr = PageResult(path=path, title=title, status=status, screenshot=ss)
-
-    if status == 0:
-        pr.errors.append("페이지 로드 실패")
-        print("  ❌ 로드 실패")
-        return pr
-
-    print(f"  ✅ {title} (HTTP {status})")
-
-    # ── 탭 클릭 ──────────────────────────────────────────────────────────────
+async def _click_tabs(pg: Page, path: str, page_name: str, pr: PageResult) -> None:
+    """탭 요소를 최대 8개까지 클릭하며 결과를 pr 에 기록."""
     tabs = pg.locator("[role=tab], [class*=tab]:not([class*=table]):not([class*=stable])")
     tab_count = await tabs.count()
     print(f"  탭 {tab_count}개")
@@ -176,6 +160,111 @@ async def test_page(pg: Page, path: str, page_name: str) -> PageResult:
         except Exception as e:  # noqa: BLE001 - 관리자 웹 E2E 버튼/탭 클릭 탐색 리포트 - SKIP_PATTERNS(삭제/결제/발행/로그아웃 등)로 위험 버튼은 클릭 자체를 건너뛰고, except 는 클릭 실패를 errors 리스트에 기록할 뿐
             pr.errors.append(f"탭[{i}] 클릭 오류: {e}")
 
+
+async def _button_status(pg: Page, path: str, before_url: str, after_url: str) -> str:
+    """버튼 클릭 후 상태(nav/modal/toast/ok) 판정. nav 면 원래 페이지로 복귀, modal 이면 닫기 시도."""
+    if after_url != before_url:
+        await goto(pg, path)  # 원복
+        return "nav"
+    # 모달/토스트 확인
+    modal = await pg.query_selector("[role=dialog],[class*=modal],[class*=Modal]")
+    toast = await pg.query_selector("[class*=toast],[class*=Toast],[class*=alert]")
+    if modal:
+        # 모달 닫기
+        try:
+            close = pg.locator("[role=dialog] button, [class*=modal] button").first
+            if await close.count():
+                await close.click(timeout=2000)
+        except Exception:  # noqa: BLE001 - 관리자 웹 E2E 버튼/탭 클릭 탐색 리포트 - SKIP_PATTERNS(삭제/결제/발행/로그아웃 등)로 위험 버튼은 클릭 자체를 건너뛰고, except 는 클릭 실패를 errors 리스트에 기록할 뿐
+            pass
+        return "modal"
+    if toast:
+        return "toast"
+    return "ok"
+
+
+async def _click_one_button(pg: Page, btns, i: int, path: str, page_name: str, pr: PageResult) -> None:
+    """버튼 1개를 클릭하고 결과를 pr 에 기록. 건너뛰는 경우 아무것도 기록하지 않음."""
+    el = btns.nth(i)
+    if not await el.is_visible():
+        return
+    if not await el.is_enabled():
+        return
+    label = await get_btn_label(el)
+    if should_skip(label):
+        pr.buttons.append(
+            BtnResult(
+                label=label,
+                selector=f"btn[{i}]",
+                action="click",
+                before_url=pg.url,
+                after_url=pg.url,
+                status="skip",
+                screenshot="",
+            ).__dict__
+        )
+        print(f"    버튼 [{i}] {label!r} → SKIP")
+        return
+
+    before_url = pg.url
+    try:
+        await el.click(timeout=4000)
+        await pg.wait_for_timeout(800)
+    except Exception as ce:  # noqa: BLE001 - 관리자 웹 E2E 버튼/탭 클릭 탐색 리포트 - SKIP_PATTERNS(삭제/결제/발행/로그아웃 등)로 위험 버튼은 클릭 자체를 건너뛰고, except 는 클릭 실패를 errors 리스트에 기록할 뿐
+        pr.buttons.append(
+            BtnResult(
+                label=label,
+                selector=f"btn[{i}]",
+                action="click",
+                before_url=before_url,
+                after_url=pg.url,
+                status="error",
+                error=str(ce)[:120],
+            ).__dict__
+        )
+        print(f"    버튼 [{i}] {label!r} → error: {str(ce)[:60]}")
+        await goto(pg, path)
+        return
+
+    after_url = pg.url
+    ss_b = await shot(pg, f"btn_{safe_name(page_name)}_{i}_{safe_name(label)}")
+
+    status_b = await _button_status(pg, path, before_url, after_url)
+
+    pr.buttons.append(
+        BtnResult(
+            label=label,
+            selector=f"btn[{i}]",
+            action="click",
+            before_url=before_url,
+            after_url=after_url,
+            status=status_b,
+            screenshot=ss_b,
+        ).__dict__
+    )
+    print(f"    버튼 [{i}] {label!r} → {status_b}")
+
+
+async def test_page(pg: Page, path: str, page_name: str) -> PageResult:
+    print(f"\n{'─' * 50}")
+    print(f"  {page_name}  ({path})")
+
+    status = await goto(pg, path)
+    title = await pg.title()
+    ss_name = f"page_{safe_name(page_name)}"
+    ss = await shot(pg, ss_name)
+    pr = PageResult(path=path, title=title, status=status, screenshot=ss)
+
+    if status == 0:
+        pr.errors.append("페이지 로드 실패")
+        print("  ❌ 로드 실패")
+        return pr
+
+    print(f"  ✅ {title} (HTTP {status})")
+
+    # ── 탭 클릭 ──────────────────────────────────────────────────────────────
+    await _click_tabs(pg, path, page_name, pr)
+
     # 원래 페이지로 복귀
     await goto(pg, path)
 
@@ -185,83 +274,7 @@ async def test_page(pg: Page, path: str, page_name: str) -> PageResult:
     print(f"  버튼 {btn_count}개")
     for i in range(min(btn_count, 20)):
         try:
-            el = btns.nth(i)
-            if not await el.is_visible():
-                continue
-            if not await el.is_enabled():
-                continue
-            label = await get_btn_label(el)
-            if should_skip(label):
-                pr.buttons.append(
-                    BtnResult(
-                        label=label,
-                        selector=f"btn[{i}]",
-                        action="click",
-                        before_url=pg.url,
-                        after_url=pg.url,
-                        status="skip",
-                        screenshot="",
-                    ).__dict__
-                )
-                print(f"    버튼 [{i}] {label!r} → SKIP")
-                continue
-
-            before_url = pg.url
-            try:
-                await el.click(timeout=4000)
-                await pg.wait_for_timeout(800)
-            except Exception as ce:  # noqa: BLE001 - 관리자 웹 E2E 버튼/탭 클릭 탐색 리포트 - SKIP_PATTERNS(삭제/결제/발행/로그아웃 등)로 위험 버튼은 클릭 자체를 건너뛰고, except 는 클릭 실패를 errors 리스트에 기록할 뿐
-                pr.buttons.append(
-                    BtnResult(
-                        label=label,
-                        selector=f"btn[{i}]",
-                        action="click",
-                        before_url=before_url,
-                        after_url=pg.url,
-                        status="error",
-                        error=str(ce)[:120],
-                    ).__dict__
-                )
-                print(f"    버튼 [{i}] {label!r} → error: {str(ce)[:60]}")
-                await goto(pg, path)
-                continue
-
-            after_url = pg.url
-            ss_b = await shot(pg, f"btn_{safe_name(page_name)}_{i}_{safe_name(label)}")
-
-            if after_url != before_url:
-                status_b = "nav"
-                await goto(pg, path)  # 원복
-            else:
-                # 모달/토스트 확인
-                modal = await pg.query_selector("[role=dialog],[class*=modal],[class*=Modal]")
-                toast = await pg.query_selector("[class*=toast],[class*=Toast],[class*=alert]")
-                if modal:
-                    status_b = "modal"
-                    # 모달 닫기
-                    try:
-                        close = pg.locator("[role=dialog] button, [class*=modal] button").first
-                        if await close.count():
-                            await close.click(timeout=2000)
-                    except Exception:  # noqa: BLE001 - 관리자 웹 E2E 버튼/탭 클릭 탐색 리포트 - SKIP_PATTERNS(삭제/결제/발행/로그아웃 등)로 위험 버튼은 클릭 자체를 건너뛰고, except 는 클릭 실패를 errors 리스트에 기록할 뿐
-                        pass
-                elif toast:
-                    status_b = "toast"
-                else:
-                    status_b = "ok"
-
-            pr.buttons.append(
-                BtnResult(
-                    label=label,
-                    selector=f"btn[{i}]",
-                    action="click",
-                    before_url=before_url,
-                    after_url=after_url,
-                    status=status_b,
-                    screenshot=ss_b,
-                ).__dict__
-            )
-            print(f"    버튼 [{i}] {label!r} → {status_b}")
+            await _click_one_button(pg, btns, i, path, page_name, pr)
         except Exception as e:  # noqa: BLE001 - 관리자 웹 E2E 버튼/탭 클릭 탐색 리포트 - SKIP_PATTERNS(삭제/결제/발행/로그아웃 등)로 위험 버튼은 클릭 자체를 건너뛰고, except 는 클릭 실패를 errors 리스트에 기록할 뿐
             pr.errors.append(f"버튼[{i}] 처리 오류: {str(e)[:100]}")
             await goto(pg, path)

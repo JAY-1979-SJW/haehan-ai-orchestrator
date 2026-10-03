@@ -137,25 +137,8 @@ def extract_product_detail(page, product_url: str) -> dict:
     return detail
 
 
-def main():
-    page = get_page()
-    print(f"\n{'=' * 70}")
-    print("  기존 상품 정보 추출 → 자동 등록 입력 테스트")
-    print(f"{'=' * 70}\n")
-
-    # 로그인 확인
-    r = ensure_naver_login(page)
-    if not r.get("ok"):
-        print("  ✗ 로그인 실패")
-        return
-
-    # 1. 스토어에서 첫 상품 추출
-    print("  [1] 스토어 접속 + 상품 목록 추출")
-    first = extract_first_product(page)
-    if not first:
-        print("  ✗ 상품 없음")
-        return
-
+def _extract_detail_and_save(page, first):
+    """2. 상세 정보 추출 + 결과 저장."""
     # 2. 상세 정보 추출
     print(f"\n  [2] 상품 상세 추출: {first['url']}")
     detail = extract_product_detail(page, first["url"])
@@ -172,7 +155,11 @@ def main():
     out = ROOT / "data" / "sample_product_data.json"
     out.write_text(json.dumps(detail, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n  ✓ 저장: {out.name}")
+    return detail
 
+
+def _fill_register_form(page, first, detail) -> None:
+    """3. 자동 등록 페이지로 데이터 입력 (저장 안 함)."""
     # 3. 자동 등록 입력 테스트
     print("\n  [3] 자동 등록 페이지로 데이터 입력 (★ 저장 안 함)")
     from scripts.naver.smartstore.product import ProductRegister
@@ -229,6 +216,30 @@ def main():
     print("\n  [4] 입력 완료 (★ 저장 안 함, 사용자 확인 후 수동 저장 가능)")
     print("     브라우저에서 입력 결과 확인 가능")
     print("     성공한 셀렉터들이 검증되었습니다.")
+
+
+def main():
+    page = get_page()
+    print(f"\n{'=' * 70}")
+    print("  기존 상품 정보 추출 → 자동 등록 입력 테스트")
+    print(f"{'=' * 70}\n")
+
+    # 로그인 확인
+    r = ensure_naver_login(page)
+    if not r.get("ok"):
+        print("  ✗ 로그인 실패")
+        return
+
+    # 1. 스토어에서 첫 상품 추출
+    print("  [1] 스토어 접속 + 상품 목록 추출")
+    first = extract_first_product(page)
+    if not first:
+        print("  ✗ 상품 없음")
+        return
+
+    detail = _extract_detail_and_save(page, first)
+
+    _fill_register_form(page, first, detail)
 
 
 if __name__ == "__main__":

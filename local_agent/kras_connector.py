@@ -67,13 +67,6 @@ def _post(path: str, body: dict) -> Any:
         return json.loads(resp.read().decode())
 
 
-def _http_error_detail(exc: urllib.error.HTTPError) -> str:
-    try:
-        return exc.read().decode()[:300]
-    except Exception:  # noqa: BLE001 - KRAS 서식 연동 커넥터 -- HTTP 에러 본문 디코딩 실패 시 문자열로 폴백, 폼 프리필 조회 실패는 무시하고 빈 입력값으로 진행(prefill은 편의 기능, 필수 아님)
-        return str(exc)
-
-
 # ── 공개 함수 ────────────────────────────────────────────────────────────────
 
 

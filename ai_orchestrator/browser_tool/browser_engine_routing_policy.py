@@ -301,7 +301,7 @@ def validate_browser_engine_routing_result(result: dict[str, Any]) -> list[str]:
     return errors
 
 
-def _make_routing(
+def _make_routing(  # noqa: PLR0913 - 내부 라우팅 결과 dict 생성 헬퍼, 필드 나열형
     routing_decision: str,
     selected_engine: str,
     server_playwright_first_allowed: bool = False,

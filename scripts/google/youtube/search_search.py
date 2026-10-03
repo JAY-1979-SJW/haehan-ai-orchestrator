@@ -24,7 +24,7 @@ from scripts.google.youtube.search_common import (
 from security_utils import safe_preview
 
 
-def search_videos(
+def search_videos(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     query: str,
     *,
     max_results: int = 10,

@@ -41,7 +41,7 @@ _SENSITIVE_RESULT_FIELDS: frozenset[str] = frozenset({
 })
 
 
-def build_safe_result(
+def build_safe_result(  # noqa: PLR0913 - 안전 결과 빌더, 공개 시그니처 유지
     task_id: str,
     ok: bool,
     execution_used: str,

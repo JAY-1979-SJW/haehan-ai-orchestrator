@@ -114,21 +114,22 @@ def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
     return True, "browser runtime operating rules are locked by policy, dry-run, and pytest"
 
 
-def check_required_local_gate_wiring() -> tuple[bool, str]:
+# 서버 CI 는 사용자 지시(2026-09-29)로 GitHub Actions 의 ci.yml 하나만 허용한다. 그 외 워크플로 파일은 계속 금지.
+_ALLOWED_WORKFLOW_FILES = frozenset({"ci.yml"})
+
+
+def _local_gate_file_failure(required_gate, pre_commit, pre_push) -> tuple[bool, str] | None:
     workflows_dir = ROOT / ".github" / "workflows"
     workflow_files = []
     if workflows_dir.exists():
         workflow_files = [
             normalize_path(str(path.relative_to(ROOT)))
             for path in workflows_dir.iterdir()
-            if path.is_file() and path.suffix.lower() in {".yml", ".yaml"}
+            if path.is_file() and path.suffix.lower() in {".yml", ".yaml"} and path.name not in _ALLOWED_WORKFLOW_FILES
         ]
     if workflow_files:
         return False, "GitHub Actions workflow files are forbidden: " + ", ".join(sorted(workflow_files))
 
-    required_gate = ROOT / "scripts" / "required_quality_gate.py"
-    pre_commit = ROOT / ".githooks" / "pre-commit"
-    pre_push = ROOT / ".githooks" / "pre-push"
     required_files = (required_gate, pre_commit, pre_push)
     missing = [normalize_path(str(path.relative_to(ROOT))) for path in required_files if not path.exists()]
     if missing:
@@ -140,6 +141,16 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         rel = normalize_path(str(hook.relative_to(ROOT)))
         if hook_call not in text:
             return False, f"{rel} does not delegate to scripts/required_quality_gate.py"
+    return None
+
+
+def check_required_local_gate_wiring() -> tuple[bool, str]:
+    required_gate = ROOT / "scripts" / "required_quality_gate.py"
+    pre_commit = ROOT / ".githooks" / "pre-commit"
+    pre_push = ROOT / ".githooks" / "pre-push"
+    failure = _local_gate_file_failure(required_gate, pre_commit, pre_push)
+    if failure is not None:
+        return failure
 
     spec = importlib.util.spec_from_file_location("required_quality_gate", required_gate)
     if spec is None or spec.loader is None:

@@ -88,6 +88,116 @@ _CLASSIFY_JS = r"""
 """
 
 
+def _rule_login(snap: dict, disc: dict):
+    # 1) 로그인
+    if disc.get("intent") == "login" and snap["password_inputs"] >= 1:
+        return (
+            "login",
+            0.95,
+            ["intent=login", f"password_inputs={snap['password_inputs']}"],
+            ["scripts.form.orchestrator.universal_login"],
+        )
+    return None
+
+
+def _rule_signup(snap: dict, disc: dict):
+    # 2) 회원가입
+    if disc.get("intent") == "signup":
+        return "signup", 0.9, ["intent=signup"], ["scripts.form.orchestrator (signup intent — F4~F8 필요)"]
+    return None
+
+
+def _rule_modal(snap: dict, disc: dict):
+    # 3) 모달/팝업 (페이지 내 작은 박스만)
+    if snap["modal_signs"] and snap["body_chars"] < 800:
+        return (
+            "modal_popup",
+            0.85,
+            [f"modal_signs={len(snap['modal_signs'])}"],
+            ["scripts.popup_watcher / popup_classifier"],
+        )
+    return None
+
+
+def _rule_tables(snap: dict, disc: dict):
+    # 4) 데이터 리스트 + 페이지네이션 / 5) 데이터 리스트 (페이지네이션 없음)
+    if snap["tables"] and snap["pagination_signs"]:
+        biggest = max(snap["tables"], key=lambda t: t["rows"])
+        return (
+            "list_table",
+            0.9,
+            [f"table_rows={biggest['rows']}", f"pagination={len(snap['pagination_signs'])}"],
+            [f"테이블 추출 + 페이지네이션 (헤더: {biggest['header'][:5]})"],
+        )
+    if snap["tables"]:
+        biggest = max(snap["tables"], key=lambda t: t["rows"])
+        if biggest["rows"] >= 5:
+            return (
+                "list_table",
+                0.75,
+                [f"table_rows={biggest['rows']}"],
+                [f"테이블 추출 (헤더: {biggest['header'][:5]})"],
+            )
+        # 표는 있으나 5행 미만 — 이후 규칙으로 넘어가지 않고 기본값 유지
+        return "unknown", 0.0, [], []
+    return None
+
+
+def _rule_form_input(snap: dict, disc: dict):
+    # 6) 일반 입력 폼 (로그인/검색 외)
+    if disc.get("intent") not in ("login", "signup") and snap["forms"] >= 1 and snap["inputs_visible"] >= 3:
+        return (
+            "form_input",
+            0.7,
+            [f"inputs_visible={snap['inputs_visible']}", f"submit_buttons={snap['submit_buttons']}"],
+            ["scripts.form.discovery + form/orchestrator 응용"],
+        )
+    return None
+
+
+def _rule_detail_view(snap: dict, disc: dict):
+    # 7) 상세 뷰 (큰 콘텐츠 + 액션 버튼)
+    if snap["body_chars"] > 500 and snap["submit_buttons"] >= 1:
+        return "detail_view", 0.6, [f"body_chars={snap['body_chars']}"], ["페이지 콘텐츠 추출 (제목/본문/메타)"]
+    return None
+
+
+def _rule_landing(snap: dict, disc: dict):
+    # 8) 랜딩 (큰 콘텐츠 + 링크 다수)
+    if snap["interactive_elements"] > 30 and snap["body_chars"] > 500:
+        return "landing", 0.6, [f"links={snap['interactive_elements']}"], ["BFS 진입점 — 메뉴/네비게이션 매핑"]
+    return None
+
+
+_CLASSIFY_RULES = (
+    _rule_login,
+    _rule_signup,
+    _rule_modal,
+    _rule_tables,
+    _rule_form_input,
+    _rule_detail_view,
+    _rule_landing,
+)
+
+
+def _apply_rules(snap: dict, disc: dict) -> tuple[str, float, list[str], list[str]]:
+    """분류 규칙을 우선순위 순으로 적용해 (type, confidence, signals, suggestions) 반환."""
+    for rule in _CLASSIFY_RULES:
+        matched = rule(snap, disc)
+        if matched is not None:
+            return matched
+    # 9) 미설계
+    return (
+        "unknown",
+        0.3,
+        [
+            f"forms={snap['forms']}, inputs={snap['inputs_visible']}, "
+            f"tables={len(snap['tables'])}, body={snap['body_chars']}"
+        ],
+        ["data/discovered/<host>/<page>.json 에 스냅샷 저장 — 수동 핸들러 추가 필요"],
+    )
+
+
 def classify_page(page) -> dict:
     """현재 페이지의 타입을 분류 + 권장 핸들러.
 
@@ -120,84 +230,8 @@ def classify_page(page) -> dict:
     except Exception:  # noqa: BLE001 - 페이지 분류기(읽기 전용 탐색) -- JS 평가 실패 시 unknown 분류로 폴백, 폼 discovery 실패도 unknown/빈 필드로 폴백(판정을 과장하지 않는 방향)
         disc = {"intent": "unknown", "fields": []}
 
-    signals: list[str] = []
-    suggestions: list[str] = []
-    page_type = "unknown"
-    confidence = 0.0
-
     # --- 분류 규칙 (우선순위 순) ---
-
-    # 1) 로그인
-    if disc.get("intent") == "login" and snap["password_inputs"] >= 1:
-        page_type = "login"
-        confidence = 0.95
-        signals.append("intent=login")
-        signals.append(f"password_inputs={snap['password_inputs']}")
-        suggestions.append("scripts.form.orchestrator.universal_login")
-
-    # 2) 회원가입
-    elif disc.get("intent") == "signup":
-        page_type = "signup"
-        confidence = 0.9
-        signals.append("intent=signup")
-        suggestions.append("scripts.form.orchestrator (signup intent — F4~F8 필요)")
-
-    # 3) 모달/팝업 (페이지 내 작은 박스만)
-    elif snap["modal_signs"] and snap["body_chars"] < 800:
-        page_type = "modal_popup"
-        confidence = 0.85
-        signals.append(f"modal_signs={len(snap['modal_signs'])}")
-        suggestions.append("scripts.popup_watcher / popup_classifier")
-
-    # 4) 데이터 리스트 + 페이지네이션
-    elif snap["tables"] and snap["pagination_signs"]:
-        page_type = "list_table"
-        confidence = 0.9
-        biggest = max(snap["tables"], key=lambda t: t["rows"])
-        signals.append(f"table_rows={biggest['rows']}")
-        signals.append(f"pagination={len(snap['pagination_signs'])}")
-        suggestions.append(f"테이블 추출 + 페이지네이션 (헤더: {biggest['header'][:5]})")
-
-    # 5) 데이터 리스트 (페이지네이션 없음)
-    elif snap["tables"]:
-        biggest = max(snap["tables"], key=lambda t: t["rows"])
-        if biggest["rows"] >= 5:
-            page_type = "list_table"
-            confidence = 0.75
-            signals.append(f"table_rows={biggest['rows']}")
-            suggestions.append(f"테이블 추출 (헤더: {biggest['header'][:5]})")
-
-    # 6) 일반 입력 폼 (로그인/검색 외)
-    elif disc.get("intent") not in ("login", "signup") and snap["forms"] >= 1 and snap["inputs_visible"] >= 3:
-        page_type = "form_input"
-        confidence = 0.7
-        signals.append(f"inputs_visible={snap['inputs_visible']}")
-        signals.append(f"submit_buttons={snap['submit_buttons']}")
-        suggestions.append("scripts.form.discovery + form/orchestrator 응용")
-
-    # 7) 상세 뷰 (큰 콘텐츠 + 액션 버튼)
-    elif snap["body_chars"] > 500 and snap["submit_buttons"] >= 1:
-        page_type = "detail_view"
-        confidence = 0.6
-        signals.append(f"body_chars={snap['body_chars']}")
-        suggestions.append("페이지 콘텐츠 추출 (제목/본문/메타)")
-
-    # 8) 랜딩 (큰 콘텐츠 + 링크 다수)
-    elif snap["interactive_elements"] > 30 and snap["body_chars"] > 500:
-        page_type = "landing"
-        confidence = 0.6
-        signals.append(f"links={snap['interactive_elements']}")
-        suggestions.append("BFS 진입점 — 메뉴/네비게이션 매핑")
-
-    # 9) 미설계
-    else:
-        page_type = "unknown"
-        confidence = 0.3
-        signals.append(
-            f"forms={snap['forms']}, inputs={snap['inputs_visible']}, "
-            f"tables={len(snap['tables'])}, body={snap['body_chars']}"
-        )
-        suggestions.append("data/discovered/<host>/<page>.json 에 스냅샷 저장 — 수동 핸들러 추가 필요")
+    page_type, confidence, signals, suggestions = _apply_rules(snap, disc)
 
     return {
         "type": page_type,

@@ -109,30 +109,8 @@ def _week_label(d: date) -> str:
     return f"{iso[0]}-W{iso[1]:02d}"
 
 
-def analyze(articles: list[dict], top_n: int = 10) -> dict:
-    """게시글 목록 분석 → 결과 dict 반환.
-
-    결과 dict 구조:
-        period          수집 기간 (start ~ end)
-        total           총 게시글 수
-        total_views     총 조회수
-        total_likes     총 좋아요
-        total_comments  총 댓글수
-        by_board        게시판별 통계 {board: {count, views, likes, comments}}
-        by_month        월별 {YYYY-MM: count}
-        by_week         주별 {YYYY-WNN: count}
-        by_weekday      요일별 {Mon: count, ...}
-        top_views       조회수 상위 N
-        top_likes       좋아요 상위 N
-        top_comments    댓글 상위 N
-        top_authors     작성자별 글 수 상위 N
-        top_keywords    제목 키워드 빈도 상위 N
-        top_tags        태그 빈도 상위 N
-        summary_text    텍스트 보고서 (print용)
-    """
-    if not articles:
-        return {"error": "데이터 없음"}
-
+def _extract_period(articles: list[dict]) -> tuple[list, str, str]:
+    """게시글 날짜 목록과 수집 기간(start, end) 추출."""
     dates = []
     for a in articles:
         try:
@@ -144,13 +122,11 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
     valid_dates = [d for d in dates if d]
     period_start = min(valid_dates).isoformat() if valid_dates else "unknown"
     period_end = max(valid_dates).isoformat() if valid_dates else "unknown"
+    return dates, period_start, period_end
 
-    total = len(articles)
-    total_views = sum(_to_int(a.get("view_count", 0)) for a in articles)
-    total_likes = sum(_to_int(a.get("like_count", 0)) for a in articles)
-    total_comments = sum(_to_int(a.get("comment_count", 0)) for a in articles)
 
-    # ── 게시판별 ──────────────────────────────────────────────────────
+def _board_stats(articles: list[dict]) -> dict:
+    """게시판별 통계(게시글 수 내림차순)."""
     board_stats: dict[str, dict] = defaultdict(lambda: {"count": 0, "views": 0, "likes": 0, "comments": 0})
     for a in articles:
         b = a.get("board", "") or "미분류"
@@ -159,8 +135,11 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
         board_stats[b]["likes"] += _to_int(a.get("like_count", 0))
         board_stats[b]["comments"] += _to_int(a.get("comment_count", 0))
     by_board = dict(sorted(board_stats.items(), key=lambda x: x[1]["count"], reverse=True))
+    return by_board
 
-    # ── 월별/주별/요일별 ─────────────────────────────────────────────
+
+def _time_distribution(dates: list) -> tuple[dict, dict, dict]:
+    """월별/주별/요일별 분포."""
     month_counter: Counter = Counter()
     week_counter: Counter = Counter()
     weekday_counter: Counter = Counter()
@@ -176,29 +155,29 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
     by_month = dict(sorted(month_counter.items()))
     by_week = dict(sorted(week_counter.items()))
     by_weekday = {k: weekday_counter[k] for k in WEEKDAY_KR}
+    return by_month, by_week, by_weekday
 
-    # ── TOP 게시글 ────────────────────────────────────────────────────
-    def _top(key: str, n: int) -> list[dict]:
-        return sorted(
-            [
-                {
-                    "title": a.get("title", "")[:40],
-                    "value": _to_int(a.get(key, 0)),
-                    "author": a.get("author", ""),
-                    "date": a.get("date", ""),
-                    "href": a.get("href", ""),
-                }
-                for a in articles
-            ],
-            key=lambda x: x["value"],
-            reverse=True,
-        )[:n]
 
-    top_views = _top("view_count", top_n)
-    top_likes = _top("like_count", top_n)
-    top_comments = _top("comment_count", top_n)
+def _top_articles(articles: list[dict], key: str, n: int) -> list[dict]:
+    """key 값 기준 상위 n 게시글."""
+    return sorted(
+        [
+            {
+                "title": a.get("title", "")[:40],
+                "value": _to_int(a.get(key, 0)),
+                "author": a.get("author", ""),
+                "date": a.get("date", ""),
+                "href": a.get("href", ""),
+            }
+            for a in articles
+        ],
+        key=lambda x: x["value"],
+        reverse=True,
+    )[:n]
 
-    # ── 작성자 활동 ───────────────────────────────────────────────────
+
+def _top_authors(articles: list[dict], top_n: int) -> list[dict]:
+    """작성자 활동 상위."""
     author_counter: Counter = Counter()
     author_views: Counter = Counter()
     for a in articles:
@@ -208,8 +187,11 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
     top_authors = [
         {"author": k, "count": v, "total_views": author_views[k]} for k, v in author_counter.most_common(top_n)
     ]
+    return top_authors
 
-    # ── 제목 키워드 ───────────────────────────────────────────────────
+
+def _top_keywords(articles: list[dict], top_n: int) -> list[dict]:
+    """제목 키워드 빈도 상위."""
     word_counter: Counter = Counter()
     for a in articles:
         title = a.get("title", "")
@@ -219,16 +201,31 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
             if w not in _STOPWORDS and len(w) >= 2:
                 word_counter[w] += 1
     top_keywords = [{"word": k, "count": v} for k, v in word_counter.most_common(top_n * 2)]
+    return top_keywords
 
-    # ── 태그 ──────────────────────────────────────────────────────────
+
+def _top_tags(articles: list[dict], top_n: int) -> list[dict]:
+    """태그 빈도 상위."""
     tag_counter: Counter = Counter()
     for a in articles:
         for tag in a.get("tags", []):
             if tag:
                 tag_counter[tag.strip()] += 1
     top_tags = [{"tag": k, "count": v} for k, v in tag_counter.most_common(top_n)]
+    return top_tags
 
-    # ── 텍스트 보고서 ─────────────────────────────────────────────────
+
+def _summary_overview_lines(result: dict) -> list[str]:
+    """텍스트 보고서 상단(헤더 + [1]~[4])."""
+    period_start = result["period"]["start"]
+    period_end = result["period"]["end"]
+    total = result["total"]
+    total_views = result["total_views"]
+    total_likes = result["total_likes"]
+    total_comments = result["total_comments"]
+    by_board = result["by_board"]
+    by_month = result["by_month"]
+    by_weekday = result["by_weekday"]
     lines: list[str] = []
     sep = "=" * 60
 
@@ -260,7 +257,18 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
     for wd, cnt in by_weekday.items():
         bar = "█" * min(cnt // 3, 30)
         lines.append(f"  {wd}요일  {bar}  {cnt}건")
+    return lines
 
+
+def _summary_ranking_lines(result: dict, top_n: int) -> list[str]:
+    """텍스트 보고서 하단([5]~[10])."""
+    top_views = result["top_views"]
+    top_likes = result["top_likes"]
+    top_comments = result["top_comments"]
+    top_authors = result["top_authors"]
+    top_keywords = result["top_keywords"]
+    top_tags = result["top_tags"]
+    lines: list[str] = []
     lines.append(f"\n[5] 조회수 TOP {top_n}")
     for i, it in enumerate(top_views, 1):
         lines.append(f"  {i:>2}. [{it['value']:>5}회] {it['title']}  ({it['author']}, {it['date']})")
@@ -285,11 +293,73 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
         lines.append(f"\n[10] 인기 태그 TOP {top_n}")
         tag_line = "  " + "  ".join(f"#{it['tag']}({it['count']})" for it in top_tags)
         lines.append(tag_line)
+    return lines
 
+
+def _render_summary_text(result: dict, top_n: int) -> str:
+    """분석 결과 dict -> 텍스트 보고서."""
+    sep = "=" * 60
+    lines = _summary_overview_lines(result) + _summary_ranking_lines(result, top_n)
     lines.append(f"\n{sep}")
-    summary_text = "\n".join(lines)
+    return "\n".join(lines)
 
-    return {
+
+def analyze(articles: list[dict], top_n: int = 10) -> dict:
+    """게시글 목록 분석 → 결과 dict 반환.
+
+    결과 dict 구조:
+        period          수집 기간 (start ~ end)
+        total           총 게시글 수
+        total_views     총 조회수
+        total_likes     총 좋아요
+        total_comments  총 댓글수
+        by_board        게시판별 통계 {board: {count, views, likes, comments}}
+        by_month        월별 {YYYY-MM: count}
+        by_week         주별 {YYYY-WNN: count}
+        by_weekday      요일별 {Mon: count, ...}
+        top_views       조회수 상위 N
+        top_likes       좋아요 상위 N
+        top_comments    댓글 상위 N
+        top_authors     작성자별 글 수 상위 N
+        top_keywords    제목 키워드 빈도 상위 N
+        top_tags        태그 빈도 상위 N
+        summary_text    텍스트 보고서 (print용)
+    """
+    if not articles:
+        return {"error": "데이터 없음"}
+
+    dates, period_start, period_end = _extract_period(articles)
+
+    total = len(articles)
+    total_views = sum(_to_int(a.get("view_count", 0)) for a in articles)
+    total_likes = sum(_to_int(a.get("like_count", 0)) for a in articles)
+    total_comments = sum(_to_int(a.get("comment_count", 0)) for a in articles)
+
+    # ── 게시판별 ──────────────────────────────────────────────────────
+    by_board = _board_stats(articles)
+
+    # ── 월별/주별/요일별 ─────────────────────────────────────────────
+    by_month, by_week, by_weekday = _time_distribution(dates)
+
+    # ── TOP 게시글 ────────────────────────────────────────────────────
+
+    top_views = _top_articles(articles, "view_count", top_n)
+    top_likes = _top_articles(articles, "like_count", top_n)
+    top_comments = _top_articles(articles, "comment_count", top_n)
+
+    # ── 작성자 활동 ───────────────────────────────────────────────────
+    top_authors = _top_authors(articles, top_n)
+
+    # ── 제목 키워드 ───────────────────────────────────────────────────
+    top_keywords = _top_keywords(articles, top_n)
+
+    # ── 태그 ──────────────────────────────────────────────────────────
+    top_tags = _top_tags(articles, top_n)
+
+    # ── 텍스트 보고서 ─────────────────────────────────────────────────
+
+
+    result = {
         "period": {"start": period_start, "end": period_end},
         "total": total,
         "total_views": total_views,
@@ -305,9 +375,9 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
         "top_authors": top_authors,
         "top_keywords": top_keywords,
         "top_tags": top_tags,
-        "summary_text": summary_text,
     }
-
+    result["summary_text"] = _render_summary_text(result, top_n)
+    return result
 
 def save_report(report: dict, out_dir: str | None = None) -> dict[str, str]:
     """분석 결과를 JSON + TXT로 저장. 저장 경로 dict 반환."""

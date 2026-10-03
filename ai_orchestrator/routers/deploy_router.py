@@ -122,5 +122,6 @@ def deploy_status(user: dict = Depends(require_role("owner"))) -> dict[str, Any]
             "running": False,
             "secret_values_output": False,
         }
-    except Exception:  # noqa: BLE001 - GitHub Webhook 배포 트리거(문서에 'HMAC-SHA256 서명 검증 실패시 401' 명시) — 서명검증은 except와 무관한 명시적 hmac.compare_digest 로직이며, except는 데몬 연결실패/JSON파싱실패/상태파일 읽기실패를 각각 HTTPException 또는 명확한 실패 dict로 반환.
+    except Exception as err:  # noqa: BLE001 - GitHub Webhook 배포 트리거(문서에 'HMAC-SHA256 서명 검증 실패시 401' 명시) — 서명검증은 except와 무관한 명시적 hmac.compare_digest 로직이며, except는 데몬 연결실패/JSON파싱실패/상태파일 읽기실패를 각각 HTTPException 또는 명확한 실패 dict로 반환.
+        logger.warning("배포 상태 읽기 실패: %s", type(err).__name__)
         return {"ok": False, "status": "status_file_unreadable", "secret_values_output": False}

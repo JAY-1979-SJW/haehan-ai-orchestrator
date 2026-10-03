@@ -57,29 +57,165 @@ def _cmd_content(sub: str, args: list[str]) -> None:
         )
 
 
-def _cmd_seo(sub: str, args: list[str]) -> None:
-    from pathlib import Path
-
+def _seo_monitor(site_url: str, company: str, keywords: list[str]) -> None:
+    """seo monitor/report-status."""
     from scripts.naver.company_seo import (
-        analyze_html,
+        audit_site_assets,
+        build_exposure_plan,
+        build_monitor_report,
+        build_submit_plan,
+        save_assets,
+        save_diagnosis,
+        save_exposure_plan,
+        save_monitor_report,
+        save_submit_plan,
+    )
+    assets = audit_site_assets(site_url)
+    exposure = build_exposure_plan(site_url, keywords=keywords)
+    submit_plan = build_submit_plan(site_url, keywords=keywords, company_name=company)
+    save_assets(assets)
+    save_exposure_plan(exposure)
+    save_submit_plan(submit_plan)
+    report = build_monitor_report(site_url, assets=assets, exposure=exposure, submit_plan=submit_plan)
+    path = save_monitor_report(report)
+    _print_saved(report, str(path))
+    save_diagnosis(assets["diagnosis"])
+
+
+def _seo_full(site_url: str, company: str, keywords: list[str]) -> None:
+    """seo full/all."""
+    from scripts.naver.company_seo import (
         audit_site_assets,
         build_company_seo_plan,
-        build_entrypoints,
         build_exposure_plan,
         build_monitor_report,
         build_ownership_plan,
         build_submit_plan,
-        print_assets_summary,
-        print_diagnosis_summary,
-        print_plan_summary,
         save_assets,
         save_diagnosis,
-        save_entrypoints,
         save_exposure_plan,
         save_monitor_report,
         save_ownership_plan,
         save_plan,
         save_submit_plan,
+    )
+    plan = build_company_seo_plan(site_url, company_name=company, keywords=keywords)
+    assets = audit_site_assets(site_url)
+    ownership = build_ownership_plan(site_url, company_name=company)
+    exposure = build_exposure_plan(site_url, keywords=keywords)
+    submit_plan = build_submit_plan(site_url, keywords=keywords, company_name=company)
+    monitor = build_monitor_report(site_url, assets=assets, exposure=exposure, submit_plan=submit_plan)
+    paths = {
+        "plan": str(save_plan(plan)),
+        "assets": str(save_assets(assets)),
+        "diagnosis": str(save_diagnosis(assets["diagnosis"])),
+        "ownership": str(save_ownership_plan(ownership)),
+        "exposure": str(save_exposure_plan(exposure)),
+        "submit_plan": str(save_submit_plan(submit_plan)),
+        "monitor": str(save_monitor_report(monitor)),
+    }
+    _print_saved(
+        {
+            "workflow": "naver_company_seo_full",
+            "site_url": site_url,
+            "ok": True,
+            "score": assets.get("score"),
+            "monitor_status": monitor.get("status"),
+            "paths": paths,
+        },
+        _save_latest("naver_company_seo_full_latest.json", {"paths": paths, "score": assets.get("score")}),
+    )
+
+
+def _seo_diagnose(args: list[str], site_url: str) -> None:
+    """seo diagnose/diagnosis/audit."""
+    from pathlib import Path
+
+    from scripts.naver.company_seo import (
+        analyze_html,
+        audit_site_assets,
+        print_diagnosis_summary,
+        save_assets,
+        save_diagnosis,
+    )
+
+    html_path = _option_value(args, "--html=")
+    if not html_path:
+        assets = audit_site_assets(site_url)
+        path = save_diagnosis(assets["diagnosis"])
+        print_diagnosis_summary(assets["diagnosis"], path)
+        save_assets(assets)
+        return
+    html = Path(html_path).read_text(encoding="utf-8")
+    diagnosis = analyze_html(site_url, html)
+    path = save_diagnosis(diagnosis)
+    print_diagnosis_summary(diagnosis, path)
+
+
+def _seo_submit(args: list[str], site_url: str, company: str, keywords: list[str]) -> None:
+    """seo submit/register(승인 게이트)."""
+    from scripts.naver.company_seo import build_submit_plan
+
+    approved = _flag(args, "--approved")
+    confirm = _option_value(args, "--confirm=") or ""
+    if not approved or confirm != "NAVER_APPROVED_SEO_SUBMIT":
+        raise SystemExit("seo submit requires --approved --confirm=NAVER_APPROVED_SEO_SUBMIT")
+    gate_check("blog_publish", force=approved, service="naver_searchadvisor", site_url=site_url)
+    plan = build_submit_plan(site_url, company_name=company, keywords=keywords)
+    record = {
+        **plan,
+        "ok": False,
+        "submit_executed": False,
+        "reason": "Search Advisor submit is approval-gated; browser adapter must confirm visible form before final click",
+    }
+    _print_saved(record, _save_latest("naver_company_seo_submit_latest.json", record))
+
+
+def _seo_plan_group(sub: str, site_url: str, company: str, keywords: list[str]) -> bool:
+    """seo ownership/exposure/submit-plan 처리. 처리했으면 True."""
+    from scripts.naver.company_seo import (
+        build_exposure_plan,
+        build_ownership_plan,
+        build_submit_plan,
+        save_exposure_plan,
+        save_ownership_plan,
+        save_submit_plan,
+    )
+
+    if sub in ("ownership", "verify-plan", "verification"):
+        gate_check("scan_page")
+        plan = build_ownership_plan(site_url, company_name=company)
+        path = save_ownership_plan(plan)
+        _print_saved(plan, str(path))
+        return True
+
+    if sub in ("exposure", "search-status", "index-status"):
+        gate_check("scan_page")
+        plan = build_exposure_plan(site_url, keywords=keywords)
+        path = save_exposure_plan(plan)
+        _print_saved(plan, str(path))
+        return True
+
+    if sub in ("submit-plan", "submission-plan", "index-request-plan"):
+        gate_check("scan_page")
+        plan = build_submit_plan(site_url, keywords=keywords, company_name=company)
+        path = save_submit_plan(plan)
+        _print_saved(plan, str(path))
+        return True
+    return False
+
+
+def _cmd_seo(sub: str, args: list[str]) -> None:
+    from scripts.naver.company_seo import (
+        audit_site_assets,
+        build_company_seo_plan,
+        build_entrypoints,
+        print_assets_summary,
+        print_plan_summary,
+        save_assets,
+        save_diagnosis,
+        save_entrypoints,
+        save_plan,
     )
 
     site_url = _option_value(args, "--site=") or _option_value(args, "--url=") or "https://haehan-ai.kr"
@@ -109,99 +245,25 @@ def _cmd_seo(sub: str, args: list[str]) -> None:
         save_diagnosis(assets["diagnosis"])
         return
 
-    if sub in ("ownership", "verify-plan", "verification"):
-        gate_check("scan_page")
-        plan = build_ownership_plan(site_url, company_name=company)
-        path = save_ownership_plan(plan)
-        _print_saved(plan, str(path))
-        return
-
-    if sub in ("exposure", "search-status", "index-status"):
-        gate_check("scan_page")
-        plan = build_exposure_plan(site_url, keywords=keywords)
-        path = save_exposure_plan(plan)
-        _print_saved(plan, str(path))
-        return
-
-    if sub in ("submit-plan", "submission-plan", "index-request-plan"):
-        gate_check("scan_page")
-        plan = build_submit_plan(site_url, keywords=keywords, company_name=company)
-        path = save_submit_plan(plan)
-        _print_saved(plan, str(path))
+    if _seo_plan_group(sub, site_url, company, keywords):
         return
 
     if sub in ("monitor", "report-status"):
         gate_check("scan_page")
-        assets = audit_site_assets(site_url)
-        exposure = build_exposure_plan(site_url, keywords=keywords)
-        submit_plan = build_submit_plan(site_url, keywords=keywords, company_name=company)
-        save_assets(assets)
-        save_exposure_plan(exposure)
-        save_submit_plan(submit_plan)
-        report = build_monitor_report(site_url, assets=assets, exposure=exposure, submit_plan=submit_plan)
-        path = save_monitor_report(report)
-        _print_saved(report, str(path))
-        save_diagnosis(assets["diagnosis"])
+        _seo_monitor(site_url, company, keywords)
         return
 
     if sub in ("full", "all"):
         gate_check("scan_page")
-        plan = build_company_seo_plan(site_url, company_name=company, keywords=keywords)
-        assets = audit_site_assets(site_url)
-        ownership = build_ownership_plan(site_url, company_name=company)
-        exposure = build_exposure_plan(site_url, keywords=keywords)
-        submit_plan = build_submit_plan(site_url, keywords=keywords, company_name=company)
-        monitor = build_monitor_report(site_url, assets=assets, exposure=exposure, submit_plan=submit_plan)
-        paths = {
-            "plan": str(save_plan(plan)),
-            "assets": str(save_assets(assets)),
-            "diagnosis": str(save_diagnosis(assets["diagnosis"])),
-            "ownership": str(save_ownership_plan(ownership)),
-            "exposure": str(save_exposure_plan(exposure)),
-            "submit_plan": str(save_submit_plan(submit_plan)),
-            "monitor": str(save_monitor_report(monitor)),
-        }
-        _print_saved(
-            {
-                "workflow": "naver_company_seo_full",
-                "site_url": site_url,
-                "ok": True,
-                "score": assets.get("score"),
-                "monitor_status": monitor.get("status"),
-                "paths": paths,
-            },
-            _save_latest("naver_company_seo_full_latest.json", {"paths": paths, "score": assets.get("score")}),
-        )
+        _seo_full(site_url, company, keywords)
         return
 
     if sub in ("diagnose", "diagnosis", "audit"):
-        html_path = _option_value(args, "--html=")
-        if not html_path:
-            assets = audit_site_assets(site_url)
-            path = save_diagnosis(assets["diagnosis"])
-            print_diagnosis_summary(assets["diagnosis"], path)
-            save_assets(assets)
-            return
-        html = Path(html_path).read_text(encoding="utf-8")
-        diagnosis = analyze_html(site_url, html)
-        path = save_diagnosis(diagnosis)
-        print_diagnosis_summary(diagnosis, path)
+        _seo_diagnose(args, site_url)
         return
 
     if sub in ("submit", "register"):
-        approved = _flag(args, "--approved")
-        confirm = _option_value(args, "--confirm=") or ""
-        if not approved or confirm != "NAVER_APPROVED_SEO_SUBMIT":
-            raise SystemExit("seo submit requires --approved --confirm=NAVER_APPROVED_SEO_SUBMIT")
-        gate_check("blog_publish", force=approved, service="naver_searchadvisor", site_url=site_url)
-        plan = build_submit_plan(site_url, company_name=company, keywords=keywords)
-        record = {
-            **plan,
-            "ok": False,
-            "submit_executed": False,
-            "reason": "Search Advisor submit is approval-gated; browser adapter must confirm visible form before final click",
-        }
-        _print_saved(record, _save_latest("naver_company_seo_submit_latest.json", record))
+        _seo_submit(args, site_url, company, keywords)
         return
 
     print(

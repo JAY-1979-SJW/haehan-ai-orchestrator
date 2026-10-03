@@ -1,11 +1,11 @@
-"""로그인 세션 모듈 — 사이트별 로그인 상태 확인 및 대기.
+"""로그인 세션 모듈 — 사이트별 로그인 상태 확인 및 자동 로그인.
 
 모든 웹 자동화 스크립트에서 공통으로 사용.
 
 사용법:
     from scripts.login_session import ensure_login, is_logged_in
 
-    # 로그인 확인 후 미로그인이면 최대 5분 대기
+    # 로그인 확인 후 미로그인이면 바로 자동 로그인(저장된 자격증명). 실패·추가 인증이면 최대 5분 대기
     ensure_login(page, "google")
     ensure_login(page, "naver")
 
@@ -188,14 +188,50 @@ def is_logged_in(page: Page, site: str) -> bool:
     return result
 
 
+# 하위 서비스 별칭 → site_registry 의 사이트 키
+_REGISTRY_KEY = {
+    "gmail": "google",
+    "calendar": "google",
+    "drive": "google",
+    "docs": "google",
+    "sheets": "google",
+    "blog": "naver",
+    "cafe": "naver",
+}
+
+
+def _auto_login(page: Page, site: str) -> bool:
+    """등록된 사이트면 저장된 자격증명으로 바로 로그인한다. 로그인됐으면 True, 못 하면 False(대기 방식으로 넘어감)."""
+    from scripts.site_registry import get_site
+
+    key = _REGISTRY_KEY.get(site.lower(), site.lower())
+    if not get_site(key):
+        return False
+    from scripts.site_access import LoginError, ensure_logged_in
+
+    try:
+        ensure_logged_in(page, key)
+    except LoginError as e:
+        log.warn("%s 자동 로그인 실패(%s) — 사용자 로그인을 기다립니다", site, e.kind)
+        return False
+    except Exception as e:  # noqa: BLE001 - 자동 로그인 실패는 기존 대기 방식으로 폴백(세션을 파기하지 않음)
+        log.warn("%s 자동 로그인 예외(%s) — 사용자 로그인을 기다립니다", site, e)
+        return False
+    return True
+
+
 def ensure_login(page: Page, site: str, wait_seconds: int = 300) -> None:
-    """로그인 상태 확인, 미로그인 시 사용자 대기.
+    """로그인 상태 확인, 미로그인이면 바로 자동 로그인. 자동 로그인이 안 되면(캡차·자격증명 없음 등) 사용자 대기.
 
     Raises:
         RuntimeError: 대기 시간 초과
     """
     if is_logged_in(page, site):
         log.info("%s 로그인 확인됨", site)
+        return
+
+    if _auto_login(page, site) and is_logged_in(page, site):
+        log.info("%s 자동 로그인 완료", site)
         return
 
     log.warn("%s 로그인 필요 — 브라우저에서 로그인하세요 (최대 %ds)", site, wait_seconds)

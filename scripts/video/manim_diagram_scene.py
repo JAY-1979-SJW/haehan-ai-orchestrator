@@ -84,6 +84,27 @@ STEP_DURATIONS = [(TOTAL - OVERVIEW_DUR) * w / _w_sum for w in WEIGHTS]
 config.background_color = CREAM
 
 
+def _build_step_boxes():
+    title = Text("핵심 구조 — 댓글이 DM이 되기까지", font="Malgun Gothic", font_size=32, color=INK)
+    title.to_edge(UP, buff=0.5)
+
+    boxes = VGroup()
+    for no, label, _, _, _ in STEPS:
+        box = RoundedRectangle(corner_radius=0.15, width=2.9, height=1.4, color=INK, stroke_width=3)
+        box.set_fill(CREAM, opacity=1)
+        txt = Text(f"{no}\n{label}", font="Malgun Gothic", font_size=22, color=INK, line_spacing=1.2)
+        txt.move_to(box)
+        boxes.add(VGroup(box, txt))
+    boxes.arrange(RIGHT, buff=0.55)
+    boxes.move_to(UP * 2.3)
+
+    arrows = VGroup()
+    for i in range(len(STEPS) - 1):
+        a = Arrow(boxes[i].get_right(), boxes[i + 1].get_left(), buff=0.08, color=INK, stroke_width=4)
+        arrows.add(a)
+    return title, boxes, arrows
+
+
 class DiagramScene(Scene):
     def construct(self):
         self.camera.background_color = CREAM
@@ -142,23 +163,7 @@ class DiagramScene(Scene):
 
     # ── ② 4단계 상세 ────────────────────────────────────────────────────
     def _steps(self):
-        title = Text("핵심 구조 — 댓글이 DM이 되기까지", font="Malgun Gothic", font_size=32, color=INK)
-        title.to_edge(UP, buff=0.5)
-
-        boxes = VGroup()
-        for no, label, _, _, _ in STEPS:
-            box = RoundedRectangle(corner_radius=0.15, width=2.9, height=1.4, color=INK, stroke_width=3)
-            box.set_fill(CREAM, opacity=1)
-            txt = Text(f"{no}\n{label}", font="Malgun Gothic", font_size=22, color=INK, line_spacing=1.2)
-            txt.move_to(box)
-            boxes.add(VGroup(box, txt))
-        boxes.arrange(RIGHT, buff=0.55)
-        boxes.move_to(UP * 2.3)
-
-        arrows = VGroup()
-        for i in range(len(STEPS) - 1):
-            a = Arrow(boxes[i].get_right(), boxes[i + 1].get_left(), buff=0.08, color=INK, stroke_width=4)
-            arrows.add(a)
+        title, boxes, arrows = _build_step_boxes()
 
         self.play(FadeIn(title), run_time=0.5)
         self.play(*[FadeIn(b) for b in boxes], run_time=0.7)

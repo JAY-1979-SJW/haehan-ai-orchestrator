@@ -130,7 +130,8 @@ async def receive_kakaotalk_skill(request: Request):
     """
     try:
         payload = await request.json()
-    except Exception:  # noqa: BLE001 - 카카오톡 오픈빌더 스킬 웹훅 -- 텔레그램 알림 실패가 스킬 응답을 막지 않도록 로깅만 하고 진행, payload 파싱 실패는 고정 응답으로 폴백
+    except Exception as exc:  # noqa: BLE001 - 카카오톡 오픈빌더 스킬 웹훅 -- 텔레그램 알림 실패가 스킬 응답을 막지 않도록 로깅만 하고 진행, payload 파싱 실패는 고정 응답으로 폴백
+        logger.debug("카카오 스킬 요청 본문 JSON 파싱 실패(무시): %s", type(exc).__name__)
         payload = None
 
     if not payload:

@@ -20,7 +20,7 @@ from ai_orchestrator.local_agent.action_registry import register_handler
 ACTION_NAME = "browser.prepare_submit"
 
 
-def execute(
+def execute(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     page_url: str,
     page_title: str = "",
     submit_selector: str = "",

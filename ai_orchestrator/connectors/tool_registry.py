@@ -12,7 +12,10 @@ _to_gpt_tools_* 변환기를 일원화 — app_llm 과 같은 '단일 출처' �
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
+
+logger = logging.getLogger(__name__)
 
 # 도메인 → {"tool_defs": callable()->list[dict], "write_tools": set[str]}
 _REGISTRY: dict[str, dict] = {}
@@ -83,7 +86,8 @@ def all_tools() -> dict[str, list[dict]]:
     for domain, info in _REGISTRY.items():
         try:
             out[domain] = info["tool_defs"]()
-        except Exception:  # noqa: BLE001 - 도메인별 tool_defs() 호출 실패 시 해당 도메인만 빈 목록으로 처리 — 다른 도메인 조회에 영향 없는 격리, 실행 권한 부여와 무관한 목록 조회 함수
+        except Exception as exc:  # noqa: BLE001 - 도메인별 tool_defs() 호출 실패 시 해당 도메인만 빈 목록으로 처리 — 다른 도메인 조회에 영향 없는 격리, 실행 권한 부여와 무관한 목록 조회 함수
+            logger.warning("도메인 tool_defs 조회 실패: %s", type(exc).__name__)
             out[domain] = []
     return out
 

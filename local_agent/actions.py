@@ -227,6 +227,117 @@ def action_open_url_execute(params: dict) -> ActionResult:
     )
 
 
+def _screenshot_prepare_dir(target_dir: Path) -> tuple[Path | None, ActionResult | None]:
+    """저장 디렉터리 생성 + 심볼릭 링크 이탈 방어. (resolved_dir, 오류결과)."""
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        return None, ActionResult(
+            False,
+            "capture_screenshot 실패 (디렉터리 생성 불가)",
+            {},
+            str(e)[:200],
+            error_code="SCREENSHOT_DIR_UNAVAILABLE",
+        )
+
+    # 심볼릭 링크 이탈 방어 — 디렉터리 자체를 먼저 검증 (grab 전에).
+    try:
+        resolved_dir = target_dir.resolve()
+        if not resolved_dir.is_dir():
+            raise ValueError("target_dir_not_dir")
+    except (OSError, ValueError):
+        return None, ActionResult(
+            False,
+            "capture_screenshot 차단 (디렉터리 해석 실패)",
+            {},
+            "LOCAL_AGENT_SCREENSHOT_DIR 이 비정상 상태",
+            error_code="SCREENSHOT_PATH_ESCAPED",
+        )
+    return resolved_dir, None
+
+
+def _screenshot_grab_or_error():
+    """화면 캡처. 성공 시 (img, width, height), 실패 시 ActionResult."""
+    try:
+        return _grab_screen()
+    except _ScreenshotDependencyMissing as e:
+        return ActionResult(
+            False,
+            "capture_screenshot 실패 (의존성 없음)",
+            {},
+            str(e),
+            error_code="SCREENSHOT_DEPENDENCY_MISSING",
+        )
+    except Exception as e:  # pragma: no cover - 환경별 실패
+        logger.exception("screenshot grab 실패")
+        return ActionResult(
+            False,
+            "capture_screenshot 실패",
+            {},
+            str(e)[:200],
+            error_code="SCREENSHOT_CAPTURE_FAILED",
+        )
+
+
+def _screenshot_save(img, target_dir: Path, resolved_dir: Path, basename: str) -> tuple[ActionResult | None, int]:
+    """경로 이탈 재검증 + PNG 저장 + 크기 조회. (오류결과, file_size)."""
+    out_path = target_dir / basename
+
+    # 저장 경로가 반드시 화이트리스트 내부인지 재검증 (심볼릭 링크 등 방어)
+    try:
+        resolved = out_path.resolve()
+        resolved.relative_to(resolved_dir)
+    except (OSError, ValueError):
+        return ActionResult(
+            False,
+            "capture_screenshot 차단 (경로 이탈)",
+            {},
+            "지정된 스크린샷 디렉터리 바깥에 저장 시도",
+            error_code="SCREENSHOT_PATH_ESCAPED",
+        ), 0
+
+    try:
+        img.save(out_path, format="PNG")
+    except OSError as e:
+        return ActionResult(
+            False,
+            "capture_screenshot 저장 실패",
+            {},
+            str(e)[:200],
+            error_code="SCREENSHOT_WRITE_FAILED",
+        ), 0
+
+    try:
+        file_size = int(out_path.stat().st_size)
+    except OSError:
+        file_size = 0
+    return None, file_size
+
+
+def _screenshot_guard(params: dict) -> tuple[ActionResult | None, str]:
+    """승인 플래그 / task_id 검증. (오류결과, task_id)."""
+    approved = bool(params.get("_approved"))
+    if not approved:
+        return ActionResult(
+            False,
+            "capture_screenshot 승인 플래그 없음",
+            {},
+            "action 단계 방어: _approved 플래그 없이 실제 캡처 불가",
+            error_code="SCREENSHOT_NOT_APPROVED",
+        ), ""
+
+    task_id = str(params.get("_task_id", "")).strip()
+    if not task_id:
+        return ActionResult(
+            False,
+            "capture_screenshot task_id 없음",
+            {},
+            "_task_id 누락 — 파일명 생성 불가, 실제 실행 거절",
+            error_code="SCREENSHOT_MISSING_TASK_ID",
+        ), ""
+    return None, task_id
+
+
 def action_capture_screenshot(params: dict) -> ActionResult:
     """Stage 3: 승인된 1회 스크린샷 캡처 + dry-run 자기점검.
 
@@ -261,104 +372,26 @@ def action_capture_screenshot(params: dict) -> ActionResult:
         return _capture_screenshot_dry_run(target_dir)
 
     # ── 실제 실행 방어 ────────────────────────────────────────────────
-    approved = bool(params.get("_approved"))
-    if not approved:
-        return ActionResult(
-            False,
-            "capture_screenshot 승인 플래그 없음",
-            {},
-            "action 단계 방어: _approved 플래그 없이 실제 캡처 불가",
-            error_code="SCREENSHOT_NOT_APPROVED",
-        )
-
-    task_id = str(params.get("_task_id", "")).strip()
-    if not task_id:
-        return ActionResult(
-            False,
-            "capture_screenshot task_id 없음",
-            {},
-            "_task_id 누락 — 파일명 생성 불가, 실제 실행 거절",
-            error_code="SCREENSHOT_MISSING_TASK_ID",
-        )
+    guard_err, task_id = _screenshot_guard(params)
+    if guard_err is not None:
+        return guard_err
     safe_task_id = "".join(c for c in task_id if c.isalnum() or c in ("-", "_"))[:32] or "untagged"
 
-    try:
-        target_dir.mkdir(parents=True, exist_ok=True)
-    except OSError as e:
-        return ActionResult(
-            False,
-            "capture_screenshot 실패 (디렉터리 생성 불가)",
-            {},
-            str(e)[:200],
-            error_code="SCREENSHOT_DIR_UNAVAILABLE",
-        )
+    resolved_dir, dir_err = _screenshot_prepare_dir(target_dir)
+    if dir_err is not None:
+        return dir_err
 
-    # 심볼릭 링크 이탈 방어 — 디렉터리 자체를 먼저 검증 (grab 전에).
-    try:
-        resolved_dir = target_dir.resolve()
-        if not resolved_dir.is_dir():
-            raise ValueError("target_dir_not_dir")
-    except (OSError, ValueError):
-        return ActionResult(
-            False,
-            "capture_screenshot 차단 (디렉터리 해석 실패)",
-            {},
-            "LOCAL_AGENT_SCREENSHOT_DIR 이 비정상 상태",
-            error_code="SCREENSHOT_PATH_ESCAPED",
-        )
-
-    try:
-        img, width, height = _grab_screen()
-    except _ScreenshotDependencyMissing as e:
-        return ActionResult(
-            False,
-            "capture_screenshot 실패 (의존성 없음)",
-            {},
-            str(e),
-            error_code="SCREENSHOT_DEPENDENCY_MISSING",
-        )
-    except Exception as e:  # pragma: no cover - 환경별 실패
-        logger.exception("screenshot grab 실패")
-        return ActionResult(
-            False,
-            "capture_screenshot 실패",
-            {},
-            str(e)[:200],
-            error_code="SCREENSHOT_CAPTURE_FAILED",
-        )
+    grabbed = _screenshot_grab_or_error()
+    if isinstance(grabbed, ActionResult):
+        return grabbed
+    img, width, height = grabbed
 
     ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     basename = f"screenshot_{safe_task_id}_{ts}.png"
-    out_path = target_dir / basename
 
-    # 저장 경로가 반드시 화이트리스트 내부인지 재검증 (심볼릭 링크 등 방어)
-    try:
-        resolved = out_path.resolve()
-        resolved.relative_to(resolved_dir)
-    except (OSError, ValueError):
-        return ActionResult(
-            False,
-            "capture_screenshot 차단 (경로 이탈)",
-            {},
-            "지정된 스크린샷 디렉터리 바깥에 저장 시도",
-            error_code="SCREENSHOT_PATH_ESCAPED",
-        )
-
-    try:
-        img.save(out_path, format="PNG")
-    except OSError as e:
-        return ActionResult(
-            False,
-            "capture_screenshot 저장 실패",
-            {},
-            str(e)[:200],
-            error_code="SCREENSHOT_WRITE_FAILED",
-        )
-
-    try:
-        file_size = int(out_path.stat().st_size)
-    except OSError:
-        file_size = 0
+    save_err, file_size = _screenshot_save(img, target_dir, resolved_dir, basename)
+    if save_err is not None:
+        return save_err
 
     # storage_ref: 디스크 경로가 아닌 참조 키. agent_id 가 주입돼 있으면 3-tier,
     # 없으면 2-tier 형식 ("{task_id}/{basename}"). 절대경로/드라이브 경로 금지.
@@ -576,28 +609,8 @@ def action_web_analyze_html(params: dict) -> ActionResult:
     )
 
 
-def action_web_open_url_readonly(params: dict) -> ActionResult:
-    """실제 브라우저를 read-only 로 열어 현재 페이지 구조를 요약 (Stage 2).
-
-    browser_reader.open_url_readonly 를 호출한다. 클릭/입력/제출/다운로드/
-    업로드/쿠키 수집은 일절 수행하지 않으며, 반환 data 에는 HTML 원문
-    전체가 포함되지 않는다 (page_structure 요약만 포함).
-    """
-    from . import browser_reader
-
-    if not isinstance(params, dict):
-        params = {}
-
-    url = str(params.get("url", "")).strip()
-    if not url:
-        return ActionResult(
-            False,
-            "web_open_url_readonly 실패",
-            {},
-            "url 누락",
-            error_code="MISSING_URL",
-        )
-
+def _readonly_open_options(params: dict) -> dict:
+    """web_open_url_readonly 입력 파라미터 정규화 (검증 거절은 호출부에서)."""
     wait_until = params.get("wait_until", "domcontentloaded")
     if not isinstance(wait_until, str):
         wait_until = "domcontentloaded"
@@ -629,14 +642,6 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
         headless = background_approved
     else:
         headless = bool(headless)
-    if headless and not background_approved:
-        return ActionResult(
-            False,
-            "web_open_url_readonly 백그라운드 거절",
-            {},
-            "headless background execution requires user-approved background_approved=True",
-            error_code="BACKGROUND_NOT_APPROVED",
-        )
     try:
         keep_open_ms = int(params.get("keep_open_ms", 0))
     except (TypeError, ValueError):
@@ -645,42 +650,22 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
     browser_channel = str(params.get("browser_channel", "") or "").strip().lower()
     if browser_channel not in {"", "chromium", "chrome", "msedge"}:
         browser_channel = ""
+    return {
+        "wait_until": wait_until,
+        "timeout_ms": timeout_ms,
+        "max_html_chars": max_html_chars,
+        "hints": hints,
+        "allow_private_network": allow_private_network,
+        "background_approved": background_approved,
+        "headless": headless,
+        "keep_open_ms": keep_open_ms,
+        "browser_channel": browser_channel,
+    }
 
-    try:
-        result = browser_reader.open_url_readonly(
-            url=url,
-            wait_until=wait_until,
-            timeout_ms=timeout_ms,
-            max_html_chars=max_html_chars,
-            keyword_hints=hints,
-            allow_private_network=allow_private_network,
-            headless=headless,
-            keep_open_ms=keep_open_ms,
-            browser_channel=browser_channel,
-        )
-    except Exception as e:
-        logger.exception("web_open_url_readonly 실행 실패")
-        return ActionResult(
-            False,
-            "web_open_url_readonly 예외",
-            {},
-            str(e)[:200],
-            error_code="BROWSER_OPEN_FAILED",
-        )
 
-    if not isinstance(result, dict) or not result.get("ok"):
-        code = "BROWSER_OPEN_FAILED"
-        reason = "browser open failed"
-        if isinstance(result, dict):
-            code = str(result.get("error_code", code))
-            reason = str(result.get("reason", reason))
-        return ActionResult(
-            False,
-            "web_open_url_readonly 거절",
-            {},
-            reason[:200],
-            error_code=code,
-        )
+def _readonly_open_data(result: dict, url: str, background_approved: bool) -> dict:
+    """browser_reader 결과 → 반환 data (HTML 원문 제외)."""
+    from . import browser_reader
 
     # HTML 원문은 반환 data 에 포함하지 않는다.
     _title_raw = str(result.get("title") or "")
@@ -731,21 +716,17 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
         # audit_summary: safe audit counts (raw audit JSONL 읽기 없음)
         "audit_summary": _build_audit_summary(_url_cat, "ok"),
     }
-    return ActionResult(
-        success=True,
-        summary=str(result.get("summary", "web_open_url_readonly ok"))[:300],
-        data=data,
-    )
+    return data
 
 
-def action_web_probe_manual_login(params: dict) -> ActionResult:
-    """수동 로그인 확인 모드 — 사용자가 직접 로그인하는 동안 read-only 관찰.
+def action_web_open_url_readonly(params: dict) -> ActionResult:
+    """실제 브라우저를 read-only 로 열어 현재 페이지 구조를 요약 (Stage 2).
 
-    browser_login_probe.probe_manual_login_flow 를 호출한다. ID/PW 자동 입력,
-    클릭, 제출, 쿠키/스토리지 수집을 일절 수행하지 않는다. 반환 data 에는
-    HTML 원문 / 쿠키 / 세션 / password / hidden value 가 포함되지 않는다.
+    browser_reader.open_url_readonly 를 호출한다. 클릭/입력/제출/다운로드/
+    업로드/쿠키 수집은 일절 수행하지 않으며, 반환 data 에는 HTML 원문
+    전체가 포함되지 않는다 (page_structure 요약만 포함).
     """
-    from . import browser_login_probe
+    from . import browser_reader
 
     if not isinstance(params, dict):
         params = {}
@@ -754,12 +735,77 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
     if not url:
         return ActionResult(
             False,
-            "web_probe_manual_login 실패",
+            "web_open_url_readonly 실패",
             {},
             "url 누락",
             error_code="MISSING_URL",
         )
 
+    opts = _readonly_open_options(params)
+    wait_until = opts["wait_until"]
+    timeout_ms = opts["timeout_ms"]
+    max_html_chars = opts["max_html_chars"]
+    hints = opts["hints"]
+    allow_private_network = opts["allow_private_network"]
+    background_approved = opts["background_approved"]
+    headless = opts["headless"]
+    if headless and not background_approved:
+        return ActionResult(
+            False,
+            "web_open_url_readonly 백그라운드 거절",
+            {},
+            "headless background execution requires user-approved background_approved=True",
+            error_code="BACKGROUND_NOT_APPROVED",
+        )
+    keep_open_ms = opts["keep_open_ms"]
+    browser_channel = opts["browser_channel"]
+
+    try:
+        result = browser_reader.open_url_readonly(
+            url=url,
+            wait_until=wait_until,
+            timeout_ms=timeout_ms,
+            max_html_chars=max_html_chars,
+            keyword_hints=hints,
+            allow_private_network=allow_private_network,
+            headless=headless,
+            keep_open_ms=keep_open_ms,
+            browser_channel=browser_channel,
+        )
+    except Exception as e:
+        logger.exception("web_open_url_readonly 실행 실패")
+        return ActionResult(
+            False,
+            "web_open_url_readonly 예외",
+            {},
+            str(e)[:200],
+            error_code="BROWSER_OPEN_FAILED",
+        )
+
+    if not isinstance(result, dict) or not result.get("ok"):
+        code = "BROWSER_OPEN_FAILED"
+        reason = "browser open failed"
+        if isinstance(result, dict):
+            code = str(result.get("error_code", code))
+            reason = str(result.get("reason", reason))
+        return ActionResult(
+            False,
+            "web_open_url_readonly 거절",
+            {},
+            reason[:200],
+            error_code=code,
+        )
+
+    data = _readonly_open_data(result, url, background_approved)
+    return ActionResult(
+        success=True,
+        summary=str(result.get("summary", "web_open_url_readonly ok"))[:300],
+        data=data,
+    )
+
+
+def _probe_login_kwargs(params: dict, url: str) -> dict | ActionResult:
+    """web_probe_manual_login 인자 검증·구성. 검증 실패 시 ActionResult."""
     kwargs: dict = {"url": url}
     for key in ("wait_seconds", "poll_interval_seconds", "max_html_chars"):
         if key in params and params[key] is not None:
@@ -793,6 +839,34 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
         kwargs["_browser_factory"] = params["_browser_factory"]
     if "_clock" in params:
         kwargs["_clock"] = params["_clock"]
+    return kwargs
+
+
+def action_web_probe_manual_login(params: dict) -> ActionResult:
+    """수동 로그인 확인 모드 — 사용자가 직접 로그인하는 동안 read-only 관찰.
+
+    browser_login_probe.probe_manual_login_flow 를 호출한다. ID/PW 자동 입력,
+    클릭, 제출, 쿠키/스토리지 수집을 일절 수행하지 않는다. 반환 data 에는
+    HTML 원문 / 쿠키 / 세션 / password / hidden value 가 포함되지 않는다.
+    """
+    from . import browser_login_probe
+
+    if not isinstance(params, dict):
+        params = {}
+
+    url = str(params.get("url", "")).strip()
+    if not url:
+        return ActionResult(
+            False,
+            "web_probe_manual_login 실패",
+            {},
+            "url 누락",
+            error_code="MISSING_URL",
+        )
+
+    kwargs = _probe_login_kwargs(params, url)
+    if isinstance(kwargs, ActionResult):
+        return kwargs
 
     try:
         result = browser_login_probe.probe_manual_login_flow(**kwargs)
@@ -842,6 +916,35 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
     )
 
 
+def _guarded_field_error(action_name: str, selector, text, value) -> ActionResult | None:
+    """guarded 액션의 selector/text/value 타입 검증 (순서 고정)."""
+    if selector is not None and not isinstance(selector, str):
+        return ActionResult(
+            False,
+            f"{action_name} 실패",
+            {},
+            "selector 는 문자열이어야 함",
+            error_code="INVALID_SELECTOR",
+        )
+    if text is not None and not isinstance(text, str):
+        return ActionResult(
+            False,
+            f"{action_name} 실패",
+            {},
+            "text 는 문자열이어야 함",
+            error_code="INVALID_TEXT",
+        )
+    if value is not None and not isinstance(value, (str, int, float)):
+        return ActionResult(
+            False,
+            f"{action_name} 실패",
+            {},
+            "value 는 문자열/숫자여야 함",
+            error_code="INVALID_VALUE",
+        )
+    return None
+
+
 def _action_browser_guarded(
     action_name: str,
     params: dict,
@@ -867,34 +970,11 @@ def _action_browser_guarded(
         )
 
     selector = params.get("selector")
-    if selector is not None and not isinstance(selector, str):
-        return ActionResult(
-            False,
-            f"{action_name} 실패",
-            {},
-            "selector 는 문자열이어야 함",
-            error_code="INVALID_SELECTOR",
-        )
-
     text = params.get("text")
-    if text is not None and not isinstance(text, str):
-        return ActionResult(
-            False,
-            f"{action_name} 실패",
-            {},
-            "text 는 문자열이어야 함",
-            error_code="INVALID_TEXT",
-        )
-
     value = params.get("value")
-    if value is not None and not isinstance(value, (str, int, float)):
-        return ActionResult(
-            False,
-            f"{action_name} 실패",
-            {},
-            "value 는 문자열/숫자여야 함",
-            error_code="INVALID_VALUE",
-        )
+    field_err = _guarded_field_error(action_name, selector, text, value)
+    if field_err is not None:
+        return field_err
     value_norm: str | None = None
     if value is not None:
         value_norm = str(value)
@@ -1300,7 +1380,7 @@ def action_cdp_run(params: dict) -> ActionResult:
         )
 
 
-def _build_claude_command(
+def _build_claude_command(  # noqa: PLR0913 - 키워드 전용 인자(옵션 조립 순수 함수), 묶으면 호출부만 복잡해짐
     *,
     root: Path,
     prompt: str,
@@ -1308,32 +1388,49 @@ def _build_claude_command(
     model: str,
     resume_session_id: str,
     allowed_tools: list[str],
+    restricted: bool = False,
 ) -> list[str]:
     """action_run_claude_agent()의 claude -p 커맨드 조립 — 분리 이유는 순수 가독성/복잡도
     관리(C901)이며, 동작(옵션 순서·"--" 구분자 등)은 기존과 동일하게 유지한다.
     """
-    cmd = [
-        "claude",
-        "-p",
-        "--mcp-config",
-        str(root / ".mcp.json"),
-        "--output-format",
-        "json",
-        "--max-budget-usd",
-        str(max_budget_usd),
-    ]
+    cmd = ["claude", "-p"]
+    if restricted:
+        # 읽기 전용 호출(작업 분배의 계획자·조사/검토/종합): --allowedTools 는 "권한 확인 없이 허용"일 뿐
+        # 사용 가능 도구를 제한하지 않는다(2026-10-02 실측: Read/Grep/Glob 만 허용했는데 Bash 가 실행됨,
+        # 프로젝트 설정이 bypassPermissions). 그래서 도구 집합 자체를 닫는다.
+        #  --restricted         : 코드 실행 도구·WebFetch 제거, 사용자/프로젝트 설정(bypass 포함) 무시, 파일 도구를 작업 폴더로 제한
+        #  --strict-mcp-config  : --mcp-config 를 주지 않으므로 MCP 서버를 하나도 로드하지 않는다
+        #  --tools              : 쓸 수 있는 내장 도구를 목록으로 한정
+        cmd += ["--restricted", "--strict-mcp-config"]
+    else:
+        cmd += ["--mcp-config", str(root / ".mcp.json")]
+    cmd += ["--output-format", "json", "--max-budget-usd", str(max_budget_usd)]
     if model:
         cmd += ["--model", model]
     if resume_session_id:
         cmd += ["--resume", resume_session_id]
     if allowed_tools:
-        cmd += ["--allowedTools", ",".join(allowed_tools)]
+        joined = ",".join(allowed_tools)
+        if restricted:
+            cmd += ["--tools", joined]
+        cmd += ["--allowedTools", joined]
     # "--" 로 옵션 파싱을 끊는다: --allowedTools 는 실측상 다음 토큰들을 계속
     # 도구 이름으로 먹어치우는 greedy 옵션이라(공식 --help의 "<tools...>" 표기와
     # 일치), 구분자 없이 prompt를 바로 이어 붙이면 "prompt 인자가 없다" 오류가 난다
     # (2026-09-28 실측 확인).
     cmd += ["--", prompt]
     return cmd
+
+
+def _apply_restricted(params: dict, allowed_tools: list[str]) -> tuple[bool, list[str]]:
+    """restricted 파라미터 해석. 제한 모드에서는 MCP 도구(mcp__*)를 쓸 수 없으므로 내장 도구 이름만 남긴다."""
+    restricted = params.get("restricted") is True
+    if restricted:
+        allowed_tools = [t for t in allowed_tools if not t.startswith("mcp__")]
+    return restricted, allowed_tools
+
+
+_RESULT_FULL_MAX_CHARS = 20000  # result_max_chars 상한(서버 필터 _RESULT_DATA_LONG_KEYS 와 같은 값)
 
 
 def action_run_claude_agent(params: dict) -> ActionResult:
@@ -1360,6 +1457,11 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         같은 전체 우회는 쓰지 않음, 이 프로젝트 승인 원칙에 위배).
       model         (str, 선택) — 공식 --model 플래그에 그대로 전달(별칭 "sonnet"/
         "opus"/"haiku"/"fable" 또는 전체 모델명). 비우면 CLI 기본값 사용.
+      restricted (bool, 선택, 기본 False) — True 면 읽기 전용 제한 모드로 실행한다: --restricted(코드 실행 도구
+        제거·설정 무시·bypassPermissions 거부) + --strict-mcp-config(MCP 없음) + --tools(allowed_tools 로 도구 집합 한정).
+        allowed_tools 의 mcp__* 이름은 무시한다. 작업 분배의 계획자·읽기 전용 역할이 사용한다.
+      result_max_chars (int, 선택, 기본 0=사용 안 함, 최대 20000) — 주면 data["result_full"] 에 결과
+        전문(이 길이까지)을 추가로 담는다. data["result"] 는 기존대로 2000자 제한(채팅 등 기존 호출 불변).
       resume_session_id (str, 선택) — 공식 -r/--resume 플래그. 같은 대화의 후속
         메시지에 이전 응답의 session_id를 넘기면 --system-prompt-snapshot(기본
         on) 덕분에 시스템 프롬프트/CLAUDE.md 재렌더링 없이 이어서 답해 매 요청마다
@@ -1391,9 +1493,14 @@ def action_run_claude_agent(params: dict) -> ActionResult:
     if not isinstance(raw_allowed_tools, list):
         raw_allowed_tools = [raw_allowed_tools]
     allowed_tools = [str(t).strip() for t in raw_allowed_tools if str(t).strip()]
+    restricted, allowed_tools = _apply_restricted(params, allowed_tools)
 
     model = str(params.get("model", "")).strip()
     resume_session_id = str(params.get("resume_session_id", "")).strip()
+    try:
+        result_max_chars = max(0, min(int(params.get("result_max_chars", 0) or 0), _RESULT_FULL_MAX_CHARS))
+    except (TypeError, ValueError):
+        result_max_chars = 0
 
     root = Path(__file__).parents[1]
     cmd = _build_claude_command(
@@ -1403,6 +1510,7 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         model=model,
         resume_session_id=resume_session_id,
         allowed_tools=allowed_tools,
+        restricted=restricted,
     )
 
     try:
@@ -1438,18 +1546,24 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         payload = {}
 
     is_error = bool(payload.get("is_error", proc.returncode != 0))
-    result_text = str(payload.get("result", "") or "")[:2000]
+    full_text = str(payload.get("result", "") or "")
+    result_text = full_text[:2000]
     success = proc.returncode == 0 and not is_error
+
+    data = {
+        "result": result_text,
+        "session_id": payload.get("session_id", ""),
+        "cost_usd": payload.get("total_cost_usd"),
+        "num_turns": payload.get("num_turns"),
+    }
+    if result_max_chars:
+        # 작업 분배(계획 JSON·하위 작업 결과)처럼 긴 결과가 필요한 호출자만 선택한다. 기존 호출은 변화 없음.
+        data["result_full"] = full_text[:result_max_chars]
 
     return ActionResult(
         success=success,
         summary=(result_text[:300] if success else f"실패(exit={proc.returncode})"),
-        data={
-            "result": result_text,
-            "session_id": payload.get("session_id", ""),
-            "cost_usd": payload.get("total_cost_usd"),
-            "num_turns": payload.get("num_turns"),
-        },
+        data=data,
         error="" if success else ((proc.stderr or "")[:400] or result_text[:400]),
         error_code="" if success else "CLAUDE_AGENT_ERROR",
     )

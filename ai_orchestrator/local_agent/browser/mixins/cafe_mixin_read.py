@@ -290,17 +290,8 @@ class CafeReadMixin:
 
         return all_posts[:max_posts]
 
-    def cafe_search(self, cafe_url: str, query: str, page: int = 1, max_posts: int = 30) -> list[dict]:
-        """카페 내 키워드 검색.
-
-        Args:
-            cafe_url - 카페 URL
-            query    - 검색어
-            page     - 페이지 번호
-        """
-        import urllib.parse
-
-        # clubid 추출
+    def _club_id_for_search(self, cafe_url: str) -> str:
+        """clubid 추출 (URL에 없으면 카페 홈의 ArticleList 링크에서 탐색)."""
         club_id = ""
         m = re.search(r"clubid=(\d+)", cafe_url)
         if not m:
@@ -313,6 +304,19 @@ class CafeReadMixin:
                     break
         else:
             club_id = m.group(1)
+        return club_id
+
+    def cafe_search(self, cafe_url: str, query: str, page: int = 1, max_posts: int = 30) -> list[dict]:
+        """카페 내 키워드 검색.
+
+        Args:
+            cafe_url - 카페 URL
+            query    - 검색어
+            page     - 페이지 번호
+        """
+        import urllib.parse
+
+        club_id = self._club_id_for_search(cafe_url)
 
         q = urllib.parse.quote(query)
         search_url = (

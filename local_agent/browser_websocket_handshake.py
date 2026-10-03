@@ -12,10 +12,8 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
-import platform
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
@@ -52,17 +50,6 @@ class Capability(str, Enum):
     SYSTEM_INFO = "system.info"
     LIST_ALLOWED_APPS = "list.allowed_apps"
     OPEN_URL = "open.url"
-
-
-def _get_hostname_hash() -> str:
-    """Return hashed hostname (never raw hostname)."""
-    try:
-        hostname = platform.node()
-        if not hostname:
-            return "unknown"
-        return hashlib.sha256(hostname.encode()).hexdigest()[:12]
-    except Exception:  # noqa: BLE001 - 호스트명 해시 생성 실패 시 'error' 플레이스홀더 반환 - 원문 hostname은 애초에 노출하지 않는 진단용 식별자, 인증/승인 판정과 무관
-        return "error"
 
 
 def safe_dict(data: dict) -> dict:
@@ -245,6 +232,32 @@ class AgentHeartbeatMessage:
         return safe_dict(self.to_dict())
 
 
+def _validate_hello_details(msg: dict) -> tuple[bool, str | None]:
+    """agent.hello 의 capabilities / tenant 필드 / raw hostname 검사 (순서 고정)."""
+    capabilities = msg.get("capabilities") or []
+    if not isinstance(capabilities, list):
+        return False, "capabilities must be list"
+
+    # TENANT-3: Check organization_id (recommended but optional for backward compatibility)
+    org_id = msg.get("organization_id", "")
+    if org_id and not isinstance(org_id, str):
+        return False, "organization_id must be string"
+
+    # TENANT-3: Check registration_user_id (optional)
+    reg_user_id = msg.get("registration_user_id")
+    if reg_user_id and not isinstance(reg_user_id, str):
+        return False, "registration_user_id must be string"
+
+    # Check that no raw hostname/user/IP is present
+    msg_str = json.dumps(msg).lower()
+    if any(x in msg_str for x in ["hostname=", "user=", "ip="] if "hash" not in msg_str):
+        # Simple check: if we find hostname= but not hostname_hash, flag it
+        if "hostname=" in msg_str and "hostname_hash" not in msg_str:
+            return False, "raw hostname not allowed; use host_name_hash"
+
+    return True, None
+
+
 def validate_agent_hello_message(msg: dict) -> tuple[bool, str | None]:
     """Validate agent.hello message.
 
@@ -288,28 +301,7 @@ def validate_agent_hello_message(msg: dict) -> tuple[bool, str | None]:
     if mode != HandshakeMode.READ_ONLY.value:
         return False, f"only read_only mode supported: {mode}"
 
-    capabilities = msg.get("capabilities") or []
-    if not isinstance(capabilities, list):
-        return False, "capabilities must be list"
-
-    # TENANT-3: Check organization_id (recommended but optional for backward compatibility)
-    org_id = msg.get("organization_id", "")
-    if org_id and not isinstance(org_id, str):
-        return False, "organization_id must be string"
-
-    # TENANT-3: Check registration_user_id (optional)
-    reg_user_id = msg.get("registration_user_id")
-    if reg_user_id and not isinstance(reg_user_id, str):
-        return False, "registration_user_id must be string"
-
-    # Check that no raw hostname/user/IP is present
-    msg_str = json.dumps(msg).lower()
-    if any(x in msg_str for x in ["hostname=", "user=", "ip="] if "hash" not in msg_str):
-        # Simple check: if we find hostname= but not hostname_hash, flag it
-        if "hostname=" in msg_str and "hostname_hash" not in msg_str:
-            return False, "raw hostname not allowed; use host_name_hash"
-
-    return True, None
+    return _validate_hello_details(msg)
 
 
 def validate_server_policy_message(msg: dict) -> tuple[bool, str | None]:

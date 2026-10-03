@@ -170,6 +170,28 @@ h1 {{ font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #0F172A; }}
 # ── FastAPI 앱 팩토리 ─────────────────────────────────────────────────────────
 
 
+def _apply_task_transition(
+    _store: UserPresentStateStore,
+    workflow_run_id: str,
+    transition: Any,
+    html_ui_enabled: bool,
+) -> Any:
+    """confirm / cancel 공통: 존재 확인 → 상태 전이 → 응답 (브라우저 action 미실행)."""
+    task = _store.get_user_present_task(workflow_run_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="작업을 찾을 수 없습니다.")
+    try:
+        updated = transition(workflow_run_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    sanitized = _store.sanitize_user_present_task_for_user(updated)
+    if html_ui_enabled:
+        from fastapi.responses import RedirectResponse
+
+        return RedirectResponse(url="/", status_code=303)
+    return JSONResponse({**sanitized, "safe_to_execute": False})
+
+
 def create_app(
     store: UserPresentStateStore | None = None,
     *,
@@ -240,19 +262,12 @@ def create_app(
         click/type/submit을 실행하지 않는다.
         safe_to_execute는 전이 후에도 항상 False다.
         """
-        task = _store.get_user_present_task(workflow_run_id)
-        if task is None:
-            raise HTTPException(status_code=404, detail="작업을 찾을 수 없습니다.")
-        try:
-            updated = _store.mark_user_confirmed(workflow_run_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
-        sanitized = _store.sanitize_user_present_task_for_user(updated)
-        if html_ui_enabled:
-            from fastapi.responses import RedirectResponse
-
-            return RedirectResponse(url="/", status_code=303)
-        return JSONResponse({**sanitized, "safe_to_execute": False})
+        return _apply_task_transition(
+            _store,
+            workflow_run_id,
+            lambda wid: _store.mark_user_confirmed(wid),
+            html_ui_enabled,
+        )
 
     @app.post("/tasks/{workflow_run_id}/cancel")
     async def cancel_task(workflow_run_id: str = Path(...)) -> Any:
@@ -260,19 +275,12 @@ def create_app(
         사용자가 중단 버튼을 클릭한 신호를 수신한다.
         상태 전이만 수행한다. 브라우저 action을 실행하지 않는다.
         """
-        task = _store.get_user_present_task(workflow_run_id)
-        if task is None:
-            raise HTTPException(status_code=404, detail="작업을 찾을 수 없습니다.")
-        try:
-            updated = _store.mark_user_cancelled(workflow_run_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
-        sanitized = _store.sanitize_user_present_task_for_user(updated)
-        if html_ui_enabled:
-            from fastapi.responses import RedirectResponse
-
-            return RedirectResponse(url="/", status_code=303)
-        return JSONResponse({**sanitized, "safe_to_execute": False})
+        return _apply_task_transition(
+            _store,
+            workflow_run_id,
+            lambda wid: _store.mark_user_cancelled(wid),
+            html_ui_enabled,
+        )
 
     return app
 

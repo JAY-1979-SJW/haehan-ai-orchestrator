@@ -33,8 +33,8 @@ import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from .browser_approval_errors import DuplicateApprovalError
 from .browser_approval_persistent_store import BrowserApprovalRecord
-from .browser_approval_verifier import DuplicateApprovalError
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +156,7 @@ class SQLiteBrowserApprovalStore:
     # ------------------------------------------------------------------
     # Public interface (matches BrowserApprovalStore + PersistentBrowserApprovalStore)
 
-    def create_approval(
+    def create_approval(  # noqa: PLR0913 - 공개 API 시그니처 유지(저장소 3종 공통 인터페이스)
         self,
         approval_id: str,
         action_type: str,

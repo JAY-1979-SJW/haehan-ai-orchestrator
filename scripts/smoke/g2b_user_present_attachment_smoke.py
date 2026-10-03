@@ -73,6 +73,50 @@ def _file_signature(path: str | Path) -> str:
     return f"UNKNOWN({head[:4].hex()})"
 
 
+def _apply_signature_verdict(result, sig):
+    if sig == "HWP_OLE2":
+        result["verdict"] = "HWP_ACQUIRED_CONVERT_REQUIRED"
+    elif sig == "ZIP_OR_HWPX":
+        result["verdict"] = "HWPX_READY"
+    elif sig == "PDF":
+        result["verdict"] = "PDF_ACQUIRED"
+    elif sig == "HTML_RESPONSE":
+        result["verdict"] = "NOT_FILE_RESPONSE"
+        result["block_reason"] = "HTML_RETURNED_INSTEAD_OF_FILE"
+    elif sig == "EMPTY":
+        result["verdict"] = "INVALID_FILE"
+    else:
+        result["verdict"] = "DOWNLOAD_SUCCESS_UNKNOWN_SIG"
+
+
+def _classify_download_error(result, page, e):
+    err_name = type(e).__name__
+    err_msg = str(e)[:200]
+    # 현재 page url로 차단 사유 추정
+    try:
+        cur_url = page.url
+        title = page.title()
+        body_sample = page.inner_text("body")[:300] if page.query_selector("body") else ""
+    except Exception:  # noqa: BLE001 - 나라장터(G2B) 첨부파일 다운로드 스모크테스트(사용자 입회 하 read-only 검증) — goto 실패해도 download 이벤트가 이미 트리거됐을 수 있어 무시, 차단사유 추정을 위한 페이지 정보 조회 실패는 빈 문자열로 폴백
+        cur_url, title, body_sample = "", "", ""  # noqa: F841
+
+    # 차단 사유 분류
+    low = (title + body_sample).lower()  # noqa: F841
+    if any(k in body_sample for k in ("로그인", "인증", "공동인증", "OTP")):
+        result["verdict"] = "USER_DIRECT_REQUIRED"
+        result["block_reason"] = "AUTH_OR_LOGIN_REQUIRED"
+    elif any(k in body_sample for k in ("보안프로그램", "보안 프로그램", "키보드보안", "설치 안내")):
+        result["verdict"] = "SECURITY_PROGRAM_REQUIRED"
+        result["block_reason"] = "SECURITY_PROGRAM_PROMPT"
+    elif "지원하지" in body_sample or "Internet Explorer" in body_sample:
+        result["verdict"] = "ACCESS_BLOCKED"
+        result["block_reason"] = "UNSUPPORTED_BROWSER"
+    else:
+        result["verdict"] = "ACCESS_BLOCKED"
+        result["block_reason"] = f"{err_name}: {err_msg[:100]}"
+    result["page_title"] = title[:80]
+
+
 def smoke_one(candidate: dict, headed: bool = True) -> dict:
     """단일 후보 user-present 다운로드 시도."""
     task_id = str(uuid.uuid4())
@@ -142,47 +186,11 @@ def smoke_one(candidate: dict, headed: bool = True) -> dict:
                 result["signature"] = sig
 
                 # 판정
-                if sig == "HWP_OLE2":
-                    result["verdict"] = "HWP_ACQUIRED_CONVERT_REQUIRED"
-                elif sig == "ZIP_OR_HWPX":
-                    result["verdict"] = "HWPX_READY"
-                elif sig == "PDF":
-                    result["verdict"] = "PDF_ACQUIRED"
-                elif sig == "HTML_RESPONSE":
-                    result["verdict"] = "NOT_FILE_RESPONSE"
-                    result["block_reason"] = "HTML_RETURNED_INSTEAD_OF_FILE"
-                elif sig == "EMPTY":
-                    result["verdict"] = "INVALID_FILE"
-                else:
-                    result["verdict"] = "DOWNLOAD_SUCCESS_UNKNOWN_SIG"
+                _apply_signature_verdict(result, sig)
 
             except Exception as e:  # noqa: BLE001 - 나라장터(G2B) 첨부파일 다운로드 스모크테스트(사용자 입회 하 read-only 검증) — goto 실패해도 download 이벤트가 이미 트리거됐을 수 있어 무시, 차단사유 추정을 위한 페이지 정보 조회 실패는 빈 문자열로 폴백
                 # download event 미발생 — 페이지 응답 확인
-                err_name = type(e).__name__
-                err_msg = str(e)[:200]
-                # 현재 page url로 차단 사유 추정
-                try:
-                    cur_url = page.url
-                    title = page.title()
-                    body_sample = page.inner_text("body")[:300] if page.query_selector("body") else ""
-                except Exception:  # noqa: BLE001 - 나라장터(G2B) 첨부파일 다운로드 스모크테스트(사용자 입회 하 read-only 검증) — goto 실패해도 download 이벤트가 이미 트리거됐을 수 있어 무시, 차단사유 추정을 위한 페이지 정보 조회 실패는 빈 문자열로 폴백
-                    cur_url, title, body_sample = "", "", ""  # noqa: F841
-
-                # 차단 사유 분류
-                low = (title + body_sample).lower()  # noqa: F841
-                if any(k in body_sample for k in ("로그인", "인증", "공동인증", "OTP")):
-                    result["verdict"] = "USER_DIRECT_REQUIRED"
-                    result["block_reason"] = "AUTH_OR_LOGIN_REQUIRED"
-                elif any(k in body_sample for k in ("보안프로그램", "보안 프로그램", "키보드보안", "설치 안내")):
-                    result["verdict"] = "SECURITY_PROGRAM_REQUIRED"
-                    result["block_reason"] = "SECURITY_PROGRAM_PROMPT"
-                elif "지원하지" in body_sample or "Internet Explorer" in body_sample:
-                    result["verdict"] = "ACCESS_BLOCKED"
-                    result["block_reason"] = "UNSUPPORTED_BROWSER"
-                else:
-                    result["verdict"] = "ACCESS_BLOCKED"
-                    result["block_reason"] = f"{err_name}: {err_msg[:100]}"
-                result["page_title"] = title[:80]
+                _classify_download_error(result, page, e)
 
             finally:
                 # cookies/storage_state 절대 추출하지 않음

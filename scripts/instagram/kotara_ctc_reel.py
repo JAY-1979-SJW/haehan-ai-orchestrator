@@ -130,67 +130,6 @@ def _phone_pill(draw: ImageDraw.ImageDraw, cx: int, y: int, text: str, size: int
 # ──────────────────────────────────────────────────────────
 
 
-def render_thumbnail(variant: str, dst: Path) -> Path:
-    src = Image.open(SRC_DIR / "01.png").convert("RGB")
-    img = _cover(src, W, H, focus_y=0.12)  # 팬(위쪽)이 잘리지 않도록 상단에 초점
-    draw = ImageDraw.Draw(img, "RGBA")
-
-    # 하단 텍스트 가독성용 그라데이션 (다이닝 공간 하단부는 이미 어두운 톤이라 과하지 않게)
-    band_y0 = int(H * 0.52)
-    _gradient_band(img, band_y0, H, from_alpha=0, to_alpha=215, color=(15, 13, 12))
-    _location_badge(draw, 48, 48)
-
-    f_sub = _font(FONT_BOLD, 52)
-    f_price = _font(FONT_BOLD, 132)
-    f_name = _font(FONT_REG, 40)
-
-    margin = 72
-    y = band_y0 + 60
-
-    if variant == "A":
-        draw.text((margin, y), "실링팬 설치까지", font=f_sub, fill=WHITE)
-        y += 78
-        draw.text((margin, y), "64.9만원", font=f_price, fill=GOLD)
-        y += 158
-        draw.text((margin, y), "루씨에어 코타라 CTC", font=f_name, fill=(225, 220, 212))
-        y += 66
-    elif variant == "B":
-        f_q = _font(FONT_BOLD, 46)
-        draw.text((margin, y), "인터넷에서 제품만", font=f_q, fill=(230, 226, 218))
-        y += 60
-        draw.text((margin, y), "사실 건가요?", font=f_q, fill=(230, 226, 218))
-        y += 84
-        f_price_b = _font(FONT_BOLD, 96)
-        draw.text((margin, y), "제품+설치 64.9만원", font=f_price_b, fill=GOLD)
-        y += 122
-        draw.text((margin, y), "루씨에어 코타라 CTC", font=f_name, fill=(225, 220, 212))
-        y += 50
-        f_edge = _font(FONT_BOLD, 30)
-        draw.text((margin, y), "설치비까지 포함하면 더 유리합니다", font=f_edge, fill=(210, 205, 196))
-        y += 46
-    else:  # C — 프리미엄형
-        f_top = _font(FONT_BOLD, 44)
-        draw.text((margin, y), "루씨에어 실링팬", font=f_top, fill=(230, 226, 218))
-        y += 58
-        draw.text((margin, y), "설치까지 한번에", font=f_top, fill=(230, 226, 218))
-        y += 90
-        draw.text((margin, y), "64.9만원", font=f_price, fill=GOLD)
-        y += 158
-        draw.text((margin, y), "코타라 CTC 137cm", font=f_name, fill=(225, 220, 212))
-        y += 66
-
-    # CTA 전화번호 배지
-    _phone_pill(draw, W // 2, y + 20, "설치문의 010-7387-6635", size=40, big=True)
-    y += 20 + 40 + 36 + 20
-
-    f_tiny = _font(FONT_REG, 28)
-    draw.text((margin, H - 60), "제품 + 기본설치 기준", font=f_tiny, fill=(190, 185, 178))
-
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    img.save(dst, quality=95)
-    return dst
-
-
 # ──────────────────────────────────────────────────────────
 # 장면 프레임
 # ──────────────────────────────────────────────────────────
@@ -401,18 +340,6 @@ SCENES: list[dict] = [
 ]
 
 
-def render_all_frames() -> list[Path]:
-    frame_dir = OUT_DIR / "frames"
-    frame_dir.mkdir(parents=True, exist_ok=True)
-    paths = []
-    for s in SCENES:
-        p = frame_dir / f"{s['name']}.png"
-        s["fn"](p)
-        paths.append(p)
-        print(f"  ✓ {s['name']} → {p.name}")
-    return paths
-
-
 # ──────────────────────────────────────────────────────────
 # ffmpeg 조립 (가변 길이 xfade)
 # ──────────────────────────────────────────────────────────
@@ -554,20 +481,3 @@ def mux_audio(
     return out_path
 
 
-def strip_audio(src: Path, out_path: Path) -> Path:
-    cmd = ["ffmpeg", "-y", "-i", str(src), "-an", "-c:v", "copy", str(out_path)]
-    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
-    if proc.returncode != 0:
-        raise RuntimeError(f"ffmpeg 무음화 실패: {proc.stderr[-2000:]}")
-    return out_path
-
-
-def extract_check_frames(video_path: Path, out_dir: Path, timestamps: list[float]) -> list[Path]:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    paths = []
-    for t in timestamps:
-        dst = out_dir / f"check_t{t:.1f}.png"
-        cmd = ["ffmpeg", "-y", "-ss", str(t), "-i", str(video_path), "-frames:v", "1", str(dst)]
-        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
-        paths.append(dst)
-    return paths

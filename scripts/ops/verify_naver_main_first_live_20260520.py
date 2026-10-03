@@ -66,6 +66,18 @@ def _send(ws, msg_id, method, params=None, timeout=5.0):
     return {"id": msg_id, "_timeout": True}
 
 
+def _good_signal(ev):
+    val = ev.get("result", {}).get("result", {}).get("value")
+    if isinstance(val, str) and val:
+        try:
+            obj = json.loads(val)
+        except Exception:  # noqa: BLE001 - 네이버 메인 first-live 검증 smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
+            obj = None
+        if obj and obj.get("href") and not obj["href"].startswith("about:") and obj.get("body_len", 0) > 50:
+            return obj
+    return None
+
+
 def _eval_until_signal(target_id, expr, max_wait=18.0):
     deadline = time.time() + max_wait
     last = None
@@ -81,14 +93,9 @@ def _eval_until_signal(target_id, expr, max_wait=18.0):
                        {"expression": expr, "returnByValue": True}, timeout=6.0)
             w.close()
             last = ev
-            val = ev.get("result", {}).get("result", {}).get("value")
-            if isinstance(val, str) and val:
-                try:
-                    obj = json.loads(val)
-                except Exception:  # noqa: BLE001 - 네이버 메인 first-live 검증 smoke 테스트 - CDP 평가 실패 시 timeout/None 반환
-                    obj = None
-                if obj and obj.get("href") and not obj["href"].startswith("about:") and obj.get("body_len", 0) > 50:
-                    return obj
+            _early = _good_signal(ev)
+            if _early is not None:
+                return _early
             break
         time.sleep(1.0)
     # 마지막 obj 반환 (body 비어있어도)

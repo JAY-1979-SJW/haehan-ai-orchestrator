@@ -7,11 +7,14 @@
 
 from __future__ import annotations
 
+import logging
 from urllib.parse import urlparse
 
 from fastapi import HTTPException
 
 from .local_agent_router_schemas import BrowserReadonlyInstructionRequest
+
+logger = logging.getLogger(__name__)
 
 
 def _capture_approval_note(task, agent_id: str, dry_run: bool) -> str:
@@ -23,7 +26,8 @@ def _capture_approval_note(task, agent_id: str, dry_run: bool) -> str:
     parts = [f"agent_id={agent_id}", f"dry_run={dry_run}"]
     try:
         params = task.params if task is not None else None
-    except Exception:  # noqa: BLE001 - 감사 note 축약용 헬퍼 - task.params 접근 실패 시 None 처리 후 reason/note 생략, 승인/차단 판정과 무관
+    except Exception as exc:  # noqa: BLE001 - 감사 note 축약용 헬퍼 - task.params 접근 실패 시 None 처리 후 reason/note 생략, 승인/차단 판정과 무관
+        logger.debug("감사 note 용 task.params 읽기 실패: %s", type(exc).__name__)
         params = None
     if isinstance(params, dict):
         raw_reason = params.get("reason")

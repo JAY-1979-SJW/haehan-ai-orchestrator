@@ -56,7 +56,91 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def run_dev_reg(
+def _resolve_final_status(token_id: str, expires_dt: datetime, clock: Callable[[], datetime]) -> str:
+    """토큰 상태로 최종 판정(approved/rejected/expired 등)."""
+    final_token = get_token(token_id)
+    final_status = final_token.status if final_token else "expired"
+
+    # timeout 으로 반환된 경우 token 이 아직 "issued" 면 expired 처리
+    now = clock()
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=UTC)
+    if final_status == "issued" or (final_token and now >= expires_dt):
+        final_status = "expired"
+    return final_status
+
+
+def _submit_approved(
+    adapter: DevRegAdapterBase,
+    page,
+    task_id: str,
+    token_id: str,
+    requested_by: str,
+    target_url: str,
+) -> DevRegResult:
+    """승인된 건의 폼 제출 + 감사 로그."""
+    try:
+        submit_result = adapter.submit_form(page)
+        result_str = submit_result.result_summary if submit_result.success else f"submit_failed:{submit_result.error}"
+    except Exception as e:  # noqa: BLE001 - 개발자 등록 신청 승인 게이트 실행기 — submit_form은 텔레그램 승인(approved) 확인 후에만 호출되며, except는 폼입력/스크린샷/제출/중단 각 단계 실패를 로그와 명확한 실패 상태로 반환할 뿐 승인 절차를 우회하지 않음.
+        result_str = f"submit_exception:{e}"
+        logger.error("submit_form 예외 | task=%s | %s", task_id, e)
+
+    _dra.mark_executed(task_id, result_str)
+    log_event(
+        "DEV_REG_EXECUTED",
+        task_id,
+        risk_level=adapter.risk_level,
+        action_type=adapter.action_type,
+        target=target_url,
+        decision=result_str,
+        actor=requested_by,
+        token_id=token_id,
+        note=f"provider={adapter.provider}",
+    )
+    return DevRegResult(task_id=task_id, status="executed", result=result_str)
+
+
+def _abort_not_approved(
+    adapter: DevRegAdapterBase,
+    page,
+    task_id: str,
+    token_id: str,
+    requested_by: str,
+    final_status: str,
+) -> DevRegResult:
+    """거절/만료 건의 세션 중단 + 감사 로그."""
+    try:
+        adapter.abort_form(page)
+    except Exception as e:  # noqa: BLE001 - 개발자 등록 신청 승인 게이트 실행기 — submit_form은 텔레그램 승인(approved) 확인 후에만 호출되며, except는 폼입력/스크린샷/제출/중단 각 단계 실패를 로그와 명확한 실패 상태로 반환할 뿐 승인 절차를 우회하지 않음.
+        logger.warning("abort_form 실패 (무시) | task=%s | %s", task_id, e)
+
+    if final_status == "rejected":
+        _dra.mark_rejected_internal(task_id)
+        log_event(
+            "DEV_REG_REJECTED",
+            task_id,
+            risk_level=adapter.risk_level,
+            action_type=adapter.action_type,
+            actor=requested_by,
+            token_id=token_id,
+            note=f"provider={adapter.provider}",
+        )
+        return DevRegResult(task_id=task_id, status="rejected")
+    _dra.mark_expired_internal(task_id)
+    log_event(
+        "DEV_REG_EXPIRED",
+        task_id,
+        risk_level=adapter.risk_level,
+        action_type=adapter.action_type,
+        actor=requested_by,
+        token_id=token_id,
+        note=f"provider={adapter.provider} token_status={final_status}",
+    )
+    return DevRegResult(task_id=task_id, status="expired")
+
+
+def run_dev_reg(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     adapter: DevRegAdapterBase,
     page,
     params: dict,
@@ -191,69 +275,11 @@ def run_dev_reg(
     _dra.unregister_approval_waiter(task_id)
 
     # ── 10. 최종 상태 판정 ──────────────────────────────────────────
-    final_token = get_token(token_id)
-    final_status = final_token.status if final_token else "expired"
-
-    # timeout 으로 반환된 경우 token 이 아직 "issued" 면 expired 처리
-    now = clock()
-    if now.tzinfo is None:
-        now = now.replace(tzinfo=UTC)
-    if final_status == "issued" or (final_token and now >= expires_dt):
-        final_status = "expired"
+    final_status = _resolve_final_status(token_id, expires_dt, clock)
 
     if final_status == "approved":
         # ── 10a. 승인 → 제출 ────────────────────────────────────────
-        try:
-            submit_result = adapter.submit_form(page)
-            result_str = (
-                submit_result.result_summary if submit_result.success else f"submit_failed:{submit_result.error}"
-            )
-        except Exception as e:  # noqa: BLE001 - 개발자 등록 신청 승인 게이트 실행기 — submit_form은 텔레그램 승인(approved) 확인 후에만 호출되며, except는 폼입력/스크린샷/제출/중단 각 단계 실패를 로그와 명확한 실패 상태로 반환할 뿐 승인 절차를 우회하지 않음.
-            result_str = f"submit_exception:{e}"
-            logger.error("submit_form 예외 | task=%s | %s", task_id, e)
+        return _submit_approved(adapter, page, task_id, token_id, requested_by, fill_result.target_url)
 
-        _dra.mark_executed(task_id, result_str)
-        log_event(
-            "DEV_REG_EXECUTED",
-            task_id,
-            risk_level=adapter.risk_level,
-            action_type=adapter.action_type,
-            target=fill_result.target_url,
-            decision=result_str,
-            actor=requested_by,
-            token_id=token_id,
-            note=f"provider={adapter.provider}",
-        )
-        return DevRegResult(task_id=task_id, status="executed", result=result_str)
-
-    else:
-        # ── 10b. 거절/만료 → 세션 중단 ─────────────────────────────
-        try:
-            adapter.abort_form(page)
-        except Exception as e:  # noqa: BLE001 - 개발자 등록 신청 승인 게이트 실행기 — submit_form은 텔레그램 승인(approved) 확인 후에만 호출되며, except는 폼입력/스크린샷/제출/중단 각 단계 실패를 로그와 명확한 실패 상태로 반환할 뿐 승인 절차를 우회하지 않음.
-            logger.warning("abort_form 실패 (무시) | task=%s | %s", task_id, e)
-
-        if final_status == "rejected":
-            _dra.mark_rejected_internal(task_id)
-            log_event(
-                "DEV_REG_REJECTED",
-                task_id,
-                risk_level=adapter.risk_level,
-                action_type=adapter.action_type,
-                actor=requested_by,
-                token_id=token_id,
-                note=f"provider={adapter.provider}",
-            )
-            return DevRegResult(task_id=task_id, status="rejected")
-        else:
-            _dra.mark_expired_internal(task_id)
-            log_event(
-                "DEV_REG_EXPIRED",
-                task_id,
-                risk_level=adapter.risk_level,
-                action_type=adapter.action_type,
-                actor=requested_by,
-                token_id=token_id,
-                note=f"provider={adapter.provider} token_status={final_status}",
-            )
-            return DevRegResult(task_id=task_id, status="expired")
+    # ── 10b. 거절/만료 → 세션 중단 ─────────────────────────────
+    return _abort_not_approved(adapter, page, task_id, token_id, requested_by, final_status)

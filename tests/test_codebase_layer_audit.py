@@ -6,6 +6,7 @@ from scripts.ops.codebase_layer_audit import (
     audit,
     build_residual_audit,
     check_consistency,
+    check_hardcoded_user_path,
     check_security_patterns,
     classify_path,
     diff_snapshot,
@@ -250,3 +251,70 @@ def test_package_containment_excluded_from_cycles():
     assert _is_package_containment("a.b", "a.b") is True
     assert _is_package_containment("a.b", "a.c") is False  # 형제는 실제 순환으로 탐지
     assert _is_package_containment("a.b", "x.y") is False
+
+
+_BS = chr(92)
+
+
+def _win(*parts):
+    """테스트 입력용 윈도우 경로 문자열(역슬래시 이스케이프 혼동을 피하려고 조립한다)."""
+    return _BS.join(parts)
+
+
+def _hardcoded_rows_and_source(tmp_path, rel, lines):
+    target = tmp_path / rel
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return [ClassifiedFile(rel, "L4", "test", 1, 1.0)]
+
+
+def test_hardcoded_user_path_flags_new_file_as_warn(tmp_path):
+    rows = _hardcoded_rows_and_source(
+        tmp_path,
+        "scripts/brand_new.py",
+        ['A = "' + _win("C:", "Users", "someone", "Downloads", "x.pdf") + '"', 'B = "C:/work/old"'],
+    )
+    issues = check_hardcoded_user_path(rows, root=tmp_path)
+    assert [i.severity for i in issues] == ["warn", "warn"]
+    assert {i.code for i in issues} == {"HARDCODED_USER_PATH"}
+
+
+def test_hardcoded_user_path_known_debt_is_info(tmp_path, monkeypatch):
+    # 알려진 부채 목록은 현재 비어 있다(2026-10-01 전부 해소). 메커니즘만 검증하려고 임시 항목을 넣는다.
+    from scripts.ops import codebase_layer_audit as audit_module
+
+    monkeypatch.setattr(audit_module, "_HARDCODED_USER_PATH_KNOWN_DEBT", {"scripts/legacy_tool.py"})
+    rows = _hardcoded_rows_and_source(
+        tmp_path, "scripts/legacy_tool.py", ['A = "' + _win("C:", "Users", "someone", "x") + '"']
+    )
+    issues = check_hardcoded_user_path(rows, root=tmp_path)
+    assert [i.severity for i in issues] == ["info"]
+
+
+def test_hardcoded_user_path_known_debt_list_is_empty():
+    # 신규 하드코딩은 전부 경고여야 한다 — 부채 목록이 다시 늘어나지 않게 고정
+    from scripts.ops import codebase_layer_audit as audit_module
+
+    assert audit_module._HARDCODED_USER_PATH_KNOWN_DEBT == set()
+
+
+def test_hardcoded_user_path_ignores_placeholders_comments_and_os_locations(tmp_path):
+    rows = _hardcoded_rows_and_source(
+        tmp_path,
+        "scripts/ok_file.py",
+        [
+            'A = "' + _win("C:", "Users", "<user>", "AppData") + '"',
+            'B = "C:/Windows/Fonts"',
+            'C = "' + _win("C:", "Program Files", "Google", "Chrome", "chrome.exe") + '"',
+            '# D = "' + _win("C:", "Users", "bob", "a") + '"',
+        ],
+    )
+    assert check_hardcoded_user_path(rows, root=tmp_path) == []
+
+
+def test_hardcoded_user_path_skips_tests_and_archive(tmp_path):
+    rows = _hardcoded_rows_and_source(
+        tmp_path, "tests/test_x.py", ['A = "' + _win("C:", "Users", "someone", "x") + '"']
+    )
+    rows += _hardcoded_rows_and_source(tmp_path, "scripts/archive/old.py", ['A = "C:/work/x"'])
+    assert check_hardcoded_user_path(rows, root=tmp_path) == []

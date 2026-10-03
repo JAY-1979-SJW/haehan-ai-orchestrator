@@ -138,6 +138,39 @@ def _bare_string_stmt_ids(tree: ast.AST) -> set[int]:
     return excluded
 
 
+def _scan_call(pf, node):
+    fn = node.func
+    name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else ""
+    if name in ("import_module", "__import__"):
+        arg = node.args[0] if node.args else None
+        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+            pf.dynamic_literal.append(arg.value)
+        else:
+            pf.dynamic_unresolved += 1
+
+
+def _mark_main_guard(pf, node):
+    t = node.test
+    if (
+        isinstance(t, ast.Compare)
+        and isinstance(t.left, ast.Name)
+        and t.left.id == "__name__"
+        and any(isinstance(c, ast.Constant) and c.value == "__main__" for c in t.comparators)
+    ):
+        pf.has_main = True
+
+
+def _scan_div(pf, node):
+    parts = _div_chain_parts(node)
+    if parts and len(parts) > 1:
+        pf.strings.append("/".join(parts))
+
+
+def _scan_str(pf, node, excluded_str_ids):
+    if id(node) not in excluded_str_ids:  # docstring·bare 문자열 statement 는 실제 코드 참조가 아니다
+        pf.strings.append(node.value)
+
+
 def scan_py(rel: str) -> PyFile:
     pf = PyFile(rel=rel)
     try:
@@ -157,30 +190,13 @@ def scan_py(rel: str) -> PyFile:
         elif isinstance(node, ast.ImportFrom):
             pf.imports.append((node.module or "", node.level, tuple(a.name for a in node.names)))
         elif isinstance(node, ast.Call):
-            fn = node.func
-            name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else ""
-            if name in ("import_module", "__import__"):
-                arg = node.args[0] if node.args else None
-                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
-                    pf.dynamic_literal.append(arg.value)
-                else:
-                    pf.dynamic_unresolved += 1
+            _scan_call(pf, node)
         elif isinstance(node, ast.If) and not pf.has_main:
-            t = node.test
-            if (
-                isinstance(t, ast.Compare)
-                and isinstance(t.left, ast.Name)
-                and t.left.id == "__name__"
-                and any(isinstance(c, ast.Constant) and c.value == "__main__" for c in t.comparators)
-            ):
-                pf.has_main = True
+            _mark_main_guard(pf, node)
         elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
-            parts = _div_chain_parts(node)
-            if parts and len(parts) > 1:
-                pf.strings.append("/".join(parts))
+            _scan_div(pf, node)
         elif isinstance(node, ast.Constant) and isinstance(node.value, str) and len(node.value) < 2000:
-            if id(node) not in excluded_str_ids:  # docstring·bare 문자열 statement 는 실제 코드 참조가 아니다
-                pf.strings.append(node.value)
+            _scan_str(pf, node, excluded_str_ids)
     return pf
 
 

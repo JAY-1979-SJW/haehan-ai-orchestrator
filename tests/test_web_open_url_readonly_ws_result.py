@@ -6,9 +6,9 @@ from local_agent.websocket_client import _build_result_message
 
 
 def test_ws_session_uses_thread_for_task_execution():
-    source = inspect.getsource(websocket_client._run_session)
-
-    assert "await asyncio.to_thread(process_task, task)" in source
+    # 작업 실행 호출은 직렬 경로(_handle_task_msg)와 병렬 경로(_run_task_parallel)로 분리됨(P1)
+    for fn in (websocket_client._handle_task_msg, websocket_client._run_task_parallel):
+        assert "await asyncio.to_thread(process_task, task)" in inspect.getsource(fn)
 
 
 def test_ws_result_lifts_observe_and_audit_summary():

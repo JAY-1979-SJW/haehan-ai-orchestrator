@@ -491,23 +491,10 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
         return all_posts[:max_posts]
 
-    def download_attachment(self, file_url: str, save_dir: str = "data/downloads", filename: str = "") -> dict:
-        """첨부파일 다운로드.
-
-        1차: requests + 브라우저 쿠키 (네이버 카페 파일 호스트)
-        2차: Playwright download 이벤트 폴백
-
-        반환:
-            ok    - 성공 여부
-            path  - 저장된 로컬 경로
-            error - 실패 시 오류 메시지
-        """
+    def _download_via_requests(self, file_url: str, save_path: Path, filename: str) -> dict | None:
+        """1차: requests + 브라우저 쿠키. 성공 시 결과 dict, 실패 시 None(2차로 진행)."""
         import requests
 
-        save_path = Path(save_dir)
-        save_path.mkdir(parents=True, exist_ok=True)
-
-        # ── 1차: requests + 쿠키 ─────────────────────────────────────────────
         try:
             cookies_raw = self._ctx.cookies()
             jar = requests.cookies.RequestsCookieJar()
@@ -528,16 +515,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             # 파일명 결정: Content-Disposition 우선
             suggested = filename
             if not suggested:
-                cd = resp.headers.get("Content-Disposition", "")
-                import urllib.parse
-
-                fn_m = re.search(r'filename\*?=["\']?(?:UTF-8\'\')?([^"\';\r\n]+)', cd, re.IGNORECASE)
-                if fn_m:
-                    raw_fn = fn_m.group(1).strip()
-                    try:
-                        suggested = urllib.parse.unquote(raw_fn)
-                    except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
-                        suggested = raw_fn
+                suggested = self._filename_from_content_disposition(resp.headers.get("Content-Disposition", ""))
             if not suggested:
                 suggested = Path(file_url.split("?")[0]).name or "download"
 
@@ -553,8 +531,63 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
             return {"ok": True, "path": str(dest), "error": ""}
 
+        except Exception:  # noqa: BLE001
+            return None  # 2차 시도로 진행
+
+    @staticmethod
+    def _filename_from_content_disposition(cd: str) -> str:
+        import urllib.parse
+
+        fn_m = re.search(r'filename\*?=["\']?(?:UTF-8\'\')?([^"\';\r\n]+)', cd, re.IGNORECASE)
+        if not fn_m:
+            return ""
+        raw_fn = fn_m.group(1).strip()
+        try:
+            return urllib.parse.unquote(raw_fn)
+        except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
+            return raw_fn
+
+    def _download_via_new_tab(self, file_url: str, save_path: Path, filename: str) -> dict | None:
+        """3차: 새 탭. 성공 시 결과 dict, 실패 시 None."""
+        try:
+            with self._ctx.expect_page() as new_page_info:
+                self._page.evaluate(f"window.open({file_url!r}, '_blank')")
+            new_page = new_page_info.value
+            try:
+                with new_page.expect_download(timeout=30000) as dl_info:
+                    pass
+                download = dl_info.value
+                suggested = filename or download.suggested_filename or "file"
+                dest = save_path / suggested
+                download.save_as(str(dest))
+                new_page.close()
+                return {"ok": True, "path": str(dest), "error": ""}
+            except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
+                new_page.close()
         except Exception:  # noqa: S110, BLE001
-            pass  # 2차 시도로 진행
+            pass
+        return None
+
+    def download_attachment(self, file_url: str, save_dir: str = "data/downloads", filename: str = "") -> dict:
+        """첨부파일 다운로드.
+
+        1차: requests + 브라우저 쿠키 (네이버 카페 파일 호스트)
+        2차: Playwright download 이벤트 폴백
+
+        반환:
+            ok    - 성공 여부
+            path  - 저장된 로컬 경로
+            error - 실패 시 오류 메시지
+        """
+        import requests  # noqa: F401 - 기존 동작 유지(미설치 시 mkdir 이전에 ImportError)
+
+        save_path = Path(save_dir)
+        save_path.mkdir(parents=True, exist_ok=True)
+
+        # ── 1차: requests + 쿠키 ─────────────────────────────────────────────
+        result = self._download_via_requests(file_url, save_path, filename)
+        if result is not None:
+            return result
 
         # ── 2차: Playwright download 이벤트 ─────────────────────────────────
         try:
@@ -567,23 +600,9 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             return {"ok": True, "path": str(dest), "error": ""}
         except Exception as pw_err:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
             # 3차: 새 탭
-            try:
-                with self._ctx.expect_page() as new_page_info:
-                    self._page.evaluate(f"window.open({file_url!r}, '_blank')")
-                new_page = new_page_info.value
-                try:
-                    with new_page.expect_download(timeout=30000) as dl_info:
-                        pass
-                    download = dl_info.value
-                    suggested = filename or download.suggested_filename or "file"
-                    dest = save_path / suggested
-                    download.save_as(str(dest))
-                    new_page.close()
-                    return {"ok": True, "path": str(dest), "error": ""}
-                except Exception:  # noqa: BLE001 - 범용 브라우저 액션 실행기 — 각 동작 실패는 ActionResult(ok=False, error) 로 반환하거나 안전한 기본값(빈 문자열/리스트)으로 폴백, 파일 다운로드는 방법을 순차 재시도, 결제·삭제 없음(2026-09-28 검토)
-                    new_page.close()
-            except Exception:  # noqa: S110, BLE001
-                pass
+            result = self._download_via_new_tab(file_url, save_path, filename)
+            if result is not None:
+                return result
             return {"ok": False, "path": "", "error": str(pw_err)}
 
 

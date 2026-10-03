@@ -344,7 +344,7 @@ print(json.dumps(payload, sort_keys=True))
 """
 
 
-def remote_snapshot(
+def remote_snapshot(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     *,
     server: str,
     remote_path: str,

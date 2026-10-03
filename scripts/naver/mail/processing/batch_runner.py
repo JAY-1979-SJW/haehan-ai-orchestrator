@@ -200,7 +200,7 @@ def save_checkpoint(path: Path, run_id: str, sn_to_status: dict[str, dict]) -> N
 # ── 실행 ──────────────────────────────────────────────────────────
 
 
-def _process_one(
+def _process_one(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     actions: Actions,
     t: BatchTarget,
     *,
@@ -274,7 +274,26 @@ def _process_one(
     return res
 
 
-def run_batch(
+def _tally_result(rep: BatchReport, res: MailResult) -> None:
+    """처리 결과 1건을 report 카운터에 반영."""
+    if res.status in SUCCESS_STATUSES:
+        rep.success += 1
+    elif res.status in FAILURE_STATUSES:
+        rep.failed += 1
+    if res.state_changed_on_open:
+        rep.unread_state_changed += 1
+    if res.restore_attempted:
+        rep.unread_restore_attempted += 1
+        if res.restore_ok:
+            rep.unread_restore_succeeded += 1
+        else:
+            rep.unread_restore_failed += 1
+    rep.pii_detected_total += res.pii_detected_count
+    for k, v in (res.pii_types or {}).items():
+        rep.pii_types_summary[k] = rep.pii_types_summary.get(k, 0) + int(v)
+
+
+def run_batch(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     actions: Actions,
     targets: list[BatchTarget],
     *,
@@ -327,21 +346,7 @@ def run_batch(
         rep.attempted += 1
         rep.results.append(res)
         # 카운터
-        if res.status in SUCCESS_STATUSES:
-            rep.success += 1
-        elif res.status in FAILURE_STATUSES:
-            rep.failed += 1
-        if res.state_changed_on_open:
-            rep.unread_state_changed += 1
-        if res.restore_attempted:
-            rep.unread_restore_attempted += 1
-            if res.restore_ok:
-                rep.unread_restore_succeeded += 1
-            else:
-                rep.unread_restore_failed += 1
-        rep.pii_detected_total += res.pii_detected_count
-        for k, v in (res.pii_types or {}).items():
-            rep.pii_types_summary[k] = rep.pii_types_summary.get(k, 0) + int(v)
+        _tally_result(rep, res)
 
         # checkpoint 업데이트
         prior[t.sn] = {
@@ -484,6 +489,43 @@ def _classify_priority(subj: str, sender: str) -> str:
     return "OTHER"
 
 
+
+PRIORITY_ORDER = (
+    "ACTION_REQUIRED",
+    "ATTENTION",
+    "REVIEW",
+    "SECURITY_NOTICE",
+    "BILLING",
+    "POLICY_NOTICE",
+    "PROMO",
+    "OTHER",
+)
+
+
+def _append_priority_sections(md: list[str], by_priority: dict[str, list[MailResult]]) -> None:
+    """우선순위 분류 섹션을 md 에 추가."""
+    for pri in PRIORITY_ORDER:
+        lst = by_priority.get(pri, [])
+        if not lst:
+            continue
+        md.append(f"\n### [{pri}] {len(lst)}건")
+        for r in lst[:30]:  # 카테고리당 상위 30건만
+            subj = r.subject_masked or "(제목없음)"
+            sender = r.sender_masked or "(발신자미상)"
+            date = r.date_text or ""
+            attach = " 📎" if r.has_attach else ""
+            pii = f" pii={r.pii_detected_count}" if r.pii_detected_count > 0 else ""
+            md.append(
+                f"- **{subj[:70]}**{attach}{pii}  \n"
+                f"  발신: {sender[:60]}  |  날짜: {date[:30]}  "
+                f"|  links: {','.join(r.link_domain_top) or '-'}"
+            )
+            if r.body_redacted_short:
+                md.append(f"  > {r.body_redacted_short[:200]}")
+        if len(lst) > 30:
+            md.append(f"- … ({len(lst) - 30}건 더)")
+
+
 def _render_business_report(rep: BatchReport) -> str:
     """마스킹된 제목/발신자/본문 발췌로 비즈니스 보고서 작성. raw 사용 X."""
     by_priority: dict[str, list[MailResult]] = {}
@@ -504,16 +546,6 @@ def _render_business_report(rep: BatchReport) -> str:
         pri = _classify_priority(r.subject_masked, r.sender_masked)
         by_priority.setdefault(pri, []).append(r)
 
-    PRIORITY_ORDER = (
-        "ACTION_REQUIRED",
-        "ATTENTION",
-        "REVIEW",
-        "SECURITY_NOTICE",
-        "BILLING",
-        "POLICY_NOTICE",
-        "PROMO",
-        "OTHER",
-    )
 
     md = [
         f"# 메일함 비즈니스 보고서 — run {rep.run_id}",
@@ -539,25 +571,6 @@ def _render_business_report(rep: BatchReport) -> str:
         md.append(f"- `{dom}` — {n}건")
 
     md += ["", "## 우선순위 분류"]
-    for pri in PRIORITY_ORDER:
-        lst = by_priority.get(pri, [])
-        if not lst:
-            continue
-        md.append(f"\n### [{pri}] {len(lst)}건")
-        for r in lst[:30]:  # 카테고리당 상위 30건만
-            subj = r.subject_masked or "(제목없음)"
-            sender = r.sender_masked or "(발신자미상)"
-            date = r.date_text or ""
-            attach = " 📎" if r.has_attach else ""
-            pii = f" pii={r.pii_detected_count}" if r.pii_detected_count > 0 else ""
-            md.append(
-                f"- **{subj[:70]}**{attach}{pii}  \n"
-                f"  발신: {sender[:60]}  |  날짜: {date[:30]}  "
-                f"|  links: {','.join(r.link_domain_top) or '-'}"
-            )
-            if r.body_redacted_short:
-                md.append(f"  > {r.body_redacted_short[:200]}")
-        if len(lst) > 30:
-            md.append(f"- … ({len(lst) - 30}건 더)")
+    _append_priority_sections(md, by_priority)
 
     return "\n".join(md)

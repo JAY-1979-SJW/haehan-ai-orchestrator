@@ -68,7 +68,7 @@ def _title_card(lines: list[str], sub: str = "", bubble: str = "", bg_photo: Pat
     return img
 
 
-def _speech_bubble(
+def _speech_bubble(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     draw: ImageDraw.ImageDraw,
     text: str,
     center_x: int,

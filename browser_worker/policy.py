@@ -134,6 +134,38 @@ _FORBIDDEN_METADATA_FLAGS: tuple[str, ...] = (
 )
 
 
+def _check_metadata_flags(meta: dict) -> dict | None:
+    """금지 메타데이터 플래그가 켜져 있으면 차단 판정 dict, 없으면 None."""
+    for flag in _FORBIDDEN_METADATA_FLAGS:
+        if meta.get(flag) is True:
+            if flag == "requires_captcha":
+                return _block(DECISION_BLOCK, f"{flag}: CAPTCHA 요구 사이트. 서버 브라우저 금지.")
+            if flag in (
+                "requires_certificate",
+                "requires_financial_certificate",
+                "requires_otp",
+                "requires_password",
+                "user_present_required",
+            ):
+                return _block(DECISION_REQUIRE_USER_PRESENT, f"{flag}: 사용자 직접 인증 필요. 서버 브라우저 금지.")
+            return _block(DECISION_REQUIRE_LOCAL_AGENT, f"{flag}: 로컬 Agent 필요. 서버 브라우저 금지.")
+    return None
+
+
+def _check_forbidden_domain(host: str) -> dict | None:
+    """금지 도메인 키워드가 host 에 있으면 차단 판정 dict, 없으면 None."""
+    for kw in _FORBIDDEN_DOMAIN_KEYWORDS:
+        if kw in host:
+            if "accounts.google.com" in host:
+                return _block(DECISION_BLOCK, "Google 계정 로그인 페이지. 서버 브라우저 금지.")
+            if any(
+                g in host for g in ("mail.google", "drive.google", "calendar.google", "docs.google", "sheets.google")
+            ):
+                return _block(DECISION_REQUIRE_API_CONNECTOR, "Google 서비스. 공식 API/OAuth만 허용.")
+            return _block(DECISION_REQUIRE_LOCAL_AGENT, f"제한 도메인({kw}). 서버 브라우저 금지.")
+    return None
+
+
 def evaluate_server_browser_url_policy(
     url: str,
     metadata: dict | None = None,
@@ -157,19 +189,9 @@ def evaluate_server_browser_url_policy(
         return _block("PRODUCTION_MODE_SERVER_BROWSER_BLOCKED", "production_mode=true: 서버 브라우저 실행 차단.")
 
     # 2. 메타데이터 플래그 기반 차단 (page.goto 이전 단계)
-    for flag in _FORBIDDEN_METADATA_FLAGS:
-        if meta.get(flag) is True:
-            if flag == "requires_captcha":
-                return _block(DECISION_BLOCK, f"{flag}: CAPTCHA 요구 사이트. 서버 브라우저 금지.")
-            if flag in (
-                "requires_certificate",
-                "requires_financial_certificate",
-                "requires_otp",
-                "requires_password",
-                "user_present_required",
-            ):
-                return _block(DECISION_REQUIRE_USER_PRESENT, f"{flag}: 사용자 직접 인증 필요. 서버 브라우저 금지.")
-            return _block(DECISION_REQUIRE_LOCAL_AGENT, f"{flag}: 로컬 Agent 필요. 서버 브라우저 금지.")
+    flag_block = _check_metadata_flags(meta)
+    if flag_block is not None:
+        return flag_block
 
     # 3. 빈 URL은 about:blank로 간주 허용
     if not url_clean or url_clean == "about:blank":
@@ -191,15 +213,9 @@ def evaluate_server_browser_url_policy(
     except Exception:  # noqa: BLE001 - URL host 파싱 실패 시 URL 원문 전체를 host로 간주해 금지 도메인 키워드 검사(substring 매칭)를 계속 진행 - 파싱 실패가 오히려 더 넓게 매칭되어 차단 방향으로 작동하며, 뒤이은 '미분류 외부 도메인 기본 차단' 로직으로 인해 결과적으로 fail-closed(알 수 없으면 차단)
         host = url_clean.lower()
 
-    for kw in _FORBIDDEN_DOMAIN_KEYWORDS:
-        if kw in host:
-            if "accounts.google.com" in host:
-                return _block(DECISION_BLOCK, "Google 계정 로그인 페이지. 서버 브라우저 금지.")
-            if any(
-                g in host for g in ("mail.google", "drive.google", "calendar.google", "docs.google", "sheets.google")
-            ):
-                return _block(DECISION_REQUIRE_API_CONNECTOR, "Google 서비스. 공식 API/OAuth만 허용.")
-            return _block(DECISION_REQUIRE_LOCAL_AGENT, f"제한 도메인({kw}). 서버 브라우저 금지.")
+    domain_block = _check_forbidden_domain(host)
+    if domain_block is not None:
+        return domain_block
 
     # 7. 알 수 없는 외부 도메인 → 기본 차단
     if host and host not in ("example.com", "www.example.com"):

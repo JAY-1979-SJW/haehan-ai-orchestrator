@@ -138,7 +138,7 @@ def is_forbidden_label(visible_label: str) -> bool:
     return False
 
 
-def build_candidate(
+def build_candidate(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     candidate_type: str,
     visible_label: str,
     role: str,

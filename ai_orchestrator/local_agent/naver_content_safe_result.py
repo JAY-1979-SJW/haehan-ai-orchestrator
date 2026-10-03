@@ -45,7 +45,7 @@ _FIXED_SAFE_FIELDS: dict[str, Any] = {
 }
 
 
-def build_cafe_read_result(
+def build_cafe_read_result(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     task_id: str,
     url: str,
     title: str = "",
@@ -78,7 +78,7 @@ def build_cafe_read_result(
     return result
 
 
-def build_blog_draft_result(
+def build_blog_draft_result(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     task_id: str,
     title_candidates: list[str] | None = None,
     body_draft: str = "",
@@ -101,7 +101,7 @@ def build_blog_draft_result(
     return result
 
 
-def build_publish_result(
+def build_publish_result(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     task_id: str,
     action: str,
     domain: str,

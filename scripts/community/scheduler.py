@@ -42,8 +42,18 @@ def run_all_sites(reason: str = "manual", max_posts: int = 40) -> dict[str, Any]
 
     sites = list_sites()
     site_reports = []
+    # 브라우저(CDP)가 꺼져 있으면 사이트 수집 전에 먼저 기동한다(사이트별 9222 직접 연결도 이 뒤에 안전).
+    cdp_error = ""
+    if sites:
+        try:
+            get_page()
+        except Exception as e:  # noqa: BLE001 - CDP 기동 실패는 사이트마다 반복하지 않고 한 번에 기록하고 수집을 건너뜀
+            cdp_error = f"CDP 브라우저 기동 실패: {str(e)[:160]}"
     for s in sites:
         url, name = s.get("url", ""), s.get("name", "")
+        if cdp_error:
+            site_reports.append({"site": name, "url": url, "ok": False, "error": cdp_error})
+            continue
         try:
             page = get_page()
             ex = extract_posts(page, url, max_posts=max_posts)

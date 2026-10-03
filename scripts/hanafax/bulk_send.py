@@ -24,7 +24,11 @@ log = logging.getLogger("hanafax.bulk_send")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 ROOT = Path(__file__).resolve().parents[2]
-G2B_BASE = Path("C:/work/05. g2b/exports/개별팩스")
+if str(ROOT) not in sys.path:  # 단독 실행 시에도 scripts 패키지를 import 할 수 있게
+    sys.path.insert(0, str(ROOT))
+from scripts.app_paths import resolve_external, sibling_project  # noqa: E402
+
+G2B_BASE = resolve_external("HAEHAN_FAX_EXPORT_DIR", "exports", "개별팩스", base=sibling_project("05. g2b"))
 FAX_FILE = G2B_BASE / "fax_common_v3.xlsx"
 BATCH_DIR = G2B_BASE / "batches"
 RESULT_DIR = ROOT / "data" / "hanafax_bulk_results"

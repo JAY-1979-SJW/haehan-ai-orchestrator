@@ -11,7 +11,6 @@
   - is_logged_in_generic(page) -> bool
   - get_logged_in_user(page) -> str | None
   - wait_for_login_generic(page, max_wait_s) -> dict
-  - wait_for_logout(page, max_wait_s) -> dict
 
 판정 기준 (score):
   >= 3: 로그인 / 1-2: 모호 / 0: 비로그인
@@ -28,9 +27,11 @@
 
 from __future__ import annotations
 
+import json
 import re
 import time
 from contextlib import suppress
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -177,6 +178,14 @@ def detect_login_on_current_tab(page) -> tuple[bool, str | None]:
 
         url = page.url or ""
         site = _site_key_for_url(url)
+
+        # 프로필이 있는 사이트는 화면 요소 판정만 쓴다 — 본문에 "로그아웃 상태입니다" 같은 문구가 있어도 로그인으로 보지 않음
+        if _profile_for_url(url):
+            state = detect_login_state(page)
+            if state.get("state") == "in":
+                _log.info("[login-detector] %s 요소 기준 로그인 확인: %s", site, url)
+                return True, site
+            return False, None
 
         # 페이지 내용 획득
         try:
@@ -458,6 +467,101 @@ def watch_all_logins(page=None, *, check_interval: float = 1.0, timeout_s: int =
     }
 
 
+_PROBES_PATH = Path(__file__).resolve().parents[1] / "configs" / "login_probes.json"
+_LOGIN_URL_RE = re.compile(r"(login|signin|sign-in|sign_in|auth|nidlogin)", re.I)
+
+
+def _load_probes() -> dict[str, Any]:
+    try:
+        return json.loads(_PROBES_PATH.read_text(encoding="utf-8")).get("sites", {})
+    except Exception as e:  # noqa: BLE001 - 프로필 파일 없음/손상 = 프로필 없는 사이트로 취급(종전 휴리스틱 동작), 판정 전용이라 자격증명·세션 접근 없음
+        _log.debug("[login-detector] 프로필 로드 실패: %s", e)
+        return {}
+
+
+def _profile_for_url(url: str) -> dict[str, Any] | None:
+    """URL 의 호스트가 등록된 프로필에 속하면 그 프로필, 아니면 None."""
+    host = _host_from_url(url)
+    if not host:
+        return None
+    for profile in _load_probes().values():
+        if any(host == h or host.endswith("." + h) for h in profile.get("hosts", [])):
+            return profile
+    return None
+
+
+def decide_login_state(login_visible: bool, in_visible: bool, cookie: bool | None) -> str:
+    """보이는 로그인 버튼·보이는 로그아웃/계정 요소·세션 쿠키가 한 방향일 때만 in/out 확정.
+
+    cookie 는 True/False/None(확인 불가). 충돌하거나 근거가 없으면 unknown — 추측하지 않는다.
+    """
+    if in_visible and not login_visible and cookie is not False:
+        return "in"
+    if login_visible and not in_visible and cookie is not True:
+        return "out"
+    return "unknown"
+
+
+def _session_cookie_present(page, profile: dict[str, Any]) -> bool | None:
+    """프로필의 세션 쿠키가 모두 있는지 — 이름만 본다(값은 읽지도 기록하지도 않음). 확인 불가면 None."""
+    names = profile.get("session_cookies") or []
+    if not names:
+        return None
+    try:
+        have = {c.get("name") for c in page.context.cookies()}
+    except Exception:  # noqa: BLE001 - 쿠키 이름 존재 확인 실패는 '확인 불가(None)'로 처리, 값 접근·삭제 없음
+        return None
+    return all(n in have for n in names)
+
+
+def _read_account(page, profile: dict[str, Any]) -> str | None:
+    """계정 표시 영역(프로필 셀렉터) 안에서만 사용자명을 읽는다. 셀렉터가 없으면 None."""
+    selector = profile.get("account_selector")
+    if not selector:
+        return None
+    try:
+        text = page.evaluate(
+            "(sel) => { const el = document.querySelector(sel);"
+            " return el && el.offsetParent !== null ? (el.innerText || '').trim() : null; }",
+            selector,
+        )
+    except Exception:  # noqa: BLE001 - 계정 영역 읽기 실패는 user=None(확인 불가)로 처리
+        return None
+    return text if text and len(text) < 50 else None
+
+
+def detect_login_state_by_elements(page, profile: dict[str, Any]) -> dict[str, Any]:
+    """화면에 보이는 요소(스냅샷) + 세션 쿠키 이름으로 로그인 상태를 판정한다.
+
+    반환 키는 detect_login_state 와 같고 method="element", state("in"/"out"/"unknown") 가 추가된다.
+    """
+    from scripts.explorer import page_analysis, page_snapshot  # 지연 import — web_connector 순환 방지
+
+    analysis = page_analysis.analyze_snapshot(page_snapshot.collect(page))
+    sig = page_analysis.element_login_signals(analysis)
+    cookie = _session_cookie_present(page, profile)
+    state = decide_login_state(sig["login_visible"] > 0, sig["in_visible"] > 0, cookie)
+    url = page.url or ""
+    return {
+        "logged_in": state == "in",
+        "score": 0,
+        "url": url,
+        "on_login_page": bool(_LOGIN_URL_RE.search(url)),
+        "user": _read_account(page, profile) if state == "in" else None,
+        "in_iframe": False,
+        "method": "element",
+        "state": state,
+        "evidence": {
+            "login_button_visible": sig["login_visible"],
+            "logout_or_account_visible": sig["in_visible"],
+            "login_button_hidden": sig["login_hidden"],
+            "logout_or_account_hidden": sig["in_hidden"],
+            "session_cookie": cookie,
+            "labels": sig["labels"],
+        },
+    }
+
+
 _GENERIC_DETECT_JS = r"""
 () => {
     const txt = (document.body?.innerText || '').toLowerCase();
@@ -567,6 +671,9 @@ def detect_login_state(page) -> dict[str, Any]:
         }
     """
     try:
+        profile = _profile_for_url(page.url or "")
+        if profile:
+            return detect_login_state_by_elements(page, profile)
         result = page.evaluate(_GENERIC_DETECT_JS)
         # iframe 내부도 검사 (메인이 약한 경우)
         if result.get("score", 0) < 3:
@@ -589,6 +696,8 @@ def detect_login_state(page) -> dict[str, Any]:
             "on_login_page": result.get("on_login_page", False),
             "user": user,
             "in_iframe": result.get("in_iframe", False),
+            "method": "heuristic",
+            "state": "in" if result.get("logged_in", False) else "unknown",
             "evidence": {
                 "logout_in_text": result.get("logout_in_text"),
                 "logout_link": result.get("logout_link"),
@@ -602,7 +711,7 @@ def detect_login_state(page) -> dict[str, Any]:
         }
     except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
         _log.debug("[login-detector-generic] 감지 실패: %s", e)
-        return {"logged_in": False, "score": 0, "error": str(e)[:100]}
+        return {"logged_in": False, "score": 0, "state": "unknown", "error": str(e)[:100]}
 
 
 def is_logged_in_generic(page) -> bool:
@@ -648,15 +757,3 @@ def wait_for_login_generic(page, max_wait_s: int = 600, poll_interval: float = 3
         time.sleep(poll_interval)
 
     return {**detect_login_state(page), "timeout": True, "elapsed_s": int(time.time() - start)}
-
-
-def wait_for_logout(page, max_wait_s: int = 60, poll_interval: float = 2.0) -> dict[str, Any]:
-    """로그아웃(세션 만료) 감지 대기."""
-    start = time.time()
-    while time.time() - start < max_wait_s:
-        state = detect_login_state(page)
-        if not state.get("logged_in"):
-            state["elapsed_s"] = int(time.time() - start)
-            return state
-        time.sleep(poll_interval)
-    return {**detect_login_state(page), "timeout": True}

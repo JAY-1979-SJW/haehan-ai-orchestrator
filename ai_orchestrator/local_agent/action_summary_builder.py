@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlparse
 
@@ -48,6 +49,56 @@ def _is_sensitive(key: str) -> bool:
     return any(s in kl for s in _SENSITIVE_PARAM_KEYS)
 
 
+def _summary_site(params: dict[str, Any]) -> Any:
+    url = params.get("url") or params.get("site_url") or params.get("source_url") or ""
+    try:
+        return (urlparse(url).hostname or "") if url else params.get("site", "")
+    except Exception:  # noqa: BLE001 - 액션 요약 로그 생성 -- URL/경로 값을 요약용으로 안전하게 축약, 파싱 실패 시 빈 문자열/자리표시자로 대체(민감정보 노출 방지 목적)
+        return ""
+
+
+def _summary_document_hash_safe(params: dict[str, Any]) -> Any:
+    h = params.get("document_hash") or ""
+    return h[:16] + "..." if len(h) > 16 else h
+
+
+def _summary_signer_info_safe(params: dict[str, Any]) -> Any:
+    # 서명자 정보 — 인증서 본인명만 (비밀번호/시리얼 X)
+    si = params.get("signer_info") or {}
+    if isinstance(si, dict):
+        return {
+            "subject_name": si.get("subject_name", ""),
+        }
+    return ""
+
+
+# field_name → params에서 요약 값을 만드는 함수 (명시적 매핑 테이블)
+_FIELD_BUILDERS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "source_url_safe": lambda p: _safe_url(p.get("source_url") or p.get("url") or ""),
+    "expected_filename": lambda p: _safe_path(p.get("expected_filename") or p.get("file_name") or ""),
+    "site": _summary_site,
+    "file_name": lambda p: _safe_path(p.get("file_name") or p.get("attach_file") or ""),
+    "form_field_label": lambda p: p.get("form_field_label") or p.get("input_label") or "",
+    "file_size": lambda p: p.get("file_size") or 0,
+    "file_signature": lambda p: p.get("file_signature") or "",
+    "expected_result": lambda p: p.get("expected_result") or "",
+    "notice_no": lambda p: p.get("notice_no") or p.get("bid_ntce_no") or "",
+    "amount": lambda p: p.get("amount") or p.get("bid_amount") or "",
+    "company": lambda p: p.get("company") or p.get("company_name") or "",
+    # 계정 ID/이메일만 (비밀번호 절대 X)
+    "account": lambda p: p.get("account_id") or p.get("user_id") or "",
+    "deadline": lambda p: p.get("deadline") or "",
+    "form_summary": lambda p: p.get("form_summary") or {},
+    "bid_amount": lambda p: p.get("bid_amount") or 0,
+    "bid_amount_summary": lambda p: p.get("bid_amount") or 0,
+    "document_summary": lambda p: p.get("document_summary") or "",
+    "document_name": lambda p: _safe_path(p.get("document_name") or ""),
+    "document_hash_safe": _summary_document_hash_safe,
+    "signer_info_safe": _summary_signer_info_safe,
+    "purpose": lambda p: p.get("purpose") or "",
+}
+
+
 def build_action_summary(action_name: str, params: dict[str, Any]) -> dict[str, Any]:
     """
     액션 스펙의 summary_fields에 정의된 필드만 노출.
@@ -67,60 +118,10 @@ def build_action_summary(action_name: str, params: dict[str, Any]) -> dict[str, 
         if _is_sensitive(field_name):
             continue
 
-        # 명시적 매핑
-        if field_name == "source_url_safe":
-            summary[field_name] = _safe_url(params.get("source_url") or params.get("url") or "")
-        elif field_name == "expected_filename":
-            summary[field_name] = _safe_path(params.get("expected_filename") or params.get("file_name") or "")
-        elif field_name == "site":
-            url = params.get("url") or params.get("site_url") or params.get("source_url") or ""
-            try:
-                summary[field_name] = (urlparse(url).hostname or "") if url else params.get("site", "")
-            except Exception:  # noqa: BLE001 - 액션 요약 로그 생성 -- URL/경로 값을 요약용으로 안전하게 축약, 파싱 실패 시 빈 문자열/자리표시자로 대체(민감정보 노출 방지 목적)
-                summary[field_name] = ""
-        elif field_name == "file_name":
-            summary[field_name] = _safe_path(params.get("file_name") or params.get("attach_file") or "")
-        elif field_name == "form_field_label":
-            summary[field_name] = params.get("form_field_label") or params.get("input_label") or ""
-        elif field_name == "file_size":
-            summary[field_name] = params.get("file_size") or 0
-        elif field_name == "file_signature":
-            summary[field_name] = params.get("file_signature") or ""
-        elif field_name == "expected_result":
-            summary[field_name] = params.get("expected_result") or ""
-        elif field_name == "notice_no":
-            summary[field_name] = params.get("notice_no") or params.get("bid_ntce_no") or ""
-        elif field_name == "amount":
-            summary[field_name] = params.get("amount") or params.get("bid_amount") or ""
-        elif field_name == "company":
-            summary[field_name] = params.get("company") or params.get("company_name") or ""
-        elif field_name == "account":
-            # 계정 ID/이메일만 (비밀번호 절대 X)
-            summary[field_name] = params.get("account_id") or params.get("user_id") or ""
-        elif field_name == "deadline":
-            summary[field_name] = params.get("deadline") or ""
-        elif field_name == "form_summary":
-            summary[field_name] = params.get("form_summary") or {}
-        elif field_name == "bid_amount" or field_name == "bid_amount_summary":
-            summary[field_name] = params.get("bid_amount") or 0
-        elif field_name == "document_summary":
-            summary[field_name] = params.get("document_summary") or ""
-        elif field_name == "document_name":
-            summary[field_name] = _safe_path(params.get("document_name") or "")
-        elif field_name == "document_hash_safe":
-            h = params.get("document_hash") or ""
-            summary[field_name] = h[:16] + "..." if len(h) > 16 else h
-        elif field_name == "signer_info_safe":
-            # 서명자 정보 — 인증서 본인명만 (비밀번호/시리얼 X)
-            si = params.get("signer_info") or {}
-            if isinstance(si, dict):
-                summary[field_name] = {
-                    "subject_name": si.get("subject_name", ""),
-                }
-            else:
-                summary[field_name] = ""
-        elif field_name == "purpose":
-            summary[field_name] = params.get("purpose") or ""
+        builder = _FIELD_BUILDERS.get(field_name)
+        if builder is not None:
+            # 명시적 매핑
+            summary[field_name] = builder(params)
         else:
             # 일반 필드는 직접 매핑 (단, 민감하지 않은 경우만)
             v = params.get(field_name)

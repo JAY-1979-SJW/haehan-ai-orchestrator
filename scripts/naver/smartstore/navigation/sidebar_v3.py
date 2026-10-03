@@ -76,17 +76,7 @@ def check_sidebar_state(page) -> dict:
     """)
 
 
-def main():
-    page = get_page()
-    print(f"\n{'=' * 70}")
-    print("  사이드바 v3 — 새로고침 + 검증 + 즉시 클릭")
-    print(f"{'=' * 70}\n")
-
-    r = ensure_naver_login(page)
-    if not r.get("ok"):
-        print("✗ 로그인 실패")
-        return
-
+def _refresh_dashboard(page) -> None:
     # 페이지 새로고침으로 깨끗한 상태
     print("[1] 페이지 새로고침")
     page.goto(DASHBOARD, timeout=20000, wait_until="domcontentloaded")
@@ -97,6 +87,8 @@ def main():
     except Exception:  # noqa: BLE001 - 팝업/닫기창 처리 브라우저자동화 실패 무시(best-effort), 최상위 main() 예외는 traceback 출력으로 진단정보 남김
         pass
 
+
+def _find_product_pos(page):
     # 사이드바 상태 검증
     print("[2] 사이드바 초기 상태")
     s1 = check_sidebar_state(page)
@@ -114,11 +106,10 @@ def main():
         time.sleep(1)
         s2 = check_sidebar_state(page)
         product_pos = s2.get("product_mgmt")
+    return product_pos
 
-    if not (product_pos and product_pos.get("in_view")):
-        print("\n  ✗ '상품관리'가 화면 안에 없음")
-        return
 
+def _click_and_collect_menus(page, product_pos):
     # 즉시 클릭
     print(f"\n[5] '상품관리' 즉시 클릭 @ ({product_pos['cx']}, {product_pos['cy']})")
     page.mouse.move(product_pos["cx"], product_pos["cy"])
@@ -154,7 +145,10 @@ def main():
     print(f"  좌측 메뉴 {len(menus)}개:")
     for m in menus[:30]:
         print(f"    {m['text']:<22} pos={m['pos']}")
+    return menus
 
+
+def _try_register_menus(page, menus, product_pos) -> None:
     # 상품 등록 관련 메뉴 즉시 클릭
     print("\n[7] '상품 등록' 직접 클릭")
     target_texts = ["상품 등록", "상품 조회/수정", "상품 관리", "상품 일괄등록"]
@@ -196,6 +190,28 @@ def main():
         print(f"\n  ★ 발견: {found_url}")
     else:
         print("\n  ✗ 일반 상품 등록 페이지 못 찾음 — 모두 그룹상품 리다이렉트")
+
+
+def main():
+    page = get_page()
+    print(f"\n{'=' * 70}")
+    print("  사이드바 v3 — 새로고침 + 검증 + 즉시 클릭")
+    print(f"{'=' * 70}\n")
+
+    r = ensure_naver_login(page)
+    if not r.get("ok"):
+        print("✗ 로그인 실패")
+        return
+
+    _refresh_dashboard(page)
+    product_pos = _find_product_pos(page)
+
+    if not (product_pos and product_pos.get("in_view")):
+        print("\n  ✗ '상품관리'가 화면 안에 없음")
+        return
+
+    menus = _click_and_collect_menus(page, product_pos)
+    _try_register_menus(page, menus, product_pos)
 
 
 if __name__ == "__main__":

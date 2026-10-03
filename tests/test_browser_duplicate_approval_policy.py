@@ -262,3 +262,21 @@ class TestNoRawTokenAfterDuplicate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DuplicateApprovalErrorLocationTests(unittest.TestCase):
+    """층간 위반 정리(L7 저장소가 L2 검증기를 가져오던 구조): 예외는 작은 L1 모듈에 있고 검증기가 재노출한다."""
+
+    def test_verifier_reexports_the_same_class(self) -> None:
+        from local_agent import browser_approval_errors, browser_approval_verifier
+
+        self.assertIs(browser_approval_verifier.DuplicateApprovalError, browser_approval_errors.DuplicateApprovalError)
+        self.assertTrue(issubclass(browser_approval_errors.DuplicateApprovalError, ValueError))
+
+    def test_stores_do_not_import_the_verifier_module(self) -> None:
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parents[1] / "local_agent"
+        for name in ("browser_approval_db_store.py", "browser_approval_persistent_store.py"):
+            text = (root / name).read_text(encoding="utf-8")
+            self.assertNotIn("browser_approval_verifier", text, f"{name} 가 검증기를 import 한다")

@@ -129,103 +129,8 @@ def _init_db() -> None:
     conn.close()
 
 
-def crawl_shopping(
-    keyword: str,
-    limit: int = 40,
-    cdp_port: int = 9222,
-    max_pages: int = 1,
-) -> dict:
-    """CDP 브라우저로 네이버쇼핑 크롤링 — 리뷰/별점 포함.
-
-    가상 스크롤 대응(2026-08-14): 검색결과는 보이는 카드만 DOM 에 유지하므로
-    "스크롤 완료 후 일괄 추출" 이 아니라 **스크롤 스텝마다 추출해 누적**한다.
-    max_pages > 1 이면 pagingIndex 로 다음 페이지까지 이어서 수집한다.
-    """
-    import urllib.parse
-    import urllib.request
-
-    import websocket
-
-    # CDP 탭 획득
-    with urllib.request.urlopen(f"http://127.0.0.1:{cdp_port}/json/list", timeout=3) as r:
-        pages = [t for t in json.loads(r.read()) if t.get("type") == "page"]
-    if not pages:
-        return {"ok": False, "error": "no_cdp_page"}
-
-    tab = pages[0]
-    ws = websocket.create_connection(tab["webSocketDebuggerUrl"], timeout=20, suppress_origin=True)
-
-    counter = {"mid": 0}
-
-    def send(method, params=None, timeout=20.0):
-        counter["mid"] += 1
-        mid = counter["mid"]
-        ws.send(json.dumps({"id": mid, "method": method, "params": params or {}}))
-        deadline = time.time() + timeout
-        while time.time() < deadline:
-            ws.settimeout(max(0.5, deadline - time.time()))
-            try:
-                m = json.loads(ws.recv())
-                if m.get("id") == mid:
-                    return m
-            except Exception:  # noqa: BLE001 - DOM에서 추출한 JSON 파싱 실패시 빈 dict/list로 안전 폴백 — 읽기전용 공개 검색결과 스크래핑
-                return {}
-        return {}
-
-    def extract_visible() -> list[dict]:
-        r = send(
-            "Runtime.evaluate",
-            {"expression": f"JSON.stringify({_EXTRACT_JS})", "returnByValue": True},
-            timeout=20,
-        )
-        raw = r.get("result", {}).get("result", {}).get("value", "[]")
-        try:
-            return json.loads(raw) or []
-        except Exception:  # noqa: BLE001 - DOM에서 추출한 JSON 파싱 실패시 빈 dict/list로 안전 폴백 — 읽기전용 공개 검색결과 스크래핑
-            return []
-
-    collected: dict[str, dict] = {}  # key(link|title) → item
-    pages_done = 0
-
-    try:
-        for page_idx in range(1, max(1, int(max_pages)) + 1):
-            q = urllib.parse.quote(keyword)
-            url = (
-                f"https://search.shopping.naver.com/search/all?query={q}&sort=rel&pagingIndex={page_idx}&pagingSize=80"
-            )
-            send("Page.navigate", {"url": url}, timeout=20)
-            time.sleep(4.0)
-            pages_done += 1
-
-            # 스크롤하며 증분 수집 — 새 항목이 안 나오면 조기 종료
-            stagnant = 0
-            for _ in range(60):
-                for item in extract_visible():
-                    key = (item.get("link") or "").strip() or (item.get("title") or "").strip()
-                    if key and key not in collected:
-                        collected[key] = item
-                        stagnant = -1  # 아래에서 +1 되어 0
-                stagnant += 1
-                if len(collected) >= limit:
-                    break
-                if stagnant >= 6:  # 6스텝 연속 신규 0건 → 페이지 끝
-                    break
-                send("Runtime.evaluate", {"expression": "window.scrollBy(0, 700)"})
-                time.sleep(0.9)
-
-            if len(collected) >= limit:
-                break
-    finally:
-        ws.close()
-
-    products = list(collected.values())[:limit]
-    for i, p in enumerate(products, start=1):
-        p["rank"] = i
-
-    if not products:
-        return {"ok": False, "error": "no_products", "keyword": keyword}
-
-    # DB 저장
+def _save_products(keyword: str, products: list[dict]) -> None:
+    """수집 결과를 DB 에 저장."""
     _init_db()
     now = datetime.now().isoformat(timespec="seconds")
     conn = sqlite3.connect(str(DB_PATH))
@@ -255,7 +160,9 @@ def crawl_shopping(
     conn.commit()
     conn.close()
 
-    # 통계 계산
+
+def _build_result(keyword: str, products: list[dict]) -> dict:
+    """통계 계산 + 결과 dict 생성."""
     prices = [p["price"] for p in products if p.get("price")]
     reviews = [p["review_count"] for p in products if p.get("review_count")]
     ratings = [p["rating"] for p in products if p.get("rating")]
@@ -283,6 +190,119 @@ def crawl_shopping(
             },
         },
     }
+
+
+def _scroll_collect(send, extract_visible, collected: dict[str, dict], limit: int) -> None:
+    """스크롤하며 증분 수집 — 새 항목이 안 나오면 조기 종료."""
+    stagnant = 0
+    for _ in range(60):
+        for item in extract_visible():
+            key = (item.get("link") or "").strip() or (item.get("title") or "").strip()
+            if key and key not in collected:
+                collected[key] = item
+                stagnant = -1  # 아래에서 +1 되어 0
+        stagnant += 1
+        if len(collected) >= limit:
+            break
+        if stagnant >= 6:  # 6스텝 연속 신규 0건 → 페이지 끝
+            break
+        send("Runtime.evaluate", {"expression": "window.scrollBy(0, 700)"})
+        time.sleep(0.9)
+
+
+def _cdp_send(ws, counter: dict, method, params=None, timeout=20.0):
+    """CDP 명령 전송 후 같은 id 의 응답을 기다린다(실패/타임아웃은 빈 dict)."""
+    counter["mid"] += 1
+    mid = counter["mid"]
+    ws.send(json.dumps({"id": mid, "method": method, "params": params or {}}))
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        ws.settimeout(max(0.5, deadline - time.time()))
+        try:
+            m = json.loads(ws.recv())
+            if m.get("id") == mid:
+                return m
+        except Exception:  # noqa: BLE001 - DOM에서 추출한 JSON 파싱 실패시 빈 dict/list로 안전 폴백 — 읽기전용 공개 검색결과 스크래핑
+            return {}
+    return {}
+
+
+def crawl_shopping(
+    keyword: str,
+    limit: int = 40,
+    cdp_port: int = 9222,
+    max_pages: int = 1,
+) -> dict:
+    """CDP 브라우저로 네이버쇼핑 크롤링 — 리뷰/별점 포함.
+
+    가상 스크롤 대응(2026-08-14): 검색결과는 보이는 카드만 DOM 에 유지하므로
+    "스크롤 완료 후 일괄 추출" 이 아니라 **스크롤 스텝마다 추출해 누적**한다.
+    max_pages > 1 이면 pagingIndex 로 다음 페이지까지 이어서 수집한다.
+    """
+    import urllib.parse
+    import urllib.request
+
+    import websocket
+
+    # CDP 탭 획득
+    with urllib.request.urlopen(f"http://127.0.0.1:{cdp_port}/json/list", timeout=3) as r:
+        pages = [t for t in json.loads(r.read()) if t.get("type") == "page"]
+    if not pages:
+        return {"ok": False, "error": "no_cdp_page"}
+
+    tab = pages[0]
+    ws = websocket.create_connection(tab["webSocketDebuggerUrl"], timeout=20, suppress_origin=True)
+
+    counter = {"mid": 0}
+
+    def send(method, params=None, timeout=20.0):
+        return _cdp_send(ws, counter, method, params, timeout)
+
+    def extract_visible() -> list[dict]:
+        r = send(
+            "Runtime.evaluate",
+            {"expression": f"JSON.stringify({_EXTRACT_JS})", "returnByValue": True},
+            timeout=20,
+        )
+        raw = r.get("result", {}).get("result", {}).get("value", "[]")
+        try:
+            return json.loads(raw) or []
+        except Exception:  # noqa: BLE001 - DOM에서 추출한 JSON 파싱 실패시 빈 dict/list로 안전 폴백 — 읽기전용 공개 검색결과 스크래핑
+            return []
+
+    collected: dict[str, dict] = {}  # key(link|title) → item
+    pages_done = 0
+
+    try:
+        for page_idx in range(1, max(1, int(max_pages)) + 1):
+            q = urllib.parse.quote(keyword)
+            url = (
+                f"https://search.shopping.naver.com/search/all?query={q}&sort=rel&pagingIndex={page_idx}&pagingSize=80"
+            )
+            send("Page.navigate", {"url": url}, timeout=20)
+            time.sleep(4.0)
+            pages_done += 1
+
+            # 스크롤하며 증분 수집 — 새 항목이 안 나오면 조기 종료
+            _scroll_collect(send, extract_visible, collected, limit)
+
+            if len(collected) >= limit:
+                break
+    finally:
+        ws.close()
+
+    products = list(collected.values())[:limit]
+    for i, p in enumerate(products, start=1):
+        p["rank"] = i
+
+    if not products:
+        return {"ok": False, "error": "no_products", "keyword": keyword}
+
+    # DB 저장
+    _save_products(keyword, products)
+
+    # 통계 계산
+    return _build_result(keyword, products)
 
 
 def query_items(keyword: str, days: int = 30, limit: int = 100) -> list[dict]:

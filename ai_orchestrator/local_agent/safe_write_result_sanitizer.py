@@ -53,7 +53,7 @@ def validate_write_result(result: dict[str, Any]) -> list[str]:
     return violations
 
 
-def build_write_result(
+def build_write_result(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     task_id: str,
     action: str,
     ok: bool,

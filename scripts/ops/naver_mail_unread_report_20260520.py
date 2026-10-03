@@ -199,11 +199,35 @@ def classify(sender: str, subject: str) -> str:
     return "기타"
 
 
-def main():
-    # GUARD
-    sep.assert_main_page_first(MAIL_MAIN, "naver")
+_FRAME_EXPR = r"""
+        JSON.stringify((function(){
+          const frames = Array.from(document.querySelectorAll('iframe'));
+          return frames.map(f => ({src:f.src, name:f.name, id:f.id}));
+        })())
+        """
 
-    # 이미 mail.naver.com 에 있으면 그 탭 사용, 아니면 새로 진입
+PAGES_EXPR = r"""
+    JSON.stringify((function(){
+      const btns = Array.from(document.querySelectorAll('.pagination .page_list .page .page_link'));
+      return btns.map(b => (b.innerText||'').trim().replace(/[^0-9]/g,'')).filter(s=>s);
+    })())
+    """
+
+CLICK_PAGE_EXPR_TPL = r"""
+    (function(){
+      const btns = Array.from(document.querySelectorAll('.pagination .page_list .page .page_link'));
+      for(const b of btns){
+        if((b.innerText||'').trim().replace(/[^0-9]/g,'') === %r){ b.click(); return true; }
+      }
+      // 다음(▶) 또는 마지막(▶▶)
+      const next = document.querySelector('.pagination .page_navigation_next, .pagination .next');
+      if(next){ next.click(); return 'next'; }
+      return false;
+    })()
+    """
+
+
+def _ensure_mail_tab():
     target_id = None
     for t in _list_pages():
         if "mail.naver.com" in t.get("url", ""):
@@ -228,27 +252,22 @@ def main():
     else:
         print(f"[1] mail.naver.com 탭 재사용: {target_id[:12]}")
         wait_dom(target_id, "document.querySelector('li.mail_item')", timeout=10.0)
+    return target_id
 
-    cap1 = screenshot(target_id, "01_mail_main")
-    print(f"  screenshot → {cap1}")
 
-    # 2) 메일 리스트 추출
+def _extract_list(target_id):
     data = evaluate(target_id, LIST_EXPR, timeout=8.0)
     if not isinstance(data, dict):
         # iframe 내부일 가능성 — 모든 frame 평가
         print(f"  list 평가 실패, frame 탐색 시도 ... data={str(data)[:200]}")
         # frame 안에서 다시 시도
-        frame_expr = r"""
-        JSON.stringify((function(){
-          const frames = Array.from(document.querySelectorAll('iframe'));
-          return frames.map(f => ({src:f.src, name:f.name, id:f.id}));
-        })())
-        """
-        frames = evaluate(target_id, frame_expr, timeout=6.0)
+        frames = evaluate(target_id, _FRAME_EXPR, timeout=6.0)
         print(f"  frames: {frames}")
         data = {"items": [], "_frames": frames}
+    return data
 
-    # 페이지네이션 — Naver Mail v2 는 페이지 단위 (15개/page)
+
+def _init_items(data):
     all_items = {}  # sn -> item
 
     def merge(items):
@@ -259,33 +278,18 @@ def main():
 
     if isinstance(data, dict):
         merge(data.get("items", []))
+    return all_items, merge
 
-    # 안읽은 필터 적용은 생략(전체 페이지 순회로 다 잡음). 페이지 1..N 클릭.
-    PAGES_EXPR = r"""
-    JSON.stringify((function(){
-      const btns = Array.from(document.querySelectorAll('.pagination .page_list .page .page_link'));
-      return btns.map(b => (b.innerText||'').trim().replace(/[^0-9]/g,'')).filter(s=>s);
-    })())
-    """
-    CLICK_PAGE_EXPR_TPL = r"""
-    (function(){
-      const btns = Array.from(document.querySelectorAll('.pagination .page_list .page .page_link'));
-      for(const b of btns){
-        if((b.innerText||'').trim().replace(/[^0-9]/g,'') === %r){ b.click(); return true; }
-      }
-      // 다음(▶) 또는 마지막(▶▶)
-      const next = document.querySelector('.pagination .page_navigation_next, .pagination .next');
-      if(next){ next.click(); return 'next'; }
-      return false;
-    })()
-    """
+
+def _get_pages_avail(target_id):
     pages_avail = evaluate(target_id, PAGES_EXPR, timeout=4.0)
     if not isinstance(pages_avail, list):
         pages_avail = []
     print(f"[2.1] pagination 페이지 후보: {pages_avail}")
+    return pages_avail
 
-    # 페이지 2..끝 순회 (현재 page 1 이미 수집됨)
-    # 페이지 후보가 [1,2,3] 처럼만 보이고 더 있을 수 있으므로 1..20 시도하면서 빈 페이지 stop
+
+def _walk_pages(target_id, pages_avail, all_items, merge):
     visited = {"1"}
     for pg in pages_avail + [str(i) for i in range(1, 21)]:
         if pg in visited:
@@ -312,23 +316,17 @@ def main():
         if len(all_items) >= 80:
             break
 
-    items = list(all_items.values())
-    href = data.get("href", "") if isinstance(data, dict) else ""
-    title = data.get("title", "") if isinstance(data, dict) else ""
 
-    print(f"\n[2] mail list: href={href} title={title} collected={len(items)}")
-
-    unread = [it for it in items if it.get("is_unread")]
-    print(f"  unread = {len(unread)} / total collected {len(items)}")
-
-    # 3) 분류
+def _classify_unread(unread):
     classified = {}
     for it in unread:
         sender_blob = it.get("sender_name", "") + " " + it.get("sender_full", "")
         lbl = classify(sender_blob, it.get("subject", ""))
         classified.setdefault(lbl, []).append(it)
+    return classified
 
-    # 4) 보고
+
+def _print_report(unread, classified, data):
     print("\n=== 안읽은 메일 분류 보고 ===")
     if not unread:
         print("(안읽은 메일 없음 또는 리스트 추출 실패)")
@@ -345,7 +343,8 @@ def main():
                 if it.get("time_txt"):
                     print(f"    시각: {it['time_txt']}  크기: {it.get('size_txt', '')}")
 
-    # 5) 결과 JSON 저장
+
+def _save_report_json(href, title, items, unread, classified):
     out_json = CAP_DIR / "mail_unread_report.json"
     out_json.write_text(
         json.dumps(
@@ -372,6 +371,48 @@ def main():
         encoding="utf-8",
     )
     print(f"\n[json] {out_json}")
+
+
+def main():
+    # GUARD
+    sep.assert_main_page_first(MAIL_MAIN, "naver")
+
+    # 이미 mail.naver.com 에 있으면 그 탭 사용, 아니면 새로 진입
+    target_id = _ensure_mail_tab()
+
+    cap1 = screenshot(target_id, "01_mail_main")
+    print(f"  screenshot → {cap1}")
+
+    # 2) 메일 리스트 추출
+    data = _extract_list(target_id)
+
+    # 페이지네이션 — Naver Mail v2 는 페이지 단위 (15개/page)
+    all_items, merge = _init_items(data)
+
+    # 안읽은 필터 적용은 생략(전체 페이지 순회로 다 잡음). 페이지 1..N 클릭.
+    pages_avail = _get_pages_avail(target_id)
+
+    # 페이지 2..끝 순회 (현재 page 1 이미 수집됨)
+    # 페이지 후보가 [1,2,3] 처럼만 보이고 더 있을 수 있으므로 1..20 시도하면서 빈 페이지 stop
+    _walk_pages(target_id, pages_avail, all_items, merge)
+
+    items = list(all_items.values())
+    href = data.get("href", "") if isinstance(data, dict) else ""
+    title = data.get("title", "") if isinstance(data, dict) else ""
+
+    print(f"\n[2] mail list: href={href} title={title} collected={len(items)}")
+
+    unread = [it for it in items if it.get("is_unread")]
+    print(f"  unread = {len(unread)} / total collected {len(items)}")
+
+    # 3) 분류
+    classified = _classify_unread(unread)
+
+    # 4) 보고
+    _print_report(unread, classified, data)
+
+    # 5) 결과 JSON 저장
+    _save_report_json(href, title, items, unread, classified)
 
     # 6) 캡쳐 종료
     cap2 = screenshot(target_id, "02_mail_list_after")

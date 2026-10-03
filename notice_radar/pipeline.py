@@ -41,7 +41,7 @@ def analyze_notice_url(
     return analysis
 
 
-def analyze_current_browser_notice(
+def analyze_current_browser_notice(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     cdp_url: str = "http://127.0.0.1:9222",
     source: str = "current-browser",

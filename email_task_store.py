@@ -33,7 +33,7 @@ def _load_all(path: str | Path) -> list[dict]:
     return items
 
 
-def save_email_task(
+def save_email_task(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     task_id: str,
     source_item_id: str,

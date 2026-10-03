@@ -83,13 +83,6 @@ def load_product_detail(product_id: str) -> dict:
         return {"ok": False, "error": str(e), "product_id": product_id}
 
 
-def list_cached_product_ids() -> list[str]:
-    """캐시된 product_id 목록."""
-    if not PRODUCTS_DIR.exists():
-        return []
-    return [p.stem for p in sorted(PRODUCTS_DIR.glob("*.json"))]
-
-
 # ── 내부: 페이지 진입 ────────────────────────────────────────────────────────
 
 

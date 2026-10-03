@@ -63,7 +63,43 @@ _HTTP_STATUS_MAP: dict[int, str] = {
 }
 
 
-def decide_fallback(
+def _decide_blocking_or_user_direct(
+    security_signals: list[str], action: str
+) -> dict[str, Any] | None:
+    """1. 절대 차단 신호 → 2. 사용자 직접 수행 신호 (순서 유지). 해당 없으면 None."""
+    # 1. 절대 차단 신호
+    for sig in security_signals:
+        if sig in _BLOCK_SIGNALS:
+            return _result(BLOCK, f"차단 신호: {sig!r}", sensitive_transfer_blocked=True)
+    if action in _BLOCK_SIGNALS:
+        return _result(BLOCK, f"차단 action: {action!r}", sensitive_transfer_blocked=True)
+
+    # 2. 사용자 직접 수행 신호
+    for sig in security_signals:
+        if sig in _USER_DIRECT_SIGNALS:
+            return _result(REQUIRE_USER_DIRECT_ACTION, f"사용자 직접 수행 신호: {sig!r}")
+    return None
+
+
+def _decide_signal_fallback(
+    security_signals: list[str], action: str, domain_profile: dict[str, Any]
+) -> dict[str, Any] | None:
+    """5. 보안 신호 기반 fallback → 6. login LOCAL_REQUIRED. 해당 없으면 None."""
+    # 5. 보안 신호 기반 fallback
+    for sig in security_signals:
+        if sig in _FALLBACK_SIGNALS:
+            if domain_profile.get("server_to_local_fallback", True):
+                return _result(HANDOFF_TO_LOCAL_AGENT, f"보안 신호 fallback: {sig!r}")
+            else:
+                return _result(REQUIRE_USER_DIRECT_ACTION, f"fallback 불가 도메인, 사용자 직접: {sig!r}")
+
+    # 6. login_execution=LOCAL_REQUIRED 도메인에서 login action
+    if "login" in action and domain_profile.get("login_execution") == "LOCAL_REQUIRED":
+        return _result(HANDOFF_TO_LOCAL_AGENT, "login_execution=LOCAL_REQUIRED")
+    return None
+
+
+def decide_fallback(  # noqa: PLR0913 - 폴백 판정 공개 함수, 입력 시그니처 유지
     task: dict[str, Any],
     domain_profile: dict[str, Any],
     server_result: dict[str, Any],
@@ -81,17 +117,10 @@ def decide_fallback(
     """
     action: str = (task.get("action") or "").lower()
 
-    # 1. 절대 차단 신호
-    for sig in security_signals:
-        if sig in _BLOCK_SIGNALS:
-            return _result(BLOCK, f"차단 신호: {sig!r}", sensitive_transfer_blocked=True)
-    if action in _BLOCK_SIGNALS:
-        return _result(BLOCK, f"차단 action: {action!r}", sensitive_transfer_blocked=True)
-
-    # 2. 사용자 직접 수행 신호
-    for sig in security_signals:
-        if sig in _USER_DIRECT_SIGNALS:
-            return _result(REQUIRE_USER_DIRECT_ACTION, f"사용자 직접 수행 신호: {sig!r}")
+    # 1~2. 절대 차단 신호 / 사용자 직접 수행 신호
+    early = _decide_blocking_or_user_direct(security_signals, action)
+    if early is not None:
+        return early
 
     # 3. 서버 성공
     server_verdict = server_result.get("verdict") or server_result.get("status") or ""
@@ -104,17 +133,10 @@ def decide_fallback(
         decision = _HTTP_STATUS_MAP[http_status]
         return _result(decision, f"HTTP {http_status} 감지")
 
-    # 5. 보안 신호 기반 fallback
-    for sig in security_signals:
-        if sig in _FALLBACK_SIGNALS:
-            if domain_profile.get("server_to_local_fallback", True):
-                return _result(HANDOFF_TO_LOCAL_AGENT, f"보안 신호 fallback: {sig!r}")
-            else:
-                return _result(REQUIRE_USER_DIRECT_ACTION, f"fallback 불가 도메인, 사용자 직접: {sig!r}")
-
-    # 6. login_execution=LOCAL_REQUIRED 도메인에서 login action
-    if "login" in action and domain_profile.get("login_execution") == "LOCAL_REQUIRED":
-        return _result(HANDOFF_TO_LOCAL_AGENT, "login_execution=LOCAL_REQUIRED")
+    # 5~6. 보안 신호 기반 fallback / login LOCAL_REQUIRED
+    signal_fallback = _decide_signal_fallback(security_signals, action, domain_profile)
+    if signal_fallback is not None:
+        return signal_fallback
 
     # 7. error_type 기반
     if error_type in ("timeout", "network_error", "connection_refused"):

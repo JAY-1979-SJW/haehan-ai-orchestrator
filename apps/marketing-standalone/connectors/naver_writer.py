@@ -205,6 +205,19 @@ class BlogWriter:
             _log.debug("[blog-writer] 제목 텍스트 조회 실패: %s", e)
             return ""
 
+    def _type_body_paragraphs(self, full_text: str, paragraph_delay: float) -> None:
+        """문단 단위로 직접 타이핑(클립보드 붙여넣기 실패 시 폴백)."""
+        paragraphs = full_text.split("\n\n")
+        for i, p in enumerate(paragraphs):
+            lines = p.split("\n")
+            for j, line in enumerate(lines):
+                self.page.keyboard.type(line, delay=15)
+                if j < len(lines) - 1:
+                    self.page.keyboard.press("Shift+Enter")
+            if i < len(paragraphs) - 1:
+                self.page.keyboard.press("Enter")
+                time.sleep(paragraph_delay)
+
     def write_body(
         self, text: str | list[str], paragraph_delay: float = 0.3, append: bool = False, verify: bool = True
     ) -> bool:
@@ -232,16 +245,7 @@ class BlogWriter:
                 self.page.keyboard.press("Control+v")
                 time.sleep(1.0)
             except (ImportError, Exception):  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
-                paragraphs = full_text.split("\n\n")
-                for i, p in enumerate(paragraphs):
-                    lines = p.split("\n")
-                    for j, line in enumerate(lines):
-                        self.page.keyboard.type(line, delay=15)
-                        if j < len(lines) - 1:
-                            self.page.keyboard.press("Shift+Enter")
-                    if i < len(paragraphs) - 1:
-                        self.page.keyboard.press("Enter")
-                        time.sleep(paragraph_delay)
+                self._type_body_paragraphs(full_text, paragraph_delay)
 
             _log.info("[blog-writer] 본문 입력 완료 (%d 자)", len(full_text))
 
@@ -607,7 +611,40 @@ class BlogWriter:
 # ── 편의 함수 ──────────────────────────────────────────────────────────────
 
 
-def write_post(
+def _install_dialog_handler(page: Page) -> None:
+    """네이버 에디터 dialog 를 자동 dismiss 하는 핸들러를 페이지당 1회 설치."""
+    if not getattr(page, "_haehan_dialog_handler_installed", False):
+        page.on("dialog", lambda d: d.dismiss())
+        try:
+            page._haehan_dialog_handler_installed = True
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
+            _log.debug("dialog handler 플래그 설정 실패(무시): %s", e)
+
+
+def _write_post_content(
+    bw: BlogWriter, body: str | list[str], images: list[str] | None, body_segments: list[str] | None
+) -> dict | None:
+    """본문(+이미지) 입력. 실패하면 오류 dict, 성공이면 None."""
+    if body_segments and images:
+        blocks: list[dict[str, str]] = []
+        for i, seg in enumerate(body_segments):
+            blocks.append({"type": "text", "value": seg})
+            if i < len(images):
+                blocks.append({"type": "image", "value": images[i]})
+        if not bw.write_mixed_content(blocks):
+            return {"ok": False, "error": "body_segments_failed"}
+    elif images:
+        for img in images:
+            bw.insert_image(img)
+        if not bw.write_body(body):
+            return {"ok": False, "error": "body_failed"}
+    else:
+        if not bw.write_body(body):
+            return {"ok": False, "error": "body_failed"}
+    return None
+
+
+def write_post(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     page: Page,
     *,
     title: str,
@@ -628,12 +665,7 @@ def write_post(
     옆에서 지켜보는 회사 내부 자동화가 아니라, 고객이 프로그램에 예약을 걸어두면
     무인으로 발행되는 걸 기대하는 제품이라 승인 대기 모드가 기본이면 안 된다.
     """
-    if not getattr(page, "_haehan_dialog_handler_installed", False):
-        page.on("dialog", lambda d: d.dismiss())
-        try:
-            page._haehan_dialog_handler_installed = True
-        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
-            _log.debug("dialog handler 플래그 설정 실패(무시): %s", e)
+    _install_dialog_handler(page)
 
     # Step 1: 로그인 확인 — 자동 로그인 시도 없음(비밀번호 미보관)
     login_result = check_login(page)
@@ -650,22 +682,9 @@ def write_post(
     if not bw.set_title(title):
         return {"ok": False, "error": "title_failed"}
 
-    if body_segments and images:
-        blocks: list[dict[str, str]] = []
-        for i, seg in enumerate(body_segments):
-            blocks.append({"type": "text", "value": seg})
-            if i < len(images):
-                blocks.append({"type": "image", "value": images[i]})
-        if not bw.write_mixed_content(blocks):
-            return {"ok": False, "error": "body_segments_failed"}
-    elif images:
-        for img in images:
-            bw.insert_image(img)
-        if not bw.write_body(body):
-            return {"ok": False, "error": "body_failed"}
-    else:
-        if not bw.write_body(body):
-            return {"ok": False, "error": "body_failed"}
+    content_error = _write_post_content(bw, body, images, body_segments)
+    if content_error is not None:
+        return content_error
 
     if save_draft_only:
         result = bw.save_draft()

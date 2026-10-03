@@ -43,7 +43,7 @@ MSG_JOB_RESUMED = "JOB_RESUMED"
 MSG_REAUTH_TIMED_OUT = "REAUTH_TIMED_OUT"
 
 
-def ensure_session(
+def ensure_session(  # noqa: PLR0913 - 사이트 러너 공개 함수, 시그니처 유지
     adapter: SiteAdapter,
     page: Any,
     *,
@@ -156,7 +156,7 @@ def ensure_session(
     )
 
 
-def run_with_session(
+def run_with_session(  # noqa: PLR0913 - 사이트 러너 공개 함수, 시그니처 유지
     adapter: SiteAdapter,
     page: Any,
     *,
@@ -252,7 +252,7 @@ class _ReauthRequired(Exception):
 SessionExpiredMidJob = _ReauthRequired
 
 
-def resume_job(
+def resume_job(  # noqa: PLR0913 - 사이트 러너 공개 함수, 시그니처 유지
     adapter: SiteAdapter,
     page: Any,
     *,

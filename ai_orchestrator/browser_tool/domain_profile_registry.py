@@ -16,7 +16,7 @@ from typing import Any
 
 # ── profile 구조 ──────────────────────────────────────────────────────────────
 
-def _profile(
+def _profile(  # noqa: PLR0913 - 도메인 프로필 선언 헬퍼, 필드 나열형
     domain: str,
     category: str,
     default_execution: str = "SERVER_FIRST",

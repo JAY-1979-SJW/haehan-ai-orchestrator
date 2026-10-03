@@ -21,7 +21,11 @@ from dataclasses import dataclass
 # ── 기본 출력 경로 ───────────────────────────────────────────────────────────
 from pathlib import Path as _Path
 
-OUTPUT_DIR: _Path = _Path(r"C:\Users\skyjw\OneDrive\01. PROJECT_FILE\01. HAEHAN_ENGNEERING\10. 견적서\단말기 견적서")
+from scripts.app_paths import onedrive_root, resolve_external
+
+OUTPUT_DIR: _Path = resolve_external(
+    "HAEHAN_EUM_QUOTE_DIR", "01. PROJECT_FILE", "01. HAEHAN_ENGNEERING", "10. 견적서", "단말기 견적서", base=onedrive_root()
+)  # OneDrive 가 없으면 문서 폴더 아래
 
 # ── A4 레이아웃 수치 ──────────────────────────────────────────────────────────
 STD_H: float = 22.0  # 표준 행 높이 (pt) — 전체 통일

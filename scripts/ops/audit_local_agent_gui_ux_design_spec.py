@@ -22,25 +22,7 @@ def _read(p: Path) -> str:
     return p.read_text(encoding="utf-8") if p.exists() else ""
 
 
-def judge_spec(
-    *,
-    spec_path: Path | None = None,
-    desktop_ui_unchanged: bool = True,
-) -> SpecVerdict:
-    p = spec_path or SPEC
-    metrics = {
-        "spec_exists": p.exists(),
-        "desktop_ui_unchanged": desktop_ui_unchanged,
-    }
-    text = _read(p)
-    if not text:
-        return SpecVerdict(False, "FAIL_USER_FLOW_MISSING", reasons=[f"spec not found: {p}"], metrics=metrics)
-
-    # FAIL_DESKTOP_UI_SCOPE_VIOLATION
-    if not desktop_ui_unchanged:
-        return SpecVerdict(False, "FAIL_DESKTOP_UI_SCOPE_VIOLATION", reasons=["desktop/ui touched"], metrics=metrics)
-
-    # FAIL_USER_FLOW_MISSING — 사용자 흐름 8종+
+def _check_flows(text, metrics):
     flow_keywords = (
         "첫 실행",
         "등록코드",
@@ -73,7 +55,10 @@ def judge_spec(
         return SpecVerdict(
             False, "FAIL_GUI_OPTION_COMPARISON_MISSING", reasons=["최종 권장안 명시 없음"], metrics=metrics
         )
+    return None
 
+
+def _check_security_next(text, metrics):
     # FAIL_SECURITY_UX_MISSING
     security_keywords = ("device_token", "registration_code", "agent_id", "마스킹", "redact", "show='●'")
     missing_sec = [k for k in security_keywords if k not in text]
@@ -90,7 +75,10 @@ def judge_spec(
             reasons=[f"next impl name missing: {NEXT_IMPL}"],
             metrics=metrics,
         )
+    return None
 
+
+def _check_sections_decision(text, metrics):
     # MVP / Later / 하지 않음 필수
     for section in ("MVP", "Later", "하지 않음"):
         if section not in text:
@@ -105,6 +93,39 @@ def judge_spec(
             pass
         else:
             return SpecVerdict(False, "WARN_DECISION_NOT_FINAL", reasons=["결정 미확정"], metrics=metrics)
+    return None
+
+
+def judge_spec(
+    *,
+    spec_path: Path | None = None,
+    desktop_ui_unchanged: bool = True,
+) -> SpecVerdict:
+    p = spec_path or SPEC
+    metrics = {
+        "spec_exists": p.exists(),
+        "desktop_ui_unchanged": desktop_ui_unchanged,
+    }
+    text = _read(p)
+    if not text:
+        return SpecVerdict(False, "FAIL_USER_FLOW_MISSING", reasons=[f"spec not found: {p}"], metrics=metrics)
+
+    # FAIL_DESKTOP_UI_SCOPE_VIOLATION
+    if not desktop_ui_unchanged:
+        return SpecVerdict(False, "FAIL_DESKTOP_UI_SCOPE_VIOLATION", reasons=["desktop/ui touched"], metrics=metrics)
+
+    # FAIL_USER_FLOW_MISSING — 사용자 흐름 8종+
+    _early = _check_flows(text, metrics)
+    if _early is not None:
+        return _early
+
+    _early = _check_security_next(text, metrics)
+    if _early is not None:
+        return _early
+
+    _early = _check_sections_decision(text, metrics)
+    if _early is not None:
+        return _early
 
     metrics["next_implementation"] = NEXT_IMPL
     metrics["spec_length"] = len(text)

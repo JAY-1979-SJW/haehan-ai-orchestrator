@@ -53,7 +53,7 @@ def list_profiles() -> list[str]:
 
 
 @contextmanager
-def open_user_session(
+def open_user_session(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     profile_name: str = "default",
     *,
     headless: bool = False,
