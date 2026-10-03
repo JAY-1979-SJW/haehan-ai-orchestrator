@@ -121,5 +121,7 @@ def test_mcp_config_does_not_pin_python_minor_version():
     """`.mcp.json` 이 AI 에게 도구를 연결하는 명령도 `py -3.14` 로 박으면 그 버전이 없는 PC 에서 AI 가 앱 도구를 전혀 못 쓴다."""
     servers = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]
     assert servers  # 설정을 실제로 읽었다
-    pinned = [name for name, cfg in servers.items() if any(re.fullmatch(r"-3\.\d+", str(a)) for a in cfg.get("args", []))]
+    all_args = [str(a) for cfg in servers.values() for a in cfg.get("args", [])]
+    assert all_args  # 명령 인자를 실제로 읽었다(비어 있으면 아래 비교가 항상 통과해 버린다)
+    pinned = [a for a in all_args if re.fullmatch(r"-3\.\d+", a)]
     assert pinned == []
