@@ -2,12 +2,13 @@
 
 기준서: docs/specs/2026-10-03_site_task_map.md (M2)
 
-- 에이전트(AI)가 쓰는 것은 `list_hosts`·`lookup` 뿐이다(읽기). `classify`·`record_outcome` 은 사람(관리자 화면)만 호출한다.
+- 에이전트(AI)가 쓰는 것은 `list_hosts`·`lookup`(읽기)과 `run_task`(조회 업무 실행 — 위험 등급은 서버가 강제)뿐이다. `classify`·`record_outcome` 은 사람(관리자 화면)만 호출한다.
 - `lookup` 응답에는 실행 규칙을 함께 실어, 지도의 절차를 읽은 에이전트가 위험 등급을 넘어 실행하지 않게 한다.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
@@ -17,10 +18,20 @@ from ..persistence import site_task_map_store as store
 LOOKUP_LIMIT_MAX = 20
 
 RULES = (
-    "risk 가 read 인 업무만 지도의 steps 대로 실행할 수 있다. write·submit 은 절차를 참고만 하고 실행은 사람 승인 카드로만 한다. "
+    "risk 가 read 인 업무는 sitemap.run(task_id, params)으로 실행한다(직접 절차를 흉내 내지 말 것). write·submit 은 절차를 참고만 하고 실행은 사람 승인 카드로만 한다. "
     "state 가 stale 이거나 observed 인 업무는 화면이 지도와 다를 수 있으니 첫 화면에서 fields 가 맞는지 먼저 확인하고, 다르면 중단해 사용자에게 알린다. "
     "steps 의 {{이름}} 은 값을 넣을 자리다. 입력값·조회 결과 데이터는 지도에 저장하지 않는다."
 )
+
+
+# 지도 기반 실행기(브라우저): (호스트, 업무 id, 검증된 매개변수) -> 결과 dict. 라우터가 주입한다(서비스는 브라우저·scripts 를 모른다).
+Runner = Callable[[str, str, dict[str, str]], dict[str, Any]]
+_runner: Runner | None = None
+
+
+def configure_runner(runner: Runner | None) -> None:
+    global _runner
+    _runner = runner
 
 
 def _now() -> str:
@@ -90,3 +101,18 @@ def record_outcome(host: str, task_id: str, *, ok: bool) -> dict[str, Any]:
     updated = tm.mark_verified(site_map, task_id, now=now) if ok else tm.mark_failed(site_map, task_id, now=now)
     store.save(updated)
     return next(t for t in updated["tasks"] if t["id"] == task_id)
+
+
+def run_task(host: str, task_id: str, params: dict[str, Any]) -> dict[str, Any]:
+    """지도에 저장된 **조회(read)** 업무를 실행한다. 위험 등급·매개변수는 여기서(서버 쪽) 먼저 검증하고, 브라우저는 주입된 실행기가 다룬다.
+
+    결과(표)는 응답으로만 돌려주고 지도에는 열 이름과 검증 상태만 남는다.
+    """
+    if _runner is None:
+        raise ValueError("지도 실행기가 연결되지 않았습니다")
+    site_map = store.load(host)
+    task = next((t for t in site_map["tasks"] if t["id"] == task_id), None)
+    if task is None:
+        raise ValueError("업무를 찾을 수 없습니다")
+    values = tm.validate_run_request(task, params)  # read 가 아니거나 매개변수가 틀리면 ValueError (브라우저를 건드리기 전)
+    return _runner(site_map["host"], task_id, values)

@@ -198,6 +198,16 @@ API_REGISTRY: dict[str, dict[str, str]] = {
             "응답의 rules 를 지킬 것: risk 가 read 인 업무만 steps 대로 실행, write·submit 은 참고만 하고 실행은 사람 승인"
         ),
     },
+    "sitemap.run": {
+        "method": "POST",
+        "path": "/api/v1/site-map/{host}/run",
+        "desc": (
+            "사이트 업무 지도에 저장된 **조회(read) 업무**를 지도 절차대로 실행하고 결과 표를 돌려준다. path_params={'host': 'www.example.com'}, "
+            "body={task_id(sitemap.lookup 의 tasks[].id), params: {입력칸 이름: 값}} — params 이름은 lookup 이 돌려준 steps 의 {{이름}}/fields 이름만 쓴다. "
+            "read 가 아닌 업무(write·submit·login)는 서버가 거부한다(실행은 사람 승인). 같은 호스트 안에서만, 새 전용 탭에서만 동작하고 값·결과 행은 지도에 저장되지 않는다. "
+            "응답 ok=false 이고 state=stale 이면 화면이 지도와 달라진 것이니 사용자에게 재탐색(sitemap.explore_request)을 제안할 것"
+        ),
+    },
     "sitemap.explore_request": {
         "method": "POST",
         "path": "/api/v1/site-map/explore/requests",

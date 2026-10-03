@@ -6,11 +6,12 @@
   GET  /site-map/{host}                   — 지도 전체(관리자 화면용)
   POST /site-map/{host}/classify          — 사람이 이름·목적·분류 확정(위험 등급 변경 불가)
   POST /site-map/{host}/outcome           — 실행 결과 기록(verified/stale)
+  POST /site-map/{host}/run               — 저장된 조회(read) 업무를 지도 절차대로 실행                [AI 허용: sitemap.run]
   POST /site-map/explore/requests         — 탐색 요청 생성(승인 대기, 실행 안 함)    [AI 허용: sitemap.explore_request]
   GET  /site-map/explore/requests[/{id}]  — 요청 목록·상태(카드가 조회)
   POST /site-map/explore/requests/{id}/approve · /cancel — 사람만(카드 버튼). 승인하면 읽기 전용 탐색이 백그라운드로 시작
 
-AI 가 쓸 수 있는 것은 읽기 2개 + 탐색 요청 생성뿐 — 승인·취소·확정·결과 기록은 허용 목록에 없다. 모든 엔드포인트는 관리자 인증.
+AI 가 쓸 수 있는 것은 읽기 2개 + 탐색 요청 생성 + 조회(read) 업무 실행(서버가 위험 등급을 강제)뿐 — 승인·취소·확정·결과 기록은 허용 목록에 없다. 모든 엔드포인트는 관리자 인증.
 """
 
 from __future__ import annotations
@@ -22,9 +23,10 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.services import site_task_map_explore_service as explore
 from ai_orchestrator.services import site_task_map_service as service
-from scripts.explorer import task_mapper
+from scripts.explorer import task_mapper, task_runner
 
 explore.configure(task_mapper.run_request)  # 승인된 탐색의 실행기 연결(브라우저 모듈은 실행 시점에만 불러온다)
+service.configure_runner(task_runner.run_task_in_browser)  # 지도 기반 업무 실행기(조회 업무 전용)
 
 site_task_map_router = APIRouter(prefix="/site-map", tags=["site-map"])
 _ADMIN = Depends(require_role("admin", "owner"))
@@ -52,6 +54,11 @@ class ExploreBody(BaseModel):
     depth: int | None = None
     max_pages: int | None = None
     reason: str = ""
+
+
+class RunBody(BaseModel):
+    task_id: str
+    params: dict[str, str] = {}
 
 
 class OutcomeBody(BaseModel):
@@ -132,6 +139,14 @@ def get_map(host: str = _host(), _: dict = _ADMIN):
 def classify(body: ClassifyBody, host: str = _host(), _: dict = _ADMIN):
     try:
         return service.classify(host, body.task_id, name=body.name, purpose=body.purpose, category=body.category)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.post("/{host}/run")
+def run_task(body: RunBody, host: str = _host(), _: dict = _ADMIN):
+    try:
+        return service.run_task(host, body.task_id, body.params)
     except ValueError as e:
         raise _bad(e) from e
 

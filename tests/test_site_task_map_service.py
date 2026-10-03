@@ -79,13 +79,14 @@ def test_classify_and_outcome_flow(env):
         service.record_outcome(HOST, "nope", ok=True)
 
 
-def test_ai_registry_exposes_two_reads_and_one_request_creation_only():
+def test_ai_registry_exposes_two_reads_request_creation_and_read_task_run_only():
     entries = {k: (v["method"], v["path"]) for k, v in mcp_server.API_REGISTRY.items() if "site-map" in v["path"]}
     assert entries == {
         "sitemap.list": ("GET", "/api/v1/site-map/hosts"),
         "sitemap.lookup": ("GET", "/api/v1/site-map/{host}/lookup"),
         "sitemap.explore_request": ("POST", "/api/v1/site-map/explore/requests"),
-    }  # classify·outcome·전체 지도·승인·취소는 AI 허용이 아니다
+        "sitemap.run": ("POST", "/api/v1/site-map/{host}/run"),
+    }  # classify·outcome·전체 지도·승인·취소는 AI 허용이 아니다 (run 은 서버가 read 업무만 허용)
 
 
 def test_router_requires_admin_and_flows(env, monkeypatch):
@@ -108,3 +109,63 @@ def test_router_requires_admin_and_flows(env, monkeypatch):
     assert client.post(f"/site-map/{HOST}/classify", json={"task_id": "nope"}).status_code == 404
     assert client.get("/site-map/bad host/lookup").status_code in (404, 422)
     assert client.get("/site-map/..%2Fetc/lookup").status_code in (404, 422)
+
+
+# ── M5: 지도 기반 실행 (가짜 실행기) ───────────────────────────────────────
+
+
+@pytest.fixture
+def runner_calls(env):
+    calls = []
+
+    def fake_runner(host, task_id, values):
+        calls.append((host, task_id, values))
+        return {"ok": True, "task_id": task_id, "tables": [{"headers": ["상호"], "rows": [["x"]], "truncated": False}], "state": "verified"}
+
+    service.configure_runner(fake_runner)
+    yield calls
+    service.configure_runner(None)
+
+
+def test_run_task_validates_before_touching_the_browser(env, runner_calls):
+    tid = env["tasks"][0]["id"]
+    ok = service.run_task(HOST, tid, {"txtSangHo": " 삼성 "})
+    assert ok["ok"] is True and runner_calls == [(HOST, tid, {"txtSangHo": "삼성"})]
+    for bad in ({}, {"unknown": "x"}, {"txtSangHo": "a" * 201}):
+        with pytest.raises(ValueError):
+            service.run_task(HOST, tid, bad)
+    with pytest.raises(ValueError, match="찾을 수 없"):
+        service.run_task(HOST, "nope", {"txtSangHo": "a"})
+    assert len(runner_calls) == 1  # 검증에 걸린 요청은 실행기까지 가지 않는다
+
+
+def test_run_task_refuses_non_read_tasks_on_the_server(env, runner_calls):
+    risky = tm.tasks_from_snapshot(_snap([{"text": "신고", "href": "#", "target": "", "visible": True}]), now=NOW)[0]
+    risky["id"] = "risky#page"
+    store.save(tm.merge_tasks(store.load(HOST), [risky], now=NOW))
+    assert risky["risk"] == "submit"
+    with pytest.raises(ValueError, match=r"조회\(read\) 업무만"):
+        service.run_task(HOST, "risky#page", {"txtSangHo": "a"})
+    assert runner_calls == []
+
+
+def test_run_task_without_runner_and_router_flow(env, monkeypatch):
+    service.configure_runner(None)
+    with pytest.raises(ValueError, match="실행기가 연결되지"):
+        service.run_task(HOST, env["tasks"][0]["id"], {"txtSangHo": "a"})
+    service.configure_runner(lambda host, tid, values: {"ok": True, "task_id": tid, "values_seen": values})
+    try:
+        app = FastAPI()
+        app.include_router(site_task_map_router)
+        app.dependency_overrides[get_current_user] = lambda: {"role": "admin", "username": "kim"}
+        client = TestClient(app)
+        tid = env["tasks"][0]["id"]
+        got = client.post(f"/site-map/{HOST}/run", json={"task_id": tid, "params": {"txtSangHo": "삼성"}})
+        assert got.status_code == 200 and got.json()["values_seen"] == {"txtSangHo": "삼성"}
+        assert client.post(f"/site-map/{HOST}/run", json={"task_id": tid, "params": {}}).status_code == 400
+        assert client.post(f"/site-map/{HOST}/run", json={"task_id": "nope", "params": {"txtSangHo": "a"}}).status_code == 404
+        app.dependency_overrides[get_current_user] = lambda: {"role": "viewer", "username": "v"}
+        monkeypatch.setattr(auth_module.config, "AUTH_ENABLED", True)
+        assert client.post(f"/site-map/{HOST}/run", json={"task_id": tid, "params": {"txtSangHo": "a"}}).status_code == 403
+    finally:
+        service.configure_runner(None)

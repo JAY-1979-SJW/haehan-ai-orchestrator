@@ -379,3 +379,77 @@ def validate_explore_request(raw: dict[str, Any]) -> dict[str, Any]:
         "max_pages": _bounded("max_pages", EXPLORE_DEFAULT_PAGES, EXPLORE_PAGES_MAX),
         "auth": raw.get("auth") if raw.get("auth") in AUTHS else AUTH_PUBLIC,
     }
+
+
+# ── 지도 기반 실행 (M5): 매개변수 검증·결과 열 이름 반영 ──────────────────────
+
+RUN_VALUE_MAX = 200
+OUTPUT_COLUMNS_MAX = 30
+_PLACEHOLDER = re.compile(r"\{\{([^{}]+)\}\}")
+
+
+def step_placeholders(steps: list[dict[str, Any]]) -> list[str]:
+    """steps 의 `{{이름}}` 매개변수 자리(등장 순서, 중복 제거)."""
+    names: list[str] = []
+    for step in steps:
+        for name in _PLACEHOLDER.findall(str(step.get("value") or "")):
+            if name not in names:
+                names.append(name)
+    return names
+
+
+def validate_run_request(task: dict[str, Any], params: dict[str, Any]) -> dict[str, str]:
+    """실행 요청 검증 → 문자열 매개변수. 규칙 위반은 ValueError.
+
+    - 조회(read) 업무만 실행한다: 위험 등급은 클라이언트 표시를 믿지 않고 여기서(서버 쪽) 판정한다.
+    - 지도에 없는 매개변수는 거부, 입력칸이 있는 업무는 적어도 하나는 있어야 한다, 필수 칸은 반드시 있어야 한다.
+    - 값은 200자 이내 문자열, 제어문자 금지. 지도에 없는 칸을 채우거나 값을 지도에 남기지 않는다.
+    """
+    if task.get("risk") != RISK_READ:
+        raise ValueError(f"조회(read) 업무만 실행할 수 있습니다(이 업무는 {RISK_LABEL_KO.get(str(task.get('risk')), str(task.get('risk')))}). 실행은 사람 승인 카드로만 합니다")
+    if not isinstance(params, dict):
+        raise ValueError("매개변수는 {이름: 값} 형태여야 합니다")
+    wanted = step_placeholders(task.get("steps", []))
+    unknown = sorted(set(params) - set(wanted))
+    if unknown:
+        raise ValueError("지도에 없는 매개변수: " + ", ".join(map(str, unknown)) + " (사용 가능: " + ", ".join(wanted) + ")")
+    values: dict[str, str] = {}
+    for name, value in params.items():
+        text = "" if value is None else str(value)
+        if len(text) > RUN_VALUE_MAX:
+            raise ValueError(f"매개변수 '{name}' 은(는) {RUN_VALUE_MAX}자 이내여야 합니다")
+        if any(ord(ch) < 32 or ord(ch) == 127 for ch in text):
+            raise ValueError(f"매개변수 '{name}' 에 제어문자를 넣을 수 없습니다")
+        if text.strip():
+            values[str(name)] = text.strip()
+    required = [f["name"] or f["id"] for f in task.get("fields", []) if f.get("required")]
+    missing = [name for name in required if name in wanted and name not in values]
+    if missing:
+        raise ValueError("필수 매개변수가 없습니다: " + ", ".join(missing))
+    if wanted and not values:
+        raise ValueError("조회할 값이 없습니다 — 매개변수를 하나 이상 넣으세요(사용 가능: " + ", ".join(wanted) + ")")
+    return values
+
+
+RISK_LABEL_KO = {RISK_READ: "조회", RISK_WRITE: "입력·저장", RISK_SUBMIT: "제출·신고·삭제"}
+
+
+def substitute(value: str, params: dict[str, str]) -> str | None:
+    """`{{이름}}` 을 값으로 바꾼다. 값이 없는 자리가 있으면 None (그 단계는 건너뛴다)."""
+    missing = False
+
+    def repl(match: re.Match[str]) -> str:
+        nonlocal missing
+        if match.group(1) in params:
+            return params[match.group(1)]
+        missing = True
+        return ""
+
+    out = _PLACEHOLDER.sub(repl, value)
+    return None if missing else out
+
+
+def apply_outputs(site_map: dict[str, Any], task_id: str, headers: list[str], *, now: str) -> dict[str, Any]:
+    """결과 표의 **열 이름**만 업무에 기록한다(구조 정보. 행 데이터는 저장하지 않는다)."""
+    cleaned = [str(h).strip()[:40] for h in headers if str(h).strip()][:OUTPUT_COLUMNS_MAX]
+    return dict(_update(site_map, task_id, outputs=cleaned), updated_at=now)

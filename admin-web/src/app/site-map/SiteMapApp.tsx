@@ -14,6 +14,7 @@ import {
   type HostSummary,
   type MapTask,
   type Risk,
+  type RunResult,
   type SiteMap,
   type TaskState,
 } from "./api";
@@ -139,6 +140,9 @@ export function SiteMapApp() {
                   task={selected}
                   busy={busy}
                   onSave={(input) => act(() => siteMapApi.classify(host, { task_id: selected.id, ...input }), "업무 정보를 저장했습니다")}
+                  runParams={placeholders(selected)}
+                  onRun={(params) => siteMapApi.run(host, selected.id, params)}
+                  onRunDone={() => Promise.all([loadMap(host), refreshHosts()])}
                   onOutcome={(ok) =>
                     act(() => siteMapApi.outcome(host, selected.id, ok), ok ? "검증됨으로 기록했습니다" : "재확인 필요로 기록했습니다")
                   }
@@ -216,6 +220,82 @@ function TaskTable({ tasks, taskId, onPick }: { tasks: MapTask[]; taskId: string
   );
 }
 
+/** 절차의 {{이름}} 자리(등장 순서, 중복 제거) — 서버의 step_placeholders 와 같은 규칙. */
+function placeholders(task: MapTask): string[] {
+  const names: string[] = [];
+  for (const step of task.steps) {
+    for (const m of (step.value ?? "").matchAll(/\{\{([^{}]+)\}\}/g)) if (!names.includes(m[1])) names.push(m[1]);
+  }
+  return names;
+}
+
+function RunPanel({
+  task,
+  names,
+  onRun,
+  onDone,
+}: {
+  task: MapTask;
+  names: string[];
+  onRun: (params: Record<string, string>) => Promise<RunResult>;
+  onDone: () => Promise<unknown>;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<RunResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setRunning(true);
+    setError(null);
+    setResult(null);
+    try {
+      const params = Object.fromEntries(Object.entries(values).filter(([, v]) => v.trim()));
+      setResult(await onRun(params));
+      await onDone();
+    } catch (e) {
+      setError(errText(e));
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const labelOf = (name: string) => task.fields.find((f) => (f.name || f.id) === name)?.label || name;
+  const table = result?.tables?.[0];
+  return (
+    <div className="space-y-2 rounded-lg border border-[#E5E7EB] p-2" data-testid="sitemap-run-panel">
+      <div className="font-semibold">지도대로 실행 (조회 전용)</div>
+      <div className="text-[12px] text-[#6B7280]">저장된 절차를 새 전용 탭에서 그대로 재생합니다. 입력값과 결과는 지도에 저장되지 않고 아래에만 표시됩니다.</div>
+      <div className="grid gap-2 md:grid-cols-2">
+        {names.map((n) => (
+          <label key={n} className="text-[12px]">{labelOf(n)}
+            <input aria-label={`실행 입력 ${n}`} className={field} value={values[n] ?? ""} maxLength={200} onChange={(e) => setValues({ ...values, [n]: e.target.value })} />
+          </label>
+        ))}
+      </div>
+      <button className={btnPrimary} disabled={running || !Object.values(values).some((v) => v.trim())} onClick={() => void run()}>{running ? "실행 중…" : "실행"}</button>
+      {error && <div className="rounded bg-red-50 p-2 text-red-700" role="alert">{error}</div>}
+      {result && !result.ok && (
+        <div className="rounded bg-orange-50 p-2 text-orange-900" role="alert">
+          {result.error}{result.state === "stale" && " — 이 업무는 ‘재확인 필요’로 기록했습니다."}
+        </div>
+      )}
+      {result?.ok && !table && <div className="rounded bg-gray-50 p-2 text-[#374151]">{result.note ?? "절차를 실행했지만 결과 표가 없습니다."}</div>}
+      {table && (
+        <div className="overflow-x-auto" data-testid="sitemap-run-result">
+          <table className="w-full text-left text-[12px]">
+            <thead className="bg-[#F9FAFB] text-[#6B7280]"><tr>{table.headers.map((h, i) => <th key={i} className="px-2 py-1">{h}</th>)}</tr></thead>
+            <tbody>
+              {table.rows.map((r, i) => <tr key={i} className="border-t border-[#F3F4F6]">{r.map((c, j) => <td key={j} className="px-2 py-1">{c}</td>)}</tr>)}
+            </tbody>
+          </table>
+          {table.truncated && <div className="text-[11px] text-[#6B7280]">행이 많아 일부만 표시했습니다.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function stepText(s: MapTask["steps"][number]): string {
   const target = s.url ?? s.selectors?.[0]?.[0] ?? "";
   return `${s.type}${target ? ` — ${target}` : ""}${s.value ? ` = ${s.value}` : ""}`;
@@ -226,9 +306,15 @@ function TaskDetail({
   busy,
   onSave,
   onOutcome,
+  runParams,
+  onRun,
+  onRunDone,
 }: {
   task: MapTask;
   busy: boolean;
+  runParams: string[];
+  onRun: (params: Record<string, string>) => Promise<RunResult>;
+  onRunDone: () => Promise<unknown>;
   onSave: (input: { name: string; purpose: string; category: Category }) => void;
   onOutcome: (ok: boolean) => void;
 }) {
@@ -265,6 +351,8 @@ function TaskDetail({
         <button className={btn} disabled={busy} onClick={() => onOutcome(true)} title="이 지도대로 실제로 한 번 성공했을 때">지도대로 성공 → 검증됨</button>
         <button className={btn} disabled={busy} onClick={() => onOutcome(false)} title="필드·주소가 지도와 달라 실패했을 때">지도와 달라 실패 → 재확인 필요</button>
       </div>
+
+      {task.risk === "read" && runParams.length > 0 && <RunPanel task={task} names={runParams} onRun={onRun} onDone={onRunDone} />}
 
       <div>
         <div className="mb-1 font-semibold">입력 필드 ({task.fields.length})</div>

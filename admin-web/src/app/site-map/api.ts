@@ -78,6 +78,23 @@ export interface SiteMap {
   tasks: MapTask[];
 }
 
+export interface ResultTable {
+  headers: string[];
+  rows: string[][];
+  truncated: boolean;
+}
+
+export interface RunResult {
+  ok: boolean;
+  task_id: string;
+  state?: TaskState;
+  url?: string;
+  steps_done?: number;
+  tables?: ResultTable[];
+  error?: string;
+  note?: string;
+}
+
 export interface ExploreRequestSummary {
   id: string;
   host: string;
@@ -113,5 +130,7 @@ export const siteMapApi = {
   classify: (host: string, input: { task_id: string; name?: string; purpose?: string; category?: Category }) =>
     call<MapTask>(`${encodeURIComponent(host)}/classify`, "POST", input),
   outcome: (host: string, taskId: string, ok: boolean) => call<MapTask>(`${encodeURIComponent(host)}/outcome`, "POST", { task_id: taskId, ok }),
+  run: (host: string, taskId: string, params: Record<string, string>) =>
+    call<RunResult>(`${encodeURIComponent(host)}/run`, "POST", { task_id: taskId, params }),
   exploreRequests: () => call<{ items: ExploreRequestSummary[] }>("explore/requests").then((r) => r.items),
 };
