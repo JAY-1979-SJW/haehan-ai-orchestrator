@@ -28,7 +28,7 @@ def test_legacy_disabled_redirects_to_admin_web(monkeypatch):
     c = _client(monkeypatch, flag=None)
     r = c.get("/api/v1/admin/local-agents", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"] == "/orchestrator/admin-web/local-agents"
+    assert r.headers["location"] == "/local-agents"  # 2026-09-30 수정: 존재하지 않던 /orchestrator/admin-web 경로 → admin-web 실제 경로
 
 
 def test_legacy_enabled_returns_html(monkeypatch):

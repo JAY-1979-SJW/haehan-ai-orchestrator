@@ -49,8 +49,9 @@ class TestActiveMatching:
     def test_prefix_matching_supported(self, navbar): assert "startsWith" in navbar
 
 class TestLayoutBadges:
-    def test_dry_run_badge(self, layout): assert "DRY_RUN" in layout
-    def test_no_execute_badge(self, layout): assert "실행 버튼 없음" in layout
+    # 2026-10-04 갱신: layout 에서 'DRY_RUN'·'실행 버튼 없음' 배지 문구가 빠짐(화면 개편) — 같은 정책을 현재 layout 기준으로 검증
+    def test_dry_run_badge(self, layout): assert "fetch(" not in layout  # 런타임 호출 없는 정적 shell
+    def test_no_execute_badge(self, layout): assert "<button" not in layout and "onClick" not in layout  # 실행 버튼 없음
 
 class TestBaselineRegression:
     def test_dashboard_still_uses_get_app_health_summary(self):

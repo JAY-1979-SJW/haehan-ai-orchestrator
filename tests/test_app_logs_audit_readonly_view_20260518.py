@@ -242,18 +242,31 @@ class TestSecurity:
 
 # ── API endpoint 계약 ────────────────────────────────────────────────────────
 class TestApiContract:
-    def test_ops_audit_events_200(self):
+    @staticmethod
+    def _authed_client():
+        # 2026-10-04 갱신: ops API 는 JWT 인증이 필수가 됨 — 인증 의존성을 시험용 사용자로 대체해 응답 계약만 검증.
         from fastapi.testclient import TestClient
+
+        from ai_orchestrator.connectors.user_auth_router import get_jwt_user
         from ai_orchestrator.server import app
-        client = TestClient(app, raise_server_exceptions=False)
-        r = client.get("/api/v1/ops/audit-events")
+
+        app.dependency_overrides[get_jwt_user] = lambda: {"actor": "owner-test", "role": "owner"}
+        return app, TestClient(app, raise_server_exceptions=False)
+
+    def test_ops_audit_events_200(self):
+        app, client = self._authed_client()
+        try:
+            r = client.get("/api/v1/ops/audit-events")
+        finally:
+            app.dependency_overrides.clear()
         assert r.status_code == 200
 
     def test_ops_summary_200(self):
-        from fastapi.testclient import TestClient
-        from ai_orchestrator.server import app
-        client = TestClient(app, raise_server_exceptions=False)
-        r = client.get("/api/v1/ops/summary")
+        app, client = self._authed_client()
+        try:
+            r = client.get("/api/v1/ops/summary")
+        finally:
+            app.dependency_overrides.clear()
         assert r.status_code == 200
 
     def test_endpoint_count_still_63(self):
@@ -264,11 +277,11 @@ class TestApiContract:
         assert len(routes) == 399
 
     def test_no_new_post_endpoint(self):
-        from ai_orchestrator.server import app
-        from fastapi.routing import APIRoute
-        # 기존 POST 27개 — logs 공정 추가로 증가 없음 확인
-        posts = [r for r in app.routes if isinstance(r, APIRoute) and "POST" in (r.methods or set())]
-        assert len(posts) == 27
+        from tests.app_routes import http_routes
+
+        # 2026-10-04 갱신: app.routes 직접 순회는 지연 include_router 로 0개 — 펼친 목록의 현재 POST 수(앞선 개수 시험과 같은 기준 184)
+        posts = [r for r in http_routes() if "POST" in r.method.split(",")]
+        assert len(posts) == 184
 
 
 # ── mock 다양성 ──────────────────────────────────────────────────────────────
