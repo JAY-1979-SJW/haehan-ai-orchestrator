@@ -102,6 +102,16 @@
             "statusMessage": "A4 서식 자동 검사 + AI 품질 검증 중..."
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3.14 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','audit_kit_gate.py'),'--post-edit'],stdin=sys.stdin).returncode)\"",
+            "statusMessage": "audit-kit 개발 기준서 검사 중..."
+          }
+        ]
       }
     ],
     "Stop": [
@@ -120,6 +130,15 @@
             "type": "command",
             "command": "py -3.14 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','stop_fast_verify.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "세션 변경분 최종 게이트 확인 중..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3.14 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','audit_kit_gate.py'),'--stop'],stdin=sys.stdin).returncode)\"",
+            "statusMessage": "audit-kit 세션 변경분 검사 중..."
           }
         ]
       }

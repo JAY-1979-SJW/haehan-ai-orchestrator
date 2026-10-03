@@ -78,10 +78,10 @@ def env(tmp_path, monkeypatch):
         return dict(OK_RESULT)
 
     svc.configure(fake, run_async=False)
-    svc._active.clear()  # noqa: SLF001 - 시험 간 격리
+    svc._active.clear()
     yield calls
     svc.configure(None)
-    svc._active.clear()  # noqa: SLF001
+    svc._active.clear()
 
 
 def test_create_does_not_execute(env):
@@ -109,7 +109,7 @@ def test_executor_failure_is_recorded_not_swallowed(env):
     svc.approve_request(r["id"], actor="kim")
     got = svc.get_request(r["id"])
     assert got["status"] == "failed" and "브라우저 없음" in got["error"]
-    assert not svc._active  # noqa: SLF001 - 실패해도 다음 탐색을 막지 않는다
+    assert not svc._active
 
 
 def test_cancel_only_pending_and_blocks_later_approve(env):
@@ -125,7 +125,7 @@ def test_cancel_only_pending_and_blocks_later_approve(env):
 def test_only_one_exploration_at_a_time(env):
     a = svc.create_request({"start_url": URL}, actor="ai")
     b = svc.create_request({"start_url": URL}, actor="ai")
-    svc._active.add(a["id"])  # noqa: SLF001 - a 가 실행 중인 상태
+    svc._active.add(a["id"])
     with pytest.raises(ValueError, match="실행 중"):
         svc.approve_request(b["id"], actor="kim")
     assert svc.get_request(b["id"])["status"] == "pending"

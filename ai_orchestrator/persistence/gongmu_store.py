@@ -430,7 +430,10 @@ def create_draft(fields: dict[str, Any], *, actor: str) -> dict[str, Any]:
             ),
         )
         _log(con, actor, "draft.create", draft_id, fields["kind"])
-    return get_draft(draft_id)
+    created = get_draft(draft_id)
+    if created is None:  # 방금 넣은 행이므로 없을 수 없다 — 조용히 None 을 돌려주지 않는다
+        raise RuntimeError("초안 저장 직후 조회에 실패했습니다")
+    return created
 
 
 def get_draft(draft_id: str) -> dict[str, Any] | None:
@@ -440,7 +443,8 @@ def get_draft(draft_id: str) -> dict[str, Any] | None:
 
 
 def list_drafts(status: str | None = None) -> list[dict[str, Any]]:
-    sql, args = "SELECT * FROM drafts", ()
+    sql = "SELECT * FROM drafts"
+    args: tuple[str, ...] = ()
     if status:
         sql, args = sql + " WHERE status=?", (status,)
     with _conn() as con:

@@ -30,7 +30,7 @@ _run_async = True  # 시험에서는 False 로 바꿔 동기 실행
 
 
 def configure(executor: Executor | None, *, run_async: bool = True) -> None:
-    global _executor, _run_async  # noqa: PLW0603 - 라우터가 한 번 주입하는 실행기 설정
+    global _executor, _run_async  # 라우터가 한 번 주입하는 실행기 설정
     _executor, _run_async = executor, run_async
 
 
@@ -108,7 +108,7 @@ def approve_request(request_id: str, *, actor: str) -> dict[str, Any]:
 
 def _run(request: dict[str, Any]) -> None:
     try:
-        assert _executor is not None  # noqa: S101 - approve_request 가 보장
+        assert _executor is not None  # approve_request 가 보장
         result = _executor(request)
         final = dict(request, status=DONE, result=result, finished_at=_now())
     except Exception as e:  # noqa: BLE001 - 실행 실패는 요청에 기록해 화면에 보인다(조용히 삼키지 않음)

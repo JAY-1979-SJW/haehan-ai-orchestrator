@@ -405,6 +405,7 @@ def _build_verify_report(
         ("모듈 순환", len(before["cycles"]), len(after["cycles"]), new("cycles")),
         ("지도↔골격 대조", len(before.get("skeleton", [])), len(after.get("skeleton", [])), new("skeleton")),
         ("바뀐 파일 ruff", "-", len(ruff_errors), ruff_errors),
+        ("audit-kit 기준서(바뀐 파일)", "-", len(measurements["kit_errors"]), measurements["kit_errors"]),
         ("이동 파일 위치의존 미조정", "-", len(loc_deps), loc_deps),
     ]
     ok = all(not c[3] for c in checks)
@@ -420,6 +421,30 @@ def _build_verify_report(
         if nw:
             lines += ["", f"### {name} — 새 문제", *[f"- {x}" for x in nw[:30]]]
     return ok, "\n".join(lines)
+
+
+def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: Path) -> tuple[list[str], str]:
+    """audit-kit 의 파일 단위 개발 기준서·순환 검사에서 "이번 변경이 새로 만든" 문제 (기준 트리 결과와의 차이).
+
+    audit-kit 이 없는 PC·CI 에서는 검사를 생략하고 그 사실을 알린다(설치된 PC 에서는 필수: 새 문제가 있으면 FAIL).
+    """
+    from audit_kit_gate import find_audit_kit, finding_key, raw_findings  # scripts/ops 안의 형제 모듈
+
+    kit = find_audit_kit(ROOT)
+    if kit is None or not py_changed:
+        return [], "[verify] audit-kit 를 찾지 못해 기준서 검사를 생략합니다 (AUDIT_KIT_BIN 으로 위치 지정)" if kit is None else ""
+
+    def one(rel: str) -> list[str]:
+        head = raw_findings(kit, head_tree / rel, head_tree)
+        if head is None:
+            return [f"{rel}: audit-kit 검사를 하지 못했습니다"]
+        base = raw_findings(kit, base_tree / rel, base_tree) if (base_tree / rel).exists() else []
+        known = {finding_key(x) for x in (base or [])}
+        return [f"{rel}: {x}" for x in head if finding_key(x) not in known]
+
+    with ThreadPoolExecutor(4) as pool:
+        found = [item for items in pool.map(one, py_changed) for item in items]
+    return found, ""
 
 
 def _new_ruff_findings(
@@ -489,6 +514,9 @@ def main() -> int:
             if reg_bytes is not None:
                 reg.write_bytes(reg_bytes)
         py_changed = [c for c in changed if c.endswith(".py") and (head_tree / c).exists()]
+        kit_errors, kit_note = _audit_kit_new_findings(py_changed, trees[0], head_tree)
+        if kit_note:
+            print(kit_note)
         ruff_cfg = ["--config", str(ROOT / CFG["ruff_config"])] if CFG["ruff_config"] else []
         ruff = (
             run(
@@ -515,6 +543,7 @@ def main() -> int:
         "before": before,
         "after": after,
         "ruff_errors": ruff_errors,
+        "kit_errors": kit_errors,
         "loc_deps": loc_deps,
         "moved": moved,
         "receiving": receiving,

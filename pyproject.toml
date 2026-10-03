@@ -5,6 +5,12 @@
 # audit-kit 안에서 돌리지 않는다. 테스트는 CI 의 verify(영향 테스트)가 맡는다.
 run_tests = false
 
+# 편집 후 hook(audit_kit_gate.py --post-edit/--stop): ruff·mypy 는 scripts/ops/post_edit_fast_gate.py 가 이미 (신규 오류만)
+# 보므로 끄고, audit-kit 고유의 개발 기준서 파일 단위 검사(조항 ID, 신규/기존 구분)와 순환 import 검사만 건다.
+# 문제가 있으면 exit 2 로 막는다(block) — 코드를 쓸 때·세션 종료 때 필수.
+hook_tools = "design"
+hook_mode = "block"
+
 # 기본값은 B105/B106/B107(하드코딩 비밀번호 의심)을 '개선'으로 올린다. 2026-09-30 이 앱 414건을
 # 전수 확인한 결과 전부 테스트 더미 값('pw-owner', 'redacted' 등)·불리언/None 상수·공개 URL 이라
 # 실제 비밀값이 아니었다. 실제 비밀값 검사는 CI gitleaks 와 audit-kit std 의 SEC 규칙이 맡는다.

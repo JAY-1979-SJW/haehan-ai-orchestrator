@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import time
 from collections.abc import Callable
@@ -45,7 +46,9 @@ def merge_snapshots(host: str, snapshots: list[dict[str, Any]], *, auth: str = t
 
 def record_page(page: Any, *, auth: str = tm.AUTH_PUBLIC, save: bool = True) -> dict[str, Any]:
     """현재 탭 한 장을 읽어 지도에 합친다(읽기 전용)."""
-    from scripts.explorer.page_snapshot import collect  # 지연 import: 브라우저 연결 모듈을 시험·변환 경로에서 끌어오지 않는다
+    from scripts.explorer.page_snapshot import (
+        collect,  # 지연 import: 브라우저 연결 모듈을 시험·변환 경로에서 끌어오지 않는다
+    )
 
     snap = collect(page)
     host = urlparse(str(snap.get("url") or "")).hostname or ""
@@ -99,7 +102,21 @@ def import_auto_sitemap(path: str | Path, *, auth: str = tm.AUTH_PUBLIC, save: b
     return {"map": merged, "observed": len(observed)}
 
 
-def explore_to_map(
+def _default_explore() -> Callable[..., dict[str, Any]]:
+    from scripts.explorer.auto_explorer import (
+        explore_site,  # 지연 import: 브라우저 모듈을 시험·변환 경로에서 끌어오지 않는다
+    )
+
+    return explore_site
+
+
+def _default_collect() -> Callable[[Any], dict[str, Any]]:
+    from scripts.explorer.page_snapshot import collect
+
+    return collect
+
+
+def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험용 주입 3개는 모두 호출부가 정하는 독립 옵션
     page: Any,
     start_url: str,
     *,
@@ -117,13 +134,11 @@ def explore_to_map(
     2) 입력창이 있는 화면만 다시 열어 `page_snapshot.collect` 로 필드 구조를 읽어 지도에 합친다.
     클릭·입력·제출은 하지 않는다. 입력값·표 데이터는 읽지 않는다.
     """
-    if explore_fn is None:
-        from scripts.explorer.auto_explorer import explore_site as explore_fn  # 지연 import: 브라우저 모듈을 시험·변환 경로에서 끌어오지 않는다
-    if collect_fn is None:
-        from scripts.explorer.page_snapshot import collect as collect_fn
+    explore = explore_fn or _default_explore()
+    collect = collect_fn or _default_collect()
 
     host = urlparse(start_url).hostname or ""
-    result = explore_fn(
+    result = explore(
         page,
         depth=depth,
         max_pages=max_pages,
@@ -141,7 +156,7 @@ def explore_to_map(
         sleep_fn(delay_s)
         try:
             page.goto(url, timeout=20000)
-            snapshots.append(collect_fn(page))
+            snapshots.append(collect(page))
         except Exception as e:  # noqa: BLE001 - 한 화면의 읽기 실패가 전체 탐색을 막지 않게 기록만 하고 계속한다
             result.setdefault("snapshot_errors", []).append({"url": url, "error": str(e)[:120]})
     merged = merge_snapshots(host, snapshots, auth=auth)
@@ -178,9 +193,7 @@ def run_request(request: dict[str, Any]) -> dict[str, Any]:
         try:
             return explore_to_map(page, request["start_url"], depth=request["depth"], max_pages=request["max_pages"], auth=request.get("auth", tm.AUTH_PUBLIC))
         finally:
-            try:
+            with contextlib.suppress(Exception):  # 닫기 실패는 탐색 결과를 가리지 않는다(다음 정리 때 남은 빈 탭으로 처리)
                 page.close()
-            except Exception:  # noqa: BLE001 - 닫기 실패는 탐색 결과를 가리지 않는다(다음 정리 때 남은 빈 탭으로 처리)
-                pass
 
     return run_on_browser_thread(work, timeout=1800)

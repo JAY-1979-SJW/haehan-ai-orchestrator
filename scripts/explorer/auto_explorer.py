@@ -109,6 +109,12 @@ def _current_url(page) -> str:
         return ""
 
 
+def _pause_between_pages(delay_s: float, pages_data: list[dict]) -> None:
+    """첫 페이지 뒤부터 페이지 이동 사이에 delay_s 초 쉰다(0 이하면 쉬지 않음 = 기존 동작)."""
+    if delay_s > 0 and pages_data:
+        time.sleep(delay_s)
+
+
 def _navigate_if_needed(page, url: str, pages_data: list[dict]) -> bool:
     """현재 URL과 다르면 url 로 이동. 이동 실패 시 오류 기록을 pages_data 에 추가하고 False."""
     if _current_url(page) != url:
@@ -256,8 +262,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
             continue
 
         # 이동 (현재 URL과 다를 때만)
-        if delay_s > 0 and pages_data:
-            time.sleep(delay_s)
+        _pause_between_pages(delay_s, pages_data)
         if not _navigate_if_needed(page, url, pages_data):
             continue
 
