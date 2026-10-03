@@ -318,3 +318,28 @@ def test_hardcoded_user_path_skips_tests_and_archive(tmp_path):
     )
     rows += _hardcoded_rows_and_source(tmp_path, "scripts/archive/old.py", ['A = "C:/work/x"'])
     assert check_hardcoded_user_path(rows, root=tmp_path) == []
+
+
+def test_storage_boundary_known_debt_entries_still_match_a_pattern():
+    """알려진 부채 목록의 각 파일은 실제로 금지 패턴(DB 직접 접근·세션 파일)을 포함해야 한다.
+
+    파일이 옮겨지면 옛 경로엔 re-export stub 만 남아 있어(파일은 존재) 목록이 낡은 줄 모르고, 새 경로의 같은 부채가
+    신규 위반(WARN)으로 잡힌다(2026-10-04 실측 7건) — 패턴이 없는 항목은 낡은 항목이다.
+    """
+    import re
+    from pathlib import Path
+
+    from scripts.ops import codebase_layer_audit as audit
+
+    root = Path(audit.ROOT)
+    patterns = [re.compile(pat, re.IGNORECASE | re.MULTILINE) for pat, _ in audit._DB_DIRECT_ACCESS_PATTERNS]
+    patterns += [re.compile(pat, re.IGNORECASE | re.MULTILINE) for pat, _ in audit._STORAGE_FORBIDDEN_PATTERNS]
+    declared = audit._STORAGE_BOUNDARY_KNOWN_DEBT | audit._STORAGE_BOUNDARY_TEST_KNOWN_DEBT
+    assert declared, "알려진 부채 목록이 비어 있음"
+    stale = sorted(
+        p
+        for p in declared
+        if not (root / p).is_file()
+        or not any(rx.search((root / p).read_text(encoding="utf-8", errors="replace")) for rx in patterns)
+    )
+    assert not stale, f"금지 패턴이 없는 낡은 항목(옮겨졌다면 새 경로로 갱신): {stale}"
