@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from ..agent_result_limits import RESULT_FULL_MAX_CHARS
+from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 from .sqlite_schema import apply_schema
 
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "agent_dispatch.db"

@@ -2,7 +2,7 @@
 
 
 def test_result_full_limit_single_source():
-    from ai_orchestrator import agent_result_limits as lim
+    from ai_orchestrator.contracts import agent_result_limits as lim
     from ai_orchestrator.local_agent_redaction import _RESULT_DATA_LONG_KEYS
     from ai_orchestrator.persistence import agent_dispatch_store as store
     from ai_orchestrator.routers import ai_agent_router as router
@@ -19,7 +19,7 @@ def test_result_full_limit_single_source():
 
 def test_chat_message_limit_can_hold_full_result():
     """대화 기록 한도는 의미가 달라 합치지 않지만, 결과 전문보다 작으면 저장 시 잘린다."""
-    from ai_orchestrator import agent_result_limits as lim
+    from ai_orchestrator.contracts import agent_result_limits as lim
     from ai_orchestrator import chat_sessions
 
     assert chat_sessions._MAX_MESSAGE_TEXT_LEN >= lim.RESULT_FULL_MAX_CHARS

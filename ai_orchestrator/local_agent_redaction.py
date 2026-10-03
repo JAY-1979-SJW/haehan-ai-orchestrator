@@ -15,7 +15,7 @@ result_data는 명시적 허용 목록만 저장하는 정책을 정의한다.
 import re
 from collections.abc import Callable
 
-from ai_orchestrator.agent_result_limits import RESULT_FULL_MAX_CHARS
+from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 
 # params / result 에서 절대 저장·노출 금지인 키
 _SENSITIVE_KEYS: frozenset[str] = frozenset(

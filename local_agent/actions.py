@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.agent_result_limits import RESULT_FULL_MAX_CHARS
+from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 from ai_orchestrator.browser_tool import route_browser_task_with_params
 
 from . import browser_actions, config
@@ -1431,7 +1431,7 @@ def _apply_restricted(params: dict, allowed_tools: list[str]) -> tuple[bool, lis
     return restricted, allowed_tools
 
 
-_RESULT_FULL_MAX_CHARS = RESULT_FULL_MAX_CHARS  # result_max_chars 상한(정본: ai_orchestrator/agent_result_limits.py)
+_RESULT_FULL_MAX_CHARS = RESULT_FULL_MAX_CHARS  # result_max_chars 상한(정본: ai_orchestrator/contracts/agent_result_limits.py)
 
 
 def action_run_claude_agent(params: dict) -> ActionResult:

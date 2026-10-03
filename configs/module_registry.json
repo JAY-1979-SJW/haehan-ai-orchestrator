@@ -20897,7 +20897,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/agent_result_limits.py": {
+  "ai_orchestrator/contracts/agent_result_limits.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
