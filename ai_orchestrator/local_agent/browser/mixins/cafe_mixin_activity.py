@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
 from .cafe_mixin_common import _js
-
 
 _ATTENDANCE_DATE_RE = r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})"
 
@@ -155,6 +155,10 @@ def _find_board_menu_id(links: list[dict], board: str) -> str:
 
 
 class CafeActivityMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def cafe_attendance(self, cafe_url: str, menu_id: str = "") -> dict:
         """출석체크 게시판 정보 조회.
 
