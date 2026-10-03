@@ -450,7 +450,7 @@ class BlogReadMixin:
         }
         tags = []
         images = []
-        comments = []
+        comments: list[Any] = []
 
         frame = self._pick_post_frame(log_no)
 
@@ -493,7 +493,7 @@ class BlogReadMixin:
         self.go(post_url)
         time.sleep(2)
 
-        images = []
+        images: list[Any] = []
         try:
             result = self._page.evaluate(_js("extract_blog_images.js"))
             images = result or []
@@ -513,7 +513,7 @@ class BlogReadMixin:
         self.go(url)
         time.sleep(2)
 
-        results = []
+        results: list[Any] = []
         try:
             result = self._page.evaluate(_js("extract_blog_search.js"))
             results = result or []
@@ -530,7 +530,7 @@ class BlogReadMixin:
         self.go(url)
         time.sleep(2.5)
 
-        entries = []
+        entries: list[Any] = []
         try:
             body = self._page.inner_text("body")
             lines = [ln.strip() for ln in body.splitlines() if ln.strip()]
@@ -602,7 +602,7 @@ class BlogReadMixin:
         self.go(post_url)
         time.sleep(3)
 
-        comments = []
+        comments: list[Any] = []
         try:
             result = self._page.evaluate(_js("extract_blog_comments.js"))
             comments = result or []
@@ -658,7 +658,7 @@ class BlogReadMixin:
         self.go(blog_url)
         time.sleep(2)
 
-        stats = {}
+        stats: dict[Any, Any] = {}
         try:
             result = self._page.evaluate(_js("extract_blog_stats.js"))
             stats = result or {}
@@ -687,7 +687,7 @@ class BlogReadMixin:
         self.go(url)
         time.sleep(2)
 
-        posts = []
+        posts: list[Any] = []
         try:
             result = self._page.evaluate(_js("extract_blog_posts.js"))
             posts = result or []

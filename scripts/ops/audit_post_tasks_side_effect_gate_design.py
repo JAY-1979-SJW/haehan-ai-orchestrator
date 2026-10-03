@@ -9,6 +9,7 @@ router.py 수정 / 서버 반영 전면 금지.
 
 import ast
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -374,7 +375,7 @@ def _audit_catalog_and_gate(errors):
 
 def run_audit() -> dict:
     errors = []
-    warnings = []
+    warnings: list[Any] = []
 
     # 1. 핵심 파일 존재
     present, missing = _check_key_files()  # noqa: RUF059 — present 는 표시용, 실제 사용은 missing

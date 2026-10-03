@@ -590,8 +590,8 @@ def collect_blog_asset_inventory(
     if not target_id:
         return {"ok": False, "code": "target_create_failed", "blog_id": blog_id}
     time.sleep(wait_seconds)
-    post_links = []
-    seen = set()
+    post_links: list[Any] = []
+    seen: set[Any] = set()
     snapshot = _read_blog_index_snapshot(target_id, port=port)
     _collect_new_links(snapshot, blog_id, seen, post_links, target_pages)
 

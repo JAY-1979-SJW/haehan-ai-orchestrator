@@ -4,6 +4,7 @@ import contextlib
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from ai_orchestrator.config import get_local_data_dir
@@ -23,7 +24,7 @@ PAGE_SIZE = 20
 cats = sorted([f for f in BASE.iterdir() if f.is_dir()])
 print(f"총 {len(cats)}개 카테고리 검증 시작\n")
 
-issues = []
+issues: list[Any] = []
 
 for cat_dir in cats:
     imgs = sorted([f for f in cat_dir.glob("*") if f.suffix.lower() in IMG_EXTS])

@@ -331,8 +331,8 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
     def wait_for(
         self,
-        selector: str = None,
-        text: str = None,  # noqa: RUF013
+        selector: str | None = None,
+        text: str | None = None,
         timeout: float = 10.0,
     ) -> bool:
         """셀렉터 또는 텍스트가 나타날 때까지 대기."""
@@ -354,7 +354,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         self, item_selector: str, next_selector: str = "a:has-text('다음')", max_pages: int = 10
     ) -> list[str]:
         """다음 버튼을 클릭하며 모든 페이지의 아이템 텍스트 수집."""
-        all_items = []
+        all_items: list[Any] = []
         for _ in range(max_pages):
             items = self._page.locator(item_selector).all_inner_texts()
             all_items.extend(items)

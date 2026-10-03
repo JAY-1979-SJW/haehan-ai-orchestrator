@@ -14,7 +14,6 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-
 # 상태 상수
 STATE_UNREAD = "UNREAD"
 STATE_READ = "READ"
@@ -118,7 +117,7 @@ def snapshot_mail(actions: _Actions, sn: str,
 def open_body_and_audit_state(actions: _Actions,
                               snap: MailReadSnapshot,
                               *, folder_id: str = "0",
-                              open_url_template: str = None) -> MailReadSnapshot:
+                              open_url_template: str | None = None) -> MailReadSnapshot:
     """본문 진입 → after_open_state 측정.
 
     open 후 unread 목록으로 복귀해서 다시 sn 의 상태를 확인한다.

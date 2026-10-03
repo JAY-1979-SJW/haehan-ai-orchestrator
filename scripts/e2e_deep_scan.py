@@ -6,6 +6,7 @@ import json
 import pathlib
 import re
 import time
+from typing import Any
 
 from playwright.async_api import Page, async_playwright
 
@@ -170,7 +171,7 @@ async def scan_page(pg: Page, path: str, name: str):
     count = await els.count()
     print(f"  감지 요소: {count}개")
 
-    btns = []
+    btns: list[Any] = []
     for i in range(min(count, 25)):
         try:
             await _scan_button(pg, els, i, path, name, btns)

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).parent.parent.parent
 SPEC = ROOT / "docs/design/HAEHAN_SINGLE_EXE_MODE_CONSOLIDATION_SPEC_01.md"
@@ -25,9 +26,9 @@ P = "\033[32m[PASS]\033[0m"
 W = "\033[33m[WARN]\033[0m"
 F = "\033[31m[FAIL]\033[0m"
 
-issues = []
-warnings = []
-passes = []
+issues: list[Any] = []
+warnings: list[Any] = []
+passes: list[Any] = []
 
 
 def fail(code, msg):
