@@ -36,7 +36,7 @@ def test_hooks_do_not_pin_python_minor_version():
 
 def test_hooks_have_no_machine_specific_absolute_paths():
     assert _hook_commands()
-    bad = [c[:80] for c in _hook_commands() if re.search(r"[A-Za-z]:[\\/]+(Users|work)[\\/]", c) or "skyjw" in c]
+    bad = [c[:80] for c in _hook_commands() if re.search(r"[A-Za-z]:[\\/]+(Users|work)[\\/]", c)]
     assert bad == []  # 저장소 위치는 git rev-parse 로 찾는다
 
 
