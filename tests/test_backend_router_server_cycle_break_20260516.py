@@ -5,10 +5,9 @@
   → server/__init__.py (server.py 즉시 실행)
   → server.py → from .router import router (초기화 중) → ImportError
 
-해소:
-  server/__init__.py에 __getattr__ lazy load 도입.
-  패키지 import 시 server.py를 즉시 실행하지 않으므로 cycle 차단.
-  from ai_orchestrator.server import app 패턴은 그대로 동작.
+해소 (2026-09-30 근본 정리):
+  앱 본체를 ai_orchestrator/asgi.py 로 옮기고, server/ 패키지는 asgi 를 참조하지 않는다.
+  방향은 asgi → router → server.* 하나뿐이다. 진입점 표기는 ai_orchestrator.asgi:app.
 
 DB/서버/외부 URL/브라우저 실행 없음.
 """
@@ -49,12 +48,30 @@ def test_router_module_defines_router_object():
 
 
 # ---------------------------------------------------------------------------
-# 2. server/__init__.py → server.py 즉시 실행 금지 확인
+# 2. server/ 패키지는 asgi 를 참조하지 않는다 (역방향 금지)
 # ---------------------------------------------------------------------------
 
 
-def test_server_package_import_does_not_immediately_load_app():
-    """server 패키지만 import할 때 app이 즉시 생성되지 않는다 (lazy)."""
+def test_server_package_does_not_reference_asgi():
+    """server/__init__.py 가 asgi 를 import 하면 ai_orchestrator ↔ ai_orchestrator/server 순환이 생긴다."""
+    import ast
+    import pathlib
+
+    tree = ast.parse(pathlib.Path("ai_orchestrator/server/__init__.py").read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names = [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            names = [(node.module or "")] + [a.name for a in node.names]
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            names = [node.value]  # import_module("ai_orchestrator.asgi") 같은 문자열 참조도 금지
+        else:
+            continue
+        assert not any(n == "asgi" or n.startswith("ai_orchestrator.asgi") or n.endswith(".asgi") for n in names), names
+
+
+def test_server_package_import_does_not_load_app():
+    """server 패키지만 import해도 app(asgi)이 만들어지지 않는다."""
     # sys.modules 제거 후 재import — 후속 테스트 오염 방지: purge 전 snapshot 저장 후 복원
     _snapshot = {k: v for k, v in sys.modules.items() if k.startswith("ai_orchestrator")}
     for k in list(_snapshot):
@@ -63,26 +80,27 @@ def test_server_package_import_does_not_immediately_load_app():
     try:
         import ai_orchestrator.server as srv_pkg
 
-        assert "app" not in vars(srv_pkg), "server/__init__.py가 즉시 app을 생성하고 있음 — lazy load 위반"
+        assert "app" not in vars(srv_pkg), "server 패키지가 app 을 노출하고 있음 — asgi 로 옮긴 뒤 별칭은 없다"
+        assert "ai_orchestrator.asgi" not in sys.modules, "server 패키지 import 가 asgi 를 끌어옴"
     finally:
         for k in [k for k in sys.modules if k.startswith("ai_orchestrator") and k not in _snapshot]:
             sys.modules.pop(k, None)
         sys.modules.update(_snapshot)
 
 
-def test_server_app_accessible_via_getattr():
-    """from ai_orchestrator.server import app 패턴이 정상 동작한다."""
+def test_asgi_app_accessible():
+    """from ai_orchestrator.asgi import app 이 FastAPI 앱을 준다."""
     from fastapi import FastAPI
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     assert isinstance(app, FastAPI)
 
 
-def test_server_app_cached_on_second_access():
-    """app 두 번째 접근 시 동일 객체가 반환된다 (캐시)."""
-    from ai_orchestrator.server import app as a1
-    from ai_orchestrator.server import app as a2
+def test_asgi_app_is_same_object_on_reimport():
+    """app 을 다시 import 해도 동일 객체다."""
+    from ai_orchestrator.asgi import app as a1
+    from ai_orchestrator.asgi import app as a2
 
     assert a1 is a2
 
@@ -99,7 +117,7 @@ def test_router_py_does_not_import_server_py_directly():
     router_src = pathlib.Path("ai_orchestrator/router.py").read_text(encoding="utf-8")
     # server.py에서 정의된 app 객체를 router.py가 직접 import하지 않아야 한다
     assert "from .server import app" not in router_src
-    assert "from ai_orchestrator.server import app" not in router_src
+    assert "from ai_orchestrator.asgi import app" not in router_src
     # server/__init__ import 없음
     assert "from .server import" not in router_src or "server.action_" not in router_src
 
@@ -110,7 +128,7 @@ def test_action_router_does_not_import_app():
 
     src = pathlib.Path("ai_orchestrator/routers/action_router.py").read_text(encoding="utf-8")
     assert "import app" not in src
-    assert "from ai_orchestrator.server import app" not in src
+    assert "from ai_orchestrator.asgi import app" not in src
 
 
 # ---------------------------------------------------------------------------
@@ -160,7 +178,7 @@ def test_canonical_endpoint_count_registered():
 def test_health_endpoint_response_unchanged():
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     client = TestClient(app, raise_server_exceptions=False)
     r = client.get("/api/v1/health")
@@ -180,7 +198,7 @@ def test_safe_to_envelope_still_zero():
     """기존 endpoint에 ApiResponse 봉투가 임의 적용되지 않았음을 고정한다."""
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     client = TestClient(app, raise_server_exceptions=False)
 

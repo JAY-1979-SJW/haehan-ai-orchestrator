@@ -5129,7 +5129,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/server.py": {
+  "ai_orchestrator/asgi.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -19674,6 +19674,14 @@
    "source": "rule"
   },
   "tests/test_page_analysis.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_verify_change_route_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

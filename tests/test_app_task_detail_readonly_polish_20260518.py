@@ -2,6 +2,7 @@
 
 Task Detail 화면 read-only 정책 준수 및 보안 경계 검증.
 """
+
 import sys
 from pathlib import Path
 
@@ -208,11 +209,14 @@ class TestBaselineRegression:
     def test_no_new_post_endpoint_in_router(self):
         router = _src(ROUTER_FILE)
         import re
-        post_routes = re.findall(r'@router\.post\(', router)
+
+        post_routes = re.findall(r"@router\.post\(", router)
         assert len(post_routes) <= 5  # 기존 POST endpoint 수 이하 유지
 
     def test_runtime_endpoint_count_still_63(self):
-        from ai_orchestrator.server import app
         from fastapi.routing import APIRoute, APIWebSocketRoute
+
+        from ai_orchestrator.asgi import app
+
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         assert len(routes) == 63

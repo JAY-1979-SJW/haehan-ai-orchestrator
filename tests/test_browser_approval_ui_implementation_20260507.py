@@ -17,11 +17,11 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
+from ai_orchestrator.asgi import app
 from ai_orchestrator.browser_tool.approval_record_store import (
     read_approval_records,
 )
 from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
-from ai_orchestrator.server import app
 
 
 @pytest.fixture

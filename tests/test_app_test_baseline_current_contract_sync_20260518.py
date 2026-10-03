@@ -181,7 +181,7 @@ class TestGroupD_EndpointCount:
     def test_runtime_endpoint_count_is_63(self):
         from fastapi.routing import APIRoute, APIWebSocketRoute
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         assert len(routes) == 63
@@ -189,7 +189,7 @@ class TestGroupD_EndpointCount:
     def test_runtime_http_count_is_62(self):
         from fastapi.routing import APIRoute
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         http = [r for r in app.routes if isinstance(r, APIRoute)]
         assert len(http) == 62

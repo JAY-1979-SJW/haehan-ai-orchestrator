@@ -160,7 +160,7 @@ L7  Persistence/Audit  ai_orchestrator/audit_logger.py
                        scripts/cdp_db.py
                        scripts/op_log.py                 (940파일)
 
-L8  Server API         ai_orchestrator/server.py
+L8  Server API         ai_orchestrator/asgi.py
                        ai_orchestrator/router.py
                        ai_orchestrator/*/*_router.py     (274파일)
 

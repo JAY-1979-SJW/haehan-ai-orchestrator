@@ -53,7 +53,7 @@ def test_naver_search_router_not_registered_in_main_app():
     분류: 등록 완료 (cf69c5c 공정에서 router.py include_router 추가됨).
     근거: prefix=/external/naver, require_role 보안 의존성 적용 상태로 등록.
     """
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     registered_paths = {r.path for r in app.routes}
     naver_paths = [
@@ -93,8 +93,8 @@ def test_naver_search_router_quarantine_hold_status():
     """
     from fastapi.routing import APIRoute
 
+    from ai_orchestrator.asgi import app
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
-    from ai_orchestrator.server import app
 
     naver_source_paths = {r.path for r in naver_search_router.routes if isinstance(r, APIRoute)}
     registered_paths = {r.path for r in app.routes}
@@ -351,7 +351,7 @@ UNREGISTERED_ROUTER_ENDPOINT_COUNT = 0  # naver_search_router 등록 완료
 def test_runtime_http_endpoint_count():
     from fastapi.routing import APIRoute
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     http = [r for r in app.routes if isinstance(r, APIRoute)]
     assert len(http) == RUNTIME_HTTP_ENDPOINT_COUNT, f"runtime HTTP={len(http)}, 기준={RUNTIME_HTTP_ENDPOINT_COUNT}"
@@ -360,7 +360,7 @@ def test_runtime_http_endpoint_count():
 def test_runtime_websocket_count():
     from fastapi.routing import APIWebSocketRoute
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     ws = [r for r in app.routes if isinstance(r, APIWebSocketRoute)]
     assert len(ws) == RUNTIME_WEBSOCKET_COUNT, f"runtime WS={len(ws)}, 기준={RUNTIME_WEBSOCKET_COUNT}"
@@ -447,7 +447,7 @@ def test_router_direct_import_still_no_cycle():
 def test_health_endpoint_still_unchanged():
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     client = TestClient(app, raise_server_exceptions=False)
     r = client.get("/api/v1/health")

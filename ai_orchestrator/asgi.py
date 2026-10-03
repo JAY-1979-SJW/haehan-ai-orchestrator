@@ -162,4 +162,4 @@ app.add_middleware(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("ai_orchestrator.server:app", host=APP_HOST, port=APP_PORT, reload=False)
+    uvicorn.run("ai_orchestrator.asgi:app", host=APP_HOST, port=APP_PORT, reload=False)
