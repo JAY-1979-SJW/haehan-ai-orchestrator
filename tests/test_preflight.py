@@ -1,199 +1,150 @@
-"""상품 등록 사전 검증 테스트 (브라우저 불필요).
-
-이 파일이 지키는 실제 사고 (2026-08-15):
-  1. '라인조명' 이라는 없는 카테고리로 등록 시도 → 브라우저 60초 왕복 후 실패
-     로컬 목록에 답이 있었는데 조회하지 않았다.
-  2. KC 인증번호 없이 전기용품을 판매하면 제재 대상인데, "이번엔 임시저장까지만"
-     이라는 사람의 기억에만 의존하고 있었다.
-"""
+"""설치 점검(scripts/ops/preflight.py) — 가짜 환경으로 PASS/WARN/FAIL 판정을 확인한다. 실제 Chrome·네트워크·설치 상태에 기대지 않는다."""
 
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
-from scripts.naver.smartstore.product.category_resolver import CategoryResolver
-from scripts.naver.smartstore.product.preflight import (
-    ERROR,
-    SALE_BLOCKER,
-    WARN,
-    preflight,
-)
+from scripts.ops import preflight as pf
 
-PATHS = [
-    "가구/인테리어>인테리어소품>조명>인테리어조명",
-    "가구/인테리어>인테리어소품>조명>LED모듈",
-    "가구/인테리어>인테리어소품>조명>거실조명",
-    "생활/건강>관상어용품>조명",
-    "디지털/가전>PC부품>튜닝용품>조명기기",
-]
+GOOD_PACKAGES = {name: "1.0.0" for name in pf.REQUIRED_PACKAGES}
+REAL_ENV = pf.Env  # 시험에서 pf.Env 를 바꿔도 도우미가 진짜 클래스를 쓰도록 미리 잡아 둔다
 
 
-@pytest.fixture
-def resolver() -> CategoryResolver:
-    return CategoryResolver(PATHS)
-
-
-@pytest.fixture
-def image(tmp_path):
-    p = tmp_path / "cover.png"
-    p.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 100)
-    return str(p)
-
-
-def _data(image: str, **over) -> dict:
+def make_env(tmp_path: Path, **over) -> pf.Env:
+    """모든 검사가 통과하는 가짜 환경. 필요한 부분만 바꿔 넣는다."""
+    (tmp_path / "data").mkdir(exist_ok=True)
+    (tmp_path / "ai_orchestrator" / "storage").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "admin-web" / "node_modules").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".claude").mkdir(exist_ok=True)
+    (tmp_path / ".claude" / "settings.json").write_text(json.dumps({"hooks": {"Stop": [{"hooks": [{"command": 'py -3 -c "pass"'}]}]}}), encoding="utf-8")
     base = {
-        "category": "인테리어조명",
-        "name": "LED 라인조명 주문제작",
-        "price": 24900,
-        "stock": 100,
-        "main_image": image,
+        "root": tmp_path,
+        "python_version": (3, 14, 0),
+        "environ": {},
+        "package_version": lambda name: GOOD_PACKAGES.get(name),
+        "which": lambda _name: "/bin/x",
+        "run": lambda cmd: (0, "154.0.1.2" if cmd and "powershell" in cmd[0].lower() else ("/repo/.githooks" if "core.hooksPath" in cmd else "ok")),
+        "http_get": lambda _url: (200, "{}"),
+        "port_in_use": lambda _h, _p: False,
+        "find_chrome": lambda: "C:/chrome/chrome.exe",
     }
     base.update(over)
-    return base
+    return REAL_ENV(**base)
 
 
-# ── 카테고리 해석기 ──────────────────────────────────────────────
-def test_resolve_exact_leaf(resolver):
-    m = resolver.resolve("인테리어조명")
-    assert m is not None
-    assert m.path == "가구/인테리어>인테리어소품>조명>인테리어조명"
+def by_name(results, name):
+    return next(r for r in results if r.name == name)
 
 
-def test_resolve_exact_full_path(resolver):
-    m = resolver.resolve("가구/인테리어>인테리어소품>조명>거실조명")
-    assert m is not None
-    assert m.leaf == "거실조명"
+def test_all_good_environment_has_no_fail(tmp_path):
+    (tmp_path / ".env").write_text("A=1\n# c\nB=2\n", encoding="utf-8")
+    results = pf.run_checks(make_env(tmp_path))
+    assert [r.name for r in results if r.status == pf.FAIL] == []
+    assert by_name(results, ".env").detail.startswith("키 2개")  # 이름만 센다
 
 
-def test_resolve_unknown_returns_none(resolver):
-    """부분일치를 성공으로 처리하면 엉뚱한 카테고리에 등록된다."""
-    assert resolver.resolve("라인조명") is None
-    assert resolver.resolve("") is None
+def test_env_values_are_never_printed(tmp_path):
+    (tmp_path / ".env").write_text("SECRET_TOKEN=super-secret-value-123\n", encoding="utf-8")
+    text = pf.render(pf.run_checks(make_env(tmp_path)))
+    assert "super-secret-value-123" not in text and "SECRET_TOKEN" not in text
 
 
-def test_candidates_offer_the_real_answer(resolver):
-    """'라인조명' 오입력 시 정답('인테리어조명')이 후보에 있어야 한다."""
-    assert "인테리어조명" in resolver.candidates("라인조명")
+@pytest.mark.parametrize(("version", "status"), [((3, 10, 9), pf.FAIL), ((3, 11, 0), pf.PASS), ((3, 14, 7), pf.PASS)])
+def test_python_version_boundary(tmp_path, version, status):
+    assert pf.check_python(make_env(tmp_path, python_version=version)).status == status
 
 
-def test_missing_file_yields_empty_resolver(tmp_path):
-    r = CategoryResolver.load(tmp_path / "없는파일.json")
-    assert r.loaded is False
+def test_missing_package_is_fail_with_fix_hint(tmp_path):
+    env = make_env(tmp_path, package_version=lambda n: None if n == "playwright" else "1.0")
+    got = pf.check_packages(env)
+    assert got.status == pf.FAIL and "playwright" in got.detail and "constraints.txt" in got.detail
 
 
-def test_corrupt_file_does_not_raise(tmp_path):
-    f = tmp_path / "bad.json"
-    f.write_text("{ 깨진 json", encoding="utf-8")
-    assert CategoryResolver.load(f).loaded is False
+def test_constraints_drift_and_absence(tmp_path):
+    env = make_env(tmp_path, package_version=lambda n: "2.0.0" if n == "fastapi" else "1.0.0")
+    assert pf.check_constraints(env).status == pf.WARN  # 파일 없음
+    (tmp_path / "constraints.txt").write_text("fastapi==1.5.0\nuvicorn[standard]==1.0.0\n# 주석\n", encoding="utf-8")
+    drift = pf.check_constraints(env)
+    assert drift.status == pf.WARN and "fastapi 2.0.0≠1.5.0" in drift.detail and "uvicorn" not in drift.detail
+    same = make_env(tmp_path, package_version=lambda n: {"fastapi": "1.5.0"}.get(n, "1.0.0"))
+    assert pf.check_constraints(same).status == pf.PASS
 
 
-def test_load_reads_paths(tmp_path):
-    f = tmp_path / "c.json"
-    f.write_text(json.dumps({"a": PATHS}, ensure_ascii=False), encoding="utf-8")
-    r = CategoryResolver.load(f)
-    assert r.loaded is True
-    assert r.resolve("인테리어조명") is not None
+def test_chrome_missing_and_unreadable_version(tmp_path):
+    assert pf.check_chrome(make_env(tmp_path, find_chrome=lambda: None)).status == pf.FAIL
+    assert pf.check_chrome(make_env(tmp_path, run=lambda _c: (1, ""))).status == pf.WARN
+    ok = pf.check_chrome(make_env(tmp_path))
+    assert ok.status == pf.PASS
 
 
-# ── 카테고리 preflight ───────────────────────────────────────────
-def test_bad_category_blocks_browser(resolver, image):
-    """핵심: 브라우저를 열기 전에 막고, 고칠 후보를 준다."""
-    rep = preflight(_data(image, category="라인조명"), resolver)
-    cat = [i for i in rep.issues if i.field == "category"]
-    assert cat and cat[0].severity == ERROR
-    assert "인테리어조명" in cat[0].candidates
-    assert rep.can_fill is False
+def test_cdp_profile_rejects_default_chrome_profile(tmp_path):
+    local = tmp_path / "Local"
+    default = local / "Google" / "Chrome" / "User Data"
+    default.mkdir(parents=True)
+    env = make_env(tmp_path, environ={"LOCALAPPDATA": str(local), "HAEHAN_CDP_PROFILE": str(default)})
+    got = pf.check_cdp_profile(env)
+    assert got.status == pf.FAIL and "조용히 무시" in got.detail
+    inside = make_env(tmp_path, environ={"LOCALAPPDATA": str(local), "HAEHAN_CDP_PROFILE": str(default / "Profile 1")})
+    assert pf.check_cdp_profile(inside).status == pf.FAIL  # 기본 폴더 안쪽도 같다
+    custom = make_env(tmp_path, environ={"LOCALAPPDATA": str(local), "HAEHAN_CDP_PROFILE": str(tmp_path / "my_profile")})
+    assert pf.check_cdp_profile(custom).status == pf.PASS
+    assert pf.check_cdp_profile(make_env(tmp_path)).status == pf.PASS  # 기본값 data/cdp_profile/ai_chrome
 
 
-def test_good_category_resolves_to_full_path(resolver, image):
-    rep = preflight(_data(image), resolver)
-    assert rep.resolved["category_path"] == "가구/인테리어>인테리어소품>조명>인테리어조명"
+def test_cdp_port_states(tmp_path):
+    assert pf.check_cdp_port(make_env(tmp_path)).status == pf.PASS
+    down = make_env(tmp_path, http_get=lambda _u: None)
+    assert pf.check_cdp_port(down).status == pf.WARN  # 꺼져 있을 뿐(읽기 전용 점검이라 켜지 않음)
+    taken = make_env(tmp_path, http_get=lambda _u: None, port_in_use=lambda _h, _p: True)
+    got = pf.check_cdp_port(taken)
+    assert got.status == pf.FAIL and "다른 프로그램" in got.detail  # 다른 프로그램이 포트를 점유
 
 
-def test_unloaded_resolver_does_not_block(image):
-    """목록을 못 읽었으면 판정하지 않는다 — 모르면서 막으면 정상 등록까지 막힌다."""
-    rep = preflight(_data(image), CategoryResolver([]))
-    assert rep.can_fill is True
-    assert any(i.field == "category" and i.severity == WARN for i in rep.issues)
+def test_hook_interpreter_flags_pinned_minor_version(tmp_path):
+    env = make_env(tmp_path)
+    (tmp_path / ".claude" / "settings.json").write_text(json.dumps({"hooks": {"PreToolUse": [{"hooks": [{"command": 'py -3.14 -c "pass"'}]}]}}), encoding="utf-8")
+    got = pf.check_hook_interpreter(env)
+    assert got.status == pf.FAIL and "py -3 을 쓰세요" in got.detail
 
 
-# ── 나머지 필드 ──────────────────────────────────────────────────
-def test_missing_image_file_is_error(resolver, tmp_path):
-    rep = preflight(_data(str(tmp_path / "없음.png")), resolver)
-    assert rep.can_fill is False
+def test_hook_interpreter_requires_launcher_and_handles_bad_json(tmp_path):
+    env = make_env(tmp_path, run=lambda cmd: (127, "") if cmd[:2] == ["py", "-3"] else (0, ""))
+    assert pf.check_hook_interpreter(env).status == pf.FAIL
+    settings = tmp_path / ".claude" / "settings.json"
+    settings.write_text("{깨짐", encoding="utf-8")
+    assert pf.check_hook_interpreter(env).status == pf.FAIL
+    settings.unlink()
+    assert pf.check_hook_interpreter(env).status == pf.WARN
 
 
-def test_bad_image_extension_is_error(resolver, tmp_path):
-    p = tmp_path / "a.bmp"
-    p.write_bytes(b"x")
-    rep = preflight(_data(str(p)), resolver)
-    assert any(i.field == "main_image" and i.severity == ERROR for i in rep.issues)
+def test_node_git_hooks_and_env_warnings(tmp_path):
+    assert pf.check_node(make_env(tmp_path, which=lambda _n: None)).status == pf.WARN
+    env = make_env(tmp_path)
+    (tmp_path / "admin-web" / "node_modules").rmdir()
+    assert pf.check_node(env).status == pf.WARN
+    assert pf.check_git_hooks(make_env(tmp_path, run=lambda _c: (1, ""))).status == pf.WARN
+    assert pf.check_env_file(make_env(tmp_path)).status == pf.WARN  # .env 없음
 
 
-def test_too_long_name_is_error(resolver, image):
-    rep = preflight(_data(image, name="가" * 101), resolver)
-    assert any(i.field == "name" and i.severity == ERROR for i in rep.issues)
+def test_one_crashing_check_does_not_stop_the_rest(tmp_path, monkeypatch):
+    def boom(_env):
+        raise RuntimeError("점검 자체 오류")
+
+    boom.__name__ = "check_boom"
+    monkeypatch.setattr(pf, "CHECKS", (pf.check_python, boom, pf.check_packages))
+    results = pf.run_checks(make_env(tmp_path))
+    assert [r.status for r in results] == [pf.PASS, pf.FAIL, pf.PASS]
+    assert "점검 자체 오류" in results[1].detail
 
 
-@pytest.mark.parametrize("bad", [24905, 5, -100, "24900", True])
-def test_invalid_price_is_error(resolver, image, bad):
-    rep = preflight(_data(image, price=bad), resolver)
-    assert any(i.field == "price" and i.severity == ERROR for i in rep.issues)
-
-
-def test_missing_price_blocks_sale_only(resolver, image):
-    """가격 미정은 임시저장까지는 허용한다(실제 운용 방식)."""
-    d = _data(image)
-    del d["price"]
-    rep = preflight(d, resolver)
-    assert rep.can_fill is True
-    assert rep.can_publish is False
-
-
-# ── 판매개시 차단 ────────────────────────────────────────────────
-def test_kc_cert_missing_blocks_publish_but_allows_draft(resolver, image):
-    """전기용품은 KC 인증번호 없이 판매하면 제재 대상 — 코드가 막는다."""
-    rep = preflight(_data(image), resolver)
-    assert rep.can_fill is True, "임시저장까지는 되어야 한다"
-    assert rep.can_publish is False
-    assert any(i.field == "kc_cert" and i.severity == SALE_BLOCKER for i in rep.issues)
-
-
-def test_complete_data_can_publish(resolver, image):
-    rep = preflight(
-        _data(
-            image,
-            kc_cert="XU-12345-6789",
-            origin_area="경상북도",
-            delivery_fee_policy="무료",
-            as_phone="010-0000-0000",
-            tags=["라인조명"],
-        ),
-        resolver,
-    )
-    assert rep.issues == []
-    assert rep.can_publish is True
-
-
-def test_issues_are_serializable_for_agents(resolver, image):
-    """AI 에이전트가 받아서 스스로 고칠 수 있는 형태여야 한다."""
-    rep = preflight(_data(image, category="라인조명"), resolver)
-    d = rep.as_dicts()
-    assert json.dumps(d, ensure_ascii=False)
-    assert {"field", "severity", "message", "candidates"} <= set(d[0])
-
-
-def test_register_product_has_preflight_gate():
-    """register_product 가 preflight 를 관문으로 쓰는지 (배선 확인)."""
-    import inspect
-
-    from scripts.naver.smartstore.product.general_product import GeneralProductRegister
-
-    src = inspect.getsource(GeneralProductRegister.register_product)
-    assert "preflight(" in src
-    assert "can_fill" in src
-    assert "can_publish" in src
-    # 브라우저를 여는 open() 보다 preflight 가 먼저여야 의미가 있다
-    assert src.index("preflight(") < src.index("self.open()")
+def test_exit_code_and_json_output(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(pf, "Env", lambda: make_env(tmp_path, python_version=(3, 9, 0)))
+    assert pf.main(["--json"]) == 1  # FAIL 이 있으면 1
+    data = json.loads(capsys.readouterr().out)
+    assert any(item["status"] == "FAIL" for item in data)
+    monkeypatch.setattr(pf, "Env", lambda: make_env(tmp_path))
+    assert pf.main([]) == 0
+    assert "결과: PASS" in capsys.readouterr().out

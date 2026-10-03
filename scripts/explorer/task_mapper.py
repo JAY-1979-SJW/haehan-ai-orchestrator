@@ -169,31 +169,68 @@ def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험�
     }
 
 
-def open_private_tab(context: Any, start_url: str) -> Any:
-    """탐색 전용 **새 탭**을 만든다. 같은 호스트의 기존 탭(사용자가 로그인해 둔 탭 포함)은 재사용하지 않는다.
-
-    `get_task_page` 는 허용 호스트가 같은 기존 탭을 재사용해 그 탭을 이동시켜 버리므로 쓰지 않는다
-    (2026-10-03 실측: 탐색 후 사용자 탭의 주소가 바뀌었다). 열기에 실패하면 만든 탭을 닫고 오류를 낸다.
-    """
-    page = context.new_page()
+def _target_id(context: Any, page: Any) -> str:
+    """Playwright 페이지가 가리키는 CDP 대상 id (`cdp_tabs` 가 돌려주는 탭 id 와 같은 값)."""
+    session = context.new_cdp_session(page)
     try:
-        page.goto(start_url, timeout=30000)
+        return str(session.send("Target.getTargetInfo")["targetInfo"]["targetId"])
+    finally:
+        with contextlib.suppress(Exception):
+            session.detach()
+
+
+def page_for_tab(context: Any, tab_id: str, *, timeout_s: float = 10.0, sleep_fn: Callable[[float], None] = time.sleep) -> Any:
+    """`cdp_tabs.open_tab` 으로 만든 탭의 Playwright 페이지를 찾는다. 새 탭이 Playwright 에 나타날 때까지 잠깐 기다린다."""
+    waited = 0.0
+    while True:
+        for page in list(context.pages):
+            with contextlib.suppress(Exception):  # 닫히는 중인 탭은 건너뛴다
+                if _target_id(context, page) == tab_id:
+                    return page
+        if waited >= timeout_s:
+            raise LookupError(f"탭 {tab_id[:6]} 의 Playwright 페이지를 {timeout_s:g}초 안에 찾지 못했습니다")
+        sleep_fn(0.3)
+        waited += 0.3
+
+
+def open_private_tab(
+    context: Any,
+    start_url: str,
+    *,
+    opener: Callable[..., Any] | None = None,
+    closer: Callable[[Any], None] | None = None,
+    finder: Callable[[Any, str], Any] = page_for_tab,
+) -> tuple[Any, Any]:
+    """탐색 전용 **새 탭**을 만들어 (Playwright 페이지, 탭 핸들) 을 돌려준다. 같은 호스트의 사용자 탭은 재사용하지 않는다.
+
+    탭은 이 저장소가 검증해 둔 경로인 `cdp_tabs.open_tab`(HTTP 로 주소와 함께 만들고 도착까지 확인)으로 만든다.
+    `ctx.new_page()+goto` 는 쓰지 않는다 — 환경에 따라 goto 가 멈추는 것이 실측됐고(cdp_tabs 문서, 2026-10-03 localhost 화면),
+    `get_task_page` 는 같은 호스트의 기존 탭을 재사용해 사용자 탭을 이동시킨다. 페이지를 못 찾으면 만든 탭을 닫고 오류를 낸다.
+    """
+    from scripts import cdp_tabs
+
+    opener = opener or cdp_tabs.open_tab
+    closer = closer or cdp_tabs.close_tab
+    handle = opener(start_url, reason="사이트 업무 지도 탐색")
+    try:
+        return finder(context, handle.tab_id), handle
     except Exception:
-        page.close()
+        with contextlib.suppress(Exception):
+            closer(handle)
         raise
-    return page
 
 
 def run_request(request: dict[str, Any]) -> dict[str, Any]:
     """승인된 탐색 요청 실행기(서비스에 주입). 새 전용 탭에서 탐색하고, 끝나면 **그 탭만** 닫는다. 사용자 탭은 건드리지 않는다."""
+    from scripts import cdp_tabs
     from scripts.web_connector import get_context, run_on_browser_thread
 
     def work() -> dict[str, Any]:
-        page = open_private_tab(get_context(), request["start_url"])
+        page, handle = open_private_tab(get_context(), request["start_url"])
         try:
             return explore_to_map(page, request["start_url"], depth=request["depth"], max_pages=request["max_pages"], auth=request.get("auth", tm.AUTH_PUBLIC))
         finally:
-            with contextlib.suppress(Exception):  # 닫기 실패는 탐색 결과를 가리지 않는다(다음 정리 때 남은 빈 탭으로 처리)
-                page.close()
+            with contextlib.suppress(Exception):  # 닫기 실패는 탐색 결과를 가리지 않는다
+                cdp_tabs.close_tab(handle)
 
     return run_on_browser_thread(work, timeout=1800)

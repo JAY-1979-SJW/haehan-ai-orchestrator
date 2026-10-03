@@ -252,38 +252,52 @@ class FakeContext:
         self.pages = [FakePage() for _ in existing_urls]
         for page, url in zip(self.pages, existing_urls, strict=True):
             page.url = url
-        self.created = []
-
-    def new_page(self):
-        page = FakePage()
-        page.closed = False
-        page.close = lambda: setattr(page, "closed", True)
-        self.created.append(page)
-        return page
 
 
-def test_private_tab_is_new_and_never_reuses_user_tabs():
-    """실사이트 실측 회귀: 같은 호스트의 사용자 탭을 재사용해 이동시키면 안 된다."""
+class FakeHandle:
+    def __init__(self, tab_id):
+        self.tab_id = tab_id
+
+
+def test_private_tab_uses_http_opener_and_never_touches_user_tabs():
+    """실사이트 실측 회귀: 같은 호스트의 사용자 탭을 재사용해 이동시키면 안 된다. 탭은 검증된 HTTP 경로로 만든다."""
     ctx = FakeContext(["https://www.example-kiscon.test/my/login-session"])
     user_tab = ctx.pages[0]
-    page = task_mapper.open_private_tab(ctx, URL)
-    assert page is not user_tab and ctx.created == [page]
-    assert page.visited == [URL] and user_tab.visited == []  # 사용자 탭은 이동하지 않았다
+    new_page = FakePage()
+    opened = []
+    page, handle = task_mapper.open_private_tab(
+        ctx,
+        URL,
+        opener=lambda url, reason: opened.append((url, reason)) or FakeHandle("T1"),
+        finder=lambda _ctx, tab_id: new_page if tab_id == "T1" else user_tab,
+    )
+    assert page is new_page and handle.tab_id == "T1"
+    assert opened == [(URL, "사이트 업무 지도 탐색")]
+    assert user_tab.visited == []  # 사용자 탭은 이동하지 않았다 (ctx.new_page()+goto 도 쓰지 않는다)
 
 
-def test_private_tab_closed_when_open_fails():
-    ctx = FakeContext([])
+def test_private_tab_closed_when_page_cannot_be_found():
+    closed = []
 
-    class Boom(FakePage):
-        def goto(self, url, timeout=0):
-            raise RuntimeError("net")
+    def not_found(_ctx, _tab_id):
+        raise LookupError("페이지 없음")
 
-    page = Boom()
-    page.close = lambda: setattr(page, "closed", True)
-    ctx.new_page = lambda: page
-    with pytest.raises(RuntimeError, match="net"):
-        task_mapper.open_private_tab(ctx, URL)
-    assert page.closed is True  # 실패해도 빈 탭이 남지 않는다
+    with pytest.raises(LookupError):
+        task_mapper.open_private_tab(
+            FakeContext([]), URL, opener=lambda url, reason: FakeHandle("T2"), closer=closed.append, finder=not_found
+        )
+    assert [h.tab_id for h in closed] == ["T2"]  # 실패해도 빈 탭이 남지 않는다
+
+
+def test_page_for_tab_matches_by_target_id_and_times_out(monkeypatch):
+    ctx = FakeContext(["https://a.test/", "https://b.test/"])
+    ids = {id(ctx.pages[0]): "AAA", id(ctx.pages[1]): "BBB"}
+    monkeypatch.setattr(task_mapper, "_target_id", lambda _ctx, page: ids[id(page)])
+    assert task_mapper.page_for_tab(ctx, "BBB") is ctx.pages[1]
+    waits = []
+    with pytest.raises(LookupError, match="찾지 못했습니다"):
+        task_mapper.page_for_tab(ctx, "ZZZ", timeout_s=0.6, sleep_fn=waits.append)
+    assert len(waits) == 2  # 기다린 만큼만 재시도하고 끝낸다
 
 
 # ── 라우터 ────────────────────────────────────────────────────────────────
