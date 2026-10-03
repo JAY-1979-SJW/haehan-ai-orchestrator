@@ -56,7 +56,9 @@ def _candidates(domain: str) -> list[str]:
     return out
 
 
-def _has_sitemap(domain: str, sitemap_dir: Path = SITEMAP_DIR) -> bool:
+def _has_sitemap(domain: str, sitemap_dir: Path | None = None) -> bool:
+    # 기본값을 인자에 직접 쓰면 함수를 정의할 때 값이 굳어 SITEMAP_DIR 을 바꿔도(시험·설정) 반영되지 않는다
+    sitemap_dir = SITEMAP_DIR if sitemap_dir is None else sitemap_dir
     if not sitemap_dir.is_dir():
         return False
     names = [_slug_host(f.name) for f in sitemap_dir.glob("*.json")]
