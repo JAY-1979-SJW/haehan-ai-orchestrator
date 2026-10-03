@@ -15,6 +15,8 @@ result_data는 명시적 허용 목록만 저장하는 정책을 정의한다.
 import re
 from collections.abc import Callable
 
+from ai_orchestrator.agent_result_limits import RESULT_FULL_MAX_CHARS
+
 # params / result 에서 절대 저장·노출 금지인 키
 _SENSITIVE_KEYS: frozenset[str] = frozenset(
     {
@@ -586,7 +588,7 @@ _RESULT_DATA_SPECIAL_HANDLERS: dict[str, Callable[[object], object | None]] = {
 
 
 # 문자열 값 기본 상한은 500자. 긴 결과가 정당한 키만 예외로 둔다.
-_RESULT_DATA_LONG_KEYS: dict[str, int] = {"result_full": 20000}
+_RESULT_DATA_LONG_KEYS: dict[str, int] = {"result_full": RESULT_FULL_MAX_CHARS}
 
 # 값 수준 비밀 마스킹 — 키 이름 필터만으로는 본문 안에 섞인 키·토큰을 못 막는다
 # (result_full 이 500→20000자로 늘면서 노출 가능 분량도 커졌다). 과마스킹을 피하려고

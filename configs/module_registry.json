@@ -20896,6 +20896,22 @@
    "reason": "저장소(L7)와 정책(L2)이 함께 읽는 메일 초안 상태 어휘·전이표(순수 값, 부작용 없음) — L7 은 L1 만 읽을 수 있어 정책에서 분리한 L1 계약. 이름 신호가 없어 기본값 L4 로 오분류되는 것을 막는다",
    "confidence": "high",
    "source": "confirmed"
+  },
+  "ai_orchestrator/agent_result_limits.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "파일 docstring이 'L1 공유 계약 — 순수 상수' 선언, 에이전트 결과 전문 길이 상한 단일 정본 — L4 generic 오분류 방지",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/tests/test_agent_result_limits.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from .. import chat_sessions as _chat_store
+from ..agent_result_limits import RESULT_FULL_MAX_CHARS
 from .. import local_agent_registry as _reg
 from .. import mcp_tool_names as _tool_names
 from ..gates.auth import require_role
@@ -31,7 +32,7 @@ ai_agent_router = APIRouter(prefix="/ai-agent", tags=["ai-agent"])
 _DEFAULT_ALLOWED_TOOLS = _tool_names.qualified(_tool_names.DEFAULT_ALLOWED)
 
 
-CHAT_RESULT_MAX_CHARS = 20000  # result_full 상한(local_agent.actions._RESULT_FULL_MAX_CHARS)과 같다
+CHAT_RESULT_MAX_CHARS = RESULT_FULL_MAX_CHARS  # result_full 상한(정본: agent_result_limits.py)
 
 
 class RunAgentRequest(BaseModel):
