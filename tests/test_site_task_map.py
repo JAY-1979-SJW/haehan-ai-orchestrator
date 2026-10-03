@@ -126,6 +126,70 @@ def test_inputs_grouped_by_form_key_when_present():
     assert ids == ["gongsi_ksc_dft_asp#frm1", "gongsi_ksc_dft_asp#headersearch"]
 
 
+def test_menu_links_outside_the_form_do_not_raise_risk():
+    """실사이트(KISCON) 실측 회귀: 같은 화면의 메뉴 링크('발급 확인' 등)가 검색 업무를 submit 으로 올리면 안 된다."""
+    snap = _snap(
+        inputs=[
+            {"tag": "INPUT", "type": "text", "name": "txtSangHo", "id": "", "placeholder": "업체명", "aria": "", "required": False, "visible": True, "form": "0:frm1"},
+        ],
+        links=[
+            {"text": "검색", "href": "#", "target": "", "visible": True, "form": "0:frm1"},
+            {"text": "제재처분확인서 발급", "href": "javascript:void(0)", "target": "", "visible": True, "form": ""},
+            {"text": "건설업체정보조회안내", "href": "javascript:void(0)", "target": "", "visible": True, "form": ""},
+        ],
+        forms=[{"id": "", "action": "https://www.example-kiscon.test/gongsi/ksc_dft.asp", "method": "get", "name": "frm1"}],
+    )
+    (t,) = tm.tasks_from_snapshot(snap, now=NOW)
+    assert (t["risk"], t["category"], t["control"]) == ("read", "search", "검색")
+
+
+def test_page_wide_form_uses_proximity_to_pick_controls():
+    """폼 하나가 메뉴·푸터까지 감싸는 사이트(KISCON 실측): 입력창 근처 컨트롤만 이 업무의 동작 버튼."""
+    snap = _snap(
+        inputs=[{"tag": "INPUT", "type": "text", "name": "txtSangHo", "id": "", "placeholder": "업체명", "aria": "", "required": False, "visible": True, "form": "0:frm1", "pos": 500}],
+        links=[
+            {"text": "제재처분확인서 발급", "href": "javascript:void(0)", "target": "", "visible": True, "form": "0:frm1", "pos": 120},
+            {"text": "건설업체정보조회안내", "href": "javascript:void(0)", "target": "", "visible": True, "form": "0:frm1", "pos": 130},
+            {"text": "검색", "href": "#", "target": "", "visible": True, "form": "0:frm1", "pos": 520},
+            {"text": "신고센터", "href": "javascript:void(0)", "target": "", "visible": True, "form": "0:frm1", "pos": 900},
+        ],
+        forms=[{"id": "", "action": "https://www.example-kiscon.test/gongsi/ksc_dft.asp", "method": "get", "name": "frm1"}],
+    )
+    (t,) = tm.tasks_from_snapshot(snap, now=NOW)
+    assert (t["risk"], t["category"], t["control"]) == ("read", "search", "검색")
+
+
+def test_hidden_inputs_do_not_widen_the_proximity_range():
+    """실사이트 실측 회귀: 화면 밖 hidden 입력창(위치가 흩어짐)이 근접 범위를 문서 전체로 넓히면 안 된다."""
+    snap = _snap(
+        inputs=[
+            {"tag": "INPUT", "type": "hidden", "name": "hid", "id": "", "placeholder": "", "aria": "", "required": False, "visible": False, "form": "0:f", "pos": 10},
+            {"tag": "INPUT", "type": "text", "name": "q", "id": "", "placeholder": "", "aria": "", "required": False, "visible": True, "form": "0:f", "pos": 500},
+        ],
+        links=[
+            {"text": "발급", "href": "javascript:void(0)", "target": "", "visible": True, "form": "0:f", "pos": 100},
+            {"text": "검색", "href": "#", "target": "", "visible": True, "form": "0:f", "pos": 510},
+        ],
+    )
+    (t,) = tm.tasks_from_snapshot(snap, now=NOW)
+    assert (t["risk"], t["control"]) == ("read", "검색")
+
+
+def test_legacy_snapshot_without_form_keys_stays_conservative():
+    snap = _snap(links=[{"text": "검색", "href": "#", "target": "", "visible": True}, {"text": "신고", "href": "#", "target": "", "visible": True}])
+    (t,) = tm.tasks_from_snapshot(snap, now=NOW)
+    assert t["risk"] == "submit"  # 소속을 알 수 없으면 넓게 보고 높은 등급을 택한다
+
+
+def test_submit_control_inside_the_form_still_raises_risk():
+    snap = _snap(
+        inputs=[{"tag": "INPUT", "type": "text", "name": "a", "id": "", "placeholder": "", "aria": "", "required": False, "visible": True, "form": "0:f"}],
+        buttons=[{"text": "제출", "id": "", "aria": "", "cls": "", "visible": True, "form": "0:f"}],
+        links=[],
+    )
+    assert tm.tasks_from_snapshot(snap, now=NOW)[0]["risk"] == "submit"
+
+
 # ── 병합·상태 ─────────────────────────────────────────────────────────────
 
 

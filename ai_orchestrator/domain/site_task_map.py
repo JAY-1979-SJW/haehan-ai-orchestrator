@@ -39,6 +39,7 @@ _WRITE_EN = ("save", "update", "add", "edit", "upload", "create", "register", "a
 
 _SKIP_INPUT_TYPES = {"hidden", "submit", "button", "image", "reset"}
 _SHORT_ACTION_LINK = 12  # href 가 '#'·javascript: 인 링크는 동작 버튼으로 본다(글자 수 제한)
+_NEAR = 80  # 입력창에서 문서 순서로 이만큼(요소 수) 안의 컨트롤만 그 업무의 동작 버튼으로 본다
 
 
 # ── 위험 등급 ─────────────────────────────────────────────────────────────
@@ -111,10 +112,27 @@ def _dedupe_fields(fields: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def _controls(frame: dict[str, Any]) -> list[str]:
-    """동작 컨트롤 이름: 버튼 + href 가 '#'·javascript: 인 짧은 링크."""
-    names = [str(b.get("text") or b.get("aria") or "") for b in frame.get("buttons", [])]
-    for link in frame.get("links", []):
+def _has_form_keys(frame: dict[str, Any]) -> bool:
+    return any("form" in x for key in ("inputs", "buttons", "links") for x in frame.get(key, []))
+
+
+def _controls(frame: dict[str, Any], form_key: str | None = None, span: tuple[int, int] | None = None) -> list[str]:
+    """동작 컨트롤 이름: 버튼 + href 가 '#'·javascript: 인 짧은 링크.
+
+    스냅샷에 소속 폼 키가 있으면 `form_key` 와 같은 폼의 컨트롤만 쓴다(메뉴 링크가 이 업무의 위험을 올리지 않게).
+    `span`(입력창들의 문서 순번 범위)이 있으면 그 앞뒤 `_NEAR` 안의 것만 쓴다(폼이 페이지 전체를 감싸는 사이트 대응).
+    키가 없는 예전 스냅샷은 프레임 전체를 쓴다(안전한 쪽으로 넓게).
+    """
+    scoped = form_key is not None and _has_form_keys(frame)
+
+    def mine(item: dict[str, Any]) -> bool:
+        if scoped and str(item.get("form") or "") != form_key:
+            return False
+        pos = item.get("pos")
+        return not (span and isinstance(pos, int) and not span[0] - _NEAR <= pos <= span[1] + _NEAR)
+
+    names = [str(b.get("text") or b.get("aria") or "") for b in frame.get("buttons", []) if mine(b)]
+    for link in (x for x in frame.get("links", []) if mine(x)):
         href = str(link.get("href") or "")
         text = str(link.get("text") or "")
         if text and len(text) <= _SHORT_ACTION_LINK and (href in ("#", "") or href.lower().startswith("javascript")):
@@ -141,6 +159,15 @@ def recorder_steps(url: str, fields: list[dict[str, Any]], *, risk: str, control
     return steps
 
 
+def _form_actions(frame: dict[str, Any], form_key: str) -> list[str]:
+    """위험 판정에 쓸 폼 action 경로. 폼 키(`순번:이름`)가 있으면 그 폼 것만, 없으면 프레임의 모든 폼."""
+    forms = frame.get("forms", [])
+    index = form_key.split(":", 1)[0]
+    if _has_form_keys(frame) and index.isdigit():
+        forms = [forms[int(index)]] if int(index) < len(forms) else []
+    return [urlparse(f.get("action") or "").path for f in forms]
+
+
 def _group_inputs(frame: dict[str, Any]) -> list[tuple[str, list[dict[str, Any]]]]:
     groups: dict[str, list[dict[str, Any]]] = {}
     for raw in frame.get("inputs", []):
@@ -162,13 +189,15 @@ def tasks_from_snapshot(snapshot: dict[str, Any], *, auth: str = AUTH_PUBLIC, no
         if "error" in frame:
             continue
         frame_url = str(frame.get("url") or url)
-        controls = _controls(frame)
         for form_key, raws in _group_inputs(frame):
-            fields = _dedupe_fields([f for f in (_field(r) for r in raws) if f])
+            kept = [(r, f) for r in raws if (f := _field(r))]
+            fields = _dedupe_fields([f for _, f in kept])
             if not fields:
                 continue
+            positions = [r["pos"] for r, _ in kept if isinstance(r.get("pos"), int)]  # 실제 쓰는 필드만(hidden 은 위치가 흩어져 있다)
+            controls = _controls(frame, form_key, (min(positions), max(positions)) if positions else None)
             has_password = any(f["type"] == "password" for f in fields)
-            action_text = [urlparse(frm.get("action") or "").path for frm in frame.get("forms", [])] + [urlparse(frame_url).path]
+            action_text = [*_form_actions(frame, form_key), urlparse(frame_url).path]
             risk = risk_of(controls + action_text)
             if has_password:
                 risk, category = RISK_SUBMIT, CAT_LOGIN
