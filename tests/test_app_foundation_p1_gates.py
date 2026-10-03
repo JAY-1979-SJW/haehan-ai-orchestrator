@@ -6,6 +6,9 @@ ROUTER_THINNESS, STORAGE_BOUNDARY, SERVER_BROWSER_GUARD 구조 게이트 검증.
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,7 +16,31 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # ── 공통 헬퍼 ────────────────────────────────────────────────────────────────
 
+_REPORT_CACHE: dict | None = None
+
+
+def _load_report() -> dict:
+    """감사 리포트를 읽는다. 리포트는 .gitignore 대상 생성 산출물이라 깨끗한 체크아웃엔 없으므로,
+    저장소 안 파일이 없으면 audit 를 임시 경로로 한 번 실행해 만든다(저장소 파일은 건드리지 않음)."""
+    global _REPORT_CACHE
+    if _REPORT_CACHE is not None:
+        return _REPORT_CACHE
+    report_path = ROOT / "data" / "codebase_layer_audit_latest.json"
+    if not report_path.exists():
+        report_path = Path(tempfile.mkdtemp(prefix="layer_audit_")) / "report.json"
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "ops" / "codebase_layer_audit.py"), "--output", str(report_path)],
+            cwd=ROOT,
+            capture_output=True,
+            check=False,
+        )
+    assert report_path.exists(), "audit 리포트를 만들지 못함(scripts/ops/codebase_layer_audit.py 실행 실패)"
+    _REPORT_CACHE = json.loads(report_path.read_text(encoding="utf-8"))
+    return _REPORT_CACHE
+
+
 def _audit_issues() -> list[dict]:
+    # 기존 동작 유지(이번 변경 범위 밖): 저장소 안 리포트가 없으면 [] — 생성 리포트는 gate_results 키 확인에만 쓴다.
     report_path = ROOT / "data" / "codebase_layer_audit_latest.json"
     if not report_path.exists():
         return []
@@ -21,10 +48,7 @@ def _audit_issues() -> list[dict]:
 
 
 def _gate_results() -> dict:
-    report_path = ROOT / "data" / "codebase_layer_audit_latest.json"
-    if not report_path.exists():
-        return {}
-    return json.loads(report_path.read_text(encoding="utf-8")).get("gate_results", {})
+    return _load_report().get("gate_results", {})
 
 
 # ── 1. ROUTER_THINNESS ───────────────────────────────────────────────────────
