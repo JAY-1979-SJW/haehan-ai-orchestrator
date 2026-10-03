@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import re
 from typing import Any
 from urllib.parse import urlparse
@@ -327,3 +328,54 @@ def lookup(site_map: dict[str, Any], query: str, *, limit: int = 10) -> list[dic
             scored.append((score, t))
     scored.sort(key=lambda s: (-s[0], s[1]["id"]))
     return [t for _, t in scored[:limit]]
+
+
+# ── 탐색 요청 (승인 카드로만 시작) ────────────────────────────────────────────
+
+EXPLORE_DEPTH_MAX = 4
+EXPLORE_PAGES_MAX = 200
+EXPLORE_DEFAULT_DEPTH = 2
+EXPLORE_DEFAULT_PAGES = 20
+EXPLORE_DEFAULT_DELAY_S = 1.0
+_HOST_OK = re.compile(r"^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$")
+# 탐색이 이동하지 않을 주소 조각(로그아웃·삭제·제출·결제 등). 클릭은 하지 않고 주소 이동(GET)만 하므로 URL 로 걸러낸다.
+EXPLORE_SKIP_URL = ("logout", "signout", "logoff", "delete", "remove", "submit", "withdraw", "cancel", "payment", "pay.", "/pay/", "send")
+
+
+def validate_explore_request(raw: dict[str, Any]) -> dict[str, Any]:
+    """탐색 요청 정규화. 잘못되면 ValueError. 내부망·로컬 주소와 인증정보가 든 주소는 거부한다."""
+    url = str(raw.get("start_url") or "").strip()
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise ValueError("시작 주소는 http(s):// 로 시작하는 전체 주소여야 합니다")
+    if parsed.username or parsed.password:
+        raise ValueError("주소에 아이디·비밀번호를 넣을 수 없습니다")
+    host = parsed.hostname.lower()
+    if not _HOST_OK.match(host) or ".." in host:
+        raise ValueError("호스트 이름이 올바르지 않습니다")
+    if host == "localhost" or host.endswith((".local", ".internal", ".localhost")):
+        raise ValueError("로컬·내부 주소는 탐색할 수 없습니다")
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        ip = None
+    if ip is not None and (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_unspecified):
+        raise ValueError("로컬·내부 주소는 탐색할 수 없습니다")
+
+    def _bounded(key: str, default: int, top: int) -> int:
+        value = raw.get(key, default)
+        try:
+            number = int(value)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"{key} 는 정수여야 합니다") from e
+        if not 1 <= number <= top:
+            raise ValueError(f"{key} 는 1~{top} 사이여야 합니다")
+        return number
+
+    return {
+        "host": host,
+        "start_url": parsed._replace(fragment="").geturl(),
+        "depth": _bounded("depth", EXPLORE_DEFAULT_DEPTH, EXPLORE_DEPTH_MAX),
+        "max_pages": _bounded("max_pages", EXPLORE_DEFAULT_PAGES, EXPLORE_PAGES_MAX),
+        "auth": raw.get("auth") if raw.get("auth") in AUTHS else AUTH_PUBLIC,
+    }

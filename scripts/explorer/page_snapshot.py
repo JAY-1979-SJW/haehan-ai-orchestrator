@@ -27,7 +27,8 @@ _EXTRACT_FRAME_JS = r"""
     // 소속 폼 키: "<문서 내 폼 순번>:<id 또는 name>" (폼 밖이면 빈 문자열) — 업무 지도가 컨트롤을 폼별로 묶는 데 쓴다
     const formKey = el => {
         const f = el.closest('form');
-        return f ? Array.from(document.forms).indexOf(f) + ':' + (f.id || f.getAttribute('name') || '') : '';
+        // f.id 는 폼 안에 name="id" 입력창이 있으면 그 요소를 가리키므로 속성 값을 직접 읽는다
+        return f ? Array.from(document.forms).indexOf(f) + ':' + (f.getAttribute('id') || f.getAttribute('name') || '') : '';
     };
     // 문서 안 위치(요소 순번): 페이지 전체를 감싸는 폼에서도 "입력창 근처의 컨트롤"만 고를 수 있게 한다
     const order = new Map(Array.from(document.querySelectorAll('*')).map((e, i) => [e, i]));

@@ -217,6 +217,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
         "remove",
         "submit",
     ),
+    delay_s: float = 0.0,
 ) -> dict:
     """현재 페이지부터 BFS 탐색.
 
@@ -227,6 +228,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
         same_host_only: 같은 호스트만
         bot_check_each_page: 각 페이지에서 봇 레이더 스캔
         skip_url_patterns: 위험 URL 키워드 (로그아웃/삭제/제출 등 자동 회피)
+        delay_s: 페이지 이동 사이 대기 초(기본 0 = 기존 동작). 사이트 부담을 줄이려는 호출자가 지정한다.
 
     Returns:
         dict{host, started_url, pages, bot_radar, elapsed_s}
@@ -254,6 +256,8 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
             continue
 
         # 이동 (현재 URL과 다를 때만)
+        if delay_s > 0 and pages_data:
+            time.sleep(delay_s)
         if not _navigate_if_needed(page, url, pages_data):
             continue
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { UniversalChat, type ChatPreset, type ExtraCard } from "@/components/chat/UniversalChat";
 import { gongmuApi, type Draft, type Site } from "./api";
+import { SiteMapExploreCard } from "@/components/sitemap/SiteMapExploreCard";
 import { GongmuDraftCard } from "./GongmuDraftCard";
 
 interface Props {
@@ -22,7 +23,7 @@ function buildHint(site: Site | null): string {
     "- 쓰기는 gongmu.draft(승인 대기 초안)뿐이다. kind 는 progress_billing·hq_report·subcontract_review·safety_checklist·missing_docs 중 하나. 업무 메모에 남기고 싶으면 task_id 를 넣는다. 만든 뒤 답변 끝에 응답의 id 로 [[gongmu-draft:<id>]] 를 그대로 적고 '아래 카드에서 확인 후 확정해 주세요'라고 안내한다.",
     "- 업무 상태 변경·서류 체크·확정·취소·가져오기·외부 사이트 신고/제출은 할 수 없으니 시도하지 않는다(사람이 화면에서 한다).",
     "- 금액·기한 기준과 법령 조문은 참고용이다. 단정하지 말고 '국가법령정보센터 원문 확인 필요'를 함께 안내한다. 없는 수치(공정률·손익 등)는 지어내지 말고 사용자에게 묻는다.",
-    "- 외부 사이트(키스콘·EUM 등)를 다루기 전에 sitemap.list 로 저장된 사이트 지도가 있는지 보고, 있으면 sitemap.lookup 의 절차·입력 필드를 따른다. risk 가 read 인 업무만 지도대로 실행하고 write·submit 은 사람 승인 없이는 하지 않는다. 지도에 없으면 새로 짜지 말고 사용자에게 탐색을 요청한다.",
+    "- 외부 사이트(키스콘·EUM 등)를 다루기 전에 sitemap.list 로 저장된 사이트 지도가 있는지 보고, 있으면 sitemap.lookup 의 절차·입력 필드를 따른다. risk 가 read 인 업무만 지도대로 실행하고 write·submit 은 사람 승인 없이는 하지 않는다. 지도에 없으면(known=false) 새로 짜지 말고 사용자가 원할 때 sitemap.explore_request 로 탐색 요청을 만들고 답변 끝에 [[sitemap-explore:<id>]] 를 그대로 적는다(승인 카드가 나타난다). 승인·취소는 사람만 한다.",
     "- 결과는 한국어로 짧게 정리한다(표가 도움이 되면 표).",
   ];
   if (site) lines.push(`[현재 선택한 현장] id=${site.id}, 이름='${site.name}', 지위=${site.role === "prime" ? "원도급" : "하도급"} — 사용자가 '이 현장'이라고 하면 이 현장이다.`);
@@ -40,7 +41,10 @@ const PRESETS: ChatPreset[] = [
 
 /** 답변 끝의 [[gongmu-draft:<id>]] 를 공무 초안 승인 카드로 바꾼다(공용 채팅에 주입). */
 function cardsFor(onDecided: () => void): ExtraCard[] {
-  return [{ mark: /\[\[gongmu-draft:([0-9a-f]{32})\]\]/g, render: (id) => <GongmuDraftCard draftId={id} onDecided={onDecided} /> }];
+  return [
+    { mark: /\[\[gongmu-draft:([0-9a-f]{32})\]\]/g, render: (id) => <GongmuDraftCard draftId={id} onDecided={onDecided} /> },
+    { mark: /\[\[sitemap-explore:([0-9a-f]{32})\]\]/g, render: (id) => <SiteMapExploreCard requestId={id} /> },
+  ];
 }
 
 export function GongmuAiPanel({ site, onClose, onDecided }: Props) {

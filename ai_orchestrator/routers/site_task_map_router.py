@@ -6,8 +6,11 @@
   GET  /site-map/{host}                   — 지도 전체(관리자 화면용)
   POST /site-map/{host}/classify          — 사람이 이름·목적·분류 확정(위험 등급 변경 불가)
   POST /site-map/{host}/outcome           — 실행 결과 기록(verified/stale)
+  POST /site-map/explore/requests         — 탐색 요청 생성(승인 대기, 실행 안 함)    [AI 허용: sitemap.explore_request]
+  GET  /site-map/explore/requests[/{id}]  — 요청 목록·상태(카드가 조회)
+  POST /site-map/explore/requests/{id}/approve · /cancel — 사람만(카드 버튼). 승인하면 읽기 전용 탐색이 백그라운드로 시작
 
-AI 가 쓸 수 있는 것은 위 두 개(읽기)뿐 — 확정·결과 기록은 허용 목록에 없다. 모든 엔드포인트는 관리자 인증.
+AI 가 쓸 수 있는 것은 읽기 2개 + 탐색 요청 생성뿐 — 승인·취소·확정·결과 기록은 허용 목록에 없다. 모든 엔드포인트는 관리자 인증.
 """
 
 from __future__ import annotations
@@ -17,7 +20,11 @@ from fastapi import Path as PathParam
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.services import site_task_map_explore_service as explore
 from ai_orchestrator.services import site_task_map_service as service
+from scripts.explorer import task_mapper
+
+explore.configure(task_mapper.run_request)  # 승인된 탐색의 실행기 연결(브라우저 모듈은 실행 시점에만 불러온다)
 
 site_task_map_router = APIRouter(prefix="/site-map", tags=["site-map"])
 _ADMIN = Depends(require_role("admin", "owner"))
@@ -40,6 +47,13 @@ class ClassifyBody(BaseModel):
     category: str | None = None
 
 
+class ExploreBody(BaseModel):
+    start_url: str
+    depth: int | None = None
+    max_pages: int | None = None
+    reason: str = ""
+
+
 class OutcomeBody(BaseModel):
     task_id: str
     ok: bool
@@ -48,6 +62,54 @@ class OutcomeBody(BaseModel):
 @site_task_map_router.get("/hosts")
 def list_hosts(_: dict = _ADMIN):
     return {"items": service.list_hosts()}
+
+
+def _user(claims: dict) -> str:
+    return str(claims.get("actor") or claims.get("username") or "admin")
+
+
+def _rid():
+    return PathParam(..., pattern=r"^[0-9a-f]{32}$")
+
+
+@site_task_map_router.post("/explore/requests")
+def create_explore(body: ExploreBody, claims: dict = _ADMIN):
+    try:
+        return explore.create_request(body.model_dump(exclude_none=True), actor=_user(claims))
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.get("/explore/requests")
+def list_explore(status: str | None = None, _: dict = _ADMIN):
+    try:
+        return {"items": explore.list_requests(status)}
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.get("/explore/requests/{request_id}")
+def get_explore(request_id: str = _rid(), _: dict = _ADMIN):
+    try:
+        return explore.get_request(request_id)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.post("/explore/requests/{request_id}/approve")
+def approve_explore(request_id: str = _rid(), claims: dict = _ADMIN):
+    try:
+        return explore.approve_request(request_id, actor=_user(claims))
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.post("/explore/requests/{request_id}/cancel")
+def cancel_explore(request_id: str = _rid(), claims: dict = _ADMIN):
+    try:
+        return explore.cancel_request(request_id, actor=_user(claims))
+    except ValueError as e:
+        raise _bad(e) from e
 
 
 @site_task_map_router.get("/{host}/lookup")

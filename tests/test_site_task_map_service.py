@@ -79,12 +79,13 @@ def test_classify_and_outcome_flow(env):
         service.record_outcome(HOST, "nope", ok=True)
 
 
-def test_ai_registry_exposes_only_two_read_endpoints():
+def test_ai_registry_exposes_two_reads_and_one_request_creation_only():
     entries = {k: (v["method"], v["path"]) for k, v in mcp_server.API_REGISTRY.items() if "site-map" in v["path"]}
     assert entries == {
         "sitemap.list": ("GET", "/api/v1/site-map/hosts"),
         "sitemap.lookup": ("GET", "/api/v1/site-map/{host}/lookup"),
-    }  # classify·outcome·전체 지도는 AI 허용이 아니다
+        "sitemap.explore_request": ("POST", "/api/v1/site-map/explore/requests"),
+    }  # classify·outcome·전체 지도·승인·취소는 AI 허용이 아니다
 
 
 def test_router_requires_admin_and_flows(env, monkeypatch):
