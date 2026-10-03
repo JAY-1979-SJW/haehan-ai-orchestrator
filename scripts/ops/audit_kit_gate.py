@@ -2,7 +2,8 @@
 
 이 저장소에는 이미 편집 직후 ruff(신규 오류)·영향 테스트를 보는 `post_edit_fast_gate` 가 있다. 이 게이트는 그것이
 보지 않는 것을 맡는다: audit-kit 의 **개발 기준서 파일 단위 검사(조항 ID, 신규/기존 구분)** 와 **순환 import**.
-ruff·mypy 는 audit-kit 쪽에서 끄고(`pyproject.toml` `[tool.audit_kit] hook_tools = "design"`) 중복 실행하지 않는다.
+ruff 는 audit-kit 쪽에서 끄고(`pyproject.toml` `[tool.audit-kit] hook_tools = "design"`) 중복 실행하지 않는다. **mypy 는 이 게이트가
+직접 돌린다**: audit-kit 가상환경의 mypy 로 파일 하나를 검사해 HEAD 버전에 없던 **신규 타입 오류만** 막는다(ruff 와 같은 원칙).
 
 모드
 - `--post-edit` (PostToolUse): stdin 의 편집 파일 한 개를 `audit-kit hook` 으로 검사. **이번 편집이 만든 문제**가 있으면 exit 2 (Claude 가 보고 고친다).
@@ -91,6 +92,68 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
     return [ln.strip() for ln in lines if ln.strip().startswith("[") and not any(n in ln for n in _NOISE)]
 
 
+def mypy_python(kit: list[str]) -> str | None:
+    """audit-kit 가상환경의 파이썬(mypy 가 들어 있다). audit-kit 실행 파일이 아니면(시험용 가짜 등) None = mypy 생략."""
+    first = Path(kit[0])
+    if not first.name.lower().startswith("audit-kit"):
+        return None
+    for name in ("python.exe", "python"):
+        candidate = first.parent / name
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
+def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
+    """파일 하나의 mypy 오류 문장 집합(줄 번호·경로 제외). 실행 못 하면 None.
+
+    `--ignore-missing-imports --follow-imports=silent`: audit-kit 가상환경에는 프로젝트 의존성이 없어 import 오류가 쏟아지므로
+    끄고, 다른 모듈의 오류는 이 파일 검사에 섞이지 않게 한다.
+    """
+    root = root or ROOT
+    cmd = [py, "-m", "mypy", "--ignore-missing-imports", "--follow-imports=silent", "--no-error-summary", "--no-color-output", str(path)]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode not in (0, 1):  # 2 이상 = mypy 자체 오류
+        return None
+    found = set()
+    for line in proc.stdout.decode("utf-8", errors="replace").splitlines():
+        match = re.search(r": error: (.*)$", line)
+        if match:
+            found.add(match.group(1).strip())
+    return found
+
+
+def mypy_new(py: str, path: Path, baseline: Path | None, root: Path | None = None) -> tuple[list[str], str]:
+    """`baseline` 파일(편집 전/기준 트리의 같은 파일)에 없던 mypy 오류만 → (신규 목록, 못 한 이유). baseline 이 None 이면 전부 신규."""
+    current = mypy_keys(py, path, root)
+    if current is None:
+        return [], "mypy 를 실행하지 못했습니다"
+    before: set[str] = set()
+    if baseline is not None:
+        before_keys = mypy_keys(py, baseline, root)
+        if before_keys is None:
+            return [], "기준 파일의 mypy 를 실행하지 못했습니다"
+        before = before_keys
+    return [f"[mypy] {path.name}: {msg}" for msg in sorted(current - before)], ""
+
+
+def _mypy_against_head(py: str, path: Path, root: Path) -> tuple[list[str], str]:
+    """편집한 파일을 HEAD 버전과 비교(편집 전에 없던 오류만). HEAD 에 없는 새 파일이면 전부 신규."""
+    rel = path.resolve().relative_to(root.resolve()).as_posix()
+    shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False)
+    if shown.returncode != 0:
+        return mypy_new(py, path, None, root)
+    copy = path.with_name(f"_mypy_base_{path.name}")  # 같은 폴더에 둬야 상대 import 가 같게 풀린다
+    try:
+        copy.write_bytes(shown.stdout)
+        return mypy_new(py, path, copy, root)
+    finally:
+        copy.unlink(missing_ok=True)
+
+
 def check_file(kit: list[str], path: Path, root: Path | None = None) -> tuple[list[str], str]:
     """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다."""
     root = root or ROOT
@@ -107,12 +170,14 @@ def check_file(kit: list[str], path: Path, root: Path | None = None) -> tuple[li
     except (OSError, subprocess.TimeoutExpired) as exc:
         return [], f"{type(exc).__name__}: {exc}"
     stderr = proc.stderr.decode("utf-8", errors="replace")
-    if proc.returncode == 2:
-        found = new_findings(stderr)
-        return [f"{path.name}: {item}" for item in found], ""
-    if proc.returncode not in (0,):
+    if proc.returncode not in (0, 2):
         return [], f"audit-kit 종료코드 {proc.returncode}: {stderr[-200:].strip()}"
-    return [], ""
+    findings = [f"{path.name}: {item}" for item in new_findings(stderr)] if proc.returncode == 2 else []
+    py = mypy_python(kit)
+    if py is None:
+        return findings, ""
+    typed, why = _mypy_against_head(py, path, root)
+    return findings + typed, ("" if findings or typed or not why else why)
 
 
 def _eligible(path: Path, root: Path | None = None) -> bool:

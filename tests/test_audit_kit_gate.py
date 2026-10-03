@@ -251,3 +251,79 @@ def test_verify_reports_unchecked_file_instead_of_passing_silently(tmp_path, mon
     base, head = _two_trees(tmp_path)
     found, _ = vc._audit_kit_new_findings(["pkg/a.py"], base, head)
     assert found == ["pkg/a.py: audit-kit 검사를 하지 못했습니다"]  # 검사를 못 한 것을 '문제 없음'으로 처리하지 않는다
+
+
+# ── mypy: 편집 전(HEAD)·기준 트리에 없던 신규 타입 오류만 ────────────────────────────
+
+
+def test_mypy_python_only_for_real_audit_kit_executable(tmp_path):
+    scripts_dir = tmp_path / "Scripts"
+    scripts_dir.mkdir()
+    (scripts_dir / "audit-kit.exe").write_text("", encoding="utf-8")
+    (scripts_dir / "python.exe").write_text("", encoding="utf-8")
+    assert gate.mypy_python([str(scripts_dir / "audit-kit.exe")]) == str(scripts_dir / "python.exe")
+    assert gate.mypy_python([sys.executable, "fake_audit_kit.py"]) is None  # 가짜·직접 지정한 .py 는 mypy 를 돌리지 않는다
+    (scripts_dir / "python.exe").unlink()
+    assert gate.mypy_python([str(scripts_dir / "audit-kit.exe")]) is None
+
+
+def test_mypy_new_reports_only_errors_absent_from_baseline(monkeypatch, tmp_path):
+    outputs = {
+        "cur.py": {"Incompatible return value type (got \"str\", expected \"int\")  [return-value]", "Missing return statement  [return]"},
+        "base.py": {"Missing return statement  [return]"},
+    }
+    monkeypatch.setattr(gate, "mypy_keys", lambda _py, path, _root=None: outputs.get(path.name))
+    new, why = gate.mypy_new("py", tmp_path / "cur.py", tmp_path / "base.py")
+    assert why == "" and new == ["[mypy] cur.py: Incompatible return value type (got \"str\", expected \"int\")  [return-value]"]
+    new, _ = gate.mypy_new("py", tmp_path / "cur.py", None)  # 기준이 없는 새 파일 = 전부 신규
+    assert len(new) == 2
+
+
+def test_mypy_new_reports_why_when_mypy_cannot_run(monkeypatch, tmp_path):
+    monkeypatch.setattr(gate, "mypy_keys", lambda *_a, **_k: None)
+    assert gate.mypy_new("py", tmp_path / "a.py", None) == ([], "mypy 를 실행하지 못했습니다")
+    outputs = {"cur.py": set(), "base.py": None}
+    monkeypatch.setattr(gate, "mypy_keys", lambda _py, path, _root=None: outputs[path.name])
+    assert gate.mypy_new("py", tmp_path / "cur.py", tmp_path / "base.py")[1] == "기준 파일의 mypy 를 실행하지 못했습니다"
+
+
+def test_mypy_keys_parses_error_lines_and_handles_failures(monkeypatch, tmp_path):
+    class Proc:
+        def __init__(self, rc, out):
+            self.returncode, self.stdout = rc, out
+
+    text = (
+        b"pkg/a.py:3: error: Incompatible return value type (got \"str\", expected \"int\")  [return-value]\n"
+        b"pkg/a.py:3: note: something helpful\n"
+        b"pkg/b.py:9:5: error: Missing return statement  [return]\n"
+    )
+    monkeypatch.setattr(gate.subprocess, "run", lambda *_a, **_k: Proc(1, text))
+    assert gate.mypy_keys("py", tmp_path / "a.py", tmp_path) == {
+        "Incompatible return value type (got \"str\", expected \"int\")  [return-value]",
+        "Missing return statement  [return]",
+    }
+    monkeypatch.setattr(gate.subprocess, "run", lambda *_a, **_k: Proc(0, b""))
+    assert gate.mypy_keys("py", tmp_path / "a.py", tmp_path) == set()
+    monkeypatch.setattr(gate.subprocess, "run", lambda *_a, **_k: Proc(2, b"fatal"))
+    assert gate.mypy_keys("py", tmp_path / "a.py", tmp_path) is None  # mypy 자체 오류는 '오류 없음'으로 처리하지 않는다
+
+
+def test_verify_includes_mypy_diff_against_base(tmp_path, tree_aware_kit, monkeypatch):
+    import importlib
+
+    from scripts.ops import verify_change as vc
+
+    # verify_change 는 scripts/ops 를 경로에 넣고 `audit_kit_gate` 를 최상위 이름으로 가져온다 — 그 모듈 객체를 패치해야 한다
+    akg = importlib.import_module("audit_kit_gate")
+    base, head = _two_trees(tmp_path)
+    monkeypatch.setattr(akg, "mypy_python", lambda _kit: "py")
+    seen = {}
+
+    def fake_new(_py, path, baseline, _root=None):
+        seen[path.name] = baseline.name if baseline else None
+        return ([f"[mypy] {path.name}: 새 타입 오류"], "")
+
+    monkeypatch.setattr(akg, "mypy_new", fake_new)
+    found, _ = vc._audit_kit_new_findings(["pkg/a.py", "pkg/new.py"], base, head)
+    assert seen == {"a.py": "a.py", "new.py": None}  # 기준 트리에 있는 파일은 그 파일과, 새 파일은 기준 없이 비교
+    assert "pkg/a.py: [mypy] a.py: 새 타입 오류" in found and "pkg/new.py: [mypy] new.py: 새 타입 오류" in found
