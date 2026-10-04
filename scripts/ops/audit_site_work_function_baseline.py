@@ -139,7 +139,10 @@ def _audit_google_tasks(failures, dry_run_cloud_readonly_browser_task):
 
 def _audit_naver(failures):
     naver_tasks = _task_status("scripts.naver.router")
-    for key in ("mail inbox", "blog write", "cafe write", "calendar list/add", "mybox list/search/upload"):
+    # defect_index #38: CLI 'mail inbox' 는 미구현을 정직하게 표기(not_implemented_cli) — done 으로 요구하지 않고 그 표기가 유지되는지 검사
+    if naver_tasks.get("mail inbox") != "not_implemented_cli":
+        failures.append("naver mail inbox must stay honestly marked not_implemented_cli")
+    for key in ("blog write", "cafe write", "calendar list/add", "mybox list/search/upload"):
         if naver_tasks.get(key) != "done":
             failures.append(f"naver task not marked done: {key}")
     naver_categories = _count_naver_catalog_categories()
@@ -155,7 +158,7 @@ def _audit_smartstore(failures, build_smartstore_action_catalog):
         for item in smartstore_catalog.get("sections", [])
         if isinstance(item, dict)
     }
-    expected_smart = {"read": 8, "prepare": 3, "approval": 4}
+    expected_smart = {"read": 8, "prepare": 3, "approval": 6}
     for risk, expected in expected_smart.items():
         item = smart_counts.get(risk)
         total = item.get("total") if isinstance(item, dict) else None
