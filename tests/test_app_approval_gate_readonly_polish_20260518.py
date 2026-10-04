@@ -114,7 +114,7 @@ class TestBackendInvariant:
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         routes = runtime_routes()
-        assert len(routes) == 399
+        assert len(routes) == 402
 
     def test_post_count_27(self):
         from tests.app_routes import http_routes

@@ -13,6 +13,7 @@ from ai_orchestrator.routers.auth_router import auth_router
 from ai_orchestrator.routers.blog_automation_router import blog_automation_router
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
+from ai_orchestrator.routers.dev_reg_approval_read_router import dev_reg_approval_read_router
 from ai_orchestrator.routers.gongmu_router import gongmu_router
 from ai_orchestrator.routers.naver_mail_bulk_router import naver_mail_bulk_router
 from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
@@ -88,6 +89,7 @@ router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)
 router.include_router(sites_router)
 router.include_router(web_task_router)
+router.include_router(dev_reg_approval_read_router)
 router.include_router(local_agent_router)
 router.include_router(admin_ui_router)
 router.include_router(approval_record_router)
