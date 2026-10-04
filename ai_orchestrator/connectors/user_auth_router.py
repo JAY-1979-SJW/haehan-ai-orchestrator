@@ -11,7 +11,7 @@ from pydantic import BaseModel, field_validator
 
 from ai_orchestrator import config
 from ai_orchestrator.gates.auth import require_role  # 관리자(Basic Auth) — 승인 등 owner 작업
-from ai_orchestrator.persistence import user_db
+from ai_orchestrator.persistence import auth_audit, user_db
 
 user_auth_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -144,8 +144,10 @@ class PendingUserResponse(BaseModel):
 def signup(body: SignupRequest):
     """가입 접수 → enabled=0(승인 대기). 토큰 미발급 — 관리자 승인 후 로그인."""
     if user_db.email_exists(body.email):
+        auth_audit.record_auth_event("signup", "conflict", email=body.email)
         raise HTTPException(status_code=409, detail="이미 사용 중인 이메일입니다")
     user = user_db.create_user(body.email, body.name, body.password)
+    auth_audit.record_auth_event("signup", "success", actor_id=user.get("id"), email=body.email)
     return SignupResponse(
         status="pending_approval",
         message="가입이 접수되었습니다. 관리자 승인 후 로그인할 수 있습니다.",
@@ -162,9 +164,12 @@ def login(body: LoginRequest):
         # 비번이 '맞고' 승인 대기(enabled=0)인 경우에만 별도 안내.
         # (비번 오류 시에는 일반 401 — 이메일 존재 여부 노출 방지)
         if user_db.is_pending_login(body.email, body.password):
+            auth_audit.record_auth_event("login", "pending_403", email=body.email)
             raise HTTPException(status_code=403, detail="관리자 승인 대기 중입니다")
+        auth_audit.record_auth_event("login", "fail_401", email=body.email)
         raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다")
     token = _make_token(user["id"])
+    auth_audit.record_auth_event("login", "success", actor_id=user["id"], email=body.email)
     return AuthResponse(token=token, user=UserResponse(**user_db.safe_user(user)))
 
 
@@ -176,8 +181,10 @@ def get_me(user: dict = Depends(get_jwt_user)):
 @user_auth_router.put("/me/password", status_code=204)
 def change_password(body: PasswordChangeRequest, user: dict = Depends(get_jwt_user)):
     if not user_db.authenticate_user(user["email"], body.current_password):
+        auth_audit.record_auth_event("password_change", "fail", actor_id=user["id"], email=user["email"])
         raise HTTPException(status_code=400, detail="현재 비밀번호가 올바르지 않습니다")
     user_db.update_password(user["id"], body.new_password)
+    auth_audit.record_auth_event("password_change", "success", actor_id=user["id"], email=user["email"])
 
 
 # ── 관리자 승인 (owner/admin 전용) ──────────────────────────────────────────────
@@ -193,8 +200,11 @@ def list_pending(_admin: dict = Depends(require_role("admin", "owner"))):
 
 
 @user_auth_router.post("/{user_id}/approve", status_code=200)
-def approve(user_id: str, _admin: dict = Depends(require_role("admin", "owner"))):
+def approve(user_id: str, admin: dict = Depends(require_role("admin", "owner"))):
     """승인 대기 사용자를 활성화(enabled=1) (관리자 전용)."""
+    actor = admin.get("actor") or admin.get("id")
     if not user_db.approve_user(user_id):
+        auth_audit.record_auth_event("approve", "not_found", actor_id=actor, target_user_id=user_id)
         raise HTTPException(status_code=404, detail="대상 사용자를 찾을 수 없습니다")
+    auth_audit.record_auth_event("approve", "success", actor_id=actor, target_user_id=user_id)
     return {"status": "approved", "user_id": user_id}

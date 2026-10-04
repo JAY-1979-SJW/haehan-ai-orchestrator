@@ -10,6 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.publish_guard import guarded
+
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
 DEFAULT_QUEUE = DATA_DIR / "eum_sales_mail_queue_latest.jsonl"
@@ -97,6 +99,7 @@ LATEST_SEND_RESULT_PATH = DATA_DIR / "hiworks_sales_mail_send_result_latest.json
 SEND_RESULT_DIR = DATA_DIR / "hiworks_send_results"
 
 
+@guarded("hiworks_mail_batch", ok_fn=lambda r: r["failed"] == 0)
 def execute_send_batch(plan: dict[str, Any], *, page) -> dict[str, Any]:
     """승인된 배치 발송 플랜을 실행한다. 1통씩 compose→fill→send→delay 순으로 진행."""
     from scripts.hiworks.mail import fill_compose, send_mail
