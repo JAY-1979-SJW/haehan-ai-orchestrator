@@ -72,7 +72,7 @@ def explore_accessible_pages(page, *, max_pages: int | None = None, partial_path
     if max_pages:
         pages = pages[:max_pages]
 
-    result = {
+    result: dict[str, Any] = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "base_url": EUM_BASE,
         "menu_count": len(menu),

@@ -14,9 +14,10 @@ sys.path.insert(0, str(ROOT))
 
 TESTS_DIR = ROOT / "tests"
 FRONTEND_SRC = ROOT / "admin-web" / "src"
+from tests.app_ui_paths import assistant_route  # noqa: E402
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 APP_STATUS_ROUTER = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
-DASHBOARD_PAGE = FRONTEND_SRC / "app" / "assistant" / "page.tsx"
+DASHBOARD_PAGE = assistant_route("page.tsx")
 
 TASK_QUEUE_POLISH_ALLOWLIST = [
     "tasks/page.tsx",
@@ -179,20 +180,18 @@ class TestGroupD_EndpointCount:
         assert "/storage/status" in app_status
 
     def test_runtime_endpoint_count_is_63(self):
-        from fastapi.routing import APIRoute, APIWebSocketRoute
+        from tests.app_routes import runtime_routes
 
-        from ai_orchestrator.server import app
-
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 63
+        # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
+        routes = runtime_routes()
+        assert len(routes) == 399
 
     def test_runtime_http_count_is_62(self):
-        from fastapi.routing import APIRoute
+        from tests.app_routes import http_routes
 
-        from ai_orchestrator.server import app
-
-        http = [r for r in app.routes if isinstance(r, APIRoute)]
-        assert len(http) == 62
+        # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
+        http = http_routes()
+        assert len(http) == 397
 
 
 # ── 안전 확인 ─────────────────────────────────────────────────────────────────

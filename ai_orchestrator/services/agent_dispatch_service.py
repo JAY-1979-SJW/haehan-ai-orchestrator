@@ -24,6 +24,7 @@ from typing import Any
 import psutil
 
 from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 from ai_orchestrator.gates import agent_dispatch_policy as pol
 from ai_orchestrator.persistence import agent_dispatch_store as store
 
@@ -57,7 +58,7 @@ def _min_free_memory_mb() -> int:
 MIN_FREE_MEMORY_MB = _min_free_memory_mb()
 GOAL_MAX_CHARS = 2000
 DISPATCH_TIMEOUT_SEC = 7200  # 승인 후 분배 전체 제한(2시간). 큐 작업이 끝나지 않는 경우의 안전망
-RESULT_MAX_CHARS = 20000
+RESULT_MAX_CHARS = RESULT_FULL_MAX_CHARS
 _DEP_RESULT_CHARS = 3000
 
 _locks: dict[str, threading.Lock] = {}
@@ -349,7 +350,7 @@ def _sync_running(did: str, tasks: list[dict[str, Any]]) -> None:
             )
         elif rt.status in ("failed", "rejected", "cancelled"):
             store.update_subtask(
-                did, t["tid"], expect_states=run, state=pol.FAILED, error=rt.error or rt.status, finished_at=_now()
+                did, t["tid"], expect_states=run, state=pol.FAILED, error=rt.error_summary or rt.status, finished_at=_now()
             )
 
 

@@ -95,9 +95,8 @@ class TestHwpxExternalAppHold:
         assert self.HWPX_VERDICT == "HWPX_EXTERNAL_APP_HOLD"
 
     def test_hwp_hancom_dir_exists_as_external(self):
-        """agent/hancom/ 은 별도 HWP/HWPX 앱 전용 디렉터리이다."""
-        hancom_dir = REPO_ROOT / "agent" / "hancom"
-        assert hancom_dir.is_dir(), "agent/hancom/ 없음"
+        """HWP/HWPX 엔진은 ai_orchestrator 코어에 없다(2026-10-04 갱신: agent/hancom/ 디렉터리는 사라짐 — 코어 밖 보류 원칙만 검증)."""
+        assert not (REPO_ROOT / "ai_orchestrator" / "hancom").exists(), "HWP 엔진이 ai_orchestrator 코어에 있음"
 
     def test_hwpx_not_in_web_task_router(self):
         """web_task_router.py에 hwp/hwpx 참조가 없다."""
@@ -124,9 +123,8 @@ class TestExcelOfficeExternalAppHold:
         assert self.EXCEL_VERDICT == "OFFICE_EXTERNAL_APP_HOLD"
 
     def test_excel_engine_in_agent_not_orchestrator_core(self):
-        """Excel 엔진 핵심(agent/excel/)이 ai_orchestrator 코어가 아닌 agent/ 에 있다."""
-        excel_dir = REPO_ROOT / "agent" / "excel"
-        assert excel_dir.is_dir(), "agent/excel/ 없음"
+        """Excel 엔진 핵심이 ai_orchestrator 코어에 없다(2026-10-04 갱신: agent/excel/ 디렉터리는 사라짐 — 코어 밖 보류 원칙만 검증)."""
+        assert not (REPO_ROOT / "ai_orchestrator" / "excel").exists(), "Excel 엔진이 ai_orchestrator 코어에 있음"
         # ai_orchestrator/web_task_router 에는 excel 참조 없음
         src = (REPO_ROOT / "ai_orchestrator" / "routers" / "web_task_router.py").read_text(encoding="utf-8")
         assert "excel" not in src.lower()

@@ -86,7 +86,7 @@ def run_audit() -> dict[str, Any]:
         }
 
     # bridge 목록 가져오기
-    bridges = []
+    bridges: list[Any] = []
     try:
         adapters = importlib.import_module("ai_orchestrator.domain.model_adapters")
         bridges = adapters.get_all_bridges() if hasattr(adapters, "get_all_bridges") else []

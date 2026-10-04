@@ -10,6 +10,7 @@ import contextlib
 import re
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from .cafe_mixin_common import _js
 
@@ -271,6 +272,10 @@ def _parse_article_comments(meta_frame, comments: list[dict]) -> None:
 
 
 class CafeArticleMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def cafe_liked_articles(self, cafe_url: str, max_posts: int = 30) -> list[dict]:
         """내가 좋아요한 게시글 목록.
 

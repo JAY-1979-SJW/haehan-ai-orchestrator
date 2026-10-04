@@ -216,7 +216,8 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
 
       if (data.status === "completed") {
         // result 는 서버 필터가 500자로 자르므로, 전문이 담긴 result_full 을 먼저 쓴다.
-        const resultText = data.result_data?.result_full ?? data.result_data?.result ?? data.result_summary ?? "(결과 없음)";
+        // 빈 문자열은 `??` 가 폴백하지 않아 빈 말풍선이 되므로 `||` 로 다음 후보로 넘긴다.
+        const resultText = data.result_data?.result_full || data.result_data?.result || data.result_summary || "(결과 없음)";
         const claudeSessionId = data.result_data?.session_id ?? "";
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, text: String(resultText), status: "done" } : m)),

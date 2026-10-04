@@ -15,9 +15,11 @@ from __future__ import annotations
 import json
 import logging
 import os
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from . import naver_search_db as db_mod
 from . import naver_search_state as state_mod
@@ -261,8 +263,8 @@ class _ShopRun:
     def __init__(self) -> None:
         self.agg = db_mod.InsertStats()
         self.consecutive = 0
-        self.conn_cm = None
-        self.conn = None
+        self.conn_cm: AbstractContextManager[Any] | None = None
+        self.conn: Any = None  # conn_cm.__enter__() 결과(DB 연결) — 연결 열기 성공 후에만 사용
         self.db_error_name: str | None = None
         self.early_stop_reason: str | None = None
 

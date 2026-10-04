@@ -6,7 +6,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "external-sites" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+PAGE = assistant_route("external-sites", "page.tsx")
 API_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "api.ts"
 
 def _src(p: Path) -> str:

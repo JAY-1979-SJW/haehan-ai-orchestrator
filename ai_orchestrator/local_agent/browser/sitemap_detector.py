@@ -242,7 +242,7 @@ def detect_sitemap(domain: str, page=None) -> SitemapInfo:
     return info
 
 
-def save_sitemap_cache(info: SitemapInfo, cache_dir: Path = None):  # noqa: RUF013
+def save_sitemap_cache(info: SitemapInfo, cache_dir: Path | None = None):
     """사이트 맵 캐시 저장."""
     if cache_dir is None:
         cache_dir = Path(__file__).parent / ".sitemap_cache"

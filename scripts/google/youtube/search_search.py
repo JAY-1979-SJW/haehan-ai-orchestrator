@@ -322,7 +322,7 @@ def extract_browser_search_results(session: Any, *, limit: int = 10) -> dict[str
 
 
 def _sanitize_browser_snapshot(data: dict[str, Any]) -> dict[str, Any]:
-    sanitized = {
+    sanitized: dict[str, Any] = {
         "url": safe_preview(str(data.get("url", "")).split("&pp=", 1)[0], limit=220),
         "title": safe_preview(data.get("title", ""), limit=160),
         "challenge_detected": bool(data.get("challenge_detected")),

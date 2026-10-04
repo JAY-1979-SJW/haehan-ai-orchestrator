@@ -35,7 +35,7 @@ class FakeReg:
     def enqueue_task(self, *, agent_id, action, params, requested_by):
         tid = f"q{len(self.enqueued) + 1}"
         self.enqueued.append({"task_id": tid, "agent_id": agent_id, "action": action, "params": params})
-        self.tasks[tid] = SimpleNamespace(task_id=tid, status="queued", result_data=None, result_summary="", error="")
+        self.tasks[tid] = SimpleNamespace(task_id=tid, status="queued", result_data=None, result_summary="", error_summary="")
         return self.tasks[tid]
 
     def get_task(self, _agent, task_id):
@@ -52,7 +52,7 @@ class FakeReg:
         t.result_data = (
             ({"result": text[:500], "result_full": text} if truncate_result else {"result": text}) if ok else None
         )
-        t.error = "" if ok else "boom"
+        t.error_summary = "" if ok else "boom"
 
 
 @pytest.fixture

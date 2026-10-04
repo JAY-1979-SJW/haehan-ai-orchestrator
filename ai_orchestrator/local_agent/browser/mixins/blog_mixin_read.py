@@ -10,6 +10,7 @@ import contextlib
 import re
 import time
 from contextlib import suppress
+from typing import TYPE_CHECKING, Any
 
 from .blog_mixin_common import _js
 
@@ -71,6 +72,10 @@ _BLOG_POSTS_DOM_JS = """
 
 
 class BlogReadMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def blog_info(self, blog_url: str) -> dict:
         """블로그 기본정보 조회."""
         blog_id = blog_url.rstrip("/").split("/")[-1]
@@ -352,7 +357,7 @@ class BlogReadMixin:
 
         return posts[:max_posts]
 
-    def _pick_post_frame(self, log_no: str) -> object:
+    def _pick_post_frame(self, log_no: str) -> Any:
         """PostView 프레임 우선 탐색 (본문 내용 있는 iframe)."""
         frame = self._page
         if log_no:
@@ -374,7 +379,7 @@ class BlogReadMixin:
         return frame
 
     @staticmethod
-    def _fill_author_and_date(frame: object, info: dict) -> None:
+    def _fill_author_and_date(frame: Any, info: dict) -> None:
         # 작성자 + 작성일: .writer 선택자 → "닉네임 ・ YYYY. MM. DD. HH:MM"
         try:
             writer_txt = frame.locator(".writer").first.inner_text(timeout=1000).strip()
@@ -389,7 +394,7 @@ class BlogReadMixin:
             info["written_at"] = m_date.group(1) if m_date else ""
 
     @staticmethod
-    def _fill_author_fallback(frame: object, info: dict, blog_id: str) -> None:
+    def _fill_author_fallback(frame: Any, info: dict, blog_id: str) -> None:
         """작성자 폴백: .nick 선택자 또는 blogId."""
         if info["author"]:
             return
@@ -404,7 +409,7 @@ class BlogReadMixin:
         if not info["author"]:
             info["author"] = blog_id
 
-    def _fill_post_text_fields(self, frame: object, blog_id: str, info: dict) -> None:
+    def _fill_post_text_fields(self, frame: Any, blog_id: str, info: dict) -> None:
         """제목/작성자/작성일/공감·댓글 수/본문을 info 에 단계별로 채운다 (예외 시 이미 채운 값은 유지)."""
         # 제목: <title> 파싱 후 " : 네이버 블로그", " - 네이버 블로그" 제거
         raw_title = re.search(r"<title>(.+?)</title>", frame.content())
@@ -445,7 +450,7 @@ class BlogReadMixin:
         }
         tags = []
         images = []
-        comments = []
+        comments: list[Any] = []
 
         frame = self._pick_post_frame(log_no)
 
@@ -488,7 +493,7 @@ class BlogReadMixin:
         self.go(post_url)
         time.sleep(2)
 
-        images = []
+        images: list[Any] = []
         try:
             result = self._page.evaluate(_js("extract_blog_images.js"))
             images = result or []
@@ -508,7 +513,7 @@ class BlogReadMixin:
         self.go(url)
         time.sleep(2)
 
-        results = []
+        results: list[Any] = []
         try:
             result = self._page.evaluate(_js("extract_blog_search.js"))
             results = result or []
@@ -525,7 +530,7 @@ class BlogReadMixin:
         self.go(url)
         time.sleep(2.5)
 
-        entries = []
+        entries: list[Any] = []
         try:
             body = self._page.inner_text("body")
             lines = [ln.strip() for ln in body.splitlines() if ln.strip()]
@@ -597,7 +602,7 @@ class BlogReadMixin:
         self.go(post_url)
         time.sleep(3)
 
-        comments = []
+        comments: list[Any] = []
         try:
             result = self._page.evaluate(_js("extract_blog_comments.js"))
             comments = result or []
@@ -653,7 +658,7 @@ class BlogReadMixin:
         self.go(blog_url)
         time.sleep(2)
 
-        stats = {}
+        stats: dict[Any, Any] = {}
         try:
             result = self._page.evaluate(_js("extract_blog_stats.js"))
             stats = result or {}
@@ -682,7 +687,7 @@ class BlogReadMixin:
         self.go(url)
         time.sleep(2)
 
-        posts = []
+        posts: list[Any] = []
         try:
             result = self._page.evaluate(_js("extract_blog_posts.js"))
             posts = result or []

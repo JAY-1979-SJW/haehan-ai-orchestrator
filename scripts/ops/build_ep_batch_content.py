@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import matplotlib
 
@@ -178,7 +179,7 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
     title = item["title"]
     topic_short = item.get("short") or title.split(",")[0]
 
-    parts = []
+    parts: list[Any] = []
     _body_part_intro(parts, item)
     _body_part_compare(parts)
     _body_part_prompt(parts, item)

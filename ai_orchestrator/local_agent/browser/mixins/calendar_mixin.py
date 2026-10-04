@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 
 def _js(name: str) -> str:
@@ -14,6 +15,10 @@ class CalendarMixin:
 
     실제 캡처된 API: ['/data/variables', '/localeMessageForJs', '/data/colors', '/data/stickers', '/ajax/GetScheduleList']
     """
+
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
 
     def calendar_events(self, start: str, end: str) -> list[dict]:
         """일정 목록 조회 — XHR 후킹 방식. 응답 구조 v2 반영.

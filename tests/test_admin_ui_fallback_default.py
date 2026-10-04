@@ -24,10 +24,11 @@ def test_legacy_admin_ui_returns_404_by_default(monkeypatch):
     monkeypatch.delenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", raising=False)
     client = _client({"actor": "admin_test", "role": "admin"})
 
-    response = client.get("/api/v1/admin/local-agents")
+    response = client.get("/api/v1/admin/local-agents", follow_redirects=False)
 
-    assert response.status_code == 404
-    assert "admin-web" in response.text
+    # 2026-10-04 갱신: 기본 비활성은 404 가 아니라 admin-web 으로 303 안내(admin_ui_router 2026-09-30 동작)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/local-agents"
 
 
 def test_legacy_admin_ui_requires_explicit_fallback(monkeypatch):
