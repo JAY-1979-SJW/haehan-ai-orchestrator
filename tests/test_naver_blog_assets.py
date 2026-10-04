@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from scripts.naver.blog import assets
+from scripts.naver.blog.seo import assets as seo_assets
 
 
 def test_blog_asset_plan_is_rights_aware():
@@ -162,8 +163,9 @@ def test_pixel_analysis_adjusts_representative_score(monkeypatch, tmp_path):
         ],
     }
 
+    # blog/assets.py 는 import * 스텁이라 실제 구현 모듈(seo.assets)의 이름을 패치해야 한다.
     monkeypatch.setattr(
-        assets,
+        seo_assets,
         "download_blog_asset_images",
         lambda inventory, output_dir, limit: {
             "ok": True,

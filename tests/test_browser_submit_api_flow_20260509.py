@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.asgi import app
+from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.local_agent.user_approval_gate import (
     _REQUESTS,
     _TOKENS,
@@ -20,7 +21,16 @@ EVIDENCE_URL = "/api/v1/actions/evidence"
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    # AUTH_ENABLED 기본 true — 이 시험은 인증이 아니라 액션 흐름 검증이므로 의존성만 우회하고 종료 시 복원한다.
+    prev = app.dependency_overrides.get(get_current_user)
+    app.dependency_overrides[get_current_user] = lambda: {"role": "admin", "actor": "test_user"}
+    try:
+        yield TestClient(app)
+    finally:
+        if prev is None:
+            app.dependency_overrides.pop(get_current_user, None)
+        else:
+            app.dependency_overrides[get_current_user] = prev
 
 
 @pytest.fixture(autouse=True)

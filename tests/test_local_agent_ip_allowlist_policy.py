@@ -239,6 +239,7 @@ def test_regression_proxy_checklist_doc_exists():
 
 def test_regression_local_agent_router_imports():
     from ai_orchestrator import local_agent_router as r
+    from ai_orchestrator import local_agent_router_registration as reg
 
     assert hasattr(r, "local_agent_router")
-    assert hasattr(r, "register_with_code")
+    assert hasattr(reg, "register_with_code")
