@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import sys
@@ -33,10 +34,14 @@ _DDAY_RE = re.compile(r"D-(\d+)")
 _MANAGER_RE = re.compile(r"(\d{2}:\d{2})\s+([가-힣]{2,4})\s+\d{4}-\d{2}-\d{2}")
 
 
+logger = logging.getLogger(__name__)
+
+
 def _load_profile() -> dict:
     try:
         return json.loads(PROFILE_FILE.read_text(encoding="utf-8"))
-    except Exception:  # noqa: BLE001 - 프로필/스캔결과 JSON 읽기 전용 — 파일 없거나 손상돼도 빈 결과로 안전 폴백, 쓰기 없음
+    except Exception:
+        logger.warning("프로필 로드 실패: %s", PROFILE_FILE, exc_info=True)
         return {"keywords": [], "keyword_weights": {}}
 
 

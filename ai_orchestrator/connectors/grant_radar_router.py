@@ -53,7 +53,8 @@ _MASK_KEYS = {"business_no", "_note"}
 def _load_company() -> dict:
     try:
         return json.loads(COMPANY_FILE.read_text(encoding="utf-8"))
-    except Exception:  # noqa: BLE001 - 정부지원사업 공고 스캔/초안생성 API - 모두 ok:False,reason 반환, 실제 신청서 제출 없음(초안 저장까지만), 감사로그 실패는 warning 으로만 무시
+    except Exception:
+        logger.warning("회사 프로필 로드 실패: %s", COMPANY_FILE, exc_info=True)
         return {}
 
 
@@ -62,7 +63,8 @@ def _load_report_items() -> list[dict]:
         return []
     try:
         return json.loads(REPORT_FILE.read_text(encoding="utf-8")).get("items", [])
-    except Exception:  # noqa: BLE001 - 정부지원사업 공고 스캔/초안생성 API - 모두 ok:False,reason 반환, 실제 신청서 제출 없음(초안 저장까지만), 감사로그 실패는 warning 으로만 무시
+    except Exception:
+        logger.warning("보고서 항목 로드 실패: %s", REPORT_FILE, exc_info=True)
         return []
 
 
@@ -74,8 +76,9 @@ def get_report():
     try:
         data = json.loads(REPORT_FILE.read_text(encoding="utf-8"))
         return data
-    except Exception as e:  # noqa: BLE001 - 정부지원사업 공고 스캔/초안생성 API - 모두 ok:False,reason 반환, 실제 신청서 제출 없음(초안 저장까지만), 감사로그 실패는 warning 으로만 무시
+    except Exception as e:
         logger.error("보고서 로드 실패: %s", e)
+        logger.exception("보고서 로드 실패: %s", e)
         return {"ok": False, "reason": "read_error", "items": []}
 
 
@@ -111,8 +114,9 @@ def trigger_scan():
         return {"ok": ok, "scan_rc": scan.returncode, "report_rc": rep.returncode}
     except subprocess.TimeoutExpired:
         return {"ok": False, "reason": "timeout"}
-    except Exception as e:  # noqa: BLE001 - 정부지원사업 공고 스캔/초안생성 API - 모두 ok:False,reason 반환, 실제 신청서 제출 없음(초안 저장까지만), 감사로그 실패는 warning 으로만 무시
+    except Exception as e:
         logger.error("스캔 실행 오류: %s", e)
+        logger.exception("스캔 실행 오류: %s", e)
         return {"ok": False, "reason": "exec_error"}
     finally:
         _scan_running = False
@@ -151,8 +155,9 @@ def make_draft(body: DraftRequest):
         from ..openai_client import generate_application_draft
 
         draft = generate_application_draft(grant, company)
-    except Exception as e:  # noqa: BLE001 - 정부지원사업 공고 스캔/초안생성 API - 모두 ok:False,reason 반환, 실제 신청서 제출 없음(초안 저장까지만), 감사로그 실패는 warning 으로만 무시
+    except Exception as e:
         logger.error("초안 생성 오류: %s", e)
+        logger.exception("초안 생성 오류: %s", e)
         return {"ok": False, "reason": "draft_error"}
 
     # 저장
@@ -221,8 +226,9 @@ def fill_form(body: FillRequest):
         result = json.loads(out[-1]) if out else {"ok": False, "reason": "no_output"}
     except subprocess.TimeoutExpired:
         return {"ok": False, "reason": "timeout"}
-    except Exception as e:  # noqa: BLE001 - 정부지원사업 공고 스캔/초안생성 API - 모두 ok:False,reason 반환, 실제 신청서 제출 없음(초안 저장까지만), 감사로그 실패는 warning 으로만 무시
+    except Exception as e:
         logger.error("폼 입력 오류: %s", e)
+        logger.exception("폼 입력 오류: %s", e)
         return {"ok": False, "reason": "exec_error"}
 
     if result.get("ok"):

@@ -15,6 +15,7 @@ L5 Site Module / L4 Browser Engine. 외부 발행/제출 없음.
 from __future__ import annotations
 
 import json
+import logging
 import sys
 
 CDP = "http://127.0.0.1:9222"
@@ -96,7 +97,8 @@ def run(req: dict) -> dict:
 def main() -> int:
     try:
         req = json.loads(sys.stdin.read() or "{}")
-    except Exception:  # noqa: BLE001 - 정부 지원사업 신청폼 초안 입력 — 문서 자체에 '제출 버튼은 절대 클릭하지 않음' 명시, except는 playwright 미설치/CDP 연결실패/입력실패/JSON파싱실패 시 모두 {ok: False}로 안전 반환.
+    except Exception:
+        logging.getLogger(__name__).warning("요청 JSON 파싱 실패", exc_info=True)
         req = {}
     print(json.dumps(run(req), ensure_ascii=False))
     return 0
