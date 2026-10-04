@@ -24,7 +24,7 @@ from scripts.google.youtube.search_common import (
 from security_utils import safe_preview
 
 
-def search_videos(
+def search_videos(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     query: str,
     *,
     max_results: int = 10,
@@ -322,7 +322,7 @@ def extract_browser_search_results(session: Any, *, limit: int = 10) -> dict[str
 
 
 def _sanitize_browser_snapshot(data: dict[str, Any]) -> dict[str, Any]:
-    sanitized = {
+    sanitized: dict[str, Any] = {
         "url": safe_preview(str(data.get("url", "")).split("&pp=", 1)[0], limit=220),
         "title": safe_preview(data.get("title", ""), limit=160),
         "challenge_detected": bool(data.get("challenge_detected")),

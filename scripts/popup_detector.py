@@ -178,6 +178,48 @@ def detect_popup(page) -> dict[str, Any]:
         return {"detected": False, "popup_count": 0, "types": [], "elements": []}
 
 
+def _close_by_text(container):
+    for txt in CLOSE_TEXTS:
+        try:
+            btn = container.get_by_text(txt, exact=True)
+            if btn.count() > 0 and btn.first.is_visible(timeout=300):
+                btn.first.click(timeout=2000)
+                time.sleep(0.8)
+                _log.info("[popup-detector] 팝업 닫음: 텍스트버튼='%s'", txt)
+                return {"closed": True, "method": f"text_button:{txt}"}
+        except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
+            continue
+    return None
+
+
+def _close_by_selector(container):
+    for sel in CLOSE_SELECTORS:
+        try:
+            btn = container.locator(sel).first
+            if btn.is_visible(timeout=300):
+                btn.click(timeout=2000)
+                time.sleep(0.8)
+                _log.info("[popup-detector] 팝업 닫음: 셀렉터='%s'", sel)
+                return {"closed": True, "method": f"selector:{sel}"}
+        except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
+            continue
+    return None
+
+
+def _close_by_global(page):
+    for sel in CLOSE_SELECTORS:
+        try:
+            btn = page.locator(sel).first
+            if btn.is_visible(timeout=300):
+                btn.click(timeout=2000)
+                time.sleep(0.8)
+                _log.info("[popup-detector] 팝업 닫음: 전역셀렉터='%s'", sel)
+                return {"closed": True, "method": f"global:{sel}"}
+        except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
+            continue
+    return None
+
+
 def close_popup(page) -> dict[str, Any]:
     """최상위 팝업 1개 닫기.
 
@@ -196,40 +238,19 @@ def close_popup(page) -> dict[str, Any]:
         container = top["locator"]
 
         # 1. 팝업 내부 닫기 텍스트 버튼
-        for txt in CLOSE_TEXTS:
-            try:
-                btn = container.get_by_text(txt, exact=True)
-                if btn.count() > 0 and btn.first.is_visible(timeout=300):
-                    btn.first.click(timeout=2000)
-                    time.sleep(0.8)
-                    _log.info("[popup-detector] 팝업 닫음: 텍스트버튼='%s'", txt)
-                    return {"closed": True, "method": f"text_button:{txt}"}
-            except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
-                continue
+        _early = _close_by_text(container)
+        if _early is not None:
+            return _early
 
         # 2. 클래스 기반 닫기 버튼 (팝업 내부)
-        for sel in CLOSE_SELECTORS:
-            try:
-                btn = container.locator(sel).first
-                if btn.is_visible(timeout=300):
-                    btn.click(timeout=2000)
-                    time.sleep(0.8)
-                    _log.info("[popup-detector] 팝업 닫음: 셀렉터='%s'", sel)
-                    return {"closed": True, "method": f"selector:{sel}"}
-            except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
-                continue
+        _early = _close_by_selector(container)
+        if _early is not None:
+            return _early
 
         # 3. 전역 닫기 버튼 (팝업 밖에서도 탐색)
-        for sel in CLOSE_SELECTORS:
-            try:
-                btn = page.locator(sel).first
-                if btn.is_visible(timeout=300):
-                    btn.click(timeout=2000)
-                    time.sleep(0.8)
-                    _log.info("[popup-detector] 팝업 닫음: 전역셀렉터='%s'", sel)
-                    return {"closed": True, "method": f"global:{sel}"}
-            except Exception:  # noqa: BLE001 - 범용 팝업 감지·닫기 — 순수 UI 노이즈 제거, 실패는 {detected/closed: False, ...} 구조로 반환하거나 보호도메인은 무조건 제외, 쓰기·결제 없음(2026-09-28 검토)
-                continue
+        _early = _close_by_global(page)
+        if _early is not None:
+            return _early
 
         # 4. ESC
         page.keyboard.press("Escape")
@@ -347,6 +368,18 @@ def _force_close_all(page) -> int:
     return count
 
 
+def _title_keyword_popup(info, title, w, h):
+    for kw in POPUP_WINDOW_TITLE_KEYWORDS:
+        if kw in title:
+            # opener도 있으면 거의 확실
+            if info.get("hasOpener"):
+                return True, f"title_kw_with_opener:{kw}"
+            # title만으로는 약함 — 작은 창 크기 추가 조건
+            if w > 0 and (w < 800 or h < 600):
+                return True, f"title_kw_small:{kw}"
+    return None
+
+
 def _looks_like_popup_window(p) -> tuple[bool, str]:
     """페이지가 window.open()으로 열린 팝업창인지 휴리스틱 판단.
 
@@ -393,14 +426,9 @@ def _looks_like_popup_window(p) -> tuple[bool, str]:
         h = info.get("h", 0) or 0
 
         # 3. title 키워드
-        for kw in POPUP_WINDOW_TITLE_KEYWORDS:
-            if kw in title:
-                # opener도 있으면 거의 확실
-                if info.get("hasOpener"):
-                    return True, f"title_kw_with_opener:{kw}"
-                # title만으로는 약함 — 작은 창 크기 추가 조건
-                if w > 0 and (w < 800 or h < 600):
-                    return True, f"title_kw_small:{kw}"
+        _early = _title_keyword_popup(info, title, w, h)
+        if _early is not None:
+            return _early
 
         # 4. opener 있고 작은 창 (전형적인 window.open 팝업)
         if info.get("hasOpener") and w > 0 and (w < 800 or h < 600):

@@ -85,6 +85,34 @@ def _now_iso() -> str:
     return datetime.now(tz=timezone.utc).isoformat()
 
 
+def _reject_status_event(
+    workflow_run_id: str,
+    agent_id: str,
+    audit_reason: str,
+    error: str,
+    message_ko: str,
+    validation_errors: list[str] | None = None,
+) -> dict[str, Any]:
+    """거부 audit 기록 + 거부 응답 dict 생성 (기존 인라인 로직과 동일)."""
+    if _AUDIT_AVAILABLE:
+        _log_event(
+            "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
+            actor=agent_id or "ws-agent",
+            note=f"reason={audit_reason}",
+        )
+    result: dict[str, Any] = {
+        "ok": False,
+        "workflow_run_id": workflow_run_id,
+        "accepted_status": None,
+        "safe_to_execute": False,
+        "error": error,
+    }
+    if validation_errors is not None:
+        result["validation_errors"] = validation_errors
+    result["message_ko"] = message_ko
+    return result
+
+
 def handle_user_present_status_event(
     event: dict[str, Any],
     agent_id: str = "",
@@ -100,74 +128,42 @@ def handle_user_present_status_event(
 
     # safe_to_execute=true 강제 reject
     if event.get("safe_to_execute") is True:
-        if _AUDIT_AVAILABLE:
-            _log_event(
-                "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
-                actor=agent_id or "ws-agent",
-                note="reason=SAFE_TO_EXECUTE_MUST_BE_FALSE",
-            )
-        return {
-            "ok": False,
-            "workflow_run_id": workflow_run_id,
-            "accepted_status": None,
-            "safe_to_execute": False,
-            "error": "SAFE_TO_EXECUTE_MUST_BE_FALSE",
-            "message_ko": "safe_to_execute=true는 허용되지 않습니다.",
-        }
+        return _reject_status_event(
+            workflow_run_id, agent_id,
+            "SAFE_TO_EXECUTE_MUST_BE_FALSE",
+            "SAFE_TO_EXECUTE_MUST_BE_FALSE",
+            "safe_to_execute=true는 허용되지 않습니다.",
+        )
 
     # 민감 필드 포함 reject
     for field in _REJECT_FIELDS:
         if field in event:
-            if _AUDIT_AVAILABLE:
-                _log_event(
-                    "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
-                    actor=agent_id or "ws-agent",
-                    note=f"reason=FORBIDDEN_FIELD field={field}",
-                )
-            return {
-                "ok": False,
-                "workflow_run_id": workflow_run_id,
-                "accepted_status": None,
-                "safe_to_execute": False,
-                "error": f"FORBIDDEN_FIELD_PRESENT: {field}",
-                "message_ko": f"금지 필드 포함: {field}",
-            }
+            return _reject_status_event(
+                workflow_run_id, agent_id,
+                f"FORBIDDEN_FIELD field={field}",
+                f"FORBIDDEN_FIELD_PRESENT: {field}",
+                f"금지 필드 포함: {field}",
+            )
 
     # contract validation
     errors = validate_user_present_ws_status_event(event)
     if errors:
-        if _AUDIT_AVAILABLE:
-            _log_event(
-                "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
-                actor=agent_id or "ws-agent",
-                note=f"reason=VALIDATION_FAILED errors={errors}",
-            )
-        return {
-            "ok": False,
-            "workflow_run_id": workflow_run_id,
-            "accepted_status": None,
-            "safe_to_execute": False,
-            "error": "VALIDATION_FAILED",
-            "validation_errors": errors,
-            "message_ko": "event 검증 실패.",
-        }
+        return _reject_status_event(
+            workflow_run_id, agent_id,
+            f"VALIDATION_FAILED errors={errors}",
+            "VALIDATION_FAILED",
+            "event 검증 실패.",
+            validation_errors=errors,
+        )
 
     status = event.get("status", "")
     if status not in _ACCEPTED_STATUSES:
-        if _AUDIT_AVAILABLE:
-            _log_event(
-                "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
-                actor=agent_id or "ws-agent",
-                note=f"reason=UNKNOWN_STATUS status={status}",
-            )
-        return {
-            "ok": False,
-            "workflow_run_id": workflow_run_id,
-            "accepted_status": None,
-            "safe_to_execute": False,
-            "error": f"UNKNOWN_STATUS: {status}",
-            "message_ko": f"알 수 없는 status: {status}",
-        }
+        return _reject_status_event(
+            workflow_run_id, agent_id,
+            f"UNKNOWN_STATUS status={status}",
+            f"UNKNOWN_STATUS: {status}",
+            f"알 수 없는 status: {status}",
+        )
 
     received_at = _now_iso()
 

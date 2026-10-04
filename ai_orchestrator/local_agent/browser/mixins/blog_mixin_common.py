@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING, Any
 
 
 def _js(name: str) -> str:
@@ -17,6 +18,10 @@ def _js(name: str) -> str:
 
 class BlogCommonMixin:
     """블로그 프레임 헬퍼 + 내 블로그 URL 탐지 (공유 기본 능력)."""
+
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드를 self(MRO)로 호출한다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
 
     # ── 프레임 헬퍼 ────────────────────────────────────────────────────────────
 

@@ -180,27 +180,10 @@ def _session_summary(session: CdpSession) -> dict[str, Any]:
     }
 
 
-def evaluate_sessions(task: str, sessions: Iterable[CdpSession]) -> SelectionReport:
-    task_key = task.strip().lower()
-    all_sessions = list(sessions)
-    summaries = [_session_summary(session) for session in all_sessions]
-    if task_key not in TASK_DOMAIN_GROUPS:
-        return SelectionReport(
-            ok=False,
-            code=CODE_UNKNOWN_TASK,
-            task=task_key,
-            messages=[f"Unknown CDP task domain: {task_key}"],
-            sessions=summaries,
-        )
-    if not all_sessions:
-        return SelectionReport(
-            ok=False,
-            code=CODE_NO_CDP,
-            task=task_key,
-            messages=["No running CDP sessions were discovered."],
-            sessions=[],
-        )
-
+def _classify_sessions(
+    task_key: str, all_sessions: list[CdpSession]
+) -> tuple[list[CdpSession], list[CdpSession], list[CdpSession], list[tuple[CdpSession, int, int]]]:
+    """세션을 (후보, 혼합 도메인, 내부 URL 탭 포함, 탭 한도 초과)로 분류."""
     conflict_groups = set(CONFLICT_DOMAIN_GROUPS.get(task_key, ()))
     candidates: list[CdpSession] = []
     mixed: list[CdpSession] = []
@@ -222,6 +205,31 @@ def evaluate_sessions(task: str, sessions: Iterable[CdpSession]) -> SelectionRep
             mixed.append(session)
         else:
             candidates.append(session)
+    return candidates, mixed, invalid_infra, tab_limited
+
+
+def evaluate_sessions(task: str, sessions: Iterable[CdpSession]) -> SelectionReport:
+    task_key = task.strip().lower()
+    all_sessions = list(sessions)
+    summaries = [_session_summary(session) for session in all_sessions]
+    if task_key not in TASK_DOMAIN_GROUPS:
+        return SelectionReport(
+            ok=False,
+            code=CODE_UNKNOWN_TASK,
+            task=task_key,
+            messages=[f"Unknown CDP task domain: {task_key}"],
+            sessions=summaries,
+        )
+    if not all_sessions:
+        return SelectionReport(
+            ok=False,
+            code=CODE_NO_CDP,
+            task=task_key,
+            messages=["No running CDP sessions were discovered."],
+            sessions=[],
+        )
+
+    candidates, mixed, invalid_infra, tab_limited = _classify_sessions(task_key, all_sessions)
 
     if len(candidates) > 1:
         return SelectionReport(
@@ -383,7 +391,7 @@ def _send_browser_cdp(
         ws.close()
 
 
-def create_isolated_target(
+def create_isolated_target(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     task: str,
     work: str,
@@ -530,6 +538,38 @@ def _parse_ports(raw: str) -> list[int]:
         else:
             out.append(int(part))
     return out
+
+
+def _pick_naver_session_when_readonly_mixed(
+    selection: SelectionReport,
+    sessions: Iterable[CdpSession],
+) -> CdpSession | None:
+    """읽기 전용이면 네이버 페이지가 섞여 있는 세션도 허용할 때, 네이버 페이지가 있는 세션을 고른다."""
+    if selection.code != CODE_MIXED_DOMAIN_SESSION:
+        return None
+    for session in sessions:
+        if any("naver.com" in page.host for page in session.pages):
+            return session
+    return None
+
+
+def select_naver_session(
+    *,
+    sessions: Iterable[CdpSession] | None = None,
+    allow_mixed_readonly: bool = False,
+) -> tuple[CdpSession | None, SelectionReport]:
+    """네이버 작업에 쓸 CDP 세션을 고른다(카페·메일 백그라운드 러너 공용 — 예전엔 두 러너에 복사돼 있었다)."""
+    discovered = list(sessions) if sessions is not None else discover_sessions()
+    selection = evaluate_sessions("naver", discovered)
+    if selection.ok and selection.selected_port is not None:
+        for session in discovered:
+            if session.port == selection.selected_port:
+                return session, selection
+    if allow_mixed_readonly:
+        mixed_session = _pick_naver_session_when_readonly_mixed(selection, discovered)
+        if mixed_session is not None:
+            return mixed_session, selection
+    return None, selection
 
 
 def main(argv: list[str] | None = None) -> int:

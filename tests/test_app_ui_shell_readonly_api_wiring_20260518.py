@@ -13,6 +13,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = REPO_ROOT / "admin-web" / "src"
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
+from tests.app_ui_paths import assistant_route  # noqa: E402
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 API_CLIENT = FRONTEND_ROOT / "lib" / "assistant" / "api.ts"
 
@@ -186,14 +187,14 @@ def test_mock_fallback_exists():
 # ── 7. Dashboard health 상태 표시 ─────────────────────────────────────────────
 
 def test_dashboard_shows_health_state():
-    content = (ASSISTANT_APP / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("page.tsx")).read_text(encoding="utf-8")
     assert "getAssistantHealth" in content or "health" in content.lower()
 
 
 # ── 8. Task Queue inbox 상태 표시 ─────────────────────────────────────────────
 
 def test_tasks_shows_inbox_state():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "getAssistantInbox" in content or "inbox" in content.lower()
 
 
@@ -210,7 +211,7 @@ def test_tasks_shows_inbox_state():
     "deployment/page.tsx",
 ])
 def test_route_still_exists(route: str):
-    assert (ASSISTANT_APP / route).exists(), f"{route} 없음"
+    assert (assistant_route(*route.split("/"))).exists(), f"{route} 없음"
 
 
 # ── 10. 금지 버튼 없음 ────────────────────────────────────────────────────────

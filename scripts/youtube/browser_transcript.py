@@ -213,28 +213,16 @@ def _open_page_with_selected_cdp(selection: dict[str, Any], url: str, video_id: 
     return playwright, browser, page
 
 
-def collect_visible_transcript_summary(
-    url_or_video_id: str,
-    *,
-    max_segments: int = 160,
-    wait_seconds: float = 4.0,
-    open_transcript: bool = True,
-    cdp_ports: str | None = None,
-) -> tuple[dict[str, Any], Path]:
-    """Open a YouTube URL in the local user browser and summarize visible transcript text."""
-    video_id = parse_youtube_video_id(url_or_video_id)
+def _invalid_id_result(url_or_video_id, video_id):
     if not video_id:
         payload = summarize_visible_segments([], video_id="", url="")
         payload["reason"] = "invalid_youtube_video_url_or_id"
         payload["input"] = safe_preview(url_or_video_id, limit=180)
         return payload, _write_report(payload)
+    return None
 
-    url = f"https://www.youtube.com/watch?v={video_id}"
-    cdp_selection = select_cdp_session(
-        target_domains=["youtube.com", "youtu.be"],
-        avoid_domains=["naver.com"],
-        ports=_parse_ports(cdp_ports),
-    )
+
+def _selection_blocked_result(cdp_selection, video_id, url):
     if not cdp_selection.get("ok"):
         payload = summarize_visible_segments([], video_id=video_id, url=url)
         payload.update(
@@ -247,6 +235,43 @@ def collect_visible_transcript_summary(
             }
         )
         return payload, _write_report(payload)
+    return None
+
+
+def _open_transcript_panel(page, open_transcript):
+    open_result: dict[str, Any] = {"clicked": False, "label": ""}
+    if open_transcript:
+        open_result = page.evaluate(OPEN_TRANSCRIPT_JS) or {"clicked": False, "label": ""}
+        page.wait_for_timeout(1200)
+        if open_result.get("needs_retry"):
+            open_result = page.evaluate(OPEN_TRANSCRIPT_JS) or open_result
+            page.wait_for_timeout(1200)
+    return open_result
+
+
+def collect_visible_transcript_summary(
+    url_or_video_id: str,
+    *,
+    max_segments: int = 160,
+    wait_seconds: float = 4.0,
+    open_transcript: bool = True,
+    cdp_ports: str | None = None,
+) -> tuple[dict[str, Any], Path]:
+    """Open a YouTube URL in the local user browser and summarize visible transcript text."""
+    video_id = parse_youtube_video_id(url_or_video_id)
+    _early = _invalid_id_result(url_or_video_id, video_id)
+    if _early is not None:
+        return _early
+
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    cdp_selection = select_cdp_session(
+        target_domains=["youtube.com", "youtu.be"],
+        avoid_domains=["naver.com"],
+        ports=_parse_ports(cdp_ports),
+    )
+    _early = _selection_blocked_result(cdp_selection, video_id, url)
+    if _early is not None:
+        return _early
 
     playwright = None
     browser = None
@@ -258,13 +283,7 @@ def collect_visible_transcript_summary(
             open_existing=not open_transcript,
         )
         page.wait_for_timeout(int(max(0.5, wait_seconds) * 1000))
-        open_result: dict[str, Any] = {"clicked": False, "label": ""}
-        if open_transcript:
-            open_result = page.evaluate(OPEN_TRANSCRIPT_JS) or {"clicked": False, "label": ""}
-            page.wait_for_timeout(1200)
-            if open_result.get("needs_retry"):
-                open_result = page.evaluate(OPEN_TRANSCRIPT_JS) or open_result
-                page.wait_for_timeout(1200)
+        open_result = _open_transcript_panel(page, open_transcript)
         segments = page.evaluate(EXTRACT_VISIBLE_TRANSCRIPT_JS) or []
     except Exception as exc:  # noqa: BLE001 - 유튜브 자막 브라우저 추출(읽기전용) — 추출 실패 시 payload status를 blocked로 명시 기록, 브라우저/playwright 종료(cleanup) 실패는 무시할 뿐 쓰기 없음
         payload = summarize_visible_segments([], video_id=video_id, url=url)

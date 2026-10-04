@@ -38,9 +38,7 @@ def _source(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8", errors="replace")
 
 
-def audit() -> list[str]:
-    failures: list[str] = []
-
+def _audit_login_urls(failures):
     if auth.GOOGLE_LOGIN_URL != GOOGLE_HOME:
         failures.append(f"scripts.google.auth.GOOGLE_LOGIN_URL must be {GOOGLE_HOME!r}")
 
@@ -59,6 +57,8 @@ def audit() -> list[str]:
     else:
         failures.append("accounts.google.com direct login URL must be blocked")
 
+
+def _audit_enforcement_sources(failures):
     auth_src = _source("scripts/google/auth.py")
     if 'site_entry_policy.assert_main_page_first(GOOGLE_LOGIN_URL, site_key="google")' not in auth_src:
         failures.append("scripts/google/auth.py must enforce main-page-first before page.goto")
@@ -72,6 +72,8 @@ def audit() -> list[str]:
     if not sequence or sequence[0].get("url") != GOOGLE_HOME:
         failures.append("managed Google console sequence must start from Google Home")
 
+
+def _audit_work_mode(failures):
     missing_mode = build_google_work_mode_policy(None)
     if missing_mode.get("status") != "blocked" or missing_mode.get("blocked_reason") != "google_work_mode_required":
         failures.append("missing Google work mode must be blocked")
@@ -92,6 +94,16 @@ def audit() -> list[str]:
         "headless_or_background_allowed"
     ):
         failures.append("approved background Google work mode must be allowed")
+
+
+def audit() -> list[str]:
+    failures: list[str] = []
+
+    _audit_login_urls(failures)
+
+    _audit_enforcement_sources(failures)
+
+    _audit_work_mode(failures)
 
     if not BASELINE.exists():
         failures.append("Google automation baseline document is missing")

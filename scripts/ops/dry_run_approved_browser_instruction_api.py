@@ -104,6 +104,63 @@ def register_agent(client: TestClient) -> str:
     return str(resp.json()["agent_id"])
 
 
+def _dry_run_admin_checks(findings, admin_client, agent_id):
+    safe = admin_client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={
+            "instruction": "Summarize the public page headings only",
+            "url": "https://example.com/path?private=query",
+        },
+    )
+    if safe.status_code == 200 and safe.json().get("action") == "web_open_url_readonly":
+        add(findings, "PASS", "admin_readonly_instruction", "queued")
+    else:
+        add(findings, "FAIL", "admin_readonly_instruction", str(safe.status_code))
+
+    if "private=query" in safe.text or "Summarize the public page" in safe.text:
+        add(findings, "FAIL", "safe_response_redaction", "raw query or instruction exposed")
+    else:
+        add(findings, "PASS", "safe_response_redaction", "query and instruction omitted")
+
+
+def _dry_run_negative_checks(findings, admin_client, viewer, agent_id):
+    viewer_client = make_client(viewer)
+    viewer_resp = viewer_client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={"instruction": "Summarize the page", "url": "https://example.com"},
+    )
+    if viewer_resp.status_code == 403:
+        add(findings, "PASS", "viewer_blocked", "403")
+    else:
+        add(findings, "FAIL", "viewer_blocked", str(viewer_resp.status_code))
+
+    unsafe_instruction = admin_client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={"instruction": "click the submit button", "url": "https://example.com"},
+    )
+    if unsafe_instruction.status_code == 400:
+        add(findings, "PASS", "unsafe_instruction_blocked", "400")
+    else:
+        add(findings, "FAIL", "unsafe_instruction_blocked", str(unsafe_instruction.status_code))
+
+    unsafe_url = admin_client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={"instruction": "Summarize the page", "url": "javascript:alert(1)"},
+    )
+    if unsafe_url.status_code == 400:
+        add(findings, "PASS", "unsafe_url_blocked", "400")
+    else:
+        add(findings, "FAIL", "unsafe_url_blocked", str(unsafe_url.status_code))
+
+
+def _dry_run_audit_redaction(findings, _al):
+    log_text = _al._LOG_PATH.read_text(encoding="utf-8") if _al._LOG_PATH.exists() else ""
+    if "private=query" in log_text or "Summarize the public page" in log_text:
+        add(findings, "FAIL", "audit_redaction", "raw query or instruction logged")
+    else:
+        add(findings, "PASS", "audit_redaction", "no raw query or instruction")
+
+
 def dry_run() -> DryRunResult:
     findings: list[Finding] = []
 
@@ -132,56 +189,11 @@ def dry_run() -> DryRunResult:
         admin_client = make_client(admin)
         agent_id = register_agent(admin_client)
 
-        safe = admin_client.post(
-            f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
-            json={
-                "instruction": "Summarize the public page headings only",
-                "url": "https://example.com/path?private=query",
-            },
-        )
-        if safe.status_code == 200 and safe.json().get("action") == "web_open_url_readonly":
-            add(findings, "PASS", "admin_readonly_instruction", "queued")
-        else:
-            add(findings, "FAIL", "admin_readonly_instruction", str(safe.status_code))
+        _dry_run_admin_checks(findings, admin_client, agent_id)
 
-        if "private=query" in safe.text or "Summarize the public page" in safe.text:
-            add(findings, "FAIL", "safe_response_redaction", "raw query or instruction exposed")
-        else:
-            add(findings, "PASS", "safe_response_redaction", "query and instruction omitted")
+        _dry_run_negative_checks(findings, admin_client, viewer, agent_id)
 
-        viewer_client = make_client(viewer)
-        viewer_resp = viewer_client.post(
-            f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
-            json={"instruction": "Summarize the page", "url": "https://example.com"},
-        )
-        if viewer_resp.status_code == 403:
-            add(findings, "PASS", "viewer_blocked", "403")
-        else:
-            add(findings, "FAIL", "viewer_blocked", str(viewer_resp.status_code))
-
-        unsafe_instruction = admin_client.post(
-            f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
-            json={"instruction": "click the submit button", "url": "https://example.com"},
-        )
-        if unsafe_instruction.status_code == 400:
-            add(findings, "PASS", "unsafe_instruction_blocked", "400")
-        else:
-            add(findings, "FAIL", "unsafe_instruction_blocked", str(unsafe_instruction.status_code))
-
-        unsafe_url = admin_client.post(
-            f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
-            json={"instruction": "Summarize the page", "url": "javascript:alert(1)"},
-        )
-        if unsafe_url.status_code == 400:
-            add(findings, "PASS", "unsafe_url_blocked", "400")
-        else:
-            add(findings, "FAIL", "unsafe_url_blocked", str(unsafe_url.status_code))
-
-        log_text = _al._LOG_PATH.read_text(encoding="utf-8") if _al._LOG_PATH.exists() else ""
-        if "private=query" in log_text or "Summarize the public page" in log_text:
-            add(findings, "FAIL", "audit_redaction", "raw query or instruction logged")
-        else:
-            add(findings, "PASS", "audit_redaction", "no raw query or instruction")
+        _dry_run_audit_redaction(findings, _al)
 
         _reg.clear()
         _ap._store.clear()

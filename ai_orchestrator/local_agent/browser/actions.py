@@ -101,7 +101,7 @@ def _current_url(page) -> str:
 # ── 공개 액션 함수 ─────────────────────────────────────────────────────────
 
 
-def navigate(
+def navigate(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     page,
     url: str,
     *,
@@ -124,7 +124,7 @@ def navigate(
         return ActionResult("navigate", ok=False, verdict=gate.verdict, error=str(e))
 
 
-def click(
+def click(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     page,
     selector: str,
     *,
@@ -162,7 +162,7 @@ def click(
         return ActionResult("click", ok=False, verdict=gate.verdict, error=str(e))
 
 
-def type_text(
+def type_text(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     page,
     selector: str,
     value: str,
@@ -204,7 +204,7 @@ def type_text(
         return ActionResult("type", ok=False, verdict=gate.verdict, error=str(e))
 
 
-def select_option(
+def select_option(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     page,
     selector: str,
     value: str,
@@ -236,7 +236,7 @@ def select_option(
         return ActionResult("select", ok=False, verdict=gate.verdict, error=str(e))
 
 
-def upload_file(
+def upload_file(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     page,
     selector: str,
     file_path: str | Path,
@@ -390,7 +390,7 @@ def get_attribute(
         return ActionResult("get_attribute", ok=False, verdict=gate.verdict, error=str(e))
 
 
-def wait_for_selector(
+def wait_for_selector(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     page,
     selector: str,
     *,

@@ -86,6 +86,20 @@ def _parse_site(pg) -> str:
     return ""
 
 
+def _scroll_password_list(pg):
+    print("▶ 목록 로드 중...")
+    pg.goto("https://passwords.google.com", timeout=20000, wait_until="domcontentloaded")
+    time.sleep(3)
+    prev = 0
+    for _ in range(60):
+        pg.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(0.6)
+        h = pg.evaluate("document.body.scrollHeight")
+        if h == prev:
+            break
+        prev = h
+
+
 def collect() -> list[dict]:
     from playwright.sync_api import sync_playwright
 
@@ -95,17 +109,7 @@ def collect() -> list[dict]:
         pg = ctx.pages[0] if ctx.pages else ctx.new_page()
 
         # 목록 전체 스크롤
-        print("▶ 목록 로드 중...")
-        pg.goto("https://passwords.google.com", timeout=20000, wait_until="domcontentloaded")
-        time.sleep(3)
-        prev = 0
-        for _ in range(60):
-            pg.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            time.sleep(0.6)
-            h = pg.evaluate("document.body.scrollHeight")
-            if h == prev:
-                break
-            prev = h
+        _scroll_password_list(pg)
 
         links = pg.evaluate(
             "() => [...new Set(Array.from(document.querySelectorAll('a[href]'))"

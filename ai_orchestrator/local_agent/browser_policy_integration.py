@@ -243,7 +243,7 @@ def submit_with_policy(
     )
 
 
-def download_with_policy(
+def download_with_policy(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     *,
     source_url: str | None = None,
     site_id: str | None = None,

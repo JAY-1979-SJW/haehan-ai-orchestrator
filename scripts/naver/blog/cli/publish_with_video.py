@@ -27,6 +27,28 @@ from scripts.naver.blog.marketing import TARGET_BLOG_ID  # noqa: E402
 _log = get_logger(__name__)
 
 
+def _click_publish_and_report(page, bw, draft: dict) -> None:
+    """발행 버튼 클릭 → 태그/공개설정 → 최종 발행 + 결과 출력."""
+    time.sleep(1)
+    page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
+    time.sleep(1.5)
+    if draft.get("tags"):
+        bw.set_tags(draft["tags"])
+    bw.set_visibility("public")
+    time.sleep(0.5)
+
+    # 패널의 최종 발행 버튼(상단 "발행"과 셀렉터가 같아 .last로 구분)
+    try:
+        page.get_by_role("button", name="발행", exact=True).last.click(timeout=5000)
+        page.wait_for_timeout(3000)
+        if "PostView" in page.url:
+            print("발행 완료:", page.url)
+        else:
+            print("발행 확인 필요 — 현재 URL:", page.url)
+    except Exception as e:  # noqa: BLE001 - 네이버 블로그 발행 버튼 클릭 자동화 - 클릭 실패 시 메시지만 출력, 발행 여부는 별도로 현재 URL을 확인해 판단(성공을 임의로 단정하지 않음)
+        print("발행 버튼 클릭 실패:", e)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("draft")
@@ -79,24 +101,7 @@ def main() -> None:
         pw.stop()
         return
 
-    time.sleep(1)
-    page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
-    time.sleep(1.5)
-    if draft.get("tags"):
-        bw.set_tags(draft["tags"])
-    bw.set_visibility("public")
-    time.sleep(0.5)
-
-    # 패널의 최종 발행 버튼(상단 "발행"과 셀렉터가 같아 .last로 구분)
-    try:
-        page.get_by_role("button", name="발행", exact=True).last.click(timeout=5000)
-        page.wait_for_timeout(3000)
-        if "PostView" in page.url:
-            print("발행 완료:", page.url)
-        else:
-            print("발행 확인 필요 — 현재 URL:", page.url)
-    except Exception as e:  # noqa: BLE001 - 네이버 블로그 발행 버튼 클릭 자동화 - 클릭 실패 시 메시지만 출력, 발행 여부는 별도로 현재 URL을 확인해 판단(성공을 임의로 단정하지 않음)
-        print("발행 버튼 클릭 실패:", e)
+    _click_publish_and_report(page, bw, draft)
 
     browser.close()
     pw.stop()

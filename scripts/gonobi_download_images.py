@@ -33,6 +33,21 @@ def safe_name(s: str) -> str:
     return re.sub(r'[\\/:*?"<>|]', "_", s)[:50]
 
 
+def _fetch_image(session, url: str, filename) -> bool:
+    """이미지 1장 다운로드. 저장 성공이면 True, 비200/예외면 False(예외는 경고 로그)."""
+    try:
+        # ?type=w966 → 네이버 postfiles 최대 해상도
+        fetch_url = url.split("?")[0] + "?type=w966"
+        resp = session.get(fetch_url, timeout=10)
+        if resp.status_code == 200:
+            filename.write_bytes(resp.content)
+            return True
+        return False
+    except Exception as e:  # noqa: BLE001 - 이미지 다운로드 실패를 카운트하고 경고 로그 남긴 뒤 계속 진행 - 읽기전용 다운로드 스크립트, 실패 건수만 집계될 뿐 위험 조작 없음
+        logger.warning("다운로드 실패 %s: %s", url[:60], e)
+        return False
+
+
 def download_images():
     session = requests.Session()
     session.headers.update(HEADERS)
@@ -70,17 +85,9 @@ def download_images():
                     total_skipped += 1
                     continue
 
-                try:
-                    # ?type=w966 → 네이버 postfiles 최대 해상도
-                    fetch_url = url.split("?")[0] + "?type=w966"
-                    resp = session.get(fetch_url, timeout=10)
-                    if resp.status_code == 200:
-                        filename.write_bytes(resp.content)
-                        total_downloaded += 1
-                    else:
-                        total_errors += 1
-                except Exception as e:  # noqa: BLE001 - 이미지 다운로드 실패를 카운트하고 경고 로그 남긴 뒤 계속 진행 - 읽기전용 다운로드 스크립트, 실패 건수만 집계될 뿐 위험 조작 없음
-                    logger.warning("다운로드 실패 %s: %s", url[:60], e)
+                if _fetch_image(session, url, filename):
+                    total_downloaded += 1
+                else:
                     total_errors += 1
 
                 time.sleep(0.1)

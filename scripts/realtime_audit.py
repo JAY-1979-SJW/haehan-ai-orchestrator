@@ -64,7 +64,7 @@ def _append_text(path: Path, entry: dict[str, Any]) -> None:
         f.flush()
 
 
-def emit_event(
+def emit_event(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     event_type: str,
     *,
     site: str = "",

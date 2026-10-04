@@ -21,6 +21,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 from ai_orchestrator import local_agent_registry as reg
 from ai_orchestrator import registration_codes as rc
@@ -198,7 +199,7 @@ def step_f_token_leak_self_check() -> dict:
 
 
 def main() -> None:
-    report = {
+    report: dict[str, Any] = {
         "schema_version": "live-smoke-1.0",
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "steps": {},

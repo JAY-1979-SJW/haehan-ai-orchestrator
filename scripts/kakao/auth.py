@@ -25,6 +25,18 @@ _LOGIN_DOMAIN = "accounts.kakao.com"
 _LOGGED_IN_TOKENS = ("로그아웃", "내 계정", "닉네임", "프로필")
 
 
+def _any_visible(page, selectors: tuple[str, ...]) -> bool:
+    """selectors 중 보이는 요소가 하나라도 있으면 True. 개별 탐색 실패는 무시."""
+    for sel in selectors:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                return True
+        except Exception:  # noqa: BLE001 - 선택자 탐색 중 개별 실패는 무시하고 다음 신호를 계속 확인
+            pass
+    return False
+
+
 def is_logged_in(page) -> bool:
     """카카오 로그인 상태 확인.
 
@@ -45,24 +57,14 @@ def is_logged_in(page) -> bool:
         return False
 
     # 로그아웃 버튼 (강한 신호)
-    for sel in ("a:has-text('로그아웃')", "button:has-text('로그아웃')", "[href*='logout']"):
-        try:
-            el = page.query_selector(sel)
-            if el and el.is_visible():
-                log.debug("kakao: 로그아웃 버튼 발견 — 로그인됨")
-                return True
-        except Exception:  # noqa: BLE001 - 선택자 탐색 중 개별 실패는 무시하고 다음 신호를 계속 확인
-            pass
+    if _any_visible(page, ("a:has-text('로그아웃')", "button:has-text('로그아웃')", "[href*='logout']")):
+        log.debug("kakao: 로그아웃 버튼 발견 — 로그인됨")
+        return True
 
     # 로그인 폼 visible → 미로그인
-    for sel in ("input[name='loginId']", "input[name='password']", "#loginId", "#password"):
-        try:
-            el = page.query_selector(sel)
-            if el and el.is_visible():
-                log.debug("kakao: 로그인 폼 visible — 미로그인")
-                return False
-        except Exception:  # noqa: BLE001 - 선택자 탐색 중 개별 실패는 무시하고 다음 신호를 계속 확인
-            pass
+    if _any_visible(page, ("input[name='loginId']", "input[name='password']", "#loginId", "#password")):
+        log.debug("kakao: 로그인 폼 visible — 미로그인")
+        return False
 
     # body 텍스트 토큰
     try:

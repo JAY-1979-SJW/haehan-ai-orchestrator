@@ -181,7 +181,8 @@ def _resolve_board(agent: BrowserAgent, cafe_url: str, board_name: str, club_id:
     return "", "전체글보기"
 
 
-def main():
+def _build_parser() -> argparse.ArgumentParser:
+    """CLI 인자 파서."""
     parser = argparse.ArgumentParser(
         description="네이버 카페 스크래퍼",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -198,6 +199,128 @@ def main():
     parser.add_argument("--out", default="", help="저장 경로 (기본: data/scrape/<카페명>_<날짜>.json)")
     parser.add_argument("--csv", action="store_true", help="CSV도 함께 저장")
     parser.add_argument("--incremental", action="store_true", help="기존 파일에 없는 글만 수집")
+    return parser
+
+
+def _resolve_out_path(args, board_label: str, timestamp: str) -> Path:
+    """출력 경로 결정."""
+    cafe_slug = args.cafe.rstrip("/").split("/")[-1]
+    if args.query:
+        label = f"search_{args.query}"
+    elif args.popular:
+        label = "popular"
+    else:
+        label = re.sub(r"[^\w가-힣]", "_", board_label)[:20]
+
+    out_path = Path(args.out) if args.out else Path(f"data/scrape/{cafe_slug}_{label}_{timestamp}.json")
+    return out_path
+
+
+def _collect_popular(agent, club_id: str, seen_ids: set[str], all_posts: list[dict]) -> None:
+    """인기글 수집."""
+    print("인기글 수집 중...")
+    url = _popular_url(club_id)
+    page_posts = scrape_posts_page(agent, url)
+    for p in page_posts:
+        aid = p.get("article_id", "")
+        if aid in seen_ids:
+            continue
+        seen_ids.add(aid)
+        all_posts.append(p)
+    print(f"  인기글 {len(all_posts)}개 수집")
+
+
+def _collect_board_pages(  # noqa: PLR0913 - main() 에서만 호출하는 내부 분할 헬퍼(인자 묶음 시 동작 위험)
+    agent, args, club_id: str, menu_id: str, seen_ids: set[str], existing_ids: set[str], all_posts: list[dict]
+) -> None:
+    """게시판/검색 목록 페이지 순회 수집."""
+    stop = False
+
+    for page_num in range(1, args.pages + 1):
+        if stop:
+            break
+
+        if args.query:
+            url = _search_url(club_id, args.query, page_num)
+        else:
+            url = _board_list_url(club_id, menu_id, page_num)
+
+        print(f"[{page_num}/{args.pages}] {url}")
+        page_posts = scrape_posts_page(agent, url)
+
+        if not page_posts:
+            print("  → 게시글 없음, 수집 종료")
+            break
+
+        new_count = 0
+        for p in page_posts:
+            aid = p.get("article_id", "")
+            if not aid or aid in seen_ids:
+                if args.incremental and aid in existing_ids:
+                    print(f"  → 증분: 기존 article_id={aid} 도달, 수집 중단")
+                    stop = True
+                    break
+                continue
+            seen_ids.add(aid)
+            all_posts.append(p)
+            new_count += 1
+
+            if args.max_articles and len(all_posts) >= args.max_articles:
+                print(f"  → max-articles={args.max_articles} 도달")
+                stop = True
+                break
+
+        print(f"  → 신규 {new_count}개 (누계 {len(all_posts)}개)")
+
+
+def _collect_full_bodies(agent, args, all_posts: list[dict]) -> None:
+    """본문 + 댓글 수집 (full 모드)."""
+    if args.full and all_posts:
+        print(f"\n본문 수집: {len(all_posts)}개 게시글...")
+        for i, post in enumerate(all_posts, 1):
+            href = post.get("href", "")
+            if not href:
+                continue
+            print(f"  [{i}/{len(all_posts)}] {post['title'][:40]}...")
+            try:
+                detail = scrape_article(agent, href, delay=args.delay)
+                # 목록 정보 보존 + 상세 정보 병합
+                post.update(
+                    {
+                        "board": detail.get("board", ""),
+                        "written_at": detail.get("written_at", ""),
+                        "view_count": detail.get("view_count", ""),
+                        "like_count": detail.get("like_count", ""),
+                        "comment_count": detail.get("comment_count", 0),
+                        "tags": detail.get("tags", []),
+                        "body": detail.get("body", ""),
+                        "comments": detail.get("comments", []),
+                    }
+                )
+            except Exception as e:  # noqa: BLE001 - 네이버 카페 게시글 읽기전용 스크래핑 — 개별 게시글 파싱 실패는 continue로 건너뛰고, 캐시 로드 실패는 빈 목록/빈 set으로 폴백, 쓰기 없음
+                print(f"    [오류] {e}")
+                post["body"] = ""
+                post["comments"] = []
+
+
+def _print_collect_summary(args, all_posts: list[dict], final_data: list[dict]) -> None:
+    """수집 요약 출력."""
+    print("\n=== 수집 요약 ===")
+    print(f"신규 수집: {len(all_posts)}개")
+    print(f"전체 저장: {len(final_data)}개")
+    if all_posts:
+        dates = [
+            p.get("date") or p.get("written_at") or "" for p in all_posts if p.get("date") or p.get("written_at")
+        ]
+        if dates:
+            print(f"날짜 범위: {min(dates)} ~ {max(dates)}")
+        if args.full:
+            with_body = sum(1 for p in all_posts if p.get("body"))
+            print(f"본문 수집: {with_body}개")
+
+
+def main():
+    parser = _build_parser()
     args = parser.parse_args()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -219,15 +342,7 @@ def main():
             menu_id, board_label = _resolve_board(agent, args.cafe, args.board, club_id)
 
         # 출력 경로 결정
-        cafe_slug = args.cafe.rstrip("/").split("/")[-1]
-        if args.query:
-            label = f"search_{args.query}"
-        elif args.popular:
-            label = "popular"
-        else:
-            label = re.sub(r"[^\w가-힣]", "_", board_label)[:20]
-
-        out_path = Path(args.out) if args.out else Path(f"data/scrape/{cafe_slug}_{label}_{timestamp}.json")
+        out_path = _resolve_out_path(args, board_label, timestamp)
 
         # 증분 모드: 기존 데이터 로드
         existing_data, existing_ids = [], set()
@@ -238,88 +353,19 @@ def main():
         # 수집 시작
         all_posts: list[dict] = []
         seen_ids: set[str] = set(existing_ids)
-        stop = False
 
         print(f"\n수집 시작: {board_label} | pages={args.pages} | full={args.full}")
         print(f"저장 경로: {out_path}\n")
 
         if args.popular:
             # 인기글
-            print("인기글 수집 중...")
-            url = _popular_url(club_id)
-            page_posts = scrape_posts_page(agent, url)
-            for p in page_posts:
-                aid = p.get("article_id", "")
-                if aid in seen_ids:
-                    continue
-                seen_ids.add(aid)
-                all_posts.append(p)
-            print(f"  인기글 {len(all_posts)}개 수집")
+            _collect_popular(agent, club_id, seen_ids, all_posts)
 
         else:
-            for page_num in range(1, args.pages + 1):
-                if stop:
-                    break
-
-                if args.query:
-                    url = _search_url(club_id, args.query, page_num)
-                else:
-                    url = _board_list_url(club_id, menu_id, page_num)
-
-                print(f"[{page_num}/{args.pages}] {url}")
-                page_posts = scrape_posts_page(agent, url)
-
-                if not page_posts:
-                    print("  → 게시글 없음, 수집 종료")
-                    break
-
-                new_count = 0
-                for p in page_posts:
-                    aid = p.get("article_id", "")
-                    if not aid or aid in seen_ids:
-                        if args.incremental and aid in existing_ids:
-                            print(f"  → 증분: 기존 article_id={aid} 도달, 수집 중단")
-                            stop = True
-                            break
-                        continue
-                    seen_ids.add(aid)
-                    all_posts.append(p)
-                    new_count += 1
-
-                    if args.max_articles and len(all_posts) >= args.max_articles:
-                        print(f"  → max-articles={args.max_articles} 도달")
-                        stop = True
-                        break
-
-                print(f"  → 신규 {new_count}개 (누계 {len(all_posts)}개)")
+            _collect_board_pages(agent, args, club_id, menu_id, seen_ids, existing_ids, all_posts)
 
         # 본문 + 댓글 수집 (full 모드)
-        if args.full and all_posts:
-            print(f"\n본문 수집: {len(all_posts)}개 게시글...")
-            for i, post in enumerate(all_posts, 1):
-                href = post.get("href", "")
-                if not href:
-                    continue
-                print(f"  [{i}/{len(all_posts)}] {post['title'][:40]}...")
-                try:
-                    detail = scrape_article(agent, href, delay=args.delay)
-                    # 목록 정보 보존 + 상세 정보 병합
-                    post.update(
-                        {
-                            "board": detail.get("board", ""),
-                            "written_at": detail.get("written_at", ""),
-                            "view_count": detail.get("view_count", ""),
-                            "like_count": detail.get("like_count", ""),
-                            "comment_count": detail.get("comment_count", 0),
-                            "tags": detail.get("tags", []),
-                            "body": detail.get("body", ""),
-                            "comments": detail.get("comments", []),
-                        }
-                    )
-                except Exception as e:  # noqa: BLE001 - 네이버 카페 게시글 읽기전용 스크래핑 — 개별 게시글 파싱 실패는 continue로 건너뛰고, 캐시 로드 실패는 빈 목록/빈 set으로 폴백, 쓰기 없음
-                    print(f"    [오류] {e}")
-                    post["body"] = ""
-                    post["comments"] = []
+        _collect_full_bodies(agent, args, all_posts)
 
         # 최종 데이터 = 기존 + 신규
         final_data = existing_data + all_posts
@@ -334,18 +380,7 @@ def main():
             print(f"CSV 저장: {csv_path}")
 
         # 요약 출력
-        print("\n=== 수집 요약 ===")
-        print(f"신규 수집: {len(all_posts)}개")
-        print(f"전체 저장: {len(final_data)}개")
-        if all_posts:
-            dates = [
-                p.get("date") or p.get("written_at") or "" for p in all_posts if p.get("date") or p.get("written_at")
-            ]
-            if dates:
-                print(f"날짜 범위: {min(dates)} ~ {max(dates)}")
-            if args.full:
-                with_body = sum(1 for p in all_posts if p.get("body"))
-                print(f"본문 수집: {with_body}개")
+        _print_collect_summary(args, all_posts, final_data)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "deployment" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+PAGE = assistant_route("deployment", "page.tsx")
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 
 
@@ -97,17 +99,15 @@ class TestBackendInvariant:
         assert "deployment_router" not in _src(ROUTER_FILE)
 
     def test_endpoint_count_63(self):
-        from fastapi.routing import APIRoute, APIWebSocketRoute
+        from tests.app_routes import runtime_routes
 
-        from ai_orchestrator.server import app
-
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 63
+        # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
+        routes = runtime_routes()
+        assert len(routes) == 399
 
     def test_post_count_27(self):
-        from fastapi.routing import APIRoute
+        from tests.app_routes import http_routes
 
-        from ai_orchestrator.server import app
-
-        posts = [r for r in app.routes if isinstance(r, APIRoute) and "POST" in (r.methods or set())]
-        assert len(posts) == 27
+        # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
+        posts = [r for r in http_routes() if "POST" in r.method.split(",")]
+        assert len(posts) == 184

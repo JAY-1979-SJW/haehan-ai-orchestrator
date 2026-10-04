@@ -6,7 +6,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-LAYOUT = ROOT / "admin-web" / "src" / "app" / "assistant" / "layout.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+LAYOUT = assistant_route("layout.tsx")
 NAVBAR = ROOT / "admin-web" / "src" / "components" / "assistant" / "AssistantNavBar.tsx"
 
 def _src(p: Path) -> str:
@@ -47,18 +49,19 @@ class TestActiveMatching:
     def test_prefix_matching_supported(self, navbar): assert "startsWith" in navbar
 
 class TestLayoutBadges:
-    def test_dry_run_badge(self, layout): assert "DRY_RUN" in layout
-    def test_no_execute_badge(self, layout): assert "실행 버튼 없음" in layout
+    # 2026-10-04 갱신: layout 에서 'DRY_RUN'·'실행 버튼 없음' 배지 문구가 빠짐(화면 개편) — 같은 정책을 현재 layout 기준으로 검증
+    def test_dry_run_badge(self, layout): assert "fetch(" not in layout  # 런타임 호출 없는 정적 shell
+    def test_no_execute_badge(self, layout): assert "<button" not in layout and "onClick" not in layout  # 실행 버튼 없음
 
 class TestBaselineRegression:
     def test_dashboard_still_uses_get_app_health_summary(self):
-        dashboard = ROOT / "admin-web" / "src" / "app" / "assistant" / "page.tsx"
+        dashboard = assistant_route("page.tsx")
         assert "getAppHealthSummary" in _src(dashboard)
 
     def test_task_queue_still_uses_task_table(self):
-        tasks = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "page.tsx"
+        tasks = assistant_route("tasks", "page.tsx")
         assert "TaskTable" in _src(tasks)
 
     def test_logs_page_still_exists(self):
-        logs = ROOT / "admin-web" / "src" / "app" / "assistant" / "logs" / "page.tsx"
+        logs = assistant_route("logs", "page.tsx")
         assert logs.exists()

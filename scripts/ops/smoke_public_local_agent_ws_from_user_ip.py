@@ -28,6 +28,7 @@ import ssl
 import time
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 OUT_DIR = Path("data/inspection/local_agent_public_ws_user_ip")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -93,7 +94,7 @@ async def ws_auth_flow(agent_id: str, device_token: str, *, send_bad: bool = Fal
     """auth → heartbeat → disconnect 라이프사이클 1회."""
     import websockets
 
-    res = {"steps": [], "ok": False}
+    res: dict[str, Any] = {"steps": [], "ok": False}
     try:
         async with websockets.connect(WS_URL, open_timeout=10) as ws:
             res["steps"].append("ws_open")

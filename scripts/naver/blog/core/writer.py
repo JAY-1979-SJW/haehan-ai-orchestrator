@@ -260,6 +260,20 @@ class BlogWriter:
             _log.debug("[blog-writer] 제목 텍스트 조회 실패: %s", e)
             return ""
 
+    def _type_paragraphs_fallback(self, full_text: str, paragraph_delay: float) -> None:
+        """클립보드 실패 시 단락 단위 keyboard.type 폴백."""
+        paragraphs = full_text.split("\n\n")
+        for i, p in enumerate(paragraphs):
+            lines = p.split("\n")
+            for j, line in enumerate(lines):
+                self.page.keyboard.type(line, delay=15)
+                if j < len(lines) - 1:
+                    self.page.keyboard.press("Shift+Enter")
+            if i < len(paragraphs) - 1:
+                self.page.keyboard.press("Enter")
+                time.sleep(paragraph_delay)
+
+
     def write_body(
         self, text: str | list[str], paragraph_delay: float = 0.3, append: bool = False, verify: bool = True
     ) -> bool:
@@ -302,16 +316,7 @@ class BlogWriter:
                 time.sleep(1.0)
             except (ImportError, Exception):  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
                 # fallback: 단락 단위 keyboard.type
-                paragraphs = full_text.split("\n\n")
-                for i, p in enumerate(paragraphs):
-                    lines = p.split("\n")
-                    for j, line in enumerate(lines):
-                        self.page.keyboard.type(line, delay=15)
-                        if j < len(lines) - 1:
-                            self.page.keyboard.press("Shift+Enter")
-                    if i < len(paragraphs) - 1:
-                        self.page.keyboard.press("Enter")
-                        time.sleep(paragraph_delay)
+                self._type_paragraphs_fallback(full_text, paragraph_delay)
 
             _log.info("[blog-writer] 본문 입력 완료 (%d 자)", len(full_text))
 
@@ -1090,7 +1095,119 @@ class BlogWriter:
 # ── 편의 함수 ──────────────────────────────────────────────────────────────
 
 
-def write_post(
+def _set_category_and_tags(bw: BlogWriter, category: str | None, tags: list[str] | None) -> None:
+    """발행 패널의 카테고리/태그 설정."""
+    if category:
+        bw.set_category(category)
+    if tags:
+        bw.set_tags(tags)
+
+
+def _install_dialog_handler(page: Page) -> None:
+    """페이지당 1회 dialog dismiss 핸들러 등록."""
+    # 명시적 dialog 핸들러 등록 — 미등록 상태로 두면 Playwright 드라이버가 자체
+    # 타이밍으로 자동 해제를 시도하다 "No dialog is showing" ProtocolError로
+    # Node 프로세스 전체가 죽는 경쟁 상태가 실측 확인됨(2026-08-17, 3번째 포스트
+    # 발행 중 크래시). 리스너를 걸어두면 Playwright가 우리 처리를 기다리므로
+    # 그 경쟁이 사라진다. 페이지 이동 중 뜨는 beforeunload 등은 무조건 dismiss
+    # (변경사항 저장 확인창에서 "취소" = 이동 유지) — 새 다이얼로그를 만들어내는
+    # 게 아니라 브라우저가 이미 띄운 것을 처리만 하므로 no-dialog 원칙과 무관.
+    if not getattr(page, "_haehan_dialog_handler_installed", False):
+        page.on("dialog", lambda d: d.dismiss())
+        # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
+        with contextlib.suppress(Exception):
+            page._haehan_dialog_handler_installed = True
+
+
+def _login_failure(page: Page) -> dict | None:
+    """네이버 로그인 확인. 실패하면 오류 dict, 성공이면 None."""
+    from scripts.naver.auth import ensure_naver_login
+
+    login_result = ensure_naver_login(page)
+    if not login_result.get("ok"):
+        return {"ok": False, "error": "login_failed", "reason": login_result.get("reason", "")}
+    return None
+
+
+def _resolve_tags(
+    tags: list[str] | None, auto_tags: bool, title: str, body_str: str, brand_tags: list[str] | None
+) -> list[str] | None:
+    """tags 미지정이고 auto_tags 이면 suggest_tags 로 자동 생성."""
+    if tags is None and auto_tags:
+        try:
+            from scripts.naver.blog.tag_suggester import suggest_tags
+
+            tags = suggest_tags(title, body_str, brand_tags=brand_tags)
+            _log.info("[write_post] 태그 자동 생성: %s", tags)
+        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
+            _log.warning("[write_post] 태그 자동 생성 실패 (무시): %s", e)
+            tags = []
+    return tags
+
+
+def _write_content(
+    bw: BlogWriter, body: str | list[str], images: list[str] | None, body_segments: list[str] | None
+) -> dict | None:
+    """본문/이미지 입력(write_post·edit_post 공통). 실패하면 오류 dict, 성공이면 None."""
+    if body_segments and images:
+        # 인터리브 삽입: 세그먼트1 → 이미지1 → 세그먼트2 → 이미지2 → ...
+        # write_mixed_content() 사용 — 개별 write_body(verify=True) 루프는 append
+        # 플래그 누락으로 커서가 매번 본문 맨 앞으로 돌아가고, 완성되지 않은
+        # 구간 텍스트를 전체 문서와 비교해 검증이 항상 실패하는 버그가 있었다.
+        blocks: list[dict[str, str]] = []
+        for i, seg in enumerate(body_segments):
+            blocks.append({"type": "text", "value": seg})
+            if i < len(images):
+                blocks.append({"type": "image", "value": images[i]})
+        if not bw.write_mixed_content(blocks):
+            return {"ok": False, "error": "body_segments_failed"}
+    elif images:
+        # 기존 방식: 이미지 전부 앞에, 본문 뒤
+        for img in images:
+            bw.insert_image(img)
+        if not bw.write_body(body):
+            return {"ok": False, "error": "body_failed"}
+    else:
+        if not bw.write_body(body):
+            return {"ok": False, "error": "body_failed"}
+    return None
+
+
+def _request_approval(
+    title: str,
+    tags: list[str] | None,
+    visibility: str,
+    body_str: str,
+    images: list[str] | None,
+    category: str | None,
+) -> dict:
+    """발행 승인 대기 응답 생성(패널은 열린 채 유지)."""
+    _log.info("[write_post] 발행 승인 대기 — confirm_publish(page) 호출로 발행")
+    log_critical(
+        "OTHER",
+        "블로그 발행 승인 요청",
+        title=title[:40],
+        visibility=visibility,
+        tags=tags or [],
+        mode="blog_awaiting_approval",
+    )
+    return {
+        "ok": True,
+        "mode": "awaiting_approval",
+        "approval_required": True,
+        "summary": {
+            "title": title,
+            "tags": tags or [],
+            "visibility": visibility,
+            "body_preview": body_str[:120].strip(),
+            "images": images or [],
+            "category": category,
+        },
+        "next_step": "confirm_publish(page) 호출 시 발행 완료",
+    }
+
+
+def write_post(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     page: Page,
     *,
     title: str,
@@ -1134,37 +1251,16 @@ def write_post(
     """
     import time as _t
 
-    # 명시적 dialog 핸들러 등록 — 미등록 상태로 두면 Playwright 드라이버가 자체
-    # 타이밍으로 자동 해제를 시도하다 "No dialog is showing" ProtocolError로
-    # Node 프로세스 전체가 죽는 경쟁 상태가 실측 확인됨(2026-08-17, 3번째 포스트
-    # 발행 중 크래시). 리스너를 걸어두면 Playwright가 우리 처리를 기다리므로
-    # 그 경쟁이 사라진다. 페이지 이동 중 뜨는 beforeunload 등은 무조건 dismiss
-    # (변경사항 저장 확인창에서 "취소" = 이동 유지) — 새 다이얼로그를 만들어내는
-    # 게 아니라 브라우저가 이미 띄운 것을 처리만 하므로 no-dialog 원칙과 무관.
-    if not getattr(page, "_haehan_dialog_handler_installed", False):
-        page.on("dialog", lambda d: d.dismiss())
-        # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-        with contextlib.suppress(Exception):
-            page._haehan_dialog_handler_installed = True
+    _install_dialog_handler(page)
 
     # Step 1: 로그인 확인
-    from scripts.naver.auth import ensure_naver_login
-
-    login_result = ensure_naver_login(page)
-    if not login_result.get("ok"):
-        return {"ok": False, "error": "login_failed", "reason": login_result.get("reason", "")}
+    login_error = _login_failure(page)
+    if login_error is not None:
+        return login_error
 
     # Step 2: 태그 자동 생성 (tags 미지정 시)
     body_str = "\n\n".join(body) if isinstance(body, list) else body
-    if tags is None and auto_tags:
-        try:
-            from scripts.naver.blog.tag_suggester import suggest_tags
-
-            tags = suggest_tags(title, body_str, brand_tags=brand_tags)
-            _log.info("[write_post] 태그 자동 생성: %s", tags)
-        except Exception as e:  # noqa: BLE001 - 브라우저 자동화 — Playwright 실패는 원인이 다양해(타임아웃/요소없음/네비게이션 등) 종류를 좁히지 않고 일괄 로그 후 폴백, 결제·인증·DB삭제 등 위험 조작 없음(2026-09-28 검토)
-            _log.warning("[write_post] 태그 자동 생성 실패 (무시): %s", e)
-            tags = []
+    tags = _resolve_tags(tags, auto_tags, title, body_str, brand_tags)
 
     bw = BlogWriter(page)
     if not bw.open():
@@ -1173,27 +1269,9 @@ def write_post(
     if not bw.set_title(title):
         return {"ok": False, "error": "title_failed"}
 
-    if body_segments and images:
-        # 인터리브 삽입: 세그먼트1 → 이미지1 → 세그먼트2 → 이미지2 → ...
-        # write_mixed_content() 사용 — 개별 write_body(verify=True) 루프는 append
-        # 플래그 누락으로 커서가 매번 본문 맨 앞으로 돌아가고, 완성되지 않은
-        # 구간 텍스트를 전체 문서와 비교해 검증이 항상 실패하는 버그가 있었다.
-        blocks: list[dict[str, str]] = []
-        for i, seg in enumerate(body_segments):
-            blocks.append({"type": "text", "value": seg})
-            if i < len(images):
-                blocks.append({"type": "image", "value": images[i]})
-        if not bw.write_mixed_content(blocks):
-            return {"ok": False, "error": "body_segments_failed"}
-    elif images:
-        # 기존 방식: 이미지 전부 앞에, 본문 뒤
-        for img in images:
-            bw.insert_image(img)
-        if not bw.write_body(body):
-            return {"ok": False, "error": "body_failed"}
-    else:
-        if not bw.write_body(body):
-            return {"ok": False, "error": "body_failed"}
+    content_error = _write_content(bw, body, images, body_segments)
+    if content_error is not None:
+        return content_error
 
     # 임시저장만
     if save_draft_only:
@@ -1205,10 +1283,7 @@ def write_post(
     if schedule_at:
         page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
         _t.sleep(1.5)
-        if category:
-            bw.set_category(category)
-        if tags:
-            bw.set_tags(tags)
+        _set_category_and_tags(bw, category, tags)
         bw.set_visibility(visibility)
         return bw.schedule_publish(schedule_at)
 
@@ -1216,39 +1291,14 @@ def write_post(
     page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
     _t.sleep(1.5)
 
-    if category:
-        bw.set_category(category)
-    if tags:
-        bw.set_tags(tags)
+    _set_category_and_tags(bw, category, tags)
     bw.set_visibility(visibility)
     bw.set_comments_allowed(comments_allowed)
     bw.set_search_exposure(search_exposure)
 
     # 승인 게이트 — 패널 열린 상태 유지, 사용자 승인 대기
     if require_approval:
-        _log.info("[write_post] 발행 승인 대기 — confirm_publish(page) 호출로 발행")
-        log_critical(
-            "OTHER",
-            "블로그 발행 승인 요청",
-            title=title[:40],
-            visibility=visibility,
-            tags=tags or [],
-            mode="blog_awaiting_approval",
-        )
-        return {
-            "ok": True,
-            "mode": "awaiting_approval",
-            "approval_required": True,
-            "summary": {
-                "title": title,
-                "tags": tags or [],
-                "visibility": visibility,
-                "body_preview": body_str[:120].strip(),
-                "images": images or [],
-                "category": category,
-            },
-            "next_step": "confirm_publish(page) 호출 시 발행 완료",
-        }
+        return _request_approval(title, tags, visibility, body_str, images, category)
 
     # 즉시 발행 (require_approval=False)
     result = bw.publish()
@@ -1256,7 +1306,7 @@ def write_post(
     return result
 
 
-def edit_post(
+def edit_post(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     page: Page,
     *,
     blog_id: str,
@@ -1275,17 +1325,11 @@ def edit_post(
     write_post()와 동일 — Naver 에디터가 logNo 존재 여부로 자동으로
     "수정 저장"인지 "신규 발행"인지 판단한다.
     """
-    if not getattr(page, "_haehan_dialog_handler_installed", False):
-        page.on("dialog", lambda d: d.dismiss())
-        # 선택적 UI 처리 — 없거나 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
-        with contextlib.suppress(Exception):
-            page._haehan_dialog_handler_installed = True
+    _install_dialog_handler(page)
 
-    from scripts.naver.auth import ensure_naver_login
-
-    login_result = ensure_naver_login(page)
-    if not login_result.get("ok"):
-        return {"ok": False, "error": "login_failed", "reason": login_result.get("reason", "")}
+    login_error = _login_failure(page)
+    if login_error is not None:
+        return login_error
 
     bw = BlogWriter(page)
     if not bw.open(blog_id=blog_id, log_no=log_no):
@@ -1299,27 +1343,9 @@ def edit_post(
     if not bw.clear_body():
         return {"ok": False, "error": "clear_body_failed"}
 
-    if body_segments and images:
-        blocks: list[dict[str, str]] = []
-        for i, seg in enumerate(body_segments):
-            blocks.append({"type": "text", "value": seg})
-            if i < len(images):
-                blocks.append({"type": "image", "value": images[i]})
-        if not bw.write_mixed_content(blocks):
-            return {"ok": False, "error": "body_segments_failed"}
-    elif images:
-        # 2026-08-24 버그: body_segments 없이 images만 넘기면(호출부가
-        # body_segments를 안 채운 경우) 이 분기가 없어서 images가 통째로
-        # 버려졌다 — 발행 자체는 성공으로 보고돼 눈치채기 어려웠다
-        # (skyjwshin 첫 수정발행에서 사진 3장+작성자 사진 1장이 전부 사라짐).
-        # write_post()의 같은 폴백(이미지 전부 앞에, 본문 뒤)을 그대로 맞춘다.
-        for img in images:
-            bw.insert_image(img)
-        if not bw.write_body(body):
-            return {"ok": False, "error": "body_failed"}
-    else:
-        if not bw.write_body(body):
-            return {"ok": False, "error": "body_failed"}
+    content_error = _write_content(bw, body, images, body_segments)
+    if content_error is not None:
+        return content_error
 
     page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
     time.sleep(1.5)

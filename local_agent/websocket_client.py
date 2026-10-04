@@ -302,6 +302,147 @@ def _load_websockets_module():
         ) from e
 
 
+async def _authenticate(ws: Any, agent_id: str, device_token: str) -> bool:
+    """auth 전송 + 첫 응답 검증. auth_ok 가 아니면 False."""
+    # 1) 인증
+    await ws.send(
+        json.dumps(
+            {
+                "type": "auth",
+                "agent_id": agent_id,
+                "device_token": device_token,
+                "version": __version__,
+                "max_parallel": _max_parallel(),
+            }
+        )
+    )
+
+    # 첫 응답 — auth_ok 또는 close
+    try:
+        raw = await asyncio.wait_for(ws.recv(), timeout=15.0)
+    except TimeoutError:
+        logger.error("auth 응답 없음")
+        return False
+
+    try:
+        first = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        logger.error("auth 응답 파싱 실패")
+        return False
+
+    if first.get("type") != "auth_ok":
+        logger.error("auth 실패: %s", first.get("type"))
+        log_local_event("ws_auth_failed", reason=first.get("type", "unknown"))
+        return False
+    return True
+
+
+async def _send_heartbeat(ws: Any, agent_id: str) -> None:
+    """수신 timeout 시: heartbeat 전송 + pending USER_PRESENT_STATUS 자동 전송."""
+    # 주기적 heartbeat 로 서버에 pull 기회 부여
+    await ws.send(
+        json.dumps(
+            {
+                "type": "heartbeat",
+                "agent_id": agent_id,
+            }
+        )
+    )
+    # pending USER_PRESENT_STATUS 자동 전송 (실패해도 agent 계속 실행)
+    if _STATUS_SENDER_AVAILABLE:
+        try:
+            await run_user_present_status_send_once(ws)
+        except Exception as _exc:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
+            logger.warning("[ws] status send 실패 (무시): %s", type(_exc).__name__)
+
+
+async def _send_running_and_wait_ack(ws: Any, agent_id: str, task_id_inner: str) -> bool:
+    """running 전송 후 running_ack 대기. 실행해도 되면 True."""
+    # 1) running 전송 후 running_ack 대기
+    # 서버 상태 기계 요구사항: delivered → running → completed
+    # running_ack 없이 result 를 보내면 delivered → completed 가
+    # InvalidTaskTransitionError 를 일으키므로 반드시 대기한다.
+    run_ok = False
+    try:
+        await ws.send(
+            json.dumps(
+                {
+                    "type": "running",
+                    "agent_id": agent_id,
+                    "task_id": task_id_inner,
+                }
+            )
+        )
+        try:
+            ack_raw = await asyncio.wait_for(ws.recv(), timeout=10.0)
+            ack = json.loads(ack_raw)
+            run_ok = ack.get("type") == "running_ack"
+            if not run_ok:
+                logger.warning(
+                    "running_ack 대신 %s 수신 — 실행 포기 (task_id=%s)",
+                    ack.get("type"),
+                    task_id_inner,
+                )
+        except TimeoutError:
+            logger.warning(
+                "running_ack timeout — 실행 포기 (task_id=%s)",
+                task_id_inner,
+            )
+        except (TypeError, json.JSONDecodeError):
+            logger.warning(
+                "running_ack 파싱 실패 — 실행 포기 (task_id=%s)",
+                task_id_inner,
+            )
+    except Exception:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
+        logger.warning(
+            "running 전송 실패 — 실행 포기 (task_id=%s)",
+            task_id_inner,
+        )
+    return run_ok
+
+
+def _max_parallel() -> int:
+    return max(1, min(3, int(getattr(config, "MAX_PARALLEL", 1) or 1)))
+
+
+async def _run_task_parallel(
+    ws: Any,
+    agent_id: str,
+    task: dict,
+    ack_waiters: dict[str, asyncio.Future[bool]],
+) -> None:
+    """병렬 모드: running 전송 → 메인 루프가 전달하는 running_ack 대기 → 실행 → result 회신.
+
+    메인 루프만 ws.recv() 를 하므로 ack 는 ack_waiters 의 future 로 전달받는다.
+    """
+    task_id = str(task.get("task_id", ""))
+    waiter: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+    ack_waiters[task_id] = waiter
+    try:
+        await ws.send(json.dumps({"type": "running", "agent_id": agent_id, "task_id": task_id}))
+        try:
+            run_ok = await asyncio.wait_for(waiter, timeout=10.0)
+        except TimeoutError:
+            logger.warning("running_ack timeout — 실행 포기 (task_id=%s)", task_id)
+            return
+        if not run_ok:
+            logger.warning("running_ack 실패 — 실행 포기 (task_id=%s)", task_id)
+            return
+        result_msg = await asyncio.to_thread(process_task, task)
+        result_msg["agent_id"] = agent_id
+        await ws.send(json.dumps(result_msg))
+    except Exception as exc:  # noqa: BLE001 - 로컬 에이전트 WebSocket 병렬 실행 - 연결 끊김 등은 경고 로그만 남기고 서버 timeout/재큐잉에 맡김, 정책 판정 함수 아님
+        logger.warning("병렬 작업 처리 중단 (task_id=%s): %s", task_id, type(exc).__name__)
+    finally:
+        ack_waiters.pop(task_id, None)
+
+
+def _resolve_ack(ack_waiters: dict[str, asyncio.Future[bool]], msg: dict, ok: bool) -> None:
+    waiter = ack_waiters.get(str(msg.get("task_id", "")))
+    if waiter is not None and not waiter.done():
+        waiter.set_result(ok)
+
+
 async def _run_session(agent_id: str, device_token: str) -> None:
     """한 번의 WebSocket 세션 실행. 종료 시 재접속은 호출자가 담당."""
     websockets = _load_websockets_module()
@@ -314,34 +455,7 @@ async def _run_session(agent_id: str, device_token: str) -> None:
         ping_timeout=20,
         **websocket_connect_kwargs(config.SERVER_BASE_URL),
     ) as ws:
-        # 1) 인증
-        await ws.send(
-            json.dumps(
-                {
-                    "type": "auth",
-                    "agent_id": agent_id,
-                    "device_token": device_token,
-                    "version": __version__,
-                }
-            )
-        )
-
-        # 첫 응답 — auth_ok 또는 close
-        try:
-            raw = await asyncio.wait_for(ws.recv(), timeout=15.0)
-        except TimeoutError:
-            logger.error("auth 응답 없음")
-            return
-
-        try:
-            first = json.loads(raw)
-        except (TypeError, json.JSONDecodeError):
-            logger.error("auth 응답 파싱 실패")
-            return
-
-        if first.get("type") != "auth_ok":
-            logger.error("auth 실패: %s", first.get("type"))
-            log_local_event("ws_auth_failed", reason=first.get("type", "unknown"))
+        if not await _authenticate(ws, agent_id, device_token):
             return
 
         log_local_event("ws_connected", agent_id=agent_id)
@@ -349,104 +463,85 @@ async def _run_session(agent_id: str, device_token: str) -> None:
 
         # 2) 메시지 루프
         heartbeat_interval = max(5, getattr(config, "POLL_INTERVAL_SEC", 10))
+        parallel = _max_parallel() > 1
+        ack_waiters: dict[str, asyncio.Future[bool]] = {}
+        running_tasks: set[asyncio.Task] = set()
 
-        while True:
-            try:
-                raw = await asyncio.wait_for(
-                    ws.recv(),
-                    timeout=heartbeat_interval,
-                )
-            except TimeoutError:
-                # 주기적 heartbeat 로 서버에 pull 기회 부여
-                await ws.send(
-                    json.dumps(
-                        {
-                            "type": "heartbeat",
-                            "agent_id": agent_id,
-                        }
-                    )
-                )
-                # pending USER_PRESENT_STATUS 자동 전송 (실패해도 agent 계속 실행)
-                if _STATUS_SENDER_AVAILABLE:
-                    try:
-                        await run_user_present_status_send_once(ws)
-                    except Exception as _exc:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
-                        logger.warning("[ws] status send 실패 (무시): %s", type(_exc).__name__)
-                continue
+        try:
+            await _message_loop(ws, agent_id, heartbeat_interval, parallel, ack_waiters, running_tasks)
+        finally:
+            for t in running_tasks:
+                t.cancel()
 
-            try:
-                msg = json.loads(raw)
-            except (TypeError, json.JSONDecodeError):
-                logger.warning("서버 메시지 파싱 실패")
-                continue
 
-            mtype = str(msg.get("type", ""))
-            if mtype == "task":
-                task = msg.get("task") or {}
-                task_id_inner = task.get("task_id", "")
+async def _handle_task_msg(
+    ws: Any,
+    agent_id: str,
+    msg: dict,
+    parallel: bool,
+    ack_waiters: dict[str, asyncio.Future[bool]],
+    running_tasks: set,
+) -> None:
+    task = msg.get("task") or {}
+    if parallel:
+        bg = asyncio.create_task(_run_task_parallel(ws, agent_id, task, ack_waiters))
+        running_tasks.add(bg)
+        bg.add_done_callback(running_tasks.discard)
+        return
+    run_ok = await _send_running_and_wait_ack(ws, agent_id, task.get("task_id", ""))
+    if not run_ok:
+        # running 상태로 전환됐을 수 있으므로 서버 timeout 에 맡긴다.
+        return
+    # 로컬 실행 후 result 회신 (서버 상태: running → completed/failed)
+    result_msg = await asyncio.to_thread(process_task, task)
+    result_msg["agent_id"] = agent_id
+    await ws.send(json.dumps(result_msg))
 
-                # 1) running 전송 후 running_ack 대기
-                # 서버 상태 기계 요구사항: delivered → running → completed
-                # running_ack 없이 result 를 보내면 delivered → completed 가
-                # InvalidTaskTransitionError 를 일으키므로 반드시 대기한다.
-                run_ok = False
-                try:
-                    await ws.send(
-                        json.dumps(
-                            {
-                                "type": "running",
-                                "agent_id": agent_id,
-                                "task_id": task_id_inner,
-                            }
-                        )
-                    )
-                    try:
-                        ack_raw = await asyncio.wait_for(ws.recv(), timeout=10.0)
-                        ack = json.loads(ack_raw)
-                        run_ok = ack.get("type") == "running_ack"
-                        if not run_ok:
-                            logger.warning(
-                                "running_ack 대신 %s 수신 — 실행 포기 (task_id=%s)",
-                                ack.get("type"),
-                                task_id_inner,
-                            )
-                    except TimeoutError:
-                        logger.warning(
-                            "running_ack timeout — 실행 포기 (task_id=%s)",
-                            task_id_inner,
-                        )
-                    except (TypeError, json.JSONDecodeError):
-                        logger.warning(
-                            "running_ack 파싱 실패 — 실행 포기 (task_id=%s)",
-                            task_id_inner,
-                        )
-                except Exception:  # noqa: BLE001 - 로컬 에이전트 WebSocket 상태보고/실행루프 — status 전송 실패나 running 전송 실패는 경고 로그만 남기고 계속하거나 backoff 후 재접속, 차단/허용을 판정하는 정책함수가 아님
-                    logger.warning(
-                        "running 전송 실패 — 실행 포기 (task_id=%s)",
-                        task_id_inner,
-                    )
 
-                if not run_ok:
-                    # running 상태로 전환됐을 수 있으므로 서버 timeout 에 맡긴다.
-                    continue
+async def _message_loop(
+    ws: Any,
+    agent_id: str,
+    heartbeat_interval: float,
+    parallel: bool,
+    ack_waiters: dict[str, asyncio.Future[bool]],
+    running_tasks: set,
+) -> None:
+    while True:
+        try:
+            raw = await asyncio.wait_for(
+                ws.recv(),
+                timeout=heartbeat_interval,
+            )
+        except TimeoutError:
+            await _send_heartbeat(ws, agent_id)
+            continue
 
-                # 2) 로컬 실행 후 result 회신 (서버 상태: running → completed/failed)
-                result_msg = await asyncio.to_thread(process_task, task)
-                result_msg["agent_id"] = agent_id
-                await ws.send(json.dumps(result_msg))
-            elif mtype == "user_present_task":
-                # USER_PRESENT_TASK: 브라우저 실행 없이 state_store 등록만 수행
-                task_msg = msg.get("task") or msg
-                ack = process_user_present_task(task_msg)
-                ack["agent_id"] = agent_id
-                await ws.send(json.dumps(ack))
-            elif mtype in ("idle", "heartbeat_ack", "result_ack", "running_ack", "auth_ok", "user_present_ack"):
-                # 제어 응답 — 별도 처리 없음
-                continue
-            elif mtype == "error":
-                logger.warning("서버 에러 메시지: %s", msg.get("error"))
-            else:
-                logger.debug("알 수 없는 서버 메시지 타입: %s", mtype)
+        try:
+            msg = json.loads(raw)
+        except (TypeError, json.JSONDecodeError):
+            logger.warning("서버 메시지 파싱 실패")
+            continue
+
+        mtype = str(msg.get("type", ""))
+        if mtype == "task":
+            await _handle_task_msg(ws, agent_id, msg, parallel, ack_waiters, running_tasks)
+        elif mtype == "user_present_task":
+            # USER_PRESENT_TASK: 브라우저 실행 없이 state_store 등록만 수행
+            task_msg = msg.get("task") or msg
+            ack = process_user_present_task(task_msg)
+            ack["agent_id"] = agent_id
+            await ws.send(json.dumps(ack))
+        elif mtype == "running_ack" and parallel:
+            _resolve_ack(ack_waiters, msg, True)
+        elif mtype == "error" and parallel and msg.get("task_id") in ack_waiters:
+            _resolve_ack(ack_waiters, msg, False)
+        elif mtype in ("idle", "heartbeat_ack", "result_ack", "running_ack", "auth_ok", "user_present_ack"):
+            # 제어 응답 — 별도 처리 없음
+            continue
+        elif mtype == "error":
+            logger.warning("서버 에러 메시지: %s", msg.get("error"))
+        else:
+            logger.debug("알 수 없는 서버 메시지 타입: %s", mtype)
 
 
 async def run_forever(agent_id: str, device_token: str) -> None:

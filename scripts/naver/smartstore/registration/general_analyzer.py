@@ -98,17 +98,8 @@ EXTRACT_JS = r"""
 """
 
 
-def main():
-    page = get_page()
-    print(f"\n{'=' * 70}")
-    print("  일반 상품 등록 페이지 (필드 248개) 정밀 분석")
-    print(f"{'=' * 70}\n")
-
-    r = ensure_naver_login(page)
-    if not r.get("ok"):
-        print("✗ 로그인 실패")
-        return
-
+def _open_analyzer_page(page) -> None:
+    """분석 페이지 진입 + 팝업 처리."""
     page.goto(URL, timeout=20000, wait_until="domcontentloaded")
     time.sleep(5)
     try:
@@ -117,9 +108,9 @@ def main():
     except Exception:  # noqa: BLE001 - 팝업/닫기창 처리 브라우저자동화 실패 무시(best-effort), 최상위 main() 예외는 traceback 출력으로 진단정보 남김
         pass
 
-    print(f"  ✓ 진입: {page.url}")
-    print("  페이지 스크롤하며 필드 수집...")
 
+def _scroll_collect(page):
+    """페이지 전체 스크롤하며 필드/섹션 수집."""
     # 페이지 전체 스크롤 (동적 필드 로드 보장)
     all_fields = {}
     all_sections = {}
@@ -135,9 +126,11 @@ def main():
             all_sections[s["text"]] = s
         if y >= snap.get("page_height", 0):
             break
+    return all_fields, all_sections
 
-    print(f"  총 필드: {len(all_fields)}, 섹션: {len(all_sections)}")
 
+def _classify_fields(all_fields):
+    """핵심 필드 분류."""
     # 핵심 필드 추출 (가격/재고/배송/옵션 관련)
     keywords = {
         "price": ["가격", "판매가", "price", "salePrice", "원"],
@@ -156,6 +149,48 @@ def main():
             if any(t.lower() in text_lower for t in terms):
                 by_keyword[kw].append(f)
                 break
+    return by_keyword
+
+
+def _report(by_keyword, all_sections) -> None:
+    """분류 결과 보고."""
+    # 보고
+    print("\n  [핵심 필드 분류]")
+    for kw, items in by_keyword.items():
+        print(f"    {kw}: {len(items)}개")
+        for f in items[:3]:
+            print(
+                f"      - {f['type']:<10} name={f['name'][:25]:<27} placeholder='{f['placeholder'][:30]}' label='{f['context_label'][:30]}'"
+            )
+
+    print(f"\n  [섹션 헤더 ({len(all_sections)}개)]")
+    for s in sorted(all_sections.values(), key=lambda x: x["y"])[:40]:
+        print(f"     y={s['y']:>5}  {s['text']}")
+
+    print(f"\n  ✓ 저장: {OUTPUT.name}")
+
+
+def main():
+    page = get_page()
+    print(f"\n{'=' * 70}")
+    print("  일반 상품 등록 페이지 (필드 248개) 정밀 분석")
+    print(f"{'=' * 70}\n")
+
+    r = ensure_naver_login(page)
+    if not r.get("ok"):
+        print("✗ 로그인 실패")
+        return
+
+    _open_analyzer_page(page)
+
+    print(f"  ✓ 진입: {page.url}")
+    print("  페이지 스크롤하며 필드 수집...")
+
+    all_fields, all_sections = _scroll_collect(page)
+
+    print(f"  총 필드: {len(all_fields)}, 섹션: {len(all_sections)}")
+
+    by_keyword = _classify_fields(all_fields)
 
     # 저장
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -174,20 +209,7 @@ def main():
         encoding="utf-8",
     )
 
-    # 보고
-    print("\n  [핵심 필드 분류]")
-    for kw, items in by_keyword.items():
-        print(f"    {kw}: {len(items)}개")
-        for f in items[:3]:
-            print(
-                f"      - {f['type']:<10} name={f['name'][:25]:<27} placeholder='{f['placeholder'][:30]}' label='{f['context_label'][:30]}'"
-            )
-
-    print(f"\n  [섹션 헤더 ({len(all_sections)}개)]")
-    for s in sorted(all_sections.values(), key=lambda x: x["y"])[:40]:
-        print(f"     y={s['y']:>5}  {s['text']}")
-
-    print(f"\n  ✓ 저장: {OUTPUT.name}")
+    _report(by_keyword, all_sections)
 
 
 if __name__ == "__main__":

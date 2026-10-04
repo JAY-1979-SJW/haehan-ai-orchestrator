@@ -217,23 +217,8 @@ def create_shopping_upload_manifest(inventory: dict[str, Any], *, rights_confirm
     }
 
 
-def classify_blog_image(image: dict[str, Any], *, index: int, total: int) -> dict[str, Any]:
-    width = int(image.get("width") or 0)
-    height = int(image.get("height") or 0)
-    ratio = round(height / width, 3) if width else 0.0
-    src = str(image.get("src") or "")
-    filename = src.split("?", 1)[0].rstrip("/").split("/")[-1]
-    lower = urllib.parse.unquote(filename).lower()
-
-    tags: list[str] = []
-    warnings: list[str] = []
-    recommendations: list[str] = []
-
-    if width < 800:
-        warnings.append("width_below_800")
-    if width and height and max(width, height) < 600:
-        warnings.append("low_resolution")
-
+def _classify_role(width: int, height: int, ratio: float, tags: list[str], recommendations: list[str]) -> str:
+    """종횡비로 이미지 역할 분류(tags/recommendations 를 제자리 갱신)."""
     if ratio >= 2.0:
         role = "spec_table_or_long_detail"
         tags.extend(["detail", "spec"])
@@ -254,17 +239,11 @@ def classify_blog_image(image: dict[str, Any], *, index: int, total: int) -> dic
         role = "landscape_detail"
         tags.extend(["detail", "product"])
         recommendations.append("Use for installation/detail explanation blocks.")
+    return role
 
-    if index == 1:
-        tags.append("opening")
-        recommendations.append("Good first detail section if it clearly states the main value proposition.")
-    if index == total:
-        tags.append("ending_or_thumbnail")
-    if any(token in lower for token in ("spec", "스펙", "상세", "table")) or ratio >= 2.0:
-        tags.append("spec_readability_check")
-    if any(token in lower for token in ("thumb", "썸", "thumbnail")):
-        tags.append("source_thumbnail")
 
+def _representative_score(width: int, height: int, ratio: float, index: int, role: str) -> int:
+    """대표 이미지 점수(0~100)."""
     representative_score = 0
     if width >= 750:
         representative_score += 20
@@ -279,6 +258,39 @@ def classify_blog_image(image: dict[str, Any], *, index: int, total: int) -> dic
     if role == "wide_comparison_or_banner":
         representative_score -= 15
     representative_score = max(0, min(100, representative_score))
+    return representative_score
+
+
+def classify_blog_image(image: dict[str, Any], *, index: int, total: int) -> dict[str, Any]:
+    width = int(image.get("width") or 0)
+    height = int(image.get("height") or 0)
+    ratio = round(height / width, 3) if width else 0.0
+    src = str(image.get("src") or "")
+    filename = src.split("?", 1)[0].rstrip("/").split("/")[-1]
+    lower = urllib.parse.unquote(filename).lower()
+
+    tags: list[str] = []
+    warnings: list[str] = []
+    recommendations: list[str] = []
+
+    if width < 800:
+        warnings.append("width_below_800")
+    if width and height and max(width, height) < 600:
+        warnings.append("low_resolution")
+
+    role = _classify_role(width, height, ratio, tags, recommendations)
+
+    if index == 1:
+        tags.append("opening")
+        recommendations.append("Good first detail section if it clearly states the main value proposition.")
+    if index == total:
+        tags.append("ending_or_thumbnail")
+    if any(token in lower for token in ("spec", "스펙", "상세", "table")) or ratio >= 2.0:
+        tags.append("spec_readability_check")
+    if any(token in lower for token in ("thumb", "썸", "thumbnail")):
+        tags.append("source_thumbnail")
+
+    representative_score = _representative_score(width, height, ratio, index, role)
 
     if representative_score >= 70:
         recommendations.append("Review as a SmartStore representative image candidate.")
@@ -554,6 +566,17 @@ def save_shopping_upload_manifest(payload: dict[str, Any]) -> Path:
     return LATEST_BLOG_SHOPPING_MANIFEST_PATH
 
 
+def _collect_new_links(snapshot: dict[str, Any], blog_id: str, seen: set, post_links: list, target_pages: int) -> None:
+    """스냅샷의 새 포스트 링크를 post_links 에 추가(중복 제외, target_pages 도달 시 중단)."""
+    for row in extract_post_links(snapshot, blog_id=blog_id):
+        if row["url"] in seen:
+            continue
+        seen.add(row["url"])
+        post_links.append(row)
+        if len(post_links) >= target_pages:
+            break
+
+
 def collect_blog_asset_inventory(
     *,
     blog_id: str,
@@ -567,16 +590,10 @@ def collect_blog_asset_inventory(
     if not target_id:
         return {"ok": False, "code": "target_create_failed", "blog_id": blog_id}
     time.sleep(wait_seconds)
-    post_links = []
-    seen = set()
+    post_links: list[Any] = []
+    seen: set[Any] = set()
     snapshot = _read_blog_index_snapshot(target_id, port=port)
-    for row in extract_post_links(snapshot, blog_id=blog_id):
-        if row["url"] in seen:
-            continue
-        seen.add(row["url"])
-        post_links.append(row)
-        if len(post_links) >= target_pages:
-            break
+    _collect_new_links(snapshot, blog_id, seen, post_links, target_pages)
 
     for index in range(1, max_index_pages + 1):
         if len(post_links) >= target_pages:
@@ -584,13 +601,7 @@ def collect_blog_asset_inventory(
         cdp.navigate(target_id, blog_post_list_url(blog_id, index), port=port)
         time.sleep(wait_seconds)
         snapshot = _read_blog_index_snapshot(target_id, port=port)
-        for row in extract_post_links(snapshot, blog_id=blog_id):
-            if row["url"] in seen:
-                continue
-            seen.add(row["url"])
-            post_links.append(row)
-            if len(post_links) >= target_pages:
-                break
+        _collect_new_links(snapshot, blog_id, seen, post_links, target_pages)
 
     posts = []
     for row in post_links[:target_pages]:
@@ -689,19 +700,3 @@ def _scroll_blog_post(target_id: str, *, port: int, steps: int) -> None:
         time.sleep(0.25)
 
 
-def _click_next_blog_index(target_id: str, *, port: int) -> bool:
-    payload = cdp.evaluate(
-        target_id,
-        r"""JSON.stringify((() => {
-          const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
-          const controls = Array.from(document.querySelectorAll('a, button'));
-          const next = controls.find((el) => /\uB2E4\uC74C|next|>/i.test(clean(el.innerText || el.textContent || el.getAttribute('aria-label') || el.getAttribute('title'))));
-          if (!next) return {ok: false};
-          next.scrollIntoView({block:'center', inline:'nearest'});
-          next.click();
-          return {ok: true};
-        })())""",
-        timeout=5.0,
-        port=port,
-    )
-    return bool(isinstance(payload, dict) and payload.get("ok"))

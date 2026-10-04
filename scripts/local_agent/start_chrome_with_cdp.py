@@ -29,19 +29,12 @@ from ai_orchestrator.local_agent.browser.cdp import (
     get_chrome_start_command,
     is_cdp_available,
 )
+from scripts.browser_paths import find_chrome  # noqa: E402 - sys.path 설정 뒤에 import 해야 하는 스크립트(기존 import 와 동일)
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
 
 def _find_chrome_exe() -> str | None:
-    candidates = [
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        r"C:\Users\skyjw\AppData\Local\Google\Chrome\Application\chrome.exe",
-    ]
-    for c in candidates:
-        if Path(c).exists():
-            return c
-    return None
+    return find_chrome()
 
 
 def main() -> None:

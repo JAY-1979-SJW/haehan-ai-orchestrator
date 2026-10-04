@@ -40,7 +40,7 @@ _AGENT_SAFE_FIELDS = {
 }
 
 
-def _build_agent_result(
+def _build_agent_result(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     task_id: str,
     site_id: str,
     status: str,
@@ -69,7 +69,7 @@ def _build_agent_result(
     return result
 
 
-def run_agent(
+def run_agent(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     instruction: str,
     page_data: dict[str, Any],
     permission_map: dict[str, bool] | None = None,

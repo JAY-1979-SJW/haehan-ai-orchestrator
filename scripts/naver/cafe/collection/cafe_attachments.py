@@ -134,7 +134,69 @@ def cmd_list(agent: BrowserAgent, article_url: str, as_json: bool):
         print(f"       {a['url'][:100]}")
 
 
-def cmd_scan(
+def _find_menu_id(agent: BrowserAgent, cafe_url: str, board: str) -> str:
+    """게시판 menuid 결정(못 찾으면 빈 문자열)."""
+    menu_id = ""
+    agent.go(cafe_url)
+    time.sleep(2)
+    links = agent.extract_links(filter_href="ArticleList")
+    for lk in links:
+        if board in lk["text"]:
+            m = re.search(r"menuid=(\d+)", lk["href"])
+            if m:
+                menu_id = m.group(1)
+                break
+    return menu_id
+
+
+def _article_list_url(club_id: str, menu_id: str, page_num: int) -> str:
+    """게시판 목록 페이지 URL."""
+    if menu_id:
+        url = (
+            f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}"
+            f"&search.menuid={menu_id}&search.boardtype=L&search.page={page_num}"
+        )
+    else:
+        url = (
+            f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}"
+            f"&search.boardtype=L&search.page={page_num}"
+        )
+    return url
+
+
+def _scan_one_post(
+    agent: BrowserAgent, post: dict, href: str, do_download: bool, save_dir: str, all_with_attach: list[dict]
+) -> None:
+    """게시글 1건을 읽어 첨부파일이 있으면 수집(오류는 출력 후 계속)."""
+    try:
+        result = agent.read_article(href)
+        attachments = result.get("attachments", [])
+        if attachments:
+            print(f" → 첨부파일 {len(attachments)}개 발견!")
+            post["attachments"] = attachments
+            post["title_full"] = result["title"]
+            all_with_attach.append(post)
+
+            if do_download:
+                for att in attachments:
+                    _do_download(agent, att, save_dir)
+        else:
+            print(" → 첨부파일 없음")
+    except Exception as e:  # noqa: BLE001 - 표준입력 프롬프트 읽기 타임아웃 무시(기본값 사용), 첨부파일 스캔 중 개별 게시글 오류는 출력 후 계속 — 읽기전용 수집
+        print(f" → 오류: {e}")
+
+
+def _print_scan_summary(all_with_attach: list[dict]) -> None:
+    """스캔 완료 요약 출력."""
+    print("\n\n=== 스캔 완료 ===")
+    print(f"첨부파일 포함 게시글: {len(all_with_attach)}개")
+    for p in all_with_attach:
+        print(f"  - {p['title'][:50]}")
+        for a in p.get("attachments", []):
+            print(f"      [{a['ext'].upper():>4}] {a['name']}")
+
+
+def cmd_scan(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     agent: BrowserAgent, cafe_url: str, board: str, pages: int, do_download: bool, out_dir: str, as_json: bool
 ):
     """게시판 게시글을 스캔해 첨부파일이 있는 것만 수집."""
@@ -151,30 +213,12 @@ def cmd_scan(
         sys.exit(1)
 
     # 게시판 menuid 결정
-    menu_id = ""
-    agent.go(cafe_url)
-    time.sleep(2)
-    links = agent.extract_links(filter_href="ArticleList")
-    for lk in links:
-        if board in lk["text"]:
-            m = re.search(r"menuid=(\d+)", lk["href"])
-            if m:
-                menu_id = m.group(1)
-                break
+    menu_id = _find_menu_id(agent, cafe_url, board)
 
     all_with_attach: list[dict] = []
 
     for page_num in range(1, pages + 1):
-        if menu_id:
-            url = (
-                f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}"
-                f"&search.menuid={menu_id}&search.boardtype=L&search.page={page_num}"
-            )
-        else:
-            url = (
-                f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}"
-                f"&search.boardtype=L&search.page={page_num}"
-            )
+        url = _article_list_url(club_id, menu_id, page_num)
 
         print(f"\n[{page_num}/{pages}] 목록 수집: {url}")
         posts = scrape_posts_page(agent, url)
@@ -186,29 +230,9 @@ def cmd_scan(
                 continue
             print(f"  [{i}/{len(posts)}] {post['title'][:40]}...", end="", flush=True)
             time.sleep(1.2)
-            try:
-                result = agent.read_article(href)
-                attachments = result.get("attachments", [])
-                if attachments:
-                    print(f" → 첨부파일 {len(attachments)}개 발견!")
-                    post["attachments"] = attachments
-                    post["title_full"] = result["title"]
-                    all_with_attach.append(post)
+            _scan_one_post(agent, post, href, do_download, save_dir, all_with_attach)
 
-                    if do_download:
-                        for att in attachments:
-                            _do_download(agent, att, save_dir)
-                else:
-                    print(" → 첨부파일 없음")
-            except Exception as e:  # noqa: BLE001 - 표준입력 프롬프트 읽기 타임아웃 무시(기본값 사용), 첨부파일 스캔 중 개별 게시글 오류는 출력 후 계속 — 읽기전용 수집
-                print(f" → 오류: {e}")
-
-    print("\n\n=== 스캔 완료 ===")
-    print(f"첨부파일 포함 게시글: {len(all_with_attach)}개")
-    for p in all_with_attach:
-        print(f"  - {p['title'][:50]}")
-        for a in p.get("attachments", []):
-            print(f"      [{a['ext'].upper():>4}] {a['name']}")
+    _print_scan_summary(all_with_attach)
 
     if as_json:
         print("\nJSON 결과:")

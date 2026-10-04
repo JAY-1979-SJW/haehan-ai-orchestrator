@@ -287,21 +287,6 @@ def get_naver_cred(naver_id: str) -> dict:
     return {"id": naver_id, "pw": ""}
 
 
-def list_naver_accounts() -> list[str]:
-    """저장된 네이버 계정 ID 목록 반환."""
-    accounts = []
-    for key in list_sites():
-        if key == "naver":
-            cred = get_cred(key)
-            if cred.get("id"):
-                accounts.append(cred["id"])
-        elif key.startswith("naver:"):
-            accounts.append(key[len("naver:") :])
-        elif key.startswith("naver_"):
-            accounts.append(key[len("naver_") :])
-    return accounts
-
-
 def list_sites() -> list[str]:
     return [site for site in _load() if not _is_password_login_disabled(site)]
 

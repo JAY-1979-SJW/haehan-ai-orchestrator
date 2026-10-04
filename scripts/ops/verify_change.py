@@ -41,7 +41,7 @@ PY = sys.executable
 # 위반 3건 때문에 CI FAIL — 로컬 pre-commit 훅은 이미 ruff_new_only_gate.py 로 같은
 # 문제를 정확히 처리하고 있어 그 로직을 재사용한다.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ruff_new_only_gate import changed_lines_between  # noqa: E402
+from ruff_new_only_gate import changed_lines_between  # type: ignore[import-not-found]  # noqa: E402
 
 ENV = {
     **os.environ,
@@ -299,6 +299,11 @@ def measure(tree: Path, tests: list[str]) -> dict:
     return r
 
 
+def _is_pytest_id(token: str) -> bool:
+    """pytest 요약 줄의 id 인가 — 'path::test' 이거나 수집 오류의 'path.py'. 로그 줄의 '모듈:파일.py:줄'은 아니다."""
+    return "::" in token or token.endswith(".py")
+
+
 def _pytest(tree: Path, files: list[str], timeout: int) -> list[str]:
     """테스트 파일 묶음 실행 → 실패 id 목록. 수집 오류가 나도 나머지는 계속 돈다."""
     p = run(
@@ -306,8 +311,12 @@ def _pytest(tree: Path, files: list[str], timeout: int) -> list[str]:
         tree,
         timeout=timeout,
     )
+    # pytest 요약 줄("FAILED path::test", "ERROR path.py")만 센다. 실패한 시험의 캡처 로그
+    # ("ERROR    모듈:파일.py:줄 메시지")도 같은 접두어라 그대로 세면 로그 줄이 가짜 실패 id 로 잡힌다.
     out = [
-        ln.split()[1] for ln in p.stdout.splitlines() if ln.startswith(("FAILED ", "ERROR ")) and len(ln.split()) > 1
+        ln.split()[1]
+        for ln in p.stdout.splitlines()
+        if ln.startswith(("FAILED ", "ERROR ")) and len(ln.split()) > 1 and _is_pytest_id(ln.split()[1])
     ]
     if p.returncode not in (0, 1, 5) and not out:
         out.append(f"{files[0]}..(+{len(files) - 1})::<rc={p.returncode}>")

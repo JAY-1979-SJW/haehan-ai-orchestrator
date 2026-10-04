@@ -135,6 +135,301 @@ def build_routing_preflight_chain_context(payload: dict[str, Any]) -> dict[str, 
     }
 
 
+def _chain(ctx: dict[str, Any], chain_decision: str, next_step: str, **fields: Any) -> dict[str, Any]:
+    """ctx 의 engine/routing/selected_engine 을 채워 _make_chain_result 를 호출한다."""
+    return _make_chain_result(
+        chain_decision=chain_decision,
+        engine_capability=ctx["engine_capability"],
+        routing_decision=ctx["routing_decision"],
+        selected_engine=ctx["selected_engine"],
+        next_step=next_step,
+        **fields,
+    )
+
+
+# engine capability → (chain_decision, next_step, block_reason, ctx.routing_block_reason 우선 여부,
+#                      message_ko, should_write_audit)  — 3단계 조기 라우팅
+_ENGINE_EARLY_ROUTES: dict[str, tuple[str, str, str, bool, str, bool]] = {
+    ENGINE_AUTOMATION_BLOCKED: (
+        CHAIN_BLOCK, NEXT_BLOCKED, "AUTOMATION_BLOCKED", True,
+        "자동화가 차단된 사이트입니다.", True,
+    ),
+    ENGINE_NEEDS_MANUAL_REVIEW: (
+        CHAIN_MANUAL_REVIEW_REQUIRED, NEXT_MANUAL_REVIEW_REQUIRED, "NEEDS_MANUAL_REVIEW", True,
+        "수동 실사 및 사용자 승인이 필요합니다.", False,
+    ),
+    ENGINE_API_CONNECTOR_REQUIRED: (
+        CHAIN_ROUTE_API_CONNECTOR, NEXT_API_CONNECTOR, "", False,
+        "공식 API/OAuth 경로로 처리합니다.", False,
+    ),
+    ENGINE_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED: (
+        CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER, NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT, "", False,
+        "사용자 직접 브라우저 접근이 필요합니다.", False,
+    ),
+    ENGINE_LOCAL_AGENT_PLAYWRIGHT_READONLY_ALLOWED: (
+        CHAIN_PROCEED, NEXT_LOCAL_AGENT_PLAYWRIGHT_READONLY, "", False,
+        "로컬 Agent Playwright read-only 라우팅.", False,
+    ),
+}
+
+
+def _early_stage_result(ctx: dict[str, Any], operation_type: str) -> dict[str, Any] | None:
+    """1~3단계: production_mode → type/submit → engine capability 조기 라우팅 (순서 고정)."""
+    # ── 1단계: production_mode → 즉시 BLOCK ──────────────────────────────────
+    if ctx["production_mode"] is True:
+        return _chain(
+            ctx, CHAIN_BLOCK, NEXT_BLOCKED,
+            block_reason="production_mode=true: 모든 preflight chain 차단.",
+            message_ko="production_mode=true: 브라우저 preflight chain 차단.",
+            should_write_audit=True,
+        )
+
+    # ── 2단계: type/submit → 즉시 BLOCK ──────────────────────────────────────
+    if operation_type in _BLOCKED_OPERATIONS:
+        return _chain(
+            ctx, CHAIN_BLOCK, NEXT_BLOCKED,
+            block_reason=f"operation_type={operation_type}: 자동 실행 route 금지.",
+            message_ko=f"{operation_type} 자동 실행은 preflight chain에서 차단됩니다.",
+            should_write_audit=True,
+        )
+
+    # ── 3단계: engine capability 기반 조기 라우팅 ────────────────────────────
+    route = _ENGINE_EARLY_ROUTES.get(ctx["engine_capability"])
+    if route is None:
+        return None
+    chain_decision, next_step, reason, use_routing_reason, message_ko, audit = route
+    block_reason = (ctx["routing_block_reason"] or reason) if use_routing_reason else reason
+    return _chain(
+        ctx, chain_decision, next_step,
+        block_reason=block_reason, message_ko=message_ko, should_write_audit=audit,
+    )
+
+
+def _is_domainless_allowed_url(target_domain: str, target_url: str) -> bool:
+    """about:blank / data: URL처럼 도메인이 없는 허용 URL 여부."""
+    return not target_domain and (
+        not target_url or target_url == "about:blank" or target_url.startswith("data:")
+    )
+
+
+def _site_compliance_stage(ctx: dict[str, Any]) -> tuple[str, dict[str, Any] | None]:
+    """4a. site_compliance_policy. (compliance_decision, 조기 종료 결과 또는 None)."""
+    # about:blank / data: URL처럼 도메인이 없는 허용 URL은 site_compliance 건너뜀
+    target_domain = ctx["target_domain"]
+    target_url = ctx["target_url"]
+
+    if _is_domainless_allowed_url(target_domain, target_url):
+        compliance_decision = "ALLOW_BROWSER_READONLY"
+        compliance_result: dict[str, Any] = {"compliance_decision": compliance_decision}
+    else:
+        compliance_result = evaluate_site_compliance(
+            {
+                "target_domain": target_domain,
+                "target_url": target_url,
+                "operation_type": ctx["operation_type"],
+                "production_mode": ctx["production_mode"],
+            }
+        )
+        compliance_decision = compliance_result.get("compliance_decision", "BLOCK")
+
+    if compliance_decision == "REQUIRE_API_CONNECTOR":
+        return compliance_decision, _chain(
+            ctx, CHAIN_ROUTE_API_CONNECTOR, NEXT_API_CONNECTOR,
+            site_compliance_decision=compliance_decision,
+            block_reason="site_compliance: API connector 필요.",
+            message_ko="사이트 정책상 공식 API/OAuth 경로가 필요합니다.",
+            should_write_audit=False,
+        )
+
+    if compliance_decision == "BLOCK":
+        return compliance_decision, _chain(
+            ctx, CHAIN_BLOCK, NEXT_BLOCKED,
+            site_compliance_decision=compliance_decision,
+            block_reason=compliance_result.get("block_reason") or "SITE_COMPLIANCE_BLOCKED",
+            message_ko=compliance_result.get("message_ko") or "사이트 정책상 차단되었습니다.",
+            should_write_audit=True,
+        )
+
+    if compliance_decision == "REQUIRE_USER_PRESENT_LOCAL":
+        return compliance_decision, _chain(
+            ctx, CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER, NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT,
+            site_compliance_decision=compliance_decision,
+            block_reason="",
+            message_ko="사이트 정책상 사용자 직접 접근이 필요합니다.",
+            should_write_audit=False,
+        )
+
+    return compliance_decision, None
+
+
+def _boundary_allowed_result() -> dict[str, Any]:
+    return {
+        "server_browser_decision": "SERVER_BROWSER_ALLOWED_READONLY",
+        "server_browser_allowed": True,
+        "block_reason": "",
+        "message_ko": "",
+    }
+
+
+def _evaluate_boundary(ctx: dict[str, Any]) -> dict[str, Any]:
+    """서버 브라우저 경계 정책 평가 결과 dict (server_browser_decision/allowed 포함)."""
+    target_domain = ctx["target_domain"]
+    target_url = ctx["target_url"]
+
+    # about:blank / data: URL은 engine capability 분류에서 이미 허용 판정받음 → 건너뜀
+    if _is_domainless_allowed_url(target_domain, target_url):
+        return _boundary_allowed_result()
+
+    # SERVER_PLAYWRIGHT_READONLY_ALLOWED인 경우 URL 기반 정책으로 확인
+    # (category 기반 classify는 미분류 허용 URL을 차단하므로 URL 정책 우선 사용)
+    from browser_worker.policy import evaluate_server_browser_url_policy  # lazy import
+
+    url_policy = evaluate_server_browser_url_policy(
+        target_url,
+        metadata={"production_mode": ctx["production_mode"]},
+    )
+    if url_policy["allowed"]:
+        return _boundary_allowed_result()
+
+    # URL 정책에서 차단 → category 기반으로 추가 확인
+    return evaluate_server_browser_allowed(
+        {
+            "site_category": ctx["site_category"],
+            "target_domain": target_domain,
+            "target_url": target_url,
+            "execution_location": "server_browser",
+            "requested_runtime": "server_playwright",
+            "production_mode": ctx["production_mode"],
+        }
+    )
+
+
+def _server_boundary_stage(ctx: dict[str, Any]) -> tuple[str, dict[str, Any] | None]:
+    """4b. server_browser_boundary_policy. (boundary_decision, 조기 종료 결과 또는 None)."""
+    boundary_result = _evaluate_boundary(ctx)
+    boundary_decision = boundary_result.get("server_browser_decision", "BLOCK")
+    boundary_allowed = boundary_result.get("server_browser_allowed", False)
+
+    if boundary_allowed:
+        return boundary_decision, None
+
+    exec_loc = boundary_result.get("execution_location_required", "BLOCKED")
+    if exec_loc == "API_ONLY":
+        return boundary_decision, _chain(
+            ctx, CHAIN_ROUTE_API_CONNECTOR, NEXT_API_CONNECTOR,
+            server_boundary_decision=boundary_decision,
+            block_reason=boundary_result.get("block_reason") or "SERVER_BOUNDARY_API_REQUIRED",
+            message_ko="서버 경계 정책상 API 경로가 필요합니다.",
+            should_write_audit=False,
+        )
+    if exec_loc == "USER_PRESENT_ONLY":
+        return boundary_decision, _chain(
+            ctx, CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER, NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT,
+            server_boundary_decision=boundary_decision,
+            block_reason="",
+            message_ko="서버 경계 정책상 사용자 직접 접근이 필요합니다.",
+            should_write_audit=False,
+        )
+    return boundary_decision, _chain(
+        ctx, CHAIN_BLOCK, NEXT_BLOCKED,
+        server_boundary_decision=boundary_decision,
+        block_reason=boundary_result.get("block_reason") or "SERVER_BOUNDARY_BLOCKED",
+        message_ko=boundary_result.get("message_ko") or "서버 브라우저 경계 정책상 차단.",
+        should_write_audit=True,
+    )
+
+
+def _approval_preflight_payload(ctx: dict[str, Any]) -> dict[str, Any]:
+    """action registry / gate approval preflight 공통 입력."""
+    return {
+        "workflow_run_id": ctx["workflow_run_id"],
+        "workflow_id": ctx["workflow_id"],
+        "action_name": ctx["action_name"] or "browser.inspect",
+        "operation_type": ctx["operation_type"] or "read",
+        "approval_required": ctx["approval_required"],
+        "approval_id": ctx["approval_id"],
+        "tenant_id": ctx["tenant_id"],
+        "user_id": ctx["user_id"],
+        "site_id": ctx["site_id"],
+        "target_domain": ctx["target_domain"],
+        "production_mode": ctx["production_mode"],
+        "dry_run": ctx["dry_run"],
+    }
+
+
+def _action_registry_stage(
+    ctx: dict[str, Any], compliance_decision: str, boundary_decision: str
+) -> tuple[str, dict[str, Any] | None]:
+    """4c. action_registry_preflight. (action_decision, 조기 종료 결과 또는 None)."""
+    action_result = evaluate_action_registry_preflight(_approval_preflight_payload(ctx))
+    action_decision = action_result.get("preflight_decision", "BLOCK")
+    prior = {
+        "site_compliance_decision": compliance_decision,
+        "server_boundary_decision": boundary_decision,
+        "action_preflight_decision": action_decision,
+    }
+
+    if action_decision in ("REQUIRE_APPROVAL", "BLOCK", "DENY_BY_DEFAULT"):
+        if action_decision == "REQUIRE_APPROVAL":
+            return action_decision, _chain(
+                ctx, CHAIN_APPROVAL_REQUIRED, NEXT_APPROVAL_REQUIRED,
+                block_reason=action_result.get("block_reason") or "APPROVAL_REQUIRED",
+                message_ko="승인이 필요합니다.",
+                should_write_audit=True,
+                **prior,
+            )
+        return action_decision, _chain(
+            ctx, CHAIN_BLOCK, NEXT_BLOCKED,
+            block_reason=action_result.get("block_reason") or "ACTION_REGISTRY_BLOCKED",
+            message_ko=action_result.get("message_ko") or "액션 레지스트리 정책상 차단.",
+            should_write_audit=True,
+            **prior,
+        )
+
+    # 도메인 검증 필요 여부 확인
+    if action_result.get("needs_domain_verification"):
+        return action_decision, _chain(
+            ctx, CHAIN_DOMAIN_VERIFICATION_REQUIRED, NEXT_DOMAIN_VERIFICATION_REQUIRED,
+            block_reason="DOMAIN_VERIFICATION_REQUIRED",
+            message_ko="도메인 실사 및 승인이 필요합니다.",
+            should_write_audit=True,
+            **prior,
+        )
+    return action_decision, None
+
+
+def _gate_approval_stage(
+    ctx: dict[str, Any], compliance_decision: str, boundary_decision: str, action_decision: str
+) -> tuple[str, dict[str, Any] | None]:
+    """4d. gate_approval_preflight. (gate_decision, 조기 종료 결과 또는 None)."""
+    gate_result = evaluate_gate_approval_preflight(_approval_preflight_payload(ctx))
+    gate_decision = gate_result.get("preflight_decision", "BLOCK")
+    prior = {
+        "site_compliance_decision": compliance_decision,
+        "server_boundary_decision": boundary_decision,
+        "action_preflight_decision": action_decision,
+        "gate_preflight_decision": gate_decision,
+    }
+
+    if gate_decision in ("REQUIRE_APPROVAL", "BLOCK", "DENY_BY_DEFAULT"):
+        if gate_decision == "REQUIRE_APPROVAL":
+            return gate_decision, _chain(
+                ctx, CHAIN_APPROVAL_REQUIRED, NEXT_APPROVAL_REQUIRED,
+                block_reason=gate_result.get("block_reason") or "APPROVAL_REQUIRED",
+                message_ko="게이트 승인이 필요합니다.",
+                should_write_audit=True,
+                **prior,
+            )
+        return gate_decision, _chain(
+            ctx, CHAIN_BLOCK, NEXT_BLOCKED,
+            block_reason=gate_result.get("block_reason") or "GATE_BLOCKED",
+            message_ko=gate_result.get("message_ko") or "게이트 승인 정책상 차단.",
+            should_write_audit=True,
+            **prior,
+        )
+    return gate_decision, None
+
+
 def evaluate_browser_engine_routing_preflight_chain(
     payload: dict[str, Any],
 ) -> dict[str, Any]:
@@ -152,359 +447,29 @@ def evaluate_browser_engine_routing_preflight_chain(
     - should_write_audit, block_reason, message_ko
     """
     ctx = build_routing_preflight_chain_context(payload)
-    engine = ctx["engine_capability"]
-    routing = ctx["routing_decision"]
     operation_type = (ctx["operation_type"] or "").lower()
 
-    # ── 1단계: production_mode → 즉시 BLOCK ──────────────────────────────────
-    if ctx["production_mode"] is True:
-        return _make_chain_result(
-            chain_decision=CHAIN_BLOCK,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_BLOCKED,
-            block_reason="production_mode=true: 모든 preflight chain 차단.",
-            message_ko="production_mode=true: 브라우저 preflight chain 차단.",
-            should_write_audit=True,
-        )
-
-    # ── 2단계: type/submit → 즉시 BLOCK ──────────────────────────────────────
-    if operation_type in _BLOCKED_OPERATIONS:
-        return _make_chain_result(
-            chain_decision=CHAIN_BLOCK,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_BLOCKED,
-            block_reason=f"operation_type={operation_type}: 자동 실행 route 금지.",
-            message_ko=f"{operation_type} 자동 실행은 preflight chain에서 차단됩니다.",
-            should_write_audit=True,
-        )
-
-    # ── 3단계: engine capability 기반 조기 라우팅 ────────────────────────────
-
-    if engine == ENGINE_AUTOMATION_BLOCKED:
-        return _make_chain_result(
-            chain_decision=CHAIN_BLOCK,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_BLOCKED,
-            block_reason=ctx["routing_block_reason"] or "AUTOMATION_BLOCKED",
-            message_ko="자동화가 차단된 사이트입니다.",
-            should_write_audit=True,
-        )
-
-    if engine == ENGINE_NEEDS_MANUAL_REVIEW:
-        return _make_chain_result(
-            chain_decision=CHAIN_MANUAL_REVIEW_REQUIRED,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_MANUAL_REVIEW_REQUIRED,
-            block_reason=ctx["routing_block_reason"] or "NEEDS_MANUAL_REVIEW",
-            message_ko="수동 실사 및 사용자 승인이 필요합니다.",
-            should_write_audit=False,
-        )
-
-    if engine == ENGINE_API_CONNECTOR_REQUIRED:
-        return _make_chain_result(
-            chain_decision=CHAIN_ROUTE_API_CONNECTOR,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_API_CONNECTOR,
-            block_reason="",
-            message_ko="공식 API/OAuth 경로로 처리합니다.",
-            should_write_audit=False,
-        )
-
-    if engine == ENGINE_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED:
-        return _make_chain_result(
-            chain_decision=CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT,
-            block_reason="",
-            message_ko="사용자 직접 브라우저 접근이 필요합니다.",
-            should_write_audit=False,
-        )
-
-    if engine == ENGINE_LOCAL_AGENT_PLAYWRIGHT_READONLY_ALLOWED:
-        return _make_chain_result(
-            chain_decision=CHAIN_PROCEED,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_LOCAL_AGENT_PLAYWRIGHT_READONLY,
-            block_reason="",
-            message_ko="로컬 Agent Playwright read-only 라우팅.",
-            should_write_audit=False,
-        )
+    # ── 1~3단계: production / type·submit / engine capability 조기 라우팅 ────
+    early = _early_stage_result(ctx, operation_type)
+    if early is not None:
+        return early
 
     # ── 4단계: SERVER_PLAYWRIGHT_READONLY_ALLOWED → 기존 preflight chain 수행 ─
+    compliance_decision, early = _site_compliance_stage(ctx)
+    if early is not None:
+        return early
 
-    # 4a. site_compliance_policy
-    # about:blank / data: URL처럼 도메인이 없는 허용 URL은 site_compliance 건너뜀
-    target_domain = ctx["target_domain"]
-    target_url = ctx["target_url"]
-    _skip_compliance = not target_domain and (
-        not target_url or target_url == "about:blank" or target_url.startswith("data:")
-    )
+    boundary_decision, early = _server_boundary_stage(ctx)
+    if early is not None:
+        return early
 
-    if _skip_compliance:
-        compliance_decision = "ALLOW_BROWSER_READONLY"
-        compliance_result: dict[str, Any] = {"compliance_decision": compliance_decision}
-    else:
-        compliance_result = evaluate_site_compliance(
-            {
-                "target_domain": target_domain,
-                "target_url": target_url,
-                "operation_type": ctx["operation_type"],
-                "production_mode": ctx["production_mode"],
-            }
-        )
-        compliance_decision = compliance_result.get("compliance_decision", "BLOCK")
+    action_decision, early = _action_registry_stage(ctx, compliance_decision, boundary_decision)
+    if early is not None:
+        return early
 
-    if compliance_decision == "REQUIRE_API_CONNECTOR":
-        return _make_chain_result(
-            chain_decision=CHAIN_ROUTE_API_CONNECTOR,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_API_CONNECTOR,
-            site_compliance_decision=compliance_decision,
-            block_reason="site_compliance: API connector 필요.",
-            message_ko="사이트 정책상 공식 API/OAuth 경로가 필요합니다.",
-            should_write_audit=False,
-        )
-
-    if compliance_decision == "BLOCK":
-        return _make_chain_result(
-            chain_decision=CHAIN_BLOCK,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_BLOCKED,
-            site_compliance_decision=compliance_decision,
-            block_reason=compliance_result.get("block_reason") or "SITE_COMPLIANCE_BLOCKED",
-            message_ko=compliance_result.get("message_ko") or "사이트 정책상 차단되었습니다.",
-            should_write_audit=True,
-        )
-
-    if compliance_decision == "REQUIRE_USER_PRESENT_LOCAL":
-        return _make_chain_result(
-            chain_decision=CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT,
-            site_compliance_decision=compliance_decision,
-            block_reason="",
-            message_ko="사이트 정책상 사용자 직접 접근이 필요합니다.",
-            should_write_audit=False,
-        )
-
-    # 4b. server_browser_boundary_policy
-    # about:blank / data: URL은 engine capability 분류에서 이미 허용 판정받음 → 건너뜀
-    _skip_boundary = not target_domain and (
-        not target_url or target_url == "about:blank" or target_url.startswith("data:")
-    )
-    if _skip_boundary:
-        boundary_decision = "SERVER_BROWSER_ALLOWED_READONLY"
-        boundary_allowed = True
-        boundary_result: dict[str, Any] = {
-            "server_browser_decision": boundary_decision,
-            "server_browser_allowed": True,
-            "block_reason": "",
-            "message_ko": "",
-        }
-    else:
-        # SERVER_PLAYWRIGHT_READONLY_ALLOWED인 경우 URL 기반 정책으로 확인
-        # (category 기반 classify는 미분류 허용 URL을 차단하므로 URL 정책 우선 사용)
-        from browser_worker.policy import evaluate_server_browser_url_policy  # lazy import
-
-        url_policy = evaluate_server_browser_url_policy(
-            target_url,
-            metadata={"production_mode": ctx["production_mode"]},
-        )
-        if url_policy["allowed"]:
-            boundary_decision = "SERVER_BROWSER_ALLOWED_READONLY"
-            boundary_allowed = True
-            boundary_result = {
-                "server_browser_decision": boundary_decision,
-                "server_browser_allowed": True,
-                "block_reason": "",
-                "message_ko": "",
-            }
-        else:
-            # URL 정책에서 차단 → category 기반으로 추가 확인
-            boundary_result = evaluate_server_browser_allowed(
-                {
-                    "site_category": ctx["site_category"],
-                    "target_domain": target_domain,
-                    "target_url": target_url,
-                    "execution_location": "server_browser",
-                    "requested_runtime": "server_playwright",
-                    "production_mode": ctx["production_mode"],
-                }
-            )
-            boundary_decision = boundary_result.get("server_browser_decision", "BLOCK")
-            boundary_allowed = boundary_result.get("server_browser_allowed", False)
-
-    if not boundary_allowed:
-        exec_loc = boundary_result.get("execution_location_required", "BLOCKED")
-        if exec_loc == "API_ONLY":
-            return _make_chain_result(
-                chain_decision=CHAIN_ROUTE_API_CONNECTOR,
-                engine_capability=engine,
-                routing_decision=routing,
-                selected_engine=ctx["selected_engine"],
-                next_step=NEXT_API_CONNECTOR,
-                server_boundary_decision=boundary_decision,
-                block_reason=boundary_result.get("block_reason") or "SERVER_BOUNDARY_API_REQUIRED",
-                message_ko="서버 경계 정책상 API 경로가 필요합니다.",
-                should_write_audit=False,
-            )
-        if exec_loc == "USER_PRESENT_ONLY":
-            return _make_chain_result(
-                chain_decision=CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER,
-                engine_capability=engine,
-                routing_decision=routing,
-                selected_engine=ctx["selected_engine"],
-                next_step=NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT,
-                server_boundary_decision=boundary_decision,
-                block_reason="",
-                message_ko="서버 경계 정책상 사용자 직접 접근이 필요합니다.",
-                should_write_audit=False,
-            )
-        return _make_chain_result(
-            chain_decision=CHAIN_BLOCK,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_BLOCKED,
-            server_boundary_decision=boundary_decision,
-            block_reason=boundary_result.get("block_reason") or "SERVER_BOUNDARY_BLOCKED",
-            message_ko=boundary_result.get("message_ko") or "서버 브라우저 경계 정책상 차단.",
-            should_write_audit=True,
-        )
-
-    # 4c. action_registry_preflight
-    action_result = evaluate_action_registry_preflight(
-        {
-            "workflow_run_id": ctx["workflow_run_id"],
-            "workflow_id": ctx["workflow_id"],
-            "action_name": ctx["action_name"] or "browser.inspect",
-            "operation_type": ctx["operation_type"] or "read",
-            "approval_required": ctx["approval_required"],
-            "approval_id": ctx["approval_id"],
-            "tenant_id": ctx["tenant_id"],
-            "user_id": ctx["user_id"],
-            "site_id": ctx["site_id"],
-            "target_domain": ctx["target_domain"],
-            "production_mode": ctx["production_mode"],
-            "dry_run": ctx["dry_run"],
-        }
-    )
-    action_decision = action_result.get("preflight_decision", "BLOCK")
-
-    if action_decision in ("REQUIRE_APPROVAL", "BLOCK", "DENY_BY_DEFAULT"):
-        if action_decision == "REQUIRE_APPROVAL":
-            return _make_chain_result(
-                chain_decision=CHAIN_APPROVAL_REQUIRED,
-                engine_capability=engine,
-                routing_decision=routing,
-                selected_engine=ctx["selected_engine"],
-                next_step=NEXT_APPROVAL_REQUIRED,
-                site_compliance_decision=compliance_decision,
-                server_boundary_decision=boundary_decision,
-                action_preflight_decision=action_decision,
-                block_reason=action_result.get("block_reason") or "APPROVAL_REQUIRED",
-                message_ko="승인이 필요합니다.",
-                should_write_audit=True,
-            )
-        return _make_chain_result(
-            chain_decision=CHAIN_BLOCK,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_BLOCKED,
-            site_compliance_decision=compliance_decision,
-            server_boundary_decision=boundary_decision,
-            action_preflight_decision=action_decision,
-            block_reason=action_result.get("block_reason") or "ACTION_REGISTRY_BLOCKED",
-            message_ko=action_result.get("message_ko") or "액션 레지스트리 정책상 차단.",
-            should_write_audit=True,
-        )
-
-    # 도메인 검증 필요 여부 확인
-    if action_result.get("needs_domain_verification"):
-        return _make_chain_result(
-            chain_decision=CHAIN_DOMAIN_VERIFICATION_REQUIRED,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_DOMAIN_VERIFICATION_REQUIRED,
-            site_compliance_decision=compliance_decision,
-            server_boundary_decision=boundary_decision,
-            action_preflight_decision=action_decision,
-            block_reason="DOMAIN_VERIFICATION_REQUIRED",
-            message_ko="도메인 실사 및 승인이 필요합니다.",
-            should_write_audit=True,
-        )
-
-    # 4d. gate_approval_preflight
-    gate_result = evaluate_gate_approval_preflight(
-        {
-            "workflow_run_id": ctx["workflow_run_id"],
-            "workflow_id": ctx["workflow_id"],
-            "action_name": ctx["action_name"] or "browser.inspect",
-            "operation_type": ctx["operation_type"] or "read",
-            "approval_required": ctx["approval_required"],
-            "approval_id": ctx["approval_id"],
-            "tenant_id": ctx["tenant_id"],
-            "user_id": ctx["user_id"],
-            "site_id": ctx["site_id"],
-            "target_domain": ctx["target_domain"],
-            "production_mode": ctx["production_mode"],
-            "dry_run": ctx["dry_run"],
-        }
-    )
-    gate_decision = gate_result.get("preflight_decision", "BLOCK")
-
-    if gate_decision in ("REQUIRE_APPROVAL", "BLOCK", "DENY_BY_DEFAULT"):
-        if gate_decision == "REQUIRE_APPROVAL":
-            return _make_chain_result(
-                chain_decision=CHAIN_APPROVAL_REQUIRED,
-                engine_capability=engine,
-                routing_decision=routing,
-                selected_engine=ctx["selected_engine"],
-                next_step=NEXT_APPROVAL_REQUIRED,
-                site_compliance_decision=compliance_decision,
-                server_boundary_decision=boundary_decision,
-                action_preflight_decision=action_decision,
-                gate_preflight_decision=gate_decision,
-                block_reason=gate_result.get("block_reason") or "APPROVAL_REQUIRED",
-                message_ko="게이트 승인이 필요합니다.",
-                should_write_audit=True,
-            )
-        return _make_chain_result(
-            chain_decision=CHAIN_BLOCK,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_BLOCKED,
-            site_compliance_decision=compliance_decision,
-            server_boundary_decision=boundary_decision,
-            action_preflight_decision=action_decision,
-            gate_preflight_decision=gate_decision,
-            block_reason=gate_result.get("block_reason") or "GATE_BLOCKED",
-            message_ko=gate_result.get("message_ko") or "게이트 승인 정책상 차단.",
-            should_write_audit=True,
-        )
+    gate_decision, early = _gate_approval_stage(ctx, compliance_decision, boundary_decision, action_decision)
+    if early is not None:
+        return early
 
     # 4e. allowlist_preflight
     allowlist_result = evaluate_allowlist_preflight(
@@ -522,39 +487,30 @@ def evaluate_browser_engine_routing_preflight_chain(
         }
     )
     allowlist_decision = allowlist_result.get("allowlist_decision", "BLOCK")
+    prior = {
+        "site_compliance_decision": compliance_decision,
+        "server_boundary_decision": boundary_decision,
+        "action_preflight_decision": action_decision,
+        "gate_preflight_decision": gate_decision,
+        "allowlist_decision": allowlist_decision,
+    }
 
     if allowlist_decision == "BLOCK":
-        return _make_chain_result(
-            chain_decision=CHAIN_BLOCK,
-            engine_capability=engine,
-            routing_decision=routing,
-            selected_engine=ctx["selected_engine"],
-            next_step=NEXT_BLOCKED,
-            site_compliance_decision=compliance_decision,
-            server_boundary_decision=boundary_decision,
-            action_preflight_decision=action_decision,
-            gate_preflight_decision=gate_decision,
-            allowlist_decision=allowlist_decision,
+        return _chain(
+            ctx, CHAIN_BLOCK, NEXT_BLOCKED,
             block_reason=allowlist_result.get("block_reason") or "ALLOWLIST_BLOCKED",
             message_ko=allowlist_result.get("message_ko") or "allowlist 정책상 차단.",
             should_write_audit=True,
+            **prior,
         )
 
     # ── 5단계: 모든 체인 통과 → SERVER_PLAYWRIGHT_READONLY_PREFLIGHT ──────────
-    return _make_chain_result(
-        chain_decision=CHAIN_PROCEED,
-        engine_capability=engine,
-        routing_decision=routing,
-        selected_engine=ctx["selected_engine"],
-        next_step=NEXT_SERVER_PLAYWRIGHT_READONLY_PREFLIGHT,
-        site_compliance_decision=compliance_decision,
-        server_boundary_decision=boundary_decision,
-        action_preflight_decision=action_decision,
-        gate_preflight_decision=gate_decision,
-        allowlist_decision=allowlist_decision,
+    return _chain(
+        ctx, CHAIN_PROCEED, NEXT_SERVER_PLAYWRIGHT_READONLY_PREFLIGHT,
         block_reason="",
         message_ko="모든 preflight 체인 통과. 서버 Playwright read-only 대기.",
         should_write_audit=False,
+        **prior,
     )
 
 
@@ -637,7 +593,7 @@ def validate_routing_preflight_chain_result(result: dict[str, Any]) -> list[str]
     return errors
 
 
-def _make_chain_result(
+def _make_chain_result(  # noqa: PLR0913 - 내부 체인 결과 dict 생성 헬퍼, 필드 나열형
     chain_decision: str,
     engine_capability: str,
     routing_decision: str,

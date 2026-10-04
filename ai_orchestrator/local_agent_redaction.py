@@ -12,7 +12,10 @@ result_data는 명시적 허용 목록만 저장하는 정책을 정의한다.
   - _strip_result_data(): result_data 필터링 (저장 전, 이중 방어)
 """
 
+import re
 from collections.abc import Callable
+
+from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 
 # params / result 에서 절대 저장·노출 금지인 키
 _SENSITIVE_KEYS: frozenset[str] = frozenset(
@@ -88,6 +91,7 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset(
         "risk_level",
         "final_approval_required",
         "result",
+        "result_full",  # 작업 분배용 긴 결과(run_claude_agent result_max_chars)
         "target_url_domain",
         "text_length",
         "text_preview",
@@ -583,6 +587,32 @@ _RESULT_DATA_SPECIAL_HANDLERS: dict[str, Callable[[object], object | None]] = {
 }
 
 
+# 문자열 값 기본 상한은 500자. 긴 결과가 정당한 키만 예외로 둔다.
+_RESULT_DATA_LONG_KEYS: dict[str, int] = {"result_full": RESULT_FULL_MAX_CHARS}
+
+# 값 수준 비밀 마스킹 — 키 이름 필터만으로는 본문 안에 섞인 키·토큰을 못 막는다
+# (result_full 이 500→20000자로 늘면서 노출 가능 분량도 커졌다). 과마스킹을 피하려고
+# 형식이 뚜렷한 것만 잡는다: sk-…, AIza…(Google API 키), Bearer <토큰>, 대문자 환경변수형 NAME_KEY=값.
+_SECRET_MASK = "[REDACTED]"
+_SECRET_VALUE_PATTERNS: tuple["re.Pattern[str]", ...] = (
+    re.compile(r"\bsk-[A-Za-z0-9_-]{20,}"),
+    re.compile(r"\bAIza[0-9A-Za-z_-]{35}"),
+    re.compile(r"\b(Bearer\s+)[A-Za-z0-9._~+/=-]{20,}", re.IGNORECASE),
+)
+_SECRET_ASSIGN_PATTERN = re.compile(
+    r"\b([A-Z][A-Z0-9_]*(?:KEY|SECRET|TOKEN|PASSWORD|PASSWD)[A-Z0-9_]*)(\s*=\s*)"
+    r"(?:\"[^\"\s]{8,}\"|'[^'\s]{8,}'|[^\s\"']{8,})"
+)
+
+
+def _mask_secret_values(text: str) -> str:
+    """문자열 안의 비밀 값 모양을 `[REDACTED]` 로 바꾼다(이름·구분자는 남긴다)."""
+    text = _SECRET_VALUE_PATTERNS[0].sub(_SECRET_MASK, text)
+    text = _SECRET_VALUE_PATTERNS[1].sub(_SECRET_MASK, text)
+    text = _SECRET_VALUE_PATTERNS[2].sub(lambda m: m.group(1) + _SECRET_MASK, text)
+    return _SECRET_ASSIGN_PATTERN.sub(lambda m: m.group(1) + m.group(2) + _SECRET_MASK, text)
+
+
 def _strip_result_data(data: object) -> "dict | None":
     """agent result data를 안전 필터 후 반환.
 
@@ -616,7 +646,8 @@ def _strip_result_data(data: object) -> "dict | None":
         if isinstance(v, (bool, int, float, type(None))):
             out[k] = v
         elif isinstance(v, str):
-            out[k] = v[:500]
+            # 자르기 전에 마스킹 — 비밀이 상한 경계에 걸쳐 일부만 남지 않게 한다.
+            out[k] = _mask_secret_values(v)[: _RESULT_DATA_LONG_KEYS.get(k_low, 500)]
         else:
-            out[k] = str(v)[:500]
+            out[k] = _mask_secret_values(str(v))[:500]
     return out or None

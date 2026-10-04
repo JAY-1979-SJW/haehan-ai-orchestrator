@@ -98,6 +98,29 @@ def validate_internal_test_url(
             f"허용 host 아님: {host} (localhost/127.0.0.1 only)",
         )
 
+    port_block = _port_block(parsed, allowed_port)
+    if port_block is not None:
+        return port_block
+    actual_port = parsed.port
+
+    path = parsed.path or ""
+    path_block = _path_block(parsed, path, allowed_path_prefix)
+    if path_block is not None:
+        return path_block
+
+    return {
+        "ok": True,
+        "scheme": scheme,
+        "host": host,
+        "port": actual_port,
+        "path": path,
+        "url_category": "internal_test",
+        "allowlist_name": "internal_test_default",
+    }
+
+
+def _port_block(parsed: Any, allowed_port: int) -> dict[str, Any] | None:
+    """포트 검사. 통과하면 None."""
     # urlparse.port 는 허용되지 않은 포트(예: 0)에서 ValueError. try/except 로 안전화.
     try:
         actual_port = parsed.port
@@ -110,8 +133,11 @@ def validate_internal_test_url(
             "URL_PORT_BLOCKED",
             f"허용 포트 아님: {actual_port} != {allowed_port}",
         )
+    return None
 
-    path = parsed.path or ""
+
+def _path_block(parsed: Any, path: str, allowed_path_prefix: str) -> dict[str, Any] | None:
+    """path prefix / query / fragment / 위험 키워드 검사. 통과하면 None."""
     if not path.startswith(allowed_path_prefix):
         return _block(
             "URL_PATH_BLOCKED",
@@ -131,16 +157,7 @@ def validate_internal_test_url(
                 "URL_RISKY_KEYWORD",
                 f"위험 경로 키워드 포함: {kw}",
             )
-
-    return {
-        "ok": True,
-        "scheme": scheme,
-        "host": host,
-        "port": actual_port,
-        "path": path,
-        "url_category": "internal_test",
-        "allowlist_name": "internal_test_default",
-    }
+    return None
 
 
 # ── 페이지 안전성 ────────────────────────────────────────────────────────────
@@ -166,25 +183,9 @@ def analyze_internal_page_safety(
     if not isinstance(page_structure, dict):
         return {"safe": False, "blocked_reason": "PAGE_STRUCTURE_INVALID"}
 
-    inputs = page_structure.get("inputs") or []
-    for inp in inputs:
-        if not isinstance(inp, dict):
-            continue
-        itype = (inp.get("type") or "").lower()
-        if itype == "password":
-            return {"safe": False, "blocked_reason": "PASSWORD_INPUT_PRESENT"}
-        if itype == "file":
-            return {"safe": False, "blocked_reason": "FILE_INPUT_PRESENT"}
-
-    forms = page_structure.get("forms") or []
-    for f in forms:
-        if not isinstance(f, dict):
-            continue
-        method = (f.get("method") or "get").lower()
-        if method == "post":
-            return {"safe": False, "blocked_reason": "FORM_POST_PRESENT"}
-        if f.get("has_password"):
-            return {"safe": False, "blocked_reason": "PASSWORD_INPUT_PRESENT"}
+    blocked = _input_form_block_reason(page_structure)
+    if blocked is not None:
+        return {"safe": False, "blocked_reason": blocked}
 
     textareas = page_structure.get("textareas") or []
     if textareas:
@@ -208,6 +209,30 @@ def analyze_internal_page_safety(
             }
 
     return {"safe": True, "blocked_reason": None}
+
+
+def _input_form_block_reason(page_structure: dict[str, Any]) -> str | None:
+    """input/form 기반 BLOCK 사유(없으면 None). 검사 순서 고정."""
+    inputs = page_structure.get("inputs") or []
+    for inp in inputs:
+        if not isinstance(inp, dict):
+            continue
+        itype = (inp.get("type") or "").lower()
+        if itype == "password":
+            return "PASSWORD_INPUT_PRESENT"
+        if itype == "file":
+            return "FILE_INPUT_PRESENT"
+
+    forms = page_structure.get("forms") or []
+    for f in forms:
+        if not isinstance(f, dict):
+            continue
+        method = (f.get("method") or "get").lower()
+        if method == "post":
+            return "FORM_POST_PRESENT"
+        if f.get("has_password"):
+            return "PASSWORD_INPUT_PRESENT"
+    return None
 
 
 # ── 내부 ────────────────────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ stdin: JSON {tool_name, tool_input: {file_path, content}}
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -19,12 +20,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.ops.write_gates import duplicate_impl_gate, naver_blog_safety_gate  # noqa: E402
+from scripts.ops.write_gates import duplicate_impl_gate, naver_blog_safety_gate, sitemap_gate  # noqa: E402
 
 # 등록된 게이트 — 순서대로 실행, 첫 차단 사유가 나오면 즉시 중단
 _GATES = [
     ("naver-blog-safety", naver_blog_safety_gate.check),
     ("duplicate-impl", duplicate_impl_gate.check),
+]
+
+# 경고 전용 게이트 — 작성은 막지 않고 안내만 붙인다(차단 게이트를 모두 통과한 뒤 실행)
+_WARN_GATES = [
+    ("sitemap", sitemap_gate.warn),
 ]
 
 
@@ -39,6 +45,11 @@ def _print_block(gate_name: str, file_path: str, message: str) -> None:
 
 
 def main() -> None:
+    # 훅 출력은 하네스가 UTF-8 로 읽는다. 파이프로 연결되면 파이썬 기본 인코딩이 cp949 라 한글이 깨져
+    # 사용자에게 안내 문구(예: /clear 안내)가 읽히지 않았다(2026-10-01).
+    for _stream in (sys.stdout, sys.stderr):
+        with contextlib.suppress(Exception):
+            _stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         raw = sys.stdin.read()
         data = json.loads(raw) if raw.strip() else {}
@@ -60,6 +71,15 @@ def main() -> None:
         if message:
             _print_block(gate_name, file_path, message)
             sys.exit(2)
+
+    warnings = [msg for _name, warn in _WARN_GATES if (msg := warn(file_path, content))]
+    if warnings:
+        print(
+            json.dumps(
+                {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": " / ".join(warnings)}},
+                ensure_ascii=False,
+            )
+        )
 
     sys.exit(0)
 

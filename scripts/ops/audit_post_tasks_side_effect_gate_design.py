@@ -9,6 +9,7 @@ router.py 수정 / 서버 반영 전면 금지.
 
 import ast
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -313,16 +314,7 @@ def _verify_no_http_import() -> tuple[bool, str]:
     return True, "HTTP client import 없음"
 
 
-def run_audit() -> dict:
-    errors = []
-    warnings = []
-
-    # 1. 핵심 파일 존재
-    present, missing = _check_key_files()  # noqa: RUF059 — present 는 표시용, 실제 사용은 missing
-    for f in missing:
-        errors.append(f"필수 파일 없음: {f}")
-
-    # 2. router.py 안정성
+def _audit_router_stability(errors, warnings):
     rs = _check_router_stability()
     if not rs["post_tasks_handler_exists"]:
         errors.append("POST /tasks handler 없음")
@@ -338,8 +330,10 @@ def run_audit() -> dict:
         errors.append("ROUTER_TOUCH_PHASE != PHASE_1R")
     if not rs["no_post_tasks_dry_run_flag"]:
         warnings.append("POST_TASKS_DRY_RUN_ENABLED flag 이미 존재 — 설계 범위 초과 여부 확인 필요")
+    return rs
 
-    # 3. 운영 안전 플래그
+
+def _audit_safety_flags(errors):
     if ROUTE_EXECUTION_ALLOWED:
         errors.append("ROUTE_EXECUTION_ALLOWED must be False")
     if EXECUTE_CALL_ALLOWED:
@@ -355,7 +349,8 @@ def run_audit() -> dict:
     if not DESIGN_ONLY:
         errors.append("DESIGN_ONLY must be True")
 
-    # 4. side-effect catalog 완전성
+
+def _audit_catalog_and_gate(errors):
     required_effects = [
         "FILE_WRITE_AUDIT_LOG",
         "FILE_WRITE_APPROVAL_TOKENS",
@@ -376,6 +371,25 @@ def run_audit() -> dict:
         errors.append("approval gate blockers < 5")
     if gate["status"] != "DESIGN_ONLY":
         errors.append("APPROVAL_GATE status must be DESIGN_ONLY")
+
+
+def run_audit() -> dict:
+    errors = []
+    warnings: list[Any] = []
+
+    # 1. 핵심 파일 존재
+    present, missing = _check_key_files()  # noqa: RUF059 — present 는 표시용, 실제 사용은 missing
+    for f in missing:
+        errors.append(f"필수 파일 없음: {f}")
+
+    # 2. router.py 안정성
+    rs = _audit_router_stability(errors, warnings)
+
+    # 3. 운영 안전 플래그
+    _audit_safety_flags(errors)
+
+    # 4. side-effect catalog 완전성
+    _audit_catalog_and_gate(errors)
 
     # 6. call chain 완전성
     if len(CALL_CHAIN) < 5:

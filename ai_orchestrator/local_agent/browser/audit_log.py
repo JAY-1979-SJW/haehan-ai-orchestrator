@@ -105,7 +105,7 @@ def get_audit_path(date: str | None = None) -> Path:
     return _AUDIT_DIR / f"user_browser_cdp_{date}.jsonl"
 
 
-def log_action(
+def log_action(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     action: str,
     *,
     url: str = "",

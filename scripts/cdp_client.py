@@ -37,15 +37,6 @@ sys.path.insert(0, str(ROOT))
 DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
 
 
-def _load_daemon_state() -> dict:
-    if not DAEMON_STATE_FILE.exists():
-        raise RuntimeError("데몬이 실행 중이지 않습니다. 먼저 'python scripts/cdp_daemon.py start' 실행하세요")
-    try:
-        return json.loads(DAEMON_STATE_FILE.read_text(encoding="utf-8"))
-    except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
-        raise RuntimeError(f"상태 파일 읽기 실패: {e}")
-
-
 # ── 명령별 핸들러 ─────────────────────────────────────────────────────────
 # 2026-09-29 STD-08(복잡도) 리팩터: 원래 main() 하나(길이 670줄, C901=134)에 있던
 # match cmd: 의 각 case 본문을 그대로 옮겼다. 로직·문자열·예외 처리는 한 글자도 바꾸지
@@ -381,8 +372,6 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
 
 
 def _cmd_analyze() -> None:
-    import json
-
     from scripts.page_analyzer import full_page_analysis
     from scripts.web_connector import get_page
 

@@ -326,7 +326,7 @@ def _now_iso() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def build_browser_task_audit_event(
+def build_browser_task_audit_event(  # noqa: PLR0913 - 공개 keyword-only 감사 이벤트 빌더, 시그니처 유지
     *,
     event_type: BrowserAuditEventType,
     task_id: str,
@@ -400,7 +400,7 @@ def build_browser_task_audit_event(
     return event
 
 
-def build_browser_approval_audit_event(
+def build_browser_approval_audit_event(  # noqa: PLR0913 - 공개 keyword-only 감사 이벤트 빌더, 시그니처 유지
     *,
     event_type: BrowserAuditEventType,
     approval_id: str,
@@ -436,7 +436,7 @@ def build_browser_approval_audit_event(
     )
 
 
-def build_browser_result_audit_event(
+def build_browser_result_audit_event(  # noqa: PLR0913 - 공개 keyword-only 감사 이벤트 빌더, 시그니처 유지
     *,
     task_result: Any,
     bridge_status: str = "callback_built",

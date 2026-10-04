@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import time
+from typing import Any
 
 sys.path.insert(0, ".")
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -21,7 +22,7 @@ load_dotenv()
 
 agent = BrowserAgent()
 agent.connect()
-page = agent._page
+page = agent.page
 
 # 해한AI 권한 삭제 페이지
 page.goto("https://myaccount.google.com/connections/overview/AcbYNTdqkQbDmr4kr37bklGx6gPcjC")
@@ -88,7 +89,7 @@ REDIRECT = "https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback"
 flow = Flow.from_client_secrets_file(str(secrets_file), scopes=SCOPES, redirect_uri=REDIRECT)
 auth_url, _ = flow.authorization_url(access_type="offline", prompt="consent")
 
-captured = []
+captured: list[Any] = []
 
 
 def on_request(req):

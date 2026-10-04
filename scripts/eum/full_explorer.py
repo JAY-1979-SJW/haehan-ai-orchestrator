@@ -303,6 +303,90 @@ def _safe_goto(page, url: str, timeout: int = 15000) -> bool:
         return False
 
 
+def _find_abnormal_keyword(page, url: str) -> tuple[str | None, str]:
+    """popup_watcher 이벤트 → 페이지 텍스트 순으로 비정상 접근 키워드를 찾는다. (키워드, 스니펫)."""
+    # 1단계: popup_watcher 설치
+    try:
+        install_watcher(page)
+        time.sleep(0.5)  # MutationObserver 초기화 대기
+    except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
+        log.debug(f"[EUM] popup_watcher 설치 실패: {e}")
+
+    # 2단계: popup_watcher 이벤트 확인 (비정상 접근)
+    events = poll_events(page)
+    detected_keyword = None
+    detected_snippet = ""
+
+    for event in events:
+        marker = event.get("marker", "")
+        # 비정상 접근 관련 마커 확인
+        if marker in [
+            "비정상적인 접근",
+            "자동화 프로그램",
+            "자동 프로그램",
+            "봇으로 판단",
+            "접근 차단",
+            "이용이 제한",
+            "서비스 차단",
+            "Abnormal access",
+            "bot detected",
+        ]:
+            detected_keyword = marker
+            detected_snippet = event.get("snippet", "")
+            log.warning(f"[EUM] popup_watcher 감지: '{marker}' @ {url}")
+            break
+
+    # 3단계: 팝업이 감지되지 않으면 fallback으로 page.text_content() 확인
+    if not detected_keyword:
+        page_text = page.text_content().strip()
+        abnormal_keywords = [
+            "비정상적인 접근",
+            "자동 프로그램",
+            "자동화",
+            "봇으로 판단",
+            "접근 차단",
+            "이용이 제한",
+            "서비스 차단",
+            "보안상의 이유",
+            "Abnormal access",
+            "bot detected",
+            "automated access",
+        ]
+        for kw in abnormal_keywords:
+            if kw.lower() in page_text.lower():
+                detected_keyword = kw
+                detected_snippet = page_text[:200]
+                log.warning(f"[EUM] 텍스트 매칭 감지: '{kw}' @ {url}")
+                break
+    return detected_keyword, detected_snippet
+
+
+def _check_abnormal_access(page, url: str, info: dict[str, Any]) -> bool:
+    """비정상 접근(봇 차단 등) 감지·복구 시도. 복구 실패로 접근 불가면 info 를 갱신하고 True."""
+    try:
+        detected_keyword, detected_snippet = _find_abnormal_keyword(page, url)
+
+        # 4단계: 감지된 비정상 접근 처리
+        if detected_keyword:
+            decision = classify(marker=detected_keyword, snippet=detected_snippet)
+
+            if is_access_blocked(decision):
+                log.critical(f"[EUM] 접근 차단됨: {decision['category']}")
+
+                # 자동 복구 시도
+                if detect_and_handle(page, decision):
+                    log.info("[EUM] 접근 복구됨, 재시도")
+                else:
+                    info["accessible"] = False
+                    info["error"] = f"접근 차단: {decision['category']} (자동 복구 실패)"
+                    log.critical(f"[EUM] 접근 불가능: {info['error']}")
+                    return True
+
+    except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
+        log.debug(f"[EUM] 비정상 접근 감지 오류 (무시): {e}")
+    return False
+
+
 def _extract_page(page, url: str, name: str) -> dict[str, Any]:
     """단일 페이지 전체 구조 추출."""
     info: dict[str, Any] = {
@@ -329,79 +413,8 @@ def _extract_page(page, url: str, name: str) -> dict[str, Any]:
         return info
 
     # ⚠️  비정상 접근 감지 (popup_watcher 통합)
-    try:
-        # 1단계: popup_watcher 설치
-        try:
-            install_watcher(page)
-            time.sleep(0.5)  # MutationObserver 초기화 대기
-        except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
-            log.debug(f"[EUM] popup_watcher 설치 실패: {e}")
-
-        # 2단계: popup_watcher 이벤트 확인 (비정상 접근)
-        events = poll_events(page)
-        detected_keyword = None
-        detected_snippet = ""
-
-        for event in events:
-            marker = event.get("marker", "")
-            # 비정상 접근 관련 마커 확인
-            if marker in [
-                "비정상적인 접근",
-                "자동화 프로그램",
-                "자동 프로그램",
-                "봇으로 판단",
-                "접근 차단",
-                "이용이 제한",
-                "서비스 차단",
-                "Abnormal access",
-                "bot detected",
-            ]:
-                detected_keyword = marker
-                detected_snippet = event.get("snippet", "")
-                log.warning(f"[EUM] popup_watcher 감지: '{marker}' @ {url}")
-                break
-
-        # 3단계: 팝업이 감지되지 않으면 fallback으로 page.text_content() 확인
-        if not detected_keyword:
-            page_text = page.text_content().strip()
-            abnormal_keywords = [
-                "비정상적인 접근",
-                "자동 프로그램",
-                "자동화",
-                "봇으로 판단",
-                "접근 차단",
-                "이용이 제한",
-                "서비스 차단",
-                "보안상의 이유",
-                "Abnormal access",
-                "bot detected",
-                "automated access",
-            ]
-            for kw in abnormal_keywords:
-                if kw.lower() in page_text.lower():
-                    detected_keyword = kw
-                    detected_snippet = page_text[:200]
-                    log.warning(f"[EUM] 텍스트 매칭 감지: '{kw}' @ {url}")
-                    break
-
-        # 4단계: 감지된 비정상 접근 처리
-        if detected_keyword:
-            decision = classify(marker=detected_keyword, snippet=detected_snippet)
-
-            if is_access_blocked(decision):
-                log.critical(f"[EUM] 접근 차단됨: {decision['category']}")
-
-                # 자동 복구 시도
-                if detect_and_handle(page, decision):
-                    log.info("[EUM] 접근 복구됨, 재시도")
-                else:
-                    info["accessible"] = False
-                    info["error"] = f"접근 차단: {decision['category']} (자동 복구 실패)"
-                    log.critical(f"[EUM] 접근 불가능: {info['error']}")
-                    return info
-
-    except Exception as e:  # noqa: BLE001 - EUM(건설근로자공제회) 사이트 구조 탐지 읽기전용 스크립트 - 실패 시 print 경고 후 빈 dict/list 반환
-        log.debug(f"[EUM] 비정상 접근 감지 오류 (무시): {e}")
+    if _check_abnormal_access(page, url, info):
+        return info
 
     # JS 전체 추출
     try:
@@ -510,6 +523,43 @@ def _explore_extra_paths(page, extra_links: list[dict]) -> list[dict[str, Any]]:
 # ── 보고서 생성 ──────────────────────────────────────────────────────
 
 
+def _append_accessible_page(p: dict[str, Any], lines: list[str]) -> None:
+    """접근 가능 페이지 1개의 요약 줄들을 lines 에 추가."""
+    code = p.get("code", "")
+    name = p.get("name", "")
+    tables = p.get("tables", [])
+    selects = p.get("selects", [])
+    buttons = p.get("buttons", [])
+    pagination = p.get("pagination", {})
+
+    lines.append(f"\n  [{code}] {name}")
+    lines.append(f"    URL: {p.get('final_url', p.get('url', ''))}")
+    lines.append(f"    테이블: {len(tables)}개 / 필터: {len(selects)}개 / 버튼: {len(buttons)}개")
+
+    for t in tables:
+        if t.get("headers"):
+            lines.append(f"    테이블[{t['index']}] 행:{t['total_rows']} 컬럼:{t['col_count']}")
+            lines.append(f"      헤더: {' | '.join(t['headers'][:10])}")
+            if t.get("sample_row"):
+                lines.append(f"      샘플: {' | '.join(t['sample_row'][:10])}")
+
+    for s in selects:
+        opts = [o["text"] for o in s.get("options", [])]
+        lines.append(f"    필터[{s.get('id') or s.get('name', '?')}]: {', '.join(opts[:8])}")
+
+    for b in buttons[:8]:
+        lines.append(f"    버튼: [{b.get('text', '')}] type={b.get('type', '')} id={b.get('id', '')}")
+
+    if pagination.get("exists"):
+        lines.append("    페이지네이션: 존재")
+
+    api_urls = p.get("api_urls", [])
+    if api_urls:
+        lines.append(f"    API 엔드포인트 ({len(api_urls)}개):")
+        for api in api_urls[:5]:
+            lines.append(f"      {api}")
+
+
 def _generate_report(result: dict[str, Any]) -> str:
     """탐색 결과를 사람이 읽기 쉬운 텍스트 보고서로 변환."""
     lines = []
@@ -537,39 +587,7 @@ def _generate_report(result: dict[str, Any]) -> str:
 
     lines.append("\n  ── 접근 가능 페이지 ──")
     for p in accessible:
-        code = p.get("code", "")
-        name = p.get("name", "")
-        tables = p.get("tables", [])
-        selects = p.get("selects", [])
-        buttons = p.get("buttons", [])
-        pagination = p.get("pagination", {})
-
-        lines.append(f"\n  [{code}] {name}")
-        lines.append(f"    URL: {p.get('final_url', p.get('url', ''))}")
-        lines.append(f"    테이블: {len(tables)}개 / 필터: {len(selects)}개 / 버튼: {len(buttons)}개")
-
-        for t in tables:
-            if t.get("headers"):
-                lines.append(f"    테이블[{t['index']}] 행:{t['total_rows']} 컬럼:{t['col_count']}")
-                lines.append(f"      헤더: {' | '.join(t['headers'][:10])}")
-                if t.get("sample_row"):
-                    lines.append(f"      샘플: {' | '.join(t['sample_row'][:10])}")
-
-        for s in selects:
-            opts = [o["text"] for o in s.get("options", [])]
-            lines.append(f"    필터[{s.get('id') or s.get('name', '?')}]: {', '.join(opts[:8])}")
-
-        for b in buttons[:8]:
-            lines.append(f"    버튼: [{b.get('text', '')}] type={b.get('type', '')} id={b.get('id', '')}")
-
-        if pagination.get("exists"):
-            lines.append("    페이지네이션: 존재")
-
-        api_urls = p.get("api_urls", [])
-        if api_urls:
-            lines.append(f"    API 엔드포인트 ({len(api_urls)}개):")
-            for api in api_urls[:5]:
-                lines.append(f"      {api}")
+        _append_accessible_page(p, lines)
 
     lines.append("\n  ── 접근 제한 페이지 ──")
     for p in denied:

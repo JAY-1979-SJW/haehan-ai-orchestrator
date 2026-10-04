@@ -25,6 +25,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:  # 단독 실행 시에도 scripts 패키지를 import 할 수 있게
+    sys.path.insert(0, str(ROOT))
+from scripts.app_paths import known_folder  # noqa: E402
+
 OUT = ROOT / "data" / "mk_catalog" / "products_manual.csv"
 
 FIELDS = [
@@ -40,7 +44,7 @@ FIELDS = [
     "source_file",
 ]
 
-_SRC = r"C:\Users\skyjw\Downloads\MK12_페이지별\MK12_p{page}.pdf"
+_SRC = str(known_folder("downloads") / "MK12_페이지별" / "MK12_p{page}.pdf")
 
 
 def price_from_code(code: str) -> str:

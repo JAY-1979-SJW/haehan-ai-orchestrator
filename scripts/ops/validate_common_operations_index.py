@@ -14,6 +14,27 @@ def _load_index(path: Path = INDEX_PATH) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _validate_site(errors, seen, index, site):
+    if not isinstance(site, dict):
+        errors.append(f"sites[{index}] must be an object")
+        return
+    site_id = str(site.get("site_id") or "")
+    if not site_id:
+        errors.append(f"sites[{index}].site_id is required")
+    elif site_id in seen:
+        errors.append(f"duplicate site_id: {site_id}")
+    seen.add(site_id)
+
+    for field in ("label", "owner", "status"):
+        if not site.get(field):
+            errors.append(f"{site_id or index}.{field} is required")
+
+    for field in ("reference_docs", "primary_artifacts", "next_actions"):
+        value = site.get(field)
+        if not isinstance(value, list):
+            errors.append(f"{site_id or index}.{field} must be a list")
+
+
 def validate_index(data: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if data.get("schema_version") != 1:
@@ -28,24 +49,7 @@ def validate_index(data: dict[str, Any]) -> list[str]:
 
     seen: set[str] = set()
     for index, site in enumerate(sites):
-        if not isinstance(site, dict):
-            errors.append(f"sites[{index}] must be an object")
-            continue
-        site_id = str(site.get("site_id") or "")
-        if not site_id:
-            errors.append(f"sites[{index}].site_id is required")
-        elif site_id in seen:
-            errors.append(f"duplicate site_id: {site_id}")
-        seen.add(site_id)
-
-        for field in ("label", "owner", "status"):
-            if not site.get(field):
-                errors.append(f"{site_id or index}.{field} is required")
-
-        for field in ("reference_docs", "primary_artifacts", "next_actions"):
-            value = site.get(field)
-            if not isinstance(value, list):
-                errors.append(f"{site_id or index}.{field} must be a list")
+        _validate_site(errors, seen, index, site)
 
     gates = data.get("global_gates")
     if not isinstance(gates, list) or not gates:

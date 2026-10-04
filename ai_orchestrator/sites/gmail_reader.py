@@ -42,7 +42,8 @@ def _get_service():
 def _decode_b64(data: str) -> str:
     try:
         return base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="replace")
-    except Exception:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
+    except Exception as exc:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
+        logger.debug("base64 디코드 실패: %s", type(exc).__name__)
         return ""
 
 
@@ -80,7 +81,8 @@ def _parse_message(msg: dict) -> dict | None:
 
         try:
             received_at = parsedate_to_datetime(date_str).isoformat() if date_str else ""
-        except Exception:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
+        except Exception as exc:  # noqa: BLE001 - Gmail 읽기전용 수집 — base64 디코드/날짜파싱/메시지파싱/전체수집 실패 시 각각 빈문자열·현재시각·None·빈리스트로 안전 폴백, 쓰기 동작 없음.
+            logger.debug("메일 날짜 파싱 실패: %s", type(exc).__name__)
             received_at = datetime.now(UTC).isoformat()
 
         body = _extract_body(msg.get("payload", {}))

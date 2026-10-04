@@ -354,13 +354,7 @@ def _current_session_id() -> str | None:
     return os.environ.get("CLAUDE_SESSION_ID") or os.environ.get("SESSION_ID")
 
 
-def cleanup(apply: bool = False) -> dict[str, Any]:
-    cfg = load_config()
-    ccfg = cfg.get("cleanup", {})
-    protected = ccfg.get("protected_paths", [])
-    report: dict[str, Any] = {"deleted": [], "reported": [], "errors": []}
-
-    # 1. 이전 인계 파일 — 요점 남기고 삭제(최신 1개만 유지 의미상, 여기선 아카이브 없이 요약만 로그)
+def _cleanup_handoff_digest(cfg, ccfg):
     if ccfg.get("previous_handoff_keep_latest_only"):
         handoff_path = _p(cfg.get("handoff_path", "data/impact/HANDOFF.md"))
         if handoff_path.exists():
@@ -370,7 +364,8 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
             except Exception:  # noqa: BLE001 - 로그 기록/플래그 정리 등 보조 동작 — 실패해도 본 흐름에 영향 없음(2026-09-28 검토)
                 pass
 
-    # 2. 이전 세션 scratchpad — report-only 기본, apply 시 2일 초과분만 삭제
+
+def _cleanup_scratchpad(ccfg, protected, report, apply):
     scratch_root = _scratchpad_root()
     cur_sid = _current_session_id()
     if scratch_root.exists():
@@ -394,41 +389,24 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
                         report["errors"].append(str(exc))
             report["reported"].append(entry)
 
-    # 3. 병합 끝난 stage/* 브랜치 + verified/* 태그 → worktree remove + branch -d
-    tag_prefix = ccfg.get("verified_tag_prefix", "verified/")
-    tags_out = _run(["git", "tag", "-l", f"{tag_prefix}*"])
-    for tag in [t for t in tags_out.splitlines() if t.strip()]:
-        branch_guess = tag[len(tag_prefix) :]
-        for cand in (f"stage/{branch_guess}", branch_guess):
-            merged = _run(["git", "branch", "--merged", "master", "--list", cand]).strip()
-            if not merged:
-                continue
-            entry = {"branch": cand, "tag": tag}
-            if apply:
-                wt_out = _run(["git", "worktree", "list", "--porcelain"])
-                wt_path = None
-                cur_branch = None
-                for ln in wt_out.splitlines():
-                    if ln.startswith("worktree "):
-                        cur_branch = None
-                        wt_path = ln.split(" ", 1)[1]
-                    elif ln.startswith("branch "):
-                        cur_branch = ln.split(" ", 1)[1].replace("refs/heads/", "")
-                        if cur_branch == cand and wt_path:
-                            subprocess.run(
-                                ["git", "worktree", "remove", wt_path, "--force"], cwd=str(ROOT), capture_output=True
-                            )
-                r = subprocess.run(
-                    ["git", "branch", "-d", cand], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8"
-                )
-                if r.returncode == 0:
-                    report["deleted"].append(entry)
-                else:
-                    report["errors"].append(f"branch -d {cand}: {r.stderr.strip()}")
-            else:
-                report["reported"].append(entry)
 
-    # 4. verify_base_* 임시 폴더 (system temp)
+def _remove_branch_worktrees(cand):
+    wt_out = _run(["git", "worktree", "list", "--porcelain"])
+    wt_path = None
+    cur_branch = None
+    for ln in wt_out.splitlines():
+        if ln.startswith("worktree "):
+            cur_branch = None
+            wt_path = ln.split(" ", 1)[1]
+        elif ln.startswith("branch "):
+            cur_branch = ln.split(" ", 1)[1].replace("refs/heads/", "")
+            if cur_branch == cand and wt_path:
+                subprocess.run(
+                    ["git", "worktree", "remove", wt_path, "--force"], cwd=str(ROOT), capture_output=True
+                )
+
+
+def _cleanup_verify_base(ccfg, report, apply):
     import tempfile
 
     tmp_root = Path(tempfile.gettempdir())
@@ -445,7 +423,8 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
             else:
                 report["reported"].append(entry)
 
-    # 5. status: superseded 기준서 — report only(요청 명세: 삭제는 하되 안전상 여기선 report만)
+
+def _report_superseded_specs(ccfg, report):
     specs_dir = ROOT / "docs" / "specs"
     superseded_status = ccfg.get("spec_superseded_status", "superseded")
     if specs_dir.exists():
@@ -457,6 +436,51 @@ def cleanup(apply: bool = False) -> dict[str, Any]:
             parsed = _parse_spec_status(text)
             if parsed and parsed[1] == superseded_status:
                 report["reported"].append({"spec": str(f)})
+
+
+def _process_merged_branch(cand, tag, report, apply):
+    entry = {"branch": cand, "tag": tag}
+    if apply:
+        _remove_branch_worktrees(cand)
+        r = subprocess.run(
+            ["git", "branch", "-d", cand], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8"
+        )
+        if r.returncode == 0:
+            report["deleted"].append(entry)
+        else:
+            report["errors"].append(f"branch -d {cand}: {r.stderr.strip()}")
+    else:
+        report["reported"].append(entry)
+
+
+def cleanup(apply: bool = False) -> dict[str, Any]:
+    cfg = load_config()
+    ccfg = cfg.get("cleanup", {})
+    protected = ccfg.get("protected_paths", [])
+    report: dict[str, Any] = {"deleted": [], "reported": [], "errors": []}
+
+    # 1. 이전 인계 파일 — 요점 남기고 삭제(최신 1개만 유지 의미상, 여기선 아카이브 없이 요약만 로그)
+    _cleanup_handoff_digest(cfg, ccfg)
+
+    # 2. 이전 세션 scratchpad — report-only 기본, apply 시 2일 초과분만 삭제
+    _cleanup_scratchpad(ccfg, protected, report, apply)
+
+    # 3. 병합 끝난 stage/* 브랜치 + verified/* 태그 → worktree remove + branch -d
+    tag_prefix = ccfg.get("verified_tag_prefix", "verified/")
+    tags_out = _run(["git", "tag", "-l", f"{tag_prefix}*"])
+    for tag in [t for t in tags_out.splitlines() if t.strip()]:
+        branch_guess = tag[len(tag_prefix) :]
+        for cand in (f"stage/{branch_guess}", branch_guess):
+            merged = _run(["git", "branch", "--merged", "master", "--list", cand]).strip()
+            if not merged:
+                continue
+            _process_merged_branch(cand, tag, report, apply)
+
+    # 4. verify_base_* 임시 폴더 (system temp)
+    _cleanup_verify_base(ccfg, report, apply)
+
+    # 5. status: superseded 기준서 — report only(요청 명세: 삭제는 하되 안전상 여기선 report만)
+    _report_superseded_specs(ccfg, report)
 
     log_event("cleanup", apply=apply, deleted=len(report["deleted"]), reported=len(report["reported"]))
     return report

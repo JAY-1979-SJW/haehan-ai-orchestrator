@@ -167,7 +167,7 @@ def _apply_page_setup(ws, xl_app) -> None:
 # ── 값 갱신 ──────────────────────────────────────────────────────────────────
 
 
-def update_values(
+def update_values(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     ws,
     recipient: str,
     qty1: int = 1,
@@ -211,18 +211,8 @@ class VerifyResult:
     warnings: list[str]
 
 
-def verify_layout(ws) -> VerifyResult:
-    """렌더 후 워크시트를 검사해 VerifyResult 반환."""
-    errors: list[str] = []
-    warnings: list[str] = []
-
-    # 1) 전체 행 높이 합계
-    total_h = sum(ws.Rows(r).RowHeight for r in range(1, LAST_ROW + 1))
-    if total_h > A4_AVAIL + 30:
-        errors.append(f"행높이 합계 {total_h:.1f}pt > A4_AVAIL({A4_AVAIL}pt)+30")
-    elif total_h < A4_AVAIL - 60:
-        warnings.append(f"행높이 합계 {total_h:.1f}pt — A4 대비 여백 과다")
-
+def _verify_page_setup(ws, errors: list[str]) -> None:
+    """인쇄 영역·Zoom·FitToPage 설정을 검사해 errors 에 누적."""
     # 2) 인쇄 영역 확인
     pa = ws.PageSetup.PrintArea or ""
     if f"$J${LAST_ROW}" not in pa:
@@ -237,6 +227,21 @@ def verify_layout(ws) -> VerifyResult:
         errors.append("FitToPagesWide != 1")
     if ws.PageSetup.FitToPagesTall != 1:
         errors.append("FitToPagesTall != 1")
+
+
+def verify_layout(ws) -> VerifyResult:
+    """렌더 후 워크시트를 검사해 VerifyResult 반환."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # 1) 전체 행 높이 합계
+    total_h = sum(ws.Rows(r).RowHeight for r in range(1, LAST_ROW + 1))
+    if total_h > A4_AVAIL + 30:
+        errors.append(f"행높이 합계 {total_h:.1f}pt > A4_AVAIL({A4_AVAIL}pt)+30")
+    elif total_h < A4_AVAIL - 60:
+        warnings.append(f"행높이 합계 {total_h:.1f}pt — A4 대비 여백 과다")
+
+    _verify_page_setup(ws, errors)
 
     # 5) 필수 셀 값 존재 (title, notice_left)
     title_val = ws.Cells(1, 1).Value or ""

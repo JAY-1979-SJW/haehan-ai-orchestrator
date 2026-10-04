@@ -16,6 +16,17 @@ def safe_name(name: str) -> str:
     return re.sub(r'[\\/:*?"<>|★\s]', "_", name).strip("_")
 
 
+def _collect_image_files(base) -> list:
+    """base 하위 폴더의 모든 파일을 수집."""
+    all_files = []
+    for folder in base.iterdir():
+        if folder.is_dir():
+            for f in folder.glob("*"):
+                if f.is_file():
+                    all_files.append(f)
+    return all_files
+
+
 def main():
     base = get_local_data_dir() / "gonobi_images"
     new_base = get_local_data_dir() / "gonobi_images_v2"
@@ -29,12 +40,7 @@ def main():
     print(f"포스트 수: {len(log_to_cat)}")
 
     # 기존 이미지 파일 전체 수집
-    all_files = []
-    for folder in base.iterdir():
-        if folder.is_dir():
-            for f in folder.glob("*"):
-                if f.is_file():
-                    all_files.append(f)
+    all_files = _collect_image_files(base)
 
     print(f"전체 이미지 파일: {len(all_files)}개")
 

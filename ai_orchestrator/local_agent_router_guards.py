@@ -15,7 +15,11 @@
 
 from __future__ import annotations
 
+import logging
+
 from .local_agent_models import LocalAgentTask
+
+logger = logging.getLogger(__name__)
 
 # ── 상태 상수 ────────────────────────────────────────────────────────────
 
@@ -43,7 +47,8 @@ def task_is_dry_run(task: LocalAgentTask | None) -> bool:
             return False
         options = task.params.get("options") if isinstance(task.params, dict) else None
         return bool(isinstance(options, dict) and options.get("dry_run"))
-    except Exception:  # noqa: BLE001 - task_is_dry_run은 감사로그용 메타데이터 플래그일 뿐 실행을 게이팅하지 않음(호출부는 audit note 기록용) - 예외 시 False 반환해도 실제 승인/차단 로직(can_approve_task 등)에는 영향 없음
+    except Exception as exc:  # noqa: BLE001 - task_is_dry_run은 감사로그용 메타데이터 플래그일 뿐 실행을 게이팅하지 않음(호출부는 audit note 기록용) - 예외 시 False 반환해도 실제 승인/차단 로직(can_approve_task 등)에는 영향 없음
+        logger.warning("task dry_run 판정 실패: %s", type(exc).__name__)
         return False
 
 

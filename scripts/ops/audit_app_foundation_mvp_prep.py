@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AUDIT_ID = "APP_FOUNDATION_MVP_PREP_01"
@@ -577,7 +577,7 @@ def check_api_contract(report: AuditReport) -> None:
 
 
 def check_forbidden_buttons(report: AuditReport) -> None:
-    all_forbidden = set()
+    all_forbidden: set[Any] = set()
     for screen in MVP_SCREENS:
         all_forbidden.update(screen.get("forbidden_buttons", []))
 

@@ -105,6 +105,20 @@ def _hash_body(src: str) -> str:
     return hashlib.sha256(_normalize_source(src).encode("utf-8")).hexdigest()
 
 
+def _collect_unit(groups, src, rel, node, min_lines):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        segment = ast.get_source_segment(src, node)
+        if not segment:
+            return
+        line_count = segment.count("\n") + 1
+        if line_count < min_lines:
+            return
+        kind = "class" if isinstance(node, ast.ClassDef) else "function"
+        h = _hash_body(segment)
+        loc = f"{rel}:{node.lineno} ({node.name})"
+        groups[h].append((kind, loc, line_count))
+
+
 def find_body_duplicates(files: list[Path], min_lines: int) -> list[UnitDup]:
     """서로 다른 파일에 있는, 본문이 사실상 동일한 함수/클래스를 찾는다."""
     groups: dict[str, list[tuple[str, str, int]]] = defaultdict(list)
@@ -122,17 +136,7 @@ def find_body_duplicates(files: list[Path], min_lines: int) -> list[UnitDup]:
 
         rel = path.relative_to(ROOT).as_posix()
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                segment = ast.get_source_segment(src, node)
-                if not segment:
-                    continue
-                line_count = segment.count("\n") + 1
-                if line_count < min_lines:
-                    continue
-                kind = "class" if isinstance(node, ast.ClassDef) else "function"
-                h = _hash_body(segment)
-                loc = f"{rel}:{node.lineno} ({node.name})"
-                groups[h].append((kind, loc, line_count))
+            _collect_unit(groups, src, rel, node, min_lines)
 
     dups: list[UnitDup] = []
     for locs in groups.values():

@@ -200,39 +200,9 @@ class LoginAutoFlowEngine:
             # 사용자가 직접 로그인 중 — 추가 click 시도하지 않음
             return events
 
-        if state == CHALLENGE_REQUIRED:
-            events.append(
-                Event(
-                    type=EVT_CHALLENGE_REQUIRED,
-                    target_id=target_id,
-                    sanitized_url=detection.sanitized_url,
-                    title=detection.title,
-                    extra={"reason": detection.reason},
-                )
-            )
-            return events
-
-        if state == CONSENT_REQUIRED:
-            events.append(
-                Event(
-                    type=EVT_CONSENT_REQUIRED,
-                    target_id=target_id,
-                    sanitized_url=detection.sanitized_url,
-                    title=detection.title,
-                    extra={"reason": detection.reason},
-                )
-            )
-            return events
-
-        if state == LOGIN_FAILED:
-            events.append(
-                Event(
-                    type=EVT_LOGIN_FAILED,
-                    target_id=target_id,
-                    sanitized_url=detection.sanitized_url,
-                    title=detection.title,
-                )
-            )
+        simple_event = self._simple_state_event(state, target_id, detection)
+        if simple_event is not None:
+            events.append(simple_event)
             return events
 
         if state == SESSION_EXPIRED:
@@ -265,6 +235,34 @@ class LoginAutoFlowEngine:
             return events
 
         return events
+
+    @staticmethod
+    def _simple_state_event(state: str, target_id: str, detection: DetectionResult) -> Event | None:
+        """challenge / consent / login_failed 상태의 단순 보고 이벤트 (그 외 상태는 None)."""
+        if state == CHALLENGE_REQUIRED:
+            return Event(
+                type=EVT_CHALLENGE_REQUIRED,
+                target_id=target_id,
+                sanitized_url=detection.sanitized_url,
+                title=detection.title,
+                extra={"reason": detection.reason},
+            )
+        if state == CONSENT_REQUIRED:
+            return Event(
+                type=EVT_CONSENT_REQUIRED,
+                target_id=target_id,
+                sanitized_url=detection.sanitized_url,
+                title=detection.title,
+                extra={"reason": detection.reason},
+            )
+        if state == LOGIN_FAILED:
+            return Event(
+                type=EVT_LOGIN_FAILED,
+                target_id=target_id,
+                sanitized_url=detection.sanitized_url,
+                title=detection.title,
+            )
+        return None
 
     # ── 내부: 로그인 버튼 클릭 / 계획 ──────────────────────────────
 

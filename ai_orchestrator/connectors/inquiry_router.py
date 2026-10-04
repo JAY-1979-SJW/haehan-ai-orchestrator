@@ -86,7 +86,8 @@ def create_inquiry(body: InquiryCreate, request: Request) -> dict:
             f"제목: {rec['subject']}\n"
             f"내용: {rec['message'][:300]}"
         )
-    except Exception:  # noqa: S110, BLE001 — 알림 실패해도 접수는 성공 처리
+    except Exception as exc:  # noqa: BLE001 — 알림 실패해도 접수는 성공 처리
+        logger.warning("문의 접수 알림 발송 실패: %s", type(exc).__name__)
         pass
 
     log_event(

@@ -1048,7 +1048,7 @@
 
 
 - 23:59 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 - <<'PY' import time from playwright.sync_api import sync_playwright ...`
-- 23:58 **[지시]** # 계정 정보 접속 URL: https://console.ixcloud.net/login ID: skyjwshin@kakao.com PW: [삭제됨]  ※패스워드는 임의로 지정한 패스워드로, 로그인 확인 후 변경 권고 드립니다.  # 프로젝트 정보 존: R2 프로젝트명: haehan-ai Hostname OS IP Flavor OS Volum...
+- 23:58 **[지시]** # 계정 정보 접속 URL: https://console.ixcloud.net/login ID: skyjwshin@kakao.com PW: [삭제됨 — 자격증명은 저장소에 두지 않는다]  ※패스워드는 임의로 지정한 패스워드로, 로그인 확인 후 변경 권고 드립니다.  # 프로젝트 정보 존: R2 프로젝트명: haehan-ai Hostname OS IP Flavor OS Volum...
 - 23:57 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 현재 공인 IP (방화벽 22번 허용에 사용) ===" curl -s --max-time 10 https://api.ip...`
 - 23:56 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -c " import os, re secret=None for p in ('.env','.env.production','.e...`
 - 23:55 **[실행]** `until grep -q "port 443" "C:\Users\skyjw\AppData\Local\Temp\claude\C--work-01--haehan-ai-orchestrator\8f968825-8ad9-4...`

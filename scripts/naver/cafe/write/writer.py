@@ -204,7 +204,7 @@ class CafeWriter:
             return {"ok": False, "error": str(e)}
 
 
-def write_post(
+def write_post(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     page: Page,
     *,
     cafe_url: str,

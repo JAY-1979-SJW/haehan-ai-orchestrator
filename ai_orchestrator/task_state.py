@@ -123,7 +123,7 @@ def _can_transition(current: str, target: str) -> bool:
     return target in _VALID_TRANSITIONS.get(current, set())
 
 
-def set_pending(
+def set_pending(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     task_id: str,
     *,
     risk_level: str,

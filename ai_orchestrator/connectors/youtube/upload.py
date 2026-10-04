@@ -31,7 +31,7 @@ class ExecuteRequest(BaseModel):
 
 
 @router.post("/prepare")
-async def prepare_upload(
+async def prepare_upload(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     file: UploadFile = File(...),
     title: str = Form(""),
     description: str = Form(""),

@@ -18,6 +18,7 @@ from __future__ import annotations
 import contextlib
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
 from scripts.naver.blog.selectors import (
     COMMENT_DELETE,
@@ -37,6 +38,10 @@ from scripts.naver.blog.selectors import (
 
 
 class BlogWriteMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     # _blog_frame() 은 BlogCommonMixin 에서 상속
 
     def blog_write_post(

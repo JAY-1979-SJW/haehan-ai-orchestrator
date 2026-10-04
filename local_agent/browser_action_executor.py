@@ -139,104 +139,133 @@ def default_target_resolver(target_id: str) -> dict[str, Any]:
 # ── default runner (Playwright 의존) ────────────────────────────────
 
 
+def _run_navigate(params: dict[str, Any]) -> dict[str, Any]:
+    url = str(params.get("url") or params.get("target") or "")
+    if not url:
+        return {"ok": False, "error_code": ERR_INVALID_PARAMS, "reason": "url required"}
+    # raw URL(http/https/about/data/file) 은 Playwright page.goto 직행.
+    # 그 외(별칭) 는 기존 navigator.goto 의 alias resolver 사용.
+    if _is_raw_url(url):
+        try:
+            from scripts.web_connector import get_page
+
+            get_page().goto(
+                url,
+                timeout=int(params.get("timeout_ms", 60000)),
+            )
+            return {"ok": True, "url": url}
+        except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
+            return {
+                "ok": False,
+                "error_code": ERR_RUNNER_FAILED,
+                "reason": f"{type(exc).__name__}: {str(exc)[:200]}",
+            }
+    try:
+        from scripts import navigator as nav
+
+        nav.goto(url, timeout_ms=int(params.get("timeout_ms", 60000)))
+        return {"ok": True}
+    except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
+        return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": f"{type(exc).__name__}: {str(exc)[:200]}"}
+
+
+def _run_click(params: dict[str, Any]) -> dict[str, Any]:
+    from scripts import navigator as nav
+
+    target = str(params.get("text") or params.get("target") or "")
+    if not target:
+        return {"ok": False, "error_code": ERR_INVALID_PARAMS, "reason": "text required"}
+    try:
+        kind = params.get("kind", "button")
+        ok = nav.click_link(target) if kind == "link" else nav.click_button(target)
+        return {"ok": bool(ok)}
+    except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
+        return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": f"{type(exc).__name__}: {str(exc)[:200]}"}
+
+
+def _run_type(params: dict[str, Any]) -> dict[str, Any]:
+    from scripts import navigator as nav
+
+    target = str(params.get("target") or "")
+    text = str(params.get("text") or "")
+    if not target:
+        return {"ok": False, "error_code": ERR_INVALID_PARAMS, "reason": "target required"}
+    try:
+        ok = nav.type_into(target, text, clear=bool(params.get("clear", True)))
+        return {"ok": bool(ok)}
+    except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
+        return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": f"{type(exc).__name__}: {str(exc)[:200]}"}
+
+
+def _run_submit(params: dict[str, Any]) -> dict[str, Any]:
+    # 명시적 submit 지원 안 함 — Enter/click_button 으로 대체할 것.
+    return {
+        "ok": False,
+        "error_code": ERR_UNSUPPORTED_ACTION,
+        "reason": "submit not supported; use click_button(submit_label)",
+    }
+
+
+def _run_get_url(params: dict[str, Any]) -> dict[str, Any]:
+    try:
+        from scripts.web_connector import get_page
+
+        return {"ok": True, "url": get_page().url}
+    except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
+        return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": str(exc)[:200]}
+
+
+def _run_get_title(params: dict[str, Any]) -> dict[str, Any]:
+    try:
+        from scripts.web_connector import get_page
+
+        return {"ok": True, "title": get_page().title()}
+    except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
+        return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": str(exc)[:200]}
+
+
+def _run_wait_for_selector(params: dict[str, Any]) -> dict[str, Any]:
+    try:
+        from scripts.web_connector import get_page
+
+        selector = str(params.get("selector") or "")
+        if not selector:
+            return {"ok": False, "error_code": ERR_INVALID_PARAMS, "reason": "selector required"}
+        get_page().wait_for_selector(
+            selector,
+            timeout=int(params.get("timeout_ms", 10000)),
+        )
+        return {"ok": True}
+    except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
+        return {"ok": False, "error_code": ERR_TIMEOUT, "reason": str(exc)[:200]}
+
+
+
 def default_runner(action_type: str, params: dict[str, Any]) -> dict[str, Any]:
     """scripts.navigator 의 primitive 함수에 위임.
 
     모든 import 는 함수 내부에서 지연 — 단위 테스트는 본 함수를 호출하지 않는다.
     """
     if action_type == ACT_NAVIGATE:
-        url = str(params.get("url") or params.get("target") or "")
-        if not url:
-            return {"ok": False, "error_code": ERR_INVALID_PARAMS, "reason": "url required"}
-        # raw URL(http/https/about/data/file) 은 Playwright page.goto 직행.
-        # 그 외(별칭) 는 기존 navigator.goto 의 alias resolver 사용.
-        if _is_raw_url(url):
-            try:
-                from scripts.web_connector import get_page
-
-                get_page().goto(
-                    url,
-                    timeout=int(params.get("timeout_ms", 60000)),
-                )
-                return {"ok": True, "url": url}
-            except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
-                return {
-                    "ok": False,
-                    "error_code": ERR_RUNNER_FAILED,
-                    "reason": f"{type(exc).__name__}: {str(exc)[:200]}",
-                }
-        try:
-            from scripts import navigator as nav
-
-            nav.goto(url, timeout_ms=int(params.get("timeout_ms", 60000)))
-            return {"ok": True}
-        except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
-            return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": f"{type(exc).__name__}: {str(exc)[:200]}"}
+        return _run_navigate(params)
 
     if action_type == ACT_CLICK:
-        from scripts import navigator as nav
-
-        target = str(params.get("text") or params.get("target") or "")
-        if not target:
-            return {"ok": False, "error_code": ERR_INVALID_PARAMS, "reason": "text required"}
-        try:
-            kind = params.get("kind", "button")
-            ok = nav.click_link(target) if kind == "link" else nav.click_button(target)
-            return {"ok": bool(ok)}
-        except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
-            return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": f"{type(exc).__name__}: {str(exc)[:200]}"}
+        return _run_click(params)
 
     if action_type == ACT_TYPE:
-        from scripts import navigator as nav
-
-        target = str(params.get("target") or "")
-        text = str(params.get("text") or "")
-        if not target:
-            return {"ok": False, "error_code": ERR_INVALID_PARAMS, "reason": "target required"}
-        try:
-            ok = nav.type_into(target, text, clear=bool(params.get("clear", True)))
-            return {"ok": bool(ok)}
-        except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
-            return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": f"{type(exc).__name__}: {str(exc)[:200]}"}
+        return _run_type(params)
 
     if action_type == ACT_SUBMIT:
-        # 명시적 submit 지원 안 함 — Enter/click_button 으로 대체할 것.
-        return {
-            "ok": False,
-            "error_code": ERR_UNSUPPORTED_ACTION,
-            "reason": "submit not supported; use click_button(submit_label)",
-        }
+        return _run_submit(params)
 
     if action_type == ACT_GET_URL:
-        try:
-            from scripts.web_connector import get_page
-
-            return {"ok": True, "url": get_page().url}
-        except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
-            return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": str(exc)[:200]}
+        return _run_get_url(params)
 
     if action_type == ACT_GET_TITLE:
-        try:
-            from scripts.web_connector import get_page
-
-            return {"ok": True, "title": get_page().title()}
-        except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
-            return {"ok": False, "error_code": ERR_RUNNER_FAILED, "reason": str(exc)[:200]}
+        return _run_get_title(params)
 
     if action_type == ACT_WAIT_FOR_SELECTOR:
-        try:
-            from scripts.web_connector import get_page
-
-            selector = str(params.get("selector") or "")
-            if not selector:
-                return {"ok": False, "error_code": ERR_INVALID_PARAMS, "reason": "selector required"}
-            get_page().wait_for_selector(
-                selector,
-                timeout=int(params.get("timeout_ms", 10000)),
-            )
-            return {"ok": True}
-        except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
-            return {"ok": False, "error_code": ERR_TIMEOUT, "reason": str(exc)[:200]}
+        return _run_wait_for_selector(params)
 
     return {"ok": False, "error_code": ERR_UNSUPPORTED_ACTION, "reason": f"unknown action: {action_type}"}
 

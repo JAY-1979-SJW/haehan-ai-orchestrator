@@ -39,7 +39,7 @@ def _is_duplicate(external_id: str, source_account: str, path: str | Path) -> bo
     return False
 
 
-def save_mail(
+def save_mail(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     external_id: str,
     sender: str,
@@ -95,7 +95,7 @@ def save_mail(
     return {"status": "saved", "external_id": external_id, "source_account": source_account}
 
 
-def save_message(
+def save_message(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     source_type: str,
     external_id: str,

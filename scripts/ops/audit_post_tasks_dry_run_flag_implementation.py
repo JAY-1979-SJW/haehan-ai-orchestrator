@@ -9,6 +9,7 @@ DB write / 서버 반영 전면 금지.
 
 import ast
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -129,11 +130,7 @@ def _verify_no_http_import() -> tuple[bool, str]:
     return True, "OK"
 
 
-def run_audit() -> dict:
-    errors = []
-    warnings = []
-
-    # 1. 운영 안전 플래그
+def _audit_safety_flags(errors):
     if APPROVAL_TOKEN_ISSUE_ALLOWED:
         errors.append("APPROVAL_TOKEN_ISSUE_ALLOWED must be False")
     if EXECUTE_TASK_CALL_ALLOWED:
@@ -143,7 +140,8 @@ def run_audit() -> dict:
     if SERVER_DEPLOY_ALLOWED:
         errors.append("SERVER_DEPLOY_ALLOWED must be False")
 
-    # 2. 구현 검증
+
+def _audit_router_impl(errors):
     ri = _check_router_implementation()
     if not ri["dry_run_flag_present"]:
         errors.append("POST_TASKS_DRY_RUN_ENABLED = True 플래그 없음")
@@ -163,15 +161,10 @@ def run_audit() -> dict:
         errors.append("Phase 1-R guard 소실")
     if not ri["touch_phase_1r"]:
         errors.append("ROUTER_TOUCH_PHASE != PHASE_1R")
+    return ri
 
-    # 3. 구현 기록 완전성
-    rec = IMPLEMENTATION_RECORD
-    if not rec["router_modification_approved"]:
-        errors.append("router 수정 승인 기록 없음")
-    if not rec["flag_default"]:
-        errors.append("flag_default must be True")
 
-    # 4. 경로 영향 분석 완전성
+def _audit_path_impact(errors):
     for path_key in (
         "medium_requires_approval_True_allowed_True",
         "low_requires_approval_False",
@@ -184,6 +177,27 @@ def run_audit() -> dict:
     medium_impact = PATH_IMPACT_ANALYSIS["medium_requires_approval_True_allowed_True"]
     if medium_impact["token_issued"]:
         errors.append("medium 경로에서 토큰 발행됨 — dry-run 분기 오류")
+
+
+def run_audit() -> dict:
+    errors: list[Any] = []
+    warnings: list[Any] = []
+
+    # 1. 운영 안전 플래그
+    _audit_safety_flags(errors)
+
+    # 2. 구현 검증
+    ri = _audit_router_impl(errors)
+
+    # 3. 구현 기록 완전성
+    rec = IMPLEMENTATION_RECORD
+    if not rec["router_modification_approved"]:
+        errors.append("router 수정 승인 기록 없음")
+    if not rec["flag_default"]:
+        errors.append("flag_default must be True")
+
+    # 4. 경로 영향 분석 완전성
+    _audit_path_impact(errors)
 
     # 5. HTTP import 없음
     ok, msg = _verify_no_http_import()

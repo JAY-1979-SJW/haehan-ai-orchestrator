@@ -163,17 +163,7 @@ def analyze_page(page) -> dict:
     """)
 
 
-def main():
-    page = get_page()
-    print(f"\n{'=' * 70}")
-    print("  사이드바 자동 펼침 + 일반 상품 메뉴 발견")
-    print(f"{'=' * 70}\n")
-
-    r = ensure_naver_login(page)
-    if not r.get("ok"):
-        print("✗ 로그인 실패")
-        return
-
+def _enter_and_expand(page) -> None:
     print("[1] 대시보드 진입")
     page.goto(DASHBOARD, timeout=20000, wait_until="domcontentloaded")
     time.sleep(5)
@@ -229,6 +219,8 @@ def main():
     """)
     time.sleep(1.5)
 
+
+def _locate_products_menu(page) -> dict | None:
     # 3. '상품관리' 클릭 (scrollIntoView 사용)
     print("\n[3] '상품관리' 클릭 (scrollIntoView)")
     r = find_and_click_text(page, "상품관리", only_left=True, wait_s=3.0)
@@ -236,7 +228,7 @@ def main():
         print(f"  ✗ {r.get('reason')}")
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT.write_text(json.dumps({"error": r.get("reason")}), encoding="utf-8")
-        return
+        return None
     print(f"  ✓ 클릭 위치: {r.get('clicked_at')}")
     # 클릭 후 메뉴 위치 재측정 (스크롤된 상태)
     target_info = page.evaluate(r"""
@@ -257,10 +249,13 @@ def main():
     """)
     if not target_info:
         print("  ✗ 상품관리 위치 재측정 실패")
-        return
+        return None
     parent_y = target_info["y"]
     print(f"  현재 위치: ({target_info['x']}, {parent_y})")
+    return target_info
 
+
+def _collect_submenus(page, parent_y) -> list:
     # 4. 펼쳐진 하위 메뉴 추출
     print("\n[4] 하위 메뉴 추출")
     submenus = extract_submenus_near(page, parent_y, margin=600)
@@ -285,7 +280,10 @@ def main():
     print(f"  발견: {len(submenus)}개")
     for s in submenus:
         print(f"    - {s['text']:<25}  pos={s['pos']}")
+    return submenus
 
+
+def _click_submenus(page, submenus, target_info, parent_y) -> list:
     # 5. 각 하위 메뉴 클릭 → URL 확인
     print("\n[5] 각 하위 메뉴 클릭 → URL/필드 확인")
     page_results = []
@@ -311,7 +309,10 @@ def main():
             print(f"  ★ 가격+재고 input! URL={info['url'][-60:]}")
         else:
             print(f"  · 필드{info['field_count']} URL={info['url'][-50:]}")
+    return page_results
 
+
+def _report_and_save(submenus, page_results) -> None:
     # 6. 진짜 일반 상품 등록 페이지
     real_hits = [r for r in page_results if r.get("has_price_input") and r.get("has_stock_input")]
     print(f"\n  진짜 상품 등록 페이지: {len(real_hits)}개")
@@ -333,6 +334,26 @@ def main():
         encoding="utf-8",
     )
     print(f"\n  저장: {OUTPUT.name}")
+
+
+def main():
+    page = get_page()
+    print(f"\n{'=' * 70}")
+    print("  사이드바 자동 펼침 + 일반 상품 메뉴 발견")
+    print(f"{'=' * 70}\n")
+
+    r = ensure_naver_login(page)
+    if not r.get("ok"):
+        print("✗ 로그인 실패")
+        return
+    _enter_and_expand(page)
+    target_info = _locate_products_menu(page)
+    if not target_info:
+        return
+    parent_y = target_info["y"]
+    submenus = _collect_submenus(page, parent_y)
+    page_results = _click_submenus(page, submenus, target_info, parent_y)
+    _report_and_save(submenus, page_results)
 
 
 if __name__ == "__main__":

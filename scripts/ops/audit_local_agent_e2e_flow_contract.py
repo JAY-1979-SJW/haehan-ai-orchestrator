@@ -78,23 +78,22 @@ def _reset_runtime_state() -> None:
     approval.clear_rate_store()
 
 
-def audit() -> tuple[bool, list[str]]:
-    findings: list[str] = []
-    _reset_runtime_state()
-    client = _make_client()
-
+def _e2e_register(client):
     reg = client.post(
         "/api/v1/local-agents/register",
         json={"host": "e2e-audit", "os_name": "Windows", "version": "0.1.0"},
     )
     if reg.status_code != 200:
-        return False, [f"register failed status={reg.status_code}"]
+        return (False, [f"register failed status={reg.status_code}"]), None, None
     reg_body = reg.json()
     agent_id = reg_body.get("agent_id", "")
     device_token = reg_body.get("device_token", "")
     if not agent_id or not device_token:
-        return False, ["register response missing one-time agent credential"]
+        return (False, ["register response missing one-time agent credential"]), None, None
+    return None, agent_id, device_token
 
+
+def _e2e_create_task(client, agent_id):
     created = client.post(
         f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
         json={
@@ -104,12 +103,15 @@ def audit() -> tuple[bool, list[str]]:
         },
     )
     if created.status_code != 200:
-        return False, [f"readonly task create failed status={created.status_code}"]
+        return (False, [f"readonly task create failed status={created.status_code}"]), None
     created_body = created.json()
     task_id = created_body.get("task_id", "")
     if created_body.get("status") != "queued" or not task_id:
-        return False, ["readonly task was not queued"]
+        return (False, ["readonly task was not queued"]), None
+    return None, task_id
 
+
+def _e2e_websocket(client, agent_id, device_token, task_id):
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
         ws.send_json(
             {
@@ -154,7 +156,10 @@ def audit() -> tuple[bool, list[str]]:
         result_ack = ws.receive_json()
         if result_ack.get("type") != "result_ack" or result_ack.get("status") != "completed":
             return False, ["result ack failed"]
+    return None
 
+
+def _e2e_final(client, agent_id, task_id):
     final = client.get(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}")
     if final.status_code != 200:
         return False, [f"final task fetch failed status={final.status_code}"]
@@ -164,7 +169,10 @@ def audit() -> tuple[bool, list[str]]:
     forbidden_final = sorted(set(_contains_forbidden_key(final_body)))
     if forbidden_final:
         return False, ["forbidden final response field(s): " + ", ".join(forbidden_final)]
+    return None
 
+
+def _e2e_high_risk(agent_id):
     import ai_orchestrator.local_agent_registry as registry
 
     high = registry.enqueue_task(
@@ -177,6 +185,33 @@ def audit() -> tuple[bool, list[str]]:
         return False, ["high-risk task did not wait for approval"]
     if any(task.task_id == high.task_id for task in registry.list_pending_for_agent(agent_id)):
         return False, ["unapproved high-risk task appeared in dispatch queue"]
+    return None
+
+
+def audit() -> tuple[bool, list[str]]:
+    findings: list[str] = []
+    _reset_runtime_state()
+    client = _make_client()
+
+    _early, agent_id, device_token = _e2e_register(client)
+    if _early is not None:
+        return _early
+
+    _early, task_id = _e2e_create_task(client, agent_id)
+    if _early is not None:
+        return _early
+
+    _early = _e2e_websocket(client, agent_id, device_token, task_id)
+    if _early is not None:
+        return _early
+
+    _early = _e2e_final(client, agent_id, task_id)
+    if _early is not None:
+        return _early
+
+    _early = _e2e_high_risk(agent_id)
+    if _early is not None:
+        return _early
 
     findings.append("approved user can queue readonly browser task")
     findings.append("authenticated local agent receives task over websocket")

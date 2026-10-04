@@ -165,6 +165,54 @@ def build_allowlist_context(payload: dict) -> dict:
     }
 
 
+def _evaluate_domain_allowlist(result: dict, action_name: str) -> dict:
+    """allowlist 필요 시 domain 검사 (차단 → 허용 → 검증필요 → 미등록 순서)."""
+    target_domain = result["target_domain"]
+
+    # Check domain presence
+    if not target_domain:
+        result["allowlist_decision"] = "BLOCK"
+        result["block_reason"] = "TARGET_DOMAIN_MISSING"
+        result["message_ko"] = f"{action_name}: domain 누락"
+        result["should_write_audit"] = True
+        return result
+
+    # Check if domain is in blocked list
+    if target_domain.lower() in COMMON_BLOCKED_DOMAINS:
+        result["allowlist_decision"] = "BLOCK"
+        result["block_reason"] = "DOMAIN_BLOCKED"
+        result["blocked_by_domain"] = True
+        result["message_ko"] = f"{action_name}: 차단 domain {target_domain}"
+        result["should_write_audit"] = True
+        return result
+
+    # Check if domain is in allowed list
+    if target_domain.lower() in COMMON_ALLOWED_DOMAINS:
+        result["domain_allowed"] = True
+        result["path_allowed"] = True
+        result["allowlist_decision"] = "ALLOW_DRY_RUN"
+        result["safe_to_dispatch"] = True
+        result["message_ko"] = f"{action_name}: domain {target_domain} allowlist에 있음"
+        return result
+
+    # Domain not in list: requires verification
+    if "example.invalid" in target_domain or "unknown" in target_domain.lower():
+        result["allowlist_decision"] = "REQUIRE_DOMAIN_VERIFICATION"
+        result["needs_domain_verification"] = True
+        result["block_reason"] = "NEEDS_DOMAIN_VERIFICATION"
+        result["message_ko"] = f"{action_name}: domain {target_domain} 검증 필요"
+        result["should_write_audit"] = True
+        return result
+
+    # Unknown domain
+    result["allowlist_decision"] = "BLOCK"
+    result["block_reason"] = "DOMAIN_NOT_ALLOWLISTED"
+    result["blocked_by_domain"] = True
+    result["message_ko"] = f"{action_name}: domain {target_domain} allowlist에 없음"
+    result["should_write_audit"] = True
+    return result
+
+
 def evaluate_allowlist_preflight(payload: dict) -> dict:
     """Evaluate allowlist preflight decision.
 
@@ -246,51 +294,7 @@ def evaluate_allowlist_preflight(payload: dict) -> dict:
         return result
 
     # Allowlist required: check domain and path
-    target_domain = result["target_domain"]
-    target_path = result["target_path"]  # noqa: F841
-
-    # Check domain presence
-    if not target_domain:
-        result["allowlist_decision"] = "BLOCK"
-        result["block_reason"] = "TARGET_DOMAIN_MISSING"
-        result["message_ko"] = f"{action_name}: domain 누락"
-        result["should_write_audit"] = True
-        return result
-
-    # Check if domain is in blocked list
-    if target_domain.lower() in COMMON_BLOCKED_DOMAINS:
-        result["allowlist_decision"] = "BLOCK"
-        result["block_reason"] = "DOMAIN_BLOCKED"
-        result["blocked_by_domain"] = True
-        result["message_ko"] = f"{action_name}: 차단 domain {target_domain}"
-        result["should_write_audit"] = True
-        return result
-
-    # Check if domain is in allowed list
-    if target_domain.lower() in COMMON_ALLOWED_DOMAINS:
-        result["domain_allowed"] = True
-        result["path_allowed"] = True
-        result["allowlist_decision"] = "ALLOW_DRY_RUN"
-        result["safe_to_dispatch"] = True
-        result["message_ko"] = f"{action_name}: domain {target_domain} allowlist에 있음"
-        return result
-
-    # Domain not in list: requires verification
-    if "example.invalid" in target_domain or "unknown" in target_domain.lower():
-        result["allowlist_decision"] = "REQUIRE_DOMAIN_VERIFICATION"
-        result["needs_domain_verification"] = True
-        result["block_reason"] = "NEEDS_DOMAIN_VERIFICATION"
-        result["message_ko"] = f"{action_name}: domain {target_domain} 검증 필요"
-        result["should_write_audit"] = True
-        return result
-
-    # Unknown domain
-    result["allowlist_decision"] = "BLOCK"
-    result["block_reason"] = "DOMAIN_NOT_ALLOWLISTED"
-    result["blocked_by_domain"] = True
-    result["message_ko"] = f"{action_name}: domain {target_domain} allowlist에 없음"
-    result["should_write_audit"] = True
-    return result
+    return _evaluate_domain_allowlist(result, action_name)
 
 
 def validate_allowlist_result(result: dict) -> list[str]:
