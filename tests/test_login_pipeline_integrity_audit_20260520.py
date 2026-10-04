@@ -210,5 +210,7 @@ def test_audit_test_file_isolated():
     """본 감사 테스트가 외부 모듈 import 만 하고 부수효과 없는지."""
     import sys
 
-    # default_store 가 import 한 다른 테스트에서 오염되지 않도록 — 단순 import 검증
+    # 다른 시험의 import 부수효과에 기대지 않도록 직접 import 한 뒤 모듈 등록을 확인한다.
+    import local_agent.browser_session_store  # noqa: F401
+
     assert "local_agent.browser_session_store" in sys.modules
