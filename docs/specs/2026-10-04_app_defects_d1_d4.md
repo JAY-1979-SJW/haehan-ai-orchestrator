@@ -67,20 +67,23 @@ AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 예약 작업 조회가 없�
 - `tests/test_employee_protocol.py` 에 시험 추가: `scheduled.` 항목은 `scheduled.list` 하나뿐이고 `scheduled-jobs` 경로의 쓰기 항목이 없다.
 - 실제 앱: 같은 질문에 AI 가 앱 기능 `scheduled.list` 로 조회하고 출처를 밝힘.
 
-## D5 — 화면 기능과 AI 허용 API 불일치 (구글 허브·하나팩스 정지 상태)
+## D5 — 화면 기능과 AI 허용 API 불일치 (구글 허브)
 
 ### 현상
-구글 허브 화면은 "캘린더: 오늘 일정" 등 읽기 버튼을 보여 주고 하나팩스 화면은 "자동 발송 전체 정지: 정상"을 보여 주지만, AI 는 "앱에서 읽을 방법이 없다"고 답했다. AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 해당 항목이 없었다.
+구글 허브 화면은 "캘린더: 오늘 일정" 등 읽기 버튼을 보여 주지만, AI 는 "앱에서 읽을 방법이 없다"고 답했다. AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 해당 항목이 없었다. (하나팩스 화면의 "자동 발송 전체 정지" 상태도 같은 불일치였으나 아래 정정 참고.)
 
 ### 변경 (`ai_orchestrator/mcp_server.py`)
-- 읽기 전용 6개 추가: `google.calendar_today`·`calendar_week`·`drive_recent`·`docs_recent`·`sheets_recent`(OAuth API 기본), `google.youtube_studio_status`, 그리고 `hanafax.kill_switch`(GET 만).
-- 제외: `google/tools/gcp/status`(사용자 Chrome 에 탭을 여는 CDP 방식), `calendar/create-event`(쓰기), 하나팩스 kill-switch 의 POST(정지·해제는 사람이 화면 버튼으로).
-- 가드: 위 구글 5개는 `source` 쿼리 인자를 줄 수 없다(`forbid_query`). `source=cdp` 는 사용자 브라우저를 여는 방식이라 설명으로만 말리지 않고 `_api_call` 이 요청을 보내기 전에 거부한다. 항목 형식은 `dict[str, str]` 을 유지(쉼표 구분 문자열).
+- 읽기 전용 6개 추가: `google.calendar_today`·`calendar_week`·`drive_recent`·`docs_recent`·`sheets_recent`(OAuth API 기본), `google.youtube_studio_status`.
+- 제외: `google/tools/gcp/status`(사용자 Chrome 에 탭을 여는 CDP 방식), `calendar/create-event`(쓰기).
+- 가드: 구글 5개는 `source` 쿼리 인자를 줄 수 없다(`forbid_query`). `source=cdp` 는 사용자 브라우저를 여는 방식이라 설명으로만 말리지 않고 `_api_call` 이 요청을 보내기 전에 거부한다. 항목 형식은 `dict[str, str]` 을 유지(쉼표 구분 문자열).
 - 라우트 추가 없음(기존 GET 을 AI 가 부를 수 있게 한 것).
 
+### 정정 (하나팩스 kill-switch)
+최초 구현은 `hanafax.kill_switch`(GET) 도 허용했으나, 기존 안전 시험 `tests/test_hanafax_p3.py::test_ai_registry_exposes_draft_only_not_approve_or_run` 이 "승인·발송·정지·수신거부 경로는 허용목록에 없어야 한다"(금지 경로 단어에 `kill-switch` 포함)고 정해 두었고 `verify_change` 가 이를 새 실패로 잡았다(D5 이후 하나팩스 시험을 다시 돌리지 않은 누락). 정책을 완화하지 않고 `hanafax.kill_switch` 를 제거했다. 따라서 AI 는 하나팩스 정지 상태를 읽을 수 없다(정책). 정지 상태 확인이 필요하면 화면에서 사람이 본다.
+
 ### 검증
-- 시험 3건 추가(`tests/test_employee_protocol.py`): 항목·경로·메서드, CDP·쓰기·정지/해제 부재, `source` 거부(요청 0건), 허용 인자는 통과.
-- 실제 앱: 하나팩스 패널이 `hanafax.kill_switch` 로 "정상(정지 꺼짐)" 보고, 구글 패널이 `google.calendar_today`·`google.drive_recent` 를 `source` 없이 호출(서버 로그 확인). 이 PC 에는 구글 OAuth 자격증명이 없어 그 오류를 그대로 보고했다. CDP 우회 없음. mypy·ruff 통과.
+- 시험 3건 추가(`tests/test_employee_protocol.py`): 구글 항목·경로·메서드, CDP·쓰기 부재, 어떤 경로도 `kill-switch` 를 포함하지 않음, `source` 거부(요청 0건), 허용 인자는 통과. `API_REGISTRY` 를 쓰는 시험 9개 파일 전부 통과(하나팩스 정책 시험 48건 포함).
+- 실제 앱: 구글 패널이 `google.calendar_today`·`google.drive_recent` 를 `source` 없이 호출(서버 로그 확인). 이 PC 에는 구글 OAuth 자격증명이 없어 그 오류를 그대로 보고했다. CDP 우회 없음. (하나팩스 정지 상태 질문에 AI 가 답한 최초 확인은 제거한 항목에 대한 것이라 유효하지 않다.)
 
 ## D6 — `/mypage` "가입일 Invalid Date"
 원인: 데스크톱 소유자 모드(`AUTH_ENABLED=false`)의 `/users/me` 가 `created_at: ""` 를 돌려주는데 화면이 `new Date("")` 를 그대로 표시했다. 변경: `admin-web/src/app/mypage/page.tsx` — 값이 없거나 날짜가 잘못되면 "-". 서버·API 불변. 검증: typecheck·lint, 실제 앱에서 "가입일 -", "Invalid Date" 없음.

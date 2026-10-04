@@ -219,12 +219,6 @@ API_REGISTRY: dict[str, dict[str, str]] = {
         "path": "/api/v1/google/tools/youtube/studio/status",
         "desc": "YouTube 채널 상태(채널명·구독자·영상 수, OAuth 읽기 전용). 구글 계정 연결이 안 돼 있으면 응답의 status/error 를 그대로 알릴 것",
     },
-    # 하나팩스 자동 발송 정지 상태 — 조회만. 정지·해제(POST)는 이 목록에 없다(사람이 화면 버튼으로 한다).
-    "hanafax.kill_switch": {
-        "method": "GET",
-        "path": "/api/v1/hanafax/kill-switch",
-        "desc": "하나팩스 자동 발송 전체 정지(킬 스위치) 상태 조회(읽기 전용). 정지·해제는 할 수 없다",
-    },
     # 앱의 예약 작업 — AI 는 '목록 조회'만. 만들기·수정·일시정지·지금 실행·삭제·실행 승인은 이 목록에 없다(화면에서 사람이 한다).
     # (2026-10-04 앱 실검증: 허용 목록에 없어 AI 가 앱 대신 Claude Code 세션의 예약 도구로 '없음'이라 답했다.)
     "scheduled.list": {

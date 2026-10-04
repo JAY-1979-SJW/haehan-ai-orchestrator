@@ -177,8 +177,9 @@ def test_scheduled_jobs_ai_can_only_list():
     assert not any("scheduled-jobs" in v["path"] and v["method"] != "GET" for v in mcp_server.API_REGISTRY.values())
 
 
-def test_google_hub_reads_and_fax_kill_switch_status_are_allowed_but_read_only():
-    """화면과 AI 가 같은 읽기를 할 수 있게 하되(2026-10-04 앱 실검증 D5), 브라우저(CDP)를 여는 gcp/status·만들기·정지/해제는 열지 않는다."""
+def test_google_hub_reads_are_allowed_but_read_only():
+    """화면과 AI 가 같은 읽기를 할 수 있게 하되(2026-10-04 앱 실검증 D5), 브라우저(CDP)를 여는 gcp/status·만들기는 열지 않는다.
+    하나팩스 kill-switch 는 정책상 읽기도 열지 않는다(tests/test_hanafax_p3.py::test_ai_registry_exposes_draft_only_not_approve_or_run)."""
     reg = mcp_server.API_REGISTRY
     for key, path in {
         "google.calendar_today": "/api/v1/google/tools/calendar/today",
@@ -187,11 +188,10 @@ def test_google_hub_reads_and_fax_kill_switch_status_are_allowed_but_read_only()
         "google.docs_recent": "/api/v1/google/tools/docs/recent",
         "google.sheets_recent": "/api/v1/google/tools/sheets/recent",
         "google.youtube_studio_status": "/api/v1/google/tools/youtube/studio/status",
-        "hanafax.kill_switch": "/api/v1/hanafax/kill-switch",
     }.items():
         assert reg[key]["method"] == "GET" and reg[key]["path"] == path, key
     assert not any("/google/tools/gcp" in v["path"] or "create-event" in v["path"] for v in reg.values())  # CDP·쓰기
-    assert not any("kill-switch" in v["path"] and v["method"] != "GET" for v in reg.values())  # 정지/해제는 사람만
+    assert not any("kill-switch" in v["path"] for v in reg.values())  # 정지 경로는 읽기도 AI 에게 열지 않는다(하나팩스 정책)
     for key in ("google.calendar_today", "google.calendar_week", "google.drive_recent", "google.docs_recent", "google.sheets_recent"):
         assert reg[key]["forbid_query"] == "source"  # cdp 는 사용자 브라우저를 연다
 

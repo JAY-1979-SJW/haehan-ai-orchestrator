@@ -71,7 +71,7 @@
 | D2 | 중 | `data/logs/app.log` 로그 회전이 `WinError 32` 로 112회 실패("--- Logging error ---"). 여러 프로세스(API·에이전트)가 같은 파일을 열고 있어 `RotatingFileHandler` 가 Windows 에서 `os.rename` 실패 | 점검 중 서버 로그 | 프로세스별 로그 파일 분리 또는 회전 없는 핸들러/`ConcurrentRotatingFileHandler` |
 | D3 | 중 | `/hanafax/status` 500. Playwright 헤드리스 셸이 없을 때(`Executable doesn't exist`) 예외를 잡지 않음. `/hanafax/address-groups` 도 사유 없이 "Error" | 서버 로그 traceback | 브라우저 미설치를 503 과 안내 문구로 변환, 설치 안내 |
 | D4 | 중 | AI 에게 "예약 작업 있는지" 물으면 앱의 예약 작업(`/scheduled-jobs`)이 아니라 Claude Code 세션 도구(`CronList`)로 조회해 "없음"이라 답한다. 앱 허용 API 에 예약 작업 조회가 없다. 답변이 출처를 밝혀 오해는 줄지만 질문과 다른 대상이다. 같은 답변이 `CLAUDE.md` 내용을 인용 — 헤드리스 세션이 저장소 설정을 읽고 있다 | 홈 콘솔 질문 A2 | 허용 API 에 `scheduled-jobs` 조회 추가, 속도 기준서 P3(`--restricted`)로 저장소 설정 차단 |
-| D5 | 하 | 화면 기능과 AI 허용 API 불일치: 하나팩스 kill-switch, 구글 캘린더·드라이브 등을 화면은 보여주지만 AI 는 접근 못 한다 | 팩스·구글 패널 질문 | 화면에서 쓰는 읽기 API 를 허용 목록 대조표로 점검 |
+| D5 | 하 | 화면 기능과 AI 허용 API 불일치: 구글 캘린더·드라이브 등을 화면은 보여주지만 AI 는 접근 못 한다(하나팩스 kill-switch 는 정책상 의도된 제한) | 팩스·구글 패널 질문 | 화면에서 쓰는 읽기 API 를 허용 목록 대조표로 점검 |
 | D6 | 하 | `/mypage` 가입일 "Invalid Date" | `/mypage` 화면 | 날짜 값이 없을 때 처리 |
 | D7 | 중 | 읽기 전용이라는 `/naver/session/live` 가 CDP 가 꺼져 있으면 **Chrome 을 직접 시작**하고 최대 20초 기다린다(화면은 "확인 중…"). 상태를 폴링하는 화면이 사용자 PC 에서 브라우저를 띄우는 부작용 | API 실측 20.1초, 서버 로그 "Chrome 시작" 5회 | 상태 확인은 브라우저를 시작하지 않고 바로 `unavailable`, 자동 로그인(`/ensure`)만 시작 |
 | D8 | 정보 | 기동마다 `APP_HOST=0.0.0.0` loopback 외 노출 경고 | 서버 시작 로그 | **결함 아님(환경 설정)** — 코드 기본값은 이미 127.0.0.1. 이 작업 폴더에는 `.env` 가 없어 `load_dotenv()` 가 상위 폴더의 메인 체크아웃 `.env`(`APP_HOST=0.0.0.0`)를 읽었다 |
@@ -100,7 +100,7 @@
 | D2 로그 회전 실패 | ✅ 수정·실검증 | `53a6bf88` (실제 재현 오류 44 → 0) |
 | D3 `/hanafax/status` 500 | ✅ 수정·실검증 | `87756850` |
 | D4 AI 예약 작업 조회 | ✅ 수정·실검증 | `401089d6` |
-| D5 화면과 AI 허용 API 불일치 | ✅ 수정·실검증 | 구글 읽기 5 + YouTube 상태 + 팩스 킬 스위치 상태 조회 허용, `source` 인자 서버 거부 |
+| D5 화면과 AI 허용 API 불일치 | ✅ 구글 읽기만 수정·실검증 | 구글 읽기 5 + YouTube 상태 허용, `source` 인자 서버 거부. 하나팩스 정지 상태는 정책 시험(`test_hanafax_p3`)상 AI 에 열지 않기로 되돌림 |
 | D6 `/mypage` Invalid Date | ✅ 수정·실검증 | 소유자 모드 `created_at: ""` → 화면이 "-" 표시 ("가입일 -") |
 | D7 상태 확인이 Chrome 을 시작함 | ✅ 수정·실검증 | `/live` 20.1초 → 0.06초, 브라우저 시작 시도 0건, Chrome 프로세스 목록 불변 |
 | D8 `APP_HOST` 경고 | 종결(결함 아님) | 환경 설정(메인 `.env`). 로컬 개발이면 `.env` 의 `APP_HOST` 를 127.0.0.1 로 두면 경고가 사라진다 |
