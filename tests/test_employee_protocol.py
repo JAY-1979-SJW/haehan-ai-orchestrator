@@ -167,3 +167,11 @@ def test_paid_declined_vendors_tell_ai_to_use_screen_map_not_api_signup():
         found = service.lookup(q)["vendors"]
         assert found and all(v["status"] == "paid_declined" for v in found), q
         assert all(v["status_meaning"] == guide for v in found)
+
+
+def test_scheduled_jobs_ai_can_only_list():
+    """AI 는 앱의 예약 작업을 목록으로만 본다(2026-10-04 실검증: 없어서 Claude Code 세션 도구로 잘못 답했다). 쓰기·실행 API 는 없다."""
+    entry = mcp_server.API_REGISTRY["scheduled.list"]
+    assert entry["method"] == "GET" and entry["path"] == "/api/v1/scheduled-jobs"
+    assert [k for k in mcp_server.API_REGISTRY if k.startswith("scheduled.")] == ["scheduled.list"]
+    assert not any("scheduled-jobs" in v["path"] and v["method"] != "GET" for v in mcp_server.API_REGISTRY.values())
