@@ -79,7 +79,7 @@ IMPORT_SCAN_PREFIXES = {
 OPENAPI_APP_MODULES = (
     "browser_api.server",
     "browser_worker.app",
-    "ai_orchestrator.server",
+    "ai_orchestrator.asgi",
 )
 
 PYDANTIC_SCHEMA_MODULES = (
@@ -463,6 +463,7 @@ _FORBIDDEN_IMPORT_PAIRS: list[tuple[str, str, str]] = [
     # core/domain은 API, UI, DB, 외부 호출 import 금지
     ("scripts.site_engine", "fastapi", "core must not import fastapi"),
     ("scripts.site_engine", "ai_orchestrator.server", "core must not import server layer"),
+    ("scripts.site_engine", "ai_orchestrator.asgi", "core must not import server layer"),
     ("scripts.site_engine", "scripts.cdp_", "core must not import browser adapters"),
     # site router는 DB 직접 접근 금지
     ("scripts.hiworks.router", "scripts.db", "site router must not access DB directly"),

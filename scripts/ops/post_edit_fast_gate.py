@@ -40,6 +40,22 @@ TSC_CACHE_SECONDS = 5 * 60
 OVERALL_BUDGET_SECONDS = 20.0
 MAX_TESTS = 3
 
+
+PROJECT_PYTHON_VERSION = (3, 14)
+
+
+def _project_python() -> list[str]:
+    """게이트가 띄우는 하위 프로세스(ruff·query·pytest)용 인터프리터.
+
+    이 훅이 PATH 의 `python`(3.11 등)으로 호출돼도 프로젝트 버전(3.14)으로 돌린다 — 3.11 에는
+    websocket-client·psutil 등 requirements 패키지가 없어 정상 코드도 수집 오류로 차단됐다
+    (2026-09-30). 이미 3.14 이거나 py 런처가 없으면 현재 인터프리터를 그대로 쓴다.
+    """
+    if sys.version_info[:2] == PROJECT_PYTHON_VERSION or not shutil.which("py"):
+        return [sys.executable]
+    probe = subprocess.run(["py", "-3.14", "-c", "pass"], capture_output=True, timeout=10, check=False)
+    return ["py", "-3.14"] if probe.returncode == 0 else [sys.executable]
+
 # 기준선 비교 — 영향 테스트가 실패해도 HEAD 에서 같은 문구로 이미 실패하던 것은 차단하지 않는다.
 HEAD_CACHE_DIR = (
     Path(tempfile.gettempdir()) / f"haehan_gate_head_{hashlib.sha256(str(ROOT).encode()).hexdigest()[:8]}"
@@ -147,7 +163,7 @@ def _ruff_errors(file_text: str, suffix: str) -> set[tuple[str, str]]:
     try:
         proc = _run(
             [
-                sys.executable,
+                *_project_python(),
                 "-m",
                 "ruff",
                 "check",
@@ -213,7 +229,7 @@ def new_failures(current: dict[str, str], baseline: dict[str, str]) -> list[str]
 
 
 def _pytest_cmd(targets: list[str]) -> list[str]:
-    return [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=no", "-rfE", "--maxfail=25", *targets]
+    return [*_project_python(), "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=no", "-rfE", "--maxfail=25", *targets]
 
 
 def _git_top_levels() -> list[str]:
@@ -320,7 +336,7 @@ def _impact_candidates(rel_path: str, start: float) -> list[str]:
     """code_map 이 알려 주는 영향 테스트 파일(live/e2e 제외, 최대 MAX_TESTS개). 조회 실패는 빈 목록."""
     try:
         proc = _run(
-            [sys.executable, "-m", QUERY_MOD, "tests-for", rel_path],
+            [*_project_python(), "-m", QUERY_MOD, "tests-for", rel_path],
             timeout=min(5, _remaining(start)),
         )
         # query.py 출력 형식: "  경로" 들여쓰기 라인

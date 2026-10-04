@@ -5121,14 +5121,6 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/server.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/server/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -10697,14 +10689,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/blog/seo.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/blog/seo/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -11978,14 +11962,6 @@
    "source": "rule"
   },
   "scripts/naver/smartstore/navigation/sitemap.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/smartstore/product.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
@@ -20949,6 +20925,94 @@
    "layer": "L11",
    "role": "test",
    "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mcp_shared_cdp.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/explorer/popup_probe.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_popup_probe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/shadowed_modules/naver_blog_seo_stub.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "naver_blog",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/shadowed_modules/naver_cafe_legacy_module.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "naver_cafe",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/shadowed_modules/naver_smartstore_product_stub.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "smartstore",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/browser_watch.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "browser",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_browser_watch.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_post_edit_gate_python.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/asgi.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_verify_change_route_check.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

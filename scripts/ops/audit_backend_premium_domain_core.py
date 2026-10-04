@@ -200,7 +200,10 @@ def _check_domain_independence(models_file: Path) -> dict:
         line.strip()
         for line in models_src.splitlines()
         if "import" in line
-        and any(x in line for x in ["fastapi", "flask", "ai_orchestrator.server", "ai_orchestrator.router"])
+        and any(
+            x in line
+            for x in ["fastapi", "flask", "ai_orchestrator.server", "ai_orchestrator.asgi", "ai_orchestrator.router"]
+        )
     ]
     return _item(
         "dc-18",

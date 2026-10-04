@@ -50,7 +50,7 @@ def iter_runtime_routes() -> list[tuple[str, str, str]]:
     # 와 동일 근본원인 — 공식 fastapi.routing.iter_route_contexts 로 해결).
     from fastapi.routing import APIRoute, APIWebSocketRoute, iter_route_contexts
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     routes: list[tuple[str, str, str]] = []
     for ctx in iter_route_contexts(app.routes):

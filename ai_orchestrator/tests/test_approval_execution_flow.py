@@ -72,7 +72,7 @@ def app_client(tmp_path_factory):
     from ai_orchestrator import router as _rt
 
     importlib.reload(_rt)
-    from ai_orchestrator import server as _srv
+    from ai_orchestrator import asgi as _srv
 
     importlib.reload(_srv)
 

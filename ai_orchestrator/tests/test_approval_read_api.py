@@ -86,7 +86,7 @@ def setup(tmp_path_factory):
     import ai_orchestrator.router as _router
 
     importlib.reload(_router)
-    import ai_orchestrator.server as _srv
+    import ai_orchestrator.asgi as _srv
 
     importlib.reload(_srv)
 

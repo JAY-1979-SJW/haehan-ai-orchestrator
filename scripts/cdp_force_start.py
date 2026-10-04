@@ -107,11 +107,32 @@ def _sanitize_prefs() -> None:
         print(f"  [PREFS] 패치 실패 (무시): {e}")
 
 
+def _start_watch() -> None:
+    """탭 생성·이동 감시 로그(scripts/ops/browser_watch.py) 기동 — 실패해도 브라우저 시작은 막지 않는다."""
+    try:
+        from scripts.ops import browser_watch
+
+        print(f"  탭 감시 로그: {'시작' if browser_watch.start() else '이미 실행 중'}")
+    except Exception as e:  # noqa: BLE001 - 감시는 부가 기능, 실패는 안내만
+        print(f"  탭 감시 로그 시작 실패(무시): {e}")
+
+
+def _stop_watch() -> None:
+    try:
+        from scripts.ops import browser_watch
+
+        if browser_watch.stop():
+            print("✓ 탭 감시 로그 종료")
+    except Exception as e:  # noqa: BLE001 - 감시는 부가 기능, 실패는 안내만
+        print(f"  탭 감시 로그 종료 실패(무시): {e}")
+
+
 def cmd_start(url: str = "") -> int:
     # 이미 실행 중이면 스킵
     if _is_cdp_alive():
         print(f"✓ CDP 이미 응답 중 (port={CDP_PORT})")
         _show_info()
+        _start_watch()
         return 0
 
     chrome = _find_chrome()
@@ -171,6 +192,7 @@ def cmd_start(url: str = "") -> int:
     if _wait_cdp(20):
         print(" ✓")
         _show_info()
+        _start_watch()
         return 0
     else:
         print(" ✗ 타임아웃")
@@ -202,6 +224,7 @@ def cmd_status() -> None:
 
 
 def cmd_stop() -> None:
+    _stop_watch()
     if PID_FILE.exists():
         try:
             data = json.loads(PID_FILE.read_text(encoding="utf-8"))

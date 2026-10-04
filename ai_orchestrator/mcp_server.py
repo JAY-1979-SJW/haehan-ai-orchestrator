@@ -908,16 +908,15 @@ def _cdp_collect(name: str, args: dict) -> dict:
     limit = args.get("limit", default_limit)
     t0 = _t.monotonic()
     try:
-        from playwright.sync_api import sync_playwright
+        from scripts.naver.smartstore import NaverSmartStore
 
-        with sync_playwright() as pw:
-            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
-            page = browser.contexts[0].pages[0]
-            from scripts.naver.smartstore import NaverSmartStore
-
+        page = _cdp_browser().contexts[0].new_page()  # 사용자가 보던 탭을 덮어쓰지 않는다
+        try:
             ss = NaverSmartStore(page)
             method = getattr(ss, method_name)
             result = method(limit=limit) if limit is not None else method()
+        finally:
+            page.close()
     except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         result = {
             "ok": False,
@@ -951,13 +950,10 @@ def _open_seller_center(args: dict) -> dict:
     if not url:
         return {"ok": False, "error": f"알 수 없는 page_key: {page_key}", "available": list(_SELLER_CENTER_URLS.keys())}
     try:
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as pw:
-            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
-            page = browser.contexts[0].pages[0]
-            page.bring_to_front()
-            page.goto(url, timeout=15000, wait_until="domcontentloaded")
+        ctx = _cdp_browser().contexts[0]
+        page = next((p for p in reversed(ctx.pages) if "smartstore" in (p.url or "")), None) or ctx.new_page()
+        page.bring_to_front()
+        page.goto(url, timeout=15000, wait_until="domcontentloaded")
     except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
@@ -975,17 +971,13 @@ def _list_cafe_boards(args: dict) -> dict:
     if not cafe_url:
         return {"ok": False, "error": "cafe_url 필요"}
     try:
-        from playwright.sync_api import sync_playwright
-
         from scripts.naver.cafe.management.board import list_boards
 
-        with sync_playwright() as pw:
-            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
-            page = browser.contexts[0].new_page()
-            try:
-                return list_boards(page, cafe_url)
-            finally:
-                page.close()
+        page = _cdp_browser().contexts[0].new_page()
+        try:
+            return list_boards(page, cafe_url)
+        finally:
+            page.close()
     except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
@@ -1001,17 +993,13 @@ def _add_cafe_board(args: dict) -> dict:
     if not cafe_url or not name:
         return {"ok": False, "error": "cafe_url, name 필요"}
     try:
-        from playwright.sync_api import sync_playwright
-
         from scripts.naver.cafe.management.board import add_board
 
-        with sync_playwright() as pw:
-            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
-            page = browser.contexts[0].new_page()
-            try:
-                return add_board(page, cafe_url, name, board_type=board_type)
-            finally:
-                page.close()
+        page = _cdp_browser().contexts[0].new_page()
+        try:
+            return add_board(page, cafe_url, name, board_type=board_type)
+        finally:
+            page.close()
     except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
@@ -1034,25 +1022,21 @@ def _auto_register_product(args: dict) -> dict:
     REGISTER_URL = "https://sell.smartstore.naver.com/#/products/create"
     t0 = _t.monotonic()
     try:
-        from playwright.sync_api import sync_playwright
-
         from scripts.naver.smartstore.product.form_runner import ProductFormRunner
 
-        with sync_playwright() as pw:
-            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
-            ctx = browser.contexts[0]
-            page = next(
-                (p for p in ctx.pages if "products/create" in p.url or "products/register" in p.url),
-                None,
-            )
-            skip = False
-            if page is None:
-                page = ctx.new_page()
-                page.goto(REGISTER_URL, timeout=20000, wait_until="domcontentloaded")
-                skip = True
-            page.bring_to_front()
-            runner = ProductFormRunner(page)
-            result = runner.run(register_data, skip_open=skip)
+        ctx = _cdp_browser().contexts[0]
+        page = next(
+            (p for p in ctx.pages if "products/create" in p.url or "products/register" in p.url),
+            None,
+        )
+        skip = False
+        if page is None:
+            page = ctx.new_page()
+            page.goto(REGISTER_URL, timeout=20000, wait_until="domcontentloaded")
+            skip = True
+        page.bring_to_front()
+        runner = ProductFormRunner(page)
+        result = runner.run(register_data, skip_open=skip)
     except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
@@ -1078,22 +1062,18 @@ def _edit_product(args: dict) -> dict:
 
     t0 = _t.monotonic()
     try:
-        from playwright.sync_api import sync_playwright
-
         from scripts.naver.smartstore.product.form_runner import ProductFormRunner
 
-        with sync_playwright() as pw:
-            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
-            ctx = browser.contexts[0]
-            page = next(
-                (p for p in ctx.pages if f"products/{product_id}" in p.url),
-                None,
-            )
-            if page is None:
-                page = ctx.new_page()
-            page.bring_to_front()
-            runner = ProductFormRunner(page)
-            result = runner.edit(product_id, edit_fields)
+        ctx = _cdp_browser().contexts[0]
+        page = next(
+            (p for p in ctx.pages if f"products/{product_id}" in p.url),
+            None,
+        )
+        if page is None:
+            page = ctx.new_page()
+        page.bring_to_front()
+        runner = ProductFormRunner(page)
+        result = runner.edit(product_id, edit_fields)
     except Exception as e:  # noqa: BLE001 - 로컬 MCP stdio 서버 - 상세설명 생성/템플릿 CRUD/상품캐시 조회 도구 핸들러, 모두 ok:False,error:str(e) 형태로 실패를 호출자(Claude Code)에게 반환. 승인/차단 판정 없음, 결제/인증 없음
         return {
             "ok": False,
@@ -1115,6 +1095,33 @@ def _edit_product(args: dict) -> dict:
 # 창(admin-web webview, 포트 9333) — electron_target.py의 어댑터를 쓴다.
 _universal_browser: dict[str, Any] = {}
 _electron_browser: dict[str, Any] = {}
+CDP_URL = "http://127.0.0.1:9222"
+
+
+def _start_playwright() -> Any:
+    from playwright.sync_api import sync_playwright
+
+    return sync_playwright().start()
+
+
+def _cdp_browser() -> Any:
+    """이 MCP 프로세스가 쓰는 CDP 브라우저 연결 하나(공용).
+
+    도구 호출마다 sync_playwright()+connect_over_cdp 로 새 연결을 맺으면 브라우저 상태에 따라 핸드셰이크가
+    45~180초 멈춘다(CLAUDE.md, 이슈 #45). 프로세스 수명 동안 연결 1개를 보관해 재사용하고, 끊겼으면 1회 재연결한다.
+    """
+    browser = _universal_browser.get("browser")
+    if browser is not None:
+        try:
+            if browser.is_connected():
+                return browser
+        except Exception as exc:  # noqa: BLE001 - 죽은 연결 판정 실패도 재연결로 복구
+            logging.getLogger(__name__).warning("CDP 연결 상태 확인 실패, 재연결: %s", type(exc).__name__)
+        _universal_browser.clear()
+    pw = _start_playwright()
+    browser = pw.chromium.connect_over_cdp(CDP_URL)
+    _universal_browser.update({"pw": pw, "browser": browser})
+    return browser
 
 
 def _get_universal_page() -> Any:
@@ -1127,13 +1134,9 @@ def _get_universal_page() -> Any:
             logger.debug("범용 브라우저 연결 확인 실패: %s", type(exc).__name__)
             _universal_browser.clear()
 
-    from playwright.sync_api import sync_playwright
-
-    pw = sync_playwright().start()
-    browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
-    context = browser.contexts[0]
+    context = _cdp_browser().contexts[0]
     page = context.pages[0] if context.pages else context.new_page()
-    _universal_browser.update({"pw": pw, "browser": browser, "page": page})
+    _universal_browser["page"] = page
     return page
 
 

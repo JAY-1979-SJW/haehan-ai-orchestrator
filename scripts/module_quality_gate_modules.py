@@ -187,7 +187,7 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "scripts/py_compile_no_cache.py",
-                    "ai_orchestrator/server.py",
+                    "ai_orchestrator/asgi.py",
                     "ai_orchestrator/router.py",
                     "ai_orchestrator/gates/auth.py",
                     "ai_orchestrator/routers/auth_router.py",

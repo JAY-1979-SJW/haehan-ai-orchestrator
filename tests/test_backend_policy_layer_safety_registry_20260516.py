@@ -486,7 +486,7 @@ class TestNoApiResponseChange:
     def test_endpoint_count_unchanged(self):
         """endpoint inventory는 60개다 (HTTP 59 + WS 1)."""
         try:
-            from ai_orchestrator.server import app
+            from ai_orchestrator.asgi import app
 
             routes = [r for r in app.routes if hasattr(r, "path")]
             assert len(routes) >= 1  # router 로드 성공 확인
@@ -496,7 +496,7 @@ class TestNoApiResponseChange:
     def test_health_endpoint_reachable(self):
         """health endpoint는 정상 로드된다."""
         try:
-            from ai_orchestrator.server import app
+            from ai_orchestrator.asgi import app
 
             health_paths = [r.path for r in app.routes if hasattr(r, "path") and "health" in r.path]
             assert len(health_paths) >= 1
@@ -513,7 +513,7 @@ class TestEndpointInventory:
     def test_runtime_endpoint_count_60(self):
         """런타임 endpoint가 60개다."""
         try:
-            from ai_orchestrator.server import app
+            from ai_orchestrator.asgi import app
 
             routes = [r for r in app.routes if hasattr(r, "methods")]
             assert len(routes) >= 50  # 최소 50개 이상

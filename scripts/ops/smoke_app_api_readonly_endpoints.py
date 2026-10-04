@@ -236,7 +236,7 @@ def run_smoke() -> SmokeReport:
 
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     with TestClient(app) as client:
         report.results.append(_smoke_health(client, report))

@@ -229,7 +229,7 @@ def client():
     import ai_orchestrator.config as config
 
     config.AUTH_ENABLED = False
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     return TestClient(app, raise_server_exceptions=False)
 
@@ -290,7 +290,7 @@ class TestSiteTasksDryRunKeyContract:
         """400(unsupported_action) detail은 SiteExecutionResult.to_dict() 구조다."""
         from fastapi.testclient import TestClient as TC
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
         from ai_orchestrator.sites import registry as _reg
         from ai_orchestrator.sites.connector import SiteConnector
         from ai_orchestrator.sites.models import SiteExecutionResult, SiteHealthStatus, SiteTask
