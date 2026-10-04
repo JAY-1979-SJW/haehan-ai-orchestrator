@@ -98,6 +98,19 @@ AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 예약 작업 조회가 없�
 ## D8 — `APP_HOST` 0.0.0.0 경고 (종결, 결함 아님)
 코드 기본값은 이미 `127.0.0.1` 이다(`config.py`). 이 작업 폴더에는 `.env` 가 없어 `load_dotenv()` 가 상위 폴더를 탐색하다 메인 체크아웃 `.env`(`APP_HOST=0.0.0.0`)를 읽었다. 경고는 그 값에 대해 정확히 동작한 것이므로 코드는 바꾸지 않는다. 서버 배포(`docker-compose.yml`)는 0.0.0.0 을 명시하며 정상이다.
 
+## D9 — 메일함 AI 창이 다른 계정 요청을 말없이 화면 계정으로 처리 (추가 발견)
+
+### 현상
+메일함 패널은 화면에서 선택한 계정(`skyjwshin`)에 묶인 창인데(지침: 모든 호출에 이 화면의 계정), 사용자가 "skyjwsin 계정으로 …"라고 해도 AI 가 알리지 않고 `skyjwshin` 으로 초안을 만들었다(보내는 계정은 승인 카드에 표시됨). 또 지침이 "모든 mailbox.* 호출의 query 에 account" 라고 해서 `mailbox.draft`(body 에 account 필요)를 query 로만 불러 첫 호출이 422 로 실패한 뒤 재시도했다.
+
+### 변경 (`admin-web/src/app/mailbox/components/MailAiPanel.tsx`, 지침 문구만)
+- 이 화면은 해당 계정 전용이다 — 사용자가 다른 계정을 말하면 호출 없이 "화면 위의 계정 선택을 바꾼 뒤 다시 요청해 주세요"라고만 안내하고, 초안을 만든 뒤에는 보내는 계정을 답변에 적는다.
+- `mailbox.*` 조회는 query 의 account, `mailbox.draft` 는 body 의 account (query 에 넣으면 422)로 구분해 명시.
+API·DB·정책 불변. 승인 흐름(보내기는 카드 버튼, 사람)도 그대로.
+
+### 검증
+typecheck·lint 통과. 실제 앱(메일함 AI 업무 창): ① 다른 계정 요청 → 호출 0건, 화면 계정 전용이라 만들지 않고 계정 선택 변경 안내 ② 화면 계정 요청 → 초안 생성, 답변에 "보내는 계정: skyjwshin@naver.com" 명시, 승인 카드 표시, 초안 API 호출 POST 1건(200)·422 재시도 없음. 테스트 초안은 모두 취소, 발송 호출 0건.
+
 ## 영향 검증 (D1~D4 합산)
 영향 테스트 197개 파일: 수정 전 164건 실패 → 수정 후 165건. 새로 실패한 2건은 변경과 무관한 기존 문제다 — `test_approval_read_api::test_history_limit_capped_at_500` 는 수정 없는 HEAD 에서도 단독 실패, `test_duplicate_code_check::test_run_against_real_repo_smoke` 는 `.claude/worktrees/` 아래 경로에서만 실패(스캔 제외 목록에 `.claude` 포함, 변경을 치운 상태에서도 동일). 실제로 고쳐진 시험 1건.
 
