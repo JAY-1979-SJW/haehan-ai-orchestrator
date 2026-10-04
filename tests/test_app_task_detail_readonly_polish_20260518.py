@@ -220,4 +220,4 @@ class TestBaselineRegression:
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         routes = runtime_routes()
-        assert len(routes) == 416  # 2026-10-04: 공무 AI 초안·사이트 업무 지도·벤더 조회 라우트 17개 추가(399→416, 삭제 0)
+        assert len(routes) == 419  # 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0)
