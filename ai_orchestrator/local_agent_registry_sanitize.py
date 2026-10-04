@@ -148,20 +148,7 @@ def _sanitize_final_url_value(raw: object) -> str | None:
     return None
 
 
-def _build_audit_summary(raw: dict | None) -> dict | None:
-    """WS result에서 받은 raw audit_summary를 allowlist로 sanitize.
-
-    PC local audit.jsonl 원문 절대 포함 금지.
-    """
-    if not isinstance(raw, dict):
-        return None
-
-    out: dict = {}
-
-    for bad_key in _AUDIT_SUMMARY_FORBIDDEN_KEYS:
-        if bad_key in raw:
-            pass
-
+def _audit_copy_counts(raw: dict, out: dict) -> None:
     for key in (
         "audit_event_count",
         "blocked_event_count",
@@ -181,11 +168,26 @@ def _build_audit_summary(raw: dict | None) -> dict | None:
             except (TypeError, ValueError):
                 pass
 
+
+def _audit_copy_strings(raw: dict, out: dict) -> None:
     for key in ("last_event_category", "last_event_status", "local_audit_source"):
         val = raw.get(key)
         if val is not None and isinstance(val, str):
             out[key] = str(val)[:80]
 
+    _audit_copy_categories(raw, out)
+
+    for key in ("audit_window_started_at", "audit_window_ended_at", "audit_summary_generated_at"):
+        val = raw.get(key)
+        if val is not None and isinstance(val, str):
+            out[key] = str(val)[:50]
+
+    hash_val = raw.get("audit_summary_hash")
+    if hash_val is not None and isinstance(hash_val, str):
+        out["audit_summary_hash"] = str(hash_val)[:128]
+
+
+def _audit_copy_categories(raw: dict, out: dict) -> None:
     categories = raw.get("audit_event_categories")
     if isinstance(categories, list):
         safe_cats = []
@@ -197,15 +199,8 @@ def _build_audit_summary(raw: dict | None) -> dict | None:
         if safe_cats:
             out["audit_event_categories"] = safe_cats
 
-    for key in ("audit_window_started_at", "audit_window_ended_at", "audit_summary_generated_at"):
-        val = raw.get(key)
-        if val is not None and isinstance(val, str):
-            out[key] = str(val)[:50]
 
-    hash_val = raw.get("audit_summary_hash")
-    if hash_val is not None and isinstance(hash_val, str):
-        out["audit_summary_hash"] = str(hash_val)[:128]
-
+def _audit_copy_count_dicts(raw: dict, out: dict) -> None:
     for dict_key in ("policy_decision_counts", "target_kind_counts", "action_kind_counts"):
         dict_val = raw.get(dict_key)
         if isinstance(dict_val, dict):
@@ -222,20 +217,29 @@ def _build_audit_summary(raw: dict | None) -> dict | None:
             if safe_dict:
                 out[dict_key] = safe_dict
 
-    return out if out else None
 
+def _build_audit_summary(raw: dict | None) -> dict | None:
+    """WS result에서 받은 raw audit_summary를 allowlist로 sanitize.
 
-def _build_observe_summary(raw: dict | None) -> dict | None:
-    """WS result에서 받은 raw observe_summary를 허용 필드만 추출/sanitize.
-
-    금지 키(cookie/session/token/authorization/password/html 등)는 포함하지 않는다.
-    final_url_sanitized는 반드시 재검증한다.
+    PC local audit.jsonl 원문 절대 포함 금지.
     """
     if not isinstance(raw, dict):
         return None
 
     out: dict = {}
 
+    for bad_key in _AUDIT_SUMMARY_FORBIDDEN_KEYS:
+        if bad_key in raw:
+            pass
+
+    _audit_copy_counts(raw, out)
+    _audit_copy_strings(raw, out)
+    _audit_copy_count_dicts(raw, out)
+
+    return out if out else None
+
+
+def _observe_copy_basic(raw: dict, out: dict) -> None:
     for key in (
         "target_kind",
         "url_category",
@@ -261,6 +265,8 @@ def _build_observe_summary(raw: dict | None) -> dict | None:
         if key in raw:
             out[key] = bool(raw[key])
 
+
+def _observe_copy_counts(raw: dict, out: dict) -> None:
     for key in ("pages_observed_count", "modal_candidates_count", "browser_keep_open_ms"):
         val = raw.get(key)
         if val is not None:
@@ -282,6 +288,21 @@ def _build_observe_summary(raw: dict | None) -> dict | None:
     ts = raw.get("observed_at")
     if isinstance(ts, str) and ts:
         out["observed_at"] = ts[:40]
+
+
+def _build_observe_summary(raw: dict | None) -> dict | None:
+    """WS result에서 받은 raw observe_summary를 허용 필드만 추출/sanitize.
+
+    금지 키(cookie/session/token/authorization/password/html 등)는 포함하지 않는다.
+    final_url_sanitized는 반드시 재검증한다.
+    """
+    if not isinstance(raw, dict):
+        return None
+
+    out: dict = {}
+
+    _observe_copy_basic(raw, out)
+    _observe_copy_counts(raw, out)
 
     for bad_key in _OBSERVE_FORBIDDEN_KEYS:
         out.pop(bad_key, None)

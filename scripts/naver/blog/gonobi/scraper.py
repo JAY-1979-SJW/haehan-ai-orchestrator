@@ -93,6 +93,36 @@ def _fetch_post_list(session: requests.Session, cat_no: str, page: int = 1) -> l
     return log_nos
 
 
+def _extract_title(soup: BeautifulSoup) -> str:
+    """제목 추출."""
+    for sel in [".se-title-text", ".pcol1", "h3.title"]:
+        el = soup.select_one(sel)
+        if el and el.get_text(strip=True):
+            return el.get_text(strip=True)
+    return ""
+
+
+def _extract_body(soup: BeautifulSoup) -> str:
+    """본문 텍스트 추출."""
+    for sel in [".se-main-container", ".post-view", "#postViewArea", ".post_ct"]:
+        el = soup.select_one(sel)
+        if el:
+            return el.get_text(separator="\n", strip=True)[:3000]
+    return ""
+
+
+def _extract_images(soup: BeautifulSoup) -> list[str]:
+    """이미지 (원본 URL — ?type=... 파라미터 제거)."""
+    images: list[str] = []
+    for img in soup.select("img[src]"):
+        src = img.get("src", "")
+        if "postfiles" in src or "blogfiles" in src or "mblogthumb" in src:
+            src = src.split("?")[0]  # ?type=w80_blur 등 제거 → 원본
+            if src not in images:
+                images.append(src)
+    return images
+
+
 def _fetch_post_detail(session: requests.Session, log_no: str) -> dict:
     """포스트 본문 + 이미지 URL 수집."""
     # PostView.naver 직접 접근이 본문을 가장 안정적으로 반환
@@ -108,30 +138,9 @@ def _fetch_post_detail(session: requests.Session, log_no: str) -> dict:
     html = resp.text
     soup = BeautifulSoup(html, "html.parser")
 
-    # 제목
-    title = ""
-    for sel in [".se-title-text", ".pcol1", "h3.title"]:
-        el = soup.select_one(sel)
-        if el and el.get_text(strip=True):
-            title = el.get_text(strip=True)
-            break
-
-    # 본문 텍스트
-    body = ""
-    for sel in [".se-main-container", ".post-view", "#postViewArea", ".post_ct"]:
-        el = soup.select_one(sel)
-        if el:
-            body = el.get_text(separator="\n", strip=True)[:3000]
-            break
-
-    # 이미지 (원본 URL — ?type=... 파라미터 제거)
-    images: list[str] = []
-    for img in soup.select("img[src]"):
-        src = img.get("src", "")
-        if "postfiles" in src or "blogfiles" in src or "mblogthumb" in src:
-            src = src.split("?")[0]  # ?type=w80_blur 등 제거 → 원본
-            if src not in images:
-                images.append(src)
+    title = _extract_title(soup)
+    body = _extract_body(soup)
+    images = _extract_images(soup)
 
     # 태그
     tags = [t.get_text(strip=True) for t in soup.select(".post_tag a, .se-hashtag")]

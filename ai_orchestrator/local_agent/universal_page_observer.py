@@ -136,7 +136,7 @@ def observe_page_from_dict(page_data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def observe_page_mock(url: str = "", title: str = "",
+def observe_page_mock(url: str = "", title: str = "",  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
                       text: str = "", buttons: list[str] | None = None,
                       links: list[str] | None = None,
                       form_labels: list[str] | None = None,

@@ -147,17 +147,8 @@ DIAGNOSE_JS = r"""
 """
 
 
-def main():
-    page = get_page()
-    print(f"\n{'=' * 70}")
-    print("  상품 등록 페이지 문제 진단")
-    print(f"{'=' * 70}\n")
-
-    r = ensure_naver_login(page)
-    if not r.get("ok"):
-        print("✗ 로그인 실패")
-        return
-
+def _enter_register_page(page) -> None:
+    """등록 페이지 진입 + 전체 스크롤."""
     print("[1] 등록 페이지 진입")
     page.goto(REGISTER_URL, timeout=20000, wait_until="domcontentloaded")
     time.sleep(5)
@@ -175,9 +166,9 @@ def main():
     page.evaluate("window.scrollTo(0, 0)")
     time.sleep(1)
 
-    print("[3] 진단 데이터 수집")
-    diag = page.evaluate(DIAGNOSE_JS)
 
+def _print_diag(diag) -> None:
+    """진단 결과 출력."""
     # 출력
     print(f"\n=== 필수 필드 ({len(diag['required_fields'])}개) ===")
     for f in diag["required_fields"][:20]:
@@ -205,6 +196,9 @@ def main():
     for lb in diag["labels"][:40]:
         print(f"  y={lb['y']:>5}  {lb['text']}")
 
+
+def _probe_save_button(page) -> None:
+    """저장하기 버튼 위치 확인 (실제 클릭 없음)."""
     # 저장 시도 → 에러 발생 시킨 후 추가 진단
     print("\n[4] 저장하기 클릭으로 검증 에러 발생 시도 (실제 저장 X)")
     # fixed bar 보이게
@@ -219,6 +213,27 @@ def main():
         print("  저장하기 버튼 화면에 위치 — 클릭하면 어떤 검증 오류 발생할지 다음 단계에서 확인")
     except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 필드 진단 스크립트(읽기전용 분석, 실제 저장 클릭 없음) — 팝업처리/스크롤/버튼탐색 실패는 무시하거나 진단결과에 오류 메시지만 기록
         print(f"  저장하기 버튼 위치 찾기 실패: {e}")
+
+
+def main():
+    page = get_page()
+    print(f"\n{'=' * 70}")
+    print("  상품 등록 페이지 문제 진단")
+    print(f"{'=' * 70}\n")
+
+    r = ensure_naver_login(page)
+    if not r.get("ok"):
+        print("✗ 로그인 실패")
+        return
+
+    _enter_register_page(page)
+
+    print("[3] 진단 데이터 수집")
+    diag = page.evaluate(DIAGNOSE_JS)
+
+    _print_diag(diag)
+
+    _probe_save_button(page)
 
     # 결과 저장
     out = ROOT / "data" / "smartstore_product_diagnosis.json"

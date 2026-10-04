@@ -202,6 +202,89 @@ def get_site_compliance_policy(
     return DEFAULT_POLICY.copy()
 
 
+def _cap_automation_blocked(result: dict, payload: dict, target_domain: str, operation_type: str, user_present: bool) -> None:
+    result["compliance_decision"] = "BLOCK"
+    result["safe_to_dispatch"] = False
+
+
+def _cap_api_connector(result: dict, payload: dict, target_domain: str, operation_type: str, user_present: bool) -> None:
+    result["compliance_decision"] = "REQUIRE_API_CONNECTOR"
+    result["safe_to_dispatch"] = False
+
+
+def _cap_user_present_local(result: dict, payload: dict, target_domain: str, operation_type: str, user_present: bool) -> None:
+    if user_present:
+        result["compliance_decision"] = "ALLOW_BROWSER_READONLY"
+        result["safe_to_dispatch"] = True
+    else:
+        result["compliance_decision"] = "REQUIRE_USER_PRESENT_LOCAL"
+        result["block_reason"] = "USER_PRESENT_REQUIRED"
+        result["safe_to_dispatch"] = False
+
+
+def _cap_official_remote_support(result: dict, payload: dict, target_domain: str, operation_type: str, user_present: bool) -> None:
+    if payload.get("remote_support_user_approved"):
+        result["compliance_decision"] = "REQUIRE_OFFICIAL_REMOTE_SUPPORT"
+        result["safe_to_dispatch"] = False
+    else:
+        result["compliance_decision"] = "REQUIRE_OFFICIAL_REMOTE_SUPPORT"
+        result["block_reason"] = "OFFICIAL_REMOTE_SUPPORT_REQUIRED"
+        result["safe_to_dispatch"] = False
+
+
+def _cap_browser_readonly(result: dict, payload: dict, target_domain: str, operation_type: str, user_present: bool) -> None:
+    # Only allow read and navigate operations
+    if operation_type in {"read", "navigate", "open_url"}:
+        result["compliance_decision"] = "ALLOW_BROWSER_READONLY"
+        result["safe_to_dispatch"] = True
+    else:
+        result["compliance_decision"] = "BLOCK"
+        result["block_reason"] = "OPERATION_NOT_ALLOWED_FOR_READONLY_SITE"
+        result["safe_to_dispatch"] = False
+
+
+def _cap_browser_controlled_click(result: dict, payload: dict, target_domain: str, operation_type: str, user_present: bool) -> None:
+    if operation_type in {"read", "navigate", "open_url", "click"}:
+        result["compliance_decision"] = "ALLOW_BROWSER_READONLY"
+        result["safe_to_dispatch"] = True
+    else:
+        result["compliance_decision"] = "BLOCK"
+        result["block_reason"] = "OPERATION_NOT_ALLOWED"
+        result["safe_to_dispatch"] = False
+
+
+def _cap_contract_allowlist(result: dict, payload: dict, target_domain: str, operation_type: str, user_present: bool) -> None:
+    if payload.get("site_owner_approval_id"):
+        result["compliance_decision"] = "REQUIRE_SITE_OWNER_APPROVAL"
+        result["safe_to_dispatch"] = True
+        result["message_ko"] = f"{target_domain}: 사이트 소유자 승인 있음"
+    else:
+        result["compliance_decision"] = "REQUIRE_SITE_OWNER_APPROVAL"
+        result["block_reason"] = "SITE_OWNER_APPROVAL_REQUIRED"
+        result["safe_to_dispatch"] = False
+
+
+def _cap_needs_legal_approval(result: dict, payload: dict, target_domain: str, operation_type: str, user_present: bool) -> None:
+    result["compliance_decision"] = "BLOCK"
+    result["block_reason"] = "NEEDS_LEGAL_OR_SITE_OWNER_APPROVAL"
+    result["safe_to_dispatch"] = False
+
+
+# capability → 판정 핸들러 (정의되지 않은 capability 는 UNKNOWN_CAPABILITY BLOCK)
+_CAPABILITY_HANDLERS = {
+    "AUTOMATION_BLOCKED": _cap_automation_blocked,
+    "OAUTH_API_ONLY": _cap_api_connector,
+    "API_ONLY": _cap_api_connector,
+    "WORKSPACE_ADMIN_DELEGATED_API": _cap_api_connector,
+    "USER_PRESENT_LOCAL_ONLY": _cap_user_present_local,
+    "OFFICIAL_REMOTE_SUPPORT_ONLY": _cap_official_remote_support,
+    "BROWSER_READONLY_ALLOWED": _cap_browser_readonly,
+    "BROWSER_CONTROLLED_CLICK_ALLOWED": _cap_browser_controlled_click,
+    "CONTRACT_ALLOWLIST_REQUIRED": _cap_contract_allowlist,
+    "NEEDS_LEGAL_OR_SITE_OWNER_APPROVAL": _cap_needs_legal_approval,
+}
+
+
 def evaluate_site_compliance(payload: dict) -> dict:
     """Evaluate site compliance preflight decision.
 
@@ -262,77 +345,9 @@ def evaluate_site_compliance(payload: dict) -> dict:
     capability = policy.get("capability", "AUTOMATION_BLOCKED")
 
     # Route based on capability
-    if capability == "AUTOMATION_BLOCKED":
-        result["compliance_decision"] = "BLOCK"
-        result["safe_to_dispatch"] = False
-        return result
-
-    elif capability == "OAUTH_API_ONLY" or capability == "API_ONLY":
-        result["compliance_decision"] = "REQUIRE_API_CONNECTOR"
-        result["safe_to_dispatch"] = False
-        return result
-
-    elif capability == "WORKSPACE_ADMIN_DELEGATED_API":
-        result["compliance_decision"] = "REQUIRE_API_CONNECTOR"
-        result["safe_to_dispatch"] = False
-        return result
-
-    elif capability == "USER_PRESENT_LOCAL_ONLY":
-        if user_present:
-            result["compliance_decision"] = "ALLOW_BROWSER_READONLY"
-            result["safe_to_dispatch"] = True
-        else:
-            result["compliance_decision"] = "REQUIRE_USER_PRESENT_LOCAL"
-            result["block_reason"] = "USER_PRESENT_REQUIRED"
-            result["safe_to_dispatch"] = False
-        return result
-
-    elif capability == "OFFICIAL_REMOTE_SUPPORT_ONLY":
-        if payload.get("remote_support_user_approved"):
-            result["compliance_decision"] = "REQUIRE_OFFICIAL_REMOTE_SUPPORT"
-            result["safe_to_dispatch"] = False
-        else:
-            result["compliance_decision"] = "REQUIRE_OFFICIAL_REMOTE_SUPPORT"
-            result["block_reason"] = "OFFICIAL_REMOTE_SUPPORT_REQUIRED"
-            result["safe_to_dispatch"] = False
-        return result
-
-    elif capability == "BROWSER_READONLY_ALLOWED":
-        # Only allow read and navigate operations
-        if operation_type in {"read", "navigate", "open_url"}:
-            result["compliance_decision"] = "ALLOW_BROWSER_READONLY"
-            result["safe_to_dispatch"] = True
-        else:
-            result["compliance_decision"] = "BLOCK"
-            result["block_reason"] = "OPERATION_NOT_ALLOWED_FOR_READONLY_SITE"
-            result["safe_to_dispatch"] = False
-        return result
-
-    elif capability == "BROWSER_CONTROLLED_CLICK_ALLOWED":
-        if operation_type in {"read", "navigate", "open_url", "click"}:
-            result["compliance_decision"] = "ALLOW_BROWSER_READONLY"
-            result["safe_to_dispatch"] = True
-        else:
-            result["compliance_decision"] = "BLOCK"
-            result["block_reason"] = "OPERATION_NOT_ALLOWED"
-            result["safe_to_dispatch"] = False
-        return result
-
-    elif capability == "CONTRACT_ALLOWLIST_REQUIRED":
-        if payload.get("site_owner_approval_id"):
-            result["compliance_decision"] = "REQUIRE_SITE_OWNER_APPROVAL"
-            result["safe_to_dispatch"] = True
-            result["message_ko"] = f"{target_domain}: 사이트 소유자 승인 있음"
-        else:
-            result["compliance_decision"] = "REQUIRE_SITE_OWNER_APPROVAL"
-            result["block_reason"] = "SITE_OWNER_APPROVAL_REQUIRED"
-            result["safe_to_dispatch"] = False
-        return result
-
-    elif capability == "NEEDS_LEGAL_OR_SITE_OWNER_APPROVAL":
-        result["compliance_decision"] = "BLOCK"
-        result["block_reason"] = "NEEDS_LEGAL_OR_SITE_OWNER_APPROVAL"
-        result["safe_to_dispatch"] = False
+    handler = _CAPABILITY_HANDLERS.get(capability)
+    if handler is not None:
+        handler(result, payload, target_domain, operation_type, user_present)
         return result
 
     # Fallback

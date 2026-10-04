@@ -68,6 +68,7 @@ import json
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
@@ -193,7 +194,7 @@ def cmd_all_comments(
     print(f"전체 댓글: {len(comments)}개")
 
     # 포스트별 집계
-    by_post = {}
+    by_post: dict[Any, Any] = {}
     for c in comments:
         post_key = c.get("post_title", "")
         by_post[post_key] = by_post.get(post_key, 0) + 1

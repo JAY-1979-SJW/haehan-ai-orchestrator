@@ -9,10 +9,13 @@
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 from PIL import Image
 
-ROOT = r"C:/work/전등 이미지/gonobi_images_v2"
+from scripts.app_paths import onedrive_root, resolve_external
+
+ROOT = str(resolve_external("HAEHAN_LIGHTING_IMAGE_DIR", "전등 이미지", "gonobi_images_v2", base=onedrive_root()))
 EXCLUDE_CATS = {"시공사례"}
 FNAME_RE = re.compile(r"^(\d+)_(\d+)_(.+)\.(png|jpg|jpeg|gif|webp)$", re.I)
 
@@ -24,7 +27,7 @@ QUALITY = 88
 IMG_DIR.mkdir(parents=True, exist_ok=True)
 
 # 1) log_no -> 정렬된 원본 이미지 경로 목록
-posts_files = {}
+posts_files: dict[Any, Any] = {}
 for catdir in Path(ROOT).iterdir():
     if catdir.name in EXCLUDE_CATS:
         continue

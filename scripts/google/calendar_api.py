@@ -71,6 +71,114 @@ class CalendarAPI:
         except Exception:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
             return []
 
+    def _open_create_event_dialog(self) -> None:
+        """'만들기' → '일정' 메뉴를 열고 quick 다이얼로그 등장까지 대기. 실패 시 RuntimeError."""
+        # 만들기 버튼 — 메뉴 열릴 때까지 최대 3회 retry
+        menu_open = False
+        for attempt in range(3):
+            clicked = self.page.evaluate("""
+                () => {
+                    for (const b of document.querySelectorAll('button, [role="button"]')) {
+                        const t = (b.innerText || '').trim();
+                        if (t.includes('만들기') && t.length < 20) {
+                            const r = b.getBoundingClientRect();
+                            if (r.x > 0 && r.y > 0 && r.x < 200) { b.click(); return true; }
+                        }
+                    }
+                    return false;
+                }
+                """)
+            if not clicked:
+                self.page.keyboard.press("Escape")
+                time.sleep(0.5)
+                continue
+            time.sleep(1.2)
+            menu_count = self.page.evaluate("() => document.querySelectorAll('li[role=\"menuitem\"]').length")
+            if menu_count > 0:
+                menu_open = True
+                break
+            # 메뉴 안 열림 → ESC + 재시도
+            self.page.keyboard.press("Escape")
+            time.sleep(0.8)
+        if not menu_open:
+            raise RuntimeError("'만들기' 메뉴 열기 실패 (3회 재시도)")
+        time.sleep(0.4)
+        # '일정' 메뉴 항목 클릭 — JS로 정확 매칭
+        picked = self.page.evaluate("""
+            () => {
+                for (const el of document.querySelectorAll('li[role="menuitem"], div[role="menuitem"]')) {
+                    const t = (el.innerText || '').trim();
+                    if (t === '일정' || t === 'Event') { el.click(); return true; }
+                }
+                return false;
+            }
+            """)
+        if not picked:
+            raise RuntimeError("'일정' 메뉴 못 찾음")
+        # 다이얼로그 등장까지 명시적 대기
+        self.page.wait_for_selector('[role="dialog"] input[aria-label="제목 추가"]', timeout=10000, state="visible")
+
+        # quick 다이얼로그 등장 대기
+        self.page.wait_for_selector('[role="dialog"] input[aria-label="제목 추가"]', timeout=8000)
+
+    def _save_event_full_page(self, title: str, location: str, description: str) -> None:
+        """'옵션 더보기' 풀 페이지에서 제목/위치/설명을 입력하고 저장. 저장 버튼 없으면 RuntimeError."""
+        self.page.locator(
+            '[role="dialog"] button:has-text("옵션 더보기"), [role="dialog"] button:has-text("More options")'
+        ).first.click(timeout=4000)
+        time.sleep(3)
+        # 풀 페이지: 제목 input
+        self.page.locator('input[aria-label="제목 추가"], input[placeholder="제목 추가"]').first.fill(
+            title, timeout=5000
+        )
+        time.sleep(0.5)
+        if location:
+            with suppress(Exception):
+                self.page.locator('input[aria-label*="위치"], input[placeholder*="위치"]').first.fill(
+                    location, timeout=3000
+                )
+        if description:
+            try:
+                desc_el = self.page.locator(
+                    '[aria-label="설명 추가"], div[contenteditable="true"][aria-label*="설명"], textarea[aria-label*="설명"]'
+                ).first
+                desc_el.click(timeout=2000)
+                self.page.keyboard.type(description, delay=10)
+            except Exception:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
+                pass
+        time.sleep(0.5)
+        # 풀 페이지 저장 버튼 — JS 직접 클릭
+        saved = self.page.evaluate("""
+                () => {
+                    for (const b of document.querySelectorAll('button, [role="button"]')) {
+                        const t = (b.innerText || '').trim();
+                        if (t === '저장' || t === 'Save') { b.click(); return true; }
+                    }
+                    return false;
+                }
+                """)
+        if not saved:
+            raise RuntimeError("'저장' 버튼 못 찾음 (풀페이지)")
+
+    def _save_event_quick_dialog(self, title: str) -> None:
+        """quick 다이얼로그 내 직접 입력 + 저장. 저장 버튼 없으면 RuntimeError."""
+        self.page.locator('[role="dialog"] input[aria-label="제목 추가"]').first.fill(title, timeout=5000)
+        time.sleep(0.7)
+        # 저장 버튼 — JS로 정확 클릭 (다이얼로그 내부 button, text="저장")
+        saved = self.page.evaluate("""
+                () => {
+                    const dlg = document.querySelector('[role="dialog"]');
+                    if (!dlg) return false;
+                    for (const b of dlg.querySelectorAll('button')) {
+                        const t = (b.innerText || '').trim();
+                        if (t === '저장' || t === 'Save') { b.click(); return true; }
+                    }
+                    return false;
+                }
+                """)
+        if not saved:
+            raise RuntimeError("'저장' 버튼 못 찾음")
+
     def create_event(
         self,
         *,
@@ -102,110 +210,13 @@ class CalendarAPI:
         self.page.goto("https://calendar.google.com/calendar/u/0/r", timeout=20000)
         time.sleep(3.5)
         try:
-            # 만들기 버튼 — 메뉴 열릴 때까지 최대 3회 retry
-            menu_open = False
-            for attempt in range(3):
-                clicked = self.page.evaluate("""
-                () => {
-                    for (const b of document.querySelectorAll('button, [role="button"]')) {
-                        const t = (b.innerText || '').trim();
-                        if (t.includes('만들기') && t.length < 20) {
-                            const r = b.getBoundingClientRect();
-                            if (r.x > 0 && r.y > 0 && r.x < 200) { b.click(); return true; }
-                        }
-                    }
-                    return false;
-                }
-                """)
-                if not clicked:
-                    self.page.keyboard.press("Escape")
-                    time.sleep(0.5)
-                    continue
-                time.sleep(1.2)
-                menu_count = self.page.evaluate("() => document.querySelectorAll('li[role=\"menuitem\"]').length")
-                if menu_count > 0:
-                    menu_open = True
-                    break
-                # 메뉴 안 열림 → ESC + 재시도
-                self.page.keyboard.press("Escape")
-                time.sleep(0.8)
-            if not menu_open:
-                raise RuntimeError("'만들기' 메뉴 열기 실패 (3회 재시도)")
-            time.sleep(0.4)
-            # '일정' 메뉴 항목 클릭 — JS로 정확 매칭
-            picked = self.page.evaluate("""
-            () => {
-                for (const el of document.querySelectorAll('li[role="menuitem"], div[role="menuitem"]')) {
-                    const t = (el.innerText || '').trim();
-                    if (t === '일정' || t === 'Event') { el.click(); return true; }
-                }
-                return false;
-            }
-            """)
-            if not picked:
-                raise RuntimeError("'일정' 메뉴 못 찾음")
-            # 다이얼로그 등장까지 명시적 대기
-            self.page.wait_for_selector('[role="dialog"] input[aria-label="제목 추가"]', timeout=10000, state="visible")
-
-            # quick 다이얼로그 등장 대기
-            self.page.wait_for_selector('[role="dialog"] input[aria-label="제목 추가"]', timeout=8000)
+            self._open_create_event_dialog()
 
             # description/location 있으면 '옵션 더보기' → 풀 페이지로 (안정적 입력)
             if description or location:
-                self.page.locator(
-                    '[role="dialog"] button:has-text("옵션 더보기"), [role="dialog"] button:has-text("More options")'
-                ).first.click(timeout=4000)
-                time.sleep(3)
-                # 풀 페이지: 제목 input
-                self.page.locator('input[aria-label="제목 추가"], input[placeholder="제목 추가"]').first.fill(
-                    title, timeout=5000
-                )
-                time.sleep(0.5)
-                if location:
-                    with suppress(Exception):
-                        self.page.locator('input[aria-label*="위치"], input[placeholder*="위치"]').first.fill(
-                            location, timeout=3000
-                        )
-                if description:
-                    try:
-                        desc_el = self.page.locator(
-                            '[aria-label="설명 추가"], div[contenteditable="true"][aria-label*="설명"], textarea[aria-label*="설명"]'
-                        ).first
-                        desc_el.click(timeout=2000)
-                        self.page.keyboard.type(description, delay=10)
-                    except Exception:  # noqa: BLE001 - 구글 캘린더 CDP 자동화 - 이벤트 생성/조회 실패 시 에러 메시지(100자 절단) 반환
-                        pass
-                time.sleep(0.5)
-                # 풀 페이지 저장 버튼 — JS 직접 클릭
-                saved = self.page.evaluate("""
-                () => {
-                    for (const b of document.querySelectorAll('button, [role="button"]')) {
-                        const t = (b.innerText || '').trim();
-                        if (t === '저장' || t === 'Save') { b.click(); return true; }
-                    }
-                    return false;
-                }
-                """)
-                if not saved:
-                    raise RuntimeError("'저장' 버튼 못 찾음 (풀페이지)")
+                self._save_event_full_page(title, location, description)
             else:
-                # quick 다이얼로그 내 직접 입력 + 저장
-                self.page.locator('[role="dialog"] input[aria-label="제목 추가"]').first.fill(title, timeout=5000)
-                time.sleep(0.7)
-                # 저장 버튼 — JS로 정확 클릭 (다이얼로그 내부 button, text="저장")
-                saved = self.page.evaluate("""
-                () => {
-                    const dlg = document.querySelector('[role="dialog"]');
-                    if (!dlg) return false;
-                    for (const b of dlg.querySelectorAll('button')) {
-                        const t = (b.innerText || '').trim();
-                        if (t === '저장' || t === 'Save') { b.click(); return true; }
-                    }
-                    return false;
-                }
-                """)
-                if not saved:
-                    raise RuntimeError("'저장' 버튼 못 찾음")
+                self._save_event_quick_dialog(title)
             time.sleep(3)
             log_critical("OTHER", f"Calendar 이벤트: {title}", when=when_dt.isoformat(), mode="cal_create")
             return {"ok": True, "title": title, "when": when_dt.isoformat(), "end": end_dt.isoformat()}

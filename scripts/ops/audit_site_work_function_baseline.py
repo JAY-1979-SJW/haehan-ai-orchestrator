@@ -96,24 +96,7 @@ def _count_naver_catalog_categories() -> set[str]:
     return categories
 
 
-def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not BASELINE.exists():
-        return False, ["docs/baseline/SITE_WORK_FUNCTION_BASELINE.md missing"]
-
-    text = BASELINE.read_text(encoding="utf-8", errors="replace")
-    missing = _missing(text, REQUIRED_PHRASES)
-    if missing:
-        failures.append("site work baseline missing phrase(s): " + ", ".join(missing))
-
-    from scripts.google import live_inputs, workflows
-    from scripts.google.cloud.local_browser import dry_run_cloud_readonly_browser_task
-    from scripts.hiworks.actions import build_action_catalog as build_hiworks_action_catalog
-    from scripts.naver.smartstore.actions import build_action_catalog as build_smartstore_action_catalog
-    from scripts.router import is_service_cmd
-    from scripts.sites.subdomain_registry import validate_registry
-    from scripts.youtube import uploader
-
+def _audit_routing(failures, is_service_cmd, validate_registry):
     not_routed = [cmd for cmd in SERVICE_COMMANDS if not is_service_cmd(cmd)]
     if not_routed:
         failures.append("service command(s) not routed through scripts.router: " + ", ".join(not_routed))
@@ -122,6 +105,8 @@ def audit() -> tuple[bool, list[str]]:
     if registry_errors:
         failures.extend(registry_errors)
 
+
+def _audit_google_counts(failures, workflows, live_inputs):
     google_catalog = workflows.build_action_catalog()
     google_actions = google_catalog.get("actions", [])
     read_count = sum(1 for action in google_actions if action.get("operation") == "read")
@@ -138,6 +123,8 @@ def audit() -> tuple[bool, list[str]]:
     if supported_count != 46:
         failures.append(f"google live input support mismatch: {supported_count}")
 
+
+def _audit_google_tasks(failures, dry_run_cloud_readonly_browser_task):
     cloud_dry = dry_run_cloud_readonly_browser_task("compute", "open")
     task = cloud_dry.get("local_agent_task", {})
     if task.get("action") != "web_open_url_readonly" or task.get("execution_location") != "local_agent":
@@ -149,6 +136,8 @@ def audit() -> tuple[bool, list[str]]:
     if google_tasks.get("work execute") != "approval_gated":
         failures.append("google work execute must be approval_gated")
 
+
+def _audit_naver(failures):
     naver_tasks = _task_status("scripts.naver.router")
     for key in ("mail inbox", "blog write", "cafe write", "calendar list/add", "mybox list/search/upload"):
         if naver_tasks.get(key) != "done":
@@ -158,6 +147,8 @@ def audit() -> tuple[bool, list[str]]:
     if missing_naver_categories:
         failures.append("naver catalog missing categories: " + ", ".join(missing_naver_categories))
 
+
+def _audit_smartstore(failures, build_smartstore_action_catalog):
     smartstore_catalog = build_smartstore_action_catalog()
     smart_counts = {
         item.get("name"): item.get("summary", {})
@@ -174,6 +165,8 @@ def audit() -> tuple[bool, list[str]]:
     if smart_tasks.get("seo") != "todo" or smart_tasks.get("product register") != "complete_baseline":
         failures.append("smartstore status boundaries changed unexpectedly")
 
+
+def _audit_hiworks_gabia(failures, build_hiworks_action_catalog):
     hiworks_catalog = build_hiworks_action_catalog()
     hiworks_services = hiworks_catalog.get("services", [])
     if len(hiworks_services) < 17:
@@ -186,6 +179,8 @@ def audit() -> tuple[bool, list[str]]:
     if gabia_tasks.get("payment") != "user_direct_required":
         failures.append("gabia payment must remain user_direct_required")
 
+
+def _audit_youtube(failures, uploader):
     youtube_tasks = _task_status("scripts.youtube.router")
     for key in (
         "record prepare",
@@ -210,6 +205,39 @@ def audit() -> tuple[bool, list[str]]:
     )
     if plan.get("ready_for_approval") is not False or "local_video_file" not in plan.get("missing_requirements", []):
         failures.append("youtube missing video file must block approval readiness")
+
+
+def audit() -> tuple[bool, list[str]]:
+    failures: list[str] = []
+    if not BASELINE.exists():
+        return False, ["docs/baseline/SITE_WORK_FUNCTION_BASELINE.md missing"]
+
+    text = BASELINE.read_text(encoding="utf-8", errors="replace")
+    missing = _missing(text, REQUIRED_PHRASES)
+    if missing:
+        failures.append("site work baseline missing phrase(s): " + ", ".join(missing))
+
+    from scripts.google import live_inputs, workflows
+    from scripts.google.cloud.local_browser import dry_run_cloud_readonly_browser_task
+    from scripts.hiworks.actions import build_action_catalog as build_hiworks_action_catalog
+    from scripts.naver.smartstore.actions import build_action_catalog as build_smartstore_action_catalog
+    from scripts.router import is_service_cmd
+    from scripts.sites.subdomain_registry import validate_registry
+    from scripts.youtube import uploader
+
+    _audit_routing(failures, is_service_cmd, validate_registry)
+
+    _audit_google_counts(failures, workflows, live_inputs)
+
+    _audit_google_tasks(failures, dry_run_cloud_readonly_browser_task)
+
+    _audit_naver(failures)
+
+    _audit_smartstore(failures, build_smartstore_action_catalog)
+
+    _audit_hiworks_gabia(failures, build_hiworks_action_catalog)
+
+    _audit_youtube(failures, uploader)
 
     return not failures, failures or [
         "SITE_WORK_FUNCTION_BASELINE exists and is locked",

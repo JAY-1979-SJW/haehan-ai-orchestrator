@@ -106,7 +106,7 @@ class ApprovalWriteResult:
     error_message: str | None = None
 
 
-def build_approval_request(
+def build_approval_request(  # noqa: PLR0913 - 승인 요청 빌더, 필드별 키워드 인자가 공개 API
     approval_id: str | None = None,
     workflow_run_id: str = "",
     workflow_id: str = "",
@@ -292,6 +292,23 @@ def _redact_url(url: str) -> tuple[str, str]:
         return "[REDACTED_URL]", url_hash
 
 
+def _validate_event_type_and_status(record: ApprovalRecord) -> list[str]:
+    """approval_event_type / approval_status 필수·허용값 검증 (오류 순서 유지)."""
+    errors: list[str] = []
+    if not record.approval_event_type:
+        errors.append("approval_event_type is required")
+    elif record.approval_event_type not in VALID_APPROVAL_EVENT_TYPES:
+        errors.append(
+            f"approval_event_type must be one of {VALID_APPROVAL_EVENT_TYPES}, got {record.approval_event_type}"
+        )
+
+    if not record.approval_status:
+        errors.append("approval_status is required")
+    elif record.approval_status not in VALID_APPROVAL_STATUS:
+        errors.append(f"approval_status must be one of {VALID_APPROVAL_STATUS}, got {record.approval_status}")
+    return errors
+
+
 def validate_approval_record(record: ApprovalRecord) -> list[str]:
     """Validate approval record.
 
@@ -308,17 +325,7 @@ def validate_approval_record(record: ApprovalRecord) -> list[str]:
         errors.append("approval_event_id is required")
     if not record.approval_id:
         errors.append("approval_id is required")
-    if not record.approval_event_type:
-        errors.append("approval_event_type is required")
-    elif record.approval_event_type not in VALID_APPROVAL_EVENT_TYPES:
-        errors.append(
-            f"approval_event_type must be one of {VALID_APPROVAL_EVENT_TYPES}, got {record.approval_event_type}"
-        )
-
-    if not record.approval_status:
-        errors.append("approval_status is required")
-    elif record.approval_status not in VALID_APPROVAL_STATUS:
-        errors.append(f"approval_status must be one of {VALID_APPROVAL_STATUS}, got {record.approval_status}")
+    errors.extend(_validate_event_type_and_status(record))
 
     # Timestamp
     if not record.created_at:

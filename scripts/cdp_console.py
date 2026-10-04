@@ -483,6 +483,80 @@ def _cli_tabs():
     print()
 
 
+def _repl_summary(s, line):
+    _print_summary(s.page_summary())
+
+
+def _repl_form(s, line):
+    for f in s.get_form_fields():
+        print(" ", f)
+
+
+def _repl_links(s, line):
+    for l in s.get_links():  # noqa: E741
+        print(f"  {l['text']!r:35s} {l['href']}")
+
+
+def _repl_find(s, line):
+    for e in s.find_elements(line[6:]):
+        print(f"  {'✓' if e['visible'] else '○'} {e['sel']}  {e['text']!r}")
+
+
+def _repl_table(s, line):
+    sel = line[6:].strip() or "table"
+    rows = s.extract_table(sel)
+    for i, r in enumerate(rows[:20]):
+        print(f"  {i:3d} | " + " | ".join(c[:18] for c in r[:8]))
+    print(f"  총 {len(rows)}행")
+
+
+def _repl_inspect(s, line):
+    for e in s.inspect_element(line[9:]):
+        print(f"  <{e['tag']}> {e['text']!r}  {e['attrs']}")
+
+
+def _repl_count(s, line):
+    print(f"  {s.count(line[7:])}개")
+
+
+def _repl_suggest(s, line):
+    for r in s.suggest_selectors(line[9:]):
+        print(f"  [{r['type']}] {r['selector']}  {r['sample']!r}")
+
+
+def _repl_goto(s, line):
+    print(s.goto(line[6:]))
+
+
+def _repl_shot(s, line):
+    print(s.screenshot())
+
+
+_REPL_EXACT = {".summary": _repl_summary, ".form": _repl_form, ".links": _repl_links, ".shot": _repl_shot}
+# 접두사 명령 — 위에서부터 순서대로 검사
+_REPL_PREFIX = (
+    (".find ", _repl_find),
+    (".table", _repl_table),
+    (".inspect ", _repl_inspect),
+    (".count ", _repl_count),
+    (".suggest ", _repl_suggest),
+    (".goto ", _repl_goto),
+)
+
+
+def _repl_dot_command(s, line: str) -> bool:
+    """점(.)으로 시작하는 단축 명령 처리. 처리했으면 True."""
+    handler = _REPL_EXACT.get(line)
+    if handler is not None:
+        handler(s, line)
+        return True
+    for prefix, handler in _REPL_PREFIX:
+        if line.startswith(prefix):
+            handler(s, line)
+            return True
+    return False
+
+
 def _cli_repl():
     tab = _find_tab()
     print(f"\nCDP REPL  {tab.get('title', '')[:50]}  |  {tab.get('url', '')[:60]}")
@@ -500,50 +574,107 @@ def _cli_repl():
             if line.lower() in ("exit", "quit", "q"):
                 break
 
-            if line == ".summary":
-                _print_summary(s.page_summary())
-                continue
-            if line == ".form":
-                for f in s.get_form_fields():
-                    print(" ", f)
-                continue
-            if line == ".links":
-                for l in s.get_links():  # noqa: E741
-                    print(f"  {l['text']!r:35s} {l['href']}")
-                continue
-            if line.startswith(".find "):
-                for e in s.find_elements(line[6:]):
-                    print(f"  {'✓' if e['visible'] else '○'} {e['sel']}  {e['text']!r}")
-                continue
-            if line.startswith(".table"):
-                sel = line[6:].strip() or "table"
-                rows = s.extract_table(sel)
-                for i, r in enumerate(rows[:20]):
-                    print(f"  {i:3d} | " + " | ".join(c[:18] for c in r[:8]))
-                print(f"  총 {len(rows)}행")
-                continue
-            if line.startswith(".inspect "):
-                for e in s.inspect_element(line[9:]):
-                    print(f"  <{e['tag']}> {e['text']!r}  {e['attrs']}")
-                continue
-            if line.startswith(".count "):
-                print(f"  {s.count(line[7:])}개")
-                continue
-            if line.startswith(".suggest "):
-                for r in s.suggest_selectors(line[9:]):
-                    print(f"  [{r['type']}] {r['selector']}  {r['sample']!r}")
-                continue
-            if line.startswith(".goto "):
-                print(s.goto(line[6:]))
-                continue
-            if line == ".shot":
-                print(s.screenshot())
+            if _repl_dot_command(s, line):
                 continue
 
             val, err = s.js(line)
             print(f"{'[오류] ' if err else '<< '}{val}")
     finally:
         s.close()
+
+
+def _cmd_info(s, rest):
+    data, _ = s.js_json("""{dpr:window.devicePixelRatio,
+                    iw:window.innerWidth,ih:window.innerHeight,
+                    url:location.href,title:document.title}""")
+    print(f"\nURL: {data['url']}\nTitle: {data['title']}")
+    print(f"DPR: {data['dpr']}  inner: {data['iw']}x{data['ih']}\n")
+
+
+def _cmd_eval(s, rest):
+    val, err = s.js(" ".join(rest))
+    print(f"{'[오류] ' if err else ''}{val}")
+
+
+def _cmd_find(s, rest):
+    for e in s.find_elements(" ".join(rest)):
+        print(f"  {'✓' if e['visible'] else '○'} {e['sel']:60s} {e['text']!r}")
+
+
+def _cmd_inspect(s, rest):
+    for e in s.inspect_element(" ".join(rest)):
+        print(f"  <{e['tag']}> visible={e['visible']} bbox={e['bbox']}")
+        print(f"    text: {e['text']!r}")
+        print(f"    attrs: {e['attrs']}")
+
+
+def _cmd_table(s, rest):
+    rows = s.extract_table(rest[0] if rest else "table")
+    for i, r in enumerate(rows[:25]):
+        pfx = "HDR" if i == 0 else f"{i:3d}"
+        print(f"  {pfx} | " + " | ".join(c[:18] for c in r[:8]))
+    print(f"  총 {len(rows)}행")
+
+
+def _cmd_form(s, rest):
+    for f in s.get_form_fields():
+        vis = "✓" if f["visible"] else "○"
+        sel = f"#{f['id']}" if f["id"] else f"[name={f['name']!r}]" if f["name"] else ""
+        print(f"  {vis} <{f['tag']}> {sel} type={f['type']!r} '{f['placeholder']}'")
+
+
+def _cmd_links(s, rest):
+    for l in s.get_links(rest[0] if rest else ""):  # noqa: E741
+        vis = "✓" if l["visible"] else "○"
+        print(f"  {vis} {l['text']!r:35s} {l['href']}")
+
+
+def _cmd_suggest(s, rest):
+    for r in s.suggest_selectors(" ".join(rest)):
+        print(f"  [{r['type']}] {r['selector']}  {r['sample']!r}")
+
+
+def _cmd_xhr_watch(s, rest):
+    dur = int(rest[0]) if rest else 10
+    s.enable_xhr_capture()
+    print(f"XHR 감지 {dur}초...")
+    end = time.time() + dur
+    seen = set()
+    while time.time() < end:
+        try:
+            s._ws.settimeout(0.3)
+            evt = json.loads(s._ws.recv())
+            if evt.get("method") == "Network.requestWillBeSent":
+                req = evt["params"].get("request", {})
+                url = req.get("url", "")
+                if url not in seen:
+                    seen.add(url)
+                    print(f"  {req.get('method', ''):4s} {url[:100]}")
+        except Exception:  # noqa: BLE001 - CDP 콘솔 CLI 도구 -- JSON 파싱 실패 시 원문 텍스트 반환, 네트워크 요청 목록 출력 중 개별 오류는 무시(출력용 도구)
+            pass
+    print(f"\n총 {len(seen)}개")
+
+
+_CLI_COMMANDS = {
+    "tabs": lambda s, rest: _cli_tabs(),
+    "info": _cmd_info,
+    "eval": _cmd_eval,
+    "goto": lambda s, rest: print(s.goto(rest[0] if rest else "")),
+    "screenshot": lambda s, rest: print(s.screenshot(rest[0] if rest else None)),
+    "shot": lambda s, rest: print(s.screenshot(rest[0] if rest else None)),
+    "page-summary": lambda s, rest: _print_summary(s.page_summary()),
+    "summary": lambda s, rest: _print_summary(s.page_summary()),
+    "find": _cmd_find,
+    "inspect": _cmd_inspect,
+    "count": lambda s, rest: print(f"{s.count(' '.join(rest))}개"),
+    "html": lambda s, rest: print(s.get_html(" ".join(rest))),
+    "attrs": lambda s, rest: print(s.get_attrs_map(" ".join(rest))),
+    "table": _cmd_table,
+    "form": _cmd_form,
+    "links": _cmd_links,
+    "suggest": _cmd_suggest,
+    "xhr-watch": _cmd_xhr_watch,
+}
 
 
 def main():
@@ -555,77 +686,11 @@ def main():
     cmd, rest = args[0].lower(), args[1:]
 
     with connect() as s:
-        match cmd:
-            case "tabs":
-                _cli_tabs()
-            case "info":
-                data, _ = s.js_json("""{dpr:window.devicePixelRatio,
-                    iw:window.innerWidth,ih:window.innerHeight,
-                    url:location.href,title:document.title}""")
-                print(f"\nURL: {data['url']}\nTitle: {data['title']}")
-                print(f"DPR: {data['dpr']}  inner: {data['iw']}x{data['ih']}\n")
-            case "eval":
-                val, err = s.js(" ".join(rest))
-                print(f"{'[오류] ' if err else ''}{val}")
-            case "goto":
-                print(s.goto(rest[0] if rest else ""))
-            case "screenshot" | "shot":
-                print(s.screenshot(rest[0] if rest else None))
-            case "page-summary" | "summary":
-                _print_summary(s.page_summary())
-            case "find":
-                for e in s.find_elements(" ".join(rest)):
-                    print(f"  {'✓' if e['visible'] else '○'} {e['sel']:60s} {e['text']!r}")
-            case "inspect":
-                for e in s.inspect_element(" ".join(rest)):
-                    print(f"  <{e['tag']}> visible={e['visible']} bbox={e['bbox']}")
-                    print(f"    text: {e['text']!r}")
-                    print(f"    attrs: {e['attrs']}")
-            case "count":
-                print(f"{s.count(' '.join(rest))}개")
-            case "html":
-                print(s.get_html(" ".join(rest)))
-            case "attrs":
-                print(s.get_attrs_map(" ".join(rest)))
-            case "table":
-                rows = s.extract_table(rest[0] if rest else "table")
-                for i, r in enumerate(rows[:25]):
-                    pfx = "HDR" if i == 0 else f"{i:3d}"
-                    print(f"  {pfx} | " + " | ".join(c[:18] for c in r[:8]))
-                print(f"  총 {len(rows)}행")
-            case "form":
-                for f in s.get_form_fields():
-                    vis = "✓" if f["visible"] else "○"
-                    sel = f"#{f['id']}" if f["id"] else f"[name={f['name']!r}]" if f["name"] else ""
-                    print(f"  {vis} <{f['tag']}> {sel} type={f['type']!r} '{f['placeholder']}'")
-            case "links":
-                for l in s.get_links(rest[0] if rest else ""):  # noqa: E741
-                    vis = "✓" if l["visible"] else "○"
-                    print(f"  {vis} {l['text']!r:35s} {l['href']}")
-            case "suggest":
-                for r in s.suggest_selectors(" ".join(rest)):
-                    print(f"  [{r['type']}] {r['selector']}  {r['sample']!r}")
-            case "xhr-watch":
-                dur = int(rest[0]) if rest else 10
-                s.enable_xhr_capture()
-                print(f"XHR 감지 {dur}초...")
-                end = time.time() + dur
-                seen = set()
-                while time.time() < end:
-                    try:
-                        s._ws.settimeout(0.3)
-                        evt = json.loads(s._ws.recv())
-                        if evt.get("method") == "Network.requestWillBeSent":
-                            req = evt["params"].get("request", {})
-                            url = req.get("url", "")
-                            if url not in seen:
-                                seen.add(url)
-                                print(f"  {req.get('method', ''):4s} {url[:100]}")
-                    except Exception:  # noqa: BLE001 - CDP 콘솔 CLI 도구 -- JSON 파싱 실패 시 원문 텍스트 반환, 네트워크 요청 목록 출력 중 개별 오류는 무시(출력용 도구)
-                        pass
-                print(f"\n총 {len(seen)}개")
-            case _:
-                print(__doc__)
+        handler = _CLI_COMMANDS.get(cmd)
+        if handler is None:
+            print(__doc__)
+        else:
+            handler(s, rest)
 
 
 if __name__ == "__main__":

@@ -60,7 +60,7 @@ def get_session(session_id: str) -> dict[str, Any] | None:
         return dict(s) if s else None
 
 
-def run_task_in_session(
+def run_task_in_session(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     session_id: str,
     instruction: str,
     page_data: dict[str, Any] | None = None,

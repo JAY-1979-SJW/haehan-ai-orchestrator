@@ -47,6 +47,7 @@ from pathlib import Path
 
 from scripts.cdp_helper import CDP
 from scripts.logger import get_logger
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
 from scripts.naver.blog.marketing.competitor import research_competitors, summarize_for_prompt
 from scripts.naver.blog.marketing.content import (
     MIN_BODY_CHARS,
@@ -80,13 +81,13 @@ CHATGPT_URL = PROJECT_URL  # 하위호환용 별칭
 
 
 def project_url(blog_id: str | None = None) -> str:
-    pid = PROJECT_IDS.get(blog_id or "skyjwsin", PROJECT_ID)
+    pid = PROJECT_IDS.get(blog_id or DEFAULT_ACCOUNT, PROJECT_ID)
     return f"https://chatgpt.com/g/{pid}/project"
 
 
 def in_project(cdp: CDP, blog_id: str | None = None) -> bool:
     """현재 열린 탭이 해당 계정 전용 프로젝트(또는 그 안의 대화)인지."""
-    pid = PROJECT_IDS.get(blog_id or "skyjwsin", PROJECT_ID)
+    pid = PROJECT_IDS.get(blog_id or DEFAULT_ACCOUNT, PROJECT_ID)
     return pid in (cdp.js("location.href") or "")
 
 
@@ -383,7 +384,7 @@ def generate_draft(
         except Exception as e:  # noqa: BLE001 - GPT 응답 JSON 파싱 실패시 None 반환, 경쟁사 조사 실패시 그 정보 없이 계속 진행 — 안전한 기능저하(degradation)일 뿐 발행 승인/여부에는 영향 없음
             _log.warning("[gpt-writer] 경쟁 글 조사 실패(무시하고 진행): %s", e)
 
-    template = _PROMPT_TEMPLATES.get(blog_id or "skyjwsin", _PROMPT_TEMPLATE)
+    template = _PROMPT_TEMPLATES.get(blog_id or DEFAULT_ACCOUNT, _PROMPT_TEMPLATE)
     prompt = template.format(
         topic=topic_info.get("topic", ""),
         source=topic_info.get("source", "(없음)"),

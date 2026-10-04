@@ -278,31 +278,21 @@ def strip_period(s):
     return s[:-1] if s.endswith(".") else s
 
 
-def gen_desc(c):
-    info = CAT_INFO.get(c["cat"], CAT_INFO["기타"])
-    head = pick(info["heads"], c["code"] + "H")
-    space = pick(info["spaces"], c["code"] + "S")
-    persona = info["persona"]
-    points = info["points"]
-
-    # 1문단: 공감형 도입 + 이 제품이 어디에 어울리는지 자연스럽게 이어서
-    c1 = pick(CONNECT_1, c["code"] + "c1")
-    p1 = f"{head}, {c['name']}을 살펴보세요. {c1}{persona}을 위해 만들어진 제품이라, {space}에 달아두면 특히 만족스러울 거예요."
-
-    # 2문단: 구매 포인트를 나열이 아니라 이어지는 문장으로 (원래 완전한 문장을 그대로 접속사로 연결)
+def _gen_p2(points, code):
     sentences = [s for s in points if s]
     p2_parts = []
     if len(sentences) > 0:
         p2_parts.append(sentences[0])
     if len(sentences) > 1:
-        c2 = pick(CONNECT_2, c["code"] + "c2")
+        c2 = pick(CONNECT_2, code + "c2")
         p2_parts.append(c2 + sentences[1])
     if len(sentences) > 2:
-        c3 = pick(CONNECT_3, c["code"] + "c3")
+        c3 = pick(CONNECT_3, code + "c3")
         p2_parts.append(c3 + sentences[2])
-    p2 = " ".join(p2_parts)
+    return " ".join(p2_parts)
 
-    # 3문단: 색감/조도/평수 정보를 자연스럽게
+
+def _gen_p3(c):
     mood_bits = []
     ct_text = (c.get("ct") or "") + " " + (c.get("features") or "")
     for pat, msg in CT_MOOD:
@@ -321,6 +311,40 @@ def gen_desc(c):
     p3 = ""
     if mood_bits:
         p3 = ", ".join(mood_bits) + "."
+    return p3
+
+
+def _spec_bits(c):
+    spec_bits = []
+    if c.get("size"):
+        spec_bits.append(f"규격 {c['size']}")
+    if c.get("led"):
+        spec_bits.append(f"광원 {c['led']}")
+    if c.get("color"):
+        spec_bits.append(f"색상 {c['color']}")
+    if c.get("ct"):
+        spec_bits.append(f"색온도 {c['ct']}")
+    if c.get("features"):
+        spec_bits.append(c["features"])
+    return spec_bits
+
+
+def gen_desc(c):
+    info = CAT_INFO.get(c["cat"], CAT_INFO["기타"])
+    head = pick(info["heads"], c["code"] + "H")
+    space = pick(info["spaces"], c["code"] + "S")
+    persona = info["persona"]
+    points = info["points"]
+
+    # 1문단: 공감형 도입 + 이 제품이 어디에 어울리는지 자연스럽게 이어서
+    c1 = pick(CONNECT_1, c["code"] + "c1")
+    p1 = f"{head}, {c['name']}을 살펴보세요. {c1}{persona}을 위해 만들어진 제품이라, {space}에 달아두면 특히 만족스러울 거예요."
+
+    # 2문단: 구매 포인트를 나열이 아니라 이어지는 문장으로 (원래 완전한 문장을 그대로 접속사로 연결)
+    p2 = _gen_p2(points, c["code"])
+
+    # 3문단: 색감/조도/평수 정보를 자연스럽게
+    p3 = _gen_p3(c)
 
     paragraphs = [p1, p2]
     if p3:
@@ -334,17 +358,7 @@ def gen_desc(c):
 
     body = "\n\n".join(paragraphs)
 
-    spec_bits = []
-    if c.get("size"):
-        spec_bits.append(f"규격 {c['size']}")
-    if c.get("led"):
-        spec_bits.append(f"광원 {c['led']}")
-    if c.get("color"):
-        spec_bits.append(f"색상 {c['color']}")
-    if c.get("ct"):
-        spec_bits.append(f"색온도 {c['ct']}")
-    if c.get("features"):
-        spec_bits.append(c["features"])
+    spec_bits = _spec_bits(c)
 
     if spec_bits:
         body += "\n\n" + " · ".join(spec_bits)

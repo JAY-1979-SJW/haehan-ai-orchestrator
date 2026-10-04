@@ -97,7 +97,7 @@ def get_meta(site_id: str) -> SessionMeta:
         return _meta_read(site_id)
 
 
-def update_meta(
+def update_meta(  # noqa: PLR0913 - 세션 메타 갱신 공개 함수, 시그니처 유지
     site_id: str,
     *,
     status: SessionStatus | None = None,

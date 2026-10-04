@@ -23,7 +23,7 @@ _lock = threading.Lock()
 _store: dict[str, dict[str, Any]] = {}
 
 
-def grant_permission(
+def grant_permission(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     action: str,
     domain: str,
     account: str = "",
@@ -93,7 +93,3 @@ def clear_all() -> None:
         _store.clear()
 
 
-def get_store_snapshot() -> dict[str, dict[str, Any]]:
-    """테스트용 저장소 스냅샷 반환."""
-    with _lock:
-        return dict(_store)

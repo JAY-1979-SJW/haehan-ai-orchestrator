@@ -4,6 +4,7 @@ import contextlib
 import re
 import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 from .models import AttachmentResult, NoticeCandidate
@@ -32,7 +33,7 @@ def collect_current_browser_page(
     title: str | None = None,
     source: str = "current-browser",
     target_url_contains: str | None = None,
-) -> tuple[NoticeCandidate, object]:
+) -> tuple[NoticeCandidate, Any]:
     """Attach to the user's already-open browser and collect the current notice tab."""
     from playwright.sync_api import sync_playwright
 
@@ -69,7 +70,7 @@ def collect_current_browser_page(
 
 def download_current_browser_attachments(
     candidate: NoticeCandidate,
-    page: object,
+    page: Any,
     output_dir: str | Path,
     *,
     click_downloads: bool = True,
@@ -106,7 +107,7 @@ def download_current_browser_attachments(
     return results
 
 
-def close_current_browser_collection(page: object) -> None:
+def close_current_browser_collection(page: Any) -> None:
     """Close only the CDP connection, not the user's actual browser process."""
     try:
         browser = page.context.browser
@@ -122,7 +123,7 @@ def close_current_browser_collection(page: object) -> None:
         pass
 
 
-def _download_href_attachment(page: object, url: str, target_dir: Path, idx: int) -> AttachmentResult:
+def _download_href_attachment(page: Any, url: str, target_dir: Path, idx: int) -> AttachmentResult:
     context = page.context
     try:
         response = context.request.get(url, timeout=45_000)
@@ -149,7 +150,7 @@ def _download_href_attachment(page: object, url: str, target_dir: Path, idx: int
 
 
 def _download_by_clicking_candidates(
-    page: object, target_dir: Path, *, start_idx: int, max_clicks: int
+    page: Any, target_dir: Path, *, start_idx: int, max_clicks: int
 ) -> list[AttachmentResult]:
     locators = _candidate_download_locators(page)
     results: list[AttachmentResult] = []
@@ -192,7 +193,7 @@ def _download_by_clicking_candidates(
     return results
 
 
-def _candidate_download_locators(page: object) -> list[object]:
+def _candidate_download_locators(page: Any) -> list[Any]:
     selectors = [
         "a[download]",
         "a[href*='download' i]",
@@ -208,7 +209,7 @@ def _candidate_download_locators(page: object) -> list[object]:
         "input[type='submit']",
         "[role='button']",
     ]
-    locators: list[object] = []
+    locators: list[Any] = []
     seen_keys: set[str] = set()
     for selector in selectors:
         try:
@@ -248,7 +249,7 @@ def _candidate_download_locators(page: object) -> list[object]:
     return locators
 
 
-def _pick_current_page(browser: object, target_url_contains: str | None = None):
+def _pick_current_page(browser: Any, target_url_contains: str | None = None):
     pages = []
     for context in browser.contexts:
         pages.extend(context.pages)
@@ -269,7 +270,7 @@ def _pick_current_page(browser: object, target_url_contains: str | None = None):
     return usable[-1] if usable else None
 
 
-def _visible_text(page: object) -> str:
+def _visible_text(page: Any) -> str:
     try:
         text = page.locator("body").inner_text(timeout=5_000)
     except Exception:  # noqa: BLE001 - 공고 페이지 첨부파일/본문 읽기전용 수집기 - 실패시 빈 결과 또는 continue 로 안전 폴백, 쓰기 동작 없음
@@ -277,7 +278,7 @@ def _visible_text(page: object) -> str:
     return re.sub(r"\s+", " ", text).strip()[:300_000]
 
 
-def _extract_attachment_links(page: object, base_url: str) -> list[str]:
+def _extract_attachment_links(page: Any, base_url: str) -> list[str]:
     raw_links = page.evaluate(
         """
         () => Array.from(document.querySelectorAll('a[href], button, input[type="button"], input[type="submit"]')).map((el) => ({

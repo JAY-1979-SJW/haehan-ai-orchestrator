@@ -27,7 +27,8 @@ def fetch_gmail_via_cdp(max_results: int = 20) -> list[dict]:
         # Gmail 탭 찾기 또는 열기
         try:
             page = get_page_by_url("mail.google.com", create_url=_GMAIL_INBOX_URL)
-        except Exception:  # noqa: BLE001 - Gmail CDP 탭 조회 실패 시 새 탭을 여는 대체 경로로 폴백(읽기 전용 수집), 메일 목록 조회 실패는 로그 남기고 재raise — 쓰기·발송 없음
+        except Exception as exc:  # noqa: BLE001 - Gmail CDP 탭 조회 실패 시 새 탭을 여는 대체 경로로 폴백(읽기 전용 수집), 메일 목록 조회 실패는 로그 남기고 재raise — 쓰기·발송 없음
+            logger.warning("Gmail CDP 탭 조회(새 탭 폴백) 실패: %s", type(exc).__name__)
             # 2026-09-29 수정: open_page() 는 키워드 전용 인자만 받는다(*, allow_new_tab,
             # reason) — URL을 여는 파라미터 자체가 없다. 이 폴백 경로는 여태 한 번도
             # 실행된 적이 없어(위 try가 항상 성공) 잠복해 있던 버그였고, 공유 CDP 연결이

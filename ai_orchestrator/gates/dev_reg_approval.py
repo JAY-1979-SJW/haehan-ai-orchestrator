@@ -170,7 +170,7 @@ def unregister_approval_waiter(task_id: str) -> None:
         _event_registry.pop(task_id, None)
 
 
-def create_pending(
+def create_pending(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     task_id: str,
     token_id: str,

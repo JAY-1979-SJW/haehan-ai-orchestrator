@@ -135,14 +135,6 @@ def cleanup_idle_tabs(target_count: int = 5) -> int:
     return 0
 
 
-def ensure_single_tab() -> None:
-    """Keep only the first visible page target."""
-    closed = cleanup_idle_tabs(target_count=1)
-    if closed:
-        log.warning("[tab-monitor] closed %d tab(s), single-tab mode", closed)
-    log_tab_status()
-
-
 if __name__ == "__main__":
     import sys
 

@@ -98,6 +98,28 @@ def _ask_approval(to: str, subject: str, service: str, attachments: list[Path]) 
     )
 
 
+def _upload_attachments(page, attachments: list[Path], intent, audit_path) -> None:
+    """첨부파일을 순서대로 업로드. 없는 파일은 건너뛰고, 실패는 출력만 한다."""
+    for att in attachments:
+        if not att.exists():
+            print(f"[메일] 첨부파일 없음: {att}")
+            continue
+        r_up = upload_file(
+            page,
+            "input[type='file']",
+            att,
+            label=att.name,
+            intent=intent,
+            audit_path=audit_path,
+            force=True,
+        )
+        if r_up.ok:
+            print(f"[메일] 첨부 완료: {att.name}")
+        else:
+            print(f"[메일] 첨부 실패: {att.name} — {r_up.error}")
+        wait_ms(1000)
+
+
 def send_email(
     to: str,
     subject: str,
@@ -170,24 +192,7 @@ def send_email(
 
             # 첨부파일
             if attachments:
-                for att in attachments:
-                    if not att.exists():
-                        print(f"[메일] 첨부파일 없음: {att}")
-                        continue
-                    r_up = upload_file(
-                        page,
-                        "input[type='file']",
-                        att,
-                        label=att.name,
-                        intent=intent,
-                        audit_path=audit_path,
-                        force=True,
-                    )
-                    if r_up.ok:
-                        print(f"[메일] 첨부 완료: {att.name}")
-                    else:
-                        print(f"[메일] 첨부 실패: {att.name} — {r_up.error}")
-                    wait_ms(1000)
+                _upload_attachments(page, attachments, intent, audit_path)
 
             # 전송
             r_send = click(page, cfg["send_btn"], label="이메일 발송", intent=intent, audit_path=audit_path, force=True)

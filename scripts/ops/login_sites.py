@@ -82,12 +82,7 @@ def save_cookies(tabs, tab_id, domains, filename):
     return len(filtered)
 
 
-def main(captcha_gabia: str):
-    with Path(CREDS_FILE).open("rb") as f:
-        creds = pickle.load(f)
-
-    tabs = json.loads(urllib.request.urlopen("http://localhost:9222/json").read())
-
+def _login_gabia(tabs, creds, captcha_gabia):
     # ─── 1. GABIA ───
     print("[1/3] 가비아 로그인...")
     GABIA_TAB = "7FD8F243350F337D0205AF2890AFF592"
@@ -129,6 +124,8 @@ def main(captcha_gabia: str):
         print("  !", e)
     ws_g.close()
 
+
+def _login_hiworks(tabs, creds):
     # ─── 2. HIWORKS ───
     print("[2/3] 하이웍스 로그인...")
     HW_TAB = "C07DF661DE1912E6B21398F8F711C09A"
@@ -160,6 +157,8 @@ def main(captcha_gabia: str):
         print("  !", e)
     ws_h.close()
 
+
+def _login_datago(tabs, creds):
     # ─── 3. DATA.GO.KR ───
     print("[3/3] 공공데이터포털 로그인...")
     DATAGO_TAB = "80E0AA27D5754BA065732958CB7082A9"
@@ -196,6 +195,19 @@ def main(captcha_gabia: str):
     except Exception as e:  # noqa: BLE001 - 여러 사이트(가비아/하이웍스/공공데이터포털) 로그인 상태 WebSocket 확인 스크립트(읽기전용) — 각 사이트 확인 실패는 print로 오류만 출력하고 다음 사이트로 계속, 로그인 상태를 바꾸지 않음
         print("  !", e)
     ws_d.close()
+
+
+def main(captcha_gabia: str):
+    with Path(CREDS_FILE).open("rb") as f:
+        creds = pickle.load(f)
+
+    tabs = json.loads(urllib.request.urlopen("http://localhost:9222/json").read())
+
+    _login_gabia(tabs, creds, captcha_gabia)
+
+    _login_hiworks(tabs, creds)
+
+    _login_datago(tabs, creds)
 
     print("\n완료")
 

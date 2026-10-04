@@ -96,64 +96,59 @@ def _autosize(ws) -> None:
         ws.column_dimensions[letter].width = max(12, min(max_len + 2, 60))
 
 
+_SEQUENCE_SHEET_KEYS = {
+    "shopping": "items",
+    "seo_plan": "phases",
+    "seo_exposure": "queries",
+    "seo_monitor": "checks",
+}
+
+
+def _write_split_sheet(ws, data: dict, exclude: tuple, label: str, sequence: Any) -> None:
+    summary = {k: v for k, v in data.items() if k not in exclude}
+    row = _write_mapping(ws, summary)
+    row += 1
+    ws.cell(row=row, column=1, value=label)
+    _write_list(ws, sequence, start_row=row + 1)
+
+
+def _write_catalog_sheet(ws, data: dict) -> None:
+    _write_mapping(ws, {k: v for k, v in data.items() if k != "features"})
+    rows = []
+    for feature_name, feature in data["features"].items():
+        rows.append(
+            {
+                "feature": feature_name,
+                "commands": ", ".join(feature.get("commands", [])),
+                "read": ", ".join(feature.get("read", [])),
+                "prepare": ", ".join(feature.get("prepare", [])),
+                "submit": ", ".join(feature.get("submit", [])),
+            }
+        )
+    _write_list(ws, rows, start_row=6)
+
+
+def _write_dict_sheet(ws, name: str, data: dict) -> None:
+    seq_key = _SEQUENCE_SHEET_KEYS.get(name)
+    if seq_key is not None and isinstance(data.get(seq_key), list):
+        _write_split_sheet(ws, data, (seq_key,), seq_key, data[seq_key])
+    elif name == "seo_assets":
+        _write_split_sheet(ws, data, ("diagnosis", "issues"), "issues", data.get("issues", []))
+    elif name in ("seo_ownership", "seo_submit_plan") and isinstance(
+        data.get("methods") or data.get("submit_steps"), list
+    ):
+        sequence_key = "methods" if "methods" in data else "submit_steps"
+        _write_split_sheet(ws, data, (sequence_key,), sequence_key, data[sequence_key])
+    elif name == "catalog" and isinstance(data.get("features"), dict):
+        _write_catalog_sheet(ws, data)
+    else:
+        _write_mapping(ws, data)
+
+
 def _write_source_sheet(wb, name: str, data: Any) -> None:
     ws = wb.create_sheet(_short_sheet_name(name))
     if isinstance(data, dict):
-        if name == "shopping" and isinstance(data.get("items"), list):
-            summary = {k: v for k, v in data.items() if k != "items"}
-            row = _write_mapping(ws, summary)
-            row += 1
-            ws.cell(row=row, column=1, value="items")
-            _write_list(ws, data["items"], start_row=row + 1)
-        elif name == "seo_plan" and isinstance(data.get("phases"), list):
-            summary = {k: v for k, v in data.items() if k != "phases"}
-            row = _write_mapping(ws, summary)
-            row += 1
-            ws.cell(row=row, column=1, value="phases")
-            _write_list(ws, data["phases"], start_row=row + 1)
-        elif name == "seo_assets":
-            summary = {k: v for k, v in data.items() if k not in ("diagnosis", "issues")}
-            row = _write_mapping(ws, summary)
-            row += 1
-            ws.cell(row=row, column=1, value="issues")
-            _write_list(ws, data.get("issues", []), start_row=row + 1)
-        elif name in ("seo_ownership", "seo_submit_plan") and isinstance(
-            data.get("methods") or data.get("submit_steps"), list
-        ):
-            sequence_key = "methods" if "methods" in data else "submit_steps"
-            summary = {k: v for k, v in data.items() if k != sequence_key}
-            row = _write_mapping(ws, summary)
-            row += 1
-            ws.cell(row=row, column=1, value=sequence_key)
-            _write_list(ws, data[sequence_key], start_row=row + 1)
-        elif name == "seo_exposure" and isinstance(data.get("queries"), list):
-            summary = {k: v for k, v in data.items() if k != "queries"}
-            row = _write_mapping(ws, summary)
-            row += 1
-            ws.cell(row=row, column=1, value="queries")
-            _write_list(ws, data["queries"], start_row=row + 1)
-        elif name == "seo_monitor" and isinstance(data.get("checks"), list):
-            summary = {k: v for k, v in data.items() if k != "checks"}
-            row = _write_mapping(ws, summary)
-            row += 1
-            ws.cell(row=row, column=1, value="checks")
-            _write_list(ws, data["checks"], start_row=row + 1)
-        elif name == "catalog" and isinstance(data.get("features"), dict):
-            _write_mapping(ws, {k: v for k, v in data.items() if k != "features"})
-            rows = []
-            for feature_name, feature in data["features"].items():
-                rows.append(
-                    {
-                        "feature": feature_name,
-                        "commands": ", ".join(feature.get("commands", [])),
-                        "read": ", ".join(feature.get("read", [])),
-                        "prepare": ", ".join(feature.get("prepare", [])),
-                        "submit": ", ".join(feature.get("submit", [])),
-                    }
-                )
-            _write_list(ws, rows, start_row=6)
-        else:
-            _write_mapping(ws, data)
+        _write_dict_sheet(ws, name, data)
     elif isinstance(data, list):
         _write_list(ws, data)
     else:

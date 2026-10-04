@@ -68,7 +68,7 @@ def _is_sensitive_key(key: str) -> bool:
     return lower in _SENSITIVE_KEYS or any(s in lower for s in _SENSITIVE_KEYS)
 
 
-def build_audit_event(
+def build_audit_event(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     *,
     site_key: str,
     capability: SiteCapability,

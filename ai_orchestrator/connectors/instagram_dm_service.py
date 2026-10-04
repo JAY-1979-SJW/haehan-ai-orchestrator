@@ -29,6 +29,17 @@ def _dry_run() -> bool:
     return os.environ.get("INSTAGRAM_DM_DRY_RUN", "true").strip().lower() != "false"
 
 
+def _blocked_reason(account: dict, rule: dict) -> str | None:
+    """발송 차단 사유(전역/계정/룰 비활성). 차단 없으면 None."""
+    if not _global_enabled():
+        return "GLOBAL_DISABLED"
+    if not account["automation_enabled"]:
+        return "ACCOUNT_DISABLED"
+    if not rule["enabled"]:
+        return "RULE_DISABLED"
+    return None
+
+
 def process_comment_event(comment_event_id: str, *, instagram_account_id: str) -> None:
     account = db.get_account(instagram_account_id)
     if account is None:
@@ -75,14 +86,9 @@ def process_comment_event(comment_event_id: str, *, instagram_account_id: str) -
         logger.info("instagram_dm: duplicate reply blocked comment_id=%s", event["comment_id"])
         return
 
-    if not _global_enabled():
-        db.update_reply_result(reply_log_id, status="BLOCKED", blocked_reason="GLOBAL_DISABLED")
-        return
-    if not account["automation_enabled"]:
-        db.update_reply_result(reply_log_id, status="BLOCKED", blocked_reason="ACCOUNT_DISABLED")
-        return
-    if not rule["enabled"]:
-        db.update_reply_result(reply_log_id, status="BLOCKED", blocked_reason="RULE_DISABLED")
+    blocked_reason = _blocked_reason(account, rule)
+    if blocked_reason:
+        db.update_reply_result(reply_log_id, status="BLOCKED", blocked_reason=blocked_reason)
         return
 
     if _dry_run():

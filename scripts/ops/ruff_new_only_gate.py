@@ -107,7 +107,7 @@ def run_ruff_json(cfg: str, files: list[str]) -> list[dict]:
         return [{"__ruff_failed__": True}]
 
 
-def main() -> int:
+def _reconfigure_streams():
     import contextlib
 
     # Windows 콘솔 기본 코드페이지(cp949)가 em-dash 등 출력에서 죽는 문제 방지
@@ -115,6 +115,49 @@ def main() -> int:
     for stream in (sys.stdout, sys.stderr):
         with contextlib.suppress(AttributeError, ValueError):
             stream.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+
+
+def _print_all_blocked(findings):
+    print(f"[ruff-new-only] git diff 조회 실패 — 새/기존 구분 불가, 전체 {len(findings)}건을 차단 대상으로 처리")
+    for f in findings:
+        print(f"  {f['filename']}:{f['location']['row']} {f['code']} {f['message']}")
+
+
+def _split_findings(findings, changed):
+    new_findings, pre_existing = [], []
+    for f in findings:
+        try:
+            rel = Path(f["filename"]).resolve().relative_to(ROOT).as_posix()
+        except ValueError:
+            rel = f["filename"]
+        line = f["location"]["row"]
+        lines_for_file = changed.get(rel)
+        if lines_for_file is not None and line in lines_for_file:
+            new_findings.append((rel, line, f))
+        else:
+            pre_existing.append((rel, line, f))
+    return new_findings, pre_existing
+
+
+def _report_split(new_findings, pre_existing):
+    if pre_existing:
+        print(f"[ruff-new-only] 기존 위반 {len(pre_existing)}건은 이번 변경과 무관 — 통과(참고용 경고만):")
+        for rel, line, f in pre_existing[:20]:
+            print(f"  (기존) {rel}:{line} {f['code']} {f['message']}")
+        if len(pre_existing) > 20:
+            print(f"  ... 외 {len(pre_existing) - 20}건")
+
+    if new_findings:
+        print(f"\n[ruff-new-only] 이번 변경으로 새로 생긴 위반 {len(new_findings)}건 — 커밋 차단:")
+        for rel, line, f in new_findings:
+            print(f"  {rel}:{line} {f['code']} {f['message']}")
+        print("\n수정하거나, 의도된 경우 `# noqa: 코드 - 사유`를 추가한 뒤 재커밋하세요.")
+        return 1
+    return None
+
+
+def main() -> int:
+    _reconfigure_streams()
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True)
@@ -133,37 +176,14 @@ def main() -> int:
     changed = changed_lines_staged()
     if changed is None:
         # git diff 자체를 못 읽으면 "새 것"인지 구분 불가 — 안전하게 기존 방식대로 전부 차단
-        print(f"[ruff-new-only] git diff 조회 실패 — 새/기존 구분 불가, 전체 {len(findings)}건을 차단 대상으로 처리")
-        for f in findings:
-            print(f"  {f['filename']}:{f['location']['row']} {f['code']} {f['message']}")
+        _print_all_blocked(findings)
         return 1
 
-    new_findings, pre_existing = [], []
-    for f in findings:
-        try:
-            rel = Path(f["filename"]).resolve().relative_to(ROOT).as_posix()
-        except ValueError:
-            rel = f["filename"]
-        line = f["location"]["row"]
-        lines_for_file = changed.get(rel)
-        if lines_for_file is not None and line in lines_for_file:
-            new_findings.append((rel, line, f))
-        else:
-            pre_existing.append((rel, line, f))
+    new_findings, pre_existing = _split_findings(findings, changed)
 
-    if pre_existing:
-        print(f"[ruff-new-only] 기존 위반 {len(pre_existing)}건은 이번 변경과 무관 — 통과(참고용 경고만):")
-        for rel, line, f in pre_existing[:20]:
-            print(f"  (기존) {rel}:{line} {f['code']} {f['message']}")
-        if len(pre_existing) > 20:
-            print(f"  ... 외 {len(pre_existing) - 20}건")
-
-    if new_findings:
-        print(f"\n[ruff-new-only] 이번 변경으로 새로 생긴 위반 {len(new_findings)}건 — 커밋 차단:")
-        for rel, line, f in new_findings:
-            print(f"  {rel}:{line} {f['code']} {f['message']}")
-        print("\n수정하거나, 의도된 경우 `# noqa: 코드 - 사유`를 추가한 뒤 재커밋하세요.")
-        return 1
+    _early = _report_split(new_findings, pre_existing)
+    if _early is not None:
+        return _early
 
     return 0
 

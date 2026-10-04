@@ -101,6 +101,81 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
             return _fail(f"CDP 브라우저 시작 실패: {e}")
 
     # ── Step 2: 브라우저 연결 ────────────────────────────────────────────────
+    pw, page, err = _connect_page()
+    if err:
+        return err
+
+    # ── Step 3: 현재 로그인 상태 확인 (계정 전환 요청이면 건너뜀) ──────────────
+    if not naver_id:
+        early = _check_existing_login(page)
+        if early:
+            pw.stop()
+            return early
+
+    # ── Step 4: 네이버 로그인 ────────────────────────────────────────────────
+    try:
+        from scripts.naver.auth import login_naver
+
+        result = login_naver(page, naver_id=naver_id)
+    except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
+        pw.stop()
+        return _fail(f"로그인 함수 오류: {e}")
+
+    return _finish_login(pw, page, result)
+
+
+# ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
+
+
+def _is_cdp_alive(timeout: float = 2.0) -> bool:
+    try:
+        with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout) as r:
+            return r.status == 200
+    except Exception as exc:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
+        log.debug("CDP 가동 확인 실패: %s", type(exc).__name__)
+        return False
+
+
+def _start_cdp() -> None:
+    from scripts.cdp_force_start import cmd_start
+
+    if cmd_start() != 0:
+        raise RuntimeError("CDP 브라우저 시작 실패")
+
+
+def _save_browser_session(page) -> None:
+    """네이버 전체 쿠키를 통합 저장 + 서브도메인별 분리 저장."""
+    from scripts.auth_session import save_session
+
+    # 1. naver.com 통합 저장 (전체 네이버 쿠키)
+    save_session(NAVER_SESSION_HOST, page, host_filter=True)
+
+    # 2. 브라우저에 실제 존재하는 서브도메인별 분리 저장
+    ctx = page.context
+    all_cookies = ctx.cookies()
+    found_domains: set[str] = set()
+    for c in all_cookies:
+        d = (c.get("domain") or "").lstrip(".")
+        if "naver.com" in d:
+            found_domains.add(d)
+
+    for subdomain in found_domains:
+        if subdomain == NAVER_SESSION_HOST:
+            continue  # 통합본과 중복 스킵
+        try:
+            save_session(subdomain, page, host_filter=True)
+            log.info("[naver_login_pipeline] 서브도메인 세션 저장: %s", subdomain)
+        except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
+            log.warning("[naver_login_pipeline] 서브도메인 세션 저장 실패 %s: %s", subdomain, e)
+
+
+def _save_status(state: dict) -> None:
+    SESSION_STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SESSION_STATUS_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _connect_page():
+    """CDP 브라우저에 연결해 (playwright, page, 오류결과) 를 돌려준다. 성공 시 오류결과는 None."""
     try:
         from playwright.sync_api import sync_playwright
 
@@ -116,43 +191,16 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
 
         if not ctx:
             pw.stop()
-            return _fail("브라우저 컨텍스트 없음")
+            return None, None, _fail("브라우저 컨텍스트 없음")
 
-        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        return pw, (ctx.pages[0] if ctx.pages else ctx.new_page()), None
 
     except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
-        return _fail(f"브라우저 연결 실패: {e}")
+        return None, None, _fail(f"브라우저 연결 실패: {e}")
 
-    # ── Step 3: 현재 로그인 상태 확인 (계정 전환 요청이면 건너뜀) ──────────────
-    if not naver_id:
-        try:
-            from scripts.login_detector import detect_login_state
 
-            current = detect_login_state(page)
-            if current.get("logged_in"):
-                user = current.get("user")
-                log.info("[naver_login_pipeline] 이미 로그인됨: %s — 세션 저장", user)
-                _save_browser_session(page)
-                _save_status({"logged_in": True, "user": user, "checked_at": _now(), "source": "existing"})
-                pw.stop()
-                return {
-                    "ok": True,
-                    "logged_in": True,
-                    "user": user,
-                    "message": f"이미 로그인됨: {user} — 세션 저장 완료",
-                }
-        except Exception:  # noqa: S110, BLE001
-            pass
-
-    # ── Step 4: 네이버 로그인 ────────────────────────────────────────────────
-    try:
-        from scripts.naver.auth import login_naver
-
-        result = login_naver(page, naver_id=naver_id)
-    except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
-        pw.stop()
-        return _fail(f"로그인 함수 오류: {e}")
-
+def _finish_login(pw, page, result: dict | None) -> dict:
+    """로그인 결과 처리: CAPTCHA 대기 기록 → 세션 저장 → 상태 메타 저장 → 결과 반환."""
     logged_in = bool(result and result.get("ok"))
     user = result.get("user") if result else None
 
@@ -199,53 +247,31 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
     }
 
 
-# ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
-
-
-def _is_cdp_alive(timeout: float = 2.0) -> bool:
+def _check_existing_login(page) -> dict | None:
+    """이미 로그인됨 → 성공 결과, 판정 불가(쿠키는 있는데 화면 근거 충돌) → 실패 결과, 그 외 None(로그인 진행)."""
     try:
-        with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout) as r:
-            return r.status == 200
-    except Exception:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
-        return False
+        from scripts.login_detector import detect_login_state
 
-
-def _start_cdp() -> None:
-    from scripts.cdp_force_start import cmd_start
-
-    if cmd_start() != 0:
-        raise RuntimeError("CDP 브라우저 시작 실패")
-
-
-def _save_browser_session(page) -> None:
-    """네이버 전체 쿠키를 통합 저장 + 서브도메인별 분리 저장."""
-    from scripts.auth_session import save_session
-
-    # 1. naver.com 통합 저장 (전체 네이버 쿠키)
-    save_session(NAVER_SESSION_HOST, page, host_filter=True)
-
-    # 2. 브라우저에 실제 존재하는 서브도메인별 분리 저장
-    ctx = page.context
-    all_cookies = ctx.cookies()
-    found_domains: set[str] = set()
-    for c in all_cookies:
-        d = (c.get("domain") or "").lstrip(".")
-        if "naver.com" in d:
-            found_domains.add(d)
-
-    for subdomain in found_domains:
-        if subdomain == NAVER_SESSION_HOST:
-            continue  # 통합본과 중복 스킵
-        try:
-            save_session(subdomain, page, host_filter=True)
-            log.info("[naver_login_pipeline] 서브도메인 세션 저장: %s", subdomain)
-        except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환
-            log.warning("[naver_login_pipeline] 서브도메인 세션 저장 실패 %s: %s", subdomain, e)
-
-
-def _save_status(state: dict) -> None:
-    SESSION_STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    SESSION_STATUS_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+        current = detect_login_state(page)
+        if current.get("logged_in"):
+            user = current.get("user")
+            log.info("[naver_login_pipeline] 이미 로그인됨: %s — 세션 저장", user)
+            _save_browser_session(page)
+            _save_status({"logged_in": True, "user": user, "checked_at": _now(), "source": "existing"})
+            return {
+                "ok": True,
+                "logged_in": True,
+                "user": user,
+                "message": f"이미 로그인됨: {user} — 세션 저장 완료",
+            }
+        evidence = current.get("evidence") or {}
+        if current.get("state") == "unknown" and evidence.get("session_cookie") is True:
+            # 세션 쿠키는 있는데 화면 근거가 없거나 충돌 — 새로 로그인하면 기존 세션을 흔들 수 있어 멈추고 보고
+            return _fail(f"로그인 상태 확인 불가(세션 쿠키는 있으나 화면 근거 충돌): {evidence}")
+    except Exception as exc:  # noqa: BLE001 - 상태 확인 실패는 로그인 진행으로 넘김(종전 동작)
+        log.warning("로그인 상태 사전 확인 실패: %s", type(exc).__name__)
+        pass
+    return None
 
 
 def _fail(msg: str) -> dict:

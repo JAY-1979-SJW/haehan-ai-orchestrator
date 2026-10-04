@@ -35,6 +35,8 @@ import sys
 import time
 from pathlib import Path
 
+from scripts.naver.blog.accounts import BLOG_ACCOUNTS, DEFAULT_ACCOUNT
+
 _ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -271,7 +273,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("draft", help="원고 JSON 경로")
     ap.add_argument(
-        "--account", choices=["skyjwsin", "skyjwshin"], default=None, help="대상 블로그 계정 (기본: skyjwsin)"
+        "--account", choices=list(BLOG_ACCOUNTS), default=None, help=f"대상 블로그 계정 (기본: {DEFAULT_ACCOUNT})"
     )
     ap.add_argument("--check", action="store_true", help="점검만 (기본)")
     ap.add_argument("--publish", action="store_true", help="실제 발행")

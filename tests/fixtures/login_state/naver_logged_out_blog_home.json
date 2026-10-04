@@ -1,0 +1,70 @@
+{
+ "_doc": "네이버 블로그 홈 로그아웃 화면(2026-09-30 실제 수집)을 역할 요소만 남겨 축소. 본문·주소·이름 제거, '가상이름 님'은 합성값.",
+ "url": "https://section.blog.naver.com/BlogHome.naver",
+ "title": "fixture",
+ "frames": [
+  {
+   "idx": 0,
+   "links": [
+    {
+     "text": "로그인",
+     "visible": true,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "내정보 보기",
+     "visible": false,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "로그아웃",
+     "visible": false,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "내 블로그",
+     "visible": false,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "NAVER 로그인",
+     "visible": true,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "로그아웃",
+     "visible": false,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "내 블로그",
+     "visible": false,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "로그아웃",
+     "visible": false,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "가상이름 님",
+     "href": "https://example.invalid/post",
+     "visible": true
+    }
+   ],
+   "buttons": [
+    {
+     "text": "로그아웃",
+     "visible": false
+    },
+    {
+     "text": "로그아웃",
+     "visible": false
+    }
+   ],
+   "inputs": [],
+   "forms": [],
+   "headings": []
+  }
+ ]
+}

@@ -27,6 +27,8 @@ import sys
 import time
 from pathlib import Path
 
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
+
 _ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -35,7 +37,7 @@ from scripts.logger import get_logger  # noqa: E402
 
 _log = get_logger("scripts.naver.blog.cli.blog_fix_markdown")
 
-BLOG_ID = "skyjwsin"
+BLOG_ID = DEFAULT_ACCOUNT
 CDP_URL = "http://127.0.0.1:9222"
 CACHE = _ROOT / "data" / "blog_topic_cache.json"
 STATE = _ROOT / "data" / "blog_markdown_fix_state.json"

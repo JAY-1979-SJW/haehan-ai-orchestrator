@@ -549,6 +549,112 @@ def _sanitize_input(item: Any) -> dict | None:
 # ─── page role heuristic (generic) ───────────────────────────────────────
 
 
+def _bump_role(
+    merged: dict[str, dict[str, Any]],
+    role: str,
+    score: float,
+    reasons: Iterable[str],
+) -> None:
+    score = round(max(0.0, min(score, 0.99)), 3)
+    entry = merged.get(role)
+    if entry is None:
+        merged[role] = {
+            "role": role,
+            "score": score,
+            "reasons": list(reasons),
+        }
+        return
+    if score > entry["score"]:
+        entry["score"] = score
+    for r in reasons:
+        if r not in entry["reasons"]:
+            entry["reasons"].append(r)
+
+
+def _bump_login_modal_roles(
+    merged: dict[str, dict[str, Any]],
+    login_required_hint: bool,
+    has_password_input: bool,
+    has_modal: bool,
+) -> None:
+    if login_required_hint or has_password_input:
+        reasons = []
+        if login_required_hint:
+            reasons.append("login_required_hint")
+        if has_password_input:
+            reasons.append("password_input")
+        _bump_role(merged, "login_page", 0.9, reasons)
+
+    if has_modal:
+        _bump_role(merged, "modal_page", 0.7, ["modal_candidates"])
+
+
+def _bump_table_roles(merged: dict[str, dict[str, Any]], tables: list) -> None:
+    if tables:
+        total_rows = sum(int(t.get("row_count") or 0) for t in tables if isinstance(t, dict))
+        reasons = [f"tables:{len(tables)}", f"rows:{total_rows}"]
+        _bump_role(
+            merged,
+            "table_page",
+            0.6 + 0.05 * min(len(tables), 5),
+            reasons,
+        )
+        if total_rows >= 2:
+            _bump_role(
+                merged,
+                "list_page",
+                0.5 + 0.03 * min(total_rows, 10),
+                reasons,
+            )
+
+
+def _bump_form_roles(
+    merged: dict[str, dict[str, Any]],
+    forms: list,
+    inputs: list,
+    buttons: list,
+) -> None:
+    if forms:
+        reasons = [f"forms:{len(forms)}", f"inputs:{len(inputs)}"]
+        _bump_role(
+            merged,
+            "form_page",
+            0.5 + 0.08 * min(len(forms), 3) + 0.01 * min(len(inputs), 10),
+            reasons,
+        )
+        has_search_affordance = any(
+            _matches_terms(_coerce_str(b.get("text", ""), 200), UNIVERSAL_SAFE_READ_TERMS)
+            for b in buttons
+            if isinstance(b, dict)
+        )
+        if has_search_affordance:
+            _bump_role(merged, "search_page", 0.6, [*reasons, "safe_read_button"])
+
+
+def _bump_layout_roles(
+    merged: dict[str, dict[str, Any]],
+    links: list,
+    buttons: list,
+    forms: list,
+    tables: list,
+) -> None:
+    if len(links) >= 5 and len(buttons) <= max(2, len(links) // 4):
+        _bump_role(
+            merged,
+            "menu_page",
+            0.5 + 0.02 * min(len(links), 20),
+            [f"links:{len(links)}", f"buttons:{len(buttons)}"],
+        )
+
+    if len(tables) >= 2 and len(forms) <= 1:
+        _bump_role(
+            merged,
+            "dashboard",
+            0.55,
+            [f"tables:{len(tables)}", f"forms:{len(forms)}"],
+        )
+
+
 def _score_page_roles(
     sanitized: dict,
     *,
@@ -565,82 +671,17 @@ def _score_page_roles(
     has_password_input = any((i.get("type") == "password") for i in inputs if isinstance(i, dict))
     merged: dict[str, dict[str, Any]] = {}
 
-    def _bump(role: str, score: float, reasons: Iterable[str]) -> None:
-        score = round(max(0.0, min(score, 0.99)), 3)
-        entry = merged.get(role)
-        if entry is None:
-            merged[role] = {
-                "role": role,
-                "score": score,
-                "reasons": list(reasons),
-            }
-            return
-        if score > entry["score"]:
-            entry["score"] = score
-        for r in reasons:
-            if r not in entry["reasons"]:
-                entry["reasons"].append(r)
-
-    if login_required_hint or has_password_input:
-        reasons = []
-        if login_required_hint:
-            reasons.append("login_required_hint")
-        if has_password_input:
-            reasons.append("password_input")
-        _bump("login_page", 0.9, reasons)
-
-    if has_modal:
-        _bump("modal_page", 0.7, ["modal_candidates"])
-
-    if tables:
-        total_rows = sum(int(t.get("row_count") or 0) for t in tables if isinstance(t, dict))
-        reasons = [f"tables:{len(tables)}", f"rows:{total_rows}"]
-        _bump(
-            "table_page",
-            0.6 + 0.05 * min(len(tables), 5),
-            reasons,
-        )
-        if total_rows >= 2:
-            _bump(
-                "list_page",
-                0.5 + 0.03 * min(total_rows, 10),
-                reasons,
-            )
-
-    if forms:
-        reasons = [f"forms:{len(forms)}", f"inputs:{len(inputs)}"]
-        _bump(
-            "form_page",
-            0.5 + 0.08 * min(len(forms), 3) + 0.01 * min(len(inputs), 10),
-            reasons,
-        )
-        has_search_affordance = any(
-            _matches_terms(_coerce_str(b.get("text", ""), 200), UNIVERSAL_SAFE_READ_TERMS)
-            for b in buttons
-            if isinstance(b, dict)
-        )
-        if has_search_affordance:
-            _bump("search_page", 0.6, reasons + ["safe_read_button"])
+    _bump_login_modal_roles(merged, login_required_hint, has_password_input, has_modal)
+    _bump_table_roles(merged, tables)
+    _bump_form_roles(merged, forms, inputs, buttons)
 
     if tables and len(forms) == 0:
-        _bump("list_page", 0.55, [f"tables:{len(tables)}", "no_form"])
+        _bump_role(merged, "list_page", 0.55, [f"tables:{len(tables)}", "no_form"])
 
-    if len(links) >= 5 and len(buttons) <= max(2, len(links) // 4):
-        _bump(
-            "menu_page",
-            0.5 + 0.02 * min(len(links), 20),
-            [f"links:{len(links)}", f"buttons:{len(buttons)}"],
-        )
-
-    if len(tables) >= 2 and len(forms) <= 1:
-        _bump(
-            "dashboard",
-            0.55,
-            [f"tables:{len(tables)}", f"forms:{len(forms)}"],
-        )
+    _bump_layout_roles(merged, links, buttons, forms, tables)
 
     if not merged:
-        _bump("unknown", 0.3, ["no_structural_signal"])
+        _bump_role(merged, "unknown", 0.3, ["no_structural_signal"])
 
     return sorted(merged.values(), key=lambda r: r["score"], reverse=True)
 
@@ -738,8 +779,7 @@ def _is_danger(text: str, risk_level: str, extra_terms: tuple[str, ...]) -> bool
     return False
 
 
-def _collect_danger_elements(sanitized: dict, profile: dict | None) -> list[dict]:
-    extra_danger = _profile_danger_terms(profile)
+def _danger_buttons(sanitized: dict, extra_danger: tuple[str, ...]) -> list[dict]:
     out: list[dict] = []
 
     for btn in sanitized.get("buttons") or []:
@@ -756,6 +796,11 @@ def _collect_danger_elements(sanitized: dict, profile: dict | None) -> list[dict
                     "reason": btn.get("reason") or _danger_reason(text, rl, extra_danger),
                 }
             )
+    return out
+
+
+def _danger_links(sanitized: dict, extra_danger: tuple[str, ...]) -> list[dict]:
+    out: list[dict] = []
 
     for link in sanitized.get("links") or []:
         if not isinstance(link, dict):
@@ -771,6 +816,11 @@ def _collect_danger_elements(sanitized: dict, profile: dict | None) -> list[dict
                     "reason": _danger_reason(text, rh, extra_danger),
                 }
             )
+    return out
+
+
+def _danger_forms(sanitized: dict) -> list[dict]:
+    out: list[dict] = []
 
     for form in sanitized.get("forms") or []:
         if not isinstance(form, dict):
@@ -794,7 +844,15 @@ def _collect_danger_elements(sanitized: dict, profile: dict | None) -> list[dict
                     "reason": ",".join(reason_parts) or "form_write",
                 }
             )
+    return out
 
+
+def _collect_danger_elements(sanitized: dict, profile: dict | None) -> list[dict]:
+    extra_danger = _profile_danger_terms(profile)
+    out: list[dict] = []
+    out.extend(_danger_buttons(sanitized, extra_danger))
+    out.extend(_danger_links(sanitized, extra_danger))
+    out.extend(_danger_forms(sanitized))
     return out
 
 
@@ -808,6 +866,47 @@ def _danger_reason(text: str, risk_level: str, extra_terms: tuple[str, ...]) -> 
     return "danger_write"
 
 
+def _score_safe_candidate(
+    kind: str,
+    text: str,
+    base_risk: str,
+    extra_danger: tuple[str, ...],
+    pref_terms: tuple[str, ...],
+    hints: list[str],
+) -> dict | None:
+    """safe navigation 후보 1건 점수화. danger 이거나 신호가 없으면 None."""
+    # danger first — 어떤 신호든 danger 면 safe 후보 금지.
+    if _is_danger(text, base_risk, extra_danger):
+        return None
+    score = 0
+    reasons: list[str] = []
+    if _matches_terms(text, UNIVERSAL_SAFE_READ_TERMS):
+        reasons.append("universal_safe_term")
+        score += 2
+    for t in pref_terms:
+        if t and t in text:
+            reasons.append(f"profile_term:{t}")
+            score += 2
+    for kw in hints:
+        if kw and kw in text:
+            reasons.append(f"hint:{kw}")
+            score += 2
+    if base_risk == "safe_read":
+        # safe_read 상태인 링크/버튼은 기본 가산점 +1. reason 이 이미 있어도
+        # hint 와 합산되어 no_hint vs with_hint 구분이 안전하게 유지된다.
+        reasons.append(f"safe_read_{kind}")
+        score += 1
+    if not reasons:
+        return None
+    return {
+        "kind": kind,
+        "text": text,
+        "risk": "low",
+        "score": score,
+        "reasons": reasons[:10],
+    }
+
+
 def _collect_safe_navigation(
     sanitized: dict,
     profile: dict | None,
@@ -818,37 +917,9 @@ def _collect_safe_navigation(
     out: list[dict] = []
 
     def _handle(kind: str, text: str, base_risk: str) -> None:
-        # danger first — 어떤 신호든 danger 면 safe 후보 금지.
-        if _is_danger(text, base_risk, extra_danger):
-            return
-        score = 0
-        reasons: list[str] = []
-        if _matches_terms(text, UNIVERSAL_SAFE_READ_TERMS):
-            reasons.append("universal_safe_term")
-            score += 2
-        for t in pref_terms:
-            if t and t in text:
-                reasons.append(f"profile_term:{t}")
-                score += 2
-        for kw in hints:
-            if kw and kw in text:
-                reasons.append(f"hint:{kw}")
-                score += 2
-        if base_risk == "safe_read":
-            # safe_read 상태인 링크/버튼은 기본 가산점 +1. reason 이 이미 있어도
-            # hint 와 합산되어 no_hint vs with_hint 구분이 안전하게 유지된다.
-            reasons.append(f"safe_read_{kind}")
-            score += 1
-        if reasons:
-            out.append(
-                {
-                    "kind": kind,
-                    "text": text,
-                    "risk": "low",
-                    "score": score,
-                    "reasons": reasons[:10],
-                }
-            )
+        cand = _score_safe_candidate(kind, text, base_risk, extra_danger, pref_terms, hints)
+        if cand is not None:
+            out.append(cand)
 
     for link in sanitized.get("links") or []:
         if not isinstance(link, dict):
@@ -884,17 +955,8 @@ GENERIC_TASK_POOL: tuple[str, ...] = (
 )
 
 
-def _build_task_candidates(
-    *,
-    sanitized: dict,
-    profile: dict | None,
-    hints: list[str],
-    goal: str | None,
-    title: str,
-    page_role_candidates: list[dict],
-) -> list[dict]:
+def _generic_task_candidates(sanitized: dict, goal: str | None, roles: set) -> list[dict]:
     out: list[dict] = []
-    roles = {r.get("role") for r in page_role_candidates if isinstance(r, dict)}
     links = sanitized.get("links") or []
     buttons = sanitized.get("buttons") or []
     forms = sanitized.get("forms") or []
@@ -958,7 +1020,11 @@ def _build_task_candidates(
                 "requires_user_confirmation": True,
             }
         )
+    return out
 
+
+def _profile_task_candidates(sanitized: dict, profile: dict | None, goal: str | None, title: str) -> list[dict]:
+    out: list[dict] = []
     # domain_profile 에서만 특정 업무 task 이름을 가져온다. 엔진 자체는
     # 특정 업무 task 를 발명하지 않는다.
     if profile:
@@ -978,7 +1044,10 @@ def _build_task_candidates(
                     "requires_user_confirmation": True,
                 }
             )
+    return out
 
+
+def _boost_confidence_for_goal(out: list[dict], goal: str | None) -> None:
     # user_goal 이 주어지면 task 후보 점수를 전체적으로 소폭 상향.
     # (사용자가 방향을 제시했으므로 "baseline 탐색" 의 가치가 높아짐)
     if goal:
@@ -987,6 +1056,8 @@ def _build_task_candidates(
                 continue
             c["confidence"] = round(min(float(c.get("confidence", 0)) + 0.1, 0.99), 3)
 
+
+def _boost_for_profile_goal_match(out: list[dict], goal: str | None, profile: dict | None) -> None:
     # user_goal 과 profile task keyword 의 직접 매칭이 있으면 추가 보정.
     if goal and profile:
         goal_lower = goal.lower()
@@ -1005,6 +1076,8 @@ def _build_task_candidates(
                             c.setdefault("reasons", []).append(f"goal_match:{kw}")
                     break
 
+
+def _boost_for_goal_hints(out: list[dict], goal: str | None, hints: list[str]) -> None:
     # keyword_hints 가 goal 에 포함되어 있으면 generic task 에도 소폭 보정.
     if goal and hints:
         for kw in hints:
@@ -1012,6 +1085,23 @@ def _build_task_candidates(
                 for c in out:
                     if c.get("task") in GENERIC_TASK_POOL:
                         c.setdefault("reasons", []).append(f"goal_hint:{kw}")
+
+
+def _build_task_candidates(
+    *,
+    sanitized: dict,
+    profile: dict | None,
+    hints: list[str],
+    goal: str | None,
+    title: str,
+    page_role_candidates: list[dict],
+) -> list[dict]:
+    roles = {r.get("role") for r in page_role_candidates if isinstance(r, dict)}
+    out = _generic_task_candidates(sanitized, goal, roles)
+    out.extend(_profile_task_candidates(sanitized, profile, goal, title))
+    _boost_confidence_for_goal(out, goal)
+    _boost_for_profile_goal_match(out, goal, profile)
+    _boost_for_goal_hints(out, goal, hints)
 
     return sorted(
         out,

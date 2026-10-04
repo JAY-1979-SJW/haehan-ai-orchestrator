@@ -157,7 +157,7 @@ class RegistrationCodeStore(ABC):
     """Registration code store 추상 인터페이스."""
 
     @abstractmethod
-    def issue(
+    def issue(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
         self,
         *,
         label: str,
@@ -212,7 +212,7 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
         self._lock = threading.Lock()
         self._codes: dict[str, RegistrationCode] = {}
 
-    def issue(
+    def issue(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
         self,
         *,
         label: str,
@@ -625,7 +625,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
                 logger.error(f"PostgreSQL init failed: {e}")
                 raise
 
-    def issue(
+    def issue(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
         self,
         *,
         label: str,
@@ -776,11 +776,3 @@ def get_registration_code_store() -> RegistrationCodeStore:
     return _store
 
 
-def reset_store_for_tests(backend: str = "memory") -> RegistrationCodeStore:
-    """테스트 전용: store 재설정."""
-    global _store
-    if backend == "memory":
-        _store = InMemoryRegistrationCodeStore()
-    else:
-        raise ValueError(f"unsupported backend in tests: {backend}")
-    return _store

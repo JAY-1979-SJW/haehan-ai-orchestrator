@@ -106,6 +106,21 @@ def _match_any(text: str, patterns: tuple[str, ...]) -> bool:
     return any(p in lower for p in patterns)
 
 
+# 텍스트 패턴 → 신호 (감지/추가 순서 고정)
+_TEXT_SIGNAL_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
+    (_LOGIN_PATTERNS, SIG_LOGIN_REQUIRED),
+    (_CERT_PATTERNS, SIG_CERT_AUTH),
+    (_OTP_PATTERNS, SIG_OTP),
+    (_CAPTCHA_PATTERNS, SIG_CAPTCHA),
+    (_SECURITY_PROGRAM_PATTERNS, SIG_SECURITY_PROGRAM),
+    (_BROWSER_UNSUPPORTED_PATTERNS, SIG_BROWSER_UNSUPPORTED),
+    (_BID_SUBMIT_PATTERNS, SIG_BID_SUBMIT),
+    (_CONTRACT_PATTERNS, SIG_CONTRACT_SUBMIT),
+    (_E_SIGN_PATTERNS, SIG_E_SIGNATURE),
+    (_PAYMENT_PATTERNS, SIG_PAYMENT_OR_TRANSFER),
+)
+
+
 def detect_from_page_text(
     title: str = "",
     body_text: str = "",
@@ -131,26 +146,9 @@ def detect_from_page_text(
     if any(p in lower_url for p in ("login", "signin", "cert", "auth")):
         signals.append(SIG_REDIRECTED_TO_LOGIN)
 
-    if _match_any(combined, _LOGIN_PATTERNS):
-        signals.append(SIG_LOGIN_REQUIRED)
-    if _match_any(combined, _CERT_PATTERNS):
-        signals.append(SIG_CERT_AUTH)
-    if _match_any(combined, _OTP_PATTERNS):
-        signals.append(SIG_OTP)
-    if _match_any(combined, _CAPTCHA_PATTERNS):
-        signals.append(SIG_CAPTCHA)
-    if _match_any(combined, _SECURITY_PROGRAM_PATTERNS):
-        signals.append(SIG_SECURITY_PROGRAM)
-    if _match_any(combined, _BROWSER_UNSUPPORTED_PATTERNS):
-        signals.append(SIG_BROWSER_UNSUPPORTED)
-    if _match_any(combined, _BID_SUBMIT_PATTERNS):
-        signals.append(SIG_BID_SUBMIT)
-    if _match_any(combined, _CONTRACT_PATTERNS):
-        signals.append(SIG_CONTRACT_SUBMIT)
-    if _match_any(combined, _E_SIGN_PATTERNS):
-        signals.append(SIG_E_SIGNATURE)
-    if _match_any(combined, _PAYMENT_PATTERNS):
-        signals.append(SIG_PAYMENT_OR_TRANSFER)
+    for patterns, signal in _TEXT_SIGNAL_RULES:
+        if _match_any(combined, patterns):
+            signals.append(signal)
 
     return _build_result(signals)
 

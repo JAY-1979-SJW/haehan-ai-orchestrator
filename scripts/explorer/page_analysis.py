@@ -122,6 +122,8 @@ def score_selector(selector: str) -> tuple[int, str]:
 # 먼저 나온 역할이 우선한다(예: "임시저장" 이 "저장" 보다, "발행" 이 "등록" 류보다 먼저).
 _BUTTON_ROLES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("login", ("로그인", "sign in", "signin", "log in", "login")),
+    ("logout", ("로그아웃", "sign out", "signout", "log out", "logout")),
+    ("account", ("내정보", "내 정보", "내 블로그", "마이페이지", "my page", "mypage", "my account")),
     ("publish", ("발행", "게시", "공개", "publish")),
     ("save", ("임시저장", "저장", "save", "draft")),
     ("write", ("글쓰기", "작성", "새 글", "write", "compose")),
@@ -317,6 +319,83 @@ def classify_page_state(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {"state": "unknown", "evidence": ["no_elements"]}
 
 
+# ── 팝업 ──────────────────────────────────────────────────────────────────
+
+_POPUP_TEXT_MAX = 200
+# 종류 판정 우선순위: 먼저 나온 것이 우선(문구 키워드). 못 정하면 버튼 구성으로, 그것도 아니면 notice.
+_POPUP_KINDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("error", ("오류", "에러", "실패", "error", "failed", "장애")),
+    ("warning", ("경고", "주의", "불가", "제한", "차단", "warning", "확인해 주세요", "올바르지")),
+    ("consent", ("쿠키", "cookie", "약관", "개인정보", "동의", "consent", "privacy")),
+    ("ad", ("이벤트", "할인", "프로모션", "쿠폰", "오늘 하루", "다시 보지", "광고", "sale", "promotion")),
+)
+_CLOSE_ROLES = ("close", "cancel")  # 안전하게 닫는 버튼: 위험하지 않은 close/cancel 우선, 다음이 confirm
+
+
+def _popup_kind(text: str, roles: list[str]) -> str:
+    lowered = text.lower()
+    for kind, words in _POPUP_KINDS:
+        if any(w in lowered for w in words):
+            return kind
+    if "confirm" in roles and "cancel" in roles:
+        return "confirm"
+    return "notice"
+
+
+def _popup_buttons(raw: list[dict[str, Any]]) -> list[dict[str, str]]:
+    out = []
+    for b in raw or []:
+        label = _label(str(b.get("text", "")), str(b.get("aria", "")))
+        if label:
+            out.append({"label": label, "role": classify_role("button", label), "risk": classify_risk(label)})
+    return out
+
+
+def _safe_close(buttons: list[dict[str, str]]) -> dict[str, str] | None:
+    """위험하지 않은 버튼 중 close > cancel > confirm 순으로 하나를 고른다. 없으면 None."""
+    safe = [b for b in buttons if b["risk"] == "safe"]
+    for role in (*_CLOSE_ROLES, "confirm"):
+        for button in safe:
+            if button["role"] == role:
+                return button
+    return None
+
+
+def _analyze_popup(order: int, dlg: dict[str, Any]) -> dict[str, Any]:
+    text = " ".join(str(dlg.get("text", "")).split())[:_POPUP_TEXT_MAX]
+    buttons = _popup_buttons(dlg.get("buttons") or [])
+    roles = [b["role"] for b in buttons]
+    close = _safe_close(buttons)
+    dangerous = any(b["risk"] != "safe" for b in buttons)
+    return {
+        "order": order,
+        "kind": _popup_kind(text, roles),
+        "text": text,
+        "role": str(dlg.get("role", "")),
+        "path": str(dlg.get("path", "")),
+        "z": int(dlg.get("z", 0) or 0),
+        "cover": float(dlg.get("cover", 0) or 0),
+        "buttons": buttons,
+        "safe_close": close,
+        # 버튼이 있는데 안전하게 누를 것이 없으면 사람이 봐야 한다. 버튼이 아예 없으면 Esc 로 닫아 볼 수 있다.
+        "needs_review": bool(buttons) and close is None,
+        "escape_ok": not buttons,
+        "has_dangerous_button": dangerous,
+    }
+
+
+def analyze_popups(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    """스냅샷의 보이는 팝업을 맨 위(z-index 큰 것)부터 분석한다. 숨김 팝업은 제외."""
+    dialogs = [
+        d
+        for frame in _frames(snapshot if isinstance(snapshot, dict) else {})
+        for d in frame.get("dialogs") or []
+        if isinstance(d, dict) and d.get("visible", True)
+    ]
+    dialogs.sort(key=lambda d: (-int(d.get("z", 0) or 0), -float(d.get("cover", 0) or 0)))
+    return [_analyze_popup(i, d) for i, d in enumerate(dialogs)]
+
+
 # ── 요소·후보 셀렉터 ──────────────────────────────────────────────────────
 
 
@@ -455,6 +534,7 @@ def analyze_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(snapshot, dict):
         snapshot = {}
     frames = _frames(snapshot)
+    popups = analyze_popups(snapshot)
     counts = _name_counts(frames)
     elements = [
         _build_element(int(frame.get("idx", 0)), kind, item, counts)
@@ -466,7 +546,51 @@ def analyze_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
         "title": _label(str(snapshot.get("title", ""))),
         "page_state": classify_page_state(snapshot),
         "elements": elements,
-        "summary": _summarize(elements),
+        "popups": popups,
+        "summary": {**_summarize(elements), "popups": len(popups)},
+    }
+
+
+# ── 로그인 상태 근거(눈에 보이는 요소만) ──────────────────────────────────
+
+_SIGNAL_LABEL_MAX = 20  # 이보다 긴 라벨은 문장·캘린더 링크 등이라 로그인 버튼으로 세지 않는다
+# "로그인"이라는 글자만 들어 있고 로그인 동작이 아닌 링크 — 예: 로그인된 화면의 "로그인 보호 설정"(2026-09-30 실제 화면에서 확인)
+_NOT_A_LOGIN_ACTION = ("보호", "설정", "도움", "유지", "찾기", "안내", "방법", "실패", "오류", "약관", "기록", "내역")
+
+
+def _signal_group(el: dict[str, Any]) -> str:
+    """로그인 상태 근거로 셀 요소의 묶음: "login"(로그인 버튼) / "in"(로그아웃·계정) / ""(세지 않음)."""
+    label = str(el.get("label", ""))
+    if el.get("kind") not in ("button", "link") or len(label) > _SIGNAL_LABEL_MAX:
+        return ""
+    role = el.get("role")
+    if role == "login":
+        return "" if any(token in label for token in _NOT_A_LOGIN_ACTION) else "login"
+    return "in" if role in ("logout", "account") else ""
+
+
+def element_login_signals(analysis: dict[str, Any]) -> dict[str, Any]:
+    """분석 결과에서 로그인 상태 근거를 센다. 숨은 요소(visible=False)는 세지 않는다.
+
+    반환: {login_visible, in_visible, login_hidden, in_hidden, labels:{login,in}}
+    상태(in/out)를 확정하는 건 호출자 몫 — 쿠키 등 독립 신호와 합쳐 판단해야 하기 때문.
+    """
+    count = {"login": [0, 0], "in": [0, 0]}  # [보임, 숨김]
+    labels: dict[str, list[str]] = {"login": [], "in": []}
+    for el in analysis.get("elements", []):
+        group = _signal_group(el)
+        if not group:
+            continue
+        idx = 0 if el.get("visible") else 1
+        count[group][idx] += 1
+        if idx == 0 and len(labels[group]) < 3:
+            labels[group].append(str(el.get("label", "")))
+    return {
+        "login_visible": count["login"][0],
+        "in_visible": count["in"][0],
+        "login_hidden": count["login"][1],
+        "in_hidden": count["in"][1],
+        "labels": labels,
     }
 
 

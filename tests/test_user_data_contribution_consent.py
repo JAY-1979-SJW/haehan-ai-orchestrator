@@ -169,7 +169,8 @@ def test_export_blocks_after_revoke() -> None:
 
 
 def test_router_is_included_under_api_v1() -> None:
-    paths = {route.path for route in app.routes}
+    from tests.app_routes import route_paths
+    paths = route_paths()
 
     assert "/api/v1/data-contribution/consents" in paths
     assert "/api/v1/data-contribution/development-material/export" in paths

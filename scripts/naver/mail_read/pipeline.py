@@ -32,6 +32,31 @@ def _print_status(state: str, href: str) -> None:
     print(f"  [login_status] state={state} href={href[:80]}")
 
 
+def _classify_unread(unread: list) -> dict[str, list]:
+    """안 읽은 메일을 라벨별로 분류(우선순위 정렬)."""
+    classified: dict[str, list] = {}
+    for it in unread:
+        c = classify.classify(it.sender_full + " " + it.sender_name, it.subject)
+        classified.setdefault(c.label, []).append((c.priority, it))
+    for k in classified:
+        classified[k].sort(key=lambda x: x[0])
+    return classified
+
+
+def _select_targets(classified: dict[str, list], max_bodies: int) -> list:
+    """우선순위 순으로 본문 읽을 대상 최대 max_bodies 건 선택."""
+    priority_order = ["ACTION_REQUIRED", "REVIEW", "INFO", "CARD_NOTICE", "PROMO", "OTHER"]
+    targets: list = []
+    for lab in priority_order:
+        for _, it in classified.get(lab, []):
+            targets.append((lab, it))
+            if len(targets) >= max_bodies:
+                break
+        if len(targets) >= max_bodies:
+            break
+    return targets
+
+
 def run(*, max_bodies: int = 4,
         login_timeout_s: float = 300.0,
         out_dir: Path = OUT_DIR) -> dict:
@@ -80,24 +105,11 @@ def run(*, max_bodies: int = 4,
           f"folder={meta.get('title','')}")
 
     # 5) 분류
-    classified: dict[str, list] = {}
-    for it in unread:
-        c = classify.classify(it.sender_full + " " + it.sender_name, it.subject)
-        classified.setdefault(c.label, []).append((c.priority, it))
-    for k in classified:
-        classified[k].sort(key=lambda x: x[0])
+    classified = _classify_unread(unread)
     print(f"[5] classify labels={ {k: len(v) for k,v in classified.items()} }")
 
     # 6) 우선순위 N건 본문 읽기 (ACTION_REQUIRED 우선)
-    priority_order = ["ACTION_REQUIRED", "REVIEW", "INFO", "CARD_NOTICE", "PROMO", "OTHER"]
-    targets: list = []
-    for lab in priority_order:
-        for _, it in classified.get(lab, []):
-            targets.append((lab, it))
-            if len(targets) >= max_bodies:
-                break
-        if len(targets) >= max_bodies:
-            break
+    targets = _select_targets(classified, max_bodies)
     print(f"[6] read bodies → {len(targets)}건")
     bodies = []
     for lab, it in targets:

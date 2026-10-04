@@ -310,47 +310,56 @@ def main() -> None:
         _print_summary(data)
 
 
+def _print_system_section(s: dict) -> None:
+    print(f"\n{'=' * 50}")
+    print(f"  시스템: {s.get('os')} {s.get('os_release')}  {s.get('hostname')}")
+    print(
+        f"  CPU: {s.get('cpu_physical_cores')}코어/{s.get('cpu_logical_cores')}스레드  "
+        f"RAM: {s.get('ram_total_gb')}GB ({s.get('ram_used_pct')}% 사용)"
+    )
+    print(f"  디스크: {s.get('disk_total_gb')}GB (여유 {s.get('disk_free_gb')}GB)")
+
+
+def _print_apps_section(apps: list) -> None:
+    print(f"\n  설치 프로그램: {len(apps)}개")
+    for a in apps[:10]:
+        ver = f" v{a['version']}" if a.get("version") else ""
+        print(f"    • {a['name']}{ver}")
+    if len(apps) > 10:
+        print(f"    ... 외 {len(apps) - 10}개")
+
+
+def _print_processes_section(procs: list) -> None:
+    print("\n  실행 프로세스 상위 10 (메모리 기준):")
+    for p in procs[:10]:
+        print(f"    [{p['pid']:6}] {p['name']:<30} {p['mem_mb']:>7.1f}MB")
+
+
+def _print_ports_section(ports: list) -> None:
+    print(f"\n  리스닝 포트 ({len(ports)}개):")
+    for p in ports:
+        print(f"    :{p['port']:<6} ← {p['process']} (PID {p['pid']})")
+
+
+def _print_startup_section(items: list) -> None:
+    print(f"\n  시작프로그램 ({len(items)}개):")
+    for s in items:
+        print(f"    • {s['name']}")
+
+
 def _print_summary(data: dict) -> None:
     if "system" in data:
-        s = data["system"]
-        print(f"\n{'=' * 50}")
-        print(f"  시스템: {s.get('os')} {s.get('os_release')}  {s.get('hostname')}")
-        print(
-            f"  CPU: {s.get('cpu_physical_cores')}코어/{s.get('cpu_logical_cores')}스레드  "
-            f"RAM: {s.get('ram_total_gb')}GB ({s.get('ram_used_pct')}% 사용)"
-        )
-        print(f"  디스크: {s.get('disk_total_gb')}GB (여유 {s.get('disk_free_gb')}GB)")
+        _print_system_section(data["system"])
 
-    if "apps" in data:
-        apps = data["apps"]
-        if isinstance(apps, list):
-            print(f"\n  설치 프로그램: {len(apps)}개")
-            for a in apps[:10]:
-                ver = f" v{a['version']}" if a.get("version") else ""
-                print(f"    • {a['name']}{ver}")
-            if len(apps) > 10:
-                print(f"    ... 외 {len(apps) - 10}개")
-
-    if "processes" in data:
-        procs = data["processes"]
-        if isinstance(procs, list):
-            print("\n  실행 프로세스 상위 10 (메모리 기준):")
-            for p in procs[:10]:
-                print(f"    [{p['pid']:6}] {p['name']:<30} {p['mem_mb']:>7.1f}MB")
-
-    if "ports" in data:
-        ports = data["ports"]
-        if isinstance(ports, list):
-            print(f"\n  리스닝 포트 ({len(ports)}개):")
-            for p in ports:
-                print(f"    :{p['port']:<6} ← {p['process']} (PID {p['pid']})")
-
-    if "startup" in data:
-        items = data["startup"]
-        if isinstance(items, list):
-            print(f"\n  시작프로그램 ({len(items)}개):")
-            for s in items:
-                print(f"    • {s['name']}")
+    # list 형태일 때만 출력하는 섹션들 (출력 순서 유지)
+    for key, printer in (
+        ("apps", _print_apps_section),
+        ("processes", _print_processes_section),
+        ("ports", _print_ports_section),
+        ("startup", _print_startup_section),
+    ):
+        if key in data and isinstance(data[key], list):
+            printer(data[key])
 
     print(f"\n{'=' * 50}")
     print(f"  수집시각: {data.get('collected_at', '-')}")

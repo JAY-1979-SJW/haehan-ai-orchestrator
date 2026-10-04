@@ -90,6 +90,24 @@ def _websocket_close_code(exc: object) -> int | None:
     return code if isinstance(code, int) else None
 
 
+async def _await_heartbeat_ack(ws, report, agent_id, timeout):
+    await ws.send(json.dumps({"type": "heartbeat", "agent_id": agent_id}))
+    deadline = asyncio.get_running_loop().time() + timeout
+    while asyncio.get_running_loop().time() < deadline:
+        raw = await asyncio.wait_for(
+            ws.recv(),
+            timeout=max(0.5, deadline - asyncio.get_running_loop().time()),
+        )
+        msg = json.loads(raw)
+        mtype = str(msg.get("type") or "")
+        if mtype == "heartbeat_ack":
+            report.pass_("websocket heartbeat", "heartbeat_ack")
+            return
+        if mtype == "task":
+            report.warn("websocket queued task observed", "not executed by smoke probe")
+    report.fail("websocket heartbeat", "timeout")
+
+
 async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, token: str, timeout: float) -> None:
     from local_agent import __version__
     from local_agent.connection_diagnostics import normalize_ws_url
@@ -126,21 +144,7 @@ async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, tok
                 return
             report.pass_("websocket auth", "AUTH_OK")
 
-            await ws.send(json.dumps({"type": "heartbeat", "agent_id": agent_id}))
-            deadline = asyncio.get_running_loop().time() + timeout
-            while asyncio.get_running_loop().time() < deadline:
-                raw = await asyncio.wait_for(
-                    ws.recv(),
-                    timeout=max(0.5, deadline - asyncio.get_running_loop().time()),
-                )
-                msg = json.loads(raw)
-                mtype = str(msg.get("type") or "")
-                if mtype == "heartbeat_ack":
-                    report.pass_("websocket heartbeat", "heartbeat_ack")
-                    return
-                if mtype == "task":
-                    report.warn("websocket queued task observed", "not executed by smoke probe")
-            report.fail("websocket heartbeat", "timeout")
+            await _await_heartbeat_ack(ws, report, agent_id, timeout)
     except TimeoutError:
         report.fail("websocket", "timeout")
     except getattr(websockets.exceptions, "ConnectionClosed", Exception) as exc:

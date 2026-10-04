@@ -200,20 +200,15 @@ def validate_g2b_dryrun_adapter_result(result: dict[str, Any]) -> list[str]:
         if field not in result:
             errors.append(f"필수 필드 누락: {field}")
 
-    if result.get("dry_run") is not True:
-        errors.append("dry_run은 항상 True여야 한다")
-
-    if result.get("safe_to_execute") is not False:
-        errors.append("safe_to_execute는 항상 False여야 한다")
-
-    if result.get("execution_dispatched") is not False:
-        errors.append("execution_dispatched는 항상 False여야 한다")
-
-    if result.get("live_browser_worker_called") is not False:
-        errors.append("live_browser_worker_called는 항상 False여야 한다")
-
-    if result.get("download_auto_allowed") is not False:
-        errors.append("download_auto_allowed는 항상 False여야 한다")
+    for key, expected, message in (
+        ("dry_run", True, "dry_run은 항상 True여야 한다"),
+        ("safe_to_execute", False, "safe_to_execute는 항상 False여야 한다"),
+        ("execution_dispatched", False, "execution_dispatched는 항상 False여야 한다"),
+        ("live_browser_worker_called", False, "live_browser_worker_called는 항상 False여야 한다"),
+        ("download_auto_allowed", False, "download_auto_allowed는 항상 False여야 한다"),
+    ):
+        if result.get(key) is not expected:
+            errors.append(message)
 
     valid_decisions = {
         ADAPTER_G2B_DRYRUN_READY,

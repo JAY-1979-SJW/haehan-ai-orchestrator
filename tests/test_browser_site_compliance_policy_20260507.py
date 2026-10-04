@@ -265,13 +265,13 @@ class TestFixtureCompatibility:
     def test_fixture_loads(self):
         """Fixture loads successfully."""
         assert FIXTURE_PATH.exists()
-        with FIXTURE_PATH.open() as f:
+        with FIXTURE_PATH.open(encoding="utf-8") as f:
             data = json.load(f)
         assert data["fixture_id"] == "BROWSER_SITE_COMPLIANCE_POLICY_1"
 
     def test_fixture_cases_valid(self):
         """Fixture cases have required structure."""
-        with FIXTURE_PATH.open() as f:
+        with FIXTURE_PATH.open(encoding="utf-8") as f:
             data = json.load(f)
 
         for case in data["cases"]:
@@ -281,7 +281,7 @@ class TestFixtureCompatibility:
 
     def test_all_cases_safe_to_execute_false(self):
         """All fixture cases have safe_to_execute=false in expected."""
-        with FIXTURE_PATH.open() as f:
+        with FIXTURE_PATH.open(encoding="utf-8") as f:
             data = json.load(f)
 
         for case in data["cases"]:
@@ -292,7 +292,7 @@ class TestFixtureCompatibility:
 
     def test_fixture_case_count(self):
         """Fixture has expected number of cases."""
-        with FIXTURE_PATH.open() as f:
+        with FIXTURE_PATH.open(encoding="utf-8") as f:
             data = json.load(f)
         # Minimum 16 cases expected
         assert len(data["cases"]) >= 16

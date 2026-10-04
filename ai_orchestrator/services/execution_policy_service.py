@@ -417,7 +417,8 @@ class ExecutionPolicyService:
             )
 
             return classification in EXTERNAL_APP_HOLD_SCOPES
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             return classification in (_CLS_EXTERNAL_APP_HOLD, _CLS_FUTURE)
 
     def is_oauth_required_blocked_without_setup(self, classification: str) -> bool:
@@ -426,7 +427,8 @@ class ExecutionPolicyService:
             from ai_orchestrator.safety_policy.safety_policy_registry import OAUTH_REQUIRED_SCOPES
 
             return classification in OAUTH_REQUIRED_SCOPES
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             return classification == _CLS_OAUTH_REQUIRED
 
     def is_user_direct_auto_execution_blocked(self, classification: str) -> bool:
@@ -435,7 +437,8 @@ class ExecutionPolicyService:
             from ai_orchestrator.safety_policy.safety_policy_registry import USER_DIRECT_SCOPES
 
             return classification in USER_DIRECT_SCOPES
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             return classification == _CLS_USER_DIRECT
 
     def is_local_agent_server_execution_blocked(self, classification: str) -> bool:
@@ -444,7 +447,8 @@ class ExecutionPolicyService:
             from ai_orchestrator.safety_policy.safety_policy_registry import LOCAL_AGENT_SCOPES
 
             return classification in LOCAL_AGENT_SCOPES
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             return classification == _CLS_LOCAL_AGENT
 
     def is_blocked_action_denied(self, classification: str) -> bool:
@@ -459,7 +463,8 @@ class ExecutionPolicyService:
             )
 
             return get_safe_to_execute_on_server(classification)
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             return self.is_server_executable(classification)
 
     # ------------------------------------------------------------------
@@ -471,7 +476,8 @@ class ExecutionPolicyService:
             from ai_orchestrator.safety_policy.safety_policy_registry import FINAL_ACTION_SCOPES
 
             return action in FINAL_ACTION_SCOPES
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             # fail-closed: 판정 불가 시 "최종 승인 게이트 필요"가 안전한 기본값이다(2026-09-28).
             return True
 
@@ -481,7 +487,8 @@ class ExecutionPolicyService:
             from ai_orchestrator.safety_policy.safety_policy_registry import SECRET_STORAGE_SCOPES
 
             return action in SECRET_STORAGE_SCOPES
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             # fail-closed: 판정 불가 시 "저장 금지"가 안전한 기본값이다(2026-09-28).
             return True
 
@@ -491,7 +498,8 @@ class ExecutionPolicyService:
             from ai_orchestrator.safety_policy.safety_policy_registry import DOMAIN_CHANGE_SCOPES
 
             return action in DOMAIN_CHANGE_SCOPES
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             # fail-closed: 판정 불가 시 "승인 필요"가 안전한 기본값이다(2026-09-28).
             return True
 
@@ -501,7 +509,8 @@ class ExecutionPolicyService:
             from ai_orchestrator.safety_policy.safety_policy_registry import TRUSTED_SESSION_SCOPES
 
             return action in TRUSTED_SESSION_SCOPES
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             return False
 
     # ------------------------------------------------------------------
@@ -643,7 +652,8 @@ class ExecutionPolicyService:
                 STATE_USER_PRESENT_AUTH_IN_PROGRESS,
             )
             is_blocked = state == STATE_BLOCKED
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             ai_exec = False
             final_blocked = True
             user_required = True
@@ -678,7 +688,8 @@ class ExecutionPolicyService:
             )
 
             return is_action_blocked_for_domain("gabia.com", action)
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             return action in ("dns_final_save", "dns_apply_button_click")
 
     def is_gabia_browser_action_user_direct(self, action: str) -> bool:
@@ -689,7 +700,8 @@ class ExecutionPolicyService:
             )
 
             return is_user_direct_action_for_domain("gabia.com", action)
-        except Exception:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+        except Exception as err:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
+            logger.warning("정책 모듈 판정(폴백 적용) 실패: %s", type(err).__name__)
             return action in ("dns_save", "dns_apply")
 
     def decide_for_site_action(self, site: str, action: str) -> PolicyDecision:

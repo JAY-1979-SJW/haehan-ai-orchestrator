@@ -9,6 +9,7 @@ execution_history 경로 미확정을 해결하기 위한 bind mount 설계.
 docker-compose.yml 실제 수정 / 컨테이너 재시작 / 서버 반영 금지.
 """
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -237,11 +238,7 @@ def _check_docker_compose_not_modified() -> bool:
     return "data/app-logs:/app/logs" not in content
 
 
-def run_audit() -> dict:
-    errors = []
-    warnings = []
-
-    # 1. 운영 안전 플래그
+def _audit_safety_flags(errors):
     if DOCKER_COMPOSE_MODIFY_ALLOWED:
         errors.append("DOCKER_COMPOSE_MODIFY_ALLOWED must be False")
     if CONTAINER_RESTART_ALLOWED:
@@ -253,18 +250,8 @@ def run_audit() -> dict:
     if not DESIGN_ONLY:
         errors.append("DESIGN_ONLY must be True")
 
-    # 2. docker-compose.yml 수정 여부 — 설계 공정에서는 미수정이 원칙.
-    # APPLY 공정 이후 bind mount가 추가된 경우 WARN으로만 처리 (설계 검증 목적은 달성됨).
-    if not _check_docker_compose_not_modified():
-        warnings.append("docker-compose.yml에 bind mount 추가됨 — APPLY 공정 진행 중 또는 완료 후 상태 (정상)")
 
-    # 3. 조사 결론 완전성
-    required_findings = ["LOG_DIR_env", "storage_named_volume", "app_logs_dir", "execution_history_path"]
-    for f in required_findings:
-        if f not in INVESTIGATION_FINDINGS:
-            errors.append(f"조사 결론 누락: {f}")
-
-    # 4. LOG_DIR 확정 — execution_history 경로 확정
+def _audit_execution_history_and_design(errors):
     ef = INVESTIGATION_FINDINGS.get("execution_history_path", {})
     if not ef.get("persisted_in_named_volume"):
         errors.append("execution_history가 named_volume에 기록되지 않음")
@@ -278,6 +265,36 @@ def run_audit() -> dict:
         errors.append("권장 옵션 미선택")
     if BIND_MOUNT_DESIGN.get("status") != "DESIGN_ONLY":
         errors.append("BIND_MOUNT_DESIGN.status must be DESIGN_ONLY")
+    return ef
+
+
+def _audit_next_phase(errors):
+    if not NEXT_PHASE_CONDITIONS.get("phase"):
+        errors.append("다음 공정 정의 없음")
+    if not NEXT_PHASE_CONDITIONS.get("requires_approval"):
+        errors.append("다음 공정 승인 요건 없음")
+
+
+def run_audit() -> dict:
+    errors: list[Any] = []
+    warnings = []
+
+    # 1. 운영 안전 플래그
+    _audit_safety_flags(errors)
+
+    # 2. docker-compose.yml 수정 여부 — 설계 공정에서는 미수정이 원칙.
+    # APPLY 공정 이후 bind mount가 추가된 경우 WARN으로만 처리 (설계 검증 목적은 달성됨).
+    if not _check_docker_compose_not_modified():
+        warnings.append("docker-compose.yml에 bind mount 추가됨 — APPLY 공정 진행 중 또는 완료 후 상태 (정상)")
+
+    # 3. 조사 결론 완전성
+    required_findings = ["LOG_DIR_env", "storage_named_volume", "app_logs_dir", "execution_history_path"]
+    for f in required_findings:
+        if f not in INVESTIGATION_FINDINGS:
+            errors.append(f"조사 결론 누락: {f}")
+
+    # 4. LOG_DIR 확정 — execution_history 경로 확정
+    ef = _audit_execution_history_and_design(errors)
 
     # 6. 파일별 정책 완전성
     required_policies = ["approval_tokens", "audit_logs", "execution_history", "orchestrator_log"]
@@ -291,10 +308,7 @@ def run_audit() -> dict:
         warnings.append("PERSISTENCE_RISK 항목 식별 없음 — 정책이 모두 OK인 경우만 허용")
 
     # 8. 다음 공정 조건
-    if not NEXT_PHASE_CONDITIONS.get("phase"):
-        errors.append("다음 공정 정의 없음")
-    if not NEXT_PHASE_CONDITIONS.get("requires_approval"):
-        errors.append("다음 공정 승인 요건 없음")
+    _audit_next_phase(errors)
 
     if errors:
         verdict = "RUNTIME_STORAGE_BIND_MOUNT_DESIGN_FAIL"

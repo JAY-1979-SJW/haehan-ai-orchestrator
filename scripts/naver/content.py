@@ -314,7 +314,7 @@ def save_action_catalog(catalog: dict[str, Any], output: str | Path | None = Non
     return path
 
 
-def build_cafe_write_plan(
+def build_cafe_write_plan(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     *,
     cafe_url: str,
     board_no: str,

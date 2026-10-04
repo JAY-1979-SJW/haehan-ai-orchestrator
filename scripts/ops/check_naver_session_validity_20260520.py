@@ -125,8 +125,7 @@ def _eval_with_retry(target_id: str, expr: str, max_wait: float = 15.0) -> dict:
     return {"_raw_ev": str(last_ev)[:300] if last_ev else "no_response"}
 
 
-def main() -> None:
-    # 기존 about:blank 탭 재사용
+def _ensure_target():
     target_id = None
     for t in _list_pages():
         if t.get("url") == "about:blank":
@@ -138,44 +137,40 @@ def main() -> None:
         new = _send(bws, 1, "Target.createTarget", {"url": "about:blank"}, timeout=5.0)
         target_id = new.get("result", {}).get("targetId")
         bws.close()
-    if not target_id:
-        print(json.dumps({"ok": False, "error": "no_target"}))
-        return
+    return target_id
 
-    results = []
-    for label, url in TARGETS:
-        # navigate
-        for t in _list_pages():
-            if t.get("id") == target_id:
-                w = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=5)
-                _send(w, 10, "Page.navigate", {"url": url}, timeout=5.0)
-                w.close()
-                break
-        time.sleep(3.0)
-        data = _eval_with_retry(target_id, PAGE_EXPR, max_wait=15.0)
-        # 출력에서 body_top 너무 길면 자름
-        out = {
-            "label": label,
-            "navigated_to": url,
-            "final_url": data.get("href"),
-            "title": data.get("title"),
-            "has_session_cookie": bool(data.get("has_naver_session_cookie")),
-            "has_login_btn": bool(data.get("has_login_btn")),
-            "has_id_form": bool(data.get("has_id_form")),
-            "has_pw_form": bool(data.get("has_pw_form")),
-            "has_logout": bool(data.get("has_logout")),
-            "has_mypage_link": bool(data.get("has_mypage_link")),
-            "has_user_menu": bool(data.get("has_user_menu")),
-            "has_relogin_msg": bool(data.get("has_relogin_msg")),
-            "login_state": _judge(data),
-            "body_len": data.get("body_len"),
-            "body_top_redacted": (data.get("body_top") or "")[:200],
-        }
-        results.append(out)
-        print(json.dumps(out, ensure_ascii=False, indent=2))
 
-    # 종합 판정
-    states = [r["login_state"] for r in results]
+def _navigate_target(target_id, url):
+    for t in _list_pages():
+        if t.get("id") == target_id:
+            w = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=5)
+            _send(w, 10, "Page.navigate", {"url": url}, timeout=5.0)
+            w.close()
+            break
+
+
+def _build_out(label, url, data):
+    out = {
+        "label": label,
+        "navigated_to": url,
+        "final_url": data.get("href"),
+        "title": data.get("title"),
+        "has_session_cookie": bool(data.get("has_naver_session_cookie")),
+        "has_login_btn": bool(data.get("has_login_btn")),
+        "has_id_form": bool(data.get("has_id_form")),
+        "has_pw_form": bool(data.get("has_pw_form")),
+        "has_logout": bool(data.get("has_logout")),
+        "has_mypage_link": bool(data.get("has_mypage_link")),
+        "has_user_menu": bool(data.get("has_user_menu")),
+        "has_relogin_msg": bool(data.get("has_relogin_msg")),
+        "login_state": _judge(data),
+        "body_len": data.get("body_len"),
+        "body_top_redacted": (data.get("body_top") or "")[:200],
+    }
+    return out
+
+
+def _overall_verdict(states):
     if all(s == "LOGGED_IN" for s in states):
         verdict = "PASS_SESSION_VALIDITY_CONFIRMED"
     elif "SESSION_EXPIRED" in states:
@@ -184,9 +179,10 @@ def main() -> None:
         verdict = "WARN_SESSION_EXPIRED_OR_RELOGIN_REQUIRED"
     else:
         verdict = "FAIL_SESSION_VALIDITY_CHECK"
-    print(json.dumps({"verdict": verdict, "states": states}, ensure_ascii=False))
+    return verdict
 
-    # 검증 후 탭은 about:blank 로 reset
+
+def _reset_target_tab(target_id):
     for t in _list_pages():
         if t.get("id") == target_id:
             try:
@@ -196,6 +192,33 @@ def main() -> None:
             except Exception:  # noqa: BLE001 - 네이버 세션 유효성 CDP 읽기전용 점검 - 실패 시 timeout/None으로 폴백
                 pass
             break
+
+
+def main() -> None:
+    # 기존 about:blank 탭 재사용
+    target_id = _ensure_target()
+    if not target_id:
+        print(json.dumps({"ok": False, "error": "no_target"}))
+        return
+
+    results = []
+    for label, url in TARGETS:
+        # navigate
+        _navigate_target(target_id, url)
+        time.sleep(3.0)
+        data = _eval_with_retry(target_id, PAGE_EXPR, max_wait=15.0)
+        # 출력에서 body_top 너무 길면 자름
+        out = _build_out(label, url, data)
+        results.append(out)
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+
+    # 종합 판정
+    states = [r["login_state"] for r in results]
+    verdict = _overall_verdict(states)
+    print(json.dumps({"verdict": verdict, "states": states}, ensure_ascii=False))
+
+    # 검증 후 탭은 about:blank 로 reset
+    _reset_target_tab(target_id)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import asdict, dataclass
+from typing import Any
 from urllib.parse import urlparse
 
 from . import surfaces, workflows
@@ -176,7 +177,7 @@ def build_google_tab_summary() -> dict:
             f"missing_surfaces={missing_surfaces}, stale_mappings={stale_mappings}"
         )
 
-    summary = {
+    summary: dict[str, Any] = {
         "site_id": "google",
         "tabs": [],
         "counts": {

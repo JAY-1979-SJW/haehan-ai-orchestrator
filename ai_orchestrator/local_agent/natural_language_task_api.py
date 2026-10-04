@@ -45,7 +45,7 @@ def _build_page_data_from_url(url: str, fetch_fn: Callable | None = None) -> dic
     }
 
 
-def execute_natural_language_task(
+def execute_natural_language_task(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     instruction: str,
     url: str | None = None,
     page_data: dict[str, Any] | None = None,

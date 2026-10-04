@@ -45,7 +45,7 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def record_execution(
+def record_execution(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     task_id: str,
     action_type: str,
     requested_by: str,

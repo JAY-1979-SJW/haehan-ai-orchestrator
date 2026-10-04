@@ -107,7 +107,7 @@ def validate_evidence_fields(result_fields: dict[str, Any]) -> list[str]:
     return violations
 
 
-def save_evidence(
+def save_evidence(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     action_name: str,
     approval_request_id: str,

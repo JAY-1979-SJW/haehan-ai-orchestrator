@@ -44,7 +44,7 @@ class PendingApprovalResult:
     telegram_message_id: str
 
 
-def create_web_task_pending_approval(
+def create_web_task_pending_approval(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     task_id: str,
     provider: str,

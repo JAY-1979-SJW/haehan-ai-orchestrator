@@ -16,9 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 
-from ai_orchestrator.connectors.naver_blog_router import _resolve_unsplash_images  # noqa: E402
 from scripts.gate import force_approved  # noqa: E402
 from scripts.naver.blog.core.writer import edit_post  # noqa: E402
+from scripts.naver.blog.unsplash_images import resolve_unsplash_images as _resolve_unsplash_images  # noqa: E402
 from scripts.web_connector import get_page  # noqa: E402
 
 UPLOAD_DIR = ROOT / "data" / "blog_uploads"

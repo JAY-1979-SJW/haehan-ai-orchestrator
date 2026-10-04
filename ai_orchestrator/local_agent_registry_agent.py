@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import secrets
 import uuid
 from datetime import datetime
@@ -17,6 +18,11 @@ from .local_agent_registry_common import (
     _save_agents_to_disk,
     _tasks,
 )
+
+logger = logging.getLogger(__name__)
+
+MAX_AGENT_PARALLEL = 3  # 에이전트 1대가 동시에 처리할 수 있는 작업 수 상한(기준서 P1)
+_agent_capacity: dict[str, int] = {}
 
 # ── 등록 / 조회 ──────────────────────────────────────────────────────────
 
@@ -62,8 +68,20 @@ def get_agent(agent_id: str) -> LocalAgent | None:
     return _agents.get(agent_id)
 
 
+def agent_stats(agent_id: str) -> dict:
+    """LocalAgent.to_safe() 에 넘기는 연결 상태·작업 통계(레지스트리가 계산)."""
+    return {
+        "agent_status": get_agent_status(agent_id),
+        "active_task_count": get_active_task_count(agent_id),
+        "current_task_id": get_current_task_id(agent_id),
+        "task_count": get_task_count(agent_id),
+        "completed_task_count": get_completed_task_count(agent_id),
+        "failed_task_count": get_failed_task_count(agent_id),
+    }
+
+
 def list_agents() -> list[dict]:
-    return [a.to_safe() for a in _agents.values()]
+    return [a.to_safe(agent_stats(a.agent_id)) for a in _agents.values()]
 
 
 def authenticate_agent(agent_id: str, device_token: str) -> LocalAgent | None:
@@ -80,7 +98,8 @@ def authenticate_agent(agent_id: str, device_token: str) -> LocalAgent | None:
         return None
     try:
         candidate_hash = hashlib.sha256(device_token.encode("utf-8")).hexdigest()
-    except Exception:  # noqa: BLE001 - device_token 해시 계산 실패 시 인증 실패(None)로 폴백 - 이미 fail-closed(허용 아님), secrets.compare_digest 상수시간 비교 로직 앞단 가드
+    except Exception as exc:  # noqa: BLE001 - device_token 해시 계산 실패 시 인증 실패(None)로 폴백 - 이미 fail-closed(허용 아님), secrets.compare_digest 상수시간 비교 로직 앞단 가드
+        logger.warning("디바이스 토큰 해시 계산 실패: %s", type(exc).__name__)
         return None
     if not secrets.compare_digest(candidate_hash, agent.token_hash):
         return None
@@ -118,9 +137,44 @@ def set_agent_disconnected(agent_id: str, now: str | None = None) -> None:
         a.disconnected_at = now if now is not None else _now_iso()
 
 
+def set_agent_capacity(agent_id: str, max_parallel: object) -> int:
+    """에이전트가 auth 때 알린 동시 처리 수를 저장(1~3으로 제한, 잘못된 값은 1)."""
+    try:
+        value = int(max_parallel)  # type: ignore[call-overload]
+    except (TypeError, ValueError):
+        value = 1
+    value = max(1, min(MAX_AGENT_PARALLEL, value))
+    with _lock:
+        _agent_capacity[agent_id] = value
+    return value
+
+
+def get_agent_capacity(agent_id: str) -> int:
+    with _lock:
+        return _agent_capacity.get(agent_id, 1)
+
+
+def clear_agent_capacity(agent_id: str) -> None:
+    with _lock:
+        _agent_capacity.pop(agent_id, None)
+
+
 def get_active_task_count(agent_id: str) -> int:
     with _lock:
         return sum(1 for t in _tasks.values() if t.agent_id == agent_id and t.status in ACTIVE_TASK_STATUSES)
+
+
+def select_agent(agents: list[dict]) -> dict | None:
+    """작업을 보낼 에이전트 선택: idle → 동시 처리 용량이 남은 busy → 첫 번째(큐에 쌓임). 없으면 None."""
+    if not agents:
+        return None
+    idle = next((a for a in agents if a.get("agent_status") == "idle"), None)
+    if idle is not None:
+        return idle
+    for a in agents:
+        if a.get("agent_status") == "busy" and get_active_task_count(a["agent_id"]) < get_agent_capacity(a["agent_id"]):
+            return a
+    return agents[0]
 
 
 def get_current_task_id(agent_id: str) -> str:
@@ -177,6 +231,11 @@ def get_agent_status(agent_id: str, now: str | None = None) -> str:
 
 
 __all__ = [
+    "MAX_AGENT_PARALLEL",
+    "clear_agent_capacity",
+    "get_agent_capacity",
+    "select_agent",
+    "set_agent_capacity",
     "authenticate_agent",
     "get_active_task_count",
     "get_agent",

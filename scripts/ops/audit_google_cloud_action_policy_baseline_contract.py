@@ -88,11 +88,7 @@ def _duplicates(values: tuple[str, ...]) -> list[str]:
     return duplicated
 
 
-def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not BASELINE.exists():
-        return False, ["docs/baseline/GOOGLE_CLOUD_ACTION_POLICY_BASELINE.md missing"]
-
+def _audit_baseline_text(failures):
     text = BASELINE.read_text(encoding="utf-8", errors="replace")
     missing = _missing(text, REQUIRED_PHRASES)
     if missing:
@@ -105,12 +101,8 @@ def audit() -> tuple[bool, list[str]]:
         if f"`{execution_class}`" not in text:
             failures.append(f"baseline missing forbidden execution class: {execution_class}")
 
-    from scripts.google.cloud import registry
 
-    actions = registry.list_actions()
-    registry_keys = tuple(action["key"] for action in actions)
-    policy_keys = READ_ONLY_ACTIONS + PREPARE_ONLY_ACTIONS + APPROVAL_REQUIRED_ACTIONS
-
+def _audit_policy_keys(failures, registry_keys, policy_keys):
     duplicated = _duplicates(policy_keys)
     if duplicated:
         failures.append("duplicated policy action(s): " + ", ".join(duplicated))
@@ -131,6 +123,8 @@ def audit() -> tuple[bool, list[str]]:
     if len(policy_keys) != 29:
         failures.append(f"Cloud policy action count changed: {len(policy_keys)}")
 
+
+def _audit_action_ops(failures, actions):
     actions_by_key = {action["key"]: action for action in actions}
     for action_key in READ_ONLY_ACTIONS:
         action = actions_by_key.get(action_key, {})
@@ -141,6 +135,8 @@ def audit() -> tuple[bool, list[str]]:
         if action.get("requires_approval") is not True:
             failures.append(f"non-read Cloud action must require approval: {action_key}")
 
+
+def _audit_cloud_summary(failures, registry):
     summary = registry.cloud_summary()
     if summary.get("hosts") != ["console.cloud.google.com"]:
         failures.append(f"Cloud host changed: {summary.get('hosts')!r}")
@@ -152,6 +148,26 @@ def audit() -> tuple[bool, list[str]]:
     prepare_open_only = tuple(summary.get("prepare_or_open_only_approval_actions", []))
     if prepare_open_only != PREPARE_ONLY_ACTIONS:
         failures.append("Cloud prepare-only approval actions changed: " + ", ".join(prepare_open_only))
+
+
+def audit() -> tuple[bool, list[str]]:
+    failures: list[str] = []
+    if not BASELINE.exists():
+        return False, ["docs/baseline/GOOGLE_CLOUD_ACTION_POLICY_BASELINE.md missing"]
+
+    _audit_baseline_text(failures)
+
+    from scripts.google.cloud import registry
+
+    actions = registry.list_actions()
+    registry_keys = tuple(action["key"] for action in actions)
+    policy_keys = READ_ONLY_ACTIONS + PREPARE_ONLY_ACTIONS + APPROVAL_REQUIRED_ACTIONS
+
+    _audit_policy_keys(failures, registry_keys, policy_keys)
+
+    _audit_action_ops(failures, actions)
+
+    _audit_cloud_summary(failures, registry)
 
     return not failures, failures or [
         "GOOGLE_CLOUD_ACTION_POLICY_BASELINE exists and is locked",

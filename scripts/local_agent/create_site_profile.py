@@ -29,7 +29,7 @@ from ai_orchestrator.local_agent.site_profile_registry import (  # noqa: E402
 )
 
 
-def create_site_profile(
+def create_site_profile(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     site_id: str,
     display_name: str,
     domains: list[str],

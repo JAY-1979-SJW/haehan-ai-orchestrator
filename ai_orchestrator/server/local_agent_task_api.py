@@ -29,7 +29,7 @@ from ai_orchestrator.server.task_queue_schema import (
 _SERVER_ALLOWED_ACTIONS = frozenset(ALLOWED_TASK_ACTIONS)
 
 
-def create_local_browser_task(
+def create_local_browser_task(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     action: str,
     target_url: str,
     domain: str = "",

@@ -24,6 +24,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+
+from scripts.browser_paths import find_chrome  # noqa: E402
+
 CDP_PORT = 9222
 CDP_HOST = "127.0.0.1"
 # 프로필 경로 단일화: HAEHAN_CDP_PROFILE(앱·런처 공통 단일 출처) 우선, 없으면 기본 data/cdp_profile/ai_chrome.
@@ -32,17 +35,10 @@ _PROFILE_ENV = os.environ.get("HAEHAN_CDP_PROFILE", "").strip()
 PROFILE_DIR = Path(_PROFILE_ENV) if _PROFILE_ENV else (ROOT / "data" / "cdp_profile" / "ai_chrome")
 PID_FILE = ROOT / "data" / "cdp_force_pid.json"
 
-CHROME_CANDIDATES = [
-    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-    os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
-]
-
-
 def _find_chrome() -> str:
-    for p in CHROME_CANDIDATES:
-        if Path(p).exists():
-            return p
+    chrome = find_chrome()
+    if chrome:
+        return chrome
     raise FileNotFoundError("Chrome을 찾을 수 없습니다.")
 
 

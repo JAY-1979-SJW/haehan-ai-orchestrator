@@ -169,6 +169,28 @@ def _make_cap(
     )
 
 
+def _append_keyword_caps(caps, labels):
+    # SUBMIT
+    submit_ev = _match_keywords(labels, _SUBMIT_BUTTON_KEYWORDS)
+    if submit_ev:
+        caps.append(_make_cap(SiteCapability.SUBMIT, submit_ev, GateDecision.APPROVAL_REQUIRED))
+
+    # PUBLISH
+    pub_ev = _match_keywords(labels, _PUBLISH_BUTTON_KEYWORDS)
+    if pub_ev:
+        caps.append(_make_cap(SiteCapability.PUBLISH, pub_ev, GateDecision.APPROVAL_REQUIRED))
+
+    # SEND
+    send_ev = _match_keywords(labels, _SEND_BUTTON_KEYWORDS)
+    if send_ev:
+        caps.append(_make_cap(SiteCapability.SEND, send_ev, GateDecision.APPROVAL_REQUIRED))
+
+    # DELETE
+    del_ev = _match_keywords(labels, _DELETE_BUTTON_KEYWORDS)
+    if del_ev:
+        caps.append(_make_cap(SiteCapability.DELETE, del_ev, GateDecision.APPROVAL_REQUIRED))
+
+
 def detect_capabilities_from_snapshot(
     detection_input: CapabilityDetectionInput,
 ) -> CapabilityDetectionResult:
@@ -209,25 +231,7 @@ def detect_capabilities_from_snapshot(
     if upload_ev:
         caps.append(_make_cap(SiteCapability.UPLOAD, upload_ev, GateDecision.APPROVAL_REQUIRED))
 
-    # SUBMIT
-    submit_ev = _match_keywords(labels, _SUBMIT_BUTTON_KEYWORDS)
-    if submit_ev:
-        caps.append(_make_cap(SiteCapability.SUBMIT, submit_ev, GateDecision.APPROVAL_REQUIRED))
-
-    # PUBLISH
-    pub_ev = _match_keywords(labels, _PUBLISH_BUTTON_KEYWORDS)
-    if pub_ev:
-        caps.append(_make_cap(SiteCapability.PUBLISH, pub_ev, GateDecision.APPROVAL_REQUIRED))
-
-    # SEND
-    send_ev = _match_keywords(labels, _SEND_BUTTON_KEYWORDS)
-    if send_ev:
-        caps.append(_make_cap(SiteCapability.SEND, send_ev, GateDecision.APPROVAL_REQUIRED))
-
-    # DELETE
-    del_ev = _match_keywords(labels, _DELETE_BUTTON_KEYWORDS)
-    if del_ev:
-        caps.append(_make_cap(SiteCapability.DELETE, del_ev, GateDecision.APPROVAL_REQUIRED))
+    _append_keyword_caps(caps, labels)
 
     # SIGN
     sign_ev = _match_keywords(labels, _SIGN_BUTTON_KEYWORDS)

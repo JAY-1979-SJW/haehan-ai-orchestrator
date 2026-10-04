@@ -66,7 +66,7 @@ def rank_analysis(
     )
 
 
-def topic_analysis(
+def topic_analysis(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     keywords: list[str],
     *,
     per_keyword_limit: int = 10,
@@ -99,7 +99,7 @@ def topic_analysis(
     )
 
 
-def market_research_run(
+def market_research_run(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     topic: str = "",
     keywords: list[str] | None = None,

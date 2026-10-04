@@ -92,6 +92,41 @@ class BlogAnalytics:
             _log.debug("[blog-analytics] XML API 실패: %s", e)
 
         # ── 2차: 어드민 페이지 fallback ──────────────────────────────
+        self._collect_admin_fallback(stats)
+
+        _init_db()
+        today = date.today().isoformat()
+        conn = sqlite3.connect(str(DB_PATH))
+        conn.execute(
+            """INSERT INTO blog_metrics_log
+               (ts, blog_id, date_key,
+                visitors_today, visitors_total, post_count, comment_count, neighbor_count,
+                raw_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                datetime.now().isoformat(timespec="seconds"),
+                self.blog_id,
+                today,
+                stats.get("visitors_today"),
+                stats.get("visitors_total"),
+                stats.get("post_count"),
+                stats.get("comment_count"),
+                stats.get("neighbor_count"),
+                json.dumps(stats, ensure_ascii=False),
+            ),
+        )
+        conn.commit()
+        conn.close()
+
+        log_critical(
+            "OTHER", f"블로그 통계 수집: {self.blog_id}", blog_id=self.blog_id, date=today, mode="blog_analytics"
+        )
+        return {"ok": True, "saved": True, "date": today, "metrics": stats}
+
+    def _collect_admin_fallback(self, stats: dict) -> None:
+        """2차: 어드민 페이지 fallback (stats 를 제자리 갱신)."""
+        import time
+
         if not stats.get("visitors_today"):
             try:
                 url = f"https://admin.blog.naver.com/{self.blog_id}/stat/today"
@@ -125,35 +160,6 @@ class BlogAnalytics:
                         continue
             except Exception:  # noqa: BLE001 - 네이버 블로그 통계 읽기전용 수집(XML API 1차 + 어드민 페이지 폴백) — 각 except는 다음 폴백 단계로 넘어가거나 부분 실패를 debug 로그로만 남기며, 로컬 앱 자체 지표 sqlite(cdp.db)에 INSERT만 하는 앱 전용 로그 DB로 운영 DB 삭제/스키마 변경과 무관.
                 pass
-
-        _init_db()
-        today = date.today().isoformat()
-        conn = sqlite3.connect(str(DB_PATH))
-        conn.execute(
-            """INSERT INTO blog_metrics_log
-               (ts, blog_id, date_key,
-                visitors_today, visitors_total, post_count, comment_count, neighbor_count,
-                raw_json)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                datetime.now().isoformat(timespec="seconds"),
-                self.blog_id,
-                today,
-                stats.get("visitors_today"),
-                stats.get("visitors_total"),
-                stats.get("post_count"),
-                stats.get("comment_count"),
-                stats.get("neighbor_count"),
-                json.dumps(stats, ensure_ascii=False),
-            ),
-        )
-        conn.commit()
-        conn.close()
-
-        log_critical(
-            "OTHER", f"블로그 통계 수집: {self.blog_id}", blog_id=self.blog_id, date=today, mode="blog_analytics"
-        )
-        return {"ok": True, "saved": True, "date": today, "metrics": stats}
 
     def daily_summary(self, days: int = 30) -> dict:
         """일자별 요약."""

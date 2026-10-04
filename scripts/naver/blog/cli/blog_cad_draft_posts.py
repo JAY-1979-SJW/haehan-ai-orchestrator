@@ -12,7 +12,9 @@ import asyncio
 
 from playwright.async_api import async_playwright
 
-BLOG_ID = "skyjwsin"
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
+
+BLOG_ID = DEFAULT_ACCOUNT
 NEW_POST_URL = f"https://blog.naver.com/PostWriteForm.naver?blogId={BLOG_ID}"
 CDP_URL = "http://127.0.0.1:9222"
 
@@ -1379,6 +1381,31 @@ BIM 물량산출의 장점:
 ]
 
 
+async def _enter_tags_and_resave(page, post: dict) -> None:
+    """발행 패널을 열어 태그 입력 후 재저장(실패는 메시지만 출력)."""
+    try:
+        await page.click(".publish_btn__m9KHH", timeout=5000)
+        await asyncio.sleep(1.5)
+        tag_input = page.locator("#tag-input")
+        for tag in post["tags"]:
+            await tag_input.click()
+            await asyncio.sleep(0.2)
+            await tag_input.fill(tag)
+            await asyncio.sleep(0.2)
+            await page.keyboard.press("Enter")
+            await asyncio.sleep(0.3)
+        print(f"  ✓ 태그 {len(post['tags'])}개 입력")
+
+        # 패널 닫고 재저장
+        await page.keyboard.press("Escape")
+        await asyncio.sleep(0.3)
+        await page.click(".save_btn__bzc5B", timeout=5000)
+        await asyncio.sleep(1.5)
+        print("  ✓ 태그 포함 재저장")
+    except Exception as e:  # noqa: BLE001 - 블로그 임시저장 CLI 자동화 — 옵션 클릭/태그 재저장 실패는 무시하고 계속하거나 개별 글 실패 시 다음 글로 continue, 임시저장(발행 아님)이며 실패해도 데이터 손실 없음
+        print(f"  ⚠ 태그 입력 실패: {e}")
+
+
 async def post_draft(page, post: dict):
     """한 편의 블로그 초안을 작성하고 임시저장."""
     no = post["no"]
@@ -1428,27 +1455,7 @@ async def post_draft(page, post: dict):
     print("  ✓ 임시저장 완료")
 
     # 발행 패널 열고 태그 입력
-    try:
-        await page.click(".publish_btn__m9KHH", timeout=5000)
-        await asyncio.sleep(1.5)
-        tag_input = page.locator("#tag-input")
-        for tag in post["tags"]:
-            await tag_input.click()
-            await asyncio.sleep(0.2)
-            await tag_input.fill(tag)
-            await asyncio.sleep(0.2)
-            await page.keyboard.press("Enter")
-            await asyncio.sleep(0.3)
-        print(f"  ✓ 태그 {len(post['tags'])}개 입력")
-
-        # 패널 닫고 재저장
-        await page.keyboard.press("Escape")
-        await asyncio.sleep(0.3)
-        await page.click(".save_btn__bzc5B", timeout=5000)
-        await asyncio.sleep(1.5)
-        print("  ✓ 태그 포함 재저장")
-    except Exception as e:  # noqa: BLE001 - 블로그 임시저장 CLI 자동화 — 옵션 클릭/태그 재저장 실패는 무시하고 계속하거나 개별 글 실패 시 다음 글로 continue, 임시저장(발행 아님)이며 실패해도 데이터 손실 없음
-        print(f"  ⚠ 태그 입력 실패: {e}")
+    await _enter_tags_and_resave(page, post)
 
     print(f"[{no:02d}/20편] 완료 ✅")
 

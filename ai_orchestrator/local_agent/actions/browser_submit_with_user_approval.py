@@ -20,7 +20,7 @@ from ai_orchestrator.local_agent.user_approval_gate import verify_and_consume_to
 ACTION_NAME = "browser.submit_with_user_approval"
 
 
-def execute(
+def execute(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     page_url: str,
     submit_selector: str,
     approval_token: str,

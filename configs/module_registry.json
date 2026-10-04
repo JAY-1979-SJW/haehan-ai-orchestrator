@@ -3906,12 +3906,12 @@
    "source": "rule"
   },
   "ai_orchestrator/local_agent/browser/approval_server.py": {
-   "layer": "L8",
-   "role": "api",
+   "layer": "L2",
+   "role": "policy",
    "domain": "local_agent",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "request_approval 은 approval_api_client(L2)로 승인 요청을 보내는 얇은 게이트이고 Flask UI 는 로컬 폴백 — 서버 API 가 아니라 승인 게이트라 L8 이 아님",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/audit_log.py": {
    "layer": "L12",
@@ -4002,60 +4002,60 @@
    "source": "rule"
   },
   "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_blog",
-   "reason": "BlogReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류",
+   "reason": "네이버 블로그 전용 동작을 하드코딩한 믹스인(domain=naver_blog) — L4 로 오분류",
    "confidence": "high",
    "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/mixins/blog_mixin_collect.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
+   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/mixins/blog_mixin_common.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
+   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/mixins/blog_mixin_download.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
+   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/mixins/blog_mixin_neighbor.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
+   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/mixins/blog_mixin_read.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
+   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
+   "reason": "writer.py·selectors.py(L5)를 호출하는 네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py": {
    "layer": "L4",
@@ -4136,14 +4136,6 @@
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
-  },
-  "ai_orchestrator/local_agent/browser/secure_login.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "local_agent",
-   "reason": "approval_server.py(L8)를 직접 호출하는 승인 연동 로그인 흐름 — 순수 L1 계약 아님",
-   "confidence": "high",
-   "source": "confirmed"
   },
   "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
    "layer": "L4",
@@ -8114,12 +8106,12 @@
    "source": "rule"
   },
   "scripts/form/orchestrator.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "common",
-   "reason": "업무 흐름 이름",
+   "reason": "사이트에 의존하지 않는 범용 폼·로그인 오케스트레이터(bot_radar·discovery·human 등 범용 프리미티브만 사용) — 'flow' 이름 규칙이 L6 으로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/form/profile.py": {
    "layer": "L4",
@@ -8138,12 +8130,12 @@
    "source": "rule"
   },
   "scripts/g2b/discover_valid_public_notice_urls.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
+   "reason": "L6 로 확정된 g2b_public_notice_* 를 호출하는 argparse 러너·리포트 작성 — g2b 이름 규칙이 L5 로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/g2b/download_g2b_direct_attachment_urls.py": {
    "layer": "L7",
@@ -8170,20 +8162,20 @@
    "source": "confirmed"
   },
   "scripts/g2b/router.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
+   "reason": "g2b CLI 라우터가 위 두 러너(L6)의 main 을 호출하는 디스패처 — 호출 대상과 같은 층",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/g2b/run_public_notice_readonly_live_suite.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
+   "reason": "g2b_public_notice_local_live_runner(L6) 를 호출하는 argparse 러너 — L5 로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/g2b/validators.py": {
    "layer": "L5",
@@ -8250,12 +8242,12 @@
    "source": "rule"
   },
   "scripts/gabia_login_watch.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "gabia",
-   "reason": "도메인(gabia) 자동화",
+   "reason": "JS 평가로 로그인 상태만 폴링하는 읽기 전용 감시 CLI(자체 _get_page) — 이름 규칙이 L5 로 오분류",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/gate.py": {
    "layer": "L2",
@@ -9602,12 +9594,12 @@
    "source": "rule"
   },
   "scripts/local_agent.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "서버 WebSocket 으로 CDP 명령을 받아 사이트 도구(ProductFormRunner·CdpPopupManager 등)를 호출하는 로컬 에이전트 디스패처 — L4 browser_engine 이 아니라 사이트 모듈을 조합하는 흐름. 코드맵이 `from local_agent import …` 를 이 파일로 잘못 해석하던 가짜 간선은 reach.py 해석기 수정으로 제거(결함 #114)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/local_agent/__init__.py": {
    "layer": "L4",
@@ -9666,12 +9658,12 @@
    "source": "rule"
   },
   "scripts/local_agent/gov/minwon_submit.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "민원 제출을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/local_agent/naver/__init__.py": {
    "layer": "L5",
@@ -9707,11 +9699,11 @@
   },
   "scripts/local_agent/router.py": {
    "layer": "L6",
-   "role": "browser_engine",
+   "role": "workflow",
    "domain": "local_agent",
-   "reason": "S2a 선언층 정정",
+   "reason": "minwon_submit·webmail_send·사이트 모듈(blog_explorer 등)을 디스패치하는 로컬 에이전트 라우터 — 호출 대상이 L5·L6 이라 L6",
    "confidence": "high",
-   "source": "override"
+   "source": "confirmed"
   },
   "scripts/local_agent/run_naver_cafe_to_blog_workflow.py": {
    "layer": "L6",
@@ -9770,12 +9762,12 @@
    "source": "rule"
   },
   "scripts/local_agent/webmail_send.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "웹메일 발송을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/local_user_secret_store.py": {
    "layer": "L7",
@@ -10162,12 +10154,12 @@
    "source": "rule"
   },
   "scripts/naver/automation/platform/error_recovery.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver",
-   "reason": "DB·저장 신호",
+   "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/automation/platform/image_processor.py": {
    "layer": "L5",
@@ -10306,12 +10298,12 @@
    "source": "rule"
   },
   "scripts/naver/blog/accounts.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L1",
+   "role": "contract",
    "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
+   "reason": "블로그 계정 상수 표(BLOG_ACCOUNTS·DEFAULT_ACCOUNT)와 조회 헬퍼 — 공용 상수라 L1. rules.py(L1)가 import 하므로 함께 L1",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/blog/ai_writer.py": {
    "layer": "L5",
@@ -10530,12 +10522,12 @@
    "source": "rule"
   },
   "scripts/naver/blog/gonobi/classifier.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L1",
+   "role": "contract",
    "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
+   "reason": "외부 import 없는 키워드 규칙 분류 함수(_rule_based 뿐) — L5 로 오분류, db.py(L7)가 import",
    "confidence": "low",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/blog/gonobi/db.py": {
    "layer": "L7",
@@ -10594,12 +10586,12 @@
    "source": "override"
   },
   "scripts/naver/blog/management/schedule.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_blog",
-   "reason": "DB·저장 신호",
+   "reason": "BlogWriter 로 Playwright 발행을 수행하는 발행 큐 워크플로 — 작은 sqlite 큐 때문에 L7 로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/blog/management/series.py": {
    "layer": "L5",
@@ -10705,14 +10697,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/blog/seo.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/blog/seo/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -10798,14 +10782,6 @@
    "role": "policy",
    "domain": "naver",
    "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/cafe.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_cafe",
-   "reason": "도메인(naver_cafe) 자동화",
    "confidence": "high",
    "source": "rule"
   },
@@ -11338,12 +11314,12 @@
    "source": "rule"
   },
   "scripts/naver/mail/collection/background_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_mail",
-   "reason": "업무 흐름 이름",
+   "reason": "CDP 선택 게이트·메일 폴더 탐색·설정 패널 등 메일 사이트 코드를 다루는 모듈 — 'runner' 이름 규칙이 L6 으로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/mail/collection/folder_discovery.py": {
    "layer": "L5",
@@ -12001,14 +11977,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/smartstore/product.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/smartstore/product/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -12034,12 +12002,12 @@
    "source": "rule"
   },
   "scripts/naver/smartstore/product/bulk.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "smartstore",
-   "reason": "DB·저장 신호",
+   "reason": "스마트스토어 상품 일괄 등록(Playwright Page)이 본체이고 DB 기록은 부수적 — 'DB 기록' 규칙이 L7 로 오분류. L5 smartstore 모듈들이 import",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/smartstore/product/category_cache.py": {
    "layer": "L7",
@@ -14186,12 +14154,12 @@
    "source": "rule"
   },
   "scripts/site_engine/action_planner.py": {
-   "layer": "L1",
-   "role": "contract",
+   "layer": "L2",
+   "role": "policy",
    "domain": "common",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "ExecutionDecision·ExecutionGateResult 로 실행 가능 여부를 가르는 계획·게이트 판정 — 정의 위주 규칙이 L1 contract 로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/site_engine/adapters/__init__.py": {
    "layer": "L4",
@@ -14266,28 +14234,28 @@
    "source": "rule"
   },
   "scripts/site_engine/validators.py": {
-   "layer": "L1",
-   "role": "contract",
+   "layer": "L2",
+   "role": "policy",
    "domain": "common",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "ActionPlan·WorkflowRunPlan 에 대한 순수 검증 함수(실행·브라우저·DB 없음) — L1 contract 로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/site_engine/workflow_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L2",
+   "role": "policy",
    "domain": "common",
-   "reason": "업무 흐름 이름",
+   "reason": "실행 없이 계획만 조립하는 순수 모듈(docstring: 실제 실행 없음·브라우저 호출 없음·DB/file write 없음) — 'runner' 이름 규칙이 L6 으로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/site_registry.py": {
-   "layer": "L1",
-   "role": "contract",
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "common",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "SiteSpec 와 사이트 조회·등록·지연 로더만 가진 코어(사이트별 로그인 지식은 scripts/site_registry_sites.py 로 분리) — L4 범용 엔진(cdp_client·login_session·site_access)이 import. 코어→사이트 모듈 결합은 변수에 담은 문자열 로더(데이터 주도)라 정적 간선이 없고, 결합이 0 은 아님(결함 #113 종결 메모)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/site_session_safety.py": {
    "layer": "L2",
@@ -14618,12 +14586,12 @@
    "source": "rule"
   },
   "scripts/youtube/research_search.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "youtube",
-   "reason": "DB·저장 신호",
+   "reason": "YouTube 검색·댓글 수집 사이트 모듈이고 캐시는 조회만 한다 — '저장 신호' 규칙이 L7 로 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/youtube/router.py": {
    "layer": "L5",
@@ -19678,6 +19646,1342 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/write_gates/sitemap_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_login_state_by_elements.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_post_edit_fast_gate_baseline.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/gates.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "naver_blog",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/rules.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "naver_blog",
+   "reason": "frozen dataclass·검증·승인 해시만 있는 순수 모듈(I/O 없음). store(L7)·gates(L2)·runner(L6) 가 공용으로 import — L5 로 오분류",
+   "confidence": "low",
+   "source": "confirmed"
+  },
+  "tests/test_blog_automation_gates.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_blog_automation_rules.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/llm.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/runner.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_blog",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "naver_blog",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/blog/automation/writer.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_blog_automation_llm.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_blog_automation_runner.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_blog_automation_store.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_blog_automation_writer.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/blog_automation_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "naver_blog",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_blog_automation_router.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_naver_auth_input_timeout.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/workflows/naver_session_guard.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver",
+   "reason": "로그인 파이프라인을 호출하고 상태를 판정·시도 기록까지 하는 업무 흐름 — 'guard' 이름 규칙이 L2 policy 로 오분류 (2026-10-01 층간 위반 정리)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/naver/blog/automation/account_probe.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_naver_session_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_naver_session_router_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_human_input.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/scheduled/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/scheduled_job_loop.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "서버 lifespan 에서 도는 예약 작업 루프(서버 API 레이어의 기동 코드) — routers/ 에 두어 루트(server.py)와의 모듈 순환을 만들지 않는다. 파일명 규칙은 L4 generic 으로 분류하므로 classify.py 가 레지스트리를 다시 쓸 때 되돌아가지 않도록 overrides 에 확정",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/persistence/scheduled_job_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/scheduled_job_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/scheduled_job_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "예약 작업 반복 계산·선점·실행을 조율하는 업무 흐름 서비스 — L4 generic 오분류",
+   "confidence": "low",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/services/scheduled_job_actions.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "예약 가능한 작업 허용 목록과 실행 연결(워크플로), CDP 보장은 헬퍼일 뿐 — L4 browser_engine 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_community_scheduler_cdp.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "community",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_scheduled_jobs.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/protocol.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/settings.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "네이버 웹메일 설정 화면을 CDP 로 읽고 바꾸는 사이트 모듈 — 파일명 settings 때문에 L1 shared 로 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_naver_mail_imap.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/browser_approval_errors.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "local_agent",
+   "reason": "저장소(L7)·검증기가 함께 쓰는 공용 예외 클래스만 정의(로직 없음) — 'approval' 이름 규칙이 L2 policy 로 오분류. L7 저장소가 import 하려면 L1 이어야 함",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_naver_blog_images.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/unsplash_images.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_code_map_reach_resolver.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/site_registry_sites.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "common",
+   "reason": "eum·naver·smartstore·google·hiworks·gabia·kakao 의 사이트별 로그인·상태 확인 래퍼와 등록 항목 — 코어가 첫 조회 때 문자열 로더로 불러 등록한다. 코어를 import 하지 않음",
+   "confidence": "low",
+   "source": "confirmed"
+  },
+  "tests/test_site_registry_core.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/sqlite_schema.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_sqlite_schema.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser_paths.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_browser_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hook_utf8_output.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/reader.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "네이버 메일 IMAP 수신(읽기 전용) 사이트 모듈",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/naver/mail_imap/sender.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "네이버 메일 SMTP 발송 사이트 모듈",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_naver_mail_rw.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/app_paths.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "공용 기반 이름(app_paths)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/app_paths_migrate.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_app_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_app_paths_migrate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/fax_send_policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "hanafax",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/fax_authorization_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "hanafax",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/workflows/hanafax_auto_send.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "hanafax",
+   "reason": "하나팩스 승인서→정책 판정→발송기 호출→이력 기록의 업무 흐름(워크플로) — 파일명의 `send` 가 L1 contract 로 오분류 (2026-10-02)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_fax_authorization_store.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_fax_send_policy.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hanafax_auto_send.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/sites/hanafax_auto_sender.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/hanafax_authorization_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "hanafax",
+   "reason": "하나팩스 발송 승인서의 만들기·승인·취소·정지를 조율하는 업무 흐름 서비스(저장소 L7 + 정책 L2 + 발송 어댑터 L5 + 예약 작업 L6 를 조합, docstring 1행이 'L6 서비스') — 파일명의 'auth' 때문에 L2 정책으로 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_hanafax_p3.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/hanafax/HanafaxApp.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/lib/hanafaxApi.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/hanafax/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/components/chat/FaxApprovalCard.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/attachments.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/folders.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/html_sanitize.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/mail_imap/mailbox.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/workflows/naver_mailbox_flow.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_mail",
+   "reason": "네이버 메일함 화면의 업무 흐름(계정 확인·조회 위임·보내기 2단계 확인 토큰) — 정의 위주(dataclass·재노출)로 L1 contract 로 오분류. 같은 L6 의 scheduled_job_actions 처럼 scripts 어댑터를 쓴다.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/workflows/naver_mail_drafts.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_mail",
+   "reason": "메일 AI 초안 업무 흐름(초안 생성→사람 승인 후 보내기→결과 기록) — 이름 규칙으로 L4 generic 오분류. scripts 어댑터와 L2 정책·L7 저장소를 조합하는 L6 워크플로.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/routers/naver_mailbox_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "naver_mail",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/mail_draft_policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "메일 AI 초안 정책(상태 전이·한도·첨부 경로 안전) — 저장·네트워크 부작용 없는 순수 판정이라 L2. 파일명의 draft 때문에 L7 persistence 로 오분류.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/gates/mail_new_policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "새 메일 알림 판정(UIDNEXT 비교) — 순수 판정이라 L2.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/persistence/naver_mail_draft_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "naver_mail",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_naver_mailbox.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_naver_mail_html.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mail_draft_policy_store.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mailbox_ai_window.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/ComposeDialog.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/FolderTree.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/MailAiPanel.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/MailDraftCard.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/MailboxApp.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/MessageList.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/MessageView.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/MoveMenu.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/RichEditor.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/lib/api.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/lib/draftApi.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/lib/format.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/NewMailToast.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/lib/useNewMailWatch.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mailbox_new_alert.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/mail_bulk_policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/mail_bulk_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mail_bulk_policy_store.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/components/chat/FaxSitePreview.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/hanafax/preview.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/naver_mail_bulk_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "naver_mail",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/mail_bulk_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "메일 순차 대량 발송 승인서의 만들기·시험 발송·승인·취소·멈춤·실행을 조율하는 업무 흐름 서비스(하나팩스 hanafax_authorization_service 와 같은 구조, docstring 1행이 'L6 서비스') — 이름 신호가 없어 기본값 L4 generic 로 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/workflows/naver_mail_bulk.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_mail",
+   "reason": "메일 순차 대량 발송 워크플로(승인서→정책 판정→한 명씩 발송→이력 기록, docstring 1행이 'L6 워크플로') — 파일 안 dataclass 때문에 정의 위주 L1 contract 로 오분류. 같은 폴더 naver_mail_drafts·naver_mailbox_flow 와 같은 유형",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/naver/mail_imap/bulk_sender.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_mail_bulk_run.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mail_bulk_service.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mail_bulk_smtp.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hanafax_hardening.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/bulk/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/bulk/BulkApp.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/bulk/BulkCreateForm.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/components/bulk/BulkDetail.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/mailbox/lib/bulkApi.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hanafax_resolve.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/hanafax_reconcile.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "hanafax",
+   "reason": "하나팩스 전송결과 대조(접수 건의 최종 성공·실패를 사이트 결과로 확인) 업무 흐름 서비스(docstring 1행이 'L6 서비스') — 이름 신호가 없어 기본값 L4 generic 로 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/hanafax/send_result.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hanafax_reconcile.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/hanafax/address_book.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hanafax_site_group.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/hanafax/AttachmentField.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "hanafax",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/hanafax_attachments.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "hanafax",
+   "reason": "하나팩스 첨부 파일 올리기·검사·정리를 조율하는 업무 흐름 서비스(docstring 1행이 'L6 서비스') — 이름 신호가 없어 기본값 L4 generic 로 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_hanafax_attachments.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_agent_parallel_p1.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/agent_dispatch_policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_agent_dispatch_policy.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/agent_dispatch_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/agent_dispatch_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/agent_dispatch_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "작업 분배(계획 제안·승인·병렬 실행)를 조율하는 업무 흐름 서비스 — 'agent' 이름 때문에 L4 generic 오분류",
+   "confidence": "low",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/services/agent_dispatch_runner.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_agent_dispatch_service.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_agent_dispatch_router.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_result_data_long_keys.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/cdp_lane_start.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/cdp_lanes.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/cdp_tabs.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_cdp_lanes_tabs.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_agent_dispatch_races.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/cdp_verify.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_cdp_verify.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_agent_dispatch_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/agent_dispatch_e2e.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/gongmu/GongmuApp.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/gongmu/api.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/gongmu/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/gongmu_task_policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/gongmu_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/gongmu_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/gongmu_service.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_gongmu_policy.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_gongmu_service.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/domain/gongmu_defaults.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "저장소(L7)와 정책(L2)이 함께 읽는 공무 업무 상태 어휘·기준값·PlannedTask(순수 값, 부작용 없음) — L7 은 L1 만 읽을 수 있어 정책에서 분리한 L1 계약. dataclass 규칙에 우연히 기대지 않고 명시한다",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/domain/mail_draft_states.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "저장소(L7)와 정책(L2)이 함께 읽는 메일 초안 상태 어휘·전이표(순수 값, 부작용 없음) — L7 은 L1 만 읽을 수 있어 정책에서 분리한 L1 계약. 이름 신호가 없어 기본값 L4 로 오분류되는 것을 막는다",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/contracts/agent_result_limits.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "파일 docstring이 'L1 공유 계약 — 순수 상수' 선언, 에이전트 결과 전문 길이 상한 단일 정본 — L4 generic 오분류 방지",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/tests/test_agent_result_limits.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/contracts/__init__.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "L1 공유 계약 끝점 폴더(import 없음) — 루트/persistence 양방향 순환 방지",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/app_ui_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_routes.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_session_tracker_change.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_browser_agent_page_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_mcp_shared_cdp.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/explorer/popup_probe.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_popup_probe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/shadowed_modules/naver_blog_seo_stub.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "naver_blog",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/shadowed_modules/naver_cafe_legacy_module.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "naver_cafe",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/shadowed_modules/naver_smartstore_product_stub.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "smartstore",
+   "reason": "문서·보관 경로",
    "confidence": "high",
    "source": "rule"
   },

@@ -71,6 +71,80 @@ def _stop_worker(proc: subprocess.Popen) -> None:
         proc.wait(timeout=8)
 
 
+def _create_task(tasks_url, args):
+    body = {
+        "action": "web_open_url_readonly",
+        "params": {
+            "url": args.url,
+            "wait_until": "domcontentloaded",
+            "timeout_ms": 20000,
+            "max_html_chars": 100000,
+        },
+    }
+    try:
+        status, created = _request_json("POST", tasks_url, body)
+    except urllib.error.HTTPError as exc:
+        print(f"[FAIL] task create - status={exc.code}")
+        print("RESULT=FAIL_LIVE_BROWSER_READONLY_DISPATCH")
+        return (1), None, None, None
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"[FAIL] task create - {type(exc).__name__}")
+        print("RESULT=FAIL_LIVE_BROWSER_READONLY_DISPATCH")
+        return (1), None, None, None
+
+    task_id = str(created.get("task_id") or "")
+    initial_status = str(created.get("status") or "")
+    if status != 200 or not task_id:
+        print(f"[FAIL] task create - status={status} task_id_present={bool(task_id)}")
+        print("RESULT=FAIL_LIVE_BROWSER_READONLY_DISPATCH")
+        return (1), None, None, None
+    print(f"[PASS] task create - task_id={task_id} status={initial_status}")
+    return None, created, task_id, initial_status
+
+
+def _poll_final(tasks_url, task_id, created, initial_status, args):
+    detail_url = f"{tasks_url}/{task_id}"
+    deadline = time.time() + args.timeout
+    detail: dict = created
+    last_status = initial_status
+    while time.time() < deadline:
+        time.sleep(2)
+        try:
+            _, detail = _request_json("GET", detail_url)
+        except Exception:  # noqa: BLE001, S112 - 실행 중인 태스크 상태를 폴링하는 읽기전용 검증 스크립트 — 상태 조회(GET) 실패를 continue로 넘기고 다음 폴링에서 재시도.
+            continue
+        last_status = str(detail.get("status") or last_status)
+        if last_status in {"completed", "failed", "cancelled", "expired"}:
+            break
+
+    print(f"[PASS] task final observed - task_id={task_id} status={last_status}")
+    if last_status != "completed":
+        print(f"[FAIL] task not completed - status={last_status}")
+        print("RESULT=FAIL_LIVE_BROWSER_READONLY_DISPATCH")
+        return (1), None
+    return None, detail
+
+
+def _report_result(detail):
+    summary = str(detail.get("result_summary") or "")[:300]
+    observe = detail.get("observe_summary") if isinstance(detail.get("observe_summary"), dict) else {}
+    result_data = detail.get("result_data") if isinstance(detail.get("result_data"), dict) else {}
+    print(f"[PASS] result summary - {summary}")
+    if observe:
+        print(
+            "[PASS] observe summary - "
+            f"status={observe.get('status_category')} "
+            f"title_len={observe.get('title_len')} "
+            f"pages={observe.get('pages_observed_count')}"
+        )
+    else:
+        print("[WARN] observe summary - not returned by server")
+    print(f"[PASS] result data stored - present={bool(result_data)}")
+    print("RESULT=PASS_LIVE_BROWSER_READONLY_DISPATCH")
+    return 0
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--server", default=DEFAULT_SERVER_URL)
@@ -97,70 +171,17 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
         tasks_url = f"{server_url}/api/v1/local-agents/{agent_id}/tasks"
-        body = {
-            "action": "web_open_url_readonly",
-            "params": {
-                "url": args.url,
-                "wait_until": "domcontentloaded",
-                "timeout_ms": 20000,
-                "max_html_chars": 100000,
-            },
-        }
-        try:
-            status, created = _request_json("POST", tasks_url, body)
-        except urllib.error.HTTPError as exc:
-            print(f"[FAIL] task create - status={exc.code}")
-            print("RESULT=FAIL_LIVE_BROWSER_READONLY_DISPATCH")
-            return 1
-        except (urllib.error.URLError, OSError) as exc:
-            print(f"[FAIL] task create - {type(exc).__name__}")
-            print("RESULT=FAIL_LIVE_BROWSER_READONLY_DISPATCH")
-            return 1
+        _early, created, task_id, initial_status = _create_task(tasks_url, args)
+        if _early is not None:
+            return _early
 
-        task_id = str(created.get("task_id") or "")
-        initial_status = str(created.get("status") or "")
-        if status != 200 or not task_id:
-            print(f"[FAIL] task create - status={status} task_id_present={bool(task_id)}")
-            print("RESULT=FAIL_LIVE_BROWSER_READONLY_DISPATCH")
-            return 1
-        print(f"[PASS] task create - task_id={task_id} status={initial_status}")
+        _early, detail = _poll_final(tasks_url, task_id, created, initial_status, args)
+        if _early is not None:
+            return _early
 
-        detail_url = f"{tasks_url}/{task_id}"
-        deadline = time.time() + args.timeout
-        detail: dict = created
-        last_status = initial_status
-        while time.time() < deadline:
-            time.sleep(2)
-            try:
-                _, detail = _request_json("GET", detail_url)
-            except Exception:  # noqa: BLE001, S112 - 실행 중인 태스크 상태를 폴링하는 읽기전용 검증 스크립트 — 상태 조회(GET) 실패를 continue로 넘기고 다음 폴링에서 재시도.
-                continue
-            last_status = str(detail.get("status") or last_status)
-            if last_status in {"completed", "failed", "cancelled", "expired"}:
-                break
-
-        print(f"[PASS] task final observed - task_id={task_id} status={last_status}")
-        if last_status != "completed":
-            print(f"[FAIL] task not completed - status={last_status}")
-            print("RESULT=FAIL_LIVE_BROWSER_READONLY_DISPATCH")
-            return 1
-
-        summary = str(detail.get("result_summary") or "")[:300]
-        observe = detail.get("observe_summary") if isinstance(detail.get("observe_summary"), dict) else {}
-        result_data = detail.get("result_data") if isinstance(detail.get("result_data"), dict) else {}
-        print(f"[PASS] result summary - {summary}")
-        if observe:
-            print(
-                "[PASS] observe summary - "
-                f"status={observe.get('status_category')} "
-                f"title_len={observe.get('title_len')} "
-                f"pages={observe.get('pages_observed_count')}"
-            )
-        else:
-            print("[WARN] observe summary - not returned by server")
-        print(f"[PASS] result data stored - present={bool(result_data)}")
-        print("RESULT=PASS_LIVE_BROWSER_READONLY_DISPATCH")
-        return 0
+        _early = _report_result(detail)
+        if _early is not None:
+            return _early
     finally:
         _stop_worker(worker)
         print("[PASS] worker stopped")
