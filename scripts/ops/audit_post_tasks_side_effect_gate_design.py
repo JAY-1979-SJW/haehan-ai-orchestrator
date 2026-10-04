@@ -285,7 +285,7 @@ def _check_key_files() -> tuple[list, list]:
         "ai_orchestrator/gates/approval.py",
         "ai_orchestrator/planner.py",
         "ai_orchestrator/execution_limits.py",
-        "backend/compat/legacy_5050",
+        # backend/compat/legacy_5050: faf799bd(2026-09-23 타앱 연결 2차 삭제)에서 이동 없이 삭제됨 -> 필수 목록에서 제외
     ]
     present, missing = [], []
     for f in required:

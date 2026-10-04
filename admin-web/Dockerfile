@@ -1,12 +1,12 @@
 # Stage 1: deps
-FROM node:20-bookworm-slim AS deps
+FROM node:24-bookworm-slim AS deps
 WORKDIR /repo/admin-web
 COPY admin-web/package.json admin-web/package-lock.json ./
 COPY admin-web/vendor ./vendor
 RUN npm ci
 
 # Stage 2: builder
-FROM node:20-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS builder
 WORKDIR /repo
 COPY --from=deps /repo/admin-web/node_modules ./admin-web/node_modules
 COPY admin-web ./admin-web
@@ -14,7 +14,7 @@ WORKDIR /repo/admin-web
 RUN npm run build
 
 # Stage 3: runner
-FROM node:20-bookworm-slim AS runner
+FROM node:24-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

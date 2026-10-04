@@ -1,4 +1,5 @@
-FROM python:3.11-slim
+# Playwright 1.63 은 Debian 13(trixie) 공식 지원(#36916)이나 --with-deps 실측 미검증 -> bookworm 고정
+FROM python:3.14-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -9,8 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install Python dependencies (Playwright package, FastAPI, uvicorn)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt constraints.txt ./
+RUN pip install --no-cache-dir -c constraints.txt -r requirements.txt
 
 # Install Playwright Chromium binary and dependencies
 RUN python -m playwright install --with-deps chromium
