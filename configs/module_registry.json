@@ -20937,6 +20937,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_mcp_shared_cdp.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/archive/shadowed_modules/naver_blog_seo_stub.py": {
    "layer": "L12",
    "role": "archive",
