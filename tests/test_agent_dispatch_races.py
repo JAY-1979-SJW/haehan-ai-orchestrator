@@ -219,8 +219,8 @@ def test_server_startup_resume_never_blocks_boot(monkeypatch):
 
     import ai_orchestrator
 
-    # ai_orchestrator.server 는 app 만 지연 노출하는 패키지라, 실제 server.py 를 같은 방식으로 불러온다.
-    path = Path(ai_orchestrator.__file__).parent / "server.py"
+    # server.py 는 asgi.py 로 옮겨졌다(패키지 server/ 와의 이름 충돌 해소) — 실제 진입점 파일을 같은 방식으로 불러온다.
+    path = Path(ai_orchestrator.__file__).parent / "asgi.py"
     spec = importlib.util.spec_from_file_location("ai_orchestrator._server_module_test", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
