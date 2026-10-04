@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 
 from scripts.naver import excel_reports
-from scripts.naver import mail
 
 
 def test_build_excel_report_from_latest_json_sources(tmp_path):
@@ -44,26 +43,5 @@ def test_build_excel_report_from_latest_json_sources(tmp_path):
     assert "shopping" in result["sheets"]
 
 
-def test_attach_files_requires_existing_files_and_compose_page(tmp_path):
-    target = tmp_path / "report.xlsx"
-    target.write_text("not real xlsx for attach test", encoding="utf-8")
-
-    class Page:
-        url = "https://mail.naver.com/v2/new"
-        frames = []
-
-    result = mail.attach_files(Page(), [target])
-
-    assert result["ok"] is False
-    assert result["error"] == "file_input_not_found"
-
-
-def test_parse_attach_files_accepts_semicolon_list(tmp_path):
-    a = tmp_path / "a.xlsx"
-    b = tmp_path / "b.xlsx"
-    a.write_text("a", encoding="utf-8")
-    b.write_text("b", encoding="utf-8")
-
-    paths = mail._parse_attach_files([f"--files={a};{b}"])
-
-    assert [p.name for p in paths] == ["a.xlsx", "b.xlsx"]
+# test_attach_files_requires_existing_files_and_compose_page · test_parse_attach_files_accepts_semicolon_list 는
+# cb9d0ea3("코드맵 S1 미도달 파일 삭제")로 scripts/naver/mail_write.py(attach_files·_parse_attach_files)가 삭제돼 2026-10-05 제거

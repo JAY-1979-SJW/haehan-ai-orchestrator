@@ -1,14 +1,14 @@
 """ASSISTANT_BACKEND_DIRECT_DICT_RESPONSE_BOUNDARY_CLOSEOUT_01
 응답 계약 characterization 테스트 + HOLD gate.
 
-대상 5개 엔드포인트:
+대상 4개 엔드포인트:
   NEEDS_ENVELOPE_REVIEW (3):
     POST /api/v1/site-tasks/dry-run
     POST /api/v1/web-tasks/run
     POST /api/v1/web-tasks/run-from-template
-  NEEDS_MANUAL_DESIGN_REVIEW / HOLD (2):
+  NEEDS_MANUAL_DESIGN_REVIEW / HOLD (1):
     POST /api/v1/webhooks/telegram
-    POST /api/v1/cad-ai/chat
+  (POST /api/v1/cad-ai/chat 은 17130f8e "CAD 모듈 전체 삭제" 로 엔드포인트 자체가 사라져 2026-10-05 에 이 시험에서 제거)
 
 판정 근거:
   - HOLD 사유: 외부 연동(Telegram Bot) / AI 응답 중계(OpenAI) → 응답 구조 임의 변경 금지
@@ -31,16 +31,10 @@ from fastapi.testclient import TestClient
 # ── HOLD 선언 상수 ────────────────────────────────────────────────────────────
 
 HOLD_TELEGRAM_WEBHOOK = "POST /api/v1/webhooks/telegram"
-HOLD_CAD_AI_CHAT = "POST /api/v1/cad-ai/chat"
 
 HOLD_REASON_TELEGRAM = (
     "외부 Telegram Bot 연동 및 콜백 payload 계약(callback_query 분기) — "
     "응답 구조 변경 시 Bot 클라이언트 계약 파괴 위험. 봉투 적용 금지."
-)
-HOLD_REASON_CAD_AI = (
-    "OpenAI API 응답 중계(CadChatResponse Pydantic 모델) — "
-    "AI reply/action/params/task_id/confidence/ai_used 필드 직렬화 계약 유지 필수. "
-    "봉투 추가 시 프론트 채팅 UI 파괴 위험. 봉투 적용 금지."
 )
 
 
@@ -116,80 +110,6 @@ class TestTelegramWebhookHold:
         assert r.status_code == 400
         detail = r.json().get("detail", {})
         assert detail.get("status") == "invalid_payload"
-
-
-# ── 2. HOLD gate: cad-ai/chat ─────────────────────────────────────────────────
-
-
-class TestCadAiChatHold:
-    """HOLD: POST /api/v1/cad-ai/chat 응답 계약 고정."""
-
-    def test_hold_declaration(self):
-        assert HOLD_CAD_AI_CHAT == "POST /api/v1/cad-ai/chat"
-        assert "CadChatResponse" in HOLD_REASON_CAD_AI
-
-    def test_response_keys_locked(self, client, auth):
-        """응답 필드 7개(reply/action/params/task_id/task_status/confidence/ai_used) 고정."""
-        r = client.post(
-            "/api/v1/cad-ai/chat",
-            headers=auth,
-            json={"agent_id": "agt-1", "message": "레이어 목록", "conversation": []},
-        )
-        assert r.status_code == 200
-        body = r.json()
-        required_keys = {"reply", "action", "params", "task_id", "task_status", "confidence", "ai_used"}
-        assert required_keys.issubset(body.keys()), f"응답 키 누락: {required_keys - body.keys()}"
-
-    def test_no_envelope_wrapper(self, client, auth):
-        """응답 최상위에 ApiResponse 봉투(success/data)가 없다."""
-        r = client.post(
-            "/api/v1/cad-ai/chat",
-            headers=auth,
-            json={"agent_id": "agt-1", "message": "레이어 목록", "conversation": []},
-        )
-        body = r.json()
-        assert "success" not in body, "봉투 미적용 — success 키 없어야 함"
-        assert "data" not in body, "봉투 미적용 — data 래퍼 없어야 함"
-
-    def test_empty_message_returns_400(self, client, auth):
-        """빈 message → 400."""
-        r = client.post(
-            "/api/v1/cad-ai/chat", headers=auth, json={"agent_id": "agt-1", "message": "", "conversation": []}
-        )
-        assert r.status_code == 400
-
-    def test_empty_agent_id_returns_400(self, client, auth):
-        """빈 agent_id → 400."""
-        r = client.post(
-            "/api/v1/cad-ai/chat", headers=auth, json={"agent_id": "", "message": "레이어", "conversation": []}
-        )
-        assert r.status_code == 400
-
-    def test_confidence_is_float(self, client, auth):
-        """confidence 필드는 float 타입이다."""
-        r = client.post(
-            "/api/v1/cad-ai/chat", headers=auth, json={"agent_id": "agt-1", "message": "레이어", "conversation": []}
-        )
-        assert isinstance(r.json()["confidence"], float)
-
-    def test_ai_used_is_bool(self, client, auth):
-        """ai_used 필드는 bool 타입이다 (OPENAI_API_KEY 없으면 False)."""
-        r = client.post(
-            "/api/v1/cad-ai/chat", headers=auth, json={"agent_id": "agt-1", "message": "레이어", "conversation": []}
-        )
-        assert isinstance(r.json()["ai_used"], bool)
-
-    def test_auth_behavior_recorded(self, client):
-        """테스트 환경 auth 동작 기록 — 인증 없이 요청 시 현재 동작을 고정.
-
-        TestClient 환경에서 auth가 bypass되는 경우 200 반환.
-        응답 구조 계약(reply/action/confidence/ai_used 키)은 별도 테스트로 고정.
-        """
-        r = client.post("/api/v1/cad-ai/chat", json={"agent_id": "a", "message": "레이어", "conversation": []})
-        # 인증 bypass(200) 또는 실제 인증 강제(401/403) — 어느 쪽이든 봉투 없음
-        assert r.status_code in (200, 401, 403)
-        if r.status_code == 200:
-            assert "success" not in r.json()  # 봉투 미적용 확인
 
 
 # ── 3. Characterization: site-tasks/dry-run ──────────────────────────────────
@@ -459,17 +379,16 @@ class TestDirectDictBoundaryHoldRegistry:
 
     HOLD_ENDPOINTS = {
         "POST /api/v1/webhooks/telegram",
-        "POST /api/v1/cad-ai/chat",
         "POST /api/v1/site-tasks/dry-run",
         "POST /api/v1/web-tasks/run",
         "POST /api/v1/web-tasks/run-from-template",
     }
 
-    def test_hold_count_is_five(self):
-        assert len(self.HOLD_ENDPOINTS) == 5
+    def test_hold_count_is_four(self):
+        assert len(self.HOLD_ENDPOINTS) == 4
 
     def test_all_hold_endpoints_registered_in_app(self, client):
-        """HOLD 엔드포인트 5개가 FastAPI app에 등록되어 있다."""
+        """HOLD 엔드포인트 4개가 FastAPI app에 등록되어 있다."""
         from fastapi.routing import APIRoute
 
         from ai_orchestrator.asgi import app
@@ -482,10 +401,9 @@ class TestDirectDictBoundaryHoldRegistry:
             assert path in paths, f"HOLD 엔드포인트 {path}가 app에 없음"
 
     def test_none_have_envelope_applied(self, client, auth):
-        """HOLD 5개 중 어떤 것도 봉투(success+data) 최상위 구조를 반환하지 않는다."""
+        """HOLD 4개 중 어떤 것도 봉투(success+data) 최상위 구조를 반환하지 않는다."""
         probes = [
             ("POST", "/api/v1/webhooks/telegram", {}),
-            ("POST", "/api/v1/cad-ai/chat", {"agent_id": "x", "message": "레이어", "conversation": []}),
             (
                 "POST",
                 "/api/v1/site-tasks/dry-run",
