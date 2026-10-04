@@ -18,6 +18,7 @@ import {
   type SiteMap,
   type TaskState,
 } from "./api";
+import { RegisteredSites } from "./RegisteredSites";
 
 /**
  * 사이트 업무 지도 화면 — 왼쪽: 탐색해 둔 사이트 목록, 오른쪽: 업무 표 · 상세(절차·입력 필드) · 이름·목적·분류 확정 · 검증 결과 기록.
@@ -119,6 +120,8 @@ export function SiteMapApp() {
           ))}
         </div>
       )}
+
+      <RegisteredSites onChanged={refreshHosts} onPick={pickHost} />
 
       <div className="grid gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
         <HostList hosts={hosts} host={host} onPick={pickHost} />

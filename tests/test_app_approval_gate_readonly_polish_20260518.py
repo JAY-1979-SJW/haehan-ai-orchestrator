@@ -114,11 +114,11 @@ class TestBackendInvariant:
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         routes = runtime_routes()
-        assert len(routes) == 419  # 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0)
+        assert len(routes) == 424  # [424=419+5: /site-registry 5개 추가(2026-10-05 M7-S1)] 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0)
 
     def test_post_count_27(self):
         from tests.app_routes import http_routes
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         posts = [r for r in http_routes() if "POST" in r.method.split(",")]
-        assert len(posts) == 193  # 위 추가분 중 POST 9개(184→193)
+        assert len(posts) == 195  # [195=193+2: /site-registry POST 2개(2026-10-05 M7-S1)] 위 추가분 중 POST 9개(184→193)

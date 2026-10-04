@@ -136,3 +136,57 @@ export const siteMapApi = {
     call<RunResult>(`${encodeURIComponent(host)}/run`, "POST", { task_id: taskId, params }),
   exploreRequests: () => call<{ items: ExploreRequestSummary[] }>("explore/requests").then((r) => r.items),
 };
+
+// ── 등록 사이트(M7-S1) — /api/v1/site-registry/* (관리자 전용). 기준서: docs/specs/2026-10-05_site_task_map_m7_onboarding_auto_prepare.md
+const REGISTRY = "/api/proxy/api/v1/site-registry";
+
+export type SiteState = "registered" | "exploring" | "ready" | "needs_login" | "blocked" | "deregistered";
+export const SITE_STATE_LABEL: Record<SiteState, string> = {
+  registered: "등록됨(탐색 전)",
+  exploring: "탐색 중",
+  ready: "사용 가능",
+  needs_login: "로그인 필요",
+  blocked: "차단됨(확인 필요)",
+  deregistered: "해제됨",
+};
+
+export interface RegisteredSite {
+  host: string;
+  state: SiteState;
+  policy: { auto_explore: string; daily_explore_max: number; max_pages: number };
+  registered_by: string;
+  registered_at: string;
+  last_explored_at: string;
+  note: string;
+  map: { tasks: number; verified: number; stale: number; auth: Auth };
+}
+
+export interface OfficialApiAdvice {
+  checked: boolean;
+  found?: boolean;
+  advice?: string;
+  error?: string;
+  vendors?: { name: string; status: string; docs: string; cost: string }[];
+}
+
+export interface RegisterResult {
+  site: RegisteredSite;
+  official_api: OfficialApiAdvice;
+}
+
+async function registryCall<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+  const res = await fetch(`${REGISTRY}${path}`, {
+    method,
+    cache: "no-store",
+    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw await failure(res);
+  return (await res.json()) as T;
+}
+
+export const siteRegistryApi = {
+  list: () => registryCall<{ items: RegisteredSite[] }>("").then((r) => r.items),
+  register: (host: string, auth: Auth) => registryCall<RegisterResult>("", "POST", { host, auth }),
+  deregister: (host: string) => registryCall<RegisteredSite>(`/${encodeURIComponent(host)}/deregister`, "POST"),
+};

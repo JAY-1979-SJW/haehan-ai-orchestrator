@@ -949,5 +949,17 @@
   "role": "contract",
   "reason": "L1 공유 계약 끝점 폴더(import 없음) — 루트/persistence 양방향 순환 방지",
   "source": "manual"
+ },
+ "ai_orchestrator/domain/site_registry.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "등록 사이트 상태 전이·정책 검증·탐색 결과 반영 규칙(순수 함수, 파일·네트워크·시계 없음) — 저장소(L7)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+  "source": "manual"
+ },
+ "ai_orchestrator/services/site_onboarding_service.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "사이트 등록·최초 탐색 시작·상태 지연 평가 업무 흐름(규칙은 domain, 저장은 persistence, 탐색은 기존 explore 서비스에 위임, HTTP·브라우저 모름) — generic L4 오분류",
+  "source": "manual"
  }
 }

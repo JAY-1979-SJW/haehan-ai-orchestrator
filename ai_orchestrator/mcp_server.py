@@ -226,6 +226,17 @@ API_REGISTRY: dict[str, dict[str, str]] = {
         "path": "/api/v1/scheduled-jobs",
         "desc": "앱에 등록된 예약 작업 목록(이름·작업·반복·다음 실행·마지막 결과·상태, 읽기 전용). '예약 작업 있어?' 같은 질문은 Claude Code 의 예약 도구가 아니라 이 앱 기능으로 답할 것",
     },
+    # 등록 사이트(온보딩) — AI 는 '읽기'만. 등록·정책 변경·해제는 이 목록에 없다(사람이 화면에서 한다).
+    "sites.list": {
+        "method": "GET",
+        "path": "/api/v1/site-registry",
+        "desc": "사람이 등록한 사이트 목록(호스트·상태 ready/needs_login/blocked 등·탐색 정책·지도 요약, 읽기 전용). 사이트 작업 전에 이 사이트가 등록·탐색됐는지 확인할 것",
+    },
+    "sites.get": {
+        "method": "GET",
+        "path": "/api/v1/site-registry/{host}",
+        "desc": "등록 사이트 하나의 상태·정책·지도 요약(읽기 전용). path_params={host}. needs_login 이면 사용자에게 로그인을 요청하고 업무 실행을 시도하지 말 것, blocked 면 사람이 사이트에서 확인해야 한다고 알릴 것",
+    },
     # 사이트 업무 지도 — AI 는 '읽기'만. 지도 확정·결과 기록·탐색 실행은 이 목록에 없다.
     "sitemap.list": {
         "method": "GET",
