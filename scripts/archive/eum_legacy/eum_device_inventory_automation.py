@@ -215,7 +215,7 @@ class EumDeviceInventoryManager:
 
     def group_by_location(self) -> dict:
         """현장별 그룹화"""
-        grouped = {}
+        grouped: dict[Any, Any] = {}
 
         for device in self.devices:
             location = device["location"].strip()

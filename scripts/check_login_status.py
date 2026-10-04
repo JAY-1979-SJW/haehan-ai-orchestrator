@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -101,7 +102,7 @@ def main() -> None:
                     return
 
                 cdp_db.init_db()
-                detected_logins = []
+                detected_logins: list[Any] = []
 
                 print("=" * 100)
                 print(f"{'#':<3} {'URL':<50} {'사이트':<15} {'로그인':<10} 상태")

@@ -327,7 +327,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale
             → 재획득도 실패하면 즉시 종료
     """
     start_time = time.time()
-    detected_sites = set()
+    detected_sites: set[Any] = set()
     stale_count = 0
     reacquired = 0
 

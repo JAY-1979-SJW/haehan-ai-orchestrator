@@ -39,8 +39,8 @@ ERROR_STATUS_CODES = {
 
 def make_error_response(
     error_type: ErrorType,
-    message: str = None,
-    error_code: str = None
+    message: str | None = None,
+    error_code: str | None = None
 ) -> tuple[int, dict]:
     """표준화된 에러 응답 생성.
 

@@ -9,6 +9,7 @@ DB write / 서버 반영 전면 금지.
 
 import ast
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -179,8 +180,8 @@ def _audit_path_impact(errors):
 
 
 def run_audit() -> dict:
-    errors = []
-    warnings = []
+    errors: list[Any] = []
+    warnings: list[Any] = []
 
     # 1. 운영 안전 플래그
     _audit_safety_flags(errors)

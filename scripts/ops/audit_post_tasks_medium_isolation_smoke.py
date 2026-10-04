@@ -10,6 +10,7 @@ mock 기반 unit smoke만 수행.
 
 import ast
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -301,8 +302,8 @@ def _audit_smoke_results(errors):
 
 
 def run_audit() -> dict:
-    errors = []
-    warnings = []
+    errors: list[Any] = []
+    warnings: list[Any] = []
 
     # 1. 운영 안전 플래그
     _audit_safety_flags(errors)

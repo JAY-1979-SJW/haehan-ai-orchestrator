@@ -9,6 +9,7 @@
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 from PIL import Image
 
@@ -26,7 +27,7 @@ QUALITY = 88
 IMG_DIR.mkdir(parents=True, exist_ok=True)
 
 # 1) log_no -> 정렬된 원본 이미지 경로 목록
-posts_files = {}
+posts_files: dict[Any, Any] = {}
 for catdir in Path(ROOT).iterdir():
     if catdir.name in EXCLUDE_CATS:
         continue

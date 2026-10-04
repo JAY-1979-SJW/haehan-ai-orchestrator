@@ -8,6 +8,7 @@ ASSISTANT_BACKEND_RUNTIME_STORAGE_PERSISTENCE_AUDIT_01
 """
 
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -362,7 +363,7 @@ def run_audit() -> dict:
         verdict = "RUNTIME_STORAGE_PERSISTENCE_AUDIT_READY"
 
     # 분류 통계
-    classification_counts = {}
+    classification_counts: dict[Any, Any] = {}
     for item in STORAGE_CLASSIFICATION.values():
         c = item.get("current_classification", "UNKNOWN")
         classification_counts[c] = classification_counts.get(c, 0) + 1
