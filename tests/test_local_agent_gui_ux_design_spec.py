@@ -207,10 +207,7 @@ def test_audit_fail_desktop_ui_violation():
 # ── 14) 회귀 가드 ────────────────────────────────────────
 
 
-def test_regression_gui_impl_audit_unchanged():
-    from scripts.ops import audit_local_agent_gui_implementation as a
-
-    assert hasattr(a, "judge_impl")
+# test_regression_gui_impl_audit_unchanged 는 b13d1216("Electron 데스크톱·로컬에이전트 GUI 삭제") 로 audit_local_agent_gui_implementation 모듈이 사라져 2026-10-05 제거
 
 
 def test_regression_field_test_audit_unchanged():
