@@ -29,6 +29,7 @@ import json
 import time
 
 from scripts.cdp_helper import CDP
+from scripts.publish_guard import guarded
 
 # 문의 상세 화면엔 숨겨진(0x0) textarea가 먼저 잡히는 경우가 있어(2026-08-23 실측),
 # 화면에 실제로 렌더된(너비>0) textarea만 후보로 삼는다.
@@ -78,6 +79,7 @@ def fill_reply_draft(cdp: CDP, text: str) -> str:
     return cdp.js(js)
 
 
+@guarded("smartstore_inquiry_reply", ok_fn=lambda msg: "완료" in msg)
 def submit_reply(cdp: CDP, timeout: float = 5.0) -> str:
     """채워진 답변을 실제로 전송한다 ("답변하기" 클릭). 고객 노출 액션 — 매번 사용자 승인 후 호출.
 
