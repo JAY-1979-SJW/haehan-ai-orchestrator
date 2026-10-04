@@ -16,10 +16,10 @@
 ## 2. 설계 — 서로 독립인 세 기능(각각 API)
 ### F1. 사이트 등록(온보딩) — "고정 기능"
 **흐름**: 사람이 사이트에 로그인(OTP·인증서·캡차는 사람) → 앱 화면 "사이트 등록"(또는 AI 에게 "이 사이트 등록해")으로 **호스트를 명시** → ① 벤더 공식 API 확인(`vendors.lookup`, 프로젝트 규칙 [0]) ② 등록 레코드 생성 ③ 로그인 상태 읽기 확인(읽기 전용, 브라우저를 시작하지 않음) ④ 최초 탐색 요청 생성(기존 explore request 재사용) ⑤ 승인(등록 때 사람이 한 번 누르면 이 사이트의 최초 탐색 승인으로 갈음) → 지도 저장 → 상태 `ready`.
-- 등록 레코드(`data/site_task_map/_sites.json`, 구조만): `host`, `auth`, `state`(`registered → exploring → ready → needs_login | blocked`), `auto_explore`(`ask`|`auto`, 기본 `ask`), 한도(일 횟수·페이지 상한), `registered_at`, `last_explored_at`, `last_login_check`.
+- 등록 레코드(`data/site_registry/sites.json`, 구조만 — 지도 저장소가 `data/site_task_map/*.json` 전부를 호스트로 취급하므로 별도 폴더): `host`, `auth`, `state`(`registered → exploring → ready → needs_login | blocked`), `auto_explore`(`ask`|`auto`, 기본 `ask`), 한도(일 횟수·페이지 상한), `registered_at`, `last_explored_at`, `last_login_check`.
 - **신규 사이트 발견은 사용자 명시 등록으로만 한다.** 백그라운드에서 9222 Chrome 의 탭을 훑어 "새로 로그인한 사이트"를 찾는 방식은 쓰지 않는다(사용자의 다른 탭 열거 금지 원칙, 직전 점검의 Chrome 부작용 사고).
-- API(신규): `GET /site-map/sites`, `POST /site-map/sites`(등록 + 최초 탐색 요청), `GET /site-map/sites/{host}`, `PATCH /site-map/sites/{host}/policy`(자동 탐색 설정, 사람만), `POST /site-map/sites/{host}/deregister`(등록 해제 — 지도는 지우지 않고 보존).
-- AI 허용(읽기): `sites.list`, `sites.get`. 등록·정책 변경·해제는 AI 에 없다(사람 화면/카드).
+- API(신규, **경로는 `/site-registry`** — `/site-map/{host}` 가 한 단계 경로를 전부 호스트로 받아 같은 접두사를 쓰면 모호): `GET /site-registry`, `POST /site-registry`(등록 + 최초 탐색 요청 + 승인), `GET /site-registry/{host}`, `PATCH /site-registry/{host}/policy`(사람만), `POST /site-registry/{host}/deregister`(등록 해제 — 지도는 지우지 않고 보존).
+- AI 허용(읽기): `sites.list`, `sites.get`(`/api/v1/site-registry[/{host}]`). 등록·정책 변경·해제는 AI 에 없다(사람 화면/카드).
 
 ### F2. 자동 탐색·갱신
 - **트리거(모두 읽기 전용·전용 탭·호스트 고정·한 번에 한 사이트)**: ① 등록 직후 최초 지도 없음 ② 업무가 `stale` 이거나 실패 N회 ③ 마지막 탐색 후 T일 경과 ④ 사용자 "다시 탐색".
@@ -39,7 +39,7 @@
 ## 3. 구성(레이어·위치) — 기존 파일을 건드리지 않고 개별 모듈로 추가
 | 계층 | 파일(신규) | 역할 |
 |---|---|---|
-| L1 | `ai_orchestrator/domain/site_registry.py` | 등록 상태 전이·정책 검증(순수) |
+| L1 | `ai_orchestrator/domain/site_registry.py` | 등록 상태 전이·정책 검증·탐색 결과 반영(순수) |
 | L1 | `ai_orchestrator/domain/site_task_prepare.py` | 준비 상태(`prepared → confirmed | cancelled | expired`), never 규칙, 마스킹 규칙(순수) |
 | L7 | `ai_orchestrator/persistence/site_registry_store.py` | `_sites.json` 원자적 저장 |
 | L6 | `ai_orchestrator/services/site_onboarding_service.py` | 등록 절차(공식 API 확인·로그인 읽기 확인·탐색 요청), 자동 탐색 정책 판정(지연 평가) |
@@ -76,3 +76,10 @@
 2. **신규 사이트 발견**: 사용자 명시 등록 — 권장. (탭 자동 스캔은 사용자 탭 열거 금지 원칙과 충돌.)
 3. **입력 실행 범위**: 준비=입력까지, 확정=사람 카드 클릭 시 재생·제출, never 목록 제외 — 권장.
 4. **첫 실사이트**: 네이버 카페 / 블로그 / 스마트스토어 중 선택(스마트스토어는 공식 커머스 API 등록이 우선).
+
+## S1 구현 결과 (2026-10-05) — 사이트 등록(F1)
+**구현**: L1 `domain/site_registry.py`(`overrides` 로 L1 계약 확정), L7 `persistence/site_registry_store.py`(`data/site_registry/sites.json`), L6 `services/site_onboarding_service.py`(overrides 로 L6 확정), L8 `routers/site_onboarding_router.py`, AI 허용 `sites.list/get`, 화면 `admin-web/src/app/site-map/RegisteredSites.tsx`(사이트 등록·상태·해제, 인라인 2단계 확인 — 브라우저 대화상자 미사용). 기존 `site_task_map*` 파일은 수정하지 않았다(코드 보존).
+**라우트**: 5개 추가(GET 2·POST 2·PATCH 1) → `EXPECTED_RUNTIME_ROUTES` 419 → 424, HTTP 417 → 422, POST 193 → 195 와 라우트 수 기준 시험 6곳을 함께 갱신.
+**이번 단계에서 하지 않은 것(다음 단계)**: 자동 탐색 `auto`(서비스가 아직 지원하지 않는다고 거부 — 설정만 받고 동작하지 않는 상태를 만들지 않으려는 선택), 로그인 상태 읽기 확인(등록 직후 상태는 탐색 결과로 판정: 로그인 필요 사이트인데 업무 0건이면 `needs_login`(추정), `bot_flagged` 는 `blocked`).
+**검증**: 시험 35건(규칙·저장소·서비스·라우터·AI 허용 범위), 린트·mypy·타입체크·ESLint 통과, 레이어 감사 층간 위반 0·순환 80(변화 없음), 계약 audit 424 PASS. 실제 앱: ① API 로 공개 사이트(`www.scrapethissite.com`)를 깊이 1·5쪽으로 등록 → `exploring` → 12초 만에 `ready`(업무 3건) ② 화면에서 인라인 확인으로 해제 → 다시 등록 → `사용 가능`·공식 API 안내 표시 ③ AI 창: `sites.list/get` 로 정확히 답, 등록 요청에는 "등록 도구가 없으니 화면에서 등록하세요"라고 안내, `sitemap.run` 으로 `pages_forms#0` 실행 21행 ④ Chrome 본체 신규 시작 0, 9222 탭 불변, 서버 로그 예외·5xx 0.
+**발견**: AI 가 만드는 탐색 요청(`sitemap.explore_request`)에는 `auth` 를 줄 수 없어 로그인 사이트도 `public` 으로 기록된다(기존 한계) — 등록 흐름은 등록할 때 로그인 요건을 선택하므로 해소된다.
