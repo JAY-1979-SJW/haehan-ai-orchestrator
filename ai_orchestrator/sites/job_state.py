@@ -164,7 +164,7 @@ def start(
         return rec
 
 
-def _transition(
+def _transition(  # noqa: PLR0913 - 작업 상태 전이 내부 헬퍼, 필드 나열형
     job_id: str,
     target: JobStatus,
     *,

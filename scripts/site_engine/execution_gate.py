@@ -175,19 +175,7 @@ def classify_action_sensitivity(action: str, capability: SiteCapability) -> Acti
 # ── 핵심 판단 함수 ────────────────────────────────────────────────────
 
 
-def evaluate_execution_gate(
-    gate_input: ExecutionGateInput,
-    profile=None,  # Optional[SiteProfile] — circular import 방지로 Any 허용
-) -> ExecutionGateResult:
-    """실행 gate 판단.
-
-    profile이 있으면 SiteProfile 정책을 우선 적용한다.
-    profile이 없으면 action/capability 기반 기본 정책을 적용한다.
-    """
-    cap = gate_input.capability
-    action = gate_input.action
-
-    # 1. profile 기반 명시 gate 확인
+def _evaluate_profile_gate(profile, cap):
     if profile is not None:
         if not profile.is_capability_allowed(cap):
             return ExecutionGateResult(
@@ -220,6 +208,25 @@ def evaluate_execution_gate(
                 reason=GateReason.USER_DIRECT_REQUIRED_BY_PROFILE,
                 detail="SiteProfile requires user direct operation",
             )
+    return None
+
+
+def evaluate_execution_gate(
+    gate_input: ExecutionGateInput,
+    profile=None,  # Optional[SiteProfile] — circular import 방지로 Any 허용
+) -> ExecutionGateResult:
+    """실행 gate 판단.
+
+    profile이 있으면 SiteProfile 정책을 우선 적용한다.
+    profile이 없으면 action/capability 기반 기본 정책을 적용한다.
+    """
+    cap = gate_input.capability
+    action = gate_input.action
+
+    # 1. profile 기반 명시 gate 확인
+    _early = _evaluate_profile_gate(profile, cap)
+    if _early is not None:
+        return _early
 
     # 2. 서버 금지 사이트에서 서버 브라우저 시도
     if gate_input.is_server_forbidden_site and gate_input.execution_location == ExecutionLocation.SERVER:

@@ -36,6 +36,36 @@ def _read(p: Path) -> str:
     return p.read_text(encoding="utf-8") if p.exists() else ""
 
 
+def _check_token_leak(rp, metrics):
+    for src_name, src_path in (("report", rp), ("summary", SUMMARY), ("runbook", RUNBOOK), ("checksums", CHECKSUMS)):
+        if src_path.exists():
+            leaks = _has_leak(_read(src_path))
+            if leaks:
+                return FieldTestVerdict(False, "FAIL_TOKEN_LEAK", reasons=[f"{src_name}: {leaks[:2]}"], metrics=metrics)
+    return None
+
+
+def _check_required_steps(steps, metrics):
+    required = (
+        "01_extract_zip_to_clean_folder",
+        "02_self_test_python_free",
+        "03_diagnostics_python_free",
+        "04_gui_launch",
+        "05_registration_with_code",
+        "06_credential_manager_storage",
+        "07_wss_auth_ok",
+        "08_heartbeat",
+        "09_reexecute_auto_reconnect",
+        "10_error_token_not_stored",
+        "11_error_register_no_env",
+    )
+    for k in required:
+        s = steps.get(k, {})
+        if not s.get("ok"):
+            return FieldTestVerdict(False, "FAIL_STEP_FAILED", reasons=[f"step {k} failed: {s}"], metrics=metrics)
+    return None
+
+
 def judge_field_test(
     *,
     report_path: Path | None = None,
@@ -61,11 +91,9 @@ def judge_field_test(
         return FieldTestVerdict(False, "FAIL_REPORT_INVALID_JSON", reasons=[str(exc)[:200]], metrics=metrics)
 
     # FAIL_TOKEN_LEAK — 보고서/runbook/summary 안에 raw token
-    for src_name, src_path in (("report", rp), ("summary", SUMMARY), ("runbook", RUNBOOK), ("checksums", CHECKSUMS)):
-        if src_path.exists():
-            leaks = _has_leak(_read(src_path))
-            if leaks:
-                return FieldTestVerdict(False, "FAIL_TOKEN_LEAK", reasons=[f"{src_name}: {leaks[:2]}"], metrics=metrics)
+    _early = _check_token_leak(rp, metrics)
+    if _early is not None:
+        return _early
 
     # FAIL_DESKTOP_UI_TOUCHED
     if not desktop_ui_unchanged_signal:
@@ -75,23 +103,9 @@ def judge_field_test(
 
     # 13 단계 — 필수 단계 PASS
     steps = d.get("steps", {})
-    required = (
-        "01_extract_zip_to_clean_folder",
-        "02_self_test_python_free",
-        "03_diagnostics_python_free",
-        "04_gui_launch",
-        "05_registration_with_code",
-        "06_credential_manager_storage",
-        "07_wss_auth_ok",
-        "08_heartbeat",
-        "09_reexecute_auto_reconnect",
-        "10_error_token_not_stored",
-        "11_error_register_no_env",
-    )
-    for k in required:
-        s = steps.get(k, {})
-        if not s.get("ok"):
-            return FieldTestVerdict(False, "FAIL_STEP_FAILED", reasons=[f"step {k} failed: {s}"], metrics=metrics)
+    _early = _check_required_steps(steps, metrics)
+    if _early is not None:
+        return _early
 
     # FAIL_ARTIFACTS_MISSING — sha256 둘 다
     art = d.get("artifacts", {})

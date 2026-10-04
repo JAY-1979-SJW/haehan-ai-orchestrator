@@ -118,11 +118,8 @@ def resolve_paths(
 # ── Chrome 프로세스 enumerate (인젝션 가능) ─────────────────────────
 
 
-def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
-    """OS 별 Chrome 프로세스 목록 (pid, cmdline) 을 반환한다.
-
-    psutil 우선, 없으면 Windows 는 wmic, 나머지는 ps 폴백.
-    """
+def _enum_chrome_psutil() -> list[tuple[int, str]] | None:
+    """psutil 로 열거. 실패하면 None (다음 폴백으로)."""
     try:
         import psutil  # type: ignore
 
@@ -137,44 +134,48 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
             except Exception:  # noqa: BLE001, S112
                 continue
         return out
-    except Exception:  # noqa: S110, BLE001
-        pass
+    except Exception:  # noqa: BLE001
+        return None
 
-    # Windows wmic fallback
-    if os.name == "nt":
-        try:
-            import subprocess
 
-            r = subprocess.run(
-                [
-                    "wmic",
-                    "process",
-                    "where",
-                    "name='chrome.exe' or name='msedge.exe'",
-                    "get",
-                    "ProcessId,CommandLine",
-                    "/format:csv",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=5,
-                encoding="utf-8",
-            )
-            out: list[tuple[int, str]] = []
-            for line in (r.stdout or "").splitlines():
-                parts = line.split(",")
-                if len(parts) < 3:
-                    continue
-                cmd = parts[1].strip()
-                try:
-                    pid = int(parts[2].strip())
-                except ValueError:
-                    continue
-                out.append((pid, cmd))
-            return out
-        except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
-            return []
+def _enum_chrome_wmic() -> list[tuple[int, str]]:
+    """Windows wmic 폴백."""
+    try:
+        import subprocess
 
+        r = subprocess.run(
+            [
+                "wmic",
+                "process",
+                "where",
+                "name='chrome.exe' or name='msedge.exe'",
+                "get",
+                "ProcessId,CommandLine",
+                "/format:csv",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            encoding="utf-8",
+        )
+        out: list[tuple[int, str]] = []
+        for line in (r.stdout or "").splitlines():
+            parts = line.split(",")
+            if len(parts) < 3:
+                continue
+            cmd = parts[1].strip()
+            try:
+                pid = int(parts[2].strip())
+            except ValueError:
+                continue
+            out.append((pid, cmd))
+        return out
+    except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
+        return []
+
+
+def _enum_chrome_ps() -> list[tuple[int, str]]:
+    """POSIX ps 폴백."""
     try:
         import subprocess
 
@@ -203,6 +204,22 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
         return out
     except Exception:  # noqa: BLE001 - 로컬 Chrome 자동화 프로세스 생명주기 관리(PID/락파일/CDP 상태 확인·종료) — 실패는 안전한 기본값(False/빈 리스트/0)으로 폴백, 여러 방법(psutil→wmic→SIGTERM)을 순차 시도, 원격 쓰기·결제 없음(2026-09-28 검토)
         return []
+
+
+def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
+    """OS 별 Chrome 프로세스 목록 (pid, cmdline) 을 반환한다.
+
+    psutil 우선, 없으면 Windows 는 wmic, 나머지는 ps 폴백.
+    """
+    out = _enum_chrome_psutil()
+    if out is not None:
+        return out
+
+    # Windows wmic fallback
+    if os.name == "nt":
+        return _enum_chrome_wmic()
+
+    return _enum_chrome_ps()
 
 
 _process_enumerator: Callable[[], list[tuple[int, str]]] = _enumerate_chrome_processes_default

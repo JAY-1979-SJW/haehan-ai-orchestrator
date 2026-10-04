@@ -321,7 +321,7 @@ def _goto_form_page(page) -> None:
         page.wait_for_load_state("load", timeout=5000)
 
 
-def register_device(
+def register_device(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     project_code: str,
     project_name: str,
     device_id: str,

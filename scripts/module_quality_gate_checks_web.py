@@ -59,10 +59,6 @@ def _npm_audit_commands() -> list[list[str]]:
     return deduped
 
 
-def _npm_audit_command() -> list[str]:
-    return _npm_audit_commands()[0]
-
-
 def _read_admin_web_audit_report(command: list[str]) -> tuple[bool, dict | str]:
     try:
         result = subprocess.run(

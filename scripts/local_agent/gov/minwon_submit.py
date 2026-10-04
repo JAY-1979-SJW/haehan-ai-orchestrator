@@ -89,7 +89,7 @@ def _ask_submit_approval(title: str, service_name: str, attachments: list[Path])
     )
 
 
-def submit_minwon(
+def submit_minwon(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     title: str,
     content: str,
     attachments: list[Path] | None = None,
@@ -185,7 +185,7 @@ def submit_minwon(
         return {"ok": False, "error": str(e)}
 
 
-def _fill_epeople_form(page, title, content, attachments, intent, audit_path, cfg) -> None:
+def _fill_epeople_form(page, title, content, attachments, intent, audit_path, cfg) -> None:  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     wait_ms(1000)
     type_text(page, cfg["title_field"], title, label="민원 제목", intent=intent, audit_path=audit_path, force=True)
     wait_ms(300)
@@ -202,7 +202,7 @@ def _fill_epeople_form(page, title, content, attachments, intent, audit_path, cf
         wait_ms(800)
 
 
-def _fill_gov24_form(page, title, content, attachments, intent, audit_path, cfg) -> None:
+def _fill_gov24_form(page, title, content, attachments, intent, audit_path, cfg) -> None:  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     search_field = cfg.get("search_field")
     if search_field:
         type_text(page, search_field, title[:50], label="민원 검색", intent=intent, audit_path=audit_path, force=True)

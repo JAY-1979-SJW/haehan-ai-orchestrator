@@ -79,7 +79,7 @@ class StandardAuditEvent:
     redaction_applied: bool
 
     @classmethod
-    def create(
+    def create(  # noqa: PLR0913 - 감사 증거 레코드 팩토리, 필드별 인자가 공개 API
         cls,
         event_type: str,
         task_id: str,
@@ -140,7 +140,7 @@ class ExecutionAttempt:
     artifact_refs: tuple[str, ...]
 
     @classmethod
-    def create(
+    def create(  # noqa: PLR0913 - 감사 증거 레코드 팩토리, 필드별 인자가 공개 API
         cls,
         task_id: str,
         execution_location: str,
@@ -203,7 +203,7 @@ class SafetyVerdict:
     checked_at: str
 
     @classmethod
-    def create(
+    def create(  # noqa: PLR0913 - 감사 증거 레코드 팩토리, 필드별 인자가 공개 API
         cls,
         task_id: str,
         policy_id: str,
@@ -266,7 +266,7 @@ class ExternalAppHandoff:
     auto_execute_allowed: bool
 
     @classmethod
-    def create(
+    def create(  # noqa: PLR0913 - 감사 증거 레코드 팩토리, 필드별 인자가 공개 API
         cls,
         task_id: str,
         bridge_id: str,
@@ -333,7 +333,7 @@ class ArtifactEvidenceRef:
     redaction_applied: bool
 
     @classmethod
-    def create(
+    def create(  # noqa: PLR0913 - 감사 증거 레코드 팩토리, 필드별 인자가 공개 API
         cls,
         artifact_type: str,
         content_type: str,

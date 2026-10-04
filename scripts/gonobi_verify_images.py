@@ -10,7 +10,7 @@ from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
 agent = BrowserAgent()
 agent.connect()
-page = agent._page
+page = agent.page
 
 OUT = ROOT / "data" / "gonobi_verify_screenshots"
 OUT.mkdir(parents=True, exist_ok=True)

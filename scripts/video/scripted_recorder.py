@@ -203,6 +203,25 @@ def place_chrome() -> None:
 # ── 장면 녹화 ───────────────────────────────────────────────────────────────
 
 
+async def _perform_action(page, act, do, sel):
+    if do == "click":
+        await page.click(sel, timeout=8000)
+    elif do == "type":
+        await page.click(sel, timeout=8000)
+        await page.fill(sel, "")
+        await page.type(sel, act.get("text", ""), delay=act.get("delay", 85))
+    elif do == "key":
+        await page.keyboard.press(act.get("key", "Enter"))
+    elif do == "select":
+        await page.select_option(sel, label=act.get("value", ""), timeout=8000)
+    elif do == "scroll":
+        await page.evaluate(f"window.scrollBy({{top:{act.get('px', 400)},behavior:'smooth'}})")
+    elif do == "scroll_top":
+        await page.evaluate("window.scrollTo({top:0,behavior:'smooth'})")
+    elif do == "hover":
+        await page.hover(sel, timeout=8000)
+
+
 async def _run_actions(page, actions: list[dict], t0: float) -> None:
     """타임라인 순서대로 조작 실행. at 은 녹화 시작 기준 초."""
     for act in sorted(actions, key=lambda a: a.get("at", 0)):
@@ -212,22 +231,7 @@ async def _run_actions(page, actions: list[dict], t0: float) -> None:
         do = act.get("do")
         sel = act.get("selector", "")
         try:
-            if do == "click":
-                await page.click(sel, timeout=8000)
-            elif do == "type":
-                await page.click(sel, timeout=8000)
-                await page.fill(sel, "")
-                await page.type(sel, act.get("text", ""), delay=act.get("delay", 85))
-            elif do == "key":
-                await page.keyboard.press(act.get("key", "Enter"))
-            elif do == "select":
-                await page.select_option(sel, label=act.get("value", ""), timeout=8000)
-            elif do == "scroll":
-                await page.evaluate(f"window.scrollBy({{top:{act.get('px', 400)},behavior:'smooth'}})")
-            elif do == "scroll_top":
-                await page.evaluate("window.scrollTo({top:0,behavior:'smooth'})")
-            elif do == "hover":
-                await page.hover(sel, timeout=8000)
+            await _perform_action(page, act, do, sel)
         except Exception as e:  # 조작 실패해도 녹화는 계속 — 장면을 통째로 잃지 않는다  # noqa: BLE001 - 녹화 스크립트 동작(클릭/스크롤/호버 등) 실패 시 경고 로그만 남기고 녹화 자체는 계속 진행 — 주석에 명시된 의도된 best-effort(장면을 통째로 잃지 않기 위함).
             _log.warning("[rec] 조작 실패 %s %s: %s", do, sel, str(e)[:90])
 

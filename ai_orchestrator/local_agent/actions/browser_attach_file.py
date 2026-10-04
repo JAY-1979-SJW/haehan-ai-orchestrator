@@ -20,6 +20,55 @@ from ai_orchestrator.local_agent.user_approval_gate import verify_and_consume_to
 ACTION_NAME = "browser.attach_file"
 
 
+def _find_file_input(page: Any, form_field_label: str) -> Any:
+    """label 매칭 우선, 없으면 첫 번째 input[type=file]."""
+    target = None
+    # label 텍스트 매칭
+    label = page.get_by_label(form_field_label) if form_field_label else None
+    if label:
+        try:
+            target = label
+        except Exception:  # noqa: BLE001 - 라벨탐색 실패 시 fallback 셀렉터로 전환(승인 토큰은 execute 진입부에서 이미 검증됨)
+            target = None
+    if target is None:
+        # fallback: 첫 file input
+        target = page.query_selector("input[type=file]")
+    return target
+
+
+def _attach_on_page(
+    page: Any, page_url: str, file_path: str, form_field_label: str, timeout_seconds: int, raw: dict[str, Any]
+) -> None:
+    try:
+        page.goto(page_url, timeout=timeout_seconds * 1000, wait_until="domcontentloaded")
+
+        # input[type=file] 매핑 — label 기준
+        target = _find_file_input(page, form_field_label)
+        if target is None:
+            raw["ok"] = False
+            raw["verdict"] = "FILE_INPUT_NOT_FOUND"
+        else:
+            try:
+                target.set_input_files(file_path)
+                raw["ok"] = True
+                raw["verdict"] = "FILE_ATTACHED"
+                raw["attached_file_name"] = Path(file_path).name
+                raw["attached_at"] = datetime.now(UTC).isoformat()
+                raw["form_state_after"] = {
+                    "field_label": form_field_label,
+                    "filled": True,
+                }
+            except Exception as e:  # noqa: BLE001 - 첨부 실패는 ATTACH_FAILED verdict로 명확히 반환(승인 토큰은 execute 진입부에서 이미 검증됨, 제출 버튼은 클릭하지 않음)
+                raw["ok"] = False
+                raw["verdict"] = "ATTACH_FAILED"
+                raw["error"] = f"{type(e).__name__}: {str(e)[:100]}"
+
+    except Exception as e:  # noqa: BLE001 - 페이지 로드 실패는 PAGE_LOAD_FAILED verdict로 명확히 반환(승인 토큰은 execute 진입부에서 이미 검증됨, 제출 버튼은 클릭하지 않음)
+        raw["ok"] = False
+        raw["verdict"] = "PAGE_LOAD_FAILED"
+        raw["error"] = f"{type(e).__name__}: {str(e)[:100]}"
+
+
 def execute(
     page_url: str,
     file_path: str,
@@ -67,51 +116,7 @@ def execute(
         try:
             context = browser.new_context()
             page = context.new_page()
-            try:
-                page.goto(page_url, timeout=timeout_seconds * 1000, wait_until="domcontentloaded")
-
-                # input[type=file] 매핑 — label 기준
-                # 우선 label 매칭, 없으면 첫 번째 file input
-                target = None
-                # label 텍스트 매칭
-                label = page.get_by_label(form_field_label) if form_field_label else None
-                if label:
-                    try:
-                        target = label
-                    except Exception:  # noqa: BLE001 - USER_DELEGATED 파일첨부 액션 — 실행 전 verify_and_consume_token으로 1회용 승인토큰을 먼저 검증(try 블록 이전)하고, except는 라벨탐색 실패시 fallback 셀렉터로 전환하거나 첨부/페이지로드 실패를 ATTACH_FAILED/PAGE_LOAD_FAILED verdict로 명확히 반환 — 승인 없이는 애초에 이 코드에 도달하지 않으며 제출(submit) 버튼은 클릭하지 않음.
-                        target = None
-                if target is None:
-                    # fallback: 첫 file input
-                    target = page.query_selector("input[type=file]")
-                if target is None:
-                    raw["ok"] = False
-                    raw["verdict"] = "FILE_INPUT_NOT_FOUND"
-                else:
-                    try:
-                        if hasattr(target, "set_input_files"):
-                            target.set_input_files(file_path)
-                        else:
-                            target.set_input_files(file_path)
-                        raw["ok"] = True
-                        raw["verdict"] = "FILE_ATTACHED"
-                        raw["attached_file_name"] = Path(file_path).name
-                        raw["attached_at"] = datetime.now(UTC).isoformat()
-                        raw["form_state_after"] = {
-                            "field_label": form_field_label,
-                            "filled": True,
-                        }
-                    except Exception as e:  # noqa: BLE001 - USER_DELEGATED 파일첨부 액션 — 실행 전 verify_and_consume_token으로 1회용 승인토큰을 먼저 검증(try 블록 이전)하고, except는 라벨탐색 실패시 fallback 셀렉터로 전환하거나 첨부/페이지로드 실패를 ATTACH_FAILED/PAGE_LOAD_FAILED verdict로 명확히 반환 — 승인 없이는 애초에 이 코드에 도달하지 않으며 제출(submit) 버튼은 클릭하지 않음.
-                        raw["ok"] = False
-                        raw["verdict"] = "ATTACH_FAILED"
-                        raw["error"] = f"{type(e).__name__}: {str(e)[:100]}"
-
-            except Exception as e:  # noqa: BLE001 - USER_DELEGATED 파일첨부 액션 — 실행 전 verify_and_consume_token으로 1회용 승인토큰을 먼저 검증(try 블록 이전)하고, except는 라벨탐색 실패시 fallback 셀렉터로 전환하거나 첨부/페이지로드 실패를 ATTACH_FAILED/PAGE_LOAD_FAILED verdict로 명확히 반환 — 승인 없이는 애초에 이 코드에 도달하지 않으며 제출(submit) 버튼은 클릭하지 않음.
-                raw["ok"] = False
-                raw["verdict"] = "PAGE_LOAD_FAILED"
-                raw["error"] = f"{type(e).__name__}: {str(e)[:100]}"
-            finally:
-                # cookies/storage_state 절대 추출 안 함
-                pass
+            _attach_on_page(page, page_url, file_path, form_field_label, timeout_seconds, raw)
         finally:
             browser.close()
 

@@ -45,6 +45,14 @@ def _read(rel: str) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
+def _needle_found(needle, scheduler):
+    if needle == "Register-ScheduledTask":
+        found = re.search(r"(?<!Un)Register-ScheduledTask", scheduler)
+    else:
+        found = needle in scheduler
+    return found
+
+
 def audit() -> list[str]:
     failures: list[str] = []
 
@@ -59,10 +67,7 @@ def audit() -> list[str]:
 
     scheduler = _read("scripts/setup_task_scheduler.ps1")
     for needle in FORBIDDEN_SCHEDULER_NEEDLES:
-        if needle == "Register-ScheduledTask":
-            found = re.search(r"(?<!Un)Register-ScheduledTask", scheduler)
-        else:
-            found = needle in scheduler
+        found = _needle_found(needle, scheduler)
         if found:
             failures.append(f"legacy autostart registration remains: {needle}")
     if "Unregister-ScheduledTask" not in scheduler:
@@ -70,10 +75,7 @@ def audit() -> list[str]:
 
     for rel, needle in FORBIDDEN_SOURCE_NEEDLES:
         text = _read(rel)
-        if needle == "Register-ScheduledTask":
-            found = re.search(r"(?<!Un)Register-ScheduledTask", text)
-        else:
-            found = needle in text
+        found = _needle_found(needle, text)
         if found:
             failures.append(f"legacy runtime source reference remains: {rel}: {needle}")
 

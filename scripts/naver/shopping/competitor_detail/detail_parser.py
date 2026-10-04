@@ -301,6 +301,64 @@ class CompetitorDetailParser:
         except Exception:  # noqa: BLE001 - 경쟁사 상품 상세페이지 읽기 전용 파싱(옵션/가격/스크린샷 조사) — 실패는 안전한 기본값(None/빈값/False)으로 폴백, 구매·결제·쓰기 없음(2026-09-28 검토)
             return None
 
+    def _reload_for_next_combo(self) -> None:
+        """조합마다 초기 상태에서 시작하도록 페이지 재로딩(실패는 무시)."""
+        try:
+            self.page.reload(wait_until="domcontentloaded", timeout=45000)
+            self.page.wait_for_timeout(5000)
+        except Exception:  # noqa: BLE001 - 재시도 전 상태 초기화 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
+            pass
+
+
+    def _select_sub_options(self, primary: str, combo: OptionCombo) -> None:
+        """하위 옵션을 모두 골라 combo 를 갱신한다(매 단계 다시 열거)."""
+        done = {primary}
+        for _ in range(self.MAX_OPTION_DEPTH):
+            # 하위 드롭다운은 **비동기로 주입**된다. 즉시 열거하면 아직 없어서
+            # 옵션이 없는 것으로 오판하고, 추가금이 0 으로 남아 자기검증이
+            # '산술 불일치' 를 오탐한다(2026-08-15 실측).
+            remaining: list[str] = []
+            for _ in range(10):
+                remaining = [g for g in self.option_groups() if g not in done]
+                if remaining:
+                    break
+                time.sleep(0.5)
+            if not remaining:
+                break
+            g = remaining[0]
+            sub = self._items(g)
+            got = self._pick(g, sub[0]) if sub else None
+            if got is None:
+                combo.needs_review = True
+                combo.review_reason = f"'{g}' 선택 실패"
+                break
+            combo.labels.append(got)
+            e = _extra_won_opt(got)
+            if e is not None:
+                combo.extra_won = (combo.extra_won or 0) + e
+            done.add(g)
+
+
+    def _read_total_with_fallback(self, prod: CompetitorProduct) -> int | None:
+        """총금액을 읽고, 없으면 옵션 행 금액으로 폴백한다."""
+        total = None
+        for _ in range(10):
+            total = self._read_total()
+            if total is not None:
+                break
+            time.sleep(0.6)
+        if total is None:
+            # 폴백: 총금액 문구가 없으면 옵션 행의 금액이라도 읽는다.
+            # 단 기본가보다 작으면 배송비 등을 잘못 잡은 것이므로 버린다
+            # (실측: 배송비 4,000원을 총액으로 오인한 사례)
+            fb = self._read_option_row_price()
+            base = prod.base_price.value
+            if fb is not None and base is not None and fb < base:
+                fb = None
+            total = fb
+        return total
+
+
     def collect_options(self, prod: CompetitorProduct, *, max_combos: int = 6) -> None:
         """제품 옵션을 하나씩 선택해 총 금액을 읽는다.
 
@@ -324,11 +382,7 @@ class CompetitorDetailParser:
             if i:
                 # 조합마다 초기 상태에서 시작한다. 선택 해제 UI 는 스토어마다
                 # 다르지만 재로딩은 항상 같은 상태를 보장한다(느리지만 확실).
-                try:
-                    self.page.reload(wait_until="domcontentloaded", timeout=45000)
-                    self.page.wait_for_timeout(5000)
-                except Exception:  # noqa: BLE001 - 재시도 전 상태 초기화 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
-                    pass
+                self._reload_for_next_combo()
 
             combo = OptionCombo(labels=[], extra_won=None)
             picked = self._pick(primary, lab)
@@ -348,47 +402,9 @@ class CompetitorDetailParser:
             # 하위 드롭다운은 **상위를 고른 뒤에야 DOM 에 생성된다**(2026-08-15 실측).
             # 그래서 처음 한 번 열거해 두면 안 되고 매 단계 다시 열거해야 한다.
             # 이 방식이면 3단 이상 옵션도 그대로 처리된다.
-            done = {primary}
-            for _ in range(self.MAX_OPTION_DEPTH):
-                # 하위 드롭다운은 **비동기로 주입**된다. 즉시 열거하면 아직 없어서
-                # 옵션이 없는 것으로 오판하고, 추가금이 0 으로 남아 자기검증이
-                # '산술 불일치' 를 오탐한다(2026-08-15 실측).
-                remaining: list[str] = []
-                for _ in range(10):
-                    remaining = [g for g in self.option_groups() if g not in done]
-                    if remaining:
-                        break
-                    time.sleep(0.5)
-                if not remaining:
-                    break
-                g = remaining[0]
-                sub = self._items(g)
-                got = self._pick(g, sub[0]) if sub else None
-                if got is None:
-                    combo.needs_review = True
-                    combo.review_reason = f"'{g}' 선택 실패"
-                    break
-                combo.labels.append(got)
-                e = _extra_won_opt(got)
-                if e is not None:
-                    combo.extra_won = (combo.extra_won or 0) + e
-                done.add(g)
+            self._select_sub_options(primary, combo)
 
-            total = None
-            for _ in range(10):
-                total = self._read_total()
-                if total is not None:
-                    break
-                time.sleep(0.6)
-            if total is None:
-                # 폴백: 총금액 문구가 없으면 옵션 행의 금액이라도 읽는다.
-                # 단 기본가보다 작으면 배송비 등을 잘못 잡은 것이므로 버린다
-                # (실측: 배송비 4,000원을 총액으로 오인한 사례)
-                fb = self._read_option_row_price()
-                base = prod.base_price.value
-                if fb is not None and base is not None and fb < base:
-                    fb = None
-                total = fb
+            total = self._read_total_with_fallback(prod)
             combo.total_won = total
 
             if not combo.needs_review and prod.base_price.value is not None:

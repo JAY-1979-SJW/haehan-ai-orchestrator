@@ -8,9 +8,14 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 
 class BlogCollectMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드를 self(MRO)로 호출한다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def blog_bulk_collect(
         self,
         blog_urls: list[str],

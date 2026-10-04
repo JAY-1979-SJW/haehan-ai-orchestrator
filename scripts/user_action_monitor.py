@@ -166,6 +166,68 @@ def _format_event(ev: dict) -> str:
         return f"[{t}]  {json.dumps(detail, ensure_ascii=False)[:80]}"
 
 
+def _print_watch_header(timeout_s, host_filter):
+    print("=" * 60)
+    print("사용자 조작 실시간 감지 시작")
+    if timeout_s > 0:
+        print(f"  최대 대기: {timeout_s}초 / Ctrl+C로 조기 종료")
+    else:
+        print("  무한 대기 — Ctrl+C로 종료")
+    if host_filter:
+        print(f"  감시 대상: {host_filter}")
+    print("=" * 60)
+
+
+def _refresh_active_page(page):
+    try:
+        current_url = page.url or ""
+    except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
+        page = _get_page()
+        current_url = page.url or ""
+    return page, current_url
+
+
+def _record_url_change(current_url, last_url, all_events, on_event):
+    if current_url != last_url:
+        if last_url:
+            ev = {
+                "type": "url_change",
+                "detail": {"from": last_url, "to": current_url},
+                "ts": int(time.time() * 1000),
+                "url": current_url,
+            }
+            all_events.append(ev)
+            print(f"\n  {_format_event(ev)}")
+            if on_event:
+                on_event(ev)
+        last_url = current_url
+    return last_url
+
+
+def _handle_events(page, host_filter, all_events, on_event, start):
+    events = _collect(page)
+    for ev in events:
+        all_events.append(ev)
+        msg = _format_event(ev)
+        elapsed = int(time.time() - start)
+        print(f"  [{elapsed:>4}s] {msg}")
+
+        # DB 기록
+        try:
+            cdp_db.init_db()
+            cdp_db.log_action(  # type: ignore[attr-defined]  # cdp_db 에 실제로 없는 함수(2026-09-29 defect_index 확인) — 이미 넓은 except 로 안전하게 감싸져 조용히 스킵됨, 콘솔 출력(위 print)은 계속 동작
+                site=host_filter or "browser",
+                action_type=ev.get("type", "unknown"),
+                detail=json.dumps(ev.get("detail", {}), ensure_ascii=False),
+                url=ev.get("url", ""),
+            )
+        except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
+            pass
+
+        if on_event:
+            on_event(ev)
+
+
 def watch_user_actions(
     timeout_s: int = DEFAULT_TIMEOUT_S,
     host_filter: str | None = None,
@@ -187,25 +249,13 @@ def watch_user_actions(
     start = time.time()
     injected_urls: set[str] = set()
 
-    print("=" * 60)
-    print("사용자 조작 실시간 감지 시작")
-    if timeout_s > 0:
-        print(f"  최대 대기: {timeout_s}초 / Ctrl+C로 조기 종료")
-    else:
-        print("  무한 대기 — Ctrl+C로 종료")
-    if host_filter:
-        print(f"  감시 대상: {host_filter}")
-    print("=" * 60)
+    _print_watch_header(timeout_s, host_filter)
 
     try:
         while timeout_s <= 0 or time.time() - start < timeout_s:
             try:
                 # 활성 탭 갱신
-                try:
-                    current_url = page.url or ""
-                except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
-                    page = _get_page()
-                    current_url = page.url or ""
+                page, current_url = _refresh_active_page(page)
 
                 # 호스트 필터
                 if host_filter and host_filter not in current_url:
@@ -213,19 +263,7 @@ def watch_user_actions(
                     continue
 
                 # URL 변화 감지
-                if current_url != last_url:
-                    if last_url:
-                        ev = {
-                            "type": "url_change",
-                            "detail": {"from": last_url, "to": current_url},
-                            "ts": int(time.time() * 1000),
-                            "url": current_url,
-                        }
-                        all_events.append(ev)
-                        print(f"\n  {_format_event(ev)}")
-                        if on_event:
-                            on_event(ev)
-                    last_url = current_url
+                last_url = _record_url_change(current_url, last_url, all_events, on_event)
 
                 # JS 주입 (URL별 1회)
                 if current_url not in injected_urls:
@@ -235,27 +273,7 @@ def watch_user_actions(
                         injected_urls.add(current_url)
 
                 # 이벤트 수집
-                events = _collect(page)
-                for ev in events:
-                    all_events.append(ev)
-                    msg = _format_event(ev)
-                    elapsed = int(time.time() - start)
-                    print(f"  [{elapsed:>4}s] {msg}")
-
-                    # DB 기록
-                    try:
-                        cdp_db.init_db()
-                        cdp_db.log_action(  # type: ignore[attr-defined]  # cdp_db 에 실제로 없는 함수(2026-09-29 defect_index 확인) — 이미 넓은 except 로 안전하게 감싸져 조용히 스킵됨, 콘솔 출력(위 print)은 계속 동작
-                            site=host_filter or "browser",
-                            action_type=ev.get("type", "unknown"),
-                            detail=json.dumps(ev.get("detail", {}), ensure_ascii=False),
-                            url=ev.get("url", ""),
-                        )
-                    except Exception:  # noqa: BLE001 - 사용자 행동 모니터링 주입 스크립트 - 주입/수집 실패 시 False/빈 목록 반환, 감시 루프 지속을 위한 폴백
-                        pass
-
-                    if on_event:
-                        on_event(ev)
+                _handle_events(page, host_filter, all_events, on_event, start)
 
             except KeyboardInterrupt:
                 raise

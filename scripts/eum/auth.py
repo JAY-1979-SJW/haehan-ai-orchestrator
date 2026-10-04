@@ -203,6 +203,67 @@ def _find_selector(page, candidates: list[str]) -> str | None:
     return None
 
 
+def _eum_session_signal(page, current_url: str, form_visible: bool) -> bool:
+    """로그인 폼이 안 보일 때 대시보드 요소/세션 텍스트로 로그인 신호를 확인."""
+    try:
+        if not form_visible and page.query_selector(".login_dashboard"):
+            log.debug("is_logged_in: EUM login dashboard detected url=%s", current_url)
+            return True
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
+        pass
+    try:
+        if not form_visible:
+            body_text = page.locator("body").inner_text(timeout=2000)
+            if any(token in body_text for token in ("로그아웃", "로그인연장", "마이페이지")):
+                log.debug("is_logged_in: EUM session text detected url=%s", current_url)
+                return True
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
+        pass
+    return False
+
+
+def _login_button_visible(page, current_url: str) -> bool:
+    """visible '로그인' 버튼이 있으면 True (R2 핵심 — /main 공개 페이지 false positive 차단)."""
+    login_button_selectors = [
+        "a:has-text('로그인')",
+        "button:has-text('로그인')",
+        "[onclick*='login']:not([onclick*='logout'])",
+    ]
+    for sel in login_button_selectors:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                # "로그아웃"도 "로그인"을 포함하므로 텍스트 한 번 더 확인
+                txt = (el.inner_text() or "").strip()
+                if txt == "로그인" or ("로그인" in txt and "로그아웃" not in txt):
+                    log.debug("is_logged_in: '로그인' 버튼 visible — 미로그인 url=%s", current_url)
+                    return True
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
+            pass
+    return False
+
+
+def _logout_button_visible(page) -> bool:
+    """명시적 로그아웃 버튼이 보이면 True (강한 로그인 신호)."""
+    strong_logged_in_selectors = [
+        "a:has-text('로그아웃')",
+        "button:has-text('로그아웃')",
+        "[onclick*='logout']",
+        "[href*='logout']",
+        "[id='btnLogout']",
+        ".btn-logout",
+    ]
+    for sel in strong_logged_in_selectors:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                log.debug("is_logged_in: 로그아웃 버튼 발견 sel=%s", sel)
+                return True
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
+            pass
+    return False
+
+
 def is_logged_in(page) -> bool:
     """현재 페이지가 로그인 상태인지 확인.
 
@@ -226,20 +287,8 @@ def is_logged_in(page) -> bool:
             page.wait_for_selector(".login_dashboard", state="attached", timeout=5000)
     id_visible = _find_selector(page, _ID_SELECTORS) is not None
     pw_visible = _find_selector(page, _PW_SELECTORS) is not None
-    try:
-        if not (id_visible and pw_visible) and page.query_selector(".login_dashboard"):
-            log.debug("is_logged_in: EUM login dashboard detected url=%s", current_url)
-            return True
-    except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-        pass
-    try:
-        if not (id_visible and pw_visible):
-            body_text = page.locator("body").inner_text(timeout=2000)
-            if any(token in body_text for token in ("로그아웃", "로그인연장", "마이페이지")):
-                log.debug("is_logged_in: EUM session text detected url=%s", current_url)
-                return True
-    except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-        pass
+    if _eum_session_signal(page, current_url, id_visible and pw_visible):
+        return True
     if id_visible and pw_visible:
         log.debug("is_logged_in: 로그인 폼 visible — 미로그인 확정 url=%s", current_url)
         return False
@@ -250,40 +299,12 @@ def is_logged_in(page) -> bool:
         return False
 
     # 3. visible "로그인" 버튼이 있으면 미로그인 (R2 핵심 — /main 공개 페이지 false positive 차단)
-    login_button_selectors = [
-        "a:has-text('로그인')",
-        "button:has-text('로그인')",
-        "[onclick*='login']:not([onclick*='logout'])",
-    ]
-    for sel in login_button_selectors:
-        try:
-            el = page.query_selector(sel)
-            if el and el.is_visible():
-                # "로그아웃"도 "로그인"을 포함하므로 텍스트 한 번 더 확인
-                txt = (el.inner_text() or "").strip()
-                if txt == "로그인" or ("로그인" in txt and "로그아웃" not in txt):
-                    log.debug("is_logged_in: '로그인' 버튼 visible — 미로그인 url=%s", current_url)
-                    return False
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-            pass
+    if _login_button_visible(page, current_url):
+        return False
 
     # 4. 명시적 로그아웃 버튼 (강한 신호 — 로그인됨)
-    strong_logged_in_selectors = [
-        "a:has-text('로그아웃')",
-        "button:has-text('로그아웃')",
-        "[onclick*='logout']",
-        "[href*='logout']",
-        "[id='btnLogout']",
-        ".btn-logout",
-    ]
-    for sel in strong_logged_in_selectors:
-        try:
-            el = page.query_selector(sel)
-            if el and el.is_visible():
-                log.debug("is_logged_in: 로그아웃 버튼 발견 sel=%s", sel)
-                return True
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-            pass
+    if _logout_button_visible(page):
+        return True
 
     # 5. 보호된 페이지 패턴 (/web/man/ 등) + 폼/로그인버튼 없음 → 로그인된 것으로 추정
     protected_patterns = ["/web/man/", "/mypage", "/dashboard"]
@@ -307,29 +328,94 @@ def _try_goto(page, url: str) -> bool:
         return False
 
 
-def _prepare_login_page(page, url: str) -> bool:
-    """Navigate to one EUM login candidate and return True when the form is ready."""
-    ok = _try_goto(page, url)
-    if not ok:
-        return False
-    current = page.url
+_USER_NAME_SELECTORS = [".user-name", ".login-user", "[class*='user-nm']", ".name"]
 
-    if "WEBLOG400M00" in current and _select_member_category(page, _MEMBER_CATEGORY):
-        _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
-        # 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-        with contextlib.suppress(Exception):
-            page.wait_for_selector(
-                "input[type='password']:visible",
-                state="visible",
-                timeout=3000,
-            )
+def _first_selector_text(page, selectors: list[str]) -> str | None:
+    """selector 순서대로 첫 번째 비어있지 않은 텍스트(strip) 반환. 개별 실패는 무시."""
+    for sel in selectors:
+        try:
+            el = page.query_selector(sel)
+            if el:
+                txt = el.inner_text().strip()
+                if txt:
+                    return txt
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
             pass
+    return None
 
-    id_sel = _find_selector(page, _ID_SELECTORS)
-    if id_sel:
-        log.info("login page found: url=%s id_sel=%s", current, id_sel)
-        return True
-    return False
+
+def _reach_login_form(page) -> bool:
+    """로그인 URL 후보로 이동해 ID 입력 폼을 찾는다. 못 찾으면 현재 페이지에서 재시도."""
+    # 로그인 URL 후보 순서대로 시도
+    for login_url in [EUM_PRIMARY_LOGIN_URL]:
+        ok = _try_goto(page, login_url)
+        if not ok:
+            continue
+        current = page.url
+
+        # WEBLOG400M00 진입 시 회원 분류 (단말기 업체) 선택 필요
+        if "WEBLOG400M00" in current and _select_member_category(page, _MEMBER_CATEGORY):
+            _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
+            # 폼이 visible 로 바뀔 때까지 잠깐 대기 (best-effort, 실패해도 다음 신호로 계속, 2026-09-28 검토)
+            with contextlib.suppress(Exception):
+                page.wait_for_selector(
+                    "input[type='password']:visible",
+                    state="visible",
+                    timeout=3000,
+                )
+                pass
+
+        id_sel = _find_selector(page, _ID_SELECTORS)
+        if id_sel:
+            log.info("로그인 페이지 발견: url=%s id_sel=%s", current, id_sel)
+            return True
+
+    # 현재 페이지에서 폼 재시도 (혹은 단말기 업체 선택 재시도)
+    if "WEBLOG400M00" in page.url:
+        _select_member_category(page, _MEMBER_CATEGORY)
+        _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
+    return bool(_find_selector(page, _ID_SELECTORS))
+
+
+def _submit_credentials(page, id_sel: str, pw_sel: str, eum_id: str, eum_pw: str) -> str | None:
+    """ID/PW 를 사람처럼 입력하고 로그인 버튼(또는 Enter)을 눌러 제출. 입력 실패 시 오류 메시지, 성공 시 None."""
+    # 휴먼 타이핑 (봇 감지 회피)
+    r_id = safe_human_input(page, id_sel, eum_id, label="ID", delay_ms=80)
+    if not r_id.get("ok"):
+        return f"ID 입력 실패: {r_id.get('reason', '')}"
+    r_pw = safe_human_input(page, pw_sel, eum_pw, label="PW", delay_ms=80)
+    if not r_pw.get("ok"):
+        return f"PW 입력 실패: {r_pw.get('reason', '')}"
+
+    # 로그인 버튼 클릭
+    btn_sel = _find_selector(page, _BTN_SELECTORS)
+    if btn_sel:
+        log.info("로그인 버튼 클릭: sel=%s", btn_sel)
+        page.click(btn_sel)
+    else:
+        # 버튼 없으면 Enter 키
+        log.info("로그인 버튼 미발견 — Enter 키 사용")
+        page.locator(pw_sel).press("Enter")
+
+    # 페이지 로딩 대기 (best-effort, 실패해도 다음 신호로 계속, 2026-09-28 검토)
+    with contextlib.suppress(Exception):
+        page.wait_for_load_state("networkidle", timeout=15000)
+
+    # 팝업/알림 처리 (로그인 실패 메시지, best-effort, 2026-09-28 검토)
+    with contextlib.suppress(Exception):
+        page.wait_for_timeout(1000)
+    return None
+
+
+def _save_eum_session(page) -> None:
+    """세션 자동 저장 (다음 실행 시 복원). 실패는 무시."""
+    try:
+        from scripts.auth_session import save_session as _save
+
+        _save("eum.cw.or.kr", page)
+        log.info("[eum-auth] 세션 저장 완료")
+    except Exception as _e:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
+        log.debug("[eum-auth] 세션 저장 실패 (무시): %s", _e)
 
 
 def login(page) -> dict:
@@ -364,43 +450,11 @@ def login(page) -> dict:
         # 메인 페이지 우회 단축경로 제거됨 — EUM /main 은 미로그인도 공개라 false positive.
         # 바로 로그인 URL 후보부터 시도하여 실제 폼/세션을 확인한다.
 
-        # 로그인 URL 후보 순서대로 시도
-        login_page_reached = False
-        for login_url in [EUM_PRIMARY_LOGIN_URL]:
-            ok = _try_goto(page, login_url)
-            if not ok:
-                continue
-            current = page.url
-
-            # WEBLOG400M00 진입 시 회원 분류 (단말기 업체) 선택 필요
-            if "WEBLOG400M00" in current and _select_member_category(page, _MEMBER_CATEGORY):
-                _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
-                # 폼이 visible 로 바뀔 때까지 잠깐 대기 (best-effort, 실패해도 다음 신호로 계속, 2026-09-28 검토)
-                with contextlib.suppress(Exception):
-                    page.wait_for_selector(
-                        "input[type='password']:visible",
-                        state="visible",
-                        timeout=3000,
-                    )
-                    pass
-
-            id_sel = _find_selector(page, _ID_SELECTORS)
-            if id_sel:
-                log.info("로그인 페이지 발견: url=%s id_sel=%s", current, id_sel)
-                login_page_reached = True
-                break
-
-        if not login_page_reached:
-            # 현재 페이지에서 폼 재시도 (혹은 단말기 업체 선택 재시도)
-            if "WEBLOG400M00" in page.url:
-                _select_member_category(page, _MEMBER_CATEGORY)
-                _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
-            id_sel = _find_selector(page, _ID_SELECTORS)
-            if not id_sel:
-                msg = "로그인 페이지/폼을 찾을 수 없습니다."
-                log.warning(msg)
-                ctx.set_result(msg=msg, ok=False)
-                return {"ok": False, "reason": msg, "user": ""}
+        if not _reach_login_form(page):
+            msg = "로그인 페이지/폼을 찾을 수 없습니다."
+            log.warning(msg)
+            ctx.set_result(msg=msg, ok=False)
+            return {"ok": False, "reason": msg, "user": ""}
 
         # ID 입력
         id_sel = _find_selector(page, _ID_SELECTORS)
@@ -417,66 +471,22 @@ def login(page) -> dict:
 
         log.info("로그인 폼 입력 시작: id_sel=%s pw_sel=%s", id_sel, pw_sel)
 
-        # 휴먼 타이핑 (봇 감지 회피)
-        r_id = safe_human_input(page, id_sel, eum_id, label="ID", delay_ms=80)
-        if not r_id.get("ok"):
-            msg = f"ID 입력 실패: {r_id.get('reason', '')}"
-            ctx.set_result(msg=msg, ok=False)
-            return {"ok": False, "reason": msg, "user": ""}
-        r_pw = safe_human_input(page, pw_sel, eum_pw, label="PW", delay_ms=80)
-        if not r_pw.get("ok"):
-            msg = f"PW 입력 실패: {r_pw.get('reason', '')}"
-            ctx.set_result(msg=msg, ok=False)
-            return {"ok": False, "reason": msg, "user": ""}
-
-        # 로그인 버튼 클릭
-        btn_sel = _find_selector(page, _BTN_SELECTORS)
-        if btn_sel:
-            log.info("로그인 버튼 클릭: sel=%s", btn_sel)
-            page.click(btn_sel)
-        else:
-            # 버튼 없으면 Enter 키
-            log.info("로그인 버튼 미발견 — Enter 키 사용")
-            page.locator(pw_sel).press("Enter")
-
-        # 페이지 로딩 대기 (best-effort, 실패해도 다음 신호로 계속, 2026-09-28 검토)
-        with contextlib.suppress(Exception):
-            page.wait_for_load_state("networkidle", timeout=15000)
-
-        # 팝업/알림 처리 (로그인 실패 메시지, best-effort, 2026-09-28 검토)
-        with contextlib.suppress(Exception):
-            page.wait_for_timeout(1000)
+        input_err = _submit_credentials(page, id_sel, pw_sel, eum_id, eum_pw)
+        if input_err:
+            ctx.set_result(msg=input_err, ok=False)
+            return {"ok": False, "reason": input_err, "user": ""}
 
         # 로그인 성공 여부 확인
         if is_logged_in(page):
             # 사용자명 추출 시도
-            user_name = eum_id
-            user_selectors = [".user-name", ".login-user", "[class*='user-nm']", ".name"]
-            for sel in user_selectors:
-                try:
-                    el = page.query_selector(sel)
-                    if el:
-                        txt = el.inner_text().strip()
-                        if txt:
-                            user_name = txt
-                            break
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-                    pass
+            user_name = _first_selector_text(page, _USER_NAME_SELECTORS) or eum_id
 
             log.info("로그인 성공: user=%s url=%s", user_name, page.url)
             ctx.set_result(msg="로그인 성공", ok=True, user=user_name)
-            # 세션 자동 저장 (다음 실행 시 복원)
-            try:
-                from scripts.auth_session import save_session as _save
-
-                _save("eum.cw.or.kr", page)
-                log.info("[eum-auth] 세션 저장 완료")
-            except Exception as _e:  # noqa: BLE001 - EUM 로그인 자동화 — 로그인 상태 판정은 여러 DOM 신호를 순차 확인하고 실패 시 항상 미로그인(fail-closed)으로 처리, 로그인 결과는 항상 {ok, reason} 구조로 반환, 자격증명 값은 로그에 남기지 않음(2026-09-28 검토)
-                log.debug("[eum-auth] 세션 저장 실패 (무시): %s", _e)
+            _save_eum_session(page)
             return {"ok": True, "reason": "로그인 성공", "user": user_name}
 
         # 실패 메시지 추출 시도
-        fail_msg = "로그인 실패 (이유 불명)"
         fail_selectors = [
             "#alertMsg0",
             ".pop_modal_alert .pop_msg",
@@ -491,16 +501,8 @@ def login(page) -> dict:
             "span:has-text('오류')",
             "div:has-text('실패')",
         ]
-        for sel in fail_selectors:
-            try:
-                el = page.query_selector(sel)
-                if el:
-                    txt = el.inner_text().strip()
-                    if txt:
-                        fail_msg = txt[:200]
-                        break
-            except Exception:  # noqa: BLE001 - 여러 셀렉터/신호를 순차 시도하는 best-effort — 하나 실패해도 다음 신호로 계속(2026-09-28 검토)
-                pass
+        fail_text = _first_selector_text(page, fail_selectors)
+        fail_msg = fail_text[:200] if fail_text else "로그인 실패 (이유 불명)"
 
         log.warning("로그인 실패: url=%s msg=%s", page.url, fail_msg)
         ctx.set_result(msg=fail_msg, ok=False)

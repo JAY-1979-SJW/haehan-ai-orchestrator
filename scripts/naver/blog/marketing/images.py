@@ -15,6 +15,7 @@ import requests
 from dotenv import load_dotenv
 
 from scripts.logger import get_logger
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
 from scripts.naver.blog.marketing.topics import topic_key
 
 _log = get_logger(__name__)
@@ -77,7 +78,7 @@ _QUERY_SETS = {
 
 
 def queries_for(blog_id: str | None = None) -> list[tuple[str, str]]:
-    return _QUERY_SETS.get(blog_id or "skyjwsin", UNSPLASH_QUERIES)
+    return _QUERY_SETS.get(blog_id or DEFAULT_ACCOUNT, UNSPLASH_QUERIES)
 
 
 def _img_dir():

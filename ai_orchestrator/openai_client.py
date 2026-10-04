@@ -27,14 +27,6 @@ def generate_approval_reason(req: TaskRequest, plan: ExecutionPlan) -> str:
     )
 
 
-def generate_plan_explanation(req: TaskRequest, plan: ExecutionPlan) -> str:
-    return (
-        f"[MOCK] 실행 계획 설명 — 작업 {req.task_id}: "
-        f"총 {len(plan.steps)}단계로 구성, "
-        f"허용여부: {plan.allowed}, 승인필요: {plan.requires_approval}"
-    )
-
-
 def generate_application_draft(grant: dict, company: dict) -> str:
     """정부 지원사업 신청서 초안 자리표시(템플릿). 실제 맞춤 초안은 Claude Code가 작성.
 

@@ -12,6 +12,66 @@ from datetime import UTC, datetime
 from . import local_agent_registry as _reg
 
 
+def _aggregate_tasks(tasks_snapshot: list) -> tuple[dict, dict, tuple]:
+    """task 스냅샷 → (task_counts, summary_counts, latest 정보) 집계."""
+    task_counts = {
+        "total": len(tasks_snapshot),
+        "queued": 0,
+        "pending": 0,
+        "running": 0,
+        "waiting_approval": 0,
+        "completed": 0,
+        "failed": 0,
+        "rejected": 0,
+        "cancelled": 0,
+    }
+
+    summary_counts = {
+        "with_result_summary": 0,
+        "with_observe_summary": 0,
+        "with_audit_summary": 0,
+    }
+
+    latest_task_created_at = None
+    latest_task_updated_at = None
+    latest_task_status = None
+    has_observe_summary = False
+    has_audit_summary = False
+
+    for task in tasks_snapshot:
+        # Task 상태 count
+        if task.status in task_counts:
+            task_counts[task.status] += 1
+        elif task.status == "pending":  # 호환성 (queued/pending 구분)
+            task_counts["pending"] += 1
+
+        # Summary count
+        if task.result_summary:
+            summary_counts["with_result_summary"] += 1
+        if task.observe_summary:
+            summary_counts["with_observe_summary"] += 1
+        if task.audit_summary:
+            summary_counts["with_audit_summary"] += 1
+
+        # Latest task timestamp
+        if latest_task_created_at is None or task.created_at > latest_task_created_at:
+            latest_task_created_at = task.created_at
+        if latest_task_updated_at is None or task.updated_at > latest_task_updated_at:
+            latest_task_updated_at = task.updated_at
+            latest_task_status = task.status
+            has_observe_summary = bool(task.observe_summary)
+            has_audit_summary = bool(task.audit_summary)
+
+    latest = (
+        latest_task_created_at,
+        latest_task_updated_at,
+        latest_task_status,
+        has_observe_summary,
+        has_audit_summary,
+    )
+    return task_counts, summary_counts, latest
+
+
 def build_local_agent_diagnostics() -> dict:
     """현재 agent/task 상태를 운영 진단용 집계 데이터로 변환.
 
@@ -87,53 +147,14 @@ def build_local_agent_diagnostics() -> dict:
         }
 
         # 2. Task 상태 집계
-        task_counts = {
-            "total": len(tasks_snapshot),
-            "queued": 0,
-            "pending": 0,
-            "running": 0,
-            "waiting_approval": 0,
-            "completed": 0,
-            "failed": 0,
-            "rejected": 0,
-            "cancelled": 0,
-        }
-
-        summary_counts = {
-            "with_result_summary": 0,
-            "with_observe_summary": 0,
-            "with_audit_summary": 0,
-        }
-
-        latest_task_created_at = None
-        latest_task_updated_at = None
-        latest_task_status = None
-        has_observe_summary = False
-        has_audit_summary = False
-
-        for task in tasks_snapshot:
-            # Task 상태 count
-            if task.status in task_counts:
-                task_counts[task.status] += 1
-            elif task.status == "pending":  # 호환성 (queued/pending 구분)
-                task_counts["pending"] += 1
-
-            # Summary count
-            if task.result_summary:
-                summary_counts["with_result_summary"] += 1
-            if task.observe_summary:
-                summary_counts["with_observe_summary"] += 1
-            if task.audit_summary:
-                summary_counts["with_audit_summary"] += 1
-
-            # Latest task timestamp
-            if latest_task_created_at is None or task.created_at > latest_task_created_at:
-                latest_task_created_at = task.created_at
-            if latest_task_updated_at is None or task.updated_at > latest_task_updated_at:
-                latest_task_updated_at = task.updated_at
-                latest_task_status = task.status
-                has_observe_summary = bool(task.observe_summary)
-                has_audit_summary = bool(task.audit_summary)
+        task_counts, summary_counts, latest = _aggregate_tasks(tasks_snapshot)
+        (
+            latest_task_created_at,
+            latest_task_updated_at,
+            latest_task_status,
+            has_observe_summary,
+            has_audit_summary,
+        ) = latest
 
         # 3. Status 판정
         status = "ok"

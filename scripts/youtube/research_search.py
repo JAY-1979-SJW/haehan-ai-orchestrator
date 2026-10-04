@@ -38,7 +38,7 @@ COMMENT_CLASS_RULES: dict[str, tuple[str, ...]] = {
 }
 
 
-def search_videos(
+def search_videos(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     query: str,
     *,
     max_results: int = 5,
@@ -271,7 +271,39 @@ def collect_video_info(
     return payload, _write_report(payload, ROOT / "data" / "youtube_video_info_latest.json", "youtube_video_info")
 
 
-def collect_comments(
+def _append_thread_comments(
+    comments: list[dict[str, Any]], item: dict[str, Any], include_replies: bool, max_comments_total: int
+) -> bool:
+    """댓글 스레드 1건(최상위 + 선택적 답글)을 comments 에 추가. 상한 도달 시 True."""
+    top_comment = item.get("snippet", {}).get("topLevelComment", {})
+    top = top_comment.get("snippet", {})
+    comments.append(
+        _comment_row(
+            comment_id=str(top_comment.get("id") or item.get("id") or ""),
+            snippet=top,
+            parent_id="",
+            kind="top_level",
+        )
+    )
+    if len(comments) >= max_comments_total:
+        return True
+    if include_replies:
+        for reply in item.get("replies", {}).get("comments", []):
+            reply_snippet = reply.get("snippet", {})
+            comments.append(
+                _comment_row(
+                    comment_id=str(reply.get("id") or ""),
+                    snippet=reply_snippet,
+                    parent_id=str(item.get("id") or ""),
+                    kind="reply",
+                )
+            )
+            if len(comments) >= max_comments_total:
+                break
+    return len(comments) >= max_comments_total
+
+
+def collect_comments(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     video_id: str,
     *,
     max_results: int = 20,
@@ -330,32 +362,7 @@ def collect_comments(
                 data = _get_json_oauth(YOUTUBE_COMMENT_THREADS_URL, params, token)
             pages_fetched += 1
             for item in data.get("items", []):
-                top_comment = item.get("snippet", {}).get("topLevelComment", {})
-                top = top_comment.get("snippet", {})
-                comments.append(
-                    _comment_row(
-                        comment_id=str(top_comment.get("id") or item.get("id") or ""),
-                        snippet=top,
-                        parent_id="",
-                        kind="top_level",
-                    )
-                )
-                if len(comments) >= max_comments_total:
-                    break
-                if include_replies:
-                    for reply in item.get("replies", {}).get("comments", []):
-                        reply_snippet = reply.get("snippet", {})
-                        comments.append(
-                            _comment_row(
-                                comment_id=str(reply.get("id") or ""),
-                                snippet=reply_snippet,
-                                parent_id=str(item.get("id") or ""),
-                                kind="reply",
-                            )
-                        )
-                        if len(comments) >= max_comments_total:
-                            break
-                if len(comments) >= max_comments_total:
+                if _append_thread_comments(comments, item, include_replies, max_comments_total):
                     break
             next_page_token = str(data.get("nextPageToken") or "")
             if not next_page_token:

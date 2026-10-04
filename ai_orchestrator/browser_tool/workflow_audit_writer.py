@@ -253,7 +253,7 @@ def _redact_url(url: str) -> tuple[str, str]:
         return "[REDACTED_URL]", url_hash
 
 
-def build_audit_record(
+def build_audit_record(  # noqa: PLR0913 - 감사 레코드 빌더, 필드별 인자가 공개 API
     workflow_run_id: str,
     event_type: str,
     action_name: str,
@@ -351,16 +351,9 @@ def build_audit_record(
     )
 
 
-def validate_audit_record(record: WorkflowAuditRecord) -> list[str]:
-    """Validate audit record has required fields and valid values.
-
-    Args:
-        record: Audit record to validate
-
-    Returns:
-        List of error messages (empty list = valid)
-    """
-    errors = []
+def _validate_required_string_fields(record: WorkflowAuditRecord) -> list[str]:
+    """audit_id ~ workflow_id 필수 문자열 필드 검증 (오류 순서 유지)."""
+    errors: list[str] = []
 
     # Required string fields
     if not record.audit_id:
@@ -378,6 +371,20 @@ def validate_audit_record(record: WorkflowAuditRecord) -> list[str]:
         errors.append("operation_type is required")
     if not record.workflow_id:
         errors.append("workflow_id is required")
+
+    return errors
+
+
+def validate_audit_record(record: WorkflowAuditRecord) -> list[str]:
+    """Validate audit record has required fields and valid values.
+
+    Args:
+        record: Audit record to validate
+
+    Returns:
+        List of error messages (empty list = valid)
+    """
+    errors = _validate_required_string_fields(record)
 
     # Gate decision
     if not record.gate_decision:

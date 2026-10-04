@@ -389,7 +389,7 @@ class NaverSmartStore:
             self._bulk_register = BulkRegister(self.page)
         return self._bulk_register
 
-    def register_bulk(
+    def register_bulk(  # noqa: PLR0913 - 공개 API 시그니처 유지(호출부 다수)
         self,
         products: list[dict],
         product_type: str = "general",

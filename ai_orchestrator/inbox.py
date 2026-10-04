@@ -26,7 +26,7 @@ class InboxItem:
     metadata: dict = field(default_factory=dict)
 
 
-def create_inbox_item(
+def create_inbox_item(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     source_type: str,
     source_account: str = "",
     external_id: str = "",

@@ -42,11 +42,6 @@ def _get_window_title(hwnd: int) -> str:
     return buf.value
 
 
-def _get_foreground_title() -> str:
-    hwnd = user32.GetForegroundWindow()
-    return _get_window_title(hwnd) if hwnd else ""
-
-
 def _enum_all_titles() -> list[str]:
     """현재 열린 모든 최상위 창 제목 목록 반환."""
     titles: list[str] = []

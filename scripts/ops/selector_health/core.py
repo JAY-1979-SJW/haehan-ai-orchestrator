@@ -96,6 +96,55 @@ def _probe(page: Any, selector: str) -> tuple[int, int]:
     return total, visible
 
 
+def _check_precondition(spec, page, req, _say):
+    satisfied = True
+    if req:
+        fn = spec.preconditions.get(req)
+        if fn is None:
+            satisfied = False
+            _say(f"  [선행조건 미정의] {req}")
+        else:
+            try:
+                satisfied = bool(fn(page))
+            except Exception as e:  # noqa: BLE001 - UI 셀렉터 존재여부 헬스체크(읽기전용) — 가시성 확인/선행조건 확인/셀렉터 조회 실패 시 모두 ERROR/SKIPPED 상태로 명확히 표시되어 '정상'으로 오판되지 않음.
+                satisfied = False
+                _say(f"  [선행조건 실패] {req}: {type(e).__name__}")
+            if not satisfied:
+                _say(f"  [선행조건 미충족] {req} — 관련 셀렉터 검사 skip")
+    return satisfied
+
+
+def _run_one_check(page, c, req, satisfied) -> CheckResult:
+    if not satisfied:
+        return CheckResult(
+            c.name,
+            c.selector,
+            SKIPPED,
+            note=c.note,
+            detail=f"선행조건 '{req}' 미충족",
+            expect_visible=(c.expect == "visible"),
+        )
+    try:
+        total, vis = _probe(page, c.selector)
+    except Exception as e:  # noqa: BLE001 - UI 셀렉터 존재여부 헬스체크(읽기전용) — 가시성 확인/선행조건 확인/셀렉터 조회 실패 시 모두 ERROR/SKIPPED 상태로 명확히 표시되어 '정상'으로 오판되지 않음.
+        return CheckResult(
+            c.name,
+            c.selector,
+            ERROR,
+            detail=type(e).__name__,
+            note=c.note,
+            expect_visible=(c.expect == "visible"),
+        )
+
+    if total == 0:
+        status = MISSING
+    elif c.expect == "visible" and vis == 0:
+        status = HIDDEN
+    else:
+        status = OK
+    return CheckResult(c.name, c.selector, status, total, vis, note=c.note, expect_visible=(c.expect == "visible"))
+
+
 def run_site_checks(page: Any, spec: SiteSpec, *, log=None) -> list[CheckResult]:
     """한 사이트의 셀렉터를 순서대로 검사.
 
@@ -122,58 +171,10 @@ def run_site_checks(page: Any, spec: SiteSpec, *, log=None) -> list[CheckResult]
 
     results: list[CheckResult] = []
     for req in sorted(groups, key=lambda k: (k is not None, k or "")):
-        satisfied = True
-        if req:
-            fn = spec.preconditions.get(req)
-            if fn is None:
-                satisfied = False
-                _say(f"  [선행조건 미정의] {req}")
-            else:
-                try:
-                    satisfied = bool(fn(page))
-                except Exception as e:  # noqa: BLE001 - UI 셀렉터 존재여부 헬스체크(읽기전용) — 가시성 확인/선행조건 확인/셀렉터 조회 실패 시 모두 ERROR/SKIPPED 상태로 명확히 표시되어 '정상'으로 오판되지 않음.
-                    satisfied = False
-                    _say(f"  [선행조건 실패] {req}: {type(e).__name__}")
-                if not satisfied:
-                    _say(f"  [선행조건 미충족] {req} — 관련 셀렉터 검사 skip")
+        satisfied = _check_precondition(spec, page, req, _say)
 
         for c in groups[req]:
-            if not satisfied:
-                results.append(
-                    CheckResult(
-                        c.name,
-                        c.selector,
-                        SKIPPED,
-                        note=c.note,
-                        detail=f"선행조건 '{req}' 미충족",
-                        expect_visible=(c.expect == "visible"),
-                    )
-                )
-                continue
-            try:
-                total, vis = _probe(page, c.selector)
-            except Exception as e:  # noqa: BLE001 - UI 셀렉터 존재여부 헬스체크(읽기전용) — 가시성 확인/선행조건 확인/셀렉터 조회 실패 시 모두 ERROR/SKIPPED 상태로 명확히 표시되어 '정상'으로 오판되지 않음.
-                results.append(
-                    CheckResult(
-                        c.name,
-                        c.selector,
-                        ERROR,
-                        detail=type(e).__name__,
-                        note=c.note,
-                        expect_visible=(c.expect == "visible"),
-                    )
-                )
-                continue
-
-            if total == 0:
-                status = MISSING
-            elif c.expect == "visible" and vis == 0:
-                status = HIDDEN
-            else:
-                status = OK
-            results.append(
-                CheckResult(c.name, c.selector, status, total, vis, note=c.note, expect_visible=(c.expect == "visible"))
-            )
+            results.append(_run_one_check(page, c, req, satisfied))
     return results
 
 

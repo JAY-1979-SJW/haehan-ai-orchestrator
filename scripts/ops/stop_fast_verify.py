@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 import time
@@ -51,7 +52,34 @@ def _session_edit_files(session_id: str | None) -> list[Path]:
     return files
 
 
+def _collect_problems(files, start):
+    problems: list[str] = []
+
+    for f in files:
+        if time.monotonic() - start > OVERALL_BUDGET_SECONDS:
+            break
+        suffix = f.suffix.lower()
+        try:
+            if suffix == ".py":
+                rc = _check_python(f, start)
+            elif suffix in (".ts", ".tsx"):
+                rc = _check_typescript(f, start)
+            else:
+                rc = 0
+            if rc != 0:
+                problems.append(str(f.relative_to(ROOT)))
+        except Exception as exc:  # noqa: BLE001 - Stop 훅 빠른검증 — stdin 파싱 실패나 개별 파일 검사 실패, 내부 전역 오류 모두 훅 자체를 무해하게 통과시키는 의도된 fail-open(코드 주석에 '# fail-open'으로 명시됨)
+            sys.stderr.write(f"[stop_fast_verify] check failed for {f} (ignored): {exc}\n")
+            continue
+    return problems
+
+
 def main() -> int:
+    # 훅 출력은 하네스가 UTF-8 로 읽는다. 파이프로 연결되면 파이썬 기본 인코딩이 cp949 라 한글이 깨져
+    # 사용자에게 안내 문구(예: /clear 안내)가 읽히지 않았다(2026-10-01).
+    for _stream in (sys.stdout, sys.stderr):
+        with contextlib.suppress(Exception):
+            _stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         payload = json.load(sys.stdin)
     except Exception:  # noqa: BLE001 - Stop 훅 빠른검증 — stdin 파싱 실패나 개별 파일 검사 실패, 내부 전역 오류 모두 훅 자체를 무해하게 통과시키는 의도된 fail-open(코드 주석에 '# fail-open'으로 명시됨)
@@ -70,24 +98,7 @@ def main() -> int:
 
     start = time.monotonic()
     try:
-        problems: list[str] = []
-
-        for f in files:
-            if time.monotonic() - start > OVERALL_BUDGET_SECONDS:
-                break
-            suffix = f.suffix.lower()
-            try:
-                if suffix == ".py":
-                    rc = _check_python(f, start)
-                elif suffix in (".ts", ".tsx"):
-                    rc = _check_typescript(f, start)
-                else:
-                    rc = 0
-                if rc != 0:
-                    problems.append(str(f.relative_to(ROOT)))
-            except Exception as exc:  # noqa: BLE001 - Stop 훅 빠른검증 — stdin 파싱 실패나 개별 파일 검사 실패, 내부 전역 오류 모두 훅 자체를 무해하게 통과시키는 의도된 fail-open(코드 주석에 '# fail-open'으로 명시됨)
-                sys.stderr.write(f"[stop_fast_verify] check failed for {f} (ignored): {exc}\n")
-                continue
+        problems = _collect_problems(files, start)
 
         if problems:
             print(

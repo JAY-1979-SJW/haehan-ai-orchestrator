@@ -106,7 +106,7 @@ def _find_forbidden_fields(value: Any, *, prefix: str = "") -> list[str]:
     return violations
 
 
-def build_common_tool_task(
+def build_common_tool_task(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     *,
     tool_namespace: str,
     action: str,
@@ -136,7 +136,7 @@ def build_common_tool_task(
     return task
 
 
-def validate_common_tool_task(task: dict[str, Any], *, raise_on_error: bool = False) -> list[str]:
+def _task_field_violations(task: dict[str, Any]) -> list[str]:
     violations: list[str] = []
 
     if task.get("schema_version") != SCHEMA_VERSION:
@@ -159,6 +159,11 @@ def validate_common_tool_task(task: dict[str, Any], *, raise_on_error: bool = Fa
         violations.append("write risk requires approval")
     if requires_approval and not task.get("approval_id"):
         violations.append("approval_id missing for approval-required task")
+    return violations
+
+
+def validate_common_tool_task(task: dict[str, Any], *, raise_on_error: bool = False) -> list[str]:
+    violations = _task_field_violations(task)
 
     forbidden = _find_forbidden_fields(task)
     if forbidden:

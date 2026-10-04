@@ -8,9 +8,14 @@ from __future__ import annotations
 
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
 
 class CafeMediaMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def cafe_album(self, cafe_url: str, menu_id: str = "", page: int = 1, per_page: int = 30) -> dict:
         """카페 앨범(사진 게시판) 목록 조회 — GraphQL BFF 직접 호출.
 

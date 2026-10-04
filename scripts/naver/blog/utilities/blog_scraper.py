@@ -84,7 +84,8 @@ def save_csv(data: list[dict], path: Path):
             writer.writerow(r)
 
 
-def main():
+def _build_parser() -> argparse.ArgumentParser:
+    """CLI 인자 파서."""
     parser = argparse.ArgumentParser(
         description="네이버 블로그 대량 수집 스크립트",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -103,6 +104,121 @@ def main():
     parser.add_argument("--out", default="", help="저장 경로")
     parser.add_argument("--csv", action="store_true", help="CSV도 저장")
     parser.add_argument("--incremental", action="store_true", help="증분 수집")
+    return parser
+
+
+def _scrape_single_blog(agent, args, timestamp: str) -> None:
+    """단일 블로그 수집."""
+    blog_id = args.blog.rstrip("/").split("/")[-1]
+    out_path = Path(args.out) if args.out else Path(f"data/scrape/blog_{blog_id}_{timestamp}.json")
+
+    existing_data, existing_ids = [], set()
+    if args.incremental and out_path.exists():
+        existing_data, existing_ids = load_existing(out_path)
+        print(f"기존 데이터: {len(existing_data)}개")
+
+    all_posts = []
+    seen_ids = set(existing_ids)
+
+    print(f"\n수집 시작: {args.blog}")
+    print(f"페이지: {args.pages} | full={args.full}")
+    print(f"저장 경로: {out_path}\n")
+
+    for page in range(1, args.pages + 1):
+        print(f"[{page}/{args.pages}] 수집 중...")
+        posts = agent.blog_posts(args.blog, category_no=args.category, page=page, max_posts=args.max)
+
+        if not posts:
+            print("  포스트 없음, 종료")
+            break
+
+        new_count = 0
+        for i, post in enumerate(posts, 1):
+            log_no = post.get("log_no", "")
+            if log_no in seen_ids:
+                continue
+
+            if args.full and post.get("href"):
+                detail = agent.blog_read_post(post["href"])
+                post.update(
+                    {
+                        "body": detail.get("body", ""),
+                        "tags": detail.get("tags", []),
+                        "images": detail.get("images", []),
+                        "comment_count": detail.get("comment_count", 0),
+                        "comments": detail.get("comments", []),
+                    }
+                )
+
+            seen_ids.add(log_no)
+            all_posts.append(post)
+            new_count += 1
+            print(f"  {post['title'][:50]}")
+
+        print(f"  신규: {new_count}개 (누계 {len(all_posts)}개)\n")
+
+    final_data = existing_data + all_posts
+    save_json(final_data, out_path)
+    print(f"저장 완료: {out_path} ({len(final_data)}개)")
+
+    if args.csv:
+        csv_path = out_path.with_suffix(".csv")
+        save_csv(final_data, csv_path)
+        print(f"CSV 저장: {csv_path}")
+
+
+def _scrape_bulk_blogs(agent, args, timestamp: str) -> None:
+    """여러 블로그 수집."""
+    blog_urls = [url.strip() for url in args.blogs.split(",")]
+    out_path = Path(args.out) if args.out else Path(f"data/scrape/blogs_bulk_{timestamp}.json")
+
+    print(f"\n여러 블로그 수집: {len(blog_urls)}개")
+    all_data = agent.blog_bulk_collect(
+        blog_urls,
+        include_posts=True,
+        include_comments=args.full,
+        include_images=args.full,
+        max_posts_each=args.max,
+    )
+
+    save_json(all_data, out_path)
+    print(f"저장 완료: {out_path}")
+
+
+def _monitor_keywords(agent, args, timestamp: str) -> None:
+    """키워드 모니터링."""
+    keywords = [kw.strip() for kw in args.keywords.split(",")]
+    out_path = Path(args.out) if args.out else Path(f"data/scrape/keywords_{timestamp}.json")
+
+    print(f"\n키워드 모니터링: {keywords}")
+    results = agent.blog_monitor_keywords(keywords, page=1, max_each=args.max)
+
+    save_json(results, out_path)
+    print(f"저장 완료: {out_path}")
+
+
+def _scrape_search(agent, args, timestamp: str) -> None:
+    """검색 결과 수집."""
+    out_path = Path(args.out) if args.out else Path(f"data/scrape/search_{args.search}_{timestamp}.json")
+
+    print(f"\n검색 결과 수집: '{args.search}'")
+    results = agent.blog_search_bulk(args.search, max_pages=args.pages, collect_post=args.full)
+
+    save_json(results, out_path)
+    print(f"저장 완료: {out_path} ({len(results)}개)")
+
+
+def _track_blogger(agent, args, timestamp: str) -> None:
+    """블로거 추적."""
+    out_path = Path(args.out) if args.out else Path(f"data/scrape/track_{datetime.now().isoformat()}.json")
+
+    print(f"\n블로거 추적: {args.track}")
+    agent.blog_track_blogger(args.track, save_path=str(out_path))
+    print(f"저장 완료: {out_path}")
+
+
+def main():
+    parser = _build_parser()
 
     args = parser.parse_args()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -110,108 +226,23 @@ def main():
     with BrowserAgent() as agent:
         # ── 단일 블로그 수집 ──────────────────────────────────────
         if args.blog:
-            blog_id = args.blog.rstrip("/").split("/")[-1]
-            out_path = Path(args.out) if args.out else Path(f"data/scrape/blog_{blog_id}_{timestamp}.json")
-
-            existing_data, existing_ids = [], set()
-            if args.incremental and out_path.exists():
-                existing_data, existing_ids = load_existing(out_path)
-                print(f"기존 데이터: {len(existing_data)}개")
-
-            all_posts = []
-            seen_ids = set(existing_ids)
-
-            print(f"\n수집 시작: {args.blog}")
-            print(f"페이지: {args.pages} | full={args.full}")
-            print(f"저장 경로: {out_path}\n")
-
-            for page in range(1, args.pages + 1):
-                print(f"[{page}/{args.pages}] 수집 중...")
-                posts = agent.blog_posts(args.blog, category_no=args.category, page=page, max_posts=args.max)
-
-                if not posts:
-                    print("  포스트 없음, 종료")
-                    break
-
-                new_count = 0
-                for i, post in enumerate(posts, 1):
-                    log_no = post.get("log_no", "")
-                    if log_no in seen_ids:
-                        continue
-
-                    if args.full and post.get("href"):
-                        detail = agent.blog_read_post(post["href"])
-                        post.update(
-                            {
-                                "body": detail.get("body", ""),
-                                "tags": detail.get("tags", []),
-                                "images": detail.get("images", []),
-                                "comment_count": detail.get("comment_count", 0),
-                                "comments": detail.get("comments", []),
-                            }
-                        )
-
-                    seen_ids.add(log_no)
-                    all_posts.append(post)
-                    new_count += 1
-                    print(f"  {post['title'][:50]}")
-
-                print(f"  신규: {new_count}개 (누계 {len(all_posts)}개)\n")
-
-            final_data = existing_data + all_posts
-            save_json(final_data, out_path)
-            print(f"저장 완료: {out_path} ({len(final_data)}개)")
-
-            if args.csv:
-                csv_path = out_path.with_suffix(".csv")
-                save_csv(final_data, csv_path)
-                print(f"CSV 저장: {csv_path}")
+            _scrape_single_blog(agent, args, timestamp)
 
         # ── 여러 블로그 수집 ──────────────────────────────────────
         elif args.blogs:
-            blog_urls = [url.strip() for url in args.blogs.split(",")]
-            out_path = Path(args.out) if args.out else Path(f"data/scrape/blogs_bulk_{timestamp}.json")
-
-            print(f"\n여러 블로그 수집: {len(blog_urls)}개")
-            all_data = agent.blog_bulk_collect(
-                blog_urls,
-                include_posts=True,
-                include_comments=args.full,
-                include_images=args.full,
-                max_posts_each=args.max,
-            )
-
-            save_json(all_data, out_path)
-            print(f"저장 완료: {out_path}")
+            _scrape_bulk_blogs(agent, args, timestamp)
 
         # ── 키워드 모니터링 ────────────────────────────────────────
         elif args.keywords:
-            keywords = [kw.strip() for kw in args.keywords.split(",")]
-            out_path = Path(args.out) if args.out else Path(f"data/scrape/keywords_{timestamp}.json")
-
-            print(f"\n키워드 모니터링: {keywords}")
-            results = agent.blog_monitor_keywords(keywords, page=1, max_each=args.max)
-
-            save_json(results, out_path)
-            print(f"저장 완료: {out_path}")
+            _monitor_keywords(agent, args, timestamp)
 
         # ── 검색 결과 수집 ────────────────────────────────────────
         elif args.search:
-            out_path = Path(args.out) if args.out else Path(f"data/scrape/search_{args.search}_{timestamp}.json")
-
-            print(f"\n검색 결과 수집: '{args.search}'")
-            results = agent.blog_search_bulk(args.search, max_pages=args.pages, collect_post=args.full)
-
-            save_json(results, out_path)
-            print(f"저장 완료: {out_path} ({len(results)}개)")
+            _scrape_search(agent, args, timestamp)
 
         # ── 블로거 추적 ────────────────────────────────────────
         elif args.track:
-            out_path = Path(args.out) if args.out else Path(f"data/scrape/track_{datetime.now().isoformat()}.json")
-
-            print(f"\n블로거 추적: {args.track}")
-            agent.blog_track_blogger(args.track, save_path=str(out_path))
-            print(f"저장 완료: {out_path}")
+            _track_blogger(agent, args, timestamp)
 
         else:
             parser.print_help()

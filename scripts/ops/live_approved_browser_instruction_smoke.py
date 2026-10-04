@@ -172,6 +172,143 @@ def stop_worker(proc: subprocess.Popen | None) -> None:
         proc.wait(timeout=8)
 
 
+def _check_unauth_blocked(server):
+    try:
+        request_json("GET", f"{server}/api/v1/local-agents/registration-codes", timeout=10)
+        print("[FAIL] unauth registration-code list unexpectedly allowed")
+        print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
+        return 1
+    except urllib.error.HTTPError as exc:
+        if exc.code == 401:
+            print("[PASS] unauth admin endpoint blocked - 401")
+        else:
+            print(f"[FAIL] unauth admin endpoint unexpected status - {exc.code}")
+            print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
+            return 1
+    return None
+
+
+def _issue_registration_code(server, auth):
+    _, issued = request_json(
+        "POST",
+        f"{server}/api/v1/local-agents/registration-codes",
+        auth=auth,
+        body={
+            "label": "codex-live-browser-smoke",
+            "expires_in_minutes": 10,
+            "allowed_actions": ["web_open_url_readonly"],
+            "note": "live readonly browser smoke",
+            "smoke_test": True,
+        },
+    )
+    registration_code = str(issued.get("registration_code") or "")
+    if not registration_code:
+        print("[FAIL] registration code missing")
+        print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
+        return (1), None
+    print("[PASS] registration code issued - redacted")
+    return None, registration_code
+
+
+def _register_with_code(server, registration_code):
+    _, registered = request_json(
+        "POST",
+        f"{server}/api/v1/local-agents/register-with-code",
+        body={
+            "registration_code": registration_code,
+            "host": "codex-live-local",
+            "os_name": "Windows",
+            "version": "live-smoke",
+        },
+    )
+    return registered
+
+
+def _check_worker_alive(worker):
+    time.sleep(6)
+    if worker.poll() is not None:
+        print(f"[FAIL] local worker exited early - code={worker.returncode}")
+        print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
+        return 1
+    return None
+
+
+def _queue_instruction(server, agent_id, auth, args):
+    _, queued = request_json(
+        "POST",
+        f"{server}/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        auth=auth,
+        body={
+            "instruction": "Summarize the public page title and link count only",
+            "url": args.url,
+            "wait_until": "domcontentloaded",
+            "timeout_ms": 20000,
+            "max_html_chars": 100000,
+            "visible_browser": bool(args.visible),
+            "keep_open_ms": max(0, min(int(args.keep_open_ms), 30000)),
+            "browser_channel": args.browser_channel,
+        },
+    )
+    task_id = str(queued.get("task_id") or "")
+    if not task_id:
+        print("[FAIL] browser instruction task id missing")
+        print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
+        return (1), None, None
+    if "Summarize the public page" in json.dumps(queued) or "?" in str(queued.get("url_host", "")):
+        print("[FAIL] browser instruction response leaked raw input")
+        print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
+        return (1), None, None
+    print(f"[PASS] browser instruction queued - task_id={task_id}")
+    return None, queued, task_id
+
+
+def _poll_task(server, agent_id, task_id, auth, queued, args):
+    deadline = time.time() + args.timeout
+    detail = queued
+    last_status = str(queued.get("status") or "")
+    while time.time() < deadline:
+        time.sleep(2)
+        try:
+            _, detail = request_json(
+                "GET",
+                f"{server}/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+                auth=auth,
+                timeout=10,
+            )
+        except Exception:  # noqa: BLE001 - 스모크테스트 진행상태 폴링 중 일시적 HTTP 조회 실패는 재시도 루프에서 continue, 테스트용 임시 관리자 계정(codex_browser_smoke_*) 정리 실패는 WARN 출력만(운영 계정이 아닌 테스트 전용 임시계정)
+            continue
+        last_status = str(detail.get("status") or last_status)
+        if last_status in {"completed", "failed", "cancelled", "expired"}:
+            break
+
+    print(f"[PASS] task final observed - status={last_status}")
+    if last_status != "completed":
+        print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
+        return (1), None
+    return None, detail
+
+
+def _report_result(detail):
+    summary = str(detail.get("result_summary") or "")[:240]
+    observe = detail.get("observe_summary") if isinstance(detail.get("observe_summary"), dict) else {}
+    print(f"[PASS] result summary - {summary}")
+    if observe:
+        print(
+            "[PASS] observe summary - "
+            f"status={observe.get('status_category')} "
+            f"title_len={observe.get('title_len')} "
+            f"pages={observe.get('pages_observed_count')} "
+            f"headless={observe.get('browser_headless')} "
+            f"keep_open_ms={observe.get('browser_keep_open_ms')} "
+            f"channel={observe.get('browser_channel')}"
+        )
+    else:
+        print("[WARN] observe summary - not returned")
+    print("RESULT=PASS_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
+    return 0
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--server", default=DEFAULT_SERVER)
@@ -191,49 +328,16 @@ def main(argv: list[str] | None = None) -> int:
         remote_user("add", username, password)
         print("[PASS] temp admin user added")
 
-        try:
-            request_json("GET", f"{server}/api/v1/local-agents/registration-codes", timeout=10)
-            print("[FAIL] unauth registration-code list unexpectedly allowed")
-            print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
-            return 1
-        except urllib.error.HTTPError as exc:
-            if exc.code == 401:
-                print("[PASS] unauth admin endpoint blocked - 401")
-            else:
-                print(f"[FAIL] unauth admin endpoint unexpected status - {exc.code}")
-                print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
-                return 1
+        _early = _check_unauth_blocked(server)
+        if _early is not None:
+            return _early
 
         auth = (username, password)
-        _, issued = request_json(
-            "POST",
-            f"{server}/api/v1/local-agents/registration-codes",
-            auth=auth,
-            body={
-                "label": "codex-live-browser-smoke",
-                "expires_in_minutes": 10,
-                "allowed_actions": ["web_open_url_readonly"],
-                "note": "live readonly browser smoke",
-                "smoke_test": True,
-            },
-        )
-        registration_code = str(issued.get("registration_code") or "")
-        if not registration_code:
-            print("[FAIL] registration code missing")
-            print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
-            return 1
-        print("[PASS] registration code issued - redacted")
+        _early, registration_code = _issue_registration_code(server, auth)
+        if _early is not None:
+            return _early
 
-        _, registered = request_json(
-            "POST",
-            f"{server}/api/v1/local-agents/register-with-code",
-            body={
-                "registration_code": registration_code,
-                "host": "codex-live-local",
-                "os_name": "Windows",
-                "version": "live-smoke",
-            },
-        )
+        registered = _register_with_code(server, registration_code)
         registration_code = ""
         agent_id = str(registered.get("agent_id") or "")
         device_token = str(registered.get("device_token") or "")
@@ -246,78 +350,21 @@ def main(argv: list[str] | None = None) -> int:
         worker = start_worker(server, agent_id, device_token)
         device_token = ""
         print(f"[PASS] local worker started - pid={worker.pid}")
-        time.sleep(6)
-        if worker.poll() is not None:
-            print(f"[FAIL] local worker exited early - code={worker.returncode}")
-            print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
-            return 1
+        _early = _check_worker_alive(worker)
+        if _early is not None:
+            return _early
 
-        _, queued = request_json(
-            "POST",
-            f"{server}/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
-            auth=auth,
-            body={
-                "instruction": "Summarize the public page title and link count only",
-                "url": args.url,
-                "wait_until": "domcontentloaded",
-                "timeout_ms": 20000,
-                "max_html_chars": 100000,
-                "visible_browser": bool(args.visible),
-                "keep_open_ms": max(0, min(int(args.keep_open_ms), 30000)),
-                "browser_channel": args.browser_channel,
-            },
-        )
-        task_id = str(queued.get("task_id") or "")
-        if not task_id:
-            print("[FAIL] browser instruction task id missing")
-            print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
-            return 1
-        if "Summarize the public page" in json.dumps(queued) or "?" in str(queued.get("url_host", "")):
-            print("[FAIL] browser instruction response leaked raw input")
-            print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
-            return 1
-        print(f"[PASS] browser instruction queued - task_id={task_id}")
+        _early, queued, task_id = _queue_instruction(server, agent_id, auth, args)
+        if _early is not None:
+            return _early
 
-        deadline = time.time() + args.timeout
-        detail = queued
-        last_status = str(queued.get("status") or "")
-        while time.time() < deadline:
-            time.sleep(2)
-            try:
-                _, detail = request_json(
-                    "GET",
-                    f"{server}/api/v1/local-agents/{agent_id}/tasks/{task_id}",
-                    auth=auth,
-                    timeout=10,
-                )
-            except Exception:  # noqa: BLE001 - 스모크테스트 진행상태 폴링 중 일시적 HTTP 조회 실패는 재시도 루프에서 continue, 테스트용 임시 관리자 계정(codex_browser_smoke_*) 정리 실패는 WARN 출력만(운영 계정이 아닌 테스트 전용 임시계정)
-                continue
-            last_status = str(detail.get("status") or last_status)
-            if last_status in {"completed", "failed", "cancelled", "expired"}:
-                break
+        _early, detail = _poll_task(server, agent_id, task_id, auth, queued, args)
+        if _early is not None:
+            return _early
 
-        print(f"[PASS] task final observed - status={last_status}")
-        if last_status != "completed":
-            print("RESULT=FAIL_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
-            return 1
-
-        summary = str(detail.get("result_summary") or "")[:240]
-        observe = detail.get("observe_summary") if isinstance(detail.get("observe_summary"), dict) else {}
-        print(f"[PASS] result summary - {summary}")
-        if observe:
-            print(
-                "[PASS] observe summary - "
-                f"status={observe.get('status_category')} "
-                f"title_len={observe.get('title_len')} "
-                f"pages={observe.get('pages_observed_count')} "
-                f"headless={observe.get('browser_headless')} "
-                f"keep_open_ms={observe.get('browser_keep_open_ms')} "
-                f"channel={observe.get('browser_channel')}"
-            )
-        else:
-            print("[WARN] observe summary - not returned")
-        print("RESULT=PASS_APPROVED_BROWSER_INSTRUCTION_LIVE_SMOKE")
-        return 0
+        _early = _report_result(detail)
+        if _early is not None:
+            return _early
     finally:
         stop_worker(worker)
         try:

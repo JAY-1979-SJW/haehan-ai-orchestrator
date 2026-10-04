@@ -102,56 +102,64 @@ TOOLS = [
 ]
 
 
+def _call_pc_apps(args: dict) -> dict:
+    apps = SECTIONS["apps"]()
+    q = (args.get("query") or "").lower()
+    if q:
+        apps = [a for a in apps if q in a["name"].lower()]
+    return _tool_result({"count": len(apps), "apps": apps})
+
+
+def _call_pc_processes(args: dict) -> dict:
+    top = int(args.get("top") or 20)
+    procs = collect_processes(top_n=max(top, 5))
+    nf = (args.get("name_filter") or "").lower()
+    if nf:
+        procs = [p for p in procs if nf in p["name"].lower()]
+    return _tool_result({"count": len(procs), "processes": procs[:top]})
+
+
+def _call_pc_services(args: dict) -> dict:
+    svcs = SECTIONS["services"]()
+    sf = (args.get("status_filter") or "all").upper()
+    if sf != "ALL":
+        svcs = [s for s in svcs if s.get("status", "").upper() == sf]
+    return _tool_result({"count": len(svcs), "services": svcs})
+
+
+def _call_pc_inventory_all(args: dict) -> dict:
+    data = collect_all()
+    summary = {
+        "collected_at": data.get("collected_at"),
+        "system": data.get("system"),
+        "installed_apps_count": len(data.get("apps", [])),
+        "top10_apps": [a["name"] for a in (data.get("apps") or [])[:10]],
+        "processes_count": len(data.get("processes", [])),
+        "top10_processes": [f"{p['name']} ({p['mem_mb']}MB)" for p in (data.get("processes") or [])[:10]],
+        "listen_ports": [f":{p['port']} ← {p['process']}" for p in (data.get("ports") or [])],
+        "services_running": sum(1 for s in (data.get("services") or []) if s.get("status", "").upper() == "RUNNING"),
+        "startup_count": len(data.get("startup", [])),
+        "secret_values_output": False,
+    }
+    return _tool_result(summary)
+
+
+_TOOL_CALLS = {
+    "pc_get_system": lambda args: _tool_result(SECTIONS["system"]()),
+    "pc_list_apps": _call_pc_apps,
+    "pc_list_processes": _call_pc_processes,
+    "pc_list_ports": lambda args: _tool_result(SECTIONS["ports"]()),
+    "pc_list_services": _call_pc_services,
+    "pc_list_startup": lambda args: _tool_result(SECTIONS["startup"]()),
+    "pc_inventory_all": _call_pc_inventory_all,
+}
+
+
 def _handle_call(name: str, args: dict) -> dict:
     try:
-        if name == "pc_get_system":
-            return _tool_result(SECTIONS["system"]())
-
-        if name == "pc_list_apps":
-            apps = SECTIONS["apps"]()
-            q = (args.get("query") or "").lower()
-            if q:
-                apps = [a for a in apps if q in a["name"].lower()]
-            return _tool_result({"count": len(apps), "apps": apps})
-
-        if name == "pc_list_processes":
-            top = int(args.get("top") or 20)
-            procs = collect_processes(top_n=max(top, 5))
-            nf = (args.get("name_filter") or "").lower()
-            if nf:
-                procs = [p for p in procs if nf in p["name"].lower()]
-            return _tool_result({"count": len(procs), "processes": procs[:top]})
-
-        if name == "pc_list_ports":
-            return _tool_result(SECTIONS["ports"]())
-
-        if name == "pc_list_services":
-            svcs = SECTIONS["services"]()
-            sf = (args.get("status_filter") or "all").upper()
-            if sf != "ALL":
-                svcs = [s for s in svcs if s.get("status", "").upper() == sf]
-            return _tool_result({"count": len(svcs), "services": svcs})
-
-        if name == "pc_list_startup":
-            return _tool_result(SECTIONS["startup"]())
-
-        if name == "pc_inventory_all":
-            data = collect_all()
-            summary = {
-                "collected_at": data.get("collected_at"),
-                "system": data.get("system"),
-                "installed_apps_count": len(data.get("apps", [])),
-                "top10_apps": [a["name"] for a in (data.get("apps") or [])[:10]],
-                "processes_count": len(data.get("processes", [])),
-                "top10_processes": [f"{p['name']} ({p['mem_mb']}MB)" for p in (data.get("processes") or [])[:10]],
-                "listen_ports": [f":{p['port']} ← {p['process']}" for p in (data.get("ports") or [])],
-                "services_running": sum(
-                    1 for s in (data.get("services") or []) if s.get("status", "").upper() == "RUNNING"
-                ),
-                "startup_count": len(data.get("startup", [])),
-                "secret_values_output": False,
-            }
-            return _tool_result(summary)
+        handler = _TOOL_CALLS.get(name)
+        if handler is not None:
+            return handler(args)
 
         return _tool_result({"error": f"unknown tool: {name}"}, is_error=True)
     except Exception as e:  # noqa: BLE001 - PC 인벤토리 MCP 도구 핸들러 최상위 캐치 - 각 도구는 read-only 조회이며 실패 시 에러 메시지를 결과로 반환할 뿐 상태를 변경하지 않음

@@ -209,10 +209,7 @@ def _is_phishing_link(url: str) -> tuple[bool, str]:
     return (False, d)
 
 
-def main():
-    sep.assert_main_page_first("https://mail.naver.com/", "naver")
-
-    # mail 탭 확보
+def _find_mail_tab():
     target_id = None
     for t in _list_pages():
         if "mail.naver" in t.get("url", ""):
@@ -223,80 +220,71 @@ def main():
             if t.get("url") in ("about:blank", "chrome://newtab/"):
                 target_id = t["id"]
                 break
-    if not target_id:
-        print("FAIL: mail tab not found")
-        return
+    return target_id
 
-    results = []
-    for tgt in TARGETS:
-        sn = tgt["sn"]
-        url = f"https://mail.naver.com/v2/popup/read/0/{sn}"
-        print(f"\n[#{sn}] navigate → {url}")
-        _navigate(target_id, url)
-        time.sleep(4.0)
-        # 본문 iframe 로딩 대기
-        for _ in range(10):
-            ready = _eval(
-                target_id,
-                '(function(){var f=document.querySelector(\'iframe#readFrame, iframe[name="readFrame"], iframe[id*="read"]\'); if(!f) return false; try{var d=f.contentDocument||f.contentWindow.document; return (d&&d.body&&d.body.innerText.length>30);}catch(e){return false;}})()',
-                timeout=3.0,
-            )
-            if ready is True:
-                break
-            time.sleep(1.0)
 
-        data = _eval(target_id, BODY_EXPR, timeout=8.0)
-        if not isinstance(data, dict):
-            print(f"  body eval 실패: {str(data)[:160]}")
-            results.append({"sn": sn, "tag": tgt["tag"], "error": "body_eval_failed"})
-            continue
-
-        body = _redact(data.get("body", ""))
-        header = data.get("header") or {}
-        links = data.get("links") or []
-        link_domains = {}
-        phishing_hits = []
-        for l in links:
-            ph, d = _is_phishing_link(l)
-            link_domains[d] = link_domains.get(d, 0) + 1
-            if ph:
-                phishing_hits.append(l)
-
-        # 스크린샷
-        shot = _screenshot(target_id, tgt["tag"])
-
-        res = {
-            "sn": sn,
-            "tag": tgt["tag"],
-            "expected": tgt["expected"],
-            "href_final": data.get("href"),
-            "subject": header.get("subject") or "",
-            "sender_name": header.get("sender_name") or "",
-            "sender_addr": _redact(header.get("sender_addr") or ""),
-            "date": header.get("date") or "",
-            "body_len": data.get("body_len", 0),
-            "body_excerpt_redacted": body[:1800],
-            "link_domain_counts": link_domains,
-            "phishing_suspect_links": phishing_hits[:10],
-            "img_count": data.get("img_count", 0),
-            "has_attach": data.get("has_attach", False),
-            "attach_names": data.get("attach_names", []),
-            "screenshot": str(shot) if shot else None,
-        }
-        results.append(res)
-        print(f"  subject: {res['subject'][:80]}")
-        print(
-            f"  body_len: {res['body_len']}  links: {len(links)}  img: {res['img_count']}  attach: {res['has_attach']}"
+def _review_target(target_id, tgt):
+    sn = tgt["sn"]
+    url = f"https://mail.naver.com/v2/popup/read/0/{sn}"
+    print(f"\n[#{sn}] navigate → {url}")
+    _navigate(target_id, url)
+    time.sleep(4.0)
+    # 본문 iframe 로딩 대기
+    for _ in range(10):
+        ready = _eval(
+            target_id,
+            '(function(){var f=document.querySelector(\'iframe#readFrame, iframe[name="readFrame"], iframe[id*="read"]\'); if(!f) return false; try{var d=f.contentDocument||f.contentWindow.document; return (d&&d.body&&d.body.innerText.length>30);}catch(e){return false;}})()',
+            timeout=3.0,
         )
+        if ready is True:
+            break
+        time.sleep(1.0)
 
-    out = CAP_DIR.parent / "priority_body_review.json"
-    out.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"\n[json] {out}")
+    data = _eval(target_id, BODY_EXPR, timeout=8.0)
+    if not isinstance(data, dict):
+        print(f"  body eval 실패: {str(data)[:160]}")
+        return {"sn": sn, "tag": tgt["tag"], "error": "body_eval_failed"}
 
-    # 콘솔 보고
-    print("\n" + "=" * 60)
-    print("=== 시급 메일 4건 본문 검토 결과 ===")
-    print("=" * 60)
+    body = _redact(data.get("body", ""))
+    header = data.get("header") or {}
+    links = data.get("links") or []
+    link_domains = {}
+    phishing_hits = []
+    for link in links:
+        ph, d = _is_phishing_link(link)
+        link_domains[d] = link_domains.get(d, 0) + 1
+        if ph:
+            phishing_hits.append(link)
+
+    # 스크린샷
+    shot = _screenshot(target_id, tgt["tag"])
+
+    res = {
+        "sn": sn,
+        "tag": tgt["tag"],
+        "expected": tgt["expected"],
+        "href_final": data.get("href"),
+        "subject": header.get("subject") or "",
+        "sender_name": header.get("sender_name") or "",
+        "sender_addr": _redact(header.get("sender_addr") or ""),
+        "date": header.get("date") or "",
+        "body_len": data.get("body_len", 0),
+        "body_excerpt_redacted": body[:1800],
+        "link_domain_counts": link_domains,
+        "phishing_suspect_links": phishing_hits[:10],
+        "img_count": data.get("img_count", 0),
+        "has_attach": data.get("has_attach", False),
+        "attach_names": data.get("attach_names", []),
+        "screenshot": str(shot) if shot else None,
+    }
+    print(f"  subject: {res['subject'][:80]}")
+    print(
+        f"  body_len: {res['body_len']}  links: {len(links)}  img: {res['img_count']}  attach: {res['has_attach']}"
+    )
+    return res
+
+
+def _print_results(results):
     for r in results:
         print(f"\n[#{r['sn']}] {r.get('expected', '')}")
         if r.get("error"):
@@ -313,6 +301,30 @@ def main():
         if r["phishing_suspect_links"]:
             print(f"  ⚠️ 피싱 의심: {r['phishing_suspect_links']}")
         print(f"  첨부: {r['has_attach']}  ({r['attach_names']})")
+
+
+def main():
+    sep.assert_main_page_first("https://mail.naver.com/", "naver")
+
+    # mail 탭 확보
+    target_id = _find_mail_tab()
+    if not target_id:
+        print("FAIL: mail tab not found")
+        return
+
+    results = []
+    for tgt in TARGETS:
+        results.append(_review_target(target_id, tgt))
+
+    out = CAP_DIR.parent / "priority_body_review.json"
+    out.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\n[json] {out}")
+
+    # 콘솔 보고
+    print("\n" + "=" * 60)
+    print("=== 시급 메일 4건 본문 검토 결과 ===")
+    print("=" * 60)
+    _print_results(results)
 
 
 if __name__ == "__main__":

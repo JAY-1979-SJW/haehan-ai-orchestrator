@@ -74,36 +74,44 @@ def _contains_forbidden_key(value: object) -> bool:
     return False
 
 
+def _audit_open_service(failures, service, dry_run_cloud_readonly_browser_task):
+    result = dry_run_cloud_readonly_browser_task(service, "open", [])
+    task = result.get("local_agent_task") or {}
+    dry_run = result.get("dry_run_result") or {}
+    params = task.get("params") or {}
+    metadata = task.get("metadata") or {}
+    if result.get("ok") is not True:
+        failures.append(f"{service}: conversion failed")
+    if task.get("action") != "web_open_url_readonly":
+        failures.append(f"{service}: wrong local agent action {task.get('action')!r}")
+    if task.get("execution_location") != "local_agent":
+        failures.append(f"{service}: execution location must be local_agent")
+    if task.get("risk_level") != "read":
+        failures.append(f"{service}: risk level must be read")
+    if task.get("requires_approval") is not False:
+        failures.append(f"{service}: read-only task must not require approval")
+    _audit_open_service_target(failures, service, result, dry_run, params, metadata)
+
+
+def _audit_open_service_target(failures, service, result, dry_run, params, metadata):
+    if params.get("target_url_host") != "console.cloud.google.com":
+        failures.append(f"{service}: target host mismatch {params.get('target_url_host')!r}")
+    if not str(params.get("url", "")).startswith("https://console.cloud.google.com"):
+        failures.append(f"{service}: target URL must be Google Cloud Console")
+    if metadata.get("google_tab") != "cloud":
+        failures.append(f"{service}: google_tab metadata missing")
+    if dry_run.get("ok") is not True:
+        failures.append(f"{service}: common runtime dry-run failed")
+    if _contains_forbidden_key(result):
+        failures.append(f"{service}: forbidden secret-shaped key present in conversion output")
+
+
 def audit() -> tuple[bool, list[str]]:
     from scripts.google.cloud.local_browser import dry_run_cloud_readonly_browser_task
 
     failures: list[str] = []
     for service in CLOUD_SERVICES:
-        result = dry_run_cloud_readonly_browser_task(service, "open", [])
-        task = result.get("local_agent_task") or {}
-        dry_run = result.get("dry_run_result") or {}
-        params = task.get("params") or {}
-        metadata = task.get("metadata") or {}
-        if result.get("ok") is not True:
-            failures.append(f"{service}: conversion failed")
-        if task.get("action") != "web_open_url_readonly":
-            failures.append(f"{service}: wrong local agent action {task.get('action')!r}")
-        if task.get("execution_location") != "local_agent":
-            failures.append(f"{service}: execution location must be local_agent")
-        if task.get("risk_level") != "read":
-            failures.append(f"{service}: risk level must be read")
-        if task.get("requires_approval") is not False:
-            failures.append(f"{service}: read-only task must not require approval")
-        if params.get("target_url_host") != "console.cloud.google.com":
-            failures.append(f"{service}: target host mismatch {params.get('target_url_host')!r}")
-        if not str(params.get("url", "")).startswith("https://console.cloud.google.com"):
-            failures.append(f"{service}: target URL must be Google Cloud Console")
-        if metadata.get("google_tab") != "cloud":
-            failures.append(f"{service}: google_tab metadata missing")
-        if dry_run.get("ok") is not True:
-            failures.append(f"{service}: common runtime dry-run failed")
-        if _contains_forbidden_key(result):
-            failures.append(f"{service}: forbidden secret-shaped key present in conversion output")
+        _audit_open_service(failures, service, dry_run_cloud_readonly_browser_task)
 
     for service, action in BLOCKED_ACTIONS.items():
         blocked = dry_run_cloud_readonly_browser_task(service, action, [])

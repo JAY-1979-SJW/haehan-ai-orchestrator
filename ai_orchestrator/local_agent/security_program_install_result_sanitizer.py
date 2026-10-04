@@ -78,7 +78,7 @@ def check_result_has_no_sensitive_data(result: dict[str, Any]) -> list[str]:
     return violations
 
 
-def build_safe_report(
+def build_safe_report(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     task_id: str,
     domain: str,
     installer_safe_name: str,

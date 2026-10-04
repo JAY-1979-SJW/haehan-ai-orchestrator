@@ -16,8 +16,8 @@ MIN_TAG_COUNT = 15
 TARGET_TAG_COUNT = 25
 
 
-def seo_check(*, title: str, body: str, keywords: list[str]) -> dict:
-    """발행 전 최소 SEO 점검. 차단하지 않고 경고만 남긴다(사람이 최종 확인)."""
+def _basic_warnings(title: str, body: str, keywords: list[str]) -> list[str]:
+    """제목·본문 길이·키워드·태그·소제목 구조 기본 점검 경고."""
     warnings = []
     if not (20 <= len(title) <= 60):
         warnings.append(f"제목 길이 {len(title)}자 (권장 20~60자)")
@@ -37,6 +37,12 @@ def seo_check(*, title: str, body: str, keywords: list[str]) -> dict:
         warnings.append("마크다운 소제목(##) 잔존 — 네이버는 렌더링하지 않음")
     if "[" not in body:
         warnings.append("소제목([ ]) 구조 없음")
+    return warnings
+
+
+def seo_check(*, title: str, body: str, keywords: list[str]) -> dict:
+    """발행 전 최소 SEO 점검. 차단하지 않고 경고만 남긴다(사람이 최종 확인)."""
+    warnings = _basic_warnings(title, body, keywords)
 
     weak = _weak_writing(body)
     if weak:

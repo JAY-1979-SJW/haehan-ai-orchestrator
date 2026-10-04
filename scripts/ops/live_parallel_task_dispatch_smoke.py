@@ -213,24 +213,7 @@ def _poll_task(
     return str(detail.get("status") or ""), str(detail.get("error_code") or "")
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--server", default=DEFAULT_SERVER_URL)
-    parser.add_argument("--timeout", type=int, default=90)
-    parser.add_argument("--count", type=int, default=5)
-    parser.add_argument("--concurrency", type=int, default=5)
-    parser.add_argument("--user", default=os.getenv("HAEHAN_AGENT_USER", ""))
-    parser.add_argument("--password", default=os.getenv("HAEHAN_AGENT_PASSWORD", ""))
-    parser.add_argument(
-        "--temp-admin",
-        action="store_true",
-        help="create a short-lived remote admin user for authenticated live verification",
-    )
-    args = parser.parse_args(argv)
-
-    count = max(2, min(args.count, 20))
-    concurrency = max(2, min(args.concurrency, count))
-    server_url = args.server.rstrip("/")
+def _resolve_identity(args, server_url):
     agent_id = ""
     device_token = ""
 
@@ -251,14 +234,142 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as exc:  # noqa: BLE001 - 병렬 작업 디스패치 스모크테스트(임시 계정/에이전트 생성 후 자체 정리) — 임시 에이전트 등록 실패는 FAIL 결과 반환, 상태폴링 실패는 continue로 다음 폴링, 임시 관리자계정 정리(remove) 실패는 경고만 출력 — 모두 테스트용 임시 리소스이며 운영 데이터 아님
             print(f"[FAIL] temp agent register - {type(exc).__name__}")
             print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
-            return 1
+            return (1), None, None, None, None
         print(f"[PASS] temp agent registered - agent_id={_mask_agent_id(agent_id)}")
     else:
         agent_id = _load_agent_id()
         if not agent_id:
             print("[FAIL] agent config - agent_id missing")
             print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
-            return 1
+            return (1), None, None, None, None
+    return None, auth, temp_admin_user, agent_id, device_token
+
+
+def _check_worker_alive(worker):
+    time.sleep(5)
+    if worker.poll() is not None:
+        print(f"[FAIL] worker exited early - code={worker.returncode}")
+        print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
+        return 1
+    return None
+
+
+def _create_tasks_parallel(tasks_url, auth, count, concurrency):
+    started_at = time.time()
+    created: list[dict[str, Any]] = []
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
+            futures = [
+                executor.submit(
+                    _create_task,
+                    tasks_url=tasks_url,
+                    auth=auth,
+                    index=i,
+                )
+                for i in range(count)
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                created.append(future.result())
+    except urllib.error.HTTPError as exc:
+        print(f"[FAIL] task create - status={exc.code}")
+        print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
+        return (1), None, None
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"[FAIL] task create - {type(exc).__name__}")
+        print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
+        return (1), None, None
+    return None, created, started_at
+
+
+def _report_created(created, count, concurrency, started_at):
+    created.sort(key=lambda row: int(row["index"]))
+    creation_elapsed_ms = int((time.time() - started_at) * 1000)
+    task_ids = [row["task_id"] for row in created if row["task_id"]]
+    all_created = len(task_ids) == count and all(row["http_status"] == 200 for row in created)
+    print(
+        "[PASS]" if all_created else "[FAIL]",
+        "parallel task create - "
+        f"count={len(task_ids)}/{count} concurrency={concurrency} elapsed_ms={creation_elapsed_ms}",
+    )
+    for row in created:
+        print(
+            "  task "
+            f"index={row['index']} id={row['task_id'] or '-'} "
+            f"initial={row['initial_status'] or '-'} http={row['http_status']}"
+        )
+    if not all_created:
+        print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
+        return (1), None
+    return None, task_ids
+
+
+def _poll_all(task_ids, tasks_url, auth, args):
+    pending = set(task_ids)
+    final: dict[str, tuple[str, str]] = {}
+    deadline = time.time() + args.timeout
+    while pending and time.time() < deadline:
+        time.sleep(2)
+        for task_id in list(pending):
+            try:
+                status, error_code = _poll_task(
+                    detail_url=f"{tasks_url}/{task_id}",
+                    auth=auth,
+                )
+            except Exception:  # noqa: BLE001 - 병렬 작업 디스패치 스모크테스트(임시 계정/에이전트 생성 후 자체 정리) — 임시 에이전트 등록 실패는 FAIL 결과 반환, 상태폴링 실패는 continue로 다음 폴링, 임시 관리자계정 정리(remove) 실패는 경고만 출력 — 모두 테스트용 임시 리소스이며 운영 데이터 아님
+                continue
+            if status in {"completed", "failed", "cancelled", "expired"}:
+                final[task_id] = (status, error_code)
+                pending.remove(task_id)
+    return pending, final
+
+
+def _report_final(pending, final, count):
+    completed = [task_id for task_id, (status, _) in final.items() if status == "completed"]
+    failed = {
+        task_id: {"status": status, "error_code": error_code}
+        for task_id, (status, error_code) in final.items()
+        if status != "completed"
+    }
+    for task_id in sorted(pending):
+        failed[task_id] = {"status": "timeout", "error_code": ""}
+
+    print(
+        "[PASS]" if len(completed) == count else "[FAIL]",
+        f"parallel task final - completed={len(completed)}/{count} failed={len(failed)}",
+    )
+    if failed:
+        print(json.dumps(failed, ensure_ascii=False, indent=2))
+        print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
+        return 1
+
+    print("[PASS] server queued concurrent submissions; single local agent completed all ws_noop tasks")
+    print("[WARN] local execution model - single worker processes tasks sequentially per agent")
+    print("RESULT=PASS_LIVE_PARALLEL_TASK_DISPATCH")
+    return 0
+    return None
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--server", default=DEFAULT_SERVER_URL)
+    parser.add_argument("--timeout", type=int, default=90)
+    parser.add_argument("--count", type=int, default=5)
+    parser.add_argument("--concurrency", type=int, default=5)
+    parser.add_argument("--user", default=os.getenv("HAEHAN_AGENT_USER", ""))
+    parser.add_argument("--password", default=os.getenv("HAEHAN_AGENT_PASSWORD", ""))
+    parser.add_argument(
+        "--temp-admin",
+        action="store_true",
+        help="create a short-lived remote admin user for authenticated live verification",
+    )
+    args = parser.parse_args(argv)
+
+    count = max(2, min(args.count, 20))
+    concurrency = max(2, min(args.concurrency, count))
+    server_url = args.server.rstrip("/")
+    _early, auth, temp_admin_user, agent_id, device_token = _resolve_identity(args, server_url)
+    if _early is not None:
+        return _early
 
     log_path = ROOT / "logs" / "live_parallel_task_worker.log"
     worker = (
@@ -270,95 +381,24 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[PASS] worker start - pid={worker.pid} agent_id={_mask_agent_id(agent_id)}")
 
     try:
-        time.sleep(5)
-        if worker.poll() is not None:
-            print(f"[FAIL] worker exited early - code={worker.returncode}")
-            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
-            return 1
+        _early = _check_worker_alive(worker)
+        if _early is not None:
+            return _early
 
         tasks_url = f"{server_url}/api/v1/local-agents/{agent_id}/tasks"
-        started_at = time.time()
-        created: list[dict[str, Any]] = []
-        try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
-                futures = [
-                    executor.submit(
-                        _create_task,
-                        tasks_url=tasks_url,
-                        auth=auth,
-                        index=i,
-                    )
-                    for i in range(count)
-                ]
-                for future in concurrent.futures.as_completed(futures):
-                    created.append(future.result())
-        except urllib.error.HTTPError as exc:
-            print(f"[FAIL] task create - status={exc.code}")
-            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
-            return 1
-        except (urllib.error.URLError, OSError) as exc:
-            print(f"[FAIL] task create - {type(exc).__name__}")
-            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
-            return 1
+        _early, created, started_at = _create_tasks_parallel(tasks_url, auth, count, concurrency)
+        if _early is not None:
+            return _early
 
-        created.sort(key=lambda row: int(row["index"]))
-        creation_elapsed_ms = int((time.time() - started_at) * 1000)
-        task_ids = [row["task_id"] for row in created if row["task_id"]]
-        all_created = len(task_ids) == count and all(row["http_status"] == 200 for row in created)
-        print(
-            "[PASS]" if all_created else "[FAIL]",
-            "parallel task create - "
-            f"count={len(task_ids)}/{count} concurrency={concurrency} elapsed_ms={creation_elapsed_ms}",
-        )
-        for row in created:
-            print(
-                "  task "
-                f"index={row['index']} id={row['task_id'] or '-'} "
-                f"initial={row['initial_status'] or '-'} http={row['http_status']}"
-            )
-        if not all_created:
-            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
-            return 1
+        _early, task_ids = _report_created(created, count, concurrency, started_at)
+        if _early is not None:
+            return _early
 
-        pending = set(task_ids)
-        final: dict[str, tuple[str, str]] = {}
-        deadline = time.time() + args.timeout
-        while pending and time.time() < deadline:
-            time.sleep(2)
-            for task_id in list(pending):
-                try:
-                    status, error_code = _poll_task(
-                        detail_url=f"{tasks_url}/{task_id}",
-                        auth=auth,
-                    )
-                except Exception:  # noqa: BLE001 - 병렬 작업 디스패치 스모크테스트(임시 계정/에이전트 생성 후 자체 정리) — 임시 에이전트 등록 실패는 FAIL 결과 반환, 상태폴링 실패는 continue로 다음 폴링, 임시 관리자계정 정리(remove) 실패는 경고만 출력 — 모두 테스트용 임시 리소스이며 운영 데이터 아님
-                    continue
-                if status in {"completed", "failed", "cancelled", "expired"}:
-                    final[task_id] = (status, error_code)
-                    pending.remove(task_id)
+        pending, final = _poll_all(task_ids, tasks_url, auth, args)
 
-        completed = [task_id for task_id, (status, _) in final.items() if status == "completed"]
-        failed = {
-            task_id: {"status": status, "error_code": error_code}
-            for task_id, (status, error_code) in final.items()
-            if status != "completed"
-        }
-        for task_id in sorted(pending):
-            failed[task_id] = {"status": "timeout", "error_code": ""}
-
-        print(
-            "[PASS]" if len(completed) == count else "[FAIL]",
-            f"parallel task final - completed={len(completed)}/{count} failed={len(failed)}",
-        )
-        if failed:
-            print(json.dumps(failed, ensure_ascii=False, indent=2))
-            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
-            return 1
-
-        print("[PASS] server queued concurrent submissions; single local agent completed all ws_noop tasks")
-        print("[WARN] local execution model - single worker processes tasks sequentially per agent")
-        print("RESULT=PASS_LIVE_PARALLEL_TASK_DISPATCH")
-        return 0
+        _early = _report_final(pending, final, count)
+        if _early is not None:
+            return _early
     finally:
         _stop_worker(worker)
         print("[PASS] worker stopped")

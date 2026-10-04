@@ -4,7 +4,7 @@
 이 파이프라인은 텍스트 메타데이터(제품명/코드/공급가/규격)만 501페이지 전체에서 추출한다.
 
 사용:
-    python -m scripts.mk_catalog.pipeline --dir "C:\\Users\\skyjw\\Downloads\\MK12_JPG" --out data/mk_catalog/products.csv
+    python -m scripts.mk_catalog.pipeline --dir "<MK12 JPG 폴더>" --out data/mk_catalog/products.csv
 
 산출:
     {out}         — 제품 1행 = variant 1개 (코드 1개당 1행), 공급가 파싱 포함

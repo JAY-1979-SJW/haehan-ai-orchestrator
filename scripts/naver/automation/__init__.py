@@ -34,7 +34,8 @@ __all__ = [
 ]
 
 
-def __getattr__(name):
+def _load_core_export(name):
+    """지연 import 대상(앞 그룹). 해당 이름이 아니면 None."""
     if name == "MailAutomation":
         from .mail_automation import MailAutomation
         return MailAutomation
@@ -59,6 +60,11 @@ def __getattr__(name):
     if name == "ImageProcessor":
         from .image_processor import ImageProcessor
         return ImageProcessor
+    return None
+
+
+def _load_extra_export(name):
+    """지연 import 대상(뒤 그룹). 해당 이름이 아니면 None."""
     if name == "Scheduler":
         from .scheduler import Scheduler
         return Scheduler
@@ -80,4 +86,12 @@ def __getattr__(name):
     if name == "ErrorRecovery":
         from .error_recovery import ErrorRecovery
         return ErrorRecovery
+    return None
+
+
+def __getattr__(name):
+    for loader in (_load_core_export, _load_extra_export):
+        found = loader(name)
+        if found is not None:
+            return found
     raise AttributeError(name)

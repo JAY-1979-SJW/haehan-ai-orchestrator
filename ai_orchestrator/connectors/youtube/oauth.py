@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import urllib.parse
 import urllib.request
 
@@ -12,6 +13,8 @@ from ai_orchestrator.gates.auth import require_role
 from scripts.youtube import oauth as _oauth_svc
 
 from ._helpers import token_path
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -91,7 +94,8 @@ def youtube_oauth_status(user: dict = Depends(require_role("admin", "owner"))):
                 items = d.get("items", [])
                 if items:
                     channel = {"title": items[0]["snippet"]["title"], "id": items[0]["id"]}
-            except Exception:  # noqa: S110, BLE001
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("YouTube 채널 정보 조회 실패: %s", type(exc).__name__)
                 pass
 
         return {
@@ -102,4 +106,5 @@ def youtube_oauth_status(user: dict = Depends(require_role("admin", "owner"))):
             "channel": channel,
         }
     except Exception as e:  # noqa: BLE001 - YouTube OAuth 토큰 상태 확인 -- 실패 시 상태값만 반환(token_error), 에러 메시지 100자로 절단해 토큰/시크릿 값 자체는 노출하지 않음
+        logger.warning("YouTube OAuth 토큰 상태 확인 실패: %s", type(e).__name__)
         return {"ok": False, "status": "token_error", "error": str(e)[:100], "scopes": []}

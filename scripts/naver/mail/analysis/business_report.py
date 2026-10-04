@@ -413,7 +413,7 @@ def to_action_item(item: MailItem, *, category: str, priority: str, evidence: li
 # ── 보고서 빌드 ────────────────────────────────────────────────────
 
 
-def build_report(
+def build_report(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     mails: Iterable[MailItem],
     *,
     run_id: str = "",
@@ -492,30 +492,8 @@ def build_report(
 # ── 렌더링 ────────────────────────────────────────────────────────
 
 
-def render_markdown(rep: BusinessReport) -> str:
-    lines = [
-        f"# 메일함 비즈니스 보고서 (closeout) — run `{rep.run_id}`",
-        "",
-        "## 개요",
-        f"- 총 메일 수: **{rep.total_mails}건**",
-        f"- 생성 시각: {rep.generated_at_iso}",
-        f"- 액션 아이템: {len(rep.action_items)}건",
-        "",
-        "## 안전 정책 준수 결과",
-        f"- raw body 저장: **{rep.raw_body_saved}**",
-        f"- attachment download: **{rep.attachment_download_count}**",
-        f"- external AI call: **{rep.external_ai_call_count}**",
-        f"- PII 검출: {rep.pii_detected_total} (types: `{rep.pii_types_summary}`)",
-        f"- unread 복구: `{rep.unread_restore_summary}`",
-        "",
-        "## 폴더별 분포",
-    ]
-    for f, n in sorted(rep.folder_distribution.items(), key=lambda x: -x[1]):
-        lines.append(f"- {f}: {n}건")
-    lines += ["", "## 발신자 도메인 TOP 15"]
-    for dom, n in rep.sender_domain_top:
-        lines.append(f"- `{dom}` — {n}건")
-
+def _render_category_sections(rep: BusinessReport, lines: list[str]) -> None:
+    """카테고리별 섹션을 lines 에 추가."""
     # 카테고리별 섹션 (spec 명시 순서)
     SECTION_ORDER = [
         (CAT_ATTENTION, "🚨 긴급 액션 (ATTENTION)"),
@@ -547,6 +525,9 @@ def render_markdown(rep: BusinessReport) -> str:
         if cg.count > 20:
             lines.append(f"- … ({cg.count - 20}건 더)")
 
+
+def _render_action_items(rep: BusinessReport, lines: list[str]) -> None:
+    """액션 아이템 섹션을 lines 에 추가."""
     # Action items
     lines += ["", "## 액션 아이템", ""]
     pri_groups: dict[str, list[ActionItem]] = defaultdict(list)
@@ -565,6 +546,37 @@ def render_markdown(rep: BusinessReport) -> str:
             )
         if len(lst) > 30:
             lines.append(f"- … ({len(lst) - 30}건 더)")
+
+
+def render_markdown(rep: BusinessReport) -> str:
+    lines = [
+        f"# 메일함 비즈니스 보고서 (closeout) — run `{rep.run_id}`",
+        "",
+        "## 개요",
+        f"- 총 메일 수: **{rep.total_mails}건**",
+        f"- 생성 시각: {rep.generated_at_iso}",
+        f"- 액션 아이템: {len(rep.action_items)}건",
+        "",
+        "## 안전 정책 준수 결과",
+        f"- raw body 저장: **{rep.raw_body_saved}**",
+        f"- attachment download: **{rep.attachment_download_count}**",
+        f"- external AI call: **{rep.external_ai_call_count}**",
+        f"- PII 검출: {rep.pii_detected_total} (types: `{rep.pii_types_summary}`)",
+        f"- unread 복구: `{rep.unread_restore_summary}`",
+        "",
+        "## 폴더별 분포",
+    ]
+    for f, n in sorted(rep.folder_distribution.items(), key=lambda x: -x[1]):
+        lines.append(f"- {f}: {n}건")
+    lines += ["", "## 발신자 도메인 TOP 15"]
+    for dom, n in rep.sender_domain_top:
+        lines.append(f"- `{dom}` — {n}건")
+
+    # 카테고리별 섹션 (spec 명시 순서)
+    _render_category_sections(rep, lines)
+
+    # Action items
+    _render_action_items(rep, lines)
 
     lines += [
         "",

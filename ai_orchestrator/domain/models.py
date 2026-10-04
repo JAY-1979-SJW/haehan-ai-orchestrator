@@ -514,7 +514,7 @@ class AuditEvent:
 # ===========================================================================
 
 
-def make_task(
+def make_task(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     title: str,
     provider: str,
     action_type: str,
@@ -538,7 +538,7 @@ def make_task(
     )
 
 
-def make_audit_event(
+def make_audit_event(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     event_type: str,
     task_id: str,
     provider: str,

@@ -75,6 +75,19 @@ def sanitize_blocked_url_for_log(url: str) -> str:
         return "(invalid_url)"
 
 
+def _classify_blocked_host(host: str) -> str | None:
+    """명시 차단 host 의 카테고리. 해당 없으면 None."""
+    if "go.kr" in host or "gov.kr" in host:
+        return "GOVERNMENT"
+    if "bank" in host or "kbstar" in host or "wooribank" in host:
+        return "BANK"
+    if "card" in host:
+        return "CARD"
+    if "naver" in host or "kakao" in host or "daum" in host:
+        return "PORTAL"
+    return None
+
+
 def get_blocked_host_category(url: str) -> str:
     """차단 host의 카테고리(은행/정부/포털 등)를 반환."""
     if not url:
@@ -85,16 +98,10 @@ def get_blocked_host_category(url: str) -> str:
         return "UNKNOWN"
     if not host:
         return "UNKNOWN"
-    for pat in _EXPLICIT_BLOCKED_HOSTS:
-        if pat in host:
-            if "go.kr" in host or "gov.kr" in host:
-                return "GOVERNMENT"
-            if "bank" in host or "kbstar" in host or "wooribank" in host:
-                return "BANK"
-            if "card" in host:
-                return "CARD"
-            if "naver" in host or "kakao" in host or "daum" in host:
-                return "PORTAL"
+    if any(pat in host for pat in _EXPLICIT_BLOCKED_HOSTS):
+        category = _classify_blocked_host(host)
+        if category:
+            return category
     if is_external_url(url):
         return "EXTERNAL_OTHER"
     return "INTERNAL"

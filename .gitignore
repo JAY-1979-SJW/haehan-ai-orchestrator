@@ -289,3 +289,11 @@ data/instagram_reels/
 media/
 audit-reports/
 *.vtt
+
+# 자격증명 백업·키 마이그레이션 산출물 (2026-10-02 정리: *.key 와 data/credentials.json 만으로는 이 이름들이 걸리지 않았다)
+data/_backup_cred_*/
+data/.cred.key*
+.env_*
+**/credentials.json
+# 루트의 임시 스크립트(tmpXXXX.py)
+/tmp[a-z0-9_]*.py

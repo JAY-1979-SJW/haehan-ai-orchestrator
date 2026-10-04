@@ -37,6 +37,8 @@ import time
 from pathlib import Path
 from urllib.parse import unquote_plus
 
+from scripts.naver.blog.accounts import BLOG_ACCOUNTS
+
 _ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -217,7 +219,7 @@ def build_cache(blog_id: str = BLOG_ID, limit: int | None = None, port: int = 92
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--account", default=BLOG_ID, choices=["skyjwsin", "skyjwshin"], help="대상 블로그 계정")
+    ap.add_argument("--account", default=BLOG_ID, choices=list(BLOG_ACCOUNTS), help="대상 블로그 계정")
     ap.add_argument("--limit", type=int, default=None, help="이번 실행에서 수집할 최대 글 수")
     ap.add_argument("--port", type=int, default=9222)
     args = ap.parse_args()

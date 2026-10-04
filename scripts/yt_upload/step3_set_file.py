@@ -3,8 +3,13 @@ import sys, time, threading
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.cdp_helper import CDP
+from scripts.app_paths import resolve_external, sibling_project
 
-VIDEO = r"C:\work\04. risk-assessment-generator\frontend\promo\bumper_v.mp4"
+VIDEO = str(
+    resolve_external(
+        "HAEHAN_PROMO_VIDEO", "frontend", "promo", "bumper_v.mp4", base=sibling_project("04. risk-assessment-generator")
+    )
+)
 
 
 def _open_dialog(cdp: CDP):

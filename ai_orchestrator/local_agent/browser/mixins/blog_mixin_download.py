@@ -9,9 +9,14 @@ from __future__ import annotations
 import re
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 
 class BlogDownloadMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드를 self(MRO)로 호출한다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def blog_download_images(self, post_url: str, save_dir: str = "data/blog_images") -> dict:
         """단일 포스트 이미지 다운로드."""
         m = re.search(r"blog\.naver\.com/(\w+)/(\d{10,})|blogId=(\w+).*logNo=(\d+)", post_url)

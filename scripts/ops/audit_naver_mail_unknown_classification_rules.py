@@ -25,26 +25,7 @@ def _find_leaks(text: str) -> int:
     return len(_RAW_EMAIL_RE.findall(text or "")) + len(_RAW_PHONE_RE.findall(text or ""))
 
 
-def judge_rules(
-    report: ur.ReclassifyReport,
-    *,
-    actions_before: list[dict] | None = None,
-    actions_after: list[dict] | None = None,
-    md_text: str = "",
-    json_text: str = "",
-    network_log: list[str] | None = None,
-    raw_body_saved: bool = False,
-    attachment_download_count: int = 0,
-) -> RulesVerdict:
-    network_log = network_log or []
-    metrics = {
-        "previous_unknown": report.previous_unknown_count,
-        "resolved": report.resolved_unknown_count,
-        "new_unknown": report.new_unknown_count,
-        "low_kept": report.low_confidence_kept_unknown,
-        "promoted_by_category": report.promoted_by_category,
-    }
-
+def _rules_leak_gates(raw_body_saved, md_text, json_text, network_log, attachment_download_count, metrics):
     # FAIL_RAW_BODY_LEAK
     if raw_body_saved:
         return RulesVerdict(False, "FAIL_RAW_BODY_LEAK", reasons=["raw_body_saved=True"], metrics=metrics)
@@ -63,17 +44,10 @@ def judge_rules(
         return RulesVerdict(
             False, "FAIL_ATTACHMENT_DOWNLOADED", reasons=[f"n={attachment_download_count}"], metrics=metrics
         )
+    return None
 
-    # FAIL_HIGH_ACTION_CHANGED
-    if actions_before is not None and actions_after is not None:
-        preserved = ur.assert_high_preserved(actions_before, actions_after)
-        missing = [k for k, v in preserved.items() if not v]
-        metrics["high_preserved"] = preserved
-        if missing:
-            return RulesVerdict(
-                False, "FAIL_HIGH_ACTION_CHANGED", reasons=[f"missing_or_changed:{missing}"], metrics=metrics
-            )
 
+def _rules_decision_gates(report, metrics):
     # FAIL_OVERCLASSIFIED_LOW_CONFIDENCE
     # LOW confidence 인데 promoted 된 결정이 있으면 정책 위반
     bad = [d for d in report.decisions if d.confidence == ur.CONF_LOW and d.promoted]
@@ -99,6 +73,46 @@ def judge_rules(
         ):
             if k not in dd:
                 return RulesVerdict(False, "FAIL_SCHEMA_BROKEN", reasons=[f"missing:{k}"], metrics=metrics)
+    return None
+
+
+def judge_rules(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
+    report: ur.ReclassifyReport,
+    *,
+    actions_before: list[dict] | None = None,
+    actions_after: list[dict] | None = None,
+    md_text: str = "",
+    json_text: str = "",
+    network_log: list[str] | None = None,
+    raw_body_saved: bool = False,
+    attachment_download_count: int = 0,
+) -> RulesVerdict:
+    network_log = network_log or []
+    metrics = {
+        "previous_unknown": report.previous_unknown_count,
+        "resolved": report.resolved_unknown_count,
+        "new_unknown": report.new_unknown_count,
+        "low_kept": report.low_confidence_kept_unknown,
+        "promoted_by_category": report.promoted_by_category,
+    }
+
+    _early = _rules_leak_gates(raw_body_saved, md_text, json_text, network_log, attachment_download_count, metrics)
+    if _early is not None:
+        return _early
+
+    # FAIL_HIGH_ACTION_CHANGED
+    if actions_before is not None and actions_after is not None:
+        preserved = ur.assert_high_preserved(actions_before, actions_after)
+        missing = [k for k, v in preserved.items() if not v]
+        metrics["high_preserved"] = preserved
+        if missing:
+            return RulesVerdict(
+                False, "FAIL_HIGH_ACTION_CHANGED", reasons=[f"missing_or_changed:{missing}"], metrics=metrics
+            )
+
+    _early = _rules_decision_gates(report, metrics)
+    if _early is not None:
+        return _early
 
     # WARN_UNKNOWN_ITEMS_REMAIN
     if report.new_unknown_count > 0:

@@ -332,7 +332,7 @@ def get_task_logs(
 # ── 메일 발송 로그 ──────────────────────────────────────────────────
 
 
-def log_mail_send(
+def log_mail_send(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     site_name: str,
     recipient: str,
     subject: str = "",
@@ -414,7 +414,7 @@ def get_mail_sends(
 # ── CLI (python scripts/cdp_db.py) ───────────────────────────────
 
 
-def log_automation_run(
+def log_automation_run(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     module: str,
     workflow: str,
     *,
@@ -466,7 +466,7 @@ def update_automation_run(
         )
 
 
-def upsert_mail_queue_item(
+def upsert_mail_queue_item(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     provider: str,
     source: str,

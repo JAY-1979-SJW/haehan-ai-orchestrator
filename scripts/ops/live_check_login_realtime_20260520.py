@@ -172,6 +172,27 @@ async def ws_tail() -> None:
         print(f"[A] WS error: {exc}", flush=True)
 
 
+def _report_tab_changes(prev, cur, activated_once):
+    for tid, (u, ti) in cur.items():
+        if tid not in prev:
+            print(f"[B] +tab id={tid[:8]} url={u[:120]} title={ti[:60]}", flush=True)
+            # 처음 본 nid.naver 타겟은 앞으로 가져오기
+            if "nid.naver.com" in u and tid not in activated_once:
+                ok = activate_target(tid)
+                activated_once.add(tid)
+                print(f"[B] activateTarget({tid[:8]}) → {ok}", flush=True)
+        else:
+            pu, pti = prev[tid]
+            if pu != u:
+                print(f"[B] url id={tid[:8]} {pu[:80]} -> {u[:120]}", flush=True)
+            if pti != ti:
+                print(f"[B] title id={tid[:8]} {pti[:40]} -> {ti[:80]}", flush=True)
+    # 제거 target
+    for tid in prev:
+        if tid not in cur:
+            print(f"[B] -tab id={tid[:8]}", flush=True)
+
+
 async def cdp_poll() -> None:
     prev: dict[str, tuple[str, str]] = {}  # tid -> (url, title)
     activated_once: set[str] = set()
@@ -184,26 +205,43 @@ async def cdp_poll() -> None:
             tid = t.get("id", "")
             cur[tid] = (t.get("url", ""), t.get("title", ""))
         # 새 target
-        for tid, (u, ti) in cur.items():
-            if tid not in prev:
-                print(f"[B] +tab id={tid[:8]} url={u[:120]} title={ti[:60]}", flush=True)
-                # 처음 본 nid.naver 타겟은 앞으로 가져오기
-                if "nid.naver.com" in u and tid not in activated_once:
-                    ok = activate_target(tid)
-                    activated_once.add(tid)
-                    print(f"[B] activateTarget({tid[:8]}) → {ok}", flush=True)
-            else:
-                pu, pti = prev[tid]
-                if pu != u:
-                    print(f"[B] url id={tid[:8]} {pu[:80]} -> {u[:120]}", flush=True)
-                if pti != ti:
-                    print(f"[B] title id={tid[:8]} {pti[:40]} -> {ti[:80]}", flush=True)
-        # 제거 target
-        for tid in prev:
-            if tid not in cur:
-                print(f"[B] -tab id={tid[:8]}", flush=True)
+        _report_tab_changes(prev, cur, activated_once)
         prev = cur
         await asyncio.sleep(1.0)
+
+
+def _pick_page_target(rows):
+    target = None
+    for t in rows:
+        if t.get("type") == "page" and "naver.com" in t.get("url", ""):
+            target = t
+            break
+    if target is None:
+        for t in rows:
+            if t.get("type") == "page" and t.get("url", "") != "about:blank":
+                target = t
+                break
+    return target
+
+
+def _page_sig(data):
+    sig = (
+        f"{data.get('href', '')}|{data.get('title', '')}|"
+        f"{int(bool(data.get('has_logout')))}|{int(bool(data.get('has_naver_session_cookie')))}|"
+        f"{','.join(data.get('err_hits') or [])}|{','.join(data.get('challenge_hits') or [])}"
+    )
+    return sig
+
+
+def _login_label(data):
+    label = "LOGIN_REQUIRED"
+    if data.get("has_logout") or data.get("has_naver_session_cookie"):
+        label = "LOGGED_IN_LIKELY"
+    elif data.get("challenge_hits"):
+        label = "CHALLENGE_REQUIRED"
+    elif data.get("err_hits"):
+        label = "LOGIN_ERROR_SHOWN"
+    return label
 
 
 async def page_poll() -> None:
@@ -211,16 +249,7 @@ async def page_poll() -> None:
     while True:
         rows = fetch_targets()
         # nid.naver 또는 가장 최근 page target 선택
-        target = None
-        for t in rows:
-            if t.get("type") == "page" and "naver.com" in t.get("url", ""):
-                target = t
-                break
-        if target is None:
-            for t in rows:
-                if t.get("type") == "page" and t.get("url", "") != "about:blank":
-                    target = t
-                    break
+        target = _pick_page_target(rows)
         if target is None:
             await asyncio.sleep(1.0)
             continue
@@ -240,20 +269,10 @@ async def page_poll() -> None:
             data = json.loads(val) if isinstance(val, str) else val
         except Exception:  # noqa: BLE001 - 로그인 흐름 실시간 감시(WS/CDP 읽기전용) - 쿠키/토큰 원문 출력 금지 명시, 예외 시 빈 목록/False/타임아웃 반환
             data = {"raw": str(val)[:200]}
-        sig = (
-            f"{data.get('href', '')}|{data.get('title', '')}|"
-            f"{int(bool(data.get('has_logout')))}|{int(bool(data.get('has_naver_session_cookie')))}|"
-            f"{','.join(data.get('err_hits') or [])}|{','.join(data.get('challenge_hits') or [])}"
-        )
+        sig = _page_sig(data)
         if sig != last_sig:
             # 판정 라벨
-            label = "LOGIN_REQUIRED"
-            if data.get("has_logout") or data.get("has_naver_session_cookie"):
-                label = "LOGGED_IN_LIKELY"
-            elif data.get("challenge_hits"):
-                label = "CHALLENGE_REQUIRED"
-            elif data.get("err_hits"):
-                label = "LOGIN_ERROR_SHOWN"
+            label = _login_label(data)
             print(
                 f"[C] {label} href={data.get('href', '')[:120]} title={data.get('title', '')[:60]} "
                 f"id_form={data.get('has_id_form')} pw_form={data.get('has_pw_form')} "

@@ -68,7 +68,48 @@ def wait_value_settled(page, selector: str, expected: str, timeout_ms: int = 300
         return False
 
 
-def wait_submit_done(
+def _find_success_dom(page, success_selectors: Iterable[str]) -> dict | None:
+    """success selector 중 보이는 것이 있으면 완료 결과 dict, 없으면 None."""
+    for sel in success_selectors:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                return {"done": True, "kind": "success_dom", "detail": sel}
+        except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
+            pass
+    return None
+
+
+def _find_fail_dom(page, fail_selectors: Iterable[str]) -> dict | None:
+    """fail selector 중 보이는 것이 있으면 완료 결과 dict, 없으면 None."""
+    for sel in fail_selectors:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                txt = ""
+                with suppress(Exception):
+                    txt = (el.inner_text() or "").strip()[:200]
+                return {"done": True, "kind": "fail_dom", "detail": txt or sel}
+        except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
+            pass
+    return None
+
+
+def _find_fail_text(page, fail_signals: Iterable[str], last: str) -> dict | None:
+    """body 텍스트에 fail_signals 가 있으면 완료 결과 dict, 없으면 None."""
+    if fail_signals:
+        try:
+            body = page.evaluate("() => document.body && document.body.innerText || ''")
+            if isinstance(body, str):
+                for s in fail_signals:
+                    if s and s in body and s != last:
+                        return {"done": True, "kind": "fail_text", "detail": s}
+        except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
+            pass
+    return None
+
+
+def wait_submit_done(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     page,
     *,
     before_url: str = "",
@@ -102,35 +143,13 @@ def wait_submit_done(
             # URL 변경
             if not success_url_contains or any(s in cur for s in success_url_contains):
                 return {"done": True, "kind": "url_changed", "detail": cur}
-        # success selector
-        for sel in success_selectors:
-            try:
-                el = page.query_selector(sel)
-                if el and el.is_visible():
-                    return {"done": True, "kind": "success_dom", "detail": sel}
-            except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
-                pass
-        # fail selector
-        for sel in fail_selectors:
-            try:
-                el = page.query_selector(sel)
-                if el and el.is_visible():
-                    txt = ""
-                    with suppress(Exception):
-                        txt = (el.inner_text() or "").strip()[:200]
-                    return {"done": True, "kind": "fail_dom", "detail": txt or sel}
-            except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
-                pass
-        # fail text in body
-        if fail_signals:
-            try:
-                body = page.evaluate("() => document.body && document.body.innerText || ''")
-                if isinstance(body, str):
-                    for s in fail_signals:
-                        if s and s in body and s != last:
-                            return {"done": True, "kind": "fail_text", "detail": s}
-            except Exception:  # noqa: BLE001 - 폼 필드 대기/제출완료 감지 범용 헬퍼 - 모든 except가 False 또는 timeout 결과를 반환, 승인 판정 로직이 아니라 단순 상태확인 유틸
-                pass
+        found = (
+            _find_success_dom(page, success_selectors)
+            or _find_fail_dom(page, fail_selectors)
+            or _find_fail_text(page, fail_signals, last)
+        )
+        if found:
+            return found
         page.wait_for_timeout(poll_ms)
     return {"done": False, "kind": "timeout", "detail": f"{int((time.time() - start) * 1000)}ms"}
 

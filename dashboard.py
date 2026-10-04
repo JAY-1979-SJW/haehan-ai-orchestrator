@@ -233,35 +233,43 @@ def _get_live_pending_tokens() -> list:
     return pending
 
 
-def _process_decision(token_id: str, task_id: str, user_id: str, reason: str, action: str) -> tuple:
+def _check_decision_allowed(token_id: str, task_id: str, user_id: str) -> tuple:
+    """승인/거부 사전 검증. (오류응답 또는 None, role, entry, risk_level) 반환."""
     if not token_id or not task_id or not user_id:
-        return {"error": "token_id, task_id, user_id are required"}, 400
+        return ({"error": "token_id, task_id, user_id are required"}, 400), None, None, None
 
     user = _USERS.get(user_id)
     if not user:
-        return {"error": f"unknown user_id: {user_id}"}, 403
+        return ({"error": f"unknown user_id: {user_id}"}, 403), None, None, None
 
     role = user["role"]
     if role == "viewer":
-        return {"error": "viewer role cannot approve or reject tasks"}, 403
+        return ({"error": "viewer role cannot approve or reject tasks"}, 403), None, None, None
 
     entry = approval_manager._store.get(token_id)
     if not entry:
-        return {"error": "token not found"}, 404
+        return ({"error": "token not found"}, 404), None, None, None
 
     risk_level = entry.get("risk_level", "critical")
 
     if risk_level == "critical":
-        return {"error": "critical tasks cannot be approved by anyone"}, 403
+        return ({"error": "critical tasks cannot be approved by anyone"}, 403), None, None, None
 
     max_risk = _ROLE_MAX_RISK.get(role)
     if max_risk is None or _RISK_RANK.get(risk_level, 99) > _RISK_RANK.get(max_risk, 0):
-        return {"error": f"role '{role}' cannot approve '{risk_level}' risk tasks"}, 403
+        return ({"error": f"role '{role}' cannot approve '{risk_level}' risk tasks"}, 403), None, None, None
 
     if entry.get("approved"):
-        return {"error": "token already approved"}, 409
+        return ({"error": "token already approved"}, 409), None, None, None
     if entry.get("rejected"):
-        return {"error": "token already rejected"}, 409
+        return ({"error": "token already rejected"}, 409), None, None, None
+    return None, role, entry, risk_level
+
+
+def _process_decision(token_id: str, task_id: str, user_id: str, reason: str, action: str) -> tuple:
+    err, role, _entry, risk_level = _check_decision_allowed(token_id, task_id, user_id)
+    if err is not None:
+        return err
 
     if action == "approve":
         approval_manager.approve_token(token_id)
@@ -311,7 +319,7 @@ def _process_decision(token_id: str, task_id: str, user_id: str, reason: str, ac
     return resp, 200
 
 
-def _record_decision(
+def _record_decision(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     token_id: str, task_id: str, user_id: str, role: str, decision: str, risk_level: str, reason: str = ""
 ) -> None:
     entry = mask_sensitive(

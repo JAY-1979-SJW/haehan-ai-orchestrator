@@ -99,9 +99,7 @@ def staged_paths(status_lines: list[str]) -> set[str]:
     return staged
 
 
-def audit() -> AuditResult:
-    findings: list[Finding] = []
-
+def _audit_scope(findings):
     status_lines = git_status_short()
     staged_oos = sorted(staged_paths(status_lines) & OUT_OF_SCOPE)
     if staged_oos:
@@ -113,7 +111,10 @@ def audit() -> AuditResult:
         add(findings, "PASS", "design_doc_exists", _rel(DOC_PATH))
     else:
         add(findings, "FAIL", "design_doc_exists", "missing")
+    return staged_oos
 
+
+def _audit_auth_defaults(findings):
     docker_compose = read_text("docker-compose.yml")
     if has(r"AUTH_ENABLED:\s*[\"']true[\"']", docker_compose):
         add(findings, "PASS", "compose_auth_default", "AUTH_ENABLED true")
@@ -126,6 +127,8 @@ def audit() -> AuditResult:
     else:
         add(findings, "FAIL", "config_auth_default", "default true not found")
 
+
+def _audit_router(findings):
     router = read_text("ai_orchestrator/local_agent_router.py")
     protected_register = has(
         r"def\s+register_local_agent\([\s\S]{0,300}require_role\(\s*[\"']admin[\"']\s*,\s*[\"']owner[\"']\s*\)",
@@ -144,6 +147,8 @@ def audit() -> AuditResult:
     else:
         add(findings, "FAIL", "registration_code_flow", "registration-code endpoints incomplete")
 
+
+def _audit_actions_ws(findings):
     actions = read_text("ai_orchestrator/local_agent_actions.py")
     risk = read_text("ai_orchestrator/local_agent_risk_policy.py")
     if "web_open_url_readonly" in actions and "web_open_url_readonly" in risk:
@@ -162,6 +167,18 @@ def audit() -> AuditResult:
         add(findings, "PASS", "live_verify_redaction", "agent id masked; token not referenced")
     else:
         add(findings, "FAIL", "live_verify_redaction", "masking/token contract failed")
+
+
+def audit() -> AuditResult:
+    findings: list[Finding] = []
+
+    staged_oos = _audit_scope(findings)
+
+    _audit_auth_defaults(findings)
+
+    _audit_router(findings)
+
+    _audit_actions_ws(findings)
 
     script_text = Path(__file__).read_text(encoding="utf-8", errors="replace")
     forbidden = [token for token in FORBIDDEN_SCRIPT_TOKENS if token in script_text.lower()]

@@ -13,7 +13,7 @@ load_dotenv()
 
 agent = BrowserAgent()
 agent.connect()
-page = agent._page
+page = agent.page
 
 # frame_locator로 iframe 접근
 iframes = [

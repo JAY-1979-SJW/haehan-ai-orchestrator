@@ -116,44 +116,7 @@ def _draw_diagram(draw: ImageDraw.ImageDraw, active: int, top: int = 90) -> None
             draw.polygon([(ax1 + 14, ay), (ax1 - 6, ay - 12), (ax1 - 6, ay + 12)], fill=arrow_color)
 
 
-def _diagram_card(active: int, desc: str, inset_path: Path | None = None, inset_caption: str = "") -> Image.Image:
-    """전체 다이어그램(상단 고정) + 하단에 설명 텍스트 또는 실제 캡처 인서트."""
-    img = Image.new("RGB", (W, H), CREAM)
-    draw = ImageDraw.Draw(img, "RGBA")
-
-    f_title = _font(FONT_BOLD, 46)
-    title = "핵심 구조 — 댓글이 DM이 되기까지"
-    tw = draw.textlength(title, font=f_title)
-    draw.text(((W - tw) / 2, 24), title, font=f_title, fill=INK)
-
-    _draw_diagram(draw, active)
-
-    bottom_y = 90 + 200 + 70  # 다이어그램 하단 여백
-
-    if inset_path and inset_path.exists():
-        # 실제 화면 캡처를 우측에, 설명 텍스트를 좌측에 배치
-        inset_w, inset_h = 760, H - bottom_y - 60
-        shot = Image.open(inset_path).convert("RGB")
-        inner = _letterbox(shot, inset_w, inset_h, bg=(235, 230, 220))
-        ix = W - inset_w - 120
-        img.paste(inner, (ix, bottom_y))
-        draw.rectangle([ix, bottom_y, ix + inset_w, bottom_y + inset_h], outline=(210, 204, 192), width=3)
-        f_cap = _font(FONT_BOLD, 30)
-        cw = draw.textlength(inset_caption, font=f_cap)
-        draw.text((ix + inset_w / 2 - cw / 2, bottom_y + inset_h + 14), inset_caption, font=f_cap, fill=GOLD)
-        desc_w = ix - 160
-    else:
-        desc_w = W - 240
-
-    f_desc = _font(FONT_BOLD, 48)
-    ty = bottom_y + 30
-    for ln in _wrap(draw, desc, f_desc, desc_w):
-        draw.text((120, ty), ln, font=f_desc, fill=(60, 56, 50))
-        ty += 68
-    return img
-
-
-def _speech_bubble(
+def _speech_bubble(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     draw: ImageDraw.ImageDraw,
     text: str,
     center_x: int,

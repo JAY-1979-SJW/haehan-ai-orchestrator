@@ -149,7 +149,7 @@ def _cmd_submit_draft(args: list[str]) -> None:
     print(json.dumps(response, ensure_ascii=False, indent=2))
 
 
-def _build_response(
+def _build_response(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     command: str,
     status: str,
     decision: str = "",

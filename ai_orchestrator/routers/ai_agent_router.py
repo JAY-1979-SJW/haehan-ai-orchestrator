@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from .. import chat_sessions as _chat_store
+from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 from .. import local_agent_registry as _reg
 from .. import mcp_tool_names as _tool_names
 from ..gates.auth import require_role
@@ -31,6 +32,9 @@ ai_agent_router = APIRouter(prefix="/ai-agent", tags=["ai-agent"])
 _DEFAULT_ALLOWED_TOOLS = _tool_names.qualified(_tool_names.DEFAULT_ALLOWED)
 
 
+CHAT_RESULT_MAX_CHARS = RESULT_FULL_MAX_CHARS  # result_full 상한(정본: contracts/agent_result_limits.py)
+
+
 class RunAgentRequest(BaseModel):
     prompt: str
     allowed_tools: list[str] | None = None  # None이면 기본 화이트리스트 사용
@@ -38,6 +42,9 @@ class RunAgentRequest(BaseModel):
     max_budget_usd: float = 2.0
     chat_id: str = ""  # 주어지면 그 세션의 claude_session_id로 --resume(대화 이어가기, 속도 개선)
     model: str = ""  # 공식 --model 그대로 전달("sonnet"/"opus"/"haiku"/"fable" 또는 전체 모델명)
+    # 결과 전문 길이. 서버 결과 필터가 result 를 500자로 자르므로 result_full 로 받는다.
+    # 기본값은 대화기록 저장 상한(chat_sessions._MAX_MESSAGE_TEXT_LEN)과 같게 맞춘다.
+    result_max_chars: int = CHAT_RESULT_MAX_CHARS
 
 
 @ai_agent_router.post("/run")
@@ -54,14 +61,12 @@ def run_agent(
     if not prompt:
         raise HTTPException(status_code=400, detail="prompt가 비어 있습니다")
 
-    agents = _reg.list_agents()
-    if not agents:
+    agent = _reg.select_agent(_reg.list_agents())
+    if agent is None:
         raise HTTPException(
             status_code=503,
             detail=("연결된 로컬 에이전트가 없습니다. python -m local_agent.agent --run 이 실행 중인지 확인하세요."),
         )
-    # idle 상태 에이전트 우선, 없으면 첫 번째(다른 작업 처리 중이어도 큐에는 쌓임)
-    agent = next((a for a in agents if a.get("agent_status") == "idle"), agents[0])
     agent_id = agent["agent_id"]
 
     allowed_tools = body.allowed_tools if body.allowed_tools is not None else _DEFAULT_ALLOWED_TOOLS
@@ -73,6 +78,7 @@ def run_agent(
         "allowed_tools": allowed_tools,
         "timeout": timeout,
         "max_budget_usd": max_budget,
+        "result_max_chars": max(0, min(20000, body.result_max_chars)),
     }
     if body.model.strip():
         params["model"] = body.model.strip()

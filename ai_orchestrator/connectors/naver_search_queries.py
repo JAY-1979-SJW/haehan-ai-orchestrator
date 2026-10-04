@@ -157,7 +157,7 @@ _SHOP_SELECT_COLS = (
 )
 
 
-def search_shopping_items(
+def search_shopping_items(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     db_path: Path | None = None,
     query: str | None = None,

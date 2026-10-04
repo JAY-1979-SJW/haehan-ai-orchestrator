@@ -25,8 +25,12 @@ _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from scripts.app_paths import resolve_external, sibling_project  # noqa: E402
+
 SRC = _ROOT / "data" / "mk_catalog" / "site" / "catalog_web.html"
-DST = Path(r"C:\work\30. 해한 AI 홈페이지\haehan-ai\public\lighting\catalog.html")
+DST = resolve_external(
+    "HAEHAN_HOMEPAGE_CATALOG", "haehan-ai", "public", "lighting", "catalog.html", base=sibling_project("30. 해한 AI 홈페이지")
+)
 
 PUBLIC_FIELDS = ("name", "size", "led", "ct", "color", "features", "cat", "img", "sellPrice")
 BIZ_PHONE = "010-7387-6635"

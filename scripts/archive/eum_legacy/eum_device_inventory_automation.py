@@ -15,6 +15,7 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -183,7 +184,7 @@ class EumDeviceInventoryManager:
 
     def _calculate_statistics(self) -> dict:
         """통계 계산"""
-        stats = {
+        stats: dict[str, Any] = {
             "total_devices": len(self.devices),
             "rental_active": 0,
             "rental_pending_paperwork": 0,
@@ -214,7 +215,7 @@ class EumDeviceInventoryManager:
 
     def group_by_location(self) -> dict:
         """현장별 그룹화"""
-        grouped = {}
+        grouped: dict[Any, Any] = {}
 
         for device in self.devices:
             location = device["location"].strip()
