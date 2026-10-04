@@ -3,7 +3,7 @@ from scripts.eum import auth
 
 def test_eum_terminal_company_subtype_is_distribution_company():
     assert auth._TERMINAL_COMPANY_SUBTYPE == "유통업체"
-    assert auth._TERMINAL_COMPANY_SUBTYPE_SELECTOR == "#radio_b2"
+    assert auth._TERMINAL_COMPANY_SUBTYPE_SELECTOR_FALLBACK == "#radio_b2"
 
 
 def test_eum_id_selectors_cover_placeholder_search_input():
