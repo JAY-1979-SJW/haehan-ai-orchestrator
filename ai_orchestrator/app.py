@@ -1,4 +1,4 @@
-# 운영 진입점 아님 — CLI 전용 (컨테이너 실행: ai_orchestrator.server:app)
+# 운영 진입점 아님 — CLI 전용 (컨테이너 실행: ai_orchestrator.asgi:app)
 import io
 import logging
 import sys

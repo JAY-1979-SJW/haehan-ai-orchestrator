@@ -48,13 +48,13 @@ if ($fastapiRunning -and -not $Restart) {
         Stop-Process -Id $fastapiRunning.ProcessId -Force -EA SilentlyContinue
         Start-Sleep -Seconds 1
         Start-Process "python" `
-            "-m uvicorn ai_orchestrator.server:app --host 127.0.0.1 --port 8401 --reload --reload-dir ai_orchestrator --reload-dir scripts" `
+            "-m uvicorn ai_orchestrator.asgi:app --host 127.0.0.1 --port 8401 --reload --reload-dir ai_orchestrator --reload-dir scripts" `
             -WorkingDirectory $ROOT -WindowStyle Hidden
         Write-Host "   FastAPI --reload 재시작 완료" -ForegroundColor Green
     }
 } else {
     Start-Process "python" `
-        "-m uvicorn ai_orchestrator.server:app --host 127.0.0.1 --port 8401 --reload --reload-dir ai_orchestrator --reload-dir scripts" `
+        "-m uvicorn ai_orchestrator.asgi:app --host 127.0.0.1 --port 8401 --reload --reload-dir ai_orchestrator --reload-dir scripts" `
         -WorkingDirectory $ROOT -WindowStyle Hidden
     Write-Host "   FastAPI --reload 시작 완료" -ForegroundColor Green
 }

@@ -52,7 +52,7 @@ def client():
     import ai_orchestrator.config as config
 
     config.AUTH_ENABLED = False
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     return TestClient(app, raise_server_exceptions=False)
 
@@ -472,7 +472,7 @@ class TestDirectDictBoundaryHoldRegistry:
         """HOLD 엔드포인트 5개가 FastAPI app에 등록되어 있다."""
         from fastapi.routing import APIRoute
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         from tests.app_routes import route_paths
 

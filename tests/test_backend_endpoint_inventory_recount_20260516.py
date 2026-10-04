@@ -293,7 +293,7 @@ def test_include_router_not_counted():
 def test_health_endpoint_key_structure_preserved():
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.server import app
+    from ai_orchestrator.asgi import app
 
     client = TestClient(app, raise_server_exceptions=False)
     r = client.get("/api/v1/health")

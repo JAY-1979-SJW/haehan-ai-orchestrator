@@ -528,12 +528,12 @@ result2, _ = oauth.exchange_code({'code': '<CODE>'})
 
 | 서비스 | 포트 | 비고 |
 |--------|------|------|
-| FastAPI 서버 | 8401 | `python -m uvicorn ai_orchestrator.server:app --host 127.0.0.1 --port 8401` |
+| FastAPI 서버 | 8401 | `python -m uvicorn ai_orchestrator.asgi:app --host 127.0.0.1 --port 8401` |
 | Next.js 프론트엔드 | 3000 | `cd admin-web && npm run dev` |
 | Electron 앱 | — | `dist-electron/win-unpacked/Haehan AI.exe` |
 
 ## 서버 시작 순서
-1. FastAPI: `python -m uvicorn ai_orchestrator.server:app --host 127.0.0.1 --port 8401`
+1. FastAPI: `python -m uvicorn ai_orchestrator.asgi:app --host 127.0.0.1 --port 8401`
 2. Next.js: `cd admin-web && npm run dev`
 3. Electron 앱 실행
 

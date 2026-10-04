@@ -2,6 +2,7 @@
 
 로그·감사 화면 read-only 정책 준수 및 보안 경계 검증.
 """
+
 import sys
 from pathlib import Path
 
@@ -248,7 +249,7 @@ class TestApiContract:
         from fastapi.testclient import TestClient
 
         from ai_orchestrator.connectors.user_auth_router import get_jwt_user
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         app.dependency_overrides[get_jwt_user] = lambda: {"actor": "owner-test", "role": "owner"}
         return app, TestClient(app, raise_server_exceptions=False)

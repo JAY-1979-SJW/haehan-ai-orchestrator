@@ -224,9 +224,24 @@ def _measure_code_map_and_import_fail(tree: Path) -> tuple[dict, dict | None, li
     return m, committed, import_fail
 
 
+def _route_check_for(tree: Path) -> str | None:
+    """그 트리 자신의 configs/verify_change.json 의 route_check.
+
+    서버 진입점 모듈 이름을 바꾸는 변경(예: server.py → asgi.py)에서 기준 트리에 '변경 후' 명령을
+    돌리면 기준 측정이 항상 실패(`?`)해 "라우트 수 변경"으로 오판된다(2026-09-30 PR #55).
+    트리에 설정이 없거나 읽을 수 없으면 현재 설정으로 되돌린다.
+    """
+    cfg_path = tree / "configs" / "verify_change.json"
+    try:
+        return json.loads(cfg_path.read_text(encoding="utf-8")).get("route_check") or CFG["route_check"]
+    except (OSError, ValueError):
+        return CFG["route_check"]
+
+
 def _measure_routes(tree: Path) -> str:
-    if CFG["route_check"]:  # 서버 앱의 라우트 수를 출력하는 파이썬 한 줄
-        routes = run([PY, "-c", CFG["route_check"]], tree)
+    check = _route_check_for(tree)
+    if check:  # 서버 앱의 라우트 수를 출력하는 파이썬 한 줄
+        routes = run([PY, "-c", check], tree)
         return (routes.stdout.strip().splitlines() or ["?"])[-1]
     return "-"
 

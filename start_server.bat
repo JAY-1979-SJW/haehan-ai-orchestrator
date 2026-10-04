@@ -11,7 +11,7 @@ if not exist ".env" (
 
 if not exist "logs" mkdir "logs"
 
-python -m uvicorn ai_orchestrator.server:app ^
+python -m uvicorn ai_orchestrator.asgi:app ^
     --host 127.0.0.1 ^
     --port 8400 ^
     --reload ^

@@ -5121,14 +5121,6 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/server.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/server/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -21002,6 +20994,22 @@
    "source": "rule"
   },
   "tests/test_post_edit_gate_python.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/asgi.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_verify_change_route_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

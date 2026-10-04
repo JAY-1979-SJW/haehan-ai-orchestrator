@@ -398,7 +398,7 @@ class TestWebTaskRunIntegrationBoundary:
         config.AUTH_ENABLED = False
         from fastapi.testclient import TestClient
 
-        from ai_orchestrator.server import app
+        from ai_orchestrator.asgi import app
 
         return TestClient(app, raise_server_exceptions=False)
 
