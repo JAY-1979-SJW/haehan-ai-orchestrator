@@ -140,11 +140,12 @@ export const siteMapApi = {
 // ── 등록 사이트(M7-S1) — /api/v1/site-registry/* (관리자 전용). 기준서: docs/specs/2026-10-05_site_task_map_m7_onboarding_auto_prepare.md
 const REGISTRY = "/api/proxy/api/v1/site-registry";
 
-export type SiteState = "registered" | "exploring" | "ready" | "needs_login" | "blocked" | "deregistered";
+export type SiteState = "registered" | "exploring" | "ready" | "incomplete" | "needs_login" | "blocked" | "deregistered";
 export const SITE_STATE_LABEL: Record<SiteState, string> = {
   registered: "등록됨(탐색 전)",
   exploring: "탐색 중",
   ready: "사용 가능",
+  incomplete: "탐색 불완전(업무 0건)",
   needs_login: "로그인 필요",
   blocked: "차단됨(확인 필요)",
   deregistered: "해제됨",
@@ -157,8 +158,11 @@ export interface RegisteredSite {
   registered_by: string;
   registered_at: string;
   last_explored_at: string;
+  /** 사이트가 다른 호스트로 넘긴 경우 실제로 탐색한 호스트 */
+  explored_host?: string;
   note: string;
   map: { tasks: number; verified: number; stale: number; auth: Auth };
+  explored?: { host: string; tasks: number; verified: number; stale: number; auth: Auth };
 }
 
 export interface OfficialApiAdvice {

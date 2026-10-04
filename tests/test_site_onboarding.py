@@ -67,6 +67,10 @@ def test_transitions_allow_only_defined_paths():
     with pytest.raises(ValueError):
         sr.transition(blocked, sr.READY, now=NOW)  # 막힌 사이트는 사람이 다시 탐색해야 풀린다
     assert sr.transition(blocked, sr.EXPLORING, now=NOW)["state"] == sr.EXPLORING
+    incomplete = sr.transition(exploring, sr.INCOMPLETE, now=NOW)
+    with pytest.raises(ValueError):
+        sr.transition(incomplete, sr.READY, now=NOW)  # 불완전한 탐색이 저절로 사용 가능이 되지 않는다
+    assert sr.transition(incomplete, sr.EXPLORING, now=NOW)["state"] == sr.EXPLORING  # 다시 탐색은 가능
     gone = sr.transition(ready, sr.DEREGISTERED, now=NOW)
     assert sr.transition(gone, sr.REGISTERED, now=NOW)["state"] == sr.REGISTERED
 
@@ -79,16 +83,22 @@ def test_history_is_bounded():
 
 
 @pytest.mark.parametrize(
-    ("result", "auth", "tasks", "state"),
+    ("result", "tasks", "login_only", "state"),
     [
-        ({"aborted_reason": "bot_flagged: high"}, "login", 5, sr.BLOCKED),
-        ({}, "login", 0, sr.NEEDS_LOGIN),
-        ({}, "public", 0, sr.READY),
-        ({}, "login", 4, sr.READY),
+        ({"aborted_reason": "bot_flagged: high"}, 5, False, sr.BLOCKED),
+        ({"aborted_reason": "bot_flagged: high"}, 0, False, sr.BLOCKED),  # 차단이 업무 0건보다 먼저
+        ({}, 0, False, sr.INCOMPLETE),  # 업무 0건은 "사용 가능"이 아니다(2026-10-05 cafe.naver.com 실검증)
+        ({}, 2, True, sr.NEEDS_LOGIN),  # 로그인 화면만 찾음
+        ({}, 4, False, sr.READY),
     ],
 )
-def test_state_after_exploration(result, auth, tasks, state):
-    assert sr.state_after_exploration(result, map_auth=auth, tasks=tasks)[0] == state
+def test_state_after_exploration(result, tasks, login_only, state):
+    assert sr.state_after_exploration(result, tasks=tasks, login_only=login_only)[0] == state
+
+
+def test_incomplete_never_claims_ready_and_explains_next_step():
+    state, note = sr.state_after_exploration({}, tasks=0)
+    assert state == sr.INCOMPLETE and "다시 등록" in note and "사용 가능" not in note
 
 
 def test_validate_record_rejects_garbage():
@@ -188,14 +198,60 @@ def test_bot_flagged_result_blocks_the_site(env):
     assert got["state"] == sr.BLOCKED and "사람이" in got["note"]
 
 
-def test_login_site_with_no_tasks_needs_login(env):
+def test_site_with_no_tasks_is_incomplete_not_ready(env):
     def fake(request):
         map_store.save(tm.empty_map(request["host"], auth="login", now=NOW))
         return {"pages": 1, "tasks": 0, "aborted_reason": ""}
 
     explore.configure(fake, run_async=False)
     svc.register({"host": HOST, "auth": "login"}, actor="kim")
+    got = svc.get_site(HOST)
+    assert got["state"] == sr.INCOMPLETE and "업무를 찾지 못했습니다" in got["note"]
+
+
+def test_login_screen_only_needs_login(env):
+    def fake(request):
+        site_map = tm.empty_map(request["host"], auth="login", now=NOW)
+        site_map["tasks"] = [{**TASK, "id": "login#0", "category": "login", "risk": "submit"}]
+        map_store.save(site_map)
+        return {"pages": 1, "tasks": 1, "aborted_reason": ""}
+
+    explore.configure(fake, run_async=False)
+    svc.register({"host": HOST, "auth": "login"}, actor="kim")
     assert svc.get_site(HOST)["state"] == sr.NEEDS_LOGIN
+
+
+def test_redirect_to_another_host_is_judged_by_the_explored_host(env):
+    """cafe.naver.com 처럼 사이트가 다른 호스트로 넘기면 업무는 거기에 쌓인다 — 등록 호스트의 옛 지도를 보고 사용 가능이라 하지 않는다."""
+    moved = "section." + HOST
+    old = tm.empty_map(HOST, auth="login", now=NOW)
+    old["tasks"] = [dict(TASK, state="verified")]  # 예전에 만든 지도(검증된 업무 1건)가 이미 있다
+    map_store.save(old)
+
+    def fake(request):
+        map_store.save(tm.empty_map(moved, auth="login", now=NOW))  # 넘어간 호스트에는 업무가 하나도 없다
+        return {"host": moved, "pages": 5, "tasks": 0, "aborted_reason": ""}
+
+    explore.configure(fake, run_async=False)
+    svc.register({"host": HOST, "auth": "login"}, actor="kim")
+    got = svc.get_site(HOST)
+    assert got["state"] == sr.INCOMPLETE  # 등록 호스트의 옛 업무 1건 때문에 ready 가 되면 안 된다
+    assert got["explored_host"] == moved and f"{moved} 로 이동" in got["note"]
+    assert got["map"]["tasks"] == 1 and got["explored"] == {"host": moved, **got["explored"]} and got["explored"]["tasks"] == 0
+
+
+def test_start_url_path_is_kept_and_host_only_starts_at_root(env):
+    starts: list[str] = []
+
+    def fake(request):
+        starts.append(request["start_url"])
+        return {"pages": 1, "tasks": 1, "aborted_reason": ""}
+
+    explore.configure(fake, run_async=False)
+    svc.register({"host": f"https://{HOST}/0moo?x=1#f"}, actor="kim")
+    svc.deregister(HOST, actor="kim")
+    svc.register({"host": HOST}, actor="kim")
+    assert starts == [f"https://{HOST}/0moo?x=1", f"https://{HOST}/"]  # 입력한 주소의 경로에서 시작, 호스트만이면 루트
 
 
 def test_executor_failure_is_recorded_and_returns_to_registered(env):
@@ -233,7 +289,7 @@ def test_nothing_sensitive_is_persisted(env, tmp_path):
         assert word not in text
     assert set(json.loads(text)["sites"][HOST]) == {
         "version", "host", "state", "policy", "registered_by", "registered_at", "updated_at",
-        "last_explored_at", "explore_request_id", "note", "history",
+        "last_explored_at", "explored_host", "explore_request_id", "note", "history",
     }  # fmt: skip
 
 

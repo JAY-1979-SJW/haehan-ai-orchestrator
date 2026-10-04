@@ -48,10 +48,11 @@ def _map_summary(host: str) -> dict[str, Any]:
     try:
         site_map = map_store.load(host)
     except ValueError:
-        return {"tasks": 0, "verified": 0, "stale": 0, "auth": tm.AUTH_PUBLIC, "error": "지도 파일을 읽을 수 없습니다"}
+        return {"tasks": 0, "verified": 0, "stale": 0, "auth": tm.AUTH_PUBLIC, "login_only": False, "error": "지도 파일을 읽을 수 없습니다"}
     tasks = site_map.get("tasks", [])
     return {
         "tasks": len(tasks),
+        "login_only": bool(tasks) and all(t.get("category") == "login" for t in tasks),
         "verified": sum(1 for t in tasks if t.get("state") == "verified"),
         "stale": sum(1 for t in tasks if t.get("state") == "stale"),
         "auth": site_map.get("auth", tm.AUTH_PUBLIC),
@@ -68,12 +69,16 @@ def _refresh(record: dict[str, Any]) -> dict[str, Any]:
         return record
     status, now = request["status"], _now()
     if status == explore.DONE:
-        summary = _map_summary(record["host"])
-        state, note = sr.state_after_exploration(
-            request.get("result") or {}, map_auth=summary["auth"], tasks=summary["tasks"]
-        )
+        result = request.get("result") or {}
+        # 사이트가 다른 호스트로 넘기면(예: cafe.naver.com → section.cafe.naver.com) 업무는 넘어간 호스트의 지도에 쌓인다.
+        # 등록 호스트의 옛 지도를 보고 "사용 가능"이라고 하면 안 되므로 실제로 탐색한 호스트 기준으로 판정한다.
+        explored = str(result.get("host") or record["host"])
+        summary = _map_summary(explored)
+        state, note = sr.state_after_exploration(result, tasks=summary["tasks"], login_only=summary["login_only"])
+        if explored != record["host"]:
+            note = f"{record['host']} 는 {explored} 로 이동합니다. {note}"
         updated = sr.transition(record, state, now=now, by="system", note=note)
-        updated = {**updated, "last_explored_at": str(request.get("finished_at") or now)}
+        updated = {**updated, "last_explored_at": str(request.get("finished_at") or now), "explored_host": explored}
     elif status in (explore.FAILED, "interrupted", explore.CANCELLED):
         reason = {"failed": f"탐색 실패: {request.get('error', '')[:100]}", "cancelled": "탐색이 취소됨"}.get(
             status, "서버가 다시 켜져 탐색이 끊김"
@@ -85,7 +90,11 @@ def _refresh(record: dict[str, Any]) -> dict[str, Any]:
 
 
 def _view(record: dict[str, Any]) -> dict[str, Any]:
-    return {**record, "map": _map_summary(record["host"])}
+    view = {**record, "map": _map_summary(record["host"])}
+    explored = record.get("explored_host") or ""
+    if explored and explored != record["host"]:  # 넘어간 호스트의 지도도 함께 보여 준다(업무는 거기에 있다)
+        view["explored"] = {"host": explored, **_map_summary(explored)}
+    return view
 
 
 def list_sites() -> list[dict[str, Any]]:
@@ -102,14 +111,18 @@ def get_site(host: str) -> dict[str, Any]:
 
 def register(raw: dict[str, Any], *, actor: str) -> dict[str, Any]:
     """사이트를 등록하고 최초 탐색을 시작한다. 이미 등록된 사이트(해제 제외)는 거부."""
-    host = sr.normalize_host(str(raw.get("host") or raw.get("start_url") or ""))
+    typed = str(raw.get("host") or raw.get("start_url") or "").strip()
+    host = sr.normalize_host(typed)
     existing = store.get(host)
     if existing is not None and existing["state"] != sr.DEREGISTERED:
         raise ValueError("이미 등록된 사이트입니다")
     policy = sr.validate_policy(raw.get("policy") or {})
     if policy["auto_explore"] == sr.AUTO:
         raise ValueError("자동 탐색(auto)은 아직 지원하지 않습니다(다음 단계) — ask 로 등록해 주세요")
-    start_url = str(raw.get("start_url") or f"https://{host}/")
+    # 입력창은 "호스트 또는 사이트 주소"를 받는다 — 경로가 있는 주소(예: https://cafe.naver.com/0moo)는 그 경로에서 탐색을 시작한다
+    typed_url = typed if "://" in typed else f"https://{typed}"
+    has_path = urlparse(typed_url).path not in ("", "/")
+    start_url = str(raw.get("start_url") or (typed_url if has_path else f"https://{host}/"))
     if (urlparse(start_url).hostname or "").lower() != host:
         raise ValueError("시작 주소의 호스트가 등록 호스트와 다릅니다")
 
