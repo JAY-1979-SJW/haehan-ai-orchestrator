@@ -35,3 +35,7 @@ importlib.reload(_lar)                          # 제거
 - 운영 코드, API, DB, 정책 변경 없음. 시험 코드 6개 파일만.
 - 검증: 6개 파일 각각 전체 실행 0건 실패, 린트 신규 오류 0, 영향 테스트 묶음 재실행 시 실패 목록이 줄기만 하고 늘지 않음, 훅 검사(`_check_python`) 재실행.
 - 범위 밖 2개 파일(별개 결함)은 별도 보고.
+
+## 후속 (2026-10-05): 낡은 시험 두 파일 정리 — 시험만 수정, 앱·정책 불변
+- `test_capture_screenshot_dry_run.py` 3건 해소(13건 통과): 서버가 `running` 보고 없이 `delivered → completed` 를 거부하므로 시험이 `running` 을 먼저 보내게 했고, 액션 결과 키가 `screenshot_file` → `file_basename` 으로 바뀐 것을 반영(전체 경로 비노출 단언은 오히려 강화).
+- `test_fetch_web_page.py` 10건: `POST /api/v1/tasks` 가 `POST_TASKS_DRY_RUN_ENABLED=True`(정책 잠금, 여러 시험이 True 를 단언)라 토큰을 발급하지 않는다. 플래그가 켜져 있을 때만 사유와 함께 skip, 꺼졌는데 토큰이 없으면 실패(`_approval_token`). 18건 통과·10건 skip. **플래그와 앱은 건드리지 않았다.** 플래그를 끄고 확인하니 승인 응답에 `executed` 키가 없어 8건이 추가로 실패한다 — 정책 결정 뒤 별도 정리 필요.
