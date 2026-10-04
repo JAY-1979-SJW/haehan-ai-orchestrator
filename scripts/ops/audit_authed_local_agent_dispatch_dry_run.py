@@ -128,24 +128,75 @@ def _audit_auth_defaults(findings):
         add(findings, "FAIL", "config_auth_default", "default true not found")
 
 
-def _audit_router(findings):
-    router = read_text("ai_orchestrator/local_agent_router.py")
-    protected_register = has(
-        r"def\s+register_local_agent\([\s\S]{0,300}require_role\(\s*[\"']admin[\"']\s*,\s*[\"']owner[\"']\s*\)",
-        router,
+ROUTER_REL = "ai_orchestrator/local_agent_router.py"
+REGISTRATION_REL = "ai_orchestrator/local_agent_router_registration.py"
+ADMIN_OWNER_GUARD = re.compile(r"require_role\(\s*[\"']admin[\"']\s*,\s*[\"']owner[\"']\s*\)")
+
+
+def _endpoint_block(text: str, router_var: str, method: str, path: str) -> str | None:
+    """Return decorator + signature + body of the endpoint, or None.
+
+    The block ends at the next top-level decorator/def/class, so a guard on a
+    different endpoint can never satisfy this endpoint.
+    """
+    deco = re.compile(
+        rf"^@{re.escape(router_var)}\.{method}\(\s*[\"']{re.escape(path)}[\"']",
+        re.M,
     )
-    if protected_register:
+    m = deco.search(text)
+    if not m:
+        return None
+    nxt = re.compile(r"^(?:@|def |async def |class )", re.M)
+    start = m.end()
+    pos = start
+    seen_def = False
+    for nm in nxt.finditer(text, start):
+        if nm.group(0).startswith("@"):
+            if seen_def:
+                pos = nm.start()
+                break
+            continue
+        if not seen_def:
+            seen_def = True
+            continue
+        pos = nm.start()
+        break
+    else:
+        pos = len(text)
+    return text[m.start():pos]
+
+
+def _audit_router(findings, router=None, registration=None):
+    if router is None:
+        router = read_text(ROUTER_REL)
+    if registration is None:
+        registration = read_text(REGISTRATION_REL)
+    rv = "registration_router"
+
+    def guarded(path: str, func: str | None = None) -> bool:
+        block = _endpoint_block(registration, rv, "post", path)
+        if block is None:
+            return False
+        if func is not None and not has(rf"^(?:async\s+)?def\s+{func}\(", block, re.M):
+            return False
+        return ADMIN_OWNER_GUARD.search(block) is not None
+
+    if guarded("/register", "register_local_agent"):
         add(findings, "PASS", "register_endpoint_auth", "admin/owner required")
     else:
         add(findings, "FAIL", "register_endpoint_auth", "admin/owner guard not found")
 
-    if (
-        '@local_agent_router.post("/registration-codes")' in router
-        and '@local_agent_router.post("/register-with-code")' in router
-    ):
-        add(findings, "PASS", "registration_code_flow", "issue and exchange endpoints present")
+    issue_guarded = guarded("/registration-codes")
+    exchange = _endpoint_block(registration, rv, "post", "/register-with-code") is not None
+    if issue_guarded and exchange:
+        add(findings, "PASS", "registration_code_flow", "issue (admin/owner) and exchange endpoints present")
     else:
-        add(findings, "FAIL", "registration_code_flow", "registration-code endpoints incomplete")
+        add(findings, "FAIL", "registration_code_flow", "registration-code endpoints incomplete or issue unguarded")
+
+    if has(r"^\s*local_agent_router\.include_router\(\s*_?registration_router\s*\)", router, re.M):
+        add(findings, "PASS", "registration_router_included", "included in local_agent_router")
+    else:
+        add(findings, "FAIL", "registration_router_included", "registration_router not included")
 
 
 def _audit_actions_ws(findings):
