@@ -231,6 +231,7 @@ def test_forbidden_docker_compose_action_defined(design):
 
 def test_all_forbidden_actions_auto_execute_false(design):
     bad = [a for a in design.FORBIDDEN_ACTION_MATRIX if a.get("auto_execute_allowed") is not False]
+    assert design.FORBIDDEN_ACTION_MATRIX, "design.FORBIDDEN_ACTION_MATRIX 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not bad, f"auto_execute_allowed=True: {[a['action_id'] for a in bad]}"
 
 

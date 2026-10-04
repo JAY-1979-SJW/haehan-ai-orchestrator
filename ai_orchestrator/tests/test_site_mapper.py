@@ -545,6 +545,7 @@ def test_production_site_mapper_has_no_domain_keywords() -> None:
         "댓글",
     ]
     hits = [p for p in forbidden_patterns if p in text]
+    assert forbidden_patterns, "forbidden_patterns 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not hits, f"production site_mapper.py 에 특정 도메인 키워드가 하드코딩됨: {hits}"
 
 
