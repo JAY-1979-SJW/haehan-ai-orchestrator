@@ -11,13 +11,13 @@
 ### 원인
 `UniversalChat` 의 `MessageBody` 는 `[[fax-approve:…]]` 만 기본으로 카드로 바꾸고, 메일 카드 규칙(`[[mail-draft:…]]`)은 메일함 패널(`MailAiPanel`)만 `extraCards` 로 주입한다. 홈 콘솔(`app/page.tsx`)·`AiDock`(모든 화면의 AI 상담)·공무·블로그 창은 주입하지 않는다. 그런데 AI 는 직원 지침 6번("초안·승인 카드가 있는 기능은 카드로")과 앱 도구 설명 때문에 어느 창에서든 표식을 낸다.
 
-### 변경 (admin-web, L9, 신규 .ts 파일 아님이 아니라 .tsx 1개 추가)
+### 변경 (admin-web, L9)
 1. `components/chat/mailDraftCards.tsx` 신규: `MAIL_DRAFT_CARDS`(= `[[mail-draft:<32자 16진>]]` → `MailDraftCard`). 팩스 카드가 `components/chat/` 에 있는 것과 같은 위치.
 2. `UniversalChat.tsx`: 기본 카드 목록에 `MAIL_DRAFT_CARDS` 를 포함하고 화면이 준 `extraCards` 와 합친다. 같은 규칙(`mark.source` 동일)은 한 번만 쓴다 — 메일함 패널은 그대로 두어도 카드가 두 번 그려지지 않는다.
 3. `MailAiPanel.tsx` 는 변경 없음(중복 제거로 호환).
 
-### 의존 방향
-`components/chat/` → `app/mailbox/components/MailDraftCard`(역방향 import). `MailDraftCard` 는 초안 id 만으로 서버에서 읽는 자립형이라 이식 비용이 크지만 이번에는 이동하지 않는다. 이동(공용 `components/` 로 승격)은 후속 정리 항목으로 남긴다.
+### 의존 방향 (개정)
+최초 구현은 `components/chat/` → `app/mailbox/components/MailDraftCard` 역방향 import 였고, `verify_change` 가 모듈 순환 `app/mailbox` ↔ `components/chat`(80 → 81)을 새 문제로 잡아 FAIL 했다. 그래서 카드(`MailDraftCard.tsx`)·API 클라이언트(`mailDraftApi.ts`)·`formatSize` 를 `components/chat/` 로 옮기고(git mv), 메일함의 옛 경로(`lib/draftApi.ts`·`components/MailDraftCard.tsx`)는 재수출 파일로 남겨 메일함 안의 기존 import 가 그대로 동작하게 했다. `lib/format.ts` 는 `formatSize` 를 공용 위치에서 재수출한다. 의존은 화면(`app/mailbox`) → 공용(`components/chat`) 한 방향이다.
 
 ### 불변
 API·DB·정책·승인 흐름 변경 없음. 보내기는 여전히 카드 버튼(사람)으로만 되고 AI 허용 API 에 send 는 없다.

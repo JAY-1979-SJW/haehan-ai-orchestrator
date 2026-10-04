@@ -1,10 +1,6 @@
 import type { Address, MessageDetail } from "./api";
 
-export function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10240 ? 1 : 0)}KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
-}
+export { formatSize } from "@/components/chat/formatSize";
 
 const KST_PARTS = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Seoul",
