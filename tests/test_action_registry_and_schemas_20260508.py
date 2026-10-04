@@ -2,6 +2,7 @@
 
 import pytest
 
+import ai_orchestrator.local_agent.actions  # noqa: F401  (액션 핸들러 등록 트리거)
 from ai_orchestrator.local_agent.action_registry import (
     get_action_spec,
     has_handler,
@@ -19,7 +20,7 @@ from ai_orchestrator.local_agent.action_risk_policy import (
 )
 from ai_orchestrator.local_agent.action_schemas import all_specs
 
-# 액션 모듈 import 트리거 (registry 등록)
+# 액션 모듈 import 트리거 (registry 등록) — 위 import 블록의 `import ai_orchestrator.local_agent.actions`
 
 
 def test_all_specs_defined():
