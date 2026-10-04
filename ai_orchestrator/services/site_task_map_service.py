@@ -55,7 +55,10 @@ def list_hosts() -> list[dict[str, Any]]:
     out = []
     for host in store.list_hosts():
         try:
-            out.append(_summary(store.load(host)))
+            site_map = store.load(host)
+            if not site_map["tasks"] and not site_map.get("explored"):  # 탐색 기록도 업무도 없는 빈 파일은 '탐색한 사이트'가 아니다(상세가 404 가 되는 불일치 방지)
+                continue
+            out.append(_summary(site_map))
         except ValueError as e:
             out.append({"host": host, "error": str(e)})
     return out
@@ -63,7 +66,7 @@ def list_hosts() -> list[dict[str, Any]]:
 
 def get_map(host: str) -> dict[str, Any]:
     site_map = store.load(host)
-    if not site_map["tasks"]:
+    if not site_map["tasks"] and not site_map.get("explored"):  # 탐색했지만 업무가 없는 사이트는 지도를 그대로 보여준다(경고·점검표 포함)
         raise ValueError("이 사이트의 지도가 없습니다")
     return site_map
 

@@ -76,6 +76,8 @@ export interface SiteMap {
   auth: Auth;
   updated_at: string;
   tasks: MapTask[];
+  /** 탐색했다는 사실과 점검표(업무가 0건이어도 남는다) */
+  explored?: { at: string; pages: number; coverage?: { warning?: string; redirected_to?: string } };
 }
 
 export interface ResultTable {

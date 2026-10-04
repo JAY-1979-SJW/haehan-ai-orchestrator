@@ -120,9 +120,9 @@ export function SiteMapApp() {
         </div>
       )}
 
-      <div className="grid gap-3 lg:grid-cols-[260px_1fr]">
+      <div className="grid gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
         <HostList hosts={hosts} host={host} onPick={pickHost} />
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           {!host && <div className="rounded-xl border border-dashed border-[#D1D5DB] p-6 text-center text-[#6B7280]">왼쪽에서 사이트를 고르세요. 지도가 없으면 AI 업무 창에서 탐색을 요청하세요.</div>}
           {host && siteMap && (
             <>
@@ -133,6 +133,12 @@ export function SiteMapApp() {
                   {unclassified > 0 && <span className="ml-2 rounded bg-violet-100 px-2 text-violet-800">분류 미정 {unclassified}</span>}
                 </div>
               </div>
+              {tasks.length === 0 && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-900">
+                  탐색은 했지만 저장된 업무가 없습니다{siteMap.explored && siteMap.explored.pages > 0 ? ` (${siteMap.explored.pages}쪽 탐색)` : ""}.
+                  {siteMap.explored?.coverage?.warning && <div className="mt-1">{siteMap.explored.coverage.warning}</div>}
+                </div>
+              )}
               <TaskTable tasks={tasks} taskId={taskId} onPick={setTaskId} />
               {selected && (
                 <TaskDetail
@@ -188,7 +194,7 @@ function HostList({ hosts, host, onPick }: { hosts: HostSummary[]; host: string 
 function TaskTable({ tasks, taskId, onPick }: { tasks: MapTask[]; taskId: string | null; onPick: (id: string) => void }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-[#E5E7EB] bg-white" data-testid="sitemap-task-table">
-      <table className="w-full text-left text-[12px]">
+      <table className="w-full min-w-[640px] text-left text-[12px]">
         <thead className="bg-[#F9FAFB] text-[#6B7280]">
           <tr>
             <th className="px-2 py-1">업무</th>

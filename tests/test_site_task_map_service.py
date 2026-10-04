@@ -190,3 +190,19 @@ def test_lookup_exposes_coverage_warning_so_ai_does_not_assume_no_tasks(env):
     task_mapper.merge_snapshots("part.example.test", [snap, {"url": "https://part.example.test/b", "title": "", "frames": [{"url": "https://part.example.test/b", "inputs": [{"type": "hidden", "name": "x", "visible": False}], "buttons": [{"text": " ", "visible": True}], "links": [], "forms": []}]}], explored_pages=4)
     found = service.lookup("part.example.test", "조회")
     assert found["known"] is True and "1쪽에서 업무를 인식하지 못했습니다" in found["warning"]  # 업무가 있어도 불완전하면 알린다
+
+
+def test_get_map_returns_explored_empty_site_but_not_unexplored(env):
+    """화면(사이트 업무 지도)이 탐색은 했지만 업무가 0건인 사이트를 '지도가 없습니다'(404)로 보여주던 문제."""
+    store.save(tm.note_exploration(tm.empty_map("empty2.example.test", now=NOW), pages=4, auth="public", now=NOW, coverage={"warning": "업무를 인식하지 못했습니다"}))
+    got = service.get_map("empty2.example.test")
+    assert got["tasks"] == [] and got["explored"]["coverage"]["warning"]
+    with pytest.raises(ValueError, match="지도가 없습니다"):
+        service.get_map("never2.example.test")  # 탐색한 적 없는 사이트는 그대로 404
+
+
+def test_list_hosts_hides_empty_unexplored_files_but_keeps_explored_empty(env):
+    store.save(tm.empty_map("blank.example.test", now=NOW))
+    store.save(tm.note_exploration(tm.empty_map("seen.example.test", now=NOW), pages=2, auth="public", now=NOW))
+    hosts = [h["host"] for h in service.list_hosts()]
+    assert "blank.example.test" not in hosts and "seen.example.test" in hosts  # 목록과 상세(get_map)가 같은 기준
