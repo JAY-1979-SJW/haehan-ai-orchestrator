@@ -21088,6 +21088,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/google/live_inputs_cdp_fillers.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
