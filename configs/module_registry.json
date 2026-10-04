@@ -20945,6 +20945,22 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/explorer/popup_probe.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_popup_probe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/archive/shadowed_modules/naver_blog_seo_stub.py": {
    "layer": "L12",
    "role": "archive",
