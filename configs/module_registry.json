@@ -21040,6 +21040,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_grant_radar_router_contract.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "grant_radar",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

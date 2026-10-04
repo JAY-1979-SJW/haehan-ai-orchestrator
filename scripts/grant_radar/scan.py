@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 from datetime import datetime
@@ -112,15 +113,21 @@ _ROWS_JS = """
 """
 
 
-def _extract(page, portal: dict) -> list[dict]:
+logger = logging.getLogger(__name__)
+
+
+def _extract(page, portal: dict, errors: list | None = None) -> list[dict]:
     try:
         if portal["mode"] == "anchor":
             rows = page.evaluate(_ANCHOR_JS, portal["detail_pattern"])
         else:
             rows = page.evaluate(_ROWS_JS)
         return rows[:PER_PORTAL_CAP]
-    except Exception as e:  # noqa: BLE001 - 정부 지원사업 포털 스캔(읽기전용) — 개별 포털 추출 실패나 playwright 미설치는 오류 메시지와 함께 빈 리스트/errors 목록으로 폴백, 쓰기 동작 없음
+    except Exception as e:
+        logger.warning("%s 추출 오류: %s", portal["key"], e, exc_info=True)
         print(f"[scan] {portal['key']} 추출 오류: {e}")
+        if errors is not None:
+            errors.append(f"{portal['key']} 추출 오류: {e}")
         return []
 
 
@@ -139,15 +146,16 @@ def scan_all() -> dict:
             try:
                 page.goto(portal["url"], wait_until="networkidle", timeout=40000)
                 page.wait_for_timeout(1800)
-                rows = _extract(page, portal)
+                rows = _extract(page, portal, errors)
                 for r in rows:
                     r["portal"] = portal["key"]
                     r["portal_name"] = portal["name"]
                 items.extend(rows)
                 print(f"[scan] {portal['key']}: {len(rows)}건")
-            except Exception as e:  # noqa: BLE001 - 정부 지원사업 포털 스캔(읽기전용) — 개별 포털 추출 실패나 playwright 미설치는 오류 메시지와 함께 빈 리스트/errors 목록으로 폴백, 쓰기 동작 없음
+            except Exception as e:
                 msg = f"{portal['key']} 스캔 실패: {e}"
                 errors.append(msg)
+                logger.warning(msg, exc_info=True)
                 print(f"[scan] {msg}")
         browser.close()
 
