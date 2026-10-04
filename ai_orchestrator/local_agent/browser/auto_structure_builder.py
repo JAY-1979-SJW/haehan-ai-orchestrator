@@ -598,24 +598,14 @@ class {cls}:
 # ── 메인 실행 ─────────────────────────────────────────────────────────────────
 
 
-def run(service_name: str):
-    """서비스 구조 자동 파악 및 코드 생성."""
-    if service_name not in SERVICES:
-        print(f"❌ 알 수 없는 서비스: {service_name}")
-        print(f"   가능한 서비스: {list(SERVICES.keys())}")
-        return
+def _print_detected_fields(fields: dict) -> None:
+    for fname, found in fields.items():
+        print(f"  ✓ {fname:10s}: {found[0]['selector']} ({found[0]['count']}개, '{found[0]['sample'][:30]}')")
 
-    config = SERVICES[service_name]
-    CACHE_DIR.mkdir(exist_ok=True)
 
-    print(f"\n{'=' * 65}")
-    print(f"  {service_name.upper()} 사이트 구조 자동 탐지 및 코드 생성")
-    print(f"{'=' * 65}\n")
-
+def _detect_with_browser(service_name: str, config: dict, structure: PageStructure, capture: NetworkCapture) -> list:
+    """브라우저를 띄워 목록/상세 구조를 탐지하고 목록 셀렉터 후보를 반환."""
     from ai_orchestrator.local_agent.browser.agent import BrowserAgent
-
-    structure = PageStructure(service=service_name, url=config["url"])
-    capture = NetworkCapture()
 
     with BrowserAgent() as agent:
         # 네트워크 캡처 시작
@@ -640,8 +630,7 @@ def run(service_name: str):
         print("\n3️⃣  목록 페이지 필드 탐지...")
         fields_list = detect_fields_on_page(agent._page)
         structure.fields["list"] = fields_list
-        for fname, found in fields_list.items():
-            print(f"  ✓ {fname:10s}: {found[0]['selector']} ({found[0]['count']}개, '{found[0]['sample'][:30]}')")
+        _print_detected_fields(fields_list)
 
         # 4. 항목 클릭 → 상세 페이지
         print("\n4️⃣  첫 항목 클릭 → 상세 구조 탐지...")
@@ -655,21 +644,13 @@ def run(service_name: str):
             # 상세 페이지 필드 탐지
             fields_detail = detect_fields_on_page(agent._page)
             structure.fields["detail"] = fields_detail
-            for fname, found in fields_detail.items():
-                print(f"  ✓ {fname:10s}: {found[0]['selector']} ({found[0]['count']}개, '{found[0]['sample'][:30]}')")
+            _print_detected_fields(fields_detail)
         else:
             print("  ✗ 상세 페이지 클릭 실패\n")
+    return list_items
 
-    # 5. 캡처된 API 정리
-    api_paths = capture.get_unique_api_paths()
-    structure.captured_apis = capture.api_calls[:30]
-    structure.api_endpoints = api_paths
 
-    print(f"\n5️⃣  캡처된 API 엔드포인트 ({len(api_paths)}개):")
-    for path in api_paths[:10]:
-        print(f"  → {path}")
-
-    # 6. 결과 캐시 저장
+def _save_structure_cache(service_name: str, structure: PageStructure) -> Path:
     cache_file = CACHE_DIR / f"{service_name}_structure.json"
     with cache_file.open("w", encoding="utf-8") as f:
         # PageStructure를 직렬화
@@ -683,24 +664,60 @@ def run(service_name: str):
         }
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"\n  💾 구조 캐시: {cache_file}")
+    return cache_file
+
+
+def _js_file_plan(service_name: str) -> list[tuple[str, str]]:
+    if service_name == "mail":
+        return [
+            ("extract_mail_inbox.js", "list"),
+            ("extract_mail_detail.js", "detail"),
+        ]
+    if service_name == "calendar":
+        return [
+            ("extract_calendar_events.js", "list"),
+        ]
+    return [
+        ("extract_mybox_list.js", "list"),
+    ]
+
+
+def run(service_name: str):
+    """서비스 구조 자동 파악 및 코드 생성."""
+    if service_name not in SERVICES:
+        print(f"❌ 알 수 없는 서비스: {service_name}")
+        print(f"   가능한 서비스: {list(SERVICES.keys())}")
+        return
+
+    config = SERVICES[service_name]
+    CACHE_DIR.mkdir(exist_ok=True)
+
+    print(f"\n{'=' * 65}")
+    print(f"  {service_name.upper()} 사이트 구조 자동 탐지 및 코드 생성")
+    print(f"{'=' * 65}\n")
+
+    structure = PageStructure(service=service_name, url=config["url"])
+    capture = NetworkCapture()
+
+    list_items = _detect_with_browser(service_name, config, structure, capture)
+
+    # 5. 캡처된 API 정리
+    api_paths = capture.get_unique_api_paths()
+    structure.captured_apis = capture.api_calls[:30]
+    structure.api_endpoints = api_paths
+
+    print(f"\n5️⃣  캡처된 API 엔드포인트 ({len(api_paths)}개):")
+    for path in api_paths[:10]:
+        print(f"  → {path}")
+
+    # 6. 결과 캐시 저장
+    cache_file = _save_structure_cache(service_name, structure)
 
     # 7. extract_*.js 자동 생성
     print("\n6️⃣  JS 파일 자동 생성...")
     JS_DIR.mkdir(exist_ok=True)
 
-    if service_name == "mail":
-        js_files = [
-            ("extract_mail_inbox.js", "list"),
-            ("extract_mail_detail.js", "detail"),
-        ]
-    elif service_name == "calendar":
-        js_files = [
-            ("extract_calendar_events.js", "list"),
-        ]
-    else:
-        js_files = [
-            ("extract_mybox_list.js", "list"),
-        ]
+    js_files = _js_file_plan(service_name)
 
     for js_name, mode in js_files:
         js_code = generate_extract_js(service_name, mode, structure)

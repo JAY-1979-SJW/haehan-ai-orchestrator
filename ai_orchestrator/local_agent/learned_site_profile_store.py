@@ -44,7 +44,7 @@ def _validate_entry(entry: dict[str, Any]) -> list[str]:
     return errors
 
 
-def save_learned_profile(
+def save_learned_profile(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     host: str,
     site_type: str,
     workflow_template_id: str | None = None,

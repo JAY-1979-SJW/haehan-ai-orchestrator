@@ -55,7 +55,9 @@ def test_naver_search_router_not_registered_in_main_app():
     """
     from ai_orchestrator.asgi import app
 
-    registered_paths = {r.path for r in app.routes}
+    from tests.app_routes import route_paths
+
+    registered_paths = route_paths()
     naver_paths = [
         "/api/v1/external/naver/blog-search",
         "/api/v1/external/naver/shopping-search",
@@ -97,7 +99,8 @@ def test_naver_search_router_quarantine_hold_status():
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
 
     naver_source_paths = {r.path for r in naver_search_router.routes if isinstance(r, APIRoute)}
-    registered_paths = {r.path for r in app.routes}
+    from tests.app_routes import route_paths
+    registered_paths = route_paths()
 
     for p in naver_source_paths:
         full = f"/api/v1{p}"

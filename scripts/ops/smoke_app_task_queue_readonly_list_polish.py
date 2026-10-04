@@ -29,13 +29,7 @@ def _src(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
-def run_smoke() -> None:
-    page = _src(TASKS_PAGE)
-    table = _src(TASK_TABLE)
-    mock = _src(MOCK_FILE)
-    types = _src(TYPES_FILE)
-
-    # ── 파일 존재 ────────────────────────────────────────────────────────────
+def _smoke_page_table_checks(page, table):
     _check("tasks/page.tsx 존재", TASKS_PAGE.exists())
     _check("TaskTable.tsx 존재", TASK_TABLE.exists())
     _check("mock.ts 존재", MOCK_FILE.exists())
@@ -63,6 +57,8 @@ def run_smoke() -> None:
     _check("riskFilter 존재", "riskFilter" in table)
     _check("statusFilter 존재", "statusFilter" in table)
 
+
+def _smoke_field_checks(table, page):
     # ── 필드 렌더링 ──────────────────────────────────────────────────────────
     _check("provider 렌더링", "provider" in table)
     _check("action_type 렌더링", "action_type" in table)
@@ -92,6 +88,8 @@ def run_smoke() -> None:
     _check("approve_url 없음", "approve_url" not in page and "approve_url" not in table)
     _check("submit_url 없음", "submit_url" not in page and "submit_url" not in table)
 
+
+def _smoke_security_and_mock(page, table, mock, types):
     # ── 보안: 원문 금지 ─────────────────────────────────────────────────────
     _check("approval_token_raw 없음 (전체)", "approval_token_raw" not in page + table + mock)
     _check("cookie_value 없음 (전체)", "cookie_value" not in page + table + mock)
@@ -109,6 +107,20 @@ def run_smoke() -> None:
     _check("blocked_reasons 타입 존재", "blocked_reasons" in types)
     _check("approval_token_id 타입 존재", "approval_token_id" in types)
     _check("dry_run boolean|null 타입", "boolean | null" in types)
+
+
+def run_smoke() -> None:
+    page = _src(TASKS_PAGE)
+    table = _src(TASK_TABLE)
+    mock = _src(MOCK_FILE)
+    types = _src(TYPES_FILE)
+
+    # ── 파일 존재 ────────────────────────────────────────────────────────────
+    _smoke_page_table_checks(page, table)
+
+    _smoke_field_checks(table, page)
+
+    _smoke_security_and_mock(page, table, mock, types)
 
 
 def print_report() -> str:

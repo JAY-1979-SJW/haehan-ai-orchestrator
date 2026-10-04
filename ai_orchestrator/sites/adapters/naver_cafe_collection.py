@@ -205,7 +205,7 @@ def merge_record(
 
 
 # ── collect_new_posts (어댑터 호출자) ──────────────────────────────
-def collect_new_posts(
+def collect_new_posts(  # noqa: PLR0913 - 수집 작업 공개 함수, 시그니처 유지
     adapter: NaverCafeAdapter,
     page: Any,
     existing: set[str],
@@ -249,7 +249,7 @@ def collect_new_posts(
 
 
 # ── Runner 연동 ────────────────────────────────────────────────────
-def run_naver_cafe_collect_job(
+def run_naver_cafe_collect_job(  # noqa: PLR0913 - 수집 작업 공개 함수, 시그니처 유지
     adapter: NaverCafeAdapter,
     page: Any,
     *,

@@ -6,12 +6,18 @@ from pydantic import BaseModel
 
 from ai_orchestrator.routers.action_router import action_router
 from ai_orchestrator.routers.admin_ui_router import admin_ui_router
+from ai_orchestrator.routers.agent_dispatch_router import agent_dispatch_router
 from ai_orchestrator.routers.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
 from ai_orchestrator.routers.auth_router import auth_router
+from ai_orchestrator.routers.blog_automation_router import blog_automation_router
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
+from ai_orchestrator.routers.gongmu_router import gongmu_router
+from ai_orchestrator.routers.naver_mail_bulk_router import naver_mail_bulk_router
+from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
 from ai_orchestrator.routers.ops_router import ops_router
+from ai_orchestrator.routers.scheduled_job_router import scheduled_job_router
 from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router
 from ai_orchestrator.routers.web_task_router import web_task_router
 from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmail
@@ -98,6 +104,7 @@ router.include_router(naver_session_router)  # naver session login pipeline
 router.include_router(hiworks_mail_router)  # hiworks mail inbox/compose/send
 router.include_router(eum_router)  # EUM 신규현장 수집 + 영업메일(하이웍스 발송)
 router.include_router(gmail_router)  # gmail inbox/collect/compose/send
+router.include_router(agent_dispatch_router)  # AI 작업 분배(계획 제안·사람 승인·병렬 실행, 관리자 전용, AI 허용 아님)
 router.include_router(ai_agent_router)  # AI 에이전트 실행(run_claude_agent 자동 dispatch)
 router.include_router(chat_router)  # AI 채팅 대화기록 CRUD(사용자 지시 '대화기록 저장')
 router.include_router(ops_router)  # read-only ops center API
@@ -109,6 +116,11 @@ router.include_router(youtube_router)
 router.include_router(google_router)
 router.include_router(smartstore_router)  # read-only smartstore catalog/history/form-fields
 router.include_router(naver_blog_router)  # naver blog compose/drafts/seo
+router.include_router(blog_automation_router)  # 블로그 자동 작성 규칙·승인·1회 실행(B단계: 로컬 초안까지)
+router.include_router(naver_mailbox_router)  # 네이버 메일함 탭(폴더·목록·상세·첨부·보내기 2단계)
+router.include_router(naver_mail_bulk_router)  # 메일 순차 대량 발송 승인서(관리자 전용, AI 허용 아님)
+router.include_router(gongmu_router)  # 건설업 공무 업무판(현장·계약·업무·서류, 관리자 전용, AI 허용 아님)
+router.include_router(scheduled_job_router)  # 사용자 예약 작업(목록·생성·일시중지·지금 실행·기록)
 router.include_router(public_media_router)  # 외부 플랫폼(IG Graph API 등) 공개 미디어 서빙
 router.include_router(user_auth_router)  # user signup/login/mypage
 router.include_router(gabia_router)  # gabia dns/domain/login watch
@@ -152,14 +164,6 @@ class RejectRequest(BaseModel):
     # 호환을 위해 필드는 유지하나 서버는 current_user.actor / current_user.role 만 신뢰한다.
     rejected_by: str | None = None
     role: str | None = None
-    reason: str = ""
-
-
-class TelegramWebhookBody(BaseModel):
-    telegram_user_id: str
-    action: str
-    task_id: str
-    token_id: str
     reason: str = ""
 
 

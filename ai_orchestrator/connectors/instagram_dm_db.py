@@ -14,10 +14,12 @@ import json
 import sqlite3
 import uuid
 from collections.abc import Iterator
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from ..persistence.sqlite_schema import add_column_if_missing, apply_schema
 
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "instagram_dm.db"
 
@@ -46,123 +48,132 @@ def _new_id() -> str:
     return uuid.uuid4().hex
 
 
+def _schema_v1(con: sqlite3.Connection) -> None:
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS instagram_accounts (
+            id TEXT PRIMARY KEY,
+            owner_user_id TEXT,
+            instagram_user_id TEXT UNIQUE NOT NULL,
+            username TEXT,
+            account_type TEXT,
+            encrypted_access_token TEXT NOT NULL,
+            token_expires_at TEXT,
+            scopes TEXT,
+            status TEXT NOT NULL DEFAULT 'connected',
+            automation_enabled INTEGER NOT NULL DEFAULT 0,
+            webhook_subscribed INTEGER NOT NULL DEFAULT 0,
+            connected_at TEXT NOT NULL,
+            disconnected_at TEXT,
+            last_verified_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS automation_rules (
+            id TEXT PRIMARY KEY,
+            instagram_account_id TEXT NOT NULL REFERENCES instagram_accounts(id),
+            name TEXT NOT NULL,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            scope_type TEXT NOT NULL DEFAULT 'ALL_MEDIA',
+            media_id TEXT,
+            match_type TEXT NOT NULL DEFAULT 'ANY_KEYWORD',
+            reply_message TEXT NOT NULL,
+            priority INTEGER NOT NULL DEFAULT 100,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS automation_rule_keywords (
+            id TEXT PRIMARY KEY,
+            rule_id TEXT NOT NULL REFERENCES automation_rules(id),
+            keyword TEXT NOT NULL,
+            normalized_keyword TEXT NOT NULL,
+            is_exclusion INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS instagram_comment_events (
+            id TEXT PRIMARY KEY,
+            instagram_account_id TEXT NOT NULL REFERENCES instagram_accounts(id),
+            comment_id TEXT NOT NULL,
+            media_id TEXT,
+            media_product_type TEXT,
+            commenter_ig_scoped_id TEXT,
+            commenter_username TEXT,
+            comment_text TEXT,
+            normalized_text TEXT,
+            comment_created_at TEXT,
+            webhook_received_at TEXT NOT NULL,
+            raw_payload_json TEXT,
+            processing_status TEXT NOT NULL DEFAULT 'RECEIVED',
+            matched_rule_id TEXT,
+            matched_keyword TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(instagram_account_id, comment_id)
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS private_reply_logs (
+            id TEXT PRIMARY KEY,
+            instagram_account_id TEXT NOT NULL REFERENCES instagram_accounts(id),
+            comment_event_id TEXT NOT NULL REFERENCES instagram_comment_events(id),
+            rule_id TEXT,
+            comment_id TEXT NOT NULL,
+            request_message TEXT,
+            status TEXT NOT NULL DEFAULT 'PENDING',
+            blocked_reason TEXT,
+            meta_recipient_id TEXT,
+            meta_message_id TEXT,
+            meta_error_code TEXT,
+            meta_error_subcode TEXT,
+            meta_error_message TEXT,
+            attempt_count INTEGER NOT NULL DEFAULT 0,
+            first_attempt_at TEXT,
+            sent_at TEXT,
+            last_attempt_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(instagram_account_id, comment_id)
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS webhook_events (
+            id TEXT PRIMARY KEY,
+            provider TEXT NOT NULL DEFAULT 'instagram',
+            event_type TEXT,
+            external_account_id TEXT,
+            external_object_id TEXT,
+            signature_valid INTEGER NOT NULL,
+            payload_hash TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'RECEIVED',
+            received_at TEXT NOT NULL,
+            processed_at TEXT,
+            error_message TEXT
+        )
+    """)
+
+
+def _schema_v2_legacy_instagram_user_id(con: sqlite3.Connection) -> None:
+    # 마이그레이션: legacy_instagram_user_id (2026-09-11 추가)
+    # Meta 계정 연결(OAuth)은 graph.instagram.com 기준 ID를 instagram_user_id에 저장하지만,
+    # 일부 계정(과거 Facebook 로그인 연동 이력이 있는 경우)의 webhook entry.id는
+    # 구버전 graph.facebook.com 계열 ID로 온다. 두 ID가 달라 계정 매칭이 실패하는 걸 막기 위해
+    # 별도 컬럼에 보조 ID를 저장하고 조회 시 OR로 매칭한다.
+    add_column_if_missing(con, "instagram_accounts", "legacy_instagram_user_id", "TEXT")
+
+
+# 한 번 배포된 단계는 수정하지 않고 새 단계를 뒤에 추가한다(docs/specs/2026-10-01_sqlite_schema_versioning.md)
+_SCHEMA_STEPS = [_schema_v1, _schema_v2_legacy_instagram_user_id]
+
+
 def init_db() -> None:
     with _conn() as con:
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS instagram_accounts (
-                id TEXT PRIMARY KEY,
-                owner_user_id TEXT,
-                instagram_user_id TEXT UNIQUE NOT NULL,
-                username TEXT,
-                account_type TEXT,
-                encrypted_access_token TEXT NOT NULL,
-                token_expires_at TEXT,
-                scopes TEXT,
-                status TEXT NOT NULL DEFAULT 'connected',
-                automation_enabled INTEGER NOT NULL DEFAULT 0,
-                webhook_subscribed INTEGER NOT NULL DEFAULT 0,
-                connected_at TEXT NOT NULL,
-                disconnected_at TEXT,
-                last_verified_at TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-        """)
-        # 마이그레이션: legacy_instagram_user_id (2026-09-11 추가)
-        # Meta 계정 연결(OAuth)은 graph.instagram.com 기준 ID를 instagram_user_id에 저장하지만,
-        # 일부 계정(과거 Facebook 로그인 연동 이력이 있는 경우)의 webhook entry.id는
-        # 구버전 graph.facebook.com 계열 ID로 온다. 두 ID가 달라 계정 매칭이 실패하는 걸 막기 위해
-        # 별도 컬럼에 보조 ID를 저장하고 조회 시 OR로 매칭한다.
-        with suppress(sqlite3.OperationalError):  # 컬럼이 이미 있음
-            con.execute("ALTER TABLE instagram_accounts ADD COLUMN legacy_instagram_user_id TEXT")
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS automation_rules (
-                id TEXT PRIMARY KEY,
-                instagram_account_id TEXT NOT NULL REFERENCES instagram_accounts(id),
-                name TEXT NOT NULL,
-                enabled INTEGER NOT NULL DEFAULT 1,
-                scope_type TEXT NOT NULL DEFAULT 'ALL_MEDIA',
-                media_id TEXT,
-                match_type TEXT NOT NULL DEFAULT 'ANY_KEYWORD',
-                reply_message TEXT NOT NULL,
-                priority INTEGER NOT NULL DEFAULT 100,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-        """)
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS automation_rule_keywords (
-                id TEXT PRIMARY KEY,
-                rule_id TEXT NOT NULL REFERENCES automation_rules(id),
-                keyword TEXT NOT NULL,
-                normalized_keyword TEXT NOT NULL,
-                is_exclusion INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT NOT NULL
-            )
-        """)
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS instagram_comment_events (
-                id TEXT PRIMARY KEY,
-                instagram_account_id TEXT NOT NULL REFERENCES instagram_accounts(id),
-                comment_id TEXT NOT NULL,
-                media_id TEXT,
-                media_product_type TEXT,
-                commenter_ig_scoped_id TEXT,
-                commenter_username TEXT,
-                comment_text TEXT,
-                normalized_text TEXT,
-                comment_created_at TEXT,
-                webhook_received_at TEXT NOT NULL,
-                raw_payload_json TEXT,
-                processing_status TEXT NOT NULL DEFAULT 'RECEIVED',
-                matched_rule_id TEXT,
-                matched_keyword TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                UNIQUE(instagram_account_id, comment_id)
-            )
-        """)
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS private_reply_logs (
-                id TEXT PRIMARY KEY,
-                instagram_account_id TEXT NOT NULL REFERENCES instagram_accounts(id),
-                comment_event_id TEXT NOT NULL REFERENCES instagram_comment_events(id),
-                rule_id TEXT,
-                comment_id TEXT NOT NULL,
-                request_message TEXT,
-                status TEXT NOT NULL DEFAULT 'PENDING',
-                blocked_reason TEXT,
-                meta_recipient_id TEXT,
-                meta_message_id TEXT,
-                meta_error_code TEXT,
-                meta_error_subcode TEXT,
-                meta_error_message TEXT,
-                attempt_count INTEGER NOT NULL DEFAULT 0,
-                first_attempt_at TEXT,
-                sent_at TEXT,
-                last_attempt_at TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                UNIQUE(instagram_account_id, comment_id)
-            )
-        """)
-        con.execute("""
-            CREATE TABLE IF NOT EXISTS webhook_events (
-                id TEXT PRIMARY KEY,
-                provider TEXT NOT NULL DEFAULT 'instagram',
-                event_type TEXT,
-                external_account_id TEXT,
-                external_object_id TEXT,
-                signature_valid INTEGER NOT NULL,
-                payload_hash TEXT NOT NULL,
-                payload_json TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT 'RECEIVED',
-                received_at TEXT NOT NULL,
-                processed_at TEXT,
-                error_message TEXT
-            )
-        """)
-        con.commit()
+        apply_schema(con, _SCHEMA_STEPS)
 
 
 # ---- instagram_accounts ----
@@ -231,15 +242,6 @@ def get_account_by_ig_user_id(instagram_user_id: str) -> sqlite3.Row | None:
         ).fetchone()
 
 
-def set_legacy_ig_user_id(account_id: str, legacy_instagram_user_id: str) -> None:
-    with _conn() as con:
-        con.execute(
-            "UPDATE instagram_accounts SET legacy_instagram_user_id=?, updated_at=? WHERE id=?",
-            (legacy_instagram_user_id, _now(), account_id),
-        )
-        con.commit()
-
-
 def list_accounts() -> list[sqlite3.Row]:
     with _conn() as con:
         return con.execute("SELECT * FROM instagram_accounts ORDER BY created_at DESC").fetchall()
@@ -273,7 +275,7 @@ def set_account_status(account_id: str, status: str) -> None:
 # ---- automation_rules ----
 
 
-def create_rule(
+def create_rule(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     instagram_account_id: str,
     name: str,
@@ -385,7 +387,7 @@ def delete_rule(rule_id: str) -> None:
 # ---- comment events / dedup ----
 
 
-def insert_comment_event_if_new(
+def insert_comment_event_if_new(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     instagram_account_id: str,
     comment_id: str,
@@ -487,7 +489,7 @@ def try_reserve_reply_slot(
             return (row["id"] if row else ""), False
 
 
-def update_reply_result(
+def update_reply_result(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     reply_log_id: str,
     *,
     status: str,
@@ -535,7 +537,7 @@ def list_reply_logs(instagram_account_id: str, limit: int = 100) -> list[sqlite3
 # ---- webhook_events (audit) ----
 
 
-def log_webhook_event(
+def log_webhook_event(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     event_type: str | None,
     external_account_id: str | None,

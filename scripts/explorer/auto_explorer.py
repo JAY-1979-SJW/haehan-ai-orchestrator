@@ -101,7 +101,108 @@ def _page_summary(page) -> dict:
     return {"title": "", "url": "", "links": [], "tables": [], "forms": 0}
 
 
-def explore_site(
+def _current_url(page) -> str:
+    """현재 페이지 URL. 조회 실패 시 빈 문자열."""
+    try:
+        return page.url or ""
+    except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
+        return ""
+
+
+def _navigate_if_needed(page, url: str, pages_data: list[dict]) -> bool:
+    """현재 URL과 다르면 url 로 이동. 이동 실패 시 오류 기록을 pages_data 에 추가하고 False."""
+    if _current_url(page) != url:
+        try:
+            page.goto(url, timeout=20000)
+            # 로드 대기 실패해도 계속 진행(안전한 기본값 반환 정책)
+            with contextlib.suppress(Exception):
+                page.wait_for_load_state("domcontentloaded", timeout=8000)
+        except Exception as e:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
+            log.warning("[explorer] goto 실패 %s: %s", url, e)
+            pages_data.append({"url": url, "error": f"goto: {str(e)[:120]}"})
+            return False
+    return True
+
+
+def _bot_check_page(page, url: str, bot_reports: list[dict]) -> str:
+    """봇 레이더 스캔. 봇이 감지되면 중단 사유 문자열, 아니면 빈 문자열."""
+    try:
+        br = bot_scan(page)
+        bot_reports.append({"url": url, "level": br["level"], "vendors": br["vendors"]})
+        if br["flagged"]:
+            aborted_reason = f"bot_flagged: {br['level']}"
+            log.warning("[explorer] 봇 감지 — 중단: %s", aborted_reason)
+            return aborted_reason
+    except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
+        pass
+    return ""
+
+
+def _form_summary(page, s: dict) -> dict:
+    """페이지에 폼이 있으면 자동 탐색 요약을 반환(없거나 실패하면 빈 dict)."""
+    form_summary = {}
+    if s.get("forms", 0) > 0:
+        try:
+            disc = discover_form(page)
+            form_summary = {
+                "intent": disc.intent,
+                "roles": sorted({f.role for f in disc.fields if f.score > 0.4}),
+                "submit": disc.submit_selector,
+            }
+        except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
+            pass
+    return form_summary
+
+
+def _collect_out_links(links: list[dict], url: str, start_url: str, same_host_only: bool) -> list[dict]:
+    """페이지 링크를 정규화하고 http(s)/호스트 조건에 맞는 것만 모은다."""
+    out_links = []
+    for link in links:
+        nurl = _norm_url(link.get("href", ""), url)
+        if not nurl.startswith(("http://", "https://")):
+            continue
+        if same_host_only and not _same_host(start_url, nurl):
+            continue
+        out_links.append({"href": nurl, "text": link.get("text", "")[:80]})
+    return out_links
+
+
+def _save_sitemap(result: dict, host: str) -> None:
+    """탐색 결과를 data/sitemap/<host>_auto_<ts>.json 으로 저장하고 result["saved_to"] 기록."""
+    SITEMAP_DIR.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_host = re.sub(r"[^a-zA-Z0-9.-]", "_", host)
+    fp = SITEMAP_DIR / f"{safe_host}_auto_{ts}.json"
+    fp.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    result["saved_to"] = str(fp)
+    log.info("[explorer] 저장: %s", fp)
+
+
+def _dedupe_links(out_links: list[dict]) -> list[dict]:
+    """href 기준 중복 제거(처음 등장 순서 유지)."""
+    seen = set()
+    return [
+        l
+        for l in out_links  # noqa: E741
+        if not (l["href"] in seen or seen.add(l["href"]))
+    ]
+
+
+def _should_skip_url(url: str, start_url: str, host: str, same_host_only: bool, skip_url_patterns: tuple[str, ...]) -> bool:
+    """위험 URL(로그아웃/삭제/제출 등) 또는 외부 호스트면 로그를 남기고 True."""
+    # 위험 URL 회피
+    if any(p in url.lower() for p in skip_url_patterns):
+        log.info("[explorer] skip 위험 URL: %s", url)
+        return True
+
+    # 같은 호스트
+    if same_host_only and host and not _same_host(start_url, url):
+        log.debug("[explorer] skip 외부 호스트: %s", url)
+        return True
+    return False
+
+
+def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     page,
     *,
     depth: int = 2,
@@ -131,10 +232,7 @@ def explore_site(
         dict{host, started_url, pages, bot_radar, elapsed_s}
     """
     started_at = time.time()
-    try:
-        start_url = page.url or ""
-    except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
-        start_url = ""
+    start_url = _current_url(page)
     host = urlparse(start_url).hostname or ""
 
     visited: set[str] = set()
@@ -151,58 +249,24 @@ def explore_site(
             continue
         visited.add(url)
 
-        # 위험 URL 회피
-        if any(p in url.lower() for p in skip_url_patterns):
-            log.info("[explorer] skip 위험 URL: %s", url)
-            continue
-
-        # 같은 호스트
-        if same_host_only and host and not _same_host(start_url, url):
-            log.debug("[explorer] skip 외부 호스트: %s", url)
+        # 위험 URL 회피 / 같은 호스트
+        if _should_skip_url(url, start_url, host, same_host_only, skip_url_patterns):
             continue
 
         # 이동 (현재 URL과 다를 때만)
-        try:
-            cur = page.url or ""
-        except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
-            cur = ""
-        if cur != url:
-            try:
-                page.goto(url, timeout=20000)
-                # 로드 대기 실패해도 계속 진행(안전한 기본값 반환 정책)
-                with contextlib.suppress(Exception):
-                    page.wait_for_load_state("domcontentloaded", timeout=8000)
-            except Exception as e:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
-                log.warning("[explorer] goto 실패 %s: %s", url, e)
-                pages_data.append({"url": url, "error": f"goto: {str(e)[:120]}"})
-                continue
+        if not _navigate_if_needed(page, url, pages_data):
+            continue
 
         # 봇 감지
         if bot_check_each_page:
-            try:
-                br = bot_scan(page)
-                bot_reports.append({"url": url, "level": br["level"], "vendors": br["vendors"]})
-                if br["flagged"]:
-                    aborted_reason = f"bot_flagged: {br['level']}"
-                    log.warning("[explorer] 봇 감지 — 중단: %s", aborted_reason)
-                    break
-            except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
-                pass
+            aborted_reason = _bot_check_page(page, url, bot_reports)
+            if aborted_reason:
+                break
 
         # 페이지 요약
         s = _page_summary(page)
         # 폼 자동 탐색 (있으면)
-        form_summary = {}
-        if s.get("forms", 0) > 0:
-            try:
-                disc = discover_form(page)
-                form_summary = {
-                    "intent": disc.intent,
-                    "roles": sorted({f.role for f in disc.fields if f.score > 0.4}),
-                    "submit": disc.submit_selector,
-                }
-            except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
-                pass
+        form_summary = _form_summary(page, s)
 
         rec = {
             "url": url,
@@ -215,23 +279,12 @@ def explore_site(
         }
 
         # 링크 수집 + 다음 큐
-        out_links = []
-        for link in s.get("links", []):
-            nurl = _norm_url(link.get("href", ""), url)
-            if not nurl.startswith(("http://", "https://")):
-                continue
-            if same_host_only and not _same_host(start_url, nurl):
-                continue
-            out_links.append({"href": nurl, "text": link.get("text", "")[:80]})
-            if nurl not in visited and d + 1 <= depth:
-                queue.append((nurl, d + 1))
+        out_links = _collect_out_links(s.get("links", []), url, start_url, same_host_only)
+        for out_link in out_links:
+            if out_link["href"] not in visited and d + 1 <= depth:
+                queue.append((out_link["href"], d + 1))
         # 중복 제거
-        seen = set()
-        rec["links_out"] = [
-            l
-            for l in out_links  # noqa: E741
-            if not (l["href"] in seen or seen.add(l["href"]))
-        ][:50]
+        rec["links_out"] = _dedupe_links(out_links)[:50]
 
         pages_data.append(rec)
         log.info(
@@ -257,12 +310,6 @@ def explore_site(
     }
 
     if save and host:
-        SITEMAP_DIR.mkdir(parents=True, exist_ok=True)
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_host = re.sub(r"[^a-zA-Z0-9.-]", "_", host)
-        fp = SITEMAP_DIR / f"{safe_host}_auto_{ts}.json"
-        fp.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-        result["saved_to"] = str(fp)
-        log.info("[explorer] 저장: %s", fp)
+        _save_sitemap(result, host)
 
     return result

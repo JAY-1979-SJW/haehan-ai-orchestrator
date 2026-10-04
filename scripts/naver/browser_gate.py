@@ -78,14 +78,6 @@ class BrowserGateReport:
         }
 
 
-def _norm_path(value: str | Path) -> str:
-    text = os.path.expandvars(str(value)).strip().strip('"').strip("'")
-    # STD-02 SKIP(의도적): 경로 정규화 결과가 향후 containment/식별 비교에 쓰일 수 있는
-    # 형태(abspath+normcase 조합)라 Path.resolve()로 바꾸면 symlink를 따라가는 의미
-    # 차이가 생긴다. 안전이 검증되지 않아 그대로 유지.
-    return os.path.normcase(os.path.abspath(text)).replace("\\", "/")
-
-
 def _extract_arg(command_line: str, name: str) -> str:
     pattern = rf"--{re.escape(name)}(?:=|\s+)(\"[^\"]+\"|'[^']+'|\S+)"
     match = re.search(pattern, command_line)
@@ -226,23 +218,28 @@ def list_cdp_tab_urls() -> list[str]:
     return [str(row.get("url") or "") for row in rows if isinstance(row, dict) and row.get("type") == "page"]
 
 
+def _chrome_processes_via_psutil() -> list[tuple[int, str]]:
+    """psutil 기반 chrome/msedge 메인 프로세스 목록(예외는 호출부에서 폴백 처리)."""
+    import psutil  # type: ignore
+
+    rows: list[tuple[int, str]] = []
+    for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+        try:
+            name = str(proc.info.get("name") or "").lower()
+            if "chrome" not in name and "msedge" not in name:
+                continue
+            command = " ".join(proc.info.get("cmdline") or [])
+            if "--type=" in command:
+                continue
+            rows.append((int(proc.info["pid"]), command))
+        except Exception:  # noqa: BLE001 - 네이버 CDP 브라우저 실행 상태 게이트 — 탭목록/프로세스목록 조회 실패 시 모두 빈 결과를 반환해 '실행 중 아님' 방향에 수렴하고, 실제 브라우저 실행은 샌드박스 가드(assert_browser_launch_allowed) 통과 후에만 수행되어 이 폴백이 승인 우회로 이어지지 않음.
+            continue
+    return rows
+
+
 def list_chrome_processes() -> list[tuple[int, str]]:
     try:
-        import psutil  # type: ignore
-
-        rows: list[tuple[int, str]] = []
-        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
-            try:
-                name = str(proc.info.get("name") or "").lower()
-                if "chrome" not in name and "msedge" not in name:
-                    continue
-                command = " ".join(proc.info.get("cmdline") or [])
-                if "--type=" in command:
-                    continue
-                rows.append((int(proc.info["pid"]), command))
-            except Exception:  # noqa: BLE001 - 네이버 CDP 브라우저 실행 상태 게이트 — 탭목록/프로세스목록 조회 실패 시 모두 빈 결과를 반환해 '실행 중 아님' 방향에 수렴하고, 실제 브라우저 실행은 샌드박스 가드(assert_browser_launch_allowed) 통과 후에만 수행되어 이 폴백이 승인 우회로 이어지지 않음.
-                continue
-        return rows
+        return _chrome_processes_via_psutil()
     except Exception:  # noqa: BLE001 - 네이버 CDP 브라우저 실행 상태 게이트 — 탭목록/프로세스목록 조회 실패 시 모두 빈 결과를 반환해 '실행 중 아님' 방향에 수렴하고, 실제 브라우저 실행은 샌드박스 가드(assert_browser_launch_allowed) 통과 후에만 수행되어 이 폴백이 승인 우회로 이어지지 않음.
         pass
 

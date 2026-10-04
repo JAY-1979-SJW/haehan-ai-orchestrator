@@ -16,6 +16,7 @@ g2b_domain_policy.py 기반으로 G2B 공개 공고 URL을 분류하고,
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from urllib.parse import urlparse
 
@@ -32,6 +33,8 @@ from ai_orchestrator.browser_tool.g2b_domain_policy import (
     classify_g2b_url,
     normalize_g2b_domain,
 )
+
+logger = logging.getLogger(__name__)
 
 # ── verdict 값 ────────────────────────────────────────────────────────────────
 
@@ -118,7 +121,8 @@ def _build_canonical_url(original_url: str, normalized_domain: str) -> str:
         parsed = urlparse(original_url)
         if parsed.netloc and parsed.netloc.lower() != normalized_domain:
             return original_url.replace(parsed.netloc, normalized_domain, 1)
-    except Exception:  # noqa: S110, BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("G2B 공고 URL 도메인 치환 실패(무시): %s", type(exc).__name__)
         pass
     return original_url
 

@@ -181,7 +181,7 @@ class BulkRegister:
             duration_s=round(duration, 2),
         )
 
-    def register_all(
+    def register_all(  # noqa: PLR0913 - 공개 API 시그니처 유지(호출부 다수)
         self,
         products: list[dict],
         product_type: str = "general",

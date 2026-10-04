@@ -227,13 +227,15 @@ def test_night_block_prevents_execution(app_client):
     assert ts.get_state(task_id) == "approved"
 
 
-def test_telegram_webhook_alias_endpoint(app_client):
-    """신규 /api/v1/telegram/webhook 이 기존 /webhooks/telegram 과 동일 동작."""
-    # invalid_payload 공통 반응 테스트 (인증 요구 없음)
-    for path in ("/api/v1/webhooks/telegram", "/api/v1/telegram/webhook"):
-        r = app_client.post(path, json={})
-        assert r.status_code == 400, f"{path} → {r.status_code}"
-        assert r.json()["detail"]["status"] == "invalid_payload"
+def test_telegram_webhook_endpoint(app_client):
+    """/api/v1/webhooks/telegram 은 빈 payload 에 invalid_payload(400) 를 돌려준다(인증 요구 없음).
+
+    별칭 /api/v1/telegram/webhook 은 2026-04-24 핫픽스(3c155f55)에서 제거된 뒤 복구되지 않았고
+    이를 호출하는 코드도 없다 — 별칭을 되살리려면 공개 엔드포인트 추가이므로 별도 승인 후 이 테스트에 되돌린다.
+    """
+    r = app_client.post("/api/v1/webhooks/telegram", json={})
+    assert r.status_code == 400
+    assert r.json()["detail"]["status"] == "invalid_payload"
 
 
 def test_user_rate_limit_5min(app_client):

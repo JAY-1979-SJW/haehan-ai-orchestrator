@@ -48,6 +48,9 @@ WEBSOCKET_ENABLED: bool = os.getenv("HAEHAN_AGENT_WS_ENABLED", "false").lower() 
 # 폴링 주기 (초)
 POLL_INTERVAL_SEC: int = int(os.getenv("HAEHAN_AGENT_POLL_SEC", "10"))
 
+# 동시 처리 작업 수 (기본 1 = 직렬, 최대 3) — 기준서 2026-10-02_app_agent_dispatch P1
+MAX_PARALLEL: int = max(1, min(3, int(os.getenv("LOCAL_AGENT_MAX_PARALLEL", "1") or "1")))
+
 # 에이전트가 실행 가능한 PC 측 앱 (1단계는 browser 만 실제 실행)
 ALLOWED_APPS: list[str] = ["browser", "excel", "hwp", "cad"]
 APPS_EXECUTABLE_STAGE1: frozenset[str] = frozenset({"browser"})
@@ -83,6 +86,7 @@ __all__ = [
     "APPS_EXECUTABLE_STAGE1",
     "LOCAL_AGENT_SCREENSHOT_DIR",
     "LOCAL_AUDIT_PATH",
+    "MAX_PARALLEL",
     "POLL_INTERVAL_SEC",
     "READ_ONLY_DIRS",
     "SERVER_BASE_URL",

@@ -130,7 +130,20 @@ class SafetyPolicyRecord:
         "test_required",
     )
 
-    def __init__(
+    # object.__setattr__ 로만 채우므로 정적 검사기에 속성 타입을 알린다(값 없는 표기 — __slots__ 와 충돌 없음).
+    policy_id: str
+    name: str
+    category: str
+    severity: str
+    applies_to: tuple[str, ...]
+    decision: str
+    reason: str
+    required_execution_location: str | None
+    blocked_scopes: tuple[str, ...]
+    test_required: bool
+    safe_to_execute_on_server: bool
+
+    def __init__(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
         self,
         policy_id: str,
         name: str,

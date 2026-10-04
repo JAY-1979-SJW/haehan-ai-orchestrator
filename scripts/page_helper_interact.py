@@ -118,6 +118,16 @@ def page_click_then_wait(
         return False
 
 
+def _fill_or_type(el, text: str, delay: int) -> None:
+    try:
+        el.fill(text)
+    except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
+        el.click()
+        el.click()
+        el.click()
+        el.type(text, delay=delay)
+
+
 def page_wait_type(
     page: Page,
     selector: str,
@@ -133,25 +143,13 @@ def page_wait_type(
     el = None
     try:
         el = page.wait_for_selector(selector, timeout=timeout, state="visible")
-        try:
-            el.fill(text)
-        except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
-            el.click()
-            el.click()
-            el.click()
-            el.type(text, delay=delay)
+        _fill_or_type(el, text, delay)
     except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         # iframe 탐색 fallback
         _found_frame, found_el = _find_frame(page, selector)
         if found_el:
             el = found_el
-            try:
-                el.fill(text)
-            except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
-                el.click()
-                el.click()
-                el.click()
-                el.type(text, delay=delay)
+            _fill_or_type(el, text, delay)
             log.debug("type OK (iframe): %s", selector)
         else:
             # JS dispatchEvent fallback — 모든 frame 순회

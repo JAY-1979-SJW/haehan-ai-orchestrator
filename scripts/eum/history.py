@@ -232,6 +232,11 @@ def main(device_id: str | None = None) -> None:
         print("이력 데이터가 없습니다.")
         return
 
+    _print_and_save_history(rows, device_id)
+
+
+def _print_and_save_history(rows: list, device_id: str | None) -> None:
+    """이력 목록을 출력하고 JSON 으로 저장."""
     print(f"\n이력 {len(rows)}건:")
     for i, row in enumerate(rows[:50], 1):  # 최대 50건 출력
         line = " | ".join(f"{k}: {v}" for k, v in row.items() if v)

@@ -85,13 +85,22 @@ def _is_seller_domain(domain: str) -> bool:
     return any(s in (domain or "").lower() for s in ("coupang", "smartstore", "navercorp"))
 
 
+_SIMPLE_RISK_BY_CATEGORY = {
+    br.CAT_SPAM_OR_PHISHING_SUSPECTED: RISK_PHISHING,
+    br.CAT_DELIVERY_FAILURE: RISK_DELIVERY_FAILURE,
+    br.CAT_BILLING: RISK_BILLING_REVIEW,
+    br.CAT_POLICY_NOTICE: RISK_POLICY_REVIEW,
+    br.CAT_SECURITY_NOTICE: RISK_SECURITY_REVIEW,
+    br.CAT_ACCOUNT_OR_SERVICE_NOTICE: RISK_SERVICE_NOTICE,
+}
+
+
 def infer_risk_type(category: str, title_redacted: str, sender_domain: str) -> str:
     """category + 제목/도메인으로 riskType 결정."""
     blob = f"{title_redacted} {sender_domain}"
-    if category == br.CAT_SPAM_OR_PHISHING_SUSPECTED:
-        return RISK_PHISHING
-    if category == br.CAT_DELIVERY_FAILURE:
-        return RISK_DELIVERY_FAILURE
+    simple = _SIMPLE_RISK_BY_CATEGORY.get(category)
+    if simple is not None:
+        return simple
     if category == br.CAT_REVIEW:
         # GSC / 색인 → SEO
         if re.search(r"색인|indexing|search ?console|haehan-ai\.kr", title_redacted, re.IGNORECASE):
@@ -101,16 +110,6 @@ def infer_risk_type(category: str, title_redacted: str, sender_domain: str) -> s
         if _SELLER_KEYWORD_RE.search(blob) or _is_seller_domain(sender_domain):
             return RISK_SELLER_ACCOUNT
         return RISK_ACCOUNT
-    if category == br.CAT_BILLING:
-        return RISK_BILLING_REVIEW
-    if category == br.CAT_POLICY_NOTICE:
-        return RISK_POLICY_REVIEW
-    if category == br.CAT_SECURITY_NOTICE:
-        return RISK_SECURITY_REVIEW
-    if category == br.CAT_ACCOUNT_OR_SERVICE_NOTICE:
-        return RISK_SERVICE_NOTICE
-    if category == br.CAT_UNKNOWN_REVIEW_REQUIRED:
-        return RISK_UNKNOWN_REVIEW
     return RISK_UNKNOWN_REVIEW
 
 
@@ -323,6 +322,14 @@ def build_summary(dash: Dashboard) -> DashboardSummary:
 # ── 렌더링 ────────────────────────────────────────────────────────
 
 
+def _append_limited_section(lines: list[str], header: str, items: list[DashboardItem]) -> None:
+    lines += ["", header]
+    for it in items[:50]:
+        lines += _render_item(it)
+    if len(items) > 50:
+        lines.append(f"- … ({len(items) - 50}건 더)")
+
+
 def render_markdown(dash: Dashboard, summary: DashboardSummary) -> str:
     by_pri: dict[str, list[DashboardItem]] = {"HIGH": [], "MEDIUM": [], "LOW": []}
     unknown_lane: list[DashboardItem] = []
@@ -356,23 +363,11 @@ def render_markdown(dash: Dashboard, summary: DashboardSummary) -> str:
     if not by_pri["HIGH"]:
         lines.append("- (없음)")
 
-    lines += ["", "## 🟡 MEDIUM 검토 필요"]
-    for it in by_pri["MEDIUM"][:50]:
-        lines += _render_item(it)
-    if len(by_pri["MEDIUM"]) > 50:
-        lines.append(f"- … ({len(by_pri['MEDIUM']) - 50}건 더)")
+    _append_limited_section(lines, "## 🟡 MEDIUM 검토 필요", by_pri["MEDIUM"])
 
-    lines += ["", "## 🟢 LOW 검토"]
-    for it in by_pri["LOW"][:50]:
-        lines += _render_item(it)
-    if len(by_pri["LOW"]) > 50:
-        lines.append(f"- … ({len(by_pri['LOW']) - 50}건 더)")
+    _append_limited_section(lines, "## 🟢 LOW 검토", by_pri["LOW"])
 
-    lines += ["", "## ❓ UNKNOWN review lane"]
-    for it in unknown_lane[:50]:
-        lines += _render_item(it)
-    if len(unknown_lane) > 50:
-        lines.append(f"- … ({len(unknown_lane) - 50}건 더)")
+    _append_limited_section(lines, "## ❓ UNKNOWN review lane", unknown_lane)
 
     lines += ["", "## 리스크 유형별 요약"]
     for k, v in sorted(summary.risk_type_counts.items(), key=lambda x: -x[1]):

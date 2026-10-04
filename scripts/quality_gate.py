@@ -245,6 +245,35 @@ def record_deploy_dry_run(command: list[str], *, exit_code: int, output: str = "
     return path
 
 
+def _check_existing_code_modified(issues, files, config, allow_existing_code_change):
+    if config.get("existing_code_change_requires_flag") and not allow_existing_code_change:
+        for row in files:
+            if row.status.startswith("M") and _is_active_code(row.path, config):
+                issues.append(
+                    GateIssue(
+                        str(config.get("existing_code_change_severity") or "warn"),
+                        "EXISTING_CODE_MODIFIED",
+                        row.path,
+                        "Existing active code was modified. Confirm this is intentional or pass --allow-existing-code-change.",
+                    )
+                )
+
+
+def _check_local_docker_cli(issues, files, config, staged):
+    if config.get("no_local_docker_cli"):
+        allow_paths = tuple(config.get("no_local_docker_cli_allow_paths", []))
+        for row in files:
+            if _has_local_docker_cli(row.path, staged=staged, allow_paths=allow_paths):
+                issues.append(
+                    GateIssue(
+                        "error",
+                        "NO_LOCAL_DOCKER_CLI",
+                        row.path,
+                        "로컬 PC에 Docker CLI 없음 — subprocess로 docker/docker-compose 직접 호출 금지. 배포는 서버에서 수행.",
+                    )
+                )
+
+
 def evaluate_changes(
     files: list[ChangedFile],
     config: dict[str, Any],
@@ -270,17 +299,7 @@ def evaluate_changes(
             )
         )
 
-    if config.get("existing_code_change_requires_flag") and not allow_existing_code_change:
-        for row in files:
-            if row.status.startswith("M") and _is_active_code(row.path, config):
-                issues.append(
-                    GateIssue(
-                        str(config.get("existing_code_change_severity") or "warn"),
-                        "EXISTING_CODE_MODIFIED",
-                        row.path,
-                        "Existing active code was modified. Confirm this is intentional or pass --allow-existing-code-change.",
-                    )
-                )
+    _check_existing_code_modified(issues, files, config, allow_existing_code_change)
 
     if schema_paths and config.get("schema_change_requires_doc_and_test") and not (doc_paths and test_paths):
         issues.append(
@@ -313,18 +332,7 @@ def evaluate_changes(
             )
         )
 
-    if config.get("no_local_docker_cli"):
-        allow_paths = tuple(config.get("no_local_docker_cli_allow_paths", []))
-        for row in files:
-            if _has_local_docker_cli(row.path, staged=staged, allow_paths=allow_paths):
-                issues.append(
-                    GateIssue(
-                        "error",
-                        "NO_LOCAL_DOCKER_CLI",
-                        row.path,
-                        "로컬 PC에 Docker CLI 없음 — subprocess로 docker/docker-compose 직접 호출 금지. 배포는 서버에서 수행.",
-                    )
-                )
+    _check_local_docker_cli(issues, files, config, staged)
 
     return issues
 

@@ -109,6 +109,48 @@ def parse_date(value: str) -> date | None:
         return None
 
 
+def _score_install_date(install_date: date | None, today: date) -> tuple[int, str] | None:
+    """설치예정일 기준 (점수, 사유). 날짜가 없으면 None."""
+    if not install_date:
+        return None
+    days_to_install = (install_date - today).days
+    if days_to_install < 0:
+        return 30, "설치예정일 경과"
+    if days_to_install <= 30:
+        return 25, "30일 이내 설치 예정"
+    if days_to_install <= 90:
+        return 15, "90일 이내 설치 예정"
+    return 5, "장기 설치 예정"
+
+
+def _score_registered_date(registered_date: date | None, today: date) -> tuple[int, str] | None:
+    """등록일 기준 (점수, 사유). 날짜가 없거나 해당 구간이 아니면 None."""
+    if not registered_date:
+        return None
+    days_since_registered = (today - registered_date).days
+    if 0 <= days_since_registered <= 30:
+        return 20, "최근 등록 현장"
+    if days_since_registered <= 60:
+        return 10, "60일 이내 등록"
+    if days_since_registered <= 90:
+        return 5, "90일 이내 등록"
+    return None
+
+
+def _score_end_date(end_date: date | None, today: date) -> tuple[int, str] | None:
+    """공사종료일(잔여 공기) 기준 (점수, 사유). 날짜가 없거나 해당 구간이 아니면 None."""
+    if not end_date:
+        return None
+    remaining_days = (end_date - today).days
+    if remaining_days >= 365:
+        return 35, "잔여 공기 12개월 이상"
+    if remaining_days >= 180:
+        return 25, "잔여 공기 6개월 이상"
+    if remaining_days >= 60:
+        return 10, "잔여 공기 2개월 이상"
+    return None
+
+
 def score_project(project: dict[str, str], today: date | None = None) -> tuple[int, str, list[str]]:
     """Score a new-site project for practical sales priority."""
     today = today or date.today()
@@ -119,44 +161,14 @@ def score_project(project: dict[str, str], today: date | None = None) -> tuple[i
     registered_date = parse_date(project.get("registered_date", ""))
     end_date = parse_date(project.get("end_date", ""))
 
-    if install_date:
-        days_to_install = (install_date - today).days
-        if days_to_install < 0:
-            score += 30
-            reasons.append("설치예정일 경과")
-        elif days_to_install <= 30:
-            score += 25
-            reasons.append("30일 이내 설치 예정")
-        elif days_to_install <= 90:
-            score += 15
-            reasons.append("90일 이내 설치 예정")
-        else:
-            score += 5
-            reasons.append("장기 설치 예정")
-
-    if registered_date:
-        days_since_registered = (today - registered_date).days
-        if 0 <= days_since_registered <= 30:
-            score += 20
-            reasons.append("최근 등록 현장")
-        elif days_since_registered <= 60:
-            score += 10
-            reasons.append("60일 이내 등록")
-        elif days_since_registered <= 90:
-            score += 5
-            reasons.append("90일 이내 등록")
-
-    if end_date:
-        remaining_days = (end_date - today).days
-        if remaining_days >= 365:
-            score += 35
-            reasons.append("잔여 공기 12개월 이상")
-        elif remaining_days >= 180:
-            score += 25
-            reasons.append("잔여 공기 6개월 이상")
-        elif remaining_days >= 60:
-            score += 10
-            reasons.append("잔여 공기 2개월 이상")
+    for date_score in (
+        _score_install_date(install_date, today),
+        _score_registered_date(registered_date, today),
+        _score_end_date(end_date, today),
+    ):
+        if date_score is not None:
+            score += date_score[0]
+            reasons.append(date_score[1])
 
     branch = project.get("branch", "")
     if any(token in branch for token in ("서울", "경기", "인천", "의정부", "수원", "성남", "안양")):
@@ -199,6 +211,33 @@ def build_mail_body(project: dict[str, str], sender_name: str = "해한소방 �
     )
 
 
+def _make_target(idx: int, project: dict[str, Any]) -> SalesMailTarget:
+    """점수가 매겨진 프로젝트 1건을 영업 메일 대상으로 변환."""
+    subject = f"[건설e음 전자카드 단말기 설치 안내] {project.get('project_name') or '현장'}"
+    body = build_mail_body(project)
+    return SalesMailTarget(
+        rank=idx,
+        grade=project["grade"],
+        score=int(project["score"]),
+        email=project["email"],
+        subject=subject,
+        project_name=project.get("project_name", ""),
+        company=project.get("company", ""),
+        manager=project.get("manager", ""),
+        phone=project.get("phone", ""),
+        address=project.get("address", ""),
+        branch=project.get("branch", ""),
+        install_date=project.get("install_date", ""),
+        registered_date=project.get("registered_date", ""),
+        start_date=project.get("start_date", ""),
+        end_date=project.get("end_date", ""),
+        project_no=project.get("project_no", ""),
+        mutual_aid_no=project.get("mutual_aid_no", ""),
+        reasons=list(project["reasons"]),
+        body=body,
+    )
+
+
 def prepare_sales_mail(
     *,
     source: str | Path = DEFAULT_SOURCE,
@@ -232,33 +271,7 @@ def prepare_sales_mail(
     scored.sort(key=lambda item: (-int(item["score"]), item["install_date"], item["project_name"]))
     selected = scored[: max(0, int(limit))]
 
-    targets: list[SalesMailTarget] = []
-    for idx, project in enumerate(selected, start=1):
-        subject = f"[건설e음 전자카드 단말기 설치 안내] {project.get('project_name') or '현장'}"
-        body = build_mail_body(project)
-        targets.append(
-            SalesMailTarget(
-                rank=idx,
-                grade=project["grade"],
-                score=int(project["score"]),
-                email=project["email"],
-                subject=subject,
-                project_name=project.get("project_name", ""),
-                company=project.get("company", ""),
-                manager=project.get("manager", ""),
-                phone=project.get("phone", ""),
-                address=project.get("address", ""),
-                branch=project.get("branch", ""),
-                install_date=project.get("install_date", ""),
-                registered_date=project.get("registered_date", ""),
-                start_date=project.get("start_date", ""),
-                end_date=project.get("end_date", ""),
-                project_no=project.get("project_no", ""),
-                mutual_aid_no=project.get("mutual_aid_no", ""),
-                reasons=list(project["reasons"]),
-                body=body,
-            )
-        )
+    targets = [_make_target(idx, project) for idx, project in enumerate(selected, start=1)]
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

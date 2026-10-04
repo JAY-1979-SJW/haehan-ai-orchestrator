@@ -300,7 +300,7 @@ def make_next_steps(fqdn: str) -> list[str]:
 # ── 메인 계획 생성 ────────────────────────────────────────────────────────────
 
 
-def create_provisioning_plan(
+def create_provisioning_plan(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     fqdn: str,
     project_id: str,
     display_name: str,

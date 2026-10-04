@@ -18,7 +18,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from html.parser import HTMLParser
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urljoin, urlparse
 
 # ─── 키워드 테이블 ─────────────────────────────────────────────────────────
@@ -539,90 +539,138 @@ class _StructureParser(HTMLParser):
         self._textarea_buf: list[str] | None = None
 
     # ── 시작 태그 ──
+    _START_HANDLERS: ClassVar[dict[str, str]] = {
+        "title": "_start_title",
+        "h1": "_start_heading",
+        "h2": "_start_heading",
+        "h3": "_start_heading",
+        "h4": "_start_heading",
+        "h5": "_start_heading",
+        "h6": "_start_heading",
+        "a": "_start_a",
+        "button": "_start_button",
+        "input": "_start_input",
+        "select": "_start_select",
+        "option": "_start_option",
+        "textarea": "_start_textarea",
+        "form": "_start_form",
+        "table": "_start_table",
+        "tr": "_start_tr",
+        "th": "_start_cell",
+        "td": "_start_cell",
+        "meta": "_start_meta",
+    }
+    _END_HANDLERS: ClassVar[dict[str, str]] = {
+        "title": "_end_title",
+        "h1": "_end_heading",
+        "h2": "_end_heading",
+        "h3": "_end_heading",
+        "h4": "_end_heading",
+        "h5": "_end_heading",
+        "h6": "_end_heading",
+        "a": "_end_a",
+        "button": "_end_button",
+        "select": "_end_select",
+        "textarea": "_end_textarea",
+        "form": "_end_form",
+        "table": "_end_table",
+        "tr": "_end_tr",
+        "th": "_end_th",
+        "td": "_end_td",
+    }
+
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         a = {k: (v or "") for k, v in attrs}
+        handler = self._START_HANDLERS.get(tag)
+        if handler is not None:
+            getattr(self, handler)(tag, a)
 
-        if tag == "title":
-            self._title_buf = []
+    def _start_title(self, tag: str, a: dict[str, str]) -> None:
+        self._title_buf = []
+
+    def _start_heading(self, tag: str, a: dict[str, str]) -> None:
+        self._heading_level = int(tag[1])
+        self._heading_buf = []
+
+    def _start_a(self, tag: str, a: dict[str, str]) -> None:
+        self._a_attrs = a
+        self._a_buf = []
+
+    def _start_button(self, tag: str, a: dict[str, str]) -> None:
+        self._button_attrs = a
+        self._button_buf = []
+
+    def _start_input(self, tag: str, a: dict[str, str]) -> None:
+        self._handle_input(a)
+
+    def _start_select(self, tag: str, a: dict[str, str]) -> None:
+        self._select_attrs = a
+        self._select_options = 0
+
+    def _start_option(self, tag: str, a: dict[str, str]) -> None:
+        if self._select_attrs is not None:
+            self._select_options += 1
+
+    def _start_textarea(self, tag: str, a: dict[str, str]) -> None:
+        self._textarea_attrs = a
+        self._textarea_buf = []
+
+    def _start_form(self, tag: str, a: dict[str, str]) -> None:
+        self._current_form = {
+            "method": (a.get("method") or "get").lower(),
+            "action": (a.get("action") or "")[:300],
+            "field_count": 0,
+            "has_password": False,
+            "has_hidden": False,
+            "risk_level": "unknown",
+        }
+
+    def _start_table(self, tag: str, a: dict[str, str]) -> None:
+        self._current_table = {
+            "headers": [],
+            "row_count": 0,
+            "column_count": 0,
+            "purpose_candidate": [],
+            "_max_cols": 0,
+        }
+
+    def _start_tr(self, tag: str, a: dict[str, str]) -> None:
+        if self._current_table is not None:
+            self._in_tr = True
+            self._current_tr_cells = 0
+            self._current_table["row_count"] += 1
+
+    def _start_cell(self, tag: str, a: dict[str, str]) -> None:
+        if self._current_table is None:
             return
-        if tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
-            self._heading_level = int(tag[1])
-            self._heading_buf = []
-            return
-        if tag == "a":
-            self._a_attrs = a
-            self._a_buf = []
-            return
-        if tag == "button":
-            self._button_attrs = a
-            self._button_buf = []
-            return
-        if tag == "input":
-            self._handle_input(a)
-            return
-        if tag == "select":
-            self._select_attrs = a
-            self._select_options = 0
-            return
-        if tag == "option":
-            if self._select_attrs is not None:
-                self._select_options += 1
-            return
-        if tag == "textarea":
-            self._textarea_attrs = a
-            self._textarea_buf = []
-            return
-        if tag == "form":
-            self._current_form = {
-                "method": (a.get("method") or "get").lower(),
-                "action": (a.get("action") or "")[:300],
-                "field_count": 0,
-                "has_password": False,
-                "has_hidden": False,
-                "risk_level": "unknown",
-            }
-            return
-        if tag == "table":
-            self._current_table = {
-                "headers": [],
-                "row_count": 0,
-                "column_count": 0,
-                "purpose_candidate": [],
-                "_max_cols": 0,
-            }
-            return
-        if tag == "tr":
-            if self._current_table is not None:
-                self._in_tr = True
-                self._current_tr_cells = 0
-                self._current_table["row_count"] += 1
-            return
-        if tag == "th" and self._current_table is not None:
+        if tag == "th":
             self._in_th = True
-            self._cell_buf = []
-            self._current_tr_cells += 1
-            return
-        if tag == "td" and self._current_table is not None:
+        else:
             self._in_td = True
-            self._cell_buf = []
-            self._current_tr_cells += 1
-            return
-        if tag == "meta":
-            name = (a.get("name") or a.get("property") or "").strip()
-            content = a.get("content", "")
-            if name and not _is_sensitive_name(name):
-                # 값 자체도 민감 토큰을 포함하면 드롭
-                if not _is_sensitive_name(content):
-                    self.meta[name[:64]] = content[:200]
-            return
+        self._cell_buf = []
+        self._current_tr_cells += 1
+
+    def _start_meta(self, tag: str, a: dict[str, str]) -> None:
+        name = (a.get("name") or a.get("property") or "").strip()
+        content = a.get("content", "")
+        if name and not _is_sensitive_name(name):
+            # 값 자체도 민감 토큰을 포함하면 드롭
+            if not _is_sensitive_name(content):
+                self.meta[name[:64]] = content[:200]
 
     # ── 종료 태그 ──
     def handle_endtag(self, tag: str) -> None:
-        if tag == "title" and self._title_buf is not None:
+        handler = self._END_HANDLERS.get(tag)
+        if handler is not None:
+            getattr(self, handler)()
+
+    def _end_title(self) -> None:
+        if self._title_buf is not None:
             self.page_title = _collapse_ws("".join(self._title_buf))
             self._title_buf = None
-            return
-        if tag in ("h1", "h2", "h3", "h4", "h5", "h6") and self._heading_buf is not None:
+
+    def _end_heading(self) -> None:
+        if self._heading_buf is not None:
             text = _collapse_ws("".join(self._heading_buf))
             if text:
                 self.headings.append(
@@ -633,8 +681,9 @@ class _StructureParser(HTMLParser):
                 )
             self._heading_buf = None
             self._heading_level = 0
-            return
-        if tag == "a" and self._a_attrs is not None:
+
+    def _end_a(self) -> None:
+        if self._a_attrs is not None:
             text = _collapse_ws("".join(self._a_buf or []))
             href = (self._a_attrs.get("href") or "")[:500]
             self.links.append(
@@ -645,8 +694,9 @@ class _StructureParser(HTMLParser):
             )
             self._a_attrs = None
             self._a_buf = None
-            return
-        if tag == "button" and self._button_attrs is not None:
+
+    def _end_button(self) -> None:
+        if self._button_attrs is not None:
             text = _collapse_ws("".join(self._button_buf or []))
             btype = (self._button_attrs.get("type") or "")[:32]
             risk, reason = _classify_button(text, btype)
@@ -663,8 +713,9 @@ class _StructureParser(HTMLParser):
                 self._current_form["risk_level"] = "danger_write"
             self._button_attrs = None
             self._button_buf = None
-            return
-        if tag == "select" and self._select_attrs is not None:
+
+    def _end_select(self) -> None:
+        if self._select_attrs is not None:
             self.selects.append(
                 {
                     "name": (self._select_attrs.get("name") or "")[:200],
@@ -674,8 +725,9 @@ class _StructureParser(HTMLParser):
             )
             self._select_attrs = None
             self._select_options = 0
-            return
-        if tag == "textarea" and self._textarea_attrs is not None:
+
+    def _end_textarea(self) -> None:
+        if self._textarea_attrs is not None:
             # textarea 의 내부 텍스트는 value 에 해당하므로 저장하지 않는다.
             self.textareas.append(
                 {
@@ -685,12 +737,14 @@ class _StructureParser(HTMLParser):
             )
             self._textarea_attrs = None
             self._textarea_buf = None
-            return
-        if tag == "form" and self._current_form is not None:
+
+    def _end_form(self) -> None:
+        if self._current_form is not None:
             self.forms.append(self._current_form)
             self._current_form = None
-            return
-        if tag == "table" and self._current_table is not None:
+
+    def _end_table(self) -> None:
+        if self._current_table is not None:
             t = self._current_table
             t["column_count"] = t.pop("_max_cols", 0)
             joined_headers = " ".join(t["headers"])
@@ -699,28 +753,27 @@ class _StructureParser(HTMLParser):
             self._current_table = None
             self._in_tr = False
             self._current_tr_cells = 0
-            return
-        if tag == "tr":
-            if self._current_table is not None:
-                self._current_table["_max_cols"] = max(
-                    self._current_table.get("_max_cols", 0),
-                    self._current_tr_cells,
-                )
-            self._in_tr = False
-            self._current_tr_cells = 0
-            return
-        if tag == "th":
-            if self._in_th and self._current_table is not None:
-                text = _collapse_ws("".join(self._cell_buf or []))
-                if text:
-                    self._current_table["headers"].append(text[:200])
-            self._in_th = False
-            self._cell_buf = None
-            return
-        if tag == "td":
-            self._in_td = False
-            self._cell_buf = None
-            return
+
+    def _end_tr(self) -> None:
+        if self._current_table is not None:
+            self._current_table["_max_cols"] = max(
+                self._current_table.get("_max_cols", 0),
+                self._current_tr_cells,
+            )
+        self._in_tr = False
+        self._current_tr_cells = 0
+
+    def _end_th(self) -> None:
+        if self._in_th and self._current_table is not None:
+            text = _collapse_ws("".join(self._cell_buf or []))
+            if text:
+                self._current_table["headers"].append(text[:200])
+        self._in_th = False
+        self._cell_buf = None
+
+    def _end_td(self) -> None:
+        self._in_td = False
+        self._cell_buf = None
 
     # ── 텍스트 ──
     def handle_data(self, data: str) -> None:

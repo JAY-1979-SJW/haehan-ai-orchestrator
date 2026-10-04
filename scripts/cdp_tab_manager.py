@@ -106,6 +106,38 @@ def plan_clean(
     return close, keep
 
 
+def _cmd_list(pages: list) -> int:
+    """list 서브커맨드: 열린 탭 출력."""
+    print(f"열린 탭 {len(pages)}개:")
+    for p in pages:
+        mark = "🔒" if is_protected(p.get("url", "")) else "  "
+        print(f"  {mark} {(p.get('title', '') or '(무제)')[:38]:38} | {p.get('url', '')[:72]}")
+    return 0
+
+
+def _cmd_clean(pages: list, args: argparse.Namespace) -> int:
+    """clean 서브커맨드: 정리 계획 출력 후 --confirm 이면 실제 닫기."""
+    close, keep = plan_clean(pages, all_unprotected=args.all_unprotected)
+    print(f"=== 정리 계획 (닫기 {len(close)} / 유지 {len(keep)}) ===")
+    for p, why in close:
+        print(f"  [닫기·{why}] {p.get('url', '')[:72]}")
+    if not close:
+        print("  정리할 빈 탭/중복 없음")
+    for p, why in keep:
+        if why.startswith("보호"):
+            print(f"  [보호] {(p.get('title', '') or '')[:30]} | {p.get('url', '')[:50]}")
+    if not args.confirm:
+        print("\n(dry-run) 실제로 닫으려면 --confirm 추가")
+        return 0
+    closed = 0
+    for p, _why in close:
+        res = _close(p["id"])
+        print(f"  닫음: {p.get('url', '')[:50]} → {res}")
+        closed += 1
+    print(f"완료: {closed}개 닫음")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="CDP 탭 정리")
     sub = ap.add_subparsers(dest="cmd")
@@ -122,32 +154,10 @@ def main() -> int:
         return 1
 
     if args.cmd in (None, "list"):
-        print(f"열린 탭 {len(pages)}개:")
-        for p in pages:
-            mark = "🔒" if is_protected(p.get("url", "")) else "  "
-            print(f"  {mark} {(p.get('title', '') or '(무제)')[:38]:38} | {p.get('url', '')[:72]}")
-        return 0
+        return _cmd_list(pages)
 
     if args.cmd == "clean":
-        close, keep = plan_clean(pages, all_unprotected=args.all_unprotected)
-        print(f"=== 정리 계획 (닫기 {len(close)} / 유지 {len(keep)}) ===")
-        for p, why in close:
-            print(f"  [닫기·{why}] {p.get('url', '')[:72]}")
-        if not close:
-            print("  정리할 빈 탭/중복 없음")
-        for p, why in keep:
-            if why.startswith("보호"):
-                print(f"  [보호] {(p.get('title', '') or '')[:30]} | {p.get('url', '')[:50]}")
-        if not args.confirm:
-            print("\n(dry-run) 실제로 닫으려면 --confirm 추가")
-            return 0
-        closed = 0
-        for p, _why in close:
-            res = _close(p["id"])
-            print(f"  닫음: {p.get('url', '')[:50]} → {res}")
-            closed += 1
-        print(f"완료: {closed}개 닫음")
-        return 0
+        return _cmd_clean(pages, args)
 
     ap.print_help()
     return 0

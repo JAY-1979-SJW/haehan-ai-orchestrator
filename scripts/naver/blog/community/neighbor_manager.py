@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 import time
+from typing import Any
 
 from playwright.sync_api import Page
 
@@ -110,8 +111,8 @@ class BlogNeighborManager:
         from datetime import datetime
 
         neighbors = self.list_neighbors()
-        active = []
-        dormant = []
+        active: list[Any] = []
+        dormant: list[Any] = []
         now = datetime.now()
         for n in neighbors:
             last_post = n.get("last_post", "")

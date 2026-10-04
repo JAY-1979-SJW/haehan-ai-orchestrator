@@ -21,6 +21,9 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "home", label: "AI 콘솔", shortLabel: "AI", href: "/", exact: true },
       { key: "ops",  label: "운영센터", shortLabel: "운영", href: "/ops" },
       { key: "mail", label: "메일 비서", shortLabel: "메일", href: "/mail" },
+      { key: "mailbox", label: "메일함", shortLabel: "함", href: "/mailbox" },
+      { key: "hanafax", label: "하나팩스", shortLabel: "팩스", href: "/hanafax" },
+      { key: "gongmu", label: "건설업 공무", shortLabel: "공무", href: "/gongmu", adminOnly: true },
       { key: "google", label: "구글 허브", shortLabel: "구글", href: "/google" },
       { key: "login-status", label: "로그인 현황", shortLabel: "로그인", href: "/login-status" },
       { key: "mypage", label: "설정", shortLabel: "설정", href: "/mypage" },
@@ -46,6 +49,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "tasks",    label: "작업 목록",   shortLabel: "작업", href: "/assistant/tasks" },
       { key: "approval", label: "승인 게이트", shortLabel: "승인", href: "/assistant/approval" },
+      { key: "scheduled", label: "예약 작업", shortLabel: "예약", href: "/scheduled" },
     ],
   },
   // "관리자" 그룹("회원 승인" /admin/users, "라이선스 관리" /admin/licenses) 임시 제거

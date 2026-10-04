@@ -159,6 +159,47 @@ class BrowserWebSocketTaskPayloadSchema:
     created_at: str | None = None
     metadata: dict[str, Any] | None = None
 
+    @staticmethod
+    def _validate_metadata(metadata: Any) -> None:
+        if metadata and isinstance(metadata, dict):
+            forbidden_keys_lower = {k.lower() for k in METADATA_FORBIDDEN_KEYS}
+            for key in metadata:
+                if key.lower() in forbidden_keys_lower:
+                    raise ValueError(f"Forbidden metadata key: {key}")
+
+    @staticmethod
+    def _validate_fields(
+        task_id: str,
+        task_type: str,
+        action_type: str,
+        selector: str,
+        value: Any,
+        metadata: Any,
+    ) -> None:
+        """from_dict 입력 검증 (ValueError, 순서 고정)."""
+        # Validate required fields
+        if not task_id:
+            raise ValueError("task_id is required")
+        if task_type != "browser_action":
+            raise ValueError(f"task_type must be 'browser_action', got {task_type}")
+        if not action_type:
+            raise ValueError("action_type is required")
+        if not selector:
+            raise ValueError("selector is required")
+
+        # Validate action_type (check blocked first for clearer error)
+        if action_type in BLOCKED_ACTION_TYPES:
+            raise ValueError(f"action_type {action_type} is blocked")
+        if action_type not in ALLOWED_ACTION_TYPES:
+            raise ValueError(f"action_type {action_type} not in allowed types")
+
+        # Validate action-specific requirements
+        if action_type == "browser.execute_type" and not value:
+            raise ValueError("value is required for browser.execute_type")
+
+        # Validate metadata
+        BrowserWebSocketTaskPayloadSchema._validate_metadata(metadata)
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> BrowserWebSocketTaskPayloadSchema:
         """Create schema from dictionary.
@@ -188,32 +229,7 @@ class BrowserWebSocketTaskPayloadSchema:
         created_at = data.get("created_at")
         metadata = data.get("metadata", {})
 
-        # Validate required fields
-        if not task_id:
-            raise ValueError("task_id is required")
-        if task_type != "browser_action":
-            raise ValueError(f"task_type must be 'browser_action', got {task_type}")
-        if not action_type:
-            raise ValueError("action_type is required")
-        if not selector:
-            raise ValueError("selector is required")
-
-        # Validate action_type (check blocked first for clearer error)
-        if action_type in BLOCKED_ACTION_TYPES:
-            raise ValueError(f"action_type {action_type} is blocked")
-        if action_type not in ALLOWED_ACTION_TYPES:
-            raise ValueError(f"action_type {action_type} not in allowed types")
-
-        # Validate action-specific requirements
-        if action_type == "browser.execute_type" and not value:
-            raise ValueError("value is required for browser.execute_type")
-
-        # Validate metadata
-        if metadata and isinstance(metadata, dict):
-            forbidden_keys_lower = {k.lower() for k in METADATA_FORBIDDEN_KEYS}
-            for key in metadata:
-                if key.lower() in forbidden_keys_lower:
-                    raise ValueError(f"Forbidden metadata key: {key}")
+        cls._validate_fields(task_id, task_type, action_type, selector, value, metadata)
 
         return cls(
             task_id=task_id,
@@ -339,7 +355,7 @@ class BrowserWebSocketTaskResultSchema:
     screenshot_taken: bool = False
 
     @classmethod
-    def from_task_result(
+    def from_task_result(  # noqa: PLR0913 - 공개 classmethod 시그니처 유지(호출부·테스트 다수)
         cls,
         task_id: str,
         status: str,

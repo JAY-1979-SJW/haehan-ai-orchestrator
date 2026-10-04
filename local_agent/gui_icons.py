@@ -62,7 +62,7 @@ def _hex_to_rgb(hexc: str) -> tuple[int, int, int]:
 # ── sparkline ───────────────────────────────────────────────────
 
 
-def make_sparkline(
+def make_sparkline(  # noqa: PLR0913 - 공개 GUI 헬퍼 keyword-only 시그니처 유지
     values: Sequence[float],
     *,
     width: int = 240,

@@ -8,11 +8,16 @@ from __future__ import annotations
 
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
 from .cafe_mixin_common import _js
 
 
 class CafeReadMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def cafe_info(self, cafe_url: str) -> dict:
         """카페 기본 정보 반환.
 
@@ -290,17 +295,8 @@ class CafeReadMixin:
 
         return all_posts[:max_posts]
 
-    def cafe_search(self, cafe_url: str, query: str, page: int = 1, max_posts: int = 30) -> list[dict]:
-        """카페 내 키워드 검색.
-
-        Args:
-            cafe_url - 카페 URL
-            query    - 검색어
-            page     - 페이지 번호
-        """
-        import urllib.parse
-
-        # clubid 추출
+    def _club_id_for_search(self, cafe_url: str) -> str:
+        """clubid 추출 (URL에 없으면 카페 홈의 ArticleList 링크에서 탐색)."""
         club_id = ""
         m = re.search(r"clubid=(\d+)", cafe_url)
         if not m:
@@ -313,6 +309,19 @@ class CafeReadMixin:
                     break
         else:
             club_id = m.group(1)
+        return club_id
+
+    def cafe_search(self, cafe_url: str, query: str, page: int = 1, max_posts: int = 30) -> list[dict]:
+        """카페 내 키워드 검색.
+
+        Args:
+            cafe_url - 카페 URL
+            query    - 검색어
+            page     - 페이지 번호
+        """
+        import urllib.parse
+
+        club_id = self._club_id_for_search(cafe_url)
 
         q = urllib.parse.quote(query)
         search_url = (

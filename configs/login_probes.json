@@ -1,0 +1,10 @@
+{
+  "_doc": "요소 기준 로그인 판정 프로필. 화면 요소(로그인/로그아웃/내정보 버튼)는 scripts/explorer 스냅샷에서 역할로 찾으므로 여기엔 두지 않는다. session_cookies 는 쿠키 '이름'의 존재만 확인(값은 읽지 않음). account_selector 는 스냅샷으로 확인된 계정 이름 요소가 있을 때만 채운다(없으면 null = user 는 항상 None).",
+  "sites": {
+    "naver": {
+      "hosts": ["naver.com"],
+      "session_cookies": ["NID_AUT", "NID_SES"],
+      "account_selector": null
+    }
+  }
+}

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any
 
 from ai_orchestrator.local_agent.action_risk_policy import (
@@ -41,6 +42,94 @@ from ai_orchestrator.local_agent.universal_safe_result import (
     build_universal_result,
 )
 from ai_orchestrator.local_agent.workflow_template_engine import get_template
+
+
+@dataclass
+class _WorkflowState:
+    executed: list[str] = field(default_factory=list)
+    pending_permission: list[str] = field(default_factory=list)
+    user_direct_required: list[str] = field(default_factory=list)
+    blocked: list[str] = field(default_factory=list)
+    audit_ids: list[str] = field(default_factory=list)
+
+
+def _run_auto_step(
+    st: _WorkflowState, action: str, domain: str, task_id: str, runner_fn: Callable | None, dry_run: bool
+):
+    e = log_execution_started(task_id, action, domain, task_id)
+    st.audit_ids.append(e["log_id"])
+    if runner_fn and not dry_run:
+        runner_fn({"task_id": task_id, "action": action, "domain": domain})
+    e2 = log_execution_completed(task_id, action, domain, task_id, ok=True)
+    st.audit_ids.append(e2["log_id"])
+    st.executed.append(action)
+
+
+def _run_delegated_step(  # noqa: PLR0913 - 내부 헬퍼, 기존 분기 로직을 그대로 옮긴 것
+    st: _WorkflowState,
+    action: str,
+    domain: str,
+    task_id: str,
+    pmap: dict[str, str],
+    runner_fn: Callable | None,
+    dry_run: bool,
+):
+    permission_id = pmap.get(action) or pmap.get("*")
+    gate = evaluate_gate(action, domain, permission_id)
+    if gate["gate"] != GATE_PASS:
+        st.pending_permission.append(action)
+        return
+    if dry_run:
+        st.executed.append(f"{action}(dry-run-skip)")
+        return
+    e = log_execution_started(permission_id or "", action, domain, task_id)
+    st.audit_ids.append(e["log_id"])
+    if runner_fn:
+        runner_fn({"task_id": task_id, "action": action, "domain": domain, "permission_id": permission_id})
+    e2 = log_execution_completed(permission_id or "", action, domain, task_id, ok=True)
+    st.audit_ids.append(e2["log_id"])
+    st.executed.append(action)
+
+
+def _block_step(st: _WorkflowState, action: str, domain: str, reason: str, task_id: str):
+    e = log_execution_blocked(action, domain, reason, task_id)
+    st.audit_ids.append(e["log_id"])
+    st.blocked.append(action)
+
+
+def _process_step(  # noqa: PLR0913 - 내부 헬퍼, 기존 분기 로직을 그대로 옮긴 것
+    st: _WorkflowState,
+    step: dict[str, Any],
+    site_id: str,
+    domain: str,
+    task_id: str,
+    pmap: dict[str, str],
+    runner_fn: Callable | None,
+    dry_run: bool,
+):
+    action = step["action"]
+    step_id = step["step_id"]  # noqa: F841
+
+    # BLOCKED 체크
+    if is_action_blocked_for_site(site_id, action):
+        _block_step(st, action, domain, f"BLOCKED on site {site_id}", task_id)
+        return
+
+    # USER_DIRECT 체크
+    if is_action_direct_required(site_id, action):
+        st.user_direct_required.append(action)
+        return
+
+    grade = step.get("risk_level", GRADE_AUTO_ALLOWED)
+
+    if grade == GRADE_BLOCKED:
+        _block_step(st, action, domain, "BLOCKED risk_level", task_id)
+    elif grade == GRADE_USER_DIRECT:
+        st.user_direct_required.append(action)
+    elif grade == GRADE_AUTO_ALLOWED:
+        _run_auto_step(st, action, domain, task_id, runner_fn, dry_run)
+    elif grade == GRADE_USER_DELEGATED:
+        _run_delegated_step(st, action, domain, task_id, pmap, runner_fn, dry_run)
 
 
 def run_workflow(
@@ -81,66 +170,16 @@ def run_workflow(
             message_ko=f"미등록 workflow: {workflow_id!r}",
         )
 
-    executed: list[str] = []
-    pending_permission: list[str] = []
-    user_direct_required: list[str] = []
-    blocked: list[str] = []
-    audit_ids: list[str] = []
-
+    st = _WorkflowState()
     for step in template["steps"]:
-        action = step["action"]
-        step_id = step["step_id"]  # noqa: F841
         domain = profile["domains"][0] if profile.get("domains") else site_id
+        _process_step(st, step, site_id, domain, _task_id, pmap, runner_fn, dry_run)
 
-        # BLOCKED 체크
-        if is_action_blocked_for_site(site_id, action):
-            e = log_execution_blocked(action, domain, f"BLOCKED on site {site_id}", _task_id)
-            audit_ids.append(e["log_id"])
-            blocked.append(action)
-            continue
-
-        # USER_DIRECT 체크
-        if is_action_direct_required(site_id, action):
-            user_direct_required.append(action)
-            continue
-
-        grade = step.get("risk_level", GRADE_AUTO_ALLOWED)
-
-        if grade == GRADE_BLOCKED:
-            e = log_execution_blocked(action, domain, "BLOCKED risk_level", _task_id)
-            audit_ids.append(e["log_id"])
-            blocked.append(action)
-
-        elif grade == GRADE_USER_DIRECT:
-            user_direct_required.append(action)
-
-        elif grade == GRADE_AUTO_ALLOWED:
-            e = log_execution_started(_task_id, action, domain, _task_id)
-            audit_ids.append(e["log_id"])
-            if runner_fn and not dry_run:
-                runner_fn({"task_id": _task_id, "action": action, "domain": domain})
-            e2 = log_execution_completed(_task_id, action, domain, _task_id, ok=True)
-            audit_ids.append(e2["log_id"])
-            executed.append(action)
-
-        elif grade == GRADE_USER_DELEGATED:
-            permission_id = pmap.get(action) or pmap.get("*")
-            gate = evaluate_gate(action, domain, permission_id)
-            if gate["gate"] == GATE_PASS:
-                if not dry_run:
-                    e = log_execution_started(permission_id or "", action, domain, _task_id)
-                    audit_ids.append(e["log_id"])
-                    if runner_fn:
-                        runner_fn(
-                            {"task_id": _task_id, "action": action, "domain": domain, "permission_id": permission_id}
-                        )
-                    e2 = log_execution_completed(permission_id or "", action, domain, _task_id, ok=True)
-                    audit_ids.append(e2["log_id"])
-                    executed.append(action)
-                else:
-                    executed.append(f"{action}(dry-run-skip)")
-            else:
-                pending_permission.append(action)
+    executed = st.executed
+    pending_permission = st.pending_permission
+    user_direct_required = st.user_direct_required
+    blocked = st.blocked
+    audit_ids = st.audit_ids
 
     # 최종 상태 판정
     if blocked:
@@ -166,7 +205,7 @@ def run_workflow(
     )
 
 
-def run_single_action(
+def run_single_action(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     site_id: str,
     action: str,
     domain: str = "",

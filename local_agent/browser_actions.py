@@ -213,7 +213,7 @@ def _result(
 
 # ── 실제 실행 게이트 ──────────────────────────────────────────────────────
 
-def perform_browser_action_readwrite_guarded(
+def perform_browser_action_readwrite_guarded(  # noqa: PLR0913 - 공개 API 시그니처 유지(호출부 다수)
     url: str,
     action: str,
     *,
@@ -326,7 +326,7 @@ def perform_browser_action_readwrite_guarded(
 
 # ── 내부: 실제 Playwright 조작 ───────────────────────────────────────────
 
-def _run_safe_action(
+def _run_safe_action(  # noqa: PLR0913 - keyword-only 내부 함수, 호출 1곳
     factory: Callable[[], Any],
     url: str,
     *,
@@ -366,7 +366,7 @@ def _run_safe_action(
     return trace
 
 
-def _dispatch_safe_action(
+def _dispatch_safe_action(  # noqa: PLR0913 - keyword-only 내부 함수, 호출 1곳
     page: Any,
     *,
     action: str,
@@ -400,16 +400,7 @@ def _dispatch_safe_action(
         return
 
     if action == "scroll":
-        delta_y = 500
-        try:
-            if value is not None:
-                delta_y = int(value)
-        except (TypeError, ValueError):
-            delta_y = 500
-        if delta_y > _MAX_SCROLL_DELTA:
-            delta_y = _MAX_SCROLL_DELTA
-        if delta_y < -_MAX_SCROLL_DELTA:
-            delta_y = -_MAX_SCROLL_DELTA
+        delta_y = _scroll_delta(value)
         page.mouse.wheel(0, delta_y)
         trace.append("scroll")
         return
@@ -420,6 +411,20 @@ def _dispatch_safe_action(
         return
 
     raise RuntimeError(f"unhandled safe action: {action!r}")
+
+
+def _scroll_delta(value: str | None) -> int:
+    delta_y = 500
+    try:
+        if value is not None:
+            delta_y = int(value)
+    except (TypeError, ValueError):
+        delta_y = 500
+    if delta_y > _MAX_SCROLL_DELTA:
+        delta_y = _MAX_SCROLL_DELTA
+    if delta_y < -_MAX_SCROLL_DELTA:
+        delta_y = -_MAX_SCROLL_DELTA
+    return delta_y
 
 
 def _safe_close(obj: Any) -> None:
@@ -433,7 +438,7 @@ def _safe_close(obj: Any) -> None:
 
 # ── 결과 포맷 ────────────────────────────────────────────────────────────
 
-def _guarded_result(
+def _guarded_result(  # noqa: PLR0913 - keyword-only 결과 포맷터, 공개 응답 key 유지
     *,
     ok: bool,
     url: str,

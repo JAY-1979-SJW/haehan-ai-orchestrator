@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import threading
 from datetime import UTC, datetime
@@ -183,10 +184,8 @@ def clear() -> None:
     with _lock:
         _agents.clear()
         _tasks.clear()
-    try:
+    with contextlib.suppress(OSError):
         _REGISTRY_STATE_PATH.unlink(missing_ok=True)
-    except OSError:
-        pass
 
 
 __all__ = [

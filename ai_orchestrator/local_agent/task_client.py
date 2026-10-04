@@ -14,7 +14,6 @@ USER_DIRECT_REQUIRED / BLOCKED는 실행하지 않고 상태만 보고한다.
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
 from ai_orchestrator.local_agent.result_sanitizer import sanitize_result
@@ -127,19 +126,3 @@ def poll_and_run_once(runner_fn: Any) -> dict[str, Any] | None:
     return safe_result
 
 
-def poll_loop(
-    runner_fn: Any,
-    poll_interval: float = DEFAULT_POLL_INTERVAL_SEC,
-    max_polls: int = DEFAULT_MAX_POLLS,
-) -> None:
-    """
-    polling 루프. max_polls=0이면 무한 반복.
-    테스트에서는 max_polls=1로 사용한다.
-    """
-    count = 0
-    while True:
-        poll_and_run_once(runner_fn)
-        count += 1
-        if max_polls > 0 and count >= max_polls:
-            break
-        time.sleep(poll_interval)

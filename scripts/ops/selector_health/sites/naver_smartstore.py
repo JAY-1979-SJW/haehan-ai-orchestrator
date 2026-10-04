@@ -136,6 +136,19 @@ def _open_image_modal(page: Any) -> bool:
     return False
 
 
+def _dismiss_confirm_modal(page):
+    for _ in range(3):
+        try:
+            b = page.locator('button:has-text("확인")').first
+            if b.is_visible(timeout=800):
+                b.click(timeout=2000)
+                time.sleep(0.8)
+            else:
+                break
+        except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
+            break
+
+
 def _select_any_category(page: Any) -> bool:
     """카테고리를 하나 선택한다 — 경로 표시(info-result)는 선택 후에만 나타난다.
 
@@ -174,16 +187,7 @@ def _select_any_category(page: Any) -> bool:
     except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
         return False
     # KC인증 모달 닫기
-    for _ in range(3):
-        try:
-            b = page.locator('button:has-text("확인")').first
-            if b.is_visible(timeout=800):
-                b.click(timeout=2000)
-                time.sleep(0.8)
-            else:
-                break
-        except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)
-            break
+    _dismiss_confirm_modal(page)
     try:
         return page.locator(".info-result.text-info").count() > 0
     except Exception:  # noqa: BLE001 - 셀렉터 헬스체크(사이트 구조 변경 감지 도구) — 실패는 그대로 False(셀렉터 비정상)로 판정, 이 도구의 목적 자체가 실패를 감지하는 것, 쓰기·결제 없음(2026-09-28 검토)

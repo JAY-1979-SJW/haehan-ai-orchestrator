@@ -8,6 +8,7 @@ POST /api/v1/kakao/setup/gate/:n  — 특정 게이트 단독 실행
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,6 +16,8 @@ from pathlib import Path
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -61,7 +64,8 @@ def _load_state() -> SetupState:
     if STATE_PATH.exists():
         try:
             return SetupState(**json.loads(STATE_PATH.read_text(encoding="utf-8")))
-        except Exception:  # noqa: S110, BLE001
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("카카오 설정 상태 파일 로드 실패(무시): %s", type(exc).__name__)
             pass
     return SetupState(gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()])
 
@@ -78,30 +82,24 @@ def _now() -> str:
 # ── SSE 스트리밍 실행 ─────────────────────────────────────────────────────────
 
 
-def _run_gates_stream():
-    """게이트를 순서대로 실행하며 SSE 이벤트를 yield한다."""
-    from scripts.kakao.setup_haehan_app import (
-        gate1_cdp,
-        gate2_login,
-        gate3_console_access,
-        gate4_app_register,
-        gate5_platform,
-        gate6_login_activate,
-        gate7_redirect_uri,
-        gate8_api_key,
-    )
+class _GateRun:
+    """게이트 실행 1회분의 상태(SSE 이벤트 생성 + 상태 파일 갱신)."""
 
-    state = SetupState(
-        running=True,
-        started_at=_now(),
-        gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()],
-    )
-    _save_state(state)
+    def __init__(self, gates_mod) -> None:
+        self.gates_mod = gates_mod
+        self.state = SetupState(
+            running=True,
+            started_at=_now(),
+            gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()],
+        )
+        _save_state(self.state)
+        self.ws_url = None
+        self.app_id = None
 
-    def event(gate: str, status: str, message: str, fix: str = "", **data) -> str:
+    def event(self, gate: str, status: str, message: str, fix: str = "", **data) -> str:
         payload = {"gate": gate, "status": status, "message": message, "fix": fix, "data": data, "updated_at": _now()}
         # 상태 파일 업데이트
-        for g in state.gates:
+        for g in self.state.gates:
             if g.gate == gate:
                 g.status = status
                 g.message = message
@@ -109,115 +107,136 @@ def _run_gates_stream():
                 g.data = data
                 g.updated_at = payload["updated_at"]
                 break
-        _save_state(state)
+        _save_state(self.state)
         return f"event: gate\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
-    def info(msg: str) -> str:
+    def info(self, msg: str) -> str:
         return f"event: info\ndata: {json.dumps({'message': msg}, ensure_ascii=False)}\n\n"
 
-    ws_url = None
-    app_id = None
+    def finish(self, **payload) -> str:
+        """실행 종료 처리(상태 파일 저장) 후 done 이벤트 문자열 반환."""
+        self.state.running = False
+        _save_state(self.state)
+        return f"event: done\ndata: {json.dumps(payload)}\n\n"
 
-    # ── GATE-1 ──
-    yield event("GATE-1", "running", "CDP 연결 확인 중...")
-    g1 = gate1_cdp()
+
+def _stage_cdp_autostart(run: _GateRun):
+    """GATE-1 실패 시 CDP 자동 시작 시도. 성공하면 True."""
+    try:
+        import subprocess
+
+        subprocess.Popen(
+            [sys.executable, str(ROOT / "scripts" / "cdp_force_start.py"), "start"],
+            cwd=str(ROOT),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        import time
+
+        time.sleep(5)
+        g1b = run.gates_mod.gate1_cdp()
+        if g1b.ok():
+            run.ws_url = g1b.data["ws_url"]
+            yield run.event("GATE-1", "pass", f"CDP 자동 시작 성공 — {g1b.message}")
+            return True
+        yield run.event("GATE-1", "fail", "CDP 자동 시작 실패", fix="서버에서 Chrome을 시작할 수 없습니다")
+        yield run.finish(success=False)
+        return False
+    except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 게이트 모니터링(운영규칙상 AI가 직접 수행 가능한 개발자 콘솔 앱 등록 작업) — 상태파일 로드 실패시 초기상태로 폴백(이미 noqa: S110 존재), CDP 자동시작 예외/게이트 5~8 예외는 모두 fail 이벤트로 SSE 스트리밍되어 은폐되지 않음.
+        yield run.event("GATE-1", "fail", f"CDP 시작 오류: {e}")
+        yield run.finish(success=False)
+        return False
+
+
+def _stage_cdp(run: _GateRun):
+    """GATE-1: CDP 연결. 계속 진행 가능하면 True."""
+    yield run.event("GATE-1", "running", "CDP 연결 확인 중...")
+    g1 = run.gates_mod.gate1_cdp()
     if g1.ok():
-        ws_url = g1.data["ws_url"]
-        yield event("GATE-1", "pass", g1.message, ws_url=ws_url)
-    else:
-        yield event("GATE-1", "fail", g1.message, fix="CDP 브라우저가 꺼져 있습니다. 잠시 후 자동 재시도합니다.")
-        # CDP 자동 시작 시도
-        yield info("CDP 자동 시작 시도 중...")
-        try:
-            import subprocess
+        run.ws_url = g1.data["ws_url"]
+        yield run.event("GATE-1", "pass", g1.message, ws_url=run.ws_url)
+        return True
+    yield run.event("GATE-1", "fail", g1.message, fix="CDP 브라우저가 꺼져 있습니다. 잠시 후 자동 재시도합니다.")
+    # CDP 자동 시작 시도
+    yield run.info("CDP 자동 시작 시도 중...")
+    return (yield from _stage_cdp_autostart(run))
 
-            subprocess.Popen(
-                [sys.executable, str(ROOT / "scripts" / "cdp_force_start.py"), "start"],
-                cwd=str(ROOT),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            import time
 
-            time.sleep(5)
-            g1b = gate1_cdp()
-            if g1b.ok():
-                ws_url = g1b.data["ws_url"]
-                yield event("GATE-1", "pass", f"CDP 자동 시작 성공 — {g1b.message}")
-            else:
-                yield event("GATE-1", "fail", "CDP 자동 시작 실패", fix="서버에서 Chrome을 시작할 수 없습니다")
-                state.running = False
-                _save_state(state)
-                yield f"event: done\ndata: {json.dumps({'success': False})}\n\n"
-                return
-        except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 게이트 모니터링(운영규칙상 AI가 직접 수행 가능한 개발자 콘솔 앱 등록 작업) — 상태파일 로드 실패시 초기상태로 폴백(이미 noqa: S110 존재), CDP 자동시작 예외/게이트 5~8 예외는 모두 fail 이벤트로 SSE 스트리밍되어 은폐되지 않음.
-            yield event("GATE-1", "fail", f"CDP 시작 오류: {e}")
-            state.running = False
-            _save_state(state)
-            yield f"event: done\ndata: {json.dumps({'success': False})}\n\n"
-            return
+def _stage_required(run: _GateRun, gate_id: str, running_msg: str, call, fix: str | None = None):
+    """GATE-2~4: 실패 시 중단. 계속 진행 가능하면 True.
 
-    # ── GATE-2 ──
-    yield event("GATE-2", "running", "카카오 로그인 세션 확인 중... (최대 5분 대기)")
-    g2 = gate2_login(ws_url, timeout_s=300)
-    if g2.ok():
-        yield event("GATE-2", "pass", g2.message)
-    else:
-        yield event("GATE-2", "fail", g2.message, fix="브라우저에서 카카오 계정으로 로그인하세요 (SMS/앱 인증 필요)")
-        state.running = False
-        _save_state(state)
-        yield f"event: done\ndata: {json.dumps({'success': False, 'stopped_at': 'GATE-2'})}\n\n"
-        return
+    fix 가 None 이면 실패 메시지를 그대로 fix 로 쓴다. GATE-4 는 통과 시 app_id 를 기록한다.
+    """
+    yield run.event(gate_id, "running", running_msg)
+    r = call()
+    if r.ok():
+        if gate_id == "GATE-4":
+            run.app_id = r.data["app_id"]
+            run.state.app_id = run.app_id
+            yield run.event(gate_id, "pass", r.message, app_id=run.app_id)
+        else:
+            yield run.event(gate_id, "pass", r.message)
+        return True
+    yield run.event(gate_id, "fail", r.message, fix=fix if fix is not None else r.message)
+    yield run.finish(success=False, stopped_at=gate_id)
+    return False
 
-    # ── GATE-3 ──
-    yield event("GATE-3", "running", "개발자 콘솔 접근 중...")
-    g3 = gate3_console_access(ws_url)
-    if g3.ok():
-        yield event("GATE-3", "pass", g3.message)
-    else:
-        yield event("GATE-3", "fail", g3.message, fix=g3.message)
-        state.running = False
-        _save_state(state)
-        yield f"event: done\ndata: {json.dumps({'success': False, 'stopped_at': 'GATE-3'})}\n\n"
-        return
 
-    # ── GATE-4 ──
-    yield event("GATE-4", "running", "앱 등록/확인 중...")
-    g4 = gate4_app_register(ws_url)
-    if g4.ok():
-        app_id = g4.data["app_id"]
-        state.app_id = app_id
-        yield event("GATE-4", "pass", g4.message, app_id=app_id)
-    else:
-        yield event("GATE-4", "fail", g4.message, fix=g4.message)
-        state.running = False
-        _save_state(state)
-        yield f"event: done\ndata: {json.dumps({'success': False, 'stopped_at': 'GATE-4'})}\n\n"
-        return
-
-    # ── GATE-5~8: 실패해도 계속 진행 ──
+def _stage_optional(run: _GateRun):
+    """GATE-5~8: 실패해도 계속 진행."""
+    gates = run.gates_mod
     for gate_id, label, fn in [
-        ("GATE-5", "플랫폼 Web", lambda: gate5_platform(ws_url, app_id)),
-        ("GATE-6", "카카오 로그인", lambda: gate6_login_activate(ws_url, app_id)),
-        ("GATE-7", "Redirect URI", lambda: gate7_redirect_uri(ws_url, app_id)),
-        ("GATE-8", "API 키 추출", lambda: gate8_api_key(ws_url, app_id)),
+        ("GATE-5", "플랫폼 Web", lambda: gates.gate5_platform(run.ws_url, run.app_id)),
+        ("GATE-6", "카카오 로그인", lambda: gates.gate6_login_activate(run.ws_url, run.app_id)),
+        ("GATE-7", "Redirect URI", lambda: gates.gate7_redirect_uri(run.ws_url, run.app_id)),
+        ("GATE-8", "API 키 추출", lambda: gates.gate8_api_key(run.ws_url, run.app_id)),
     ]:
-        yield event(gate_id, "running", f"{label} 처리 중...")
+        yield run.event(gate_id, "running", f"{label} 처리 중...")
         try:
             r = fn()
             if r.ok():
-                yield event(gate_id, "pass", r.message, **r.data)
+                yield run.event(gate_id, "pass", r.message, **r.data)
                 if gate_id == "GATE-8" and r.data.get("rest_api_key"):
-                    state.rest_api_key_found = True
-                    _save_state(state)
+                    run.state.rest_api_key_found = True
+                    _save_state(run.state)
             else:
-                yield event(gate_id, "fail", r.message, fix=r.message)
+                yield run.event(gate_id, "fail", r.message, fix=r.message)
         except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 게이트 모니터링(운영규칙상 AI가 직접 수행 가능한 개발자 콘솔 앱 등록 작업) — 상태파일 로드 실패시 초기상태로 폴백(이미 noqa: S110 존재), CDP 자동시작 예외/게이트 5~8 예외는 모두 fail 이벤트로 SSE 스트리밍되어 은폐되지 않음.
-            yield event(gate_id, "fail", f"오류: {e}", fix="로그 확인 후 재시도")
+            yield run.event(gate_id, "fail", f"오류: {e}", fix="로그 확인 후 재시도")
 
-    state.running = False
-    _save_state(state)
-    yield f"event: done\ndata: {json.dumps({'success': True, 'app_id': app_id})}\n\n"
+
+def _run_gates_stream():
+    """게이트를 순서대로 실행하며 SSE 이벤트를 yield한다."""
+    from scripts.kakao import setup_haehan_app as gates
+
+    run = _GateRun(gates)
+
+    if not (yield from _stage_cdp(run)):
+        return
+    gate2_fix = "브라우저에서 카카오 계정으로 로그인하세요 (SMS/앱 인증 필요)"
+    if not (
+        yield from _stage_required(
+            run,
+            "GATE-2",
+            "카카오 로그인 세션 확인 중... (최대 5분 대기)",
+            lambda: gates.gate2_login(run.ws_url, timeout_s=300),
+            fix=gate2_fix,
+        )
+    ):
+        return
+    if not (
+        yield from _stage_required(
+            run, "GATE-3", "개발자 콘솔 접근 중...", lambda: gates.gate3_console_access(run.ws_url)
+        )
+    ):
+        return
+    if not (
+        yield from _stage_required(run, "GATE-4", "앱 등록/확인 중...", lambda: gates.gate4_app_register(run.ws_url))
+    ):
+        return
+
+    yield from _stage_optional(run)
+    yield run.finish(success=True, app_id=run.app_id)
 
 
 # ── 엔드포인트 ────────────────────────────────────────────────────────────────

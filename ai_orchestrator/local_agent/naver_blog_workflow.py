@@ -80,7 +80,7 @@ def generate_blog_draft(
     )
 
 
-def publish_blog_post(
+def publish_blog_post(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     content: str,
     permission_id: str,
     domain: str = "blog.naver.com",

@@ -291,14 +291,8 @@ def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5, r
 # ── 메인 ────────────────────────────────────────────────────────────────────
 
 
-def main():
-    clicker = ClickLogger(LOG_FILE)
-    print(f"\n{'=' * 70}")
-    print("  스마트스토어 사이트맵 (모든 클릭 로그)")
-    print(f"  로그 파일: {LOG_FILE.name}")
-    print(f"{'=' * 70}\n")
-
-    # 셀러센터 탭 찾기
+def _find_seller_page(clicker: ClickLogger):
+    """셀러센터 탭 찾기 (없으면 새 탭)."""
     existing = get_page()
     ctx = existing.context
     page = None
@@ -313,8 +307,11 @@ def main():
     if page is None:
         page = ctx.new_page()
         clicker.log("tab_new", reason="no_existing_seller_tab")
+    return page
 
-    # 대시보드 진입
+
+def _enter_dashboard(page, clicker: ClickLogger):
+    """대시보드 진입 + 팝업 처리 + 로그인 확인. 로그인된 사용자 반환."""
     clicker.log("goto_start", url=DASHBOARD_URL)
     page.goto(DASHBOARD_URL, timeout=20000, wait_until="domcontentloaded")
     time.sleep(5)
@@ -331,6 +328,165 @@ def main():
         sys.exit(1)
     user = get_logged_in_user(page)
     clicker.log("login_confirmed", user=user, url=page.url)
+    return user
+
+
+def _click_main_menu(page, clicker: ClickLogger, text: str) -> bool:
+    """메인 메뉴 클릭 (1차). 실패 시 대시보드 복귀 후 재시도. 최종 성공 여부 반환."""
+    click_result = click_with_log(page, text, clicker, wait_s=3.0, reason="main_menu")
+    if not click_result["ok"]:
+        # 자동 복구 1: 대시보드 복귀 후 재시도
+        clicker.log("recover_attempt", reason="main_menu_click_failed", action="goto_dashboard")
+        page.goto(DASHBOARD_URL, timeout=15000, wait_until="domcontentloaded")
+        time.sleep(3)
+        click_result = click_with_log(page, text, clicker, wait_s=3.0, reason="main_menu_retry")
+        if not click_result["ok"]:
+            clicker.log("recover_failed", text=text, action="skip_menu")
+            return False
+    return True
+
+
+def _read_page_meta(page, clicker: ClickLogger, text: str):
+    """메인 페이지 메타."""
+    try:
+        page_meta = page.evaluate(PAGE_META_JS)
+        clicker.log(
+            "page_meta",
+            text=text,
+            url=page_meta.get("url", "")[:80],
+            fields=page_meta.get("field_count", 0),
+            buttons=len(page_meta.get("buttons", [])),
+            is_product_register=page_meta.get("is_product_register"),
+        )
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
+        page_meta = {"error": str(e)[:80]}
+        clicker.log("page_meta_error", error=str(e)[:80])
+    return page_meta
+
+
+def _recover_same_submenu(page, clicker: ClickLogger, text: str, parent_y, previous_submenu_names, submenus):
+    """자동 복구 2: 직전 부모와 동일한 submenu (부모 클릭 안 됨). (submenus, 복구실패여부) 반환."""
+    no_effect = False
+    clicker.log("recover_attempt", reason="same_submenu_as_previous", text=text, action="reload_dashboard_and_retry")
+    page.goto(DASHBOARD_URL, timeout=15000, wait_until="domcontentloaded")
+    time.sleep(3)
+    retry_click = click_with_log(page, text, clicker, wait_s=3.5, reason="recover_same_submenu")
+    if retry_click["ok"]:
+        submenus = page.evaluate(SUBMENU_JS, parent_y)
+        submenus = [s for s in submenus if s["text"] != text]
+        new_names = {s["text"] for s in submenus}
+        if new_names == previous_submenu_names and new_names:
+            # 복구 실패 → 이 부모는 skip
+            clicker.log("recover_failed", text=text, reason="still_same_submenu", action="skip_submenus")
+            submenus = []
+            no_effect = True
+        else:
+            clicker.log("recover_success", text=text, new_submenu_count=len(new_names))
+    return submenus, no_effect
+
+
+def _extract_submenus(page, clicker: ClickLogger, text: str, parent_y, previous_submenu_names, page_meta):
+    """하위 메뉴 추출. (submenus, 갱신된 previous_submenu_names) 반환."""
+    try:
+        submenus = page.evaluate(SUBMENU_JS, parent_y)
+        submenus = [s for s in submenus if s["text"] != text]
+        current_names = {s["text"] for s in submenus}
+
+        # 자동 복구 2: 직전 부모와 동일한 submenu (부모 클릭 안 됨)
+        if previous_submenu_names is not None and current_names == previous_submenu_names and current_names:
+            submenus, no_effect = _recover_same_submenu(
+                page, clicker, text, parent_y, previous_submenu_names, submenus
+            )
+            if no_effect:
+                page_meta["error"] = "parent_click_no_effect"
+
+        previous_submenu_names = {s["text"] for s in submenus} if submenus else previous_submenu_names
+        clicker.log("submenu_extracted", parent=text, count=len(submenus), names=[s["text"] for s in submenus[:8]])
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
+        submenus = []
+        clicker.log("submenu_error", parent=text, error=str(e)[:80])
+    return submenus, previous_submenu_names
+
+
+def _visit_submenu_pages(page, clicker: ClickLogger, text: str, submenus: list) -> list:
+    """하위 메뉴 페이지 진입 (최대 8개)."""
+    sub_pages = []
+    for j, s in enumerate(submenus[:8], 1):
+        sub_text = s["text"]
+        print(f"      [{j}/{min(len(submenus), 8)}] {sub_text}", end=" ", flush=True)
+        # 부모 다시 클릭 (펼침)
+        click_with_log(page, text, clicker, wait_s=1.5, reason="re_expand_parent")
+        sub_click = click_with_log(page, sub_text, clicker, wait_s=2.5, reason="submenu")
+        if not sub_click["ok"]:
+            print("✗")
+            continue
+        try:
+            sm = page.evaluate(PAGE_META_JS)
+            sm["menu_text"] = sub_text
+            sub_pages.append(sm)
+            tag = "[상품등록]" if sm.get("is_product_register") else ("[폼]" if sm.get("is_form") else "")
+            print(f"✓ 필드:{sm.get('field_count', 0)} 버튼:{len(sm.get('buttons', []))} {tag}")
+            clicker.log(
+                "submenu_page_meta",
+                parent=text,
+                menu=sub_text,
+                url=sm.get("url", "")[:80],
+                fields=sm.get("field_count", 0),
+            )
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
+            print(f"메타실패 {str(e)[:30]}")
+            clicker.log("submenu_page_error", menu=sub_text, error=str(e)[:80])
+    return sub_pages
+
+
+def _explore_menu(page, clicker: ClickLogger, i: int, total: int, m: dict, previous_submenu_names):
+    """메인 메뉴 1개 탐색. (트리 항목, 갱신된 previous_submenu_names) 반환."""
+    text = m["text"]
+    parent_y = m["pos"][1]
+    print(f"\n  [{i:2}/{total}] {text}")
+    clicker.log("menu_loop", index=i, total=total, text=text)
+
+    # 메뉴 클릭 (1차)
+    if not _click_main_menu(page, clicker, text):
+        return {**m, "click_ok": False, "submenus": [], "submenu_pages": []}, previous_submenu_names
+
+    # 메인 페이지 메타
+    page_meta = _read_page_meta(page, clicker, text)
+
+    # 하위 메뉴 추출
+    submenus, previous_submenu_names = _extract_submenus(
+        page, clicker, text, parent_y, previous_submenu_names, page_meta
+    )
+
+    sub_pages = _visit_submenu_pages(page, clicker, text, submenus)
+
+    return (
+        {**m, "click_ok": True, "page_meta": page_meta, "submenus": submenus, "submenu_pages": sub_pages},
+        previous_submenu_names,
+    )
+
+
+def _find_register_candidates(full_tree: list) -> list:
+    """상품등록 후보 식별."""
+    candidates = []
+    for t in full_tree:
+        if t.get("page_meta", {}).get("is_product_register"):
+            candidates.append({"parent": t["text"], "from": "main", "page": t["page_meta"]})
+        for sp in t.get("submenu_pages", []):
+            if sp.get("is_product_register"):
+                candidates.append({"parent": t["text"], "from": "sub", "menu": sp.get("menu_text"), "page": sp})
+    return candidates
+
+
+def main():
+    clicker = ClickLogger(LOG_FILE)
+    print(f"\n{'=' * 70}")
+    print("  스마트스토어 사이트맵 (모든 클릭 로그)")
+    print(f"  로그 파일: {LOG_FILE.name}")
+    print(f"{'=' * 70}\n")
+
+    page = _find_seller_page(clicker)
+    user = _enter_dashboard(page, clicker)
 
     # 사이드바 추출
     main_menus = page.evaluate(EXTRACT_SIDEBAR_JS)
@@ -341,111 +497,10 @@ def main():
     full_tree = []
     previous_submenu_names: set | None = None  # 직전 부모의 submenu 텍스트 집합 (중복 감지)
     for i, m in enumerate(main_menus, 1):
-        text = m["text"]
-        parent_y = m["pos"][1]
-        print(f"\n  [{i:2}/{len(main_menus)}] {text}")
-        clicker.log("menu_loop", index=i, total=len(main_menus), text=text)
+        entry, previous_submenu_names = _explore_menu(page, clicker, i, len(main_menus), m, previous_submenu_names)
+        full_tree.append(entry)
 
-        # 메뉴 클릭 (1차)
-        click_result = click_with_log(page, text, clicker, wait_s=3.0, reason="main_menu")
-        if not click_result["ok"]:
-            # 자동 복구 1: 대시보드 복귀 후 재시도
-            clicker.log("recover_attempt", reason="main_menu_click_failed", action="goto_dashboard")
-            page.goto(DASHBOARD_URL, timeout=15000, wait_until="domcontentloaded")
-            time.sleep(3)
-            click_result = click_with_log(page, text, clicker, wait_s=3.0, reason="main_menu_retry")
-            if not click_result["ok"]:
-                clicker.log("recover_failed", text=text, action="skip_menu")
-                full_tree.append({**m, "click_ok": False, "submenus": [], "submenu_pages": []})
-                continue
-
-        # 메인 페이지 메타
-        try:
-            page_meta = page.evaluate(PAGE_META_JS)
-            clicker.log(
-                "page_meta",
-                text=text,
-                url=page_meta.get("url", "")[:80],
-                fields=page_meta.get("field_count", 0),
-                buttons=len(page_meta.get("buttons", [])),
-                is_product_register=page_meta.get("is_product_register"),
-            )
-        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
-            page_meta = {"error": str(e)[:80]}
-            clicker.log("page_meta_error", error=str(e)[:80])
-
-        # 하위 메뉴 추출
-        try:
-            submenus = page.evaluate(SUBMENU_JS, parent_y)
-            submenus = [s for s in submenus if s["text"] != text]
-            current_names = {s["text"] for s in submenus}
-
-            # 자동 복구 2: 직전 부모와 동일한 submenu (부모 클릭 안 됨)
-            if previous_submenu_names is not None and current_names == previous_submenu_names and current_names:
-                clicker.log(
-                    "recover_attempt", reason="same_submenu_as_previous", text=text, action="reload_dashboard_and_retry"
-                )
-                page.goto(DASHBOARD_URL, timeout=15000, wait_until="domcontentloaded")
-                time.sleep(3)
-                retry_click = click_with_log(page, text, clicker, wait_s=3.5, reason="recover_same_submenu")
-                if retry_click["ok"]:
-                    submenus = page.evaluate(SUBMENU_JS, parent_y)
-                    submenus = [s for s in submenus if s["text"] != text]
-                    new_names = {s["text"] for s in submenus}
-                    if new_names == previous_submenu_names and new_names:
-                        # 복구 실패 → 이 부모는 skip
-                        clicker.log("recover_failed", text=text, reason="still_same_submenu", action="skip_submenus")
-                        submenus = []
-                        page_meta["error"] = "parent_click_no_effect"
-                    else:
-                        clicker.log("recover_success", text=text, new_submenu_count=len(new_names))
-
-            previous_submenu_names = {s["text"] for s in submenus} if submenus else previous_submenu_names
-            clicker.log("submenu_extracted", parent=text, count=len(submenus), names=[s["text"] for s in submenus[:8]])
-        except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
-            submenus = []
-            clicker.log("submenu_error", parent=text, error=str(e)[:80])
-
-        # 하위 메뉴 페이지 진입 (최대 8개)
-        sub_pages = []
-        for j, s in enumerate(submenus[:8], 1):
-            sub_text = s["text"]
-            print(f"      [{j}/{min(len(submenus), 8)}] {sub_text}", end=" ", flush=True)
-            # 부모 다시 클릭 (펼침)
-            click_with_log(page, text, clicker, wait_s=1.5, reason="re_expand_parent")
-            sub_click = click_with_log(page, sub_text, clicker, wait_s=2.5, reason="submenu")
-            if not sub_click["ok"]:
-                print("✗")
-                continue
-            try:
-                sm = page.evaluate(PAGE_META_JS)
-                sm["menu_text"] = sub_text
-                sub_pages.append(sm)
-                tag = "[상품등록]" if sm.get("is_product_register") else ("[폼]" if sm.get("is_form") else "")
-                print(f"✓ 필드:{sm.get('field_count', 0)} 버튼:{len(sm.get('buttons', []))} {tag}")
-                clicker.log(
-                    "submenu_page_meta",
-                    parent=text,
-                    menu=sub_text,
-                    url=sm.get("url", "")[:80],
-                    fields=sm.get("field_count", 0),
-                )
-            except Exception as e:  # noqa: BLE001 - 스마트스토어 관리자 메뉴 트리 읽기전용 매핑(클릭하며 사이트맵 구축) - 실패시 error 필드 기록, 데이터 변경 없음
-                print(f"메타실패 {str(e)[:30]}")
-                clicker.log("submenu_page_error", menu=sub_text, error=str(e)[:80])
-
-        full_tree.append(
-            {**m, "click_ok": True, "page_meta": page_meta, "submenus": submenus, "submenu_pages": sub_pages}
-        )
-
-    # 상품등록 후보 식별
-    candidates = []
-    for t in full_tree:
-        if t.get("page_meta", {}).get("is_product_register"):
-            candidates.append({"parent": t["text"], "from": "main", "page": t["page_meta"]})
-        for sp in t.get("submenu_pages", []):
-            if sp.get("is_product_register"):
-                candidates.append({"parent": t["text"], "from": "sub", "menu": sp.get("menu_text"), "page": sp})
+    candidates = _find_register_candidates(full_tree)
 
     output = {
         "domain": SELLER_HOST,

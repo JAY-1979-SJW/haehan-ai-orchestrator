@@ -308,6 +308,12 @@ def _classify_agent_and_service(p: str, name: str) -> tuple[str, str] | None:
         return "L10", "agent/local automation"
     if p.startswith("services/"):
         return "L8", "standalone service path"
+    if p.startswith("apps/"):
+        return "L10", "standalone local PC app (apps/*-standalone)"
+    if p.startswith(".githooks/"):
+        return "L7", "git hook tooling"
+    if p.startswith("notice_radar/"):
+        return "L6", "notice radar business workflow"
     return None
 
 
@@ -733,6 +739,18 @@ def parse_import_edges(rows: list[ClassifiedFile], root: Path = ROOT) -> dict[st
     return graph
 
 
+def _pop_component(stack: list[str], on_stack: set[str], node: str, components: list[list[str]]) -> None:
+    component = []
+    while True:
+        item = stack.pop()
+        on_stack.remove(item)
+        component.append(item)
+        if item == node:
+            break
+    if len(component) > 1:
+        components.append(sorted(component))
+
+
 def find_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
     index = 0
     stack: list[str] = []
@@ -757,15 +775,7 @@ def find_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
                 lowlinks[node] = min(lowlinks[node], indexes[target])
 
         if lowlinks[node] == indexes[node]:
-            component = []
-            while True:
-                item = stack.pop()
-                on_stack.remove(item)
-                component.append(item)
-                if item == node:
-                    break
-            if len(component) > 1:
-                components.append(sorted(component))
+            _pop_component(stack, on_stack, node, components)
 
     for node in sorted(graph):
         if node not in indexes:
@@ -782,21 +792,29 @@ _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
 }
 
 # STORAGE_BOUNDARY known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지
+# 2026-10-04: 허브 분리로 옮겨진 7개 파일의 경로를 갱신하고(같은 파일, 이미 허용된 부채), 이전에 목록에 없던 DB 직접 사용 6개를 추가 —
+# 6개는 DB 모듈 자체이거나(instagram_dm_db·gonobi/db) 연결을 직접 여는 파일이라 L7 헬퍼로 옮기는 별도 리팩터링 대상.
 _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
+    "ai_orchestrator/connectors/instagram_dm_db.py",
     "ai_orchestrator/connectors/naver_search_db.py",
     "ai_orchestrator/connectors/naver_search_queries.py",
     "ai_orchestrator/local_agent/browser/cdp_session_manager.py",
     "ai_orchestrator/persistence/registration_code_store.py",
+    "apps/ig-comment-dm-bot/core/processed_store.py",
     "local_agent/browser_approval_db_store.py",
     "scripts/cdp_db.py",
+    "scripts/common/youtube_search_cache.py",
     "scripts/critical_logger.py",
-    "scripts/naver/automation/analytics_dashboard.py",
-    "scripts/naver/automation/competitor_analysis.py",
-    "scripts/naver/automation/error_recovery.py",
-    "scripts/naver/automation/scheduler.py",
-    "scripts/naver/blog/analytics.py",
-    "scripts/naver/blog/schedule.py",
-    "scripts/naver/smartstore/bulk.py",
+    "scripts/naver/automation/platform/error_recovery.py",
+    "scripts/naver/automation/platform/scheduler.py",
+    "scripts/naver/automation/smartstore/analytics_dashboard.py",
+    "scripts/naver/automation/smartstore/competitor_analysis.py",
+    "scripts/naver/blog/gonobi/db.py",
+    "scripts/naver/blog/management/analytics.py",
+    "scripts/naver/blog/management/schedule.py",
+    "scripts/naver/shopping/analysis.py",
+    "scripts/naver/shopping/crawl.py",
+    "scripts/naver/smartstore/product/bulk.py",
     "scripts/op_log.py",
     "scripts/popup_monitor.py",
 }
@@ -897,6 +915,8 @@ _DB_DIRECT_ACCESS_PATTERNS = [
 # 이 경로들은 storage 계층이므로 DB 직접 접근 허용
 _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/storage/",
+    "ai_orchestrator/persistence/",  # L7 Persistence 계층 자체 — DB 접근이 이 계층의 책임이다(2026-10-01)
+    "scripts/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
     "storage/",
     "migrations/",
     "scripts/ops/",
@@ -996,6 +1016,48 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
         # DB 직접 접근 (storage 계층 외, test 파일 별도 처리)
         if not any(row.path.startswith(p) for p in _STORAGE_ALLOWED_PREFIXES):
             _scan_db_patterns(row, source, db_compiled, is_known_debt, is_test, issues)
+    return issues
+
+
+# ── P1 Gate: HARDCODED_USER_PATH ─────────────────────────────────────────────
+
+# 사용자 계정 이름이 들어간 절대경로(드라이브:\Users\<이름>\...)나 옛 작업 폴더(드라이브:\work)를 코드에 박으면
+# 컴퓨터·계정이 바뀔 때 깨진다(결함 #17). 기존 16개 파일은 2026-10-01 에 모두 고쳐 목록을 비웠다 — 새로 생기면 경고.
+_HARDCODED_USER_PATH_KNOWN_DEBT: set[str] = set()  # 2026-10-01 전부 해소 — 신규는 모두 경고
+
+# 따옴표로 시작하는 문자열 안의 `드라이브:\Users\<실제 이름>` 또는 `드라이브:\work`. <user>·%USERNAME% 같은 자리표시자는 제외.
+_HARDCODED_USER_PATH_RE = re.compile(
+    r"""["'][A-Za-z]:[\\/]+(?:Users[\\/]+(?![<%])[^\\/"'<%]+|work)(?![A-Za-z0-9_])""",
+    re.IGNORECASE,
+)
+
+
+def check_hardcoded_user_path(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
+    """HARDCODED_USER_PATH: 사용자 계정·옛 작업 폴더가 박힌 절대경로 리터럴.
+
+    known debt 파일은 INFO로 분류, 신규 위반만 WARN. 테스트·archive·docs 는 제외.
+    """
+    issues: list[AuditIssue] = []
+    for row in rows:
+        path_str = row.path
+        if not path_str.endswith(".py") or path_str.startswith(("tests/", "docs/", "scripts/archive/")) or "/tests/" in path_str:
+            continue
+        try:
+            source = (root / path_str).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        severity = "info" if path_str in _HARDCODED_USER_PATH_KNOWN_DEBT else "warn"
+        for lineno, line in enumerate(source.splitlines(), start=1):
+            if line.lstrip().startswith("#") or not _HARDCODED_USER_PATH_RE.search(line):
+                continue
+            issues.append(
+                AuditIssue(
+                    severity,
+                    "HARDCODED_USER_PATH",
+                    f"{path_str}:{lineno}",
+                    "사용자 계정/옛 작업 폴더가 박힌 절대경로 — 환경변수·scripts/common/data_paths·ai_orchestrator/config 경로 해석을 쓸 것",
+                )
+            )
     return issues
 
 
@@ -1147,6 +1209,19 @@ def validate_pydantic_schema_modules() -> list[dict]:
     return results
 
 
+def _skip_jsonc_string(text: str, i: int, n: int) -> int:
+    j = i + 1
+    while j < n:
+        if text[j] == "\\" and j + 1 < n:
+            j += 2
+            continue
+        if text[j] == '"':
+            j += 1
+            break
+        j += 1
+    return j
+
+
 def _strip_jsonc(text: str) -> str:
     out = []
     i = 0
@@ -1154,15 +1229,7 @@ def _strip_jsonc(text: str) -> str:
     while i < n:
         c = text[i]
         if c == '"':
-            j = i + 1
-            while j < n:
-                if text[j] == "\\" and j + 1 < n:
-                    j += 2
-                    continue
-                if text[j] == '"':
-                    j += 1
-                    break
-                j += 1
+            j = _skip_jsonc_string(text, i, n)
             out.append(text[i:j])
             i = j
             continue
@@ -1284,12 +1351,6 @@ def validate_config(config: dict) -> list[ConsistencyCheck]:
             )
         )
     return checks
-
-
-def issue_key(issue: dict | AuditIssue) -> tuple[str, str]:
-    if isinstance(issue, AuditIssue):
-        return issue.code, issue.path
-    return str(issue.get("code", "")), str(issue.get("path", ""))
 
 
 def tracked_residual_matches(item: dict, issue: AuditIssue) -> bool:
@@ -1446,11 +1507,13 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
     router_thinness_issues = check_router_thinness(rows, root)
     storage_boundary_issues = check_storage_boundary(rows, root)
     server_browser_guard_issues = check_server_browser_guard(rows, root)
+    hardcoded_user_path_issues = check_hardcoded_user_path(rows, root)
     issues.extend(forbidden_import_issues)
     issues.extend(security_pattern_issues)
     issues.extend(router_thinness_issues)
     issues.extend(storage_boundary_issues)
     issues.extend(server_browser_guard_issues)
+    issues.extend(hardcoded_user_path_issues)
     for cycle in circular_imports["cycles"]:
         issues.append(
             AuditIssue(
@@ -1489,6 +1552,7 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
             "router_thinness": len(router_thinness_issues),
             "storage_boundary": len(storage_boundary_issues),
             "server_browser_guard": len(server_browser_guard_issues),
+            "hardcoded_user_path": len(hardcoded_user_path_issues),
         },
         "summary": {
             "file_count": len(rows),

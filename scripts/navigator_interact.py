@@ -9,26 +9,7 @@ from scripts.navigator_common import _find_element_in_frames
 from scripts.op_log import log_op
 from scripts.web_connector import get_page
 
-
-def type_into(target: str, text: str, clear: bool = True) -> bool:
-    """대상 입력칸/편집영역에 텍스트 입력.
-
-    매칭 우선순위(현재 페이지의 모든 프레임에서 검색):
-      1) <input>/<textarea>의 name == target
-      2) <input>/<textarea>의 id == target
-      3) placeholder 부분 일치
-      4) [contenteditable]의 aria-label/id/data-placeholder 부분 일치
-      5) 첫 번째 보이는 [contenteditable] (target == "body" 인 경우)
-    """
-    print("=" * 60)
-    page = get_page()
-    # 범용 페이지 상호작용 헬퍼 - 탭 포커스 실패시 폴백 방법 시도, 클립보드 내용은 로그에 남기지 않음
-    with contextlib.suppress(Exception):
-        page.bring_to_front()  # 키 이벤트가 정확히 이 탭으로 가도록 보장
-    print(f"입력 시도: target='{target}' text='{text[:40]}...' ({page.url})")
-    print("=" * 60)
-
-    finder = """(needle) => {
+_TYPE_FINDER_JS = """(needle) => {
         const isShown = el => {
             const s = getComputedStyle(el);
             return s.display !== 'none' && s.visibility !== 'hidden';
@@ -81,28 +62,8 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
         return null;
     }"""
 
-    # 요소 등장 대기 (최대 10초) — Smart Editor 로드 시간 대응
-    frame, handle = None, None
-    deadline = time.time() + 10
-    while time.time() < deadline:
-        frame, handle = _find_element_in_frames(page, finder, target)
-        if frame is not None:
-            break
-        time.sleep(0.5)
-    if frame is None:
-        print("✗ 매칭 요소 없음 (10초 대기 후에도)")
-        print("=" * 60)
-        return False
 
-    tag = handle.evaluate("e => e.tagName.toLowerCase()")
-    print(f"  매칭: <{tag}> in frame '{frame.name or frame.url[:40]}'")
-
-    try:
-        handle.evaluate("e => e.scrollIntoView({block:'center'})")
-        if tag in ("input", "textarea"):
-            # Vue.js/React 반응형 폼 대응: nativeInputValueSetter로 value 설정 후 input/change 이벤트 발행
-            handle.evaluate(
-                """(e, val) => {
+_NATIVE_SET_JS = """(e, val) => {
                 e.focus();
                 const nativeSetter = Object.getOwnPropertyDescriptor(
                     Object.getPrototypeOf(e), 'value'
@@ -114,78 +75,136 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
                 }
                 e.dispatchEvent(new Event('input',  {bubbles: true}));
                 e.dispatchEvent(new Event('change', {bubbles: true}));
-            }""",
-                text,
-            )
-            time.sleep(0.15)
+            }"""
+
+
+def _wait_for_element(page, finder, target):
+    # 요소 등장 대기 (최대 10초) — Smart Editor 로드 시간 대응
+    frame, handle = None, None
+    deadline = time.time() + 10
+    while time.time() < deadline:
+        frame, handle = _find_element_in_frames(page, finder, target)
+        if frame is not None:
+            break
+        time.sleep(0.5)
+    return frame, handle
+
+
+def _set_input_value(handle, text):
+    # Vue.js/React 반응형 폼 대응: nativeInputValueSetter로 value 설정 후 input/change 이벤트 발행
+    handle.evaluate(_NATIVE_SET_JS, text)
+    time.sleep(0.15)
+
+
+def _set_clipboard_text(text) -> bool:
+    # 2. Windows 클립보드에 텍스트 설정 — pywin32로 CF_UNICODETEXT 직접 (BOM 오염 없음)
+    try:
+        import win32clipboard
+        import win32con
+
+        win32clipboard.OpenClipboard()
+        try:
+            win32clipboard.EmptyClipboard()
+            win32clipboard.SetClipboardData(win32con.CF_UNICODETEXT, text)
+        finally:
+            win32clipboard.CloseClipboard()
+        return True
+    except Exception as ce:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
+        print(f"  [경고] 클립보드 설정 실패: {ce}")
+        return False
+
+
+def _text_present(frame, handle, text) -> bool:
+    # 4. paste 결과 검증 — handle 자체 + child + 전체 페이지 모두 확인
+    # handle 자신의 innerText (child span 포함)
+    try:
+        h_text = handle.evaluate("e => e.innerText || e.textContent || ''")
+        if text[:10] in h_text:
+            return True
+    except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
+        pass
+    # 폴백: 페이지 전체 검색
+    snippet = text[:30] if len(text) >= 10 else text
+    for fr in frame.page.frames:
+        try:
+            if snippet in fr.evaluate("() => (document.body && document.body.innerText) || ''"):
+                return True
+        except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
+            continue
+    return False
+
+
+def _fill_contenteditable(frame, handle, text, clear):
+    # contenteditable / Smart Editor paragraph: 클립보드 paste 1순위
+    # 1. 마우스 클릭으로 에디터 활성화 (실제 좌표 클릭)
+    box = handle.bounding_box()
+    if box:
+        cx = box["x"] + box["width"] / 2
+        cy = box["y"] + box["height"] / 2
+        frame.page.mouse.click(cx, cy)
+    else:
+        handle.evaluate("e => e.click()")
+    time.sleep(0.3)
+
+    # 2. clear=True 면 triple-click으로 단일 paragraph 선택 후 Delete
+    if clear and box:
+        frame.page.mouse.click(cx, cy, click_count=3)
+        time.sleep(0.2)
+        frame.page.keyboard.press("Delete")
+        time.sleep(0.3)
+
+    clipboard_ok = _set_clipboard_text(text)
+
+    # 3. Ctrl+V (paste) — Smart Editor의 정식 paste 핸들러로 라우팅
+    if clipboard_ok:
+        frame.page.keyboard.press("Control+V")
+        time.sleep(1.5)  # Smart Editor 렌더 대기 (child span 생성)
+
+    if clipboard_ok and _text_present(frame, handle, text):
+        pass  # paste 성공 — 폴백 절대 안 함
+    elif not clipboard_ok:
+        # 클립보드 자체 실패 시에만 폴백
+        try:
+            frame.page.keyboard.insert_text(text)
+            time.sleep(0.5)
+        except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
+            handle.evaluate("(e, t) => { e.focus(); document.execCommand('insertText', false, t); }", text)
+
+
+def type_into(target: str, text: str, clear: bool = True) -> bool:
+    """대상 입력칸/편집영역에 텍스트 입력.
+
+    매칭 우선순위(현재 페이지의 모든 프레임에서 검색):
+      1) <input>/<textarea>의 name == target
+      2) <input>/<textarea>의 id == target
+      3) placeholder 부분 일치
+      4) [contenteditable]의 aria-label/id/data-placeholder 부분 일치
+      5) 첫 번째 보이는 [contenteditable] (target == "body" 인 경우)
+    """
+    print("=" * 60)
+    page = get_page()
+    # 범용 페이지 상호작용 헬퍼 - 탭 포커스 실패시 폴백 방법 시도, 클립보드 내용은 로그에 남기지 않음
+    with contextlib.suppress(Exception):
+        page.bring_to_front()  # 키 이벤트가 정확히 이 탭으로 가도록 보장
+    print(f"입력 시도: target='{target}' text='{text[:40]}...' ({page.url})")
+    print("=" * 60)
+
+
+    frame, handle = _wait_for_element(page, _TYPE_FINDER_JS, target)
+    if frame is None:
+        print("✗ 매칭 요소 없음 (10초 대기 후에도)")
+        print("=" * 60)
+        return False
+
+    tag = handle.evaluate("e => e.tagName.toLowerCase()")
+    print(f"  매칭: <{tag}> in frame '{frame.name or frame.url[:40]}'")
+
+    try:
+        handle.evaluate("e => e.scrollIntoView({block:'center'})")
+        if tag in ("input", "textarea"):
+            _set_input_value(handle, text)
         else:
-            # contenteditable / Smart Editor paragraph: 클립보드 paste 1순위
-            # 1. 마우스 클릭으로 에디터 활성화 (실제 좌표 클릭)
-            box = handle.bounding_box()
-            if box:
-                cx = box["x"] + box["width"] / 2
-                cy = box["y"] + box["height"] / 2
-                frame.page.mouse.click(cx, cy)
-            else:
-                handle.evaluate("e => e.click()")
-            time.sleep(0.3)
-
-            # 2. clear=True 면 triple-click으로 단일 paragraph 선택 후 Delete
-            if clear and box:
-                frame.page.mouse.click(cx, cy, click_count=3)
-                time.sleep(0.2)
-                frame.page.keyboard.press("Delete")
-                time.sleep(0.3)
-
-            # 2. Windows 클립보드에 텍스트 설정 — pywin32로 CF_UNICODETEXT 직접 (BOM 오염 없음)
-            try:
-                import win32clipboard
-                import win32con
-
-                win32clipboard.OpenClipboard()
-                try:
-                    win32clipboard.EmptyClipboard()
-                    win32clipboard.SetClipboardData(win32con.CF_UNICODETEXT, text)
-                finally:
-                    win32clipboard.CloseClipboard()
-                clipboard_ok = True
-            except Exception as ce:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
-                print(f"  [경고] 클립보드 설정 실패: {ce}")
-                clipboard_ok = False
-
-            # 3. Ctrl+V (paste) — Smart Editor의 정식 paste 핸들러로 라우팅
-            if clipboard_ok:
-                frame.page.keyboard.press("Control+V")
-                time.sleep(1.5)  # Smart Editor 렌더 대기 (child span 생성)
-
-            # 4. paste 결과 검증 — handle 자체 + child + 전체 페이지 모두 확인
-            def _text_present() -> bool:
-                # handle 자신의 innerText (child span 포함)
-                try:
-                    h_text = handle.evaluate("e => e.innerText || e.textContent || ''")
-                    if text[:10] in h_text:
-                        return True
-                except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
-                    pass
-                # 폴백: 페이지 전체 검색
-                snippet = text[:30] if len(text) >= 10 else text
-                for fr in frame.page.frames:
-                    try:
-                        if snippet in fr.evaluate("() => (document.body && document.body.innerText) || ''"):
-                            return True
-                    except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
-                        continue
-                return False
-
-            if clipboard_ok and _text_present():
-                pass  # paste 성공 — 폴백 절대 안 함
-            elif not clipboard_ok:
-                # 클립보드 자체 실패 시에만 폴백
-                try:
-                    frame.page.keyboard.insert_text(text)
-                    time.sleep(0.5)
-                except Exception:  # noqa: BLE001 - 범용 페이지 상호작용 헬퍼(클립보드 붙여넣기/클릭/타입) - 실패시 False 반환 또는 폴백 방법 시도, 클립보드 내용 자체를 로그에 남기지 않아 자격증명 노출 없음
-                    handle.evaluate("(e, t) => { e.focus(); document.execCommand('insertText', false, t); }", text)
+            _fill_contenteditable(frame, handle, text, clear)
 
         # 입력 결과 검증 — 표준 verify_input 사용 (page 재사용으로 중첩 회피)
         from scripts.navigator_verify import verify_input

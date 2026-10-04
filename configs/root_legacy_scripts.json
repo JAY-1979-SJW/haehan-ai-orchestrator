@@ -32,6 +32,7 @@
     {"path": "message_classifier.py", "category": "workflow_legacy_module", "next_action": "Move under message workflow module."},
     {"path": "models.py", "category": "shared_legacy_module", "next_action": "Move models into explicit contract package."},
     {"path": "monitor.py", "category": "runtime_entrypoint", "next_action": "Keep until monitor service migration is complete."},
+    {"path": "notice_router.py", "category": "workflow_legacy_module", "next_action": "공고 첨부파일 분석 실행 API 라우터(루트 레거시). FastAPI 라우터 영역으로 이전하기 전까지 유지."},
     {"path": "policy_engine.py", "category": "shared_legacy_module", "next_action": "Move under policy package."},
     {"path": "risk_assessor.py", "category": "shared_legacy_module", "next_action": "Move under policy/risk package."},
     {"path": "security_utils.py", "category": "shared_legacy_module", "next_action": "Move under shared security package."},
@@ -43,8 +44,6 @@
     {"path": "verify_live_browser_readonly_dispatch.py", "category": "verification_tool", "next_action": "Move under scripts/ops/verify with compatibility wrapper."},
     {"path": "verify_live_task_dispatch.py", "category": "verification_tool", "next_action": "Move under scripts/ops/verify with compatibility wrapper."},
     {"path": "verify_local_runtime_dry_run.py", "category": "verification_tool", "next_action": "Move under scripts/ops/verify with compatibility wrapper."},
-    {"path": "verify_portable_zip_install.py", "category": "verification_tool", "next_action": "Move under scripts/ops/verify with compatibility wrapper."},
-    {"path": "verify_release_runtime_gate.py", "category": "verification_tool", "next_action": "Move under scripts/ops/verify with compatibility wrapper."},
     {"path": "webhooks_router.py", "category": "runtime_entrypoint", "next_action": "Keep until webhook router migration is complete."},
     {"path": "whitelist_executor.py", "category": "workflow_legacy_module", "next_action": "Move under policy/workflow executor package."}
   ]

@@ -11,7 +11,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-DETAIL_PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "[id]" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+DETAIL_PAGE = assistant_route("tasks", "[id]", "page.tsx")
 DETAIL_PANEL = ROOT / "admin-web" / "src" / "components" / "assistant" / "TaskDetailPanel.tsx"
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
@@ -202,7 +204,7 @@ class TestBackendUnchanged:
 # ── 회귀: baseline sync 기준선 유지 ─────────────────────────────────────────
 class TestBaselineRegression:
     def test_dashboard_health_uses_get_app_health_summary(self):
-        dashboard = ROOT / "admin-web" / "src" / "app" / "assistant" / "page.tsx"
+        dashboard = assistant_route("page.tsx")
         content = _src(dashboard)
         assert "getAppHealthSummary" in content
 
@@ -214,9 +216,8 @@ class TestBaselineRegression:
         assert len(post_routes) <= 5  # 기존 POST endpoint 수 이하 유지
 
     def test_runtime_endpoint_count_still_63(self):
-        from fastapi.routing import APIRoute, APIWebSocketRoute
+        from tests.app_routes import runtime_routes
 
-        from ai_orchestrator.asgi import app
-
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 63
+        # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
+        routes = runtime_routes()
+        assert len(routes) == 399

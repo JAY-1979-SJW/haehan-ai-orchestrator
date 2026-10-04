@@ -8,7 +8,10 @@
 from __future__ import annotations
 
 import inspect
+import logging
 import re
+
+logger = logging.getLogger(__name__)
 
 # 파괴적 동작만 차단: 발송·결제·삭제·투찰·입찰·팩스·환불 등 되돌릴 수 없는 외부 영향
 # 2026-09-29 defect_index #39 확장: build_manifest() 가 FastAPI _IncludedRouter 버그로
@@ -82,6 +85,26 @@ def list_actions(query: str = "") -> list[dict]:
     return [a for a in man if all(t in f"{a['path']} {a['func']} {a['desc']}".lower() for t in terms)]
 
 
+def _build_call_kwargs(ep, params: dict, user: dict) -> dict | None:
+    """엔드포인트 시그니처에서 호출 인자를 구성. 자동 호출 불가 형태면 None."""
+    from pydantic import BaseModel
+
+    kwargs: dict = {}
+    for pname, par in inspect.signature(ep).parameters.items():
+        ann = par.annotation
+        if isinstance(ann, type) and issubclass(ann, BaseModel):
+            kwargs[pname] = ann(**params)
+        elif pname in ("user", "current_user", "actor"):
+            kwargs[pname] = user
+        elif pname in params:
+            kwargs[pname] = params[pname]
+        elif par.default is not inspect.Parameter.empty:
+            continue  # 기본값 사용
+        else:
+            return None
+    return kwargs
+
+
 def run_action(path: str, params: dict | None, user: dict, confirmed: bool = False) -> dict:
     """동작 1개 실행. DESTRUCTIVE 만 차단, 나머지는 즉시 실행."""
     from scripts.web_connector import run_on_browser_thread
@@ -106,24 +129,12 @@ def run_action(path: str, params: dict | None, user: dict, confirmed: bool = Fal
 
     # 표준 (RequestModel, user) 형태만 자동 호출 — 그 외는 폴백(안전).
     try:
-        from pydantic import BaseModel
-
-        kwargs: dict = {}
-        for pname, par in inspect.signature(ep).parameters.items():
-            ann = par.annotation
-            if isinstance(ann, type) and issubclass(ann, BaseModel):
-                kwargs[pname] = ann(**params)
-            elif pname in ("user", "current_user", "actor"):
-                kwargs[pname] = user
-            elif pname in params:
-                kwargs[pname] = params[pname]
-            elif par.default is not inspect.Parameter.empty:
-                continue  # 기본값 사용
-            else:
-                return {
-                    "ok": False,
-                    "error": f"'{path}' 은(는) 자동 호출 형태가 아닙니다. 해당 탭 버튼으로 진행하거나 브라우저 도구를 쓰세요.",
-                }
+        kwargs = _build_call_kwargs(ep, params, user)
+        if kwargs is None:
+            return {
+                "ok": False,
+                "error": f"'{path}' 은(는) 자동 호출 형태가 아닙니다. 해당 탭 버튼으로 진행하거나 브라우저 도구를 쓰세요.",
+            }
 
         def _call():
             res = ep(**kwargs)
@@ -139,4 +150,5 @@ def run_action(path: str, params: dict | None, user: dict, confirmed: bool = Fal
         txt = result if isinstance(result, str) else _json.dumps(result, ensure_ascii=False, default=str)
         return {"ok": True, "result": txt[:2000]}
     except Exception as e:  # noqa: BLE001 - 액션 실행 결과 래핑 - 실행 중 예외를 에러 딕셔너리로 변환해 반환(이미 실패로 처리), 결제/삭제 등 위험 조작 없음
+        logger.warning("앱 액션 실행 실패: %s", type(e).__name__)
         return {"ok": False, "error": f"실행 오류: {str(e)[:160]}"}

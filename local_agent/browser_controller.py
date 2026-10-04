@@ -110,18 +110,6 @@ class BrowserControllerError(Exception):
     pass
 
 
-class BrowserApprovalError(BrowserControllerError):
-    """Approval-related error."""
-
-    pass
-
-
-class BrowserSensitiveFieldError(BrowserControllerError):
-    """Sensitive field access error."""
-
-    pass
-
-
 class BrowserController:
     """Browser controller using Playwright with isolated profiles."""
 
@@ -660,24 +648,3 @@ class BrowserController:
 # Convenience functions for common operations
 
 
-async def create_and_inspect(agent_id: str, url: str) -> InspectResult | None:
-    """Create controller, launch, navigate, and inspect.
-
-    Args:
-        agent_id: Agent identifier
-        url: URL to inspect
-
-    Returns:
-        InspectResult or None if failed
-    """
-    controller = BrowserController(agent_id)
-    try:
-        await controller.launch()
-        await controller.navigate(url)
-        result = await controller.inspect_page()
-        return result
-    except BrowserControllerError as e:
-        logger.error(f"Failed to inspect {url}: {e}")
-        return None
-    finally:
-        await controller.close()

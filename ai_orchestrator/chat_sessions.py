@@ -16,6 +16,7 @@ session_id를 저장해뒀다가, 같은 세션의 다음 메시지에서 --resu
 
 from __future__ import annotations
 
+import contextlib
 import json
 import threading
 import uuid
@@ -25,7 +26,7 @@ from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
 _STORE_PATH = _ROOT / "data" / "chat_sessions.json"
-_MAX_MESSAGE_TEXT_LEN = 8000  # 저장 폭주 방지(단일 채팅 메시지 상한)
+_MAX_MESSAGE_TEXT_LEN = 20000  # 저장 폭주 방지(단일 채팅 메시지 상한). 에이전트 결과 전문 상한(result_full 20000)과 같은 값
 _MAX_SESSIONS = 500  # 오래된 세션 자동 정리 상한(개인 사용자 1명 기준 충분)
 
 _lock = threading.Lock()
@@ -223,10 +224,8 @@ def clear() -> None:
     """테스트 전용: 메모리 + 디스크 초기화."""
     with _lock:
         _sessions.clear()
-    try:
+    with contextlib.suppress(OSError):
         _STORE_PATH.unlink(missing_ok=True)
-    except OSError:
-        pass
 
 
 __all__ = [

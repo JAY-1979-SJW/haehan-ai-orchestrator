@@ -23,6 +23,18 @@ VERDICT_BLOCKED = "APP_UI_READONLY_BACKEND_STATUS_CARDS_BLOCKED"
 
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
+
+
+def _route_page(rel: str) -> Path:
+    """`app/assistant/tasks/page.tsx` 형태의 경로를 찾는다.
+
+    Next.js 의 라우트 그룹 `(legacy)` 는 URL 에 나타나지 않으므로, 그 안으로 옮겨진 화면도 같은 화면이다.
+    """
+    direct = FRONTEND_ROOT / rel
+    if direct.exists():
+        return direct
+    grouped = FRONTEND_ROOT / rel.replace("app/assistant/", "app/assistant/(legacy)/", 1)
+    return grouped if grouped.exists() else direct
 API_CLIENT = FRONTEND_ROOT / "lib" / "assistant" / "api.ts"
 TYPES_FILE = FRONTEND_ROOT / "types" / "assistant.ts"
 
@@ -141,7 +153,7 @@ def check_dashboard_enhanced(report: AuditReport) -> None:
 
 
 def check_tasks_enhanced(report: AuditReport) -> None:
-    tasks = ASSISTANT_APP / "tasks" / "page.tsx"
+    tasks = _route_page("app/assistant/tasks/page.tsx")
     if not tasks.exists():
         report.add("tasks_enhanced", "FAIL", "tasks/page.tsx 없음")
         return
@@ -161,7 +173,7 @@ def check_tasks_enhanced(report: AuditReport) -> None:
 
 
 def check_deployment_display_only(report: AuditReport) -> None:
-    deploy = ASSISTANT_APP / "deployment" / "page.tsx"
+    deploy = _route_page("app/assistant/deployment/page.tsx")
     if not deploy.exists():
         report.add("deployment_display_only", "FAIL", "deployment/page.tsx 없음")
         return

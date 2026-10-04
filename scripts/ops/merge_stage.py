@@ -194,6 +194,68 @@ def do_tag(tag: str, message: str) -> subprocess.CompletedProcess:
     return run(["git", "tag", "-a", tag, "-m", message])
 
 
+def _check_branch(a):
+    branch_now = current_branch()
+    if branch_now != a.base:
+        print("=" * 60)
+        print(f"[merge_stage] REFUSED — 현재 브랜치 '{branch_now}' 가 --base '{a.base}' 와 다릅니다.")
+        print(f"    git checkout {a.base} 후 다시 시도하세요.")
+        print("=" * 60)
+        return 1
+    return None
+
+
+def _check_tag(a):
+    tag = tag_name_for(a.branch)
+    if tag_exists(tag):
+        print("=" * 60)
+        print(f"[merge_stage] REFUSED — 태그 '{tag}' 가 이미 있습니다(이미 검증·병합된 것으로 보입니다).")
+        print("    다시 검증하려면 먼저 그 태그를 사람이 확인 후 지우세요.")
+        print("=" * 60)
+        return (1), None
+    return None, tag
+
+
+def _print_dry_preview(a, tag):
+    print("[dry-run] --no-verify-dry — verify_change 를 실행하지 않는 순수 미리보기입니다.")
+    print("[dry-run] PASS/FAIL 판정 없이, 실제 실행 시 수행할 순서만 보여줍니다:")
+    print(f"[dry-run]   1) python scripts/ops/verify_change.py --base {a.base} --head {a.branch} --json <tmp>")
+    print(f"[dry-run]   2) (PASS 시) git merge --ff-only {a.branch}")
+    print(f"[dry-run]   3) (병합 성공 시) git tag -a {tag} -m <검증표>")
+
+
+def _run_verify(a):
+    fd, tmp_name = tempfile.mkstemp(suffix=".json", prefix="merge_stage_")
+    os.close(fd)
+    tmp = Path(tmp_name)
+    try:
+        result = run_verify_change(a.base, a.branch, tmp)
+    finally:
+        tmp.unlink(missing_ok=True)
+    return result
+
+
+def _print_verify_refused(a):
+    print("=" * 60)
+    print(f"[merge_stage] REFUSED — verify_change FAIL ({a.base}...{a.branch})")
+    print("병합하지 않습니다. 리포트의 새 문제를 먼저 고치세요.")
+    print("=" * 60)
+
+
+def _print_overlap_refused(overlap):
+    print("=" * 60)
+    print("[merge_stage] REFUSED — 메인 작업트리에 겹치는 미커밋 변경이 있습니다:")
+    for p in overlap[:20]:
+        print("  - " + p)
+    print("커밋하거나 stash 한 뒤 다시 시도하세요.")
+
+
+def _print_dry_pass(a, tag):
+    print("[dry-run] verify_change PASS — 실제로는 다음을 수행합니다:")
+    print(f"[dry-run]   git merge --ff-only {a.branch}")
+    print(f"[dry-run]   git tag -a {tag} -m <검증표>")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("branch", help="master 로 병합할 stage 브랜치")
@@ -207,64 +269,37 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
 
     # 1) 브랜치 확인 — --dry-run 이어도 동일하게 거부(틀린 전제로 계획 세우지 않음)
-    branch_now = current_branch()
-    if branch_now != a.base:
-        print("=" * 60)
-        print(f"[merge_stage] REFUSED — 현재 브랜치 '{branch_now}' 가 --base '{a.base}' 와 다릅니다.")
-        print(f"    git checkout {a.base} 후 다시 시도하세요.")
-        print("=" * 60)
-        return 1
+    _early = _check_branch(a)
+    if _early is not None:
+        return _early
 
     # 2) 태그 존재 확인 — 병합 시도 전에 먼저
-    tag = tag_name_for(a.branch)
-    if tag_exists(tag):
-        print("=" * 60)
-        print(f"[merge_stage] REFUSED — 태그 '{tag}' 가 이미 있습니다(이미 검증·병합된 것으로 보입니다).")
-        print("    다시 검증하려면 먼저 그 태그를 사람이 확인 후 지우세요.")
-        print("=" * 60)
-        return 1
+    _early, tag = _check_tag(a)
+    if _early is not None:
+        return _early
 
     if a.dry_run and a.no_verify_dry:
-        print("[dry-run] --no-verify-dry — verify_change 를 실행하지 않는 순수 미리보기입니다.")
-        print("[dry-run] PASS/FAIL 판정 없이, 실제 실행 시 수행할 순서만 보여줍니다:")
-        print(f"[dry-run]   1) python scripts/ops/verify_change.py --base {a.base} --head {a.branch} --json <tmp>")
-        print(f"[dry-run]   2) (PASS 시) git merge --ff-only {a.branch}")
-        print(f"[dry-run]   3) (병합 성공 시) git tag -a {tag} -m <검증표>")
+        _print_dry_preview(a, tag)
         return 0
 
-    fd, tmp_name = tempfile.mkstemp(suffix=".json", prefix="merge_stage_")
-    os.close(fd)
-    tmp = Path(tmp_name)
-    try:
-        result = run_verify_change(a.base, a.branch, tmp)
-    finally:
-        tmp.unlink(missing_ok=True)
+    result = _run_verify(a)
 
     report = result.get("report", "")
     print(report)
 
     if not result.get("ok"):
-        print("=" * 60)
-        print(f"[merge_stage] REFUSED — verify_change FAIL ({a.base}...{a.branch})")
-        print("병합하지 않습니다. 리포트의 새 문제를 먼저 고치세요.")
-        print("=" * 60)
+        _print_verify_refused(a)
         return 1
 
     changed = result.get("changed", [])
     overlap = overlap_with_dirty(changed)
     if overlap:
-        print("=" * 60)
-        print("[merge_stage] REFUSED — 메인 작업트리에 겹치는 미커밋 변경이 있습니다:")
-        for p in overlap[:20]:
-            print("  - " + p)
-        print("커밋하거나 stash 한 뒤 다시 시도하세요.")
+        _print_overlap_refused(overlap)
         print("=" * 60)
         return 1
 
     if a.dry_run:
-        print("[dry-run] verify_change PASS — 실제로는 다음을 수행합니다:")
-        print(f"[dry-run]   git merge --ff-only {a.branch}")
-        print(f"[dry-run]   git tag -a {tag} -m <검증표>")
+        _print_dry_pass(a, tag)
         return 0
 
     merged = do_merge(a.branch)

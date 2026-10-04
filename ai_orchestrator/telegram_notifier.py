@@ -81,7 +81,7 @@ def parse_dev_reg_callback_data(data: str) -> dict | None:
     return {"action": "approve" if raw_action == _DR_APPROVE else "reject", "token_id": token_id}
 
 
-def build_dev_reg_message(
+def build_dev_reg_message(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     task_id: str,
     provider: str,
     action_type: str,
@@ -145,7 +145,7 @@ def _truncate_memo(text: str, limit: int = 80) -> str:
     return s
 
 
-def build_capture_screenshot_approval_message(
+def build_capture_screenshot_approval_message(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     task_id: str,
     agent_id: str,
     token_id: str,

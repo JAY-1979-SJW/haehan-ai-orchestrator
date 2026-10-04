@@ -99,6 +99,11 @@ def _handle_quiet_write() -> int:
 
 
 def main() -> int:
+    # 훅 출력은 하네스가 UTF-8 로 읽는다. 파이프로 연결되면 파이썬 기본 인코딩이 cp949 라 한글이 깨져
+    # 사용자에게 안내 문구(예: /clear 안내)가 읽히지 않았다(2026-10-01).
+    for _stream in (sys.stdout, sys.stderr):
+        with contextlib.suppress(Exception):
+            _stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}

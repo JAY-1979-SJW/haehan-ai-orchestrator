@@ -10,6 +10,7 @@ mock 기반 unit smoke만 수행.
 
 import ast
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -241,11 +242,7 @@ def _verify_no_http_import() -> tuple[bool, str]:
     return True, "OK"
 
 
-def run_audit() -> dict:
-    errors = []
-    warnings = []
-
-    # 1. 운영 안전 플래그
+def _audit_safety_flags(errors):
     for flag, name in [
         (REAL_EXECUTE_ALLOWED, "REAL_EXECUTE_ALLOWED"),
         (REAL_TOKEN_ISSUE_ALLOWED, "REAL_TOKEN_ISSUE_ALLOWED"),
@@ -259,7 +256,8 @@ def run_audit() -> dict:
     if not SMOKE_MOCK_ONLY:
         errors.append("SMOKE_MOCK_ONLY must be True")
 
-    # 2. router.py 상태
+
+def _audit_router_state(errors):
     rs = _verify_router_state()
     if not rs["dry_run_flag_true"]:
         errors.append("POST_TASKS_DRY_RUN_ENABLED != True")
@@ -273,8 +271,10 @@ def run_audit() -> dict:
         errors.append("TASK_APPROVE guard 없음")
     if not rs["touch_phase_1r"]:
         errors.append("ROUTER_TOUCH_PHASE != PHASE_1R")
+    return rs
 
-    # 3. executor.py whitelist
+
+def _audit_executor_whitelist(errors):
     es = _verify_executor_whitelist()
     if not es["whitelist_defined"]:
         errors.append("ALLOWED_ACTIONS 없음")
@@ -286,13 +286,10 @@ def run_audit() -> dict:
         errors.append("medium action이 whitelist에 포함됨 — 예상치 못한 실행 허용")
     if not es["high_critical_blocked_in_execute_task"]:
         errors.append("high/critical BLOCKED 처리 없음")
+    return es
 
-    # 4. approval expiry
-    ap = _verify_approval_expiry()
-    if not ap["expiry_check_exists"]:
-        errors.append("토큰 만료 검사 없음")
 
-    # 5. smoke 결과 전 항목 PASS
+def _audit_smoke_results(errors):
     for smoke_id, result in SMOKE_RESULTS.items():
         if result.get("result") != "PASS":
             errors.append(f"smoke FAIL: {smoke_id}")
@@ -302,6 +299,28 @@ def run_audit() -> dict:
     for k, v in criteria.items():
         if not v:
             errors.append(f"smoke verdict criteria 실패: {k}")
+
+
+def run_audit() -> dict:
+    errors: list[Any] = []
+    warnings: list[Any] = []
+
+    # 1. 운영 안전 플래그
+    _audit_safety_flags(errors)
+
+    # 2. router.py 상태
+    rs = _audit_router_state(errors)
+
+    # 3. executor.py whitelist
+    es = _audit_executor_whitelist(errors)
+
+    # 4. approval expiry
+    ap = _verify_approval_expiry()
+    if not ap["expiry_check_exists"]:
+        errors.append("토큰 만료 검사 없음")
+
+    # 5. smoke 결과 전 항목 PASS
+    _audit_smoke_results(errors)
 
     # 7. write path 검증
     approval_tokens_write = WRITE_PATH_VERIFICATION["approval_tokens_jsonl"]

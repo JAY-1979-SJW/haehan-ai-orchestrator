@@ -31,6 +31,49 @@ def _has_token_leak(text: str) -> list[str]:
     return [p.pattern for p in _TOKEN_PATTERNS if p.search(text or "")]
 
 
+def _check_user_doc(metrics):
+    doc_text = USER_DOC.read_text(encoding="utf-8")
+    for keyword in ("설치", "등록", "재실행", "진단", "오류", "SmartScreen", "재등록", "AUTH_FAILED_4401"):
+        if keyword not in doc_text:
+            return (UserInstallVerdict(
+                False, "FAIL_USER_DOC_MISSING", reasons=[f"missing keyword: {keyword}"], metrics=metrics
+            )), None
+    return None, doc_text
+
+
+def _check_dist_files(metrics):
+    if not DIST_ZIP.exists():
+        return UserInstallVerdict(
+            False, "FAIL_ZIP_PACKAGE_MISSING", reasons=["dist/HaehanAI-Agent.zip not found"], metrics=metrics
+        )
+    metrics["zip_size_bytes"] = DIST_ZIP.stat().st_size
+
+    # FAIL_EXE_NOT_STANDALONE
+    if not EXE.exists():
+        return UserInstallVerdict(False, "FAIL_EXE_NOT_STANDALONE", reasons=["exe missing in dist"], metrics=metrics)
+    return None
+
+
+def _check_smoke_flags(smoke, metrics):
+    if smoke.get("register_ok") is False:
+        return UserInstallVerdict(
+            False, "FAIL_REGISTER_FAILED", reasons=[f"register: {smoke.get('register_error', '')}"], metrics=metrics
+        )
+
+    # FAIL_TOKEN_STORE_FAILED
+    if smoke.get("token_store_ok") is False:
+        return UserInstallVerdict(False, "FAIL_TOKEN_STORE_FAILED", reasons=["token store failed"], metrics=metrics)
+
+    # FAIL_WSS_AUTH_FAILED
+    if smoke.get("wss_auth_ok") is False:
+        return UserInstallVerdict(False, "FAIL_WSS_AUTH_FAILED", reasons=["wss auth failed"], metrics=metrics)
+
+    # FAIL_HEARTBEAT_FAILED
+    if smoke.get("heartbeat_ok") is False:
+        return UserInstallVerdict(False, "FAIL_HEARTBEAT_FAILED", reasons=["heartbeat failed"], metrics=metrics)
+    return None
+
+
 def judge_user_install(
     *, smoke_results: dict | None = None, same_machine_test: bool = True, gui_available: bool = False
 ) -> UserInstallVerdict:
@@ -50,41 +93,19 @@ def judge_user_install(
         return UserInstallVerdict(False, "FAIL_USER_DOC_MISSING", reasons=[f"missing: {USER_DOC}"], metrics=metrics)
 
     # 문서 필수 항목
-    doc_text = USER_DOC.read_text(encoding="utf-8")
-    for keyword in ("설치", "등록", "재실행", "진단", "오류", "SmartScreen", "재등록", "AUTH_FAILED_4401"):
-        if keyword not in doc_text:
-            return UserInstallVerdict(
-                False, "FAIL_USER_DOC_MISSING", reasons=[f"missing keyword: {keyword}"], metrics=metrics
-            )
+    _early, doc_text = _check_user_doc(metrics)
+    if _early is not None:
+        return _early
 
     # FAIL_ZIP_PACKAGE_MISSING
-    if not DIST_ZIP.exists():
-        return UserInstallVerdict(
-            False, "FAIL_ZIP_PACKAGE_MISSING", reasons=["dist/HaehanAI-Agent.zip not found"], metrics=metrics
-        )
-    metrics["zip_size_bytes"] = DIST_ZIP.stat().st_size
-
-    # FAIL_EXE_NOT_STANDALONE
-    if not EXE.exists():
-        return UserInstallVerdict(False, "FAIL_EXE_NOT_STANDALONE", reasons=["exe missing in dist"], metrics=metrics)
+    _early = _check_dist_files(metrics)
+    if _early is not None:
+        return _early
 
     # FAIL_REGISTER_FAILED
-    if smoke.get("register_ok") is False:
-        return UserInstallVerdict(
-            False, "FAIL_REGISTER_FAILED", reasons=[f"register: {smoke.get('register_error', '')}"], metrics=metrics
-        )
-
-    # FAIL_TOKEN_STORE_FAILED
-    if smoke.get("token_store_ok") is False:
-        return UserInstallVerdict(False, "FAIL_TOKEN_STORE_FAILED", reasons=["token store failed"], metrics=metrics)
-
-    # FAIL_WSS_AUTH_FAILED
-    if smoke.get("wss_auth_ok") is False:
-        return UserInstallVerdict(False, "FAIL_WSS_AUTH_FAILED", reasons=["wss auth failed"], metrics=metrics)
-
-    # FAIL_HEARTBEAT_FAILED
-    if smoke.get("heartbeat_ok") is False:
-        return UserInstallVerdict(False, "FAIL_HEARTBEAT_FAILED", reasons=["heartbeat failed"], metrics=metrics)
+    _early = _check_smoke_flags(smoke, metrics)
+    if _early is not None:
+        return _early
 
     # FAIL_TOKEN_LEAK — smoke output / 문서 안에 raw token
     for src_name, src_text in (("user_doc", doc_text), ("smoke_output", json.dumps(smoke, ensure_ascii=False))):

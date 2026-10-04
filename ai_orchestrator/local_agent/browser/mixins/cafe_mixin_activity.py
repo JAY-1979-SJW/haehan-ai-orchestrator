@@ -8,11 +8,157 @@ from __future__ import annotations
 
 import re
 import time
+from typing import TYPE_CHECKING, Any
 
 from .cafe_mixin_common import _js
 
+_ATTENDANCE_DATE_RE = r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})"
+
+
+def _find_menu_id_by_link(links: list[dict]) -> str:
+    """링크 목록에서 첫 menuid 를 찾는다 (없으면 빈 문자열)."""
+    for lk in links:
+        m = re.search(r"menuid=(\d+)", lk["href"])
+        if m:
+            return m.group(1)
+    return ""
+
+
+def _attendance_records_from_rows(rows: list, records: list[dict]) -> None:
+    for row in rows:
+        raw = row.inner_text(timeout=500).strip()
+        lines = [l.strip() for l in raw.splitlines() if l.strip()]  # noqa: E741
+        if not lines:
+            continue
+        author = lines[0]
+        date_m2 = re.search(_ATTENDANCE_DATE_RE, raw)
+        written_at = date_m2.group(1).strip() if date_m2 else ""
+        msg_lines = [
+            l
+            for l in lines[1:]  # noqa: E741
+            if l != written_at and not re.match(r"\d{4}\.\d{2}\.\d{2}", l)
+        ]
+        records.append(
+            {
+                "author": author,
+                "written_at": written_at,
+                "message": " ".join(msg_lines).strip()[:200],
+            }
+        )
+
+
+def _attendance_records_from_text(body_txt: str, records: list[dict]) -> None:
+    """텍스트 파싱 폴백."""
+    lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
+    i = 0
+    while i < len(lines):
+        date_m2 = re.search(_ATTENDANCE_DATE_RE, lines[i])
+        if date_m2 and i > 0:
+            records.append(
+                {
+                    "author": lines[i - 1],
+                    "written_at": date_m2.group(1).strip(),
+                    "message": lines[i + 1] if i + 1 < len(lines) else "",
+                }
+            )
+        i += 1
+
+
+def _parse_one_greeting(lines: list[str], i: int) -> tuple[dict | None, int]:
+    """'작성자 정보' 줄(i)부터 가입인사 1건 파싱. (post|None, 다음 인덱스) 반환."""
+    author = lines[i + 1] if i + 1 < len(lines) else ""
+    # "작성일시" 스킵
+    j = i + 2
+    if j < len(lines) and lines[j] == "작성일시":
+        j += 1
+    written_at = ""
+    if j < len(lines):
+        date_m = re.search(_ATTENDANCE_DATE_RE, lines[j])
+        if date_m:
+            written_at = date_m.group(1).strip()
+            j += 1
+    # 내용 (날짜 다음 줄, "댓글 정보" 전까지)
+    preview_lines = []
+    while j < len(lines) and lines[j] != "댓글 정보":
+        preview_lines.append(lines[j])
+        j += 1
+    preview = " ".join(preview_lines).strip()
+    # 댓글수
+    comment_count = 0
+    if j < len(lines) and lines[j] == "댓글 정보":
+        j += 1
+        if j < len(lines):
+            cm = re.search(r"댓글\s*(\d+)", lines[j])
+            if cm:
+                comment_count = int(cm.group(1))
+    if author and written_at:
+        return (
+            {
+                "author": author,
+                "written_at": written_at,
+                "preview": preview[:150],
+                "comment_count": comment_count,
+            },
+            j,
+        )
+    return None, j
+
+
+def _parse_greetings(lines: list[str], max_posts: int, posts: list[dict]) -> None:
+    # MemoList DOM 구조:
+    # "작성자 정보" → 닉네임 → "작성일시" → 날짜 → 내용 → "댓글 정보" → "댓글 N"
+    i = 0
+    while i < len(lines) and len(posts) < max_posts:
+        if lines[i] == "작성자 정보":
+            post, i = _parse_one_greeting(lines, i)
+            if post is not None:
+                posts.append(post)
+        else:
+            i += 1
+
+
+_PHOTO_THUMBS_JS = """
+                (() => {
+                    const res = [];
+                    for (const el of document.querySelectorAll(
+                        '.photo_area img, .thumb img, [class*=\"thumb\"] img, .image_area img'
+                    )) {
+                        const src = el.src || el.getAttribute('data-src') || '';
+                        if (src && !src.includes('default_thumb'))
+                            res.push(src);
+                    }
+                    return res;
+                })()
+                """
+
+
+def _collect_photo_posts(result: list, thumbs: list, posts: list[dict]) -> None:
+    seen: set[str] = set()
+    for idx, p in enumerate(result):
+        aid_m = re.search(r"articles/(\d+)|articleid=(\d+)", p.get("href", ""))
+        aid = (aid_m.group(1) or aid_m.group(2)) if aid_m else ""
+        if not aid or aid in seen:
+            continue
+        seen.add(aid)
+        p["article_id"] = aid
+        p["thumb_url"] = thumbs[idx] if idx < len(thumbs) else ""
+        posts.append(p)
+
+
+def _find_board_menu_id(links: list[dict], board: str) -> str:
+    for lk in links:
+        if board in lk["text"]:
+            m = re.search(r"menuid=(\d+)", lk["href"])
+            if m:
+                return m.group(1)
+    return ""
+
 
 class CafeActivityMixin:
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
+
     def cafe_attendance(self, cafe_url: str, menu_id: str = "") -> dict:
         """출석체크 게시판 정보 조회.
 
@@ -61,41 +207,9 @@ class CafeActivityMixin:
             # 실제 DOM에서 row 단위로 읽기
             rows = frame.locator(".attendance_item, .item, li.AttList").all()
             if rows:
-                for row in rows:
-                    raw = row.inner_text(timeout=500).strip()
-                    lines = [l.strip() for l in raw.splitlines() if l.strip()]  # noqa: E741
-                    if not lines:
-                        continue
-                    author = lines[0]
-                    date_m2 = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", raw)
-                    written_at = date_m2.group(1).strip() if date_m2 else ""
-                    msg_lines = [
-                        l
-                        for l in lines[1:]  # noqa: E741
-                        if l != written_at and not re.match(r"\d{4}\.\d{2}\.\d{2}", l)
-                    ]
-                    records.append(
-                        {
-                            "author": author,
-                            "written_at": written_at,
-                            "message": " ".join(msg_lines).strip()[:200],
-                        }
-                    )
+                _attendance_records_from_rows(rows, records)
             else:
-                # 텍스트 파싱 폴백
-                lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
-                i = 0
-                while i < len(lines):
-                    date_m2 = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", lines[i])
-                    if date_m2 and i > 0:
-                        records.append(
-                            {
-                                "author": lines[i - 1],
-                                "written_at": date_m2.group(1).strip(),
-                                "message": lines[i + 1] if i + 1 < len(lines) else "",
-                            }
-                        )
-                    i += 1
+                _attendance_records_from_text(body_txt, records)
         except Exception:  # noqa: S110, BLE001
             pass
 
@@ -117,12 +231,7 @@ class CafeActivityMixin:
         self.go(cafe_url)
         time.sleep(2)
         links = self.extract_links(filter_href="MemoList")
-        menu_id = ""
-        for lk in links:
-            m = re.search(r"menuid=(\d+)", lk["href"])
-            if m:
-                menu_id = m.group(1)
-                break
+        menu_id = _find_menu_id_by_link(links)
 
         if not menu_id:
             return []
@@ -135,52 +244,11 @@ class CafeActivityMixin:
         if not cafe_main:
             return []
 
-        # MemoList DOM 구조:
-        # "작성자 정보" → 닉네임 → "작성일시" → 날짜 → 내용 → "댓글 정보" → "댓글 N"
         posts: list[dict] = []
         try:
             body_txt = cafe_main.inner_text("body")
             lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
-            i = 0
-            while i < len(lines) and len(posts) < max_posts:
-                if lines[i] == "작성자 정보":
-                    author = lines[i + 1] if i + 1 < len(lines) else ""
-                    # "작성일시" 스킵
-                    j = i + 2
-                    if j < len(lines) and lines[j] == "작성일시":
-                        j += 1
-                    written_at = ""
-                    if j < len(lines):
-                        date_m = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", lines[j])
-                        if date_m:
-                            written_at = date_m.group(1).strip()
-                            j += 1
-                    # 내용 (날짜 다음 줄, "댓글 정보" 전까지)
-                    preview_lines = []
-                    while j < len(lines) and lines[j] != "댓글 정보":
-                        preview_lines.append(lines[j])
-                        j += 1
-                    preview = " ".join(preview_lines).strip()
-                    # 댓글수
-                    comment_count = 0
-                    if j < len(lines) and lines[j] == "댓글 정보":
-                        j += 1
-                        if j < len(lines):
-                            cm = re.search(r"댓글\s*(\d+)", lines[j])
-                            if cm:
-                                comment_count = int(cm.group(1))
-                    if author and written_at:
-                        posts.append(
-                            {
-                                "author": author,
-                                "written_at": written_at,
-                                "preview": preview[:150],
-                                "comment_count": comment_count,
-                            }
-                        )
-                    i = j
-                else:
-                    i += 1
+            _parse_greetings(lines, max_posts, posts)
         except Exception:  # noqa: S110, BLE001
             pass
 
@@ -276,12 +344,7 @@ class CafeActivityMixin:
             self.go(cafe_url)
             time.sleep(2)
             links = self.extract_links(filter_href="ArticleList")
-            for lk in links:
-                if board in lk["text"]:
-                    m = re.search(r"menuid=(\d+)", lk["href"])
-                    if m:
-                        menu_id = m.group(1)
-                        break
+            menu_id = _find_board_menu_id(links, board)
 
         # f-e URL로 사진 게시판 접근
         if menu_id:
@@ -303,30 +366,9 @@ class CafeActivityMixin:
                     continue
 
                 # 썸네일은 별도 추출
-                thumbs = frame.evaluate("""
-                (() => {
-                    const res = [];
-                    for (const el of document.querySelectorAll(
-                        '.photo_area img, .thumb img, [class*=\"thumb\"] img, .image_area img'
-                    )) {
-                        const src = el.src || el.getAttribute('data-src') || '';
-                        if (src && !src.includes('default_thumb'))
-                            res.push(src);
-                    }
-                    return res;
-                })()
-                """)
+                thumbs = frame.evaluate(_PHOTO_THUMBS_JS)
 
-                seen: set[str] = set()
-                for idx, p in enumerate(result):
-                    aid_m = re.search(r"articles/(\d+)|articleid=(\d+)", p.get("href", ""))
-                    aid = (aid_m.group(1) or aid_m.group(2)) if aid_m else ""
-                    if not aid or aid in seen:
-                        continue
-                    seen.add(aid)
-                    p["article_id"] = aid
-                    p["thumb_url"] = thumbs[idx] if idx < len(thumbs) else ""
-                    posts.append(p)
+                _collect_photo_posts(result, thumbs, posts)
 
                 if posts:
                     break

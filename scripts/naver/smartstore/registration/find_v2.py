@@ -125,17 +125,8 @@ def try_sidebar_hover(page) -> dict:
         return {"ok": False, "error": str(e)[:100]}
 
 
-def main():
-    page = get_page()
-    print(f"\n{'=' * 70}")
-    print("  일반 상품 등록 페이지 재탐색 v2")
-    print(f"{'=' * 70}\n")
-
-    r = ensure_naver_login(page)
-    if not r.get("ok"):
-        print("✗ 로그인 실패")
-        return
-
+def _explore_hover(page):
+    """1. 사이드바 hover 로 상품관리 펼침 시도."""
     # 1. 사이드바 hover로 상품관리 펼침 시도
     print("[1] 사이드바 '상품관리' hover로 펼침 시도")
     hover_r = try_sidebar_hover(page)
@@ -146,7 +137,11 @@ def main():
             print(f"    - {s['text']:<25}  pos={s['pos']}")
     else:
         print(f"  ✗ {hover_r.get('reason', 'unknown')}")
+    return hover_r
 
+
+def _probe_candidates(page):
+    """2. 추가 URL 후보 시도."""
     # 2. 추가 URL 후보 시도
     print(f"\n[2] 추가 URL 후보 시도 ({len(CANDIDATES_V2)}개)")
     results = []
@@ -173,6 +168,23 @@ def main():
         except Exception as e:  # noqa: BLE001 - 상품등록 페이지 URL 탐색(읽기전용 리서치 스크립트) — 팝업무시/사이드바탐색실패/URL후보실패 모두 오류를 결과에 기록하고 계속 진행할 뿐 실제 등록 동작은 없음.
             print(f"  ✗ {str(e)[:30]}")
             results.append({"candidate": suffix, "error": str(e)[:100]})
+    return results
+
+
+def main():
+    page = get_page()
+    print(f"\n{'=' * 70}")
+    print("  일반 상품 등록 페이지 재탐색 v2")
+    print(f"{'=' * 70}\n")
+
+    r = ensure_naver_login(page)
+    if not r.get("ok"):
+        print("✗ 로그인 실패")
+        return
+
+    hover_r = _explore_hover(page)
+
+    results = _probe_candidates(page)
 
     # 결과
     real_hits = [r for r in results if r.get("price_input") and r.get("stock_input")]

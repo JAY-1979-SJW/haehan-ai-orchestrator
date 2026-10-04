@@ -61,12 +61,7 @@ def _load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def audit() -> tuple[bool, list[str]]:
-    ok = True
-    findings: list[str] = []
-
-    if not BASELINE.exists():
-        return False, [f"[FAIL] missing baseline: {BASELINE}"]
+def _audit_baseline_tokens(ok, findings):
     baseline_text = BASELINE.read_text(encoding="utf-8")
     for token in REQUIRED_BASELINE_TOKENS:
         if token not in baseline_text:
@@ -74,18 +69,10 @@ def audit() -> tuple[bool, list[str]]:
             findings.append(f"[FAIL] missing MCP baseline token: {token}")
     if all(token in baseline_text for token in REQUIRED_BASELINE_TOKENS):
         findings.append("[PASS] MCP gateway baseline is locked")
+    return ok
 
-    if not REGISTRY.exists():
-        ok = False
-        findings.append(f"[FAIL] missing MCP registry template: {REGISTRY}")
-        return ok, findings
-    registry_text = REGISTRY.read_text(encoding="utf-8")
-    if SECRET_SHAPED.search(registry_text):
-        ok = False
-        findings.append("[FAIL] MCP registry template contains secret-shaped text")
-    else:
-        findings.append("[PASS] MCP registry template contains no secret-shaped text")
 
+def _audit_servers(ok, findings):
     data = _load_json(REGISTRY)
     servers = data.get("servers")
     if not isinstance(servers, list) or not servers:
@@ -112,7 +99,10 @@ def audit() -> tuple[bool, list[str]]:
                 findings.append(f"[FAIL] MCP server {server.get('id', index)} must define blocked_tools")
         if ok:
             findings.append(f"[PASS] MCP registry template defines {len(servers)} disabled server/adapter examples")
+    return ok
 
+
+def _audit_app_tokens(ok, findings):
     app_text = APP_BASELINE.read_text(encoding="utf-8") if APP_BASELINE.exists() else ""
     for token in REQUIRED_APP_TOKENS:
         if token not in app_text:
@@ -120,7 +110,10 @@ def audit() -> tuple[bool, list[str]]:
             findings.append(f"[FAIL] app structure baseline missing MCP token: {token}")
     if all(token in app_text for token in REQUIRED_APP_TOKENS):
         findings.append("[PASS] app structure baseline references MCP gateway")
+    return ok
 
+
+def _audit_home_tokens(ok, findings):
     home_text = HOME_PAGE.read_text(encoding="utf-8") if HOME_PAGE.exists() else ""
     for token in REQUIRED_HOME_TOKENS:
         if token not in home_text:
@@ -128,6 +121,33 @@ def audit() -> tuple[bool, list[str]]:
             findings.append(f"[FAIL] home dashboard missing MCP token: {token}")
     if all(token in home_text for token in REQUIRED_HOME_TOKENS):
         findings.append("[PASS] home dashboard exposes MCP gateway readiness")
+    return ok
+
+
+def audit() -> tuple[bool, list[str]]:
+    ok = True
+    findings: list[str] = []
+
+    if not BASELINE.exists():
+        return False, [f"[FAIL] missing baseline: {BASELINE}"]
+    ok = _audit_baseline_tokens(ok, findings)
+
+    if not REGISTRY.exists():
+        ok = False
+        findings.append(f"[FAIL] missing MCP registry template: {REGISTRY}")
+        return ok, findings
+    registry_text = REGISTRY.read_text(encoding="utf-8")
+    if SECRET_SHAPED.search(registry_text):
+        ok = False
+        findings.append("[FAIL] MCP registry template contains secret-shaped text")
+    else:
+        findings.append("[PASS] MCP registry template contains no secret-shaped text")
+
+    ok = _audit_servers(ok, findings)
+
+    ok = _audit_app_tokens(ok, findings)
+
+    ok = _audit_home_tokens(ok, findings)
 
     return ok, findings
 

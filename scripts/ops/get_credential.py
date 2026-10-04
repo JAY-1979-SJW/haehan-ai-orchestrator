@@ -180,6 +180,39 @@ def _match_domain(urls: list[str], domain: str) -> bool:
     return any(dl in u.lower() or u.lower() in dl for u in urls)
 
 
+def _request_plaintext_password(tab_id, match, password_result, eval_done):
+    # 별도 WebSocket 연결 — PIN 입력 대기 동안 타임아웃 없이 유지
+    ws2: websocket.WebSocket | None = None
+    try:
+        tabs2 = _get_tabs()
+        ws_url2 = next(t["webSocketDebuggerUrl"] for t in tabs2 if t["id"] == tab_id)
+        ws2 = websocket.create_connection(ws_url2, timeout=300)  # 5분
+        js = _REQUEST_PLAINTEXT_JS % match["id"]
+        r = _ws_cmd(
+            ws2,
+            "Runtime.evaluate",
+            {
+                "expression": js,
+                "awaitPromise": True,
+                "timeout": 240000,  # CDP 내부 타임아웃 4분
+            },
+        )
+        val = r.get("result", {}).get("result", {}).get("value")
+        if val is not None:
+            password_result["password"] = val
+        else:
+            err = r.get("result", {}).get("exceptionDetails", {})
+            print(f"[get_credential] 비밀번호 취득 실패: {err}", file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001 - Chrome 저장 자격증명 조회 CLI - 사용자가 직접 실행, Windows PIN 팝업으로 본인 인증 필요. except는 WebSocket/CDP 통신 실패만 감싸며 로그에 예외 타입만 출력, 실제 조회 결과(JSON 출력)는 도구의 의도된 동작
+        print(f"[get_credential] _request_password 오류: {exc}", file=sys.stderr)
+    finally:
+        if ws2:
+            # WebSocket 연결 종료(cleanup) 실패는 무시 — 실제 조회 결과(JSON 출력)와 무관
+            with contextlib.suppress(Exception):
+                ws2.close()
+        eval_done.set()
+
+
 def get_credential(domain: str) -> dict:
     from scripts.ops.windows_auth_popup_monitor import (
         notify_user,
@@ -225,39 +258,11 @@ def get_credential(domain: str) -> dict:
         password_result: dict = {}
         eval_done = threading.Event()
 
-        def _request_password():
-            # 별도 WebSocket 연결 — PIN 입력 대기 동안 타임아웃 없이 유지
-            ws2: websocket.WebSocket | None = None
-            try:
-                tabs2 = _get_tabs()
-                ws_url2 = next(t["webSocketDebuggerUrl"] for t in tabs2 if t["id"] == tab_id)
-                ws2 = websocket.create_connection(ws_url2, timeout=300)  # 5분
-                js = _REQUEST_PLAINTEXT_JS % match["id"]
-                r = _ws_cmd(
-                    ws2,
-                    "Runtime.evaluate",
-                    {
-                        "expression": js,
-                        "awaitPromise": True,
-                        "timeout": 240000,  # CDP 내부 타임아웃 4분
-                    },
-                )
-                val = r.get("result", {}).get("result", {}).get("value")
-                if val is not None:
-                    password_result["password"] = val
-                else:
-                    err = r.get("result", {}).get("exceptionDetails", {})
-                    print(f"[get_credential] 비밀번호 취득 실패: {err}", file=sys.stderr)
-            except Exception as exc:  # noqa: BLE001 - Chrome 저장 자격증명 조회 CLI - 사용자가 직접 실행, Windows PIN 팝업으로 본인 인증 필요. except는 WebSocket/CDP 통신 실패만 감싸며 로그에 예외 타입만 출력, 실제 조회 결과(JSON 출력)는 도구의 의도된 동작
-                print(f"[get_credential] _request_password 오류: {exc}", file=sys.stderr)
-            finally:
-                if ws2:
-                    # WebSocket 연결 종료(cleanup) 실패는 무시 — 실제 조회 결과(JSON 출력)와 무관
-                    with contextlib.suppress(Exception):
-                        ws2.close()
-                eval_done.set()
-
-        t = threading.Thread(target=_request_password, daemon=True)
+        t = threading.Thread(
+            target=_request_plaintext_password,
+            args=(tab_id, match, password_result, eval_done),
+            daemon=True,
+        )
         t.start()
 
         # 4. 팝업 감지 → 사용자 안내

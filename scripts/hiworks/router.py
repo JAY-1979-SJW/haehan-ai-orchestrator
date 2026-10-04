@@ -46,32 +46,33 @@ from scripts.hiworks.workflows import (
 )
 
 
+def _command_table() -> dict:
+    """task 별칭 -> (sub, args) 를 받는 실행 함수 표. 호출 시점에 _cmd_* 를 조회한다."""
+    table: dict = {}
+    for names, fn in (
+        (("dashboard", "home"), lambda sub, args: _cmd_dashboard()),
+        (("mail",), lambda sub, args: _cmd_mail(sub)),
+        (("compose",), lambda sub, args: _cmd_compose()),
+        (("prepare-sales-mail",), lambda sub, args: _cmd_prepare_sales_mail(sub)),
+        (("send-batch",), lambda sub, args: _cmd_send_batch(sub, args)),
+        (("apps", "scan"), lambda sub, args: _cmd_apps()),
+        (("service", "services", "explore-services"), lambda sub, args: _cmd_service_scan(sub, args)),
+        (("actions", "action-catalog"), lambda sub, args: _cmd_action_catalog(sub, args)),
+        (("prepare-section", "section-prepare"), lambda sub, args: _cmd_prepare_section(sub, args)),
+        (("submit-section", "section-submit"), lambda sub, args: _cmd_submit_section(sub, args)),
+        (("queue", "sales-queue"), lambda sub, args: _cmd_queue(sub)),
+    ):
+        for name in names:
+            table[name] = fn
+    return table
+
+
 def run_hiworks(task: str | None, sub: str | None, args: list[str]) -> None:
-    match task or "dashboard":
-        case "dashboard" | "home":
-            _cmd_dashboard()
-        case "mail":
-            _cmd_mail(sub)
-        case "compose":
-            _cmd_compose()
-        case "prepare-sales-mail":
-            _cmd_prepare_sales_mail(sub)
-        case "send-batch":
-            _cmd_send_batch(sub, args)
-        case "apps" | "scan":
-            _cmd_apps()
-        case "service" | "services" | "explore-services":
-            _cmd_service_scan(sub, args)
-        case "actions" | "action-catalog":
-            _cmd_action_catalog(sub, args)
-        case "prepare-section" | "section-prepare":
-            _cmd_prepare_section(sub, args)
-        case "submit-section" | "section-submit":
-            _cmd_submit_section(sub, args)
-        case "queue" | "sales-queue":
-            _cmd_queue(sub)
-        case _:
-            _print_help()
+    handler = _command_table().get(task or "dashboard")
+    if handler is None:
+        _print_help()
+        return
+    handler(sub, args)
 
 
 def _cmd_dashboard() -> None:

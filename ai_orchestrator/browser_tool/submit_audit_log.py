@@ -121,7 +121,7 @@ class SubmitAuditWriteResult:
     error_message: str | None = None
 
 
-def build_submit_audit_event(
+def build_submit_audit_event(  # noqa: PLR0913 - 감사 이벤트 빌더, 필드별 인자가 공개 API
     validation_id: str,
     action_id: str,
     site_id: str,
@@ -267,6 +267,21 @@ def redact_audit_payload(payload: dict) -> dict:
     return result
 
 
+# 값이 비어 있으면 "<name> is required" 오류가 되는 필드 (검사 순서 고정)
+_REQUIRED_TRUTHY_FIELDS: tuple[str, ...] = (
+    "schema_version",
+    "event_id",
+    "created_at",
+    "validation_id",
+    "action_id",
+    "site_id",
+    "form_id",
+    "submit_button_id",
+    "intent",
+    "preview_hash",
+)
+
+
 def validate_submit_audit_event(event: SubmitAuditEvent) -> list[str]:
     """Validate event has all required fields.
 
@@ -276,29 +291,12 @@ def validate_submit_audit_event(event: SubmitAuditEvent) -> list[str]:
     Returns:
         List of error messages (empty list = valid)
     """
-    errors = []
+    errors: list[str] = []
 
     # Required fields
-    if not event.schema_version:
-        errors.append("schema_version is required")
-    if not event.event_id:
-        errors.append("event_id is required")
-    if not event.created_at:
-        errors.append("created_at is required")
-    if not event.validation_id:
-        errors.append("validation_id is required")
-    if not event.action_id:
-        errors.append("action_id is required")
-    if not event.site_id:
-        errors.append("site_id is required")
-    if not event.form_id:
-        errors.append("form_id is required")
-    if not event.submit_button_id:
-        errors.append("submit_button_id is required")
-    if not event.intent:
-        errors.append("intent is required")
-    if not event.preview_hash:
-        errors.append("preview_hash is required")
+    for name in _REQUIRED_TRUTHY_FIELDS:
+        if not getattr(event, name):
+            errors.append(f"{name} is required")
     if event.preview_hash and len(event.preview_hash) != 64:
         errors.append(f"preview_hash must be 64 chars (got {len(event.preview_hash)})")
     if not event.policy_verdict:
@@ -309,6 +307,14 @@ def validate_submit_audit_event(event: SubmitAuditEvent) -> list[str]:
         errors.append("risk_level is required")
     if event.risk_level not in ["low", "medium", "high"]:
         errors.append(f"risk_level must be low/medium/high (got {event.risk_level})")
+    errors.extend(_validate_result_fields(event))
+
+    return errors
+
+
+def _validate_result_fields(event: SubmitAuditEvent) -> list[str]:
+    """user_confirmed 이후 결과 관련 필수 필드 검증 (오류 순서 유지)."""
+    errors: list[str] = []
     if event.user_confirmed is None:
         errors.append("user_confirmed is required")
     if event.submitted is None:
@@ -321,7 +327,6 @@ def validate_submit_audit_event(event: SubmitAuditEvent) -> list[str]:
         errors.append("redacted_payload is required")
     if not event.result_summary:
         errors.append("result_summary is required")
-
     return errors
 
 

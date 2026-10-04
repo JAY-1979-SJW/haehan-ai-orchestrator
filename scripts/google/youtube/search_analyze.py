@@ -86,7 +86,7 @@ def analyze_ranked_videos(
     return _write_report(payload, LATEST_ANALYSIS, latest_path=LATEST_ANALYSIS)
 
 
-def analyze_keyword_topic_market(
+def analyze_keyword_topic_market(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     keywords: list[str],
     *,
     per_keyword_limit: int = 10,
@@ -244,7 +244,7 @@ def expand_topic_keywords(topic: str, *, auto_keywords: bool = True) -> list[str
     return [str(topic).strip()]
 
 
-def run_market_research(
+def run_market_research(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     *,
     topic: str = "",
     keywords: list[str] | None = None,

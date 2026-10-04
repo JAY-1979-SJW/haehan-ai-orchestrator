@@ -4,10 +4,17 @@ Stop 훅: AI 응답에서 금지 행동 패턴 감지 → exit(2)로 차단.
 Claude Code가 응답을 완성하기 직전 실행됨.
 """
 
+import contextlib
 import json
 import re
 import sys
 from pathlib import Path
+
+# 훅 출력은 하네스가 UTF-8 로 읽는다. 파이프로 연결되면 파이썬 기본 인코딩이 cp949 라 한글이 깨져
+# 사용자에게 안내 문구(예: /clear 안내)가 읽히지 않았다(2026-10-01).
+for _stream in (sys.stdout, sys.stderr):
+    with contextlib.suppress(Exception):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
 
 # stop_hook_active 시 무한루프 방지
 data = {}

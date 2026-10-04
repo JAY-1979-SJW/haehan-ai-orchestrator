@@ -51,7 +51,7 @@ _COMMON_GOVERNMENT_DIRECT = _COMMON_DIRECT + [
 ]
 
 
-def _profile(
+def _profile(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     site_id: str,
     display_name: str,
     domains: list[str],

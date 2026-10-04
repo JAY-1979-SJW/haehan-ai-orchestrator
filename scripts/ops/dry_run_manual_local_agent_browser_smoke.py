@@ -87,16 +87,7 @@ def staged_paths(status_lines: list[str]) -> set[str]:
     return staged
 
 
-def dry_run() -> DryRunResult:
-    findings: list[Finding] = []
-
-    status = git_status_short()
-    staged_oos = sorted(staged_paths(status) & OUT_OF_SCOPE)
-    if staged_oos:
-        add(findings, "FAIL", "out_of_scope_staged", ", ".join(staged_oos))
-    else:
-        add(findings, "PASS", "out_of_scope_staged", "none")
-
+def _dry_run_files_router(findings):
     missing = [path for path in REQUIRED_FILES if not (ROOT / path).exists()]
     if missing:
         add(findings, "FAIL", "required_files", ", ".join(missing))
@@ -109,6 +100,8 @@ def dry_run() -> DryRunResult:
     else:
         add(findings, "FAIL", "authenticated_registration_code_flow", "guard or endpoint missing")
 
+
+def _dry_run_config_actions(findings):
     config = read("ai_orchestrator/config.py")
     compose = read("docker-compose.yml")
     if 'os.environ.get("AUTH_ENABLED", "true")' in config and 'AUTH_ENABLED: "true"' in compose:
@@ -123,6 +116,8 @@ def dry_run() -> DryRunResult:
     else:
         add(findings, "FAIL", "readonly_action_allowed", "missing readonly browser action")
 
+
+def _dry_run_ws_verifier(findings):
     ws = read("local_agent/websocket_client.py")
     if "await asyncio.to_thread(process_task, task)" in ws:
         add(findings, "PASS", "playwright_off_event_loop", "process_task uses to_thread")
@@ -135,6 +130,8 @@ def dry_run() -> DryRunResult:
     else:
         add(findings, "FAIL", "live_verifier_redaction", "redaction contract missing")
 
+
+def _dry_run_no_side_effects(findings):
     this_script = Path(__file__).read_text(encoding="utf-8", errors="replace")
     forbidden_runtime = tuple(
         "".join(parts)
@@ -156,6 +153,25 @@ def dry_run() -> DryRunResult:
         add(findings, "FAIL", "dry_run_no_runtime_side_effects", ", ".join(hits))
     else:
         add(findings, "PASS", "dry_run_no_runtime_side_effects", "no network/process/build/deploy call")
+
+
+def dry_run() -> DryRunResult:
+    findings: list[Finding] = []
+
+    status = git_status_short()
+    staged_oos = sorted(staged_paths(status) & OUT_OF_SCOPE)
+    if staged_oos:
+        add(findings, "FAIL", "out_of_scope_staged", ", ".join(staged_oos))
+    else:
+        add(findings, "PASS", "out_of_scope_staged", "none")
+
+    _dry_run_files_router(findings)
+
+    _dry_run_config_actions(findings)
+
+    _dry_run_ws_verifier(findings)
+
+    _dry_run_no_side_effects(findings)
 
     rendered = "\n".join(f"{f.status} {f.item} {f.detail}" for f in findings)
     if any(pattern.search(rendered) for pattern in SENSITIVE_PATTERNS):

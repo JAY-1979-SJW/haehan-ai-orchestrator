@@ -163,7 +163,7 @@ def build_join_plan(
     )
 
 
-def inspect_join_request_from_target(
+def inspect_join_request_from_target(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
     target_id: str,
     *,
     port: int,

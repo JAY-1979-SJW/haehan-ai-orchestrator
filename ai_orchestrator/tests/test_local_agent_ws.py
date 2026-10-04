@@ -877,7 +877,9 @@ def test_ws_idle_timeout_triggers_expire_and_audit(admin_user, monkeypatch):
 
     import ai_orchestrator.audit_logger as _al
     import ai_orchestrator.local_agent_registry as _reg
-    import ai_orchestrator.local_agent_router as _lar
+
+    # 수신 timeout 상수는 WS 엔드포인트를 분리한 local_agent_router_ws 모듈이 소유한다(결함 #111)
+    import ai_orchestrator.local_agent_router_ws as _lar
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)

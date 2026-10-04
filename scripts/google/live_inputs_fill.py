@@ -68,7 +68,7 @@ def _domain_prefill_selectors(action: dict, field: str) -> list[str]:
     return selectors
 
 
-def _cdp_fill_first(
+def _cdp_fill_first(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
     session: Any,
     selectors: list[str],
     value: str,

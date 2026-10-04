@@ -28,17 +28,7 @@ class Verdict:
     metrics: dict = field(default_factory=dict)
 
 
-def judge(
-    result: ic.CollectionResult,
-    *,
-    mode: str,
-    unread_snapshot: rsg.UnreadCountSnapshot | None = None,
-    plan: rsg.FullReadPlan | None = None,
-) -> Verdict:
-    reasons: list[str] = []
-    passed = True
-
-    # 1) schema 검증 — 모든 item 이 필수 필드를 갖는지
+def _p0_schema(result, reasons, passed):
     d = ic.result_to_dict(result)
     for i, item in enumerate(d["items"]):
         missing = ic.validate_item_schema(item)
@@ -46,16 +36,20 @@ def judge(
             reasons.append(f"schema_missing[{i}]={missing}")
             passed = False
             break
+    return passed
 
-    # 2) 페이지네이션 끝까지
+
+def _p0_pagination(result, reasons, passed):
     if result.warn_limit_reached:
         reasons.append("warn_limit_reached")
         passed = False
     if not result.last_page_reached:
         reasons.append("last_page_not_reached")
         passed = False
+    return passed
 
-    # 3) UI unread vs 수집 unread
+
+def _p0_unread(result, mode, reasons, passed):
     if result.unread_count_ui >= 0:
         if mode == rsg.MODE_UNREAD_ONLY:
             # UNREAD 필터 모드 — 수집 전체가 unread, 그 수가 UI 와 일치 기대
@@ -67,8 +61,10 @@ def judge(
                 # 전체 수집인데 unread 가 UI 와 다르면 누락 후보
                 reasons.append(f"unread_collected({result.collected_unread})!=ui({result.unread_count_ui})")
                 passed = False
+    return passed
 
-    # 4) FULL_READ 모드 — 안읽음 복구
+
+def _p0_full_read(mode, plan, unread_snapshot, reasons, passed):
     if mode == rsg.MODE_FULL_READ:
         if plan is None:
             reasons.append("full_read_plan_missing")
@@ -80,6 +76,30 @@ def judge(
             if unread_snapshot.after < unread_snapshot.before - (plan.restore_failed if plan else 0):
                 reasons.append(f"unread_count_dropped: {unread_snapshot.before}->{unread_snapshot.after}")
                 passed = False
+    return passed
+
+
+def judge(
+    result: ic.CollectionResult,
+    *,
+    mode: str,
+    unread_snapshot: rsg.UnreadCountSnapshot | None = None,
+    plan: rsg.FullReadPlan | None = None,
+) -> Verdict:
+    reasons: list[str] = []
+    passed = True
+
+    # 1) schema 검증 — 모든 item 이 필수 필드를 갖는지
+    passed = _p0_schema(result, reasons, passed)
+
+    # 2) 페이지네이션 끝까지
+    passed = _p0_pagination(result, reasons, passed)
+
+    # 3) UI unread vs 수집 unread
+    passed = _p0_unread(result, mode, reasons, passed)
+
+    # 4) FULL_READ 모드 — 안읽음 복구
+    passed = _p0_full_read(mode, plan, unread_snapshot, reasons, passed)
 
     # 5) parse_warning 다수면 WARN (parse 자체 실패는 큰 문제, 가정은 OK)
     bad_parses = [i for i in result.items if i.parsed_at_iso == "" and i.parse_warning.startswith("unknown_format")]

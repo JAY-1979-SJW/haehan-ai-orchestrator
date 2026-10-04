@@ -16,6 +16,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -189,7 +190,7 @@ def explore_site(page) -> dict:
     Returns:
         탐색 결과 dict
     """
-    result = {
+    result: dict[str, Any] = {
         "explored_at": datetime.now().isoformat(timespec="seconds"),
         "base_url": EUM_BASE,
         "nav_links": [],

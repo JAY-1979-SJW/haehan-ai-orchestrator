@@ -173,11 +173,6 @@ def build_tenant_context(user: dict) -> dict:
     return user
 
 
-def get_tenant_context(user: dict) -> dict:
-    """Get tenant context (alias for build_tenant_context)."""
-    return build_tenant_context(user)
-
-
 def require_active_organization(user: dict) -> str:
     """Require active organization in context.
 

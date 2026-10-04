@@ -474,7 +474,9 @@ class TestDirectDictBoundaryHoldRegistry:
 
         from ai_orchestrator.asgi import app
 
-        paths = {r.path for r in app.routes if isinstance(r, APIRoute)}
+        from tests.app_routes import route_paths
+
+        paths = route_paths()
         for ep in self.HOLD_ENDPOINTS:
             path = ep.split(" ", 1)[1]
             assert path in paths, f"HOLD 엔드포인트 {path}가 app에 없음"

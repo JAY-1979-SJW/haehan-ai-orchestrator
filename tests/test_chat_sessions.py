@@ -35,7 +35,7 @@ def test_invalid_role_and_unknown_chat_rejected():
 
 def test_message_length_capped():
     s = store.create_session()
-    store.add_message(s.chat_id, role="user", text="a" * 20000)
+    store.add_message(s.chat_id, role="user", text="a" * (store._MAX_MESSAGE_TEXT_LEN + 5000))
     assert len(s.messages[0].text) == store._MAX_MESSAGE_TEXT_LEN
 
 

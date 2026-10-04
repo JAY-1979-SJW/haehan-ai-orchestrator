@@ -84,7 +84,7 @@ _FIXED_SAFE_RESULT_FIELDS: dict[str, Any] = {
 }
 
 
-def build_task(
+def build_task(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     action: str,
     target_url: str,
     domain: str = "",
@@ -116,7 +116,7 @@ def build_task(
     }
 
 
-def build_result(
+def build_result(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     task_id: str,
     ok: bool,
     status: str,
