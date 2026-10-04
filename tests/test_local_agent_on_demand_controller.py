@@ -247,6 +247,7 @@ def test_no_sessions_access():
         for pat in access_patterns:
             # pathlib.Path("data/sessions") 또는 open("data/sessions") 형태만 차단
             code_hits = [ln for ln in code_lines if pat in ln and ("Path(" in ln or "open(" in ln or "read_text" in ln)]
+            assert code_lines, "code_lines 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
             assert not code_hits, f"{py.name}에 data/sessions 실제 접근 코드 금지: {code_hits}"
 
 

@@ -112,6 +112,7 @@ class TestOpsRouterNoSecretExposure:
         external_http = [
             line for line in import_lines if "requests" in line or "httpx" in line or "urllib.request" in line
         ]
+        assert import_lines, "import_lines 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
         assert external_http == [], f"외부 HTTP import 발견: {external_http}"
 
     def test_no_db_write(self):
@@ -168,6 +169,7 @@ class TestOpsRouterPythonImport:
         from ai_orchestrator.routers.ops_router import ops_router
 
         post_routes = [r for r in ops_router.routes if hasattr(r, "methods") and "POST" in r.methods]
+        assert ops_router.routes, "ops_router.routes 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
         assert post_routes == [], f"POST endpoint 발견: {post_routes}"
 
 

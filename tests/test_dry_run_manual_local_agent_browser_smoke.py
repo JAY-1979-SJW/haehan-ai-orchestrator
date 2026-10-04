@@ -24,4 +24,5 @@ def test_dry_run_script_does_not_start_runtime():
             ("npm", "run", "build"),
         )
     )
+    assert forbidden, "forbidden 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert [token for token in forbidden if token in script] == []

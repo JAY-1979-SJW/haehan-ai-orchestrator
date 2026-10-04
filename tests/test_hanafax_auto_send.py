@@ -291,6 +291,7 @@ def test_workflow_does_not_import_the_real_fax_sender():
         elif isinstance(node, ast.ImportFrom):
             imported.append(node.module or "")
     forbidden = [name for name in imported if name.startswith(("scripts.hanafax", "playwright", "scripts.cdp"))]
+    assert imported, "imported 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert forbidden == [], f"워크플로가 실제 전송 코드를 import 한다: {forbidden}"
 
 

@@ -10,6 +10,7 @@ TEST_PYCACHE = ROOT
 def test_required_gate_has_no_forbidden_commands():
     offenders = [gate.command_text(command) for command in gate.COMMANDS if gate.command_is_forbidden(command)]
 
+    assert gate.COMMANDS, "gate.COMMANDS 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert offenders == []
 
 

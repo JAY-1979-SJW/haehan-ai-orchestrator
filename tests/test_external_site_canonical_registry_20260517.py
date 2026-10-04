@@ -265,12 +265,14 @@ def test_33_no_github_actions_dependency():
 def test_34_no_cookie_storage_allowed_provider():
     r = reg()
     bad = [p.provider_id for p in r.PROVIDER_REGISTRY if p.cookie_storage_allowed]
+    assert r.PROVIDER_REGISTRY, "r.PROVIDER_REGISTRY 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert bad == [], f"쿠키 저장 허용 provider: {bad}"
 
 
 def test_35_no_server_remote_login_allowed_provider():
     r = reg()
     bad = [p.provider_id for p in r.PROVIDER_REGISTRY if p.server_remote_login_allowed]
+    assert r.PROVIDER_REGISTRY, "r.PROVIDER_REGISTRY 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert bad == [], f"서버 원격 로그인 허용 provider: {bad}"
 
 
