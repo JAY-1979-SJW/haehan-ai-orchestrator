@@ -263,3 +263,45 @@ def test_non_naver_page_is_not_treated_as_logged_in(monkeypatch):
 
     monkeypatch.setattr(A, "detect_login_state", lambda page: {"logged_in": True, "user": "skyjwsin"})
     assert A._existing_login_verdict(Other(), "skyjwsin", False) is None
+
+
+# ── 읽기 전용 확인은 브라우저를 시작하지 않는다 (2026-10-04 앱 실검증 D7) ─────────────────
+
+
+def _deps_with_starting(calls):
+    return G.GuardDeps(
+        now=lambda: NOW,
+        detect=lambda: calls.append("detect") or {"state": "unavailable", "cookie": None},
+        detect_starting=lambda: calls.append("detect_starting") or {"state": "in", "cookie": True},
+        read_alias=lambda: "skyjwsin",
+        run_login=lambda target: {"ok": True, "logged_in": True},
+        save_attempt=lambda a: None,
+    )
+
+
+def test_observe_is_read_only_by_default_and_never_uses_the_starting_detector():
+    calls: list[str] = []
+    seen = G.observe("skyjwsin", _deps_with_starting(calls))
+    assert calls == ["detect"] and seen["state"] == "unavailable"
+
+
+def test_ensure_login_may_start_the_browser():
+    calls: list[str] = []
+    res = G.ensure_login("skyjwsin", _deps_with_starting(calls))
+    assert calls == ["detect_starting"]  # 자동 로그인 흐름만 브라우저를 시작할 수 있다
+    assert res["action"] == "none" and res["reason"] == "already_logged_in"
+
+
+def test_default_deps_detect_does_not_launch_chrome_when_cdp_is_down(monkeypatch):
+    from ai_orchestrator.workflows import naver_login_pipeline as pipeline
+
+    started: list[int] = []
+    monkeypatch.setattr(pipeline, "_is_cdp_alive", lambda *a, **k: False)
+    monkeypatch.setattr(pipeline, "_start_cdp", lambda: started.append(1) or (_ for _ in ()).throw(RuntimeError("stub")))
+    deps = G.default_deps()
+
+    assert deps.detect() == {"state": "unavailable", "cookie": None}
+    assert started == []  # 상태 확인만으로 Chrome 이 뜨면 안 된다
+
+    assert deps.detect_starting()["state"] == "unavailable"  # 시작을 시도했지만(스텁이 실패) 불가로 알린다
+    assert started == [1]

@@ -26,14 +26,9 @@ sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
-    import importlib
-
-    import ai_orchestrator.gates.auth as _auth
-
-    importlib.reload(_auth)
-    import ai_orchestrator.local_agent_router as _lar
-
-    importlib.reload(_lar)
+    # auth/local_agent_router 를 reload 하지 않는다: reload 하면 get_current_user 가 시험마다 새 객체가 되는데
+    # 하위 라우터는 처음 import 된 옛 객체에 묶여 있어 dependency_overrides 가 두 번째 시험부터 안 먹혀
+    # 파일 전체 실행 시 등록이 401 이 되고 KeyError: 'agent_id' 가 난다(단독 실행만 통과, 2026-10-04 확인).
 
     import ai_orchestrator.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
@@ -265,10 +260,12 @@ def test_real_capture_result_basename_only(tmp_path, monkeypatch):
     assert result.success
     assert "basename=" in result.summary
     assert str(tmp_path) not in result.summary
-    assert result.data["screenshot_file"].endswith(".png")
+    # 결과 키는 file_basename(저장 경로가 아니라 파일 이름만) — 2026-10-05 시험이 옛 키 screenshot_file 을 기대해 실패하던 것
+    assert result.data["file_basename"].endswith(".png")
     # 전체 경로가 result 에 새어나오지 않는다
-    assert "/" not in result.data["screenshot_file"]
-    assert "\\" not in result.data["screenshot_file"]
+    assert "/" not in result.data["file_basename"]
+    assert "\\" not in result.data["file_basename"]
+    assert str(tmp_path) not in " ".join(str(v) for v in result.data.values())
 
 
 # ── 8. 감사 로그 이벤트 ────────────────────────────────────────────────
@@ -343,6 +340,9 @@ def test_audit_emits_dry_run_completed_event(admin_user):
         assert ws.receive_json()["type"] == "auth_ok"
         msg = ws.receive_json()
         assert msg["type"] == "task"
+        # 에이전트는 실행 시작을 먼저 알린다(서버는 running 없이 delivered → completed 를 거부)
+        ws.send_json({"type": "running", "agent_id": agent_id, "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
         # 에이전트가 dry-run summary 로 완료 보고
         ws.send_json(
             {
@@ -374,6 +374,9 @@ def test_audit_emits_completed_event_for_real_capture(admin_user):
         ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         assert ws.receive_json()["type"] == "task"
+        # 에이전트는 실행 시작을 먼저 알린다(서버는 running 없이 delivered → completed 를 거부)
+        ws.send_json({"type": "running", "agent_id": agent_id, "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
         ws.send_json(
             {
                 "type": "result",

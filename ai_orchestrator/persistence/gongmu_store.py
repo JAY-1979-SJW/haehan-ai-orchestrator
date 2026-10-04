@@ -96,8 +96,19 @@ def _schema_v1(con: sqlite3.Connection) -> None:
         )""")
 
 
+def _schema_v2(con: sqlite3.Connection) -> None:
+    # G2 — AI 초안(승인 대기). 확정·취소는 사람만, 한 번 정해지면 바뀌지 않는다.
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS drafts (
+            id TEXT PRIMARY KEY, kind TEXT NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,
+            site_id TEXT, task_id TEXT, status TEXT NOT NULL DEFAULT 'pending',
+            created_by TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,
+            decided_by TEXT NOT NULL DEFAULT '', decided_at TEXT
+        )""")
+
+
 # 한 번 배포된 단계는 수정하지 않고 새 단계를 뒤에 추가한다
-_SCHEMA_STEPS = [_schema_v1]
+_SCHEMA_STEPS = [_schema_v1, _schema_v2]
 
 
 @contextmanager
@@ -397,3 +408,73 @@ def set_doc(task_id: str, doc_name: str, *, ready: bool, file_path: str, sha256:
 def list_events(limit: int = 100) -> list[dict[str, Any]]:
     with _conn() as con:
         return [dict(r) for r in con.execute("SELECT * FROM events ORDER BY id DESC LIMIT ?", (int(limit),))]
+
+
+# ── G2 AI 초안 ────────────────────────────────────────────────────────────
+
+
+def create_draft(fields: dict[str, Any], *, actor: str) -> dict[str, Any]:
+    draft_id = _id()
+    with _conn() as con:
+        con.execute(
+            "INSERT INTO drafts(id,kind,title,body,site_id,task_id,created_by,created_at) VALUES(?,?,?,?,?,?,?,?)",
+            (
+                draft_id,
+                fields["kind"],
+                fields["title"],
+                fields["body"],
+                fields.get("site_id"),
+                fields.get("task_id"),
+                actor,
+                _now(),
+            ),
+        )
+        _log(con, actor, "draft.create", draft_id, fields["kind"])
+    created = get_draft(draft_id)
+    if created is None:  # 방금 넣은 행이므로 없을 수 없다 — 조용히 None 을 돌려주지 않는다
+        raise RuntimeError("초안 저장 직후 조회에 실패했습니다")
+    return created
+
+
+def get_draft(draft_id: str) -> dict[str, Any] | None:
+    with _conn() as con:
+        row = con.execute("SELECT * FROM drafts WHERE id=?", (draft_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def list_drafts(status: str | None = None) -> list[dict[str, Any]]:
+    sql = "SELECT * FROM drafts"
+    args: tuple[str, ...] = ()
+    if status:
+        sql, args = sql + " WHERE status=?", (status,)
+    with _conn() as con:
+        return [dict(r) for r in con.execute(sql + " ORDER BY created_at DESC, id", args)]
+
+
+def decide_draft(draft_id: str, *, confirm: bool, actor: str) -> dict[str, Any] | None:
+    """승인 대기 초안을 확정/취소한다. 이미 결정됐거나 없는 초안은 None. 확정하면 연결된 업무 메모 끝에 덧붙인다(같은 트랜잭션)."""
+    with _conn() as con:
+        con.execute("BEGIN IMMEDIATE")
+        try:
+            row = con.execute("SELECT * FROM drafts WHERE id=? AND status='pending'", (draft_id,)).fetchone()
+            if row is None:
+                con.execute("ROLLBACK")
+                return None
+            now = _now()
+            con.execute(
+                "UPDATE drafts SET status=?, decided_by=?, decided_at=? WHERE id=?",
+                ("confirmed" if confirm else "cancelled", actor, now, draft_id),
+            )
+            if confirm and row["task_id"]:
+                note = f"[AI 초안 확정 {now[:10]}] {row['title']}\n{row['body']}"
+                con.execute(
+                    "UPDATE tasks SET memo=CASE WHEN memo='' THEN ? ELSE memo || char(10) || char(10) || ? END, "
+                    "updated_at=? WHERE id=?",
+                    (note, note, now, row["task_id"]),
+                )
+            _log(con, actor, "draft.confirm" if confirm else "draft.cancel", draft_id, row["kind"])
+            con.execute("COMMIT")
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
+    return get_draft(draft_id)

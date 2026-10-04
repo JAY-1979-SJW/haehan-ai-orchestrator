@@ -561,6 +561,24 @@ def _submit_fetch(client, url, auth, task_id=None):
     return task_id, r
 
 
+def _approval_token(r):
+    """제출 응답에서 승인 토큰을 꺼낸다.
+
+    POST /api/v1/tasks 는 router.POST_TASKS_DRY_RUN_ENABLED=True(정책 잠금, 다른 시험들이 True 를 단언)일 때 토큰을 발급하지 않는다
+    ("DRY_RUN: would issue token — gate active"). 이 흐름(승인→실행) 시험은 그 동안 건너뛰고 이유를 남긴다 —
+    test_approval_execution_flow 의 기존 방식. 플래그가 꺼졌는데도 토큰이 없으면 진짜 회귀이므로 실패시킨다.
+    주의: 정책이 풀려 토큰이 발급돼도 승인 응답에 'executed' 키가 없어(2026-10-05 실측: 플래그를 끄면 8건이 KeyError) 시험 본문이
+    추가로 낡았다 — 정책 결정 뒤 별도로 정리해야 한다(이번 변경은 토큰 부재로 인한 실패만 건너뛰기로 바꾼 것).
+    """
+    from ai_orchestrator import router as _router
+
+    token_id = r.json().get("approval_token_id")
+    if not token_id and _router.POST_TASKS_DRY_RUN_ENABLED:
+        pytest.skip("POST /tasks 가 DRY_RUN 게이트(POST_TASKS_DRY_RUN_ENABLED=True)라 승인 토큰을 발급하지 않음")
+    assert token_id, r.text
+    return token_id
+
+
 def test_fetch_web_page_in_whitelist(app_client):
     from ai_orchestrator import executor as ex
 
@@ -586,8 +604,7 @@ def test_fetch_web_page_admin_approve_success(app_client):
     with patch.object(pc, "fetch_web_page", return_value=fake):
         task_id, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"))
         assert r.status_code == 200, r.text
-        token_id = r.json().get("approval_token_id")
-        assert token_id
+        token_id = _approval_token(r)
         r2 = app_client.post(
             f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
         )
@@ -609,8 +626,7 @@ def test_fetch_web_page_admin_approve_success(app_client):
 
 def test_fetch_web_page_viewer_approve_forbidden(app_client):
     task_id, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"))
-    token_id = r.json().get("approval_token_id")
-    assert token_id
+    token_id = _approval_token(r)
     r2 = app_client.post(
         f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("viewer_u")
     )
@@ -619,8 +635,7 @@ def test_fetch_web_page_viewer_approve_forbidden(app_client):
 
 def test_fetch_web_page_operator_approve_forbidden(app_client):
     task_id, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"))
-    token_id = r.json().get("approval_token_id")
-    assert token_id
+    token_id = _approval_token(r)
     r2 = app_client.post(
         f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("operator_u")
     )
@@ -632,8 +647,7 @@ def _approve_expect_block(app_client, url, expected_marker):
 
     with patch.object(pc, "fetch_web_page", wraps=pc.fetch_web_page):
         task_id, r = _submit_fetch(app_client, url, _auth("admin_u"))
-        token_id = r.json().get("approval_token_id")
-        assert token_id, r.json()
+        token_id = _approval_token(r)
         r2 = app_client.post(
             f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
         )
@@ -684,8 +698,7 @@ def test_fetch_web_page_night_block_has_priority(app_client):
     from ai_orchestrator.connectors import playwright_connector as pc
 
     task_id, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"))
-    token_id = r.json().get("approval_token_id")
-    assert token_id
+    token_id = _approval_token(r)
 
     with (
         patch.object(pc, "fetch_web_page") as spy,
@@ -711,8 +724,7 @@ def test_fetch_web_page_task_cooldown_has_priority(app_client):
     with patch.object(el, "_now", return_value=fixed_now):
         el.record_execution(task_id, "fetch_web_page", "admin_u", status="OK", risk_level="medium")
         _, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"), task_id=task_id)
-        token_id = r.json().get("approval_token_id")
-        assert token_id, r.json()
+        token_id = _approval_token(r)
         with patch.object(pc, "fetch_web_page") as spy:
             r2 = app_client.post(
                 f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")

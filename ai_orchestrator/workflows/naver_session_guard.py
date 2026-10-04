@@ -47,15 +47,23 @@ class GuardDeps:
     read_alias: Callable[[], str | None]  # 새 탭에서 블로그 alias 읽기(읽기 전용)
     run_login: Callable[[str], dict[str, Any]]  # 로그인 파이프라인(naver_id) — out 일 때만 호출
     save_attempt: Callable[[dict[str, Any]], None]
+    # 브라우저가 꺼져 있으면 시작까지 하는 판정(자동 로그인 흐름 전용). 없으면 detect 를 쓴다(테스트의 가짜 부품 호환).
+    detect_starting: Callable[[], dict[str, Any]] | None = None
     sleep: Callable[[float], None] = time.sleep
 
 
 # ── 상태 확인·결정 ───────────────────────────────────────────────────────
 
 
-def observe(target: str, deps: GuardDeps) -> dict[str, Any]:
-    """읽기 전용 관찰: 로그인 상태와(로그인돼 있으면) 어느 계정인지."""
-    detected = deps.detect()
+def observe(target: str, deps: GuardDeps, *, start_browser: bool = False) -> dict[str, Any]:
+    """읽기 전용 관찰: 로그인 상태와(로그인돼 있으면) 어느 계정인지.
+
+    기본은 브라우저를 시작하지 않는다 — 꺼져 있으면 바로 unavailable. 화면이 상태를 반복해서 확인하는 용도라
+    사용자 PC 에서 Chrome 이 저절로 뜨고 최대 20초 기다리면 안 된다(2026-10-04 앱 실검증 D7).
+    자동 로그인 흐름(start_browser=True)만 필요할 때 브라우저를 시작한다.
+    """
+    detect = deps.detect_starting if (start_browser and deps.detect_starting is not None) else deps.detect
+    detected = detect()
     state = str(detected.get("state", "unknown"))
     seen: dict[str, Any] = {
         "target": target,
@@ -98,18 +106,18 @@ def _login_outcome(result: dict[str, Any]) -> str:
 
 def _observe_after_login(target: str, deps: GuardDeps) -> dict[str, Any]:
     """로그인 직후에는 페이지가 이동 중이라 상태가 unknown 으로 읽힐 수 있다 — 안정될 때까지 몇 번 다시 읽는다."""
-    seen = observe(target, deps)
+    seen = observe(target, deps, start_browser=True)
     for _ in range(SETTLE_CHECKS):
         if seen["state"] in ("in", "out"):
             break
         deps.sleep(SETTLE_WAIT_SECONDS)
-        seen = observe(target, deps)
+        seen = observe(target, deps, start_browser=True)
     return seen
 
 
 def ensure_login(target: str, deps: GuardDeps, *, allow_attempt: bool = True) -> dict[str, Any]:
     """상태를 확인하고 로그인돼 있지 않으면(out·unknown) 바로 자동 로그인. 결과 dict 의 action: none / logged_in / unverified / captcha / failed."""
-    seen = observe(target, deps)
+    seen = observe(target, deps, start_browser=True)  # 자동 로그인이 목적이라 브라우저가 꺼져 있으면 시작한다
     if seen["state"] not in ("out", "unknown"):
         return _result(seen, "none", "already_logged_in" if seen["state"] == "in" else f"state_{seen['state']}")
     if not allow_attempt:
@@ -167,9 +175,11 @@ def default_deps() -> GuardDeps:
     from scripts.naver.blog.automation.account_probe import read_alias
     from scripts.web_connector import get_page_by_url, open_page, run_on_browser_thread
 
-    def detect() -> dict[str, Any]:
+    def _detect(start_browser: bool) -> dict[str, Any]:
         try:
             if not _is_cdp_alive():
+                if not start_browser:
+                    return {"state": "unavailable", "cookie": None}  # 읽기 전용 확인은 브라우저를 띄우지 않는다
                 _start_cdp()  # 로그인 파이프라인이 하는 것과 같다(프로필 유지, 세션 보존)
 
             def job() -> dict[str, Any]:
@@ -204,7 +214,8 @@ def default_deps() -> GuardDeps:
 
     return GuardDeps(
         now=datetime.now,
-        detect=detect,
+        detect=lambda: _detect(False),
+        detect_starting=lambda: _detect(True),
         read_alias=alias_in_new_tab,
         run_login=lambda target: run_naver_login_pipeline(naver_id=target),
         save_attempt=_save_attempt,

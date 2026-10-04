@@ -430,3 +430,63 @@ def list_catalog() -> list[dict[str, Any]]:
 
 def list_events(limit: int = 100) -> list[dict[str, Any]]:
     return store.list_events(min(max(limit, 1), 500))
+
+
+# ── G2 AI 초안 (AI 는 만들기만, 확정·취소는 사람) ─────────────────────────────
+
+DRAFT_KINDS = {
+    "progress_billing": "기성 청구 내역서",
+    "hq_report": "본사 정기 보고서",
+    "subcontract_review": "하도급 계약 검토 체크리스트",
+    "safety_checklist": "안전서류 작성 점검표",
+    "missing_docs": "서류 누락 요약",
+}
+
+
+def create_draft(raw: dict[str, Any], *, actor: str) -> dict[str, Any]:
+    kind = str(raw.get("kind") or "").strip()
+    if kind not in DRAFT_KINDS:
+        raise ValueError(f"초안 종류는 {', '.join(DRAFT_KINDS)} 중 하나여야 합니다")
+    site_id = str(raw.get("site_id") or "").strip() or None
+    task_id = str(raw.get("task_id") or "").strip() or None
+    if site_id and store.get_site(site_id) is None:
+        raise ValueError("현장을 찾을 수 없습니다")
+    if task_id and store.get_task(task_id) is None:
+        raise ValueError("업무를 찾을 수 없습니다")
+    fields = {
+        "kind": kind,
+        "title": _text(raw.get("title") or DRAFT_KINDS[kind], "제목", 100),
+        "body": _text(raw.get("body"), "내용", 6000, required=True),
+        "site_id": site_id,
+        "task_id": task_id,
+    }
+    return store.create_draft(fields, actor=actor)
+
+
+def list_drafts(status: str | None = None) -> list[dict[str, Any]]:
+    if status and status not in ("pending", "confirmed", "cancelled"):
+        raise ValueError("상태는 pending·confirmed·cancelled 중 하나여야 합니다")
+    return store.list_drafts(status)
+
+
+def get_draft(draft_id: str) -> dict[str, Any]:
+    draft = store.get_draft(draft_id)
+    if draft is None:
+        raise ValueError("초안을 찾을 수 없습니다")
+    return draft
+
+
+def confirm_draft(draft_id: str, *, actor: str) -> dict[str, Any]:
+    return _decide(draft_id, True, actor)
+
+
+def cancel_draft(draft_id: str, *, actor: str) -> dict[str, Any]:
+    return _decide(draft_id, False, actor)
+
+
+def _decide(draft_id: str, confirm: bool, actor: str) -> dict[str, Any]:
+    done = store.decide_draft(draft_id, confirm=confirm, actor=actor)
+    if done is None:
+        get_draft(draft_id)  # 없으면 '찾을 수 없습니다'
+        raise ValueError("이미 처리된 초안입니다")
+    return done

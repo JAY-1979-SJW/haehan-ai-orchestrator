@@ -15,6 +15,7 @@ import {
   type TaskDetail,
   type TaskStatus,
 } from "./api";
+import { GongmuAiPanel } from "./GongmuAiPanel";
 
 /**
  * 공무 업무판 화면 — 왼쪽: 현장 목록·등록·가져오기, 오른쪽: 이번 주 할 일 · 상태별 업무 보드 · 계약 · 업무 상세(서류).
@@ -53,6 +54,7 @@ export function GongmuApp() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const refreshAll = useCallback(async () => {
     try {
@@ -116,6 +118,19 @@ export function GongmuApp() {
           <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800">기한 확인 필요 {summary.counts.unknown}</span>
           <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">진행 중 {summary.counts.open}</span>
         </div>
+      )}
+      <div>
+        <button className={btn} onClick={() => setAiOpen((v) => !v)} aria-expanded={aiOpen}>🤖 공무 AI 업무 창{aiOpen ? " 닫기" : ""}</button>
+      </div>
+      {aiOpen && (
+        <GongmuAiPanel
+          site={site}
+          onClose={() => setAiOpen(false)}
+          onDecided={() => {
+            void refreshAll();
+            if (siteId) void refreshSite(siteId);
+          }}
+        />
       )}
       {error && <div className="rounded-lg bg-red-50 p-2 text-red-700" role="alert">{error}</div>}
       {notice && <div className="rounded-lg bg-green-50 p-2 text-green-800">{notice}</div>}

@@ -10,7 +10,9 @@
 from __future__ import annotations
 
 import stat
+import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]  # scripts/ops/ → repo root
@@ -321,6 +323,33 @@ def install(name: str, content: str) -> None:
     print(f"[install_git_hooks] {name} 설치 완료: {path}")
 
 
+def _git_config(root: Path, *args: str) -> tuple[int, str]:
+    proc = subprocess.run(
+        ["git", "-C", str(root), "config", *args], capture_output=True, text=True, encoding="utf-8", errors="replace", check=False
+    )
+    return proc.returncode, (proc.stdout or "").strip()
+
+
+def ensure_hooks_path(root: Path = ROOT, git_config: Callable[..., tuple[int, str]] = _git_config) -> str:
+    """`core.hooksPath` 가 `.githooks` 를 가리키게 맞춘다. 훅 파일만 쓰고 이 설정이 없으면 git 이 훅을 실행하지 않는다.
+
+    새로 복제한 저장소·다른 PC 는 로컬 설정이 비어 있어 훅이 "설치됨"인데 동작하지 않던 문제(2026-10-04 실측)를 막는다.
+    이미 다른 값이 설정돼 있으면 덮어쓰지 않고 알리기만 한다. 반환: 'ok' | 'set' | 'other' | 'failed'.
+    """
+    code, current = git_config(root, "--get", "core.hooksPath")
+    if code == 0 and current == ".githooks":
+        return "ok"
+    if code == 0 and current:
+        print(f"[install_git_hooks] core.hooksPath 가 이미 '{current}' 로 설정돼 있어 바꾸지 않았습니다(.githooks 훅이 동작하지 않을 수 있음)")
+        return "other"
+    code, out = git_config(root, "core.hooksPath", ".githooks")
+    if code != 0:
+        print(f"[install_git_hooks] core.hooksPath 설정 실패: {out}")
+        return "failed"
+    print("[install_git_hooks] core.hooksPath=.githooks 를 설정했습니다(이전에는 비어 있어 훅이 동작하지 않았음)")
+    return "set"
+
+
 def main() -> None:
     if not HOOKS_DIR.exists():
         print(f"[install_git_hooks] .git/hooks 디렉터리를 찾을 수 없습니다: {HOOKS_DIR}")
@@ -332,7 +361,11 @@ def main() -> None:
     install("pre-commit.orig" if wrapped else "pre-commit", PRE_COMMIT)
     install("pre-push", PRE_PUSH)
     install("post-commit", POST_COMMIT)
-    print("[install_git_hooks] 완료. pre-commit(ruff) + pre-push(AI 검수) + post-commit(작업기록) 활성화됨.")
+    state = ensure_hooks_path()
+    if state in ("ok", "set"):
+        print("[install_git_hooks] 완료. pre-commit(ruff) + pre-push(AI 검수) + post-commit(작업기록) 활성화됨.")
+    else:
+        print("[install_git_hooks] 훅 파일은 설치했지만 core.hooksPath 문제로 git 이 실행하지 않을 수 있습니다(위 안내 참고).")
 
 
 if __name__ == "__main__":

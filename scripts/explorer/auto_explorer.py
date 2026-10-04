@@ -82,10 +82,12 @@ _PAGE_SUMMARY_JS = r"""
   });
   // 폼 개수 (간단)
   const forms = document.querySelectorAll('form').length;
+  // 폼 없이 버튼·편집 영역으로만 동작하는 화면도 업무 화면이다(글쓰기·발행·이체 등)
+  const controls = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], [contenteditable="true"], [role="textbox"]')).filter(e => e.offsetParent !== null).length;
   return {
     title: document.title || '',
     url: location.href,
-    links, tables, forms,
+    links, tables, forms, controls,
   };
 }
 """
@@ -107,6 +109,12 @@ def _current_url(page) -> str:
         return page.url or ""
     except Exception:  # noqa: BLE001 - 범용 사이트 크롤링 탐색기 - 동일 도메인 검사/URL 이동 실패시 안전한 기본값(False/원본 URL) 반환, 봇 감지시 즉시 중단
         return ""
+
+
+def _pause_between_pages(delay_s: float, pages_data: list[dict]) -> None:
+    """첫 페이지 뒤부터 페이지 이동 사이에 delay_s 초 쉰다(0 이하면 쉬지 않음 = 기존 동작)."""
+    if delay_s > 0 and pages_data:
+        time.sleep(delay_s)
 
 
 def _navigate_if_needed(page, url: str, pages_data: list[dict]) -> bool:
@@ -217,6 +225,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
         "remove",
         "submit",
     ),
+    delay_s: float = 0.0,
 ) -> dict:
     """현재 페이지부터 BFS 탐색.
 
@@ -227,6 +236,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
         same_host_only: 같은 호스트만
         bot_check_each_page: 각 페이지에서 봇 레이더 스캔
         skip_url_patterns: 위험 URL 키워드 (로그아웃/삭제/제출 등 자동 회피)
+        delay_s: 페이지 이동 사이 대기 초(기본 0 = 기존 동작). 사이트 부담을 줄이려는 호출자가 지정한다.
 
     Returns:
         dict{host, started_url, pages, bot_radar, elapsed_s}
@@ -254,6 +264,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
             continue
 
         # 이동 (현재 URL과 다를 때만)
+        _pause_between_pages(delay_s, pages_data)
         if not _navigate_if_needed(page, url, pages_data):
             continue
 
@@ -274,6 +285,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
             "title": s.get("title", "")[:120],
             "tables": s.get("tables", [])[:10],
             "forms_count": s.get("forms", 0),
+            "controls_count": s.get("controls", 0),
             "form_summary": form_summary,
             "links_out": [],
         }

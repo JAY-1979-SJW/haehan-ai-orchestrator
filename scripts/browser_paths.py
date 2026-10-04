@@ -40,6 +40,10 @@ def first_existing(candidates: Iterable[str]) -> str | None:
 
 
 def find_chrome() -> str | None:
+    """Chrome 실행 파일. 환경변수 HAEHAN_CHROME_PATH(비표준 위치에 설치한 PC 용) → Program Files → x86 → %LOCALAPPDATA% 순."""
+    configured = os.environ.get("HAEHAN_CHROME_PATH", "").strip()
+    if configured and Path(configured).exists():
+        return configured
     return first_existing(CHROME_CANDIDATES)
 
 
