@@ -53,5 +53,5 @@ def record_auth_event(
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
-    except Exception:
+    except Exception:  # noqa: BLE001 - 감사 기록 실패가 로그인·가입 흐름을 깨면 안 되어 실패 격리(경고 로그)
         _log.warning("auth audit write failed", exc_info=False)

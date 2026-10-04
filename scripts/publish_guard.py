@@ -47,7 +47,7 @@ def _notify(text: str) -> None:
         result = send_message(text)
         if not result.get("ok") and not result.get("skipped"):
             print(f"[publish_guard] 텔레그램 알림 실패: {result}", file=sys.stderr)
-    except Exception as exc:  # 알림 실패가 본작업을 절대 깨면 안 됨
+    except Exception as exc:  # noqa: BLE001 - 알림 실패가 본작업을 절대 깨면 안 됨
         print(f"[publish_guard] 텔레그램 알림 예외: {type(exc).__name__}: {exc}", file=sys.stderr)
 
 
@@ -55,7 +55,7 @@ def _safe_notify(text: str) -> None:
     """_notify 호출 자체가 예외를 던져도(테스트 monkeypatch 포함) 절대 전파하지 않는다."""
     try:
         _notify(text)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 실패 기록 시도가 본 작업 오류를 가리면 안 되어 의도적으로 넓게 잡음
         print(f"[publish_guard] 알림 래퍼 예외: {type(exc).__name__}: {exc}", file=sys.stderr)
 
 
@@ -109,7 +109,7 @@ def guarded(
 
             try:
                 ok = ok_fn(result)
-            except Exception:
+            except Exception:  # noqa: BLE001 - 후처리(기록·알림) 실패는 원래 예외 전파를 막으면 안 됨
                 ok = True  # ok_fn 자체 오류로 본작업 실패 처리하지 않음(보수적)
 
             if not ok:
