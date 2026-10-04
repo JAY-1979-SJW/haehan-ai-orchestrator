@@ -161,3 +161,20 @@ def test_restricted_requires_literal_true() -> None:
     for value in ("true", 1, "yes", None):
         cmd = _capture_cmd({"restricted": value, "allowed_tools": ["Read"]})
         assert "--restricted" not in cmd  # 느슨한 값으로 제한 모드를 켜거나 끄는 혼동 방지(True 만 인정)
+
+
+def test_stdin_is_devnull_so_claude_does_not_wait_for_input() -> None:
+    """에이전트는 Electron 이 열린 빈 stdin 파이프로 띄운다 — 상속하면 claude -p 가 입력을 3초 기다린다
+    (2026-10-04 실측 18.6초 → 15.1초). subprocess.run 에 stdin=DEVNULL 을 명시해야 한다."""
+    import subprocess
+
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["kwargs"] = kwargs
+        return _FakeCompletedProcess(_ok_payload("1"))
+
+    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+        action_run_claude_agent({"prompt": "숫자 1만 답해"})
+
+    assert captured["kwargs"].get("stdin") is subprocess.DEVNULL

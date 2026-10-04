@@ -96,6 +96,21 @@ export interface ImportResult {
 
 export type Settings = Record<string, number>;
 
+export type DraftStatus = "pending" | "confirmed" | "cancelled";
+
+export interface Draft {
+  id: string;
+  kind: string;
+  title: string;
+  body: string;
+  site_id: string | null;
+  task_id: string | null;
+  status: DraftStatus;
+  created_at: string;
+  decided_by: string;
+  decided_at: string | null;
+}
+
 async function failure(res: Response): Promise<Error> {
   let detail = `HTTP ${res.status}`;
   try {
@@ -136,4 +151,8 @@ export const gongmuApi = {
   addChange: (contractId: string, input: Record<string, unknown>) => call<{ contract: Contract }>(`contracts/${contractId}/changes`, "POST", input),
   importSites: (path: string) => call<ImportResult>("import/sites", "POST", { path }),
   importContracts: (path: string) => call<ImportResult>("import/contracts", "POST", { path }),
+  drafts: (status?: DraftStatus) => call<{ items: Draft[] }>(`drafts${status ? `?status=${status}` : ""}`).then((r) => r.items),
+  draft: (id: string) => call<Draft>(`drafts/${id}`),
+  confirmDraft: (id: string) => call<Draft>(`drafts/${id}/confirm`, "POST"),
+  cancelDraft: (id: string) => call<Draft>(`drafts/${id}/cancel`, "POST"),
 };

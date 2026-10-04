@@ -902,6 +902,42 @@
   "reason": "메일 순차 대량 발송 워크플로(승인서→정책 판정→한 명씩 발송→이력 기록, docstring 1행이 'L6 워크플로') — 파일 안 dataclass 때문에 정의 위주 L1 contract 로 오분류. 같은 폴더 naver_mail_drafts·naver_mailbox_flow 와 같은 유형",
   "source": "manual"
  },
+ "ai_orchestrator/domain/site_task_map.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "사이트 업무 지도 스키마·위험 등급·분류·병합 규칙(순수 함수, 네트워크·파일·시계 없음) — 저장소(L7)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+  "source": "manual"
+ },
+ "ai_orchestrator/services/site_task_map_service.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "지도 조회·확정 업무 흐름(규칙은 domain, 저장은 persistence 에 위임, HTTP·브라우저 모름) — generic L4 오분류",
+  "source": "manual"
+ },
+ "ai_orchestrator/services/site_task_map_explore_service.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "탐색 요청 승인·실행 상태 전이 업무 흐름(실행기 주입, 브라우저·scripts 모름) — generic L4 오분류",
+  "source": "manual"
+ },
+ "scripts/explorer/task_mapper.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "탐색 결과(page_snapshot·auto_explorer)를 domain 규칙으로 분류해 persistence 에 합치는 변환·저장 연결 어댑터 — 저장소를 호출하므로 L4 가 아니라 L6. generic L4 오분류",
+  "source": "manual"
+ },
+ "ai_orchestrator/domain/vendor_directory.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "벤더 공식 API 목록 검색·요약·상태 의미(순수 함수, 파일·네트워크 없음) — 서비스(L6)가 읽는 L1 계약. generic L4 오분류",
+  "source": "manual"
+ },
+ "ai_orchestrator/services/vendor_directory_service.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "벤더 공식 API 목록 조회 업무 흐름(파일 읽기 + domain 규칙 호출, HTTP 모름) — generic L4 오분류",
+  "source": "manual"
+ },
  "ai_orchestrator/contracts/agent_result_limits.py": {
   "layer": "L1",
   "role": "contract",
@@ -912,6 +948,18 @@
   "layer": "L1",
   "role": "contract",
   "reason": "L1 공유 계약 끝점 폴더(import 없음) — 루트/persistence 양방향 순환 방지",
+  "source": "manual"
+ },
+ "ai_orchestrator/domain/site_registry.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "등록 사이트 상태 전이·정책 검증·탐색 결과 반영 규칙(순수 함수, 파일·네트워크·시계 없음) — 저장소(L7)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+  "source": "manual"
+ },
+ "ai_orchestrator/services/site_onboarding_service.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "사이트 등록·최초 탐색 시작·상태 지연 평가 업무 흐름(규칙은 domain, 저장은 persistence, 탐색은 기존 explore 서비스에 위임, HTTP·브라우저 모름) — generic L4 오분류",
   "source": "manual"
  }
 }

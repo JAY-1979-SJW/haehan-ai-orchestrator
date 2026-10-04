@@ -91,6 +91,7 @@ from .local_agent_registry_task_lifecycle import (  # noqa: F401
 # ── 작업 큐 ────────────────────────────────────────────────────────────────
 from .local_agent_registry_task_queue import (
     attach_token,
+    add_enqueue_listener,
     enqueue_task,
     find_task_by_id,
     find_task_by_token_id,
@@ -129,6 +130,7 @@ __all__ = [
     "cancel_task",
     "cleanup_agent_and_tasks",
     "clear",
+    "add_enqueue_listener",
     "enqueue_task",
     "expire_stale_tasks",
     "clear_agent_capacity",

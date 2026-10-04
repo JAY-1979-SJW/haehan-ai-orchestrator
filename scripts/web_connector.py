@@ -161,6 +161,13 @@ def _connect_browser():
         except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
             pass
         log.warning("[web_connector] 캐시된 브라우저 컨텍스트 스테일 — 재연결")
+        # 이전 Playwright 인스턴스를 멈추지 않고 버리면, 그 내부 이벤트루프가 이 전용 스레드에 "실행 중"으로 남아
+        # 이후의 모든 sync_playwright().start() 가 "Sync API inside the asyncio loop" 로 영구 실패한다
+        # (2026-10-04 실측: 서버 시작 직후 연결이 낡아 재연결 → 사이트 지도 실행 500. 연결 실패 경로는 아래에서 이미 stop 한다).
+        stale = _PLAYWRIGHT_INSTANCE
+        if stale is not None:
+            with suppress(Exception):
+                stale.stop()
         globals()["_BROWSER_CACHE"] = None
         globals()["_BROWSER_CONTEXT_CACHE"] = None
         globals()["_PLAYWRIGHT_INSTANCE"] = None

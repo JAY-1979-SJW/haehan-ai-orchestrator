@@ -86,3 +86,36 @@ def test_find_ffmpeg_returns_none_when_not_installed(tmp_path, monkeypatch):
     monkeypatch.setattr(bp.shutil, "which", lambda name: None)
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     assert bp.find_ffmpeg() is None
+
+
+def test_find_chrome_prefers_env_override_for_nonstandard_install(tmp_path, monkeypatch):
+    custom = tmp_path / "portable" / "chrome.exe"
+    custom.parent.mkdir()
+    custom.write_text("x")
+    monkeypatch.setenv("HAEHAN_CHROME_PATH", str(custom))
+    assert bp.find_chrome() == str(custom)  # 표준 위치에 설치돼 있어도 지정한 경로가 우선
+
+
+def test_find_chrome_ignores_env_override_that_does_not_exist(tmp_path, monkeypatch):
+    monkeypatch.setenv("HAEHAN_CHROME_PATH", str(tmp_path / "missing.exe"))
+    monkeypatch.setattr(bp, "first_existing", lambda _c: "STANDARD")
+    assert bp.find_chrome() == "STANDARD"  # 잘못 지정했으면 조용히 기본 탐색으로 돌아간다(없는 경로로 실행하지 않음)
+
+
+def test_naver_browser_gate_honors_chrome_path_env_and_reports_missing(tmp_path, monkeypatch):
+    """browser_gate 는 L2 로 분류돼 browser_paths(L4)를 import 할 수 없어 자체 목록을 둔다 — 환경변수 인식은 같아야 한다."""
+    from scripts.naver import browser_gate
+
+    custom = tmp_path / "portable" / "chrome.exe"
+    custom.parent.mkdir()
+    custom.write_text("x")
+    monkeypatch.setenv("HAEHAN_CHROME_PATH", str(custom))
+    assert browser_gate._find_chrome_exe() == str(custom)
+    monkeypatch.delenv("HAEHAN_CHROME_PATH")
+    monkeypatch.setattr(browser_gate.Path, "exists", lambda _self: False)
+    try:
+        browser_gate._find_chrome_exe()
+    except FileNotFoundError:
+        pass
+    else:
+        raise AssertionError("Chrome 이 없으면 FileNotFoundError 여야 한다")

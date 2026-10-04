@@ -12,7 +12,10 @@
   POST /gongmu/import/sites · /import/contracts  {path} — 허용 폴더 안의 엑셀·CSV
   GET  /gongmu/events                     — 변경 이력(추가만)
 
-**AI 허용 아님**(G2 에서 읽기 전용 API 를 따로 연다). 모든 엔드포인트는 관리자 인증.
+  POST/GET /gongmu/drafts · GET /gongmu/drafts/{id} — G2 AI 초안(승인 대기)
+  POST /gongmu/drafts/{id}/confirm · /cancel        — 사람만(카드 버튼)
+
+AI 허용(mcp_server)은 sites·tasks·tasks/{id}·drafts(POST/GET) 뿐 — 확정·취소 등 나머지는 허용 아님. 모든 엔드포인트는 관리자 인증.
 sqlite·파일 읽기가 블로킹이라 엔드포인트를 `def` 로 둔다(FastAPI 가 스레드풀에서 실행 — 공식 문서 권장).
 """
 
@@ -102,6 +105,14 @@ class DocBody(BaseModel):
 
 class ImportBody(BaseModel):
     path: str
+
+
+class DraftBody(BaseModel):
+    kind: str
+    title: str = ""
+    body: str
+    site_id: str | None = None
+    task_id: str | None = None
 
 
 class SettingsBody(BaseModel):
@@ -240,3 +251,43 @@ def import_contracts(body: ImportBody, claims: dict = _ADMIN):
 @gongmu_router.get("/events")
 def events(limit: int = 100, _: dict = _ADMIN):
     return {"items": service.list_events(limit)}
+
+
+@gongmu_router.post("/drafts")
+def create_draft(body: DraftBody, claims: dict = _ADMIN):
+    try:
+        return service.create_draft(body.model_dump(), actor=_user(claims))
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@gongmu_router.get("/drafts")
+def list_drafts(status: str | None = None, _: dict = _ADMIN):
+    try:
+        return {"items": service.list_drafts(status)}
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@gongmu_router.get("/drafts/{draft_id}")
+def get_draft(draft_id: str = _id(), _: dict = _ADMIN):
+    try:
+        return service.get_draft(draft_id)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@gongmu_router.post("/drafts/{draft_id}/confirm")
+def confirm_draft(draft_id: str = _id(), claims: dict = _ADMIN):
+    try:
+        return service.confirm_draft(draft_id, actor=_user(claims))
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@gongmu_router.post("/drafts/{draft_id}/cancel")
+def cancel_draft(draft_id: str = _id(), claims: dict = _ADMIN):
+    try:
+        return service.cancel_draft(draft_id, actor=_user(claims))
+    except ValueError as e:
+        raise _bad(e) from e

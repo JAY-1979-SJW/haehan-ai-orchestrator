@@ -11,6 +11,7 @@ POST /api/v1/hanafax/batch/execute   — 배치 실 발송 (승인 필수)
 
 from __future__ import annotations
 
+import logging
 import re
 import sys
 from pathlib import Path
@@ -26,6 +27,18 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 hanafax_router = APIRouter(prefix="/hanafax", tags=["hanafax"])
+logger = logging.getLogger(__name__)
+
+
+def _failure_text(exc: Exception, what: str) -> str:
+    """하나팩스 사이트를 읽다 난 예외를 사람이 알아볼 문장으로 바꾼다.
+
+    브라우저(Playwright Chromium)가 설치되지 않은 PC 에서는 예외 이름이 그냥 'Error' 라 원인을 알 수 없었다
+    (2026-10-04 앱 실검증: /status 는 500, /address-groups 는 "...: Error").
+    """
+    if "Executable doesn't exist" in str(exc):
+        return f"{what}에 쓰는 브라우저(Playwright Chromium)가 이 PC 에 설치돼 있지 않습니다. 관리자가 설치해야 합니다 (playwright install chromium)."
+    return f"{what} 실패: {type(exc).__name__}"
 
 
 # ── 모델 ─────────────────────────────────────────────────────────────────────
@@ -121,7 +134,19 @@ def _parse_status(info: str) -> dict:
 def get_status(_: dict = Depends(require_role("admin", "owner"))):
     from scripts.hanafax.auth import test_login
 
-    result = test_login()
+    try:
+        result = test_login()
+    except Exception as exc:  # noqa: BLE001 - 상태 조회는 브라우저 미설치·사이트 오류 등 어떤 실패든 500 대신 ok=False+사유 문구로 알리는 읽기 전용 점검 API(로그인 실패와 같은 규약), 발송·승인 판정과 무관
+        logger.warning("하나팩스 상태 확인 실패: %s", exc)
+        return HanafaxStatus(
+            ok=False,
+            message=_failure_text(exc, "하나팩스 상태 확인"),
+            fax_number="",
+            balance="",
+            plan="",
+            member_status="",
+            new_fax_count="",
+        )
     if not result["ok"]:
         return HanafaxStatus(
             ok=False, message=result["message"], fax_number="", balance="", plan="", member_status="", new_fax_count=""
@@ -266,7 +291,8 @@ def address_groups(_: dict = Depends(require_role("admin", "owner"))):
     try:
         return _auth_service().list_site_groups()
     except Exception as exc:  # 사이트 읽기 실패 사유를 알린다
-        raise HTTPException(status_code=502, detail=f"주소록 그룹을 읽지 못했습니다: {type(exc).__name__}") from exc
+        logger.warning("하나팩스 주소록 그룹 읽기 실패: %s", exc)
+        raise HTTPException(status_code=502, detail=_failure_text(exc, "주소록 그룹 읽기")) from exc
 
 
 @hanafax_router.post("/address-groups/{intid}/sync", response_model=dict)

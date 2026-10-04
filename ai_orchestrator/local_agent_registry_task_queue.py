@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import uuid
+from collections.abc import Callable
 
 from .local_agent_models import LocalAgentTask
 from .local_agent_redaction import _strip_sensitive
@@ -15,6 +17,22 @@ from .local_agent_registry_common import (
     _now_iso,
     _tasks,
 )
+
+# 큐에 작업(queued)이 들어간 직후 호출되는 리스너(agent_id 전달). WS 계층이 연결된 에이전트를
+# 즉시 깨우는 데 쓴다 — 레지스트리는 WS 계층을 import 하지 않는다(의존 방향 유지).
+_enqueue_listeners: list[Callable[[str], None]] = []
+
+
+def add_enqueue_listener(listener: Callable[[str], None]) -> None:
+    if listener not in _enqueue_listeners:
+        _enqueue_listeners.append(listener)
+
+
+def _notify_enqueued(agent_id: str) -> None:
+    for listener in list(_enqueue_listeners):
+        # 리스너 실패가 작업 등록을 막으면 안 된다 — 늦어도 heartbeat 가 전달한다(폴백)
+        with contextlib.suppress(Exception):
+            listener(agent_id)
 
 
 def enqueue_task(
@@ -62,6 +80,8 @@ def enqueue_task(
     )
     with _lock:
         _tasks[task.task_id] = task
+    if status == "queued":
+        _notify_enqueued(agent_id)
     return task
 
 

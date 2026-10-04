@@ -70,9 +70,12 @@ export default function MyPage() {
 
   if (!user) return null;
 
-  const joinedAt = new Date(user.created_at).toLocaleDateString("ko-KR", {
-    year: "numeric", month: "long", day: "numeric",
-  });
+  // 데스크톱 소유자 모드는 created_at 이 빈 문자열이다 — new Date("") 는 "Invalid Date" 로 보이므로 값이 없거나 잘못되면 "-"
+  const joinedDate = new Date(user.created_at);
+  const joinedAt =
+    user.created_at && !Number.isNaN(joinedDate.getTime())
+      ? joinedDate.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
+      : "-";
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] px-4 py-8">

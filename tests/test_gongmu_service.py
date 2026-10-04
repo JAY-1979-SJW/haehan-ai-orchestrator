@@ -190,7 +190,7 @@ def test_update_settings_changes_rules_and_regenerates(env):
 def test_schema_version_set(env):
     store.list_sites()
     with sqlite3.connect(store._DB_PATH) as con:
-        assert con.execute("PRAGMA user_version").fetchone()[0] == 1
+        assert con.execute("PRAGMA user_version").fetchone()[0] == 2
 
 
 def test_scheduled_action_is_readonly_summary_and_registered(env):
@@ -203,9 +203,15 @@ def test_scheduled_action_is_readonly_summary_and_registered(env):
     assert "공무 업무 알림" in spec.run({})
 
 
-def test_not_exposed_to_ai_registry():
-    text = " ".join(f"{v.get('path', '')} {v.get('method', '')}" for v in mcp_server.API_REGISTRY.values())
-    assert "gongmu" not in text  # G1 은 AI 허용 목록에 없다(G2 에서 읽기 전용만 연다)
+def test_ai_registry_is_read_and_draft_only():
+    """AI 허용 gongmu API 는 읽기 3개 + 초안 생성뿐 — 상태 변경·서류·확정·취소·가져오기는 없다."""
+    entries = {k: (v["method"], v["path"]) for k, v in mcp_server.API_REGISTRY.items() if "gongmu" in v["path"]}
+    assert entries == {
+        "gongmu.sites": ("GET", "/api/v1/gongmu/sites"),
+        "gongmu.tasks": ("GET", "/api/v1/gongmu/tasks"),
+        "gongmu.task": ("GET", "/api/v1/gongmu/tasks/{task_id}"),
+        "gongmu.draft": ("POST", "/api/v1/gongmu/drafts"),
+    }
 
 
 def test_router_requires_auth_and_works_for_admin(env, monkeypatch):
@@ -261,3 +267,49 @@ def test_concurrent_first_access_does_not_break_seed(env):
     with ThreadPoolExecutor(max_workers=8) as pool:
         results = list(pool.map(lambda _: len(service.list_catalog()), range(16)))
     assert set(results) == {12}
+
+
+def test_draft_create_confirm_appends_task_memo_once(env):
+    site_id = service.create_site(_site(), actor="t")["site"]["id"]
+    task_id = service.list_tasks(site_id)[0]["id"]
+    d = service.create_draft(
+        {"kind": "missing_docs", "body": "서류 3건 누락", "site_id": site_id, "task_id": task_id}, actor="ai"
+    )
+    assert d["status"] == "pending" and d["title"] == "서류 누락 요약"
+    assert service.get_task(task_id)["memo"] == ""  # 만들기만으로는 업무가 바뀌지 않는다
+    done = service.confirm_draft(d["id"], actor="kim")
+    assert done["status"] == "confirmed" and done["decided_by"] == "kim"
+    assert "서류 3건 누락" in service.get_task(task_id)["memo"]
+    with pytest.raises(ValueError, match="이미 처리"):
+        service.confirm_draft(d["id"], actor="kim")  # 두 번 확정해도 메모가 두 번 붙지 않는다
+    with pytest.raises(ValueError, match="이미 처리"):
+        service.cancel_draft(d["id"], actor="kim")
+    assert service.get_task(task_id)["memo"].count("서류 3건 누락") == 1
+
+
+def test_draft_cancel_leaves_task_untouched_and_validates(env):
+    site_id = service.create_site(_site(), actor="t")["site"]["id"]
+    task_id = service.list_tasks(site_id)[0]["id"]
+    d = service.create_draft({"kind": "hq_report", "body": "보고", "task_id": task_id}, actor="ai")
+    assert service.cancel_draft(d["id"], actor="kim")["status"] == "cancelled"
+    assert service.get_task(task_id)["memo"] == ""
+    assert [x["id"] for x in service.list_drafts("cancelled")] == [d["id"]] and not service.list_drafts("pending")
+    for bad in ({"kind": "x", "body": "a"}, {"kind": "hq_report", "body": " "}, {"kind": "hq_report", "body": "a", "task_id": "0" * 32}):
+        with pytest.raises(ValueError):
+            service.create_draft(bad, actor="ai")
+    with pytest.raises(ValueError, match="찾을 수 없"):
+        service.confirm_draft("0" * 32, actor="kim")
+
+
+def test_draft_router_flow(env):
+    app = FastAPI()
+    app.include_router(gongmu_router)
+    app.dependency_overrides[get_current_user] = lambda: {"role": "admin", "username": "kim"}
+    client = TestClient(app)
+    d = client.post("/gongmu/drafts", json={"kind": "safety_checklist", "body": "점검표"}).json()
+    assert client.get("/gongmu/drafts", params={"status": "pending"}).json()["items"][0]["id"] == d["id"]
+    assert client.get(f"/gongmu/drafts/{d['id']}").json()["status"] == "pending"
+    assert client.post(f"/gongmu/drafts/{d['id']}/confirm").json()["status"] == "confirmed"
+    assert client.post(f"/gongmu/drafts/{d['id']}/cancel").status_code == 400
+    assert client.post("/gongmu/drafts", json={"kind": "nope", "body": "a"}).status_code == 400
+    assert client.get("/gongmu/drafts", params={"status": "zzz"}).status_code == 400

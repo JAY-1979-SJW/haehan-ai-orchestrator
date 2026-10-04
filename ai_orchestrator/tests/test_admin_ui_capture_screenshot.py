@@ -37,12 +37,9 @@ def _isolated_storage(tmp_path, monkeypatch):
     import importlib
 
     monkeypatch.setenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", "1")
-    import ai_orchestrator.gates.auth as _auth
-
-    importlib.reload(_auth)
-    import ai_orchestrator.local_agent_router as _lar
-
-    importlib.reload(_lar)
+    # auth/local_agent_router 를 reload 하지 않는다: reload 하면 get_current_user 가 시험마다 새 객체가 되는데
+    # 하위 라우터는 처음 import 된 옛 객체에 묶여 있어 dependency_overrides 가 두 번째 시험부터 안 먹혀
+    # 파일 전체 실행 시 등록이 401 이 되고 KeyError: 'agent_id' 가 난다(단독 실행만 통과, 2026-10-04 확인).
     import ai_orchestrator.routers.admin_ui_router as _adm
 
     importlib.reload(_adm)

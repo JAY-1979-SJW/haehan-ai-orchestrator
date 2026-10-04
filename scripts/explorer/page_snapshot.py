@@ -24,11 +24,21 @@ _log = get_logger(__name__)
 
 _EXTRACT_FRAME_JS = r"""
 () => {
+    // 소속 폼 키: "<문서 내 폼 순번>:<id 또는 name>" (폼 밖이면 빈 문자열) — 업무 지도가 컨트롤을 폼별로 묶는 데 쓴다
+    const formKey = el => {
+        const f = el.closest('form');
+        // f.id 는 폼 안에 name="id" 입력창이 있으면 그 요소를 가리키므로 속성 값을 직접 읽는다
+        return f ? Array.from(document.forms).indexOf(f) + ':' + (f.getAttribute('id') || f.getAttribute('name') || '') : '';
+    };
+    // 문서 안 위치(요소 순번): 페이지 전체를 감싸는 폼에서도 "입력창 근처의 컨트롤"만 고를 수 있게 한다
+    const order = new Map(Array.from(document.querySelectorAll('*')).map((e, i) => [e, i]));
     const links = Array.from(document.querySelectorAll('a')).map(a => ({
         text: (a.innerText || '').trim().slice(0, 80),
         href: a.getAttribute('href') || '',
         target: a.getAttribute('target') || '',
         visible: a.offsetParent !== null,
+        form: formKey(a),
+        pos: order.get(a),
     })).filter(l => l.text || l.href);
     const inputs = Array.from(document.querySelectorAll('input, textarea, select')).map(e => ({
         tag: e.tagName,
@@ -39,13 +49,32 @@ _EXTRACT_FRAME_JS = r"""
         aria: e.getAttribute('aria-label') || '',
         required: e.required || false,
         visible: e.offsetParent !== null,
+        form: formKey(e),
+        pos: order.get(e),
     }));
-    const buttons = Array.from(document.querySelectorAll('button, [role="button"]')).map(b => ({
-        text: (b.innerText || '').trim().slice(0, 60),
+    // 편집 영역(contenteditable·role=textbox)도 입력창이다(블로그 에디터 등). 이름이 없어 문서 순번으로 정한다.
+    const editables = Array.from(document.querySelectorAll('[contenteditable="true"], [role="textbox"]')).filter(e => !e.closest('input, textarea')).map((e, i) => ({
+        tag: 'EDITABLE',
+        type: 'editable',
+        name: e.getAttribute('name') || 'editable_' + (i + 1),
+        id: e.id || '',
+        placeholder: e.getAttribute('data-placeholder') || e.getAttribute('placeholder') || '',
+        aria: e.getAttribute('aria-label') || '',
+        required: false,
+        visible: e.offsetParent !== null,
+        form: formKey(e),
+        pos: order.get(e),
+    }));
+    inputs.push(...editables);
+    // <input type="submit|button|image"> 도 버튼이다(흔한 검색 폼: 입력창 + submit 입력). 글자는 value·alt·title 에서 읽는다.
+    const buttons = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], input[type="image"]')).map(b => ({
+        text: (b.innerText || b.value || b.alt || b.title || '').trim().slice(0, 60),
         id: b.id || '',
         aria: b.getAttribute('aria-label') || '',
         cls: (b.className || '').toString().slice(0, 80),
         visible: b.offsetParent !== null,
+        form: formKey(b),
+        pos: order.get(b),
     })).filter(b => b.text || b.aria);
     const forms = Array.from(document.querySelectorAll('form')).map(f => ({
         id: f.id || '',

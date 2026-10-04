@@ -156,6 +156,132 @@ API_REGISTRY: dict[str, dict[str, str]] = {
         "path": "/api/v1/naver-mailbox/drafts",
         "desc": "승인 대기 초안 목록·상태 조회(읽기 전용). query={account, all(true 면 보낸·취소된 것까지)}",
     },
+    # 건설업 공무 — AI 는 '읽기 + 승인 대기 초안'만. 상태 변경·서류 체크·확정·취소는 이 목록에 없다(앱 화면에서 사람이 한다).
+    "gongmu.sites": {
+        "method": "GET",
+        "path": "/api/v1/gongmu/sites",
+        "desc": "공무 현장 목록(이름·지위·도급금액·기간, 읽기 전용)",
+    },
+    "gongmu.tasks": {
+        "method": "GET",
+        "path": "/api/v1/gongmu/tasks",
+        "desc": "공무 업무 목록(기한순, 지연·임박 등급 포함, 읽기 전용). query={site_id, status}",
+    },
+    "gongmu.task": {
+        "method": "GET",
+        "path": "/api/v1/gongmu/tasks/{task_id}",
+        "desc": "공무 업무 1건 상세(근거 문구·필요 서류 준비 현황·메모, 읽기 전용). path_params={'task_id': '<업무 id>'}",
+    },
+    "gongmu.draft": {
+        "method": "POST",
+        "path": "/api/v1/gongmu/drafts",
+        "desc": (
+            "공무 문서 승인 대기 초안 생성(확정하지 않음). body={kind: progress_billing(기성 청구 내역서)|hq_report(본사 정기 보고서)|"
+            "subcontract_review(하도급 계약 검토 체크리스트)|safety_checklist(안전서류 점검표)|missing_docs(서류 누락 요약), "
+            "title, body(본문 텍스트), site_id, task_id(있으면 확정 시 그 업무 메모에 덧붙음)}. 만든 뒤 답변 끝에 응답의 id 로 "
+            "'[[gongmu-draft:<id>]]' 를 그대로 적어(AI 창에 승인 카드가 나타난다) '아래 카드에서 확인 후 확정해 주세요'라고 안내할 것. "
+            "확정·취소는 사용자가 카드 버튼으로만 한다 — 대신 시도하지 말 것"
+        ),
+    },
+    # 구글 허브 화면의 읽기 기능 — 화면 버튼과 AI 가 같은 일을 할 수 있게(2026-10-04 앱 실검증 D5). OAuth API 읽기만, gcp/status(CDP)·만들기(create-event)는 제외.
+    "google.calendar_today": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/calendar/today",
+        "desc": "구글 캘린더 오늘 일정 (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.calendar_week": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/calendar/week",
+        "desc": "구글 캘린더 이번 주 일정 (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.drive_recent": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/drive/recent",
+        "desc": "구글 드라이브 최근 파일 목록. query={limit: 개수} (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.docs_recent": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/docs/recent",
+        "desc": "구글 문서 최근 목록. query={limit: 개수} (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.sheets_recent": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/sheets/recent",
+        "desc": "구글 스프레드시트 최근 목록. query={limit: 개수} (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.youtube_studio_status": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/youtube/studio/status",
+        "desc": "YouTube 채널 상태(채널명·구독자·영상 수, OAuth 읽기 전용). 구글 계정 연결이 안 돼 있으면 응답의 status/error 를 그대로 알릴 것",
+    },
+    # 앱의 예약 작업 — AI 는 '목록 조회'만. 만들기·수정·일시정지·지금 실행·삭제·실행 승인은 이 목록에 없다(화면에서 사람이 한다).
+    # (2026-10-04 앱 실검증: 허용 목록에 없어 AI 가 앱 대신 Claude Code 세션의 예약 도구로 '없음'이라 답했다.)
+    "scheduled.list": {
+        "method": "GET",
+        "path": "/api/v1/scheduled-jobs",
+        "desc": "앱에 등록된 예약 작업 목록(이름·작업·반복·다음 실행·마지막 결과·상태, 읽기 전용). '예약 작업 있어?' 같은 질문은 Claude Code 의 예약 도구가 아니라 이 앱 기능으로 답할 것",
+    },
+    # 등록 사이트(온보딩) — AI 는 '읽기'만. 등록·정책 변경·해제는 이 목록에 없다(사람이 화면에서 한다).
+    "sites.list": {
+        "method": "GET",
+        "path": "/api/v1/site-registry",
+        "desc": "사람이 등록한 사이트 목록(호스트·상태 ready/needs_login/blocked 등·탐색 정책·지도 요약, 읽기 전용). 사이트 작업 전에 이 사이트가 등록·탐색됐는지 확인할 것",
+    },
+    "sites.get": {
+        "method": "GET",
+        "path": "/api/v1/site-registry/{host}",
+        "desc": "등록 사이트 하나의 상태·정책·지도 요약(읽기 전용). path_params={host}. needs_login 이면 사용자에게 로그인을 요청하고 업무 실행을 시도하지 말 것, blocked 면 사람이 사이트에서 확인해야 한다고 알릴 것",
+    },
+    # 사이트 업무 지도 — AI 는 '읽기'만. 지도 확정·결과 기록·탐색 실행은 이 목록에 없다.
+    "sitemap.list": {
+        "method": "GET",
+        "path": "/api/v1/site-map/hosts",
+        "desc": "이미 탐색해 저장한 사이트 지도 목록(호스트·업무 수·검증된 수, 읽기 전용). 사이트 작업 전에 먼저 확인할 것",
+    },
+    "sitemap.lookup": {
+        "method": "GET",
+        "path": "/api/v1/site-map/{host}/lookup",
+        "desc": (
+            "사이트 업무 지도에서 업무 후보와 절차(steps, 입력 필드, 위험 등급)를 찾는다(읽기 전용). path_params={'host': 'www.example.com'}, "
+            "query={q: 키워드(공백 구분, 비우면 전부), limit}. known=false 면 탐색된 적 없는 사이트 → 사용자에게 탐색을 요청. "
+            "응답의 rules 를 지킬 것: risk 가 read 인 업무만 steps 대로 실행, write·submit 은 참고만 하고 실행은 사람 승인"
+        ),
+    },
+    "vendors.lookup": {
+        "method": "GET",
+        "path": "/api/v1/vendors/lookup",
+        "desc": (
+            "외부 서비스·사이트의 **벤더 공식 API** 가 있는지 조회한다(읽기 전용). query={q: 서비스/사이트 이름, 공백 구분, 비우면 전체 목록}. "
+            "외부 사이트 작업 전에 먼저 부를 것. 응답의 status_meaning 대로 행동한다: available/registered 면 앱 기능(list_api_endpoints)을 쓰고, "
+            "not_registered 면 사용자에게 신청이 필요하다고 알리며(화면 조작으로 우회 금지), unknown/목록에 없음이면 sitemap.lookup 으로 넘어간다. "
+            "목록에 없다고 공식 API 가 없다는 뜻은 아니다(미조사)"
+        ),
+    },
+    "sitemap.run": {
+        "method": "POST",
+        "path": "/api/v1/site-map/{host}/run",
+        "desc": (
+            "사이트 업무 지도에 저장된 **조회(read) 업무**를 지도 절차대로 실행하고 결과 표를 돌려준다. path_params={'host': 'www.example.com'}, "
+            "body={task_id(sitemap.lookup 의 tasks[].id), params: {입력칸 이름: 값}} — params 이름은 lookup 이 돌려준 steps 의 {{이름}}/fields 이름만 쓴다. "
+            "read 가 아닌 업무(write·submit·login)는 서버가 거부한다(실행은 사람 승인). 같은 호스트 안에서만, 새 전용 탭에서만 동작하고 값·결과 행은 지도에 저장되지 않는다. "
+            "응답 ok=false 이고 state=stale 이면 화면이 지도와 달라진 것이니 사용자에게 재탐색(sitemap.explore_request)을 제안할 것"
+        ),
+    },
+    "sitemap.explore_request": {
+        "method": "POST",
+        "path": "/api/v1/site-map/explore/requests",
+        "desc": (
+            "사이트 탐색 '승인 대기 요청'만 만든다(탐색하지 않음). body={start_url(전체 주소), depth(1~4, 기본 2), max_pages(1~200, 기본 20), reason, auth('public' 기본 | 'login': 사용자가 이미 로그인해 둔 사이트를 탐색할 때)}. "
+            "사이트 지도가 없는(sitemap.lookup 이 known=false) 사이트에서만, 사용자가 탐색을 원할 때 쓴다. 만든 뒤 답변 끝에 응답의 id 로 "
+            "'[[sitemap-explore:<id>]]' 를 그대로 적어(AI 창에 승인 카드가 나타난다) '아래 카드에서 승인하면 읽기 전용으로 탐색합니다'라고 안내할 것. "
+            "로그인이 필요한 사이트는 사용자가 먼저 브라우저에서 로그인해 있어야 한다. 승인·취소는 사용자가 카드 버튼으로만 한다 — 대신 시도하지 말 것"
+        ),
+    },
     "sessions.status": {
         "method": "GET",
         "path": "/api/v1/sessions/status",
@@ -295,6 +421,10 @@ def _api_call(
             "error": f"허용되지 않은 endpoint: {endpoint}",
             "hint": "list_api_endpoints 로 사용 가능 목록 확인",
         }
+    for forbidden in (spec.get("forbid_query") or "").split(","):
+        # 브라우저(CDP)를 여는 인자처럼 AI 가 줄 수 없는 쿼리 인자 — 설명으로만 말리지 않고 서버에서 거부한다
+        if forbidden.strip() and forbidden.strip() in (query or {}):
+            return {"ok": False, "error": f"이 endpoint 는 '{forbidden.strip()}' 인자를 쓸 수 없습니다(사용자 브라우저를 여는 방식 금지)"}
     path = spec["path"]
     for k, v in (path_params or {}).items():
         path = path.replace(f"{{{k}}}", str(v))

@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
+import { EMPLOYEE_PROTOCOL } from "./employeeProtocol";
 import { FaxApprovalCard } from "./FaxApprovalCard";
+import { MAIL_DRAFT_CARDS } from "./mailDraftCards";
 
 /**
  * 답변 속 "[[종류:<id>]]" 표시를 카드(버튼)로 바꿔 보여 주는 규칙 — 화면(메일함 등)이 주입한다.
@@ -48,8 +50,10 @@ interface ChatSessionSummary {
   message_count: number;
 }
 
+const POLL_FAST_MS = 700; // 처음 20초는 촘촘히 — 짧은 질문의 완료 감지 지연을 줄인다
+const POLL_FAST_WINDOW_MS = 20_000;
 const POLL_INTERVAL_MS = 2000;
-const MAX_POLLS = 150; // 2s * 150 = 5분(백엔드 기본 timeout=300s와 정합)
+const POLL_TIMEOUT_MS = 300_000; // 5분(백엔드 기본 timeout=300s와 정합) — 간격이 달라도 총 대기 시간은 시각으로 계산
 const MODEL_LABELS: Record<string, string> = {
   "": "기본",
   sonnet: "Sonnet",
@@ -82,7 +86,11 @@ const FAX_APPROVE_MARK = /\[\[fax-approve:([0-9a-f]{32})\]\]/g;
  */
 function MessageBody({ text, extraCards = [] }: { text: string; extraCards?: ExtraCard[] }) {
   const faxIds = [...text.matchAll(FAX_APPROVE_MARK)].map((m) => m[1]);
-  const extras = extraCards.map((c) => ({ card: c, ids: [...new Set([...text.matchAll(c.mark)].map((m) => m[1]))] }));
+  // 모든 창이 기본으로 처리하는 카드(메일 초안) + 화면이 주입한 카드. 같은 규칙은 한 번만 쓴다(카드가 두 번 그려지지 않게).
+  const cards = [...MAIL_DRAFT_CARDS, ...extraCards].filter(
+    (c, i, all) => all.findIndex((o) => o.mark.source === c.mark.source) === i,
+  );
+  const extras = cards.map((c) => ({ card: c, ids: [...new Set([...text.matchAll(c.mark)].map((m) => m[1]))] }));
   if (faxIds.length === 0 && extras.every((e) => e.ids.length === 0)) return <>{text}</>;
   const cleaned = extras.reduce((acc, e) => acc.replace(e.card.mark, ""), text.replace(FAX_APPROVE_MARK, "")).trim();
   return (
@@ -194,8 +202,10 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
   }
 
   async function pollTask(agentId: string, taskId: string, assistantId: string, activeChatId: string) {
-    for (let i = 0; i < MAX_POLLS; i++) {
-      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+      const elapsed = Date.now() - startedAt;
+      await new Promise((r) => setTimeout(r, elapsed < POLL_FAST_WINDOW_MS ? POLL_FAST_MS : POLL_INTERVAL_MS));
       let data: TaskStatusResponse;
       try {
         const res = await fetch(`/api/proxy/api/v1/local-agents/${agentId}/tasks/${taskId}`);
@@ -272,9 +282,8 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
       );
 
       const data = await postJson<RunAgentResponse>("/api/proxy/api/v1/ai-agent/run", {
-        prompt: agentHint ? `${agentHint}
-
-사용자 요청: ${prompt}` : prompt,
+        // 모든 AI 창 공통 직원 업무 원칙 → 창별 지침 → 사용자 요청 순서로 붙인다(기준서 2026-10-04_ai_employee.md)
+        prompt: [EMPLOYEE_PROTOCOL, agentHint, `사용자 요청: ${prompt}`].filter(Boolean).join("\n\n"),
         chat_id: activeChatId,
         model,
       });
