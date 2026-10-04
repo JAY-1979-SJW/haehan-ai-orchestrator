@@ -325,6 +325,7 @@ def test_runner_never_imports_anything_that_writes_to_naver():
         elif isinstance(node, ast.Import):
             imported.update(a.name for a in node.names)
     forbidden = ("scripts.naver.blog.core", "scripts.naver.blog.marketing.publish", "playwright")
+    assert imported, "imported 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not [name for name in imported if any(name.startswith(f) for f in forbidden)]
 
 

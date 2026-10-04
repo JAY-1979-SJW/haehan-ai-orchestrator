@@ -150,6 +150,7 @@ def test_08_router_no_browser_worker_at_import_time():
         and not line.strip().startswith(" ")  # 들여쓰기 있으면 함수 내부
         and not line.strip().startswith("\t")
     ]
+    assert lines, "lines 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not module_level_bw_imports, (
         f"router.py에 module-level browser_worker import 발견: {module_level_bw_imports}"
     )
@@ -168,6 +169,7 @@ def test_09_preflight_chain_no_browser_worker_at_module_level():
         and not line.startswith(" ")
         and not line.startswith("\t")
     ]
+    assert lines, "lines 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not module_level_imports, f"preflight_chain.py module-level browser_worker import: {module_level_imports}"
 
 
@@ -185,6 +187,7 @@ def test_10_live_runner_import_no_playwright_at_module_level():
         and not line.startswith(" ")
         and not line.startswith("\t")
     ]
+    assert lines, "lines 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not module_level_pw, f"live_runner.py에 module-level playwright import 발견: {module_level_pw}"
 
 

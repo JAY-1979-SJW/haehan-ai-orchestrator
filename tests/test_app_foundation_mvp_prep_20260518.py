@@ -169,6 +169,7 @@ def test_docker_compose_action_gate_exists(mvp):
 
 def test_all_gates_auto_execute_false(mvp):
     bad = [g for g in mvp.APPROVAL_GATE_MATRIX if g.get("auto_execute_allowed") is not False]
+    assert mvp.APPROVAL_GATE_MATRIX, "mvp.APPROVAL_GATE_MATRIX 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not bad, f"auto_execute_allowed=True gate: {[g['gate_id'] for g in bad]}"
 
 
@@ -218,6 +219,7 @@ def test_g2b_nara_certificate_required(mvp):
 
 def test_cookie_storage_forbidden_all_providers(mvp):
     bad = [p for p in mvp.PROVIDERS if not p.get("cookie_storage_forbidden")]
+    assert mvp.PROVIDERS, "mvp.PROVIDERS 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not bad, f"cookie_storage_forbidden 미설정 provider: {[p['id'] for p in bad]}"
 
 

@@ -191,6 +191,7 @@ def test_script_returns_pass_verdict():
 def test_checklist_all_pass():
     report = _run_json()
     failed = [c for c in report["checklist"] if not c["ok"]]
+    assert report['checklist'], "report['checklist'] 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
     assert not failed, f"체크리스트 실패 항목: {failed}"
 
 

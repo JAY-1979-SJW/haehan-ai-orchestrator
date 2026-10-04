@@ -254,4 +254,5 @@ class TestExecutionPolicyBridgeBlock:
 
         # 실제 CAD/HWPX 앱 SDK가 import되지 않았음을 확인
         cad_modules = [k for k in sys.modules if "autocad" in k.lower() or "zwcad" in k.lower() or "hwpx" in k.lower()]
+        assert sys.modules, "sys.modules 이(가) 비어 있음 — 비교대상 0건이면 아래 assert 는 공허하게 통과한다"
         assert cad_modules == [], f"실제 앱 import 감지: {cad_modules}"
