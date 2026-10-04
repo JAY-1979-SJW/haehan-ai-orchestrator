@@ -432,3 +432,36 @@ def test_other_host_snapshots_are_reported_not_silently_dropped(isolated_store):
     out = task_mapper.merge_snapshots("tax.example.test", [other], auth="public", explored_pages=2)
     cov = store.load("tax.example.test")["explored"]["coverage"]
     assert out["skipped_other_host"] == 1 and cov["skipped_other_host"] == 1 and "다른 호스트" in cov["warning"]
+
+
+# ── 실제 앱 시험에서 발견: '블로그 마켓 가입' 버튼이 조회로 저장돼 있었다 ───────────
+
+
+@pytest.mark.parametrize(("label", "risk"), [("블로그 마켓 가입", "submit"), ("회원가입", "submit"), ("가입하기", "submit"), ("공제가입번호 조회", "read"), ("가입자 조회", "read")])
+def test_signup_buttons_are_submit_but_lookups_about_membership_stay_read(label, risk):
+    assert tm.risk_of([label]) == risk
+
+
+def _stored_read_task(control="블로그 마켓 가입"):
+    snap = _snap("https://m.example.test/dir", inputs=[], links=[], forms=[], buttons=[_btn("조회")])
+    (task,) = tm.tasks_from_snapshot(snap, now=NOW)
+    return dict(task, control=control, risk="read", steps=[{"type": "navigate", "url": task["url"]}, {"type": "click", "selectors": [[f"text/{control}"]]}])
+
+
+def test_effective_risk_rechecks_old_stored_tasks_with_current_rules():
+    old = _stored_read_task()  # 규칙이 늘기 전에 read 로 저장된 업무
+    assert tm.effective_risk(old) == "submit" and tm.effective_risk(dict(old, control="조회")) == "read"
+    with pytest.raises(ValueError, match=r"조회\(read\) 업무만"):
+        tm.validate_run_request(old, {})  # 서버가 실행 직전에 다시 판정해 막는다
+    shown = tm.with_effective_risk(dict(tm.empty_map("m.example.test", now=NOW), tasks=[old]))
+    assert shown["tasks"][0]["risk"] == "submit" and old["risk"] == "read"  # 응답에만 반영, 저장본은 그대로
+
+
+def test_merge_raises_risk_of_same_structure_task_and_drops_click():
+    old = _stored_read_task()
+    new = dict(old, risk="submit", steps=[{"type": "navigate", "url": old["url"]}], category="submit")
+    merged = tm.merge_tasks(dict(tm.empty_map("m.example.test", now=NOW), tasks=[old]), [new], now=LATER)
+    (task,) = merged["tasks"]
+    assert task["risk"] == "submit" and [s["type"] for s in task["steps"]] == ["navigate"] and task["state"] == "observed"
+    back = tm.merge_tasks(merged, [dict(old)], now=LATER)  # 다시 read 로 관찰돼도 내리지 않는다
+    assert back["tasks"][0]["risk"] == "submit"

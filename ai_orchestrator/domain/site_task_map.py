@@ -33,7 +33,7 @@ AUTH_PUBLIC, AUTH_LOGIN, AUTH_CERT = "public", "login", "certificate"
 AUTHS = (AUTH_PUBLIC, AUTH_LOGIN, AUTH_CERT)
 
 # 한글은 부분 문자열, 영문은 단어 앞부분(`display` 가 `pay` 로 걸리지 않게)으로 맞춘다.
-_SUBMIT_KO = ("제출", "신고", "통보", "결제", "송금", "이체", "삭제", "제거", "탈퇴", "서명", "전송", "발송", "발급", "승인", "확정", "취소", "로그아웃", "출금", "발행", "인증서", "납부", "지급")
+_SUBMIT_KO = ("제출", "신고", "통보", "결제", "송금", "이체", "삭제", "제거", "탈퇴", "서명", "전송", "발송", "발급", "승인", "확정", "취소", "로그아웃", "출금", "발행", "인증서", "납부", "지급", "회원가입", "가입하기", "가입신청")
 _SUBMIT_EN = ("submit", "delete", "remove", "pay", "send", "logout", "signout", "sign", "approve", "confirm", "withdraw", "cancel")
 _WRITE_KO = ("저장", "수정", "등록", "추가", "변경", "업로드", "첨부", "신청", "작성", "글쓰기")
 _WRITE_EN = ("save", "update", "add", "edit", "upload", "create", "register", "apply", "insert")
@@ -58,7 +58,7 @@ def _hits(text: str, ko: tuple[str, ...], en: tuple[str, ...]) -> bool:
 def risk_of(texts: list[str]) -> str:
     """버튼·동작 이름·URL 조각 목록에서 위험 등급을 정한다. 가장 높은 등급이 이긴다."""
     joined = " ".join(str(t) for t in texts if t)
-    if _hits(joined, _SUBMIT_KO, _SUBMIT_EN):
+    if _hits(joined, _SUBMIT_KO, _SUBMIT_EN) or any(str(t).strip().endswith("가입") for t in texts):  # '블로그 마켓 가입' 처럼 끝이 '가입'인 버튼은 가입 제출이다('공제가입번호' 같은 이름은 아니다)
         return RISK_SUBMIT
     if _hits(joined, _WRITE_KO, _WRITE_EN):
         return RISK_WRITE
@@ -356,7 +356,10 @@ def merge_tasks(site_map: dict[str, Any], observed: list[dict[str, Any]], *, now
             by_id[new["id"]] = dict(new, observed_at=now)
             continue
         if old["fingerprint"] == new["fingerprint"]:
-            by_id[new["id"]] = dict(old, observed_at=now)
+            kept = dict(old, observed_at=now)
+            if _RISK_RANK[new["risk"]] > _RISK_RANK[old["risk"]]:  # 규칙이 강화돼 위험이 올라갔다 — 올리고 읽기용 클릭 단계는 뺀다(내리지는 않는다)
+                kept.update(risk=new["risk"], steps=new["steps"], category=new["category"], state=STATE_OBSERVED)
+            by_id[new["id"]] = kept
             continue
         change = {"at": now, "from": old["fingerprint"], "to": new["fingerprint"], "was": old["state"]}
         merged = dict(new, observed_at=now, changes=[*old.get("changes", []), change][-20:])
@@ -485,6 +488,17 @@ def step_placeholders(steps: list[dict[str, Any]]) -> list[str]:
     return names
 
 
+def effective_risk(task: dict[str, Any]) -> str:
+    """저장된 위험 등급과 **현재 규칙**으로 다시 판정한 등급 중 높은 쪽. 키워드 규칙이 나중에 늘어도 예전에 저장된 업무가 조용히 read 로 남지 않게 한다."""
+    path = urlparse(str(task.get("url") or "")).path
+    return max_risk(str(task.get("risk") or RISK_READ), risk_of([str(task.get("control") or ""), path]))
+
+
+def with_effective_risk(site_map: dict[str, Any]) -> dict[str, Any]:
+    """화면·조회 응답에 내보낼 때 업무마다 유효 위험 등급을 반영한 사본(저장본은 건드리지 않는다)."""
+    return dict(site_map, tasks=[dict(t, risk=effective_risk(t)) for t in site_map["tasks"]])
+
+
 def validate_run_request(task: dict[str, Any], params: dict[str, Any]) -> dict[str, str]:
     """실행 요청 검증 → 문자열 매개변수. 규칙 위반은 ValueError.
 
@@ -492,8 +506,9 @@ def validate_run_request(task: dict[str, Any], params: dict[str, Any]) -> dict[s
     - 지도에 없는 매개변수는 거부, 입력칸이 있는 업무는 적어도 하나는 있어야 한다, 필수 칸은 반드시 있어야 한다.
     - 값은 200자 이내 문자열, 제어문자 금지. 지도에 없는 칸을 채우거나 값을 지도에 남기지 않는다.
     """
-    if task.get("risk") != RISK_READ:
-        raise ValueError(f"조회(read) 업무만 실행할 수 있습니다(이 업무는 {RISK_LABEL_KO.get(str(task.get('risk')), str(task.get('risk')))}). 실행은 사람 승인 카드로만 합니다")
+    risk = effective_risk(task)
+    if risk != RISK_READ:
+        raise ValueError(f"조회(read) 업무만 실행할 수 있습니다(이 업무는 {RISK_LABEL_KO.get(risk, risk)}). 실행은 사람 승인 카드로만 합니다")
     if not isinstance(params, dict):
         raise ValueError("매개변수는 {이름: 값} 형태여야 합니다")
     wanted = step_placeholders(task.get("steps", []))
