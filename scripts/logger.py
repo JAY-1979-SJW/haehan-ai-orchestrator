@@ -26,12 +26,42 @@ import contextlib
 import logging
 import os
 import sys
+import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LOG_DIR = ROOT / "data" / "logs"
 LOG_FILE = LOG_DIR / "app.log"
+
+
+class _BlockedRotateSafeHandler(RotatingFileHandler):
+    """여러 프로세스가 같은 로그 파일을 열고 있는 Windows 에서도 기록이 끊기지 않는 회전 핸들러.
+
+    표준 RotatingFileHandler 는 회전(os.rename)이 다른 프로세스의 파일 사용 때문에 막히면(WinError 32)
+    로그 한 줄마다 회전을 다시 시도하고 매번 "--- Logging error ---" 를 낸다(2026-10-04 실측: 112회).
+    회전이 막히면 _RETRY_SEC 동안은 다시 시도하지 않고 기존 파일에 계속 이어 쓴다.
+    """
+
+    _RETRY_SEC = 60.0
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._blocked_until = 0.0
+
+    def shouldRollover(self, record: logging.LogRecord) -> int:
+        if time.monotonic() < self._blocked_until:
+            return False
+        return super().shouldRollover(record)
+
+    def doRollover(self) -> None:
+        try:
+            super().doRollover()
+        except OSError:
+            # 회전 실패(다른 프로세스가 파일 사용 중) — 잠시 쉬고, 표준 doRollover 가 닫아 둔 스트림을 되살려 계속 기록
+            self._blocked_until = time.monotonic() + self._RETRY_SEC
+            if self.stream is None:
+                self.stream = self._open()
 
 # ── 포맷 ─────────────────────────────────────────────────────────────
 _FMT_CONSOLE = "%(levelname)s  %(name)s │ %(message)s"
@@ -75,7 +105,7 @@ def _init_root() -> None:
 
     # 파일 핸들러 (최대 5MB x 3개 로테이션)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    fh = RotatingFileHandler(LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
+    fh = _BlockedRotateSafeHandler(LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
     fh.setLevel(logging.DEBUG)  # 파일은 항상 전체 기록
     fh.setFormatter(logging.Formatter(_FMT_FILE, datefmt=_DATE_FMT))
     root.addHandler(fh)

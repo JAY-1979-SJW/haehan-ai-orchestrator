@@ -21272,6 +21272,14 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_scripts_logger_rotation.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
