@@ -82,8 +82,21 @@ AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 예약 작업 조회가 없�
 - 시험 3건 추가(`tests/test_employee_protocol.py`): 항목·경로·메서드, CDP·쓰기·정지/해제 부재, `source` 거부(요청 0건), 허용 인자는 통과.
 - 실제 앱: 하나팩스 패널이 `hanafax.kill_switch` 로 "정상(정지 꺼짐)" 보고, 구글 패널이 `google.calendar_today`·`google.drive_recent` 를 `source` 없이 호출(서버 로그 확인). 이 PC 에는 구글 OAuth 자격증명이 없어 그 오류를 그대로 보고했다. CDP 우회 없음. mypy·ruff 통과.
 
+## D6 — `/mypage` "가입일 Invalid Date"
+원인: 데스크톱 소유자 모드(`AUTH_ENABLED=false`)의 `/users/me` 가 `created_at: ""` 를 돌려주는데 화면이 `new Date("")` 를 그대로 표시했다. 변경: `admin-web/src/app/mypage/page.tsx` — 값이 없거나 날짜가 잘못되면 "-". 서버·API 불변. 검증: typecheck·lint, 실제 앱에서 "가입일 -", "Invalid Date" 없음.
+
+## D7 — 읽기 전용 상태 확인이 Chrome 을 시작함 (재정의)
+최초 기록은 "CDP 가 없으면 20초 대기"였으나 원인을 파 보니 `GET /naver/session/live` → `observe` → `default_deps().detect()` 가 CDP 가 꺼져 있으면 `_start_cdp()`(= `cdp_force_start.cmd_start`)로 **Chrome 을 직접 시작**하고 응답을 최대 20초 기다리는 설계였다. 화면(`/naver/session`)이 상태를 폴링하므로 사용자 PC 에서 브라우저가 저절로 뜬다. 앱 실검증 중 실제로 5회 시작됐다(원인의 한 부분은 점검 런처의 포트 치환, 아래 정정 참고).
+
+변경(`ai_orchestrator/workflows/naver_session_guard.py`): `observe(..., start_browser=False)` 기본은 브라우저를 시작하지 않고 CDP 가 꺼져 있으면 바로 `unavailable`. `GuardDeps.detect_starting`(선택 필드, 기존 가짜 부품 호환)을 추가해 자동 로그인 흐름(`ensure_login`·`_observe_after_login`)만 브라우저를 시작한다. `default_deps()` 는 `detect`(시작 안 함)와 `detect_starting` 을 모두 제공. API 응답 형식·키 불변.
+검증: 시험 3건 추가(읽기 전용은 시작 안 함, ensure 는 시작 가능, 기본 부품은 CDP 꺼짐에서 Chrome 을 띄우지 않음) + 기존 세션 지킴이 시험 77건 통과(총 80건). 실제 앱: `/live` 20.1초 → 0.06초, 브라우저 시작 시도 0건, Chrome 프로세스 목록 불변. mypy·ruff 통과.
+정정: 점검 런처가 `scripts.config.CDP_PORT` 를 9998 로 바꿔 CDP 를 "꺼짐"으로 오판하게 만든 것이 시작을 유발했다. 런처를 브라우저 시작 함수 차단 방식으로 교체했다.
+
+## D8 — `APP_HOST` 0.0.0.0 경고 (종결, 결함 아님)
+코드 기본값은 이미 `127.0.0.1` 이다(`config.py`). 이 작업 폴더에는 `.env` 가 없어 `load_dotenv()` 가 상위 폴더를 탐색하다 메인 체크아웃 `.env`(`APP_HOST=0.0.0.0`)를 읽었다. 경고는 그 값에 대해 정확히 동작한 것이므로 코드는 바꾸지 않는다. 서버 배포(`docker-compose.yml`)는 0.0.0.0 을 명시하며 정상이다.
+
 ## 영향 검증 (D1~D4 합산)
 영향 테스트 197개 파일: 수정 전 164건 실패 → 수정 후 165건. 새로 실패한 2건은 변경과 무관한 기존 문제다 — `test_approval_read_api::test_history_limit_capped_at_500` 는 수정 없는 HEAD 에서도 단독 실패, `test_duplicate_code_check::test_run_against_real_repo_smoke` 는 `.claude/worktrees/` 아래 경로에서만 실패(스캔 제외 목록에 `.claude` 포함, 변경을 치운 상태에서도 동일). 실제로 고쳐진 시험 1건.
 
 ## 이번에 하지 않은 것
-D6~D8, 승인 카드 컴포넌트의 공용 위치 이동(역방향 import 정리), 메일함 패널이 사용자가 말한 계정(skyjwsin)이 아니라 화면에서 선택된 계정(skyjwshin)으로 초안을 만든 점(패널 지침 설계 확인 필요).
+메일함 패널이 사용자가 말한 계정(skyjwsin)이 아니라 화면에서 선택된 계정(skyjwshin)으로 초안을 만든 점(패널 지침 설계 확인 필요).
