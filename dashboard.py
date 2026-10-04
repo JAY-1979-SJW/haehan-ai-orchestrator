@@ -259,6 +259,12 @@ def _check_decision_allowed(token_id: str, task_id: str, user_id: str) -> tuple:
     if max_risk is None or _RISK_RANK.get(risk_level, 99) > _RISK_RANK.get(max_risk, 0):
         return ({"error": f"role '{role}' cannot approve '{risk_level}' risk tasks"}, 403), None, None, None
 
+    # 만료된 승인 토큰은 승인·거부 모두 거절한다(TTL 10분). 이 검사가 80b93dac 에서 실수로 빠져
+    # 만료 토큰으로도 승인·실행이 되고 있었다(2026-10-04 시험 실패로 발견).
+    elapsed = time.time() - entry.get("issued_at", 0)
+    if elapsed > approval_manager.TOKEN_TTL_SECONDS:
+        return ({"error": "token has expired"}, 410), None, None, None
+
     if entry.get("approved"):
         return ({"error": "token already approved"}, 409), None, None, None
     if entry.get("rejected"):

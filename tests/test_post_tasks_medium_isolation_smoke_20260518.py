@@ -15,6 +15,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from fastapi import APIRouter
 
 REPO_ROOT = Path(__file__).parent.parent
 
@@ -232,17 +233,17 @@ def router_mod():
         "ai_orchestrator.telegram_webhook": MagicMock(),
         "ai_orchestrator.inbox": MagicMock(),
         "ai_orchestrator.sites.gmail_reader": MagicMock(),
-        "ai_orchestrator.sites.router": MagicMock(sites_router=MagicMock()),
-        "ai_orchestrator.cad.router": MagicMock(cad_router=MagicMock()),
-        "ai_orchestrator.routers.web_task_router": MagicMock(web_task_router=MagicMock()),
-        "ai_orchestrator.local_agent_router": MagicMock(local_agent_router=MagicMock()),
-        "ai_orchestrator.routers.admin_ui_router": MagicMock(admin_ui_router=MagicMock()),
-        "ai_orchestrator.routers.auth_router": MagicMock(auth_router=MagicMock()),
-        "ai_orchestrator.browser_tool.approval_record_router": MagicMock(approval_record_router=MagicMock()),
-        "ai_orchestrator.routers.action_router": MagicMock(action_router=MagicMock()),
-        "ai_orchestrator.cad_ai_router": MagicMock(cad_ai_router=MagicMock()),
-        "ai_orchestrator.connectors.naver_search_router": MagicMock(naver_search_router=MagicMock()),
-        "ai_orchestrator.routers.ops_router": MagicMock(ops_router=MagicMock()),
+        "ai_orchestrator.sites.router": MagicMock(sites_router=APIRouter()),
+        "ai_orchestrator.cad.router": MagicMock(cad_router=APIRouter()),
+        "ai_orchestrator.routers.web_task_router": MagicMock(web_task_router=APIRouter()),
+        "ai_orchestrator.local_agent_router": MagicMock(local_agent_router=APIRouter()),
+        "ai_orchestrator.routers.admin_ui_router": MagicMock(admin_ui_router=APIRouter()),
+        "ai_orchestrator.routers.auth_router": MagicMock(auth_router=APIRouter()),
+        "ai_orchestrator.browser_tool.approval_record_router": MagicMock(approval_record_router=APIRouter()),
+        "ai_orchestrator.routers.action_router": MagicMock(action_router=APIRouter()),
+        "ai_orchestrator.cad_ai_router": MagicMock(cad_ai_router=APIRouter()),
+        "ai_orchestrator.connectors.naver_search_router": MagicMock(naver_search_router=APIRouter()),
+        "ai_orchestrator.routers.ops_router": MagicMock(ops_router=APIRouter()),
     }
     for mod_name, mock in mocks.items():
         sys.modules[mod_name] = mock

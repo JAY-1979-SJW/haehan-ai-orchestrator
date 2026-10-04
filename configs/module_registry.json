@@ -21017,6 +21017,38 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_hanafax_bulk_send_smoke.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_instagram_api_publish_smoke.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_instagram_dm_contract.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_grant_radar_router_contract.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "grant_radar",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "admin-web/src/app/gongmu/GongmuAiPanel.tsx": {
    "layer": "L9",
    "role": "ui",
@@ -21058,6 +21090,14 @@
    "source": "rule"
   },
   "admin-web/src/components/chat/employeeProtocol.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/components/chat/mailDraftCards.tsx": {
    "layer": "L9",
    "role": "ui",
    "domain": "common",
@@ -21209,6 +21249,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_hanafax_status_failure.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_install_git_hooks.py": {
    "layer": "L11",
    "role": "test",
@@ -21218,6 +21266,14 @@
    "source": "rule"
   },
   "tests/test_portability_standard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_scripts_logger_rotation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -21261,30 +21317,6 @@
    "layer": "L11",
    "role": "test",
    "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/components/chat/mailDraftCards.tsx": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_scripts_logger_rotation.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_hanafax_status_failure.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "hanafax",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
