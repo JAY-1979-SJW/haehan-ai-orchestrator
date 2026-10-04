@@ -183,6 +183,48 @@ API_REGISTRY: dict[str, dict[str, str]] = {
             "확정·취소는 사용자가 카드 버튼으로만 한다 — 대신 시도하지 말 것"
         ),
     },
+    # 구글 허브 화면의 읽기 기능 — 화면 버튼과 AI 가 같은 일을 할 수 있게(2026-10-04 앱 실검증 D5). OAuth API 읽기만, gcp/status(CDP)·만들기(create-event)는 제외.
+    "google.calendar_today": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/calendar/today",
+        "desc": "구글 캘린더 오늘 일정 (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.calendar_week": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/calendar/week",
+        "desc": "구글 캘린더 이번 주 일정 (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.drive_recent": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/drive/recent",
+        "desc": "구글 드라이브 최근 파일 목록. query={limit: 개수} (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.docs_recent": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/docs/recent",
+        "desc": "구글 문서 최근 목록. query={limit: 개수} (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.sheets_recent": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/sheets/recent",
+        "desc": "구글 스프레드시트 최근 목록. query={limit: 개수} (OAuth API, 읽기 전용). source 인자는 쓰지 말 것 — cdp 는 사용자 브라우저를 여는 방식이라 서버가 거부한다. 구글 계정 연결(OAuth)이 안 돼 있으면 응답의 error 를 그대로 알릴 것",
+        "forbid_query": "source",
+    },
+    "google.youtube_studio_status": {
+        "method": "GET",
+        "path": "/api/v1/google/tools/youtube/studio/status",
+        "desc": "YouTube 채널 상태(채널명·구독자·영상 수, OAuth 읽기 전용). 구글 계정 연결이 안 돼 있으면 응답의 status/error 를 그대로 알릴 것",
+    },
+    # 하나팩스 자동 발송 정지 상태 — 조회만. 정지·해제(POST)는 이 목록에 없다(사람이 화면 버튼으로 한다).
+    "hanafax.kill_switch": {
+        "method": "GET",
+        "path": "/api/v1/hanafax/kill-switch",
+        "desc": "하나팩스 자동 발송 전체 정지(킬 스위치) 상태 조회(읽기 전용). 정지·해제는 할 수 없다",
+    },
     # 앱의 예약 작업 — AI 는 '목록 조회'만. 만들기·수정·일시정지·지금 실행·삭제·실행 승인은 이 목록에 없다(화면에서 사람이 한다).
     # (2026-10-04 앱 실검증: 허용 목록에 없어 AI 가 앱 대신 Claude Code 세션의 예약 도구로 '없음'이라 답했다.)
     "scheduled.list": {
@@ -374,6 +416,10 @@ def _api_call(
             "error": f"허용되지 않은 endpoint: {endpoint}",
             "hint": "list_api_endpoints 로 사용 가능 목록 확인",
         }
+    for forbidden in (spec.get("forbid_query") or "").split(","):
+        # 브라우저(CDP)를 여는 인자처럼 AI 가 줄 수 없는 쿼리 인자 — 설명으로만 말리지 않고 서버에서 거부한다
+        if forbidden.strip() and forbidden.strip() in (query or {}):
+            return {"ok": False, "error": f"이 endpoint 는 '{forbidden.strip()}' 인자를 쓸 수 없습니다(사용자 브라우저를 여는 방식 금지)"}
     path = spec["path"]
     for k, v in (path_params or {}).items():
         path = path.replace(f"{{{k}}}", str(v))

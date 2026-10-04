@@ -67,8 +67,23 @@ AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 예약 작업 조회가 없�
 - `tests/test_employee_protocol.py` 에 시험 추가: `scheduled.` 항목은 `scheduled.list` 하나뿐이고 `scheduled-jobs` 경로의 쓰기 항목이 없다.
 - 실제 앱: 같은 질문에 AI 가 앱 기능 `scheduled.list` 로 조회하고 출처를 밝힘.
 
+## D5 — 화면 기능과 AI 허용 API 불일치 (구글 허브·하나팩스 정지 상태)
+
+### 현상
+구글 허브 화면은 "캘린더: 오늘 일정" 등 읽기 버튼을 보여 주고 하나팩스 화면은 "자동 발송 전체 정지: 정상"을 보여 주지만, AI 는 "앱에서 읽을 방법이 없다"고 답했다. AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 해당 항목이 없었다.
+
+### 변경 (`ai_orchestrator/mcp_server.py`)
+- 읽기 전용 6개 추가: `google.calendar_today`·`calendar_week`·`drive_recent`·`docs_recent`·`sheets_recent`(OAuth API 기본), `google.youtube_studio_status`, 그리고 `hanafax.kill_switch`(GET 만).
+- 제외: `google/tools/gcp/status`(사용자 Chrome 에 탭을 여는 CDP 방식), `calendar/create-event`(쓰기), 하나팩스 kill-switch 의 POST(정지·해제는 사람이 화면 버튼으로).
+- 가드: 위 구글 5개는 `source` 쿼리 인자를 줄 수 없다(`forbid_query`). `source=cdp` 는 사용자 브라우저를 여는 방식이라 설명으로만 말리지 않고 `_api_call` 이 요청을 보내기 전에 거부한다. 항목 형식은 `dict[str, str]` 을 유지(쉼표 구분 문자열).
+- 라우트 추가 없음(기존 GET 을 AI 가 부를 수 있게 한 것).
+
+### 검증
+- 시험 3건 추가(`tests/test_employee_protocol.py`): 항목·경로·메서드, CDP·쓰기·정지/해제 부재, `source` 거부(요청 0건), 허용 인자는 통과.
+- 실제 앱: 하나팩스 패널이 `hanafax.kill_switch` 로 "정상(정지 꺼짐)" 보고, 구글 패널이 `google.calendar_today`·`google.drive_recent` 를 `source` 없이 호출(서버 로그 확인). 이 PC 에는 구글 OAuth 자격증명이 없어 그 오류를 그대로 보고했다. CDP 우회 없음. mypy·ruff 통과.
+
 ## 영향 검증 (D1~D4 합산)
 영향 테스트 197개 파일: 수정 전 164건 실패 → 수정 후 165건. 새로 실패한 2건은 변경과 무관한 기존 문제다 — `test_approval_read_api::test_history_limit_capped_at_500` 는 수정 없는 HEAD 에서도 단독 실패, `test_duplicate_code_check::test_run_against_real_repo_smoke` 는 `.claude/worktrees/` 아래 경로에서만 실패(스캔 제외 목록에 `.claude` 포함, 변경을 치운 상태에서도 동일). 실제로 고쳐진 시험 1건.
 
 ## 이번에 하지 않은 것
-D5(AI 허용 API 와 화면 기능 불일치: 하나팩스 kill-switch·구글 캘린더 등)~D8, 승인 카드 컴포넌트의 공용 위치 이동(역방향 import 정리), 메일함 패널이 사용자가 말한 계정(skyjwsin)이 아니라 화면에서 선택된 계정(skyjwshin)으로 초안을 만든 점(패널 지침 설계 확인 필요).
+D6~D8, 승인 카드 컴포넌트의 공용 위치 이동(역방향 import 정리), 메일함 패널이 사용자가 말한 계정(skyjwsin)이 아니라 화면에서 선택된 계정(skyjwshin)으로 초안을 만든 점(패널 지침 설계 확인 필요).

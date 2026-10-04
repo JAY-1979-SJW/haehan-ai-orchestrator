@@ -175,3 +175,46 @@ def test_scheduled_jobs_ai_can_only_list():
     assert entry["method"] == "GET" and entry["path"] == "/api/v1/scheduled-jobs"
     assert [k for k in mcp_server.API_REGISTRY if k.startswith("scheduled.")] == ["scheduled.list"]
     assert not any("scheduled-jobs" in v["path"] and v["method"] != "GET" for v in mcp_server.API_REGISTRY.values())
+
+
+def test_google_hub_reads_and_fax_kill_switch_status_are_allowed_but_read_only():
+    """화면과 AI 가 같은 읽기를 할 수 있게 하되(2026-10-04 앱 실검증 D5), 브라우저(CDP)를 여는 gcp/status·만들기·정지/해제는 열지 않는다."""
+    reg = mcp_server.API_REGISTRY
+    for key, path in {
+        "google.calendar_today": "/api/v1/google/tools/calendar/today",
+        "google.calendar_week": "/api/v1/google/tools/calendar/week",
+        "google.drive_recent": "/api/v1/google/tools/drive/recent",
+        "google.docs_recent": "/api/v1/google/tools/docs/recent",
+        "google.sheets_recent": "/api/v1/google/tools/sheets/recent",
+        "google.youtube_studio_status": "/api/v1/google/tools/youtube/studio/status",
+        "hanafax.kill_switch": "/api/v1/hanafax/kill-switch",
+    }.items():
+        assert reg[key]["method"] == "GET" and reg[key]["path"] == path, key
+    assert not any("/google/tools/gcp" in v["path"] or "create-event" in v["path"] for v in reg.values())  # CDP·쓰기
+    assert not any("kill-switch" in v["path"] and v["method"] != "GET" for v in reg.values())  # 정지/해제는 사람만
+    for key in ("google.calendar_today", "google.calendar_week", "google.drive_recent", "google.docs_recent", "google.sheets_recent"):
+        assert reg[key]["forbid_query"] == "source"  # cdp 는 사용자 브라우저를 연다
+
+
+def test_forbidden_query_is_rejected_before_any_request(monkeypatch):
+    calls = []
+    monkeypatch.setattr(mcp_server.requests, "request", lambda *a, **k: calls.append((a, k)))
+    res = mcp_server._api_call("google.calendar_today", query={"source": "cdp"})
+    assert res["ok"] is False and "source" in res["error"]
+    assert calls == []  # 서버로 요청 자체가 나가지 않는다
+
+
+def test_allowed_query_still_passes_through(monkeypatch):
+    class _Resp:
+        ok = True
+        status_code = 200
+        text = "{}"
+        def json(self):
+            return {"events": []}
+    seen = {}
+    def fake(method, url, params=None, json=None, timeout=None):
+        seen.update(method=method, url=url, params=params)
+        return _Resp()
+    monkeypatch.setattr(mcp_server.requests, "request", fake)
+    res = mcp_server._api_call("google.drive_recent", query={"limit": 5})
+    assert res["ok"] is True and seen["method"] == "GET" and seen["url"].endswith("/api/v1/google/tools/drive/recent") and seen["params"] == {"limit": 5}
