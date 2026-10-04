@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import contextlib
 import re
+from typing import Any
 
 from scripts.logger import get_logger
 
@@ -125,8 +126,8 @@ _BLOCK_URL_PATTERNS = [
 
 
 def _scan_cookies(page) -> tuple[list[str], list[dict]]:
-    vendors_found = []
-    signals = []
+    vendors_found: list[Any] = []
+    signals: list[Any] = []
     try:
         cookies = page.context.cookies()
     except Exception:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
@@ -150,31 +151,10 @@ def _scan_cookies(page) -> tuple[list[str], list[dict]]:
     return vendors_found, signals
 
 
-def _scan_dom(page) -> tuple[list[str], list[dict]]:
-    """DOM 안의 vendor 스크립트, 차단 텍스트, CAPTCHA 위젯 탐지."""
-    js = r"""
-    () => {
-        const scripts = Array.from(document.scripts).map(s => s.src || '').filter(Boolean);
-        const html = document.documentElement ? document.documentElement.outerHTML : '';
-        const text = (document.body && document.body.innerText) || '';
-        // 캡차 위젯 존재
-        const widgets = [];
-        if (document.querySelector('.g-recaptcha, [data-sitekey]')) widgets.push('recaptcha_widget');
-        if (document.querySelector('.h-captcha, .hcaptcha-box')) widgets.push('hcaptcha_widget');
-        if (document.querySelector('.cf-turnstile, [data-callback*=turnstile]')) widgets.push('turnstile_widget');
-        if (document.querySelector('iframe[src*="recaptcha"], iframe[src*="hcaptcha"], iframe[src*="turnstile"], iframe[src*="captcha"]')) widgets.push('captcha_iframe');
-        if (document.querySelector('iframe[src*="arkoselabs"], iframe[src*="funcaptcha"]')) widgets.push('funcaptcha_iframe');
-        return {scripts, html_snippet: html.slice(0, 50000), text: text.slice(0, 30000), widgets, url: location.href};
-    }
-    """
-    try:
-        data = page.evaluate(js)
-    except Exception as e:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
-        log.debug("[bot-radar] dom scan 실패: %s", e)
-        return [], []
-
-    vendors_found = []
-    signals = []
+def _match_dom_vendors(data: dict) -> tuple[list[str], list[dict]]:
+    """DOM 스캔 결과에서 벤더 스크립트/HTML 마커를 매칭."""
+    vendors_found: list[str] = []
+    signals: list[dict] = []
 
     # 벤더 스크립트 매칭
     for vendor, sig in _VENDORS.items():
@@ -206,6 +186,33 @@ def _scan_dom(page) -> tuple[list[str], list[dict]]:
                         "severity": "low",
                     }
                 )
+    return vendors_found, signals
+
+
+def _scan_dom(page) -> tuple[list[str], list[dict]]:
+    """DOM 안의 vendor 스크립트, 차단 텍스트, CAPTCHA 위젯 탐지."""
+    js = r"""
+    () => {
+        const scripts = Array.from(document.scripts).map(s => s.src || '').filter(Boolean);
+        const html = document.documentElement ? document.documentElement.outerHTML : '';
+        const text = (document.body && document.body.innerText) || '';
+        // 캡차 위젯 존재
+        const widgets = [];
+        if (document.querySelector('.g-recaptcha, [data-sitekey]')) widgets.push('recaptcha_widget');
+        if (document.querySelector('.h-captcha, .hcaptcha-box')) widgets.push('hcaptcha_widget');
+        if (document.querySelector('.cf-turnstile, [data-callback*=turnstile]')) widgets.push('turnstile_widget');
+        if (document.querySelector('iframe[src*="recaptcha"], iframe[src*="hcaptcha"], iframe[src*="turnstile"], iframe[src*="captcha"]')) widgets.push('captcha_iframe');
+        if (document.querySelector('iframe[src*="arkoselabs"], iframe[src*="funcaptcha"]')) widgets.push('funcaptcha_iframe');
+        return {scripts, html_snippet: html.slice(0, 50000), text: text.slice(0, 30000), widgets, url: location.href};
+    }
+    """
+    try:
+        data = page.evaluate(js)
+    except Exception as e:  # noqa: BLE001 - 봇 탐지 신호(쿠키/DOM/응답헤더) 스캔 도구 - 스캔 실패 시 unknown/빈 목록 반환, 차단 여부를 직접 결정하지 않는 리포팅 전용
+        log.debug("[bot-radar] dom scan 실패: %s", e)
+        return [], []
+
+    vendors_found, signals = _match_dom_vendors(data)
 
     # CAPTCHA 위젯
     for w in data.get("widgets", []):

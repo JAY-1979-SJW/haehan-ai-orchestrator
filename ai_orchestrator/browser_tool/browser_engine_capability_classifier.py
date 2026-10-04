@@ -116,6 +116,59 @@ _AUTOMATION_BLOCK_FLAGS: frozenset[str] = frozenset({
 })
 
 
+def _server_readonly_result(message_ko: str) -> dict[str, Any]:
+    """서버 Playwright read-only 허용 결과 (세 허용 분기 공통)."""
+    return _make_result(
+        engine_capability=ENGINE_SERVER_PLAYWRIGHT_READONLY_ALLOWED,
+        recommended_route=ROUTE_SERVER_PLAYWRIGHT_READONLY,
+        server_playwright_allowed=True,
+        fallback_allowed=True,
+        fallback_route=ROUTE_LOCAL_AGENT_PLAYWRIGHT_READONLY,
+        block_reason="",
+        message_ko=message_ko,
+    )
+
+
+def _classify_google(
+    site_category: str, target_domain: str, target_url: str
+) -> dict[str, Any] | None:
+    """Google 계정/서비스 관련 분류. 해당 없으면 None (판정 순서 유지)."""
+    # Google accounts → BLOCK
+    if target_domain in _GOOGLE_ACCOUNTS_DOMAINS or any(
+        kw in target_url for kw in ("accounts.google.com", "google.com/accounts",
+                                     "google.com/signin", "google.com/login")
+    ):
+        return _make_result(
+            engine_capability=ENGINE_AUTOMATION_BLOCKED,
+            recommended_route=ROUTE_BLOCK,
+            server_playwright_allowed=False,
+            local_agent_playwright_allowed=False,
+            block_reason="Google 계정 로그인 페이지. 서버/로컬 Playwright 금지. OAuth만 허용.",
+            message_ko="Google 계정 로그인은 자동화가 차단됩니다. OAuth API를 사용하세요.",
+        )
+
+    # Google 서비스 도메인 → API_CONNECTOR
+    if target_domain in _GOOGLE_SERVICE_DOMAINS:
+        return _make_result(
+            engine_capability=ENGINE_API_CONNECTOR_REQUIRED,
+            recommended_route=ROUTE_API_CONNECTOR,
+            api_connector_required=True,
+            block_reason="Google 서비스. 공식 API/OAuth만 허용.",
+            message_ko="Google 서비스는 공식 API/OAuth를 사용해야 합니다. 브라우저 자동화 차단.",
+        )
+
+    # Google 서비스 카테고리 → API_CONNECTOR
+    if site_category in _GOOGLE_SERVICE_CATEGORIES:
+        return _make_result(
+            engine_capability=ENGINE_API_CONNECTOR_REQUIRED,
+            recommended_route=ROUTE_API_CONNECTOR,
+            api_connector_required=True,
+            block_reason="Google 서비스 카테고리. 공식 API/OAuth만 허용.",
+            message_ko="Google 서비스는 공식 API/OAuth를 사용해야 합니다.",
+        )
+    return None
+
+
 def classify_browser_engine_capability(payload: dict[str, Any]) -> dict[str, Any]:
     """
     사이트별 브라우저 엔진 실행 가능 여부를 분류한다.
@@ -161,39 +214,9 @@ def classify_browser_engine_capability(payload: dict[str, Any]) -> dict[str, Any
             message_ko="CAPTCHA 필요 사이트입니다. 자동화가 차단됩니다.",
         )
 
-    # Google accounts → BLOCK
-    if target_domain in _GOOGLE_ACCOUNTS_DOMAINS or any(
-        kw in target_url for kw in ("accounts.google.com", "google.com/accounts",
-                                     "google.com/signin", "google.com/login")
-    ):
-        return _make_result(
-            engine_capability=ENGINE_AUTOMATION_BLOCKED,
-            recommended_route=ROUTE_BLOCK,
-            server_playwright_allowed=False,
-            local_agent_playwright_allowed=False,
-            block_reason="Google 계정 로그인 페이지. 서버/로컬 Playwright 금지. OAuth만 허용.",
-            message_ko="Google 계정 로그인은 자동화가 차단됩니다. OAuth API를 사용하세요.",
-        )
-
-    # Google 서비스 도메인 → API_CONNECTOR
-    if target_domain in _GOOGLE_SERVICE_DOMAINS:
-        return _make_result(
-            engine_capability=ENGINE_API_CONNECTOR_REQUIRED,
-            recommended_route=ROUTE_API_CONNECTOR,
-            api_connector_required=True,
-            block_reason="Google 서비스. 공식 API/OAuth만 허용.",
-            message_ko="Google 서비스는 공식 API/OAuth를 사용해야 합니다. 브라우저 자동화 차단.",
-        )
-
-    # Google 서비스 카테고리 → API_CONNECTOR
-    if site_category in _GOOGLE_SERVICE_CATEGORIES:
-        return _make_result(
-            engine_capability=ENGINE_API_CONNECTOR_REQUIRED,
-            recommended_route=ROUTE_API_CONNECTOR,
-            api_connector_required=True,
-            block_reason="Google 서비스 카테고리. 공식 API/OAuth만 허용.",
-            message_ko="Google 서비스는 공식 API/OAuth를 사용해야 합니다.",
-        )
+    google_result = _classify_google(site_category, target_domain, target_url)
+    if google_result is not None:
+        return google_result
 
     # user-present 인증 플래그 → LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED
     for flag in _USER_PRESENT_FLAGS:
@@ -224,39 +247,15 @@ def classify_browser_engine_capability(payload: dict[str, Any]) -> dict[str, Any
         or target_url in _SERVER_PLAYWRIGHT_ALLOWED_URLS
         or any(target_url.startswith(p) for p in _SERVER_PLAYWRIGHT_ALLOWED_PREFIXES)
     ):
-        return _make_result(
-            engine_capability=ENGINE_SERVER_PLAYWRIGHT_READONLY_ALLOWED,
-            recommended_route=ROUTE_SERVER_PLAYWRIGHT_READONLY,
-            server_playwright_allowed=True,
-            fallback_allowed=True,
-            fallback_route=ROUTE_LOCAL_AGENT_PLAYWRIGHT_READONLY,
-            block_reason="",
-            message_ko="서버 Playwright read-only 접근이 허용됩니다.",
-        )
+        return _server_readonly_result("서버 Playwright read-only 접근이 허용됩니다.")
 
     # 서버 Playwright 허용 카테고리
     if site_category in _SERVER_PLAYWRIGHT_ALLOWED_CATEGORIES:
-        return _make_result(
-            engine_capability=ENGINE_SERVER_PLAYWRIGHT_READONLY_ALLOWED,
-            recommended_route=ROUTE_SERVER_PLAYWRIGHT_READONLY,
-            server_playwright_allowed=True,
-            fallback_allowed=True,
-            fallback_route=ROUTE_LOCAL_AGENT_PLAYWRIGHT_READONLY,
-            block_reason="",
-            message_ko=f"{site_category} 카테고리. 서버 Playwright read-only 허용.",
-        )
+        return _server_readonly_result(f"{site_category} 카테고리. 서버 Playwright read-only 허용.")
 
     # example.com 도메인
     if target_domain in ("example.com", "www.example.com"):
-        return _make_result(
-            engine_capability=ENGINE_SERVER_PLAYWRIGHT_READONLY_ALLOWED,
-            recommended_route=ROUTE_SERVER_PLAYWRIGHT_READONLY,
-            server_playwright_allowed=True,
-            fallback_allowed=True,
-            fallback_route=ROUTE_LOCAL_AGENT_PLAYWRIGHT_READONLY,
-            block_reason="",
-            message_ko="example.com: 서버 Playwright read-only 허용.",
-        )
+        return _server_readonly_result("example.com: 서버 Playwright read-only 허용.")
 
     # 알 수 없는 사이트 → NEEDS_MANUAL_REVIEW
     return _make_result(
@@ -335,7 +334,7 @@ def validate_engine_capability_result(result: dict[str, Any]) -> list[str]:
     return errors
 
 
-def _make_result(
+def _make_result(  # noqa: PLR0913 - 내부 결과 dict 생성 헬퍼, 필드 나열형
     engine_capability: str,
     recommended_route: str,
     server_playwright_allowed: bool = False,

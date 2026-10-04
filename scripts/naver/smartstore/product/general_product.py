@@ -309,6 +309,28 @@ class GeneralProductRegister:
         if not self._ensure_opened():
             return {"ok": False, "error": "open_failed"}
 
+        self._expand_origin_section()
+
+        err = self._select_origin_type(origin_type)
+        if err:
+            return err
+
+        if origin_type == "수입산":
+            err = self._select_import_origin(continent, country, importer)
+            if err:
+                return err
+
+        # 검증
+        final_txt = self.page.evaluate("document.body.innerText")
+        idx = final_txt.find("원산지")
+        segment = final_txt[idx : idx + 120] if idx >= 0 else ""
+        ok = origin_type in segment and (origin_type != "수입산" or (continent in segment and country in segment))
+        if not ok:
+            return {"ok": False, "error": "검증 실패", "segment": segment}
+        _log.info("[gen-reg] 원산지: %s %s %s", origin_type, continent or "", country or "")
+        return {"ok": True, "origin_type": origin_type, "continent": continent, "country": country}
+
+    def _expand_origin_section(self) -> None:
         # "상품 주요정보" 섹션이 접혀 있으면 펼친다.
         # ⚠ 헤더 클릭은 토글이라, 이미 펼쳐진 상태에서 또 누르면 도로 접힌다.
         # 반드시 "원산지" 레이블이 실제로 DOM에 있는지 먼저 확인하고, 없을 때만 클릭한다.
@@ -324,6 +346,8 @@ class GeneralProductRegister:
         except Exception:  # noqa: BLE001 - 여러 셀렉터/유형을 순차 시도하는 best-effort — 하나 실패해도 다음으로 계속하거나 상위에서 재시도(2026-09-28 검토)
             pass
 
+    def _select_origin_type(self, origin_type: str) -> dict | None:
+        """원산지 유형(국산/수입산/기타) 선택. 실패 시 반환할 에러 dict, 성공이면 None."""
         try:
             # 1) 원산지 유형(국산/수입산/기타) 드롭다운.
             # 기본값이 "국산"이지만 재호출 시 이미 다른 값일 수 있으므로 텍스트를
@@ -358,13 +382,23 @@ class GeneralProductRegister:
             time.sleep(0.7)
         except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": f"origin_type 선택 실패: {str(e)[:100]}"}
+        return None
 
-        if origin_type == "수입산":
-            if not continent or not country:
-                return {"ok": False, "error": "수입산은 continent/country 필수"}
+    def _select_import_origin(self, continent, country, importer) -> dict | None:
+        """수입산 대륙/국가/수입사 입력. 실패 시 반환할 에러 dict, 성공이면 None."""
+        if not continent or not country:
+            return {"ok": False, "error": "수입산은 continent/country 필수"}
 
-            def _find_row_select_coords() -> list[dict]:
-                """원산지 라벨과 같은 가로줄(±20px)에 있는 "선택" 드롭다운 좌표.
+        err = self._pick_continent_country(continent, country)
+        if err:
+            return err
+
+        if importer:
+            return self._fill_importer(importer)
+        return None
+
+    def _origin_row_select_coords(self) -> list[dict]:
+        """원산지 라벨과 같은 가로줄(±20px)에 있는 "선택" 드롭다운 좌표.
                 인증선택/인증정보 등 다른 "선택" 드롭다운과 섞이지 않게 걸러낸다.
 
                 ⚠ row_y 를 한 번 계산해서 재사용하면 안 된다 — 드롭다운 옵션을
@@ -372,8 +406,8 @@ class GeneralProductRegister:
                 바뀌어서 라벨의 화면상 y좌표도 매번 달라진다(2026-08-26 실측:
                 대륙 선택 후 국가 드롭다운을 못 찾던 원인). **매 호출마다
                 라벨 위치를 새로 조회**한다."""
-                coords = self.page.evaluate(
-                    """
+        coords = self.page.evaluate(
+            """
                     () => {
                         const label = Array.from(document.querySelectorAll('label,div,span')).find(e =>
                             e.innerText && e.innerText.trim() === '원산지'
@@ -390,12 +424,12 @@ class GeneralProductRegister:
                         }).filter(c => c.w > 0 && Math.abs(c.y - rowY) < 20);
                     }
                     """
-                )
-                coords.sort(key=lambda c: c["x"])
-                return coords
+        )
+        coords.sort(key=lambda c: c["x"])
+        return coords
 
-            def _click_dropdown_option(value: str) -> bool:
-                """열린 드롭다운에서 정확한 텍스트의 옵션을 클릭.
+    def _origin_click_option(self, value: str) -> bool:
+        """열린 드롭다운에서 정확한 텍스트의 옵션을 클릭.
 
                 2026-08-26 실측 함정 2가지:
                 1. `get_by_text(value, exact=True)`가 실제 리스트 항목보다
@@ -405,8 +439,8 @@ class GeneralProductRegister:
                    훨씬 큼)에 있다 — 클릭 전 `scrollIntoView({block:'center'})` 필수,
                    안 하면 좌표만 유효해 보이고 클릭이 조용히 실패한다.
                 """
-                coords = self.page.evaluate(
-                    """
+        coords = self.page.evaluate(
+            """
                     (value) => {
                         const els = Array.from(document.querySelectorAll('div.option')).filter(e =>
                             e.innerText && e.innerText.trim() === value
@@ -417,54 +451,47 @@ class GeneralProductRegister:
                         return {x: r.x + r.width/2, y: r.y + r.height/2};
                     }
                     """,
-                    value,
-                )
-                if not coords:
-                    return False
-                self.page.mouse.click(coords["x"], coords["y"])
-                return True
+            value,
+        )
+        if not coords:
+            return False
+        self.page.mouse.click(coords["x"], coords["y"])
+        return True
 
-            try:
-                # 2) 대륙 드롭다운
-                coords = _find_row_select_coords()
-                if len(coords) < 2:
-                    return {"ok": False, "error": f"원산지 대륙/국가 드롭다운 못찾음 (같은 줄 후보 {len(coords)}개)"}
-                self.page.mouse.click(coords[0]["x"], coords[0]["y"])
-                time.sleep(0.6)
-                if not _click_dropdown_option(continent):
-                    return {"ok": False, "error": f"대륙 옵션 못찾음: {continent}"}
-                time.sleep(0.6)
+    def _pick_continent_country(self, continent: str, country: str) -> dict | None:
+        try:
+            # 2) 대륙 드롭다운
+            coords = self._origin_row_select_coords()
+            if len(coords) < 2:
+                return {"ok": False, "error": f"원산지 대륙/국가 드롭다운 못찾음 (같은 줄 후보 {len(coords)}개)"}
+            self.page.mouse.click(coords[0]["x"], coords[0]["y"])
+            time.sleep(0.6)
+            if not self._origin_click_option(continent):
+                return {"ok": False, "error": f"대륙 옵션 못찾음: {continent}"}
+            time.sleep(0.6)
 
-                # 3) 국가 드롭다운 — 대륙 선택 후 좌표 재조회(레이아웃 변동)
-                coords2 = _find_row_select_coords()
-                if not coords2:
-                    return {"ok": False, "error": "원산지 국가 드롭다운 못찾음"}
-                self.page.mouse.click(coords2[0]["x"], coords2[0]["y"])
-                time.sleep(0.6)
-                if not _click_dropdown_option(country):
-                    return {"ok": False, "error": f"국가 옵션 못찾음: {country}"}
-                time.sleep(0.6)
-            except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
-                return {"ok": False, "error": f"대륙/국가 선택 실패: {str(e)[:100]}"}
+            # 3) 국가 드롭다운 — 대륙 선택 후 좌표 재조회(레이아웃 변동)
+            coords2 = self._origin_row_select_coords()
+            if not coords2:
+                return {"ok": False, "error": "원산지 국가 드롭다운 못찾음"}
+            self.page.mouse.click(coords2[0]["x"], coords2[0]["y"])
+            time.sleep(0.6)
+            if not self._origin_click_option(country):
+                return {"ok": False, "error": f"국가 옵션 못찾음: {country}"}
+            time.sleep(0.6)
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
+            return {"ok": False, "error": f"대륙/국가 선택 실패: {str(e)[:100]}"}
+        return None
 
-            if importer:
-                try:
-                    imp_loc = self.page.locator('input[placeholder="수입사입력"]')
-                    if imp_loc.count() > 0:
-                        imp_loc.first.fill(importer)
-                        time.sleep(0.3)
-                except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
-                    return {"ok": False, "error": f"수입사 입력 실패: {str(e)[:100]}"}
-
-        # 검증
-        final_txt = self.page.evaluate("document.body.innerText")
-        idx = final_txt.find("원산지")
-        segment = final_txt[idx : idx + 120] if idx >= 0 else ""
-        ok = origin_type in segment and (origin_type != "수입산" or (continent in segment and country in segment))
-        if not ok:
-            return {"ok": False, "error": "검증 실패", "segment": segment}
-        _log.info("[gen-reg] 원산지: %s %s %s", origin_type, continent or "", country or "")
-        return {"ok": True, "origin_type": origin_type, "continent": continent, "country": country}
+    def _fill_importer(self, importer: str) -> dict | None:
+        try:
+            imp_loc = self.page.locator('input[placeholder="수입사입력"]')
+            if imp_loc.count() > 0:
+                imp_loc.first.fill(importer)
+                time.sleep(0.3)
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
+            return {"ok": False, "error": f"수입사 입력 실패: {str(e)[:100]}"}
+        return None
 
     def set_manufacturer(self, name: str) -> dict:
         """제조자(사) 설정 — selectize 자동완성 입력.
@@ -576,61 +603,9 @@ class GeneralProductRegister:
             # 가로챈다("intercepts pointer events"). 먼저 정리한다(2026-08-15).
             self._dismiss_blocking_modals()
 
-            sel = 'input[placeholder*="카테고리"]:not([type="radio"]):not([type="checkbox"])'
-            self.page.evaluate(f"""
-            (() => {{
-                const el = document.querySelector('{sel}');
-                if (el) el.scrollIntoView({{block: 'center'}});
-            }})();
-            """)
-            time.sleep(0.4)
-            el = self.page.locator(sel).first
-            el.fill(category_name, timeout=5000, force=True)
-            self.page.evaluate(f"""
-            (() => {{
-                const el = document.querySelector('{sel}');
-                if (el) {{
-                    el.dispatchEvent(new Event('input', {{bubbles: true}}));
-                    el.dispatchEvent(new Event('focus', {{bubbles: true}}));
-                }}
-            }})();
-            """)
-            # 원하는 카테고리 경로가 뜰 때까지 폴링 (이전 검색 잔상 회피)
-            #
-            # ⚠ has_text=category_name 만 쓰면 안 된다. 드롭다운에는 카테고리 경로 외에
-            #   상품명 자동완성('헤이그 ... 인테리어조명(등 미포함)')도 섞여 나오고,
-            #   그게 먼저 잡히면 보이지도 않아 클릭이 타임아웃된다(2026-08-15 실측).
-            #   → '>' 로 시작하는 경로형이면서, 마지막 노드가 요청값인 것만 고른다.
-            target = None
-            for _ in range(12):
-                time.sleep(0.8)
-                try:
-                    opts = self.page.locator(".selectize-dropdown .option")
-                    n = min(opts.count(), 20)
-                    for i in range(n):
-                        o = opts.nth(i)
-                        if not o.is_visible(timeout=400):
-                            continue
-                        txt = (o.inner_text(timeout=400) or "").strip()
-                        if ">" not in txt:
-                            continue  # 상품명 자동완성 제외
-                        if txt.rsplit(">", 1)[-1].strip() == category_name:
-                            target = o
-                            break
-                    if target is not None:
-                        break
-                except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
-                    continue
-
-            try:
-                if target is not None:
-                    target.click(timeout=3000, force=True)
-                    time.sleep(0.8)
-            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
-                self.page.keyboard.press("ArrowDown")
-                time.sleep(0.3)
-                self.page.keyboard.press("Enter")
-                time.sleep(0.8)
+            self._fill_category_search(category_name)
+            target = self._find_category_option(category_name)
+            self._click_category_option(target)
             # 카테고리 선택 시 'KC인증 필수 카테고리' 모달이 뜬다 → 닫아야 다음 단계가 산다
             self._dismiss_blocking_modals()
 
@@ -662,6 +637,70 @@ class GeneralProductRegister:
             return {"ok": True, "category": category_name, "selected": selected[:120]}
         except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
             return {"ok": False, "error": str(e)[:80]}
+
+    def _fill_category_search(self, category_name: str) -> None:
+        """카테고리 입력창에 검색어를 채우고 input/focus 이벤트를 발생시킨다."""
+        sel = 'input[placeholder*="카테고리"]:not([type="radio"]):not([type="checkbox"])'
+        self.page.evaluate(f"""
+            (() => {{
+                const el = document.querySelector('{sel}');
+                if (el) el.scrollIntoView({{block: 'center'}});
+            }})();
+            """)
+        time.sleep(0.4)
+        el = self.page.locator(sel).first
+        el.fill(category_name, timeout=5000, force=True)
+        self.page.evaluate(f"""
+            (() => {{
+                const el = document.querySelector('{sel}');
+                if (el) {{
+                    el.dispatchEvent(new Event('input', {{bubbles: true}}));
+                    el.dispatchEvent(new Event('focus', {{bubbles: true}}));
+                }}
+            }})();
+            """)
+
+    def _find_category_option(self, category_name: str):
+        """원하는 카테고리 경로(마지막 노드 일치)가 뜰 때까지 폴링해 해당 옵션을 반환(없으면 None)."""
+        # 원하는 카테고리 경로가 뜰 때까지 폴링 (이전 검색 잔상 회피)
+        #
+        # ⚠ has_text=category_name 만 쓰면 안 된다. 드롭다운에는 카테고리 경로 외에
+        #   상품명 자동완성('헤이그 ... 인테리어조명(등 미포함)')도 섞여 나오고,
+        #   그게 먼저 잡히면 보이지도 않아 클릭이 타임아웃된다(2026-08-15 실측).
+        #   → '>' 로 시작하는 경로형이면서, 마지막 노드가 요청값인 것만 고른다.
+        target = None
+        for _ in range(12):
+            time.sleep(0.8)
+            try:
+                opts = self.page.locator(".selectize-dropdown .option")
+                n = min(opts.count(), 20)
+                for i in range(n):
+                    o = opts.nth(i)
+                    if not o.is_visible(timeout=400):
+                        continue
+                    txt = (o.inner_text(timeout=400) or "").strip()
+                    if ">" not in txt:
+                        continue  # 상품명 자동완성 제외
+                    if txt.rsplit(">", 1)[-1].strip() == category_name:
+                        target = o
+                        break
+                if target is not None:
+                    break
+            except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
+                continue
+        return target
+
+    def _click_category_option(self, target) -> None:
+        """찾은 옵션 클릭, 실패하면 키보드(ArrowDown+Enter) 폴백."""
+        try:
+            if target is not None:
+                target.click(timeout=3000, force=True)
+                time.sleep(0.8)
+        except Exception:  # noqa: BLE001 - 스마트스토어 상품등록 폼 자동화 — 각 단계 실패는 항상 {ok: False, error} 로 반환해 호출부가 확인 후 중단하도록 함(실제 저장은 save() 명시 호출 시에만, log_critical 감사로그 남김), 결제 없음(2026-09-28 검토)
+            self.page.keyboard.press("ArrowDown")
+            time.sleep(0.3)
+            self.page.keyboard.press("Enter")
+            time.sleep(0.8)
 
     _SELECTIZE_SET_JS = r"""
     (wantText) => {
@@ -907,6 +946,31 @@ class GeneralProductRegister:
 
     # ── 통합 원샷 등록 ───────────────────────────────────────────────────
 
+    def _ordered_steps(self, data: dict) -> list:
+        """register_product 단계 목록 (이름, 함수, 인자) — 데이터에 값이 있는 단계만."""
+        ordered = []
+        if data.get("category"):
+            ordered.append(("category", self.set_category, data["category"]))
+        if data.get("name"):
+            ordered.append(("name", self.set_product_name, data["name"]))
+        if data.get("price") is not None:
+            ordered.append(("price", self.set_price, data["price"]))
+        if data.get("stock") is not None:
+            ordered.append(("stock", self.set_stock, data["stock"]))
+        if data.get("main_image"):
+            ordered.append(("main_image", self.upload_main_image, data["main_image"]))
+        return ordered
+
+    def _save_if_ok(self, save_after: bool, failed_at: str | None, require_confirm: bool, steps: list):
+        """모든 단계가 성공했을 때만 저장. 실패가 있으면 저장하지 않는다."""
+        save_result = None
+        if save_after and failed_at is None:
+            save_result = self.save(require_confirm=require_confirm)
+            steps.append(("save", save_result))
+        elif save_after and failed_at:
+            _log.error("[gen-reg] '%s' 실패로 저장을 건너뜀", failed_at)
+        return save_result
+
     def register_product(
         self,
         data: dict,
@@ -977,28 +1041,13 @@ class GeneralProductRegister:
                 return False
             return True
 
-        ordered = []
-        if data.get("category"):
-            ordered.append(("category", self.set_category, data["category"]))
-        if data.get("name"):
-            ordered.append(("name", self.set_product_name, data["name"]))
-        if data.get("price") is not None:
-            ordered.append(("price", self.set_price, data["price"]))
-        if data.get("stock") is not None:
-            ordered.append(("stock", self.set_stock, data["stock"]))
-        if data.get("main_image"):
-            ordered.append(("main_image", self.upload_main_image, data["main_image"]))
+        ordered = self._ordered_steps(data)
 
         for name, fn, arg in ordered:
             if not run(name, fn, arg):
                 break
 
-        save_result = None
-        if save_after and failed_at is None:
-            save_result = self.save(require_confirm=require_confirm)
-            steps.append(("save", save_result))
-        elif save_after and failed_at:
-            _log.error("[gen-reg] '%s' 실패로 저장을 건너뜀", failed_at)
+        save_result = self._save_if_ok(save_after, failed_at, require_confirm, steps)
 
         return {
             "ok": failed_at is None and all(s[1].get("ok", False) for s in steps),

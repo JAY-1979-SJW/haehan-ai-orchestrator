@@ -208,6 +208,19 @@ def explore_service(page, svc: dict) -> dict:
     return result
 
 
+def _print_category_summary(by_cat: dict) -> None:
+    """카테고리별 요약 출력."""
+    print(f"\n{'=' * 70}")
+    print("  카테고리별 요약")
+    print(f"{'=' * 70}")
+    for cat in sorted(by_cat):
+        items = by_cat[cat]
+        ok = sum(1 for r in items if r["ok"])
+        logged = sum(1 for r in items if r["ok"] and r.get("has_logout"))
+        denied = sum(1 for r in items if r["ok"] and r.get("access_denied"))
+        print(f"  {cat:<10} 성공 {ok}/{len(items)} | 로그인 인식 {logged} | 접근불가 {denied}")
+
+
 def main():
     print(f"\n{'=' * 70}")
     print(f"  네이버 개인 서비스 전체 탐색  |  {len(PERSONAL_SERVICES)}개")
@@ -263,15 +276,7 @@ def main():
     for r in results:
         by_cat.setdefault(r["category"], []).append(r)
 
-    print(f"\n{'=' * 70}")
-    print("  카테고리별 요약")
-    print(f"{'=' * 70}")
-    for cat in sorted(by_cat):
-        items = by_cat[cat]
-        ok = sum(1 for r in items if r["ok"])
-        logged = sum(1 for r in items if r["ok"] and r.get("has_logout"))
-        denied = sum(1 for r in items if r["ok"] and r.get("access_denied"))
-        print(f"  {cat:<10} 성공 {ok}/{len(items)} | 로그인 인식 {logged} | 접근불가 {denied}")
+    _print_category_summary(by_cat)
 
     # 통합 저장
     summary = {

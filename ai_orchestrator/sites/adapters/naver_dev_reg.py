@@ -58,6 +58,29 @@ _SUBMIT_BTN_SELECTORS = (
 _LOGIN_HINTS = ("nid.naver.com/nidlogin", "nid.naver.com/login2", "/login")
 
 
+def _fill_fields_and_scopes(page, params: dict, filled: list[str], errors_fill: list[str]) -> None:
+    """앱 등록 폼 필드 입력 + scope 체크박스 선택 (filled/errors_fill 에 누적)."""
+    for field_name, selector in _SELECTORS.items():
+        value = params.get(field_name, "")
+        if not value:
+            continue
+        try:
+            page.fill(selector, str(value))
+            filled.append(field_name)
+        except Exception as e:  # noqa: BLE001 - 네이버 개발자센터 앱 등록 폼 자동입력 — 페이지이동/필드입력/체크박스/제출 실패 시 모두 error 필드를 채운 명시적 실패 결과(FormFillResult/SubmitResult)를 반환, 승인 없이 제출 진행 없음.
+            errors_fill.append(f"{field_name}: {e}")
+            logger.warning("네이버 폼 입력 실패 | field=%s | %s", field_name, e)
+
+    scopes = params.get("requested_scopes", [])
+    if isinstance(scopes, list):
+        for scope in scopes:
+            try:
+                page.check(f"input[type='checkbox'][value='{scope}']")
+                filled.append(f"scope:{scope}")
+            except Exception as e:  # noqa: BLE001 - 네이버 개발자센터 앱 등록 폼 자동입력 — 페이지이동/필드입력/체크박스/제출 실패 시 모두 error 필드를 채운 명시적 실패 결과(FormFillResult/SubmitResult)를 반환, 승인 없이 제출 진행 없음.
+                logger.warning("네이버 scope 체크 실패 | scope=%s | %s", scope, e)
+
+
 class NaverDevRegAdapter(DevRegAdapterBase):
     """네이버 개발자센터 앱 등록 어댑터."""
 
@@ -121,25 +144,7 @@ class NaverDevRegAdapter(DevRegAdapterBase):
         filled: list[str] = []
         errors_fill: list[str] = []
 
-        for field_name, selector in _SELECTORS.items():
-            value = params.get(field_name, "")
-            if not value:
-                continue
-            try:
-                page.fill(selector, str(value))
-                filled.append(field_name)
-            except Exception as e:  # noqa: BLE001 - 네이버 개발자센터 앱 등록 폼 자동입력 — 페이지이동/필드입력/체크박스/제출 실패 시 모두 error 필드를 채운 명시적 실패 결과(FormFillResult/SubmitResult)를 반환, 승인 없이 제출 진행 없음.
-                errors_fill.append(f"{field_name}: {e}")
-                logger.warning("네이버 폼 입력 실패 | field=%s | %s", field_name, e)
-
-        scopes = params.get("requested_scopes", [])
-        if isinstance(scopes, list):
-            for scope in scopes:
-                try:
-                    page.check(f"input[type='checkbox'][value='{scope}']")
-                    filled.append(f"scope:{scope}")
-                except Exception as e:  # noqa: BLE001 - 네이버 개발자센터 앱 등록 폼 자동입력 — 페이지이동/필드입력/체크박스/제출 실패 시 모두 error 필드를 채운 명시적 실패 결과(FormFillResult/SubmitResult)를 반환, 승인 없이 제출 진행 없음.
-                    logger.warning("네이버 scope 체크 실패 | scope=%s | %s", scope, e)
+        _fill_fields_and_scopes(page, params, filled, errors_fill)
 
         if errors_fill:
             return FormFillResult(

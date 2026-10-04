@@ -5,8 +5,7 @@ from pathlib import Path
 catalog = json.load(Path("data/mk_catalog/products_web.json").open(encoding="utf-8"))
 
 
-def classify(name, features):
-    t = (name or "") + " " + (features or "")
+def _classify_a(name, t):
     if "힘펠" in name or "환풍기" in t:
         return "환풍기"
     if any(
@@ -18,6 +17,10 @@ def classify(name, features):
         return "안전·방재"
     if name.startswith("스피커"):
         return "안전·방재"
+    return None
+
+
+def _classify_b(name, t):
     if any(
         k in t
         for k in [
@@ -41,6 +44,10 @@ def classify(name, features):
         return "배선기구"
     if any(k in t for k in ["CD 파이프", "로맥스", "HIV ", "전선"]):
         return "전선·자재"
+    return None
+
+
+def _classify_c(name, t):
     if any(
         k in name
         for k in [
@@ -91,6 +98,10 @@ def classify(name, features):
         return "레일조명"
     if "벽시계" in name:
         return "벽시계"
+    return None
+
+
+def _classify_d(name, t):
     if any(
         k in t
         for k in [
@@ -122,6 +133,10 @@ def classify(name, features):
         return "센서등"
     if "직부" in t:
         return "직부등"
+    return None
+
+
+def _classify_e(name, t):
     if any(
         k in name
         for k in [
@@ -144,7 +159,19 @@ def classify(name, features):
         return "램프·전구"
     if any(k in name for k in ["에지", "LED바", "라인시스템"]):
         return "LED스트립·자재"
-    return "기타"
+    return None
+
+
+def classify(name, features):
+    t = (name or "") + " " + (features or "")
+    return (
+        _classify_a(name, t)
+        or _classify_b(name, t)
+        or _classify_c(name, t)
+        or _classify_d(name, t)
+        or _classify_e(name, t)
+        or "기타"
+    )
 
 
 changed = 0

@@ -41,7 +41,7 @@ from ai_orchestrator.server.action_task_handoff import (
 # ── prepare ───────────────────────────────────────────────────────────────────
 
 
-def api_prepare_action(
+def api_prepare_action(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     action_name: str,
     params: dict[str, Any] | None = None,
@@ -116,7 +116,7 @@ def api_prepare_action(
 # ── evidence ──────────────────────────────────────────────────────────────────
 
 
-def api_receive_evidence(
+def api_receive_evidence(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     action_name: str,
     approval_request_id: str,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 
 def _js(name: str) -> str:
@@ -15,6 +16,10 @@ class MyBoxMixin:
 
     실제 캡처된 API: ['/api/v1/pay/users/status', '/jsonp/push/count/v2/services/chat', '/api/general/config', '/service/user/get', '/api/v1/pay/users/status']
     """
+
+    if TYPE_CHECKING:
+        # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
+        def __getattr__(self, name: str) -> Any: ...
 
     def mybox_list(self, path: str = "/") -> list[dict]:
         """파일/폴더 목록 — file/get + file/list 2단계 호출.

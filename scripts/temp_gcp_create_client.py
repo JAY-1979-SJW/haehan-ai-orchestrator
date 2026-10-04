@@ -14,7 +14,7 @@ load_dotenv()
 
 agent = BrowserAgent()
 agent.connect()
-page = agent._page
+page = agent.page
 
 page.goto("https://console.cloud.google.com/auth/clients/create?project=haehan-ai")
 time.sleep(4)

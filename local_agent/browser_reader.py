@@ -67,7 +67,7 @@ _ALLOWED_WAIT_UNTIL: frozenset[str] = frozenset({
 
 # ── 공개 API ─────────────────────────────────────────────────────────────
 
-def open_url_readonly(
+def open_url_readonly(  # noqa: PLR0913 - 공개 API keyword-only 시그니처 유지(호출부·테스트 다수)
     url: str,
     *,
     wait_until: str = "domcontentloaded",
@@ -102,19 +102,9 @@ def open_url_readonly(
     keep_open_ms = max(0, min(keep_open_ms, 30000))
     browser_channel = _normalize_browser_channel(browser_channel)
 
-    audit_base = {
-        "action": "controlled_browser_open",
-        "url_category": url_category,
-        "allow_about_blank": bool(allow_about_blank),
-        "allow_private_network": bool(allow_private_network),
-        "headless": bool(headless),
-        "keep_open_ms": keep_open_ms,
-        "browser_channel": browser_channel or "chromium",
-        "dry_run": False,
-    }
-    # url 원문은 about:blank 인 경우에만 audit 에 포함
-    if url_category == "about_blank":
-        audit_base["url"] = "about:blank"
+    audit_base = _build_audit_base(
+        url_category, allow_about_blank, allow_private_network, headless, keep_open_ms, browser_channel,
+    )
 
     _audit.log_local_event("browser_open_requested", **audit_base)
 
@@ -146,23 +136,9 @@ def open_url_readonly(
     if not isinstance(max_html_chars, int) or max_html_chars <= 0:
         max_html_chars = 500000
 
-    factory = _playwright_factory
-    if factory is None:
-        assert_browser_launch_allowed(component="local_agent.browser_reader", action="playwright_launch")
-        try:
-            from playwright.sync_api import sync_playwright as _sync_playwright
-        except ImportError:
-            _audit.log_local_event(
-                "browser_open_failed",
-                error_code="BROWSER_DEPENDENCY_MISSING",
-                **audit_base,
-            )
-            return _err(
-                url=url,
-                error_code="BROWSER_DEPENDENCY_MISSING",
-                reason="playwright not installed: pip install playwright",
-            )
-        factory = _sync_playwright
+    factory, dep_err = _resolve_playwright_factory(_playwright_factory, url, audit_base)
+    if dep_err is not None:
+        return dep_err
 
     _audit.log_local_event("browser_open_started", **audit_base)
 
@@ -199,12 +175,7 @@ def open_url_readonly(
             reason=str(e)[:200],
         )
 
-    html_truncated = False
-    if not isinstance(html, str):
-        html = ""
-    if len(html) > max_html_chars:
-        html = html[:max_html_chars]
-        html_truncated = True
+    html, html_truncated = _truncate_html(html, max_html_chars)
 
     page_structure = analyze_html_structure(
         html=html, base_url=current_url, keyword_hints=keyword_hints,
@@ -213,30 +184,8 @@ def open_url_readonly(
     login_hint, login_reason = _detect_login_required(page_structure)
     modal_candidates = _detect_modal_candidates(html)
 
-    counts = page_structure.get("counts", {}) or {}
-    summary = (
-        f"title={(page_title or '')[:60]} "
-        f"links={counts.get('links', 0)} "
-        f"buttons={counts.get('buttons', 0)} "
-        f"forms={counts.get('forms', 0)} "
-        f"tables={counts.get('tables', 0)}"
-    )
-
-    # 관찰 결과 audit — title/url 본문은 기록하지 않고 카운트와 힌트만 남긴다
-    _audit.log_local_event(
-        "browser_open_observed",
-        pages_observed_count=1,
-        title_len=len((page_title or "")),
-        login_required_hint=bool(login_hint),
-        modal_candidates_count=len(modal_candidates or []),
-        html_truncated=bool(html_truncated),
-        **audit_base,
-    )
-    _audit.log_local_event(
-        "browser_open_completed",
-        status_category="ok",
-        **audit_base,
-    )
+    summary = _page_summary(page_title, page_structure)
+    _log_observed(audit_base, page_title, login_hint, modal_candidates, html_truncated)
 
     return {
         "ok": True,
@@ -254,6 +203,100 @@ def open_url_readonly(
         "page_structure": page_structure,
         "summary": summary,
     }
+
+
+def _build_audit_base(
+    url_category: str,
+    allow_about_blank: bool,
+    allow_private_network: bool,
+    headless: bool | None,
+    keep_open_ms: int,
+    browser_channel: str,
+) -> dict[str, Any]:
+    audit_base = {
+        "action": "controlled_browser_open",
+        "url_category": url_category,
+        "allow_about_blank": bool(allow_about_blank),
+        "allow_private_network": bool(allow_private_network),
+        "headless": bool(headless),
+        "keep_open_ms": keep_open_ms,
+        "browser_channel": browser_channel or "chromium",
+        "dry_run": False,
+    }
+    # url 원문은 about:blank 인 경우에만 audit 에 포함
+    if url_category == "about_blank":
+        audit_base["url"] = "about:blank"
+    return audit_base
+
+
+def _resolve_playwright_factory(
+    factory: Callable[[], Any] | None,
+    url: str,
+    audit_base: dict[str, Any],
+) -> tuple[Callable[[], Any] | None, dict[str, Any] | None]:
+    """주입된 factory 가 없으면 playwright 를 로드. (factory, 오류결과)."""
+    if factory is None:
+        assert_browser_launch_allowed(component="local_agent.browser_reader", action="playwright_launch")
+        try:
+            from playwright.sync_api import sync_playwright as _sync_playwright
+        except ImportError:
+            _audit.log_local_event(
+                "browser_open_failed",
+                error_code="BROWSER_DEPENDENCY_MISSING",
+                **audit_base,
+            )
+            return None, _err(
+                url=url,
+                error_code="BROWSER_DEPENDENCY_MISSING",
+                reason="playwright not installed: pip install playwright",
+            )
+        factory = _sync_playwright
+    return factory, None
+
+
+def _truncate_html(html: Any, max_html_chars: int) -> tuple[str, bool]:
+    html_truncated = False
+    if not isinstance(html, str):
+        html = ""
+    if len(html) > max_html_chars:
+        html = html[:max_html_chars]
+        html_truncated = True
+    return html, html_truncated
+
+
+def _page_summary(page_title: Any, page_structure: dict[str, Any]) -> str:
+    counts = page_structure.get("counts", {}) or {}
+    return (
+        f"title={(page_title or '')[:60]} "
+        f"links={counts.get('links', 0)} "
+        f"buttons={counts.get('buttons', 0)} "
+        f"forms={counts.get('forms', 0)} "
+        f"tables={counts.get('tables', 0)}"
+    )
+
+
+def _log_observed(
+    audit_base: dict[str, Any],
+    page_title: Any,
+    login_hint: bool,
+    modal_candidates: list[dict[str, Any]],
+    html_truncated: bool,
+) -> None:
+    # 관찰 결과 audit — title/url 본문은 기록하지 않고 카운트와 힌트만 남긴다
+    _audit.log_local_event(
+        "browser_open_observed",
+        pages_observed_count=1,
+        title_len=len((page_title or "")),
+        login_required_hint=bool(login_hint),
+        modal_candidates_count=len(modal_candidates or []),
+        html_truncated=bool(html_truncated),
+        **audit_base,
+    )
+    _audit.log_local_event(
+        "browser_open_completed",
+        status_category="ok",
+        **audit_base,
+    )
 
 
 def _categorize_url(url: Any) -> str:
@@ -298,7 +341,7 @@ def _normalize_browser_channel(value: Any) -> str:
     return ""
 
 
-def _open_and_read(
+def _open_and_read(  # noqa: PLR0913 - keyword-only 내부 함수, 호출 1곳
     factory: Callable[[], Any],
     url: str,
     *,
@@ -387,6 +430,22 @@ def _detect_login_required(
     return (len(reasons) > 0, reasons)
 
 
+def _iter_modal_hits(html: str):
+    """모달 후보 (text, reason) 을 원래 탐색 순서대로 산출."""
+    for _m in re.finditer(r'role\s*=\s*["\']dialog["\']', html, re.IGNORECASE):
+        yield "", "role_dialog"
+
+    for token in _MODAL_CLASS_TOKENS:
+        pattern = rf'(?:class|id)\s*=\s*["\'][^"\']*{re.escape(token)}[^"\']*["\']'
+        for _m in re.finditer(pattern, html, re.IGNORECASE):
+            yield "", f"class_or_id:{token}"
+
+    for txt in _MODAL_CLOSE_BUTTON_TEXTS:
+        pattern = rf'<button[^>]*>\s*{re.escape(txt)}\s*</button>'
+        for _m in re.finditer(pattern, html, re.IGNORECASE):
+            yield txt, f"close_button:{txt}"
+
+
 def _detect_modal_candidates(html: str) -> list[dict[str, Any]]:
     """HTML 에서 팝업/모달 후보만 구조적으로 추정. 닫기 동작은 수행하지 않는다."""
     if not isinstance(html, str) or not html:
@@ -410,18 +469,8 @@ def _detect_modal_candidates(html: str) -> list[dict[str, Any]]:
         limit_per_reason[reason] = limit_per_reason.get(reason, 0) + 1
         candidates.append({"text": text[:80], "reason": reason})
 
-    for _m in re.finditer(r'role\s*=\s*["\']dialog["\']', html, re.IGNORECASE):
-        _add("", "role_dialog")
-
-    for token in _MODAL_CLASS_TOKENS:
-        pattern = rf'(?:class|id)\s*=\s*["\'][^"\']*{re.escape(token)}[^"\']*["\']'
-        for _m in re.finditer(pattern, html, re.IGNORECASE):
-            _add("", f"class_or_id:{token}")
-
-    for txt in _MODAL_CLOSE_BUTTON_TEXTS:
-        pattern = rf'<button[^>]*>\s*{re.escape(txt)}\s*</button>'
-        for _m in re.finditer(pattern, html, re.IGNORECASE):
-            _add(txt, f"close_button:{txt}")
+    for text, reason in _iter_modal_hits(html):
+        _add(text, reason)
 
     return candidates
 

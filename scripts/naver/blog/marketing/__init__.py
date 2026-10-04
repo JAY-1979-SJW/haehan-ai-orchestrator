@@ -11,4 +11,6 @@
 
 from __future__ import annotations
 
-TARGET_BLOG_ID = "skyjwsin"
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
+
+TARGET_BLOG_ID = DEFAULT_ACCOUNT

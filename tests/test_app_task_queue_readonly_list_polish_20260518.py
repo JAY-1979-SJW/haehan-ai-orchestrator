@@ -10,7 +10,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-TASKS_PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+TASKS_PAGE = assistant_route("tasks", "page.tsx")
 TASK_TABLE = ROOT / "admin-web" / "src" / "components" / "assistant" / "TaskTable.tsx"
 MOCK_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "mock.ts"
 TYPES_FILE = ROOT / "admin-web" / "src" / "types" / "assistant.ts"

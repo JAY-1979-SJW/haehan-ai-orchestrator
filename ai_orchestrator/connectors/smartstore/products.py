@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 import time as _t
 
@@ -12,6 +13,8 @@ from ai_orchestrator.gates.auth import require_role
 
 from ...audit_logger import log_event
 from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, run_with_cdp_context, run_with_cdp_page, save_ss
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -27,7 +30,8 @@ def _notify_collect(rows: list, ok: bool) -> None:
         mgr = get_manager()
         with mgr._lock:
             mgr._events.append(ev)
-    except Exception:  # noqa: S110, BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("상품 이벤트 매니저 기록 실패(무시): %s", type(exc).__name__)
         pass
 
 

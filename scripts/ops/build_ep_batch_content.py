@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import matplotlib
 
@@ -48,11 +49,7 @@ def make_chart(idx: int, topic_short: str) -> str:
     return fname
 
 
-def build_body(item: dict, idx: int) -> tuple[str, str]:
-    title = item["title"]
-    topic_short = item.get("short") or title.split(",")[0]
-
-    parts = []
+def _body_part_intro(parts, item):
     parts.append(item["hook"])
     parts.append("")
     parts.append(
@@ -70,6 +67,9 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
     parts.append("■ 기본 실무 정리")
     parts.append("")
     parts.append(item["a"])
+
+
+def _body_part_compare(parts):
     parts.append(
         "\n실무에서는 이 판단을 문서 하나만 보고 끝내지 않고, 관련 고시·공고문·계약 특수조건을 "
         "함께 대조하는 경우가 많습니다. 특히 여러 현장을 동시에 관리하는 담당자라면 현장마다 "
@@ -94,6 +94,9 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
         "부분은 여전히 사람의 몫입니다. 이 역할 분담이 명확해야 실수 없이 시간을 아낄 수 있습니다."
     )
     parts.append("")
+
+
+def _body_part_prompt(parts, item):
     parts.append("■ AI로 확인하는 방법 — 실제 사용 프롬프트")
     parts.append("")
     parts.append("1단계: 자료 찾기")
@@ -114,6 +117,9 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
         "그럴듯한 오답(할루시네이션) 위험을 크게 줄일 수 있습니다."
     )
     parts.append("")
+
+
+def _body_part_chart_tips(parts):
     parts.append("■ 업무 단계별 소요시간 비교(예시)")
     parts.append("")
     parts.append("[[CHART]]")
@@ -134,6 +140,9 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
         "4. 반복되는 현장이라면 프롬프트를 템플릿으로 저장해두고 현장 정보만 바꿔서 재사용하면 효율이 더 올라갑니다."
     )
     parts.append("")
+
+
+def _body_part_pitfalls(parts):
     parts.append("■ 실무자들이 자주 틀리는 포인트")
     parts.append("")
     parts.append(
@@ -164,6 +173,18 @@ def build_body(item: dict, idx: int) -> tuple[str, str]:
         "이런 식으로 건설공무 실무에서 반복되는 판단 포인트들을 AI로 정리하는 작업을 계속 "
         "테스트하고 있습니다. 비슷한 고민이 있는 항목이 있으시면 댓글로 남겨주세요."
     )
+
+
+def build_body(item: dict, idx: int) -> tuple[str, str]:
+    title = item["title"]
+    topic_short = item.get("short") or title.split(",")[0]
+
+    parts: list[Any] = []
+    _body_part_intro(parts, item)
+    _body_part_compare(parts)
+    _body_part_prompt(parts, item)
+    _body_part_chart_tips(parts)
+    _body_part_pitfalls(parts)
 
     body = "\n".join(parts) + DISCLAIMER + CTA
     return body, topic_short

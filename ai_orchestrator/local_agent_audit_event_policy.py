@@ -5,7 +5,6 @@ audit 노트 생성 로직을 중앙화한다.
 """
 from __future__ import annotations
 
-
 # ── 승인/거절 엔드포인트 HTTP 상태 코드 매핑 ────────────────────────────────────────
 
 APPROVE_STATUS_HTTP = {
@@ -54,7 +53,7 @@ REJECT_AUDIT_EVENT = {
 
 # ── HTTP 에러 응답 생성 헬퍼 ────────────────────────────────────────────────────────
 
-def make_approval_error_detail(status: str, status_code_map: dict = None, event_map: dict = None) -> tuple[int, dict]:
+def make_approval_error_detail(status: str, status_code_map: dict | None = None, event_map: dict | None = None) -> tuple[int, dict]:
     """승인 실패 응답 생성.
 
     Returns: (http_status_code, detail_dict)
@@ -65,7 +64,7 @@ def make_approval_error_detail(status: str, status_code_map: dict = None, event_
     return http_code, {"error": status.upper(), "status": status}
 
 
-def make_rejection_error_detail(status: str, status_code_map: dict = None, event_map: dict = None) -> tuple[int, dict]:
+def make_rejection_error_detail(status: str, status_code_map: dict | None = None, event_map: dict | None = None) -> tuple[int, dict]:
     """거절 실패 응답 생성.
 
     Returns: (http_status_code, detail_dict)

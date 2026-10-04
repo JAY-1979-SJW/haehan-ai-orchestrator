@@ -107,11 +107,6 @@ def _persist_token(agent_id: str, device_token: str) -> None:
         logger.error("device_token 저장 실패: %s", e)
 
 
-def poll_task(agent_id: str, task_id: str, basic_auth: tuple[str, str] | None) -> dict:
-    url = f"{config.SERVER_BASE_URL.rstrip('/')}/api/v1/local-agents/{agent_id}/tasks/{task_id}"
-    return _http_get(url, basic_auth=basic_auth)
-
-
 def execute_local(action: str, params: dict) -> dict:
     """로컬에서 액션 실행 + 결과 dict 반환."""
     result = execute_action(action, params)

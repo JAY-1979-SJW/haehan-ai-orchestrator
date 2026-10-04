@@ -63,7 +63,7 @@ def build_cleanup_confirm(agent_id: str) -> str:
     return f"CLEANUP_SMOKE_TEST_{agent_id}"
 
 
-def validate_cleanup_request(
+def validate_cleanup_request(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     agent_id: str,
     host: str,
     label: str,

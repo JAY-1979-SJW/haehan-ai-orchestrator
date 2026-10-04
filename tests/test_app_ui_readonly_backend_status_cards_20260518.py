@@ -12,6 +12,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = REPO_ROOT / "admin-web" / "src"
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
+from tests.app_ui_paths import assistant_route  # noqa: E402
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 API_CLIENT = FRONTEND_ROOT / "lib" / "assistant" / "api.ts"
 TYPES_FILE = FRONTEND_ROOT / "types" / "assistant.ts"
@@ -38,17 +39,17 @@ def test_audit_script_importable():
 
 def test_dashboard_health_api_connected():
     # APP_UI_READONLY_STATUS_CARDS_API_BIND_01: getAssistantHealth → getAppHealthSummary 로 갱신
-    content = (ASSISTANT_APP / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("page.tsx")).read_text(encoding="utf-8")
     assert "getAppHealthSummary" in content
 
 
 def test_dashboard_readonly_mode_banner():
-    content = (ASSISTANT_APP / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("page.tsx")).read_text(encoding="utf-8")
     assert "ReadOnlyModeBanner" in content
 
 
 def test_dashboard_api_connection_state_badge():
-    content = (ASSISTANT_APP / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("page.tsx")).read_text(encoding="utf-8")
     assert "ApiConnectionStateBadge" in content
 
 
@@ -97,44 +98,44 @@ def test_types_has_mutation_allowed_false():
 # ── 4. Task Queue inbox status card 보강 ─────────────────────────────────────
 
 def test_tasks_inbox_api_connected():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "getAssistantInbox" in content
 
 
 def test_tasks_readonly_mode_banner():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "ReadOnlyModeBanner" in content
 
 
 def test_tasks_empty_state_panel():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "EmptyStatePanel" in content
 
 
 def test_tasks_dry_run_only_badge():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "DRY_RUN_ONLY" in content
 
 
 def test_tasks_mutation_blocked_badge():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "MUTATION_BLOCKED" in content
 
 
 # ── 5. Deployment display-only 유지 ──────────────────────────────────────────
 
 def test_deployment_no_restart_button():
-    content = (ASSISTANT_APP / "deployment" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("deployment", "page.tsx")).read_text(encoding="utf-8")
     assert not re.search(r"<[Bb]utton[^>]*>서버\s*재시작", content)
 
 
 def test_deployment_no_docker_compose_button():
-    content = (ASSISTANT_APP / "deployment" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("deployment", "page.tsx")).read_text(encoding="utf-8")
     assert not re.search(r"<[Bb]utton[^>]*>compose\s*실행", content)
 
 
 def test_deployment_server_apply_allowed_false():
-    content = (ASSISTANT_APP / "deployment" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("deployment", "page.tsx")).read_text(encoding="utf-8")
     assert "server_apply_allowed=false" in content
 
 

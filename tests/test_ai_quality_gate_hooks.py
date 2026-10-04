@@ -11,12 +11,22 @@ exit code/stdout/stderr 확인)으로 검증한다. 실제 ruff/pytest 를 사�
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
+
+# post_edit_fast_gate 는 `python -m ruff` 로 새 ruff 오류를 찾는다. ruff 가 없으면 그 검사 자체가 동작하지 않아
+# 시험이 실패하므로(CI 는 requirements.txt 만 설치하고 거기에 ruff 가 없다) 그때만 건너뛴다.
+requires_ruff = pytest.mark.skipif(
+    importlib.util.find_spec("ruff") is None,
+    reason="ruff 가 설치돼 있지 않다 — post_edit_fast_gate 의 ruff 검사를 시험할 수 없다",
+)
 PRE_EDIT = ROOT / "scripts" / "ops" / "pre_edit_dup_check.py"
 POST_EDIT = ROOT / "scripts" / "ops" / "post_edit_fast_gate.py"
 STOP_VERIFY = ROOT / "scripts" / "ops" / "stop_fast_verify.py"
@@ -86,13 +96,14 @@ def test_pre_edit_dup_check_fails_open_on_bad_input():
 # ---- post_edit_fast_gate.py ---------------------------------------------
 
 
+@requires_ruff
 def test_post_edit_fast_gate_blocks_new_ruff_error(tmp_path):
     target = ROOT / "ai_orchestrator" / "connectors" / "community_router.py"
-    original = target.read_text(encoding="utf-8")
+    # 바이트로 다룬다 — read_text/write_text 는 윈도우에서 줄바꿈(CRLF/LF)을 바꿔 추적 파일을 더럽힌다
+    original = target.read_bytes()
     try:
-        target.write_text(
-            original + "\n\ndef _unused_var_demo_test_marker():\n    unused_local_var = 123\n    return True\n",
-            encoding="utf-8",
+        target.write_bytes(
+            original + b"\n\ndef _unused_var_demo_test_marker():\n    unused_local_var = 123\n    return True\n"
         )
         proc = _run_hook(
             POST_EDIT,
@@ -104,14 +115,14 @@ def test_post_edit_fast_gate_blocks_new_ruff_error(tmp_path):
         assert proc.returncode == 2
         assert "F841" in proc.stderr or "unused" in proc.stderr.lower()
     finally:
-        target.write_text(original, encoding="utf-8")
+        target.write_bytes(original)
 
 
 def test_post_edit_fast_gate_passes_clean_edit(tmp_path):
     target = ROOT / "ai_orchestrator" / "connectors" / "community_router.py"
-    original = target.read_text(encoding="utf-8")
+    original = target.read_bytes()
     try:
-        target.write_text(original + "\n\ndef _clean_noop_test_marker():\n    return True\n", encoding="utf-8")
+        target.write_bytes(original + b"\n\ndef _clean_noop_test_marker():\n    return True\n")
         proc = _run_hook(
             POST_EDIT,
             {
@@ -125,7 +136,7 @@ def test_post_edit_fast_gate_passes_clean_edit(tmp_path):
         # does not mention a rule code for our added function.
         assert "_clean_noop_test_marker" not in proc.stderr
     finally:
-        target.write_text(original, encoding="utf-8")
+        target.write_bytes(original)
 
 
 def test_post_edit_fast_gate_skips_missing_file():
@@ -182,7 +193,7 @@ def test_stop_fast_verify_only_checks_this_sessions_files():
     other_record_path = session_dir / f"{other_session_id}.json"
 
     target = ROOT / "ai_orchestrator" / "connectors" / "community_router.py"
-    original = target.read_text(encoding="utf-8")
+    original = target.read_bytes()
     try:
         # 세션 A 가 이 파일을 편집했다고 기록만 남긴다(실제 ruff 신규 오류는 넣지 않음 —
         # 통과 경로에서 격리 여부만 확인).
@@ -202,7 +213,7 @@ def test_stop_fast_verify_only_checks_this_sessions_files():
         assert proc.returncode == 0
         assert proc.stdout.strip() == ""
     finally:
-        target.write_text(original, encoding="utf-8")
+        target.write_bytes(original)
         for p in (record_path, other_record_path):
             if p.exists():
                 p.unlink()

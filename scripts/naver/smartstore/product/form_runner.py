@@ -182,46 +182,34 @@ class ProductFormRunner:
         self.channel = ChannelSection(page)
         self.save_section = SaveSection(page)
 
-    def run(self, data: dict | RegisterData, skip_open: bool = False) -> dict:
-        """전체 폼 실행.
+    def _auto_handle_popups(self) -> None:
+        """카테고리 선택/페이지 진입 후 뜨는 팝업/모달 자동 처리 (실패는 무시)."""
+        try:
+            from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
 
-        Args:
-            data: RegisterData 또는 dict
-            skip_open: True면 페이지 진입 생략 (이미 열려 있을 때)
+            CdpPopupManager().handle_page(self.page, auto_confirm=True)
+        except Exception:  # noqa: BLE001 - 예약구매/팝업 처리를 위한 CdpPopupManager 호출 실패는 무시하고 다음 폼 입력 단계로 계속 진행
+            pass
 
-        Returns:
-            {ok, steps: {섹션명: {ok, ...}}, errors: [...]}
-        """
-        if isinstance(data, dict):
-            data = RegisterData.from_dict(data)
+    def _run_open(self, steps: dict) -> list[str] | None:
+        """1. 페이지 진입. 실패 시 errors 리스트 반환."""
+        ok = self._reg.open()
+        steps["open"] = {"ok": ok}
+        if not ok:
+            return ["상품 등록 페이지 진입 실패"]
+        time.sleep(1)
+        return None
 
-        # 유효성 검사
-        errs = data.validate()
-        if errs:
-            return {"ok": False, "errors": errs, "steps": {}}
-
-        steps: dict[str, Any] = {}
-
-        # 1. 페이지 진입
-        if not skip_open:
-            ok = self._reg.open()
-            steps["open"] = {"ok": ok}
-            if not ok:
-                return {"ok": False, "errors": ["상품 등록 페이지 진입 실패"], "steps": steps}
-            time.sleep(1)
-
-        # 2. 카테고리
+    def _run_category(self, data: RegisterData, steps: dict) -> None:
+        """2. 카테고리."""
         if data.category:
             steps["category"] = self.category.set(data.category, result_idx=data.category_result_idx)
             time.sleep(0.8)  # 카테고리 선택 후 폼 리렌더링 대기
             # 카테고리 선택 후 뜨는 팝업/모달 자동 처리
-            try:
-                from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
+            self._auto_handle_popups()
 
-                CdpPopupManager().handle_page(self.page, auto_confirm=True)
-            except Exception:  # noqa: BLE001 - 예약구매/팝업 처리를 위한 CdpPopupManager 호출 실패는 무시하고 다음 폼 입력 단계로 계속 진행
-                pass
-
+    def _run_basic(self, data: RegisterData, steps: dict) -> list[str] | None:
+        """3~9. 예약구매/상품명/판매가/즉시할인/부가세/재고/옵션. 필수 입력 실패 시 errors 반환."""
         # 3. 예약구매
         if data.pre_order:
             steps["pre_order"] = self.pre_order.enable(data.pre_order_start, data.pre_order_end)
@@ -231,12 +219,12 @@ class ProductFormRunner:
         # 4. 상품명
         steps["name"] = self.product_name.set(data.name)
         if not steps["name"]["ok"]:
-            return {"ok": False, "errors": ["상품명 입력 실패"], "steps": steps}
+            return ["상품명 입력 실패"]
 
         # 5. 판매가
         steps["price"] = self.price.set(data.price, data.original_price)
         if not steps["price"]["ok"]:
-            return {"ok": False, "errors": ["판매가 입력 실패"], "steps": steps}
+            return ["판매가 입력 실패"]
 
         # 6. 즉시할인
         if data.discount_enabled:
@@ -250,14 +238,17 @@ class ProductFormRunner:
         # 8. 재고수량
         steps["stock"] = self.stock.set(data.stock, data.min_purchase, data.max_purchase)
         if not steps["stock"]["ok"]:
-            return {"ok": False, "errors": ["재고수량 입력 실패"], "steps": steps}
+            return ["재고수량 입력 실패"]
 
         # 9. 옵션
         if data.options:
             steps["option"] = self.option.add_single(data.options)
         else:
             steps["option"] = self.option.disable()
+        return None
 
+    def _run_media(self, data: RegisterData, steps: dict) -> None:
+        """10~12. 이미지/동영상."""
         # 10~11. 이미지
         img_results: dict[str, Any] = {}
         if data.main_image:
@@ -270,7 +261,8 @@ class ProductFormRunner:
         if data.video_title or data.video_url:
             steps["video"] = self.video.set(data.video_title, data.video_url)
 
-        # 13. 상세설명
+    def _run_description(self, data: RegisterData, steps: dict) -> None:
+        """13. 상세설명."""
         if data.description_mode == "claude":
             # Claude AI 자동 작성 — description 텍스트 대신 ai_product_data 사용
             ai_data = {
@@ -290,6 +282,8 @@ class ProductFormRunner:
             else:
                 steps["description"] = self.description.write_direct(data.description)
 
+    def _run_tail(self, data: RegisterData, steps: dict) -> None:
+        """14~저장: 주요정보/검색태그/노출채널/저장."""
         # 14. 상품 주요정보
         if any([data.brand, data.manufacturer, data.origin]):
             steps["product_info"] = self.product_info.set(
@@ -318,6 +312,42 @@ class ProductFormRunner:
         else:
             steps["save"] = {"ok": True, "skipped": True, "note": "저장 생략"}
 
+    def run(self, data: dict | RegisterData, skip_open: bool = False) -> dict:
+        """전체 폼 실행.
+
+        Args:
+            data: RegisterData 또는 dict
+            skip_open: True면 페이지 진입 생략 (이미 열려 있을 때)
+
+        Returns:
+            {ok, steps: {섹션명: {ok, ...}}, errors: [...]}
+        """
+        if isinstance(data, dict):
+            data = RegisterData.from_dict(data)
+
+        # 유효성 검사
+        errs = data.validate()
+        if errs:
+            return {"ok": False, "errors": errs, "steps": {}}
+
+        steps: dict[str, Any] = {}
+
+        # 1. 페이지 진입
+        if not skip_open:
+            open_errs = self._run_open(steps)
+            if open_errs:
+                return {"ok": False, "errors": open_errs, "steps": steps}
+
+        self._run_category(data, steps)
+
+        basic_errs = self._run_basic(data, steps)
+        if basic_errs:
+            return {"ok": False, "errors": basic_errs, "steps": steps}
+
+        self._run_media(data, steps)
+        self._run_description(data, steps)
+        self._run_tail(data, steps)
+
         failed = [k for k, v in steps.items() if not v.get("ok", True)]
         return {
             "ok": len(failed) == 0,
@@ -330,38 +360,21 @@ class ProductFormRunner:
         """페이지 진입 없이 현재 열린 폼에만 채우기."""
         return self.run(data, skip_open=True)
 
-    def edit(self, product_id: str, fields: dict) -> dict:
-        """기존 상품 수정.
-
-        Args:
-            product_id: 상품번호 (숫자 문자열)
-            fields:     수정할 필드만 포함한 dict
-                        지원: name, price, stock, description, keywords,
-                              brand, manufacturer, origin, original_price,
-                              discount_enabled, save (True/False/None)
-
-        Returns:
-            {ok, product_id, steps, errors}
-        """
+    def _edit_open(self, product_id: str, steps: dict) -> dict | None:
+        """1. 수정 페이지 진입. 실패 시 반환할 결과 dict, 성공이면 None."""
         EDIT_URL = f"https://sell.smartstore.naver.com/#/products/{product_id}/edit"
-        steps: dict[str, Any] = {}
-
-        # 1. 수정 페이지 진입
         try:
             self.page.goto(EDIT_URL, timeout=20000, wait_until="domcontentloaded")
             time.sleep(2.5)  # 폼 Angular 렌더링 대기
             # 팝업 처리 (임시저장 불러오기 등)
-            try:
-                from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
-
-                CdpPopupManager().handle_page(self.page, auto_confirm=True)
-            except Exception:  # noqa: BLE001 - 예약구매/팝업 처리를 위한 CdpPopupManager 호출 실패는 무시하고 다음 폼 입력 단계로 계속 진행
-                pass
+            self._auto_handle_popups()
             steps["open"] = {"ok": True, "url": EDIT_URL}
         except Exception as e:  # noqa: BLE001 - 스마트스토어 상품 등록/수정 폼 자동화(필드 입력 단계) — 팝업관리자 호출 실패는 무시하고 계속, 수정페이지 진입 실패는 에러 목록에 담아 반환할 뿐 최종 저장/제출 버튼 클릭은 별도 단계로 분리되어 있음
             return {"ok": False, "product_id": product_id, "errors": [f"수정 페이지 진입 실패: {e}"], "steps": steps}
+        return None
 
-        # 2. 지정된 필드만 수정 (카테고리는 수정 불가 — 등록 후 변경 금지)
+    def _edit_fields(self, fields: dict, steps: dict) -> None:
+        """2. 지정된 필드만 수정 (카테고리는 수정 불가 — 등록 후 변경 금지)."""
         if fields.get("name"):
             steps["name"] = self.product_name.set(fields["name"])
 
@@ -393,7 +406,8 @@ class ProductFormRunner:
         if fields.get("keywords"):
             steps["keywords"] = self.keywords.set(fields["keywords"])
 
-        # 3. 저장
+    def _edit_save(self, fields: dict, steps: dict) -> None:
+        """3. 저장."""
         save = fields.get("save", False)
         if save is True:
             steps["save"] = self.save_section.save(require_confirm=False)
@@ -401,6 +415,28 @@ class ProductFormRunner:
             steps["save"] = self.save_section.temp_save()
         else:
             steps["save"] = {"ok": True, "skipped": True}
+
+    def edit(self, product_id: str, fields: dict) -> dict:
+        """기존 상품 수정.
+
+        Args:
+            product_id: 상품번호 (숫자 문자열)
+            fields:     수정할 필드만 포함한 dict
+                        지원: name, price, stock, description, keywords,
+                              brand, manufacturer, origin, original_price,
+                              discount_enabled, save (True/False/None)
+
+        Returns:
+            {ok, product_id, steps, errors}
+        """
+        steps: dict[str, Any] = {}
+
+        open_fail = self._edit_open(product_id, steps)
+        if open_fail is not None:
+            return open_fail
+
+        self._edit_fields(fields, steps)
+        self._edit_save(fields, steps)
 
         failed = [k for k, v in steps.items() if not v.get("ok", True)]
         return {

@@ -221,6 +221,30 @@ def request_demolition(page, device_id: str) -> dict:
             return {"ok": False, "reason": msg}
 
 
+def _print_and_save_demolition_list(result: dict) -> None:
+    """철거 현황 조회 결과를 출력하고 JSON 으로 저장."""
+    items = result["items"]
+    page_info = result["page_info"]
+
+    print(f"\n페이지 제목: {page_info.get('title', '')}")
+    print(f"가용 버튼: {', '.join(page_info.get('buttons', []))}")
+    print(f"\n철거 목록: {len(items)}건")
+
+    for i, item in enumerate(items[:30], 1):
+        line = " | ".join(f"{k}: {v}" for k, v in item.items() if v)
+        print(f"  {i:3d}. {line}")
+
+    if len(items) > 30:
+        print(f"  ... (총 {len(items)}건, 30건만 표시)")
+
+    # 저장
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = DATA_DIR / "eum_demolition_list.json"
+    out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\n저장 완료: {out_path}")
+    print("=" * 60)
+
+
 def main(apply: bool = False, device_id: str | None = None) -> None:
     """CLI 실행."""
     from scripts.eum.auth import is_logged_in, login
@@ -268,26 +292,7 @@ def main(apply: bool = False, device_id: str | None = None) -> None:
         print("WEBMAN382M00은 관리자 권한이 필요합니다.")
         return
 
-    items = result["items"]
-    page_info = result["page_info"]
-
-    print(f"\n페이지 제목: {page_info.get('title', '')}")
-    print(f"가용 버튼: {', '.join(page_info.get('buttons', []))}")
-    print(f"\n철거 목록: {len(items)}건")
-
-    for i, item in enumerate(items[:30], 1):
-        line = " | ".join(f"{k}: {v}" for k, v in item.items() if v)
-        print(f"  {i:3d}. {line}")
-
-    if len(items) > 30:
-        print(f"  ... (총 {len(items)}건, 30건만 표시)")
-
-    # 저장
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = DATA_DIR / "eum_demolition_list.json"
-    out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"\n저장 완료: {out_path}")
-    print("=" * 60)
+    _print_and_save_demolition_list(result)
 
 
 if __name__ == "__main__":

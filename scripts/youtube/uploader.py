@@ -77,7 +77,7 @@ def prepare_upload_plan(local_path: str | Path, values: dict[str, Any]) -> tuple
 
     file_scan = scan_video_file(video_path)
     metadata_ok = bool(title.strip()) and privacy in ALLOWED_PRIVACY
-    plan = {
+    plan: dict[str, Any] = {
         "schema_version": 1,
         "created_at": _now(),
         "workflow": "youtube_upload_video",

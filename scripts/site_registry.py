@@ -1,14 +1,21 @@
-"""사이트별 메타데이터 + 로그인/세션 함수 레지스트리.
+"""사이트 등록표 코어 — 사이트 메타데이터 조회·등록 (사이트별 지식 없음).
 
-신규 사이트 추가:
-    1. 아래 _REGISTRY 에 항목 추가
-    2. 사이트별 auth 모듈에 login() / is_logged_in() 제공
+결함 #113: 이 파일은 원래 사이트별 로그인 함수 약 12개와 7개 사이트 항목을 직접 품고 있어(L5 사이트 지식) L4 범용 엔진
+(cdp_client·login_session·site_access)이 이를 import 하면 층간 위반이었다. 사이트별 지식은 `scripts/site_registry_sites.py`(L5)로 옮기고,
+이 코어는 `SiteSpec`·조회·등록만 한다. 호출처는 그대로 `get_site`·`list_sites` 를 부른다.
+
+사이트 모듈 연결: 처음 `get_site`/`list_sites` 가 불리면 `_LOADER` 가 가리키는 모듈을 문자열로 불러 `build_sites(SiteSpec)` 결과를 등록한다.
+정적 import 가 아니라 **의도적인 데이터 주도(플러그인) 결합**이다 — 런타임에는 코어가 사이트 모듈에 의존하며(결합이 0 은 아님),
+달라지는 것은 L4 파일이 사이트 지식을 소유하지 않는다는 점이다. 로더 실패는 삼키지 않고 예외로 알린다(다음 호출에서 다시 시도).
 """
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Callable
 from dataclasses import dataclass
+
+_LOADER = "scripts.site_registry_sites"  # 변수에 담은 문자열 — 정적 import 가 아니다(위 설명 참고)
 
 
 @dataclass
@@ -21,213 +28,42 @@ class SiteSpec:
     login_strategy: str = "registered_only"  # registered_only | registered_then_universal | manual_only
 
 
-# ── lazy 로더 ─────────────────────────────────────────────────────────────
+_REGISTRY: dict[str, SiteSpec] = {}
+_loaded = False
+_loading = False
 
 
-def _eum_is_logged_in(page):
-    from scripts.eum.auth import is_logged_in
-
-    return is_logged_in(page)
-
-
-def _eum_login(page):
-    from scripts.eum.auth import login
-
-    return login(page)
+def register_site(spec: SiteSpec) -> None:
+    """사이트를 등록한다. 같은 키가 이미 있으면 거부한다(조용한 덮어쓰기 방지)."""
+    if spec.key in _REGISTRY:
+        raise ValueError(f"이미 등록된 사이트: {spec.key}")
+    _REGISTRY[spec.key] = spec
 
 
-def _naver_is_logged_in(page):
-    from scripts.login_detector import detect_login_state
-
-    s = detect_login_state(page)
-    return bool(s.get("logged_in"))
-
-
-def _naver_login(page, *, force_login: bool = False):
-    from scripts.naver.auth import login_naver
-
-    # wait_for_user_s 짧게 (B방식 fallback은 site_access에서 제어)
-    r = login_naver(page, wait_for_user_s=10, force_relogin=force_login)
-    # 통일된 스키마로 변환
-    return {
-        "ok": bool(r.get("logged_in") or r.get("ok")),
-        "reason": r.get("reason") or r.get("hint") or "",
-        "user": r.get("user") or "",
-        "needs_manual": bool(r.get("needs_manual") or r.get("captcha") or r.get("captcha_required")),
-    }
-
-
-def _smartstore_is_logged_in(page):
+def _ensure_loaded() -> None:
+    """사이트 모듈을 한 번만 불러 등록한다(멱등·재진입 안전). 실패하면 아무것도 등록하지 않고 예외를 올린다."""
+    global _loaded, _loading
+    if _loaded or _loading:
+        return
+    _loading = True
     try:
-        from scripts.naver.smartstore.live_probe import classify_probe
-
-        raw = page.evaluate(
-            """() => {
-              const clean = (value) => String(value || '').replace(/\\s+/g, ' ').trim();
-              const body = clean(document.body ? document.body.innerText : '');
-              const href = String(location.href || '');
-              const host = String(location.host || '').toLowerCase();
-              const title = String(document.title || '');
-              const combined = `${href} ${title} ${body}`;
-              return {
-                href,
-                host,
-                title,
-                markers: {
-                  naverLogin: /nid\\.naver\\.com|로그인|아이디|비밀번호|sign in/i.test(combined),
-                  smartstore: /스마트스토어|스마트스토어센터|상품관리|판매관리|정산관리|문의\\/리뷰관리|스토어/i.test(combined),
-                  sellerCenter: /sell\\.smartstore\\.naver\\.com|판매자|센터/i.test(combined),
-                  challenge: /보안|captcha|자동입력|로봇|인증번호|비정상|차단/i.test(combined)
-                },
-                bodySample: body.slice(0, 500)
-              };
-            }"""
-        )
-        return bool(classify_probe(raw or {}).get("logged_in"))
-    except Exception:  # noqa: BLE001 - 로그인 상태 확인 헬퍼 — 예외 시 False(로그인 안 됨)로 fail-closed 반환, 읽기 전용 DOM 텍스트 검사, 쓰기 없음
-        return False
-
-
-def _smartstore_login(page):
-    return {
-        "ok": False,
-        "reason": "manual_smartstore_login_required",
-        "user": "",
-        "needs_manual": True,
-    }
-
-
-def _google_is_logged_in(page):
-    from scripts.login_detector import detect_login_state
-
-    s = detect_login_state(page)
-    return bool(s.get("logged_in"))
-
-
-def _google_login(page):
-    from scripts.google.auth import login_google
-
-    r = login_google(page, wait_for_user_s=10)
-    return {
-        "ok": bool(r.get("logged_in") or r.get("ok")),
-        "reason": r.get("reason") or r.get("hint") or "",
-        "user": r.get("user") or "",
-        "needs_manual": bool(r.get("needs_manual") or r.get("challenge")),
-    }
-
-
-def _gabia_is_logged_in(page):
-    from scripts.gabia.auth import is_logged_in
-
-    return is_logged_in(page)
-
-
-def _gabia_login(page):
-    from scripts.gabia.auth import login
-
-    return login(page)
-
-
-def _kakao_is_logged_in(page):
-    from scripts.kakao.auth import is_logged_in
-
-    return is_logged_in(page)
-
-
-def _kakao_login(page):
-    from scripts.kakao.auth import login
-
-    return login(page)
-
-
-def _hiworks_is_logged_in(page):
-    try:
-        url = page.url or ""
-        if "login.office.hiworks.com" in url:
-            return False
-        if "office.hiworks.com" not in url:
-            return False
-        text = page.locator("body").inner_text(timeout=2000)
-        return any(token in text for token in ("오피스 홈", "메일", "전자결재", "업무관리", "로그아웃"))
-    except Exception:  # noqa: BLE001 - 로그인 상태 확인 헬퍼 — 예외 시 False(로그인 안 됨)로 fail-closed 반환, 읽기 전용 DOM 텍스트 검사, 쓰기 없음
-        return False
-
-
-def _hiworks_login(page):
-    from scripts.login_detector import monitor_for_login
-
-    return {
-        "ok": False,
-        "reason": "manual_login_required",
-        "user": "",
-        "needs_manual": True,
-        "monitor": monitor_for_login,
-    }
-
-
-_REGISTRY: dict[str, SiteSpec] = {
-    "eum": SiteSpec(
-        key="eum",
-        base_url="https://eum.cw.or.kr/main",
-        login_domain_hints=("eum.cw.or.kr/web/log/WEBLOG400M00", "eum.cw.or.kr/login", "eum.cw.or.kr/web/login"),
-        is_logged_in=_eum_is_logged_in,
-        login=_eum_login,
-        login_strategy="registered_only",
-    ),
-    "naver": SiteSpec(
-        key="naver",
-        base_url="https://www.naver.com",
-        login_domain_hints=("nid.naver.com", "/nidlogin"),
-        is_logged_in=_naver_is_logged_in,
-        login=_naver_login,
-        login_strategy="registered_only",
-    ),
-    "smartstore": SiteSpec(
-        key="smartstore",
-        base_url="https://sell.smartstore.naver.com/#/home/dashboard",
-        login_domain_hints=("sell.smartstore.naver.com", "nid.naver.com", "/nidlogin"),
-        is_logged_in=_smartstore_is_logged_in,
-        login=_smartstore_login,
-        login_strategy="manual_only",
-    ),
-    "google": SiteSpec(
-        key="google",
-        base_url="https://www.google.com",
-        login_domain_hints=("accounts.google.com",),
-        is_logged_in=_google_is_logged_in,
-        login=_google_login,
-        login_strategy="registered_only",
-    ),
-    "hiworks": SiteSpec(
-        key="hiworks",
-        base_url="https://dashboard.office.hiworks.com/",
-        login_domain_hints=("login.office.hiworks.com", "office.hiworks.com"),
-        is_logged_in=_hiworks_is_logged_in,
-        login=_hiworks_login,
-        login_strategy="manual_only",
-    ),
-    "gabia": SiteSpec(
-        key="gabia",
-        base_url="https://www.gabia.com",
-        login_domain_hints=("account.gabia.com",),
-        is_logged_in=_gabia_is_logged_in,
-        login=_gabia_login,
-        login_strategy="manual_only",
-    ),
-    "kakao": SiteSpec(
-        key="kakao",
-        base_url="https://www.kakao.com",
-        login_domain_hints=("accounts.kakao.com",),
-        is_logged_in=_kakao_is_logged_in,
-        login=_kakao_login,
-        login_strategy="manual_only",
-    ),
-}
+        specs = importlib.import_module(_LOADER).build_sites(SiteSpec)
+        for spec in specs:
+            register_site(spec)
+        _loaded = True
+    except BaseException:
+        for spec in list(_REGISTRY.values()):  # 일부만 등록된 상태로 남기지 않는다(다음 호출에서 처음부터 다시)
+            _REGISTRY.pop(spec.key, None)
+        raise
+    finally:
+        _loading = False
 
 
 def get_site(key: str) -> SiteSpec | None:
+    _ensure_loaded()
     return _REGISTRY.get(key)
 
 
 def list_sites() -> list[str]:
+    _ensure_loaded()
     return list(_REGISTRY.keys())

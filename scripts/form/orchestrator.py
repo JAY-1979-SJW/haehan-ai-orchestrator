@@ -90,6 +90,68 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
     return "", ""
 
 
+def _warn_inline_validation(page, selector: str) -> None:
+    """ID 입력 직후 인라인 검증 메시지(예: "사용자가 없습니다")가 있으면 경고 로그."""
+    vmsg = wait_validation(page, selector, timeout_ms=600)
+    if vmsg.get("found"):
+        msg = vmsg.get("message", "").lower()
+        if any(s in msg for s in ["없", "확인", "invalid", "not found", "잘못"]):
+            log.warning("[orchestrator] ID 인라인 검증 경고: %s", vmsg["message"])
+
+
+def _submit_login(page, disc, pw_field, result: dict) -> bool:
+    """로그인 제출 — submit 버튼 우선, 없거나 실패하면 Enter. 제출 오류 시 result["reason"] 설정 후 False."""
+    if disc.submit_selector:
+        r_sub = human_click(page, disc.submit_selector, label="로그인 버튼")
+        if not r_sub.get("ok"):
+            # 버튼 클릭 실패 → Enter 폴백
+            try:
+                page.locator(pw_field.selector).press("Enter")
+            except Exception as e:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
+                result["reason"] = f"제출 실패: {e}"
+                return False
+    else:
+        try:
+            page.locator(pw_field.selector).press("Enter")
+        except Exception as e:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
+            result["reason"] = f"제출 실패(Enter): {e}"
+            return False
+    return True
+
+
+def _judge_login_result(page, done: dict, nid: str, wait_submit_ms: int, result: dict) -> None:
+    """제출 응답(done)으로 로그인 성공/실패를 판정해 result 에 기록."""
+    kind = done.get("kind")
+    detail = done.get("detail", "")
+
+    if kind in ("fail_dom", "fail_text"):
+        result["reason"] = f"로그인 실패: {detail[:200]}"
+        return
+
+    if kind == "success_dom" or kind == "url_changed":
+        result["ok"] = True
+        result["user"] = nid
+        result["reason"] = f"로그인 성공 ({kind})"
+        return
+
+    if kind == "timeout":
+        # 마지막 보루: 로그인 폼이 사라졌으면 성공으로 간주
+        try:
+            disc2 = discover_form(page)
+            has_pw = any(f.role == "password" for f in disc2.fields)
+            if not has_pw:
+                result["ok"] = True
+                result["user"] = nid
+                result["reason"] = "로그인 성공 (폼 사라짐)"
+                return
+        except Exception:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
+            pass
+        result["reason"] = f"응답 타임아웃 ({wait_submit_ms}ms)"
+        return
+
+    result["reason"] = f"판정 불가 ({kind}: {detail[:120]})"
+
+
 def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms: int = 12000) -> dict:
     """범용 로그인. 사이트별 selector 없이 discovery로 폼 찾고 휴먼 타이핑.
 
@@ -171,11 +233,7 @@ def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms
     result["fields_used"].append("id")
 
     # 즉시 인라인 검증 메시지 체크 (예: "사용자가 없습니다")
-    vmsg = wait_validation(page, id_field.selector, timeout_ms=600)
-    if vmsg.get("found"):
-        msg = vmsg.get("message", "").lower()
-        if any(s in msg for s in ["없", "확인", "invalid", "not found", "잘못"]):
-            log.warning("[orchestrator] ID 인라인 검증 경고: %s", vmsg["message"])
+    _warn_inline_validation(page, id_field.selector)
 
     # 6) PW 입력
     r_pw = human_type(page, pw_field.selector, pw, label="PW", simulate_typo=False)
@@ -193,21 +251,8 @@ def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms
         return result
 
     # 8) 제출 — submit 버튼 우선, 없으면 Enter
-    if disc.submit_selector:
-        r_sub = human_click(page, disc.submit_selector, label="로그인 버튼")
-        if not r_sub.get("ok"):
-            # 버튼 클릭 실패 → Enter 폴백
-            try:
-                page.locator(pw_field.selector).press("Enter")
-            except Exception as e:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
-                result["reason"] = f"제출 실패: {e}"
-                return result
-    else:
-        try:
-            page.locator(pw_field.selector).press("Enter")
-        except Exception as e:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
-            result["reason"] = f"제출 실패(Enter): {e}"
-            return result
+    if not _submit_login(page, disc, pw_field, result):
+        return result
 
     # 9) 응답 대기 — URL 변경 / 성공 DOM / 실패 DOM / 실패 텍스트 중 first
     done = wait_submit_done(
@@ -228,33 +273,5 @@ def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms
         return result
 
     # 11) 결과 판정
-    kind = done.get("kind")
-    detail = done.get("detail", "")
-
-    if kind in ("fail_dom", "fail_text"):
-        result["reason"] = f"로그인 실패: {detail[:200]}"
-        return result
-
-    if kind == "success_dom" or kind == "url_changed":
-        result["ok"] = True
-        result["user"] = nid
-        result["reason"] = f"로그인 성공 ({kind})"
-        return result
-
-    if kind == "timeout":
-        # 마지막 보루: 로그인 폼이 사라졌으면 성공으로 간주
-        try:
-            disc2 = discover_form(page)
-            has_pw = any(f.role == "password" for f in disc2.fields)
-            if not has_pw:
-                result["ok"] = True
-                result["user"] = nid
-                result["reason"] = "로그인 성공 (폼 사라짐)"
-                return result
-        except Exception:  # noqa: BLE001 - 폼 자동 로그인 오케스트레이터 - 자격증명 조회/제출 실패는 debug 로그(값 노출 없음) 후 다음 방식으로 폴백하거나 실패 사유를 반환
-            pass
-        result["reason"] = f"응답 타임아웃 ({wait_submit_ms}ms)"
-        return result
-
-    result["reason"] = f"판정 불가 ({kind}: {detail[:120]})"
+    _judge_login_result(page, done, nid, wait_submit_ms, result)
     return result

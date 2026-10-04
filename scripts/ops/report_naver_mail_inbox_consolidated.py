@@ -45,16 +45,7 @@ def _load_json(p: Path) -> dict:
         return {}
 
 
-def main():
-    base = Path("data/inspection")
-    ck = _load_json(base / "naver_mail_body_pipeline_batch/checkpoint.json")
-    list_old = _load_json(base / "mail_20260520/mail_unread_report.json")
-    smart_dir = base / "naver_mail_smart_folder_coverage/folder_results"
-
-    # 1) checkpoint sn → status, hash, pii_count
-    sn_status = ck.get("sn_to_status", {})
-
-    # 2) 5/20 list — 제목/발신자/날짜 (이미 마스킹된 상태)
+def _meta_from_list(list_old):
     sn_meta: dict[str, dict] = {}
     for lbl, lst in (list_old.get("classified", {}) or {}).items():
         for it in lst:
@@ -69,8 +60,10 @@ def main():
                     "preview": it.get("preview", ""),
                     "folder_name": "받은메일함",
                 }
+    return sn_meta
 
-    # 3) smart_folder_coverage — 스마트폴더의 sn → meta
+
+def _merge_smart_meta(smart_dir, sn_meta):
     if smart_dir.exists():
         for jf in smart_dir.glob("*.json"):
             d = _load_json(jf)
@@ -88,7 +81,8 @@ def main():
                         "folder_name": fname or "스마트폴더",
                     }
 
-    # 4) MailResult 합성 — 체크포인트 + meta JOIN
+
+def _build_report(sn_status, sn_meta):
     rep = BatchReport()
     rep.run_id = "consolidated"
     rep.target_total = len(sn_status)
@@ -127,12 +121,10 @@ def main():
             rep.success += 1
     rep.pii_detected_total = pii_total
     rep.attempted = rep.success
+    return rep
 
-    # 5) 산출 (구버전 — 호환)
-    out = Path("data/inspection/naver_mail_inbox_consolidated_report")
-    out.mkdir(parents=True, exist_ok=True)
-    md_path = out / "consolidated_business_report.md"
-    md_path.write_text(_render_business_report(rep), encoding="utf-8")
+
+def _write_legacy_json(out, rep):
     json_path = out / "consolidated_data.json"
     json_path.write_text(
         json.dumps(
@@ -152,7 +144,10 @@ def main():
         ),
         encoding="utf-8",
     )
-    # 6) 신규 정식 모듈로 보고서 재생성 (business_report)
+    return json_path
+
+
+def _build_mail_items(rep, sn_meta):
     mail_items = []
     seen_sns: set[str] = set()
     for mr in rep.results:
@@ -190,6 +185,10 @@ def main():
                 link_domains={},
             )
         )
+    return mail_items
+
+
+def _build_business_report(rep, mail_items):
     biz_rep = br.build_report(
         mail_items,
         run_id="closeout_consolidated",
@@ -208,7 +207,10 @@ def main():
     biz_rep = br.attach_leak_check(biz_rep, md_text=md, json_text=js)
     # leak self-check 반영된 최종 json 재직렬화
     js = json.dumps(br.render_json(biz_rep), ensure_ascii=False, indent=2)
+    return biz_rep, md, js
 
+
+def _write_v2_files(out, md, js, biz_rep):
     md2 = out / "consolidated_business_report_v2.md"
     js2 = out / "consolidated_business_report_v2.json"
     md2.write_text(md, encoding="utf-8")
@@ -223,8 +225,10 @@ def main():
     cs.write_text(
         json.dumps({cg.category: cg.count for cg in biz_rep.categories}, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    return md2, js2, ai, cs
 
-    # audit
+
+def _write_audit(out, biz_rep, md, js):
     v = audit_br.judge_report(biz_rep, md_text=md, json_text=js)
     audit_path = out / "audit_business_report.json"
     audit_path.write_text(
@@ -240,6 +244,41 @@ def main():
         ),
         encoding="utf-8",
     )
+    return v, audit_path
+
+
+def main():
+    base = Path("data/inspection")
+    ck = _load_json(base / "naver_mail_body_pipeline_batch/checkpoint.json")
+    list_old = _load_json(base / "mail_20260520/mail_unread_report.json")
+    smart_dir = base / "naver_mail_smart_folder_coverage/folder_results"
+
+    # 1) checkpoint sn → status, hash, pii_count
+    sn_status = ck.get("sn_to_status", {})
+
+    # 2) 5/20 list — 제목/발신자/날짜 (이미 마스킹된 상태)
+    sn_meta = _meta_from_list(list_old)
+
+    # 3) smart_folder_coverage — 스마트폴더의 sn → meta
+    _merge_smart_meta(smart_dir, sn_meta)
+
+    # 4) MailResult 합성 — 체크포인트 + meta JOIN
+    rep = _build_report(sn_status, sn_meta)
+
+    # 5) 산출 (구버전 — 호환)
+    out = Path("data/inspection/naver_mail_inbox_consolidated_report")
+    out.mkdir(parents=True, exist_ok=True)
+    md_path = out / "consolidated_business_report.md"
+    md_path.write_text(_render_business_report(rep), encoding="utf-8")
+    json_path = _write_legacy_json(out, rep)
+    # 6) 신규 정식 모듈로 보고서 재생성 (business_report)
+    mail_items = _build_mail_items(rep, sn_meta)
+    biz_rep, md, js = _build_business_report(rep, mail_items)
+
+    md2, js2, ai, cs = _write_v2_files(out, md, js, biz_rep)
+
+    # audit
+    v, audit_path = _write_audit(out, biz_rep, md, js)
 
     print(f"[done] (v1) {md_path}")
     print(f"       (v1) {json_path}")

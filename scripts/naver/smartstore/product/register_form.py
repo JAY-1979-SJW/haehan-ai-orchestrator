@@ -96,17 +96,38 @@ class FormSection:
 
             # 1) 일반 클릭
             if not clicked:
-                try:
-                    if el.is_visible(timeout=500):
-                        el.click(timeout=2000)
-                        clicked = True
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                    pass
+                clicked = self._radio_click_plain(el)
 
             # 2) label JS click (table-cell / 숨겨진 label)
             if not clicked:
-                try:
-                    done = self.page.evaluate(f"""
+                clicked = self._radio_click_label(sel)
+
+            # 3) JS dispatchEvent 직접 발생 (최후 수단)
+            if not clicked:
+                clicked = self._radio_click_js(sel)
+
+            if clicked:
+                time.sleep(0.2)
+                _log.info("[%s] %s 선택", self.section_name, label or sel)
+                return {"ok": True}
+        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
+            _log.debug("[%s] 라디오 클릭 실패 (%s): %s", self.section_name, sel, e)
+        return {"ok": False, "error": f"{label} 라디오 선택 실패"}
+
+    def _radio_click_plain(self, el) -> bool:
+        """1) Playwright 직접 클릭. 성공 시 True."""
+        try:
+            if el.is_visible(timeout=500):
+                el.click(timeout=2000)
+                return True
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+            pass
+        return False
+
+    def _radio_click_label(self, sel: str) -> bool:
+        """2) label JS click (table-cell / 숨겨진 label). 성공 시 True."""
+        try:
+            done = self.page.evaluate(f"""
                     (() => {{
                         const inp = document.querySelector('{sel}');
                         if (!inp) return false;
@@ -127,15 +148,16 @@ class FormSection:
                         return false;
                     }})()
                     """)
-                    if done:
-                        clicked = True
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                    pass
+            if done:
+                return True
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+            pass
+        return False
 
-            # 3) JS dispatchEvent 직접 발생 (최후 수단)
-            if not clicked:
-                try:
-                    self.page.evaluate(f"""
+    def _radio_click_js(self, sel: str) -> bool:
+        """3) JS dispatchEvent 직접 발생 (최후 수단). 성공 시 True."""
+        try:
+            self.page.evaluate(f"""
                     (() => {{
                         const inp = document.querySelector('{sel}');
                         if (!inp) return;
@@ -145,17 +167,10 @@ class FormSection:
                         );
                     }})()
                     """)
-                    clicked = True
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                    pass
-
-            if clicked:
-                time.sleep(0.2)
-                _log.info("[%s] %s 선택", self.section_name, label or sel)
-                return {"ok": True}
-        except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
-            _log.debug("[%s] 라디오 클릭 실패 (%s): %s", self.section_name, sel, e)
-        return {"ok": False, "error": f"{label} 라디오 선택 실패"}
+            return True
+        except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+            pass
+        return False
 
     def _click_btn(self, sels: list[str], label: str = "") -> dict:
         for sel in sels:
@@ -198,6 +213,36 @@ class CategorySection(FormSection):
     section_name = "category"
 
     def set(self, keyword: str, result_idx: int = 0) -> dict:
+        res = self._set_category_from_cache(keyword)
+        if res is not None:
+            return res
+
+        # 1. 입력란 찾기 (캐시 미스 또는 캐시 없을 때)
+        inp_sel = None
+        for sel in SEL.CATEGORY_SEARCH_INPUT:
+            el = self.page.locator(sel).first
+            if el.count() > 0 and el.is_visible(timeout=1000):
+                inp_sel = sel
+                break
+        if not inp_sel:
+            return {"ok": False, "error": "카테고리 검색 입력 필드를 찾지 못했습니다"}
+
+        err = self._enter_category_search(inp_sel, keyword)
+        if err is not None:
+            return err
+
+        res = self._click_category_result(result_idx)
+        if res is not None:
+            return res
+
+        res = self._category_keyboard_pick()
+        if res is not None:
+            return res
+
+        return {"ok": False, "error": "카테고리 결과 항목을 클릭하지 못했습니다"}
+
+    def _set_category_from_cache(self, keyword: str) -> dict | None:
+        """0. 캐시에서 ID 조회 → 직접 주입. 성공 시 결과 dict, 아니면 None."""
         # 0. 캐시에서 ID 조회 → 직접 주입 (검색 생략)
         try:
             from scripts.naver.smartstore.product.category_cache import find_id, set_by_id
@@ -210,17 +255,10 @@ class CategorySection(FormSection):
                     return {"ok": True, "selected": keyword, "id": cat_id, "method": "cache"}
         except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
             _log.debug("[category] 캐시 조회 실패, 검색으로 진행: %s", e)
+        return None
 
-        # 1. 입력란 찾기 (캐시 미스 또는 캐시 없을 때)
-        inp_sel = None
-        for sel in SEL.CATEGORY_SEARCH_INPUT:
-            el = self.page.locator(sel).first
-            if el.count() > 0 and el.is_visible(timeout=1000):
-                inp_sel = sel
-                break
-        if not inp_sel:
-            return {"ok": False, "error": "카테고리 검색 입력 필드를 찾지 못했습니다"}
-
+    def _enter_category_search(self, inp_sel: str, keyword: str) -> dict | None:
+        """2. 검색어 입력. 실패 시 에러 dict, 성공이면 None."""
         # 2. 검색어 입력 (force=True로 Selectize readonly 우회)
         try:
             # JS scrollIntoView로 뷰포트 안으로
@@ -250,8 +288,10 @@ class CategorySection(FormSection):
             _log.info("[category] 카테고리 검색 입력 완료: %s", keyword)
         except Exception as e:  # noqa: BLE001 - 스마트스토어 상품등록 폼 필드 공용 헬퍼 — 여러 셀렉터/입력값을 순차 시도하고 실패는 {ok: False, error} 로 반환, 결제·삭제 없음(2026-09-28 검토)
             return {"ok": False, "error": f"카테고리 검색 입력 실패: {e}"}
+        return None
 
-        # 3. 결과 선택
+    def _click_category_result(self, result_idx: int) -> dict | None:
+        """3-A. Playwright locator로 결과 클릭. 성공 시 결과 dict, 아니면 None."""
         result_sels = SEL.CATEGORY_RESULT_ITEM
 
         # 3-A. Playwright locator로 클릭
@@ -272,8 +312,10 @@ class CategorySection(FormSection):
                         return {"ok": True, "selected": txt}
             except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
                 pass
+        return None
 
-        # 3-B. 키보드 탐색 fallback (ArrowDown + Enter)
+    def _category_keyboard_pick(self) -> dict | None:
+        """3-B. 키보드 탐색 fallback (ArrowDown + Enter). 성공 시 결과 dict, 아니면 None."""
         try:
             self.page.keyboard.press("ArrowDown")
             time.sleep(0.3)
@@ -283,8 +325,7 @@ class CategorySection(FormSection):
             return {"ok": True, "selected": "(ArrowDown)"}
         except Exception:  # noqa: BLE001 - 여러 셀렉터/클릭 방법을 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
-
-        return {"ok": False, "error": "카테고리 결과 항목을 클릭하지 못했습니다"}
+        return None
 
     def get_selected(self) -> str | None:
         for sel in SEL.CATEGORY_PATH_DISPLAY:

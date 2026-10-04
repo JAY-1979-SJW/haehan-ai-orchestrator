@@ -76,6 +76,43 @@ _CONSENT_SAVE_BTN_SELECTORS = (
 _LOGIN_HINTS = ("accounts.google.com/signin", "accounts.google.com/login", "/signin")
 
 
+def _fill_consent_fields(page, params: dict, filled: list[str], errors_fill: list[str]) -> None:
+    """동의 화면 필드 + 개발자 연락처 이메일 입력 (filled/errors_fill 에 누적)."""
+    for field_name, selector in _CONSENT_SELECTORS.items():
+        value = params.get(field_name, "")
+        if not value:
+            continue
+        try:
+            page.fill(selector, str(value))
+            filled.append(field_name)
+        except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
+            errors_fill.append(f"{field_name}: {e}")
+            logger.warning("구글 폼 입력 실패 | field=%s | %s", field_name, e)
+
+    # 개발자 연락처 이메일 (동의 화면 하단 별도 영역)
+    dev_email = params.get("contact_email", "")
+    if dev_email and "contact_email" not in filled:
+        try:
+            page.fill(_DEV_EMAIL_SELECTOR, str(dev_email))
+            if "contact_email" not in filled:
+                filled.append("contact_email")
+        except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
+            logger.warning("구글 개발자 이메일 입력 실패: %s", e)
+
+
+def _add_redirect_uri(page, params: dict, filled: list[str], errors_fill: list[str]) -> None:
+    """리다이렉트 URI 추가 (filled/errors_fill 에 누적)."""
+    redirect_uri = params.get("redirect_uri", "")
+    if redirect_uri:
+        try:
+            page.click(_REDIRECT_URI_ADD_BTN)
+            page.fill(_REDIRECT_URI_INPUT, str(redirect_uri))
+            filled.append("redirect_uri")
+        except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
+            errors_fill.append(f"redirect_uri: {e}")
+            logger.warning("구글 redirect_uri 입력 실패: %s", e)
+
+
 class GoogleDevRegAdapter(DevRegAdapterBase):
     """구글 OAuth 2.0 클라이언트 등록 어댑터."""
 
@@ -131,37 +168,10 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
         filled: list[str] = []
         errors_fill: list[str] = []
 
-        for field_name, selector in _CONSENT_SELECTORS.items():
-            value = params.get(field_name, "")
-            if not value:
-                continue
-            try:
-                page.fill(selector, str(value))
-                filled.append(field_name)
-            except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
-                errors_fill.append(f"{field_name}: {e}")
-                logger.warning("구글 폼 입력 실패 | field=%s | %s", field_name, e)
-
-        # 개발자 연락처 이메일 (동의 화면 하단 별도 영역)
-        dev_email = params.get("contact_email", "")
-        if dev_email and "contact_email" not in filled:
-            try:
-                page.fill(_DEV_EMAIL_SELECTOR, str(dev_email))
-                if "contact_email" not in filled:
-                    filled.append("contact_email")
-            except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
-                logger.warning("구글 개발자 이메일 입력 실패: %s", e)
+        _fill_consent_fields(page, params, filled, errors_fill)
 
         # ── 2단계: 리다이렉트 URI 추가 ──────────────────────────────────
-        redirect_uri = params.get("redirect_uri", "")
-        if redirect_uri:
-            try:
-                page.click(_REDIRECT_URI_ADD_BTN)
-                page.fill(_REDIRECT_URI_INPUT, str(redirect_uri))
-                filled.append("redirect_uri")
-            except Exception as e:  # noqa: BLE001 - 구글 개발자 콘솔 동의화면 폼 자동입력 어댑터 - 필드 입력/제출 실패 시 에러 메시지를 결과에 담아 반환(성공으로 위장하지 않음), 최종 제출 여부는 호출측 승인 흐름에서 별도 처리
-                errors_fill.append(f"redirect_uri: {e}")
-                logger.warning("구글 redirect_uri 입력 실패: %s", e)
+        _add_redirect_uri(page, params, filled, errors_fill)
 
         if errors_fill:
             return FormFillResult(

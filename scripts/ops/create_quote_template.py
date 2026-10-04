@@ -125,7 +125,7 @@ def mc(r1, c1, r2, c2):
     ws.merge_cells(start_row=r1, start_column=c1, end_row=r2, end_column=c2)
 
 
-def C(r, c, val="", bold=False, size=10, align=None, border=None, fill=None, italic=False):
+def C(r, c, val="", bold=False, size=10, align=None, border=None, fill=None, italic=False):  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     cl = ws.cell(r, c, val)
     cl.font = Font(bold=bold, size=size, italic=italic)
     if align:

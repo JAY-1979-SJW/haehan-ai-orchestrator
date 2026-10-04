@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -48,6 +49,55 @@ def _safe_path(path: str) -> str:
     return path.replace("\\", "/").split("/")[-1]
 
 
+def _filtered_dict_or(raw_result: dict[str, Any], key: str, fallback_str_len: int | None) -> Any:
+    """dict면 민감 키 제거, 아니면 str 앞 N자(없으면 빈 문자열)."""
+    val = raw_result.get(key) or {}
+    if isinstance(val, dict):
+        return {k: v for k, v in val.items() if not _is_sensitive_key(k)}
+    return str(val)[:fallback_str_len] if fallback_str_len is not None else ""
+
+
+def _ev_result_screen_safe(raw_result: dict[str, Any], _shot: str | None) -> Any:
+    screen = raw_result.get("result_screen", "")
+    if isinstance(screen, str):
+        return screen[:300]  # 최대 300자
+    return str(screen)[:300]
+
+
+def _ev_document_hash_safe(raw_result: dict[str, Any], _shot: str | None) -> Any:
+    h = raw_result.get("document_hash") or ""
+    return h[:16] + "..." if len(h) > 16 else h
+
+
+def _ev_signer_info_safe(raw_result: dict[str, Any], _shot: str | None) -> Any:
+    si = raw_result.get("signer_info") or {}
+    if isinstance(si, dict):
+        return {"subject_name": si.get("subject_name", "")}
+    return ""
+
+
+def _ev_timestamp(key: str) -> Callable[[dict[str, Any], str | None], Any]:
+    return lambda raw_result, _shot: raw_result.get(key) or datetime.now(UTC).isoformat()
+
+
+# field_name → (raw_result, screenshot_path)로 증거 값을 만드는 함수 (명시적 매핑 테이블)
+_EVIDENCE_BUILDERS: dict[str, Callable[[dict[str, Any], str | None], Any]] = {
+    "saved_safe_path": lambda r, _s: _safe_path(r.get("saved_path") or r.get("downloaded_path") or ""),
+    "result_screen_safe": _ev_result_screen_safe,
+    "screenshot_path_safe": lambda r, s: _safe_path(s or r.get("screenshot_path") or ""),
+    "form_state_after": lambda r, _s: _filtered_dict_or(r, "form_state_after", 200),
+    "preview_state": lambda r, _s: _filtered_dict_or(r, "preview_state", 200),
+    "summary_payload": lambda r, _s: _filtered_dict_or(r, "summary_payload", None),
+    "downloaded_at": _ev_timestamp("downloaded_at"),
+    "attached_at": _ev_timestamp("attached_at"),
+    "submitted_at": _ev_timestamp("submitted_at"),
+    "signed_at": _ev_timestamp("signed_at"),
+    "document_hash_safe": _ev_document_hash_safe,
+    "signer_info_safe": _ev_signer_info_safe,
+    "bid_payload_preview": lambda r, _s: _filtered_dict_or(r, "bid_payload_preview", None),
+}
+
+
 def collect_evidence(
     action_name: str,
     raw_result: dict[str, Any],
@@ -70,58 +120,10 @@ def collect_evidence(
         if _is_sensitive_key(field_name):
             continue
 
-        # 명시적 매핑 (path/url은 안전 변환)
-        if field_name == "saved_safe_path":
-            evidence[field_name] = _safe_path(raw_result.get("saved_path") or raw_result.get("downloaded_path") or "")
-        elif field_name == "result_screen_safe":
-            screen = raw_result.get("result_screen", "")
-            if isinstance(screen, str):
-                evidence[field_name] = screen[:300]  # 최대 300자
-            else:
-                evidence[field_name] = str(screen)[:300]
-        elif field_name == "screenshot_path_safe":
-            evidence[field_name] = _safe_path(screenshot_path or raw_result.get("screenshot_path") or "")
-        elif field_name == "form_state_after":
-            fs = raw_result.get("form_state_after") or {}
-            if isinstance(fs, dict):
-                evidence[field_name] = {k: v for k, v in fs.items() if not _is_sensitive_key(k)}
-            else:
-                evidence[field_name] = str(fs)[:200]
-        elif field_name == "preview_state":
-            ps = raw_result.get("preview_state") or {}
-            if isinstance(ps, dict):
-                evidence[field_name] = {k: v for k, v in ps.items() if not _is_sensitive_key(k)}
-            else:
-                evidence[field_name] = str(ps)[:200]
-        elif field_name == "summary_payload":
-            sp = raw_result.get("summary_payload") or {}
-            if isinstance(sp, dict):
-                evidence[field_name] = {k: v for k, v in sp.items() if not _is_sensitive_key(k)}
-            else:
-                evidence[field_name] = ""
-        elif field_name == "downloaded_at":
-            evidence[field_name] = raw_result.get("downloaded_at") or datetime.now(UTC).isoformat()
-        elif field_name == "attached_at":
-            evidence[field_name] = raw_result.get("attached_at") or datetime.now(UTC).isoformat()
-        elif field_name == "submitted_at":
-            evidence[field_name] = raw_result.get("submitted_at") or datetime.now(UTC).isoformat()
-        elif field_name == "signed_at":
-            evidence[field_name] = raw_result.get("signed_at") or datetime.now(UTC).isoformat()
-        elif field_name == "document_hash_safe":
-            h = raw_result.get("document_hash") or ""
-            evidence[field_name] = h[:16] + "..." if len(h) > 16 else h
-        elif field_name == "signer_info_safe":
-            si = raw_result.get("signer_info") or {}
-            if isinstance(si, dict):
-                evidence[field_name] = {"subject_name": si.get("subject_name", "")}
-            else:
-                evidence[field_name] = ""
-        elif field_name == "bid_payload_preview":
-            bp = raw_result.get("bid_payload_preview") or {}
-            if isinstance(bp, dict):
-                evidence[field_name] = {k: v for k, v in bp.items() if not _is_sensitive_key(k)}
-            else:
-                evidence[field_name] = ""
+        builder = _EVIDENCE_BUILDERS.get(field_name)
+        if builder is not None:
+            # 명시적 매핑 (path/url은 안전 변환)
+            evidence[field_name] = builder(raw_result, screenshot_path)
         else:
             # 기타 필드 — 민감 키 제외하고 직접 매핑
             v = raw_result.get(field_name)

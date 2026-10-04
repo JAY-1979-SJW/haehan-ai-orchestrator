@@ -158,43 +158,49 @@ def _detect_notice_popup(page) -> dict:
     return {"detected": False}
 
 
+def _check_today_hide(page) -> None:
+    """'하루동안 보지 않기' 체크박스 체크 (실패해도 계속)."""
+    try:
+        cb = page.locator(TODAY_HIDE_SEL).first
+        if cb.count() > 0 and cb.is_visible(timeout=300) and not cb.is_checked(timeout=300):
+            cb.click(timeout=2000)
+            time.sleep(0.3)
+            _log.info("[ss-popup] '하루동안 보지 않기' 체크")
+    except Exception as e:  # noqa: BLE001 - 스마트스토어 공지팝업/배너 감지·닫기 — 순수 UI 노이즈 제거, 실패는 로그 후 계속 또는 False/0 기본값(2026-09-28 검토)
+        _log.debug("[ss-popup] 체크박스 처리 실패: %s", e)
+
+
+def _click_visible(locate, vis_timeout: int, log_fmt: str | None = None, key: str = "") -> bool:
+    """locate() 첫 요소가 보이면 클릭 후 0.5초 대기. 성공 True, 실패/예외 False."""
+    try:
+        btn = locate().first
+        if btn.count() > 0 and btn.is_visible(timeout=vis_timeout):
+            btn.click(timeout=2000)
+            time.sleep(0.5)
+            if log_fmt:
+                _log.info(log_fmt, key)
+            return True
+    except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
+        pass
+    return False
+
+
 def _close_notice_popup(page, check_today_hide: bool = True) -> bool:
     """공지 팝업 닫기. check_today_hide=True면 '하루동안 보지 않기' 먼저 체크."""
 
     # 하루동안 보지 않기 체크
     if check_today_hide:
-        try:
-            cb = page.locator(TODAY_HIDE_SEL).first
-            if cb.count() > 0 and cb.is_visible(timeout=300) and not cb.is_checked(timeout=300):
-                cb.click(timeout=2000)
-                time.sleep(0.3)
-                _log.info("[ss-popup] '하루동안 보지 않기' 체크")
-        except Exception as e:  # noqa: BLE001 - 스마트스토어 공지팝업/배너 감지·닫기 — 순수 UI 노이즈 제거, 실패는 로그 후 계속 또는 False/0 기본값(2026-09-28 검토)
-            _log.debug("[ss-popup] 체크박스 처리 실패: %s", e)
+        _check_today_hide(page)
 
     # 닫기 버튼 클릭
     for sel in CLOSE_BTN_SELS:
-        try:
-            btn = page.locator(sel).first
-            if btn.count() > 0 and btn.is_visible(timeout=300):
-                btn.click(timeout=2000)
-                time.sleep(0.5)
-                _log.info("[ss-popup] 공지 팝업 닫음: %s", sel)
-                return True
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-            pass
+        if _click_visible(lambda sel=sel: page.locator(sel), 300, "[ss-popup] 공지 팝업 닫음: %s", sel):
+            return True
 
     # 텍스트 기반 닫기
     for txt in CLOSE_TEXTS:
-        try:
-            btn = page.get_by_text(txt, exact=True).first
-            if btn.count() > 0 and btn.is_visible(timeout=300):
-                btn.click(timeout=2000)
-                time.sleep(0.5)
-                _log.info("[ss-popup] 텍스트 닫기: '%s'", txt)
-                return True
-        except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-            pass
+        if _click_visible(lambda txt=txt: page.get_by_text(txt, exact=True), 300, "[ss-popup] 텍스트 닫기: '%s'", txt):
+            return True
 
     # ESC
     page.keyboard.press("Escape")
@@ -234,6 +240,20 @@ def _detect_general_modals(page) -> dict:
     return {"count": count, "found": found}
 
 
+def _close_in_modal(modal) -> bool:
+    """모달 내부 닫기 버튼 → 텍스트 닫기 순서로 클릭. 성공 시 True."""
+    # 닫기 버튼 (모달 내부)
+    for close_sel in CLOSE_BTN_SELS:
+        if _click_visible(lambda close_sel=close_sel: modal.locator(close_sel), 200):
+            return True
+
+    # 텍스트 닫기
+    for txt in CLOSE_TEXTS:
+        if _click_visible(lambda txt=txt: modal.get_by_text(txt, exact=True), 200):
+            return True
+    return False
+
+
 def _close_general_modal(page) -> bool:
     for sel in GENERAL_MODAL_SELS:
         try:
@@ -244,27 +264,8 @@ def _close_general_modal(page) -> bool:
             if any(x in cls for x in ["navbar", "side-nav", "dock-nav", "backdrop"]):
                 continue
 
-            # 닫기 버튼 (모달 내부)
-            for close_sel in CLOSE_BTN_SELS:
-                try:
-                    btn = modal.locator(close_sel).first
-                    if btn.count() > 0 and btn.is_visible(timeout=200):
-                        btn.click(timeout=2000)
-                        time.sleep(0.5)
-                        return True
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                    pass
-
-            # 텍스트 닫기
-            for txt in CLOSE_TEXTS:
-                try:
-                    btn = modal.get_by_text(txt, exact=True).first
-                    if btn.count() > 0 and btn.is_visible(timeout=200):
-                        btn.click(timeout=2000)
-                        time.sleep(0.5)
-                        return True
-                except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
-                    pass
+            if _close_in_modal(modal):
+                return True
         except Exception:  # noqa: BLE001 - 여러 셀렉터/텍스트를 순차 시도하는 best-effort — 하나 실패해도 다음 방법으로 계속(2026-09-28 검토)
             pass
 

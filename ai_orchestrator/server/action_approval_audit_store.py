@@ -85,7 +85,7 @@ def _append_jsonl(record: dict[str, Any]) -> None:
         pass  # 파일 기록 실패 시 in-memory만 유지
 
 
-def save_approval_request(
+def save_approval_request(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     approval_request_id: str,
     action_name: str,

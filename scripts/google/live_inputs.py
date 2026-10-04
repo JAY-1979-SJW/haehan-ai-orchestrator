@@ -52,6 +52,13 @@ from .live_inputs_coverage import (  # noqa: F401
 )
 
 
+def _mark_no_upload_input(action: dict, result: dict) -> None:
+    """YouTube 업로드 입력이 확인되지 않았으면 상태를 opened_no_upload_input 으로 표시."""
+    if action["key"] == "youtube_studio_upload_video" and "video_path" not in result["filled_fields"]:
+        result["status"] = "opened_no_upload_input"
+        result["warnings"].append("YouTube upload input was not verified; no video was uploaded or published.")
+
+
 def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tuple[dict, Path]:
     """Open the target workflow and fill available inputs without final submit."""
     path = Path(plan_path)
@@ -109,15 +116,11 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
             pass
         if result["status"] == "started":
             result["status"] = "filled_no_final_submit"
-        if action["key"] == "youtube_studio_upload_video" and "video_path" not in result["filled_fields"]:
-            result["status"] = "opened_no_upload_input"
-            result["warnings"].append("YouTube upload input was not verified; no video was uploaded or published.")
+        _mark_no_upload_input(action, result)
     except Exception as exc:  # noqa: BLE001 - 'no_final_submit'(최종 제출 버튼 클릭 금지) 원칙이 설계 전체에 명시된 구글 워크플로 폼 프리필 파사드 — except는 페이지정보 조회 실패 무시, 자동화 경로 실패 시 CDP 폴백 또는 경고 기록으로 전환할 뿐 실제 제출(Send/Grant/Save 등)은 어디서도 자동 클릭하지 않음.
         result["warnings"].append(f"playwright_live_input_unavailable: {exc}")
         _dispatch_live_input_direct_cdp(action, values, result)
-        if action["key"] == "youtube_studio_upload_video" and "video_path" not in result["filled_fields"]:
-            result["status"] = "opened_no_upload_input"
-            result["warnings"].append("YouTube upload input was not verified; no video was uploaded or published.")
+        _mark_no_upload_input(action, result)
     return _save_result(result)
 
 
@@ -130,7 +133,7 @@ def run_live_input_manifest(
     path = Path(manifest_path)
     manifest = json.loads(path.read_text(encoding="utf-8"))
     entries = manifest.get("items", [])
-    summary = {
+    summary: dict[str, Any] = {
         "site_id": "google",
         "manifest_path": str(path),
         "started_at": datetime.now(UTC).isoformat(),
@@ -187,33 +190,200 @@ from .live_inputs_report import (  # noqa: F401,E402
 )
 
 
+def _live_fill_handlers() -> dict:
+    """action key -> Playwright 경로 채우기 함수. 호출 시점에 이름을 조회한다(하단 재노출 import 이후 해석)."""
+    return {
+        "gmail_send_email": _fill_gmail_send_v2,
+        "cloud_iam_change_role": _fill_cloud_iam_change,
+        "search_console_submit_indexing": _fill_search_console_url_inspection,
+        "youtube_studio_upload_video": _fill_youtube_studio_upload_v2,
+        "youtube_studio_edit_video_metadata": _fill_youtube_studio_metadata,
+        "search_console_submit_sitemap": _fill_search_console_sitemap,
+        "ai_studio_create_api_key": _fill_ai_studio_api_key,
+        "cloud_create_api_credential": _fill_cloud_api_credential,
+        "play_console_prepare_release": _fill_play_console_release_handoff,
+    }
+
+
 def _dispatch_live_input(page: Any, action: dict, values: dict, result: dict) -> None:
     key = action["key"]
     mode = LIVE_INPUT_ADAPTERS.get(key, "")
-    if key == "gmail_send_email":
-        _fill_gmail_send_v2(page, action, values, result)
-    elif key == "cloud_iam_change_role":
-        _fill_cloud_iam_change(page, action, values, result)
-    elif key == "search_console_submit_indexing":
-        _fill_search_console_url_inspection(page, action, values, result)
-    elif key == "youtube_studio_upload_video":
-        _fill_youtube_studio_upload_v2(page, action, values, result)
-    elif key == "youtube_studio_edit_video_metadata":
-        _fill_youtube_studio_metadata(page, action, values, result)
-    elif key == "search_console_submit_sitemap":
-        _fill_search_console_sitemap(page, action, values, result)
-    elif key == "ai_studio_create_api_key":
-        _fill_ai_studio_api_key(page, action, values, result)
-    elif key == "cloud_create_api_credential":
-        _fill_cloud_api_credential(page, action, values, result)
-    elif key == "play_console_prepare_release":
-        _fill_play_console_release_handoff(page, action, values, result)
+    handler = _live_fill_handlers().get(key)
+    if handler is not None:
+        handler(page, action, values, result)
     elif mode in DOMAIN_SPECIFIC_PREFILL_MODES:
         _fill_domain_specific_input_handoff(page, action, values, result)
     elif key in LIVE_INPUT_ADAPTERS:
         _fill_generic_input_handoff(page, action, values, result)
     else:
         _open_only(page, action, values, result)
+
+
+def _cdp_fill_gmail_send(session: Any, values: dict, result: dict) -> None:
+    compose_values = {
+        "view": "cm",
+        "fs": "1",
+        "to": values.get("to", ""),
+        "su": values.get("subject", ""),
+        "body": values.get("body", ""),
+    }
+    compose_url = "https://mail.google.com/mail/u/0/?" + urlencode(compose_values)
+    session.goto(compose_url, wait_idle=False)
+    _cdp_wait(session, 4.0)
+    result.setdefault("clicked_nonfinal_controls", []).append({"field": "compose", "method": "gmail_compose_url"})
+    _cdp_wait(session, 2.0)
+    _cdp_verify_gmail_compose_values(session, values, result)
+    _cdp_detect_file_input(session, values.get("attachment_path", ""), "attachment_path", result)
+    result["warnings"].append("CDP fallback did not click Send.")
+
+
+def _cdp_fill_youtube_upload(session: Any, values: dict, result: dict) -> None:
+    _cdp_click_text(session, ["Create", "Upload videos", "만들기", "업로드"], result, "youtube_upload_open")
+    _cdp_wait(session, 2.0)
+    _cdp_detect_file_input(session, values.get("video_path", ""), "video_path", result)
+    _cdp_fill_first(
+        session,
+        ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'],
+        values.get("title", ""),
+        "title",
+        result,
+    )
+    _cdp_fill_first(
+        session, ['textarea[aria-label*="Description"]'], values.get("description", ""), "description", result
+    )
+    result["warnings"].append("CDP fallback verified upload controls but did not publish.")
+
+
+def _cdp_fill_youtube_metadata(session: Any, values: dict, result: dict) -> None:
+    _cdp_fill_first(
+        session,
+        [
+            'input[aria-label*="Search"]',
+            'input[placeholder*="Search"]',
+            'input[type="search"]',
+        ],
+        values.get("video_id_or_url", "") or values.get("video_id", ""),
+        "video_lookup",
+        result,
+        press_enter=True,
+    )
+    for field in ("title", "description", "visibility"):
+        if values.get(field):
+            result["skipped_fields"].append(field)
+    result["warnings"].append("CDP fallback performed lookup only; metadata save was not clicked.")
+
+
+def _cdp_fill_search_console(session: Any, key: str, values: dict, result: dict) -> None:
+    field = "url" if key == "search_console_submit_indexing" else "sitemap_url"
+    _cdp_fill_first(
+        session,
+        [
+            'input[aria-label*="URL"]',
+            'input[aria-label*="Sitemap"]',
+            'input[placeholder*="sitemap"]',
+            'input[type="url"]',
+            'input[type="text"]',
+        ],
+        values.get(field, ""),
+        field,
+        result,
+        press_enter=False,
+    )
+    if values.get("property"):
+        result["filled_fields"].append("property")
+    result["warnings"].append("CDP fallback did not click Request indexing/Submit.")
+
+
+def _cdp_fill_iam_change_role(session: Any, values: dict, result: dict) -> None:
+    opened_panel = _cdp_click_first_selector(
+        session,
+        [
+            'button[instrumentationid="iam-add-member"]',
+            "iam-add-member-action button",
+            'button[aria-label*="Grant access"]',
+            'button[aria-label*="권한"]',
+        ],
+        result,
+        "grant_access_panel",
+    )
+    if not opened_panel:
+        opened_panel = _cdp_click_text(session, ["Grant access", "권한 부여", "Add"], result, "grant_access_panel")
+    _cdp_wait(session, 2.0)
+    principal_filled = _cdp_fill_first(
+        session,
+        [
+            'input[aria-label*="principal"]',
+            'input[aria-label*="Principal"]',
+            'input[id*="add-member-bar-input"]',
+            'input[type="email"]',
+            'input[type="text"]',
+        ],
+        values.get("principal", ""),
+        "principal",
+        result,
+        press_enter=True,
+    )
+    if values.get("project"):
+        result["filled_fields"].append("project")
+    if not opened_panel:
+        result["status"] = "opened_no_final_submit"
+        result["warnings"].append("IAM Grant access panel was not opened; role/change were not entered.")
+        for field in ("role", "change"):
+            if values.get(field):
+                result["skipped_fields"].append(field)
+    elif principal_filled:
+        for field in ("role", "change"):
+            if values.get(field):
+                result["skipped_fields"].append(field)
+        result["warnings"].append("IAM principal was entered; role/change require visual picker confirmation.")
+        result["status"] = "opened_no_final_submit"
+    else:
+        result["status"] = "opened_no_final_submit"
+        result["warnings"].append("IAM Grant access panel opened, but principal input was not verified.")
+    result["warnings"].append("CDP fallback did not click final Grant/Save.")
+
+
+def _cdp_fill_credential_fields(session: Any, values: dict, result: dict) -> None:
+    for field, value in values.items():
+        if not value:
+            result["skipped_fields"].append(field)
+            continue
+        _cdp_fill_first(
+            session,
+            [
+                'input[aria-label*="Search"]',
+                'input[placeholder*="Search"]',
+                'input[aria-label*="project"]',
+                'input[aria-label*="Project"]',
+                'input[type="search"]',
+                'input[type="text"]',
+            ],
+            str(value),
+            field,
+            result,
+        )
+    result["warnings"].append("CDP fallback did not click Create/Get key/Release.")
+
+
+def _cdp_fill_by_key(session: Any, action: dict, values: dict, result: dict) -> None:
+    """action key 별 CDP 폴백 채우기 분기."""
+    key = action["key"]
+    if key == "gmail_send_email":
+        _cdp_fill_gmail_send(session, values, result)
+    elif key == "youtube_studio_upload_video":
+        _cdp_fill_youtube_upload(session, values, result)
+    elif key == "youtube_studio_edit_video_metadata":
+        _cdp_fill_youtube_metadata(session, values, result)
+    elif key in ("search_console_submit_indexing", "search_console_submit_sitemap"):
+        _cdp_fill_search_console(session, key, values, result)
+    elif key == "cloud_iam_change_role":
+        _cdp_fill_iam_change_role(session, values, result)
+    elif key in ("cloud_create_api_credential", "ai_studio_create_api_key", "play_console_prepare_release"):
+        _cdp_fill_credential_fields(session, values, result)
+    elif LIVE_INPUT_ADAPTERS.get(key) in DOMAIN_SPECIFIC_PREFILL_MODES:
+        _cdp_fill_domain_specific_input_handoff(session, action, values, result)
+    else:
+        _cdp_fill_generic_input_handoff(session, action, values, result)
 
 
 def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) -> None:
@@ -226,149 +396,7 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
         session = session_manager.__enter__()
         session.goto(target_action["target_url"], wait_idle=False)
         _cdp_wait(session, 4.0)
-        key = action["key"]
-        if key == "gmail_send_email":
-            compose_values = {
-                "view": "cm",
-                "fs": "1",
-                "to": values.get("to", ""),
-                "su": values.get("subject", ""),
-                "body": values.get("body", ""),
-            }
-            compose_url = "https://mail.google.com/mail/u/0/?" + urlencode(compose_values)
-            session.goto(compose_url, wait_idle=False)
-            _cdp_wait(session, 4.0)
-            result.setdefault("clicked_nonfinal_controls", []).append(
-                {"field": "compose", "method": "gmail_compose_url"}
-            )
-            _cdp_wait(session, 2.0)
-            _cdp_verify_gmail_compose_values(session, values, result)
-            _cdp_detect_file_input(session, values.get("attachment_path", ""), "attachment_path", result)
-            result["warnings"].append("CDP fallback did not click Send.")
-        elif key == "youtube_studio_upload_video":
-            _cdp_click_text(session, ["Create", "Upload videos", "만들기", "업로드"], result, "youtube_upload_open")
-            _cdp_wait(session, 2.0)
-            _cdp_detect_file_input(session, values.get("video_path", ""), "video_path", result)
-            _cdp_fill_first(
-                session,
-                ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'],
-                values.get("title", ""),
-                "title",
-                result,
-            )
-            _cdp_fill_first(
-                session, ['textarea[aria-label*="Description"]'], values.get("description", ""), "description", result
-            )
-            result["warnings"].append("CDP fallback verified upload controls but did not publish.")
-        elif key == "youtube_studio_edit_video_metadata":
-            _cdp_fill_first(
-                session,
-                [
-                    'input[aria-label*="Search"]',
-                    'input[placeholder*="Search"]',
-                    'input[type="search"]',
-                ],
-                values.get("video_id_or_url", "") or values.get("video_id", ""),
-                "video_lookup",
-                result,
-                press_enter=True,
-            )
-            for field in ("title", "description", "visibility"):
-                if values.get(field):
-                    result["skipped_fields"].append(field)
-            result["warnings"].append("CDP fallback performed lookup only; metadata save was not clicked.")
-        elif key in ("search_console_submit_indexing", "search_console_submit_sitemap"):
-            field = "url" if key == "search_console_submit_indexing" else "sitemap_url"
-            _cdp_fill_first(
-                session,
-                [
-                    'input[aria-label*="URL"]',
-                    'input[aria-label*="Sitemap"]',
-                    'input[placeholder*="sitemap"]',
-                    'input[type="url"]',
-                    'input[type="text"]',
-                ],
-                values.get(field, ""),
-                field,
-                result,
-                press_enter=False,
-            )
-            if values.get("property"):
-                result["filled_fields"].append("property")
-            result["warnings"].append("CDP fallback did not click Request indexing/Submit.")
-        elif key == "cloud_iam_change_role":
-            opened_panel = _cdp_click_first_selector(
-                session,
-                [
-                    'button[instrumentationid="iam-add-member"]',
-                    "iam-add-member-action button",
-                    'button[aria-label*="Grant access"]',
-                    'button[aria-label*="권한"]',
-                ],
-                result,
-                "grant_access_panel",
-            )
-            if not opened_panel:
-                opened_panel = _cdp_click_text(
-                    session, ["Grant access", "권한 부여", "Add"], result, "grant_access_panel"
-                )
-            _cdp_wait(session, 2.0)
-            principal_filled = _cdp_fill_first(
-                session,
-                [
-                    'input[aria-label*="principal"]',
-                    'input[aria-label*="Principal"]',
-                    'input[id*="add-member-bar-input"]',
-                    'input[type="email"]',
-                    'input[type="text"]',
-                ],
-                values.get("principal", ""),
-                "principal",
-                result,
-                press_enter=True,
-            )
-            if values.get("project"):
-                result["filled_fields"].append("project")
-            if not opened_panel:
-                result["status"] = "opened_no_final_submit"
-                result["warnings"].append("IAM Grant access panel was not opened; role/change were not entered.")
-                for field in ("role", "change"):
-                    if values.get(field):
-                        result["skipped_fields"].append(field)
-            elif principal_filled:
-                for field in ("role", "change"):
-                    if values.get(field):
-                        result["skipped_fields"].append(field)
-                result["warnings"].append("IAM principal was entered; role/change require visual picker confirmation.")
-                result["status"] = "opened_no_final_submit"
-            else:
-                result["status"] = "opened_no_final_submit"
-                result["warnings"].append("IAM Grant access panel opened, but principal input was not verified.")
-            result["warnings"].append("CDP fallback did not click final Grant/Save.")
-        elif key in ("cloud_create_api_credential", "ai_studio_create_api_key", "play_console_prepare_release"):
-            for field, value in values.items():
-                if not value:
-                    result["skipped_fields"].append(field)
-                    continue
-                _cdp_fill_first(
-                    session,
-                    [
-                        'input[aria-label*="Search"]',
-                        'input[placeholder*="Search"]',
-                        'input[aria-label*="project"]',
-                        'input[aria-label*="Project"]',
-                        'input[type="search"]',
-                        'input[type="text"]',
-                    ],
-                    str(value),
-                    field,
-                    result,
-                )
-            result["warnings"].append("CDP fallback did not click Create/Get key/Release.")
-        elif LIVE_INPUT_ADAPTERS.get(key) in DOMAIN_SPECIFIC_PREFILL_MODES:
-            _cdp_fill_domain_specific_input_handoff(session, action, values, result)
-        else:
-            _cdp_fill_generic_input_handoff(session, action, values, result)
+        _cdp_fill_by_key(session, action, values, result)
         result["final_control_policy"] = {
             "mode": "no_final_submit",
             "blocked_labels": list(FINAL_CONTROL_LABELS),

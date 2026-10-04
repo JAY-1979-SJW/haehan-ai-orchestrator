@@ -358,6 +358,222 @@ def _click_page_expr(pg: str) -> str:
     )
 
 
+@dataclass
+class _CollectState:
+    """collect_inbox 페이지 순회 상태(내부용)."""
+
+    actions: Any
+    result: CollectionResult
+    seen_sns: dict[str, CollectedItem]
+    folder_id: Any
+    folder_name: Any
+    mode: str
+    max_items: int
+    now_for_time: Any
+    strategies_used: set[str] = field(default_factory=set)
+    consecutive_no_new: int = 0
+    page_index: int = 1
+
+
+
+def _absorb(st: _CollectState, payload: dict, page_label: str) -> int:
+    """페이지 payload 의 메일 row 를 흡수(중복 제외)하고 신규 개수를 반환."""
+    result = st.result
+    seen_sns = st.seen_sns
+    folder_id = st.folder_id
+    folder_name = st.folder_name
+    mode = st.mode
+    max_items = st.max_items
+    now_for_time = st.now_for_time
+    added = 0
+    for raw in (payload or {}).get("items", []) or []:
+        result.total_seen += 1
+        sn = (raw.get("sn") or "").strip()
+        if not sn:
+            # sn 없는 row 는 fallback key
+            fkey = f"NOSN|{raw.get('subject', '')[:60]}|{raw.get('sender_name', '')[:40]}"
+            if fkey in seen_sns:
+                result.dup_count += 1
+                continue
+            sn_to_use = fkey
+        else:
+            if sn in seen_sns:
+                result.dup_count += 1
+                if sn not in result.duplicate_sns:
+                    result.duplicate_sns.append(sn)
+                continue
+            sn_to_use = sn
+        pt = tp.parse_korean_time(raw.get("time_txt", "") or "", now=now_for_time)
+        it = CollectedItem(
+            folder_id=folder_id,
+            folder_name=folder_name,
+            sn=sn,
+            subject_masked=_mask_subject(raw.get("subject", "") or ""),
+            sender_masked=_mask_sender(raw.get("sender_full") or raw.get("sender_name") or ""),
+            display_time=(raw.get("time_txt") or "").strip(),
+            parsed_at_iso=pt.iso,
+            parse_warning=pt.warning,
+            read_state="UNREAD" if raw.get("is_unread") else "READ",
+            has_attachment=False,  # 행에 첨부 표시는 별도 — best-effort 후속
+            collect_mode=mode,
+            size_txt=(raw.get("size_txt") or "").strip(),
+            href=(raw.get("href") or "").strip(),
+        )
+        seen_sns[sn_to_use] = it
+        added += 1
+        if len(seen_sns) >= max_items:
+            result.warn_limit_reached = True
+            result.notes.append(f"max_items={max_items}_도달")
+            break
+    return added
+
+
+def _sn_hash(payload: dict) -> str:
+    """페이지 sn 목록 지문."""
+    import hashlib
+
+    sns = sorted((it.get("sn") or "") for it in (payload or {}).get("items", []))
+    # 변경 감지용 지문일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
+    return hashlib.sha1("|".join(sns).encode(), usedforsecurity=False).hexdigest()[:12]
+
+
+def _record_page(st: _CollectState, idx: int, payload: dict) -> None:
+    """페이지 기록 추가."""
+    result = st.result
+    items = (payload or {}).get("items", [])
+    result.page_records.append(
+        {
+            "idx": idx,
+            "url": (payload or {}).get("href", ""),
+            "item_count": len(items),
+            "unread_count": sum(1 for r in items if r.get("is_unread")),
+            "sn_hash": _sn_hash(payload),
+            "next_state": (st.actions.evaluate(NEXT_STATE_EXPR) or {}),
+        }
+    )
+
+
+def _handle_advance_failure(st: _CollectState, target_idx: int, url_before: str, sn_hash_before: str) -> str:
+    """다음 페이지 이동 실패 처리. 'continue'(다음 반복) 또는 'break'(종료)를 반환."""
+    result = st.result
+    if "next_disabled" not in result.last_page_evidence:
+        # 추가 검증: URL ?page=N+1 직접 시도해도 변화 없음
+        trial_url = _bump_page_url(url_before, target_idx)
+        if trial_url:
+            st.actions.navigate(trial_url)
+            time.sleep(0.2)
+            st.actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=6.0)
+            after = st.actions.evaluate(LIST_EXPR) or {}
+            if _sn_hash(after) == sn_hash_before:
+                result.last_page_evidence.append("url_page_no_change")
+            else:
+                # 의외로 변화 — 진행
+                st.page_index += 1
+                added = _absorb(st, after, str(st.page_index))
+                result.pages_visited.append(str(st.page_index))
+                _record_page(st, st.page_index, after)
+                st.strategies_used.add("url_page")
+                if added == 0:
+                    st.consecutive_no_new += 1
+                    if st.consecutive_no_new >= 2:
+                        result.last_page_evidence.append("no_new_sn")
+                        return "break"
+                else:
+                    st.consecutive_no_new = 0
+                return "continue"
+    # 종료 판정 (근거 2개 이상 요구)
+    if len(set(result.last_page_evidence)) >= 2:
+        result.last_page_reached = True
+    else:
+        result.notes.append(f"insufficient_last_page_evidence:{result.last_page_evidence}")
+        # 추가 증거 부족 — WARN
+    return "break"
+
+
+def _handle_no_page_change(st: _CollectState, strat: str) -> str:
+    """이동했지만 sn_hash 가 같은 경우 처리. 'continue' 또는 'break' 를 반환."""
+    result = st.result
+    # url_page 전략이 실패한 것 → evidence 누적, absorb 하지 않음
+    if strat == "url_page":
+        result.last_page_evidence.append("url_page_no_change")
+    else:
+        result.last_page_evidence.append("no_new_sn")
+    # 종료 판정
+    if len(set(result.last_page_evidence)) >= 2:
+        result.last_page_reached = True
+        return "break"
+    # 단일 근거라도 한 번 더 시도하지 않고 곧장 종료 후보
+    st.consecutive_no_new += 1
+    if st.consecutive_no_new >= 2:
+        # 근거 부족이라도 무한 루프 방지 — last_page_reached False 로 두고 종료
+        result.notes.append(f"loop_safety_break_evidence={list(set(result.last_page_evidence))}")
+        return "break"
+    return "continue"
+
+
+def _absorb_next_page(st: _CollectState, more: dict) -> bool:
+    """다음 페이지 payload 흡수. 종료해야 하면 True."""
+    result = st.result
+    st.page_index += 1
+    added = _absorb(st, more, str(st.page_index))
+    result.pages_visited.append(str(st.page_index))
+    _record_page(st, st.page_index, more)
+    if added == 0:
+        st.consecutive_no_new += 1
+        if st.consecutive_no_new >= 2:
+            result.last_page_evidence.append("no_new_sn")
+            if len(set(result.last_page_evidence)) >= 2:
+                result.last_page_reached = True
+                return True
+    else:
+        st.consecutive_no_new = 0
+    return False
+
+
+def _finalize_result(st: _CollectState) -> None:
+    """UI 근거 수집 + 페이지네이션 전략 정리 + 마지막 페이지 판정."""
+    actions = st.actions
+    result = st.result
+    strategies_used = st.strategies_used
+    seen_sns = st.seen_sns
+    # UI count scope evidence 수집
+    result.ui_count_scope_evidence = actions.evaluate(LNB_UNREAD_BREAKDOWN_EXPR) or {}
+
+    # pagination 전략 정리
+    if len(strategies_used) == 1:
+        result.pagination_strategy_used = next(iter(strategies_used))
+    elif len(strategies_used) > 1:
+        result.pagination_strategy_used = "mixed:" + ",".join(sorted(strategies_used))
+    else:
+        result.pagination_strategy_used = "single_page"
+
+    # 종료 — collected_unread 계산
+    result.items = list(seen_sns.values())
+    result.collected_unread = sum(1 for i in result.items if i.read_state == "UNREAD")
+
+    # last_page_reached 최종 판정
+    if not result.warn_limit_reached and not result.last_page_reached:
+        # 자연 종료 시: 근거가 2개 이상이어야 True
+        if len(set(result.last_page_evidence)) >= 2:
+            result.last_page_reached = True
+            result.notes.append("자연_종료_근거2개+")
+        else:
+            result.last_page_reached = False
+            result.notes.append(f"WARN_DYNAMIC_PAGE_MISSED_evidence={result.last_page_evidence}")
+
+
+def _limit_reached(st: _CollectState, max_pages: int) -> bool:
+    """수집 상한(max_items/max_pages) 도달 여부."""
+    result = st.result
+    if result.warn_limit_reached:
+        return True
+    if st.page_index >= max_pages:
+        result.warn_limit_reached = True
+        result.notes.append(f"max_pages={max_pages}_도달")
+        return True
+    return False
+
+
 def collect_inbox(
     actions: Actions,
     *,
@@ -391,87 +607,27 @@ def collect_inbox(
     )
     seen_sns: dict[str, CollectedItem] = {}
 
-    def _absorb(payload: dict, page_label: str) -> int:
-        added = 0
-        for raw in (payload or {}).get("items", []) or []:
-            result.total_seen += 1
-            sn = (raw.get("sn") or "").strip()
-            if not sn:
-                # sn 없는 row 는 fallback key
-                fkey = f"NOSN|{raw.get('subject', '')[:60]}|{raw.get('sender_name', '')[:40]}"
-                if fkey in seen_sns:
-                    result.dup_count += 1
-                    continue
-                sn_to_use = fkey
-            else:
-                if sn in seen_sns:
-                    result.dup_count += 1
-                    if sn not in result.duplicate_sns:
-                        result.duplicate_sns.append(sn)
-                    continue
-                sn_to_use = sn
-            pt = tp.parse_korean_time(raw.get("time_txt", "") or "", now=now_for_time)
-            it = CollectedItem(
-                folder_id=folder_id,
-                folder_name=folder_name,
-                sn=sn,
-                subject_masked=_mask_subject(raw.get("subject", "") or ""),
-                sender_masked=_mask_sender(raw.get("sender_full") or raw.get("sender_name") or ""),
-                display_time=(raw.get("time_txt") or "").strip(),
-                parsed_at_iso=pt.iso,
-                parse_warning=pt.warning,
-                read_state="UNREAD" if raw.get("is_unread") else "READ",
-                has_attachment=False,  # 행에 첨부 표시는 별도 — best-effort 후속
-                collect_mode=mode,
-                size_txt=(raw.get("size_txt") or "").strip(),
-                href=(raw.get("href") or "").strip(),
-            )
-            seen_sns[sn_to_use] = it
-            added += 1
-            if len(seen_sns) >= max_items:
-                result.warn_limit_reached = True
-                result.notes.append(f"max_items={max_items}_도달")
-                break
-        return added
 
-    def _sn_hash(payload: dict) -> str:
-        import hashlib
 
-        sns = sorted((it.get("sn") or "") for it in (payload or {}).get("items", []))
-        # 변경 감지용 지문일 뿐 보안 용도 아님(bandit B324, 2026-09-29 확인).
-        return hashlib.sha1("|".join(sns).encode(), usedforsecurity=False).hexdigest()[:12]
 
-    def _next_state() -> dict:
-        return actions.evaluate(NEXT_STATE_EXPR) or {}
-
-    def _record_page(idx: int, payload: dict) -> None:
-        items = (payload or {}).get("items", [])
-        result.page_records.append(
-            {
-                "idx": idx,
-                "url": (payload or {}).get("href", ""),
-                "item_count": len(items),
-                "unread_count": sum(1 for r in items if r.get("is_unread")),
-                "sn_hash": _sn_hash(payload),
-                "next_state": _next_state(),
-            }
-        )
-
-    _absorb(first, "1")
+    st = _CollectState(
+        actions=actions,
+        result=result,
+        seen_sns=seen_sns,
+        folder_id=folder_id,
+        folder_name=folder_name,
+        mode=mode,
+        max_items=max_items,
+        now_for_time=now_for_time,
+    )
+    _absorb(st, first, "1")
     result.pages_visited.append("1")
-    _record_page(1, first)
+    _record_page(st, 1, first)
 
-    strategies_used: set[str] = set()
-    consecutive_no_new = 0
-    page_index = 1
     while True:
-        if result.warn_limit_reached:
+        if _limit_reached(st, max_pages):
             break
-        if page_index >= max_pages:
-            result.warn_limit_reached = True
-            result.notes.append(f"max_pages={max_pages}_도달")
-            break
-        target_idx = page_index + 1
+        target_idx = st.page_index + 1
 
         # 다음 페이지 전 sn_hash 기준점
         sn_hash_before = result.page_records[-1]["sn_hash"]
@@ -485,101 +641,25 @@ def collect_inbox(
         advanced, strat = _advance_page(actions, target_idx, url_before)
         if not advanced:
             # URL/번호/next 모두 실패 — last_page_evidence 보강
-            if "next_disabled" not in result.last_page_evidence:
-                # 추가 검증: URL ?page=N+1 직접 시도해도 변화 없음
-                trial_url = _bump_page_url(url_before, target_idx)
-                if trial_url:
-                    actions.navigate(trial_url)
-                    time.sleep(0.2)
-                    actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=6.0)
-                    after = actions.evaluate(LIST_EXPR) or {}
-                    if _sn_hash(after) == sn_hash_before:
-                        result.last_page_evidence.append("url_page_no_change")
-                    else:
-                        # 의외로 변화 — 진행
-                        page_index += 1
-                        added = _absorb(after, str(page_index))
-                        result.pages_visited.append(str(page_index))
-                        _record_page(page_index, after)
-                        strategies_used.add("url_page")
-                        if added == 0:
-                            consecutive_no_new += 1
-                            if consecutive_no_new >= 2:
-                                result.last_page_evidence.append("no_new_sn")
-                                break
-                        else:
-                            consecutive_no_new = 0
-                        continue
-            # 종료 판정 (근거 2개 이상 요구)
-            if len(set(result.last_page_evidence)) >= 2:
-                result.last_page_reached = True
-            else:
-                result.notes.append(f"insufficient_last_page_evidence:{result.last_page_evidence}")
-                # 추가 증거 부족 — WARN
+            if _handle_advance_failure(st, target_idx, url_before, sn_hash_before) == "continue":
+                continue
             break
 
-        strategies_used.add(strat)
+        st.strategies_used.add(strat)
         time.sleep(0.2)
         actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=8.0)
         more = actions.evaluate(LIST_EXPR) or {}
 
         # sn_hash 가 이전과 동일 — URL/click 이 실제로는 진행 안 함
         if _sn_hash(more) == sn_hash_before:
-            # url_page 전략이 실패한 것 → evidence 누적, absorb 하지 않음
-            if strat == "url_page":
-                result.last_page_evidence.append("url_page_no_change")
-            else:
-                result.last_page_evidence.append("no_new_sn")
-            # 종료 판정
-            if len(set(result.last_page_evidence)) >= 2:
-                result.last_page_reached = True
-                break
-            # 단일 근거라도 한 번 더 시도하지 않고 곧장 종료 후보
-            consecutive_no_new += 1
-            if consecutive_no_new >= 2:
-                # 근거 부족이라도 무한 루프 방지 — last_page_reached False 로 두고 종료
-                result.notes.append(f"loop_safety_break_evidence={list(set(result.last_page_evidence))}")
-                break
-            continue
+            if _handle_no_page_change(st, strat) == "continue":
+                continue
+            break
 
-        page_index += 1
-        added = _absorb(more, str(page_index))
-        result.pages_visited.append(str(page_index))
-        _record_page(page_index, more)
-        if added == 0:
-            consecutive_no_new += 1
-            if consecutive_no_new >= 2:
-                result.last_page_evidence.append("no_new_sn")
-                if len(set(result.last_page_evidence)) >= 2:
-                    result.last_page_reached = True
-                    break
-        else:
-            consecutive_no_new = 0
+        if _absorb_next_page(st, more):
+            break
 
-    # UI count scope evidence 수집
-    result.ui_count_scope_evidence = actions.evaluate(LNB_UNREAD_BREAKDOWN_EXPR) or {}
-
-    # pagination 전략 정리
-    if len(strategies_used) == 1:
-        result.pagination_strategy_used = next(iter(strategies_used))
-    elif len(strategies_used) > 1:
-        result.pagination_strategy_used = "mixed:" + ",".join(sorted(strategies_used))
-    else:
-        result.pagination_strategy_used = "single_page"
-
-    # 종료 — collected_unread 계산
-    result.items = list(seen_sns.values())
-    result.collected_unread = sum(1 for i in result.items if i.read_state == "UNREAD")
-
-    # last_page_reached 최종 판정
-    if not result.warn_limit_reached and not result.last_page_reached:
-        # 자연 종료 시: 근거가 2개 이상이어야 True
-        if len(set(result.last_page_evidence)) >= 2:
-            result.last_page_reached = True
-            result.notes.append("자연_종료_근거2개+")
-        else:
-            result.last_page_reached = False
-            result.notes.append(f"WARN_DYNAMIC_PAGE_MISSED_evidence={result.last_page_evidence}")
+    _finalize_result(st)
     return result
 
 

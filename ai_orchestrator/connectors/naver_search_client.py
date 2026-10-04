@@ -28,7 +28,8 @@ def _requests_transport(method: str, url: str, headers: dict, params: dict) -> t
     resp = requests.request(method, url, headers=headers, timeout=10)
     try:
         body = resp.json()
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("네이버 검색 응답 JSON 파싱 실패(무시): %s", type(exc).__name__)
         body = {}
     return resp.status_code, body
 

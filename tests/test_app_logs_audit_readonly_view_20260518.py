@@ -10,7 +10,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-LOGS_PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "logs" / "page.tsx"
+from tests.app_ui_paths import assistant_route  # noqa: E402
+
+LOGS_PAGE = assistant_route("logs", "page.tsx")
 AUDIT_LIST = ROOT / "admin-web" / "src" / "components" / "assistant" / "AuditLogList.tsx"
 API_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "api.ts"
 TYPES_FILE = ROOT / "admin-web" / "src" / "types" / "assistant.ts"
@@ -240,32 +242,46 @@ class TestSecurity:
 
 # ── API endpoint 계약 ────────────────────────────────────────────────────────
 class TestApiContract:
-    def test_ops_audit_events_200(self):
+    @staticmethod
+    def _authed_client():
+        # 2026-10-04 갱신: ops API 는 JWT 인증이 필수가 됨 — 인증 의존성을 시험용 사용자로 대체해 응답 계약만 검증.
         from fastapi.testclient import TestClient
+
+        from ai_orchestrator.connectors.user_auth_router import get_jwt_user
         from ai_orchestrator.server import app
-        client = TestClient(app, raise_server_exceptions=False)
-        r = client.get("/api/v1/ops/audit-events")
+
+        app.dependency_overrides[get_jwt_user] = lambda: {"actor": "owner-test", "role": "owner"}
+        return app, TestClient(app, raise_server_exceptions=False)
+
+    def test_ops_audit_events_200(self):
+        app, client = self._authed_client()
+        try:
+            r = client.get("/api/v1/ops/audit-events")
+        finally:
+            app.dependency_overrides.clear()
         assert r.status_code == 200
 
     def test_ops_summary_200(self):
-        from fastapi.testclient import TestClient
-        from ai_orchestrator.server import app
-        client = TestClient(app, raise_server_exceptions=False)
-        r = client.get("/api/v1/ops/summary")
+        app, client = self._authed_client()
+        try:
+            r = client.get("/api/v1/ops/summary")
+        finally:
+            app.dependency_overrides.clear()
         assert r.status_code == 200
 
     def test_endpoint_count_still_63(self):
-        from ai_orchestrator.server import app
-        from fastapi.routing import APIRoute, APIWebSocketRoute
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 63
+        from tests.app_routes import runtime_routes
+
+        # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
+        routes = runtime_routes()
+        assert len(routes) == 399
 
     def test_no_new_post_endpoint(self):
-        from ai_orchestrator.server import app
-        from fastapi.routing import APIRoute
-        # 기존 POST 27개 — logs 공정 추가로 증가 없음 확인
-        posts = [r for r in app.routes if isinstance(r, APIRoute) and "POST" in (r.methods or set())]
-        assert len(posts) == 27
+        from tests.app_routes import http_routes
+
+        # 2026-10-04 갱신: app.routes 직접 순회는 지연 include_router 로 0개 — 펼친 목록의 현재 POST 수(앞선 개수 시험과 같은 기준 184)
+        posts = [r for r in http_routes() if "POST" in r.method.split(",")]
+        assert len(posts) == 184
 
 
 # ── mock 다양성 ──────────────────────────────────────────────────────────────
@@ -286,11 +302,11 @@ class TestMockDiversity:
 # ── 회귀: baseline sync 유지 ─────────────────────────────────────────────────
 class TestBaselineRegression:
     def test_dashboard_uses_get_app_health_summary(self):
-        dashboard = ROOT / "admin-web" / "src" / "app" / "assistant" / "page.tsx"
+        dashboard = assistant_route("page.tsx")
         assert "getAppHealthSummary" in _src(dashboard)
 
     def test_task_queue_uses_task_table(self):
-        tasks = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "page.tsx"
+        tasks = assistant_route("tasks", "page.tsx")
         assert "TaskTable" in _src(tasks)
 
     def test_task_detail_read_only_panel(self):

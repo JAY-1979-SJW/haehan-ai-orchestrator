@@ -136,7 +136,7 @@ def _has_sensitive_keys(params: dict[str, Any]) -> list[str]:
     return found
 
 
-def _verdict_envelope(
+def _verdict_envelope(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     action_name: str,
     spec,
     verdict: str,
@@ -169,7 +169,7 @@ def _verdict_envelope(
     }
 
 
-def build_handoff_payload(
+def build_handoff_payload(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     action_name: str,
     spec,
@@ -254,7 +254,7 @@ def validate_handoff_payload(payload: dict[str, Any]) -> list[str]:
     return violations
 
 
-def prepare_action_task(
+def prepare_action_task(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, 인자 묶음 변경 시 API 영향)
     *,
     action_name: str,
     params: dict[str, Any] | None = None,

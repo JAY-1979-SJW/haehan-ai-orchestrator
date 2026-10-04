@@ -357,24 +357,28 @@ def get_ops_summary(
     """대시보드 메트릭 집계 — 각 모듈 상태를 읽어 집계."""
     try:
         pending_count = len(_list_pending())
-    except Exception:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
+    except Exception as err:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
+        logger.warning("대시보드 승인 대기 집계 실패: %s", type(err).__name__)
         pending_count = 0
 
     try:
         agents_raw = _reg.list_agents()
         online_count = sum(1 for a in agents_raw if _map_agent_status(a.get("status", "")) == "online")
-    except Exception:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
+    except Exception as err:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
+        logger.warning("대시보드 에이전트 집계 실패: %s", type(err).__name__)
         online_count = 0
         agents_raw = []
 
     try:
         web_task_count = len(_list_web_tasks())
-    except Exception:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
+    except Exception as err:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
+        logger.warning("대시보드 웹작업 집계 실패: %s", type(err).__name__)
         web_task_count = 0
 
     try:
         external_count = len(_list_external())
-    except Exception:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
+    except Exception as err:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
+        logger.warning("대시보드 외부작업 집계 실패: %s", type(err).__name__)
         external_count = 0
 
     approval_status: str = "WARN" if pending_count > 0 else "PASS"

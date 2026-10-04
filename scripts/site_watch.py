@@ -27,6 +27,7 @@ import traceback
 from contextlib import contextmanager, suppress
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from scripts.logger import get_logger
 from scripts.op_log import log_op
@@ -242,7 +243,7 @@ class StepWatcher:
 
     def _finalize(self, *, failed: bool, last_step: str = "", kind: str = "", message: str = "") -> None:
         # 마지막 종합 봇 리포트
-        final_bot = {}
+        final_bot: dict[Any, Any] = {}
         if self._bot_radar is not None:
             with suppress(Exception):
                 final_bot = self._bot_radar.report()

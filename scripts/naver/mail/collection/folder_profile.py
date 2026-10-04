@@ -47,6 +47,16 @@ class FolderProfileSnapshot:
     reconciliation: dict = field(default_factory=dict)
 
 
+def _unread_sums(f: fd.FolderInfo) -> tuple[int, int, int]:
+    """폴더 1개의 (inbox+smart, spam, trash) unread 기여분."""
+    active = f.unread_count if f.kind in (fp.KIND_INBOX, fp.KIND_SMART) and f.unread_count > 0 else 0
+    spam = f.unread_count if f.kind == fp.KIND_SPAM and f.unread_count > 0 else 0
+    trash = f.unread_count if f.kind == fp.KIND_TRASH and f.unread_count > 0 else 0
+    return active, spam, trash
+
+
+
+
 def build_snapshot(
     folders: list[fd.FolderInfo],
     *,
@@ -81,13 +91,10 @@ def build_snapshot(
                 header_dup += f.unread_count
         elif f.kind == fp.KIND_UNKNOWN:
             unknown.append(f.name)
-        # active sum 후보
-        if f.kind in (fp.KIND_INBOX, fp.KIND_SMART) and f.unread_count > 0:
-            inbox_smart_active += f.unread_count
-        if f.kind == fp.KIND_SPAM and f.unread_count > 0:
-            spam_total += f.unread_count
-        if f.kind == fp.KIND_TRASH and f.unread_count > 0:
-            trash_total += f.unread_count
+        d_active, d_spam, d_trash = _unread_sums(f)
+        inbox_smart_active += d_active
+        spam_total += d_spam
+        trash_total += d_trash
 
         if f.is_collectable:
             collectable.append(f.name)

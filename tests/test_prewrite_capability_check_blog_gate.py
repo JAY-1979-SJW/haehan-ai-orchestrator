@@ -72,16 +72,19 @@ def test_ctrl_a_then_font_size_blocked_even_with_gap():
 
 
 def test_blogwriter_use_inside_reviewed_connector_path_allowed():
+    # 저장소에 실제로 있는 검증된 경로를 ROOT 기준으로 쓴다(없는 경로는 '신규 파일 기존 구현 확인' 게이트가 따로 차단)
     result = _run_hook(
-        r"C:\work\01. haehan-ai-orchestrator\ai_orchestrator\connectors\naver_blog_router.py",
+        str(ROOT / "ai_orchestrator" / "connectors" / "naver_blog_router.py"),
         "from scripts.naver.blog.core.writer import BlogWriter\n",
     )
     assert result.returncode == 0
 
 
 def test_blogwriter_use_inside_reviewed_naver_scripts_path_allowed():
+    # 이 시험은 블로그 안전 게이트만 본다. 없는 새 파일 경로를 쓰면 '신규 파일 기존 구현 확인' 게이트가
+    # 별도로 차단하므로, 저장소에 실제로 있는 검증된 경로의 파일을 쓴다(저장소 폴더 위치에도 의존하지 않는다).
     result = _run_hook(
-        r"C:\work\01. haehan-ai-orchestrator\scripts\naver\blog\some_new_helper.py",
+        str(ROOT / "scripts" / "naver" / "blog" / "core" / "writer.py"),
         "from scripts.naver.blog.core.writer import BlogWriter\n",
     )
     assert result.returncode == 0

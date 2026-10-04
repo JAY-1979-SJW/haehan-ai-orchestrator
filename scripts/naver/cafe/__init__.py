@@ -158,7 +158,7 @@ class NaverCafe:
                     continue
         return {"error": "iframe_not_found"}
 
-    def write_post(
+    def write_post(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
         self,
         cafe_url: str,
         board_name: str,

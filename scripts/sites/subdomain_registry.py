@@ -108,6 +108,20 @@ def get_service(provider_id: str, service_key: str) -> SubdomainService:
     raise KeyError(f"unknown SSO service: {provider_id}/{service_key}")
 
 
+def _validate_services(provider, errors):
+    service_keys: set[str] = set()
+    for service in provider.services:
+        if service.key in service_keys:
+            errors.append(f"{provider.provider_id}: duplicate service {service.key}")
+        service_keys.add(service.key)
+        if _host(service.url) != service.host:
+            errors.append(f"{provider.provider_id}/{service.key}: host mismatch")
+        if service.risk_level != "read":
+            errors.append(f"{provider.provider_id}/{service.key}: risk_level must be read")
+        if service.default_action != "web_open_url_readonly":
+            errors.append(f"{provider.provider_id}/{service.key}: action must be web_open_url_readonly")
+
+
 def validate_registry() -> list[str]:
     errors: list[str] = []
     provider_ids: set[str] = set()
@@ -120,15 +134,5 @@ def validate_registry() -> list[str]:
         for url_field in (provider.login_entry_url, provider.account_entry_url):
             if not _host(url_field):
                 errors.append(f"{provider.provider_id}: invalid provider URL {url_field!r}")
-        service_keys: set[str] = set()
-        for service in provider.services:
-            if service.key in service_keys:
-                errors.append(f"{provider.provider_id}: duplicate service {service.key}")
-            service_keys.add(service.key)
-            if _host(service.url) != service.host:
-                errors.append(f"{provider.provider_id}/{service.key}: host mismatch")
-            if service.risk_level != "read":
-                errors.append(f"{provider.provider_id}/{service.key}: risk_level must be read")
-            if service.default_action != "web_open_url_readonly":
-                errors.append(f"{provider.provider_id}/{service.key}: action must be web_open_url_readonly")
+        _validate_services(provider, errors)
     return errors

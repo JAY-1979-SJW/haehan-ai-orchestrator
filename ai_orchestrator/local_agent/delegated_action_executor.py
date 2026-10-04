@@ -50,7 +50,7 @@ _WRITE_ACTIONS = frozenset(
 )
 
 
-def execute_delegated_action(
+def execute_delegated_action(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     action: str,
     domain: str,
     permission_id: str | None,

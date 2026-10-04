@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from typing import Any
 
 from playwright.sync_api import Page
 
@@ -107,7 +108,7 @@ class SEOOptimizer:
             }
             """)
             # 키워드 빈도 분석
-            all_words = []
+            all_words: list[Any] = []
             for t in titles:
                 words = re.findall(r"[가-힣]{2,}|[A-Za-z]{3,}", t)
                 all_words.extend(w for w in words if len(w) >= 2)

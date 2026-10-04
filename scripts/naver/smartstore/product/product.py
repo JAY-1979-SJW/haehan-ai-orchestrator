@@ -598,6 +598,66 @@ class ProductRegister:
 
     # ── 통합 원샷 등록 ───────────────────────────────────────────────────
 
+    def _reg_basic(self, data: dict, run) -> None:
+        """기본 정보(카테고리/상품명)."""
+        # 기본 정보
+        if data.get("category"):
+            run("category", self.set_category, data["category"])
+        if data.get("name"):
+            run("name", self.set_product_name, data["name"])
+
+    def _reg_main_info(self, data: dict, run) -> None:
+        """상품 주요정보(브랜드/제조사/모델명/자체제작)."""
+        # 상품 주요정보
+        if data.get("brand"):
+            run("brand", self.set_brand, data["brand"])
+        if data.get("manufacturer"):
+            run("manufacturer", self.set_manufacturer, data["manufacturer"])
+        if data.get("model_name"):
+            run("model_name", self.set_model_name, data["model_name"])
+        if data.get("self_made") is not None:
+            run("self_made", self.set_self_made, data["self_made"])
+
+    def _reg_radio(self, data: dict, run) -> None:
+        """라디오 옵션들(부가세/상품상태/미성년자 구매/판매기간)."""
+        # 라디오 옵션들
+        if data.get("vat_type"):
+            run("vat_type", self.set_vat_type, data["vat_type"])
+        if data.get("product_status"):
+            run("product_status", self.set_product_status, data["product_status"])
+        if data.get("minor_purchase") is not None:
+            run("minor_purchase", self.set_minor_purchase, data["minor_purchase"])
+        if data.get("sale_period") is not None:
+            run("sale_period", self.set_sale_period, data["sale_period"])
+
+    def _reg_cert_extra(self, data: dict, run) -> None:
+        """인증 + 부가 정보(사은품/이벤트)."""
+        # 인증
+        if data.get("kc_exemption"):
+            run("kc_exemption", self.set_kc_exemption, data["kc_exemption"])
+        if data.get("certification"):
+            c = data["certification"]
+            run("certification", self.set_certification, c.get("agency", ""), c.get("number", ""))
+
+        # 부가 정보
+        if data.get("gift"):
+            run("gift", self.set_gift, data["gift"])
+        if data.get("event_text"):
+            run("event_text", self.set_event_text, data["event_text"])
+
+    def _reg_media(self, data: dict, run) -> None:
+        """이미지 + 상세설명."""
+        # 이미지
+        if data.get("main_image"):
+            mode = data.get("image_mode", "common")
+            run("main_image", self.upload_main_image, data["main_image"], mode=mode)
+        if data.get("additional_images"):
+            run("additional_images", self.upload_additional_images, data["additional_images"])
+
+        # 상세설명
+        if data.get("description"):
+            run("description", self.set_description, data["description"])
+
     def register_product(self, data: dict, save_after: bool = False, require_confirm: bool = True) -> dict:
         """상품 정보 dict → 자동 등록 (전체 필드 통합).
 
@@ -624,55 +684,11 @@ class ProductRegister:
             steps.append((name, r))
             return r
 
-        # 기본 정보
-        if data.get("category"):
-            run("category", self.set_category, data["category"])
-        if data.get("name"):
-            run("name", self.set_product_name, data["name"])
-
-        # 상품 주요정보
-        if data.get("brand"):
-            run("brand", self.set_brand, data["brand"])
-        if data.get("manufacturer"):
-            run("manufacturer", self.set_manufacturer, data["manufacturer"])
-        if data.get("model_name"):
-            run("model_name", self.set_model_name, data["model_name"])
-        if data.get("self_made") is not None:
-            run("self_made", self.set_self_made, data["self_made"])
-
-        # 라디오 옵션들
-        if data.get("vat_type"):
-            run("vat_type", self.set_vat_type, data["vat_type"])
-        if data.get("product_status"):
-            run("product_status", self.set_product_status, data["product_status"])
-        if data.get("minor_purchase") is not None:
-            run("minor_purchase", self.set_minor_purchase, data["minor_purchase"])
-        if data.get("sale_period") is not None:
-            run("sale_period", self.set_sale_period, data["sale_period"])
-
-        # 인증
-        if data.get("kc_exemption"):
-            run("kc_exemption", self.set_kc_exemption, data["kc_exemption"])
-        if data.get("certification"):
-            c = data["certification"]
-            run("certification", self.set_certification, c.get("agency", ""), c.get("number", ""))
-
-        # 부가 정보
-        if data.get("gift"):
-            run("gift", self.set_gift, data["gift"])
-        if data.get("event_text"):
-            run("event_text", self.set_event_text, data["event_text"])
-
-        # 이미지
-        if data.get("main_image"):
-            mode = data.get("image_mode", "common")
-            run("main_image", self.upload_main_image, data["main_image"], mode=mode)
-        if data.get("additional_images"):
-            run("additional_images", self.upload_additional_images, data["additional_images"])
-
-        # 상세설명
-        if data.get("description"):
-            run("description", self.set_description, data["description"])
+        self._reg_basic(data, run)
+        self._reg_main_info(data, run)
+        self._reg_radio(data, run)
+        self._reg_cert_extra(data, run)
+        self._reg_media(data, run)
 
         # 저장
         save_result = None

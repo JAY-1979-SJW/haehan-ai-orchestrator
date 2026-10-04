@@ -214,7 +214,38 @@ class BlogWriterPro:
 
     # ── 메인 워크플로우: smart_publish ───────────────────────────────────
 
-    def smart_publish(
+    def _decide_schedule_time(self, auto_schedule: bool) -> datetime | None:
+        """자동 예약 시간 결정(실패 시 None 으로 폴백)."""
+        schedule_at = None
+        if auto_schedule:
+            try:
+                from scripts.naver.blog.seo import BlogSEO
+
+                bt = BlogSEO(self.page).best_publish_time()
+                today = datetime.now()
+                hour = bt["best_today"]
+                schedule_at = today.replace(hour=hour, minute=0, second=0, microsecond=0)
+                # 이미 지난 시간이면 다음 추천
+                if schedule_at <= datetime.now():
+                    schedule_at = schedule_at + timedelta(days=1)
+                _log.info("[blog-pro] 자동 예약: %s", schedule_at)
+            except Exception as e:  # noqa: BLE001 - 네이버 블로그 발행 도우미 - SEO 분석/이미지 alt/예약시간 계산 실패는 기본값으로 폴백, 발행 자체를 우회하지 않음
+                _log.warning("[blog-pro] 자동 예약 시간 계산 실패: %s", e)
+        return schedule_at
+
+
+    def _publish_by_mode(self, save_draft_only: bool, schedule_at: datetime | None) -> dict:
+        """발행 모드 분기(임시저장/예약/즉시)."""
+        if save_draft_only:
+            result = self.writer.save_draft()
+        elif schedule_at:
+            result = self.writer.schedule_publish(schedule_at)
+        else:
+            result = self.writer.publish()
+        return result
+
+
+    def smart_publish(  # noqa: PLR0913 - 공개 시그니처 유지(동작 변경 금지 리팩터링)
         self,
         *,
         title: str,
@@ -295,21 +326,7 @@ class BlogWriterPro:
             }
 
         # 7) 자동 예약 시간 결정
-        schedule_at = None
-        if auto_schedule:
-            try:
-                from scripts.naver.blog.seo import BlogSEO
-
-                bt = BlogSEO(self.page).best_publish_time()
-                today = datetime.now()
-                hour = bt["best_today"]
-                schedule_at = today.replace(hour=hour, minute=0, second=0, microsecond=0)
-                # 이미 지난 시간이면 다음 추천
-                if schedule_at <= datetime.now():
-                    schedule_at = schedule_at + timedelta(days=1)
-                _log.info("[blog-pro] 자동 예약: %s", schedule_at)
-            except Exception as e:  # noqa: BLE001 - 네이버 블로그 발행 도우미 - SEO 분석/이미지 alt/예약시간 계산 실패는 기본값으로 폴백, 발행 자체를 우회하지 않음
-                _log.warning("[blog-pro] 자동 예약 시간 계산 실패: %s", e)
+        schedule_at = self._decide_schedule_time(auto_schedule)
 
         # 8) 실제 발행
         if not self.writer.open(blog_id=self.blog_id):
@@ -334,12 +351,7 @@ class BlogWriterPro:
         self.writer.set_search_exposure(True)
 
         # 9) 발행 모드 분기
-        if save_draft_only:
-            result = self.writer.save_draft()
-        elif schedule_at:
-            result = self.writer.schedule_publish(schedule_at)
-        else:
-            result = self.writer.publish()
+        result = self._publish_by_mode(save_draft_only, schedule_at)
 
         # 10) 통계 + 로그
         result.update(

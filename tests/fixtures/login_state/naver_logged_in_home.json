@@ -1,0 +1,31 @@
+{
+ "_doc": "네이버 메인의 로그인된 화면(2026-09-30 실제 수집)을 역할 요소만 남겨 축소. 본문·주소·이름 제거. '로그인 보호 설정' 링크는 로그인된 화면에만 보이는 실제 요소로, 로그인 버튼이 아니다.",
+ "url": "https://www.naver.com/",
+ "title": "fixture",
+ "frames": [
+  {
+   "idx": 0,
+   "links": [
+    {
+     "text": "네이버로그인",
+     "visible": false,
+     "href": "https://example.invalid/x"
+    },
+    {
+     "text": "로그인 보호 설정",
+     "visible": true,
+     "href": "https://example.invalid/x"
+    }
+   ],
+   "buttons": [
+    {
+     "text": "로그아웃",
+     "visible": true
+    }
+   ],
+   "inputs": [],
+   "forms": [],
+   "headings": []
+  }
+ ]
+}

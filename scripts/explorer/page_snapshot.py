@@ -1,7 +1,7 @@
 """단일 페이지 구조 스냅샷 + JSON 저장.
 
 각 프레임에서 다음 메타데이터를 추출한다:
-  - links: text, href, target
+  - links: text, href, target, visible
   - inputs: tag/type/name/id/placeholder/aria/required/visible
   - buttons: text/id/aria/cls/visible (a, button, [role="button"])
   - forms: id/action/method/name
@@ -28,6 +28,7 @@ _EXTRACT_FRAME_JS = r"""
         text: (a.innerText || '').trim().slice(0, 80),
         href: a.getAttribute('href') || '',
         target: a.getAttribute('target') || '',
+        visible: a.offsetParent !== null,
     })).filter(l => l.text || l.href);
     const inputs = Array.from(document.querySelectorAll('input, textarea, select')).map(e => ({
         tag: e.tagName,
@@ -66,16 +67,12 @@ def slugify(url: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_.-]+", "_", s)[:120]
 
 
-def snapshot(page, save_dir: str = "data/sitemap") -> dict[str, Any]:
-    """페이지 스냅샷 추출 + 저장. 반환: {path, url, title, frames, counts}.
-
-    Page 상태는 변경하지 않음 (read-only).
-    """
+def collect(page) -> dict[str, Any]:
+    """페이지 구조 수집만 한다(파일 저장 없음). 반환 dict 는 snapshot() 저장본과 같은 모양."""
     url = page.url
-    title = page.title()
     data: dict[str, Any] = {
         "url": url,
-        "title": title,
+        "title": page.title(),
         "captured_at": datetime.now().isoformat(),
         "frames": [],
     }
@@ -97,9 +94,17 @@ def snapshot(page, save_dir: str = "data/sitemap") -> dict[str, Any]:
         except Exception as e:  # noqa: BLE001 - iframe 프레임 정보 추출(page.evaluate) 실패를 data에 error로 기록하고 다음 프레임 계속 처리 - 읽기전용 페이지 스냅샷, 실패한 프레임만 누락될 뿐 위험 조작 없음
             data["frames"].append({"idx": i, "url": f.url, "error": str(e)})
             _log.warning("[explorer] 프레임[%d] 추출 실패: %s", i, e)
+    return data
 
+
+def snapshot(page, save_dir: str = "data/sitemap") -> dict[str, Any]:
+    """페이지 스냅샷 추출 + 저장. 반환: {path, url, title, frames, counts}.
+
+    Page 상태는 변경하지 않음 (read-only).
+    """
+    data = collect(page)
     Path(save_dir).mkdir(parents=True, exist_ok=True)
-    out_path = Path(save_dir) / f"{slugify(url)}.json"
+    out_path = Path(save_dir) / f"{slugify(data['url'])}.json"
     with out_path.open("w", encoding="utf-8") as fp:
         json.dump(data, fp, ensure_ascii=False, indent=2)
 

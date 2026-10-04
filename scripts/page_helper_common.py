@@ -848,7 +848,7 @@ def _safe_auto_login_detect(page: Page, url: str) -> None:
             except Exception:  # noqa: BLE001 - 자동 팝업 처리/로그 기록/프레임 탐색 등 부수 동작 실패는 무시해도 메인 흐름에 영향 없음
                 pass
     except Exception as e:  # noqa: BLE001 - 브라우저 자동화 공용 헬퍼(팝업처리/중요작업로깅/로그인감지) - 실패 시 무시하고 계속하거나 (None, None) 반환, 로그인 감지 실패는 감지 안 함으로 처리될 뿐 로그인됨으로 오판하지 않음
-        log.debug("자동 로그인 감지 실패 (무시): %s", e)
+        log.warning("자동 로그인 감지 실패 (무시): %s", e)
 
 
 def _find_frame(page: Page, selector: str):

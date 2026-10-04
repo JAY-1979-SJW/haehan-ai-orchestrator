@@ -27,11 +27,13 @@ from __future__ import annotations
 
 from playwright.sync_api import Page
 
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
+
 
 class Blog:
     """블로그 통합 진입점."""
 
-    def __init__(self, page: Page, blog_id: str = "skyjwsin"):
+    def __init__(self, page: Page, blog_id: str = DEFAULT_ACCOUNT):
         self.page = page
         self.blog_id = blog_id
         self._writer = None

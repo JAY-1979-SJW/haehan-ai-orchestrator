@@ -38,7 +38,7 @@ DEFAULT_MAX_EXECUTIONS = 1
 MAX_BULK_LIMIT = 50  # 스팸 방지: 단일 권한 최대 실행 횟수 상한
 
 
-def build_permission(
+def build_permission(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 호환)
     action: str,
     domain: str,
     account: str = "",
@@ -82,6 +82,38 @@ def build_permission(
     }
 
 
+def _is_expired(permission: dict[str, Any]) -> bool:
+    expires_at_str = permission.get("expires_at", "")
+    if expires_at_str:
+        try:
+            expires_at = datetime.fromisoformat(expires_at_str)
+            if datetime.now(tz=UTC) > expires_at:
+                return True
+        except ValueError:
+            pass
+    return False
+
+
+def _scope_violation(
+    permission: dict[str, Any], action: str, domain: str, account: str, task_scope: str
+) -> dict[str, Any] | None:
+    if permission.get("action") != action:
+        return {
+            "result": CHECK_SCOPE_EXCEEDED,
+            "reason": f"action 불일치: 권한={permission.get('action')!r}, 요청={action!r}",
+        }
+    if permission.get("domain") and permission["domain"] != domain:
+        return {
+            "result": CHECK_SCOPE_EXCEEDED,
+            "reason": f"domain 불일치: 권한={permission['domain']!r}, 요청={domain!r}",
+        }
+    if permission.get("account") and account and permission["account"] != account:
+        return {"result": CHECK_SCOPE_EXCEEDED, "reason": "account 불일치"}
+    if permission.get("task_scope") and task_scope and permission["task_scope"] != task_scope:
+        return {"result": CHECK_SCOPE_EXCEEDED, "reason": "task_scope 불일치"}
+    return None
+
+
 def check_permission(
     permission: dict[str, Any],
     action: str,
@@ -107,30 +139,13 @@ def check_permission(
         return {"result": CHECK_EXHAUSTED, "reason": "최대 실행 횟수 소진"}
 
     # 만료 검사
-    expires_at_str = permission.get("expires_at", "")
-    if expires_at_str:
-        try:
-            expires_at = datetime.fromisoformat(expires_at_str)
-            if datetime.now(tz=UTC) > expires_at:
-                return {"result": CHECK_EXPIRED, "reason": "권한 만료됨"}
-        except ValueError:
-            pass
+    if _is_expired(permission):
+        return {"result": CHECK_EXPIRED, "reason": "권한 만료됨"}
 
     # scope 검사
-    if permission.get("action") != action:
-        return {
-            "result": CHECK_SCOPE_EXCEEDED,
-            "reason": f"action 불일치: 권한={permission.get('action')!r}, 요청={action!r}",
-        }
-    if permission.get("domain") and permission["domain"] != domain:
-        return {
-            "result": CHECK_SCOPE_EXCEEDED,
-            "reason": f"domain 불일치: 권한={permission['domain']!r}, 요청={domain!r}",
-        }
-    if permission.get("account") and account and permission["account"] != account:
-        return {"result": CHECK_SCOPE_EXCEEDED, "reason": "account 불일치"}
-    if permission.get("task_scope") and task_scope and permission["task_scope"] != task_scope:
-        return {"result": CHECK_SCOPE_EXCEEDED, "reason": "task_scope 불일치"}
+    scope_violation = _scope_violation(permission, action, domain, account, task_scope)
+    if scope_violation is not None:
+        return scope_violation
 
     # 횟수 검사
     max_exec = permission.get("max_executions", DEFAULT_MAX_EXECUTIONS)

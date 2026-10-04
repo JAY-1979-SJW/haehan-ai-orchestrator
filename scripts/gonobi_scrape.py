@@ -5,6 +5,7 @@ import re
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
@@ -50,13 +51,13 @@ def extract_posts_from_html(html: str) -> list[dict]:
 
 
 def scrape_category(agent: BrowserAgent, name: str, cat_no: str) -> list[dict]:
-    posts = []
+    posts: list[Any] = []
     page = 1
     while True:
         url = f"https://blog.naver.com/PostList.naver?blogId=gonobi&categoryNo={cat_no}&currentPage={page}"
         agent.go(url)
         time.sleep(2.5)
-        html = agent._page.content()
+        html = agent.page.content()
         found = extract_posts_from_html(html)
         if not found:
             break

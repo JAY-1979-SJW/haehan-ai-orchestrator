@@ -97,6 +97,107 @@ def _site_allowed(tool: str, enabled_sites: set[str] | None) -> bool:
     return site in enabled_sites
 
 
+def _tool_collect_products(page, ctx, inputs: dict) -> dict:
+    import time as _t
+
+    from scripts.naver.smartstore import NaverSmartStore
+
+    t0 = _t.monotonic()
+    result = NaverSmartStore(page).list_products(limit=inputs.get("limit", 50))
+    result["duration_ms"] = int((_t.monotonic() - t0) * 1000)
+    # 서버 캐시 저장 (선택)
+    return result
+
+
+def _tool_collect_orders(page, ctx, inputs: dict) -> dict:
+    from scripts.naver.smartstore import NaverSmartStore
+
+    return NaverSmartStore(page).list_orders(limit=inputs.get("limit", 50))
+
+
+def _tool_collect_settlements(page, ctx, inputs: dict) -> dict:
+    from scripts.naver.smartstore import NaverSmartStore
+
+    return NaverSmartStore(page).list_settlements(limit=inputs.get("limit", 30))
+
+
+def _tool_collect_reviews(page, ctx, inputs: dict) -> dict:
+    from scripts.naver.smartstore import NaverSmartStore
+
+    return NaverSmartStore(page).list_reviews(limit=inputs.get("limit", 30))
+
+
+def _tool_collect_stats(page, ctx, inputs: dict) -> dict:
+    from scripts.naver.smartstore import NaverSmartStore
+
+    return NaverSmartStore(page).stats()
+
+
+def _tool_open_seller_center(page, ctx, inputs: dict) -> dict:
+    URLS = {
+        "dashboard": "https://sell.smartstore.naver.com/#/home/dashboard",
+        "list": "https://sell.smartstore.naver.com/#/products/list",
+        "register": "https://sell.smartstore.naver.com/#/products/new",
+        "orders": "https://sell.smartstore.naver.com/#/order/list",
+        "settlement": "https://sell.smartstore.naver.com/#/settlement/main",
+        "reviews": "https://sell.smartstore.naver.com/#/review/list",
+        "stats": "https://sell.smartstore.naver.com/#/analytics/dashboard",
+    }
+    url = URLS.get(inputs.get("page_key", "dashboard"))
+    if not url:
+        return {"ok": False, "error": f"알 수 없는 page_key: {inputs.get('page_key')}"}
+    page.bring_to_front()
+    page.goto(url, timeout=15000, wait_until="domcontentloaded")
+    return {"ok": True, "url": url}
+
+
+def _tool_auto_register_product(page, ctx, inputs: dict) -> dict:
+    from scripts.naver.smartstore.product.form_runner import ProductFormRunner
+
+    data = {**inputs, "save": False, "require_confirm": False}
+    REGISTER_URL = "https://sell.smartstore.naver.com/#/products/create"
+    reg_page = next((p for p in ctx.pages if "products/create" in p.url), None)
+    if not reg_page:
+        reg_page = ctx.new_page()
+        reg_page.goto(REGISTER_URL, timeout=20000, wait_until="domcontentloaded")
+    reg_page.bring_to_front()
+    result = ProductFormRunner(reg_page).run(data, skip_open=True)
+    return {**result, "dry_run": True}
+
+
+def _tool_edit_product(page, ctx, inputs: dict) -> dict:
+    from scripts.naver.smartstore.product.form_runner import ProductFormRunner
+
+    product_id = inputs.get("product_id")
+    fields = {k: v for k, v in inputs.items() if k != "product_id"}
+    fields["save"] = False
+    ed_page = next((p for p in ctx.pages if f"products/{product_id}" in p.url), None) or ctx.new_page()
+    ed_page.bring_to_front()
+    result = ProductFormRunner(ed_page).edit(product_id, fields)
+    return {**result, "dry_run": True}
+
+
+def _tool_popup_handle(page, ctx, inputs: dict) -> dict:
+    from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
+
+    mgr = CdpPopupManager()
+    mgr.unblock(ctx, origin="https://sell.smartstore.naver.com")
+    return mgr.handle_page(page, auto_confirm=True)
+
+
+_CDP_TOOL_HANDLERS = {
+    "collect_products": _tool_collect_products,
+    "collect_orders": _tool_collect_orders,
+    "collect_settlements": _tool_collect_settlements,
+    "collect_reviews": _tool_collect_reviews,
+    "collect_stats": _tool_collect_stats,
+    "open_seller_center": _tool_open_seller_center,
+    "auto_register_product": _tool_auto_register_product,
+    "edit_product": _tool_edit_product,
+    "popup_handle": _tool_popup_handle,
+}
+
+
 def _run_cdp_tool(name: str, inputs: dict) -> dict:
     """로컬 Chrome CDP에서 도구를 실행합니다."""
     try:
@@ -111,84 +212,9 @@ def _run_cdp_tool(name: str, inputs: dict) -> dict:
 
             sys.path.insert(0, str(ROOT))
 
-            if name == "collect_products":
-                import time as _t
-
-                from scripts.naver.smartstore import NaverSmartStore
-
-                t0 = _t.monotonic()
-                result = NaverSmartStore(page).list_products(limit=inputs.get("limit", 50))
-                result["duration_ms"] = int((_t.monotonic() - t0) * 1000)
-                # 서버 캐시 저장 (선택)
-                return result
-
-            if name == "collect_orders":
-                from scripts.naver.smartstore import NaverSmartStore
-
-                return NaverSmartStore(page).list_orders(limit=inputs.get("limit", 50))
-
-            if name == "collect_settlements":
-                from scripts.naver.smartstore import NaverSmartStore
-
-                return NaverSmartStore(page).list_settlements(limit=inputs.get("limit", 30))
-
-            if name == "collect_reviews":
-                from scripts.naver.smartstore import NaverSmartStore
-
-                return NaverSmartStore(page).list_reviews(limit=inputs.get("limit", 30))
-
-            if name == "collect_stats":
-                from scripts.naver.smartstore import NaverSmartStore
-
-                return NaverSmartStore(page).stats()
-
-            if name == "open_seller_center":
-                URLS = {
-                    "dashboard": "https://sell.smartstore.naver.com/#/home/dashboard",
-                    "list": "https://sell.smartstore.naver.com/#/products/list",
-                    "register": "https://sell.smartstore.naver.com/#/products/new",
-                    "orders": "https://sell.smartstore.naver.com/#/order/list",
-                    "settlement": "https://sell.smartstore.naver.com/#/settlement/main",
-                    "reviews": "https://sell.smartstore.naver.com/#/review/list",
-                    "stats": "https://sell.smartstore.naver.com/#/analytics/dashboard",
-                }
-                url = URLS.get(inputs.get("page_key", "dashboard"))
-                if not url:
-                    return {"ok": False, "error": f"알 수 없는 page_key: {inputs.get('page_key')}"}
-                page.bring_to_front()
-                page.goto(url, timeout=15000, wait_until="domcontentloaded")
-                return {"ok": True, "url": url}
-
-            if name == "auto_register_product":
-                from scripts.naver.smartstore.product.form_runner import ProductFormRunner
-
-                data = {**inputs, "save": False, "require_confirm": False}
-                REGISTER_URL = "https://sell.smartstore.naver.com/#/products/create"
-                reg_page = next((p for p in ctx.pages if "products/create" in p.url), None)
-                if not reg_page:
-                    reg_page = ctx.new_page()
-                    reg_page.goto(REGISTER_URL, timeout=20000, wait_until="domcontentloaded")
-                reg_page.bring_to_front()
-                result = ProductFormRunner(reg_page).run(data, skip_open=True)
-                return {**result, "dry_run": True}
-
-            if name == "edit_product":
-                from scripts.naver.smartstore.product.form_runner import ProductFormRunner
-
-                product_id = inputs.get("product_id")
-                fields = {k: v for k, v in inputs.items() if k != "product_id"}
-                fields["save"] = False
-                ed_page = next((p for p in ctx.pages if f"products/{product_id}" in p.url), None) or ctx.new_page()
-                ed_page.bring_to_front()
-                result = ProductFormRunner(ed_page).edit(product_id, fields)
-                return {**result, "dry_run": True}
-
-            if name == "popup_handle":
-                from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
-
-                mgr = CdpPopupManager()
-                mgr.unblock(ctx, origin="https://sell.smartstore.naver.com")
-                return mgr.handle_page(page, auto_confirm=True)
+            handler = _CDP_TOOL_HANDLERS.get(name)
+            if handler is not None:
+                return handler(page, ctx, inputs)
 
             return {"ok": False, "error": f"알 수 없는 도구: {name}"}
 
@@ -199,6 +225,50 @@ def _run_cdp_tool(name: str, inputs: dict) -> dict:
 # ── WebSocket 에이전트 ────────────────────────────────────────────────────────
 
 
+def _handle_tool_call(ws, msg: dict, enabled_sites: set[str] | None) -> None:
+    """서버의 tool_call 메시지를 실행하고 tool_result 로 응답."""
+    req_id = msg["request_id"]
+    tool = msg["tool"]
+    inputs = msg.get("inputs", {})
+    print(f"[에이전트] 도구 실행: {tool} {inputs}")
+    if not _site_allowed(tool, enabled_sites):
+        site = _TOOL_SITE.get(tool, tool)
+        print(f"[에이전트] 거부: '{site}' 사이트 미활성")
+        result = {
+            "ok": False,
+            "error": "site_not_enabled",
+            "site": site,
+            "hint": f"'{site}' 사이트가 활성화되지 않았습니다. 사이트 설정에서 켜세요.",
+        }
+    else:
+        result = _run_cdp_tool(tool, inputs)
+    print(f"[에이전트] 결과: ok={result.get('ok')}")
+    ws.send(
+        json.dumps(
+            {
+                "type": "tool_result",
+                "request_id": req_id,
+                "result": result,
+            }
+        )
+    )
+
+
+def _on_agent_message(ws, message, enabled_sites: set[str] | None) -> None:
+    """WebSocket 메시지 1건 처리. 예외는 로그만 남기고 삼킨다."""
+    try:
+        msg = json.loads(message)
+        if msg.get("type") == "connected":
+            print(f"[에이전트] 연결됨 — agent_id={msg.get('agent_id')} plan={msg.get('plan')}")
+            return
+
+        if msg.get("type") == "tool_call":
+            _handle_tool_call(ws, msg, enabled_sites)
+    except Exception as e:  # noqa: BLE001 - 로컬 에이전트 CDP 명령 실행/WebSocket 루프 — 알 수 없는 도구 호출 실패는 에러 dict로 반환, 루프 중 예외는 로그 남기고 재시도 대기 후 계속(무한 크래시 방지용 방어 코드)
+        print(f"[에이전트] 오류: {e}")
+        traceback.print_exc()
+
+
 def run_agent(server_url: str, license_key: str, retry_interval: int = 5, enabled_sites: set[str] | None = None):
     ws_url = f"{server_url}/api/v1/smartstore/agent/ws?license={license_key}"
     print(f"[에이전트] 서버 연결 중: {ws_url}")
@@ -206,41 +276,7 @@ def run_agent(server_url: str, license_key: str, retry_interval: int = 5, enable
         print(f"[에이전트] 활성 사이트 제한: {sorted(enabled_sites)}")
 
     def on_message(ws, message):
-        try:
-            msg = json.loads(message)
-            if msg.get("type") == "connected":
-                print(f"[에이전트] 연결됨 — agent_id={msg.get('agent_id')} plan={msg.get('plan')}")
-                return
-
-            if msg.get("type") == "tool_call":
-                req_id = msg["request_id"]
-                tool = msg["tool"]
-                inputs = msg.get("inputs", {})
-                print(f"[에이전트] 도구 실행: {tool} {inputs}")
-                if not _site_allowed(tool, enabled_sites):
-                    site = _TOOL_SITE.get(tool, tool)
-                    print(f"[에이전트] 거부: '{site}' 사이트 미활성")
-                    result = {
-                        "ok": False,
-                        "error": "site_not_enabled",
-                        "site": site,
-                        "hint": f"'{site}' 사이트가 활성화되지 않았습니다. 사이트 설정에서 켜세요.",
-                    }
-                else:
-                    result = _run_cdp_tool(tool, inputs)
-                print(f"[에이전트] 결과: ok={result.get('ok')}")
-                ws.send(
-                    json.dumps(
-                        {
-                            "type": "tool_result",
-                            "request_id": req_id,
-                            "result": result,
-                        }
-                    )
-                )
-        except Exception as e:  # noqa: BLE001 - 로컬 에이전트 CDP 명령 실행/WebSocket 루프 — 알 수 없는 도구 호출 실패는 에러 dict로 반환, 루프 중 예외는 로그 남기고 재시도 대기 후 계속(무한 크래시 방지용 방어 코드)
-            print(f"[에이전트] 오류: {e}")
-            traceback.print_exc()
+        _on_agent_message(ws, message, enabled_sites)
 
     def on_error(ws, error):
         print(f"[에이전트] WS 오류: {error}")

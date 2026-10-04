@@ -14,6 +14,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = REPO_ROOT / "admin-web" / "src"
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
+from tests.app_ui_paths import assistant_route  # noqa: E402
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 MOCK_FILE = FRONTEND_ROOT / "lib" / "assistant" / "mock.ts"
 
@@ -35,7 +36,7 @@ MOCK_FILE = FRONTEND_ROOT / "lib" / "assistant" / "mock.ts"
     ],
 )
 def test_assistant_route_exists(route: str):
-    assert (ASSISTANT_APP / route).exists(), f"/assistant/{route} 없음"
+    assert (assistant_route(*route.split("/"))).exists(), f"/assistant/{route} 없음"
 
 
 # ── 2. 공통 컴포넌트 존재 ─────────────────────────────────────────────────────
@@ -168,12 +169,12 @@ def test_forbidden_button_text_not_present(pattern: str, name: str):
 
 
 def test_dry_run_notice_used_in_tasks():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "DryRunNotice" in content
 
 
 def test_forbidden_action_banner_used_in_tasks():
-    content = (ASSISTANT_APP / "tasks" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("tasks", "page.tsx")).read_text(encoding="utf-8")
     assert "ForbiddenActionBanner" in content
 
 
@@ -181,7 +182,7 @@ def test_forbidden_action_banner_used_in_tasks():
 
 
 def test_approval_page_no_execute_connection():
-    content = (ASSISTANT_APP / "approval" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("approval", "page.tsx")).read_text(encoding="utf-8")
     assert "approve→execute 미연결" in content or "display" in content.lower() or "ForbiddenActionBanner" in content
 
 
@@ -189,7 +190,7 @@ def test_approval_page_no_execute_connection():
 
 
 def test_deployment_page_no_restart_button():
-    content = (ASSISTANT_APP / "deployment" / "page.tsx").read_text(encoding="utf-8")
+    content = (assistant_route("deployment", "page.tsx")).read_text(encoding="utf-8")
     assert "서버 재시작" not in content or "없음" in content
 
 

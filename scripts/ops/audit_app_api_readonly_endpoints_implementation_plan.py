@@ -378,37 +378,45 @@ def check_priority1_plan(report: AuditReport) -> None:
             report.add(f"plan_{slug[:50]}", "FAIL", f"{req} plan 없음")
 
     for ep in PRIORITY1_ENDPOINT_PLAN_MATRIX:
-        name = ep["endpoint"].split("/")[-1]
-        if ep.get("method") != "GET":
-            report.add(f"method_get_{name}", "FAIL", f"{ep['endpoint']} method != GET")
-        else:
-            report.add(f"method_get_{name}", "PASS", f"{ep['endpoint']} method=GET")
+        _check_priority1_endpoint(report, ep)
 
-        if ep.get("priority") == 1:
-            report.add(f"priority1_{name}", "PASS", f"{ep['endpoint']} priority=1")
-        else:
-            report.add(f"priority1_{name}", "FAIL", f"{ep['endpoint']} priority != 1")
 
-        for flag in ["mutation_allowed", "side_effect_allowed", "server_action_allowed"]:
-            if ep.get(flag) is False:
-                report.add(f"{flag}_{name}", "PASS", f"{ep['endpoint']} {flag}=false")
-            else:
-                report.add(f"{flag}_{name}", "FAIL", f"{ep['endpoint']} {flag} 위반")
+def _check_priority1_endpoint(report: AuditReport, ep: dict) -> None:
+    name = ep["endpoint"].split("/")[-1]
+    if ep.get("method") != "GET":
+        report.add(f"method_get_{name}", "FAIL", f"{ep['endpoint']} method != GET")
+    else:
+        report.add(f"method_get_{name}", "PASS", f"{ep['endpoint']} method=GET")
 
-        if ep.get("implementation_allowed_now") is False:
-            report.add(f"impl_not_allowed_{name}", "PASS", f"{ep['endpoint']} implementation_allowed_now=false")
-        else:
-            report.add(f"impl_not_allowed_{name}", "FAIL", f"{ep['endpoint']} implementation_allowed_now 위반")
+    if ep.get("priority") == 1:
+        report.add(f"priority1_{name}", "PASS", f"{ep['endpoint']} priority=1")
+    else:
+        report.add(f"priority1_{name}", "FAIL", f"{ep['endpoint']} priority != 1")
 
-        if ep.get("response_schema_frozen"):
-            report.add(f"schema_frozen_{name}", "PASS", f"{ep['endpoint']} response_schema_frozen=true")
+    for flag in ["mutation_allowed", "side_effect_allowed", "server_action_allowed"]:
+        if ep.get(flag) is False:
+            report.add(f"{flag}_{name}", "PASS", f"{ep['endpoint']} {flag}=false")
         else:
-            report.add(f"schema_frozen_{name}", "FAIL", f"{ep['endpoint']} schema 미확정")
+            report.add(f"{flag}_{name}", "FAIL", f"{ep['endpoint']} {flag} 위반")
 
-        if ep.get("read_only_guard_required"):
-            report.add(f"guard_{name}", "PASS", f"{ep['endpoint']} read_only_guard_required=true")
-        else:
-            report.add(f"guard_{name}", "WARN", f"{ep['endpoint']} read_only_guard_required 미설정")
+    _check_priority1_endpoint_gates(report, ep, name)
+
+
+def _check_priority1_endpoint_gates(report: AuditReport, ep: dict, name: str) -> None:
+    if ep.get("implementation_allowed_now") is False:
+        report.add(f"impl_not_allowed_{name}", "PASS", f"{ep['endpoint']} implementation_allowed_now=false")
+    else:
+        report.add(f"impl_not_allowed_{name}", "FAIL", f"{ep['endpoint']} implementation_allowed_now 위반")
+
+    if ep.get("response_schema_frozen"):
+        report.add(f"schema_frozen_{name}", "PASS", f"{ep['endpoint']} response_schema_frozen=true")
+    else:
+        report.add(f"schema_frozen_{name}", "FAIL", f"{ep['endpoint']} schema 미확정")
+
+    if ep.get("read_only_guard_required"):
+        report.add(f"guard_{name}", "PASS", f"{ep['endpoint']} read_only_guard_required=true")
+    else:
+        report.add(f"guard_{name}", "WARN", f"{ep['endpoint']} read_only_guard_required 미설정")
 
 
 def check_router_location(report: AuditReport) -> None:
