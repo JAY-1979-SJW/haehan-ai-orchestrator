@@ -21049,6 +21049,22 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/routers/dev_reg_approval_read_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/auth_audit.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/publish_guard.py": {
    "layer": "L2",
    "role": "policy",
@@ -21062,14 +21078,6 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/persistence/auth_audit.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
   },
