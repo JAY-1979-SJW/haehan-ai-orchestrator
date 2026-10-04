@@ -1522,6 +1522,9 @@ def action_run_claude_agent(params: dict) -> ActionResult:
             encoding="utf-8",
             timeout=timeout,
             cwd=str(root),
+            # 에이전트는 Electron(Node spawn)이 stdin 을 열린 빈 파이프로 넘겨 띄운다 — 그대로 상속하면
+            # claude -p 가 입력을 3초 기다린 뒤 시작한다(2026-10-04 실측: 18.6초 → 15.1초).
+            stdin=subprocess.DEVNULL,
         )
     except FileNotFoundError:
         return ActionResult(

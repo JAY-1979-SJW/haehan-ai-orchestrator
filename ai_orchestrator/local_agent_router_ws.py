@@ -62,6 +62,34 @@ ws_router = APIRouter()
 
 _WS_RECV_TIMEOUT_SEC = 30  # keepalive/idle push 주기
 
+# agent_id → (이벤트 루프, 깨움 이벤트). 큐에 작업이 들어오면 heartbeat(기본 10초)를 기다리지 않고
+# 즉시 push 한다. 등록 정보가 없거나 실패하면 기존 heartbeat/pull 경로가 그대로 전달한다(폴백).
+_WAKE: dict[str, tuple[asyncio.AbstractEventLoop, asyncio.Event]] = {}
+
+
+def notify_agent_queued(agent_id: str) -> None:
+    """어느 스레드에서든 호출 가능 — 해당 에이전트의 WS 연결을 깨워 queued 작업을 즉시 push 하게 한다."""
+    entry = _WAKE.get(agent_id)
+    if entry is None:
+        return
+    loop, event = entry
+    with contextlib.suppress(RuntimeError):  # 루프가 이미 닫힌 경우
+        loop.call_soon_threadsafe(event.set)
+
+
+_reg.add_enqueue_listener(notify_agent_queued)
+
+
+async def _wake_pusher(ws: WebSocket, agent_id: str, event: asyncio.Event) -> None:
+    """깨움 이벤트가 오면 queued 작업을 push 한다. 연결 종료로 전송이 실패하면 조용히 끝난다(메인 루프가 정리)."""
+    while True:
+        await event.wait()
+        event.clear()
+        try:
+            await _push_queued(ws, agent_id)
+        except Exception:  # noqa: BLE001 - 연결 종료 중의 전송 실패는 무시, 정리는 메인 루프 finally 가 담당
+            return
+
 
 def _safe_str(value) -> str:
     return "" if value is None else str(value)
@@ -528,6 +556,8 @@ async def agent_websocket(websocket: WebSocket):
     """
     await websocket.accept()
     agent_id: str = ""
+    wake_event: asyncio.Event | None = None
+    wake_task: asyncio.Task | None = None
     try:
         # 1) 인증
         authed = await _authenticate_ws(websocket)
@@ -538,6 +568,9 @@ async def agent_websocket(websocket: WebSocket):
 
         # 2) 초기 큐 드레인
         await _push_queued(websocket, agent_id)
+        wake_event = asyncio.Event()
+        _WAKE[agent_id] = (asyncio.get_running_loop(), wake_event)
+        wake_task = asyncio.create_task(_wake_pusher(websocket, agent_id, wake_event))
 
         # 3) 메시지 루프
         while True:
@@ -568,6 +601,10 @@ async def agent_websocket(websocket: WebSocket):
         with contextlib.suppress(Exception):
             await websocket.close(code=1011)
     finally:
+        if wake_task is not None:
+            wake_task.cancel()
+        if wake_event is not None and _WAKE.get(agent_id, (None, None))[1] is wake_event:
+            _WAKE.pop(agent_id, None)
         if agent_id:
             _cleanup_ws_disconnect(agent_id)
 

@@ -49,8 +49,10 @@ interface ChatSessionSummary {
   message_count: number;
 }
 
+const POLL_FAST_MS = 700; // 처음 20초는 촘촘히 — 짧은 질문의 완료 감지 지연을 줄인다
+const POLL_FAST_WINDOW_MS = 20_000;
 const POLL_INTERVAL_MS = 2000;
-const MAX_POLLS = 150; // 2s * 150 = 5분(백엔드 기본 timeout=300s와 정합)
+const POLL_TIMEOUT_MS = 300_000; // 5분(백엔드 기본 timeout=300s와 정합) — 간격이 달라도 총 대기 시간은 시각으로 계산
 const MODEL_LABELS: Record<string, string> = {
   "": "기본",
   sonnet: "Sonnet",
@@ -195,8 +197,10 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
   }
 
   async function pollTask(agentId: string, taskId: string, assistantId: string, activeChatId: string) {
-    for (let i = 0; i < MAX_POLLS; i++) {
-      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+      const elapsed = Date.now() - startedAt;
+      await new Promise((r) => setTimeout(r, elapsed < POLL_FAST_WINDOW_MS ? POLL_FAST_MS : POLL_INTERVAL_MS));
       let data: TaskStatusResponse;
       try {
         const res = await fetch(`/api/proxy/api/v1/local-agents/${agentId}/tasks/${taskId}`);

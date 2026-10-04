@@ -27,15 +27,9 @@ sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
-    import importlib
-
-    import ai_orchestrator.gates.auth as _auth
-
-    importlib.reload(_auth)
-    import ai_orchestrator.local_agent_router as _lar
-
-    importlib.reload(_lar)
-
+    # auth/local_agent_router 를 reload 하지 않는다: reload 하면 get_current_user 가 시험마다 새 객체가 되는데
+    # 하위 라우터는 처음 import 된 옛 객체에 묶여 있어 dependency_overrides 가 두 번째 시험부터 안 먹혀
+    # 파일 전체 실행 시 등록이 401 이 되고 KeyError: 'agent_id' 가 난다(단독 실행만 통과, 2026-10-04 확인).
     import ai_orchestrator.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
@@ -1309,3 +1303,54 @@ def test_existing_actions_unchanged():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# ── 큐 등록 즉시 push (heartbeat 대기 없음) ────────────────────────────────
+
+
+def test_ws_enqueue_pushes_immediately_without_pull(admin_user):
+    """연결 중 enqueue 된 task 는 pull/heartbeat 없이도 즉시 task 메시지로 도착한다(대기 8초 → 즉시)."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+
+        created = _enqueue(client, agent_id, "open_url", {"url": "https://example.org/wake"})
+
+        msg = ws.receive_json()  # pull 을 보내지 않았다
+        assert msg["type"] == "task"
+        assert msg["task"]["task_id"] == created["task_id"]
+
+
+def test_ws_wake_registry_cleared_on_disconnect(admin_user):
+    import ai_orchestrator.local_agent_router_ws as _ws
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        _enqueue(client, agent_id, "open_url", {"url": "https://example.org/x"})
+        ws.receive_json()
+        assert agent_id in _ws._WAKE
+    assert agent_id not in _ws._WAKE
+
+
+def test_enqueue_listener_failure_does_not_block_enqueue(admin_user):
+    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.local_agent_registry_task_queue as _tq
+
+    def _boom(_agent_id: str) -> None:
+        raise RuntimeError("listener down")
+
+    _tq._enqueue_listeners.append(_boom)
+    try:
+        client = _make_test_client(admin_user)
+        agent_id, _ = _register(client)
+        created = _enqueue(client, agent_id, "open_url", {"url": "https://example.org/y"})
+        assert created["status"] == "queued"
+        assert _reg.get_task(agent_id, created["task_id"]) is not None
+    finally:
+        _tq._enqueue_listeners.remove(_boom)
