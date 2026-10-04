@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { EMPLOYEE_PROTOCOL } from "./employeeProtocol";
 import { FaxApprovalCard } from "./FaxApprovalCard";
+import { MAIL_DRAFT_CARDS } from "./mailDraftCards";
 
 /**
  * 답변 속 "[[종류:<id>]]" 표시를 카드(버튼)로 바꿔 보여 주는 규칙 — 화면(메일함 등)이 주입한다.
@@ -85,7 +86,11 @@ const FAX_APPROVE_MARK = /\[\[fax-approve:([0-9a-f]{32})\]\]/g;
  */
 function MessageBody({ text, extraCards = [] }: { text: string; extraCards?: ExtraCard[] }) {
   const faxIds = [...text.matchAll(FAX_APPROVE_MARK)].map((m) => m[1]);
-  const extras = extraCards.map((c) => ({ card: c, ids: [...new Set([...text.matchAll(c.mark)].map((m) => m[1]))] }));
+  // 모든 창이 기본으로 처리하는 카드(메일 초안) + 화면이 주입한 카드. 같은 규칙은 한 번만 쓴다(카드가 두 번 그려지지 않게).
+  const cards = [...MAIL_DRAFT_CARDS, ...extraCards].filter(
+    (c, i, all) => all.findIndex((o) => o.mark.source === c.mark.source) === i,
+  );
+  const extras = cards.map((c) => ({ card: c, ids: [...new Set([...text.matchAll(c.mark)].map((m) => m[1]))] }));
   if (faxIds.length === 0 && extras.every((e) => e.ids.length === 0)) return <>{text}</>;
   const cleaned = extras.reduce((acc, e) => acc.replace(e.card.mark, ""), text.replace(FAX_APPROVE_MARK, "")).trim();
   return (
