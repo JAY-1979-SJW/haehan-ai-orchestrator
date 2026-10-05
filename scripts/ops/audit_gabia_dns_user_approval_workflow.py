@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -129,7 +130,7 @@ def _check_external_works() -> tuple[bool, list[str]]:
 
 
 def _check_policies() -> dict[str, bool]:
-    result = {}
+    result: dict[str, Any] = {}
     try:
         from ai_orchestrator.safety_policy.safety_policy_registry import get_policy
 
@@ -147,7 +148,7 @@ def _check_policies() -> dict[str, bool]:
 
 
 def _check_policy_decisions() -> dict[str, bool]:
-    result = {}
+    result: dict[str, Any] = {}
     try:
         from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
 
@@ -178,7 +179,7 @@ def _check_policy_decisions() -> dict[str, bool]:
 
 
 def _check_dns_models() -> dict[str, bool]:
-    result = {}
+    result: dict[str, Any] = {}
     try:
         from ai_orchestrator.gabia.gabia_dns_models import (
             make_assistant_subdomain_drafts,
