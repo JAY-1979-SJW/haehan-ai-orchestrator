@@ -27,7 +27,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
@@ -50,7 +50,7 @@ from ai_orchestrator.local_agent.browser.intent_token import SCOPE_INTERACTION, 
 
 MailService = Literal["gmail", "naver", "kakao"]
 
-_SERVICE_CONFIG = {
+_SERVICE_CONFIG: dict[str, dict[str, Any]] = {
     "gmail": {
         "url": "https://mail.google.com/mail/u/0/#inbox",
         "origins": ("mail.google.com", "accounts.google.com"),

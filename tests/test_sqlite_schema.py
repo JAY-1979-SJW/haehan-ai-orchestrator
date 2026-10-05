@@ -135,3 +135,38 @@ def test_second_connection_does_not_rerun_applied_step(tmp_path):
         a.close()
         b.close()
     assert calls == [1]
+
+
+def test_stores_apply_busy_timeout_and_gongmu_seeds_once(tmp_path, monkeypatch):
+    """스토어 연결에 busy_timeout 이 적용되고, gongmu 시드는 DB 파일당 한 번만 돈다."""
+    from ai_orchestrator.connectors import instagram_dm_db
+    from ai_orchestrator.persistence import (
+        agent_dispatch_store,
+        fax_authorization_store,
+        gongmu_store,
+        mail_bulk_store,
+        naver_mail_draft_store,
+        scheduled_job_store,
+    )
+
+    for mod in (
+        scheduled_job_store,
+        mail_bulk_store,
+        gongmu_store,
+        fax_authorization_store,
+        agent_dispatch_store,
+        naver_mail_draft_store,
+        instagram_dm_db,
+    ):
+        monkeypatch.setattr(mod, "_DB_PATH", tmp_path / f"{mod.__name__.rsplit('.', 1)[-1]}.db")
+        with mod._conn() as con:
+            assert con.execute("PRAGMA busy_timeout").fetchone()[0] == 30000, mod.__name__
+
+    calls = []
+    real = gongmu_store._seed_catalog
+    monkeypatch.setattr(gongmu_store, "_seed_catalog", lambda con: (calls.append(1), real(con)))
+    monkeypatch.setattr(gongmu_store, "_SEEDED", set())
+    for _ in range(3):
+        with gongmu_store._conn():
+            pass
+    assert len(calls) == 1
