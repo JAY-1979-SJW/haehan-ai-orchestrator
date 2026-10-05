@@ -95,7 +95,10 @@ def create_user(email: str, name: str, password: str) -> dict:
         )
         con.commit()
     # 승인 전(enabled=0)에도 가입 결과를 반환해야 하므로 enabled 필터 없는 조회 사용
-    return _get_user_unfiltered(user_id)
+    created = _get_user_unfiltered(user_id)
+    if created is None:
+        raise RuntimeError("가입 직후 조회 실패")
+    return created
 
 
 def _get_user_unfiltered(user_id: str) -> dict | None:
