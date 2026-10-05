@@ -381,21 +381,63 @@ def append_approval_record(
             error_message=f"Validation failed: {'; '.join(errors)}",
         )
 
+    with _APPEND_LOCK:
+        return _append_unlocked(record, jsonl_path)
+
+
+class ApprovalTransitionError(Exception):
+    """승인 결정 기록이 현재 상태와 맞지 않을 때(미존재/이미 종결). status_code 는 404 또는 409."""
+
+    def __init__(self, status_code: int, detail: str, current_status: str | None = None) -> None:
+        super().__init__(detail)
+        self.status_code = status_code
+        self.detail = detail
+        self.current_status = current_status
+
+
+def append_decision_if_pending(
+    record: ApprovalRecord,
+    jsonl_path: Path | str,
+) -> ApprovalWriteResult:
+    """현재 상태가 PENDING 일 때만 결정 기록을 append (검사+append 를 같은 락 구간에서 원자적으로).
+
+    Raises:
+        ApprovalTransitionError: 기록이 전혀 없으면 404, 이미 PENDING 이 아니면 409
+    """
+    jsonl_path = Path(jsonl_path)
+    errors = validate_approval_record(record)
+    if errors:
+        return ApprovalWriteResult(
+            success=False,
+            approval_event_id=record.approval_event_id,
+            approval_id=record.approval_id,
+            path=str(jsonl_path),
+            error_message=f"Validation failed: {'; '.join(errors)}",
+        )
+    with _APPEND_LOCK:
+        try:
+            latest = get_latest_approval_status(record.approval_id, jsonl_path)
+        except FileNotFoundError:
+            latest = None
+        if latest is None:
+            raise ApprovalTransitionError(404, "Approval not found")
+        current = latest.get("approval_status", "")
+        if current != "PENDING":
+            raise ApprovalTransitionError(409, f"Approval already {current}", current)
+        return _append_unlocked(record, jsonl_path)
+
+
+def _append_unlocked(record: ApprovalRecord, jsonl_path: Path) -> ApprovalWriteResult:
+    """락을 이미 잡은 상태에서 한 줄 append + 줄 수 계산 (호출자가 _APPEND_LOCK 보유)."""
     try:
-        # Serialize
-        record_dict = asdict(record)
-        json_line = json.dumps(record_dict, ensure_ascii=False, sort_keys=True)
+        json_line = json.dumps(asdict(record), ensure_ascii=False, sort_keys=True)
+        with jsonl_path.open("a", encoding="utf-8") as f:
+            f.write(json_line + "\n")
 
-        with _APPEND_LOCK:
-            # Append
-            with jsonl_path.open("a", encoding="utf-8") as f:
-                f.write(json_line + "\n")
-
-            # Count events
-            event_count = 0
-            if jsonl_path.exists():
-                with jsonl_path.open(encoding="utf-8") as f:
-                    event_count = sum(1 for line in f if line.strip())
+        event_count = 0
+        if jsonl_path.exists():
+            with jsonl_path.open(encoding="utf-8") as f:
+                event_count = sum(1 for line in f if line.strip())
 
         return ApprovalWriteResult(
             success=True,
