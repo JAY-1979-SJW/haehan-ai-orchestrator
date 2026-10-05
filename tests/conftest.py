@@ -21,3 +21,13 @@ def browser():
     yield instance
     instance.close()
     pw.stop()
+
+
+@pytest.fixture(autouse=True)
+def _no_real_preflight():
+    """사이트 등록의 사전 조사(robots.txt 조회) 실행기는 운영에서만 연결한다 — 시험은 기본으로 끄고, 필요한 시험이 직접 가짜를 넣는다."""
+    from ai_orchestrator.services import site_preflight_service
+
+    site_preflight_service.configure_fetcher(None)
+    yield
+    site_preflight_service.configure_fetcher(None)

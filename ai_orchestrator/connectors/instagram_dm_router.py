@@ -223,9 +223,13 @@ def oauth_callback(code: str = "", state: str = "", error: str = ""):
             app_id=_app_id(), app_secret=_app_secret(), redirect_uri=_redirect_uri(), code=code
         )
         short_token = short.get("access_token")
+        if not short_token:
+            raise HTTPException(status_code=502, detail="Meta OAuth 실패: 단기 토큰 없음")
         ig_user_id = str(short.get("user_id") or "")
         long_ = exchange_for_long_lived_token(app_secret=_app_secret(), short_lived_token=short_token)
         long_token = long_.get("access_token", short_token)
+        if not long_token:
+            raise HTTPException(status_code=502, detail="Meta OAuth 실패: 장기 토큰 없음")
         profile = graph_verify_token(ig_user_id, long_token)
     except InstagramApiError as e:
         raise HTTPException(status_code=502, detail=f"Meta OAuth 실패: {e.error_message or str(e)}") from e
@@ -365,7 +369,7 @@ def simulate(body: SimulateRequest):
         rules=rules,
     )
     preview_message = None
-    if result.matched:
+    if result.matched and result.rule is not None:
         preview_message = rule_engine.render_template(
             result.rule["reply_message"], username="테스트유저", keyword=result.matched_keyword
         )

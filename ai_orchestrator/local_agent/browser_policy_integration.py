@@ -112,6 +112,9 @@ def open_with_policy(
             return _verdict(False, "BLOCKED", f"raw URL 차단: {url_check.get('error')}")
         site_id = url_check["site_id"]
 
+    if not site_id:  # fail-closed: site_id 확정 불가면 차단 (정상 경로에선 도달 불가)
+        return _verdict(False, "BLOCKED", "site_id 확인 불가")
+
     site = get_site(site_id)
     if site is None:
         return _verdict(False, "BLOCKED", f"site_id 미등록: {site_id}")
