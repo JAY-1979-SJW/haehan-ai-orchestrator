@@ -297,6 +297,7 @@ finish_job(job_id, status, *, error=None) -> None      # 허용 전이 위반 �
 |---|---|
 | 저장 금지 | 비밀값·쿠키·세션·토큰·OTP·비밀번호·결제정보·민감 폼 값. 마스킹/해시/참조 ID 만 |
 | 필드 방식 | **허용 필드 화이트리스트**(`dev_reg_audit_log.py:34-70` 방식). 화이트리스트 밖 키는 거부, 키 이름에 password/token/secret/cookie/otp 포함 시 값 제거 |
+| params 열거형 키 | 화이트리스트에 열거형 검증 키 2개 추가 — `verdict`(허용 값 `proceed`·`use_api`·`blocked`), `robots_status`(허용 값 `ok`·`missing`·`unavailable`). 허용 값 밖은 거부, 구조 문자열뿐이라 비밀 위험 없음. 용도: 6a M10 사전조사(6a 문서 참조). 구현 기준 허용 키는 21개(기존 19 + 2) |
 | URL | `approval_record_store.py:247-297` 의 리다크션+sha256 재사용(중복 구현 금지, import 또는 공통 헬퍼로 승격은 구현 시 판단) |
 | 산출물 등급 | public(지도 구조) / internal(실행 메타) / restricted(스크린샷·개인정보 가능). restricted 는 owner 만, 목록 응답에 경로 비노출 |
 | 인증·권한 | JWT + `require_role("admin","owner")`(기존 site-map 라우터와 동일). 소유자 필터: owner 는 전체, admin 은 tenant 내 전체(Q3) |
