@@ -120,12 +120,12 @@ _ALLOWED_WORKFLOW_FILES = frozenset({"ci.yml"})
 
 # 훅 파일별로 존재해야 하는 현행 게이트 호출 문자열(없으면 FAIL).
 _REQUIRED_HOOK_NEEDLES: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("pre-commit", ("commit_checklist.py", "pre-commit.orig")),
+    ("pre-commit", ("commit_checklist", "pre-commit.orig")),
     (
         "pre-commit.orig",
-        ("ruff_new_only_gate.py", "skeleton_gate.py", "audit_kit_gate.py", '"--staged"', "quality_gate.py"),
+        ("ruff_new_only_gate", "skeleton_gate", "audit_kit_gate", '"--staged"', "quality_gate"),
     ),
-    ("pre-push", ("ai_code_review_gate.py",)),
+    ("pre-push", ("ai_code_review_gate",)),
 )
 
 
