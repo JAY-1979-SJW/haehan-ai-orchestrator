@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import subprocess
 from pathlib import Path
+from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -119,7 +120,7 @@ def _cta_card() -> Image.Image:
 # 장면 구성
 # ──────────────────────────────────────────────────────────
 
-SCENES = [
+SCENES: list[dict[str, Any]] = [
     {
         "narr": "나라장터 공고 하나를 골라서, AI에게 실제로 투찰가 분석을 시켜봤습니다. 화성여자교도소 신축공사 소방공사, 기초금액 31억원짜리 공고입니다.",
         "render": lambda: _text_card(
