@@ -33,6 +33,8 @@ winotify>=1.1.0; sys_platform == "win32"
 pystray>=0.19.5; sys_platform == "win32"
 Pillow>=10.0; sys_platform == "win32"
 pytest>=7.0
+# 비동기 시험(@pytest.mark.asyncio — tests/test_login_session_monitor.py 등) 실행용. 없으면 CI 에서 async 시험이 실패한다.
+pytest-asyncio>=1.0
 flask>=3.0.0
 requests>=2.31.0
 websocket-client>=1.8.0

@@ -352,20 +352,16 @@ UNREGISTERED_ROUTER_ENDPOINT_COUNT = 0  # naver_search_router 등록 완료
 
 
 def test_runtime_http_endpoint_count():
-    from fastapi.routing import APIRoute
+    from tests.app_routes import http_routes
 
-    from ai_orchestrator.asgi import app
-
-    http = [r for r in app.routes if isinstance(r, APIRoute)]
+    http = http_routes()
     assert len(http) == RUNTIME_HTTP_ENDPOINT_COUNT, f"runtime HTTP={len(http)}, 기준={RUNTIME_HTTP_ENDPOINT_COUNT}"
 
 
 def test_runtime_websocket_count():
-    from fastapi.routing import APIWebSocketRoute
+    from tests.app_routes import websocket_routes
 
-    from ai_orchestrator.asgi import app
-
-    ws = [r for r in app.routes if isinstance(r, APIWebSocketRoute)]
+    ws = websocket_routes()
     assert len(ws) == RUNTIME_WEBSOCKET_COUNT, f"runtime WS={len(ws)}, 기준={RUNTIME_WEBSOCKET_COUNT}"
 
 
