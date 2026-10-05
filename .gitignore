@@ -297,3 +297,6 @@ data/.cred.key*
 **/credentials.json
 # 루트의 임시 스크립트(tmpXXXX.py)
 /tmp[a-z0-9_]*.py
+
+# 작업 기록 저장소(WRS) 산출물·DB — 기준서 docs/specs/2026-10-05_work_record_store.md §10-1
+data/work_records/
