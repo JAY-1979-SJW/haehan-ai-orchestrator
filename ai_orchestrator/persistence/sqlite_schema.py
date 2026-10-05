@@ -19,6 +19,14 @@ from collections.abc import Callable, Sequence
 
 SchemaStep = Callable[[sqlite3.Connection], None]
 
+BUSY_TIMEOUT_MS = 30000  # 다른 연결이 쓰기 잠금을 잡고 있을 때 SQLITE_BUSY 대신 기다리는 최대 시간
+
+
+def set_busy_timeout(con: sqlite3.Connection, ms: int = BUSY_TIMEOUT_MS) -> None:
+    """연결에 `PRAGMA busy_timeout` 을 명시 적용한다(connect(timeout=) 과 같은 값으로 일관 유지)."""
+    con.execute(f"PRAGMA busy_timeout = {int(ms)}")  # PRAGMA 는 바인딩 불가 — int 만 포매팅
+
+
 _IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 

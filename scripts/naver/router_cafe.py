@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from scripts.gate import check as gate_check
 
@@ -414,7 +415,7 @@ def _cmd_calendar(sub: str, args: list[str]) -> None:
     if sub in ("list", "events"):
         gate_check("scan_page")
         events = NaverCalendar(get_page()).list_events()
-        out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "events": events}
+        out: dict[str, Any] = {"generated_at": datetime.now().isoformat(timespec="seconds"), "events": events}
         _print_saved(out, _save_latest("naver_calendar_events_latest.json", out))
         return
 
@@ -480,7 +481,7 @@ def _cmd_mybox(sub: str, args: list[str]) -> None:
         gate_check("scan_page")
         limit = _int_option(args, "--limit=", 50)
         items = NaverMyBox(get_page()).list_files(limit=limit)
-        out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "files": items}
+        out: dict[str, Any] = {"generated_at": datetime.now().isoformat(timespec="seconds"), "files": items}
         _print_saved(out, _save_latest("naver_mybox_files_latest.json", out))
         return
 
