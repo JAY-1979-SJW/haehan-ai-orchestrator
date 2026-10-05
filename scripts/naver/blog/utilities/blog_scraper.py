@@ -112,7 +112,8 @@ def _scrape_single_blog(agent, args, timestamp: str) -> None:
     blog_id = args.blog.rstrip("/").split("/")[-1]
     out_path = Path(args.out) if args.out else Path(f"data/scrape/blog_{blog_id}_{timestamp}.json")
 
-    existing_data, existing_ids = [], set()
+    existing_data: list[dict] = []
+    existing_ids: set[str] = set()
     if args.incremental and out_path.exists():
         existing_data, existing_ids = load_existing(out_path)
         print(f"기존 데이터: {len(existing_data)}개")
