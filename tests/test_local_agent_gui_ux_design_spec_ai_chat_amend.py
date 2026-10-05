@@ -128,6 +128,7 @@ def test_spec_chat_disables_disk_save_by_default():
 def test_spec_no_raw_token_in_doc():
     import re
     text = SPEC.read_text(encoding="utf-8")
+    assert text, "문서가 비어 있음 — 비어 있으면 아래 비밀값 검사는 공허하게 통과한다"
     matches = re.findall(r'"device_token"\s*:\s*"([^"]{20,})"', text)
     real = [m for m in matches if "<" not in m and m != "[REDACTED]"]
     assert real == []

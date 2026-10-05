@@ -104,6 +104,7 @@ def test_no_token_leak_in_runbook():
     import re
 
     text = RUNBOOK.read_text(encoding="utf-8")
+    assert text, "문서가 비어 있음 — 비어 있으면 아래 비밀값 검사는 공허하게 통과한다"
     # 코드 예시의 "여기에-코드-붙여넣기" 같은 placeholder 만 허용
     matches = re.findall(r'"device_token"\s*:\s*"([^"]{8,})"', text)
     real = [m for m in matches if "<" not in m and "여기" not in m and m != "[REDACTED]"]
