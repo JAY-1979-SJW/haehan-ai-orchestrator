@@ -107,9 +107,15 @@ def test_forbidden_button_text_not_present(pattern: str, name: str):
     (r'fetch\s*\([^,)]+,\s*\{[^}]*method\s*:\s*[\'"]DELETE[\'"]', "fetch DELETE"),
 ])
 def test_no_mutation_fetch(pattern: str, name: str):
+    # 현행: (legacy)/cafe/tabs/AiAnalysisTab.tsx 의 카페 AI 분석 호출(POST /naver-cafe/ai-analyze)이 유일한 알려진 쓰기 fetch 다.
+    # 그 한 파일·POST 만 허용하고, 그 외 파일의 POST 및 모든 PUT/DELETE 는 계속 금지한다.
+    known = {"AiAnalysisTab.tsx"} if name == "fetch POST" else set()
+    found = set()
     for f in _all_tsx():
         content = f.read_text(encoding="utf-8")
-        assert not re.search(pattern, content), f"{f.name}에 {name} mutation 발견"
+        if re.search(pattern, content):
+            found.add(f.name)
+    assert found == known, f"{name} mutation 파일 목록 변경: 현재={sorted(found)} 허용={sorted(known)}"
 
 
 # ── 6. mock secret 없음 ───────────────────────────────────────────────────────

@@ -168,7 +168,10 @@ class TestGroupD_EndpointCount:
         assert "= 425" in legacy_test  # M10 +2(423→425); 2026-10-05 갱신(62→423): 대상 시험의 기대치 갱신과 일관
 
     def test_cycle_test_count_63(self, cycle_test):
-        assert "== 63" in cycle_test
+        # 현행: cycle_test 는 자체 숫자 대신 audit_backend_runtime_contract.EXPECTED_RUNTIME_ROUTES 단일 기준에 위임한다
+        # (defect_index #40) — 하드코딩 63 이 아니라 위임 사용 자체가 동기화 계약.
+        assert "audit.EXPECTED_RUNTIME_ROUTES" in cycle_test
+        assert "iter_runtime_routes" in cycle_test
 
     def test_app_status_router_health_summary_endpoint(self, app_status):
         assert "/health/summary" in app_status
