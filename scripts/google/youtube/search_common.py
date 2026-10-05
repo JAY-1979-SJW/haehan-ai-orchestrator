@@ -274,7 +274,7 @@ def _should_retry_without_proxy(exc: urllib.error.URLError) -> bool:
 # 공유하면 어느 경로로 먼저 검색됐든 캐시가 재사용된다.
 # 정리(docs/defect_index.json #15, 2026-09-29): 실제 구현은
 # scripts/common/youtube_search_cache.py 로 옮기고, 이 도메인의 기존
-# import 지점(search.py/search_analyze.py/search_score.py/search_search.py 등)이
+# import 지점(search.py 와 분석/점수/검색 leaf 등)이
 # 계속 같은 이름으로 쓸 수 있게 여기서 별칭만 다시 내보낸다.
 _search_cache_key = _shared_cache.cache_key
 _search_cache_get = _shared_cache.cache_get
