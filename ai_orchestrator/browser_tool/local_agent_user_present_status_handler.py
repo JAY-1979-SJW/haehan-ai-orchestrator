@@ -37,7 +37,7 @@ except ImportError:
     STATUS_BLOCKED = "BLOCKED"
     STATUS_FAILED = "FAILED"
 
-    def validate_user_present_ws_status_event(event: dict) -> list:
+    def validate_user_present_ws_status_event(event: dict[str, Any]) -> list[str]:
         errors = []
         for f in ["message_type", "workflow_run_id", "status", "safe_to_execute"]:
             if f not in event:

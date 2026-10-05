@@ -18,7 +18,7 @@ import time
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from playwright.sync_api import Page
 
@@ -30,6 +30,10 @@ from scripts.naver.smartstore.product.models import (
     RegisterResult,
     ValidationError,
 )
+
+if TYPE_CHECKING:
+    from scripts.naver.smartstore.product.general_product import GeneralProductRegister
+    from scripts.naver.smartstore.product.product import ProductRegister
 
 _log = get_logger(__name__)
 
@@ -132,6 +136,7 @@ class BulkRegister:
 
         # 1. 데이터 검증
         try:
+            pd: GeneralProductData | GroupProductData
             if product_type == "general":
                 pd = GeneralProductData.from_dict(data)
             else:
@@ -151,6 +156,7 @@ class BulkRegister:
             )
 
         # 2. 등록 실행
+        register: GeneralProductRegister | ProductRegister
         if product_type == "general":
             from scripts.naver.smartstore.product.general_product import GeneralProductRegister
 

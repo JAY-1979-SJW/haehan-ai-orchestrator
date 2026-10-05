@@ -21729,7 +21729,31 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_preflight.py": {
+  "tests/test_collect_google_passwords_list_safe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_eum_router_submit_result.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_eum_send_mail_batch_dedupe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_temp_oauth_revoke_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -21760,6 +21784,14 @@
    "reason": "robots.txt·sitemap.xml 단순 GET(호스트 고정·내부망 거부, 브라우저 없음) — generic L4 오분류",
    "confidence": "high",
    "source": "confirmed"
+  },
+  "tests/test_site_preflight.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

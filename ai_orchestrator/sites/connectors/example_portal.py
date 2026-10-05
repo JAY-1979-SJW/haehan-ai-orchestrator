@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import time
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from ..browser import probe_launch
 from ..connector import SiteConnector
@@ -32,6 +32,7 @@ class ExamplePortalConnector(SiteConnector):
         probe = probe_launch()
         latency = int((time.monotonic() - t0) * 1000)
 
+        state: Literal["healthy", "degraded", "unavailable", "unconfigured"]
         if not creds_ok and not session_ok:
             state = "unconfigured"
             warning = "자격증명/세션 파일 모두 없음 (정책 문서 참고)"

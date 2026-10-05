@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 SPEC = Path("docs/design/local_agent_gui_ux_design_spec_ai_chat_amend_20260521.md")
 NEXT_IMPL_API = "AGENT_AI_CHAT_API_CLIENT_01"
@@ -85,7 +86,7 @@ def judge_amend(
     ai_api_implementation_done: bool = False,
 ) -> AmendVerdict:
     p = spec_path or SPEC
-    metrics = {
+    metrics: dict[str, Any] = {
         "spec_exists": p.exists(),
         "desktop_ui_unchanged": desktop_ui_unchanged,
         "ai_api_implementation_done": ai_api_implementation_done,

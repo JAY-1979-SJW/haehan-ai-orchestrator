@@ -27,6 +27,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -376,6 +377,8 @@ class _FakeDbTable:
 class _PostgresDbExecutor:
     """PostgreSQL 연결 및 쿼리 실행 (connection-per-operation)."""
 
+    _conn: Any  # 타입 선언만(값 미할당) — 동작 불변
+
     def __init__(self, connection_string: str):
         """connection_string: postgresql://user:pass@host:port/dbname"""
         try:
@@ -614,7 +617,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
 
         if db_connection_string.startswith("fake://"):
             # 테스트용 fake DB
-            self._db = _FakeDbTable()
+            self._db: _FakeDbTable | _PostgresDbExecutor = _FakeDbTable()
             self._is_fake = True
         else:
             # 실제 PostgreSQL

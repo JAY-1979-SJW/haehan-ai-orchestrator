@@ -102,7 +102,7 @@ def judge_spec(
     desktop_ui_unchanged: bool = True,
 ) -> SpecVerdict:
     p = spec_path or SPEC
-    metrics = {
+    metrics: dict[str, object] = {
         "spec_exists": p.exists(),
         "desktop_ui_unchanged": desktop_ui_unchanged,
     }

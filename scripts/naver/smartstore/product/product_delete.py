@@ -79,7 +79,8 @@ class ProductDeleter:
         if not self._open_product_list():
             return {"ok": False, "error": "상품 목록 페이지 진입 실패"}
 
-        deleted, failed = [], []
+        deleted: list[dict] = []
+        failed: list[dict] = []
         for pid in product_ids:
             r = self._delete_one(pid)
             (deleted if r["ok"] else failed).append({"product_id": pid, **r})

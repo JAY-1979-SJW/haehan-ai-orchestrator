@@ -5,7 +5,9 @@ import json
 import logging
 import os
 import smtplib
+import tempfile
 import time
+from collections.abc import Callable
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -120,12 +122,45 @@ logger = logging.getLogger(__name__)
 
 def load_sent_log() -> dict:
     if LOG_FILE.exists():
-        return json.loads(LOG_FILE.read_text(encoding="utf-8"))
+        log = json.loads(LOG_FILE.read_text(encoding="utf-8"))
+        # 구 형식(키 누락) 호환
+        log.setdefault("sent", [])
+        log.setdefault("failed", [])
+        return log
     return {"sent": [], "failed": []}
 
 
-def save_log(log: dict):
-    LOG_FILE.write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")
+def save_log(log: dict) -> None:
+    """발송 로그 원자적 저장: 같은 폴더 임시 파일에 쓰고 os.replace 로 교체."""
+    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=LOG_FILE.parent, prefix=LOG_FILE.name + ".", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(log, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, LOG_FILE)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp)
+        raise
+
+
+def _norm_email(value: object) -> str:
+    return str(value or "").strip().lower()
+
+
+def require_credentials() -> tuple[str, str]:
+    """발송 전 계정/비밀번호 미설정 가드."""
+    if not ACCOUNT or not PASSWORD:
+        raise RuntimeError("HIWORKS_MAIL_ACCOUNT / HIWORKS_MAIL_PASSWORD 환경변수가 설정되지 않았습니다")
+    return ACCOUNT, PASSWORD
+
+
+def select_targets(rows: list[dict], log: dict) -> list[dict]:
+    """로그에 이미 발송 기록된 수신자(정규화 비교)를 제외."""
+    sent = {_norm_email(e.get("email")) for e in log["sent"]}
+    return [r for r in rows if _norm_email(r.get("이메일")) not in sent]
 
 
 def send_one(server: smtplib.SMTP, row: dict) -> bool:
@@ -135,25 +170,83 @@ def send_one(server: smtplib.SMTP, row: dict) -> bool:
     if not email or "@" not in email:
         return False
 
+    account, _ = require_credentials()
     body = BODY_TEMPLATE.format(업체명=company, 공사명=project)
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = Header(SUBJECT, "utf-8")
     from email.utils import formataddr
 
-    msg["From"] = formataddr((Header("해한AI엔지니어링 신재우", "utf-8").encode(), ACCOUNT))
+    msg["From"] = formataddr((Header("해한AI엔지니어링 신재우", "utf-8").encode(), account))
     msg["To"] = email
     msg.attach(MIMEText(body, "plain", "utf-8"))
 
-    server.sendmail(ACCOUNT, [email], msg.as_string())
+    server.sendmail(account, [email], msg.as_string())
     return True
 
 
 def connect_smtp() -> smtplib.SMTP:
+    account, password = require_credentials()
     server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15)
     server.ehlo()
-    server.login(ACCOUNT, PASSWORD)
+    server.login(account, password)
     return server
+
+
+def run_send_loop(
+    targets: list[dict],
+    log: dict,
+    send_row: Callable[[dict], bool],
+    save: Callable[[dict], None] = save_log,
+    sleep: Callable[[float], None] = time.sleep,
+    reconnect: Callable[[bool], None] | None = None,
+) -> int:
+    """발송 루프. 건별 즉시 로그 저장 + try/finally 최종 저장. 재연결 횟수 반환."""
+    reconnect_count = 0
+    done = {_norm_email(e.get("email")) for e in log["sent"]}
+    try:
+        for i, row in enumerate(targets, 1):
+            email = (row.get("이메일") or "").strip()
+            if email and _norm_email(email) in done:  # 같은 실행 내 중복 수신자
+                logger.info("[%d/%d] 중복 수신자 건너뜀", i, len(targets))
+                continue
+            try:
+                # 100건마다 재연결
+                if i % 100 == 0 and reconnect is not None:
+                    reconnect(True)
+                    reconnect_count += 1
+
+                ok = send_row(row)
+                if ok:
+                    log["sent"].append(
+                        {
+                            "email": email,
+                            "company": row.get("업체명"),
+                            "project": row.get("공사명"),
+                            "seq": i,
+                        }
+                    )
+                    done.add(_norm_email(email))
+                    logger.info("[%d/%d] ✓ %s → %s", i, len(targets), row.get("업체명"), email)
+                else:
+                    log["failed"].append({"email": email, "reason": "invalid_email", "row": row})
+                    logger.warning("[%d/%d] ✗ 이메일 없음: %s", i, len(targets), row.get("업체명"))
+
+            except Exception as e:  # noqa: BLE001 - 개별 발송 실패는 failed 로그에 기록 후 다음 건 계속(성공으로 기록하지 않음)
+                logger.error("[%d/%d] ✗ 발송 실패 %s: %s", i, len(targets), email, e)
+                log["failed"].append({"email": email, "reason": str(e), "row": row})
+                # SMTP 재연결 실패 무시 - 다음 건은 send_one() 내부에서 다시 실패 처리됨
+                if reconnect is not None:
+                    with contextlib.suppress(Exception):
+                        reconnect(False)
+
+            # 건별 로그 저장(발송 직후) — 중간 종료 시에도 기발송 기록 보존
+            save(log)
+
+            sleep(1.5)  # 발송 간격 1.5초
+    finally:
+        save(log)
+    return reconnect_count
 
 
 def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
@@ -169,10 +262,9 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
     ]
 
     log = load_sent_log()
-    sent_emails = {e["email"] for e in log["sent"]}
 
     # 이미 발송된 것 제외
-    targets = [r for r in rows if (r.get("이메일") or "").strip() not in sent_emails]
+    targets = select_targets(rows, log)
     targets = targets[start_from:]
     if limit:
         targets = targets[:limit]
@@ -185,53 +277,25 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
             logger.info("[%d] %s → %s", i, r.get("업체명"), r.get("이메일"))
         return
 
-    server = connect_smtp()
-    reconnect_count = 0
+    require_credentials()
+    holder = {"server": connect_smtp()}
 
-    for i, row in enumerate(targets, 1):
-        email = (row.get("이메일") or "").strip()
-        try:
-            # 100건마다 재연결
-            if i % 100 == 0:
-                # SMTP 재연결 실패 무시 - 개별 발송 실패는 failed 로그에 별도 기록(성공/실패 은폐 없음)
-                with contextlib.suppress(Exception):
-                    server.quit()
-                server = connect_smtp()
-                reconnect_count += 1
-
-            ok = send_one(server, row)
-            if ok:
-                log["sent"].append(
-                    {
-                        "email": email,
-                        "company": row.get("업체명"),
-                        "project": row.get("공사명"),
-                        "seq": i,
-                    }
-                )
-                logger.info("[%d/%d] ✓ %s → %s", i, len(targets), row.get("업체명"), email)
-            else:
-                log["failed"].append({"email": email, "reason": "invalid_email", "row": row})
-                logger.warning("[%d/%d] ✗ 이메일 없음: %s", i, len(targets), row.get("업체명"))
-
-        except Exception as e:  # noqa: BLE001 - EUM 영업메일 배치 발송 스크립트 — except는 SMTP 재연결 실패 무시, 개별 발송 실패를 failed 로그에 기록 후 다음 건 계속, 최종 서버 종료 실패 무시. 각 건의 성공/실패는 sent/failed 리스트에 명시적으로 구분 기록되어 실패가 성공으로 은폐되지 않음.
-            logger.error("[%d/%d] ✗ 발송 실패 %s: %s", i, len(targets), email, e)
-            log["failed"].append({"email": email, "reason": str(e), "row": row})
-            # SMTP 재연결 실패 무시 - 다음 건은 send_one() 내부에서 다시 실패 처리됨
+    def _reconnect(quit_old: bool) -> None:
+        if quit_old:
+            # SMTP 재연결 실패 무시 - 개별 발송 실패는 failed 로그에 별도 기록(성공/실패 은폐 없음)
             with contextlib.suppress(Exception):
-                server = connect_smtp()
+                holder["server"].quit()
+        holder["server"] = connect_smtp()
 
-        # 로그 저장 (10건마다)
-        if i % 10 == 0:
-            save_log(log)
+    try:
+        reconnect_count = run_send_loop(
+            targets, log, lambda row: send_one(holder["server"], row), reconnect=_reconnect
+        )
+    finally:
+        # 서버 종료 실패 무시 - sent/failed 로그가 실제 결과를 별도로 보존
+        with contextlib.suppress(Exception):
+            holder["server"].quit()
 
-        time.sleep(1.5)  # 발송 간격 1.5초
-
-    # 최종 서버 종료 실패 무시 - 배치는 이미 완료, sent/failed 로그가 실제 결과를 별도로 보존
-    with contextlib.suppress(Exception):
-        server.quit()
-
-    save_log(log)
     logger.info("완료 — 성공:%d 실패:%d 재연결:%d", len(log["sent"]), len(log["failed"]), reconnect_count)
 
 

@@ -37,17 +37,11 @@ def test_market_research_nav_not_registered_while_page_missing() -> None:
 
 
 def test_home_dashboard_exposes_ai_runtime_contract() -> None:
+    # 2026-09-30 홈 재작성(855d595a 단일 AI 콘솔): 대시보드형 홈 -> UniversalChat 단일 콘솔.
     page = Path("admin-web/src/app/page.tsx").read_text(encoding="utf-8")
 
-    assert 'data-testid="ai-agent-app-dashboard"' in page
-    assert "Server, local agent, app UI, and AI orchestration" in page
-    assert "Quick Actions And Immediate Results" in page
-    assert "Chat And Result Workspace" in page
-    assert 'data-testid="ai-agent-chat-input"' in page
-    assert 'data-testid="ai-agent-result-panel"' in page
-    assert "Latest result panel" in page
-    assert "Button-first action" in page
-    assert "Runtime Integration Flow" in page
-    assert "Current App Tool Surfaces" in page
-    assert "approval gate" in page
-    assert "natural-language input is the fallback" in page
+    assert 'data-testid="ai-agent-console"' in page
+    assert "단일 AI 작업 콘솔" in page
+    assert 'import { UniversalChat } from "@/components/chat/UniversalChat"' in page
+    assert '<UniversalChat domain="default" title="AI 작업 콘솔"' in page
+    assert "실제 작업은 브라우저(CDP)에서 수행됩니다" in page
