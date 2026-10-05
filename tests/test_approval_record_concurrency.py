@@ -59,13 +59,13 @@ def test_concurrent_create_and_approve_keep_jsonl_intact(client):
     assert listed["count"] == _N
 
 
-def test_duplicate_approve_behavior_unchanged_both_recorded(client):
-    """현 계약: 상태 전이 검증이 없어 같은 요청의 중복 approve 는 모두 200 으로 기록된다(동작 불변 확인)."""
+def test_concurrent_duplicate_approve_only_one_wins(client):
+    """상태 전이 검증: 같은 요청의 동시 approve 4건 중 정확히 1건만 200, 나머지 409, 기록은 요청+승인 2줄."""
     c, store = client
     aid = c.post("/api/v1/browser-approvals/requests", json=_create_body(0)).json()["approval_id"]
     dec = {"decided_by": "a", "decided_role": "admin"}
     with ThreadPoolExecutor(max_workers=4) as ex:
         rs = list(ex.map(lambda _: c.post(f"/api/v1/browser-approvals/requests/{aid}/approve", json=dec), range(4)))
-    assert [r.status_code for r in rs] == [200] * 4
+    assert sorted(r.status_code for r in rs) == [200, 409, 409, 409]
     lines = [json.loads(ln) for ln in store.read_text(encoding="utf-8").splitlines() if ln.strip()]
-    assert len(lines) == 5
+    assert [r["approval_status"] for r in lines] == ["PENDING", "APPROVED"]
