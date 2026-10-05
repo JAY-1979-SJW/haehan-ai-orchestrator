@@ -362,7 +362,7 @@ def test_mypy_keys_treats_missing_mypy_module_as_not_run(monkeypatch, tmp_path):
 
 
 def test_is_real_kit_only_for_audit_kit_executable():
-    assert gate.is_real_kit(["C:/x/.venv/Scripts/audit-kit.exe"]) and gate.is_real_kit(["audit-kit"])
+    assert gate.is_real_kit(["x/.venv/Scripts/audit-kit.exe"]) and gate.is_real_kit(["audit-kit"])
     assert not gate.is_real_kit([sys.executable, "fake_audit_kit.py"])
 
 
