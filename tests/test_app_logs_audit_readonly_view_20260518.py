@@ -275,14 +275,14 @@ class TestApiContract:
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         routes = runtime_routes()
-        assert len(routes) == 429  # [429=427+2: 지도 이력 /site-map/{host}/history·/diff GET 2개 추가(M11)] [427=425+2: 사이트 사전 조사 /site-registry/{host}/preflight GET·POST 2개 추가(M10, 삭제 0); 이전 425=424+1: 가입 카페 변동 조회 GET /naver-cafe/my-cafes/changes 1개 추가(2026-10-05), 삭제 0] [424=419+5: /site-registry 5개 추가(2026-10-05 M7-S1)] 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0)
+        assert len(routes) == 432  # [432=429+3: 업무 후보·명세 /site-map/{host}/candidates GET·spec POST/GET 3개 추가(M12)] [429=427+2: 지도 이력 /site-map/{host}/history·/diff GET 2개 추가(M11)] [427=425+2: 사이트 사전 조사 /site-registry/{host}/preflight GET·POST 2개 추가(M10, 삭제 0); 이전 425=424+1: 가입 카페 변동 조회 GET /naver-cafe/my-cafes/changes 1개 추가(2026-10-05), 삭제 0] [424=419+5: /site-registry 5개 추가(2026-10-05 M7-S1)] 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0)
 
     def test_no_new_post_endpoint(self):
         from tests.app_routes import http_routes
 
         # 2026-10-04 갱신: app.routes 직접 순회는 지연 include_router 로 0개 — 펼친 목록의 현재 POST 수(앞선 개수 시험과 같은 기준 184)
         posts = [r for r in http_routes() if "POST" in r.method.split(",")]
-        assert len(posts) == 196  # [196=195+1: POST /site-registry/{host}/preflight(2026-10-05 M10)] [195=193+2: /site-registry POST 2개(2026-10-05 M7-S1)] 위 추가분 중 POST 9개(184→193)
+        assert len(posts) == 197  # [197=196+1: POST /site-map/{host}/spec(업무 명세 초안, M12)] [196=195+1: POST /site-registry/{host}/preflight(2026-10-05 M10)] [195=193+2: /site-registry POST 2개(2026-10-05 M7-S1)] 위 추가분 중 POST 9개(184→193)
 
 
 # ── mock 다양성 ──────────────────────────────────────────────────────────────
