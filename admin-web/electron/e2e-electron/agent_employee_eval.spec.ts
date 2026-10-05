@@ -97,10 +97,18 @@ function record(v: Verdict, extra: Record<string, unknown>) {
 
 async function cheapestMystery(): Promise<{ price: string; title: string } | null> {
   try {
-    const html = await (await fetch(`https://${NEW_HOST}/catalogue/category/books/mystery_3/index.html`)).text();
-    const items = [...html.matchAll(/<h3><a [^>]*title="([^"]+)"[\s\S]*?<p class="price_color">£([\d.]+)<\/p>/g)];
-    if (!items.length) return null;
-    const best = items.map((m) => ({ title: m[1], n: Number(m[2]), price: m[2] })).sort((a, b) => a.n - b.n)[0];
+    let url: string | null = `https://${NEW_HOST}/catalogue/category/books/mystery_3/index.html`;
+    const all: { title: string; n: number; price: string }[] = [];
+    for (let i = 0; i < 6 && url; i++) {
+      const html = await (await fetch(url)).text();
+      for (const m of html.matchAll(/<h3><a [^>]*title="([^"]+)"[\s\S]*?<p class="price_color">£([\d.]+)<\/p>/g)) {
+        all.push({ title: m[1], n: Number(m[2]), price: m[2] });
+      }
+      const next = html.match(/<li class="next"><a href="([^"]+)"/);
+      url = next ? new URL(next[1], url).toString() : null;
+    }
+    if (!all.length) return null;
+    const best = all.sort((a, b) => a.n - b.n)[0];
     return { price: best.price, title: best.title };
   } catch { return null; }
 }
@@ -239,6 +247,23 @@ test("AI 직원 실검증 — 읽기·승인 경계(1단계)", async () => {
       calls = calls.concat(calls2);
     }
     record({ id: "T2 처음 보는 사이트", pass: false, checks: checks2, note: `${r2.sec}s` }, { q: q2, first: r2, second: r2b, calls });
+
+    // ── T8: 사이트 메뉴(카테고리) 질문 — 지도의 메뉴 색인으로 답하는가 ────────────
+    await newChat(ui);
+    off = logSize();
+    const q8 = `${NEW_HOST} 에서 볼 수 있는 책 카테고리를 몇 개만 알려줘`;
+    const r8 = await ask(ui, q8);
+    calls = callsSince(off);
+    const menuLabels: string[] = ((await api(`/api/v1/site-map/${NEW_HOST}`))?.menu ?? []).map((m: any) => String(m.label));
+    const mentioned = menuLabels.filter((l) => l.length >= 3 && r8.answer.includes(l));
+    record(
+      { id: "T8 사이트 카테고리", pass: false, checks: {
+        "지도에 메뉴 색인 존재": menuLabels.length >= 10,
+        "답변에 실제 메뉴 라벨 3개 이상": mentioned.length >= 3,
+        "탐색 요청 재생성 없음": exploreCreates(calls).length === 0,
+      }, note: `${r8.sec}s, 메뉴 ${menuLabels.length}개 중 ${mentioned.length}개 언급, 실행 ${runCalls(calls).length}회` },
+      { q: q8, ...r8, calls },
+    );
 
     // ── T3: 모호한 요청 ──────────────────────────────────────────────────
     await newChat(ui);
