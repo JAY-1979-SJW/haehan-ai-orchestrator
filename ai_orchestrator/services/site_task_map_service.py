@@ -12,6 +12,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
+from ..domain import site_map_history as hist
 from ..domain import site_map_sources as sources
 from ..domain import site_task_map as tm
 from ..domain.site_map_menu import OPEN_PAGE_ID
@@ -112,6 +113,8 @@ def lookup(host: str, query: str = "", *, limit: int = 5) -> dict[str, Any]:
         "total": len(site_map["tasks"]),
         "tasks": found,
         "rules": RULES,
+        "map_rev": int(site_map.get("map_rev") or 0),  # 이 지도의 버전 — 실행·재호출 때 map_rev 로 고정해 지도가 바뀌었는지 확인한다
+        "map_fingerprint": str(site_map.get("map_fingerprint") or ""),
     }
     if site_map.get("menu"):
         out.update(_menu_view(site_map, query))
@@ -139,7 +142,33 @@ def record_outcome(host: str, task_id: str, *, ok: bool) -> dict[str, Any]:
     return next(t for t in updated["tasks"] if t["id"] == task_id)
 
 
-def run_task(host: str, task_id: str, params: dict[str, Any]) -> dict[str, Any]:
+def _pinned_fingerprint(host: str, rev: int | None) -> str:
+    """고정하려는 버전의 지문(보존돼 있으면). 없으면 빈 문자열 — 번호가 다르면 '바뀜'으로 본다."""
+    if rev is None:
+        return ""
+    try:
+        return str(store.history_load(host, rev).get("fingerprint") or "")
+    except ValueError:
+        return ""
+
+
+def history(host: str) -> dict[str, Any]:
+    """보존 중인 지도 버전 목록(최신 순)과 현재 버전."""
+    site_map = store.load(host)
+    return {"host": site_map["host"], "map_rev": int(site_map.get("map_rev") or 0), "map_fingerprint": str(site_map.get("map_fingerprint") or ""), "revisions": store.history_list(host)}
+
+
+def diff(host: str, rev_from: int, rev_to: int | None = None) -> dict[str, Any]:
+    """두 지도 버전의 차이(`rev_to` 를 생략하면 현재 버전과 비교). 값 없이 구조(업무·메뉴·데이터 소스)만 비교한다."""
+    current = store.load(host)
+    target = int(rev_to) if rev_to is not None else int(current.get("map_rev") or 0)
+    if target <= 0:
+        raise ValueError("비교할 지도 버전을 찾을 수 없습니다")
+    old, new = store.history_load(host, rev_from), store.history_load(host, target)
+    return {"host": current["host"], "from": int(rev_from), "to": target, **hist.diff(old["structure"], new["structure"])}
+
+
+def run_task(host: str, task_id: str, params: dict[str, Any], *, map_rev: int | None = None) -> dict[str, Any]:
     """지도에 저장된 **조회(read)** 업무를 실행한다. 위험 등급·매개변수는 여기서(서버 쪽) 먼저 검증하고, 브라우저는 주입된 실행기가 다룬다.
 
     결과(표)는 응답으로만 돌려주고 지도에는 열 이름과 검증 상태만 남는다.
@@ -148,6 +177,9 @@ def run_task(host: str, task_id: str, params: dict[str, Any]) -> dict[str, Any]:
     if runner is None:
         raise ValueError("지도 실행기가 연결되지 않았습니다")
     site_map = store.load(host)
+    changed = hist.pin_check(map_rev, int(site_map.get("map_rev") or 0), str(site_map.get("map_fingerprint") or ""), _pinned_fingerprint(host, map_rev))
+    if changed is not None:  # 기준 지도 버전이 바뀌었다 — 브라우저를 건드리기 전에 사람에게 되돌려 묻는다
+        return changed
     task = next((t for t in site_map["tasks"] if t["id"] == task_id), None)
     if task is None:
         raise ValueError("업무를 찾을 수 없습니다")

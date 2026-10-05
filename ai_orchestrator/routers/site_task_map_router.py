@@ -4,6 +4,8 @@
   GET  /site-map/hosts                    — 저장된 지도 요약                       [AI 허용: sitemap.list]
   GET  /site-map/{host}/lookup?q&limit    — 키워드로 업무 후보·절차 조회            [AI 허용: sitemap.lookup]
   GET  /site-map/{host}                   — 지도 전체(관리자 화면용)
+  GET  /site-map/{host}/history           — 보존 중인 지도 버전 목록(map_rev·지문·시각)
+  GET  /site-map/{host}/diff?from&to      — 두 지도 버전의 구조 차이(to 생략 = 현재)
   POST /site-map/{host}/classify          — 사람이 이름·목적·분류 확정(위험 등급 변경 불가)
   POST /site-map/{host}/outcome           — 실행 결과 기록(verified/stale)
   POST /site-map/{host}/run               — 저장된 조회(read) 업무를 지도 절차대로 실행                [AI 허용: sitemap.run]
@@ -16,7 +18,7 @@ AI 가 쓸 수 있는 것은 읽기 2개 + 탐색 요청 생성 + 조회(read) �
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi import Path as PathParam
 from pydantic import BaseModel
 
@@ -59,6 +61,7 @@ class ExploreBody(BaseModel):
 class RunBody(BaseModel):
     task_id: str
     params: dict[str, str] = {}
+    map_rev: int | None = None  # 기준으로 삼은 지도 버전(생략하면 현재 지도) — 어긋나면 map_changed 로 돌려준다
 
 
 class OutcomeBody(BaseModel):
@@ -127,6 +130,22 @@ def lookup(q: str = "", limit: int = 5, host: str = _host(), _: dict = _ADMIN):
         raise _bad(e) from e
 
 
+@site_task_map_router.get("/{host}/history")
+def map_history(host: str = _host(), _: dict = _ADMIN):
+    try:
+        return service.history(host)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.get("/{host}/diff")
+def map_diff(rev_from: int = Query(..., alias="from", ge=1), rev_to: int | None = Query(None, alias="to", ge=1), host: str = _host(), _: dict = _ADMIN):
+    try:
+        return service.diff(host, rev_from, rev_to)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
 @site_task_map_router.get("/{host}")
 def get_map(host: str = _host(), _: dict = _ADMIN):
     try:
@@ -146,7 +165,7 @@ def classify(body: ClassifyBody, host: str = _host(), _: dict = _ADMIN):
 @site_task_map_router.post("/{host}/run")
 def run_task(body: RunBody, host: str = _host(), _: dict = _ADMIN):
     try:
-        return service.run_task(host, body.task_id, body.params)
+        return service.run_task(host, body.task_id, body.params, map_rev=body.map_rev)
     except ValueError as e:
         raise _bad(e) from e
 
