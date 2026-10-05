@@ -34,10 +34,10 @@ try:
 except ImportError:
     MSG_USER_PRESENT_TASK = "USER_PRESENT_TASK"
 
-    def build_user_present_ws_task_message(payload: dict) -> dict:
+    def build_user_present_ws_task_message(payload: dict[str, Any]) -> dict[str, Any]:
         return {"message_type": MSG_USER_PRESENT_TASK, **payload, "safe_to_execute": False}
 
-    def sanitize_user_present_ws_payload(payload: dict) -> dict:
+    def sanitize_user_present_ws_payload(payload: dict[str, Any]) -> dict[str, Any]:
         return {k: v for k, v in payload.items() if k != "target_url"}
 
 # ── dispatch 금지 decision ────────────────────────────────────────────────────
