@@ -453,6 +453,7 @@ class TestFullE2EFlow:
         recv_result = create_local_user_present_task_from_ws(task_message, store)
         assert recv_result["ok"] is True
         task = store.get_user_present_task(wfid)
+        assert task is not None
         assert task["state"] == STATE_WAITING_FOR_USER
 
         # 3) 사용자 인증 완료 → USER_CONFIRMED

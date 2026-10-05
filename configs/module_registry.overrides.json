@@ -1015,5 +1015,11 @@
   "role": "connector",
   "reason": "robots.txt·sitemap.xml 단순 GET(호스트 고정·내부망 거부, 브라우저 없음) — generic L4 오분류",
   "source": "manual"
+ },
+ "ai_orchestrator/domain/site_map_history.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "지도 구조 요약·지문·map_rev·diff·버전 고정 확인 규칙(순수 함수, 입출력 없음) — generic L4 오분류",
+  "source": "manual"
  }
 }

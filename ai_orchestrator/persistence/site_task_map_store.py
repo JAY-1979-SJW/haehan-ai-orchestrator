@@ -17,7 +17,9 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from ..domain import site_map_history as hist
 from ..domain import site_task_map as tm
+from . import site_map_history_store as history_store
 
 _DIR = Path(__file__).resolve().parents[2] / "data" / "site_task_map"
 _HOST_RE = re.compile(r"^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$")
@@ -42,9 +44,38 @@ def load(host: str, *, now: str = "") -> dict[str, Any]:
     return tm.validate_map(data)
 
 
+def _stamp_revision(site_map: dict[str, Any], path: Path) -> None:
+    """구조(업무·메뉴·데이터 소스)가 바뀐 저장이면 지도 버전(`map_rev`)을 올리고 그 버전의 구조 요약을 이력에 남긴다.
+
+    검증 상태·관찰 시각만 바뀐 저장은 버전을 올리지 않는다(구조 지문이 같으므로). 이전 파일이 없거나 버전이 없던 옛 지도는 1 부터.
+    """
+    prev: dict[str, Any] = {}
+    if path.exists():
+        try:
+            prev = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            prev = {}  # 깨진 이전 파일은 새 지도로 덮어쓰는 저장이므로 처음 저장처럼 다룬다
+    struct = hist.structure(site_map)
+    fp = hist.fingerprint(struct)
+    rev, changed = hist.next_rev(int(prev.get("map_rev") or 0), str(prev.get("map_fingerprint") or ""), fp)
+    site_map["map_rev"], site_map["map_fingerprint"] = rev, fp
+    if changed:
+        history_store.save(_DIR, site_map["host"], rev, struct, at=str(site_map.get("updated_at") or ""), fingerprint=fp)
+
+
+def history_list(host: str) -> list[dict[str, Any]]:
+    """보존 중인 지도 버전 목록(최신 순)."""
+    return history_store.list_revs(_DIR, host)
+
+
+def history_load(host: str, rev: int) -> dict[str, Any]:
+    return history_store.load(_DIR, host, rev)
+
+
 def save(site_map: dict[str, Any]) -> Path:
     tm.validate_map(site_map)
     path = _path(site_map["host"])
+    _stamp_revision(site_map, path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.stem}.", suffix=".tmp")
     try:

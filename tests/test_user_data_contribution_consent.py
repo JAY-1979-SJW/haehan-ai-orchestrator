@@ -44,7 +44,9 @@ def test_grant_consent_records_server_source_of_truth() -> None:
     assert consent["status"] == store.STATUS_ACTIVE
     assert consent["user_reference"] == "user-1"
     assert consent["consent_id"]
-    assert store.get_consent(consent["consent_id"])["status"] == store.STATUS_ACTIVE
+    fetched = store.get_consent(consent["consent_id"])
+    assert fetched is not None
+    assert fetched["status"] == store.STATUS_ACTIVE
 
 
 def test_consent_persists_to_jsonl_and_reloads() -> None:
@@ -60,6 +62,7 @@ def test_consent_persists_to_jsonl_and_reloads() -> None:
     loaded = store.get_consent(consent["consent_id"])
 
     assert loaded_count == 1
+    assert loaded is not None
     assert loaded["status"] == store.STATUS_ACTIVE
     assert loaded["user_reference"] == "user-1"
 
@@ -77,6 +80,7 @@ def test_revoke_persists_to_jsonl_and_reloads() -> None:
     store.reload_store_from_disk()
     loaded = store.get_consent(consent["consent_id"])
 
+    assert loaded is not None
     assert loaded["status"] == store.STATUS_REVOKED
     assert loaded["revoked_at"]
 
