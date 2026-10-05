@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from ..domain import gongmu_defaults as defaults
-from .sqlite_schema import apply_schema
+from .sqlite_schema import apply_schema, set_busy_timeout
 
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "gongmu.db"
 
@@ -115,13 +115,30 @@ _SCHEMA_STEPS = [_schema_v1, _schema_v2]
 def _conn():
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(_DB_PATH), timeout=30, isolation_level=None)
+    set_busy_timeout(con)
     con.row_factory = sqlite3.Row
     try:
         apply_schema(con, _SCHEMA_STEPS)
-        _seed_catalog(con)
+        _seed_catalog_once(con)
         yield con
     finally:
         con.close()
+
+
+_SEEDED: set[tuple[str, int]] = set()  # (DB 경로, inode) — 프로세스당 1회. 파일이 지워져 새로 생기면 inode 가 달라 다시 시드한다
+
+
+def _seed_catalog_once(con: sqlite3.Connection) -> None:
+    """_seed_catalog 는 INSERT OR IGNORE(멱등)이므로 DB 파일당 프로세스에서 한 번만 돌려 연결마다 반복되는 쓰기를 없앤다."""
+    try:
+        key = (str(_DB_PATH), _DB_PATH.stat().st_ino)
+    except OSError:
+        _seed_catalog(con)
+        return
+    if key in _SEEDED:
+        return
+    _seed_catalog(con)
+    _SEEDED.add(key)
 
 
 def _seed_catalog(con: sqlite3.Connection) -> None:

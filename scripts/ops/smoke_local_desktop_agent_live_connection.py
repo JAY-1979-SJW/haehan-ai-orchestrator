@@ -49,7 +49,7 @@ def _ssh(cmd: str, timeout: float = 10.0) -> tuple[bool, str]:
 
 
 def step_a_server_head() -> dict:
-    out = {"step": "A_server_head"}
+    out: dict[str, object] = {"step": "A_server_head"}
     # 1) 로컬 git 의 remote head
     try:
         r = subprocess.run(
@@ -68,7 +68,8 @@ def step_a_server_head() -> dict:
         timeout=8,
     )
     out["remote_head"] = remote_head[:16]
-    out["ssh_head"] = ssh_head.strip()[:16] if ok else ""
+    ssh_head_short = ssh_head.strip()[:16] if ok else ""
+    out["ssh_head"] = ssh_head_short
     # 3) 로컬 HEAD
     local_head = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -77,12 +78,12 @@ def step_a_server_head() -> dict:
         encoding="utf-8",
     ).stdout.strip()[:16]
     out["local_head"] = local_head
-    out["server_matches_local"] = remote_head[:7] == local_head[:7] or out["ssh_head"][:7] == local_head[:7]
+    out["server_matches_local"] = remote_head[:7] == local_head[:7] or ssh_head_short[:7] == local_head[:7]
     return out
 
 
 def step_b_containers() -> dict:
-    out = {"step": "B_containers"}
+    out: dict[str, object] = {"step": "B_containers"}
     ok, txt = _ssh("docker ps --format '{{.Names}}\\t{{.Status}}' | grep -E 'orchestrator|nginx|edge'", timeout=8)
     out["ssh_ok"] = ok
     if ok:
@@ -93,7 +94,7 @@ def step_b_containers() -> dict:
 
 
 def step_c_nginx_ws() -> dict:
-    out = {"step": "C_nginx_ws"}
+    out: dict[str, object] = {"step": "C_nginx_ws"}
     ok, txt = _ssh(
         "docker exec nginx cat /etc/nginx/conf.d/default.conf 2>/dev/null | grep -A 10 'local-agents/ws'",
         timeout=8,
@@ -116,7 +117,7 @@ def step_c_nginx_ws() -> dict:
 
 
 def step_d_inprocess_e2e() -> dict:
-    out = {"step": "D_inprocess_e2e"}
+    out: dict[str, object] = {"step": "D_inprocess_e2e"}
     reg.clear()
     rc.clear()
     try:
@@ -137,9 +138,7 @@ def step_d_inprocess_e2e() -> dict:
         out["register_ok"] = bool(reg_res.agent.agent_id and reg_res.device_token)
         # token 원문 저장 안 됨
         stored = reg.get_agent(reg_res.agent.agent_id)
-        out["token_not_stored_raw"] = "device_token" not in (
-            stored.__dataclass_fields__ if hasattr(stored, "__dataclass_fields__") else {}
-        )
+        out["token_not_stored_raw"] = "device_token" not in getattr(stored, "__dataclass_fields__", {})
         # auth ok
         ok = reg.authenticate_agent(reg_res.agent.agent_id, reg_res.device_token)
         out["auth_ok"] = ok is not None
@@ -161,7 +160,7 @@ def step_d_inprocess_e2e() -> dict:
 
 
 def step_e_url_normalize() -> dict:
-    out = {"step": "E_url_normalize"}
+    out: dict[str, object] = {"step": "E_url_normalize"}
     cases = [
         ("https://api.haehan.ai", "wss://api.haehan.ai/api/v1/local-agents/ws"),
         ("https://api.haehan.ai/orchestrator", "wss://api.haehan.ai/orchestrator/api/v1/local-agents/ws"),
@@ -178,7 +177,7 @@ def step_e_url_normalize() -> dict:
 
 def step_f_token_leak_self_check() -> dict:
     """diagnostics 출력에 token/secret 미노출 확인."""
-    out = {"step": "F_token_leak"}
+    out: dict[str, object] = {"step": "F_token_leak"}
     d = cd.build_diagnostics(
         server_base_url="https://api.haehan.ai/orchestrator?token=SECRETXYZ&device_token=ABCDEF",
         agent_id="la-abc123def456",

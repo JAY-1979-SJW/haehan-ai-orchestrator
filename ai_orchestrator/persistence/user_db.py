@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 import sqlite3
+import threading
 import uuid
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -22,7 +23,7 @@ def _get_db_path() -> Path:
 
 @contextmanager
 def _conn():
-    con = sqlite3.connect(str(_get_db_path()))
+    con = sqlite3.connect(str(_get_db_path()), timeout=30)
     con.row_factory = sqlite3.Row
     try:
         yield con
@@ -30,7 +31,24 @@ def _conn():
         con.close()
 
 
+# 경로별 1회 초기화 가드 (핫패스에서 매 호출 CREATE+commit 방지)
+_INIT_LOCK = threading.Lock()
+_INITIALIZED: set[str] = set()
+
+
 def init_db() -> None:
+    key = str(_get_db_path())
+    # 파일이 삭제된 경우(시험·복구)에는 재초기화
+    if key in _INITIALIZED and Path(key).exists():
+        return
+    with _INIT_LOCK:
+        if key in _INITIALIZED and Path(key).exists():
+            return
+        _create_schema()
+        _INITIALIZED.add(key)
+
+
+def _create_schema() -> None:
     with _conn() as con:
         con.execute("""
             CREATE TABLE IF NOT EXISTS users (
