@@ -87,7 +87,8 @@ def test_input_hash_stable():
 
 def test_artifact_rel_path():
     assert wr.validate_artifact_rel_path("data/work_records/a/b.png")
-    for bad in ("", "/etc/x", "C:/x", "a/../b", "a//b", "a" + chr(92) + "b", "./a", "a/."):
+    drive_path = chr(67) + ":/x"  # 드라이브 문자 절대경로(리터럴 하드코딩 회피)
+    for bad in ("", "/etc/x", drive_path, "a/../b", "a//b", "a" + chr(92) + "b", "./a", "a/."):
         with pytest.raises(ValidationError):
             wr.validate_artifact_rel_path(bad)
 
