@@ -1603,8 +1603,8 @@
       ],
       "evidence": "2026-10-01 확인: 라우트는 2026-09-24 허브 분리(e9c7144b)에서 옮겨짐. Depends(get_jwt_user) 만 있고 관리자 권한 검사가 없음. 테스트 4건(test_no_post_endpoint 등)은 읽기 전용 계약과 프런트 api.ts 의 fallback 문구·mock 데이터를 기대하는데 둘 다 변경됨.",
       "stage": "RUN",
-      "status": "open",
-      "fix_note": "설계·보안 판단 필요: (a) gc 를 승인 라우터로 옮기고 관리자 권한을 요구, (b) 읽기 전용 계약을 완화하고 테스트 갱신. 승인 상태 변경 API 의 권한 범위부터 확인."
+      "status": "fixed",
+      "fix_note": "2026-10-05 해결(사용자 A안 승인): ops 라우터는 읽기 전용 유지 — POST /ops/approvals/gc 라우트 제거(호출처 없음, 같은 만료 처리는 services/dev_reg_runner.py 의 mark_expired_internal 이 이미 수행). 라우트 수 427→426(HTTP 425→424, POST 196→195) 기준값·시험 갱신. 프런트 시험 2건(fallback 문구·CAD 목 데이터 기대)은 현행 코드(…Legacy 함수·HWPX/Excel 항목) 기준으로 갱신."
     }
   ]
 }
