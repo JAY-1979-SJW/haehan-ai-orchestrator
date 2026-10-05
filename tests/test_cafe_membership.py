@@ -197,20 +197,14 @@ def client(env, monkeypatch):
     import scripts.web_connector as wc
 
     monkeypatch.setattr(explorer, "_DATA_DIR", env / "my_cafes_dir")
-    state = {"result": (cafes(1, 2, 3), "api"), "closed": 0, "task_ids": []}
+    state = {"result": (cafes(1, 2, 3), "api"), "closed": 0, "new_pages": 0}
 
-    class FakeSession:
-        def __init__(self, **kw):
-            state["task_ids"].append(kw.get("task_id"))
-            self.hosts = kw.get("allowed_hosts")
-
-        def __enter__(self):
+    class FakeContext:
+        def new_page(self):
+            state["new_pages"] += 1
             return object()
 
-        def __exit__(self, *_a):
-            return False
-
-    monkeypatch.setattr(wc, "browser_task_session", lambda **kw: FakeSession(**kw))
+    monkeypatch.setattr(wc, "get_context", lambda: FakeContext())
     monkeypatch.setattr(wc, "close_page", lambda _page: state.__setitem__("closed", state["closed"] + 1))
     monkeypatch.setattr(wc, "run_on_browser_thread", lambda fn, timeout=0: fn())
     monkeypatch.setattr(explorer, "get_my_cafes_with_source", lambda _page: state["result"])
@@ -229,7 +223,7 @@ def test_collect_route_returns_changes_saves_list_and_closes_its_tab(client):
     assert out["ok"] is True and out["count"] == 3 and out["source"] == "api" and len(out["cafes"]) == 3  # 기존 키 호환
     assert out["changes"]["status"] == "baseline"
     assert json.loads((client.data_dir / "my_cafes.json").read_text(encoding="utf-8"))[0]["cafe_id"] == "cafe1"
-    assert client.state["closed"] == 1 and client.state["task_ids"] == ["cafe-my-cafes"]  # 작업 탭 하나를 쓰고 닫았다
+    assert client.state["closed"] == 1 and client.state["new_pages"] == 1  # 자기 탭 하나를 만들어 쓰고 닫았다(빈 탭 재사용 없음)
     client.state["result"] = ([cafe(1), cafe(3), cafe(4)], "api")
     second = client.post("/naver-cafe/collect-my-cafes").json()["changes"]
     assert [e["cafe_id"] for e in second["new"]] == ["cafe4"] and [e["cafe_id"] for e in second["left"]] == ["cafe2"]

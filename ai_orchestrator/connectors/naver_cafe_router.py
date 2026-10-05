@@ -56,10 +56,6 @@ class CafeCollectRequest(BaseModel):
     keyword: str = ""
 
 
-# 가입 카페 목록 수집이 열어도 되는 호스트(네이버 로그인 이동 포함). 작업 탭은 이 호스트만 다룬다.
-_MY_CAFES_HOSTS = ("section.cafe.naver.com", "cafe.naver.com", "nid.naver.com", "apis.naver.com")
-
-
 @naver_cafe_router.post("/collect-my-cafes")
 def collect_my_cafes(confirm_mass_change: bool = False, user: dict = Depends(require_role("admin", "owner"))) -> dict:
     """내 가입 카페 목록을 CDP 로 수집하고 이전 이력과 비교해 신규 가입·탈퇴를 반영한다.
@@ -70,17 +66,17 @@ def collect_my_cafes(confirm_mass_change: bool = False, user: dict = Depends(req
     try:
         _ensure_path()
         from scripts.naver.cafe.collection.explorer import get_my_cafes_with_source, save_my_cafes
-        from scripts.web_connector import browser_task_session, close_page, run_on_browser_thread
+        from scripts.web_connector import close_page, get_context, run_on_browser_thread
 
         def collect() -> tuple[list[dict], str]:
-            with browser_task_session(
-                task_id="cafe-my-cafes", allowed_hosts=_MY_CAFES_HOSTS, start_url="https://section.cafe.naver.com/ca-fe/home"
-            ) as page:
-                try:
-                    return get_my_cafes_with_source(page)
-                finally:
-                    with contextlib.suppress(Exception):
-                        close_page(page)  # 작업 탭을 남기지 않는다(사용자 탭 불간섭)
+            # 자기 탭을 직접 만들어 쓰고 닫는다. browser_task_session 은 컨텍스트의 아무 빈 탭을 골라 재사용하므로(2026-10-05 실측:
+            # 사라지는 탭에서 `Frame has been detached`, 다른 작업·사용자의 빈 탭을 가로챌 위험) 쓰지 않는다.
+            page = get_context().new_page()
+            try:
+                return get_my_cafes_with_source(page)
+            finally:
+                with contextlib.suppress(Exception):
+                    close_page(page)  # 작업 탭을 남기지 않는다(사용자 탭 불간섭)
 
         # CDP page 조작은 반드시 브라우저 전용 스레드에서 실행(playwright sync 스레드 경계).
         cafes, source = run_on_browser_thread(collect, timeout=120)
