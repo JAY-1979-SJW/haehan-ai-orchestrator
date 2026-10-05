@@ -320,10 +320,13 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
 복잡하거나 여러 파일에 걸친 작업은 Explore → Plan(Plan Mode) → Implement → Verify → Commit
 순서로 진행한다. Verify 단계는 `scripts/ops/verify_change.py`(전체) 또는 세션 빠른 게이트
 (ruff+영향 테스트, 바뀐 파일 기준)로 한다 — 전체 pytest는 21분+ 걸리고 멈추는 결함이 있어
-매번 돌리지 않는다.
+매번 돌리지 않는다(2026-10-05 실측: CI 조건 약 16분 25초, 위 gotcha 정정 참조).
 
 ### 반복 실수(gotcha)
 - 전체 `pytest` 실행 금지 — `tests/test_local_agent_installer_package.py`에서 멈춤. 영향 테스트만.
+  (2026-10-05 정정: 위 파일은 커밋 `b13d1216`에서 삭제되어 현재 없다. 같은 날 CI 조건 전체 시험은
+  약 16분 25초에 정상 종료했다. 다만 다른 파일에서 '멈춤'이 재현되는지는 확인하지 않았으므로
+  금지는 유지한다 — 전체 시험은 오래 걸리므로 영향 시험만 돌린다.)
 - ruff는 레거시 오류가 많은 파일이 다수 존재 — 새 훅은 "이번 편집으로 새로 생긴 오류"만 차단.
 - Windows에서 훅은 셸 스크립트가 아니라 python 스크립트로 작성(기존 관례, PowerShell/cmd 차이 회피).
 - `scripts/ops/stop_fast_verify.py`는 세션별 편집 기록(`data/.session_edits/<session_id>.json`,
@@ -363,6 +366,21 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
   `tests/integration/manual/` 이 원인). 시험은 가짜 객체만 쓰고 패치는 **실제 호출이 일어나는 모듈**에
   건다. 수동 시험은 `HAEHAN_RUN_MANUAL=1` 일 때만 실행된다. 탭 이동 주체는
   `data/logs/browser_watch.jsonl` 의 `cdp_clients`·`browser_process` 기록으로 추적한다.
+- **시험 중 9222 접속은 가드가 막는다 — 해제는 사용자 확인 후에만** (2026-10-05). 루트 `conftest.py` 가
+  `tests/cdp_port_guard.py` 로 루프백 9222 접속(소켓·Playwright `connect_over_cdp`)을 시험 중 차단하고,
+  실제 9222 를 쓰는 시험(같은 파일의 `REAL_CDP_TESTS`)은 기본 skip 한다. 해제 환경변수
+  `HAEHAN_ALLOW_REAL_CDP=1` 은 **사용자 확인 없이 쓰지 않는다.** 가드는 소켓·Playwright 경로만 막으므로
+  subprocess 의 curl/taskkill 같은 경로는 못 막는다 — CDP·browser·gmail·youtube·cafe 계열 시험은
+  사용자 Chrome 세션 보호를 위해 이 PC 에서 임의로 돌리지 않는다.
+- **CI 의 audit-kit·mypy 검사** (2026-10-05). `.github/workflows/ci.yml` 의 verify 단계는 audit-kit 과 mypy 를
+  별도 가상환경에 설치(`AUDIT_KIT_BIN` 지정)하고 `verify_change.py` 로 **기준 대비 신규 오류**만 검사한다
+  (CI 는 전체 pytest 를 돌리지 않는다). 로컬 커밋 훅에서 "audit-kit 를 찾지 못해 검사 생략"이 나오면 원인은
+  `AUDIT_KIT_BIN` 미설정이다 — `AUDIT_KIT_REQUIRED=1` 로 두면 생략 대신 차단된다(위 'audit-kit 검증 강제').
+- **Python 3.14 문법 `except A, B:`(괄호 없는 다중 예외)는 유효하다** (2026-10-05, 로컬 3.14 로 실행 확인).
+  3.13 이하 기준 도구·검수가 이를 문법 오류로 오판할 수 있으니 오류로 단정하기 전에 실제 인터프리터로 확인한다.
+- **`configs/module_registry.json` 병합 충돌** (2026-10-05). master 쪽 내용을 취한 뒤(`git checkout --theirs`)
+  `python scripts/ops/code_map/registry_sync.py --fix` 로 내 새 파일만 다시 등록하고 `--check` 로 일치를
+  확인한다. PR 브랜치는 푸시 직전에 `git merge origin/master` 로 최신을 병합한다.
 
 ### 코딩 컨벤션 (2026-09-26 실측 확인)
 
