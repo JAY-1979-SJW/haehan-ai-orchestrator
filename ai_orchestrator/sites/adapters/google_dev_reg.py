@@ -136,7 +136,7 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
             )
 
         if dry_run:
-            filled = [k for k in _CONSENT_SELECTORS if params.get(k)]
+            filled: list[str] = [k for k in _CONSENT_SELECTORS if params.get(k)]
             if params.get("redirect_uri"):
                 filled.append("redirect_uri")
             summary = _build_safe_summary(self.provider, params, filled)
@@ -165,7 +165,7 @@ class GoogleDevRegAdapter(DevRegAdapterBase):
                 error_code=ErrorCode.LOGIN_REQUIRED,
             )
 
-        filled: list[str] = []
+        filled = []
         errors_fill: list[str] = []
 
         _fill_consent_fields(page, params, filled, errors_fill)

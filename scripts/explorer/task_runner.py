@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import threading
 import time
 from collections.abc import Callable
@@ -18,6 +19,7 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
+from ai_orchestrator.domain import site_map_menu as menu
 from ai_orchestrator.domain import site_task_map as tm
 from ai_orchestrator.persistence import site_task_map_store as store
 
@@ -155,6 +157,68 @@ RESULT_WAIT_S = 8.0  # 클릭 뒤 결과 표가 갱신되기를 기다리는 최
 RESULT_POLL_MS = 400
 
 
+ITEMS_MAX = 30
+ITEM_TEXT_MAX = 200
+CONTENT_BYTES_MAX = 8000
+
+# 표가 아닌 결과(상품 카드·목록)를 읽는다(M8): 메뉴 영역(navigation·complementary·banner·contentinfo)을 뺀 본문에서
+# 같은 부모 아래 같은 태그·클래스 형제가 3개 이상인 반복 구조 중 "개수 × 글자 길이" 점수가 가장 큰 것을 항목 목록으로 본다.
+_CONTENT_JS = r"""([itemsMax, textMax]) => {
+  const clean = s => (s || '').replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const lm = el => {
+    const r = el.closest('[role="navigation"],[role="banner"],[role="contentinfo"],[role="complementary"],nav,header,footer,aside');
+    if (!r) return '';
+    const role = r.getAttribute('role'); if (role) return role;
+    const t = r.tagName; if (t === 'NAV') return 'navigation'; if (t === 'ASIDE') return 'complementary';
+    const scoped = r.parentElement && r.parentElement.closest('article,section,main,aside,nav');
+    if (t === 'HEADER') return scoped ? '' : 'banner'; if (t === 'FOOTER') return scoped ? '' : 'contentinfo'; return '';
+  };
+  const menuArea = el => ['navigation', 'complementary', 'banner', 'contentinfo'].includes(lm(el));
+  const sameHost = href => { try { return new URL(href, location.href).hostname === location.hostname; } catch (e) { return false; } };
+  const headings = Array.from(document.querySelectorAll('h1,h2,h3')).filter(h => h.offsetParent !== null).map(h => clean(h.innerText).slice(0, 100)).filter(Boolean).slice(0, 10);
+  let best = null, bestScore = 0;
+  for (const p of document.querySelectorAll('ol,ul,div,section,tbody')) {
+    if (menuArea(p)) continue;
+    const kids = Array.from(p.children).filter(k => k.offsetParent !== null);
+    if (kids.length < 3) continue;
+    const groups = {};
+    kids.forEach(k => { (groups[k.tagName + '.' + (k.className || '')] = groups[k.tagName + '.' + (k.className || '')] || []).push(k); });
+    for (const g of Object.values(groups)) {
+      if (g.length < 3 || !g.some(k => k.querySelector('a[href]'))) continue;
+      const score = g.length * Math.min(120, Math.max(...g.map(k => clean(k.innerText).length)));
+      if (score > bestScore) { bestScore = score; best = g; }
+    }
+  }
+  const items = (best || []).slice(0, itemsMax).map(k => {
+    const a = k.querySelector('a[href]');
+    return { text: clean(k.innerText).slice(0, textMax), label: a ? clean(a.getAttribute('title') || '').slice(0, 120) : '', href: a && sameHost(a.href) ? a.href : '' };
+  }).filter(i => i.text);
+  const nx = document.querySelector('a[rel~="next"], li.next a, a[aria-label*="next" i], a[aria-label*="다음"]');
+  return { title: clean(document.title).slice(0, 120), headings, items, total_items: best ? best.length : 0, next_url: nx && sameHost(nx.href) ? nx.href : '' };
+}"""
+
+
+def read_page_content(page: Any, host: str) -> dict[str, Any] | None:
+    """표가 없는 화면의 제목·소제목·반복 항목·다음 쪽 주소. 항목이 하나도 없고 소제목도 없으면 None. 값은 응답에만 담고 지도에는 저장하지 않는다."""
+    raw = page.evaluate(_CONTENT_JS, [ITEMS_MAX, ITEM_TEXT_MAX])
+    if not isinstance(raw, dict):
+        return None
+    items = [dict(i, href=menu.same_host_url(str(i.get("href") or ""), host) or "") for i in raw.get("items", [])]
+    while items and len(json.dumps(items, ensure_ascii=False)) > CONTENT_BYTES_MAX:
+        items.pop()
+    if not items and not raw.get("headings"):
+        return None
+    next_url = menu.same_host_url(str(raw.get("next_url") or ""), host) or ""
+    return {
+        "title": raw.get("title", ""),
+        "url": page.url,
+        "headings": raw.get("headings", []),
+        "items": items,
+        "total_items": raw.get("total_items", len(items)),
+        "next_url": next_url,
+    }
+
+
 def read_result_table(page: Any) -> dict[str, Any] | None:
     result = page.evaluate(_TABLE_JS, [ROWS_MAX, CELL_MAX])
     return result if isinstance(result, dict) else None
@@ -197,8 +261,10 @@ def _check_deadline(deadline: float, clock: Callable[[], float]) -> None:
         raise StepFailed(f"{RUN_BUDGET_S:g}초 안에 끝내지 못했습니다")
 
 
-def _step_navigate(page: Any, host: str, step: dict[str, Any]) -> None:
-    url = str(step.get("url") or "")
+def _step_navigate(page: Any, host: str, step: dict[str, Any], values: dict[str, str] | None = None) -> None:
+    url = tm.substitute(str(step.get("url") or ""), values or {})  # 주소 열기 업무의 {{url}} 자리(고정 주소는 그대로)
+    if url is None:
+        raise StepFailed("열 주소(url)가 필요합니다")
     if not _same_host(url, host):
         raise StepFailed("지도의 호스트와 다른 주소로는 이동하지 않습니다")
     try:
@@ -253,7 +319,7 @@ def execute_task(
         _check_deadline(deadline, clock)
         kind = step.get("type")
         if kind == "navigate":
-            _step_navigate(page, host, step)
+            _step_navigate(page, host, step, values)
         elif kind == "change":
             anchor = _step_change(page, step, values) or anchor
         elif kind == "click":
@@ -263,10 +329,20 @@ def execute_task(
         else:
             raise StepFailed(f"실행할 수 없는 단계 종류: {kind}")
         done += 1
-    table, freshness = wait_for_result_table(page, before_signature, clock=clock)
+    if all(s.get("type") == "navigate" for s in task["steps"]):  # 이동만 하는 업무(주소 열기): 갱신을 기다릴 게 없으니 바로 읽는다(표 없는 화면에서 8초 대기 방지)
+        table = read_result_table(page)
+        freshness = "fresh" if table else "none"
+    else:
+        table, freshness = wait_for_result_table(page, before_signature, clock=clock)
     if table:
         table = {k: v for k, v in table.items() if k != "signature"}  # 내부 비교용 값은 응답에 싣지 않는다
-    return {"steps_done": done, "url": page.url, "tables": [table] if table else [], "result_state": freshness}
+    result: dict[str, Any] = {"steps_done": done, "url": page.url, "tables": [table] if table else [], "result_state": freshness}
+    if not table and freshness == "none":  # 표가 없는 화면: 제목·반복 항목(상품 카드·목록)·다음 쪽 주소를 읽는다
+        content = read_page_content(page, host)
+        if content:
+            result["page"] = {k: v for k, v in content.items() if k != "items"}
+            result["items"] = content["items"]
+    return result
 
 
 # ── 기록과 실행 ────────────────────────────────────────────────────────────
@@ -303,7 +379,7 @@ def run_task(
         wait = MIN_GAP_S - (clock() - _last_run.get(host, -1e9))
         if wait > 0:
             sleep(wait)
-        start_url = next((str(s.get("url")) for s in task["steps"] if s.get("type") == "navigate"), task["url"])
+        start_url = next((str(s.get("url")) for s in task["steps"] if s.get("type") == "navigate" and "{{" not in str(s.get("url"))), task["url"])
         outcome: dict[str, Any] = {"ok": False, "task_id": task_id, "host": host}
         try:
             with page_scope(start_url) as page:
@@ -322,6 +398,9 @@ def run_task(
             updated = tm.apply_outputs(updated, task_id, outcome["tables"][0]["headers"], now=_now())
             updated = tm.mark_verified(updated, task_id, now=_now())
             store.save(updated)
+            outcome["state"] = tm.STATE_VERIFIED
+        elif outcome.get("items"):  # 표는 없지만 반복 항목을 읽었다 — 값은 저장하지 않고 동작한 업무로만 표시한다
+            store.save(tm.mark_verified(updated, task_id, now=_now()))
             outcome["state"] = tm.STATE_VERIFIED
         else:
             if outcome.get("result_state") == "unchanged":

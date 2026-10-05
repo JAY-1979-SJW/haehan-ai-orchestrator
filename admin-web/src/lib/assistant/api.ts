@@ -382,6 +382,65 @@ export async function getMyCafes(signal?: AbortSignal): Promise<{ cafes: MyCafe[
   return getJson<{ cafes: MyCafe[]; count: number }>("/api/v1/naver-cafe/my-cafes", signal);
 }
 
+/** 가입 카페 변동(신규 가입·탈퇴·이름 변경) — 기준서 docs/specs/2026-10-05_cafe_membership_changes.md */
+export interface CafeMember {
+  cafe_id: string;
+  name: string;
+  clubid: string;
+}
+export interface CafeRename {
+  cafe_id: string;
+  from: string;
+  to: string;
+}
+export type CafeChangeStatus = "baseline" | "ok" | "blocked" | "needs_confirmation";
+export interface CafeChangeResult {
+  status: CafeChangeStatus;
+  reason: string;
+  warning: string;
+  baseline: boolean;
+  new: CafeMember[];
+  left: CafeMember[];
+  renamed: CafeRename[];
+  total: number;
+  previous_total: number;
+}
+export interface CafeChangeLog {
+  at: string;
+  new: CafeMember[];
+  left: CafeMember[];
+  renamed: CafeRename[];
+  total: number;
+  previous_total: number;
+  confirmed_mass_change?: boolean;
+}
+export interface CafeActivity {
+  total: number;
+  with_new_articles: number;
+  new_articles_total: number;
+  top_new: { cafe_id: string; name: string; new_articles: number }[];
+  favorites: number;
+  managed: number;
+  power: number;
+  dormant: number;
+  stale_visit: number;
+  stale_update: number;
+  unknown_dates: number;
+  visit_stale_days: number;
+  update_stale_days: number;
+}
+
+export interface CafeChangeHistory {
+  activity?: CafeActivity | null;
+  changes: CafeChangeLog[];
+  trend: { at: string; total: number }[];
+  summary: { snapshots: number; current_total: number; net_change_since_first: number; joined_in_log: number; left_in_log: number };
+}
+
+export async function getMyCafeChanges(limit = 20, signal?: AbortSignal): Promise<CafeChangeHistory> {
+  return getJson<CafeChangeHistory>(`/api/v1/naver-cafe/my-cafes/changes?limit=${limit}`, signal);
+}
+
 export async function getCafeArticles(
   limit = 50,
   offset = 0,

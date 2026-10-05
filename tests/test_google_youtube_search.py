@@ -1,11 +1,26 @@
 from __future__ import annotations
 
-import pytest
-
 from pathlib import Path
 from uuid import uuid4
 
-from scripts.google.youtube import search
+import pytest
+
+from scripts.google.youtube import search, search_analyze, search_search
+
+
+@pytest.fixture(autouse=True)
+def _never_touch_the_real_browser(monkeypatch):
+    """2026-10-05 실측: 이 파일의 시험이 패치를 잘못된 모듈에 걸어 **사용자 9222 Chrome 으로 실제 YouTube 검색을 키워드마다 수행**했다.
+
+    `search_analyze` 는 `search_videos` 를 `search_search` 에서 직접 가져와 쓰므로 껍데기 모듈(`search`)에 건 패치는 닿지 않는다.
+    브라우저 세션을 만드는 `connect` 를 모듈 전체에서 막아, 어떤 시험이든 실제 브라우저에 닿으면 접속 대신 즉시 실패한다.
+    """
+
+    def blocked(*_a, **_k):
+        raise AssertionError("시험이 실제 브라우저(9222)에 접속하려 했습니다 — 패치 대상 모듈을 확인하세요")
+
+    monkeypatch.setattr(search_search, "connect", blocked)
+    monkeypatch.setattr(search, "connect", blocked)
 
 
 def _test_dir() -> Path:
@@ -262,7 +277,11 @@ def test_rank_analysis_uses_transcript_summary_without_raw_storage(monkeypatch):
     assert result["ranked_videos"][0]["scores"]["overall_opportunity_score"] > 0
 
 
-def test_rank_analysis_does_not_overwrite_search_latest(monkeypatch):
+def test_rank_analysis_does_not_overwrite_search_latest(monkeypatch, tmp_path):
+    # 실제 data/ 의 최신 결과 파일을 건드리지 않도록 결과 경로를 임시 폴더로 돌린다
+    for module in (search, search_analyze):
+        monkeypatch.setattr(module, "LATEST_SEARCH", tmp_path / "search_latest.json")
+        monkeypatch.setattr(module, "LATEST_ANALYSIS", tmp_path / "analysis_latest.json")
     search.LATEST_SEARCH.write_text('{"workflow":"google_youtube_search","results":[]}', encoding="utf-8")
     search_report = _test_dir() / "search.json"
     search_report.write_text('{"query":"ai","results":[]}', encoding="utf-8")
@@ -374,7 +393,7 @@ def test_public_signal_model_separates_official_and_inferred_data():
     assert "repeated appearance across related keywords" in model["inferred_signals"]
 
 
-def test_market_research_run_writes_json_and_markdown(monkeypatch):
+def test_market_research_run_writes_json_and_markdown(monkeypatch, tmp_path):
     def fake_search_videos(query, max_results=10, source="auto", wait_seconds=3.0, **kwargs):
         return {
             "status": "ok",
@@ -393,9 +412,12 @@ def test_market_research_run_writes_json_and_markdown(monkeypatch):
             ],
         }, _test_dir() / f"{query}.json"
 
-    monkeypatch.setattr(search, "search_videos", fake_search_videos)
+    # run_market_research 가 실제로 쓰는 이름은 search_analyze 모듈 안의 것이다(껍데기 `search` 에 걸면 패치가 닿지 않는다)
+    monkeypatch.setattr(search_analyze, "search_videos", fake_search_videos)
+    monkeypatch.setattr(search_analyze, "LATEST_MARKET_RESEARCH", tmp_path / "market_latest.json")  # 실제 data/ 의 최신 결과를 덮어쓰지 않는다
+    monkeypatch.setattr(search_analyze, "MARKET_RESEARCH_REPORT_DIR", tmp_path / "reports")
     monkeypatch.setattr(
-        search,
+        search_analyze,
         "collect_public_comment_summary",
         lambda video_id, **kwargs: {
             "status": "ok",

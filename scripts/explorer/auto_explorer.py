@@ -188,12 +188,14 @@ def _save_sitemap(result: dict, host: str) -> None:
 
 def _dedupe_links(out_links: list[dict]) -> list[dict]:
     """href 기준 중복 제거(처음 등장 순서 유지)."""
-    seen = set()
-    return [
-        l
-        for l in out_links  # noqa: E741
-        if not (l["href"] in seen or seen.add(l["href"]))
-    ]
+    seen: set[str] = set()
+    unique: list[dict] = []
+    for link in out_links:
+        if link["href"] in seen:
+            continue
+        seen.add(link["href"])
+        unique.append(link)
+    return unique
 
 
 def _should_skip_url(url: str, start_url: str, host: str, same_host_only: bool, skip_url_patterns: tuple[str, ...]) -> bool:
@@ -208,6 +210,16 @@ def _should_skip_url(url: str, start_url: str, host: str, same_host_only: bool, 
         log.debug("[explorer] skip 외부 호스트: %s", url)
         return True
     return False
+
+
+def _call_on_page(on_page, page) -> None:
+    """쪽 직후 콜백(있을 때만). 관측 실패가 탐색을 막지 않는다."""
+    if on_page is None:
+        return
+    try:
+        on_page(page)
+    except Exception as exc:  # noqa: BLE001 - 관측 실패가 탐색을 막지 않는다
+        log.debug("[explorer] on_page 실패: %s", str(exc)[:80])
 
 
 def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
@@ -226,6 +238,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
         "submit",
     ),
     delay_s: float = 0.0,
+    on_page=None,
 ) -> dict:
     """현재 페이지부터 BFS 탐색.
 
@@ -237,6 +250,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
         bot_check_each_page: 각 페이지에서 봇 레이더 스캔
         skip_url_patterns: 위험 URL 키워드 (로그아웃/삭제/제출 등 자동 회피)
         delay_s: 페이지 이동 사이 대기 초(기본 0 = 기존 동작). 사이트 부담을 줄이려는 호출자가 지정한다.
+        on_page: 쪽을 읽은 직후(그 쪽이 열려 있는 동안) `on_page(page)` 를 부른다 — 데이터 소스 관측용. 실패해도 탐색은 계속한다.
 
     Returns:
         dict{host, started_url, pages, bot_radar, elapsed_s}
@@ -292,13 +306,12 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
 
         # 링크 수집 + 다음 큐
         out_links = _collect_out_links(s.get("links", []), url, start_url, same_host_only)
-        for out_link in out_links:
-            if out_link["href"] not in visited and d + 1 <= depth:
-                queue.append((out_link["href"], d + 1))
+        queue.extend((out_link["href"], d + 1) for out_link in out_links if out_link["href"] not in visited and d + 1 <= depth)
         # 중복 제거
         rec["links_out"] = _dedupe_links(out_links)[:50]
 
         pages_data.append(rec)
+        _call_on_page(on_page, page)
         log.info(
             "[explorer] [%d/%d] d=%d %s — 링크 %d개",
             len(pages_data),

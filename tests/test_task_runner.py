@@ -175,18 +175,6 @@ def test_same_host_calls_are_spaced_apart(saved_map, monkeypatch):
 # ── 실제 브라우저(격리 헤드리스 Chrome)로 탐색 → 지도 → 실행 왕복 ──────────────────
 
 
-@pytest.fixture(scope="module")
-def browser():
-    sync_api = pytest.importorskip("playwright.sync_api")
-    pw = sync_api.sync_playwright().start()
-    try:
-        instance = pw.chromium.launch(channel="chrome", headless=True)
-    except Exception as exc:  # noqa: BLE001 - Chrome 을 못 띄우는 환경은 이 시험만 건너뛴다
-        pw.stop()
-        pytest.skip(f"헤드리스 Chrome 을 띄울 수 없음: {type(exc).__name__}")
-    yield instance
-    instance.close()
-    pw.stop()
 
 
 def make_page(browser, html):
@@ -358,3 +346,118 @@ def test_table_without_th_still_uses_first_row_as_headers(browser, tmp_path, mon
 def test_unchanged_note_is_reported_by_run_task(saved_map, monkeypatch):
     out = run({"txtName": "x"}, monkeypatch, result={"steps_done": 3, "url": "u", "tables": [], "result_state": "unchanged"})
     assert out["ok"] is True and "갱신됐는지 확인하지 못했습니다" in out["note"] and state_of()["state"] == "observed"
+
+
+# ── M8: 링크 이동형 읽기(메뉴 색인·주소 열기·표 아닌 결과) — 실제 브라우저 ─────────────────────
+
+CATALOG_HOME = """<!doctype html><html><head><meta charset="utf-8"><title>상점 홈</title></head><body>
+<div class="side"><ul>
+<li><a href="/cat/mystery.html">추리</a></li><li><a href="/cat/travel.html">여행</a></li><li><a href="/cat/poetry.html">시</a></li>
+<li><a href="/cat/music.html">음악</a></li><li><a href="/cat/art.html">미술</a></li><li><a href="/logout">로그아웃</a></li></ul></div>
+<main><h1>전체 상품</h1><ol class="row">
+<li class="col"><article><h3><a href="/p/1.html" title="Sharp Objects 전체 제목">Sharp Obj...</a></h3><p class="price">£47.82</p><p>재고 있음</p></article></li>
+<li class="col"><article><h3><a href="/p/2.html" title="In a Dark Dark Wood">In a Dark...</a></h3><p class="price">£19.63</p><p>재고 있음</p></article></li>
+<li class="col"><article><h3><a href="https://other.test/x" title="외부 링크 상품">외부</a></h3><p class="price">£5.00</p><p>재고 있음</p></article></li>
+<li class="col"><article><h3><a href="/p/4.html" title="The Past Never Ends">The Past...</a></h3><p class="price">£56.50</p><p>재고 있음</p></article></li>
+</ol><ul class="pager"><li class="next"><a href="/cat/mystery-2.html">다음</a></li></ul></main></body></html>"""
+
+CATALOG_NO_ITEMS = """<!doctype html><html><head><meta charset="utf-8"><title>빈 쪽</title></head><body><p>준비 중입니다</p></body></html>"""
+
+
+def _catalog_context(browser, pages: dict[str, str]):
+    context = browser.new_context()
+
+    def handle(route):
+        path = route.request.url.split(HOST, 1)[-1].split("?")[0] or "/"
+        body = pages.get(path)
+        if body is None:
+            route.fulfill(status=404, body="not found")
+        else:
+            route.fulfill(status=200, content_type="text/html; charset=utf-8", body=body)
+
+    context.route(f"http://{HOST}/**", handle)
+    return context, context.new_page()
+
+
+def test_real_snapshot_menu_excludes_product_cards_and_risky_links(browser):
+    from ai_orchestrator.domain import site_map_menu as menu
+    from scripts.explorer.page_snapshot import collect
+
+    context, page = _catalog_context(browser, {"/": CATALOG_HOME})
+    try:
+        page.goto(f"http://{HOST}/")
+        got = menu.menu_from_snapshot(collect(page), risk_of=tm.risk_of, skip_fragments=tm.EXPLORE_SKIP_URL)
+        assert [m["label"] for m in got] == ["추리", "여행", "시", "음악", "미술"]  # 사이드바 목록만 — 상품 링크·로그아웃·외부 링크 제외
+        assert got[0]["href"] == f"http://{HOST}/cat/mystery.html"
+    finally:
+        context.close()
+
+
+def test_page_without_table_returns_product_items_not_sidebar_and_next_url(browser):
+    context, page = _catalog_context(browser, {"/": CATALOG_HOME})
+    try:
+        page.goto(f"http://{HOST}/")
+        content = tr.read_page_content(page, HOST)
+        assert content is not None and content["headings"][0] == "전체 상품"
+        texts = [i["text"] for i in content["items"]]
+        assert len(texts) == 4 and "£47.82" in texts[0] and "추리" not in " ".join(texts)  # 사이드바 카테고리가 아니라 상품 카드
+        assert content["items"][0]["label"] == "Sharp Objects 전체 제목"  # 사이트가 줄인 글자 대신 title 속성
+        assert content["items"][0]["href"] == f"http://{HOST}/p/1.html"
+        assert content["items"][2]["href"] == ""  # 다른 호스트 링크는 돌려주지 않는다
+        assert content["next_url"] == f"http://{HOST}/cat/mystery-2.html"
+    finally:
+        context.close()
+
+
+def test_open_page_task_runs_on_a_page_without_table_and_returns_items(browser, tmp_path, monkeypatch):
+    monkeypatch.setattr(store, "_DIR", tmp_path / "maps")
+    context, page = _catalog_context(browser, {"/": CATALOG_HOME, "/cat/mystery.html": CATALOG_HOME})
+    try:
+        task = tm.open_page_task(HOST, f"http://{HOST}/", now=NOW)
+        values = tm.validate_run_request(task, {"url": f"http://{HOST}/cat/mystery.html"})
+        page.goto("about:blank")
+        result = tr.execute_task(page, HOST, task, values)
+        assert result["tables"] == [] and result["steps_done"] == 1
+        assert len(result["items"]) == 4 and result["page"]["next_url"].endswith("/cat/mystery-2.html")
+        assert "items" not in result["page"]  # 항목은 한 곳(items)에만
+    finally:
+        context.close()
+
+
+def test_open_page_navigate_only_task_does_not_wait_for_a_table(browser):
+    import time
+
+    context, page = _catalog_context(browser, {"/": CATALOG_NO_ITEMS})
+    try:
+        task = tm.open_page_task(HOST, f"http://{HOST}/", now=NOW)
+        t0 = time.monotonic()
+        result = tr.execute_task(page, HOST, task, {"url": f"http://{HOST}/"})
+        assert time.monotonic() - t0 < tr.RESULT_WAIT_S - 2  # 표가 없는 화면에서 갱신을 기다리지 않는다
+        assert result["tables"] == [] and "items" not in result  # 항목도 소제목도 없으면 아무것도 지어내지 않는다
+    finally:
+        context.close()
+
+
+def test_open_page_refuses_other_host_even_if_validation_were_skipped(browser):
+    context, page = _catalog_context(browser, {"/": CATALOG_NO_ITEMS})
+    try:
+        task = tm.open_page_task(HOST, f"http://{HOST}/", now=NOW)
+        with pytest.raises(tr.StepFailed, match="다른 주소"):
+            tr.execute_task(page, HOST, task, {"url": "http://other.test/x"})  # 실행기의 이중 방어
+        with pytest.raises(tr.StepFailed, match="열 주소"):
+            tr.execute_task(page, HOST, task, {})
+    finally:
+        context.close()
+
+
+def test_table_page_keeps_tables_and_adds_no_items(browser, tmp_path, monkeypatch):
+    monkeypatch.setattr(store, "_DIR", tmp_path / "maps")
+    context, page = make_page(browser, PAGE_HTML)
+    try:
+        task = explored_task(page)
+        values = tm.validate_run_request(task, {"txtName": "삼성물산"})
+        page.goto("about:blank")
+        result = tr.execute_task(page, HOST, task, values)
+        assert result["tables"] and "items" not in result and "page" not in result  # 표가 있으면 기존 응답 그대로
+    finally:
+        context.close()

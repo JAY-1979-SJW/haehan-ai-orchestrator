@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import cast
 
 try:
     from scripts.module_quality_gate_common import ROOT, _run_check_command, normalize_path, redact
@@ -158,7 +159,7 @@ def check_admin_web_audit() -> tuple[bool, str]:
             failures.append(str(report_or_message))
             continue
 
-        report = report_or_message
+        report = cast(dict, report_or_message)
         high, critical, total = audit_vulnerability_counts(report)
         if not high and not critical:
             return True, f"production dependency audit high=0 critical=0 total={total}"
