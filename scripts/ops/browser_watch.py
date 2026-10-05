@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import collections
+import contextlib
 import json
 import os
 import subprocess
@@ -230,10 +231,8 @@ def stop() -> bool:
 def main(argv: list[str]) -> int:
     cmd = argv[0] if argv else "status"
     if cmd == "run":
-        try:
+        with contextlib.suppress(KeyboardInterrupt):
             run()
-        except KeyboardInterrupt:
-            pass
         return 0
     if cmd == "start":
         print("감시 시작" if start() else "이미 실행 중")

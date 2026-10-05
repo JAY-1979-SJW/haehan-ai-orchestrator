@@ -21441,6 +21441,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/local_agent_registry_exports.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "local_agent",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
   "tests/test_error_recovery_log_critical.py": {
    "layer": "L11",
    "role": "test",
