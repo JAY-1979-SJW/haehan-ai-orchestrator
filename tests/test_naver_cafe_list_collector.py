@@ -5,10 +5,11 @@ import json
 import pytest
 
 from scripts.browser_cdp_selection_gate import CdpPage, CdpSession
-from scripts.naver import router
+from scripts.naver import router, router_cafe
 from scripts.naver.cafe import join_request, main_page, member_collect, topic_search
 from scripts.naver.cafe import list_background_runner as runner
 from scripts.naver.cafe import list_collector as collector
+from scripts.naver.cafe.collection import member_collect as member_collect_impl
 
 
 def _api_payload(*, total: int = 1) -> dict:
@@ -539,7 +540,7 @@ def test_member_collect_filters_home_links_readonly():
         {"text": "hello", "href": "https://example.com/"},
     ]
 
-    boards, articles = member_collect._filtered_links(links, terms=["smart", "SmartStore", "upload"])
+    boards, articles = member_collect_impl._filtered_links(links, terms=["smart", "SmartStore", "upload"])
 
     assert len(boards) == 2
     assert articles == [
@@ -787,7 +788,7 @@ def test_router_cafe_join_submit_records_gate_pass(monkeypatch, tmp_path):
     calls = []
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: calls.append((a, k)))
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: calls.append((a, k)))
 
     router._cmd_cafe("join-submit", ["--cafe-url=royaltyserver", "--approved", "--confirm=NAVER_APPROVED_CAFE_JOIN"])
 

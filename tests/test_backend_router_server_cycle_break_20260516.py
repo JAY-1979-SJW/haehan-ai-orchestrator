@@ -199,11 +199,17 @@ def test_safe_to_envelope_still_zero():
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.asgi import app
+    from ai_orchestrator.connectors.user_auth_router import get_jwt_user
 
     client = TestClient(app, raise_server_exceptions=False)
 
-    # 대표 LEGACY_DIRECT_DICT endpoint — 최상위 success 키 없음
-    r = client.get("/api/v1/logs")
+    # /api/v1/logs 는 get_jwt_user 를 요구하므로 가짜 사용자를 주입한다(실제 사용자 정보 없음).
+    app.dependency_overrides[get_jwt_user] = lambda: {"id": "test-user", "role": "owner"}
+    try:
+        # 대표 LEGACY_DIRECT_DICT endpoint — 최상위 success 키 없음
+        r = client.get("/api/v1/logs")
+    finally:
+        app.dependency_overrides.pop(get_jwt_user, None)
     assert r.status_code == 200
     data = r.json()
     # list 반환이거나, dict 반환이어도 success 키 없음
