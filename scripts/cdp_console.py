@@ -55,6 +55,7 @@ import time
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 import requests
 import websocket
@@ -133,7 +134,7 @@ class CDPSession:
             return res.get("description", "object"), False
         return (json.dumps(val, ensure_ascii=False) if not isinstance(val, str) else val), False
 
-    def js_json(self, expression: str) -> tuple[object, bool]:
+    def js_json(self, expression: str) -> tuple[Any, bool]:
         """JS → Python 객체. 반환값을 JSON.stringify로 감싸서 파싱."""
         raw, err = self.js(f"JSON.stringify({expression})")
         if err:
