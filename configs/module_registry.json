@@ -21729,6 +21729,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_collect_google_passwords_list_safe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "ai_orchestrator/domain/work_record.py": {
    "layer": "L1",
    "role": "contract",
