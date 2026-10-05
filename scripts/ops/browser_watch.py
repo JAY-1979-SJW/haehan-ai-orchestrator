@@ -36,6 +36,7 @@ RECONNECT_SEC = 2.0
 PROCESS_POLL_SEC = 1.0  # 브라우저 프로세스 점검 주기
 RECENT_WINDOW_SEC = 90.0  # 브라우저가 사라지기 직전 이 시간 안에 시작된 프로세스를 기록한다(원인 후보)
 RECENT_MAX = 40
+CLIENT_SNAPSHOT_MIN_GAP_S = 5.0  # 탭 이동이 몰려도 연결 클라이언트 기록은 이 간격으로만 남긴다
 _SCRIPT_SUFFIXES = (".py", ".js", ".cmd", ".bat", ".ps1", ".vbs")
 
 
@@ -255,6 +256,39 @@ def poll_process(state: ProcessState, port: int, log: RotatingLog, now: float) -
         return
 
 
+# ── 누가 이동시켰나: 탭 이동 순간의 연결 클라이언트 ────────────────────────────
+# CDP 이벤트는 탭이 열리고 이동했다는 사실만 알려 주고 "누가"는 알려 주지 않는다(2026-10-05: 빈 탭이 80초 뒤 YouTube 검색으로 이동했으나 주체 불명).
+# 이동이 일어난 바로 그 순간 디버그 포트에 연결돼 있는 프로세스(Playwright·자동화 스크립트)의 이름·스크립트 파일명을 같은 로그에 남긴다.
+
+
+def cdp_clients(port: int, own_pid: int) -> list[dict]:
+    """디버그 포트에 연결된 클라이언트 프로세스(브라우저 자신·이 감시 프로세스 제외)의 pid·이름·스크립트 파일명."""
+    import psutil
+
+    found: dict[int, dict] = {}
+    try:
+        conns = psutil.net_connections(kind="tcp")
+    except (psutil.Error, OSError):
+        return []
+    for c in conns:
+        if c.status != "ESTABLISHED" or not c.pid or c.pid == own_pid or not c.raddr or c.raddr.port != port:
+            continue
+        try:
+            proc = psutil.Process(c.pid)
+            name = proc.name()
+            if name.lower() in ("chrome.exe", "chrome"):
+                continue
+            found[c.pid] = {"pid": c.pid, "name": name, "script": script_name(proc.cmdline())}
+        except psutil.Error:
+            continue
+    return list(found.values())
+
+
+def should_log_clients(records: list[dict], last_at: float, now: float, gap: float = CLIENT_SNAPSHOT_MIN_GAP_S) -> bool:
+    """이번 기록에 탭 열림·이동이 있고, 마지막 클라이언트 기록 이후 gap 초가 지났는가(순수)."""
+    return now - last_at >= gap and any(r.get("event") in ("opened", "navigated") for r in records)
+
+
 def _browser_ws_url(port: int) -> str | None:
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version", timeout=3) as resp:
@@ -270,6 +304,7 @@ def run(port: int = CDP_PORT, log_path: Path = LOG_PATH, stop_after: float | Non
     log = RotatingLog(log_path)
     proc_state = ProcessState()
     last_poll = 0.0
+    last_clients_at = 0.0
     deadline = None if stop_after is None else time.time() + stop_after
     while deadline is None or time.time() < deadline:
         poll_process(proc_state, port, log, time.time())
@@ -290,8 +325,12 @@ def run(port: int = CDP_PORT, log_path: Path = LOG_PATH, stop_after: float | Non
                     msg = json.loads(ws.recv())
                 except websocket.WebSocketTimeoutException:
                     continue
-                for rec in state.handle(msg, time.time()):
+                recs = state.handle(msg, time.time())
+                for rec in recs:
                     log.write(rec)
+                if recs and should_log_clients(recs, last_clients_at, time.time()):  # 탭이 열리거나 이동한 순간 누가 연결돼 있는지
+                    last_clients_at = time.time()
+                    log.write({"event": "cdp_clients", "clients": cdp_clients(port, os.getpid())})
         except (websocket.WebSocketException, OSError, ValueError):
             time.sleep(RECONNECT_SEC)
 

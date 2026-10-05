@@ -129,3 +129,57 @@ def test_find_browser_main_reads_command_line_only_for_chrome(monkeypatch):
     ]
     monkeypatch.setattr(psutil, "process_iter", lambda _attrs=None: iter(fakes))
     assert bw._find_browser_main(PORT) == {"pid": 3, "ppid": 9}
+
+
+# ── 누가 이동시켰나: 연결 클라이언트 기록 ──────────────────────────────
+
+
+def test_should_log_clients_only_for_tab_open_or_navigation_and_respects_gap():
+    nav = [{"event": "navigated"}]
+    assert bw.should_log_clients(nav, last_at=0.0, now=100.0) is True
+    assert bw.should_log_clients([{"event": "opened"}], last_at=0.0, now=100.0) is True
+    assert bw.should_log_clients([{"event": "closed"}], last_at=0.0, now=100.0) is False  # 닫힘만으로는 기록하지 않는다
+    assert bw.should_log_clients([], last_at=0.0, now=100.0) is False
+    assert bw.should_log_clients(nav, last_at=98.0, now=100.0) is False  # 3초 간격 이동이 몰려도 간격 안에서는 한 번만
+    assert bw.should_log_clients(nav, last_at=90.0, now=100.0) is True
+
+
+def test_cdp_clients_lists_only_non_browser_clients_of_the_debug_port(monkeypatch):
+    import psutil
+
+    class Addr:
+        def __init__(self, port):
+            self.port = port
+
+    class Conn:
+        def __init__(self, pid, raddr_port, status="ESTABLISHED"):
+            self.pid, self.status = pid, status
+            self.raddr = Addr(raddr_port) if raddr_port else None
+
+    class Proc:
+        def __init__(self, pid):
+            self.pid = pid
+
+        def name(self):
+            return {10: "python.exe", 11: "chrome.exe", 12: "node.exe"}[self.pid]
+
+        def cmdline(self):
+            return {10: ["python.exe", "scripts/gmail_reader.py", "--token=SECRET"], 12: ["node.exe", "driver.js"]}.get(self.pid, [])
+
+    conns = [Conn(10, PORT), Conn(10, PORT), Conn(11, PORT), Conn(12, PORT), Conn(99, PORT), Conn(13, 8080), Conn(14, PORT, status="TIME_WAIT"), Conn(0, PORT)]
+    monkeypatch.setattr(psutil, "net_connections", lambda kind="tcp": conns)
+    monkeypatch.setattr(psutil, "Process", lambda pid: Proc(pid) if pid in (10, 11, 12) else (_ for _ in ()).throw(psutil.NoSuchProcess(pid)))
+    got = bw.cdp_clients(PORT, own_pid=99)
+    assert {c["pid"] for c in got} == {10, 12}  # 브라우저(11)·감시 자신(99)·다른 포트·종료된 연결은 제외
+    python = next(c for c in got if c["pid"] == 10)
+    assert python == {"pid": 10, "name": "python.exe", "script": "gmail_reader.py"}  # 스크립트 파일명만 — 인자(토큰)는 남기지 않는다
+
+
+def test_cdp_clients_returns_empty_when_connections_cannot_be_read(monkeypatch):
+    import psutil
+
+    def boom(kind="tcp"):
+        raise psutil.AccessDenied()
+
+    monkeypatch.setattr(psutil, "net_connections", boom)
+    assert bw.cdp_clients(PORT, own_pid=1) == []
