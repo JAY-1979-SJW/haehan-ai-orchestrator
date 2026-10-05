@@ -21489,6 +21489,38 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_memory_bounds_20261005.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/module_quality_gate_exports.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/dispatch.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/router_status.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
   "tests/cdp_port_guard.py": {
    "layer": "L11",
    "role": "test",
@@ -21501,6 +21533,14 @@
    "layer": "L11",
    "role": "test",
    "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_site_engine_get_gate_policies.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
