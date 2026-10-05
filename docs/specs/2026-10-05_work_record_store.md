@@ -101,7 +101,7 @@
 | 컬럼 | 타입 | 필수 | 설명 |
 |---|---|---|---|
 | job_id | TEXT PK | O | uuid4 hex32 |
-| kind | TEXT | O | `site_map_explore` / `task_run` / `dev_task` / `ops_check` / `manual`. 허용목록 |
+| kind | TEXT | O | `site_map_explore` / `task_run` / `dev_task` / `ops_check` / `manual` / `site.onboard:<host>`(6a 온보딩 job; `site.onboard:` 접두 + 호스트 문자열). 허용목록 검증은 고정 값 일치, 그리고 `site.onboard:` 접두 + 호스트 형식 검사(host 가 `site_registry` 표기 규칙에 맞을 것)로 한다 |
 | title | TEXT | O | 사람이 읽는 제목(검색 대상) |
 | status | TEXT | O | §3-2 |
 | site_id / host | TEXT | - | 도메인(`site_registry` 의 host 와 동일 표기) |
@@ -114,8 +114,10 @@
 | tenant_id | TEXT | O | 기본 `default`(Q3) |
 | created_by / updated_by | TEXT | O | actor 문자열(기존 관례) |
 | retention_class | TEXT | O | `standard`/`short`/`keep`(Q2) |
-| workflow_run_id / task_id | TEXT | - | 기존 승인·감사 키와 연결 |
+| workflow_run_id / task_id | TEXT | - | 기존 승인·감사 키와 연결. 이 `task_id` 는 **`audit_logger` 의 task_id 와 정합을 위해 유지**(WRS 작업 자체의 식별자 아님; 아래 용어 정리 참조) |
 | created_at / updated_at | TEXT | O | ISO8601 UTC |
+
+**식별자 용어 정리(task_key / job_id / task_id)**: WRS 의 task_id 는 audit_logger 의 task_id 와 의미가 달라 충돌할 수 있다. 그래서 6a 지도의 업무 항목 식별자는 `task_key`, WRS 작업 자체의 식별자는 `job_id` 로 구분한다. `task_id` 라는 이름은 `audit_logger`·기존 스토어(승인 등)의 키를 가리킬 때만 쓰며, `wrs_jobs.task_id` 컬럼은 그 연결 용도로만 유지한다(지도 업무는 `task_key`, `wrs_links` 또는 artifact 참조로 표현).
 
 ### 3-2. 상태와 허용 전이 (원자적 `UPDATE ... WHERE status IN (...)` rowcount==1 판정 — `agent_dispatch_store.py:143-152`)
 
@@ -135,7 +137,7 @@
 | 컬럼 | 타입 | 필수 | 설명 |
 |---|---|---|---|
 | job_id, seq | PK(복합) | O | 순번 |
-| kind | TEXT | O | explore/classify/navigate/read/fill/submit/verify/approve 등 |
+| kind | TEXT | O | explore/classify/navigate/read/fill/submit/verify/approve/`dry_run`/`run` 등(허용목록, `dry_run`·`run` 은 6a 확정) |
 | status | TEXT | O | pending/running/succeeded/failed/skipped |
 | risk | TEXT | O | read/write/submit (지도 task 의 risk 와 동일 값) |
 | started_at / finished_at | TEXT | - | |
@@ -163,7 +165,7 @@
 
 - `wrs_events`(append-only): `event_id AI, job_id, step_seq?, at, actor, event, detail(마스킹 요약)`. 수정·삭제 불가(gongmu_store.events 패턴).
 - `wrs_links`: `job_id, link_type(approval/audit/dispatch/scheduled_run/gongmu_task), ref_store, ref_id`. 승인·결정은 **원본을 복제하지 않고 ID 만 참조**한다.
-- 연결 키: `task_id`(audit_logger), `workflow_run_id`·`tenant_id`·`site_id`(approval_record 의 필드명과 동일) — 정합 유지.
+- 연결 키: `task_id`(**audit_logger 의 것**; 지도 업무 `task_key`·WRS 작업 `job_id` 와 다른 의미), `workflow_run_id`·`tenant_id`·`site_id`(approval_record 의 필드명과 동일) — 정합 유지.
 - 인덱스(제안): (status, updated_at), (host, updated_at), (kind, created_at), (rerun_of), (input_hash), 태그는 별도 `wrs_job_tags(job_id, tag)` 로 정규화해 태그 검색 인덱스.
 
 ### 3-6. 값 저장 규칙
@@ -172,7 +174,7 @@
 
 ## 4. 6a 인터페이스
 
-6a(`feat/gongmu-g2`)의 문서: 선행(master) `new_site_onboarding`·`site_task_map`·`m5_runner`·`m6_business_sites`·`m7_onboarding_auto_prepare`, 6a 신규 M8(링크 이동형 읽기)·M9(정밀 탐색: `data_sources`, `declared_tools`). 6a 기준서는 `docs/specs/2026-10-05_new_site_onboarding_pipeline.md`(커밋 `98a59688`, 사용자 승인 전)이며 이 접점은 그 문서 §5(데이터 모델)·§6(작업 기록 저장소 인터페이스)와 정합시켰다(`git show 98a59688:<경로>` 로 확인; `origin/feat/gongmu-g2` 에는 아직 이 경로가 없음). 서술이 중복되는 부분은 6a 문서 §5·§6 이 우선이다.
+6a(`feat/gongmu-g2`)의 문서: 선행(master) `new_site_onboarding`·`site_task_map`·`m5_runner`·`m6_business_sites`·`m7_onboarding_auto_prepare`, 6a 신규 M8(링크 이동형 읽기)·M9(정밀 탐색: `data_sources`, `declared_tools`). 6a 기준서는 `docs/specs/2026-10-05_new_site_onboarding_pipeline.md`(커밋 `98a59688`, 사용자 승인 전)이며 이 접점은 그 문서 §5(데이터 모델)·§6(작업 기록 저장소 인터페이스)와 정합시켰다(`git show 98a59688:<경로>` 로 확인; `origin/feat/gongmu-g2` 에는 아직 이 경로가 없음). 서술이 중복되는 부분은 6a 문서 §5·§6 이 우선이다. 6a 문서 커밋 98a59688·1ea2dd10 은 6a 로컬(미푸시) 상태이며 푸시는 사용자 몫이다.
 
 6a 회신 반영(요지): (a) 4개 기록 함수 호출은 **L6 서비스**(`site_task_map_service`·`site_task_map_explore_service`·`site_onboarding_service`)에서만 하고, 브라우저를 직접 만지는 runner/explorer(L4)에는 넣지 않는다(best-effort, 기록 실패가 읽기 업무를 막지 않음). (b) task spec 은 지도 스냅샷의 `task_key` 를 참조(업무 명세는 지도의 업무 항목 안에 키로 추가) — M9 와 충돌 없음. (d) 6a 는 `data/site_task_map`(`site_task_map_store`)만 쓰고 `data/sitemap`(구 계통)은 건드리지 않음 — 구 계통 읽기 어댑터는 선택 사항(Q5). (e) 재실행: 같은 `map_rev` 고정 + `fingerprint` 가 달라졌으면 사람에게 묻는다(6a 문서 §6-c) — WRS 의 '새 job+새 승인'(§6-3)과 같은 방향.
 
@@ -201,8 +203,8 @@ finish_job(job_id, status, *, error=None) -> None      # 허용 전이 위반 �
 위 5개 규칙에 6a 회신 (a)를 더해 호출 위치는 **L6 서비스 한정**이다(runner/explorer L4 금지).
 
 6a 문서 §5·§6 과의 정합 점검(불일치·미결, 구현 전 6a 와 맞출 것):
-1. 용어: 6a 문서는 업무 식별자를 `task_id`(§5), 회신은 `task_key` 로 쓴다. WRS `wrs_jobs.task_id` 는 `audit_logger` 의 task_id 와 같은 의미라 충돌 가능 → 지도 업무 식별은 `task_key` 로 통일 권장(6a 문서 수정 필요).
-2. 작업 키: 6a 는 job `site.onboard:<host>`, step `explore`/`dry_run`/`run`, 산출물 `map:<host>@<map_rev>`·`task_spec:<host>/<task_id>@<map_rev>`(§6). WRS §3 의 job.kind 허용목록에는 온보딩용 kind 가, step.kind 에는 `dry_run` 이 없다 → M1 에서 `site_onboard` 등 추가 필요(Q11).
+1. 용어: 6a 문서(98a59688·1ea2dd10)는 §5·§6·Q6 에서 업무 식별자를 아직 `task_id` 로 쓰고(`task_spec:<host>/<task_id>@<map_rev>`), 회신은 `task_key` 로 쓴다. WRS 는 지도 업무를 `task_key` 로 통일했으므로(창 E 결정·사용자 승인) **6a 문서 §5·§6·Q6 의 `task_id` → `task_key` 수정이 필요**하다(미반영).
+2. 작업 키: 6a 는 job `site.onboard:<host>`, step `explore`/`dry_run`/`run`, 산출물 `map:<host>@<map_rev>`·`task_spec:<host>/<task_id>@<map_rev>`(§6). 이 이름들은 §3 의 kind 허용목록(job `site.onboard:<host>`, step `dry_run`·`run`)에 반영했다(M1 구현 시 포함, Q11).
 3. 저장 분담: 6a §6-a "지도 본문은 기존 저장소, 기록에는 참조(host,map_rev,fingerprint)만" 은 위 조정 제안(c)과 같은 방향. 단 6a 이력 경로가 `_history/<host>/<map_rev>.json` 인 점은 6a 문서 §5 근거이며 구현 전이라 변경될 수 있음(확인 필요).
 
 ## 5. 저장소 선택·레이어
@@ -328,7 +330,7 @@ finish_job(job_id, status, *, error=None) -> None      # 허용 전이 위반 �
 
 | 단계 | 산출물 | 영향 파일(층) | 위험 | 롤백 | 승인 필요 |
 |---|---|---|---|---|---|
-| M1 | 스키마·스토어·도메인 | `domain/work_record.py`(L1), `persistence/work_record_store.py`(L7), registry, **`.gitignore` 에 `data/work_records/` 추가(§10-1, 별도 승인)** | 스키마 확정 후 변경 비용 | 신규 파일 삭제, DB 삭제 | 스키마 변경 승인, Q1·Q3 |
+| M1 | 스키마·스토어·도메인 | `domain/work_record.py`(L1, kind 허용목록에 `site.onboard:<host>` 접두+호스트 형식 검사·step `dry_run` 포함), `persistence/work_record_store.py`(L7), registry, **`.gitignore` 에 `data/work_records/` 추가(§10-1, 별도 승인)** | 스키마 확정 후 변경 비용 | 신규 파일 삭제, DB 삭제 | 스키마 변경 승인, Q1·Q3 |
 | M2 | 서비스·마스킹·화이트리스트 | `services/work_record_service.py`(L6) | 마스킹 누락=민감정보 저장 | 신규 파일 삭제 | Q8 |
 | M3 | 읽기 API | `routers/work_record_router.py`(L8), `router.py` include 1줄(기존 파일 수정) | 라우트 노출·권한 | include 줄 제거 | 신규 라우트 승인 |
 | M4 | CLI·재실행/resume | `scripts/ops/work_record_cli.py`, 서비스 | 승인 우회 위험 | 신규 파일 삭제 | 승인 게이트 설계 검토 |
