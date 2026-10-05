@@ -107,7 +107,7 @@ class NaverDevRegAdapter(DevRegAdapterBase):
             )
 
         if dry_run:
-            filled = [k for k in _SELECTORS if params.get(k)]
+            filled: list[str] = [k for k in _SELECTORS if params.get(k)]
             scopes = params.get("requested_scopes", [])
             if scopes:
                 filled += [f"scope:{s}" for s in (scopes if isinstance(scopes, list) else [])]
@@ -141,7 +141,7 @@ class NaverDevRegAdapter(DevRegAdapterBase):
                 error_code=ErrorCode.LOGIN_REQUIRED,
             )
 
-        filled: list[str] = []
+        filled = []
         errors_fill: list[str] = []
 
         _fill_fields_and_scopes(page, params, filled, errors_fill)
