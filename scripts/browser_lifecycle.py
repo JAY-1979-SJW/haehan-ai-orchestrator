@@ -6,7 +6,9 @@
   기본 설정은 쿠키가 사라졌고, Preferences 파일에 "이어서 열기"를 써 넣는 방식은 Chrome 이 무시했다(시작 설정은 변조 방지로 보호됨), 강제 종료도 쿠키가 사라졌다.
   쿠키 값은 건드리지 않는다 — 브라우저의 표준 스위치·종료 명령만 쓴다. (이 스위치는 값과 무관하게 있으면 켜진다 — `=false` 를 붙이면 안 된다.)
 - 깨끗한 시작: 복원된 옛 탭은 시작 직후 닫고 빈 탭 하나만 남긴다(사용자가 실행 중에 연 탭은 건드리지 않는다).
-- 정상 종료: CDP `Browser.close` 로 먼저 닫아 쿠키·세션이 디스크에 남게 하고, 안 닫히면 그때 강제 종료한다.
+- 정상 종료: CDP `Browser.close` 로 먼저 닫아 쿠키·세션이 디스크에 남게 하고, 안 닫히면 종료 신호 → 강제 종료 순으로 넘어간다.
+  실측: **로그인 쿠키까지 남는 것은 CDP `Browser.close` 뿐**이다. 종료 신호(Windows 창 닫기 요청)는 탭은 복원되지만 세션 쿠키는 사라졌고, 강제 종료는 둘 다 잃었다.
+  그래서 2·3단계는 프로세스를 확실히 끝내는 안전망일 뿐 로그인 보존을 보장하지 않는다(호출자는 `graceful` 이 아니면 경고를 남긴다).
 """
 
 from __future__ import annotations
@@ -14,12 +16,19 @@ from __future__ import annotations
 import contextlib
 import http.client
 import json
+import os
+import shutil
+import signal
+import subprocess
+import sys
 import time
 from typing import Any
 
 RESTORE_SWITCH = "--restore-last-session"  # Chrome 실행 인자(값 없이). 이전 세션 복원 → 세션 쿠키(로그인) 유지
 CLOSE_WAIT_S = 8.0
-RESTORE_SETTLE_S = 2.5  # 시작 직후 세션 복원이 끝나기를 기다리는 시간
+RESTORE_SETTLE_S = 10.0  # 시작 직후 세션 복원이 끝나기를 기다리는 최대 시간(탭 목록이 두 번 연속 같으면 끝난 것으로 본다)
+RESTORE_POLL_S = 0.7
+SIGNAL_WAIT_S = 5.0
 
 
 def page_tab_ids(tabs: list[dict[str, Any]]) -> list[str]:
@@ -41,11 +50,26 @@ def _http(port: int, path: str, method: str = "GET", timeout: float = 5.0) -> An
         return body.decode("utf-8", errors="replace")
 
 
-def close_stale_tabs(port: int, *, settle_s: float = RESTORE_SETTLE_S, sleep=time.sleep) -> int:
+def _wait_restore_settled(port: int, *, timeout_s: float, poll_s: float, sleep, clock) -> list[str]:
+    """복원이 끝나기를 기다린다: page 탭 목록이 두 번 연속 같으면(또는 시간 초과) 그 목록을 돌려준다. 탭이 많아도 고정 대기보다 정확하다."""
+    deadline = clock() + timeout_s
+    last: list[str] | None = None
+    same = 0
+    while True:
+        ids = sorted(page_tab_ids(_http(port, "/json/list")))
+        same = same + 1 if ids == last else 0
+        last = ids
+        if same >= 2 or clock() >= deadline:
+            return ids
+        sleep(poll_s)
+
+
+def close_stale_tabs(
+    port: int, *, settle_s: float = RESTORE_SETTLE_S, poll_s: float = RESTORE_POLL_S, sleep=time.sleep, clock=time.monotonic
+) -> int:
     """시작 직후 복원된 옛 탭을 모두 닫고 빈 탭 하나만 남긴다 → 닫은 개수. 실패해도 예외를 내지 않는다(브라우저 시작을 막지 않는다)."""
     try:
-        sleep(settle_s)
-        old = page_tab_ids(_http(port, "/json/list"))
+        old = _wait_restore_settled(port, timeout_s=settle_s, poll_s=poll_s, sleep=sleep, clock=clock)
         if not old:
             return 0
         _http(port, "/json/new?about:blank", method="PUT")  # 마지막 탭을 닫으면 Chrome 이 끝나므로 빈 탭을 먼저 만든다
@@ -86,3 +110,53 @@ def graceful_close(
             return True
         sleep(0.3)
     return not is_alive()
+
+
+def _polite_signal(pid: int, *, is_alive, timeout_s: float = SIGNAL_WAIT_S, sleep=time.sleep, clock=time.monotonic) -> bool:
+    """2단계: 종료 신호(Windows 는 강제 옵션 없는 taskkill = 창 닫기 요청, 그 밖에는 SIGTERM). ChromeDriver 의 quitGracefully 와 같은 순서."""
+    try:
+        if sys.platform == "win32":
+            taskkill = shutil.which("taskkill")  # 시스템 명령을 PATH 에서 찾는다(없으면 신호 단계를 건너뛴다)
+            if not taskkill:
+                return False
+            subprocess.run([taskkill, "/PID", str(int(pid))], capture_output=True, timeout=10, check=False)
+        else:
+            os.kill(pid, signal.SIGTERM)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    deadline = clock() + timeout_s
+    while clock() < deadline:
+        if not is_alive():
+            return True
+        sleep(0.3)
+    return not is_alive()
+
+
+def _force_kill(pid: int) -> None:
+    import psutil
+
+    with contextlib.suppress(psutil.Error):
+        psutil.Process(pid).kill()
+
+
+def _pid_alive(pid: int) -> bool:
+    import psutil
+
+    return psutil.pid_exists(pid)
+
+
+def stop_browser(port: int, pid: int, *, is_alive=None, graceful=graceful_close, polite=_polite_signal, force=_force_kill) -> str:
+    """Chrome 을 3단계로 닫는다 → 끝난 방식(`already_stopped`·`graceful`·`signal`·`forced`).
+
+    1) CDP `Browser.close` — 쿠키·세션이 디스크에 남는다(로그인 유지는 이 단계뿐)  2) 종료 신호 — 탭은 복원되지만 로그인 쿠키는 잃을 수 있다
+    3) 강제 종료(마지막 수단 — 둘 다 잃을 수 있다).
+    """
+    alive = is_alive or (lambda: _pid_alive(pid))
+    if not alive():
+        return "already_stopped"
+    if graceful(port, is_alive=alive):
+        return "graceful"
+    if polite(pid, is_alive=alive):
+        return "signal"
+    force(pid)
+    return "forced"

@@ -19,7 +19,7 @@ ALL_LAUNCHERS = (*CDP_LAUNCHERS, "scripts/naver/browser_gate.py")
 
 def _arg_lines(rel: str) -> list[str]:
     lines = (ROOT / rel).read_text(encoding="utf-8").splitlines()
-    return [ln for ln in lines if re.search(r'^\s*("--[a-z-]+|lifecycle\.RESTORE_SWITCH)', ln)]
+    return [ln for ln in lines if re.search(r'^\s*(f?"--[a-z-]+|lifecycle\.RESTORE_SWITCH)', ln)]
 
 
 def test_no_launcher_passes_the_switch_with_a_value():
@@ -40,3 +40,11 @@ def test_naver_browser_gate_does_not_restore_sessions():
     args = _arg_lines("scripts/naver/browser_gate.py")
     assert args, "검사할 Chrome 실행 인자를 하나도 찾지 못했습니다(시험이 공허해짐)"
     assert not [ln for ln in args if "restore-last-session" in ln or "RESTORE_SWITCH" in ln]
+
+
+def test_cdp_launchers_always_pass_a_custom_user_data_dir():
+    """Chrome 136 부터 원격 디버깅 포트는 기본 프로필에서는 무시된다 — 반드시 별도 `--user-data-dir` 이 함께 있어야 한다(developer.chrome.com/blog/remote-debugging-port)."""
+    for rel in CDP_LAUNCHERS:
+        args = _arg_lines(rel)
+        assert any("--remote-debugging-port" in ln for ln in args), f"{rel}: 원격 디버깅 포트 인자를 찾지 못했습니다(시험이 공허해짐)"
+        assert any("--user-data-dir" in ln for ln in args), f"{rel}: --user-data-dir 가 없으면 Chrome 136+ 에서 디버깅 포트가 무시됩니다"

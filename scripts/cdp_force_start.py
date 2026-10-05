@@ -227,12 +227,6 @@ def cmd_status() -> None:
         print(f"Chrome PID: {pid_data['pid']}")
 
 
-def _pid_alive(pid: int) -> bool:
-    import psutil
-
-    return psutil.pid_exists(pid)
-
-
 def cmd_stop() -> None:
     _stop_watch()
     if PID_FILE.exists():
@@ -240,11 +234,8 @@ def cmd_stop() -> None:
             data = json.loads(PID_FILE.read_text(encoding="utf-8"))
             pid = data.get("pid")
             if pid:
-                if lifecycle.graceful_close(CDP_PORT, is_alive=lambda: _pid_alive(pid)):  # 쿠키가 디스크에 남도록 정상 종료 먼저
-                    print(f"✓ Chrome 정상 종료 (PID={pid})")
-                else:
-                    os.kill(pid, 9 if sys.platform == "win32" else 15)
-                    print(f"✓ Chrome 종료 (PID={pid})")
+                how = lifecycle.stop_browser(CDP_PORT, pid)  # 쿠키가 디스크에 남도록 정상 종료부터 3단계
+                print(f"✓ Chrome 종료 (PID={pid}, 방식={how})")
             PID_FILE.unlink(missing_ok=True)
         except Exception as e:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내
             print(f"종료 실패: {e}")

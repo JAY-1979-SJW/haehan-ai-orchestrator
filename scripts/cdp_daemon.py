@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import json
 import logging
 import os
@@ -329,16 +328,14 @@ def _start_popup_monitor_process() -> None:
 
 
 def _stop_chrome(proc: subprocess.Popen | None) -> None:
-    """Chrome 을 정상 종료(CDP Browser.close)로 먼저 닫아 쿠키가 디스크에 남게 하고, 안 닫히면 강제 종료한다."""
+    """Chrome 을 3단계로 닫는다(CDP 종료 → 종료 신호 → 강제) — 앞 단계일수록 쿠키가 디스크에 잘 남는다."""
     if not proc or proc.poll() is not None:
         return
-    if lifecycle.graceful_close(CDP_PORT, is_alive=lambda: proc.poll() is None):
-        log.info("[CHROME] 정상 종료 PID=%d", proc.pid)
-        return
-    log.warning("[CHROME] 정상 종료 실패 — 강제 종료 PID=%d", proc.pid)
-    with contextlib.suppress(Exception):
-        proc.terminate()
-        proc.wait(timeout=5)
+    how = lifecycle.stop_browser(CDP_PORT, proc.pid, is_alive=lambda: proc.poll() is None)
+    if how in ("signal", "forced"):  # CDP 정상 종료가 아니면 로그인(세션 쿠키)이 사라졌을 수 있다
+        log.warning("[CHROME] 정상 종료(CDP) 실패 → 종료 방식=%s PID=%d — 로그인 세션이 사라졌을 수 있습니다", how, proc.pid)
+    else:
+        log.info("[CHROME] 종료 방식=%s PID=%d", how, proc.pid)
 
 
 def _stop_process(proc: subprocess.Popen | None, label: str) -> None:
@@ -685,12 +682,6 @@ def cmd_start() -> None:
         print(" ⚠ (시간 초과 — 로그 확인 필요)")
 
 
-def _pid_alive(pid: int) -> bool:
-    import psutil
-
-    return psutil.pid_exists(pid)
-
-
 def cmd_stop() -> None:
     state = _load_state()
 
@@ -698,12 +689,8 @@ def cmd_stop() -> None:
     # Chrome 종료
     if state.chrome_pid:
         try:
-            pid = state.chrome_pid
-            if lifecycle.graceful_close(CDP_PORT, is_alive=lambda: _pid_alive(pid)):  # 쿠키가 디스크에 남도록 정상 종료 먼저
-                print(f"✓ Chrome 정상 종료 (PID={pid})")
-            else:
-                os.kill(pid, signal.SIGTERM)
-                print(f"✓ Chrome 종료 (PID={pid})")
+            how = lifecycle.stop_browser(CDP_PORT, state.chrome_pid)  # 쿠키가 디스크에 남도록 정상 종료부터 3단계
+            print(f"✓ Chrome 종료 (PID={state.chrome_pid}, 방식={how})")
             stopped = True
         except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             print(f"⚠  Chrome 종료 실패: {e}")
