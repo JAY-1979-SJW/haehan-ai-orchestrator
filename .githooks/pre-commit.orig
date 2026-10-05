@@ -189,6 +189,14 @@ if _sg.exists():
     if _sg_result.returncode != 0:
         sys.exit(_sg_result.returncode)
 
+# ── audit-kit 개발 기준서 게이트 (staged .py 의 신규 문제만 차단) ──────────
+# audit-kit 를 못 찾으면 건너뛰지만 AUDIT_KIT_REQUIRED=1 이면 커밋을 막는다.
+_ak = ROOT / "scripts" / "ops" / "audit_kit_gate.py"
+if _ak.exists():
+    _ak_result = subprocess.run([*_pyexe(), str(_ak), "--staged"], cwd=str(ROOT))
+    if _ak_result.returncode != 0:
+        sys.exit(_ak_result.returncode)
+
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P
 import importlib.util, os

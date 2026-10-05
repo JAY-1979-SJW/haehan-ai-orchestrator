@@ -349,3 +349,81 @@ def test_mypy_keys_retries_once_on_internal_error_and_serializes(monkeypatch, tm
     answers[:] = [Proc(2, b"x"), Proc(2, b"x")]
     assert gate.mypy_keys("py", tmp_path / "a.py", tmp_path) is None  # 두 번 다 실패하면 '오류 없음'이 아니라 실행 못 함
     assert len(calls) == 2
+
+
+# ── 강제(AUDIT_KIT_REQUIRED)·커밋 단계(--staged) ─────────────────────────────
+
+
+def _missing_kit(py_file, monkeypatch):
+    monkeypatch.setenv("AUDIT_KIT_BIN", str(py_file.parent / "does_not_exist.py"))
+
+
+def test_required_blocks_post_edit_when_kit_missing(py_file, monkeypatch, capsys):
+    _missing_kit(py_file, monkeypatch)
+    monkeypatch.setenv("AUDIT_KIT_REQUIRED", "1")
+    proc = _post_edit(py_file, capsys)
+    assert proc.returncode == 2 and "AUDIT_KIT_REQUIRED" in proc.stderr  # 필수 환경에선 미설치도 막는다
+
+
+def test_required_blocks_stop_when_kit_missing(py_file, monkeypatch, capsys):
+    from scripts.ops import post_edit_fast_gate as pef
+
+    _missing_kit(py_file, monkeypatch)
+    monkeypatch.setenv("AUDIT_KIT_REQUIRED", "1")
+    monkeypatch.setattr(pef, "load_session_edits", lambda _sid: [str(py_file)])
+    monkeypatch.setattr(pef, "cleanup_old_session_edit_files", lambda: None)
+    assert gate.run_stop(json.dumps({"session_id": "s1"})) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["decision"] == "block" and "AUDIT_KIT_REQUIRED" in out["reason"]
+
+
+@pytest.mark.parametrize("value", ["", "0", "false", "no"])
+def test_not_required_values_stay_fail_open(py_file, monkeypatch, capsys, value):
+    _missing_kit(py_file, monkeypatch)
+    monkeypatch.setenv("AUDIT_KIT_REQUIRED", value)
+    assert _post_edit(py_file, capsys).returncode == 0
+
+
+def _staged(monkeypatch, files):
+    monkeypatch.setattr(gate, "_staged_python_files", lambda: list(files))
+
+
+def test_staged_blocks_commit_on_new_findings(fake_kit, py_file, monkeypatch, capsys):
+    fake_kit(2, "audit-kit: mod.py 검사에서 1건 발견\n[표준 STD-02] mod.py:1 절대경로 하드코딩\n")
+    _staged(monkeypatch, [py_file])
+    assert gate.run_staged() == 1
+    assert "STD-02" in capsys.readouterr().err
+
+
+def test_staged_passes_when_clean_or_only_existing(fake_kit, py_file, monkeypatch):
+    _staged(monkeypatch, [py_file])
+    fake_kit(0)
+    assert gate.run_staged() == 0
+    fake_kit(2, "[표준 EFF-03] mod.py:3 반복문 안에서 open() 호출 (기존)\n")
+    assert gate.run_staged() == 0  # 이번 변경 이전부터 있던 문제는 막지 않는다
+
+
+def test_staged_with_nothing_staged_passes_without_kit(py_file, monkeypatch, capsys):
+    _missing_kit(py_file, monkeypatch)
+    monkeypatch.setenv("AUDIT_KIT_REQUIRED", "1")
+    _staged(monkeypatch, [])
+    assert gate.run_staged() == 0  # 검사할 .py 가 없으면 audit-kit 이 없어도 커밋을 막지 않는다
+
+
+def test_staged_skips_when_kit_missing_unless_required(py_file, monkeypatch, capsys):
+    _missing_kit(py_file, monkeypatch)
+    _staged(monkeypatch, [py_file])
+    monkeypatch.delenv("AUDIT_KIT_REQUIRED", raising=False)
+    assert gate.run_staged() == 0
+    assert "찾지 못해" in capsys.readouterr().err
+    monkeypatch.setenv("AUDIT_KIT_REQUIRED", "1")
+    assert gate.run_staged() == 1
+    assert "AUDIT_KIT_REQUIRED" in capsys.readouterr().err
+
+
+def test_main_dispatches_staged_mode(fake_kit, py_file, monkeypatch):
+    fake_kit(2, "[표준 STD-02] mod.py:1 x\n")
+    _staged(monkeypatch, [py_file])
+    monkeypatch.setattr(sys, "stdin", type("S", (), {"isatty": lambda self: True, "read": lambda self: ""})())
+    assert gate.main(["--staged"]) == 1
+
