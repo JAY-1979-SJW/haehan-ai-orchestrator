@@ -101,7 +101,7 @@ def _extract_title(html_text: str) -> str | None:
     return None
 
 
-def _extract_meta_and_canonical(html_text: str) -> tuple[str | None, str | None]:
+def _extract_meta_and_canonical(html_text: str) -> tuple[str | None, str | None, str | None]:
     description: str | None = None
     og_title: str | None = None
     canonical: str | None = None
@@ -126,7 +126,7 @@ def _extract_meta_and_canonical(html_text: str) -> tuple[str | None, str | None]
                 canonical = href.strip() or None
             break
 
-    return description, canonical, og_title  # type: ignore[return-value]
+    return description, canonical, og_title
 
 
 def _content_type_of(headers: Any) -> str:
