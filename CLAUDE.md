@@ -309,6 +309,13 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
 작업이 끝났다고 보고하기 전에 반드시 테스트를 실행하거나 빌드/타입체크를 통과시켜 증거를
 확인할 것. 실행해보지 않은 코드를 '완료'로 보고하지 말 것.
 
+### audit-kit 검증 강제 (2026-10-05 추가)
+코드를 쓴 직후 `scripts/ops/audit_kit_gate.py`(PostToolUse/Stop 훅)가, 커밋 시점에는 pre-commit 의
+`audit_kit_gate.py --staged` 가 **이번 변경으로 새로 생긴** 개발 기준서·구조 문제를 막는다(기존 문제는 안 막음).
+audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/audit-kit` 로 설치하며, 위치는
+`AUDIT_KIT_BIN` 으로 지정한다. **`AUDIT_KIT_REQUIRED=1` 이면 audit-kit 를 못 찾을 때 건너뛰지 않고 막는다** —
+검증 없이 통과되는 것을 막으려면 개발 PC 환경변수에 켜 둔다.
+
 ### 워크플로
 복잡하거나 여러 파일에 걸친 작업은 Explore → Plan(Plan Mode) → Implement → Verify → Commit
 순서로 진행한다. Verify 단계는 `scripts/ops/verify_change.py`(전체) 또는 세션 빠른 게이트
