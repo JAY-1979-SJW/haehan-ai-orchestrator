@@ -21489,6 +21489,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_site_engine_get_gate_policies.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/module_quality_gate_exports.py": {
    "layer": "L2",
    "role": "policy",
