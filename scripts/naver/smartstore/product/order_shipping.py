@@ -116,7 +116,8 @@ class OrderShippingProcessor:
         if not self._open_order_page():
             return {"ok": False, "error": "주문관리 페이지 진입 실패"}
 
-        processed, failed = [], []
+        processed: list[dict] = []
+        failed: list[dict] = []
         for order in orders:
             r = self._input_tracking(
                 order["order_id"],
