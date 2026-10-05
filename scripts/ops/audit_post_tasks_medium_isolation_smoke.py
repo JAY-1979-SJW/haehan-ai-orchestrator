@@ -36,7 +36,7 @@ SMOKE_APPROVAL = {
 
 # ── 1. 경로별 smoke 결과 정의 ─────────────────────────────────────────────────
 # 실제 실행이 아닌 코드 경로 추적 + mock 기반 검증 결과를 문서화.
-SMOKE_RESULTS = {
+SMOKE_RESULTS: dict[str, dict[str, Any]] = {
     "MS-1_medium_dry_run_blocks_token": {
         "desc": "medium risk → dry-run gate 활성화 → issue_token 미호출",
         "test_method": "mock, patch issue_token assert_not_called",
@@ -106,7 +106,7 @@ SMOKE_RESULTS = {
 }
 
 # ── 2. 위험 write 경로 검증 결과 ─────────────────────────────────────────────
-WRITE_PATH_VERIFICATION = {
+WRITE_PATH_VERIFICATION: dict[str, dict[str, Any]] = {
     "audit_logs_jsonl": {
         "path": "data/logs/audit_logs.jsonl",
         "trigger": "매 submit_task 호출 시",

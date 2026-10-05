@@ -10,7 +10,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AUDIT_ID = "APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_PLAN"
@@ -55,7 +55,7 @@ ROUTER_LOCATION_PLAN = {
 
 # ── priority1 endpoint plan matrix ───────────────────────────────────────────
 
-PRIORITY1_ENDPOINT_PLAN_MATRIX = [
+PRIORITY1_ENDPOINT_PLAN_MATRIX: list[dict[str, Any]] = [
     {
         "endpoint": "GET /api/v1/app/health/summary",
         "method": "GET",
