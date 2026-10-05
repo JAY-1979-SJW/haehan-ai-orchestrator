@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import datetime, time
+from typing import Any
 
 import pytest
 
@@ -16,7 +17,7 @@ RECIPS = tuple({"email": f"user{i}@example.com", "name": f"고객{i}"} for i in 
 
 def _auth(**over) -> pol.Authorization:
     kind, subject, body = pol.KIND_TRANSACTION, "안내", "본문"
-    base = dict(
+    base: dict[str, Any] = dict(
         id="a1",
         recipients=RECIPS,
         subject=subject,
@@ -41,7 +42,7 @@ def _auth(**over) -> pol.Authorization:
 
 
 def _state(**over) -> pol.State:
-    base = dict(
+    base: dict[str, Any] = dict(
         now=NOW,
         kill_switch_on=False,
         sent_today=0,
@@ -169,7 +170,7 @@ def db(tmp_path, monkeypatch):
 
 
 def _new(**over) -> store.NewAuthorization:
-    base = dict(
+    base: dict[str, Any] = dict(
         name="10월 안내",
         account="skyjwsin",
         kind="transaction",

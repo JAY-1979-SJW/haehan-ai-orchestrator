@@ -1,5 +1,7 @@
 """Unit tests for scripts.site_engine.profiles."""
 
+from typing import Any
+
 import pytest
 
 from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile
@@ -12,7 +14,7 @@ from scripts.site_engine.types import (
 
 
 def _minimal_profile(**overrides) -> SiteProfile:
-    defaults = {
+    defaults: dict[str, Any] = {
         "key": "test_site",
         "base_url": "https://test.example.com",
         "display_name": "Test Site",
