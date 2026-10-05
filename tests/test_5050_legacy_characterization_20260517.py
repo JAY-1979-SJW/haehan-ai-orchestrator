@@ -367,6 +367,7 @@ def test_audit_boundary_no_violations():
 
 def test_checklist_completeness():
     audit = _audit()
+    assert len(audit["checks"].items()) > 0, "checks 가 비어 있음 — 아래 assert 가 공허하게 통과한다"
     failed = [k for k, v in audit["checks"].items() if not v]
     assert failed == [], f"checklist 실패: {failed}"
 

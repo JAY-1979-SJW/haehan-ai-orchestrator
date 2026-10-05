@@ -39,6 +39,7 @@ def test_desktop_auth_runtime_includes_baseline_contract_gate():
 
 
 def test_command_matrix_blocks_build_deploy_and_push_commands():
+    assert len(list(gate.all_steps())) > 0, "all_steps() 가 비어 있음 — 아래 assert 가 공허하게 통과한다"
     offenders = [step.name for step in gate.all_steps() if step.command and gate.command_is_forbidden(step.command)]
 
     assert offenders == []

@@ -21449,6 +21449,14 @@
    "confidence": "low",
    "source": "rule"
   },
+  "tests/test_error_recovery_log_critical.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "ai_orchestrator/domain/site_map_labels.py": {
    "layer": "L1",
    "role": "contract",

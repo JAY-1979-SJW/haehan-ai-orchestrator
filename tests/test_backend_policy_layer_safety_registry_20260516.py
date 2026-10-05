@@ -533,6 +533,7 @@ class TestNoUIFileChange:
         if not policy_dir.exists():
             return
         ui_extensions = {".tsx", ".jsx", ".vue", ".html", ".css", ".scss"}
+        assert len(list(policy_dir.rglob("*"))) > 0, "policy/ 에 검사 대상 파일이 없음 — 아래 assert 가 공허하게 통과한다"
         ui_files = [f for f in policy_dir.rglob("*") if f.suffix in ui_extensions]
         assert ui_files == [], f"UI 파일이 policy 모듈에 있음: {ui_files}"
 

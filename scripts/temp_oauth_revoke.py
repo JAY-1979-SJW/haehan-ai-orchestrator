@@ -158,7 +158,7 @@ if captured:
 
     import requests as req_mod
 
-    r = req_mod.get("https://oauth2.googleapis.com/tokeninfo", params={"access_token": creds.token})
+    r = req_mod.get("https://oauth2.googleapis.com/tokeninfo", params={"access_token": creds.token}, timeout=10)
     info = r.json()
     print("실제 스코프:", info.get("scope", ""))
 

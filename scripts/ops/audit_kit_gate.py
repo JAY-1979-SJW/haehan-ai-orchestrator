@@ -211,6 +211,12 @@ def _utf8_streams() -> None:
             getattr(stream, "reconfigure")(encoding="utf-8", errors="replace")
 
 
+def _required(env: Mapping[str, str] | None = None) -> bool:
+    """AUDIT_KIT_REQUIRED=1/true/yes 면 audit-kit 를 못 찾을 때 통과시키지 않고 막는다(fail-closed)."""
+    value = (env if env is not None else os.environ).get("AUDIT_KIT_REQUIRED", "")
+    return value.strip().lower() in {"1", "true", "yes"}
+
+
 def run_post_edit(stdin_text: str) -> int:
     try:
         data = json.loads(stdin_text) if stdin_text.strip() else {}
@@ -227,6 +233,9 @@ def run_post_edit(stdin_text: str) -> int:
         return 0
     kit = find_audit_kit()
     if kit is None:
+        if _required():
+            sys.stderr.write("[audit_kit_gate] audit-kit 를 찾지 못했고 AUDIT_KIT_REQUIRED 가 켜져 있어 막습니다 (AUDIT_KIT_BIN 으로 위치 지정)\n")
+            return 2
         sys.stderr.write("[audit_kit_gate] audit-kit 를 찾지 못해 이번 검사를 생략합니다 (AUDIT_KIT_BIN 환경변수로 위치 지정 가능)\n")
         return 0
     findings, skipped = check_file(kit, path)
@@ -273,6 +282,10 @@ def run_stop(stdin_text: str) -> int:
     files = _session_python_files(payload.get("session_id"))
     kit = find_audit_kit() if files else None
     if files and kit is None:
+        if _required():
+            reason = "audit-kit 를 찾지 못했고 AUDIT_KIT_REQUIRED 가 켜져 있어 세션 종료를 막습니다 (AUDIT_KIT_BIN 으로 위치 지정)"
+            print(json.dumps({"decision": "block", "reason": reason}, ensure_ascii=False))
+            return 0
         sys.stderr.write("[audit_kit_gate] audit-kit 를 찾지 못해 세션 종료 검사를 생략합니다\n")
     if not files or kit is None:
         return 0
@@ -291,6 +304,42 @@ def run_stop(stdin_text: str) -> int:
     return 0
 
 
+def _staged_python_files() -> list[Path]:
+    """커밋에 올라갈(staged, 삭제 제외) 저장소 안 .py 파일."""
+    out = subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
+    ).stdout
+    candidates = [ROOT / rel for rel in out.split("\0") if rel]
+    return [c for c in candidates if _eligible(c)]
+
+
+def run_staged() -> int:
+    """pre-commit 용: staged .py 의 신규 문제가 있으면 1(커밋 차단). 기존 문제는 막지 않는다."""
+    files = _staged_python_files()
+    if not files:
+        return 0
+    kit = find_audit_kit()
+    if kit is None:
+        if _required():
+            sys.stderr.write("[audit_kit_gate] audit-kit 를 찾지 못했고 AUDIT_KIT_REQUIRED 가 켜져 있어 커밋을 막습니다 (AUDIT_KIT_BIN 으로 위치 지정)\n")
+            return 1
+        sys.stderr.write("[audit_kit_gate] audit-kit 를 찾지 못해 커밋 검사를 생략합니다 (AUDIT_KIT_BIN 환경변수로 위치 지정 가능)\n")
+        return 0
+    problems: list[str] = []
+    for path in files:
+        findings, skipped = check_file(kit, path)
+        if skipped:
+            sys.stderr.write(f"[audit_kit_gate] {path.name} 검사하지 못했습니다(막지 않음): {skipped}\n")
+        problems.extend(findings)
+    if not problems:
+        return 0
+    sys.stderr.write("[audit_kit_gate] 이번 커밋으로 생긴 개발 기준서·구조 문제입니다. 고친 뒤 다시 커밋하세요.\n")
+    for item in problems[:MAX_SHOWN]:
+        sys.stderr.write(f"  {item}\n")
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     _utf8_streams()
     args = sys.argv[1:] if argv is None else argv
@@ -301,6 +350,8 @@ def main(argv: list[str] | None = None) -> int:
             return run_stop(stdin_text)
         if mode == "--post-edit":
             return run_post_edit(stdin_text)
+        if mode == "--staged":
+            return run_staged()
     except Exception as exc:  # noqa: BLE001 - 훅 진입점: 게이트 자체의 오류로 작업을 막지 않는 fail-open(rules.toml ERR-06), 이유는 stderr 로 남긴다
         sys.stderr.write(f"[audit_kit_gate] 내부 오류(무시): {type(exc).__name__}: {exc}\n")
         return 0

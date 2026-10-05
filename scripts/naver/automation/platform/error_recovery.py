@@ -96,7 +96,7 @@ class ErrorRecovery:
             "OTHER",
             f"에러 기록: {func_name} ({category})",
             func=func_name,
-            category=category,
+            error_category=category,
             recovered=recovered,
             mode="error_logged",
         )
