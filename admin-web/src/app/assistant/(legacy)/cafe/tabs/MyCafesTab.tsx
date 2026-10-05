@@ -1,8 +1,9 @@
 "use client";
 /** 카페 탭 — 내 카페 목록 (수집 + 기간 선택) */
 import { useState, useEffect, useCallback } from "react";
-import { getMyCafes, type MyCafe } from "@/lib/assistant/api";
+import { getMyCafeChanges, getMyCafes, type CafeChangeHistory, type CafeChangeResult, type MyCafe } from "@/lib/assistant/api";
 import { apiPost } from "../cafeShared";
+import { MyCafesChangesPanel } from "./MyCafesChangesPanel";
 
 export function MyCafesTab() {
   const [cafes, setCafes] = useState<MyCafe[]>([]);
@@ -13,22 +14,36 @@ export function MyCafesTab() {
   const [collectingUrl, setCollectingUrl] = useState<string | null>(null);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
   const [collectDays, setCollectDays] = useState(90); // 수집 기간(일). 3650=전체
+  const [changes, setChanges] = useState<CafeChangeResult | null>(null); // 이번 수집의 신규 가입·탈퇴
+  const [history, setHistory] = useState<CafeChangeHistory | null>(null); // 변동 기록·가입 수 추이
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
     try { const r = await getMyCafes(); setCafes(r.cafes); }
     catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
+    getMyCafeChanges().then(setHistory).catch(() => setHistory(null)); // 이력이 아직 없어도 목록 화면은 그대로 쓴다
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const handleCollectMyCafes = async () => {
+  const handleCollectMyCafes = async (confirmMassChange = false) => {
     setCollectingCafes(true); setCollectMsg(null); setError(null);
     try {
-      const d = await apiPost("/api/v1/naver-cafe/collect-my-cafes", {});
-      if (d.ok) { setCafes(d.cafes || []); setCollectMsg(`내 카페 ${d.count}개 수집 완료`); }
-      else setError(d.detail || d.error || "수집 실패");
+      const d = await apiPost(`/api/v1/naver-cafe/collect-my-cafes${confirmMassChange ? "?confirm_mass_change=true" : ""}`, {});
+      if (d.ok) {
+        const ch: CafeChangeResult | null = d.changes ?? null;
+        setChanges(ch);
+        const held = ch && (ch.status === "blocked" || ch.status === "needs_confirmation");
+        if (held) {
+          // 보호 규칙에 걸린 수집(빈 결과·화면 읽기 대체·대량 감소)은 저장본을 바꾸지 않으므로 화면 목록도 저장본을 그대로 둔다
+          setCollectMsg("수집은 했지만 결과를 반영하지 않았습니다 — 아래 경고를 확인하세요");
+        } else {
+          setCafes(d.cafes || []);
+          setCollectMsg(`내 카페 ${d.count}개 수집 완료`);
+        }
+        getMyCafeChanges().then(setHistory).catch(() => setHistory(null));
+      } else setError(d.detail || d.error || "수집 실패");
     } catch (e) { setError(e instanceof Error ? e.message : "수집 실패"); }
     finally { setCollectingCafes(false); }
   };
@@ -47,7 +62,7 @@ export function MyCafesTab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
-        <button onClick={handleCollectMyCafes} disabled={collectingCafes}
+        <button onClick={() => handleCollectMyCafes()} disabled={collectingCafes}
           className="px-3 py-1.5 bg-[#03C75A] text-white text-xs rounded-lg font-semibold disabled:opacity-50">
           {collectingCafes ? "수집 중…" : "📥 내 카페 수집"}
         </button>
@@ -71,6 +86,7 @@ export function MyCafesTab() {
       <p className="text-[11px] text-[#9CA3AF]">[내 카페 수집]으로 가입 카페를 가져온 뒤, 각 카페의 [게시글 수집]을 누르세요. 수집 기간을 먼저 고르세요(게시판 구분 없이 전체글 수집). (네이버 로그인 필요)</p>
       {collectMsg && <p className="text-xs text-[#16A34A]">{collectMsg}</p>}
       {error && <p className="text-xs text-[#DC2626]">오류: {error}</p>}
+      <MyCafesChangesPanel latest={changes} history={history} busy={collectingCafes} onConfirm={() => handleCollectMyCafes(true)} />
       <div className="divide-y divide-[#E5E7EB]">
         {cafes.map((c, i) => (
           <div key={c.cafe_id} className="flex items-center gap-3 py-2">

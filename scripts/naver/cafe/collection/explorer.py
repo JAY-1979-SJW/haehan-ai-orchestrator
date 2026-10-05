@@ -76,10 +76,18 @@ def _fetch_joined_cafes_via_api(page: Page) -> list[dict]:
 
 
 def get_my_cafes(page: Page) -> list[dict]:
-    """내가 가입한 카페 목록 반환.
+    """내가 가입한 카페 목록 반환(호환용). 출처가 필요하면 `get_my_cafes_with_source` 를 쓴다.
 
     Returns:
         [{ cafe_id, cafe_name, href, member_count }]
+    """
+    return get_my_cafes_with_source(page)[0]
+
+
+def get_my_cafes_with_source(page: Page) -> tuple[list[dict], str]:
+    """내 가입 카페 목록과 그 **출처**(`api`=가입카페 전용 API, `dom`=화면 읽기 대신 — 추천·최근 방문이 섞일 수 있음).
+
+    출처는 변동 비교의 보호 규칙이 쓴다(화면 읽기 결과로는 신규·탈퇴를 판정하지 않는다).
     """
     if not ensure_naver_login(page).get("ok"):
         raise RuntimeError("네이버 로그인 필요")
@@ -92,7 +100,7 @@ def get_my_cafes(page: Page) -> list[dict]:
     cafes = _fetch_joined_cafes_via_api(page)
     if cafes:
         _log.info("[explorer] 내 가입카페 %d개 (API)", len(cafes))
-        return cafes
+        return cafes, "api"
 
     # 폴백: API 실패 시 기존 DOM 스크래핑(추천/최근방문 혼입 가능 — 최후수단)
     _log.warning("[explorer] 가입카페 API 실패 — DOM 폴백")
@@ -128,8 +136,8 @@ def get_my_cafes(page: Page) -> list[dict]:
         return result;
     }""")
 
-    _log.info("[explorer] 내 카페 %d개 확인", len(cafes))
-    return cafes
+    _log.info("[explorer] 내 카페 %d개 확인(화면 읽기)", len(cafes))
+    return cafes, "dom"
 
 
 def explore_cafe(page: Page, cafe_url: str) -> dict:

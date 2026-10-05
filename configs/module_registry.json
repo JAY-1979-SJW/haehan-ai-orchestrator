@@ -21560,6 +21560,46 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/persistence/cafe_membership_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "naver_cafe",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_cafe_membership.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_cafe",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/domain/cafe_membership_diff.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "naver_cafe",
+   "reason": "가입 카페 신규·탈퇴 비교와 보호 규칙(순수 함수, 입출력 없음) — 서비스(L6)·저장소가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/services/cafe_membership_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_cafe",
+   "reason": "가입 카페 수집 결과를 이력과 비교·반영·분석하는 업무 흐름(규칙은 domain, 저장은 persistence, 브라우저·HTTP 모름) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "admin-web/src/app/assistant/(legacy)/cafe/tabs/MyCafesChangesPanel.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "naver_cafe",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
