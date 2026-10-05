@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from scripts.site_engine.types import (
@@ -34,7 +34,9 @@ class SiteProfile:
     login_domain_hints: Collection[str]
     allowed_capabilities: Collection[SiteCapability]
     blocked_capabilities: Collection[SiteCapability] = field(default_factory=tuple)
-    action_policies: tuple[SiteActionPolicy, ...] = field(default_factory=tuple)
+    action_policies: Mapping[SiteCapability, SiteActionPolicy] | Sequence[SiteActionPolicy] = field(
+        default_factory=tuple
+    )
     default_execution_location: ExecutionLocation = ExecutionLocation.SERVER
     login_strategy: str = "registered_only"
     status: SiteProfileStatus = SiteProfileStatus.ACTIVE
@@ -44,7 +46,8 @@ class SiteProfile:
         _validate_profile(self)
 
     def get_gate(self, capability: SiteCapability) -> GateDecision:
-        for policy in self.action_policies:
+        policies = self.action_policies.values() if isinstance(self.action_policies, Mapping) else self.action_policies
+        for policy in policies:
             if policy.capability == capability:
                 return policy.gate
         if capability in self.blocked_capabilities:
