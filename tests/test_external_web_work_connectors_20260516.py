@@ -365,8 +365,8 @@ class TestExistingCloseoutTestsUnchanged:
         assert (REPO_ROOT / test_path).exists(), f"준공 테스트 없음: {test_path}"
 
     def test_cad_hold_unchanged(self):
-        """CAD는 여전히 EXTERNAL_APP_HOLD 상태이다."""
-        # cad controller_loader가 여전히 별도 플러그인에 의존
-        loader = REPO_ROOT / "local_agent" / "cad" / "controller_loader.py"
-        src = loader.read_text(encoding="utf-8")
-        assert "local_worker_plugins" in src
+        """CAD 모듈은 17130f8e(2026-06-04)에서 전체 삭제됨 — 로컬 에이전트에 CAD 커넥터가 없다."""
+        # 구 기대: local_agent/cad/controller_loader.py 가 local_worker_plugins 에 의존(HOLD).
+        # 현행: CAD 디렉터리 자체가 없어야 하며, 웹 커넥터가 CAD 를 되살리지 않아야 한다.
+        assert not (REPO_ROOT / "local_agent" / "cad").exists()
+        assert not (REPO_ROOT / "local_agent" / "cad" / "controller_loader.py").exists()
