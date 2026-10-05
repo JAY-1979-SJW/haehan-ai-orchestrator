@@ -89,7 +89,7 @@ def test_running_error_gives_up_without_executing():
         ws = FakeClientWS([], auto_ack=False)
         ran: list[str] = []
         orig = client.process_task
-        client.process_task = lambda t: ran.append(t["task_id"]) or {"type": "result", "task_id": t["task_id"]}
+        client.process_task = lambda t: ran.append(t["task_id"]) or {"type": "result", "task_id": t["task_id"]}  # type: ignore[assignment,func-returns-value]
         loop_task = asyncio.create_task(client._message_loop(ws, "ag", 5, True, {}, set()))
         try:
             ws.q.put_nowait(json.dumps({"type": "task", "task": {"task_id": "bad"}}))

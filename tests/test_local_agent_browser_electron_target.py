@@ -55,7 +55,7 @@ def test_cdp_session_handle_detach_does_not_close_shared_connection() -> None:
     바로 다음 호출이 끊긴 연결에 쓰려다 실패했다(2026-09-28). new_cdp_session()이
     돌려주는 핸들의 detach()는 공유 연결을 끊지 않아야 한다."""
     fake = _FakeRawSession()
-    handle = et._CDPSessionHandle(fake)
+    handle = et._CDPSessionHandle(fake)  # type: ignore[arg-type]
 
     handle.send("Accessibility.getFullAXTree", {})
     handle.detach()
@@ -81,8 +81,8 @@ def test_electron_target_page_new_cdp_session_shares_underlying_session() -> Non
     handle1.detach()
     handle2.send("Page.captureScreenshot", {"format": "png"})
 
-    assert page._session.closed is False
-    assert len(page._session.sent) == 2
+    assert page._session.closed is False  # type: ignore[attr-defined]
+    assert len(page._session.sent) == 2  # type: ignore[attr-defined]
 
 
 def test_electron_target_page_close_closes_real_session() -> None:
@@ -92,4 +92,4 @@ def test_electron_target_page_close_closes_real_session() -> None:
 
     page.close()
 
-    assert page._session.closed is True
+    assert page._session.closed is True  # type: ignore[attr-defined]

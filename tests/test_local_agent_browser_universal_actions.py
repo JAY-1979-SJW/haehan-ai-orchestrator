@@ -150,10 +150,12 @@ def test_act_click_uses_box_center_and_dispatches_mouse_events() -> None:
     ua.act(page, button_ref, "click")
 
     mouse_events = [(m, p) for m, p in session.calls if m == "Input.dispatchMouseEvent"]
-    assert [m[1]["type"] for m in mouse_events] == ["mousePressed", "mouseReleased"]
+    ev_params = [p for _, p in mouse_events if p is not None]
+    assert len(ev_params) == len(mouse_events)
+    assert [p["type"] for p in ev_params] == ["mousePressed", "mouseReleased"]
     # 중심좌표 = (0+100+100+0)/4=50, (0+0+50+50)/4=25
-    assert mouse_events[0][1]["x"] == 50.0
-    assert mouse_events[0][1]["y"] == 25.0
+    assert ev_params[0]["x"] == 50.0
+    assert ev_params[0]["y"] == 25.0
     assert session.detached is True  # 세션 정리 확인
 
 
