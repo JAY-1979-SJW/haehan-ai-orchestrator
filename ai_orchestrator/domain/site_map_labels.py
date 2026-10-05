@@ -114,3 +114,41 @@ def prune_legacy(site_map: dict[str, Any]) -> tuple[dict[str, Any], int]:
     if len(kept) == len(tasks):
         return site_map, 0
     return {**site_map, "tasks": kept}, len(tasks) - len(kept)
+
+
+SEEN_PAGES_MAX = 20
+
+
+def _is_action_button(task: dict[str, Any]) -> bool:
+    return task.get("risk") in ("write", "submit") and "#btn_" in str(task.get("id", ""))
+
+
+def collapse_duplicate_actions(site_map: dict[str, Any]) -> tuple[dict[str, Any], int]:
+    """같은 글자의 쓰기·제출 **버튼 업무**가 화면마다 쌓인 것을 하나로 합치고 본 화면 수(`seen_pages`)만 기록한다.
+
+    예: 상품 목록 20쪽의 "Add to basket" 21개 → 1개(seen_pages=20). verified 업무·목적을 적은 업무는 지우지 않고(있으면 그것을 대표로),
+    이름 끝의 "(화면 제목)" 꼬리는 자동으로 붙은 것일 때만 뗀다. 위험 등급은 그대로 둔다(내리지 않는다).
+    """
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for t in site_map.get("tasks", []):
+        if _is_action_button(t):
+            groups[(clean_label(str(t.get("control") or "")), str(t.get("risk")))].append(t)
+    drop: set[str] = set()
+    update: dict[str, dict[str, Any]] = {}
+    for (label, _risk), members in groups.items():
+        if len(members) < 2 or not label:
+            continue
+        members = sorted(members, key=lambda t: (t.get("state") != "verified", not t.get("purpose"), str(t.get("id"))))
+        keep = members[0]
+        for other in members[1:]:
+            if other.get("state") == "observed" and not other.get("purpose"):
+                drop.add(str(other["id"]))
+        seen = min(SEEN_PAGES_MAX, max(int(keep.get("seen_pages") or 0), len(members)))
+        changes: dict[str, Any] = {"seen_pages": seen}
+        if str(keep.get("name", "")).startswith(f"{label} ("):
+            changes["name"] = label
+        update[str(keep["id"])] = changes
+    if not drop and not update:
+        return site_map, 0
+    tasks = [dict(t, **update.get(str(t.get("id")), {})) for t in site_map.get("tasks", []) if str(t.get("id")) not in drop]
+    return {**site_map, "tasks": tasks}, len(drop)

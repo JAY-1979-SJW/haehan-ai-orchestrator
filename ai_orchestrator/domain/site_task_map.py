@@ -18,6 +18,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from .site_map_labels import clean_label, is_global_landmark
+from .site_map_menu import OPEN_PAGE_ID, validate_open_url
 
 SCHEMA_VERSION = 1
 
@@ -177,6 +178,34 @@ def _group_inputs(frame: dict[str, Any]) -> list[tuple[str, list[dict[str, Any]]
     for raw in frame.get("inputs", []):
         groups.setdefault(str(raw.get("form") or ""), []).append(raw)
     return list(groups.items())
+
+
+def open_page_task(host: str, start_url: str, *, auth: str = AUTH_PUBLIC, now: str = "") -> dict[str, Any]:
+    """사이트당 하나인 읽기 업무 `주소 열기` — 지도의 메뉴 색인(또는 결과의 next_url)에서 고른 같은 호스트 주소를 열어 읽는다(M8).
+
+    절차는 `navigate {{url}}` 하나다. 주소는 실행 요청 검증(`validate_run_request`)과 실행기(`_step_navigate`)가 같은 호스트 GET 이동만 허용한다.
+    """
+    fields = [{"name": "url", "id": "", "type": "text", "role": "textbox", "label": "열 주소(메뉴 색인의 href 또는 결과의 next_url)", "required": True}]
+    return {
+        "id": OPEN_PAGE_ID,
+        "name": "주소 열기(open_page) — 메뉴·다음 쪽 주소를 열어 읽기",
+        "category": CAT_NAVIGATE,
+        "purpose": "",
+        "risk": RISK_READ,
+        "auth": auth,
+        "state": STATE_OBSERVED,
+        "url": start_url,
+        "host": host,
+        "fields": fields,
+        "control": "",
+        "outputs": [],
+        "steps": [{"type": "navigate", "url": "{{url}}"}],
+        "fingerprint": fingerprint(fields),
+        "observed_at": now,
+        "verified_at": "",
+        "failures": 0,
+        "changes": [],
+    }
 
 
 def tasks_from_snapshot(snapshot: dict[str, Any], *, auth: str = AUTH_PUBLIC, now: str = "") -> list[dict[str, Any]]:
@@ -487,7 +516,7 @@ def step_placeholders(steps: list[dict[str, Any]]) -> list[str]:
     """steps 의 `{{이름}}` 매개변수 자리(등장 순서, 중복 제거)."""
     names: list[str] = []
     for step in steps:
-        for name in _PLACEHOLDER.findall(str(step.get("value") or "")):
+        for name in _PLACEHOLDER.findall(str(step.get("value") or "")) + _PLACEHOLDER.findall(str(step.get("url") or "")):
             if name not in names:
                 names.append(name)
     return names
@@ -504,6 +533,19 @@ def with_effective_risk(site_map: dict[str, Any]) -> dict[str, Any]:
     return dict(site_map, tasks=[dict(t, risk=effective_risk(t)) for t in site_map["tasks"]])
 
 
+def _require_dict(params: Any) -> None:
+    if not isinstance(params, dict):
+        raise ValueError("매개변수는 {이름: 값} 형태여야 합니다")
+
+
+def _validate_open_page_request(task: dict[str, Any], params: dict[str, Any]) -> dict[str, str]:
+    """주소 열기 업무: 값은 url 하나, 같은 호스트의 안전한 GET 주소만."""
+    extra = sorted(set(params) - {"url"})
+    if extra:
+        raise ValueError("지도에 없는 매개변수: " + ", ".join(map(str, extra)) + " (사용 가능: url)")
+    return {"url": validate_open_url(params.get("url"), str(task.get("host") or ""), risk_of=risk_of, skip_fragments=EXPLORE_SKIP_URL)}
+
+
 def validate_run_request(task: dict[str, Any], params: dict[str, Any]) -> dict[str, str]:
     """실행 요청 검증 → 문자열 매개변수. 규칙 위반은 ValueError.
 
@@ -514,8 +556,9 @@ def validate_run_request(task: dict[str, Any], params: dict[str, Any]) -> dict[s
     risk = effective_risk(task)
     if risk != RISK_READ:
         raise ValueError(f"조회(read) 업무만 실행할 수 있습니다(이 업무는 {RISK_LABEL_KO.get(risk, risk)}). 실행은 사람 승인 카드로만 합니다")
-    if not isinstance(params, dict):
-        raise ValueError("매개변수는 {이름: 값} 형태여야 합니다")
+    _require_dict(params)
+    if task.get("id") == OPEN_PAGE_ID:
+        return _validate_open_page_request(task, params)
     wanted = step_placeholders(task.get("steps", []))
     unknown = sorted(set(params) - set(wanted))
     if unknown:

@@ -20,6 +20,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from ai_orchestrator.domain import site_map_labels as lab
+from ai_orchestrator.domain import site_map_menu as menu
 from ai_orchestrator.domain import site_task_map as tm
 from ai_orchestrator.persistence import site_task_map_store as store
 
@@ -57,9 +58,16 @@ def merge_snapshots(
     global_labels = [x for snap, _ in per_snapshot for x in lab.global_nav_labels(snap, risk_of=tm.risk_of)]
     observed, repeated = lab.split_by_frequency(observed)  # 여러 화면에 반복되는 읽기 이동 버튼 = 전역 메뉴(업무로 쌓지 않는다)
     merged = tm.merge_tasks(site_map, observed, now=now)
+    # 메뉴 색인과 `주소 열기` 업무(M8): 링크를 따라가는 것이 핵심 조작인 사이트(카탈로그·게시판)에서 읽을 수단이 되게 한다
+    menu_entries = [e for snap, _ in per_snapshot for e in menu.menu_from_snapshot(snap, risk_of=tm.risk_of, skip_fragments=tm.EXPLORE_SKIP_URL)]
+    merged = menu.merge_menu(merged, menu_entries, now=now)
+    if merged.get("menu") and per_snapshot:
+        origin = urlparse(str(per_snapshot[0][0].get("url") or ""))
+        merged = tm.merge_tasks(merged, [tm.open_page_task(merged["host"], f"{origin.scheme}://{origin.netloc}/", auth=auth, now=now)], now=now)
     if explored_pages is not None:  # 전역 메뉴 기록·예전 형식 정리는 탐색 실행에서만(한 화면 기록에서는 반복 여부를 알 수 없다)
         merged = lab.merge_global_nav(merged, [*global_labels, *repeated], now=now)
         merged, _pruned = lab.prune_legacy(merged)
+        merged, _collapsed = lab.collapse_duplicate_actions(merged)  # 화면마다 쌓인 같은 쓰기 버튼(예: 장바구니 담기 21개)을 하나로
     if explored_pages is not None:  # 탐색 실행(explore_to_map)에서만: 탐색했다는 사실과 접근 구분(로그인 세션이면 '공개'로 남기지 않음)
         coverage = tm.coverage_of(per_snapshot)
         if skipped:  # 읽었지만 이 호스트 화면이 아니라 버려진 것 — 조용히 0건이 되지 않게 알린다

@@ -206,3 +206,20 @@ def test_list_hosts_hides_empty_unexplored_files_but_keeps_explored_empty(env):
     store.save(tm.note_exploration(tm.empty_map("seen.example.test", now=NOW), pages=2, auth="public", now=NOW))
     hosts = [h["host"] for h in service.list_hosts()]
     assert "blank.example.test" not in hosts and "seen.example.test" in hosts  # 목록과 상세(get_map)가 같은 기준
+
+
+def test_lookup_exposes_menu_index_and_open_page_task_id_only_when_map_has_menu(env):
+    """M8: 메뉴 색인이 있는 지도는 조회 응답에 menu·open_page_task_id 를 싣고, 키워드가 맞는 메뉴를 앞에 둔다. 없는 지도는 키를 더하지 않는다."""
+    assert "menu" not in service.lookup(HOST, "업체")  # 응답 키는 메뉴가 있을 때만 추가
+
+    saved = store.load(HOST)
+    entries = [{"label": f"분류{i}", "href": f"https://{HOST}/c/{i}"} for i in range(40)] + [{"label": "추리", "href": f"https://{HOST}/c/mystery"}]
+    saved = {**saved, "menu": entries}
+    saved = tm.merge_tasks(saved, [tm.open_page_task(HOST, f"https://{HOST}/", now=NOW)], now=NOW)
+    store.save(saved)
+
+    got = service.lookup(HOST, "추리")
+    assert got["open_page_task_id"] == "__open_page__" and got["menu_total"] == 41
+    assert got["menu"][0] == {"label": "추리", "href": f"https://{HOST}/c/mystery"}  # 질문에 맞는 메뉴가 맨 앞
+    assert len(got["menu"]) == service.MENU_SHOWN_MAX
+    assert "menu" in got["rules"] and "지어내지" in got["rules"]
