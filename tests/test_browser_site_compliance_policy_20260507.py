@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from ai_orchestrator.browser_tool.site_compliance_policy import (
     evaluate_site_compliance,
     get_site_compliance_policy,
@@ -96,8 +98,8 @@ class TestEvaluateSiteCompliance:
         assert result["block_reason"] == "GOOGLE_LOGIN_AUTOMATION_BLOCKED"
         assert result["safe_to_dispatch"] is False
 
-    def test_gmail_requires_api_connector(self):
-        """Gmail requires API connector."""
+    def test_gmail_cdp_read_only_allows_navigate(self):
+        """Gmail(CDP_READ_ONLY): 이동은 ALLOW_BROWSER_READONLY (커밋 5177645b 완화 정책)."""
         payload = {
             "target_domain": "mail.google.com",
             "action_name": "browser.plan_open_url",
@@ -106,9 +108,51 @@ class TestEvaluateSiteCompliance:
         }
         result = evaluate_site_compliance(payload)
 
-        assert result["compliance_decision"] == "REQUIRE_API_CONNECTOR"
-        assert result["api_connector_required"] is True
+        assert result["site_capability"] == "CDP_READ_ONLY"
+        assert result["compliance_decision"] == "ALLOW_BROWSER_READONLY"
+        assert result["api_connector_required"] is False
+        assert result["block_reason"] is None
+        assert result["safe_to_dispatch"] is True
+        assert result["safe_to_execute"] is False
+        assert validate_site_compliance_result(result) == []
+
+    @pytest.mark.parametrize("op", ["read", "navigate", "open_url"])
+    def test_gmail_read_ops_allowed(self, op):
+        result = evaluate_site_compliance({"target_domain": "mail.google.com", "operation_type": op})
+        assert result["compliance_decision"] == "ALLOW_BROWSER_READONLY"
+        assert result["safe_to_dispatch"] is True
+
+    @pytest.mark.parametrize(
+        "op", ["submit", "type", "fill", "delete", "send", "upload", "click", "download", "unknown_op", ""]
+    )
+    def test_gmail_write_ops_blocked(self, op):
+        result = evaluate_site_compliance({"target_domain": "mail.google.com", "operation_type": op})
+        assert result["compliance_decision"] == "BLOCK"
+        assert result["block_reason"] == "OPERATION_NOT_ALLOWED_FOR_READONLY_SITE"
         assert result["safe_to_dispatch"] is False
+
+    def test_gmail_production_mode_still_blocked(self):
+        result = evaluate_site_compliance(
+            {"target_domain": "mail.google.com", "operation_type": "read", "production_mode": True}
+        )
+        assert result["compliance_decision"] == "BLOCK"
+        assert result["block_reason"] == "PRODUCTION_MODE_BLOCKED"
+
+    @pytest.mark.parametrize(
+        "domain", ["drive.google.com", "calendar.google.com", "docs.google.com", "sheets.google.com"]
+    )
+    def test_other_google_services_policy_unchanged(self, domain):
+        result = evaluate_site_compliance({"target_domain": domain, "operation_type": "read"})
+        assert result["site_capability"] == "OAUTH_API_ONLY"
+        assert result["compliance_decision"] == "REQUIRE_API_CONNECTOR"
+        assert result["safe_to_dispatch"] is False
+
+    def test_google_login_and_remote_desktop_unchanged(self):
+        login = evaluate_site_compliance({"target_domain": "accounts.google.com", "operation_type": "read"})
+        assert login["compliance_decision"] == "BLOCK"
+        assert login["block_reason"] == "GOOGLE_LOGIN_AUTOMATION_BLOCKED"
+        rd = evaluate_site_compliance({"target_domain": "remotedesktop.google.com", "operation_type": "read"})
+        assert rd["compliance_decision"] == "REQUIRE_OFFICIAL_REMOTE_SUPPORT"
 
     def test_browser_readonly_allows_read(self):
         """Browser readonly site allows read operations."""
@@ -401,7 +445,13 @@ class TestPolicyConsistency:
                 "action_name": "browser.inspect",
                 "operation_type": "read",
                 "production_mode": False,
-            }
+            },
+            {
+                "target_domain": "mail.google.com",
+                "action_name": "browser.inspect",
+                "operation_type": "read",
+                "production_mode": False,
+            },
         ]
 
         blocked_cases = [
@@ -413,8 +463,8 @@ class TestPolicyConsistency:
             },
             {
                 "target_domain": "mail.google.com",
-                "action_name": "browser.inspect",
-                "operation_type": "read",
+                "action_name": "browser.send",
+                "operation_type": "send",
                 "production_mode": False,
             },
         ]

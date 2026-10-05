@@ -324,5 +324,5 @@ def test_ai_can_only_read_registered_sites():
     reg = mcp_server.API_REGISTRY
     assert reg["sites.list"]["method"] == "GET" and reg["sites.list"]["path"] == "/api/v1/site-registry"
     assert reg["sites.get"]["method"] == "GET" and reg["sites.get"]["path"] == "/api/v1/site-registry/{host}"
-    assert sorted(k for k in reg if k.startswith("sites.")) == ["sites.get", "sites.list"]
+    assert sorted(k for k in reg if k.startswith("sites.")) == ["sites.get", "sites.list", "sites.preflight"]  # 2026-10-05 사용자 승인: 저장된 사전 조사 결과 조회(GET) 추가
     assert not any("site-registry" in v["path"] and v["method"] != "GET" for v in reg.values())  # 등록·정책·해제는 사람만

@@ -237,6 +237,11 @@ API_REGISTRY: dict[str, dict[str, str]] = {
         "path": "/api/v1/site-registry/{host}",
         "desc": "등록 사이트 하나의 상태·정책·지도 요약(읽기 전용). path_params={host}. needs_login 이면 사용자에게 로그인을 요청하고 업무 실행을 시도하지 말 것, blocked 면 사람이 사이트에서 확인해야 한다고 알릴 것",
     },
+    "sites.preflight": {
+        "method": "GET",
+        "path": "/api/v1/site-registry/{host}/preflight",
+        "desc": "등록 사이트의 마지막 사전 조사 결과(읽기 전용, 저장된 것만 — 조사 실행은 사람 화면에서). path_params={host}. verdict 가 blocked 면 탐색·업무를 시도하지 말고 reasons 를 사용자에게 알릴 것, use_api 면 화면 조작 대신 공식 API 로 하자고 제안할 것, research_needed 면 공식 API 조사를 사용자에게 제안할 것. 404 면 아직 조사된 적이 없다는 뜻",
+    },
     # 사이트 업무 지도 — AI 는 '읽기'만. 지도 확정·결과 기록·탐색 실행은 이 목록에 없다.
     "sitemap.list": {
         "method": "GET",
