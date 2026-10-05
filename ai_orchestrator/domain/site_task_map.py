@@ -79,7 +79,7 @@ def slug(text: str) -> str:
 def fingerprint(fields: list[dict[str, Any]]) -> str:
     """필드 이름 집합의 지문. 순서·라벨이 바뀌어도 같고, 필드가 늘거나 줄거나 이름이 바뀌면 달라진다."""
     names = sorted(f"{f.get('name') or f.get('id') or ''}:{f.get('type', '')}" for f in fields)
-    return hashlib.sha1("|".join(names).encode("utf-8")).hexdigest()[:12]  # noqa: S324 - 변경 감지용 지문, 보안 용도 아님
+    return hashlib.sha1("|".join(names).encode("utf-8"), usedforsecurity=False).hexdigest()[:12]  # 변경 감지용 지문, 보안 용도 아님
 
 
 def _field(raw: dict[str, Any]) -> dict[str, Any] | None:
@@ -259,7 +259,7 @@ def _button_tasks(  # noqa: PLR0913 - 한 프레임의 버튼 업무를 만드�
     tasks = []
     for risk, text in ranked[:_BUTTON_TASKS_MAX]:
         category = CAT_SUBMIT if risk == RISK_SUBMIT else CAT_INPUT if risk == RISK_WRITE else CAT_NAVIGATE
-        digest = hashlib.sha1(text.encode("utf-8")).hexdigest()[:6]  # noqa: S324 - 이름 충돌 방지용, 보안 용도 아님(한글 버튼 이름은 slug 로 지워진다)
+        digest = hashlib.sha1(text.encode("utf-8"), usedforsecurity=False).hexdigest()[:6]  # 이름 충돌 방지용, 보안 용도 아님(한글 버튼 이름은 slug 로 지워진다)
         tasks.append(
             {
                 "id": f"{slug(path)}#btn_{digest}",

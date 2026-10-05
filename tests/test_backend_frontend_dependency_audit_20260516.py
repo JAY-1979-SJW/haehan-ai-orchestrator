@@ -217,6 +217,7 @@ class TestEnvelopeConversionVerdict:
 
     def test_none_safe_for_immediate_envelope_conversion(self):
         """즉시 봉투 전환 가능한 endpoint가 0개임을 선언한다."""
+        assert len(DEPENDENCY_TABLE.items()) > 0, "DEPENDENCY_TABLE 이 비어 있음 — 아래 assert 가 공허하게 통과한다"
         safe = [ep for ep, info in DEPENDENCY_TABLE.items() if info["envelope_verdict"] == "ENVELOPE_CONVERSION_SAFE"]
         assert len(safe) == 0, f"즉시 봉투 전환 선언된 endpoint: {safe}"
 
