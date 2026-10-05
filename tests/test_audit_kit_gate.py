@@ -349,3 +349,35 @@ def test_mypy_keys_retries_once_on_internal_error_and_serializes(monkeypatch, tm
     answers[:] = [Proc(2, b"x"), Proc(2, b"x")]
     assert gate.mypy_keys("py", tmp_path / "a.py", tmp_path) is None  # 두 번 다 실패하면 '오류 없음'이 아니라 실행 못 함
     assert len(calls) == 2
+
+def test_mypy_keys_treats_missing_mypy_module_as_not_run(monkeypatch, tmp_path):
+    """`python -m mypy` 는 mypy 가 없으면 종료코드 1 + 빈 출력 — '오류 없음'(통과)으로 오인하면 타입 검사가 조용히 빠진다."""
+
+    class Proc:
+        returncode, stdout = 1, b""
+        stderr = b"python.exe: No module named mypy"
+
+    monkeypatch.setattr(gate.subprocess, "run", lambda *_a, **_k: Proc())
+    assert gate.mypy_keys("py", tmp_path / "a.py", tmp_path) is None
+
+
+def test_is_real_kit_only_for_audit_kit_executable():
+    assert gate.is_real_kit(["C:/x/.venv/Scripts/audit-kit.exe"]) and gate.is_real_kit(["audit-kit"])
+    assert not gate.is_real_kit([sys.executable, "fake_audit_kit.py"])
+
+
+def test_verify_fails_when_real_kit_has_no_python_for_mypy(tmp_path, tree_aware_kit, monkeypatch):
+    """진짜 audit-kit 인데 mypy 를 돌릴 파이썬이 없으면 조용히 생략하지 않고 검사 결과(FAIL 사유)로 올린다."""
+    import importlib
+
+    from scripts.ops import verify_change as vc
+
+    akg = importlib.import_module("audit_kit_gate")
+    base, head = _two_trees(tmp_path)
+    monkeypatch.setattr(akg, "is_real_kit", lambda _kit: True)
+    monkeypatch.setattr(akg, "mypy_python", lambda _kit: None)
+    found, _ = vc._audit_kit_new_findings(["pkg/a.py"], base, head)
+    assert any("mypy 실행 환경" in x for x in found)
+    monkeypatch.setattr(akg, "is_real_kit", lambda _kit: False)  # 시험용 가짜 kit 는 기존처럼 mypy 없이 통과
+    found, _ = vc._audit_kit_new_findings(["pkg/a.py"], base, head)
+    assert not any("mypy 실행 환경" in x for x in found)

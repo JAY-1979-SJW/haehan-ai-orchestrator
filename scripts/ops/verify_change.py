@@ -446,6 +446,7 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
     from audit_kit_gate import (  # scripts/ops 안의 형제 모듈
         find_audit_kit,
         finding_key,
+        is_real_kit,
         mypy_new,
         mypy_python,
         raw_findings,
@@ -470,6 +471,8 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
 
     with ThreadPoolExecutor(4) as pool:
         found = [item for items in pool.map(one, py_changed) for item in items]
+    if is_real_kit(kit) and mypy_python(kit) is None:  # 진짜 audit-kit 인데 mypy 를 돌릴 파이썬이 없다 = 타입 검사가 조용히 빠진다 → 실패로 취급
+        found.append("mypy 실행 환경(audit-kit 가상환경의 python)을 찾지 못해 타입 검사를 할 수 없습니다 — audit-kit 를 다시 설치하세요")
     return found, ""
 
 
