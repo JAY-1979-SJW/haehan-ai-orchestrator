@@ -117,6 +117,9 @@ def check_routes(report: AuditReport) -> None:
     missing = []
     for route in REQUIRED_ROUTES:
         path = FRONTEND_ROOT / route
+        if not path.exists():
+            # 라우트 그룹 `(legacy)` 로 옮겨진 화면도 같은 화면(URL 불변)
+            path = FRONTEND_ROOT / route.replace("app/assistant/", "app/assistant/(legacy)/", 1)
         if path.exists():
             report.add(
                 f"route_{route.replace('/', '_').replace('[', '').replace(']', '').replace('.tsx', '')}",
