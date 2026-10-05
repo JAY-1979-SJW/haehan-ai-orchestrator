@@ -12,6 +12,7 @@ import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -93,11 +94,11 @@ class _GateRun:
             gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()],
         )
         _save_state(self.state)
-        self.ws_url = None
-        self.app_id = None
+        self.ws_url: str | None = None
+        self.app_id: str | None = None
 
     def event(self, gate: str, status: str, message: str, fix: str = "", **data) -> str:
-        payload = {"gate": gate, "status": status, "message": message, "fix": fix, "data": data, "updated_at": _now()}
+        payload: dict[str, Any] = {"gate": gate, "status": status, "message": message, "fix": fix, "data": data, "updated_at": _now()}
         # 상태 파일 업데이트
         for g in self.state.gates:
             if g.gate == gate:
@@ -171,8 +172,9 @@ def _stage_required(run: _GateRun, gate_id: str, running_msg: str, call, fix: st
     r = call()
     if r.ok():
         if gate_id == "GATE-4":
-            run.app_id = r.data["app_id"]
-            run.state.app_id = run.app_id
+            app_id = r.data["app_id"]
+            run.app_id = app_id
+            run.state.app_id = app_id
             yield run.event(gate_id, "pass", r.message, app_id=run.app_id)
         else:
             yield run.event(gate_id, "pass", r.message)

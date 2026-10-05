@@ -6,6 +6,7 @@ import sys
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -36,7 +37,7 @@ __all__ = [
 
 def check_session() -> dict:
     """데몬 Chrome에서 카카오 로그인 상태 실시간 확인."""
-    result = {"logged_in": None, "error": None}
+    result: dict[str, Any] = {"logged_in": None, "error": None}
     try:
         with browser_session() as page:
             result["logged_in"] = is_logged_in(page, "kakao")
