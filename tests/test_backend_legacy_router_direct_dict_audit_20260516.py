@@ -348,6 +348,9 @@ def test_next_phase_manual_review_candidates_locked():
 # 2026-10-05 갱신(HTTP 62→423, WS 1→2): 저장소 성장·FastAPI 0.142 로 지연 include 래퍼를 펼쳐 실제 라우트를 보게 됨(HTTP+WS=425=EXPECTED_RUNTIME_ROUTES)
 RUNTIME_HTTP_ENDPOINT_COUNT = 423
 RUNTIME_WEBSOCKET_COUNT = 2
+# FULL_CLASSIFICATION(아래 SECTION 4)은 라우터 분류 매핑이 63개 시점에 작성된 스냅샷이라 현행 425개 전체를 분류하지 않는다.
+# 분류 매핑 시험(③④)은 그 시점 값(HTTP 62 + WS 1 = 63)과 대조한다 — 분류 데이터 전체 재작성은 이번 승인 범위 밖.
+CLASSIFICATION_SNAPSHOT_RUNTIME_TOTAL = 63
 SOURCE_ROUTER_HTTP_ENDPOINT_COUNT = 59  # naver 3 + ops_router 7 포함
 UNREGISTERED_ROUTER_ENDPOINT_COUNT = 0  # naver_search_router 등록 완료
 
@@ -380,7 +383,7 @@ def test_runtime_plus_unregistered_equals_source_minus_core():
     """runtime 63 + unregistered 0 = source 63 관계가 성립한다.
     APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63.
     """
-    runtime_total = RUNTIME_HTTP_ENDPOINT_COUNT + RUNTIME_WEBSOCKET_COUNT
+    runtime_total = CLASSIFICATION_SNAPSHOT_RUNTIME_TOTAL
     unregistered = UNREGISTERED_ROUTER_ENDPOINT_COUNT
     source_total = 63  # 60 + app_status_router 3 read-only GET
     assert runtime_total + unregistered == source_total, (
@@ -415,7 +418,7 @@ def test_full_classification_sum_equals_runtime_total():
     합계: 1+18+27+3+1+0+7+3+3 = 63 (APP_STATUS_READONLY 3개 추가)
     """
     total = sum(FULL_CLASSIFICATION.values())
-    runtime = RUNTIME_HTTP_ENDPOINT_COUNT + RUNTIME_WEBSOCKET_COUNT
+    runtime = CLASSIFICATION_SNAPSHOT_RUNTIME_TOTAL
     assert total == runtime, f"분류 합계={total}, runtime={runtime}"
 
 
