@@ -134,6 +134,7 @@ def test_12_approve_guard_active(router_content):
 
 
 def test_13_execute_task_not_imported_in_router(router_content):
+    assert len(router_content.splitlines()) > 100, "router.py 내용이 비어 있거나 너무 짧음 — 아래 assert 가 공허하게 통과한다"
     import_lines = [
         l for l in router_content.splitlines()
         if l.strip().startswith(("import", "from")) and "execute_task" in l

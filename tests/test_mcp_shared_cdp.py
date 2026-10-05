@@ -28,6 +28,7 @@ def _calls_in(fn: ast.FunctionDef, attr: str) -> int:
 
 
 def test_connect_over_cdp_appears_only_in_the_shared_helper():
+    assert len(_functions().items()) > 0, "검사 대상 함수가 0개 — 아래 assert 가 공허하게 통과한다"
     offenders = [
         name
         for name, fn in _functions().items()

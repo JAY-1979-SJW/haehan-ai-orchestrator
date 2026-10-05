@@ -85,6 +85,7 @@ class TestOpsRouterNoSecretExposure:
 
     def test_token_hash_not_in_response(self):
         src = self._src()
+        assert len(src.splitlines()) > 20, "소스가 비어 있음 — 아래 assert 가 공허하게 통과한다"
         # token_hash 를 응답 dict에 포함하지 않음 — "token_hash" 문자열이 주석/docstring에만 있으면 허용
         # 코드 라인에 "token_hash" 가 dict key로 포함되지 않음
         response_lines = [
@@ -117,6 +118,7 @@ class TestOpsRouterNoSecretExposure:
 
     def test_no_db_write(self):
         src = self._src()
+        assert len(src.splitlines()) > 20, "소스가 비어 있음 — 아래 assert 가 공허하게 통과한다"
         for bad in ("INSERT INTO", "UPDATE SET", "DROP TABLE", "TRUNCATE", ".write(", ".delete("):
             code_lines = [
                 line
