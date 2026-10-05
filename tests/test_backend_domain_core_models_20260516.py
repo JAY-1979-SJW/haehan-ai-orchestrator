@@ -836,11 +836,9 @@ class TestNoContractBreak:
 
     def test_runtime_endpoint_count_unchanged(self):
         """runtime endpoint 수가 60개로 변경되지 않았다."""
-        from fastapi.routing import APIRoute, APIWebSocketRoute
+        from tests.app_routes import runtime_routes
 
-        from ai_orchestrator.asgi import app
-
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
+        routes = runtime_routes()
         # APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63
         assert len(routes) == 63, f"endpoint 수 변경 감지: {len(routes)}"
 

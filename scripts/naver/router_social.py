@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from scripts.gate import check as gate_check
 
 from .router_common import (
@@ -24,7 +26,7 @@ def _cmd_pay(sub: str, args: list[str]) -> None:
     if sub in ("orders", "order", "list"):
         limit = _int_option(args, "--limit=", 30)
         orders = pay.list_orders(limit=limit)
-        out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "orders": orders}
+        out: dict[str, Any] = {"generated_at": datetime.now().isoformat(timespec="seconds"), "orders": orders}
         _print_saved(out, _save_latest("naver_pay_orders_latest.json", out))
     elif sub in ("points", "point", "balance"):
         points = pay.points()
@@ -44,7 +46,7 @@ def _cmd_talk(sub: str, args: list[str]) -> None:
         gate_check("scan_page")
         limit = _int_option(args, "--limit=", 30)
         chats = NaverTalk(get_page()).list_chats(limit=limit)
-        out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "chats": chats}
+        out: dict[str, Any] = {"generated_at": datetime.now().isoformat(timespec="seconds"), "chats": chats}
         _print_saved(out, _save_latest("naver_talk_chats_latest.json", out))
         return
 
@@ -64,7 +66,7 @@ def _cmd_talk(sub: str, args: list[str]) -> None:
     if not dry_run and (not approved or confirm != "NAVER_APPROVED_SEND"):
         raise SystemExit("talk send execute requires --approved --confirm=NAVER_APPROVED_SEND")
 
-    plan = {
+    plan: dict[str, Any] = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "workflow": "talk_send",
         "partner": partner,
