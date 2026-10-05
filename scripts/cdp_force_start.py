@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
+from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome  # noqa: E402
 
 CDP_PORT = 9222
@@ -152,6 +153,7 @@ def cmd_start(url: str = "") -> int:
         "--disable-session-crashed-bubble",
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
+        lifecycle.RESTORE_SWITCH,  # 이전 세션 복원(로그인 유지) — 옛 탭은 시작 직후 close_stale_tabs 가 정리한다
         "--window-position=100,50",
         "--window-size=1280,900",
     ]
@@ -191,6 +193,8 @@ def cmd_start(url: str = "") -> int:
     print(f"  CDP 포트 {CDP_PORT} 응답 대기...", end="", flush=True)
     if _wait_cdp(20):
         print(" ✓")
+        if not url:  # 주소를 지정했으면 그 탭이 목적이니 두고, 아니면 복원된 옛 탭을 정리해 깨끗하게 시작한다
+            print(f"  복원된 옛 탭 {lifecycle.close_stale_tabs(CDP_PORT)}개 정리(빈 탭 하나만 남김)")
         _show_info()
         _start_watch()
         return 0
@@ -223,6 +227,12 @@ def cmd_status() -> None:
         print(f"Chrome PID: {pid_data['pid']}")
 
 
+def _pid_alive(pid: int) -> bool:
+    import psutil
+
+    return psutil.pid_exists(pid)
+
+
 def cmd_stop() -> None:
     _stop_watch()
     if PID_FILE.exists():
@@ -230,8 +240,11 @@ def cmd_stop() -> None:
             data = json.loads(PID_FILE.read_text(encoding="utf-8"))
             pid = data.get("pid")
             if pid:
-                os.kill(pid, 9 if sys.platform == "win32" else 15)
-                print(f"✓ Chrome 종료 (PID={pid})")
+                if lifecycle.graceful_close(CDP_PORT, is_alive=lambda: _pid_alive(pid)):  # 쿠키가 디스크에 남도록 정상 종료 먼저
+                    print(f"✓ Chrome 정상 종료 (PID={pid})")
+                else:
+                    os.kill(pid, 9 if sys.platform == "win32" else 15)
+                    print(f"✓ Chrome 종료 (PID={pid})")
             PID_FILE.unlink(missing_ok=True)
         except Exception as e:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내
             print(f"종료 실패: {e}")

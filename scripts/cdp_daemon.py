@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -36,6 +37,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome, find_edge  # noqa: E402
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
 from scripts.config import CDP_HOST, CDP_PORT  # noqa: E402
@@ -192,7 +194,8 @@ def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
         "--disable-session-crashed-bubble",
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
-        # --restore-last-session 은 값과 무관하게 "있으면 이전 세션 복원"인 스위치라 =false 를 붙여도 복원된다(2026-10-05: 재시작 때마다 예전 YouTube·Gmail 탭이 되살아남). 복원을 막으려면 스위치를 아예 빼고 exit_type=Normal 로 정리한다.
+        # 이전 세션 복원 스위치(값 없이): 로그인(세션 쿠키)을 재시작 뒤에도 유지한다. 복원된 옛 탭은 시작 직후 close_stale_tabs 가 정리한다. 이전에 쓰던 `=false` 형태는 값과 무관하게 켜지는 스위치라 오해를 부르는 잘못된 표기였다.
+        lifecycle.RESTORE_SWITCH,
         "--window-position=100,50",
         "--window-size=1280,900",
         "--force-device-scale-factor=1.5",
@@ -325,6 +328,19 @@ def _start_popup_monitor_process() -> None:
     log.info("[popup_monitor] process started PID=%d", _popup_monitor_proc.pid)
 
 
+def _stop_chrome(proc: subprocess.Popen | None) -> None:
+    """Chrome 을 정상 종료(CDP Browser.close)로 먼저 닫아 쿠키가 디스크에 남게 하고, 안 닫히면 강제 종료한다."""
+    if not proc or proc.poll() is not None:
+        return
+    if lifecycle.graceful_close(CDP_PORT, is_alive=lambda: proc.poll() is None):
+        log.info("[CHROME] 정상 종료 PID=%d", proc.pid)
+        return
+    log.warning("[CHROME] 정상 종료 실패 — 강제 종료 PID=%d", proc.pid)
+    with contextlib.suppress(Exception):
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
 def _stop_process(proc: subprocess.Popen | None, label: str) -> None:
     if not proc or proc.poll() is not None:
         return
@@ -352,12 +368,7 @@ def _restart_chrome() -> None:
         _save_state(_state)
 
         # 기존 프로세스 정리
-        if _chrome_proc and _chrome_proc.poll() is None:
-            try:
-                _chrome_proc.terminate()
-                _chrome_proc.wait(timeout=5)
-            except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
-                pass
+        _stop_chrome(_chrome_proc)
 
         time.sleep(2)
 
@@ -368,6 +379,7 @@ def _restart_chrome() -> None:
             _save_state(_state)
 
             if _is_cdp_ready(CDP_PORT):
+                log.info("[RESTART] 복원된 옛 탭 %d개 정리(빈 탭 하나만 남김)", lifecycle.close_stale_tabs(CDP_PORT))
                 _state.browser_context = "active"
                 _state.last_error = ""
                 log.info("[RESTART] Chrome 재시작 성공 PID=%d", _chrome_proc.pid)
@@ -534,9 +546,7 @@ def _shutdown_daemon() -> None:
     log.info("데몬 종료 중...")
     _stop_process(_popup_monitor_proc, "popup_monitor")
     _stop_process(_chrome_ui_monitor_proc, "chrome_ui_monitor")
-    if _chrome_proc and _chrome_proc.poll() is None:
-        _chrome_proc.terminate()
-        log.info("[CHROME] 종료 (PID=%d)", _chrome_proc.pid)
+    _stop_chrome(_chrome_proc)
     _state.running = False
     _state.chrome_pid = 0
     _state.popup_monitor_pid = 0
@@ -592,6 +602,7 @@ def run_daemon() -> None:
         _chrome_proc.terminate()
         return
 
+    log.info("[CDP] 복원된 옛 탭 %d개 정리(빈 탭 하나만 남김)", lifecycle.close_stale_tabs(CDP_PORT))
     _state.browser_context = "active"
     _save_state(_state)
     log.info("✓ CDP 포트 %d 준비 완료", CDP_PORT)
@@ -674,6 +685,12 @@ def cmd_start() -> None:
         print(" ⚠ (시간 초과 — 로그 확인 필요)")
 
 
+def _pid_alive(pid: int) -> bool:
+    import psutil
+
+    return psutil.pid_exists(pid)
+
+
 def cmd_stop() -> None:
     state = _load_state()
 
@@ -681,8 +698,12 @@ def cmd_stop() -> None:
     # Chrome 종료
     if state.chrome_pid:
         try:
-            os.kill(state.chrome_pid, signal.SIGTERM)
-            print(f"✓ Chrome 종료 (PID={state.chrome_pid})")
+            pid = state.chrome_pid
+            if lifecycle.graceful_close(CDP_PORT, is_alive=lambda: _pid_alive(pid)):  # 쿠키가 디스크에 남도록 정상 종료 먼저
+                print(f"✓ Chrome 정상 종료 (PID={pid})")
+            else:
+                os.kill(pid, signal.SIGTERM)
+                print(f"✓ Chrome 종료 (PID={pid})")
             stopped = True
         except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             print(f"⚠  Chrome 종료 실패: {e}")

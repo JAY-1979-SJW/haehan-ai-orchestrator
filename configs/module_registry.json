@@ -21528,6 +21528,22 @@
    "reason": "메뉴 색인·주소 열기 검증 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
    "confidence": "high",
    "source": "confirmed"
+  },
+  "scripts/browser_lifecycle.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_browser_lifecycle.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
