@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 
 from ..audit_logger import log_event
+from ..services import cafe_membership_service
 
 logger = logging.getLogger(__name__)
 
@@ -56,28 +57,53 @@ class CafeCollectRequest(BaseModel):
 
 
 @naver_cafe_router.post("/collect-my-cafes")
-def collect_my_cafes(user: dict = Depends(require_role("admin", "owner"))) -> dict:
-    """내 가입 카페 목록을 CDP 로 수집해 저장."""
+def collect_my_cafes(confirm_mass_change: bool = False, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """내 가입 카페 목록을 CDP 로 수집하고 이전 이력과 비교해 신규 가입·탈퇴를 반영한다.
+
+    작업 탭 하나만 쓰고 끝나면 닫는다. 빈 결과·화면 읽기 대체·중복·대량 감소는 비교하지 않고 경고만 낸다(저장본을 덮어쓰지 않는다).
+    `confirm_mass_change=true` 는 절반 이상 줄어든 결과를 사람이 확인하고 반영할 때만 쓴다.
+    """
     try:
         _ensure_path()
-        from scripts.naver.cafe.collection.explorer import get_my_cafes, save_my_cafes
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.naver.cafe.collection.explorer import get_my_cafes_with_source, save_my_cafes
+        from scripts.web_connector import close_page, get_context, run_on_browser_thread
+
+        def collect() -> tuple[list[dict], str]:
+            # 자기 탭을 직접 만들어 쓰고 닫는다. browser_task_session 은 컨텍스트의 아무 빈 탭을 골라 재사용하므로(2026-10-05 실측:
+            # 사라지는 탭에서 `Frame has been detached`, 다른 작업·사용자의 빈 탭을 가로챌 위험) 쓰지 않는다.
+            page = get_context().new_page()
+            try:
+                return get_my_cafes_with_source(page)
+            finally:
+                with contextlib.suppress(Exception):
+                    close_page(page)  # 작업 탭을 남기지 않는다(사용자 탭 불간섭)
 
         # CDP page 조작은 반드시 브라우저 전용 스레드에서 실행(playwright sync 스레드 경계).
-        cafes = run_on_browser_thread(lambda: get_my_cafes(get_page()), timeout=120)
-        save_my_cafes(cafes)
+        cafes, source = run_on_browser_thread(collect, timeout=120)
+        outcome = cafe_membership_service.apply_collection(cafes, source=source, confirm_mass_change=confirm_mass_change)
+        changes = outcome["changes"]
+        if outcome["persist_current"]:
+            save_my_cafes(cafes)  # 보호 규칙에 걸린 수집은 현재 목록 파일도 덮어쓰지 않는다
         log_event(
             "NAVER_CAFE_COLLECT_MY_CAFES",
             task_id="-",
             actor=user["actor"],
             role=user["role"],
-            decision="ok",
-            note=f"count={len(cafes)}",
+            decision="ok" if changes["status"] in ("baseline", "ok") else changes["status"],
+            note=f"count={len(cafes)} source={source} status={changes['status']} new={len(changes['new'])} left={len(changes['left'])}",
         )
-        return {"ok": True, "count": len(cafes), "cafes": cafes}
+        return {"ok": True, "count": len(cafes), "cafes": cafes, "source": source, "changes": changes, "activity": outcome["activity"]}
     except Exception as e:
         logger.exception("collect my-cafes error")
         raise HTTPException(status_code=500, detail=f"카페 목록 수집 실패: {e}") from e
+
+
+@naver_cafe_router.get("/my-cafes/changes")
+def api_my_cafes_changes(limit: int = 20, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """가입 카페 신규 가입·탈퇴 변동 기록과 가입 수 추이(읽기 전용)."""
+    out = cafe_membership_service.recent(limit)
+    log_event("NAVER_CAFE_MY_CAFES_CHANGES_READ", task_id="-", actor=user["actor"], role=user["role"], decision="ok", note=f"changes={len(out['changes'])}")
+    return out
 
 
 @naver_cafe_router.post("/collect")
@@ -367,7 +393,7 @@ def api_report(
 
 @naver_cafe_router.get("/summary")
 def api_summary(
-    user: dict = Depends(require_role("admin", "owner")),
+    _: dict = Depends(require_role("admin", "owner")),
 ) -> dict:
     """카페 수집 현황 요약 (파일 존재 여부 + 건수)."""
     t0 = time.monotonic()
@@ -568,14 +594,12 @@ def cafe_to_haehan_blog(
         )
 
     # ── 3 & 4. 주제별 블로그 생성 → 홈페이지 DB 저장 ─────────────────────────
-    results = []
     headers_common = {
         "Content-Type": "application/json",
         "x-admin-key": admin_secret,
     }
 
-    for topic in topics:
-        results.append(_generate_and_save_post(topic, haehan_url, headers_common, post_status))
+    results = [_generate_and_save_post(topic, haehan_url, headers_common, post_status) for topic in topics]
 
     success = [r for r in results if r["error"] is None]
     failed = [r for r in results if r["error"] is not None]

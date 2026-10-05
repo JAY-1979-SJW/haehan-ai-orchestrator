@@ -1,5 +1,6 @@
 "use client";
 
+import { SiteOverview } from "./SiteOverview";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SiteMapExploreCard } from "@/components/sitemap/SiteMapExploreCard";
 import {
@@ -136,6 +137,7 @@ export function SiteMapApp() {
                   {unclassified > 0 && <span className="ml-2 rounded bg-violet-100 px-2 text-violet-800">분류 미정 {unclassified}</span>}
                 </div>
               </div>
+              <SiteOverview siteMap={siteMap} />
               {tasks.length === 0 && (
                 <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-900">
                   탐색은 했지만 저장된 업무가 없습니다{siteMap.explored && siteMap.explored.pages > 0 ? ` (${siteMap.explored.pages}쪽 탐색)` : ""}.

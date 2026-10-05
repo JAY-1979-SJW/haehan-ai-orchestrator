@@ -7,6 +7,8 @@
 """
 from __future__ import annotations
 
+from typing import Any
+
 # ── 사용자 정보 ──────────────────────────────────────────────────────
 USER_EMAIL       = "skyjwshin@gmail.com"
 PROJECT_NAME     = "haehan-orchestrator"
@@ -17,8 +19,22 @@ CDP_PORT         = 9222
 CDP_HOST         = "127.0.0.1"
 CDP_ENDPOINT     = f"http://{CDP_HOST}:{CDP_PORT}"
 
+# ── CDP 데몬 브라우저 정책(단일 출처) ───────────────────────────────────
+# 데몬(cdp_daemon.py)·cdp_force_start.py 가 이 값을 읽는다. 값의 뜻·근거: docs/architecture/CDP_BROWSER_POLICY.md
+# 아래 세 불리언은 끄면 안 된다 — 검증 함수(browser_lifecycle.validate_policy)와 시험이 True 가 아니면 실패시킨다.
+CDP_BROWSER_POLICY: dict[str, Any] = {
+    "start_url": "https://www.google.com/",  # 시작 페이지(홈): 옛 탭을 정리한 뒤 이 주소 탭 하나만 남긴다(구글 첫 화면, 로그인·동작 없음)
+    "restore_last_session": True,  # 이전 세션 복원 스위치(값 없이) — 로그인(세션 쿠키)이 재시작 뒤에도 남는 조건
+    "clean_start": True,  # 시작 직후 복원된 옛 탭 정리
+    "graceful_stop_first": True,  # 종료는 CDP Browser.close 먼저 — 쿠키가 디스크에 남는 유일한 종료 방식
+    "restore_settle_s": 10.0,  # 세션 복원이 끝나기를 기다리는 최대 시간(초)
+}
+CDP_START_URL    = CDP_BROWSER_POLICY["start_url"]
+
 # ── Google 서비스 URL ────────────────────────────────────────────────
 GOOGLE_URLS = {
+    # 데몬 브라우저 시작 페이지(구글 홈)
+    "home": CDP_START_URL,
     # Calendar
     "calendar_day":  "https://calendar.google.com/calendar/u/0/r/day",
     "calendar_week": "https://calendar.google.com/calendar/u/0/r/week",

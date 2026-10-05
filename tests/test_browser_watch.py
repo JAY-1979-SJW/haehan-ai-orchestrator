@@ -188,6 +188,7 @@ class _FakeWS:
 
 
 def test_run_logs_events_and_reconnects_after_drop(tmp_path, monkeypatch):
+    monkeypatch.setattr(bw, "poll_process", lambda *_a, **_k: None)  # 이 시험은 탭 이벤트만 본다 — 실제 프로세스 점검(실측 3초)을 타지 않게 격리
     conns = [
         _FakeWS([_created("T1", "https://a.com/?t=SECRET", title="A")]),
         _FakeWS([_created("T2", "https://b.com/")]),
@@ -211,6 +212,7 @@ def test_run_subscribes_to_target_discovery(tmp_path, monkeypatch):
 
 
 def test_run_waits_quietly_when_browser_is_absent(tmp_path, monkeypatch):
+    monkeypatch.setattr(bw, "poll_process", lambda *_a, **_k: None)  # 이 시험은 탭 이벤트만 본다 — 실제 프로세스 점검(실측 3초)을 타지 않게 격리
     monkeypatch.setattr(bw, "_browser_ws_url", lambda port: None)
     monkeypatch.setattr(bw, "RECONNECT_SEC", 0.01)
     bw.run(log_path=tmp_path / "w.jsonl", stop_after=0.1)

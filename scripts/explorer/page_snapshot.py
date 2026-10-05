@@ -32,7 +32,27 @@ _EXTRACT_FRAME_JS = r"""
     };
     // 문서 안 위치(요소 순번): 페이지 전체를 감싸는 폼에서도 "입력창 근처의 컨트롤"만 고를 수 있게 한다
     const order = new Map(Array.from(document.querySelectorAll('*')).map((e, i) => [e, i]));
+    // 버튼이 속한 ARIA 랜드마크(사이트 공통 메뉴 판별용). header/footer 는 article·section·main 안이면 banner/contentinfo 가 아니다(HTML-AAM).
+    const landmarkOf = (el) => {
+        const r = el.closest('[role="navigation"],[role="banner"],[role="contentinfo"],[role="complementary"],[role="main"],[role="search"],nav,header,footer,aside,main');
+        if (!r) return '';
+        const role = r.getAttribute('role');
+        if (role) return role;
+        const t = r.tagName;
+        if (t === 'NAV') return 'navigation';
+        if (t === 'ASIDE') return 'complementary';
+        if (t === 'MAIN') return 'main';
+        const scoped = r.parentElement && r.parentElement.closest('article,section,main,aside,nav');
+        if (t === 'HEADER') return scoped ? '' : 'banner';
+        if (t === 'FOOTER') return scoped ? '' : 'contentinfo';
+        return '';
+    };
+    // 메뉴 목록 판별(M8): 링크가 li 의 직계 자식일 때만 그 목록(ul/ol)을 그룹으로 본다 — 상품 카드처럼 깊이 들어간 링크는 메뉴가 아니다.
+    const listGroup = a => (a.parentElement && a.parentElement.tagName === 'LI' && a.parentElement.parentElement) ? String(order.get(a.parentElement.parentElement)) : '';
     const links = Array.from(document.querySelectorAll('a')).map(a => ({
+        abs: a.href || '',
+        landmark: landmarkOf(a),
+        group: listGroup(a),
         text: (a.innerText || '').trim().slice(0, 80),
         href: a.getAttribute('href') || '',
         target: a.getAttribute('target') || '',
@@ -67,21 +87,6 @@ _EXTRACT_FRAME_JS = r"""
     }));
     inputs.push(...editables);
     // <input type="submit|button|image"> 도 버튼이다(흔한 검색 폼: 입력창 + submit 입력). 글자는 value·alt·title 에서 읽는다.
-    // 버튼이 속한 ARIA 랜드마크(사이트 공통 메뉴 판별용). header/footer 는 article·section·main 안이면 banner/contentinfo 가 아니다(HTML-AAM).
-    const landmarkOf = (el) => {
-        const r = el.closest('[role="navigation"],[role="banner"],[role="contentinfo"],[role="complementary"],[role="main"],[role="search"],nav,header,footer,aside,main');
-        if (!r) return '';
-        const role = r.getAttribute('role');
-        if (role) return role;
-        const t = r.tagName;
-        if (t === 'NAV') return 'navigation';
-        if (t === 'ASIDE') return 'complementary';
-        if (t === 'MAIN') return 'main';
-        const scoped = r.parentElement && r.parentElement.closest('article,section,main,aside,nav');
-        if (t === 'HEADER') return scoped ? '' : 'banner';
-        if (t === 'FOOTER') return scoped ? '' : 'contentinfo';
-        return '';
-    };
     const buttons = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], input[type="image"]')).map(b => ({
         text: (b.innerText || b.value || b.alt || b.title || '').trim().slice(0, 60),
         id: b.id || '',

@@ -23,6 +23,7 @@ import logging
 import os
 import re
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -35,9 +36,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome, find_edge  # noqa: E402
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
-from scripts.config import CDP_HOST, CDP_PORT  # noqa: E402
+from scripts.config import CDP_BROWSER_POLICY, CDP_HOST, CDP_PORT  # noqa: E402
 
 # ── 설정 ─────────────────────────────────────────────────────────────
 DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
@@ -191,7 +193,8 @@ def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
         "--disable-session-crashed-bubble",
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
-        "--restore-last-session=false",
+        # 이전 세션 복원 스위치(값 없이): 로그인(세션 쿠키)을 재시작 뒤에도 유지한다. 복원된 옛 탭은 시작 직후 close_stale_tabs 가 정리한다. 이전에 쓰던 `=false` 형태는 값과 무관하게 켜지는 스위치라 오해를 부르는 잘못된 표기였다.
+        *lifecycle.session_args(CDP_BROWSER_POLICY),
         "--window-position=100,50",
         "--window-size=1280,900",
         "--force-device-scale-factor=1.5",
@@ -283,9 +286,18 @@ def _profile_session_files(profile_dir: Path) -> list[str]:
 # ── 데몬 본체 ─────────────────────────────────────────────────────────
 _stop_event = threading.Event()
 _state = DaemonState()
-_chrome_proc: subprocess.Popen | None = None
-_popup_monitor_proc: subprocess.Popen | None = None
-_chrome_ui_monitor_proc: subprocess.Popen | None = None
+
+
+@dataclass
+class _Procs:
+    """데몬이 띄운 프로세스 보관(모듈 전역을 `global` 로 다시 대입하지 않고 속성으로 바꾼다)."""
+
+    chrome: subprocess.Popen | None = None
+    popup_monitor: subprocess.Popen | None = None
+    chrome_ui_monitor: subprocess.Popen | None = None
+
+
+_procs = _Procs()
 _restart_lock = threading.Lock()
 
 
@@ -314,14 +326,24 @@ def _launch_background_python(args: list[str]) -> subprocess.Popen:
 
 def _start_popup_monitor_process() -> None:
     """Run popup monitor out-of-process to keep Playwright sync API isolated."""
-    global _popup_monitor_proc
-    if _popup_monitor_proc and _popup_monitor_proc.poll() is None:
+    if _procs.popup_monitor and _procs.popup_monitor.poll() is None:
         return
     script = ROOT / "scripts" / "cdp_client.py"
-    _popup_monitor_proc = _launch_background_python([str(script), "popup-monitor", "start", "2.0"])
-    _state.popup_monitor_pid = _popup_monitor_proc.pid
+    _procs.popup_monitor = _launch_background_python([str(script), "popup-monitor", "start", "2.0"])
+    _state.popup_monitor_pid = _procs.popup_monitor.pid
     _save_state(_state)
-    log.info("[popup_monitor] process started PID=%d", _popup_monitor_proc.pid)
+    log.info("[popup_monitor] process started PID=%d", _procs.popup_monitor.pid)
+
+
+def _stop_chrome(proc: subprocess.Popen | None) -> None:
+    """Chrome 을 3단계로 닫는다(CDP 종료 → 종료 신호 → 강제) — 앞 단계일수록 쿠키가 디스크에 잘 남는다."""
+    if not proc or proc.poll() is not None:
+        return
+    how = lifecycle.stop_browser(CDP_PORT, proc.pid, is_alive=lambda: proc.poll() is None, graceful_first=CDP_BROWSER_POLICY["graceful_stop_first"])
+    if how in ("signal", "forced"):  # CDP 정상 종료가 아니면 로그인(세션 쿠키)이 사라졌을 수 있다
+        log.warning("[CHROME] 정상 종료(CDP) 실패 → 종료 방식=%s PID=%d — 로그인 세션이 사라졌을 수 있습니다", how, proc.pid)
+    else:
+        log.info("[CHROME] 종료 방식=%s PID=%d", how, proc.pid)
 
 
 def _stop_process(proc: subprocess.Popen | None, label: str) -> None:
@@ -337,7 +359,6 @@ def _stop_process(proc: subprocess.Popen | None, label: str) -> None:
 
 def _restart_chrome() -> None:
     """Chrome 재시작 (락으로 중복 방지)."""
-    global _chrome_proc
     with _restart_lock:
         if _state.restart_count >= MAX_RESTART:
             log.error("최대 재시작 횟수(%d) 초과 — 데몬 종료", MAX_RESTART)
@@ -351,25 +372,21 @@ def _restart_chrome() -> None:
         _save_state(_state)
 
         # 기존 프로세스 정리
-        if _chrome_proc and _chrome_proc.poll() is None:
-            try:
-                _chrome_proc.terminate()
-                _chrome_proc.wait(timeout=5)
-            except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
-                pass
+        _stop_chrome(_procs.chrome)
 
         time.sleep(2)
 
         try:
-            _chrome_proc = _launch_chrome(CDP_PORT)
-            _state.chrome_pid = _chrome_proc.pid
+            _procs.chrome = _launch_chrome(CDP_PORT)
+            _state.chrome_pid = _procs.chrome.pid
             _record_browser_launch_metadata()
             _save_state(_state)
 
             if _is_cdp_ready(CDP_PORT):
+                log.info("[RESTART] 복원된 옛 탭 %d개 정리(시작 페이지 %s 탭 하나만 남김)", lifecycle.apply_start_policy(CDP_PORT, CDP_BROWSER_POLICY), CDP_BROWSER_POLICY["start_url"])
                 _state.browser_context = "active"
                 _state.last_error = ""
-                log.info("[RESTART] Chrome 재시작 성공 PID=%d", _chrome_proc.pid)
+                log.info("[RESTART] Chrome 재시작 성공 PID=%d", _procs.chrome.pid)
             else:
                 log.error("[RESTART] CDP 포트 응답 없음")
                 _state.last_error = "cdp_port_timeout_after_restart"
@@ -407,10 +424,9 @@ def _heartbeat_probe(cdp_fail_streak: int, healthy_streak: int, healthy_reset_af
 
 def _restart_dead_monitors() -> None:
     """종료된 popup_monitor / chrome_ui_monitor 프로세스를 자동 재시작."""
-    global _chrome_ui_monitor_proc
 
     # popup_monitor 자동 재시작 (팝업 감지 보장)
-    if _popup_monitor_proc and _popup_monitor_proc.poll() is not None:
+    if _procs.popup_monitor and _procs.popup_monitor.poll() is not None:
         log.warning("[HEARTBEAT] popup_monitor 종료 감지 → 자동 재시작")
         _state.popup_monitor_pid = 0
         try:
@@ -419,15 +435,35 @@ def _restart_dead_monitors() -> None:
             log.warning("[HEARTBEAT] popup_monitor 재시작 실패: %s", e)
 
     # chrome_ui_monitor 자동 재시작 (독립 프로세스)
-    if _chrome_ui_monitor_proc and _chrome_ui_monitor_proc.poll() is not None:
+    if _procs.chrome_ui_monitor and _procs.chrome_ui_monitor.poll() is not None:
         log.warning("[HEARTBEAT] chrome_ui_monitor 종료 감지 → 자동 재시작")
         _state.chrome_ui_monitor_pid = 0
         try:
             script = ROOT / "scripts" / "chrome_ui_monitor.py"
-            _chrome_ui_monitor_proc = _launch_background_python([str(script), "3.0"])
-            _state.chrome_ui_monitor_pid = _chrome_ui_monitor_proc.pid
+            _procs.chrome_ui_monitor = _launch_background_python([str(script), "3.0"])
+            _state.chrome_ui_monitor_pid = _procs.chrome_ui_monitor.pid
         except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             log.warning("[HEARTBEAT] chrome_ui_monitor 재시작 실패: %s", e)
+
+
+def _port_listening(port: int = CDP_PORT, timeout: float = 1.0) -> bool:
+    """디버그 포트에 TCP 연결이 되는가 — 되면 Chrome 프로세스는 살아 있다(HTTP 응답만 느릴 수 있다)."""
+    try:
+        with socket.create_connection((CDP_HOST, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+CDP_FAIL_THRESHOLD = 3  # 연속 응답 없음 3회(약 30초) — 포트가 닫혀 있으면(Chrome 종료) 바로 재시작
+CDP_HUNG_THRESHOLD = 18  # 포트는 열려 있는데 응답만 없을 땐 약 3분까지 기다린다(살아있는 Chrome 과 열린 탭을 죽이지 않는다)
+
+
+def _should_restart_chrome(fail_streak: int, port_open: bool) -> bool:
+    """재시작 판정(순수). 2026-10-05: 응답 지연 3회만으로 살아있는 Chrome 을 종료·재시작해 열려 있던 탭이 날아갔다."""
+    if fail_streak < CDP_FAIL_THRESHOLD:
+        return False
+    return fail_streak >= CDP_HUNG_THRESHOLD or not port_open
 
 
 def _heartbeat_loop() -> None:
@@ -437,10 +473,8 @@ def _heartbeat_loop() -> None:
     실제 기능 살아있는지가 중요하므로 CDP 포트 ping 으로 판정.
     연속 N회 실패 시 재시작.
     """
-    global _chrome_ui_monitor_proc
 
     cdp_fail_streak = 0
-    CDP_FAIL_THRESHOLD = 3  # 3회 연속(약 30초) 응답 없으면 재시작
     healthy_streak = 0
     HEALTHY_RESET_AFTER = 30  # 30회 연속(약 5분) 정상이면 restart_count 초기화
 
@@ -452,10 +486,13 @@ def _heartbeat_loop() -> None:
             cdp_fail_streak, healthy_streak = _heartbeat_probe(cdp_fail_streak, healthy_streak, HEALTHY_RESET_AFTER)
 
             if cdp_fail_streak >= CDP_FAIL_THRESHOLD:
-                log.warning("[HEARTBEAT] CDP 포트 %d 무응답 %d회 — Chrome 자동 재시작", CDP_PORT, cdp_fail_streak)
-                _state.browser_context = "inactive"
-                cdp_fail_streak = 0
-                threading.Thread(target=_restart_chrome, daemon=True).start()
+                if _should_restart_chrome(cdp_fail_streak, _port_listening()):
+                    log.warning("[HEARTBEAT] CDP 포트 %d 무응답 %d회 — Chrome 자동 재시작", CDP_PORT, cdp_fail_streak)
+                    _state.browser_context = "inactive"
+                    cdp_fail_streak = 0
+                    threading.Thread(target=_restart_chrome, daemon=True).start()
+                elif cdp_fail_streak == CDP_FAIL_THRESHOLD:
+                    log.warning("[HEARTBEAT] CDP 포트 %d 응답이 느리지만 포트는 열려 있어 재시작하지 않고 기다립니다(최대 %d회)", CDP_PORT, CDP_HUNG_THRESHOLD)
 
             _restart_dead_monitors()
 
@@ -465,14 +502,24 @@ def _heartbeat_loop() -> None:
         _stop_event.wait(timeout=10)
 
 
-def _signal_handler(signum: int, frame: Any) -> None:
+def _signal_handler(signum: int, _frame: Any) -> None:
     log.info("신호 수신: %d → 종료", signum)
     _stop_event.set()
 
 
+def _start_browser_watch() -> None:
+    """탭·브라우저 프로세스 감시 로그(scripts/ops/browser_watch.py) 기동 — cdp_force_start 와 같은 감시를 데몬 경로에도 켠다. 실패해도 데몬은 계속."""
+    try:
+        from scripts.ops import browser_watch
+
+        log.info("[WATCH] 브라우저 감시 로그 %s", "시작" if browser_watch.start() else "이미 실행 중")
+    except Exception as e:  # noqa: BLE001 - 감시는 부가 기능, 실패해도 브라우저 관리는 계속
+        log.warning("[WATCH] 브라우저 감시 로그 시작 실패(무시): %s", e)
+
+
 def _start_monitor_processes() -> None:
     """popup_monitor / chrome_ui_monitor 보조 프로세스 시작. 실패해도 데몬은 계속."""
-    global _chrome_ui_monitor_proc
+    _start_browser_watch()
 
     # popup_monitor uses Playwright's sync API, so keep it in a separate
     # process. Running it in a daemon thread can collide with asyncio loops
@@ -487,10 +534,10 @@ def _start_monitor_processes() -> None:
     # daemon thread가 아닌 별도 프로세스이므로 IDE 세션 간섭 없음
     try:
         script = ROOT / "scripts" / "chrome_ui_monitor.py"
-        _chrome_ui_monitor_proc = _launch_background_python([str(script), "3.0"])
-        _state.chrome_ui_monitor_pid = _chrome_ui_monitor_proc.pid
+        _procs.chrome_ui_monitor = _launch_background_python([str(script), "3.0"])
+        _state.chrome_ui_monitor_pid = _procs.chrome_ui_monitor.pid
         _save_state(_state)
-        log.info("[chrome_ui_monitor] process started PID=%d", _chrome_ui_monitor_proc.pid)
+        log.info("[chrome_ui_monitor] process started PID=%d", _procs.chrome_ui_monitor.pid)
     except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         log.warning("[chrome_ui_monitor] 시작 실패 (데몬은 계속): %s", e)
 
@@ -498,11 +545,9 @@ def _start_monitor_processes() -> None:
 def _shutdown_daemon() -> None:
     """데몬 종료 정리 — 보조 프로세스/Chrome 종료 및 상태 저장."""
     log.info("데몬 종료 중...")
-    _stop_process(_popup_monitor_proc, "popup_monitor")
-    _stop_process(_chrome_ui_monitor_proc, "chrome_ui_monitor")
-    if _chrome_proc and _chrome_proc.poll() is None:
-        _chrome_proc.terminate()
-        log.info("[CHROME] 종료 (PID=%d)", _chrome_proc.pid)
+    _stop_process(_procs.popup_monitor, "popup_monitor")
+    _stop_process(_procs.chrome_ui_monitor, "chrome_ui_monitor")
+    _stop_chrome(_procs.chrome)
     _state.running = False
     _state.chrome_pid = 0
     _state.popup_monitor_pid = 0
@@ -513,7 +558,6 @@ def _shutdown_daemon() -> None:
 
 
 def run_daemon() -> None:
-    global _chrome_proc, _chrome_ui_monitor_proc, _state
 
     log.info("=" * 60)
     log.info("  AI CDP 데몬 시작 (상시 실행 모드)")
@@ -525,20 +569,20 @@ def run_daemon() -> None:
     signal.signal(signal.SIGTERM, _signal_handler)
     signal.signal(signal.SIGINT, _signal_handler)
 
-    _state.__init__(
+    vars(_state).update(vars(DaemonState(
         running=True,
         pid=os.getpid(),
         cdp_port=CDP_PORT,
         browser_context="inactive",
         started_at=datetime.now(UTC).isoformat(),
         profile_dir=str(PROFILE_DIR),
-    )
+    )))  # 같은 객체를 제자리에서 다시 채운다(`__init__` 직접 호출은 안전하지 않다)
     _save_state(_state)
 
     # Chrome 실행
     try:
-        _chrome_proc = _launch_chrome(CDP_PORT)
-        _state.chrome_pid = _chrome_proc.pid
+        _procs.chrome = _launch_chrome(CDP_PORT)
+        _state.chrome_pid = _procs.chrome.pid
         _record_browser_launch_metadata()
         _save_state(_state)
     except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
@@ -555,9 +599,10 @@ def run_daemon() -> None:
         _state.running = False
         _state.last_error = "cdp_port_timeout"
         _save_state(_state)
-        _chrome_proc.terminate()
+        _procs.chrome.terminate()
         return
 
+    log.info("[CDP] 복원된 옛 탭 %d개 정리(시작 페이지 %s 탭 하나만 남김)", lifecycle.apply_start_policy(CDP_PORT, CDP_BROWSER_POLICY), CDP_BROWSER_POLICY["start_url"])
     _state.browser_context = "active"
     _save_state(_state)
     log.info("✓ CDP 포트 %d 준비 완료", CDP_PORT)
@@ -647,8 +692,8 @@ def cmd_stop() -> None:
     # Chrome 종료
     if state.chrome_pid:
         try:
-            os.kill(state.chrome_pid, signal.SIGTERM)
-            print(f"✓ Chrome 종료 (PID={state.chrome_pid})")
+            how = lifecycle.stop_browser(CDP_PORT, state.chrome_pid, graceful_first=CDP_BROWSER_POLICY["graceful_stop_first"])  # 쿠키가 디스크에 남도록 정상 종료부터 3단계
+            print(f"✓ Chrome 종료 (PID={state.chrome_pid}, 방식={how})")
             stopped = True
         except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             print(f"⚠  Chrome 종료 실패: {e}")
