@@ -60,13 +60,13 @@ def process_comment_event(comment_event_id: str, *, instagram_account_id: str) -
         rules=rules,
     )
 
-    if not result.matched:
+    rule = result.rule
+    if not result.matched or rule is None:  # rule 이 없으면 발송 경로로 진행하지 않는다(fail-closed)
         db.update_comment_event_status(
             comment_event_id, status="NO_MATCH" if result.reason == "NO_MATCH" else "IGNORED"
         )
         return
 
-    rule = result.rule
     db.update_comment_event_status(
         comment_event_id, status="MATCHED", matched_rule_id=rule["id"], matched_keyword=result.matched_keyword
     )
