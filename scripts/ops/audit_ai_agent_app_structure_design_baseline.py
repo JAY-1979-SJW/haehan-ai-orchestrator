@@ -36,31 +36,24 @@ REQUIRED_BASELINE_TOKENS = [
     "Do not create a separate domain for a tool by default.",
 ]
 
+# 2026-10-05: 홈 재작성(855d595a 단일 AI 콘솔) + nav 정리 이후 현행 값으로 갱신.
+# 구조(필수 키/토큰 존재 검사)는 유지, 폐기된 대시보드형 표면 요구만 현행 표면으로 교체.
 REQUIRED_NAV_KEYS = [
     "home",
-    "local-agents",
-    "market-research",
-    "cad",
-    "file-map",
-    "browser-approvals",
+    "ops",
+    "mail",
+    "hanafax",
+    "google",
+    "approval",
+    "tasks",
 ]
 
 REQUIRED_HOME_TOKENS = [
-    'data-testid="ai-agent-app-dashboard"',
-    "Server, local agent, app UI, and AI orchestration",
-    "Runtime Integration Flow",
-    "Current App Tool Surfaces",
-    "Quick Actions And Immediate Results",
-    "Chat And Result Workspace",
-    'data-testid="ai-agent-chat-input"',
-    'data-testid="ai-agent-result-panel"',
-    "Latest result panel",
-    "Button-first action",
-    "low-input",
-    "natural-language input is the fallback",
-    "Operating contract",
-    "approval gate",
-    "Work records",
+    'data-testid="ai-agent-console"',
+    "단일 AI 작업 콘솔",
+    'import { UniversalChat } from "@/components/chat/UniversalChat"',
+    '<UniversalChat domain="default" title="AI 작업 콘솔"',
+    "실제 작업은 브라우저(CDP)에서 수행됩니다",
 ]
 
 
@@ -94,18 +87,20 @@ def _check_home_tokens(home_text: str) -> tuple[bool, list[str]]:
     for token in REQUIRED_HOME_TOKENS:
         if token not in home_text:
             ok = False
-            findings.append(f"[FAIL] missing home dashboard token: {token}")
+            findings.append(f"[FAIL] missing home console token: {token}")
     if all(token in home_text for token in REQUIRED_HOME_TOKENS):
-        findings.append("[PASS] home dashboard exposes server/local/app/AI operating contract")
+        findings.append("[PASS] home exposes single AI console (UniversalChat)")
     return ok, findings
 
 
-def _check_market_research_route() -> tuple[bool, list[str]]:
+def _check_market_research_route(nav_text: str) -> tuple[bool, list[str]]:
+    # 2026-10-05: /market-research 페이지가 삭제돼(b769231d) UI/API 존재 요구는 폐기.
+    # 대신 nav 가 존재하지 않는 페이지로 링크하지 않는지(404 방지) 검증한다.
     market_page = ROOT / "admin-web" / "src" / "app" / "market-research" / "page.tsx"
-    market_api = ROOT / "admin-web" / "src" / "app" / "api" / "market-research" / "run" / "route.ts"
-    if not market_page.exists() or not market_api.exists():
-        return False, ["[FAIL] Market Research UI/API route missing"]
-    return True, ["[PASS] Market Research UI and bounded run API are present"]
+    registered = 'href: "/market-research"' in nav_text
+    if registered and not market_page.exists():
+        return False, ["[FAIL] nav links /market-research but page is missing"]
+    return True, ["[PASS] nav does not link to missing Market Research page"]
 
 
 def audit() -> tuple[bool, list[str]]:
@@ -121,7 +116,7 @@ def audit() -> tuple[bool, list[str]]:
     home_text = HOME_PAGE.read_text(encoding="utf-8") if HOME_PAGE.exists() else ""
     ok3, f3 = _check_home_tokens(home_text)
 
-    ok4, f4 = _check_market_research_route()
+    ok4, f4 = _check_market_research_route(nav_text)
 
     return ok1 and ok2 and ok3 and ok4, f1 + f2 + f3 + f4
 
