@@ -7,13 +7,13 @@ MutationObserver를 주입해 DOM 변화 감시하고,
 from __future__ import annotations
 
 import json
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
-POPUP_MARKERS = {
+POPUP_MARKERS: dict[str, dict[str, Any]] = {
     "작성 중인 글": {"action": "click_button", "target": "취소"},
     "이어서 작성": {"action": "click_button", "target": "취소"},
     "임시저장": {"action": None},

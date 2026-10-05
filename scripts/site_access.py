@@ -27,6 +27,7 @@ import contextlib
 import sys
 import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -627,7 +628,7 @@ def explore_after_login(
             "explore": {"host": "(dry)", "visited": 0, "elapsed_s": 0.0, "aborted_reason": "", "saved_to": ""},
         }
 
-    page = open_site(site, path)
+    page: Any = open_site(site, path)
     from scripts.explorer.auto_explorer import explore_site
 
     log.info("[site-access] %s 로그인 완료 — 자동 탐색 시작 (depth=%d max=%d)", site, depth, max_pages)
@@ -652,7 +653,7 @@ def main() -> None:
     site = sys.argv[1]
     path = sys.argv[2] if len(sys.argv) > 2 else ""
     try:
-        page = open_site(site, path)
+        page: Any = open_site(site, path)
         if isinstance(page, dict):
             print(f"✔ {site} 접속 드라이런 완료 — {page.get('url', '')}")
         else:

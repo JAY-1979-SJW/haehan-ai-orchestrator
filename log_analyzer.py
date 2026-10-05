@@ -19,7 +19,7 @@ _CACHE_PATH = _BASE_DIR / "storage" / "dashboard_cache.json"
 log = get_logger("log_analyzer")
 
 
-def _read_jsonl(path: str, limit: int = 0) -> list:
+def _read_jsonl(path: str | Path, limit: int = 0) -> list:
     """JSONL 파일 읽기. 파싱 실패 라인은 skip + WARN."""
     if not Path(path).exists():
         return []

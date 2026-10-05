@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from scripts import cdp_verify as v
 
 
 def _info(**over) -> v.PageInfo:
-    base = {
+    base: dict[str, Any] = {
         "href": "https://developers.hiworks.com/",
         "ready": "complete",
         "title": "하이웍스 - 개발자 센터",

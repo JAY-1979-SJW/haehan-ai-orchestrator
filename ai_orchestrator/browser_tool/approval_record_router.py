@@ -17,7 +17,9 @@ from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
 from ai_orchestrator.gates.auth import require_role
 
 from .approval_record_store import (
+    ApprovalTransitionError,
     append_approval_record,
+    append_decision_if_pending,
     build_approval_decision,
     build_approval_request,
     get_latest_approval_status,
@@ -278,7 +280,10 @@ def approve_request(
             decision_reason=req.decision_reason,
         )
 
-        result = append_approval_record(decision_record, APPROVAL_RECORD_STORE_PATH)
+        try:
+            result = append_decision_if_pending(decision_record, APPROVAL_RECORD_STORE_PATH)
+        except ApprovalTransitionError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
         if not result.success:
             logger.error("Failed to append approval decision: %s", result.error_message)
             raise HTTPException(status_code=400, detail=result.error_message or "Failed to approve")
@@ -328,7 +333,10 @@ def reject_request(
             decision_reason=req.decision_reason,
         )
 
-        result = append_approval_record(decision_record, APPROVAL_RECORD_STORE_PATH)
+        try:
+            result = append_decision_if_pending(decision_record, APPROVAL_RECORD_STORE_PATH)
+        except ApprovalTransitionError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
         if not result.success:
             logger.error("Failed to append approval decision: %s", result.error_message)
             raise HTTPException(status_code=400, detail=result.error_message or "Failed to reject")

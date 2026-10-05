@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.logger import get_logger
-from scripts.popup_classifier import Decision, classify, is_auto_handleable
+from scripts.popup_classifier import Action, Category, Decision, Severity, classify, is_auto_handleable
 from scripts.popup_watcher import POPUP_MARKERS, build_watcher_js
 
 _log = get_logger(__name__)
@@ -382,7 +382,7 @@ class ChromeUIWatcher:
         marker = ev.get("marker", "unknown")
         btn = ev.get("button_name")
         # marker → (category, severity, action)
-        TABLE = {
+        TABLE: dict[str, tuple[Category, Severity, Action]] = {
             "automation_warning": ("notification_request", "low", "notify_user"),
             "session_crashed": ("draft_restore", "low", "auto_dismiss"),
             "save_password": ("marketing_optin", "low", "auto_dismiss"),
@@ -397,7 +397,7 @@ class ChromeUIWatcher:
         return Decision(
             category=cat,
             severity=sev,
-            action=act,  # type: ignore[typeddict-item]
+            action=act,
             target=btn,
             confidence=0.85,
             reasoning=f"chrome_ui_watcher 매칭: {marker}",

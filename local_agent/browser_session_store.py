@@ -64,12 +64,13 @@ class BrowserSessionStore:
                 started_at=time.time(),
                 status=BROWSER_RUNNING,
             )
-            return BrowserSession(**{
+            snapshot: dict[str, Any] = {
                 "browser_session_id": self._session.browser_session_id,
                 "started_at": self._session.started_at,
                 "status": self._session.status,
                 "tabs": {},
-            })
+            }
+            return BrowserSession(**snapshot)
 
     def mark_browser_closed(self) -> None:
         with self._lock:

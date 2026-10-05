@@ -315,6 +315,7 @@ def collect_joined_cafe_background(
             selection=selection.to_dict(),
         )
 
+    report: Any
     if mode == "boards":
         report = member_collect.collect_boards_from_target(target_id, port=session.port, cafe_url=cafe_url)
     elif mode == "join-request":
@@ -355,6 +356,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--limit", type=int, default=10)
     args = parser.parse_args(argv)
 
+    report: Any
     if args.mode == "main":
         report = collect_main_background(allow_mixed_readonly=args.allow_mixed_readonly)
     elif args.mode == "topic-search":

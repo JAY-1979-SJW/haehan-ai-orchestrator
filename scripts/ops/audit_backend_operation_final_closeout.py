@@ -8,6 +8,7 @@ ASSISTANT_BACKEND_OPERATION_FINAL_CLOSEOUT_01
 """
 
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -45,7 +46,7 @@ COMPLETED_PHASES = [
 ]
 
 # ── 1. 서버/배포 기준선 ──────────────────────────────────────────────────────
-DEPLOYMENT_BASELINE = {
+DEPLOYMENT_BASELINE: dict[str, Any] = {
     "server_head": "8e72025",
     "local_head": "8e72025",
     "origin_master": "8e72025",
@@ -69,7 +70,7 @@ DEPLOYMENT_BASELINE = {
 }
 
 # ── 2. POST /api/v1/tasks dry-run gate 상태 ──────────────────────────────────
-POST_TASKS_GATE_STATUS = {
+POST_TASKS_GATE_STATUS: dict[str, Any] = {
     "flag": "POST_TASKS_DRY_RUN_ENABLED",
     "value": True,
     "location": "ai_orchestrator/router.py:39",
@@ -101,7 +102,7 @@ LEGACY_5050_STATUS = {
 }
 
 # ── 4. Runtime Storage 영속성 ────────────────────────────────────────────────
-STORAGE_PERSISTENCE_STATUS = {
+STORAGE_PERSISTENCE_STATUS: dict[str, Any] = {
     "storage_named_volume": {
         "path": "/app/ai_orchestrator/storage",
         "volume": "haehan-ai-orchestrator-api-storage",
@@ -145,7 +146,7 @@ EXTERNAL_SITE_REGISTRY_STATUS = {
 }
 
 # ── 6. Known Baseline Failures / Warnings ───────────────────────────────────
-KNOWN_BASELINE_ISSUES = {
+KNOWN_BASELINE_ISSUES: dict[str, Any] = {
     "known_failures": [
         {
             "id": "KF-1",
@@ -190,7 +191,7 @@ KNOWN_BASELINE_ISSUES = {
 }
 
 # ── 7. POST /tasks 남은 blockers ─────────────────────────────────────────────
-POST_TASKS_REMAINING_BLOCKERS = {
+POST_TASKS_REMAINING_BLOCKERS: dict[str, Any] = {
     "status": "MEDIUM_PATH_DRY_RUN_ACTIVE",
     "blockers": [
         {
@@ -213,7 +214,7 @@ POST_TASKS_REMAINING_BLOCKERS = {
 }
 
 # ── 8. 앱 착공 가능 조건 ─────────────────────────────────────────────────────
-APP_FOUNDATION_CONDITIONS = {
+APP_FOUNDATION_CONDITIONS: dict[str, Any] = {
     "phase": "APP_FOUNDATION_MVP_PREP_01",
     "backend_ready": True,
     "conditions_met": [

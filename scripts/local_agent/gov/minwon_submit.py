@@ -24,7 +24,7 @@ import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
@@ -55,7 +55,7 @@ from ai_orchestrator.local_agent.browser.intent_token import (  # noqa: E402 - s
 
 MinwonService = Literal["gov24", "epeople"]
 
-_SERVICE_CONFIG = {
+_SERVICE_CONFIG: dict[str, dict[str, Any]] = {
     "gov24": {
         "name": "정부24",
         "url": "https://www.gov.kr/portal/minwon/main",

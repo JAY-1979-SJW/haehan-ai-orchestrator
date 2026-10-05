@@ -10,7 +10,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AUDIT_ID = "APP_API_CONTRACT_ENDPOINTS_PREP"
@@ -26,7 +26,7 @@ VERDICT_BLOCKED = "APP_API_CONTRACT_ENDPOINTS_PREP_BLOCKED"
 
 # ── endpoint contract matrix ──────────────────────────────────────────────────
 
-ENDPOINT_CONTRACT_MATRIX = [
+ENDPOINT_CONTRACT_MATRIX: list[dict[str, Any]] = [
     {
         "endpoint": "GET /api/v1/app/health/summary",
         "method": "GET",
