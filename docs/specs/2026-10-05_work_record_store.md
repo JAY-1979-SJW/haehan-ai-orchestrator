@@ -1,6 +1,24 @@
 # 작업 기록 저장소(Work Record Store, WRS) — 기준서
 
 - 날짜: 2026-10-05 / 상태: **기준서 초안(코드 미착수) — 드라이런 포함, 사용자 승인 대기** / 브랜치: `stage/spec-work-records`
+
+## 0. 한눈에 보기
+
+- **목적**: 사이트 탐색 결과·업무 정의·실행·결정·승인·오류·산출물을 작업 단위로 저장하고, 검색·재호출·재실행·이어가기가 되게 한다(Claude 웹 대화 기록과 같은 사용감, 단 외부 영향이 있어 승인 우회 금지).
+- **핵심 설계(§3·§5 권장안)**: ① 메타는 SQLite(기존 `apply_schema`·원자 전이 패턴 재사용), 산출물은 파일(경로+sha256) ② job→step→artifact + append-only events + 기존 스토어는 `wrs_links` 로 ID 참조(통합 안 함) ③ 값은 기본 미저장(구조·해시·개수만), 화이트리스트+마스킹 ④ 재실행은 항상 새 job+새 승인, 되돌릴 수 없는 step 은 자동 재개 금지 ⑤ 레이어 L1 도메인 → L7 스토어 → L6 서비스 → L8 라우터 → L9 화면, 기록 쓰기는 서비스 함수만.
+
+| Claude 웹 기록 | 이 저장소의 대응 |
+|---|---|
+| 제목·목록 | job `title` + 목록 API |
+| 타임라인 | `wrs_events`(append-only)·step 순번 |
+| 검색 | 제목·태그·상태·사이트·기간 필터(+요약) |
+| 이어가기 | resume: 마지막 완료 step 이후 새 run(새 승인) |
+| 태그·즐겨찾기 | `tags`·`starred`·`archived` |
+
+- **단계**: M1 스키마·스토어 / M2 서비스·마스킹 / M3 읽기 API / M4 CLI·재실행·resume / M5 admin-web 화면 / M6 기존 기록 읽기 어댑터 / M7 6a 연동.
+- **사용자가 정할 것**: 열린 질문 **13개**(§12, 각각 권장 답안 있음 — "권장대로"만 답해도 됨). 가장 중요한 3개: **Q7**(쿠키 백업 2개 처리), **Q8**(값 저장 범위), **Q11**(6a 호출 규약·지도 이력 참조 방식).
+- **이 문서는 기준서 단계이며 코드 착수는 사용자 승인 후.**
+
 - 기존 구현 확인: 완료(읽기 전용 inventory 3종 — 서버 persistence 스토어, `data/` 파일 저장소, 훅·메모리·조회 API). 통합 job/run/artifact 저장소는 **없음**으로 확인. `capability_check`·코드 실행은 하지 않았다(문서 작업).
 - 요청 원문: "작업한 것을 저장하는 저장소 및 기록을 저장하고, 재호출해서 다시 사용이 되게 해야 하니 클로드 웹도 작업 기록을 저장하고 호출하듯이 동일하게 해줘."
 - 원칙: 새 저장 방식을 발명하지 않는다. 기존 SQLite 스토어 패턴을 재사용하고, 기존 스토어는 **참조(링크)** 한다. 이번에는 문서만 — 코드·스키마·설정 변경 없음.
@@ -58,6 +76,11 @@
 - gitignore: `.gitignore:215` `data/**/*.json` 포괄 규칙으로만 무시, git 추적 없음. 파일명 전용 규칙 없음.
 - 생성·읽기 코드: 저장소 전체 grep 에서 파일명 문자열 없음 → 생성/읽기 코드 부재(고아 파일 추정).
 - 평문 여부는 의도적으로 열지 않아 **확인 필요**. 규칙 충돌 가능성: `CLAUDE.md` 보안 금지선 "쿠키/session 추출 금지", `shared_warehouse_model.md`("session/cookie/token/password 저장 금지"). → 처리는 열린 질문 Q7.
+
+### 2-1-1. 강제 추적된 메일함 덤프 JSON (내용 미열람)
+
+- `git ls-files | grep naver_mail_inbox` 결과 추적 파일: JSON **2개** — `data/naver_mail_inbox_dump.json`, `data/naver_mail_inbox_parsed.json` (`.gitignore:215` `data/**/*.json` 규칙이 있어도 강제 추가되어 추적 중). 같은 이름 패턴의 추적 파일이 그 밖에 보고서 md 2개(`data/inspection/naver_mail_inbox_consolidated_report/`)와 스크립트·테스트 4개 있음(JSON 아님).
+- 개인정보(수신자·본문 등) 포함 여부는 **내용을 열지 않았으므로 확인 필요**. 이미 커밋된 이력에 들어 있는지도 내용 열람 없이는 판단 불가 → 사용자 확인 사항(Q13).
 
 ### 2-2. 주요 빈틈
 
@@ -149,12 +172,16 @@
 
 ## 4. 6a 인터페이스
 
-6a(`feat/gongmu-g2`)의 문서: 선행(master) `new_site_onboarding`·`site_task_map`·`m5_runner`·`m6_business_sites`·`m7_onboarding_auto_prepare`, 6a 신규 M8(링크 이동형 읽기)·M9(정밀 탐색: `data_sources`, `declared_tools`). 이 절은 제목·절·저장 방식만 읽어 맞춘 접점이며 6a 문서 본문과 어긋나면 6a 문서가 우선이다(확인 필요).
+6a(`feat/gongmu-g2`)의 문서: 선행(master) `new_site_onboarding`·`site_task_map`·`m5_runner`·`m6_business_sites`·`m7_onboarding_auto_prepare`, 6a 신규 M8(링크 이동형 읽기)·M9(정밀 탐색: `data_sources`, `declared_tools`). 6a 기준서는 `docs/specs/2026-10-05_new_site_onboarding_pipeline.md`(커밋 `98a59688`, 사용자 승인 전)이며 이 접점은 그 문서 §5(데이터 모델)·§6(작업 기록 저장소 인터페이스)와 정합시켰다(`git show 98a59688:<경로>` 로 확인; `origin/feat/gongmu-g2` 에는 아직 이 경로가 없음). 서술이 중복되는 부분은 6a 문서 §5·§6 이 우선이다.
+
+6a 회신 반영(요지): (a) 4개 기록 함수 호출은 **L6 서비스**(`site_task_map_service`·`site_task_map_explore_service`·`site_onboarding_service`)에서만 하고, 브라우저를 직접 만지는 runner/explorer(L4)에는 넣지 않는다(best-effort, 기록 실패가 읽기 업무를 막지 않음). (b) task spec 은 지도 스냅샷의 `task_key` 를 참조(업무 명세는 지도의 업무 항목 안에 키로 추가) — M9 와 충돌 없음. (d) 6a 는 `data/site_task_map`(`site_task_map_store`)만 쓰고 `data/sitemap`(구 계통)은 건드리지 않음 — 구 계통 읽기 어댑터는 선택 사항(Q5). (e) 재실행: 같은 `map_rev` 고정 + `fingerprint` 가 달라졌으면 사람에게 묻는다(6a 문서 §6-c) — WRS 의 '새 job+새 승인'(§6-3)과 같은 방향.
+
+**조정 제안 (c, 권장안이며 최종 결정은 사용자 — Q11)**: 6a 가 지도 이력을 `data/site_task_map/_history/<host>/<map_rev>.json` 에 6a 쪽 L7 저장소가 직접 쓴다(6a 문서 §5). WRS 가 스냅샷을 또 복사하면 중복이므로 **WRS artifact 는 그 이력 파일의 경로+sha256 참조 하나만** 둔다(복사본 없음). 지도 식별은 `(host, map_rev, fingerprint)`. 대안: 6a 이력 저장소가 WRS 의 artifact 저장 함수를 호출.
 
 | 6a 산출 | WRS 에서의 저장 | 방식 |
 |---|---|---|
-| 호스트별 지도 JSON(`data/site_task_map/<host>.json`) | artifact(`site_map_snapshot`)로 **버전 스냅샷** 보관. job(`site_map_explore`)은 artifact 를 참조 | 지도 저장 시점마다 사본 1개+해시. 현행 덮어쓰기 스토어는 변경하지 않음 |
-| task spec(steps/risk/state, M9 data_sources·declared_tools) | 지도 안의 task 를 `task_key` 로 식별해 `kind=task_spec` artifact 로 스냅샷(검증상태 observed/verified/stale 포함). 별도 엔티티 테이블은 두지 않음 | 지도 스냅샷의 부분 참조(`task_key`+지도 해시) |
+| 호스트별 지도 JSON(`data/site_task_map/<host>.json`) + 이력 파일 | artifact(`site_map_snapshot`)는 **이력 파일 경로+sha256 참조**(권장안 c; 복사 없음). job(`site_map_explore`)은 이 artifact 를 참조 | 식별 `(host, map_rev, fingerprint)`. 현행 스토어는 변경하지 않음 |
+| task spec(steps/risk/state, M9 data_sources·declared_tools) | 지도의 업무 항목 안에 `task_key` 로 추가되며, WRS 는 `(지도 참조, task_key)` 로만 가리킴(검증상태 observed/verified/stale 포함). 별도 엔티티 테이블은 두지 않음 | 지도 이력 파일의 부분 참조(`task_key`+지도 sha256) |
 | 실행 결과(`POST /site-map/{host}/run`, MCP `sitemap.run`) | job(`task_run`)의 한 run. step 은 Recorder 단계 단위, 결과는 **열 이름·행 수·해시** 메타만(artifact `run_result_meta`) | 기본 값 미저장 |
 | 지도 변경 이력(`outcome` 기록으로 verified/stale 전이) | `wrs_events` 에 `map_outcome` 이벤트 + 새 스냅샷 | `/{host}/outcome` 호출 지점에서 기록 |
 | 탐색 요청 카드(`site_task_map_request_store`) | `wrs_links(link_type=explore_request)` 로 참조 | 파일은 그대로 |
@@ -170,6 +197,13 @@ finish_job(job_id, status, *, error=None) -> None      # 허용 전이 위반 �
 ```
 
 6a 가 지킬 규칙: (1) 기록 실패가 업무 실행을 막지 않도록 호출은 best-effort 이되 **실패를 조용히 삼키지 않고** 로그에 남긴다(`defect_index` 의 조용한 실패 금지 관례). (2) 비밀·쿠키·폼 값·OTP 를 `params`/`summary` 에 넣지 않는다(화이트리스트 거부). (3) 지도 직접 경로 변경 금지 — 스토어(L7) 경유. (4) WRS 호출 때문에 CDP·브라우저를 새로 열지 않는다. (5) 다른 업무 도메인 간 직접 import 금지 규칙 유지 — WRS 는 공통 하위 서비스로만 import 된다.
+
+위 5개 규칙에 6a 회신 (a)를 더해 호출 위치는 **L6 서비스 한정**이다(runner/explorer L4 금지).
+
+6a 문서 §5·§6 과의 정합 점검(불일치·미결, 구현 전 6a 와 맞출 것):
+1. 용어: 6a 문서는 업무 식별자를 `task_id`(§5), 회신은 `task_key` 로 쓴다. WRS `wrs_jobs.task_id` 는 `audit_logger` 의 task_id 와 같은 의미라 충돌 가능 → 지도 업무 식별은 `task_key` 로 통일 권장(6a 문서 수정 필요).
+2. 작업 키: 6a 는 job `site.onboard:<host>`, step `explore`/`dry_run`/`run`, 산출물 `map:<host>@<map_rev>`·`task_spec:<host>/<task_id>@<map_rev>`(§6). WRS §3 의 job.kind 허용목록에는 온보딩용 kind 가, step.kind 에는 `dry_run` 이 없다 → M1 에서 `site_onboard` 등 추가 필요(Q11).
+3. 저장 분담: 6a §6-a "지도 본문은 기존 저장소, 기록에는 참조(host,map_rev,fingerprint)만" 은 위 조정 제안(c)과 같은 방향. 단 6a 이력 경로가 `_history/<host>/<map_rev>.json` 인 점은 6a 문서 §5 근거이며 구현 전이라 변경될 수 있음(확인 필요).
 
 ## 5. 저장소 선택·레이어
 
@@ -294,7 +328,7 @@ finish_job(job_id, status, *, error=None) -> None      # 허용 전이 위반 �
 
 | 단계 | 산출물 | 영향 파일(층) | 위험 | 롤백 | 승인 필요 |
 |---|---|---|---|---|---|
-| M1 | 스키마·스토어·도메인 | `domain/work_record.py`(L1), `persistence/work_record_store.py`(L7), registry | 스키마 확정 후 변경 비용 | 신규 파일 삭제, DB 삭제 | 스키마 변경 승인, Q1·Q3 |
+| M1 | 스키마·스토어·도메인 | `domain/work_record.py`(L1), `persistence/work_record_store.py`(L7), registry, **`.gitignore` 에 `data/work_records/` 추가(§10-1, 별도 승인)** | 스키마 확정 후 변경 비용 | 신규 파일 삭제, DB 삭제 | 스키마 변경 승인, Q1·Q3 |
 | M2 | 서비스·마스킹·화이트리스트 | `services/work_record_service.py`(L6) | 마스킹 누락=민감정보 저장 | 신규 파일 삭제 | Q8 |
 | M3 | 읽기 API | `routers/work_record_router.py`(L8), `router.py` include 1줄(기존 파일 수정) | 라우트 노출·권한 | include 줄 제거 | 신규 라우트 승인 |
 | M4 | CLI·재실행/resume | `scripts/ops/work_record_cli.py`, 서비스 | 승인 우회 위험 | 신규 파일 삭제 | 승인 게이트 설계 검토 |
@@ -303,6 +337,21 @@ finish_job(job_id, status, *, error=None) -> None      # 허용 전이 위반 �
 | M7 | 6a 연동 | 6a 쪽 호출 지점(`site_task_map_*` 서비스, L6) | 6a 와 호출 규약 불일치, 도메인 간 import | 호출 줄 제거 | Q11, 6a 담당과 합의 |
 
 M1~M2 는 DB·서비스만이라 외부 영향이 없다. 각 단계는 별도 브랜치·별도 승인(기준서→드라이런→승인→코드).
+
+### 10-1. `data/work_records/` gitignore 확인 (`.gitignore` 읽기 + `git check-ignore -v` 가상 경로, 파일 생성 없음)
+
+| 가상 경로 | 무시 여부 | 규칙 |
+|---|---|---|
+| `data/work_records/wrs.db` | **무시 안 됨** | 해당 규칙 없음(`data/**/*.db` 없음; `.db` 는 `data/cdp.db`·`data/naver_search.db` 등 개별 나열, `.gitignore:174,175,244`) |
+| `data/work_records/wrs.db-wal` | 무시됨 | `.gitignore:213` `data/**/*.db-wal` |
+| `data/work_records/wrs.db-shm` | 무시됨 | `.gitignore:212` `data/**/*.db-shm` |
+| `data/work_records/artifacts/x.png` | 무시됨 | `.gitignore:217` `data/**/*.png` |
+| `data/work_records/x.json` | 무시됨 | `.gitignore:215` `data/**/*.json` |
+| `data/work_records/artifacts/x.bin`·`x.jpg`·`x.pdf`·`x.csv`, `x.md` | **무시 안 됨** | 해당 규칙 없음 |
+| `data/work_records/.gitkeep` | 무시 안 됨(의도대로 추적 가능) | — |
+| `storage/work_records.db` (§5-3 DB 위치 제안) | 무시됨 | `.gitignore:110` `storage/` (기존 SQLite 들이 `ai_orchestrator/storage/*.db` 로 같은 규칙에 의해 무시됨) |
+
+결론: 산출물 폴더를 `data/work_records/` 로 쓰면 `.db`·바이너리·pdf/jpg/csv 가 커밋 후보로 노출되므로 **`.gitignore` 수정이 필요**하다. `.gitignore` 수정은 구현 단계(M1)에서 별도 승인으로 한다(이번엔 수정 안 함). 일관된 제안 한 줄: DB 는 기존 SQLite 와 같이 `storage/work_records.db`(이미 무시됨), 산출물은 `data/work_records/` 전체를 규칙 한 줄(`data/work_records/`)로 무시.
 
 ## 11. 드라이런 결과
 
@@ -313,21 +362,28 @@ M1~M2 는 DB·서비스만이라 외부 영향이 없다. 각 단계는 별도 �
 
 ## 12. 열린 질문 (사용자 결정 필요 — 추측 금지)
 
-| # | 질문 | 권장안(참고) |
-|---|---|---|
-| Q1 | 백엔드: SQLite 단독 vs Postgres 옵션 | SQLite 단독으로 시작, 스토어 인터페이스는 교체 가능하게 |
-| Q2 | retention 기본값(job·artifact·events 별 기간, restricted 산출물 단기) | 미정 — 사용자 결정 |
-| Q3 | 테넌트 모델: 현재 `tenant_id` 는 approval_record 만 보유. 필수화할지, `default` 고정할지 | 컬럼은 두되 `default` |
-| Q4 | 승인 저장소 3종(approval_tokens / approval_records / dev_reg_approvals) 통합 여부 | 이번 범위 밖, 링크만 |
-| Q5 | 지도 구(`data/sitemap`)·신(`data/site_task_map`) 계통 통합 여부 | 신 계통만 스냅샷 |
-| Q6 | 과거 기록(`ai_work_records` history 88줄 등) 백필 여부 | 읽기 어댑터만, 백필 보류 |
-| Q7 | 쿠키 백업 2개 처리: 삭제 / 안전 보관 / 암호화(`auth_session` Fernet 선례). 내용은 미열람이며 열람·이동은 사용자 지시 후에만 | 삭제 또는 암호화 중 사용자 결정 |
-| Q8 | 평문 prompt/params 마스킹 정책, 결과 값 저장 옵션(`store_result`)의 허용 범위 | 기본 미저장, 화이트리스트 |
-| Q9 | admin-web 화면 범위(목록만 vs 재실행 버튼까지) | 읽기 목록·상세 먼저 |
-| Q10 | W1~W7 창고 폴더(`shared_warehouse_model.md`)와 `data/work_records/` 관계(재사용 vs 별도) | 문서 정합 후 결정 |
-| Q11 | 6a 호출 규약(함수 시그니처·실패 시 동작·기록 시점) 확정 | §4 초안으로 6a 와 협의 |
-| Q12 | 전문 검색 범위(제목·태그·요약만 vs 오류 메시지·event detail 포함) 및 `GET /logs` 역할 제한 개선을 별건으로 할지 | 제목·태그·요약, `/logs` 별건 |
-| Q13 | 강제 추적된 `naver_mail_inbox_dump/parsed.json` 처리 | WRS 범위 밖, 별건 보고 |
+| # | 질문 | 권장안(참고) | 권장 답안(한 줄) | 이유(한 줄) |
+|---|---|---|---|---|
+| Q1 | 백엔드: SQLite 단독 vs Postgres 옵션 | SQLite 단독으로 시작, 스토어 인터페이스는 교체 가능하게 | SQLite 단독(스토어 인터페이스는 교체 가능하게) | 기존 패턴 재사용·의존성 추가 없음·삭제만으로 원복 가능 |
+| Q2 | retention 기본값(job·artifact·events 별 기간, restricted 산출물 단기) | 미정 — 사용자 결정 | 보류(운영 볼륨 영속·용량 미확인). 방향만: restricted 산출물 최단, 삭제는 소프트 삭제 | 기간을 정할 사실(용량·법적 보존 요건)이 없고 삭제는 비가역 |
+| Q3 | 테넌트 모델: 현재 `tenant_id` 는 approval_record 만 보유. 필수화할지, `default` 고정할지 | 컬럼은 두되 `default` | 컬럼은 두고 값은 `default` 고정, 모든 조회에 tenant·소유자 필터 기본 ON | 나중에 테넌트를 늘려도 스키마 변경이 없고 기본이 가장 좁은 노출 |
+| Q4 | 승인 저장소 3종(approval_tokens / approval_records / dev_reg_approvals) 통합 여부 | 이번 범위 밖, 링크만 | 통합 안 함, `wrs_links` 로 ID 참조만 | 승인 흐름 변경은 보안 영향이 커서 별건 승인 필요 |
+| Q5 | 지도 구(`data/sitemap`)·신(`data/site_task_map`) 계통 통합 여부 | 신 계통만 스냅샷 | 신 계통만 참조, 구 계통은 읽기 어댑터도 보류 | 6a 가 신 계통만 쓰고 구 계통은 로컬에 없음 |
+| Q6 | 과거 기록(`ai_work_records` history 88줄 등) 백필 여부 | 읽기 어댑터만, 백필 보류 | 백필 안 함, 읽기 어댑터(M6)만 | 기존 형식 가정 오류 위험을 쓰기 없이 피함 |
+| Q7 | 쿠키 백업 2개 처리: 삭제 / 안전 보관 / 암호화(`auth_session` Fernet 선례). 내용은 미열람이며 열람·이동은 사용자 지시 후에만 | 삭제 또는 암호화 중 사용자 결정 | 지금 삭제하지 않고, 사용자 확인 후 내용을 열지 않은 채 암호화해 저장소 밖으로 이동하고 불필요 확인 시 삭제 | 평문 여부 불명이고 삭제는 비가역이며 쿠키 보관은 보안 금지선과 충돌 |
+| Q8 | 평문 prompt/params 마스킹 정책, 결과 값 저장 옵션(`store_result`)의 허용 범위 | 기본 미저장, 화이트리스트 | 결과 값은 기본 미저장(`store_result=false`), 허용 필드 화이트리스트 밖 키 거부, 저장은 job 단위 명시+등급 지정 때만 | 개인정보·비밀 저장 사고를 구조적으로 차단 |
+| Q9 | admin-web 화면 범위(목록만 vs 재실행 버튼까지) | 읽기 목록·상세 먼저 | 읽기 목록·상세만 먼저(재실행 버튼은 후속) | 재실행은 승인 게이트 설계 검토(M4) 후에 노출하는 게 안전 |
+| Q10 | W1~W7 창고 폴더(`shared_warehouse_model.md`)와 `data/work_records/` 관계(재사용 vs 별도) | 문서 정합 후 결정 | 별도 `data/work_records/` 사용, W1~W7 은 건드리지 않고 문서에 관계만 명기 | W1~W7 은 쓰는 코드가 없어 재사용 이점이 없음 |
+| Q11 | 6a 호출 규약(함수 시그니처·실패 시 동작·기록 시점) 확정, **및 조정 제안 (c)** | §4 초안으로 6a 와 협의 | §4 대로 확정: 4개 함수는 L6 서비스에서만·best-effort+실패 로그, artifact 는 6a 지도 이력 파일 경로+sha256 참조 하나만(복사 없음), `task_key`·온보딩 kind 추가 | 중복 저장과 L4 오염을 막고 6a 회신·6a 문서 §6 과 같은 방향 |
+| Q12 | 전문 검색 범위(제목·태그·요약만 vs 오류 메시지·event detail 포함) 및 `GET /logs` 역할 제한 개선을 별건으로 할지 | 제목·태그·요약, `/logs` 별건 | 제목·태그·요약만, `/logs` 개선은 별건 | 오류·detail 은 민감 문자열이 섞일 수 있고 `/logs` 는 이번 범위 밖 |
+| Q13 | 강제 추적된 `data/naver_mail_inbox_dump.json`·`data/naver_mail_inbox_parsed.json`(2개, §2-1-1) 처리 | WRS 범위 밖, 별건 보고 | WRS 범위 밖. 내용은 열지 않고, 개인정보 포함 여부·이력 포함 여부는 사용자가 확인한 뒤에만 추적 해제(`git rm --cached`) 등을 별건 승인으로 검토 | 내용 열람 없이는 개인정보·커밋 이력 판단 불가이고 추적 해제는 이력에 남은 값을 지우지 못함 |
+
+**권장대로 승인 시 확정되는 것**
+1. 저장은 SQLite 단독·`default` 테넌트 고정(필터 기본 ON), 기존 승인·지도 스토어는 통합하지 않고 ID 참조만(Q1·Q3·Q4·Q5).
+2. 결과 값 기본 미저장·화이트리스트·검색은 제목/태그/요약만(Q8·Q12), 화면은 읽기 전용부터(Q9).
+3. 과거 기록 백필 없음, W1~W7 미사용, 별도 `data/work_records/`(Q6·Q10).
+4. 6a 호출 규약은 L6 한정·참조 전용으로 확정(Q11). Q2(보존 기간)는 보류로 남는다.
+5. 쿠키 백업(Q7)·메일 덤프(Q13)는 내용 열람·삭제 없이 사용자 확인 후 별건 승인으로만 처리.
 
 ### 확인 필요 (inventory 미확인 항목)
 
