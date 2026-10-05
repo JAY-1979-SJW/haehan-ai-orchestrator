@@ -118,7 +118,18 @@ def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
 _ALLOWED_WORKFLOW_FILES = frozenset({"ci.yml"})
 
 
-def _local_gate_file_failure(required_gate, pre_commit, pre_push) -> tuple[bool, str] | None:
+# 훅 파일별로 존재해야 하는 현행 게이트 호출 문자열(없으면 FAIL).
+_REQUIRED_HOOK_NEEDLES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("pre-commit", ("commit_checklist.py", "pre-commit.orig")),
+    (
+        "pre-commit.orig",
+        ("ruff_new_only_gate.py", "skeleton_gate.py", "audit_kit_gate.py", '"--staged"', "quality_gate.py"),
+    ),
+    ("pre-push", ("ai_code_review_gate.py",)),
+)
+
+
+def _local_gate_file_failure(required_gate, pre_commit, pre_commit_orig, pre_push) -> tuple[bool, str] | None:
     workflows_dir = ROOT / ".github" / "workflows"
     workflow_files = []
     if workflows_dir.exists():
@@ -130,25 +141,32 @@ def _local_gate_file_failure(required_gate, pre_commit, pre_push) -> tuple[bool,
     if workflow_files:
         return False, "GitHub Actions workflow files are forbidden: " + ", ".join(sorted(workflow_files))
 
-    required_files = (required_gate, pre_commit, pre_push)
+    required_files = (required_gate, pre_commit, pre_commit_orig, pre_push)
     missing = [normalize_path(str(path.relative_to(ROOT))) for path in required_files if not path.exists()]
     if missing:
         return False, "missing required local gate file(s): " + ", ".join(missing)
 
-    hook_call = "python scripts/required_quality_gate.py"
-    for hook in (pre_commit, pre_push):
+    # 현행 훅 구조(f6a169ae 2026-05-31 재작성 이후, 설치기 scripts/ops/install_git_hooks.py):
+    #   pre-commit(래퍼) -> pre-commit.orig 위임, pre-commit.orig 가 핵심 게이트들을 호출,
+    #   pre-push -> ai_code_review_gate.py. required_quality_gate.py 는 더 이상 훅에서
+    #   호출되지 않는다(그 미연결 자체는 의도 미확인 — 훅 변경은 이 검사기의 범위 밖).
+    for hook_name, needles in _REQUIRED_HOOK_NEEDLES:
+        hook = ROOT / ".githooks" / hook_name
+        if not hook.exists():
+            return False, f"missing required local gate file(s): .githooks/{hook_name}"
         text = hook.read_text(encoding="utf-8", errors="replace")
-        rel = normalize_path(str(hook.relative_to(ROOT)))
-        if hook_call not in text:
-            return False, f"{rel} does not delegate to scripts/required_quality_gate.py"
+        missing_calls = [needle for needle in needles if needle not in text]
+        if missing_calls:
+            return False, f".githooks/{hook_name} is missing gate call(s): " + ", ".join(missing_calls)
     return None
 
 
 def check_required_local_gate_wiring() -> tuple[bool, str]:
     required_gate = ROOT / "scripts" / "required_quality_gate.py"
     pre_commit = ROOT / ".githooks" / "pre-commit"
+    pre_commit_orig = ROOT / ".githooks" / "pre-commit.orig"
     pre_push = ROOT / ".githooks" / "pre-push"
-    failure = _local_gate_file_failure(required_gate, pre_commit, pre_push)
+    failure = _local_gate_file_failure(required_gate, pre_commit, pre_commit_orig, pre_push)
     if failure is not None:
         return failure
 
@@ -220,7 +238,8 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         encoding="utf-8",
     )
     hooks_path = normalize_path(config.stdout.strip()) if config.returncode == 0 else ""
-    if hooks_path != ".githooks":
+    # 설치기가 절대경로(<저장소>/.githooks)로 설정하는 환경도 현행 구조로 인정한다.
+    if hooks_path != ".githooks" and not hooks_path.endswith("/.githooks"):
         return False, "core.hooksPath must be .githooks; run python scripts/install_git_hooks.py"
 
     return True, "required local gate is wired through pre-commit/pre-push and Actions are disabled"
