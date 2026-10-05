@@ -477,11 +477,13 @@ def _execute_approval_workflow(workflow: dict, args: list[str]) -> None:
 
     with work_run(workflow, args), force_approved():
         if key == "device_registration":
-            _cmd_registration(args[0], args[1:], submit=True)
+            result = _cmd_registration(args[0], args[1:], submit=True)
         elif key == "device_deregistration":
-            _cmd_deregistration(args[0], args[1:], submit=True)
+            result = _cmd_deregistration(args[0], args[1:], submit=True)
         else:
             raise SystemExit(f"No approval executor is registered for {key}.")
+        if isinstance(result, dict) and not result.get("success"):
+            raise RuntimeError(result.get("error") or "approval submit failed")
 
 
 def _prepare_approval_workflow(workflow: dict, args: list[str]) -> None:
@@ -511,7 +513,7 @@ def _prepare_approval_workflow(workflow: dict, args: list[str]) -> None:
             raise RuntimeError(result.get("error") or "approval prepare failed")
 
 
-def _cmd_registration(sub: str | None, args: list[str], *, submit: bool = False) -> None:
+def _cmd_registration(sub: str | None, args: list[str], *, submit: bool = False) -> dict | None:
     """단말기 신규 등록 (WEBMAN381M00)."""
     if submit:
         gate_check("eum_register_device", force=False)
@@ -538,7 +540,7 @@ def _cmd_registration(sub: str | None, args: list[str], *, submit: bool = False)
         print("  사용법: eum registration <공사코드> <단말기번호> [설치장소]")
 
 
-def _cmd_deregistration(sub: str | None, args: list[str], *, submit: bool = False) -> None:
+def _cmd_deregistration(sub: str | None, args: list[str], *, submit: bool = False) -> dict | None:
     """단말기 철거(말소) (WEBMAN382M00)."""
     if submit:
         gate_check("eum_deregister_device", force=False)
