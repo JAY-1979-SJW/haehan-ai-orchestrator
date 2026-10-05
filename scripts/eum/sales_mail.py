@@ -313,7 +313,7 @@ def prepare_sales_mail(
             )
         )
     text_path.write_text("\n\n".join(draft_blocks), encoding="utf-8")
-    queue_rows = []
+    queue_rows: list[dict[str, Any]] = []
     for target in targets:
         queue_rows.append(
             {
