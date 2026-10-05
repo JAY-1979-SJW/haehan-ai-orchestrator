@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -31,8 +32,8 @@ SAFE_BOUNDARY = {
 }
 
 
-def _check_task_contract() -> dict[str, bool]:
-    result = {}
+def _check_task_contract() -> dict[str, Any]:
+    result: dict[str, Any] = {}
     try:
         from ai_orchestrator.gabia.gabia_browser_task import (
             make_autowork_dns_task,
@@ -55,8 +56,8 @@ def _check_task_contract() -> dict[str, bool]:
     return result
 
 
-def _check_state_machine() -> dict[str, bool]:
-    result = {}
+def _check_state_machine() -> dict[str, Any]:
+    result: dict[str, Any] = {}
     try:
         from ai_orchestrator.gabia.gabia_browser_task import (
             STATE_DNS_MANAGEMENT_PAGE_READY,
@@ -92,8 +93,8 @@ def _check_state_machine() -> dict[str, bool]:
     return result
 
 
-def _check_policies() -> dict[str, bool]:
-    result = {}
+def _check_policies() -> dict[str, Any]:
+    result: dict[str, Any] = {}
     try:
         from ai_orchestrator.safety_policy.safety_policy_registry import get_policy
 
@@ -108,8 +109,8 @@ def _check_policies() -> dict[str, bool]:
     return result
 
 
-def _check_policy_service() -> dict[str, bool]:
-    result = {}
+def _check_policy_service() -> dict[str, Any]:
+    result: dict[str, Any] = {}
     try:
         from ai_orchestrator.gabia.gabia_browser_task import (
             STATE_DNS_RECORD_DRAFTED,
@@ -148,8 +149,8 @@ def _check_policy_service() -> dict[str, bool]:
     return result
 
 
-def _check_audit_events() -> dict[str, bool]:
-    result = {}
+def _check_audit_events() -> dict[str, Any]:
+    result: dict[str, Any] = {}
     try:
         from ai_orchestrator.services.execution_policy_service import AUDIT_EVENT_TYPES
 
