@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import secrets
+import time
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import PlainTextResponse
@@ -42,7 +43,18 @@ db.init_db()
 _TOKEN_REF_MARKER = "keyring"  # noqa: S105 — 참조 마커일 뿐 토큰 값이 아님, 실제 토큰은 token_store(keyring)에만 저장
 
 _OAUTH_SCOPES = ["instagram_business_basic", "instagram_business_manage_comments", "instagram_business_manage_messages"]
-_oauth_states: dict[str, bool] = {}  # 단일 프로세스 CSRF state — 데스크톱형 단일사용자 전제(§19)
+_oauth_states: dict[str, float] = {}  # state -> 생성 시각. 단일 프로세스 CSRF state — 데스크톱형 단일사용자 전제(§19)
+_OAUTH_STATE_TTL_SEC = 600.0  # 10분 초과 state 는 거부·청소
+_OAUTH_STATE_MAX = 1000  # 초과 시 가장 오래된 state 제거
+
+
+def _oauth_state_add(state: str) -> None:
+    now = time.time()
+    for k in [k for k, t in _oauth_states.items() if now - t > _OAUTH_STATE_TTL_SEC]:
+        _oauth_states.pop(k, None)
+    _oauth_states[state] = now
+    while len(_oauth_states) > _OAUTH_STATE_MAX:
+        _oauth_states.pop(next(iter(_oauth_states)), None)  # dict 삽입순 = 가장 오래된 것
 
 
 def _app_id() -> str:
@@ -179,7 +191,7 @@ async def oauth_start():
     if not _app_id() or not _redirect_uri():
         raise HTTPException(status_code=400, detail="META_APP_ID / INSTAGRAM_REDIRECT_URI 미설정")
     state = secrets.token_urlsafe(24)
-    _oauth_states[state] = True
+    _oauth_state_add(state)
     url = build_authorize_url(app_id=_app_id(), redirect_uri=_redirect_uri(), state=state, scopes=_OAUTH_SCOPES)
     return {"auth_url": url, "state": state}
 
@@ -188,9 +200,9 @@ async def oauth_start():
 async def oauth_callback(code: str = "", state: str = "", error: str = ""):
     if error:
         raise HTTPException(status_code=400, detail=f"Instagram 인가 거부: {error}")
-    if not state or state not in _oauth_states:
+    created = _oauth_states.pop(state, None) if state else None
+    if created is None or time.time() - created > _OAUTH_STATE_TTL_SEC:
         raise HTTPException(status_code=400, detail="state 검증 실패(CSRF)")
-    _oauth_states.pop(state, None)
     if not code:
         raise HTTPException(status_code=400, detail="code 없음")
 
