@@ -27,52 +27,16 @@ from .user_present_state_store import (
     _CANCELLABLE_STATES,
 )
 
-try:
-    from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
-        MSG_USER_PRESENT_TASK,
-        MSG_USER_PRESENT_STATUS,
-        STATUS_WAITING_FOR_USER,
-        STATUS_USER_CONFIRMED,
-        STATUS_CANCELLED,
-        STATUS_BLOCKED,
-        STATUS_FAILED,
-        build_user_present_ws_status_event,
-        sanitize_user_present_ws_payload,
-        validate_user_present_ws_task_message,
-    )
-except ImportError:
-    MSG_USER_PRESENT_TASK = "USER_PRESENT_TASK"
-    MSG_USER_PRESENT_STATUS = "USER_PRESENT_STATUS"
-    STATUS_WAITING_FOR_USER = "WAITING_FOR_USER"
-    STATUS_USER_CONFIRMED = "USER_CONFIRMED"
-    STATUS_CANCELLED = "CANCELLED"
-    STATUS_BLOCKED = "BLOCKED"
-    STATUS_FAILED = "FAILED"
-
-    def build_user_present_ws_status_event(payload: dict) -> dict:
-        return {
-            "message_type": MSG_USER_PRESENT_STATUS,
-            "workflow_run_id": payload.get("workflow_run_id", ""),
-            "tenant_id": payload.get("tenant_id", ""),
-            "user_id": payload.get("user_id", ""),
-            "site_id": payload.get("site_id", ""),
-            "status": payload.get("status", STATUS_WAITING_FOR_USER),
-            "status_reason": payload.get("status_reason", ""),
-            "safe_to_execute": False,
-            "created_at": datetime.now(tz=timezone.utc).isoformat(),
-        }
-
-    def sanitize_user_present_ws_payload(payload: dict) -> dict:
-        _forbidden = {"password", "otp", "certificate_password", "token",
-                      "cookie", "session", "target_url"}
-        return {k: v for k, v in payload.items() if k not in _forbidden}
-
-    def validate_user_present_ws_task_message(message: dict) -> list:
-        errors = []
-        for f in ["message_type", "workflow_run_id", "tenant_id", "user_id"]:
-            if not message.get(f):
-                errors.append(f"필수 필드 누락: {f}")
-        return errors
+from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+    STATUS_WAITING_FOR_USER,
+    STATUS_USER_CONFIRMED,
+    STATUS_CANCELLED,
+    STATUS_BLOCKED,
+    STATUS_FAILED,
+    build_user_present_ws_status_event,
+    sanitize_user_present_ws_payload,
+    validate_user_present_ws_task_message,
+)
 
 
 def _now_iso() -> str:
