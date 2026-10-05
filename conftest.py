@@ -12,6 +12,8 @@ import pytest
 
 from scripts.runtime_temp import usable_temp_base
 
+_SESSION_MP = None
+
 
 def _pytest_base(kind: str = "pytest_runtime") -> Path:
     return usable_temp_base(kind, "HAEHAN_PYTEST_TEMP")
@@ -46,6 +48,32 @@ def pytest_configure(config):
         os.environ[key] = str(base)
     tempfile.tempdir = str(base)
     _isolate_dotenv_override()
+    # 수집(import) 시점에 브라우저에 접속하는 모듈 최상위 코드(tests/integration/manual/test_context.py 등)도 막도록 세션 전체에 설치한다.
+    global _SESSION_MP
+    from tests.cdp_port_guard import install_guard
+
+    _SESSION_MP = pytest.MonkeyPatch()
+    install_guard(_SESSION_MP)
+
+
+def pytest_unconfigure(config):
+    if _SESSION_MP is not None:
+        _SESSION_MP.undo()
+
+
+@pytest.fixture(autouse=True)
+def _block_local_cdp_port(monkeypatch):
+    """사용자의 로그인된 Chrome(127.0.0.1:9222)에 시험이 접속하지 못하게 막는다(우회: HAEHAN_ALLOW_REAL_CDP=1)."""
+    from tests.cdp_port_guard import install_guard
+
+    install_guard(monkeypatch)
+
+
+def pytest_collection_modifyitems(config, items):
+    """실제 9222 Chrome 에 접속하는 시험은 기본 skip(HAEHAN_ALLOW_REAL_CDP=1 일 때만 실행)."""
+    from tests.cdp_port_guard import SKIP_REASON, apply_real_cdp_skips
+
+    apply_real_cdp_skips(items, pytest.mark.skip(reason=SKIP_REASON))
 
 
 @pytest.fixture
