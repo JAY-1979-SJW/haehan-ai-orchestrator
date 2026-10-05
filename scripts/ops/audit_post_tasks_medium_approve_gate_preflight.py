@@ -10,6 +10,7 @@ DB write / router.py 수정 / 서버 반영 전면 금지.
 
 import ast
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -49,7 +50,7 @@ APPROVE_EXECUTE_CONNECTION_ANALYSIS = {
 }
 
 # ── 2. medium 경로 전체 흐름 (현재 상태) ─────────────────────────────────────
-MEDIUM_PATH_CURRENT_STATE = {
+MEDIUM_PATH_CURRENT_STATE: dict[str, Any] = {
     "step_1": {
         "route": "POST /api/v1/tasks",
         "handler": "submit_task()",
@@ -287,7 +288,7 @@ REPRESENTATIVE_APPROVAL_CONDITIONS = {
 }
 
 # ── 10. preflight 진입 조건 달성 현황 ────────────────────────────────────────
-PREFLIGHT_GATE_STATUS = {
+PREFLIGHT_GATE_STATUS: dict[str, Any] = {
     "condition_1_approve_execute_connection_analyzed": {
         "status": "COMPLETE",
         "finding": "현재 미연결 (SAFE_BY_INCOMPLETENESS)",

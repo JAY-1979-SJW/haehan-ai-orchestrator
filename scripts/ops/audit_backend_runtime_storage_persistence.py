@@ -30,7 +30,7 @@ RUNTIME_CACHE_DISPOSABLE = "RUNTIME_CACHE_DISPOSABLE"
 FORBIDDEN_PLAINTEXT_SECRET = "FORBIDDEN_PLAINTEXT_SECRET"
 
 # ── docker mount 현황 (컨테이너 inspect 결과 기준) ───────────────────────────
-DOCKER_MOUNTS_SUMMARY = {
+DOCKER_MOUNTS_SUMMARY: dict[str, Any] = {
     "container": "haehan-ai-orchestrator-api",
     "image": "haehan-ai-orchestrator-api:local",
     "source_type": "baked_in_image",
@@ -232,7 +232,7 @@ STORAGE_CLASSIFICATION = {
 }
 
 # ── 후속 bind mount 설계 권장안 ───────────────────────────────────────────────
-RECOMMENDED_BIND_MOUNT_PLAN = {
+RECOMMENDED_BIND_MOUNT_PLAN: dict[str, Any] = {
     "status": "DESIGN_ONLY",
     "implementation_allowed_this_phase": False,
     "current_protected": [
