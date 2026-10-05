@@ -226,9 +226,13 @@ def oauth_callback(code: str = "", state: str = "", error: str = ""):
         if not short_token:
             raise HTTPException(status_code=502, detail="Meta OAuth 실패: 단기 토큰 없음")
         ig_user_id = str(short.get("user_id") or "")
+        if not ig_user_id:
+            # fail-closed: 사용자 식별 없이는 검증·토큰 저장·계정 등록 어느 것도 진행하지 않는다
+            raise HTTPException(status_code=502, detail="Meta OAuth 실패: 사용자 ID 없음")
         long_ = exchange_for_long_lived_token(app_secret=_app_secret(), short_lived_token=short_token)
-        long_token = long_.get("access_token", short_token)
+        long_token = long_.get("access_token")
         if not long_token:
+            # fail-closed: 장기 토큰 교환 응답에 토큰이 없으면 단기 토큰으로 대체 저장하지 않는다
             raise HTTPException(status_code=502, detail="Meta OAuth 실패: 장기 토큰 없음")
         profile = graph_verify_token(ig_user_id, long_token)
     except InstagramApiError as e:
