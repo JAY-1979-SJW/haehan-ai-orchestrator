@@ -2,7 +2,7 @@ from models import TaskRequest, RiskAssessment
 from policy_engine import load_policy, get_risk_level_for_action, is_command_blocked
 
 
-def assess_risk(task: TaskRequest, policy: dict = None) -> RiskAssessment:
+def assess_risk(task: TaskRequest, policy: dict | None = None) -> RiskAssessment:
     if policy is None:
         policy = load_policy()
 

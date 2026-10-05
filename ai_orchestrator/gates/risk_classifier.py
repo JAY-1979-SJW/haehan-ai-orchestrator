@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Literal
 
 from ai_orchestrator.models import RiskAssessment, TaskRequest
 
@@ -41,7 +42,7 @@ def classify_risk(req: TaskRequest) -> RiskAssessment:
     return RiskAssessment(risk_level=level, reasons=reasons, requires_approval=requires_approval)
 
 
-def _base_level(action: str) -> str:
+def _base_level(action: str) -> Literal["low", "medium", "high", "critical"]:
     if any(k in action for k in ("read", "list", "inspect", "summarize", "status")):
         return "low"
     if any(k in action for k in ("write", "edit", "create_patch", "generate")):
