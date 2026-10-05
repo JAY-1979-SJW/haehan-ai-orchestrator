@@ -21,7 +21,7 @@ from urllib.parse import unquote, urldefrag, urljoin, urlsplit
 from .site_map_labels import clean_label
 
 OPEN_PAGE_ID = "__open_page__"
-MENU_MAX = 60
+MENU_MAX = 200  # 2026-10-05: 60 → 200 (카페 게시판이 60개를 넘어 잘렸다). 잘렸는지는 `menu_total_seen` 으로 알린다
 MENU_GROUP_MIN = 5  # li 직계 링크가 이만큼 모인 목록은 메뉴로 본다
 MENU_LANDMARKS = ("navigation", "complementary")
 OPEN_URL_MAX = 300
@@ -89,17 +89,23 @@ def menu_from_snapshot(
 
 
 def merge_menu(site_map: dict[str, Any], entries: list[dict[str, str]], *, now: str) -> dict[str, Any]:
-    """지도의 `menu` 에 항목을 더한다(새 dict, 주소 기준 중복 제거, 최대 MENU_MAX). 새로 아는 것이 없으면 그대로 돌려준다."""
+    """지도의 `menu` 에 항목을 더한다(새 dict, 주소 기준 중복 제거, 최대 MENU_MAX). 상한과 무관하게 관측한 서로 다른 주소의 총수를 `menu_total_seen` 에 남긴다.
+
+    새로 아는 것이 없으면(추가도 총수 변화도 없으면) 그대로 돌려준다.
+    """
     existing = [dict(x) for x in site_map.get("menu") or []]
     known = {x["href"] for x in existing}
+    seen_before = int(site_map.get("menu_total_seen") or len(existing))
+    unseen = {e["href"] for e in entries if e["href"] not in known}
     added: list[dict[str, str]] = []
     for e in entries:
         if e["href"] not in known and len(existing) + len(added) < MENU_MAX:
             known.add(e["href"])
             added.append({"label": e["label"], "href": e["href"]})
-    if not added:
+    total_seen = max(seen_before, len(existing) + len(unseen))
+    if not added and total_seen == seen_before:
         return site_map
-    return {**site_map, "menu": [*existing, *added], "menu_at": now}
+    return {**site_map, "menu": [*existing, *added], "menu_at": now, "menu_total_seen": total_seen}
 
 
 def validate_open_url(

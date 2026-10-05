@@ -414,7 +414,24 @@ export interface CafeChangeLog {
   previous_total: number;
   confirmed_mass_change?: boolean;
 }
+export interface CafeActivity {
+  total: number;
+  with_new_articles: number;
+  new_articles_total: number;
+  top_new: { cafe_id: string; name: string; new_articles: number }[];
+  favorites: number;
+  managed: number;
+  power: number;
+  dormant: number;
+  stale_visit: number;
+  stale_update: number;
+  unknown_dates: number;
+  visit_stale_days: number;
+  update_stale_days: number;
+}
+
 export interface CafeChangeHistory {
+  activity?: CafeActivity | null;
   changes: CafeChangeLog[];
   trend: { at: string; total: number }[];
   summary: { snapshots: number; current_total: number; net_change_since_first: number; joined_in_log: number; left_in_log: number };

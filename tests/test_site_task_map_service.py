@@ -223,3 +223,33 @@ def test_lookup_exposes_menu_index_and_open_page_task_id_only_when_map_has_menu(
     assert got["menu"][0] == {"label": "추리", "href": f"https://{HOST}/c/mystery"}  # 질문에 맞는 메뉴가 맨 앞
     assert len(got["menu"]) == service.MENU_SHOWN_MAX
     assert "menu" in got["rules"] and "지어내지" in got["rules"]
+
+
+def test_lookup_exposes_data_sources_declared_tools_and_menu_truncation(env):
+    """M9: 조회 응답에 데이터 소스 요약·선언 도구·메뉴 잘림 정보를 싣는다(있을 때만 키가 생긴다)."""
+    plain = service.lookup(HOST, "업체")
+    assert "data_sources" not in plain and "declared_tools" not in plain
+
+    saved = store.load(HOST)
+    sources = [{"host": "api.example.test", "path": f"/v1/p{i}", "query_keys": ["q"], "top_keys": ["message"], "lists": [{"path": "message.items", "count": 5, "fields": ["a"]}], "seen": 30 - i} for i in range(25)]
+    saved = {**saved, "data_sources": sources, "declared_tools": [{"name": "find", "description": "d", "kind": "declarative", "fields": ["q"], "required": ["q"]}]}
+    saved = {**saved, "menu": [{"label": f"분류{i}", "href": f"https://{HOST}/c/{i}"} for i in range(5)], "menu_total_seen": 12}
+    saved = tm.merge_tasks(saved, [tm.open_page_task(HOST, f"https://{HOST}/", now=NOW)], now=NOW)
+    store.save(saved)
+
+    got = service.lookup(HOST, "분류")
+    assert got["data_sources_total"] == 25 and len(got["data_sources"]) == 20  # 요약은 상위 20개
+    assert [t["name"] for t in got["declared_tools"]] == ["find"]
+    assert got["menu_total"] == 5 and got["menu_total_seen"] == 12 and got["menu_truncated"] is True  # 잘렸다는 것을 알린다
+    assert "data_sources" in got["rules"] and "declared_tools" in got["rules"]
+
+
+def test_lookup_of_explored_map_without_tasks_still_reports_observed_data_sources(env):
+    """카페 포털처럼 화면을 자바스크립트로 그려 업무가 0개여도 데이터 소스를 관측했다면 '빈 사이트'로 오해하지 않게 알린다."""
+    empty = tm.empty_map("portal.example.test", now=NOW)
+    empty = tm.note_exploration(empty, pages=14, auth="public", now=NOW, coverage={"pages_read": 1, "tasks": 0})
+    empty = {**empty, "data_sources": [{"host": "api.example.test", "path": "/v3/home", "query_keys": [], "top_keys": ["message"], "lists": [], "seen": 2}]}
+    store.save(empty)
+    got = service.lookup("portal.example.test", "카페")
+    assert got["known"] is False and got["explored"] is True and got["tasks"] == []
+    assert got["data_sources_total"] == 1 and "데이터 소스 1개" in got["hint"]

@@ -12,6 +12,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
+from ..domain import site_map_sources as sources
 from ..domain import site_task_map as tm
 from ..domain.site_map_menu import OPEN_PAGE_ID
 from ..persistence import site_task_map_store as store
@@ -23,7 +24,9 @@ RULES = (
     "state 가 stale 이거나 observed 인 업무는 화면이 지도와 다를 수 있으니 첫 화면에서 fields 가 맞는지 먼저 확인하고, 다르면 중단해 사용자에게 알린다. "
     "steps 의 {{이름}} 은 값을 넣을 자리다. 입력값·조회 결과 데이터는 지도에 저장하지 않는다. "
     "menu 가 있으면 사이트의 메뉴(카테고리·게시판 등) 색인이다: 라벨에 맞는 href 를 골라 open_page_task_id 업무를 sitemap.run(task_id, {url: href}) 로 실행하면 같은 호스트의 그 화면을 읽기 전용으로 열어 "
-    "표 또는 items(상품·목록 항목)와 next_url(다음 쪽)을 돌려준다. 메뉴에 없는 주소를 지어내지 말 것."
+    "표 또는 items(상품·목록 항목)와 next_url(다음 쪽)을 돌려준다. 메뉴에 없는 주소를 지어내지 말 것. "
+    "data_sources 는 화면이 로드될 때 사이트가 부르는 데이터 API 의 구조(경로·목록 경로·필드 이름·건수)다 — 이 사이트가 무엇을 다루는지 아는 근거이며 값은 없다. "
+    "declared_tools 는 사이트가 스스로 선언한 에이전트용 도구(WebMCP) 목록이다 — 읽기만 한다(실행하지 말 것)."
 )
 MENU_SHOWN_MAX = 30
 
@@ -81,7 +84,8 @@ def _menu_view(site_map: dict[str, Any], query: str) -> dict[str, Any]:
     words = [w for w in query.lower().split() if w]
     is_hit = [bool(words) and any(w in f"{e['label']} {e['href']}".lower() for w in words) for e in entries]
     shown = ([e for e, hit in zip(entries, is_hit, strict=True) if hit] + [e for e, hit in zip(entries, is_hit, strict=True) if not hit])[:MENU_SHOWN_MAX]
-    return {"menu": shown, "menu_total": len(entries), "open_page_task_id": OPEN_PAGE_ID}
+    seen = max(int(site_map.get("menu_total_seen") or 0), len(entries))
+    return {"menu": shown, "menu_total": len(entries), "menu_total_seen": seen, "menu_truncated": seen > len(entries), "open_page_task_id": OPEN_PAGE_ID}
 
 
 def lookup(host: str, query: str = "", *, limit: int = 5) -> dict[str, Any]:
@@ -95,7 +99,10 @@ def lookup(host: str, query: str = "", *, limit: int = 5) -> dict[str, Any]:
             warning = (explored.get("coverage") or {}).get("warning")
             if warning:
                 hint = f"{hint} 주의: {warning}"
-            return {"host": site_map["host"], "known": False, "explored": True, "count": 0, "tasks": [], "rules": RULES, "hint": hint}
+            observed = sources.summary(site_map)
+            if observed.get("data_sources"):  # 업무는 못 찾았지만 화면이 부르는 데이터 API 구조는 관측했다 — 빈 사이트로 오해하지 않게 알린다
+                hint = f"{hint} 다만 데이터 소스 {observed['data_sources_total']}개를 관측했습니다(data_sources) — 이 사이트는 화면을 자바스크립트로 그려 폼·링크 업무가 안 잡힌 것일 수 있습니다."
+            return {"host": site_map["host"], "known": False, "explored": True, "count": 0, "tasks": [], "rules": RULES, "hint": hint, **observed}
         return {"host": site_map["host"], "known": False, "count": 0, "tasks": [], "rules": RULES, "hint": "이 사이트는 아직 탐색된 적이 없습니다. 사용자에게 탐색을 요청하세요."}
     found = tm.lookup(tm.with_effective_risk(site_map), query, limit=limit)
     out = {
@@ -109,6 +116,7 @@ def lookup(host: str, query: str = "", *, limit: int = 5) -> dict[str, Any]:
     }
     if site_map.get("menu"):
         out.update(_menu_view(site_map, query))
+    out.update(sources.summary(site_map))  # 데이터 소스 요약·선언 도구(있을 때만 키가 생긴다)
     warning = ((site_map.get("explored") or {}).get("coverage") or {}).get("warning")
     if warning:  # 탐색이 불완전했다 — AI 가 업무가 없다고 단정하지 않고 사용자에게 알리게 한다
         out["warning"] = warning

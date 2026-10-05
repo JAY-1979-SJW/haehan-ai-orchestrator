@@ -67,6 +67,15 @@ def _fetch_joined_cafes_via_api(page: Page) -> list[dict]:
                     "href": f"https://cafe.naver.com/{slug}",
                     "clubid": str(c.get("cafeId", "")),  # 숫자 clubid — 수집 시 재사용 가능
                     "member_count": 0,
+                    # 활동 필드(가입 카페 활동 분석용 — 이미지 주소·광고 정보 등은 가져오지 않는다)
+                    "new_articles": int(c.get("articleNewCounts") or 0),
+                    "last_update": str(c.get("lastUpdateDate") or ""),
+                    "last_visit": str(c.get("lastVisitDate") or ""),
+                    "favorite": bool(c.get("favoriteCafe")),
+                    "manage": bool(c.get("manageCafe")),
+                    "dormant": bool(c.get("dormantCafe")),
+                    "power": bool(c.get("powerCafe")),
+                    "open_type": str(c.get("openType") or ""),
                 }
             )
         return out

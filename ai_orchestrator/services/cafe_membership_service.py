@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from ..domain import cafe_activity as activity
 from ..domain import cafe_membership_diff as diff
 from ..persistence import cafe_membership_store as store
 
@@ -52,7 +53,11 @@ def apply_collection(
                     ),
                 }
             )
-    return {"changes": {k: v for k, v in result.items() if k != "persist"}, "persist_current": bool(result["persist"])}
+    return {
+        "changes": {k: v for k, v in result.items() if k != "persist"},
+        "persist_current": bool(result["persist"]),
+        "activity": activity.analyze(diff.snapshot_entries(cafes)) if result["persist"] else None,  # 막힌 수집(빈 결과·화면 읽기 대체)으로는 분석하지 않는다
+    }
 
 
 def recent(limit: int = 20) -> dict[str, Any]:
@@ -61,8 +66,10 @@ def recent(limit: int = 20) -> dict[str, Any]:
     changes = store.recent_changes(limit)
     trend = store.history_totals(30)
     first, last = (trend[0]["total"], trend[-1]["total"]) if trend else (0, 0)
+    latest = store.latest_snapshot()
     return {
         "changes": changes,
+        "activity": activity.analyze(latest) if latest else None,
         "trend": trend,
         "summary": {
             "snapshots": len(trend),

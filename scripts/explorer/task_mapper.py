@@ -21,6 +21,7 @@ from urllib.parse import urlparse
 
 from ai_orchestrator.domain import site_map_labels as lab
 from ai_orchestrator.domain import site_map_menu as menu
+from ai_orchestrator.domain import site_map_sources as sources
 from ai_orchestrator.domain import site_task_map as tm
 from ai_orchestrator.persistence import site_task_map_store as store
 
@@ -144,6 +145,12 @@ def _default_explore() -> Callable[..., dict[str, Any]]:
     return explore_site
 
 
+def _default_recorder() -> Any:
+    from scripts.explorer.data_sources import ResponseRecorder
+
+    return ResponseRecorder()
+
+
 def _default_collect() -> Callable[[Any], dict[str, Any]]:
     from scripts.explorer.page_snapshot import collect
 
@@ -168,6 +175,7 @@ def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험�
     explore_fn: Callable[..., dict[str, Any]] | None = None,
     collect_fn: Callable[[Any], dict[str, Any]] | None = None,
     sleep_fn: Callable[[float], None] = time.sleep,
+    recorder_factory: Callable[[], Any] | None = None,
 ) -> dict[str, Any]:
     """시작 주소부터 같은 호스트의 화면을 **주소 이동(GET)만으로** 돌며 업무 지도를 만든다.
 
@@ -177,35 +185,48 @@ def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험�
     """
     explore = explore_fn or _default_explore()
     collect = collect_fn or _default_collect()
+    recorder_factory = recorder_factory or _default_recorder
 
     requested_host = urlparse(start_url).hostname or ""
-    result = explore(
-        page,
-        depth=depth,
-        max_pages=max_pages,
-        save=False,
-        same_host_only=True,
-        bot_check_each_page=True,
-        skip_url_patterns=tm.EXPLORE_SKIP_URL,
-        delay_s=delay_s,
-    )
+    recorder = recorder_factory()  # 쪽이 로드되는 동안 데이터 소스 구조와 사이트 선언 도구를 관측한다(읽기 전용, 값 불저장)
+    recorder.attach(page)
+    try:
+        result = explore(
+            page,
+            depth=depth,
+            max_pages=max_pages,
+            save=False,
+            same_host_only=True,
+            bot_check_each_page=True,
+            skip_url_patterns=tm.EXPLORE_SKIP_URL,
+            delay_s=delay_s,
+            on_page=recorder.flush,
+        )
     # 시작 주소가 다른 호스트로 이동하면(blog.naver.com → section.blog.naver.com) 실제로 탐색한 호스트의 지도에 담는다
-    host = str(result.get("host") or requested_host)
-    if host != requested_host and requested_host:
-        _note_redirect(requested_host, host, auth=auth)
-    form_pages = [p["url"] for p in result.get("pages", []) if _has_inputs(p) and "error" not in p]
-    snapshots: list[dict[str, Any]] = []
-    for url in form_pages:
-        if result.get("aborted_reason"):
-            break
-        sleep_fn(delay_s)
-        try:
-            page.goto(url, timeout=20000)
-            snapshots.append(collect(page))
-        except Exception as e:  # noqa: BLE001 - 한 화면의 읽기 실패가 전체 탐색을 막지 않게 기록만 하고 계속한다
-            result.setdefault("snapshot_errors", []).append({"url": url, "error": str(e)[:120]})
+        host = str(result.get("host") or requested_host)
+        if host != requested_host and requested_host:
+            _note_redirect(requested_host, host, auth=auth)
+        form_pages = [p["url"] for p in result.get("pages", []) if _has_inputs(p) and "error" not in p]
+        snapshots: list[dict[str, Any]] = []
+        for url in form_pages:
+            if result.get("aborted_reason"):
+                break
+            sleep_fn(delay_s)
+            try:
+                page.goto(url, timeout=20000)
+                snapshots.append(collect(page))
+                recorder.flush(page)
+            except Exception as e:  # noqa: BLE001 - 한 화면의 읽기 실패가 전체 탐색을 막지 않게 기록만 하고 계속한다
+                result.setdefault("snapshot_errors", []).append({"url": url, "error": str(e)[:120]})
+    finally:
+        recorder.detach(page)
     pages_visited = int(result.get("visited_count", len(result.get("pages", []))))
     merged = merge_snapshots(host, snapshots, auth=auth, explored_pages=pages_visited)
+    now = _now()
+    enriched = sources.merge_tools(sources.merge_sources(merged["map"], recorder.sources, now=now), recorder.tools, now=now)
+    if enriched is not merged["map"]:  # 새로 관측한 데이터 소스·선언 도구가 있을 때만 다시 저장한다
+        store.save(enriched)
+        merged = {**merged, "map": enriched}
     return {
         "host": host,
         "pages": int(result.get("visited_count", len(result.get("pages", [])))),
@@ -213,6 +234,8 @@ def explore_to_map(  # noqa: PLR0913 - 깊이·쪽수·간격·인증 + 시험�
         "tasks": len(merged["map"]["tasks"]),
         "aborted_reason": str(result.get("aborted_reason") or ""),
         "snapshot_errors": len(result.get("snapshot_errors", [])),
+        "data_sources": len(merged["map"].get("data_sources") or []),
+        "declared_tools": len(merged["map"].get("declared_tools") or []),
     }
 
 

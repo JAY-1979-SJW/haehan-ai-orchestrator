@@ -1,7 +1,7 @@
 "use client";
 /** 카페 탭 — 내 카페 목록 (수집 + 기간 선택) */
 import { useState, useEffect, useCallback } from "react";
-import { getMyCafeChanges, getMyCafes, type CafeChangeHistory, type CafeChangeResult, type MyCafe } from "@/lib/assistant/api";
+import { getMyCafeChanges, getMyCafes, type CafeActivity, type CafeChangeHistory, type CafeChangeResult, type MyCafe } from "@/lib/assistant/api";
 import { apiPost } from "../cafeShared";
 import { MyCafesChangesPanel } from "./MyCafesChangesPanel";
 
@@ -16,6 +16,7 @@ export function MyCafesTab() {
   const [collectDays, setCollectDays] = useState(90); // 수집 기간(일). 3650=전체
   const [changes, setChanges] = useState<CafeChangeResult | null>(null); // 이번 수집의 신규 가입·탈퇴
   const [history, setHistory] = useState<CafeChangeHistory | null>(null); // 변동 기록·가입 수 추이
+  const [activity, setActivity] = useState<CafeActivity | null>(null); // 이번 수집의 활동 분석
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -34,6 +35,7 @@ export function MyCafesTab() {
       if (d.ok) {
         const ch: CafeChangeResult | null = d.changes ?? null;
         setChanges(ch);
+        setActivity(d.activity ?? null);
         const held = ch && (ch.status === "blocked" || ch.status === "needs_confirmation");
         if (held) {
           // 보호 규칙에 걸린 수집(빈 결과·화면 읽기 대체·대량 감소)은 저장본을 바꾸지 않으므로 화면 목록도 저장본을 그대로 둔다
@@ -86,7 +88,7 @@ export function MyCafesTab() {
       <p className="text-[11px] text-[#9CA3AF]">[내 카페 수집]으로 가입 카페를 가져온 뒤, 각 카페의 [게시글 수집]을 누르세요. 수집 기간을 먼저 고르세요(게시판 구분 없이 전체글 수집). (네이버 로그인 필요)</p>
       {collectMsg && <p className="text-xs text-[#16A34A]">{collectMsg}</p>}
       {error && <p className="text-xs text-[#DC2626]">오류: {error}</p>}
-      <MyCafesChangesPanel latest={changes} history={history} busy={collectingCafes} onConfirm={() => handleCollectMyCafes(true)} />
+      <MyCafesChangesPanel latest={changes} history={history} activity={activity} busy={collectingCafes} onConfirm={() => handleCollectMyCafes(true)} />
       <div className="divide-y divide-[#E5E7EB]">
         {cafes.map((c, i) => (
           <div key={c.cafe_id} className="flex items-center gap-3 py-2">

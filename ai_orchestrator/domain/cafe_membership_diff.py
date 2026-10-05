@@ -37,16 +37,32 @@ def _clean(text: Any) -> str:
     return " ".join(str(text or "").split())[:NAME_MAX]
 
 
-def _entry(raw: dict[str, Any]) -> dict[str, str]:
+def _count(value: Any) -> int:
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _entry(raw: dict[str, Any]) -> dict[str, Any]:
+    """저장용 항목: 카페 id·이름·clubid 와 활동 필드(새 글 수·마지막 갱신/방문·즐겨찾기·관리·휴면·파워·공개 형태)만. 그 밖의 값은 담지 않는다."""
     return {
         "cafe_id": str(raw.get("cafe_id") or "").strip(),
         "name": _clean(raw.get("cafe_name") or raw.get("name")),
         "clubid": str(raw.get("clubid") or ""),
+        "new_articles": _count(raw.get("new_articles")),
+        "last_update": str(raw.get("last_update") or "")[:19],
+        "last_visit": str(raw.get("last_visit") or "")[:19],
+        "favorite": bool(raw.get("favorite")),
+        "manage": bool(raw.get("manage")),
+        "dormant": bool(raw.get("dormant")),
+        "power": bool(raw.get("power")),
+        "open_type": str(raw.get("open_type") or "")[:4],
     }
 
 
-def snapshot_entries(cafes: list[dict[str, Any]]) -> list[dict[str, str]]:
-    """저장용 항목(카페 id·이름·clubid 만 — 그 밖의 값은 담지 않는다). id 가 없는 항목은 버린다."""
+def snapshot_entries(cafes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """저장용 항목 목록(`_entry` 참고). id 가 없는 항목은 버린다."""
     return [e for e in (_entry(c) for c in cafes) if e["cafe_id"]]
 
 

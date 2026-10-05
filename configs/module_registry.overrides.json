@@ -985,5 +985,17 @@
   "role": "workflow",
   "reason": "가입 카페 수집 결과를 이력과 비교·반영·분석하는 업무 흐름(규칙은 domain, 저장은 persistence, 브라우저·HTTP 모름) — generic L4 오분류",
   "source": "manual"
+ },
+ "ai_orchestrator/domain/site_map_sources.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "데이터 소스·사이트 선언 도구의 정리·마스킹·병합 규칙(순수 함수, 입출력 없음) — 탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+  "source": "manual"
+ },
+ "ai_orchestrator/domain/cafe_activity.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "가입 카페 활동 분석(순수 계산, 입출력 없음) — 서비스(L6)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+  "source": "manual"
  }
 }

@@ -1,10 +1,11 @@
 "use client";
 /** 카페 탭 — 가입 카페 변동(신규 가입·탈퇴·이름 변경)과 요약. 기준서: docs/specs/2026-10-05_cafe_membership_changes.md */
-import type { CafeChangeHistory, CafeChangeResult } from "@/lib/assistant/api";
+import type { CafeActivity, CafeChangeHistory, CafeChangeResult } from "@/lib/assistant/api";
 
 interface Props {
   latest: CafeChangeResult | null;
   history: CafeChangeHistory | null;
+  activity?: CafeActivity | null;
   busy: boolean;
   onConfirm: () => void;
 }
@@ -22,8 +23,9 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: str
 
 const day = (iso: string) => (iso ? iso.slice(0, 16).replace("T", " ") : "-");
 
-export function MyCafesChangesPanel({ latest, history, busy, onConfirm }: Props) {
+export function MyCafesChangesPanel({ latest, history, busy, onConfirm, activity }: Props) {
   if (!latest && !history) return null;
+  const act = activity ?? history?.activity ?? null;
   const summary = history?.summary;
   const warn = latest && (latest.status === "blocked" || latest.status === "needs_confirmation");
   return (
@@ -67,6 +69,27 @@ export function MyCafesChangesPanel({ latest, history, busy, onConfirm }: Props)
               ✎ 이름 변경 — {c.from} → {c.to}
             </div>
           ))}
+        </div>
+      )}
+      {act && act.total > 0 && (
+        <div className="space-y-1.5" data-testid="cafe-activity-card">
+          <div className="text-xs font-semibold text-[#111827]">활동 분석</div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Stat label="새 글 있는 카페" value={`${act.with_new_articles}/${act.total}개`} tone="text-[#16A34A]" />
+            <Stat label="즐겨찾기" value={`${act.favorites}개`} />
+            <Stat label={`${act.visit_stale_days}일 넘게 미방문`} value={`${act.stale_visit}개`} tone={act.stale_visit > 0 ? "text-[#D97706]" : undefined} />
+            <Stat label="휴면 카페" value={`${act.dormant}개`} />
+          </div>
+          {act.top_new.length > 0 && (
+            <ol className="space-y-0.5 text-[11px] text-[#374151]">
+              {act.top_new.map((c, i) => (
+                <li key={c.cafe_id}>
+                  {i + 1}. {c.name || c.cafe_id} — 새 글 {c.new_articles.toLocaleString()}건
+                </li>
+              ))}
+            </ol>
+          )}
+          {act.unknown_dates > 0 && <p className="text-[10px] text-[#9CA3AF]">날짜를 읽을 수 없는 카페 {act.unknown_dates}개는 미방문·갱신 집계에서 제외했습니다.</p>}
         </div>
       )}
       {history && history.changes.length > 0 && (

@@ -92,7 +92,7 @@ def collect_my_cafes(confirm_mass_change: bool = False, user: dict = Depends(req
             decision="ok" if changes["status"] in ("baseline", "ok") else changes["status"],
             note=f"count={len(cafes)} source={source} status={changes['status']} new={len(changes['new'])} left={len(changes['left'])}",
         )
-        return {"ok": True, "count": len(cafes), "cafes": cafes, "source": source, "changes": changes}
+        return {"ok": True, "count": len(cafes), "cafes": cafes, "source": source, "changes": changes, "activity": outcome["activity"]}
     except Exception as e:
         logger.exception("collect my-cafes error")
         raise HTTPException(status_code=500, detail=f"카페 목록 수집 실패: {e}") from e

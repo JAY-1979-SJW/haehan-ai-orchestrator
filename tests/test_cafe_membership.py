@@ -91,12 +91,24 @@ def test_small_previous_list_does_not_trigger_the_mass_drop_rule():
     assert r["status"] == diff.STATUS_OK and [e["cafe_id"] for e in r["left"]] == ["cafe2"]
 
 
-def test_snapshot_entries_keep_only_id_name_clubid_and_drop_idless_items():
+def test_snapshot_entries_keep_only_id_name_clubid_and_activity_fields_and_drop_idless_items():
     raw = [
-        {"cafe_id": "a", "cafe_name": "  공백   정리 ", "clubid": 7, "href": "x", "member_count": 9, "token": "SECRET"},
+        {"cafe_id": "a", "cafe_name": "  공백   정리 ", "clubid": 7, "href": "x", "member_count": 9, "token": "SECRET", "cafeThumbnailPcUrl": "http://img", "new_articles": "12", "last_visit": "2026-10-01 09:00:00", "favorite": 1},
         {"cafe_name": "id 없음"},
     ]
-    assert diff.snapshot_entries(raw) == [{"cafe_id": "a", "name": "공백 정리", "clubid": "7"}]
+    (entry,) = diff.snapshot_entries(raw)
+    assert entry["cafe_id"] == "a" and entry["name"] == "공백 정리" and entry["clubid"] == "7"
+    assert entry["new_articles"] == 12 and entry["last_visit"] == "2026-10-01 09:00:00" and entry["favorite"] is True and entry["dormant"] is False
+    assert set(entry) == {"cafe_id", "name", "clubid", "new_articles", "last_update", "last_visit", "favorite", "manage", "dormant", "power", "open_type"}
+    assert "SECRET" not in str(entry) and "img" not in str(entry)  # 정해진 필드 밖의 값(이미지 주소·토큰 등)은 저장하지 않는다
+    assert diff.snapshot_entries([{"cafe_id": "z", "new_articles": "나쁨"}])[0]["new_articles"] == 0  # 숫자가 아니면 0
+
+
+def test_activity_fields_do_not_create_membership_changes():
+    """새 글 수가 바뀌어도 신규·탈퇴·이름 변경이 아니다 — 변동 비교는 id·이름만 본다."""
+    previous = diff.snapshot_entries([{**cafe(1), "new_articles": 3}])
+    r = diff.compute_changes(previous, [{**cafe(1), "new_articles": 99}], source="api")
+    assert r["status"] == diff.STATUS_OK and r["new"] == r["left"] == r["renamed"] == []
 
 
 # ── 이력 저장소 ───────────────────────────────────────────────
@@ -143,6 +155,7 @@ def test_store_corrupt_latest_snapshot_means_baseline_not_crash(env):
 def test_service_baseline_then_join_and_leave_are_recorded(env):
     first = service.apply_collection(cafes(1, 2, 3), source="api", now="2026-10-05T09:00:00+09:00")
     assert first["changes"]["status"] == "baseline" and first["persist_current"] is True
+    assert first["activity"]["total"] == 3  # 반영되는 수집은 활동 분석을 함께 돌려준다
     second = service.apply_collection([cafe(1), cafe(3), cafe(4)], source="api", now="2026-10-06T09:00:00+09:00")
     ch = second["changes"]
     assert [e["cafe_id"] for e in ch["new"]] == ["cafe4"] and [e["cafe_id"] for e in ch["left"]] == ["cafe2"]
@@ -160,6 +173,7 @@ def test_service_blocked_collection_writes_nothing(env):
     for bad, source in (([], "api"), (cafes(1, 2, 3), "dom")):
         out = service.apply_collection(bad, source=source, now="2026-10-06T09:00:00+09:00")
         assert out["persist_current"] is False and out["changes"]["status"] == "blocked"
+        assert out["activity"] is None  # 막힌 수집으로는 분석하지 않는다
     assert store.latest_snapshot() == before and store.recent_changes() == []  # 이력도 변동 기록도 그대로
 
 
@@ -185,6 +199,7 @@ def test_service_recent_summarizes_trend_and_log(env):
         and out["summary"]["net_change_since_first"] == 1
     )
     assert out["summary"]["joined_in_log"] == 1 and out["summary"]["left_in_log"] == 0
+    assert out["activity"]["total"] == 3  # 최근 스냅샷의 활동 분석
     assert len(service.recent(10_000)["changes"]) <= service.CHANGES_LIMIT_MAX  # 상한
 
 
@@ -221,7 +236,7 @@ def client(env, monkeypatch):
 def test_collect_route_returns_changes_saves_list_and_closes_its_tab(client):
     out = client.post("/naver-cafe/collect-my-cafes").json()
     assert out["ok"] is True and out["count"] == 3 and out["source"] == "api" and len(out["cafes"]) == 3  # 기존 키 호환
-    assert out["changes"]["status"] == "baseline"
+    assert out["changes"]["status"] == "baseline" and out["activity"]["total"] == 3
     assert json.loads((client.data_dir / "my_cafes.json").read_text(encoding="utf-8"))[0]["cafe_id"] == "cafe1"
     assert client.state["closed"] == 1 and client.state["new_pages"] == 1  # 자기 탭 하나를 만들어 쓰고 닫았다(빈 탭 재사용 없음)
     client.state["result"] = ([cafe(1), cafe(3), cafe(4)], "api")

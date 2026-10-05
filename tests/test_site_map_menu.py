@@ -101,8 +101,9 @@ def test_merge_menu_is_additive_bounded_and_returns_same_object_when_nothing_new
     one = menu.merge_menu(base, [{"label": "A", "href": f"{BASE}/a"}], now=NOW)
     assert one["menu"] == [{"label": "A", "href": f"{BASE}/a"}] and one["menu_at"] == NOW
     assert menu.merge_menu(one, [{"label": "A2", "href": f"{BASE}/a"}], now="later") is one
-    many = menu.merge_menu(base, [{"label": f"L{i}", "href": f"{BASE}/{i}"} for i in range(100)], now=NOW)
-    assert len(many["menu"]) == menu.MENU_MAX
+    many = menu.merge_menu(base, [{"label": f"L{i}", "href": f"{BASE}/{i}"} for i in range(menu.MENU_MAX + 40)], now=NOW)
+    assert len(many["menu"]) == menu.MENU_MAX and many["menu_total_seen"] == menu.MENU_MAX + 40  # 잘렸다는 것(관측 총수 > 저장 수)을 알 수 있다
+    assert menu.merge_menu(many, [{"label": "again", "href": f"{BASE}/0"}], now="later") is many  # 이미 아는 주소만이면 그대로
 
 
 # ── 주소 열기 검증 ─────────────────────────────────────────────

@@ -60,6 +60,23 @@ export interface MapTask {
   changes: { at: string; from: string; to: string; was: string }[];
 }
 
+export interface DataSource {
+  host: string;
+  path: string;
+  query_keys: string[];
+  top_keys: string[];
+  lists: { path: string; count: number; fields: string[] }[];
+  seen: number;
+}
+
+export interface DeclaredTool {
+  name: string;
+  description: string;
+  kind: "declarative" | "imperative";
+  fields: string[];
+  required: string[];
+}
+
 export interface HostSummary {
   host: string;
   auth?: Auth;
@@ -76,6 +93,13 @@ export interface SiteMap {
   auth: Auth;
   updated_at: string;
   tasks: MapTask[];
+  /** 메뉴 색인(M8)·관측한 서로 다른 주소 총수(M9, 상한 때문에 잘렸는지) */
+  menu?: { label: string; href: string }[];
+  menu_total_seen?: number;
+  /** 화면이 로드될 때 사이트가 부르는 데이터 API 의 구조(M9, 값 없음) */
+  data_sources?: DataSource[];
+  /** 사이트가 선언한 에이전트용 도구(WebMCP, 읽기만) */
+  declared_tools?: DeclaredTool[];
   /** 탐색했다는 사실과 점검표(업무가 0건이어도 남는다) */
   explored?: { at: string; pages: number; coverage?: { warning?: string; redirected_to?: string } };
 }
