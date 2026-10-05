@@ -20,7 +20,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .sqlite_schema import apply_schema
+from .sqlite_schema import apply_schema, set_busy_timeout
 
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "fax_authorizations.db"
 
@@ -109,6 +109,7 @@ _SCHEMA_STEPS = [_schema_v1]
 def _conn():
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(_DB_PATH), timeout=30, isolation_level=None)  # 자동 커밋
+    set_busy_timeout(con)
     con.row_factory = sqlite3.Row
     try:
         apply_schema(con, _SCHEMA_STEPS)
