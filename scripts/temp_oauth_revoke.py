@@ -206,8 +206,9 @@ def main(argv: list[str] | None = None) -> int:
     if not args.execute:
         print("[dry-run] --execute 가 없어 아무 것도 실행하지 않습니다.")
         print("[dry-run] 실행 시 순서: 환경변수 검증 -> 브라우저 연결 -> Google 계정 연결 권한 '모두 삭제' -> YouTube OAuth 재인가 -> 토큰 파일 저장")
+        missing_set = set(missing)
         for k in REQUIRED_ENV:
-            print(f"[dry-run] 환경변수 {k}: {'설정됨' if k not in missing else '미설정'}")
+            print(f"[dry-run] 환경변수 {k}: {'설정됨' if k not in missing_set else '미설정'}")
         return 0
 
     if missing:

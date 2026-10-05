@@ -538,6 +538,7 @@ def _cmd_registration(sub: str | None, args: list[str], *, submit: bool = False)
         return result
     else:
         print("  사용법: eum registration <공사코드> <단말기번호> [설치장소]")
+        return None
 
 
 def _cmd_deregistration(sub: str | None, args: list[str], *, submit: bool = False) -> dict | None:
@@ -563,6 +564,7 @@ def _cmd_deregistration(sub: str | None, args: list[str], *, submit: bool = Fals
         return result
     else:
         print("  사용법: eum deregistration <단말기번호> [철거예정일]")
+        return None
 
 
 def _print_help() -> None:
