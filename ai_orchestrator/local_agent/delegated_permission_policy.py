@@ -115,7 +115,7 @@ def _scope_violation(
 
 
 def check_permission(
-    permission: dict[str, Any],
+    permission: dict[str, Any] | None,
     action: str,
     domain: str,
     account: str = "",

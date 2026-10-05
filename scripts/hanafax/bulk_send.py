@@ -364,7 +364,8 @@ def main() -> None:
         # 이전 배치 처리 중이면 최대 2시간 대기 후 재시도
         MAX_RETRY = 24  # 5분 × 24 = 2시간
         RETRY_WAIT = 300  # 5분
-        result = None
+        # fail-closed: 발송 루프가 한 번도 돌지 않으면 '실패'로 기록 (성공으로 보이는 기본값 금지)
+        result: dict = {"ok": False, "error": "not_attempted"}
         for attempt in range(MAX_RETRY + 1):
             result = send_bulk_batch(
                 batch_num=batch_num,

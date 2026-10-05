@@ -21737,6 +21737,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_dashboard_auth_none_guards.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_eum_router_submit_result.py": {
    "layer": "L11",
    "role": "test",
@@ -21746,6 +21754,30 @@
    "source": "rule"
   },
   "tests/test_eum_send_mail_batch_dedupe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hanafax_bulk_send_result_init.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_instagram_dm_none_guards.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_permission_policy_none_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

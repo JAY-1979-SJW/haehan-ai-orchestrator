@@ -76,7 +76,7 @@ def use_permission(
     with _lock:
         perm = _store.get(permission_id)
         check = check_permission(perm, action, domain, account, task_scope)
-        if check["result"] == CHECK_ALLOWED:
+        if check["result"] == CHECK_ALLOWED and perm is not None:
             increment_execution(perm)
         return {**check, "permission": perm}
 
