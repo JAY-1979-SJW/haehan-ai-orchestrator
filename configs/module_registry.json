@@ -21440,6 +21440,22 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_site_map_labels.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/domain/site_map_labels.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "지도 이름 정리·전역 메뉴 분리 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   }
  }
 }
