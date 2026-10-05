@@ -31,7 +31,9 @@ REQUIRED_APP_TOKENS = [
     "configs/external_mcp_registry.template.json",
 ]
 
-REQUIRED_HOME_TOKENS = [
+# 2026-10-05: 홈 재작성(855d595a 단일 AI 콘솔) 후 MCP Gateway 표면은 폐기 확정.
+# 홈에 이 문구가 다시 나타나면 폐기 정책 위반으로 FAIL(부정 단언).
+FORBIDDEN_HOME_TOKENS = [
     "External MCP Gateway",
     "Registered MCP servers and owned app adapters",
     "MCP Gateway readiness",
@@ -115,12 +117,12 @@ def _audit_app_tokens(ok, findings):
 
 def _audit_home_tokens(ok, findings):
     home_text = HOME_PAGE.read_text(encoding="utf-8") if HOME_PAGE.exists() else ""
-    for token in REQUIRED_HOME_TOKENS:
-        if token not in home_text:
-            ok = False
-            findings.append(f"[FAIL] home dashboard missing MCP token: {token}")
-    if all(token in home_text for token in REQUIRED_HOME_TOKENS):
-        findings.append("[PASS] home dashboard exposes MCP gateway readiness")
+    present = [token for token in FORBIDDEN_HOME_TOKENS if token in home_text]
+    for token in present:
+        ok = False
+        findings.append(f"[FAIL] retired MCP gateway surface reappeared on home: {token}")
+    if not present:
+        findings.append("[PASS] home does not expose retired MCP gateway surface")
     return ok
 
 

@@ -26,11 +26,13 @@ def test_mcp_registry_template_defaults_to_disabled_and_no_inline_secrets() -> N
     assert all(server["blocked_tools"] for server in data["servers"])
 
 
-def test_app_structure_and_home_expose_mcp_gateway_readiness() -> None:
+def test_app_structure_baseline_keeps_mcp_gateway_but_home_surface_is_retired() -> None:
+    # 2026-10-05 정책: 홈 재작성(855d595a 단일 AI 콘솔) 후 MCP Gateway 화면 표면은 폐기.
     baseline = Path("docs/baseline/AI_AGENT_APP_STRUCTURE_DESIGN_BASELINE.md").read_text(encoding="utf-8")
     home = Path("admin-web/src/app/page.tsx").read_text(encoding="utf-8")
 
     assert "External MCP / Tool Gateway" in baseline
     assert "MCP Gateway readiness" in baseline
-    assert "External MCP Gateway" in home
-    assert "Registered MCP servers and owned app adapters" in home
+    assert "External MCP Gateway" not in home
+    assert "Registered MCP servers and owned app adapters" not in home
+    assert "MCP Gateway readiness" not in home
