@@ -132,7 +132,7 @@ def _to_approval_response(record: dict) -> ApprovalRecordResponse:
 
 
 @approval_record_router.get("/requests", response_model=ApprovalListResponse)
-async def list_approvals(
+def list_approvals(
     status: str | None = None,
     approval_id: str | None = None,
     _user: dict = Depends(require_role("admin", "owner")),
@@ -185,7 +185,7 @@ async def list_approvals(
 
 
 @approval_record_router.get("/requests/{approval_id}", response_model=ApprovalRecordResponse)
-async def get_approval(
+def get_approval(
     approval_id: str,
     _user: dict = Depends(require_role("admin", "owner")),
 ) -> ApprovalRecordResponse:
@@ -205,7 +205,7 @@ async def get_approval(
 
 
 @approval_record_router.post("/requests", response_model=ApprovalRecordResponse)
-async def create_approval(
+def create_approval(
     req: ApprovalRequestCreate,
     _user: dict = Depends(require_role("admin", "owner")),
 ) -> ApprovalRecordResponse:
@@ -258,7 +258,7 @@ async def create_approval(
 
 
 @approval_record_router.post("/requests/{approval_id}/approve", response_model=ApprovalRecordResponse)
-async def approve_request(
+def approve_request(
     approval_id: str,
     req: ApprovalDecisionCreate,
     _user: dict = Depends(require_role("admin", "owner")),
@@ -308,7 +308,7 @@ async def approve_request(
 
 
 @approval_record_router.post("/requests/{approval_id}/reject", response_model=ApprovalRecordResponse)
-async def reject_request(
+def reject_request(
     approval_id: str,
     req: ApprovalDecisionCreate,
     _user: dict = Depends(require_role("admin", "owner")),
@@ -358,7 +358,7 @@ async def reject_request(
 
 
 @approval_record_router.get("/requests/{approval_id}/history", response_model=ApprovalHistoryResponse)
-async def get_approval_history_endpoint(
+def get_approval_history_endpoint(
     approval_id: str,
     _user: dict = Depends(require_role("admin", "owner")),
 ) -> ApprovalHistoryResponse:
