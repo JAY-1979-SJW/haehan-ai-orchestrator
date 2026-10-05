@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator import mcp_server
 from ai_orchestrator.domain import site_preflight as sp
+from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.persistence import site_registry_store as reg_store
 from ai_orchestrator.persistence import site_task_map_request_store as rstore
@@ -267,7 +268,8 @@ def _client(*, as_admin: bool) -> TestClient:
     return TestClient(app)
 
 
-def test_preflight_routes_require_role_and_return_saved_result(env):
+def test_preflight_routes_require_role_and_return_saved_result(env, monkeypatch):
+    monkeypatch.setattr(auth_module.config, "AUTH_ENABLED", True)
     fetch, _ = _fake_fetch((404, ""), (404, ""))
     svc.configure_fetcher(fetch)
     client = _client(as_admin=True)
