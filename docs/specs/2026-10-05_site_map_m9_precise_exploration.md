@@ -84,3 +84,12 @@
 - Claude 플랫폼 문서 Browser use tool: https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool
 - Chrome WebMCP: https://developer.chrome.com/docs/ai/webmcp/declarative-api · https://developer.chrome.com/blog/webmcp-epp
 - 변경 이력: 2026-10-05 초안.
+
+### 8.1 드라이 런 결과 (2026-10-05, 저장소 미변경, 값 불출력)
+| 항목 | 결과 | 기준서 보정 |
+|---|---|---|
+| 데이터 소스 정리(카페 포털) | 11개. `hot-articles/home/02310` → `hot-articles/home/{id}` 마스킹 정상, 쿼리는 키 이름만(`articleCount,myCafeCount,useMyCafeEvent`) | — |
+| 광고·추적 주소 | `nam.veta.naver.com/gfp/v1`(광고 노출 추적)이 섞여 들어옴 | **제외 규칙 추가**: 호스트·경로에 `veta`·`gfp`·`track`·`beacon`·`analytics`·`telemetry`·`/log`·`/ads` 가 있으면 데이터 소스로 기록하지 않는다 |
+| WebMCP | 카페 포털·카페 내부 모두 `form[toolname]` 0, `document.modelContext` 없음 | 예상대로(탐지는 비용 거의 없음, 생기면 즉시 반영) |
+| 활동 필드 | 80개 모두 채워짐: `lastUpdateDate`·`lastVisitDate`(형식 `YYYY-MM-DD HH:MM:SS`, 시간대 표기 없음 → 한국 시간으로 간주)·`openType`(`O`/`C`), `articleNewCounts`>0 46개, 즐겨찾기 9, 파워 12, 관리 2, 휴면 0. `aheadOfTime` 은 "n시간 전" 같은 표시용 글자라 **쓰지 않음** | §4-C 의 "미방문 N일"은 `lastVisitDate` 로 계산 가능. `articleCount=1` 은 최근 글 목록(`articles`)을 80개 모두 더 싣지만 이름·내용이 필요 없으므로 `articleCount=0` 유지 |
+| 새 글 많은 카페 | 상위 5 건수 `[74005, 823, 819, 427, 365]`(이름 불출력) — 한 카페가 압도적(대형 카페의 누적 새 글) | 분석 카드는 건수와 함께 **카페 이름**을 보여 주되(사용자 화면), 로그·보고에는 이름 대신 집계만 남긴다 |
