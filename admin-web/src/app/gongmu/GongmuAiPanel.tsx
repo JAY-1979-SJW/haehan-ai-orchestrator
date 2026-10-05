@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { UniversalChat, type ChatPreset, type ExtraCard } from "@/components/chat/UniversalChat";
 import { gongmuApi, type Draft, type Site } from "./api";
-import { SiteMapExploreCard } from "@/components/sitemap/SiteMapExploreCard";
 import { GongmuDraftCard } from "./GongmuDraftCard";
 
 interface Props {
@@ -43,7 +42,6 @@ const PRESETS: ChatPreset[] = [
 function cardsFor(onDecided: () => void): ExtraCard[] {
   return [
     { mark: /\[\[gongmu-draft:([0-9a-f]{32})\]\]/g, render: (id) => <GongmuDraftCard draftId={id} onDecided={onDecided} /> },
-    { mark: /\[\[sitemap-explore:([0-9a-f]{32})\]\]/g, render: (id) => <SiteMapExploreCard requestId={id} /> },
   ];
 }
 

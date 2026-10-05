@@ -21488,6 +21488,22 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/components/chat/siteMapCards.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_cdp_daemon_restart_policy.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

@@ -23,6 +23,7 @@ import logging
 import os
 import re
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -430,6 +431,26 @@ def _restart_dead_monitors() -> None:
             log.warning("[HEARTBEAT] chrome_ui_monitor 재시작 실패: %s", e)
 
 
+def _port_listening(port: int = CDP_PORT, timeout: float = 1.0) -> bool:
+    """디버그 포트에 TCP 연결이 되는가 — 되면 Chrome 프로세스는 살아 있다(HTTP 응답만 느릴 수 있다)."""
+    try:
+        with socket.create_connection((CDP_HOST, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+CDP_FAIL_THRESHOLD = 3  # 연속 응답 없음 3회(약 30초) — 포트가 닫혀 있으면(Chrome 종료) 바로 재시작
+CDP_HUNG_THRESHOLD = 18  # 포트는 열려 있는데 응답만 없을 땐 약 3분까지 기다린다(살아있는 Chrome 과 열린 탭을 죽이지 않는다)
+
+
+def _should_restart_chrome(fail_streak: int, port_open: bool) -> bool:
+    """재시작 판정(순수). 2026-10-05: 응답 지연 3회만으로 살아있는 Chrome 을 종료·재시작해 열려 있던 탭이 날아갔다."""
+    if fail_streak < CDP_FAIL_THRESHOLD:
+        return False
+    return fail_streak >= CDP_HUNG_THRESHOLD or not port_open
+
+
 def _heartbeat_loop() -> None:
     """헬스체크 — CDP 포트가 응답 안 하면 Chrome 자동 재시작.
 
@@ -440,7 +461,6 @@ def _heartbeat_loop() -> None:
     global _chrome_ui_monitor_proc
 
     cdp_fail_streak = 0
-    CDP_FAIL_THRESHOLD = 3  # 3회 연속(약 30초) 응답 없으면 재시작
     healthy_streak = 0
     HEALTHY_RESET_AFTER = 30  # 30회 연속(약 5분) 정상이면 restart_count 초기화
 
@@ -452,10 +472,13 @@ def _heartbeat_loop() -> None:
             cdp_fail_streak, healthy_streak = _heartbeat_probe(cdp_fail_streak, healthy_streak, HEALTHY_RESET_AFTER)
 
             if cdp_fail_streak >= CDP_FAIL_THRESHOLD:
-                log.warning("[HEARTBEAT] CDP 포트 %d 무응답 %d회 — Chrome 자동 재시작", CDP_PORT, cdp_fail_streak)
-                _state.browser_context = "inactive"
-                cdp_fail_streak = 0
-                threading.Thread(target=_restart_chrome, daemon=True).start()
+                if _should_restart_chrome(cdp_fail_streak, _port_listening()):
+                    log.warning("[HEARTBEAT] CDP 포트 %d 무응답 %d회 — Chrome 자동 재시작", CDP_PORT, cdp_fail_streak)
+                    _state.browser_context = "inactive"
+                    cdp_fail_streak = 0
+                    threading.Thread(target=_restart_chrome, daemon=True).start()
+                elif cdp_fail_streak == CDP_FAIL_THRESHOLD:
+                    log.warning("[HEARTBEAT] CDP 포트 %d 응답이 느리지만 포트는 열려 있어 재시작하지 않고 기다립니다(최대 %d회)", CDP_PORT, CDP_HUNG_THRESHOLD)
 
             _restart_dead_monitors()
 
