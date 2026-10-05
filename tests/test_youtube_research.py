@@ -7,6 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from scripts.youtube import research
+from scripts.youtube import research_captions
 from scripts.youtube import browser_transcript
 from scripts.youtube.router import _read_json_file
 
@@ -267,8 +268,8 @@ def test_caption_download_reports_forbidden_without_traceback(monkeypatch):
     def fake_get_text_oauth(url, params, token):
         raise PermissionError("HTTP Error 403: Forbidden")
 
-    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "fake-oauth")
-    monkeypatch.setattr(research, "_get_text_oauth", fake_get_text_oauth)
+    monkeypatch.setattr(research_captions, "_oauth_token", lambda explicit=None, token_file=None: "fake-oauth")
+    monkeypatch.setattr(research_captions, "_get_text_oauth", fake_get_text_oauth)
 
     result, path = research.download_caption("caption-1")
 
