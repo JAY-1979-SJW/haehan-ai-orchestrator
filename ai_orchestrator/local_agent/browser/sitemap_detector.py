@@ -19,9 +19,9 @@ class SitemapInfo:
     domain: str
     robots_txt: str | None = None
     sitemap_url: str | None = None
-    api_endpoints: list[str] = None
-    page_structure: dict = None
-    selectors: dict = None  # {element_type: [selectors]}
+    api_endpoints: list[str] | None = None
+    page_structure: dict | None = None
+    selectors: dict | None = None  # {element_type: [selectors]}
 
     def __post_init__(self):
         if self.api_endpoints is None:
@@ -100,9 +100,9 @@ def detect_selectors_by_network(page) -> dict[str, list[str]]:
     return {}
 
 
-def detect_dom_selectors(page) -> dict[str, list[str]]:
+def detect_dom_selectors(page) -> dict[str, list[dict[str, object]]]:
     """DOM에서 주요 셀렉터 자동 탐지."""
-    selectors_result = {}
+    selectors_result: dict[str, list[dict[str, object]]] = {}
 
     try:
         # 메일 아이템 셀렉터 탐지
