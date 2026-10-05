@@ -402,18 +402,6 @@ def _route(route):
         route.fulfill(status=200, content_type="text/plain", body="plain")
 
 
-@pytest.fixture(scope="module")
-def browser():
-    sync_api = pytest.importorskip("playwright.sync_api")
-    pw = sync_api.sync_playwright().start()
-    try:
-        instance = pw.chromium.launch(channel="chrome", headless=True)
-    except Exception as exc:  # noqa: BLE001 - Chrome 을 못 띄우는 환경은 이 시험만 건너뛴다
-        pw.stop()
-        pytest.skip(f"헤드리스 Chrome 을 띄울 수 없음: {type(exc).__name__}")
-    yield instance
-    instance.close()
-    pw.stop()
 
 
 def test_real_spa_page_yields_structure_without_values_and_navigation_is_not_blocked(browser):

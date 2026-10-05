@@ -33,12 +33,11 @@ MENU_SHOWN_MAX = 30
 
 # 지도 기반 실행기(브라우저): (호스트, 업무 id, 검증된 매개변수) -> 결과 dict. 라우터가 주입한다(서비스는 브라우저·scripts 를 모른다).
 Runner = Callable[[str, str, dict[str, str]], dict[str, Any]]
-_runner: Runner | None = None
+_runner_ref: list[Runner | None] = [None]  # 한 칸짜리 보관소 — `global` 로 다시 대입하지 않는다
 
 
 def configure_runner(runner: Runner | None) -> None:
-    global _runner
-    _runner = runner
+    _runner_ref[0] = runner
 
 
 def _now() -> str:
@@ -145,11 +144,12 @@ def run_task(host: str, task_id: str, params: dict[str, Any]) -> dict[str, Any]:
 
     결과(표)는 응답으로만 돌려주고 지도에는 열 이름과 검증 상태만 남는다.
     """
-    if _runner is None:
+    runner = _runner_ref[0]
+    if runner is None:
         raise ValueError("지도 실행기가 연결되지 않았습니다")
     site_map = store.load(host)
     task = next((t for t in site_map["tasks"] if t["id"] == task_id), None)
     if task is None:
         raise ValueError("업무를 찾을 수 없습니다")
     values = tm.validate_run_request(task, params)  # read 가 아니거나 매개변수가 틀리면 ValueError (브라우저를 건드리기 전)
-    return _runner(site_map["host"], task_id, values)
+    return runner(site_map["host"], task_id, values)

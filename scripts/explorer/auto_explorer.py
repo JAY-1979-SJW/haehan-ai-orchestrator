@@ -188,12 +188,14 @@ def _save_sitemap(result: dict, host: str) -> None:
 
 def _dedupe_links(out_links: list[dict]) -> list[dict]:
     """href 기준 중복 제거(처음 등장 순서 유지)."""
-    seen = set()
-    return [
-        l
-        for l in out_links  # noqa: E741
-        if not (l["href"] in seen or seen.add(l["href"]))
-    ]
+    seen: set[str] = set()
+    unique: list[dict] = []
+    for link in out_links:
+        if link["href"] in seen:
+            continue
+        seen.add(link["href"])
+        unique.append(link)
+    return unique
 
 
 def _should_skip_url(url: str, start_url: str, host: str, same_host_only: bool, skip_url_patterns: tuple[str, ...]) -> bool:
@@ -304,9 +306,7 @@ def explore_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
 
         # 링크 수집 + 다음 큐
         out_links = _collect_out_links(s.get("links", []), url, start_url, same_host_only)
-        for out_link in out_links:
-            if out_link["href"] not in visited and d + 1 <= depth:
-                queue.append((out_link["href"], d + 1))
+        queue.extend((out_link["href"], d + 1) for out_link in out_links if out_link["href"] not in visited and d + 1 <= depth)
         # 중복 제거
         rec["links_out"] = _dedupe_links(out_links)[:50]
 

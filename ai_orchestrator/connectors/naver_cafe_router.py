@@ -393,7 +393,7 @@ def api_report(
 
 @naver_cafe_router.get("/summary")
 def api_summary(
-    user: dict = Depends(require_role("admin", "owner")),
+    _: dict = Depends(require_role("admin", "owner")),
 ) -> dict:
     """카페 수집 현황 요약 (파일 존재 여부 + 건수)."""
     t0 = time.monotonic()
@@ -594,14 +594,12 @@ def cafe_to_haehan_blog(
         )
 
     # ── 3 & 4. 주제별 블로그 생성 → 홈페이지 DB 저장 ─────────────────────────
-    results = []
     headers_common = {
         "Content-Type": "application/json",
         "x-admin-key": admin_secret,
     }
 
-    for topic in topics:
-        results.append(_generate_and_save_post(topic, haehan_url, headers_common, post_status))
+    results = [_generate_and_save_post(topic, haehan_url, headers_common, post_status) for topic in topics]
 
     success = [r for r in results if r["error"] is None]
     failed = [r for r in results if r["error"] is not None]
