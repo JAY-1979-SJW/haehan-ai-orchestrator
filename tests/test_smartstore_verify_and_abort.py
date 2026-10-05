@@ -61,7 +61,7 @@ class _StubRegister(GeneralProductRegister):
     def upload_main_image(self, image_path):
         return self._step("main_image")
 
-    def save(self, require_confirm: bool = True):
+    def save(self, require_confirm: bool = True):  # type: ignore[override]
         self.saved = True
         self.calls.append("save")
         return {"ok": True}

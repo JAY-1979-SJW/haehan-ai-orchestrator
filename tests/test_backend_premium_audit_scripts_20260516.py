@@ -49,6 +49,7 @@ RUNNER_ORDER = [
 def _load(name: str):
     path = SCRIPTS_OPS / f"{name}.py"
     spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None and spec.loader is not None, f"모듈 spec 로드 실패: {path}"
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

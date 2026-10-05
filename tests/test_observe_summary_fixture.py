@@ -43,7 +43,9 @@ def _make_task(action: str = "web_open_url_readonly") -> _reg.LocalAgentTask:
     # queued → delivered → running 으로 수동 전환
     _reg.mark_delivered(agent_id, task.task_id)
     _reg.mark_running(agent_id, task.task_id)
-    return _reg.get_task(agent_id, task.task_id)
+    t = _reg.get_task(agent_id, task.task_id)
+    assert t is not None
+    return t
 
 
 def _make_full_observe_summary(**overrides) -> dict:
