@@ -191,7 +191,7 @@ def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
         "--disable-session-crashed-bubble",
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
-        "--restore-last-session=false",
+        # --restore-last-session 은 값과 무관하게 "있으면 이전 세션 복원"인 스위치라 =false 를 붙여도 복원된다(2026-10-05: 재시작 때마다 예전 YouTube·Gmail 탭이 되살아남). 복원을 막으려면 스위치를 아예 빼고 exit_type=Normal 로 정리한다.
         "--window-position=100,50",
         "--window-size=1280,900",
         "--force-device-scale-factor=1.5",
