@@ -19,6 +19,7 @@ from ..domain import site_registry as sr
 from ..domain import site_task_map as tm
 from ..persistence import site_registry_store as store
 from ..persistence import site_task_map_store as map_store
+from . import site_preflight_service as preflight
 from . import site_task_map_explore_service as explore
 from . import vendor_directory_service as vendors
 
@@ -130,6 +131,13 @@ def register(raw: dict[str, Any], *, actor: str) -> dict[str, Any]:
     record = sr.new_record(host, actor=actor, now=now, policy=policy)
     if existing is not None:  # 해제했던 사이트를 다시 등록 — 이전 이력은 보존
         record["history"] = (existing.get("history") or [])[-40:] + record["history"]
+    checked = preflight.run_for_registration(host)  # 사전 조사(실행기가 없으면 None) — 등록 직전 한 번, 읽기 전용
+    if checked is not None:
+        record["preflight"] = checked
+        if checked["verdict"] == "blocked":  # 탐색을 시작하지 않는다 — 사람이 이유를 보고 다시 판단
+            record = sr.transition(record, sr.BLOCKED, now=now, by=actor, note="사전 조사에서 차단: " + "; ".join(checked["reasons"])[:150])
+            store.put(record)
+            return {"site": _view(record), "explore_request": None, "official_api": _official_api(host), "preflight": checked}
     options = {"start_url": start_url, "max_pages": policy["max_pages"], "reason": "사이트 등록 최초 탐색"}
     for key in ("depth", "auth"):
         if raw.get(key) is not None:
@@ -142,7 +150,7 @@ def register(raw: dict[str, Any], *, actor: str) -> dict[str, Any]:
     except ValueError as e:  # 다른 탐색이 실행 중 등 — 요청은 승인 대기로 남기고 나중에 사람이 승인
         record["note"] = f"최초 탐색은 승인 대기: {e}"[:200]
     store.put(record)
-    return {"site": _view(record), "explore_request": request, "official_api": _official_api(host)}
+    return {"site": _view(record), "explore_request": request, "official_api": _official_api(host), "preflight": checked}
 
 
 def set_policy(host: str, raw: dict[str, Any], *, actor: str) -> dict[str, Any]:
