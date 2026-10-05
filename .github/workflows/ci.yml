@@ -83,6 +83,20 @@ jobs:
           # (scripts/ops/make_constraints.py 로 재생성, docs/specs/2026-10-04_portability_standard.md)
           python -m pip install -r requirements.txt -c constraints.txt
 
+      - name: Install audit-kit + mypy (개발 기준서·타입 신규 오류 검사용 별도 가상환경)
+        # verify_change.py 가 AUDIT_KIT_BIN 의 audit-kit 로 기준서 검사를, 같은 가상환경의 mypy 로 "기준 대비 신규 타입 오류"만
+        # 검사한다(공개 저장소라 토큰 불필요). 프로젝트 의존성과 섞이지 않게, 그리고 저장소 스캔(layer audit 등)에
+        # 잡히지 않게 작업 폴더 밖(RUNNER_TEMP)의 별도 가상환경에 설치한다.
+        # 설치 실패 시 이 스텝이 FAIL 하므로 검사가 조용히 생략되는 일은 없다.
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/akvenv"
+          "$RUNNER_TEMP/akvenv/Scripts/python.exe" -m pip install --upgrade pip
+          "$RUNNER_TEMP/akvenv/Scripts/python.exe" -m pip install mypy "git+https://github.com/JAY-1979-SJW/audit-kit"
+          test -f "$RUNNER_TEMP/akvenv/Scripts/audit-kit.exe"
+          echo "AUDIT_KIT_BIN=$RUNNER_TEMP/akvenv/Scripts/audit-kit.exe" >> "$GITHUB_ENV"
+          echo "AUDIT_KIT_REQUIRED=1" >> "$GITHUB_ENV"
+
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
         # forbidden_imports/security_patterns/circular_imports 외에 "unknown layer 파일 수"
