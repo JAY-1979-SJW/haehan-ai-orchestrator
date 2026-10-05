@@ -120,7 +120,7 @@ def log_action(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 인자 �
     audit_path: Path | None = None,
 ) -> dict:
     """액션 1건 기록. 반환: 기록된 entry."""
-    entry = {
+    entry: dict[str, Any] = {
         "ts": datetime.now(UTC).isoformat(),
         "action": action,
         "url": url[:500],  # URL이 너무 길면 truncate

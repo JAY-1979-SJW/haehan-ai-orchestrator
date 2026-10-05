@@ -21553,14 +21553,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_router_submit_result.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "admin-web/electron/e2e-electron/agent_employee_eval.spec.ts": {
    "layer": "L9",
    "role": "ui",
@@ -21713,14 +21705,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_send_mail_batch_dedupe.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/test_manual_tests_never_touch_browser_on_collect.py": {
    "layer": "L11",
    "role": "test",
@@ -21738,6 +21722,30 @@
    "source": "rule"
   },
   "tests/test_site_map_sources.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_collect_google_passwords_list_safe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_eum_router_submit_result.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_eum_send_mail_batch_dedupe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

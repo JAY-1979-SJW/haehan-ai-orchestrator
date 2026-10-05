@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from ai_orchestrator.local_agent.browser.intent_token import (
     IntentToken,
@@ -245,7 +246,7 @@ class GateResult:
     origin_allowed: bool = True
 
     def to_dict(self) -> dict:
-        d = {
+        d: dict[str, Any] = {
             "verdict": self.verdict,
             "reason": self.reason,
         }
