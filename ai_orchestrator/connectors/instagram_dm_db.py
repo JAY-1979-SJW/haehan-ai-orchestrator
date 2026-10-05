@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from ..persistence.sqlite_schema import add_column_if_missing, apply_schema
+from ..persistence.sqlite_schema import add_column_if_missing, apply_schema, set_busy_timeout
 
 _DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "instagram_dm.db"
 
@@ -31,8 +31,9 @@ def _get_db_path() -> Path:
 @contextmanager
 def _conn() -> Iterator[sqlite3.Connection]:
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(str(_get_db_path()))
+    con = sqlite3.connect(str(_get_db_path()), timeout=30)
     con.row_factory = sqlite3.Row
+    set_busy_timeout(con)
     con.execute("PRAGMA foreign_keys = ON")
     try:
         yield con

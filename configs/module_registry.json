@@ -21473,7 +21473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_chrome_launch_flags.py": {
+  "tests/test_approval_record_concurrency.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -21494,30 +21494,6 @@
    "role": "ui",
    "domain": "common",
    "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_cdp_daemon_restart_policy.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_watch_process.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_site_map_menu.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -21545,10 +21521,42 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_browser_watch_process.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_cdp_daemon_restart_policy.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_chrome_launch_flags.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_manual_tests_never_touch_browser_on_collect.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_site_map_menu.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
