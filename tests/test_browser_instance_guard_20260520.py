@@ -118,7 +118,10 @@ def test_cdp_alive_prevents_start_new(paths):
 
 # 8. browser_quit 은 자동화 Chrome 만 종료
 
-def test_quit_only_kills_automation_browsers(paths):
+def test_quit_only_kills_automation_browsers(paths, monkeypatch):
+    # 실제 CDP(/json/list·/json/close) 접속으로 사용자 Chrome 탭을 닫지 않도록 가짜로 대체
+    close_calls: list[int] = []
+    monkeypatch.setattr(guard, "close_all_cdp_targets", lambda port: close_calls.append(port) or [])
     user_chrome = "chrome.exe --user-data-dir=C:/Users/me/Chrome/Default"
     auto_chrome = _cmd_for(paths.profile_dir)
     guard.set_process_enumerator(lambda: [(100, user_chrome), (200, auto_chrome)])
@@ -132,6 +135,7 @@ def test_quit_only_kills_automation_browsers(paths):
     assert killed_call_args == [200]  # user_chrome (pid 100) 은 미포함
     assert result["killed_pids"] == [200]
     assert result["ok"] is True
+    assert close_calls == [9222]  # 가짜 호출만 일어남(실제 CDP 접속 없음)
 
 
 # 9. 일반 Chrome 은 count/quit 대상 제외 — list 에서 분리

@@ -345,8 +345,9 @@ def test_next_phase_manual_review_candidates_locked():
 # SECTION 3: endpoint inventory 4종 수치 고정
 # ===========================================================================
 
-RUNTIME_HTTP_ENDPOINT_COUNT = 62  # 49 base + naver(3) + ops_router(7) + app_status_router(3) read-only GET
-RUNTIME_WEBSOCKET_COUNT = 1
+# 2026-10-05 갱신(HTTP 62→423, WS 1→2): 저장소 성장·FastAPI 0.142 로 지연 include 래퍼를 펼쳐 실제 라우트를 보게 됨(HTTP+WS=425=EXPECTED_RUNTIME_ROUTES)
+RUNTIME_HTTP_ENDPOINT_COUNT = 423
+RUNTIME_WEBSOCKET_COUNT = 2
 SOURCE_ROUTER_HTTP_ENDPOINT_COUNT = 59  # naver 3 + ops_router 7 포함
 UNREGISTERED_ROUTER_ENDPOINT_COUNT = 0  # naver_search_router 등록 완료
 
