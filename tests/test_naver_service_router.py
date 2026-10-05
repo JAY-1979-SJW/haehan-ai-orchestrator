@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.naver import router, service_catalog
+from scripts.naver import router, router_cafe, router_social, service_catalog
 
 
 def test_service_catalog_lists_all_naver_sections(tmp_path):
@@ -28,7 +28,7 @@ def test_service_catalog_lists_all_naver_sections(tmp_path):
     assert saved["site"] == "naver"
     assert saved["features"]["cafe"]["read"] == ["list", "home", "topic-search", "collect", "boards", "posts", "read"]
     assert "join-request" in saved["features"]["cafe"]["prepare"]
-    assert "UTF-8 query encoding" in saved["features"]["cafe"]["policy"]
+    assert "topic-search uses Naver search API" in saved["features"]["cafe"]["policy"]
     assert "approval-gated" in saved["features"]["cafe"]["policy"]
     assert "paid Naver API" in saved["features"]["keyword-tools"]["policy"]
     assert "rights confirmation" in saved["features"]["blog-assets"]["policy"]
@@ -36,9 +36,9 @@ def test_service_catalog_lists_all_naver_sections(tmp_path):
 
 def test_dry_run_calendar_add_does_not_open_browser(monkeypatch):
     saved = {}
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
-    monkeypatch.setattr(router, "_save_latest", lambda name, payload: saved.setdefault(name, payload) or name)
-    monkeypatch.setattr(router, "_print_saved", lambda payload, path: None)
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: None)
+    monkeypatch.setattr(router_cafe, "_save_latest", lambda name, payload: saved.setdefault(name, payload) or name)
+    monkeypatch.setattr(router_cafe, "_print_saved", lambda payload, path: None)
 
     router._cmd_calendar(
         "add",
@@ -55,9 +55,9 @@ def test_dry_run_mybox_upload_requires_file_but_not_browser(tmp_path, monkeypatc
     target = tmp_path / "sample.txt"
     target.write_text("sample", encoding="utf-8")
     saved = {}
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
-    monkeypatch.setattr(router, "_save_latest", lambda name, payload: saved.setdefault(name, payload) or name)
-    monkeypatch.setattr(router, "_print_saved", lambda payload, path: None)
+    monkeypatch.setattr(router_cafe, "gate_check", lambda *a, **k: None)
+    monkeypatch.setattr(router_cafe, "_save_latest", lambda name, payload: saved.setdefault(name, payload) or name)
+    monkeypatch.setattr(router_cafe, "_print_saved", lambda payload, path: None)
 
     router._cmd_mybox("upload", [f"--file={target}", "--dry-run"])
 
@@ -69,9 +69,9 @@ def test_dry_run_mybox_upload_requires_file_but_not_browser(tmp_path, monkeypatc
 
 def test_dry_run_talk_send_records_approval_gate_shape(monkeypatch):
     saved = {}
-    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
-    monkeypatch.setattr(router, "_save_latest", lambda name, payload: saved.setdefault(name, payload) or name)
-    monkeypatch.setattr(router, "_print_saved", lambda payload, path: None)
+    monkeypatch.setattr(router_social, "gate_check", lambda *a, **k: None)
+    monkeypatch.setattr(router_social, "_save_latest", lambda name, payload: saved.setdefault(name, payload) or name)
+    monkeypatch.setattr(router_social, "_print_saved", lambda payload, path: None)
 
     router._cmd_talk("send", ["--partner=Client", "--message=Hello", "--dry-run"])
 
