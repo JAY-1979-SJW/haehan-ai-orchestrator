@@ -25,14 +25,14 @@ def test_naver_search_router_importable():
     assert naver_search_router is not None
 
 
-def test_naver_search_router_has_3_source_endpoints():
-    """naver_search_router source-level에 3개 HTTP endpoint가 정의되어 있다."""
+def test_naver_search_router_has_13_source_endpoints():
+    """naver_search_router source-level에 13개 HTTP endpoint가 정의되어 있다."""
     from fastapi.routing import APIRoute
 
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
 
     routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
-    assert len(routes) == 3, f"naver_search_router source endpoint 수={len(routes)}, 기준=3"
+    assert len(routes) == 13, f"naver_search_router source endpoint 수={len(routes)}, 기준=13"
 
 
 def test_naver_search_router_endpoint_paths():
@@ -68,7 +68,7 @@ def test_naver_search_router_not_registered_in_main_app():
 
 
 def test_naver_search_router_all_endpoints_require_admin_or_owner():
-    """naver_search_router 3개 endpoint 모두 require_role('admin','owner') 의존성 적용 확인.
+    """naver_search_router 13개 endpoint 모두 require_role('admin','owner') 의존성 적용 확인.
 
     HOLD 이유: 외부 Naver API 호출로 별도 승인/격리 판단 필요.
     이번 공정에서 등록하지 않고 QUARANTINE_OR_HOLD 상태로 유지한다.
@@ -80,7 +80,7 @@ def test_naver_search_router_all_endpoints_require_admin_or_owner():
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
 
     routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
-    assert len(routes) == 3, f"endpoint 수 불일치: {len(routes)}"
+    assert len(routes) == 13, f"endpoint 수 불일치: {len(routes)}"
 
     for route in routes:
         source = inspect.getsource(route.endpoint)
@@ -346,7 +346,7 @@ def test_next_phase_manual_review_candidates_locked():
 # ===========================================================================
 
 # 2026-10-05 갱신(HTTP 62→423, WS 1→2): 저장소 성장·FastAPI 0.142 로 지연 include 래퍼를 펼쳐 실제 라우트를 보게 됨(HTTP+WS=425=EXPECTED_RUNTIME_ROUTES)
-RUNTIME_HTTP_ENDPOINT_COUNT = 425  # M10: 사이트 사전 조사 /site-registry/{host}/preflight GET·POST 2개 추가(423→425)
+RUNTIME_HTTP_ENDPOINT_COUNT = 427  # M11: 지도 이력 /site-map/{host}/history·/diff GET 2개 추가(425→427); 이전: M10: 사이트 사전 조사 /site-registry/{host}/preflight GET·POST 2개 추가(423→425)
 RUNTIME_WEBSOCKET_COUNT = 2
 # FULL_CLASSIFICATION(아래 SECTION 4)은 라우터 분류 매핑이 63개 시점에 작성된 스냅샷이라 현행 425개 전체를 분류하지 않는다.
 # 분류 매핑 시험(③④)은 그 시점 값(HTTP 62 + WS 1 = 63)과 대조한다 — 분류 데이터 전체 재작성은 이번 승인 범위 밖.
@@ -370,13 +370,13 @@ def test_runtime_websocket_count():
 
 
 def test_unregistered_router_endpoint_count():
-    """naver_search_router source-level 3개 endpoint가 존재한다 (등록 완료)."""
+    """naver_search_router source-level 13개 endpoint가 존재한다 (등록 완료)."""
     from fastapi.routing import APIRoute
 
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
 
     naver_routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
-    assert len(naver_routes) == 3, f"naver_search_router source endpoint={len(naver_routes)}, 기준=3"
+    assert len(naver_routes) == 13, f"naver_search_router source endpoint={len(naver_routes)}, 기준=13"
 
 
 def test_runtime_plus_unregistered_equals_source_minus_core():

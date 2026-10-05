@@ -194,7 +194,7 @@ def test_handle_result_idempotent_when_already_final():
 
     original_get_task = r._reg.get_task
     try:
-        r._reg.get_task = lambda agent_id, task_id: _FakeTask() if task_id == "t_done" else None
+        r._reg.get_task = lambda agent_id, task_id: _FakeTask() if task_id == "t_done" else None  # type: ignore[assignment,return-value]
         asyncio.new_event_loop().run_until_complete(
             r._handle_result(
                 ws,
