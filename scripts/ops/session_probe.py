@@ -32,7 +32,8 @@ SITES: list[tuple[str, str, list[str]]] = [
     ("youtube_studio", "https://studio.youtube.com/", ["accounts.google.com", "servicelogin"]),
     ("gabia", "https://my.gabia.com/", ["accounts.gabia.com", "/login"]),
     ("eum", "https://eum.cw.or.kr/web/man/WEBMAN390M00", ["/login", "nidlogin"]),
-    ("hiworks", "https://office.hiworks.com/", ["login.office.hiworks", "/login"]),
+    # 2026-10-05: office.hiworks.com 루트는 로그인 상태여도 로그인 포털로 리다이렉트(오탐) → 대시보드 주소로 판정
+    ("hiworks", "https://dashboard.office.hiworks.com/", ["login.office.hiworks", "/login"]),
     ("kakao", "https://accounts.kakao.com/weblogin/account/info", ["/login"]),
     ("dataportal", "https://www.data.go.kr/mypage/mylogin/index.do", ["/login", "auth.data.go.kr"]),
 ]
