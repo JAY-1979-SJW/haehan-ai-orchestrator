@@ -94,8 +94,20 @@ def _dry_run_files_router(findings):
     else:
         add(findings, "PASS", "required_files", "all present")
 
-    router = read("ai_orchestrator/local_agent_router.py")
-    if 'require_role("admin", "owner")' in router and '@local_agent_router.post("/registration-codes")' in router:
+    # 등록 라우트는 local_agent_router_registration.py 로 분리됨 — 분리 전/후 두 파일을 함께 읽는다.
+    router = "\n".join(
+        read(rel)
+        for rel in (
+            "ai_orchestrator/local_agent_router.py",
+            "ai_orchestrator/local_agent_router_registration.py",
+        )
+        if (ROOT / rel).exists()
+    )
+    has_issue_endpoint = any(
+        f'@{name}.post("/registration-codes")' in router
+        for name in ("local_agent_router", "registration_router")
+    )
+    if 'require_role("admin", "owner")' in router and has_issue_endpoint:
         add(findings, "PASS", "authenticated_registration_code_flow", "admin/owner issue endpoint present")
     else:
         add(findings, "FAIL", "authenticated_registration_code_flow", "guard or endpoint missing")
