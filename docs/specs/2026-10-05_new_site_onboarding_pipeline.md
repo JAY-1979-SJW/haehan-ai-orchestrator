@@ -52,13 +52,13 @@
 - **지도 JSON**(현행 `data/site_task_map/<host>.json`, `version`=스키마 버전)에 **키 추가만**(기존 키·응답 불변): `source`(시작 URL·출처 `robots|sitemap|crawl|manual`), `explored_at`, `map_rev`(정수, 탐색 저장마다 +1), `fingerprint`(구조 해시: 메뉴·업무 목록·폼 필드 이름 — 값 없음), 업무별 `capability`(`read|write|submit|never:<delete|payment|signature|otp|…>`)·`sensitive_fields`(이름만)·`selector_confidence`.
 - **이력**: 지도 파일은 최신 한 벌 유지, 이력은 **별도 파일** `data/site_task_map/_history/<host>/<map_rev>.json`(구조만, 용량 상한·최근 N개 보존). 비밀·값 비저장 규칙 동일.
 - **변경 감지(diff)**: `diff(map_rev_a, map_rev_b)` → 추가·삭제·변경된 메뉴/업무/폼 필드 이름, 업무별 `stale` 후보. 순수 함수(L1).
-- 업무 명세(task spec, 지도 업무에 연결): `task_id`, `map_rev`(**기준 지도 버전 고정**), 입력(이름·유형·민감 여부), 단계, 성공/실패 판정, `irreversible_at`(되돌릴 수 없는 단계), `approval_points`, 위험 등급. 입력 값은 저장하지 않는다(실행 시 메모리 TTL — M7 F3).
+- 업무 명세(task spec, 지도 업무에 연결): `task_key`, `map_rev`(**기준 지도 버전 고정**), 입력(이름·유형·민감 여부), 단계, 성공/실패 판정, `irreversible_at`(되돌릴 수 없는 단계), `approval_points`, 위험 등급. 입력 값은 저장하지 않는다(실행 시 메모리 TTL — M7 F3).
 
 ## 6. 작업 기록 저장소(ea)와의 인터페이스 — 이 문서는 이 부분만 정의
 | 이 파이프라인 산출물 | 저장 단위·키(제안) | ea 저장소가 맡을 것 |
 |---|---|---|
 | 탐색 결과(지도) | 작업 `site.onboard:<host>` 의 단계 `explore`, 산출물 `map:<host>@<map_rev>` (지도 본문은 기존 저장소, 기록에는 **참조(host,map_rev,fingerprint)만**) | 작업→단계→산출물 모델, 검색, 재호출 목록 |
-| 업무 명세 | 산출물 `task_spec:<host>/<task_id>@<map_rev>` | 〃 |
+| 업무 명세 | 산출물 `task_spec:<host>/<task_key>@<map_rev>` | 〃 |
 | 드라이런/실행 결과 | 단계 `dry_run`, `run` — 결과 요약·행 수·성공 여부(값 비저장) | 〃, 이어서 하기·재실행 |
 - (a) **저장 위치 분담**: 지도·이력·업무 명세는 기존 `site_task_map_store`(L7)에 그대로, 작업 기록은 ea 저장소가 **참조만** 보관 → 중복 저장 없음.
 - (b) **"지난번 탐색한 사이트" 재호출**: `host` 로 최신 `map_rev` 조회 → 만든 지 `T`일 이내면 재사용, 지나면 "재탐색 제안"(승인 카드). 재탐색하면 새 `map_rev` + diff 보고(바뀐 업무는 `stale`).
@@ -177,4 +177,10 @@
 | Q3 공식 API 조사 결과를 `vendor_apis.json` 에 자동 추가? | **초안만 만들고 사람이 확정**(설정 파일은 승인 대상) |
 | Q4 지도 재사용 기한·이력 보존? | **7일 / 최근 20개**(설정값, 사이트별 조정은 사람만) |
 | Q5 업무 명세 편집 화면? | **1단계는 AI 초안을 승인만**, 편집 화면은 후속 단계(M12 이후) |
-| Q6 작업 기록 저장소 키 | ea 기준서 대조 후 확정 — 6a 쪽 제안: `map:<host>@<rev>`, `task_spec:<host>/<task_id>@<rev>`, 지도 스냅샷 중복 저장 없이 이력 파일 경로+sha256 참조 |
+| Q6 작업 기록 저장소 키 | ea 기준서 대조 후 확정 — 6a 쪽 제안: `map:<host>@<rev>`, `task_spec:<host>/<task_key>@<rev>`, 지도 스냅샷 중복 저장 없이 이력 파일 경로+sha256 참조 |
+
+## 14. 확정 사항(2026-10-05, 사용자 승인 "권장대로 승인하니 진행해" · 창 E 조율)
+- Q1~Q5 는 §13.5 권장 답안대로 확정. Q6: 작업 기록 저장소(WRS, ea) 키는 job `site.onboard:<host>`·step `explore|dry_run|run`·산출물 `map:<host>@<map_rev>`·`task_spec:<host>/<task_key>@<map_rev>` 로 확정.
+- 업무 식별자는 문서·WRS 에서 **`task_key`** 로 통일한다(감사 로그의 `task_id` 와 의미가 달라 혼동 방지). 지도 JSON 안의 기존 필드 이름은 바꾸지 않는다(응답 키 불변) — `task_key` 는 그 값(지도 업무의 기존 식별자)을 가리키는 문서·저장소 쪽 이름이다.
+- compliance(L2 `site_compliance_policy`) 해석: 미지의 사이트 기본 정책이 `NEEDS_LEGAL_OR_SITE_OWNER_APPROVAL` 이라 이를 **하드 차단으로 쓰면 신규 사이트가 전부 막힌다.** 사용자가 사이트를 명시 지정·등록하는 것이 승인이므로, 사전 조사에서 compliance 는 **안내(advisory)** 로 싣고, 하드 차단은 `AUTOMATION_BLOCKED` 로 명시된 경우와 robots 전체 금지뿐이다.
+- robots.txt 조회 실패: 404 는 "제한 없음", 5xx·접속 불가는 RFC 9309 에 따라 **판정 보류(blocked, 재시도 안내)**.
