@@ -104,11 +104,17 @@ def test_required_gate_includes_browser_runtime_policy_tests():
 
 
 def test_git_hooks_delegate_to_required_gate():
+    # 현행 위임 구조(2026-05-31 f6a169ae 이후 훅 재작성, 설치기 scripts/ops/install_git_hooks.py):
+    #   pre-commit(체크리스트 래퍼) -> pre-commit.orig(ruff + ruff_new_only_gate)
+    #   pre-push -> scripts/ops/ai_code_review_gate.py
+    # required_quality_gate.py 를 직접 호출하던 구 구조는 더 이상 훅에 없다.
     pre_commit = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
+    pre_commit_orig = (ROOT / ".githooks" / "pre-commit.orig").read_text(encoding="utf-8")
     pre_push = (ROOT / ".githooks" / "pre-push").read_text(encoding="utf-8")
 
-    assert "python scripts/required_quality_gate.py" in pre_commit
-    assert "python scripts/required_quality_gate.py" in pre_push
+    assert "pre-commit.orig" in pre_commit
+    assert "ruff_new_only_gate.py" in pre_commit_orig
+    assert "ai_code_review_gate.py" in pre_push
 
 
 def test_github_actions_workflow_removed():

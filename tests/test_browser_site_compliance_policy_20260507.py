@@ -22,11 +22,12 @@ class TestGetSiteCompliancePolicy:
         assert policy["browser_automation_allowed"] is False
 
     def test_gmail_requires_oauth_api(self):
-        """Gmail requires OAuth API."""
+        """Gmail: 현행 정책(5177645b) = CDP 세션 읽기 전용 허용 (OAuth API 필수 아님)."""
         policy = get_site_compliance_policy("mail.google.com")
-        assert policy["capability"] == "OAUTH_API_ONLY"
-        assert policy["api_connector_required"] is True
-        assert policy["browser_automation_allowed"] is False
+        assert policy["capability"] == "CDP_READ_ONLY"
+        assert policy["api_connector_required"] is False
+        assert policy["browser_automation_allowed"] is True
+        assert policy["block_reason"] is None
 
     def test_google_drive_requires_oauth(self):
         """Google Drive requires OAuth."""
@@ -357,6 +358,12 @@ class TestGooglePolicyEnforcement:
 
         for service in google_services:
             policy = get_site_compliance_policy(service)
+            if service == "mail.google.com":
+                # 현행 정책(5177645b): Gmail 만 CDP 세션 읽기 허용으로 완화
+                assert policy["capability"] == "CDP_READ_ONLY"
+                assert policy["browser_automation_allowed"] is True
+                assert policy["api_connector_required"] is False
+                continue
             assert policy["capability"] in {"OAUTH_API_ONLY", "API_ONLY"}
             assert policy["browser_automation_allowed"] is False
             assert policy["api_connector_required"] is True
