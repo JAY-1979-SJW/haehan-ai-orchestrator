@@ -493,9 +493,20 @@ def _signal_handler(signum: int, frame: Any) -> None:
     _stop_event.set()
 
 
+def _start_browser_watch() -> None:
+    """탭·브라우저 프로세스 감시 로그(scripts/ops/browser_watch.py) 기동 — cdp_force_start 와 같은 감시를 데몬 경로에도 켠다. 실패해도 데몬은 계속."""
+    try:
+        from scripts.ops import browser_watch
+
+        log.info("[WATCH] 브라우저 감시 로그 %s", "시작" if browser_watch.start() else "이미 실행 중")
+    except Exception as e:  # noqa: BLE001 - 감시는 부가 기능, 실패해도 브라우저 관리는 계속
+        log.warning("[WATCH] 브라우저 감시 로그 시작 실패(무시): %s", e)
+
+
 def _start_monitor_processes() -> None:
     """popup_monitor / chrome_ui_monitor 보조 프로세스 시작. 실패해도 데몬은 계속."""
     global _chrome_ui_monitor_proc
+    _start_browser_watch()
 
     # popup_monitor uses Playwright's sync API, so keep it in a separate
     # process. Running it in a daemon thread can collide with asyncio loops

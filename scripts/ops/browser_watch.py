@@ -1,4 +1,4 @@
-"""CDP 브라우저 감시 로그 — 탭 생성·이동·종료를 JSONL 로 기록한다(읽기 전용).
+"""CDP 브라우저 감시 로그 — 탭 생성·이동·종료와 브라우저 프로세스의 출현·소멸을 JSONL 로 기록한다(읽기 전용).
 
 브라우저 레벨 CDP 웹소켓에서 Target 이벤트만 구독한다. 페이지에 붙지 않고 Playwright 연결도
 맺지 않으므로 자동화에 간섭하지 않는다. 설계: docs/specs/2026-09-30_browser_watch_log.md
@@ -33,6 +33,10 @@ CHAIN_WINDOW_SEC = 60.0  # 한 탭이 이 시간 안에
 CHAIN_MIN_DOMAINS = 5  # 서로 다른 도메인 이 개수 이상으로 이동하면 이상
 MAX_TABS = 3  # 동시에 열린 page 탭이 이 개수를 넘으면 이상
 RECONNECT_SEC = 2.0
+PROCESS_POLL_SEC = 1.0  # 브라우저 프로세스 점검 주기
+RECENT_WINDOW_SEC = 90.0  # 브라우저가 사라지기 직전 이 시간 안에 시작된 프로세스를 기록한다(원인 후보)
+RECENT_MAX = 40
+_SCRIPT_SUFFIXES = (".py", ".js", ".cmd", ".bat", ".ps1", ".vbs")
 
 
 def mask_url(url: str) -> str:
@@ -143,6 +147,114 @@ class RotatingLog:
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
+# ── 브라우저 프로세스 감시 ─────────────────────────────────────────────────────
+# 탭 이벤트만으로는 "브라우저가 언제·누구 때문에 사라졌는가"를 알 수 없다(2026-10-05: 검증 중 9222 Chrome 이 두 번 사라졌으나 원인 불명).
+# 그래서 본체 프로세스의 출현·소멸 시각과, 소멸 직전에 시작된 프로세스(이름·스크립트 파일명만)를 같은 로그에 남긴다.
+
+
+def script_name(cmdline: list[str]) -> str:
+    """명령줄에서 스크립트 파일명만 뽑는다(경로·인자는 버린다 — 토큰·라이선스 같은 값이 로그에 남지 않게)."""
+    for arg in cmdline[1:]:
+        name = Path(arg.strip('"')).name
+        if name.lower().endswith(_SCRIPT_SUFFIXES):
+            return name
+    return ""
+
+
+def is_browser_main(cmdline: list[str], port: int) -> bool:
+    """디버그 포트로 뜬 Chrome 본체(렌더러·GPU 같은 --type= 자식 제외)."""
+    return any(f"--remote-debugging-port={port}" in a for a in cmdline) and not any(a.startswith("--type=") for a in cmdline)
+
+
+def recent_processes(procs: list[dict], now: float, window: float = RECENT_WINDOW_SEC, limit: int = RECENT_MAX) -> list[dict]:
+    """`window` 초 안에 시작된 프로세스(브라우저 자식·conhost 제외, 최신순)의 이름·스크립트 파일명만. 입출력 없는 순수 함수."""
+    out = []
+    for p in procs:
+        cmd = p.get("cmdline") or []
+        age = now - float(p.get("create_time", 0))
+        name = str(p.get("name") or "")
+        if age < 0 or age > window or name.lower() == "conhost.exe" or any(a.startswith("--type=") for a in cmd):
+            continue
+        out.append({"pid": p.get("pid"), "ppid": p.get("ppid"), "name": name, "script": script_name(cmd), "age_sec": round(age)})
+    out.sort(key=lambda r: int(r["age_sec"] or 0))  # 최신(경과 시간이 짧은) 순
+    return out[:limit]
+
+
+class ProcessState:
+    """브라우저 본체 PID 변화 → 기록 dict 목록. 입출력이 없어 단위 시험이 가능하다."""
+
+    def __init__(self) -> None:
+        self._pid: int | None = None
+        self._seen = False
+
+    def changed(self, main: dict | None) -> bool:
+        """이번 점검 결과가 마지막으로 기록한 상태와 다른가(첫 점검에서 브라우저가 이미 있으면 기록 대상)."""
+        pid = main["pid"] if main else None
+        return pid != self._pid or (not self._seen and pid is not None)
+
+    def observe(self, main: dict | None, procs: list[dict], now: float) -> list[dict]:
+        pid = main["pid"] if main else None
+        first, self._seen = not self._seen, True
+        if pid == self._pid and not (first and pid is not None):
+            return []
+        prev, self._pid = self._pid, pid
+        out: list[dict] = []
+        if prev is not None:
+            out.append({"event": "browser_process", "state": "vanished", "pid": prev, "recent_processes": recent_processes(procs, now)})
+        if pid is not None and main is not None:
+            parent = next((p for p in procs if p.get("pid") == main.get("ppid")), {})
+            out.append(
+                {
+                    "event": "browser_process",
+                    "state": "appeared",
+                    "pid": pid,
+                    "initial": first,
+                    "parent": {"pid": main.get("ppid"), "name": parent.get("name", ""), "script": script_name(parent.get("cmdline") or [])},
+                }
+            )
+        return out
+
+
+def _snapshot_processes() -> list[dict]:
+    """전체 프로세스 목록. Windows 에서 3초 안팎 걸리므로(2026-10-05 실측 360개 3.1초) 변화가 있을 때만 부른다."""
+    import psutil
+
+    procs: list[dict] = []
+    for p in psutil.process_iter(["pid", "ppid", "name", "cmdline", "create_time"]):
+        try:
+            procs.append({**p.info, "cmdline": p.info.get("cmdline") or []})
+        except psutil.Error:
+            continue
+    return procs
+
+
+def _find_browser_main(port: int) -> dict | None:
+    """가벼운 점검(평소 주기 호출): 이름이 chrome.exe/chrome 인 프로세스에서만 명령줄을 읽어 디버그 포트 본체를 찾는다(약 2ms)."""
+    import psutil
+
+    for p in psutil.process_iter(["pid", "name"]):
+        try:
+            if (p.info.get("name") or "").lower() not in ("chrome.exe", "chrome"):
+                continue
+            if is_browser_main(p.cmdline(), port):
+                return {"pid": p.info["pid"], "ppid": p.ppid()}
+        except psutil.Error:
+            continue
+    return None
+
+
+def poll_process(state: ProcessState, port: int, log: RotatingLog, now: float) -> None:
+    """본체 프로세스를 한 번 점검해 변화가 있을 때만(무거운) 전체 스냅샷을 찍어 기록한다. 오류는 모두 삼킨다(감시가 감시 루프를 죽이지 않게)."""
+    try:
+        main = _find_browser_main(port)
+        if not state.changed(main):
+            return
+        for rec in state.observe(main, _snapshot_processes(), now):
+            log.write(rec)
+    except Exception:  # noqa: BLE001 - 보조 감시: 실패해도 탭 감시는 계속한다
+        return
+
+
 def _browser_ws_url(port: int) -> str | None:
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version", timeout=3) as resp:
@@ -156,8 +268,12 @@ def run(port: int = CDP_PORT, log_path: Path = LOG_PATH, stop_after: float | Non
     import websocket
 
     log = RotatingLog(log_path)
+    proc_state = ProcessState()
+    last_poll = 0.0
     deadline = None if stop_after is None else time.time() + stop_after
     while deadline is None or time.time() < deadline:
+        poll_process(proc_state, port, log, time.time())
+        last_poll = time.time()
         ws_url = _browser_ws_url(port)
         if not ws_url:
             time.sleep(RECONNECT_SEC)
@@ -167,6 +283,9 @@ def run(port: int = CDP_PORT, log_path: Path = LOG_PATH, stop_after: float | Non
             ws = websocket.create_connection(ws_url, timeout=1)
             ws.send(json.dumps({"id": 1, "method": "Target.setDiscoverTargets", "params": {"discover": True}}))
             while deadline is None or time.time() < deadline:
+                if time.time() - last_poll >= PROCESS_POLL_SEC:
+                    poll_process(proc_state, port, log, time.time())
+                    last_poll = time.time()
                 try:
                     msg = json.loads(ws.recv())
                 except websocket.WebSocketTimeoutException:
