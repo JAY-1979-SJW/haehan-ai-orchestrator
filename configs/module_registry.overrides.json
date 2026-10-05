@@ -961,5 +961,11 @@
   "role": "workflow",
   "reason": "사이트 등록·최초 탐색 시작·상태 지연 평가 업무 흐름(규칙은 domain, 저장은 persistence, 탐색은 기존 explore 서비스에 위임, HTTP·브라우저 모름) — generic L4 오분류",
   "source": "manual"
+ },
+ "ai_orchestrator/domain/site_map_labels.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "지도 이름 정리·전역 메뉴 분리 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+  "source": "manual"
  }
 }

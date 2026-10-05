@@ -95,10 +95,15 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
     return [ln.strip() for ln in lines if ln.strip().startswith("[") and not any(n in ln for n in _NOISE)]
 
 
+def is_real_kit(kit: list[str]) -> bool:
+    """진짜 audit-kit 실행 파일인가(시험용 가짜·직접 지정한 .py 는 아니다) — 진짜인데 mypy 를 못 돌리면 환경 결함이다."""
+    return Path(kit[0]).name.lower().startswith("audit-kit")
+
+
 def mypy_python(kit: list[str]) -> str | None:
     """audit-kit 가상환경의 파이썬(mypy 가 들어 있다). audit-kit 실행 파일이 아니면(시험용 가짜 등) None = mypy 생략."""
     first = Path(kit[0])
-    if not first.name.lower().startswith("audit-kit"):
+    if not is_real_kit(kit):
         return None
     for name in ("python.exe", "python"):
         candidate = first.parent / name
@@ -125,6 +130,9 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
             if proc.returncode in (0, 1):
                 break
     if proc is None or proc.returncode not in (0, 1):  # 2 이상 = mypy 자체 오류
+        return None
+    # mypy 가 설치돼 있지 않으면 `python -m mypy` 가 종료코드 1 + 빈 출력으로 끝나 '오류 없음'처럼 보인다 — 통과로 오인하지 않는다
+    if proc.returncode == 1 and b"No module named mypy" in (getattr(proc, "stderr", None) or b""):
         return None
     found = set()
     for line in proc.stdout.decode("utf-8", errors="replace").splitlines():

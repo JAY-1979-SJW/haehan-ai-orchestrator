@@ -282,6 +282,25 @@ def test_submit_input_button_is_collected_so_the_search_can_be_clicked(browser, 
         context.close()
 
 
+SUFFIX_NAME_HTML = """<!doctype html><html><head><meta charset="utf-8"><title>카페</title></head><body>
+<button onclick="document.title='CLICKED'">네이버 메이트<br>누적 인용<br>380만 인용</button><button>다른 버튼</button></body></html>"""
+
+
+def test_click_falls_back_to_substring_when_site_adds_text_after_stored_label(browser):
+    """저장된 이름(첫 줄)이 접근 가능한 이름의 앞부분일 때(뒤 수치는 바뀐다) 정확 일치가 없어도 찾아 누른다 — 재개 안정성."""
+    context, page = make_page(browser, SUFFIX_NAME_HTML)
+    try:
+        page.goto(f"http://{HOST}/x")
+        found = tr._click_candidates(page, [["aria/네이버 메이트"]])
+        assert len(found) == 1
+        found[0].click()
+        assert page.title() == "CLICKED"
+        with pytest.raises(tr.StepMismatch):
+            tr._click_candidates(page, [["aria/없는 이름"]])  # 부분 일치도 없으면 여전히 구조 불일치
+    finally:
+        context.close()
+
+
 # ── 결과 표 읽기: 비동기 갱신·칸 병합·낡은 표 방지 (실제 브라우저) ─────────────────────
 
 CAFE_LIKE_HTML = """<!doctype html><html><head><meta charset="utf-8"><title>게시판</title></head><body>

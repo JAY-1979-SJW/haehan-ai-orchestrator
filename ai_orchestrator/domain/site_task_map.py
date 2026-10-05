@@ -17,6 +17,8 @@ import re
 from typing import Any
 from urllib.parse import urlparse
 
+from .site_map_labels import clean_label, is_global_landmark
+
 SCHEMA_VERSION = 1
 
 RISK_READ, RISK_WRITE, RISK_SUBMIT = "read", "write", "submit"
@@ -249,11 +251,14 @@ def _button_tasks(  # noqa: PLR0913 - 한 프레임의 버튼 업무를 만드�
     seen: set[str] = set()
     ranked: list[tuple[str, str]] = []
     for b in frame.get("buttons", []):
-        text = str(b.get("text") or b.get("aria") or "").strip()
-        if not text or text in used or text in seen or not b.get("visible", True):
+        raw = str(b.get("text") or b.get("aria") or "").strip()
+        text = clean_label(str(b.get("text") or ""), str(b.get("aria") or ""))  # 표시·실행용 이름(첫 의미 있는 줄, 수치 제외, 40자)
+        if not text or raw in used or text in used or text in seen or not b.get("visible", True):
             continue
-        seen.add(text)
         risk = risk_of([text, path])
+        if risk == RISK_READ and is_global_landmark(b.get("landmark")):
+            continue  # 사이트 공통 메뉴(banner·navigation·contentinfo)는 업무가 아니라 지도의 global_nav 로 한 번만 기록한다
+        seen.add(text)
         ranked.append((risk, text))
     ranked.sort(key=lambda x: -_RISK_RANK[x[0]])  # 위험한 버튼부터 남긴다(상한이 있어도 놓치지 않게)
     tasks = []

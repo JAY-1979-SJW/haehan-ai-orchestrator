@@ -77,6 +77,16 @@ def _click_candidates(page: Any, selectors: list[list[str]]) -> list[Any]:
             count = locator.count()
             if count > 0:
                 return [locator.nth(i) for i in range(count)]
+    # 정확히 일치하는 요소가 없으면 부분 일치로 한 번 더 찾는다: 저장된 이름은 안정적인 앞부분(첫 줄)이라, 사이트가 이름 뒤에 붙이는
+    # 수치·문구가 바뀌어도 재개가 깨지지 않게 한다(Playwright 역할+이름 로케이터의 기본 일치가 부분 일치). 읽기 업무 실행기라 위험 등급 강제는 그대로다.
+    for group in selectors:
+        label = _label_of(group[0]) if group else None
+        if not label or len(label) < 2:
+            continue
+        for locator in (page.get_by_role("link", name=label), page.get_by_role("button", name=label)):
+            count = locator.count()
+            if count > 0:
+                return [locator.nth(i) for i in range(count)]
     raise StepMismatch("클릭할 요소를 찾지 못했습니다: " + " | ".join(g[0] for g in selectors if g))
 
 

@@ -67,12 +67,28 @@ _EXTRACT_FRAME_JS = r"""
     }));
     inputs.push(...editables);
     // <input type="submit|button|image"> 도 버튼이다(흔한 검색 폼: 입력창 + submit 입력). 글자는 value·alt·title 에서 읽는다.
+    // 버튼이 속한 ARIA 랜드마크(사이트 공통 메뉴 판별용). header/footer 는 article·section·main 안이면 banner/contentinfo 가 아니다(HTML-AAM).
+    const landmarkOf = (el) => {
+        const r = el.closest('[role="navigation"],[role="banner"],[role="contentinfo"],[role="complementary"],[role="main"],[role="search"],nav,header,footer,aside,main');
+        if (!r) return '';
+        const role = r.getAttribute('role');
+        if (role) return role;
+        const t = r.tagName;
+        if (t === 'NAV') return 'navigation';
+        if (t === 'ASIDE') return 'complementary';
+        if (t === 'MAIN') return 'main';
+        const scoped = r.parentElement && r.parentElement.closest('article,section,main,aside,nav');
+        if (t === 'HEADER') return scoped ? '' : 'banner';
+        if (t === 'FOOTER') return scoped ? '' : 'contentinfo';
+        return '';
+    };
     const buttons = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], input[type="image"]')).map(b => ({
         text: (b.innerText || b.value || b.alt || b.title || '').trim().slice(0, 60),
         id: b.id || '',
         aria: b.getAttribute('aria-label') || '',
         cls: (b.className || '').toString().slice(0, 80),
         visible: b.offsetParent !== null,
+        landmark: landmarkOf(b),
         form: formKey(b),
         pos: order.get(b),
     })).filter(b => b.text || b.aria);

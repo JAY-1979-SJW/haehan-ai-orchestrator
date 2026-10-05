@@ -21,6 +21,7 @@ const STATE_STYLE: Record<SiteState, string> = {
   registered: "bg-gray-100 text-gray-700",
   exploring: "bg-blue-100 text-blue-800",
   ready: "bg-green-100 text-green-800",
+  incomplete: "bg-orange-100 text-orange-800",
   needs_login: "bg-amber-100 text-amber-800",
   blocked: "bg-red-100 text-red-800",
   deregistered: "bg-gray-200 text-gray-600",
@@ -151,6 +152,12 @@ export function RegisteredSites({ onChanged, onPick }: { onChanged: () => void; 
               <span className={`rounded px-2 text-[11px] ${STATE_STYLE[s.state]}`}>{SITE_STATE_LABEL[s.state]}</span>
               <span className="text-[12px] text-[#6B7280]">
                 업무 {s.map.tasks}개 · 검증 {s.map.verified} · 탐색 {day(s.last_explored_at)} · 갱신 방식: 승인 카드(ask)
+                {s.explored && (
+                  <>
+                    {" "}
+                    · 이동한 {s.explored.host} 업무 {s.explored.tasks}개
+                  </>
+                )}
               </span>
               {s.note && <span className="text-[12px] text-[#6B7280]">— {s.note}</span>}
               {confirming === s.host ? (

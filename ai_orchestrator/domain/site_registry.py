@@ -15,15 +15,16 @@ from . import site_task_map as tm
 
 VERSION = 1
 
-REGISTERED, EXPLORING, READY, NEEDS_LOGIN, BLOCKED, DEREGISTERED = (
+REGISTERED, EXPLORING, READY, INCOMPLETE, NEEDS_LOGIN, BLOCKED, DEREGISTERED = (
     "registered",
     "exploring",
     "ready",
+    "incomplete",
     "needs_login",
     "blocked",
     "deregistered",
 )
-STATES = (REGISTERED, EXPLORING, READY, NEEDS_LOGIN, BLOCKED, DEREGISTERED)
+STATES = (REGISTERED, EXPLORING, READY, INCOMPLETE, NEEDS_LOGIN, BLOCKED, DEREGISTERED)
 
 ASK, AUTO = "ask", "auto"
 AUTO_MODES = (ASK, AUTO)
@@ -33,8 +34,9 @@ DAILY_MAX_DEFAULT, DAILY_MAX_TOP = 1, 24
 # 허용 전이. 한 번 blocked(캡차·봇 감지)가 되면 사람이 다시 탐색을 승인해야 풀린다(자동 경로 없음).
 _ALLOWED: dict[str, tuple[str, ...]] = {
     REGISTERED: (EXPLORING, DEREGISTERED),
-    EXPLORING: (READY, NEEDS_LOGIN, BLOCKED, REGISTERED, DEREGISTERED),  # 탐색 도중에도 사람이 해제할 수 있다
+    EXPLORING: (READY, INCOMPLETE, NEEDS_LOGIN, BLOCKED, REGISTERED, DEREGISTERED),  # 탐색 도중에도 사람이 해제할 수 있다
     READY: (EXPLORING, DEREGISTERED),
+    INCOMPLETE: (EXPLORING, DEREGISTERED),
     NEEDS_LOGIN: (EXPLORING, DEREGISTERED),
     BLOCKED: (EXPLORING, DEREGISTERED),
     DEREGISTERED: (REGISTERED,),
@@ -78,6 +80,7 @@ def new_record(host: str, *, actor: str, now: str, policy: dict[str, Any] | None
         "registered_at": now,
         "updated_at": now,
         "last_explored_at": "",
+        "explored_host": "",  # 사이트가 다른 호스트로 넘긴 경우 실제로 탐색한 호스트(예: cafe.naver.com → section.cafe.naver.com)
         "explore_request_id": "",
         "note": "",
         "history": [{"at": now, "state": REGISTERED, "by": actor}],
@@ -105,13 +108,18 @@ def transition(record: dict[str, Any], state: str, *, now: str, by: str = "", no
     return {**record, "state": state, "updated_at": now, "note": note[:200], "history": history}
 
 
-def state_after_exploration(result: dict[str, Any], *, map_auth: str, tasks: int) -> tuple[str, str]:
-    """탐색 결과 → (새 상태, 메모). 캡차·봇 감지는 blocked, 로그인이 필요한 사이트인데 업무가 0건이면 needs_login(추정)."""
+def state_after_exploration(result: dict[str, Any], *, tasks: int, login_only: bool = False) -> tuple[str, str]:
+    """탐색 결과 → (새 상태, 메모). `tasks`·`login_only` 는 **실제로 탐색한 호스트**의 지도 기준이다.
+
+    - 캡차·봇 감지 → blocked(사람이 사이트에서 확인해야 풀린다)
+    - 업무 0건 → incomplete: 시작 주소가 업무 화면이 아니거나 로그인이 풀렸을 수 있다(원인을 단정하지 않는다). 사용 가능(ready)이라고 말하지 않는다.
+    - 로그인 화면만 찾음 → needs_login
+    """
     reason = str(result.get("aborted_reason") or "")
     if reason.startswith("bot_flagged"):
         return BLOCKED, f"봇·보안 확인 감지로 중단({reason[:60]}) — 사람이 사이트에서 확인한 뒤 다시 탐색해 주세요"
-    if tasks == 0 and map_auth != tm.AUTH_PUBLIC:
-        return NEEDS_LOGIN, "업무를 찾지 못했습니다(추정: 로그인이 풀렸거나 업무 화면이 아님) — 로그인 확인 후 다시 탐색해 주세요"
     if tasks == 0:
-        return READY, "탐색은 끝났지만 업무를 찾지 못했습니다"
+        return INCOMPLETE, "업무를 찾지 못했습니다 — 시작 주소가 업무 화면이 아니거나 로그인이 풀렸을 수 있습니다. 업무가 있는 화면의 주소(예: 특정 카페 주소)로 다시 등록해 탐색해 주세요"
+    if login_only:
+        return NEEDS_LOGIN, "로그인 화면만 찾았습니다 — 로그인을 확인한 뒤 다시 탐색해 주세요"
     return READY, f"업무 {tasks}건"

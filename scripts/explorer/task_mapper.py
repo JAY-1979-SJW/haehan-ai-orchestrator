@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from ai_orchestrator.domain import site_map_labels as lab
 from ai_orchestrator.domain import site_task_map as tm
 from ai_orchestrator.persistence import site_task_map_store as store
 
@@ -53,7 +54,12 @@ def merge_snapshots(
         found = tm.tasks_from_snapshot(snap, auth=auth, now=now)
         per_snapshot.append((snap, found))
         observed.extend(found)
+    global_labels = [x for snap, _ in per_snapshot for x in lab.global_nav_labels(snap, risk_of=tm.risk_of)]
+    observed, repeated = lab.split_by_frequency(observed)  # 여러 화면에 반복되는 읽기 이동 버튼 = 전역 메뉴(업무로 쌓지 않는다)
     merged = tm.merge_tasks(site_map, observed, now=now)
+    if explored_pages is not None:  # 전역 메뉴 기록·예전 형식 정리는 탐색 실행에서만(한 화면 기록에서는 반복 여부를 알 수 없다)
+        merged = lab.merge_global_nav(merged, [*global_labels, *repeated], now=now)
+        merged, _pruned = lab.prune_legacy(merged)
     if explored_pages is not None:  # 탐색 실행(explore_to_map)에서만: 탐색했다는 사실과 접근 구분(로그인 세션이면 '공개'로 남기지 않음)
         coverage = tm.coverage_of(per_snapshot)
         if skipped:  # 읽었지만 이 호스트 화면이 아니라 버려진 것 — 조용히 0건이 되지 않게 알린다
