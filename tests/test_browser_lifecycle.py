@@ -191,3 +191,27 @@ def test_polite_signal_returns_false_when_browser_ignores_it(monkeypatch):
     monkeypatch.setattr(os, "kill", lambda *_a: None)
     ticks = iter(range(0, 1000))
     assert lc._polite_signal(4242, is_alive=lambda: True, timeout_s=3, sleep=lambda _s: None, clock=lambda: next(ticks)) is False
+
+
+# ── 시작 페이지(홈) ───────────────────────────────────────────
+
+
+def test_close_stale_tabs_keeps_one_tab_at_the_given_start_url(monkeypatch):
+    calls = _fake_http(monkeypatch, [{"id": "yt", "type": "page"}, {"id": "gm", "type": "page"}])
+    assert lc.close_stale_tabs(9222, start_url="https://www.google.com/", sleep=lambda _s: None, clock=_Clock()) == 2
+    assert ("PUT", "/json/new?https://www.google.com/") in calls  # 시작 탭을 구글 첫 화면으로 만든다
+    assert calls.index(("PUT", "/json/new?https://www.google.com/")) < calls.index(("GET", "/json/close/gm"))  # 옛 탭을 닫기 전에 먼저
+
+
+def test_close_stale_tabs_defaults_to_a_blank_tab(monkeypatch):
+    calls = _fake_http(monkeypatch, [{"id": "a", "type": "page"}])
+    lc.close_stale_tabs(9222, sleep=lambda _s: None, clock=_Clock())
+    assert ("PUT", "/json/new?about:blank") in calls
+
+
+def test_start_url_only_allows_http_https_or_blank():
+    for bad in ("file:///etc/passwd", "javascript:alert(1)", "chrome://settings", "ftp://x/y", "https://a b/", "https://x/\n", ""):
+        assert lc._safe_start_url(bad) == lc.BLANK_URL
+    assert lc._safe_start_url("https://www.google.com/") == "https://www.google.com/"
+    assert lc._safe_start_url("http://127.0.0.1:8777/x") == "http://127.0.0.1:8777/x"
+    assert lc._safe_start_url(lc.BLANK_URL) == lc.BLANK_URL

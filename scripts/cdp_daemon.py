@@ -39,7 +39,7 @@ sys.path.insert(0, str(ROOT))
 from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome, find_edge  # noqa: E402
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
-from scripts.config import CDP_HOST, CDP_PORT  # noqa: E402
+from scripts.config import CDP_HOST, CDP_PORT, CDP_START_URL  # noqa: E402
 
 # ── 설정 ─────────────────────────────────────────────────────────────
 DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
@@ -376,7 +376,7 @@ def _restart_chrome() -> None:
             _save_state(_state)
 
             if _is_cdp_ready(CDP_PORT):
-                log.info("[RESTART] 복원된 옛 탭 %d개 정리(빈 탭 하나만 남김)", lifecycle.close_stale_tabs(CDP_PORT))
+                log.info("[RESTART] 복원된 옛 탭 %d개 정리(시작 페이지 %s 탭 하나만 남김)", lifecycle.close_stale_tabs(CDP_PORT, start_url=CDP_START_URL), CDP_START_URL)
                 _state.browser_context = "active"
                 _state.last_error = ""
                 log.info("[RESTART] Chrome 재시작 성공 PID=%d", _chrome_proc.pid)
@@ -599,7 +599,7 @@ def run_daemon() -> None:
         _chrome_proc.terminate()
         return
 
-    log.info("[CDP] 복원된 옛 탭 %d개 정리(빈 탭 하나만 남김)", lifecycle.close_stale_tabs(CDP_PORT))
+    log.info("[CDP] 복원된 옛 탭 %d개 정리(시작 페이지 %s 탭 하나만 남김)", lifecycle.close_stale_tabs(CDP_PORT, start_url=CDP_START_URL), CDP_START_URL)
     _state.browser_context = "active"
     _save_state(_state)
     log.info("✓ CDP 포트 %d 준비 완료", CDP_PORT)

@@ -17,8 +17,14 @@ CDP_PORT         = 9222
 CDP_HOST         = "127.0.0.1"
 CDP_ENDPOINT     = f"http://{CDP_HOST}:{CDP_PORT}"
 
+# ── CDP 데몬 브라우저 시작 페이지(홈) ───────────────────────────────────
+# 데몬이 Chrome 을 (재)시작할 때 옛 탭을 정리하고 이 주소 탭 하나만 남긴다. 사이트 로그인·동작은 없다(구글 첫 화면).
+CDP_START_URL    = "https://www.google.com/"
+
 # ── Google 서비스 URL ────────────────────────────────────────────────
 GOOGLE_URLS = {
+    # 데몬 브라우저 시작 페이지(구글 홈)
+    "home": CDP_START_URL,
     # Calendar
     "calendar_day":  "https://calendar.google.com/calendar/u/0/r/day",
     "calendar_week": "https://calendar.google.com/calendar/u/0/r/week",

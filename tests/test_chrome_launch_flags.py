@@ -48,3 +48,13 @@ def test_cdp_launchers_always_pass_a_custom_user_data_dir():
         args = _arg_lines(rel)
         assert any("--remote-debugging-port" in ln for ln in args), f"{rel}: 원격 디버깅 포트 인자를 찾지 못했습니다(시험이 공허해짐)"
         assert any("--user-data-dir" in ln for ln in args), f"{rel}: --user-data-dir 가 없으면 Chrome 136+ 에서 디버깅 포트가 무시됩니다"
+
+
+def test_cdp_launchers_pass_the_configured_start_page_to_the_tab_cleanup():
+    """데몬·force_start 는 시작 직후 정리에서 설정의 시작 페이지(구글 홈)를 남긴다 — 빈 탭이 아니라(2026-10-05 사용자 요청)."""
+    from scripts.config import CDP_START_URL, GOOGLE_URLS
+
+    assert CDP_START_URL == "https://www.google.com/" and GOOGLE_URLS["home"] == CDP_START_URL
+    for rel in CDP_LAUNCHERS:
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        assert "close_stale_tabs(" in text and "start_url=CDP_START_URL" in text, f"{rel}: 시작 페이지를 넘기지 않습니다"

@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome  # noqa: E402
+from scripts.config import CDP_START_URL  # noqa: E402
 
 CDP_PORT = 9222
 CDP_HOST = "127.0.0.1"
@@ -194,7 +195,7 @@ def cmd_start(url: str = "") -> int:
     if _wait_cdp(20):
         print(" ✓")
         if not url:  # 주소를 지정했으면 그 탭이 목적이니 두고, 아니면 복원된 옛 탭을 정리해 깨끗하게 시작한다
-            print(f"  복원된 옛 탭 {lifecycle.close_stale_tabs(CDP_PORT)}개 정리(빈 탭 하나만 남김)")
+            print(f"  복원된 옛 탭 {lifecycle.close_stale_tabs(CDP_PORT, start_url=CDP_START_URL)}개 정리(시작 페이지 {CDP_START_URL} 탭 하나만 남김)")
         _show_info()
         _start_watch()
         return 0

@@ -64,15 +64,30 @@ def _wait_restore_settled(port: int, *, timeout_s: float, poll_s: float, sleep, 
         sleep(poll_s)
 
 
+BLANK_URL = "about:blank"
+
+
+def _safe_start_url(url: str) -> str:
+    """시작 탭 주소: http(s) 또는 about:blank 만 허용한다(그 밖의 스킴·공백·제어문자는 빈 탭으로 대체)."""
+    ok = url == BLANK_URL or (url.startswith(("http://", "https://")) and not any(ch.isspace() or ord(ch) < 32 for ch in url))
+    return url if ok else BLANK_URL
+
+
 def close_stale_tabs(
-    port: int, *, settle_s: float = RESTORE_SETTLE_S, poll_s: float = RESTORE_POLL_S, sleep=time.sleep, clock=time.monotonic
+    port: int,
+    *,
+    start_url: str = BLANK_URL,
+    settle_s: float = RESTORE_SETTLE_S,
+    poll_s: float = RESTORE_POLL_S,
+    sleep=time.sleep,
+    clock=time.monotonic,
 ) -> int:
-    """시작 직후 복원된 옛 탭을 모두 닫고 빈 탭 하나만 남긴다 → 닫은 개수. 실패해도 예외를 내지 않는다(브라우저 시작을 막지 않는다)."""
+    """시작 직후 복원된 옛 탭을 모두 닫고 `start_url` 탭 하나만 남긴다(기본 빈 탭) → 닫은 개수. 실패해도 예외를 내지 않는다(브라우저 시작을 막지 않는다)."""
     try:
         old = _wait_restore_settled(port, timeout_s=settle_s, poll_s=poll_s, sleep=sleep, clock=clock)
         if not old:
             return 0
-        _http(port, "/json/new?about:blank", method="PUT")  # 마지막 탭을 닫으면 Chrome 이 끝나므로 빈 탭을 먼저 만든다
+        _http(port, f"/json/new?{_safe_start_url(start_url)}", method="PUT")  # 마지막 탭을 닫으면 Chrome 이 끝나므로 시작 탭을 먼저 만든다
         closed = 0
         for tab_id in old:
             with contextlib.suppress(Exception):
