@@ -43,7 +43,7 @@ def is_blocked_address(address: Any) -> bool:
         return False
     try:
         port_num = int(port)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return False
     if port_num != GUARDED_PORT:
         return False
