@@ -1,5 +1,7 @@
 """Unit tests for scripts.site_engine.capability_detector."""
 
+from typing import Any
+
 from scripts.site_engine.capability_detector import (
     CapabilityDetectionInput,
     detect_capabilities_from_snapshot,
@@ -8,7 +10,7 @@ from scripts.site_engine.types import GateDecision, SiteCapability
 
 
 def _inp(**kwargs) -> CapabilityDetectionInput:
-    defaults = {
+    defaults: dict[str, Any] = {
         "page_url": "https://example.com",
         "page_title": "",
         "button_labels": [],
