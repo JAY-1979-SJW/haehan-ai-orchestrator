@@ -426,9 +426,13 @@ def test_no_conflict_with_server_boundary_policy():
 def test_no_conflict_with_site_compliance_policy():
     from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
 
+    # Gmail 은 CDP_READ_ONLY 완화 정책(5177645b): 읽기 = ALLOW_BROWSER_READONLY, 쓰기성 = BLOCK
     result = evaluate_site_compliance({"target_domain": "mail.google.com", "operation_type": "read"})
-    assert result["compliance_decision"] == "REQUIRE_API_CONNECTOR"
+    assert result["compliance_decision"] == "ALLOW_BROWSER_READONLY"
     assert result["safe_to_execute"] is False
+    write = evaluate_site_compliance({"target_domain": "mail.google.com", "operation_type": "send"})
+    assert write["compliance_decision"] == "BLOCK"
+    assert write["safe_to_dispatch"] is False
 
 
 # ── 34. local_agent_user_present_flow와 충돌 없음 ────────────────────────────

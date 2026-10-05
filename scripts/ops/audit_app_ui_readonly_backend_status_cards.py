@@ -139,10 +139,9 @@ def check_dashboard_enhanced(report: AuditReport) -> None:
         return
     content = dash.read_text(encoding="utf-8")
     checks = [
-        ("getAssistantHealth", "health API 연결"),
+        ("getAppHealthSummary", "health API 연결"),
         ("ReadOnlyModeBanner", "ReadOnlyModeBanner 사용"),
         ("ApiConnectionStateBadge", "ApiConnectionStateBadge 사용"),
-        ("FutureEndpointNotice", "FutureEndpointNotice 사용"),
         ("makeMeta", "makeMeta 사용"),
     ]
     for key, label in checks:
@@ -150,6 +149,16 @@ def check_dashboard_enhanced(report: AuditReport) -> None:
             report.add(f"dashboard_{key.lower()}", "PASS", f"Dashboard: {label}")
         else:
             report.add(f"dashboard_{key.lower()}", "WARN", f"Dashboard: {label} 미확인")
+    # 현행 계약: 옛 getAssistantHealth·FutureEndpointNotice 는 대시보드에 없어야 한다
+    # (APP_UI_READONLY_STATUS_CARDS_API_BIND_01 — getAppHealthSummary 로 대체, storage/status 구현 후 제거).
+    for key, label in (
+        ("getAssistantHealth", "legacy health API"),
+        ("FutureEndpointNotice", "FutureEndpointNotice"),
+    ):
+        if key in content:
+            report.add(f"dashboard_no_{key.lower()}", "WARN", f"Dashboard: {label} 잔존 (없어야 함)")
+        else:
+            report.add(f"dashboard_no_{key.lower()}", "PASS", f"Dashboard: {label} 없음")
 
 
 def check_tasks_enhanced(report: AuditReport) -> None:

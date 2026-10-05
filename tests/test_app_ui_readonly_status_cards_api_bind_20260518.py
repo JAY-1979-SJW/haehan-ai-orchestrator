@@ -73,7 +73,14 @@ def test_api_storage_path():
 
 def test_api_no_post():
     src = _read(API_FILE)
-    assert 'method: "POST"' not in src and "method: 'POST'" not in src
+    # 현행: api.ts 에는 쓰기 클라이언트(postJson·템플릿 저장/삭제·스마트스토어 채팅)가 있다. 상태 카드 조회 3개는 GET 전용을 유지하고,
+    # POST/DELETE 는 알려진 위치 수(POST 3·DELETE 1)로 고정해 새 쓰기 호출이 조용히 늘면 실패한다.
+    assert 'getJson<AppHealthSummaryResponse>("/api/v1/app/health/summary"' in src
+    assert 'getJson<AppProvidersResponse>("/api/v1/app/providers"' in src
+    assert 'getJson<AppStorageStatusResponse>("/api/v1/app/storage/status"' in src
+    assert src.count('method: "POST"') == 3
+    assert src.count('method: "DELETE"') == 1
+    assert "method: 'POST'" not in src
 
 
 # ── Dashboard 연결 ────────────────────────────────────────────────────────────
