@@ -181,15 +181,7 @@ def _is_secret_scan_excluded(path: Path) -> bool:
         ("docs/", "scripts/archive/", "scripts/ops/", "data/logs/", "data/cdp_profile/", "data/sessions/")
     ):
         return True
-    if rel in {
-        "scripts/module_quality_gate.py",
-        "scripts/module_quality_gate_checks_repo.py",
-        "scripts/module_quality_gate_checks_web.py",
-        "scripts/module_quality_gate_checks_audit.py",
-        "scripts/module_quality_gate_common.py",
-        "scripts/module_quality_gate_modules.py",
-        "scripts/module_quality_gate_runner.py",
-    }:
+    if rel.startswith("scripts/module_quality_gate") and rel.endswith(".py"):
         return True
     return False
 
