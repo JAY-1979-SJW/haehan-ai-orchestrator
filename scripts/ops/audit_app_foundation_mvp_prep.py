@@ -440,7 +440,7 @@ PROVIDERS = [
 
 # ── Storage Matrix ────────────────────────────────────────────────────────────
 
-STORAGE_MATRIX = {
+STORAGE_MATRIX: dict[str, Any] = {
     "named_volume": {
         "path": "/app/ai_orchestrator/storage",
         "classification": "PERSISTENT_OPERATION_REQUIRED",
@@ -474,7 +474,7 @@ PYTEST_BASELINE = {
 
 # ── Deployment SOP ────────────────────────────────────────────────────────────
 
-DEPLOYMENT_SOP = {
+DEPLOYMENT_SOP: dict[str, Any] = {
     "steps": [
         "git pull origin master",
         "docker compose build",
