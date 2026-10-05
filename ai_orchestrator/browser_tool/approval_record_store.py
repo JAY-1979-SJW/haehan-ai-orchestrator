@@ -9,10 +9,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+
+# append 직렬화 — 라우터 핸들러가 스레드풀에서 동시 실행돼도 줄 인터리브/개수 계산 경합이 없게 한다.
+# 락 안에서 다른 락을 잡지 않으므로 RLock 불필요. 읽기 경로(read_*)에는 걸지 않는다.
+_APPEND_LOCK = threading.Lock()
 
 # Valid approval event types
 VALID_APPROVAL_EVENT_TYPES = {
@@ -381,15 +386,16 @@ def append_approval_record(
         record_dict = asdict(record)
         json_line = json.dumps(record_dict, ensure_ascii=False, sort_keys=True)
 
-        # Append
-        with jsonl_path.open("a", encoding="utf-8") as f:
-            f.write(json_line + "\n")
+        with _APPEND_LOCK:
+            # Append
+            with jsonl_path.open("a", encoding="utf-8") as f:
+                f.write(json_line + "\n")
 
-        # Count events
-        event_count = 0
-        if jsonl_path.exists():
-            with jsonl_path.open(encoding="utf-8") as f:
-                event_count = sum(1 for line in f if line.strip())
+            # Count events
+            event_count = 0
+            if jsonl_path.exists():
+                with jsonl_path.open(encoding="utf-8") as f:
+                    event_count = sum(1 for line in f if line.strip())
 
         return ApprovalWriteResult(
             success=True,
