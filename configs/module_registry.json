@@ -21553,7 +21553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_send_mail_batch_dedupe.py": {
+  "tests/test_temp_oauth_revoke_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -21706,6 +21706,14 @@
    "source": "rule"
   },
   "tests/test_chrome_launch_flags.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_eum_send_mail_batch_dedupe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
