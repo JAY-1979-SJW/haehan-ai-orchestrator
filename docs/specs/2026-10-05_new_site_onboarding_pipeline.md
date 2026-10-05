@@ -112,3 +112,69 @@
 - Q4. 지도 재사용 기한 `T`(제안 7일)와 이력 보존 개수 N(제안 20)은 이 값으로 할까?
 - Q5. 업무 명세는 사용자가 **직접 입력 필드·성공 판정을 고치는 화면**이 필요한가, AI 초안을 승인만 하면 되는가?
 - Q6. 작업 기록 저장소 키(§6)는 ea 기준서와 대조해 확정 — ea 요약 도착 후.
+
+## 13. 드라이런 결과(2026-10-05, 파일·설정·registry 변경 없음 — 문서에만 기록)
+### 13.1 예상 diff와 레이어 정적 확인
+`configs/module_registry.json` 정본 `allowed_deps` 기준(L1→L1 / L3→L1,L3 / L7→L1,L7 / L6→L1~L7 / L8→L1~L8·L10). 기존 유사 모듈의 실제 배치: `domain/site_map_menu.py` L1, `persistence/site_task_map_store.py` L7, `services/site_task_map_service.py` L6, `routers/site_onboarding_router.py` L8, `scripts/explorer/task_mapper.py` L6, `scripts/explorer/data_sources.py` L4, `browser_tool/site_compliance_policy.py` **L2**.
+
+| M | 신규 파일 | 레이어 | 책임 | 허용 import(통과 근거) |
+|---|---|---|---|---|
+| M10 | `ai_orchestrator/domain/site_preflight.py` | L1 | 사전 조사 모델·robots 해석·`proceed/use_api/blocked` 판정 | L1 만 — 표준 라이브러리·다른 domain 만 사용 |
+| M10 | `scripts/explorer/preflight_fetch.py` | **L3**(registry 가 L4 로 분류하면 override) | robots.txt·sitemap.xml 단순 GET(호스트 고정·간격 제한) | L3→L1 만 |
+| M10 | `ai_orchestrator/services/site_preflight_service.py` | L6 | 공식 API 조회(`vendors`)·compliance(L2)·fetch(L3) 결합, 등록 연결 | L6→L1·L2·L3·L7 허용 |
+| M11 | `ai_orchestrator/domain/site_map_history.py` | L1 | `map_rev`·fingerprint·diff(순수) | L1 |
+| M11 | `ai_orchestrator/persistence/site_map_history_store.py` | L7 | 이력 파일 원자적 저장·상한 | L7→L1,L7 만(서비스·라우터 import 금지) |
+| M12 | `ai_orchestrator/domain/site_task_spec.py` | L1 | 업무 명세 검증·never 분류·승인 지점 | L1 |
+| M12 | `ai_orchestrator/services/site_task_spec_service.py` | L6 | 명세 생성·검토·승인 기록(작업 기록 저장소 호출은 best-effort) | L6 |
+| M10~12 | 기존 `site_onboarding_router.py`·`site_task_map_router.py` 에 라우트 추가 | L8 | 얇은 HTTP, `require_role` 적용 | L8→L6 |
+| M10~12 | 기존 `site_onboarding_service.register`(사전 조사 연결·`auth: none`), `task_mapper.explore_to_map`(저장 시 `map_rev`·fingerprint·이력) 소규모 편집 | L6 | — | 기존 import 유지 |
+- 새 라우트 **6개**(preflight 조회·실행 2, 이력 목록·diff 2, 명세 생성/조회·승인 2 → 정확한 수는 구현 때 확정, 잠금값 425→431 예상). 새 .py **7개**(위 표) + 시험 파일 약 7개. 위 표의 모든 import 는 `allowed_deps` 안 → **FORBIDDEN_IMPORT 0 예상**.
+- 주의 1: L1 은 L1 만 import 가능하므로 compliance(L2)·`vendors`·fetch 는 **서비스(L6)에서 결합**하고, L1 은 결과를 받아 판정만 한다.
+- 주의 2: L7 이력 저장소는 순수 데이터(L1 모델)만 받는다 — 서비스 역방향 import 없음.
+- 주의 3: 신규 L1 모듈은 `registry_sync --fix` 가 L4 로 놓을 수 있어 `module_registry.overrides.json` 에 L1/L3 override 를 함께 추가(M8·M9 에서 같은 방식으로 처리한 사례 있음).
+
+### 13.2 합성 로컬 사이트 fixture 와 시험 목록(설계만 — 작성·실행 금지)
+- **fixture**(정적 서버, 시험 프로세스 안에서 `127.0.0.1:임의포트`, 실사이트·9222 접속 없음): `/`(공개 메뉴: 소개·목록·문의), `/list`(표), `/contact`(폼: 이름·이메일·**메시지** + 제출 버튼), `/admin`(로그인 필요 → 로그인 폼으로 리다이렉트), `/private/…`(robots.txt 가 금지), `/danger`(삭제 버튼·결제 버튼 포함), `/robots.txt`, `/sitemap.xml`.
+- 브라우저는 시험 전용 headless(`tests/headless_browser.py` 의 `browser` 픽스처), 순수 함수 시험은 브라우저 없음.
+
+| 시험(제안 이름) | 검증 항목 | 브라우저 |
+|---|---|---|
+| `test_preflight_decisions` | 공식 API 있음→`use_api`, robots 전체 금지→`blocked`, 일부 금지→`proceed`+제외 경로, 미조사→"조사 필요" | 없음 |
+| `test_robots_parser` | Disallow·Allow·와일드카드·Crawl-delay 해석, sitemap.xml 주소 추출 | 없음 |
+| `test_preflight_fetch_host_pinned` | 다른 호스트로 리다이렉트하면 중단, 간격 제한, 응답 크기 상한 | 없음(로컬 서버) |
+| `test_explore_respects_robots` | `/private/…` 를 방문하지 않음, sitemap 주소를 시작점으로 사용 | 있음 |
+| `test_explore_readonly_never_clicks_submit` | 제출·삭제·결제 버튼 클릭 0(서버 요청 로그로 확인) | 있음 |
+| `test_map_marks_login_required_and_sensitive_fields` | `/admin` 은 로그인 필요 표시, 민감 필드는 이름만 | 있음 |
+| `test_task_capability_never_for_delete_payment` | 삭제·결제 버튼 업무가 `never`, 폼 제출은 `submit`, 목록은 `read` | 있음 |
+| `test_map_rev_and_diff` | 재탐색 시 `map_rev`+1, 메뉴 추가·폼 필드 삭제를 diff 가 보고, 값은 저장 안 됨 | 있음 |
+| `test_rerun_pins_map_rev` | 지도가 바뀌면(fingerprint 불일치) 실행 전에 "지도가 바뀜" 반환, 자동으로 최신 사용 안 함 | 없음 |
+| `test_task_spec_requires_approval_points` | 명세에 `irreversible_at`·`approval_points` 없으면 거부, never 업무는 명세 생성 불가 | 없음 |
+| `test_public_site_registration` | `auth: none` 등록, 상태 전이 | 없음 |
+| `test_router_requires_role_and_additive_keys` | 신규 라우트 `require_role`, 기존 응답 키 불변·추가만 | 없음 |
+- 기존 시험 재사용: `tests/test_site_map_menu.py`·`test_site_map_sources.py`(합성 SPA 서버 패턴)·`test_task_runner.py`.
+
+### 13.3 기존 시험·API·DB 영향(없음 근거)
+- **DB·schema**: 없음 — JSON 파일만(`data/site_task_map/…`, 새 폴더 `_history`). 지도 스키마 `version` 불변, 키 추가만 → `site_task_map.load` 는 `map_rev` 가 없으면 0 으로 간주(구 지도 9개 호환).
+- **기존 응답 key**: `site_task_map_service.lookup`·`/site-map`·`/site-registry` 응답은 키 **추가만**(기존 키 이름·의미 불변) — 기존 시험이 키 존재만 확인하므로 영향 없음(구현 때 `test_site_task_map_service.py`·`test_site_task_map_router*` 재실행으로 증명).
+- **영향 받는 시험**: 라우트 수 기준 시험(`scripts/ops/audit_backend_runtime_contract.py` 의 `EXPECTED_RUNTIME_ROUTES` 와 `tests/test_app_*` 에 하드코딩된 값 — 창 E 가 조율 중인 3건과 같은 줄) — 구현 PR 에서 함께 갱신. 그 외 영향 없음.
+- **보안 정책**: 완화 없음 — 읽기 전용 기본, never 강화. 외부 접촉은 robots.txt/sitemap.xml 단순 GET 뿐.
+
+### 13.4 게이트 통과 예상
+| 게이트 | 예상 | 근거 |
+|---|---|---|
+| layer audit(FORBIDDEN_IMPORT·CIRCULAR·SECURITY) | 0·0·0 | §13.1 import 는 모두 `allowed_deps` 안, 서비스가 L2·L3 결합 |
+| quality gate(--staged --enforce) | errors 0 | 새 코드, 비밀 출력·docker·DB 접근 없음, SECURITY_PATTERN 문자열 없음(쿠키·세션 미접근) |
+| skeleton gate(지도↔골격) | override 추가 후 PASS | `registry_sync --fix` 로 정본 맞춤 |
+| audit-kit std | 새 문제 0 | 새 모듈 크기·복잡도 분리, M8·M9 때와 같은 규칙 준수 |
+| verify_change | PASS 예상 | 영향 시험 중 라우트 수만 갱신 필요 |
+- 구현 시 코드 길이: 함수 분리(C901)·모듈 전역 대입 금지·시험 픽스처 공용 사용 — 기존 지적 정리 때 확인한 패턴 적용.
+
+### 13.5 열린 질문별 권장 답안(사용자가 "권장대로"만 답해도 되게)
+| 질문 | 권장 |
+|---|---|
+| Q1 공개(로그인 불필요) 사이트도 대상? | **예** — 공개 사이트는 `auth: none` 으로 같은 파이프라인(읽기 전용) |
+| Q2 robots.txt 가 사이트 전체를 금지? | **기본 `blocked`**, 풀려면 사용자 명시 + 약관 확인 기록(자동 해제 없음) |
+| Q3 공식 API 조사 결과를 `vendor_apis.json` 에 자동 추가? | **초안만 만들고 사람이 확정**(설정 파일은 승인 대상) |
+| Q4 지도 재사용 기한·이력 보존? | **7일 / 최근 20개**(설정값, 사이트별 조정은 사람만) |
+| Q5 업무 명세 편집 화면? | **1단계는 AI 초안을 승인만**, 편집 화면은 후속 단계(M12 이후) |
+| Q6 작업 기록 저장소 키 | ea 기준서 대조 후 확정 — 6a 쪽 제안: `map:<host>@<rev>`, `task_spec:<host>/<task_id>@<rev>`, 지도 스냅샷 중복 저장 없이 이력 파일 경로+sha256 참조 |
