@@ -82,7 +82,7 @@ class HiworksDevRegAdapter(DevRegAdapterBase):
             )
 
         if dry_run:
-            filled = [k for k in _SELECTORS if params.get(k)]
+            filled: list[str] = [k for k in _SELECTORS if params.get(k)]
             summary = _build_safe_summary(self.provider, params, filled)
             return FormFillResult(
                 success=True,
@@ -113,7 +113,7 @@ class HiworksDevRegAdapter(DevRegAdapterBase):
                 error_code=ErrorCode.LOGIN_REQUIRED,
             )
 
-        filled: list[str] = []
+        filled = []
         errors_fill: list[str] = []
         for field_name, selector in _SELECTORS.items():
             value = params.get(field_name, "")
