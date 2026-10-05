@@ -133,3 +133,32 @@ def test_l1_is_pure_by_ast():
     assert not any(m.startswith("ai_orchestrator") for m in mods)
     text = _SRC.read_text(encoding="utf-8")
     assert "environ" not in text and "getenv" not in text and "sqlite" not in text.replace("sqlite 금지", "")
+
+
+def test_params_verdict_robots_enum_ok():
+    for v in ("proceed", "use_api", "blocked"):
+        for r in ("ok", "missing", "unavailable"):
+            assert wr.validate_params({"verdict": v, "robots_status": r}) == {"verdict": v, "robots_status": r}
+
+
+def test_params_verdict_robots_enum_rejected():
+    for bad in (
+        {"verdict": "maybe"},
+        {"verdict": ""},
+        {"verdict": 1},
+        {"verdict": None},
+        {"verdict": ["proceed"]},
+        {"verdict": "PROCEED"},
+        {"robots_status": 1},
+        {"robots_status": ""},
+        {"robots_status": "maybe"},
+        {"robots_status": True},
+    ):
+        with pytest.raises(ValidationError):
+            wr.validate_params(bad)
+
+
+def test_params_existing_keys_unchanged_after_enum_keys():
+    assert len(wr.PARAM_ALLOWED_KEYS) == 21
+    assert {"host", "url", "note", "max_pages", "reason"} <= wr.PARAM_ALLOWED_KEYS
+    assert wr.validate_params({"note": "free text", "mode": "anything"}) == {"note": "free text", "mode": "anything"}

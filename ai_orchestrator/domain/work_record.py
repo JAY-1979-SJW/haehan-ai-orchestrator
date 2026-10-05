@@ -239,8 +239,15 @@ PARAM_ALLOWED_KEYS = frozenset(
     {
         "host", "start_url", "url", "task_key", "map_rev", "fingerprint", "mode", "max_pages", "max_depth",
         "dry_run", "field_names", "columns", "row_count", "count", "page_count", "note", "label", "source", "reason",
+        "verdict", "robots_status",
     }
 )  # fmt: skip
+
+# 열거형 검증 키(6a M10 사전조사용 구조 문자열). 허용 값 밖·문자열 아님은 거부.
+PARAM_ENUM_VALUES: dict[str, frozenset[str]] = {
+    "verdict": frozenset({"proceed", "use_api", "blocked"}),
+    "robots_status": frozenset({"ok", "missing", "unavailable"}),
+}
 
 
 def unsafe_url_reason(url: str) -> str | None:
@@ -359,6 +366,11 @@ def validate_artifact_rel_path(path: str) -> str:
     return path
 
 
+def _validate_enum_param(key: str, value: Any, allowed: frozenset[str]) -> None:
+    if not isinstance(value, str) or value not in allowed:
+        raise ValidationError(f"params.{key}: 허용 값 아님(허용: {sorted(allowed)})")
+
+
 def _validate_param_value(key: str, value: Any) -> None:
     if value is None or isinstance(value, (bool, int, float)):
         return
@@ -381,6 +393,14 @@ def _validate_param_value(key: str, value: Any) -> None:
     raise ValidationError(f"params.{key}: 허용되지 않은 값 형식({type(value).__name__})")
 
 
+def _validate_param(key: str, value: Any) -> None:
+    allowed = PARAM_ENUM_VALUES.get(key)
+    if allowed is not None:
+        _validate_enum_param(key, value, allowed)
+    else:
+        _validate_param_value(key, value)
+
+
 def validate_params(params: Mapping[str, Any] | None) -> dict[str, Any]:
     """input_params 화이트리스트 검사. 알 수 없는 키·금지 키 이름·과대 크기·위험 URL 은 예외."""
     if params is None:
@@ -396,7 +416,7 @@ def validate_params(params: Mapping[str, Any] | None) -> dict[str, Any]:
             raise ValidationError(f"params 키에 금지 이름 포함: {key!r}")
         if key not in PARAM_ALLOWED_KEYS:
             raise ValidationError(f"params 허용 필드가 아님: {key!r}")
-        _validate_param_value(key, value)
+        _validate_param(key, value)
         clean[key] = list(value) if isinstance(value, tuple) else value
     if len(canonical_json(clean)) > PARAMS_JSON_MAX:
         raise ValidationError("params 가 너무 크다")

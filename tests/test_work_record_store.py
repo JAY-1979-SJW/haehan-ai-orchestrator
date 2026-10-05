@@ -475,3 +475,11 @@ def test_cannot_soft_delete_running(store):
 
 def test_no_hard_delete_api(store):
     assert not any(n.startswith(("delete_", "purge_", "remove_")) for n in dir(store))
+
+
+def test_params_verdict_robots_stored_and_rejected(store):
+    jid = _job(store, params={"verdict": "use_api", "robots_status": "missing", "host": "a.com"})
+    assert store.get_job(jid, OWNER).params == {"verdict": "use_api", "robots_status": "missing", "host": "a.com"}
+    for bad in ({"verdict": "maybe"}, {"robots_status": 1}, {"verdict": ""}):
+        with pytest.raises(ValidationError):
+            _job(store, params=bad)
