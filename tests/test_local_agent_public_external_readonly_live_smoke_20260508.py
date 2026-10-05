@@ -16,6 +16,7 @@ import importlib.util  # noqa: E402
 
 _SCRIPT_PATH = Path(_REPO_ROOT) / "scripts" / "smoke" / "local_agent_public_external_readonly_live_smoke.py"
 _spec = importlib.util.spec_from_file_location("_lp_smoke", str(_SCRIPT_PATH))
+assert _spec is not None and _spec.loader is not None, "모듈 spec 로드 실패: local_agent_public_external_readonly_live_smoke.py"
 _smoke = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_smoke)
 

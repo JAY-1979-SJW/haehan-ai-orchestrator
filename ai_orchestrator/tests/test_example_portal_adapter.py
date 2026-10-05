@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Collection
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,7 +16,7 @@ def adapter() -> ExamplePortalAdapter:
     return ExamplePortalAdapter()
 
 
-def _mock_page(url: str = "https://example.test/", selectors: dict | None = None) -> MagicMock:
+def _mock_page(url: str = "https://example.test/", selectors: Collection[str] | None = None) -> MagicMock:
     page = MagicMock()
     page.url = url
     sel_map = selectors or {}
