@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import Any
 
 from playwright.sync_api import Page
 
@@ -948,7 +949,7 @@ class GeneralProductRegister:
 
     def _ordered_steps(self, data: dict) -> list:
         """register_product 단계 목록 (이름, 함수, 인자) — 데이터에 값이 있는 단계만."""
-        ordered = []
+        ordered: list[tuple[str, Any, Any]] = []
         if data.get("category"):
             ordered.append(("category", self.set_category, data["category"]))
         if data.get("name"):
