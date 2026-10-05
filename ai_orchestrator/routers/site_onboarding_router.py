@@ -6,6 +6,8 @@
   POST  /site-registry                    — 사이트 등록 + 최초 탐색 시작(사람만 — 등록이 곧 승인)
   PATCH /site-registry/{host}/policy      — 탐색 정책 변경(사람만)
   POST  /site-registry/{host}/deregister  — 등록 해제(사람만, 지도는 보존)
+  POST  /site-registry/{host}/preflight   — 사전 조사 실행(공식 API·robots·sitemap, 읽기 전용)
+  GET   /site-registry/{host}/preflight   — 마지막 사전 조사 결과
 
 경로는 `/site-map/*` 와 분리했다: `/site-map/{host}` 가 모든 한 단계 경로를 호스트로 받으므로 같은 접두사를 쓰면 라우트가 모호해진다.
 AI 는 읽기 2개만 쓴다 — 등록·정책·해제는 AI 허용 목록에 없다(시험으로 고정).
@@ -19,9 +21,12 @@ from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.services import site_onboarding_service as service
+from ai_orchestrator.services import site_preflight_service as preflight
+from scripts.explorer import preflight_fetch
 
 site_onboarding_router = APIRouter(prefix="/site-registry", tags=["site-registry"])
 _ADMIN = Depends(require_role("admin", "owner"))
+preflight.configure_fetcher(preflight_fetch.fetch_text)  # 사전 조사 실행기 연결(브라우저 없음, robots·sitemap 단순 GET)
 
 
 def _host():
@@ -89,3 +94,22 @@ def deregister_site(host: str = _host(), claims: dict = _ADMIN):
         return service.deregister(host, actor=_user(claims))
     except ValueError as e:
         raise _bad(e) from e
+
+
+@site_onboarding_router.post("/{host}/preflight")
+def run_preflight(host: str = _host(), _: dict = _ADMIN):
+    try:
+        return preflight.run(host)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_onboarding_router.get("/{host}/preflight")
+def get_preflight(host: str = _host(), _: dict = _ADMIN):
+    try:
+        found = preflight.latest(host)
+    except ValueError as e:
+        raise _bad(e) from e
+    if found is None:
+        raise HTTPException(status_code=404, detail="사전 조사 결과가 없습니다")
+    return found

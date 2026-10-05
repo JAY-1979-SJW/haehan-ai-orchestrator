@@ -997,5 +997,23 @@
   "role": "contract",
   "reason": "가입 카페 활동 분석(순수 계산, 입출력 없음) — 서비스(L6)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
   "source": "manual"
+ },
+ "ai_orchestrator/domain/site_preflight.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "사전 조사 규칙(robots 해석·sitemap 주소·진행/차단 판정, 순수 함수) — generic L4 오분류",
+  "source": "manual"
+ },
+ "ai_orchestrator/services/site_preflight_service.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "사전 조사 업무 흐름(공식 API·robots·정책을 모아 판정, 조회기는 주입) — generic L4 오분류",
+  "source": "manual"
+ },
+ "scripts/explorer/preflight_fetch.py": {
+  "layer": "L3",
+  "role": "connector",
+  "reason": "robots.txt·sitemap.xml 단순 GET(호스트 고정·내부망 거부, 브라우저 없음) — generic L4 오분류",
+  "source": "manual"
  }
 }

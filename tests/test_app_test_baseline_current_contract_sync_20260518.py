@@ -184,14 +184,14 @@ class TestGroupD_EndpointCount:
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         routes = runtime_routes()
-        assert len(routes) == 425  # [425=424+1: 가입 카페 변동 조회 GET /naver-cafe/my-cafes/changes 1개 추가(2026-10-05), 삭제 0] [424=419+5: /site-registry 5개 추가(2026-10-05 M7-S1)] 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0)
+        assert len(routes) == 427  # [427=425+2: 사이트 사전 조사 /site-registry/{host}/preflight GET·POST 2개 추가(M10, 삭제 0); 이전 425=424+1: 가입 카페 변동 조회 GET /naver-cafe/my-cafes/changes 1개 추가(2026-10-05), 삭제 0] [424=419+5: /site-registry 5개 추가(2026-10-05 M7-S1)] 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0)
 
     def test_runtime_http_count_is_62(self):
         from tests.app_routes import http_routes
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         http = http_routes()
-        assert len(http) == 423  # [423=422+1: GET /naver-cafe/my-cafes/changes(2026-10-05)] [422=417+5: /site-registry 5개(2026-10-05 M7-S1)] origin/master 400 + 위 17개(397→417)
+        assert len(http) == 425  # [425=423+2: /site-registry/{host}/preflight GET·POST(2026-10-05 M10)] [423=422+1: GET /naver-cafe/my-cafes/changes(2026-10-05)] [422=417+5: /site-registry 5개(2026-10-05 M7-S1)] origin/master 400 + 위 17개(397→417)
 
 
 # ── 안전 확인 ─────────────────────────────────────────────────────────────────

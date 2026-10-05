@@ -33,7 +33,7 @@ DAILY_MAX_DEFAULT, DAILY_MAX_TOP = 1, 24
 
 # 허용 전이. 한 번 blocked(캡차·봇 감지)가 되면 사람이 다시 탐색을 승인해야 풀린다(자동 경로 없음).
 _ALLOWED: dict[str, tuple[str, ...]] = {
-    REGISTERED: (EXPLORING, DEREGISTERED),
+    REGISTERED: (EXPLORING, BLOCKED, DEREGISTERED),  # 사전 조사(robots 전체 금지 등)로 탐색 전에 막힐 수 있다
     EXPLORING: (READY, INCOMPLETE, NEEDS_LOGIN, BLOCKED, REGISTERED, DEREGISTERED),  # 탐색 도중에도 사람이 해제할 수 있다
     READY: (EXPLORING, DEREGISTERED),
     INCOMPLETE: (EXPLORING, DEREGISTERED),

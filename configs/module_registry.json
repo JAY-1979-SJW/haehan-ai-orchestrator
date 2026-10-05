@@ -21728,6 +21728,38 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_site_preflight.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/domain/site_preflight.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "사전 조사 규칙(robots 해석·sitemap 주소·진행/차단 판정, 순수 함수) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/services/site_preflight_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "사전 조사 업무 흐름(공식 API·robots·정책을 모아 판정, 조회기는 주입) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/explorer/preflight_fetch.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "robots.txt·sitemap.xml 단순 GET(호스트 고정·내부망 거부, 브라우저 없음) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   }
  }
 }
