@@ -21,7 +21,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC
 
 from fastapi import APIRouter, Depends, Query
 
@@ -30,7 +29,6 @@ from ai_orchestrator.audit_logger import read_recent_logs as _read_logs
 from ai_orchestrator.connectors.user_auth_router import get_jwt_user
 from ai_orchestrator.external_work_registry import list_external_works as _list_external
 from ai_orchestrator.gates.dev_reg_approval import list_pending as _list_pending
-from ai_orchestrator.gates.dev_reg_approval import mark_expired_internal as _mark_expired
 from ai_orchestrator.services.web_task_registry import list_entries as _list_web_tasks
 
 logger = logging.getLogger(__name__)
@@ -78,33 +76,6 @@ def _build_task_name(rec: dict) -> str:
     if provider and action_type:
         return f"{provider}/{action_type}"
     return rec.get("task_id", "-")
-
-
-@ops_router.post("/approvals/gc")
-def gc_expired_approvals(
-    user: dict = Depends(get_jwt_user),
-):
-    """만료된 승인 대기 항목 일괄 정리 (expired 처리)."""
-    from datetime import datetime
-
-    try:
-        pending = _list_pending()
-        now = datetime.now(UTC)
-        cleared = []
-        for rec in pending:
-            exp = rec.get("expires_at", "")
-            if exp:
-                try:
-                    exp_dt = datetime.fromisoformat(exp.replace("Z", "+00:00"))
-                    if exp_dt <= now:
-                        _mark_expired(rec.get("task_id", ""))
-                        cleared.append(rec.get("task_id", ""))
-                except Exception as exc:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
-                    logger.debug("만료일 파싱 실패 (무시): %s", exc)
-        return {"cleared": len(cleared), "ids": cleared}
-    except Exception as e:  # noqa: BLE001 - 운영 대시보드 조회 API - 승인/웹작업/감사이벤트/에이전트 현황을 읽기전용으로 집계, 실패시 빈 리스트/0건으로 폴백하고 warning 로그만 남김. 판정/차단 로직 없음
-        logger.warning("ops/approvals/gc 실패: %s", e)
-        return {"cleared": 0, "error": str(e)}
 
 
 # ─── 웹 작업 레지스트리 ──────────────────────────────────────────────────────

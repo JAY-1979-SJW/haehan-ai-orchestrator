@@ -217,8 +217,9 @@ class TestOpsPageAssembly:
         assert "MOCK_APPROVAL_QUEUE" not in src
 
     def test_home_page_has_ops_link(self):
-        home = (ADMIN_WEB.parent / "page.tsx").read_text(encoding="utf-8")
-        assert "/ops" in home
+        # 현행: 홈(page.tsx)은 단일 AI 콘솔(855d595a) — /ops 진입 링크는 공통 nav 정본(lib/nav.ts)에 있다.
+        nav = (ADMIN_WEB.parent.parent / "lib" / "nav.ts").read_text(encoding="utf-8")
+        assert '{ key: "ops",  label: "운영센터", shortLabel: "운영", href: "/ops" }' in nav
 
     def test_ops_api_client_has_no_mock_fallback(self):
         src = (ADMIN_WEB / "lib/opsApiClient.ts").read_text(encoding="utf-8")
