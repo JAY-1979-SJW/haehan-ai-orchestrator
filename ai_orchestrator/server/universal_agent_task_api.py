@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import time
 import uuid
 from typing import Any
 
@@ -22,6 +23,13 @@ from ai_orchestrator.server.universal_agent_models import (
 _LOCK = threading.Lock()
 _TASKS: dict[str, UniversalAgentTask] = {}
 
+# 종료 상태 태스크만 메모리에서 제거한다(대기/진행 중 태스크는 절대 제거하지 않음).
+# 상태 값은 update_task_result 호출부(시험·세션 모듈)에서 쓰이는 종료 값만 나열 — 미지의 상태는 보존.
+_TERMINAL_STATUSES = frozenset({"COMPLETED", "FAILED", "BLOCKED"})
+_TERMINAL_TTL_SEC = 3600.0  # 종료 후 1시간 지나면 제거 → get_task 는 None(라우터 404)
+_TERMINAL_MAX = 1000  # 종료 태스크 보관 상한 — 초과 시 가장 오래된 종료분부터 제거
+_TERMINAL_AT: dict[str, float] = {}  # task_id -> 종료 시각(time.time)
+
 _SAFE_FIELDS = (
     "cookie_exported",
     "session_exported",
@@ -31,6 +39,18 @@ _SAFE_FIELDS = (
     "storage_state_exported",
     "server_browser_used",
 )
+
+
+def _prune_terminal_locked(now: float) -> None:
+    """_LOCK 보유 상태에서 호출. 만료/초과 종료 태스크 제거."""
+    for tid in [t for t, at in _TERMINAL_AT.items() if now - at > _TERMINAL_TTL_SEC]:
+        _TERMINAL_AT.pop(tid, None)
+        _TASKS.pop(tid, None)
+    excess = len(_TERMINAL_AT) - _TERMINAL_MAX
+    if excess > 0:
+        for tid, _ in sorted(_TERMINAL_AT.items(), key=lambda kv: kv[1])[:excess]:
+            _TERMINAL_AT.pop(tid, None)
+            _TASKS.pop(tid, None)
 
 
 def create_task(
@@ -67,7 +87,9 @@ def create_task(
         }
 
     with _LOCK:
+        _prune_terminal_locked(time.time())
         _TASKS[task_id] = task
+        _TERMINAL_AT.pop(task_id, None)
 
     result: dict[str, Any] = task.to_dict()
     result["ok"] = True
@@ -94,6 +116,7 @@ def create_task(
 def get_task(task_id: str) -> dict[str, Any] | None:
     """task 상태 조회."""
     with _LOCK:
+        _prune_terminal_locked(time.time())
         task = _TASKS.get(task_id)
     if not task:
         return None
@@ -105,6 +128,7 @@ def get_task(task_id: str) -> dict[str, Any] | None:
 def update_task_result(task_id: str, status: str, result: dict[str, Any] | None = None) -> bool:
     """local agent로부터 결과를 받아 task 상태 업데이트."""
     with _LOCK:
+        _prune_terminal_locked(time.time())
         task = _TASKS.get(task_id)
         if not task:
             return False
@@ -112,6 +136,11 @@ def update_task_result(task_id: str, status: str, result: dict[str, Any] | None 
         if result and result.get("server_browser_used") is True:
             return False
         task.status = status
+        if status in _TERMINAL_STATUSES:
+            _TERMINAL_AT[task_id] = time.time()
+            _prune_terminal_locked(_TERMINAL_AT[task_id])
+        else:
+            _TERMINAL_AT.pop(task_id, None)
         if result:
             # safe fields는 강제 False
             sanitized = dict(result)
@@ -124,6 +153,7 @@ def update_task_result(task_id: str, status: str, result: dict[str, Any] | None 
 def list_pending_local_agent_tasks() -> list[dict[str, Any]]:
     """local agent가 처리해야 할 대기 중 task 목록."""
     with _LOCK:
+        _prune_terminal_locked(time.time())
         tasks = [
             t.to_dict()
             for t in _TASKS.values()
@@ -140,3 +170,4 @@ def reject_server_external_fetch(url: str, purpose: str = "") -> dict[str, Any]:
 def clear_all() -> None:
     with _LOCK:
         _TASKS.clear()
+        _TERMINAL_AT.clear()

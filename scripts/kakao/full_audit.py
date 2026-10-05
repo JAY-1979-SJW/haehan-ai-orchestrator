@@ -1,5 +1,6 @@
 """카카오 4개 앱 전체 현황 서버 확인."""
 import sys, time, json, re
+from typing import Any
 sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parents[2]))
 from scripts.web_connector import get_page
 from scripts.page_helper import page_goto
@@ -18,7 +19,7 @@ report = []
 
 for app in APPS:
     aid = app['id']
-    info = {'id': aid, 'name': app['name']}
+    info: dict[str, Any] = {'id': aid, 'name': app['name']}
 
     print(f"\n{'='*55}")
     print(f"  {app['name']} (ID: {aid})")
