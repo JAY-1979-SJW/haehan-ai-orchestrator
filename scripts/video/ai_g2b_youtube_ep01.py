@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from typing import Any
 
 from PIL import Image, ImageDraw
 
@@ -127,7 +128,7 @@ def _cta_card() -> Image.Image:
 # 대본 (1편: 나라장터 입찰 처음이신 분 — 요약본, 3~4분 타깃)
 # ──────────────────────────────────────────────────────────
 
-SCENES = [
+SCENES: list[dict[str, Any]] = [
     {
         "narr": "나라장터 입찰, 처음이면 다들 여기서 막힙니다. 투찰금액을 얼마로 써야 할지, 감으로 정하고 계시지 않나요?",
         "render": lambda: _text_card(["나라장터 입찰", "처음이신 분"], "투찰금액, 감으로 쓰고 계신가요?"),

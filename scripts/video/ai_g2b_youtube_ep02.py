@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import subprocess
 from pathlib import Path
+from typing import Any
 
 from PIL import Image, ImageDraw
 
@@ -120,7 +121,7 @@ def _cta_card() -> Image.Image:
     return frame
 
 
-SCENES = [
+SCENES: list[dict[str, Any]] = [
     {
         "narr": "이번엔 경쟁이 훨씬 치열한 공고로 AI에게 투찰가 분석을 시켜봤습니다. 동고양세무서 청사신축 소방공사, 예상 참여업체 678개사입니다.",
         "render": lambda: _text_card(
