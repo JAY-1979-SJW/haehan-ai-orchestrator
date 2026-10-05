@@ -21440,6 +21440,14 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/local_agent_registry_exports.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "local_agent",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
   }
  }
 }
