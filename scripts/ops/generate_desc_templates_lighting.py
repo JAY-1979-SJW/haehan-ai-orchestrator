@@ -11,6 +11,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -28,7 +29,7 @@ TMPL_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── 5종 샘플 데이터 ───────────────────────────────────────────────────────────
 
-SAMPLES = [
+SAMPLES: list[dict[str, Any]] = [
     {
         "meta": {"name": "무드등_감성표준", "category": "조명", "source": "ai"},
         "sections": ["hero", "trust", "features", "price", "detail", "quality", "spec", "as", "delivery"],

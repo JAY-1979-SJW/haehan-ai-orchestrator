@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import ssl
 import urllib.request
+from typing import Any
 from urllib.parse import urlparse
 
 
@@ -54,7 +55,7 @@ def urlopen_for_server(server_url: str, req, *, timeout: float, context: ssl.SSL
     return urllib.request.urlopen(req, timeout=timeout, context=context)
 
 
-def websocket_connect_kwargs(server_url: str) -> dict[str, object]:
+def websocket_connect_kwargs(server_url: str) -> dict[str, Any]:
     if host_needs_direct(server_url):
         return {"proxy": None}
     return {}
