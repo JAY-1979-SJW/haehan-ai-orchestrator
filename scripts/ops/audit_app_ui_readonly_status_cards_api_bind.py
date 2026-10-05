@@ -12,8 +12,20 @@ sys.path.insert(0, str(ROOT))
 
 API_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "api.ts"
 DASHBOARD_FILE = ROOT / "admin-web" / "src" / "app" / "assistant" / "page.tsx"
-EXTERNAL_FILE = ROOT / "admin-web" / "src" / "app" / "assistant" / "external-sites" / "page.tsx"
-STORAGE_FILE = ROOT / "admin-web" / "src" / "app" / "assistant" / "storage" / "page.tsx"
+_ASSISTANT_APP = ROOT / "admin-web" / "src" / "app" / "assistant"
+
+
+def _route_file(*parts: str) -> Path:
+    """직접 경로 우선, 없으면 라우트 그룹 `(legacy)` 아래(URL 불변, tests/app_ui_paths.py 와 같은 규칙)."""
+    direct = _ASSISTANT_APP.joinpath(*parts)
+    if direct.exists():
+        return direct
+    grouped = _ASSISTANT_APP.joinpath("(legacy)", *parts)
+    return grouped if grouped.exists() else direct
+
+
+EXTERNAL_FILE = _route_file("external-sites", "page.tsx")
+STORAGE_FILE = _route_file("storage", "page.tsx")
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 
 VERDICT_READY = "APP_UI_READONLY_STATUS_CARDS_API_BIND_READY"
@@ -49,8 +61,18 @@ def run_audit() -> None:
     _add("/api/v1/app/providers 경로", "/api/v1/app/providers" in api)
     _add("/api/v1/app/storage/status 경로", "/api/v1/app/storage/status" in api)
 
-    # api.ts — GET만, POST/mutation 없음
-    _add("api.ts POST 없음", 'method: "POST"' not in api and "method: 'POST'" not in api)
+    # api.ts — 상태 카드 조회 함수 3개는 GET(getJson)만. 현행 api.ts 에는 별도 쓰기 클라이언트
+    # (postJson·템플릿 저장/삭제·스마트스토어 채팅)가 있으므로 POST/DELETE 는 알려진 위치 수로 고정한다.
+    _add(
+        "상태 카드 조회 3개 GET(getJson) 사용",
+        'getJson<AppHealthSummaryResponse>("/api/v1/app/health/summary"' in api
+        and 'getJson<AppProvidersResponse>("/api/v1/app/providers"' in api
+        and 'getJson<AppStorageStatusResponse>("/api/v1/app/storage/status"' in api,
+    )
+    _add(
+        "api.ts POST 3곳·DELETE 1곳 (알려진 쓰기 클라이언트만)",
+        api.count('method: "POST"') == 3 and api.count('method: "DELETE"') == 1 and "method: 'POST'" not in api,
+    )
 
     # Dashboard — getAppHealthSummary 연결
     _add("Dashboard getAppHealthSummary 사용", "getAppHealthSummary" in dash)

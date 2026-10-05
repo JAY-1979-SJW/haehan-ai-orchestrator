@@ -24,6 +24,16 @@ ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 MOCK_FILE = FRONTEND_ROOT / "lib" / "assistant" / "mock.ts"
 
+
+def _page(*parts: str) -> Path:
+    """`app/assistant/<parts>` — 직접 경로 우선, 없으면 라우트 그룹 `(legacy)` 아래(URL 불변)."""
+    direct = ASSISTANT_APP.joinpath(*parts)
+    if direct.exists():
+        return direct
+    grouped = ASSISTANT_APP.joinpath("(legacy)", *parts)
+    return grouped if grouped.exists() else direct
+
+
 SMOKE_ID = "APP_UI_SHELL_BROWSER_SMOKE"
 
 VERDICT_PASS = "BROWSER_SMOKE_PASS"
@@ -146,7 +156,7 @@ def _all_tsx() -> list[Path]:
 
 def check_routes_exist(report: SmokeReport) -> None:
     for rel, url, slug in ROUTES:
-        path = ASSISTANT_APP / rel
+        path = _page(*rel.split("/"))
         if path.exists():
             report.add(f"route_exists_{slug}", "PASS", f"{url} → {rel} 존재")
         else:
@@ -155,7 +165,7 @@ def check_routes_exist(report: SmokeReport) -> None:
 
 def check_heading_markers(report: SmokeReport) -> None:
     for rel, url, slug in ROUTES:
-        path = ASSISTANT_APP / rel
+        path = _page(*rel.split("/"))
         if not path.exists():
             report.add(f"heading_{slug}", "FAIL", f"{rel} 없어서 heading 확인 불가")
             continue
@@ -239,7 +249,7 @@ def check_mock_providers(report: SmokeReport) -> None:
 
 
 def check_dry_run_notice_used(report: SmokeReport) -> None:
-    tasks_page = ASSISTANT_APP / "tasks" / "page.tsx"
+    tasks_page = _page("tasks", "page.tsx")
     if not tasks_page.exists():
         report.add("dry_run_notice_used", "FAIL", "tasks/page.tsx 없음")
         return
@@ -251,7 +261,7 @@ def check_dry_run_notice_used(report: SmokeReport) -> None:
 
 
 def check_forbidden_banner_used(report: SmokeReport) -> None:
-    tasks_page = ASSISTANT_APP / "tasks" / "page.tsx"
+    tasks_page = _page("tasks", "page.tsx")
     if not tasks_page.exists():
         report.add("forbidden_banner_used", "FAIL", "tasks/page.tsx 없음")
         return
@@ -276,7 +286,7 @@ def check_approval_no_execute_connection(report: SmokeReport) -> None:
 
 
 def check_deployment_no_restart(report: SmokeReport) -> None:
-    deployment_page = ASSISTANT_APP / "deployment" / "page.tsx"
+    deployment_page = _page("deployment", "page.tsx")
     if not deployment_page.exists():
         report.add("deployment_no_restart", "FAIL", "deployment/page.tsx 없음")
         return
