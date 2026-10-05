@@ -17,7 +17,7 @@ import signal
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -107,7 +107,7 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
 
                             ok = click_button_in_window(window, decision["target"])
                             _record_event(
-                                ev,
+                                cast(dict, ev),
                                 decision,
                                 status="handled" if ok else "notified",
                                 note=f"chrome_ui click={ok}",
@@ -119,10 +119,10 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
                                 notified += 1
                         except Exception as e:  # noqa: BLE001 - 크롬 UI 이벤트 모니터 -- 자동 처리 실패 시 사용자에게 알림(notified)으로 안전하게 폴백(자동실행 강행 아님), 루프 자체 오류는 디버그 로깅 후 무시하고 폴링 계속
                             _log.warning("[chrome_ui_monitor] 자동 처리 실패: %s", e)
-                            _record_event(ev, decision, status="notified", source="chrome_ui")
+                            _record_event(cast(dict, ev), decision, status="notified", source="chrome_ui")
                             notified += 1
                     else:
-                        _record_event(ev, decision, status="notified", source="chrome_ui")
+                        _record_event(cast(dict, ev), decision, status="notified", source="chrome_ui")
                         notified += 1
 
             _save_state(
