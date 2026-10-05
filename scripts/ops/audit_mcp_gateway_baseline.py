@@ -29,6 +29,9 @@ REQUIRED_APP_TOKENS = [
     "External MCP / Tool Gateway",
     "MCP Gateway readiness",
     "configs/external_mcp_registry.template.json",
+    # 2026-10-05: 폐기 확정 문구(현행 사실)도 기준서에 있어야 한다.
+    "MCP Gateway surface is retired and is not exposed on the home screen",
+    "~~MCP Gateway readiness must be visible in the app",
 ]
 
 # 2026-10-05: 홈 재작성(855d595a 단일 AI 콘솔) 후 MCP Gateway 표면은 폐기 확정.

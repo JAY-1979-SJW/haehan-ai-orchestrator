@@ -43,7 +43,7 @@ AI Agent App
     MCP Server Registry
     Owned App Adapters
     Tool Catalog
-    MCP Gateway readiness
+    MCP Gateway readiness   (retired 2026-10-05: not shown on home, see External MCP Gateway Rule)
   Ops
     Container / Deploy / Drift Check
     Runtime Event Watch
@@ -160,7 +160,7 @@ Tool modules currently discovered in the repo:
 | File Map Tools | `admin-web/src/app/file-map`, `admin-web/src/app/api/file-map/*` | `/file-map` | cleanup execution approval-gated |
 | Ops / Runtime Tools | `scripts/ops/*`, `admin-web/src/app/ops` | `/ops` | deploy/drift/runtime actions gated by ops policy |
 | Local Agent Runtime | `local_agent/*`, `ai_orchestrator/local_agent/*` | `/local-agents`, Work Automation | loopback/local-agent security boundaries |
-| External MCP / Tool Gateway | `configs/external_mcp_registry.template.json`, `docs/baseline/MCP_GATEWAY_BASELINE.md` | Home / Tool Catalog | disabled-by-default registry; secrets by env refs only; writes approval-gated |
+| External MCP / Tool Gateway | `configs/external_mcp_registry.template.json`, `docs/baseline/MCP_GATEWAY_BASELINE.md` | Tool Catalog (home surface retired 2026-10-05) | disabled-by-default registry; secrets by env refs only; writes approval-gated |
 
 ## External MCP Gateway Rule
 
@@ -173,8 +173,21 @@ configs/external_mcp_registry.template.json
 
 The registry is disabled by default and contains no raw secrets. Each entry must
 declare allowed tools, blocked tools, owner app, risk level, UI surface, result
-target, and approval policy. MCP Gateway readiness must be visible in the app
-before real MCP calls are enabled.
+target, and approval policy.
+
+### Current status (2026-10-05, user-confirmed)
+
+The MCP Gateway surface is retired and is not exposed on the home screen. After
+the home rewrite (commit 855d595a, "single AI console") the home is a single AI
+console, not a dashboard; the registry and its disabled-by-default rules above
+remain as backend/config policy only. MCP Gateway readiness is not shown on home.
+`scripts/ops/audit_mcp_gateway_baseline.py` enforces this: the home page must not
+contain the retired MCP Gateway strings.
+
+### Previous baseline (retired, kept for history)
+
+~~MCP Gateway readiness must be visible in the app before real MCP calls are
+enabled.~~ (Retired 2026-10-05; superseded by the current status above.)
 
 ## UI Design Rules
 
