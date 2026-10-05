@@ -73,7 +73,7 @@ def test_real_profiles(profile: SiteProfile) -> None:
     for cap in list(profile.allowed_capabilities) + list(profile.blocked_capabilities):
         assert isinstance(profile.get_gate(cap), GateDecision)
     policies = profile.action_policies
-    values = policies.values() if isinstance(policies, dict) else policies
+    values = policies.values() if isinstance(policies, Mapping) else policies
     for pol in values:
         assert profile.get_gate(pol.capability) == pol.gate
 
