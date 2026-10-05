@@ -29,8 +29,8 @@ SAFE_BOUNDARY = {
 }
 
 
-def _check_dns_draft() -> dict[str, bool]:
-    result = {}
+def _check_dns_draft() -> dict[str, bool | str]:
+    result: dict[str, bool | str] = {}
     try:
         from ai_orchestrator.gabia.autowork_subdomain_plan import (
             AUTOWORK_DNS_APPROVAL_SUMMARY,
@@ -52,8 +52,8 @@ def _check_dns_draft() -> dict[str, bool]:
     return result
 
 
-def _check_nginx_plan() -> dict[str, bool]:
-    result = {}
+def _check_nginx_plan() -> dict[str, bool | str]:
+    result: dict[str, bool | str] = {}
     try:
         from ai_orchestrator.gabia.autowork_subdomain_plan import (
             EXISTING_NGINX_ROUTES,
@@ -84,8 +84,8 @@ def _check_5050_protection() -> bool:
         return False
 
 
-def _check_ssl_plan() -> dict[str, bool]:
-    result = {}
+def _check_ssl_plan() -> dict[str, bool | str]:
+    result: dict[str, bool | str] = {}
     try:
         from ai_orchestrator.gabia.autowork_subdomain_plan import SSL_PLAN
 
@@ -100,8 +100,8 @@ def _check_ssl_plan() -> dict[str, bool]:
     return result
 
 
-def _check_smoke() -> dict[str, bool]:
-    result = {}
+def _check_smoke() -> dict[str, bool | str]:
+    result: dict[str, bool | str] = {}
     try:
         from ai_orchestrator.gabia.autowork_subdomain_plan import SMOKE_CHECKLIST
 
@@ -124,8 +124,8 @@ def _check_smoke() -> dict[str, bool]:
     return result
 
 
-def _check_rollback() -> dict[str, bool]:
-    result = {}
+def _check_rollback() -> dict[str, bool | str]:
+    result: dict[str, bool | str] = {}
     try:
         from ai_orchestrator.gabia.autowork_subdomain_plan import (
             AUTOWORK_ROLLBACK_PLAN,
@@ -145,8 +145,8 @@ def _check_rollback() -> dict[str, bool]:
     return result
 
 
-def _check_gabia_flow() -> dict[str, bool]:
-    result = {}
+def _check_gabia_flow() -> dict[str, bool | str]:
+    result: dict[str, bool | str] = {}
     try:
         from ai_orchestrator.gabia.autowork_subdomain_plan import (
             AUTOWORK_DNS_APPROVAL_SUMMARY,
