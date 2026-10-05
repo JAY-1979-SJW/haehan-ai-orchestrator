@@ -1,5 +1,4 @@
 "use client";
-// getAssistantHealth compatibility: this dashboard uses getAppHealthSummary.
 /** /assistant — Dashboard (APP_UI_READONLY_STATUS_CARDS_API_BIND_01) */
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -9,7 +8,6 @@ import { StorageStatusCard } from "@/components/assistant/StorageStatusCard";
 import { DryRunNotice } from "@/components/assistant/DryRunNotice";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ApiConnectionStateBadge } from "@/components/assistant/ApiConnectionStateBadge";
-import { FutureEndpointNotice } from "@/components/assistant/FutureEndpointNotice";
 import {
   backendStatusMock, storageStatusMock, knownBacklogMock,
 } from "@/lib/assistant/mock";
