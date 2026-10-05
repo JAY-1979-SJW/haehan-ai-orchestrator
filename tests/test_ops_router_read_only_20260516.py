@@ -183,8 +183,12 @@ class TestOpsApiClientFallback:
         assert OPS_CLIENT.exists()
 
     def test_has_fallback_path(self):
+        # 2026-10-05 갱신: 소문자 'fallback' 문구는 사라지고 실패 시 빈 결과로 대체하는
+        # emptyResult 와 호환용 …Legacy 함수(결과 data 만 반환)가 폴백 구조를 이룬다.
         src = self._src()
-        assert "fallback" in src
+        assert "emptyResult(" in src
+        for name in ("fetchApprovalQueueLegacy", "fetchAuditEventsLegacy", "fetchAgentStatusesLegacy"):
+            assert f"export async function {name}(" in src, f"누락: {name}"
 
     def test_has_timeout_handling(self):
         src = self._src()
@@ -248,8 +252,12 @@ class TestExistingBoundaryTestsUnchanged:
 
     def test_cad_external_app_hold_in_mock_data(self):
         mock_src = (REPO / "admin-web" / "src" / "app" / "ops" / "lib" / "mockOpsData.ts").read_text(encoding="utf-8")
+        # 2026-10-05 갱신: CAD 모듈 삭제(17130f8e)로 CAD 항목은 제거됨 — 현행 EXTERNAL_APP_HOLD 는 HWPX·Excel 2종
         assert "EXTERNAL_APP_HOLD" in mock_src
-        assert "cad" in mock_src.lower()
+        for key in ("hwpx-integration", "excel-integration", "hwpx-app", "excel-app"):
+            assert f'"{key}"' in mock_src, f"EXTERNAL_APP_HOLD 현행 항목 누락: {key}"
+        assert mock_src.count('classification: "EXTERNAL_APP_HOLD"') == 4
+        assert "cad" not in mock_src.lower(), "CAD 항목은 17130f8e 로 삭제되어 없어야 한다"
 
     def test_ops_integrations_static_has_cad_hold(self):
         src = OPS_ROUTER.read_text(encoding="utf-8")
