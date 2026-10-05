@@ -63,8 +63,9 @@ def _require_auth() -> Response | None:
         )
 
     auth = request.authorization
-    username = auth.username if auth else ""
-    password = auth.password if auth else ""
+    # 비-Basic(Bearer 등) 헤더는 username/password 가 None → 빈 문자열로 취급해 401 (fail-closed)
+    username = (auth.username or "") if auth else ""
+    password = (auth.password or "") if auth else ""
 
     if not _check_auth(username, password):
         ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
