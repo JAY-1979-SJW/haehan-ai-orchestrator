@@ -7,12 +7,14 @@ AUTH_ENABLED=false 기본값을 그대로 따른다(다른 커넥터 라우터�
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import json
 import logging
 import os
 import secrets
+import time
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import PlainTextResponse
@@ -42,7 +44,18 @@ db.init_db()
 _TOKEN_REF_MARKER = "keyring"  # noqa: S105 — 참조 마커일 뿐 토큰 값이 아님, 실제 토큰은 token_store(keyring)에만 저장
 
 _OAUTH_SCOPES = ["instagram_business_basic", "instagram_business_manage_comments", "instagram_business_manage_messages"]
-_oauth_states: dict[str, bool] = {}  # 단일 프로세스 CSRF state — 데스크톱형 단일사용자 전제(§19)
+_oauth_states: dict[str, float] = {}  # state -> 생성 시각. 단일 프로세스 CSRF state — 데스크톱형 단일사용자 전제(§19)
+_OAUTH_STATE_TTL_SEC = 600.0  # 10분 초과 state 는 거부·청소
+_OAUTH_STATE_MAX = 1000  # 초과 시 가장 오래된 state 제거
+
+
+def _oauth_state_add(state: str) -> None:
+    now = time.time()
+    for k in [k for k, t in _oauth_states.items() if now - t > _OAUTH_STATE_TTL_SEC]:
+        _oauth_states.pop(k, None)
+    _oauth_states[state] = now
+    while len(_oauth_states) > _OAUTH_STATE_MAX:
+        _oauth_states.pop(next(iter(_oauth_states)), None)  # dict 삽입순 = 가장 오래된 것
 
 
 def _app_id() -> str:
@@ -65,6 +78,34 @@ def _verify_token_env() -> str:
 
 
 # ── Webhook ──────────────────────────────────────────────────────
+
+
+def _ingest_comment_events(payload: dict, background_tasks: BackgroundTasks) -> None:
+    """동기 sqlite 조회·적재를 모아 스레드에서 실행한다(이벤트 루프 비차단). 계정 조회는 id별 1회만."""
+    accounts: dict = {}
+    for parsed in parse_comment_events(payload):
+        uid = parsed.instagram_user_id
+        if uid not in accounts:
+            accounts[uid] = db.get_account_by_ig_user_id(uid)
+        account = accounts[uid]
+        if account is None:
+            logger.warning("instagram_dm: webhook에 미등록 계정 id=%s", uid)
+            continue
+        normalized = rule_engine.normalize_text(parsed.comment_text or "")
+        event_id, is_new = db.insert_comment_event_if_new(
+            instagram_account_id=account["id"],
+            comment_id=parsed.comment_id,
+            media_id=parsed.media_id,
+            media_product_type=parsed.media_product_type,
+            commenter_ig_scoped_id=parsed.commenter_ig_scoped_id,
+            commenter_username=parsed.commenter_username,
+            comment_text=parsed.comment_text,
+            normalized_text=normalized,
+            comment_created_at=parsed.comment_created_at,
+            raw_payload=payload,
+        )
+        if is_new and event_id:
+            background_tasks.add_task(process_comment_event, event_id, instagram_account_id=account["id"])
 
 
 @instagram_dm_router.get("/webhooks/instagram")
@@ -108,7 +149,8 @@ async def webhook_receive(request: Request, background_tasks: BackgroundTasks):
             payload = json.loads(raw_body or b"{}")
         except json.JSONDecodeError:
             payload = {}
-        db.log_webhook_event(
+        await asyncio.to_thread(
+            db.log_webhook_event,
             event_type=payload.get("object"),
             external_account_id=None,
             external_object_id=None,
@@ -123,7 +165,8 @@ async def webhook_receive(request: Request, background_tasks: BackgroundTasks):
     try:
         payload = json.loads(raw_body)
     except json.JSONDecodeError as e:
-        db.log_webhook_event(
+        await asyncio.to_thread(
+            db.log_webhook_event,
             event_type=None,
             external_account_id=None,
             external_object_id=None,
@@ -135,7 +178,8 @@ async def webhook_receive(request: Request, background_tasks: BackgroundTasks):
         )
         raise HTTPException(status_code=400, detail="malformed payload") from e
 
-    db.log_webhook_event(
+    await asyncio.to_thread(
+        db.log_webhook_event,
         event_type=payload.get("object"),
         external_account_id=None,
         external_object_id=None,
@@ -145,27 +189,7 @@ async def webhook_receive(request: Request, background_tasks: BackgroundTasks):
         status="RECEIVED",
     )
 
-    comment_events = parse_comment_events(payload)
-    for parsed in comment_events:
-        account = db.get_account_by_ig_user_id(parsed.instagram_user_id)
-        if account is None:
-            logger.warning("instagram_dm: webhook에 미등록 계정 id=%s", parsed.instagram_user_id)
-            continue
-        normalized = rule_engine.normalize_text(parsed.comment_text or "")
-        event_id, is_new = db.insert_comment_event_if_new(
-            instagram_account_id=account["id"],
-            comment_id=parsed.comment_id,
-            media_id=parsed.media_id,
-            media_product_type=parsed.media_product_type,
-            commenter_ig_scoped_id=parsed.commenter_ig_scoped_id,
-            commenter_username=parsed.commenter_username,
-            comment_text=parsed.comment_text,
-            normalized_text=normalized,
-            comment_created_at=parsed.comment_created_at,
-            raw_payload=payload,
-        )
-        if is_new and event_id:
-            background_tasks.add_task(process_comment_event, event_id, instagram_account_id=account["id"])
+    await asyncio.to_thread(_ingest_comment_events, payload, background_tasks)
 
     # Meta 재전송 대비: 빠르게 200 (idempotent — comment_id UNIQUE로 중복 방지됨)
     return {"status": "ok"}
@@ -179,18 +203,18 @@ async def oauth_start():
     if not _app_id() or not _redirect_uri():
         raise HTTPException(status_code=400, detail="META_APP_ID / INSTAGRAM_REDIRECT_URI 미설정")
     state = secrets.token_urlsafe(24)
-    _oauth_states[state] = True
+    _oauth_state_add(state)
     url = build_authorize_url(app_id=_app_id(), redirect_uri=_redirect_uri(), state=state, scopes=_OAUTH_SCOPES)
     return {"auth_url": url, "state": state}
 
 
 @instagram_dm_router.get("/oauth/callback")
-async def oauth_callback(code: str = "", state: str = "", error: str = ""):
+def oauth_callback(code: str = "", state: str = "", error: str = ""):
     if error:
         raise HTTPException(status_code=400, detail=f"Instagram 인가 거부: {error}")
-    if not state or state not in _oauth_states:
+    created = _oauth_states.pop(state, None) if state else None
+    if created is None or time.time() - created > _OAUTH_STATE_TTL_SEC:
         raise HTTPException(status_code=400, detail="state 검증 실패(CSRF)")
-    _oauth_states.pop(state, None)
     if not code:
         raise HTTPException(status_code=400, detail="code 없음")
 
@@ -221,12 +245,12 @@ async def oauth_callback(code: str = "", state: str = "", error: str = ""):
 
 
 @instagram_dm_router.get("/accounts")
-async def list_accounts():
+def list_accounts():
     return [{k: v for k, v in dict(a).items() if k != "encrypted_access_token"} for a in db.list_accounts()]
 
 
 @instagram_dm_router.post("/accounts/{account_id}/verify")
-async def verify_account(account_id: str):
+def verify_account(account_id: str):
     account = db.get_account(account_id)
     if account is None:
         raise HTTPException(status_code=404, detail="계정 없음")
@@ -243,7 +267,7 @@ async def verify_account(account_id: str):
 
 
 @instagram_dm_router.post("/accounts/{account_id}/disconnect")
-async def disconnect_account(account_id: str):
+def disconnect_account(account_id: str):
     account = db.get_account(account_id)
     if account is None:
         raise HTTPException(status_code=404, detail="계정 없음")
@@ -256,7 +280,7 @@ class AutomationToggle(BaseModel):
 
 
 @instagram_dm_router.post("/accounts/{account_id}/automation")
-async def toggle_account_automation(account_id: str, body: AutomationToggle):
+def toggle_account_automation(account_id: str, body: AutomationToggle):
     if db.get_account(account_id) is None:
         raise HTTPException(status_code=404, detail="계정 없음")
     db.set_account_automation_enabled(account_id, body.enabled)
@@ -279,12 +303,12 @@ class RuleCreate(BaseModel):
 
 
 @instagram_dm_router.get("/rules")
-async def list_rules(instagram_account_id: str):
+def list_rules(instagram_account_id: str):
     return db.list_rules(instagram_account_id)
 
 
 @instagram_dm_router.post("/rules")
-async def create_rule(body: RuleCreate):
+def create_rule(body: RuleCreate):
     if body.scope_type not in {"ALL_MEDIA", "SPECIFIC_MEDIA"}:
         raise HTTPException(status_code=400, detail="scope_type은 ALL_MEDIA|SPECIFIC_MEDIA만 허용")
     if body.scope_type == "SPECIFIC_MEDIA" and not body.media_id:
@@ -306,7 +330,7 @@ async def create_rule(body: RuleCreate):
 
 
 @instagram_dm_router.patch("/rules/{rule_id}")
-async def update_rule_enabled(rule_id: str, body: AutomationToggle):
+def update_rule_enabled(rule_id: str, body: AutomationToggle):
     if db.get_rule(rule_id) is None:
         raise HTTPException(status_code=404, detail="rule 없음")
     db.set_rule_enabled(rule_id, body.enabled)
@@ -314,7 +338,7 @@ async def update_rule_enabled(rule_id: str, body: AutomationToggle):
 
 
 @instagram_dm_router.delete("/rules/{rule_id}")
-async def remove_rule(rule_id: str):
+def remove_rule(rule_id: str):
     if db.get_rule(rule_id) is None:
         raise HTTPException(status_code=404, detail="rule 없음")
     db.delete_rule(rule_id)
@@ -328,7 +352,7 @@ class SimulateRequest(BaseModel):
 
 
 @instagram_dm_router.post("/rules/simulate")
-async def simulate(body: SimulateRequest):
+def simulate(body: SimulateRequest):
     """실제 DM을 보내지 않는다 — rule engine 결과만 반환."""
     account = db.get_account(body.instagram_account_id)
     if account is None:
@@ -358,22 +382,22 @@ async def simulate(body: SimulateRequest):
 
 
 @instagram_dm_router.get("/comments")
-async def get_comment_logs(instagram_account_id: str, limit: int = 100):
+def get_comment_logs(instagram_account_id: str, limit: int = 100):
     return [dict(r) for r in db.list_comment_events(instagram_account_id, limit=limit)]
 
 
 @instagram_dm_router.get("/private-replies")
-async def get_reply_logs(instagram_account_id: str, limit: int = 100):
+def get_reply_logs(instagram_account_id: str, limit: int = 100):
     return [dict(r) for r in db.list_reply_logs(instagram_account_id, limit=limit)]
 
 
 @instagram_dm_router.get("/dashboard")
-async def dashboard(instagram_account_id: str):
+def dashboard(instagram_account_id: str):
     return db.dashboard_stats(instagram_account_id)
 
 
 @instagram_dm_router.get("/health")
-async def health():
+def health():
     return {
         "global_enabled": os.environ.get("INSTAGRAM_DM_ENABLED", "false").strip().lower() == "true",
         "dry_run": os.environ.get("INSTAGRAM_DM_DRY_RUN", "true").strip().lower() != "false",
