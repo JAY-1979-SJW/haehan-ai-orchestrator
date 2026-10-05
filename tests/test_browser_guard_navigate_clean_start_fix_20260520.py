@@ -151,7 +151,7 @@ def test_l2_navigate_with_alias_still_uses_navigator(monkeypatch):
 # ── L3: stale tab cleanup 계획 ────────────────────────────────────────
 
 
-def test_l3_quit_closes_all_targets_first(monkeypatch):
+def test_l3_quit_closes_all_targets_first(monkeypatch, paths):
     """browser_quit 가 CDP /json/close 로 모든 page target 을 닫고 그 다음
     Chrome 프로세스를 종료해야 한다 (세션 복원 방지)."""
     from local_agent import browser_instance_guard as g
@@ -159,13 +159,13 @@ def test_l3_quit_closes_all_targets_first(monkeypatch):
     monkeypatch.setattr(g, "close_all_cdp_targets", lambda port: ["T-1", "T-2", "T-3"])
     g.set_process_enumerator(lambda: [])  # 프로세스 없는 상태
     result = g.quit_automation_browsers(
-        g.resolve_paths(),
+        paths,  # 실제 상태 디렉터리(pid/lock/snapshot 삭제) 대신 tmp 경로
         kill_fn=lambda pid: True,
     )
     assert result["closed_targets"] == ["T-1", "T-2", "T-3"]
 
 
-def test_l3_quit_close_targets_first_can_be_disabled(monkeypatch):
+def test_l3_quit_close_targets_first_can_be_disabled(monkeypatch, paths):
     from local_agent import browser_instance_guard as g
 
     called = []
@@ -177,7 +177,7 @@ def test_l3_quit_close_targets_first_can_be_disabled(monkeypatch):
     monkeypatch.setattr(g, "close_all_cdp_targets", fake_close)
     g.set_process_enumerator(lambda: [])
     g.quit_automation_browsers(
-        g.resolve_paths(),
+        paths,  # 실제 상태 디렉터리(pid/lock/snapshot 삭제) 대신 tmp 경로
         kill_fn=lambda pid: True,
         close_targets_first=False,
     )

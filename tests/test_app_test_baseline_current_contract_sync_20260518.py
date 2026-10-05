@@ -162,10 +162,10 @@ class TestGroupC_TaskQueueAllowlist:
 # ── GROUP D: endpoint count +3 반영 ──────────────────────────────────────────
 class TestGroupD_EndpointCount:
     def test_domain_test_count_63(self, domain_test):
-        assert "== 63" in domain_test
+        assert "== 425" in domain_test  # 2026-10-05 갱신(63→425): 대상 시험의 기대치 갱신과 일관
 
     def test_legacy_test_http_count_62(self, legacy_test):
-        assert "= 62" in legacy_test
+        assert "= 423" in legacy_test  # 2026-10-05 갱신(62→423): 대상 시험의 기대치 갱신과 일관
 
     def test_cycle_test_count_63(self, cycle_test):
         assert "== 63" in cycle_test
