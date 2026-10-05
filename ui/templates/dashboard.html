@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>haehan-ai-orchestrator 운영 대시보드</title>
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🤖 haehan-ai-orchestrator</h1>
+    <div class="subtitle">운영 대시보드 (5단계) — 로컬/내부 테스트 전용</div>
+  </div>
+  <nav>
+    <a href="/dashboard">대시보드</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <div class="warn-banner">
+    ⚠️ 현재 인증 없음 — 운영 배포 전 로그인/세션 인증 추가가 필요합니다.
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="cards">
+    <div class="card total">
+      <div class="label">전체 작업</div>
+      <div class="value">{{ activity.total_tasks }}</div>
+    </div>
+    <div class="card pending">
+      <div class="label">승인 대기</div>
+      <div class="value">{{ live_pending | length }}</div>
+    </div>
+    <div class="card blocked">
+      <div class="label">차단</div>
+      <div class="value">{{ activity.blocked_count }}</div>
+    </div>
+    <div class="card preview">
+      <div class="label">프리뷰</div>
+      <div class="value">{{ activity.preview_count }}</div>
+    </div>
+    <div class="card executed">
+      <div class="label">실행 완료</div>
+      <div class="value">{{ activity.executed_count }}</div>
+    </div>
+    <div class="card failed">
+      <div class="label">실패</div>
+      <div class="value">{{ activity.failed_count }}</div>
+    </div>
+  </div>
+
+  <!-- AI Summary Card -->
+  <div class="ai-card">
+    <h3>🔍 AI 운영 요약</h3>
+    <p>{{ ai_summary }}</p>
+  </div>
+
+  <!-- Pending Approvals (Live) -->
+  <div class="section">
+    <h2>⏳ 승인 대기 목록 (라이브)</h2>
+    {% if live_pending %}
+    <table>
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Task ID</th>
+          <th>Risk</th>
+          <th>발급 시각</th>
+          <th>남은 TTL</th>
+          <th>상세</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in live_pending %}
+        <tr>
+          <td><code>{{ p.token_id_display }}</code></td>
+          <td><a href="/dashboard/tasks/{{ p.task_id }}">{{ p.task_id }}</a></td>
+          <td><span class="badge badge-{{ p.risk_level or 'unknown' }}">{{ p.risk_level or '-' }}</span></td>
+          <td>{{ p.issued_at | int }}</td>
+          <td>{{ p.ttl_remaining }}초</td>
+          <td><a href="/dashboard/tasks/{{ p.task_id }}">승인/거절 →</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">승인 대기 중인 작업이 없습니다.</div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Blocked -->
+  <div class="section">
+    <h2>🚫 최근 차단 작업</h2>
+    {% set blocked_list = activity.recent_tasks | selectattr("status", "equalto", "BLOCKED") | list %}
+    {% if blocked_list %}
+    <table>
+      <thead>
+        <tr><th>시각</th><th>Task ID</th><th>Action</th><th>Risk</th><th>상태</th></tr>
+      </thead>
+      <tbody>
+        {% for t in blocked_list %}
+        <tr>
+          <td>{{ t.timestamp or '-' }}</td>
+          <td><a href="/dashboard/tasks/{{ t.task_id }}">{{ t.task_id }}</a></td>
+          <td>{{ t.action_type or '-' }}</td>
+          <td><span class="badge badge-{{ t.risk_level or 'unknown' }}">{{ t.risk_level or '-' }}</span></td>
+          <td><span class="badge badge-blocked">BLOCKED</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">최근 차단 작업 없음.</div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Errors -->
+  <div class="section">
+    <h2>❌ 최근 에러</h2>
+    {% if failures.recent_errors %}
+    <table>
+      <thead>
+        <tr><th>시각</th><th>Task ID</th><th>Event</th><th>Action</th><th>Risk</th><th>내용</th></tr>
+      </thead>
+      <tbody>
+        {% for e in failures.recent_errors %}
+        <tr>
+          <td>{{ e.timestamp or '-' }}</td>
+          <td><a href="/dashboard/tasks/{{ e.task_id }}">{{ e.task_id or '-' }}</a></td>
+          <td><span class="badge badge-blocked">{{ e.event_type }}</span></td>
+          <td>{{ e.action_type or '-' }}</td>
+          <td><span class="badge badge-{{ e.risk_level or 'unknown' }}">{{ e.risk_level or '-' }}</span></td>
+          <td>{{ (e.note or '')[:80] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">최근 에러 없음.</div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Tasks -->
+  <div class="section">
+    <h2>📋 최근 작업 목록</h2>
+    {% if activity.recent_tasks %}
+    <table>
+      <thead>
+        <tr><th>시각</th><th>Task ID</th><th>Action</th><th>Target</th><th>Risk</th><th>상태</th></tr>
+      </thead>
+      <tbody>
+        {% for t in activity.recent_tasks %}
+        <tr>
+          <td>{{ t.timestamp or '-' }}</td>
+          <td><a href="/dashboard/tasks/{{ t.task_id }}">{{ t.task_id or '-' }}</a></td>
+          <td>{{ t.action_type or '-' }}</td>
+          <td>{{ (t.target or '')[:40] }}</td>
+          <td><span class="badge badge-{{ t.risk_level or 'unknown' }}">{{ t.risk_level or '-' }}</span></td>
+          <td>
+            {% set st = (t.status or '') | upper %}
+            {% if st == 'EXECUTED' %}<span class="badge badge-executed">EXECUTED</span>
+            {% elif st == 'PREVIEW_ONLY' %}<span class="badge badge-preview">PREVIEW</span>
+            {% elif st == 'BLOCKED' %}<span class="badge badge-blocked">BLOCKED</span>
+            {% else %}<span class="badge badge-unknown">{{ t.status or '-' }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">아직 처리된 작업이 없습니다. <code>python app.py</code> 를 먼저 실행하세요.</div>
+    {% endif %}
+  </div>
+
+  <!-- Top Action Types -->
+  {% if activity.top_action_types %}
+  <div class="section">
+    <h2>📊 Action 타입 분포 (상위 5)</h2>
+    <table>
+      <thead><tr><th>Action Type</th><th>건수</th></tr></thead>
+      <tbody>
+        {% for name, cnt in activity.top_action_types %}
+        <tr><td>{{ name }}</td><td>{{ cnt }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Top Blocked Reasons -->
+  {% if activity.top_blocked_reasons %}
+  <div class="section">
+    <h2>🔒 주요 차단 사유 (상위 5)</h2>
+    <table>
+      <thead><tr><th>차단 사유</th><th>건수</th></tr></thead>
+      <tbody>
+        {% for reason, cnt in activity.top_blocked_reasons %}
+        <tr><td>{{ reason }}</td><td>{{ cnt }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>

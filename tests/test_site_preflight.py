@@ -282,5 +282,8 @@ def test_preflight_routes_require_role_and_return_saved_result(env, monkeypatch)
     assert _client(as_admin=False).post(f"/site-registry/{HOST}/preflight").status_code in (401, 403)
 
 
-def test_preflight_is_not_exposed_to_ai_registry():
-    assert not any("preflight" in key for key in mcp_server.API_REGISTRY)
+def test_ai_can_only_read_saved_preflight_never_run_it():
+    reg = mcp_server.API_REGISTRY
+    assert reg["sites.preflight"]["method"] == "GET" and reg["sites.preflight"]["path"] == "/api/v1/site-registry/{host}/preflight"
+    assert not any("preflight" in v["path"] and v["method"] != "GET" for v in reg.values())  # 조사 실행(POST)은 사람만
+    assert [k for k in reg if "preflight" in k] == ["sites.preflight"]
