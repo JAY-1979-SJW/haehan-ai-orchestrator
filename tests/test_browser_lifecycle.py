@@ -215,3 +215,57 @@ def test_start_url_only_allows_http_https_or_blank():
     assert lc._safe_start_url("https://www.google.com/") == "https://www.google.com/"
     assert lc._safe_start_url("http://127.0.0.1:8777/x") == "http://127.0.0.1:8777/x"
     assert lc._safe_start_url(lc.BLANK_URL) == lc.BLANK_URL
+
+
+# ── 중앙 정책(CDP_BROWSER_POLICY) ─────────────────────────────
+
+
+def test_central_policy_is_valid_and_guardrails_are_on():
+    """정책의 세 불리언은 끄면 안 된다(로그인 유지·깨끗한 시작이 깨진다) — 끄는 변경은 이 시험이 막는다."""
+    from scripts.config import CDP_BROWSER_POLICY
+
+    assert lc.validate_policy(CDP_BROWSER_POLICY) == []
+    assert all(CDP_BROWSER_POLICY[k] is True for k in lc.POLICY_REQUIRED_TRUE)
+
+
+def test_validate_policy_reports_each_problem():
+    good = {"start_url": "https://www.google.com/", "restore_last_session": True, "clean_start": True, "graceful_stop_first": True, "restore_settle_s": 10.0}
+    assert lc.validate_policy(good) == []
+    for key in lc.POLICY_REQUIRED_TRUE:
+        assert any(key in problem for problem in lc.validate_policy({**good, key: False}))
+    assert lc.validate_policy({**good, "start_url": "about:blank"})  # 시작 페이지는 http(s) 주소여야 한다
+    assert lc.validate_policy({**good, "start_url": "file:///x"})
+    for bad in (0, 61, "10", True, None):
+        assert lc.validate_policy({**good, "restore_settle_s": bad})
+
+
+def test_session_args_follow_the_policy():
+    assert lc.session_args({"restore_last_session": True}) == ["--restore-last-session"]
+    assert lc.session_args({"restore_last_session": False}) == []
+    assert lc.session_args({}) == []
+
+
+def test_apply_start_policy_cleans_with_the_policy_url_and_settle_time(monkeypatch):
+    seen = {}
+
+    def fake_close(port, *, start_url, settle_s, **kw):
+        seen.update(port=port, start_url=start_url, settle_s=settle_s)
+        return 3
+
+    monkeypatch.setattr(lc, "close_stale_tabs", fake_close)
+    policy = {"clean_start": True, "start_url": "https://www.google.com/", "restore_settle_s": 7.5}
+    assert lc.apply_start_policy(9222, policy) == 3
+    assert seen == {"port": 9222, "start_url": "https://www.google.com/", "settle_s": 7.5}
+    seen.clear()
+    assert lc.apply_start_policy(9222, {**policy, "clean_start": False}) == 0 and seen == {}  # 꺼져 있으면 정리하지 않는다
+
+
+def test_stop_browser_skips_the_graceful_step_only_when_the_policy_says_so():
+    calls: list[str] = []
+    result = lc.stop_browser(
+        9222, 1, is_alive=lambda: True, graceful_first=False,
+        graceful=lambda port, is_alive: calls.append("graceful") or True,
+        polite=lambda pid, is_alive: calls.append("signal") or True,
+        force=lambda pid: calls.append("force"),
+    )
+    assert result == "signal" and calls == ["signal"]  # 정책이 끄면 CDP 단계를 건너뛴다(기본은 켜짐 — 위 시험이 고정)

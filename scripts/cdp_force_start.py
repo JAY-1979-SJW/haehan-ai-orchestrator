@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome  # noqa: E402
-from scripts.config import CDP_START_URL  # noqa: E402
+from scripts.config import CDP_BROWSER_POLICY  # noqa: E402
 
 CDP_PORT = 9222
 CDP_HOST = "127.0.0.1"
@@ -154,7 +154,7 @@ def cmd_start(url: str = "") -> int:
         "--disable-session-crashed-bubble",
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
-        lifecycle.RESTORE_SWITCH,  # 이전 세션 복원(로그인 유지) — 옛 탭은 시작 직후 close_stale_tabs 가 정리한다
+        *lifecycle.session_args(CDP_BROWSER_POLICY),  # 이전 세션 복원(로그인 유지) — 옛 탭은 시작 직후 close_stale_tabs 가 정리한다
         "--window-position=100,50",
         "--window-size=1280,900",
     ]
@@ -195,7 +195,7 @@ def cmd_start(url: str = "") -> int:
     if _wait_cdp(20):
         print(" ✓")
         if not url:  # 주소를 지정했으면 그 탭이 목적이니 두고, 아니면 복원된 옛 탭을 정리해 깨끗하게 시작한다
-            print(f"  복원된 옛 탭 {lifecycle.close_stale_tabs(CDP_PORT, start_url=CDP_START_URL)}개 정리(시작 페이지 {CDP_START_URL} 탭 하나만 남김)")
+            print(f"  복원된 옛 탭 {lifecycle.apply_start_policy(CDP_PORT, CDP_BROWSER_POLICY)}개 정리(시작 페이지 {CDP_BROWSER_POLICY['start_url']} 탭 하나만 남김)")
         _show_info()
         _start_watch()
         return 0
@@ -235,7 +235,7 @@ def cmd_stop() -> None:
             data = json.loads(PID_FILE.read_text(encoding="utf-8"))
             pid = data.get("pid")
             if pid:
-                how = lifecycle.stop_browser(CDP_PORT, pid)  # 쿠키가 디스크에 남도록 정상 종료부터 3단계
+                how = lifecycle.stop_browser(CDP_PORT, pid, graceful_first=CDP_BROWSER_POLICY["graceful_stop_first"])  # 쿠키가 디스크에 남도록 정상 종료부터 3단계
                 print(f"✓ Chrome 종료 (PID={pid}, 방식={how})")
             PID_FILE.unlink(missing_ok=True)
         except Exception as e:  # noqa: BLE001 - 로컬 CDP 크롬 강제 시작/중지 CLI 도구 - 프로세스 상태 조회/종료 실패 시 print 안내

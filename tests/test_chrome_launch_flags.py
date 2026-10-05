@@ -19,7 +19,7 @@ ALL_LAUNCHERS = (*CDP_LAUNCHERS, "scripts/naver/browser_gate.py")
 
 def _arg_lines(rel: str) -> list[str]:
     lines = (ROOT / rel).read_text(encoding="utf-8").splitlines()
-    return [ln for ln in lines if re.search(r'^\s*(f?"--[a-z-]+|lifecycle\.RESTORE_SWITCH)', ln)]
+    return [ln for ln in lines if re.search(r'^\s*(f?"--[a-z-]+|\*lifecycle\.session_args)', ln)]
 
 
 def test_no_launcher_passes_the_switch_with_a_value():
@@ -31,7 +31,7 @@ def test_no_launcher_passes_the_switch_with_a_value():
 
 def test_cdp_launchers_use_the_bare_restore_switch_constant():
     for rel in CDP_LAUNCHERS:
-        assert any("lifecycle.RESTORE_SWITCH" in ln for ln in _arg_lines(rel)), f"{rel}: 로그인 유지용 복원 스위치가 실행 인자에 없습니다"
+        assert any("lifecycle.session_args(CDP_BROWSER_POLICY)" in ln for ln in _arg_lines(rel)), f"{rel}: 로그인 유지용 복원 스위치(정책)가 실행 인자에 없습니다"
     assert lc.RESTORE_SWITCH == "--restore-last-session"
 
 
@@ -39,7 +39,7 @@ def test_naver_browser_gate_does_not_restore_sessions():
     """네이버 시작 주소를 여는 별도 실행 경로는 복원 스위치를 쓰지 않는다(시작 주소만 열기)."""
     args = _arg_lines("scripts/naver/browser_gate.py")
     assert args, "검사할 Chrome 실행 인자를 하나도 찾지 못했습니다(시험이 공허해짐)"
-    assert not [ln for ln in args if "restore-last-session" in ln or "RESTORE_SWITCH" in ln]
+    assert not [ln for ln in args if "restore-last-session" in ln or "RESTORE_SWITCH" in ln or "session_args" in ln]
 
 
 def test_cdp_launchers_always_pass_a_custom_user_data_dir():
@@ -50,11 +50,13 @@ def test_cdp_launchers_always_pass_a_custom_user_data_dir():
         assert any("--user-data-dir" in ln for ln in args), f"{rel}: --user-data-dir 가 없으면 Chrome 136+ 에서 디버깅 포트가 무시됩니다"
 
 
-def test_cdp_launchers_pass_the_configured_start_page_to_the_tab_cleanup():
-    """데몬·force_start 는 시작 직후 정리에서 설정의 시작 페이지(구글 홈)를 남긴다 — 빈 탭이 아니라(2026-10-05 사용자 요청)."""
-    from scripts.config import CDP_START_URL, GOOGLE_URLS
+def test_cdp_launchers_apply_the_central_policy():
+    """데몬·force_start 는 시작 정리·종료에서 설정의 정책(`CDP_BROWSER_POLICY`)을 그대로 쓴다 — 값이 코드에 흩어지지 않게(2026-10-05 구조화)."""
+    from scripts.config import CDP_BROWSER_POLICY, CDP_START_URL, GOOGLE_URLS
 
-    assert CDP_START_URL == "https://www.google.com/" and GOOGLE_URLS["home"] == CDP_START_URL
+    assert CDP_START_URL == CDP_BROWSER_POLICY["start_url"] == GOOGLE_URLS["home"] == "https://www.google.com/"
     for rel in CDP_LAUNCHERS:
         text = (ROOT / rel).read_text(encoding="utf-8")
-        assert "close_stale_tabs(" in text and "start_url=CDP_START_URL" in text, f"{rel}: 시작 페이지를 넘기지 않습니다"
+        assert "apply_start_policy(CDP_PORT, CDP_BROWSER_POLICY)" in text, f"{rel}: 시작 정책을 적용하지 않습니다"
+        assert 'graceful_first=CDP_BROWSER_POLICY["graceful_stop_first"]' in text, f"{rel}: 종료 정책을 적용하지 않습니다"
+        assert "close_stale_tabs(" not in text, f"{rel}: 정책을 거치지 않고 탭 정리를 직접 부르고 있습니다"

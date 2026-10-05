@@ -352,6 +352,17 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
   (하드코딩 금지) — 실제 인증된 세션에서 도착 URL을 확인하지 않고 추측으로
   적으면 리다이렉트/마케팅 페이지로 빠질 수 있다. 새 URL을 추가하기 전엔 실제
   로그인된 CDP 세션으로 `page.goto()` 후 `page.url`을 찍어 확인한다.
+- **9222 데몬 Chrome 의 로그인 유지·깨끗한 시작 정책은 `scripts/config.py` 의 `CDP_BROWSER_POLICY`
+  한 곳에서 정한다**(상세·근거: `docs/architecture/CDP_BROWSER_POLICY.md`). (2026-10-05 실측) 로그인(세션
+  쿠키)은 `--restore-last-session` 스위치(**값 없이** — `=false` 도 켜진다) + CDP `Browser.close` 정상
+  종료일 때만 재시작 뒤에도 남는다. 종료 신호·강제 종료·전원 차단은 로그인을 잃는다 → 데몬 재시작은
+  `python scripts/cdp_daemon.py restart` 로만. 시작 페이지는 구글 홈(복원된 옛 탭은 시작 직후 정리).
+  로그인 확인은 쿠키 이름 존재 여부(참/거짓)로만 하고 값은 읽지 않는다.
+- **시험·검증 도구가 9222 브라우저에 접속하면 안 된다** — 사용자 탭이 이동·소멸하고 로그인이 풀린다
+  (2026-10-05: 패치가 잘못된 모듈에 걸린 YouTube 시험과, 파일 이름 지정만으로 수집되던
+  `tests/integration/manual/` 이 원인). 시험은 가짜 객체만 쓰고 패치는 **실제 호출이 일어나는 모듈**에
+  건다. 수동 시험은 `HAEHAN_RUN_MANUAL=1` 일 때만 실행된다. 탭 이동 주체는
+  `data/logs/browser_watch.jsonl` 의 `cdp_clients`·`browser_process` 기록으로 추적한다.
 
 ### 코딩 컨벤션 (2026-09-26 실측 확인)
 

@@ -50,6 +50,33 @@ def _http(port: int, path: str, method: str = "GET", timeout: float = 5.0) -> An
         return body.decode("utf-8", errors="replace")
 
 
+POLICY_REQUIRED_TRUE = ("restore_last_session", "clean_start", "graceful_stop_first")  # 끄면 로그인이 풀리거나 옛 탭이 되살아난다
+
+
+def validate_policy(policy: dict[str, Any]) -> list[str]:
+    """`scripts.config.CDP_BROWSER_POLICY` 검증 → 문제 목록(비어 있으면 정상). 입출력 없는 순수 함수."""
+    problems = [f"{key} 는 True 여야 합니다(끄면 로그인 유지·깨끗한 시작이 깨집니다)" for key in POLICY_REQUIRED_TRUE if policy.get(key) is not True]
+    url = str(policy.get("start_url", ""))
+    if _safe_start_url(url) != url or url == BLANK_URL:
+        problems.append("start_url 은 http(s) 주소여야 합니다")
+    settle = policy.get("restore_settle_s")
+    if not isinstance(settle, (int, float)) or isinstance(settle, bool) or not 1 <= settle <= 60:
+        problems.append("restore_settle_s 는 1~60 초여야 합니다")
+    return problems
+
+
+def session_args(policy: dict[str, Any]) -> list[str]:
+    """Chrome 실행 인자 중 세션 복원 스위치(정책이 켜져 있을 때만, 값 없이)."""
+    return [RESTORE_SWITCH] if policy.get("restore_last_session") else []
+
+
+def apply_start_policy(port: int, policy: dict[str, Any], **kwargs: Any) -> int:
+    """시작 직후 정책 적용: `clean_start` 이면 옛 탭을 정리하고 `start_url` 탭 하나만 남긴다 → 닫은 개수(꺼져 있으면 0)."""
+    if not policy.get("clean_start"):
+        return 0
+    return close_stale_tabs(port, start_url=str(policy.get("start_url", BLANK_URL)), settle_s=float(policy.get("restore_settle_s", RESTORE_SETTLE_S)), **kwargs)
+
+
 def _wait_restore_settled(port: int, *, timeout_s: float, poll_s: float, sleep, clock) -> list[str]:
     """복원이 끝나기를 기다린다: page 탭 목록이 두 번 연속 같으면(또는 시간 초과) 그 목록을 돌려준다. 탭이 많아도 고정 대기보다 정확하다."""
     deadline = clock() + timeout_s
@@ -160,7 +187,9 @@ def _pid_alive(pid: int) -> bool:
     return psutil.pid_exists(pid)
 
 
-def stop_browser(port: int, pid: int, *, is_alive=None, graceful=graceful_close, polite=_polite_signal, force=_force_kill) -> str:
+def stop_browser(  # noqa: PLR0913 - 정책 1개 + 시험용 단계 주입 3개는 모두 호출부가 정하는 독립 옵션
+    port: int, pid: int, *, is_alive=None, graceful_first: bool = True, graceful=graceful_close, polite=_polite_signal, force=_force_kill
+) -> str:
     """Chrome 을 3단계로 닫는다 → 끝난 방식(`already_stopped`·`graceful`·`signal`·`forced`).
 
     1) CDP `Browser.close` — 쿠키·세션이 디스크에 남는다(로그인 유지는 이 단계뿐)  2) 종료 신호 — 탭은 복원되지만 로그인 쿠키는 잃을 수 있다
@@ -169,7 +198,7 @@ def stop_browser(port: int, pid: int, *, is_alive=None, graceful=graceful_close,
     alive = is_alive or (lambda: _pid_alive(pid))
     if not alive():
         return "already_stopped"
-    if graceful(port, is_alive=alive):
+    if graceful_first and graceful(port, is_alive=alive):
         return "graceful"
     if polite(pid, is_alive=alive):
         return "signal"

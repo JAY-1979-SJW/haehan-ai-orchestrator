@@ -39,7 +39,7 @@ sys.path.insert(0, str(ROOT))
 from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome, find_edge  # noqa: E402
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
-from scripts.config import CDP_HOST, CDP_PORT, CDP_START_URL  # noqa: E402
+from scripts.config import CDP_BROWSER_POLICY, CDP_HOST, CDP_PORT  # noqa: E402
 
 # ── 설정 ─────────────────────────────────────────────────────────────
 DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
@@ -194,7 +194,7 @@ def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
         # 이전 세션 복원 스위치(값 없이): 로그인(세션 쿠키)을 재시작 뒤에도 유지한다. 복원된 옛 탭은 시작 직후 close_stale_tabs 가 정리한다. 이전에 쓰던 `=false` 형태는 값과 무관하게 켜지는 스위치라 오해를 부르는 잘못된 표기였다.
-        lifecycle.RESTORE_SWITCH,
+        *lifecycle.session_args(CDP_BROWSER_POLICY),
         "--window-position=100,50",
         "--window-size=1280,900",
         "--force-device-scale-factor=1.5",
@@ -331,7 +331,7 @@ def _stop_chrome(proc: subprocess.Popen | None) -> None:
     """Chrome 을 3단계로 닫는다(CDP 종료 → 종료 신호 → 강제) — 앞 단계일수록 쿠키가 디스크에 잘 남는다."""
     if not proc or proc.poll() is not None:
         return
-    how = lifecycle.stop_browser(CDP_PORT, proc.pid, is_alive=lambda: proc.poll() is None)
+    how = lifecycle.stop_browser(CDP_PORT, proc.pid, is_alive=lambda: proc.poll() is None, graceful_first=CDP_BROWSER_POLICY["graceful_stop_first"])
     if how in ("signal", "forced"):  # CDP 정상 종료가 아니면 로그인(세션 쿠키)이 사라졌을 수 있다
         log.warning("[CHROME] 정상 종료(CDP) 실패 → 종료 방식=%s PID=%d — 로그인 세션이 사라졌을 수 있습니다", how, proc.pid)
     else:
@@ -376,7 +376,7 @@ def _restart_chrome() -> None:
             _save_state(_state)
 
             if _is_cdp_ready(CDP_PORT):
-                log.info("[RESTART] 복원된 옛 탭 %d개 정리(시작 페이지 %s 탭 하나만 남김)", lifecycle.close_stale_tabs(CDP_PORT, start_url=CDP_START_URL), CDP_START_URL)
+                log.info("[RESTART] 복원된 옛 탭 %d개 정리(시작 페이지 %s 탭 하나만 남김)", lifecycle.apply_start_policy(CDP_PORT, CDP_BROWSER_POLICY), CDP_BROWSER_POLICY["start_url"])
                 _state.browser_context = "active"
                 _state.last_error = ""
                 log.info("[RESTART] Chrome 재시작 성공 PID=%d", _chrome_proc.pid)
@@ -599,7 +599,7 @@ def run_daemon() -> None:
         _chrome_proc.terminate()
         return
 
-    log.info("[CDP] 복원된 옛 탭 %d개 정리(시작 페이지 %s 탭 하나만 남김)", lifecycle.close_stale_tabs(CDP_PORT, start_url=CDP_START_URL), CDP_START_URL)
+    log.info("[CDP] 복원된 옛 탭 %d개 정리(시작 페이지 %s 탭 하나만 남김)", lifecycle.apply_start_policy(CDP_PORT, CDP_BROWSER_POLICY), CDP_BROWSER_POLICY["start_url"])
     _state.browser_context = "active"
     _save_state(_state)
     log.info("✓ CDP 포트 %d 준비 완료", CDP_PORT)
@@ -689,7 +689,7 @@ def cmd_stop() -> None:
     # Chrome 종료
     if state.chrome_pid:
         try:
-            how = lifecycle.stop_browser(CDP_PORT, state.chrome_pid)  # 쿠키가 디스크에 남도록 정상 종료부터 3단계
+            how = lifecycle.stop_browser(CDP_PORT, state.chrome_pid, graceful_first=CDP_BROWSER_POLICY["graceful_stop_first"])  # 쿠키가 디스크에 남도록 정상 종료부터 3단계
             print(f"✓ Chrome 종료 (PID={state.chrome_pid}, 방식={how})")
             stopped = True
         except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
