@@ -24,6 +24,7 @@ def structure(site_map: dict[str, Any]) -> dict[str, Any]:
             "name": str(t.get("name") or ""),
             "risk": str(t.get("risk") or ""),
             "fp": str(t.get("fingerprint") or ""),
+            **({"never": str(t["never"])} if t.get("never") else {}),  # 있을 때만 넣는다 — 표시가 없는 기존 지도의 지문은 그대로
         }
         for t in site_map.get("tasks", [])
         if isinstance(t, dict) and t.get("id")
@@ -51,7 +52,7 @@ def next_rev(prev_rev: int, prev_fingerprint: str, new_fingerprint: str) -> tupl
 
 
 def _changed_tasks(a: dict[str, Any], b: dict[str, Any]) -> list[str]:
-    return [k for k in a if k in b and (a[k]["fp"] != b[k]["fp"] or a[k]["risk"] != b[k]["risk"])]
+    return [k for k in a if k in b and (a[k]["fp"] != b[k]["fp"] or a[k]["risk"] != b[k]["risk"] or a[k].get("never", "") != b[k].get("never", ""))]
 
 
 def diff(old: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
@@ -73,6 +74,7 @@ def diff(old: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
         "menu_removed": menu_removed[:LIST_CAP],
         "sources_added": src_added[:LIST_CAP],
         "sources_removed": src_removed[:LIST_CAP],
+        "never_removed": [k for k in old_tasks if old_tasks[k].get("never") and k in new_tasks and not new_tasks[k].get("never")][:LIST_CAP],  # 자동 실행 불가 표시가 사라진 업무 — 사람이 확인해야 한다
         "stale_candidates": (changed + removed)[:LIST_CAP],
         "counts": {
             "tasks": [len(old_tasks), len(new_tasks)],

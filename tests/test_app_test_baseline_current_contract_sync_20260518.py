@@ -162,10 +162,10 @@ class TestGroupC_TaskQueueAllowlist:
 # ── GROUP D: endpoint count +3 반영 ──────────────────────────────────────────
 class TestGroupD_EndpointCount:
     def test_domain_test_count_63(self, domain_test):
-        assert "== 428" in domain_test  # M11 +2(427→429); M10 +2(425→427); 2026-10-05 갱신(63→425): 대상 시험의 기대치 갱신과 일관 / gc 제거 -1(429→428 기준, 2026-10-05)
+        assert "== 431" in domain_test  # M12 +3(428→431); M11 +2(427→429); M10 +2(425→427); 2026-10-05 갱신(63→425): 대상 시험의 기대치 갱신과 일관 / gc 제거 -1(429→428 기준, 2026-10-05)
 
     def test_legacy_test_http_count_62(self, legacy_test):
-        assert "= 426" in legacy_test  # M11 +2(425→427); M10 +2(423→425); 2026-10-05 갱신(62→423): 대상 시험의 기대치 갱신과 일관 / gc 제거 -1(429→428 기준, 2026-10-05)
+        assert "= 429" in legacy_test  # M12 +3(426→429); M11 +2(425→427); M10 +2(423→425); 2026-10-05 갱신(62→423): 대상 시험의 기대치 갱신과 일관 / gc 제거 -1(429→428 기준, 2026-10-05)
 
     def test_cycle_test_count_63(self, cycle_test):
         # 현행: cycle_test 는 자체 숫자 대신 audit_backend_runtime_contract.EXPECTED_RUNTIME_ROUTES 단일 기준에 위임한다
@@ -187,14 +187,14 @@ class TestGroupD_EndpointCount:
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         routes = runtime_routes()
-        assert len(routes) == 428  # [429=427+2: 지도 이력 /site-map/{host}/history·/diff GET 2개 추가(M11)] [427=425+2: 사이트 사전 조사 /site-registry/{host}/preflight GET·POST 2개 추가(M10, 삭제 0); 이전 425=424+1: 가입 카페 변동 조회 GET /naver-cafe/my-cafes/changes 1개 추가(2026-10-05), 삭제 0] [424=419+5: /site-registry 5개 추가(2026-10-05 M7-S1)] 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0) / gc 제거 -1(429→428 기준, 2026-10-05)
+        assert len(routes) == 431  # [431=428+3: 업무 후보·명세 /site-map/{host}/candidates GET·spec POST/GET 3개 추가(M12)] [429=427+2: 지도 이력 /site-map/{host}/history·/diff GET 2개 추가(M11)] [427=425+2: 사이트 사전 조사 /site-registry/{host}/preflight GET·POST 2개 추가(M10, 삭제 0); 이전 425=424+1: 가입 카페 변동 조회 GET /naver-cafe/my-cafes/changes 1개 추가(2026-10-05), 삭제 0] [424=419+5: /site-registry 5개 추가(2026-10-05 M7-S1)] 2026-10-04: origin/master 402(/dev-reg/approvals GET 3개 복원) + 이 브랜치의 공무 AI 초안·사이트 업무 지도·벤더 조회 17개(삭제 0) / gc 제거 -1(429→428 기준, 2026-10-05)
 
     def test_runtime_http_count_is_62(self):
         from tests.app_routes import http_routes
 
         # 2026-10-04 갱신: FastAPI 0.137+ 지연 include_router 때문에 app.routes 를 직접 세면 0개 — 펼친 목록(tests/app_routes.py)으로 센 현재 값
         http = http_routes()
-        assert len(http) == 426  # [427=425+2: 지도 이력 /site-map/{host}/history·/diff GET 2개 추가(M11)] [425=423+2: /site-registry/{host}/preflight GET·POST(2026-10-05 M10)] [423=422+1: GET /naver-cafe/my-cafes/changes(2026-10-05)] [422=417+5: /site-registry 5개(2026-10-05 M7-S1)] origin/master 400 + 위 17개(397→417) / gc 제거 -1(429→428 기준, 2026-10-05)
+        assert len(http) == 429  # [429=426+3: 업무 후보·명세 /site-map/{host}/candidates GET·spec POST/GET 3개 추가(M12)] [427=425+2: 지도 이력 /site-map/{host}/history·/diff GET 2개 추가(M11)] [425=423+2: /site-registry/{host}/preflight GET·POST(2026-10-05 M10)] [423=422+1: GET /naver-cafe/my-cafes/changes(2026-10-05)] [422=417+5: /site-registry 5개(2026-10-05 M7-S1)] origin/master 400 + 위 17개(397→417) / gc 제거 -1(429→428 기준, 2026-10-05)
 
 
 # ── 안전 확인 ─────────────────────────────────────────────────────────────────

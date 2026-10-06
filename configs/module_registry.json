@@ -21888,6 +21888,30 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_site_task_spec.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/domain/site_task_spec.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "업무 never(자동 실행 불가) 분류·후보 표시·업무 명세 규칙(순수 함수, 입출력 없음) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/services/site_task_spec_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "업무 후보 목록·명세 생성·승인 가능 여부 판정 업무 흐름(규칙은 domain, 저장은 persistence, HTTP·브라우저 모름) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   }
  }
 }

@@ -841,7 +841,7 @@ class TestNoContractBreak:
         routes = runtime_routes()
         # APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63
         # 2026-10-05 갱신(63→425): 저장소 성장·FastAPI 0.142 로 지연 include 래퍼를 펼쳐 실제 라우트를 보게 됨(EXPECTED_RUNTIME_ROUTES 와 일치)
-        assert len(routes) == 428, f"endpoint 수 변경 감지: {len(routes)}"
+        assert len(routes) == 431, f"endpoint 수 변경 감지: {len(routes)}"
 
     def test_health_endpoint_unchanged(self):
         """health endpoint 응답 구조가 변경되지 않았다."""

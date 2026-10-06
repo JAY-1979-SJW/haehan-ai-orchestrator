@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 
 from .site_map_labels import clean_label, is_global_landmark
 from .site_map_menu import OPEN_PAGE_ID, validate_open_url
+from .site_task_spec import carry_never, effective_never, never_kind
 
 SCHEMA_VERSION = 1
 
@@ -264,6 +265,7 @@ def tasks_from_snapshot(snapshot: dict[str, Any], *, auth: str = AUTH_PUBLIC, no
                     "verified_at": "",
                     "failures": 0,
                     "changes": [],
+                    **_never_key(never_kind([*controls, *action_text, title, path], fields, risk=risk)),
                 }
             )
         tasks.extend(_button_tasks(frame, frame_url, host, path, title, used_controls, auth=auth, now=now))
@@ -314,9 +316,15 @@ def _button_tasks(  # noqa: PLR0913 - 한 프레임의 버튼 업무를 만드�
                 "verified_at": "",
                 "failures": 0,
                 "changes": [],
+                **_never_key(never_kind([text, path], [], risk=risk)),
             }
         )
     return tasks
+
+
+def _never_key(kind: str) -> dict[str, str]:
+    """`never` 가 있을 때만 키를 만든다(없는 업무의 저장 형식·구조 지문은 그대로)."""
+    return {"never": kind} if kind else {}
 
 
 def coverage_of(per_snapshot: list[tuple[dict[str, Any], list[dict[str, Any]]]]) -> dict[str, Any]:
@@ -390,7 +398,7 @@ def merge_tasks(site_map: dict[str, Any], observed: list[dict[str, Any]], *, now
             by_id[new["id"]] = dict(new, observed_at=now)
             continue
         if old["fingerprint"] == new["fingerprint"]:
-            kept = dict(old, observed_at=now)
+            kept = dict(old, observed_at=now, **_never_key(carry_never(old, new)))
             if _RISK_RANK[new["risk"]] > _RISK_RANK[old["risk"]]:  # 규칙이 강화돼 위험이 올라갔다 — 올리고 읽기용 클릭 단계는 뺀다(내리지는 않는다)
                 kept.update(risk=new["risk"], steps=new["steps"], category=new["category"], state=STATE_OBSERVED)
             by_id[new["id"]] = kept
@@ -401,6 +409,7 @@ def merge_tasks(site_map: dict[str, Any], observed: list[dict[str, Any]], *, now
             if old.get(keep):
                 merged[keep] = old[keep]
         merged["risk"] = max_risk(old["risk"], new["risk"])  # 위험 등급은 내려가지 않는다
+        merged.update(_never_key(carry_never(old, new)))  # never 표시도 자동 관찰로 지워지지 않는다
         by_id[new["id"]] = merged
     return dict(site_map, updated_at=now, tasks=sorted(by_id.values(), key=lambda t: t["id"]))
 
@@ -530,7 +539,7 @@ def effective_risk(task: dict[str, Any]) -> str:
 
 def with_effective_risk(site_map: dict[str, Any]) -> dict[str, Any]:
     """화면·조회 응답에 내보낼 때 업무마다 유효 위험 등급을 반영한 사본(저장본은 건드리지 않는다)."""
-    return dict(site_map, tasks=[dict(t, risk=effective_risk(t)) for t in site_map["tasks"]])
+    return dict(site_map, tasks=[dict(t, risk=effective_risk(t), **_never_key(effective_never(dict(t, risk=effective_risk(t))))) for t in site_map["tasks"]])
 
 
 def _require_dict(params: Any) -> None:
@@ -546,6 +555,16 @@ def _validate_open_page_request(task: dict[str, Any], params: dict[str, Any]) ->
     return {"url": validate_open_url(params.get("url"), str(task.get("host") or ""), risk_of=risk_of, skip_fragments=EXPLORE_SKIP_URL)}
 
 
+def _require_runnable(task: dict[str, Any]) -> None:
+    """AI 가 실행할 수 있는 업무인지: never(자동 실행 불가)가 먼저 막고, 그다음 read 가 아니면 막는다."""
+    risk = effective_risk(task)
+    never = effective_never(dict(task, risk=risk))
+    if never:
+        raise ValueError(f"자동 실행 불가 업무입니다(never:{never}) — 승인으로도 실행할 수 없고 사람이 사이트에서 직접 해야 합니다")
+    if risk != RISK_READ:
+        raise ValueError(f"조회(read) 업무만 실행할 수 있습니다(이 업무는 {RISK_LABEL_KO.get(risk, risk)}). 실행은 사람 승인 카드로만 합니다")
+
+
 def validate_run_request(task: dict[str, Any], params: dict[str, Any]) -> dict[str, str]:
     """실행 요청 검증 → 문자열 매개변수. 규칙 위반은 ValueError.
 
@@ -553,9 +572,7 @@ def validate_run_request(task: dict[str, Any], params: dict[str, Any]) -> dict[s
     - 지도에 없는 매개변수는 거부, 입력칸이 있는 업무는 적어도 하나는 있어야 한다, 필수 칸은 반드시 있어야 한다.
     - 값은 200자 이내 문자열, 제어문자 금지. 지도에 없는 칸을 채우거나 값을 지도에 남기지 않는다.
     """
-    risk = effective_risk(task)
-    if risk != RISK_READ:
-        raise ValueError(f"조회(read) 업무만 실행할 수 있습니다(이 업무는 {RISK_LABEL_KO.get(risk, risk)}). 실행은 사람 승인 카드로만 합니다")
+    _require_runnable(task)
     _require_dict(params)
     if task.get("id") == OPEN_PAGE_ID:
         return _validate_open_page_request(task, params)

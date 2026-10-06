@@ -5,6 +5,9 @@
   GET  /site-map/{host}/lookup?q&limit    — 키워드로 업무 후보·절차 조회            [AI 허용: sitemap.lookup]
   GET  /site-map/{host}                   — 지도 전체(관리자 화면용)
   GET  /site-map/{host}/history           — 보존 중인 지도 버전 목록(map_rev·지문·시각)
+  GET  /site-map/{host}/candidates        — '이 사이트에서 할 수 있는 일' 목록(never 는 자동 실행 불가로 표시)
+  POST /site-map/{host}/spec              — 업무 명세 초안 생성 + 실행 계획(드라이런, 실행 없음). never 는 거부
+  GET  /site-map/{host}/spec?task_key=    — 저장된 업무 명세·계획
   GET  /site-map/{host}/diff?from&to      — 두 지도 버전의 구조 차이(to 생략 = 현재)
   POST /site-map/{host}/classify          — 사람이 이름·목적·분류 확정(위험 등급 변경 불가)
   POST /site-map/{host}/outcome           — 실행 결과 기록(verified/stale)
@@ -25,6 +28,7 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.services import site_task_map_explore_service as explore
 from ai_orchestrator.services import site_task_map_service as service
+from ai_orchestrator.services import site_task_spec_service as spec_service
 from scripts.explorer import task_mapper, task_runner
 
 explore.configure(task_mapper.run_request)  # 승인된 탐색의 실행기 연결(브라우저 모듈은 실행 시점에만 불러온다)
@@ -62,6 +66,10 @@ class RunBody(BaseModel):
     task_id: str
     params: dict[str, str] = {}
     map_rev: int | None = None  # 기준으로 삼은 지도 버전(생략하면 현재 지도) — 어긋나면 map_changed 로 돌려준다
+
+
+class SpecBody(BaseModel):
+    task_key: str
 
 
 class OutcomeBody(BaseModel):
@@ -126,6 +134,30 @@ def cancel_explore(request_id: str = _rid(), claims: dict = _ADMIN):
 def lookup(q: str = "", limit: int = 5, host: str = _host(), _: dict = _ADMIN):
     try:
         return service.lookup(host, q, limit=limit)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.get("/{host}/candidates")
+def candidates(host: str = _host(), _: dict = _ADMIN):
+    try:
+        return spec_service.candidates(host)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.post("/{host}/spec")
+def create_spec(body: SpecBody, host: str = _host(), _: dict = _ADMIN):
+    try:
+        return spec_service.create_spec(host, body.task_key)
+    except ValueError as e:
+        raise _bad(e) from e
+
+
+@site_task_map_router.get("/{host}/spec")
+def get_spec(task_key: str = Query(..., min_length=1, max_length=200), host: str = _host(), _: dict = _ADMIN):
+    try:
+        return spec_service.get_spec(host, task_key)
     except ValueError as e:
         raise _bad(e) from e
 
