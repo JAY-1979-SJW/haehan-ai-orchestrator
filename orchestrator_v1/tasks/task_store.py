@@ -3,7 +3,6 @@
 task_id → {task, risk, policy} 를 저장해서 executor.py가 조회할 수 있게 함.
 approval_manager._store와 같은 in-process 공유 방식.
 """
-from typing import Optional
 
 _store: dict = {}
 

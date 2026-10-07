@@ -6,7 +6,6 @@ candidate → task 승격 모듈
 """
 import hashlib
 from datetime import datetime, timezone
-from typing import Optional
 
 import audit_logger
 import email_task_store
