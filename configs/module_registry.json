@@ -2993,7 +2993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/notify/telegram_sender.py": {
+  "ai_orchestrator/core/telegram_sender.py": {
    "layer": "L3",
    "role": "connector",
    "domain": "common",
@@ -22354,14 +22354,6 @@
    "source": "rule"
   },
   "scripts/ops/import_contracts_gen.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/merge_step_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

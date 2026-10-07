@@ -82,7 +82,7 @@ def test_guarded_publish_telegram_failure_does_not_break_flow(monkeypatch):
 
 def test_notify_skips_when_telegram_unconfigured(monkeypatch):
     """send_message 가 미설정으로 skipped 응답을 주면 stderr 에러 출력이 없어야 한다."""
-    import ai_orchestrator.notify.telegram_sender as ts
+    import ai_orchestrator.core.telegram_sender as ts
 
     monkeypatch.setattr(ts, "send_message", lambda text: {"ok": False, "skipped": True})
     # 예외 없이 완료되면 성공

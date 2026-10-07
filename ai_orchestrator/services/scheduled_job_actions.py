@@ -168,7 +168,7 @@ def _run_gonobi(_: dict[str, Any]) -> str:
 def _run_telegram(params: dict[str, Any]) -> str:
     import html
 
-    from ai_orchestrator.notify.telegram_sender import send_message
+    from ai_orchestrator.core.telegram_sender import send_message
 
     result = send_message(html.escape(params["text"]))
     if result.get("skipped"):

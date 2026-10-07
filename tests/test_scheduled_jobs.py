@@ -380,7 +380,7 @@ def test_telegram_params_are_validated():
 def test_telegram_success_escapes_html_and_sends_the_text(monkeypatch):
     sent = []
     monkeypatch.setattr(
-        "ai_orchestrator.notify.telegram_sender.send_message", lambda text, **kw: sent.append(text) or {"ok": True}
+        "ai_orchestrator.core.telegram_sender.send_message", lambda text, **kw: sent.append(text) or {"ok": True}
     )
     assert "보냈습니다" in actions.ACTIONS["telegram_notify"].run({"text": "<b>안녕</b> & 확인"})
     assert sent == ["&lt;b&gt;안녕&lt;/b&gt; &amp; 확인"]
@@ -388,7 +388,7 @@ def test_telegram_success_escapes_html_and_sends_the_text(monkeypatch):
 
 def test_telegram_missing_config_fails_loudly_not_silently(monkeypatch):
     monkeypatch.setattr(
-        "ai_orchestrator.notify.telegram_sender.send_message", lambda text, **kw: {"ok": False, "skipped": True}
+        "ai_orchestrator.core.telegram_sender.send_message", lambda text, **kw: {"ok": False, "skipped": True}
     )
     with pytest.raises(RuntimeError, match="TELEGRAM_BOT_TOKEN"):
         actions.ACTIONS["telegram_notify"].run({"text": "x"})
@@ -397,7 +397,7 @@ def test_telegram_missing_config_fails_loudly_not_silently(monkeypatch):
 def test_telegram_error_text_is_never_copied_into_the_run_record(monkeypatch):
     leaked_url = "https://api.telegram.org/bot123:SECRET-TOKEN/sendMessage"
     monkeypatch.setattr(
-        "ai_orchestrator.notify.telegram_sender.send_message",
+        "ai_orchestrator.core.telegram_sender.send_message",
         lambda text, **kw: {"ok": False, "error": f"Client error 401 for url '{leaked_url}'"},
     )
     with pytest.raises(RuntimeError) as err:
