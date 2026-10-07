@@ -109,7 +109,7 @@
   "scripts/e2e_full_report.py",
   "scripts/fetch_nts_interpretations.py",
   "scripts/fetch_tax_precedent_summary.py",
-  "scripts/gabia_login_watch.py",
+  "scripts/gabia/login_watch.py",
   "scripts/gate.py",
   "scripts/human_input.py",
   "scripts/install_git_hooks.py",

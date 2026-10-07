@@ -749,10 +749,11 @@
   "role": "browser_engine",
   "reason": "사이트에 의존하지 않는 범용 폼·로그인 오케스트레이터(bot_radar·discovery·human 등 범용 프리미티브만 사용) — 'flow' 이름 규칙이 L6 으로 오분류"
  },
- "scripts/gabia_login_watch.py": {
+ "scripts/gabia/login_watch.py": {
   "layer": "L4",
   "role": "browser_engine",
-  "reason": "JS 평가로 로그인 상태만 폴링하는 읽기 전용 감시 CLI(자체 _get_page) — 이름 규칙이 L5 로 오분류"
+  "reason": "이동한 파일 — 원본 scripts/gabia/login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
  },
  "ai_orchestrator/local_agent/browser/approval_server.py": {
   "layer": "L2",
@@ -1194,12 +1195,6 @@
   "layer": "L8",
   "role": "api",
   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gabia_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "scripts/gabia/login_watch.py": {
-  "layer": "L4",
-  "role": "browser_engine",
-  "reason": "이동한 파일 — 원본 scripts/gabia_login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
   "source": "manual"
  },
  "scripts/naver/smartstore/automation/analytics_dashboard.py": {

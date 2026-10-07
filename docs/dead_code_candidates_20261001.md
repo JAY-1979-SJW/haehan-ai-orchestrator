@@ -81,7 +81,7 @@
 - `scripts/naver/mail/collection/background_runner.py`: `find_mail_target_id`(function,L63)
 - `scripts/naver/mail/collection/folder_discovery.py`: `folders_to_dicts`(function,L344)
 - `scripts/naver/mail/processing/read_state_guard.py`: `snapshot_unread_count`(function,L173)
-- `scripts/naver/mail_read/cdp.py`: `find_target`(function,L24), `screenshot_png`(function,L91)
+- `scripts/naver/mail/read/cdp.py`: `find_target`(function,L24), `screenshot_png`(function,L91)
 - `scripts/naver/smartstore/navigation/cdp_popup_manager.py`: `quick_handle`(function,L603)
 - `scripts/naver/smartstore/product/ai_description_writer.py`: `build_trust_summary`(function,L117)
 - `scripts/naver/smartstore/product/detail_collector.py`: `list_cached_product_ids`(function,L86)

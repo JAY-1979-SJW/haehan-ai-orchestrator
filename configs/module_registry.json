@@ -9273,14 +9273,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gabia_login_watch.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "gabia",
-   "reason": "JS 평가로 로그인 상태만 폴링하는 읽기 전용 감시 CLI(자체 _get_page) — 이름 규칙이 L5 로 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
   "scripts/common/gate.py": {
    "layer": "L2",
    "role": "policy",
@@ -12648,62 +12640,6 @@
    "reason": "네이버 웹메일 설정 화면을 CDP 로 읽고 바꾸는 사이트 모듈 — 파일명 settings 때문에 L1 shared 로 오분류",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "scripts/naver/mail_read/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/body_reader.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/cdp.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/classify.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/entry.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/list_collector.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/pipeline.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver_mail",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
   },
   "scripts/naver/mybox.py": {
    "layer": "L5",

@@ -38,7 +38,7 @@ cdp.close()
 
 - 스크린샷은 `cdp.shot()` 저장 후 Read 도구로 열어 화면을 직접 눈으로 확인하고 다음 액션 결정.
 - 클릭/타이핑은 `cdp.send("Input.dispatchMouseEvent", ...)` / `"Input.dispatchKeyEvent"` 등 CDP 프로토콜 직접 호출.
-- 반복 패턴(로그인 감지, 폼 입력 등)은 `scripts/ops/login_sites.py`, `scripts/naver/mail_read/cdp.py` 등 기존 구현 먼저 확인 후 재사용.
+- 반복 패턴(로그인 감지, 폼 입력 등)은 `scripts/ops/login_sites.py`, `scripts/naver/mail/read/cdp.py` 등 기존 구현 먼저 확인 후 재사용.
 - **`CDP(port=9222)`는 항상 Chrome의 `/json` 목록에서 첫 번째 "page" 탭에 붙는다** — 여러
   탭이 열려있는 세션(이 프로젝트는 거의 항상 그렇다)에서 "이미 열려있는 특정 탭"을 골라
   잡을 수 없다. 그래서 이 헬퍼는 **연결 직후 바로 `cdp.navigate(url)`로 원하는 URL로
