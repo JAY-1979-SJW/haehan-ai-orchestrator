@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
-from logging_utils import mask_sensitive
+from orchestrator_v1.core.logging_utils import mask_sensitive  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 LOG_DIR = data_dir() / "logs"
 AUDIT_JSONL = LOG_DIR / "realtime_audit.jsonl"

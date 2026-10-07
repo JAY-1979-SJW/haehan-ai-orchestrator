@@ -1,7 +1,7 @@
 """Compatibility wrapper for the repository-wide security helpers."""
 from __future__ import annotations
 
-from security_utils import (
+from orchestrator_v1.core.security_utils import (
     REDACTED,
     SENSITIVE_KEYS,
     is_sensitive_key,

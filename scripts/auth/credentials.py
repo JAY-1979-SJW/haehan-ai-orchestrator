@@ -37,7 +37,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from ai_orchestrator.paths.runtime import atomic_write_bytes, atomic_write_text, data_dir  # noqa: E402
-from security_utils import mask_identifier  # noqa: E402
+from orchestrator_v1.core.security_utils import mask_identifier  # noqa: E402
 
 CRED_FILE = data_dir() / "credentials.json"
 KEY_FILE = data_dir() / ".cred.key"  # keyring 이전 원본 / HAEHAN_CRED_KEY_BACKEND=file 개발용 경로
