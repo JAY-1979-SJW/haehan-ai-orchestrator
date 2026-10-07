@@ -11,16 +11,17 @@ import json
 import logging
 import sys
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from ..paths import repo_root
+
 logger = logging.getLogger(__name__)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 sys.path.insert(0, str(ROOT))
 
 kakao_setup_router = APIRouter(prefix="/kakao/setup", tags=["kakao-setup"])

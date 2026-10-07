@@ -17,7 +17,6 @@ import logging
 import os
 import sys
 from datetime import UTC, datetime
-from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -25,8 +24,9 @@ from fastapi.responses import JSONResponse
 from ai_orchestrator.clients import telegram_sender
 
 from ..inbox import create_inbox_item, exists_by_external_id
+from ..paths import repo_root
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = repo_root()
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
