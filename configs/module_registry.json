@@ -22753,7 +22753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp/cli.py": {
+  "scripts/browser/cdp_cli.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

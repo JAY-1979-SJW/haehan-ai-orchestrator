@@ -4,27 +4,27 @@
   데몬의 브라우저 세션에 명령 전달
 
 사용법:
-  python scripts/browser/cdp/cli.py check-login          # 현재 열려있는 탭 로그인 상태 확인
-  python scripts/browser/cdp/cli.py open <사이트> [경로] # 통합 접속 (A방식 자동로그인+B방식 fallback) ★권장
-  python scripts/browser/cdp/cli.py explore <site> [path] [depth] [max] # 로그인+자동 사이트탐색 (sitemap 생성)
-  python scripts/browser/cdp/cli.py crawl <site> [depth=3] [max=50] # 홈페이지부터 전체 크롤 + 미설계 페이지 자동 반영
-  python scripts/browser/cdp/cli.py crawl-here [depth=2] [max=30]  # 현재 탭부터 BFS 탐색 (로그인 우회) ★수동 로그인 후
-  python scripts/browser/cdp/cli.py snapshot                  # 현재 활성 탭 1회 분석 + 저장 (수동 탐색)
-  python scripts/browser/cdp/cli.py visits [host]             # 저장된 수동 스냅샷 목록 + 타입 통계
-  python scripts/browser/cdp/cli.py session save <host>       # 인증 세션 저장 (쿠키+storage 암호화)
-  python scripts/browser/cdp/cli.py session load <host>       # 세션 복원
-  python scripts/browser/cdp/cli.py user-watch [타임아웃초] [호스트]  # 사용자 수동 조작 실시간 감지 (URL변화/클릭/XHR/DOM)
-  python scripts/browser/cdp/cli.py gabia login-watch [초]  # 가비아 로그인 실시간 감지 → 감지 즉시 DNS 관리 화면 이동
-  python scripts/browser/cdp/cli.py auto-login <사이트>  # 감지기 전용 (사용자 수동 로그인 대기)
-  python scripts/browser/cdp/cli.py login-watch [interval] [timeout] # 모든 탭 로그인 실시간 감지/저장
-  python scripts/browser/cdp/cli.py naver login           # 네이버 로그인
-  python scripts/browser/cdp/cli.py naver session-check   # 세션 확인
-  python scripts/browser/cdp/cli.py naver blog write      # 블로그 작성
-  python scripts/browser/cdp/cli.py google mail list      # Gmail 목록
-  python scripts/browser/cdp/cli.py google calendar today # 오늘 일정
+  python scripts/browser/cdp_cli.py check-login          # 현재 열려있는 탭 로그인 상태 확인
+  python scripts/browser/cdp_cli.py open <사이트> [경로] # 통합 접속 (A방식 자동로그인+B방식 fallback) ★권장
+  python scripts/browser/cdp_cli.py explore <site> [path] [depth] [max] # 로그인+자동 사이트탐색 (sitemap 생성)
+  python scripts/browser/cdp_cli.py crawl <site> [depth=3] [max=50] # 홈페이지부터 전체 크롤 + 미설계 페이지 자동 반영
+  python scripts/browser/cdp_cli.py crawl-here [depth=2] [max=30]  # 현재 탭부터 BFS 탐색 (로그인 우회) ★수동 로그인 후
+  python scripts/browser/cdp_cli.py snapshot                  # 현재 활성 탭 1회 분석 + 저장 (수동 탐색)
+  python scripts/browser/cdp_cli.py visits [host]             # 저장된 수동 스냅샷 목록 + 타입 통계
+  python scripts/browser/cdp_cli.py session save <host>       # 인증 세션 저장 (쿠키+storage 암호화)
+  python scripts/browser/cdp_cli.py session load <host>       # 세션 복원
+  python scripts/browser/cdp_cli.py user-watch [타임아웃초] [호스트]  # 사용자 수동 조작 실시간 감지 (URL변화/클릭/XHR/DOM)
+  python scripts/browser/cdp_cli.py gabia login-watch [초]  # 가비아 로그인 실시간 감지 → 감지 즉시 DNS 관리 화면 이동
+  python scripts/browser/cdp_cli.py auto-login <사이트>  # 감지기 전용 (사용자 수동 로그인 대기)
+  python scripts/browser/cdp_cli.py login-watch [interval] [timeout] # 모든 탭 로그인 실시간 감지/저장
+  python scripts/browser/cdp_cli.py naver login           # 네이버 로그인
+  python scripts/browser/cdp_cli.py naver session-check   # 세션 확인
+  python scripts/browser/cdp_cli.py naver blog write      # 블로그 작성
+  python scripts/browser/cdp_cli.py google mail list      # Gmail 목록
+  python scripts/browser/cdp_cli.py google calendar today # 오늘 일정
 
 명령 핸들러 중 navigator·popup·explorer·gabia(상위 도메인 도구)를 쓰는 것들은
-scripts/browser/cdp/cli.py 로 옮겼다(S1-c, 2026-10-07) — 이 파일은 연결(connection.py)·
+scripts/browser/cdp_cli.py 로 옮겼다(S1-c, 2026-10-07) — 이 파일은 연결(connection.py)·
 scripts 최상위 공용 유틸(gate·op_log·credentials·site_access 등)만 쓰는 핸들러만
 남는다.
 """
@@ -125,7 +125,7 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
     from scripts.site_watch import StepFailure
 
     if not task:
-        print("사용법: python scripts/browser/cdp/cli.py explore <사이트> [경로] [depth] [max] [--dry-run]")
+        print("사용법: python scripts/browser/cdp_cli.py explore <사이트> [경로] [depth] [max] [--dry-run]")
         print(f"  지원: {list_sites()}")
         return
     args_all = ([sub] if sub else []) + list(args)
@@ -209,7 +209,7 @@ def _cmd_open(task: str, sub: str, args: list[str]) -> None:
     from scripts.site_watch import StepFailure
 
     if not task:
-        print("사용법: python scripts/browser/cdp/cli.py open <사이트> [경로] [--dry-run] [--force-login]")
+        print("사용법: python scripts/browser/cdp_cli.py open <사이트> [경로] [--dry-run] [--force-login]")
         print(f"  지원: {list_sites()}")
         return
     # --dry-run 플래그 해석
@@ -262,7 +262,7 @@ def _cmd_auto_login(task: str, sub: str) -> None:
     from scripts.login_detector import monitor_for_login
 
     if not task:
-        print("사용법: python scripts/browser/cdp/cli.py auto-login <사이트> [URL]")
+        print("사용법: python scripts/browser/cdp_cli.py auto-login <사이트> [URL]")
         return
     url = sub if sub else None
     print(f"\n[작업] {task} 자동 로그인 + 세션 저장")
@@ -371,6 +371,6 @@ def _cmd_op_log(task: str, sub: str) -> None:
 
 
 # CLI 디스패치(_HANDLERS·_dispatch·main)와 직접 실행 진입점, navigator·popup·explorer·
-# gabia 를 쓰는 핸들러는 scripts/browser/cdp/cli.py 로 분리했다(cdp_client 는 라이브러리라
+# gabia 를 쓰는 핸들러는 scripts/browser/cdp_cli.py 로 분리했다(cdp_client 는 라이브러리라
 # scripts.router 와 상위 도메인 도구를 몰라야 한다 — 2026-10-07 STD-08 후속, S1-c).
-# 직접 실행하려면 `python scripts/browser/cdp/cli.py ...` 를 쓴다.
+# 직접 실행하려면 `python scripts/browser/cdp_cli.py ...` 를 쓴다.
