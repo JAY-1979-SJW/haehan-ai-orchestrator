@@ -32,8 +32,8 @@ def _make_task_id(item_id: str) -> str:
 
 def promote(
     item_id: str,
-    candidate_path: Optional[str] = None,
-    task_path: Optional[str] = None,
+    candidate_path: str | None = None,
+    task_path: str | None = None,
 ) -> dict:
     """
     candidate item_id를 task로 승격.

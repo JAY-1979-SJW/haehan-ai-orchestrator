@@ -16,7 +16,7 @@ def register(task, risk, policy: dict) -> None:
     }
 
 
-def get(task_id: str) -> Optional[dict]:
+def get(task_id: str) -> dict | None:
     return _store.get(task_id)
 
 

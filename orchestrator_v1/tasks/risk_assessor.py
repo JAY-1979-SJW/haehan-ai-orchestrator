@@ -15,7 +15,7 @@ def assess_risk(task: TaskRequest, policy: dict | None = None) -> RiskAssessment
     reasons = []
 
     if is_command_blocked(task.action_type, policy) or is_command_blocked(task.target, policy):
-        reasons.append(f"blocked keyword detected in action_type or target")
+        reasons.append("blocked keyword detected in action_type or target")
         return RiskAssessment(risk_level="critical", reasons=reasons, requires_approval=True)
 
     level = get_risk_level_for_action(task.action_type, policy)

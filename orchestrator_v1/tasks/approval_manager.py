@@ -1,15 +1,15 @@
-import uuid
 import time
+import uuid
 from typing import Optional
-from models import TaskRequest, RiskAssessment, ExecutionPlan
 
+from models import ExecutionPlan, RiskAssessment, TaskRequest
 
 _store: dict[str, dict] = {}
 
 TOKEN_TTL_SECONDS = 600  # 10 minutes
 
 
-def issue_token(task: TaskRequest, risk: RiskAssessment) -> Optional[str]:
+def issue_token(task: TaskRequest, risk: RiskAssessment) -> str | None:
     if risk.risk_level == "critical":
         return None
     token_id = str(uuid.uuid4())
@@ -52,7 +52,7 @@ def is_token_valid(token_id: str) -> bool:
     return entry.get("approved", False)
 
 
-def build_execution_plan(task: TaskRequest, risk: RiskAssessment, token_id: Optional[str]) -> ExecutionPlan:
+def build_execution_plan(task: TaskRequest, risk: RiskAssessment, token_id: str | None) -> ExecutionPlan:
     level = risk.risk_level
     blocked_reasons = list(risk.reasons)
 
@@ -72,7 +72,7 @@ def build_execution_plan(task: TaskRequest, risk: RiskAssessment, token_id: Opti
             task_id=task.task_id,
             allowed=False,
             requires_approval=True,
-            steps=[f"send approval request", f"await human confirmation"],
+            steps=["send approval request", "await human confirmation"],
             blocked_reasons=blocked_reasons,
         )
 
