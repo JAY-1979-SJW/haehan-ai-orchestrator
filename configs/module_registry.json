@@ -22536,6 +22536,14 @@
    "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_desktop_fresh_run.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
