@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # 파괴적 동작만 차단: 발송·결제·삭제·투찰·입찰·팩스·환불 등 되돌릴 수 없는 외부 영향
 # 2026-09-29 defect_index #39 확장: build_manifest() 가 FastAPI _IncludedRouter 버그로
-# 계속 빈 리스트를 반환해(수정 완료) tests/test_app_action_coverage.py 의
+# 계속 빈 리스트를 반환해(수정 완료) tests/app_contracts/test_app_action_coverage.py 의
 # test_destructive_actions_never_auto_safe 가 그동안 공허하게(비교 대상 0건) 통과하고
 # 있었음 — 실제 데이터로 처음 돌려보니 register/upload/setup/reset/publish 계열이
 # 전부 SAFE로 새는 게 드러남(디바이스 토큰 발급, 실제 발행 가능한 blog write-to-naver

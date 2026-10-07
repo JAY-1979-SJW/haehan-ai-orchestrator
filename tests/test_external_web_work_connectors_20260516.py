@@ -354,9 +354,9 @@ class TestExistingCloseoutTestsUnchanged:
     """기존 준공 범위 테스트 파일이 변경되지 않았다."""
 
     CLOSEOUT_TESTS = [
-        "tests/test_app_scope_web_desktop_boundary_20260516.py",
+        "tests/app_contracts/test_app_scope_web_desktop_boundary_20260516.py",
         "tests/server_features/test_backend_web_task_approval_flow_20260516.py",
-        "tests/test_backend_direct_dict_boundary_lock_20260516.py",
+        "tests/app_contracts/test_backend_direct_dict_boundary_lock_20260516.py",
     ]
 
     @pytest.mark.parametrize("test_path", CLOSEOUT_TESTS)

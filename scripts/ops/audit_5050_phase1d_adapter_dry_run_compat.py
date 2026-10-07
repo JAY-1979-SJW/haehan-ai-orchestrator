@@ -48,8 +48,8 @@ SAFE_BOUNDARY = {
 # ── known baseline failures (이번 공정과 무관) ─────────────────────────────────
 
 KNOWN_BASELINE_FAILURES = [
-    "tests/test_app_foundation_p1_gates.py::test_server_browser_guard_no_violations",
-    "tests/test_app_foundation_p1_gates.py::test_p1_gates_all_zero_new_violations",
+    "tests/app_contracts/test_app_foundation_p1_gates.py::test_server_browser_guard_no_violations",
+    "tests/app_contracts/test_app_foundation_p1_gates.py::test_p1_gates_all_zero_new_violations",
 ]
 
 # ── Phase 1-D dry-run compatibility matrix ───────────────────────────────────
