@@ -26,8 +26,9 @@ _TOKEN_FILE = os.getenv(
 
 class ExecuteRequest(BaseModel):
     plan_path: str
-    confirm: str  # 반드시 "YOUTUBE_APPROVED_UPLOAD"
-    dry_run: bool = False
+    confirm: str  # 사용자가 직접 입력한 승인 문구(틀리면 403)
+    # 기본은 dry_run — 실제 업로드는 호출자가 dry_run=false 를 명시해야 한다(승인 문구가 있어도 기본으로 업로드되지 않는다).
+    dry_run: bool = True
 
 
 @router.post("/prepare")
