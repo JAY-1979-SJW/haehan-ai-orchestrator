@@ -638,7 +638,7 @@ forbidden_modules =
     scripts.browser.cdp.cdp_tabs
     scripts.browser.cdp.cdp_verify
     scripts.browser.cdp.connection
-    scripts.browser.cdp_cli
+    scripts.entry.cdp_cli
     scripts.browser.navigator.navigator
     scripts.browser.navigator.navigator_common
     scripts.browser.navigator.navigator_interact
@@ -1745,7 +1745,7 @@ forbidden_modules =
     scripts.browser.cdp.cdp_tabs
     scripts.browser.cdp.cdp_verify
     scripts.browser.cdp.connection
-    scripts.browser.cdp_cli
+    scripts.entry.cdp_cli
     scripts.browser.navigator.navigator
     scripts.browser.navigator.navigator_common
     scripts.browser.navigator.navigator_interact
@@ -2815,7 +2815,7 @@ forbidden_modules =
     scripts.browser.cdp.cdp_tabs
     scripts.browser.cdp.cdp_verify
     scripts.browser.cdp.connection
-    scripts.browser.cdp_cli
+    scripts.entry.cdp_cli
     scripts.browser.navigator.navigator
     scripts.browser.navigator.navigator_common
     scripts.browser.navigator.navigator_interact
@@ -3862,7 +3862,7 @@ forbidden_modules =
     scripts.archive.one_off.kotara_ctc_reel
     scripts.archive.one_off.kotara_ctc_shorts
     scripts.archive.one_off.temp_oauth_revoke
-    scripts.browser.cdp_cli
+    scripts.entry.cdp_cli
     scripts.common.youtube_api_common
     scripts.common.youtube_comments
     scripts.common.youtube_http_client
@@ -5011,7 +5011,7 @@ forbidden_modules =
     scripts.archive.misc.browser_api_router
     scripts.archive.misc.browser_api_server
     scripts.archive.one_off.temp_oauth_revoke
-    scripts.browser.cdp_cli
+    scripts.entry.cdp_cli
     scripts.community.scheduler
     scripts.eum.daily_check
     scripts.eum.send_mail_batch
@@ -5114,7 +5114,7 @@ source_modules =
     ai_orchestrator.web_task.web_task_registry
     orchestrator_v1.inbox.notice_radar.pipeline
     scripts.archive.one_off.temp_oauth_revoke
-    scripts.browser.cdp_cli
+    scripts.entry.cdp_cli
     scripts.community.scheduler
     scripts.eum.daily_check
     scripts.eum.send_mail_batch
@@ -5844,7 +5844,7 @@ forbidden_modules =
     scripts.browser.cdp.cdp_tabs
     scripts.browser.cdp.cdp_verify
     scripts.browser.cdp.connection
-    scripts.browser.cdp_cli
+    scripts.entry.cdp_cli
     scripts.browser.navigator.navigator
     scripts.browser.navigator.navigator_common
     scripts.browser.navigator.navigator_interact
@@ -6658,7 +6658,7 @@ forbidden_modules =
     scripts.archive.one_off.kotara_ctc_reel
     scripts.archive.one_off.kotara_ctc_shorts
     scripts.archive.one_off.temp_oauth_revoke
-    scripts.browser.cdp_cli
+    scripts.entry.cdp_cli
     scripts.common.youtube_api_common
     scripts.common.youtube_comments
     scripts.common.youtube_http_client

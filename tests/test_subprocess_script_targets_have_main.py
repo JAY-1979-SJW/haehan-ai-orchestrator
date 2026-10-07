@@ -16,14 +16,16 @@ CALLERS = [
     "ai_orchestrator/gongmu/fetch_nts_interpretations.py",
     "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py",
 ]
-_TARGET = re.compile(r'(?:scripts/browser/|"browser"\s*/\s*")(\w+)\.py')
+_TARGET = re.compile(r'(?:scripts/(browser|entry)/|"(browser|entry)"\s*/\s*")(\w+)\.py')
 
 
 def test_script_targets_launched_by_subprocess_have_a_main():
     problems = []
     for rel in CALLERS:
-        for name in sorted(set(_TARGET.findall((ROOT / rel).read_text(encoding="utf-8")))):
-            target = ROOT / "scripts" / "browser" / f"{name}.py"
+        found = {(a or b, name) for a, b, name in _TARGET.findall((ROOT / rel).read_text(encoding="utf-8"))}
+        assert found, f"{rel}: 실행 대상 스크립트 경로를 찾지 못했다(시험이 눈을 잃었다)"
+        for folder, name in sorted(found):
+            target = ROOT / "scripts" / folder / f"{name}.py"
             if not target.is_file() or '__name__ == "__main__"' not in target.read_text(encoding="utf-8"):
-                problems.append(f"{rel} → scripts/browser/{name}.py (실행부 없음)")
+                problems.append(f"{rel} → scripts/{folder}/{name}.py (실행부 없음)")
     assert not problems, problems

@@ -28,6 +28,7 @@ from scripts.browser.cdp_client import (
     _cmd_session,
     _cmd_user_watch,
 )
+from scripts.entry import site_login_registry
 
 _SITE_ROUTER_CMDS = (
     "naver",
@@ -69,7 +70,7 @@ def _cmd_goto(task: str) -> None:
     from scripts.browser.navigator.navigator import goto
 
     if not task:
-        print("사용법: python scripts/browser/cdp_cli.py goto <별칭_or_URL>")
+        print("사용법: python scripts/entry/cdp_cli.py goto <별칭_or_URL>")
         return
     goto(task)
 
@@ -78,7 +79,7 @@ def _cmd_wait_login(task: str, sub: str) -> None:
     from scripts.browser.navigator.navigator import wait_login
 
     if not task:
-        print("사용법: python scripts/browser/cdp_cli.py wait-login <사이트> [타임아웃초]")
+        print("사용법: python scripts/entry/cdp_cli.py wait-login <사이트> [타임아웃초]")
         return
     t_out = int(sub) if sub.isdigit() else 300
     ok = wait_login(task, timeout_s=t_out)
@@ -95,7 +96,7 @@ def _cmd_write_post(task: str, sub: str, args: list[str]) -> None:
     from scripts.naver.blog.navigator_blog import write_blog_post
 
     if not task or not sub:
-        print("사용법: python scripts/browser/cdp_cli.py write-post <제목> <본문> [이미지경로]")
+        print("사용법: python scripts/entry/cdp_cli.py write-post <제목> <본문> [이미지경로]")
         return
     img = args[0] if args else None
     ok = write_blog_post(task, sub, image_path=img)
@@ -106,7 +107,7 @@ def _cmd_paste_image(task: str, sub: str) -> None:
     from scripts.browser.navigator.navigator import paste_image
 
     if not task:
-        print("사용법: python scripts/browser/cdp_cli.py paste-image <이미지경로> [target]")
+        print("사용법: python scripts/entry/cdp_cli.py paste-image <이미지경로> [target]")
         return
     tgt = sub if sub else "body"
     ok = paste_image(task, tgt)
@@ -131,7 +132,7 @@ def _cmd_is_ready(task: str, sub: str, args: list[str]) -> None:
 
     check_args = [a for a in [task, sub, *args] if a]
     if not check_args:
-        print("사용법: python scripts/browser/cdp_cli.py is-ready <체크1> [체크2 ...]")
+        print("사용법: python scripts/entry/cdp_cli.py is-ready <체크1> [체크2 ...]")
         print("  예: is-ready url_contains:naver readystate has_button:발행")
         return
     r = is_ready(check_args, timeout_s=2.0)
@@ -147,7 +148,7 @@ def _cmd_verify_input(task: str, sub: str, args: list[str]) -> None:
     from scripts.browser.navigator.navigator import verify_input
 
     if not task:
-        print("사용법: python scripts/browser/cdp_cli.py verify-input <텍스트>")
+        print("사용법: python scripts/entry/cdp_cli.py verify-input <텍스트>")
         return
     full = " ".join([task, sub, *args]).strip()
     v = verify_input(full)
@@ -162,7 +163,7 @@ def _cmd_verify_text(task: str, sub: str, args: list[str]) -> None:
     from scripts.browser.navigator.navigator import verify_text
 
     if not task:
-        print("사용법: python scripts/browser/cdp_cli.py verify-text <텍스트>")
+        print("사용법: python scripts/entry/cdp_cli.py verify-text <텍스트>")
         return
     full = " ".join([task, sub, *args]).strip()
     results = verify_text(full)
@@ -187,7 +188,7 @@ def _cmd_type_into(task: str, sub: str, args: list[str]) -> None:
     from scripts.browser.navigator.navigator import type_into
 
     if not task or not sub:
-        print("사용법: python scripts/browser/cdp_cli.py type-into <대상> <텍스트>")
+        print("사용법: python scripts/entry/cdp_cli.py type-into <대상> <텍스트>")
         return
     # 텍스트는 sub + args 전체를 공백 join
     full_text = " ".join([sub, *args])
@@ -199,7 +200,7 @@ def _cmd_click_button(task: str) -> None:
     from scripts.browser.navigator.navigator import click_button
 
     if not task:
-        print("사용법: python scripts/browser/cdp_cli.py click-button <텍스트>")
+        print("사용법: python scripts/entry/cdp_cli.py click-button <텍스트>")
         return
     ok = click_button(task)
     sys.exit(0 if ok else 1)
@@ -209,7 +210,7 @@ def _cmd_click_link(task: str) -> None:
     from scripts.browser.navigator.navigator import click_link
 
     if not task:
-        print("사용법: python scripts/browser/cdp_cli.py click-link <텍스트>")
+        print("사용법: python scripts/entry/cdp_cli.py click-link <텍스트>")
         return
     ok = click_link(task)
     sys.exit(0 if ok else 1)
@@ -353,7 +354,7 @@ def _cmd_crawl(task: str, sub: str, args: list[str]) -> None:
     from scripts.site_engine.site_watch import StepFailure
 
     if not task:
-        print("사용법: python scripts/browser/cdp_cli.py crawl <사이트> [depth=3] [max=50]")
+        print("사용법: python scripts/entry/cdp_cli.py crawl <사이트> [depth=3] [max=50]")
         print(f"  지원: {list_sites()}")
         return
     args_all = ([sub] if sub else []) + list(args)
@@ -453,8 +454,8 @@ def _cmd_gabia(task: str, sub: str, args: list[str]) -> None:
             sys.exit(0 if result["logged_in"] else 1)
         case _:
             print("가비아 명령:")
-            print("  python scripts/browser/cdp_cli.py gabia login-watch [타임아웃초]")
-            print("  python scripts/browser/cdp_cli.py gabia login-watch [타임아웃초] --no-navigate")
+            print("  python scripts/entry/cdp_cli.py gabia login-watch [타임아웃초]")
+            print("  python scripts/entry/cdp_cli.py gabia login-watch [타임아웃초] --no-navigate")
 
 
 # cmd 문자열 → 핸들러 매핑. 원래 match cmd: 의 case 순서를 그대로 옮긴 것 — 동작은 동일하다.
@@ -524,6 +525,7 @@ def _dispatch(cmd: str, task: str, sub: str, args: list[str]) -> None:
 
 
 def main() -> None:
+    site_login_registry.install()
     if len(sys.argv) < 2:
         from scripts.browser.cdp_client import __doc__ as _cdp_client_doc
 

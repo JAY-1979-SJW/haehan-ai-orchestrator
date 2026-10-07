@@ -21561,7 +21561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp_cli.py": {
+  "scripts/entry/cdp_cli.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "browser",
@@ -22761,7 +22761,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_engine/site_registry_sites.py": {
+  "scripts/entry/site_login_registry.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "common",
@@ -23186,6 +23186,38 @@
    "source": "rule"
   },
   "tests/test_subprocess_script_targets_have_main.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/entry/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/entry/site_access_cli.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/entry/site_crawl_cli.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_site_registry_entrypoints.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

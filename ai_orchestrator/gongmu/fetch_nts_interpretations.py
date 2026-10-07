@@ -90,9 +90,9 @@ def fetch_keyword(keyword: str) -> list[dict]:
     before = {str(p) for p in VISITS_DIR.glob("*.html")}
     q = urllib.parse.quote(keyword)
     run_in_repo(
-        ["python", "scripts/browser/cdp_cli.py", "goto", f"https://taxlaw.nts.go.kr/is/USEISA001M.do?schVcb={q}&searchType="]
+        ["python", "scripts/entry/cdp_cli.py", "goto", f"https://taxlaw.nts.go.kr/is/USEISA001M.do?schVcb={q}&searchType="]
     )
-    run_in_repo(["python", "scripts/browser/cdp_cli.py", "snapshot"])
+    run_in_repo(["python", "scripts/entry/cdp_cli.py", "snapshot"])
     html_path = latest_html_after(before)
     if not html_path:
         return []

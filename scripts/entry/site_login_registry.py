@@ -1,9 +1,10 @@
-"""사이트별 로그인·로그인 상태 확인 함수와 사이트 등록 항목 (L5 사이트 모듈).
+"""사이트별 로그인·로그인 상태 확인 함수와 사이트 등록 항목, 그리고 진입점이 부르는 `install()` (조합 모듈).
 
-`scripts/site_engine/site_registry.py`(코어)가 처음 조회될 때 이 모듈을 문자열 로더로 불러와 `build_sites()` 의 결과를 등록한다.
-코어는 사이트 지식을 갖지 않는다(결함 #113: L4 범용 엔진이 L5 사이트 지식을 import 하던 구조를 분리).
-이 모듈은 코어를 import 하지 않는다 — `SiteSpec` 클래스는 코어가 인자로 넘겨 준다(같은 모듈이 두 이름으로 import 되는
-저장소의 sys.path 관례에서도 등록표가 갈라지지 않게 하기 위함).
+사이트 등록표 코어(`scripts/site_engine/site_registry.py`)는 사이트 지식도, 이 모듈도 import 하지 않는다(결함 #113).
+프로세스 진입점(cdp_cli·직접 실행 main·서버 조합 루트·시험 conftest)이 시작할 때 `install()` 을 부르면
+코어에 사이트 목록 공급자(`build_sites`)가 알려지고, 처음 `get_site`/`list_sites` 가 불릴 때 목록이 만들어진다.
+이 모듈은 모든 사이트 모듈을 아는 맨 위 층이라 `scripts/entry/` 에 두고 어떤 도구도 import 하지 않는다 —
+(사이트 모듈이 이 모듈을 import 하면 순환이 된다). 진입점이 `install()` 을 빠뜨리면 코어가 RuntimeError 로 알린다.
 
 신규 사이트 추가:
     1. 아래 `build_sites()` 의 반환 목록에 항목 추가(순서 = `list_sites()` 순서)
@@ -11,6 +12,8 @@
 """
 
 from __future__ import annotations
+
+from scripts.site_engine import site_registry
 
 # ── lazy 로더 ─────────────────────────────────────────────────────────────
 
@@ -216,3 +219,8 @@ def build_sites(spec_cls):
             login_strategy="manual_only",
         ),
     ]
+
+
+def install() -> None:
+    """사이트 등록표 코어에 사이트 목록 공급자를 알린다. 여러 번 불러도 같다(멱등)."""
+    site_registry.configure(build_sites)

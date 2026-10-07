@@ -6,8 +6,8 @@
     page = open_site("eum", "/web/man/WEBMAN390M00")   # 특정 경로
 
 CLI:
-    python scripts/browser/cdp_client.py open <site> [path]
-    python -m scripts.site_engine.site_access <site> [path]
+    python scripts/entry/cdp_cli.py open <site> [path]
+    python -m scripts.entry.site_access_cli <site> [path]
 
 흐름:
   1. CDP 페이지 획득
@@ -605,25 +605,3 @@ def _dry_run_open(site: str, target: str, spec, *, ensure_login: bool, force_log
     print("  [DRY] post_login_verify  → ok 가정")
     print("  [DRY] bot_radar          → clean 가정")
     return {"dry_run": True, "site": site, "url": target, "logged_in": True}
-
-
-def main() -> None:
-    if len(sys.argv) < 2:
-        print("사용법: python -m scripts.site_engine.site_access <site> [path]")
-        print(f"  지원 사이트: {list_sites()}")
-        return
-    site = sys.argv[1]
-    path = sys.argv[2] if len(sys.argv) > 2 else ""
-    try:
-        page: Any = open_site(site, path)
-        if isinstance(page, dict):
-            print(f"✔ {site} 접속 드라이런 완료 — {page.get('url', '')}")
-        else:
-            print(f"✔ {site} 접속 완료 — {page.url}")
-    except LoginError as e:
-        print(f"✘ {e}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()

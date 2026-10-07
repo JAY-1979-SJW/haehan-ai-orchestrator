@@ -41,9 +41,9 @@ def _extract_summary(html_path: str) -> tuple[str, str]:
 def fetch_one(prec_seq: str) -> dict:
     before = {str(p) for p in VISITS_DIR.glob("*.html")}
     run_in_repo(
-        ["python", "scripts/browser/cdp_cli.py", "goto", f"https://www.law.go.kr/LSW/precInfoP.do?precSeq={prec_seq}&mode=0"]
+        ["python", "scripts/entry/cdp_cli.py", "goto", f"https://www.law.go.kr/LSW/precInfoP.do?precSeq={prec_seq}&mode=0"]
     )
-    run_in_repo(["python", "scripts/browser/cdp_cli.py", "snapshot"])
+    run_in_repo(["python", "scripts/entry/cdp_cli.py", "snapshot"])
     html_path = latest_html_after(before)
     if not html_path:
         return {"fetched_ok": False, "error": "no_snapshot"}
