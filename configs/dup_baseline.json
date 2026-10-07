@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 63,
+ "hash_count": 62,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/connectors/naver_mail/bulk_service.py:_read_rows",
@@ -39,10 +39,6 @@
    "scripts/ops/audit_backend_premium_policy_layer.py:main",
    "scripts/ops/audit_backend_premium_security_boundary.py:main",
    "scripts/ops/audit_backend_premium_service_layer.py:main"
-  ],
-  "2c0c8a1552865935b6e32f6c0ebd15b3438c33b0": [
-   "scripts/naver/automation/platform/session_manager.py:SessionManager.check_and_recover",
-   "scripts/naver/automation/session_manager.py:SessionManager.check_and_recover"
   ],
   "2f788045f55b2d0e39cbb3db38fce3ca8ee42330": [
    "scripts/hanafax/export_kras_fax_pdf.py:_fit_merged_wrap_rows",
@@ -264,7 +260,7 @@
    "scripts/naver/company_seo.py:save_diagnosis",
    "scripts/naver/company_seo.py:save_plan",
    "scripts/naver/keyword_tools.py:save_payload",
-   "scripts/naver/shopping_competitor.py:save_competitor_report"
+   "scripts/naver/shopping/competitor_report.py:save_competitor_report"
   ],
   "d4e3c4acd6b77cfecc179cdeedcc937f52670de8": [
    "scripts/naver/blog/management/analytics.py:_init_db",

@@ -9657,30 +9657,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/ai_responder.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/analytics_dashboard.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/competitor_analysis.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/automation/content/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -9689,7 +9665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/content/review_automation.py": {
+  "scripts/naver/smartstore/automation/review_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -9703,14 +9679,6 @@
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/automation/csv_import.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
    "source": "rule"
   },
   "scripts/naver/automation/error_recovery.py": {
@@ -9761,52 +9729,12 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/integration/workflow.py": {
+  "scripts/naver/smartstore/automation/workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver",
    "reason": "업무 흐름 이름",
    "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/automation/inventory_monitor.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/notification_hub.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/order_automation.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/session_manager.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/automation/review_automation.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
    "source": "rule"
   },
   "scripts/naver/automation/scheduler.py": {
@@ -9817,28 +9745,12 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/seo_optimizer.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/automation/session_manager.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/workflow.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
    "source": "rule"
   },
   "scripts/naver/base.py": {

@@ -85,7 +85,7 @@ class Workflow:
         send_alerts: bool = False,
     ) -> dict:
         """스토어 신규 주문 → 메일/카페 공지."""
-        from scripts.naver.automation.order_automation import OrderAutomation
+        from scripts.naver.smartstore.automation.order_automation import OrderAutomation
 
         oa = OrderAutomation(self.page)
         orders = oa.fetch_new_orders()

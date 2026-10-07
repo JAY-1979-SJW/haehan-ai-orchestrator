@@ -11,7 +11,7 @@ DB: data/cdp.db.scheduled_tasks
   from scripts.naver.automation.scheduler import Scheduler
   sch = Scheduler()
   sch.add_task("daily_inventory", "0 9 * * *",  # 매일 9시
-               "scripts.naver.automation.inventory_monitor:InventoryMonitor.check_low_stock")
+               "scripts.naver.smartstore.automation.inventory_monitor:InventoryMonitor.check_low_stock")
   sch.start()  # 백그라운드 루프
 """
 

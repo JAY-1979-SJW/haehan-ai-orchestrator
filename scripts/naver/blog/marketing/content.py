@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 
 from scripts.common.logger import get_logger
-from scripts.naver.automation.ai_responder import AIResponder
+from scripts.naver.automation.integration.ai_responder import AIResponder
 
 _log = get_logger(__name__)
 

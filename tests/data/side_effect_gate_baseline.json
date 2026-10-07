@@ -14,7 +14,6 @@
  "scripts/instagram/api_publish.py::publish",
  "scripts/instagram/guard_instagram_publish.py::main",
  "scripts/instagram/ig_batch.py::main",
- "scripts/naver/automation/integration/workflow.py::Workflow.new_orders_to_alerts",
  "scripts/naver/blog/_runner.py::_task_confirm",
  "scripts/naver/blog/_runner.py::_task_write",
  "scripts/naver/blog/core/writer.py::confirm_publish",
@@ -24,5 +23,6 @@
  "scripts/naver/cafe/__init__.py::NaverCafe.write_post",
  "scripts/naver/cafe/_runner.py::_task_confirm",
  "scripts/naver/cafe/_runner.py::_task_write",
+ "scripts/naver/smartstore/automation/workflow.py::Workflow.new_orders_to_alerts",
  "scripts/youtube/uploader.py::_upload_with_official_api"
 ]

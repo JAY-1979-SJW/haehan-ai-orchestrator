@@ -3,7 +3,7 @@
  "target": 0,
  "reviewed_at": "",
  "count": 19,
- "note": "하향 갱신: 34 → 19",
+ "note": "하향 갱신: 19 → 19",
  "files": [
   "admin-web/src/app/assistant/(legacy)/cafe/CafeClient.tsx",
   "admin-web/src/app/assistant/(legacy)/cafe/CategoryCard.tsx",

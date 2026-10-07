@@ -15,7 +15,7 @@ from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.common.logger import get_logger
-from scripts.naver.automation.ai_responder import AIResponder
+from scripts.naver.automation.integration.ai_responder import AIResponder
 from scripts.naver.blog.accounts import cache_file_for
 
 _log = get_logger(__name__)

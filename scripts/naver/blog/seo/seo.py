@@ -216,7 +216,7 @@ class BlogSEO:
     def generate_image_alt(self, image_context: str, product_name: str = "") -> dict:
         """이미지 ALT 텍스트 자동 생성. SEO + 접근성용."""
         try:
-            from scripts.naver.automation.ai_responder import AIResponder
+            from scripts.naver.automation.integration.ai_responder import AIResponder
 
             ai = AIResponder()
             system = "이미지 ALT 텍스트 작성 전문가. SEO와 접근성 모두 고려. 50자 이내."

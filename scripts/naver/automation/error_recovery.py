@@ -190,7 +190,7 @@ class ErrorRecovery:
         conn.close()
 
         if cnt >= max_errors_per_hour:
-            from scripts.naver.automation.notification_hub import NotificationHub
+            from scripts.naver.automation.integration.notification_hub import NotificationHub
 
             hub = NotificationHub(self.page)
             hub.notify(
