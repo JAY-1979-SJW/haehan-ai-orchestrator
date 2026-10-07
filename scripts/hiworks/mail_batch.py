@@ -100,14 +100,23 @@ SEND_RESULT_DIR = DATA_DIR / "hiworks_send_results"
 
 
 @guarded("hiworks_mail_batch", ok_fn=lambda r: r["failed"] == 0)
-def execute_send_batch(plan: dict[str, Any], *, page) -> dict[str, Any]:
-    """승인된 배치 발송 플랜을 실행한다. 1통씩 compose→fill→send→delay 순으로 진행."""
+def execute_send_batch(plan: dict[str, Any], *, page, approval: str | None = None) -> dict[str, Any]:
+    """승인된 배치 발송 플랜을 실행한다. 1통씩 compose→fill→send→delay 순으로 진행.
+
+    approval 이 APPROVAL_CONFIRM_TEXT 가 아니면 한 통도 보내지 않고 GateBlocked 를 낸다(직접 import 호출도 동일).
+    수신거부 목록에 있는 수신자는 보내지 않고 skipped 로 기록한다. 발송 건수는 제한하지 않는다.
+    """
+    from scripts.gate import GateBlocked, require_side_effect
     from scripts.hiworks.mail import fill_compose, send_mail
+
+    # 항목이 0건이어도 승인 문구가 틀리면 같은 방식으로 차단한다.
+    require_side_effect("mail_send", approval=approval, expected=APPROVAL_CONFIRM_TEXT)
 
     items = plan.get("items") or []
     results: list[dict[str, Any]] = []
     sent = 0
     failed = 0
+    skipped = 0
 
     for item in items:
         item_result: dict[str, Any] = {
@@ -120,6 +129,9 @@ def execute_send_batch(plan: dict[str, Any], *, page) -> dict[str, Any]:
             "timestamp": datetime.now().isoformat(),
         }
         try:
+            require_side_effect(
+                "mail_send", approval=approval, expected=APPROVAL_CONFIRM_TEXT, recipient=item["to"], subject=item["subject"]
+            )
             fill_compose(page, to=item["to"], subject=item["subject"], body=item.get("body", ""))
             send_result = send_mail(page)
             item_result["sent"] = send_result.get("success", False)
@@ -129,6 +141,11 @@ def execute_send_batch(plan: dict[str, Any], *, page) -> dict[str, Any]:
             else:
                 failed += 1
                 item_result["error"] = send_result.get("error_msg") or "send_failed"
+        except GateBlocked as exc:
+            skipped += 1
+            item_result["skipped_reason"] = exc.result.reason
+            results.append(item_result)
+            continue  # 보내지 않은 항목은 딜레이도 하지 않는다
         except Exception as exc:  # noqa: BLE001 - 하이웍스 메일 일괄발송 결과 집계 루프 - 개별 발송 실패는 failed 카운트와 error 필드에 기록
             failed += 1
             item_result["error"] = str(exc)
@@ -146,6 +163,7 @@ def execute_send_batch(plan: dict[str, Any], *, page) -> dict[str, Any]:
         "selected": len(items),
         "sent": sent,
         "failed": failed,
+        "skipped": skipped,
         "items": results,
         "send_status": "done",
     }

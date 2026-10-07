@@ -287,7 +287,7 @@ def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
 
             plan, _ = build_and_save_send_plan(limit=limit, delay_min=delay_min, delay_max=delay_max)
             page = open_hiworks(HIWORKS_MAIL_URL)
-            result = execute_send_batch(plan, page=page)
+            result = execute_send_batch(plan, page=page, approval=confirm)
             print_send_result(result)
         return
 

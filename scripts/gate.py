@@ -33,9 +33,14 @@ CLAUDE.md 의 "사용자 승인 후 자동 진행" 정책 적용 시 호출자�
 
 from __future__ import annotations
 
+import contextlib
 import functools
+import json
+import os
 import threading
-from collections.abc import Callable
+import time
+from collections.abc import Callable, Iterator
+from pathlib import Path
 from typing import Any
 
 from scripts.logger import get_logger
@@ -278,3 +283,99 @@ def gated(risk: RiskLevel | str, *, op_name: str | None = None) -> Callable:
 def list_registry() -> list[dict]:
     """등록된 전체 작업 + 위험 등급 목록 반환."""
     return [{"op_name": k, "risk": v.value} for k, v in sorted(_RISK_REGISTRY.items())]
+
+
+# ── 외부 발행·발송 승인·수신거부 장치 (R2) ──────────────────────────
+# 승인 문구 + 수신거부를 한곳에서 판정한다. 라우터가 아니라 부작용 함수 안쪽에서 호출해 직접 import 호출도
+# 거치게 한다. 발송량(하루 상한)은 제한하지 않는다 — 건수는 사용자가 판단한다(대표님 결정).
+# 수신거부 목록은 data/gate/opt_out.json (GATE_DATA_DIR 로 변경) 에 tmp+rename 으로만 쓴다.
+
+_opt_out_lock = threading.Lock()
+_LOCK_WAIT_S = 10.0
+_LOCK_STALE_S = 30.0  # 이보다 오래된 잠금 파일은 죽은 프로세스가 남긴 것으로 보고 치운다
+
+
+def _opt_out_path() -> Path:
+    base = os.environ.get("GATE_DATA_DIR")
+    root = Path(base) if base else Path(__file__).resolve().parents[1] / "data" / "gate"
+    return root / "opt_out.json"
+
+
+@contextlib.contextmanager
+def _opt_out_guard() -> Iterator[None]:
+    """수신거부 목록 읽고-합치고-쓰기 구간의 배타 잠금. 스레드 락 + 잠금 파일(O_CREAT|O_EXCL)로 프로세스 간에도 막는다."""
+    lock_path = _opt_out_path().with_suffix(".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    deadline = time.monotonic() + _LOCK_WAIT_S
+    with _opt_out_lock:
+        while True:
+            try:
+                os.close(os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+                break
+            except FileExistsError:
+                with contextlib.suppress(OSError):
+                    if time.time() - lock_path.stat().st_mtime > _LOCK_STALE_S:
+                        lock_path.unlink()
+                        continue
+                if time.monotonic() > deadline:
+                    # 잠금을 못 얻으면 쓰지 않고 실패시킨다 — 조용히 덮어써서 수신거부를 잃는 것보다 낫다.
+                    raise TimeoutError(f"[gate] 수신거부 잠금 획득 실패: {lock_path}") from None
+                time.sleep(0.02)
+        try:
+            yield
+        finally:
+            with contextlib.suppress(OSError):
+                lock_path.unlink()
+
+
+def opt_out_list() -> set[str] | None:
+    """수신거부 목록. 파일이 깨졌으면 None(호출자가 보수적으로 차단)."""
+    try:
+        data = json.loads(_opt_out_path().read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return set()
+    except (OSError, ValueError):
+        _log.warning("[gate] 수신거부 목록 읽기 실패 — 발송 차단: %s", _opt_out_path())
+        return None
+    return {str(a).strip().lower() for a in data}
+
+
+def add_opt_out(address: str) -> None:
+    with _opt_out_guard():
+        path = _opt_out_path()
+        merged = sorted((opt_out_list() or set()) | {address.strip().lower()})
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
+        tmp.write_text(json.dumps(merged, ensure_ascii=False, indent=1), encoding="utf-8")
+        os.replace(tmp, path)
+
+
+def _blocked(op_name: str, reason: str, **metadata: Any) -> GateBlocked:
+    result = GateResult(
+        verdict=GateVerdict.BLOCKED, risk=RiskLevel.APPROVE, op_name=op_name, reason=reason, metadata=metadata
+    )
+    return GateBlocked(result)
+
+
+def require_side_effect(
+    op_name: str,
+    *,
+    approval: str | None,
+    expected: str,
+    recipient: str | None = None,
+    **metadata: Any,
+) -> GateResult:
+    """외부 발행·발송 직전 공통 검사. 통과하면 GateResult, 아니면 GateBlocked.
+
+    1) 승인 문구(approval == expected) — 불리언 force 가 아니라 사용자가 확인 단계에서 입력한 값이어야 한다
+    2) 수신거부 — recipient 가 opt_out 목록에 있으면 차단(목록 파일이 깨졌으면 차단)
+    """
+    if approval != expected:
+        raise _blocked(op_name, "명시 승인 문구 필요", **metadata)
+    if recipient is not None:
+        opted = opt_out_list()
+        if opted is None:
+            raise _blocked(op_name, "수신거부 목록을 읽을 수 없음", **metadata)
+        if recipient.strip().lower() in opted:
+            raise _blocked(op_name, "수신거부 대상", recipient=recipient, **metadata)
+    return check(op_name, risk=RiskLevel.APPROVE, force=True, **metadata)
