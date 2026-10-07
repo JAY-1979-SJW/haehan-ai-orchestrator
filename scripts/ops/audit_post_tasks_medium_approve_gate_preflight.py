@@ -46,7 +46,7 @@ APPROVE_EXECUTE_CONNECTION_ANALYSIS = {
         "whitelist 검증 + policy 검증이 작동하지만, "
         "해당 연결 자체가 신규 attack surface가 됨."
     ),
-    "router_import_check": "from ..executor import execute  (execute만 import, execute_task 없음)",
+    "router_import_check": "from ..tasks.executor import execute  (execute만 import, execute_task 없음)",
 }
 
 # ── 2. medium 경로 전체 흐름 (현재 상태) ─────────────────────────────────────
@@ -326,7 +326,7 @@ def _check_router_state() -> dict:
     content = (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "execute_task_imported": "execute_task" in content and "import" in content,
-        "execute_imported": "from ..executor import execute" in content,
+        "execute_imported": "from ..tasks.executor import execute" in content,
         "task_approve_guard_active": (
             '_legacy_5050_should_use_route_wiring("TASK_APPROVE")' in content
             or "_legacy_5050_should_use_route_wiring('TASK_APPROVE')" in content
