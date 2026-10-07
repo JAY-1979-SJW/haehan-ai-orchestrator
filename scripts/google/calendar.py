@@ -25,15 +25,28 @@ def run(task: str, args: list[str]) -> None:
                 print(f"  [오류] 알 수 없는 작업: {task}")
 
 
+def _show_events(page: Any, label: str, url_key: str, ready_selector: str, script: str, column: str) -> None:
+    """캘린더 화면을 열어 일정을 읽어 출력한다(_task_today/_task_week 공통). column = 왼쪽 열로 보여 줄 필드(time|date)."""
+    print(f"\n[작업] Google Calendar {label}")
+
+    page_goto(page, GOOGLE_URLS[url_key])
+    page_wait_visible(page, ready_selector, timeout=15000)
+
+    events = page.evaluate(script)
+
+    print(f"  일정 수: {len(events)}")
+    for i, evt in enumerate(events, 1):
+        print(f"  [{i}] {evt[column]:20s} {evt['title'][:50]}")
+
+
 def _task_today(page: Any, args: list[str]) -> None:
     """오늘 일정."""
-    print("\n[작업] Google Calendar 오늘 일정")
-
-    page_goto(page, GOOGLE_URLS["calendar_day"])
-    # 캘린더 그리드 렌더 확인
-    page_wait_visible(page, '[role="main"], [data-view="day"], .KF4T6b', timeout=15000)
-
-    events = page.evaluate(r"""() => {
+    _show_events(
+        page,
+        "오늘 일정",
+        "calendar_day",
+        '[role="main"], [data-view="day"], .KF4T6b',  # 캘린더 그리드 렌더 확인
+        r"""() => {
         const results = [];
         for (const el of document.querySelectorAll('[data-eventchip], [role="button"][data-draggable-id*="event"]')) {
             const title = el.getAttribute('data-eventchip') || el.textContent.trim();
@@ -41,21 +54,19 @@ def _task_today(page: Any, args: list[str]) -> None:
             if (title) results.push({title, time});
         }
         return results;
-    }""")
-
-    print(f"  일정 수: {len(events)}")
-    for i, evt in enumerate(events, 1):
-        print(f"  [{i}] {evt['time']:20s} {evt['title'][:50]}")
+    }""",
+        "time",
+    )
 
 
 def _task_week(page: Any, args: list[str]) -> None:
     """주간 일정."""
-    print("\n[작업] Google Calendar 주간 일정")
-
-    page_goto(page, GOOGLE_URLS["calendar_week"])
-    page_wait_visible(page, '[role="main"], [data-view="week"], .KF4T6b', timeout=15000)
-
-    events = page.evaluate(r"""() => {
+    _show_events(
+        page,
+        "주간 일정",
+        "calendar_week",
+        '[role="main"], [data-view="week"], .KF4T6b',
+        r"""() => {
         const results = [];
         for (const el of document.querySelectorAll('[data-eventchip]')) {
             const title = el.getAttribute('data-eventchip') || el.textContent.trim();
@@ -63,11 +74,9 @@ def _task_week(page: Any, args: list[str]) -> None:
             if (title) results.push({title, date});
         }
         return results.slice(0, 20);
-    }""")
-
-    print(f"  일정 수: {len(events)}")
-    for i, evt in enumerate(events, 1):
-        print(f"  [{i}] {evt['date']:20s} {evt['title'][:50]}")
+    }""",
+        "date",
+    )
 
 
 def _task_create(page: Any, args: list[str]) -> None:
