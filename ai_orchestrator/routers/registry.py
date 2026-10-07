@@ -6,19 +6,21 @@ from dataclasses import asdict as _asdict
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from ai_orchestrator.connectors.google.gmail_reader import collect_to_inbox as _collect_gmail
+from ai_orchestrator.connectors.naver_auth.session_router import router as naver_session_router
+from ai_orchestrator.connectors.naver_blog.automation_router import blog_automation_router
+from ai_orchestrator.connectors.naver_mail.bulk_router import naver_mail_bulk_router
+from ai_orchestrator.connectors.naver_mail.mailbox_router import naver_mailbox_router
 from ai_orchestrator.routers.action_router import action_router
 from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 from ai_orchestrator.routers.agent_dispatch_router import agent_dispatch_router
 from ai_orchestrator.routers.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
 from ai_orchestrator.routers.auth_router import auth_router
-from ai_orchestrator.connectors.naver_blog.automation_router import blog_automation_router
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
 from ai_orchestrator.routers.dev_reg_approval_read_router import dev_reg_approval_read_router
 from ai_orchestrator.routers.gongmu_router import gongmu_router
-from ai_orchestrator.connectors.naver_mail.bulk_router import naver_mail_bulk_router
-from ai_orchestrator.connectors.naver_mail.mailbox_router import naver_mailbox_router
 from ai_orchestrator.routers.ops_router import ops_router
 from ai_orchestrator.routers.scheduled_job_router import scheduled_job_router
 from ai_orchestrator.routers.site_onboarding_router import site_onboarding_router
@@ -26,7 +28,6 @@ from ai_orchestrator.routers.site_task_map_router import site_task_map_router
 from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router
 from ai_orchestrator.routers.vendor_directory_router import vendor_directory_router
 from ai_orchestrator.routers.web_task_router import web_task_router
-from ai_orchestrator.connectors.google.gmail_reader import collect_to_inbox as _collect_gmail
 
 from ..audit_logger import log_event, read_recent_logs
 from ..browser_tool.approval_record_router import approval_record_router
@@ -35,9 +36,9 @@ from ..connectors.community_router import community_router
 from ..connectors.desktop_session_router import desktop_session_router
 from ..connectors.eum.router import eum_router
 from ..connectors.gabia.router import gabia_router
-from ..connectors.google.gmail_router import gmail_router
 from ..connectors.gonobi_router import gonobi_router
-from ..connectors.google_router import google_router
+from ..connectors.google.gmail_router import gmail_router
+from ..connectors.google.router import google_router
 from ..connectors.hanafax.router import hanafax_router
 from ..connectors.hiworks.mail_router import hiworks_mail_router
 from ..connectors.inquiry_router import inquiry_router
@@ -50,12 +51,11 @@ from ..connectors.naver_mail_router import naver_mail_router
 from ..connectors.naver_news_router import naver_news_router
 from ..connectors.naver_openapi_setup_router import naver_openapi_setup_router
 from ..connectors.naver_search_router import naver_search_router
-from ai_orchestrator.connectors.naver_auth.session_router import router as naver_session_router
 from ..connectors.public_media_router import public_media_router
 from ..connectors.session_status_router import session_status_router
-from ..connectors.smartstore_router import smartstore_router
+from ..connectors.smartstore.router import smartstore_router
 from ..connectors.user_auth_router import get_jwt_user, user_auth_router
-from ..connectors.youtube_router import youtube_router
+from ..connectors.youtube.router import youtube_router
 from ..executor import execute
 from ..gates.approval import approve_token, issue_token, reject_token
 from ..gates.auth import require_role
@@ -64,9 +64,9 @@ from ..inbox import read_recent_inbox
 from ..local_agent_router import local_agent_router
 from ..models import TaskRequest
 from ..planner import plan
-from .marketing_ops_router import marketing_ops_router
 from ..sites.router import sites_router
 from ..telegram_webhook import handle_telegram_update, handle_telegram_webhook
+from .marketing_ops_router import marketing_ops_router
 
 logger = logging.getLogger(__name__)
 

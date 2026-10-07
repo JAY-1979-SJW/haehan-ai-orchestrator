@@ -3297,14 +3297,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/google_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "google",
-   "reason": "docstring이 '하위 호환 re-export' 라 명시 — google/router.py(L8) APIRouter 를 그대로 재노출하는 라우터 자신, L5 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
   "ai_orchestrator/connectors/grant_radar_router.py": {
    "layer": "L8",
    "role": "api",
@@ -3705,14 +3697,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/smartstore_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "smartstore",
-   "reason": "하위 호환 re-export — smartstore/router.py(L8) APIRouter 재노출, L5 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
   "ai_orchestrator/connectors/system_connector.py": {
    "layer": "L4",
    "role": "generic",
@@ -3784,14 +3768,6 @@
    "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
    "source": "rule"
-  },
-  "ai_orchestrator/connectors/youtube_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "youtube",
-   "reason": "하위 호환 re-export — youtube/router.py(L8) APIRouter 재노출, L5 오분류",
-   "confidence": "high",
-   "source": "confirmed"
   },
   "ai_orchestrator/contracts/__init__.py": {
    "layer": "L1",

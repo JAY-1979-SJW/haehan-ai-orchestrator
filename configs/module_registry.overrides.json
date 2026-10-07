@@ -35,11 +35,6 @@
   "reason": "clients 패키지(허브 분리 1단계 신설)",
   "source": "manual"
  },
- "ai_orchestrator/connectors/google_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "docstring이 '하위 호환 re-export' 라 명시 — google/router.py(L8) APIRouter 를 그대로 재노출하는 라우터 자신, L5 오분류"
- },
  "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
   "layer": "L1",
   "role": "shared",
@@ -54,16 +49,6 @@
   "layer": "L7",
   "role": "persistence",
   "reason": "data/naver_search_state.json 상태 저장 파일 — 저장 성격, L5 site_module 오분류"
- },
- "ai_orchestrator/connectors/smartstore_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "하위 호환 re-export — smartstore/router.py(L8) APIRouter 재노출, L5 오분류"
- },
- "ai_orchestrator/connectors/youtube_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "하위 호환 re-export — youtube/router.py(L8) APIRouter 재노출, L5 오분류"
  },
  "ai_orchestrator/domain/integrations_static.py": {
   "layer": "L1",
