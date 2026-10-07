@@ -21,15 +21,6 @@ ROOT = Path(__file__).resolve().parents[1]
 
 SHIMS = find_shims(ROOT)
 
-# 계약을 아직 못 지키는 기존 shim. 마커(# haehan-shim:) 없는 1단계 alias-only shim 은 경로 로드 속성이 없다 —
-# 이번 도구 이전 형태라 알려진 부채로 xfail(비엄격: 재생성하면 XPASS 로 통과). 새 shim 은 마커가 있어 예외 없다.
-# dashboard 직접 실행 전달은 W3 b02dcbb7 이 고친다(병합되면 XPASS).
-_LEGACY = {rel for rel, _ in SHIMS if MARKER not in (ROOT / rel).read_text(encoding="utf-8", errors="replace")[:600]}
-KNOWN_GAPS: dict[tuple[str, str], str] = {
-    **{(rel, "pathload"): "마커 없는 1단계 alias-only shim — make_shim 으로 재생성 필요" for rel in _LEGACY},
-    ("dashboard.py", "direct"): "직접 실행 전달 없음 — W3 b02dcbb7 병합 대기",
-}
-
 
 def _real_file(target: str) -> Path | None:
     try:
@@ -53,16 +44,17 @@ def _ids(shims):
     return [s[0] for s in shims]
 
 
-def _mark(shim: tuple[str, str], kind: str):
-    reason = KNOWN_GAPS.get((shim[0], kind))
-    return pytest.param(shim, marks=pytest.mark.xfail(strict=False, reason=reason)) if reason else shim
+@pytest.mark.parametrize("shim", SHIMS, ids=_ids(SHIMS))
+def test_shim_has_marker(shim):
+    """마커 없는 옛 alias-only 형태는 경로 로드·직접 실행을 못 받는다 — make_shim 으로 재생성할 것."""
+    assert MARKER in (ROOT / shim[0]).read_text(encoding="utf-8")[:600]
 
 
 def test_shims_are_found():
     assert SHIMS, "shim 을 하나도 못 찾음 — 식별 로직 점검"
 
 
-@pytest.mark.parametrize("shim", [_mark(s, "alias") for s in SHIMS], ids=_ids(SHIMS))
+@pytest.mark.parametrize("shim", SHIMS, ids=_ids(SHIMS))
 def test_import_alias(shim, monkeypatch):
     rel, target = shim
     monkeypatch.syspath_prepend(str(ROOT))
@@ -70,7 +62,7 @@ def test_import_alias(shim, monkeypatch):
     assert old_mod is _import_real(target)
 
 
-@pytest.mark.parametrize("shim", [_mark(s, "pathload") for s in SHIMS], ids=_ids(SHIMS))
+@pytest.mark.parametrize("shim", SHIMS, ids=_ids(SHIMS))
 def test_path_load_has_real_attributes(shim, monkeypatch):
     rel, target = shim
     monkeypatch.syspath_prepend(str(ROOT))
@@ -84,7 +76,7 @@ def test_path_load_has_real_attributes(shim, monkeypatch):
     assert not missing, f"파일 경로로 읽은 shim 에 실제 속성이 없다: {missing[:8]}"
 
 
-@pytest.mark.parametrize("shim", [_mark(s, "direct") for s in SHIMS], ids=_ids(SHIMS))
+@pytest.mark.parametrize("shim", SHIMS, ids=_ids(SHIMS))
 def test_direct_execution_forwards(shim, monkeypatch):
     rel, target = shim
     real_file = _real_file(target)
