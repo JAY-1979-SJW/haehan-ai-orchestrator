@@ -22832,6 +22832,14 @@
    "reason": "도메인(naver_blog) 자동화",
    "confidence": "low",
    "source": "rule"
+  },
+  "ai_orchestrator/connectors/hanafax/send_job.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "low",
+   "source": "rule"
   }
  }
 }

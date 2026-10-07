@@ -17,12 +17,12 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.connectors.hanafax import attachments as attachments
+from ai_orchestrator.connectors.hanafax import authorization_store as store
+from ai_orchestrator.connectors.hanafax import auto_sender as adapter
+from ai_orchestrator.connectors.hanafax import send_job
 from ai_orchestrator.connectors.hanafax import send_policy as policy
 from ai_orchestrator.paths.runtime import data_dir, storage_dir
-from ai_orchestrator.connectors.hanafax import authorization_store as store
-from ai_orchestrator.connectors.hanafax import attachments as attachments
-from ai_orchestrator.services import scheduled_job_actions as actions
-from ai_orchestrator.connectors.hanafax import auto_sender as adapter
 
 MAX_RECIPIENTS = 1000
 MAX_PER_RUN_CAP = 1000
@@ -368,7 +368,7 @@ _last_run: dict[str, dict[str, str]] = {}
 
 def _run_job(auth_id: str) -> None:
     try:
-        message = actions.get_action("hanafax_send").run({"authorization_id": auth_id})  # type: ignore[union-attr]
+        message = send_job.run_send({"authorization_id": auth_id})
         outcome = {"status": "done", "message": message}
     except Exception as exc:  # noqa: BLE001 - 실패 사유를 화면에 보여 주기 위해 기록한다(발송 재시도는 하지 않는다)
         outcome = {"status": "failed", "message": str(exc)[:300] or type(exc).__name__}
