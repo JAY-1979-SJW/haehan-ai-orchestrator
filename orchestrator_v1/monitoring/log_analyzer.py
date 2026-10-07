@@ -11,7 +11,7 @@ from pathlib import Path
 
 from logger import get_logger
 
-_BASE_DIR = Path(__file__).resolve().parent
+_BASE_DIR = Path(__file__).resolve().parents[2]
 _AUDIT_PATH = _BASE_DIR / "logs" / "audit.jsonl"
 _HISTORY_PATH = _BASE_DIR / "storage" / "execution_history.jsonl"
 _CACHE_PATH = _BASE_DIR / "storage" / "dashboard_cache.json"

@@ -16,12 +16,12 @@ from flask import Blueprint, jsonify, request
 import audit_logger
 import candidate_store
 import candidate_to_task
-import email_task_store
-import inbox_store
-from email_classifier import classify
-from hiworks_mail_reader import fetch_recent_mails
+from orchestrator_v1.inbox import email_task_store
+from orchestrator_v1.inbox import inbox_store
+from orchestrator_v1.inbox.email_classifier import classify
+from orchestrator_v1.inbox.hiworks_mail_reader import fetch_recent_mails
 from logger import get_logger
-from message_classifier import classify_message
+from orchestrator_v1.inbox.message_classifier import classify_message
 
 log = get_logger("inbox_router")
 

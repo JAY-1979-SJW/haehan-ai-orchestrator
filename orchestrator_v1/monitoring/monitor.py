@@ -19,11 +19,11 @@ import time
 from pathlib import Path
 
 from logger import get_logger
-from telegram_notifier import send_status_message
+from orchestrator_v1.monitoring.telegram_notifier import send_status_message
 
 log = get_logger("monitor")
 
-_BASE_DIR = str(Path(__file__).resolve().parent)
+_BASE_DIR = str(Path(__file__).resolve().parents[2])
 
 # ── 환경변수 설정 ──────────────────────────────────────────────────────────────
 POLL_INTERVAL = float(os.environ.get("MONITOR_POLL_INTERVAL", "2"))

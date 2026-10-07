@@ -7882,17 +7882,81 @@
    "source": "rule"
   },
   "dashboard.py": {
-   "layer": "L8",
-   "role": "api",
+   "layer": "L4",
+   "role": "generic",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "email_classifier.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "email_task_approval.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "email_task_executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "email_task_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
    "source": "rule"
   },
   "executor.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "hiworks_mail_reader.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "naver_mail",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "inbox_router.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "inbox_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "kakaowork_reader.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "kakao",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
@@ -8305,6 +8369,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "log_analyzer.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
   "logger.py": {
    "layer": "L1",
    "role": "shared",
@@ -8321,12 +8393,28 @@
    "confidence": "high",
    "source": "rule"
   },
+  "message_classifier.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
   "models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
    "reason": "공용 기반 이름(models)",
    "confidence": "high",
+   "source": "rule"
+  },
+  "monitor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   },
   "notice_radar/__init__.py": {
@@ -8391,6 +8479,14 @@
    "domain": "g2b",
    "reason": "정의 위주(모델·스키마·dataclass)",
    "confidence": "high",
+   "source": "rule"
+  },
+  "notice_router.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   },
   "orchestrator_v1/__init__.py": {
@@ -8495,6 +8591,14 @@
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/dashboard.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
    "source": "rule"
   },
   "orchestrator_v1/monitoring/log_analyzer.py": {
@@ -16695,6 +16799,14 @@
    "domain": "common",
    "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
+   "source": "rule"
+  },
+  "telegram_notifier.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   },
   "tests/__init__.py": {

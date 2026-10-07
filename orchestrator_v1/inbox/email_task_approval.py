@@ -10,12 +10,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import audit_logger
-import email_task_store
+from orchestrator_v1.inbox import email_task_store
 from logger import get_logger
 
 log = get_logger("email_task_approval")
 
-_BASE_DIR = str(Path(__file__).resolve().parent)
+_BASE_DIR = str(Path(__file__).resolve().parents[2])
 _DEFAULT_TOKEN_PATH = str(Path(_BASE_DIR) / "storage" / "email_approval_tokens.json")
 
 

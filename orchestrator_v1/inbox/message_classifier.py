@@ -7,13 +7,13 @@ AI 미사용 — 규칙 기반.
 
 from __future__ import annotations
 
-from email_classifier import (
+from orchestrator_v1.inbox.email_classifier import (
     _CATEGORY_RULES,
     _HIGH_PRIORITY_KEYWORDS,
     _LOW_PRIORITY_KEYWORDS,
     _match_keywords,
 )
-from email_classifier import (
+from orchestrator_v1.inbox.email_classifier import (
     classify as _classify_email,
 )
 

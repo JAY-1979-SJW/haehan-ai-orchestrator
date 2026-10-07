@@ -20,7 +20,7 @@ from notice_radar.site_profiles import get_daily_briefing_sites, get_site_profil
 
 notice_bp = Blueprint("notices", __name__, url_prefix="/api/v1/notices")
 
-_BASE_DIR = Path(__file__).resolve().parent
+_BASE_DIR = Path(__file__).resolve().parents[2]
 _DEFAULT_OUTPUT_ROOT = _BASE_DIR / "storage" / "notices"
 _ALLOWED_LOCAL_ROOTS = [
     _BASE_DIR / "storage" / "notices",
