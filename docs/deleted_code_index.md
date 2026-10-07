@@ -1058,3 +1058,18 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/ops/codebase_layer_audit.py` — `issue_key`
 - `scripts/session_tracker.py` — `clear_state`, `all_states`
 - `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
+
+## 2026-10-08 삭제 — scripts/ops 일회성·사용처 0 (stage/ops-folders)
+
+대표님 방침 "쓸 곳이 없으면 확인해서 삭제". 삭제 전 확인(모두 0): ① 운영 코드 import·호출 ② 문자열 경로 호출(subprocess·command_router·importlib) ③ 워크플로·bat·ps1·spec·Electron·.mcp.json·훅 설정 ④ docs 의 실행 안내(역사 기록 docs/reports 제외) ⑤ 사용자 스킬(~/.claude/skills)·_coordination 문서의 명령 ⑥ 이 PC 예약 작업(지휘창 확인: 저장소 스크립트를 부르는 작업 0).
+복원: `git checkout 3bbe7640 -- <경로>` (삭제 직전 커밋 3bbe7640. 이 커밋에서 scripts/ops → scripts/archive/ops 로 옮겨진 상태이므로 경로는 아래 표기).
+
+- `scripts/archive/ops/audit_5050_legacy_characterization.py` — 5050 Flask 이관 단계 감사. 사용처: 이 스크립트만 검사하는 시험(아래)뿐. 문서 언급은 분석표·조정 문서의 목록 서술(실행 안내 아님)
+- `scripts/archive/ops/audit_5050_legacy_fastapi_migration_readiness.py` — 위와 같음
+- `scripts/archive/ops/audit_5050_phase1_8400_contract_freeze.py` — 위와 같음
+- `scripts/archive/ops/audit_5050_phase1b_adapter_contract_detail.py` — 위와 같음
+- `scripts/archive/ops/audit_5050_phase1d_adapter_dry_run_compat.py` — 위와 같음(test_test_path_refs 의 원본 파일 목록에서 항목 제거)
+- `tests/test_5050_legacy_characterization_20260517.py`, `tests/test_5050_legacy_fastapi_migration_readiness_20260516.py`, `tests/test_5050_phase1_8400_contract_freeze_20260517.py`, `tests/test_5050_phase1b_adapter_contract_detail_20260517.py`, `tests/test_5050_phase1d_adapter_dry_run_compat_20260517.py` — 위 5050 감사 스크립트만 검사하던 시험
+- `scripts/archive/ops/check_audit.py` — 2026-05-10 감사 로그 파일 이름을 박은 일회성 확인 스크립트. 문서 언급은 표의 설명 문구
+- `scripts/archive/ops/e2e_deep_scan.py` — 일회성 E2E 재점검(옛 프로젝트 위치 경로를 박아 둠). 문서 언급은 HANDOFF 의 '부수 발견' 기록
+- `scripts/archive/ops/e2e_full_report.py` — 위와 같음

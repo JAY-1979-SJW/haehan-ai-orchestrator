@@ -11753,46 +11753,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/archive/ops/audit_5050_legacy_characterization.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/ops/audit_5050_legacy_fastapi_migration_readiness.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/ops/audit_5050_phase1_8400_contract_freeze.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/ops/audit_5050_phase1b_adapter_contract_detail.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/ops/audit_5050_phase1d_adapter_dry_run_compat.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/audit_ai_agent_app_structure_design_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -12546,14 +12506,6 @@
    "source": "rule"
   },
   "scripts/ops/check_a4.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/ops/check_audit.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13786,46 +13738,6 @@
    "source": "rule"
   },
   "tests/integration/manual/test_wait_login.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_legacy_characterization_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_legacy_fastapi_migration_readiness_20260516.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_phase1_8400_contract_freeze_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_phase1b_adapter_contract_detail_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_phase1d_adapter_dry_run_compat_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22498,22 +22410,6 @@
    "source": "rule"
   },
   "scripts/ops/deploy_dry_run.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/ops/e2e_deep_scan.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/ops/e2e_full_report.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

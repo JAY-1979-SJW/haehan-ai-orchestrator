@@ -21,7 +21,6 @@ SOURCE_FILES = [
     ROOT / "configs" / "site_automation_status_index.json",
     ROOT / "configs" / "module_boundaries.json",
     ROOT / "scripts" / "ops" / "audit_google_automation_baseline_contract.py",
-    ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1d_adapter_dry_run_compat.py",
 ]
 
 # `tests/x/y.py` 또는 `ai_orchestrator/tests/x.py` 형태(끝에 `::func` 가 붙을 수 있음).
