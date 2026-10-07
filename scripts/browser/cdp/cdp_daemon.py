@@ -36,9 +36,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts import browser_lifecycle as lifecycle  # noqa: E402
-from scripts.browser_paths import find_chrome, find_edge  # noqa: E402
-from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
+from scripts.browser.session import browser_lifecycle as lifecycle  # noqa: E402
+from scripts.browser.session.browser_paths import find_chrome, find_edge  # noqa: E402
+from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
 from scripts.config import CDP_BROWSER_POLICY, CDP_HOST, CDP_PORT  # noqa: E402
 
 # ── 설정 ─────────────────────────────────────────────────────────────

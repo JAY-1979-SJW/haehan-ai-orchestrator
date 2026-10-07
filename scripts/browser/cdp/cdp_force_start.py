@@ -25,8 +25,8 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 
-from scripts import browser_lifecycle as lifecycle  # noqa: E402
-from scripts.browser_paths import find_chrome  # noqa: E402
+from scripts.browser.session import browser_lifecycle as lifecycle  # noqa: E402
+from scripts.browser.session.browser_paths import find_chrome  # noqa: E402
 from scripts.config import CDP_BROWSER_POLICY  # noqa: E402
 
 CDP_PORT = 9222

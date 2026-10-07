@@ -15,14 +15,14 @@ from collections.abc import Iterable
 from pathlib import Path
 
 CHROME_CANDIDATES: tuple[str, ...] = (
-    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    r"%ProgramFiles%\Google\Chrome\Application\chrome.exe",
+    r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe",
     r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe",
 )
 
 EDGE_CANDIDATES: tuple[str, ...] = (
-    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe",
+    r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe",
     r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe",
 )
 

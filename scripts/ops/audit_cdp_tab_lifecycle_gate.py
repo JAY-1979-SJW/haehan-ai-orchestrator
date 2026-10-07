@@ -23,8 +23,8 @@ SKIP_PARTS = {
 }
 APPROVED_FILES = {
     Path("scripts/web_connector.py"),
-    Path("scripts/browser_cdp_selection_gate.py"),
-    Path("scripts/browser_task_session.py"),
+    Path("scripts/browser/session/browser_cdp_selection_gate.py"),
+    Path("scripts/browser/session/browser_task_session.py"),
     Path("scripts/local_agent/open_user_browser_session.py"),
 }
 PATTERNS = (

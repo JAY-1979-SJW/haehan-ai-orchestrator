@@ -17,10 +17,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from scripts.app_paths import repo_root
 from scripts.config import CDP_HOST
 from scripts.config import CDP_PORT as GENERAL_PORT
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = repo_root()
 MAX_ACTIVE_LANES = 3
 GENERAL = "general"
 

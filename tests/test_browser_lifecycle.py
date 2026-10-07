@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 import types
 
-from scripts import browser_lifecycle as lc
+from scripts.browser.session import browser_lifecycle as lc
 
 
 def test_restore_switch_is_the_bare_chrome_switch():

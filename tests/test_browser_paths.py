@@ -1,8 +1,8 @@
-"""scripts.browser_paths — Chrome/Edge/ffmpeg 위치 탐색 (결함 #17)."""
+"""scripts.browser.session.browser_paths — Chrome/Edge/ffmpeg 위치 탐색 (결함 #17)."""
 
 from __future__ import annotations
 
-from scripts import browser_paths as bp
+from scripts.browser.session import browser_paths as bp
 
 
 def test_first_existing_returns_first_candidate_that_exists(tmp_path):
@@ -35,12 +35,32 @@ def test_first_existing_expands_environment_variables(tmp_path, monkeypatch):
 
 def test_candidate_order_matches_previous_implementation():
     # 기존 3곳(cdp_daemon·cdp_force_start·start_chrome_with_cdp)의 순서를 유지해야 같은 브라우저가 선택된다
-    assert bp.CHROME_CANDIDATES[0].startswith(r"C:\Program Files\Google")
-    assert bp.CHROME_CANDIDATES[1].startswith(r"C:\Program Files (x86)\Google")
+    assert bp.CHROME_CANDIDATES[0].startswith(r"%ProgramFiles%\Google")
+    assert bp.CHROME_CANDIDATES[1].startswith(r"%ProgramFiles(x86)%\Google")
     assert bp.CHROME_CANDIDATES[2].startswith("%LOCALAPPDATA%")
-    assert bp.EDGE_CANDIDATES[0].startswith(r"C:\Program Files (x86)\Microsoft")
-    assert bp.EDGE_CANDIDATES[1].startswith(r"C:\Program Files\Microsoft")
+    assert bp.EDGE_CANDIDATES[0].startswith(r"%ProgramFiles(x86)%\Microsoft")
+    assert bp.EDGE_CANDIDATES[1].startswith(r"%ProgramFiles%\Microsoft")
     assert bp.EDGE_CANDIDATES[2].startswith("%LOCALAPPDATA%")
+
+
+def test_candidates_expand_to_absolute_paths_on_this_pc():
+    # STD-02(절대경로 하드코딩) 해소 — 환경변수 기반으로 바꿔도 각 후보가 실제 절대경로로
+    # 펼쳐지는지(변수가 안 남고, Program Files 계열 아래 exe로 끝나는지) 확인한다.
+    # 기대값 자체를 하드코딩하지 않는다 — 비교 대상도 같은 환경변수로 조립해 STD-02를 다시 어기지 않는다.
+    import os
+
+    program_files = os.environ.get("ProgramFiles", "")
+    program_files_x86 = os.environ.get("ProgramFiles(x86)", "")
+    assert program_files and program_files_x86, "이 시험은 Windows 전용(ProgramFiles 환경변수 필요)"
+
+    for candidate, root in zip(bp.CHROME_CANDIDATES[:2], (program_files, program_files_x86), strict=True):
+        expanded = os.path.expandvars(candidate)
+        assert "%" not in expanded
+        assert expanded == root + r"\Google\Chrome\Application\chrome.exe"
+    for candidate, root in zip(bp.EDGE_CANDIDATES[:2], (program_files_x86, program_files), strict=True):
+        expanded = os.path.expandvars(candidate)
+        assert "%" not in expanded
+        assert expanded == root + r"\Microsoft\Edge\Application\msedge.exe"
 
 
 def test_candidates_do_not_hardcode_a_user_name():

@@ -87,7 +87,7 @@ def _port_in_use(host: str, port: int) -> bool:
 
 
 def _find_chrome() -> str | None:
-    from scripts.browser_paths import find_chrome
+    from scripts.browser.session.browser_paths import find_chrome
 
     return find_chrome()
 

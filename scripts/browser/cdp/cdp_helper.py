@@ -12,11 +12,12 @@ import logging
 import threading
 import time
 import urllib.request
-from pathlib import Path
 
 import websocket
 
-ROOT = Path(__file__).resolve().parents[3]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 SHOT_PATH = ROOT / "data" / "browser_screenshot.png"
 _log = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 
 SANDBOX_ENV_MARKERS = (
     "CODEX_SANDBOX_NETWORK_DISABLED",

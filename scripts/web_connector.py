@@ -31,8 +31,8 @@ _DAEMON_STATE = ROOT / "data" / "cdp_daemon_state.json"
 import sys  # noqa: E402
 
 sys.path.insert(0, str(ROOT))
-from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
-from scripts.browser_task_session import (  # noqa: E402
+from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
+from scripts.browser.session.browser_task_session import (  # noqa: E402
     BrowserTaskPolicy,
     cleanup_task_pages,
     get_or_create_task_page,

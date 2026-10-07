@@ -326,7 +326,9 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
     import subprocess
     from pathlib import Path as _Path
 
-    STATE_FILE = _Path(__file__).resolve().parents[3] / "data" / "runtime" / "chrome_ui_monitor_state.json"
+    from scripts.app_paths import repo_root
+
+    STATE_FILE = repo_root() / "data" / "runtime" / "chrome_ui_monitor_state.json"
     sub_cmd = task or "status"
 
     if sub_cmd == "start":
@@ -338,7 +340,7 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
 
         proc = subprocess.Popen(
             [str(pythonw), str(script), str(interval)],
-            cwd=str(_Path(__file__).resolve().parents[3]),
+            cwd=str(repo_root()),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from scripts import session_tracker
+from scripts.browser.session import session_tracker
 
 
 @pytest.fixture(autouse=True)

@@ -14,7 +14,7 @@ ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.browser_cdp_selection_gate import (  # noqa: E402
+from scripts.browser.session.browser_cdp_selection_gate import (  # noqa: E402
     create_isolated_target,
     evaluate_sessions,  # noqa: F401 - tests/test_naver_cafe_list_collector.py 가 runner.evaluate_sessions 로 접근
     select_naver_session,

@@ -1,4 +1,4 @@
-from scripts import browser_cdp_selection_gate as gate
+from scripts.browser.session import browser_cdp_selection_gate as gate
 
 
 def _session(port: int, *urls: str) -> gate.CdpSession:

@@ -8601,7 +8601,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/browser_cdp_selection_gate.py": {
+  "scripts/browser/session/browser_cdp_selection_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -8609,7 +8609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_paths.py": {
+  "scripts/browser/session/browser_paths.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8617,7 +8617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_rpc_client.py": {
+  "scripts/browser/session/browser_rpc_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8625,7 +8625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_rpc_server.py": {
+  "scripts/browser/session/browser_rpc_server.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8633,7 +8633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_sandbox_gate.py": {
+  "scripts/browser/session/browser_sandbox_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -8649,7 +8649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_task_session.py": {
+  "scripts/browser/session/browser_task_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -15825,7 +15825,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/session_tracker.py": {
+  "scripts/browser/session/session_tracker.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -21617,7 +21617,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/browser_lifecycle.py": {
+  "scripts/browser/session/browser_lifecycle.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -22994,6 +22994,14 @@
    "source": "rule"
   },
   "scripts/browser/cdp/cli.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

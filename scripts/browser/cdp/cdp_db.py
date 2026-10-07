@@ -13,16 +13,17 @@ import sqlite3
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parents[3] / "data" / "cdp.db"
+from scripts.app_paths import repo_root
+
+DB_PATH = repo_root() / "data" / "cdp.db"
 
 
 # ── 연결 ──────────────────────────────────────────────────────────
 
 
 @contextmanager
-def _conn() -> Generator[sqlite3.Connection, None, None]:
+def _conn() -> Generator[sqlite3.Connection]:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(DB_PATH), timeout=10)
     con.row_factory = sqlite3.Row

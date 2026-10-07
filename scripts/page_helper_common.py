@@ -818,7 +818,7 @@ def _safe_auto_login_detect(page: Page, url: str) -> None:
             return
 
         from scripts.login_detector import detect_login_state
-        from scripts.session_tracker import mark_state
+        from scripts.browser.session.session_tracker import mark_state
 
         state = detect_login_state(page)
         change = mark_state(domain, state)

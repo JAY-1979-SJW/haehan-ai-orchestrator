@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from scripts import browser_sandbox_gate as gate
+from scripts.browser.session import browser_sandbox_gate as gate
 
 
 def test_sandbox_gate_detects_codex_sandbox(monkeypatch):
