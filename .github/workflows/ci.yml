@@ -199,6 +199,18 @@ jobs:
       - name: Layer audit self-test
         run: python -m pytest tests/test_codebase_layer_audit.py -q
 
+      - name: import-linter 계약 (비차단 시험 운영 — 표준 도구 1단계, 기존 층·금지 import·분리 게이트와 나란히)
+        # 2026-10-08 대표님 승인 '표준 도구 채택': 층 방향(module_registry allowed_deps)·금지 import 쌍(layer_rules)·leaf 분리
+        # (module_separation_gate)·블로그 분리(check_blog_separability)를 import-linter 계약으로 옮겨 같은 결과가 나오는지 지켜본다.
+        # .importlinter 는 생성물(scripts/ops/import_contracts_gen.py) — 정본 설정이 바뀌었는데 다시 만들지 않았으면 --check 가 먼저 알린다.
+        # 기존 게이트를 대체하지 않는다. 판정이 기존 측정과 일치함이 확인될 때까지 continue-on-error 로 PR 을 막지 않는다.
+        # 알려진 한계: 루트 평면 .py·__init__.py 없는 폴더·동적 import(importlib) 는 import-linter 가 못 본다(기존 게이트가 계속 맡는다).
+        continue-on-error: true
+        shell: bash
+        run: |
+          python scripts/ops/import_contracts_gen.py --check
+          lint-imports --no-cache
+
       - name: Determine base/head refs
         id: refs
         shell: bash
