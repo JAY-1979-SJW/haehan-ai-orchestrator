@@ -11,7 +11,7 @@
   POST /inventory/refresh — 캐시 강제 갱신
 
 실행:
-  python scripts/local/pc_inventory_server.py
+  python scripts/ops/pc_inventory_server.py
 
 보안: 127.0.0.1 바인딩 (로컬 전용), 외부 노출 없음.
 """
