@@ -7,27 +7,15 @@ from collections.abc import Callable
 
 from scripts.common.gate import check as gate_check
 
-from . import (
-    ads_signup,
-    ai_usage_labels,
-    android_app_dev_labels,
-    android_app_dev_report,
-    domain_taxonomy,
-    live_inputs,
-    live_surface_explorer,
-    managed_console,
-    oauth_console_fill,
-    precision_report,
-    router_management,
-    subdomain_logic,
-    surface_explorer,
-    surfaces,
-    tab_logic,
-    vision_usage_gate,
-    workflows,
-    workspace_basic,
-    youtube_upload,
-)
+from scripts.google import ads_signup, ai_usage_labels, android_app_dev_labels, android_app_dev_report, live_surface_explorer, managed_console, oauth_console_fill, precision_report, router_management, vision_usage_gate, workspace_basic
+from scripts.google.common import domain_taxonomy
+from scripts.google.common import live_inputs
+from scripts.google.common import subdomain_logic
+from scripts.google.common import surface_explorer
+from scripts.google.common import surfaces
+from scripts.google.common import tab_logic
+from scripts.google.common import workflows
+from scripts.google.common import youtube_upload
 from .cloud import live_console_explorer
 from .gates import gate_google_oauth_required, gate_google_send_plan, gate_google_submit_plan  # noqa: F401
 from .site_profile import GOOGLE_PROFILE  # noqa: F401

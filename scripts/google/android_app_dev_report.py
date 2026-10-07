@@ -7,7 +7,7 @@ from typing import Any
 
 from scripts.google.android_app_dev_labels import build_android_app_dev_labels, label_for_surface
 from scripts.google.precision_report import build_google_precision_report
-from scripts.google.report_io import print_report_summary, save_json_md_report
+from scripts.google.common.report_io import print_report_summary, save_json_md_report
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_REPORT_DIR = ROOT / "data" / "google_android_app_dev_reports"

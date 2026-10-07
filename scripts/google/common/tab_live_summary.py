@@ -6,8 +6,8 @@ cloud/registry.cloud_summary·workspace/registry.workspace_summary 가 탭 키�
 
 from __future__ import annotations
 
-from scripts.google.live_inputs import build_live_input_coverage
-from scripts.google.tab_registry import build_google_tab_summary
+from scripts.google.common.live_inputs import build_live_input_coverage
+from scripts.google.common.tab_registry import build_google_tab_summary
 
 
 def tab_summary_with_live_inputs(tab_key: str) -> dict:

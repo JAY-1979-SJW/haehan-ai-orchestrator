@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.google.gmail_api import GmailAPI
+from scripts.google.common.gmail_api import GmailAPI
 from scripts.google.audit_gmail_function_contract import audit
 
 

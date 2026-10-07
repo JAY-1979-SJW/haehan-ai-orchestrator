@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.google import surfaces, tab_registry, workflows
-from scripts.google.report_io import print_report_summary, save_json_md_report
+from scripts.google.common import surfaces, tab_registry, workflows
+from scripts.google.common.report_io import print_report_summary, save_json_md_report
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 DATA_REPORT_DIR = ROOT / "data" / "google_domain_taxonomy_reports"
 LATEST_REPORT = ROOT / "data" / "google_domain_taxonomy_latest.json"
 DOC_REPORT_DIR = ROOT / "docs" / "reports"

@@ -10,7 +10,7 @@ from urllib.parse import quote, urlsplit
 
 import requests
 
-from .live_inputs_config import _cdp_websocket_timeout
+from scripts.google.common.live_inputs_config import _cdp_websocket_timeout
 
 
 class _CDPSessionManager:

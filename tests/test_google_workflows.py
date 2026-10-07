@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from uuid import uuid4
 
-from scripts.google import live_inputs, workflows
+from scripts.google.common import live_inputs, workflows
 
 
 def _test_dir() -> Path:
@@ -17,7 +17,7 @@ def _patch(monkeypatch, name, value):
     import sys
 
     for mod_name, mod in list(sys.modules.items()):
-        if mod_name.startswith(("scripts.google.workflows", "scripts.google.live_inputs")) and hasattr(mod, name):
+        if mod_name.startswith(("scripts.google.common.workflows", "scripts.google.common.live_inputs")) and hasattr(mod, name):
             monkeypatch.setattr(mod, name, value)
 
 

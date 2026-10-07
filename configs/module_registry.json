@@ -8361,7 +8361,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/base.py": {
+  "scripts/google/common/base.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8553,7 +8553,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/docs.py": {
+  "scripts/google/common/docs.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8577,7 +8577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/domain_taxonomy.py": {
+  "scripts/google/common/domain_taxonomy.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8585,7 +8585,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/drive.py": {
+  "scripts/google/common/drive.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8609,7 +8609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/gmail.py": {
+  "scripts/google/common/gmail.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8617,7 +8617,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/gmail_analysis.py": {
+  "scripts/google/common/gmail_analysis.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8625,7 +8625,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/gmail_api.py": {
+  "scripts/google/common/gmail_api.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8641,7 +8641,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/live_inputs.py": {
+  "scripts/google/common/live_inputs.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8649,7 +8649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_cdp.py": {
+  "scripts/google/common/live_inputs_cdp.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8657,7 +8657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_cdp_fillers.py": {
+  "scripts/google/common/live_inputs_cdp_fillers.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8665,7 +8665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_config.py": {
+  "scripts/google/common/live_inputs_config.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8673,7 +8673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_coverage.py": {
+  "scripts/google/common/live_inputs_coverage.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8681,7 +8681,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/live_inputs_domain_fillers.py": {
+  "scripts/google/common/live_inputs_domain_fillers.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8689,7 +8689,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/live_inputs_fill.py": {
+  "scripts/google/common/live_inputs_fill.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8697,7 +8697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_report.py": {
+  "scripts/google/common/live_inputs_report.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8809,7 +8809,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/sheets.py": {
+  "scripts/google/common/sheets.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8825,7 +8825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/subdomain_logic.py": {
+  "scripts/google/common/subdomain_logic.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8833,7 +8833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/surface_explorer.py": {
+  "scripts/google/common/surface_explorer.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8841,7 +8841,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/surfaces.py": {
+  "scripts/google/common/surfaces.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8849,7 +8849,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/tab_logic.py": {
+  "scripts/google/common/tab_logic.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8857,7 +8857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/tab_registry.py": {
+  "scripts/google/common/tab_registry.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8889,15 +8889,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/workflows.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "google 도메인 site module 내부에서만 쓰는 공개 API aggregator(leaf 모듈 re-export) — 다른 도메인이 호출하는 범용 업무흐름이 아니라 google/ 사이트 모듈 상세 구현. 이름만 workflows라 L6로 오분류.",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/google/workflows_actions.py": {
+  "scripts/google/common/workflows_actions.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8905,7 +8897,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/workflows_catalog.py": {
+  "scripts/google/common/workflows_catalog.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8913,7 +8905,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/workflows_common.py": {
+  "scripts/google/common/workflows_common.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8921,7 +8913,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/workflows_execute.py": {
+  "scripts/google/common/workflows_execute.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8929,7 +8921,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/workflows_report.py": {
+  "scripts/google/common/workflows_report.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -9113,7 +9105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/youtube_upload.py": {
+  "scripts/google/common/youtube_upload.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -22057,7 +22049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/browser_tasks.py": {
+  "scripts/google/common/browser_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -22065,7 +22057,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/calendar_tasks.py": {
+  "scripts/google/common/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -22073,7 +22065,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/report_io.py": {
+  "scripts/google/common/report_io.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -22089,7 +22081,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/tab_live_summary.py": {
+  "scripts/google/common/tab_live_summary.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -23184,6 +23176,22 @@
    "reason": "도메인(naver) 자동화",
    "confidence": "low",
    "source": "rule"
+  },
+  "scripts/google/common/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/google/common/workflows.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "google 도메인 site module 내부에서만 쓰는 공개 API aggregator(leaf 모듈 re-export) — 다른 도메인이 호출하는 범용 업무흐름이 아니라 google/ 사이트 모듈 상세 구현. 이름만 workflows라 L6로 오분류.",
+   "confidence": "high",
+   "source": "confirmed"
   }
  }
 }

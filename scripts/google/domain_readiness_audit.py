@@ -16,8 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.google import domain_taxonomy
-
+from scripts.google.common import domain_taxonomy  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 REPORT_DIR = ROOT / "data" / "google_domain_readiness_reports"
 LATEST_REPORT = ROOT / "data" / "google_domain_readiness_latest.json"

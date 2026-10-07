@@ -8,18 +8,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from scripts.google.report_io import save_json_with_latest
+from scripts.google.common.report_io import save_json_with_latest
 
-from . import workflows
-from .live_inputs_config import (
-    LIVE_INPUT_ADAPTERS,
-    DOMAIN_SPECIFIC_PREFILL_MODES,
-    GENERIC_HANDOFF_MODES,
-    PARTIAL_HANDOFF_MODES,
-    LIVE_INPUT_COVERAGE_DIR,
-    LATEST_LIVE_INPUT_COVERAGE,
-    FINAL_CONTROL_LABELS,
-)
+from scripts.google.common import workflows
+from scripts.google.common.live_inputs_config import LIVE_INPUT_ADAPTERS, DOMAIN_SPECIFIC_PREFILL_MODES, GENERIC_HANDOFF_MODES, PARTIAL_HANDOFF_MODES, LIVE_INPUT_COVERAGE_DIR, LATEST_LIVE_INPUT_COVERAGE, FINAL_CONTROL_LABELS
 
 def build_live_input_coverage() -> dict:
     """Build live-fill support coverage against the Google work catalog."""

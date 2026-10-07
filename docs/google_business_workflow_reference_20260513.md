@@ -64,7 +64,7 @@ blocked execution result and does not change Google state.
 
 ## Subdomain Logic
 
-`scripts/google/subdomain_logic.py` groups the Google surface and workflow
+`scripts/google/common/subdomain_logic.py` groups the Google surface and workflow
 catalogs by host. The logic is intentionally server-first and user-present:
 
 - login operations create only a user-present login entry task; auto-login,
@@ -78,7 +78,7 @@ catalogs by host. The logic is intentionally server-first and user-present:
 
 ## Tab Logic
 
-`scripts/google/tab_logic.py` exposes the same logic per Google tab:
+`scripts/google/common/tab_logic.py` exposes the same logic per Google tab:
 `search`, `identity`, `workspace`, `cloud`, `ai`, `youtube`, `marketing`,
 `developer`, and `media`.
 

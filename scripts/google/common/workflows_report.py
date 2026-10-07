@@ -3,11 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .workflows_common import (
-    LATEST_ACTION_CATALOG,
-    LATEST_ADAPTER_CATALOG,
-    LATEST_UNDEVELOPED_REPORT,
-)
+from scripts.google.common.workflows_common import LATEST_ACTION_CATALOG, LATEST_ADAPTER_CATALOG, LATEST_UNDEVELOPED_REPORT
 
 
 def print_action_summary(catalog: dict, path: Path) -> None:

@@ -764,10 +764,10 @@ forbidden_modules =
     scripts.google.android_app_dev_labels
     scripts.google.android_app_dev_report
     scripts.google.auth
-    scripts.google.base
-    scripts.google.browser_tasks
+    scripts.google.common.base
+    scripts.google.common.browser_tasks
     scripts.google.calendar_api
-    scripts.google.calendar_tasks
+    scripts.google.common.calendar_tasks
     scripts.google.cloud._catalog_only
     scripts.google.cloud.api_credentials
     scripts.google.cloud.bigquery
@@ -788,24 +788,24 @@ forbidden_modules =
     scripts.google.cloud.secret_manager
     scripts.google.cloud.sql
     scripts.google.cloud.storage
-    scripts.google.docs
+    scripts.google.common.docs
     scripts.google.docs_api
     scripts.google.domain_readiness_audit
-    scripts.google.domain_taxonomy
-    scripts.google.drive
+    scripts.google.common.domain_taxonomy
+    scripts.google.common.drive
     scripts.google.drive_api
     scripts.google.gates
-    scripts.google.gmail
-    scripts.google.gmail_analysis
-    scripts.google.gmail_api
-    scripts.google.live_inputs
-    scripts.google.live_inputs_cdp
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_config
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_fill
-    scripts.google.live_inputs_report
+    scripts.google.common.gmail
+    scripts.google.common.gmail_analysis
+    scripts.google.common.gmail_api
+    scripts.google.common.live_inputs
+    scripts.google.common.live_inputs_cdp
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_config
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_fill
+    scripts.google.common.live_inputs_report
     scripts.google.live_surface_explorer
     scripts.google.managed_console
     scripts.google.module_check
@@ -814,27 +814,27 @@ forbidden_modules =
     scripts.google.oauth_console_fill
     scripts.google.precision_report
     scripts.google.register_credentials
-    scripts.google.report_io
+    scripts.google.common.report_io
     scripts.google.router
     scripts.google.router_management
-    scripts.google.sheets
+    scripts.google.common.sheets
     scripts.google.sheets_api
     scripts.google.site_profile
-    scripts.google.subdomain_logic
-    scripts.google.surface_explorer
-    scripts.google.surfaces
-    scripts.google.tab_live_summary
-    scripts.google.tab_logic
-    scripts.google.tab_registry
+    scripts.google.common.subdomain_logic
+    scripts.google.common.surface_explorer
+    scripts.google.common.surfaces
+    scripts.google.common.tab_live_summary
+    scripts.google.common.tab_logic
+    scripts.google.common.tab_registry
     scripts.google.validators
     scripts.google.vision_usage_gate
     scripts.google.work_records
-    scripts.google.workflows
-    scripts.google.workflows_actions
-    scripts.google.workflows_catalog
-    scripts.google.workflows_common
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows
+    scripts.google.common.workflows_actions
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_common
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
     scripts.google.workspace.calendar_tasks
     scripts.google.workspace.chat
     scripts.google.workspace.contacts
@@ -856,7 +856,7 @@ forbidden_modules =
     scripts.google.youtube.search_score
     scripts.google.youtube.search_search
     scripts.google.youtube.search_transcript
-    scripts.google.youtube_upload
+    scripts.google.common.youtube_upload
     scripts.grant_radar.form_fill
     scripts.grant_radar.report
     scripts.grant_radar.scan
@@ -1852,10 +1852,10 @@ forbidden_modules =
     scripts.google.android_app_dev_labels
     scripts.google.android_app_dev_report
     scripts.google.auth
-    scripts.google.base
-    scripts.google.browser_tasks
+    scripts.google.common.base
+    scripts.google.common.browser_tasks
     scripts.google.calendar_api
-    scripts.google.calendar_tasks
+    scripts.google.common.calendar_tasks
     scripts.google.cloud._catalog_only
     scripts.google.cloud.api_credentials
     scripts.google.cloud.bigquery
@@ -1876,23 +1876,23 @@ forbidden_modules =
     scripts.google.cloud.secret_manager
     scripts.google.cloud.sql
     scripts.google.cloud.storage
-    scripts.google.docs
+    scripts.google.common.docs
     scripts.google.docs_api
     scripts.google.domain_readiness_audit
-    scripts.google.domain_taxonomy
-    scripts.google.drive
+    scripts.google.common.domain_taxonomy
+    scripts.google.common.drive
     scripts.google.drive_api
-    scripts.google.gmail
-    scripts.google.gmail_analysis
-    scripts.google.gmail_api
-    scripts.google.live_inputs
-    scripts.google.live_inputs_cdp
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_config
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_fill
-    scripts.google.live_inputs_report
+    scripts.google.common.gmail
+    scripts.google.common.gmail_analysis
+    scripts.google.common.gmail_api
+    scripts.google.common.live_inputs
+    scripts.google.common.live_inputs_cdp
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_config
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_fill
+    scripts.google.common.live_inputs_report
     scripts.google.live_surface_explorer
     scripts.google.managed_console
     scripts.google.module_check
@@ -1901,26 +1901,26 @@ forbidden_modules =
     scripts.google.oauth_console_fill
     scripts.google.precision_report
     scripts.google.register_credentials
-    scripts.google.report_io
+    scripts.google.common.report_io
     scripts.google.router
     scripts.google.router_management
-    scripts.google.sheets
+    scripts.google.common.sheets
     scripts.google.sheets_api
     scripts.google.site_profile
-    scripts.google.subdomain_logic
-    scripts.google.surface_explorer
-    scripts.google.surfaces
-    scripts.google.tab_live_summary
-    scripts.google.tab_logic
-    scripts.google.tab_registry
+    scripts.google.common.subdomain_logic
+    scripts.google.common.surface_explorer
+    scripts.google.common.surfaces
+    scripts.google.common.tab_live_summary
+    scripts.google.common.tab_logic
+    scripts.google.common.tab_registry
     scripts.google.validators
     scripts.google.work_records
-    scripts.google.workflows
-    scripts.google.workflows_actions
-    scripts.google.workflows_catalog
-    scripts.google.workflows_common
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows
+    scripts.google.common.workflows_actions
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_common
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
     scripts.google.workspace.calendar_tasks
     scripts.google.workspace.chat
     scripts.google.workspace.contacts
@@ -1942,7 +1942,7 @@ forbidden_modules =
     scripts.google.youtube.search_score
     scripts.google.youtube.search_search
     scripts.google.youtube.search_transcript
-    scripts.google.youtube_upload
+    scripts.google.common.youtube_upload
     scripts.grant_radar.form_fill
     scripts.grant_radar.report
     scripts.grant_radar.scan
@@ -2939,10 +2939,10 @@ forbidden_modules =
     scripts.google.android_app_dev_labels
     scripts.google.android_app_dev_report
     scripts.google.auth
-    scripts.google.base
-    scripts.google.browser_tasks
+    scripts.google.common.base
+    scripts.google.common.browser_tasks
     scripts.google.calendar_api
-    scripts.google.calendar_tasks
+    scripts.google.common.calendar_tasks
     scripts.google.cloud._catalog_only
     scripts.google.cloud.api_credentials
     scripts.google.cloud.bigquery
@@ -2963,24 +2963,24 @@ forbidden_modules =
     scripts.google.cloud.secret_manager
     scripts.google.cloud.sql
     scripts.google.cloud.storage
-    scripts.google.docs
+    scripts.google.common.docs
     scripts.google.docs_api
     scripts.google.domain_readiness_audit
-    scripts.google.domain_taxonomy
-    scripts.google.drive
+    scripts.google.common.domain_taxonomy
+    scripts.google.common.drive
     scripts.google.drive_api
     scripts.google.gates
-    scripts.google.gmail
-    scripts.google.gmail_analysis
-    scripts.google.gmail_api
-    scripts.google.live_inputs
-    scripts.google.live_inputs_cdp
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_config
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_fill
-    scripts.google.live_inputs_report
+    scripts.google.common.gmail
+    scripts.google.common.gmail_analysis
+    scripts.google.common.gmail_api
+    scripts.google.common.live_inputs
+    scripts.google.common.live_inputs_cdp
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_config
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_fill
+    scripts.google.common.live_inputs_report
     scripts.google.live_surface_explorer
     scripts.google.managed_console
     scripts.google.module_check
@@ -2989,27 +2989,27 @@ forbidden_modules =
     scripts.google.oauth_console_fill
     scripts.google.precision_report
     scripts.google.register_credentials
-    scripts.google.report_io
+    scripts.google.common.report_io
     scripts.google.router
     scripts.google.router_management
-    scripts.google.sheets
+    scripts.google.common.sheets
     scripts.google.sheets_api
     scripts.google.site_profile
-    scripts.google.subdomain_logic
-    scripts.google.surface_explorer
-    scripts.google.surfaces
-    scripts.google.tab_live_summary
-    scripts.google.tab_logic
-    scripts.google.tab_registry
+    scripts.google.common.subdomain_logic
+    scripts.google.common.surface_explorer
+    scripts.google.common.surfaces
+    scripts.google.common.tab_live_summary
+    scripts.google.common.tab_logic
+    scripts.google.common.tab_registry
     scripts.google.validators
     scripts.google.vision_usage_gate
     scripts.google.work_records
-    scripts.google.workflows
-    scripts.google.workflows_actions
-    scripts.google.workflows_catalog
-    scripts.google.workflows_common
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows
+    scripts.google.common.workflows_actions
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_common
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
     scripts.google.workspace.calendar_tasks
     scripts.google.workspace.chat
     scripts.google.workspace.contacts
@@ -3031,7 +3031,7 @@ forbidden_modules =
     scripts.google.youtube.search_score
     scripts.google.youtube.search_search
     scripts.google.youtube.search_transcript
-    scripts.google.youtube_upload
+    scripts.google.common.youtube_upload
     scripts.grant_radar.form_fill
     scripts.grant_radar.report
     scripts.grant_radar.scan
@@ -3926,10 +3926,10 @@ forbidden_modules =
     scripts.google.android_app_dev_labels
     scripts.google.android_app_dev_report
     scripts.google.auth
-    scripts.google.base
-    scripts.google.browser_tasks
+    scripts.google.common.base
+    scripts.google.common.browser_tasks
     scripts.google.calendar_api
-    scripts.google.calendar_tasks
+    scripts.google.common.calendar_tasks
     scripts.google.cloud._catalog_only
     scripts.google.cloud.api_credentials
     scripts.google.cloud.bigquery
@@ -3950,23 +3950,23 @@ forbidden_modules =
     scripts.google.cloud.secret_manager
     scripts.google.cloud.sql
     scripts.google.cloud.storage
-    scripts.google.docs
+    scripts.google.common.docs
     scripts.google.docs_api
     scripts.google.domain_readiness_audit
-    scripts.google.domain_taxonomy
-    scripts.google.drive
+    scripts.google.common.domain_taxonomy
+    scripts.google.common.drive
     scripts.google.drive_api
-    scripts.google.gmail
-    scripts.google.gmail_analysis
-    scripts.google.gmail_api
-    scripts.google.live_inputs
-    scripts.google.live_inputs_cdp
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_config
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_fill
-    scripts.google.live_inputs_report
+    scripts.google.common.gmail
+    scripts.google.common.gmail_analysis
+    scripts.google.common.gmail_api
+    scripts.google.common.live_inputs
+    scripts.google.common.live_inputs_cdp
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_config
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_fill
+    scripts.google.common.live_inputs_report
     scripts.google.live_surface_explorer
     scripts.google.managed_console
     scripts.google.module_check
@@ -3975,26 +3975,26 @@ forbidden_modules =
     scripts.google.oauth_console_fill
     scripts.google.precision_report
     scripts.google.register_credentials
-    scripts.google.report_io
+    scripts.google.common.report_io
     scripts.google.router
     scripts.google.router_management
-    scripts.google.sheets
+    scripts.google.common.sheets
     scripts.google.sheets_api
     scripts.google.site_profile
-    scripts.google.subdomain_logic
-    scripts.google.surface_explorer
-    scripts.google.surfaces
-    scripts.google.tab_live_summary
-    scripts.google.tab_logic
-    scripts.google.tab_registry
+    scripts.google.common.subdomain_logic
+    scripts.google.common.surface_explorer
+    scripts.google.common.surfaces
+    scripts.google.common.tab_live_summary
+    scripts.google.common.tab_logic
+    scripts.google.common.tab_registry
     scripts.google.validators
     scripts.google.work_records
-    scripts.google.workflows
-    scripts.google.workflows_actions
-    scripts.google.workflows_catalog
-    scripts.google.workflows_common
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows
+    scripts.google.common.workflows_actions
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_common
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
     scripts.google.workspace.calendar_tasks
     scripts.google.workspace.chat
     scripts.google.workspace.contacts
@@ -4016,7 +4016,7 @@ forbidden_modules =
     scripts.google.youtube.search_score
     scripts.google.youtube.search_search
     scripts.google.youtube.search_transcript
-    scripts.google.youtube_upload
+    scripts.google.common.youtube_upload
     scripts.grant_radar.form_fill
     scripts.grant_radar.report
     scripts.grant_radar.scan
@@ -4449,10 +4449,10 @@ source_modules =
     scripts.google.android_app_dev_labels
     scripts.google.android_app_dev_report
     scripts.google.auth
-    scripts.google.base
-    scripts.google.browser_tasks
+    scripts.google.common.base
+    scripts.google.common.browser_tasks
     scripts.google.calendar_api
-    scripts.google.calendar_tasks
+    scripts.google.common.calendar_tasks
     scripts.google.cloud._catalog_only
     scripts.google.cloud.api_credentials
     scripts.google.cloud.bigquery
@@ -4473,23 +4473,23 @@ source_modules =
     scripts.google.cloud.secret_manager
     scripts.google.cloud.sql
     scripts.google.cloud.storage
-    scripts.google.docs
+    scripts.google.common.docs
     scripts.google.docs_api
     scripts.google.domain_readiness_audit
-    scripts.google.domain_taxonomy
-    scripts.google.drive
+    scripts.google.common.domain_taxonomy
+    scripts.google.common.drive
     scripts.google.drive_api
-    scripts.google.gmail
-    scripts.google.gmail_analysis
-    scripts.google.gmail_api
-    scripts.google.live_inputs
-    scripts.google.live_inputs_cdp
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_config
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_fill
-    scripts.google.live_inputs_report
+    scripts.google.common.gmail
+    scripts.google.common.gmail_analysis
+    scripts.google.common.gmail_api
+    scripts.google.common.live_inputs
+    scripts.google.common.live_inputs_cdp
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_config
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_fill
+    scripts.google.common.live_inputs_report
     scripts.google.live_surface_explorer
     scripts.google.managed_console
     scripts.google.module_check
@@ -4498,26 +4498,26 @@ source_modules =
     scripts.google.oauth_console_fill
     scripts.google.precision_report
     scripts.google.register_credentials
-    scripts.google.report_io
+    scripts.google.common.report_io
     scripts.google.router
     scripts.google.router_management
-    scripts.google.sheets
+    scripts.google.common.sheets
     scripts.google.sheets_api
     scripts.google.site_profile
-    scripts.google.subdomain_logic
-    scripts.google.surface_explorer
-    scripts.google.surfaces
-    scripts.google.tab_live_summary
-    scripts.google.tab_logic
-    scripts.google.tab_registry
+    scripts.google.common.subdomain_logic
+    scripts.google.common.surface_explorer
+    scripts.google.common.surfaces
+    scripts.google.common.tab_live_summary
+    scripts.google.common.tab_logic
+    scripts.google.common.tab_registry
     scripts.google.validators
     scripts.google.work_records
-    scripts.google.workflows
-    scripts.google.workflows_actions
-    scripts.google.workflows_catalog
-    scripts.google.workflows_common
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows
+    scripts.google.common.workflows_actions
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_common
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
     scripts.google.workspace.calendar_tasks
     scripts.google.workspace.chat
     scripts.google.workspace.contacts
@@ -4539,7 +4539,7 @@ source_modules =
     scripts.google.youtube.search_score
     scripts.google.youtube.search_search
     scripts.google.youtube.search_transcript
-    scripts.google.youtube_upload
+    scripts.google.common.youtube_upload
     scripts.grant_radar.form_fill
     scripts.grant_radar.report
     scripts.grant_radar.scan
@@ -5964,10 +5964,10 @@ forbidden_modules =
     scripts.google.android_app_dev_labels
     scripts.google.android_app_dev_report
     scripts.google.auth
-    scripts.google.base
-    scripts.google.browser_tasks
+    scripts.google.common.base
+    scripts.google.common.browser_tasks
     scripts.google.calendar_api
-    scripts.google.calendar_tasks
+    scripts.google.common.calendar_tasks
     scripts.google.cloud._catalog_only
     scripts.google.cloud.api_credentials
     scripts.google.cloud.bigquery
@@ -5988,24 +5988,24 @@ forbidden_modules =
     scripts.google.cloud.secret_manager
     scripts.google.cloud.sql
     scripts.google.cloud.storage
-    scripts.google.docs
+    scripts.google.common.docs
     scripts.google.docs_api
     scripts.google.domain_readiness_audit
-    scripts.google.domain_taxonomy
-    scripts.google.drive
+    scripts.google.common.domain_taxonomy
+    scripts.google.common.drive
     scripts.google.drive_api
     scripts.google.gates
-    scripts.google.gmail
-    scripts.google.gmail_analysis
-    scripts.google.gmail_api
-    scripts.google.live_inputs
-    scripts.google.live_inputs_cdp
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_config
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_fill
-    scripts.google.live_inputs_report
+    scripts.google.common.gmail
+    scripts.google.common.gmail_analysis
+    scripts.google.common.gmail_api
+    scripts.google.common.live_inputs
+    scripts.google.common.live_inputs_cdp
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_config
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_fill
+    scripts.google.common.live_inputs_report
     scripts.google.live_surface_explorer
     scripts.google.managed_console
     scripts.google.module_check
@@ -6014,27 +6014,27 @@ forbidden_modules =
     scripts.google.oauth_console_fill
     scripts.google.precision_report
     scripts.google.register_credentials
-    scripts.google.report_io
+    scripts.google.common.report_io
     scripts.google.router
     scripts.google.router_management
-    scripts.google.sheets
+    scripts.google.common.sheets
     scripts.google.sheets_api
     scripts.google.site_profile
-    scripts.google.subdomain_logic
-    scripts.google.surface_explorer
-    scripts.google.surfaces
-    scripts.google.tab_live_summary
-    scripts.google.tab_logic
-    scripts.google.tab_registry
+    scripts.google.common.subdomain_logic
+    scripts.google.common.surface_explorer
+    scripts.google.common.surfaces
+    scripts.google.common.tab_live_summary
+    scripts.google.common.tab_logic
+    scripts.google.common.tab_registry
     scripts.google.validators
     scripts.google.vision_usage_gate
     scripts.google.work_records
-    scripts.google.workflows
-    scripts.google.workflows_actions
-    scripts.google.workflows_catalog
-    scripts.google.workflows_common
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows
+    scripts.google.common.workflows_actions
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_common
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
     scripts.google.workspace.calendar_tasks
     scripts.google.workspace.chat
     scripts.google.workspace.contacts
@@ -6056,7 +6056,7 @@ forbidden_modules =
     scripts.google.youtube.search_score
     scripts.google.youtube.search_search
     scripts.google.youtube.search_transcript
-    scripts.google.youtube_upload
+    scripts.google.common.youtube_upload
     scripts.grant_radar.form_fill
     scripts.grant_radar.report
     scripts.grant_radar.scan
@@ -6722,10 +6722,10 @@ forbidden_modules =
     scripts.google.android_app_dev_labels
     scripts.google.android_app_dev_report
     scripts.google.auth
-    scripts.google.base
-    scripts.google.browser_tasks
+    scripts.google.common.base
+    scripts.google.common.browser_tasks
     scripts.google.calendar_api
-    scripts.google.calendar_tasks
+    scripts.google.common.calendar_tasks
     scripts.google.cloud._catalog_only
     scripts.google.cloud.api_credentials
     scripts.google.cloud.bigquery
@@ -6746,23 +6746,23 @@ forbidden_modules =
     scripts.google.cloud.secret_manager
     scripts.google.cloud.sql
     scripts.google.cloud.storage
-    scripts.google.docs
+    scripts.google.common.docs
     scripts.google.docs_api
     scripts.google.domain_readiness_audit
-    scripts.google.domain_taxonomy
-    scripts.google.drive
+    scripts.google.common.domain_taxonomy
+    scripts.google.common.drive
     scripts.google.drive_api
-    scripts.google.gmail
-    scripts.google.gmail_analysis
-    scripts.google.gmail_api
-    scripts.google.live_inputs
-    scripts.google.live_inputs_cdp
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_config
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_fill
-    scripts.google.live_inputs_report
+    scripts.google.common.gmail
+    scripts.google.common.gmail_analysis
+    scripts.google.common.gmail_api
+    scripts.google.common.live_inputs
+    scripts.google.common.live_inputs_cdp
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_config
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_fill
+    scripts.google.common.live_inputs_report
     scripts.google.live_surface_explorer
     scripts.google.managed_console
     scripts.google.module_check
@@ -6771,26 +6771,26 @@ forbidden_modules =
     scripts.google.oauth_console_fill
     scripts.google.precision_report
     scripts.google.register_credentials
-    scripts.google.report_io
+    scripts.google.common.report_io
     scripts.google.router
     scripts.google.router_management
-    scripts.google.sheets
+    scripts.google.common.sheets
     scripts.google.sheets_api
     scripts.google.site_profile
-    scripts.google.subdomain_logic
-    scripts.google.surface_explorer
-    scripts.google.surfaces
-    scripts.google.tab_live_summary
-    scripts.google.tab_logic
-    scripts.google.tab_registry
+    scripts.google.common.subdomain_logic
+    scripts.google.common.surface_explorer
+    scripts.google.common.surfaces
+    scripts.google.common.tab_live_summary
+    scripts.google.common.tab_logic
+    scripts.google.common.tab_registry
     scripts.google.validators
     scripts.google.work_records
-    scripts.google.workflows
-    scripts.google.workflows_actions
-    scripts.google.workflows_catalog
-    scripts.google.workflows_common
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows
+    scripts.google.common.workflows_actions
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_common
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
     scripts.google.workspace.calendar_tasks
     scripts.google.workspace.chat
     scripts.google.workspace.contacts
@@ -6812,7 +6812,7 @@ forbidden_modules =
     scripts.google.youtube.search_score
     scripts.google.youtube.search_search
     scripts.google.youtube.search_transcript
-    scripts.google.youtube_upload
+    scripts.google.common.youtube_upload
     scripts.grant_radar.form_fill
     scripts.grant_radar.report
     scripts.grant_radar.scan
@@ -7427,18 +7427,18 @@ as_packages = False
 name = google_live_inputs leaf 는 공유 아닌 다른 leaf 직접 import 금지(module_separation_gate)
 type = forbidden
 source_modules =
-    scripts.google.live_inputs_cdp
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_config
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_fill
-    scripts.google.live_inputs_report
+    scripts.google.common.live_inputs_cdp
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_config
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_fill
+    scripts.google.common.live_inputs_report
 forbidden_modules =
-    scripts.google.live_inputs_cdp_fillers
-    scripts.google.live_inputs_coverage
-    scripts.google.live_inputs_domain_fillers
-    scripts.google.live_inputs_report
+    scripts.google.common.live_inputs_cdp_fillers
+    scripts.google.common.live_inputs_coverage
+    scripts.google.common.live_inputs_domain_fillers
+    scripts.google.common.live_inputs_report
 allow_indirect_imports = True
 as_packages = False
 
@@ -7538,15 +7538,15 @@ as_packages = False
 name = google_workflows leaf 는 공유 아닌 다른 leaf 직접 import 금지(module_separation_gate)
 type = forbidden
 source_modules =
-    scripts.google.workflows_actions
-    scripts.google.workflows_catalog
-    scripts.google.workflows_common
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows_actions
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_common
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
 forbidden_modules =
-    scripts.google.workflows_catalog
-    scripts.google.workflows_execute
-    scripts.google.workflows_report
+    scripts.google.common.workflows_catalog
+    scripts.google.common.workflows_execute
+    scripts.google.common.workflows_report
 allow_indirect_imports = True
 as_packages = False
 

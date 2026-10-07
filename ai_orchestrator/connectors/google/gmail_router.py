@@ -150,8 +150,8 @@ def api_compose(
         }
 
     try:
-        from scripts.google.gmail_api import GmailAPI
         from scripts.browser.cdp.connection import get_page, run_on_browser_thread
+        from scripts.google.common.gmail_api import GmailAPI
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         g = run_on_browser_thread(lambda: GmailAPI(get_page()), timeout=60)

@@ -1,7 +1,7 @@
 """Google Workspace registry derived from the locked Google tab registry."""
 from __future__ import annotations
 
-from scripts.google.tab_live_summary import tab_summary_with_live_inputs
+from scripts.google.common.tab_live_summary import tab_summary_with_live_inputs
 
 WORKSPACE_TAB_KEY = "workspace"
 WORKSPACE_LIVE_INPUT_ACTIONS = (

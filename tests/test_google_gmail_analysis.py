@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.google import gmail_analysis
+from scripts.google.common import gmail_analysis
 
 
 def test_analyze_text_redacts_and_extracts_business_signals() -> None:

@@ -71,8 +71,8 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google Workspace baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google.live_inputs import build_live_input_coverage
-    from scripts.google.tab_registry import build_google_tab_summary
+    from scripts.google.common.live_inputs import build_live_input_coverage
+    from scripts.google.common.tab_registry import build_google_tab_summary
 
     summary = build_google_tab_summary()
     workspace = next((tab for tab in summary["tabs"] if tab["key"] == "workspace"), None)

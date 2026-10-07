@@ -9,9 +9,9 @@ import os
 from pathlib import Path
 from typing import Any
 
-from . import workflows
+from scripts.google.common import workflows
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 LIVE_INPUT_DIR = ROOT / "data" / "google_live_inputs"
 LATEST_LIVE_INPUT = ROOT / "data" / "google_live_input_latest.json"
 LIVE_INPUT_MANIFEST_DIR = ROOT / "data" / "google_live_input_manifests"

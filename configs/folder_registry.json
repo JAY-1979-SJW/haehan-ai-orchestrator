@@ -1851,6 +1851,15 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/google/common",
+   "purpose": "구글 도구 공용 말단 — router 와 cloud·workspace·youtube 하위가 함께 쓰는 탭 로직·요약·보고서 입출력·표면·워크플로 카탈로그",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님",
+   "reason": "router↔cloud/workspace/youtube 부모-자식 모듈 순환 3건 해소 — 하위가 쓰는 공용 모듈을 부모가 아닌 독립 폴더로 빼 router→하위→common 을 일방향으로(scripts/common 은 구글 전용 로직을 둘 곳이 아님)"
+  },
+  {
    "path": "scripts/google/developer",
    "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",

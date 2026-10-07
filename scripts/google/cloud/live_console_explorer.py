@@ -14,9 +14,9 @@ from pathlib import Path
 from typing import Any
 
 from scripts.browser.cdp.cdp_console import connect
-from scripts.google import surfaces, tab_logic
-from scripts.google.report_io import save_json_with_latest
-from scripts.google.surface_explorer import RISK_CONTROL_KEYWORDS
+from scripts.google.common import surfaces, tab_logic
+from scripts.google.common.report_io import save_json_with_latest
+from scripts.google.common.surface_explorer import RISK_CONTROL_KEYWORDS
 
 ROOT = Path(__file__).resolve().parents[3]
 REPORT_DIR = ROOT / "data" / "google_cloud_console_live"

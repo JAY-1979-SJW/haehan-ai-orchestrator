@@ -110,7 +110,7 @@ def get_gmail_inbox(
 
     # CDP 폴백
     def _fn(page):
-        from scripts.google.gmail_api import GmailAPI
+        from scripts.google.common.gmail_api import GmailAPI
 
         return GmailAPI(page).list_inbox(limit=limit)
 
@@ -131,7 +131,7 @@ def search_gmail(
     t0 = time.monotonic()
 
     def _fn(page):
-        from scripts.google.gmail_api import GmailAPI
+        from scripts.google.common.gmail_api import GmailAPI
 
         return GmailAPI(page).search(query=query, limit=limit)
 

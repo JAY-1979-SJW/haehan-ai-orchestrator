@@ -5,14 +5,8 @@ from typing import Any
 
 from scripts.common.config import GOOGLE_URLS
 
-from .base import page_goto, page_wait_visible, task_context
-from .browser_tasks import (
-    ContextDeleteSpec,
-    run_context_menu_delete,
-    run_open_editor,
-    run_recent_titles,
-    run_search,
-)
+from scripts.google.common.base import page_goto, page_wait_visible, task_context
+from scripts.google.common.browser_tasks import ContextDeleteSpec, run_context_menu_delete, run_open_editor, run_recent_titles, run_search
 
 
 def run(task: str, args: list[str]) -> None:

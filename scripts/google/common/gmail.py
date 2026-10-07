@@ -10,8 +10,8 @@ from typing import Any
 
 from scripts.common.config import GOOGLE_URLS
 
-from . import gmail_analysis
-from .base import task_context, page_goto, page_wait_type, page_wait_visible
+from scripts.google.common import gmail_analysis
+from scripts.google.common.base import task_context, page_goto, page_wait_type, page_wait_visible
 
 
 def run(task: str, args: list[str]) -> None:

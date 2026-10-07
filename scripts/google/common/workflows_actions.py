@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from . import surfaces
-from .workflows_common import GoogleWorkAction
+from scripts.google.common import surfaces
+from scripts.google.common.workflows_common import GoogleWorkAction
 
 
 def _read_actions() -> tuple[GoogleWorkAction, ...]:

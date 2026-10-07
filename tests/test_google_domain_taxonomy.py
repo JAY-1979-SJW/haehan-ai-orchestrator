@@ -1,5 +1,5 @@
-from scripts.google import domain_taxonomy, surfaces
 from scripts.google import youtube
+from scripts.google.common import domain_taxonomy, surfaces
 
 
 def test_domain_taxonomy_covers_every_google_surface_once() -> None:

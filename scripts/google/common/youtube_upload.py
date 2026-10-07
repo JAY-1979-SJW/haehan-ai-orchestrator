@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Any
 
 from scripts.common.app_paths import repo_root
-from scripts.google import workflows
-from scripts.google.domain_taxonomy import build_google_page_tab_catalog
+from scripts.google.common import workflows
+from scripts.google.common.domain_taxonomy import build_google_page_tab_catalog
 
 ROOT = repo_root()
 REPORT_DIR = ROOT / "data" / "google_youtube_upload_plans"

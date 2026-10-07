@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from uuid import uuid4
 
-from scripts.google import surface_explorer, surfaces
+from scripts.google.common import surface_explorer, surfaces
 
 
 def _test_dir() -> Path:

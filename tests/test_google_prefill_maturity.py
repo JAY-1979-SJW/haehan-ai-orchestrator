@@ -1,4 +1,4 @@
-from scripts.google import live_inputs
+from scripts.google.common import live_inputs
 from scripts.ops import audit_google_prefill_maturity as audit
 
 

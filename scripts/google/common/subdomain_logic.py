@@ -24,7 +24,8 @@ from scripts.site_engine.sso_runtime import (
 )
 from scripts.site_engine.subdomain_registry import get_provider
 
-from . import surfaces, workflows
+from scripts.google.common import surfaces
+from scripts.google.common import workflows
 
 READ_OPERATIONS = frozenset({"read", "open", "status", "inspect"})
 LOGIN_OPERATIONS = frozenset({"login", "signin", "sign_in", "account_login"})
