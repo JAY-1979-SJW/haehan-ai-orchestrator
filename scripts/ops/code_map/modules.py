@@ -256,6 +256,32 @@ def _module_edges_and_cycles(m_acc: dict) -> tuple[Counter, list[tuple[str, str]
     return mod_edges, cycles
 
 
+def _is_ancestor_init_edge(src: str, dst: str) -> bool:
+    """dst 가 src 의 조상(또는 같은) 패키지의 __init__.py 인가 — a/b/c.py 를 import 하면 a/__init__.py 도 실행되는 암묵 간선."""
+    d = PurePosixPath(dst)
+    if d.name != "__init__.py":
+        return False
+    pkg = str(d.parent)
+    sdir = str(PurePosixPath(src).parent)
+    return pkg != "." and (sdir == pkg or sdir.startswith(pkg + "/"))
+
+
+def _cycle_edges(import_edges: dict) -> dict:
+    """폴더 순환 계산에 쓰는 간선 — 실제 import 만(경로 문자열 언급은 의존이 아니다), 조상 패키지 __init__ 로 가는 암묵 간선은 뺀다.
+
+    층간 위반(_find_layer_inversions)과 같은 기준이다(2026-10-07 대표님 승인). 예전에는 all_edges(문자열 경로 언급 포함)로 재서
+    '문자열로만 서로 언급하는' 쌍이 순환으로 잡혔고, 조상 __init__ 간선이 상위↔하위 폴더 순환을 만들었다.
+    """
+    return {s: [t for t in ts if not _is_ancestor_init_edge(s, t)] for s, ts in import_edges.items()}
+
+
+def _cycle_pairs(import_edges: dict, mod: dict[str, str], nodes: dict) -> list[tuple[str, str]]:
+    """실제 import 기준 폴더 순환 쌍(정렬된 (a, b) 목록)."""
+    acc: dict[str, dict] = defaultdict(_make_module_accumulator)
+    _accumulate_module_edges(_cycle_edges(import_edges), mod, nodes, acc)
+    return _module_edges_and_cycles(acc)[1]
+
+
 def _build_result(m: dict, ctx: dict, modules: dict[str, dict], mod_edges: Counter) -> dict:
     """ctx 는 crosscheck 계산 단계들의 출력을 모은 딕셔너리(2026-09-29 STD-08: PLR0913=15>6,
     main() 에서 그대로 딕셔너리로 모아 넘긴다 — 각 키의 의미는 아래 crosscheck 필드명과 동일)."""
@@ -372,7 +398,8 @@ def main() -> int:
     _accumulate_module_file_stats(files, mod, nodes, layer, ledger, m_acc)
     _accumulate_module_edges(edges, mod, nodes, m_acc)
     modules = _summarize_modules(m_acc)
-    mod_edges, cycles = _module_edges_and_cycles(m_acc)
+    mod_edges, _all_edge_cycles = _module_edges_and_cycles(m_acc)  # 모듈 통계용(문자열 언급 포함) — 순환 판정에는 쓰지 않는다
+    cycles = _cycle_pairs(import_edges, mod, nodes)
 
     ctx = {
         "registry": registry,
