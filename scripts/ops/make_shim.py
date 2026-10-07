@@ -1,7 +1,14 @@
-"""이동한 파일의 옛 경로에 호환 shim 을 만든다 (G2).
+"""이동한 파일(또는 패키지 전체)의 옛 경로에 호환 shim 을 만든다 (G2).
 
-사용:
+사용(파일 1개):
     python scripts/ops/make_shim.py <옛경로.py> <새경로.py> [--dry-run]
+사용(패키지 — 하위 모듈째 옮긴 경우, 둘 다 디렉터리로 준다):
+    python scripts/ops/make_shim.py <옛패키지디렉터리> <새패키지디렉터리> [--dry-run]
+    (새 디렉터리의 .py 파일(__init__.py 포함) 각각에 옛 자리 shim 을 1개씩 만든다 —
+     __init__.py 뿐 아니라 하위 모듈도 전부 4계약을 독립적으로 만족해야
+     mail_read.cdp 같은 "하위 모듈 직접 import·경로 로드·직접 실행"이 깨지지 않는다.
+     2026-10-07 W2 실측 — 동적 sys.modules 별칭만으로는 mypy attr-defined 가 나고,
+     __init__.py 하나만 shim 이면 하위 모듈의 파일 경로 로드·직접 실행은 못 받는다.)
 
 shim 이 지키는 4가지 (alias 한 줄만으로는 1·2번만 된다 — 2026-10-07 hiworks·dashboard 회귀):
     1. import 별칭      `import old.module` 이 새 모듈과 같은 객체
@@ -155,6 +162,50 @@ def make_shim(old: str, new: str, root: Path, *, dry_run: bool = False) -> str:
     return body
 
 
+def make_package_shim(old_dir: str, new_dir: str, root: Path, *, dry_run: bool = False) -> dict[str, str]:
+    """패키지 전체 이동 — 새 디렉터리의 .py 파일마다 옛 자리에 shim 을 1개씩 만든다.
+
+    각 shim 은 make_shim() 과 같은 생성기를 재사용해 4계약을 전부 받는다(코드 중복 없음).
+    옛 디렉터리에 이미 파일이 있으면(부분 이동 등) 그 파일은 건너뛰고 경고만 남긴다 —
+    전체를 막지는 않는다(다른 담당이 이미 손으로 처리했을 수 있음).
+    """
+    old_rel = old_dir.replace("\\", "/").rstrip("/")
+    new_rel = new_dir.replace("\\", "/").rstrip("/")
+    new_path = root / new_rel
+    if not new_path.is_dir():
+        raise FileNotFoundError(f"새 패키지 디렉터리가 없다: {new_rel} (먼저 git mv)")
+    py_files = sorted(p.name for p in new_path.glob("*.py"))
+    if not py_files:
+        raise FileNotFoundError(f"새 패키지 디렉터리에 .py 파일이 없다: {new_rel}")
+    bodies: dict[str, str] = {}
+    for name in py_files:
+        old_file_rel = f"{old_rel}/{name}"
+        new_file_rel = f"{new_rel}/{name}"
+        if (root / old_file_rel).exists():
+            print(f"make_shim: 건너뜀(이미 있음) {old_file_rel}", file=sys.stderr)
+            continue
+        bodies[old_file_rel] = make_shim(old_file_rel, new_file_rel, root, dry_run=dry_run)
+
+    # __init__.py 가 새로 생겼으면, 형제 하위모듈을 sys.modules 에 먼저 등록해 둔다.
+    # 안 하면 `import old.sub.a` 가 부모(old.sub)의 __path__(= 별칭 교체로 실제 new.sub 를
+    # 가리키게 됨) 를 따라가 old.sub.a 를 새로 다시 실행해 old/sub/a.py shim 과는 별개의
+    # 모듈 객체가 돼버린다(실측 확인) — sys.modules 선등록이면 캐시에 먼저 걸려 이 문제가 없다.
+    init_rel = f"{old_rel}/__init__.py"
+    if init_rel in bodies and not dry_run:
+        new_module = module_name(f"{new_rel}/__init__.py")
+        siblings = [p.stem for p in new_path.glob("*.py") if p.stem != "__init__"]
+        if siblings:
+            extra = ["", "# 형제 하위 모듈 선등록 — import old.sub.a 가 부모 __path__ 를 따라 새로 실행되는 것을 막는다"]
+            for sib in siblings:
+                extra.append(f'_sys.modules[f"{{__name__}}.{sib}"] = _il.import_module("{new_module}.{sib}")')
+            init_path = root / init_rel
+            init_path.write_text(
+                init_path.read_text(encoding="utf-8") + "\n".join(extra) + "\n", encoding="utf-8", newline="\n"
+            )
+            bodies[init_rel] = init_path.read_text(encoding="utf-8")
+    return bodies
+
+
 def find_shims(root: Path) -> list[tuple[str, str]]:
     """저장소 안 모든 shim 을 (상대경로, 대상 모듈) 로 돌려준다."""
     out: list[tuple[str, str]] = []
@@ -184,15 +235,27 @@ def main(argv: list[str] | None = None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")  # cp949 콘솔에서 --help/dry-run 한글이 터지지 않게
     a = ap.parse_args(argv)
+    is_pkg_call = not a.old.endswith(".py") and not a.new.endswith(".py")
     try:
-        body = make_shim(a.old, a.new, a.root, dry_run=a.dry_run)
+        if is_pkg_call:
+            bodies = make_package_shim(a.old, a.new, a.root, dry_run=a.dry_run)
+            if a.dry_run:
+                for rel, body in bodies.items():
+                    print(f"# ── {rel} ──")
+                    print(body)
+            else:
+                for rel in bodies:
+                    print(f"shim 생성: {rel}")
+                print(f"패키지 shim {len(bodies)}개 생성: {a.old} → {a.new}")
+        else:
+            body = make_shim(a.old, a.new, a.root, dry_run=a.dry_run)
+            if a.dry_run:
+                print(body)
+            else:
+                print(f"shim 생성: {a.old} → {module_name(a.new.replace(chr(92), '/'))}")
     except (FileNotFoundError, FileExistsError, ValueError) as e:
         print(f"make_shim: {e}", file=sys.stderr)
         return 2
-    if a.dry_run:
-        print(body)
-    else:
-        print(f"shim 생성: {a.old} → {module_name(a.new.replace(chr(92), '/'))}")
     return 0
 
 
