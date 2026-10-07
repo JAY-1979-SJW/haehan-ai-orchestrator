@@ -242,6 +242,10 @@ jobs:
           else
             echo "변경된 .py 없음 — G12 건너뜀"
           fi
+      - name: G12 중복 전체 비교 (기준선에 없는 새 중복 묶음이 저장소에 하나라도 있으면 FAIL)
+        # 위 단계는 PR 이 바꾼 파일만 본다 — 두 파일이 모두 이번에 안 바뀌었거나 한쪽만 바뀐 새 중복은 놓친다(2026-10-07 기준선 감사에서
+        # 기준선에 없는 중복 2묶음이 실제로 샜다). 저장소 전체 묶음을 기준선과 비교한다.
+        run: python scripts/ops/dup_gate.py check --all
       - name: 루트 직접 계산 차단 게이트 (새 줄만 — Path(__file__).parents[N] 등)
         # 저장소 루트를 파일마다 따로 계산하는 새 줄을 차단한다(기존 줄은 통과). 정본: ai_orchestrator.paths.repo_root /
         # scripts.app_paths.repo_root. 예외·사유: configs/root_calc_gate.json.

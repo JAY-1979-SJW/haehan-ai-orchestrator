@@ -22824,6 +22824,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/contracts/display_name.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
   }
  }
 }
