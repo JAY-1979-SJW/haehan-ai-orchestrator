@@ -728,6 +728,12 @@ _DB_DIRECT_ACCESS_PATTERNS = [
 _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/storage/",
     "ai_orchestrator/persistence/",  # L7 Persistence 계층 자체 — DB 접근이 이 계층의 책임이다(2026-10-01)
+    # 기능 폴더로 옮겨 온 저장소 파일 — 원래 persistence/ 에 있던 L7 저장소라 허용이었다(폴더 이동 F1·F9~F16 으로 접두사 밖이 됨). 폴더 전체가 아니라 파일 5개만 정확히 허용한다.
+    "ai_orchestrator/agent_dispatch/agent_dispatch_store.py",
+    "ai_orchestrator/auth/user_db.py",
+    "ai_orchestrator/gongmu/gongmu_store.py",
+    "ai_orchestrator/scheduler/scheduled_job_store.py",
+    "ai_orchestrator/site_work/work_record_store.py",
     "scripts/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
     "storage/",
     "migrations/",
