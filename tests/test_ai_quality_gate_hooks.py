@@ -53,7 +53,7 @@ def test_pre_edit_dup_check_no_warning_for_unique_name():
         PRE_EDIT,
         {
             "tool_input": {
-                "file_path": "ai_orchestrator/telegram_notifier.py",
+                "file_path": "ai_orchestrator/notify/telegram_notifier.py",
                 "new_string": "def send_notification_batch_unique_xyz123(x):\n    pass\n",
             }
         },
@@ -68,7 +68,7 @@ def test_pre_edit_dup_check_warns_on_known_duplicate_name():
         PRE_EDIT,
         {
             "tool_input": {
-                "file_path": "ai_orchestrator/telegram_notifier.py",
+                "file_path": "ai_orchestrator/notify/telegram_notifier.py",
                 "new_string": "def revoke(x):\n    pass\n",
             }
         },

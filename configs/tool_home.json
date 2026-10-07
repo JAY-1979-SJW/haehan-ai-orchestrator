@@ -17,7 +17,15 @@
   {"name": "naver_mail", "keyword": "naver_mail|mailbox|mail_bulk|mail_draft|mail_imap|mail_read|naver/mail|/mail/|(^|/)mail(_|/)", "homes": ["scripts/naver/mail/", "ai_orchestrator/connectors/naver_mail/", "admin-web/src/app/mailbox/", "admin-web/src/app/mail/"]},
   {"name": "naver_blog", "keyword": "blog|gonobi", "homes": ["scripts/naver/blog/", "ai_orchestrator/connectors/naver_blog/", "admin-web/src/app/naver/blog/", "admin-web/src/app/naver/(legacy)/blog/"]},
   {"name": "naver_search", "keyword": "naver_search|naver_shopping|naver_kin|naver_news|naver_openapi|naver_public|shopping", "homes": ["scripts/naver/shopping/", "ai_orchestrator/connectors/naver_search/", "admin-web/src/app/naver/(legacy)/keywords/", "admin-web/src/app/api/naver/marketing-ops/"]},
-  {"name": "google", "keyword": "gmail|scripts/google|google_router|connectors/google", "homes": ["scripts/google/", "ai_orchestrator/connectors/google/", "admin-web/src/app/google/"]}
+  {"name": "google", "keyword": "gmail|scripts/google|google_router|connectors/google", "homes": ["scripts/google/", "ai_orchestrator/connectors/google/", "admin-web/src/app/google/"]},
+ {"name": "gongmu", "keyword": "^ai_orchestrator/(?!tests/).*gongmu", "homes": ["ai_orchestrator/gongmu/"], "before_exempt": true},
+ {"name": "scheduler", "keyword": "^ai_orchestrator/(?!tests/).*scheduled_job_(store|service|loop|router)", "homes": ["ai_orchestrator/scheduler/"], "before_exempt": true},
+ {"name": "vendor_directory", "keyword": "^ai_orchestrator/(?!tests/).*vendor_directory", "homes": ["ai_orchestrator/vendor_directory/"], "before_exempt": true},
+ {"name": "dev_reg", "keyword": "^ai_orchestrator/(?!tests/)(gates|persistence|routers|services)/.*dev_reg", "homes": ["ai_orchestrator/dev_reg/"], "before_exempt": true},
+ {"name": "web_task", "keyword": "^ai_orchestrator/(?!tests/).*web_task", "homes": ["ai_orchestrator/web_task/"], "before_exempt": true},
+ {"name": "marketing", "keyword": "^ai_orchestrator/(?!tests/).*marketing_ops", "homes": ["ai_orchestrator/marketing/"], "before_exempt": true},
+ {"name": "auth", "keyword": "^ai_orchestrator/(?!tests/)(routers/auth_router|persistence/(auth_audit|user_db|registration_code_store)|registration_codes|connectors/(desktop_session_router|user_auth_router))", "homes": ["ai_orchestrator/auth/"], "before_exempt": true},
+ {"name": "user_data", "keyword": "^ai_orchestrator/(?!tests/).*user_data_contribution", "homes": ["ai_orchestrator/user_data/"], "before_exempt": true}
  ],
  "exempt": [
   {"regex": "(^|/)(tests?|__tests__)/|\\.(test|spec)\\.(ts|tsx)$", "reason": "시험(어느 폴더든)"},

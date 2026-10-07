@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from ai_orchestrator.config import get_local_data_dir  # noqa: E402
+from ai_orchestrator.core.config import get_local_data_dir  # noqa: E402
 from scripts.instagram.kotara_ctc_reel import _cover, _font, _gradient_band, _letterbox, _wrap  # noqa: E402
 
 OUT_DIR = get_local_data_dir() / "video" / "kakao_skill_bot_ep01"

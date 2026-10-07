@@ -43,7 +43,7 @@ def client(tmp_path_factory):
     os.environ["AUTH_ENABLED"] = "true"
     os.environ["HTTP_USERS_PATH"] = str(users_path)
 
-    from ai_orchestrator import config as _config
+    from ai_orchestrator.core import config as _config
 
     importlib.reload(_config)
     from ai_orchestrator.gates import auth as _auth

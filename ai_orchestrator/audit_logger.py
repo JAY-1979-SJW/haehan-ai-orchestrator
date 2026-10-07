@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from orchestrator_v1.core.logging_utils import mask_sensitive
 
-from .config import AUDIT_LOG_PATH as _LOG_PATH
+from .core.config import AUDIT_LOG_PATH as _LOG_PATH
 
 logger = logging.getLogger(__name__)
 

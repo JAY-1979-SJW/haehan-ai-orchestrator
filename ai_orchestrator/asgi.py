@@ -10,10 +10,10 @@ from ai_orchestrator.paths import (
     bootstrap as _runtime_bootstrap,  # noqa: F401 - 저장소(DB)가 열리기 전에 데이터 폴더 준비·이행(맨 먼저 실행돼야 함)
 )
 
-from . import config
-from .config import APP_HOST, APP_PORT
+from .core import config
+from .core.config import APP_HOST, APP_PORT
 from .connectors.naver_search_runner import schedule_loop
-from .logging_setup import setup_logging
+from .core.logging_setup import setup_logging
 from .routers.registry import router
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ def _write_server_discovery_file() -> None:
 
 def _start_scheduled_job_loop() -> asyncio.Task | None:
     try:
-        from .routers.scheduled_job_loop import scheduled_job_loop
+        from .scheduler.scheduled_job_loop import scheduled_job_loop
 
         return asyncio.create_task(scheduled_job_loop())
     except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동 시 백그라운드 스케줄러 시작 실패 처리 - 로그만 남기고 해당 기능 비활성화, 보안 판정과 무관

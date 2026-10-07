@@ -114,7 +114,7 @@ def _dry_run_files_router(findings):
 
 
 def _dry_run_config_actions(findings):
-    config = read("ai_orchestrator/config.py")
+    config = read("ai_orchestrator/core/config.py")
     compose = read("docker-compose.yml")
     if 'os.environ.get("AUTH_ENABLED", "true")' in config and 'AUTH_ENABLED: "true"' in compose:
         add(findings, "PASS", "auth_fail_closed_defaults", "config and compose default true")

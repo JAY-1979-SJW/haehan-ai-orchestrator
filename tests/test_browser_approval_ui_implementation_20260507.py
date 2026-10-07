@@ -21,13 +21,13 @@ from ai_orchestrator.asgi import app
 from ai_orchestrator.browser_tool.approval_record_store import (
     read_approval_records,
 )
-from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+from ai_orchestrator.core.config import APPROVAL_RECORD_STORE_PATH
 
 
 @pytest.fixture
 def client(monkeypatch):
     """FastAPI test client."""
-    import ai_orchestrator.config as config
+    import ai_orchestrator.core.config as config
 
     monkeypatch.setattr(config, "AUTH_ENABLED", False)
     return TestClient(app)
@@ -541,7 +541,7 @@ class TestApprovalAuthGate:
     """Approval APIs must require admin/owner when auth is enabled."""
 
     def test_list_requires_auth_when_enabled(self, monkeypatch, tmp_path):
-        import ai_orchestrator.config as config
+        import ai_orchestrator.core.config as config
 
         monkeypatch.setattr(config, "AUTH_ENABLED", True)
         monkeypatch.setattr(config, "HTTP_USERS_PATH", tmp_path / "http_users.json")
@@ -558,7 +558,7 @@ class TestApprovalAuthGate:
         assert response.status_code == 401
 
     def test_viewer_blocked_when_enabled(self, monkeypatch, tmp_path):
-        import ai_orchestrator.config as config
+        import ai_orchestrator.core.config as config
 
         monkeypatch.setattr(config, "AUTH_ENABLED", True)
         monkeypatch.setattr(config, "HTTP_USERS_PATH", tmp_path / "http_users.json")

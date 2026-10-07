@@ -121,7 +121,7 @@ def _audit_auth_defaults(findings):
     else:
         add(findings, "FAIL", "compose_auth_default", "AUTH_ENABLED true not found")
 
-    config_py = read_text("ai_orchestrator/config.py")
+    config_py = read_text("ai_orchestrator/core/config.py")
     if has(r"os\.environ\.get\(\s*[\"']AUTH_ENABLED[\"']\s*,\s*[\"']true[\"']", config_py):
         add(findings, "PASS", "config_auth_default", "default true")
     else:

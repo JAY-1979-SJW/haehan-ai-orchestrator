@@ -93,7 +93,7 @@ def adapt_external_work_entry(entry: Any) -> ExternalWork:
 def list_external_works_as_models() -> list[ExternalWork]:
     """기존 external_work_registry 전체를 ExternalWork 모델 목록으로 반환."""
     try:
-        from ai_orchestrator.external_work_registry import list_external_works
+        from ai_orchestrator.tasks.external_work_registry import list_external_works
 
         entries = list_external_works()
         return [adapt_external_work_entry(e) for e in entries]

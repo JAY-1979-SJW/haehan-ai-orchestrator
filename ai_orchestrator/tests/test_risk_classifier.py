@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_orchestrator.gates.risk_classifier import classify_risk
-from ai_orchestrator.models import TaskRequest
+from ai_orchestrator.core.models import TaskRequest
 
 
 def make_req(action, target="/tmp/test.txt", payload=None):  # noqa: S108 — 테스트 헬퍼 기본값, 실제 파일 생성 없음

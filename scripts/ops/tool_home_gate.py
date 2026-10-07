@@ -42,6 +42,8 @@ def load_config(root: Path = ROOT) -> dict:
     cfg = json.loads((root / CONFIG).read_text(encoding="utf-8"))
     cfg["_tools"] = [(t["name"], re.compile(t["keyword"]), tuple(t["homes"])) for t in cfg["tools"]]
     cfg["_all_homes"] = tuple(h for t in cfg["tools"] for h in t["homes"])
+    # 기능 폴더(before_exempt): 층 표준 폴더 예외보다 먼저 판정한다 — 기능 파일이 층 폴더에 새로 생기는 것을 막는다
+    cfg["_pre_tools"] = [(t["name"], re.compile(t["keyword"]), tuple(t["homes"])) for t in cfg["tools"] if t.get("before_exempt")]
     cfg["_exempt"] = [
         (re.compile(e["regex"]) if "regex" in e else None, e.get("prefix"), e["reason"]) for e in cfg["exempt"]
     ]
@@ -53,10 +55,13 @@ def classify(path: str, cfg: dict) -> tuple[str, str | None, str]:
     p = path.replace("\\", "/")
     if Path(p).suffix.lower() not in cfg["extensions"]:
         return "skip", None, "대상 확장자 아님"
+    lp = p.lower()
+    for name, kw, homes in cfg["_pre_tools"]:
+        if kw.search(lp):
+            return ("home", name, "기능 폴더 안") if p.startswith(homes) else ("leak", name, "기능 폴더 밖(층 폴더 예외 적용 안 함)")
     for rx, prefix, reason in cfg["_exempt"]:
         if (prefix is not None and p.startswith(prefix)) or (rx is not None and rx.search(p)):
             return "exempt", None, reason
-    lp = p.lower()
     for name, kw, homes in cfg["_tools"]:
         if kw.search(lp):
             if p.startswith(homes):

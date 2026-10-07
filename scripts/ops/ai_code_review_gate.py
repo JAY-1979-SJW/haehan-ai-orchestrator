@@ -1,7 +1,7 @@
 """Claude Code AI 코드 검수 게이트 (pre-push).
 
 [LLM 경계] 개발/터미널 도구 — 앱 런타임 아님. git 훅에서 Claude Code CLI 사용은
-의도된 경계(터미널=Claude Code). 앱 기능 LLM 은 GPT(ai_orchestrator.app_llm) 전용.
+의도된 경계(터미널=Claude Code). 앱 기능 LLM 은 GPT(ai_orchestrator.llm.app_llm) 전용.
 
 git push 직전에 origin/master 대비 변경 diff를 Claude Code CLI로 리뷰한다.
 VERDICT: BLOCK 이 나오면 push를 차단한다.

@@ -13,11 +13,11 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import config
-from ai_orchestrator.connectors import user_auth_router as user_auth
+from ai_orchestrator.core import config
+from ai_orchestrator.auth import user_auth_router as user_auth
 from ai_orchestrator.gates import auth as gate
 from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.persistence import auth_audit, user_db
+from ai_orchestrator.auth import auth_audit, user_db
 from tests.console_api_contract_support import (
     API,
     basic,
@@ -33,7 +33,7 @@ CHAT = f"{API}/chat/sessions"
 def _isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(user_db, "_get_db_path", lambda: tmp_path / "users.db")
     monkeypatch.setattr(auth_audit, "_get_audit_path", lambda: tmp_path / "auth_audit.jsonl")
-    from ai_orchestrator import chat_sessions as store
+    from ai_orchestrator.tasks import chat_sessions as store
 
     monkeypatch.setattr(store, "_STORE_PATH", tmp_path / "chat_sessions.json")
     store._sessions.clear()

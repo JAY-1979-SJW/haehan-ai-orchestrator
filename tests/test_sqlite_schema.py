@@ -140,14 +140,14 @@ def test_second_connection_does_not_rerun_applied_step(tmp_path):
 def test_stores_apply_busy_timeout_and_gongmu_seeds_once(tmp_path, monkeypatch):
     """스토어 연결에 busy_timeout 이 적용되고, gongmu 시드는 DB 파일당 한 번만 돈다."""
     from ai_orchestrator.connectors import instagram_dm_db
+    from ai_orchestrator.gongmu import gongmu_store
     from ai_orchestrator.persistence import (
         agent_dispatch_store,
         fax_authorization_store,
-        gongmu_store,
         mail_bulk_store,
         naver_mail_draft_store,
-        scheduled_job_store,
     )
+    from ai_orchestrator.scheduler import scheduled_job_store
 
     for mod in (
         scheduled_job_store,

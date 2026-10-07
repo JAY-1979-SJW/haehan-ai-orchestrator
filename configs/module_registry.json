@@ -2713,7 +2713,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/alert_classifier.py": {
+  "ai_orchestrator/notify/alert_classifier.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -2729,7 +2729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/app_llm.py": {
+  "ai_orchestrator/llm/app_llm.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -3145,7 +3145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/chat_sessions.py": {
+  "ai_orchestrator/tasks/chat_sessions.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -3169,7 +3169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/config.py": {
+  "ai_orchestrator/core/config.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -3221,9 +3221,9 @@
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
-   "reason": "도메인(google) 자동화",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_cdp_reader.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/connectors/gonobi_router.py": {
    "layer": "L8",
@@ -3325,17 +3325,17 @@
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
-   "reason": "도메인(hiworks) 자동화",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_client.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/connectors/hiworks/collectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
-   "reason": "도메인(hiworks) 자동화",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_collectors.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/connectors/hiworks/config.py": {
    "layer": "L5",
@@ -3409,7 +3409,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/routers/marketing_ops_router.py": {
+  "ai_orchestrator/marketing/marketing_ops_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "marketing",
@@ -3761,7 +3761,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/user_auth_router.py": {
+  "ai_orchestrator/auth/user_auth_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -3857,7 +3857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/domain/gongmu_defaults.py": {
+  "ai_orchestrator/gongmu/gongmu_defaults.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -3929,7 +3929,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/domain/vendor_directory.py": {
+  "ai_orchestrator/vendor_directory/vendor_directory.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -3937,7 +3937,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/execution_limits.py": {
+  "ai_orchestrator/core/execution_limits.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -3945,7 +3945,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/executor.py": {
+  "ai_orchestrator/tasks/executor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -4001,7 +4001,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/external_work_registry.py": {
+  "ai_orchestrator/tasks/external_work_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -4097,7 +4097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/dev_reg_approval.py": {
+  "ai_orchestrator/dev_reg/dev_reg_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -4113,7 +4113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/gongmu_task_policy.py": {
+  "ai_orchestrator/gongmu/gongmu_task_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -4161,7 +4161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/inbox.py": {
+  "ai_orchestrator/tasks/inbox.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -5489,7 +5489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/logging_setup.py": {
+  "ai_orchestrator/core/logging_setup.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -5513,7 +5513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/models.py": {
+  "ai_orchestrator/core/models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -5521,7 +5521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/openai_client.py": {
+  "ai_orchestrator/llm/openai_client.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -5529,7 +5529,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/openai_guard.py": {
+  "ai_orchestrator/llm/openai_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -5553,7 +5553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/auth_audit.py": {
+  "ai_orchestrator/auth/auth_audit.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -5561,7 +5561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/dev_reg_audit_log.py": {
+  "ai_orchestrator/dev_reg/dev_reg_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5577,7 +5577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/gongmu_store.py": {
+  "ai_orchestrator/gongmu/gongmu_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5601,7 +5601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/registration_code_store.py": {
+  "ai_orchestrator/auth/registration_code_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5609,7 +5609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/scheduled_job_store.py": {
+  "ai_orchestrator/scheduler/scheduled_job_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5649,7 +5649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/user_db.py": {
+  "ai_orchestrator/auth/user_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5657,7 +5657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/planner.py": {
+  "ai_orchestrator/llm/planner.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -5665,7 +5665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/registration_codes.py": {
+  "ai_orchestrator/auth/registration_codes.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -5737,7 +5737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/auth_router.py": {
+  "ai_orchestrator/auth/auth_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5777,7 +5777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/dev_reg_approval_read_router.py": {
+  "ai_orchestrator/dev_reg/dev_reg_approval_read_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5785,7 +5785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/gongmu_router.py": {
+  "ai_orchestrator/gongmu/gongmu_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5817,7 +5817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/scheduled_job_loop.py": {
+  "ai_orchestrator/scheduler/scheduled_job_loop.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5825,7 +5825,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/routers/scheduled_job_router.py": {
+  "ai_orchestrator/scheduler/scheduled_job_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5857,7 +5857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/user_data_contribution_router.py": {
+  "ai_orchestrator/user_data/user_data_contribution_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5865,7 +5865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/vendor_directory_router.py": {
+  "ai_orchestrator/vendor_directory/vendor_directory_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5873,7 +5873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/web_task_router.py": {
+  "ai_orchestrator/web_task/web_task_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -6025,7 +6025,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/server/user_data_contribution_store.py": {
+  "ai_orchestrator/user_data/user_data_contribution_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -6057,7 +6057,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/dev_reg_runner.py": {
+  "ai_orchestrator/dev_reg/dev_reg_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -6073,7 +6073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/services/gongmu_service.py": {
+  "ai_orchestrator/gongmu/gongmu_service.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -6121,7 +6121,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/scheduled_job_service.py": {
+  "ai_orchestrator/scheduler/scheduled_job_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -6161,7 +6161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/services/vendor_directory_service.py": {
+  "ai_orchestrator/vendor_directory/vendor_directory_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -6169,7 +6169,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/web_task_approval_service.py": {
+  "ai_orchestrator/web_task/web_task_approval_service.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -6177,7 +6177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/services/web_task_registry.py": {
+  "ai_orchestrator/web_task/web_task_registry.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -6409,7 +6409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/task_state.py": {
+  "ai_orchestrator/core/task_state.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -6417,7 +6417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/telegram_notifier.py": {
+  "ai_orchestrator/notify/telegram_notifier.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -6425,7 +6425,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/telegram_webhook.py": {
+  "ai_orchestrator/notify/telegram_webhook.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -7153,7 +7153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/web_task_templates.py": {
+  "ai_orchestrator/web_task/web_task_templates.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -11485,41 +11485,41 @@
    "layer": "L7",
    "role": "persistence",
    "domain": "smartstore",
-   "reason": "DB·저장 신호",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/analytics_dashboard.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/smartstore/automation/competitor_analysis.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "smartstore",
-   "reason": "DB·저장 신호",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/competitor_analysis.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/smartstore/automation/csv_import.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/csv_import.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/smartstore/automation/inventory_monitor.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/inventory_monitor.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/smartstore/automation/order_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/order_automation.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/automation/workflow.py": {
    "layer": "L6",
@@ -22185,7 +22185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/marketing_ops_settings.py": {
+  "ai_orchestrator/marketing/marketing_ops_settings.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "marketing",
@@ -22345,7 +22345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/desktop_session_router.py": {
+  "ai_orchestrator/auth/desktop_session_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -22863,6 +22863,110 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/auth/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/core/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/dev_reg/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/dev_reg/dev_reg_telegram.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "notify/telegram_notifier(L1 contract)에서 옮겨 온 개발자 등록 텔레그램 메시지·callback_data 포맷 — 같은 내용이라 같은 층·역할(F12 순환 방지 이동). 규칙 기본값 L4 로 두면 L2 정책 모듈이 이를 import 할 때 층간 위반이 생긴다.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/gongmu/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/llm/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/marketing/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "marketing",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/notify/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/scheduler/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/tasks/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/user_data/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/vendor_directory/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/web_task/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }

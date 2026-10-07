@@ -13,9 +13,9 @@ from ai_orchestrator import mcp_server
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates import mail_draft_policy as draft_policy
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import gongmu_store as store
-from ai_orchestrator.routers.gongmu_router import gongmu_router
-from ai_orchestrator.services import gongmu_service as service
+from ai_orchestrator.gongmu import gongmu_store as store
+from ai_orchestrator.gongmu.gongmu_router import gongmu_router
+from ai_orchestrator.gongmu import gongmu_service as service
 from ai_orchestrator.services import scheduled_job_actions as actions
 
 TODAY = date(2026, 10, 2)

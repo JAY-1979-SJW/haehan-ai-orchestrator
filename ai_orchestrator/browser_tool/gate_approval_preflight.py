@@ -64,7 +64,7 @@ def build_gate_approval_context(
         return {}
 
     if approval_store_path is None:
-        from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+        from ai_orchestrator.core.config import APPROVAL_RECORD_STORE_PATH
 
         approval_store_path = APPROVAL_RECORD_STORE_PATH
 
@@ -202,7 +202,7 @@ def _evaluate_approval_record(
 ) -> dict | None:
     """approval record 조회 후 판정. 최종 결과면 result, 계속 진행이면 None (오류는 fail-closed BLOCK)."""
     if approval_store_path is None:
-        from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+        from ai_orchestrator.core.config import APPROVAL_RECORD_STORE_PATH
 
         approval_store_path = APPROVAL_RECORD_STORE_PATH
 
