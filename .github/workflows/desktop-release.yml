@@ -209,4 +209,6 @@ jobs:
           name: HaehanAI-Desktop-${{ steps.buildinfo.outputs.version }}
           path: release-out/*
           if-no-files-found: error
-          retention-days: 30
+          # 공개 저장소의 아티팩트는 GitHub 로그인 사용자 누구나 받을 수 있다 — 설치 파일은 NAS 게시에 필요한 기간만 둔다
+          # (대표님 결정 2026-10-08: 설치 파일을 GitHub 에 두지 않는다. 비공개 전환 뒤 늘릴지 다시 판단)
+          retention-days: 3
