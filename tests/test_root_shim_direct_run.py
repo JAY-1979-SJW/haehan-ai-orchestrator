@@ -40,7 +40,7 @@ def test_dashboard_shim_import_still_aliases_real_module():
 def test_hiworks_inbox_route_loads_reader_through_the_root_shim(monkeypatch):
     """라우트는 루트의 hiworks_mail_reader.py 를 파일 경로로 읽는다 — shim 이어도 fetch_recent_mails 를 찾아야 한다(500 방지)."""
     import orchestrator_v1.inbox.hiworks_mail_reader as real
-    from ai_orchestrator.connectors import hiworks_mail_router as r
+    from ai_orchestrator.connectors.hiworks import mail_router as r
 
     monkeypatch.setattr(real, "fetch_recent_mails", lambda limit=20: [{"subject": "ok"}])
     monkeypatch.setattr(r, "log_event", lambda *a, **k: None)

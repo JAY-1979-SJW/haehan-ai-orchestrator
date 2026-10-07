@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.connectors import gabia_router
+from ai_orchestrator.connectors.gabia import router as gabia_router
 from ai_orchestrator.paths import repo_root
 
 

@@ -3209,36 +3209,12 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/eum_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "eum",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/connectors/gabia/__init__.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "gabia",
    "reason": "도메인(gabia) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gabia_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "gabia",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gmail_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "google",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
    "source": "rule"
   },
   "ai_orchestrator/connectors/gonobi_router.py": {
@@ -3337,22 +3313,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/hanafax_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "hanafax",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/hiworks_mail_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "hiworks",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/connectors/inquiry_router.py": {
    "layer": "L8",
    "role": "api",
@@ -3415,14 +3375,6 @@
    "domain": "instagram",
    "reason": "도메인(instagram) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/kakao_setup_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "kakao",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
    "source": "rule"
   },
   "ai_orchestrator/routers/marketing_ops_router.py": {
@@ -21009,14 +20961,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/kakao_skill_router.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
-  },
   "admin-web/src/app/site-map/RegisteredSites.tsx": {
    "layer": "L9",
    "role": "ui",
@@ -22594,6 +22538,14 @@
    "source": "rule"
   },
   "tests/test_ruff_new_only_gate_rename.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_verify_change_ruff_loud.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
