@@ -439,7 +439,7 @@ def _restart_dead_monitors() -> None:
         log.warning("[HEARTBEAT] chrome_ui_monitor 종료 감지 → 자동 재시작")
         _state.chrome_ui_monitor_pid = 0
         try:
-            script = ROOT / "scripts" / "chrome_ui_monitor.py"
+            script = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
             _procs.chrome_ui_monitor = _launch_background_python([str(script), "3.0"])
             _state.chrome_ui_monitor_pid = _procs.chrome_ui_monitor.pid
         except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
@@ -533,7 +533,7 @@ def _start_monitor_processes() -> None:
     # chrome_ui_monitor (별도 독립 프로세스 — UI Automation 격리)
     # daemon thread가 아닌 별도 프로세스이므로 IDE 세션 간섭 없음
     try:
-        script = ROOT / "scripts" / "chrome_ui_monitor.py"
+        script = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
         _procs.chrome_ui_monitor = _launch_background_python([str(script), "3.0"])
         _state.chrome_ui_monitor_pid = _procs.chrome_ui_monitor.pid
         _save_state(_state)

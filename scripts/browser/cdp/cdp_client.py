@@ -333,7 +333,7 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
 
     if sub_cmd == "start":
         interval = float(sub) if sub else 3.0
-        script = _Path(__file__).resolve().parent / "chrome_ui_monitor.py"
+        script = repo_root() / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
         pythonw = _Path(__import__("sys").executable).parent / "pythonw.exe"
         if not pythonw.exists():
             pythonw = _Path(__import__("sys").executable)

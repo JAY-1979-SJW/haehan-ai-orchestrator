@@ -8761,22 +8761,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp/chrome_ui_monitor.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/chrome_ui_watcher.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/common/__init__.py": {
    "layer": "L4",
    "role": "generic",
