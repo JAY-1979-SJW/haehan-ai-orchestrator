@@ -27,11 +27,14 @@ def test_installer_name_matches_publish_glob():
     assert re.fullmatch(r"HaehanAI-\$\{env\.HAEHAN_BUILD_VERSION\}-setup\.exe", name)
 
 
-def test_publish_source_is_github_release():
+def test_installers_are_never_published_to_github():
+    # 대표님 결정(2026-10-08): 설치 파일은 GitHub 에 올리지 않는다 — 출처는 실행 때 받는 generic 주소뿐
     publish = _pkg()["build"]["publish"]
-    assert len(publish) == 1
-    assert publish[0]["provider"] == "github"
-    assert publish[0]["repo"] == "haehan-ai-orchestrator"
+    assert [p["provider"] for p in publish] == ["generic"]
+    wf = (ROOT / ".github" / "workflows" / "desktop-release.yml").read_text(encoding="utf-8")
+    assert "gh release" not in wf
+    assert "contents: write" not in wf
+    assert "--publish never" in wf
 
 
 def test_per_user_install_so_updates_need_no_admin():
@@ -40,8 +43,9 @@ def test_per_user_install_so_updates_need_no_admin():
 
 def test_updater_off_for_portable_e2e_and_dev():
     src = (ELECTRON / "lib" / "updater.js").read_text(encoding="utf-8")
-    for guard in ("app.isPackaged", "PORTABLE_EXECUTABLE_DIR", 'HAEHAN_E2E === "1"', "HAEHAN_DISABLE_UPDATE"):
+    for guard in ("app.isPackaged", "PORTABLE_EXECUTABLE_DIR", 'HAEHAN_E2E === "1"', "HAEHAN_DISABLE_UPDATE", "no-update-url"):
         assert guard in src, guard
+    assert 'setFeedURL({ provider: "generic", url: updateUrl() })' in src
 
 
 def test_main_starts_updater_after_shell_loaded():
@@ -50,12 +54,3 @@ def test_main_starts_updater_after_shell_loaded():
     start = main.index("startAutoUpdate(getMainWindow)")
     assert start > shell_loaded
 
-
-def test_release_job_only_on_tags_with_scoped_write():
-    wf = (ROOT / ".github" / "workflows" / "desktop-release.yml").read_text(encoding="utf-8")
-    top, _, publish_job = wf.partition("  publish-release:")
-    assert publish_job, "publish-release 작업 없음"
-    assert "contents: write" not in top
-    assert "if: startsWith(github.ref, 'refs/tags/v')" in publish_job
-    assert "contents: write" in publish_job
-    assert "--publish never" in top

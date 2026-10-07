@@ -78,10 +78,8 @@
     },
     "publish": [
       {
-        "provider": "github",
-        "owner": "JAY-1979-SJW",
-        "repo": "haehan-ai-orchestrator",
-        "releaseType": "release"
+        "provider": "generic",
+        "url": "https://updates.invalid/haehan-desktop"
       }
     ],
     "nsis": {
