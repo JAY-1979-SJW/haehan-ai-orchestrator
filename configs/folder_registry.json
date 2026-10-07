@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 318,
+ "count": 322,
  "folders": [
   {
    "path": ".",
@@ -955,6 +955,14 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
   },
   {
+   "path": "ai_orchestrator/agent_hub/actions",
+   "purpose": "에이전트 허브 동작(action) 모음",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
+  },
+  {
    "path": "ai_orchestrator/agent_hub/policy",
    "purpose": "에이전트 정책(T4)",
    "kind": "기능",
@@ -1555,6 +1563,14 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "local_agent/runtime",
+   "purpose": "로컬 에이전트 실행 런타임",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
+  },
+  {
    "path": "notice_radar",
    "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "레거시",
@@ -1721,6 +1737,22 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/browser/agent",
+   "purpose": "브라우저 에이전트 도구",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
+  },
+  {
+   "path": "scripts/browser/agent/_js",
+   "purpose": "브라우저 에이전트가 주입하는 JS 조각",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
   },
   {
    "path": "scripts/browser/cdp",
