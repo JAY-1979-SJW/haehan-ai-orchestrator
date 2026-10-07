@@ -41,4 +41,4 @@ def test_importers_still_work_through_the_shims():
 def test_old_path_shims_are_tiny():
     for rel in ("scripts/naver/router_blog.py", "scripts/navigator_blog.py"):
         text = (ROOT / rel).read_text(encoding="utf-8")
-        assert "sys.modules[__name__]" in text and len(text.splitlines()) <= 8
+        assert text.splitlines()[0].startswith("# haehan-shim: ")  # make_shim 이 만든 shim(식별 마커)

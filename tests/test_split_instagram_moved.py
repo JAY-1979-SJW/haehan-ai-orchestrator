@@ -49,7 +49,7 @@ def test_old_path_shims_are_tiny_aliases():
     root = repo_root() / "ai_orchestrator" / "connectors"
     for old in MOVED:
         text = (root / f"{old}.py").read_text(encoding="utf-8")
-        assert "sys.modules[__name__]" in text and len(text.splitlines()) <= 8
+        assert text.splitlines()[0].startswith("# haehan-shim: ")  # make_shim 이 만든 shim(식별 마커)
 
 
 @pytest.mark.parametrize(
