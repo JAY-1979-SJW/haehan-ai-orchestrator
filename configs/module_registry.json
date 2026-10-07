@@ -9593,7 +9593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gonobi_download_images.py": {
+  "scripts/naver/blog/gonobi/download_images.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9601,7 +9601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gonobi_gallery_check.py": {
+  "scripts/naver/blog/gonobi/gallery_check.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9609,7 +9609,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_page_test.py": {
+  "scripts/naver/blog/gonobi/page_test.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9617,7 +9617,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_reclassify_images.py": {
+  "scripts/naver/blog/gonobi/reclassify_images.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9625,7 +9625,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_redownload_small.py": {
+  "scripts/naver/blog/gonobi/redownload_small.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9633,7 +9633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gonobi_scrape.py": {
+  "scripts/naver/blog/gonobi/scrape.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9641,7 +9641,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_verify_images.py": {
+  "scripts/naver/blog/gonobi/verify_images.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9649,7 +9649,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_verify_paged.py": {
+  "scripts/naver/blog/gonobi/verify_paged.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9657,7 +9657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_verify_problems.py": {
+  "scripts/naver/blog/gonobi/verify_problems.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -11270,14 +11270,6 @@
    "role": "site_module",
    "domain": "marketing",
    "reason": "도메인(marketing) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/mk_catalog/reclassify_blog_new.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
    "confidence": "low",
    "source": "rule"
   },
@@ -22287,6 +22279,14 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/mk_catalog/reclassify_blog_new.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "low",
    "source": "rule"
   }
  }

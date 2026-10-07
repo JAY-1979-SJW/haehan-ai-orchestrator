@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from ai_orchestrator.config import get_local_data_dir
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
