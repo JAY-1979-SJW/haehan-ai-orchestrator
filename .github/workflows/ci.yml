@@ -30,6 +30,12 @@ on:
 permissions:
   contents: read
 
+# 모든 python 단계 공통 UTF-8 — Windows 러너의 기본 인코딩(cp1252)에서는 한국어 print/open 이 UnicodeEncodeError 로 죽는다
+# (2026-10-07 desktop-release 와 같은 원인 예방). 개별 파일을 고치지 않고 실행 환경에서 한 번에 해결한다.
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true

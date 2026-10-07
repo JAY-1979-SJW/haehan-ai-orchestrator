@@ -22,6 +22,12 @@ on:
 permissions:
   contents: read
 
+# 모든 python 단계 공통 UTF-8 — Windows 러너의 기본 인코딩(cp1252)에서는 한국어 print/open 이 UnicodeEncodeError 로 죽는다
+# (2026-10-07 첫 앱 빌드 run 37616567839: haehan-server.spec 186행). 개별 파일을 고치지 않고 실행 환경에서 한 번에 해결한다.
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
 jobs:
   build-desktop:
     runs-on: windows-latest
