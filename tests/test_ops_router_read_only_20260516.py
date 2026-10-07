@@ -146,7 +146,7 @@ class TestOpsRouterImports:
         assert "from ai_orchestrator.services.web_task_registry import list_entries" in self._src()
 
     def test_imports_external_work_registry(self):
-        assert "from ai_orchestrator.external_work_registry import list_external_works" in self._src()
+        assert "from ai_orchestrator.tasks.external_work_registry import list_external_works" in self._src()
 
     def test_imports_local_agent_registry(self):
         assert "import local_agent_registry" in self._src() or "as _reg" in self._src()

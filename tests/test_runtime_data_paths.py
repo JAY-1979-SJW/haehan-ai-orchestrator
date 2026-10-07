@@ -41,7 +41,7 @@ CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.core.config", "LOG_DIR", STORAGE, ()),
     ("ai_orchestrator.core.config", "AUDIT_LOG_PATH", STORAGE, ("audit_logs.jsonl",)),
     ("ai_orchestrator.core.config", "_DEFAULT_DATA_DIR", DATA, ()),
-    ("ai_orchestrator.chat_sessions", "_STORE_PATH", DATA, ("chat_sessions.json",)),
+    ("ai_orchestrator.tasks.chat_sessions", "_STORE_PATH", DATA, ("chat_sessions.json",)),
     ("ai_orchestrator.connectors.eum.router", "_TARGETS_LATEST", DATA, ("eum_sales_mail_targets_latest.json",)),
     ("ai_orchestrator.connectors.grant_radar_router", "DATA_DIR", DATA, ("grant_radar",)),
     ("ai_orchestrator.connectors.kakao.setup_router", "STATE_PATH", DATA, ("kakao_setup_state.json",)),

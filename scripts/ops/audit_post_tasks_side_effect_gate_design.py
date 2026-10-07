@@ -38,7 +38,7 @@ CALL_CHAIN = [
     {
         "step": 2,
         "call": "plan(req)",
-        "file": "ai_orchestrator/planner.py",
+        "file": "ai_orchestrator/llm/planner.py",
         "line_approx": 9,
         "side_effects": ["classify_risk()", "evaluate_request() — 모두 pure 계산, write 없음"],
         "blocking": False,
@@ -67,7 +67,7 @@ CALL_CHAIN = [
     {
         "step": 5,
         "call": "execute(ep, req, risk_level)",
-        "file": "ai_orchestrator/executor.py",
+        "file": "ai_orchestrator/tasks/executor.py",
         "line_approx": 70,
         "side_effects": [
             "low 경로: check_rate_limits() 인메모리 변경",
@@ -281,9 +281,9 @@ def _check_router_stability() -> dict:
 def _check_key_files() -> tuple[list, list]:
     required = [
         "ai_orchestrator/routers/registry.py",
-        "ai_orchestrator/executor.py",
+        "ai_orchestrator/tasks/executor.py",
         "ai_orchestrator/gates/approval.py",
-        "ai_orchestrator/planner.py",
+        "ai_orchestrator/llm/planner.py",
         "ai_orchestrator/core/execution_limits.py",
         # backend/compat/legacy_5050: faf799bd(2026-09-23 타앱 연결 2차 삭제)에서 이동 없이 삭제됨 -> 필수 목록에서 제외
     ]

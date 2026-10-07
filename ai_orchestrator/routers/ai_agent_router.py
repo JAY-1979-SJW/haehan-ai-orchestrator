@@ -17,7 +17,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from .. import chat_sessions as _chat_store
+from ..tasks import chat_sessions as _chat_store
 from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 from .. import local_agent_registry as _reg
 from .. import mcp_tool_names as _tool_names

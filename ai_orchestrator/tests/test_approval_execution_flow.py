@@ -55,7 +55,7 @@ def app_client(tmp_path_factory):
     from ai_orchestrator.core import execution_limits as _el
 
     importlib.reload(_el)
-    from ai_orchestrator import executor as _ex
+    from ai_orchestrator.tasks import executor as _ex
 
     importlib.reload(_ex)
     from ai_orchestrator.gates import approval as _ap

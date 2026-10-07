@@ -96,7 +96,7 @@ def router_content():
 
 @pytest.fixture(scope="module")
 def executor_content():
-    return (REPO_ROOT / "ai_orchestrator/executor.py").read_text(encoding="utf-8", errors="ignore")
+    return (REPO_ROOT / "ai_orchestrator/tasks/executor.py").read_text(encoding="utf-8", errors="ignore")
 
 
 # ── 1~2. import ──────────────────────────────────────────────────────────────

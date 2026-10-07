@@ -372,8 +372,8 @@ def audit_and_alert(
       자동 재시도 절대 금지 — retry_candidate 판단만 기록.
       알림 메시지에 민감정보 포함 금지.
     """
-    from ai_orchestrator.alert_classifier import build_alert_text, classify
     from ai_orchestrator.clients.telegram_sender import send_message
+    from ai_orchestrator.notify.alert_classifier import build_alert_text, classify
 
     # 2026-09-29 복원(defect_index #32): 원본 삭제 이후 "허브 분리 1단계"
     # 리팩터(e9c7144b)로 두 모듈이 ai_orchestrator 루트에서

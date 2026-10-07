@@ -2,7 +2,7 @@
 
 원본: scripts/naver/automation/integration/ai_responder.py (AIResponder).
 차이점:
-  - ai_orchestrator.openai_guard.assert_openai_allowed 의존 제거.
+  - ai_orchestrator.llm.openai_guard.assert_openai_allowed 의존 제거.
     원본은 "회사 소유 API 키로 회사 서비스가 호출"하는 내부 자동화라 승인 게이트가
     필요했지만, 이 독립 앱은 **고객이 자기 OpenAI API 키로 직접 호출**하므로
     회사 승인 정책과 무관하다(고객 본인 비용/책임).

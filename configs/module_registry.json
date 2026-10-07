@@ -2713,7 +2713,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/alert_classifier.py": {
+  "ai_orchestrator/notify/alert_classifier.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -2729,7 +2729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/app_llm.py": {
+  "ai_orchestrator/llm/app_llm.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -3145,7 +3145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/chat_sessions.py": {
+  "ai_orchestrator/tasks/chat_sessions.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -3913,7 +3913,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/executor.py": {
+  "ai_orchestrator/tasks/executor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -3969,7 +3969,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/external_work_registry.py": {
+  "ai_orchestrator/tasks/external_work_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -4129,7 +4129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/inbox.py": {
+  "ai_orchestrator/tasks/inbox.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -5489,7 +5489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/openai_client.py": {
+  "ai_orchestrator/llm/openai_client.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -5497,7 +5497,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/openai_guard.py": {
+  "ai_orchestrator/llm/openai_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -5625,7 +5625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/planner.py": {
+  "ai_orchestrator/llm/planner.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -6385,7 +6385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/telegram_notifier.py": {
+  "ai_orchestrator/notify/telegram_notifier.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -6393,7 +6393,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/telegram_webhook.py": {
+  "ai_orchestrator/notify/telegram_webhook.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -22799,6 +22799,30 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/llm/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/notify/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/tasks/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }

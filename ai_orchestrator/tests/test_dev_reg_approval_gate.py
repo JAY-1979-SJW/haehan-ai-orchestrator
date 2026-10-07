@@ -255,8 +255,8 @@ def test_unregistered_telegram_user_blocked():
     """telegram_users.json 에 없는 사용자 ID 는 handle_telegram_update 에서 차단."""
     from ai_orchestrator.gates.approval import issue_token_for_dev_reg
     from ai_orchestrator.gates.dev_reg_approval import create_pending
-    from ai_orchestrator.telegram_notifier import build_dev_reg_callback_data
-    from ai_orchestrator.telegram_webhook import handle_telegram_update
+    from ai_orchestrator.notify.telegram_notifier import build_dev_reg_callback_data
+    from ai_orchestrator.notify.telegram_webhook import handle_telegram_update
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
@@ -558,7 +558,7 @@ def test_dev_reg_approval_record_no_raw_secrets():
 
 def test_dev_reg_callback_data_format():
     """build/parse 대칭성 및 64바이트 제한 검증."""
-    from ai_orchestrator.telegram_notifier import (
+    from ai_orchestrator.notify.telegram_notifier import (
         build_dev_reg_callback_data,
         parse_dev_reg_callback_data,
     )
@@ -575,7 +575,7 @@ def test_dev_reg_callback_data_format():
 
 def test_parse_dev_reg_rejects_invalid():
     """잘못된 callback_data 는 None 반환."""
-    from ai_orchestrator.telegram_notifier import parse_dev_reg_callback_data
+    from ai_orchestrator.notify.telegram_notifier import parse_dev_reg_callback_data
 
     assert parse_dev_reg_callback_data("") is None
     assert parse_dev_reg_callback_data("approve|task|token") is None  # 기존 형식 → None
@@ -589,7 +589,7 @@ def test_existing_webhook_unaffected():
     """기존 handle_telegram_webhook 는 dr_* 추가 후에도 정상 동작."""
     from ai_orchestrator.gates.approval import issue_token
     from ai_orchestrator.core.models import RiskAssessment, TaskRequest
-    from ai_orchestrator.telegram_webhook import handle_telegram_webhook
+    from ai_orchestrator.notify.telegram_webhook import handle_telegram_webhook
 
     tid = f"TG-{uuid.uuid4().hex[:8]}"
     req = TaskRequest(

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator import chat_sessions as store
+from ai_orchestrator.tasks import chat_sessions as store
 from tests.console_api_contract_support import (
     API,
     basic,

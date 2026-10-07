@@ -24,9 +24,10 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+from ai_orchestrator.paths import repo_root
 from ai_orchestrator.paths.runtime import data_dir
 
-_ROOT = Path(__file__).resolve().parents[1]
+_ROOT = repo_root()
 _STORE_PATH = data_dir() / "chat_sessions.json"
 _MAX_MESSAGE_TEXT_LEN = 20000  # 저장 폭주 방지(단일 채팅 메시지 상한). 에이전트 결과 전문 상한(result_full 20000)과 같은 값
 _MAX_SESSIONS = 500  # 오래된 세션 자동 정리 상한(개인 사용자 1명 기준 충분)

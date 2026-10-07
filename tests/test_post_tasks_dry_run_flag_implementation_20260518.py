@@ -150,13 +150,13 @@ def router_mod():
     import sys
 
     mock_names = [
-        "ai_orchestrator.planner",
-        "ai_orchestrator.executor",
+        "ai_orchestrator.llm.planner",
+        "ai_orchestrator.tasks.executor",
         "ai_orchestrator.gates.approval",
         "ai_orchestrator.audit_logger",
         "ai_orchestrator.gates.auth",
-        "ai_orchestrator.telegram_webhook",
-        "ai_orchestrator.inbox",
+        "ai_orchestrator.notify.telegram_webhook",
+        "ai_orchestrator.tasks.inbox",
         "ai_orchestrator.sites.gmail_reader",
         "ai_orchestrator.sites.router",
         "ai_orchestrator.cad.router",
@@ -172,13 +172,13 @@ def router_mod():
     ]
     originals = {n: sys.modules.get(n) for n in mock_names}
     mocks = {
-        "ai_orchestrator.planner": MagicMock(),
-        "ai_orchestrator.executor": MagicMock(),
+        "ai_orchestrator.llm.planner": MagicMock(),
+        "ai_orchestrator.tasks.executor": MagicMock(),
         "ai_orchestrator.gates.approval": MagicMock(),
         "ai_orchestrator.audit_logger": MagicMock(),
         "ai_orchestrator.gates.auth": MagicMock(),
-        "ai_orchestrator.telegram_webhook": MagicMock(),
-        "ai_orchestrator.inbox": MagicMock(),
+        "ai_orchestrator.notify.telegram_webhook": MagicMock(),
+        "ai_orchestrator.tasks.inbox": MagicMock(),
         "ai_orchestrator.sites.gmail_reader": MagicMock(),
         "ai_orchestrator.sites.router": MagicMock(sites_router=MagicMock()),
         "ai_orchestrator.cad.router": MagicMock(cad_router=MagicMock()),

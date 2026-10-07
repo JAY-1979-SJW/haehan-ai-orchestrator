@@ -6,7 +6,7 @@ MOCK/템플릿 문자열을 반환한다. 실제 문구 작성은 Claude Code �
 
 import logging
 
-from .core.models import ExecutionPlan, RiskAssessment, TaskRequest
+from ..core.models import ExecutionPlan, RiskAssessment, TaskRequest
 
 logger = logging.getLogger(__name__)
 

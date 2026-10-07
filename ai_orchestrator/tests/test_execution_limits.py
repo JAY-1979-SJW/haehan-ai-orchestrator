@@ -13,7 +13,7 @@ from ai_orchestrator.core.execution_limits import (
     current_limits,
 )
 from ai_orchestrator.core.models import ExecutionPlan, TaskRequest
-from ai_orchestrator.executor import execute
+from ai_orchestrator.tasks.executor import execute
 
 
 def _cleanup_history():

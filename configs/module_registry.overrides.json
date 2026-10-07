@@ -4,7 +4,7 @@
   "role": "policy",
   "reason": "액션 카테고리/리스크 메타데이터 레지스트리 — 여러 계층이 참조하는 정책성 상수 레지스트리, L10 오분류"
  },
- "ai_orchestrator/app_llm.py": {
+ "ai_orchestrator/llm/app_llm.py": {
   "layer": "L1",
   "role": "shared",
   "reason": "파일 docstring이 스스로 'L1 공유 계약 — 순수 상수' 선언, L4 generic 오분류"
@@ -262,7 +262,7 @@
   "role": "contract",
   "reason": "SiteConnector ABC — 공통 인터페이스/예외 정의만, 실행 코드 없음 — L4 오분류"
  },
- "ai_orchestrator/telegram_notifier.py": {
+ "ai_orchestrator/notify/telegram_notifier.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "텔레그램 메시지 포맷/파싱만 담당, 전송(HTTP) 없음 — L4 오분류, 실제 전송은 telegram_sender(L3)"

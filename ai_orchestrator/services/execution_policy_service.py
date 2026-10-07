@@ -18,7 +18,7 @@
 기존 원본:
 - ai_orchestrator/server/execution_location_guard.py (원본 유지)
 - ai_orchestrator/local_agent/action_risk_policy.py (원본 유지)
-- ai_orchestrator/external_work_registry.py (원본 유지)
+- ai_orchestrator/tasks/external_work_registry.py (원본 유지)
 
 이 서비스는 3단계 Policy Layer 통합 공정의 준비 계층이다.
 """
@@ -237,7 +237,7 @@ class ExecutionPolicyService:
     def _get_classification(self, provider: str, work_type: str) -> str:
         """external_work_registry에서 분류값을 조회한다."""
         try:
-            from ai_orchestrator.external_work_registry import get_external_work
+            from ai_orchestrator.tasks.external_work_registry import get_external_work
 
             entry = get_external_work(provider, work_type)
             if entry:

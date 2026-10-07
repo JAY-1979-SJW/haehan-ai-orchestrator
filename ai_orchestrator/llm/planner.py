@@ -1,8 +1,8 @@
 import logging
 
-from .gates.policy import evaluate_request, load_policy
-from .gates.risk_classifier import classify_risk
-from .core.models import ExecutionPlan, RiskAssessment, TaskRequest
+from ..gates.policy import evaluate_request, load_policy
+from ..gates.risk_classifier import classify_risk
+from ..core.models import ExecutionPlan, RiskAssessment, TaskRequest
 
 logger = logging.getLogger(__name__)
 

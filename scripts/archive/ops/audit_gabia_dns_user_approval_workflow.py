@@ -235,7 +235,7 @@ def _check_audit_events() -> bool:
 
 def _check_external_work_registry() -> bool:
     try:
-        from ai_orchestrator.external_work_registry import get_external_work
+        from ai_orchestrator.tasks.external_work_registry import get_external_work
 
         p = get_external_work("gabia", "dns_record_prepare")
         f = get_external_work("gabia", "dns_final_save")

@@ -14,7 +14,7 @@ def test_registry_state_path_is_isolated():
 
 
 def test_chat_store_path_is_isolated():
-    from ai_orchestrator import chat_sessions as store
+    from ai_orchestrator.tasks import chat_sessions as store
 
     assert ROOT / "data" not in Path(store._STORE_PATH).parents
 

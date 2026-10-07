@@ -41,7 +41,7 @@ def _isolated(tmp_path, monkeypatch):
     monkeypatch.setattr(user_db, "_get_db_path", lambda: tmp_path / "users.db")
     monkeypatch.setattr(auth_audit, "_get_audit_path", lambda: tmp_path / "auth_audit.jsonl")
     # 대화기록 저장소도 임시 폴더로(콘솔 라우트 호출 시 실제 파일 보호)
-    from ai_orchestrator import chat_sessions as store
+    from ai_orchestrator.tasks import chat_sessions as store
 
     monkeypatch.setattr(store, "_STORE_PATH", tmp_path / "chat_sessions.json")
     store._sessions.clear()

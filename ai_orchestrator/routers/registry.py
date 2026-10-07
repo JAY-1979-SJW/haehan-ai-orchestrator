@@ -56,17 +56,17 @@ from ..connectors.session_status_router import session_status_router
 from ..connectors.smartstore_router import smartstore_router
 from ..connectors.user_auth_router import get_jwt_user, user_auth_router
 from ..connectors.youtube_router import youtube_router
-from ..executor import execute
+from ..tasks.executor import execute
 from ..gates.approval import approve_token, issue_token, reject_token
 from ..gates.auth import require_role
-from ..inbox import get_inbox_item as _get_inbox_item
-from ..inbox import read_recent_inbox
+from ..tasks.inbox import get_inbox_item as _get_inbox_item
+from ..tasks.inbox import read_recent_inbox
 from ..local_agent_router import local_agent_router
 from ..core.models import TaskRequest
-from ..planner import plan
+from ..llm.planner import plan
 from .marketing_ops_router import marketing_ops_router
 from ..sites.router import sites_router
-from ..telegram_webhook import handle_telegram_update, handle_telegram_webhook
+from ..notify.telegram_webhook import handle_telegram_update, handle_telegram_webhook
 
 logger = logging.getLogger(__name__)
 

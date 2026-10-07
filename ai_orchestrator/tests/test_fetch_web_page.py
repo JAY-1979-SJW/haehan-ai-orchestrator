@@ -354,7 +354,7 @@ def _isolated_logdir(tmp_path, monkeypatch):
     from ai_orchestrator.connectors import playwright_connector as _pc
 
     importlib.reload(_pc)
-    from ai_orchestrator import executor as _ex
+    from ai_orchestrator.tasks import executor as _ex
 
     importlib.reload(_ex)
     yield _cfg, _el, _pc, _ex
@@ -472,7 +472,7 @@ def app_client(tmp_path_factory):
     from ai_orchestrator.connectors import playwright_connector as _pc
 
     importlib.reload(_pc)
-    from ai_orchestrator import executor as _ex
+    from ai_orchestrator.tasks import executor as _ex
 
     importlib.reload(_ex)
     from ai_orchestrator.gates import approval as _ap
@@ -580,7 +580,7 @@ def _approval_token(r):
 
 
 def test_fetch_web_page_in_whitelist(app_client):
-    from ai_orchestrator import executor as ex
+    from ai_orchestrator.tasks import executor as ex
 
     assert "fetch_web_page" in ex.ALLOWED_ACTIONS
 
@@ -748,8 +748,8 @@ def test_fetch_web_page_user_rate_limit_has_priority(app_client):
         r = el.check_user_5min_window(rate_user, max_count=5)
         assert r[0] is False and r[1] == el.BLOCK_USER_5MIN
 
-    from ai_orchestrator import executor as ex
     from ai_orchestrator.core.models import TaskRequest
+    from ai_orchestrator.tasks import executor as ex
 
     with patch.object(el, "_now", return_value=fixed_now), patch.object(pc, "fetch_web_page") as spy:
         req = TaskRequest(

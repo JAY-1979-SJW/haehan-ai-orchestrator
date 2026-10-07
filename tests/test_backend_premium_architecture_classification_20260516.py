@@ -49,7 +49,7 @@ DOMAIN_CORE_MAP = {
     },
     "WorkTrade": {
         "impl_files": [
-            "ai_orchestrator/external_work_registry.py",
+            "ai_orchestrator/tasks/external_work_registry.py",
             "ai_orchestrator/domain/models.py",  # STEP 1: WorkTrade baseline model 추가
         ],
         "status": "BASELINE_MODEL_READY",
@@ -86,7 +86,7 @@ DOMAIN_CORE_MAP = {
     },
     "ExternalWork": {
         "impl_files": [
-            "ai_orchestrator/external_work_registry.py",
+            "ai_orchestrator/tasks/external_work_registry.py",
             "ai_orchestrator/domain/models.py",  # STEP 1: ExternalWork baseline model 추가
             "ai_orchestrator/domain/model_adapters.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: ExecutionAttempt + ExternalAppHandoff
@@ -266,7 +266,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "external_work_service": {
         "purpose": "ExternalWork 분류 조회, handoff 기록, 상태 추적",
-        "current_location": "ai_orchestrator/external_work_registry.py (registry only)",
+        "current_location": "ai_orchestrator/tasks/external_work_registry.py (registry only)",
         "extraction_priority": "MEDIUM",
         "must_not_call": ["db_write"],
         "test_criteria": ["분류 조회 검증", "handoff 기록 단위 테스트"],
@@ -845,7 +845,7 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/services/web_task_approval_service.py",
     "ai_orchestrator/services/web_task_registry.py",
     "ai_orchestrator/web_task_templates.py",
-    "ai_orchestrator/external_work_registry.py",
+    "ai_orchestrator/tasks/external_work_registry.py",
     "ai_orchestrator/routers/ops_router.py",
     "ai_orchestrator/browser_tool/execution_location_policy.py",
     "ai_orchestrator/browser_tool/policy.py",
@@ -863,7 +863,7 @@ CORE_MODULES_MUST_IMPORT = [
     "ai_orchestrator.gates.dev_reg_approval",
     "ai_orchestrator.services.web_task_approval_service",
     "ai_orchestrator.services.web_task_registry",
-    "ai_orchestrator.external_work_registry",
+    "ai_orchestrator.tasks.external_work_registry",
     "ai_orchestrator.routers.ops_router",
 ]
 
@@ -915,7 +915,7 @@ class TestCoreFileIntegrity:
 
     def test_external_work_registry_importable_with_classification(self):
         """external_work_registry가 분류 상수와 함께 import된다."""
-        import ai_orchestrator.external_work_registry as m
+        import ai_orchestrator.tasks.external_work_registry as m
 
         assert (
             hasattr(m, "WORK_REGISTRY")
