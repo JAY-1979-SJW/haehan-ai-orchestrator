@@ -1247,5 +1247,17 @@
   "role": "workflow",
   "reason": "하나팩스 자동 발송 한 번 실행 워크플로(예약 작업·지금 발송의 공용 진입점) — 같은 폴더의 auto_send·authorization_service 와 같은 L6",
   "source": "manual"
+ },
+ "scripts/browser/cdp_cli.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "CDP 명령줄 진입점 — 서비스·사이트별 명령을 한곳에서 조립·분배하는 러너(업무흐름 조립 L6). 사이트 모듈(L5)을 부르는 방향이 정상",
+  "source": "manual"
+ },
+ "ai_orchestrator/server/desktop_entry.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "데스크톱 앱 서버 진입점 — asgi(L8)를 기동하는 엔트리라 같은 L8 로 분류(진입점이 앱 조립 계층을 부르는 방향)",
+  "source": "manual"
  }
 }

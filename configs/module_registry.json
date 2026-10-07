@@ -22122,12 +22122,12 @@
    "source": "rule"
   },
   "scripts/browser/cdp_cli.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "browser",
-   "reason": "범용 브라우저·CDP",
+   "reason": "CDP 명령줄 진입점 — 서비스·사이트별 명령을 한곳에서 조립·분배하는 러너(업무흐름 조립 L6). 사이트 모듈(L5)을 부르는 방향이 정상",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/browser/navigator/__init__.py": {
    "layer": "L4",
@@ -23050,12 +23050,12 @@
    "source": "rule"
   },
   "ai_orchestrator/server/desktop_entry.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L8",
+   "role": "api",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "데스크톱 앱 서버 진입점 — asgi(L8)를 기동하는 엔트리라 같은 L8 로 분류(진입점이 앱 조립 계층을 부르는 방향)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "tests/test_bundle_entrypoints.py": {
    "layer": "L11",
