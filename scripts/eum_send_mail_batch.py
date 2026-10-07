@@ -328,4 +328,4 @@ if __name__ == "__main__":
     try:
         main(dry_run=args.dry_run, limit=args.limit, start_from=args.start_from, approval=args.confirm)
     except GateBlocked as exc:
-        raise SystemExit(f"발송 차단: {exc.result.reason} (--confirm={CONFIRM_TEXT} 필요)") from exc
+        raise SystemExit(f"발송 차단: {exc.result.reason} (--confirm=<사용자가 직접 입력한 승인 문구> 필요)") from exc
