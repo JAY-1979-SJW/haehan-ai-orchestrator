@@ -174,7 +174,7 @@ def test_stale_lock_file_is_cleared(tmp_path):
 
 
 def _gmail(monkeypatch):
-    from ai_orchestrator.connectors import gmail_router as g
+    from ai_orchestrator.connectors.google import gmail_router as g
 
     sent: list[dict] = []
     monkeypatch.setattr(g, "log_event", lambda *a, **k: None)
@@ -405,7 +405,7 @@ def test_eum_sales_mail_send_requires_phrase_and_checks_opt_out(monkeypatch):
 def test_hiworks_mail_send_requires_phrase_before_browser(monkeypatch):
     from fastapi import HTTPException
 
-    from ai_orchestrator.connectors import hiworks_mail_router as h
+    from ai_orchestrator.connectors.hiworks import mail_router as h
 
     opened: list[int] = []
     monkeypatch.setattr(h, "log_event", lambda *a, **k: None)
@@ -427,8 +427,10 @@ def test_hiworks_mail_send_requires_phrase_before_browser(monkeypatch):
 
 def _all_phrases() -> set[str]:
     phrases = set(gate.CONFIRM_TEXTS.values())
-    from ai_orchestrator.connectors import gmail_router, hiworks_mail_router, naver_blog_router
+    from ai_orchestrator.connectors import naver_blog_router
     from ai_orchestrator.connectors.eum import router as eum_router
+    from ai_orchestrator.connectors.google import gmail_router
+    from ai_orchestrator.connectors.hiworks import mail_router as hiworks_mail_router
     from scripts.hiworks import mail_batch
 
     phrases |= {
@@ -460,11 +462,11 @@ def _http_detail(fn):
 
 def test_blocked_http_responses_never_contain_approval_phrases(monkeypatch):
     """경로마다 '차단 응답 본문에 승인 문구 문자열이 없다'를 고정한다(R2d 정책)."""
-    from ai_orchestrator.connectors import gmail_router as g
-    from ai_orchestrator.connectors import hanafax_router as hf
-    from ai_orchestrator.connectors import hiworks_mail_router as h
     from ai_orchestrator.connectors import naver_blog_router as b
     from ai_orchestrator.connectors.eum import router as e
+    from ai_orchestrator.connectors.google import gmail_router as g
+    from ai_orchestrator.connectors.hanafax import router as hf
+    from ai_orchestrator.connectors.hiworks import mail_router as h
     from ai_orchestrator.connectors.smartstore import reviews as rv
 
     for mod in (e, g, h):
@@ -717,7 +719,7 @@ def test_drive_share_link_blocks_before_touching_page():
 def test_hanafax_single_send_phrase_number_and_opt_out(monkeypatch):
     from fastapi import HTTPException
 
-    from ai_orchestrator.connectors import hanafax_router as hf
+    from ai_orchestrator.connectors.hanafax import router as hf
     from ai_orchestrator.persistence import fax_authorization_store as store
 
     sent: list[str] = []

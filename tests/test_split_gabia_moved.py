@@ -14,14 +14,13 @@ BEFORE = json.loads((repo_root() / "tests" / "data" / "split_w3d_before.json").r
 
 def test_old_paths_alias_new_modules():
     for old, new in (
-        ("ai_orchestrator.connectors.gabia_router", "ai_orchestrator.connectors.gabia.router"),
         ("scripts.gabia_login_watch", "scripts.gabia.login_watch"),
     ):
         assert importlib.import_module(old) is importlib.import_module(new)
 
 
 def test_routes_unchanged():
-    from ai_orchestrator.connectors.gabia_router import gabia_router
+    from ai_orchestrator.connectors.gabia.router import gabia_router
 
     now = sorted([sorted(r.methods), r.path] for r in gabia_router.routes)
     assert now == sorted(BEFORE["gabia_routes"])
