@@ -24,7 +24,7 @@ import { launchApp } from "./launch_helper";
 // 가입 승인·거절(대기 승인/거절 API)은 서버 모드(다중 사용자) 전용 개념이라
 // 데스크톱 E2E에는 없다 — 그 경로는 tests/test_user_approval_gate.py·
 // tests/test_user_auth_audit.py(서버 모드 pytest)가 이미 검증한다.
-const SKIP_PENDING_FEATURES = true;
+const SKIP_PENDING_FEATURES = false;
 const SKIP_REASON =
   "W4 desktop-session/setup(B안: 이름·이메일만, 비밀번호 없음) 미병합 — " +
   "병합 후 SKIP_PENDING_FEATURES=false로 전환";
