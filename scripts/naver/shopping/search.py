@@ -52,7 +52,7 @@ def search_shopping(
     import urllib.request
 
     from scripts.naver.shopping.naver_openapi_config import load_config
-    from ai_orchestrator.connectors.naver_search.naver_search_jobs import run_naver_shopping_search_job
+    from scripts.naver.shopping.naver_search_jobs import run_naver_shopping_search_job
     from scripts.naver.shopping.naver_search_client import NaverSearchClient
 
     def _transport(method, url, headers, params):

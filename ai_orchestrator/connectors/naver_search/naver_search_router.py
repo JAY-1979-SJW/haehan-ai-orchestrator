@@ -15,8 +15,8 @@ from fastapi import APIRouter, Depends
 from ai_orchestrator.gates.auth import require_role
 
 from ai_orchestrator.audit.audit_logger import log_event
-from ai_orchestrator.connectors.naver_search import naver_search_queries as q
-from ai_orchestrator.connectors.naver_search.naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
+from scripts.naver.shopping import naver_search_queries as q
+from scripts.naver.shopping.naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
 
 logger = logging.getLogger(__name__)
 

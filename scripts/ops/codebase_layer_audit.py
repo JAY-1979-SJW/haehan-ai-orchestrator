@@ -606,8 +606,8 @@ _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
 # 6개는 DB 모듈 자체이거나(instagram_dm_db·gonobi/db) 연결을 직접 여는 파일이라 L7 헬퍼로 옮기는 별도 리팩터링 대상.
 _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "ai_orchestrator/connectors/instagram/instagram_dm_db.py",
-    "ai_orchestrator/connectors/naver_search/naver_search_db.py",
-    "ai_orchestrator/connectors/naver_search/naver_search_queries.py",
+    "scripts/naver/shopping/naver_search_db.py",
+    "scripts/naver/shopping/naver_search_queries.py",
     "scripts/browser/agent/cdp_session_manager.py",
     "ai_orchestrator/auth/registration_code_store.py",
     "apps/ig-comment-dm-bot/core/processed_store.py",

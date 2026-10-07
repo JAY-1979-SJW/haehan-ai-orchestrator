@@ -6,8 +6,8 @@ import sqlite3
 
 import pytest
 
-from ai_orchestrator.connectors.naver_search import naver_search_db as db_mod
-from ai_orchestrator.connectors.naver_search import naver_search_queries as q
+from scripts.naver.shopping import naver_search_db as db_mod
+from scripts.naver.shopping import naver_search_queries as q
 
 
 @pytest.mark.parametrize("bad", ["users", "naver_blog_posts; DROP TABLE x", ""])

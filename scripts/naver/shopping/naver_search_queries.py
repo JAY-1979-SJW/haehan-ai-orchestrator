@@ -14,7 +14,7 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
-from ai_orchestrator.connectors.naver_search import naver_search_db as db_mod
+from scripts.naver.shopping import naver_search_db as db_mod
 
 logger = logging.getLogger(__name__)
 
@@ -316,7 +316,7 @@ def get_search_status(
     recent_runs_n: int = 10,
 ) -> SearchStatus:
     """현재 DB / state / 실행 기록의 요약 상태. 민감정보 없음."""
-    from ai_orchestrator.connectors.naver_search import naver_search_state as state_mod
+    from scripts.naver.shopping import naver_search_state as state_mod
 
     db_p = _resolve_db_path(db_path)
     state_p = state_path or state_mod.default_state_path()
@@ -357,7 +357,7 @@ def get_search_status(
                 conn.close()
 
     # 5단계: 실행 기록 로드 (실패해도 기존 status 판정에 영향 없음)
-    from ai_orchestrator.connectors.naver_search.naver_search_run_log import load_recent_runs
+    from scripts.naver.shopping.naver_search_run_log import load_recent_runs
 
     try:
         recent_runs = load_recent_runs(recent_runs_n, path=run_log_path)

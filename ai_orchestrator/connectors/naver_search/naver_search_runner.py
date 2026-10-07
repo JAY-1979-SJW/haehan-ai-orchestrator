@@ -15,8 +15,8 @@ import os
 from datetime import UTC, datetime
 from pathlib import Path
 
-from ai_orchestrator.connectors.naver_search.naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
-from ai_orchestrator.connectors.naver_search.naver_search_run_log import append_run
+from scripts.naver.shopping.naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
+from scripts.naver.shopping.naver_search_run_log import append_run
 
 logger = logging.getLogger(__name__)
 

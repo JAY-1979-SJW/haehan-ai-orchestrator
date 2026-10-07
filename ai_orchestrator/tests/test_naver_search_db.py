@@ -9,15 +9,9 @@ from __future__ import annotations
 
 import sqlite3
 
-from ai_orchestrator.connectors.naver_search import (
-    naver_search_jobs,
-)
-from ai_orchestrator.connectors.naver_search import (
-    naver_search_db as db_mod,
-)
-from ai_orchestrator.connectors.naver_search import (
-    naver_search_state as state_mod,
-)
+from scripts.naver.shopping import naver_search_jobs
+from scripts.naver.shopping import naver_search_db as db_mod
+from scripts.naver.shopping import naver_search_state as state_mod
 from scripts.naver.shopping import (
     naver_openapi_config as cfg_mod,
     naver_search_client,
