@@ -1,0 +1,206 @@
+"""G12 — 신규 구조동일 중복 차단 게이트.
+
+staged(또는 지정한) .py 파일의 함수 중 '구조 동일 중복'(이름·상수를 지운 AST 해시가
+같음, 본문 4문장 이상)이 저장소의 다른 파일에 이미 있으면 커밋을 차단한다.
+기존에 이미 있던 중복 묶음은 기준선(configs/dup_baseline.json)에 고정해 두고 건드리지
+않는다 — "새로 생긴 중복만" 막는다(CLAUDE.md 공통 원칙과 동일).
+
+알고리즘은 scripts/ops/_dup_structure_hash.py(= C:/work/audit-tools/dupscan/src/dupscan/
+extractor.py에서 그대로 가져온 구조 해시)를 쓴다. dupscan 자체를 CI에 설치하지 않는 이유:
+그 저장소는 이 PC의 개인 작업 경로(C:/work/audit-tools/dupscan)에만 있고 패키지로 배포돼
+있지 않아, CI 러너(다른 머신·컨테이너)에서는 pip install -e 할 경로가 없다. 알고리즘
+핵심(정규화 + sha1, 약 40줄)만 저장소에 들여 외부 경로 의존을 없앴다(재구현이 아니라
+동일 로직 이전).
+
+사용:
+  build-baseline            오늘 기준 전체 저장소를 스캔해 기존 중복 묶음을 기준선에 기록
+  check --staged            git staged .py 파일만 검사(pre-commit)
+  check <file> [file...]    지정 파일만 검사(CI verify에서 명시적으로 넘길 때)
+"""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import contextlib
+import json
+import subprocess
+import sys
+from pathlib import Path, PurePosixPath
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _dup_structure_hash import (  # noqa: E402
+    body_statement_count,
+    is_test_path,
+    iter_functions,
+    normalize,
+    structure_hash,
+)
+
+BASELINE_PATH = ROOT / "configs" / "dup_baseline.json"
+MIN_STATEMENTS = 4
+
+EXEMPT_DIR_PREFIXES = (
+    "scripts/archive/",
+    "apps/",
+)
+
+
+def is_exempt(rel_path: str) -> bool:
+    p = rel_path.replace("\\", "/")
+    if any(p.startswith(d) for d in EXEMPT_DIR_PREFIXES):
+        return True
+    return is_test_path(p)
+
+
+def _git(args: list[str]) -> str:
+    out = subprocess.run(["git", *args], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8")
+    if out.returncode != 0:
+        raise RuntimeError(out.stderr.strip())
+    return out.stdout
+
+
+def tracked_py_files() -> list[str]:
+    return [f for f in _git(["ls-files", "*.py"]).splitlines() if f]
+
+
+def staged_py_files() -> list[str]:
+    raw = _git(["diff", "--cached", "--name-only", "--diff-filter=ACM"])
+    return [f for f in raw.splitlines() if f.endswith(".py")]
+
+
+def extract_fingerprints(rel_path: str, source: str) -> list[tuple[str, str, int]]:
+    """(qualname, structure_hash, 문장수) 목록. 파싱 실패 시 빈 목록(문법 오류는 다른 게이트가 잡음)."""
+    try:
+        tree = ast.parse(source, filename=rel_path)
+    except SyntaxError:
+        return []
+    out = []
+    for qualname, node in iter_functions(tree):
+        if body_statement_count(node) < MIN_STATEMENTS:
+            continue
+        out.append((qualname, structure_hash(normalize(node)), node.lineno))
+    return out
+
+
+def build_repo_index(*, exclude_exempt: bool = True) -> dict[str, list[tuple[str, str]]]:
+    """해시 → [(file, qualname), ...] 전체 저장소 색인(예외 폴더/시험 파일 제외)."""
+    index: dict[str, list[tuple[str, str]]] = {}
+    for rel in tracked_py_files():
+        if exclude_exempt and is_exempt(rel):
+            continue
+        full = ROOT / rel
+        try:
+            source = full.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for qualname, h, _lineno in extract_fingerprints(rel, source):
+            index.setdefault(h, []).append((rel, qualname))
+    return index
+
+
+def cmd_build_baseline(_args: argparse.Namespace) -> int:
+    index = build_repo_index()
+    dup_hashes = {h: locs for h, locs in index.items() if len(locs) >= 2}
+    payload = {
+        "generated_by": "scripts/ops/dup_gate.py build-baseline",
+        "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
+        "min_statements": MIN_STATEMENTS,
+        "hash_count": len(dup_hashes),
+        "hashes": {h: [f"{f}:{q}" for f, q in sorted(locs)] for h, locs in sorted(dup_hashes.items())},
+    }
+    tmp = BASELINE_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    tmp.replace(BASELINE_PATH)
+    print(f"기준선 저장: {BASELINE_PATH} ({len(dup_hashes)}개 중복 해시 묶음)")
+    return 0
+
+
+def load_baseline_hashes() -> set[str]:
+    if not BASELINE_PATH.exists():
+        return set()
+    try:
+        data = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
+    except OSError, ValueError:
+        return set()
+    return set(data.get("hashes", {}).keys())
+
+
+def _normalize_targets(args: argparse.Namespace) -> list[str]:
+    targets = staged_py_files() if args.staged else args.files
+    targets = [PurePosixPath(t.replace("\\", "/")).as_posix() for t in targets]
+    return [t for t in targets if not is_exempt(t)]
+
+
+def _find_blocked(
+    targets: list[str], baseline_hashes: set[str], repo_index: dict[str, list[tuple[str, str]]]
+) -> list[str]:
+    blocked: list[str] = []
+    for rel in targets:
+        full = ROOT / rel
+        if not full.exists():
+            continue  # 삭제된 파일
+        try:
+            source = full.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for qualname, h, lineno in extract_fingerprints(rel, source):
+            if h in baseline_hashes:
+                continue  # 기존 중복(기준선) — 통과
+            others = [loc for loc in repo_index.get(h, []) if loc != (rel, qualname)]
+            if not others:
+                continue
+            other_desc = ", ".join(f"{f}:{q}" for f, q in others[:3])
+            blocked.append(f"{rel}:{lineno} {qualname}() — 구조 동일 중복 ↔ {other_desc}")
+    return blocked
+
+
+def _print_blocked(blocked: list[str]) -> None:
+    print("=" * 60)
+    print("[dup-gate/G12] 새 구조동일 중복 함수 발견 — 커밋 차단:")
+    for b in blocked[:20]:
+        print(f"    - {b}")
+    if len(blocked) > 20:
+        print(f"    ... 외 {len(blocked) - 20}건")
+    print("    기존 구현을 재사용하거나 공용 함수로 추출하세요.")
+    print("    기존부터 있던 중복이면 configs/dup_baseline.json에 이미 등록돼 있어야 합니다")
+    print("    (등록 안 돼 있다면 실제로 새로 생긴 중복입니다).")
+    print("=" * 60)
+
+
+def cmd_check(args: argparse.Namespace) -> int:
+    targets = _normalize_targets(args)
+    if not targets:
+        return 0
+
+    baseline_hashes = load_baseline_hashes()
+    repo_index = build_repo_index()
+    blocked = _find_blocked(targets, baseline_hashes, repo_index)
+
+    if blocked:
+        _print_blocked(blocked)
+        return 1
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    with contextlib.suppress(AttributeError, ValueError):
+        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+    ap = argparse.ArgumentParser(description=__doc__)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("build-baseline").set_defaults(func=cmd_build_baseline)
+
+    p_check = sub.add_parser("check")
+    p_check.add_argument("files", nargs="*")
+    p_check.add_argument("--staged", action="store_true")
+    p_check.set_defaults(func=cmd_check)
+
+    args = ap.parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

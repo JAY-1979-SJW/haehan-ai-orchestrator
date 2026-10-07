@@ -243,6 +243,16 @@ if _r1_staged:
         if _r1_result.returncode != 0:
             sys.exit(_r1_result.returncode)
 
+# ── G12 중복 게이트 (새 구조동일 중복 함수만 차단) ──────────────────────────
+# 이름·상수를 지운 AST 해시가 같은 함수(4문장 이상)가 다른 파일에 이미 있으면 차단.
+# 기존 중복은 configs/dup_baseline.json 기준선으로 고정(새로 생긴 것만 막음).
+# 시험 파일·scripts/archive/·apps/ 는 예외. 우회 옵션 없음(기준선 재생성: build-baseline).
+_dg = ROOT / "scripts" / "ops" / "dup_gate.py"
+if _dg.exists() and py_files:
+    _dg_result = subprocess.run([*_pyexe(), str(_dg), "check", *py_files], cwd=str(ROOT))
+    if _dg_result.returncode != 0:
+        sys.exit(_dg_result.returncode)
+
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P
 import importlib.util, os
