@@ -115,7 +115,8 @@ def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
 
 
 # 서버 CI 는 사용자 지시(2026-09-29)로 GitHub Actions 의 ci.yml 하나만 허용한다. 그 외 워크플로 파일은 계속 금지.
-_ALLOWED_WORKFLOW_FILES = frozenset({"ci.yml"})
+# 2026-10-07 대표님 승인(데스크톱 앱 릴리스 빌드, 저녁 계획 18:10)으로 desktop-release.yml 1개를 추가 허용한다(configs/module_boundaries.json 의 allowed_exceptions 와 같은 목록).
+_ALLOWED_WORKFLOW_FILES = frozenset({"ci.yml", "desktop-release.yml"})
 
 
 # 훅 파일별로 존재해야 하는 현행 게이트 호출 문자열(없으면 FAIL).
