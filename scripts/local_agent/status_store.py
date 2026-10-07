@@ -7,13 +7,22 @@ secret/session/cookie/token/password 값 절대 기록 금지.
 from __future__ import annotations
 
 import json
-import pathlib
+import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
-_STATUS_DIR = pathlib.Path("data/local_agent")
+from ai_orchestrator.paths import repo_root
+
+# 이동해도·실행 위치가 바뀌어도 값이 안 바뀌게 작업 디렉터리 상대 대신 repo_root() 기준으로
+# 고정(T4 C1과 같은 원칙). 실제 쓰이는 값(repo 안 data/local_agent)은 그대로 유지 — OS 표준
+# 데이터 폴더(data_dir())로의 전환은 범위 밖(T4 D4 각주, 별도 후속 커밋).
+_STATUS_DIR = repo_root() / "data" / "local_agent"
 _STATUS_FILE = _STATUS_DIR / "status.json"
 _LOCK_FILE = _STATUS_DIR / "agent.lock"
+
+# ai_orchestrator/gates/gate_core.py의 _opt_out_guard()와 같은 원자적 잠금 처리(T4 C2).
+_IS_WINDOWS = os.name == "nt"
 
 # 기록 금지 키 목록
 _FORBIDDEN_KEYS = frozenset(
@@ -34,6 +43,13 @@ _FORBIDDEN_KEYS = frozenset(
 
 def _ensure_dir() -> None:
     _STATUS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _write_atomic(path: Path, text: str) -> None:
+    """임시 파일에 쓴 뒤 교체 — 쓰는 중 죽어도 반쪽 파일이 남지 않는다(T4 C2)."""
+    tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
 
 
 def _sanitize(data: dict[str, Any]) -> dict[str, Any]:
@@ -68,7 +84,7 @@ def write_status(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
         payload["stop_reason"] = reason
     if extra:
         payload.update(_sanitize(extra))
-    _STATUS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_atomic(_STATUS_FILE, json.dumps(payload, ensure_ascii=False, indent=2))
 
 
 def read_status() -> dict[str, Any]:
@@ -85,11 +101,28 @@ def read_status() -> dict[str, Any]:
 
 
 def acquire_lock(task_id: str) -> bool:
-    """Lock 획득. 이미 lock 존재 시 False 반환."""
+    """Lock 획득. 이미 lock 존재 시 False 반환.
+
+    기존에는 exists() 확인 후 write_text()로 거는 check-then-set이라 두 프로세스가
+    동시에 호출하면 둘 다 성공할 수 있었다(T4 R10) — os.open(O_CREAT|O_EXCL)로
+    원자적으로 바꾼다(ai_orchestrator/gates/gate_core.py의 _opt_out_guard()와 같은
+    패턴). 재시도는 하지 않는다 — 기존처럼 한 번 시도해 실패하면 바로 False(동작 범위
+    확장 안 함).
+    """
     _ensure_dir()
-    if _LOCK_FILE.exists():
+    try:
+        fd = os.open(str(_LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
         return False
-    _LOCK_FILE.write_text(task_id, encoding="utf-8")
+    except PermissionError:
+        # Windows: 다른 프로세스가 방금 unlink 한 잠금 파일은 '삭제 보류' 상태라 같은
+        # 이름의 생성이 FileExistsError 가 아니라 PermissionError 로 실패한다 — 잠금 중과
+        # 같은 뜻으로 처리(ai_orchestrator/gates/gate_core.py와 동일 처리).
+        if _IS_WINDOWS:
+            return False
+        raise
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(task_id)
     return True
 
 

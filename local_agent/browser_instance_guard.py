@@ -362,7 +362,8 @@ def cleanup_stale_pid(paths: GuardPaths) -> tuple[int, bool]:
 
 def write_lock_file(paths: GuardPaths, owner_pid: int) -> None:
     payload = {"pid": int(owner_pid), "ts": time.time()}
-    tmp = paths.lock_file.with_suffix(paths.lock_file.suffix + ".tmp")
+    # tmp 이름에 pid를 넣어 두 프로세스가 동시에 써도 서로의 tmp를 안 덮어쓰게 한다(T4 R11).
+    tmp = paths.lock_file.with_suffix(paths.lock_file.suffix + f".tmp.{os.getpid()}")
     tmp.write_text(json.dumps(payload), encoding="utf-8")
     tmp.replace(paths.lock_file)
 
@@ -390,6 +391,35 @@ def is_lock_active(paths: GuardPaths) -> bool:
         return True
     clear_lock_file(paths)
     return False
+
+
+def try_acquire_lock(paths: GuardPaths, owner_pid: int) -> bool:
+    """잠금을 원자적으로 시도 — 성공하면 True, 이미 살아있는 잠금이면 False(T4 R11).
+
+    기존에는 `is_lock_active()`로 확인한 뒤 호출자가 Chrome 을 띄우고
+    `write_lock_file()`로 무조건 덮어써서, 그 사이(확인→기동→쓰기)에 다른 프로세스가
+    끼어들 수 있는 check-then-act 레이스가 있었다. 이 함수는 "죽은 잠금이면 치우고,
+    O_CREAT|O_EXCL 로 새 잠금 파일을 원자적으로 만드는 데 성공한 경우에만 True"를
+    돌려줘, 성공한 호출자만 Chrome을 띄우는 흐름으로 쓸 수 있게 한다
+    (ai_orchestrator/gates/gate_core.py의 _opt_out_guard()와 같은 원자적 생성 패턴).
+    기존 write_lock_file()/is_lock_active() 는 하위 호환을 위해 그대로 둔다.
+    """
+    if is_lock_active(paths):
+        return False
+    payload = {"pid": int(owner_pid), "ts": time.time()}
+    try:
+        fd = os.open(str(paths.lock_file), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        return False
+    except PermissionError:
+        # Windows: 방금 unlink 된 잠금 파일은 '삭제 보류' 상태라 같은 이름의 생성이
+        # PermissionError 로 실패할 수 있다 — 잠금 중과 같은 뜻으로 처리.
+        if os.name == "nt":
+            return False
+        raise
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(json.dumps(payload))
+    return True
 
 
 # ── CDP alive ────────────────────────────────────────────────────────
