@@ -20,8 +20,8 @@ ASSISTANT_GABIA_DNS_USER_APPROVAL_WORKFLOW_01
   15. DB/schema 변경 없음
 
 실행:
-    python scripts/ops/audit_gabia_dns_user_approval_workflow.py
-    python scripts/ops/audit_gabia_dns_user_approval_workflow.py --json
+    python scripts/archive/ops/audit_gabia_dns_user_approval_workflow.py
+    python scripts/archive/ops/audit_gabia_dns_user_approval_workflow.py --json
 """
 
 from __future__ import annotations

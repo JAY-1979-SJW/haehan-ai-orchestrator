@@ -5,7 +5,7 @@
 - 헤더도 2행 (행0: 14열 / 행1: 13열)
 - 페이지네이션 존재 (1, 2 페이지)
 
-2026-08-16: scripts/eum_extract_all_devices.py 의 re-export 대상 파일이
+2026-08-16: 당시 scripts/ 최상위 eum_extract_all_devices.py(현 scripts/eum/extract_all_devices.py) 의 re-export 대상 파일이
 누락돼(dfa06bfa 모듈화 리팩토링 중 아카이브 파일 생성 누락) 깨져 있던 것을
 git 이력(6e08aec2)에서 복원. 저장 경로만 get_app_dir("eum") 기준으로 보정.
 """

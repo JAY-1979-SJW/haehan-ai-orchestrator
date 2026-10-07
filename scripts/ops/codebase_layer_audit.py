@@ -83,8 +83,7 @@ IMPORT_SCAN_PREFIXES = {
     "adapters",
 }
 
-OPENAPI_APP_MODULES = (
-    "browser_api.server",
+OPENAPI_APP_MODULES = (  # browser_api.server 는 2026-10-07 scripts/archive/misc 로 보관(실행 대상 아님) — 목록에서 뺌
     "ai_orchestrator.browser_tool.worker.app",
     "ai_orchestrator.asgi",
 )
@@ -97,8 +96,7 @@ PYDANTIC_SCHEMA_MODULES = (
     "ai_orchestrator.server.task_queue_schema",
     "ai_orchestrator.local_agent.action_schemas",
     "local_agent.browser_websocket_schema",
-    "agent.models",
-)
+)  # agent.models 는 2026-10-07 scripts/archive/misc 로 보관(가져다 쓰는 곳 없음) — 목록에서 뺌
 
 
 SITE_STANDARD_FILES = {
