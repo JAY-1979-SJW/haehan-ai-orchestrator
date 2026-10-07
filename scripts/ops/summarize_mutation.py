@@ -27,9 +27,14 @@ def render(stats: dict[str, int], total_targets: int = 0, limit: int = 0) -> str
     return "\n".join(lines) + "\n"
 
 
+def _int_env(name: str) -> int:
+    """환경변수 정수값. 미설정·빈 값은 0."""
+    return int(os.environ.get(name) or 0)
+
+
 def main() -> int:
-    total_targets = int(os.environ.get("TOTAL_TARGETS", "0") or 0)
-    limit = int(os.environ.get("TARGET_LIMIT", "0") or 0)
+    total_targets = _int_env("TOTAL_TARGETS")
+    limit = _int_env("TARGET_LIMIT")
     try:
         stats = json.loads(STATS.read_text(encoding="utf-8"))
     except (OSError, ValueError) as _read_error:

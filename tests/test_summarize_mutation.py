@@ -184,3 +184,14 @@ def test_main_empty_limit_env_means_no_limit(tmp_path, monkeypatch, capsys):
 def test_render_default_limit_is_unlimited():
     assert "절삭" not in sm.render({"killed": 1}, total_targets=5)
     assert "절삭" not in sm.render({"killed": 1}, 5)
+
+
+def test_int_env_unset_empty_and_numeric(monkeypatch):
+    monkeypatch.delenv("X_INT_ENV", raising=False)
+    assert sm._int_env("X_INT_ENV") == 0
+    monkeypatch.setenv("X_INT_ENV", "")
+    assert sm._int_env("X_INT_ENV") == 0
+    monkeypatch.setenv("X_INT_ENV", "0")
+    assert sm._int_env("X_INT_ENV") == 0
+    monkeypatch.setenv("X_INT_ENV", "42")
+    assert sm._int_env("X_INT_ENV") == 42
