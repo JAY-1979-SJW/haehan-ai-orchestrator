@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from scripts.youtube import oauth
-from scripts import local_user_secret_store
+from scripts.auth import local_user_secret_store
 
 
 def _test_dir() -> Path:

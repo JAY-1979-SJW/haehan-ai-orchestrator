@@ -1,7 +1,7 @@
 """회원가입/폼 채우기용 개인정보 프로필 — Fernet 암호화 저장.
 
 저장 위치: data/profile.json (암호화 필드)
-키 재사용: scripts.credentials._get_or_create_key (data/.cred.key)
+키 재사용: scripts.auth.credentials._get_or_create_key (data/.cred.key)
 
 저장 필드 (예시):
     name, name_en, email, phone, birth (YYYY-MM-DD),
@@ -59,7 +59,7 @@ KNOWN_FIELDS = [
 
 def _crypto():
     """credentials.py 의 키를 그대로 재사용."""
-    from scripts.credentials import _fernet
+    from scripts.auth.credentials import _fernet
 
     return _fernet()
 

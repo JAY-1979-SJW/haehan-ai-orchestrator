@@ -8449,7 +8449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/auth_session.py": {
+  "scripts/auth/auth_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -8505,7 +8505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/check_login_status.py": {
+  "scripts/auth/check_login_status.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -8641,7 +8641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/credentials.py": {
+  "scripts/auth/credentials.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -10649,7 +10649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/known_login_urls.py": {
+  "scripts/auth/known_login_urls.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -10857,7 +10857,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_user_secret_store.py": {
+  "scripts/auth/local_user_secret_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -10873,7 +10873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/login_check.py": {
+  "scripts/auth/login_check.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -10881,7 +10881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/login_detector.py": {
+  "scripts/auth/login_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -10889,7 +10889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/login_session.py": {
+  "scripts/auth/login_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -22839,6 +22839,14 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/auth/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }

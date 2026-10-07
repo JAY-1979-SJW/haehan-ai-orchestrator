@@ -101,7 +101,7 @@ async def get_session_status(_: None = Depends(require_role("admin", "owner"))):
 @router.get("/accounts")
 async def list_accounts(_: None = Depends(require_role("admin", "owner"))):
     """저장된 네이버 계정 목록을 반환합니다."""
-    from scripts.credentials import get_cred, list_sites
+    from scripts.auth.credentials import get_cred, list_sites
 
     accounts = []
     for key in list_sites():
@@ -117,7 +117,7 @@ async def list_accounts(_: None = Depends(require_role("admin", "owner"))):
 @router.post("/accounts")
 async def add_account(req: AccountRequest, _: None = Depends(require_role("admin", "owner"))):
     """네이버 계정을 추가/갱신합니다."""
-    from scripts.credentials import set_cred
+    from scripts.auth.credentials import set_cred
 
     set_cred(f"naver:{req.username}", id=req.username, pw=req.password)
     return {"ok": True, "message": f"계정 저장 완료: naver:{req.username}"}

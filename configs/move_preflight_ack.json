@@ -44,6 +44,26 @@
    "file": "scripts/realtime_audit.py",
    "reason": "S2-C common 이동 — 옛 경로 직접 실행 호출처 없음(문서 언급뿐), 참조 모두 새 경로로 수정",
    "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/auth_session.py",
+   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/check_login_status.py",
+   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/credentials.py",
+   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/local_user_secret_store.py",
+   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+   "date": "2026-10-07"
   }
  ]
 }

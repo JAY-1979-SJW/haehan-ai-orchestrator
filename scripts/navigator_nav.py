@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 
 from scripts.common.logger import get_logger
-from scripts.login_check import is_logged_in_by_cookie
+from scripts.auth.login_check import is_logged_in_by_cookie
 from scripts.navigator_common import resolve
 from scripts.common.op_log import log_op
 from scripts.web_connector import get_page

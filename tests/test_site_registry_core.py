@@ -144,9 +144,9 @@ def test_plain_wrappers_delegate_to_the_site_module(monkeypatch, key, module):
 
 @pytest.mark.parametrize("key", ["naver", "google"])
 def test_detector_based_state_check_uses_the_logged_in_flag(monkeypatch, key):
-    monkeypatch.setattr("scripts.login_detector.detect_login_state", lambda page: {"logged_in": True})
+    monkeypatch.setattr("scripts.auth.login_detector.detect_login_state", lambda page: {"logged_in": True})
     assert reg.get_site(key).is_logged_in(object()) is True
-    monkeypatch.setattr("scripts.login_detector.detect_login_state", lambda page: {})
+    monkeypatch.setattr("scripts.auth.login_detector.detect_login_state", lambda page: {})
     assert reg.get_site(key).is_logged_in(object()) is False
 
 

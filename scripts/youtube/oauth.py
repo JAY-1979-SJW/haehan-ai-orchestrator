@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts import local_user_secret_store
+from scripts.auth import local_user_secret_store
 from scripts.common.app_paths import repo_root
 from scripts.gates.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
 from scripts.gates.work_mode_gate import build_google_work_mode_policy
@@ -438,8 +438,8 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
             "YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED": "true",
         },
         "local_secret_commands": [
-            "python scripts/local_user_secret_store.py put-file youtube oauth_client_json <downloaded_oauth_client_json>",
-            "python scripts/local_user_secret_store.py status youtube oauth_client_json",
+            "python scripts/auth/local_user_secret_store.py put-file youtube oauth_client_json <downloaded_oauth_client_json>",
+            "python scripts/auth/local_user_secret_store.py status youtube oauth_client_json",
         ],
         "post_approval_commands": [
             (

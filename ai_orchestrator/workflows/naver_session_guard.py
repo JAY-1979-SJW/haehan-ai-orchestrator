@@ -172,7 +172,7 @@ def _save_attempt(entry: dict[str, Any]) -> None:
 def default_deps() -> GuardDeps:
     """브라우저(CDP)·로그인 파이프라인·시도 기록 파일을 연결한다. 테스트는 이 함수를 쓰지 않는다."""
     from ai_orchestrator.workflows.naver_login_pipeline import _is_cdp_alive, _start_cdp, run_naver_login_pipeline
-    from scripts import login_detector
+    from scripts.auth import login_detector
     from scripts.naver.blog.automation.account_probe import read_alias
     from scripts.web_connector import get_page_by_url, open_page, run_on_browser_thread
 

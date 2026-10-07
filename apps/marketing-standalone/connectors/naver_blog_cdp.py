@@ -5,7 +5,7 @@
 
 2026-09-12: Phase 1b 완료 — 실제 에디터 조작은 connectors/naver_writer.py
 (원본 scripts/naver/blog/core/writer.py 사본)로 포팅했다. 다만 로그인은
-원본(scripts/naver/auth.py, scripts/credentials.py — 저장된 비밀번호로 자동
+원본(scripts/naver/auth.py, scripts/auth/credentials.py — 저장된 비밀번호로 자동
 재로그인)을 그대로 가져오지 **않았다** — 이 독립 앱은 고객의 네이버 비밀번호를
 절대 저장하지 않는다는 설계 원칙이라, 로그인 상태만 확인하고 안 맞으면 사용자
 에게 브라우저에서 직접 로그인하라고 안내한다(자동 로그아웃/재로그인 없음).

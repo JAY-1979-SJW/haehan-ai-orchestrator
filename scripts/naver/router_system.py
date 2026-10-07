@@ -76,8 +76,8 @@ def _cmd_login() -> None:
     CDP 데몬이 꺼져 있으면 자동 시작 후 연결.
     """
     from scripts.web_connector import browser_session
-    from scripts.login_session import is_logged_in
-    from scripts.login_detector import monitor_for_login
+    from scripts.auth.login_session import is_logged_in
+    from scripts.auth.login_detector import monitor_for_login
     from scripts.naver.browser_gate import require_naver_browser
 
     print("=" * 60)

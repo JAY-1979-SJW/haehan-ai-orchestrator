@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts import login_detector
+from scripts.auth import login_detector
 
 
 class FakeContext:
@@ -51,7 +51,7 @@ def test_save_detected_login_saves_encrypted_session_and_db(monkeypatch, tmp_pat
         calls["host"] = host
         return tmp_path / f"{host}.json"
 
-    monkeypatch.setattr("scripts.auth_session.save_session", fake_save_session)
+    monkeypatch.setattr("scripts.auth.auth_session.save_session", fake_save_session)
     monkeypatch.setattr("scripts.common.realtime_audit.emit_event", lambda *args, **kwargs: None)
     monkeypatch.setattr(login_detector.cdp_db, "init_db", lambda: calls.setdefault("db_init", True))
     monkeypatch.setattr(

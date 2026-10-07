@@ -9,7 +9,7 @@
     사이트별 인증 마커 쿠키 존재 여부만 확인. 페이지를 이동하지 않음.
 
 사용법:
-    from scripts.login_check import is_logged_in_by_cookie
+    from scripts.auth.login_check import is_logged_in_by_cookie
     if is_logged_in_by_cookie(page, "google"):
         ...
 """

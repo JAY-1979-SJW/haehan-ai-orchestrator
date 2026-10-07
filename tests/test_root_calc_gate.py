@@ -70,7 +70,7 @@ def test_non_python_and_exempt_paths_are_ignored():
         "docs/example.py",
         "scripts/archive/old.py",
         "ai_orchestrator/paths/__init__.py",
-        "scripts/app_paths.py",
+        "scripts/common/app_paths.py",
         "scripts/data_paths.py",
         "scripts/browser_paths.py",
         "scripts/some/tests/conftest.py",
@@ -157,7 +157,7 @@ def test_new_file_in_scripts_blocked_with_scripts_guidance(repo, capsys):
     (repo / "scripts/ops/new.py").write_text("DB = Path(__file__).resolve().parents[2] / 'data'\n", encoding="utf-8")
     _git(repo, "add", "-A")
     assert gate.main(["--staged", "--root", str(repo)]) == 1
-    assert "scripts.app_paths import repo_root" in capsys.readouterr().err
+    assert "scripts.common.app_paths import repo_root" in capsys.readouterr().err
 
 
 def test_check_diff_base_head(repo):

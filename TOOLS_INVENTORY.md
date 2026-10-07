@@ -77,11 +77,11 @@ python scripts/cdp_client.py explore page|tabs [셀렉터]
 
 ## 🔐 로그인 관련 도구
 
-### 3. 로그인 감지 (`scripts/login_detector.py`)
+### 3. 로그인 감지 (`scripts/auth/login_detector.py`)
 **용도**: 페이지에서 로그인 자동 감지 + 세션 저장
 
 ```python
-from scripts.login_detector import monitor_for_login, detect_login_on_current_tab
+from scripts.auth.login_detector import monitor_for_login, detect_login_on_current_tab
 from scripts.web_connector import get_page
 
 page = get_page()
@@ -108,7 +108,7 @@ is_logged_in, site = detect_login_on_current_tab(page)
 
 ---
 
-### 4. 현재 탭 로그인 상태 확인 (`scripts/check_login_status.py`)
+### 4. 현재 탭 로그인 상태 확인 (`scripts/auth/check_login_status.py`)
 **용도**: 모든 열려있는 탭의 로그인 상태 스캔
 
 ```bash
@@ -119,11 +119,11 @@ python scripts/cdp_client.py check-login
 
 ---
 
-### 5. 로그인 세션 관리 (`scripts/login_session.py`)
+### 5. 로그인 세션 관리 (`scripts/auth/login_session.py`)
 **용도**: 쿠키 기반 로그인 상태 판별 + 확인
 
 ```python
-from scripts.login_session import is_logged_in, ensure_login
+from scripts.auth.login_session import is_logged_in, ensure_login
 from scripts.web_connector import get_page
 
 page = get_page()

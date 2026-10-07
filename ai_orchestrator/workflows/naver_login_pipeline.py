@@ -5,7 +5,7 @@
 
 세션은 기존 auth_session.save_session() 체계로 저장됩니다.
   저장: data/sessions/naver.com.json  (Fernet 암호화)
-  복원: from scripts.auth_session import restore_session
+  복원: from scripts.auth.auth_session import restore_session
         restore_session('naver.com', page)
 """
 
@@ -61,14 +61,14 @@ def load_session_status() -> dict:
 
 def has_saved_browser_session() -> bool:
     """auth_session 저장소에 naver.com 세션이 있는지 확인합니다."""
-    from scripts.auth_session import list_sessions
+    from scripts.auth.auth_session import list_sessions
 
     return any(s["host"] == NAVER_SESSION_HOST for s in list_sessions())
 
 
 def list_naver_sessions() -> list[dict]:
     """저장된 네이버 서브도메인 세션 목록을 반환합니다."""
-    from scripts.auth_session import list_sessions
+    from scripts.auth.auth_session import list_sessions
 
     saved = {s["host"]: s for s in list_sessions()}
     result = []
@@ -146,7 +146,7 @@ def _start_cdp() -> None:
 
 def _save_browser_session(page) -> None:
     """네이버 전체 쿠키를 통합 저장 + 서브도메인별 분리 저장."""
-    from scripts.auth_session import save_session
+    from scripts.auth.auth_session import save_session
 
     # 1. naver.com 통합 저장 (전체 네이버 쿠키)
     save_session(NAVER_SESSION_HOST, page, host_filter=True)
@@ -251,7 +251,7 @@ def _finish_login(pw, page, result: dict | None) -> dict:
 def _check_existing_login(page) -> dict | None:
     """이미 로그인됨 → 성공 결과, 판정 불가(쿠키는 있는데 화면 근거 충돌) → 실패 결과, 그 외 None(로그인 진행)."""
     try:
-        from scripts.login_detector import detect_login_state
+        from scripts.auth.login_detector import detect_login_state
 
         current = detect_login_state(page)
         if current.get("logged_in"):

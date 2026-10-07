@@ -14,7 +14,7 @@ from types import SimpleNamespace
 import pytest
 
 from ai_orchestrator.workflows import naver_login_pipeline as pipeline
-from scripts import login_detector as ld
+from scripts.auth import login_detector as ld
 from scripts.explorer import page_analysis, page_snapshot
 from scripts.ops.write_gates import sitemap_gate
 

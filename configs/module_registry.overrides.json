@@ -429,13 +429,13 @@
   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
   "source": "manual"
  },
- "scripts/auth_session.py": {
+ "scripts/auth/auth_session.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "쿠키/localStorage/sessionStorage 저장·복원 범용 엔진(data/sessions/<host>.json) — 특정 사이트 로직 없이 어떤 사이트에도 쓰는 범용 브라우저 세션 기능. L2 정책 아님, L4 범용 엔진.",
   "source": "manual"
  },
- "scripts/credentials.py": {
+ "scripts/auth/credentials.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "자격증명 암호화 저장/로드(Fernet, data/credentials.json) 순수 유틸 — 브라우저·CDP 조작 없음. security_utils.py와 같은 성격의 공용 헬퍼. L4 기본값 오분류를 L1로 정정.",

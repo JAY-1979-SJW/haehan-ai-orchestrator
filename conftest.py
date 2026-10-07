@@ -107,10 +107,10 @@ def _isolate_runtime_state(monkeypatch, tmp_path):
     monkeypatch.setenv("HAEHAN_CRED_KEY_BACKEND", "file")
     # 저장소가 첫 로드 때 흡수하는 평문 레거시 파일(data/.env_naver)도 실제 위치를 읽지 못하게 한다.
     try:
-        from scripts import credentials as _cred
+        from scripts.auth import credentials as _cred
 
         monkeypatch.setattr(_cred, "_LEGACY_ENV_FILES", {"naver": tmp_path / ".env_naver_legacy"})
-    except Exception:  # noqa: BLE001, S110 - scripts.credentials 를 import 못 하는 환경은 격리 대상 아님
+    except Exception:  # noqa: BLE001, S110 - scripts.auth.credentials 를 import 못 하는 환경은 격리 대상 아님
         pass
     for module_name, attr, filename in targets:
         try:

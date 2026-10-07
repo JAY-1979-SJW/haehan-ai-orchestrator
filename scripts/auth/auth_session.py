@@ -9,7 +9,7 @@
 저장 위치: data/sessions/<host>.json (Fernet 암호화)
 
 사용:
-    from scripts.auth_session import save_session, restore_session
+    from scripts.auth.auth_session import save_session, restore_session
     save_session('eum.cw.or.kr', page)           # 사용자 로그인 후 1회
     restore_session('eum.cw.or.kr', page)        # 새 세션에서 복원
 
@@ -32,12 +32,12 @@ from cryptography.fernet import InvalidToken
 
 from ai_orchestrator.paths.runtime import atomic_write_text, data_dir
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 SESSIONS_DIR = data_dir() / "sessions"
 
 
 def _fernet():
-    from scripts.credentials import _fernet as f
+    from scripts.auth.credentials import _fernet as f
 
     return f()
 
@@ -272,7 +272,7 @@ def cli_delete(host: str) -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("사용법: python -m scripts.auth_session <save|load|list|delete> [host]")
+        print("사용법: python -m scripts.auth.auth_session <save|load|list|delete> [host]")
         return
     cmd = sys.argv[1]
     host = sys.argv[2] if len(sys.argv) > 2 else ""

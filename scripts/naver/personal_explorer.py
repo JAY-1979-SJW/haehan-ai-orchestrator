@@ -37,7 +37,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.common.critical_logger import log_critical  # noqa: E402
 from scripts.common.logger import get_logger  # noqa: E402
-from scripts.login_detector import detect_login_state  # noqa: E402
+from scripts.auth.login_detector import detect_login_state  # noqa: E402
 from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
 from scripts.web_connector import get_page  # noqa: E402
 

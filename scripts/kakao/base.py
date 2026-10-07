@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.common.logger import get_logger  # noqa: E402
-from scripts.login_session import ensure_login, is_logged_in  # noqa: E402
+from scripts.auth.login_session import ensure_login, is_logged_in  # noqa: E402
 from scripts.page_helper import (  # noqa: E402
     page_goto,
     page_wait_click,

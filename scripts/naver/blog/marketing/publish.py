@@ -60,7 +60,7 @@ def connect_and_ensure_login(cdp_url: str = "http://localhost:9222", blog_id: st
 
     if detected_alias != target_alias:
         print(f"  → {blog_id} 재로그인 필요 (현재: {detected_alias}, 기대: {target_alias})")
-        from scripts.credentials import get_naver_cred
+        from scripts.auth.credentials import get_naver_cred
         from scripts.naver.auth import login_naver
 
         cred = get_naver_cred(blog_id)

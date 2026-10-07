@@ -81,7 +81,7 @@ class LoginError(RuntimeError):
 
 def _has_credentials(site: str) -> bool:
     try:
-        from scripts.credentials import get_cred
+        from scripts.auth.credentials import get_cred
 
         c = get_cred(site)
         return bool(c.get("id") and c.get("pw"))
@@ -91,7 +91,7 @@ def _has_credentials(site: str) -> bool:
 
 def _b_mode_wait(page, site: str, timeout_s: int) -> bool:
     """B방식 감지기 fallback — 사용자 수동 로그인 대기."""
-    from scripts.login_detector import monitor_for_login
+    from scripts.auth.login_detector import monitor_for_login
 
     log.info("[site-access] %s — B방식 fallback 시작 (%d초)", site, timeout_s)
     print(f"  [{site}] 추가 인증 필요 — 브라우저에서 수동 로그인 진행 후 자동 감지 (최대 {timeout_s}초)")
@@ -236,7 +236,7 @@ def ensure_logged_in(page, site: str) -> dict:
 
         # 2) 자격증명 확인
         if _login_strategy(spec) != LOGIN_STRATEGY_MANUAL_ONLY and not _has_credentials(site):
-            msg = f"자격증명 없음. 입력: python scripts/credentials.py set {site}"
+            msg = f"자격증명 없음. 입력: python scripts/auth/credentials.py set {site}"
             ctx.set_result(msg=msg, ok=False)
             raise LoginError(site, "cred_missing", msg)
 
@@ -445,7 +445,7 @@ def _step_credential_check(w, page, spec, site):
             log.info("[site-access] %s manual-only login; credential check skipped", site)
         elif not _has_credentials(site):
             s.fail(
-                f"자격증명 없음. 입력: python scripts/credentials.py set {site}",
+                f"자격증명 없음. 입력: python scripts/auth/credentials.py set {site}",
                 kind="cred_missing",
             )
 
@@ -503,7 +503,7 @@ def _step_manual_fallback(w, page, site):
     with w.step("manual_fallback") as s:
         s.attach(page)
         print(f"  [{site}] 추가 인증 — 브라우저에서 수동 진행 (최대 {B_MODE_FALLBACK_TIMEOUT_S}초)")
-        from scripts.login_detector import monitor_for_login
+        from scripts.auth.login_detector import monitor_for_login
 
         detected = monitor_for_login(page, check_interval=1, timeout_s=B_MODE_FALLBACK_TIMEOUT_S)
         if not detected.get("detected"):
@@ -589,7 +589,7 @@ def _dry_run_open(site: str, target: str, spec, *, ensure_login: bool, force_log
         has_cred = _has_credentials(site)
         print(f"  [DRY] credential_check   → {'있음' if has_cred else '✘없음'}")
         if not has_cred:
-            raise LoginError(site, "cred_missing", f"자격증명 없음. 입력: python scripts/credentials.py set {site}")
+            raise LoginError(site, "cred_missing", f"자격증명 없음. 입력: python scripts/auth/credentials.py set {site}")
     print(f"  [DRY] login_strategy     → {strategy}")
     if strategy == LOGIN_STRATEGY_MANUAL_ONLY:
         print("  [DRY] manual_fallback    → login monitor")

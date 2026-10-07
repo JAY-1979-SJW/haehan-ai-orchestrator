@@ -63,9 +63,9 @@ def _audit_enforcement_sources(failures):
     if 'site_entry_policy.assert_main_page_first(GOOGLE_LOGIN_URL, site_key="google")' not in auth_src:
         failures.append("scripts/google/auth.py must enforce main-page-first before page.goto")
 
-    login_session_src = _source("scripts/login_session.py")
+    login_session_src = _source("scripts/auth/login_session.py")
     if 'site_entry_policy.assert_main_page_first(LOGIN_PROBE_URLS[site], site_key="google")' not in login_session_src:
-        failures.append("scripts/login_session.py must enforce main-page-first for google probe")
+        failures.append("scripts/auth/login_session.py must enforce main-page-first for google probe")
 
     plan = managed_console.build_youtube_oauth_console_open_plan()
     sequence = plan.get("sequence") or []

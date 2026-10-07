@@ -28,7 +28,7 @@ def _eum_login(page):
 
 
 def _naver_is_logged_in(page):
-    from scripts.login_detector import detect_login_state
+    from scripts.auth.login_detector import detect_login_state
 
     s = detect_login_state(page)
     return bool(s.get("logged_in"))
@@ -89,7 +89,7 @@ def _smartstore_login(page):
 
 
 def _google_is_logged_in(page):
-    from scripts.login_detector import detect_login_state
+    from scripts.auth.login_detector import detect_login_state
 
     s = detect_login_state(page)
     return bool(s.get("logged_in"))
@@ -145,7 +145,7 @@ def _hiworks_is_logged_in(page):
 
 
 def _hiworks_login(page):
-    from scripts.login_detector import monitor_for_login
+    from scripts.auth.login_detector import monitor_for_login
 
     return {
         "ok": False,

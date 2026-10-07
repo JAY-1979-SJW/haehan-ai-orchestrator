@@ -175,7 +175,7 @@ All site automation modules share one security/redaction baseline.
 - Root security implementation: `security_utils.py`
 - `scripts.common.security` compatibility wrapper: `scripts/common/security.py`
 - Logging compatibility facade: `logging_utils.py`
-- Credential storage and masked CLI output: `scripts/credentials.py`
+- Credential storage and masked CLI output: `scripts/auth/credentials.py`
 
 ## YouTube Recording And Upload
 

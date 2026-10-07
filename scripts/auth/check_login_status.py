@@ -1,7 +1,7 @@
 """현재 열려있는 모든 탭의 로그인 상태 확인.
 
 사용법:
-  python scripts/check_login_status.py
+  python scripts/auth/check_login_status.py
 
 결과:
   모든 탭의 URL과 로그인 여부를 표로 출력
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 
@@ -71,7 +71,7 @@ def main() -> None:
         from scripts.browser.cdp import cdp_db
         from scripts.common.config import CDP_HOST, CDP_PORT
         from scripts.common.logger import get_logger
-        from scripts.login_detector import (
+        from scripts.auth.login_detector import (
             _extract_domain,
             _find_site_by_domain,
             detect_login_on_current_tab,

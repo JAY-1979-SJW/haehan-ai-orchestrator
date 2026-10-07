@@ -33,7 +33,7 @@ from scripts.common.auth_window_gate import (
 from scripts.common.auth_window_gate import (
     run_auth_gate as _run,
 )
-from scripts.login_detector import detect_login_state
+from scripts.auth.login_detector import detect_login_state
 
 # 하위호환 별칭 — 기존 네이버 모듈이 노출하던 단계명
 STAGE_COMMERCE_LOGIN = STAGE_LOGIN

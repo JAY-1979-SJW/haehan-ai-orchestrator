@@ -10,16 +10,16 @@
 - .env_naver / .env_google 파일이 있으면 첫 로드 시 흡수 후 archive
 
 사용:
-    from scripts.credentials import set_cred, get_cred
+    from scripts.auth.credentials import set_cred, get_cred
     set_cred("eum", id="아이디", pw="비밀번호")
     cred = get_cred("eum")   # {"id": ..., "pw": ...}  pw 자동 복호화
 
 CLI:
-    python scripts/credentials.py set <site>
-    python scripts/credentials.py get <site>
-    python scripts/credentials.py list
-    python scripts/credentials.py delete <site>
-    python scripts/credentials.py migrate    # .env_* 파일 흡수
+    python scripts/auth/credentials.py set <site>
+    python scripts/auth/credentials.py get <site>
+    python scripts/auth/credentials.py list
+    python scripts/auth/credentials.py delete <site>
+    python scripts/auth/credentials.py migrate    # .env_* 파일 흡수
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from pathlib import Path
 
 from cryptography.fernet import Fernet, InvalidToken
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -375,7 +375,7 @@ def _cmd_migrate() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("사용법: python scripts/credentials.py <set|get|list|delete|migrate> [사이트]")
+        print("사용법: python scripts/auth/credentials.py <set|get|list|delete|migrate> [사이트]")
         print("  set <site>     자격증명 입력/저장 (암호화)")
         print("  get <site>     자격증명 확인 (마스킹)")
         print("  list           저장된 사이트 목록")

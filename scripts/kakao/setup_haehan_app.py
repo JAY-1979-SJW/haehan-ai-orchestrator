@@ -137,7 +137,7 @@ def gate2_login():
     if True:
         # 저장 세션 복원 시도
         try:
-            from scripts.auth_session import restore_session
+            from scripts.auth.auth_session import restore_session
 
             if restore_session("developers.kakao.com", page):
                 print("  ! [GATE-2] 저장 세션 복원 시도")
@@ -153,7 +153,7 @@ def gate2_login():
             logged_in = "로그아웃" in body or "전체 앱" in body or "앱 생성" in body or "Owner" in body
             if logged_in:
                 try:
-                    from scripts.auth_session import save_session
+                    from scripts.auth.auth_session import save_session
 
                     save_session("developers.kakao.com", page)
                 except Exception:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
@@ -164,12 +164,12 @@ def gate2_login():
 
         # 미로그인 — 대기
         print("  ! [GATE-2] 미로그인 — 브라우저에서 카카오 로그인하세요 (SMS/앱 인증)")
-        from scripts.login_detector import monitor_for_login
+        from scripts.auth.login_detector import monitor_for_login
 
         result = monitor_for_login(page, check_interval=2, timeout_s=300)
         if result.get("detected"):
             try:
-                from scripts.auth_session import save_session
+                from scripts.auth.auth_session import save_session
 
                 save_session("developers.kakao.com", page)
                 print("  ✓ [GATE-2] 세션 저장됨")
@@ -465,7 +465,7 @@ def main():
     with browser_session() as page:
         # 세션 복원
         try:
-            from scripts.auth_session import restore_session
+            from scripts.auth.auth_session import restore_session
 
             restore_session("developers.kakao.com", page)
         except Exception:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음

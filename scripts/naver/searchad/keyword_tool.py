@@ -33,7 +33,7 @@ def _to_int(v) -> int:
 def _fetch_batch(keywords: list[str]) -> list[dict]:
     cred = load_credentials()
     if not all([cred["customer_id"], cred["secret_key"], cred["access_license"]]):
-        raise RuntimeError("naver_searchad 자격증명이 없습니다. scripts.credentials.set_cred로 먼저 등록하세요.")
+        raise RuntimeError("naver_searchad 자격증명이 없습니다. scripts.auth.credentials.set_cred로 먼저 등록하세요.")
 
     headers = build_headers(
         method="GET",

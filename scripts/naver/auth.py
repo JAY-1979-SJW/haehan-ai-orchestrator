@@ -30,7 +30,7 @@ from typing import Any
 from scripts.common.critical_logger import log_critical
 from scripts.human_input import safe_human_input
 from scripts.common.logger import get_logger
-from scripts.login_detector import detect_login_state, wait_for_login_generic
+from scripts.auth.login_detector import detect_login_state, wait_for_login_generic
 from security_utils import mask_identifier
 
 _log = get_logger(__name__)
@@ -48,7 +48,7 @@ def _load_from_cred_store(nid: str | None, pw: str | None) -> tuple[str | None, 
     """통합 저장소(암호화)에서 ID/PW 보충."""
     if not pw:
         try:
-            from scripts.credentials import get_cred
+            from scripts.auth.credentials import get_cred
 
             if nid:
                 cred = get_cred(f"naver:{nid}")
@@ -68,7 +68,7 @@ def _load_from_legacy_file(nid: str | None, pw: str | None) -> tuple[str | None,
     """레거시 평문 파일에서 ID/PW 보충."""
     if (not nid or not pw) and ENV_FILE.exists():
         _log.warning(
-            "[naver-auth] 평문 자격증명 파일을 사용 중 — `python scripts/credentials.py migrate` 로 암호화 저장소로 이전하세요"
+            "[naver-auth] 평문 자격증명 파일을 사용 중 — `python scripts/auth/credentials.py migrate` 로 암호화 저장소로 이전하세요"
         )
         try:
             for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
@@ -114,13 +114,13 @@ def _load_credentials(
 
 
 def save_credentials(naver_id: str, naver_pw: str) -> Path:
-    """네이버 자격증명을 통합 암호화 저장소(scripts.credentials)에 저장한다.
+    """네이버 자격증명을 통합 암호화 저장소(scripts.auth.credentials)에 저장한다.
 
     예전에는 data/.env_naver 에 평문으로 썼으나(2026-09-30 폐지), 이제 계정별 키 "naver:<id>" 로
     암호화 저장한다. 기본 계정 "naver" 가 아직 없으면 같은 값을 기본으로도 둔다.
     반환값은 하위 호환을 위해 저장소 파일 경로다. 비밀번호는 로그에 남기지 않는다.
     """
-    from scripts.credentials import CRED_FILE, get_cred, set_cred
+    from scripts.auth.credentials import CRED_FILE, get_cred, set_cred
 
     set_cred(f"naver:{naver_id}", id=naver_id, pw=naver_pw)
     if not get_cred("naver").get("id"):
@@ -474,9 +474,9 @@ def _handle_logged_in_state(page, state: dict, naver_id: str | None, naver_pw: s
             # pw 자동 탐색 (naver:{id} 키 우선)
             if not naver_pw:
                 try:
-                    from scripts.credentials import get_naver_cred
+                    from scripts.auth.credentials import get_naver_cred
 
-                    cred = get_naver_cred(naver_id)
+                    cred = get_naver_cred(naver_id or "")
                     naver_pw = cred.get("pw", "")
                 except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
                     pass
@@ -491,7 +491,7 @@ def _fill_naver_pw(naver_id: str | None, naver_pw: str | None) -> str | None:
     """pw 미전달 시 자격증명 자동 탐색."""
     if naver_id and not naver_pw:
         try:
-            from scripts.credentials import get_naver_cred
+            from scripts.auth.credentials import get_naver_cred
 
             cred = get_naver_cred(naver_id)
             naver_pw = cred.get("pw", "")

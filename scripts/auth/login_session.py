@@ -3,7 +3,7 @@
 모든 웹 자동화 스크립트에서 공통으로 사용.
 
 사용법:
-    from scripts.login_session import ensure_login, is_logged_in
+    from scripts.auth.login_session import ensure_login, is_logged_in
 
     # 로그인 확인 후 미로그인이면 바로 자동 로그인(저장된 자격증명). 실패·추가 인증이면 최대 5분 대기
     ensure_login(page, "google")
@@ -171,7 +171,7 @@ def is_logged_in(page: Page, site: str) -> bool:
     쿠키 마커 기반(페이지 이동 없음)으로 1차 판별.
     마커 미등록 사이트만 기존 셀렉터 기반 _SITE_CHECKERS로 폴백.
     """
-    from scripts.login_check import _LOGIN_MARKERS, _domain_of, is_logged_in_by_cookie
+    from scripts.auth.login_check import _LOGIN_MARKERS, _domain_of, is_logged_in_by_cookie
 
     domain = _domain_of(site)
     if domain in _LOGIN_MARKERS:

@@ -232,7 +232,7 @@ def save_detected_login(site: str, page=None) -> bool:
         if page is not None:
             try:
                 storage_host = _storage_host_for_url(page.url) or site
-                from scripts.auth_session import save_session
+                from scripts.auth.auth_session import save_session
 
                 session_file = str(save_session(storage_host, page))
             except Exception as e:  # noqa: BLE001 - 로그인 상태 감지(판정 전용, 자격증명 입력 없음) — 감지 실패는 항상 미로그인/False(fail-closed)로 처리하고 로그로 남김, 세션 저장 실패도 로그 후 계속(2026-09-28 검토)
@@ -467,7 +467,7 @@ def watch_all_logins(page=None, *, check_interval: float = 1.0, timeout_s: int =
     }
 
 
-_PROBES_PATH = Path(__file__).resolve().parents[1] / "configs" / "login_probes.json"
+_PROBES_PATH = Path(__file__).resolve().parents[2] / "configs" / "login_probes.json"
 _LOGIN_URL_RE = re.compile(r"(login|signin|sign-in|sign_in|auth|nidlogin)", re.I)
 
 

@@ -56,7 +56,7 @@ class NaverServices:
 
     def logged_in_user(self) -> str | None:
         """현재 로그인 사용자명."""
-        from scripts.login_detector import get_logged_in_user
+        from scripts.auth.login_detector import get_logged_in_user
         return get_logged_in_user(self.page)
 
     # ── 서비스별 lazy 인스턴스 ─────────────────────────────────────────

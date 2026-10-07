@@ -44,7 +44,7 @@ DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
 
 
 def _cmd_check_login() -> None:
-    from scripts.check_login_status import main as check_login_main
+    from scripts.auth.check_login_status import main as check_login_main
 
     check_login_main()
 
@@ -548,7 +548,7 @@ def _cmd_visits(task: str) -> None:
 
 def _cmd_session(task: str, sub: str) -> None:
     # 인증 세션 저장/복원/관리
-    from scripts.auth_session import cli_delete, cli_list, cli_load, cli_save
+    from scripts.auth.auth_session import cli_delete, cli_list, cli_load, cli_save
 
     sub_cmd = task or "list"
     host = sub or ""
@@ -658,7 +658,7 @@ def _cmd_gabia(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_auto_login(task: str, sub: str) -> None:
-    from scripts.login_detector import monitor_for_login
+    from scripts.auth.login_detector import monitor_for_login
     from scripts.web_connector import get_page
 
     if not task:
@@ -692,7 +692,7 @@ def _cmd_auto_login(task: str, sub: str) -> None:
 def _cmd_login_watch(task: str, sub: str) -> None:
     import json as _json
 
-    from scripts.login_detector import watch_all_logins
+    from scripts.auth.login_detector import watch_all_logins
 
     interval = float(task) if task else 1.0
     timeout_s = int(sub) if sub and sub.isdigit() else 0
@@ -701,7 +701,7 @@ def _cmd_login_watch(task: str, sub: str) -> None:
 
 
 def _cmd_cred(task: str, sub: str) -> None:
-    from scripts.credentials import _cmd_delete, _cmd_get, _cmd_list, _cmd_set
+    from scripts.auth.credentials import _cmd_delete, _cmd_get, _cmd_list, _cmd_set
 
     sub_cmd = task or "list"
     site = sub or ""
