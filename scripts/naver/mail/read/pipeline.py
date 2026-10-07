@@ -10,7 +10,7 @@
   7. 상위 N건(또는 ACTION_REQUIRED) 본문 읽기 → 보고
 
 CLI:
-  python -m scripts.naver.mail_read.pipeline [--max-bodies N] [--login-timeout S]
+  python -m scripts.naver.mail.read.pipeline [--max-bodies N] [--login-timeout S]
 """
 from __future__ import annotations
 

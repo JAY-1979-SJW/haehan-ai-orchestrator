@@ -33,7 +33,7 @@ from scripts.naver.mail.collection.background_runner import (  # noqa: E402
     create_isolated_mail_target,
     select_naver_session,
 )
-from scripts.naver.mail_read import list_collector  # noqa: E402
+from scripts.naver.mail.read import list_collector  # noqa: E402
 
 STATE_PATH = ROOT / "data" / "naver_mail_watch_state.json"
 _MAX_SEEN_KEEP = 500

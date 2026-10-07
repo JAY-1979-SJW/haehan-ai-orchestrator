@@ -1,6 +1,6 @@
 """naver_mail — P0 운영 가능 등급 받은편지함 수집/읽기.
 
-기존 scripts/naver/mail_read 패키지의 CDP/PII/분류 헬퍼를 재사용.
+기존 scripts/naver/mail/read 패키지의 CDP/PII/분류 헬퍼를 재사용.
 본 패키지는 그 위에:
   - 전체 페이지네이션 종료 조건 (last-page 도달까지)
   - 안읽은 필터 모드

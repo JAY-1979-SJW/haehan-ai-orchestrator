@@ -1,4 +1,4 @@
-"""CDP 헬퍼 (mail_read 전용) — 외부 의존 최소화.
+"""CDP 헬퍼 (scripts.naver.mail.read 전용) — 외부 의존 최소화.
 
 자동화 Chrome 9222 fixed. WebSocket 한 호출당 fresh 연결.
 """

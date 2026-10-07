@@ -26,7 +26,7 @@ from scripts.naver.cafe import (  # noqa: E402
     member_collect,
     topic_search,
 )
-from scripts.naver.mail_read import cdp  # noqa: E402
+from scripts.naver.mail.read import cdp  # noqa: E402
 
 CAFE_WORK_START_URLS = {
     "list": "https://section.cafe.naver.com/ca-fe/home",
