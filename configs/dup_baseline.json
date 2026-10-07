@@ -412,9 +412,9 @@
    "scripts/required_quality_gate.py:redact"
   ],
   "fcc9673f9a46bea4053b07a2b608145f7ffdd247": [
-   "ai_orchestrator/local_agent/installer_folder_presenter.py:_result",
-   "ai_orchestrator/local_agent/security_program_install_completion_detector.py:_result",
-   "ai_orchestrator/local_agent/user_assisted_installer.py:_safe_result"
+   "local_agent/runtime/installer_folder_presenter.py:_result",
+   "local_agent/runtime/security_program_install_completion_detector.py:_result",
+   "local_agent/runtime/user_assisted_installer.py:_safe_result"
   ]
  }
 }

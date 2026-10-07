@@ -156,12 +156,12 @@
   "role": "policy",
   "reason": "안전 쓰기 결과 sanitize — result_sanitizer와 동급 보안 정책, L6 script_cli(low) 오분류"
  },
- "ai_orchestrator/local_agent/security_program_auto_resume.py": {
+ "local_agent/runtime/security_program_auto_resume.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "보안 프로그램 설치/탐지 워크플로 오케스트레이션(local_security_installer_runner 등 L6 호출) — L4 generic(low) 오분류"
  },
- "ai_orchestrator/local_agent/security_program_install_completion_detector.py": {
+ "local_agent/runtime/security_program_install_completion_detector.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "security_program_detector(L6)와 동급 설치 완료 감지 워크플로 — L4 generic(low) 오분류"
