@@ -1,5 +1,11 @@
-from models import TaskRequest, RiskAssessment
-from policy_engine import load_policy, get_risk_level_for_action, is_command_blocked
+from typing import Literal, cast
+
+from models import RiskAssessment, TaskRequest
+from orchestrator_v1.tasks.policy_engine import (
+    get_risk_level_for_action,
+    is_command_blocked,
+    load_policy,
+)
 
 
 def assess_risk(task: TaskRequest, policy: dict | None = None) -> RiskAssessment:
@@ -23,4 +29,8 @@ def assess_risk(task: TaskRequest, policy: dict | None = None) -> RiskAssessment
     if level == "critical":
         reasons.append("critical action — always blocked by default")
 
-    return RiskAssessment(risk_level=level, reasons=reasons, requires_approval=requires_approval)
+    return RiskAssessment(
+        risk_level=cast(Literal["low", "medium", "high", "critical"], level),
+        reasons=reasons,
+        requires_approval=requires_approval,
+    )

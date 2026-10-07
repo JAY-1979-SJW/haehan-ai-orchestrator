@@ -9,9 +9,9 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import audit_logger
-import candidate_store
 import email_task_store
 from logger import get_logger
+from orchestrator_v1.tasks import candidate_store
 
 log = get_logger("candidate_to_task")
 

@@ -10,11 +10,10 @@ import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-import approval_manager
-import task_store
-from approval_manager import build_execution_plan, is_token_valid
 from logger import get_logger
-from whitelist_executor import execute_allowed
+from orchestrator_v1.tasks import approval_manager, task_store
+from orchestrator_v1.tasks.approval_manager import build_execution_plan, is_token_valid
+from orchestrator_v1.tasks.whitelist_executor import execute_allowed
 
 _BASE_DIR = Path(__file__).resolve().parents[2]
 _EXEC_LOG_PATH = _BASE_DIR / "logs" / "execution.jsonl"
