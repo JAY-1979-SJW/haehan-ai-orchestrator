@@ -11,10 +11,11 @@ import argparse
 import json
 import sys
 from dataclasses import asdict, dataclass, field
-from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[4]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

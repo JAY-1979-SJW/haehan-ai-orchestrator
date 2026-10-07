@@ -14,9 +14,10 @@ from __future__ import annotations
 import sys
 import traceback
 from datetime import datetime
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 sys.path.insert(0, str(ROOT))
 
 LOG_PATH = ROOT / "data" / "daily_cafe_pipeline_log.jsonl"

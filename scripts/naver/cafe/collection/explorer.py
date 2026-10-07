@@ -10,16 +10,16 @@ from __future__ import annotations
 import json
 import re
 import time
-from pathlib import Path
 
 from playwright.sync_api import Page
 
+from scripts.app_paths import repo_root
 from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 
 _log = get_logger(__name__)
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = repo_root()
 _DATA_DIR = ROOT / "data" / "cafe"
 
 _CAFE_HOME_URL = "https://section.cafe.naver.com/ca-fe/home"

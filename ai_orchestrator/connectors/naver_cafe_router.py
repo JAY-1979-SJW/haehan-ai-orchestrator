@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from scripts.app_paths import repo_root
 
 from ..audit_logger import log_event
 from ..services import cafe_membership_service
@@ -25,7 +26,7 @@ from ..services import cafe_membership_service
 logger = logging.getLogger(__name__)
 
 # parents[2] = repo 루트(소스) / _internal(frozen exe) — collector(_OUT_DIR)와 동일 기준
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 _CAFE_DIR = ROOT / "data" / "cafe"
 
 naver_cafe_router = APIRouter(

@@ -6,10 +6,11 @@ import argparse
 import json
 import sys
 from dataclasses import asdict, dataclass, field
-from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[4]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -18,7 +19,13 @@ from scripts.browser_cdp_selection_gate import (  # noqa: E402
     evaluate_sessions,  # noqa: F401 - tests/test_naver_cafe_list_collector.py 가 runner.evaluate_sessions 로 접근
     select_naver_session,
 )
-from scripts.naver.cafe import join_request, list_collector, main_page, member_collect, topic_search  # noqa: E402
+from scripts.naver.cafe import (  # noqa: E402
+    join_request,
+    list_collector,
+    main_page,
+    member_collect,
+    topic_search,
+)
 from scripts.naver.mail_read import cdp  # noqa: E402
 
 CAFE_WORK_START_URLS = {

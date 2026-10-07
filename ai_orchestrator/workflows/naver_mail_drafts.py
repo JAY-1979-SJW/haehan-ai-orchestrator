@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import hashlib
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
+from scripts.app_paths import repo_root
 from scripts.naver.mail_imap import attachments as att
 from scripts.naver.mail_imap import html_sanitize as hs
 from scripts.naver.mail_imap import mailbox, reader, sender
@@ -21,7 +21,7 @@ from ..gates import mail_draft_policy as policy
 from ..persistence import naver_mail_draft_store as store
 from .naver_mailbox_flow import ServiceError, require_account
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 COMPACT_TEXT_LIMIT = 12000
 _DEFINITE_FAILURES = ("send_failed", "auth_failed", "connect_failed", "no_password")
 

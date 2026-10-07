@@ -24,10 +24,11 @@ from ai_orchestrator.persistence import mail_bulk_store as store
 from ai_orchestrator.workflows import naver_mail_bulk as flow
 from ai_orchestrator.workflows import naver_mail_drafts as drafts
 from ai_orchestrator.workflows import naver_mailbox_flow as mailbox_flow
+from scripts.app_paths import repo_root
 from scripts.naver.mail_imap import bulk_sender
 from scripts.naver.mail_imap import sender as smtp_draft
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 MAX_RECIPIENTS = 5000
 MAX_SUBJECT = 200
 MAX_BODY = 20000
