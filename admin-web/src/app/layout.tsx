@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ClaudeConnectionBadge } from "@/components/app/ClaudeConnectionBadge";
 import { RegisterServiceWorker } from "@/components/app/RegisterServiceWorker";
 import "./globals.css";
 
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body>
         <RegisterServiceWorker />
         {children}
+        <ClaudeConnectionBadge />
       </body>
     </html>
   );

@@ -39,7 +39,7 @@ const { startAutoUpdate } = require("./lib/updater");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
 const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
-const { Menu, dialog, session } = require("electron");
+const { Menu, Notification, dialog, session, webContents } = require("electron");
 const { startFastAPIServer, stopFastAPIServer, FASTAPI_PORT } = require("./lib/fastapi_server");
 const { refreshDesktopSession } = require("./lib/desktop_session");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
@@ -316,61 +316,67 @@ function claudeCtx() {
   };
 }
 
+// 연결 상태가 바뀌면 화면(webview)의 Claude 연결 배지가 바로 다시 읽게 알린다(화면 버튼·트레이 어느 쪽이든).
+// result 가 있으면 배지가 그 결과 문구를 화면 안에 보여 준다. 알릴 화면이 없으면 false.
+function notifyClaudeChanged(result = null) {
+  let sent = false;
+  for (const wc of webContents.getAllWebContents()) {
+    if (wc.getType() === "webview" && !wc.isDestroyed()) {
+      wc.send("claude-status-changed", result);
+      sent = true;
+    }
+  }
+  return sent;
+}
+
 async function connectClaudeNow() {
   if (!app.isPackaged) return { ok: false, error: "dev_mode_unsupported", hint: "패키징된 앱에서만 지원합니다" };
   const r = await claudeMcp.connectClaude(claudeCtx());
   if (r.ok) patchConfig({ claude_mcp: { ...(loadConfig().claude_mcp || {}), connected: true, prompted: true, build_id: r.buildId, fastapi_url: FASTAPI_URL } });
+  notifyClaudeChanged();
   return r;
 }
 
 function disconnectClaudeNow() {
   const r = claudeMcp.disconnectClaude(claudeCtx());
   if (r.ok) patchConfig({ claude_mcp: { ...(loadConfig().claude_mcp || {}), connected: false, prompted: true } });
+  notifyClaudeChanged();
   return r;
 }
 
+// 결과는 Windows 기본 대화상자 대신 화면 안 배지로 보여 준다(대표님 지시 2026-10-08: 기본 창은 보기 좋지 않다).
+// 화면이 없을 때(창을 아직 안 띄움)만 Windows 알림으로 대신한다.
 function notifyClaudeResult(title, r) {
   const parts = [];
-  if (r.desktop) parts.push(`Claude Desktop: ${r.desktop.ok ? (r.desktop.changed === false ? "변경 없음" : "완료") : (r.desktop.error === "claude_desktop_not_found" ? "설치 안 됨" : "실패")}`);
-  if (r.code) parts.push(`Claude Code: ${r.code.ok ? (r.code.skipped ? "건너뜀(claude 명령 없음)" : r.code.changed === false ? "변경 없음" : "완료") : "실패"}`);
-  dialog.showMessageBox(getMainWindow() || undefined, {
-    type: r.ok ? "info" : "warning",
-    title,
-    message: r.ok ? `${title} 완료` : `${title} 실패`,
-    detail: [parts.join("\n"), r.hint || ""].filter(Boolean).join("\n\n"),
-  }).catch(() => {});
+  if (r.desktop) parts.push(`Claude Desktop ${r.desktop.ok ? (r.desktop.changed === false ? "변경 없음" : "완료") : (r.desktop.error === "claude_desktop_not_found" ? "설치 안 됨" : "실패")}`);
+  if (r.code) parts.push(`Claude Code ${r.code.ok ? (r.code.skipped ? "건너뜀" : r.code.changed === false ? "변경 없음" : "완료") : "실패"}`);
+  const summary = { title, ok: !!r.ok, detail: parts.join(" · "), hint: r.ok ? "" : r.hint || "" };
+  if (notifyClaudeChanged(summary)) return;
+  new Notification({ title: r.ok ? `${title} 완료` : `${title} 실패`, body: [summary.detail, summary.hint].filter(Boolean).join("\n") }).show();
 }
 
-// 앱 시작 때: 이미 동의한 사용자는 새 빌드·주소 변경 시 조용히 갱신하고, 처음이면 한 번만 동의를 묻는다.
+// 앱 시작 때: 이미 동의한 사용자는 새 빌드·주소 변경 시 조용히 갱신한다.
+// 처음이면 따로 창을 띄우지 않는다 — 화면 배지가 "연결 / 나중에" 안내 카드를 보여 준다(prompted 가 false 인 동안).
 async function syncClaudeOnStart() {
   if (!app.isPackaged) return;
   const ctx = claudeCtx();
   if (!fs.existsSync(path.join(ctx.srcDir, claudeMcp.EXE_NAME))) return;
   const st = loadConfig().claude_mcp || {};
-  if (st.connected) {
-    if (st.build_id === claudeMcp.buildId(ctx.srcDir, ctx.version, ctx.buildVersion) && st.fastapi_url === FASTAPI_URL) return;
-    await connectClaudeNow();
-    return;
-  }
-  if (st.prompted) return;
-  const res = await dialog.showMessageBox(getMainWindow() || undefined, {
-    type: "question",
-    buttons: ["연결", "나중에"],
-    defaultId: 0,
-    cancelId: 1,
-    title: "Claude 연결",
-    message: "이 PC의 Claude에서 Haehan AI 도구를 쓸 수 있게 연결할까요?",
-    detail: "Claude Desktop과 Claude Code 설정에 Haehan AI를 추가합니다. 다른 설정은 바꾸지 않고, 바꾸기 전에 백업을 남깁니다. 나중에 트레이 메뉴의 'Claude 연결 해제'로 되돌릴 수 있습니다.",
-  });
-  patchConfig({ claude_mcp: { ...st, prompted: true } });
-  if (res.response === 0) notifyClaudeResult("Claude 연결", await connectClaudeNow());
+  if (!st.connected) return;
+  if (st.build_id === claudeMcp.buildId(ctx.srcDir, ctx.version, ctx.buildVersion) && st.fastapi_url === FASTAPI_URL) return;
+  await connectClaudeNow();
 }
 
 ipcMain.handle("local-config:connect-claude", () => connectClaudeNow());
 ipcMain.handle("local-config:disconnect-claude", () => disconnectClaudeNow());
 ipcMain.handle("local-config:claude-status", () => {
   const st = loadConfig().claude_mcp || {};
-  return { ...claudeMcp.claudeStatus({ ...claudeCtx(), exePath: undefined }), consented: !!st.connected };
+  return { ...claudeMcp.claudeStatus({ ...claudeCtx(), exePath: undefined }), consented: !!st.connected, prompted: !!st.prompted };
+});
+// 안내 카드의 "나중에" — 다시 묻지 않는다(배지의 "연결" 버튼·트레이 메뉴로 언제든 연결 가능)
+ipcMain.handle("local-config:claude-later", () => {
+  patchConfig({ claude_mcp: { ...(loadConfig().claude_mcp || {}), prompted: true } });
+  return { ok: true };
 });
 bus.on(EVENTS.CLAUDE_CONNECT, async () => notifyClaudeResult("Claude 연결", await connectClaudeNow()));
 bus.on(EVENTS.CLAUDE_DISCONNECT, () => notifyClaudeResult("Claude 연결 해제", disconnectClaudeNow()));

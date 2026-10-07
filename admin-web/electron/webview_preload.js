@@ -20,6 +20,15 @@ contextBridge.exposeInMainWorld("haehanLocal", {
   connectClaude: () => ipcRenderer.invoke("local-config:connect-claude"),
   disconnectClaude: () => ipcRenderer.invoke("local-config:disconnect-claude"),
   getClaudeStatus: () => ipcRenderer.invoke("local-config:claude-status"),
+  // 첫 안내 카드의 "나중에" — 다시 묻지 않게 기록
+  claudeLater: () => ipcRenderer.invoke("local-config:claude-later"),
+  // 연결 상태가 바뀌면(화면 버튼·트레이) 알림 — 화면 배지가 다시 읽는다. 트레이 결과는 result 로 함께 온다.
+  // 해제 함수를 돌려준다.
+  onClaudeStatusChanged: (cb) => {
+    const handler = (_event, result) => cb(result || null);
+    ipcRenderer.on("claude-status-changed", handler);
+    return () => ipcRenderer.removeListener("claude-status-changed", handler);
+  },
   // 하위 호환 이름(옛 UI)
   connectClaudeDesktop: () => ipcRenderer.invoke("local-config:connect-claude"),
 });
