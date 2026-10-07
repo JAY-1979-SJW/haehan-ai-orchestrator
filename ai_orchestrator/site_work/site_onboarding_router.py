@@ -22,11 +22,10 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.site_work import site_onboarding_service as service
 from ai_orchestrator.site_work import site_preflight_service as preflight
-from scripts.explorer import preflight_fetch
 
 site_onboarding_router = APIRouter(prefix="/site-registry", tags=["site-registry"])
 _ADMIN = Depends(require_role("admin", "owner"))
-preflight.configure_fetcher(preflight_fetch.fetch_text)  # 사전 조사 실행기 연결(브라우저 없음, robots·sitemap 단순 GET)
+# 사전 조사 실행기(브라우저 없음, robots·sitemap 단순 GET)는 조합 루트(routers/registry.py)가 연결한다
 
 
 def _host():

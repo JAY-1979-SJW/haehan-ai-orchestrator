@@ -18,7 +18,7 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.routers.site_task_map_router import site_task_map_router
+from ai_orchestrator.site_work.site_task_map_router import site_task_map_router
 from ai_orchestrator.site_work import site_map_history as hist
 from ai_orchestrator.site_work import site_task_map as tm
 from ai_orchestrator.site_work import site_task_map_service as map_service

@@ -5809,7 +5809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/site_onboarding_router.py": {
+  "ai_orchestrator/site_work/site_onboarding_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5817,7 +5817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/site_task_map_router.py": {
+  "ai_orchestrator/site_work/site_task_map_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",

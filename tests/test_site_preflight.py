@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from ai_orchestrator import mcp_server
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.routers.site_onboarding_router import site_onboarding_router
+from ai_orchestrator.site_work.site_onboarding_router import site_onboarding_router
 from ai_orchestrator.site_work import site_onboarding_service as onboarding
 from ai_orchestrator.site_work import site_preflight as sp
 from ai_orchestrator.site_work import site_preflight_service as svc

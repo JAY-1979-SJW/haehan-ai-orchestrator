@@ -22,8 +22,12 @@ from ai_orchestrator.routers.naver_mail_bulk_router import naver_mail_bulk_route
 from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
 from ai_orchestrator.routers.ops_router import ops_router
 from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
-from ai_orchestrator.routers.site_onboarding_router import site_onboarding_router
-from ai_orchestrator.routers.site_task_map_router import site_task_map_router
+from ai_orchestrator.site_work.site_onboarding_router import site_onboarding_router
+from ai_orchestrator.site_work.site_task_map_router import site_task_map_router
+from ai_orchestrator.site_work import site_preflight_service as _site_preflight
+from ai_orchestrator.site_work import site_task_map_explore_service as _site_explore
+from ai_orchestrator.site_work import site_task_map_service as _site_map_service
+from scripts.explorer import preflight_fetch, task_mapper, task_runner
 from ai_orchestrator.user_data.user_data_contribution_router import user_data_contribution_router
 from ai_orchestrator.vendor_directory.vendor_directory_router import vendor_directory_router
 from ai_orchestrator.web_task.web_task_router import web_task_router
@@ -97,6 +101,11 @@ def _legacy_5050_should_use_route_wiring(route_id: str) -> bool:
     }
     return _flags.get(route_id, False)
 
+
+# 사이트 업무(site_work)의 실행기 연결 — 조합 루트에서만 scripts.explorer 와 이어 준다(site_work 는 scripts 를 import 하지 않는다)
+_site_explore.configure(task_mapper.run_request)  # 승인된 탐색의 실행기(브라우저 모듈은 실행 시점에만 불러온다)
+_site_map_service.configure_runner(task_runner.run_task_in_browser)  # 지도 기반 업무 실행기(조회 업무 전용)
+_site_preflight.configure_fetcher(preflight_fetch.fetch_text)  # 사전 조사 실행기(브라우저 없음)
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)

@@ -29,10 +29,7 @@ from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.site_work import site_task_map_explore_service as explore
 from ai_orchestrator.site_work import site_task_map_service as service
 from ai_orchestrator.site_work import site_task_spec_service as spec_service
-from scripts.explorer import task_mapper, task_runner
-
-explore.configure(task_mapper.run_request)  # 승인된 탐색의 실행기 연결(브라우저 모듈은 실행 시점에만 불러온다)
-service.configure_runner(task_runner.run_task_in_browser)  # 지도 기반 업무 실행기(조회 업무 전용)
+# 실행기(브라우저)는 이 모듈이 아니라 조합 루트(routers/registry.py)가 연결한다 — site_work 는 scripts.explorer 를 모른다
 
 site_task_map_router = APIRouter(prefix="/site-map", tags=["site-map"])
 _ADMIN = Depends(require_role("admin", "owner"))
