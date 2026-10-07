@@ -23,8 +23,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, time
 from typing import Any
 
-from ai_orchestrator.gates import fax_send_policy as policy
-from ai_orchestrator.persistence import fax_authorization_store as store
+from ai_orchestrator.connectors.hanafax import send_policy as policy
+from ai_orchestrator.connectors.hanafax import authorization_store as store
 
 logger = logging.getLogger(__name__)
 

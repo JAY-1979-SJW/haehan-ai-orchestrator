@@ -9,10 +9,10 @@ from zoneinfo import ZoneInfoNotFoundError
 import pytest
 
 from ai_orchestrator import mcp_server
-from ai_orchestrator.gates import mail_bulk_policy as pol
-from ai_orchestrator.gates import mail_draft_policy as draft_policy
-from ai_orchestrator.persistence import mail_bulk_store as store
-from ai_orchestrator.services import mail_bulk_service as service
+from ai_orchestrator.connectors.naver_mail import bulk_policy as pol
+from ai_orchestrator.connectors.naver_mail import draft_policy as draft_policy
+from ai_orchestrator.connectors.naver_mail import bulk_store as store
+from ai_orchestrator.connectors.naver_mail import bulk_service as service
 from ai_orchestrator.services import scheduled_job_actions as actions
 
 
@@ -182,7 +182,7 @@ def _live(env, n=3):
 
 
 def test_start_runs_in_background_sequentially_and_reports_status(env, monkeypatch):
-    monkeypatch.setattr("ai_orchestrator.workflows.naver_mail_bulk.time.sleep", lambda _s: None)
+    monkeypatch.setattr("ai_orchestrator.connectors.naver_mail.bulk_workflow.time.sleep", lambda _s: None)
     auth_id = _live(env, 3)
     service.start(auth_id)
     _wait_idle(auth_id)
@@ -209,7 +209,7 @@ def test_start_rejects_unapproved_revoked_paused_and_running(env):
 
 
 def test_dry_run_authorization_never_uses_smtp(env, monkeypatch):
-    monkeypatch.setattr("ai_orchestrator.workflows.naver_mail_bulk.time.sleep", lambda _s: None)
+    monkeypatch.setattr("ai_orchestrator.connectors.naver_mail.bulk_workflow.time.sleep", lambda _s: None)
     a = service.create(_payload(2), user="t")
     service.approve(a["id"], user="t", live=False)
     service.start(a["id"])
@@ -219,7 +219,7 @@ def test_dry_run_authorization_never_uses_smtp(env, monkeypatch):
 
 
 def test_send_log_masks_addresses(env, monkeypatch):
-    monkeypatch.setattr("ai_orchestrator.workflows.naver_mail_bulk.time.sleep", lambda _s: None)
+    monkeypatch.setattr("ai_orchestrator.connectors.naver_mail.bulk_workflow.time.sleep", lambda _s: None)
     auth_id = _live(env, 2)
     service.start(auth_id)
     _wait_idle(auth_id)
@@ -242,7 +242,7 @@ def test_scheduled_action_validates_and_starts(env, monkeypatch):
         spec.validate({"authorization_id": a["id"]})
     service.approve(a["id"], user="t", live=False)
     params = spec.validate({"authorization_id": a["id"]})
-    monkeypatch.setattr("ai_orchestrator.workflows.naver_mail_bulk.time.sleep", lambda _s: None)
+    monkeypatch.setattr("ai_orchestrator.connectors.naver_mail.bulk_workflow.time.sleep", lambda _s: None)
     assert "시작" in spec.run(params)
     _wait_idle(a["id"])
 

@@ -142,11 +142,8 @@ def test_stores_apply_busy_timeout_and_gongmu_seeds_once(tmp_path, monkeypatch):
     from ai_orchestrator.agent_dispatch import agent_dispatch_store
     from ai_orchestrator.connectors import instagram_dm_db
     from ai_orchestrator.gongmu import gongmu_store
-    from ai_orchestrator.persistence import (
-        fax_authorization_store,
-        mail_bulk_store,
-        naver_mail_draft_store,
-    )
+    from ai_orchestrator.connectors.hanafax import authorization_store as fax_authorization_store
+    from ai_orchestrator.connectors.naver_mail import bulk_store as mail_bulk_store, draft_store as naver_mail_draft_store
     from ai_orchestrator.scheduler import scheduled_job_store
 
     for mod in (

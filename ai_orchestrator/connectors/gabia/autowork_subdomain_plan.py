@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.gabia.gabia_dns_models import (
+from ai_orchestrator.connectors.gabia.dns_models import (
     GabiaDnsApprovalSummary,
     GabiaDnsChangePreview,
     GabiaDnsRecordDraft,

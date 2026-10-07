@@ -13,19 +13,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..domain.mail_draft_states import (  # noqa: F401  (정책을 거쳐 쓰던 기존 이름을 그대로 다시 내보낸다)
-    CANCELLED,
-    DRAFT_TTL_DAYS,
-    EXPIRED,
-    FAILED,
-    OPEN_STATUSES,
-    PENDING,
-    SENDING,
-    SENT,
-    STATUSES,
-    UNKNOWN,
-    can_transition,
-)
+from ai_orchestrator.connectors.naver_mail.draft_states import CANCELLED, DRAFT_TTL_DAYS, EXPIRED, FAILED, OPEN_STATUSES, PENDING, SENDING, SENT, STATUSES, UNKNOWN, can_transition  # noqa: F401  (정책을 거쳐 쓰던 기존 이름을 그대로 다시 내보낸다)
 
 MAX_PENDING_DRAFTS = 50
 MAX_RECIPIENTS = 20

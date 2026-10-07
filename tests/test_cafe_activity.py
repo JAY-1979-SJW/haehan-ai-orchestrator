@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from ai_orchestrator.domain import cafe_activity as act
+from ai_orchestrator.connectors.naver_cafe import activity as act
 
 NOW = datetime(2026, 10, 5, 12, 0, 0, tzinfo=act.KST)
 

@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator import mcp_server
 from ai_orchestrator.gates import auth as auth_module
-from ai_orchestrator.gates import mail_draft_policy as draft_policy
+from ai_orchestrator.connectors.naver_mail import draft_policy as draft_policy
 from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.gongmu import gongmu_store as store
 from ai_orchestrator.gongmu.gongmu_router import gongmu_router

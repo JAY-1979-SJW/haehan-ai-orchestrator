@@ -71,7 +71,7 @@ def api_inbox(
     t0 = time.monotonic()
     try:
         if source == "api":
-            from ai_orchestrator.sites.gmail_reader import fetch_recent_emails
+            from ai_orchestrator.connectors.google.gmail_reader import fetch_recent_emails
 
             items = fetch_recent_emails(max_results=max_results, hours=hours)
         else:
@@ -105,7 +105,7 @@ def api_collect(
 ) -> dict:
     """Gmail 최근 메일을 내부 inbox에 저장."""
     try:
-        from ai_orchestrator.sites.gmail_reader import collect_to_inbox
+        from ai_orchestrator.connectors.google.gmail_reader import collect_to_inbox
 
         result = collect_to_inbox(max_results=max_results, hours=hours)
         log_event(
@@ -217,7 +217,7 @@ def api_reply(
     _require_send_approval(req.send_confirm, recipients=addresses(req.to), subject=req.subject)
 
     try:
-        from ai_orchestrator.sites.gmail_reader import send_reply
+        from ai_orchestrator.connectors.google.gmail_reader import send_reply
 
         result = send_reply(
             thread_id=req.thread_id,
@@ -265,7 +265,7 @@ def api_ai_draft_unread(
     t0 = time.monotonic()
 
     try:
-        from ai_orchestrator.sites.gmail_reader import fetch_unread_emails
+        from ai_orchestrator.connectors.google.gmail_reader import fetch_unread_emails
 
         raw_mails = fetch_unread_emails(max_results=limit)
         mails = [

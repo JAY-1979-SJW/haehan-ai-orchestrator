@@ -28,7 +28,7 @@
 |---|---|---|---|---|---|
 | 구글 로그인/OAuth | Google | `/api/v1/google/*`(google_router) | `ai_orchestrator/connectors/google_router.py`, `ai_orchestrator/connectors/google/router.py` | 미확인 | 라우터는 마운트됨(router.py:105,25). run_ledger에 해당 항목 없음, 실사용 성공 로그 미발견 |
 | Gmail 읽기/발송 | Google | `/api/v1/gmail/*` | `ai_orchestrator/connectors/gmail_router.py` | 미확인 | router.py:98 마운트. defect_index에 별도 언급 없음, 실행 로그 미확인 |
-| YouTube 업로드/OAuth | Google | `/api/v1/youtube/*`, `scripts/youtube/oauth.py` | `ai_orchestrator/routers/youtube_oauth_router.py`, `ai_orchestrator/connectors/youtube_router.py`, `scripts/youtube/*`(16파일) | 정상 동작 | 메모리 `channel-youtube-worklog.md`: OAuth 완료·코타라 CTC 쇼츠 3편 예약발행 기록. modules.md scripts/youtube R0 OK 16 |
+| YouTube 업로드/OAuth | Google | `/api/v1/youtube/*`, `scripts/youtube/oauth.py` | `ai_orchestrator/connectors/youtube/oauth_router.py`, `ai_orchestrator/connectors/youtube_router.py`, `scripts/youtube/*`(16파일) | 정상 동작 | 메모리 `channel-youtube-worklog.md`: OAuth 완료·코타라 CTC 쇼츠 3편 예약발행 기록. modules.md scripts/youtube R0 OK 16 |
 | YouTube 자막·분석(standalone) | Google | CLI `apps/youtube-analyzer-standalone` | `connectors/transcriber.py`, `connectors/youtube_data_api.py`, `connectors/yt_dlp_downloader.py` | 미확인 | summary.md apps/youtube-analyzer-standalone LIVE 160, UNREACHED 2. git status상 신규(??) 미커밋 상태 — 실사용 로그 없음 |
 | GA/Google Analytics | Google | 없음 | 검색 결과 없음(scripts/google 104파일 중 analytics 전용 모듈 미발견) | 없음 | grep 미실시했으나 CLAUDE.md·memory 어디에도 GA 언급 없음, service_catalog 미등재 |
 | Google Drive/Workspace | Google | `scripts/google/workspace`(15파일), MCP `Google_Drive` | `scripts/google/workspace/*` | 미확인 | modules.md scripts/google/workspace R0 OK 15, 그러나 실사용 결과 로그·메모리 근거 없음 |

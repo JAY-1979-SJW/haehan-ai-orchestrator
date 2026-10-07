@@ -734,6 +734,10 @@ _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/gongmu/gongmu_store.py",
     "ai_orchestrator/scheduler/scheduled_job_store.py",
     "ai_orchestrator/site_work/work_record_store.py",
+    # 도구 폴더로 옮겨진 L7 저장소(F3·F4 묶음 이동 — 층은 registry 에서 그대로 L7 persistence, 위치만 도구 집 안)
+    "ai_orchestrator/connectors/hanafax/authorization_store.py",
+    "ai_orchestrator/connectors/naver_mail/bulk_store.py",
+    "ai_orchestrator/connectors/naver_mail/draft_store.py",
     "scripts/common/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
     "storage/",
     "migrations/",

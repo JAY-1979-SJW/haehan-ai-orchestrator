@@ -1,7 +1,7 @@
 """L6 서비스 — 메일 순차 대량 발송 승인서 만들기·시험 발송·승인·취소·멈춤·실행 (API 라우터가 호출한다).
 
 기준서: docs/specs/2026-10-02_mail_bulk_sequential.md (하나팩스 `hanafax_authorization_service` 와 같은 구조)
-검증·해시 계산은 여기서 하고, 저장은 `mail_bulk_store`, 판정은 `mail_bulk_policy`, 차례 발송은 `naver_mail_bulk` 가 맡는다.
+검증·해시 계산은 여기서 하고, 저장은 `bulk_store`, 판정은 `bulk_policy`, 차례 발송은 `naver_mail_bulk` 가 맡는다.
 승인서는 한 번 승인하면 수정할 수 없다. 실행은 **백그라운드 스레드**(긴 간격 대기가 예약 작업 루프를 막지 않게).
 AI(에이전트)에게는 이 서비스를 열지 않는다 — `mcp_server.API_REGISTRY` 에 없고 테스트가 고정한다.
 주소록 파일은 허용 폴더(첨부와 같은 경로 안전 규칙) 안의 사용자 본인 파일만 읽는다(openpyxl 은 XML 공격을 막지 않으므로 임의 경로를 받지 않는다).
@@ -18,13 +18,13 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from ai_orchestrator.gates import mail_bulk_policy as policy
-from ai_orchestrator.gates import mail_draft_policy as draft_policy
+from ai_orchestrator.connectors.naver_mail import bulk_policy as policy
+from ai_orchestrator.connectors.naver_mail import draft_policy as draft_policy
 from ai_orchestrator.paths import repo_root
-from ai_orchestrator.persistence import mail_bulk_store as store
-from ai_orchestrator.workflows import naver_mail_bulk as flow
-from ai_orchestrator.workflows import naver_mail_drafts as drafts
-from ai_orchestrator.workflows import naver_mailbox_flow as mailbox_flow
+from ai_orchestrator.connectors.naver_mail import bulk_store as store
+from ai_orchestrator.connectors.naver_mail import bulk_workflow as flow
+from ai_orchestrator.connectors.naver_mail import drafts_workflow as drafts
+from ai_orchestrator.connectors.naver_mail import mailbox_flow as mailbox_flow
 from scripts.naver.mail.imap import bulk_sender
 from scripts.naver.mail.imap import sender as smtp_draft
 

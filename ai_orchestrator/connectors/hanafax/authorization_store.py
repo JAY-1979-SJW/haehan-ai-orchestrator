@@ -21,7 +21,7 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import storage_dir
 
-from .sqlite_schema import apply_schema, set_busy_timeout
+from ai_orchestrator.persistence.sqlite_schema import apply_schema, set_busy_timeout
 
 _DB_PATH = storage_dir() / "fax_authorizations.db"
 

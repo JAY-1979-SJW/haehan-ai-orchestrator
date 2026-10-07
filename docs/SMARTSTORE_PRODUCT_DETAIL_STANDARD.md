@@ -456,5 +456,5 @@ python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-c
 | `scripts/naver/smartstore/product/models.py` | 데이터 모델 (확장 대상) |
 | `admin-web/src/app/naver/smartstore/SmartStoreClient.tsx` | 기존 UI (드로어 추가 위치) |
 | `scripts/auth/auth_session.py` | 세션 복원 (`restore_session('naver.com', page)`) |
-| `ai_orchestrator/connectors/naver_session_router.py` | 세션 파이프라인 API |
+| `ai_orchestrator/connectors/naver_auth/session_router.py` | 세션 파이프라인 API |
 | `data/sessions/naver.com.json` | 저장된 로그인 세션 |

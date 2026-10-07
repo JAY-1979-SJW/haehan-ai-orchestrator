@@ -1,4 +1,4 @@
-"""ai_orchestrator.workflows.hanafax_auto_send — 하나팩스 자동 발송 워크플로.
+"""ai_orchestrator.connectors.hanafax.auto_send — 하나팩스 자동 발송 워크플로.
 
 **모든 테스트는 가짜 발송기만 쓴다. 실제 팩스는 절대 나가지 않는다**(워크플로가 실제 발송 코드를 import 하지 않는다).
 """
@@ -9,9 +9,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from ai_orchestrator.gates import fax_send_policy as pol
-from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.workflows import hanafax_auto_send as flow
+from ai_orchestrator.connectors.hanafax import send_policy as pol
+from ai_orchestrator.connectors.hanafax import authorization_store as store
+from ai_orchestrator.connectors.hanafax import auto_send as flow
 
 KST = timezone(timedelta(hours=9))
 NOW = datetime(2026, 10, 2, 10, 0, tzinfo=KST)

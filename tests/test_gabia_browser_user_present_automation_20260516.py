@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT))
 
 
 def test_gabia_browser_task_contract_created():
-    from ai_orchestrator.gabia.gabia_browser_task import make_autowork_dns_task
+    from ai_orchestrator.connectors.gabia.browser_task import make_autowork_dns_task
 
     task = make_autowork_dns_task()
     assert task.provider == "gabia"
@@ -35,7 +35,7 @@ def test_gabia_browser_task_contract_created():
 
 
 def test_desired_fqdn_is_autowork_haehan_ai_kr():
-    from ai_orchestrator.gabia.gabia_browser_task import make_autowork_dns_task
+    from ai_orchestrator.connectors.gabia.browser_task import make_autowork_dns_task
 
     task = make_autowork_dns_task()
     assert task.desired_fqdn == "autowork.haehan-ai.kr"
@@ -49,7 +49,7 @@ def test_desired_fqdn_is_autowork_haehan_ai_kr():
 
 
 def test_login_required_state_requires_user_present_auth():
-    from ai_orchestrator.gabia.gabia_browser_task import STATE_LOGIN_REQUIRED
+    from ai_orchestrator.connectors.gabia.browser_task import STATE_LOGIN_REQUIRED
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
 
     svc = ExecutionPolicyService()
@@ -64,7 +64,7 @@ def test_login_required_state_requires_user_present_auth():
 
 
 def test_trusted_session_reuse_allowed_in_reused_state():
-    from ai_orchestrator.gabia.gabia_browser_task import STATE_TRUSTED_SESSION_REUSED
+    from ai_orchestrator.connectors.gabia.browser_task import STATE_TRUSTED_SESSION_REUSED
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
 
     svc = ExecutionPolicyService()
@@ -74,7 +74,7 @@ def test_trusted_session_reuse_allowed_in_reused_state():
 
 
 def test_trusted_session_not_allowed_in_blocked_state():
-    from ai_orchestrator.gabia.gabia_browser_task import STATE_BLOCKED
+    from ai_orchestrator.connectors.gabia.browser_task import STATE_BLOCKED
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
 
     svc = ExecutionPolicyService()
@@ -88,7 +88,7 @@ def test_trusted_session_not_allowed_in_blocked_state():
 
 
 def test_reauth_required_state():
-    from ai_orchestrator.gabia.gabia_browser_task import STATE_REAUTH_REQUIRED
+    from ai_orchestrator.connectors.gabia.browser_task import STATE_REAUTH_REQUIRED
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
 
     svc = ExecutionPolicyService()
@@ -103,7 +103,7 @@ def test_reauth_required_state():
 
 
 def test_dns_management_page_ready_state_ai_executable():
-    from ai_orchestrator.gabia.gabia_browser_task import (
+    from ai_orchestrator.connectors.gabia.browser_task import (
         STATE_DNS_MANAGEMENT_PAGE_READY,
         is_ai_executable,
     )
@@ -117,7 +117,7 @@ def test_dns_management_page_ready_state_ai_executable():
 
 
 def test_dns_record_drafted_state_safe_to_prepare():
-    from ai_orchestrator.gabia.gabia_browser_task import STATE_DNS_RECORD_DRAFTED
+    from ai_orchestrator.connectors.gabia.browser_task import STATE_DNS_RECORD_DRAFTED
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
 
     svc = ExecutionPolicyService()
@@ -132,7 +132,7 @@ def test_dns_record_drafted_state_safe_to_prepare():
 
 
 def test_final_approval_required_state_button_blocked():
-    from ai_orchestrator.gabia.gabia_browser_task import STATE_FINAL_APPROVAL_REQUIRED
+    from ai_orchestrator.connectors.gabia.browser_task import STATE_FINAL_APPROVAL_REQUIRED
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
 
     svc = ExecutionPolicyService()
@@ -173,7 +173,7 @@ def test_domain_dns_change_approval_policy_exists():
 
 
 def test_ai_cannot_auto_click_final_save_in_any_state():
-    from ai_orchestrator.gabia.gabia_browser_task import (
+    from ai_orchestrator.connectors.gabia.browser_task import (
         STATE_CHANGE_PREVIEW_CREATED,
         STATE_DNS_RECORD_DRAFTED,
         STATE_FINAL_APPROVAL_REQUIRED,
@@ -281,8 +281,8 @@ def test_no_actual_gabia_browser_access():
 
 
 def test_no_conflict_with_gabia_dns_workflow():
-    from ai_orchestrator.gabia.gabia_browser_task import make_autowork_dns_task
-    from ai_orchestrator.gabia.gabia_dns_work_registry import get_work_trade
+    from ai_orchestrator.connectors.gabia.browser_task import make_autowork_dns_task
+    from ai_orchestrator.connectors.gabia.dns_work_registry import get_work_trade
 
     wt = get_work_trade("gabia_dns_management")
     task = make_autowork_dns_task()
@@ -311,7 +311,7 @@ def test_no_conflict_with_trusted_session_policy():
 
 
 def test_state_machine_allowed_transitions():
-    from ai_orchestrator.gabia.gabia_browser_task import (
+    from ai_orchestrator.connectors.gabia.browser_task import (
         STATE_CHANGE_PREVIEW_CREATED,
         STATE_DNS_RECORD_DRAFTED,
         STATE_FINAL_APPROVAL_REQUIRED,
@@ -329,7 +329,7 @@ def test_state_machine_allowed_transitions():
 
 
 def test_state_machine_blocked_transitions():
-    from ai_orchestrator.gabia.gabia_browser_task import (
+    from ai_orchestrator.connectors.gabia.browser_task import (
         STATE_DNS_MANAGEMENT_PAGE_READY,
         STATE_DNS_RECORD_DRAFTED,
         STATE_FINAL_APPROVAL_REQUIRED,
@@ -353,7 +353,7 @@ def test_gabia_domain_profile_registered():
 
 
 def test_task_safe_dict_no_secret_fields():
-    from ai_orchestrator.gabia.gabia_browser_task import make_autowork_dns_task
+    from ai_orchestrator.connectors.gabia.browser_task import make_autowork_dns_task
 
     task = make_autowork_dns_task()
     safe = task.to_safe_dict()

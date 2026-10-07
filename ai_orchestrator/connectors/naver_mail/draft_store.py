@@ -21,8 +21,8 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import storage_dir
 
-from ..domain import mail_draft_states as states
-from .sqlite_schema import apply_schema, set_busy_timeout
+from ai_orchestrator.connectors.naver_mail import draft_states as states
+from ai_orchestrator.persistence.sqlite_schema import apply_schema, set_busy_timeout
 
 _DB_PATH = storage_dir() / "naver_mail_drafts.db"
 

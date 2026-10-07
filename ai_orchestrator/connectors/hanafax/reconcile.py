@@ -14,7 +14,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from ai_orchestrator.persistence import fax_authorization_store as store
+from ai_orchestrator.connectors.hanafax import authorization_store as store
 
 CLUSTER_GAP_SECONDS = 15  # 같은 전송으로 기록된 번호는 몇 초 안에 몰려 있다
 MATCH_WINDOW_MINUTES = 10

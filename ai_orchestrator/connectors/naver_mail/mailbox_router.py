@@ -1,4 +1,4 @@
-"""네이버 메일함 라우터 (L8) — HTTP 처리만. 업무 흐름은 workflows/naver_mailbox_flow.
+"""네이버 메일함 라우터 (L8) — HTTP 처리만. 업무 흐름은 connectors/naver_mail/mailbox_flow.
 
 기준서: docs/specs/2026-10-01_naver_mailbox_tab.md
   GET  /naver-mailbox/accounts                       — 고를 수 있는 계정
@@ -38,8 +38,8 @@ from fastapi import Path as PathParam
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.workflows import naver_mail_drafts as drafts
-from ai_orchestrator.workflows import naver_mailbox_flow as service
+from ai_orchestrator.connectors.naver_mail import drafts_workflow as drafts
+from ai_orchestrator.connectors.naver_mail import mailbox_flow as service
 
 naver_mailbox_router = APIRouter(prefix="/naver-mailbox", tags=["naver-mailbox"])
 _ADMIN = Depends(require_role("admin", "owner"))

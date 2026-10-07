@@ -179,7 +179,7 @@ def _gmail(monkeypatch):
     sent: list[dict] = []
     monkeypatch.setattr(g, "log_event", lambda *a, **k: None)
     monkeypatch.setattr(
-        "ai_orchestrator.sites.gmail_reader.send_reply", lambda **kw: sent.append(kw) or {"id": "m1"}
+        "ai_orchestrator.connectors.google.gmail_reader.send_reply", lambda **kw: sent.append(kw) or {"id": "m1"}
     )
     return g, sent
 
@@ -720,7 +720,7 @@ def test_hanafax_single_send_phrase_number_and_opt_out(monkeypatch):
     from fastapi import HTTPException
 
     from ai_orchestrator.connectors.hanafax import router as hf
-    from ai_orchestrator.persistence import fax_authorization_store as store
+    from ai_orchestrator.connectors.hanafax import authorization_store as store
 
     sent: list[str] = []
     monkeypatch.setattr(

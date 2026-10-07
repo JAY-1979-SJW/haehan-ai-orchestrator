@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from ai_orchestrator.gates import mail_new_policy
+from ai_orchestrator.connectors.naver_mail import new_policy as mail_new_policy
 from scripts.naver.blog.accounts import BLOG_ACCOUNTS
 from scripts.naver.mail.imap import attachments as att
 from scripts.naver.mail.imap import mailbox, sender
