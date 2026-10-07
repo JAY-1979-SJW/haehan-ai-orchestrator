@@ -130,6 +130,12 @@ jobs:
         # 허용목록)은 통과, 새로 끊기는 호출만 FAIL.
         run: python scripts/ops/audit_r1_api_contract_gate.py
 
+      - name: 도구 집 게이트 (도구 키워드 파일이 집 밖에 새로 생기면 차단)
+        # 도구 파일은 구현 scripts/<도구>/·API connectors/<도구>/·화면 app/<도구>/ 집 안에 둔다
+        # (docs/architecture/TOOL_HOME_MAP.md). 기존 집 밖 파일은 configs/tool_home_baseline.json 으로
+        # 고정, 기준선에 없는 새 이탈만 FAIL. 규칙·예외 사유: configs/tool_home.json.
+        run: python scripts/ops/tool_home_gate.py --check-all
+
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
         # forbidden_imports/security_patterns/circular_imports 외에 "unknown layer 파일 수"
