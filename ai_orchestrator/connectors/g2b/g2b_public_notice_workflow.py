@@ -20,7 +20,7 @@ import logging
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.browser_tool.g2b_domain_policy import (
+from ai_orchestrator.connectors.g2b.g2b_domain_policy import (
     DOMAIN_G2B_PUBLIC_READONLY,
     DOMAIN_NEEDS_URL_VERIFICATION,
     DOMAIN_READONLY_CANDIDATE,

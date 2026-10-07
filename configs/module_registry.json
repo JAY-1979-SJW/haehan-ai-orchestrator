@@ -2905,7 +2905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_domain_policy.py": {
+  "ai_orchestrator/connectors/g2b/g2b_domain_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "g2b",
@@ -2913,7 +2913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_existing_openapi_bridge.py": {
+  "ai_orchestrator/connectors/g2b/g2b_existing_openapi_bridge.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -2921,7 +2921,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_content_validator.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_content_validator.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -2929,7 +2929,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_dryrun_adapter.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -2937,7 +2937,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_execution_gate.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -2945,7 +2945,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_local_live_runner.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_local_live_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -2953,7 +2953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_workflow.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -22847,6 +22847,14 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/g2b/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "g2b",
+   "reason": "도메인(g2b) 자동화",
+   "confidence": "low",
    "source": "rule"
   }
  }

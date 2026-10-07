@@ -32,14 +32,14 @@ import warnings
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
-from ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter import (
+from ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter import (  # noqa: E402 - 위 sys.path 부트스트랩 이후에만 import 가능(이동 전부터 존재)
     ADAPTER_G2B_BLOCKED,
     ADAPTER_G2B_DRYRUN_READY,
     ADAPTER_G2B_NEEDS_VERIFICATION,
     evaluate_g2b_public_notice_dryrun,
     validate_g2b_dryrun_adapter_result,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (
+from ai_orchestrator.connectors.g2b.g2b_public_notice_workflow import (  # noqa: E402 - 위 sys.path 부트스트랩 이후에만 import 가능(이동 전부터 존재)
     FORBIDDEN_OPERATIONS,
     VERDICT_ALLOWED,
     VERDICT_BLOCKED,
@@ -347,12 +347,12 @@ class TestDryRunCodeSafety(unittest.TestCase):
     """adapter / workflow 코드 정적 검사."""
 
     def _get_adapter_src(self):
-        import ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter as m
+        import ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter as m
 
         return inspect.getsource(m)
 
     def _get_workflow_src(self):
-        import ai_orchestrator.browser_tool.g2b_public_notice_workflow as m
+        import ai_orchestrator.connectors.g2b.g2b_public_notice_workflow as m
 
         return inspect.getsource(m)
 

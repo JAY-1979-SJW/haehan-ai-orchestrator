@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.g2b_public_notice_content_validator import (
+from ai_orchestrator.connectors.g2b.g2b_public_notice_content_validator import (
     CONTENT_INVALID,
     CONTENT_UNKNOWN,
     CONTENT_VALID_PASS,
@@ -274,7 +274,7 @@ def test_discovery_max_depth_is_one():
 def test_content_validator_has_no_click_no_download_code():
     import inspect
 
-    import ai_orchestrator.browser_tool.g2b_public_notice_content_validator as m
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_content_validator as m
 
     src = inspect.getsource(m)
     # click/type/fill/submit/download를 실행하는 코드가 없어야 함

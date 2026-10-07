@@ -31,8 +31,8 @@ def test_01_g2b_import_does_not_break_allowlist_result():
     payload = {"target_url": "https://www.google.com", "operation": "read"}
     result_before = evaluate_allowlist_preflight(payload)
 
-    import ai_orchestrator.browser_tool.g2b_public_notice_execution_gate
-    import ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
 
     result_after = evaluate_allowlist_preflight(payload)
     assert result_before.get("site_id") == result_after.get("site_id")
@@ -47,7 +47,7 @@ def test_02_g2b_execution_gate_import_does_not_break_site_compliance():
 
     result_before = get_site_compliance_policy("google_accounts")
 
-    import ai_orchestrator.browser_tool.g2b_public_notice_execution_gate  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
 
     result_after = get_site_compliance_policy("google_accounts")
     assert result_before == result_after
@@ -56,11 +56,11 @@ def test_02_g2b_execution_gate_import_does_not_break_site_compliance():
 def test_03_g2b_workflow_import_does_not_mutate_allowlist():
     """g2b_public_notice_workflow import 후 ALLOWLIST_SAFE_SITES가 mutate되지 않는다."""
     # g2b 관련 모든 모듈 import
-    import ai_orchestrator.browser_tool.g2b_domain_policy
-    import ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter
-    import ai_orchestrator.browser_tool.g2b_public_notice_execution_gate
-    import ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner
-    import ai_orchestrator.browser_tool.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
+    import ai_orchestrator.connectors.g2b.g2b_domain_policy
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
     from ai_orchestrator.browser_tool.allowlist_preflight import (
         evaluate_allowlist_preflight,
     )
@@ -72,14 +72,14 @@ def test_03_g2b_workflow_import_does_not_mutate_allowlist():
 
 def test_04_g2b_allowed_domain_result_import_order_independent():
     """g2b.go.kr 허용 결과가 import 순서와 무관하게 동일하다."""
-    from ai_orchestrator.browser_tool.g2b_domain_policy import (
+    from ai_orchestrator.connectors.g2b.g2b_domain_policy import (
         classify_g2b_url,
     )
 
     result_a = classify_g2b_url("https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do", "read")
 
     # 다른 모듈 import 후 재확인
-    import ai_orchestrator.browser_tool.g2b_public_notice_execution_gate  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
 
     result_b = classify_g2b_url("https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do", "read")
     assert result_a["readonly_allowed"] == result_b["readonly_allowed"]
@@ -88,11 +88,11 @@ def test_04_g2b_allowed_domain_result_import_order_independent():
 
 def test_05_login_path_block_import_order_independent():
     """login/cert/bid/contract/payment BLOCK 결과가 import 순서와 무관하다."""
-    import ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter
 
     # 다른 모듈들을 import한 후에도 BLOCK 결과 유지
-    import ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
-    from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (
         build_g2b_readonly_execution_candidate,
     )
 
@@ -110,8 +110,8 @@ def test_05_login_path_block_import_order_independent():
 
 def test_06_wildcard_subdomain_block_import_order_independent():
     """wildcard subdomain 차단 결과가 import 순서와 무관하다."""
-    import ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
-    from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (
         build_g2b_readonly_execution_candidate,
     )
 
@@ -122,8 +122,8 @@ def test_06_wildcard_subdomain_block_import_order_independent():
 
 def test_07_download_block_import_order_independent():
     """download 차단 결과가 import 순서와 무관하다."""
-    import ai_orchestrator.browser_tool.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
-    from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (
         build_g2b_readonly_execution_candidate,
     )
 
@@ -175,7 +175,7 @@ def test_09_preflight_chain_no_browser_worker_at_module_level():
 
 def test_10_live_runner_import_no_playwright_at_module_level():
     """g2b_public_notice_local_live_runner.py는 playwright를 lazy import한다."""
-    runner_path = _repo_root / "ai_orchestrator" / "browser_tool" / "g2b_public_notice_local_live_runner.py"
+    runner_path = _repo_root / "ai_orchestrator" / "connectors" / "g2b" / "g2b_public_notice_local_live_runner.py"
     source = runner_path.read_text(encoding="utf-8")
     lines = source.split("\n")
     # module-level playwright import가 없어야 함
@@ -211,11 +211,11 @@ def test_11_scripts_import_no_side_effect():
 def test_12_gate_module_design_tests_pass_after_all_g2b_imports():
     """모든 g2b 모듈 import 후에도 gate_module_design 테스트가 기대하는 소스 검사가 통과한다."""
     # 모든 g2b 모듈 import
-    import ai_orchestrator.browser_tool.g2b_domain_policy
-    import ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter
-    import ai_orchestrator.browser_tool.g2b_public_notice_execution_gate
-    import ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner
-    import ai_orchestrator.browser_tool.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
+    import ai_orchestrator.connectors.g2b.g2b_domain_policy
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
 
     # gate_module_design 테스트 파일 소스 확인
     test_file = _repo_root / "tests" / "test_browser_gate_module_design_20260506.py"

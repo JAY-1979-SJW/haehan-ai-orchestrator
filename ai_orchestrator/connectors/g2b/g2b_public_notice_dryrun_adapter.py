@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (
+from ai_orchestrator.connectors.g2b.g2b_public_notice_workflow import (
     ALLOWED_OPERATIONS,
     FORBIDDEN_OPERATIONS,
     VERDICT_BLOCKED,

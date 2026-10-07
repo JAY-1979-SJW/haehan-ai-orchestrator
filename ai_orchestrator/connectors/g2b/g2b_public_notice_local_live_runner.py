@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
+from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (
     GATE_READONLY_EXECUTION_CANDIDATE,
     validate_g2b_execution_gate_result,
 )
@@ -442,7 +442,7 @@ def _run_suite_case(
     actual_live_required: bool,
 ) -> None:
     """fixture 케이스 1건을 실행/검증하고 suite_result 에 누적한다."""
-    from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (
         build_g2b_readonly_execution_candidate,
     )
 
