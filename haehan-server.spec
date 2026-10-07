@@ -187,7 +187,9 @@ print("[spec] Chromium 번들 제외 — 대상 PC에 Google Chrome 설치 필�
 
 # ── Analysis ─────────────────────────────────────────────────────────────────
 a = Analysis(
-    [str(ROOT / 'ai_orchestrator' / 'asgi.py')],  # 진입점(2026-10-07: scripts/run_server.py → asgi.py, 루트 모듈 분리 반영)
+    # 진입점: 상대 import 가 없는 전용 진입 파일. asgi.py 를 직접 쓰면 단독 스크립트로 실행돼
+    # `from . import config` 가 실패한다(2026-10-08 첫 빌드 E2E fastapi.log 실측).
+    [str(ROOT / 'ai_orchestrator' / 'server' / 'desktop_entry.py')],
     pathex=[str(ROOT)],
     binaries=[],
     datas=datas,
