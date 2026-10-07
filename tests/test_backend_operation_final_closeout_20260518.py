@@ -37,7 +37,7 @@ def audit_result(audit_mod):
 
 @pytest.fixture(scope="module")
 def router_content():
-    return (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
+    return (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
 
 
 @pytest.fixture(scope="module")

@@ -19,9 +19,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import storage_dir
+
 from ..persistence.sqlite_schema import add_column_if_missing, apply_schema, set_busy_timeout
 
-_DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "instagram_dm.db"
+_DB_PATH = storage_dir() / "instagram_dm.db"
 
 
 def _get_db_path() -> Path:

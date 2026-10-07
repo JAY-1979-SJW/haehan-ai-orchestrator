@@ -21,14 +21,14 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from pathlib import Path
 
+from scripts.app_paths import repo_root
 from scripts.logger import get_logger
 from scripts.naver.cafe.collection.collector import collect_articles
 
 _log = get_logger(__name__)
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = repo_root()
 BOARD_CONFIG = ROOT / "configs" / "cafe_gunmu_boards.json"
 OUT_DIR = ROOT / "data" / "cafe" / "gunmu_all_boards"
 

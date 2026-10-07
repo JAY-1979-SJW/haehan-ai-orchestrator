@@ -19,7 +19,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 DATA_DIR = ROOT / "data"
 DEFAULT_QUEUE = DATA_DIR / "hanafax_queue.jsonl"
 BATCH_RESULT_DIR = DATA_DIR / "hanafax_batch_results"

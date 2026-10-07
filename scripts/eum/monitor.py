@@ -178,7 +178,7 @@ def main() -> dict:
         devices = _load_devices()
         if not devices:
             print("단말기 데이터가 없습니다.")
-            print("먼저 실행: python scripts/eum_extract_all_devices.py")
+            print("먼저 실행: python scripts/eum/extract_all_devices.py")
             ctx.set_result(msg="데이터 없음", ok=False)
             return {}
 

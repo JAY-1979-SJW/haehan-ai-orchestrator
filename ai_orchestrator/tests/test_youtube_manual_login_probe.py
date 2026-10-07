@@ -741,7 +741,7 @@ def test_close_methods_called():
 
 
 def test_smoke_script_not_auto_executed():
-    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "smoke_youtube_manual_login_probe.py"
+    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "youtube" / "smoke_youtube_manual_login_probe.py"
     assert smoke_path.exists(), "smoke script missing"
     src = smoke_path.read_text(encoding="utf-8")
     assert 'if __name__ == "__main__":' in src or "if __name__ == '__main__':" in src
@@ -757,7 +757,7 @@ def test_smoke_script_not_auto_executed():
 
 def test_no_credentials_hardcoded():
     root = Path(__file__).resolve().parent.parent.parent
-    smoke_src = (root / "scripts" / "smoke_youtube_manual_login_probe.py").read_text(encoding="utf-8")
+    smoke_src = (root / "scripts" / "youtube" / "smoke_youtube_manual_login_probe.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
         "YOUTUBE_ID",
@@ -1071,7 +1071,7 @@ def test_yt_no_auto_login_or_cookies_with_new_options():
 
 
 def test_smoke_script_exposes_new_options():
-    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "smoke_youtube_manual_login_probe.py"
+    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "youtube" / "smoke_youtube_manual_login_probe.py"
     src = smoke_path.read_text(encoding="utf-8")
     assert "--require-visible-confirm" in src
     assert "--require-user-login-confirm" in src

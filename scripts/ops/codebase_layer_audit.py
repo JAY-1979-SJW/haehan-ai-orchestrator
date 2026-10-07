@@ -788,7 +788,7 @@ def find_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
 # ROUTER_THINNESS known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지
 _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
     "ai_orchestrator/browser_tool/router.py",
-    "ai_orchestrator/router.py",
+    "ai_orchestrator/routers/registry.py",
 }
 
 # STORAGE_BOUNDARY known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지
@@ -807,8 +807,8 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/critical_logger.py",
     "scripts/naver/automation/platform/error_recovery.py",
     "scripts/naver/automation/platform/scheduler.py",
-    "scripts/naver/automation/smartstore/analytics_dashboard.py",
-    "scripts/naver/automation/smartstore/competitor_analysis.py",
+    "scripts/naver/smartstore/automation/analytics_dashboard.py",
+    "scripts/naver/smartstore/automation/competitor_analysis.py",
     "scripts/naver/blog/gonobi/db.py",
     "scripts/naver/blog/management/analytics.py",
     "scripts/naver/blog/management/schedule.py",

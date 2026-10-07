@@ -29,6 +29,8 @@ import logging
 import os
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
+
 logger = logging.getLogger(__name__)
 
 _SAFE_FIELDS: frozenset[str] = frozenset(
@@ -54,7 +56,7 @@ def default_audit_log_path() -> Path:
     env = os.environ.get("DEV_REG_AUDIT_LOG_PATH", "").strip()
     if env:
         return Path(env)
-    return Path(__file__).resolve().parents[2] / "data" / "dev_reg_audit_runs.jsonl"
+    return data_dir() / "dev_reg_audit_runs.jsonl"
 
 
 def append_run(record: dict, *, path: Path | None = None) -> None:

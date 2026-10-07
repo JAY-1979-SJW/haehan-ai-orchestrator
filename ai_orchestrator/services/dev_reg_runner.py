@@ -35,12 +35,13 @@ from ai_orchestrator.audit_logger import log_event
 from ai_orchestrator.clients import telegram_sender as _ts
 from ai_orchestrator.gates import dev_reg_approval as _dra
 from ai_orchestrator.gates.approval import get_token, issue_token_for_dev_reg
+from ai_orchestrator.paths.runtime import storage_dir
 from ai_orchestrator.sites.adapters.dev_reg_base import DevRegAdapterBase
 from ai_orchestrator.telegram_notifier import build_dev_reg_message
 
 logger = logging.getLogger(__name__)
 
-_SCREENSHOT_DIR = Path(__file__).resolve().parents[1] / "storage" / "screenshots" / "dev_reg"
+_SCREENSHOT_DIR = storage_dir() / "screenshots" / "dev_reg"
 _DEFAULT_TTL_MINUTES = 30
 
 

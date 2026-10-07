@@ -87,23 +87,29 @@ test("사용자 흐름 E2E — 앱 UI 직접 조작", async () => {
   console.log(okOps ? "✅ [4] 운영센터 진입" : "⚠️ [4] 운영센터 스킵");
 
   // ── 5. AI 비서: GPT 채팅 실제 1턴 ──────────────────────────────
-  try {
-    await ui.goto("http://localhost:3000/", { timeout: 20_000 }).catch(() => {});
-    await ui.waitForTimeout(3_000);
-    await clickAndGo(ui, "AI 비서", "(assistant|ai|chat)");
-    await ui.waitForTimeout(3_000);
-    const input = ui.locator("textarea, input[type='text']").first();
-    if (await input.count() > 0) {
-      await input.fill("한 단어로 답해: 대한민국 수도?");
-      await ui.keyboard.press("Enter");
-      await ui.waitForTimeout(12_000); // GPT 응답 대기
-      console.log("✅ [5] AI 채팅 1턴 전송");
-    } else {
-      console.log("⚠️ [5] 채팅 입력창 미발견 — 스킵");
+  // 유료 API 호출이라 CI(desktop-release.yml 빌드 산출물 E2E)에서는 스킵한다
+  // (HAEHAN_E2E_SKIP_PAID_API=1). 로컬 수동 실행에선 그대로 돈다.
+  if (process.env.HAEHAN_E2E_SKIP_PAID_API === "1") {
+    console.log("⏭️ [5] AI 채팅 — HAEHAN_E2E_SKIP_PAID_API=1, 유료 API 스킵");
+  } else {
+    try {
+      await ui.goto("http://localhost:3000/", { timeout: 20_000 }).catch(() => {});
+      await ui.waitForTimeout(3_000);
+      await clickAndGo(ui, "AI 비서", "(assistant|ai|chat)");
+      await ui.waitForTimeout(3_000);
+      const input = ui.locator("textarea, input[type='text']").first();
+      if (await input.count() > 0) {
+        await input.fill("한 단어로 답해: 대한민국 수도?");
+        await ui.keyboard.press("Enter");
+        await ui.waitForTimeout(12_000); // GPT 응답 대기
+        console.log("✅ [5] AI 채팅 1턴 전송");
+      } else {
+        console.log("⚠️ [5] 채팅 입력창 미발견 — 스킵");
+      }
+      await shot(ui, "05_ai_chat.png");
+    } catch (e) {
+      console.log("⚠️ [5] AI 채팅 스킵:", String(e).slice(0, 80));
     }
-    await shot(ui, "05_ai_chat.png");
-  } catch (e) {
-    console.log("⚠️ [5] AI 채팅 스킵:", String(e).slice(0, 80));
   }
 
   expect(!app.process().killed).toBe(true);

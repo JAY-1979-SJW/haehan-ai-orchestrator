@@ -83,7 +83,7 @@ def setup(tmp_path_factory):
 
     importlib.reload(_dra)
     _dra.clear()
-    import ai_orchestrator.router as _router
+    import ai_orchestrator.routers.registry as _router
 
     importlib.reload(_router)
     import ai_orchestrator.asgi as _srv

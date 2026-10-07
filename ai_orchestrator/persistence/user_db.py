@@ -14,7 +14,9 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-_DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "users.db"
+from ai_orchestrator.paths.runtime import storage_dir
+
+_DB_PATH = storage_dir() / "users.db"
 
 
 def _get_db_path() -> Path:
@@ -23,6 +25,7 @@ def _get_db_path() -> Path:
 
 @contextmanager
 def _conn():
+    _get_db_path().parent.mkdir(parents=True, exist_ok=True)  # 데스크톱: 새 데이터 루트(userData\storage)가 아직 없을 수 있다
     con = sqlite3.connect(str(_get_db_path()), timeout=30)
     con.row_factory = sqlite3.Row
     try:
@@ -62,6 +65,10 @@ def _create_schema() -> None:
                 enabled INTEGER NOT NULL DEFAULT 1
             )
         """)
+        # 데스크톱 자동 세션이 '마지막으로 쓴 owner' 를 고르는 데 쓴다 — 옛 DB 에는 컬럼이 없으므로 한 번 추가한다.
+        columns = {row[1] for row in con.execute("PRAGMA table_info(users)")}
+        if "last_session_at" not in columns:
+            con.execute("ALTER TABLE users ADD COLUMN last_session_at TEXT")
         con.commit()
 
 
@@ -99,6 +106,81 @@ def create_user(email: str, name: str, password: str) -> dict:
     if created is None:
         raise RuntimeError("가입 직후 조회 실패")
     return created
+
+
+def create_user_bootstrapping(
+    email: str, name: str, password: str, *, allow_bootstrap: bool, only_bootstrap: bool = False
+) -> tuple[dict | None, bool]:
+    """가입 처리 + (허용될 때) 첫 가입자 owner 부트스트랩. 반환: (사용자, 부트스트랩으로 owner 가 되었는가).
+
+    allow_bootstrap 이 True 이고 users 테이블이 **완전히 비어 있을 때** 들어온 가입 한 명만 enabled=1, role=owner 가 된다.
+    경쟁 조건 차단: BEGIN IMMEDIATE 로 쓰기 잠금을 먼저 잡은 뒤 '비어 있는가' 확인과 INSERT 를 한 트랜잭션으로 처리하고,
+    INSERT 자체도 `WHERE NOT EXISTS` 로 한 번 더 막는다 → 동시에 두 가입이 와도 한 명만 owner, 나머지는 승인 대기.
+    allow_bootstrap=False(서버 모드 등)면 늘 enabled=0, role=user — create_user 와 같다.
+    only_bootstrap=True 면 부트스트랩이 안 될 때(이미 사용자가 있음) 아무 행도 만들지 않고 (None, False) 를 돌려준다
+    (데스크톱 첫 실행 설정: 승인 대기 계정이 따로 생기면 안 된다).
+    """
+    init_db()
+    user_id = str(uuid.uuid4())
+    now = datetime.now(UTC).isoformat()
+    pw_hash = _hash_password(password)
+    with _conn() as con:
+        con.isolation_level = None  # 아래에서 트랜잭션을 직접 관리
+        con.execute("BEGIN IMMEDIATE")
+        try:
+            if allow_bootstrap:
+                con.execute(
+                    "INSERT INTO users (id, email, name, password_hash, role, plan, created_at, enabled) "
+                    "SELECT ?,?,?,?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM users)",
+                    (user_id, email.lower().strip(), name.strip(), pw_hash, "owner", "free", now, 1),
+                )
+                inserted = con.execute("SELECT changes()").fetchone()[0] == 1
+            else:
+                inserted = False
+            if not inserted and only_bootstrap:
+                con.execute("ROLLBACK")
+                return None, False
+            if not inserted:
+                con.execute(
+                    "INSERT INTO users (id, email, name, password_hash, role, plan, created_at, enabled) VALUES (?,?,?,?,?,?,?,?)",
+                    (user_id, email.lower().strip(), name.strip(), pw_hash, "user", "free", now, 0),
+                )
+            con.execute("COMMIT")
+        except BaseException:
+            con.execute("ROLLBACK")
+            raise
+    created = _get_user_unfiltered(user_id)
+    if created is None:
+        raise RuntimeError("가입 직후 조회 실패")
+    return created, bool(inserted)
+
+
+def count_users() -> int:
+    """승인 대기·비활성 포함 전체 사용자 수."""
+    init_db()
+    with _conn() as con:
+        return int(con.execute("SELECT COUNT(*) FROM users").fetchone()[0])
+
+
+def select_desktop_owner() -> dict | None:
+    """데스크톱 자동 세션을 만들 owner — 활성(enabled=1) owner 중 마지막으로 세션을 쓴 계정, 그런 기록이 없으면 가장 먼저 만든 owner.
+
+    owner 가 없으면(비어 있거나 승인 대기 일반 계정뿐) None."""
+    init_db()
+    with _conn() as con:
+        row = con.execute(
+            "SELECT * FROM users WHERE role='owner' AND enabled=1 "
+            "ORDER BY (last_session_at IS NULL), last_session_at DESC, created_at ASC, id ASC LIMIT 1"
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def touch_session(user_id: str) -> None:
+    """자동 세션 발급 시각 기록(마지막으로 쓴 owner 를 고르는 기준)."""
+    init_db()
+    with _conn() as con:
+        con.execute("UPDATE users SET last_session_at=? WHERE id=?", (datetime.now(UTC).isoformat(), user_id))
+        con.commit()
 
 
 def _get_user_unfiltered(user_id: str) -> dict | None:

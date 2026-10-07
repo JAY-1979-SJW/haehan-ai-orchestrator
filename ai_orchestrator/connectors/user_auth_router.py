@@ -58,6 +58,13 @@ def get_jwt_user(
     # 자기완결 데스크톱(AUTH_ENABLED=false, loopback owner): 토큰 없이 owner 자동 인증.
     # require_role 의 AUTH-off 정책(_DUMMY_USER owner)과 통일. 운영 웹(AUTH on)은 바이패스 0 → 기존 로그인 유지.
     if not config.AUTH_ENABLED:
+        # 데스크톱: 등록된 사용자의 유효한 토큰이 오면 그 사용자로(마이페이지에 실제 이름·이메일이 보이도록),
+        # 토큰이 없거나 맞지 않으면 기존처럼 owner 자동 인증.
+        if cred:
+            token_user_id = _decode_token(cred.credentials)
+            registered = user_db.get_user_by_id(token_user_id) if token_user_id else None
+            if registered:
+                return registered
         return {
             "id": "owner",
             "email": "owner@haehan-ai.local",
@@ -160,6 +167,7 @@ def signup(body: SignupRequest):
     if user_db.email_exists(body.email):
         auth_audit.record_auth_event("signup", "conflict", email=body.email)
         raise HTTPException(status_code=409, detail="이미 사용 중인 이메일입니다")
+    # 데스크톱 첫 사용자 등록은 이 가입 흐름이 아니라 desktop_session_router(이름·이메일만, 비밀번호 없음)가 맡는다.
     user = user_db.create_user(body.email, body.name, body.password)
     auth_audit.record_auth_event("signup", "success", actor_id=user.get("id"), email=body.email)
     if is_owner_email(body.email):

@@ -3233,7 +3233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/gmail_cdp_reader.py": {
+  "ai_orchestrator/connectors/google/gmail_cdp_reader.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -3353,7 +3353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/hiworks_client.py": {
+  "ai_orchestrator/connectors/hiworks/client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
@@ -3361,7 +3361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/hiworks_collectors.py": {
+  "ai_orchestrator/connectors/hiworks/collectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
@@ -3369,7 +3369,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/hiworks_config.py": {
+  "ai_orchestrator/connectors/hiworks/config.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
@@ -3465,7 +3465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/marketing_ops_router.py": {
+  "ai_orchestrator/routers/marketing_ops_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "marketing",
@@ -5729,7 +5729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/router.py": {
+  "ai_orchestrator/routers/registry.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -7713,14 +7713,6 @@
    "confidence": "low",
    "source": "manual"
   },
-  "candidate_to_task.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_to_task.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
-  },
   "conftest.py": {
    "layer": "L11",
    "role": "test",
@@ -7737,28 +7729,12 @@
    "confidence": "high",
    "source": "manual"
   },
-  "email_classifier.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
-  },
   "email_task_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
-  },
-  "email_task_executor.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
    "source": "manual"
   },
   "email_task_store.py": {
@@ -7785,27 +7761,11 @@
    "confidence": "low",
    "source": "manual"
   },
-  "inbox_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "high",
-   "source": "manual"
-  },
   "inbox_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
-  },
-  "kakaowork_reader.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "kakao",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/kakaowork_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
    "source": "manual"
   },
@@ -8241,14 +8201,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "message_classifier.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/message_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
-  },
   "orchestrator_v1/core/models.py": {
    "layer": "L1",
    "role": "shared",
@@ -8342,14 +8294,6 @@
    "role": "policy",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/policy_engine.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "high",
-   "source": "manual"
-  },
-  "risk_assessor.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/risk_assessor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
    "source": "manual"
   },
@@ -9225,7 +9169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/eum_collect_now.py": {
+  "scripts/eum/collect_now.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "eum",
@@ -9233,7 +9177,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/eum_export_excel.py": {
+  "scripts/eum/export_excel.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "eum",
@@ -9241,7 +9185,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/eum_extract_all_devices.py": {
+  "scripts/eum/extract_all_devices.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "eum",
@@ -9249,15 +9193,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/eum_login_check.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "eum",
-   "reason": "도메인(eum) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/eum_send_mail_batch.py": {
+  "scripts/eum/send_mail_batch.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "eum",
@@ -9593,7 +9529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gonobi_download_images.py": {
+  "scripts/naver/blog/gonobi/download_images.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9601,7 +9537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gonobi_gallery_check.py": {
+  "scripts/naver/blog/gonobi/gallery_check.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9609,7 +9545,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_page_test.py": {
+  "scripts/naver/blog/gonobi/page_test.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9617,7 +9553,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_reclassify_images.py": {
+  "scripts/naver/blog/gonobi/reclassify_images.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9625,7 +9561,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_redownload_small.py": {
+  "scripts/naver/blog/gonobi/redownload_small.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9633,7 +9569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gonobi_scrape.py": {
+  "scripts/naver/blog/gonobi/scrape.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9641,7 +9577,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_verify_images.py": {
+  "scripts/naver/blog/gonobi/verify_images.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9649,7 +9585,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_verify_paged.py": {
+  "scripts/naver/blog/gonobi/verify_paged.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -9657,7 +9593,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gonobi_verify_problems.py": {
+  "scripts/naver/blog/gonobi/verify_problems.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -11473,7 +11409,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/integration/mail_automation.py": {
+  "scripts/archive/naver/automation/integration/mail_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11498,14 +11434,6 @@
    "source": "rule"
   },
   "scripts/naver/automation/inventory_monitor.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/mail_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11601,7 +11529,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/smartstore/__init__.py": {
+  "scripts/naver/smartstore/automation/__init__.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
@@ -11609,7 +11537,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/smartstore/analytics_dashboard.py": {
+  "scripts/naver/smartstore/automation/analytics_dashboard.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "smartstore",
@@ -11617,7 +11545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/smartstore/competitor_analysis.py": {
+  "scripts/naver/smartstore/automation/competitor_analysis.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "smartstore",
@@ -11625,7 +11553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/smartstore/csv_import.py": {
+  "scripts/naver/smartstore/automation/csv_import.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
@@ -11633,7 +11561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/smartstore/inventory_monitor.py": {
+  "scripts/naver/smartstore/automation/inventory_monitor.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
@@ -11641,7 +11569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/smartstore/order_automation.py": {
+  "scripts/naver/smartstore/automation/order_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
@@ -14345,7 +14273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_browser_user_present_automation.py": {
+  "scripts/archive/ops/audit_gabia_browser_user_present_automation.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -14353,7 +14281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_dns_user_approval_workflow.py": {
+  "scripts/archive/ops/audit_gabia_dns_user_approval_workflow.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -14361,7 +14289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_session_storage_safety.py": {
+  "scripts/archive/ops/audit_gabia_session_storage_safety.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -14873,7 +14801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/check_naver_session_validity_20260520.py": {
+  "scripts/archive/ops/check_naver_session_validity_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver",
@@ -15073,7 +15001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/export_cafe_keywords_excel.py": {
+  "scripts/naver/cafe/ops/export_cafe_keywords_excel.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_cafe",
@@ -15097,7 +15025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/generate_naver_mail_action_dashboard.py": {
+  "scripts/archive/ops/generate_naver_mail_action_dashboard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15193,7 +15121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/live_check_login_realtime_20260520.py": {
+  "scripts/archive/ops/live_check_login_realtime_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -15217,7 +15145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/login_gabia_datago.py": {
+  "scripts/gabia/ops/login_gabia_datago.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -15281,7 +15209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/naver_mail_priority_body_review_20260520.py": {
+  "scripts/archive/ops/naver_mail_priority_body_review_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15289,7 +15217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/naver_mail_unread_report_20260520.py": {
+  "scripts/archive/ops/naver_mail_unread_report_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15345,7 +15273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py": {
+  "scripts/archive/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15353,7 +15281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/report_naver_mail_inbox_consolidated.py": {
+  "scripts/archive/ops/report_naver_mail_inbox_consolidated.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15505,7 +15433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_body_pipeline_batch_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_body_pipeline_batch_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15513,7 +15441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_body_pipeline_v2_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_body_pipeline_v2_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15521,7 +15449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_dynamic_folder_discovery_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_dynamic_folder_discovery_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15529,7 +15457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_inbox_p0_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_inbox_p0_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15537,7 +15465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_smart_folder_coverage_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_smart_folder_coverage_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15593,7 +15521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify_naver_main_first_live_20260520.py": {
+  "scripts/archive/ops/verify_naver_main_first_live_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver",
@@ -16041,7 +15969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/smoke/g2b_user_present_attachment_smoke.py": {
+  "scripts/g2b/smoke/g2b_user_present_attachment_smoke.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "g2b",
@@ -16065,7 +15993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/smoke_youtube_manual_login_probe.py": {
+  "scripts/youtube/smoke_youtube_manual_login_probe.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "youtube",
@@ -16385,7 +16313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/runner.py": {
+  "scripts/youtube/upload/runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "youtube",
@@ -16393,7 +16321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/step1_navigate.py": {
+  "scripts/youtube/upload/step1_navigate.py": {
    "layer": "L6",
    "role": "policy",
    "domain": "youtube",
@@ -16401,7 +16329,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/yt_upload/step2_open_dialog.py": {
+  "scripts/youtube/upload/step2_open_dialog.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -16409,7 +16337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/step3_set_file.py": {
+  "scripts/youtube/upload/step3_set_file.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -16417,7 +16345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/step4_metadata.py": {
+  "scripts/youtube/upload/step4_metadata.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -16425,7 +16353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/step5_publish.py": {
+  "scripts/youtube/upload/step5_publish.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -16455,14 +16383,6 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "manual"
-  },
-  "tasks_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "high",
    "source": "manual"
   },
   "telegram_notifier.py": {
@@ -21425,14 +21345,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "whitelist_executor.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
-  },
   "admin-web/src/app/site-map/RegisteredSites.tsx": {
    "layer": "L9",
    "role": "ui",
@@ -21953,14 +21865,6 @@
    "confidence": "low",
    "source": "manual"
   },
-  "webhooks_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/webhooks/webhooks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
-  },
   "orchestrator_v1/tasks/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -22458,6 +22362,494 @@
    "source": "rule"
   },
   "tests/test_site_task_spec.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/e2e-electron/fresh_install_signup.spec.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/lib/desktop_session.js": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/lib/pid_guard.js": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/setup/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/desktop_session_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/eum/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "eum",
+   "reason": "도메인(eum) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/eum/router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "eum",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/gabia/router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "gabia",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gabia_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/google/gmail_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "google",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/hanafax/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/hanafax/router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "hanafax",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/hiworks/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hiworks",
+   "reason": "도메인(hiworks) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/hiworks/mail_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "hiworks",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_mail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/kakao/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "kakao",
+   "reason": "도메인(kakao) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/kakao/setup_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "kakao",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/kakao_setup_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/kakao/skill_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "kakao",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/kakao_skill_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/paths/bootstrap.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "공용 기반 이름(bootstrap)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/paths/migrate.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/paths/runtime.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/archive/naver/automation/mail_automation.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "naver",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/eum/login_check.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "eum",
+   "reason": "도메인(eum) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/gabia/login_watch.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "gabia",
+   "reason": "이동한 파일 — 원본 scripts/gabia_login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/naver/cafe/ops/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_cafe",
+   "reason": "도메인(naver_cafe) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/cafe/ops/daily_cafe_marketing_pipeline.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_cafe",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/read/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/read/body_reader.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/read/cdp.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/read/classify.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/mail/read/entry.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/mail/read/list_collector.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/read/pipeline.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_mail",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/_dup_structure_hash.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/dup_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/flat_root_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/make_shim.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/move_preflight.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/root_calc_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/run_impacted_tests.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/tool_home_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/electron_guard_harness.js": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_code_map_inert_init.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_desktop_fresh_run.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_desktop_owner_bootstrap.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_dup_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_electron_runtime_guards.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_flat_root_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_move_guardrails.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_naver_mail_read_shim.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_opt_out_lock_windows.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_root_calc_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_runtime_data_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_shim_contract.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_gabia_moved.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "gabia",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_gabia_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "gabia",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_gmail_moved.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_hiworks_moved.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hiworks",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_hiworks_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hiworks",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_kakao_moved.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "kakao",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_kakao_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "kakao",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_smartstore_automation.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "smartstore",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_tool_home_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

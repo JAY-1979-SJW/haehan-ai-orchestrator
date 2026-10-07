@@ -6,11 +6,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from ai_orchestrator.paths import (
+    bootstrap as _runtime_bootstrap,  # noqa: F401 - 저장소(DB)가 열리기 전에 데이터 폴더 준비·이행(맨 먼저 실행돼야 함)
+)
+
 from . import config
 from .config import APP_HOST, APP_PORT
 from .connectors.naver_search_runner import schedule_loop
 from .logging_setup import setup_logging
-from .router import router
+from .routers.registry import router
 
 logger = logging.getLogger(__name__)
 

@@ -1,74 +1,28 @@
-"""건설공무 카페 일일 수집 + 마케팅 요약 재빌드 — 스케줄러용 단일 진입점.
+# haehan-shim: scripts.naver.cafe.ops.daily_cafe_marketing_pipeline
+# 호환 shim: 실제 모듈은 scripts.naver.cafe.ops.daily_cafe_marketing_pipeline 로 이동했다 (scripts/naver/cafe/ops/daily_cafe_marketing_pipeline.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-흐름:
-  1. CDP 브라우저 확인(꺼져 있으면 강제 시작)
-  2. 오늘 신규 게시글 수집 → 누적 JSONL append (daily_snapshot.run_daily_snapshot)
-  3. marketing_summary_build.main() 재실행 → data/marketing/summary_latest.json 갱신
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
 
-로그인 세션이 끊겨있으면 수집은 건너뛰고(예외 삼키지 않고 기록만) 요약 재빌드는
-기존 누적 데이터로 계속 진행한다 — 하루 실패가 전체 파이프라인을 막지 않게.
-"""
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    from pathlib import Path as _Path
 
-from __future__ import annotations
+    _root = str(_Path(__file__).resolve().parents[2])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-import sys
-import traceback
-from datetime import datetime
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
-
-LOG_PATH = ROOT / "data" / "daily_cafe_pipeline_log.jsonl"
+    _runpy.run_module("scripts.naver.cafe.ops.daily_cafe_marketing_pipeline", run_name="__main__")
+    raise SystemExit
 
 
-def _log(payload: dict) -> None:
-    import json
-
-    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    payload["ts"] = datetime.now().isoformat(timespec="seconds")
-    with LOG_PATH.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def main() -> int:
-    result = {"snapshot_ok": False, "snapshot_error": "", "build_ok": False, "build_error": ""}
-
-    try:
-        from scripts.cdp_force_start import _is_cdp_alive, cmd_start
-
-        if not _is_cdp_alive():
-            cmd_start()
-    except Exception:  # noqa: BLE001 - CDP 강제시작 헬퍼가 없거나 실패해도 무시 — 아래 단계에서 자체적으로 연결 상태를 다시 확인함
-        pass  # 강제시작 도우미가 없거나 실패해도 아래 단계에서 자체 확인
-
-    try:
-        from scripts.naver.cafe.collection.daily_snapshot import run_daily_snapshot
-        from scripts.web_connector import get_page
-
-        page = get_page()
-        snap_result = run_daily_snapshot(page)
-        result["snapshot_ok"] = True
-        result["snapshot_summary"] = snap_result
-        print(f"[daily-pipeline] 수집 완료: {snap_result}")
-    except Exception as e:  # noqa: BLE001 - 카페마케팅 일일 파이프라인 오케스트레이션 — CDP 강제시작 실패 무시(다음 단계에서 자체 확인), 수집/요약재빌드 실패는 result dict에 에러 기록 후 다음 단계 계속 진행할 뿐 쓰기 대상은 로컬 요약 파일
-        result["snapshot_error"] = f"{type(e).__name__}: {e}"
-        print(f"[daily-pipeline] 수집 실패(건너뜀): {result['snapshot_error']}")
-
-    try:
-        from scripts import marketing_summary_build
-
-        marketing_summary_build.main()
-        result["build_ok"] = True
-        print("[daily-pipeline] 마케팅 요약 재빌드 완료")
-    except Exception as e:  # noqa: BLE001 - 카페마케팅 일일 파이프라인 오케스트레이션 — CDP 강제시작 실패 무시(다음 단계에서 자체 확인), 수집/요약재빌드 실패는 result dict에 에러 기록 후 다음 단계 계속 진행할 뿐 쓰기 대상은 로컬 요약 파일
-        result["build_error"] = f"{type(e).__name__}: {e}"
-        print(f"[daily-pipeline] 요약 재빌드 실패: {result['build_error']}")
-        traceback.print_exc()
-
-    _log(result)
-    return 0 if result["build_ok"] else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+_install(_il.import_module("scripts.naver.cafe.ops.daily_cafe_marketing_pipeline"), globals(), _sys.modules)

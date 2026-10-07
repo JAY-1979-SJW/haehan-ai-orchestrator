@@ -5,6 +5,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from ai_orchestrator.paths.runtime import data_dir, storage_dir
+
 # 명시적 UTF-8 인코딩으로 .env 파일 로드 (인코딩 오류 방지)
 load_dotenv(encoding="utf-8")
 
@@ -14,7 +16,7 @@ LOG_LEVEL = _log_level_env if _log_level_env in {"DEBUG", "INFO", "WARNING", "ER
 
 # LOG_DIR — 비어있으면 패키지 내 storage/ 사용
 _log_dir_env = os.environ.get("LOG_DIR", "").strip()
-LOG_DIR = Path(_log_dir_env) if _log_dir_env else Path(__file__).parent / "storage"
+LOG_DIR = Path(_log_dir_env) if _log_dir_env else storage_dir()
 AUDIT_LOG_PATH = LOG_DIR / "audit_logs.jsonl"
 APPROVAL_STORE_PATH = LOG_DIR / "approval_tokens.jsonl"
 APPROVAL_RECORD_STORE_PATH = LOG_DIR / "approval_records.jsonl"
@@ -117,7 +119,7 @@ OWNER_EMAILS = parse_owner_emails(os.environ.get("OWNER_EMAILS", ""))
 # ── 로컬 대용량 데이터 루트 ──────────────────────────────────────────────────
 # .env의 LOCAL_DATA_DIR을 매 호출마다 재읽어 경로 변경 시 재시작 불필요.
 # 설정 예) LOCAL_DATA_DIR=C:\Users\skyjw\OneDrive\_local_data
-_DEFAULT_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+_DEFAULT_DATA_DIR = data_dir()
 
 
 def get_local_data_dir() -> Path:

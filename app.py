@@ -17,9 +17,9 @@ from approval_manager import approve_token, build_execution_plan, is_token_valid
 from logger import get_logger, log_event
 from models import TaskRequest
 from policy_engine import load_policy
-from risk_assessor import assess_risk
+from orchestrator_v1.tasks.risk_assessor import assess_risk
 from telegram_notifier import send_approval_request
-from whitelist_executor import execute_allowed
+from orchestrator_v1.tasks.whitelist_executor import execute_allowed
 
 log = get_logger("app")
 

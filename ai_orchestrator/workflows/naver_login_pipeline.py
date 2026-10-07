@@ -21,6 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
@@ -29,7 +30,7 @@ CDP_HOST = "127.0.0.1"
 CDP_PORT = 9222
 
 NAVER_SESSION_HOST = "naver.com"
-SESSION_STATUS_FILE = ROOT / "data" / "naver_session_state.json"
+SESSION_STATUS_FILE = data_dir() / "naver_session_state.json"
 
 # 서브도메인별 개별 저장 대상 (각 도메인 쿠키를 분리 보관)
 NAVER_SUBDOMAINS = [

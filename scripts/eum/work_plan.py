@@ -7,7 +7,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 PLANS_DIR = ROOT / "data" / "eum_plans"
 
 _DEVICE_RE = re.compile(r"^[A-Za-z0-9_.:-]{2,80}$")

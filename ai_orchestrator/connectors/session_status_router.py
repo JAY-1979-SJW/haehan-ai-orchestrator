@@ -15,12 +15,14 @@ from pathlib import Path
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from ai_orchestrator.paths.runtime import data_dir
+
 logger = logging.getLogger(__name__)
 
 session_status_router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_PATH = ROOT / "data" / "login_session_monitor_latest.json"
+DATA_PATH = data_dir() / "login_session_monitor_latest.json"
 
 # 사이트별 메타 (아이콘, 색상)
 _SITE_META: dict[str, dict] = {

@@ -1,13 +1,13 @@
 """Server-owned user data contribution consent and safe export gate."""
 from __future__ import annotations
 
+import json
 import threading
 import uuid
-import json
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
 
 STATUS_ACTIVE = "ACTIVE"
 STATUS_REVOKED = "REVOKED"
@@ -90,7 +90,7 @@ FORBIDDEN_DEVELOPMENT_FIELDS: frozenset[str] = frozenset({
 
 _STORE: dict[str, dict[str, Any]] = {}
 _LOCK = threading.Lock()
-_DEFAULT_AUDIT_DIR = Path(__file__).resolve().parents[2] / "data" / "audit"
+_DEFAULT_AUDIT_DIR = data_dir() / "audit"
 _CONSENT_LOG_PATH = _DEFAULT_AUDIT_DIR / "user_data_contribution_consents.jsonl"
 
 

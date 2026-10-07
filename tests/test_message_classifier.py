@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import candidate_store
 import inbox_store
-from message_classifier import classify_message
+from orchestrator_v1.inbox.message_classifier import classify_message
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -293,7 +293,7 @@ def test_app_boot_with_classify_route(flask_app):
 
 def test_email_classify_unchanged():
     """email source_type은 기존 email_classifier.classify()와 동일 결과."""
-    from email_classifier import classify as email_classify
+    from orchestrator_v1.inbox.email_classifier import classify as email_classify
 
     item = {
         "source_type": "email",

@@ -1,0 +1,68 @@
+순위	점수	분류	추천	종류	유사도	프로젝트	함수	대표 위치	총 줄	절감 가능 줄
+1	46.9	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	유사	0.944	apps, scripts	BlogWriter.write_body	apps/marketing-standalone/connectors/naver_writer.py:221	111	48
+2	44.1	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	유사	0.894	ai_orchestrator, orchestrator_v1	_parse_kakaotalk_channel_payload, _parse_payload	ai_orchestrator/connectors/kakao_skill_router.py:84	98	37
+3	40.8	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.set_tags	apps/marketing-standalone/connectors/naver_writer.py:449	79	35
+4	40.4	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP._reader	apps/marketing-standalone/connectors/cdp_helper.py:64	52	26
+5	39.8	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.write_mixed_content	apps/marketing-standalone/connectors/naver_writer.py:270	74	33
+6	38.8	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	_basic_seo_warnings, _basic_warnings	apps/marketing-standalone/core/content_rules.py:19	44	22
+7	38.6	경로/파일	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	scripts, tests	_load, _load_audit, _load_factory	scripts/ops/audit_web_project_provisioning_factory.py:22	43	35
+8	38.0	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	_ai_section_ratio	apps/marketing-standalone/core/content_rules.py:96	40	16
+9	37.6	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	_risky_claims	apps/marketing-standalone/core/content_rules.py:78	38	16
+10	37.2	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	seo_check	apps/marketing-standalone/core/content_rules.py:43	36	18
+11	37.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.insert_image	apps/marketing-standalone/connectors/naver_writer.py:370	60	29
+12	36.8	경로/파일	haehan_common 이전 추천 (독립 코드)	유사	1.0	ai_orchestrator, tests	test_cancel_allowed_status_matrix, test_handler_registered_for_implemented, test_terminal_status_validation	ai_orchestrator/tests/test_local_agent_real_usage_server_side.py:46	34	20
+13	36.4	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	split_body	apps/marketing-standalone/core/content_rules.py:114	32	14
+14	36.2	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	fetch_unsplash_images	apps/marketing-standalone/connectors/blog_images.py:77	56	28
+15	36.2	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	_weak_writing	apps/marketing-standalone/core/content_rules.py:63	31	13
+16	36.0	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP.shot, TabCDP.shot	apps/marketing-standalone/connectors/cdp_helper.py:112	30	20
+17	35.6	기타	haehan_common 이전 추천 (독립 코드)	유사	1.0	ai_orchestrator, scripts	_popup_record, make_register_agent_response	ai_orchestrator/local_agent_response_builders.py:13	28	8
+18	35.4	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	create_carousel	apps/marketing-standalone/connectors/instagram_graph_api.py:118	52	24
+19	35.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.clear_body, BlogWriter.clear_title	apps/marketing-standalone/connectors/naver_writer.py:153	50	37
+20	35.0	웹/HTTP	haehan_common 이전 추천 (독립 코드)	유사	0.842	ai_orchestrator, tests	TestBuildWatcherJs.test_js_template_generated, test_real_capture_button_uses_distinct_class, test_real_capture_success_message_contains_required_phrases, test_step2_has_real_capture_button	ai_orchestrator/tests/test_admin_ui_capture_screenshot.py:352	29	19
+21	34.9	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	유사	0.816	apps, scripts	BlogWriter.publish	apps/marketing-standalone/connectors/naver_writer.py:537	54	25
+22	34.8	경로/파일	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	scripts, tests	_check_forbidden, _has_forbidden	scripts/ops/audit_backend_premium_audit_evidence.py:81	24	16
+23	34.4	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP.send	apps/marketing-standalone/connectors/cdp_helper.py:91	22	11
+24	34.4	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	_write_content, _write_post_content	apps/marketing-standalone/connectors/naver_writer.py:624	47	21
+25	34.2	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter._detect_blog_id	apps/marketing-standalone/connectors/naver_writer.py:109	46	20
+26	34.0	설정	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP.__init__	apps/marketing-standalone/connectors/cdp_helper.py:24	20	10
+27	34.0	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP._reconnect	apps/marketing-standalone/connectors/cdp_helper.py:44	20	10
+28	33.8	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	ai_orchestrator, tests	_clean, _clear_state, clear_stores	ai_orchestrator/tests/test_local_agent_registration_code_flow.py:16	19	12
+29	33.6	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.set_title	apps/marketing-standalone/connectors/naver_writer.py:179	43	21
+30	33.6	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter._is_toolbar_active	apps/marketing-standalone/connectors/naver_writer.py:337	43	19
+31	33.6	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.set_visibility	apps/marketing-standalone/connectors/naver_writer.py:485	43	21
+32	33.4	웹/HTTP	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	ai_orchestrator, apps	get_recent_media	ai_orchestrator/connectors/instagram_graph_client.py:144	17	8
+33	33.4	웹/HTTP	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	ai_orchestrator, apps	get_comments	ai_orchestrator/connectors/instagram_graph_client.py:154	17	8
+34	33.1	경로/파일	haehan_common 이전 추천 (독립 코드)	유사	0.897	ai_orchestrator, tests	clear_stores, isolated_registry	ai_orchestrator/tests/test_local_agent_cleanup.py:20	18	8
+35	33.0	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	AIResponder.draft_blog_post	apps/marketing-standalone/connectors/ai_responder.py:63	15	7
+36	32.8	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP.query_node_ids	apps/marketing-standalone/connectors/cdp_helper.py:127	14	7
+37	32.8	DB	haehan_common 이전 추천 (독립 코드)	유사	0.807	ai_orchestrator, scripts	_sha256, _sha256_file, file_sha256	ai_orchestrator/sites/hanafax_auto_sender.py:42	19	12
+38	32.6	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	ai_orchestrator, tests	_cdp_alive, _cdp_http_alive	ai_orchestrator/connectors/cdp_screen_router.py:22	13	6
+39	32.4	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP.close	apps/marketing-standalone/connectors/cdp_helper.py:138	12	6
+40	32.4	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.get_selected_category_text, BlogWriter.get_tags_text, BlogWriter.get_title_text	apps/marketing-standalone/connectors/naver_writer.py:201	37	26
+41	32.2	기타	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	local_agent, scripts	_build_gpt_instruction, _gmail_search_selector	local_agent/site_mapper.py:1116	36	7
+42	31.6	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter._open_publish_panel	apps/marketing-standalone/connectors/naver_writer.py:428	33	13
+43	31.4	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	create_reel_container	apps/marketing-standalone/connectors/instagram_graph_api.py:68	32	16
+44	31.4	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.verify_body	apps/marketing-standalone/connectors/naver_writer.py:312	32	13
+45	31.2	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	review	apps/marketing-standalone/site_modules/blog_router.py:101	31	15
+46	30.8	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	confirm_publish	apps/marketing-standalone/connectors/naver_writer.py:727	29	9
+47	30.6	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	download_image	apps/marketing-standalone/connectors/blog_images.py:107	28	14
+48	30.6	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	record_success	apps/marketing-standalone/connectors/naver_blog_cdp.py:93	28	14
+49	30.2	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter._set_publish_checkbox	apps/marketing-standalone/connectors/naver_writer.py:513	26	11
+50	30.0	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	ai_orchestrator, scripts	_live_fill_handlers, current_limits	ai_orchestrator/execution_limits.py:145	25	12
+51	30.0	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	ensure_images	apps/marketing-standalone/site_modules/blog_router.py:118	25	9
+52	29.8	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	wait_ready	apps/marketing-standalone/connectors/instagram_graph_api.py:86	24	12
+53	29.8	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter._type_body_paragraphs, BlogWriter._type_paragraphs_fallback	apps/marketing-standalone/connectors/naver_writer.py:208	24	12
+54	29.8	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	유사	0.806	ai_orchestrator, tests	_base, _sample_domain_profile	ai_orchestrator/tests/test_site_mapper.py:125	29	13
+55	29.0	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	유사	0.84	ai_orchestrator, local_agent	_result	ai_orchestrator/local_agent/playwright_bootstrap.py:281	24	9
+56	28.8	경로/파일	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	_naver_auth_cookies_present	apps/marketing-standalone/connectors/naver_login_check.py:25	19	8
+57	28.8	경로/파일	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	local_agent, scripts	_mask_agent_id, mask_agent_id	local_agent/connection_diagnostics.py:109	19	12
+58	28.6	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	publish_reel	apps/marketing-standalone/connectors/instagram_graph_api.py:107	18	9
+59	28.4	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter._toolbar_click	apps/marketing-standalone/connectors/naver_writer.py:328	17	8
+60	28.1	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	유사	0.816	apps, scripts	BlogWriter.save_draft	apps/marketing-standalone/connectors/naver_writer.py:527	20	9
+61	28.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.get_body_text	apps/marketing-standalone/connectors/naver_writer.py:304	15	7
+62	28.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter._is_publish_panel_open	apps/marketing-standalone/connectors/naver_writer.py:420	15	7
+63	27.8	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	ai_orchestrator, local_agent	_html_ui_fallback_enabled, _legacy_admin_ui_fallback_enabled	ai_orchestrator/routers/admin_ui_router.py:32	14	7
+64	27.8	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	_post	apps/marketing-standalone/connectors/instagram_graph_api.py:52	14	7
+65	27.6	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.get_image_count	apps/marketing-standalone/connectors/naver_writer.py:363	13	6
+66	27.4	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	ai_orchestrator, orchestrator_v1	_kakao_skill_text_response, _skill_response	ai_orchestrator/connectors/kakao_skill_router.py:76	12	6
+67	27.4	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	publish_carousel	apps/marketing-standalone/connectors/instagram_graph_api.py:144	12	6

@@ -15,11 +15,12 @@ from pathlib import Path
 from typing import Any
 
 from scripts import local_user_secret_store
+from scripts.app_paths import repo_root
 from scripts.gates.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
 from scripts.gates.work_mode_gate import build_google_work_mode_policy
 from security_utils import safe_preview
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 REPORT_DIR = ROOT / "data" / "youtube_oauth_reports"
 TOKEN_DIR = ROOT / "data" / "secrets"
 LATEST_AUTH_PLAN = ROOT / "data" / "youtube_oauth_auth_plan_latest.json"

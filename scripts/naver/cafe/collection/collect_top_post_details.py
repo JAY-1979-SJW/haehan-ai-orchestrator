@@ -14,14 +14,14 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from pathlib import Path
 
+from scripts.app_paths import repo_root
 from scripts.logger import get_logger
 from scripts.naver.cafe.collection.collector import _fetch_article_detail
 
 _log = get_logger(__name__)
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = repo_root()
 BOARDS_DIR = ROOT / "data" / "cafe" / "gunmu_all_boards"
 OUT_DIR = ROOT / "data" / "cafe" / "gunmu_post_details"
 CLUB_ID = "10445200"

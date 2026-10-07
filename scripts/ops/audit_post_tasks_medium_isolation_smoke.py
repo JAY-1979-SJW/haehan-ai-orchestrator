@@ -134,7 +134,7 @@ WRITE_PATH_VERIFICATION: dict[str, dict[str, Any]] = {
 DRY_RUN_FLAG_STATE = {
     "flag_name": "POST_TASKS_DRY_RUN_ENABLED",
     "expected_value": True,
-    "location": "ai_orchestrator/router.py",
+    "location": "ai_orchestrator/routers/registry.py",
     "verified_in_smoke": True,
 }
 
@@ -166,7 +166,7 @@ NEXT_PHASE_CONDITIONS = {
 
 
 def _verify_router_state() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "dry_run_flag_true": "POST_TASKS_DRY_RUN_ENABLED = True" in content,
         "dry_run_branch_present": "POST_TASKS_DRY_RUN_ENABLED and ep.requires_approval" in content,
