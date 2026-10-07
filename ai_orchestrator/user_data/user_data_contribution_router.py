@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.server.user_data_contribution_store import (
+from ai_orchestrator.user_data.user_data_contribution_store import (
     export_development_material,
     get_consent,
     grant_consent,

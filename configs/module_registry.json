@@ -5825,7 +5825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/user_data_contribution_router.py": {
+  "ai_orchestrator/user_data/user_data_contribution_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5993,7 +5993,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/server/user_data_contribution_store.py": {
+  "ai_orchestrator/user_data/user_data_contribution_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -22882,6 +22882,14 @@
    "source": "rule"
   },
   "ai_orchestrator/auth/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/user_data/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",

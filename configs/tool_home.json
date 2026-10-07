@@ -24,7 +24,8 @@
  {"name": "dev_reg", "keyword": "^ai_orchestrator/(?!tests/)(gates|persistence|routers|services)/.*dev_reg", "homes": ["ai_orchestrator/dev_reg/"], "before_exempt": true},
  {"name": "web_task", "keyword": "^ai_orchestrator/(?!tests/).*web_task", "homes": ["ai_orchestrator/web_task/"], "before_exempt": true},
  {"name": "marketing", "keyword": "^ai_orchestrator/(?!tests/).*marketing_ops", "homes": ["ai_orchestrator/marketing/"], "before_exempt": true},
- {"name": "auth", "keyword": "^ai_orchestrator/(?!tests/)(routers/auth_router|persistence/(auth_audit|user_db|registration_code_store)|registration_codes|connectors/(desktop_session_router|user_auth_router))", "homes": ["ai_orchestrator/auth/"], "before_exempt": true}
+ {"name": "auth", "keyword": "^ai_orchestrator/(?!tests/)(routers/auth_router|persistence/(auth_audit|user_db|registration_code_store)|registration_codes|connectors/(desktop_session_router|user_auth_router))", "homes": ["ai_orchestrator/auth/"], "before_exempt": true},
+ {"name": "user_data", "keyword": "^ai_orchestrator/(?!tests/).*user_data_contribution", "homes": ["ai_orchestrator/user_data/"], "before_exempt": true}
  ],
  "exempt": [
   {"prefix": "tests/", "reason": "시험 — 도구 집 규칙 대상 아님"},
