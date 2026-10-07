@@ -126,6 +126,21 @@ def approve_user(user_id: str) -> bool:
     return cur.rowcount > 0
 
 
+def delete_pending_user(user_id: str) -> str:
+    """승인 대기(enabled=0) 계정만 삭제한다. 승인된 계정은 지우지 않는다.
+
+    반환: "deleted" | "not_pending"(이미 승인된 계정) | "not_found". 삭제하면 그 이메일로 다시 가입할 수 있다."""
+    init_db()
+    with _conn() as con:
+        cur = con.execute("DELETE FROM users WHERE id=? AND enabled=0", (user_id,))
+        deleted = cur.rowcount > 0
+        exists = deleted or con.execute("SELECT 1 FROM users WHERE id=?", (user_id,)).fetchone() is not None
+        con.commit()
+    if deleted:
+        return "deleted"
+    return "not_pending" if exists else "not_found"
+
+
 def get_user_by_email(email: str) -> dict | None:
     init_db()
     with _conn() as con:
