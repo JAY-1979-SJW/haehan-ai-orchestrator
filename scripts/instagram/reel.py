@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 
 from scripts.instagram.cases import Case
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 

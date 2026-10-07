@@ -14,7 +14,7 @@
   - data/cdp.db.critical_logs   (SQLite — 검색/필터링용)
 
 사용법:
-    from scripts.critical_logger import log_critical
+    from scripts.common.critical_logger import log_critical
 
     log_critical("BANK_LOGIN", "하나은행 로그인 시도", site="hanabank.com", user="skyjwshin")
     log_critical("FILE_DOWNLOAD", "Veraport 다운로드", file="veraport-g3-x64-sha2.exe", size=30041304)
@@ -34,7 +34,7 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import data_dir
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = data_dir() / "logs"
 CRITICAL_LOG_FILE = LOG_DIR / "critical.log"
 DB_PATH = data_dir() / "cdp.db"

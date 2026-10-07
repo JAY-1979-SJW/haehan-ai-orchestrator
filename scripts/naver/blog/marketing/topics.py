@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.automation.ai_responder import AIResponder
 from scripts.naver.blog.accounts import cache_file_for
 

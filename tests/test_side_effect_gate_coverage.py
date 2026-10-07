@@ -1,4 +1,4 @@
-"""R2 커버리지 — 외부 발행·발송을 하는 함수가 공통 장치(scripts.gate)를 거치는지 정적 검사한다.
+"""R2 커버리지 — 외부 발행·발송을 하는 함수가 공통 장치(scripts.common.gate)를 거치는지 정적 검사한다.
 
 발행·발송 호출(sink)을 가진 함수가 게이트 호출(`require_side_effect` / `gate_check` / `check_send` / `@gated`)을
 하지 않으면 '미적용 경로'다. 기존 미적용 경로는 tests/data/side_effect_gate_baseline.json 에 고정해 두고,
@@ -163,7 +163,7 @@ def test_no_new_unguarded_publish_or_send_paths():
     baseline = set(json.loads(BASELINE.read_text(encoding="utf-8")))
     new = sorted(unguarded - baseline)
     assert not new, (
-        "공통 장치(scripts.gate.require_side_effect)를 거치지 않는 새 발행·발송 경로:\n  "
+        "공통 장치(scripts.common.gate.require_side_effect)를 거치지 않는 새 발행·발송 경로:\n  "
         + "\n  ".join(new)
         + "\n→ 함수 안쪽에서 require_side_effect 를 호출하거나, 불가피하면 기준선에 사유와 함께 추가하세요."
     )

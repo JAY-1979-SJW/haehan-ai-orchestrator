@@ -19,7 +19,7 @@ FILES = [
     "scripts/local_agent/router.py",
     "scripts/login_session.py",
     "scripts/google/auth.py",
-    "scripts/logger.py",
+    "scripts/common/logger.py",
     "logger.py",
     "ai_orchestrator/local_agent/__init__.py",
     "ai_orchestrator/local_agent/actions.py",
@@ -69,8 +69,8 @@ def test_relative_imports_are_not_affected():
 
 
 def test_absolute_module_without_submodule_names_keeps_nearest_first_for_logger():
-    targets, _ = resolve("scripts/login_session.py", "logger", ["get_logger"])
-    assert targets == ["scripts/logger.py"]
+    targets, _ = resolve("scripts/common/op_log.py", "logger", ["get_logger"])
+    assert targets == ["scripts/common/logger.py"]
 
 
 def test_standard_library_and_third_party_stay_external():

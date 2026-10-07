@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.app_paths import onedrive_root, resolve_external
+from scripts.common.app_paths import onedrive_root, resolve_external
 
 DEFAULT_ACCOUNT = "skyjwsin"
 

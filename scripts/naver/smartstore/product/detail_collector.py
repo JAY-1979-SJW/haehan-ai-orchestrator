@@ -23,7 +23,7 @@ import sys
 sys.path.insert(0, str(ROOT))
 
 from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger  # noqa: E402 - sys.path 부트스트랩 뒤 import
 from scripts.naver.smartstore.product import selectors as SEL
 
 log = get_logger(__name__)

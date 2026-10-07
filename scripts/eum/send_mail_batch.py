@@ -17,10 +17,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[2]  # 저장소 루트(scripts/eum/ 깊이) — sys.path 부트스트랩에 쓰여 repo_root 로 못 바꿈
-if str(ROOT) not in sys.path:  # `python scripts/eum/send_mail_batch.py` 로 직접 실행해도 scripts.gate 를 import 할 수 있게
+if str(ROOT) not in sys.path:  # `python scripts/eum/send_mail_batch.py` 로 직접 실행해도 scripts.common.gate 를 import 할 수 있게
     sys.path.insert(0, str(ROOT))
 
-from scripts.gate import GateBlocked, require_side_effect  # noqa: E402 - sys.path 보정 뒤에 import
+from scripts.common.gate import GateBlocked, require_side_effect  # noqa: E402 - sys.path 보정 뒤에 import
 
 load_dotenv()
 

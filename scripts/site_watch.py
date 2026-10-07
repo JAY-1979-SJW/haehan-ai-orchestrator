@@ -29,8 +29,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.logger import get_logger
-from scripts.op_log import log_op
+from scripts.common.logger import get_logger
+from scripts.common.op_log import log_op
 
 log = get_logger(__name__)
 

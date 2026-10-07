@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 from urllib.parse import urlencode
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 from scripts.naver.mail.read import cdp
 from scripts.naver.cafe import list_collector
 

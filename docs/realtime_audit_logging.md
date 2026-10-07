@@ -22,7 +22,7 @@
 공통 기록 API:
 
 ```python
-from scripts.realtime_audit import emit_event
+from scripts.common.realtime_audit import emit_event
 
 emit_event(
     "EUM_WORK_STARTED",
@@ -52,20 +52,20 @@ emit_event(
 최근 감사 이벤트:
 
 ```bash
-python scripts/realtime_audit.py recent --limit 30
-python scripts/realtime_audit.py recent --site eum
+python scripts/common/realtime_audit.py recent --limit 30
+python scripts/common/realtime_audit.py recent --site eum
 ```
 
 JSONL 실시간 감시:
 
 ```bash
-python scripts/realtime_audit.py tail
+python scripts/common/realtime_audit.py tail
 ```
 
 사람이 읽는 텍스트 로그 감시:
 
 ```bash
-python scripts/realtime_audit.py tail --text
+python scripts/common/realtime_audit.py tail --text
 python scripts/watch_log.py
 ```
 

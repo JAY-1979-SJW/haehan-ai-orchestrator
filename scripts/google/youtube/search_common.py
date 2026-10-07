@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 from scripts.common import youtube_search_cache as _shared_cache
 from security_utils import safe_preview
 

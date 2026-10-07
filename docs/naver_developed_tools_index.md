@@ -25,7 +25,7 @@ be checked before adding more Naver automation.
 | Login/session | `python scripts\cdp_client.py naver login`, `session-check` | prepare/read | implemented | `scripts/naver/router.py`, `scripts/naver/browser_gate.py` | console status |
 | Keyword tools | `python scripts\cdp_client.py naver keyword-tools catalog` | read | implemented | `scripts/naver/keyword_tools.py`, `scripts/naver/router.py` | `data/naver_keyword_tools_latest.json` |
 | Keyword research plan | `python scripts\cdp_client.py naver keyword-tools plan --query=...` | read | implemented | `scripts/naver/keyword_tools.py` | `data/naver_keyword_tools_latest.json` |
-| Keyword paid policy | `python scripts\cdp_client.py naver keyword-tools paid-blocks` | blocked-policy | implemented | `scripts/naver/keyword_tools.py`, `scripts/gate.py` | `data/naver_keyword_tools_latest.json` |
+| Keyword paid policy | `python scripts\cdp_client.py naver keyword-tools paid-blocks` | blocked-policy | implemented | `scripts/naver/keyword_tools.py`, `scripts/common/gate.py` | `data/naver_keyword_tools_latest.json` |
 | Cafe list | `python scripts\cdp_client.py naver cafe list` | read | verified | `scripts/naver/cafe/list_collector.py`, `scripts/naver/cafe/list_background_runner.py` | `data/naver_cafes_latest.json` |
 | Cafe main/home | `python scripts\cdp_client.py naver cafe home` | read | implemented | `scripts/naver/cafe/main_page.py` | `data/naver_cafe_main_latest.json` |
 | Cafe topic search | `python scripts\cdp_client.py naver cafe topic-search --query=...` | read | verified | `scripts/naver/cafe/topic_search.py` | `data/naver_cafe_topic_search_latest.json` |

@@ -24,7 +24,7 @@ from playwright.sync_api import Page
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 from scripts.login_session import ensure_login, is_logged_in  # noqa: E402
 from scripts.web_connector import browser_session, close_page, get_page  # noqa: E402
 

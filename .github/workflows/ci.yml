@@ -231,7 +231,7 @@ jobs:
           fi
       - name: 루트 직접 계산 차단 게이트 (새 줄만 — Path(__file__).parents[N] 등)
         # 저장소 루트를 파일마다 따로 계산하는 새 줄을 차단한다(기존 줄은 통과). 정본: ai_orchestrator.paths.repo_root /
-        # scripts.app_paths.repo_root. 예외·사유: configs/root_calc_gate.json.
+        # scripts.common.app_paths.repo_root. 예외·사유: configs/root_calc_gate.json.
         run: python scripts/ops/root_calc_gate.py --check-diff ${{ steps.refs.outputs.base }} ${{ steps.refs.outputs.head }}
 
       - name: Verify change (ruff + 영향 테스트 + 라우트/구조 대조, 기준 대비 새 문제만 FAIL)

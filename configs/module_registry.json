@@ -8217,7 +8217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/app_paths.py": {
+  "scripts/common/app_paths.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -8225,7 +8225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/app_paths_migrate.py": {
+  "scripts/common/app_paths_migrate.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -8633,7 +8633,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/config.py": {
+  "scripts/common/config.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -8649,7 +8649,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/critical_logger.py": {
+  "scripts/common/critical_logger.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -9281,7 +9281,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/gate.py": {
+  "scripts/common/gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -10865,7 +10865,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/logger.py": {
+  "scripts/common/logger.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -13465,7 +13465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/op_log.py": {
+  "scripts/common/op_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -15345,7 +15345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/publish_guard.py": {
+  "scripts/common/publish_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -15361,7 +15361,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/realtime_audit.py": {
+  "scripts/common/realtime_audit.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -15385,7 +15385,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/runtime_temp.py": {
+  "scripts/common/runtime_temp.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -15393,7 +15393,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/schemas.py": {
+  "scripts/common/schemas.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -15401,7 +15401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/security.py": {
+  "scripts/common/security.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",

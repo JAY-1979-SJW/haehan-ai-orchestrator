@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 from playwright.sync_api import Page, Response
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.page_helper_common import _ERROR_SELECTORS
 
 log = get_logger(__name__)

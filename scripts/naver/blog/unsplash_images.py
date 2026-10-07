@@ -16,7 +16,7 @@ import logging
 import os
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.realtime_audit import emit_event
+from scripts.common.realtime_audit import emit_event
 
 _log = logging.getLogger(__name__)
 

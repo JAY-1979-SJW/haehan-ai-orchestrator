@@ -12,7 +12,7 @@
                     ② HAEHAN_DATA_ROOT/storage
                     ③ <저장소>/ai_orchestrator/storage
 
-HAEHAN_DATA_ROOT 는 `scripts.app_paths.data_root()` 가 쓰는 같은 환경변수다 — 데스크톱은 Electron 이 이 값을 사용자
+HAEHAN_DATA_ROOT 는 `scripts.common.app_paths.data_root()` 가 쓰는 같은 환경변수다 — 데스크톱은 Electron 이 이 값을 사용자
 프로필 아래 한 곳(userData)으로 정해 서버·스크립트가 같은 루트를 보게 한다. 환경변수가 없을 때 `app_paths` 는
 Windows 표준(%LOCALAPPDATA%\\HaehanAI\\Orchestrator)을 쓰지만, 이 모듈은 저장소 실행의 기존 위치를 유지한다
 (소스 체크아웃·Docker 의 기존 데이터가 그대로 읽히도록). 두 정본이 갈라지지 않게 환경변수 하나로 묶는다.

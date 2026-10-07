@@ -26,7 +26,7 @@ from scripts.form.bot_radar import scan as bot_scan
 from scripts.form.discovery import discover_form
 from scripts.form.events import wait_for_form, wait_submit_done, wait_validation
 from scripts.form.human import human_click, human_type
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

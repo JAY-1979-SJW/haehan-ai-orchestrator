@@ -15,7 +15,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 sys.path.insert(0, str(ROOT))

@@ -1,4 +1,4 @@
-"""scripts/logger.py 의 회전 핸들러 시험 — 여러 프로세스가 같은 로그를 열고 있어 회전이 막혀도(WinError 32) 기록이 이어져야 한다.
+"""scripts/common/logger.py 의 회전 핸들러 시험 — 여러 프로세스가 같은 로그를 열고 있어 회전이 막혀도(WinError 32) 기록이 이어져야 한다.
 
 2026-10-04 앱 실검증에서 data/logs/app.log 회전이 112회 실패했다(표준 RotatingFileHandler 는 막히면 줄마다 재시도하고 오류를 낸다).
 """
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 
-from scripts.logger import _BlockedRotateSafeHandler
+from scripts.common.logger import _BlockedRotateSafeHandler
 
 
 def _record(msg: str) -> logging.LogRecord:

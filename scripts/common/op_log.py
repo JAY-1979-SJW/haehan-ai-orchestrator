@@ -9,21 +9,21 @@ critical_logger(감사추적)와 app.log(디버그)의 중간 레이어.
 
 사용법:
     # 1) 데코레이터
-    from scripts.op_log import op_logged
+    from scripts.common.op_log import op_logged
 
     @op_logged("goto")
     def goto(target: str) -> None:
         ...
 
     # 2) 컨텍스트 매니저
-    from scripts.op_log import op_context
+    from scripts.common.op_log import op_context
 
     with op_context("eum_extract", site="eum.cw.or.kr") as ctx:
         result = do_extract()
         ctx.set_result(count=len(result))
 
     # 3) 단발 호출
-    from scripts.op_log import log_op
+    from scripts.common.op_log import log_op
     log_op("mail_send", ok=True, to="vendor@x.com", subject="...")
 
 CLI:
@@ -47,9 +47,9 @@ from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.schemas import OpStatus  # 상태값 타입 참조
+from scripts.common.schemas import OpStatus  # 상태값 타입 참조
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = data_dir() / "logs"
 OPS_LOG_FILE = LOG_DIR / "ops.log"
 DB_PATH = data_dir() / "cdp.db"

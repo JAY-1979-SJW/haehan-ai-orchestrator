@@ -1,6 +1,6 @@
-"""R2d-2 P0a — 게이트 핵심 이전(scripts/gate.py → ai_orchestrator/gates/gate_core.py) 시험.
+"""R2d-2 P0a — 게이트 핵심 이전(scripts/common/gate.py → ai_orchestrator/gates/gate_core.py) 시험.
 
-목적: ① 핵심이 `scripts` 를 import 하지 않는다(순환 해소의 구조 보장) ② 기존 `scripts.gate` 호출자 동작이 같다(shim)
+목적: ① 핵심이 `scripts` 를 import 하지 않는다(순환 해소의 구조 보장) ② 기존 `scripts.common.gate` 호출자 동작이 같다(shim)
 ③ 감사 기록(op_log)이 싱크 주입으로 그대로 남는다 ④ `__file__` 기준 경로가 저장소 루트를 가리킨다.
 """
 
@@ -13,8 +13,8 @@ import pytest
 
 import ai_orchestrator.gates.gate_core as core
 import ai_orchestrator.gates.gate_types as gtypes
-import scripts.gate as shim
-import scripts.schemas as schemas
+import scripts.common.gate as shim
+import scripts.common.schemas as schemas
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -110,8 +110,8 @@ def test_no_sink_is_safe(restore_sink):
 
 
 def test_shim_registers_op_log_sink(monkeypatch):
-    """scripts.gate(shim)를 import 한 경로는 op_log 로 감사 기록을 남긴다(기존 동작과 동일)."""
-    import scripts.op_log as op_log
+    """scripts.common.gate(shim)를 import 한 경로는 op_log 로 감사 기록을 남긴다(기존 동작과 동일)."""
+    import scripts.common.op_log as op_log
 
     calls: list[tuple[str, dict]] = []
     monkeypatch.setattr(op_log, "log_op", lambda name, **f: calls.append((name, f)))
@@ -127,7 +127,7 @@ def test_shim_registers_op_log_sink(monkeypatch):
 
 
 def test_asgi_composition_root_connects_audit_sink(monkeypatch):
-    import scripts.op_log as op_log
+    import scripts.common.op_log as op_log
     from ai_orchestrator import asgi
 
     calls: list[str] = []

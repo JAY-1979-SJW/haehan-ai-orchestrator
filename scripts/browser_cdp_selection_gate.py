@@ -412,7 +412,7 @@ def create_isolated_target(  # noqa: PLR0913 - 공개 시그니처 유지(동작
     HAEHAN_CDP_CREATE_TARGET_ALLOWED=1.
     """
     try:
-        from scripts.gate import check as gate_check
+        from scripts.common.gate import check as gate_check
 
         gate_check("cdp_nav", context="cdp_tab_isolation", task=task, work=work, port=port)
     except Exception as exc:  # noqa: BLE001 - CDP 세션 선택/탭격리 게이트 — host 파싱 실패나 게이트체크·타겟생성 실패 시 전부 ok=False(차단) 결과로 fail-closed 폴백, 허용 방향으로 새는 기본값 없음

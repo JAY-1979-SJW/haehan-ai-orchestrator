@@ -17,8 +17,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from scripts.config import CDP_HOST
-from scripts.config import CDP_PORT as GENERAL_PORT
+from scripts.common.config import CDP_HOST
+from scripts.common.config import CDP_PORT as GENERAL_PORT
 
 ROOT = Path(__file__).resolve().parents[3]
 MAX_ACTIVE_LANES = 3

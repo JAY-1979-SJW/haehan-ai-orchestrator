@@ -27,7 +27,7 @@ from scripts.naver.blog.automation import gates, rules
 from scripts.naver.blog.automation import runner as automation_runner
 from scripts.naver.blog.automation.llm import claude_available
 from scripts.naver.blog.automation.store import ROOT, Store, StoreError
-from scripts.realtime_audit import emit_event
+from scripts.common.realtime_audit import emit_event
 
 blog_automation_router = APIRouter(prefix="/naver/blog/automation", tags=["naver-blog-automation"])
 

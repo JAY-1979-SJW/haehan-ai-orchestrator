@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 from . import dev_console
 from .base import check_session

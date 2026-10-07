@@ -21,7 +21,7 @@ from typing import Any, cast
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
-from scripts.logger import get_logger  # noqa: E402 - REPO_ROOT 계산 이후 임포트하는 기존 구조(이번 BLE001 작업과 무관)
+from scripts.common.logger import get_logger  # noqa: E402 - REPO_ROOT 이후 import
 from scripts.popup_classifier import (  # noqa: E402 - REPO_ROOT 계산 이후 임포트하는 기존 구조(이번 BLE001 작업과 무관)
     classify,
     is_auto_handleable,

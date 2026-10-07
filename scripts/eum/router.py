@@ -7,8 +7,8 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
-from scripts.logger import get_logger
+from scripts.common.gate import check as gate_check
+from scripts.common.logger import get_logger
 
 __status__ = {
     "tasks": {
@@ -462,7 +462,7 @@ def _execute_approval_workflow(workflow: dict, args: list[str]) -> None:
     """Validate an approval workflow, then execute only through its gate."""
     from scripts.eum.run_log import work_run
     from scripts.eum.work_plan import build_action_plan, print_action_plan, save_action_plan
-    from scripts.gate import force_approved
+    from scripts.common.gate import force_approved
 
     plan = build_action_plan(workflow, args)
     path = save_action_plan(plan)

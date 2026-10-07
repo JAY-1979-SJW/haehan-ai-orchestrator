@@ -33,8 +33,8 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
-from scripts.op_log import op_context  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import op_context  # noqa: E402
 from scripts.site_registry import get_site, list_sites  # noqa: E402
 from scripts.site_watch import StepFailure, StepWatcher  # noqa: E402
 

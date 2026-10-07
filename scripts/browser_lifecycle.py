@@ -54,7 +54,7 @@ POLICY_REQUIRED_TRUE = ("restore_last_session", "clean_start", "graceful_stop_fi
 
 
 def validate_policy(policy: dict[str, Any]) -> list[str]:
-    """`scripts.config.CDP_BROWSER_POLICY` 검증 → 문제 목록(비어 있으면 정상). 입출력 없는 순수 함수."""
+    """`scripts.common.config.CDP_BROWSER_POLICY` 검증 → 문제 목록(비어 있으면 정상). 입출력 없는 순수 함수."""
     problems = [f"{key} 는 True 여야 합니다(끄면 로그인 유지·깨끗한 시작이 깨집니다)" for key in POLICY_REQUIRED_TRUE if policy.get(key) is not True]
     url = str(policy.get("start_url", ""))
     if _safe_start_url(url) != url or url == BLANK_URL:

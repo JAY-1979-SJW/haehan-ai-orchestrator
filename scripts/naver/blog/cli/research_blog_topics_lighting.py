@@ -45,7 +45,7 @@ if str(_ROOT) not in sys.path:
 from dotenv import load_dotenv  # noqa: E402
 
 from scripts.community.sites.ohou import search_community  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 
 load_dotenv(_ROOT / ".env", encoding="utf-8")
 

@@ -27,7 +27,7 @@ import win32com.client as win32
 _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:  # 단독 실행 시에도 scripts 패키지를 import 할 수 있게
     sys.path.insert(0, str(_ROOT))
-from scripts.app_paths import known_folder  # noqa: E402
+from scripts.common.app_paths import known_folder  # noqa: E402
 
 A4_WIDTH_PT = 595.32  # 210mm
 A4_HEIGHT_PT = 841.92  # 297mm

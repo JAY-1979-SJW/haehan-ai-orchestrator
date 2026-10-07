@@ -23,8 +23,8 @@ try:
 except ImportError:
     pass
 
-from scripts.logger import get_logger  # noqa: E402
-from scripts.op_log import op_context  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 

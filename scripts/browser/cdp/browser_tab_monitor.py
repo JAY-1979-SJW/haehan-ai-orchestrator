@@ -18,8 +18,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.config import CDP_HOST, CDP_PORT
-from scripts.logger import get_logger
+from scripts.common.config import CDP_HOST, CDP_PORT  # noqa: E402 - sys.path 부트스트랩 뒤 import
+from scripts.common.logger import get_logger  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 log = get_logger(__name__)
 

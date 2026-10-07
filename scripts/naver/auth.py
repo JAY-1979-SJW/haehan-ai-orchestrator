@@ -27,9 +27,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from scripts.critical_logger import log_critical
+from scripts.common.critical_logger import log_critical
 from scripts.human_input import safe_human_input
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.login_detector import detect_login_state, wait_for_login_generic
 from security_utils import mask_identifier
 

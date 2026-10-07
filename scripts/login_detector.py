@@ -36,7 +36,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from scripts.browser.cdp import cdp_db
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -243,7 +243,7 @@ def save_detected_login(site: str, page=None) -> bool:
             site_name=site, display=site.title(), logged_in=True, session_file=session_file, login_event=True
         )
         try:
-            from scripts.realtime_audit import emit_event
+            from scripts.common.realtime_audit import emit_event
 
             emit_event(
                 "LOGIN_SESSION_SAVED",

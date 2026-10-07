@@ -21,8 +21,8 @@ from collections.abc import Callable
 
 from playwright.sync_api import Page
 
-from scripts.config import LOGIN_PROBE_URLS
-from scripts.logger import get_logger
+from scripts.common.config import LOGIN_PROBE_URLS
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

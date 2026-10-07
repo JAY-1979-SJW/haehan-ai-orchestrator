@@ -76,7 +76,7 @@
 - `scripts/inquiry/store.py`: `looks_like_contact`(function,L108)
 - `scripts/instagram/api_publish.py`: `publish_story`(function,L177), `get_media_insights`(function,L201), `get_account_insights`(function,L208), `search_hashtag_id`(function,L227), `get_hashtag_media`(function,L241), `get_media_comments`(function,L260), `reply_to_comment`(function,L266), `get_content_publishing_limit`(function,L278)
 - `scripts/instagram/kotara_ctc_reel.py`: `render_thumbnail`(function,L133), `render_all_frames`(function,L404), `strip_audio`(function,L557), `extract_check_frames`(function,L565)
-- `scripts/logger.py`: `enable_debug`(function,L111), `disable_debug`(function,L116)
+- `scripts/common/logger.py`: `enable_debug`(function,L111), `disable_debug`(function,L116)
 - `scripts/naver/blog/marketing/multichannel.py`: `generate_community_answer`(function,L91)
 - `scripts/naver/mail/collection/background_runner.py`: `find_mail_target_id`(function,L63)
 - `scripts/naver/mail/collection/folder_discovery.py`: `folders_to_dicts`(function,L344)

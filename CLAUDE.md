@@ -351,11 +351,11 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
   기동한 FastAPI 프로세스의 첫 Gmail 호출조차 멈춤 → `scripts/cdp_force_start.py
   stop` 후 `start`로 브라우저만 재시작(프로필 유지, 로그인 세션 그대로 보존됨)하니
   즉시 정상화). 코드를 계속 고치기 전에 이 재시작부터 시도한다.
-- Google 서비스 URL은 `scripts/config.py`의 `GOOGLE_URLS` 딕셔너리에서 가져온다
+- Google 서비스 URL은 `scripts/common/config.py`의 `GOOGLE_URLS` 딕셔너리에서 가져온다
   (하드코딩 금지) — 실제 인증된 세션에서 도착 URL을 확인하지 않고 추측으로
   적으면 리다이렉트/마케팅 페이지로 빠질 수 있다. 새 URL을 추가하기 전엔 실제
   로그인된 CDP 세션으로 `page.goto()` 후 `page.url`을 찍어 확인한다.
-- **9222 데몬 Chrome 의 로그인 유지·깨끗한 시작 정책은 `scripts/config.py` 의 `CDP_BROWSER_POLICY`
+- **9222 데몬 Chrome 의 로그인 유지·깨끗한 시작 정책은 `scripts/common/config.py` 의 `CDP_BROWSER_POLICY`
   한 곳에서 정한다**(상세·근거: `docs/architecture/CDP_BROWSER_POLICY.md`). (2026-10-05 실측) 로그인(세션
   쿠키)은 `--restore-last-session` 스위치(**값 없이** — `=false` 도 켜진다) + CDP `Browser.close` 정상
   종료일 때만 재시작 뒤에도 남는다. 종료 신호·강제 종료·전원 차단은 로그인을 잃는다 → 데몬 재시작은

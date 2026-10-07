@@ -40,9 +40,9 @@ from scripts.browser_task_session import (  # noqa: E402
     get_or_create_task_page,
     mark_task_owned,
 )
-from scripts.config import CDP_HOST as _DEFAULT_CDP_HOST  # noqa: E402
-from scripts.config import CDP_PORT as _DEFAULT_CDP_PORT  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.config import CDP_HOST as _DEFAULT_CDP_HOST  # noqa: E402
+from scripts.common.config import CDP_PORT as _DEFAULT_CDP_PORT  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
 

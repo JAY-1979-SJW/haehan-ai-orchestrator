@@ -412,7 +412,7 @@ def test_forbidden_actions_blocked_at_guard():
 
 
 def test_state_changing_mail_actions_require_approval_gate():
-    from scripts.gate import GateBlocked
+    from scripts.common.gate import GateBlocked
 
     for act in (
         "send",

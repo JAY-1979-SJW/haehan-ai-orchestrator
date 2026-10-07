@@ -228,7 +228,7 @@ def record_deploy_dry_run(command: list[str], *, exit_code: int, output: str = "
     }
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             "DEPLOY_DRY_RUN_RECORDED",
@@ -350,7 +350,7 @@ def summarize(files: list[ChangedFile], issues: list[GateIssue]) -> dict[str, An
 
 def emit_audit(summary: dict[str, Any]) -> None:
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         status = "failed" if summary["errors"] else ("warn" if summary["warnings"] else "ok")
         emit_event(

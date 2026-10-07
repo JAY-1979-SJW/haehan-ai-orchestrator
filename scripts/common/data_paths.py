@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 # 앱 키 → C:\AI 에이전트 하위 폴더명 매핑
 _APP_FOLDER: dict[str, str] = {
@@ -31,7 +31,7 @@ _APP_FOLDER: dict[str, str] = {
     "fax": "팩스",
 }
 
-# 프로젝트 루트 — T1-① 정본(scripts.app_paths.repo_root) 위임. 값은 기존과 동일
+# 프로젝트 루트 — T1-① 정본(scripts.common.app_paths.repo_root) 위임. 값은 기존과 동일
 # (이 파일 기준 두 단계 위 == app_paths.py 기준 한 단계 위, 같은 저장소 루트).
 _PROJECT_ROOT = repo_root()
 

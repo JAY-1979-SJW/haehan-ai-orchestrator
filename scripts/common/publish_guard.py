@@ -1,7 +1,7 @@
 """발행·발송 공용 실패 기록·알림 래퍼 (L5 site_module — 여러 도메인이 공용으로 쓰는 조합 모듈).
 
 기존 장치를 재사용만 한다(신규 채널 금지):
-  - 기록: scripts/op_log.py(L7) log_op — 파일(data/logs/ops.log) + DB(data/cdp.db)
+  - 기록: scripts/common/op_log.py(L7) log_op — 파일(data/logs/ops.log) + DB(data/cdp.db)
   - 알림: ai_orchestrator/clients/telegram_sender.py(L3) send_message —
     TELEGRAM_BOT_TOKEN/TELEGRAM_APPROVER_CHAT_ID 미설정 시 자동 skip(예외 없음)
 
@@ -9,7 +9,7 @@ L5 는 allowed_deps 상 L3·L7 을 모두 허용하므로 이 조합을 여기(L
 (2026-09-26 기준서 docs/specs/2026-09-26_maturity_fix_batch1.md 3번, D3 결정).
 
 사용법:
-    from scripts.publish_guard import guarded_publish, guarded
+    from scripts.common.publish_guard import guarded_publish, guarded
 
     # 1) 컨텍스트 매니저 — 예외 전파형(반환값 그대로, 실패 시 기록+알림 후 raise)
     with guarded_publish("ig_publish"):
@@ -34,7 +34,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from typing import Any
 
-from scripts.op_log import log_op
+from scripts.common.op_log import log_op
 
 _NOTIFY_PREFIX = "❌"  # ❌
 

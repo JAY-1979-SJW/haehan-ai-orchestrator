@@ -21,7 +21,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 log = logging.getLogger("hanafax.sender")
 

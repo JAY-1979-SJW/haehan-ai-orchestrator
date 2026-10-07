@@ -4,7 +4,7 @@
 op_log, critical_logger, cdp_event_monitor, gate 에서 공통으로 참조한다.
 
 사용법:
-    from scripts.schemas import OpRecord, CriticalRecord, GateResult, CdpNavEvent
+    from scripts.common.schemas import OpRecord, CriticalRecord, GateResult, CdpNavEvent
 """
 
 from __future__ import annotations

@@ -83,7 +83,7 @@ OPENAPI_APP_MODULES = (
 )
 
 PYDANTIC_SCHEMA_MODULES = (
-    "scripts.schemas",
+    "scripts.common.schemas",
     "browser_worker.schemas",
     "ai_orchestrator.browser_tool.schemas",
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
@@ -193,8 +193,8 @@ def iter_files(root: Path = ROOT) -> Iterable[Path]:
 LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
     "ai_orchestrator/config.py": ("L1", "shared env/config helper (used by 22 files across layers)"),
     "ai_orchestrator/audit_logger.py": ("L3", "low-level audit log writer, IO wrapper"),
-    "scripts/op_log.py": ("L3", "low-level operation log writer, IO wrapper"),
-    "scripts/realtime_audit.py": ("L3", "low-level realtime audit log helper"),
+    "scripts/common/op_log.py": ("L3", "low-level operation log writer, IO wrapper"),
+    "scripts/common/realtime_audit.py": ("L3", "low-level realtime audit log helper"),
     "scripts/browser/cdp/cdp_db.py": ("L3", "low-level CDP sqlite IO wrapper"),
     "ai_orchestrator/local_agent/browser/audit_log.py": ("L3", "low-level audit log writer"),
     "ai_orchestrator/local_agent/browser/cdp_audit.py": ("L3", "low-level CDP audit log helper"),
@@ -804,7 +804,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "local_agent/browser_approval_db_store.py",
     "scripts/browser/cdp/cdp_db.py",
     "scripts/common/youtube_search_cache.py",
-    "scripts/critical_logger.py",
+    "scripts/common/critical_logger.py",
     "scripts/naver/automation/platform/error_recovery.py",
     "scripts/naver/automation/platform/scheduler.py",
     "scripts/naver/smartstore/automation/analytics_dashboard.py",
@@ -815,7 +815,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/naver/shopping/analysis.py",
     "scripts/naver/shopping/crawl.py",
     "scripts/naver/smartstore/product/bulk.py",
-    "scripts/op_log.py",
+    "scripts/common/op_log.py",
     "scripts/popup_monitor.py",
 }
 
@@ -916,7 +916,7 @@ _DB_DIRECT_ACCESS_PATTERNS = [
 _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/storage/",
     "ai_orchestrator/persistence/",  # L7 Persistence 계층 자체 — DB 접근이 이 계층의 책임이다(2026-10-01)
-    "scripts/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
+    "scripts/common/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
     "storage/",
     "migrations/",
     "scripts/ops/",

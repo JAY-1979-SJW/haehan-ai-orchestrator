@@ -155,7 +155,7 @@ def test_resolution_order(monkeypatch, tmp_path):
 
 
 def test_data_root_is_the_same_env_as_app_paths():
-    from scripts import app_paths
+    from scripts.common import app_paths
 
     assert runtime.ENV_DATA_ROOT == app_paths.ENV_DATA_ROOT  # 정본이 갈라지지 않게 환경변수 하나로 묶는다
 

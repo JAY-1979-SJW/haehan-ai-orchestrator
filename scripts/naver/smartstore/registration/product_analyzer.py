@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 from scripts.login_detector import is_logged_in_generic  # noqa: E402
 from scripts.naver.auth import ensure_naver_login  # noqa: E402
 from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402

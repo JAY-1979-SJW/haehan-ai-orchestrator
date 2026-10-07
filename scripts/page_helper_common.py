@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -780,8 +780,8 @@ def _safe_critical_log(url: str) -> None:
     """
     try:
         category = _detect_critical_category(url)
-        if is_work_category(category):
-            from scripts.critical_logger import log_critical
+        if category and is_work_category(category):
+            from scripts.common.critical_logger import log_critical
             log_critical(category, f"페이지 접속: {url[:120]}", url=url)
     except Exception:  # noqa: BLE001 - 자동 팝업 처리/로그 기록/프레임 탐색 등 부수 동작 실패는 무시해도 메인 흐름에 영향 없음
         pass
@@ -828,7 +828,7 @@ def _safe_auto_login_detect(page: Page, url: str) -> None:
             try:
                 category = _detect_critical_category(url)
                 if is_work_category(category):
-                    from scripts.critical_logger import log_critical
+                    from scripts.common.critical_logger import log_critical
                     if change["new_logged_in"]:
                         log_critical(
                             "AUTH_SUCCESS",

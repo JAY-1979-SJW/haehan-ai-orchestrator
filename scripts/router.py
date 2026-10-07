@@ -14,7 +14,7 @@ cdp_client.py 의 CLI 파서에서 라우팅 책임만 분리.
 
 from __future__ import annotations
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 

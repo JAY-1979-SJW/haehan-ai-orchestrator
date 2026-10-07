@@ -87,8 +87,8 @@ discover -> plan -> prepare -> submit -> verify -> log
 | 팝업/비정상 접근 | `scripts/popup_watcher.py`, `scripts/popup_classifier.py`, `scripts/<site>/access_handler.py` |
 | 작업 계획 | `scripts/<site>/work_plan.py` |
 | 실행 로그 | `scripts/<site>/run_log.py` |
-| 실시간 감사 | `scripts/realtime_audit.py`, `scripts/watch_log.py` |
-| 승인 게이트 | `scripts/gate.py`, `scripts/<site>/gates.py` |
+| 실시간 감사 | `scripts/common/realtime_audit.py`, `scripts/watch_log.py` |
+| 승인 게이트 | `scripts/common/gate.py`, `scripts/<site>/gates.py` |
 | 작업트리 분류 | `scripts/ops/worktree_change_index.py` |
 
 ## Common Session Safety Update
@@ -173,7 +173,7 @@ Updated: 2026-05-13
 All site automation modules share one security/redaction baseline.
 
 - Root security implementation: `security_utils.py`
-- `scripts.security` compatibility wrapper: `scripts/security.py`
+- `scripts.common.security` compatibility wrapper: `scripts/common/security.py`
 - Logging compatibility facade: `logging_utils.py`
 - Credential storage and masked CLI output: `scripts/credentials.py`
 

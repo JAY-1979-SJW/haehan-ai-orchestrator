@@ -6,7 +6,7 @@ import re
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.page_helper_common import _ERROR_SELECTORS, _find_frame
 
 log = get_logger(__name__)

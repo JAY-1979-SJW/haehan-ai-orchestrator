@@ -85,8 +85,8 @@ Common modules:
 
 - `security_utils.py`: sensitive-key detection, email/identifier masking,
   nested dict/list/tuple redaction, inline token/RRN/card masking.
-- `scripts/security.py`: compatibility wrapper for the existing
-  `scripts.security` import path.
+- `scripts/common/security.py`: compatibility wrapper for the existing
+  `scripts.common.security` import path.
 - `logging_utils.py`: compatibility facade that delegates to `security_utils.py`.
 - `scripts/credentials.py`: encrypted credential storage; CLI `get` and `list`
   must show only masked IDs and masked password previews.

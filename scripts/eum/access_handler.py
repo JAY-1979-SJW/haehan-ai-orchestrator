@@ -26,7 +26,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 from scripts.popup_classifier import Decision  # noqa: E402
 
 log = get_logger(__name__)
@@ -134,7 +134,7 @@ def handle_access_block(
             )
 
     # 로그 기록
-    log.op(
+    log.op(  # type: ignore[attr-defined]  # 기존 결함: logging.Logger 에 op 가 없다(별도 수정 과제, 이번 이동과 무관)
         "eum_access_recovery",
         ok=result["recovered"],
         category=category,

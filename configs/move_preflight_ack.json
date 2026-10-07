@@ -39,6 +39,11 @@
    "file": "scripts/required_quality_gate.py",
    "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
    "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/realtime_audit.py",
+   "reason": "S2-C common 이동 — 옛 경로 직접 실행 호출처 없음(문서 언급뿐), 참조 모두 새 경로로 수정",
+   "date": "2026-10-07"
   }
  ]
 }

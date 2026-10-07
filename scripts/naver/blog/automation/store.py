@@ -20,7 +20,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import runtime_data_dir
+from scripts.common.app_paths import runtime_data_dir
 from scripts.naver.blog.automation.rules import Rule, is_valid_rule_id, parse_rule, rule_to_dict
 
 ROOT = Path(__file__).resolve().parents[4]

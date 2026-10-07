@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from local_agent import site_entry_policy  # noqa: E402
-from scripts.config import LOGIN_PROBE_URLS  # noqa: E402
+from scripts.common.config import LOGIN_PROBE_URLS  # noqa: E402
 from scripts.gates.work_mode_gate import build_google_work_mode_policy  # noqa: E402
 from scripts.google import auth, managed_console  # noqa: E402
 

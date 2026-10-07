@@ -83,7 +83,7 @@ def build_session_integrity_result(
 
 def emit_session_integrity_event(result: dict[str, Any]) -> None:
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             "SITE_SESSION_INTEGRITY_BLOCKED",

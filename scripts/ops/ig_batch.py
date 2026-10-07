@@ -26,7 +26,7 @@ def main() -> None:
     ap.add_argument("--category", default="시공사례", help="기본값 시공사례 — 캡션 템플릿이 실제 시공 사진 전용")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--confirmed", action="store_true", help="실제 게시(공유하기)까지 진행 — --confirm 승인 문구도 필요")
-    from scripts.gate import CONFIRM_TEXTS
+    from scripts.common.gate import CONFIRM_TEXTS
 
     ap.add_argument("--confirm", default=None, help=f"실제 게시 승인 문구(직접 입력): {CONFIRM_TEXTS['instagram_publish']}")
     args = ap.parse_args()
@@ -49,7 +49,7 @@ def main() -> None:
 
     from scripts.instagram.publish import publish_case
 
-    from scripts.gate import GateBlocked
+    from scripts.common.gate import GateBlocked
 
     try:
         result = publish_case(case, confirmed=args.confirmed, approval=args.confirm)

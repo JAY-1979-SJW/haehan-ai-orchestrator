@@ -3,7 +3,7 @@
 모든 스크립트에서 직접 값을 쓰지 말고 이 모듈에서 import.
 
 사용법:
-    from scripts.config import CDP_PORT, USER_EMAIL, GOOGLE_URLS, NAVER_URLS
+    from scripts.common.config import CDP_PORT, USER_EMAIL, GOOGLE_URLS, NAVER_URLS
 """
 from __future__ import annotations
 

@@ -31,8 +31,8 @@ from ai_orchestrator.connectors.marketing_ops_settings import is_enabled, load_s
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import require_send_approval
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.gate import CONFIRM_TEXTS
-from scripts.realtime_audit import emit_event
+from scripts.common.gate import CONFIRM_TEXTS
+from scripts.common.realtime_audit import emit_event
 
 marketing_ops_router = APIRouter(prefix="/naver/marketing-ops", tags=["marketing-ops"])
 

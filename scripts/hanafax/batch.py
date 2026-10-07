@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 DATA_DIR = data_dir()

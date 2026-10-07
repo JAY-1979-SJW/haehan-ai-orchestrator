@@ -1,7 +1,7 @@
 """경량 위험 게이트 — 호환 shim.
 
 게이트 핵심은 `ai_orchestrator/gates/gate_core.py` 로 옮겼다(R2d-2 설계서 §4: `ai_orchestrator/gates ↔ scripts` 순환 해소).
-이 모듈은 기존 `from scripts.gate import check, gated, GateBlocked, ...` 호출자(29곳+)를 위한 shim 이고,
+이 모듈은 기존 `from scripts.common.gate import check, gated, GateBlocked, ...` 호출자(29곳+)를 위한 shim 이고,
 `sys.modules` 를 바꿔치기해 **같은 모듈 객체**를 돌려준다(모듈 전역 상태 `_RISK_REGISTRY`·`_force_local` 공유, 시험의 patch 도 그대로 동작).
 
 게이트 판정의 감사 기록(op_log)은 핵심이 `scripts` 를 import 하지 않도록 싱크 주입으로 연결한다 — 여기서 등록한다.
@@ -33,7 +33,7 @@ from ai_orchestrator.gates.gate_core import (  # noqa: F401 - 정적 분석(mypy
 
 def _audit(name: str, **fields: _Any) -> None:
     """게이트 판정을 op_log 에 기록(지연 import — 기존 동작과 같다)."""
-    from scripts.op_log import log_op
+    from scripts.common.op_log import log_op
 
     log_op(name, **fields)
 

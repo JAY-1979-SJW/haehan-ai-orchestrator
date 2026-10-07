@@ -13,7 +13,7 @@ import sys
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 if str(ROOT) not in sys.path:

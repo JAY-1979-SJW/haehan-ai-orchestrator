@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 _DATA_DIR = data_dir() / "cafe"

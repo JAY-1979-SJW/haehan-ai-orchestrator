@@ -14,8 +14,8 @@ import time
 from playwright.sync_api import Page
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.app_paths import repo_root
-from scripts.logger import get_logger
+from scripts.common.app_paths import repo_root
+from scripts.common.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 
 _log = get_logger(__name__)

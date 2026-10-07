@@ -52,7 +52,7 @@ def test_save_detected_login_saves_encrypted_session_and_db(monkeypatch, tmp_pat
         return tmp_path / f"{host}.json"
 
     monkeypatch.setattr("scripts.auth_session.save_session", fake_save_session)
-    monkeypatch.setattr("scripts.realtime_audit.emit_event", lambda *args, **kwargs: None)
+    monkeypatch.setattr("scripts.common.realtime_audit.emit_event", lambda *args, **kwargs: None)
     monkeypatch.setattr(login_detector.cdp_db, "init_db", lambda: calls.setdefault("db_init", True))
     monkeypatch.setattr(
         login_detector.cdp_db,

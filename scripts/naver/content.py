@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 from scripts.naver.live_safety import ensure_page_safe, throttle_live
 from scripts.site_session_safety import assert_session_integrity
@@ -356,7 +356,7 @@ def save_cafe_submit_record(record: dict[str, Any], output: str | Path | None = 
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     LATEST_CAFE_SUBMIT_RECORD_PATH.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             "NAVER_CAFE_PUBLISH_EXECUTED" if record.get("published") else "NAVER_CAFE_WRITE_PREPARED",

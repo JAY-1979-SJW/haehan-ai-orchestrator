@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.page_helper_common import (
     _find_frame,
     _safe_auto_login_detect,

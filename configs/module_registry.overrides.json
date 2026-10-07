@@ -585,7 +585,7 @@
   "reason": "리포지토리 커밋/스테이지 변경 감사용 CLI 도구(quality gate). 앱 도메인 정책이 아니라 운영 도구 — L12(문서·운영 도구, 의존 방향 규칙 밖). 이름만 gate라 L2로 오분류.",
   "source": "manual"
  },
- "scripts/realtime_audit.py": {
+ "scripts/common/realtime_audit.py": {
   "layer": "L7",
   "role": "persistence",
   "reason": "실시간 감사 이벤트를 data/logs/realtime_audit.jsonl 에 기록/조회하는 감사 로그 저장소 — L7(저장·감사) 정의에 정확히 부합. L4 기본값 오분류를 L7로 정정.",
@@ -597,7 +597,7 @@
   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
   "source": "manual"
  },
- "scripts/runtime_temp.py": {
+ "scripts/common/runtime_temp.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "런타임 임시 디렉터리 경로 선택 순수 함수(후보 경로 목록 반환) — 브라우저·외부 IO 없음. L4 기본값 오분류를 L1로 정정.",
@@ -1139,7 +1139,7 @@
  "ai_orchestrator/gates/gate_types.py": {
   "layer": "L1",
   "role": "shared",
-  "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
+  "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/common/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
   "source": "manual"
  },
  "ai_orchestrator/connectors/hiworks/client.py": {

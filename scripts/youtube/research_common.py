@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 from scripts.youtube.youtube_http_client import (
     api_key as _resolve_api_key,
 )

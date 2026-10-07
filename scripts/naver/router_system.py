@@ -1,7 +1,7 @@
 """네이버 시스템/세션/카탈로그/로그인 명령 핸들러"""
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 from .base import check_session
 
 

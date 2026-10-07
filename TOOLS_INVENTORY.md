@@ -288,7 +288,7 @@ python scripts/cdp_db.py requests [site|summary] [limit]
 
 ## 📝 로깅 도구
 
-### 11. 로거 (`scripts/logger.py`)
+### 11. 로거 (`scripts/common/logger.py`)
 **용도**: 모든 활동을 파일 + 콘솔에 기록
 
 **로그 파일**: `data/logs/app.log` (96KB, RotatingFileHandler)

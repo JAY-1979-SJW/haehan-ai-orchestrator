@@ -21,7 +21,7 @@ import time
 from collections.abc import Iterable
 from contextlib import suppress
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

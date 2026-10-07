@@ -4,7 +4,7 @@
 게이트: 환경변수 LOG_LEVEL 또는 set_level()로 런타임 변경 가능.
 
 사용법:
-    from scripts.logger import get_logger
+    from scripts.common.logger import get_logger
     log = get_logger(__name__)
 
     log.debug("CDP 포트: %s", port)
@@ -16,7 +16,7 @@
     # LOG_LEVEL=DEBUG python scripts/...
 
     # 런타임 변경
-    from scripts.logger import set_level
+    from scripts.common.logger import set_level
     set_level("DEBUG")
 """
 
@@ -32,7 +32,7 @@ from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = data_dir() / "logs"
 LOG_FILE = LOG_DIR / "app.log"
 

@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import pytest
 
-from scripts.runtime_temp import usable_temp_base
+from scripts.common.runtime_temp import usable_temp_base
 
 _SESSION_MP = None
 

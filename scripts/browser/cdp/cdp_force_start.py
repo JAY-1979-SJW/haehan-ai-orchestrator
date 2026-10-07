@@ -28,7 +28,7 @@ sys.path.insert(0, str(ROOT))
 from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
 from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome  # noqa: E402
-from scripts.config import CDP_BROWSER_POLICY  # noqa: E402
+from scripts.common.config import CDP_BROWSER_POLICY  # noqa: E402
 
 CDP_PORT = 9222
 CDP_HOST = "127.0.0.1"

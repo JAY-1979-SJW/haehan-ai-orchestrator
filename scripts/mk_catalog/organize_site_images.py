@@ -13,7 +13,7 @@ from typing import Any
 
 from PIL import Image
 
-from scripts.app_paths import onedrive_root, resolve_external
+from scripts.common.app_paths import onedrive_root, resolve_external
 
 ROOT = str(resolve_external("HAEHAN_LIGHTING_IMAGE_DIR", "전등 이미지", "gonobi_images_v2", base=onedrive_root()))
 EXCLUDE_CATS = {"시공사례"}

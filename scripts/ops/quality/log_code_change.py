@@ -68,7 +68,7 @@ def main() -> None:
     suffix = Path(file_path).suffix.lower()
 
     try:
-        from scripts.op_log import log_op
+        from scripts.common.op_log import log_op
 
         log_op(
             op,

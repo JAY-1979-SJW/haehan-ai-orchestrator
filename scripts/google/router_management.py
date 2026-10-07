@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 from scripts.google import module_check, work_records
 from scripts.google.base import check_session
 

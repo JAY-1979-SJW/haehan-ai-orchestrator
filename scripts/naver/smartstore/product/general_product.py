@@ -28,8 +28,8 @@ from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 from scripts.naver.smartstore.product.postflight import postflight
 from scripts.naver.smartstore.product.preflight import preflight

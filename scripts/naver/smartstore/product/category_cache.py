@@ -24,7 +24,7 @@ import time
 from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 

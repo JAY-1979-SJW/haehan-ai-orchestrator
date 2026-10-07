@@ -26,7 +26,7 @@ docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md 참조.
 그래서 이 게이트의 우회는 환경변수 SKELETON_GATE_SKIP_REASON 으로 받는다(quality_gate 류의
 다른 게이트도 pre-commit 단계에선 메시지를 못 보므로 같은 방식이 이 저장소의 관례에 맞다).
 사용 예: SKELETON_GATE_SKIP_REASON="긴급 롤백" git commit -m "..."
-우회 시에도 scripts.op_log.log_op 로 감사 로그에 남긴다(다른 운영 로그와 같은 위치:
+우회 시에도 scripts.common.op_log.log_op 로 감사 로그에 남긴다(다른 운영 로그와 같은 위치:
 <메인 저장소 루트>/data/logs/ops.log, data/cdp.db ops_log 테이블 — 이 스크립트가 git worktree
 안에서 실행돼도 `git rev-parse --git-common-dir` 로 메인 저장소 루트를 찾아 그 곳에 남긴다).
 내부 오류(예상 못한 예외)가 나면: SKELETON_GATE_SKIP_REASON 이 있으면 그래도 우회(로그 남기고
@@ -314,7 +314,7 @@ def _main_repo_root(root: Path) -> Path:
 
 def _log_bypass(reason: str, fails: list[str], root: Path = ROOT) -> None:
     with contextlib.suppress(Exception):
-        from scripts.op_log import log_op
+        from scripts.common.op_log import log_op
 
         main_root = _main_repo_root(root)
         log_op(

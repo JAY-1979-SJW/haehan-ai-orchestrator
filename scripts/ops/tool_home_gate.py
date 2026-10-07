@@ -31,7 +31,7 @@ _BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.p
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
-from scripts.app_paths import repo_root  # noqa: E402
+from scripts.common.app_paths import repo_root  # noqa: E402
 
 ROOT = repo_root()
 CONFIG = "configs/tool_home.json"

@@ -43,8 +43,8 @@ from pathlib import Path
 from playwright.sync_api import Page
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 from scripts.naver.blog.core.writer import BlogWriter
 
 _log = get_logger(__name__)
@@ -244,7 +244,7 @@ class BlogWriterPro:
         elif schedule_at:
             result = self.writer.schedule_publish(schedule_at)
         else:
-            from scripts.gate import require_approved
+            from scripts.common.gate import require_approved
 
             require_approved("blog_publish", approval, via="blog_pro_smart_publish")
             result = self.writer.publish()

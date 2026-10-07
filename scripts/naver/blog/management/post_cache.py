@@ -44,7 +44,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from scripts.browser.cdp.cdp_helper import CDP  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 from scripts.naver.blog.accounts import DEFAULT_ACCOUNT  # noqa: E402
 
 _log = get_logger(__name__)

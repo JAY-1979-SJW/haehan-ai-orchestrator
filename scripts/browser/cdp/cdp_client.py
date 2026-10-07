@@ -729,7 +729,7 @@ def _cmd_services() -> None:
 
 
 def _cmd_gate(task: str, sub: str) -> None:
-    from scripts.gate import GateBlocked, check, list_registry
+    from scripts.common.gate import GateBlocked, check, list_registry
 
     sub_cmd = task or "list"
     if sub_cmd == "list":
@@ -752,7 +752,7 @@ def _cmd_gate(task: str, sub: str) -> None:
 
 
 def _cmd_op_log(task: str, sub: str) -> None:
-    from scripts.op_log import query_recent, query_stats
+    from scripts.common.op_log import query_recent, query_stats
 
     sub_cmd = task or "list"
     if sub_cmd == "list":

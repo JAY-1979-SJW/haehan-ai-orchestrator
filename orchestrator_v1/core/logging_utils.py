@@ -1,7 +1,7 @@
 """Logging helpers.
 
 This module stays as a compatibility facade. New redaction behavior lives in
-``scripts.security`` so browser, audit, credentials, and CLI code can share one
+``scripts.common.security`` so browser, audit, credentials, and CLI code can share one
 policy.
 """
 

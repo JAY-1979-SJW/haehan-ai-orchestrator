@@ -34,7 +34,7 @@ from contextlib import closing, suppress
 from pathlib import Path
 from typing import Any
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.popup_classifier import Action, Category, Decision, Severity, classify, is_auto_handleable
 from scripts.popup_watcher import POPUP_MARKERS, build_watcher_js
 
@@ -53,7 +53,7 @@ _CLEAR_JS = "() => { if(window.__hh_popup_state) window.__hh_popup_state.events 
 
 def _get_cdp_port() -> int:
     try:
-        from scripts.config import CDP_PORT as _CDP_PORT
+        from scripts.common.config import CDP_PORT as _CDP_PORT
     except Exception:  # noqa: BLE001 - 백그라운드 팝업 감시 데몬 — 모니터링 루프는 한 틱이 실패해도 다음 틱으로 계속돼야 하므로 로그 후 진행, 상태 읽기 실패는 안전한 기본값 폴백, 쓰기·결제 없음(2026-09-28 검토)
         _CDP_PORT = 9222
     try:

@@ -15,7 +15,7 @@ import socket
 from collections.abc import Callable
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 IMAP_HOST, IMAP_PORT = "imap.naver.com", 993

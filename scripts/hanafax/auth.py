@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

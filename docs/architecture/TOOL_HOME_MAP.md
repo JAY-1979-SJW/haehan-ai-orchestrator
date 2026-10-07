@@ -62,7 +62,7 @@
 |---|---|---|---|
 | CDP·브라우저 | 22개 위치(`ai_orchestrator/local_agent` 47, `browser_tool` 46, 루트 `local_agent` 20, `scripts` 20, `browser_worker`, `browser_api` …) | 엔진은 `ai_orchestrator/browser_tool/`, 공유 연결은 `scripts/web_connector.py`(CLAUDE.md가 이미 정본으로 지정). 도구 전용 믹스인은 각 도구 집으로 | T1(클라이언트 1벌)·T4 |
 | local_agent | 3벌(`ai_orchestrator/local_agent` 116, 루트 `local_agent` 51, `scripts/local_agent` 21) | 서버 측은 `ai_orchestrator/local_agent/`, PC 실행체는 루트 `local_agent/`(독립 배포 단위)로 역할을 나누고 `scripts/local_agent/`는 시나리오로 흡수 — **T4 기준서에서 확정**(이번 제안은 방향만) | T4 |
-| 게이트·정책 | 26개 위치, 4종 병존(`scripts/gate.py`, `scripts/gates/`, `ai_orchestrator/gates/`, `scripts/ops/write_gates/`) | 1종으로 — R2d-2 설계와 함께 | T5 |
+| 게이트·정책 | 26개 위치, 4종 병존(`scripts/common/gate.py`, `scripts/gates/`, `ai_orchestrator/gates/`, `scripts/ops/write_gates/`) | 1종으로 — R2d-2 설계와 함께 | T5 |
 
 ## 3. ② 집 밖 파일 전수와 이동 대상
 

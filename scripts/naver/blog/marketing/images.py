@@ -15,7 +15,7 @@ import requests
 from dotenv import load_dotenv
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
 from scripts.naver.blog.marketing.topics import topic_key
 

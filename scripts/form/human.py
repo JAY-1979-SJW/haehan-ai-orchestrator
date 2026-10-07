@@ -20,7 +20,7 @@ import time
 
 from scripts.form.events import wait_field_ready, wait_value_settled
 from scripts.human_input import safe_human_input as _safe_basic  # noqa: F401
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 from scripts.page_helper import page_goto  # noqa: E402
 from scripts.web_connector import browser_session  # noqa: E402
 

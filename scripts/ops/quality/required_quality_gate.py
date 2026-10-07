@@ -18,8 +18,7 @@ from uuid import uuid4
 _ROOT_BOOT = str(Path(__file__).resolve().parents[3])  # 직접 실행(python .../quality/x.py)에서도 scripts 패키지를 찾게 한다
 if _ROOT_BOOT not in sys.path:
     sys.path.insert(0, _ROOT_BOOT)
-from scripts.runtime_temp import usable_temp_base  # noqa: E402 - sys.path 부트스트랩 뒤 import
-
+from scripts.common.runtime_temp import usable_temp_base  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 30

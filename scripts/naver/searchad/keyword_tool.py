@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import requests
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.searchad.auth import build_headers, load_credentials
 
 _log = get_logger(__name__)

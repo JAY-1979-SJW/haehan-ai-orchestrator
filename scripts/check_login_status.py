@@ -69,8 +69,8 @@ def main() -> None:
         import urllib.request
 
         from scripts.browser.cdp import cdp_db
-        from scripts.config import CDP_HOST, CDP_PORT
-        from scripts.logger import get_logger
+        from scripts.common.config import CDP_HOST, CDP_PORT
+        from scripts.common.logger import get_logger
         from scripts.login_detector import (
             _extract_domain,
             _find_site_by_domain,

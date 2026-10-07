@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, ".")
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.blog.marketing import TARGET_BLOG_ID
 from scripts.naver.blog.marketing.content import generate_post
 from scripts.naver.blog.marketing.images import fetch_unsplash_images, pick_3_images
@@ -105,7 +105,7 @@ def _require_batch_approval(dry_run: bool, approval: str | None, count: int) -> 
     """이 일괄 작성은 글마다 즉시 발행한다 — 시작 전에 사용자가 직접 입력한 승인 문구를 확인한다(dry-run 은 제외)."""
     if dry_run:
         return
-    from scripts.gate import require_approved
+    from scripts.common.gate import require_approved
 
     require_approved("blog_publish", approval, via="blog_ai_batch_20", count=count)
 
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="실제 발행 없이 시뮬레이션")
     parser.add_argument("--count", type=int, default=20, help="작성할 포스트 수")
-    from scripts.gate import CONFIRM_TEXTS, GateBlocked
+    from scripts.common.gate import CONFIRM_TEXTS, GateBlocked
 
     parser.add_argument("--confirm", default=None, help=f"실제 발행 승인 문구(직접 입력): {CONFIRM_TEXTS['blog_publish']}")
     args = parser.parse_args()
