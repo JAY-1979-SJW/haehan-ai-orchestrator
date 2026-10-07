@@ -102,16 +102,38 @@ def files_for_diff(ranges: dict[str, set[int]], read=lambda p: Path(p).read_text
     return out
 
 
+def tests_for_files(files: list[str], tests: list[str], read=lambda p: Path(p).read_text(encoding="utf-8", errors="replace")) -> list[str]:
+    """바뀐 파일을 직접 가리키는 시험 파일(모듈 점 경로 또는 파일명이 본문에 나오는 것). 전이 영향까지 넓히면 수백 개라 직접 참조만 쓴다."""
+    needles = [(module_dotted_path(f), Path(f).stem) for f in files]
+    picked: list[str] = []
+    file_set = set(files)
+    for t in sorted(tests):
+        if t in file_set:
+            picked.append(t)
+            continue
+        try:
+            text = read(t)
+        except OSError:
+            continue
+        if any(dotted in text or re.search(rf"\b{re.escape(stem)}\b", text) for dotted, stem in needles):
+            picked.append(t)
+    return picked
+
+
+def rewrite_toml_list(pyproject: str, key: str, values: list[str]) -> str:
+    """pyproject 의 `key = [...]` 한 줄(여러 줄 가능)을 values 로 바꾼 텍스트(워크플로가 실행 중에만 쓴다)."""
+    value = f"{key} = [" + ", ".join(f'"{v}"' for v in values) + "]"
+    return re.sub(rf"^{re.escape(key)} = \[[^\]]*\]", lambda _m: value, pyproject, count=1, flags=re.M)
+
+
 def rewrite_source_paths(pyproject: str, files: list[str]) -> str:
-    """pyproject 의 [tool.mutmut] source_paths 를 지정 파일들로 바꾼 텍스트(실행 중에만 쓴다)."""
-    value = "source_paths = [" + ", ".join(f'"{f}"' for f in files) + "]"
-    return re.sub(r"^source_paths = \[[^\]]*\]", lambda _m: value, pyproject, count=1, flags=re.M)
+    return rewrite_toml_list(pyproject, "source_paths", files)
 
 
 def main(argv: list[str]) -> int:
-    """사용: BASE [HEAD] [--limit N] [--files] [--write-source-paths PYPROJECT]"""
+    """사용: BASE [HEAD] [--limit N] [--files] [--tests] [--write-source-paths PYPROJECT]"""
     opts = {"--limit": "", "--write-source-paths": ""}
-    flags = {"--files": False}
+    flags = {"--files": False, "--tests": False}
     args: list[str] = []
     it = iter(argv)
     for a in it:
@@ -122,7 +144,7 @@ def main(argv: list[str]) -> int:
         else:
             args.append(a)
     if not args:
-        print("usage: changed_functions.py BASE [HEAD] [--limit N] [--files] [--write-source-paths PYPROJECT]", file=sys.stderr)
+        print("usage: changed_functions.py BASE [HEAD] [--limit N] [--files] [--tests] [--write-source-paths PYPROJECT]", file=sys.stderr)
         return 2
     base, head = args[0], (args[1] if len(args) > 1 else "HEAD")
     ranges = changed_line_ranges(base, head)
@@ -132,6 +154,10 @@ def main(argv: list[str]) -> int:
         tmp = target.with_suffix(target.suffix + ".tmp")
         tmp.write_text(rewrite_source_paths(target.read_text(encoding="utf-8"), files), encoding="utf-8", newline="\n")
         tmp.replace(target)
+        return 0
+    if flags["--tests"]:
+        all_tests = [str(x).replace("\\", "/") for x in Path("tests").rglob("test_*.py")]
+        print("\n".join(tests_for_files(files_for_diff(ranges), all_tests)))
         return 0
     if flags["--files"]:
         print("\n".join(files_for_diff(ranges)))

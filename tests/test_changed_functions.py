@@ -64,3 +64,18 @@ def test_files_for_diff_and_rewrite_source_paths():
 
 def test_summary_warns_when_no_mutant_ran():
     assert "실행된 변이체 0" in sm.render({"killed": 0, "survived": 0, "total": 466457})
+
+
+def test_tests_for_files_picks_direct_references_only():
+    texts = {
+        "tests/test_a.py": "from scripts.ops import a\n",
+        "tests/test_b.py": "import unrelated\n",
+        "tests/test_c.py": "from scripts.ops.a import f\n",
+    }
+    got = cf.tests_for_files(["scripts/ops/a.py"], list(texts), read=lambda p: texts[p])
+    assert got == ["tests/test_a.py", "tests/test_c.py"]
+
+
+def test_rewrite_toml_list_replaces_only_that_key():
+    text = 'a = ["1"]\nalso_copy = ["x", "y"]\n'
+    assert cf.rewrite_toml_list(text, "also_copy", ["z"]) == 'a = ["1"]\nalso_copy = ["z"]\n'
