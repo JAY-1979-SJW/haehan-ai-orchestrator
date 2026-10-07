@@ -6,7 +6,14 @@ from typing import Any
 
 from scripts.config import GOOGLE_URLS
 
-from .base import page_goto, page_wait_click, page_wait_type, page_wait_visible, task_context
+from .base import page_goto, page_wait_type, page_wait_visible, task_context
+from .browser_tasks import (
+    ContextDeleteSpec,
+    run_context_menu_delete,
+    run_open_editor,
+    run_recent_titles,
+    run_search,
+)
 
 
 def run(task: str, args: list[str]) -> None:
@@ -33,53 +40,23 @@ def run(task: str, args: list[str]) -> None:
 
 def _task_recent(page: Any, args: list[str]) -> None:
     """최근 시트."""
-    print("\n[작업] Google Sheets 최근 시트")
-
-    page_goto(page, GOOGLE_URLS["sheets_home"])
-    page_wait_visible(page, '[role="listitem"], [data-item-id]', timeout=20000)
-
-    sheets = page.evaluate(r"""() => {
-        const results = [];
-        for (const el of document.querySelectorAll('[role="listitem"] [aria-label]')) {
-            const title = el.getAttribute('aria-label') || el.textContent.trim();
-            if (title && title.length > 2) results.push(title);
-        }
-        return results.slice(0, 10);
-    }""")
-
-    print(f"  시트 수: {len(sheets)}")
-    for i, sheet in enumerate(sheets, 1):
-        print(f"  [{i}] {sheet[:60]}")
+    run_recent_titles(page, heading="Google Sheets 최근 시트", home_url=GOOGLE_URLS["sheets_home"], count_label="시트 수")
 
 
 def _task_new(page: Any, args: list[str]) -> None:
     """새 시트 생성."""
-    print("\n[작업] Google Sheets 새 시트 생성")
-
-    page_goto(page, GOOGLE_URLS["sheets_create"])
-    # 스프레드시트 에디터 로드 대기
-    page_wait_visible(page, '#docs-editor, .docs-editor-container, [id*="grid"]', timeout=30000)
-    print("  ✓ 새 시트 생성 완료")
+    run_open_editor(
+        page,
+        heading="Google Sheets 새 시트 생성",
+        url=GOOGLE_URLS["sheets_create"],
+        editor_selector='#docs-editor, .docs-editor-container, [id*="grid"]',
+        done_message="  ✓ 새 시트 생성 완료",
+    )
 
 
 def _task_search(page: Any, args: list[str]) -> None:
     """시트 검색."""
-    if not args:
-        print("  [오류] 검색어를 입력하세요")
-        return
-
-    query = " ".join(args)
-    print(f"\n[작업] Sheets 검색: {query}")
-
-    page_goto(page, GOOGLE_URLS["sheets_home"])
-    page_wait_visible(page, '[role="main"]', timeout=20000)
-
-    if page_wait_type(page, 'input[placeholder*="Search"], input[aria-label*="Search"]', query):
-        page.keyboard.press("Enter")
-        page_wait_visible(page, '[role="main"]', timeout=10000)
-        print("  ✓ 검색 완료")
-    else:
-        print("  ⚠  검색창 못 찾음")
+    run_search(page, args, service="Sheets", home_url=GOOGLE_URLS["sheets_home"], search_selector='input[placeholder*="Search"], input[aria-label*="Search"]')
 
 
 def _task_open(page: Any, args: list[str]) -> None:
@@ -110,31 +87,22 @@ def _task_open(page: Any, args: list[str]) -> None:
 
 def _task_delete(page: Any, args: list[str]) -> None:
     """시트 삭제."""
-    if not args:
-        print("  [오류] 삭제할 시트명을 입력하세요")
-        return
-
-    sheet_name = " ".join(args)
-    print(f"\n[작업] Sheets 시트 삭제: {sheet_name}")
-
-    page_goto(page, GOOGLE_URLS["sheets_home"])
-    page_wait_visible(page, '[role="listitem"]', timeout=20000)
-
-    page.evaluate(f"""() => {{
-        for (const el of document.querySelectorAll('[role="listitem"]')) {{
-            if (el.textContent.includes({sheet_name!r})) {{
-                el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true }}));
-                break;
-            }}
-        }}
-    }}""")
-
-    if page_wait_visible(page, '[role="menu"]', timeout=5000):
-        page_wait_click(page, '[role="menuitem"]:has-text("삭제"), [role="menuitem"]:has-text("Delete")')
-        page_wait_visible(page, '[role="listitem"]', timeout=5000)
-        print("  ✓ 시트 삭제 완료")
-    else:
-        print("  ⚠  컨텍스트 메뉴 못 찾음")
+    run_context_menu_delete(
+        page,
+        args,
+        ContextDeleteSpec(
+            empty_message="  [오류] 삭제할 시트명을 입력하세요",
+            heading="Sheets 시트 삭제",
+            home_url=GOOGLE_URLS["sheets_home"],
+            ready_selector='[role="listitem"]',
+            ready_timeout=20000,
+            candidates_selector='[role="listitem"]',
+            match_condition="el.textContent.includes({name})",
+            menu_selector='[role="menu"]',
+            done_message="  ✓ 시트 삭제 완료",
+            fail_message="  ⚠  컨텍스트 메뉴 못 찾음",
+        ),
+    )
 
 
 def _task_insert(page: Any, args: list[str]) -> None:

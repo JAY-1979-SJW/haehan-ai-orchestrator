@@ -1,13 +1,13 @@
 """Google domain taxonomy, handling policy, and user-facing labels."""
 from __future__ import annotations
 
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from scripts.google import surfaces, tab_registry, workflows
+from scripts.google.report_io import print_report_summary, save_json_md_report
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_REPORT_DIR = ROOT / "data" / "google_domain_taxonomy_reports"
@@ -521,15 +521,9 @@ def build_google_page_tab_catalog(surface_key: str | None = None) -> dict[str, A
 
 def save_google_domain_taxonomy(report: dict[str, Any] | None = None) -> tuple[dict[str, Any], Path, Path]:
     report = report or build_google_domain_taxonomy()
-    DATA_REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    DOC_REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    json_path = DATA_REPORT_DIR / f"google_domain_taxonomy_{timestamp}.json"
-    md_path = DOC_REPORT_DIR / f"google_domain_taxonomy_{timestamp}.md"
-    text = json.dumps(report, ensure_ascii=False, indent=2)
-    json_path.write_text(text, encoding="utf-8")
-    LATEST_REPORT.write_text(text, encoding="utf-8")
-    md_path.write_text(_render_markdown(report), encoding="utf-8")
+    json_path, md_path = save_json_md_report(
+        report, DATA_REPORT_DIR, DOC_REPORT_DIR, LATEST_REPORT, "google_domain_taxonomy", _render_markdown
+    )
     return report, json_path, md_path
 
 
@@ -576,18 +570,10 @@ def _render_markdown(report: dict[str, Any]) -> str:
 
 
 def print_google_domain_taxonomy_summary(report: dict[str, Any], json_path: Path, md_path: Path) -> None:
-    print("=" * 60)
-    print("Google domain taxonomy")
-    print("=" * 60)
-    print(f"groups: {report['counts']['domain_groups']}")
-    print(f"surfaces: {report['counts']['surfaces']}")
-    print(f"hosts: {report['counts']['hosts']}")
-    print(f"page_tabs: {report['counts']['page_tabs']}")
-    print(f"approval_surfaces: {report['counts']['approval_surfaces']}")
-    print(f"readonly_surfaces: {report['counts']['readonly_surfaces']}")
-    print(f"json: {json_path}")
-    print(f"markdown: {md_path}")
-    print(f"latest: {LATEST_REPORT}")
+    fields = [("groups", "domain_groups")] + [
+        (key, key) for key in ("surfaces", "hosts", "page_tabs", "approval_surfaces", "readonly_surfaces")
+    ]
+    print_report_summary("Google domain taxonomy", report["counts"], fields, json_path, md_path, LATEST_REPORT)
 
 
 def print_google_page_tab_summary(catalog: dict[str, Any]) -> None:

@@ -219,10 +219,9 @@ def _cmd_labor_test() -> None:
     print("EUM 근로내역테스트 조회")
     print("=" * 60)
     from scripts.eum.labor_test import fetch_labor_test, save_labor_test
+    from scripts.eum.menu_actions import fetch_save_print
 
-    records = fetch_labor_test(page)
-    path = save_labor_test(records)
-    print(f"근로내역테스트: {len(records)}건 조회 → {path}")
+    fetch_save_print(page, fetch_labor_test, save_labor_test, "근로내역테스트")
 
 
 def _cmd_test_workers() -> None:
@@ -244,11 +243,10 @@ def _cmd_site_devices() -> None:
     print("=" * 60)
     print("EUM 현장별단말기목록 조회")
     print("=" * 60)
+    from scripts.eum.menu_actions import fetch_save_print
     from scripts.eum.site_devices import fetch_site_devices, save_site_devices
 
-    records = fetch_site_devices(page)
-    path = save_site_devices(records)
-    print(f"현장별단말기목록: {len(records)}건 조회 → {path}")
+    fetch_save_print(page, fetch_site_devices, save_site_devices, "현장별단말기목록")
 
 
 def _cmd_history(sub: str | None, args: list[str]) -> None:

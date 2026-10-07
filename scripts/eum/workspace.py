@@ -6,13 +6,13 @@ business map. It does not click buttons or submit forms.
 
 from __future__ import annotations
 
-import json
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from scripts.app_paths import repo_root
+from scripts.eum.report_io import save_json
 
 ROOT = repo_root()
 
@@ -354,10 +354,7 @@ def build_work_index(page) -> dict[str, Any]:
 
 
 def save_work_index(index: dict[str, Any], path: Path | None = None) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    out = path or (DATA_DIR / "eum_work_index.json")
-    out.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
-    return out
+    return save_json(index, DATA_DIR, "eum_work_index.json", path)
 
 
 def print_summary(index: dict[str, Any], path: Path | None = None) -> None:
