@@ -291,6 +291,16 @@ def list_registry() -> list[dict]:
 # 수신거부 목록은 data/gate/opt_out.json (GATE_DATA_DIR 로 변경) 에 tmp+rename 으로만 쓴다.
 
 _opt_out_lock = threading.Lock()
+
+# 작업별 승인 문구 — 사용자가 확인 단계에서 직접 입력해야 하는 값(코드·화면에서 자동으로 채우지 않는다).
+# 한곳에 모아 두면 R2d-2(승인을 내용 해시에 묶기)에서 교체할 지점이 하나가 된다.
+CONFIRM_TEXTS: dict[str, str] = {
+    "blog_publish": "NAVER_BLOG_APPROVED_PUBLISH",
+    "instagram_publish": "INSTAGRAM_APPROVED_PUBLISH",
+    "smartstore_reply": "SMARTSTORE_APPROVED_REPLY",
+    "drive_share": "GOOGLE_DRIVE_APPROVED_SHARE",
+    "hanafax_send": "HANAFAX_APPROVED_SEND",
+}
 _LOCK_WAIT_S = 10.0
 _LOCK_STALE_S = 30.0  # 이보다 오래된 잠금 파일은 죽은 프로세스가 남긴 것으로 보고 치운다
 
@@ -350,6 +360,12 @@ def add_opt_out(address: str) -> None:
         os.replace(tmp, path)
 
 
+def is_opted_out(address: str) -> bool:
+    """수신거부 목록에 있으면 True. 목록 파일이 깨졌으면 보수적으로 True(보내지 않는다)."""
+    opted = opt_out_list()
+    return opted is None or address.strip().lower() in opted
+
+
 def _blocked(op_name: str, reason: str, **metadata: Any) -> GateBlocked:
     result = GateResult(
         verdict=GateVerdict.BLOCKED, risk=RiskLevel.APPROVE, op_name=op_name, reason=reason, metadata=metadata
@@ -381,3 +397,8 @@ def require_side_effect(
         if hit is not None:
             raise _blocked(op_name, "수신거부 대상", recipient=hit, **metadata)
     return check(op_name, risk=RiskLevel.APPROVE, force=True, **metadata)
+
+
+def require_approved(op_name: str, approval: str | None, **metadata: Any) -> GateResult:
+    """CONFIRM_TEXTS 에 등록된 작업의 승인 문구 검사(수신자가 없는 공개 발행·답변·공유용)."""
+    return require_side_effect(op_name, approval=approval, expected=CONFIRM_TEXTS[op_name], **metadata)
