@@ -28,6 +28,7 @@ const FORWARD_REQUEST_HEADERS = new Set([
   "cache-control",
   "x-request-id",
   "x-device-token",
+  "x-haehan-desktop", // 데스크톱 첫 실행 등록/자동 세션 요청 표지(백엔드가 요구)
   "authorization", // 사용자 JWT(Bearer) 전달 — user-auth(getMe/login 등). 미포함 시 서버 Basic 주입.
 ]);
 

@@ -92,6 +92,8 @@ async function startNextServer() {
       PORT: String(NEXT_PORT),
       HOSTNAME: "127.0.0.1",
       NODE_ENV: "production",
+      // 데스크톱 표지 — Next 미들웨어가 로그인 대신 /setup(첫 실행 등록·자동 세션)으로 보낸다
+      HAEHAN_DESKTOP: "1",
       // self-contained: 번들 .env.production(원격) 대신 로컬 FastAPI(8401)로 강제.
       // @next/env 는 이미 설정된 process.env 를 .env 파일로 덮어쓰지 않으므로 여기 값이 우선.
       API_BASE_URL: "http://localhost:8401",

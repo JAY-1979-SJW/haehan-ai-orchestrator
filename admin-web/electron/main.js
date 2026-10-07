@@ -39,7 +39,8 @@ const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./l
 const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
 const { Menu, dialog, session } = require("electron");
-const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
+const { startFastAPIServer, stopFastAPIServer, FASTAPI_PORT } = require("./lib/fastapi_server");
+const { refreshDesktopSession } = require("./lib/desktop_session");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
 const claudeMcp = require("./lib/claude_mcp");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
@@ -179,6 +180,15 @@ if (!gotLock) {
     // 그 시점에 CDP를 자동 기동하므로 기능 손실 없음. (startCdpBrowser 는 보존 —
     // 추후 명시적 요청 시 호출 가능)
     if (cdpWatchdogTimer) { clearInterval(cdpWatchdogTimer); cdpWatchdogTimer = null; }
+
+    // 데스크톱 자동 세션: 시작할 때마다 등록된 owner 의 새 토큰을 받아 config(auth_token)에 보관한다(webview 가 이를 쿠키로 사용).
+    // 첫 실행(사용자 없음)이면 옛 토큰만 지우고, Next 가 /setup(이름·이메일 등록)으로 보낸다. 실패해도 시작은 계속한다.
+    try {
+      const sessionState = await refreshDesktopSession(FASTAPI_PORT);
+      console.log("[desktop-session]", sessionState);
+    } catch (e) {
+      console.warn("[desktop-session] 건너뜀:", e.message);
+    }
 
     // config.json 이 손상·잠김이었다면(보존·복구한 내용) 한 번 알린다 — 기존 설정을 조용히 잃지 않도록(D6)
     const cfgWarnings = consumeConfigWarnings();

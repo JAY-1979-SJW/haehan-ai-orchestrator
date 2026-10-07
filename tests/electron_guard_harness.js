@@ -136,6 +136,34 @@ async function main() {
     fs.writeFileSync(path.join(dir, "build-info.json"), "{not json");
     const broken = f.readBuildInfo();
     out({ none, ok, bad, broken });
+  } else if (testCase.startsWith("desktop-session-")) {
+    const http = require("http");
+    const mode = testCase.slice("desktop-session-".length); // 200 | needs-setup | 404 | no-owner | down
+    const c = lib("config.js");
+    c.setAuthToken("OLD-TOKEN");
+    const seen = {};
+    const server = http.createServer((req, res) => {
+      seen.method = req.method;
+      seen.path = req.url;
+      seen.header = req.headers["x-haehan-desktop"];
+      const send = (code, obj) => {
+        res.writeHead(code, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(obj));
+      };
+      if (mode === "200") send(200, { token: "NEW-TOKEN", user: { id: "u1" } });
+      else if (mode === "needs-setup") send(409, { detail: "needs_setup" });
+      else if (mode === "no-owner") send(409, { detail: "no_active_owner" });
+      else send(404, { detail: "Not Found" });
+    });
+    await new Promise((r) => server.listen(0, "127.0.0.1", r));
+    let port = server.address().port;
+    if (mode === "down") {
+      await new Promise((r) => server.close(r));
+    }
+    const ds = lib("desktop_session.js");
+    const result = await ds.refreshDesktopSession(port);
+    if (mode !== "down") await new Promise((r) => server.close(r));
+    out({ result, token: c.getAuthToken(), seen });
   } else {
     throw new Error("unknown case " + testCase);
   }

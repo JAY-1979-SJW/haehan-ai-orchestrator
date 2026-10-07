@@ -11,7 +11,6 @@ from pydantic import BaseModel, field_validator
 
 from ai_orchestrator import config
 from ai_orchestrator.gates.auth import (  # 승인 등 owner 작업·콘솔 JWT 수용·OWNER_EMAILS
-    desktop_owner_bootstrap_allowed,
     is_owner_email,
     register_bearer_resolver,
     require_role,
@@ -59,6 +58,13 @@ def get_jwt_user(
     # 자기완결 데스크톱(AUTH_ENABLED=false, loopback owner): 토큰 없이 owner 자동 인증.
     # require_role 의 AUTH-off 정책(_DUMMY_USER owner)과 통일. 운영 웹(AUTH on)은 바이패스 0 → 기존 로그인 유지.
     if not config.AUTH_ENABLED:
+        # 데스크톱: 등록된 사용자의 유효한 토큰이 오면 그 사용자로(마이페이지에 실제 이름·이메일이 보이도록),
+        # 토큰이 없거나 맞지 않으면 기존처럼 owner 자동 인증.
+        if cred:
+            token_user_id = _decode_token(cred.credentials)
+            registered = user_db.get_user_by_id(token_user_id) if token_user_id else None
+            if registered:
+                return registered
         return {
             "id": "owner",
             "email": "owner@haehan-ai.local",
@@ -140,7 +146,7 @@ class AuthResponse(BaseModel):
 
 
 class SignupResponse(BaseModel):
-    status: str  # "pending_approval" (데스크톱 첫 사용자 부트스트랩이면 "approved")
+    status: str  # "pending_approval"
     message: str
     user: UserResponse
 
@@ -161,18 +167,9 @@ def signup(body: SignupRequest):
     if user_db.email_exists(body.email):
         auth_audit.record_auth_event("signup", "conflict", email=body.email)
         raise HTTPException(status_code=409, detail="이미 사용 중인 이메일입니다")
-    user, bootstrapped = user_db.create_user_bootstrapping(
-        body.email, body.name, body.password, allow_bootstrap=desktop_owner_bootstrap_allowed()
-    )
+    # 데스크톱 첫 사용자 등록은 이 가입 흐름이 아니라 desktop_session_router(이름·이메일만, 비밀번호 없음)가 맡는다.
+    user = user_db.create_user(body.email, body.name, body.password)
     auth_audit.record_auth_event("signup", "success", actor_id=user.get("id"), email=body.email)
-    if bootstrapped:
-        # 데스크톱 새 설치의 첫 사용자 — 감사 로그에 눈에 띄게 남긴다(이메일은 auth_audit 가 마스킹).
-        auth_audit.record_auth_event("signup", "bootstrap_owner", actor_id=user.get("id"), email=body.email)
-        return SignupResponse(
-            status="approved",
-            message="첫 사용자(소유자)로 등록되었습니다. 바로 로그인할 수 있습니다.",
-            user=UserResponse(**user_db.safe_user(user)),
-        )
     if is_owner_email(body.email):
         # 이메일 인증이 없으므로 owner 이메일 가입은 감사 로그로 눈에 띄게 남긴다(승인 전 본인 가입인지 확인할 단서).
         auth_audit.record_auth_event("signup", "owner_email_pending", actor_id=user.get("id"), email=body.email)

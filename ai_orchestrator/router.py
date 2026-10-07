@@ -32,6 +32,7 @@ from .audit_logger import log_event, read_recent_logs
 from .browser_tool.approval_record_router import approval_record_router
 from .connectors.cdp_screen_router import cdp_screen_router
 from .connectors.community_router import community_router
+from .connectors.desktop_session_router import desktop_session_router
 from .connectors.eum_router import eum_router
 from .connectors.marketing_ops_router import marketing_ops_router
 from .connectors.gabia_router import gabia_router
@@ -93,6 +94,7 @@ def _legacy_5050_should_use_route_wiring(route_id: str) -> bool:
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)
+router.include_router(desktop_session_router)  # 데스크톱 로컬 모드에서만 응답(그 외 404) — 첫 실행 등록·자동 세션
 router.include_router(sites_router)
 router.include_router(web_task_router)
 router.include_router(dev_reg_approval_read_router)
