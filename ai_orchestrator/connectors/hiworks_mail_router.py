@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.gates.send_approval import require_send_approval
 
 from ..audit_logger import log_event
 
@@ -29,8 +30,13 @@ class HWMailComposeRequest(BaseModel):
     dry_run: bool = True
 
 
+HIWORKS_SEND_CONFIRM_TEXT = "HIWORKS_APPROVED_SEND"
+
+
 class HWMailSendRequest(BaseModel):
     confirmed: bool = False
+    # 사용자가 확인 단계에서 직접 입력한 승인 문구(HIWORKS_SEND_CONFIRM_TEXT). 없거나 다르면 403.
+    send_confirm: str | None = None
 
 
 @hiworks_mail_router.get("/inbox")
@@ -133,6 +139,8 @@ def api_send(
     """현재 브라우저에 열린 하이웍스 작성 메일 발송. confirmed=True 필수."""
     if not req.confirmed:
         raise HTTPException(status_code=400, detail="confirmed=True 필수")
+    # 수신자는 브라우저 작성창 안에 있어 여기서 알 수 없으므로 수신거부 대조는 못 한다 — 승인 문구만 확인.
+    require_send_approval("mail_send", send_confirm=req.send_confirm, expected=HIWORKS_SEND_CONFIRM_TEXT)
 
     log_event(
         "HIWORKS_MAIL_SEND_REQUESTED",

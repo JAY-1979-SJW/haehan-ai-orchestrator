@@ -288,3 +288,135 @@ def test_multiple_recipients_any_opt_out_blocks():
     with pytest.raises(gate.GateBlocked, match="수신거부"):
         gate.require_side_effect("gmail_send", approval=OK, expected=OK, recipient=["a@t.com", "B@t.com"])
     gate.require_side_effect("gmail_send", approval=OK, expected=OK, recipient=["a@t.com", "c@t.com"])
+
+
+# ── R2c: eum 대량 SMTP, eum /sales-mail/send, hiworks /mail/send ───────
+
+
+def test_eum_batch_script_blocks_without_phrase_before_smtp(monkeypatch, tmp_path):
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location(
+        "eum_batch_r2c", Path(__file__).resolve().parents[1] / "scripts" / "eum_send_mail_batch.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    targets = tmp_path / "t.json"
+    targets.write_text('[{"업체명":"A","공사명":"X","이메일":"a@t.com","공사시작일":"2026-01-01"}]', encoding="utf-8")
+    monkeypatch.setattr(mod, "TARGETS_FILE", targets)
+    monkeypatch.setattr(mod, "LOG_FILE", tmp_path / "log.json")
+    connected: list[int] = []
+    monkeypatch.setattr(mod, "connect_smtp", lambda: connected.append(1))
+
+    for bad in (None, "", "yes"):
+        with pytest.raises(gate.GateBlocked):
+            mod.main(approval=bad)
+    assert connected == []  # SMTP 접속 전에 차단
+    mod.main(dry_run=True)  # 드라이런은 승인 불필요
+    assert connected == []
+
+
+def test_eum_batch_send_one_checks_phrase_and_opt_out(monkeypatch):
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location(
+        "eum_batch_r2c2", Path(__file__).resolve().parents[1] / "scripts" / "eum_send_mail_batch.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    monkeypatch.setattr(mod, "ACCOUNT", "me@x.com")
+    monkeypatch.setattr(mod, "PASSWORD", "pw")
+
+    class FakeServer:
+        sent: list[str] = []
+
+        def sendmail(self, frm, to, msg):
+            self.sent.extend(to)
+
+    srv = FakeServer()
+    row = {"업체명": "A", "공사명": "X", "이메일": "a@t.com"}
+    with pytest.raises(gate.GateBlocked):
+        mod.send_one(srv, row)
+    gate.add_opt_out("A@T.com")
+    with pytest.raises(gate.GateBlocked, match="수신거부"):
+        mod.send_one(srv, row, mod.CONFIRM_TEXT)
+    assert srv.sent == []
+    assert mod.send_one(srv, {**row, "이메일": "b@t.com"}, mod.CONFIRM_TEXT) is True
+    assert srv.sent == ["b@t.com"]
+
+
+def test_eum_batch_loop_records_gate_block_without_reconnect(tmp_path):
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location(
+        "eum_batch_r2c3", Path(__file__).resolve().parents[1] / "scripts" / "eum_send_mail_batch.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    gate.add_opt_out("stop@t.com")
+    reconnects: list[bool] = []
+
+    def send_row(row):
+        return mod.send_one(type("S", (), {"sendmail": lambda *a: None})(), row, mod.CONFIRM_TEXT)
+
+    mod.ACCOUNT, mod.PASSWORD = "me@x.com", "pw"
+    log = {"sent": [], "failed": []}
+    mod.run_send_loop(
+        [{"이메일": "stop@t.com", "업체명": "S"}, {"이메일": "ok@t.com", "업체명": "O"}],
+        log,
+        send_row,
+        save=lambda _l: None,
+        sleep=lambda _s: None,
+        reconnect=lambda q: reconnects.append(q),
+    )
+    assert [e["email"] for e in log["sent"]] == ["ok@t.com"]
+    assert "수신거부" in log["failed"][0]["reason"]
+    assert reconnects == []
+
+
+def test_eum_sales_mail_send_requires_phrase_and_checks_opt_out(monkeypatch):
+    from fastapi import HTTPException
+
+    from ai_orchestrator.connectors import eum_router as e
+
+    opened: list[int] = []
+    monkeypatch.setattr(e, "log_event", lambda *a, **k: None)
+    monkeypatch.setattr("scripts.web_connector.run_on_browser_thread", lambda fn, timeout=0: opened.append(1) or {"success": True})
+    user = {"actor": "a", "role": "admin"}
+    base = {"to": "Kim <kim@x.com>", "subject": "s", "body": "b", "confirmed": True}
+    for bad in (None, "", "nope"):
+        with pytest.raises(HTTPException) as exc:
+            e.send_one(e.SendRequest(**base, send_confirm=bad), user=user)
+        assert exc.value.status_code == 403
+    gate.add_opt_out("kim@x.com")
+    with pytest.raises(HTTPException) as exc:
+        e.send_one(e.SendRequest(**base, send_confirm=e.EUM_SALES_MAIL_CONFIRM_TEXT), user=user)
+    assert exc.value.status_code == 403 and "수신거부" in exc.value.detail
+    assert opened == []
+    with pytest.raises(HTTPException) as exc:  # confirmed=False 는 기존대로 400
+        e.send_one(e.SendRequest(**{**base, "confirmed": False}, send_confirm=e.EUM_SALES_MAIL_CONFIRM_TEXT), user=user)
+    assert exc.value.status_code == 400
+
+
+def test_hiworks_mail_send_requires_phrase_before_browser(monkeypatch):
+    from fastapi import HTTPException
+
+    from ai_orchestrator.connectors import hiworks_mail_router as h
+
+    opened: list[int] = []
+    monkeypatch.setattr(h, "log_event", lambda *a, **k: None)
+    monkeypatch.setattr("scripts.web_connector.run_on_browser_thread", lambda fn, timeout=0: opened.append(1) or {"success": True})
+    user = {"actor": "a", "role": "admin"}
+    with pytest.raises(HTTPException) as exc:
+        h.api_send(h.HWMailSendRequest(confirmed=True), user=user)
+    assert exc.value.status_code == 403
+    with pytest.raises(HTTPException) as exc:
+        h.api_send(h.HWMailSendRequest(confirmed=False, send_confirm=h.HIWORKS_SEND_CONFIRM_TEXT), user=user)
+    assert exc.value.status_code == 400
+    assert opened == []
+    h.api_send(h.HWMailSendRequest(confirmed=True, send_confirm=h.HIWORKS_SEND_CONFIRM_TEXT), user=user)
+    assert opened == [1]
