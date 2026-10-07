@@ -788,7 +788,7 @@ def find_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
 # ROUTER_THINNESS known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지
 _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
     "ai_orchestrator/browser_tool/router.py",
-    "ai_orchestrator/router.py",
+    "ai_orchestrator/routers/registry.py",
 }
 
 # STORAGE_BOUNDARY known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지

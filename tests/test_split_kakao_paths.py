@@ -9,11 +9,11 @@ import pytest
 from ai_orchestrator.paths import repo_root
 
 
-@pytest.mark.parametrize(("module", "attr"), [("kakao_setup_router", "ROOT"), ("kakao_skill_router", "_ROOT")])
+@pytest.mark.parametrize(("module", "attr"), [("kakao.setup_router", "ROOT"), ("kakao.skill_router", "_ROOT")])
 def test_root_constant_is_the_repo_root(module, attr):
     assert getattr(importlib.import_module(f"ai_orchestrator.connectors.{module}"), attr) == repo_root()
 
 
 def test_setup_state_path_is_unchanged():
-    mod = importlib.import_module("ai_orchestrator.connectors.kakao_setup_router")
+    mod = importlib.import_module("ai_orchestrator.connectors.kakao.setup_router")
     assert mod.STATE_PATH == repo_root() / "data" / "kakao_setup_state.json"

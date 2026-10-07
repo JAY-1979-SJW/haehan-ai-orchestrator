@@ -13,7 +13,7 @@ TASKS_PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "page.
 TASK_TABLE = ROOT / "admin-web" / "src" / "components" / "assistant" / "TaskTable.tsx"
 MOCK_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "mock.ts"
 TYPES_FILE = ROOT / "admin-web" / "src" / "types" / "assistant.ts"
-ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
+ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "registry.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 
 VERDICT_READY = "APP_TASK_QUEUE_READONLY_LIST_POLISH_READY"

@@ -9,14 +9,7 @@ from pathlib import Path
 import pytest
 
 BEFORE = json.loads((Path(__file__).parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
-MOVED = {"gmail_cdp_reader": "google.gmail_cdp_reader", "gmail_router": "google.gmail_router"}
-
-
-@pytest.mark.parametrize(("old", "new"), MOVED.items())
-def test_old_path_is_alias_of_new_module(old, new):
-    assert importlib.import_module(f"ai_orchestrator.connectors.{old}") is importlib.import_module(
-        f"ai_orchestrator.connectors.{new}"
-    )
+# gmail_router 옛 경로 shim 은 정리됨(SHIM_CLEANUP_2) — 새 경로만 확인한다
 
 
 def test_cdp_reader_public_names_unchanged():

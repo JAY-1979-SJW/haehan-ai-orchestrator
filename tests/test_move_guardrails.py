@@ -214,3 +214,82 @@ def test_pytest_runs_with_the_current_interpreter():
     import sys
 
     assert rit._pyexe() == [sys.executable]
+
+
+# ── 하위 패키지 이동: `from . import <패키지>` · bare `import <패키지>` · 폴더 인자 ─────────────────
+
+
+@pytest.fixture()
+def pkg_repo(tmp_path):
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "config", "user.email", "t@t")
+    _git(tmp_path, "config", "user.name", "t")
+    _w(tmp_path, "scripts/auto/__init__.py", "from . import smartstore\nimport smartstore\nfrom smartstore import mod_a\nfrom scripts.auto import smartstore as ss2\n")
+    _w(tmp_path, "scripts/auto/smartstore/__init__.py", "from .mod_a import run\n")
+    _w(tmp_path, "scripts/auto/smartstore/mod_a.py", "def run():\n    return 1\n")
+    _w(tmp_path, "scripts/auto/smartstore/mod_b.py", "from . import mod_a\n")
+    _w(tmp_path, "scripts/other/__init__.py", "import smartstore\n")  # 다른 폴더의 같은 이름 import 는 이 패키지 참조가 아니다
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-qm", "init")
+    return tmp_path
+
+
+def _import_lines(rows, target):
+    row = next(r for r in rows if r["file"] == target)
+    return {(r["file"], r["line"]) for r in row["references"] if r["kind"] == "import"}
+
+
+def test_subpackage_init_is_referenced_by_relative_absolute_and_bare_imports(pkg_repo):
+    rows = mp.report(["scripts/auto/smartstore/__init__.py"], pkg_repo)
+    refs = _import_lines(rows, "scripts/auto/smartstore/__init__.py")
+    # from . import smartstore / import smartstore(bare) / from smartstore import x(bare) / from scripts.auto import smartstore
+    assert {("scripts/auto/__init__.py", n) for n in (1, 2, 3, 4)} <= refs
+    assert not any(f == "scripts/other/__init__.py" for f, _ in refs)  # 다른 폴더의 bare import 는 제외
+
+
+def test_bare_import_of_a_module_in_the_same_folder_is_detected(pkg_repo):
+    _w(pkg_repo, "scripts/auto/smartstore/runner.py", "import mod_a\nfrom mod_a import run\n")
+    refs = _import_lines(mp.report(["scripts/auto/smartstore/mod_a.py"], pkg_repo), "scripts/auto/smartstore/mod_a.py")
+    assert {("scripts/auto/smartstore/runner.py", 1), ("scripts/auto/smartstore/runner.py", 2)} <= refs
+    assert ("scripts/auto/smartstore/mod_b.py", 1) in refs  # from . import mod_a
+
+
+def test_directory_argument_expands_to_all_files_including_init(pkg_repo, capsys):
+    assert mp.expand_targets(["scripts/auto/smartstore/"], pkg_repo) == [
+        "scripts/auto/smartstore/__init__.py",
+        "scripts/auto/smartstore/mod_a.py",
+        "scripts/auto/smartstore/mod_b.py",
+    ]
+    assert mp.main(["scripts/auto/smartstore", "--json", "--root", str(pkg_repo)]) == 0
+    rows = json.loads(capsys.readouterr().out)
+    assert rows[0]["file"] == "scripts/auto/smartstore/__init__.py"
+    init_row = rows[0]
+    assert any(r["file"] == "scripts/auto/__init__.py" and r["kind"] == "import" for r in init_row["references"])
+
+
+# ── 확인 목록(configs/move_preflight_ack.json): 암묵 직접 실행 차단만 풀고 명시 참조는 계속 막는다 ──────────
+
+
+def _ack(repo, *files, reason="참조 전수 수정 확인"):
+    _w(repo, "configs/move_preflight_ack.json", json.dumps({"acked": [{"file": f, "reason": reason} for f in files]}))
+
+
+def test_ack_lifts_only_the_implicit_main_block(repo):
+    _git(repo, "mv", "dash.py", "pkg/dash.py")
+    assert mp.main(["--staged-renames", "--root", str(repo)]) == 1  # 기본: __main__ 있는 파일은 shim 없으면 차단
+    _ack(repo, "dash.py")
+    assert mp.main(["--staged-renames", "--root", str(repo)]) == 0  # 확인 목록에 있으면 통과
+
+
+def test_ack_without_reason_is_ignored(repo):
+    _git(repo, "mv", "dash.py", "pkg/dash.py")
+    _w(repo, "configs/move_preflight_ack.json", json.dumps({"acked": [{"file": "dash.py"}]}))
+    assert mp.main(["--staged-renames", "--root", str(repo)]) == 1  # 사유 없는 항목은 무효
+
+
+def test_ack_does_not_hide_explicit_references(repo):
+    _w(repo, "run_dash.bat", "python dash.py\n")  # 명시적 직접 실행 참조
+    _git(repo, "add", "-A")
+    _git(repo, "mv", "dash.py", "pkg/dash.py")
+    _ack(repo, "dash.py")
+    assert mp.main(["--staged-renames", "--root", str(repo)]) == 1  # 명시 참조가 남아 있으면 확인 목록과 무관하게 차단

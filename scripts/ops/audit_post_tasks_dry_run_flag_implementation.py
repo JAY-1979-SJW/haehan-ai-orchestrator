@@ -27,7 +27,7 @@ IMPLEMENTATION_SCOPE = "DRY_RUN_FLAG_AND_SUBMIT_BRANCH_ONLY"
 IMPLEMENTATION_RECORD = {
     "flag_name": "POST_TASKS_DRY_RUN_ENABLED",
     "flag_default": True,
-    "flag_location": "ai_orchestrator/router.py (Phase 1-R feature flag 섹션 하단)",
+    "flag_location": "ai_orchestrator/routers/registry.py (Phase 1-R feature flag 섹션 하단)",
     "branch_location": "submit_task() — issue_token 호출 전",
     "branch_condition": "POST_TASKS_DRY_RUN_ENABLED and ep.requires_approval and ep.allowed",
     "branch_behavior": (
@@ -89,7 +89,7 @@ NEXT_PHASE_CONDITIONS = {
 
 
 def _check_router_implementation() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "dry_run_flag_present": "POST_TASKS_DRY_RUN_ENABLED = True" in content,
         "dry_run_flag_default_true": "POST_TASKS_DRY_RUN_ENABLED = True" in content,
@@ -98,8 +98,8 @@ def _check_router_implementation() -> dict:
         "dry_run_status_string": "DRY_RUN: would issue token" in content,
         "dry_run_field_in_response": '"dry_run": True' in content or "'dry_run': True" in content,
         "issue_token_still_present": "issue_token(req, risk" in content,
-        "execute_task_not_imported": "execute_task" not in content.split("from .executor import")[1].split("\n")[0]
-        if "from .executor import" in content
+        "execute_task_not_imported": "execute_task" not in content.split("from ..executor import")[1].split("\n")[0]
+        if "from ..executor import" in content
         else True,
         "phase_1r_guards_intact": (
             "LEGACY_5050_TASK_APPROVE_ROUTE_WIRING_ENABLED = False" in content

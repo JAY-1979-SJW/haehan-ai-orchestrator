@@ -16,7 +16,7 @@ TASKS_PAGE = assistant_route("tasks", "page.tsx")
 TASK_TABLE = ROOT / "admin-web" / "src" / "components" / "assistant" / "TaskTable.tsx"
 MOCK_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "mock.ts"
 TYPES_FILE = ROOT / "admin-web" / "src" / "types" / "assistant.ts"
-ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
+ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "registry.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 
 

@@ -9,24 +9,13 @@ from pathlib import Path
 import pytest
 
 BEFORE = json.loads((Path(__file__).parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
-MOVED = {
-    "hiworks_client": "hiworks.client",
-    "hiworks_collectors": "hiworks.collectors",
-    "hiworks_config": "hiworks.config",
-    "hiworks_mail_router": "hiworks.mail_router",
-}
-
-
-@pytest.mark.parametrize(("old", "new"), MOVED.items())
-def test_old_path_is_alias_of_new_module(old, new):
-    assert importlib.import_module(f"ai_orchestrator.connectors.{old}") is importlib.import_module(
-        f"ai_orchestrator.connectors.{new}"
-    )
+# 옛 경로 shim(client·collectors·config: SHIM_CLEANUP_1, mail_router: SHIM_CLEANUP_2)은 정리됨 — 새 경로만 확인한다
+NEW_NAMES = {"hiworks_client": "hiworks.client", "hiworks_collectors": "hiworks.collectors", "hiworks_config": "hiworks.config"}
 
 
 @pytest.mark.parametrize("old", ["hiworks_client", "hiworks_collectors", "hiworks_config"])
 def test_public_names_unchanged(old):
-    mod = importlib.import_module(f"ai_orchestrator.connectors.{old}")
+    mod = importlib.import_module(f"ai_orchestrator.connectors.{NEW_NAMES[old]}")
     assert sorted(n for n in dir(mod) if not n.startswith("__")) == BEFORE["names"][old]
 
 

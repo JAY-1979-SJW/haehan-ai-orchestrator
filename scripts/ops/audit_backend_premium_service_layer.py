@@ -213,7 +213,7 @@ def _check_router_independence() -> dict:
     bad_imports = [
         line.strip()
         for line in (svc_src + eps_src).splitlines()
-        if "import" in line and any(x in line for x in ["fastapi", "flask", "router.py", "ai_orchestrator.router"])
+        if "import" in line and any(x in line for x in ["fastapi", "flask", "router.py", "ai_orchestrator.routers.registry"])
     ]
     return _item(
         "sl-15",

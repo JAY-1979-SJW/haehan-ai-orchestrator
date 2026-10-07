@@ -50,7 +50,7 @@ def app_client(tmp_path_factory):
 
     importlib.reload(_approval)
     _approval.clear_rate_store()  # module 간 rate counter 누적 차단
-    from ai_orchestrator import router as _router
+    from ai_orchestrator.routers import registry as _router
 
     importlib.reload(_router)
     from ai_orchestrator import asgi as _server

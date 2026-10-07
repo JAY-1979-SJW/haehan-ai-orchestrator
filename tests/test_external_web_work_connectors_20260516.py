@@ -229,7 +229,7 @@ class TestNaverSearchRouterRegistration:
 
     def test_naver_search_router_in_router_py(self):
         """router.py에 naver_search_router import 및 include 확인."""
-        src = (REPO_ROOT / "ai_orchestrator" / "router.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "routers" / "registry.py").read_text(encoding="utf-8")
         assert "naver_search_router" in src, "router.py에 naver_search_router가 없음"
         assert "include_router(naver_search_router)" in src, "router.py에 include_router(naver_search_router) 없음"
 

@@ -318,6 +318,32 @@ _LOCK_WAIT_S = 10.0
 _LOCK_STALE_S = 30.0  # 이보다 오래된 잠금 파일은 죽은 프로세스가 남긴 것으로 보고 치운다
 
 
+_IS_WINDOWS = os.name == "nt"
+_UNLINK_RETRY_S = 1.0  # Windows 에서 잠금 파일 삭제가 공유 위반으로 잠깐 막힐 때 기다리는 최대 시간
+
+
+def _release_lock_file(lock_path: Path) -> None:
+    """잠금 파일을 지운다. Windows 의 일시적 공유 위반(PermissionError)은 짧게 재시도하고, 끝내 못 지우면 기록한다.
+
+    예전에는 모든 OSError 를 조용히 삼켜 잠금 파일이 남을 수 있었다(다음 프로세스가 기한까지 기다리다 실패).
+    """
+    stop = time.monotonic() + _UNLINK_RETRY_S
+    while True:
+        try:
+            lock_path.unlink()
+            return
+        except FileNotFoundError:
+            return
+        except PermissionError:
+            if not _IS_WINDOWS or time.monotonic() > stop:
+                _log.warning("[gate] 수신거부 잠금 파일 삭제 실패(다음 획득자는 오래된 잠금 정리 규칙을 따른다): %s", lock_path)
+                return
+            time.sleep(0.02)
+        except OSError:
+            _log.warning("[gate] 수신거부 잠금 파일 삭제 실패: %s", lock_path)
+            return
+
+
 def _opt_out_path() -> Path:
     base = os.environ.get("GATE_DATA_DIR")
     root = Path(base) if base else data_dir() / "gate"
@@ -335,6 +361,13 @@ def _opt_out_guard() -> Iterator[None]:
             try:
                 os.close(os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY))
                 break
+            except PermissionError:
+                # Windows: 다른 프로세스가 방금 unlink 한 잠금 파일은 '삭제 보류' 상태라 같은 이름의 생성이
+                # FileExistsError 가 아니라 PermissionError(Errno 13)로 실패한다 — 잠금 중과 같은 뜻이므로 기한까지 기다린다.
+                # POSIX 의 PermissionError 는 진짜 권한 문제라 즉시 올린다. 기한이 지나면 원래 오류를 그대로 올린다(조용히 넘기지 않음).
+                if not _IS_WINDOWS or time.monotonic() > deadline:
+                    raise
+                time.sleep(0.02)
             except FileExistsError:
                 with contextlib.suppress(OSError):
                     if time.time() - lock_path.stat().st_mtime > _LOCK_STALE_S:
@@ -347,8 +380,7 @@ def _opt_out_guard() -> Iterator[None]:
         try:
             yield
         finally:
-            with contextlib.suppress(OSError):
-                lock_path.unlink()
+            _release_lock_file(lock_path)
 
 
 def opt_out_list() -> set[str] | None:

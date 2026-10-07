@@ -172,7 +172,26 @@ def test_check_diff_base_head(repo):
     assert gate.main(["--check-diff", head, head, "--root", str(repo)]) == 0
 
 
+def _integration_base_ref() -> str | None:
+    """이 브랜치가 갈라져 나온 기준(master)의 ref. CI 러너에는 로컬 브랜치가 없고 origin/<이름> 만 있다."""
+    for ref in ("origin/master", "master"):
+        r = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"],
+            cwd=str(REAL_ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
+        )
+        if r.returncode == 0:
+            return ref
+    return None
+
+
 def test_real_repo_has_no_violation_in_own_branch_diff():
-    """이 게이트가 들어가는 브랜치 자신의 새 줄도 통과(자기 도구들이 repo_root 를 쓰는지)."""
-    base = _git(REAL_ROOT, "merge-base", "HEAD", "stage/t-base-w4").strip()
+    """이 브랜치가 master 위에 새로 추가한 줄도 통과(자기 도구들이 repo_root 를 쓰는지).
+
+    예전에는 기준을 로컬 브랜치 이름(stage/t-base-w4)으로 박아 뒀다 — CI 러너에는 그 로컬 브랜치가 없어 기준을 못 찾고 죽었고,
+    로컬에서는 오래된 merge-base 때문에 이미 master 에 있던 줄까지 새 줄로 잡혔다. master 와의 merge-base 를 쓴다.
+    """
+    ref = _integration_base_ref()
+    if ref is None:  # master 이력이 없는 얕은 복제에서는 기준을 정할 수 없다(CI 는 fetch-depth: 0 이라 origin/master 가 있다)
+        pytest.skip("origin/master 도 master 도 없어 브랜치 기준을 정할 수 없음")
+    base = _git(REAL_ROOT, "merge-base", "HEAD", ref).strip()
     assert gate.main(["--check-diff", base, "HEAD", "--root", str(REAL_ROOT)]) == 0

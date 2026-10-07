@@ -485,10 +485,19 @@ def _new_ruff_findings(
     번호에 걸리는 finding만 new로 판정) — 단순히 head 쪽 ruff 결과를 통째로 쓰면 그
     파일의 기존 부채까지 전부 이번 커밋 탓이 된다(2026-09-30 실측 발견 버그).
     """
-    try:
-        findings = json.loads(ruff.stdout) if ruff and ruff.stdout else []
-    except json.JSONDecodeError:
-        findings = []
+    findings: list[dict] = []
+    if ruff is not None:
+        # ruff 는 finding 이 없어도 JSON '[]' 를 출력한다. 출력이 비었거나 JSON 이 아니거나 종료코드가 2 이상(ruff 자체 오류)이면
+        # ruff 가 돌지 못한 것이다 — 예전에는 이를 조용히 '0건'으로 처리해, ruff 가 설치되지 않은 CI 러너에서 이 검사가 통째로
+        # 건너뛰어지고 있었다(2026-10-07). 돌지 못했으면 FAIL 로 드러낸다.
+        out = (ruff.stdout or "").strip()
+        tail = (ruff.stderr or "").strip().splitlines()[-1:] or [""]
+        if ruff.returncode >= 2 or not out:
+            return [f"ruff 실행 실패(종료코드 {ruff.returncode}, 출력 {'없음' if not out else '있음'}) — 검사가 수행되지 않았다: {tail[0][:160]}"]
+        try:
+            findings = json.loads(out)
+        except json.JSONDecodeError:
+            return [f"ruff 출력이 JSON 이 아니다(종료코드 {ruff.returncode}) — 검사가 수행되지 않았다: {tail[0][:160]}"]
     changed_lines = changed_lines_between(base_ref, head_ref)
     result = []
     for f in findings:
