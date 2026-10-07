@@ -7193,14 +7193,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/app_realtime_check.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/archive/__init__.py": {
    "layer": "L12",
    "role": "archive",
@@ -7519,38 +7511,6 @@
    "domain": "community",
    "reason": "도메인(community) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/ops/deploy_dry_run.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/dev_reg/dev_reg_cli.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/ops/e2e_deep_scan.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/e2e_full_report.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
    "source": "rule"
   },
   "scripts/eum/__init__.py": {
@@ -7945,22 +7905,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gongmu/fetch_nts_interpretations.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/form/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -8009,14 +7953,6 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/form/personal_profile.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/g2b/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -8048,14 +7984,6 @@
    "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
-  },
-  "scripts/g2b/site_profile.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "g2b",
-   "reason": "G2B 사이트 프로필 — action 분류 상수(READ_ONLY_ACTIONS 등) 골격 정책 선언만 포함, 실제 접속/로그인/투찰 구현 없음(docstring 명시). L2 정정.",
-   "confidence": "high",
-   "source": "confirmed"
   },
   "scripts/g2b/router.py": {
    "layer": "L6",
@@ -8112,14 +8040,6 @@
    "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
-  },
-  "scripts/gabia/site_profile.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "gabia",
-   "reason": "가비아 SiteProfile 선언(SiteActionPolicy·GateDecision·SiteCapability) — 위험도·승인 정책 선언만 포함하고 실제 자동화 코드 없음. L2(정책) 정의에 부합. L5 저신뢰 기본값 오분류를 L2로 정정.",
-   "confidence": "high",
-   "source": "confirmed"
   },
   "scripts/gabia/router.py": {
    "layer": "L5",
@@ -8271,14 +8191,6 @@
    "domain": "google",
    "reason": "도메인(google) 자동화",
    "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/google/calendar_tasks.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
    "source": "rule"
   },
   "scripts/google/calendar_api.py": {
@@ -8689,14 +8601,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/site_profile.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/google/register_credentials.py": {
    "layer": "L5",
    "role": "site_module",
@@ -8858,14 +8762,6 @@
    "source": "confirmed"
   },
   "scripts/google/workspace/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/google/workspace/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -9240,14 +9136,6 @@
    "reason": "하이웍스 1건씩 순차 발송 배치 계획/실행 — hiworks 도메인 전용 상세 구현. 이름만 batch라 L6로 오분류.",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "scripts/hiworks/site_profile.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "hiworks",
-   "reason": "도메인(hiworks) 자동화",
-   "confidence": "low",
-   "source": "rule"
   },
   "scripts/hiworks/router.py": {
    "layer": "L5",
@@ -9664,14 +9552,6 @@
    "reason": "웹메일 발송을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "scripts/naver/cafe/ops/marketing_summary_build.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "marketing",
-   "reason": "도메인(marketing) 자동화",
-   "confidence": "low",
-   "source": "rule"
   },
   "scripts/mk_catalog/__init__.py": {
    "layer": "L5",
@@ -10441,14 +10321,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/blog/page_selectors.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/blog/seo/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -10927,14 +10799,6 @@
    "domain": "naver_cafe",
    "reason": "도메인(naver_cafe) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/calendar_tasks.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "high",
    "source": "rule"
   },
   "scripts/naver/company_seo.py": {
@@ -11849,14 +11713,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/smartstore/product/page_selectors.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/smartstore/product/tag_section.py": {
    "layer": "L5",
    "role": "site_module",
@@ -12433,14 +12289,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "gabia",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/audit_google_automation_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -12482,14 +12330,6 @@
    "source": "rule"
   },
   "scripts/ops/audit_google_domain_module_boundaries.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "google",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/google/audit_gmail_function_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12645,94 +12485,6 @@
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/analysis/audit_naver_mail_business_report.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_mail",
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
@@ -13205,14 +12957,6 @@
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/instagram/ig_batch.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "instagram",
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
@@ -13705,22 +13449,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/smartstore/preview_description.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/smartstore/run_page_builder.py": {
-   "layer": "L6",
-   "role": "generic",
-   "domain": "common",
-   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
-   "confidence": "high",
-   "source": "confirmed"
-  },
   "scripts/site_engine/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -13801,14 +13529,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/site_engine/site_types.py": {
-   "layer": "L1",
-   "role": "shared",
-   "domain": "common",
-   "reason": "공용 기반 이름(types)",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/site_engine/validators.py": {
    "layer": "L2",
    "role": "policy",
@@ -13838,14 +13558,6 @@
    "role": "site_module",
    "domain": "g2b",
    "reason": "도메인(g2b) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/smoke_naver_manual_login_probe.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver",
-   "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
   },
@@ -13985,14 +13697,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/watch_log.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/youtube/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -14023,14 +13727,6 @@
    "domain": "youtube",
    "reason": "정책·게이트 이름",
    "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/youtube/site_profile.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "youtube",
-   "reason": "도메인(youtube) 자동화",
-   "confidence": "low",
    "source": "rule"
   },
   "scripts/youtube/recording.py": {
@@ -20609,6 +20305,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_test_path_refs.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "admin-web/electron/lib/startup_log.js": {
    "layer": "L9",
    "role": "ui",
@@ -21417,6 +21121,14 @@
    "confidence": "low",
    "source": "rule"
   },
+  "ai_orchestrator/dev_reg/dev_reg_cli.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
   "ai_orchestrator/dev_reg/dev_reg_runner.py": {
    "layer": "L6",
    "role": "workflow",
@@ -21439,6 +21151,22 @@
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/gongmu/fetch_nts_interpretations.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
    "source": "rule"
   },
   "ai_orchestrator/gongmu/gongmu_defaults.py": {
@@ -22609,7 +22337,55 @@
    "confidence": "low",
    "source": "rule"
   },
+  "scripts/form/personal_profile.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/g2b/site_profile.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "g2b",
+   "reason": "G2B 사이트 프로필 — action 분류 상수(READ_ONLY_ACTIONS 등) 골격 정책 선언만 포함, 실제 접속/로그인/투찰 구현 없음(docstring 명시). L2 정정.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "gabia",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/gabia/site_profile.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "gabia",
+   "reason": "가비아 SiteProfile 선언(SiteActionPolicy·GateDecision·SiteCapability) — 위험도·승인 정책 선언만 포함하고 실제 자동화 코드 없음. L2(정책) 정의에 부합. L5 저신뢰 기본값 오분류를 L2로 정정.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/google/audit_gmail_function_contract.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "google",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/google/browser_tasks.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/google/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -22625,11 +22401,35 @@
    "confidence": "low",
    "source": "rule"
   },
+  "scripts/google/site_profile.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
   "scripts/google/tab_live_summary.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
    "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/google/workspace/calendar_tasks.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/hiworks/site_profile.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hiworks",
+   "reason": "도메인(hiworks) 자동화",
    "confidence": "low",
    "source": "rule"
   },
@@ -22641,11 +22441,115 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/instagram/ig_batch.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "instagram",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/naver/blog/navigator_blog.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
    "reason": "도메인(naver_blog) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/page_selectors.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/cafe/ops/marketing_summary_build.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_cafe",
+   "reason": "도메인(naver_cafe) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/calendar_tasks.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/analysis/audit_naver_mail_business_report.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
   },
@@ -22729,7 +22633,63 @@
    "confidence": "high",
    "source": "confirmed"
   },
+  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver_mail",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/smartstore/preview_description.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "smartstore",
+   "reason": "도메인(smartstore) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/smartstore/product/page_selectors.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "smartstore",
+   "reason": "도메인(smartstore) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/smartstore/run_page_builder.py": {
+   "layer": "L6",
+   "role": "generic",
+   "domain": "smartstore",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/naver/smoke_naver_manual_login_probe.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "naver",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/ops/_proc.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/app_realtime_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22746,6 +22706,30 @@
    "source": "rule"
   },
   "scripts/ops/bundle_path_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/deploy_dry_run.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/e2e_deep_scan.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/e2e_full_report.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22929,6 +22913,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/ops/watch_log.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/site_engine/command_router.py": {
    "layer": "L4",
    "role": "browser_engine",
@@ -22985,6 +22977,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/site_engine/site_types.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "정의 위주(모델·스키마·dataclass)",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/site_engine/site_watch.py": {
    "layer": "L4",
    "role": "generic",
@@ -23007,6 +23007,14 @@
    "domain": "common",
    "reason": "정의 위주(모델·스키마·dataclass)",
    "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/youtube/site_profile.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "youtube",
+   "reason": "도메인(youtube) 자동화",
+   "confidence": "low",
    "source": "rule"
   },
   "tests/test_audit_log_sensitive_scan.py": {

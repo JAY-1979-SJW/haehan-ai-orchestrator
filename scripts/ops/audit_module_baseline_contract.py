@@ -22,7 +22,6 @@ MODULES = (
     "approval_flow",
     "playwright_ai",
     "desktop_auth_runtime",
-    "portable_install",
     "release_preflight",
     "release_runtime",
 )

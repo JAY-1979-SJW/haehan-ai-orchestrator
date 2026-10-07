@@ -107,18 +107,6 @@ MODULES: tuple[GateModule, ...] = (
         ),
     ),
     GateModule(
-        name="portable_install",
-        description="portable ZIP install scripts and contract",
-        steps=(
-            GateStep("portable_py_compile", (PY, "scripts/ops/quality/py_compile_no_cache.py", "verify_portable_zip_install.py")),
-            GateStep("portable_static_verify", (PY, "verify_portable_zip_install.py", "--static-only")),
-            GateStep(
-                "portable_contract_pytest",
-                (PY, "-m", "pytest", "tests/test_portable_zip_install_contract.py", "-q"),
-            ),
-        ),
-    ),
-    GateModule(
         name="desktop_auth_runtime",
         description="desktop diagnostics, auth token presence, and runtime dry-run",
         steps=(

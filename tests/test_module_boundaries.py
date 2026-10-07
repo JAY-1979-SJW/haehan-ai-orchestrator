@@ -17,7 +17,6 @@ def test_module_boundary_config_is_locked():
         "local_agent_browser_runtime",
         "desktop_runtime",
         "admin_web",
-        "portable_install",
         "server_api",
         "site_automation",
         "legacy_root_quarantine",

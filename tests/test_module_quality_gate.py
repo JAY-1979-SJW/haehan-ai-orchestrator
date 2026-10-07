@@ -4,7 +4,6 @@ from scripts.ops.quality import module_quality_gate as gate
 def test_module_matrix_has_expected_modules():
     assert {
         "repo_guard",
-        "portable_install",
         "desktop_auth_runtime",
         "backend_core",
         "common_engine_commercialization",
