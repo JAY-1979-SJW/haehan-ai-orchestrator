@@ -31,7 +31,7 @@ from scripts.naver.blog.automation.account_probe import alias_to_blog_id
 
 logger = logging.getLogger(__name__)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 ATTEMPTS_FILE = data_dir() / "naver_login_attempts.json"
 SETTLE_CHECKS = 6  # 로그인 직후 페이지 이동이 끝나 상태를 읽을 수 있을 때까지 다시 읽는 횟수
 SETTLE_WAIT_SECONDS = 3.0
@@ -171,7 +171,7 @@ def _save_attempt(entry: dict[str, Any]) -> None:
 
 def default_deps() -> GuardDeps:
     """브라우저(CDP)·로그인 파이프라인·시도 기록 파일을 연결한다. 테스트는 이 함수를 쓰지 않는다."""
-    from ai_orchestrator.workflows.naver_login_pipeline import _is_cdp_alive, _start_cdp, run_naver_login_pipeline
+    from ai_orchestrator.connectors.naver_auth.login_pipeline import _is_cdp_alive, _start_cdp, run_naver_login_pipeline
     from scripts import login_detector
     from scripts.naver.blog.automation.account_probe import read_alias
     from scripts.web_connector import get_page_by_url, open_page, run_on_browser_thread

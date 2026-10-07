@@ -50,7 +50,7 @@ class EnsureRequest(BaseModel):
 
 def get_guard_deps():
     """세션 지킴이의 실제 부품(브라우저·파이프라인·시도 기록). 테스트에서 dependency_overrides 로 바꾼다."""
-    from ai_orchestrator.workflows.naver_session_guard import default_deps
+    from ai_orchestrator.connectors.naver_auth.session_guard import default_deps
 
     return default_deps()
 
@@ -75,7 +75,7 @@ class AccountRequest(BaseModel):
 @router.get("/sessions")
 async def get_all_sessions(_: None = Depends(require_role("admin", "owner"))):
     """저장된 네이버 서브도메인 세션 목록을 반환합니다."""
-    from ai_orchestrator.workflows.naver_login_pipeline import list_naver_sessions
+    from ai_orchestrator.connectors.naver_auth.login_pipeline import list_naver_sessions
 
     return {"sessions": list_naver_sessions()}
 
@@ -83,10 +83,10 @@ async def get_all_sessions(_: None = Depends(require_role("admin", "owner"))):
 @router.get("/status", response_model=SessionStatusResponse)
 async def get_session_status(_: None = Depends(require_role("admin", "owner"))):
     """저장된 네이버 세션 상태를 반환합니다."""
-    from ai_orchestrator.workflows.naver_login_pipeline import load_session_status
+    from ai_orchestrator.connectors.naver_auth.login_pipeline import load_session_status
 
     state = load_session_status()
-    from ai_orchestrator.workflows.naver_login_pipeline import has_saved_browser_session
+    from ai_orchestrator.connectors.naver_auth.login_pipeline import has_saved_browser_session
 
     return SessionStatusResponse(
         logged_in=state.get("logged_in", False),
@@ -132,7 +132,7 @@ async def trigger_login(req: LoginRequest = LoginRequest(), _: None = Depends(re
     """
     from functools import partial
 
-    from ai_orchestrator.workflows.naver_login_pipeline import run_naver_login_pipeline
+    from ai_orchestrator.connectors.naver_auth.login_pipeline import run_naver_login_pipeline
 
     loop = asyncio.get_running_loop()
     fn = partial(run_naver_login_pipeline, naver_id=req.username)
@@ -155,7 +155,7 @@ async def live_status(
     """실제 로그인 상태와 계정을 확인한다(읽기 전용 — 로그인·로그아웃·쿠키 변경 없음)."""
     from functools import partial
 
-    from ai_orchestrator.workflows.naver_session_guard import observe
+    from ai_orchestrator.connectors.naver_auth.session_guard import observe
 
     loop = asyncio.get_running_loop()
     seen = await loop.run_in_executor(_executor, partial(observe, _valid_target_or_400(target), deps))
@@ -175,7 +175,7 @@ async def ensure_session(
     """
     from functools import partial
 
-    from ai_orchestrator.workflows.naver_session_guard import ensure_login
+    from ai_orchestrator.connectors.naver_auth.session_guard import ensure_login
 
     req = req or EnsureRequest()
     loop = asyncio.get_running_loop()

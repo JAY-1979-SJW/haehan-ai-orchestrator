@@ -679,7 +679,7 @@
   "role": "site_module",
   "reason": "네이버 웹메일 설정 화면을 CDP 로 읽고 바꾸는 사이트 모듈 — 파일명 settings 때문에 L1 shared 로 오분류"
  },
- "ai_orchestrator/workflows/naver_session_guard.py": {
+ "ai_orchestrator/connectors/naver_auth/session_guard.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "로그인 파이프라인을 호출하고 상태를 판정·시도 기록까지 하는 업무 흐름 — 'guard' 이름 규칙이 L2 policy 로 오분류 (2026-10-01 층간 위반 정리)"

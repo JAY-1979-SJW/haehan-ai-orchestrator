@@ -12,7 +12,7 @@ from ai_orchestrator.routers.agent_dispatch_router import agent_dispatch_router
 from ai_orchestrator.routers.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
 from ai_orchestrator.routers.auth_router import auth_router
-from ai_orchestrator.routers.blog_automation_router import blog_automation_router
+from ai_orchestrator.connectors.naver_blog.automation_router import blog_automation_router
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
 from ai_orchestrator.routers.dev_reg_approval_read_router import dev_reg_approval_read_router

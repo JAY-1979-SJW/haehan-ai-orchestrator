@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.routers import blog_automation_router as B
+from ai_orchestrator.connectors.naver_blog import automation_router as B
 from scripts.naver.blog.automation import runner as N
 from scripts.naver.blog.automation import store as S
 

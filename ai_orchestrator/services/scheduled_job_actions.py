@@ -144,7 +144,7 @@ def _run_community(_: dict[str, Any]) -> str:
 
 
 def _run_naver_login_check(params: dict[str, Any]) -> str:
-    from ai_orchestrator.workflows.naver_session_guard import default_deps, ensure_login
+    from ai_orchestrator.connectors.naver_auth.session_guard import default_deps, ensure_login
 
     result = ensure_login(params["target"], default_deps())
     if result["action"] in ("failed", "captcha"):
