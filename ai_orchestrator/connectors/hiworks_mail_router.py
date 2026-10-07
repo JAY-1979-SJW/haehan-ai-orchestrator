@@ -18,6 +18,7 @@ from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import require_send_approval
 
 from ..audit_logger import log_event
+from ..paths import repo_root
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ def api_inbox(
         # hiworks_mail_reader.py 위치를 견고하게 해석: 프로젝트/번들 루트 → CWD 순.
         # (CWD 상대경로만 쓰면 번들 실행 시 CWD가 달라 FileNotFound 발생)
         _cands = [
-            Path(__file__).resolve().parents[2] / "hiworks_mail_reader.py",
+            repo_root() / "hiworks_mail_reader.py",
             Path.cwd() / "hiworks_mail_reader.py",
             Path("hiworks_mail_reader.py"),
         ]
