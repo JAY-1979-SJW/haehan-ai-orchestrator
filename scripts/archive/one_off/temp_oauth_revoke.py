@@ -1,7 +1,7 @@
 """Google 계정 해한AI 권한 삭제 후 YouTube OAuth 재인가.
 
 비가역 작업(Google 권한 철회)이므로 기본은 dry-run 이다.
-실제 실행은 ``python scripts/temp_oauth_revoke.py --execute`` 로만 한다.
+실제 실행은 ``python scripts/archive/one_off/temp_oauth_revoke.py --execute`` 로만 한다.
 필수 환경변수(YOUTUBE_CLIENT_SECRETS_FILE, YOUTUBE_OAUTH_TOKEN_FILE)는
 철회 전에 검증하며 하나라도 없으면 아무 것도 하지 않고 오류 종료한다.
 """

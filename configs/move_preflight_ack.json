@@ -1,0 +1,5 @@
+{
+ "acked": [
+  {"file": "scripts/temp_oauth_revoke.py", "reason": "S2 archive 이동 — 일회성 스크립트, 직접 실행 호출처 없음(참조는 시험 경로 갱신 완료)", "date": "2026-10-07"}
+ ]
+}

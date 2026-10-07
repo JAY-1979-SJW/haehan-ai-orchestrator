@@ -16057,7 +16057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/temp_gcp_create_client.py": {
+  "scripts/archive/one_off/temp_gcp_create_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -16065,7 +16065,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/temp_gcp_dom.py": {
+  "scripts/archive/one_off/temp_gcp_dom.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -16073,7 +16073,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/temp_oauth_revoke.py": {
+  "scripts/archive/one_off/temp_oauth_revoke.py": {
    "layer": "L6",
    "role": "policy",
    "domain": "common",
