@@ -2,9 +2,9 @@
 
 하위 호환성 유지: 기존 import 경로 그대로 동작.
 """
-from scripts.naver.automation.smartstore.csv_import import (  # noqa: F401
-    CSVImporter,
+from scripts.naver.smartstore.automation.csv_import import (
     COLUMN_ALIASES,
+    CSVImporter,
     normalize_row,
 )
 

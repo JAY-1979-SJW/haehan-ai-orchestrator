@@ -1201,5 +1201,179 @@
   "role": "shared",
   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
   "source": "manual"
+ },
+ "ai_orchestrator/connectors/hiworks/client.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_client.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/hiworks_client.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/hiworks_client.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/hiworks/collectors.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_collectors.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/hiworks_collectors.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/hiworks_collectors.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/hiworks/config.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_config.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/hiworks_config.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/hiworks_config.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/hiworks/mail_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_mail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/hiworks_mail_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/hiworks_mail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/kakao/setup_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/kakao_setup_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/kakao_setup_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/kakao_setup_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/kakao/skill_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/kakao_skill_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/kakao_skill_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/kakao_skill_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/google/gmail_cdp_reader.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_cdp_reader.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gmail_cdp_reader.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gmail_cdp_reader.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/google/gmail_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gmail_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gabia/router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gabia_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gabia_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gabia_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/gabia/login_watch.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "이동한 파일 — 원본 scripts/gabia_login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/smartstore/automation/analytics_dashboard.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/analytics_dashboard.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/automation/smartstore/analytics_dashboard.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/analytics_dashboard.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/smartstore/automation/competitor_analysis.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/competitor_analysis.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/automation/smartstore/competitor_analysis.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/competitor_analysis.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/smartstore/automation/csv_import.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/csv_import.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/automation/smartstore/csv_import.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/csv_import.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/smartstore/automation/inventory_monitor.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/inventory_monitor.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/automation/smartstore/inventory_monitor.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/inventory_monitor.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/smartstore/automation/order_automation.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/order_automation.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/automation/smartstore/order_automation.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/order_automation.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
  }
 }

@@ -2,7 +2,7 @@
 
 하위 호환성 유지: 기존 import 경로 그대로 동작.
 """
-from scripts.naver.automation.smartstore.inventory_monitor import (  # noqa: F401
+from scripts.naver.smartstore.automation.inventory_monitor import (
     InventoryMonitor,
 )
 
