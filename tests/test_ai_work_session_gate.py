@@ -10,7 +10,7 @@ from uuid import uuid4
 from scripts.ops.audit_ai_work_session_gate import audit
 
 ROOT = Path(__file__).resolve().parents[1]
-SESSION = ROOT / "scripts" / "ops" / "ai_work_session.py"
+SESSION = ROOT / "scripts" / "common" / "ai_work_session.py"
 
 
 def test_ai_work_session_gate_audit_passes() -> None:
