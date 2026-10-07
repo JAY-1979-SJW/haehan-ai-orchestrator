@@ -736,6 +736,7 @@ _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/connectors/hanafax/authorization_store.py",
     "ai_orchestrator/connectors/naver_mail/bulk_store.py",
     "ai_orchestrator/connectors/naver_mail/draft_store.py",
+    "scripts/common/sqlite_helpers.py",  # L7 persistence 공용 SQLite 헬퍼 — 흩어진 sqlite3 직접 사용(N6 중복 통합)을 이 한 파일로 모은 것이라 DB 직접 접근이 이 파일의 책임이다(registry 도 L7·persistence)
     "scripts/common/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
     "storage/",
     "migrations/",
