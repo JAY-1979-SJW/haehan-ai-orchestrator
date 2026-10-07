@@ -302,7 +302,7 @@ def _cmd_shopping(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
     from scripts.naver.company_seo import OFFICIAL_ENTRYPOINTS
-    from scripts.naver.shopping_competitor import (
+    from scripts.naver.shopping.competitor_report import (
         collect_openapi_competitors,
         print_competitor_summary,
         save_competitor_report,

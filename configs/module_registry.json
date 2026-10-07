@@ -11193,7 +11193,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/router_blog.py": {
+  "scripts/naver/blog/cli_router.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11201,7 +11201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/router_cafe.py": {
+  "scripts/naver/cafe/cli_router.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_cafe",
@@ -11393,7 +11393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/shopping_competitor.py": {
+  "scripts/naver/shopping/competitor_report.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",

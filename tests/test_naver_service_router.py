@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 
-from scripts.naver import router, router_cafe, router_social, service_catalog
+from scripts.naver import router, router_social, service_catalog
+from scripts.naver.cafe import cli_router as router_cafe
 
 
 def test_service_catalog_lists_all_naver_sections(tmp_path):

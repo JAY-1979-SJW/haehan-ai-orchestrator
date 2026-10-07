@@ -1,4 +1,4 @@
-"""카페 글쓰기 라우터(router_cafe._cmd_cafe write/publish)가 새 write_post 시그니처로 호출하는지 검사."""
+"""카페 글쓰기 라우터(cafe/cli_router._cmd_cafe write/publish)가 새 write_post 시그니처로 호출하는지 검사."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from scripts.naver import router_cafe as router
+from scripts.naver.cafe import cli_router as router
 
 
 class _FakeCafe:

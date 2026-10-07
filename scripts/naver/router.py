@@ -7,11 +7,11 @@
 from __future__ import annotations
 
 from scripts.common.gate import check as gate_check  # noqa: F401 — tests patch router.gate_check
+from scripts.naver.blog.cli_router import _cmd_blog_assets  # noqa: F401
+from scripts.naver.cafe.cli_router import _cmd_cafe, _cmd_calendar, _cmd_mybox  # noqa: F401
 
 from . import blog
 from .dispatch import _run_naver_content_task, _run_naver_service_task, _run_naver_system_task  # noqa: F401
-from .router_blog import _cmd_blog_assets  # noqa: F401
-from .router_cafe import _cmd_cafe, _cmd_calendar, _cmd_mybox  # noqa: F401
 from .router_common import (  # noqa: F401
     _flag,
     _gate_blog,

@@ -6,8 +6,7 @@ import json
 from typing import Any
 
 from scripts.common.gate import check as gate_check
-
-from .router_common import (
+from scripts.naver.router_common import (
     _flag,
     _int_option,
     _option_phrase,

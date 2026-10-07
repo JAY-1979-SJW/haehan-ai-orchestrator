@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 
-from scripts.naver import company_seo, shopping_competitor
+from scripts.naver import company_seo
+from scripts.naver.shopping import competitor_report as shopping_competitor
 
 
 def test_company_seo_plan_includes_searchadvisor_and_approval_gate(tmp_path):
