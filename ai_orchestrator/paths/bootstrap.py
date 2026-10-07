@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+from .legacy_import import import_legacy_install
 from .migrate import migrate_legacy_data
 from .runtime import ensure_runtime_dirs
 
 ensure_runtime_dirs()
 MIGRATION_RESULT = migrate_legacy_data()
+LEGACY_IMPORT_RESULT = import_legacy_install()  # 예전 설치 폴더(Haehan AI) 데이터 가져오기 — 첫 실행·복사만·실패해도 시작은 계속
