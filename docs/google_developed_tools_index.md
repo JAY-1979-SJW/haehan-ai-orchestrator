@@ -40,9 +40,9 @@ developed, gated, or verified in this repo. Check this index and
 | Session check | `python scripts\cdp_client.py google session-check` | read | implemented | `scripts/google/base.py`, `scripts/google/router.py` | console status |
 | User-present login | `python scripts\cdp_client.py google login` | user-present | implemented | `scripts/google/auth.py`, `scripts/google/router.py` | console status |
 | Basic feature catalog | `python scripts\cdp_client.py google basic catalog` | read | implemented | `scripts/google/workspace_basic.py` | console JSON |
-| Basic feature plan | `python scripts\cdp_client.py google basic plan <surface> <operation> ... --google-work-mode=main` | read/prepare/approval/user-only | implemented | `scripts/google/workspace_basic.py`, `scripts/gates/work_mode_gate.py` | console JSON |
+| Basic feature plan | `python scripts\cdp_client.py google basic plan <surface> <operation> ... --google-work-mode=main` | read/prepare/approval/user-only | implemented | `scripts/google/workspace_basic.py`, `scripts/common/gates/work_mode_gate.py` | console JSON |
 | Gmail list/analyze/compose | `python scripts\cdp_client.py google mail <list|analyze|compose>` | read/prepare | implemented | `scripts/google/workspace/gmail.py`, `scripts/google/gmail_analysis.py` | console/data |
-| Gmail send gate | `python scripts\cdp_client.py google mail send ...` | approval/user-only | gated | `scripts/google/workspace/gmail.py`, `scripts/gate.py` | approval-gated action |
+| Gmail send gate | `python scripts\cdp_client.py google mail send ...` | approval/user-only | gated | `scripts/google/workspace/gmail.py`, `scripts/common/gate.py` | approval-gated action |
 | Drive wrapper | `python scripts\cdp_client.py google drive <list|search|file_info>` | read/partial | implemented partial | `scripts/google/workspace/drive.py`, `scripts/google/drive.py` | console/data |
 | Calendar wrapper | `python scripts\cdp_client.py google calendar <today|search>` | read/partial | implemented partial | `scripts/google/workspace/calendar.py`, `scripts/google/calendar.py` | console/data |
 | Docs wrapper | `python scripts\cdp_client.py google docs <recent|create_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/docs.py`, `scripts/google/docs.py` | console/data |
@@ -162,7 +162,7 @@ Latest focused verification:
 ```powershell
 python -m pytest tests\test_google_workspace_basic.py -q
 python scripts\ops\audit_google_automation_baseline_contract.py
-python scripts\required_quality_gate.py
+python scripts\ops\quality\required_quality_gate.py
 ```
 
 Latest result:
@@ -170,7 +170,7 @@ Latest result:
 - `tests\test_google_workspace_basic.py`: `23 passed`
 - `scripts\ops\audit_google_automation_baseline_contract.py`:
   `RESULT=PASS_GOOGLE_AUTOMATION_BASELINE_CONTRACT`
-- `scripts\required_quality_gate.py`: `RESULT=PASS_REQUIRED_QUALITY_GATE`
+- `scripts\ops\quality\required_quality_gate.py`: `RESULT=PASS_REQUIRED_QUALITY_GATE`
 
 ## Remaining Work
 

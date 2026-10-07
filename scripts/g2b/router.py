@@ -6,8 +6,8 @@ router 역할: command dispatch, validator 호출, gate 호출, response formatt
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
-from scripts.logger import get_logger
+from scripts.common.gate import check as gate_check
+from scripts.common.logger import get_logger
 
 __status__ = {
     "tasks": {

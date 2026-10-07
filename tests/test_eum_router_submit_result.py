@@ -15,7 +15,7 @@ WF = {"key": "device_registration"}
 def _fake_env(monkeypatch):
     import scripts.eum.run_log as run_log
     import scripts.eum.work_plan as work_plan
-    import scripts.gate as gate
+    import scripts.common.gate as gate
 
     monkeypatch.setattr(work_plan, "build_action_plan", lambda *a, **k: {"valid": True})
     monkeypatch.setattr(work_plan, "save_action_plan", lambda plan: "plan.json")

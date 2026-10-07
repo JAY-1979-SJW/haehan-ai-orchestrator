@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.realtime_audit import AUDIT_TEXT, follow_file
+from scripts.common.realtime_audit import AUDIT_TEXT, follow_file  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 
 def main() -> None:

@@ -7,9 +7,9 @@ GABIA_LOGIN_WATCH_01
   로그인 확인 즉시 DNS 관리 화면으로 자동 이동한다.
 
 실행:
-  python scripts/gabia_login_watch.py
-  python scripts/gabia_login_watch.py --timeout 600
-  python scripts/gabia_login_watch.py --no-navigate   # 로그인 감지만, DNS 이동 없음
+  python scripts/gabia/login_watch.py
+  python scripts/gabia/login_watch.py --timeout 600
+  python scripts/gabia/login_watch.py --no-navigate   # 로그인 감지만, DNS 이동 없음
 
 금지:
   비밀번호/OTP 자동 입력 금지

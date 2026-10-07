@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from scripts.config import GOOGLE_URLS
+from scripts.common.config import GOOGLE_URLS
 
 from .base import page_goto, page_wait_click, page_wait_type, page_wait_visible, task_context
 

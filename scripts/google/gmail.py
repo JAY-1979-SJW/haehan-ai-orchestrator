@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from scripts.config import GOOGLE_URLS
+from scripts.common.config import GOOGLE_URLS
 
 from . import gmail_analysis
 from .base import task_context, page_goto, page_wait_type, page_wait_visible

@@ -62,7 +62,7 @@
 |---|---|---|---|
 | CDP·브라우저 | 22개 위치(`ai_orchestrator/local_agent` 47, `browser_tool` 46, 루트 `local_agent` 20, `scripts` 20, `browser_worker`, `browser_api` …) | 엔진은 `ai_orchestrator/browser_tool/`, 공유 연결은 `scripts/web_connector.py`(CLAUDE.md가 이미 정본으로 지정). 도구 전용 믹스인은 각 도구 집으로 | T1(클라이언트 1벌)·T4 |
 | local_agent | 3벌(`ai_orchestrator/local_agent` 116, 루트 `local_agent` 51, `scripts/local_agent` 21) | 서버 측은 `ai_orchestrator/local_agent/`, PC 실행체는 루트 `local_agent/`(독립 배포 단위)로 역할을 나누고 `scripts/local_agent/`는 시나리오로 흡수 — **T4 기준서에서 확정**(이번 제안은 방향만) | T4 |
-| 게이트·정책 | 26개 위치, 4종 병존(`scripts/gate.py`, `scripts/gates/`, `ai_orchestrator/gates/`, `scripts/ops/write_gates/`) | 1종으로 — R2d-2 설계와 함께 | T5 |
+| 게이트·정책 | 26개 위치, 4종 병존(`scripts/common/gate.py`, `scripts/gates/`, `ai_orchestrator/gates/`, `scripts/ops/write_gates/`) | 1종으로 — R2d-2 설계와 함께 | T5 |
 
 ## 3. ② 집 밖 파일 전수와 이동 대상
 
@@ -140,7 +140,7 @@
 |---|---|---|---|---|---|
 | 1 | persistence 스토어의 연결·스키마 상용구 `_conn`·`_schema_v1` | `agent_dispatch_store`·`fax_authorization_store`·`mail_bulk_store`·`gongmu_store`·`instagram_dm_db` 등 (E701 5함수, E11·S2 `_schema_v1` 8함수) | 절감 약 620줄 | 기존 `persistence/sqlite_schema.py`(`apply_schema`·`set_busy_timeout`)와 `_conn` 표준형으로 모음 — G5 기준서 §4와 같은 부품 | T1③ |
 | 2 | 검증기 복사 `validate_*_action_plan` | `scripts/{gabia,google,hiworks,youtube}/validators.py` (E704) | 4개 파일 | 검증기 공용 모듈 1곳 | T1② |
-| 3 | 네이버 메일 CDP `_send` 등 | `scripts/naver/mail_read/cdp.py` + `scripts/ops/` 일회성 4개 (E256) | 5개 파일 | 공용 CDP 클라이언트 1벌(T1①), 일회성은 archive | T1①·T3 |
+| 3 | 네이버 메일 CDP `_send` 등 | `scripts/naver/mail/read/cdp.py` + `scripts/ops/` 일회성 4개 (E256) | 5개 파일 | 공용 CDP 클라이언트 1벌(T1①), 일회성은 archive | T1①·T3 |
 | 4 | CDP 탐색기 상용구 `_visible_ui_snapshot`·`analyze`·`check` | `scripts/eum/workspace.py`, `scripts/hiworks/{explorer,mail}.py`, `scripts/naver/smartstore/…` (E6, 148줄) | 4+ 파일 | 공용 CDP 탐색 부품 | T1① |
 | 5 | cdp.db 클러스터의 `_init_db` | `scripts/naver/automation/{platform,smartstore}/…`, `blog/management/…`, `smartstore/product/bulk.py` (S34·E145·E397) | 약 190줄 | **G5 P3에서 저장 계층으로 이동하며 함께 해소** | G5 |
 | 6 | 감사 스크립트 상용구 `run_audit`·`audit`·`main`·`print_report` | `scripts/ops/audit_*`(S10 182·S21 142·S22 138·S28 130·E33 115·E39 112 …) | 최상위 묶음 다수 | 감사 상용구 공용 모듈 | T1④ |

@@ -223,7 +223,7 @@ if _ak.exists():
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P
 import importlib.util, os
-gate = ROOT / "scripts" / "quality_gate.py"
+gate = ROOT / "scripts" / "ops" / "quality" / "quality_gate.py"
 if gate.exists():
     # 2026-09-30 수정(defect_index #2): 이 훅이 --allow-existing-code-change 를 항상
     # 넘겨서 existing_code_change_requires_flag 안전장치가 영구 무력화돼 있었다.

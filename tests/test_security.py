@@ -1,4 +1,4 @@
-from scripts.security import (
+from scripts.common.security import (
     REDACTED,
     is_sensitive_key,
     mask_identifier,

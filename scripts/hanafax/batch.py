@@ -19,10 +19,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
-DATA_DIR = ROOT / "data"
+DATA_DIR = data_dir()
 DEFAULT_QUEUE = DATA_DIR / "hanafax_queue.jsonl"
 BATCH_RESULT_DIR = DATA_DIR / "hanafax_batch_results"
 LATEST_RESULT_PATH = DATA_DIR / "hanafax_batch_result_latest.json"

@@ -13,8 +13,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import atomic_write_text, data_dir
+
 ROOT = Path(__file__).resolve().parents[2]
-_DIR = ROOT / "data" / "community"
+_DIR = data_dir() / "community"
 _REPORTS_DIR = _DIR / "reports"
 _STATE_FILE = _DIR / "scheduler_state.json"
 
@@ -30,7 +32,7 @@ def get_state() -> dict:
 
 def _save_state(state: dict) -> None:
     _DIR.mkdir(parents=True, exist_ok=True)
-    _STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_text(_STATE_FILE, json.dumps(state, ensure_ascii=False, indent=2))
 
 
 def run_all_sites(reason: str = "manual", max_posts: int = 40) -> dict[str, Any]:

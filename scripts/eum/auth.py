@@ -1,7 +1,7 @@
 """EUM 자동 로그인 (ID/PW).
 
 자격증명 저장:
-    python scripts/credentials.py set eum
+    python scripts/auth/credentials.py set eum
 
 사용:
     from scripts.eum.auth import login, is_logged_in
@@ -24,8 +24,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.browser.page.human_input import safe_human_input  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
-from scripts.op_log import op_context  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -410,7 +410,7 @@ def _submit_credentials(page, id_sel: str, pw_sel: str, eum_id: str, eum_pw: str
 def _save_eum_session(page) -> None:
     """세션 자동 저장 (다음 실행 시 복원). 실패는 무시."""
     try:
-        from scripts.auth_session import save_session as _save
+        from scripts.auth.auth_session import save_session as _save
 
         _save("eum.cw.or.kr", page)
         log.info("[eum-auth] 세션 저장 완료")
@@ -427,7 +427,7 @@ def login(page) -> dict:
     Returns:
         dict{ok: bool, reason: str, user: str}
     """
-    from scripts.credentials import get_cred
+    from scripts.auth.credentials import get_cred
 
     cred = get_cred("eum")
     eum_id = cred.get("id", "").strip()
@@ -436,7 +436,7 @@ def login(page) -> dict:
     if not eum_id or not eum_pw:
         return {
             "ok": False,
-            "reason": "EUM 자격증명 없음. 먼저 실행: python scripts/credentials.py set eum",
+            "reason": "EUM 자격증명 없음. 먼저 실행: python scripts/auth/credentials.py set eum",
             "user": "",
         }
 
@@ -521,7 +521,7 @@ def ensure_logged_in(page) -> None:
 
     # 저장된 세션 복원 시도
     try:
-        from scripts.auth_session import restore_session as _restore
+        from scripts.auth.auth_session import restore_session as _restore
 
         r = _restore("eum.cw.or.kr", page)
         if r.get("ok"):

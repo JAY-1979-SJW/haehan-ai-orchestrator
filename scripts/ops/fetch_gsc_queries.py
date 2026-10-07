@@ -31,7 +31,7 @@ if str(_ROOT) not in sys.path:
 
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 
 logger = get_logger("scripts.ops.fetch_gsc_queries")
 

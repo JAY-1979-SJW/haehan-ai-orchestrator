@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 from .router_common import (
     _flag,

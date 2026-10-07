@@ -32,7 +32,7 @@ from urllib.parse import urljoin, urlparse
 
 from scripts.explorer.page_classifier import classify_page
 from scripts.form.bot_radar import scan as bot_scan
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -494,7 +494,7 @@ def main() -> None:
     depth = int(sys.argv[2]) if len(sys.argv) > 2 else 3
     max_pages = int(sys.argv[3]) if len(sys.argv) > 3 else 50
 
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
 
     page = open_site(site)
     result = crawl_site(page, depth=depth, max_pages=max_pages)

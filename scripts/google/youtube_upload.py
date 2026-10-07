@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 from scripts.google import workflows
 from scripts.google.domain_taxonomy import build_google_page_tab_catalog
 

@@ -40,8 +40,8 @@ except ImportError:
     pass
 
 from scripts.eum.access_handler import detect_and_handle, is_access_blocked  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
-from scripts.op_log import log_op, op_context  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import log_op, op_context  # noqa: E402
 from scripts.browser.popup.popup_classifier import classify  # noqa: E402
 from scripts.browser.popup.popup_watcher import install_watcher, poll_events  # noqa: E402
 

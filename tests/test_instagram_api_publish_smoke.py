@@ -33,7 +33,7 @@ def test_publish_reel_unconfirmed_does_not_publish(calls):
 
 
 def test_publish_reel_confirmed_order_and_params(calls):
-    from scripts.gate import CONFIRM_TEXTS
+    from scripts.common.gate import CONFIRM_TEXTS
 
     res = ap.publish_reel("https://x/v.mp4", "cap", confirmed=True, approval=CONFIRM_TEXTS["instagram_publish"])
     assert res["published"] is True and res["container_id"] == "C1"

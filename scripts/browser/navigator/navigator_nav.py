@@ -6,9 +6,9 @@ import time
 
 from scripts.browser.navigator.navigator_common import resolve
 from scripts.browser.cdp.connection import get_page
-from scripts.logger import get_logger
-from scripts.login_check import is_logged_in_by_cookie
-from scripts.op_log import log_op
+from scripts.common.logger import get_logger
+from scripts.auth.login_check import is_logged_in_by_cookie
+from scripts.common.op_log import log_op
 
 _log = get_logger(__name__)
 

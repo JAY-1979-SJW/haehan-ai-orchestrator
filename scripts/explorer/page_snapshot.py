@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.browser.cdp.connection import get_page
 
 _log = get_logger(__name__)

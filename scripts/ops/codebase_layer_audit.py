@@ -90,7 +90,7 @@ OPENAPI_APP_MODULES = (
 )
 
 PYDANTIC_SCHEMA_MODULES = (
-    "scripts.schemas",
+    "scripts.common.schemas",
     "ai_orchestrator.browser_tool.worker.schemas",
     "ai_orchestrator.browser_tool.schemas",
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
@@ -616,7 +616,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "local_agent/browser_approval_db_store.py",
     "scripts/browser/cdp/cdp_db.py",
     "scripts/common/youtube_search_cache.py",
-    "scripts/critical_logger.py",
+    "scripts/common/critical_logger.py",
     "scripts/naver/automation/platform/error_recovery.py",
     "scripts/naver/automation/platform/scheduler.py",
     "scripts/naver/smartstore/automation/analytics_dashboard.py",
@@ -627,7 +627,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/naver/shopping/analysis.py",
     "scripts/naver/shopping/crawl.py",
     "scripts/naver/smartstore/product/bulk.py",
-    "scripts/op_log.py",
+    "scripts/common/op_log.py",
     "scripts/browser/popup/popup_monitor.py",
 }
 
@@ -734,7 +734,7 @@ _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/gongmu/gongmu_store.py",
     "ai_orchestrator/scheduler/scheduled_job_store.py",
     "ai_orchestrator/site_work/work_record_store.py",
-    "scripts/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
+    "scripts/common/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
     "storage/",
     "migrations/",
     "scripts/ops/",

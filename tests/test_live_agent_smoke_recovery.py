@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.verify import verify_live_agent_smoke as smoke
+from scripts.ops.verify import verify_live_agent_smoke as smoke
 
 
 class _Close:

@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from scripts import required_quality_gate as gate
+from scripts.ops.quality import required_quality_gate as gate
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_PYCACHE = ROOT
@@ -93,14 +93,14 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/google/precision_report.py" in rendered
     assert "scripts/google/subdomain_logic.py" in rendered
     assert "scripts/google/tab_logic.py" in rendered
-    assert "scripts/gates/work_mode_gate.py" in rendered
+    assert "scripts/common/gates/work_mode_gate.py" in rendered
     assert "scripts/google/workspace_basic.py" in rendered
     assert "scripts/google/youtube/search.py" in rendered
     assert "scripts/google/youtube_upload.py" in rendered
     assert "scripts/youtube/oauth.py" in rendered
     assert "scripts/youtube/research.py" in rendered
     assert "scripts/youtube/router.py" in rendered
-    assert "scripts/module_quality_gate.py --module repo_guard" in rendered
+    assert "scripts/ops/quality/module_quality_gate.py --module repo_guard" in rendered
 
 
 def test_git_hooks_delegate_to_required_gate():
@@ -175,7 +175,7 @@ def test_repo_guard_gate_gets_extended_timeout(monkeypatch):
     monkeypatch.setenv("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "30")
     monkeypatch.setattr(gate.subprocess, "run", fake_run)
 
-    result = gate.run_command((gate.sys.executable, "scripts/module_quality_gate.py", "--module", "repo_guard"))
+    result = gate.run_command((gate.sys.executable, "scripts/ops/quality/module_quality_gate.py", "--module", "repo_guard"))
 
     assert result.ok is True
     assert captured["timeout"] == 240

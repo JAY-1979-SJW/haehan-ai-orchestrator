@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from uuid import uuid4
 
-from scripts import realtime_audit
+from scripts.common import realtime_audit
 from scripts.eum import run_log
 
 

@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -18,7 +18,7 @@ HANAFAX_BASE = "https://www.hanafax.com"
 
 def get_credentials() -> tuple[str, str]:
     """저장된 하나팩스 자격증명 반환. (user_id, password)"""
-    from scripts.credentials import get_cred
+    from scripts.auth.credentials import get_cred
 
     cred = get_cred("hanafax")
     return cred.get("id", ""), cred.get("pw", "")

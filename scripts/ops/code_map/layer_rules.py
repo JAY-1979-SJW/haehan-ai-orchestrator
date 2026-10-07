@@ -23,9 +23,9 @@ SITE_MODULES = {
 LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
     "ai_orchestrator/core/config.py": ("L1", "shared env/config helper (used by 22 files across layers)"),
     "ai_orchestrator/audit/audit_logger.py": ("L3", "low-level audit log writer, IO wrapper"),
-    "scripts/op_log.py": ("L3", "low-level operation log writer, IO wrapper"),
-    "scripts/realtime_audit.py": ("L3", "low-level realtime audit log helper"),
-    "scripts/cdp_db.py": ("L3", "low-level CDP sqlite IO wrapper"),
+    "scripts/common/op_log.py": ("L3", "low-level operation log writer, IO wrapper"),
+    "scripts/common/realtime_audit.py": ("L3", "low-level realtime audit log helper"),
+    "scripts/browser/cdp/cdp_db.py": ("L3", "low-level CDP sqlite IO wrapper"),
     "ai_orchestrator/local_agent/browser/audit_log.py": ("L3", "low-level audit log writer"),
     "ai_orchestrator/local_agent/browser/cdp_audit.py": ("L3", "low-level CDP audit log helper"),
     "logging_utils.py": ("L3", "shared logging facade, IO wrapper"),

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.sites.readonly_check import build_provider_readonly_check_plan
-from scripts.sites.sso_runtime import (
+from scripts.site_engine.readonly_check import build_provider_readonly_check_plan
+from scripts.site_engine.sso_runtime import (
     build_blocked_operation_result,
     build_login_entry_task,
     build_occasional_site_login_task,
@@ -11,7 +11,7 @@ from scripts.sites.sso_runtime import (
     build_subdomain_readonly_task,
     dry_run_occasional_site_login_task,
 )
-from scripts.sites.subdomain_registry import get_provider, validate_registry
+from scripts.site_engine.subdomain_registry import get_provider, validate_registry
 
 
 def test_sso_registry_has_google_and_naver() -> None:

@@ -216,6 +216,11 @@ def test_pytest_runs_with_the_current_interpreter():
     assert rit._pyexe() == [sys.executable]
 
 
+
+
+
+
+
 # ── 하위 패키지 이동: `from . import <패키지>` · bare `import <패키지>` · 폴더 인자 ─────────────────
 
 

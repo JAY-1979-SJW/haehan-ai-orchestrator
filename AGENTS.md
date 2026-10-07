@@ -243,7 +243,7 @@ chmod/chown 자동 변경 금지
 ```bash
 python scripts/ops/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
 
 FORBIDDEN_IMPORT > 0 → STOP  
@@ -453,9 +453,9 @@ NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
 
 브라우저 CDP가 내려갔을 때:
 ```bash
-python scripts/cdp_force_start.py start [URL]
-python scripts/cdp_force_start.py status
-python scripts/cdp_force_start.py stop
+python scripts/browser/cdp/cdp_force_start.py start [URL]
+python scripts/browser/cdp/cdp_force_start.py status
+python scripts/browser/cdp/cdp_force_start.py stop
 ```
 - 샌드박스 게이트 우회 버전 (`assert_browser_launch_allowed` 미호출)
 - 프로필: `data/cdp_profile/ai_chrome`

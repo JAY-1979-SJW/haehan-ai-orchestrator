@@ -51,7 +51,7 @@ from ai_orchestrator.paths.runtime import data_dir
 # (이 모듈은 scripts 를 import 하지 않는다. 이름 계층만 쓴다.)
 _log = logging.getLogger("scripts.gate_core")
 
-# 감사 기록 싱크: 게이트 판정을 op_log 등에 남기는 함수. scripts/gate.py(shim)와 앱 시작점이 등록한다(의존 방향 보존).
+# 감사 기록 싱크: 게이트 판정을 op_log 등에 남기는 함수. scripts/common/gate.py(shim)와 앱 시작점이 등록한다(의존 방향 보존).
 _audit_sink: Callable[..., Any] | None = None
 
 

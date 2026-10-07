@@ -1,0 +1,109 @@
+{
+ "acked": [
+  {
+   "file": "scripts/archive/one_off/temp_oauth_revoke.py",
+   "reason": "S2 archive 이동 — 일회성 스크립트, 직접 실행 호출처 없음(참조는 시험 경로 갱신 완료)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/quality/install_git_hooks.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/quality/install_quality_gate.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/quality/log_code_change.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/quality/module_quality_gate.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/quality/py_compile_no_cache.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/quality/quality_gate.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/quality/required_quality_gate.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/common/realtime_audit.py",
+   "reason": "S2-C common 이동 — 옛 경로 직접 실행 호출처 없음(문서 언급뿐), 참조 모두 새 경로로 수정",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/auth/auth_session.py",
+   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/auth/check_login_status.py",
+   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/auth/credentials.py",
+   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/auth/local_user_secret_store.py",
+   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/site_engine/site_access.py",
+   "reason": "S2-E site_engine 이동 — 옛 경로 직접 실행(python -m scripts.site_engine.site_access)은 역사 보고서 문서에만 있음(보존), 나머지 참조 새 경로로 수정",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/archive/one_off/mock_task_server.py",
+   "reason": "W15 archive 이동 — 참조 0(전수 grep), 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/smoke/local_agent_public_external_readonly_live_smoke.py",
+   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/verify/verify_agent_ws_auth.py",
+   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/verify/verify_live_agent_smoke.py",
+   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/verify/verify_live_browser_readonly_dispatch.py",
+   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/verify/verify_live_task_dispatch.py",
+   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/verify/verify_local_runtime_dry_run.py",
+   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+   "date": "2026-10-07"
+  }
+ ]
+}

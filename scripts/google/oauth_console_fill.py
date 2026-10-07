@@ -13,8 +13,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.gates.secret_action_gate import build_secret_action_policy
-from scripts.gates.work_mode_gate import build_google_work_mode_policy
+from scripts.common.gates.secret_action_gate import build_secret_action_policy
+from scripts.common.gates.work_mode_gate import build_google_work_mode_policy
 
 from . import managed_console
 

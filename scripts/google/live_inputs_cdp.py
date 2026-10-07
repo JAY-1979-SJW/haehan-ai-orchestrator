@@ -26,7 +26,7 @@ class _CDPSessionManager:
 
 def _new_cdp_target_session(target_url: str) -> _CDPSessionManager:
     from scripts.browser.cdp.cdp_console import CDPSession
-    from scripts.config import CDP_HOST, CDP_PORT
+    from scripts.common.config import CDP_HOST, CDP_PORT
 
     encoded_url = quote(target_url, safe=":/?&=%#")
     endpoint = f"http://{CDP_HOST}:{CDP_PORT}/json/new?{encoded_url}"

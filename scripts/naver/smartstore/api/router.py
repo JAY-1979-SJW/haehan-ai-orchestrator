@@ -4,8 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.gate import check as gate_check
-from scripts.logger import get_logger
+from scripts.common.gate import check as gate_check
+from scripts.common.logger import get_logger
 from scripts.naver.live_safety import before_live_navigation, ensure_page_safe
 from scripts.naver.smartstore.api.actions import APPROVAL_CONFIRM_TEXT
 
@@ -293,7 +293,7 @@ def _cmd_analytics(sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_session_check() -> None:
-    from scripts.site_base import check_session
+    from scripts.site_engine.site_base import check_session
 
     print("=" * 60)
     print("SmartStore session check")

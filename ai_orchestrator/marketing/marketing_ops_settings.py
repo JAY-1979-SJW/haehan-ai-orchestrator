@@ -20,7 +20,9 @@ import threading
 from pathlib import Path
 from typing import Any
 
-_FILE = Path(__file__).resolve().parents[2] / "data" / "marketing_ops" / "settings.json"
+from ai_orchestrator.paths.runtime import data_dir
+
+_FILE = data_dir() / "marketing_ops" / "settings.json"
 _lock = threading.Lock()
 
 _DEFAULT: dict[str, Any] = {"enabled": False}

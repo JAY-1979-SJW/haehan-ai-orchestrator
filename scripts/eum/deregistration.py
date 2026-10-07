@@ -24,8 +24,8 @@ except ImportError:
     pass
 
 from scripts.eum.auth import ensure_logged_in
-from scripts.gate import check as gate_check
-from scripts.logger import get_logger
+from scripts.common.gate import check as gate_check  # noqa: E402 - sys.path 부트스트랩 뒤 import
+from scripts.common.logger import get_logger  # noqa: E402 - sys.path 부트스트랩 뒤 import
 from scripts.browser.cdp.connection import get_page  # noqa: E402 - sys.path 부트스트랩 뒤 import(이동 전부터 있던 패턴)
 
 log = get_logger(__name__)

@@ -44,6 +44,7 @@ hidden_imports = [
     "ai_orchestrator.local_agent_router_registration",
     "ai_orchestrator.audit.audit_logger",
     "scripts.browser.cdp.connection",
+    "scripts.browser.page.web_connector",
     "scripts.naver.smartstore.navigation.cdp_popup_manager",
     # FastAPI / uvicorn
     "uvicorn.logging",

@@ -14,9 +14,9 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
-from scripts.app_paths import repo_root
+from ai_orchestrator.paths.runtime import data_dir
 
-DB_PATH = repo_root() / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"
 
 
 # ── 연결 ──────────────────────────────────────────────────────────

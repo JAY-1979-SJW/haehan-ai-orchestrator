@@ -21,17 +21,18 @@ from pathlib import Path
 
 from playwright.sync_api import Page, sync_playwright
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 from scripts.browser.session.browser_task_session import BrowserTaskPolicy, mark_task_owned
-from scripts.config import CDP_HOST as _DEFAULT_CDP_HOST
-from scripts.config import CDP_PORT as _DEFAULT_CDP_PORT
-from scripts.logger import get_logger
+from scripts.common.config import CDP_HOST as _DEFAULT_CDP_HOST
+from scripts.common.config import CDP_PORT as _DEFAULT_CDP_PORT
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
-_DAEMON_STATE = ROOT / "data" / "cdp_daemon_state.json"
+_DAEMON_STATE = data_dir() / "cdp_daemon_state.json"
 
 # ── 브라우저 context 캐싱 ────────────────────────────────────────────
 _BROWSER_CONTEXT_CACHE = None

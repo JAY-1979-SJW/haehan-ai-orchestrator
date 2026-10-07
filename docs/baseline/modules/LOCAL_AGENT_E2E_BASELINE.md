@@ -148,8 +148,8 @@ Baseline and gate work may modify:
 docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
 scripts/ops/audit_local_agent_e2e_baseline_contract.py
-scripts/module_quality_gate.py
-scripts/required_quality_gate.py
+scripts/ops/quality/module_quality_gate.py
+scripts/ops/quality/required_quality_gate.py
 tests/test_local_agent_e2e_baseline_contract.py
 tests/test_module_quality_gate.py
 tests/test_required_quality_gate.py
@@ -169,9 +169,9 @@ Runtime/local-agent verification:
 ```text
 python scripts/ops/audit_local_agent_e2e_flow_contract.py
 python scripts/ops/live_parallel_task_dispatch_smoke.py --temp-admin --count 5 --concurrency 5 --timeout 90
-python scripts/module_quality_gate.py --module local_agent_e2e
-python scripts/module_quality_gate.py --module repo_guard
-python scripts/required_quality_gate.py
+python scripts/ops/quality/module_quality_gate.py --module local_agent_e2e
+python scripts/ops/quality/module_quality_gate.py --module repo_guard
+python scripts/ops/quality/required_quality_gate.py
 ```
 
 ## 11. Known WARN

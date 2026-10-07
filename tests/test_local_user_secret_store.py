@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts import local_user_secret_store as store
+from scripts.auth import local_user_secret_store as store
 
 
 class FakeKeyring:

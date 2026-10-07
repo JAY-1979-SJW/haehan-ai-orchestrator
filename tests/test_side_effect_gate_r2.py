@@ -1,4 +1,4 @@
-"""R2 — 외부 발행·발송 승인·수신거부 장치(scripts.gate.require_side_effect) 와 블로그·하이웍스 연결 시험.
+"""R2 — 외부 발행·발송 승인·수신거부 장치(scripts.common.gate.require_side_effect) 와 블로그·하이웍스 연결 시험.
 
 발송량(하루 상한)은 제한하지 않는다 — 시험도 '제한이 없음'을 고정한다.
 """
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from scripts import gate
+from scripts.common import gate
 from scripts.hiworks import mail_batch
 
 OK = "OK_PHRASE"
@@ -135,7 +135,7 @@ def _add_many(state_dir: str, prefix: str, n: int) -> None:
     import os
 
     os.environ["GATE_DATA_DIR"] = state_dir
-    from scripts import gate as g
+    from scripts.common import gate as g
 
     for i in range(n):
         g.add_opt_out(f"{prefix}{i}@t.com")

@@ -18,10 +18,10 @@ from fastapi.testclient import TestClient
 from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
 from ai_orchestrator.workflows import naver_mailbox_flow as service
-from scripts.naver.mail_imap import attachments as att
-from scripts.naver.mail_imap import folders as fld
-from scripts.naver.mail_imap import mailbox as mb
-from scripts.naver.mail_imap import sender
+from scripts.naver.mail.imap import attachments as att
+from scripts.naver.mail.imap import folders as fld
+from scripts.naver.mail.imap import mailbox as mb
+from scripts.naver.mail.imap import sender
 
 PW = "not-a-real-value-123456"
 PNG = bytes.fromhex(

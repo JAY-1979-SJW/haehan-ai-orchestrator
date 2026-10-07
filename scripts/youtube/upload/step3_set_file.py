@@ -5,8 +5,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-from scripts.app_paths import resolve_external, sibling_project
 from scripts.browser.cdp.cdp_helper import CDP
+from scripts.common.app_paths import resolve_external, sibling_project
 
 VIDEO = str(
     resolve_external(

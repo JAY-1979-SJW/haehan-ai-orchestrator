@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 DATA_DIR = Path("data")
 LATEST_PATH = DATA_DIR / "naver_keyword_tools_latest.json"
@@ -140,7 +140,7 @@ def assert_paid_actions_blocked() -> dict[str, Any]:
     for item in build_paid_block_plans():
         try:
             gate_check(str(item["gate"]))
-        except Exception:  # noqa: BLE001 - 네이버 무료정책(FREE_ONLY_POLICY) 자가진단 함수 assert_paid_actions_blocked — 실제 결제/광고 차단은 scripts.gate.check가 수행하며, 여기선 그 호출이 예외를 던졌는지(=차단됨)만 집계하는 읽기전용 감사 카운터. 쓰기/승인 로직 없음.
+        except Exception:  # noqa: BLE001 - 네이버 무료정책(FREE_ONLY_POLICY) 자가진단 함수 assert_paid_actions_blocked — 실제 결제/광고 차단은 scripts.common.gate.check가 수행하며, 여기선 그 호출이 예외를 던졌는지(=차단됨)만 집계하는 읽기전용 감사 카운터. 쓰기/승인 로직 없음.
             blocked.append(str(item["gate"]))
     return {
         "ok": len(blocked) == len(build_paid_block_plans()),

@@ -15,12 +15,13 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"
 
 
 def _init_db():
@@ -108,7 +109,7 @@ class BlogSchedule:
         """예약 시간 도래한 글 자동 발행. approval 은 사용자가 직접 입력한 승인 문구(없으면 GateBlocked)."""
         import json
 
-        from scripts.gate import require_approved
+        from scripts.common.gate import require_approved
 
         require_approved("blog_publish", approval, via="blog_schedule_process_due")
 

@@ -8,9 +8,9 @@
       "layer": "L2",
       "paths": [
         ".githooks/",
-        "scripts/required_quality_gate.py",
-        "scripts/module_quality_gate.py",
-        "scripts/install_git_hooks.py",
+        "scripts/ops/quality/required_quality_gate.py",
+        "scripts/ops/quality/module_quality_gate.py",
+        "scripts/ops/quality/install_git_hooks.py",
         "tests/test_required_quality_gate.py",
         "tests/test_module_quality_gate.py"
       ],
@@ -37,8 +37,8 @@
       "owner": "desktop",
       "layer": "L10",
       "paths": [
-        "scripts/verify/verify_local_runtime_dry_run.py",
-        "scripts/verify/verify_agent_ws_auth.py"
+        "scripts/ops/verify/verify_local_runtime_dry_run.py",
+        "scripts/ops/verify/verify_agent_ws_auth.py"
       ],
       "required_gate": "desktop_auth_runtime"
     },
@@ -68,8 +68,8 @@
       "layer": "L8",
       "paths": [
         "ai_orchestrator/",
-        "scripts/verify/verify_live_agent_smoke.py",
-        "scripts/verify/verify_live_task_dispatch.py"
+        "scripts/ops/verify/verify_live_agent_smoke.py",
+        "scripts/ops/verify/verify_live_task_dispatch.py"
       ],
       "required_gate": "live_agent"
     },

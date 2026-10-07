@@ -49,7 +49,7 @@ python -m scripts.naver.blog.cli.check_blog_separability --strict # 위반 시 e
    중복 구현하지 말고 목록에만 넣는다.
    실례: `naver_kin_client.py`(84줄, 지식iN 검색) — 블로그 전용이 아님.
 3. **어댑터로 교체** — 분리 시점에 인터페이스만 맞춰 갈아끼운다.
-   실례: `scripts/credentials.py`(자격증명) — 지금은 공용 재사용이 맞고,
+   실례: `scripts/auth/credentials.py`(자격증명) — 지금은 공용 재사용이 맞고,
    분리할 때 이 부분만 바꾼다.
 
 **하지 말 것**: 분리를 위해 미리 코드를 중복 복사하는 것. 유지보수 지점이

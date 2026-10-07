@@ -18,7 +18,7 @@ from scripts.naver.blog.unsplash_images import UPLOADS_DIR
 from scripts.naver.blog.unsplash_images import (
     resolve_unsplash_images as _resolve_unsplash_images,  # 재노출(옛 이름 유지)
 )
-from scripts.realtime_audit import emit_event
+from scripts.common.realtime_audit import emit_event
 
 _log = logging.getLogger(__name__)
 

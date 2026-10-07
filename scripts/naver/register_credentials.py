@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.credentials import CRED_FILE
+from scripts.auth.credentials import CRED_FILE
 from scripts.naver.auth import _load_credentials, save_credentials
 
 

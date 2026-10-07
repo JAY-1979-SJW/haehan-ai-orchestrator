@@ -10,7 +10,7 @@ from scripts.browser.page.page_helper_common import (
     _safe_auto_popup,
     _safe_critical_log,
 )
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

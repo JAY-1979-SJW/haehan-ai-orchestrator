@@ -116,7 +116,7 @@ def _mail_fetch_params(params: dict[str, Any]) -> dict[str, Any]:
 
 
 def _mail_send_params(params: dict[str, Any]) -> dict[str, Any]:
-    from scripts.naver.mail_imap import sender
+    from scripts.naver.mail.imap import sender
 
     extra = set(params) - {"target", "to", "subject", "body"}
     if extra:
@@ -228,7 +228,7 @@ def _in_new_tab(fn: Callable[[Any], Any]) -> Any:
 
 def _run_naver_mail_check(params: dict[str, Any]) -> str:
     """웹메일 'IMAP/SMTP 사용' 설정 상태 + IMAP/SMTP 로그인 점검(읽기 전용). 하나라도 안 되면 해결 방법과 함께 실패로 기록."""
-    from scripts.naver.mail_imap import protocol, settings
+    from scripts.naver.mail.imap import protocol, settings
 
     account = params["target"]
     state = _in_new_tab(settings.read_state)
@@ -244,7 +244,7 @@ def _run_naver_mail_check(params: dict[str, Any]) -> str:
 
 def _run_naver_mail_enable(params: dict[str, Any]) -> str:
     """웹메일에서 'IMAP/SMTP 사용'을 '사용함'으로 저장한다(이미 사용함이면 변경 없음). 승인 후에만 실행된다."""
-    from scripts.naver.mail_imap import settings
+    from scripts.naver.mail.imap import settings
 
     account = params["target"]
     result = _in_new_tab(lambda page: settings.enable(page, account))
@@ -261,7 +261,7 @@ def _run_naver_mail_enable(params: dict[str, Any]) -> str:
 
 def _run_naver_mail_fetch(params: dict[str, Any]) -> str:
     """IMAP 으로 받은편지함 최근 메일 헤더를 읽는다(읽음 표시는 바뀌지 않는다)."""
-    from scripts.naver.mail_imap import reader
+    from scripts.naver.mail.imap import reader
 
     result = reader.list_messages(params["target"], unseen_only=params["unseen_only"], limit=params["limit"])
     if not result["ok"]:
@@ -271,7 +271,7 @@ def _run_naver_mail_fetch(params: dict[str, Any]) -> str:
 
 def _run_naver_mail_send(params: dict[str, Any]) -> str:
     """SMTP 로 메일 1통을 보낸다. 회차 승인을 받은 뒤에만 호출된다."""
-    from scripts.naver.mail_imap import sender
+    from scripts.naver.mail.imap import sender
 
     result = sender.send_mail(params["target"], params["to"], params["subject"], params["body"])
     if not result["ok"]:

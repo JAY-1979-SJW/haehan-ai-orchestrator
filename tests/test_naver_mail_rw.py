@@ -11,7 +11,7 @@ import pytest
 
 from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
 from ai_orchestrator.services import scheduled_job_actions as actions
-from scripts.naver.mail_imap import reader, sender
+from scripts.naver.mail.imap import reader, sender
 
 PW = "not-a-real-value-123456"
 ALICE = "a@example.com"

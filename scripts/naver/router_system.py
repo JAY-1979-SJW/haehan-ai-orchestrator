@@ -1,7 +1,7 @@
 """네이버 시스템/세션/카탈로그/로그인 명령 핸들러"""
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 from .base import check_session
 
 
@@ -76,8 +76,8 @@ def _cmd_login() -> None:
     CDP 데몬이 꺼져 있으면 자동 시작 후 연결.
     """
     from scripts.browser.page.web_connector import browser_session  # noqa: I001 - 이동 전부터 있던 미정렬 import(동작 변경 없음)
-    from scripts.login_session import is_logged_in
-    from scripts.login_detector import monitor_for_login
+    from scripts.auth.login_session import is_logged_in
+    from scripts.auth.login_detector import monitor_for_login
     from scripts.naver.browser_gate import require_naver_browser
 
     print("=" * 60)

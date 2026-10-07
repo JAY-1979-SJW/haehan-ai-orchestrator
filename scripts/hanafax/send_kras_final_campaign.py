@@ -29,7 +29,7 @@ from pathlib import Path
 import fitz
 import win32com.client as win32
 
-from scripts.app_paths import known_folder, repo_root
+from scripts.common.app_paths import known_folder, repo_root
 from scripts.hanafax.kst_date import now_kst, today_kr_str
 from scripts.hanafax.sender import send_fax
 

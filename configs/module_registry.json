@@ -7465,7 +7465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/app_paths.py": {
+  "scripts/common/app_paths.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -7473,7 +7473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/app_paths_migrate.py": {
+  "scripts/common/app_paths_migrate.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -7689,15 +7689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/audit_dev_reg_approvals.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/auth_session.py": {
+  "scripts/auth/auth_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7705,159 +7697,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/browser/session/browser_cdp_selection_gate.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/session/browser_paths.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/browser_rpc_client.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/browser_rpc_server.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/session/browser_sandbox_gate.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/browser_tab_monitor.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/session/browser_task_session.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_client.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_console.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_daemon.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_db.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "browser",
-   "reason": "DB·저장 신호",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_force_start.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_helper.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_lane_start.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_lanes.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_session_selector.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_tab_manager.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_tabs.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/cdp_verify.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/check_login_status.py": {
+  "scripts/auth/check_login_status.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -7985,7 +7825,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/config.py": {
+  "scripts/common/config.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -7993,7 +7833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/credentials.py": {
+  "scripts/auth/credentials.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -8001,7 +7841,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/critical_logger.py": {
+  "scripts/common/critical_logger.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -8625,15 +8465,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gabia_login_watch.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "gabia",
-   "reason": "JS 평가로 로그인 상태만 폴링하는 읽기 전용 감시 CLI(자체 _get_page) — 이름 규칙이 L5 로 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/gate.py": {
+  "scripts/common/gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -8641,7 +8473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gates/__init__.py": {
+  "scripts/common/gates/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -8649,7 +8481,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gates/secret_action_gate.py": {
+  "scripts/common/gates/secret_action_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -8657,7 +8489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gates/work_mode_gate.py": {
+  "scripts/common/gates/work_mode_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -9833,14 +9665,6 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/browser/page/human_input.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/inquiry/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -9921,22 +9745,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/install_git_hooks.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/install_quality_gate.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/kakao/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -10009,7 +9817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/known_login_urls.py": {
+  "scripts/auth/known_login_urls.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -10217,7 +10025,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_user_secret_store.py": {
+  "scripts/auth/local_user_secret_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -10225,15 +10033,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/log_code_change.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/logger.py": {
+  "scripts/common/logger.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -10241,7 +10041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/login_check.py": {
+  "scripts/auth/login_check.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -10249,7 +10049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/login_detector.py": {
+  "scripts/auth/login_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -10257,7 +10057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/login_session.py": {
+  "scripts/auth/login_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -10337,7 +10137,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/mk_catalog/reclassify_blog_new.py": {
+  "scripts/archive/one_off/reclassify_blog_new.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -10353,67 +10153,11 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/mock_task_server.py": {
+  "scripts/archive/one_off/mock_task_server.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
    "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/module_quality_gate.py": {
-   "layer": "L6",
-   "role": "policy",
-   "domain": "common",
-   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/module_quality_gate_checks_audit.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/module_quality_gate_checks_repo.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/module_quality_gate_checks_web.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/module_quality_gate_common.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/module_quality_gate_modules.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/module_quality_gate_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "common",
-   "reason": "업무 흐름 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -11037,7 +10781,7 @@
    "layer": "L6",
    "role": "persistence",
    "domain": "naver_blog",
-   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/browser/cdp/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -11737,14 +11481,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail/background_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver_mail",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/naver/mail/batch_runner.py": {
    "layer": "L6",
    "role": "workflow",
@@ -11913,14 +11649,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/mail/settings_panel.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/mail/smart_folder_collector.py": {
    "layer": "L5",
    "role": "site_module",
@@ -11993,7 +11721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/__init__.py": {
+  "scripts/naver/mail/imap/__init__.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12001,7 +11729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/attachments.py": {
+  "scripts/naver/mail/imap/attachments.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12009,7 +11737,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/bulk_sender.py": {
+  "scripts/naver/mail/imap/bulk_sender.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12017,7 +11745,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/folders.py": {
+  "scripts/naver/mail/imap/folders.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12025,7 +11753,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/html_sanitize.py": {
+  "scripts/naver/mail/imap/html_sanitize.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12033,7 +11761,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/mailbox.py": {
+  "scripts/naver/mail/imap/mailbox.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12041,7 +11769,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/protocol.py": {
+  "scripts/naver/mail/imap/protocol.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12049,7 +11777,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/reader.py": {
+  "scripts/naver/mail/imap/reader.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12057,7 +11785,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/sender.py": {
+  "scripts/naver/mail/imap/sender.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12065,69 +11793,13 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/settings.py": {
+  "scripts/naver/mail/imap/settings.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
    "reason": "네이버 웹메일 설정 화면을 CDP 로 읽고 바꾸는 사이트 모듈 — 파일명 settings 때문에 L1 shared 로 오분류",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "scripts/naver/mail_read/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/body_reader.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/cdp.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/classify.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/entry.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/list_collector.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail_read/pipeline.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver_mail",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
   },
   "scripts/naver/mybox.py": {
    "layer": "L5",
@@ -12809,87 +12481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver_mail/background_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver_mail",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver_mail/settings_panel.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser/navigator/navigator.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/blog/navigator_blog.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/navigator/navigator_common.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser/navigator/navigator_interact.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser/navigator/navigator_nav.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser/navigator/navigator_scan.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser/navigator/navigator_session.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/navigator/navigator_verify.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/op_log.py": {
+  "scripts/common/op_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -14633,94 +14225,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/page/page_analyzer.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser/page/page_helper.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/page/page_helper_common.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/page/page_helper_inspect.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/page/page_helper_interact.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/page/page_helper_nav.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/page/page_helper_watch.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/popup/popup_classifier.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/popup/popup_detector.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/popup/popup_monitor.py": {
-   "layer": "L4",
-   "role": "persistence",
-   "domain": "browser",
-   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/navigator.py·popup_classifier.py 를 import. 지우면 층 역전 +3건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/browser/popup/popup_watcher.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/preview_description.py": {
    "layer": "L4",
    "role": "browser_engine",
@@ -14729,7 +14233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/publish_guard.py": {
+  "scripts/common/publish_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -14737,15 +14241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/py_compile_no_cache.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/quality_gate.py": {
+  "scripts/ops/quality/quality_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -14753,7 +14249,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/realtime_audit.py": {
+  "scripts/common/realtime_audit.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -14761,15 +14257,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/required_quality_gate.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/router.py": {
+  "scripts/site_engine/command_router.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -14785,7 +14273,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/runtime_temp.py": {
+  "scripts/common/runtime_temp.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -14793,7 +14281,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/schemas.py": {
+  "scripts/common/schemas.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -14801,7 +14289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/security.py": {
+  "scripts/common/security.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -14809,15 +14297,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/browser/session/session_tracker.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/site_access.py": {
+  "scripts/site_engine/site_access.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -14825,7 +14305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/site_base.py": {
+  "scripts/site_engine/site_base.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -14937,15 +14417,15 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_registry.py": {
+  "scripts/site_engine/site_registry.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
-   "reason": "SiteSpec 와 사이트 조회·등록·지연 로더만 가진 코어(사이트별 로그인 지식은 scripts/site_registry_sites.py 로 분리) — L4 범용 엔진(cdp_client·login_session·site_access)이 import. 코어→사이트 모듈 결합은 변수에 담은 문자열 로더(데이터 주도)라 정적 간선이 없고, 결합이 0 은 아님(결함 #113 종결 메모)",
+   "reason": "SiteSpec 와 사이트 조회·등록·지연 로더만 가진 코어(사이트별 로그인 지식은 scripts/site_engine/site_registry_sites.py 로 분리) — L4 범용 엔진(cdp_client·login_session·site_access)이 import. 코어→사이트 모듈 결합은 변수에 담은 문자열 로더(데이터 주도)라 정적 간선이 없고, 결합이 0 은 아님(결함 #113 종결 메모)",
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_registry_sites.py": {
+  "scripts/site_engine/site_registry_sites.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "common",
@@ -14953,7 +14433,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_session_safety.py": {
+  "scripts/site_engine/site_session_safety.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -14961,7 +14441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/site_watch.py": {
+  "scripts/site_engine/site_watch.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -14977,7 +14457,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/sites/__init__.py": {
+  "scripts/site_engine/readonly_check.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -14985,7 +14465,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/sites/readonly_check.py": {
+  "scripts/site_engine/sso_runtime.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -14993,15 +14473,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/sites/sso_runtime.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/sites/subdomain_registry.py": {
+  "scripts/site_engine/subdomain_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -15017,7 +14489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/smoke/local_agent_public_external_readonly_live_smoke.py": {
+  "scripts/ops/smoke/local_agent_public_external_readonly_live_smoke.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -15038,46 +14510,6 @@
    "role": "ops_tool",
    "domain": "youtube",
    "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/temp_gcp_create_client.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/temp_gcp_dom.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/temp_oauth_revoke.py": {
-   "layer": "L6",
-   "role": "policy",
-   "domain": "common",
-   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/agent.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/browser/page/user_action_monitor.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/validate_site_policy_config.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -15135,14 +14567,6 @@
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser/page/web_connector.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
    "source": "rule"
   },
   "scripts/youtube/__init__.py": {
@@ -15269,7 +14693,7 @@
    "layer": "L6",
    "role": "policy",
    "domain": "youtube",
-   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/browser/cdp/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -20233,7 +19657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_agent_ws_auth.py": {
+  "scripts/ops/verify/verify_agent_ws_auth.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20241,7 +19665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_live_agent_smoke.py": {
+  "scripts/ops/verify/verify_live_agent_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20249,7 +19673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_live_browser_readonly_dispatch.py": {
+  "scripts/ops/verify/verify_live_browser_readonly_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -20257,7 +19681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_live_task_dispatch.py": {
+  "scripts/ops/verify/verify_live_task_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20265,7 +19689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_local_runtime_dry_run.py": {
+  "scripts/ops/verify/verify_local_runtime_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20334,14 +19758,6 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/module_quality_gate_exports.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -20456,14 +19872,6 @@
    "reason": "가입 카페 수집 결과를 이력과 비교·반영·분석하는 업무 흐름(규칙은 domain, 저장은 persistence, 브라우저·HTTP 모름) — generic L4 오분류",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "scripts/browser/session/browser_lifecycle.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
   },
   "scripts/explorer/data_sources.py": {
    "layer": "L4",
@@ -21069,7 +20477,7 @@
    "layer": "L1",
    "role": "shared",
    "domain": "common",
-   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
+   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/common/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -21097,7 +20505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/_shared.py": {
+  "scripts/ops/verify/_shared.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -21405,7 +20813,7 @@
    "layer": "L4",
    "role": "browser_engine",
    "domain": "gabia",
-   "reason": "이동한 파일 — 원본 scripts/gabia_login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "reason": "이동한 파일 — 원본 scripts/gabia/login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -21745,46 +21153,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/__init__.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp/__init__.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/cdp_cli.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/session/__init__.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser/page/__init__.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/test_opt_out_lock_windows.py": {
    "layer": "L11",
    "role": "test",
@@ -21833,7 +21201,31 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/navigator/__init__.py": {
+  "scripts/archive/one_off/temp_gcp_create_client.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "google",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/temp_gcp_dom.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "google",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/temp_oauth_revoke.py": {
+   "layer": "L6",
+   "role": "policy",
+   "domain": "common",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/agent.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/browser/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -21841,7 +21233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/popup/__init__.py": {
+  "scripts/browser/cdp/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -21849,12 +21241,236 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp/connection.py": {
+  "scripts/browser/cdp/browser_tab_monitor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
    "reason": "범용 브라우저·CDP",
    "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_client.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_console.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_daemon.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_db.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "browser",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_force_start.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_helper.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_lane_start.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_lanes.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_session_selector.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_tab_manager.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_tabs.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/cdp_verify.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/install_git_hooks.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/install_quality_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/log_code_change.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate.py": {
+   "layer": "L6",
+   "role": "policy",
+   "domain": "common",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/ops/quality/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/ops/quality/module_quality_gate_checks_audit.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_checks_repo.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_checks_web.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_common.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/ops/quality/module_quality_gate_exports.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_modules.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_runner.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/py_compile_no_cache.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/required_quality_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_scripts_data_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_eum_access_handler.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/auth/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   },
   "admin-web/src/components/chat/domainChatRegistry.ts": {
@@ -22937,6 +22553,286 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/browser/cdp/browser_rpc_client.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/browser_rpc_server.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/connection.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp_cli.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/navigator.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/navigator_common.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/navigator_interact.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/navigator_nav.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/navigator_scan.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/navigator_session.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/navigator_verify.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/human_input.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/page_analyzer.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/page_helper.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/page_helper_common.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/page_helper_inspect.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/page_helper_interact.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/page_helper_nav.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/page_helper_watch.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/user_action_monitor.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/web_connector.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/popup/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/popup/popup_classifier.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/popup/popup_detector.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/popup/popup_monitor.py": {
+   "layer": "L4",
+   "role": "persistence",
+   "domain": "browser",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/browser/navigator/navigator.py·popup_classifier.py 를 import. 지우면 층 역전 +3건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/browser/popup/popup_watcher.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/browser_cdp_selection_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "browser",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/browser_lifecycle.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/browser_paths.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/browser_sandbox_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "browser",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/browser_task_session.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/session_tracker.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/common/ai_work_record.py": {
    "layer": "L4",
    "role": "generic",
@@ -22974,6 +22870,14 @@
    "role": "site_module",
    "domain": "youtube",
    "reason": "도메인(youtube) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/blog/navigator_blog.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
    "confidence": "high",
    "source": "rule"
   },

@@ -35,7 +35,7 @@ REQUIRED_BACKEND_PHRASES = (
     "hide auth failures behind mock data",
     "dispatch unapproved high-risk work to a local agent",
     "python scripts/ops/audit_backend_runtime_contract.py",
-    "python scripts/module_quality_gate.py --module backend_core",
+    "python scripts/ops/quality/module_quality_gate.py --module backend_core",
 )
 
 REQUIRED_MODULE_BASELINE_PHRASES = (

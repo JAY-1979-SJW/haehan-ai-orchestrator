@@ -38,7 +38,7 @@ def test_youtube_oauth_console_sequence_starts_from_google_home() -> None:
 
 
 def test_google_login_probe_uses_home_first() -> None:
-    from scripts.config import LOGIN_PROBE_URLS
+    from scripts.common.config import LOGIN_PROBE_URLS
 
     assert LOGIN_PROBE_URLS["google"] == "https://www.google.com/"
 

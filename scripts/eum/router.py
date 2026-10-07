@@ -7,8 +7,8 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
-from scripts.logger import get_logger
+from scripts.common.gate import check as gate_check
+from scripts.common.logger import get_logger
 
 __status__ = {
     "tasks": {
@@ -150,7 +150,7 @@ def _cmd_new_sites() -> None:
     print("=" * 60)
     from scripts.eum.install_targets import collect_all_install_targets
     from scripts.eum.sales_mail import DEFAULT_SOURCE, load_new_site_projects
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
 
     page = open_site("eum")
     result = collect_all_install_targets(page)  # 표시개수 100 + 전 페이지 순회
@@ -171,7 +171,7 @@ def _cmd_install_targets(sub: str | None, args: list[str]) -> None:
         print_summary,
         verify_install_targets,
     )
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
 
     page = open_site("eum")
     if sub in {"download-excel", "excel"} or "download-excel" in args or "excel" in args:
@@ -297,7 +297,7 @@ def _cmd_explore_accessible(sub: str | None = None, args: list[str] | None = Non
     """Explore pages available in the current account menu."""
     gate_check("eum_extract_all_devices")
     from scripts.eum.access_explorer import explore_accessible_pages, print_summary, save_accessible_pages
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
 
     page = open_site("eum")
     max_pages = int(sub) if sub and str(sub).isdigit() else None
@@ -311,7 +311,7 @@ def _cmd_work_index() -> None:
     """Build a read-only EUM business/work index from the live UI."""
     gate_check("eum_extract_all_devices")
     from scripts.eum.workspace import build_work_index, print_summary, save_work_index
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
 
     page = open_site("eum")
     index = build_work_index(page)
@@ -323,7 +323,7 @@ def _cmd_capabilities() -> None:
     """Print current-account EUM workflow availability."""
     gate_check("eum_extract_all_devices")
     from scripts.eum.workspace import build_work_index
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
 
     page = open_site("eum")
     index = build_work_index(page)
@@ -368,7 +368,7 @@ def _cmd_open_menu(sub: str | None, args: list[str]) -> None:
         return
 
     from scripts.eum.menu_actions import open_menu_page, print_menu_result, save_menu_result
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
 
     page = open_site("eum")
     result = open_menu_page(page, query)
@@ -462,7 +462,7 @@ def _execute_approval_workflow(workflow: dict, args: list[str]) -> None:
     """Validate an approval workflow, then execute only through its gate."""
     from scripts.eum.run_log import work_run
     from scripts.eum.work_plan import build_action_plan, print_action_plan, save_action_plan
-    from scripts.gate import force_approved
+    from scripts.common.gate import force_approved
 
     plan = build_action_plan(workflow, args)
     path = save_action_plan(plan)

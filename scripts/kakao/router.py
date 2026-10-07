@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 from . import dev_console
 from .base import check_session
@@ -65,7 +65,7 @@ def _cmd_login() -> None:
             print("✓ 이미 로그인 상태입니다")
         else:
             print("\n브라우저에서 카카오 계정으로 로그인하세요 (최대 5분 대기)")
-            from scripts.login_detector import monitor_for_login
+            from scripts.auth.login_detector import monitor_for_login
 
             detected = monitor_for_login(page, check_interval=2, timeout_s=300)
             if detected.get("detected"):

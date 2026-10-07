@@ -1,7 +1,7 @@
 """게이트 결과 타입(RiskLevel·GateVerdict·GateResult) — `scripts` 에 의존하지 않는 말단 모듈.
 
 게이트 핵심(`gate_core`)이 `scripts` 패키지를 import 하지 않도록(순환 해소, R2d-2 설계서 §4) 이 타입을 여기에 둔다.
-`scripts/schemas.py` 가 같은 객체를 재수출하므로 기존 `from scripts.schemas import GateResult` 는 그대로 동작한다.
+`scripts/common/schemas.py` 가 같은 객체를 재수출하므로 기존 `from scripts.common.schemas import GateResult` 는 그대로 동작한다.
 """
 
 from __future__ import annotations

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 from . import (
     ads_signup,

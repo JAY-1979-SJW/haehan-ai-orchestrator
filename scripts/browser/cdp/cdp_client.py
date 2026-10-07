@@ -43,7 +43,7 @@ DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
 
 
 def _cmd_check_login() -> None:
-    from scripts.check_login_status import main as check_login_main
+    from scripts.auth.check_login_status import main as check_login_main
 
     check_login_main()
 
@@ -53,7 +53,7 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
     import subprocess
     from pathlib import Path as _Path
 
-    from scripts.app_paths import repo_root
+    from scripts.common.app_paths import repo_root
 
     STATE_FILE = repo_root() / "data" / "runtime" / "chrome_ui_monitor_state.json"
     sub_cmd = task or "status"
@@ -120,9 +120,9 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
     # 로그인 후 자동 사이트 탐색
     import os
 
-    from scripts.site_access import LoginError, explore_after_login
-    from scripts.site_registry import list_sites
-    from scripts.site_watch import StepFailure
+    from scripts.site_engine.site_access import LoginError, explore_after_login
+    from scripts.site_engine.site_registry import list_sites
+    from scripts.site_engine.site_watch import StepFailure
 
     if not task:
         print("사용법: python scripts/browser/cdp_cli.py explore <사이트> [경로] [depth] [max] [--dry-run]")
@@ -163,7 +163,7 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
 
 def _cmd_session(task: str, sub: str) -> None:
     # 인증 세션 저장/복원/관리
-    from scripts.auth_session import cli_delete, cli_list, cli_load, cli_save
+    from scripts.auth.auth_session import cli_delete, cli_list, cli_load, cli_save
 
     sub_cmd = task or "list"
     host = sub or ""
@@ -204,9 +204,9 @@ def _cmd_open(task: str, sub: str, args: list[str]) -> None:
     # 통합 사이트 접속 (A방식 + B방식 fallback + 전 단계 감시)
     import os
 
-    from scripts.site_access import LoginError, open_site
-    from scripts.site_registry import list_sites
-    from scripts.site_watch import StepFailure
+    from scripts.site_engine.site_access import LoginError, open_site
+    from scripts.site_engine.site_registry import list_sites
+    from scripts.site_engine.site_watch import StepFailure
 
     if not task:
         print("사용법: python scripts/browser/cdp_cli.py open <사이트> [경로] [--dry-run] [--force-login]")
@@ -259,7 +259,7 @@ def _cmd_user_watch(task: str, sub: str) -> None:
 
 def _cmd_auto_login(task: str, sub: str) -> None:
     from scripts.browser.cdp.connection import get_page
-    from scripts.login_detector import monitor_for_login
+    from scripts.auth.login_detector import monitor_for_login
 
     if not task:
         print("사용법: python scripts/browser/cdp_cli.py auto-login <사이트> [URL]")
@@ -292,7 +292,7 @@ def _cmd_auto_login(task: str, sub: str) -> None:
 def _cmd_login_watch(task: str, sub: str) -> None:
     import json as _json
 
-    from scripts.login_detector import watch_all_logins
+    from scripts.auth.login_detector import watch_all_logins
 
     interval = float(task) if task else 1.0
     timeout_s = int(sub) if sub and sub.isdigit() else 0
@@ -301,7 +301,7 @@ def _cmd_login_watch(task: str, sub: str) -> None:
 
 
 def _cmd_cred(task: str, sub: str) -> None:
-    from scripts.credentials import _cmd_delete, _cmd_get, _cmd_list, _cmd_set
+    from scripts.auth.credentials import _cmd_delete, _cmd_get, _cmd_list, _cmd_set
 
     sub_cmd = task or "list"
     site = sub or ""
@@ -318,7 +318,7 @@ def _cmd_cred(task: str, sub: str) -> None:
 
 
 def _cmd_gate(task: str, sub: str) -> None:
-    from scripts.gate import GateBlocked, check, list_registry
+    from scripts.common.gate import GateBlocked, check, list_registry
 
     sub_cmd = task or "list"
     if sub_cmd == "list":
@@ -341,7 +341,7 @@ def _cmd_gate(task: str, sub: str) -> None:
 
 
 def _cmd_op_log(task: str, sub: str) -> None:
-    from scripts.op_log import query_recent, query_stats
+    from scripts.common.op_log import query_recent, query_stats
 
     sub_cmd = task or "list"
     if sub_cmd == "list":
@@ -372,5 +372,5 @@ def _cmd_op_log(task: str, sub: str) -> None:
 
 # CLI 디스패치(_HANDLERS·_dispatch·main)와 직접 실행 진입점, navigator·popup·explorer·
 # gabia 를 쓰는 핸들러는 scripts/browser/cdp_cli.py 로 분리했다(cdp_client 는 라이브러리라
-# scripts.router 와 상위 도메인 도구를 몰라야 한다 — 2026-10-07 STD-08 후속, S1-c).
+# scripts.site_engine.command_router 와 상위 도메인 도구를 몰라야 한다 — 2026-10-07 STD-08 후속, S1-c).
 # 직접 실행하려면 `python scripts/browser/cdp_cli.py ...` 를 쓴다.

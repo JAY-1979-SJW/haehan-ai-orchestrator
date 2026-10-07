@@ -1,6 +1,6 @@
 """CDP 데몬 클라이언트 CLI 진입부 — cdp_client.py(라이브러리)에서 분리.
 
-cdp_client.py 는 CDP 제어 라이브러리라 scripts/router.py(최상위 서비스 디스패처,
+cdp_client.py 는 CDP 제어 라이브러리라 scripts/site_engine/command_router.py(최상위 서비스 디스패처,
 L5 성격)·scripts/browser/navigator·popup·explorer·gabia(상위 도메인 도구)를
 몰라야 한다(기반이 상위를 import하면 역방향 — module_cycles 유발). 이 모듈이
 그 반대: 그것들을 알고, cdp_client 의 명령 핸들러들과 함께 모아 디스패치한다.
@@ -46,13 +46,13 @@ _SITE_ROUTER_CMDS = (
 
 def _cmd_site_router(cmd: str, task: str, sub: str, args: list[str]) -> None:
     # 'explore' 는 신규 통합 사이트 탐색에 양보 (아래 case로 처리)
-    from scripts.router import dispatch
+    from scripts.site_engine.command_router import dispatch
 
     dispatch(cmd, task, sub, args)
 
 
 def _cmd_services() -> None:
-    from scripts.router import list_services
+    from scripts.site_engine.command_router import list_services
 
     rows = list_services()
     print(f"{'명령':<14} {'라우터 모듈'}")
@@ -348,9 +348,9 @@ def _cmd_crawl(task: str, sub: str, args: list[str]) -> None:
     import os  # noqa: F401 - 원본 그대로 보존(2026-09-29 STD-08 리팩터, 로직 변경 없음)
 
     from scripts.explorer.site_crawler import crawl_site
-    from scripts.site_access import LoginError, open_site
-    from scripts.site_registry import list_sites
-    from scripts.site_watch import StepFailure
+    from scripts.site_engine.site_access import LoginError, open_site
+    from scripts.site_engine.site_registry import list_sites
+    from scripts.site_engine.site_watch import StepFailure
 
     if not task:
         print("사용법: python scripts/browser/cdp_cli.py crawl <사이트> [depth=3] [max=50]")

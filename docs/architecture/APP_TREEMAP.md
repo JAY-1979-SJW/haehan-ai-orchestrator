@@ -128,7 +128,7 @@ L1  Shared Contracts   ai_orchestrator/models.py
 L2  Policy/Gate        ai_orchestrator/auth.py
                        ai_orchestrator/approval.py
                        ai_orchestrator/browser_gate_middleware.py
-                       scripts/gate.py                  (53파일)
+                       scripts/common/gate.py                  (53파일)
 
 L3  Connectors         ai_orchestrator/connectors/*
                        admin-web/electron/lib/agent.js
@@ -158,7 +158,7 @@ L6  Workflows          scripts/*/workflows.py
 L7  Persistence/Audit  ai_orchestrator/audit_logger.py
                        ai_orchestrator/persistence/user_db.py
                        scripts/cdp_db.py
-                       scripts/op_log.py                 (940파일)
+                       scripts/common/op_log.py                 (940파일)
 
 L8  Server API         ai_orchestrator/asgi.py
                        ai_orchestrator/router.py
@@ -203,7 +203,7 @@ git push
 작업 후 수동 의무 (CLAUDE.md 규칙):
   ├─ python scripts/ops/codebase_layer_audit.py
   ├─ pytest tests/test_codebase_layer_audit.py -q
-  └─ python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+  └─ python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 
   STOP 조건:
     FORBIDDEN_IMPORT > 0  → STOP

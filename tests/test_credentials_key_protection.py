@@ -10,7 +10,7 @@ import json
 import pytest
 from cryptography.fernet import Fernet
 
-from scripts import credentials as c
+from scripts.auth import credentials as c
 
 
 class FakeKeyring:

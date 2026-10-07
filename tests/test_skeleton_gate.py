@@ -155,7 +155,7 @@ def test_bypass_env_var_passes_and_logs(repo: Path, monkeypatch):
         logged["op_name"] = op_name
         logged.update(kw)
 
-    monkeypatch.setattr("scripts.op_log.log_op", fake_log_op, raising=False)
+    monkeypatch.setattr("scripts.common.op_log.log_op", fake_log_op, raising=False)
     monkeypatch.setenv("SKELETON_GATE_SKIP_REASON", "테스트 우회")
 
     exit_code = skeleton_gate.run(root=repo)

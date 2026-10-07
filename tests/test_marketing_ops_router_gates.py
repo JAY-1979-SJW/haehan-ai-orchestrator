@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.marketing import marketing_ops_router as M
 from ai_orchestrator.marketing import marketing_ops_settings as S
-from scripts.gate import CONFIRM_TEXTS
+from scripts.common.gate import CONFIRM_TEXTS
 
 BLOG_PUBLISH_CONFIRM_TEXT = CONFIRM_TEXTS["blog_publish"]
 

@@ -21,7 +21,7 @@ from dataclasses import dataclass
 # ── 기본 출력 경로 ───────────────────────────────────────────────────────────
 from pathlib import Path as _Path
 
-from scripts.app_paths import onedrive_root, resolve_external
+from scripts.common.app_paths import onedrive_root, resolve_external
 
 OUTPUT_DIR: _Path = resolve_external(
     "HAEHAN_EUM_QUOTE_DIR", "01. PROJECT_FILE", "01. HAEHAN_ENGNEERING", "10. 견적서", "단말기 견적서", base=onedrive_root()

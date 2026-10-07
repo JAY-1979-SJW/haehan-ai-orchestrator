@@ -1,11 +1,11 @@
-"""scripts.app_paths_migrate — 윈도우 표준 저장소 복사 이전 엔진 (결함 #17). 실제 데이터는 건드리지 않고 임시 폴더만 쓴다."""
+"""scripts.common.app_paths_migrate — 윈도우 표준 저장소 복사 이전 엔진 (결함 #17). 실제 데이터는 건드리지 않고 임시 폴더만 쓴다."""
 
 from __future__ import annotations
 
 import json
 import sqlite3
 
-from scripts import app_paths_migrate as m
+from scripts.common import app_paths_migrate as m
 
 
 def _make_source(tmp_path):

@@ -7,7 +7,7 @@ import time
 
 from scripts.browser.navigator.navigator_common import _find_element_in_frames
 from scripts.browser.cdp.connection import get_page
-from scripts.op_log import log_op
+from scripts.common.op_log import log_op
 
 _TYPE_FINDER_JS = """(needle) => {
         const isShown = el => {

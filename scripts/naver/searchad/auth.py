@@ -3,7 +3,7 @@
 공식 스펙: X-Timestamp(ms) + "." + HTTP method + "." + URI 를
 secret key로 HMAC-SHA256 서명 후 base64 인코딩 → X-Signature.
 
-자격증명은 scripts.credentials(암호화 저장, "naver_searchad" 사이트)에서 읽는다.
+자격증명은 scripts.auth.credentials(암호화 저장, "naver_searchad" 사이트)에서 읽는다.
 원문 값은 어떤 경우에도 로그/출력하지 않는다.
 """
 
@@ -36,7 +36,7 @@ def build_headers(*, method: str, uri: str, access_license: str, secret_key: str
 
 def load_credentials() -> dict[str, str]:
     """저장된 naver_searchad 자격증명을 로드. 없으면 빈 값."""
-    from scripts.credentials import get_cred
+    from scripts.auth.credentials import get_cred
 
     cred = get_cred("naver_searchad")
     return {

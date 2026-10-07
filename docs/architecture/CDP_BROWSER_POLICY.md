@@ -1,4 +1,4 @@
-# CDP 데몬 브라우저 정책 (단일 출처: `scripts/config.py` 의 `CDP_BROWSER_POLICY`)
+# CDP 데몬 브라우저 정책 (단일 출처: `scripts/common/config.py` 의 `CDP_BROWSER_POLICY`)
 
 L12 문서 · 2026-10-05 · 근거 실험과 상세: `docs/specs/2026-10-05_cdp_clean_start_login_retention.md`
 

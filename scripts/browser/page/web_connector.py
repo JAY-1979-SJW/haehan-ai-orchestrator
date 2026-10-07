@@ -24,7 +24,8 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.browser.cdp.connection import ROOT, _connect_browser, close_page, fit_viewport, get_page, open_page
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.browser.cdp.connection import _connect_browser, close_page, fit_viewport, get_page, open_page
 from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 from scripts.browser.session.browser_task_session import (
     BrowserTaskPolicy,
@@ -32,7 +33,7 @@ from scripts.browser.session.browser_task_session import (
     get_or_create_task_page,
     mark_task_owned,
 )
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -183,7 +184,7 @@ def browser_task_session(
         )
 
 
-SESSION_BASE_DIR = ROOT / "data" / "browser_sessions"
+SESSION_BASE_DIR = data_dir() / "browser_sessions"
 
 
 def session_dir(name: str) -> Path:

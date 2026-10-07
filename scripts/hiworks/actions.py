@@ -466,7 +466,7 @@ def save_submit_record(record: dict[str, Any], output: str | Path | None = None)
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     LATEST_SUBMIT_RECORD_PATH.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             "HIWORKS_SUBMIT_SECTION_EXECUTED" if record.get("submit_executed") else "HIWORKS_SUBMIT_SECTION_DRY_RUN",

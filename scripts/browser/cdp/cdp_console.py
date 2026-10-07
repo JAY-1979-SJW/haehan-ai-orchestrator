@@ -63,7 +63,7 @@ import websocket
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from scripts.config import CDP_HOST, CDP_PORT  # noqa: E402
+from scripts.common.config import CDP_HOST, CDP_PORT  # noqa: E402
 
 # ── 탭 조회 ───────────────────────────────────────────────────────────────────
 

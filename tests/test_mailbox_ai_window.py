@@ -21,7 +21,7 @@ from ai_orchestrator.persistence import naver_mail_draft_store as store
 from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
 from ai_orchestrator.workflows import naver_mail_drafts as drafts
 from ai_orchestrator.workflows.naver_mailbox_flow import ServiceError
-from scripts.naver.mail_imap import sender
+from scripts.naver.mail.imap import sender
 
 ME = "skyjwsin"
 

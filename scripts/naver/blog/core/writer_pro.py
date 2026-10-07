@@ -42,13 +42,14 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 from scripts.naver.blog.core.writer import BlogWriter
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[3]
-DRAFT_DIR = ROOT / "data" / "blog_drafts"
+DRAFT_DIR = data_dir() / "blog_drafts"  # ROOT(parents[3])는 저장소 루트가 아니라 scripts/naver 였다 — naver_blog_router 의 DRAFTS_DIR 과 같은 위치로
 
 # ── 템플릿 (intro / outro / CTA) ─────────────────────────────────────────
 INTRO_TEMPLATES = {
@@ -243,7 +244,7 @@ class BlogWriterPro:
         elif schedule_at:
             result = self.writer.schedule_publish(schedule_at)
         else:
-            from scripts.gate import require_approved
+            from scripts.common.gate import require_approved
 
             require_approved("blog_publish", approval, via="blog_pro_smart_publish")
             result = self.writer.publish()

@@ -1,6 +1,6 @@
 import pytest
 
-from scripts.gate import GateBlocked
+from scripts.common.gate import GateBlocked
 from scripts.naver.mail import settings_panel as sp
 
 

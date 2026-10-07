@@ -38,7 +38,7 @@ import time
 from collections.abc import Callable
 from typing import ClassVar
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 # ── 백그라운드 폴러 싱글톤 ────────────────────────────────────────────────────
 _poller: CdpPopupPoller | None = None

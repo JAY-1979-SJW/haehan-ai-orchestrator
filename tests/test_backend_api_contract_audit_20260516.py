@@ -31,9 +31,9 @@ def test_domain_enum_import_clean():
 
 
 def test_domain_enum_no_conflict_with_scripts_schemas():
-    """scripts/schemas.py RiskLevel(AUTO/NOTIFY)과 다른 네임스페이스."""
+    """scripts/common/schemas.py RiskLevel(AUTO/NOTIFY)과 다른 네임스페이스."""
     from ai_orchestrator.domain.enums import RiskLevel as OrchestratorRiskLevel
-    from scripts.schemas import RiskLevel as ScriptsRiskLevel
+    from scripts.common.schemas import RiskLevel as ScriptsRiskLevel
 
     # 서로 다른 클래스여야 한다 (충돌 없음)
     assert OrchestratorRiskLevel is not ScriptsRiskLevel
