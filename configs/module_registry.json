@@ -22816,6 +22816,22 @@
    "reason": "문서·보관 경로",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/ops/merge_step_check.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_merge_step_check.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
