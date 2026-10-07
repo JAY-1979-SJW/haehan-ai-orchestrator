@@ -5,8 +5,18 @@
 # "pkg.__init__" 로 import해 대조하는데, 패키지는 보통 "pkg"로 import되어 같은 파일이어도
 # 별개 모듈 객체가 되어 해당 공통 계약(단일파일 전제)과 안 맞는다(실측 확인, 2026-10-07).
 # 계약 테스트는 tests/test_naver_mail_read_shim.py 로 따로 둔다.
+#
+# 하위 모듈은 정적 import(as 재노출)로 받는다 — sys.modules 동적 치환만으로는 mypy가
+# `scripts.naver.mail_read.cdp` 같은 속성을 못 찾아 새 타입오류를 낸다(verify_change 실측,
+# scripts/archive/ops/smoke_naver_mail_*.py 5건).
 import importlib as _il
 import sys as _sys
+from scripts.naver.mail.read import body_reader as body_reader
+from scripts.naver.mail.read import cdp as cdp
+from scripts.naver.mail.read import classify as classify
+from scripts.naver.mail.read import entry as entry
+from scripts.naver.mail.read import list_collector as list_collector
+from scripts.naver.mail.read import pipeline as pipeline
 
 
 def _install(real, g, mods):
