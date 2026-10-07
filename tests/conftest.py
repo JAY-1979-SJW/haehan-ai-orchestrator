@@ -34,8 +34,14 @@ def _no_real_preflight():
 
 
 def _is_cdp_launch(args) -> bool:
-    text = " ".join(map(str, args)) if isinstance(args, (list, tuple)) else str(args)
-    return "cdp_daemon" in text or "remote-debugging-port" in text
+    """파이썬으로 cdp_daemon.py 를 실행하거나, 원격 디버깅 포트 옵션으로 브라우저를 띄우는 호출만 잡는다(git show <경로> 같은 파일명 언급은 통과)."""
+    parts = [str(a).replace("\\", "/") for a in (args if isinstance(args, (list, tuple)) else str(args).split())]
+    if not parts:
+        return False
+    runs_python = parts[0].rsplit("/", 1)[-1].lower().startswith(("python", "pythonw", "py."))
+    return (runs_python and any(p.rsplit("/", 1)[-1] == "cdp_daemon.py" for p in parts[1:])) or any(
+        p.startswith("--remote-debugging-port") for p in parts
+    )
 
 
 @pytest.fixture(autouse=True)

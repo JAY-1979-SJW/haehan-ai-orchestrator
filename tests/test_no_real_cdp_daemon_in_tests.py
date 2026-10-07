@@ -26,3 +26,13 @@ def test_test_can_override_with_its_own_fake(monkeypatch):
     monkeypatch.setattr(subprocess, "Popen", lambda args, *a, **k: calls.append(args))
     subprocess.Popen(["x", "cdp_daemon.py"])
     assert calls == [["x", "cdp_daemon.py"]]
+
+
+def test_mentioning_the_name_is_not_a_launch():
+    # git show / grep 처럼 파일 이름만 언급하는 호출은 막지 않는다(test_root_calc_gate 가 git show 를 쓴다)
+    proc = subprocess.Popen(["git", "--version"], stdout=subprocess.PIPE)
+    proc.communicate(timeout=30)
+    from tests.conftest import _is_cdp_launch
+
+    assert not _is_cdp_launch(["git", "show", "HEAD:tests/test_x_cdp_daemon.py"])
+    assert _is_cdp_launch([sys.executable, "scripts/browser/cdp/cdp_daemon.py", "start"])
