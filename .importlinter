@@ -247,7 +247,7 @@ forbidden_modules =
     ai_orchestrator.connectors.naver_mail.naver_mail_router
     ai_orchestrator.connectors.naver_mail.new_policy
     ai_orchestrator.connectors.naver_news_router
-    ai_orchestrator.connectors.naver_openapi_config
+    scripts.naver.shopping.naver_openapi_config
     ai_orchestrator.connectors.naver_openapi_setup_router
     ai_orchestrator.connectors.naver_public_page_reader
     ai_orchestrator.connectors.naver_search.naver_search_db
@@ -257,9 +257,9 @@ forbidden_modules =
     ai_orchestrator.connectors.naver_search.naver_search_run_log
     ai_orchestrator.connectors.naver_search.naver_search_runner
     ai_orchestrator.connectors.naver_search.naver_search_state
-    ai_orchestrator.connectors.naver_search_client
-    ai_orchestrator.connectors.naver_search_utils
-    ai_orchestrator.connectors.naver_shopping_collectors
+    scripts.naver.shopping.naver_search_client
+    scripts.naver.shopping.naver_search_utils
+    scripts.naver.shopping.naver_shopping_collectors
     ai_orchestrator.connectors.playwright_connector
     ai_orchestrator.connectors.public_media_router
     ai_orchestrator.connectors.session_status_router
@@ -1449,15 +1449,15 @@ forbidden_modules =
     ai_orchestrator.connectors.naver_mail.mailbox_router
     ai_orchestrator.connectors.naver_mail.naver_mail_router
     ai_orchestrator.connectors.naver_news_router
-    ai_orchestrator.connectors.naver_openapi_config
+    scripts.naver.shopping.naver_openapi_config
     ai_orchestrator.connectors.naver_openapi_setup_router
     ai_orchestrator.connectors.naver_public_page_reader
     ai_orchestrator.connectors.naver_search.naver_search_jobs
     ai_orchestrator.connectors.naver_search.naver_search_router
     ai_orchestrator.connectors.naver_search.naver_search_runner
-    ai_orchestrator.connectors.naver_search_client
-    ai_orchestrator.connectors.naver_search_utils
-    ai_orchestrator.connectors.naver_shopping_collectors
+    scripts.naver.shopping.naver_search_client
+    scripts.naver.shopping.naver_search_utils
+    scripts.naver.shopping.naver_shopping_collectors
     ai_orchestrator.connectors.playwright_connector
     ai_orchestrator.connectors.public_media_router
     ai_orchestrator.connectors.session_status_router
@@ -2425,7 +2425,7 @@ forbidden_modules =
     ai_orchestrator.connectors.naver_mail.naver_mail_router
     ai_orchestrator.connectors.naver_mail.new_policy
     ai_orchestrator.connectors.naver_news_router
-    ai_orchestrator.connectors.naver_openapi_config
+    scripts.naver.shopping.naver_openapi_config
     ai_orchestrator.connectors.naver_openapi_setup_router
     ai_orchestrator.connectors.naver_public_page_reader
     ai_orchestrator.connectors.naver_search.naver_search_db
@@ -2435,9 +2435,9 @@ forbidden_modules =
     ai_orchestrator.connectors.naver_search.naver_search_run_log
     ai_orchestrator.connectors.naver_search.naver_search_runner
     ai_orchestrator.connectors.naver_search.naver_search_state
-    ai_orchestrator.connectors.naver_search_client
-    ai_orchestrator.connectors.naver_search_utils
-    ai_orchestrator.connectors.naver_shopping_collectors
+    scripts.naver.shopping.naver_search_client
+    scripts.naver.shopping.naver_search_utils
+    scripts.naver.shopping.naver_shopping_collectors
     ai_orchestrator.connectors.playwright_connector
     ai_orchestrator.connectors.public_media_router
     ai_orchestrator.connectors.session_status_router
@@ -3700,15 +3700,15 @@ forbidden_modules =
     ai_orchestrator.connectors.naver_mail.mailbox_router
     ai_orchestrator.connectors.naver_mail.naver_mail_router
     ai_orchestrator.connectors.naver_news_router
-    ai_orchestrator.connectors.naver_openapi_config
+    scripts.naver.shopping.naver_openapi_config
     ai_orchestrator.connectors.naver_openapi_setup_router
     ai_orchestrator.connectors.naver_public_page_reader
     ai_orchestrator.connectors.naver_search.naver_search_jobs
     ai_orchestrator.connectors.naver_search.naver_search_router
     ai_orchestrator.connectors.naver_search.naver_search_runner
-    ai_orchestrator.connectors.naver_search_client
-    ai_orchestrator.connectors.naver_search_utils
-    ai_orchestrator.connectors.naver_shopping_collectors
+    scripts.naver.shopping.naver_search_client
+    scripts.naver.shopping.naver_search_utils
+    scripts.naver.shopping.naver_shopping_collectors
     ai_orchestrator.connectors.public_media_router
     ai_orchestrator.connectors.session_status_router
     ai_orchestrator.connectors.smartstore._helpers
@@ -4363,12 +4363,12 @@ source_modules =
     ai_orchestrator.connectors.instagram.instagram_webhook_parser
     ai_orchestrator.connectors.naver_blog.naver_blog_collectors
     ai_orchestrator.connectors.naver_kin_client
-    ai_orchestrator.connectors.naver_openapi_config
+    scripts.naver.shopping.naver_openapi_config
     ai_orchestrator.connectors.naver_public_page_reader
     ai_orchestrator.connectors.naver_search.naver_search_jobs
-    ai_orchestrator.connectors.naver_search_client
-    ai_orchestrator.connectors.naver_search_utils
-    ai_orchestrator.connectors.naver_shopping_collectors
+    scripts.naver.shopping.naver_search_client
+    scripts.naver.shopping.naver_search_utils
+    scripts.naver.shopping.naver_shopping_collectors
     ai_orchestrator.connectors.smartstore._helpers
     ai_orchestrator.connectors.smartstore.license
     ai_orchestrator.connectors.youtube._helpers
@@ -5484,15 +5484,15 @@ forbidden_modules =
     ai_orchestrator.connectors.naver_mail.naver_mail_router
     ai_orchestrator.connectors.naver_mail.new_policy
     ai_orchestrator.connectors.naver_news_router
-    ai_orchestrator.connectors.naver_openapi_config
+    scripts.naver.shopping.naver_openapi_config
     ai_orchestrator.connectors.naver_openapi_setup_router
     ai_orchestrator.connectors.naver_public_page_reader
     ai_orchestrator.connectors.naver_search.naver_search_jobs
     ai_orchestrator.connectors.naver_search.naver_search_router
     ai_orchestrator.connectors.naver_search.naver_search_runner
-    ai_orchestrator.connectors.naver_search_client
-    ai_orchestrator.connectors.naver_search_utils
-    ai_orchestrator.connectors.naver_shopping_collectors
+    scripts.naver.shopping.naver_search_client
+    scripts.naver.shopping.naver_search_utils
+    scripts.naver.shopping.naver_shopping_collectors
     ai_orchestrator.connectors.playwright_connector
     ai_orchestrator.connectors.public_media_router
     ai_orchestrator.connectors.session_status_router
@@ -6533,15 +6533,15 @@ forbidden_modules =
     ai_orchestrator.connectors.naver_mail.mailbox_router
     ai_orchestrator.connectors.naver_mail.naver_mail_router
     ai_orchestrator.connectors.naver_news_router
-    ai_orchestrator.connectors.naver_openapi_config
+    scripts.naver.shopping.naver_openapi_config
     ai_orchestrator.connectors.naver_openapi_setup_router
     ai_orchestrator.connectors.naver_public_page_reader
     ai_orchestrator.connectors.naver_search.naver_search_jobs
     ai_orchestrator.connectors.naver_search.naver_search_router
     ai_orchestrator.connectors.naver_search.naver_search_runner
-    ai_orchestrator.connectors.naver_search_client
-    ai_orchestrator.connectors.naver_search_utils
-    ai_orchestrator.connectors.naver_shopping_collectors
+    scripts.naver.shopping.naver_search_client
+    scripts.naver.shopping.naver_search_utils
+    scripts.naver.shopping.naver_shopping_collectors
     ai_orchestrator.connectors.public_media_router
     ai_orchestrator.connectors.session_status_router
     ai_orchestrator.connectors.smartstore._helpers

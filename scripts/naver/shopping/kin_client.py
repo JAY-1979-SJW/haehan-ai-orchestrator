@@ -23,7 +23,7 @@ import re
 
 import requests
 
-from ai_orchestrator.connectors import naver_openapi_config as cfg_mod
+from scripts.naver.shopping import naver_openapi_config as cfg_mod
 
 logger = logging.getLogger(__name__)
 

@@ -17,9 +17,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors import (
-    naver_openapi_config as cfg_mod,
-)
 from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 from ai_orchestrator.connectors.naver_search.naver_search_run_log import append_run, load_recent_runs
 from ai_orchestrator.connectors.naver_search.naver_search_runner import (
@@ -28,6 +25,7 @@ from ai_orchestrator.connectors.naver_search.naver_search_runner import (
     ENV_SHOP_QUERIES,
     run_scheduled_collection,
 )
+from scripts.naver.shopping import naver_openapi_config as cfg_mod
 
 # ── 공통 fixtures ────────────────────────────────────────────────
 
