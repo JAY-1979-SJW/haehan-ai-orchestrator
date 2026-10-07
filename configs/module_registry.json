@@ -20305,11 +20305,11 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_test_path_refs.py": {
-   "layer": "L11",
-   "role": "test",
+  "scripts/ops/import_contracts_gen.py": {
+   "layer": "L12",
+   "role": "ops_tool",
    "domain": "common",
-   "reason": "테스트 경로·이름",
+   "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
   },
@@ -23106,6 +23106,14 @@
    "source": "rule"
   },
   "tests/test_site_task_spec.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_test_path_refs.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

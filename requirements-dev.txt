@@ -10,3 +10,11 @@
 ruff==0.16.10
 pytest-timeout==2.4.0
 mypy==2.4.0
+# 표준 도구 채택 1단계(2026-10-08 대표님 승인) — 기존 게이트와 '나란히' 도는 추가 도구. 기존 게이트를 대체하지 않는다.
+#  - import-linter: .importlinter 계약(scripts/ops/import_contracts_gen.py 가 정본 설정에서 생성)을 CI 비차단 단계로 잰다.
+#  - pytest-xdist: 병렬 실행 측정용(CI 는 아직 직렬). 설치만으로는 동작이 바뀌지 않는다(-n 을 줄 때만 병렬).
+#  - pip-audit·bandit: 취약 의존성·보안 패턴 측정용(CI 단계 도입 계획: C:\work\_coordination\STD_TOOLS_REPORT.md). 아직 CI 에서 돌리지 않는다.
+import-linter==2.15
+pytest-xdist==3.8.0
+pip-audit==2.10.1
+bandit==1.9.4
