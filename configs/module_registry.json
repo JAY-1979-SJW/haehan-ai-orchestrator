@@ -121,6 +121,14 @@
    "confidence": "low",
    "source": "rule"
   },
+  "admin-web/electron/e2e-electron/agent_employee_eval.spec.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
   "admin-web/electron/e2e-electron/app.spec.ts": {
    "layer": "L9",
    "role": "ui",
@@ -482,6 +490,14 @@
    "source": "rule"
   },
   "admin-web/src/app/assistant/(legacy)/cafe/tabs/ArticlesTab.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "naver_cafe",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/assistant/(legacy)/cafe/tabs/MyCafesChangesPanel.tsx": {
    "layer": "L9",
    "role": "ui",
    "domain": "naver_cafe",
@@ -1521,7 +1537,23 @@
    "confidence": "high",
    "source": "rule"
   },
+  "admin-web/src/app/site-map/RegisteredSites.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
   "admin-web/src/app/site-map/SiteMapApp.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/site-map/SiteOverview.tsx": {
    "layer": "L9",
    "role": "ui",
    "domain": "common",
@@ -1882,6 +1914,14 @@
    "source": "rule"
   },
   "admin-web/src/components/chat/mailDraftCards.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/components/chat/siteMapCards.tsx": {
    "layer": "L9",
    "role": "ui",
    "domain": "common",
@@ -3905,6 +3945,22 @@
    "confidence": "low",
    "source": "rule"
   },
+  "ai_orchestrator/domain/cafe_activity.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "naver_cafe",
+   "reason": "가입 카페 활동 분석(순수 계산, 입출력 없음) — 서비스(L6)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/domain/cafe_membership_diff.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "naver_cafe",
+   "reason": "가입 카페 신규·탈퇴 비교와 보호 규칙(순수 함수, 입출력 없음) — 서비스(L6)·저장소가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
   "ai_orchestrator/domain/enums.py": {
    "layer": "L1",
    "role": "shared",
@@ -3969,6 +4025,46 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/domain/site_map_history.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "지도 구조 요약·지문·map_rev·diff·버전 고정 확인 규칙(순수 함수, 입출력 없음) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/domain/site_map_labels.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "지도 이름 정리·전역 메뉴 분리 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/domain/site_map_menu.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "메뉴 색인·주소 열기 검증 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/domain/site_map_sources.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "데이터 소스·사이트 선언 도구의 정리·마스킹·병합 규칙(순수 함수, 입출력 없음) — 탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/domain/site_preflight.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "사전 조사 규칙(robots 해석·sitemap 주소·진행/차단 판정, 순수 함수) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
   "ai_orchestrator/domain/site_registry.py": {
    "layer": "L1",
    "role": "contract",
@@ -3992,6 +4088,14 @@
    "reason": "벤더 공식 API 목록 검색·요약·상태 의미(순수 함수, 파일·네트워크 없음) — 서비스(L6)가 읽는 L1 계약. generic L4 오분류",
    "confidence": "high",
    "source": "confirmed"
+  },
+  "ai_orchestrator/domain/work_record.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "정의 위주(모델·스키마·dataclass)",
+   "confidence": "high",
+   "source": "rule"
   },
   "ai_orchestrator/execution_limits.py": {
    "layer": "L4",
@@ -5393,6 +5497,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/local_agent_registry_exports.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "local_agent",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
   "ai_orchestrator/local_agent_registry_sanitize.py": {
    "layer": "L4",
    "role": "generic",
@@ -5617,6 +5729,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/persistence/cafe_membership_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "naver_cafe",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
   "ai_orchestrator/persistence/dev_reg_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
@@ -5673,6 +5793,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/persistence/site_map_history_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
   "ai_orchestrator/persistence/site_registry_store.py": {
    "layer": "L7",
    "role": "persistence",
@@ -5706,6 +5834,14 @@
    "source": "rule"
   },
   "ai_orchestrator/persistence/user_db.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/work_record_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -6113,6 +6249,14 @@
    "confidence": "high",
    "source": "confirmed"
   },
+  "ai_orchestrator/services/cafe_membership_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_cafe",
+   "reason": "가입 카페 수집 결과를 이력과 비교·반영·분석하는 업무 흐름(규칙은 domain, 저장은 persistence, 브라우저·HTTP 모름) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
   "ai_orchestrator/services/dev_reg_runner.py": {
    "layer": "L6",
    "role": "workflow",
@@ -6190,6 +6334,14 @@
    "role": "workflow",
    "domain": "common",
    "reason": "사이트 등록·최초 탐색 시작·상태 지연 평가 업무 흐름(규칙은 domain, 저장은 persistence, 탐색은 기존 explore 서비스에 위임, HTTP·브라우저 모름) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/services/site_preflight_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "사전 조사 업무 흐름(공식 API·robots·정책을 모아 판정, 조회기는 주입) — generic L4 오분류",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -7281,14 +7433,6 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "approval_manager.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "apps/ig-comment-dm-bot/connectors/__init__.py": {
    "layer": "APP",
    "role": "standalone_app",
@@ -7705,22 +7849,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "candidate_store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "candidate_to_task.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "conftest.py": {
    "layer": "L11",
    "role": "test",
@@ -7766,14 +7894,6 @@
    "role": "persistence",
    "domain": "common",
    "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "executor.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
   },
@@ -8337,7 +8457,23 @@
    "confidence": "high",
    "source": "rule"
   },
-  "policy_engine.py": {
+  "orchestrator_v1/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/approval_manager.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -8345,12 +8481,68 @@
    "confidence": "high",
    "source": "rule"
   },
-  "risk_assessor.py": {
+  "orchestrator_v1/tasks/candidate_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/candidate_to_task.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/policy_engine.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
    "reason": "정책·게이트 이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/risk_assessor.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/task_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/tasks_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/whitelist_executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   },
   "scripts/__init__.py": {
@@ -8606,6 +8798,14 @@
    "role": "policy",
    "domain": "browser",
    "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser_lifecycle.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
   },
@@ -9281,6 +9481,14 @@
    "confidence": "low",
    "source": "rule"
   },
+  "scripts/explorer/data_sources.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
   "scripts/explorer/manual_snapshot.py": {
    "layer": "L4",
    "role": "generic",
@@ -9320,6 +9528,14 @@
    "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/explorer/preflight_fetch.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "robots.txt·sitemap.xml 단순 GET(호스트 고정·내부망 거부, 브라우저 없음) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/explorer/router.py": {
    "layer": "L4",
@@ -11337,6 +11553,14 @@
    "confidence": "high",
    "source": "confirmed"
   },
+  "scripts/module_quality_gate_exports.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/module_quality_gate_modules.py": {
    "layer": "L2",
    "role": "policy",
@@ -12649,6 +12873,14 @@
    "confidence": "low",
    "source": "rule"
   },
+  "scripts/naver/dispatch.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
   "scripts/naver/excel_reports.py": {
    "layer": "L5",
    "role": "site_module",
@@ -13215,6 +13447,14 @@
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/router_status.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "low",
    "source": "rule"
   },
   "scripts/naver/router_system.py": {
@@ -16449,22 +16689,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "task_store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "tasks_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "telegram_notifier.py": {
    "layer": "L3",
    "role": "connector",
@@ -16490,6 +16714,22 @@
    "source": "rule"
   },
   "tests/app_ui_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/cdp_port_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/conftest.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17034,6 +17274,22 @@
    "source": "rule"
   },
   "tests/test_approval_flow_baseline_contract.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_approval_record_concurrency.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_approval_state_transition.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17601,6 +17857,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_browser_lifecycle.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_browser_open_observe_fixture.py": {
    "layer": "L11",
    "role": "test",
@@ -17881,6 +18145,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_browser_watch_process.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_browser_websocket_bridge.py": {
    "layer": "L11",
    "role": "test",
@@ -17985,10 +18257,34 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_cafe_activity.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_cafe",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_cafe_membership.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_cafe",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_candidate_to_task.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_cdp_daemon_restart_policy.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
@@ -18017,6 +18313,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_cdp_port_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_cdp_session_selector.py": {
    "layer": "L11",
    "role": "test",
@@ -18034,6 +18338,14 @@
    "source": "rule"
   },
   "tests/test_chat_sessions.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_chrome_launch_flags.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18069,6 +18381,14 @@
    "layer": "L11",
    "role": "test",
    "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_collect_google_passwords_list_safe.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
@@ -18162,6 +18482,14 @@
    "source": "rule"
   },
   "tests/test_credentials_key_protection.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_dashboard_auth_none_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18297,6 +18625,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_error_recovery_log_critical.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_eum_access_explorer.py": {
    "layer": "L11",
    "role": "test",
@@ -18345,6 +18681,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_eum_router_submit_result.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_eum_router_work.py": {
    "layer": "L11",
    "role": "test",
@@ -18362,6 +18706,14 @@
    "source": "rule"
   },
   "tests/test_eum_sales_mail.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_eum_send_mail_batch_dedupe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18945,6 +19297,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_hanafax_bulk_send_result_init.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_hanafax_bulk_send_smoke.py": {
    "layer": "L11",
    "role": "test",
@@ -19082,6 +19442,22 @@
    "source": "rule"
   },
   "tests/test_instagram_dm_contract.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_instagram_dm_none_guards.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_instagram_oauth_failclosed.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -19769,6 +20145,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_manual_tests_never_touch_browser_on_collect.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_mcp_gateway_baseline.py": {
    "layer": "L11",
    "role": "test",
@@ -19789,6 +20173,14 @@
    "layer": "L11",
    "role": "test",
    "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_memory_bounds_20261005.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
@@ -20250,6 +20642,14 @@
    "source": "rule"
   },
   "tests/test_page_analysis.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_permission_policy_none_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20761,6 +21161,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_site_engine_get_gate_policies.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_site_engine_profiles.py": {
    "layer": "L11",
    "role": "test",
@@ -20801,6 +21209,38 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_site_map_history.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_site_map_labels.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_site_map_menu.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_site_map_sources.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_site_onboarding.py": {
    "layer": "L11",
    "role": "test",
@@ -20810,6 +21250,14 @@
    "source": "rule"
   },
   "tests/test_site_onboarding_tool_20260508.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_site_preflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20986,6 +21434,14 @@
    "source": "rule"
   },
   "tests/test_telegram_notifier.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_temp_oauth_revoke_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -21201,6 +21657,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_user_db_init_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_user_delegated_permission_execution_model_20260508.py": {
    "layer": "L11",
    "role": "test",
@@ -21290,6 +21754,22 @@
    "source": "rule"
   },
   "tests/test_whitelist_executor.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_work_record_domain.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_work_record_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -21422,470 +21902,6 @@
    "role": "api",
    "domain": "common",
    "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "whitelist_executor.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "admin-web/src/app/site-map/RegisteredSites.tsx": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/local_agent_registry_exports.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "tests/test_error_recovery_log_critical.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/domain/site_map_labels.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "common",
-   "reason": "지도 이름 정리·전역 메뉴 분리 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "tests/test_site_map_labels.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_approval_record_concurrency.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_user_db_init_guard.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_memory_bounds_20261005.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/module_quality_gate_exports.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/dispatch.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/router_status.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "tests/cdp_port_guard.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_cdp_port_guard.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_site_engine_get_gate_policies.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_approval_state_transition.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/electron/e2e-electron/agent_employee_eval.spec.ts": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/assistant/(legacy)/cafe/tabs/MyCafesChangesPanel.tsx": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "naver_cafe",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/site-map/SiteOverview.tsx": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/components/chat/siteMapCards.tsx": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/domain/cafe_activity.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "naver_cafe",
-   "reason": "가입 카페 활동 분석(순수 계산, 입출력 없음) — 서비스(L6)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/domain/cafe_membership_diff.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "naver_cafe",
-   "reason": "가입 카페 신규·탈퇴 비교와 보호 규칙(순수 함수, 입출력 없음) — 서비스(L6)·저장소가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/domain/site_map_menu.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "common",
-   "reason": "메뉴 색인·주소 열기 검증 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/domain/site_map_sources.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "common",
-   "reason": "데이터 소스·사이트 선언 도구의 정리·마스킹·병합 규칙(순수 함수, 입출력 없음) — 탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/persistence/cafe_membership_store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "naver_cafe",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/services/cafe_membership_service.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver_cafe",
-   "reason": "가입 카페 수집 결과를 이력과 비교·반영·분석하는 업무 흐름(규칙은 domain, 저장은 persistence, 브라우저·HTTP 모름) — generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/browser_lifecycle.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/explorer/data_sources.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "tests/conftest.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_lifecycle.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_watch_process.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_cafe_activity.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "naver_cafe",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_cafe_membership.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "naver_cafe",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_cdp_daemon_restart_policy.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_chrome_launch_flags.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_manual_tests_never_touch_browser_on_collect.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_site_map_menu.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_site_map_sources.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_collect_google_passwords_list_safe.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "google",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_dashboard_auth_none_guards.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_eum_router_submit_result.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_eum_send_mail_batch_dedupe.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_hanafax_bulk_send_result_init.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "hanafax",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_instagram_dm_none_guards.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "instagram",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_permission_policy_none_guards.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_temp_oauth_revoke_guard.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/domain/site_preflight.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "common",
-   "reason": "사전 조사 규칙(robots 해석·sitemap 주소·진행/차단 판정, 순수 함수) — generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/services/site_preflight_service.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "common",
-   "reason": "사전 조사 업무 흐름(공식 API·robots·정책을 모아 판정, 조회기는 주입) — generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/explorer/preflight_fetch.py": {
-   "layer": "L3",
-   "role": "connector",
-   "domain": "common",
-   "reason": "robots.txt·sitemap.xml 단순 GET(호스트 고정·내부망 거부, 브라우저 없음) — generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "tests/test_site_preflight.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_instagram_oauth_failclosed.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "instagram",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/domain/work_record.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "common",
-   "reason": "정의 위주(모델·스키마·dataclass)",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/persistence/work_record_store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_work_record_domain.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_work_record_store.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/domain/site_map_history.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "common",
-   "reason": "지도 구조 요약·지문·map_rev·diff·버전 고정 확인 규칙(순수 함수, 입출력 없음) — generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/persistence/site_map_history_store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "tests/test_site_map_history.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   }
