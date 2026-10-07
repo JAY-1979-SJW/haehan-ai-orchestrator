@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from ai_orchestrator.models import ExecutionPlan, RiskAssessment, TaskRequest
+from ai_orchestrator.core.models import ExecutionPlan, RiskAssessment, TaskRequest
 
 DEFAULT_POLICY_PATH = Path(__file__).resolve().parents[1] / "policies" / "default_policy.yaml"
 

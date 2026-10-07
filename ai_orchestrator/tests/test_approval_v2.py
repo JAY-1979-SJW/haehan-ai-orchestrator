@@ -11,7 +11,7 @@ from ai_orchestrator.gates.approval import (
     issue_token,
     validate_token,
 )
-from ai_orchestrator.models import RiskAssessment, TaskRequest
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 
 
 def _req(task_id: str, action="edit_config") -> TaskRequest:

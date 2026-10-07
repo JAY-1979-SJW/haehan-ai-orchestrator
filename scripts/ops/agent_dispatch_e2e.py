@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 import sys
 import tempfile
 import threading
@@ -22,9 +23,9 @@ from types import SimpleNamespace
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc  # noqa: E402
+from ai_orchestrator.agent_dispatch import agent_dispatch_store as store  # noqa: E402
 from ai_orchestrator.local_agent_redaction import _strip_result_data  # noqa: E402
-from ai_orchestrator.persistence import agent_dispatch_store as store  # noqa: E402
-from ai_orchestrator.services import agent_dispatch_service as svc  # noqa: E402
 from local_agent.actions import action_run_claude_agent  # noqa: E402
 from local_agent.websocket_client import _build_result_message  # noqa: E402
 
@@ -103,23 +104,31 @@ class ThreadReg:
                 RUNNING_NOW -= 1
 
 
+def _view(did: str) -> dict[str, Any]:
+    """분배안 조회 — 없으면(None) 이 스크립트는 더 진행할 수 없으므로 중단한다."""
+    d = svc.view(did)
+    assert d is not None, f"분배안을 찾을 수 없음: {did}"
+    return d
+
+
 def main() -> int:
     goal = sys.argv[1]
     capacity = int(sys.argv[2]) if len(sys.argv) > 2 else 2
     tmp = Path(tempfile.mkdtemp(prefix="dispatch_e2e_"))
     store._DB_PATH = tmp / "dispatch.db"
     reg = ThreadReg(capacity)
-    svc._reg = reg
+    svc_any: Any = svc  # 모듈 속성 교체(시험용)라 정적 형은 Any 로 본다
+    svc_any._reg = reg
     log(f"임시 DB: {store._DB_PATH}  목표: {goal}")
 
     did = svc.create_dispatch(goal, "e2e")["id"]
     deadline = time.monotonic() + 300
     while time.monotonic() < deadline:
-        d = svc.view(did)
+        d = _view(did)
         if d["status"] != store.PLANNING:
             break
         time.sleep(2)
-    d = svc.view(did)
+    d = _view(did)
     log(f"계획 결과 status={d['status']} note={d['note']!r}")
     if d["status"] != store.PROPOSED:
         t = reg.tasks["e2e1"]
@@ -146,7 +155,7 @@ def main() -> int:
         if status != store.RUNNING:
             break
         time.sleep(3)
-    d = svc.view(did)
+    d = _view(did)
     log(f"최종 status={d['status']} note={d['note']!r} 동시 실행 최대={PEAK}")
     for s in d["subtasks"]:
         log(f"  {s['tid']} [{s['role']}] {s['state']} err={s['error']!r} 결과 {len(s['result_text'])}자")

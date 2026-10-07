@@ -16,7 +16,7 @@ import logging
 from typing import Any
 from urllib.parse import urlsplit
 
-from ai_orchestrator.domain import site_map_sources as sd
+from ai_orchestrator.site_work import site_map_sources as sd
 
 _log = logging.getLogger(__name__)
 

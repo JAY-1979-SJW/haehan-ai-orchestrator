@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .. import config
+from ..core import config
 from . import secrets_policy
 
 logger = logging.getLogger(__name__)

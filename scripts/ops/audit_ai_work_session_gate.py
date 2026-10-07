@@ -7,7 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
-SESSION = ROOT / "scripts" / "ops" / "ai_work_session.py"
+SESSION = ROOT / "scripts" / "common" / "ai_work_session.py"
 STANDARD = ROOT / "docs" / "baseline" / "STANDARD_WORKFLOW.md"
 
 

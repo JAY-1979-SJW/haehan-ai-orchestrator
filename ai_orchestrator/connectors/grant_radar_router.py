@@ -152,7 +152,7 @@ def make_draft(body: DraftRequest):
 
     company = _load_company()
     try:
-        from ..openai_client import generate_application_draft
+        from ..llm.openai_client import generate_application_draft
 
         draft = generate_application_draft(grant, company)
     except Exception as e:

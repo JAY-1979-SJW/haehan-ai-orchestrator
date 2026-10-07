@@ -46,7 +46,7 @@ APPROVE_EXECUTE_CONNECTION_ANALYSIS = {
         "whitelist 검증 + policy 검증이 작동하지만, "
         "해당 연결 자체가 신규 attack surface가 됨."
     ),
-    "router_import_check": "from ..executor import execute  (execute만 import, execute_task 없음)",
+    "router_import_check": "from ..tasks.executor import execute  (execute만 import, execute_task 없음)",
 }
 
 # ── 2. medium 경로 전체 흐름 (현재 상태) ─────────────────────────────────────
@@ -109,7 +109,7 @@ PHASE_1R_GUARD_STATUS = {
 # ── 4. execute_task whitelist 검토 ───────────────────────────────────────────
 EXECUTE_TASK_WHITELIST_ANALYSIS = {
     "current_whitelist": ["get_server_status", "fetch_web_page"],
-    "whitelist_location": "ai_orchestrator/executor.py:ALLOWED_ACTIONS",
+    "whitelist_location": "ai_orchestrator/tasks/executor.py:ALLOWED_ACTIONS",
     "medium_path_applicable": (
         "approve → execute_task 연결이 추가될 때 동일 whitelist 적용됨. "
         "medium 요청의 action_type이 whitelist에 없으면 BLOCKED:not_allowed_action."
@@ -326,7 +326,7 @@ def _check_router_state() -> dict:
     content = (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "execute_task_imported": "execute_task" in content and "import" in content,
-        "execute_imported": "from ..executor import execute" in content,
+        "execute_imported": "from ..tasks.executor import execute" in content,
         "task_approve_guard_active": (
             '_legacy_5050_should_use_route_wiring("TASK_APPROVE")' in content
             or "_legacy_5050_should_use_route_wiring('TASK_APPROVE')" in content
@@ -341,7 +341,7 @@ def _check_router_state() -> dict:
 
 
 def _check_executor_state() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/executor.py").read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "ai_orchestrator/tasks/executor.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "execute_task_defined": "def execute_task(" in content,
         "allowed_actions_defined": "ALLOWED_ACTIONS" in content,

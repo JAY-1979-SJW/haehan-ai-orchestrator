@@ -5,13 +5,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_orchestrator.gates.approval import issue_token
-from ai_orchestrator.models import RiskAssessment, TaskRequest
-from ai_orchestrator.telegram_notifier import (
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
+from ai_orchestrator.notify.telegram_notifier import (
     build_approval_message,
     build_callback_data,
     parse_callback_data,
 )
-from ai_orchestrator.telegram_webhook import handle_telegram_update
+from ai_orchestrator.notify.telegram_webhook import handle_telegram_update
 
 
 def _req(task_id: str) -> TaskRequest:

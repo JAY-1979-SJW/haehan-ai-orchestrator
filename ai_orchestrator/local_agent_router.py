@@ -34,8 +34,8 @@ from . import local_agent_audit_event_policy as _policy
 from . import local_agent_diagnostics
 from . import local_agent_registry as _reg
 from . import local_agent_router_guards as _guards
-from . import registration_codes as _regcodes
 from .audit_logger import log_event
+from .auth import registration_codes as _regcodes
 from .gates.approval import approve_token, issue_token_for_dev_reg, reject_token
 from .gates.auth import require_role
 

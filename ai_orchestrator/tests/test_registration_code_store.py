@@ -25,7 +25,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from ai_orchestrator.persistence.registration_code_store import (
+from ai_orchestrator.auth.registration_code_store import (
     MAX_TTL_MINUTES,
     CodeExchangeError,
     InMemoryRegistrationCodeStore,
@@ -235,7 +235,7 @@ class TestDbStore:
     @pytest.fixture
     def store(self):
         """테스트용 db-backed store (fake DB)."""
-        from ai_orchestrator.persistence.registration_code_store import DbRegistrationCodeStore
+        from ai_orchestrator.auth.registration_code_store import DbRegistrationCodeStore
 
         return DbRegistrationCodeStore("fake://not-used")
 
@@ -321,14 +321,14 @@ class TestBackendSelection:
 
     def test_default_backend_is_memory(self, monkeypatch):
         """기본값은 memory."""
-        from ai_orchestrator.persistence.registration_code_store import (
+        from ai_orchestrator.auth.registration_code_store import (
             InMemoryRegistrationCodeStore,
             get_registration_code_store,
         )
 
         monkeypatch.delenv("LOCAL_AGENT_REGISTRATION_CODE_STORE", raising=False)
         # global store reset
-        import ai_orchestrator.persistence.registration_code_store as store_module
+        import ai_orchestrator.auth.registration_code_store as store_module
 
         store_module._store = None
 
@@ -337,13 +337,13 @@ class TestBackendSelection:
 
     def test_memory_backend_explicit(self, monkeypatch):
         """env=memory → InMemoryRegistrationCodeStore."""
-        from ai_orchestrator.persistence.registration_code_store import (
+        from ai_orchestrator.auth.registration_code_store import (
             InMemoryRegistrationCodeStore,
             get_registration_code_store,
         )
 
         monkeypatch.setenv("LOCAL_AGENT_REGISTRATION_CODE_STORE", "memory")
-        import ai_orchestrator.persistence.registration_code_store as store_module
+        import ai_orchestrator.auth.registration_code_store as store_module
 
         store_module._store = None
 
@@ -352,11 +352,11 @@ class TestBackendSelection:
 
     def test_db_backend_requires_database_url(self, monkeypatch):
         """env=db이고 DATABASE_URL 없으면 에러."""
-        from ai_orchestrator.persistence.registration_code_store import get_registration_code_store
+        from ai_orchestrator.auth.registration_code_store import get_registration_code_store
 
         monkeypatch.setenv("LOCAL_AGENT_REGISTRATION_CODE_STORE", "db")
         monkeypatch.delenv("DATABASE_URL", raising=False)
-        import ai_orchestrator.persistence.registration_code_store as store_module
+        import ai_orchestrator.auth.registration_code_store as store_module
 
         store_module._store = None
 
@@ -370,7 +370,7 @@ class TestRegistrationCodesWrapper:
     @pytest.fixture
     def reset_store(self):
         """테스트 후 store 정리."""
-        from ai_orchestrator import registration_codes
+        from ai_orchestrator.auth import registration_codes
 
         yield
         # 테스트 후 store 정리 - clear() 미구현/실패해도 다음 테스트에 영향 없음(각 테스트가 자체 격리)
@@ -379,7 +379,7 @@ class TestRegistrationCodesWrapper:
 
     def test_wrapper_issue_code(self, reset_store):
         """래퍼 issue_code 호환성."""
-        from ai_orchestrator import registration_codes
+        from ai_orchestrator.auth import registration_codes
 
         result = registration_codes.issue_code(
             label="test",
@@ -390,7 +390,7 @@ class TestRegistrationCodesWrapper:
 
     def test_wrapper_consume_code(self, reset_store):
         """래퍼 consume_code 호환성."""
-        from ai_orchestrator import registration_codes
+        from ai_orchestrator.auth import registration_codes
 
         result = registration_codes.issue_code(
             label="test",
@@ -401,7 +401,7 @@ class TestRegistrationCodesWrapper:
 
     def test_wrapper_list_codes(self, reset_store):
         """래퍼 list_codes 호환성."""
-        from ai_orchestrator import registration_codes
+        from ai_orchestrator.auth import registration_codes
 
         registration_codes.issue_code(label="test1", issued_by="admin")
         registration_codes.issue_code(label="test2", issued_by="admin")
@@ -410,7 +410,7 @@ class TestRegistrationCodesWrapper:
 
     def test_wrapper_clear(self, reset_store):
         """래퍼 clear 호환성."""
-        from ai_orchestrator import registration_codes
+        from ai_orchestrator.auth import registration_codes
 
         registration_codes.issue_code(label="test", issued_by="admin")
         assert len(registration_codes.list_codes()) > 0

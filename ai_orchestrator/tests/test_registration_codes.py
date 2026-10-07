@@ -29,10 +29,10 @@ def _isolated_storage(tmp_path, monkeypatch):
     # 파일 전체 실행 시 등록이 401 이 되고 KeyError: 'agent_id' 가 난다(단독 실행만 통과, 2026-10-04 확인).
 
     import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.auth.registration_codes as _rc
     import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
     import ai_orchestrator.local_agent_registry_common as _reg_common
-    import ai_orchestrator.registration_codes as _rc
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -232,7 +232,7 @@ def test_exchange_revoked_generic(admin_user):
 
 def test_exchange_expired_generic(admin_user):
     """만료 처리: 발급 직후 expires_at 을 과거로 강제 후 교환 시도."""
-    import ai_orchestrator.registration_codes as _rc
+    import ai_orchestrator.auth.registration_codes as _rc
 
     a_client = _make_client(admin_user)
     issued = a_client.post("/api/v1/local-agents/registration-codes", json={"label": "X"}).json()

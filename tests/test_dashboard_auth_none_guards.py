@@ -10,7 +10,7 @@ import base64
 import pytest
 
 import dashboard
-from ai_orchestrator.persistence import user_db
+from ai_orchestrator.auth import user_db
 
 _USER = "tuser"
 _PASS = "tpass-fixture"

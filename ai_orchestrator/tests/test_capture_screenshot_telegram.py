@@ -26,7 +26,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 
-from ai_orchestrator.telegram_notifier import (
+from ai_orchestrator.notify.telegram_notifier import (
     build_capture_screenshot_approval_message,
     parse_callback_data,
 )

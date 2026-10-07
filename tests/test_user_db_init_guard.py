@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from ai_orchestrator.persistence import user_db
+from ai_orchestrator.auth import user_db
 
 
 def _count_creates(monkeypatch) -> list[str]:

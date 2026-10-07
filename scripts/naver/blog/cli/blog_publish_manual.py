@@ -1,7 +1,7 @@
 """사람(Claude Code)이 작성한 원고를 네이버 블로그에 발행한다.
 
 GPT 자동 생성 경로(blog_ai_batch_20.py)를 대체한다. 2026-08-19 사업자 결정으로
-OpenAI 호출을 차단했고(ai_orchestrator/openai_guard.py), 글은 Claude Code가
+OpenAI 호출을 차단했고(ai_orchestrator/llm/openai_guard.py), 글은 Claude Code가
 직접 조사·작성한다. GPT는 학습 데이터만으로 쓰다 보니 "2022년 건설산업기본법",
 "최저임금 10,000원" 같은 없는 수치를 지어내는 문제가 실제로 있었다.
 

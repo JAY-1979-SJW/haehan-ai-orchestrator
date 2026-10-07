@@ -25,39 +25,39 @@ PKG = REPO / "ai_orchestrator"
 STORAGE = "storage"
 DATA = "data"
 CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
-    ("ai_orchestrator.persistence.user_db", "_DB_PATH", STORAGE, ("users.db",)),
-    ("ai_orchestrator.persistence.auth_audit", "_AUDIT_PATH", STORAGE, ("auth_audit.jsonl",)),
-    ("ai_orchestrator.persistence.agent_dispatch_store", "_DB_PATH", STORAGE, ("agent_dispatch.db",)),
+    ("ai_orchestrator.auth.user_db", "_DB_PATH", STORAGE, ("users.db",)),
+    ("ai_orchestrator.auth.auth_audit", "_AUDIT_PATH", STORAGE, ("auth_audit.jsonl",)),
+    ("ai_orchestrator.agent_dispatch.agent_dispatch_store", "_DB_PATH", STORAGE, ("agent_dispatch.db",)),
     ("ai_orchestrator.persistence.fax_authorization_store", "_DB_PATH", STORAGE, ("fax_authorizations.db",)),
-    ("ai_orchestrator.persistence.gongmu_store", "_DB_PATH", STORAGE, ("gongmu.db",)),
+    ("ai_orchestrator.gongmu.gongmu_store", "_DB_PATH", STORAGE, ("gongmu.db",)),
     ("ai_orchestrator.persistence.mail_bulk_store", "_DB_PATH", STORAGE, ("mail_bulk.db",)),
     ("ai_orchestrator.persistence.naver_mail_draft_store", "_DB_PATH", STORAGE, ("naver_mail_drafts.db",)),
-    ("ai_orchestrator.persistence.scheduled_job_store", "_DB_PATH", STORAGE, ("scheduled_jobs.db",)),
-    ("ai_orchestrator.persistence.work_record_store", "_DB_PATH", STORAGE, ("work_records.db",)),
+    ("ai_orchestrator.scheduler.scheduled_job_store", "_DB_PATH", STORAGE, ("scheduled_jobs.db",)),
+    ("ai_orchestrator.site_work.work_record_store", "_DB_PATH", STORAGE, ("work_records.db",)),
     ("ai_orchestrator.connectors.instagram_dm_db", "_DB_PATH", STORAGE, ("instagram_dm.db",)),
-    ("ai_orchestrator.services.dev_reg_runner", "_SCREENSHOT_DIR", STORAGE, ("screenshots", "dev_reg")),
+    ("ai_orchestrator.dev_reg.dev_reg_runner", "_SCREENSHOT_DIR", STORAGE, ("screenshots", "dev_reg")),
     ("ai_orchestrator.services.hanafax_attachments", "_UPLOAD_DIR", STORAGE, ("fax_attachments",)),
     ("ai_orchestrator.services.hanafax_authorization_service", "_CACHE_DIR", STORAGE, ("fax_address_cache",)),
-    ("ai_orchestrator.config", "LOG_DIR", STORAGE, ()),
-    ("ai_orchestrator.config", "AUDIT_LOG_PATH", STORAGE, ("audit_logs.jsonl",)),
-    ("ai_orchestrator.config", "_DEFAULT_DATA_DIR", DATA, ()),
-    ("ai_orchestrator.chat_sessions", "_STORE_PATH", DATA, ("chat_sessions.json",)),
+    ("ai_orchestrator.core.config", "LOG_DIR", STORAGE, ()),
+    ("ai_orchestrator.core.config", "AUDIT_LOG_PATH", STORAGE, ("audit_logs.jsonl",)),
+    ("ai_orchestrator.core.config", "_DEFAULT_DATA_DIR", DATA, ()),
+    ("ai_orchestrator.tasks.chat_sessions", "_STORE_PATH", DATA, ("chat_sessions.json",)),
     ("ai_orchestrator.connectors.eum.router", "_TARGETS_LATEST", DATA, ("eum_sales_mail_targets_latest.json",)),
     ("ai_orchestrator.connectors.grant_radar_router", "DATA_DIR", DATA, ("grant_radar",)),
     ("ai_orchestrator.connectors.kakao.setup_router", "STATE_PATH", DATA, ("kakao_setup_state.json",)),
-    ("ai_orchestrator.routers.marketing_ops_router", "_RESEARCH_FILE", DATA, ("blog_topic_research_latest.json",)),
-    ("ai_orchestrator.routers.marketing_ops_router", "_CACHE_FILE", DATA, ("blog_topic_cache.json",)),
-    ("ai_orchestrator.routers.marketing_ops_router", "_REPORTS_DIR", DATA, ("reports",)),
-    ("ai_orchestrator.routers.marketing_ops_router", "_PACKAGES_DIR", DATA, ("marketing_packages",)),
+    ("ai_orchestrator.marketing.marketing_ops_router", "_RESEARCH_FILE", DATA, ("blog_topic_research_latest.json",)),
+    ("ai_orchestrator.marketing.marketing_ops_router", "_CACHE_FILE", DATA, ("blog_topic_cache.json",)),
+    ("ai_orchestrator.marketing.marketing_ops_router", "_REPORTS_DIR", DATA, ("reports",)),
+    ("ai_orchestrator.marketing.marketing_ops_router", "_PACKAGES_DIR", DATA, ("marketing_packages",)),
     ("ai_orchestrator.connectors.naver_blog_router", "DRAFTS_DIR", DATA, ("blog_drafts",)),
     ("ai_orchestrator.connectors.naver_cafe_router", "_CAFE_DIR", DATA, ("cafe",)),
     ("ai_orchestrator.connectors.public_media_router", "MEDIA_DIR", DATA, ("public_media",)),
     ("ai_orchestrator.connectors.session_status_router", "DATA_PATH", DATA, ("login_session_monitor_latest.json",)),
     ("ai_orchestrator.connectors.smartstore._helpers", "_SS_DATA_DIR", DATA, ("smartstore",)),
     ("ai_orchestrator.persistence.cafe_membership_store", "_DIR", DATA, ("cafe",)),
-    ("ai_orchestrator.persistence.site_registry_store", "_FILE", DATA, ("site_registry", "sites.json")),
-    ("ai_orchestrator.persistence.site_task_map_store", "_DIR", DATA, ("site_task_map",)),
-    ("ai_orchestrator.persistence.site_task_map_request_store", "_DIR", DATA, ("site_task_map_requests",)),
+    ("ai_orchestrator.site_work.site_registry_store", "_FILE", DATA, ("site_registry", "sites.json")),
+    ("ai_orchestrator.site_work.site_task_map_store", "_DIR", DATA, ("site_task_map",)),
+    ("ai_orchestrator.site_work.site_task_map_request_store", "_DIR", DATA, ("site_task_map_requests",)),
     ("ai_orchestrator.routers.deploy_router", "STATUS_FILE", DATA, ("runtime", "server_deploy_latest.json")),
     ("ai_orchestrator.routers.server_router", "_DEPLOY_STATUS_FILE", DATA, ("runtime", "server_deploy_latest.json")),
     ("ai_orchestrator.workflows.naver_login_pipeline", "SESSION_STATUS_FILE", DATA, ("naver_session_state.json",)),
@@ -129,8 +129,8 @@ def test_constants_follow_data_root(tmp_path):
 
 def test_log_dir_env_still_wins_for_audit_logs(tmp_path):
     got = _resolve(_clean_env(HAEHAN_DATA_ROOT=str(tmp_path / "r"), LOG_DIR=str(tmp_path / "logs")))
-    assert got["ai_orchestrator.config:LOG_DIR"] == str(tmp_path / "logs")
-    assert got["ai_orchestrator.config:AUDIT_LOG_PATH"] == str(tmp_path / "logs" / "audit_logs.jsonl")
+    assert got["ai_orchestrator.core.config:LOG_DIR"] == str(tmp_path / "logs")
+    assert got["ai_orchestrator.core.config:AUDIT_LOG_PATH"] == str(tmp_path / "logs" / "audit_logs.jsonl")
 
 
 # ── 해석 순서 ─────────────────────────────────────────────────────────────

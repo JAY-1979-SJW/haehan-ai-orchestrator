@@ -19,9 +19,9 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.domain import site_map_menu as menu
-from ai_orchestrator.domain import site_task_map as tm
-from ai_orchestrator.persistence import site_task_map_store as store
+from ai_orchestrator.site_work import site_map_menu as menu
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_store as store
 
 RUN_BUDGET_S = 25.0  # 앱의 call_api 호출 상한(30초) 안에서 끝낸다
 STEP_TIMEOUT_MS = 8000

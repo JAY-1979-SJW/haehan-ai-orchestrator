@@ -6,10 +6,10 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from ai_orchestrator.agent_dispatch import agent_dispatch_router as router_mod
+from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc
+from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import agent_dispatch_store as store
-from ai_orchestrator.routers import agent_dispatch_router as router_mod
-from ai_orchestrator.services import agent_dispatch_service as svc
 from tests.test_agent_dispatch_service import FakeReg, T, plan_json
 
 
@@ -77,7 +77,7 @@ def test_validation_and_not_found(reg):
 
 
 def test_runner_ticks_running_dispatches_and_stops_when_idle(monkeypatch):
-    from ai_orchestrator.services import agent_dispatch_runner as runner
+    from ai_orchestrator.agent_dispatch import agent_dispatch_runner as runner
 
     monkeypatch.setattr(runner, "TICK_INTERVAL_SEC", 0.01)
     queue = [["d1"], ["d1", "d2"], [], []]  # 마지막 []는 두 번째 기동용

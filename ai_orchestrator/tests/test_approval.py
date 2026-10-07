@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_orchestrator.gates.approval import approve_token, issue_token, validate_token
-from ai_orchestrator.models import RiskAssessment, TaskRequest
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 
 
 def make_req(task_id="T-APR-001"):

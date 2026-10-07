@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from scripts.ops import ai_work_record, ai_work_session
+from scripts.common import ai_work_record, ai_work_session
 
 ROOT = Path(__file__).resolve().parents[2]
 LANE = "google"

@@ -46,23 +46,23 @@ def app_client(tmp_path_factory):
     os.environ["HTTP_USERS_PATH"] = str(users_path)
     os.environ["LOG_DIR"] = str(logdir)
 
-    from ai_orchestrator import config as _config
+    from ai_orchestrator.core import config as _config
 
     importlib.reload(_config)
     from ai_orchestrator.gates import auth as _auth
 
     importlib.reload(_auth)
-    from ai_orchestrator import execution_limits as _el
+    from ai_orchestrator.core import execution_limits as _el
 
     importlib.reload(_el)
-    from ai_orchestrator import executor as _ex
+    from ai_orchestrator.tasks import executor as _ex
 
     importlib.reload(_ex)
     from ai_orchestrator.gates import approval as _ap
 
     importlib.reload(_ap)
     _ap.clear_rate_store()
-    from ai_orchestrator import task_state as _ts
+    from ai_orchestrator.core import task_state as _ts
 
     importlib.reload(_ts)
     _ts.clear()
@@ -109,7 +109,7 @@ def _force_daytime(app_client, monkeypatch):
 
     야간 차단 자체를 검증하는 테스트는 자체 patch 를 적용해 덮어쓴다.
     """
-    from ai_orchestrator import execution_limits as _el
+    from ai_orchestrator.core import execution_limits as _el
 
     monkeypatch.setattr(
         _el,
@@ -141,7 +141,7 @@ def test_medium_submit_stays_pending_without_approval(app_client):
     assert data["status"] == "PENDING_APPROVAL"
     assert data["requires_approval"] is True
 
-    from ai_orchestrator import task_state as ts
+    from ai_orchestrator.core import task_state as ts
 
     assert ts.get_state(task_id) == "pending"
 
@@ -184,7 +184,7 @@ def test_admin_approve_triggers_execution(app_client):
     assert "not_allowed_action" in body["execution"]
     assert body["task_state"] == "approved"
 
-    from ai_orchestrator import task_state as ts
+    from ai_orchestrator.core import task_state as ts
 
     assert ts.get_state(task_id) == "approved"
 
@@ -208,7 +208,7 @@ def test_night_block_prevents_execution(app_client):
     if not token_id:
         pytest.skip()
 
-    from ai_orchestrator import execution_limits as el
+    from ai_orchestrator.core import execution_limits as el
 
     with patch.object(el, "_now", return_value=datetime(2026, 4, 22, 16, 30, tzinfo=UTC)):
         # UTC 16:30 = KST 01:30 (야간)
@@ -222,7 +222,7 @@ def test_night_block_prevents_execution(app_client):
     assert body["executed"] is False
     assert "night_blocked" in body["execution"]
     # state 는 approved 로 남아야 함
-    from ai_orchestrator import task_state as ts
+    from ai_orchestrator.core import task_state as ts
 
     assert ts.get_state(task_id) == "approved"
 
@@ -240,7 +240,7 @@ def test_telegram_webhook_endpoint(app_client):
 
 def test_user_rate_limit_5min(app_client):
     """동일 사용자 승인 실행이 5회 넘어가면 6번째는 BLOCKED:rate_limited_user_5min."""
-    from ai_orchestrator import execution_limits as el
+    from ai_orchestrator.core import execution_limits as el
 
     # 과거 5회 실행 기록을 직접 채움 (user 5min 카운트 트리거)
     for i in range(5):

@@ -11,7 +11,7 @@ import json
 
 import pytest
 
-from ai_orchestrator.persistence import dev_reg_audit_log as al
+from ai_orchestrator.dev_reg import dev_reg_audit_log as al
 
 
 @pytest.fixture(autouse=True)

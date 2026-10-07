@@ -34,13 +34,13 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.gates.auth as _auth
 
     importlib.reload(_auth)
-    import ai_orchestrator.routers.web_task_router as _wtr
+    import ai_orchestrator.web_task.web_task_router as _wtr
 
     importlib.reload(_wtr)
 
     import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.dev_reg.dev_reg_approval as _dra
     import ai_orchestrator.gates.approval as _ap
-    import ai_orchestrator.gates.dev_reg_approval as _dra
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_dra, "_STORE_PATH", tmp_path / "dev_reg_approvals.jsonl")
@@ -77,7 +77,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.routers.web_task_router import web_task_router
+    from ai_orchestrator.web_task.web_task_router import web_task_router
 
     test_app = FastAPI()
     test_app.include_router(web_task_router, prefix="/api/v1")
@@ -123,7 +123,7 @@ def test_templates_default_params_not_exposed_raw(admin_user):
 
 def test_no_secret_keys_in_template_default_params():
     """템플릿 모듈 자체에 민감 키가 default_params 로 등록돼 있으면 안 된다."""
-    from ai_orchestrator.web_task_templates import _FORBIDDEN_KEYS, _TEMPLATES
+    from ai_orchestrator.web_task.web_task_templates import _FORBIDDEN_KEYS, _TEMPLATES
 
     for t in _TEMPLATES.values():
         keys = {k.lower() for k in t.default_params}
@@ -155,7 +155,7 @@ def test_run_from_template_dry_run_success(admin_user):
 
 
 def test_run_from_template_dry_run_no_approval_created(admin_user):
-    import ai_orchestrator.gates.dev_reg_approval as _dra
+    import ai_orchestrator.dev_reg.dev_reg_approval as _dra
 
     client = _make_test_client(admin_user)
     resp = client.post(
@@ -254,7 +254,7 @@ def test_unknown_template_id_audit_logged(admin_user):
 
 
 def test_run_from_template_real_run_creates_pending_approval(admin_user):
-    import ai_orchestrator.gates.dev_reg_approval as _dra
+    import ai_orchestrator.dev_reg.dev_reg_approval as _dra
 
     with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
@@ -420,7 +420,7 @@ def test_owner_can_use_templates(owner_user):
 
 
 def test_templates_module_get_template_lookup():
-    from ai_orchestrator.web_task_templates import get_template
+    from ai_orchestrator.web_task.web_task_templates import get_template
 
     assert get_template("hiworks_default") is not None
     assert get_template("naver_default") is not None
@@ -430,7 +430,7 @@ def test_templates_module_get_template_lookup():
 
 
 def test_merge_params_override_wins():
-    from ai_orchestrator.web_task_templates import get_template, merge_params
+    from ai_orchestrator.web_task.web_task_templates import get_template, merge_params
 
     t = get_template("naver_default")
     merged = merge_params(t, {"company_name": "Z", "app_name": "A"})

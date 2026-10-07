@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_orchestrator import local_agent_registry as reg
-from ai_orchestrator import registration_codes as rc
+from ai_orchestrator.auth import registration_codes as rc
 from local_agent import connection_diagnostics as cd
 
 OUT_DIR = Path("data/inspection/local_desktop_agent_live_connection")

@@ -1,7 +1,7 @@
 """해한 AI 오케스트레이터 MCP 서버 (stdio transport).
 
 [LLM 경계] 이 MCP 서버는 '터미널 Claude Code'가 앱 도구를 호출하는 인터페이스다.
-도구 자체(상세설명 생성 등)는 앱 표준인 GPT(ai_orchestrator.app_llm)를 사용한다.
+도구 자체(상세설명 생성 등)는 앱 표준인 GPT(ai_orchestrator.llm.app_llm)를 사용한다.
 
 Claude Code에서 다음 도구를 직접 호출할 수 있게 합니다:
   - generate_description   : GPT로 상품 상세설명 HTML 생성

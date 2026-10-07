@@ -34,8 +34,8 @@ def _make_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
+    from ai_orchestrator.auth.auth_router import auth_router
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.routers.auth_router import auth_router
 
     app = FastAPI()
     app.include_router(auth_router, prefix="/api/v1")
@@ -113,7 +113,7 @@ def test_me_owner_role():
 
 def test_me_returns_401_when_auth_enabled_and_no_credentials(monkeypatch):
     """AUTH_ENABLED=True일 때 인증 없이 호출하면 401을 반환한다."""
-    import ai_orchestrator.config as _config
+    import ai_orchestrator.core.config as _config
 
     # reload 없이 monkeypatch만 사용 — get_current_user는 런타임에 config 값을 읽음
     monkeypatch.setattr(_config, "AUTH_ENABLED", True)
@@ -121,7 +121,7 @@ def test_me_returns_401_when_auth_enabled_and_no_credentials(monkeypatch):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.routers.auth_router import auth_router
+    from ai_orchestrator.auth.auth_router import auth_router
 
     app = FastAPI()
     # dependency_overrides 없이 실제 get_current_user 사용

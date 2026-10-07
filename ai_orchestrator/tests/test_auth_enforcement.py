@@ -40,7 +40,7 @@ def app_client(tmp_path_factory):
     os.environ["HTTP_USERS_PATH"] = str(users_path)
 
     # 설정 캐시 무효화 → 관련 모듈 리로드
-    from ai_orchestrator import config as _config
+    from ai_orchestrator.core import config as _config
 
     importlib.reload(_config)
     from ai_orchestrator.gates import auth as _auth

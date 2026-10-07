@@ -23,8 +23,8 @@ from fastapi.responses import JSONResponse
 
 from ai_orchestrator.clients import telegram_sender
 
-from ...inbox import create_inbox_item, exists_by_external_id
 from ...paths import repo_root
+from ...tasks.inbox import create_inbox_item, exists_by_external_id
 
 _ROOT = repo_root()
 if str(_ROOT) not in sys.path:

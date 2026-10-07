@@ -8,9 +8,9 @@ from types import SimpleNamespace
 import pytest
 
 from ai_orchestrator import mcp_server
-from ai_orchestrator.gates import agent_dispatch_policy as pol
-from ai_orchestrator.persistence import agent_dispatch_store as store
-from ai_orchestrator.services import agent_dispatch_service as svc
+from ai_orchestrator.agent_dispatch import agent_dispatch_policy as pol
+from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc
+from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
 
 
 class FakeReg:
