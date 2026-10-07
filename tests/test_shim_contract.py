@@ -24,6 +24,7 @@ from scripts.ops.make_shim import (
     has_main_block,
     make_package_shim,
     make_shim,
+    module_name,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,7 +68,7 @@ def test_shims_are_found():
 def test_import_alias(shim, monkeypatch):
     rel, target = shim
     monkeypatch.syspath_prepend(str(ROOT))
-    old_mod = importlib.import_module(Path(rel).with_suffix("").as_posix().replace("/", "."))
+    old_mod = importlib.import_module(module_name(rel))
     assert old_mod is _import_real(target)
 
 

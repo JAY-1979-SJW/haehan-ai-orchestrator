@@ -1,22 +1,9 @@
-# 호환 shim: 실제 패키지는 scripts.naver.mail.read 로 이동했다 (scripts/naver/mail/read/__init__.py).
-# 옛 경로의 import · 파일 경로 로드를 모두 받는다. 하위 모듈(scripts.naver.mail_read.cdp 등)도
-# 같은 모듈이 나오도록 별칭을 건다. make_shim.py는 패키지+다중 하위모듈을 지원하지 않아 수동 작성 —
-# haehan-shim 마커는 일부러 안 붙인다: tests/test_shim_contract.py가 __init__.py 경로를
-# "pkg.__init__" 로 import해 대조하는데, 패키지는 보통 "pkg"로 import되어 같은 파일이어도
-# 별개 모듈 객체가 되어 해당 공통 계약(단일파일 전제)과 안 맞는다(실측 확인, 2026-10-07).
-# 계약 테스트는 tests/test_naver_mail_read_shim.py 로 따로 둔다.
-#
-# 하위 모듈은 정적 import(as 재노출)로 받는다 — sys.modules 동적 치환만으로는 mypy가
-# `scripts.naver.mail_read.cdp` 같은 속성을 못 찾아 새 타입오류를 낸다(verify_change 실측,
-# scripts/archive/ops/smoke_naver_mail_*.py 5건).
+# haehan-shim: scripts.naver.mail.read
+# 호환 shim: 실제 모듈은 scripts.naver.mail.read 로 이동했다 (scripts/naver/mail/read/__init__.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
 import importlib as _il
 import sys as _sys
-from scripts.naver.mail.read import body_reader as body_reader
-from scripts.naver.mail.read import cdp as cdp
-from scripts.naver.mail.read import classify as classify
-from scripts.naver.mail.read import entry as entry
-from scripts.naver.mail.read import list_collector as list_collector
-from scripts.naver.mail.read import pipeline as pipeline
 
 
 def _install(real, g, mods):
@@ -27,5 +14,10 @@ def _install(real, g, mods):
 
 _install(_il.import_module("scripts.naver.mail.read"), globals(), _sys.modules)
 
-for _sub in ("cdp", "body_reader", "classify", "entry", "list_collector", "pipeline"):
-    _sys.modules[f"{__name__}.{_sub}"] = _il.import_module(f"scripts.naver.mail.read.{_sub}")
+# 형제 하위 모듈 선등록 — import old.sub.a 가 부모 __path__ 를 따라 새로 실행되는 것을 막는다
+_sys.modules[f"{__name__}.body_reader"] = _il.import_module("scripts.naver.mail.read.body_reader")
+_sys.modules[f"{__name__}.cdp"] = _il.import_module("scripts.naver.mail.read.cdp")
+_sys.modules[f"{__name__}.classify"] = _il.import_module("scripts.naver.mail.read.classify")
+_sys.modules[f"{__name__}.entry"] = _il.import_module("scripts.naver.mail.read.entry")
+_sys.modules[f"{__name__}.list_collector"] = _il.import_module("scripts.naver.mail.read.list_collector")
+_sys.modules[f"{__name__}.pipeline"] = _il.import_module("scripts.naver.mail.read.pipeline")
