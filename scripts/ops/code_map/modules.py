@@ -323,6 +323,23 @@ def _render_markdown_report(result: dict, m: dict, modules: dict[str, dict]) -> 
     return "\n".join(lines)
 
 
+def _crosscheck_summary(c: dict) -> dict:
+    """crosscheck 요약 줄용 값: 목록은 길이, 'total' 이 있는 dict(layer_inversions 등)는 그 total, 그 밖의 dict 는 키 수.
+
+    예전에는 dict 를 모두 len() 으로 세어 layer_inversions({total, by_pair, ...})가 키 개수 3 으로 찍혔다 —
+    실제 위반이 30건이어도 '3' 으로 보이는 오보(2026-10-07 기준선 감사).
+    """
+    out: dict = {}
+    for k, v in c.items():
+        if isinstance(v, dict) and "total" in v:
+            out[k] = v["total"]
+        elif isinstance(v, (list, dict)):
+            out[k] = len(v)
+        else:
+            out[k] = v
+    return out
+
+
 def main() -> int:
     with contextlib.suppress(AttributeError, ValueError):
         sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
@@ -378,7 +395,7 @@ def main() -> int:
     (OUT_DIR / "modules.md").write_text(md, encoding="utf-8")
 
     c = result["crosscheck"]
-    print(json.dumps({k: (v if not isinstance(v, (list, dict)) else len(v)) for k, v in c.items()}, ensure_ascii=False))
+    print(json.dumps(_crosscheck_summary(c), ensure_ascii=False))
     print(f"inversions={c['layer_inversions']['total']} by_pair={c['layer_inversions']['by_pair']}")
     print(f"modules={len(modules)} module_edges={len(mod_edges)}")
     return 0

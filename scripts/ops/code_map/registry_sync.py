@@ -106,14 +106,47 @@ def diff_registry(reg_files: set[str], tracked: set[str]) -> tuple[set[str], set
     return tracked - reg_files, reg_files - tracked
 
 
+def expected_with_override(entry: dict, override: dict) -> dict:
+    """정본 항목에 사람이 확정한 override 를 덮은 기대값 — classify.py 재생성 결과와 같은 규칙(source=confirmed, confidence=high)."""
+    out = dict(entry)
+    out.update(override)
+    out["source"] = "confirmed"
+    out["confidence"] = "high"
+    return out
+
+
+def override_drift(files: dict, overrides: dict) -> list[str]:
+    """정본에 이미 있는 항목인데 override 가 반영되지 않은 키(예전 --fix 는 새 파일에만 overrides 를 적용해 기존 키의 변경을 놓쳤다)."""
+    return sorted(p for p, ov in overrides.items() if p in files and expected_with_override(files[p], ov) != files[p])
+
+
+def stale_overrides(overrides: dict, tracked: set[str]) -> list[str]:
+    """추적되는 코드 파일이 아닌데(이미 삭제·이동된) 남아 있는 override 키."""
+    return sorted(p for p in overrides if p not in tracked)
+
+
 def check(root: Path = ROOT) -> int:
     doc = load_registry(root)
     reg_files = set(doc.get("files", {}).keys())
     tracked = tracked_code_files(root)
     missing, ghost = diff_registry(reg_files, tracked)
-    if not missing and not ghost:
-        print(f"OK: registry({len(reg_files)}) matches tracked code files({len(tracked)})")
+    overrides = load_overrides(root)
+    drift = override_drift(doc.get("files", {}), overrides)
+    stale = stale_overrides(overrides, tracked)
+    if not missing and not ghost and not drift and not stale:
+        print(f"OK: registry({len(reg_files)}) matches tracked code files({len(tracked)}), overrides({len(overrides)}) reflected")
         return 0
+    if drift:
+        print(f"OVERRIDE not reflected in registry ({len(drift)}):")
+        for f in drift[:40]:
+            print("  ~ " + f)
+    if stale:
+        print(f"STALE overrides — file no longer tracked ({len(stale)}):")
+        for f in stale[:40]:
+            print("  x " + f)
+    if not missing and not ghost:
+        print("fix: python scripts/ops/code_map/registry_sync.py --fix")
+        return 1
     if missing:
         print(f"MISSING in registry ({len(missing)}) — tracked but no registry entry:")
         for f in sorted(missing)[:80]:
@@ -182,10 +215,27 @@ def fix(root: Path = ROOT) -> int:
             del overrides[p]
             overrides_changed = True
 
+    # 4) 기존 항목에 overrides 반영 — 예전에는 새로 추가되는 파일에만 적용돼, overrides 를 고쳐도 정본이 안 바뀌었다
+    reflected = 0
+    for p in override_drift(files, overrides):
+        files[p] = expected_with_override(files[p], overrides[p])
+        reflected += 1
+
+    # 5) 이미 없는 파일의 낡은 override 제거(삭제·이동 뒤 남은 것)
+    stale = stale_overrides(overrides, tracked)
+    for p in stale:
+        del overrides[p]
+        overrides_changed = True
+
     save_registry(doc, root)
     if overrides or overrides_changed:
         save_overrides(overrides, root)
-    print(json.dumps({"added": added, "removed": removed, "moved": moved}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {"added": added, "removed": removed, "moved": moved, "overrides_reflected": reflected, "stale_overrides_removed": len(stale)},
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 
