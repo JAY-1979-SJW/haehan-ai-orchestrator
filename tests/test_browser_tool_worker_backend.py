@@ -1,11 +1,14 @@
 """Tests for Browser Tool Worker Backend."""
 
-from ai_orchestrator.browser_tool.backends.worker_backend import (
+from ai_orchestrator.browser_tool.schemas import BrowserTask
+from ai_orchestrator.browser_tool.worker.schemas import (
+    WorkerBrowserRequest,
+    WorkerBrowserResponse,
+)
+from ai_orchestrator.browser_tool.worker_backend import (
     BrowserWorkerBackend,
     BrowserWorkerClient,
 )
-from ai_orchestrator.browser_tool.schemas import BrowserTask
-from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 
 
 class MockTransport:

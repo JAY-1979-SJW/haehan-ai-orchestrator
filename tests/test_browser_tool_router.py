@@ -233,7 +233,7 @@ class TestNoPlaywrightImport:
 
     def test_mock_backend_imports(self):
         """Mock backend should not import playwright."""
-        import ai_orchestrator.browser_tool.backends.mock_backend as mock_module
+        import ai_orchestrator.browser_tool.mock_backend as mock_module
 
         source_file = mock_module.__file__
         assert source_file is not None

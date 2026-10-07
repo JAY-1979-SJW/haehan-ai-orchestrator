@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from ..schemas import BrowserResult, BrowserTask
+from .schemas import BrowserResult, BrowserTask
 
 
 def _now_iso() -> str:

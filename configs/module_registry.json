@@ -2729,7 +2729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/backends/__init__.py": {
+  "ai_orchestrator/browser_tool/mock_backend.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2737,15 +2737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/backends/mock_backend.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/backends/worker_backend.py": {
+  "ai_orchestrator/browser_tool/worker_backend.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

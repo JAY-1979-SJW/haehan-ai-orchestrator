@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import policy
-from .backends import mock_backend
+from . import mock_backend, policy
 from .schemas import BrowserResult, BrowserTask
 
 
@@ -59,7 +58,7 @@ def route_browser_task(task: BrowserTask) -> BrowserResult:
 
     if selected_backend == "worker":
         # Route to Browser Worker backend (HTTP)
-        from .backends.worker_backend import BrowserWorkerBackend  # lazy import
+        from .worker_backend import BrowserWorkerBackend  # lazy import
 
         worker_backend = BrowserWorkerBackend()
         url = params.get("url", "about:blank")
