@@ -94,7 +94,7 @@ class InventoryMonitor:
             body += f"\n\n... 외 {check['low_count'] - 20}개"
 
         results = []
-        from scripts.naver import NaverServices
+        from scripts.naver.services import NaverServices
 
         n = NaverServices(self.page)
 

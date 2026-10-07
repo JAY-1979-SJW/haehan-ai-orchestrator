@@ -24,7 +24,7 @@ class Workflow:
 
     def __init__(self, page: Page):
         self.page = page
-        from scripts.naver import NaverServices
+        from scripts.naver.services import NaverServices
 
         self.n = NaverServices(page)
 

@@ -16,7 +16,7 @@ URL: https://sell.smartstore.naver.com/
   쇼핑커넥트 / 판매자정보
 
 사용:
-  from scripts.naver import NaverServices
+  from scripts.naver.services import NaverServices
   n = NaverServices(page)
   n.login()
   n.smartstore.open_dashboard()                 # 대시보드
