@@ -4,7 +4,7 @@
 popup_watcher가 감지한 이벤트를 입력받아 신중하게 자동/수동/차단을 결정.
 
 사용:
-    from scripts.popup_classifier import classify
+    from scripts.browser.popup.popup_classifier import classify
     decision = classify(marker="작성 중인 글", snippet="이어서 작성하시겠습니까? ...")
     # → {"category": "draft_restore", "severity": "low",
     #    "action": "auto_dismiss", "target": "취소", "confidence": 0.9}

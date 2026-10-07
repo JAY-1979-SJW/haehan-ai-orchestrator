@@ -13,11 +13,11 @@
   비활성화: page_helper.disable_auto_popup_handling()
 
 보호 도메인 등록:
-  from scripts.popup_detector import add_protected_domain
+  from scripts.browser.popup.popup_detector import add_protected_domain
   add_protected_domain("my-main-app.com")  # 절대 닫히면 안 되는 도메인
 
 사용법:
-  from scripts.popup_detector import detect_popup, close_all_popups, handle_page_popups
+  from scripts.browser.popup.popup_detector import detect_popup, close_all_popups, handle_page_popups
   handle_page_popups(page)  # 별도 창 + 모달 모두 처리
 """
 

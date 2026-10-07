@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.logger import get_logger  # noqa: E402
-from scripts.popup_classifier import Decision  # noqa: E402
+from scripts.browser.popup.popup_classifier import Decision  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -156,7 +156,7 @@ def wait_for_recovery(minutes: int = 5) -> None:
     log.info("[EUM] 대기 완료, 재접근 시도")
 
 
-def detect_and_handle(page: Any, decision: dict[str, Any]) -> bool:
+def detect_and_handle(page: Any, decision: Decision) -> bool:
     """Decision을 기반으로 비정상 접근 자동 처리.
 
     반환:

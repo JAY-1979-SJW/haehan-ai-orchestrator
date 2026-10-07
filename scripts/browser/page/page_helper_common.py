@@ -34,7 +34,7 @@ def _safe_auto_popup(page: Page) -> None:
     if not _AUTO_POPUP_HANDLE:
         return
     try:
-        from scripts.popup_detector import handle_page_popups
+        from scripts.browser.popup.popup_detector import handle_page_popups
         handle_page_popups(page, timeout_s=2.0)
     except Exception as e:  # noqa: BLE001 - 브라우저 자동화 공용 헬퍼(팝업처리/중요작업로깅/로그인감지) - 실패 시 무시하고 계속하거나 (None, None) 반환, 로그인 감지 실패는 감지 안 함으로 처리될 뿐 로그인됨으로 오판하지 않음
         log.debug("자동 팝업 처리 실패 (무시): %s", e)

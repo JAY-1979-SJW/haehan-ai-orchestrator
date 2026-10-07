@@ -200,15 +200,15 @@ def _cmd_click_link(task: str) -> None:
 
 
 def _cmd_popup_install() -> None:
-    from scripts.popup_watcher import install_watcher
+    from scripts.browser.popup.popup_watcher import install_watcher
 
     r = install_watcher()
     print(f"✓ 팝업 감지 설치 완료 (프레임: {r['frame_count']}개)")
 
 
 def _cmd_detect_popup() -> None:
-    from scripts.popup_detector import detect_popup
     from scripts.browser.page.web_connector import get_page
+    from scripts.browser.popup.popup_detector import detect_popup
 
     page = get_page()
     result = detect_popup(page)
@@ -223,8 +223,8 @@ def _cmd_detect_popup() -> None:
 
 
 def _cmd_close_popup() -> None:
-    from scripts.popup_detector import close_all_popups
     from scripts.browser.page.web_connector import get_page
+    from scripts.browser.popup.popup_detector import close_all_popups
 
     page = get_page()
     result = close_all_popups(page)
@@ -237,7 +237,7 @@ def _cmd_close_popup() -> None:
 def _cmd_popup_poll() -> None:
     import json as _json
 
-    from scripts.popup_watcher import poll_events
+    from scripts.browser.popup.popup_watcher import poll_events
 
     events = poll_events()
     if not events:
@@ -251,7 +251,7 @@ def _cmd_popup_poll() -> None:
 
 
 def _cmd_popup_auto() -> None:
-    from scripts.popup_watcher import auto_handle
+    from scripts.browser.popup.popup_watcher import auto_handle
 
     r = auto_handle()
     print("✓ 자동 처리 완료")
@@ -266,7 +266,7 @@ def _cmd_popup_auto() -> None:
 def _cmd_popup_monitor_start(interval: float) -> None:
     # _cmd_popup_monitor 의 "start" 분기만 분리(2026-09-29 STD-08: C901 12>10, mccabe 가
     # while/try/except 를 추가 분기로 셈 — 로직은 그대로, 함수만 나눔).
-    from scripts import popup_monitor as _pm
+    from scripts.browser.popup import popup_monitor as _pm
 
     mon = _pm.PopupMonitor(poll_interval_s=interval)
     mon.start()
@@ -284,7 +284,7 @@ def _cmd_popup_monitor_start(interval: float) -> None:
 def _cmd_popup_monitor(task: str, sub: str, args: list[str]) -> None:
     import json as _json
 
-    from scripts import popup_monitor as _pm
+    from scripts.browser.popup import popup_monitor as _pm
 
     sub_cmd = task or "status"
     if sub_cmd == "start":
@@ -310,7 +310,7 @@ def _cmd_popup_monitor(task: str, sub: str, args: list[str]) -> None:
         ok = _pm.ack_event(int(sub), note=" ".join(args))
         print("✓ ack 완료" if ok else "✗ id 없음")
     elif sub_cmd == "classify":
-        from scripts.popup_classifier import classify
+        from scripts.browser.popup.popup_classifier import classify
 
         if not sub:
             print("사용법: popup-monitor classify <marker> [snippet]")
@@ -478,8 +478,8 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
 
 def _cmd_crawl_here(task: str, sub: str, args: list[str]) -> None:
     # 로그인 안 거치고 현재 활성 탭부터 BFS 탐색 (사용자 수동 로그인 후 사용)
-    from scripts.explorer.site_crawler import crawl_site
     from scripts.browser.page.web_connector import get_page
+    from scripts.explorer.site_crawler import crawl_site
 
     args_all = ([task] if task else []) + ([sub] if sub else []) + list(args)
     depth = int(args_all[0]) if args_all and args_all[0].isdigit() else 2
@@ -642,8 +642,8 @@ def _cmd_gabia(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_auto_login(task: str, sub: str) -> None:
-    from scripts.login_detector import monitor_for_login
     from scripts.browser.page.web_connector import get_page
+    from scripts.login_detector import monitor_for_login
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py auto-login <사이트> [URL]")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest import mock
 
-from scripts.popup_watcher import (
+from scripts.browser.popup.popup_watcher import (
     POPUP_MARKERS,
     auto_handle,
     build_watcher_js,

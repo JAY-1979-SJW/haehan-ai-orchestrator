@@ -816,7 +816,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/naver/shopping/crawl.py",
     "scripts/naver/smartstore/product/bulk.py",
     "scripts/op_log.py",
-    "scripts/popup_monitor.py",
+    "scripts/browser/popup/popup_monitor.py",
 }
 
 # STORAGE_BOUNDARY test known debt (tests 폴더 내 sqlite3 사용)

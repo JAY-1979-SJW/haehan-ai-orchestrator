@@ -431,8 +431,8 @@
    "ai_orchestrator/paths/runtime.py:storage_dir"
   ],
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
-   "scripts/popup_monitor.py:ChromeUIWatcher.start",
-   "scripts/popup_monitor.py:PopupMonitor.start"
+   "scripts/browser/popup/popup_monitor.py:ChromeUIWatcher.start",
+   "scripts/browser/popup/popup_monitor.py:PopupMonitor.start"
   ],
   "d9372ac71a1ef1716b42c0e51ef6216a4ed84dab": [
    "scripts/video/ig_dm_bot_ep01.py:main",

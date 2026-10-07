@@ -10,7 +10,7 @@
   4. SQLite popup_events 테이블에 모든 이력 영속화
 
 사용 (in-process):
-    from scripts.popup_monitor import PopupMonitor
+    from scripts.browser.popup.popup_monitor import PopupMonitor
     mon = PopupMonitor(poll_interval_s=2.0)
     mon.start()
     ...
@@ -35,8 +35,8 @@ from pathlib import Path
 from typing import Any
 
 from scripts.logger import get_logger
-from scripts.popup_classifier import Action, Category, Decision, Severity, classify, is_auto_handleable
-from scripts.popup_watcher import POPUP_MARKERS, build_watcher_js
+from scripts.browser.popup.popup_classifier import Action, Category, Decision, Severity, classify, is_auto_handleable
+from scripts.browser.popup.popup_watcher import POPUP_MARKERS, build_watcher_js
 
 _log = get_logger(__name__)
 
@@ -44,7 +44,7 @@ _log = get_logger(__name__)
 # Playwright Sync API는 백그라운드 스레드에서 asyncio 충돌을 유발한다.
 # 여기서는 requests + websockets 로 CDP를 직접 호출한다.
 
-_ROOT = Path(__file__).resolve().parents[1]
+_ROOT = Path(__file__).resolve().parents[3]
 _DAEMON_STATE = _ROOT / "data" / "cdp_daemon_state.json"
 _WATCHER_JS = build_watcher_js(POPUP_MARKERS)
 _POLL_JS = "(s) => (window.__hh_popup_state?.events||[]).filter(e => e.ts_ms > s)"
@@ -110,8 +110,8 @@ def _cdp_clear_events() -> None:
     asyncio.run(_for_all_tabs(_CLEAR_JS))
 
 
-DB_PATH = Path(__file__).resolve().parents[1] / "data" / "cdp.db"
-STATE_PATH = Path(__file__).resolve().parents[1] / "data" / "popup_monitor_state.json"
+DB_PATH = Path(__file__).resolve().parents[3] / "data" / "cdp.db"
+STATE_PATH = Path(__file__).resolve().parents[3] / "data" / "popup_monitor_state.json"
 
 DEFAULT_POLL_INTERVAL_S = 2.0
 DB_TIMEOUT_S = 30
@@ -359,7 +359,7 @@ def status() -> dict:
 
 # ── Chrome chrome UI Watcher (uiautomation 기반) ────────────────────
 
-CHROME_UI_STATE_PATH = Path(__file__).resolve().parents[1] / "data" / "chrome_ui_watcher_state.json"
+CHROME_UI_STATE_PATH = Path(__file__).resolve().parents[3] / "data" / "chrome_ui_watcher_state.json"
 _CHROME_UI_COOLDOWN_S = 60.0  # 같은 (marker, window) 조합 재기록 쿨다운
 
 

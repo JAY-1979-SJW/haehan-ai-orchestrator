@@ -148,7 +148,7 @@ class EumDeviceInventoryManager:
 
             # 팝업 처리
             try:
-                from scripts.popup_detector import handle_page_popups
+                from scripts.browser.popup.popup_detector import handle_page_popups
 
                 handle_page_popups(self.page, timeout_s=2.0)
             except:  # noqa: E722

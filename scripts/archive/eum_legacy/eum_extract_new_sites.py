@@ -158,7 +158,7 @@ def main():
     page.wait_for_load_state("load", timeout=5000)
 
     try:
-        from scripts.popup_detector import handle_page_popups
+        from scripts.browser.popup.popup_detector import handle_page_popups
 
         handle_page_popups(page, timeout_s=2.0)
     except Exception:  # noqa: BLE001 - 팝업 정리 best-effort, 읽기전용 탐색이라 실패해도 다음 단계 진행에 영향 없음

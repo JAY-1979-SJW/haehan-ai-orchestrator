@@ -15489,7 +15489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/popup_classifier.py": {
+  "scripts/browser/popup/popup_classifier.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -15497,7 +15497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/popup_detector.py": {
+  "scripts/browser/popup/popup_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -15505,7 +15505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/popup_monitor.py": {
+  "scripts/browser/popup/popup_monitor.py": {
    "layer": "L4",
    "role": "persistence",
    "domain": "browser",
@@ -15513,7 +15513,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/popup_watcher.py": {
+  "scripts/browser/popup/popup_watcher.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -22826,6 +22826,14 @@
    "source": "rule"
   },
   "scripts/browser/navigator/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/popup/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

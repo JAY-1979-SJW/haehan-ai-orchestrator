@@ -37,7 +37,7 @@ def goto(target: str, timeout_ms: int = 60000, auto_scan: bool = True, handle_po
     # 팝업 자동 처리
     if handle_popups:
         try:
-            from scripts.popup_detector import handle_page_popups
+            from scripts.browser.popup.popup_detector import handle_page_popups
 
             result = handle_page_popups(page)
             if result.get("had_popup"):

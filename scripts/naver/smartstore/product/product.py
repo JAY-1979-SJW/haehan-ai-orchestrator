@@ -39,7 +39,7 @@ from playwright.sync_api import Page
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
-from scripts.popup_detector import close_popup_windows, handle_page_popups
+from scripts.browser.popup.popup_detector import close_popup_windows, handle_page_popups
 from scripts.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
