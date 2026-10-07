@@ -23,11 +23,11 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from ai_orchestrator.local_agent.action_registry import (
+from ai_orchestrator.agent_hub.action_registry import (
     get_action_spec,
     has_handler,
 )
-from ai_orchestrator.local_agent.action_summary_builder import (
+from ai_orchestrator.agent_hub.action_summary_builder import (
     build_action_summary,
 )
 from ai_orchestrator.agent_hub.policy.user_approval_gate import (

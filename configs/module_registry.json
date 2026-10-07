@@ -4161,7 +4161,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/action_evidence_collector.py": {
+  "ai_orchestrator/agent_hub/action_evidence_collector.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4169,7 +4169,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/action_registry.py": {
+  "ai_orchestrator/agent_hub/action_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4185,7 +4185,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/action_schemas.py": {
+  "ai_orchestrator/agent_hub/action_schemas.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4193,7 +4193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/action_summary_builder.py": {
+  "ai_orchestrator/agent_hub/action_summary_builder.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4201,7 +4201,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/__init__.py": {
+  "ai_orchestrator/agent_hub/actions/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4209,7 +4209,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/browser_attach_file.py": {
+  "ai_orchestrator/agent_hub/actions/browser_attach_file.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4217,7 +4217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/browser_download_file.py": {
+  "ai_orchestrator/agent_hub/actions/browser_download_file.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4225,7 +4225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/browser_prepare_submit.py": {
+  "ai_orchestrator/agent_hub/actions/browser_prepare_submit.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4233,7 +4233,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/browser_submit_with_user_approval.py": {
+  "ai_orchestrator/agent_hub/actions/browser_submit_with_user_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4241,7 +4241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/business_execute_with_user_approval.py": {
+  "ai_orchestrator/agent_hub/actions/business_execute_with_user_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4249,7 +4249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/business_prepare_action.py": {
+  "ai_orchestrator/agent_hub/actions/business_prepare_action.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4257,7 +4257,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/future_action_stubs.py": {
+  "ai_orchestrator/agent_hub/actions/future_action_stubs.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4777,7 +4777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/business_action_profiles.py": {
+  "ai_orchestrator/agent_hub/business_action_profiles.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4785,7 +4785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/business_local_agent_mock_runner.py": {
+  "ai_orchestrator/agent_hub/business_local_agent_mock_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",

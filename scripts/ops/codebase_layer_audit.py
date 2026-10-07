@@ -95,7 +95,7 @@ PYDANTIC_SCHEMA_MODULES = (
     "ai_orchestrator.browser_tool.schemas",
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
     "ai_orchestrator.server.task_queue_schema",
-    "ai_orchestrator.local_agent.action_schemas",
+    "ai_orchestrator.agent_hub.action_schemas",
     "local_agent.browser_websocket_schema",
     "agent.models",
 )

@@ -12,8 +12,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.local_agent.action_evidence_collector import collect_evidence
-from ai_orchestrator.local_agent.action_registry import register_handler
+from ai_orchestrator.agent_hub.action_evidence_collector import collect_evidence
+from ai_orchestrator.agent_hub.action_registry import register_handler
 
 ACTION_NAME = "browser.download_file"
 

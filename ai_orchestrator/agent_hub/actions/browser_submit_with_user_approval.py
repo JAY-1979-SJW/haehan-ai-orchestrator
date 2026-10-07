@@ -13,8 +13,8 @@ from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.local_agent.action_evidence_collector import collect_evidence
-from ai_orchestrator.local_agent.action_registry import register_handler
+from ai_orchestrator.agent_hub.action_evidence_collector import collect_evidence
+from ai_orchestrator.agent_hub.action_registry import register_handler
 from ai_orchestrator.agent_hub.policy.user_approval_gate import verify_and_consume_token
 
 ACTION_NAME = "browser.submit_with_user_approval"

@@ -81,12 +81,12 @@
   "reason": "gates 패키지(정책·승인·인증 게이트)",
   "source": "manual"
  },
- "ai_orchestrator/local_agent/action_evidence_collector.py": {
+ "ai_orchestrator/agent_hub/action_evidence_collector.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "실행 후 민감정보 redaction 증거 수집 — 승인/감사 정책 성격, L4 generic 오분류"
  },
- "ai_orchestrator/local_agent/action_registry.py": {
+ "ai_orchestrator/agent_hub/action_registry.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "등록 액션 스펙+실행 핸들러 매핑(승인 게이트가 참조하는 정책 레지스트리) — L4 generic 오분류"

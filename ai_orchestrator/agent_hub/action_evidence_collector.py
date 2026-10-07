@@ -6,7 +6,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from ai_orchestrator.local_agent.action_schemas import all_specs
+from ai_orchestrator.agent_hub.action_schemas import all_specs
 
 _SENSITIVE_KEYS = frozenset(
     (

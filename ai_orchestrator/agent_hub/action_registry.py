@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from ai_orchestrator.local_agent.action_schemas import (
+from ai_orchestrator.agent_hub.action_schemas import (
     ActionSpec,
     all_specs,
 )

@@ -6,12 +6,8 @@ Playwright 실제 호출은 mock — 외부 사이트 접속 없음.
 
 import pytest
 
-from ai_orchestrator.local_agent.action_registry import get_handler
-from ai_orchestrator.local_agent.actions import (
-    browser_attach_file,
-    browser_download_file,
-    future_action_stubs,
-)
+from ai_orchestrator.agent_hub.action_registry import get_handler
+from ai_orchestrator.agent_hub.actions import browser_attach_file, browser_download_file, future_action_stubs
 from ai_orchestrator.agent_hub.policy.user_approval_gate import (
     approve_request,
     clear_all,

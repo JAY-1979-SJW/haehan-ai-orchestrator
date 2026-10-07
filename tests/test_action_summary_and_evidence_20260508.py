@@ -1,10 +1,10 @@
 """tests/test_action_summary_and_evidence_20260508.py"""
 
-from ai_orchestrator.local_agent.action_evidence_collector import (
+from ai_orchestrator.agent_hub.action_evidence_collector import (
     check_evidence_no_sensitive,
     collect_evidence,
 )
-from ai_orchestrator.local_agent.action_summary_builder import (
+from ai_orchestrator.agent_hub.action_summary_builder import (
     build_action_summary,
     format_summary_for_display,
 )

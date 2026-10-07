@@ -114,7 +114,7 @@ DOMAIN_CORE_MAP = {
     "Artifact": {
         "impl_files": [
             "ai_orchestrator/server/action_evidence_store.py",
-            "ai_orchestrator/local_agent/action_evidence_collector.py",
+            "ai_orchestrator/agent_hub/action_evidence_collector.py",
             "ai_orchestrator/domain/models.py",  # STEP 1: Artifact baseline model 추가
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: ArtifactEvidenceRef 기준선
         ],
