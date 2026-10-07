@@ -12945,7 +12945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/preflight.py": {
+  "scripts/ops/preflight.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
