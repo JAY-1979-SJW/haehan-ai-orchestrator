@@ -130,7 +130,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
  * 2026-09-30: 사용자 지시 "답변이 너무 느려 / 모델 선택 가능하게 / 이전 대화기록을 저장해서
  * 볼수 있게"로 3가지를 추가:
  *  - 모델 선택: 드롭다운 → POST /ai-agent/run 의 model 파라미터로 공식 --model 전달.
- *  - 대화기록 저장: /chat/sessions* (ai_orchestrator/chat_sessions.py, 신규) — 세션 목록/전환/삭제.
+ *  - 대화기록 저장: /chat/sessions* (ai_orchestrator/tasks/chat_sessions.py, 신규) — 세션 목록/전환/삭제.
  *  - 속도: 같은 채팅의 다음 메시지부터 claude_session_id로 --resume 재사용(서버가 chat_id로
  *    자동 처리) → 시스템 프롬프트/CLAUDE.md 재렌더링 생략(공식 --system-prompt-snapshot 근거),
  *    실측상 냉간시작 대비 후속 메시지가 더 빠르다. 첫 메시지 자체의 지연(claude -p 프로세스
