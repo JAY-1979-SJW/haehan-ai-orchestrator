@@ -9,14 +9,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "../.."))
 
-from ai_orchestrator import local_agent_registry as _reg
-from ai_orchestrator.agent_hub.policy.audit_event_policy import (
-    APPROVE_AUDIT_EVENT,
-    REJECT_AUDIT_EVENT,
-)
 from ai_orchestrator.agent_hub.error_mapping import (
     ERROR_STATUS_CODES,
     ErrorType,
+)
+from ai_orchestrator.agent_hub.policy.audit_event_policy import (
+    APPROVE_AUDIT_EVENT,
+    REJECT_AUDIT_EVENT,
 )
 from ai_orchestrator.agent_hub.policy.status_policy import (
     ACTIVE_TASK_STATUSES,
@@ -24,6 +23,7 @@ from ai_orchestrator.agent_hub.policy.status_policy import (
     can_cancel_task,
     is_terminal_status,
 )
+from ai_orchestrator.agent_hub.registry import facade as _reg
 
 # ── 상태 정책 검증 ──────────────────────────────────────────────────────
 
@@ -195,7 +195,7 @@ def test_response_builder_functions_exist():
 
 def test_diagnostics_helpers_functions_exist():
     """진단 헬퍼 함수들이 정의되어 있음."""
-    from ai_orchestrator.local_agent_diagnostics_helpers import (
+    from ai_orchestrator.agent_hub.registry.diagnostics_helpers import (
         count_agents_by_status,
         count_tasks_by_status,
         determine_diagnostics_status,

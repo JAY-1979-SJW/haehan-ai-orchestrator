@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from ..tasks import chat_sessions as _chat_store
 from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
-from .. import local_agent_registry as _reg
+from ..agent_hub.registry import facade as _reg
 from .. import mcp_tool_names as _tool_names
 from ..gates.auth import require_role
 

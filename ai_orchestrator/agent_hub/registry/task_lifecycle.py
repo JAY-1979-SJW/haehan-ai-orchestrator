@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from .agent_hub.models import LocalAgentTask
-from .agent_hub.redaction import _strip_result_data
-from .local_agent_registry_common import (
+from ..models import LocalAgentTask
+from ..redaction import _strip_result_data
+from .common import (
     ACTIVE_TASK_STATUSES,
     DELIVERED_TIMEOUT_SECONDS,
     MAX_WS_DISCONNECT_RETRIES,
@@ -17,7 +17,7 @@ from .local_agent_registry_common import (
     _now_iso,
     _tasks,
 )
-from .local_agent_registry_sanitize import _build_audit_summary, _build_observe_summary
+from .sanitize import _build_audit_summary, _build_observe_summary
 
 # ── 실패 처리 internal helper ───────────────────────────────────────────
 

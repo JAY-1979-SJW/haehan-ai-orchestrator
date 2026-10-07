@@ -24,7 +24,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import ai_orchestrator.gates.approval as _ap
-import ai_orchestrator.local_agent_registry as reg
+import ai_orchestrator.agent_hub.registry.facade as reg
 
 
 @pytest.fixture(autouse=True)

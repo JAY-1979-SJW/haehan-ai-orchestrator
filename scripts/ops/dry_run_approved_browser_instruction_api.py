@@ -171,7 +171,7 @@ def dry_run() -> DryRunResult:
     else:
         add(findings, "PASS", "out_of_scope_staged", "none")
 
-    from ai_orchestrator import local_agent_registry as _reg
+    from ai_orchestrator.agent_hub.registry import facade as _reg
     from ai_orchestrator.audit import audit_logger as _al
     from ai_orchestrator.gates import approval as _ap
 

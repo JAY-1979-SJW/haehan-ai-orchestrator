@@ -32,8 +32,8 @@ def _isolated_storage(tmp_path, monkeypatch):
 
     import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
-    import ai_orchestrator.local_agent_registry as _reg
-    import ai_orchestrator.local_agent_registry_common as _reg_common
+    import ai_orchestrator.agent_hub.registry.facade as _reg
+    import ai_orchestrator.agent_hub.registry.common as _reg_common
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -535,7 +535,7 @@ def test_action_capture_screenshot_dependency_missing(tmp_path, monkeypatch):
 
 
 def test_capture_screenshot_in_auto_exec_sets_both_sides():
-    from ai_orchestrator.local_agent_registry import AUTO_EXECUTE_VIA_AGENT as _S
+    from ai_orchestrator.agent_hub.registry.facade import AUTO_EXECUTE_VIA_AGENT as _S
     from local_agent.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
 
     assert "capture_screenshot" in _S
@@ -591,7 +591,7 @@ def test_reject_then_approve_not_allowed(admin_user):
 
 
 def test_h2_allowlist_includes_screenshot_keys():
-    from ai_orchestrator.local_agent_registry import _RESULT_DATA_ALLOWED_KEYS
+    from ai_orchestrator.agent_hub.registry.facade import _RESULT_DATA_ALLOWED_KEYS
 
     expected = {
         "screenshot_taken",
@@ -708,7 +708,7 @@ def test_h2_storage_ref_two_tier_when_no_agent_id(tmp_path, monkeypatch):
 
 
 def test_h2_strip_result_data_drops_full_path_and_raw_image():
-    from ai_orchestrator.local_agent_registry import _strip_result_data
+    from ai_orchestrator.agent_hub.registry.facade import _strip_result_data
 
     out = _strip_result_data(
         {
@@ -738,7 +738,7 @@ def test_h2_strip_result_data_drops_full_path_and_raw_image():
 
 
 def test_h2_dry_run_data_preserved_through_strip():
-    from ai_orchestrator.local_agent_registry import _strip_result_data
+    from ai_orchestrator.agent_hub.registry.facade import _strip_result_data
 
     out = _strip_result_data(
         {

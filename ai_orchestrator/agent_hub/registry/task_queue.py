@@ -6,9 +6,9 @@ import contextlib
 import uuid
 from collections.abc import Callable
 
-from .agent_hub.models import LocalAgentTask
-from .agent_hub.redaction import _strip_sensitive
-from .local_agent_registry_common import (
+from ..models import LocalAgentTask
+from ..redaction import _strip_sensitive
+from .common import (
     _SERVER_AUTO_COMPLETE,
     ACTION_RISK,
     ALLOWED_APPS,

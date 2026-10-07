@@ -237,7 +237,7 @@ def test_status_policy_module_importable():
 def test_no_circular_import_with_registry():
     """상태 정책 모듈과 registry 간 순환 참조 없음을 검증."""
     try:
-        from ai_orchestrator import local_agent_registry
+        from ai_orchestrator.agent_hub.registry import facade as local_agent_registry
 
         assert local_agent_registry is not None
     except ImportError:

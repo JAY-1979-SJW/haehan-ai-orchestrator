@@ -157,7 +157,7 @@ def test_auth_enabled_wrong_password_returns_401(monkeypatch, tmp_path):
 
 
 def test_auth_enabled_owner_can_register_agent(monkeypatch, tmp_path):
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     reg.clear()
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -175,7 +175,7 @@ def test_auth_enabled_owner_can_register_agent(monkeypatch, tmp_path):
 
 
 def test_auth_enabled_admin_can_register_agent(monkeypatch, tmp_path):
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     reg.clear()
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -192,7 +192,7 @@ def test_auth_enabled_admin_can_register_agent(monkeypatch, tmp_path):
 
 
 def test_auth_enabled_viewer_can_list_agents(monkeypatch, tmp_path):
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     reg.clear()
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -221,7 +221,7 @@ def test_auth_enabled_viewer_cannot_register(monkeypatch, tmp_path):
 
 def test_auth_enabled_viewer_cannot_approve(monkeypatch, tmp_path):
     """viewer 가 capture_screenshot 승인 endpoint 시도 시 403."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     reg.clear()
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -333,7 +333,7 @@ def test_disabled_user_cannot_authenticate(monkeypatch, tmp_path):
 
 def test_auth_disabled_endpoint_passes_with_no_credentials(monkeypatch):
     """AUTH_ENABLED=False 상태에서 인증 헤더 없어도 owner 권한으로 통과."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     reg.clear()
     _disable_auth(monkeypatch)

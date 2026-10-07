@@ -65,7 +65,7 @@ def _make_client() -> TestClient:
 def _reset_runtime_state() -> None:
     import ai_orchestrator.audit.audit_logger as audit_logger
     import ai_orchestrator.gates.approval as approval
-    import ai_orchestrator.local_agent_registry as registry
+    import ai_orchestrator.agent_hub.registry.facade as registry
     import ai_orchestrator.local_agent_router as local_agent_router
 
     tmp_root = ROOT / "tmp"
@@ -173,7 +173,7 @@ def _e2e_final(client, agent_id, task_id):
 
 
 def _e2e_high_risk(agent_id):
-    import ai_orchestrator.local_agent_registry as registry
+    import ai_orchestrator.agent_hub.registry.facade as registry
 
     high = registry.enqueue_task(
         agent_id=agent_id,

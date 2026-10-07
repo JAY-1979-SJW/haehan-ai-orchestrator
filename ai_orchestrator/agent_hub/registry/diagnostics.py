@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from . import local_agent_registry as _reg
+from . import facade as _reg
 
 
 def _aggregate_tasks(tasks_snapshot: list) -> tuple[dict, dict, tuple]:

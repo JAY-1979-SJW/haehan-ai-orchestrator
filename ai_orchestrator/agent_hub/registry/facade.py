@@ -8,9 +8,9 @@ leaf 가 아닌 이 root 에서 직접 재노출한다. [docs/module_separation_
 # ruff: noqa: F401, F403
 from __future__ import annotations
 
-from .local_agent_registry_cleanup import cleanup_agent_and_tasks, get_agent_cleanup_preview
-from .local_agent_registry_exports import *
-from .local_agent_registry_exports import (
+from .cleanup import cleanup_agent_and_tasks, get_agent_cleanup_preview
+from .exports import *
+from .exports import (
     _RESULT_DATA_ALLOWED_KEYS,
     _SENSITIVE_KEYS,
     _SERVER_AUTO_COMPLETE,
@@ -25,8 +25,8 @@ from .local_agent_registry_exports import (
     _strip_result_data,
     _tasks,
 )  # fmt: skip
-from .local_agent_registry_task_cancel import CancelNotAllowedError, cancel_task
-from .local_agent_registry_task_lifecycle import (
+from .task_cancel import CancelNotAllowedError, cancel_task
+from .task_lifecycle import (
     _mark_task_failed,
     apply_result,
     expire_stale_tasks,
@@ -34,7 +34,7 @@ from .local_agent_registry_task_lifecycle import (
     mark_delivered,
     mark_running,
 )  # fmt: skip
-from .local_agent_registry_task_queue import (
+from .task_queue import (
     add_enqueue_listener,
     attach_token,
     enqueue_task,

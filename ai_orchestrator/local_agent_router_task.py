@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .agent_hub import audit_builders as _audit
 from .agent_hub.policy import audit_event_policy as _policy
-from . import local_agent_registry as _reg
+from .agent_hub.registry import facade as _reg
 from . import local_agent_router_guards as _guards  # 공유 leaf
 from .audit.audit_logger import log_event
 from .gates.approval import approve_token, issue_token_for_dev_reg, reject_token
@@ -442,4 +442,7 @@ def submit_local_agent_task(
                 note=f"agent_id={agent_id}",
             )
 
-    return _reg.get_task(agent_id, task.task_id).to_safe()
+    saved = _reg.get_task(agent_id, task.task_id)
+    if saved is None:  # 방금 만든 작업이 사라진 경우(이전에는 AttributeError 로 500) — 명시적으로 500
+        raise HTTPException(status_code=500, detail="저장된 작업을 찾을 수 없습니다")
+    return saved.to_safe()

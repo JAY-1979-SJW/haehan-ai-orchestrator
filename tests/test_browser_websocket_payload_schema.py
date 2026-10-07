@@ -11,7 +11,7 @@ Verifies:
 
 import pytest
 
-from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator.agent_hub.registry import facade as _reg
 from local_agent.browser_websocket_schema import (
     ALLOWED_ACTION_TYPES,
     RESULT_DATA_ALLOWED_KEYS,

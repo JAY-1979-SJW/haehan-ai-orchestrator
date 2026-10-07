@@ -28,7 +28,7 @@ REQUIRED_FILES = [
     "ai_orchestrator/gates/approval.py",
     "ai_orchestrator/gates/policy.py",
     "ai_orchestrator/policies/default_policy.yaml",
-    "ai_orchestrator/local_agent_registry.py",
+    "ai_orchestrator/agent_hub/registry/facade.py",
     "admin-web/src/app/local-agents/LocalAgentsClient.tsx",
     "admin-web/src/lib/api.ts",
     "admin-web/src/types/local-agent.ts",

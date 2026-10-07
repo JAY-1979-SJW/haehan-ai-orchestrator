@@ -8,16 +8,16 @@ root(local_agent_registry.py)는 이 leaf 와 나머지 leaf 를 재노출하는
 # ruff: noqa: F401
 from __future__ import annotations
 
-from .contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
-from .agent_hub.models import LocalAgent, LocalAgentTask, RegisterResult
+from ...contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+from ..models import LocalAgent, LocalAgentTask, RegisterResult
 
 # 마스킹/정책 내부 이름 — 이 이름을 창구로 참조하는 테스트 다수 (2026-09-30 복원)
-from .agent_hub.redaction import (
+from ..redaction import (
     _RESULT_DATA_ALLOWED_KEYS,
     _SENSITIVE_KEYS,
     _strip_result_data,
 )
-from .local_agent_registry_agent import (
+from .agent import (
     authenticate_agent,
     clear_agent_capacity,
     get_active_task_count,
@@ -38,7 +38,7 @@ from .local_agent_registry_agent import (
     set_agent_disconnected,
     set_agent_last_seen,
 )
-from .local_agent_registry_common import (
+from .common import (
     ACTIVE_TASK_STATUSES,
     DELIVERED_TIMEOUT_SECONDS,
     HEARTBEAT_STALE_SECONDS,
@@ -54,12 +54,12 @@ from .local_agent_registry_common import (
     _tasks,
     clear,
 )
-from .local_agent_registry_sanitize import (
+from .sanitize import (
     _build_audit_summary,
     _build_observe_summary,
     _sanitize_final_url_value,
 )
-from .agent_hub.policy.risk_policy import (
+from ..policy.risk_policy import (
     _SERVER_AUTO_COMPLETE,
     ACTION_RISK,
     ALLOWED_APPS,

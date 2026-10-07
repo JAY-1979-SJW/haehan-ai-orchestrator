@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from .agent_hub.models import LocalAgentTask
-from .local_agent_registry_common import (
+from ..models import LocalAgentTask
+from .common import (
     _ensure_task_transition,
     _lock,
     _tasks,

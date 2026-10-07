@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
 
-from . import local_agent_registry as _reg
+from .agent_hub.registry import facade as _reg
 from .audit.audit_logger import log_event
 from .gates.approval import issue_token_for_dev_reg
 from .gates.auth import require_role

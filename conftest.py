@@ -99,7 +99,7 @@ def _isolate_runtime_state(monkeypatch, tmp_path):
     monkeypatch 하면 그쪽이 우선한다.
     """
     targets = (
-        ("ai_orchestrator.local_agent_registry_common", "_REGISTRY_STATE_PATH", "local_agent_registry_state.json"),
+        ("ai_orchestrator.agent_hub.registry.common", "_REGISTRY_STATE_PATH", "local_agent_registry_state.json"),
         ("ai_orchestrator.tasks.chat_sessions", "_STORE_PATH", "chat_sessions.json"),
     )
     # 마스터 키는 기본이 OS 자격 증명 관리자(keyring)다. 테스트가 이 PC 의 진짜 키를 만들거나 건드리지

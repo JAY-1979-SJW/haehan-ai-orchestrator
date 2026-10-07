@@ -5265,7 +5265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_diagnostics.py": {
+  "ai_orchestrator/agent_hub/registry/diagnostics.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5273,7 +5273,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_diagnostics_helpers.py": {
+  "ai_orchestrator/agent_hub/registry/diagnostics_helpers.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5305,7 +5305,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry.py": {
+  "ai_orchestrator/agent_hub/registry/facade.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5313,7 +5313,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_agent.py": {
+  "ai_orchestrator/agent_hub/registry/agent.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5321,7 +5321,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_cleanup.py": {
+  "ai_orchestrator/agent_hub/registry/cleanup.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5329,7 +5329,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_common.py": {
+  "ai_orchestrator/agent_hub/registry/common.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -5337,7 +5337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_sanitize.py": {
+  "ai_orchestrator/agent_hub/registry/sanitize.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5345,7 +5345,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_task_cancel.py": {
+  "ai_orchestrator/agent_hub/registry/task_cancel.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5353,7 +5353,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_task_lifecycle.py": {
+  "ai_orchestrator/agent_hub/registry/task_lifecycle.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -5361,7 +5361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_task_queue.py": {
+  "ai_orchestrator/agent_hub/registry/task_queue.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -21289,7 +21289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_exports.py": {
+  "ai_orchestrator/agent_hub/registry/exports.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -23055,6 +23055,22 @@
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/agent_hub/registry/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_runtime_state_isolation_targets.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
    "source": "rule"
   }
  }

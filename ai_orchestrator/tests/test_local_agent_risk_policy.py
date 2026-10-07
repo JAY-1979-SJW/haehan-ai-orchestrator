@@ -66,7 +66,10 @@ def test_allowed_apps_defined():
 
 def test_registry_uses_action_risk():
     """registry가 ACTION_RISK를 올바르게 사용한다."""
-    from ai_orchestrator.local_agent_registry import enqueue_task, UnknownActionError
+    from ai_orchestrator.agent_hub.registry.facade import (
+        UnknownActionError,
+        enqueue_task,
+    )
 
     # 알려진 액션은 성공
     task = enqueue_task(
@@ -90,7 +93,7 @@ def test_registry_uses_action_risk():
 
 def test_risk_level_high_requires_approval():
     """high risk 액션은 waiting_approval 상태로 생성된다."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -105,7 +108,7 @@ def test_risk_level_high_requires_approval():
 
 def test_server_auto_complete_behavior():
     """_SERVER_AUTO_COMPLETE 액션은 completed 상태로 생성된다."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -119,7 +122,7 @@ def test_server_auto_complete_behavior():
 
 def test_low_risk_non_auto_complete_action():
     """low risk이지만 non-auto-complete 액션은 queued 상태."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -134,7 +137,7 @@ def test_low_risk_non_auto_complete_action():
 
 def test_web_open_url_readonly_is_low_risk_queued():
     """read-only browser observation is queued for local agent execution."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -149,7 +152,7 @@ def test_web_open_url_readonly_is_low_risk_queued():
 
 def test_medium_risk_action():
     """medium risk 액션은 queued 상태."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",

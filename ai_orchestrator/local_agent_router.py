@@ -31,8 +31,8 @@ from fastapi import APIRouter, Depends
 
 from .agent_hub import audit_builders as _audit
 from .agent_hub.policy import audit_event_policy as _policy
-from . import local_agent_diagnostics
-from . import local_agent_registry as _reg
+from .agent_hub.registry import diagnostics as local_agent_diagnostics
+from .agent_hub.registry import facade as _reg
 from . import local_agent_router_guards as _guards
 from .audit.audit_logger import log_event
 from .auth import registration_codes as _regcodes

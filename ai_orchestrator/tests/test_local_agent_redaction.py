@@ -220,7 +220,7 @@ def test_strip_result_data_preserves_bool_int_float():
 
 def test_registry_uses_strip_sensitive():
     """registry의 enqueue_task가 _strip_sensitive를 사용한다."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -236,7 +236,7 @@ def test_registry_uses_strip_sensitive():
 
 def test_registry_uses_strip_result_data():
     """registry의 apply_result가 _strip_result_data를 사용한다."""
-    from ai_orchestrator.local_agent_registry import (
+    from ai_orchestrator.agent_hub.registry.facade import (
         apply_result,
         enqueue_task,
         mark_approved,
@@ -272,7 +272,7 @@ def test_registry_uses_strip_result_data():
     )
 
     # task.result_data에 password가 없어야 함
-    from ai_orchestrator.local_agent_registry import get_task
+    from ai_orchestrator.agent_hub.registry.facade import get_task
 
     updated_task = get_task(task.agent_id, task.task_id)
     assert updated_task is not None

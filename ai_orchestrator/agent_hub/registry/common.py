@@ -9,9 +9,9 @@ from datetime import UTC, datetime
 
 from ai_orchestrator.paths.runtime import data_dir
 
-from .contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
-from .agent_hub.models import LocalAgent, LocalAgentTask, RegisterResult
-from .agent_hub.policy.risk_policy import _SERVER_AUTO_COMPLETE, ACTION_RISK, ALLOWED_APPS
+from ...contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+from ..models import LocalAgent, LocalAgentTask, RegisterResult
+from ..policy.risk_policy import _SERVER_AUTO_COMPLETE, ACTION_RISK, ALLOWED_APPS
 
 # ── timeout 상수 ────────────────────────────────────────────────────────
 

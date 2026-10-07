@@ -2,8 +2,8 @@
 
 from datetime import UTC, datetime
 
-from ai_orchestrator import local_agent_diagnostics
-from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator.agent_hub.registry import diagnostics as local_agent_diagnostics
+from ai_orchestrator.agent_hub.registry import facade as _reg
 
 
 class TestDiagnosticsHelper:

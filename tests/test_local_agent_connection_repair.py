@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from ai_orchestrator import local_agent_registry as reg
+from ai_orchestrator.agent_hub.registry import facade as reg
 from ai_orchestrator.auth import registration_codes as rc
 from local_agent import connection_diagnostics as cd
 from scripts.ops import audit_local_desktop_agent_connection as audit

@@ -65,7 +65,7 @@ CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.local_agent.browser.cdp_audit", "AUDIT_ROOT", DATA, ("audit",)),
     ("ai_orchestrator.local_agent.browser.cdp_session_manager", "PROFILE_ROOT", DATA, ("cdp_profile",)),
     ("ai_orchestrator.local_agent.browser.action_gate", "_POLICY_PATH", DATA, ("gate_policy.json",)),
-    ("ai_orchestrator.local_agent_registry_common", "_REGISTRY_STATE_PATH", DATA, ("local_agent_registry_state.json",)),
+    ("ai_orchestrator.agent_hub.registry.common", "_REGISTRY_STATE_PATH", DATA, ("local_agent_registry_state.json",)),
 ]
 
 _CLEAN_KEYS = ("HAEHAN_DATA_ROOT", "HAEHAN_DATA_DIR", "HAEHAN_STORAGE_DIR", "LOG_DIR", "LOCAL_DATA_DIR")
