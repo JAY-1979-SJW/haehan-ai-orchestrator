@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 62,
+ "hash_count": 60,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/connectors/naver_mail/bulk_service.py:_read_rows",
@@ -250,12 +250,6 @@
    "local_agent/browser_login_probe.py:_normalize_str_list",
    "local_agent/site_mapper.py:_normalize_hints"
   ],
-  "cb41120f3ab1168c59cbafcf68a552ecf495f3f2": [
-   "scripts/gabia/validators.py:validate_gabia_action_plan",
-   "scripts/google/validators.py:validate_google_action_plan",
-   "scripts/hiworks/validators.py:validate_hiworks_action_plan",
-   "scripts/youtube/validators.py:validate_youtube_action_plan"
-  ],
   "cf8971bf73cf0cca56b729d1a669437da54f0683": [
    "scripts/naver/company_seo.py:save_diagnosis",
    "scripts/naver/company_seo.py:save_plan",
@@ -297,10 +291,6 @@
    "scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py:_verify_no_http_import",
    "scripts/ops/audit_post_tasks_medium_isolation_smoke.py:_verify_no_http_import",
    "scripts/ops/audit_post_tasks_side_effect_gate_design.py:_verify_no_http_import"
-  ],
-  "ef7fe454c93d0a29914ccee0d6e53ac1cdd068e1": [
-   "scripts/common/youtube_http_client.py:_should_retry_without_proxy",
-   "scripts/google/youtube/search_common.py:_should_retry_without_proxy"
   ],
   "f2dd54c583d5f6e43808f5917d535acd830fa502": [
    "scripts/naver/automation/scheduler.py:Scheduler.remove_task",
