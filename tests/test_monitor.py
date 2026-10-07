@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-import monitor as mon
+import orchestrator_v1.monitoring.monitor as mon
 
 # ── FileTailer ────────────────────────────────────────────────────────────────
 

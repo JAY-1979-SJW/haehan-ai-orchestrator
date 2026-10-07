@@ -28,7 +28,7 @@ from scripts.common.youtube_api_common import (
     _oauth_token,
     _write_report,
 )
-from security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 
 def search_videos(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수/CLI 인자 보존)
     query: str,

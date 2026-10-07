@@ -19,7 +19,7 @@ from typing import Any
 from scripts.common.app_paths import repo_root
 from scripts.common import youtube_search_cache as _shared_cache
 from scripts.common.http_retry import urlopen_with_dead_proxy_fallback as _urlopen_with_dead_proxy_fallback
-from security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 
 ROOT = repo_root()
 REPORT_DIR = ROOT / "data" / "google_youtube_search_reports"

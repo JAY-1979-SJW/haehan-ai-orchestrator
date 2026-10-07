@@ -25,7 +25,7 @@ def test_routes_unchanged():
 
 
 def test_inbox_still_reaches_the_reader_after_the_move(monkeypatch):
-    """repo_root() 기준이라 이동(깊이 변경) 뒤에도 루트 hiworks_mail_reader.py 를 찾는다(회귀 방지)."""
+    """라우트가 hiworks_mail_reader 를 정적으로 import 해 이동 뒤에도 실제 모듈의 fetch_recent_mails 를 쓴다(회귀 방지)."""
     import orchestrator_v1.inbox.hiworks_mail_reader as real
 
     mod = importlib.import_module("ai_orchestrator.connectors.hiworks.mail_router")

@@ -21,7 +21,7 @@ from scripts.google.youtube.search_common import (
     _write_report,
     build_search_url,
 )
-from security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 
 
 def search_videos(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)

@@ -7,10 +7,10 @@ sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 def _fresh_logger_module(tmp_logs_dir: str):
     """logger 모듈을 재로드하여 임시 경로 주입"""
-    import logger as lg_mod
+    import orchestrator_v1.core.logger as lg_mod
 
     original = lg_mod.LOGS_DIR
-    lg_mod.LOGS_DIR = tmp_logs_dir
+    lg_mod.LOGS_DIR = Path(tmp_logs_dir)
     # 기존 핸들러 제거해서 새 경로로 재생성 가능하게
     for name in list(logging.Logger.manager.loggerDict.keys()):
         if name.startswith("orchestrator.test_"):
@@ -20,7 +20,7 @@ def _fresh_logger_module(tmp_logs_dir: str):
 
 
 def test_logs_dir_created_on_get_logger(tmp_path):
-    import logger as lg_mod
+    import orchestrator_v1.core.logger as lg_mod
 
     original = lg_mod.LOGS_DIR
     try:
@@ -34,7 +34,7 @@ def test_logs_dir_created_on_get_logger(tmp_path):
 
 
 def test_orchestrator_log_written(tmp_path):
-    import logger as lg_mod
+    import orchestrator_v1.core.logger as lg_mod
 
     original = lg_mod.LOGS_DIR
     try:
@@ -58,7 +58,7 @@ def test_orchestrator_log_written(tmp_path):
 
 
 def test_error_log_separated(tmp_path):
-    import logger as lg_mod
+    import orchestrator_v1.core.logger as lg_mod
 
     original = lg_mod.LOGS_DIR
     try:
@@ -84,7 +84,7 @@ def test_error_log_separated(tmp_path):
 
 
 def test_log_event_helper(tmp_path):
-    import logger as lg_mod
+    import orchestrator_v1.core.logger as lg_mod
 
     original = lg_mod.LOGS_DIR
     try:

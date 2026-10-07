@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import logging
-import sys
 import time
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,7 +17,6 @@ from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import require_send_approval
 
 from ...audit.audit_logger import log_event
-from ...paths import repo_root
 
 logger = logging.getLogger(__name__)
 
@@ -49,26 +47,9 @@ def api_inbox(
     """하이웍스 POP3 받은편지함 (환경변수 HIWORKS_MAIL_ACCOUNT/PASSWORD 필요)."""
     t0 = time.monotonic()
     try:
-        import importlib.util
-        from pathlib import Path
+        # 실제 모듈을 정적으로 import 한다(예전에는 루트의 호환 shim 파일을 경로로 읽었다 — 루트 shim 제거로 불필요).
+        from orchestrator_v1.inbox import hiworks_mail_reader as mod
 
-        # hiworks_mail_reader.py 위치를 견고하게 해석: 프로젝트/번들 루트 → CWD 순.
-        # (CWD 상대경로만 쓰면 번들 실행 시 CWD가 달라 FileNotFound 발생)
-        _cands = [
-            repo_root() / "hiworks_mail_reader.py",
-            Path.cwd() / "hiworks_mail_reader.py",
-            Path("hiworks_mail_reader.py"),
-        ]
-        reader_path = next((p for p in _cands if p.exists()), None)
-        if reader_path is None:
-            raise FileNotFoundError("hiworks_mail_reader.py 없음 (번들 누락)")
-        spec = importlib.util.spec_from_file_location("hiworks_mail_reader", str(reader_path))
-        if not spec or not spec.loader:
-            raise ImportError("hiworks_mail_reader.py 로드 불가")
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore[attr-defined]
-        # 루트의 hiworks_mail_reader.py 는 호환 shim 이라 로드하면 sys.modules 가 실제 모듈로 바뀐다 — 로드한 객체 대신 그것을 쓴다.
-        mod = sys.modules.get("hiworks_mail_reader", mod)
         items = mod.fetch_recent_mails(limit=limit)
         duration_ms = int((time.monotonic() - t0) * 1000)
         log_event(

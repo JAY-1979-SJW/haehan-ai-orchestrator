@@ -20,8 +20,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-import candidate_store
-import inbox_store
+import orchestrator_v1.inbox.inbox_store as inbox_store
+import orchestrator_v1.tasks.candidate_store as candidate_store
 from orchestrator_v1.inbox.message_classifier import classify_message
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ def tmp_cand(tmp_path):
 def flask_app():
     os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
-    from dashboard import create_app
+    from orchestrator_v1.monitoring.dashboard import create_app
 
     app = create_app()
     app.config["TESTING"] = True
@@ -239,7 +239,7 @@ def test_source_type_inbox_filter(tmp_inbox):
 
 
 def test_no_auto_execution_on_classify():
-    import task_store as ts
+    import orchestrator_v1.tasks.task_store as ts
 
     ts.clear()
 
@@ -251,7 +251,7 @@ def test_no_auto_execution_on_classify():
 
 def test_no_auto_task_creation_on_classify(tmp_cand):
     """classify 후 candidate 생성되어도 email_task는 생성 안됨."""
-    import email_task_store
+    import orchestrator_v1.tasks.email_task_store as email_task_store
 
     item = _kw_item("kakaowork", "견적 문의", "단가 견적 요청드립니다.")
     clf = classify_message(item)
@@ -272,7 +272,7 @@ def test_no_auto_task_creation_on_classify(tmp_cand):
         tasks = email_task_store.list_email_tasks()  # noqa: F841
         # 테스트 중 생성된 task가 없어야 함 (기존 데이터 무시)
     # task_store는 비어있어야 함
-    import task_store as ts
+    import orchestrator_v1.tasks.task_store as ts
 
     assert ts.get(item["external_id"]) is None
 
@@ -309,8 +309,8 @@ def test_email_classify_unchanged():
 
 
 def test_no_conflict_with_approval_manager():
-    import approval_manager
-    import task_store
+    import orchestrator_v1.tasks.approval_manager as approval_manager
+    import orchestrator_v1.tasks.task_store as task_store
 
     before_approval = dict(approval_manager._store)
     before_task = dict(task_store._store)

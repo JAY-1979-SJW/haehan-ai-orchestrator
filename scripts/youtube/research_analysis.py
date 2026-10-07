@@ -18,7 +18,7 @@ from scripts.common.youtube_api_common import (
     _top_keywords,
     _write_report,
 )
-from security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 
 
 def analyze_video_context(

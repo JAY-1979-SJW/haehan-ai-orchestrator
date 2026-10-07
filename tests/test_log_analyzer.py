@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-import log_analyzer
+import orchestrator_v1.monitoring.log_analyzer as log_analyzer
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 

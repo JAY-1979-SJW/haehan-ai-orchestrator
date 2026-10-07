@@ -60,8 +60,12 @@ def test_shim_has_marker(shim):
     assert MARKER in (ROOT / shim[0]).read_text(encoding="utf-8")[:600]
 
 
-def test_shims_are_found():
-    assert SHIMS, "shim 을 하나도 못 찾음 — 식별 로직 점검"
+def test_find_shims_identifies_a_generated_shim(tmp_path):
+    """저장소의 실제 shim 은 정리로 0개가 됐다(루트 shim 제거, 2026-10-08) — 식별 로직은 임시 저장소에서 만든 shim 으로 계속 확인한다."""
+    (tmp_path / "pkg").mkdir()
+    (tmp_path / "pkg" / "real.py").write_text("X = 1" + chr(10), encoding="utf-8")
+    make_shim("old_mod.py", "pkg/real.py", tmp_path)
+    assert find_shims(tmp_path) == [("old_mod.py", "pkg.real")]
 
 
 @pytest.mark.parametrize("shim", SHIMS, ids=_ids(SHIMS))
