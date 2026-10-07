@@ -607,48 +607,6 @@ def _dry_run_open(site: str, target: str, spec, *, ensure_login: bool, force_log
     return {"dry_run": True, "site": site, "url": target, "logged_in": True}
 
 
-def explore_after_login(
-    site: str,
-    path: str = "",
-    *,
-    depth: int = 2,
-    max_pages: int = 20,
-) -> dict:
-    """로그인 보장 후 자동 사이트 탐색.
-
-    Returns:
-        {open: {url, ...}, explore: {host, pages, ...}}
-    """
-    if _dry_run():
-        from scripts.site_engine.site_registry import get_site as _gs
-
-        spec = _gs(site)
-        target = (spec.base_url if spec else "https://example.com") + (path or "")
-        open_site(site, path)  # 드라이런 흐름만
-        print(f"  [DRY] explore_site(depth={depth}, max={max_pages})")
-        print(f"  [DRY] visited 0~{max_pages} pages — (사이트맵 미생성)")
-        return {
-            "open": {"url": target, "site": site, "dry_run": True},
-            "explore": {"host": "(dry)", "visited": 0, "elapsed_s": 0.0, "aborted_reason": "", "saved_to": ""},
-        }
-
-    page: Any = open_site(site, path)
-    from scripts.explorer.auto_explorer import explore_site
-
-    log.info("[site-access] %s 로그인 완료 — 자동 탐색 시작 (depth=%d max=%d)", site, depth, max_pages)
-    explore = explore_site(page, depth=depth, max_pages=max_pages)
-    return {
-        "open": {"url": page.url, "site": site},
-        "explore": {
-            "host": explore["host"],
-            "visited": explore["visited_count"],
-            "elapsed_s": explore["elapsed_s"],
-            "aborted_reason": explore.get("aborted_reason", ""),
-            "saved_to": explore.get("saved_to", ""),
-        },
-    }
-
-
 def main() -> None:
     if len(sys.argv) < 2:
         print("사용법: python -m scripts.site_engine.site_access <site> [path]")

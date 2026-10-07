@@ -23176,6 +23176,14 @@
    "reason": "google 도메인 site module 내부에서만 쓰는 공개 API aggregator(leaf 모듈 re-export) — 다른 도메인이 호출하는 범용 업무흐름이 아니라 google/ 사이트 모듈 상세 구현. 이름만 workflows라 L6로 오분류.",
    "confidence": "high",
    "source": "confirmed"
+  },
+  "scripts/explorer/explore_after_login.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
   }
  }
 }

@@ -120,7 +120,8 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
     # 로그인 후 자동 사이트 탐색
     import os
 
-    from scripts.site_engine.site_access import LoginError, explore_after_login
+    from scripts.explorer.explore_after_login import explore_after_login
+    from scripts.site_engine.site_access import LoginError
     from scripts.site_engine.site_registry import list_sites
     from scripts.site_engine.site_watch import StepFailure
 
