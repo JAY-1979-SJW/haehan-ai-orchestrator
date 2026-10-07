@@ -1,0 +1,127 @@
+name: Desktop Release Build
+
+# 데스크톱(Electron) 포터블 빌드 — 운영 배포는 서버가 아니라 사용자별 로컬 설치이며
+# NAS(Nextcloud)로 배포 파일을 공유한다(대표님 결정, 2026-10-07). 빌드는 이 PC가 아니라
+# GitHub Actions에서 한다(공개 저장소라 Windows 러너 무료, 로컬 CPU 보호).
+#
+# 주의: workflow_dispatch 트리거는 기본 브랜치(master)에 있어야 실행할 수 있다.
+# 이 워크플로는 master에 반영된 뒤에야 첫 실행이 가능하다 — 그 전에는 YAML 구조와
+# 각 빌드 단계 명령이 저장소 스크립트와 맞는지 정적 점검만 한다(로컬 빌드 없음).
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "빌드할 git ref(브랜치/태그/커밋) — 비우면 기본 브랜치"
+        required: false
+        default: ""
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-desktop:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: |
+            admin-web/package-lock.json
+            admin-web/electron/package-lock.json
+
+      - name: Install Python build dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -c constraints.txt
+          python -m pip install pyinstaller
+
+      - name: npm ci (admin-web)
+        shell: bash
+        working-directory: admin-web
+        run: npm ci
+
+      - name: npm ci (electron shell)
+        shell: bash
+        working-directory: admin-web/electron
+        run: npm ci
+
+      - name: next build (standalone)
+        # next.config.*의 output: "standalone" 으로 .next/standalone 산출 —
+        # electron/package.json extraResources 가 이 경로를 그대로 쓴다.
+        shell: bash
+        working-directory: admin-web
+        run: npm run build
+
+      - name: PyInstaller — haehan-server (FastAPI 백엔드)
+        shell: bash
+        run: python -m PyInstaller haehan-server.spec --noconfirm --clean --distpath dist
+
+      - name: PyInstaller — local-agent (브라우저 CDP 자동화)
+        shell: bash
+        run: python -m PyInstaller local-agent.spec --noconfirm --clean --distpath dist
+
+      - name: PyInstaller — haehan-mcp (Claude Desktop MCP 연동)
+        shell: bash
+        run: python -m PyInstaller mcp-server.spec --noconfirm --clean --distpath dist
+
+      - name: Write build-info.json
+        # 대표님 결정 — git_sha·build_time·version. fastapi_server.js가 이 파일을
+        # 읽어 GIT_SHA·BUILD_TIME env로 서버에 넘기면 /api/v1/health(R3 관례)가
+        # 그대로 노출한다(서버 코드 수정 불필요). 포맷은 W4(skyjw-3c)와 합의.
+        id: buildinfo
+        shell: bash
+        run: |
+          git_sha="$(git rev-parse HEAD)"
+          sha7="${git_sha:0:7}"
+          build_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          yyyymmdd="$(date -u +%Y%m%d)"
+          version="${yyyymmdd}-${sha7}"
+          cat > admin-web/electron/build-info.json <<EOF
+          {"git_sha": "${git_sha}", "build_time": "${build_time}", "version": "${version}"}
+          EOF
+          cat admin-web/electron/build-info.json
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "sha7=${sha7}" >> "$GITHUB_OUTPUT"
+
+      - name: electron-builder --win portable
+        # -c.extraMetadata.version 이 package.json의 "1.0.0" 고정값을 덮어써 artifactName의
+        # ${version}(package.json:79 "HaehanAI-${version}-portable.exe")에 반영된다.
+        shell: bash
+        working-directory: admin-web/electron
+        run: npx electron-builder --win portable -c.extraMetadata.version=${{ steps.buildinfo.outputs.version }}
+
+      - name: SHA256 checksums
+        shell: bash
+        run: |
+          out_dir="dist-electron-new"
+          ( cd "$out_dir" && sha256sum *.exe > checksums.txt 2>/dev/null || true )
+          cat "$out_dir/checksums.txt" 2>/dev/null || echo "체크섬 대상 exe 없음 — 위 단계 출력 확인"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: HaehanAI-Desktop-${{ steps.buildinfo.outputs.version }}
+          path: |
+            dist-electron-new/*.exe
+            dist-electron-new/checksums.txt
+          if-no-files-found: error
+          retention-days: 30
