@@ -32,7 +32,7 @@ CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.gongmu.gongmu_store", "_DB_PATH", STORAGE, ("gongmu.db",)),
     ("ai_orchestrator.persistence.mail_bulk_store", "_DB_PATH", STORAGE, ("mail_bulk.db",)),
     ("ai_orchestrator.persistence.naver_mail_draft_store", "_DB_PATH", STORAGE, ("naver_mail_drafts.db",)),
-    ("ai_orchestrator.persistence.scheduled_job_store", "_DB_PATH", STORAGE, ("scheduled_jobs.db",)),
+    ("ai_orchestrator.scheduler.scheduled_job_store", "_DB_PATH", STORAGE, ("scheduled_jobs.db",)),
     ("ai_orchestrator.persistence.work_record_store", "_DB_PATH", STORAGE, ("work_records.db",)),
     ("ai_orchestrator.connectors.instagram_dm_db", "_DB_PATH", STORAGE, ("instagram_dm.db",)),
     ("ai_orchestrator.services.dev_reg_runner", "_SCREENSHOT_DIR", STORAGE, ("screenshots", "dev_reg")),

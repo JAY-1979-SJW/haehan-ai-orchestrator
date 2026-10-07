@@ -18,7 +18,8 @@
   {"name": "naver_blog", "keyword": "blog|gonobi", "homes": ["scripts/naver/blog/", "ai_orchestrator/connectors/naver_blog/", "admin-web/src/app/naver/blog/", "admin-web/src/app/naver/(legacy)/blog/"]},
   {"name": "naver_search", "keyword": "naver_search|naver_shopping|naver_kin|naver_news|naver_openapi|naver_public|shopping", "homes": ["scripts/naver/shopping/", "ai_orchestrator/connectors/naver_search/", "admin-web/src/app/naver/(legacy)/keywords/", "admin-web/src/app/api/naver/marketing-ops/"]},
   {"name": "google", "keyword": "gmail|scripts/google|google_router|connectors/google", "homes": ["scripts/google/", "ai_orchestrator/connectors/google/", "admin-web/src/app/google/"]},
- {"name": "gongmu", "keyword": "^ai_orchestrator/(?!tests/).*gongmu", "homes": ["ai_orchestrator/gongmu/"], "before_exempt": true}
+ {"name": "gongmu", "keyword": "^ai_orchestrator/(?!tests/).*gongmu", "homes": ["ai_orchestrator/gongmu/"], "before_exempt": true},
+ {"name": "scheduler", "keyword": "^ai_orchestrator/(?!tests/).*scheduled_job_(store|service|loop|router)", "homes": ["ai_orchestrator/scheduler/"], "before_exempt": true}
  ],
  "exempt": [
   {"prefix": "tests/", "reason": "시험 — 도구 집 규칙 대상 아님"},

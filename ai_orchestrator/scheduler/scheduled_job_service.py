@@ -14,7 +14,7 @@ from datetime import UTC, datetime, time, timedelta
 from typing import Any
 
 from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
-from ai_orchestrator.persistence import scheduled_job_store as store
+from ai_orchestrator.scheduler import scheduled_job_store as store
 from ai_orchestrator.services import scheduled_job_actions as actions
 
 GRACE = timedelta(minutes=10)  # 예정 시각보다 이만큼 넘게 늦으면 실행하지 않고 "놓침" 처리

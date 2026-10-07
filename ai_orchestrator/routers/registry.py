@@ -20,7 +20,7 @@ from ai_orchestrator.gongmu.gongmu_router import gongmu_router
 from ai_orchestrator.routers.naver_mail_bulk_router import naver_mail_bulk_router
 from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
 from ai_orchestrator.routers.ops_router import ops_router
-from ai_orchestrator.routers.scheduled_job_router import scheduled_job_router
+from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
 from ai_orchestrator.routers.site_onboarding_router import site_onboarding_router
 from ai_orchestrator.routers.site_task_map_router import site_task_map_router
 from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router

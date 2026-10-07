@@ -31,7 +31,7 @@ async def scheduled_job_loop() -> None:
         logger.info("[SCHEDULED-JOBS] 비활성화 (SCHEDULED_JOBS_ENABLED)")
         return
 
-    from ai_orchestrator.services import scheduled_job_service as service
+    from ai_orchestrator.scheduler import scheduled_job_service as service
 
     try:
         stale = await asyncio.to_thread(service.recover)
