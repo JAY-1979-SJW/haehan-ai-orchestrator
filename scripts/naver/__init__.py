@@ -5,7 +5,6 @@
 
 각 서비스는 실제 모듈에서 직접 import 한다:
     from scripts.naver.blog.writer import BlogWriter
-    from scripts.naver.mail import NaverMail
     from scripts.naver.cafe import NaverCafe
     from scripts.naver.smartstore import NaverSmartStore
 """

@@ -8,7 +8,6 @@ scripts/naver/__init__.py 에 있던 것을 그대로 옮겼다(패키지 __init
     n = NaverServices(get_page())
     n.login()                                  # 자동 로그인
     n.blog.write_post(title=..., body=...)     # 블로그 글
-    n.mail.list_inbox(limit=20)                # 메일 목록
     n.cafe.open_my_cafes()                     # 내 카페
     n.calendar.add_event(title=..., start=...) # 일정
     n.mybox.upload(local_path=...)             # 파일 업로드
@@ -34,7 +33,6 @@ class NaverServices:
     def __init__(self, page: Page):
         self.page = page
         self._blog = None
-        self._mail = None
         self._cafe = None
         self._calendar = None
         self._mybox = None
@@ -64,14 +62,6 @@ class NaverServices:
 
             self._blog = BlogWriter(self.page)
         return self._blog
-
-    @property
-    def mail(self):
-        if self._mail is None:
-            from scripts.naver.mail import NaverMail
-
-            self._mail = NaverMail(self.page)
-        return self._mail
 
     @property
     def cafe(self):
