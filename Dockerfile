@@ -14,6 +14,13 @@ COPY . .
 
 RUN mkdir -p /app/ai_orchestrator/storage
 
+# 빌드 식별: /api/v1/health 가 git_sha·build_time 으로 노출한다(없으면 "unknown").
+# COPY 뒤에 두어 값이 바뀌어도 pip install·COPY 레이어 캐시는 유지된다.
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+ENV GIT_SHA=${GIT_SHA} \
+    BUILD_TIME=${BUILD_TIME}
+
 EXPOSE 8400
 
 # 헬스체크: 내부에서 /api/v1/health 만 확인 (stdlib 사용, curl 미설치)
