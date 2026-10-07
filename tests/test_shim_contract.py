@@ -222,3 +222,32 @@ def test_make_shim_refuses_overwrite_and_missing_target(tmp_path):
         make_shim("a.py", "b.py", tmp_path)
     with pytest.raises(FileNotFoundError):
         make_shim("c.py", "nope.py", tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("old_path", "with_main"),
+    [
+        ("scripts/ops/ig_batch.py", True),  # 하위 폴더 + 직접 실행 부트스트랩(I001 회귀: import 블록 중간 주석)
+        ("scripts/a/b/c/tool.py", True),
+        ("dashboard.py", True),  # 루트 shim
+        ("scripts/ops/x.py", False),  # __main__ 없음
+        ("pkg/sub.py", False),
+    ],
+)
+def test_generated_shim_passes_project_ruff(old_path, with_main):
+    """생성된 shim 은 프로젝트 ruff(설정 configs/ruff.toml)의 check·format --check 를 그대로 통과해야 한다
+    (커밋 훅이 ruff 로 정리·차단하므로 생성기가 정렬·서식이 맞는 형태를 내야 한다)."""
+    import subprocess
+
+    from scripts.ops.make_shim import render_shim
+
+    text = render_shim("scripts.instagram.ig_batch", with_main=with_main, old_path=old_path)
+    for cmd in (["check"], ["format", "--check", "--diff"]):
+        r = subprocess.run(
+            [sys.executable, "-m", "ruff", *cmd, "--config", str(ROOT / "configs" / "ruff.toml"), "--stdin-filename", old_path, "-"],
+            input=text,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        assert r.returncode == 0, f"ruff {cmd[0]} 실패({old_path}):\n{r.stdout}{r.stderr}"

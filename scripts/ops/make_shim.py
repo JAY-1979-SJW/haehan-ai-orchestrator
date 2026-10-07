@@ -86,9 +86,10 @@ def _bootstrap_lines(old_path: str) -> list[str]:
     if depth <= 0:
         return []
     return [
-        f"    # {BOOTSTRAP_MARK}: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)",
+        # import 두 줄은 붙여서(ruff I001: import 블록 중간에 주석이 끼면 정렬·서식 위반), 그 뒤 빈 줄, 그다음 마커 주석과 코드
         "    from pathlib import Path as _Path",
         "",
+        f"    # {BOOTSTRAP_MARK}: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)",
         f"    _root = str(_Path(__file__).resolve().parents[{depth}])",
         "    if _root not in _sys.path:",
         "        _sys.path.insert(0, _root)",
