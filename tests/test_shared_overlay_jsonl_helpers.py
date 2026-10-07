@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.approval_record_store import read_approval_records, read_jsonl_records
-from ai_orchestrator.browser_tool.workflow_audit_writer import read_audit_records
+from ai_orchestrator.browser_tool.approval.approval_record_store import read_approval_records, read_jsonl_records
+from ai_orchestrator.browser_tool.approval.workflow_audit_writer import read_audit_records
 
 # ── browser_tool.approval_record_store.read_jsonl_records ───────────────────────────────────────
 

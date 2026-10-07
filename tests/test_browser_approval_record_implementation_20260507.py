@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.approval_record_store import (
+from ai_orchestrator.browser_tool.approval.approval_record_store import (
     ApprovalRecord,
     append_approval_record,
     build_approval_decision,
@@ -528,7 +528,7 @@ class TestNoImproperImports:
         """Should not import task_executor."""
         import inspect
 
-        import ai_orchestrator.browser_tool.approval_record_store as module
+        import ai_orchestrator.browser_tool.approval.approval_record_store as module
 
         source = inspect.getsource(module)
         assert "import task_executor" not in source
@@ -538,7 +538,7 @@ class TestNoImproperImports:
         """Should not import dispatcher."""
         import inspect
 
-        import ai_orchestrator.browser_tool.approval_record_store as module
+        import ai_orchestrator.browser_tool.approval.approval_record_store as module
 
         source = inspect.getsource(module)
         assert "import dispatcher" not in source
@@ -548,7 +548,7 @@ class TestNoImproperImports:
         """Should not import browser execution libraries."""
         import inspect
 
-        import ai_orchestrator.browser_tool.approval_record_store as module
+        import ai_orchestrator.browser_tool.approval.approval_record_store as module
 
         source = inspect.getsource(module)
         assert "selenium" not in source.lower()
@@ -558,7 +558,7 @@ class TestNoImproperImports:
         """Should not have DB write operations."""
         import inspect
 
-        import ai_orchestrator.browser_tool.approval_record_store as module
+        import ai_orchestrator.browser_tool.approval.approval_record_store as module
 
         source = inspect.getsource(module)
         assert ".execute(" not in source

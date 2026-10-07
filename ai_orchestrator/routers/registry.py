@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from ai_orchestrator.agent_dispatch.agent_dispatch_router import agent_dispatch_router
 from ai_orchestrator.agent_dispatch.agent_dispatch_router import resume_on_startup as _resume_agent_dispatch
 from ai_orchestrator.auth.auth_router import auth_router
+from ai_orchestrator.browser_tool.approval.approval_record_router import approval_record_router
 from ai_orchestrator.connectors.google.gmail_reader import collect_to_inbox as _collect_gmail
 from ai_orchestrator.connectors.naver_auth.session_router import router as naver_session_router
 from ai_orchestrator.connectors.naver_blog.automation_router import blog_automation_router
@@ -22,28 +23,27 @@ from ai_orchestrator.routers.app_status_router import app_status_router
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
 from ai_orchestrator.routers.ops_router import ops_router
+from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
 from ai_orchestrator.site_work import site_preflight_service as _site_preflight
 from ai_orchestrator.site_work import site_task_map_explore_service as _site_explore
 from ai_orchestrator.site_work import site_task_map_service as _site_map_service
+from ai_orchestrator.site_work.ai_agent_router import ai_agent_router
 from ai_orchestrator.site_work.site_onboarding_router import site_onboarding_router
 from ai_orchestrator.site_work.site_task_map_router import site_task_map_router
-from scripts.entry import site_login_registry
-from scripts.explorer import preflight_fetch, task_mapper, task_runner
-from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
-from ai_orchestrator.site_work.ai_agent_router import ai_agent_router
 from ai_orchestrator.user_data.user_data_contribution_router import user_data_contribution_router
 from ai_orchestrator.vendor_directory.vendor_directory_router import vendor_directory_router
 from ai_orchestrator.web_task.web_task_router import web_task_router
+from scripts.entry import site_login_registry
+from scripts.explorer import preflight_fetch, task_mapper, task_runner
 
+from ..agent_hub.router.root import local_agent_router
 from ..audit.audit_logger import log_event, read_recent_logs
 from ..auth.desktop_session_router import desktop_session_router
 from ..auth.user_auth_router import get_jwt_user, user_auth_router
-from ..browser_tool.approval_record_router import approval_record_router
 from ..connectors.cdp_screen_router import cdp_screen_router
 from ..connectors.community_router import community_router
 from ..connectors.eum.router import eum_router
 from ..connectors.gabia.router import gabia_router
-from ..connectors.naver_blog.gonobi_router import gonobi_router
 from ..connectors.google.gmail_router import gmail_router
 from ..connectors.google.router import google_router
 from ..connectors.hanafax.router import hanafax_router
@@ -52,6 +52,7 @@ from ..connectors.inquiry_router import inquiry_router
 from ..connectors.instagram.instagram_dm_router import instagram_dm_router
 from ..connectors.kakao.setup_router import kakao_setup_router
 from ..connectors.kakao.skill_router import kakao_skill_router
+from ..connectors.naver_blog.gonobi_router import gonobi_router
 from ..connectors.naver_blog.naver_blog_router import naver_blog_router
 from ..connectors.naver_cafe.naver_cafe_router import naver_cafe_router
 from ..connectors.naver_mail.naver_mail_router import naver_mail_router
@@ -66,7 +67,6 @@ from ..core.models import TaskRequest
 from ..gates.approval import approve_token, issue_token, reject_token
 from ..gates.auth import require_role
 from ..llm.planner import plan
-from ..agent_hub.router.root import local_agent_router
 from ..marketing.marketing_ops_router import marketing_ops_router
 from ..notify.telegram_webhook import handle_telegram_update, handle_telegram_webhook
 from ..sites.router import sites_router

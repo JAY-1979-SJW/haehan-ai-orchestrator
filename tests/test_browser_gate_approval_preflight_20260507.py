@@ -6,7 +6,7 @@ Uses temporary JSONL approval store for each test.
 
 import json
 
-from ai_orchestrator.browser_tool.approval_record_store import (
+from ai_orchestrator.browser_tool.approval.approval_record_store import (
     append_approval_record,
     build_approval_decision,
     build_approval_request,

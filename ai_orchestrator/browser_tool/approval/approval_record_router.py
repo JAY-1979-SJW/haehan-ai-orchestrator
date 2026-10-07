@@ -12,11 +12,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ai_orchestrator.core import config
-from ai_orchestrator.core.config import APPROVAL_RECORD_STORE_PATH
-from ai_orchestrator.gates.auth import require_role
-
-from .approval_record_store import (
+from ai_orchestrator.browser_tool.approval.approval_record_store import (
     ApprovalTransitionError,
     append_approval_record,
     append_decision_if_pending,
@@ -25,9 +21,12 @@ from .approval_record_store import (
     get_latest_approval_status,
     read_approval_records,
 )
-from .approval_record_store import (
+from ai_orchestrator.browser_tool.approval.approval_record_store import (
     get_approval_history as get_approval_history_records,
 )
+from ai_orchestrator.core import config
+from ai_orchestrator.core.config import APPROVAL_RECORD_STORE_PATH
+from ai_orchestrator.gates.auth import require_role
 
 logger = logging.getLogger(__name__)
 

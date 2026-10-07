@@ -25,6 +25,12 @@ try:
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
 
+from ai_orchestrator.browser_tool.approval.submit_audit_log import (
+    append_submit_audit_event,
+    build_submit_audit_event,
+    read_submit_audit_events,
+    redact_audit_payload,
+)
 from ai_orchestrator.browser_tool.submit.controlled_submit import (
     build_controlled_submit_result,
 )
@@ -35,12 +41,6 @@ from ai_orchestrator.browser_tool.submit.submit_policy import (
 from ai_orchestrator.browser_tool.submit.submit_preview import (
     SubmitPreviewInput,
     build_submit_preview,
-)
-from ai_orchestrator.browser_tool.submit_audit_log import (
-    append_submit_audit_event,
-    build_submit_audit_event,
-    read_submit_audit_events,
-    redact_audit_payload,
 )
 
 

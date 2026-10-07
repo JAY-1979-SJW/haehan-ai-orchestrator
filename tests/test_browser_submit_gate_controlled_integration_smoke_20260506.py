@@ -15,6 +15,11 @@ Integration scope (no browser, no DB, no network, no file I/O except tmp_path):
 
 import pytest
 
+from ai_orchestrator.browser_tool.approval.submit_audit_log import (
+    append_submit_audit_event,
+    build_submit_audit_event,
+    read_submit_audit_events,
+)
 from ai_orchestrator.browser_tool.submit.controlled_submit import (
     build_controlled_submit_result,
 )
@@ -23,11 +28,6 @@ from ai_orchestrator.browser_tool.submit.submit_execution_gate import (
     ExecutionGateInput,
     ExecutionGateResult,
     evaluate_execution_gate,
-)
-from ai_orchestrator.browser_tool.submit_audit_log import (
-    append_submit_audit_event,
-    build_submit_audit_event,
-    read_submit_audit_events,
 )
 
 # ---------------------------------------------------------------------------
@@ -134,7 +134,7 @@ class TestModuleImport:
         assert callable(build_controlled_submit_result)
 
     def test_submit_audit_log_importable(self):
-        from ai_orchestrator.browser_tool.submit_audit_log import (
+        from ai_orchestrator.browser_tool.approval.submit_audit_log import (
             append_submit_audit_event,
             build_submit_audit_event,
         )

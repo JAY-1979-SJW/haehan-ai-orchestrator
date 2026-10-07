@@ -174,7 +174,7 @@ encryption_key, enc_key
 
 ## 5. 구현 모듈 (Implementation)
 
-### File: `ai_orchestrator/browser_tool/submit_audit_log.py`
+### File: `ai_orchestrator/browser_tool/approval/submit_audit_log.py`
 
 #### Dataclasses
 ```python

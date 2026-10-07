@@ -162,7 +162,7 @@ def test_router_imports_clean():
 
 
 def test_approval_record_router_imports_clean():
-    from ai_orchestrator.browser_tool.approval_record_router import (
+    from ai_orchestrator.browser_tool.approval.approval_record_router import (
         approval_record_router,
     )
 
@@ -209,7 +209,7 @@ def test_health_endpoint_unchanged():
 
 def test_approval_response_keys_unchanged():
     """approval_record_router가 ApprovalRecordResponse 모델을 그대로 반환한다."""
-    from ai_orchestrator.browser_tool.approval_record_router import (
+    from ai_orchestrator.browser_tool.approval.approval_record_router import (
         ApprovalRecordResponse,
     )
 

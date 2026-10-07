@@ -1,7 +1,7 @@
 # Browser Submit Approval State Persistence 설계 문서
 
 **작성일:** 2026-05-06  
-**모듈:** ai_orchestrator/browser_tool/submit_approval_state.py  
+**모듈:** ai_orchestrator/browser_tool/approval/submit_approval_state.py  
 **상태:** ✓ 설계 완료, 테스트 30/30 PASS
 
 ---
@@ -270,7 +270,7 @@ def get_approval_status(event: Optional[dict]) -> str
 
 ```python
 from pathlib import Path
-from ai_orchestrator.browser_tool.submit_approval_state import (
+from ai_orchestrator.browser_tool.approval.submit_approval_state import (
     create_approval_requested_event,
     create_approval_decision_event,
     append_approval_state_event,

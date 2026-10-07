@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.workflow_audit_writer import (
+from ai_orchestrator.browser_tool.approval.workflow_audit_writer import (
     WorkflowAuditRecord,
     append_audit_record,
     build_audit_record,
@@ -483,7 +483,7 @@ class TestNoImproperImports:
         """Should not import task_executor."""
         import inspect
 
-        import ai_orchestrator.browser_tool.workflow_audit_writer as module
+        import ai_orchestrator.browser_tool.approval.workflow_audit_writer as module
 
         source = inspect.getsource(module)
         assert "import task_executor" not in source
@@ -493,7 +493,7 @@ class TestNoImproperImports:
         """Should not import dispatcher."""
         import inspect
 
-        import ai_orchestrator.browser_tool.workflow_audit_writer as module
+        import ai_orchestrator.browser_tool.approval.workflow_audit_writer as module
 
         source = inspect.getsource(module)
         assert "import dispatcher" not in source
@@ -503,7 +503,7 @@ class TestNoImproperImports:
         """Should not import browser execution libraries."""
         import inspect
 
-        import ai_orchestrator.browser_tool.workflow_audit_writer as module
+        import ai_orchestrator.browser_tool.approval.workflow_audit_writer as module
 
         source = inspect.getsource(module)
         assert "selenium" not in source.lower()
@@ -513,7 +513,7 @@ class TestNoImproperImports:
         """Should not have DB write operations."""
         import inspect
 
-        import ai_orchestrator.browser_tool.workflow_audit_writer as module
+        import ai_orchestrator.browser_tool.approval.workflow_audit_writer as module
 
         source = inspect.getsource(module)
         assert ".execute(" not in source

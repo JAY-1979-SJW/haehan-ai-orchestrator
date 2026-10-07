@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.browser_tool.approval_record_store import read_jsonl_records
+from ai_orchestrator.browser_tool.approval.approval_record_store import read_jsonl_records
 
 # Sensitive field names that must be redacted
 SENSITIVE_FIELD_NAMES = {
