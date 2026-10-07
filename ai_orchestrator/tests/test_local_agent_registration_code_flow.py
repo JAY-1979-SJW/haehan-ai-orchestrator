@@ -8,7 +8,7 @@ from datetime import UTC, timedelta
 
 import pytest
 
-from ai_orchestrator import local_agent_registry as reg
+from ai_orchestrator.agent_hub.registry import facade as reg
 from ai_orchestrator.auth import registration_codes as regcodes
 
 

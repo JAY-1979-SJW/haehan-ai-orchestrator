@@ -527,7 +527,7 @@
       "risk_level": "critical",
       "tools": [
         "ai_orchestrator/external_sites/provider_registry.py",
-        "scripts/local_agent/gov"
+        "scripts/sites"
       ],
       "tests": [
         "tests/test_external_site_canonical_registry_20260517.py"

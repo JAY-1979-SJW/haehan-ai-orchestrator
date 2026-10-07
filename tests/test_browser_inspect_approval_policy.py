@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
-from ai_orchestrator.local_agent_registry import (
+from ai_orchestrator.contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+from ai_orchestrator.agent_hub.registry.facade import (
     ACTION_RISK,
     clear,
     enqueue_task,

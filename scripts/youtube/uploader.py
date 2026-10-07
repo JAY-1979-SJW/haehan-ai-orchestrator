@@ -7,8 +7,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.core.security_utils import safe_preview
 from ai_orchestrator.paths.runtime import data_dir
-from orchestrator_v1.core.security_utils import safe_preview
 from scripts.common.app_paths import repo_root
 from scripts.common.publish_guard import guarded
 from scripts.common.realtime_audit import emit_event

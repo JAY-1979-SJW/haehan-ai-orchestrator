@@ -24,7 +24,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import ai_orchestrator.gates.approval as _ap
-import ai_orchestrator.local_agent_registry as reg
+import ai_orchestrator.agent_hub.registry.facade as reg
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +51,7 @@ def _make_test_client(user):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")

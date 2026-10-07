@@ -4,7 +4,7 @@ from __future__ import annotations
 import urllib.parse
 from typing import Any
 
-from ai_orchestrator.local_agent.common_tool_runtime import (
+from local_agent.runtime.common_tool_runtime import (
     EXECUTION_LOCAL_AGENT,
     RISK_READ,
     TOOL_BROWSER,

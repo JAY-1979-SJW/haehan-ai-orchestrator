@@ -140,7 +140,7 @@ L3  Connectors         ai_orchestrator/connectors/*
                        admin-web/electron/lib/bus.js
                        admin-web/electron/lib/nextjs_wrapper.js  (76파일)
 
-L4  Browser Engine     ai_orchestrator/local_agent/browser/
+L4  Browser Engine     scripts/browser/agent/
                        scripts/cdp_*.py                  (482파일)
 
 L5  Site Modules       scripts/eum/
@@ -155,7 +155,7 @@ L5  Site Modules       scripts/eum/
 L6  Workflows          scripts/*/workflows.py
                        scripts/hiworks/mail_batch.py     (5파일)
 
-L7  Persistence/Audit  ai_orchestrator/audit_logger.py
+L7  Persistence/Audit  ai_orchestrator/audit/audit_logger.py
                        ai_orchestrator/persistence/user_db.py
                        scripts/browser/cdp/cdp_db.py
                        scripts/common/op_log.py                 (940파일)

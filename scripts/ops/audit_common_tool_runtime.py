@@ -4,12 +4,15 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ai_orchestrator.local_agent.common_tool_runtime import (  # noqa: E402
+from ai_orchestrator.contracts.local_task_protocol import (  # noqa: E402
+    build_task,
+    validate_task,
+)
+from local_agent.runtime.common_tool_runtime import (  # noqa: E402
     EXECUTION_LOCAL_AGENT,
     PHASE_BLOCKED,
     RISK_READ,
@@ -19,7 +22,6 @@ from ai_orchestrator.local_agent.common_tool_runtime import (  # noqa: E402
     dry_run_common_tool_flow,
     validate_common_tool_task,
 )
-from ai_orchestrator.local_agent.task_protocol import build_task, validate_task  # noqa: E402
 
 
 def _fail(message: str) -> int:

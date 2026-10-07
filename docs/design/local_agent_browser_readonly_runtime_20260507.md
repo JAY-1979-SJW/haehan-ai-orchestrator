@@ -138,7 +138,7 @@
 | 런타임 모듈 | local_agent/browser_readonly_runtime.py |
 | 기존 read-only 브라우저 실행 | local_agent/browser_reader.py (open_url_readonly) |
 | 기존 수동 로그인 감지 | local_agent/browser_login_probe.py |
-| 정책 판정 (실행 위치) | ai_orchestrator/browser_tool/local_agent_user_present_flow.py |
+| 정책 판정 (실행 위치) | ai_orchestrator/agent_hub/user_present_flow.py |
 | 테스트 | tests/test_local_agent_browser_readonly_runtime_20260507.py |
 | fixture | tests/fixtures/local_agent_browser_readonly_runtime_20260507.json |
 | 이 문서 | docs/design/local_agent_browser_readonly_runtime_20260507.md |

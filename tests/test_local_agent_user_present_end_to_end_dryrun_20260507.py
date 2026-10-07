@@ -40,12 +40,12 @@ def _case(case_id: str) -> dict:
 
 
 # ── 모듈 임포트 ──────────────────────────────────────────────────────────────
-from ai_orchestrator.browser_tool.local_agent_user_present_dispatcher import (  # noqa: E402
+from ai_orchestrator.agent_hub.user_present_dispatcher import (  # noqa: E402
     DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
     build_user_present_dispatch_response,
     validate_user_present_dispatch_request,
 )
-from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (  # noqa: E402
+from ai_orchestrator.agent_hub.user_present_status_handler import (  # noqa: E402
     clear_status_registry,
     get_user_present_status,
     handle_user_present_status_event,
@@ -534,7 +534,7 @@ class TestFullE2EFlow:
     def test_full_flow_no_browser_action(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as disp_mod
+        import ai_orchestrator.agent_hub.user_present_dispatcher as disp_mod
         import local_agent.user_present_ws_adapter as adapter_mod
 
         for mod, name in [(disp_mod, "dispatcher"), (adapter_mod, "adapter")]:

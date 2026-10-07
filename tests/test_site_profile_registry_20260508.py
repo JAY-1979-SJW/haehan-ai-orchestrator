@@ -1,6 +1,6 @@
 """tests/test_site_profile_registry_20260508.py - site_profile_registry 단위 테스트"""
 
-from ai_orchestrator.local_agent.site_profile_registry import (
+from local_agent.runtime.site_profile_registry import (
     _COMMON_BLOCKED,
     _REGISTRY,
     CAT_GENERIC,

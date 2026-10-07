@@ -1,4 +1,10 @@
 {
+ "ai_orchestrator/server/desktop_entry.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "데스크톱 앱 서버 진입점 — asgi(L8)를 기동하는 엔트리라 같은 L8 로 분류(진입점이 앱 조립 계층을 부르는 방향)",
+  "source": "manual"
+ },
  "ai_orchestrator/browser_tool/agent_action_registry.py": {
   "layer": "L2",
   "role": "policy",
@@ -66,117 +72,117 @@
   "reason": "gates 패키지(정책·승인·인증 게이트)",
   "source": "manual"
  },
- "ai_orchestrator/local_agent/action_evidence_collector.py": {
+ "ai_orchestrator/agent_hub/action_evidence_collector.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "실행 후 민감정보 redaction 증거 수집 — 승인/감사 정책 성격, L4 generic 오분류"
  },
- "ai_orchestrator/local_agent/action_registry.py": {
+ "ai_orchestrator/agent_hub/action_registry.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "등록 액션 스펙+실행 핸들러 매핑(승인 게이트가 참조하는 정책 레지스트리) — L4 generic 오분류"
  },
- "ai_orchestrator/local_agent/action_risk_policy.py": {
+ "ai_orchestrator/contracts/action_risk_policy.py": {
   "layer": "L1",
   "role": "shared",
   "reason": "GRADE_* 순수 상수 정의만, 외부 의존 없음 — action_schemas(L1)가 참조하는 공유 계약, L2 오분류"
  },
- "ai_orchestrator/local_agent/browser/bootstrap.py": {
+ "scripts/archive/one_off/browser_agent_bootstrap.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "BrowserAgent/cdp_launcher/cdp_session_manager를 직접 조립하는 부트스트래퍼 — L1 shared 오분류"
  },
- "ai_orchestrator/local_agent/browser/cdp_audit.py": {
+ "scripts/common/cdp_audit.py": {
   "layer": "L7",
   "role": "persistence",
   "reason": "CDP 액션 감사 로그 기록 — persistence/audit 성격, cdp_session_manager(L7)와 동급, L4 오분류"
  },
- "ai_orchestrator/local_agent/browser/deep_sitemap_detector.py": {
+ "scripts/browser/agent/deep_sitemap_detector.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "BrowserAgent(L4)를 구동해 사이트맵을 탐지하는 실행기 — L1 contract 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 동작을 하드코딩한 믹스인(domain=naver_blog) — L4 로 오분류"
+ "scripts/naver/blog/blog_mixin.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py": {
+ "scripts/naver/cafe/cafe_mixin.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
  },
- "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
+ "scripts/browser/agent/sitemap_detector.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "agent.py(BrowserAgent, L4)를 구동해 사이트맵을 탐지 — 단순 외부 API 커넥터(L3) 아님, 브라우저 엔진 성격"
  },
- "ai_orchestrator/local_agent/delegated_permission_store.py": {
+ "local_agent/runtime/delegated_permission_store.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "저장 전 delegated_permission_policy(L2)의 build/check/revoke를 직접 호출해 검증까지 수행 — 단순 L7 저장소 아님, 정책 집행 성격"
  },
- "ai_orchestrator/local_agent/local_session_boundary.py": {
+ "local_agent/runtime/local_session_boundary.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "세션 경계 판정 — auto_resume_after_auth(L2)가 참조하는 정책 헬퍼, L6 script_cli(low) 오분류"
  },
- "ai_orchestrator/local_agent/natural_language_task_api.py": {
+ "local_agent/runtime/natural_language_task_api.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "자연어 입력→universal_ai_site_agent/user_intent_parser(L6) 호출 오케스트레이션 — L4 browser_engine 오분류"
  },
- "ai_orchestrator/local_agent/result_sanitizer.py": {
+ "local_agent/runtime/result_sanitizer.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "결과 sanitize(보안 redaction) — security_guard(L2)와 동급 보안 정책, L6 script_cli(low) 오분류"
  },
- "ai_orchestrator/local_agent/safe_write_result_sanitizer.py": {
+ "local_agent/runtime/safe_write_result_sanitizer.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "안전 쓰기 결과 sanitize — result_sanitizer와 동급 보안 정책, L6 script_cli(low) 오분류"
  },
- "ai_orchestrator/local_agent/security_program_auto_resume.py": {
+ "local_agent/runtime/security_program_auto_resume.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "보안 프로그램 설치/탐지 워크플로 오케스트레이션(local_security_installer_runner 등 L6 호출) — L4 generic(low) 오분류"
  },
- "ai_orchestrator/local_agent/security_program_install_completion_detector.py": {
+ "local_agent/runtime/security_program_install_completion_detector.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "security_program_detector(L6)와 동급 설치 완료 감지 워크플로 — L4 generic(low) 오분류"
  },
- "ai_orchestrator/local_agent/site_capability_matrix.py": {
+ "local_agent/runtime/site_capability_matrix.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "사이트별 지원 능력 매트릭스(정적 레지스트리) — unknown_site_fallback_policy(L2)와 동급 정책, L6 script_cli(low) 오분류"
  },
- "ai_orchestrator/local_agent/site_profile_registry.py": {
+ "local_agent/runtime/site_profile_registry.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "docstring이 '사이트별 자동화 정책을 profile로 관리'라 명시 — site_capability_matrix(L2)와 동급 정책 레지스트리, L4 오분류"
  },
- "ai_orchestrator/local_agent/task_protocol.py": {
+ "ai_orchestrator/contracts/local_task_protocol.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "태스크 프로토콜 스키마 정의 — auth_wait_controller/auto_resume(L2)가 참조하는 순수 계약, L4 오분류"
  },
- "ai_orchestrator/local_agent/universal_action_verifier.py": {
+ "local_agent/runtime/universal_action_verifier.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "universal_safe_result(L6)를 사용한 액션 검증 — 업무 흐름 검증기, L4 generic(low) 오분류"
  },
- "ai_orchestrator/local_agent/universal_agent_session.py": {
+ "local_agent/runtime/universal_agent_session.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "delegated_permission_store(L2)+natural_language_task_api(L6)를 결합하는 세션 오케스트레이터 — L4 generic(low) 오분류"
  },
- "ai_orchestrator/local_agent_models.py": {
+ "ai_orchestrator/agent_hub/models.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "LocalAgent/LocalAgentTask 데이터클래스 + 직렬화 메서드 — 순수 모델, L4 오분류"
  },
- "ai_orchestrator/local_agent_router_schemas.py": {
+ "ai_orchestrator/agent_hub/router/schemas.py": {
   "layer": "L4",
   "role": "generic",
   "reason": "registration_codes.py(L4)를 실제 top-level import — 순수 L1 pydantic 계약 아님. local_agent_router.py 언급은 docstring 텍스트뿐(실제 import 아님, false-positive 텍스트스캔 edge 였음 — 문구 수정으로 제거)"
@@ -553,7 +559,7 @@
   "reason": "런타임 임시 디렉터리 경로 선택 순수 함수(후보 경로 목록 반환) — 브라우저·외부 IO 없음. L4 기본값 오분류를 L1로 정정.",
   "source": "manual"
  },
- "orchestrator_v1/core/security_utils.py": {
+ "ai_orchestrator/core/security_utils.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "로그·감사 이벤트의 민감정보 마스킹 정규식/헬퍼(REDACTED, SENSITIVE_KEYS) 순수 함수 — IO 없음. L4 기본값 오분류를 L1로 정정.",
@@ -564,22 +570,17 @@
   "role": "generic",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/local_agent/router.py": {
-  "layer": "L6",
-  "role": "workflow",
-  "reason": "minwon_submit·webmail_send·사이트 모듈(blog_explorer 등)을 디스패치하는 로컬 에이전트 라우터 — 호출 대상이 L5·L6 이라 L6"
- },
- "scripts/local_agent/run_playwright_smoke.py": {
+ "scripts/ops/run_playwright_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/local_agent/run_universal_ai_real_site_smoke.py": {
+ "scripts/ops/run_universal_ai_real_site_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/local_agent/g2b/run_readonly_local_e2e.py": {
+ "scripts/g2b/run_readonly_local_e2e.py": {
   "layer": "L6",
   "role": "site_module",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L5, 2026-10-07 재판정)"
@@ -604,7 +605,7 @@
   "role": "persistence",
   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/browser/cdp/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
- "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py": {
+ "scripts/naver/cafe/cafe_mixin_article.py": {
   "layer": "L4",
   "role": "site_module",
   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L5 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py(역방향) 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
@@ -700,50 +701,40 @@
   "reason": "이동한 파일 — 원본 scripts/gabia/login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
   "source": "manual"
  },
- "ai_orchestrator/local_agent/browser/approval_server.py": {
+ "scripts/browser/agent/approval_server.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "request_approval 은 approval_api_client(L2)로 승인 요청을 보내는 얇은 게이트이고 Flask UI 는 로컬 폴백 — 서버 API 가 아니라 승인 게이트라 L8 이 아님"
  },
- "scripts/local_agent/gov/minwon_submit.py": {
-  "layer": "L6",
-  "role": "workflow",
-  "reason": "민원 제출을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류"
+ "scripts/naver/blog/blog_mixin_collect.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "scripts/local_agent/webmail_send.py": {
-  "layer": "L6",
-  "role": "workflow",
-  "reason": "웹메일 발송을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류"
+ "scripts/naver/blog/blog_mixin_common.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_collect.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ "scripts/naver/blog/blog_mixin_download.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_common.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ "scripts/naver/blog/blog_mixin_neighbor.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_download.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ "scripts/naver/blog/blog_mixin_read.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_neighbor.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
- },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_read.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
- },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "writer.py·selectors.py(L5)를 호출하는 네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+ "scripts/naver/blog/blog_mixin_write.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
  "scripts/site_engine/site_registry.py": {
   "layer": "L4",
@@ -1232,12 +1223,6 @@
   "layer": "L6",
   "role": "workflow",
   "reason": "CDP 명령줄 진입점 — 서비스·사이트별 명령을 한곳에서 조립·분배하는 러너(업무흐름 조립 L6). 사이트 모듈(L5)을 부르는 방향이 정상",
-  "source": "manual"
- },
- "ai_orchestrator/server/desktop_entry.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "데스크톱 앱 서버 진입점 — asgi(L8)를 기동하는 엔트리라 같은 L8 로 분류(진입점이 앱 조립 계층을 부르는 방향)",
   "source": "manual"
  },
  "ai_orchestrator/connectors/gabia/browser_task.py": {

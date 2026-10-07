@@ -1,4 +1,4 @@
-"""ai_orchestrator/local_agent/browser/electron_target.py 회귀 테스트.
+"""scripts/browser/agent/electron_target.py 회귀 테스트.
 
 실기 검증(2026-09-28, 실행 중인 Electron 앱에 --remote-debugging-port=9333으로 접속해
 admin-web webview snapshot 40개 노드/실제 클릭/스크린샷까지 확인)은
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.browser import electron_target as et
+from scripts.browser.agent import electron_target as et
 
 
 def test_find_target_prefers_webview_over_page() -> None:

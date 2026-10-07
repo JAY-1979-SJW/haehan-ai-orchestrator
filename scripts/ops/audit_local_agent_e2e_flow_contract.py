@@ -51,7 +51,7 @@ def _contains_forbidden_key(value: Any) -> list[str]:
 
 def _make_client() -> TestClient:
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -65,8 +65,8 @@ def _make_client() -> TestClient:
 def _reset_runtime_state() -> None:
     import ai_orchestrator.audit.audit_logger as audit_logger
     import ai_orchestrator.gates.approval as approval
-    import ai_orchestrator.local_agent_registry as registry
-    import ai_orchestrator.local_agent_router as local_agent_router
+    import ai_orchestrator.agent_hub.registry.facade as registry
+    import ai_orchestrator.agent_hub.router.root as local_agent_router
 
     tmp_root = ROOT / "tmp"
     tmp_root.mkdir(parents=True, exist_ok=True)
@@ -173,7 +173,7 @@ def _e2e_final(client, agent_id, task_id):
 
 
 def _e2e_high_risk(agent_id):
-    import ai_orchestrator.local_agent_registry as registry
+    import ai_orchestrator.agent_hub.registry.facade as registry
 
     high = registry.enqueue_task(
         agent_id=agent_id,

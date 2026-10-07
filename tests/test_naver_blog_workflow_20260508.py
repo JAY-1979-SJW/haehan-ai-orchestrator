@@ -4,21 +4,21 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.content_workflow_policy import (
+from local_agent.runtime.content_workflow_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_USER_DELEGATED,
     requires_permission,
 )
-from ai_orchestrator.local_agent.delegated_action_executor import (
+from local_agent.runtime.delegated_action_executor import (
     EXEC_ALLOWED,
     EXEC_NEED_PERMISSION,
 )
-from ai_orchestrator.local_agent.delegated_permission_store import (
+from local_agent.runtime.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,
 )
-from ai_orchestrator.local_agent.naver_blog_workflow import (
+from scripts.naver.blog.naver_blog_workflow import (
     STEP_DELETE,
     STEP_EDIT,
     STEP_GENERATE_BODY,
@@ -36,7 +36,7 @@ from ai_orchestrator.local_agent.naver_blog_workflow import (
     read_blog_post,
     schedule_blog_publish,
 )
-from ai_orchestrator.local_agent.naver_content_safe_result import validate_naver_result
+from scripts.naver.blog.naver_content_safe_result import validate_naver_result
 
 
 @pytest.fixture(autouse=True)

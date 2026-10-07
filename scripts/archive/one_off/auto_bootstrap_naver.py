@@ -13,7 +13,7 @@ def run_bootstrap():
 
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "ai_orchestrator.local_agent.browser.bootstrap"],
+            [sys.executable, "-m", "scripts.archive.one_off.browser_agent_bootstrap"],
             cwd=REPO_ROOT,
             capture_output=False,
             text=True,
@@ -51,33 +51,33 @@ def fix_and_retry():
                 print(f"  생성 중: {fname}")
                 # Bootstrap 함수를 직접 호출하는 대신, 파일을 직접 생성
                 if fname == "mail_mixin.py":
-                    from ai_orchestrator.local_agent.browser.bootstrap import create_mail_mixin
+                    from scripts.archive.one_off.browser_agent_bootstrap import create_mail_mixin
 
                     create_mail_mixin()
                 elif fname == "calendar_mixin.py":
-                    from ai_orchestrator.local_agent.browser.bootstrap import create_calendar_mixin
+                    from scripts.archive.one_off.browser_agent_bootstrap import create_calendar_mixin
 
                     create_calendar_mixin()
                 elif fname == "mybox_mixin.py":
-                    from ai_orchestrator.local_agent.browser.bootstrap import create_mybox_mixin
+                    from scripts.archive.one_off.browser_agent_bootstrap import create_mybox_mixin
 
                     create_mybox_mixin()
 
         # __init__.py 업데이트
         print("  업데이트 중: __init__.py")
-        from ai_orchestrator.local_agent.browser.bootstrap import update_mixins_init
+        from scripts.archive.one_off.browser_agent_bootstrap import update_mixins_init
 
         update_mixins_init()
 
         # agent.py 업데이트
         print("  업데이트 중: agent.py")
-        from ai_orchestrator.local_agent.browser.bootstrap import update_browser_agent
+        from scripts.archive.one_off.browser_agent_bootstrap import update_browser_agent
 
         update_browser_agent()
 
         # 검증
         print("  검증 중...")
-        from ai_orchestrator.local_agent.browser.bootstrap import verify_import
+        from scripts.archive.one_off.browser_agent_bootstrap import verify_import
 
         if verify_import():
             print("\n✓ 수정 완료!\n")

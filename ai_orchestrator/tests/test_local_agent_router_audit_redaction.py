@@ -43,7 +43,7 @@ def test_approve_path_no_token_id_in_audit(monkeypatch):
     risk = _make_test_risk()
 
     # Patch router's log_event to capture calls
-    with patch("ai_orchestrator.local_agent_router.log_event") as mock_log:
+    with patch("ai_orchestrator.agent_hub.router.root.log_event") as mock_log:
         # Create token
         token = approval.issue_token(req, risk)
         mock_log.reset_mock()  # Reset after token creation

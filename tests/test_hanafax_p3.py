@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 
 from ai_orchestrator.connectors.hanafax import auto_sender as adapter
-from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, classify_action
+from ai_orchestrator.contracts.action_risk_policy import GRADE_AUTO_ALLOWED, classify_action
 from ai_orchestrator.connectors.hanafax import authorization_store as store
 from ai_orchestrator.connectors.hanafax import authorization_service as service
 from ai_orchestrator.services import scheduled_job_actions as actions

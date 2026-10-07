@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ai_orchestrator.local_agent_error_mapping import (
+from ai_orchestrator.agent_hub.error_mapping import (
     ERROR_STATUS_CODES,
     ErrorType,
     make_error_response,
@@ -169,7 +169,7 @@ def test_make_error_response_no_token_in_message():
 
 def test_error_mapping_module_importable():
     """에러 매핑 모듈이 정상적으로 임포트 가능한지 검증."""
-    import ai_orchestrator.local_agent_error_mapping as error_mapping_module
+    import ai_orchestrator.agent_hub.error_mapping as error_mapping_module
 
     assert hasattr(error_mapping_module, "ErrorType")
     assert hasattr(error_mapping_module, "ERROR_STATUS_CODES")
@@ -179,7 +179,7 @@ def test_error_mapping_module_importable():
 def test_no_circular_import_with_router():
     """에러 매핑 모듈과 라우터 간 순환 참조 없음을 검증."""
     try:
-        from ai_orchestrator.local_agent_router import local_agent_router
+        from ai_orchestrator.agent_hub.router.root import local_agent_router
 
         assert local_agent_router is not None
     except ImportError:

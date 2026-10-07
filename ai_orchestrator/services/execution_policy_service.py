@@ -17,7 +17,7 @@
 
 기존 원본:
 - ai_orchestrator/server/execution_location_guard.py (원본 유지)
-- ai_orchestrator/local_agent/action_risk_policy.py (원본 유지)
+- ai_orchestrator/contracts/action_risk_policy.py (원본 유지)
 - ai_orchestrator/tasks/external_work_registry.py (원본 유지)
 
 이 서비스는 3단계 Policy Layer 통합 공정의 준비 계층이다.
@@ -328,7 +328,7 @@ class ExecutionPolicyService:
     def classify_action_risk(self, action: str) -> str:
         """action_risk_policy.classify_action wrapper."""
         try:
-            from ai_orchestrator.local_agent.action_risk_policy import classify_action
+            from ai_orchestrator.contracts.action_risk_policy import classify_action
 
             return classify_action(action)
         except Exception as exc:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
@@ -338,7 +338,7 @@ class ExecutionPolicyService:
     def is_action_blocked(self, action: str) -> bool:
         """action_risk_policy.is_blocked wrapper."""
         try:
-            from ai_orchestrator.local_agent.action_risk_policy import is_blocked
+            from ai_orchestrator.contracts.action_risk_policy import is_blocked
 
             return is_blocked(action)
         except Exception as exc:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)
@@ -349,7 +349,7 @@ class ExecutionPolicyService:
     def is_user_direct_action(self, action: str) -> bool:
         """action_risk_policy.is_user_direct_required wrapper."""
         try:
-            from ai_orchestrator.local_agent.action_risk_policy import is_user_direct_required
+            from ai_orchestrator.contracts.action_risk_policy import is_user_direct_required
 
             return is_user_direct_required(action)
         except Exception as exc:  # noqa: BLE001 - 정책 모듈 import 실패 시 폴백 — is_action_blocked/is_user_direct_action/is_final_action/is_secret_storage_forbidden/is_domain_change_approval_required 5곳은 fail-closed(차단/승인필요 쪽)로 직접 수정(2026-09-28), 나머지는 이미 안전한 기본값(QUARANTINE/SERVER_INTERNAL_ONLY) 또는 전달받은 classification 기반 계산값 사용(맹목적 허용 아님)

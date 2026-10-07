@@ -34,9 +34,9 @@ FORBIDDEN_SCHEDULER_NEEDLES = [
 
 FORBIDDEN_SOURCE_NEEDLES = [
     ("scripts/build_desktop_webview_app_windows.py", "desktop.webview_app_pywebview"),
-    ("scripts/local_agent/install_cdp_chrome_task.ps1", "New-ScheduledTaskTrigger"),
-    ("scripts/local_agent/install_cdp_chrome_task.ps1", "Register-ScheduledTask"),
-    ("scripts/local_agent/install_cdp_chrome_task.ps1", "-AtLogOn"),
+    ("scripts/browser/cdp/install_cdp_chrome_task.ps1", "New-ScheduledTaskTrigger"),
+    ("scripts/browser/cdp/install_cdp_chrome_task.ps1", "Register-ScheduledTask"),
+    ("scripts/browser/cdp/install_cdp_chrome_task.ps1", "-AtLogOn"),
 ]
 
 

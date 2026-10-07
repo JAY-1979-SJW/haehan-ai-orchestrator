@@ -8,7 +8,7 @@ local_agent_audit_builders 모듈이 audit note/payload 구성 helper를
 
 def test_build_approval_note_with_public_id():
     """approval note builder가 approval_public_id를 포함한다."""
-    from ai_orchestrator.local_agent_audit_builders import build_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_approval_note
 
     note = build_approval_note(
         agent_id="test-agent",
@@ -23,7 +23,7 @@ def test_build_approval_note_with_public_id():
 
 def test_build_approval_note_without_public_id():
     """approval note builder가 approval_public_id 없이도 작동한다."""
-    from ai_orchestrator.local_agent_audit_builders import build_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_approval_note
 
     note = build_approval_note(
         agent_id="test-agent",
@@ -36,7 +36,7 @@ def test_build_approval_note_without_public_id():
 
 def test_build_approval_note_with_reason():
     """approval rejection note에 reason이 포함된다."""
-    from ai_orchestrator.local_agent_audit_builders import build_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_approval_note
 
     note = build_approval_note(
         agent_id="test-agent",
@@ -51,7 +51,7 @@ def test_build_approval_note_with_reason():
 
 def test_build_approval_note_reason_none():
     """approval note builder가 reason=None을 처리한다."""
-    from ai_orchestrator.local_agent_audit_builders import build_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_approval_note
 
     note = build_approval_note(
         agent_id="test-agent",
@@ -66,7 +66,7 @@ def test_build_approval_note_reason_none():
 
 def test_build_approval_note_no_token_id():
     """approval note builder는 token_id를 절대 포함하지 않는다."""
-    from ai_orchestrator.local_agent_audit_builders import build_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_approval_note
 
     note = build_approval_note(
         agent_id="test-agent",
@@ -81,7 +81,7 @@ def test_build_approval_note_no_token_id():
 
 def test_build_replay_note():
     """replay (이미 결정된 작업 재시도) note builder."""
-    from ai_orchestrator.local_agent_audit_builders import build_replay_note
+    from ai_orchestrator.agent_hub.audit_builders import build_replay_note
 
     note = build_replay_note(
         agent_id="test-agent",
@@ -94,7 +94,7 @@ def test_build_replay_note():
 
 def test_build_task_note():
     """일반 task 생성 note builder."""
-    from ai_orchestrator.local_agent_audit_builders import build_task_note
+    from ai_orchestrator.agent_hub.audit_builders import build_task_note
 
     note = build_task_note(
         agent_id="test-agent",
@@ -107,7 +107,7 @@ def test_build_task_note():
 
 def test_build_screenshot_approval_note():
     """capture_screenshot approval note builder."""
-    from ai_orchestrator.local_agent_audit_builders import build_screenshot_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_screenshot_approval_note
 
     # task는 보통 dict-like object (to_safe() 호출 결과)
     task_params = {
@@ -130,7 +130,7 @@ def test_build_screenshot_approval_note():
 
 def test_build_screenshot_approval_note_dry_run():
     """dry_run=True인 경우."""
-    from ai_orchestrator.local_agent_audit_builders import build_screenshot_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_screenshot_approval_note
 
     note = build_screenshot_approval_note(
         agent_id="test-agent",
@@ -145,7 +145,7 @@ def test_build_screenshot_approval_note_dry_run():
 
 def test_build_screenshot_approval_note_long_reason():
     """긴 reason이 축약된다."""
-    from ai_orchestrator.local_agent_audit_builders import build_screenshot_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_screenshot_approval_note
 
     long_reason = "x" * 200
 
@@ -163,7 +163,7 @@ def test_build_screenshot_approval_note_long_reason():
 
 def test_build_screenshot_approval_note_with_approval_public_id():
     """screenshot note에 approval_public_id가 포함될 수 있다."""
-    from ai_orchestrator.local_agent_audit_builders import build_screenshot_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_screenshot_approval_note
 
     note = build_screenshot_approval_note(
         agent_id="test-agent",
@@ -178,7 +178,7 @@ def test_build_screenshot_approval_note_with_approval_public_id():
 
 def test_audit_builders_no_token_id_leak():
     """모든 audit builder가 token_id를 포함하지 않는다."""
-    from ai_orchestrator.local_agent_audit_builders import (
+    from ai_orchestrator.agent_hub.audit_builders import (
         build_approval_note,
         build_replay_note,
         build_screenshot_approval_note,
@@ -207,7 +207,7 @@ def test_audit_builders_no_token_id_leak():
 
 def test_audit_builders_no_sensitive_keys():
     """audit note에 token_id/api_key/secret 원문이 포함되지 않는다."""
-    from ai_orchestrator.local_agent_audit_builders import build_screenshot_approval_note
+    from ai_orchestrator.agent_hub.audit_builders import build_screenshot_approval_note
 
     # 실제 민감값 패턴 (값 원문)
     sensitive_patterns = [

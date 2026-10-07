@@ -23,14 +23,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (
+from ai_orchestrator.agent_hub.user_present_status_handler import (
     clear_status_registry,
     handle_user_present_status_event,
 )
-from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (
+from ai_orchestrator.agent_hub.user_present_status_handler import (
     get_user_present_status as handler_get_status,
 )
-from ai_orchestrator.browser_tool.local_agent_user_present_status_store import (
+from ai_orchestrator.agent_hub.user_present_status_store import (
     clear_store_for_testing,
     get_user_present_status,
     list_user_present_statuses,
@@ -203,7 +203,7 @@ class TestStatusStore(unittest.TestCase):
     def test_15_no_db_write(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_store as m
+        import ai_orchestrator.agent_hub.user_present_status_store as m
 
         src = inspect.getsource(m)
         for mod in ["sqlite3", "psycopg2", "sqlalchemy", "pymongo", "motor"]:
@@ -213,7 +213,7 @@ class TestStatusStore(unittest.TestCase):
     def test_16_no_browser_worker_task_executor(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_store as m
+        import ai_orchestrator.agent_hub.user_present_status_store as m
 
         src = inspect.getsource(m)
         # docstring/comment 제외 실제 import/call 라인만 검사
@@ -233,7 +233,7 @@ class TestStatusStore(unittest.TestCase):
     def test_17_no_automation_calls(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_store as m
+        import ai_orchestrator.agent_hub.user_present_status_store as m
 
         src = inspect.getsource(m)
         for call in ["page.click", "page.type", "page.fill", "page.goto", ".submit("]:

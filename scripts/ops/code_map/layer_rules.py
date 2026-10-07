@@ -26,12 +26,12 @@ LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
     "scripts/common/op_log.py": ("L3", "low-level operation log writer, IO wrapper"),
     "scripts/common/realtime_audit.py": ("L3", "low-level realtime audit log helper"),
     "scripts/browser/cdp/cdp_db.py": ("L3", "low-level CDP sqlite IO wrapper"),
-    "ai_orchestrator/local_agent/browser/audit_log.py": ("L3", "low-level audit log writer"),
-    "ai_orchestrator/local_agent/browser/cdp_audit.py": ("L3", "low-level CDP audit log helper"),
+    "scripts/browser/agent/audit_log.py": ("L3", "low-level audit log writer"),
+    "scripts/common/cdp_audit.py": ("L3", "low-level CDP audit log helper"),
     "logging_utils.py": ("L3", "shared logging facade, IO wrapper"),
-    "ai_orchestrator/local_agent/task_protocol.py": ("L1", "task protocol DTO/contract"),
+    "ai_orchestrator/contracts/local_task_protocol.py": ("L1", "task protocol DTO/contract"),
     "ai_orchestrator/safety_policy/secret_redaction.py": ("L1", "redaction helper (L1 per layer definition)"),
-    "ai_orchestrator/local_agent/result_sanitizer.py": ("L1", "result sanitizer/redaction helper"),
+    "local_agent/runtime/result_sanitizer.py": ("L1", "result sanitizer/redaction helper"),
     "local_agent/desktop_config.py": ("L1", "desktop config helper"),
     "local_agent/network_bypass.py": ("L3", "low-level network IO helper"),
 }
@@ -90,8 +90,8 @@ def _classify_server_and_browser(p: str, name: str) -> tuple[str, str] | None:
         ("cdp_", "navigator", "popup_", "page_")
     ):
         return "L4", "generic browser automation path"
-    if p.startswith("ai_orchestrator/local_agent/browser/") or p.startswith("local_agent/browser_"):
-        return "L4", "local browser automation path"
+    if p.startswith(("ai_orchestrator/local_agent/browser/", "scripts/browser/agent/")) or p.startswith("local_agent/browser_"):
+        return "L4", "local browser automation path"  # CDP 엔진(T4 C12b 에서 scripts/browser/agent/ 로 이동)은 이전과 같은 층
     return None
 
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from orchestrator_v1.core.security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 from scripts.common.youtube_api_common import (
     ROOT,
     SENSITIVE_WORDS,

@@ -117,7 +117,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         requires_auth=True,
         auth_method="browser_session",
         registered_in_web_task=False,
-        notes="서버 브라우저 금지. local_agent/browser/mixins 의 blog_mixin 구현 있음. "
+        notes="서버 브라우저 금지. scripts/naver/blog 의 blog_mixin 구현 있음. "
         "실제 게시는 사용자 승인 후 로컬 에이전트가 수행.",
     ),
     ExternalWorkEntry(
@@ -132,7 +132,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         requires_auth=True,
         auth_method="browser_session",
         registered_in_web_task=False,
-        notes="서버 브라우저 금지. local_agent/browser/mixins 의 cafe_mixin 구현 있음.",
+        notes="서버 브라우저 금지. scripts/naver/cafe 의 cafe_mixin 구현 있음.",
     ),
     ExternalWorkEntry(
         work_key="naver/mail_send",
@@ -146,7 +146,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         requires_auth=True,
         auth_method="browser_session",
         registered_in_web_task=False,
-        notes="메일 발송은 사용자가 직접 확인 후 실행. local_agent/browser/mixins 의 mail_mixin 모듈.",
+        notes="메일 발송은 사용자가 직접 확인 후 실행. scripts/naver/mail 의 mail_mixin 모듈.",
     ),
     # ── Google: 공식 API/OAuth 계열 ──────────────────────────────────────────
     ExternalWorkEntry(

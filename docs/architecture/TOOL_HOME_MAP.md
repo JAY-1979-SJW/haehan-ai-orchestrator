@@ -100,7 +100,7 @@
 **naver_cafe (이탈 24)**
 - 화면 `admin-web/src/app/assistant/(legacy)/cafe/*`(10) → `admin-web/src/app/naver/cafe/` (URL 변경, 리다이렉트)
 - `scripts/naver/router_cafe.py` → `scripts/naver/cafe/`(운영 3), `scripts/ops/{daily_cafe_marketing_pipeline,export_cafe_keywords_excel}.py` → `scripts/naver/cafe/ops/`
-- `local_agent/browser/mixins/cafe_mixin*.py`(7)·`_js/extract_cafe_posts.js`·`naver_cafe_workflow.py`·`scripts/local_agent/run_naver_cafe_to_blog_workflow.py` → T4연동 10
+- `local_agent/browser/mixins/cafe_mixin*.py`(7)·`_js/extract_cafe_posts.js`·`naver_cafe_workflow.py`·`scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py` → T4연동 10
 
 **youtube (이탈 31 → 재분류, 정정 2026-10-07 split-youtube)** — 실제 이동 대상은 소수였다
 - 이동 완료: `scripts/yt_upload/*`(6, B1 `b4908817`) → `scripts/youtube/upload/`, `scripts/smoke_youtube_manual_login_probe.py` → `scripts/youtube/`(split-youtube `2ce2345e`)

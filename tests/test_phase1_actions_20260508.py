@@ -6,13 +6,9 @@ Playwright 실제 호출은 mock — 외부 사이트 접속 없음.
 
 import pytest
 
-from ai_orchestrator.local_agent.action_registry import get_handler
-from ai_orchestrator.local_agent.actions import (
-    browser_attach_file,
-    browser_download_file,
-    future_action_stubs,
-)
-from ai_orchestrator.local_agent.user_approval_gate import (
+from ai_orchestrator.agent_hub.action_registry import get_handler
+from ai_orchestrator.agent_hub.actions import browser_attach_file, browser_download_file, future_action_stubs
+from ai_orchestrator.agent_hub.policy.user_approval_gate import (
     approve_request,
     clear_all,
     create_approval_request,
@@ -128,7 +124,7 @@ def test_attach_file_token_consumed_once(tmp_path):
     token = appr["approval_token"]
 
     # 토큰 검증 함수 직접 호출 — 1회 사용 후 EXHAUSTED
-    from ai_orchestrator.local_agent.user_approval_gate import verify_and_consume_token
+    from ai_orchestrator.agent_hub.policy.user_approval_gate import verify_and_consume_token
 
     v1 = verify_and_consume_token(token, "browser.attach_file", params)
     assert v1["ok"] is True

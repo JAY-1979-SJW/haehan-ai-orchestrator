@@ -15,7 +15,7 @@ ai_orchestrator/mcp_server.py 는 로컬 FastAPI(127.0.0.1:8401)를 HTTP로 호�
 쓰던 gpt_description_writer·scripts.common.critical_logger·scripts.logger가
 mcp_server.py에서 더 이상 안 보여 hidden_imports에서 뺐다. 대신 현재 코드가
 실제로 동적 import하는 경로(scripts.naver.smartstore.*, scripts.naver.cafe.*,
-ai_orchestrator.local_agent.browser.*)로 갱신했다(정적 점검, 실제 빌드 확인은
+scripts.browser.agent.*)로 갱신했다(정적 점검, 실제 빌드 확인은
 CI 첫 실행에서).
 """
 
@@ -34,8 +34,8 @@ hidden_imports = [
     "dotenv",
     "playwright",
     "playwright.sync_api",
-    "ai_orchestrator.local_agent.browser.universal_actions",
-    "ai_orchestrator.local_agent.browser.electron_target",
+    "scripts.browser.agent.universal_actions",
+    "scripts.browser.agent.electron_target",
     "scripts.naver.smartstore",
     "scripts.naver.smartstore.product.page_builder",
     "scripts.naver.smartstore.product.form_runner",

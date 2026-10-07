@@ -1,5 +1,5 @@
 from ai_orchestrator.external_sites.provider_registry import get_provider
-from ai_orchestrator.local_agent.content_workflow_policy import NAVER_LOGIN_DOMAIN
+from local_agent.runtime.content_workflow_policy import NAVER_LOGIN_DOMAIN
 from ai_orchestrator.sites.adapters.naver_cafe_adapter import NaverCafeAdapter
 from scripts.auth.known_login_urls import get_known_login_url
 from scripts.naver.common.auth import NAVER_LOGIN_URL

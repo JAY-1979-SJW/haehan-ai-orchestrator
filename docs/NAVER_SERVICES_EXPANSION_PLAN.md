@@ -23,7 +23,7 @@
 
 ### 2.1 파일 구조
 ```
-ai_orchestrator/local_agent/browser/
+scripts/browser/agent/
 ├─ mixins/
 │  ├─ blog_mixin.py     [완성]
 │  ├─ cafe_mixin.py     [완성]

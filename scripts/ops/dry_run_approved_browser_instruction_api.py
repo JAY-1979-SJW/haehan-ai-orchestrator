@@ -86,7 +86,7 @@ def staged_paths(status_lines: list[str]) -> set[str]:
 
 def make_client(user: dict) -> TestClient:
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -171,7 +171,7 @@ def dry_run() -> DryRunResult:
     else:
         add(findings, "PASS", "out_of_scope_staged", "none")
 
-    from ai_orchestrator import local_agent_registry as _reg
+    from ai_orchestrator.agent_hub.registry import facade as _reg
     from ai_orchestrator.audit import audit_logger as _al
     from ai_orchestrator.gates import approval as _ap
 

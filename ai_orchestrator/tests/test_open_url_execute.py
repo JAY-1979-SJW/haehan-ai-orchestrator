@@ -31,7 +31,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _clear_registry():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     reg.clear()
     yield
@@ -47,7 +47,7 @@ def _make_test_client(user: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -103,7 +103,7 @@ def test_open_url_dry_run_false_still_rejected():
 
 
 def test_open_url_execute_action_risk_high():
-    from ai_orchestrator.local_agent_registry import ACTION_RISK
+    from ai_orchestrator.agent_hub.registry.facade import ACTION_RISK
 
     assert ACTION_RISK["open_url_execute"] == "high"
 
@@ -114,7 +114,7 @@ def test_open_url_execute_action_risk_high():
 
 
 def test_open_url_execute_not_in_server_auto_complete():
-    from ai_orchestrator.local_agent_registry import _SERVER_AUTO_COMPLETE
+    from ai_orchestrator.agent_hub.registry.facade import _SERVER_AUTO_COMPLETE
 
     assert "open_url_execute" not in _SERVER_AUTO_COMPLETE
 
@@ -261,7 +261,7 @@ def test_open_url_execute_query_string_stripped_from_result():
 
 
 def test_open_url_execute_waiting_approval_not_delivered():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     result = reg.register_agent(
         host="pc-test",
@@ -290,7 +290,7 @@ def test_open_url_execute_waiting_approval_not_delivered():
 
 
 def test_open_url_execute_mark_approved_queued_and_pending():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     result = reg.register_agent(
         host="pc-test2",
@@ -323,7 +323,7 @@ def test_open_url_execute_mark_approved_queued_and_pending():
 
 
 def test_open_url_execute_attach_and_validate_token():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
     from ai_orchestrator.gates.approval import approve_token, issue_token_for_dev_reg, validate_token
 
     result = reg.register_agent(
@@ -400,7 +400,7 @@ def test_open_url_execute_result_data_fields():
 
 
 def test_result_data_allowed_keys_include_approval_fields():
-    from ai_orchestrator.local_agent_registry import _RESULT_DATA_ALLOWED_KEYS
+    from ai_orchestrator.agent_hub.registry.facade import _RESULT_DATA_ALLOWED_KEYS
 
     for key in ("approval_id", "approved_by", "execution_task_id"):
         assert key in _RESULT_DATA_ALLOWED_KEYS, f"{key} 가 허용 목록에 없음"
@@ -412,7 +412,7 @@ def test_result_data_allowed_keys_include_approval_fields():
 
 
 def test_router_open_url_execution_request_creates_waiting_approval():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     user = _make_admin_user()
     client = _make_test_client(user)
@@ -516,7 +516,7 @@ def test_open_url_execute_ws_running_then_result_ack_completed(tmp_path):
     서버 상태 기계: waiting_approval → queued → delivered → running → completed.
     running 없이 result 전송 시 InvalidTaskTransitionError 발생 확인도 포함한다.
     """
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     user = _make_admin_user()
     client = _make_test_client(user)
@@ -589,7 +589,7 @@ def test_open_url_execute_ws_result_without_running_fails(tmp_path):
     """
     from starlette.websockets import WebSocketDisconnect
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     user = _make_admin_user()
     client = _make_test_client(user)
@@ -683,7 +683,7 @@ def test_open_url_execute_ws_persists_result_data(tmp_path):
     서버 _handle_result 가 msg['data'] 를 apply_result(data=...) 로 전달하며,
     _strip_result_data allowlist 통과 키만 result_data 에 저장됨을 확인한다.
     """
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
     from local_agent.websocket_client import process_task
 
     user = _make_admin_user()
@@ -762,7 +762,7 @@ def test_open_url_execute_ws_persists_result_data(tmp_path):
 
 def test_ws_result_handler_drops_unknown_data_keys(tmp_path):
     """클라이언트가 unknown/sensitive key 를 보내도 서버가 _strip_result_data 로 drop."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     user = _make_admin_user()
     client = _make_test_client(user)

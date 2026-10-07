@@ -20,7 +20,7 @@ const path = require("path");
 
 // Electron 앱 자신의 창(webview 포함)을 CDP로 제어할 수 있게 원격 디버깅 포트를 연다.
 // ready 이벤트 이전에 호출해야 한다(공식 문서: code.electronjs.org/docs/latest/api/command-line-switches).
-// 9222는 scripts/local_agent/start_chrome_with_cdp.py 가 쓰는 "사용자 Chrome" CDP 포트와 겹치므로
+// 9222는 scripts/browser/cdp/start_chrome_with_cdp.py 가 쓰는 "사용자 Chrome" CDP 포트와 겹치므로
 // 별도 포트(9333)를 쓴다 — 웹사이트 자동화(사용자 Chrome)와 앱 자체 자동화(이 창)를 분리한다.
 app.commandLine.appendSwitch("remote-debugging-port", "9333");
 

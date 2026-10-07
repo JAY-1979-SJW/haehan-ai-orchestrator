@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """네이버 블로그 도구 테스트."""
 
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from scripts.browser.agent.agent import BrowserAgent
 
 
 def test_blog_exploration():

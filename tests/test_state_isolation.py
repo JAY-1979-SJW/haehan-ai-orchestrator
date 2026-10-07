@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_registry_state_path_is_isolated():
-    from ai_orchestrator import local_agent_registry_common as reg
+    from ai_orchestrator.agent_hub.registry import common as reg
 
     assert ROOT / "data" not in Path(reg._REGISTRY_STATE_PATH).parents
 
@@ -20,7 +20,7 @@ def test_chat_store_path_is_isolated():
 
 
 def test_clear_does_not_delete_real_registry_file():
-    from ai_orchestrator import local_agent_registry_common as reg
+    from ai_orchestrator.agent_hub.registry import common as reg
 
     real = ROOT / "data" / "local_agent_registry_state.json"
     existed = real.exists()

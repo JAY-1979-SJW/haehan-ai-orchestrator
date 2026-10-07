@@ -4,7 +4,7 @@ PC local audit.jsonl 원문은 절대 저장/반환하지 않는다.
 audit_summary는 allowlist 방식으로 필드를 필터링한다.
 """
 
-from ai_orchestrator import local_agent_registry as reg
+from ai_orchestrator.agent_hub.registry import facade as reg
 
 
 class TestAuditSummaryBasic:

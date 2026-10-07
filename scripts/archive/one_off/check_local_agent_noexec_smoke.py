@@ -24,11 +24,11 @@ def check(level: str, msg: str) -> None:
 # ── A. 필수 파일 존재 ──────────────────────────────────────────────────────────
 
 REQUIRED_FILES = [
-    "ai_orchestrator/local_agent_router.py",
+    "ai_orchestrator/agent_hub/router/root.py",
     "ai_orchestrator/gates/approval.py",
     "ai_orchestrator/gates/policy.py",
     "ai_orchestrator/policies/default_policy.yaml",
-    "ai_orchestrator/local_agent_registry.py",
+    "ai_orchestrator/agent_hub/registry/facade.py",
     "admin-web/src/app/local-agents/LocalAgentsClient.tsx",
     "admin-web/src/lib/api.ts",
     "admin-web/src/types/local-agent.ts",
@@ -75,7 +75,7 @@ for marker, file_path, severity in APPROVAL_MARKERS:
 
 POLICY_FILE = REPO_ROOT / "ai_orchestrator/policies/default_policy.yaml"
 APPROVAL_PY = REPO_ROOT / "ai_orchestrator/gates/approval.py"
-ROUTER_PY = REPO_ROOT / "ai_orchestrator/local_agent_router.py"
+ROUTER_PY = REPO_ROOT / "ai_orchestrator/agent_hub/router/root.py"
 
 SAFETY_MARKERS = [
     ("dry_run", ROUTER_PY, "FAIL"),

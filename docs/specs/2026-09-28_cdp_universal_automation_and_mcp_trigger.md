@@ -79,8 +79,8 @@
 
 | 자산 | 역할 | 처리 |
 |---|---|---|
-| `ai_orchestrator/local_agent/browser/cdp.py` (`open_cdp_session`/`CDPSession.new_tab`) | 사용자 Chrome에 Playwright로 CDP 연결, 새 탭 관리 | 그대로 재사용 — 신규 계층의 진입점 |
-| `ai_orchestrator/local_agent_registry_task_queue.py` / `local_agent_registry_task_lifecycle.py` | 작업 큐 상태전이(`queued→delivered→running→completed/failed`), 이미 구현·테스트됨 | 그대로 재사용 — 버튼 트리거의 큐로 사용 |
+| `scripts/browser/agent/cdp.py` (`open_cdp_session`/`CDPSession.new_tab`) | 사용자 Chrome에 Playwright로 CDP 연결, 새 탭 관리 | 그대로 재사용 — 신규 계층의 진입점 |
+| `ai_orchestrator/agent_hub/registry/task_queue.py` / `local_agent_registry_task_lifecycle.py` | 작업 큐 상태전이(`queued→delivered→running→completed/failed`), 이미 구현·테스트됨 | 그대로 재사용 — 버튼 트리거의 큐로 사용 |
 | **`local_agent/agent.py` + `local_agent/actions.py`**(드라이런 대비 변경 — 아래 §5.1 참고) | device_token 인증 + 포맬한 액션 레지스트리로 이미 `/api/v1/local-agents/ws`에 접속하는 상시 클라이언트 | **신규 스크립트 대신 이걸 그대로 재사용.** `run_claude_agent` 액션 1개만 추가 |
 | `POST /api/v1/local-agents/{agent_id}/tasks`(기존, 신규 아님 — 드라이런에서는 신규로 오판) | 특정 에이전트에 작업 적재 | 그대로 재사용 — `action: "run_claude_agent"`로 호출 |
 | `ai_orchestrator/mcp_server.py`의 `list_api_endpoints`/`call_api` | 앱 API 전체를 MCP 도구로 범용 노출하는 기존 패턴 | 패턴 재사용 — `snapshot_page`/`act_on_page`/`navigate_page` 3종 추가 |
@@ -101,7 +101,7 @@
         ▼
 [작업 큐] ── local_agent_registry_task_queue.py (queued)
         │ 3중 게이트 통과 필요(실기로 발견): ACTION_RISK(local_agent_risk_policy.py) +
-        │ AUTO_EXECUTE_VIA_AGENT(ai_orchestrator/local_agent_actions.py) +
+        │ AUTO_EXECUTE_VIA_AGENT(ai_orchestrator/contracts/local_agent_actions.py) +
         │ _ACTIONS 레지스트리(local_agent/actions.py) — 셋 중 하나라도 빠지면
         │ UNKNOWN_ACTION 또는 ACTION_NOT_AUTO_EXECUTABLE로 즉시 실패
         ▼ WS 푸시 (local_agent_router_ws.py 채널)
@@ -153,9 +153,9 @@
   골라 넣어야 한다. `--dangerously-skip-permissions`(전체 우회)는 이 프로젝트의 승인 원칙에 맞지
   않아 채택하지 않음.
 - **3중 게이트**(전부 있어야 작업이 실제로 실행됨, 실기 테스트로 하나씩 발견):
-  1. `ai_orchestrator/local_agent_risk_policy.py::ACTION_RISK["run_claude_agent"] = "medium"` —
+  1. `ai_orchestrator/agent_hub/policy/risk_policy.py::ACTION_RISK["run_claude_agent"] = "medium"` —
      없으면 `enqueue_task()`가 `UnknownActionError`
-  2. `ai_orchestrator/local_agent_actions.py::AUTO_EXECUTE_VIA_AGENT`에 `"run_claude_agent"` 포함 —
+  2. `ai_orchestrator/contracts/local_agent_actions.py::AUTO_EXECUTE_VIA_AGENT`에 `"run_claude_agent"` 포함 —
      없으면 `ACTION_NOT_AUTO_EXECUTABLE`로 실패
   3. `local_agent/actions.py::_ACTIONS["run_claude_agent"]` — 실제 실행기 매핑
 - **종단 실측 검증**(모킹 없음): 작업 큐 적재 → WS 전달 → `local_agent/agent.py` 실행 →
@@ -166,7 +166,7 @@
 - 회귀 테스트: `tests/test_local_agent_actions_run_claude_agent.py`(5개, `--allowedTools`/`--`
   구성 자체를 subprocess 모킹으로 검사 — 그리디 옵션 버그 재발 방지).
 
-### 5.2 범용 CDP 액션 계층: `ai_orchestrator/local_agent/browser/universal_actions.py`
+### 5.2 범용 CDP 액션 계층: `scripts/browser/agent/universal_actions.py`
 
 드라이런 설계대로 구현됨. `cdp.py`의 형제 모듈(같은 L4 Browser Engine 계층).
 
@@ -209,9 +209,9 @@
 
 - `admin-web/electron/main.js`: `app.whenReady()` 이전에
   `app.commandLine.appendSwitch("remote-debugging-port", "9333")` 추가. 사용자 Chrome이 쓰는
-  9222(§5.2, `scripts/local_agent/start_chrome_with_cdp.py`)와 겹치지 않게 별도 포트 사용 —
+  9222(§5.2, `scripts/browser/cdp/start_chrome_with_cdp.py`)와 겹치지 않게 별도 포트 사용 —
   "웹사이트 자동화"와 "앱 자체 자동화"를 완전히 분리.
-- `ai_orchestrator/local_agent/browser/electron_target.py`(신규):
+- `scripts/browser/agent/electron_target.py`(신규):
   - `list_electron_targets(port)` — `GET http://127.0.0.1:9333/json/list`
   - `_find_target()` — `type == "webview"`(admin-web 콘텐츠) 우선, 없으면 `type == "page"`로 폴백
   - `_RawCDPSession` — `websocket.create_connection(..., enable_multithread=True)`(공식 문서 확인,
@@ -324,7 +324,7 @@
      자동 기동·영속화는 다음 세션 후보로 남김(§10에 신규 항목 4로 추가).
 4. ~~로컬 에이전트(`local_agent/agent.py --run`)를 Electron 앱이 자동 스폰하지 않음~~
    **2026-09-29 완료.** 사용자 요청("자동으로 연결이 되게 해야 하고")으로 착수·완료:
-   - **서버 쪽 영속화**: `ai_orchestrator/local_agent_registry_common.py`에
+   - **서버 쪽 영속화**: `ai_orchestrator/agent_hub/registry/common.py`에
      `_save_agents_to_disk()`/`_load_agents_from_disk()` 추가 — 등록 정체성(agent_id/
      token_hash 등, device_token 원문 제외)을 `data/local_agent_registry_state.json`에
      저장. FastAPI 프로세스가 재시작돼도(이 세션에서 여러 번 발생) 인메모리 레지스트리가

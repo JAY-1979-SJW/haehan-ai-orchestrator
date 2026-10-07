@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from ai_orchestrator import local_agent_registry as reg
+from ai_orchestrator.agent_hub.registry import facade as reg
 
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────

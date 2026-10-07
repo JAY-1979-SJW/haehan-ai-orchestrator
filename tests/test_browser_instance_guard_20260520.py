@@ -218,6 +218,29 @@ def test_stale_lock_cleared(paths):
     assert not paths.lock_file.exists()
 
 
+# 추가(T4 R11): try_acquire_lock — 원자적 획득, 두 번째 시도는 실패
+
+def test_try_acquire_lock_succeeds_once(paths):
+    assert guard.try_acquire_lock(paths, os.getpid()) is True
+    assert guard.is_lock_active(paths) is True
+    assert guard.try_acquire_lock(paths, os.getpid()) is False
+
+
+def test_try_acquire_lock_after_stale_lock_cleared(paths):
+    guard.write_lock_file(paths, 999999)
+    if guard._pid_alive(999999):
+        pytest.skip("pid 999999 alive in this env")
+    assert guard.try_acquire_lock(paths, os.getpid()) is True
+    assert guard.is_lock_active(paths) is True
+
+
+def test_write_lock_file_leaves_no_tmp_leftover(paths):
+    guard.write_lock_file(paths, os.getpid())
+    leftover_tmp = list(paths.lock_file.parent.glob(f"{paths.lock_file.name}.tmp.*"))
+    assert leftover_tmp == []  # replace()로 바로 치워짐
+    assert paths.lock_file.exists()
+
+
 # 추가: 닫힌 탭에 명령이 도달하면 store 가 TAB_CLOSED 응답을 유지하고
 #       새 탭을 만들지 않는다 (호출자 책임).
 

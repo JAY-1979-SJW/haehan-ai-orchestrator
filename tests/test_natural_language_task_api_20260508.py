@@ -1,11 +1,11 @@
 """tests/test_natural_language_task_api_20260508.py"""
 
-from ai_orchestrator.local_agent.natural_language_task_api import (
+from local_agent.runtime.natural_language_task_api import (
     build_task_summary,
     check_result_safety,
     execute_natural_language_task,
 )
-from ai_orchestrator.local_agent.universal_safe_result import STATUS_FAILED
+from local_agent.runtime.universal_safe_result import STATUS_FAILED
 
 _SAFE_FIELDS = [
     "cookie_exported",

@@ -94,7 +94,7 @@ PYDANTIC_SCHEMA_MODULES = (
     "ai_orchestrator.browser_tool.schemas",
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
     "ai_orchestrator.server.task_queue_schema",
-    "ai_orchestrator.local_agent.action_schemas",
+    "ai_orchestrator.agent_hub.action_schemas",
     "local_agent.browser_websocket_schema",
 )  # scripts.archive.misc.agent_models 는 2026-10-07 scripts/archive/misc 로 보관(가져다 쓰는 곳 없음) — 목록에서 뺌
 
@@ -608,7 +608,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "ai_orchestrator/connectors/instagram/instagram_dm_db.py",
     "ai_orchestrator/connectors/naver_search/naver_search_db.py",
     "ai_orchestrator/connectors/naver_search/naver_search_queries.py",
-    "ai_orchestrator/local_agent/browser/cdp_session_manager.py",
+    "scripts/browser/agent/cdp_session_manager.py",
     "ai_orchestrator/auth/registration_code_store.py",
     "apps/ig-comment-dm-bot/core/processed_store.py",
     "local_agent/browser_approval_db_store.py",

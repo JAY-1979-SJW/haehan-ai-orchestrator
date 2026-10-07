@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ai_orchestrator.local_agent_audit_event_policy import (
+from ai_orchestrator.agent_hub.policy.audit_event_policy import (
     APPROVE_AUDIT_EVENT,
     APPROVE_STATUS_HTTP,
     REJECT_AUDIT_EVENT,
@@ -238,7 +238,7 @@ def test_error_detail_response_no_token_values():
 
 def test_policy_module_importable():
     """정책 모듈이 정상적으로 임포트 가능한지 검증."""
-    import ai_orchestrator.local_agent_audit_event_policy as policy_module
+    import ai_orchestrator.agent_hub.policy.audit_event_policy as policy_module
 
     assert hasattr(policy_module, "APPROVE_STATUS_HTTP")
     assert hasattr(policy_module, "REJECT_STATUS_HTTP")
@@ -255,7 +255,7 @@ def test_no_circular_import_with_router():
     """정책 모듈과 라우터 간 순환 참조 없음을 검증."""
     try:
         # router를 임포트하면 policy도 임포트되어야 함
-        from ai_orchestrator.local_agent_router import LocalAgentRouter
+        from ai_orchestrator.agent_hub.router.root import LocalAgentRouter
 
         # 성공하면 순환 참조가 없음
         assert LocalAgentRouter is not None

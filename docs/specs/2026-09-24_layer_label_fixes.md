@@ -106,7 +106,7 @@ spec:
 아래는 내용을 확인했으나 라벨을 바꿀 만한 명확한 근거가 없어 그대로 남긴 것들이다(위반으로 계속
 집계됨, 코드/아키텍처 조정이 필요한 type C/D 성격에 가까움):
 
-- `ai_orchestrator/local_agent_models.py -> ai_orchestrator/local_agent_registry.py` (L1→L4):
+- `ai_orchestrator/agent_hub/models.py -> ai_orchestrator/agent_hub/registry/facade.py` (L1→L4):
   `local_agent_registry.py` 는 에이전트/작업큐 lifecycle 관리 aggregator로 L4(브라우저 엔진)는
   명백히 틀렸지만, L6(업무흐름)·L7(상태 저장소) 둘 다 그럴듯해 라벨을 확정하지 못함.
 - `scripts/site_registry.py -> {eum,gabia,google,kakao,naver}/auth.py, login_detector.py`

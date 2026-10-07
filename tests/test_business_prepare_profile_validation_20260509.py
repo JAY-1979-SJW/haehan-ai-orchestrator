@@ -10,7 +10,7 @@ business.prepare_action의 profile policy 연동 테스트 (2026-05-09).
 
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.actions import business_prepare_action
+from ai_orchestrator.agent_hub.actions import business_prepare_action
 
 
 def test_bid_submission_with_all_fields():

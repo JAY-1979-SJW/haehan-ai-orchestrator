@@ -14,26 +14,26 @@ mock/local fixture만 사용. 외부 사이트 실접속 0건.
 
 import pytest
 
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
     classify_action,
 )
-from ai_orchestrator.local_agent.local_security_installer_runner import (
+from local_agent.runtime.local_security_installer_runner import (
     GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
 )
-from ai_orchestrator.local_agent.local_security_installer_runner import (
+from local_agent.runtime.local_security_installer_runner import (
     STATUS_INSTALL_PERMISSION_REQUIRED,
     STATUS_WAITING_USER_UAC,
     check_action_allowed,
 )
-from ai_orchestrator.local_agent.site_type_classifier import (
+from local_agent.runtime.site_type_classifier import (
     SITE_GOVERNMENT,
     classify_site,
 )
-from ai_orchestrator.local_agent.universal_safe_result import (
+from local_agent.runtime.universal_safe_result import (
     STATUS_COMPLETED,
     build_universal_result,
     sanitize_universal_result,

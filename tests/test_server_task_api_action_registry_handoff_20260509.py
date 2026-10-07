@@ -14,7 +14,7 @@ from __future__ import annotations
 import pytest
 
 from ai_orchestrator.server import action_task_handoff as ath
-from ai_orchestrator.local_agent.user_approval_gate import clear_all
+from ai_orchestrator.agent_hub.policy.user_approval_gate import clear_all
 
 
 @pytest.fixture(autouse=True)

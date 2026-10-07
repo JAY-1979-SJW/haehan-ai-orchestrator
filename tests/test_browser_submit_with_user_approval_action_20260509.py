@@ -3,8 +3,8 @@ browser.submit_with_user_approval 핸들러 테스트
 """
 import pytest
 
-from ai_orchestrator.local_agent.actions.browser_submit_with_user_approval import execute
-from ai_orchestrator.local_agent.user_approval_gate import (
+from ai_orchestrator.agent_hub.actions.browser_submit_with_user_approval import execute
+from ai_orchestrator.agent_hub.policy.user_approval_gate import (
     create_approval_request,
     approve_request,
     _REQUESTS,

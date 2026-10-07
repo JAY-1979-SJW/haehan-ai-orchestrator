@@ -24,11 +24,11 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.actions import business_execute_with_user_approval, business_prepare_action
-from ai_orchestrator.local_agent.business_local_agent_mock_runner import (
+from ai_orchestrator.agent_hub.actions import business_execute_with_user_approval, business_prepare_action
+from ai_orchestrator.agent_hub.business_local_agent_mock_runner import (
     run_mock_business_local_agent,
 )
-from ai_orchestrator.local_agent.user_approval_gate import (
+from ai_orchestrator.agent_hub.policy.user_approval_gate import (
     approve_request,
     clear_all,
     create_approval_request,

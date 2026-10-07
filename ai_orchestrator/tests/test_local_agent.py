@@ -33,28 +33,28 @@ def _isolated_storage(tmp_path, monkeypatch):
     # local_agent_router 분리 후: 서브라우터 leaf 들도 reload 해야 갱신된 auth 를
     # 재바인딩한다(의존 순서: 공유 leaf → 라우트 leaf → 컴포지션 루트).
     for _m in (
-        "local_agent_router_schemas",
-        "local_agent_router_up_queue",
-        "local_agent_router_validation",
-        "local_agent_router_guards",
-        "local_agent_router_registration",
-        "local_agent_router_query",
-        "local_agent_router_task",
-        "local_agent_router_browser",
-        "local_agent_router_user_present",
-        "local_agent_router_cleanup",
-        "local_agent_router_ws",
+        "agent_hub.router.schemas",
+        "agent_hub.router.up_queue",
+        "agent_hub.router.validation",
+        "agent_hub.router.guards",
+        "agent_hub.router.registration",
+        "agent_hub.router.query",
+        "agent_hub.router.task",
+        "agent_hub.router.browser",
+        "agent_hub.router.user_present",
+        "agent_hub.router.cleanup",
+        "agent_hub.router.ws",
     ):
         with contextlib.suppress(ModuleNotFoundError):
             importlib.reload(importlib.import_module(f"ai_orchestrator.{_m}"))
-    import ai_orchestrator.local_agent_router as _lar
+    import ai_orchestrator.agent_hub.router.root as _lar
 
     importlib.reload(_lar)
 
     import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
-    import ai_orchestrator.local_agent_registry as _reg
-    import ai_orchestrator.local_agent_registry_common as _reg_common
+    import ai_orchestrator.agent_hub.registry.facade as _reg
+    import ai_orchestrator.agent_hub.registry.common as _reg_common
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -88,7 +88,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -251,7 +251,7 @@ def test_browser_readonly_instruction_queues_safe_task(admin_user):
     assert "private=query" not in resp.text
     assert "Summarize the page" not in resp.text
 
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     task = _reg.get_task(agent_id, data["task_id"])
     assert task.action == "web_open_url_readonly"
@@ -282,7 +282,7 @@ def test_browser_readonly_instruction_can_request_visible_browser(admin_user):
     assert data["keep_open_ms"] == 5000
     assert data["browser_channel"] == "chrome"
 
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     task = _reg.get_task(agent_id, data["task_id"])
     assert task.params["headless"] is False
@@ -307,7 +307,7 @@ def test_browser_readonly_instruction_can_disable_background(admin_user):
     assert data["allow_background"] is False
     assert data["background_approved"] is False
 
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     task = _reg.get_task(agent_id, data["task_id"])
     assert task.params["headless"] is False
@@ -565,7 +565,7 @@ def test_get_task_wrong_agent_returns_404(admin_user):
 
 
 def test_action_risk_mapping_sanity():
-    from ai_orchestrator.local_agent_registry import ACTION_RISK
+    from ai_orchestrator.agent_hub.registry.facade import ACTION_RISK
 
     assert ACTION_RISK["ping"] == "low"
     assert ACTION_RISK["system_info"] == "low"
@@ -738,7 +738,7 @@ def test_local_actions_list_allowed_apps():
 
 def _make_queued_task(agent_id: str):
     """open_url queued 작업 하나 생성 후 반환 (helper)."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     return reg.enqueue_task(
         agent_id=agent_id,
@@ -750,7 +750,7 @@ def _make_queued_task(agent_id: str):
 
 def test_state_transition_queued_to_delivered(admin_user):
     """queued → delivered 정상."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -762,7 +762,7 @@ def test_state_transition_queued_to_delivered(admin_user):
 
 def test_state_transition_delivered_to_running(admin_user):
     """delivered → running 정상."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -775,7 +775,7 @@ def test_state_transition_delivered_to_running(admin_user):
 
 def test_state_transition_running_to_completed(admin_user):
     """running → completed 정상."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -789,7 +789,7 @@ def test_state_transition_running_to_completed(admin_user):
 
 def test_state_transition_running_to_failed(admin_user):
     """running → failed 정상."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -803,7 +803,7 @@ def test_state_transition_running_to_failed(admin_user):
 
 def test_state_guard_completed_cannot_transition_to_running(admin_user):
     """completed 이후 running 전이 차단 — 상태 보존."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -819,7 +819,7 @@ def test_state_guard_completed_cannot_transition_to_running(admin_user):
 
 def test_state_guard_failed_cannot_transition_to_running(admin_user):
     """failed 이후 running 전이 차단 — 상태 보존."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -834,7 +834,7 @@ def test_state_guard_failed_cannot_transition_to_running(admin_user):
 
 def test_state_guard_queued_cannot_directly_run(admin_user):
     """queued → running 직접 전이 차단."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -847,7 +847,7 @@ def test_state_guard_queued_cannot_directly_run(admin_user):
 
 def test_state_guard_delivered_cannot_complete_directly(admin_user):
     """delivered 상태에서 success=True result를 바로 적용해 completed 전이 시도 → 차단."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -864,7 +864,7 @@ def test_state_guard_delivered_cannot_complete_directly(admin_user):
 
 def test_state_guard_unknown_task_id_safe(admin_user):
     """존재하지 않는 task_id 에 대해 mark_delivered/mark_running/apply_result 가 안전하게 None 반환."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -915,7 +915,7 @@ def test_expire_stale_tasks_delivered_timeout(admin_user):
     """delivered 상태에서 120초 초과 → failed / failure_reason=delivered_timeout."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -936,7 +936,7 @@ def test_expire_stale_tasks_delivered_not_yet_expired(admin_user):
     """delivered 상태에서 120초 이내 → 그대로 유지."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -954,7 +954,7 @@ def test_expire_stale_tasks_running_timeout(admin_user):
     """running 상태에서 300초 초과 → failed / failure_reason=running_timeout."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -976,7 +976,7 @@ def test_expire_stale_tasks_completed_not_touched(admin_user):
     """completed 상태는 expire_stale_tasks 가 건드리지 않는다."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -996,7 +996,7 @@ def test_expire_stale_tasks_failed_not_touched(admin_user):
     """failed 상태는 expire_stale_tasks 가 건드리지 않는다."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1014,7 +1014,7 @@ def test_expire_stale_tasks_failed_not_touched(admin_user):
 
 def test_apply_result_failure_sets_agent_error(admin_user):
     """apply_result(success=False) 시 failure_reason = agent_error."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1037,7 +1037,7 @@ def test_apply_result_failure_sets_agent_error(admin_user):
 
 def test_apply_result_stores_result_data(admin_user):
     """apply_result(data=...) 시 허용 key만 저장된다."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1071,7 +1071,7 @@ def test_apply_result_stores_result_data(admin_user):
 
 def test_apply_result_result_data_in_to_safe(admin_user):
     """result_data가 to_safe() 응답에 포함된다."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1094,7 +1094,7 @@ def test_apply_result_result_data_in_to_safe(admin_user):
 
 def test_apply_result_result_data_via_api(admin_user):
     """API task 조회 응답에 result_data가 포함된다."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1118,7 +1118,7 @@ def test_apply_result_result_data_via_api(admin_user):
 
 def test_apply_result_strips_sensitive_key(admin_user):
     """민감 key(token, password, cookie 등)는 result_data에 저장되지 않는다."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1150,7 +1150,7 @@ def test_apply_result_strips_sensitive_key(admin_user):
 
 def test_apply_result_strips_unknown_key(admin_user):
     """허용 key 목록에 없는 key는 result_data에 저장되지 않는다."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1172,7 +1172,7 @@ def test_apply_result_strips_unknown_key(admin_user):
 
 def test_apply_result_no_data_result_data_none(admin_user):
     """data 없이 apply_result 호출 시 result_data=None."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1190,7 +1190,7 @@ def test_apply_result_no_data_result_data_none(admin_user):
 
 def test_strip_result_data_url_query_removed():
     """normalized_url에서 query string이 제거된다."""
-    from ai_orchestrator.local_agent_registry import _strip_result_data
+    from ai_orchestrator.agent_hub.registry.facade import _strip_result_data
 
     rd = _strip_result_data({"normalized_url": "https://example.com/path?token=abc&foo=bar"})
     assert rd is not None
@@ -1199,7 +1199,7 @@ def test_strip_result_data_url_query_removed():
 
 def test_strip_result_data_empty_returns_none():
     """빈 dict는 None 반환."""
-    from ai_orchestrator.local_agent_registry import _strip_result_data
+    from ai_orchestrator.agent_hub.registry.facade import _strip_result_data
 
     assert _strip_result_data({}) is None
     assert _strip_result_data(None) is None
@@ -1207,7 +1207,7 @@ def test_strip_result_data_empty_returns_none():
 
 def test_strip_result_data_sensitive_key_dropped():
     """민감 key만 있는 data는 None 반환."""
-    from ai_orchestrator.local_agent_registry import _strip_result_data
+    from ai_orchestrator.agent_hub.registry.facade import _strip_result_data
 
     assert _strip_result_data({"token": "abc", "password": "pw"}) is None
 
@@ -1217,7 +1217,7 @@ def test_strip_result_data_sensitive_key_dropped():
 
 def test_list_tasks_empty_for_unknown_agent():
     """없는 agent_id → 빈 목록."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     result = reg.list_tasks_for_agent("la-nonexistent")
     assert result == []
@@ -1225,7 +1225,7 @@ def test_list_tasks_empty_for_unknown_agent():
 
 def test_list_tasks_returns_all_tasks_for_agent(admin_user):
     """task 3개 생성 → 전체 반환, agent_id 일치 확인."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1238,7 +1238,7 @@ def test_list_tasks_returns_all_tasks_for_agent(admin_user):
 
 def test_list_tasks_status_filter(admin_user):
     """status 필터: queued 2개 + completed 1개 → status=queued → 2개."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1255,7 +1255,7 @@ def test_list_tasks_status_filter(admin_user):
 
 def test_list_tasks_limit(admin_user):
     """limit=2 → 2개만 반환."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1267,7 +1267,7 @@ def test_list_tasks_limit(admin_user):
 
 def test_list_tasks_sorted_newest_first(admin_user):
     """created_at 최신순 정렬 확인."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1282,7 +1282,7 @@ def test_list_tasks_contains_failure_reason_and_timed_out_at(admin_user):
     """failed task → failure_reason / timed_out_at 포함."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_id = _register_agent(client)["agent_id"]
@@ -1299,7 +1299,7 @@ def test_list_tasks_contains_failure_reason_and_timed_out_at(admin_user):
 
 def test_list_tasks_agent_isolation(admin_user):
     """agent A/B task 혼합 → 각 agent는 자신의 task만 반환."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     agent_a = _register_agent(client)["agent_id"]
@@ -1410,7 +1410,7 @@ def test_api_list_tasks_empty_for_unknown_agent(admin_user):
 
 def test_new_agent_default_status_offline():
     """새로 등록된 agent의 기본 상태는 offline."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     result = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
     assert reg.get_agent_status(result.agent.agent_id) == "offline"
@@ -1418,7 +1418,7 @@ def test_new_agent_default_status_offline():
 
 def test_set_agent_connected_sets_timestamps():
     """set_agent_connected 후 connected_at / last_seen_at 설정, disconnected_at 초기화."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
     agent_id = r.agent.agent_id
@@ -1431,7 +1431,7 @@ def test_set_agent_connected_sets_timestamps():
 
 def test_set_agent_disconnected_sets_disconnected_at():
     """set_agent_disconnected 후 disconnected_at 설정."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
     agent_id = r.agent.agent_id
@@ -1444,7 +1444,7 @@ def test_set_agent_disconnected_sets_disconnected_at():
 
 def test_agent_status_idle_when_connected_no_task():
     """연결 중이고 active task 없으면 idle."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
     agent_id = r.agent.agent_id
@@ -1456,7 +1456,7 @@ def test_agent_status_idle_when_connected_no_task():
 
 def test_agent_status_busy_with_delivered_task():
     """delivered task 있으면 busy."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
     agent_id = r.agent.agent_id
@@ -1469,7 +1469,7 @@ def test_agent_status_busy_with_delivered_task():
 
 def test_agent_status_busy_with_running_task():
     """running task 있으면 busy."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
     agent_id = r.agent.agent_id
@@ -1485,7 +1485,7 @@ def test_agent_status_stale_after_91s():
     """last_seen_at이 91초 이상 과거면 stale."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
     agent_id = r.agent.agent_id
@@ -1496,7 +1496,7 @@ def test_agent_status_stale_after_91s():
 
 def test_agent_status_offline_after_disconnect():
     """disconnected_at 설정 후 offline."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
     agent_id = r.agent.agent_id
@@ -1545,7 +1545,7 @@ def test_list_agents_no_token_hash_or_device_token(admin_user):
 
 def _make_agent_and_task(action: str = "open_url", params: dict | None = None):
     """테스트용 agent + task 생성 헬퍼. registry 직접 사용."""
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     result = reg.register_agent(
         host="cancel-test-pc",
@@ -1564,7 +1564,7 @@ def _make_agent_and_task(action: str = "open_url", params: dict | None = None):
 
 
 def test_cancel_queued_task_becomes_cancelled():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     assert task.status == "queued"
@@ -1574,7 +1574,7 @@ def test_cancel_queued_task_becomes_cancelled():
 
 
 def test_cancel_waiting_approval_task_becomes_cancelled():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("capture_screenshot")
     assert task.status == "waiting_approval"
@@ -1584,7 +1584,7 @@ def test_cancel_waiting_approval_task_becomes_cancelled():
 
 
 def test_cancel_delivered_task_becomes_cancel_requested():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1594,7 +1594,7 @@ def test_cancel_delivered_task_becomes_cancel_requested():
 
 
 def test_cancel_running_task_becomes_cancel_requested():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1605,7 +1605,7 @@ def test_cancel_running_task_becomes_cancel_requested():
 
 
 def test_cancel_completed_task_raises():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1616,7 +1616,7 @@ def test_cancel_completed_task_raises():
 
 
 def test_cancel_failed_task_raises():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1627,7 +1627,7 @@ def test_cancel_failed_task_raises():
 
 
 def test_cancel_rejected_task_raises():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("capture_screenshot")
     reg.mark_rejected(task.task_id, actor="admin", reason="denied")
@@ -1636,7 +1636,7 @@ def test_cancel_rejected_task_raises():
 
 
 def test_cancel_cancelled_task_raises():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.cancel_task(agent_id, task.task_id, actor="admin")
@@ -1645,7 +1645,7 @@ def test_cancel_cancelled_task_raises():
 
 
 def test_cancel_cancel_requested_task_raises():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1655,7 +1655,7 @@ def test_cancel_cancel_requested_task_raises():
 
 
 def test_cancel_saves_cancel_reason():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     t, _ = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="user request")
@@ -1663,7 +1663,7 @@ def test_cancel_saves_cancel_reason():
 
 
 def test_cancel_saves_cancel_requested_by():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     t, _ = reg.cancel_task(agent_id, task.task_id, actor="tester_actor")
@@ -1671,7 +1671,7 @@ def test_cancel_saves_cancel_requested_by():
 
 
 def test_cancel_queued_saves_cancelled_at():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     t, _ = reg.cancel_task(agent_id, task.task_id, actor="admin")
@@ -1680,7 +1680,7 @@ def test_cancel_queued_saves_cancelled_at():
 
 
 def test_cancel_delivered_saves_cancel_requested_at():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1690,7 +1690,7 @@ def test_cancel_delivered_saves_cancel_requested_at():
 
 
 def test_cancel_reason_max_len_enforced():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     with pytest.raises(ValueError, match="최대 길이"):
@@ -1698,7 +1698,7 @@ def test_cancel_reason_max_len_enforced():
 
 
 def test_cancel_unknown_task_raises():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, _ = _make_agent_and_task("open_url")
     with pytest.raises(ValueError):
@@ -1706,7 +1706,7 @@ def test_cancel_unknown_task_raises():
 
 
 def test_cancel_agent_id_mismatch_raises():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     _, task = _make_agent_and_task("open_url")
     with pytest.raises(ValueError):
@@ -1714,7 +1714,7 @@ def test_cancel_agent_id_mismatch_raises():
 
 
 def test_to_safe_includes_cancel_fields():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1729,7 +1729,7 @@ def test_to_safe_includes_cancel_fields():
 
 
 def test_to_list_safe_includes_cancel_fields():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     t, _ = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="list test")
@@ -1741,7 +1741,7 @@ def test_to_list_safe_includes_cancel_fields():
 
 
 def test_apply_result_cancel_requested_success_becomes_completed():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1759,7 +1759,7 @@ def test_apply_result_cancel_requested_success_becomes_completed():
 
 
 def test_apply_result_cancel_requested_failure_becomes_failed():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1776,7 +1776,7 @@ def test_apply_result_cancel_requested_failure_becomes_failed():
 
 
 def test_apply_result_cancel_requested_preserves_cancel_fields():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1795,7 +1795,7 @@ def test_apply_result_cancel_requested_preserves_cancel_fields():
 def test_expire_stale_tasks_cancel_requested_timeout():
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1812,7 +1812,7 @@ def test_expire_stale_tasks_cancel_requested_timeout():
 
 
 def test_fail_active_tasks_for_agent_includes_cancel_requested():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     agent_id, task = _make_agent_and_task("open_url")
     reg.mark_delivered(agent_id, task.task_id)
@@ -1827,14 +1827,14 @@ def test_fail_active_tasks_for_agent_includes_cancel_requested():
 
 
 def test_known_task_statuses_includes_cancel_statuses():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     assert "cancel_requested" in reg.KNOWN_TASK_STATUSES
     assert "cancelled" in reg.KNOWN_TASK_STATUSES
 
 
 def test_active_task_statuses_includes_cancel_requested():
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     assert "cancel_requested" in reg.ACTIVE_TASK_STATUSES
 
@@ -1849,13 +1849,13 @@ def _enqueue_via_api(client, agent_id: str, action: str = "open_url") -> dict:
 
 
 def _advance_to_delivered(agent_id: str, task_id: str) -> None:
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     reg.mark_delivered(agent_id, task_id)
 
 
 def _advance_to_running(agent_id: str, task_id: str) -> None:
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     reg.mark_delivered(agent_id, task_id)
     reg.mark_running(agent_id, task_id)
@@ -1913,7 +1913,7 @@ def test_cancel_api_agent_id_mismatch_returns_404(admin_user):
 
 
 def test_cancel_api_completed_returns_409(admin_user):
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     reg_resp = _register_agent(client)
@@ -1929,7 +1929,7 @@ def test_cancel_api_completed_returns_409(admin_user):
 
 
 def test_cancel_api_failed_returns_409(admin_user):
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     client = _make_test_client(admin_user)
     reg_resp = _register_agent(client)
@@ -1973,7 +1973,7 @@ def test_cancel_api_reason_too_long_returns_400(admin_user):
 def test_cancel_api_viewer_forbidden(viewer_user):
     client = _make_test_client(viewer_user)
     # viewer는 register 권한이 없으므로 별도 admin으로 준비
-    import ai_orchestrator.local_agent_registry as reg
+    import ai_orchestrator.agent_hub.registry.facade as reg
 
     result = reg.register_agent(host="pc", os_name="Win", version="0.1", requested_by="admin")
     agent_id = result.agent.agent_id

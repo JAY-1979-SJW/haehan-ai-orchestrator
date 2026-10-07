@@ -9,21 +9,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "../.."))
 
-from ai_orchestrator import local_agent_registry as _reg
-from ai_orchestrator.local_agent_audit_event_policy import (
-    APPROVE_AUDIT_EVENT,
-    REJECT_AUDIT_EVENT,
-)
-from ai_orchestrator.local_agent_error_mapping import (
+from ai_orchestrator.agent_hub.error_mapping import (
     ERROR_STATUS_CODES,
     ErrorType,
 )
-from ai_orchestrator.local_agent_status_policy import (
+from ai_orchestrator.agent_hub.policy.audit_event_policy import (
+    APPROVE_AUDIT_EVENT,
+    REJECT_AUDIT_EVENT,
+)
+from ai_orchestrator.agent_hub.policy.status_policy import (
     ACTIVE_TASK_STATUSES,
     VALID_TASK_TRANSITIONS,
     can_cancel_task,
     is_terminal_status,
 )
+from ai_orchestrator.agent_hub.registry import facade as _reg
 
 # ── 상태 정책 검증 ──────────────────────────────────────────────────────
 
@@ -157,7 +157,7 @@ def test_no_agent_list_response_has_agents_key():
 
 def test_task_status_values_are_known():
     """task 상태값이 KNOWN_TASK_STATUSES에 포함됨."""
-    from ai_orchestrator.local_agent_status_policy import KNOWN_TASK_STATUSES
+    from ai_orchestrator.agent_hub.policy.status_policy import KNOWN_TASK_STATUSES
 
     expected_statuses = {
         "queued",
@@ -176,7 +176,7 @@ def test_task_status_values_are_known():
 
 def test_response_builder_functions_exist():
     """응답 빌더 함수들이 정의되어 있음."""
-    from ai_orchestrator.local_agent_response_builders import (
+    from ai_orchestrator.agent_hub.response_builders import (
         make_list_agents_response,
         make_list_codes_response,
         make_list_tasks_response,
@@ -195,7 +195,7 @@ def test_response_builder_functions_exist():
 
 def test_diagnostics_helpers_functions_exist():
     """진단 헬퍼 함수들이 정의되어 있음."""
-    from ai_orchestrator.local_agent_diagnostics_helpers import (
+    from ai_orchestrator.agent_hub.registry.diagnostics_helpers import (
         count_agents_by_status,
         count_tasks_by_status,
         determine_diagnostics_status,
@@ -218,7 +218,7 @@ def test_diagnostics_helpers_functions_exist():
 
 def test_response_builders_return_dict():
     """응답 빌더가 dict를 반환함."""
-    from ai_orchestrator.local_agent_response_builders import (
+    from ai_orchestrator.agent_hub.response_builders import (
         make_register_agent_response,
     )
 
@@ -239,7 +239,7 @@ def test_response_builders_return_dict():
 
 def test_error_response_builder_no_token_in_detail():
     """에러 응답에 실제 토큰 값 없음."""
-    from ai_orchestrator.local_agent_error_mapping import make_error_response
+    from ai_orchestrator.agent_hub.error_mapping import make_error_response
 
     _status_code, detail = make_error_response(ErrorType.INVALID_REQUEST, message="Invalid request")
 
@@ -264,7 +264,7 @@ def test_audit_event_snapshot_consistency():
 
 def test_status_code_consistency():
     """status code 매핑이 일관성 있음."""
-    from ai_orchestrator.local_agent_audit_event_policy import (
+    from ai_orchestrator.agent_hub.policy.audit_event_policy import (
         APPROVE_STATUS_HTTP,
         REJECT_STATUS_HTTP,
     )
@@ -287,7 +287,7 @@ def test_status_code_consistency():
 
 def test_task_lifecycle_states_are_valid():
     """task 생명주기의 상태들이 모두 KNOWN_TASK_STATUSES에 있음."""
-    from ai_orchestrator.local_agent_status_policy import KNOWN_TASK_STATUSES
+    from ai_orchestrator.agent_hub.policy.status_policy import KNOWN_TASK_STATUSES
 
     lifecycle = [
         "queued",  # 초기
@@ -302,7 +302,7 @@ def test_task_lifecycle_states_are_valid():
 
 def test_high_risk_task_approval_flow_states():
     """high-risk task approval 흐름의 상태들이 유효함."""
-    from ai_orchestrator.local_agent_status_policy import KNOWN_TASK_STATUSES
+    from ai_orchestrator.agent_hub.policy.status_policy import KNOWN_TASK_STATUSES
 
     flow = [
         "waiting_approval",  # 초기: 승인 대기

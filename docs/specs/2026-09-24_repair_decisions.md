@@ -5,7 +5,7 @@
 |---|---|---|---|---|---|---|
 | scripts/google/workflows.py | 구글 업무 aggregator(실체는 workflows_common 등 leaf 재수출) | L6 (workflows 이름) | L5 leaf 11건이 import | 라벨 L5 변경(1줄, -11, 위험 낮음) | 공용부 _shared.py 추출(파일 신설+shim, -11, 중) | A: 사실상 공용 라이브러리 |
 | local_agent/web_reader.py | HTML 문자열 정적 분석(브라우저 조작 없음) | L10 (local_agent 경로) | L4 3건 | 라벨 L4(-3) | scripts/로 이동(중) | A |
-| ai_orchestrator/local_agent_registry.py | 에이전트+작업큐 aggregator, 40곳이 사용 | L8 (registry/서버 경로) | L1 1, L7 3 | 라벨 L6(-4) | 이동은 40 import 영향(큼) | A(L7 3건은 감사스크립트라 라벨 L7 정리 병행) |
+| ai_orchestrator/agent_hub/registry/facade.py | 에이전트+작업큐 aggregator, 40곳이 사용 | L8 (registry/서버 경로) | L1 1, L7 3 | 라벨 L6(-4) | 이동은 40 import 영향(큼) | A(L7 3건은 감사스크립트라 라벨 L7 정리 병행) |
 | external_work_registry.py | 외부 웹업무 분류 표(데이터/정책) | L8 | L1 1, L2 1, L7 1 | 라벨 L2(-3) | 이동 | A |
 | external_sites/provider_registry.py | 외부사이트 공급자 정본 표(583줄) | L8 | L2 1, L7 2 | 라벨 L2(-3) | 이동 | A |
 | gabia/gabia_browser_task.py | 가비아 작업 계약+상태머신 | L8 | L2 1, L7 3 | 라벨 L6(-4) | 이동 | A |

@@ -2,12 +2,12 @@
 나라장터 read-only 다운로드 manifest 테스트
 """
 
-from ai_orchestrator.local_agent.download_policy import check_file
-from ai_orchestrator.local_agent.download_upload_manifest import (
+from ai_orchestrator.agent_hub.policy.file_upload_policy import validate_upload_manifest
+from local_agent.runtime.download_policy import check_file
+from local_agent.runtime.download_upload_manifest import (
     build_manifest,
     is_safe_manifest,
 )
-from ai_orchestrator.server.local_agent_file_upload_policy import validate_upload_manifest
 
 TASK_ID = "g2b-manifest-test-001"
 

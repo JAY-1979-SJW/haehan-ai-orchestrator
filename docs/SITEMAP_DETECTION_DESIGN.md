@@ -11,7 +11,7 @@
 ### 1단계: 사이트 맵 탐지 (자동)
 
 ```python
-from ai_orchestrator.local_agent.browser.sitemap_detector import detect_sitemap
+from scripts.browser.agent.sitemap_detector import detect_sitemap
 
 with BrowserAgent() as agent:
     agent.go("https://mail.naver.com/")
@@ -151,7 +151,7 @@ def mail_inbox(self, max_n=30) -> list[dict]:
 ## 📁 파일 구조
 
 ```
-ai_orchestrator/local_agent/browser/
+scripts/browser/agent/
 ├─ sitemap_detector.py        [신규] 사이트 맵 탐지 엔진
 ├─ .sitemap_cache/            [자동] 탐지 캐시
 │  ├─ mail_naver_com.json

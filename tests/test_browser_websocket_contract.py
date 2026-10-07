@@ -8,7 +8,7 @@ Verifies:
 5. Forbidden field protection
 """
 
-from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator.agent_hub.registry import facade as _reg
 from local_agent.browser_approval_verifier import BrowserApprovalStore, BrowserApprovalVerifier
 from local_agent.browser_task_handler import BrowserTaskPayload, BrowserTaskResult
 

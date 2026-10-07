@@ -3,7 +3,7 @@
 대상: 데스크톱 userData\\storage\\audit_logs.jsonl(및 회전 파일, 예: audit_logs.jsonl.1)
 — 경로는 인자로 지정한다(이 PC 고정 경로를 가정하지 않는다).
 
-규칙(비밀번호·토큰·API 키·쿠키·주민번호·카드번호)은 orchestrator_v1.core.security_utils
+규칙(비밀번호·토큰·API 키·쿠키·주민번호·카드번호)은 ai_orchestrator.core.security_utils
 (9a48754b 에서 만든 마스킹 모듈)를 그대로 재사용한다 — 새 정규식·규칙을 여기서
 다시 정의하지 않는다.
 
@@ -33,7 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from orchestrator_v1.core.security_utils import (
+from ai_orchestrator.core.security_utils import (
     AWS_KEY_RE,
     BEARER_RE,
     CARD_RE,
@@ -46,7 +46,7 @@ from orchestrator_v1.core.security_utils import (
     is_sensitive_key,
 )
 
-# 값 패턴 규칙 — orchestrator_v1.core.security_utils 의 기존 정규식을 그대로 가리킨다(재사용).
+# 값 패턴 규칙 — ai_orchestrator.core.security_utils 의 기존 정규식을 그대로 가리킨다(재사용).
 _VALUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("RRN", RRN_RE),
     ("CARD", CARD_RE),
@@ -78,7 +78,7 @@ class Finding:
 
 def _collect_in_value(key: str, value: object, line: int, path: str) -> list[Finding]:
     """값 하나를 점검한다 — 민감 키 이름이면 SENSITIVE_KEY, 문자열이면 값 패턴도 본다.
-    재귀 구조(dict/list/tuple)는 orchestrator_v1.core.security_utils.redact_obj 와 같은
+    재귀 구조(dict/list/tuple)는 ai_orchestrator.core.security_utils.redact_obj 와 같은
     모양으로 내려간다(실제 마스킹은 redact_obj 에 위임, 여기서는 '찾기'만)."""
     field = path or key
     if isinstance(value, Mapping):

@@ -24,7 +24,7 @@ FILES = [
     "ai_orchestrator/local_agent/__init__.py",
     "ai_orchestrator/local_agent/actions.py",
     "ai_orchestrator/tests/test_x.py",
-    "ai_orchestrator/local_agent_registry.py",
+    "ai_orchestrator/agent_hub/registry/facade.py",
 ]
 
 

@@ -9,10 +9,10 @@
    "ai_orchestrator/gongmu/gongmu_service.py:_read_rows"
   ],
   "12f815d0a03c48ff8494bf6fd69a1488f3dd8a85": [
-   "ai_orchestrator/local_agent_redaction.py:_strip_browser",
-   "ai_orchestrator/local_agent_redaction.py:_strip_capabilities",
-   "ai_orchestrator/local_agent_redaction.py:_strip_cleanup",
-   "ai_orchestrator/local_agent_redaction.py:_strip_lifecycle"
+   "ai_orchestrator/agent_hub/redaction.py:_strip_browser",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_capabilities",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_cleanup",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_lifecycle"
   ],
   "1c3787c65ac5010655eec0046e605c8bce5cf100": [
    "orchestrator_v1/inbox/notice_radar/browser_collector.py:_find_near_date",
@@ -45,8 +45,8 @@
    "scripts/hanafax/send_kras_final_campaign.py:_fit_merged_wrap_rows"
   ],
   "3a1616afa4db701703834b6ec3b4e30bee779c3a": [
-   "ai_orchestrator/local_agent_redaction.py:_strip_click_target",
-   "ai_orchestrator/local_agent_redaction.py:_strip_url_info"
+   "ai_orchestrator/agent_hub/redaction.py:_strip_click_target",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_url_info"
   ],
   "3a206e750dedc94764bb59afad4ef3ad988fab6d": [
    "scripts/google/vision_usage_gate.py:save_vision_monthly_free_gate",
@@ -159,8 +159,8 @@
    "scripts/naver/common/talk.py:NaverTalk.open"
   ],
   "6d1a5ce95e8f3c3f8d97ffa1240713c858e8731b": [
-   "scripts/local_agent/g2b/run_readonly_local_e2e.py:_save_report",
-   "scripts/local_agent/run_naver_cafe_to_blog_workflow.py:_save_report"
+   "scripts/g2b/run_readonly_local_e2e.py:_save_report",
+   "scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py:_save_report"
   ],
   "710cc7b7c16a77349fcb79e5d3fb53ee9e40cd2f": [
    "scripts/naver/blog/marketing/multichannel.py:generate_community_answer",
@@ -209,8 +209,8 @@
    "scripts/g2b/router.py:_cmd_submit_draft"
   ],
   "9c61ce44dc64466f3098f9f13841854e81e5aa35": [
-   "ai_orchestrator/local_agent/naver_content_safe_result.py:validate_naver_result",
-   "ai_orchestrator/local_agent/universal_safe_result.py:validate_universal_result"
+   "scripts/naver/blog/naver_content_safe_result.py:validate_naver_result",
+   "local_agent/runtime/universal_safe_result.py:validate_universal_result"
   ],
   "9cb75156eea54eb3e9293fc251ec4602a93db2fe": [
    "scripts/ops/audit_approval_flow_baseline_contract.py:audit",
@@ -311,9 +311,9 @@
    "scripts/naver/common/content.py:select_targets"
   ],
   "fcc9673f9a46bea4053b07a2b608145f7ffdd247": [
-   "ai_orchestrator/local_agent/installer_folder_presenter.py:_result",
-   "ai_orchestrator/local_agent/security_program_install_completion_detector.py:_result",
-   "ai_orchestrator/local_agent/user_assisted_installer.py:_safe_result"
+   "local_agent/runtime/installer_folder_presenter.py:_result",
+   "local_agent/runtime/security_program_install_completion_detector.py:_result",
+   "local_agent/runtime/user_assisted_installer.py:_safe_result"
   ]
  }
 }

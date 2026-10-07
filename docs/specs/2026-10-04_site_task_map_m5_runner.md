@@ -2,7 +2,7 @@
 
 - 날짜: 2026-10-04 / 승인: 사용자 "네"(M5 진행 — 탐색 → JSON → 다음에 JSON 으로 업무 수행을 완성). 상위: `2026-10-03_site_task_map.md` §5.
 - 목적: 저장된 업무 지도의 **`read` 등급 절차를 결정론적으로 재생**하고, 결과 표를 읽어 돌려주며, 성공/불일치를 지도에 자동 기록한다.
-- 선행 확인: `capability_check` replay/recorder → 기존 구현 없음. 기존 `ai_orchestrator/local_agent/browser/universal_actions.py` 는 **처음 보는 사이트용 폴백**(접근성 트리 `ref` 기반 즉석 조작)이라 역할이 다르다. M5 는 **이미 지도에 있는 업무의 재생**이며 두 모듈을 섞지 않는다.
+- 선행 확인: `capability_check` replay/recorder → 기존 구현 없음. 기존 `scripts/browser/agent/universal_actions.py` 는 **처음 보는 사이트용 폴백**(접근성 트리 `ref` 기반 즉석 조작)이라 역할이 다르다. M5 는 **이미 지도에 있는 업무의 재생**이며 두 모듈을 섞지 않는다.
 
 ## 1. 하는 것 / 하지 않는 것
 | 하는 것 | 하지 않는 것 |

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.browser_policy_integration import open_with_policy
-from ai_orchestrator.local_agent.browser_site_registry import (
+from local_agent.runtime.browser_policy_integration import open_with_policy
+from local_agent.runtime.browser_site_registry import (
     SitePolicy, register_site, clear_all,
 )
 

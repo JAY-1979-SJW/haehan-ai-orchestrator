@@ -27,7 +27,7 @@ from .user_present_state_store import (
     _CANCELLABLE_STATES,
 )
 
-from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+from ai_orchestrator.contracts.user_present_ws_contract import (
     STATUS_WAITING_FOR_USER,
     STATUS_USER_CONFIRMED,
     STATUS_CANCELLED,
