@@ -92,7 +92,7 @@ def _cmd_save_session(task: str) -> None:
 
 
 def _cmd_write_post(task: str, sub: str, args: list[str]) -> None:
-    from scripts.browser.navigator.navigator import write_blog_post
+    from scripts.naver.blog.navigator_blog import write_blog_post
 
     if not task or not sub:
         print("사용법: python scripts/browser/cdp_cli.py write-post <제목> <본문> [이미지경로]")

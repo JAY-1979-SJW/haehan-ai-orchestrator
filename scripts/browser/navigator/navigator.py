@@ -5,8 +5,6 @@ goto/scan/interact/verify/blog/session 기능이 각 leaf 에 구현돼 있다.
 """
 from __future__ import annotations
 
-from scripts.naver.blog.navigator_blog import write_blog_post  # noqa: F401
-
 from .navigator_common import _find_element_in_frames, _normalize_text, resolve  # noqa: F401
 from .navigator_interact import click_button, click_link, paste_image, type_into  # noqa: F401
 from .navigator_nav import goto, wait_login  # noqa: F401
