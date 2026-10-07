@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 
 from scripts.browser.navigator.navigator_common import _normalize_text
-from scripts.browser.page.web_connector import get_page
+from scripts.browser.cdp.connection import get_page
 
 
 def verify_input(text: str, timeout_s: float = 3.0, page=None) -> dict:

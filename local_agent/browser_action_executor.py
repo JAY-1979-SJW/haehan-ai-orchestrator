@@ -147,7 +147,7 @@ def _run_navigate(params: dict[str, Any]) -> dict[str, Any]:
     # 그 외(별칭) 는 기존 navigator.goto 의 alias resolver 사용.
     if _is_raw_url(url):
         try:
-            from scripts.browser.page.web_connector import get_page
+            from scripts.browser.cdp.connection import get_page
 
             get_page().goto(
                 url,
@@ -208,7 +208,7 @@ def _run_submit(params: dict[str, Any]) -> dict[str, Any]:
 
 def _run_get_url(params: dict[str, Any]) -> dict[str, Any]:
     try:
-        from scripts.browser.page.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         return {"ok": True, "url": get_page().url}
     except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
@@ -217,7 +217,7 @@ def _run_get_url(params: dict[str, Any]) -> dict[str, Any]:
 
 def _run_get_title(params: dict[str, Any]) -> dict[str, Any]:
     try:
-        from scripts.browser.page.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         return {"ok": True, "title": get_page().title()}
     except Exception as exc:  # noqa: BLE001 - 범용 브라우저 액션 실행기(goto/click/type) - 모든 except 가 ok:False,error_code,reason 반환, ACT_SUBMIT 은 실제 제출 미지원
@@ -226,7 +226,7 @@ def _run_get_title(params: dict[str, Any]) -> dict[str, Any]:
 
 def _run_wait_for_selector(params: dict[str, Any]) -> dict[str, Any]:
     try:
-        from scripts.browser.page.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         selector = str(params.get("selector") or "")
         if not selector:

@@ -26,7 +26,7 @@ except ImportError:
 from scripts.eum.auth import ensure_logged_in
 from scripts.gate import check as gate_check
 from scripts.logger import get_logger
-from scripts.browser.page.web_connector import get_page  # noqa: E402 - sys.path 부트스트랩 뒤 import(이동 전부터 있던 패턴)
+from scripts.browser.cdp.connection import get_page  # noqa: E402 - sys.path 부트스트랩 뒤 import(이동 전부터 있던 패턴)
 
 log = get_logger(__name__)
 

@@ -88,7 +88,7 @@ def save_labor_test(records: list[dict[str, Any]]) -> Path:
 
 
 def main() -> None:
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     page = get_page()
     records = fetch_labor_test(page)

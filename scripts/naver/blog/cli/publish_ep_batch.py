@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.gate import force_approved  # noqa: E402
 from scripts.naver.blog.core.writer import write_post  # noqa: E402
 from scripts.naver.blog.unsplash_images import resolve_unsplash_images as _resolve_unsplash_images  # noqa: E402
-from scripts.browser.page.web_connector import get_page  # noqa: E402
+from scripts.browser.cdp.connection import get_page  # noqa: E402
 
 FULL_PATH = ROOT / "data" / "marketing" / "ep_batch_full.json"
 LOG_PATH = ROOT / "data" / "marketing" / "ep_batch_publish_log_v2.jsonl"

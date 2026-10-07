@@ -130,7 +130,7 @@ def gate1_connect():
 
 def gate2_login():
     """GATE-2: 카카오 로그인 세션. 저장 세션 복원 시도 → 없으면 대기."""
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     page = get_page()
     if True:

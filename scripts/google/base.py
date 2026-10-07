@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 # 브라우저 연결 모듈
 from scripts.logger import get_logger  # noqa: E402
-from scripts.browser.page.web_connector import get_page as _wc_get_page  # noqa: E402
+from scripts.browser.cdp.connection import get_page as _wc_get_page  # noqa: E402
 
 log = get_logger(__name__)
 

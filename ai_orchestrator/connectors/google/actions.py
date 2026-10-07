@@ -33,7 +33,7 @@ def _cdp_call(fn, *, reason: str = "google-tools-action"):
     써서 이 세션 내내 이 문제를 한 번도 겪지 않았다 — 동일 패턴으로 통일.
     (CLAUDE.md '반복 실수' 참고.)
     """
-    from scripts.browser.page.web_connector import open_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import open_page, run_on_browser_thread
 
     def _work():
         page = open_page(allow_new_tab=True, reason=reason)

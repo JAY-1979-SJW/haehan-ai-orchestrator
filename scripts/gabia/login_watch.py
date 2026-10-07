@@ -67,7 +67,7 @@ _GABIA_LOGGED_IN_JS = r"""
 
 
 def _get_page():
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     return get_page()
 

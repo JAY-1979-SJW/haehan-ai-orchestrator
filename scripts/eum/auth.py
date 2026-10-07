@@ -551,7 +551,7 @@ def ensure_logged_in(page) -> None:
 
 def main() -> None:
     """CLI 실행: 로그인 시도 및 결과 출력."""
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     print("=" * 60)
     print("EUM 자동 로그인")

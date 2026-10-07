@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from scripts.browser.page import web_connector as wc
+from scripts.browser.cdp import connection as wc
 
 
 class FakePlaywright:

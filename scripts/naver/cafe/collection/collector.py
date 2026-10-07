@@ -1,7 +1,7 @@
 """네이버 카페 게시글 수집기 — 3개월치 전수 수집.
 
 사용:
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.cafe.collector import collect_articles
 
     articles = collect_articles(

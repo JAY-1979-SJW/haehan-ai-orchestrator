@@ -347,7 +347,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale
                     if stale_count >= stale_threshold:
                         # 새 활성 페이지 재획득 시도
                         try:
-                            from scripts.browser.page.web_connector import get_page
+                            from scripts.browser.cdp.connection import get_page
 
                             new_page = get_page()
                             if new_page and new_page is not page:
@@ -432,7 +432,7 @@ def watch_all_logins(page=None, *, check_interval: float = 1.0, timeout_s: int =
     Set timeout_s=0 to run until interrupted.
     """
     if page is None:
-        from scripts.browser.page.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         page = get_page()
 

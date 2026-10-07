@@ -29,7 +29,7 @@
 
 사용 예:
   from scripts.naver.blog.writer import BlogWriter
-  from scripts.browser.page.web_connector import get_page
+  from scripts.browser.cdp.connection import get_page
 
   page = get_page()
   bw = BlogWriter(page)

@@ -572,7 +572,7 @@ class FakeBlog:
     def __init__(self, monkeypatch, alias="skyjwsin", result=None):
         self.calls: list[dict] = []
         self.result = result or {"ok": True, "log_no": "123"}
-        monkeypatch.setattr("scripts.browser.page.web_connector.get_page", lambda: object())
+        monkeypatch.setattr("scripts.browser.cdp.connection.get_page", lambda: object())
         monkeypatch.setattr("scripts.naver.blog.automation.account_probe.read_alias", lambda page: alias)
         monkeypatch.setattr("scripts.naver.blog.core.writer.write_post", self._write)
 

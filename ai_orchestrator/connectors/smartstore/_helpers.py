@@ -72,7 +72,7 @@ def run_with_cdp_page(fn):
 
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    from scripts.browser.page.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     def _work():
         page = get_page()
@@ -91,7 +91,7 @@ def run_with_cdp_context(fn):
 
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    from scripts.browser.page.web_connector import get_context, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_context, run_on_browser_thread
 
     def _work():
         ctx = get_context()

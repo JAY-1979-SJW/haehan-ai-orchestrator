@@ -205,7 +205,7 @@ def write_to_naver(
     BlogWriter 가 SE3 셀렉터·iframe·자동로그인을 처리. 범용 클릭 에이전트보다 정확.
     """
     from ai_orchestrator.gates.gate_core import GateBlocked, require_side_effect
-    from scripts.browser.page.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     if req.publish:
         # 외부 공개 발행: 사용자가 확인 단계에서 입력한 승인 문구가 있어야 한다. 막히면 브라우저를 열기 전에 403.

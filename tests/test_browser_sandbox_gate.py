@@ -46,14 +46,14 @@ def test_cdp_launcher_blocks_scheduler_start_in_sandbox(monkeypatch):
 
 
 def test_web_connector_blocks_daemon_autostart_in_sandbox(tmp_path, monkeypatch):
-    from scripts.browser.page import web_connector
+    from scripts.browser.cdp import connection
 
     state_file = tmp_path / "cdp_daemon_state.json"
-    monkeypatch.setattr(web_connector, "_DAEMON_STATE", state_file)
+    monkeypatch.setattr(connection, "_DAEMON_STATE", state_file)
     monkeypatch.setenv("CODEX_SANDBOX_NETWORK_DISABLED", "1")
 
     with pytest.raises(RuntimeError) as exc:
-        web_connector._ensure_cdp_daemon()
+        connection._ensure_cdp_daemon()
 
     assert gate.SANDBOX_BROWSER_LAUNCH_BLOCKED in str(exc.value)
 

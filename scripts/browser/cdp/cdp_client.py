@@ -207,7 +207,7 @@ def _cmd_popup_install() -> None:
 
 
 def _cmd_detect_popup() -> None:
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.browser.popup.popup_detector import detect_popup
 
     page = get_page()
@@ -223,7 +223,7 @@ def _cmd_detect_popup() -> None:
 
 
 def _cmd_close_popup() -> None:
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.browser.popup.popup_detector import close_all_popups
 
     page = get_page()
@@ -375,7 +375,7 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
 
 def _cmd_analyze() -> None:
     from scripts.browser.page.page_analyzer import full_page_analysis
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     page = get_page()
     result = full_page_analysis(page, wait_for_load=True)
@@ -478,7 +478,7 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
 
 def _cmd_crawl_here(task: str, sub: str, args: list[str]) -> None:
     # 로그인 안 거치고 현재 활성 탭부터 BFS 탐색 (사용자 수동 로그인 후 사용)
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.explorer.site_crawler import crawl_site
 
     args_all = ([task] if task else []) + ([sub] if sub else []) + list(args)
@@ -642,7 +642,7 @@ def _cmd_gabia(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_auto_login(task: str, sub: str) -> None:
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.login_detector import monitor_for_login
 
     if not task:

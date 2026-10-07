@@ -1,8 +1,12 @@
 """카카오 4개 앱 전체 현황 서버 확인."""
-import sys, time, json, re
+import json
+import re
+import sys
+import time
 from typing import Any
+
 sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parents[2]))
-from scripts.browser.page.web_connector import get_page  # noqa: I001 - 이동 전부터 있던 미정렬 import(동작 변경 없음)
+from scripts.browser.cdp.connection import get_page
 from scripts.browser.page.page_helper import page_goto
 
 page = get_page()
@@ -101,6 +105,7 @@ for app in APPS:
 
 # 저장
 import pathlib
+
 out = pathlib.Path('data/kakao_full_audit.json')
 out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
 

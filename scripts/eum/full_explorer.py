@@ -643,7 +643,7 @@ def explore_all(page) -> dict[str, Any]:
 def main() -> None:
     """CLI 실행."""
     from scripts.eum.auth import is_logged_in, login
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     print("=" * 70)
     print("  EUM 전체 사이트 세밀 탐색")

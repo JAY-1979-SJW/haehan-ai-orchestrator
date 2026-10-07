@@ -22840,6 +22840,14 @@
    "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/browser/cdp/connection.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

@@ -293,7 +293,7 @@ def open_private_tab(
 def run_request(request: dict[str, Any]) -> dict[str, Any]:
     """승인된 탐색 요청 실행기(서비스에 주입). 새 전용 탭에서 탐색하고, 끝나면 **그 탭만** 닫는다. 사용자 탭은 건드리지 않는다."""
     from scripts.browser.cdp import cdp_tabs
-    from scripts.browser.page.web_connector import get_context, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_context, run_on_browser_thread
 
     def work() -> dict[str, Any]:
         page, handle = open_private_tab(get_context(), request["start_url"])

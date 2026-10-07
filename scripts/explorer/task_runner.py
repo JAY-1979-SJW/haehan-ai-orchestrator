@@ -418,7 +418,7 @@ def private_tab_scope(start_url: str):
     """운영용 페이지 범위: 공유 브라우저에 새 전용 탭을 열고(`cdp_tabs`), 끝나면 그 탭만 닫는다. 브라우저 스레드 안에서만 쓴다."""
     from scripts.browser.cdp import cdp_tabs
     from scripts.explorer.task_mapper import open_private_tab
-    from scripts.browser.page.web_connector import get_context
+    from scripts.browser.cdp.connection import get_context
 
     page, handle = open_private_tab(get_context(), start_url)
     try:
@@ -430,6 +430,6 @@ def private_tab_scope(start_url: str):
 
 def run_task_in_browser(host: str, task_id: str, values: dict[str, str]) -> dict[str, Any]:
     """서비스에 주입하는 운영용 실행기: 공유 브라우저 스레드에서 전용 탭으로 실행한다."""
-    from scripts.browser.page.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     return run_on_browser_thread(lambda: run_task(host, task_id, values, page_scope=private_tab_scope), timeout=int(RUN_BUDGET_S) + 40)

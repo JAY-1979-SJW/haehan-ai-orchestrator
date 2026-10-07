@@ -65,7 +65,7 @@ def _task_write(args: list[str], save_draft_only: bool = False,
     require_approval=True(기본): 발행 패널 열어둔 채로 awaiting_approval 반환.
     save_draft_only=True: 임시저장만.
     """
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.blog.writer import write_post
 
     # 인수 파싱
@@ -151,7 +151,7 @@ def _task_confirm(args: list[str]) -> None:
     write_post(..., require_approval=True) 결과 확인 후 호출.
     브라우저는 동일 세션이어야 한다.
     """
-    from scripts.browser.page.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.blog.writer import confirm_publish
 
     dry_run = _flag(args, "--dry-run")

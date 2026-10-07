@@ -53,7 +53,8 @@ _current_page = None  # 도메인 재사용 없이 단일 페이지 핸들 — g
 def _get_page(url: str | None = None):
     """web_connector의 get_domain_page/get_page 로직을 그대로 재사용."""
     global _current_page
-    from scripts.browser.page.web_connector import get_domain_page, get_page
+    from scripts.browser.cdp.connection import get_page
+    from scripts.browser.page.web_connector import get_domain_page
 
     if url:
         page = get_domain_page(url)
@@ -90,7 +91,7 @@ class _Handler(socketserver.StreamRequestHandler):
                 raise
             # 재사용하려던 탭이 죽어있음(2026-08-22 실측) — 새 탭으로 강제 교체.
             _log.warning("[browser-rpc] 탭 detached — 새 탭으로 재시도: %s", url)
-            from scripts.browser.page.web_connector import open_page
+            from scripts.browser.cdp.connection import open_page
 
             page = open_page(allow_new_tab=True, reason="rpc-detached-retry")
             page.goto(url, timeout=30000)

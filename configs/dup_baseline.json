@@ -330,10 +330,6 @@
    "scripts/youtube/oauth.py:parse_kv_args",
    "scripts/youtube/research_common.py:parse_kv_args"
   ],
-  "a06be2465179c5121eccdfda419be55d0d6a4e2e": [
-   "scripts/eum/labor_test.py:main",
-   "scripts/eum/site_devices.py:main"
-  ],
   "a0d3793fb09312dd9762fb5ca835c35e4d7e3667": [
    "scripts/video/ai_g2b_youtube_ep01_real.py:mux_audio",
    "scripts/video/ai_g2b_youtube_ep02.py:mux_audio"
@@ -445,6 +441,10 @@
   "dd98391254fcf8260de1b0c71e2290212b22ff73": [
    "scripts/naver/calendar.py:NaverCalendar.open",
    "scripts/naver/place.py:NaverPlace.open"
+  ],
+  "e0629eccbee21fd03c8dc90f3076b7f408b3b6d8": [
+   "scripts/eum/labor_test.py:main",
+   "scripts/eum/site_devices.py:main"
   ],
   "e36c0e76b7b2bf132fe345aaf357a99cfb41a76e": [
    "scripts/eum/deregistration.py:_analysis_entries",

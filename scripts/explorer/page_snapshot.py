@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.logger import get_logger
-from scripts.browser.page.web_connector import get_page
+from scripts.browser.cdp.connection import get_page
 
 _log = get_logger(__name__)
 

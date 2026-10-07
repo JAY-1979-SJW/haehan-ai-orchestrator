@@ -253,7 +253,7 @@ def publish_blog(
     from scripts.naver.blog.marketing.images import pick_3_images
     from scripts.naver.blog.marketing.publish import existing_unsplash_fallback, record_success
     from scripts.naver.blog.marketing.topics import load_cache
-    from scripts.browser.page.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     blog = package["blog"]
     all_images = existing_unsplash_fallback()
@@ -348,7 +348,7 @@ def refresh_neighbors(
     """CDP로 실제 이웃 목록을 다시 조회해 캐시 갱신 (107명 기준 약 10~20초 소요)."""
     from scripts.naver.blog.community.neighbor_manager import BlogNeighborManager
     from scripts.naver.blog.marketing import TARGET_BLOG_ID
-    from scripts.browser.page.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     def _do() -> dict:
         page = get_page()

@@ -45,7 +45,7 @@ def main() -> int:
 
     try:
         from scripts.naver.cafe.collection.daily_snapshot import run_daily_snapshot
-        from scripts.browser.page.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         page = get_page()
         snap_result = run_daily_snapshot(page)

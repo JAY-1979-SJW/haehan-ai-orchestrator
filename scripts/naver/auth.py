@@ -12,7 +12,7 @@
 
 사용:
   from scripts.naver.auth import login_naver
-  from scripts.browser.page.web_connector import get_page
+  from scripts.browser.cdp.connection import get_page
 
   page = get_page()
   result = login_naver(page)  # 환경변수/파일 사용

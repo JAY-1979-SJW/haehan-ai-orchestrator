@@ -143,7 +143,7 @@ def _adapter_profile_for_action(action: GoogleWorkAction) -> GoogleExecutionAdap
 
 def _open_target_readonly(url: str) -> dict:
     try:
-        from scripts.browser.page.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         page = get_page()
         page.goto(url, timeout=30000, wait_until="domcontentloaded")
