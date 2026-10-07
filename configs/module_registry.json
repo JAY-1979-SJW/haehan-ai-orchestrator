@@ -8233,7 +8233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/app_realtime_check.py": {
+  "scripts/ops/app_realtime_check.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -8649,7 +8649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/deploy_dry_run.py": {
+  "scripts/ops/deploy_dry_run.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -8665,7 +8665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/e2e_deep_scan.py": {
+  "scripts/ops/e2e_deep_scan.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -8673,7 +8673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/e2e_full_report.py": {
+  "scripts/ops/e2e_full_report.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -15657,7 +15657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/watch_log.py": {
+  "scripts/ops/watch_log.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",

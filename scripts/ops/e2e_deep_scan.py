@@ -1,19 +1,23 @@
-"""딥스캔: 버튼 미감지 페이지 + 500 페이지 재점검 (더 긴 대기 + 넓은 셀렉터)"""
+"""딥스캔: 버튼 미감지 페이지 + 500 페이지 재점검 (더 긴 대기 + 넓은 셀렉터)
+
+실행: python -m scripts.ops.e2e_deep_scan (저장소 루트에서)
+"""
 
 import asyncio
 import contextlib
 import json
-import pathlib
 import re
 import time
 from typing import Any
 
 from playwright.async_api import Page, async_playwright
 
+from scripts.common.app_paths import repo_root
+
 BASE = "http://127.0.0.1:3000"
 # 저장소 루트 기준 상대경로(2026-09-29 defect: 하드코딩된 구 경로 C:/work/... 가 이미
 # 이 PC에서도 깨져 있었음 — 프로젝트가 C:\Users\skyjw\claude-dev-handoff\... 로 이동됨).
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = repo_root()
 SS_DIR = ROOT / "data" / "e2e_report" / "deep"
 SS_DIR.mkdir(parents=True, exist_ok=True)
 

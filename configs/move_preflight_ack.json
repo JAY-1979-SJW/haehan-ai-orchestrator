@@ -174,6 +174,21 @@
    "file": "scripts/ops/ig_batch.py",
    "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
    "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/app_realtime_check.py",
+   "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/deploy_dry_run.py",
+   "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/watch_log.py",
+   "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
   }
  ]
 }
