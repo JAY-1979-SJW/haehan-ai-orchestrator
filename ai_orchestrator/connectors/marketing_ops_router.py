@@ -239,10 +239,10 @@ def publish_blog(
     if not req.confirmed:
         return {"ok": False, "error": "발행은 confirmed=true 확인이 필요합니다 (외부 공개)"}
 
-    from ai_orchestrator.connectors.naver_blog_router import BLOG_PUBLISH_CONFIRM_TEXT
     from ai_orchestrator.gates.send_approval import require_send_approval
+    from scripts.gate import CONFIRM_TEXTS
 
-    require_send_approval("blog_publish", send_confirm=req.send_confirm, expected=BLOG_PUBLISH_CONFIRM_TEXT)
+    require_send_approval("blog_publish", send_confirm=req.send_confirm, expected=CONFIRM_TEXTS["blog_publish"])
 
     path = _PACKAGES_DIR / f"{req.package_id}.json"
     package = _load_json(path)

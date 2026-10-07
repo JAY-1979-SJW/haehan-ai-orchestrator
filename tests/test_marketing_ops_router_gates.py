@@ -14,8 +14,10 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator.connectors import marketing_ops_router as M
 from ai_orchestrator.connectors import marketing_ops_settings as S
-from ai_orchestrator.connectors.naver_blog_router import BLOG_PUBLISH_CONFIRM_TEXT
 from ai_orchestrator.gates.auth import get_current_user
+from scripts.gate import CONFIRM_TEXTS
+
+BLOG_PUBLISH_CONFIRM_TEXT = CONFIRM_TEXTS["blog_publish"]
 
 
 @pytest.fixture
@@ -60,13 +62,9 @@ def test_publish_blog_blocked_without_send_confirm_when_switch_on(api):
     assert r.status_code == 403
 
 
-@pytest.mark.xfail(
-    reason="ai_orchestrator/gates/send_approval.py(R2c, 공유 모듈)가 차단 detail에 expected"
-    " 승인 문구를 그대로 노출함 — '문구를 넣지 않는다' 원칙 위반. 이 라우터 범위 밖이라"
-    " 여기서 고치지 않고 지휘창에 보고(2026-10-07). R2c가 고쳐지면 xfail 해제.",
-    strict=True,
-)
 def test_publish_blog_blocked_response_does_not_leak_approval_phrase(api):
+    # R2d-1(f2a72857)이 send_approval 어댑터의 차단 detail에서 승인 문구를 뺀 뒤
+    # 일반 단언으로 전환(2026-10-07). 이전에는 detail에 문구가 그대로 노출돼 xfail이었음.
     _toggle(api, True)
     r = api.post("/naver/marketing-ops/publish-blog", json={"package_id": "x", "confirmed": True})
     assert r.status_code == 403
