@@ -362,13 +362,13 @@ def require_side_effect(
     *,
     approval: str | None,
     expected: str,
-    recipient: str | None = None,
+    recipient: str | list[str] | None = None,
     **metadata: Any,
 ) -> GateResult:
     """외부 발행·발송 직전 공통 검사. 통과하면 GateResult, 아니면 GateBlocked.
 
     1) 승인 문구(approval == expected) — 불리언 force 가 아니라 사용자가 확인 단계에서 입력한 값이어야 한다
-    2) 수신거부 — recipient 가 opt_out 목록에 있으면 차단(목록 파일이 깨졌으면 차단)
+    2) 수신거부 — recipient(여러 명이면 목록) 중 하나라도 opt_out 목록에 있으면 차단(목록 파일이 깨졌으면 차단)
     """
     if approval != expected:
         raise _blocked(op_name, "명시 승인 문구 필요", **metadata)
@@ -376,6 +376,8 @@ def require_side_effect(
         opted = opt_out_list()
         if opted is None:
             raise _blocked(op_name, "수신거부 목록을 읽을 수 없음", **metadata)
-        if recipient.strip().lower() in opted:
-            raise _blocked(op_name, "수신거부 대상", recipient=recipient, **metadata)
+        names = [recipient] if isinstance(recipient, str) else list(recipient)
+        hit = next((r for r in names if r.strip().lower() in opted), None)
+        if hit is not None:
+            raise _blocked(op_name, "수신거부 대상", recipient=hit, **metadata)
     return check(op_name, risk=RiskLevel.APPROVE, force=True, **metadata)

@@ -21,11 +21,15 @@ SKIP_PARTS = {"__pycache__", "node_modules", ".venv", "archive", "ops", "tests"}
 SINK_CALLS = {"send_mail", "sendmail", "send_draft", "media_publish", "send_reply"}  # 이름이 곧 외부 발송·게시
 SINK_STRINGS = ("media_publish", "Send ⌘Enter")  # Graph API 경로·Gmail 보내기 버튼 셀렉터 문자열
 PUBLISH_RECEIVERS = ("bw", "writer")  # bw.publish() / self.writer.publish() — BlogWriter 계열 발행 호출
-GUARDS = {"require_side_effect", "gate_check", "check_send", "gated"}
+# gates.check_send(force=True) 는 항상 통과시킬 수 있어 게이트로 인정하지 않는다(R2b). require_send 는 승인 문구를 대조한다.
+GUARDS = {"require_side_effect", "require_send", "_require_send_approval", "gate_check", "gated", "check_send"}
+WEAK_GUARD_RECEIVERS = {"gates"}  # gates.check_send(force=...) 는 불리언으로 통과 가능 — policy.check_send 같은 별도 정책만 인정
 # 정의 자체가 발송 구현이라 호출이 아닌 것(예: smtplib 래퍼 정의)은 SINK 호출이 없으므로 자동 제외된다.
 REQUIRED_GUARDED = {
     "ai_orchestrator/connectors/naver_blog_router.py::write_to_naver._do",  # 게이트는 바깥 write_to_naver 에 있다
     "scripts/hiworks/mail_batch.py::execute_send_batch",
+    "ai_orchestrator/connectors/gmail_router.py::api_reply",
+    "ai_orchestrator/connectors/gmail_router.py::api_send",
 }
 
 
@@ -62,7 +66,9 @@ def _is_sink(node: ast.AST) -> bool:
 
 def _is_guard(node: ast.AST) -> bool:
     if isinstance(node, ast.Call):
-        name, _ = _call_name(node)
+        name, is_attr = _call_name(node)
+        if name == "check_send" and is_attr and ast.unparse(node.func.value) in WEAK_GUARD_RECEIVERS:  # type: ignore[attr-defined]
+            return False
         return name in GUARDS
     if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
         return any(

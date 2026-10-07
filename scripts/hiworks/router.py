@@ -6,6 +6,7 @@ import contextlib
 import json
 
 from scripts.hiworks import gates
+from scripts.hiworks.actions import APPROVAL_CONFIRM_TEXT as SUBMIT_CONFIRM_TEXT
 from scripts.hiworks.actions import (
     apply_prepare_values,
     build_action_catalog,
@@ -236,10 +237,17 @@ def _cmd_submit_section(sub: str | None, args: list[str]) -> None:
     dry_run = "--dry-run" in args
     confirm = option_value(args, "--confirm=") or ""
     approved_by = option_value(args, "--approved-by=") or "operator"
-    if approved and confirm != "HIWORKS_APPROVED_SUBMIT":
-        raise SystemExit("approved submit requires --confirm=HIWORKS_APPROVED_SUBMIT")
+    if approved and confirm != SUBMIT_CONFIRM_TEXT:
+        raise SystemExit(f"approved submit requires --confirm={SUBMIT_CONFIRM_TEXT}")
 
-    gates.check_send(force=approved, service=service, control_id=control_id, dry_run=dry_run, approved_by=approved_by)
+    gates.require_send(
+        approval=confirm if approved else None,
+        expected=SUBMIT_CONFIRM_TEXT,
+        service=service,
+        control_id=control_id,
+        dry_run=dry_run,
+        approved_by=approved_by,
+    )
     workflow = workflow_for_alias("submit-section") or {"key": "submit_section", "risk": "send"}
     with work_run(workflow, [service, control_id, *(args or [])]):
         catalog = load_action_catalog()
@@ -279,7 +287,7 @@ def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
     if approved and not dry_run:
         if confirm != APPROVAL_CONFIRM_TEXT:
             raise SystemExit(f"approved send requires --confirm={APPROVAL_CONFIRM_TEXT}")
-        gates.check_send(force=True, context="hiworks batch send", dry_run=False)
+        gates.require_send(approval=confirm, expected=APPROVAL_CONFIRM_TEXT, dry_run=False, batch_limit=limit)
         workflow = workflow_for_alias("send-batch") or {"key": "send_batch_execute", "risk": "send"}
         with work_run(workflow, [str(limit), f"--delay-min={delay_min}", f"--delay-max={delay_max}", "--approved"]):
             from scripts.hiworks.explorer import open_hiworks

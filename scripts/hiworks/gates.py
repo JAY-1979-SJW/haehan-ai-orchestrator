@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from scripts.gate import check as gate_check
+from scripts.gate import require_side_effect
 from scripts.site_engine.execution_gate import (
     ExecutionGateInput,
     ExecutionGateResult,
@@ -21,6 +22,13 @@ def check_prepare() -> None:
 
 def check_send(*, force: bool = False, **metadata) -> None:
     gate_check("mail_send", force=force, context="Hiworks state-changing action", **metadata)
+
+
+def require_send(*, approval: str | None, expected: str, recipient: str | list[str] | None = None, **metadata):
+    """하이웍스 발송·제출 직전 검사 — force 불리언이 아니라 사용자가 입력한 --confirm 문구와 대조한다."""
+    return require_side_effect(
+        "mail_send", approval=approval, expected=expected, recipient=recipient, context="Hiworks state-changing action", **metadata
+    )
 
 
 # ── site_engine ExecutionGateResult wrappers (non-breaking additions) ─
