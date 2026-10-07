@@ -13,8 +13,7 @@ from __future__ import annotations
 import logging
 import os
 
-from ai_orchestrator.gates.gate_core import is_opted_out
-
+from ..gates.gate_core import is_opted_out
 from . import instagram_dm_db as db
 from . import instagram_dm_rule_engine as rule_engine
 from . import instagram_dm_token_store as token_store

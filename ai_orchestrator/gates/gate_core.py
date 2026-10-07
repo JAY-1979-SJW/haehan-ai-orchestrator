@@ -46,8 +46,9 @@ from typing import Any
 
 from ai_orchestrator.gates.gate_types import GateResult, GateVerdict, RiskLevel
 
-# scripts.logger.get_logger("scripts.gate") 와 같은 로거(핸들러는 "scripts" 루트 로거에 붙는다) — scripts 를 import 하지 않는다.
-_log = logging.getLogger("scripts.gate")
+# 로거 이름은 "scripts" 계층 아래에 둔다 — 핸들러는 "scripts" 루트 로거에 붙어 있어 기존 로그 출력·파일 기록이 그대로다.
+# (이 모듈은 scripts 를 import 하지 않는다. 이름 계층만 쓴다.)
+_log = logging.getLogger("scripts.gate_core")
 
 # 감사 기록 싱크: 게이트 판정을 op_log 등에 남기는 함수. scripts/gate.py(shim)와 앱 시작점이 등록한다(의존 방향 보존).
 _audit_sink: Callable[..., Any] | None = None

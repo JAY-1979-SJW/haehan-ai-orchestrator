@@ -22298,12 +22298,12 @@
    "source": "rule"
   },
   "ai_orchestrator/gates/gate_types.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L1",
+   "role": "shared",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "게이트 결과 타입만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출(R2d-2 설계서 §4)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "tests/test_gate_core_split_r2d2.py": {
    "layer": "L11",
