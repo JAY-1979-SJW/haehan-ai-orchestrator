@@ -644,7 +644,7 @@
   "role": "policy",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
  },
- "scripts/yt_upload/step1_navigate.py": {
+ "scripts/youtube/upload/step1_navigate.py": {
   "layer": "L6",
   "role": "policy",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"

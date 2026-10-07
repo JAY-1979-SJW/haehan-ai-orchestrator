@@ -1,7 +1,7 @@
 """STEP 3: File Chooser 인터셉트로 파일 주입."""
 import sys, time, threading
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from scripts.cdp_helper import CDP
 from scripts.app_paths import resolve_external, sibling_project
 

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import websocket
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 CREDS_FILE = "data/.tmp_creds.pkl"
 GABIA_TAB = "1620EC5553AE2CFFD42553A8DFD4E915"

@@ -1,7 +1,7 @@
 """STEP 2: 만들기 → 동영상 업로드 다이얼로그 열기."""
 import sys, time
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from scripts.cdp_helper import CDP
 
 def run() -> bool:

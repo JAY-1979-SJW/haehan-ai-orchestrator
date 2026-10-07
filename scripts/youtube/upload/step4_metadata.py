@@ -1,7 +1,7 @@
 """STEP 4: 제목 입력 및 다음 버튼 클릭."""
 import sys, time
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from scripts.cdp_helper import CDP
 
 TITLE = "bumper_v"
