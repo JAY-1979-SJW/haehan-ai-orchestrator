@@ -89,25 +89,35 @@ jobs:
         # 그대로 노출한다(서버 코드 수정 불필요). 포맷은 W4(skyjw-3c)와 합의.
         id: buildinfo
         shell: bash
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
           git_sha="$(git rev-parse HEAD)"
           sha7="${git_sha:0:7}"
           build_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           yyyymmdd="$(date -u +%Y%m%d)"
           version="${yyyymmdd}-${sha7}"
+          # electron-builder(extraMetadata.version)에는 semver·Windows 16비트 파일 버전(각 칸 ≤65535)에 맞는
+          # <yyyy>.<mmdd 정수>.<run_number> 를 넘긴다(예: 2026.1008.17). 화면 표시·산출물 이름·build-info.json 의
+          # version 은 사람이 읽는 yyyymmdd-sha7 그대로다. mmdd 는 앞자리 0 이 semver 에서 무효라 정수로 바꾼다(0107 → 107).
+          pkg_version="$(date -u +%Y).$((10#$(date -u +%m%d))).${RUN_NUMBER}"
           cat > admin-web/electron/build-info.json <<EOF
           {"git_sha": "${git_sha}", "build_time": "${build_time}", "version": "${version}"}
           EOF
           cat admin-web/electron/build-info.json
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "pkg_version=${pkg_version}" >> "$GITHUB_OUTPUT"
           echo "sha7=${sha7}" >> "$GITHUB_OUTPUT"
 
       - name: electron-builder --win portable
-        # -c.extraMetadata.version 이 package.json의 "1.0.0" 고정값을 덮어써 artifactName의
-        # ${version}(package.json:79 "HaehanAI-${version}-portable.exe")에 반영된다.
+        # -c.extraMetadata.version 은 앱 메타데이터·Windows 파일 버전용 semver(<yyyy>.<mmdd>.<run>).
+        # 산출물 이름은 package.json portable.artifactName 의 HaehanAI-${env.HAEHAN_BUILD_VERSION}-portable.exe 로
+        # 사람이 읽는 yyyymmdd-sha7 이 들어간다 → 게시 도구 glob(HaehanAI-*.exe)·VERSION_RE 가 그대로 통과한다.
         shell: bash
         working-directory: admin-web/electron
-        run: npx electron-builder --win portable -c.extraMetadata.version=${{ steps.buildinfo.outputs.version }}
+        env:
+          HAEHAN_BUILD_VERSION: ${{ steps.buildinfo.outputs.version }}
+        run: npx electron-builder --win portable -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
 
       - name: SHA256 checksums
         shell: bash
@@ -122,7 +132,9 @@ jobs:
         # --dir(unpacked 폴더)로도 한 번 더 뽑아 그 안의 실제 exe를 실행 대상으로 쓴다.
         shell: bash
         working-directory: admin-web/electron
-        run: npx electron-builder --win dir -c.extraMetadata.version=${{ steps.buildinfo.outputs.version }}
+        env:
+          HAEHAN_BUILD_VERSION: ${{ steps.buildinfo.outputs.version }}
+        run: npx electron-builder --win dir -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
 
       - name: E2E (Electron, 빌드 산출물) — app/user_flow/fresh_install_signup
         # 기존 e2e-electron/*.spec.ts·playwright.electron.config.ts 재사용(신규 프레임워크 없음).
@@ -151,12 +163,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Stage release files (exe·checksums·릴리스 노트·설치 안내서를 한 폴더에 평평하게)
+        # 게시 도구(publish_release_to_nas.py)는 산출물 폴더에 HaehanAI-*.exe·checksums.txt(필수)와
+        # RELEASE_NOTES.md·설치_및_사용_안내.md(있으면)를 기대한다. 업로드 경로가 여러 폴더에 걸치면
+        # 아티팩트 안에 폴더 구조가 생기므로 release-out/ 한 폴더로 모아 올린다.
+        shell: bash
+        run: |
+          mkdir -p release-out
+          cp dist-electron-new/*.exe dist-electron-new/checksums.txt release-out/
+          for f in docs/release/desktop/*.md; do
+            if [ -f "$f" ]; then cp "$f" release-out/; else echo "릴리스 문서 없음(이 ref 에는 docs/release/desktop 이 없다) — 건너뜀"; fi
+          done
+          ls -la release-out
+
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: HaehanAI-Desktop-${{ steps.buildinfo.outputs.version }}
-          path: |
-            dist-electron-new/*.exe
-            dist-electron-new/checksums.txt
+          path: release-out/*
           if-no-files-found: error
           retention-days: 30

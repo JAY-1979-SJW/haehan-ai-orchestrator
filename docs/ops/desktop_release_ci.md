@@ -197,8 +197,16 @@ Electron 셸만 복원됐고(사용자가 "AI 에이전트+브라우저 CDP 자�
 - 저장소에 커밋된 기본값(`git_sha`·`build_time`: `"unknown"`, `version`: `"0.0.0-dev"`)은
   CI가 빌드 때마다 덮어쓴다 — 로컬 `electron-builder`(dev 패키징) 때 파일이 없어서
   실패하는 일을 막기 위한 플레이스홀더다.
-- 포터블 파일명도 같은 `version`을 쓴다(`package.json`의 `portable.artifactName`:
-  `HaehanAI-${version}-portable.exe` → `-c.extraMetadata.version=<yyyymmdd>-<sha7>`로 주입).
+- 버전은 두 가지다. **표시용** `yyyymmdd-sha7`(예: `20261008-abc1234`)은 `build-info.json`의 `version`,
+  포터블 파일 이름(`package.json` `portable.artifactName` = `HaehanAI-${env.HAEHAN_BUILD_VERSION}-portable.exe`),
+  앱의 `userData\mcp\<버전>` 폴더, 게시 도구 `--version` 에 쓴다. **Windows/electron-builder용**
+  `<yyyy>.<mmdd 정수>.<run_number>`(예: `2026.1008.17`, semver 유효·각 칸 ≤65535)는
+  `-c.extraMetadata.version` 으로만 넘긴다(비-semver 날짜 문자열은 Windows 16비트 파일 버전에서 잘린다).
+  로컬에서 `electron-builder` 로 직접 빌드할 때는 `HAEHAN_BUILD_VERSION=<표시용 버전>` 환경변수를 줘야 파일 이름이 정해진다.
+- 아티팩트(`HaehanAI-Desktop-<버전>`)는 `release-out/` 한 폴더에 평평하게 담긴다: `HaehanAI-*.exe`,
+  `checksums.txt`, `RELEASE_NOTES.md`, `설치_및_사용_안내.md`(두 문서는 `docs/release/desktop/` 에서 복사, 없으면 건너뜀).
+  압축을 푼 폴더를 그대로 `publish_release_to_nas.py <폴더> --version <표시용 버전>` 의 산출물 폴더로 쓴다 — 게시 도구는
+  exe·checksums.txt 를 필수로, 두 문서를 있으면 함께 NAS 에 올린다.
 
 ## 서명·비밀값
 
