@@ -29,6 +29,8 @@ from pydantic import BaseModel
 from ai_orchestrator.audit_logger import log_event
 from ai_orchestrator.connectors.marketing_ops_settings import is_enabled, load_settings, save_settings
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.gates.send_approval import require_send_approval
+from scripts.gate import CONFIRM_TEXTS
 from scripts.realtime_audit import emit_event
 
 marketing_ops_router = APIRouter(prefix="/naver/marketing-ops", tags=["marketing-ops"])
@@ -238,9 +240,6 @@ def publish_blog(
     """
     if not req.confirmed:
         return {"ok": False, "error": "발행은 confirmed=true 확인이 필요합니다 (외부 공개)"}
-
-    from ai_orchestrator.gates.send_approval import require_send_approval
-    from scripts.gate import CONFIRM_TEXTS
 
     require_send_approval("blog_publish", send_confirm=req.send_confirm, expected=CONFIRM_TEXTS["blog_publish"])
 
