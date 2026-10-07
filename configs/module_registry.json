@@ -22442,12 +22442,12 @@
    "source": "rule"
   },
   "ai_orchestrator/domain/site_task_spec.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "업무 후보 never 분류·업무 명세(spec) 생성·검증 규칙(순수 함수, 네트워크·파일·시계 없음, docstring 1행이 'L1 Shared Contracts') — site_task_map.py와 같은 성격이라 같은 층. site_task_map.py가 이 모듈을 쓰는 방향(L1→L1, 역전 아님)이고 이 모듈은 site_task_map을 import하지 않는다. generic L4 오분류(M12 PR 통합 중 발견 — site_task_map(L1)→site_task_spec(L4) 거짓 층 역전 1건의 원인)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/services/site_task_spec_service.py": {
    "layer": "L4",
