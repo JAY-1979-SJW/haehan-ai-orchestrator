@@ -22,8 +22,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from ai_orchestrator.browser_tool.router import route_browser_task_with_params
 from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
-from ai_orchestrator.browser_tool import route_browser_task_with_params
 
 from . import browser_actions, config
 
