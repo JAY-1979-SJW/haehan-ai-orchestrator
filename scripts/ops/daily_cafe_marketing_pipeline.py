@@ -1,12 +1,20 @@
-"""실행 전달 shim: 실제 구현은 scripts/naver/cafe/ops/daily_cafe_marketing_pipeline.py
-(docs/architecture/TOOL_HOME_MAP.md). Windows 작업 스케줄러(HaehanAI_DailyCafeMarketing)가
-이 파일을 경로로 직접 실행하므로, 파일 자체는 남기고 실행만 새 위치로 넘긴다.
-"""
+# haehan-shim: scripts.naver.cafe.ops.daily_cafe_marketing_pipeline
+# 호환 shim: 실제 모듈은 scripts.naver.cafe.ops.daily_cafe_marketing_pipeline 로 이동했다 (scripts/naver/cafe/ops/daily_cafe_marketing_pipeline.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-from __future__ import annotations
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
 
-from scripts.naver.cafe.ops.daily_cafe_marketing_pipeline import *  # noqa: F403
-from scripts.naver.cafe.ops.daily_cafe_marketing_pipeline import main
+    _runpy.run_module("scripts.naver.cafe.ops.daily_cafe_marketing_pipeline", run_name="__main__")
+    raise SystemExit
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
+
+
+_install(_il.import_module("scripts.naver.cafe.ops.daily_cafe_marketing_pipeline"), globals(), _sys.modules)

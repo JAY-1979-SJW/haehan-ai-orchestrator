@@ -18873,14 +18873,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_daily_cafe_marketing_pipeline_shim.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "naver_cafe",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/test_dashboard_auth_none_guards.py": {
    "layer": "L11",
    "role": "test",
