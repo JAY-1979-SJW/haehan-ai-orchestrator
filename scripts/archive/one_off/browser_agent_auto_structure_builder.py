@@ -8,9 +8,9 @@
   5. mixin 메서드 자동 생성
 
 사용:
-  python -m ai_orchestrator.local_agent.browser.auto_structure_builder mail
-  python -m ai_orchestrator.local_agent.browser.auto_structure_builder calendar
-  python -m ai_orchestrator.local_agent.browser.auto_structure_builder mybox
+  python -m scripts.archive.one_off.browser_agent_auto_structure_builder mail
+  python -m scripts.archive.one_off.browser_agent_auto_structure_builder calendar
+  python -m scripts.archive.one_off.browser_agent_auto_structure_builder mybox
 """
 
 from __future__ import annotations
@@ -483,7 +483,7 @@ class {cls}:
         실제 발송은 사용자가 Chrome에서 직접 클릭.
         반환: {{ok, draft_url}}
         """
-        from ai_orchestrator.local_agent.browser.cdp_audit import L2
+        from scripts.browser.agent.cdp_audit import L2
         self.go("https://mail.naver.com/v2/write")
         time.sleep(2)
         try:
@@ -541,7 +541,7 @@ class {cls}:
 
         반환: {{ok, draft_url}}
         """
-        from ai_orchestrator.local_agent.browser.cdp_audit import L2
+        from scripts.browser.agent.cdp_audit import L2
         self.go("https://calendar.naver.com/")
         time.sleep(2)
         L2("CALENDAR_WRITE_PREPARED", "calendar_mixin", title=title, start=start, end=end)
@@ -605,7 +605,7 @@ def _print_detected_fields(fields: dict) -> None:
 
 def _detect_with_browser(service_name: str, config: dict, structure: PageStructure, capture: NetworkCapture) -> list:
     """브라우저를 띄워 목록/상세 구조를 탐지하고 목록 셀렉터 후보를 반환."""
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         # 네트워크 캡처 시작

@@ -95,7 +95,7 @@ def _main() -> None:
     parser.add_argument("--top", type=int, default=300)
     args = parser.parse_args()
 
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         summary = collect_top_details(agent._page, top=args.top)

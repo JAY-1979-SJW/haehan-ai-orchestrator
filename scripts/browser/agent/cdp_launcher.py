@@ -10,7 +10,7 @@ import time
 import urllib.error
 import urllib.request
 
-from ai_orchestrator.local_agent.browser.cdp_audit import L1, L2
+from scripts.browser.agent.cdp_audit import L1, L2
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
 CDP_HOST = "127.0.0.1"
@@ -69,7 +69,7 @@ def ensure_cdp(
         return base
 
     assert_browser_launch_allowed(
-        component="ai_orchestrator.local_agent.browser.cdp_launcher", action="cdp_scheduler_start"
+        component="scripts.browser.agent.cdp_launcher", action="cdp_scheduler_start"
     )
 
     if not is_task_registered(task_name):
@@ -105,7 +105,7 @@ def open_url(url: str, host: str = CDP_HOST, port: int = CDP_PORT, activate: boo
     Chrome 창이 백그라운드에 있어도 자동으로 전면화.
 
     사용 예 (CLI):
-        python -m ai_orchestrator.local_agent.browser.cdp_launcher https://example.com
+        python -m scripts.browser.agent.cdp_launcher https://example.com
     """
     ensure_cdp(host=host, port=port)
     # URL이 스킴 없으면 https:// 자동 부여
@@ -140,7 +140,7 @@ def open_and_wait_login(
     Returns:
         {"tab": {...}, "logged_in": bool, "elapsed_s": int}
     """
-    from ai_orchestrator.local_agent.browser.cdp_session_manager import (
+    from scripts.browser.agent.cdp_session_manager import (
         is_logged_in,
         wait_for_login,
     )
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if not args:
         print(
-            "Usage: python -m ai_orchestrator.local_agent.browser.cdp_launcher <url> "
+            "Usage: python -m scripts.browser.agent.cdp_launcher <url> "
             "[--wait-login [domain] [timeout_s]]"
         )
         sys.exit(1)

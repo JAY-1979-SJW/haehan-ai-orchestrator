@@ -262,7 +262,7 @@ def save_sitemap_cache(info: SitemapInfo, cache_dir: Path | None = None):
 
 def main():
     """테스트용 main."""
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     domains = [
         "mail.naver.com",

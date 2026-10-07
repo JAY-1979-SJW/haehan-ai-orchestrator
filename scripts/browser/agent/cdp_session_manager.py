@@ -10,7 +10,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-from ai_orchestrator.local_agent.browser.cdp_audit import L2, L3
+from scripts.browser.agent.cdp_audit import L2, L3
 from ai_orchestrator.paths.runtime import data_dir
 
 PROFILE_ROOT = data_dir() / "cdp_profile"

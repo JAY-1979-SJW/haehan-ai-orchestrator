@@ -335,7 +335,7 @@ def deep_detect_mybox_service(page) -> dict:
 
 def main():
     """심층 탐지 실행."""
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     print("\n" + "=" * 70)
     print("  항목별 심층 사이트 맵 탐지")

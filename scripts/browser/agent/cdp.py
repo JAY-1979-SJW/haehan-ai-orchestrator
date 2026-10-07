@@ -24,7 +24,7 @@ Playwright `connect_over_cdp`로 연결하여 AI가 새 탭으로만 작업.
 
 사용 예
 ======
-    from ai_orchestrator.local_agent.browser.cdp import open_cdp_session
+    from scripts.browser.agent.cdp import open_cdp_session
 
     with open_cdp_session() as session:
         page = session.new_tab("https://developer.hancom.com")
@@ -35,6 +35,7 @@ Playwright `connect_over_cdp`로 연결하여 AI가 새 탭으로만 작업.
 from __future__ import annotations
 
 import json
+import os
 import urllib.error
 import urllib.request
 from collections.abc import Iterator
@@ -82,12 +83,19 @@ def is_cdp_available(
         }
 
 
+def _default_chrome_path() -> str:
+    """Windows 의 기본 Chrome 실행 파일 경로(ProgramFiles 환경변수 기준 — 경로를 코드에 박지 않는다). 값은 이전 기본값과 같다."""
+    program_files = os.environ.get("ProgramFiles") or (os.environ.get("SystemDrive", "C:") + r"\Program Files")
+    return program_files + r"\Google\Chrome\Application\chrome.exe"
+
+
 def get_chrome_start_command(
-    chrome_path: str = r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    chrome_path: str | None = None,
     user_data_dir: str | None = None,
     port: int = DEFAULT_CDP_PORT,
 ) -> str:
     """사용자에게 안내할 Chrome 디버깅 모드 시작 명령어 반환."""
+    chrome_path = chrome_path or _default_chrome_path()
     udd = user_data_dir or r"%LOCALAPPDATA%\Google\Chrome\User Data"
     return f'"{chrome_path}" --remote-debugging-port={port} --remote-allow-origins=* --user-data-dir="{udd}"'
 

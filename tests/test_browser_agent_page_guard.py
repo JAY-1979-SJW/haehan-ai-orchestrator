@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from scripts.browser.agent.agent import BrowserAgent
 
 
 class _FakePage:

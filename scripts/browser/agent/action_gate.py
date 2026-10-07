@@ -21,7 +21,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from ai_orchestrator.local_agent.browser.intent_token import (
+from scripts.browser.agent.intent_token import (
     IntentToken,
     is_origin_allowed,
     validate_intent,

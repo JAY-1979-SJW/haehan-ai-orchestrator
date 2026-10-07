@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import urllib.error
 
-from ai_orchestrator.local_agent.browser import approval_api_client as client
+from scripts.browser.agent import approval_api_client as client
 
 
 class _FakeResponse:

@@ -12,7 +12,7 @@
 
 사용법
 ======
-    from ai_orchestrator.local_agent.browser.approval_server import request_approval
+    from scripts.browser.agent.approval_server import request_approval
 
     approved = request_approval(
         action="submit",
@@ -223,7 +223,7 @@ def audit_stream():
     def _generate():
         import time as _time
 
-        from ai_orchestrator.local_agent.browser.audit_log import get_audit_path
+        from scripts.browser.agent.audit_log import get_audit_path
 
         path = get_audit_path()
         last_size = path.stat().st_size if path.exists() else 0
@@ -258,7 +258,7 @@ def audit_recent():
     """최근 감사 로그 N건 반환."""
     from flask import request as freq
 
-    from ai_orchestrator.local_agent.browser.audit_log import read_log
+    from scripts.browser.agent.audit_log import read_log
 
     n = int(freq.args.get("n", 50))
     entries = read_log()
@@ -268,7 +268,7 @@ def audit_recent():
 @app.route("/api/audit/summary", methods=["GET"])
 def audit_summary():
     """감사 로그 요약 통계."""
-    from ai_orchestrator.local_agent.browser.audit_log import summarize_log
+    from scripts.browser.agent.audit_log import summarize_log
 
     return jsonify(summarize_log())
 
@@ -334,7 +334,7 @@ def request_approval(
     bool : True = 승인, False = 거부/타임아웃
     """
     if not _local_ui_fallback_enabled():
-        from ai_orchestrator.local_agent.browser.approval_api_client import request_approval_via_api
+        from scripts.browser.agent.approval_api_client import request_approval_via_api
 
         result = request_approval_via_api(
             action=action,

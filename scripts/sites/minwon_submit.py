@@ -29,7 +29,7 @@ from typing import Any, Literal
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
-from ai_orchestrator.local_agent.browser.actions import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+from scripts.browser.agent.actions import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     click,
     navigate,
     screenshot,
@@ -37,18 +37,18 @@ from ai_orchestrator.local_agent.browser.actions import (  # noqa: E402 - sys.pa
     upload_file,
     wait_ms,
 )
-from ai_orchestrator.local_agent.browser.approval_server import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+from scripts.browser.agent.approval_server import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     request_approval,
 )
-from ai_orchestrator.local_agent.browser.audit_log import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+from scripts.browser.agent.audit_log import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     get_audit_path,
 )
-from ai_orchestrator.local_agent.browser.cdp import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+from scripts.browser.agent.cdp import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     CDPConnectionError,
     is_cdp_available,
     open_cdp_session,
 )
-from ai_orchestrator.local_agent.browser.intent_token import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+from scripts.browser.agent.intent_token import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     SCOPE_INTERACTION,
     create_intent,
 )

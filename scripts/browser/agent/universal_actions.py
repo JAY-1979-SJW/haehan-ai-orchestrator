@@ -1,4 +1,4 @@
-"""ai_orchestrator/local_agent/browser/universal_actions.py — 범용 CDP 액션 계층.
+"""scripts/browser/agent/universal_actions.py — 범용 CDP 액션 계층.
 
 목적
 ====

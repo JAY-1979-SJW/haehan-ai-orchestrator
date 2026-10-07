@@ -13,7 +13,7 @@ data/audit/user_browser_cdp_YYYYMMDD.jsonl
 
 사용 예
 ======
-    from ai_orchestrator.local_agent.browser.audit_log import log_action
+    from scripts.browser.agent.audit_log import log_action
 
     log_action(
         action="navigate",

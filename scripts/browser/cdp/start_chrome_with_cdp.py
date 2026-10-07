@@ -24,13 +24,13 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_ROOT))
 
-from ai_orchestrator.local_agent.browser.cdp import (
+from scripts.browser.agent.cdp import (  # noqa: E402
     DEFAULT_CDP_PORT,
     get_chrome_start_command,
     is_cdp_available,
 )
-from scripts.browser_paths import find_chrome  # noqa: E402 - sys.path 설정 뒤에 import 해야 하는 스크립트(기존 import 와 동일)
-from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+from scripts.browser_paths import find_chrome  # noqa: E402
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
 
 
 def _find_chrome_exe() -> str | None:

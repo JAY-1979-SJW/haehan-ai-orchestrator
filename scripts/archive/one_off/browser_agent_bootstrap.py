@@ -6,7 +6,7 @@ import sys
 import time
 from pathlib import Path
 
-from ai_orchestrator.local_agent.browser.cdp_session_manager import (
+from scripts.browser.agent.cdp_session_manager import (
     is_logged_in,
 )
 
@@ -31,7 +31,7 @@ def check_cdp_connection() -> bool:
     """CDP 연결 상태 확인."""
     print_step("CDP 연결 확인", "🔍")
     try:
-        from ai_orchestrator.local_agent.browser.cdp_launcher import ensure_cdp, probe_cdp
+        from scripts.browser.agent.cdp_launcher import ensure_cdp, probe_cdp
 
         if probe_cdp():
             print_ok("Chrome/CDP 실행 중 (127.0.0.1:9222)")
@@ -212,8 +212,8 @@ def update_browser_agent() -> bool:
         if "MailMixin" not in content:
             # Import 줄 수정
             content = content.replace(
-                "from ai_orchestrator.local_agent.browser.mixins import CafeMixin, BlogMixin",
-                "from ai_orchestrator.local_agent.browser.mixins import CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin",
+                "from scripts.browser.agent.mixins import CafeMixin, BlogMixin",
+                "from scripts.browser.agent.mixins import CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin",
             )
             # 클래스 정의 수정
             content = content.replace(
@@ -235,7 +235,7 @@ def verify_import() -> bool:
     print_step("Import 검증", "✅")
 
     try:
-        from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+        from scripts.browser.agent.agent import BrowserAgent
 
         print_ok("BrowserAgent import 성공")
 

@@ -2,7 +2,7 @@
 
 공개 API
 ========
-from ai_orchestrator.local_agent.browser import (
+from scripts.browser.agent import (
     # CDP 연결
     open_cdp_session, is_cdp_available, CDPSession, CDPConnectionError,
 
@@ -32,7 +32,7 @@ from ai_orchestrator.local_agent.browser import (
 )
 """
 
-from ai_orchestrator.local_agent.browser.action_gate import (
+from scripts.browser.agent.action_gate import (
     GATE_APPROVE,
     GATE_AUTO,
     GATE_NOTIFY,
@@ -42,7 +42,7 @@ from ai_orchestrator.local_agent.browser.action_gate import (
     requires_approval,
     should_notify,
 )
-from ai_orchestrator.local_agent.browser.actions import (
+from scripts.browser.agent.actions import (
     ActionResult,
     GateApprovalRequired,
     accept_dialog,
@@ -59,15 +59,15 @@ from ai_orchestrator.local_agent.browser.actions import (
     wait_for_selector,
     wait_ms,
 )
-from ai_orchestrator.local_agent.browser.audit_log import (
+from scripts.browser.agent.audit_log import (
     get_audit_path,
     log_action,
     mask_sensitive_data,
     read_log,
     summarize_log,
 )
-from ai_orchestrator.local_agent.browser.browser_session import open_user_session
-from ai_orchestrator.local_agent.browser.cdp import (
+from scripts.browser.agent.browser_session import open_user_session
+from scripts.browser.agent.cdp import (
     DEFAULT_CDP_HOST,
     DEFAULT_CDP_PORT,
     CDPConnectionError,
@@ -77,7 +77,7 @@ from ai_orchestrator.local_agent.browser.cdp import (
     is_cdp_available,
     open_cdp_session,
 )
-from ai_orchestrator.local_agent.browser.intent_token import (
+from scripts.browser.agent.intent_token import (
     INTENT_EXCEEDED,
     INTENT_EXPIRED,
     INTENT_INVALID,

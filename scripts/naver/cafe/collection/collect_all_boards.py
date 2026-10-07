@@ -126,7 +126,7 @@ def _main() -> None:
     parser.add_argument("--refresh-boards", action="store_true", help="게시판 목록을 라이브로 다시 조회 후 저장")
     args = parser.parse_args()
 
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         page = agent._page

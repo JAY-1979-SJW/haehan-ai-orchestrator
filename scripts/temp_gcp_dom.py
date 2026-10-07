@@ -7,7 +7,7 @@ sys.path.insert(0, ".")
 
 from dotenv import load_dotenv
 
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from scripts.browser.agent.agent import BrowserAgent
 
 load_dotenv()
 

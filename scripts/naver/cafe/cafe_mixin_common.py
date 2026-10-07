@@ -7,6 +7,6 @@ from __future__ import annotations
 
 
 def _js(name: str) -> str:
-    from ai_orchestrator.local_agent.browser._js_dir import JS_DIR
+    from scripts.browser.agent._js_dir import JS_DIR
 
     return (JS_DIR / name).read_text(encoding="utf-8")

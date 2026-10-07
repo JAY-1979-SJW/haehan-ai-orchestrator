@@ -1,4 +1,4 @@
-"""ai_orchestrator/local_agent/browser/electron_target.py — Electron 앱 자신의 창(webview
+"""scripts/browser/agent/electron_target.py — Electron 앱 자신의 창(webview
 포함)을 CDP로 제어하기 위한 어댑터.
 
 목적

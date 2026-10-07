@@ -25,7 +25,7 @@ def _load_env() -> None:
 
 
 def _make_agent() -> Any:
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     agent = BrowserAgent()
     agent.connect()

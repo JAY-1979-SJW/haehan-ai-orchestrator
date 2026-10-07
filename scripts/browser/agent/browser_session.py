@@ -15,7 +15,7 @@ launch 하지 않고 **사용자 로그인 세션을 유지**한 채 같은 브�
 
 사용 예
 ======
-    from ai_orchestrator.local_agent.browser.session import open_user_session
+    from scripts.browser.agent.session import open_user_session
 
     with open_user_session(profile_name="hancom_dev") as session:
         page = session.new_page()

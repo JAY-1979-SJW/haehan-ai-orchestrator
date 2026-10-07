@@ -101,17 +101,17 @@
   "role": "shared",
   "reason": "GRADE_* 순수 상수 정의만, 외부 의존 없음 — action_schemas(L1)가 참조하는 공유 계약, L2 오분류"
  },
- "ai_orchestrator/local_agent/browser/bootstrap.py": {
+ "scripts/archive/one_off/browser_agent_bootstrap.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "BrowserAgent/cdp_launcher/cdp_session_manager를 직접 조립하는 부트스트래퍼 — L1 shared 오분류"
  },
- "ai_orchestrator/local_agent/browser/cdp_audit.py": {
+ "scripts/browser/agent/cdp_audit.py": {
   "layer": "L7",
   "role": "persistence",
   "reason": "CDP 액션 감사 로그 기록 — persistence/audit 성격, cdp_session_manager(L7)와 동급, L4 오분류"
  },
- "ai_orchestrator/local_agent/browser/deep_sitemap_detector.py": {
+ "scripts/browser/agent/deep_sitemap_detector.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "BrowserAgent(L4)를 구동해 사이트맵을 탐지하는 실행기 — L1 contract 오분류"
@@ -126,7 +126,7 @@
   "role": "browser_engine",
   "reason": "CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
  },
- "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
+ "scripts/browser/agent/sitemap_detector.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "agent.py(BrowserAgent, L4)를 구동해 사이트맵을 탐지 — 단순 외부 API 커넥터(L3) 아님, 브라우저 엔진 성격"
@@ -739,7 +739,7 @@
   "role": "browser_engine",
   "reason": "JS 평가로 로그인 상태만 폴링하는 읽기 전용 감시 CLI(자체 _get_page) — 이름 규칙이 L5 로 오분류"
  },
- "ai_orchestrator/local_agent/browser/approval_server.py": {
+ "scripts/browser/agent/approval_server.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "request_approval 은 approval_api_client(L2)로 승인 요청을 보내는 얇은 게이트이고 Flask UI 는 로컬 폴백 — 서버 API 가 아니라 승인 게이트라 L8 이 아님"

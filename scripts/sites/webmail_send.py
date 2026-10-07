@@ -32,21 +32,21 @@ from typing import Any, Literal
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
-from ai_orchestrator.local_agent.browser.actions import (  # noqa: E402
+from scripts.browser.agent.actions import (  # noqa: E402
     click,
     navigate,
     type_text,
     upload_file,
     wait_ms,
 )
-from ai_orchestrator.local_agent.browser.approval_server import request_approval  # noqa: E402
-from ai_orchestrator.local_agent.browser.audit_log import get_audit_path  # noqa: E402
-from ai_orchestrator.local_agent.browser.cdp import (  # noqa: E402
+from scripts.browser.agent.approval_server import request_approval  # noqa: E402
+from scripts.browser.agent.audit_log import get_audit_path  # noqa: E402
+from scripts.browser.agent.cdp import (  # noqa: E402
     CDPConnectionError,
     is_cdp_available,
     open_cdp_session,
 )
-from ai_orchestrator.local_agent.browser.intent_token import SCOPE_INTERACTION, create_intent  # noqa: E402
+from scripts.browser.agent.intent_token import SCOPE_INTERACTION, create_intent  # noqa: E402
 
 MailService = Literal["gmail", "naver", "kakao"]
 

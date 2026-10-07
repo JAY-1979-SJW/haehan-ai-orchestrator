@@ -4297,7 +4297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/__init__.py": {
+  "scripts/browser/agent/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4305,7 +4305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_comments.js": {
+  "scripts/browser/agent/_js/extract_blog_comments.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -4313,7 +4313,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_images.js": {
+  "scripts/browser/agent/_js/extract_blog_images.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -4321,7 +4321,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_neighbors.js": {
+  "scripts/browser/agent/_js/extract_blog_neighbors.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -4329,7 +4329,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_posts.js": {
+  "scripts/browser/agent/_js/extract_blog_posts.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -4337,7 +4337,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_posts_mobile.js": {
+  "scripts/browser/agent/_js/extract_blog_posts_mobile.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -4345,7 +4345,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_search.js": {
+  "scripts/browser/agent/_js/extract_blog_search.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -4353,7 +4353,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_stats.js": {
+  "scripts/browser/agent/_js/extract_blog_stats.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -4361,7 +4361,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_tags.js": {
+  "scripts/browser/agent/_js/extract_blog_tags.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -4369,7 +4369,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_boards.js": {
+  "scripts/browser/agent/_js/extract_boards.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4377,7 +4377,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_cafe_posts.js": {
+  "scripts/browser/agent/_js/extract_cafe_posts.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4385,7 +4385,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_calendar_events.js": {
+  "scripts/browser/agent/_js/extract_calendar_events.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4393,7 +4393,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_links.js": {
+  "scripts/browser/agent/_js/extract_links.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4401,7 +4401,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_mail_detail.js": {
+  "scripts/browser/agent/_js/extract_mail_detail.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4409,7 +4409,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_mail_folders.js": {
+  "scripts/browser/agent/_js/extract_mail_folders.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4417,7 +4417,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_mail_inbox.js": {
+  "scripts/browser/agent/_js/extract_mail_inbox.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4425,7 +4425,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_mybox_list.js": {
+  "scripts/browser/agent/_js/extract_mybox_list.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4433,7 +4433,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_posts.js": {
+  "scripts/browser/agent/_js/extract_posts.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4441,7 +4441,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/action_gate.py": {
+  "scripts/browser/agent/action_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4449,7 +4449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/actions.py": {
+  "scripts/browser/agent/actions.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4457,7 +4457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/agent.py": {
+  "scripts/browser/agent/agent.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4465,7 +4465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/approval_api_client.py": {
+  "scripts/browser/agent/approval_api_client.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4473,7 +4473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/approval_server.py": {
+  "scripts/browser/agent/approval_server.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4481,7 +4481,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/audit_log.py": {
+  "scripts/browser/agent/audit_log.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -4489,7 +4489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/auto_structure_builder.py": {
+  "scripts/archive/one_off/browser_agent_auto_structure_builder.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4497,7 +4497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/bootstrap.py": {
+  "scripts/archive/one_off/browser_agent_bootstrap.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4505,7 +4505,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/browser_session.py": {
+  "scripts/browser/agent/browser_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4513,7 +4513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/cdp.py": {
+  "scripts/browser/agent/cdp.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4521,7 +4521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/cdp_audit.py": {
+  "scripts/browser/agent/cdp_audit.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4529,7 +4529,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/cdp_launcher.py": {
+  "scripts/browser/agent/cdp_launcher.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4537,7 +4537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/cdp_session_manager.py": {
+  "scripts/browser/agent/cdp_session_manager.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4545,7 +4545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/deep_sitemap_detector.py": {
+  "scripts/browser/agent/deep_sitemap_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4553,7 +4553,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/electron_target.py": {
+  "scripts/browser/agent/electron_target.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4561,7 +4561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/intent_token.py": {
+  "scripts/browser/agent/intent_token.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4681,7 +4681,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/calendar_mixin.py": {
+  "scripts/browser/agent/calendar_mixin.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4697,7 +4697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/mybox_mixin.py": {
+  "scripts/browser/agent/mybox_mixin.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4705,7 +4705,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
+  "scripts/browser/agent/sitemap_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4713,7 +4713,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/universal_actions.py": {
+  "scripts/browser/agent/universal_actions.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -22945,7 +22945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js_dir.py": {
+  "scripts/browser/agent/_js_dir.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",

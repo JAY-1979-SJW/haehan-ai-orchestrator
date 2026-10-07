@@ -10,7 +10,7 @@
 
 사용 예
 =======
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         agent.go("https://cafe.naver.com")
@@ -20,7 +20,7 @@
 
 CLI
 ===
-    python -m ai_orchestrator.local_agent.browser.agent
+    python -m scripts.browser.agent.agent
 """
 
 from __future__ import annotations
@@ -90,8 +90,8 @@ class PageInfo:
 
 
 # ── BrowserAgent ──────────────────────────────────────────────────────────────
-from ai_orchestrator.local_agent.browser.mixins.calendar_mixin import CalendarMixin  # noqa: E402
-from ai_orchestrator.local_agent.browser.mixins.mybox_mixin import MyBoxMixin  # noqa: E402
+from scripts.browser.agent.calendar_mixin import CalendarMixin  # noqa: E402
+from scripts.browser.agent.mybox_mixin import MyBoxMixin  # noqa: E402
 from scripts.naver.blog.blog_mixin import BlogMixin  # noqa: E402
 from scripts.naver.cafe.cafe_mixin import CafeMixin  # noqa: E402
 from scripts.naver.mail.mail_mixin import MailMixin  # noqa: E402
@@ -116,8 +116,8 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         self.close()
 
     def connect(self):
-        from ai_orchestrator.local_agent.browser.cdp_audit import L2
-        from ai_orchestrator.local_agent.browser.cdp_launcher import ensure_cdp
+        from scripts.browser.agent.cdp_audit import L2
+        from scripts.browser.agent.cdp_launcher import ensure_cdp
 
         self._session_id = str(uuid.uuid4())
         self._connect_t0 = time.time()
@@ -138,7 +138,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         return self
 
     def close(self):
-        from ai_orchestrator.local_agent.browser.cdp_audit import L2
+        from scripts.browser.agent.cdp_audit import L2
 
         if self._pw:
             self._pw.stop()

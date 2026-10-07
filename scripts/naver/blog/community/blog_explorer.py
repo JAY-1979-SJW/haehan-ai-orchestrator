@@ -72,7 +72,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from scripts.browser.agent.agent import BrowserAgent
 
 
 def cmd_info(agent: BrowserAgent, blog_url: str, as_json: bool):

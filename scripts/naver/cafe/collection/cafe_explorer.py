@@ -85,7 +85,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # 엔진 ↔ 믹스인 import 순환을 피하려고 타입 힌트로만 쓰고 실제 사용은 main 안에서 불러온다(T4 C12a)
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
 
 def _print_posts(posts: list[dict], show_views: bool = True):
@@ -539,7 +539,7 @@ def main():
 
     args = parser.parse_args()
 
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         _RUNNERS[args.command](agent, parser, args)

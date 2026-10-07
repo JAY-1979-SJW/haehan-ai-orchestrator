@@ -36,19 +36,19 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
-from ai_orchestrator.local_agent.browser.actions import (  # noqa: E402
+from scripts.browser.agent.actions import (  # noqa: E402
     GateApprovalRequired,
     click,
     navigate,
     screenshot,
 )
-from ai_orchestrator.local_agent.browser.audit_log import get_audit_path  # noqa: E402
-from ai_orchestrator.local_agent.browser.cdp import (  # noqa: E402
+from scripts.browser.agent.audit_log import get_audit_path  # noqa: E402
+from scripts.browser.agent.cdp import (  # noqa: E402
     CDPConnectionError,
     is_cdp_available,
     open_cdp_session,
 )
-from ai_orchestrator.local_agent.browser.intent_token import create_intent  # noqa: E402
+from scripts.browser.agent.intent_token import create_intent  # noqa: E402
 
 GOV24_URL = "https://www.gov.kr"
 GOV24_CERT_SEARCH = "https://www.gov.kr/mw/AA020InfoCappView.do?HighCtgCD=A01001&CappBizCD=13100000015&tp_seq=01"

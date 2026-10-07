@@ -23,13 +23,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.local_agent.browser.action_gate import (
+from scripts.browser.agent.action_gate import (
     GATE_APPROVE,
     GateResult,
     classify_action,
 )
-from ai_orchestrator.local_agent.browser.audit_log import log_action
-from ai_orchestrator.local_agent.browser.intent_token import IntentToken
+from scripts.browser.agent.audit_log import log_action
+from scripts.browser.agent.intent_token import IntentToken
 
 # ── 예외 ────────────────────────────────────────────────────────────────────
 
