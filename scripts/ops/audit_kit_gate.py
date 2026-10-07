@@ -27,6 +27,9 @@ import threading
 from collections.abc import Mapping
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _proc import no_window_kwargs
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
@@ -84,7 +87,15 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
     root = root or ROOT
     payload = json.dumps({"tool_input": {"file_path": str(path)}, "cwd": str(root)})
     try:
-        proc = subprocess.run([*kit, "hook"], input=payload.encode("utf-8"), capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False)
+        proc = subprocess.run(
+            [*kit, "hook"],
+            input=payload.encode("utf-8"),
+            capture_output=True,
+            timeout=PER_FILE_TIMEOUT_S,
+            cwd=str(root),
+            check=False,
+            **no_window_kwargs(),
+        )
     except (OSError, subprocess.TimeoutExpired):
         return None
     if proc.returncode == 0:
@@ -124,7 +135,9 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
     with _MYPY_LOCK:
         for _attempt in range(2):  # 자체 오류(종료코드 2 이상)는 일시적일 수 있어 한 번 다시 시도한다
             try:
-                proc = subprocess.run(cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False)
+                proc = subprocess.run(
+                    cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False, **no_window_kwargs()
+                )
             except (OSError, subprocess.TimeoutExpired):
                 return None
             if proc.returncode in (0, 1):
@@ -159,7 +172,7 @@ def mypy_new(py: str, path: Path, baseline: Path | None, root: Path | None = Non
 def _mypy_against_head(py: str, path: Path, root: Path) -> tuple[list[str], str]:
     """편집한 파일을 HEAD 버전과 비교(편집 전에 없던 오류만). HEAD 에 없는 새 파일이면 전부 신규."""
     rel = path.resolve().relative_to(root.resolve()).as_posix()
-    shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False)
+    shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False, **no_window_kwargs())
     if shown.returncode != 0:
         return mypy_new(py, path, None, root)
     copy = path.with_name(f"_mypy_base_{path.name}")  # 같은 폴더에 둬야 상대 import 가 같게 풀린다
@@ -182,6 +195,7 @@ def check_file(kit: list[str], path: Path, root: Path | None = None) -> tuple[li
             timeout=PER_FILE_TIMEOUT_S,
             cwd=str(root),
             check=False,
+            **no_window_kwargs(),
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return [], f"{type(exc).__name__}: {exc}"
@@ -309,6 +323,7 @@ def _staged_python_files() -> list[Path]:
     out = subprocess.run(
         ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
+        **no_window_kwargs(),
     ).stdout
     candidates = [ROOT / rel for rel in out.split("\0") if rel]
     return [c for c in candidates if _eligible(c)]
