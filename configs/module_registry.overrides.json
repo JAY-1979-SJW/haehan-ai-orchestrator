@@ -1273,5 +1273,88 @@
   "role": "site_module",
   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/order_automation.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
   "source": "manual"
+ },
+ "scripts/yt_upload/step1_navigate.py": {
+  "layer": "L6",
+  "role": "policy",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "webhooks_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/webhooks/webhooks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "candidate_to_task.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_to_task.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "risk_assessor.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/risk_assessor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "tasks_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "whitelist_executor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_classifier.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_task_executor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "inbox_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "kakaowork_reader.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/kakaowork_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "message_classifier.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/message_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "ai_orchestrator/paths/__init__.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+  "source": "manual"
+ },
+ "ai_orchestrator/paths/runtime.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+  "source": "manual"
+ },
+ "ai_orchestrator/paths/migrate.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+  "source": "manual"
  }
 }
