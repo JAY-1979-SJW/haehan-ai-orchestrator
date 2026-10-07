@@ -8,9 +8,9 @@ candidate → task 승격 모듈
 import hashlib
 from datetime import UTC, datetime
 
-import email_task_store
 from orchestrator_v1.core import audit_logger
 from orchestrator_v1.core.logger import get_logger
+from orchestrator_v1.inbox import email_task_store
 from orchestrator_v1.tasks import candidate_store
 
 log = get_logger("candidate_to_task")

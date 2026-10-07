@@ -12,9 +12,11 @@ from typing import cast
 
 from flask import Blueprint, jsonify, request
 
-import email_task_approval
-import email_task_executor
-import email_task_store
+from orchestrator_v1.inbox import (
+    email_task_approval,
+    email_task_executor,
+    email_task_store,
+)
 
 tasks_bp = Blueprint("tasks", __name__, url_prefix="/api/v1/tasks")
 
