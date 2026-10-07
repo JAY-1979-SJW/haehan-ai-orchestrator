@@ -15,8 +15,8 @@ import socket
 from collections.abc import Callable
 from typing import Any
 
-from scripts.naver.mail_imap import sender
-from scripts.naver.mail_imap.protocol import (
+from scripts.naver.mail.imap import sender
+from scripts.naver.mail.imap.protocol import (
     AUTH_HINT,
     SMTP_HOST,
     SMTP_PORT,

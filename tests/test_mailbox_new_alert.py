@@ -6,7 +6,7 @@ import json
 
 from ai_orchestrator import mcp_server
 from ai_orchestrator.gates import mail_new_policy as pol
-from scripts.naver.mail_imap import mailbox
+from scripts.naver.mail.imap import mailbox
 
 
 class _Conn:
@@ -61,7 +61,7 @@ def test_inbox_status_bad_response():
 
 
 def test_checkpoint_untouched(tmp_path, monkeypatch):
-    from scripts.naver.mail_imap import reader
+    from scripts.naver.mail.imap import reader
 
     path = reader._checkpoint_path()
     before = path.read_bytes() if path.exists() else None

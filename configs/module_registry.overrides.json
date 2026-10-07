@@ -674,7 +674,7 @@
   "role": "workflow",
   "reason": "예약 가능한 작업 허용 목록과 실행 연결(워크플로), CDP 보장은 헬퍼일 뿐 — L4 browser_engine 오분류"
  },
- "scripts/naver/mail_imap/settings.py": {
+ "scripts/naver/mail/imap/settings.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 웹메일 설정 화면을 CDP 로 읽고 바꾸는 사이트 모듈 — 파일명 settings 때문에 L1 shared 로 오분류"

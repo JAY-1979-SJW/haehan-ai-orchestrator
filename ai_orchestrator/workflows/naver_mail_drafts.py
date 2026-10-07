@@ -13,9 +13,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 from ai_orchestrator.paths import repo_root
-from scripts.naver.mail_imap import attachments as att
-from scripts.naver.mail_imap import html_sanitize as hs
-from scripts.naver.mail_imap import mailbox, reader, sender
+from scripts.naver.mail.imap import attachments as att
+from scripts.naver.mail.imap import html_sanitize as hs
+from scripts.naver.mail.imap import mailbox, reader, sender
 
 from ..gates import mail_draft_policy as policy
 from ..persistence import naver_mail_draft_store as store

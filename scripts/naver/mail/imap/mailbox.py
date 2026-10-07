@@ -26,10 +26,10 @@ from email.message import EmailMessage
 from email.utils import getaddresses, parsedate_to_datetime
 from typing import Any, cast
 
-from scripts.naver.mail_imap import attachments as att
-from scripts.naver.mail_imap import folders as fld
-from scripts.naver.mail_imap import html_sanitize as hs
-from scripts.naver.mail_imap.protocol import (
+from scripts.naver.mail.imap import attachments as att
+from scripts.naver.mail.imap import folders as fld
+from scripts.naver.mail.imap import html_sanitize as hs
+from scripts.naver.mail.imap.protocol import (
     AUTH_HINT,
     IMAP_HOST,
     IMAP_PORT,
@@ -39,7 +39,7 @@ from scripts.naver.mail_imap.protocol import (
     load_password,
     password_env_name,
 )
-from scripts.naver.mail_imap.reader import _imap_date
+from scripts.naver.mail.imap.reader import _imap_date
 
 PER_PAGE_DEFAULT = 30
 PER_PAGE_MAX = 100

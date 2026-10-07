@@ -14,9 +14,9 @@ from dataclasses import dataclass, field
 from email.message import EmailMessage
 from typing import Any
 
-from scripts.naver.mail_imap import attachments as att
-from scripts.naver.mail_imap import html_sanitize as hs
-from scripts.naver.mail_imap.protocol import (
+from scripts.naver.mail.imap import attachments as att
+from scripts.naver.mail.imap import html_sanitize as hs
+from scripts.naver.mail.imap.protocol import (
     AUTH_HINT,
     SMTP_HOST,
     SMTP_PORT,
@@ -150,7 +150,8 @@ def make_draft(  # noqa: PLR0913 - 메일 한 통을 이루는 필드(받는 사
     bcc_list = parse_recipients(bcc) if _has_text(bcc) else []
     if len(to_list) + len(cc_list) + len(bcc_list) > MAX_RECIPIENTS_FULL:
         raise ValueError(f"받는 사람은 참조·숨은참조를 합쳐 {MAX_RECIPIENTS_FULL}명 이하여야 합니다")
-    clean_html, images = "", []
+    clean_html = ""
+    images: list[hs.InlineImage] = []
     if html.strip():
         sanitized = hs.sanitize_html(html)
         clean_html, images = hs.split_inline_images(sanitized)

@@ -3,7 +3,7 @@
 기준서: docs/specs/2026-10-02_mail_bulk_sequential.md (하나팩스 `hanafax_auto_send` 와 같은 뼈대)
 
 **발송기는 인자로 주입한다.** 이 모듈은 실제 SMTP 코드를 import 하지 않는다 — 테스트는 가짜 발송기만 쓰고, 운영 연결
-(`scripts.naver.mail_imap.bulk_sender.BulkSmtp.send`)은 서비스가 맺는다. 그래서 테스트가 실수로 실제 메일을 보낼 수 없다.
+(`scripts.naver.mail.imap.bulk_sender.BulkSmtp.send`)은 서비스가 맺는다. 그래서 테스트가 실수로 실제 메일을 보낼 수 없다.
 
 안전 규칙
 - 한 통을 보낸 뒤 **간격(±20% 무작위)** 만큼 기다렸다가 다음 사람에게 보낸다. 건마다 정지·취소·멈춤·허용 시간대를 다시 확인한다.
@@ -27,8 +27,8 @@ from typing import Any
 
 from ai_orchestrator.gates import mail_bulk_policy as policy
 from ai_orchestrator.persistence import mail_bulk_store as store
-from scripts.naver.mail_imap import attachments as att
-from scripts.naver.mail_imap import sender as smtp_draft
+from scripts.naver.mail.imap import attachments as att
+from scripts.naver.mail.imap import sender as smtp_draft
 
 logger = logging.getLogger(__name__)
 

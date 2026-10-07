@@ -12561,7 +12561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/__init__.py": {
+  "scripts/naver/mail/imap/__init__.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12569,7 +12569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/attachments.py": {
+  "scripts/naver/mail/imap/attachments.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12577,7 +12577,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/bulk_sender.py": {
+  "scripts/naver/mail/imap/bulk_sender.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12585,7 +12585,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/folders.py": {
+  "scripts/naver/mail/imap/folders.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12593,7 +12593,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/html_sanitize.py": {
+  "scripts/naver/mail/imap/html_sanitize.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12601,7 +12601,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/mailbox.py": {
+  "scripts/naver/mail/imap/mailbox.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12609,7 +12609,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/protocol.py": {
+  "scripts/naver/mail/imap/protocol.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12617,7 +12617,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/reader.py": {
+  "scripts/naver/mail/imap/reader.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12625,7 +12625,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/sender.py": {
+  "scripts/naver/mail/imap/sender.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -12633,7 +12633,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail_imap/settings.py": {
+  "scripts/naver/mail/imap/settings.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",

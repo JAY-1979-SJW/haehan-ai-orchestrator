@@ -17,7 +17,7 @@ from email.message import Message
 from pathlib import Path
 from typing import Any
 
-from scripts.naver.mail_imap.protocol import (
+from scripts.naver.mail.imap.protocol import (
     AUTH_HINT,
     IMAP_HOST,
     IMAP_PORT,
