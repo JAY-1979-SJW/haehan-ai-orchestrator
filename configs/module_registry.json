@@ -22858,12 +22858,12 @@
    "source": "rule"
   },
   "ai_orchestrator/dev_reg/dev_reg_telegram.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "notify/telegram_notifier(L1 contract)에서 옮겨 온 파일 — 같은 층·역할(F12). overrides 와 동일.",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/web_task/__init__.py": {
    "layer": "L4",
