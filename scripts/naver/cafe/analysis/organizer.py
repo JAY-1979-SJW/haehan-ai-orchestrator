@@ -15,8 +15,10 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
+
 ROOT = Path(__file__).resolve().parents[4]
-_DATA_DIR = ROOT / "data" / "cafe"
+_DATA_DIR = data_dir() / "cafe"
 
 # ── 카테고리 순서 (보고서용) ──────────────────────────────────────────
 CAT_ORDER = [

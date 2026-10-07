@@ -14,6 +14,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.logger import get_logger
 from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
 from scripts.naver.blog.marketing.topics import topic_key
@@ -26,7 +27,7 @@ _log = get_logger(__name__)
 # 이게 블로그 모듈이 앱 패키지에 걸린 **유일한 의존**이었다(2026-08-24 실측).
 # 기준서 0절이 "언제든 들어낼 수 있는 경계 유지"를 요구하므로 직접 구현으로
 # 대체했다. 동작은 동일하다 — `LOCAL_DATA_DIR` 환경변수, 없으면 repo/data.
-_DEFAULT_DATA_DIR = Path(__file__).resolve().parents[4] / "data"
+_DEFAULT_DATA_DIR = data_dir()
 
 
 def get_local_data_dir() -> Path:
