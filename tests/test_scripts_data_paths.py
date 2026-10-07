@@ -174,3 +174,26 @@ def test_writer_and_reader_agree_on_the_desktop_location(tmp_path, scripts_mod, 
         timeout=300,
     )
     assert r.stdout.startswith("True"), r.stdout + r.stderr[-500:]
+
+
+def _youtube_token_file(extra: dict[str, str]) -> str:
+    env = {k: v for k, v in os.environ.items() if k not in (*_CLEAN, "YOUTUBE_OAUTH_TOKEN_FILE") and k.upper() != "PYTHONPATH"}
+    env["PYTHONUTF8"] = "1"
+    env.update(extra)
+    code = "from ai_orchestrator.connectors.youtube import upload; print(upload._TOKEN_FILE)"
+    r = subprocess.run([sys.executable, "-c", code], cwd=str(REPO), capture_output=True, text=True, encoding="utf-8", env=env, timeout=300)
+    assert r.returncode == 0, r.stderr[-500:]
+    return r.stdout.strip().splitlines()[-1]
+
+
+def test_youtube_upload_token_file_is_absolute_and_follows_storage(tmp_path):
+    """예전 기본값은 cwd 상대 문자열이었다 — 환경변수 없으면 같은 위치(절대 경로), DATA_ROOT 가 있으면 userData/storage 아래."""
+    name = "youtube_oauth_authorized_user.json"
+    assert _youtube_token_file({}) == str(REPO / "ai_orchestrator" / "storage" / "secrets" / name)
+    root = tmp_path / "ud"
+    assert _youtube_token_file({"HAEHAN_DATA_ROOT": str(root)}) == str(root / "storage" / "secrets" / name)
+    # scripts.youtube.oauth 가 data/secrets 에 이미 토큰을 썼다면 그쪽을 쓴다
+    (root / "data" / "secrets").mkdir(parents=True)
+    (root / "data" / "secrets" / name).write_text("{}", encoding="utf-8")
+    assert _youtube_token_file({"HAEHAN_DATA_ROOT": str(root)}) == str(root / "data" / "secrets" / name)
+    assert _youtube_token_file({"HAEHAN_DATA_ROOT": str(root), "YOUTUBE_OAUTH_TOKEN_FILE": "x.json"}) == "x.json"
