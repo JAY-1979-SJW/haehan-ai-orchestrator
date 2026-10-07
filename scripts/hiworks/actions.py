@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.hiworks.schemas import DATA_DIR, SERVICE_TARGETS
+from scripts.site_engine.catalog_helpers import load_or_build_catalog, print_keyed_summary
 
 LATEST_SURFACE_PATH = DATA_DIR / "hiworks_service_surfaces_latest.json"
 LATEST_ACTION_CATALOG_PATH = DATA_DIR / "hiworks_action_catalog_latest.json"
@@ -258,12 +259,7 @@ def save_action_catalog(catalog: dict[str, Any], output: str | Path | None = Non
 
 
 def load_action_catalog(path: str | Path | None = None) -> dict[str, Any]:
-    source = Path(path) if path else LATEST_ACTION_CATALOG_PATH
-    if source.exists():
-        return json.loads(source.read_text(encoding="utf-8"))
-    catalog = build_action_catalog()
-    save_action_catalog(catalog, source)
-    return catalog
+    return load_or_build_catalog(path, LATEST_ACTION_CATALOG_PATH, build_action_catalog, save_action_catalog)
 
 
 def _select_catalog_services(catalog: dict[str, Any], name: str | None) -> list[dict[str, Any]]:
@@ -544,17 +540,14 @@ def print_action_catalog_summary(catalog: dict[str, Any], path: Path | None = No
 
 
 def print_prepare_plan_summary(plan: dict[str, Any], path: Path | None = None) -> None:
-    print("=" * 60)
-    print("Hiworks section prepare plan")
-    print("=" * 60)
-    for service in plan.get("services") or []:
-        summary = service.get("summary") or {}
-        print(
-            f"- {service.get('key')}: "
-            f"fillable={summary.get('fillable_inputs', 0)} "
-            f"blocked_inputs={summary.get('blocked_inputs', 0)} "
-            f"buttons_cataloged={summary.get('buttons_cataloged', 0)} "
-            f"buttons_gated={summary.get('buttons_gated', 0)}"
-        )
-    if path:
-        print(f"saved: {path}")
+    print_keyed_summary(
+        "Hiworks section prepare plan",
+        plan.get("services") or [],
+        (
+            ("fillable", "fillable_inputs"),
+            ("blocked_inputs", "blocked_inputs"),
+            ("buttons_cataloged", "buttons_cataloged"),
+            ("buttons_gated", "buttons_gated"),
+        ),
+        path,
+    )

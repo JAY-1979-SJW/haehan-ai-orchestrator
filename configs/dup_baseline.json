@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 60,
+ "hash_count": 51,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/connectors/naver_mail/bulk_service.py:_read_rows",
@@ -39,10 +39,6 @@
    "scripts/ops/audit_backend_premium_policy_layer.py:main",
    "scripts/ops/audit_backend_premium_security_boundary.py:main",
    "scripts/ops/audit_backend_premium_service_layer.py:main"
-  ],
-  "2f788045f55b2d0e39cbb3db38fce3ca8ee42330": [
-   "scripts/hanafax/export_kras_fax_pdf.py:_fit_merged_wrap_rows",
-   "scripts/hanafax/send_kras_final_campaign.py:_fit_merged_wrap_rows"
   ],
   "3a1616afa4db701703834b6ec3b4e30bee779c3a": [
    "ai_orchestrator/local_agent_redaction.py:_strip_click_target",
@@ -104,14 +100,6 @@
    "scripts/ops/verify/verify_live_browser_readonly_dispatch.py:_start_worker",
    "scripts/ops/verify/verify_live_task_dispatch.py:_start_worker"
   ],
-  "49dee0d8de6e96167b552d0fd60bb495efd7a171": [
-   "scripts/site_engine/action_planner.py:_is_credential_extraction",
-   "scripts/site_engine/execution_gate.py:block_for_sensitive_credential_action"
-  ],
-  "4e7fe5d86076c92f3fdaeaeacd67600594583620": [
-   "scripts/g2b/validators.py:validate_bid_analysis_draft_payload",
-   "scripts/g2b/validators.py:validate_submit_draft_payload"
-  ],
   "513080ea99ea2367a1df1e1017113a7d956ef2a2": [
    "scripts/ops/audit_authed_local_agent_dispatch_dry_run.py:main",
    "scripts/ops/dry_run_approved_browser_instruction_api.py:main",
@@ -139,10 +127,6 @@
    "scripts/ops/audit_app_test_baseline_current_contract_sync.py:print_report",
    "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:print_report"
   ],
-  "5b9a25e895f21e4869527e5c14a41b99bc492cb2": [
-   "scripts/gabia/auth.py:login",
-   "scripts/kakao/auth.py:login"
-  ],
   "632774467f6ef61fea21bd5fa6c830236bbe8fad": [
    "scripts/naver/smartstore/navigation/sidebar_v3.py:_refresh_dashboard",
    "scripts/naver/smartstore/registration/general_full_analyze.py:_enter_dashboard"
@@ -169,10 +153,6 @@
   "76a31dc5575f6481b80fa19eec4be8d386273459": [
    "scripts/ops/live_parallel_task_dispatch_smoke.py:_request_json",
    "scripts/ops/verify/verify_live_task_dispatch.py:_request_json"
-  ],
-  "77f4d8c54d71a79d80a2dcf29f4c21a3dcfaa0c1": [
-   "scripts/hiworks/actions.py:print_prepare_plan_summary",
-   "scripts/naver/common/content.py:print_action_summary"
   ],
   "7977b42cf3bf386ad6ca7c4479c72ddb04dcbae0": [
    "orchestrator_v1/inbox/inbox_store.py:_load_all",
@@ -204,10 +184,6 @@
    "scripts/naver/cafe/analysis/organizer.py:_load_classified",
    "scripts/naver/cafe/analysis/pipeline.py:_load_raw"
   ],
-  "9be482078c50a5f5280a77565e966263886a9ef6": [
-   "scripts/g2b/router.py:_cmd_analysis_draft",
-   "scripts/g2b/router.py:_cmd_submit_draft"
-  ],
   "9c61ce44dc64466f3098f9f13841854e81e5aa35": [
    "ai_orchestrator/local_agent/naver_content_safe_result.py:validate_naver_result",
    "ai_orchestrator/local_agent/universal_safe_result.py:validate_universal_result"
@@ -227,10 +203,6 @@
   "a6c86fa3be510ada0dc1bac8e6de485c3b3439fc": [
    "scripts/naver/blog/cli/research_blog_topics.py:_search_volume",
    "scripts/naver/blog/cli/research_blog_topics_lighting.py:_search_volume"
-  ],
-  "b1fd589b4a7eeb68d40ccc93a4ab99789faa99db": [
-   "scripts/hiworks/actions.py:load_action_catalog",
-   "scripts/naver/smartstore/api/actions.py:load_action_catalog"
   ],
   "b26ae391e3d034e06090d085411a5b5784ecfbf7": [
    "scripts/ops/audit_common_engine_commercialization_baseline.py:main",
@@ -282,10 +254,6 @@
    "scripts/browser/cdp/cdp_helper.py:CDP.shot",
    "scripts/video/_cdp_tab.py:TabCDP.shot"
   ],
-  "eb823f7ed71cf0ea1e0b3486ac9ea08e12bfe3dc": [
-   "scripts/gabia/router.py:_cmd_login",
-   "scripts/gabia/router.py:_cmd_payment"
-  ],
   "ee97c78137c675a6f7e2e4ffb03f989607ac408b": [
    "scripts/ops/audit_post_tasks_dry_run_flag_implementation.py:_verify_no_http_import",
    "scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py:_verify_no_http_import",
@@ -295,10 +263,6 @@
   "f2dd54c583d5f6e43808f5917d535acd830fa502": [
    "scripts/naver/automation/scheduler.py:Scheduler.remove_task",
    "scripts/naver/blog/management/schedule.py:BlogSchedule.cancel"
-  ],
-  "f568a5f5be82c5fa8429969099bc76c6122861f9": [
-   "scripts/hiworks/service_explorer.py:selected_targets",
-   "scripts/naver/common/content.py:select_targets"
   ],
   "fcc9673f9a46bea4053b07a2b608145f7ffdd247": [
    "ai_orchestrator/local_agent/installer_folder_presenter.py:_result",
