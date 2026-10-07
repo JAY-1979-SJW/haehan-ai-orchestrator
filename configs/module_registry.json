@@ -3897,7 +3897,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/domain/vendor_directory.py": {
+  "ai_orchestrator/vendor_directory/vendor_directory.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -5833,7 +5833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/vendor_directory_router.py": {
+  "ai_orchestrator/vendor_directory/vendor_directory_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -6129,7 +6129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/services/vendor_directory_service.py": {
+  "ai_orchestrator/vendor_directory/vendor_directory_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -22834,6 +22834,14 @@
    "source": "rule"
   },
   "ai_orchestrator/scheduler/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/vendor_directory/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",

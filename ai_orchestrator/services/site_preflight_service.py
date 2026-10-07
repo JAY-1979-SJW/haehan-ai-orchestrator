@@ -17,7 +17,7 @@ from ..browser_tool.site_compliance_policy import get_site_compliance_policy
 from ..domain import site_preflight as sp
 from ..domain import site_registry as sr
 from ..persistence import site_registry_store as store
-from . import vendor_directory_service as vendors
+from ..vendor_directory import vendor_directory_service as vendors
 
 Fetcher = Callable[[str], dict[str, Any]]
 _fetcher_ref: list[Fetcher | None] = [None]  # 한 칸짜리 보관소 — `global` 로 다시 대입하지 않는다

@@ -24,7 +24,7 @@ from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
 from ai_orchestrator.routers.site_onboarding_router import site_onboarding_router
 from ai_orchestrator.routers.site_task_map_router import site_task_map_router
 from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router
-from ai_orchestrator.routers.vendor_directory_router import vendor_directory_router
+from ai_orchestrator.vendor_directory.vendor_directory_router import vendor_directory_router
 from ai_orchestrator.routers.web_task_router import web_task_router
 from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmail
 

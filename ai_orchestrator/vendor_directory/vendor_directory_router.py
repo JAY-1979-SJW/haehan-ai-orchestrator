@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 
 from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.services import vendor_directory_service as service
+from ai_orchestrator.vendor_directory import vendor_directory_service as service
 
 vendor_directory_router = APIRouter(prefix="/vendors", tags=["vendors"])
 _ADMIN = Depends(require_role("admin", "owner"))

@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ..domain import vendor_directory as vd
+from . import vendor_directory as vd
 
 _FILE = Path(__file__).resolve().parents[2] / "configs" / "vendor_apis.json"
 
