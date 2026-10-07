@@ -32,8 +32,11 @@ from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import Any
 
-# 프로젝트 루트 기준 세션 저장 경로
-_DEFAULT_SESSION_ROOT = Path(__file__).resolve().parents[2] / "data" / "browser_sessions"
+from ai_orchestrator.paths import repo_root
+
+# 이동해도 값이 안 바뀌게 __file__ 상대 계산 대신 repo_root() 기준으로 고정(T4 C1).
+# 지금 값과 완전히 동일(ai_orchestrator/data/browser_sessions).
+_DEFAULT_SESSION_ROOT = repo_root() / "ai_orchestrator" / "data" / "browser_sessions"
 
 
 def get_session_dir(profile_name: str = "default") -> Path:

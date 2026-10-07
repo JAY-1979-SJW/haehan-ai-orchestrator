@@ -51,13 +51,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
+from ai_orchestrator.local_agent.browser._js_dir import JS_DIR
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
-
-_JS_DIR = Path(__file__).resolve().parents[4] / "ai_orchestrator/local_agent/browser/_js"
 
 
 def _load_js(name: str) -> str:
-    return (_JS_DIR / name).read_text(encoding="utf-8")
+    return (JS_DIR / name).read_text(encoding="utf-8")
 
 
 def _extract_article_id(href: str) -> str:

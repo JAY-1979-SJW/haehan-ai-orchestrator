@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 
 def _js(name: str) -> str:
-    return (Path(__file__).parent.parent / "_js" / name).read_text(encoding="utf-8")
+    from ai_orchestrator.local_agent.browser._js_dir import JS_DIR
+
+    return (JS_DIR / name).read_text(encoding="utf-8")
 
 
 class MyBoxMixin:

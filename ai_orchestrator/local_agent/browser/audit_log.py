@@ -32,7 +32,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-_AUDIT_DIR = Path(__file__).resolve().parents[2] / "data" / "audit"
+from ai_orchestrator.paths import repo_root
+
+# 이동해도 값이 안 바뀌게 __file__ 상대 계산 대신 repo_root() 기준으로 고정(T4 C1).
+# 지금 값과 완전히 동일(ai_orchestrator/data/audit) — 저장소 루트 data/는 기존 결함으로
+# 쓰지 않음, 전환은 별도 커밋(D4).
+_AUDIT_DIR = repo_root() / "ai_orchestrator" / "data" / "audit"
 
 # 마스킹 대상 키 (대소문자 무관 부분 매칭)
 _SENSITIVE_KEY_PATTERNS = (

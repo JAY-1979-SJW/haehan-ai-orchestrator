@@ -34,6 +34,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
+from ai_orchestrator.paths import repo_root
+
 # Scope 정의
 SCOPE_READ_ONLY = "read_only"  # navigate/read/screenshot만
 SCOPE_INTERACTION = "interaction"  # +click/type/scroll/download (commit 액션은 별도 승인)
@@ -49,7 +51,9 @@ INTENT_INVALID = "invalid"
 DEFAULT_TTL_SECONDS = 3600  # 1시간
 DEFAULT_MAX_ACTIONS = 50
 
-_INTENT_DIR = Path(__file__).resolve().parents[2] / "data" / "intents"
+# 이동해도 값이 안 바뀌게 __file__ 상대 계산 대신 repo_root() 기준으로 고정(T4 C1).
+# 지금 값과 완전히 동일(ai_orchestrator/data/intents).
+_INTENT_DIR = repo_root() / "ai_orchestrator" / "data" / "intents"
 
 
 @dataclass(frozen=True)
