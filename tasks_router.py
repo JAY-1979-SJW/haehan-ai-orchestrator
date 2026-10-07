@@ -7,6 +7,8 @@ POST /api/v1/tasks/<task_id>/execute           — ready task 실행 (risk 정�
 GET  /api/v1/tasks/<task_id>                   — task 단건 조회
 GET  /api/v1/tasks/<task_id>/approval          — task approval 상태 조회
 """
+from typing import cast
+
 from flask import Blueprint, jsonify, request
 
 import email_task_approval
@@ -82,7 +84,7 @@ def execute_task(task_id: str):
         "BLOCKED":        403,
         "PREVIEW_ONLY":   200,
     }
-    code = status_map.get(result.get("status"), 200)
+    code = status_map.get(cast(str, result.get("status")), 200)
     return jsonify(result), code
 
 

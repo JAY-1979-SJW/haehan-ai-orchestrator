@@ -60,7 +60,7 @@ def _get_exec_logger() -> logging.Logger:
     return _exec_logger
 
 
-def _log_execution(task_id: str, status: str, duration_ms: float, error: str = None) -> None:
+def _log_execution(task_id: str, status: str, duration_ms: float, error: str | None = None) -> None:
     entry = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "task_id": task_id,
