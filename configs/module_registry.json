@@ -22336,6 +22336,14 @@
    "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_security_utils_token_patterns.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
