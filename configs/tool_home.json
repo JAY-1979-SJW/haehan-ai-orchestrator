@@ -21,7 +21,8 @@
  {"name": "gongmu", "keyword": "^ai_orchestrator/(?!tests/).*gongmu", "homes": ["ai_orchestrator/gongmu/"], "before_exempt": true},
  {"name": "scheduler", "keyword": "^ai_orchestrator/(?!tests/).*scheduled_job_(store|service|loop|router)", "homes": ["ai_orchestrator/scheduler/"], "before_exempt": true},
  {"name": "vendor_directory", "keyword": "^ai_orchestrator/(?!tests/).*vendor_directory", "homes": ["ai_orchestrator/vendor_directory/"], "before_exempt": true},
- {"name": "dev_reg", "keyword": "^ai_orchestrator/(?!tests/)(gates|persistence|routers|services)/.*dev_reg", "homes": ["ai_orchestrator/dev_reg/"], "before_exempt": true}
+ {"name": "dev_reg", "keyword": "^ai_orchestrator/(?!tests/)(gates|persistence|routers|services)/.*dev_reg", "homes": ["ai_orchestrator/dev_reg/"], "before_exempt": true},
+ {"name": "web_task", "keyword": "^ai_orchestrator/(?!tests/).*web_task", "homes": ["ai_orchestrator/web_task/"], "before_exempt": true}
  ],
  "exempt": [
   {"prefix": "tests/", "reason": "시험 — 도구 집 규칙 대상 아님"},

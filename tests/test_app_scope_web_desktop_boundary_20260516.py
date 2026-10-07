@@ -29,10 +29,10 @@ class TestInScopeWebTaskEngine:
     """웹 업무 실행 핵심 파일이 존재하고 임포트 가능한지 확인."""
 
     IN_SCOPE_MODULES = [
-        "ai_orchestrator.routers.web_task_router",
-        "ai_orchestrator.services.web_task_registry",
-        "ai_orchestrator.web_task_templates",
-        "ai_orchestrator.services.web_task_approval_service",
+        "ai_orchestrator.web_task.web_task_router",
+        "ai_orchestrator.web_task.web_task_registry",
+        "ai_orchestrator.web_task.web_task_templates",
+        "ai_orchestrator.web_task.web_task_approval_service",
         "ai_orchestrator.gates.approval",
         "ai_orchestrator.dev_reg.dev_reg_approval",
         "ai_orchestrator.core.task_state",
@@ -47,11 +47,11 @@ class TestInScopeWebTaskEngine:
 
     def test_web_task_router_file_exists(self):
         """web_task_router.py IN_SCOPE 파일 존재."""
-        assert (REPO_ROOT / "ai_orchestrator" / "routers" / "web_task_router.py").exists()
+        assert (REPO_ROOT / "ai_orchestrator" / "web_task" / "web_task_router.py").exists()
 
     def test_web_task_approval_service_file_exists(self):
         """web_task_approval_service.py IN_SCOPE 파일 존재."""
-        assert (REPO_ROOT / "ai_orchestrator" / "services" / "web_task_approval_service.py").exists()
+        assert (REPO_ROOT / "ai_orchestrator" / "web_task" / "web_task_approval_service.py").exists()
 
     def test_server_execution_location_guard_exists(self):
         """server/execution_location_guard.py IN_SCOPE 파일 존재."""
@@ -100,12 +100,12 @@ class TestHwpxExternalAppHold:
 
     def test_hwpx_not_in_web_task_router(self):
         """web_task_router.py에 hwp/hwpx 참조가 없다."""
-        src = (REPO_ROOT / "ai_orchestrator" / "routers" / "web_task_router.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task" / "web_task_router.py").read_text(encoding="utf-8")
         assert "hwp" not in src.lower(), "web_task_router.py에 hwp 참조가 존재함 — IN_SCOPE 오염 가능성"
 
     def test_hwpx_not_in_approval_service(self):
         """web_task_approval_service.py에 hwp/hwpx 참조가 없다."""
-        src = (REPO_ROOT / "ai_orchestrator" / "services" / "web_task_approval_service.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task" / "web_task_approval_service.py").read_text(encoding="utf-8")
         assert "hwp" not in src.lower()
 
 
@@ -126,12 +126,12 @@ class TestExcelOfficeExternalAppHold:
         """Excel 엔진 핵심이 ai_orchestrator 코어에 없다(2026-10-04 갱신: agent/excel/ 디렉터리는 사라짐 — 코어 밖 보류 원칙만 검증)."""
         assert not (REPO_ROOT / "ai_orchestrator" / "excel").exists(), "Excel 엔진이 ai_orchestrator 코어에 있음"
         # ai_orchestrator/web_task_router 에는 excel 참조 없음
-        src = (REPO_ROOT / "ai_orchestrator" / "routers" / "web_task_router.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task" / "web_task_router.py").read_text(encoding="utf-8")
         assert "excel" not in src.lower()
 
     def test_excel_not_in_approval_service(self):
         """web_task_approval_service.py에 excel 참조가 없다."""
-        src = (REPO_ROOT / "ai_orchestrator" / "services" / "web_task_approval_service.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task" / "web_task_approval_service.py").read_text(encoding="utf-8")
         assert "excel" not in src.lower()
 
 
@@ -157,7 +157,7 @@ class TestBackendCloseoutBoundary:
 
     def test_web_task_closeout_passes_without_cad(self):
         """web_task_approval_service 는 CAD 없이 임포트 가능하다."""
-        import ai_orchestrator.services.web_task_approval_service as svc
+        import ai_orchestrator.web_task.web_task_approval_service as svc
 
         assert hasattr(svc, "create_web_task_pending_approval")
 
@@ -165,7 +165,7 @@ class TestBackendCloseoutBoundary:
         """web_task_approval_service의 응답 계약 키 존재."""
         import dataclasses
 
-        from ai_orchestrator.services.web_task_approval_service import PendingApprovalResult
+        from ai_orchestrator.web_task.web_task_approval_service import PendingApprovalResult
 
         fields = {f.name for f in dataclasses.fields(PendingApprovalResult)}
         required = {

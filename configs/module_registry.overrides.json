@@ -232,7 +232,7 @@
   "role": "policy",
   "reason": "execution_location_guard/server_egress_policy(L2)와 강결합된 모델 — 순수 L1 계약 아님"
  },
- "ai_orchestrator/services/web_task_registry.py": {
+ "ai_orchestrator/web_task/web_task_registry.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "사이트명→dev_reg 어댑터(L5) 선택/디스패치 — 업무 흐름 오케스트레이터, L1 contract 오분류"

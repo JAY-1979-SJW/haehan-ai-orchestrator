@@ -143,10 +143,12 @@ class TestOpsRouterImports:
         assert "from ai_orchestrator.audit_logger import read_recent_logs" in self._src()
 
     def test_imports_web_task_registry(self):
-        assert "from ai_orchestrator.services.web_task_registry import list_entries" in self._src()
+        assert "from ai_orchestrator.web_task.web_task_registry import list_entries" in self._src()
 
     def test_imports_external_work_registry(self):
-        assert "from ai_orchestrator.tasks.external_work_registry import list_external_works" in self._src()
+        src = self._src()  # 줄이 길면 포매터가 괄호로 나눌 수 있어 모듈 이름과 가져오는 이름을 따로 확인한다
+        assert "from ai_orchestrator.tasks.external_work_registry import" in src
+        assert "list_external_works" in src
 
     def test_imports_local_agent_registry(self):
         assert "import local_agent_registry" in self._src() or "as _reg" in self._src()

@@ -31,10 +31,10 @@ from pydantic import BaseModel
 
 from ai_orchestrator.audit_logger import log_event
 from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.services.web_task_approval_service import create_web_task_pending_approval
-from ai_orchestrator.services.web_task_registry import get_entry, list_entries
+from ai_orchestrator.web_task.web_task_approval_service import create_web_task_pending_approval
+from ai_orchestrator.web_task.web_task_registry import get_entry, list_entries
 from ai_orchestrator.sites.adapters.dev_reg_base import ErrorCode, validate_params
-from ai_orchestrator.web_task_templates import get_template, list_templates, merge_params
+from ai_orchestrator.web_task.web_task_templates import get_template, list_templates, merge_params
 
 logger = logging.getLogger(__name__)
 

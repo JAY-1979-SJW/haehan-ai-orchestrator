@@ -45,7 +45,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.gates.auth as _auth
 
     importlib.reload(_auth)
-    import ai_orchestrator.routers.web_task_router as _wtr
+    import ai_orchestrator.web_task.web_task_router as _wtr
 
     importlib.reload(_wtr)
 
@@ -93,7 +93,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.routers.web_task_router import web_task_router
+    from ai_orchestrator.web_task.web_task_router import web_task_router
 
     test_app = FastAPI()
     test_app.include_router(web_task_router, prefix="/api/v1")
@@ -499,7 +499,7 @@ def test_existing_adapter_imports_unchanged():
 
 def test_registry_does_not_break_existing_adapters():
     """web_task_registry 가 기존 어댑터와 정상 연동된다."""
-    from ai_orchestrator.services.web_task_registry import get_entry, list_entries
+    from ai_orchestrator.web_task.web_task_registry import get_entry, list_entries
 
     assert get_entry("hiworks", "developer_apply") is not None
     assert get_entry("naver", "app_register") is not None

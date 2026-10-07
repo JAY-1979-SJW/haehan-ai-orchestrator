@@ -192,7 +192,7 @@ MODULES: tuple[GateModule, ...] = (
                     "ai_orchestrator/gates/auth.py",
                     "ai_orchestrator/routers/auth_router.py",
                     "ai_orchestrator/gates/approval.py",
-                    "ai_orchestrator/routers/web_task_router.py",
+                    "ai_orchestrator/web_task/web_task_router.py",
                     "ai_orchestrator/services",  # 폴더째 컴파일 — 파일 하나를 이름으로 적으면 새 서비스가 빠지고, 코드맵이 services↔scripts 순환으로 읽는다
                     "ai_orchestrator/local_agent_router.py",
                     "ai_orchestrator/local_agent_registry.py",

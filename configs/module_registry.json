@@ -5841,7 +5841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/web_task_router.py": {
+  "ai_orchestrator/web_task/web_task_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -6137,7 +6137,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/web_task_approval_service.py": {
+  "ai_orchestrator/web_task/web_task_approval_service.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -6145,7 +6145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/services/web_task_registry.py": {
+  "ai_orchestrator/web_task/web_task_registry.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -7121,7 +7121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/web_task_templates.py": {
+  "ai_orchestrator/web_task/web_task_templates.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -22858,6 +22858,14 @@
    "source": "rule"
   },
   "ai_orchestrator/dev_reg/dev_reg_telegram.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/web_task/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",

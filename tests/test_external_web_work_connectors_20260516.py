@@ -204,7 +204,7 @@ class TestSecretNonExposureBoundary:
 
     def test_web_task_registry_no_secret_values(self):
         """web_task_registry의 list_entries 응답에 민감값 없음."""
-        from ai_orchestrator.services.web_task_registry import list_entries
+        from ai_orchestrator.web_task.web_task_registry import list_entries
 
         entries = list_entries()
         blob = str(entries).lower()
@@ -267,7 +267,7 @@ class TestWebTaskRegistryNaVerGoogle:
 
     def test_naver_app_register_in_registry(self):
         """naver/app_register가 web_task_registry에 등록되어 있다."""
-        from ai_orchestrator.services.web_task_registry import get_entry
+        from ai_orchestrator.web_task.web_task_registry import get_entry
 
         entry = get_entry("naver", "app_register")
         assert entry is not None
@@ -276,7 +276,7 @@ class TestWebTaskRegistryNaVerGoogle:
 
     def test_google_oauth_submit_in_registry(self):
         """google/oauth_submit이 web_task_registry에 등록되어 있다."""
-        from ai_orchestrator.services.web_task_registry import get_entry
+        from ai_orchestrator.web_task.web_task_registry import get_entry
 
         entry = get_entry("google", "oauth_submit")
         assert entry is not None
@@ -285,7 +285,7 @@ class TestWebTaskRegistryNaVerGoogle:
 
     def test_registry_does_not_expose_adapter_class(self):
         """list_entries()에 adapter_class가 포함되지 않는다."""
-        from ai_orchestrator.services.web_task_registry import list_entries
+        from ai_orchestrator.web_task.web_task_registry import list_entries
 
         for entry in list_entries():
             assert "adapter_class" not in entry
