@@ -11,6 +11,8 @@ import math
 import sqlite3
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
+
 logger = logging.getLogger(__name__)
 
 # ── 상수 ────────────────────────────────────────────────────────────────────
@@ -48,7 +50,7 @@ PRICE_RANGES = [
 
 def _db_path() -> Path:
     """repo root / data / naver_search.db"""
-    return Path(__file__).resolve().parents[3] / "data" / "naver_search.db"
+    return data_dir() / "naver_search.db"
 
 
 def _connect() -> sqlite3.Connection | None:

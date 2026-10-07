@@ -13,9 +13,10 @@ import sqlite3
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parents[1] / "data" / "cdp.db"
+from ai_orchestrator.paths.runtime import data_dir
+
+DB_PATH = data_dir() / "cdp.db"
 
 
 # ── 연결 ──────────────────────────────────────────────────────────

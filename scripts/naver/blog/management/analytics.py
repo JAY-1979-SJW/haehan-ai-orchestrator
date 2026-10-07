@@ -18,12 +18,13 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"
 
 
 def _init_db():
@@ -358,7 +359,7 @@ class BlogAnalytics:
             "device": device,
         }
 
-        out = Path("data/reports") / f"blog_analytics_{self.blog_id}_{date.today().isoformat()}.json"
+        out = data_dir() / "reports" / f"blog_analytics_{self.blog_id}_{date.today().isoformat()}.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         report["_file"] = str(out)

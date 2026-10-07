@@ -4,13 +4,15 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from ai_orchestrator.paths.runtime import storage_dir
+from ai_orchestrator.paths.runtime import data_dir, storage_dir
 
 ROOT = Path(__file__).resolve().parents[3]
 
 _TOKEN_PATHS = [
     Path("/app/ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json"),
     storage_dir() / "secrets" / "youtube_oauth_authorized_user.json",
+    # scripts.youtube.oauth 가 로컬(데스크톱) 인증 때 토큰을 쓰는 위치 — 읽는 쪽도 같이 본다
+    data_dir() / "secrets" / "youtube_oauth_authorized_user.json",
 ]
 
 

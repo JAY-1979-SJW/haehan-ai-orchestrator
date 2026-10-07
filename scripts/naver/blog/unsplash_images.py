@@ -14,15 +14,15 @@ import contextlib
 import json
 import logging
 import os
-from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.realtime_audit import emit_event
 
 _log = logging.getLogger(__name__)
 
-UPLOADS_DIR = Path(__file__).resolve().parents[3] / "data" / "blog_uploads"
+UPLOADS_DIR = data_dir() / "blog_uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-_UNSPLASH_CACHE = Path(__file__).resolve().parents[3] / "data" / "unsplash_images.json"
+_UNSPLASH_CACHE = data_dir() / "unsplash_images.json"
 _UNSPLASH_API = "https://api.unsplash.com"
 
 

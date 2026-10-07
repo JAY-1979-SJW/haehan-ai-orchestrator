@@ -29,6 +29,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
 from scripts.page_helper import page_goto  # noqa: E402
 from scripts.web_connector import browser_session  # noqa: E402
@@ -528,7 +529,7 @@ def main():
         "apps": {aid: {"name": APP_CONFIG[aid]["name"], "rest_key": k} for aid, k in final_keys.items()},
         "gates": [{"gate": r.gate, "status": r.status.value, "message": r.message} for r in all_results],
     }
-    Path("data/kakao_setup_result.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    (data_dir() / "kakao_setup_result.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 
     _summary(all_results)
 
