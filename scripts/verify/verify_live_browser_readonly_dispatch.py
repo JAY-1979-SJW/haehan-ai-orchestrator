@@ -185,6 +185,7 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         _stop_worker(worker)
         print("[PASS] worker stopped")
+    return 0
 
 
 if __name__ == "__main__":

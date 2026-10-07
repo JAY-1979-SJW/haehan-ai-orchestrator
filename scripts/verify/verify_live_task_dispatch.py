@@ -302,6 +302,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("[PASS] temp admin user removed")
             except Exception:  # noqa: BLE001 - 라이브 태스크 디스패치 검증 스크립트 -- 임시 에이전트 등록 실패 시 FAIL 처리 후 종료(fail-closed), 상태 폴링 조회 실패는 다음 루프에서 재시도, 임시 관리자 계정 정리 실패는 경고만 출력(검증 결과를 바꾸지 않음)
                 print("[WARN] temp admin user cleanup failed")
+    return 0
 
 
 if __name__ == "__main__":
