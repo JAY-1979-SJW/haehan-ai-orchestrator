@@ -1,0 +1,72 @@
+name: Mutation
+
+# 대표님 확정 2026-10-08: 변이 검증은 mutmut 로 통일(수동으로 코드를 깨뜨려 보는 실험은 하지 않는다).
+# PR 에서는 바뀐 함수만, 수동 실행(workflow_dispatch)은 지정한 패턴만 검사한다. 처음에는 점수로 실패시키지 않고 요약만 남긴다.
+# mutmut 은 Windows 네이티브 미지원이라 ubuntu 에서 돈다. 게이트 검출력 검증은 별도의 고정 시험이 맡는다.
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      patterns:
+        description: 'mutmut 패턴(공백 구분, 예: "*scripts.ops.changed_functions.module_dotted_path*")'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUTF8: "1"
+  TARGET_LIMIT: "40"
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install mutmut pytest pytest-timeout
+      - name: 대상 함수 결정
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python scripts/ops/changed_functions.py "origin/${{ github.base_ref }}" HEAD > all_patterns.txt
+          else
+            printf '%s\n' ${{ toJSON(inputs.patterns) }} > all_patterns.txt
+          fi
+          sed -i '/^$/d' all_patterns.txt
+          echo "TOTAL_TARGETS=$(wc -l < all_patterns.txt)" >> "$GITHUB_ENV"
+          head -n "$TARGET_LIMIT" all_patterns.txt > patterns.txt
+          cat patterns.txt
+      - name: mutmut 실행
+        run: |
+          if [ ! -s patterns.txt ]; then echo "바뀐 함수 없음 — 건너뜀"; exit 0; fi
+          mapfile -t patterns < patterns.txt
+          mutmut run "${patterns[@]}" || true
+          mutmut results --all true | head -n 40 || true
+          mutmut export-cicd-stats || true
+      - name: 요약
+        if: always()
+        run: python scripts/ops/summarize_mutation.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mutation-stats
+          path: |
+            mutants/mutmut-cicd-stats.json
+            mutants/*.log
+          if-no-files-found: ignore
