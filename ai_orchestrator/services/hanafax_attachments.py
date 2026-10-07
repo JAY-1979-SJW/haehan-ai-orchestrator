@@ -15,9 +15,11 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import storage_dir
+
 MAX_BYTES = 10 * 1024 * 1024  # 하나팩스 접수 화면 안내: 파일 크기 10MB 이하
 _MAGIC = {".pdf": (b"%PDF",), ".docx": (b"PK\x03\x04",), ".doc": (b"\xd0\xcf\x11\xe0",)}
-_UPLOAD_DIR = Path(__file__).resolve().parents[1] / "storage" / "fax_attachments"
+_UPLOAD_DIR = storage_dir() / "fax_attachments"
 _NAME_CLEAN = re.compile(r"[^\w.\-() 가-힣]")
 
 

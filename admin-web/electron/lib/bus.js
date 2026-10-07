@@ -25,6 +25,9 @@ const EVENTS = Object.freeze({
   TOGGLE_AUTO_LAUNCH: "app:toggle-auto-launch",
   // 시스템 Chrome 프로필 사용 토글 (사용자 Chrome 세션 공유)
   TOGGLE_SYSTEM_CHROME: "cdp:toggle-system-chrome",
+  // Claude(데스크톱·Code) MCP 연결/해제 요청 (트레이 메뉴)
+  CLAUDE_CONNECT: "claude:connect",
+  CLAUDE_DISCONNECT: "claude:disconnect",
 });
 
 // 단일 버스 인스턴스 (메인 프로세스 전역). 핸들러 수가 많지 않으므로 경고 한도만 상향.

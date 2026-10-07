@@ -35,6 +35,9 @@ function _buildMenu(autoLaunch) {
       click: () => bus.emit(EVENTS.TOGGLE_AUTO_LAUNCH),
     },
     { type: "separator" },
+    { label: "Claude 연결", click: () => bus.emit(EVENTS.CLAUDE_CONNECT) },
+    { label: "Claude 연결 해제", click: () => bus.emit(EVENTS.CLAUDE_DISCONNECT) },
+    { type: "separator" },
     { label: "종료", click: () => app.quit() },
   ]);
 }

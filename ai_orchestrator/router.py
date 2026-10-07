@@ -32,6 +32,7 @@ from .audit_logger import log_event, read_recent_logs
 from .browser_tool.approval_record_router import approval_record_router
 from .connectors.cdp_screen_router import cdp_screen_router
 from .connectors.community_router import community_router
+from .connectors.desktop_session_router import desktop_session_router
 from .connectors.eum_router import eum_router
 from .connectors.gabia_router import gabia_router
 from .connectors.gmail_router import gmail_router
@@ -63,6 +64,7 @@ from .inbox import read_recent_inbox
 from .local_agent_router import local_agent_router
 from .models import TaskRequest
 from .planner import plan
+from .routers.marketing_ops_router import marketing_ops_router
 from .sites.router import sites_router
 from .telegram_webhook import handle_telegram_update, handle_telegram_webhook
 
@@ -92,6 +94,7 @@ def _legacy_5050_should_use_route_wiring(route_id: str) -> bool:
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)
+router.include_router(desktop_session_router)  # 데스크톱 로컬 모드에서만 응답(그 외 404) — 첫 실행 등록·자동 세션
 router.include_router(sites_router)
 router.include_router(web_task_router)
 router.include_router(dev_reg_approval_read_router)
@@ -123,6 +126,7 @@ router.include_router(youtube_router)
 router.include_router(google_router)
 router.include_router(smartstore_router)  # read-only smartstore catalog/history/form-fields
 router.include_router(naver_blog_router)  # naver blog compose/drafts/seo
+router.include_router(marketing_ops_router)  # 마케팅 운영실(기능 스위치 기본 꺼짐, R1 수리)
 router.include_router(blog_automation_router)  # 블로그 자동 작성 규칙·승인·1회 실행(B단계: 로컬 초안까지)
 router.include_router(naver_mailbox_router)  # 네이버 메일함 탭(폴더·목록·상세·첨부·보내기 2단계)
 router.include_router(naver_mail_bulk_router)  # 메일 순차 대량 발송 승인서(관리자 전용, AI 허용 아님)

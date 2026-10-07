@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import sys
 from collections import deque
@@ -29,6 +30,8 @@ class Resolver:
         self.dirs = {str(PurePosixPath(p).parent) for p in py_files}
         # 파일명(.py 포함) → 경로들 (문자열 경로 참조 접미사 매칭용)
         self.by_name: dict[str, list[str]] = {}
+        # 실행 문장이 없는 __init__.py 판정 캐시(경로 → bool)
+        self._inert_cache: dict[str, bool] = {}
         for p in py_files:
             self.by_name.setdefault(PurePosixPath(p).name, []).append(p)
 
@@ -49,6 +52,27 @@ class Resolver:
     def _pkg_exists(self, base: str, dotted: str) -> bool:
         path = "/".join(x for x in (base, dotted.replace(".", "/")) if x)
         return path in self.dirs
+
+    def _inert_init(self, init_path: str) -> bool:
+        """__init__.py 가 비었거나 docstring 만 있어 import 해도 실행되는 것이 없으면 True.
+
+        그런 파일은 부모 패키지 init 로 가는 의존 간선을 만들지 않는다(2026-10-07 대표님 승인 — 빈 패키지 init 은
+        실행 부작용이 없다). 실행 문장(import·대입·호출 등)이 하나라도 있으면 False(기존처럼 간선 유지).
+        읽거나 파싱할 수 없으면 보수적으로 False.
+        """
+        if init_path in self._inert_cache:
+            return self._inert_cache[init_path]
+        try:
+            tree = ast.parse(scan._read(init_path))
+        except (OSError, SyntaxError, ValueError):
+            inert = False
+        else:
+            inert = all(
+                isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant) and isinstance(n.value.value, str)
+                for n in tree.body
+            )
+        self._inert_cache[init_path] = inert
+        return inert
 
     @staticmethod
     def _parent_inits(target: str, base: str) -> list[str]:
@@ -121,7 +145,7 @@ class Resolver:
         if hits or (dotted and self._pkg_exists(base, dotted)):
             extra = []
             for h in hits:
-                extra += [i for i in self._parent_inits(h, base) if i in self.py]
+                extra += [i for i in self._parent_inits(h, base) if i in self.py and not self._inert_init(i)]
             return sorted(set(hits + extra)), "internal"
         return None
 

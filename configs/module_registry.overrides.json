@@ -1201,5 +1201,23 @@
   "role": "shared",
   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
   "source": "manual"
+ },
+ "ai_orchestrator/paths/__init__.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+  "source": "manual"
+ },
+ "ai_orchestrator/paths/runtime.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+  "source": "manual"
+ },
+ "ai_orchestrator/paths/migrate.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+  "source": "manual"
  }
 }

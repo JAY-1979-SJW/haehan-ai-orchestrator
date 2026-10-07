@@ -11,6 +11,7 @@ const path = require("path");
 const fs = require("fs");
 const { fork } = require("child_process");
 const http = require("http");
+const { writePid, clearPid, killPreviousFromPidFile } = require("./pid_guard");
 
 const NEXT_PORT = parseInt(process.env.NEXT_PORT || "3000", 10);
 const HEALTH_URL = `http://127.0.0.1:${NEXT_PORT}`;
@@ -57,6 +58,10 @@ async function waitForServer(timeoutMs = HEALTH_TIMEOUT_MS) {
 }
 
 async function startNextServer() {
+  // 이전 실행이 남긴 '우리 Next 서버'만 PID 파일 기준으로 정리 — 이름·포트로 남의 프로세스를 죽이지 않는다(D5).
+  const prev = killPreviousFromPidFile("nextjs");
+  if (prev.killed) console.log("[nextjs] 이전 실행의 서버를 정리했다 (PID %d)", prev.pid);
+
   // 단발성 checkHealth()(2초 타임아웃) 대신 waitForServer()로 재시도한다.
   // `next dev`는 첫 요청에서 그 라우트를 온디맨드 컴파일하는데, 콜드스타트에서
   // 2초를 넘기는 경우가 흔해 한 번만 확인하면 "이미 떠 있는데도 없다"고 오판해
@@ -87,6 +92,8 @@ async function startNextServer() {
       PORT: String(NEXT_PORT),
       HOSTNAME: "127.0.0.1",
       NODE_ENV: "production",
+      // 데스크톱 표지 — Next 미들웨어가 로그인 대신 /setup(첫 실행 등록·자동 세션)으로 보낸다
+      HAEHAN_DESKTOP: "1",
       // self-contained: 번들 .env.production(원격) 대신 로컬 FastAPI(8401)로 강제.
       // @next/env 는 이미 설정된 process.env 를 .env 파일로 덮어쓰지 않으므로 여기 값이 우선.
       API_BASE_URL: "http://localhost:8401",
@@ -95,10 +102,13 @@ async function startNextServer() {
     },
   });
 
+  const spawnedPid = serverProc.pid;
+  writePid("nextjs", spawnedPid, path.basename(process.execPath), serverJs); // fork 는 현재 실행 파일(Electron)로 뜬다
   serverProc.stdout.pipe(logStream);
   serverProc.stderr.pipe(logStream);
   serverProc.on("exit", (code) => {
     console.log("[nextjs] 서버 종료 (code=%d)", code);
+    clearPid("nextjs", spawnedPid);
     serverProc = null;
     _ready = false;
   });

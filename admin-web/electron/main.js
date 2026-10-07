@@ -15,6 +15,8 @@
  *   - 일반 클라이언트: 라이선스 키 입력·검증 후 진입
  */
 const { app, ipcMain, shell: electronShell } = require("electron");
+const fs = require("fs");
+const path = require("path");
 
 // Electron 앱 자신의 창(webview 포함)을 CDP로 제어할 수 있게 원격 디버깅 포트를 연다.
 // ready 이벤트 이전에 호출해야 한다(공식 문서: code.electronjs.org/docs/latest/api/command-line-switches).
@@ -26,8 +28,9 @@ const {
   loadConfig, saveConfig, isOwnerMode,
   getEnabledSites, setEnabledSites, getSiteSettings, setSiteSettings,
   getAuthToken, isAutoStartEnabled, setAutoStartEnabled,
-  ENV_KEYS, saveUserEnv, maskedUserEnv, connectClaudeDesktop,
-  SERVER_URL,
+  ENV_KEYS, saveUserEnv, maskedUserEnv, patchConfig,
+  consumeConfigWarnings,
+  SERVER_URL, FASTAPI_URL,
 } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
@@ -36,8 +39,10 @@ const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./l
 const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
 const { Menu, dialog, session } = require("electron");
-const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
+const { startFastAPIServer, stopFastAPIServer, FASTAPI_PORT } = require("./lib/fastapi_server");
+const { refreshDesktopSession } = require("./lib/desktop_session");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
+const claudeMcp = require("./lib/claude_mcp");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
 const { startCdpBrowser, stopCdpBrowser, isCdpAlive, setUseSystemChromeProfile } = require("./lib/cdp_manager");
 // CDP watchdog — 앱이 CDP 를 책임지고 항상 살려둔다(클릭→앱 출력이 항상 되도록)
@@ -176,6 +181,26 @@ if (!gotLock) {
     // 추후 명시적 요청 시 호출 가능)
     if (cdpWatchdogTimer) { clearInterval(cdpWatchdogTimer); cdpWatchdogTimer = null; }
 
+    // 데스크톱 자동 세션: 시작할 때마다 등록된 owner 의 새 토큰을 받아 config(auth_token)에 보관한다(webview 가 이를 쿠키로 사용).
+    // 첫 실행(사용자 없음)이면 옛 토큰만 지우고, Next 가 /setup(이름·이메일 등록)으로 보낸다. 실패해도 시작은 계속한다.
+    try {
+      const sessionState = await refreshDesktopSession(FASTAPI_PORT);
+      console.log("[desktop-session]", sessionState);
+    } catch (e) {
+      console.warn("[desktop-session] 건너뜀:", e.message);
+    }
+
+    // config.json 이 손상·잠김이었다면(보존·복구한 내용) 한 번 알린다 — 기존 설정을 조용히 잃지 않도록(D6)
+    const cfgWarnings = consumeConfigWarnings();
+    if (cfgWarnings.length) {
+      dialog.showMessageBox({
+        type: "warning",
+        title: "설정 파일 경고",
+        message: "설정 파일에 문제가 있었습니다",
+        detail: cfgWarnings.join("\n\n"),
+      }).catch(() => {});
+    }
+
     // ── Next.js 서버 시작 ────────────────────────────────────────────────────
     const nextReady = await startNextServer();
     if (!nextReady) {
@@ -205,6 +230,9 @@ if (!gotLock) {
       startAgent(key);
       createMainWindow(key, startHidden);
       createTray(isAutoStartEnabled());
+      // 창이 뜬 뒤 백그라운드로 Claude 연결 확인(처음이면 동의 요청) — 시작을 막지 않는다
+      if (!startHidden) setTimeout(() => syncClaudeOnStart().catch((e) => console.warn("[main] Claude 연결 확인 실패(무시):", e.message)), 5000);
+      else syncClaudeOnStart().catch(() => {});
     } else {
       startLicenseFlow();
     }
@@ -273,8 +301,78 @@ ipcMain.handle("local-config:set-env-keys", (_e, patch) => {
   return { ok: true, values: maskedUserEnv() };
 });
 
-// Claude Desktop MCP 연동: claude_desktop_config.json 에 번들 MCP 서버 등록
-ipcMain.handle("local-config:connect-claude-desktop", () => connectClaudeDesktop());
+// ── Claude(데스크톱·Code) MCP 연동 ─────────────────────────────────────────────
+// 포터블 타깃은 실행마다 임시 폴더로 풀리므로 번들 MCP 를 userData\mcp\<빌드>\ 로 복사한 고정 경로를 등록한다.
+// 등록·해제 로직은 lib/claude_mcp.js(시험 가능한 순수 IO 모듈). 여기서는 앱 경로와 사용자 동의 흐름만 잇는다.
+function claudeCtx() {
+  return {
+    srcDir: path.join(process.resourcesPath, "mcp", "haehan-mcp"),
+    userDataDir: app.getPath("userData"),
+    version: app.getVersion(),
+    buildVersion: claudeMcp.readBuildVersion(process.resourcesPath), // build-info.json 의 yyyymmdd-sha7 (없으면 앱 버전-exe크기)
+    appDataDir: app.getPath("appData"),
+    fastapiUrl: FASTAPI_URL,
+  };
+}
+
+async function connectClaudeNow() {
+  if (!app.isPackaged) return { ok: false, error: "dev_mode_unsupported", hint: "패키징된 앱에서만 지원합니다" };
+  const r = await claudeMcp.connectClaude(claudeCtx());
+  if (r.ok) patchConfig({ claude_mcp: { ...(loadConfig().claude_mcp || {}), connected: true, prompted: true, build_id: r.buildId, fastapi_url: FASTAPI_URL } });
+  return r;
+}
+
+function disconnectClaudeNow() {
+  const r = claudeMcp.disconnectClaude(claudeCtx());
+  if (r.ok) patchConfig({ claude_mcp: { ...(loadConfig().claude_mcp || {}), connected: false, prompted: true } });
+  return r;
+}
+
+function notifyClaudeResult(title, r) {
+  const parts = [];
+  if (r.desktop) parts.push(`Claude Desktop: ${r.desktop.ok ? (r.desktop.changed === false ? "변경 없음" : "완료") : (r.desktop.error === "claude_desktop_not_found" ? "설치 안 됨" : "실패")}`);
+  if (r.code) parts.push(`Claude Code: ${r.code.ok ? (r.code.skipped ? "건너뜀(claude 명령 없음)" : r.code.changed === false ? "변경 없음" : "완료") : "실패"}`);
+  dialog.showMessageBox(getMainWindow() || undefined, {
+    type: r.ok ? "info" : "warning",
+    title,
+    message: r.ok ? `${title} 완료` : `${title} 실패`,
+    detail: [parts.join("\n"), r.hint || ""].filter(Boolean).join("\n\n"),
+  }).catch(() => {});
+}
+
+// 앱 시작 때: 이미 동의한 사용자는 새 빌드·주소 변경 시 조용히 갱신하고, 처음이면 한 번만 동의를 묻는다.
+async function syncClaudeOnStart() {
+  if (!app.isPackaged) return;
+  const ctx = claudeCtx();
+  if (!fs.existsSync(path.join(ctx.srcDir, claudeMcp.EXE_NAME))) return;
+  const st = loadConfig().claude_mcp || {};
+  if (st.connected) {
+    if (st.build_id === claudeMcp.buildId(ctx.srcDir, ctx.version, ctx.buildVersion) && st.fastapi_url === FASTAPI_URL) return;
+    await connectClaudeNow();
+    return;
+  }
+  if (st.prompted) return;
+  const res = await dialog.showMessageBox(getMainWindow() || undefined, {
+    type: "question",
+    buttons: ["연결", "나중에"],
+    defaultId: 0,
+    cancelId: 1,
+    title: "Claude 연결",
+    message: "이 PC의 Claude에서 Haehan AI 도구를 쓸 수 있게 연결할까요?",
+    detail: "Claude Desktop과 Claude Code 설정에 Haehan AI를 추가합니다. 다른 설정은 바꾸지 않고, 바꾸기 전에 백업을 남깁니다. 나중에 트레이 메뉴의 'Claude 연결 해제'로 되돌릴 수 있습니다.",
+  });
+  patchConfig({ claude_mcp: { ...st, prompted: true } });
+  if (res.response === 0) notifyClaudeResult("Claude 연결", await connectClaudeNow());
+}
+
+ipcMain.handle("local-config:connect-claude", () => connectClaudeNow());
+ipcMain.handle("local-config:disconnect-claude", () => disconnectClaudeNow());
+ipcMain.handle("local-config:claude-status", () => {
+  const st = loadConfig().claude_mcp || {};
+  return { ...claudeMcp.claudeStatus({ ...claudeCtx(), exePath: undefined }), consented: !!st.connected };
+});
+bus.on(EVENTS.CLAUDE_CONNECT, async () => notifyClaudeResult("Claude 연결", await connectClaudeNow()));
+bus.on(EVENTS.CLAUDE_DISCONNECT, () => notifyClaudeResult("Claude 연결 해제", disconnectClaudeNow()));
 
 // 사진 선택: 네이티브 파일 탐색기로 이미지를 고르면 로컬 경로 배열 반환.
 // (사용자가 경로를 직접 타이핑하지 않게 — 백엔드는 로컬 경로를 직접 읽어 base64 처리)

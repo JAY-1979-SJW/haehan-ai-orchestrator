@@ -107,8 +107,8 @@
     {
       "rule": "github_actions_disabled",
       "forbidden_path_glob": ".github/workflows/*.yml",
-      "allowed_exceptions": ["ci.yml"],
-      "exception_note": "2026-09-29 커밋 a941e09a, 사용자 승인으로 'GitHub 기능 안 씀' 결정 번복 — ci.yml만 허용(docs/specs 참고), 그 외 신규 workflow 파일은 계속 금지"
+      "allowed_exceptions": ["ci.yml", "desktop-release.yml"],
+      "exception_note": "2026-09-29 커밋 a941e09a, 사용자 승인으로 'GitHub 기능 안 씀' 결정 번복 — ci.yml만 허용(docs/specs 참고), 그 외 신규 workflow 파일은 계속 금지. 2026-10-07 대표님 승인(데스크톱 앱 릴리스 빌드, 저녁 계획 18:10) — desktop-release.yml 1개 추가 허용"
     },
     {
       "rule": "archive_runtime_state_write_forbidden",

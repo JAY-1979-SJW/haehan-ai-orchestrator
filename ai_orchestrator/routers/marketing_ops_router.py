@@ -6,6 +6,13 @@
 쌓여 CDP 자체가 느려지는 문제(2026-08-17 실측)를 피하기 위함.
 
 발행(publish)은 항상 사용자 확인 후 confirmed=true로만 실행 — 자동 게시 없음.
+
+기능 스위치(2026-10-07, R1 끊긴 호출 수리 — ROOT_FIX_ORDERS.md 추가 배정
+"W2 — 마케팅 운영 연결", 대표님 결정): 이 라우터는 원래 app에 include된 적이
+없었다(R1 감사로 발견). 이번에 include하되, 기본 꺼짐 — 사용자가 설정에서
+켜야 /state·/settings/toggle 을 뺀 나머지 전부가 동작한다(꺼져 있으면 403).
+publish-blog의 R2(require_side_effect) 연결은 R2c(gates/send_approval)가
+통합된 뒤 별도 배정.
 """
 
 from __future__ import annotations
@@ -16,19 +23,32 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.connectors.marketing_ops_settings import is_enabled, load_settings, save_settings
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.gates.send_approval import require_send_approval
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.gate import CONFIRM_TEXTS
 from scripts.realtime_audit import emit_event
 
 marketing_ops_router = APIRouter(prefix="/naver/marketing-ops", tags=["marketing-ops"])
 
+_SETTINGS_OFF_DETAIL = "설정에서 마케팅 운영을 켜세요"
+
+
+def _require_marketing_ops_enabled() -> None:
+    """/state·/settings/toggle 을 뺀 모든 라우트 앞단 게이트 — 꺼져 있으면 403."""
+    if not is_enabled():
+        raise HTTPException(status_code=403, detail=_SETTINGS_OFF_DETAIL)
+
 _ROOT = Path(__file__).resolve().parents[2]
-_RESEARCH_FILE = _ROOT / "data" / "blog_topic_research_latest.json"
-_CACHE_FILE = _ROOT / "data" / "blog_topic_cache.json"
-_REPORTS_DIR = _ROOT / "data" / "reports"
-_PACKAGES_DIR = _ROOT / "data" / "marketing_packages"
+_RESEARCH_FILE = data_dir() / "blog_topic_research_latest.json"
+_CACHE_FILE = data_dir() / "blog_topic_cache.json"
+_REPORTS_DIR = data_dir() / "reports"
+_PACKAGES_DIR = data_dir() / "marketing_packages"
 _PACKAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -98,8 +118,38 @@ def _list_packages() -> list[dict]:
 
 
 @marketing_ops_router.get("/packages")
-def list_packages(user: dict = Depends(require_role("admin", "owner"))) -> dict[str, Any]:
+def list_packages(
+    user: dict = Depends(require_role("admin", "owner")), _gate: None = Depends(_require_marketing_ops_enabled)
+) -> dict[str, Any]:
     return {"ok": True, "items": _list_packages()}
+
+
+# ── 기능 스위치 ──────────────────────────────────────────────────────────────
+
+
+class SettingsToggleRequest(BaseModel):
+    enabled: bool
+
+
+@marketing_ops_router.get("/settings")
+def get_settings(user: dict = Depends(require_role("admin", "owner"))) -> dict[str, Any]:
+    return {"ok": True, **load_settings()}
+
+
+@marketing_ops_router.post("/settings/toggle")
+def toggle_settings(
+    req: SettingsToggleRequest, user: dict = Depends(require_role("admin", "owner"))
+) -> dict[str, Any]:
+    settings = save_settings(req.enabled)
+    log_event(
+        "MARKETING_OPS_SETTINGS_TOGGLE",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"enabled={settings['enabled']}",
+    )
+    return {"ok": True, **settings}
 
 
 # ── 콘텐츠 패키지 생성 (블로그 원본 + 유튜브/쇼츠/인스타 파생) ───────────────────
@@ -114,7 +164,9 @@ class GeneratePackageRequest(BaseModel):
 
 @marketing_ops_router.post("/generate-package")
 def generate_package(
-    req: GeneratePackageRequest, user: dict = Depends(require_role("admin", "owner"))
+    req: GeneratePackageRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+    _gate: None = Depends(_require_marketing_ops_enabled),
 ) -> dict[str, Any]:
     """주제 1개 → 블로그 글(원본) + 유튜브 대본 + 쇼츠 3편 + 인스타 캡션. 발행 안 함(미리보기 전용)."""
     from scripts.naver.blog.marketing.content import generate_post
@@ -172,13 +224,25 @@ def generate_package(
 class PublishBlogRequest(BaseModel):
     package_id: str
     confirmed: bool = False
+    send_confirm: str | None = None
 
 
 @marketing_ops_router.post("/publish-blog")
-def publish_blog(req: PublishBlogRequest, user: dict = Depends(require_role("admin", "owner"))) -> dict[str, Any]:
-    """패키지의 블로그 콘텐츠를 실제로 네이버 블로그에 발행. confirmed=true 필수."""
+def publish_blog(
+    req: PublishBlogRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+    _gate: None = Depends(_require_marketing_ops_enabled),
+) -> dict[str, Any]:
+    """패키지의 블로그 콘텐츠를 실제로 네이버 블로그에 발행.
+
+    confirmed=true 와 send_confirm(R2 공통 승인 문구) 둘 다 필요 — confirmed 만으로는
+    통과할 수 없다(대표님 결정, 2026-10-07 마케팅 운영 연결). write_post 자체에는
+    approval 인자가 없어(예약 실행 보호) 호출 전에 require_send_approval 로 막는다.
+    """
     if not req.confirmed:
         return {"ok": False, "error": "발행은 confirmed=true 확인이 필요합니다 (외부 공개)"}
+
+    require_send_approval("blog_publish", send_confirm=req.send_confirm, expected=CONFIRM_TEXTS["blog_publish"])
 
     path = _PACKAGES_DIR / f"{req.package_id}.json"
     package = _load_json(path)
@@ -246,7 +310,11 @@ class ApproveChannelRequest(BaseModel):
 
 
 @marketing_ops_router.post("/approve-channel")
-def approve_channel(req: ApproveChannelRequest, user: dict = Depends(require_role("admin", "owner"))) -> dict[str, Any]:
+def approve_channel(
+    req: ApproveChannelRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+    _gate: None = Depends(_require_marketing_ops_enabled),
+) -> dict[str, Any]:
     """유튜브/쇼츠/인스타는 자동 게시가 아직 없음 — '검토 완료' 표시만 남긴다(수동 게시용)."""
     path = _PACKAGES_DIR / f"{req.package_id}.json"
     package = _load_json(path)
@@ -259,11 +327,13 @@ def approve_channel(req: ApproveChannelRequest, user: dict = Depends(require_rol
 
 # ── 블로그 이웃 목록 ────────────────────────────────────────────────────────
 
-_NEIGHBORS_CACHE = _ROOT / "data" / "reports" / "blog_neighbors_latest.json"
+_NEIGHBORS_CACHE = data_dir() / "reports" / "blog_neighbors_latest.json"
 
 
 @marketing_ops_router.get("/neighbors")
-def get_neighbors(user: dict = Depends(require_role("admin", "owner"))) -> dict[str, Any]:
+def get_neighbors(
+    user: dict = Depends(require_role("admin", "owner")), _gate: None = Depends(_require_marketing_ops_enabled)
+) -> dict[str, Any]:
     """캐시된 이웃 목록 조회 (없으면 새로고침 안내만, CDP 호출은 /neighbors/refresh 로 별도)."""
     cached = _load_json(_NEIGHBORS_CACHE)
     if not cached:
@@ -272,7 +342,9 @@ def get_neighbors(user: dict = Depends(require_role("admin", "owner"))) -> dict[
 
 
 @marketing_ops_router.post("/neighbors/refresh")
-def refresh_neighbors(user: dict = Depends(require_role("admin", "owner"))) -> dict[str, Any]:
+def refresh_neighbors(
+    user: dict = Depends(require_role("admin", "owner")), _gate: None = Depends(_require_marketing_ops_enabled)
+) -> dict[str, Any]:
     """CDP로 실제 이웃 목록을 다시 조회해 캐시 갱신 (107명 기준 약 10~20초 소요)."""
     from scripts.naver.blog.community.neighbor_manager import BlogNeighborManager
     from scripts.naver.blog.marketing import TARGET_BLOG_ID

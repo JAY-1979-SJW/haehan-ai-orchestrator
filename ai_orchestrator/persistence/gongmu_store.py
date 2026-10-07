@@ -16,13 +16,14 @@ import sqlite3
 import uuid
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
+
+from ai_orchestrator.paths.runtime import storage_dir
 
 from ..domain import gongmu_defaults as defaults
 from .sqlite_schema import apply_schema, set_busy_timeout
 
-_DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "gongmu.db"
+_DB_PATH = storage_dir() / "gongmu.db"
 
 _SITE_FIELDS = (
     "name",

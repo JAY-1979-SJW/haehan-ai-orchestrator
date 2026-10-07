@@ -4,11 +4,13 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import storage_dir
+
 ROOT = Path(__file__).resolve().parents[3]
 
 _TOKEN_PATHS = [
     Path("/app/ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json"),
-    ROOT / "ai_orchestrator" / "storage" / "secrets" / "youtube_oauth_authorized_user.json",
+    storage_dir() / "secrets" / "youtube_oauth_authorized_user.json",
 ]
 
 

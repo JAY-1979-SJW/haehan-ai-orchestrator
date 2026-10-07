@@ -11,6 +11,8 @@ export default defineConfig({
     // 스크린샷 실패 시 자동 저장
     screenshot: "on",
     video: "off",
+    // CI(desktop-release.yml)가 실패 시 trace를 artifact로 올린다 — 로컬 실행 땐 그냥 무시.
+    trace: "retain-on-failure",
   },
   reporter: [["list"], ["html", { open: "never" }]],
 });

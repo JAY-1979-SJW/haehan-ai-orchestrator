@@ -58,6 +58,13 @@ def get_jwt_user(
     # 자기완결 데스크톱(AUTH_ENABLED=false, loopback owner): 토큰 없이 owner 자동 인증.
     # require_role 의 AUTH-off 정책(_DUMMY_USER owner)과 통일. 운영 웹(AUTH on)은 바이패스 0 → 기존 로그인 유지.
     if not config.AUTH_ENABLED:
+        # 데스크톱: 등록된 사용자의 유효한 토큰이 오면 그 사용자로(마이페이지에 실제 이름·이메일이 보이도록),
+        # 토큰이 없거나 맞지 않으면 기존처럼 owner 자동 인증.
+        if cred:
+            token_user_id = _decode_token(cred.credentials)
+            registered = user_db.get_user_by_id(token_user_id) if token_user_id else None
+            if registered:
+                return registered
         return {
             "id": "owner",
             "email": "owner@haehan-ai.local",
@@ -160,6 +167,7 @@ def signup(body: SignupRequest):
     if user_db.email_exists(body.email):
         auth_audit.record_auth_event("signup", "conflict", email=body.email)
         raise HTTPException(status_code=409, detail="이미 사용 중인 이메일입니다")
+    # 데스크톱 첫 사용자 등록은 이 가입 흐름이 아니라 desktop_session_router(이름·이메일만, 비밀번호 없음)가 맡는다.
     user = user_db.create_user(body.email, body.name, body.password)
     auth_audit.record_auth_event("signup", "success", actor_id=user.get("id"), email=body.email)
     if is_owner_email(body.email):
@@ -231,6 +239,22 @@ def approve(user_id: str, admin: dict = Depends(require_role("admin", "owner")))
         raise HTTPException(status_code=404, detail="대상 사용자를 찾을 수 없습니다")
     auth_audit.record_auth_event("approve", "success", actor_id=actor, target_user_id=user_id)
     return {"status": "approved", "user_id": user_id}
+
+
+@user_auth_router.post("/{user_id}/reject", status_code=200)
+def reject(user_id: str, owner: dict = Depends(require_role("owner"))):
+    """승인 대기 계정을 거절·삭제한다(owner 전용). 승인된 계정은 지우지 않는다(409).
+
+    이메일 인증이 없어 남이 owner 이메일로 먼저 가입(선점)할 수 있는데, 지울 수단이 없으면 본인이 가입하지 못한다.
+    삭제하면 그 이메일로 다시 가입할 수 있다. 이메일 원문은 감사 로그에 남기지 않고 대상 id 만 남긴다."""
+    actor = owner.get("actor") or owner.get("id")
+    result = user_db.delete_pending_user(user_id)
+    auth_audit.record_auth_event("reject", result, actor_id=actor, target_user_id=user_id)
+    if result == "not_found":
+        raise HTTPException(status_code=404, detail="대상 사용자를 찾을 수 없습니다")
+    if result == "not_pending":
+        raise HTTPException(status_code=409, detail="이미 승인된 계정은 거절·삭제할 수 없습니다")
+    return {"status": "rejected", "user_id": user_id}
 
 
 # 콘솔 라우트(require_role)가 Bearer JWT 도 받도록 검증 함수를 게이트에 등록한다(L2 게이트가 L7 DB 를 직접 import 하지 않게 하는 의존 역전).

@@ -3465,7 +3465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/marketing_ops_router.py": {
+  "ai_orchestrator/routers/marketing_ops_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "marketing",
@@ -22334,6 +22334,230 @@
    "role": "browser_engine",
    "domain": "common",
    "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/marketing_ops_settings.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "marketing",
+   "reason": "도메인(marketing) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_marketing_ops_router_gates.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "marketing",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_console_api_contract_pending_reject.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_security_utils_token_patterns.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/paths/__init__.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "low",
+   "source": "manual"
+  },
+  "tests/test_repo_root_canonical.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/lib/claude_mcp.js": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/tests/claude_mcp.test.js": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_desktop_claude_mcp.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/publish_release_to_nas.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_publish_release_to_nas.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/components/settings/MarketingOpsSwitch.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "marketing",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/lib/marketingOps.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "marketing",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/e2e-electron/fresh_install_signup.spec.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/lib/pid_guard.js": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/paths/bootstrap.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "공용 기반 이름(bootstrap)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/paths/migrate.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "low",
+   "source": "manual"
+  },
+  "ai_orchestrator/paths/runtime.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "low",
+   "source": "manual"
+  },
+  "tests/electron_guard_harness.js": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_desktop_owner_bootstrap.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_electron_runtime_guards.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_runtime_data_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/lib/desktop_session.js": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/app/setup/page.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/desktop_session_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_desktop_fresh_run.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_code_map_inert_init.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_opt_out_lock_windows.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   }

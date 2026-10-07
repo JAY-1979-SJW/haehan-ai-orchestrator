@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
-  "updated": "2026-09-29",
-  "next_no": 120,
+  "updated": "2026-10-07",
+  "next_no": 123,
   "items": [
     {
       "no": 1,
@@ -1605,6 +1605,35 @@
       "stage": "RUN",
       "status": "fixed",
       "fix_note": "2026-10-05 해결(사용자 A안 승인): ops 라우터는 읽기 전용 유지 — POST /ops/approvals/gc 라우트 제거(호출처 없음, 같은 만료 처리는 services/dev_reg_runner.py 의 mark_expired_internal 이 이미 수행). 라우트 수 427→426(HTTP 425→424, POST 196→195) 기준값·시험 갱신. 프런트 시험 2건(fallback 문구·CAD 목 데이터 기대)은 현행 코드(…Legacy 함수·HWPX/Excel 항목) 기준으로 갱신."
+    },
+    {
+      "no": 121,
+      "id": "admin_web.backend_auth.basic_only_blocks_approval_routes",
+      "category": 2,
+      "title": "requireBackendRole(admin-web/src/lib/backend-auth.ts)이 Authorization 이 'Basic ' 이 아니면 백엔드 호출 전에 401 — 쿠키 로그인 사용자(JWT)도 막힘. 승인 패널(/api/approval/requests*)이 헤더 없이 호출하므로 마운트하면 서버·데스크톱(AUTH_ENABLED 무관) 모두 401",
+      "where": [
+        "admin-web/src/lib/backend-auth.ts:31-41",
+        "admin-web/src/components/browser-approval/BrowserApprovalPanel.tsx:76,111,157",
+        "admin-web/src/app/api/approval/requests/**/route.ts"
+      ],
+      "evidence": "2026-10-07 W4 점검 D9 → W3 확인(stage/integrate-2): BrowserApprovalPanel 은 components/browser-approval/index.ts 의 export 외에 어떤 페이지도 import 하지 않아 지금 화면이 막히지는 않는 잠복 결함. 이 Next 라우트들은 /api/proxy 를 거치지 않아 쿠키→Bearer 규칙·P0c 승인 프록시와 별개 시스템. 지금의 Basic 요구가 우연히 CSRF 를 막고 있었다(쿠키 인증을 받으면 브라우저가 쿠키를 자동으로 붙이므로 상태 변경 요청에 same-origin 검사가 필요). 인증이 꺼진 데스크톱에서는 패널이 보내는 decided_by:'admin' 이 그대로 기록된다.",
+      "stage": "RUN",
+      "status": "open",
+      "fix_note": "보류 — BrowserApprovalPanel 을 화면에 붙일 때 수정안(C:\\work\\_coordination\\D9_fix_proposal.diff, 브랜치 stage/d9-approval-auth: 쿠키 JWT 를 Bearer 로 수용 + 쿠키 인증의 POST 는 same-origin 검사)과 CSRF·권한 시험(쿠키 JWT 200 / 무인증 401 / 교차 사이트 POST 403)을 함께 적용한다. 패널 마운트 시 decided_by 는 서버가 JWT 에서 도출하게 정리."
+    },
+    {
+      "no": 122,
+      "id": "code_map.empty_package_init_counted_as_dependency",
+      "category": 3,
+      "title": "코드맵이 실행 문장이 없는 빈 __init__.py 를 부모 패키지 의존 간선으로 세어 가짜 폴더 순환이 늘어남",
+      "where": [
+        "scripts/ops/code_map/reach.py:Resolver._parent_inits 사용부(_internal_hits)",
+        "ai_orchestrator/__init__.py(0바이트)"
+      ],
+      "evidence": "2026-10-07 PR #156 CI verify 가 순환 80→84 로 FAIL. 새 순환 4개(connectors/desktop*·instagram*·session*, persistence)는 모두 'from ai_orchestrator.paths.runtime import ...' 가 부모 ai_orchestrator/__init__.py(0바이트)로 가는 간선을 만들어 생겼다. 빈 패키지 init 은 import 해도 실행되는 것이 없다. 기준·head 를 같은 도구로 재면(verify_change._checkout 이 head 의 code_map 도구를 기준 트리에 복사) 기준 80→73, head 84→73 이고 순증 0.",
+      "stage": "MAP",
+      "status": "fixed",
+      "fix_note": "2026-10-07 대표님 승인(빈 패키지 init 은 실행 부작용이 없음). reach.py Resolver._inert_init: AST 로 Module.body 가 비었거나 docstring 만 있는 __init__ 만 부모 간선에서 제외, 실행 문장(import·대입·호출·future import 포함)이 있거나 읽기·파싱 실패면 기존대로 유지. 시험 tests/test_code_map_inert_init.py(빈 init 제외 / 실행 코드 init 유지 / 실제 a<->b 순환은 여전히 검출). 게이트 완화가 아니라 가짜 간선 제거이고 순환 검출 규칙은 그대로."
     }
   ]
 }

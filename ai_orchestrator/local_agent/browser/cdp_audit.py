@@ -15,8 +15,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 KST = timezone(timedelta(hours=9))
-AUDIT_ROOT = Path(__file__).resolve().parents[3] / "data" / "audit"
+AUDIT_ROOT = data_dir() / "audit"
 SCHEMA_VERSION = 1
 
 _SENSITIVE_KEYS = re.compile(r"(password|token|auth|secret|apikey|api_key|cookie)", re.I)

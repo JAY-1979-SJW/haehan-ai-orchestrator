@@ -22,6 +22,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import storage_dir
+
 from ..domain.work_record import (
     ARTIFACT_MAX_BYTES,
     ERROR_MAX,
@@ -78,7 +80,7 @@ from ..domain.work_record import (
 from .sqlite_schema import apply_schema, set_busy_timeout
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "work_records.db"
+_DB_PATH = storage_dir() / "work_records.db"
 # 산출물으로 참조할 수 있는 루트(저장소 기준 상대). 두 번째는 6a 지도 이력 파일 참조용(기준서 §4 조정 제안 c).
 _DEFAULT_ARTIFACT_ROOTS = ("data/work_records", "data/site_task_map")
 

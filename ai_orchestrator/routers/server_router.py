@@ -18,13 +18,14 @@ from typing import Any
 from fastapi import APIRouter, Depends
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.paths.runtime import data_dir
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/server", tags=["server"])
 
 ROOT = Path(__file__).resolve().parents[2]
-_DEPLOY_STATUS_FILE = ROOT / "data" / "runtime" / "server_deploy_latest.json"
+_DEPLOY_STATUS_FILE = data_dir() / "runtime" / "server_deploy_latest.json"
 
 # ── 인스턴스 정보 (IXcloud R2 / project haehan-ai) ────────────────────────────
 INSTANCES: list[dict[str, Any]] = [

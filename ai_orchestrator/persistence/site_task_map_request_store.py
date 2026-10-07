@@ -16,7 +16,9 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-_DIR = Path(__file__).resolve().parents[2] / "data" / "site_task_map_requests"
+from ai_orchestrator.paths.runtime import data_dir
+
+_DIR = data_dir() / "site_task_map_requests"
 _ID_RE = re.compile(r"^[0-9a-f]{32}$")
 
 

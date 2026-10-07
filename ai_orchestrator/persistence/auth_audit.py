@@ -12,9 +12,11 @@ import threading
 from datetime import UTC, datetime
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import storage_dir
+
 _log = logging.getLogger(__name__)
 _LOCK = threading.Lock()
-_AUDIT_PATH = Path(__file__).resolve().parents[1] / "storage" / "auth_audit.jsonl"
+_AUDIT_PATH = storage_dir() / "auth_audit.jsonl"
 
 
 def _get_audit_path() -> Path:
