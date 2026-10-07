@@ -18,11 +18,12 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
+from scripts.app_paths import repo_root
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = repo_root()
 DB_PATH = ROOT / "data" / "cdp.db"
 
 

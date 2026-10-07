@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from scripts.app_paths import repo_root
 from scripts.naver.blog.unsplash_images import UPLOADS_DIR
 from scripts.naver.blog.unsplash_images import (
     resolve_unsplash_images as _resolve_unsplash_images,  # 재노출(옛 이름 유지)
@@ -23,7 +24,7 @@ _log = logging.getLogger(__name__)
 
 naver_blog_router = APIRouter(prefix="/naver/blog", tags=["naver-blog"])
 
-DRAFTS_DIR = Path(__file__).resolve().parents[2] / "data" / "blog_drafts"
+DRAFTS_DIR = repo_root() / "data" / "blog_drafts"
 DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
 
 

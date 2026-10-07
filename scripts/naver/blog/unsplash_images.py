@@ -14,15 +14,15 @@ import contextlib
 import json
 import logging
 import os
-from pathlib import Path
 
+from scripts.app_paths import repo_root
 from scripts.realtime_audit import emit_event
 
 _log = logging.getLogger(__name__)
 
-UPLOADS_DIR = Path(__file__).resolve().parents[3] / "data" / "blog_uploads"
+UPLOADS_DIR = repo_root() / "data" / "blog_uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-_UNSPLASH_CACHE = Path(__file__).resolve().parents[3] / "data" / "unsplash_images.json"
+_UNSPLASH_CACHE = repo_root() / "data" / "unsplash_images.json"
 _UNSPLASH_API = "https://api.unsplash.com"
 
 

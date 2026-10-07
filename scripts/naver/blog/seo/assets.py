@@ -16,9 +16,10 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from scripts.app_paths import repo_root
 from scripts.naver.mail_read import cdp
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = repo_root()
 LATEST_BLOG_ASSET_PLAN_PATH = ROOT / "data" / "naver_blog_asset_plan_latest.json"
 LATEST_BLOG_ASSET_INVENTORY_PATH = ROOT / "data" / "naver_blog_asset_inventory_latest.json"
 LATEST_BLOG_IMAGE_ANALYSIS_PATH = ROOT / "data" / "naver_blog_image_analysis_latest.json"

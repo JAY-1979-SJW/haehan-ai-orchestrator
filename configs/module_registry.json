@@ -22304,6 +22304,14 @@
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
    "source": "confirmed"
+  },
+  "tests/test_split_naver_blog_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
