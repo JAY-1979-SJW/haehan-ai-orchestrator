@@ -31,3 +31,28 @@ def _no_real_preflight():
     site_preflight_service.configure_fetcher(None)
     yield
     site_preflight_service.configure_fetcher(None)
+
+
+def _is_cdp_launch(args) -> bool:
+    text = " ".join(map(str, args)) if isinstance(args, (list, tuple)) else str(args)
+    return "cdp_daemon" in text or "remote-debugging-port" in text
+
+
+@pytest.fixture(autouse=True)
+def _no_real_cdp_daemon(monkeypatch):
+    """시험이 실제 CDP 데몬·Chrome(원격 디버깅 포트)을 띄우지 못하게 막는다.
+
+    2026-10-08 사고: naver/cafe 시험이 connection 의 자동 기동 경로(_ensure_cdp_daemon)로 pythonw cdp_daemon 을 띄워
+    대표님이 Chrome 을 닫아도 계속 다시 떴다. 필요한 시험은 Popen 을 직접 가짜로 바꾸면 이 보호보다 우선한다.
+    """
+    import subprocess
+
+    real_popen = subprocess.Popen
+
+    class _GuardedPopen(real_popen):  # type: ignore[valid-type, misc]
+        def __init__(self, args, *a, **kw):
+            if _is_cdp_launch(args):
+                raise RuntimeError(f"시험에서 실제 CDP 데몬/Chrome 기동 금지(Popen 을 가짜로 바꾸세요): {args!r}"[:300])
+            super().__init__(args, *a, **kw)
+
+    monkeypatch.setattr(subprocess, "Popen", _GuardedPopen)
