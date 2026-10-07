@@ -3185,7 +3185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_kin_client.py": {
+  "scripts/naver/shopping/kin_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",

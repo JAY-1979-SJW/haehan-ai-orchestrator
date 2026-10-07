@@ -19,7 +19,7 @@
 3. 네이버 검색광고 키워드도구로 실제 월간 검색량 조회 (scripts.naver.searchad,
    건설 파이프라인과 동일 함수 재사용)
 4. 검색량 상위 키워드로 지식iN 실제 질문 조회
-   (ai_orchestrator.connectors.naver_kin_client, 동일 함수 재사용)
+   (scripts.naver.shopping.kin_client, 동일 함수 재사용)
 
 출력: data/blog_topic_research_lighting_latest.json
 
@@ -250,7 +250,7 @@ def _search_volume(candidates: list[tuple[str, int]]) -> list[dict]:
 
 
 def _real_questions(keyword_rows: list[dict]) -> list[dict]:
-    from ai_orchestrator.connectors.naver_kin_client import search_kin_questions
+    from scripts.naver.shopping.kin_client import search_kin_questions
 
     topics = []
     for row in keyword_rows[:_TOP_KEYWORD_COUNT]:

@@ -3,7 +3,7 @@
 1. 건설공무카페 수집 데이터(data/cafe/gunmu_all_boards/)에서 제목 키워드 빈도 집계
 2. 네이버 검색광고 키워드도구로 실제 월간 검색량 조회 (scripts.naver.searchad)
 3. 검색량 상위 키워드에 대해 네이버 지식iN 실제 질문 제목 조회
-   (ai_orchestrator.connectors.naver_kin_client)
+   (scripts.naver.shopping.kin_client)
 4. 반복 등장(2회 이상)하는 실제 질문을 우선해 블로그 주제 후보로 저장
 
 카페 언급만 봐서는 "카페 안에서만 화제"인지 구분이 안 되고(예: 실적신고),
@@ -179,7 +179,7 @@ def _search_volume(candidates: list[tuple[str, int]]) -> list[dict]:
 
 
 def _real_questions(keyword_rows: list[dict]) -> list[dict]:
-    from ai_orchestrator.connectors.naver_kin_client import search_kin_questions
+    from scripts.naver.shopping.kin_client import search_kin_questions
 
     topics = []
     for row in keyword_rows[:_TOP_KEYWORD_COUNT]:

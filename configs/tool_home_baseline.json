@@ -2,8 +2,8 @@
  "_comment": "도구 집 게이트(G11) 기준선 — 이미 집 밖에 있던 파일(기존 부채). 늘리는 변경 금지, 이동·삭제로 줄이는 방향만. 규칙: configs/tool_home.json",
  "target": 0,
  "reviewed_at": "",
- "count": 19,
- "note": "하향 갱신: 19 → 19",
+ "count": 18,
+ "note": "하향 갱신: 19 → 18",
  "files": [
   "admin-web/src/app/assistant/(legacy)/cafe/CafeClient.tsx",
   "admin-web/src/app/assistant/(legacy)/cafe/CategoryCard.tsx",
@@ -15,7 +15,6 @@
   "admin-web/src/app/assistant/(legacy)/cafe/tabs/MyCafesTab.tsx",
   "admin-web/src/app/assistant/(legacy)/cafe/tabs/ReportTab.tsx",
   "admin-web/src/app/assistant/(legacy)/cafe/tabs/SummaryTab.tsx",
-  "ai_orchestrator/connectors/naver_kin_client.py",
   "ai_orchestrator/connectors/naver_news_router.py",
   "ai_orchestrator/connectors/naver_openapi_config.py",
   "ai_orchestrator/connectors/naver_openapi_setup_router.py",

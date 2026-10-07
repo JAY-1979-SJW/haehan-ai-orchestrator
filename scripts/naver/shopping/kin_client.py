@@ -4,6 +4,9 @@
 하는지"는 알 수 없다. 지식iN 검색은 실제 사용자가 올린 질문 제목을 그대로
 보여주므로, 블로그 콘텐츠의 제목·앵글을 사람들이 쓰는 표현에 맞추는 데 쓴다.
 
+(2026-10-08 W10: 서버 connectors 에서 도구 집 scripts/naver/shopping/ 로 이동 —
+블로그 리서치 CLI 만 쓰는 도구 구현이라 scripts → connectors 역방향 import 를 없앴다.)
+
 기존 naver_search_client.py(blog/shop 전용)와 별개 모듈로 둔 이유: kin.json은
 동일 OpenAPI 스펙이지만 응답 필드가 달라 공유 파서를 억지로 맞추는 것보다
 명확히 분리하는 게 낫다고 판단.
@@ -20,7 +23,7 @@ import re
 
 import requests
 
-from . import naver_openapi_config as cfg_mod
+from ai_orchestrator.connectors import naver_openapi_config as cfg_mod
 
 logger = logging.getLogger(__name__)
 
