@@ -196,72 +196,24 @@ def test_main_fails_on_new_impacted_failure_but_not_on_existing_ones(monkeypatch
     assert "영향 시험 새 실패 1건" in capsys.readouterr().out
 
 
-# ── 비-.py 파일을 문자열로 읽는 .py(시험·도구)도 영향 시험의 출발점에 넣는다 ─────────────
+# ── 영향 시험 선별은 verify_change.affected_tests(= ref_seeds 출발점 포함) 와 같은 함수를 쓴다 ──────
 
 
-def _repo_with_files(tmp_path: Path, files: dict[str, str]) -> list[str]:
-    for rel, body in files.items():
-        path = tmp_path / rel
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(body, encoding="utf-8")
-    return sorted(files)
-
-
-def test_py_that_reads_a_changed_config_by_path_is_found(tmp_path):
-    tracked = [*_repo_with_files(
-        tmp_path,
-        {
-            "scripts/ops/folder_gate.py": 'REGISTRY = ROOT / "configs/folder_registry.json"' + chr(10),
-            "tests/test_unrelated.py": "x = 1" + chr(10),
-        },
-    ), "configs/folder_registry.json"]
-    got = msc.py_files_referencing_non_py(tmp_path, ["configs/folder_registry.json"], tracked)
-    assert got == {"scripts/ops/folder_gate.py": ["configs/folder_registry.json"]}
-
-
-def test_path_join_style_reference_matches_by_unique_file_name(tmp_path):
-    tracked = [*_repo_with_files(tmp_path, {"tests/test_a.py": 'p = ROOT / "configs" / "dup_baseline.json"' + chr(10)}), "configs/dup_baseline.json"]
-    assert list(msc.py_files_referencing_non_py(tmp_path, ["configs/dup_baseline.json"], tracked)) == ["tests/test_a.py"]
-
-
-def test_ambiguous_file_name_needs_the_full_path(tmp_path):
-    """package.json 처럼 이름이 여러 파일에 있으면 파일명만으로는 맞추지 않는다(전부 끌려 들어오는 것을 막는다)."""
-    tracked = [*_repo_with_files(
-        tmp_path,
-        {"tests/test_name_only.py": 'x = "package.json"' + chr(10), "tests/test_full_path.py": 'x = "admin-web/package.json"' + chr(10)},
-    ), "package.json", "admin-web/package.json"]
-    assert list(msc.py_files_referencing_non_py(tmp_path, ["admin-web/package.json"], tracked)) == ["tests/test_full_path.py"]
-
-
-def test_docs_images_and_py_files_are_not_targets(tmp_path):
-    tracked = [*_repo_with_files(tmp_path, {"tests/test_a.py": 'x = "README.md" + "logo.png" + "tool.py"' + chr(10)}), "README.md", "logo.png", "tool.py"]
-    assert msc.py_files_referencing_non_py(tmp_path, ["README.md", "logo.png", "tool.py"], tracked) == {}
-
-
-def test_impacted_tests_follow_the_tool_that_reads_the_config(monkeypatch, tmp_path):
-    """W3 364f4b83 사례: configs/folder_registry.json 만 바뀌어도, 그 파일을 여는 folder_gate.py 를 import 하는 test_folder_gate 가 선택된다."""
+def test_impacted_test_files_uses_the_shared_selection(monkeypatch, tmp_path):
     from scripts.ops import verify_change as vc
 
-    tracked = [*_repo_with_files(
-        tmp_path,
-        {
-            "scripts/ops/folder_gate.py": 'REGISTRY = "configs/folder_registry.json"' + chr(10),
-            "tests/test_folder_gate.py": "from scripts.ops import folder_gate" + chr(10),
-            "tests/test_other.py": "x = 1" + chr(10),
-        },
-    ), "configs/folder_registry.json"]
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_a.py").write_text("x = 1", encoding="utf-8")
     seen: list[list[str]] = []
-    monkeypatch.setattr(vc, "changed_files", lambda base, head: ["configs/folder_registry.json"])  # .py 는 하나도 안 바뀜
-    monkeypatch.setattr(vc, "affected_tests", lambda seeds: seen.append(list(seeds)) or ["tests/test_folder_gate.py"])
-    monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=0: subprocess.CompletedProcess(cmd, 0, chr(10).join(tracked), ""))
-    assert msc.impacted_test_files("b", "HEAD", tmp_path) == ["tests/test_folder_gate.py"]
-    assert seen == [["scripts/ops/folder_gate.py"]]  # 출발점 = 설정을 문자열로 읽는 .py
+    monkeypatch.setattr(vc, "changed_files", lambda base, head: ["configs/folder_registry.json"])
+    monkeypatch.setattr(vc, "affected_tests", lambda changed: seen.append(list(changed)) or ["tests/test_a.py", "tests/test_gone.py"])
+    assert msc.impacted_test_files("b", "HEAD", tmp_path) == ["tests/test_a.py"]  # 현재 트리에 없는 시험은 뺀다
+    assert seen == [["configs/folder_registry.json"]]  # .py 가 하나도 없어도 비-.py 변경이 선별 함수에 그대로 전달된다
 
 
-def test_no_seeds_means_no_tests(monkeypatch, tmp_path):
+def test_no_changes_means_no_tests(monkeypatch, tmp_path):
     from scripts.ops import verify_change as vc
 
-    monkeypatch.setattr(vc, "changed_files", lambda base, head: ["docs/a.md"])
-    monkeypatch.setattr(vc, "affected_tests", lambda seeds: (_ for _ in ()).throw(AssertionError("출발점이 없으면 부르지 않는다")))
-    monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=0: subprocess.CompletedProcess(cmd, 0, "", ""))
+    monkeypatch.setattr(vc, "changed_files", lambda base, head: [])
+    monkeypatch.setattr(vc, "affected_tests", lambda changed: (_ for _ in ()).throw(AssertionError("변경이 없으면 부르지 않는다")))
     assert msc.impacted_test_files("b", "HEAD", tmp_path) == []
