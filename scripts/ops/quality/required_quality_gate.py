@@ -8,7 +8,6 @@ deploy, push, run Docker, or start browsers.
 from __future__ import annotations
 
 import os
-import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -19,6 +18,7 @@ _ROOT_BOOT = str(Path(__file__).resolve().parents[3])  # 직접 실행(python ..
 if _ROOT_BOOT not in sys.path:
     sys.path.insert(0, _ROOT_BOOT)
 from scripts.common.runtime_temp import usable_temp_base  # noqa: E402 - sys.path 부트스트랩 뒤 import
+from scripts.ops.quality.module_quality_gate_common import redact  # noqa: E402 - redact 정본(중복 제거)
 
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 30
@@ -285,24 +285,6 @@ class GateResult:
     name: str
     ok: bool
     detail: str
-
-
-def redact(text: str) -> str:
-    rules = (
-        (re.compile(r"(?i)(Authorization\s*[:=]\s*Bearer\s+)[^\s'\";,]+"), r"\1<redacted>"),
-        (re.compile(r"(?i)(Bearer\s+)[A-Za-z0-9._~+/=-]+"), r"\1<redacted>"),
-        (re.compile(r"sk-[A-Za-z0-9_-]{12,}"), "sk-<redacted>"),
-        (
-            re.compile(
-                r"(?i)((?:api[_-]?key|access[_-]?token|refresh[_-]?token|device[_-]?token|secret|password)\s*[:=]\s*)[^\s'\";,]+"
-            ),
-            r"\1<redacted>",
-        ),
-    )
-    redacted = text
-    for pattern, replacement in rules:
-        redacted = pattern.sub(replacement, redacted)
-    return redacted
 
 
 def command_text(command: tuple[str, ...]) -> str:
