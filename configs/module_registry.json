@@ -23050,12 +23050,12 @@
    "source": "rule"
   },
   "ai_orchestrator/server/desktop_entry.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L8",
+   "role": "api",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "데스크톱 번들(PyInstaller) 서버 진입점 — asgi 앱을 불러 uvicorn 실행(mcp_server 와 같은 진입점 계층), L4 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/ops/bundle_path_gate.py": {
    "layer": "L12",
