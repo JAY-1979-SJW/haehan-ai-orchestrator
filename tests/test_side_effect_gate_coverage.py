@@ -54,8 +54,8 @@ WEAK_GUARD_RECEIVERS = {"gates"}  # gates.check_send(force=...) 는 불리언으
 REQUIRED_GUARDED = {
     "ai_orchestrator/connectors/naver_blog_router.py::write_to_naver._do",  # 게이트는 바깥 write_to_naver 에 있다
     "scripts/hiworks/mail_batch.py::execute_send_batch",
-    "ai_orchestrator/connectors/gmail_router.py::api_reply",
-    "ai_orchestrator/connectors/gmail_router.py::api_send",
+    "ai_orchestrator/connectors/google/gmail_router.py::api_reply",
+    "ai_orchestrator/connectors/google/gmail_router.py::api_send",
     "ai_orchestrator/connectors/eum_router.py::send_one._compose_and_send",
     "ai_orchestrator/connectors/hiworks/mail_router.py::api_send",
     "scripts/eum_send_mail_batch.py::send_one",

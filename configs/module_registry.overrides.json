@@ -1267,5 +1267,29 @@
   "role": "api",
   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/kakao_skill_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
   "source": "manual"
+ },
+ "ai_orchestrator/connectors/google/gmail_cdp_reader.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_cdp_reader.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gmail_cdp_reader.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gmail_cdp_reader.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/google/gmail_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gmail_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
  }
 }

@@ -3277,17 +3277,17 @@
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
-   "reason": "도메인(google) 자동화",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gmail_cdp_reader.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/gmail_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "google",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/gonobi_router.py": {
    "layer": "L8",
@@ -22405,6 +22405,30 @@
    "layer": "L11",
    "role": "test",
    "domain": "kakao",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/google/gmail_cdp_reader.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_cdp_reader.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "ai_orchestrator/connectors/google/gmail_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "google",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "tests/test_split_gmail_moved.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
