@@ -286,7 +286,7 @@ Google domain/module management uses the fixed `google` lane. Its latest state
 and visible history can be reviewed with:
 
 ```text
-python scripts/cdp_client.py google records --limit=10
+python scripts/browser/cdp/cdp_client.py google records --limit=10
 ```
 
 Before a new AI session continues operational work, it must inspect the latest

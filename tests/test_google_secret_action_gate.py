@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.gates import secret_action_gate as gate
+from scripts.common.gates import secret_action_gate as gate
 
 
 def test_secret_action_gate_defaults_to_final_approval_only() -> None:

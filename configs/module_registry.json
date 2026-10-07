@@ -9273,7 +9273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gates/__init__.py": {
+  "scripts/common/gates/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -9281,7 +9281,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/gates/secret_action_gate.py": {
+  "scripts/common/gates/secret_action_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -9289,7 +9289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gates/work_mode_gate.py": {
+  "scripts/common/gates/work_mode_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -15473,7 +15473,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/sites/__init__.py": {
+  "scripts/site_engine/readonly_check.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -15481,7 +15481,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/sites/readonly_check.py": {
+  "scripts/site_engine/sso_runtime.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -15489,15 +15489,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/sites/sso_runtime.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/sites/subdomain_registry.py": {
+  "scripts/site_engine/subdomain_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",

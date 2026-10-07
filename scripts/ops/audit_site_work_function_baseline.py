@@ -225,7 +225,7 @@ def audit() -> tuple[bool, list[str]]:
     from scripts.hiworks.actions import build_action_catalog as build_hiworks_action_catalog
     from scripts.naver.smartstore.actions import build_action_catalog as build_smartstore_action_catalog
     from scripts.site_engine.command_router import is_service_cmd
-    from scripts.sites.subdomain_registry import validate_registry
+    from scripts.site_engine.subdomain_registry import validate_registry
     from scripts.youtube import uploader
 
     _audit_routing(failures, is_service_cmd, validate_registry)

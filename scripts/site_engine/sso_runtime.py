@@ -12,7 +12,7 @@ from ai_orchestrator.local_agent.common_tool_runtime import (
     dry_run_common_tool_flow,
 )
 
-from .subdomain_registry import get_provider, get_service
+from scripts.site_engine.subdomain_registry import get_provider, get_service
 
 FORBIDDEN_SSO_FIELDS = frozenset(
     {

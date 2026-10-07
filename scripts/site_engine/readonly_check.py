@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .sso_runtime import dry_run_login_entry_task, dry_run_subdomain_readonly_task
-from .subdomain_registry import get_provider
+from scripts.site_engine.sso_runtime import dry_run_login_entry_task, dry_run_subdomain_readonly_task
+from scripts.site_engine.subdomain_registry import get_provider
 
 
 def build_provider_readonly_check_plan(provider_id: str) -> dict[str, Any]:

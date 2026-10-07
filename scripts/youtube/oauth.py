@@ -17,8 +17,8 @@ from typing import Any
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.auth import local_user_secret_store
 from scripts.common.app_paths import repo_root
-from scripts.gates.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
-from scripts.gates.work_mode_gate import build_google_work_mode_policy
+from scripts.common.gates.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
+from scripts.common.gates.work_mode_gate import build_google_work_mode_policy
 from security_utils import safe_preview
 
 ROOT = repo_root()

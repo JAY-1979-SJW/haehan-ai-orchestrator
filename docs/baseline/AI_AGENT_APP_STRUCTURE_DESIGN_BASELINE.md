@@ -149,13 +149,13 @@ Tool modules currently discovered in the repo:
 
 | Tool Area | Main Entrypoints | UI Target | Boundary |
 | --- | --- | --- | --- |
-| Market Research / YouTube Research | `scripts/cdp_client.py google youtube research-run`, `scripts/google/youtube/search.py` | `/market-research` | read/prepare; bounded UI execution; no hidden transcript scraping |
-| YouTube Owner/Research Tools | `scripts/cdp_client.py youtube research ...`, `scripts/youtube/research.py` | Market Research / YouTube Tools | public metadata/comments via official API; uploads/recording approval-gated |
-| Google Tools | `scripts/cdp_client.py google ...`, `scripts/google/*` | Google Tools | Google Home entry, work-mode gate, writes/keys/billing approval-gated |
-| Naver Tools | `scripts/cdp_client.py naver ...`, `scripts/naver/*`, `scripts/naver_mail/*` | Naver Tools | user-present login; send/publish/upload/save approval-gated |
-| SmartStore Tools | `scripts/cdp_client.py smartstore ...`, `scripts/smartstore/*`, `scripts/naver/smartstore/*` | SmartStore Tools | product save approval-gated; live gaps remain explicit |
-| Hiworks Tools | `scripts/cdp_client.py hiworks ...`, `scripts/hiworks/*` | Work/External Tools | send/submit approval-gated |
-| Gabia Tools | `scripts/cdp_client.py gabia ...`, `scripts/gabia/*` | Domain/Ops Tools | DNS/domain/hosting changes approval-gated; login/payment user-direct |
+| Market Research / YouTube Research | `scripts/browser/cdp/cdp_client.py google youtube research-run`, `scripts/google/youtube/search.py` | `/market-research` | read/prepare; bounded UI execution; no hidden transcript scraping |
+| YouTube Owner/Research Tools | `scripts/browser/cdp/cdp_client.py youtube research ...`, `scripts/youtube/research.py` | Market Research / YouTube Tools | public metadata/comments via official API; uploads/recording approval-gated |
+| Google Tools | `scripts/browser/cdp/cdp_client.py google ...`, `scripts/google/*` | Google Tools | Google Home entry, work-mode gate, writes/keys/billing approval-gated |
+| Naver Tools | `scripts/browser/cdp/cdp_client.py naver ...`, `scripts/naver/*`, `scripts/naver_mail/*` | Naver Tools | user-present login; send/publish/upload/save approval-gated |
+| SmartStore Tools | `scripts/browser/cdp/cdp_client.py smartstore ...`, `scripts/smartstore/*`, `scripts/naver/smartstore/*` | SmartStore Tools | product save approval-gated; live gaps remain explicit |
+| Hiworks Tools | `scripts/browser/cdp/cdp_client.py hiworks ...`, `scripts/hiworks/*` | Work/External Tools | send/submit approval-gated |
+| Gabia Tools | `scripts/browser/cdp/cdp_client.py gabia ...`, `scripts/gabia/*` | Domain/Ops Tools | DNS/domain/hosting changes approval-gated; login/payment user-direct |
 | CAD Tools | `scripts/cad/*`, `admin-web/src/app/cad` | `/cad` | local/desktop workflow boundary |
 | File Map Tools | `admin-web/src/app/file-map`, `admin-web/src/app/api/file-map/*` | `/file-map` | cleanup execution approval-gated |
 | Ops / Runtime Tools | `scripts/ops/*`, `admin-web/src/app/ops` | `/ops` | deploy/drift/runtime actions gated by ops policy |
