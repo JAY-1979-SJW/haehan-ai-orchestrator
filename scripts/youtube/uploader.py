@@ -8,10 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from orchestrator_v1.core.security_utils import safe_preview
+from scripts.app_paths import repo_root
 from scripts.publish_guard import guarded
 from scripts.realtime_audit import emit_event
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 PLAN_DIR = ROOT / "data" / "youtube_upload_plans"
 RESULT_DIR = ROOT / "data" / "youtube_upload_results"
 LATEST_PLAN = ROOT / "data" / "youtube_upload_plan_latest.json"

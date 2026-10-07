@@ -16049,7 +16049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/smoke_youtube_manual_login_probe.py": {
+  "scripts/youtube/smoke_youtube_manual_login_probe.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "youtube",

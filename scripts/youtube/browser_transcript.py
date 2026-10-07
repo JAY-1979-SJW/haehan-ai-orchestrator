@@ -14,12 +14,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.app_paths import repo_root
 from scripts.cdp_session_selector import select_cdp_session
 from security_utils import safe_preview
 
 from .research import parse_youtube_video_id
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 REPORT_DIR = ROOT / "data" / "youtube_research_reports"
 LATEST_BROWSER_TRANSCRIPT_SUMMARY = ROOT / "data" / "youtube_browser_transcript_summary_latest.json"
 WORD_RE = re.compile(r"[A-Za-z가-힣0-9][A-Za-z가-힣0-9_+-]{1,}")
