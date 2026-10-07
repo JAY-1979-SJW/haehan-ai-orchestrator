@@ -1,10 +1,9 @@
 """콘솔 HTTP 계약 — 로그인 확인 경로 GET /api/v1/users/me (userAuth.ts:76-78)와 폴백 GET /api/v1/auth/me (:84).
 
 홈(page.tsx)은 `getMe()` 가 실패하면 /about 으로 보낸다. 사용자 DB·감사 로그는 임시 폴더로 바꿔 실제 파일을 쓰지 않는다.
-동작 변경 없음.
 
-⚠ 마지막 절의 '인증 방식 불일치' 시험은 **현재 동작을 기록**하는 특성화 시험이다(옳다는 뜻이 아님). 정책이 정해져 동작이 바뀌면
-그 시험을 새 정책에 맞게 고친다. 배경과 사실관계는 아래 절 주석 참고.
+마지막 절은 인증 정책(2026-10-07 대표님 결정 A안: 로그인한 사용자의 JWT 도 콘솔 라우트에서 받는다)에 맞춘 시험이다.
+JWT role 매핑·만료/위조/경계 시험은 test_console_api_contract_jwt_auth.py 에 있다.
 """
 
 from __future__ import annotations
@@ -30,7 +29,9 @@ _USER_KEYS = {"id", "email", "name", "role", "plan", "created_at"}
 @pytest.fixture(autouse=True)
 def _isolated_user_storage(tmp_path, monkeypatch):
     monkeypatch.setattr(user_db, "_get_db_path", lambda: tmp_path / "users.db")
-    monkeypatch.setattr(auth_audit, "_get_audit_path", lambda: tmp_path / "auth_audit.jsonl")
+    monkeypatch.setattr(
+        auth_audit, "_get_audit_path", lambda: tmp_path / "auth_audit.jsonl"
+    )
 
 
 @pytest.fixture
@@ -120,27 +121,37 @@ def test_auth_me_auth_disabled_is_system_owner(client, monkeypatch):
     assert client.get(AUTH_ME).json() == {"actor": "system", "role": "owner"}
 
 
-# ── 인증 방식 불일치 (현재 동작 기록 — 특성화 시험) ──────────────────────────
-# 사실관계(코드 근거):
-#  - 로그인 확인(/users/me)은 JWT Bearer(`get_jwt_user`), 콘솔 라우트(/chat/sessions, /ai-agent/run, /local-agents/.../tasks)는
-#    Basic(`require_role` → `get_current_user`) 이다. user_auth_router.py 의 주석도 "일반 사용자 인증은 JWT, 관리자 작업은 Basic"이라 적는다.
-#  - admin-web 프록시(`api/proxy/[...path]/route.ts`)는 클라이언트 Authorization → `haehan_ai_token` 쿠키(JWT) → 서버 Basic 순으로
-#    인증을 붙인다. 로그인하면 `setToken()`(userAuth.ts)이 이 쿠키를 심는다.
-#  - 따라서 AUTH_ENABLED=true(docker-compose 기본) 운영 웹에서 쿠키가 있는 로그인 사용자의 콘솔 호출은 Bearer 로 나가
-#    아래처럼 401 이 될 수 있다. 쿠키가 없을 때만 서버 Basic 이 붙어 통과한다. 실제 브라우저·운영에서 확인한 것은 아니다(코드 추정).
+# ── 인증 방식 (A안: 콘솔 라우트도 로그인 JWT 를 받는다) ──────────────────────
+# 배경: admin-web 프록시(`api/proxy/[...path]/route.ts`)는 클라이언트 Authorization → `haehan_ai_token` 쿠키(JWT) → 서버 Basic 순으로
+# 인증을 붙이고, 로그인하면 `setToken()`(userAuth.ts)이 쿠키를 심는다. 예전에는 콘솔 라우트가 Basic 만 받아 쿠키가 있는 로그인
+# 사용자의 호출이 401 이었다(2026-10-07 특성화 시험으로 확인). 이제 `get_current_user` 가 Bearer JWT 도 받는다.
+# 단, 가입 기본 role("user")은 어떤 require_role 라우트도 통과하지 못한다 — 토큰이 유효해도 403 (최소 권한).
 
 
-def test_jwt_bearer_is_not_accepted_by_basic_gated_console_routes(client, monkeypatch, tmp_path):
+def test_jwt_of_default_user_role_passes_login_check_but_not_console_routes(
+    client, monkeypatch, tmp_path
+):
     enable_basic_auth(monkeypatch, tmp_path)
     _, token = _approved_user_token()
     headers = _bearer(token)
-    assert client.get(ME, headers=headers).status_code == 200  # 같은 토큰이 로그인 확인에서는 통과
-    assert client.get(f"{API}/chat/sessions", headers=headers).status_code == 401
-    assert client.post(f"{API}/ai-agent/run", json={"prompt": "x"}, headers=headers).status_code == 401
-    assert client.get(f"{API}/local-agents/la-1/tasks/task-1", headers=headers).status_code == 401
+    assert client.get(ME, headers=headers).status_code == 200  # 로그인 확인은 통과
+    # 유효한 토큰이지만 role "user" → 401 이 아니라 403(권한 부족)
+    assert client.get(f"{API}/chat/sessions", headers=headers).status_code == 403
+    assert (
+        client.post(
+            f"{API}/ai-agent/run", json={"prompt": "x"}, headers=headers
+        ).status_code
+        == 403
+    )
+    assert (
+        client.get(f"{API}/local-agents/la-1/tasks/task-1", headers=headers).status_code
+        == 403
+    )
 
 
-def test_basic_credentials_are_not_accepted_by_jwt_gated_users_me(client, monkeypatch, tmp_path):
+def test_basic_credentials_are_not_accepted_by_jwt_gated_users_me(
+    client, monkeypatch, tmp_path
+):
     enable_basic_auth(monkeypatch, tmp_path)
     assert client.get(AUTH_ME, headers=basic("owner_u")).status_code == 200
     assert client.get(ME, headers=basic("owner_u")).status_code == 401
