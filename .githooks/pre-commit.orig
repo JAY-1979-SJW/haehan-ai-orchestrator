@@ -2,10 +2,20 @@
 import subprocess, sys
 from pathlib import Path
 
+
+def _no_window():
+    # scripts/ops/_proc.no_window_kwargs 와 같은 로직을 그대로 둔다 — 이 파일은
+    # core.hooksPath 로 여러 worktree 가 공유해 __file__ 기준 import 가 항상 메인
+    # 체크아웃을 가리켜(2026-09-28 실측), scripts/ops/_proc.py 를 import하면 그
+    # 워크트리의 수정 전 사본을 보거나 아직 없으면 전원 커밋이 막힌다. 그래서
+    # 복사 대신 같은 3줄을 이 파일에도 둔다(콘솔 깜빡임 수정, 2026-10-07).
+    return {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
+
+
 ROOT = Path(
     subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True, check=True, **_no_window(),
     ).stdout.strip()
 )  # __file__ 기준이면 core.hooksPath 공유 시 worktree 에서도 항상 메인 체크아웃을
 # 가리켜 내용을 조용히 훼손한다(2026-09-28 worktree 병렬 세션에서 실측 발견).
@@ -21,7 +31,7 @@ def _pyexe():
 
     if shutil.which("py"):
         try:
-            subprocess.run(["py", "-3.14", "--version"], capture_output=True, check=True)
+            subprocess.run(["py", "-3.14", "--version"], capture_output=True, check=True, **_no_window())
             return ["py", "-3.14"]
         except Exception:
             pass
@@ -34,7 +44,7 @@ def _pyexe():
 r = subprocess.run(
     ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
     cwd=str(ROOT), capture_output=True, text=True,
-    encoding="utf-8", errors="replace",
+    encoding="utf-8", errors="replace", **_no_window(),
 )
 py_files = [f for f in r.stdout.splitlines() if f.endswith(".py")]
 
@@ -47,7 +57,7 @@ if py_files:
     _ra = subprocess.run(
         ["git", "diff", "--cached", "--name-only", "--diff-filter=A"],
         cwd=str(ROOT), capture_output=True, text=True,
-        encoding="utf-8", errors="replace",
+        encoding="utf-8", errors="replace", **_no_window(),
     )
     _added = set(_ra.stdout.splitlines())
     fix_files = [f for f in py_files if f in _added]
@@ -58,15 +68,15 @@ if py_files:
         subprocess.run(
             [*_pyexe(), "-m", "ruff", "check", "--fix", "--unfixable", "F401",
              "--config", cfg] + fix_files,
-            cwd=str(ROOT),
+            cwd=str(ROOT), **_no_window(),
         )
         # 2. ruff format
         subprocess.run(
             [*_pyexe(), "-m", "ruff", "format", "--config", cfg] + fix_files,
-            cwd=str(ROOT),
+            cwd=str(ROOT), **_no_window(),
         )
         # ruff 가 수정한 신규 파일을 다시 stage
-        subprocess.run(["git", "add"] + fix_files, cwd=str(ROOT))
+        subprocess.run(["git", "add"] + fix_files, cwd=str(ROOT), **_no_window())
     # 3. 자동수정 안 되는 나머지 위반은 "이번 커밋으로 새로 생긴 것"만 차단한다.
     #    (BLE001 같은 대규모 기존 부채가 있는 파일을 조금만 건드려도 매번 전체가
     #    막히면 사실상 개발이 정지된다 — CLAUDE.md "새 훅은 새로 생긴 오류만
@@ -75,7 +85,7 @@ if py_files:
     if gate.exists():
         gate_result = subprocess.run(
             [*_pyexe(), str(gate), "--config", cfg] + py_files,
-            cwd=str(ROOT),
+            cwd=str(ROOT), **_no_window(),
         )
         if gate_result.returncode != 0:
             print("[ruff] 이번 변경으로 새로 생긴 위반이 있습니다. 위 내용을 확인하고 재커밋하세요.")
@@ -90,7 +100,7 @@ if _sg_files:
     _sdiff = subprocess.run(
         ["git", "diff", "--cached", "-U0", "--"] + _sg_files,
         cwd=str(ROOT), capture_output=True, text=True,
-        encoding="utf-8", errors="replace",
+        encoding="utf-8", errors="replace", **_no_window(),
     )
     _sess_pat = (
         "nidlogin.logout", "logout.naver", "clear_cookies", "delete_cookies",
@@ -155,7 +165,7 @@ if _js_staged:
     _jsdiff = subprocess.run(
         ["git", "diff", "--cached", "-U5", "--"] + _js_staged,
         cwd=str(ROOT), capture_output=True, text=True,
-        encoding="utf-8", errors="replace",
+        encoding="utf-8", errors="replace", **_no_window(),
     )
     _chunks, _cur = [], []
     for _ln in _jsdiff.stdout.splitlines():
@@ -185,7 +195,7 @@ if _js_staged:
 # 우회: SKELETON_GATE_SKIP_REASON="사유" 환경변수 (감사 로그 기록됨).
 _sg = ROOT / "scripts" / "ops" / "code_map" / "skeleton_gate.py"
 if _sg.exists():
-    _sg_result = subprocess.run([*_pyexe(), str(_sg)], cwd=str(ROOT))
+    _sg_result = subprocess.run([*_pyexe(), str(_sg)], cwd=str(ROOT), **_no_window())
     if _sg_result.returncode != 0:
         sys.exit(_sg_result.returncode)
 
@@ -193,7 +203,7 @@ if _sg.exists():
 # audit-kit 를 못 찾으면 건너뛰지만 AUDIT_KIT_REQUIRED=1 이면 커밋을 막는다.
 _ak = ROOT / "scripts" / "ops" / "audit_kit_gate.py"
 if _ak.exists():
-    _ak_result = subprocess.run([*_pyexe(), str(_ak), "--staged"], cwd=str(ROOT))
+    _ak_result = subprocess.run([*_pyexe(), str(_ak), "--staged"], cwd=str(ROOT), **_no_window())
     if _ak_result.returncode != 0:
         sys.exit(_ak_result.returncode)
 
@@ -290,7 +300,7 @@ _r1_staged = [
 if _r1_staged:
     _r1 = ROOT / "scripts" / "ops" / "audit_r1_api_contract_gate.py"
     if _r1.exists():
-        _r1_result = subprocess.run([*_pyexe(), str(_r1)], cwd=str(ROOT))
+        _r1_result = subprocess.run([*_pyexe(), str(_r1)], cwd=str(ROOT), **_no_window())
         if _r1_result.returncode != 0:
             sys.exit(_r1_result.returncode)
 
@@ -316,7 +326,7 @@ if gate.exists():
     try:
         _diff = subprocess.run(
             ["git", "diff", "--cached", "--name-status"],
-            cwd=str(ROOT), capture_output=True, text=True, check=True,
+            cwd=str(ROOT), capture_output=True, text=True, check=True, **_no_window(),
         ).stdout
         _modified = [
             line.split("	", 1)[1] for line in _diff.splitlines()
@@ -334,6 +344,6 @@ if gate.exists():
 
     result = subprocess.run(
         [*_pyexe(), str(gate), "--staged", "--enforce", "--allow-existing-code-change"],
-        cwd=str(ROOT),
+        cwd=str(ROOT), **_no_window(),
     )
     sys.exit(result.returncode)
