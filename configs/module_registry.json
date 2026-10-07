@@ -16377,7 +16377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/runner.py": {
+  "scripts/youtube/upload/runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "youtube",
@@ -16385,7 +16385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/step1_navigate.py": {
+  "scripts/youtube/upload/step1_navigate.py": {
    "layer": "L6",
    "role": "policy",
    "domain": "youtube",
@@ -16393,7 +16393,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/yt_upload/step2_open_dialog.py": {
+  "scripts/youtube/upload/step2_open_dialog.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -16401,7 +16401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/step3_set_file.py": {
+  "scripts/youtube/upload/step3_set_file.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -16409,7 +16409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/step4_metadata.py": {
+  "scripts/youtube/upload/step4_metadata.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -16417,7 +16417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/yt_upload/step5_publish.py": {
+  "scripts/youtube/upload/step5_publish.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
