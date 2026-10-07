@@ -40,6 +40,12 @@
   "role": "api",
   "reason": "docstring이 '하위 호환 re-export' 라 명시 — google/router.py(L8) APIRouter 를 그대로 재노출하는 라우터 자신, L5 오분류"
  },
+ "ai_orchestrator/connectors/hanafax_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "호환 shim — 원본 ai_orchestrator/connectors/hanafax/router.py 와 같은 층·역할(L8/api). shim 은 원본 층을 따른다(이름 규칙이 다른 층으로 오분류해 shim→라우터가 층간 위반으로 보임, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
  "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
   "layer": "L1",
   "role": "shared",
