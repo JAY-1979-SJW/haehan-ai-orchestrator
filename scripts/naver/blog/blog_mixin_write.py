@@ -18,29 +18,35 @@ from __future__ import annotations
 import contextlib
 import re
 import time
-from typing import TYPE_CHECKING, Any
-
-from scripts.naver.blog.selectors import (
-    COMMENT_DELETE,
-    COMMENT_INPUT,
-    COMMENT_LIST_TOGGLE,
-    COMMENT_SUBMIT,
-    COMMENT_WRITE_BTN,
-    DELETE_CONFIRM,
-    DELETE_TRIGGER,
-    DEPRECATED,
-    LIKE_BUTTON,
-    NEIGHBOR_ADD_BTN,
-    NEIGHBOR_ADD_CONFIRM,
-    NEIGHBOR_DEL_BTN,
-    NEIGHBOR_MUTUAL,
-)
+from typing import TYPE_CHECKING, Any, ClassVar
 
 
 class BlogWriteMixin:
     if TYPE_CHECKING:
         # 다른 믹스인의 메서드·속성(go, _page …)을 self(MRO)로 쓴다 — 정적 검사기에는 합쳐진 클래스가 보이지 않으므로 알려 준다(런타임 영향 없음).
         def __getattr__(self, name: str) -> Any: ...
+
+    # 사이트 계층(scripts.naver.blog 패키지)이 셀렉터 상수와 글쓰기 구현을 넣어 준다 — 엔진 쪽 믹스인(L4)이 사이트 모듈(L5)을 import 하지 않는다(T4: 주입)
+    _blog_selectors: ClassVar[Any] = None
+    _blog_writer: ClassVar[Any] = None
+
+    @classmethod
+    def configure_blog_write(cls, *, selectors: Any, writer: Any) -> None:
+        """selectors: 셀렉터 상수 모듈(scripts/naver/blog/selectors.py), writer: write_post·BlogWriter 를 가진 모듈(core/writer.py)."""
+        cls._blog_selectors = selectors
+        cls._blog_writer = writer
+
+    @property
+    def _sel(self) -> Any:
+        if self._blog_selectors is None:
+            raise RuntimeError("블로그 셀렉터가 주입되지 않았다 — scripts.naver.blog 패키지를 통해 불러와야 한다")
+        return self._blog_selectors
+
+    @property
+    def _writer(self) -> Any:
+        if self._blog_writer is None:
+            raise RuntimeError("블로그 글쓰기 구현이 주입되지 않았다 — scripts.naver.blog 패키지를 통해 불러와야 한다")
+        return self._blog_writer
 
     # _blog_frame() 은 BlogCommonMixin 에서 상속
 
@@ -54,10 +60,8 @@ class BlogWriteMixin:
         is_public: bool = True,
     ) -> dict:
         """포스트 작성 — BlogWriter 에 위임."""
-        from scripts.naver.blog.core.writer import write_post
-
         visibility = "public" if is_public else "private"
-        return write_post(
+        return self._writer.write_post(
             self._page,
             title=title,
             body=body,
@@ -73,12 +77,10 @@ class BlogWriteMixin:
         self, blog_id: str, log_no: str, title: str = "", body: str = "", tags: list[str] | None = None
     ) -> dict:
         """포스트 수정 — BlogWriter 에 위임."""
-        from scripts.naver.blog.core.writer import BlogWriter
-
         url = f"https://blog.naver.com/PostModify.naver?blogId={blog_id}&logNo={log_no}"
         self.go(url)
 
-        bw = BlogWriter(self._page)
+        bw = self._writer.BlogWriter(self._page)
         # 임시저장 다이얼로그 처리 후 편집기 준비 대기
         try:
             self._page.wait_for_selector(".se-section-documentTitle", timeout=15000, state="visible")
@@ -114,13 +116,13 @@ class BlogWriteMixin:
         fr = self._blog_frame()
         try:
             self._page.on("dialog", lambda dialog: dialog.accept())
-            trigger = fr.locator(DELETE_TRIGGER)
+            trigger = fr.locator(self._sel.DELETE_TRIGGER)
             if trigger.count() > 0:
                 trigger.first.click(timeout=3000)
                 time.sleep(0.5)
-                fr.locator(DELETE_CONFIRM).first.click(timeout=3000)
+                fr.locator(self._sel.DELETE_CONFIRM).first.click(timeout=3000)
             else:
-                fr.locator(DELETE_CONFIRM).first.click(timeout=3000)
+                fr.locator(self._sel.DELETE_CONFIRM).first.click(timeout=3000)
             time.sleep(1)
             return {"ok": True, "error": ""}
         except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
@@ -165,24 +167,24 @@ class BlogWriteMixin:
             time.sleep(1)
 
             fr.evaluate(
-                f"() => {{ const l = document.querySelector('{COMMENT_LIST_TOGGLE}'); "
+                f"() => {{ const l = document.querySelector('{self._sel.COMMENT_LIST_TOGGLE}'); "
                 "if (l) l.dispatchEvent(new MouseEvent('click', {bubbles:true})); }"
             )
             time.sleep(2)
 
             fr.evaluate(
-                f"() => {{ const b = document.querySelector('{COMMENT_WRITE_BTN}'); "
+                f"() => {{ const b = document.querySelector('{self._sel.COMMENT_WRITE_BTN}'); "
                 "if (b) b.dispatchEvent(new MouseEvent('click', {bubbles:true})); }"
             )
             time.sleep(1.5)
 
-            comment_input = fr.locator(COMMENT_INPUT).first
+            comment_input = fr.locator(self._sel.COMMENT_INPUT).first
             comment_input.wait_for(state="visible", timeout=8000)
             comment_input.click(force=True)
             comment_input.type(text, delay=25)
             time.sleep(0.5)
 
-            fr.locator(COMMENT_SUBMIT).first.click(force=True)
+            fr.locator(self._sel.COMMENT_SUBMIT).first.click(force=True)
             time.sleep(1.5)
 
             return {"ok": True, "error": ""}
@@ -202,7 +204,7 @@ class BlogWriteMixin:
             fr.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
             time.sleep(1.5)
 
-            delete_btns = fr.locator(COMMENT_DELETE).all()
+            delete_btns = fr.locator(self._sel.COMMENT_DELETE).all()
             if comment_index < len(delete_btns):
                 self._page.on("dialog", lambda dialog: dialog.accept())
                 delete_btns[comment_index].click()
@@ -225,7 +227,7 @@ class BlogWriteMixin:
 
         fr = self._blog_frame()
         try:
-            like_btn = fr.locator(LIKE_BUTTON).first
+            like_btn = fr.locator(self._sel.LIKE_BUTTON).first
             like_btn.click()
             time.sleep(1)
 
@@ -254,14 +256,14 @@ class BlogWriteMixin:
 
         fr = self._blog_frame()
         try:
-            fr.locator(NEIGHBOR_ADD_BTN).first.click()
+            fr.locator(self._sel.NEIGHBOR_ADD_BTN).first.click()
             time.sleep(1.5)
 
             if is_mutual:
                 with contextlib.suppress(Exception):
-                    fr.locator(NEIGHBOR_MUTUAL).first.click()
+                    fr.locator(self._sel.NEIGHBOR_MUTUAL).first.click()
 
-            fr.locator(NEIGHBOR_ADD_CONFIRM).first.click()
+            fr.locator(self._sel.NEIGHBOR_ADD_CONFIRM).first.click()
             time.sleep(1)
 
             return {"ok": True, "error": ""}
@@ -279,7 +281,7 @@ class BlogWriteMixin:
         fr = self._blog_frame()
         try:
             self._page.on("dialog", lambda dialog: dialog.accept())
-            fr.locator(NEIGHBOR_DEL_BTN).first.click()
+            fr.locator(self._sel.NEIGHBOR_DEL_BTN).first.click()
             time.sleep(1)
             return {"ok": True, "error": ""}
         except Exception as e:  # noqa: BLE001 - 네이버 블로그 글쓰기/삭제/댓글/이웃추가/공감 자동화 믹스인 - 모든 except가 ok:False,error:str(e) 반환(성공 위장 없음), 실행은 상위 승인 흐름을 거친 뒤 호출됨
@@ -292,7 +294,7 @@ class BlogWriteMixin:
         GuestBook.naver 접근 시 "이전 화면으로" 페이지만 반환.
         이 메서드는 항상 ok=False 를 반환한다.
         """
-        return {"ok": False, "error": DEPRECATED["guestbook"]}
+        return {"ok": False, "error": self._sel.DEPRECATED["guestbook"]}
 
     def blog_scrap_post(self, post_url: str) -> dict:
         """포스트 스크랩.
@@ -301,4 +303,4 @@ class BlogWriteMixin:
         공유 패널에 URL 복사만 남아 있음.
         이 메서드는 항상 ok=False 를 반환한다.
         """
-        return {"ok": False, "error": DEPRECATED["scrap"]}
+        return {"ok": False, "error": self._sel.DEPRECATED["scrap"]}

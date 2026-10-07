@@ -117,9 +117,9 @@
   "reason": "BrowserAgent(L4)를 구동해 사이트맵을 탐지하는 실행기 — L1 contract 오분류"
  },
  "scripts/naver/blog/blog_mixin.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 동작을 하드코딩한 믹스인(domain=naver_blog) — L4 로 오분류"
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
  "scripts/naver/cafe/cafe_mixin.py": {
   "layer": "L4",
@@ -755,34 +755,34 @@
   "reason": "웹메일 발송을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류"
  },
  "scripts/naver/blog/blog_mixin_collect.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
  "scripts/naver/blog/blog_mixin_common.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
  "scripts/naver/blog/blog_mixin_download.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
  "scripts/naver/blog/blog_mixin_neighbor.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
  "scripts/naver/blog/blog_mixin_read.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
  "scripts/naver/blog/blog_mixin_write.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "writer.py·selectors.py(L5)를 호출하는 네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
  "scripts/naver/smartstore/product/bulk.py": {
   "layer": "L5",

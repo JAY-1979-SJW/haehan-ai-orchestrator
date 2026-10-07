@@ -114,3 +114,10 @@ class Blog:
 __all__ = ["Blog", "run"]
 
 from ._runner import run  # CLI 진입점 (router용)
+
+# 엔진 쪽 블로그 믹스인(L4)은 사이트 모듈(셀렉터·글쓰기, L5)을 import 하지 않는다 — 사이트 패키지가 로드될 때 여기서 넣어 준다(T4 주입)
+from scripts.naver.blog import selectors as _selectors  # noqa: E402
+from scripts.naver.blog.blog_mixin_write import BlogWriteMixin as _BlogWriteMixin  # noqa: E402
+from scripts.naver.blog.core import writer as _writer  # noqa: E402
+
+_BlogWriteMixin.configure_blog_write(selectors=_selectors, writer=_writer)
