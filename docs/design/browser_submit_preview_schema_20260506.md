@@ -314,7 +314,7 @@ compute_preview_hash(payload1) == compute_preview_hash(payload2)  # True
 
 ### 8.1 모듈
 ```
-ai_orchestrator/browser_tool/submit_preview.py
+ai_orchestrator/browser_tool/submit/submit_preview.py
   - SubmitPreviewInput
   - UserPreviewSummary
   - UserPreviewDetails

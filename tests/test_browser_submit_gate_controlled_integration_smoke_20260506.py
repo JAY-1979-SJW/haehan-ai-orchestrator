@@ -15,19 +15,19 @@ Integration scope (no browser, no DB, no network, no file I/O except tmp_path):
 
 import pytest
 
-from ai_orchestrator.browser_tool.controlled_submit import (
+from ai_orchestrator.browser_tool.submit.controlled_submit import (
     build_controlled_submit_result,
+)
+from ai_orchestrator.browser_tool.submit.submit_execution_gate import (
+    BlockReason,
+    ExecutionGateInput,
+    ExecutionGateResult,
+    evaluate_execution_gate,
 )
 from ai_orchestrator.browser_tool.submit_audit_log import (
     append_submit_audit_event,
     build_submit_audit_event,
     read_submit_audit_events,
-)
-from ai_orchestrator.browser_tool.submit_execution_gate import (
-    BlockReason,
-    ExecutionGateInput,
-    ExecutionGateResult,
-    evaluate_execution_gate,
 )
 
 # ---------------------------------------------------------------------------
@@ -119,17 +119,17 @@ class TestModuleImport:
     """필요한 모든 모듈이 import 가능한지 확인."""
 
     def test_submit_policy_importable(self):
-        from ai_orchestrator.browser_tool.submit_policy import validate_submit_policy
+        from ai_orchestrator.browser_tool.submit.submit_policy import validate_submit_policy
 
         assert callable(validate_submit_policy)
 
     def test_submit_preview_importable(self):
-        from ai_orchestrator.browser_tool.submit_preview import build_submit_preview
+        from ai_orchestrator.browser_tool.submit.submit_preview import build_submit_preview
 
         assert callable(build_submit_preview)
 
     def test_controlled_submit_importable(self):
-        from ai_orchestrator.browser_tool.controlled_submit import build_controlled_submit_result
+        from ai_orchestrator.browser_tool.submit.controlled_submit import build_controlled_submit_result
 
         assert callable(build_controlled_submit_result)
 
@@ -143,7 +143,7 @@ class TestModuleImport:
         assert callable(append_submit_audit_event)
 
     def test_execution_gate_importable(self):
-        from ai_orchestrator.browser_tool.submit_execution_gate import evaluate_execution_gate
+        from ai_orchestrator.browser_tool.submit.submit_execution_gate import evaluate_execution_gate
 
         assert callable(evaluate_execution_gate)
 

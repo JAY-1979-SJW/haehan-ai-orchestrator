@@ -2777,7 +2777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/controlled_submit.py": {
+  "ai_orchestrator/browser_tool/submit/controlled_submit.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2937,7 +2937,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/submit_execution_gate.py": {
+  "ai_orchestrator/browser_tool/submit/submit_execution_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2945,7 +2945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/submit_policy.py": {
+  "ai_orchestrator/browser_tool/submit/submit_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2953,7 +2953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/submit_preview.py": {
+  "ai_orchestrator/browser_tool/submit/submit_preview.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -23234,6 +23234,14 @@
    "source": "rule"
   },
   "ai_orchestrator/browser_tool/preflight/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/submit/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

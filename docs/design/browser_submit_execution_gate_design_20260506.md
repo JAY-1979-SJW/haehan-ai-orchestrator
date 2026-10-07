@@ -294,7 +294,7 @@ production_submit_enabled   ← 설정값 (현재 항상 False)
 ## 12. 구현 예정 파일 (다음 단계)
 
 ```
-ai_orchestrator/browser_tool/submit_execution_gate.py
+ai_orchestrator/browser_tool/submit/submit_execution_gate.py
   - ExecutionGateInput (dataclass)
   - ExecutionGateResult (dataclass: gate_verdict, controlled_submit_allowed, production_submit_allowed, block_reasons, ...)
   - BlockReason (class with constants)
