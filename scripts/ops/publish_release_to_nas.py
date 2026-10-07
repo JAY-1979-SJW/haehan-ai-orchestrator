@@ -6,8 +6,9 @@
 옵션 없이 실행하면 기본값이 dry-run(명령만 출력, 아무 것도 안 보냄)이다.
 실제 업로드는 --execute를 명시해야만 일어난다.
 
-산출물 폴더에는 HaehanAI-*.exe, checksums.txt, RELEASE_NOTES.md(변경 요약)가 있어야 한다
-(desktop-release.yml 참고, version은 build-info.json과 같은 형식).
+산출물 폴더에는 HaehanAI-*.exe, checksums.txt 가 필수이고, RELEASE_NOTES.md(변경 요약)와
+설치_및_사용_안내.md(사용자 안내서)는 있으면 함께 올린다(desktop-release.yml 이 두 문서를 아티팩트에 넣는다.
+version은 build-info.json과 같은 형식).
 
 흐름(지휘창이 KDS 업로드에 쓴 방식과 동일):
   1. 로컬에서 산출물을 tar로 묶는다.
@@ -42,6 +43,8 @@ REMOTE_TMP = "/tmp"
 NEXTCLOUD_CONTAINER = "nextcloud-app"
 GROUPFOLDER_BASE = "/var/www/html/data/__groupfolders/1/배포/Haehan AI"
 VERSION_RE = re.compile(r"^\d{8}-[0-9a-f]{7}$")
+# 있으면 함께 올리는 문서(없어도 게시는 된다 — 필수는 exe·checksums.txt 뿐)
+OPTIONAL_DOCS = ("RELEASE_NOTES.md", "설치_및_사용_안내.md")
 
 
 class PublishError(RuntimeError):
@@ -63,9 +66,10 @@ def validate_artifacts(artifact_dir: Path) -> list[Path]:
     if not checksums.is_file():
         raise PublishError(f"checksums.txt 없음: {artifact_dir}")
     files = [*exes, checksums]
-    notes = artifact_dir / "RELEASE_NOTES.md"
-    if notes.is_file():
-        files.append(notes)
+    for doc_name in OPTIONAL_DOCS:
+        doc = artifact_dir / doc_name
+        if doc.is_file():
+            files.append(doc)
     return files
 
 

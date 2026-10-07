@@ -80,7 +80,7 @@
       "language": "1042"
     },
     "portable": {
-      "artifactName": "HaehanAI-${version}-portable.exe"
+      "artifactName": "HaehanAI-${env.HAEHAN_BUILD_VERSION}-portable.exe"
     },
     "mac": {
       "target": "dmg",
