@@ -26,7 +26,8 @@
  {"name": "marketing", "keyword": "^ai_orchestrator/(?!tests/).*marketing_ops", "homes": ["ai_orchestrator/marketing/"], "before_exempt": true},
  {"name": "auth", "keyword": "^ai_orchestrator/(?!tests/)(routers/auth_router|persistence/(auth_audit|user_db|registration_code_store)|registration_codes|connectors/(desktop_session_router|user_auth_router))", "homes": ["ai_orchestrator/auth/"], "before_exempt": true},
  {"name": "user_data", "keyword": "^ai_orchestrator/(?!tests/).*user_data_contribution", "homes": ["ai_orchestrator/user_data/"], "before_exempt": true},
- {"name": "site_work", "keyword": "^ai_orchestrator/(?!tests/)(domain|persistence|services)/.*(site_map|site_preflight|site_registry|site_task|site_onboarding|work_record)|^ai_orchestrator/routers/ai_agent_router", "homes": ["ai_orchestrator/site_work/"], "before_exempt": true}
+ {"name": "site_work", "keyword": "^ai_orchestrator/(?!tests/)(domain|persistence|services)/.*(site_map|site_preflight|site_registry|site_task|site_onboarding|work_record)|^ai_orchestrator/routers/ai_agent_router", "homes": ["ai_orchestrator/site_work/"], "before_exempt": true},
+ {"name": "agent_dispatch", "keyword": "^ai_orchestrator/(?!tests/).*agent_dispatch", "homes": ["ai_orchestrator/agent_dispatch/"], "before_exempt": true}
  ],
  "exempt": [
   {"regex": "(^|/)(tests?|__tests__)/|\\.(test|spec)\\.(ts|tsx)$", "reason": "시험(어느 폴더든)"},

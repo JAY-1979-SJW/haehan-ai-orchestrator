@@ -2,10 +2,10 @@
 
 
 def test_result_full_limit_single_source():
+    from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc
+    from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
     from ai_orchestrator.contracts import agent_result_limits as lim
     from ai_orchestrator.local_agent_redaction import _RESULT_DATA_LONG_KEYS
-    from ai_orchestrator.persistence import agent_dispatch_store as store
-    from ai_orchestrator.services import agent_dispatch_service as svc
     from ai_orchestrator.site_work import ai_agent_router as router
     from local_agent import actions
 

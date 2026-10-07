@@ -27,7 +27,7 @@ DATA = "data"
 CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.auth.user_db", "_DB_PATH", STORAGE, ("users.db",)),
     ("ai_orchestrator.auth.auth_audit", "_AUDIT_PATH", STORAGE, ("auth_audit.jsonl",)),
-    ("ai_orchestrator.persistence.agent_dispatch_store", "_DB_PATH", STORAGE, ("agent_dispatch.db",)),
+    ("ai_orchestrator.agent_dispatch.agent_dispatch_store", "_DB_PATH", STORAGE, ("agent_dispatch.db",)),
     ("ai_orchestrator.persistence.fax_authorization_store", "_DB_PATH", STORAGE, ("fax_authorizations.db",)),
     ("ai_orchestrator.gongmu.gongmu_store", "_DB_PATH", STORAGE, ("gongmu.db",)),
     ("ai_orchestrator.persistence.mail_bulk_store", "_DB_PATH", STORAGE, ("mail_bulk.db",)),

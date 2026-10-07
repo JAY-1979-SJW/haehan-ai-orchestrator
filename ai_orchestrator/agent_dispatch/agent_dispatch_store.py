@@ -20,7 +20,7 @@ from typing import Any
 from ai_orchestrator.paths.runtime import storage_dir
 
 from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
-from .sqlite_schema import apply_schema, set_busy_timeout
+from ..persistence.sqlite_schema import apply_schema, set_busy_timeout
 
 _DB_PATH = storage_dir() / "agent_dispatch.db"
 

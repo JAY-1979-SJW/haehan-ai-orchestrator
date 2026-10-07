@@ -8,7 +8,8 @@ from pydantic import BaseModel
 
 from ai_orchestrator.routers.action_router import action_router
 from ai_orchestrator.routers.admin_ui_router import admin_ui_router
-from ai_orchestrator.routers.agent_dispatch_router import agent_dispatch_router
+from ai_orchestrator.agent_dispatch.agent_dispatch_router import agent_dispatch_router
+from ai_orchestrator.agent_dispatch.agent_dispatch_router import resume_on_startup as _resume_agent_dispatch
 from ai_orchestrator.site_work.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
 from ai_orchestrator.auth.auth_router import auth_router
@@ -69,6 +70,11 @@ from ..sites.router import sites_router
 from ..notify.telegram_webhook import handle_telegram_update, handle_telegram_webhook
 
 logger = logging.getLogger(__name__)
+
+
+def resume_agent_dispatch_on_startup() -> bool:
+    """서버 시작 시 승인된 채 끝나지 않은 AI 작업 분배가 있으면 러너를 다시 띄운다(asgi 가 이 모듈을 거쳐 부른다)."""
+    return _resume_agent_dispatch()
 
 # ── Phase 1-R: feature flag OFF constants (default: disabled) ────────────
 LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"
