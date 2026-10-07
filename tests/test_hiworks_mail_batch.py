@@ -57,6 +57,7 @@ def test_workflow_aliases_resolve_send_batch():
 
 def test_execute_send_batch_sends_all_items_and_records_result(tmp_path, monkeypatch):
     monkeypatch.setattr(mail_batch, "DATA_DIR", tmp_path)
+    monkeypatch.setenv("GATE_DATA_DIR", str(tmp_path / "gate"))
     monkeypatch.setattr(mail_batch, "LATEST_SEND_RESULT_PATH", tmp_path / "latest.json")
     monkeypatch.setattr(mail_batch, "SEND_RESULT_DIR", tmp_path / "results")
 
@@ -80,7 +81,7 @@ def test_execute_send_batch_sends_all_items_and_records_result(tmp_path, monkeyp
         ]
     }
 
-    result = mail_batch.execute_send_batch(plan, page=object())
+    result = mail_batch.execute_send_batch(plan, page=object(), approval=mail_batch.APPROVAL_CONFIRM_TEXT)
 
     assert result["sent"] == 2
     assert result["failed"] == 0
@@ -93,6 +94,7 @@ def test_execute_send_batch_sends_all_items_and_records_result(tmp_path, monkeyp
 
 def test_execute_send_batch_records_partial_failure(tmp_path, monkeypatch):
     monkeypatch.setattr(mail_batch, "DATA_DIR", tmp_path)
+    monkeypatch.setenv("GATE_DATA_DIR", str(tmp_path / "gate"))
     monkeypatch.setattr(mail_batch, "LATEST_SEND_RESULT_PATH", tmp_path / "latest.json")
     monkeypatch.setattr(mail_batch, "SEND_RESULT_DIR", tmp_path / "results")
 
@@ -120,7 +122,7 @@ def test_execute_send_batch_records_partial_failure(tmp_path, monkeypatch):
         ]
     }
 
-    result = mail_batch.execute_send_batch(plan, page=object())
+    result = mail_batch.execute_send_batch(plan, page=object(), approval=mail_batch.APPROVAL_CONFIRM_TEXT)
 
     assert result["sent"] == 2
     assert result["failed"] == 1

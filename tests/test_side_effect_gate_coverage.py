@@ -23,7 +23,10 @@ SINK_STRINGS = ("media_publish", "Send ⌘Enter")  # Graph API 경로·Gmail 보
 PUBLISH_RECEIVERS = ("bw", "writer")  # bw.publish() / self.writer.publish() — BlogWriter 계열 발행 호출
 GUARDS = {"require_side_effect", "gate_check", "check_send", "gated"}
 # 정의 자체가 발송 구현이라 호출이 아닌 것(예: smtplib 래퍼 정의)은 SINK 호출이 없으므로 자동 제외된다.
-REQUIRED_GUARDED: set[str] = set()  # 게이트를 연결한 경로가 생기면 여기에 추가해 회귀를 막는다
+REQUIRED_GUARDED = {
+    "ai_orchestrator/connectors/naver_blog_router.py::write_to_naver._do",  # 게이트는 바깥 write_to_naver 에 있다
+    "scripts/hiworks/mail_batch.py::execute_send_batch",
+}
 
 
 def _py_files() -> list[Path]:
@@ -93,7 +96,7 @@ def scan() -> tuple[set[str], set[str]]:
     for path in _py_files():
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
-        except SyntaxError, UnicodeDecodeError, OSError:
+        except (SyntaxError, UnicodeDecodeError, OSError):
             continue
         visit(tree, path.relative_to(ROOT).as_posix(), [], False)
     return sinks, unguarded
