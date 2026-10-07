@@ -79,7 +79,7 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/server/execution_location_guard.py",
             "ai_orchestrator/domain/enums.py",
-            "ai_orchestrator/browser_tool/execution_location_policy.py",
+            "ai_orchestrator/browser_tool/routing/execution_location_policy.py",
         ],
         "status": "FUNCTIONAL",
         "needs": ["unified_enum_source", "bridge_location_enum"],
@@ -145,7 +145,7 @@ DOMAIN_CORE_MAP = {
     },
     "UserDirectAction": {
         "impl_files": [
-            "ai_orchestrator/browser_tool/browser_engine_routing_policy.py",
+            "ai_orchestrator/browser_tool/routing/browser_engine_routing_policy.py",
         ],
         "status": "PARTIAL",
         "needs": ["UserDirectAction_entity", "instruction_record", "user_confirmation_required"],
@@ -642,7 +642,7 @@ POLICY_LAYER_MAP = {
         "risk_gap": None,
     },
     "local_agent_required_policy": {
-        "impl": "ai_orchestrator/browser_tool/execution_location_policy.py",
+        "impl": "ai_orchestrator/browser_tool/routing/execution_location_policy.py",
         "status": "IMPLEMENTED",
         "test_covered": True,
         "risk_gap": None,
@@ -847,7 +847,7 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/web_task/web_task_templates.py",
     "ai_orchestrator/tasks/external_work_registry.py",
     "ai_orchestrator/routers/ops_router.py",
-    "ai_orchestrator/browser_tool/execution_location_policy.py",
+    "ai_orchestrator/browser_tool/routing/execution_location_policy.py",
     "ai_orchestrator/browser_tool/policy.py",
     "ai_orchestrator/server/server_egress_policy.py",
 ]

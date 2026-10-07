@@ -158,7 +158,7 @@ def test_08_router_no_browser_worker_at_import_time():
 
 def test_09_preflight_chain_no_browser_worker_at_module_level():
     """browser_engine_routing_preflight_chain.py module-level에 browser_worker import 없다."""
-    chain_path = _repo_root / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_preflight_chain.py"
+    chain_path = _repo_root / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_routing_preflight_chain.py"
     source = chain_path.read_text(encoding="utf-8")
     lines = source.split("\n")
     module_level_imports = [

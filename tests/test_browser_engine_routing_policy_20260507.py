@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
     ENGINE_SEL_API_CONNECTOR,
     ENGINE_SEL_LOCAL_SYSTEM_BROWSER,
     ENGINE_SEL_NONE,
@@ -31,7 +31,7 @@ from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_engine_routing_policy_20260507.json"
 
-MODULE_PATH = Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_policy.py"
+MODULE_PATH = Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_routing_policy.py"
 
 
 @pytest.fixture(scope="module")
@@ -343,7 +343,7 @@ def test_no_browser_action_calls():
 
 
 def test_compatible_with_capability_classifier():
-    from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
+    from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
         classify_browser_engine_capability,
     )
 

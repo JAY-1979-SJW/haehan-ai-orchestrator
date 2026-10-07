@@ -10,7 +10,7 @@
   "role": "policy",
   "reason": "액션 카테고리/리스크 메타데이터 레지스트리 — 여러 계층이 참조하는 정책성 상수 레지스트리, L10 오분류"
  },
- "ai_orchestrator/browser_tool/browser_engine_capability_classifier.py": {
+ "ai_orchestrator/browser_tool/routing/browser_engine_capability_classifier.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "정책 기반 엔진 라우팅 분류만 수행, click/type/fill/submit 코드 없음(docstring 명시) — L4 오분류"

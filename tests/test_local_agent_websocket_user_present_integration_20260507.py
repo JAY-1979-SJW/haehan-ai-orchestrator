@@ -374,7 +374,7 @@ class TestInMemoryTransport:
 
 class TestCompatibility:
     def test_compatible_with_dispatch_dryrun(self):
-        from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import (
+        from ai_orchestrator.browser_tool.routing.browser_engine_routing_dispatch_dryrun import (
             DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
             evaluate_browser_engine_routing_dispatch_dryrun,
         )

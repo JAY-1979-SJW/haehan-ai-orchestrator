@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
+from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
     ENGINE_API_CONNECTOR_REQUIRED,
     ENGINE_AUTOMATION_BLOCKED,
     ENGINE_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
@@ -32,7 +32,7 @@ from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_engine_capability_classification_20260507.json"
 
 MODULE_PATH = (
-    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_capability_classifier.py"
+    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_capability_classifier.py"
 )
 
 

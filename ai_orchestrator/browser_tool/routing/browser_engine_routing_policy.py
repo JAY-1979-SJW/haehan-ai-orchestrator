@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
+from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
     ENGINE_API_CONNECTOR_REQUIRED,
     ENGINE_AUTOMATION_BLOCKED,
     ENGINE_LOCAL_AGENT_PLAYWRIGHT_READONLY_ALLOWED,

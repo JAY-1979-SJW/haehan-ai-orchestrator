@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.browser_tool.browser_engine_routing_preflight_chain import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_preflight_chain import (
     CHAIN_BLOCK,
     NEXT_API_CONNECTOR,
     NEXT_APPROVAL_REQUIRED,

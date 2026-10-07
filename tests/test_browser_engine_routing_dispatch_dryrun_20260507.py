@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_dispatch_dryrun import (
     DISPATCH_API_CONNECTOR_REQUIRED,
     DISPATCH_APPROVAL_REQUIRED,
     DISPATCH_BLOCKED,
@@ -302,7 +302,7 @@ class TestSecurityPrinciples:
     def test_no_actual_browser_execution_in_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun as mod
+        import ai_orchestrator.browser_tool.routing.browser_engine_routing_dispatch_dryrun as mod
 
         src = inspect.getsource(mod)
         forbidden = ["playwright.chromium.launch", "page.goto(", "page.click(", "page.fill("]
@@ -312,7 +312,7 @@ class TestSecurityPrinciples:
     def test_no_cookie_session_extraction_in_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun as mod
+        import ai_orchestrator.browser_tool.routing.browser_engine_routing_dispatch_dryrun as mod
 
         src = inspect.getsource(mod)
         forbidden = ["cookies()", "storage_state(", "session_token"]
@@ -322,7 +322,7 @@ class TestSecurityPrinciples:
     def test_no_task_executor_in_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun as mod
+        import ai_orchestrator.browser_tool.routing.browser_engine_routing_dispatch_dryrun as mod
 
         src = inspect.getsource(mod)
         assert "TaskExecutor(" not in src

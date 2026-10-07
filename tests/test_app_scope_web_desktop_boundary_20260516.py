@@ -59,7 +59,7 @@ class TestInScopeWebTaskEngine:
 
     def test_browser_execution_location_policy_exists(self):
         """browser_tool/execution_location_policy.py IN_SCOPE 파일 존재."""
-        assert (REPO_ROOT / "ai_orchestrator" / "browser_tool" / "execution_location_policy.py").exists()
+        assert (REPO_ROOT / "ai_orchestrator" / "browser_tool" / "routing" / "execution_location_policy.py").exists()
 
 
 # ── IN_SCOPE: 비서앱 웹 페이지 + 데스크 앱 골조 ────────────────────────────

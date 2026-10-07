@@ -31,7 +31,7 @@ from urllib.parse import urlparse
 from ai_orchestrator.browser_tool.domain_profile_registry import (
     get_domain_profile,
 )
-from ai_orchestrator.browser_tool.execution_location_policy import (
+from ai_orchestrator.browser_tool.routing.execution_location_policy import (
     BLOCKED,
     LOCAL_BROWSER_DEFAULT,
     LOCAL_REQUIRED,
@@ -39,14 +39,14 @@ from ai_orchestrator.browser_tool.execution_location_policy import (
     USER_DIRECT_ONLY,
     classify_execution_location,
 )
-from ai_orchestrator.browser_tool.fallback_decision_engine import (
+from ai_orchestrator.browser_tool.routing.fallback_decision_engine import (
     COMPLETE_ON_SERVER,
     HANDOFF_TO_LOCAL_AGENT,
     REQUIRE_USER_DIRECT_ACTION,
     RETRY_ON_SERVER,
     decide_fallback,
 )
-from ai_orchestrator.browser_tool.local_agent_handoff import (
+from ai_orchestrator.browser_tool.routing.local_agent_handoff import (
     build_local_agent_handoff,
     handoff_to_task_protocol,
     validate_handoff_payload,

@@ -19,7 +19,7 @@ from ai_orchestrator.browser_tool.action_registry_preflight import (
     evaluate_action_registry_preflight,
 )
 from ai_orchestrator.browser_tool.allowlist_preflight import evaluate_allowlist_preflight
-from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
+from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
     ENGINE_API_CONNECTOR_REQUIRED,
     ENGINE_AUTOMATION_BLOCKED,
     ENGINE_LOCAL_AGENT_PLAYWRIGHT_READONLY_ALLOWED,
@@ -27,7 +27,7 @@ from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
     ENGINE_NEEDS_MANUAL_REVIEW,
     classify_browser_engine_capability,
 )
-from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
     evaluate_browser_engine_routing,
 )
 from ai_orchestrator.browser_tool.gate_approval_preflight import (

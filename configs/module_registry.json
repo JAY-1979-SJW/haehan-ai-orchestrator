@@ -2745,7 +2745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/browser_engine_capability_classifier.py": {
+  "ai_orchestrator/browser_tool/routing/browser_engine_capability_classifier.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2753,7 +2753,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/browser_tool/browser_engine_routing_dispatch_dryrun.py": {
+  "ai_orchestrator/browser_tool/routing/browser_engine_routing_dispatch_dryrun.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2761,7 +2761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/browser_engine_routing_policy.py": {
+  "ai_orchestrator/browser_tool/routing/browser_engine_routing_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2769,7 +2769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/browser_engine_routing_preflight_chain.py": {
+  "ai_orchestrator/browser_tool/routing/browser_engine_routing_preflight_chain.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2793,7 +2793,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/browser_tool/execution_location_policy.py": {
+  "ai_orchestrator/browser_tool/routing/execution_location_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2801,7 +2801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/fallback_decision_engine.py": {
+  "ai_orchestrator/browser_tool/routing/fallback_decision_engine.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2817,7 +2817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_handoff.py": {
+  "ai_orchestrator/browser_tool/routing/local_agent_handoff.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -2977,7 +2977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/unified_execution_router.py": {
+  "ai_orchestrator/browser_tool/routing/unified_execution_router.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -23222,6 +23222,14 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/routing/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
   }

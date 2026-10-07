@@ -13,10 +13,10 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
     should_fallback_to_local_agent,
 )
-from ai_orchestrator.browser_tool.browser_engine_routing_preflight_chain import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_preflight_chain import (
     CHAIN_APPROVAL_REQUIRED,
     CHAIN_BLOCK,
     CHAIN_MANUAL_REVIEW_REQUIRED,
@@ -36,7 +36,7 @@ from ai_orchestrator.browser_tool.browser_engine_routing_preflight_chain import 
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_engine_routing_preflight_chain_20260507.json"
 MODULE_PATH = (
-    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_preflight_chain.py"
+    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_routing_preflight_chain.py"
 )
 
 
@@ -379,7 +379,7 @@ def test_no_db_write_code():
 
 
 def test_compatible_with_capability_classifier():
-    from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
+    from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
         classify_browser_engine_capability,
     )
 
@@ -395,7 +395,7 @@ def test_compatible_with_capability_classifier():
 
 
 def test_compatible_with_routing_policy():
-    from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
+    from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
         evaluate_browser_engine_routing,
     )
 
