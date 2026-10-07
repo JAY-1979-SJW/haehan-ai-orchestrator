@@ -636,7 +636,7 @@ POLICY_LAYER_MAP = {
         "risk_gap": None,
     },
     "approval_gate": {
-        "impl": "ai_orchestrator/browser_tool/gate_approval_preflight.py",
+        "impl": "ai_orchestrator/browser_tool/preflight/gate_approval_preflight.py",
         "status": "IMPLEMENTED",
         "test_covered": True,
         "risk_gap": None,
@@ -648,7 +648,7 @@ POLICY_LAYER_MAP = {
         "risk_gap": None,
     },
     "user_direct_required_policy": {
-        "impl": "desktop/task_receiver.py + browser_tool/execution_location_policy.py",
+        "impl": "desktop/task_receiver.py + browser_tool/routing/execution_location_policy.py",
         "status": "PARTIAL",
         "test_covered": True,
         "risk_gap": "server-side UserDirect 정책 미통합",

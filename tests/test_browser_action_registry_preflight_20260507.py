@@ -3,16 +3,16 @@
 import json
 from pathlib import Path
 
-from ai_orchestrator.browser_tool.action_registry_preflight import (
-    build_action_preflight_context,
-    evaluate_action_registry_preflight,
-    get_browser_action_policy,
-    validate_action_preflight_result,
-)
 from ai_orchestrator.browser_tool.approval_record_store import (
     append_approval_record,
     build_approval_decision,
     build_approval_request,
+)
+from ai_orchestrator.browser_tool.preflight.action_registry_preflight import (
+    build_action_preflight_context,
+    evaluate_action_registry_preflight,
+    get_browser_action_policy,
+    validate_action_preflight_result,
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_registry_preflight_20260507.json"
@@ -272,7 +272,7 @@ class TestRegistryPolicyConsistency:
         import ast
         import inspect
 
-        from ai_orchestrator.browser_tool import action_registry_preflight
+        from ai_orchestrator.browser_tool.preflight import action_registry_preflight
 
         source = inspect.getsource(action_registry_preflight)
         tree = ast.parse(source)
@@ -292,7 +292,7 @@ class TestRegistryPolicyConsistency:
         import ast
         import inspect
 
-        from ai_orchestrator.browser_tool import action_registry_preflight
+        from ai_orchestrator.browser_tool.preflight import action_registry_preflight
 
         source = inspect.getsource(action_registry_preflight)
         tree = ast.parse(source)
@@ -309,7 +309,7 @@ class TestRegistryPolicyConsistency:
         import ast
         import inspect
 
-        from ai_orchestrator.browser_tool import action_registry_preflight
+        from ai_orchestrator.browser_tool.preflight import action_registry_preflight
 
         source = inspect.getsource(action_registry_preflight)
         tree = ast.parse(source)

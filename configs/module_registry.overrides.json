@@ -5,7 +5,7 @@
   "reason": "데스크톱 앱 서버 진입점 — asgi(L8)를 기동하는 엔트리라 같은 L8 로 분류(진입점이 앱 조립 계층을 부르는 방향)",
   "source": "manual"
  },
- "ai_orchestrator/browser_tool/agent_action_registry.py": {
+ "ai_orchestrator/browser_tool/preflight/agent_action_registry.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "액션 카테고리/리스크 메타데이터 레지스트리 — 여러 계층이 참조하는 정책성 상수 레지스트리, L10 오분류"

@@ -15,10 +15,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.browser_tool.action_registry_preflight import (
+from ai_orchestrator.browser_tool.preflight.action_registry_preflight import (
     evaluate_action_registry_preflight,
 )
-from ai_orchestrator.browser_tool.allowlist_preflight import evaluate_allowlist_preflight
+from ai_orchestrator.browser_tool.preflight.allowlist_preflight import evaluate_allowlist_preflight
+from ai_orchestrator.browser_tool.preflight.gate_approval_preflight import (
+    evaluate_gate_approval_preflight,
+)
 from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
     ENGINE_API_CONNECTOR_REQUIRED,
     ENGINE_AUTOMATION_BLOCKED,
@@ -29,9 +32,6 @@ from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier i
 )
 from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
     evaluate_browser_engine_routing,
-)
-from ai_orchestrator.browser_tool.gate_approval_preflight import (
-    evaluate_gate_approval_preflight,
 )
 from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
     evaluate_server_browser_allowed,

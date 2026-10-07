@@ -129,9 +129,9 @@ forbidden_modules =
     ai_orchestrator.auth.registration_codes
     ai_orchestrator.auth.user_auth_router
     ai_orchestrator.auth.user_db
-    ai_orchestrator.browser_tool.action_registry_preflight
-    ai_orchestrator.browser_tool.agent_action_registry
-    ai_orchestrator.browser_tool.allowlist_preflight
+    ai_orchestrator.browser_tool.preflight.action_registry_preflight
+    ai_orchestrator.browser_tool.preflight.agent_action_registry
+    ai_orchestrator.browser_tool.preflight.allowlist_preflight
     ai_orchestrator.browser_tool.approval_record_router
     ai_orchestrator.browser_tool.approval_record_store
     ai_orchestrator.browser_tool.mock_backend
@@ -144,7 +144,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
     ai_orchestrator.browser_tool.routing.fallback_decision_engine
-    ai_orchestrator.browser_tool.gate_approval_preflight
+    ai_orchestrator.browser_tool.preflight.gate_approval_preflight
     ai_orchestrator.browser_tool.routing.local_agent_handoff
     ai_orchestrator.browser_tool.local_agent_user_present_dispatcher
     ai_orchestrator.browser_tool.local_agent_user_present_flow
@@ -1234,13 +1234,13 @@ type = forbidden
 source_modules =
     ai_orchestrator.agent_dispatch.agent_dispatch_policy
     ai_orchestrator.auth.auth_audit
-    ai_orchestrator.browser_tool.agent_action_registry
-    ai_orchestrator.browser_tool.allowlist_preflight
+    ai_orchestrator.browser_tool.preflight.agent_action_registry
+    ai_orchestrator.browser_tool.preflight.allowlist_preflight
     ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier
     ai_orchestrator.browser_tool.routing.browser_engine_routing_policy
     ai_orchestrator.browser_tool.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
-    ai_orchestrator.browser_tool.gate_approval_preflight
+    ai_orchestrator.browser_tool.preflight.gate_approval_preflight
     ai_orchestrator.browser_tool.policy
     ai_orchestrator.browser_tool.server_browser_boundary_policy
     ai_orchestrator.browser_tool.site_compliance_policy
@@ -1361,7 +1361,7 @@ forbidden_modules =
     ai_orchestrator.auth.desktop_session_router
     ai_orchestrator.auth.registration_codes
     ai_orchestrator.auth.user_auth_router
-    ai_orchestrator.browser_tool.action_registry_preflight
+    ai_orchestrator.browser_tool.preflight.action_registry_preflight
     ai_orchestrator.browser_tool.approval_record_router
     ai_orchestrator.browser_tool.mock_backend
     ai_orchestrator.browser_tool.worker_backend
@@ -2308,9 +2308,9 @@ forbidden_modules =
     ai_orchestrator.auth.registration_codes
     ai_orchestrator.auth.user_auth_router
     ai_orchestrator.auth.user_db
-    ai_orchestrator.browser_tool.action_registry_preflight
-    ai_orchestrator.browser_tool.agent_action_registry
-    ai_orchestrator.browser_tool.allowlist_preflight
+    ai_orchestrator.browser_tool.preflight.action_registry_preflight
+    ai_orchestrator.browser_tool.preflight.agent_action_registry
+    ai_orchestrator.browser_tool.preflight.allowlist_preflight
     ai_orchestrator.browser_tool.approval_record_router
     ai_orchestrator.browser_tool.approval_record_store
     ai_orchestrator.browser_tool.mock_backend
@@ -2323,7 +2323,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
     ai_orchestrator.browser_tool.routing.fallback_decision_engine
-    ai_orchestrator.browser_tool.gate_approval_preflight
+    ai_orchestrator.browser_tool.preflight.gate_approval_preflight
     ai_orchestrator.browser_tool.routing.local_agent_handoff
     ai_orchestrator.browser_tool.local_agent_user_present_dispatcher
     ai_orchestrator.browser_tool.local_agent_user_present_flow
@@ -3410,7 +3410,7 @@ source_modules =
     ai_orchestrator.app
     ai_orchestrator.audit_evidence.adapters
     ai_orchestrator.auth.registration_codes
-    ai_orchestrator.browser_tool.action_registry_preflight
+    ai_orchestrator.browser_tool.preflight.action_registry_preflight
     ai_orchestrator.browser_tool.mock_backend
     ai_orchestrator.browser_tool.worker_backend
     ai_orchestrator.browser_tool.routing.browser_engine_routing_dispatch_dryrun
@@ -5375,9 +5375,9 @@ forbidden_modules =
     ai_orchestrator.auth.desktop_session_router
     ai_orchestrator.auth.registration_codes
     ai_orchestrator.auth.user_auth_router
-    ai_orchestrator.browser_tool.action_registry_preflight
-    ai_orchestrator.browser_tool.agent_action_registry
-    ai_orchestrator.browser_tool.allowlist_preflight
+    ai_orchestrator.browser_tool.preflight.action_registry_preflight
+    ai_orchestrator.browser_tool.preflight.agent_action_registry
+    ai_orchestrator.browser_tool.preflight.allowlist_preflight
     ai_orchestrator.browser_tool.approval_record_router
     ai_orchestrator.browser_tool.mock_backend
     ai_orchestrator.browser_tool.worker_backend
@@ -5389,7 +5389,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
     ai_orchestrator.browser_tool.routing.fallback_decision_engine
-    ai_orchestrator.browser_tool.gate_approval_preflight
+    ai_orchestrator.browser_tool.preflight.gate_approval_preflight
     ai_orchestrator.browser_tool.routing.local_agent_handoff
     ai_orchestrator.browser_tool.local_agent_user_present_dispatcher
     ai_orchestrator.browser_tool.local_agent_user_present_flow

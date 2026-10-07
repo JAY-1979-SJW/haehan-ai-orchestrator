@@ -58,7 +58,7 @@ class TestInScopeWebTaskEngine:
         assert (REPO_ROOT / "ai_orchestrator" / "server" / "execution_location_guard.py").exists()
 
     def test_browser_execution_location_policy_exists(self):
-        """browser_tool/execution_location_policy.py IN_SCOPE 파일 존재."""
+        """browser_tool/routing/execution_location_policy.py IN_SCOPE 파일 존재."""
         assert (REPO_ROOT / "ai_orchestrator" / "browser_tool" / "routing" / "execution_location_policy.py").exists()
 
 

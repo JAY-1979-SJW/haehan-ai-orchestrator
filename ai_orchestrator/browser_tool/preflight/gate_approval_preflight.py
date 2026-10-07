@@ -10,10 +10,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from .approval_record_store import (
-    build_audit_approval_context,
-    get_latest_approval_status,
-)
+from ai_orchestrator.browser_tool.approval_record_store import build_audit_approval_context, get_latest_approval_status
 
 logger = logging.getLogger(__name__)
 

@@ -2697,7 +2697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/action_registry_preflight.py": {
+  "ai_orchestrator/browser_tool/preflight/action_registry_preflight.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2705,7 +2705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/allowlist_preflight.py": {
+  "ai_orchestrator/browser_tool/preflight/allowlist_preflight.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2809,7 +2809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/gate_approval_preflight.py": {
+  "ai_orchestrator/browser_tool/preflight/gate_approval_preflight.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -20281,7 +20281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/agent_action_registry.py": {
+  "ai_orchestrator/browser_tool/preflight/agent_action_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -23226,6 +23226,14 @@
    "source": "rule"
   },
   "ai_orchestrator/browser_tool/routing/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/preflight/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

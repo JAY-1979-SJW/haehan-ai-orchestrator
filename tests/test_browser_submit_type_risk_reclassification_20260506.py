@@ -301,7 +301,7 @@ def test_untracked_preflight_md_not_deleted():
 
 def test_submit_type_not_in_action_registry():
     """submit/type/click 계열은 action_registry에 미등록 상태 유지."""
-    from ai_orchestrator.browser_tool.agent_action_registry import is_known_action
+    from ai_orchestrator.browser_tool.preflight.agent_action_registry import is_known_action
 
     for action in SUBMIT_TYPE_ACTIONS:
         assert not is_known_action(action), (
@@ -311,7 +311,7 @@ def test_submit_type_not_in_action_registry():
 
 def test_read_navigate_still_in_action_registry():
     """read/navigate 3개는 action_registry 등록 유지."""
-    from ai_orchestrator.browser_tool.agent_action_registry import is_known_action
+    from ai_orchestrator.browser_tool.preflight.agent_action_registry import is_known_action
 
     for action in READ_NAVIGATE_ACTIONS:
         assert is_known_action(action), f"{action} must be in action_registry"

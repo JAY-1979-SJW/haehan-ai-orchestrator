@@ -24,7 +24,7 @@ _repo_root = Path(__file__).resolve().parent.parent
 
 def test_01_g2b_import_does_not_break_allowlist_result():
     """g2b live execution 모듈 import 후 allowlist_preflight 결과가 변하지 않는다."""
-    from ai_orchestrator.browser_tool.allowlist_preflight import (
+    from ai_orchestrator.browser_tool.preflight.allowlist_preflight import (
         evaluate_allowlist_preflight,
     )
 
@@ -61,7 +61,7 @@ def test_03_g2b_workflow_import_does_not_mutate_allowlist():
     import ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate
     import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner
     import ai_orchestrator.connectors.g2b.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
-    from ai_orchestrator.browser_tool.allowlist_preflight import (
+    from ai_orchestrator.browser_tool.preflight.allowlist_preflight import (
         evaluate_allowlist_preflight,
     )
 

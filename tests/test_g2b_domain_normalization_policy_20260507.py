@@ -33,7 +33,8 @@ import warnings
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
-from ai_orchestrator.browser_tool.allowlist_preflight import evaluate_allowlist_preflight  # noqa: E402
+from ai_orchestrator.browser_tool.preflight.allowlist_preflight import evaluate_allowlist_preflight  # noqa: E402
+from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 from ai_orchestrator.connectors.g2b.g2b_domain_policy import (  # noqa: E402
     DOMAIN_G2B_PUBLIC_READONLY,
     DOMAIN_NEEDS_URL_VERIFICATION,
@@ -49,7 +50,6 @@ from ai_orchestrator.connectors.g2b.g2b_domain_policy import (  # noqa: E402
     normalize_g2b_domain,
     validate_g2b_domain_policy_result,
 )
-from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "g2b_domain_normalization_policy_20260507.json"
 
