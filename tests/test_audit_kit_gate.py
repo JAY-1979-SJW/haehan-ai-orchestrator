@@ -141,6 +141,7 @@ def test_post_edit_ignores_non_python_and_outside_repo(fake_kit, py_file, tmp_pa
 
 
 def test_post_edit_is_fail_open_when_kit_missing_or_broken(py_file, monkeypatch, fake_kit, capsys):
+    monkeypatch.delenv("AUDIT_KIT_REQUIRED", raising=False)  # 이 시험은 '필수 아님' 모드의 fail-open 을 본다 — 개발 PC·CI 환경에 켜져 있어도 격리한다
     monkeypatch.setenv("AUDIT_KIT_BIN", str(py_file.parent / "does_not_exist.py"))
     proc = _post_edit(py_file, capsys)
     assert proc.returncode == 0 and "찾지 못해" in proc.stderr  # 미설치 PC·CI 를 막지 않되 이유는 알린다
