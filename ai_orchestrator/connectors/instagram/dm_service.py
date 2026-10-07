@@ -16,10 +16,10 @@ from typing import Any
 
 from scripts.gate import is_opted_out
 
-from . import dm_token_store as token_store
-from .graph_client import send_private_reply
 from . import dm_db as db
 from . import dm_rule_engine as rule_engine
+from . import dm_token_store as token_store
+from .graph_client import send_private_reply
 
 logger = logging.getLogger(__name__)
 

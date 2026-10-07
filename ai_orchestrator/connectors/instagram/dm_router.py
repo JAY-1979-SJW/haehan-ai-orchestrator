@@ -20,7 +20,10 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
+from . import dm_db as db
+from . import dm_rule_engine as rule_engine
 from . import dm_token_store as token_store
+from .dm_service import process_comment_event
 from .graph_client import (
     InstagramApiError,
     build_authorize_url,
@@ -31,9 +34,6 @@ from .graph_client import (
     verify_token as graph_verify_token,
 )
 from .webhook_parser import parse_comment_events
-from . import dm_db as db
-from . import dm_rule_engine as rule_engine
-from .dm_service import process_comment_event
 
 logger = logging.getLogger(__name__)
 
