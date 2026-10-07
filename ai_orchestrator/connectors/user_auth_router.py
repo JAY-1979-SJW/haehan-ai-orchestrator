@@ -10,7 +10,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
 
 from ai_orchestrator import config
-from ai_orchestrator.gates.auth import require_role  # 관리자(Basic Auth) — 승인 등 owner 작업
+from ai_orchestrator.gates.auth import (  # 승인 등 owner 작업·콘솔 JWT 수용
+    register_bearer_resolver,
+    require_role,
+)
 from ai_orchestrator.persistence import auth_audit, user_db
 
 user_auth_router = APIRouter(prefix="/users", tags=["users"])
@@ -36,6 +39,16 @@ def _decode_token(token: str) -> str | None:
         return payload.get("sub")
     except jwt.PyJWTError:
         return None
+
+
+def resolve_bearer_user(token: str) -> dict | None:
+    """Bearer JWT → 활성 사용자 레코드. 만료·위조·서명 불일치·알 수 없는 사용자·승인 대기(enabled=0)는 None.
+
+    `gates.auth.get_current_user` 가 콘솔 라우트에서 JWT 를 받을 때 쓴다(아래 register_bearer_resolver).
+    검증 자체는 위 `_decode_token`·`user_db.get_user_by_id` 를 그대로 재사용한다(새 JWT 로직 없음).
+    """
+    user_id = _decode_token(token)
+    return user_db.get_user_by_id(user_id) if user_id else None
 
 
 def get_jwt_user(
@@ -208,3 +221,7 @@ def approve(user_id: str, admin: dict = Depends(require_role("admin", "owner")))
         raise HTTPException(status_code=404, detail="대상 사용자를 찾을 수 없습니다")
     auth_audit.record_auth_event("approve", "success", actor_id=actor, target_user_id=user_id)
     return {"status": "approved", "user_id": user_id}
+
+
+# 콘솔 라우트(require_role)가 Bearer JWT 도 받도록 검증 함수를 게이트에 등록한다(L2 게이트가 L7 DB 를 직접 import 하지 않게 하는 의존 역전).
+register_bearer_resolver(resolve_bearer_user)
