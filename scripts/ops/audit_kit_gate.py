@@ -156,9 +156,13 @@ def mypy_new(py: str, path: Path, baseline: Path | None, root: Path | None = Non
     return [f"[mypy] {path.name}: {msg}" for msg in sorted(current - before)], ""
 
 
-def _mypy_against_head(py: str, path: Path, root: Path) -> tuple[list[str], str]:
-    """편집한 파일을 HEAD 버전과 비교(편집 전에 없던 오류만). HEAD 에 없는 새 파일이면 전부 신규."""
-    rel = path.resolve().relative_to(root.resolve()).as_posix()
+def _mypy_against_head(py: str, path: Path, root: Path, old_rel: str | None = None) -> tuple[list[str], str]:
+    """편집한 파일을 HEAD 버전과 비교(편집 전에 없던 오류만). HEAD 에 없는 새 파일이면 전부 신규.
+
+    `old_rel`: git 이 이름 변경(R)으로 본 파일의 옛 경로(저장소 기준 posix). 있으면 HEAD:<옛 경로> 를 비교 기준으로 쓴다 — 옛 위치에
+    있던 기존 오류가 이동 때문에 '새 파일의 신규 오류'로 잡히지 않게 한다(2026-10-07, git mv 이동 커밋에서 오탐 3건).
+    """
+    rel = old_rel or path.resolve().relative_to(root.resolve()).as_posix()
     shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False)
     if shown.returncode != 0:
         return mypy_new(py, path, None, root)
@@ -170,8 +174,10 @@ def _mypy_against_head(py: str, path: Path, root: Path) -> tuple[list[str], str]
         copy.unlink(missing_ok=True)
 
 
-def check_file(kit: list[str], path: Path, root: Path | None = None) -> tuple[list[str], str]:
-    """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다."""
+def check_file(
+    kit: list[str], path: Path, root: Path | None = None, old_rel: str | None = None
+) -> tuple[list[str], str]:
+    """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다. old_rel: 이름 변경 전 경로(mypy 비교 기준)."""
     root = root or ROOT
     payload = json.dumps({"tool_input": {"file_path": str(path)}, "cwd": str(root)})
     try:
@@ -192,7 +198,7 @@ def check_file(kit: list[str], path: Path, root: Path | None = None) -> tuple[li
     py = mypy_python(kit)
     if py is None:
         return findings, ""
-    typed, why = _mypy_against_head(py, path, root)
+    typed, why = _mypy_against_head(py, path, root, old_rel)
     return findings + typed, ("" if findings or typed or not why else why)
 
 
@@ -304,19 +310,39 @@ def run_stop(stdin_text: str) -> int:
     return 0
 
 
-def _staged_python_files() -> list[Path]:
-    """커밋에 올라갈(staged, 삭제 제외) 저장소 안 .py 파일."""
+def _staged_python_changes() -> list[tuple[Path, str | None]]:
+    """커밋에 올라갈(staged, 삭제 제외) 저장소 안 .py 파일과, 이름 변경(R)이면 옛 경로.
+
+    `git diff --cached -M --name-status` 로 읽어 R(이름 변경) 파일의 옛 경로를 함께 돌려준다 → 비교 기준을 HEAD:<옛 경로> 로 쓴다.
+    새 파일(A)·복사(C)·수정(M)은 옛 경로가 None(HEAD:<같은 경로>, 없으면 전부 신규). 복사는 원본이 남아 있어 새 파일로 본다(보수적).
+    """
     out = subprocess.run(
-        ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
+        ["git", "diff", "--cached", "-M", "--name-status", "--diff-filter=ACMR", "-z"],
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     ).stdout
-    candidates = [ROOT / rel for rel in out.split("\0") if rel]
-    return [c for c in candidates if _eligible(c)]
+    parts = [x for x in out.split("\0") if x]
+    changes: list[tuple[Path, str | None]] = []
+    i = 0
+    while i < len(parts):
+        status = parts[i]
+        if status[:1] in ("R", "C") and i + 2 < len(parts):
+            changes.append((ROOT / parts[i + 2], parts[i + 1] if status[0] == "R" else None))
+            i += 3
+        else:
+            if i + 1 < len(parts):
+                changes.append((ROOT / parts[i + 1], None))
+            i += 2
+    return [(c, old) for c, old in changes if _eligible(c)]
+
+
+def _staged_python_files() -> list[Path]:
+    """커밋에 올라갈(staged, 삭제 제외) 저장소 안 .py 파일."""
+    return [c for c, _old in _staged_python_changes()]
 
 
 def run_staged() -> int:
     """pre-commit 용: staged .py 의 신규 문제가 있으면 1(커밋 차단). 기존 문제는 막지 않는다."""
-    files = _staged_python_files()
+    files = _staged_python_changes()
     if not files:
         return 0
     kit = find_audit_kit()
@@ -327,8 +353,8 @@ def run_staged() -> int:
         sys.stderr.write("[audit_kit_gate] audit-kit 를 찾지 못해 커밋 검사를 생략합니다 (AUDIT_KIT_BIN 환경변수로 위치 지정 가능)\n")
         return 0
     problems: list[str] = []
-    for path in files:
-        findings, skipped = check_file(kit, path)
+    for path, old_rel in files:
+        findings, skipped = check_file(kit, path, old_rel=old_rel)
         if skipped:
             sys.stderr.write(f"[audit_kit_gate] {path.name} 검사하지 못했습니다(막지 않음): {skipped}\n")
         problems.extend(findings)
