@@ -10,8 +10,8 @@ from local_agent.runtime.delegated_permission_store import (
     grant_permission,
     revoke,
 )
-from ai_orchestrator.local_agent.naver_content_safe_result import validate_naver_result
-from ai_orchestrator.local_agent.naver_content_workflow_runner import (
+from scripts.naver.blog.naver_content_safe_result import validate_naver_result
+from scripts.naver.cafe.naver_content_workflow_runner import (
     WORKFLOW_WARN_PERMISSION,
     run_cafe_to_blog_workflow,
 )

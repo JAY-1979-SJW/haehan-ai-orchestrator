@@ -4921,7 +4921,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/naver_blog_workflow.py": {
+  "scripts/naver/blog/naver_blog_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_blog",
@@ -4929,7 +4929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/naver_cafe_workflow.py": {
+  "scripts/naver/cafe/naver_cafe_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_cafe",
@@ -4937,7 +4937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/naver_content_safe_result.py": {
+  "scripts/naver/blog/naver_content_safe_result.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver",
@@ -4945,7 +4945,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/naver_content_workflow_runner.py": {
+  "scripts/naver/cafe/naver_content_workflow_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver",
@@ -10945,7 +10945,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/run_naver_cafe_to_blog_workflow.py": {
+  "scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_blog",

@@ -16,11 +16,11 @@ from typing import Any
 from local_agent.runtime.delegated_action_executor import (
     EXEC_ALLOWED,
 )
-from ai_orchestrator.local_agent.naver_blog_workflow import (
+from scripts.naver.blog.naver_blog_workflow import (
     generate_blog_draft,
     publish_blog_post,
 )
-from ai_orchestrator.local_agent.naver_cafe_workflow import (
+from scripts.naver.cafe.naver_cafe_workflow import (
     generate_blog_material_from_post,
     read_cafe_post,
     search_cafe,

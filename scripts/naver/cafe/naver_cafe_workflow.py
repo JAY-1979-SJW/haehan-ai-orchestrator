@@ -16,7 +16,7 @@ from typing import Any
 from local_agent.runtime.delegated_action_executor import (
     execute_delegated_action,
 )
-from ai_orchestrator.local_agent.naver_content_safe_result import (
+from scripts.naver.blog.naver_content_safe_result import (
     build_cafe_read_result,
     sanitize_naver_result,
 )
@@ -132,7 +132,7 @@ def generate_blog_material_from_post(post_result: dict[str, Any]) -> dict[str, A
         "ok": True,
         "message_ko": "블로그 소재 후보 생성 완료.",
     }
-    from ai_orchestrator.local_agent.naver_content_safe_result import _FIXED_SAFE_FIELDS
+    from scripts.naver.blog.naver_content_safe_result import _FIXED_SAFE_FIELDS
 
     result.update(_FIXED_SAFE_FIELDS)
     return result

@@ -18,7 +18,7 @@
 - 서버 외부 브라우저 실행
 
 사용:
-  python scripts/local_agent/run_naver_cafe_to_blog_workflow.py
+  python scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py
 """
 
 from __future__ import annotations
@@ -28,11 +28,11 @@ import json
 import pathlib
 import sys
 
-_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]  # scripts/naver/cafe/ → 저장소 루트(이동 전 scripts/local_agent/ 에서와 같은 값)
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_orchestrator.local_agent.naver_content_workflow_runner import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+from scripts.naver.cafe.naver_content_workflow_runner import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     WORKFLOW_PASS,
     WORKFLOW_WARN_AUTH,
     WORKFLOW_WARN_PERMISSION,

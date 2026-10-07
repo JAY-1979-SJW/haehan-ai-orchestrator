@@ -16,7 +16,7 @@ from typing import Any
 from local_agent.runtime.delegated_action_executor import (
     execute_delegated_action,
 )
-from ai_orchestrator.local_agent.naver_content_safe_result import (
+from scripts.naver.blog.naver_content_safe_result import (
     build_blog_draft_result,
     sanitize_naver_result,
 )

@@ -2,7 +2,7 @@
 네이버 카페 workflow 테스트
 """
 import pytest
-from ai_orchestrator.local_agent.naver_cafe_workflow import (
+from scripts.naver.cafe.naver_cafe_workflow import (
     search_cafe, read_cafe_post, generate_blog_material_from_post,
     write_cafe_post, write_cafe_comment, get_cafe_workflow_grade,
     STEP_SEARCH, STEP_READ_POST, STEP_POST_WRITE, STEP_COMMENT_WRITE,
@@ -17,7 +17,7 @@ from local_agent.runtime.delegated_permission_store import (
 from local_agent.runtime.delegated_action_executor import (
     EXEC_ALLOWED, EXEC_NEED_PERMISSION,
 )
-from ai_orchestrator.local_agent.naver_content_safe_result import validate_naver_result
+from scripts.naver.blog.naver_content_safe_result import validate_naver_result
 
 
 @pytest.fixture(autouse=True)
