@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
-from scripts.app_paths import repo_root
+from ai_orchestrator.paths import repo_root
 
 from ..audit_logger import log_event
 from ..services import cafe_membership_service

@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from ai_orchestrator.paths import repo_root
 
 ROOT = repo_root()
 _DIR = ROOT / "data" / "cafe"

@@ -20,11 +20,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from ai_orchestrator.gates import mail_bulk_policy as policy
 from ai_orchestrator.gates import mail_draft_policy as draft_policy
+from ai_orchestrator.paths import repo_root
 from ai_orchestrator.persistence import mail_bulk_store as store
 from ai_orchestrator.workflows import naver_mail_bulk as flow
 from ai_orchestrator.workflows import naver_mail_drafts as drafts
 from ai_orchestrator.workflows import naver_mailbox_flow as mailbox_flow
-from scripts.app_paths import repo_root
 from scripts.naver.mail_imap import bulk_sender
 from scripts.naver.mail_imap import sender as smtp_draft
 
