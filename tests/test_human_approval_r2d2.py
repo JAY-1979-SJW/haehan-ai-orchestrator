@@ -251,12 +251,21 @@ def test_audit_events_are_emitted_without_content(monkeypatch):
 # ── 구조 ──
 
 
-def test_module_does_not_import_scripts():
-    tree = ast.parse((ROOT / "ai_orchestrator" / "gates" / "human_approval.py").read_text(encoding="utf-8"))
+@pytest.mark.parametrize("rel", ["ai_orchestrator/gates/human_approval.py", "ai_orchestrator/persistence/human_approval_store.py"])
+def test_modules_do_not_import_scripts(rel):
+    tree = ast.parse((ROOT / rel).read_text(encoding="utf-8"))
     mods = {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) and n.module}
     mods |= {a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names}
     assert mods
     assert not {m for m in mods if m == "scripts" or m.startswith("scripts.")}
+
+
+def test_policy_layer_has_no_direct_sqlite_and_store_has_no_policy():
+    """저장소 경계: sqlite3 는 persistence(L7)에만, 정책(L2)은 저장 계층을 통해서만 접근한다."""
+    policy = (ROOT / "ai_orchestrator" / "gates" / "human_approval.py").read_text(encoding="utf-8")
+    store_src = (ROOT / "ai_orchestrator" / "persistence" / "human_approval_store.py").read_text(encoding="utf-8")
+    assert "sqlite3" not in policy
+    assert "gate_core" not in store_src and "APPROVED_VIA_ALLOWED" not in store_src
 
 
 def test_schema_version_and_wal(tmp_path):

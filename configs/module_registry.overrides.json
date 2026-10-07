@@ -1201,5 +1201,11 @@
   "role": "shared",
   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
   "source": "manual"
+ },
+ "ai_orchestrator/gates/human_approval.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "사람 발급 승인의 정책(내용 해시·허용된 발급 경로·감사·예외). sqlite 접근은 persistence/human_approval_store.py(L7)에 분리 — 'DB·저장 신호' 오분류 방지",
+  "source": "manual"
  }
 }

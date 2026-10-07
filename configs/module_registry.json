@@ -22314,18 +22314,26 @@
    "source": "rule"
   },
   "ai_orchestrator/gates/human_approval.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "L2",
+   "role": "policy",
    "domain": "common",
-   "reason": "DB·저장 신호",
+   "reason": "승인 정책(해시·허용 발급 경로·감사) — 저장은 persistence/human_approval_store.py(L7)로 분리(R2d-2 P0b)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "tests/test_human_approval_r2d2.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/human_approval_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
    "confidence": "high",
    "source": "rule"
   }
