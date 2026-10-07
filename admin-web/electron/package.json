@@ -48,6 +48,10 @@
         "from": "../.next/standalone",
         "to": "nextjs",
         "filter": ["**/*"]
+      },
+      {
+        "from": "build-info.json",
+        "to": "build-info.json"
       }
     ],
     "win": {

@@ -1,0 +1,236 @@
+# -*- mode: python ; coding: utf-8 -*-
+"""PyInstaller spec for haehan-ai FastAPI server.
+
+빌드:
+    python -m PyInstaller haehan-server.spec --noconfirm --clean --distpath dist
+결과:
+    dist/haehan-server/haehan-server.exe
+
+2026-10-07 복구(W2, 데스크톱 릴리스 빌드 워크플로): 2026-09-23 b13d1216에서
+삭제됐다가 전체 복구. 그 사이 루트 모듈 분리(orchestrator_v1/)로 진입점이
+scripts/run_server.py → ai_orchestrator/asgi.py 로 바뀌어 반영했고,
+scripts.browser_agent(삭제됨)를 hidden_imports에서 뺐다. ai_orchestrator/storage
+와 data/ 는 사용자 데이터(계정 DB·감사 로그 등)가 들어있어 번들에서 명시적으로
+제외한다(DESKTOP_RUNTIME_AUDIT.md D1/D3 — CI는 git 체크아웃이라 애초에 비어
+있지만, 로컬에서 실수로 빌드해도 안 들어가게 방어적으로 막아 둔다).
+"""
+
+import sys
+import os
+from pathlib import Path
+
+ROOT = Path(SPECPATH)
+
+block_cipher = None
+
+# ── Hidden imports ──────────────────────────────────────────────────────────
+hidden_imports = [
+    # ai_orchestrator 패키지 (uvicorn 문자열 import 대응)
+    "ai_orchestrator",
+    "ai_orchestrator.server",
+    "ai_orchestrator.router",
+    "ai_orchestrator.auth",
+    "ai_orchestrator.user_db",
+    "ai_orchestrator.local_agent_registry",
+    "ai_orchestrator.local_agent_registry_common",
+    "ai_orchestrator.local_agent_registry_agent",
+    "ai_orchestrator.local_agent_registry_task_queue",
+    "ai_orchestrator.local_agent_registry_task_lifecycle",
+    "ai_orchestrator.local_agent_registry_task_cancel",
+    "ai_orchestrator.local_agent_registry_cleanup",
+    "ai_orchestrator.local_agent_registry_sanitize",
+    "ai_orchestrator.local_agent_router",
+    "ai_orchestrator.local_agent_router_ws",
+    "ai_orchestrator.local_agent_router_registration",
+    "ai_orchestrator.audit_logger",
+    "scripts.web_connector",
+    "scripts.naver.smartstore.navigation.cdp_popup_manager",
+    # FastAPI / uvicorn
+    "uvicorn.logging",
+    "uvicorn.loops",
+    "uvicorn.loops.auto",
+    "uvicorn.protocols",
+    "uvicorn.protocols.http",
+    "uvicorn.protocols.http.auto",
+    "uvicorn.protocols.websockets",
+    "uvicorn.protocols.websockets.auto",
+    "uvicorn.lifespan",
+    "uvicorn.lifespan.on",
+    "uvicorn.lifespan.off",
+    "fastapi",
+    "fastapi.middleware.cors",
+    "starlette.routing",
+    "starlette.responses",
+    "starlette.middleware",
+    "starlette.middleware.cors",
+    # AI
+    "anthropic",
+    "openai",
+    # Playwright
+    "playwright",
+    "playwright.sync_api",
+    "playwright.async_api",
+    # DB / cache
+    "sqlite3",
+    "aiosqlite",
+    # HTTP
+    "httpx",
+    "httpcore",
+    "aiohttp",
+    "aiofiles",
+    # Utilities
+    "websocket",
+    "websockets",
+    "pillow",
+    "PIL",
+    "PIL.Image",
+    "PIL.ImageEnhance",
+    "PIL.ImageOps",
+    "pyautogui",
+    "pyperclip",
+    "pydantic",
+    "pydantic.v1",
+    "pydantic_settings",
+    "python_dotenv",
+    "dotenv",
+    "cryptography",
+    "cryptography.fernet",
+    # Windows
+    "win32api",
+    "win32con",
+    "win32gui",
+    "winsound",
+    "ctypes",
+    "ctypes.wintypes",
+    # Misc
+    "email",
+    "email.mime",
+    "email.mime.text",
+    "email.mime.multipart",
+    # 메일 프로토콜 (hiworks_mail_reader.py 가 동적 로드 — 정적분석 누락 방지)
+    "poplib",
+    "imaplib",
+    "smtplib",
+    "jinja2",
+    "yaml",
+    "toml",
+    # Auth / Google
+    "jwt",
+    "google",
+    "google.oauth2",
+    "google.oauth2.credentials",
+    "google.auth.transport.requests",
+    "google_auth_oauthlib",
+    "google_auth_oauthlib.flow",
+    "googleapiclient",
+    "googleapiclient.discovery",
+    "googleapiclient.errors",
+    # DB
+    "psycopg2",
+    "psycopg2.extras",
+    "psycopg2.extensions",
+    # System / UI
+    "keyring",
+    "pystray",
+    "win32clipboard",
+    "win32process",
+    "win32security",
+    "winerror",
+    "psutil",
+    # Data
+    "numpy",
+    "openpyxl",
+    "openpyxl.styles",
+    "openpyxl.utils",
+    "requests",
+    "requests.adapters",
+]
+
+# ── Data files ──────────────────────────────────────────────────────────────
+def _tree_excluding(src_dir: Path, dest_prefix: str, exclude_dirnames: set[str]) -> list[tuple[str, str]]:
+    """src_dir 전체를 (file, dest) 목록으로 모으되, exclude_dirnames 에 든 하위
+    폴더(예: 'storage' — 계정 DB·감사 로그 등 사용자 데이터)는 통째로 뺀다.
+    CI는 git 체크아웃이라 storage/ 가 비어 있지만(.gitignore), 로컬에서 실수로
+    빌드해도 사용자 데이터가 번들에 안 들어가게 방어적으로 막는다(D1/D3)."""
+    out: list[tuple[str, str]] = []
+    for dirpath, dirnames, filenames in os.walk(src_dir):
+        dirnames[:] = [d for d in dirnames if d not in exclude_dirnames and d != "__pycache__"]
+        for fn in filenames:
+            full = Path(dirpath) / fn
+            rel = full.relative_to(src_dir)
+            dest = str(Path(dest_prefix) / rel.parent) if str(rel.parent) != "." else dest_prefix
+            out.append((str(full), dest))
+    return out
+
+
+datas = [
+    # .env (로컬 전용 — 배포용 제거 가능)
+    # (str(ROOT / '.env'), '.'),
+    # configs
+    (str(ROOT / 'configs'), 'configs'),
+    # ai_orchestrator 패키지 내 데이터 (storage/ 제외 — 계정 DB·감사 로그 등 사용자 데이터)
+    *_tree_excluding(ROOT / 'ai_orchestrator', 'ai_orchestrator', {'storage'}),
+    # scripts 전체 (realtime_audit, naver, google 등 런타임 import)
+    (str(ROOT / 'scripts'), 'scripts'),
+    # 루트 레벨 모듈 (logging_utils 등 ai_orchestrator가 직접 import)
+    *[(str(p), '.') for p in ROOT.glob('*.py') if p.stem not in ('run_server', 'conftest')],
+    # Playwright 드라이버 (driver/package)
+    (str(Path(sys.executable).parent / 'Lib' / 'site-packages' / 'playwright' / 'driver'), 'playwright/driver'),
+]
+
+# ── Playwright Chromium 번들 제외 (2026-09-09) ────────────────────────────────
+# 예전엔 대상 PC에 Chrome 미설치 시에도 동작하도록 425MB 짜리 Chromium을 통째로
+# 번들했으나, 설치 파일이 너무 커져(15,000+ 파일, 2.2GB) 배포/설치 시간이 과도해짐.
+# 대상 PC에 Google Chrome 설치를 전제로 바꾸고 번들을 뺀다(admin-web/electron/
+# lib/cdp_manager.js 가 Chrome 미탐지 시 설치 안내 다이얼로그를 띄움).
+print("[spec] Chromium 번들 제외 — 대상 PC에 Google Chrome 설치 필요(cdp_manager.js가 안내)")
+
+# ── Analysis ─────────────────────────────────────────────────────────────────
+a = Analysis(
+    [str(ROOT / 'ai_orchestrator' / 'asgi.py')],  # 진입점(2026-10-07: scripts/run_server.py → asgi.py, 루트 모듈 분리 반영)
+    pathex=[str(ROOT)],
+    binaries=[],
+    datas=datas,
+    hiddenimports=hidden_imports,
+    hookspath=[],  # build_hooks/ 삭제 후 미복구 — 현재 커스텀 훅 없음
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[
+        'tkinter',
+        'matplotlib',
+        'scipy',
+        'numpy.testing',
+        'pytest',
+    ],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='haehan-server',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=True,     # 디버그용 콘솔 표시 (배포 시 False)
+    icon=str(ROOT / 'admin-web' / 'electron' / 'icon.ico'),
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='haehan-server',
+)
