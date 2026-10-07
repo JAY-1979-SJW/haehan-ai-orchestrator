@@ -6,8 +6,8 @@ import re
 
 from playwright.sync_api import Page
 
+from scripts.browser.page.page_helper_common import _ERROR_SELECTORS, _find_frame
 from scripts.logger import get_logger
-from scripts.page_helper_common import _ERROR_SELECTORS, _find_frame
 
 log = get_logger(__name__)
 
@@ -16,6 +16,7 @@ def page_check_error(page: Page, timeout: int = 1500) -> str | None:
     """에러 요소가 있으면 텍스트 반환, 없으면 None."""
     try:
         el = page.wait_for_selector(_ERROR_SELECTORS, timeout=timeout, state="visible")
+        assert el is not None  # state="visible" 대기 성공 시 항상 핸들 반환(Playwright)
         msg = el.inner_text().strip()
         log.warn("에러 감지: %s", msg)
         return msg or "(에러 텍스트 없음)"
@@ -31,6 +32,7 @@ def page_wait_click(page: Page, selector: str, timeout: int = 20000) -> bool:
     log.debug("wait_click: %s", selector)
     try:
         el = page.wait_for_selector(selector, timeout=timeout, state="visible")
+        assert el is not None  # state="visible" 대기 성공 시 항상 핸들 반환(Playwright)
         el.click()
         log.debug("click OK: %s", selector)
     except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
@@ -94,6 +96,7 @@ def page_click_then_wait(
     log.debug("click_then_wait: %s → %s", click_selector, wait_selector)
     try:
         el = page.wait_for_selector(click_selector, timeout=click_timeout, state="visible")
+        assert el is not None  # state="visible" 대기 성공 시 항상 핸들 반환(Playwright)
         el.click()
     except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         log.warn("click_then_wait: 클릭 요소 없음 — %s", click_selector)
@@ -105,6 +108,7 @@ def page_click_then_wait(
             timeout=wait_timeout,
             state="visible",
         )
+        assert appeared is not None  # state="visible" 대기 성공 시 항상 핸들 반환(Playwright)
         tag_class = (appeared.get_attribute("class") or "") + (appeared.get_attribute("role") or "")
         if any(k in tag_class for k in ("error", "alert", "toast")):
             msg = appeared.inner_text().strip()
@@ -143,6 +147,7 @@ def page_wait_type(
     el = None
     try:
         el = page.wait_for_selector(selector, timeout=timeout, state="visible")
+        assert el is not None  # state="visible" 대기 성공 시 항상 핸들 반환(Playwright)
         _fill_or_type(el, text, delay)
     except Exception:  # noqa: BLE001 - 범용 페이지 클릭/타입 헬퍼(iframe 폴백 포함) - 실패시 False 반환 또는 대체 방법 시도, 결제/삭제 없음
         # iframe 탐색 fallback

@@ -3,7 +3,7 @@
 모든 웹 자동화 스크립트의 브라우저 연결 진입점.
 
 사용법:
-    from scripts.web_connector import open_page, close_page, browser_session
+    from scripts.browser.page.web_connector import open_page, close_page, browser_session
 
     # 단건
     page = open_page(allow_new_tab=True, reason="manual-single")
@@ -25,7 +25,7 @@ from pathlib import Path
 
 from playwright.sync_api import Page, sync_playwright
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 _DAEMON_STATE = ROOT / "data" / "cdp_daemon_state.json"
 
 import sys  # noqa: E402
@@ -406,6 +406,7 @@ def get_page() -> Page:
                 _PINNED_PAGE = None
             else:
                 raise
+    raise AssertionError("get_page: range(2) 루프는 항상 return 하거나 raise 한다(도달 불가)")
 
 
 def get_page_by_url(*patterns: str, create_url: str | None = None) -> Page:
@@ -521,7 +522,7 @@ def close_page(page: Page) -> None:
 
 
 @contextmanager
-def browser_session() -> Generator[Page, None, None]:
+def browser_session() -> Generator[Page]:
     """CDP 페이지를 컨텍스트 매니저로 제공.
 
     with browser_session() as page:
@@ -545,7 +546,7 @@ def browser_task_session(
     url_patterns: tuple[str, ...] = (),
     start_url: str | None = None,
     max_tabs: int = 1,
-) -> Generator[Page, None, None]:
+) -> Generator[Page]:
     """Yield one bounded task tab and clean task-owned tabs on exit."""
     page = get_task_page(
         task_id=task_id,
@@ -578,7 +579,7 @@ def session_dir(name: str) -> Path:
 def persistent_session(
     name: str,
     headless: bool = False,
-) -> Generator[tuple, None, None]:
+) -> Generator[tuple]:
     """세션을 유지하는 Playwright persistent context 제공.
 
     with persistent_session("ai_assistant") as (ctx, page):

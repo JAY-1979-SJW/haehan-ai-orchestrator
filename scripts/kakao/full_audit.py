@@ -2,8 +2,8 @@
 import sys, time, json, re
 from typing import Any
 sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parents[2]))
-from scripts.web_connector import get_page
-from scripts.page_helper import page_goto
+from scripts.browser.page.web_connector import get_page  # noqa: I001 - 이동 전부터 있던 미정렬 import(동작 변경 없음)
+from scripts.browser.page.page_helper import page_goto
 
 page = get_page()
 BASE = 'https://developers.kakao.com/console/app'

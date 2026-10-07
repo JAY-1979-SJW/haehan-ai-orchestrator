@@ -43,7 +43,7 @@ def _get_page():
     모든 브라우저 접근 명령에서 get_page() 대신 이 함수를 사용한다.
     """
     from scripts.eum.auth import ensure_logged_in
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     page = get_page()
     ensure_logged_in(page)
@@ -195,7 +195,7 @@ def _cmd_login() -> None:
     print("EUM 로그인 상태 확인")
     print("=" * 60)
     _get_page()  # ensure_logged_in 내부에서 결과 출력
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     print(f"  현재 URL: {get_page().url}")
     print("=" * 60)

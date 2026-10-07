@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
-from scripts.page_helper_common import (
+from scripts.browser.page.page_helper_common import (
     _find_frame,
     _safe_auto_login_detect,
     _safe_auto_popup,
     _safe_critical_log,
 )
+from scripts.logger import get_logger
 
 log = get_logger(__name__)
 

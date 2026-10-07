@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.human_input import safe_human_input  # noqa: E402
+from scripts.browser.page.human_input import safe_human_input  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
 from scripts.op_log import op_context  # noqa: E402
 
@@ -551,7 +551,7 @@ def ensure_logged_in(page) -> None:
 
 def main() -> None:
     """CLI 실행: 로그인 시도 및 결과 출력."""
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     print("=" * 60)
     print("EUM 자동 로그인")

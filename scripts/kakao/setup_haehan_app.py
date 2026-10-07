@@ -30,8 +30,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.logger import get_logger  # noqa: E402
-from scripts.page_helper import page_goto  # noqa: E402
-from scripts.web_connector import browser_session  # noqa: E402
+from scripts.browser.page.page_helper import page_goto  # noqa: E402
+from scripts.browser.page.web_connector import browser_session  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -130,7 +130,7 @@ def gate1_connect():
 
 def gate2_login():
     """GATE-2: 카카오 로그인 세션. 저장 세션 복원 시도 → 없으면 대기."""
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     page = get_page()
     if True:

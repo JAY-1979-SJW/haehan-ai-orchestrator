@@ -1,7 +1,7 @@
 """Google 서비스 공통 - 로그인 확인, 작업 컨텍스트
 
-브라우저 연결 → scripts.web_connector
-페이지 헬퍼   → scripts.page_helper
+브라우저 연결 → scripts.browser.page.web_connector
+페이지 헬퍼   → scripts.browser.page.page_helper
 """
 
 from __future__ import annotations
@@ -18,14 +18,14 @@ sys.path.insert(0, str(ROOT))
 
 # 브라우저 연결 모듈
 from scripts.logger import get_logger  # noqa: E402
-from scripts.web_connector import get_page as _wc_get_page  # noqa: E402
+from scripts.browser.page.web_connector import get_page as _wc_get_page  # noqa: E402
 
 log = get_logger(__name__)
 
 # 로그인 세션 모듈
 
 # 공통 페이지 헬퍼 re-export
-from scripts.page_helper import (  # noqa: E402
+from scripts.browser.page.page_helper import (  # noqa: E402
     page_goto,
     page_wait_click,
     page_wait_nav,

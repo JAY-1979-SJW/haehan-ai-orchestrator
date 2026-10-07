@@ -68,7 +68,7 @@ def collect_my_cafes(confirm_mass_change: bool = False, user: dict = Depends(req
     try:
         _ensure_path()
         from scripts.naver.cafe.collection.explorer import get_my_cafes_with_source, save_my_cafes
-        from scripts.web_connector import close_page, get_context, run_on_browser_thread
+        from scripts.browser.page.web_connector import close_page, get_context, run_on_browser_thread
 
         def collect() -> tuple[list[dict], str]:
             # 자기 탭을 직접 만들어 쓰고 닫는다. browser_task_session 은 컨텍스트의 아무 빈 탭을 골라 재사용하므로(2026-10-05 실측:
@@ -122,7 +122,7 @@ def collect_cafe_articles(
         from scripts.naver.cafe.collector import collect_articles
         from scripts.naver.cafe.organizer import organize
         from scripts.naver.cafe.pipeline import run_pipeline
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.page.web_connector import get_page, run_on_browser_thread
 
         # CDP page 조작은 반드시 브라우저 전용 스레드에서 실행(playwright sync 스레드 경계).
         articles = run_on_browser_thread(

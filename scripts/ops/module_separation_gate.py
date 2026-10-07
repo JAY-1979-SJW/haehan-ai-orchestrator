@@ -61,7 +61,7 @@ SEPARATED_MODULES: list[dict] = [
     },
     {
         "name": "page_helper",
-        "root": "scripts/page_helper.py",
+        "root": "scripts/browser/page/page_helper.py",
         "max_root_loc": 45,
         "leaf_glob": "scripts/page_helper_*.py",
         "shared_leaves": {"common", "interact"},

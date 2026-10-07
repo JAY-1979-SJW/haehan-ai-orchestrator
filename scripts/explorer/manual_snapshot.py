@@ -130,7 +130,7 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
 
 
 def cli_snapshot() -> None:
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
     page = get_page()
     r = snapshot_current(page)
     if r["ok"]:

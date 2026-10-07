@@ -53,7 +53,7 @@ def _cmd_session_check() -> None:
 
 def _cmd_login() -> None:
     from scripts.kakao.auth import login
-    from scripts.web_connector import browser_session
+    from scripts.browser.page.web_connector import browser_session
 
     print("=" * 60)
     print("카카오 로그인")

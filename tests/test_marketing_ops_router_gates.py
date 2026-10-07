@@ -89,7 +89,7 @@ def test_publish_blog_confirmed_false_short_circuits_before_gate(api):
 
 def test_publish_blog_passes_gate_with_correct_send_confirm(api):
     _toggle(api, True)
-    with patch("scripts.web_connector.run_on_browser_thread", return_value={"ok": True, "log_no": "t1"}):
+    with patch("scripts.browser.page.web_connector.run_on_browser_thread", return_value={"ok": True, "log_no": "t1"}):
         r = api.post(
             "/naver/marketing-ops/publish-blog",
             json={"package_id": "nope", "confirmed": True, "send_confirm": BLOG_PUBLISH_CONFIRM_TEXT},

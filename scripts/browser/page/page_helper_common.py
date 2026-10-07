@@ -780,7 +780,7 @@ def _safe_critical_log(url: str) -> None:
     """
     try:
         category = _detect_critical_category(url)
-        if is_work_category(category):
+        if category is not None and is_work_category(category):
             from scripts.critical_logger import log_critical
             log_critical(category, f"페이지 접속: {url[:120]}", url=url)
     except Exception:  # noqa: BLE001 - 자동 팝업 처리/로그 기록/프레임 탐색 등 부수 동작 실패는 무시해도 메인 흐름에 영향 없음
@@ -817,8 +817,8 @@ def _safe_auto_login_detect(page: Page, url: str) -> None:
         if not domain:
             return
 
-        from scripts.login_detector import detect_login_state
         from scripts.browser.session.session_tracker import mark_state
+        from scripts.login_detector import detect_login_state
 
         state = detect_login_state(page)
         change = mark_state(domain, state)

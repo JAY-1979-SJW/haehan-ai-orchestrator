@@ -67,7 +67,7 @@ def _run_eum_query(query_fn, *, needs_login_hint: bool = True) -> dict:
     """
     from scripts.site_access import LoginError
     from scripts.site_watch import StepFailure
-    from scripts.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.page.web_connector import get_page, run_on_browser_thread
 
     try:
 
@@ -284,7 +284,7 @@ def send_one(
     try:
         _ensure_root_on_path()
         from scripts.hiworks.mail import fill_compose, send_mail
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.page.web_connector import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         def _compose_and_send():

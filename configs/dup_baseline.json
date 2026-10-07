@@ -334,6 +334,10 @@
    "scripts/youtube/oauth.py:parse_kv_args",
    "scripts/youtube/research_common.py:parse_kv_args"
   ],
+  "a06be2465179c5121eccdfda419be55d0d6a4e2e": [
+   "scripts/eum/labor_test.py:main",
+   "scripts/eum/site_devices.py:main"
+  ],
   "a0d3793fb09312dd9762fb5ca835c35e4d7e3667": [
    "scripts/video/ai_g2b_youtube_ep01_real.py:mux_audio",
    "scripts/video/ai_g2b_youtube_ep02.py:mux_audio"
@@ -453,10 +457,6 @@
   "e52edc3fccea138286e4ee989420aca94771e83d": [
    "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:_route_file",
    "scripts/ops/smoke_app_ui_shell_browser.py:_page"
-  ],
-  "e53b6c96e67ad5ce8bb56b8fc41422ae9b2f71ab": [
-   "scripts/eum/labor_test.py:main",
-   "scripts/eum/site_devices.py:main"
   ],
   "e55f06f8e61437d0e4a448891d63f8c86d52f388": [
    "scripts/browser/cdp/cdp_helper.py:CDP.shot",

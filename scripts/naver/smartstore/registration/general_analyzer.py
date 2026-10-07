@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.naver.auth import ensure_naver_login  # noqa: E402
 from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
-from scripts.web_connector import get_page  # noqa: E402
+from scripts.browser.page.web_connector import get_page  # noqa: E402
 
 URL = "https://sell.smartstore.naver.com/#/products/edit-new"
 OUTPUT = ROOT / "data" / "sitemap" / "smartstore_general_product_fields.json"

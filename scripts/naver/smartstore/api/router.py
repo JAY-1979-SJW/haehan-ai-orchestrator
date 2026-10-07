@@ -72,7 +72,7 @@ def _flag(args: list[str], name: str) -> bool:
 
 def _live_page(args: list[str], *, workflow: str):
     before_live_navigation(args, site="smartstore", workflow=workflow)
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     page = get_page()
     ensure_page_safe(page, site="smartstore", workflow=workflow, phase="before_action")

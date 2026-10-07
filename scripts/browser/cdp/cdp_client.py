@@ -208,7 +208,7 @@ def _cmd_popup_install() -> None:
 
 def _cmd_detect_popup() -> None:
     from scripts.popup_detector import detect_popup
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     page = get_page()
     result = detect_popup(page)
@@ -224,7 +224,7 @@ def _cmd_detect_popup() -> None:
 
 def _cmd_close_popup() -> None:
     from scripts.popup_detector import close_all_popups
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     page = get_page()
     result = close_all_popups(page)
@@ -374,8 +374,8 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
 
 
 def _cmd_analyze() -> None:
-    from scripts.page_analyzer import full_page_analysis
-    from scripts.web_connector import get_page
+    from scripts.browser.page.page_analyzer import full_page_analysis
+    from scripts.browser.page.web_connector import get_page
 
     page = get_page()
     result = full_page_analysis(page, wait_for_load=True)
@@ -479,7 +479,7 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
 def _cmd_crawl_here(task: str, sub: str, args: list[str]) -> None:
     # 로그인 안 거치고 현재 활성 탭부터 BFS 탐색 (사용자 수동 로그인 후 사용)
     from scripts.explorer.site_crawler import crawl_site
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     args_all = ([task] if task else []) + ([sub] if sub else []) + list(args)
     depth = int(args_all[0]) if args_all and args_all[0].isdigit() else 2
@@ -615,7 +615,7 @@ def _cmd_open(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_user_watch(task: str, sub: str) -> None:
-    from scripts.user_action_monitor import watch_user_actions
+    from scripts.browser.page.user_action_monitor import watch_user_actions
 
     timeout_s = int(task) if task and task.isdigit() else 0
     host_filter = sub if sub else None
@@ -643,7 +643,7 @@ def _cmd_gabia(task: str, sub: str, args: list[str]) -> None:
 
 def _cmd_auto_login(task: str, sub: str) -> None:
     from scripts.login_detector import monitor_for_login
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py auto-login <사이트> [URL]")

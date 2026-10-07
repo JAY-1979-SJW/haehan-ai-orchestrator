@@ -46,7 +46,7 @@ def test_cdp_launcher_blocks_scheduler_start_in_sandbox(monkeypatch):
 
 
 def test_web_connector_blocks_daemon_autostart_in_sandbox(tmp_path, monkeypatch):
-    from scripts import web_connector
+    from scripts.browser.page import web_connector
 
     state_file = tmp_path / "cdp_daemon_state.json"
     monkeypatch.setattr(web_connector, "_DAEMON_STATE", state_file)

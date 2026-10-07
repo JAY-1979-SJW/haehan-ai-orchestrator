@@ -248,7 +248,7 @@ def _print_and_save_demolition_list(result: dict) -> None:
 def main(apply: bool = False, device_id: str | None = None) -> None:
     """CLI 실행."""
     from scripts.eum.auth import is_logged_in, login
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     # CLI 인자 파싱
     args = sys.argv[1:]

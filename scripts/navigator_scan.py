@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from scripts.web_connector import get_page
+from scripts.browser.page.web_connector import get_page
 
 
 def scan_links() -> list[dict]:

@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 
 from playwright.sync_api import Page, Response
 
+from scripts.browser.page.page_helper_common import _ERROR_SELECTORS
 from scripts.logger import get_logger
-from scripts.page_helper_common import _ERROR_SELECTORS
 
 log = get_logger(__name__)
 
@@ -29,7 +29,7 @@ def page_watch_network(
     page: Page,
     url_pattern: str = "",
     methods: tuple[str, ...] = ("POST", "PUT", "PATCH", "DELETE"),
-) -> Generator[NetworkLog, None, None]:
+) -> Generator[NetworkLog]:
     """네트워크 요청 감시 컨텍스트.
 
     with page_watch_network(page, "/api/") as net:
@@ -82,7 +82,7 @@ class DomChangeLog:
 def page_watch_dom(
     page: Page,
     selector: str,
-) -> Generator[DomChangeLog, None, None]:
+) -> Generator[DomChangeLog]:
     """DOM 변화 감시 컨텍스트 (MutationObserver).
 
     with page_watch_dom(page, "#result-area") as dom:
@@ -223,6 +223,7 @@ def page_submit_and_verify(  # noqa: PLR0913 - 공개 시그니처 유지(호출
             # 제출 버튼 클릭
             try:
                 btn = page.wait_for_selector(submit_selector, timeout=submit_timeout, state="visible")
+                assert btn is not None  # state="visible" 대기 성공 시 항상 핸들 반환(Playwright)
                 btn.click()
                 log.debug("submit_and_verify: 클릭 완료 — %s", submit_selector)
             except Exception as e:  # noqa: BLE001 - 폼 제출 3중 검증(네트워크/DOM변화/폴링) 유틸 — 각 except는 폴백 시도(input_value 실패시 inner_text) 또는 폴링 계속을 할 뿐, 제출버튼 클릭 실패나 검증 실패는 error_msg와 success=False로 명확히 반환되어 실패가 성공으로 오인되지 않음.
@@ -238,6 +239,7 @@ def page_submit_and_verify(  # noqa: PLR0913 - 공개 시그니처 유지(호출
                         timeout=int(verify_timeout * 1000),
                         state="visible",
                     )
+                    assert appeared is not None  # state="visible" 대기 성공 시 항상 핸들 반환(Playwright)
                     tag_class = (appeared.get_attribute("class") or "") + (appeared.get_attribute("role") or "")
                     if any(k in tag_class for k in ("error", "alert", "toast")):
                         result.error_msg = appeared.inner_text().strip()
@@ -269,7 +271,7 @@ def page_submit_and_verify(  # noqa: PLR0913 - 공개 시그니처 유지(호출
         result.poll_ok = True  # 폴링 기준 미지정 시 생략
 
     # 에러 메시지 최종 확인
-    from scripts.page_helper_interact import page_check_error
+    from scripts.browser.page.page_helper_interact import page_check_error
 
     err = page_check_error(page, timeout=1000)
     if err:

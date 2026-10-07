@@ -259,7 +259,7 @@ def explore_site(page) -> dict:
 def main() -> None:
     """CLI 실행: 사이트 탐색 후 JSON 저장."""
     from scripts.eum.auth import is_logged_in, login
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     print("=" * 60)
     print("EUM 전체 사이트 탐색")

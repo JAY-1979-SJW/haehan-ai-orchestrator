@@ -8,7 +8,7 @@ from scripts.logger import get_logger
 from scripts.login_check import is_logged_in_by_cookie
 from scripts.navigator_common import resolve
 from scripts.op_log import log_op
-from scripts.web_connector import get_page
+from scripts.browser.page.web_connector import get_page
 
 _log = get_logger(__name__)
 

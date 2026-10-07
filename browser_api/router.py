@@ -197,8 +197,8 @@ async def generic_fetch_text(req: FetchTextRequest) -> ActionResponse:
     def _run():
         import time
 
-        from scripts.page_helper import page_goto
-        from scripts.web_connector import browser_session
+        from scripts.browser.page.page_helper import page_goto
+        from scripts.browser.page.web_connector import browser_session
 
         with browser_session() as page:
             page_goto(page, req.url)
@@ -213,7 +213,7 @@ async def generic_fetch_text(req: FetchTextRequest) -> ActionResponse:
             }
 
     try:
-        from scripts.web_connector import run_on_browser_thread
+        from scripts.browser.page.web_connector import run_on_browser_thread
 
         result = await run_in_threadpool(lambda: run_on_browser_thread(_run))
         return _ok("페이지 조회 완료", **result)
@@ -228,8 +228,8 @@ async def generic_screenshot(req: FetchTextRequest) -> ActionResponse:
     def _run():
         import time
 
-        from scripts.page_helper import page_goto
-        from scripts.web_connector import browser_session
+        from scripts.browser.page.page_helper import page_goto
+        from scripts.browser.page.web_connector import browser_session
 
         with browser_session() as page:
             page_goto(page, req.url)
@@ -245,7 +245,7 @@ async def generic_screenshot(req: FetchTextRequest) -> ActionResponse:
             }
 
     try:
-        from scripts.web_connector import run_on_browser_thread
+        from scripts.browser.page.web_connector import run_on_browser_thread
 
         result = await run_in_threadpool(lambda: run_on_browser_thread(_run))
         return _ok("스크린샷 완료", **result)

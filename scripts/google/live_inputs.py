@@ -94,7 +94,7 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
         result["warnings"].append("direct CDP first path was unavailable; retrying Playwright path.")
 
     try:
-        from scripts.web_connector import get_page
+        from scripts.browser.page.web_connector import get_page
 
         page = get_page()
         _dispatch_live_input(page, action, values, result)

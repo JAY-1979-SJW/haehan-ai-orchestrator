@@ -75,7 +75,7 @@ def _cmd_login() -> None:
     input() / 터미널 입력 없음. 앱에서 호출 시에도 동일하게 동작.
     CDP 데몬이 꺼져 있으면 자동 시작 후 연결.
     """
-    from scripts.web_connector import browser_session
+    from scripts.browser.page.web_connector import browser_session  # noqa: I001 - 이동 전부터 있던 미정렬 import(동작 변경 없음)
     from scripts.login_session import is_logged_in
     from scripts.login_detector import monitor_for_login
     from scripts.naver.browser_gate import require_naver_browser

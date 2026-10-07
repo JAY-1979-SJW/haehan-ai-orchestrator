@@ -19,7 +19,7 @@ def _cmd_pay(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
     from scripts.naver.pay import NaverPay
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     gate_check("scan_page")
     pay = NaverPay(get_page())
@@ -40,7 +40,7 @@ def _cmd_talk(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
     from scripts.naver.talk import NaverTalk
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     if sub in ("list", "chats"):
         gate_check("scan_page")
@@ -89,7 +89,7 @@ def _cmd_place(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
     from scripts.naver.place import NaverPlace
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     gate_check("scan_page")
     place = NaverPlace(get_page())

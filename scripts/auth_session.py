@@ -218,7 +218,7 @@ def delete_session(host: str) -> bool:
 
 
 def cli_save(host: str) -> None:
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     page = get_page()
     fp = save_session(host, page)
@@ -228,7 +228,7 @@ def cli_save(host: str) -> None:
 
 
 def cli_load(host: str) -> None:
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     page = get_page()
     # 같은 호스트로 먼저 이동해야 storage 복원 가능

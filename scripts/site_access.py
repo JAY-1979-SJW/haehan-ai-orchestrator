@@ -299,7 +299,7 @@ def _resolve_target(spec, path):
 
 def _step_get_page(w):
     with w.step("cdp_get_page") as s:
-        from scripts.web_connector import get_page
+        from scripts.browser.page.web_connector import get_page
 
         page = get_page()
         if page is None:

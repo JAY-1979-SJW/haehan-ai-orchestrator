@@ -38,7 +38,7 @@ def run_all_sites(reason: str = "manual", max_posts: int = 40) -> dict[str, Any]
     from scripts.community.analyzer import prepare_posts_for_review
     from scripts.community.registry import list_sites
     from scripts.community.universal_extractor import extract_posts
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     sites = list_sites()
     site_reports = []

@@ -2,7 +2,7 @@
 
 Default mode reports findings without failing so existing legacy code can be
 classified. Use --strict in CI or pre-commit once the legacy call sites are
-migrated to scripts.web_connector.get_task_page/browser_task_session.
+migrated to scripts.browser.page.web_connector.get_task_page/browser_task_session.
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ SKIP_PARTS = {
     "tests",
 }
 APPROVED_FILES = {
-    Path("scripts/web_connector.py"),
+    Path("scripts/browser/page/web_connector.py"),
     Path("scripts/browser/session/browser_cdp_selection_gate.py"),
     Path("scripts/browser/session/browser_task_session.py"),
     Path("scripts/local_agent/open_user_browser_session.py"),

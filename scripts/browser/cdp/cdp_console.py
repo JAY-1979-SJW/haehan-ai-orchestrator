@@ -38,7 +38,7 @@
         ...
 
     # Playwright Page와 함께 — 같은 탭을 두 가지 방식으로 제어
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
     from scripts.cdp_console import connect_to_page
 
     page = get_page()

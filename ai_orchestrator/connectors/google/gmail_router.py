@@ -151,7 +151,7 @@ def api_compose(
 
     try:
         from scripts.google.gmail_api import GmailAPI
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.page.web_connector import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         g = run_on_browser_thread(lambda: GmailAPI(get_page()), timeout=60)
@@ -372,7 +372,7 @@ def api_send(
     # GmailAPI는 stateless(브라우저 페이지 재사용) 이므로
     # /compose 후 브라우저에 열린 작성창에서 발송 버튼 클릭
     try:
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.page.web_connector import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         sent = run_on_browser_thread(

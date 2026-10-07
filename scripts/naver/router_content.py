@@ -25,7 +25,7 @@ def _cmd_content(sub: str, args: list[str]) -> None:
         select_targets,
     )
     from scripts.naver.live_safety import before_live_navigation
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     name = args[0] if args and not str(args[0]).startswith("--") else "all"
     limit = int(_option_value(args, "--limit=") or "80")

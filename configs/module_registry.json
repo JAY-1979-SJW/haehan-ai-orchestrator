@@ -10737,7 +10737,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/human_input.py": {
+  "scripts/browser/page/human_input.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -13793,7 +13793,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_blog.py": {
+  "scripts/naver/blog/navigator_blog.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -15633,7 +15633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_analyzer.py": {
+  "scripts/browser/page/page_analyzer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -15641,7 +15641,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/page_helper.py": {
+  "scripts/browser/page/page_helper.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -15649,7 +15649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_common.py": {
+  "scripts/browser/page/page_helper_common.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -15657,7 +15657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_inspect.py": {
+  "scripts/browser/page/page_helper_inspect.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -15665,7 +15665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_interact.py": {
+  "scripts/browser/page/page_helper_interact.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -15673,7 +15673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_nav.py": {
+  "scripts/browser/page/page_helper_nav.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -15681,7 +15681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_watch.py": {
+  "scripts/browser/page/page_helper_watch.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -16065,7 +16065,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/user_action_monitor.py": {
+  "scripts/browser/page/user_action_monitor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -16217,7 +16217,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/web_connector.py": {
+  "scripts/browser/page/web_connector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -22986,6 +22986,14 @@
    "source": "rule"
   },
   "scripts/browser/session/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

@@ -27,7 +27,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from scripts.browser.cdp import cdp_db  # noqa: E402
@@ -139,7 +139,7 @@ def _collect(page) -> list[dict]:
 
 
 def _get_page():
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     return get_page()
 

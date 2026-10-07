@@ -126,7 +126,7 @@ def test_l2_navigate_with_raw_url_uses_page_goto(monkeypatch):
     import types
 
     fake_module = types.SimpleNamespace(get_page=lambda: _FakePage())
-    monkeypatch.setitem(__import__("sys").modules, "scripts.web_connector", fake_module)
+    monkeypatch.setitem(__import__("sys").modules, "scripts.browser.page.web_connector", fake_module)
 
     out = bx.default_runner(bx.ACT_NAVIGATE, {"url": "about:blank"})
     assert out["ok"] is True

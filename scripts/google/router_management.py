@@ -56,7 +56,7 @@ def run_work_records(args: list[str] | None = None) -> None:
 def run_login() -> None:
     """User-present Google login helper."""
     from scripts.google.auth import login_google
-    from scripts.web_connector import get_page
+    from scripts.browser.page.web_connector import get_page
 
     gate_check("wait_login", risk="notify")
     print("=" * 60)
