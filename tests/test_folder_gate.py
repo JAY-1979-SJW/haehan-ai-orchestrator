@@ -241,21 +241,22 @@ def test_initial_registration_when_base_has_no_registry_passes(tmp_path):
 # ── 생성·조회 ───────────────────────────────────────────────────────────
 
 
-def test_init_registry_covers_current_tree_and_pre_approved_targets(tmp_path):
+def test_init_registry_covers_current_tree_and_pre_approved_targets(tmp_path, monkeypatch):
+    monkeypatch.setattr(gate, "LEGACY_TO_REMOVE", frozenset({"notice_radar"}))
     _git(tmp_path, "init", "-q")
     _git(tmp_path, "config", "user.email", "t@t")
     _git(tmp_path, "config", "user.name", "t")
     _w(tmp_path, "scripts/a/x.py")
-    _w(tmp_path, "adapters/legacy.py")
+    _w(tmp_path, "notice_radar/legacy.py")
     _git(tmp_path, "add", "-A")
     _git(tmp_path, "commit", "-qm", "i")
     assert gate.main(["--init-registry", "--root", str(tmp_path)]) == 0
     reg = gate.load_registry(tmp_path)
-    assert {"scripts/a", "adapters"} <= set(reg)  # 현재 트리
+    assert {"scripts/a", "notice_radar"} <= set(reg)  # 현재 트리
     assert {"scripts/browser/cdp", "ai_orchestrator/site_work", "ai_orchestrator/connectors/naver_mail"} <= set(
         reg
     )  # 사전 승인 목표
-    assert reg["adapters"]["status"] == "legacy_to_remove" and reg["scripts/a"]["status"] == "approved"
+    assert reg["notice_radar"]["status"] == "legacy_to_remove" and reg["scripts/a"]["status"] == "approved"
     assert all({"path", "purpose", "kind", "status", "approved_at", "approved_by"} <= set(e) for e in reg.values())
     assert gate.main(["--init-registry", "--root", str(tmp_path)]) == 2  # 이미 있으면 덮어쓰지 않는다
 

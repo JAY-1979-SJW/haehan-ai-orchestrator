@@ -365,6 +365,7 @@ class TestDryRunCodeSafety(unittest.TestCase):
         code = "\n".join(import_lines)
         self.assertNotIn("task_executor", code)
         self.assertNotIn("browser_worker", code)
+        self.assertNotIn("ai_orchestrator.browser_tool.worker", code)
 
     def test_no_playwright_selenium_import(self):
         src = self._get_adapter_src()

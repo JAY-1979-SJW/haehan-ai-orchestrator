@@ -1,8 +1,8 @@
 """Browser Worker service — handles browser requests with policy checks."""
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
-from browser_worker.policy import WorkerSecurityPolicy, is_action_known
-from browser_worker.backends.mock_playwright_backend import MockPlaywrightBackend
-from browser_worker.backends.real_playwright_backend import RealPlaywrightBackend
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from ai_orchestrator.browser_tool.worker.policy import WorkerSecurityPolicy, is_action_known
+from ai_orchestrator.browser_tool.worker.backends.mock_playwright_backend import MockPlaywrightBackend
+from ai_orchestrator.browser_tool.worker.backends.real_playwright_backend import RealPlaywrightBackend
 
 
 def handle_browser_request(request: WorkerBrowserRequest) -> WorkerBrowserResponse:

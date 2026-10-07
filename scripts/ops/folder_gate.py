@@ -89,7 +89,7 @@ PRE_APPROVED_TARGETS: tuple[tuple[str, str, str], ...] = (
 )
 
 # 정리 대상(설계서 §1 '정리 대상'): 참조 조사 후 소속 폴더로 이동하거나 archive 로 — 새 코드를 두지 않는다.
-LEGACY_TO_REMOVE = frozenset({"adapters", "agent", "browser_api", "browser_worker", "notice_radar", "services"})
+LEGACY_TO_REMOVE: frozenset[str] = frozenset()  # S6 완료(2026-10-08) — 정리 대상 폴더 없음. 생기면 여기에 최상위 이름을 적는다
 
 _NAME_PURPOSE = {
     "routers": "FastAPI 라우터",

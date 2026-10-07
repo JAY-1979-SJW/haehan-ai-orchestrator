@@ -1,7 +1,7 @@
 """Tests for Browser Worker mock backend."""
 
-from browser_worker.backends.mock_playwright_backend import MockPlaywrightBackend
-from browser_worker.schemas import WorkerBrowserRequest
+from ai_orchestrator.browser_tool.worker.backends.mock_playwright_backend import MockPlaywrightBackend
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest
 
 
 class TestMockPlaywrightBackend:

@@ -5,10 +5,10 @@ from pathlib import Path
 
 from openpyxl import Workbook
 
-from notice_radar.analyzer import analyze_document
-from notice_radar.models import NoticeCandidate, NoticeDocument
-from notice_radar.parsers import parse_attachment
-from notice_radar.pipeline import analyze_notice_folder
+from orchestrator_v1.inbox.notice_radar.analyzer import analyze_document
+from orchestrator_v1.inbox.notice_radar.models import NoticeCandidate, NoticeDocument
+from orchestrator_v1.inbox.notice_radar.parsers import parse_attachment
+from orchestrator_v1.inbox.notice_radar.pipeline import analyze_notice_folder
 
 
 def test_xlsx_parser_extracts_application_terms(tmp_path: Path):

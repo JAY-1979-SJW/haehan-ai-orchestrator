@@ -78,13 +78,13 @@ IMPORT_SCAN_PREFIXES = {
 
 OPENAPI_APP_MODULES = (
     "browser_api.server",
-    "browser_worker.app",
+    "ai_orchestrator.browser_tool.worker.app",
     "ai_orchestrator.asgi",
 )
 
 PYDANTIC_SCHEMA_MODULES = (
     "scripts.schemas",
-    "browser_worker.schemas",
+    "ai_orchestrator.browser_tool.worker.schemas",
     "ai_orchestrator.browser_tool.schemas",
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
     "ai_orchestrator.server.task_queue_schema",

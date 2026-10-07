@@ -97,7 +97,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "adapters/__init__.py": {
+  "orchestrator_v1/tasks/command_adapter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -105,15 +105,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "adapters/command_adapter.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "adapters/file_adapter.py": {
+  "orchestrator_v1/tasks/file_adapter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -2665,15 +2657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "agent/__init__.py": {
-   "layer": "L10",
-   "role": "local_agent",
-   "domain": "local_agent",
-   "reason": "로컬 에이전트 패키지",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "agent/action_registry.py": {
+  "ai_orchestrator/browser_tool/agent_action_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -2681,7 +2665,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "agent/models.py": {
+  "scripts/archive/misc/agent_models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "local_agent",
@@ -2689,7 +2673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "agent/tests/test_action_registry_approval_policy.py": {
+  "tests/test_agent_action_registry_approval_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "local_agent",
@@ -2697,7 +2681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "agent/tests/test_action_registry_unit.py": {
+  "tests/test_agent_action_registry_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "local_agent",
@@ -7529,15 +7513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_api/__init__.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "browser_api/router.py": {
+  "scripts/archive/misc/browser_api_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "browser",
@@ -7545,7 +7521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_api/server.py": {
+  "scripts/archive/misc/browser_api_server.py": {
    "layer": "L8",
    "role": "api",
    "domain": "browser",
@@ -7553,7 +7529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/__init__.py": {
+  "ai_orchestrator/browser_tool/worker/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7561,7 +7537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/app.py": {
+  "ai_orchestrator/browser_tool/worker/app.py": {
    "layer": "L8",
    "role": "api",
    "domain": "browser",
@@ -7569,7 +7545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/backends/__init__.py": {
+  "ai_orchestrator/browser_tool/worker/backends/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7577,7 +7553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/backends/mock_playwright_backend.py": {
+  "ai_orchestrator/browser_tool/worker/backends/mock_playwright_backend.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7585,7 +7561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/backends/real_playwright_backend.py": {
+  "ai_orchestrator/browser_tool/worker/backends/real_playwright_backend.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7593,7 +7569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/policy.py": {
+  "ai_orchestrator/browser_tool/worker/policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -7601,7 +7577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/schemas.py": {
+  "ai_orchestrator/browser_tool/worker/schemas.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "browser",
@@ -7609,7 +7585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/service.py": {
+  "ai_orchestrator/browser_tool/worker/service.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8129,7 +8105,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "notice_radar/__init__.py": {
+  "orchestrator_v1/inbox/notice_radar/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -8137,7 +8113,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "notice_radar/analyzer.py": {
+  "orchestrator_v1/inbox/notice_radar/analyzer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -8145,7 +8121,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "notice_radar/browser_collector.py": {
+  "orchestrator_v1/inbox/notice_radar/browser_collector.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "g2b",
@@ -8153,7 +8129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "notice_radar/collector.py": {
+  "orchestrator_v1/inbox/notice_radar/collector.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "g2b",
@@ -8161,7 +8137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "notice_radar/models.py": {
+  "orchestrator_v1/inbox/notice_radar/models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "g2b",
@@ -8169,7 +8145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "notice_radar/parsers.py": {
+  "orchestrator_v1/inbox/notice_radar/parsers.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -8177,7 +8153,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "notice_radar/pipeline.py": {
+  "orchestrator_v1/inbox/notice_radar/pipeline.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -8185,7 +8161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "notice_radar/site_profiles.py": {
+  "orchestrator_v1/inbox/notice_radar/site_profiles.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "g2b",
@@ -16216,14 +16192,6 @@
    "reason": "로그·감사 이벤트의 민감정보 마스킹 정규식/헬퍼(REDACTED, SENSITIVE_KEYS) 순수 함수 — IO 없음. L4 기본값 오분류를 L1로 정정.",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "services/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
   },
   "task_store.py": {
    "layer": "L7",

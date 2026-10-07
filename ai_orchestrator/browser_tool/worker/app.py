@@ -5,8 +5,8 @@ future deployment as a separate service. The actual browser operations are
 handled by browser_worker.service when imported by the Tool Router.
 """
 from fastapi import FastAPI
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
-from browser_worker.service import handle_browser_request, get_worker_status
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from ai_orchestrator.browser_tool.worker.service import handle_browser_request, get_worker_status
 
 # FastAPI app skeleton (not deployed in current environment)
 app = FastAPI(
@@ -44,4 +44,4 @@ def browser_action(request: WorkerBrowserRequest) -> WorkerBrowserResponse:
 
 # Note: This app is not run with uvicorn in the current environment.
 # It serves as a specification for the future separate browser-worker service.
-# When deployed, run with: uvicorn browser_worker.app:app --host 0.0.0.0 --port 9900
+# When deployed, run with: uvicorn ai_orchestrator.browser_tool.worker.app:app --host 0.0.0.0 --port 9900
