@@ -17,6 +17,8 @@ def render(stats: dict[str, int], total_targets: int = 0, limit: int = 0) -> str
     lines = ["## 변이 검증(mutmut)", "", f"- 점수(killed/(killed+survived)): **{score}** ({killed}/{decided})"]
     for key in ("survived", "no_tests", "timeout", "suspicious", "skipped"):
         lines.append(f"- {key}: {stats.get(key, 0)}")
+    if not decided:
+        lines.append("- ⚠ **실행된 변이체 0 — 설정 확인 필요**(패턴이 변이체 이름과 안 맞거나 source_paths 범위 문제)")
     if limit and total_targets > limit:
         lines.append(f"- ⚠ 대상 함수 {total_targets}개 중 {limit}개만 검사함(상한 절삭)")
     return "\n".join(lines) + "\n"

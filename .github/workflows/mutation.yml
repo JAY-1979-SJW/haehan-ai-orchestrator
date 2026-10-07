@@ -9,8 +9,12 @@ on:
     branches: [master]
   workflow_dispatch:
     inputs:
+      files:
+        description: '변이 대상 소스 파일(공백 구분, 예: scripts/ops/changed_functions.py)'
+        required: true
+        type: string
       patterns:
-        description: 'mutmut 패턴(공백 구분, 예: "*scripts.ops.changed_functions.module_dotted_path*")'
+        description: 'mutmut 변이체 패턴(공백 구분, 예: "scripts.ops.changed_functions.x_module_dotted_path__mutmut_*")'
         required: true
         type: string
 
@@ -45,19 +49,34 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             python scripts/ops/changed_functions.py "origin/${{ github.base_ref }}" HEAD > all_patterns.txt
+            python scripts/ops/changed_functions.py "origin/${{ github.base_ref }}" HEAD --files > files.txt
           else
-            printf '%s\n' ${{ toJSON(inputs.patterns) }} > all_patterns.txt
+            printf '%s
+' ${{ toJSON(inputs.patterns) }} > all_patterns.txt
+            printf '%s
+' ${{ toJSON(inputs.files) }} > files.txt
           fi
-          sed -i '/^$/d' all_patterns.txt
+          sed -i '/^$/d' all_patterns.txt files.txt
           echo "TOTAL_TARGETS=$(wc -l < all_patterns.txt)" >> "$GITHUB_ENV"
           head -n "$TARGET_LIMIT" all_patterns.txt > patterns.txt
-          cat patterns.txt
+          echo "--- 변이 대상 파일"; cat files.txt
+          echo "--- 변이체 패턴"; cat patterns.txt
       - name: mutmut 실행
         run: |
           if [ ! -s patterns.txt ]; then echo "바뀐 함수 없음 — 건너뜀"; exit 0; fi
+          # 저장소 전체(46만 변이체) 생성을 막으려고 source_paths 를 바뀐 파일로만 덮어쓴다(이 실행에서만, 커밋하지 않음)
+          python - <<'PY'
+          import re, pathlib
+          files = [f for f in pathlib.Path("files.txt").read_text(encoding="utf-8").split() if f]
+          p = pathlib.Path("pyproject.toml")
+          value = "source_paths = [" + ", ".join('"%s"' % f for f in files) + "]"
+          p.write_text(re.sub(r"^source_paths = \[[^\]]*\]", lambda _m: value, p.read_text(encoding="utf-8"), count=1, flags=re.M), encoding="utf-8")
+          PY
+          grep -n "^source_paths" pyproject.toml
           mapfile -t patterns < patterns.txt
           mutmut run "${patterns[@]}" || true
-          mutmut results --all true | head -n 40 || true
+          echo "--- 실제 변이체 이름(앞 60개)"
+          mutmut results --all true | head -n 60 || true
           mutmut export-cicd-stats || true
       - name: 요약
         if: always()

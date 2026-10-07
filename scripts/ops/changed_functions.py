@@ -71,6 +71,13 @@ def functions_touching(source: str, lines: set[int]) -> list[str]:
     return found
 
 
+def mutant_pattern(dotted: str, name: str) -> str:
+    """mutmut 3 변이체 이름 형식: 함수 `모듈.x_함수__mutmut_N`, 메서드 `모듈.xǁ클래스ǁ메서드__mutmut_N`."""
+    if "." in name:
+        return f"{dotted}.xǁ{name.replace('.', 'ǁ')}__mutmut_*"
+    return f"{dotted}.x_{name}__mutmut_*"
+
+
 def patterns_for_diff(ranges: dict[str, set[int]], read=lambda p: Path(p).read_text(encoding="utf-8")) -> list[str]:
     patterns: list[str] = []
     for path in sorted(ranges):
@@ -79,24 +86,58 @@ def patterns_for_diff(ranges: dict[str, set[int]], read=lambda p: Path(p).read_t
         except OSError:
             continue
         dotted = module_dotted_path(path)
-        patterns.extend(f"*{dotted}.{fn}*" for fn in functions_touching(source, ranges[path]))
+        patterns.extend(mutant_pattern(dotted, fn) for fn in functions_touching(source, ranges[path]))
     return patterns
 
 
+def files_for_diff(ranges: dict[str, set[int]], read=lambda p: Path(p).read_text(encoding="utf-8")) -> list[str]:
+    """바뀐 함수가 있는 파일만(변이체 생성 범위를 줄이는 데 쓴다)."""
+    out = []
+    for path in sorted(ranges):
+        try:
+            if functions_touching(read(path), ranges[path]):
+                out.append(path)
+        except OSError:
+            continue
+    return out
+
+
+def rewrite_source_paths(pyproject: str, files: list[str]) -> str:
+    """pyproject 의 [tool.mutmut] source_paths 를 지정 파일들로 바꾼 텍스트(실행 중에만 쓴다)."""
+    value = "source_paths = [" + ", ".join(f'"{f}"' for f in files) + "]"
+    return re.sub(r"^source_paths = \[[^\]]*\]", lambda _m: value, pyproject, count=1, flags=re.M)
+
+
 def main(argv: list[str]) -> int:
-    args = [a for a in argv if not a.startswith("--limit")]
-    limit = 0
-    for i, a in enumerate(argv):
-        if a == "--limit" and i + 1 < len(argv):
-            limit = int(argv[i + 1])
-            args = [x for x in args if x != argv[i + 1]]
-        elif a.startswith("--limit="):
-            limit = int(a.split("=", 1)[1])
+    """사용: BASE [HEAD] [--limit N] [--files] [--write-source-paths PYPROJECT]"""
+    opts = {"--limit": "", "--write-source-paths": ""}
+    flags = {"--files": False}
+    args: list[str] = []
+    it = iter(argv)
+    for a in it:
+        if a in opts:
+            opts[a] = next(it, "")
+        elif a in flags:
+            flags[a] = True
+        else:
+            args.append(a)
     if not args:
-        print("usage: changed_functions.py BASE [HEAD] [--limit N]", file=sys.stderr)
+        print("usage: changed_functions.py BASE [HEAD] [--limit N] [--files] [--write-source-paths PYPROJECT]", file=sys.stderr)
         return 2
     base, head = args[0], (args[1] if len(args) > 1 else "HEAD")
-    patterns = patterns_for_diff(changed_line_ranges(base, head))
+    ranges = changed_line_ranges(base, head)
+    if opts["--write-source-paths"]:
+        target = Path(opts["--write-source-paths"])
+        files = files_for_diff(ranges)
+        tmp = target.with_suffix(target.suffix + ".tmp")
+        tmp.write_text(rewrite_source_paths(target.read_text(encoding="utf-8"), files), encoding="utf-8", newline="\n")
+        tmp.replace(target)
+        return 0
+    if flags["--files"]:
+        print("\n".join(files_for_diff(ranges)))
+        return 0
+    patterns = patterns_for_diff(ranges)
+    limit = int(opts["--limit"] or 0)
     if limit and len(patterns) > limit:
         print(f"[changed_functions] {len(patterns)}개 중 앞 {limit}개만 출력(상한)", file=sys.stderr)
         patterns = patterns[:limit]
