@@ -6,13 +6,7 @@ from typing import Any
 
 from scripts.common.gate import check as gate_check
 
-from .router_common import (
-    _flag,
-    _int_option,
-    _option_value,
-    _print_saved,
-    _save_latest,
-)
+from scripts.naver.common.router_common import _flag, _int_option, _option_value, _print_saved, _save_latest
 
 
 def _cmd_pay(sub: str, args: list[str]) -> None:
@@ -39,7 +33,7 @@ def _cmd_pay(sub: str, args: list[str]) -> None:
 def _cmd_talk(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
-    from scripts.naver.talk import NaverTalk
+    from scripts.naver.common.talk import NaverTalk
     from scripts.browser.cdp.connection import get_page
 
     if sub in ("list", "chats"):
@@ -88,7 +82,7 @@ def _cmd_talk(sub: str, args: list[str]) -> None:
 def _cmd_place(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
-    from scripts.naver.place import NaverPlace
+    from scripts.naver.common.place import NaverPlace
     from scripts.browser.cdp.connection import get_page
 
     gate_check("scan_page")

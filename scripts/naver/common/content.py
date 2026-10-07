@@ -10,13 +10,13 @@ from pathlib import Path
 from typing import Any
 
 from scripts.common.logger import get_logger
-from scripts.naver.auth import ensure_naver_login
-from scripts.naver.live_safety import ensure_page_safe, throttle_live
+from scripts.naver.common.auth import ensure_naver_login
+from scripts.naver.common.live_safety import ensure_page_safe, throttle_live
 from scripts.site_engine.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT / "data"
 
 CONTENT_TARGETS: dict[str, dict[str, str]] = {

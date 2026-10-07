@@ -18,7 +18,7 @@ from scripts.common.auth_window_gate import (
     STAGE_TWO_FACTOR,
     classify,
 )
-from scripts.naver import auth_window_gate as naver_gate
+from scripts.naver.common import auth_window_gate as naver_gate
 
 
 def probe(url, text="", buttons=(), hasPw=False):

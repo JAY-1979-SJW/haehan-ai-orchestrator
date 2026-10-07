@@ -627,7 +627,7 @@ def run():
 
         # ── Scene 3: 네이버 로그인 페이지 이동 ──────────────────────────────
         print(f"  {step(3)} 네이버 로그인 페이지 이동")
-        from scripts.naver.auth import (
+        from scripts.naver.common.auth import (
             _BTN_SELECTORS,
             _ID_SELECTORS,
             _PW_SELECTORS,

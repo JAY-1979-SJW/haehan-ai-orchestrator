@@ -55,12 +55,12 @@ page can be inspected.
 
 Safety module:
 
-- `scripts/naver/live_safety.py`
+- `scripts/naver/common/live_safety.py`
 
 Integrated paths:
 
 - `scripts/naver/router.py` for `naver content explore`
-- `scripts/naver/content.py` before/after content navigation and before surface extraction
+- `scripts/naver/common/content.py` before/after content navigation and before surface extraction
 - `scripts/smartstore/router.py` before every live SmartStore browser action
 
 ## Operational Notes

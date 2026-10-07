@@ -12,17 +12,7 @@ from scripts.naver.cafe.cli_router import _cmd_cafe, _cmd_calendar, _cmd_mybox  
 
 from . import blog
 from .dispatch import _run_naver_content_task, _run_naver_service_task, _run_naver_system_task  # noqa: F401
-from .router_common import (  # noqa: F401
-    _flag,
-    _gate_blog,
-    _gate_mail,
-    _int_option,
-    _option_phrase,
-    _option_value,
-    _parse_datetime_arg,
-    _print_saved,
-    _save_latest,
-)
+from scripts.naver.common.router_common import _flag, _gate_blog, _gate_mail, _int_option, _option_phrase, _option_value, _parse_datetime_arg, _print_saved, _save_latest  # noqa: F401
 from .router_content import (  # noqa: F401
     _cmd_content,
     _cmd_developers,

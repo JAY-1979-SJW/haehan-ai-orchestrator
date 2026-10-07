@@ -95,7 +95,7 @@ class NotificationHub:
     def send_talk(self, partner: str, message: str) -> dict:
         if not self.page:
             return {"ok": False, "error": "page_required"}
-        from scripts.naver.talk import NaverTalk
+        from scripts.naver.common.talk import NaverTalk
 
         talk = NaverTalk(self.page)
         return talk.send_message(partner, message, confirm=True)

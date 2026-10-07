@@ -9633,7 +9633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/auth.py": {
+  "scripts/naver/common/auth.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -9641,7 +9641,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/naver/auth_window_gate.py": {
+  "scripts/naver/common/auth_window_gate.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "naver",
@@ -9729,7 +9729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/smartstore/automation/workflow.py": {
+  "scripts/naver/workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver",
@@ -10721,7 +10721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/content.py": {
+  "scripts/naver/common/content.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -10753,7 +10753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/live_safety.py": {
+  "scripts/naver/common/live_safety.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "naver",
@@ -11049,7 +11049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/mybox.py": {
+  "scripts/naver/common/mybox.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11081,7 +11081,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/place.py": {
+  "scripts/naver/common/place.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11121,7 +11121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/router_common.py": {
+  "scripts/naver/common/router_common.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11713,7 +11713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/talk.py": {
+  "scripts/naver/common/talk.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -22385,7 +22385,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/calendar_tasks.py": {
+  "scripts/naver/common/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -23039,6 +23039,14 @@
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/common/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "low",
    "source": "rule"
   }
  }

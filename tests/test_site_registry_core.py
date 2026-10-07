@@ -110,7 +110,7 @@ def test_naver_login_wrapper_maps_the_result_to_the_common_schema(monkeypatch):
         seen.update(kwargs)
         return {"logged_in": True, "user": "skyjwsin", "captcha": False}
 
-    monkeypatch.setattr("scripts.naver.auth.login_naver", fake_login_naver)
+    monkeypatch.setattr("scripts.naver.common.auth.login_naver", fake_login_naver)
     result = reg.get_site("naver").login(object(), force_login=True)
     assert result == {"ok": True, "reason": "", "user": "skyjwsin", "needs_manual": False}
     assert seen == {"wait_for_user_s": 10, "force_relogin": True}
@@ -118,7 +118,7 @@ def test_naver_login_wrapper_maps_the_result_to_the_common_schema(monkeypatch):
 
 def test_naver_login_wrapper_flags_captcha_as_manual(monkeypatch):
     monkeypatch.setattr(
-        "scripts.naver.auth.login_naver",
+        "scripts.naver.common.auth.login_naver",
         lambda page, **kw: {"ok": False, "captcha_required": True, "reason": "captcha"},
     )
     result = reg.get_site("naver").login(object())

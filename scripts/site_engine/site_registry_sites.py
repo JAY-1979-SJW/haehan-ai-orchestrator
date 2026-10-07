@@ -35,7 +35,7 @@ def _naver_is_logged_in(page):
 
 
 def _naver_login(page, *, force_login: bool = False):
-    from scripts.naver.auth import login_naver
+    from scripts.naver.common.auth import login_naver
 
     # wait_for_user_s 짧게 (B방식 fallback은 site_access에서 제어)
     r = login_naver(page, wait_for_user_s=10, force_relogin=force_login)

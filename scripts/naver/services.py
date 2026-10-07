@@ -45,7 +45,7 @@ class NaverServices:
 
     def login(self, naver_id: str | None = None, naver_pw: str | None = None) -> dict:
         """네이버 자동 로그인 (자격증명 환경변수/파일/파라미터)."""
-        from scripts.naver.auth import login_naver
+        from scripts.naver.common.auth import login_naver
 
         return login_naver(self.page, naver_id, naver_pw)
 
@@ -83,7 +83,7 @@ class NaverServices:
     @property
     def calendar(self):
         if self._calendar is None:
-            from scripts.naver.calendar_tasks import NaverCalendar
+            from scripts.naver.common.calendar_tasks import NaverCalendar
 
             self._calendar = NaverCalendar(self.page)
         return self._calendar
@@ -91,7 +91,7 @@ class NaverServices:
     @property
     def mybox(self):
         if self._mybox is None:
-            from scripts.naver.mybox import NaverMyBox
+            from scripts.naver.common.mybox import NaverMyBox
 
             self._mybox = NaverMyBox(self.page)
         return self._mybox
@@ -107,7 +107,7 @@ class NaverServices:
     @property
     def talk(self):
         if self._talk is None:
-            from scripts.naver.talk import NaverTalk
+            from scripts.naver.common.talk import NaverTalk
 
             self._talk = NaverTalk(self.page)
         return self._talk
@@ -115,7 +115,7 @@ class NaverServices:
     @property
     def place(self):
         if self._place is None:
-            from scripts.naver.place import NaverPlace
+            from scripts.naver.common.place import NaverPlace
 
             self._place = NaverPlace(self.page)
         return self._place

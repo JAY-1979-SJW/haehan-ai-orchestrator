@@ -56,7 +56,7 @@ def test_publish_requires_approval_flags(fake_cafe):
 
 
 def test_publish_with_approval_publishes_directly(fake_cafe, capsys):
-    from scripts.naver.content import APPROVAL_CONFIRM_TEXT
+    from scripts.naver.common.content import APPROVAL_CONFIRM_TEXT
 
     fake_cafe.result = {"ok": True, "url": "https://cafe.naver.com/testcafe/1"}
     _run("publish", "--approved", f"--confirm={APPROVAL_CONFIRM_TEXT}")

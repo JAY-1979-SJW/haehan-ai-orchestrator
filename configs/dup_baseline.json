@@ -155,8 +155,8 @@
    "scripts/ops/audit_web_project_provisioning_factory.py:main"
   ],
   "65ec1a903e7c4d29911e7ff388bae95e6542b527": [
-   "scripts/naver/mybox.py:NaverMyBox.open",
-   "scripts/naver/talk.py:NaverTalk.open"
+   "scripts/naver/common/mybox.py:NaverMyBox.open",
+   "scripts/naver/common/talk.py:NaverTalk.open"
   ],
   "6d1a5ce95e8f3c3f8d97ffa1240713c858e8731b": [
    "scripts/local_agent/g2b/run_readonly_local_e2e.py:_save_report",
@@ -172,7 +172,7 @@
   ],
   "77f4d8c54d71a79d80a2dcf29f4c21a3dcfaa0c1": [
    "scripts/hiworks/actions.py:print_prepare_plan_summary",
-   "scripts/naver/content.py:print_action_summary"
+   "scripts/naver/common/content.py:print_action_summary"
   ],
   "7977b42cf3bf386ad6ca7c4479c72ddb04dcbae0": [
    "orchestrator_v1/inbox/inbox_store.py:_load_all",
@@ -277,8 +277,8 @@
    "scripts/instagram/reel_overlay.py:_fit_cover"
   ],
   "dd98391254fcf8260de1b0c71e2290212b22ff73": [
-   "scripts/naver/calendar_tasks.py:NaverCalendar.open",
-   "scripts/naver/place.py:NaverPlace.open"
+   "scripts/naver/common/calendar_tasks.py:NaverCalendar.open",
+   "scripts/naver/common/place.py:NaverPlace.open"
   ],
   "e52edc3fccea138286e4ee989420aca94771e83d": [
    "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:_route_file",
@@ -308,7 +308,7 @@
   ],
   "f568a5f5be82c5fa8429969099bc76c6122861f9": [
    "scripts/hiworks/service_explorer.py:selected_targets",
-   "scripts/naver/content.py:select_targets"
+   "scripts/naver/common/content.py:select_targets"
   ],
   "fcc9673f9a46bea4053b07a2b608145f7ffdd247": [
    "ai_orchestrator/local_agent/installer_folder_presenter.py:_result",

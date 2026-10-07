@@ -499,13 +499,13 @@
   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
   "source": "manual"
  },
- "scripts/naver/auth.py": {
+ "scripts/naver/common/auth.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 ID/PW 자동 로그인 모듈(사람처럼 타이핑·캡차 감지·login_detector 호출) — 정책 게이트가 아니라 사이트별 자동화 구현. 이름만 auth라 오분류.",
   "source": "manual"
  },
- "scripts/naver/auth_window_gate.py": {
+ "scripts/naver/common/auth_window_gate.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "파일 docstring이 명시적으로 'L4 Browser Engine 계층'이라고 선언 — 범용 scripts.common.auth_window_gate 엔진에 NAVER_PROFILE만 주입하는 하위호환 래퍼. 이름만 gate라 L2로 오분류.",

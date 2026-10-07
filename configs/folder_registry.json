@@ -2219,6 +2219,14 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/naver/common",
+   "purpose": "네이버 하위 도구(blog·cafe·smartstore·mail)가 함께 쓰는 공용 모듈",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님"
+  },
+  {
    "path": "scripts/naver/mail",
    "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",

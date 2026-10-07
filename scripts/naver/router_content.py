@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from scripts.common.gate import check as gate_check
-
-from .router_common import (
+from scripts.naver.common.router_common import (
     _flag,
     _int_option,
     _option_phrase,
@@ -15,7 +14,8 @@ from .router_common import (
 
 
 def _cmd_content(sub: str, args: list[str]) -> None:
-    from scripts.naver.content import (
+    from scripts.browser.cdp.connection import get_page
+    from scripts.naver.common.content import (
         build_action_catalog,
         print_action_summary,
         print_surface_summary,
@@ -24,8 +24,7 @@ def _cmd_content(sub: str, args: list[str]) -> None:
         scan_target,
         select_targets,
     )
-    from scripts.naver.live_safety import before_live_navigation
-    from scripts.browser.cdp.connection import get_page
+    from scripts.naver.common.live_safety import before_live_navigation
 
     name = args[0] if args and not str(args[0]).startswith("--") else "all"
     limit = int(_option_value(args, "--limit=") or "80")

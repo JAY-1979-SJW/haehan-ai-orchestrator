@@ -12,7 +12,7 @@ import time
 from playwright.sync_api import Page
 
 from scripts.common.logger import get_logger
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.common.auth import ensure_naver_login
 from scripts.browser.popup.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)

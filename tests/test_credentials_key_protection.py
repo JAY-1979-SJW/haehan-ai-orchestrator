@@ -108,7 +108,7 @@ def test_error_messages_never_contain_secrets(env):
 
 
 def test_naver_save_credentials_goes_to_encrypted_store_not_plaintext(env, monkeypatch, tmp_path):
-    from scripts.naver import auth
+    from scripts.naver.common import auth
 
     monkeypatch.setattr(auth, "ENV_FILE", tmp_path / ".env_naver")
     auth.save_credentials("naver_user", "Dummy-Pw-2")

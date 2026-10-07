@@ -115,7 +115,7 @@ def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
 
     # ── Step 4: 네이버 로그인 ────────────────────────────────────────────────
     try:
-        from scripts.naver.auth import login_naver
+        from scripts.naver.common.auth import login_naver
 
         result = login_naver(page, naver_id=naver_id)
     except Exception as e:  # noqa: BLE001 - 네이버 로그인 파이프라인 - 세션은 저장만 하고 로그아웃/쿠키삭제 없음, 실패시 _fail() 로 명확히 실패 반환

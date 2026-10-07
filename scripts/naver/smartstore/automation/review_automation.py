@@ -98,7 +98,7 @@ class ReviewAutoResponder:
 
     def respond_place_reviews(self, limit: int = 20, confirm: bool = False) -> dict:
         """스마트플레이스 리뷰 자동 답변."""
-        from scripts.naver.place import NaverPlace
+        from scripts.naver.common.place import NaverPlace
 
         place = NaverPlace(self.page)
         reviews = place.reviews(limit=limit)

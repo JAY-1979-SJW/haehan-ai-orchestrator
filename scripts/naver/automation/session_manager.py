@@ -55,7 +55,7 @@ class SessionManager:
             mode="session_expired",
         )
 
-        from scripts.naver.auth import login_naver
+        from scripts.naver.common.auth import login_naver
 
         r = login_naver(self.page)
         if r.get("ok"):

@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 from scripts.common.gate import check as gate_check
-from scripts.naver.router_common import (
+from scripts.naver.common.router_common import (
     _flag,
     _int_option,
     _option_phrase,
@@ -298,7 +298,7 @@ def _cafe_read(args: list[str]) -> None:
 def _cafe_write(sub: str, args: list[str]) -> None:
     """cafe write/prepare-post/publish (승인 게이트 포함)."""
     from scripts.naver.cafe import NaverCafe
-    from scripts.naver.content import (
+    from scripts.naver.common.content import (
         APPROVAL_CONFIRM_TEXT,
         build_cafe_write_plan,
         save_cafe_submit_record,
@@ -408,7 +408,7 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
 def _cmd_calendar(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
-    from scripts.naver.calendar_tasks import NaverCalendar
+    from scripts.naver.common.calendar_tasks import NaverCalendar
     from scripts.browser.cdp.connection import get_page
 
     if sub in ("list", "events"):
@@ -473,7 +473,7 @@ def _cmd_mybox(sub: str, args: list[str]) -> None:
     from datetime import datetime
     from pathlib import Path
 
-    from scripts.naver.mybox import NaverMyBox
+    from scripts.naver.common.mybox import NaverMyBox
     from scripts.browser.cdp.connection import get_page
 
     if sub in ("list", "files"):

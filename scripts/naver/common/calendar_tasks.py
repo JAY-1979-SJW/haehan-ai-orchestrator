@@ -3,7 +3,7 @@
 URL: https://calendar.naver.com/
 
 사용:
-  from scripts.naver.calendar_tasks import NaverCalendar
+  from scripts.naver.common.calendar_tasks import NaverCalendar
   c = NaverCalendar(page)
   c.list_events(from_date, to_date)
   c.add_event(title, start, end, location, memo)
@@ -19,7 +19,7 @@ from playwright.sync_api import Page
 
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.common.auth import ensure_naver_login
 from scripts.browser.popup.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)

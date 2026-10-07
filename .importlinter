@@ -927,8 +927,8 @@ forbidden_modules =
     scripts.mk_catalog.pricing
     scripts.mk_catalog.public_catalog
     scripts.mk_catalog.vision_extract
-    scripts.naver.auth
-    scripts.naver.auth_window_gate
+    scripts.naver.common.auth
+    scripts.naver.common.auth_window_gate
     scripts.naver.automation.ai_responder
     scripts.naver.automation.analytics_dashboard
     scripts.naver.automation.competitor_analysis
@@ -1061,14 +1061,14 @@ forbidden_modules =
     scripts.naver.cafe.write.join_request
     scripts.naver.cafe.write.writer
     scripts.naver.cafe.writer
-    scripts.naver.calendar_tasks
+    scripts.naver.common.calendar_tasks
     scripts.naver.company_seo
-    scripts.naver.content
+    scripts.naver.common.content
     scripts.naver.dispatch
     scripts.naver.excel_reports
     scripts.naver.generate_catalog
     scripts.naver.keyword_tools
-    scripts.naver.live_safety
+    scripts.naver.common.live_safety
     scripts.naver.mail.action_item_dashboard
     scripts.naver.mail.analysis.action_item_dashboard
     scripts.naver.mail.analysis.business_report
@@ -1115,16 +1115,16 @@ forbidden_modules =
     scripts.naver.mail.utilities.settings_panel
     scripts.naver.mail.utilities.time_parser
     scripts.naver.mail.watch_new_mail
-    scripts.naver.mybox
+    scripts.naver.common.mybox
     scripts.naver.openapi_key_lookup
     scripts.naver.pay
     scripts.naver.personal_explorer
-    scripts.naver.place
+    scripts.naver.common.place
     scripts.naver.register_credentials
     scripts.naver.router
     scripts.naver.router_blog
     scripts.naver.router_cafe
-    scripts.naver.router_common
+    scripts.naver.common.router_common
     scripts.naver.router_content
     scripts.naver.router_social
     scripts.naver.router_status
@@ -1195,7 +1195,7 @@ forbidden_modules =
     scripts.naver.smartstore.registration.general_full_analyze
     scripts.naver.smartstore.registration.product_analyzer
     scripts.naver.smartstore.run_page_builder
-    scripts.naver.talk
+    scripts.naver.common.talk
     scripts.site_engine.action_planner
     scripts.site_engine.adapters.browser
     scripts.site_engine.command_router
@@ -1335,7 +1335,7 @@ source_modules =
     scripts.local_agent.process_guard
     scripts.naver.blog.automation.gates
     scripts.naver.browser_gate
-    scripts.naver.live_safety
+    scripts.naver.common.live_safety
     scripts.naver.mail.collection.folder_policy
     scripts.naver.mail.folder_policy
     scripts.naver.mail.processing.read_state_guard
@@ -2008,8 +2008,8 @@ forbidden_modules =
     scripts.mk_catalog.pricing
     scripts.mk_catalog.public_catalog
     scripts.mk_catalog.vision_extract
-    scripts.naver.auth
-    scripts.naver.auth_window_gate
+    scripts.naver.common.auth
+    scripts.naver.common.auth_window_gate
     scripts.naver.automation.ai_responder
     scripts.naver.automation.analytics_dashboard
     scripts.naver.automation.competitor_analysis
@@ -2137,9 +2137,9 @@ forbidden_modules =
     scripts.naver.cafe.write.join_request
     scripts.naver.cafe.write.writer
     scripts.naver.cafe.writer
-    scripts.naver.calendar_tasks
+    scripts.naver.common.calendar_tasks
     scripts.naver.company_seo
-    scripts.naver.content
+    scripts.naver.common.content
     scripts.naver.dispatch
     scripts.naver.excel_reports
     scripts.naver.generate_catalog
@@ -2186,16 +2186,16 @@ forbidden_modules =
     scripts.naver.mail.utilities.settings_panel
     scripts.naver.mail.utilities.time_parser
     scripts.naver.mail.watch_new_mail
-    scripts.naver.mybox
+    scripts.naver.common.mybox
     scripts.naver.openapi_key_lookup
     scripts.naver.pay
     scripts.naver.personal_explorer
-    scripts.naver.place
+    scripts.naver.common.place
     scripts.naver.register_credentials
     scripts.naver.router
     scripts.naver.router_blog
     scripts.naver.router_cafe
-    scripts.naver.router_common
+    scripts.naver.common.router_common
     scripts.naver.router_content
     scripts.naver.router_social
     scripts.naver.router_status
@@ -2258,7 +2258,7 @@ forbidden_modules =
     scripts.naver.smartstore.registration.general_full_analyze
     scripts.naver.smartstore.registration.product_analyzer
     scripts.naver.smartstore.run_page_builder
-    scripts.naver.talk
+    scripts.naver.common.talk
     scripts.site_engine.adapters.browser
     scripts.site_engine.command_router
     scripts.site_engine.readonly_check
@@ -3102,8 +3102,8 @@ forbidden_modules =
     scripts.mk_catalog.pricing
     scripts.mk_catalog.public_catalog
     scripts.mk_catalog.vision_extract
-    scripts.naver.auth
-    scripts.naver.auth_window_gate
+    scripts.naver.common.auth
+    scripts.naver.common.auth_window_gate
     scripts.naver.automation.ai_responder
     scripts.naver.automation.analytics_dashboard
     scripts.naver.automation.competitor_analysis
@@ -3236,14 +3236,14 @@ forbidden_modules =
     scripts.naver.cafe.write.join_request
     scripts.naver.cafe.write.writer
     scripts.naver.cafe.writer
-    scripts.naver.calendar_tasks
+    scripts.naver.common.calendar_tasks
     scripts.naver.company_seo
-    scripts.naver.content
+    scripts.naver.common.content
     scripts.naver.dispatch
     scripts.naver.excel_reports
     scripts.naver.generate_catalog
     scripts.naver.keyword_tools
-    scripts.naver.live_safety
+    scripts.naver.common.live_safety
     scripts.naver.mail.action_item_dashboard
     scripts.naver.mail.analysis.action_item_dashboard
     scripts.naver.mail.analysis.business_report
@@ -3290,16 +3290,16 @@ forbidden_modules =
     scripts.naver.mail.utilities.settings_panel
     scripts.naver.mail.utilities.time_parser
     scripts.naver.mail.watch_new_mail
-    scripts.naver.mybox
+    scripts.naver.common.mybox
     scripts.naver.openapi_key_lookup
     scripts.naver.pay
     scripts.naver.personal_explorer
-    scripts.naver.place
+    scripts.naver.common.place
     scripts.naver.register_credentials
     scripts.naver.router
     scripts.naver.router_blog
     scripts.naver.router_cafe
-    scripts.naver.router_common
+    scripts.naver.common.router_common
     scripts.naver.router_content
     scripts.naver.router_social
     scripts.naver.router_status
@@ -3370,7 +3370,7 @@ forbidden_modules =
     scripts.naver.smartstore.registration.general_full_analyze
     scripts.naver.smartstore.registration.product_analyzer
     scripts.naver.smartstore.run_page_builder
-    scripts.naver.talk
+    scripts.naver.common.talk
     scripts.site_engine.action_planner
     scripts.site_engine.adapters.browser
     scripts.site_engine.command_router
@@ -3615,7 +3615,7 @@ source_modules =
     scripts.local_agent.run_security_install_discovery
     scripts.local_agent.start_chrome_with_cdp
     scripts.local_agent.validate_site_profile
-    scripts.naver.auth_window_gate
+    scripts.naver.common.auth_window_gate
     scripts.site_engine.adapters.browser
     scripts.site_engine.command_router
     scripts.site_engine.readonly_check
@@ -4076,7 +4076,7 @@ forbidden_modules =
     scripts.mk_catalog.pricing
     scripts.mk_catalog.public_catalog
     scripts.mk_catalog.vision_extract
-    scripts.naver.auth
+    scripts.naver.common.auth
     scripts.naver.automation.ai_responder
     scripts.naver.automation.analytics_dashboard
     scripts.naver.automation.competitor_analysis
@@ -4204,9 +4204,9 @@ forbidden_modules =
     scripts.naver.cafe.write.join_request
     scripts.naver.cafe.write.writer
     scripts.naver.cafe.writer
-    scripts.naver.calendar_tasks
+    scripts.naver.common.calendar_tasks
     scripts.naver.company_seo
-    scripts.naver.content
+    scripts.naver.common.content
     scripts.naver.dispatch
     scripts.naver.excel_reports
     scripts.naver.generate_catalog
@@ -4253,16 +4253,16 @@ forbidden_modules =
     scripts.naver.mail.utilities.settings_panel
     scripts.naver.mail.utilities.time_parser
     scripts.naver.mail.watch_new_mail
-    scripts.naver.mybox
+    scripts.naver.common.mybox
     scripts.naver.openapi_key_lookup
     scripts.naver.pay
     scripts.naver.personal_explorer
-    scripts.naver.place
+    scripts.naver.common.place
     scripts.naver.register_credentials
     scripts.naver.router
     scripts.naver.router_blog
     scripts.naver.router_cafe
-    scripts.naver.router_common
+    scripts.naver.common.router_common
     scripts.naver.router_content
     scripts.naver.router_social
     scripts.naver.router_status
@@ -4325,7 +4325,7 @@ forbidden_modules =
     scripts.naver.smartstore.registration.general_full_analyze
     scripts.naver.smartstore.registration.product_analyzer
     scripts.naver.smartstore.run_page_builder
-    scripts.naver.talk
+    scripts.naver.common.talk
     scripts.site_engine.site_registry_sites
     scripts.youtube.browser_transcript
     scripts.youtube.recording
@@ -4587,7 +4587,7 @@ source_modules =
     scripts.mk_catalog.pricing
     scripts.mk_catalog.public_catalog
     scripts.mk_catalog.vision_extract
-    scripts.naver.auth
+    scripts.naver.common.auth
     scripts.naver.automation.ai_responder
     scripts.naver.automation.analytics_dashboard
     scripts.naver.automation.competitor_analysis
@@ -4699,9 +4699,9 @@ source_modules =
     scripts.naver.cafe.write.join_request
     scripts.naver.cafe.write.writer
     scripts.naver.cafe.writer
-    scripts.naver.calendar_tasks
+    scripts.naver.common.calendar_tasks
     scripts.naver.company_seo
-    scripts.naver.content
+    scripts.naver.common.content
     scripts.naver.dispatch
     scripts.naver.excel_reports
     scripts.naver.generate_catalog
@@ -4743,16 +4743,16 @@ source_modules =
     scripts.naver.mail.utilities.settings_panel
     scripts.naver.mail.utilities.time_parser
     scripts.naver.mail.watch_new_mail
-    scripts.naver.mybox
+    scripts.naver.common.mybox
     scripts.naver.openapi_key_lookup
     scripts.naver.pay
     scripts.naver.personal_explorer
-    scripts.naver.place
+    scripts.naver.common.place
     scripts.naver.register_credentials
     scripts.naver.router
     scripts.naver.router_blog
     scripts.naver.router_cafe
-    scripts.naver.router_common
+    scripts.naver.common.router_common
     scripts.naver.router_content
     scripts.naver.router_social
     scripts.naver.router_status
@@ -4812,7 +4812,7 @@ source_modules =
     scripts.naver.smartstore.registration.general_analyzer
     scripts.naver.smartstore.registration.general_full_analyze
     scripts.naver.smartstore.registration.product_analyzer
-    scripts.naver.talk
+    scripts.naver.common.talk
     scripts.site_engine.site_registry_sites
     scripts.youtube.browser_transcript
     scripts.youtube.recording
@@ -6125,8 +6125,8 @@ forbidden_modules =
     scripts.mk_catalog.pricing
     scripts.mk_catalog.public_catalog
     scripts.mk_catalog.vision_extract
-    scripts.naver.auth
-    scripts.naver.auth_window_gate
+    scripts.naver.common.auth
+    scripts.naver.common.auth_window_gate
     scripts.naver.automation.ai_responder
     scripts.naver.automation.analytics_dashboard
     scripts.naver.automation.competitor_analysis
@@ -6256,14 +6256,14 @@ forbidden_modules =
     scripts.naver.cafe.write.join_request
     scripts.naver.cafe.write.writer
     scripts.naver.cafe.writer
-    scripts.naver.calendar_tasks
+    scripts.naver.common.calendar_tasks
     scripts.naver.company_seo
-    scripts.naver.content
+    scripts.naver.common.content
     scripts.naver.dispatch
     scripts.naver.excel_reports
     scripts.naver.generate_catalog
     scripts.naver.keyword_tools
-    scripts.naver.live_safety
+    scripts.naver.common.live_safety
     scripts.naver.mail.action_item_dashboard
     scripts.naver.mail.analysis.action_item_dashboard
     scripts.naver.mail.analysis.business_report
@@ -6310,16 +6310,16 @@ forbidden_modules =
     scripts.naver.mail.utilities.settings_panel
     scripts.naver.mail.utilities.time_parser
     scripts.naver.mail.watch_new_mail
-    scripts.naver.mybox
+    scripts.naver.common.mybox
     scripts.naver.openapi_key_lookup
     scripts.naver.pay
     scripts.naver.personal_explorer
-    scripts.naver.place
+    scripts.naver.common.place
     scripts.naver.register_credentials
     scripts.naver.router
     scripts.naver.router_blog
     scripts.naver.router_cafe
-    scripts.naver.router_common
+    scripts.naver.common.router_common
     scripts.naver.router_content
     scripts.naver.router_social
     scripts.naver.router_status
@@ -6385,7 +6385,7 @@ forbidden_modules =
     scripts.naver.smartstore.registration.general_full_analyze
     scripts.naver.smartstore.registration.product_analyzer
     scripts.naver.smartstore.run_page_builder
-    scripts.naver.talk
+    scripts.naver.common.talk
     scripts.site_engine.action_planner
     scripts.site_engine.adapters.browser
     scripts.site_engine.command_router
@@ -6872,7 +6872,7 @@ forbidden_modules =
     scripts.mk_catalog.pricing
     scripts.mk_catalog.public_catalog
     scripts.mk_catalog.vision_extract
-    scripts.naver.auth
+    scripts.naver.common.auth
     scripts.naver.automation.ai_responder
     scripts.naver.automation.analytics_dashboard
     scripts.naver.automation.competitor_analysis
@@ -7000,9 +7000,9 @@ forbidden_modules =
     scripts.naver.cafe.write.join_request
     scripts.naver.cafe.write.writer
     scripts.naver.cafe.writer
-    scripts.naver.calendar_tasks
+    scripts.naver.common.calendar_tasks
     scripts.naver.company_seo
-    scripts.naver.content
+    scripts.naver.common.content
     scripts.naver.dispatch
     scripts.naver.excel_reports
     scripts.naver.generate_catalog
@@ -7049,16 +7049,16 @@ forbidden_modules =
     scripts.naver.mail.utilities.settings_panel
     scripts.naver.mail.utilities.time_parser
     scripts.naver.mail.watch_new_mail
-    scripts.naver.mybox
+    scripts.naver.common.mybox
     scripts.naver.openapi_key_lookup
     scripts.naver.pay
     scripts.naver.personal_explorer
-    scripts.naver.place
+    scripts.naver.common.place
     scripts.naver.register_credentials
     scripts.naver.router
     scripts.naver.router_blog
     scripts.naver.router_cafe
-    scripts.naver.router_common
+    scripts.naver.common.router_common
     scripts.naver.router_content
     scripts.naver.router_social
     scripts.naver.router_status
@@ -7121,7 +7121,7 @@ forbidden_modules =
     scripts.naver.smartstore.registration.general_full_analyze
     scripts.naver.smartstore.registration.product_analyzer
     scripts.naver.smartstore.run_page_builder
-    scripts.naver.talk
+    scripts.naver.common.talk
     scripts.site_engine.site_registry_sites
     scripts.youtube.browser_transcript
     scripts.youtube.recording
@@ -7556,7 +7556,7 @@ type = forbidden
 source_modules =
     scripts.naver.router_blog
     scripts.naver.router_cafe
-    scripts.naver.router_common
+    scripts.naver.common.router_common
     scripts.naver.router_content
     scripts.naver.router_social
     scripts.naver.router_status

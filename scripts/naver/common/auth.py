@@ -11,7 +11,7 @@
   3. .env 파일 (data/.env_naver)
 
 사용:
-  from scripts.naver.auth import login_naver
+  from scripts.naver.common.auth import login_naver
   from scripts.browser.cdp.connection import get_page
 
   page = get_page()
@@ -35,7 +35,7 @@ from security_utils import mask_identifier
 
 _log = get_logger(__name__)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 ENV_FILE = ROOT / "data" / ".env_naver"
 
 NAVER_LOGIN_URL = "https://www.naver.com/"
@@ -503,7 +503,7 @@ def _fill_naver_pw(naver_id: str | None, naver_pw: str | None) -> str | None:
 def _try_auth_window_gate(page) -> dict[str, Any] | None:
     """순차 인증창 게이트(SSO 우선). 결과를 확정할 수 있으면 dict, 아니면 None."""
     try:
-        from scripts.naver.auth_window_gate import (
+        from scripts.naver.common.auth_window_gate import (
             STAGE_CAPTCHA,
             STAGE_LOGGED_IN,
             STAGE_TWO_FACTOR,

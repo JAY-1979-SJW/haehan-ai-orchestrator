@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 
 from scripts.common.gate import check as gate_check
-from scripts.naver.router_common import _int_option, _option_value
+from scripts.naver.common.router_common import _int_option, _option_value
 
 
 def _blog_assets_plan(blog_id, target_pages, build_blog_asset_plan, save_blog_asset_plan) -> None:

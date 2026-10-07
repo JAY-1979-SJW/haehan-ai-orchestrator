@@ -1,4 +1,4 @@
-from scripts.naver import talk
+from scripts.naver.common import talk
 
 
 class _FakeLocator:

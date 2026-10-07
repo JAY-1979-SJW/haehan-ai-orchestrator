@@ -23,6 +23,6 @@
  "scripts/naver/cafe/__init__.py::NaverCafe.write_post",
  "scripts/naver/cafe/_runner.py::_task_confirm",
  "scripts/naver/cafe/_runner.py::_task_write",
- "scripts/naver/smartstore/automation/workflow.py::Workflow.new_orders_to_alerts",
+ "scripts/naver/workflow.py::Workflow.new_orders_to_alerts",
  "scripts/youtube/uploader.py::_upload_with_official_api"
 ]

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from scripts.browser.page import human_input as H
-from scripts.naver import auth as A
+from scripts.naver.common import auth as A
 
 
 class FakeElement:
