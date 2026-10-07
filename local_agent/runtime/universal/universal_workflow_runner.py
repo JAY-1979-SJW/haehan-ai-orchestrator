@@ -27,7 +27,7 @@ from local_agent.runtime.delegated_permission_gate import (
     GATE_PASS,
     evaluate_gate,
 )
-from local_agent.runtime.site_profile_registry import (
+from local_agent.runtime.site_profile.site_profile_registry import (
     get_site_profile,
     is_action_blocked_for_site,
     is_action_direct_required,

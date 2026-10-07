@@ -152,12 +152,12 @@
   "role": "workflow",
   "reason": "security_program_detector(L6)와 동급 설치 완료 감지 워크플로 — L4 generic(low) 오분류"
  },
- "local_agent/runtime/site_capability_matrix.py": {
+ "local_agent/runtime/site_profile/site_capability_matrix.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "사이트별 지원 능력 매트릭스(정적 레지스트리) — unknown_site_fallback_policy(L2)와 동급 정책, L6 script_cli(low) 오분류"
  },
- "local_agent/runtime/site_profile_registry.py": {
+ "local_agent/runtime/site_profile/site_profile_registry.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "docstring이 '사이트별 자동화 정책을 profile로 관리'라 명시 — site_capability_matrix(L2)와 동급 정책 레지스트리, L4 오분류"

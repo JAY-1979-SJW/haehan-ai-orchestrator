@@ -1,13 +1,22 @@
 """Browser Discovery Candidates 테스트."""
 from __future__ import annotations
 
-from local_agent.runtime.browser_discovery_candidates import (
-    build_candidate, validate_candidate_safety,
-    CANDIDATE_MENU, CANDIDATE_FIELD, CANDIDATE_BUTTON,
-    CANDIDATE_DESTRUCTIVE_BUTTON, CANDIDATE_SUBMIT_BUTTON,
-    CANDIDATE_FILE_INPUT, CANDIDATE_DOWNLOAD_LINK,
-    RISK_LOW, RISK_MEDIUM, RISK_HIGH,
-    fingerprint_selector, classify_risk, is_forbidden_label,
+from local_agent.runtime.site_profile.browser_discovery_candidates import (
+    CANDIDATE_BUTTON,
+    CANDIDATE_DESTRUCTIVE_BUTTON,
+    CANDIDATE_DOWNLOAD_LINK,
+    CANDIDATE_FIELD,
+    CANDIDATE_FILE_INPUT,
+    CANDIDATE_MENU,
+    CANDIDATE_SUBMIT_BUTTON,
+    RISK_HIGH,
+    RISK_LOW,
+    RISK_MEDIUM,
+    build_candidate,
+    classify_risk,
+    fingerprint_selector,
+    is_forbidden_label,
+    validate_candidate_safety,
 )
 
 

@@ -4345,7 +4345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_allowlist_expansion_preflight.py": {
+  "local_agent/runtime/site_profile/browser_allowlist_expansion_preflight.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4353,7 +4353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_discovery_candidates.py": {
+  "local_agent/runtime/site_profile/browser_discovery_candidates.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4369,7 +4369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_policy_integration.py": {
+  "local_agent/runtime/site_profile/browser_policy_integration.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4377,7 +4377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_site_registry.py": {
+  "local_agent/runtime/site_profile/browser_site_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4385,7 +4385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_value_registry.py": {
+  "local_agent/runtime/site_profile/browser_value_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4673,7 +4673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/selector_pack_registry.py": {
+  "local_agent/runtime/site_profile/selector_pack_registry.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4681,7 +4681,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/site_capability_matrix.py": {
+  "local_agent/runtime/site_profile/site_capability_matrix.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4689,7 +4689,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/site_profile_registry.py": {
+  "local_agent/runtime/site_profile/site_profile_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4697,7 +4697,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/site_type_classifier.py": {
+  "local_agent/runtime/site_profile/site_type_classifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -23266,6 +23266,14 @@
    "source": "rule"
   },
   "local_agent/runtime/universal/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/site_profile/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

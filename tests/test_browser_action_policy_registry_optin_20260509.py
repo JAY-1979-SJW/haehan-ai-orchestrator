@@ -3,12 +3,15 @@ from __future__ import annotations
 
 import pytest
 
-from local_agent.runtime.browser_policy_integration import (
-    open_with_policy, type_with_policy, submit_with_policy,
-    download_with_policy, attach_with_policy,
+from local_agent.runtime.site_profile.browser_policy_integration import (
+    attach_with_policy,
+    download_with_policy,
+    open_with_policy,
+    submit_with_policy,
+    type_with_policy,
 )
-from local_agent.runtime.browser_site_registry import clear_all
-from local_agent.runtime.browser_value_registry import clear_all as clear_values
+from local_agent.runtime.site_profile.browser_site_registry import clear_all
+from local_agent.runtime.site_profile.browser_value_registry import clear_all as clear_values
 
 
 @pytest.fixture(autouse=True)

@@ -5,13 +5,13 @@
 
 from __future__ import annotations
 
-from local_agent.runtime.browser_allowlist_expansion_preflight import (
+from local_agent.runtime.site_profile.browser_allowlist_expansion_preflight import (
     VERDICT_ALLOW,
     VERDICT_BLOCKED,
     VERDICT_REVIEW,
     preflight_expansion,
 )
-from local_agent.runtime.browser_discovery_candidates import (
+from local_agent.runtime.site_profile.browser_discovery_candidates import (
     CANDIDATE_DESTRUCTIVE_BUTTON,
     CANDIDATE_MENU,
     CANDIDATE_SUBMIT_BUTTON,

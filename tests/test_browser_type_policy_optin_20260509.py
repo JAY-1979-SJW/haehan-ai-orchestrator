@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from local_agent.runtime.browser_policy_integration import type_with_policy
-from local_agent.runtime.browser_value_registry import (
-    ValuePolicy, register_value, clear_all,
+from local_agent.runtime.site_profile.browser_policy_integration import type_with_policy
+from local_agent.runtime.site_profile.browser_value_registry import (
     VTYPE_SAMPLE_TEXT,
+    ValuePolicy,
+    clear_all,
+    register_value,
 )
 
 

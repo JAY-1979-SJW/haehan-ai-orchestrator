@@ -7,10 +7,10 @@ from collections.abc import Callable
 from contextlib import suppress
 from typing import Any
 
-from local_agent.runtime.site_capability_matrix import (
+from local_agent.runtime.site_profile.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
 )
-from local_agent.runtime.site_type_classifier import classify_site
+from local_agent.runtime.site_profile.site_type_classifier import classify_site
 from local_agent.runtime.universal.generic_selector_discovery import discover_selectors
 from local_agent.runtime.universal.learned_site_profile_store import (
     has_learned_profile,

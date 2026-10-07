@@ -35,7 +35,7 @@ from local_agent.runtime.local_security_installer_runner import (
     STATUS_WAITING_USER_UAC,
     check_action_allowed,
 )
-from local_agent.runtime.site_type_classifier import (
+from local_agent.runtime.site_profile.site_type_classifier import (
     SITE_GOVERNMENT,
     classify_site,
 )

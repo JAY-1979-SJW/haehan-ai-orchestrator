@@ -17,7 +17,7 @@ from local_agent.runtime.delegated_permission_policy import (
 )
 
 _ROOT = Path(__file__).resolve().parent.parent
-_BPI = _ROOT / "local_agent" / "runtime" / "browser_policy_integration.py"
+_BPI = _ROOT / "local_agent" / "runtime" / "site_profile" / "browser_policy_integration.py"
 
 
 def setup_function() -> None:

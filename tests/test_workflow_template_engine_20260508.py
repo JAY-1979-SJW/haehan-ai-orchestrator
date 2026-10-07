@@ -2,7 +2,7 @@
 
 import pytest
 
-from local_agent.runtime.site_capability_matrix import (
+from local_agent.runtime.site_profile.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
 )

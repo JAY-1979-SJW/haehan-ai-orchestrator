@@ -1,14 +1,14 @@
 """tests/test_universal_site_automation_platform_20260508.py - 플랫폼 통합 테스트"""
 
-from local_agent.runtime.selector_pack_registry import (
+from local_agent.runtime.site_profile.selector_pack_registry import (
     _FORBIDDEN_SELECTOR_KEYS,
     _PACKS,
 )
-from local_agent.runtime.site_capability_matrix import (
+from local_agent.runtime.site_profile.site_capability_matrix import (
     _CAPABILITY_GRADE,
     GRADE_BLOCKED,
 )
-from local_agent.runtime.site_profile_registry import (
+from local_agent.runtime.site_profile.site_profile_registry import (
     _COMMON_BLOCKED,
     _REGISTRY,
 )
