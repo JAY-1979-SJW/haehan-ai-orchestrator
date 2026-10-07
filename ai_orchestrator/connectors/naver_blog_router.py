@@ -203,7 +203,7 @@ def write_to_naver(
 
     BlogWriter 가 SE3 셀렉터·iframe·자동로그인을 처리. 범용 클릭 에이전트보다 정확.
     """
-    from scripts.gate import GateBlocked, require_side_effect
+    from ai_orchestrator.gates.gate_core import GateBlocked, require_side_effect
     from scripts.web_connector import get_page, run_on_browser_thread
 
     if req.publish:
