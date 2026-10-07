@@ -10,7 +10,7 @@
   4. SQLite popup_events 테이블에 모든 이력 영속화
 
 사용 (in-process):
-    from scripts.browser.popup.popup_monitor import PopupMonitor
+    from scripts.browser.navigator.popup_monitor import PopupMonitor
     mon = PopupMonitor(poll_interval_s=2.0)
     mon.start()
     ...
@@ -36,7 +36,7 @@ from typing import Any
 
 from scripts.common.logger import get_logger
 from scripts.browser.popup.popup_classifier import Action, Category, Decision, Severity, classify, is_auto_handleable
-from scripts.browser.popup.popup_watcher import POPUP_MARKERS, build_watcher_js
+from scripts.browser.navigator.popup_watcher import POPUP_MARKERS, build_watcher_js
 
 _log = get_logger(__name__)
 

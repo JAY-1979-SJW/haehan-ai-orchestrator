@@ -21769,7 +21769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/popup/popup_monitor.py": {
+  "scripts/browser/navigator/popup_monitor.py": {
    "layer": "L4",
    "role": "persistence",
    "domain": "browser",
@@ -21777,7 +21777,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/browser/popup/popup_watcher.py": {
+  "scripts/browser/navigator/popup_watcher.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

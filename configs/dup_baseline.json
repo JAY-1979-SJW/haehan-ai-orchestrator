@@ -132,8 +132,8 @@
    "local_agent/site_mapper.py:_normalize_hints"
   ],
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
-   "scripts/browser/popup/popup_monitor.py:ChromeUIWatcher.start",
-   "scripts/browser/popup/popup_monitor.py:PopupMonitor.start"
+   "scripts/browser/navigator/popup_monitor.py:ChromeUIWatcher.start",
+   "scripts/browser/navigator/popup_monitor.py:PopupMonitor.start"
   ],
   "e52edc3fccea138286e4ee989420aca94771e83d": [
    "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:_route_file",

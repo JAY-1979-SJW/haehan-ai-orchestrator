@@ -1,6 +1,6 @@
 """popup_classifier + popup_monitor DB 단위 검증 (브라우저 불필요)."""
 from scripts.browser.popup.popup_classifier import classify, is_auto_handleable
-from scripts.browser.popup.popup_monitor import _ensure_table, _record_event, ack_event, list_pending, status
+from scripts.browser.navigator.popup_monitor import _ensure_table, _record_event, ack_event, list_pending, status
 
 print("\n[1] 분류기 룰 매칭 테스트")
 print("-" * 70)

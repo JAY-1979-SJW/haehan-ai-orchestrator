@@ -610,7 +610,7 @@
   "role": "site_module",
   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L5 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py(역방향) 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
- "scripts/browser/popup/popup_monitor.py": {
+ "scripts/browser/navigator/popup_monitor.py": {
   "layer": "L4",
   "role": "persistence",
   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/browser/navigator/navigator.py·popup_classifier.py 를 import. 지우면 층 역전 +3건(2026-10-07 재판정, 구조 수정 뒤 삭제)"

@@ -219,7 +219,7 @@ def _cmd_click_link(task: str) -> None:
 
 
 def _cmd_popup_install() -> None:
-    from scripts.browser.popup.popup_watcher import install_watcher
+    from scripts.browser.navigator.popup_watcher import install_watcher
 
     r = install_watcher()
     print(f"✓ 팝업 감지 설치 완료 (프레임: {r['frame_count']}개)")
@@ -256,7 +256,7 @@ def _cmd_close_popup() -> None:
 def _cmd_popup_poll() -> None:
     import json as _json
 
-    from scripts.browser.popup.popup_watcher import poll_events
+    from scripts.browser.navigator.popup_watcher import poll_events
 
     events = poll_events()
     if not events:
@@ -270,7 +270,7 @@ def _cmd_popup_poll() -> None:
 
 
 def _cmd_popup_auto() -> None:
-    from scripts.browser.popup.popup_watcher import auto_handle
+    from scripts.browser.navigator.popup_watcher import auto_handle
 
     r = auto_handle()
     print("✓ 자동 처리 완료")
@@ -285,7 +285,7 @@ def _cmd_popup_auto() -> None:
 def _cmd_popup_monitor_start(interval: float) -> None:
     # _cmd_popup_monitor 의 "start" 분기만 분리(2026-09-29 STD-08: C901 12>10, mccabe 가
     # while/try/except 를 추가 분기로 셈 — 로직은 그대로, 함수만 나눔).
-    from scripts.browser.popup import popup_monitor as _pm
+    from scripts.browser.navigator import popup_monitor as _pm
 
     mon = _pm.PopupMonitor(poll_interval_s=interval)
     mon.start()
@@ -303,7 +303,7 @@ def _cmd_popup_monitor_start(interval: float) -> None:
 def _cmd_popup_monitor(task: str, sub: str, args: list[str]) -> None:
     import json as _json
 
-    from scripts.browser.popup import popup_monitor as _pm
+    from scripts.browser.navigator import popup_monitor as _pm
 
     sub_cmd = task or "status"
     if sub_cmd == "start":
