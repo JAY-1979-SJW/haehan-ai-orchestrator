@@ -12,10 +12,9 @@ email task approval → execution 연결
 import time
 
 import audit_logger
-from orchestrator_v1.inbox import email_task_approval
-from orchestrator_v1.inbox import email_task_store
 from logger import get_logger
 from models import ExecutionPlan, RiskAssessment, TaskRequest
+from orchestrator_v1.inbox import email_task_approval, email_task_store
 from whitelist_executor import execute_allowed
 
 log = get_logger("email_task_executor")

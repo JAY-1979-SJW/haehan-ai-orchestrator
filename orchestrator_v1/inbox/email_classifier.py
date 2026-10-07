@@ -99,7 +99,7 @@ def classify(item: dict) -> dict:
 
     # ── 카테고리 판정 ─────────────────────────────────────────────
     matched_category = "general"
-    matched_task_type: Optional[str] = None
+    matched_task_type: str | None = None
     matched_keywords: list[str] = []
 
     for category, keywords, task_type in _CATEGORY_RULES:

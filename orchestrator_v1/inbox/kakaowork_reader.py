@@ -38,7 +38,7 @@ def _build_external_id(message_id: str, channel_id: str = "") -> str:
     return f"kakaowork:hash:{hashlib.sha256(raw.encode()).hexdigest()[:16]}"
 
 
-def _parse_received_at(created_at_ms: Optional[int]) -> str:
+def _parse_received_at(created_at_ms: int | None) -> str:
     """카카오워크 timestamp(ms) → ISO 형식 변환."""
     if created_at_ms:
         try:
