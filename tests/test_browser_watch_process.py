@@ -13,7 +13,7 @@ def _proc(pid, name="python.exe", cmd=None, age=5, ppid=1):
 
 
 def test_script_name_keeps_only_file_name_never_arguments():
-    cmd = ["python.exe", "-u", "scripts/cdp_daemon.py", "--token=SECRET123", "run"]
+    cmd = ["python.exe", "-u", "scripts/browser/cdp/cdp_daemon.py", "--token=SECRET123", "run"]
     assert bw.script_name(cmd) == "cdp_daemon.py"
     assert bw.script_name(["chrome.exe", "--flag=1"]) == ""
     assert "SECRET" not in str(bw.recent_processes([_proc(7, cmd=cmd)], NOW))

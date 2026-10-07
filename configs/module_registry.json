@@ -8641,7 +8641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_tab_monitor.py": {
+  "scripts/browser/cdp/browser_tab_monitor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8657,7 +8657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_client.py": {
+  "scripts/browser/cdp/cdp_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8665,7 +8665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_console.py": {
+  "scripts/browser/cdp/cdp_console.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8673,7 +8673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_daemon.py": {
+  "scripts/browser/cdp/cdp_daemon.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8681,7 +8681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_db.py": {
+  "scripts/browser/cdp/cdp_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "browser",
@@ -8689,7 +8689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_force_start.py": {
+  "scripts/browser/cdp/cdp_force_start.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8697,7 +8697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_helper.py": {
+  "scripts/browser/cdp/cdp_helper.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8705,7 +8705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_lane_start.py": {
+  "scripts/browser/cdp/cdp_lane_start.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8713,7 +8713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_lanes.py": {
+  "scripts/browser/cdp/cdp_lanes.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8721,7 +8721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_session_selector.py": {
+  "scripts/browser/cdp/cdp_session_selector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8729,7 +8729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_tab_manager.py": {
+  "scripts/browser/cdp/cdp_tab_manager.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8737,7 +8737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_tabs.py": {
+  "scripts/browser/cdp/cdp_tabs.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8745,7 +8745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_verify.py": {
+  "scripts/browser/cdp/cdp_verify.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8761,7 +8761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/chrome_ui_monitor.py": {
+  "scripts/browser/cdp/chrome_ui_monitor.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -8769,7 +8769,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/chrome_ui_watcher.py": {
+  "scripts/browser/cdp/chrome_ui_watcher.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -22974,6 +22974,22 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
   }

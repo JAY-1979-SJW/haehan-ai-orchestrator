@@ -59,12 +59,12 @@ def _cmd_session_check() -> None:
 
     if result["error"]:
         print(f"[WARNING] 데몬 연결 실패: {result['error']}")
-        print("  python scripts/cdp_daemon.py start")
+        print("  python scripts/browser/cdp/cdp_daemon.py start")
     elif result["logged_in"]:
         print("[OK] 로그인 상태 정상")
     else:
         print("[X] 로그인 필요")
-        print("  python scripts/cdp_client.py naver login")
+        print("  python scripts/browser/cdp/cdp_client.py naver login")
 
     print("=" * 60)
 

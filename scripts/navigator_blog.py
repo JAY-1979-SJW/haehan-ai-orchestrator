@@ -31,7 +31,7 @@ def write_blog_post(
     _log.info("write_blog_post: title=%s image=%s", title[:40], image_path)
     _t_blog = time.perf_counter()
 
-    script = str(ROOT / "scripts" / "cdp_client.py")
+    script = str(ROOT / "scripts" / "browser" / "cdp" / "cdp_client.py")
     py = sys.executable
 
     def _run(args: list[str], label: str, soft: bool = False) -> bool:

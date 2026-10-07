@@ -98,7 +98,7 @@ def _cmd_actions(sub: str | None, args: list[str]) -> None:
     )
 
     if sub not in ("catalog", "actions", "list", None, ""):
-        print("usage: python scripts/cdp_client.py smartstore actions catalog")
+        print("usage: python scripts/browser/cdp/cdp_client.py smartstore actions catalog")
         return
     gate_check("scan_page")
     catalog = build_action_catalog()
@@ -111,7 +111,7 @@ def _cmd_prepare(sub: str | None, args: list[str]) -> None:
 
     if sub not in ("product", "register", "general", "group", None, ""):
         print(
-            "usage: python scripts/cdp_client.py smartstore prepare product "
+            "usage: python scripts/browser/cdp/cdp_client.py smartstore prepare product "
             "--data=<json> [--product-type=general|group] [--save-after] [--dry-run]"
         )
         return
@@ -311,17 +311,17 @@ def _cmd_session_check() -> None:
 def _print_help() -> None:
     print(
         """SmartStore usage:
-  python scripts/cdp_client.py smartstore actions catalog
-  python scripts/cdp_client.py smartstore prepare product --data=<json> [--dry-run]
-  python scripts/cdp_client.py smartstore submit product --data=<json> --dry-run --approved --confirm=SMARTSTORE_APPROVED_SUBMIT
-  python scripts/cdp_client.py smartstore product list --live-ok
-  python scripts/cdp_client.py smartstore order new --live-ok
-  python scripts/cdp_client.py smartstore inventory --live-ok
-  python scripts/cdp_client.py smartstore seo
-  python scripts/cdp_client.py smartstore ai <review-text>
-  python scripts/cdp_client.py smartstore competitor <keyword>
-  python scripts/cdp_client.py smartstore csv <file>
-  python scripts/cdp_client.py smartstore analytics"""
+  python scripts/browser/cdp/cdp_client.py smartstore actions catalog
+  python scripts/browser/cdp/cdp_client.py smartstore prepare product --data=<json> [--dry-run]
+  python scripts/browser/cdp/cdp_client.py smartstore submit product --data=<json> --dry-run --approved --confirm=SMARTSTORE_APPROVED_SUBMIT
+  python scripts/browser/cdp/cdp_client.py smartstore product list --live-ok
+  python scripts/browser/cdp/cdp_client.py smartstore order new --live-ok
+  python scripts/browser/cdp/cdp_client.py smartstore inventory --live-ok
+  python scripts/browser/cdp/cdp_client.py smartstore seo
+  python scripts/browser/cdp/cdp_client.py smartstore ai <review-text>
+  python scripts/browser/cdp/cdp_client.py smartstore competitor <keyword>
+  python scripts/browser/cdp/cdp_client.py smartstore csv <file>
+  python scripts/browser/cdp/cdp_client.py smartstore analytics"""
     )
 
 

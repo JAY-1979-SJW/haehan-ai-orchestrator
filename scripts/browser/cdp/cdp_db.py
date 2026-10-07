@@ -15,7 +15,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parents[1] / "data" / "cdp.db"
+DB_PATH = Path(__file__).resolve().parents[3] / "data" / "cdp.db"
 
 
 # ── 연결 ──────────────────────────────────────────────────────────

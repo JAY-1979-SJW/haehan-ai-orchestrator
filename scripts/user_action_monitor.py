@@ -9,8 +9,8 @@
   - 버튼 클릭 (지정 셀렉터)
 
 실행:
-  python scripts/cdp_client.py user-watch [타임아웃초]
-  python scripts/cdp_client.py user-watch 0   # 무한 대기
+  python scripts/browser/cdp/cdp_client.py user-watch [타임아웃초]
+  python scripts/browser/cdp/cdp_client.py user-watch 0   # 무한 대기
 
 또는 직접:
   python scripts/user_action_monitor.py
@@ -30,7 +30,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts import cdp_db  # noqa: E402
+from scripts.browser.cdp import cdp_db  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
 
 _log = get_logger(__name__)

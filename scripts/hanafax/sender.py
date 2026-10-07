@@ -76,7 +76,7 @@ def send_fax(
             "success": False,
             "simulated": True,
             "job_id": None,
-            "message": "자격증명 없음. python scripts/cdp_client.py cred set hanafax",
+            "message": "자격증명 없음. python scripts/browser/cdp/cdp_client.py cred set hanafax",
         }
 
     try:
@@ -136,7 +136,7 @@ def send_fax_bulk(
             "success": False,
             "sent_faxes": [],
             "job_id": None,
-            "message": "자격증명 없음. python scripts/cdp_client.py cred set hanafax",
+            "message": "자격증명 없음. python scripts/browser/cdp/cdp_client.py cred set hanafax",
         }
 
     try:

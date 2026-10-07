@@ -489,7 +489,7 @@ def get_action(key: str) -> ActionSpec | None:
 
 def ensure_cdp() -> None:
     """브라우저(CDP, 9222)가 꺼져 있으면 기동한다. 이미 떠 있으면 아무것도 하지 않는다."""
-    from scripts.cdp_force_start import _is_cdp_alive, cmd_start
+    from scripts.browser.cdp.cdp_force_start import _is_cdp_alive, cmd_start
 
     if _is_cdp_alive():
         return

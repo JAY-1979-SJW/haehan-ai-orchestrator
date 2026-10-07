@@ -16,7 +16,7 @@ alert로 막힌다. submit_reply()는 페이지의 $Form/$Element 프레임워�
 호출해야 한다.
 
 사용법:
-    from scripts.cdp_helper import CDP
+    from scripts.browser.cdp.cdp_helper import CDP
     from scripts.naver.smartstore.inquiry_reply import fill_reply_draft, submit_reply
 
     cdp = CDP(port=9222)
@@ -28,7 +28,7 @@ alert로 막힌다. submit_reply()는 페이지의 $Form/$Element 프레임워�
 import json
 import time
 
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 from scripts.publish_guard import guarded
 
 # 문의 상세 화면엔 숨겨진(0x0) textarea가 먼저 잡히는 경우가 있어(2026-08-23 실측),

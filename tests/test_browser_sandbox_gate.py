@@ -59,7 +59,7 @@ def test_web_connector_blocks_daemon_autostart_in_sandbox(tmp_path, monkeypatch)
 
 
 def test_cdp_daemon_blocks_chrome_launch_in_sandbox(monkeypatch):
-    from scripts import cdp_daemon
+    from scripts.browser.cdp import cdp_daemon
 
     monkeypatch.setenv("CODEX_SANDBOX_NETWORK_DISABLED", "1")
     monkeypatch.setattr(

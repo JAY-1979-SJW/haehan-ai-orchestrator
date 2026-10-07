@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from scripts import cdp_db
+from scripts.browser.cdp import cdp_db
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)

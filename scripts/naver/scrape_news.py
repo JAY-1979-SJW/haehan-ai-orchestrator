@@ -45,7 +45,7 @@ def fetch_news(url: str = "https://news.naver.com") -> list[dict]:
     """
     import importlib
 
-    connect = importlib.import_module("scripts.cdp_console").connect
+    connect = importlib.import_module("scripts.browser.cdp.cdp_console").connect
 
     with connect() as s:
         if "news.naver.com" not in s.url:
@@ -94,7 +94,7 @@ def fetch_article(article_url: str) -> dict:
     """
     import importlib
 
-    connect = importlib.import_module("scripts.cdp_console").connect
+    connect = importlib.import_module("scripts.browser.cdp.cdp_console").connect
 
     with connect() as s:
         s.goto(article_url)
@@ -149,7 +149,7 @@ def fetch_search(query: str, page: int = 1) -> list[dict]:
     """
     import importlib
 
-    connect = importlib.import_module("scripts.cdp_console").connect
+    connect = importlib.import_module("scripts.browser.cdp.cdp_console").connect
 
     search_url = f"https://search.naver.com/search.naver?where=news&query={query}&start={(page - 1) * 10 + 1}"
 

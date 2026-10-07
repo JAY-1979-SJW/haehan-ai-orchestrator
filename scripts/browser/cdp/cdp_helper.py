@@ -16,7 +16,7 @@ from pathlib import Path
 
 import websocket
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 SHOT_PATH = ROOT / "data" / "browser_screenshot.png"
 _log = logging.getLogger(__name__)
 

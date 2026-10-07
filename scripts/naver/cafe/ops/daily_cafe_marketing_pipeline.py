@@ -36,7 +36,7 @@ def main() -> int:
     result = {"snapshot_ok": False, "snapshot_error": "", "build_ok": False, "build_error": ""}
 
     try:
-        from scripts.cdp_force_start import _is_cdp_alive, cmd_start
+        from scripts.browser.cdp.cdp_force_start import _is_cdp_alive, cmd_start
 
         if not _is_cdp_alive():
             cmd_start()

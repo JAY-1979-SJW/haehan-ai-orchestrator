@@ -86,9 +86,9 @@ def fetch_keyword(keyword: str) -> list[dict]:
     before = {str(p) for p in VISITS_DIR.glob("*.html")}
     q = urllib.parse.quote(keyword)
     _run(
-        ["python", "scripts/cdp_client.py", "goto", f"https://taxlaw.nts.go.kr/is/USEISA001M.do?schVcb={q}&searchType="]
+        ["python", "scripts/browser/cdp/cdp_client.py", "goto", f"https://taxlaw.nts.go.kr/is/USEISA001M.do?schVcb={q}&searchType="]
     )
-    _run(["python", "scripts/cdp_client.py", "snapshot"])
+    _run(["python", "scripts/browser/cdp/cdp_client.py", "snapshot"])
     html_path = _latest_html_after(before)
     if not html_path:
         return []

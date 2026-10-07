@@ -416,7 +416,7 @@ def run_task(
 @contextlib.contextmanager
 def private_tab_scope(start_url: str):
     """운영용 페이지 범위: 공유 브라우저에 새 전용 탭을 열고(`cdp_tabs`), 끝나면 그 탭만 닫는다. 브라우저 스레드 안에서만 쓴다."""
-    from scripts import cdp_tabs
+    from scripts.browser.cdp import cdp_tabs
     from scripts.explorer.task_mapper import open_private_tab
     from scripts.web_connector import get_context
 

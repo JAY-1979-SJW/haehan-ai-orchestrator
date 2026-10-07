@@ -33,7 +33,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from scripts import browser_lifecycle as lifecycle  # noqa: E402
@@ -328,7 +328,7 @@ def _start_popup_monitor_process() -> None:
     """Run popup monitor out-of-process to keep Playwright sync API isolated."""
     if _procs.popup_monitor and _procs.popup_monitor.poll() is None:
         return
-    script = ROOT / "scripts" / "cdp_client.py"
+    script = ROOT / "scripts" / "browser" / "cdp" / "cdp_client.py"
     _procs.popup_monitor = _launch_background_python([str(script), "popup-monitor", "start", "2.0"])
     _state.popup_monitor_pid = _procs.popup_monitor.pid
     _save_state(_state)

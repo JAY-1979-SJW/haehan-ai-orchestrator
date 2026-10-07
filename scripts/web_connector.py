@@ -96,7 +96,7 @@ def _ensure_cdp_daemon() -> None:
 
     log.info("[web_connector] CDP 데몬 미실행 — 앱 요청으로 자동 기동")
     assert_browser_launch_allowed(component="scripts.web_connector", action="cdp_daemon_autostart")
-    daemon_script = ROOT / "scripts" / "cdp_daemon.py"
+    daemon_script = ROOT / "scripts" / "browser" / "cdp" / "cdp_daemon.py"
     import subprocess
     import sys
 
@@ -117,7 +117,7 @@ def _ensure_cdp_daemon() -> None:
                     return
             except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
                 pass
-    raise RuntimeError("CDP 데몬 자동 기동 실패 — 수동으로 'python scripts/cdp_daemon.py start' 실행하세요")
+    raise RuntimeError("CDP 데몬 자동 기동 실패 — 수동으로 'python scripts/browser/cdp/cdp_daemon.py start' 실행하세요")
 
 
 def _is_cdp_live(port: int) -> bool:

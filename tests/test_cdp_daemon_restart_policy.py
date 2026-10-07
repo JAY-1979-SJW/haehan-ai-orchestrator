@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from scripts import cdp_daemon as d
+from scripts.browser.cdp import cdp_daemon as d
 
 
 @pytest.mark.parametrize(
