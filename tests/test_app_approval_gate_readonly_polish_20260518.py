@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT))
 from tests.app_ui_paths import assistant_route  # noqa: E402
 
 PAGE = assistant_route("approval", "page.tsx")
-ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
+ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "registry.py"
 
 
 def _src(p: Path) -> str:

@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
-MAIN_ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
+MAIN_ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "registry.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 
 checks: list[tuple[str, bool, str]] = []

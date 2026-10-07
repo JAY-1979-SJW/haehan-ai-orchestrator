@@ -322,5 +322,5 @@ def test_no_conflict_with_backend_closeout():
 
 
 def test_dry_run_gate_active():
-    import ai_orchestrator.router as router_mod
+    import ai_orchestrator.routers.registry as router_mod
     assert getattr(router_mod, "POST_TASKS_DRY_RUN_ENABLED", False) is True

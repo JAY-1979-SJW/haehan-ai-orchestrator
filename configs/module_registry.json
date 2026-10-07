@@ -5689,7 +5689,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/router.py": {
+  "ai_orchestrator/routers/registry.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",

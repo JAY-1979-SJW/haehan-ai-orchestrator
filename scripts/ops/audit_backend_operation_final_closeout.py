@@ -60,7 +60,7 @@ DEPLOYMENT_BASELINE: dict[str, Any] = {
             "git pull --ff-only",
             "docker compose build ai-orchestrator-api",
             "docker compose up -d ai-orchestrator-api",
-            "컨테이너 내부 import 확인 (python -c from ai_orchestrator.router import X)",
+            "컨테이너 내부 import 확인 (python -c from ai_orchestrator.routers.registry import X)",
             "GET /api/v1/health",
             "smoke 1회",
         ],
@@ -73,7 +73,7 @@ DEPLOYMENT_BASELINE: dict[str, Any] = {
 POST_TASKS_GATE_STATUS: dict[str, Any] = {
     "flag": "POST_TASKS_DRY_RUN_ENABLED",
     "value": True,
-    "location": "ai_orchestrator/router.py:39",
+    "location": "ai_orchestrator/routers/registry.py:39",
     "effect": "medium risk + requires_approval=True + allowed=True → token 발행 차단, DRY_RUN 반환",
     "runtime_verified": True,
     "runtime_smoke_date": "2026-05-18",
@@ -236,7 +236,7 @@ APP_FOUNDATION_CONDITIONS: dict[str, Any] = {
 
 
 def _verify_router_state() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "dry_run_flag_true": "POST_TASKS_DRY_RUN_ENABLED = True" in content,
         "phase_1r": (

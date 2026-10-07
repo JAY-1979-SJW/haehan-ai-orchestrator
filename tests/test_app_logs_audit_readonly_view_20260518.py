@@ -18,7 +18,7 @@ AUDIT_LIST = ROOT / "admin-web" / "src" / "components" / "assistant" / "AuditLog
 API_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "api.ts"
 TYPES_FILE = ROOT / "admin-web" / "src" / "types" / "assistant.ts"
 MOCK_FILE = ROOT / "admin-web" / "src" / "lib" / "assistant" / "mock.ts"
-ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
+ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "registry.py"
 
 
 def _src(path: Path) -> str:

@@ -74,7 +74,7 @@ SECRET_PATTERNS = [
 ]
 
 PROTECTED_BACKEND_FILES = [
-    "ai_orchestrator/router.py",
+    "ai_orchestrator/routers/registry.py",
     "docker-compose.yml",
 ]
 

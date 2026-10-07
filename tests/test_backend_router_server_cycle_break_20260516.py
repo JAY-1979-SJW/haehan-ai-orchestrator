@@ -22,14 +22,14 @@ import sys
 
 
 def test_router_direct_import_no_cycle():
-    """ai_orchestrator.router를 직접 import해도 ImportError가 발생하지 않는다."""
+    """ai_orchestrator.routers.registry를 직접 import해도 ImportError가 발생하지 않는다."""
     # sys.modules 제거 후 재import — 후속 테스트 오염 방지: purge 전 snapshot 저장 후 복원
     _snapshot = {k: v for k, v in sys.modules.items() if k.startswith("ai_orchestrator")}
     for m in list(_snapshot):
         sys.modules.pop(m, None)
 
     try:
-        import ai_orchestrator.router as r
+        import ai_orchestrator.routers.registry as r
 
         assert r.router is not None
         assert hasattr(r, "router")
@@ -42,7 +42,7 @@ def test_router_direct_import_no_cycle():
 def test_router_module_defines_router_object():
     from fastapi import APIRouter
 
-    import ai_orchestrator.router as r
+    import ai_orchestrator.routers.registry as r
 
     assert isinstance(r.router, APIRouter)
 
@@ -114,7 +114,7 @@ def test_router_py_does_not_import_server_py_directly():
     """router.py 소스에 'from .server import' 또는 'import server' 가 없다."""
     import pathlib
 
-    router_src = pathlib.Path("ai_orchestrator/router.py").read_text(encoding="utf-8")
+    router_src = pathlib.Path("ai_orchestrator/routers/registry.py").read_text(encoding="utf-8")
     # server.py에서 정의된 app 객체를 router.py가 직접 import하지 않아야 한다
     assert "from .server import app" not in router_src
     assert "from ai_orchestrator.asgi import app" not in router_src

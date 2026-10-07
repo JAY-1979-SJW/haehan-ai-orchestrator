@@ -27,7 +27,7 @@ VERDICT_BLOCKED = "APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_PLAN_BLOCKED"
 
 # ── router location plan ──────────────────────────────────────────────────────
 # router.py 정적 분석 결과:
-# - ai_orchestrator/router.py: 311줄, prefix=/api/v1, 이미 9개 sub-router include
+# - ai_orchestrator/routers/registry.py: 311줄, prefix=/api/v1, 이미 9개 sub-router include
 # - 추가 app status route를 직접 router.py에 넣으면 누적 비대화 위험
 # → 별도 thin router 파일 신설 권장
 
@@ -39,7 +39,7 @@ ROUTER_LOCATION_PLAN = {
         "단일 책임 원칙 유지. router.py에는 include_router 1줄만 추가."
     ),
     "alternative_router_files": [
-        "ai_orchestrator/router.py (직접 추가 — 권장 안 함, 파일 비대화)",
+        "ai_orchestrator/routers/registry.py (직접 추가 — 권장 안 함, 파일 비대화)",
         "ai_orchestrator/routers/admin_ui_router.py (기존 admin UI route 파일 — 역할 혼합 비권장)",
     ],
     "import_dependencies": [

@@ -46,7 +46,7 @@ APPROVE_EXECUTE_CONNECTION_ANALYSIS = {
         "whitelist 검증 + policy 검증이 작동하지만, "
         "해당 연결 자체가 신규 attack surface가 됨."
     ),
-    "router_import_check": "from .executor import execute  (execute만 import, execute_task 없음)",
+    "router_import_check": "from ..executor import execute  (execute만 import, execute_task 없음)",
 }
 
 # ── 2. medium 경로 전체 흐름 (현재 상태) ─────────────────────────────────────
@@ -129,7 +129,7 @@ EXECUTE_TASK_WHITELIST_ANALYSIS = {
 DRY_RUN_FLAG_SCOPE = {
     "flag_name": "POST_TASKS_DRY_RUN_ENABLED",
     "default_value": True,
-    "location": "ai_orchestrator/router.py (feature flag 섹션)",
+    "location": "ai_orchestrator/routers/registry.py (feature flag 섹션)",
     "scope": "submit_task + approve_task 양쪽에 적용",
     "behavior_when_true": (
         "submit_task: issue_token 호출 전 dry-run 분기 — 토큰 발행 없이 "
@@ -323,10 +323,10 @@ PREFLIGHT_GATE_STATUS: dict[str, Any] = {
 
 
 def _check_router_state() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "execute_task_imported": "execute_task" in content and "import" in content,
-        "execute_imported": "from .executor import execute" in content,
+        "execute_imported": "from ..executor import execute" in content,
         "task_approve_guard_active": (
             '_legacy_5050_should_use_route_wiring("TASK_APPROVE")' in content
             or "_legacy_5050_should_use_route_wiring('TASK_APPROVE')" in content
