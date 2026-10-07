@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 
 def _js(name: str) -> str:
-    from scripts.browser.agent._js_dir import JS_DIR
+    from scripts.common.browser_js_dir import JS_DIR
 
     return (JS_DIR / name).read_text(encoding="utf-8")
 
@@ -184,7 +184,7 @@ class MailMixin:
         실제 발송은 사용자가 Chrome에서 직접 클릭.
         반환: {ok, draft_url}
         """
-        from scripts.browser.agent.cdp_audit import L2
+        from scripts.common.cdp_audit import L2
         self.go("https://mail.naver.com/v2/write")
         time.sleep(2)
         try:

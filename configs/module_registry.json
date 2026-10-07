@@ -4513,7 +4513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/agent/cdp_audit.py": {
+  "scripts/common/cdp_audit.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -22937,7 +22937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/agent/_js_dir.py": {
+  "scripts/common/browser_js_dir.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",

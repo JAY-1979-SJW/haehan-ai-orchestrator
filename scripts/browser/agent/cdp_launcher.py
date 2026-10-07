@@ -10,7 +10,7 @@ import time
 import urllib.error
 import urllib.request
 
-from scripts.browser.agent.cdp_audit import L1, L2
+from scripts.common.cdp_audit import L1, L2
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
 CDP_HOST = "127.0.0.1"

@@ -62,7 +62,7 @@ CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.routers.server_router", "_DEPLOY_STATUS_FILE", DATA, ("runtime", "server_deploy_latest.json")),
     ("ai_orchestrator.workflows.naver_login_pipeline", "SESSION_STATUS_FILE", DATA, ("naver_session_state.json",)),
     ("ai_orchestrator.workflows.naver_session_guard", "ATTEMPTS_FILE", DATA, ("naver_login_attempts.json",)),
-    ("scripts.browser.agent.cdp_audit", "AUDIT_ROOT", DATA, ("audit",)),
+    ("scripts.common.cdp_audit", "AUDIT_ROOT", DATA, ("audit",)),
     ("scripts.browser.agent.cdp_session_manager", "PROFILE_ROOT", DATA, ("cdp_profile",)),
     ("scripts.browser.agent.action_gate", "_POLICY_PATH", DATA, ("gate_policy.json",)),
     ("ai_orchestrator.agent_hub.registry.common", "_REGISTRY_STATE_PATH", DATA, ("local_agent_registry_state.json",)),

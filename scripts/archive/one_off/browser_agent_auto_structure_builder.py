@@ -483,7 +483,7 @@ class {cls}:
         실제 발송은 사용자가 Chrome에서 직접 클릭.
         반환: {{ok, draft_url}}
         """
-        from scripts.browser.agent.cdp_audit import L2
+        from scripts.common.cdp_audit import L2
         self.go("https://mail.naver.com/v2/write")
         time.sleep(2)
         try:
@@ -541,7 +541,7 @@ class {cls}:
 
         반환: {{ok, draft_url}}
         """
-        from scripts.browser.agent.cdp_audit import L2
+        from scripts.common.cdp_audit import L2
         self.go("https://calendar.naver.com/")
         time.sleep(2)
         L2("CALENDAR_WRITE_PREPARED", "calendar_mixin", title=title, start=start, end=end)

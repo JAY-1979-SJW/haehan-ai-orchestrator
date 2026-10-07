@@ -106,7 +106,7 @@
   "role": "browser_engine",
   "reason": "BrowserAgent/cdp_launcher/cdp_session_manager를 직접 조립하는 부트스트래퍼 — L1 shared 오분류"
  },
- "scripts/browser/agent/cdp_audit.py": {
+ "scripts/common/cdp_audit.py": {
   "layer": "L7",
   "role": "persistence",
   "reason": "CDP 액션 감사 로그 기록 — persistence/audit 성격, cdp_session_manager(L7)와 동급, L4 오분류"

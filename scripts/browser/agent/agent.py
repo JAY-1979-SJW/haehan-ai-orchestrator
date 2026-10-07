@@ -116,8 +116,8 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         self.close()
 
     def connect(self):
-        from scripts.browser.agent.cdp_audit import L2
         from scripts.browser.agent.cdp_launcher import ensure_cdp
+        from scripts.common.cdp_audit import L2
 
         self._session_id = str(uuid.uuid4())
         self._connect_t0 = time.time()
@@ -138,7 +138,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         return self
 
     def close(self):
-        from scripts.browser.agent.cdp_audit import L2
+        from scripts.common.cdp_audit import L2
 
         if self._pw:
             self._pw.stop()

@@ -27,7 +27,7 @@ LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
     "scripts/realtime_audit.py": ("L3", "low-level realtime audit log helper"),
     "scripts/cdp_db.py": ("L3", "low-level CDP sqlite IO wrapper"),
     "scripts/browser/agent/audit_log.py": ("L3", "low-level audit log writer"),
-    "scripts/browser/agent/cdp_audit.py": ("L3", "low-level CDP audit log helper"),
+    "scripts/common/cdp_audit.py": ("L3", "low-level CDP audit log helper"),
     "logging_utils.py": ("L3", "shared logging facade, IO wrapper"),
     "ai_orchestrator/contracts/local_task_protocol.py": ("L1", "task protocol DTO/contract"),
     "ai_orchestrator/safety_policy/secret_redaction.py": ("L1", "redaction helper (L1 per layer definition)"),

@@ -54,7 +54,7 @@ from typing import TYPE_CHECKING
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
-from scripts.browser.agent._js_dir import JS_DIR
+from scripts.common.browser_js_dir import JS_DIR
 
 if TYPE_CHECKING:  # 엔진 ↔ 믹스인 import 순환을 피하려고 타입 힌트로만 쓰고 실제 사용은 main 안에서 불러온다(T4 C12a)
     from scripts.browser.agent.agent import BrowserAgent
