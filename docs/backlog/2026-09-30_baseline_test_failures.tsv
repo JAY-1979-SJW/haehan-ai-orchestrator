@@ -1,156 +1,5 @@
 status	test_id	message
-FAILED	ai_orchestrator/tests/test_admin_ui_capture_screenshot.py::test_backend_returns_403_for_viewer	assert 200 == 403
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_admin_allowed_all_endpoints	AssertionError: assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_detail_approved	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_detail_pending	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_all	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_filter_provider_hiworks	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_filter_provider_naver	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_filter_status_approved	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_filter_status_pending	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_filter_status_rejected	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_limit_capped_at_500	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_pagination_limit	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_history_pagination_offset	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_owner_allowed_all_endpoints	AssertionError: assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_pending_only	assert 404 == 200
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_viewer_blocked_detail	AssertionError: assert 404 == 403
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_viewer_blocked_history	AssertionError: assert 404 == 403
-FAILED	ai_orchestrator/tests/test_approval_read_api.py::test_viewer_blocked_pending	AssertionError: assert 404 == 403
-FAILED	ai_orchestrator/tests/test_auth_me.py::test_me_accessible_without_require_role	AssertionError: assert 'owner' == 'viewer'
-FAILED	ai_orchestrator/tests/test_auth_me.py::test_me_admin_role	AssertionError: assert 'owner' == 'admin'
-FAILED	ai_orchestrator/tests/test_auth_me.py::test_me_viewer_role	AssertionError: assert 'owner' == 'viewer'
-FAILED	ai_orchestrator/tests/test_capture_screenshot_approval.py::test_approval_transitions_waiting_to_queued	AssertionError: assert 'system' == 'admin_test'
-FAILED	ai_orchestrator/tests/test_capture_screenshot_approval.py::test_viewer_cannot_approve	assert 200 == 403
-FAILED	ai_orchestrator/tests/test_capture_screenshot_dry_run.py::test_audit_emits_completed_event_for_real_capture	starlette.websockets.WebSocketDisconnect
-FAILED	ai_orchestrator/tests/test_capture_screenshot_dry_run.py::test_audit_emits_dry_run_completed_event	starlette.websockets.WebSocketDisconnect
-FAILED	ai_orchestrator/tests/test_capture_screenshot_dry_run.py::test_real_capture_result_basename_only	KeyError: 'screenshot_file'
-FAILED	ai_orchestrator/tests/test_capture_screenshot_request_api.py::test_viewer_cannot_create_request	assert 200 == 403
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_admin_approve_success	assert None
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_blocks_file_scheme_target	AssertionError: {'task_id': 'F-19fc352a', 'risk_level': 'medium', 'allowed': True, 'requires_approval': True, ...}
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_blocks_internal_ip_target	AssertionError: {'task_id': 'F-75e700ca', 'risk_level': 'medium', 'allowed': True, 'requires_approval': True, ...}
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_blocks_localhost_target	AssertionError: {'task_id': 'F-c3ed205c', 'risk_level': 'medium', 'allowed': True, 'requires_approval': True, ...}
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_blocks_malformed_url_target	AssertionError: {'task_id': 'F-fa9323a8', 'risk_level': 'medium', 'allowed': True, 'requires_approval': True, ...}
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_blocks_non_allowlist_host_target	AssertionError: {'task_id': 'F-6a74b8d7', 'risk_level': 'medium', 'allowed': True, 'requires_approval': True, ...}
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_night_block_has_priority	assert None
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_operator_approve_forbidden	assert None
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_task_cooldown_has_priority	AssertionError: {'task_id': 'CD-8a56b6b0', 'risk_level': 'medium', 'allowed': True, 'requires_approval': True, ...}
-FAILED	ai_orchestrator/tests/test_fetch_web_page.py::test_fetch_web_page_viewer_approve_forbidden	assert None
-FAILED	ai_orchestrator/tests/test_local_agent_ws.py::test_ws_idle_timeout_triggers_expire_and_audit	AttributeError: <module 'ai_orchestrator.local_agent_router' from 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\ai_orchestrator\\local_agen
-FAILED	ai_orchestrator/tests/test_registration_codes.py::test_viewer_cannot_issue_code	assert 200 == 403
-FAILED	ai_orchestrator/tests/test_registration_codes.py::test_viewer_cannot_list_codes	assert 200 == 403
-FAILED	ai_orchestrator/tests/test_registration_codes.py::test_viewer_cannot_revoke	assert 200 == 403
-FAILED	tests/test_admin_legacy_redirect.py::test_legacy_disabled_redirects_to_admin_web	AssertionError: assert '/local-agents' == '/orchestrato.../local-agents'
-FAILED	tests/test_admin_ui_fallback_default.py::test_legacy_admin_ui_returns_404_by_default	assert 'admin-web' in '{"detail":"Not Found"}'
 FAILED	tests/test_admin_web_ops_dashboard_boundary_20260516.py::TestOpsPageAssembly::test_home_page_has_ops_link	assert '/ops' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n * CDP ...lChat domain="default"
-FAILED	tests/test_ai_agent_app_structure_design_baseline.py::test_ai_agent_app_structure_design_baseline_audit_passes	AssertionError: ['[PASS] AI agent app structure/design baseline is locked', '[FAIL] missing nav key: local-agents', '[FAIL] missing na...', '[FAIL] missing nav 
-FAILED	tests/test_ai_agent_app_structure_design_baseline.py::test_home_dashboard_exposes_ai_runtime_contract	assert 'data-testid="ai-agent-app-dashboard"' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n
-FAILED	tests/test_ai_agent_ui_structure_blueprint.py::test_ai_agent_ui_structure_blueprint_audit_passes	AssertionError: ['[PASS] AI agent UI structure blueprint is locked', '[PASS] app baseline references UI structure blueprint', '[FAIL] ...at And Result Workspace
-FAILED	tests/test_ai_agent_ui_structure_blueprint.py::test_home_links_ui_blueprint_artifact	assert 'AI agent UI structure blueprint' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n * CD
-FAILED	tests/test_app_api_contract_endpoints_prep_20260518.py::test_no_conflict_with_api_wiring	AssertionError: assert 'APP_UI_SHELL_READONLY_API_WIRING_BLOCKED' in ('APP_UI_SHELL_READONLY_API_WIRING_READY', 'APP_UI_SHELL_READONLY_API_WIRING_WITH_WARN')
-FAILED	tests/test_app_api_contract_endpoints_prep_20260518.py::test_no_conflict_with_readonly_status_cards	AssertionError: assert 'APP_UI_READONLY_BACKEND_STATUS_CARDS_BLOCKED' in ('APP_UI_READONLY_BACKEND_STATUS_CARDS_READY', 'APP_UI_READONLY_BACKEND_STATUS_CARDS_WI
-FAILED	tests/test_app_api_readonly_endpoints_implementation_plan_20260518.py::test_no_conflict_with_readonly_status_cards	AssertionError: assert 'APP_UI_READONLY_BACKEND_STATUS_CARDS_BLOCKED' in ('APP_UI_READONLY_BACKEND_STATUS_CARDS_READY', 'APP_UI_READONLY_BACKEND_STATUS_CARDS_WI
-FAILED	tests/test_app_approval_gate_readonly_polish_20260518.py::TestBackendInvariant::test_endpoint_count_63	assert 0 == 63
-FAILED	tests/test_app_approval_gate_readonly_polish_20260518.py::TestBackendInvariant::test_post_count_27	assert 0 == 27
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestBackendInvariant::test_endpoint_count_63	assert 0 == 63
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestBackendInvariant::test_post_count_27	assert 0 == 27
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestBanners::test_forbidden_action_banner	AssertionError: assert 'ForbiddenActionBanner' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestBanners::test_mutation_blocked_badge	AssertionError: assert 'MUTATION_BLOCKED' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestBanners::test_readonly_mode_banner	AssertionError: assert 'ReadOnlyModeBanner' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestBanners::test_server_apply_allowed_false	AssertionError: assert 'server_apply_allowed=false' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestFilesExist::test_page_exists	AssertionError: assert False
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestMockUsage::test_deployment_status_mock	AssertionError: assert 'deploymentStatusMock' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestSopPanel::test_baked_in_image_sop	AssertionError: assert 'BAKED_IN_IMAGE' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestSopPanel::test_deployment_sop_panel	AssertionError: assert 'DeploymentSopPanel' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestSopPanel::test_restart_alone_forbidden	AssertionError: assert 'RESTART_ALONE_FORBIDDEN' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestSopPanel::test_sop_steps_displayed	AssertionError: assert 'sop_steps' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestSummaryCards::test_build_required_card	AssertionError: assert '빌드 필요' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestSummaryCards::test_server_head_card	AssertionError: assert '서버 HEAD' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestSummaryCards::test_sync_state_card	AssertionError: assert '동기화 상태' in ''
-FAILED	tests/test_app_deployment_readonly_polish_20260518.py::TestUseClient::test_use_client	assert '"use client"' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestApiConnection::test_api_connection_state_badge	AssertionError: assert 'ApiConnectionStateBadge' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestApiConnection::test_get_app_providers_page	AssertionError: assert 'getAppProviders' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestApiConnection::test_mock_fallback_state	AssertionError: assert 'mock_fallback' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestBanners::test_forbidden_action_banner	AssertionError: assert 'ForbiddenActionBanner' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestBanners::test_mutation_blocked_badge	AssertionError: assert 'MUTATION_BLOCKED' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestBanners::test_readonly_mode_banner	AssertionError: assert 'ReadOnlyModeBanner' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestComponents::test_external_providers_mock	AssertionError: assert 'externalProvidersMock' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestComponents::test_provider_card_used	AssertionError: assert 'ProviderCard' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestFilesExist::test_page_exists	AssertionError: assert False
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestSummaryCards::test_auth_required_card	AssertionError: assert '인증 필요' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestSummaryCards::test_high_risk_card	AssertionError: assert ('HIGH+' in '' or 'highRisk' in '')
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestSummaryCards::test_total_providers	AssertionError: assert '전체 공급자' in ''
-FAILED	tests/test_app_external_sites_readonly_polish_20260518.py::TestUseClient::test_use_client	assert '"use client"' in ''
-FAILED	tests/test_app_foundation_p1_gates.py::test_p1_gates_all_zero_new_violations	AssertionError: P1 신규 위반: [{'severity': 'warn', 'code': 'STORAGE_BOUNDARY', 'path': 'ai_orchestrator/connectors/instagram_dm_db.py:14', 'message': 'sqlite3 직접 i
-FAILED	tests/test_app_foundation_p1_gates.py::test_storage_boundary_no_new_violations	AssertionError: STORAGE_BOUNDARY 신규 위반: [{'severity': 'warn', 'code': 'STORAGE_BOUNDARY', 'path': 'ai_orchestrator/connectors/instagram_dm_db.py:14', 'message':
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestApiConnection::test_get_ops_audit_events_in_page	AssertionError: assert 'getOpsAuditEvents' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestApiContract::test_endpoint_count_still_63	assert 0 == 63
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestApiContract::test_no_new_post_endpoint	assert 0 == 27
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestBaselineRegression::test_task_queue_uses_task_table	AssertionError: assert 'TaskTable' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestFilesExist::test_logs_page_exists	AssertionError: assert False
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestNormalization::test_app_mock_source_label	AssertionError: assert 'app-mock' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestNormalization::test_normalize_function_exists	AssertionError: assert 'normalize' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestNormalization::test_ops_api_source_label	AssertionError: assert 'ops-api' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestNormalization::test_redacted_true_enforced	AssertionError: assert 'redacted: true' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestReadOnlyBanners::test_forbidden_action_banner	AssertionError: assert 'ForbiddenActionBanner' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestReadOnlyBanners::test_mutation_blocked_badge	AssertionError: assert 'MUTATION_BLOCKED' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestReadOnlyBanners::test_read_only_mode_banner	AssertionError: assert 'ReadOnlyModeBanner' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestStateHandling::test_empty_state	AssertionError: assert 'empty' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestStateHandling::test_error_state	AssertionError: assert 'error' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestStateHandling::test_loading_state	AssertionError: assert 'loading' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestStateHandling::test_mock_fallback_state	AssertionError: assert 'mock_fallback' in ''
-FAILED	tests/test_app_logs_audit_readonly_view_20260518.py::TestUseClient::test_logs_page_use_client	assert '"use client"' in ''
-FAILED	tests/test_app_nav_active_state_polish_20260518.py::TestBaselineRegression::test_logs_page_still_exists	AssertionError: assert False
-FAILED	tests/test_app_nav_active_state_polish_20260518.py::TestBaselineRegression::test_task_queue_still_uses_task_table	AssertionError: assert 'TaskTable' in ''
-FAILED	tests/test_app_nav_active_state_polish_20260518.py::TestLayoutBadges::test_dry_run_badge	assert 'DRY_RUN' in '/** /assistant 레이아웃 — 비서앱 MVP shell (APP_NAV_ACTIVE_STATE_POLISH_01) */\nimport Link from "next/link";\nimport type {...n      </header>\n 
-FAILED	tests/test_app_nav_active_state_polish_20260518.py::TestLayoutBadges::test_no_execute_badge	assert '실행 버튼 없음' in '/** /assistant 레이아웃 — 비서앱 MVP shell (APP_NAV_ACTIVE_STATE_POLISH_01) */\nimport Link from "next/link";\nimport type {...n      </header>\n
-FAILED	tests/test_app_scope_web_desktop_boundary_20260516.py::TestExcelOfficeExternalAppHold::test_excel_engine_in_agent_not_orchestrator_core	AssertionError: agent/excel/ 없음
-FAILED	tests/test_app_scope_web_desktop_boundary_20260516.py::TestHwpxExternalAppHold::test_hwp_hancom_dir_exists_as_external	AssertionError: agent/hancom/ 없음
-FAILED	tests/test_app_standard_ui_dashboard.py::test_home_dashboard_defines_required_navigation	assert 'Dashboard' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n * CDP ...lChat domain="def
-FAILED	tests/test_app_standard_ui_dashboard.py::test_home_dashboard_has_consent_and_agent_sections	assert '에이전트 연결' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n * CDP ...lChat domain="defau
-FAILED	tests/test_app_standard_ui_dashboard.py::test_home_dashboard_is_server_first_static_dry_run	assert '서버 기준 운영 앱' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n * CDP ...lChat domain="de
-FAILED	tests/test_app_standard_ui_dashboard.py::test_home_dashboard_prioritizes_user_next_action	assert '지금 처리할 일을 한 화면에서 확인합니다' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n * CDP ...lCha
-FAILED	tests/test_app_standard_ui_dashboard.py::test_home_dashboard_uses_standard_ui_shell	assert 'AppShell' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n * CDP ...lChat domain="defa
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestApiConnection::test_api_connection_state_badge	AssertionError: assert 'ApiConnectionStateBadge' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestApiConnection::test_get_app_storage_status	AssertionError: assert 'getAppStorageStatus' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestApiConnection::test_mock_fallback	AssertionError: assert 'mock_fallback' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestB3Panel::test_approval_tokens_note	AssertionError: assert 'approval_tokens' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestB3Panel::test_b3_audit_pending	AssertionError: assert ('B-3' in '' or 'B3' in '')
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestB3Panel::test_token_policy	AssertionError: assert 'token 원문' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestBanners::test_mutation_blocked_badge	AssertionError: assert 'MUTATION_BLOCKED' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestBanners::test_readonly_mode_banner	AssertionError: assert 'ReadOnlyModeBanner' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestComponents::test_storage_status_card	AssertionError: assert 'StorageStatusCard' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestComponents::test_storage_status_mock	AssertionError: assert 'storageStatusMock' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestFilesExist::test_page_exists	AssertionError: assert False
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestSummaryCards::test_disposable_card	AssertionError: assert 'DISPOSABLE' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestSummaryCards::test_mount_count_card	AssertionError: assert '마운트 수' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestSummaryCards::test_persistent_card	AssertionError: assert 'PERSISTENT' in ''
-FAILED	tests/test_app_storage_readonly_polish_20260518.py::TestUseClient::test_use_client	assert '"use client"' in ''
-FAILED	tests/test_app_task_detail_readonly_polish_20260518.py::TestBaselineRegression::test_runtime_endpoint_count_still_63	assert 0 == 63
-FAILED	tests/test_app_task_detail_readonly_polish_20260518.py::TestFallbackHandling::test_loading_state	AssertionError: assert 'loading' in ''
-FAILED	tests/test_app_task_detail_readonly_polish_20260518.py::TestFallbackHandling::test_mock_fallback_state	AssertionError: assert 'mock_fallback' in ''
-FAILED	tests/test_app_task_detail_readonly_polish_20260518.py::TestFilesExist::test_detail_page_exists	AssertionError: assert False
-FAILED	tests/test_app_task_detail_readonly_polish_20260518.py::TestReadOnlyBanners::test_forbidden_action_banner	AssertionError: assert 'ForbiddenActionBanner' in ''
-FAILED	tests/test_app_task_detail_readonly_polish_20260518.py::TestReadOnlyBanners::test_mutation_blocked_badge	AssertionError: assert 'MUTATION_BLOCKED' in ''
-FAILED	tests/test_app_task_detail_readonly_polish_20260518.py::TestReadOnlyBanners::test_read_only_mode_banner	AssertionError: assert 'ReadOnlyModeBanner' in ''
-FAILED	tests/test_app_task_detail_readonly_polish_20260518.py::TestUiFeatures::test_back_link_exists	AssertionError: assert '/assistant/tasks' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestFilesExist::test_tasks_page_exists	AssertionError: assert False
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestPageHeading::test_dry_run_only_badge	AssertionError: assert 'DRY_RUN_ONLY' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestPageHeading::test_heading_task_queue	AssertionError: assert '작업 큐' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestPageHeading::test_mutation_blocked_badge	AssertionError: assert 'MUTATION_BLOCKED' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestReadOnlyBanners::test_dry_run_notice	AssertionError: assert 'DryRunNotice' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestReadOnlyBanners::test_forbidden_action_banner	AssertionError: assert 'ForbiddenActionBanner' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestReadOnlyBanners::test_read_only_mode_banner	AssertionError: assert 'ReadOnlyModeBanner' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestStateHandling::test_empty_state_panel	AssertionError: assert 'EmptyStatePanel' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestStateHandling::test_error_state	AssertionError: assert 'error' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestStateHandling::test_loading_state	AssertionError: assert 'loading' in ''
-FAILED	tests/test_app_task_queue_readonly_list_polish_20260518.py::TestStateHandling::test_mock_fallback_state	AssertionError: assert 'mock_fallback' in ''
-FAILED	tests/test_app_test_baseline_current_contract_sync_20260518.py::TestAuditScriptImportable::test_audit_verdict_ready	AssertionError: assert 'APP_TEST_BAS..._SYNC_BLOCKED' == 'APP_TEST_BAS...CT_SYNC_READY'
-FAILED	tests/test_app_test_baseline_current_contract_sync_20260518.py::TestGroupA_DashboardHealthAPI::test_dashboard_no_legacy_get_assistant_health	assert 'getAssistantHealth' not in '"use client...>\n  );\n}\n'
-FAILED	tests/test_app_test_baseline_current_contract_sync_20260518.py::TestGroupB_FutureEndpointNotice::test_dashboard_no_future_endpoint_notice	assert 'FutureEndpointNotice' not in '"use client...>\n  );\n}\n'
-FAILED	tests/test_app_test_baseline_current_contract_sync_20260518.py::TestGroupD_EndpointCount::test_cycle_test_count_63	assert '== 63' in '"""ASSISTANT_BACKEND_ROUTER_SERVER_CYCLE_BREAK_01 — 순환 import 제거 회귀 테스트.\n\n기존 cycle:\n  router.py → action_router.py..."low"\n    assert api
-FAILED	tests/test_app_test_baseline_current_contract_sync_20260518.py::TestGroupD_EndpointCount::test_runtime_endpoint_count_is_63	assert 0 == 63
-FAILED	tests/test_app_test_baseline_current_contract_sync_20260518.py::TestGroupD_EndpointCount::test_runtime_http_count_is_62	assert 0 == 62
 FAILED	tests/test_app_ui_readonly_backend_status_cards_20260518.py::test_audit_verdict_ready_or_warn	AssertionError: verdict=APP_UI_READONLY_BACKEND_STATUS_CARDS_BLOCKED
 FAILED	tests/test_app_ui_readonly_backend_status_cards_20260518.py::test_deployment_no_docker_compose_button	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\deplo
 FAILED	tests/test_app_ui_readonly_backend_status_cards_20260518.py::test_deployment_no_restart_button	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\deplo
@@ -163,17 +12,6 @@ FAILED	tests/test_app_ui_readonly_backend_status_cards_20260518.py::test_tasks_e
 FAILED	tests/test_app_ui_readonly_backend_status_cards_20260518.py::test_tasks_inbox_api_connected	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\tasks
 FAILED	tests/test_app_ui_readonly_backend_status_cards_20260518.py::test_tasks_mutation_blocked_badge	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\tasks
 FAILED	tests/test_app_ui_readonly_backend_status_cards_20260518.py::test_tasks_readonly_mode_banner	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\tasks
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_api_no_post	assert ('method: "POST"' not in '/**\n * 비서앱...\n  });\n}\n'
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_audit_verdict	AssertionError: audit BLOCKED: APP_UI_READONLY_STATUS_CARDS_API_BIND_BLOCKED
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_external_cookie_storage_forbidden_true	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\exter
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_external_map_providers	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\exter
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_external_mock_fallback	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\exter
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_external_no_raw_token	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\exter
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_external_uses_get_app_providers	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\exter
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_storage_map_storage	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\stora
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_storage_mock_fallback	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\stora
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_storage_no_raw_token	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\stora
-FAILED	tests/test_app_ui_readonly_status_cards_api_bind_20260518.py::test_storage_uses_get_app_storage_status	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\stora
 FAILED	tests/test_app_ui_shell_browser_smoke_20260518.py::test_audit_verdict_pass_or_warn	AssertionError: verdict=BROWSER_SMOKE_FAIL
 FAILED	tests/test_app_ui_shell_browser_smoke_20260518.py::test_deployment_no_restart_button	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\deplo
 FAILED	tests/test_app_ui_shell_browser_smoke_20260518.py::test_dry_run_notice_in_tasks	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\tasks
@@ -206,55 +44,17 @@ FAILED	tests/test_app_ui_shell_skeleton_20260518.py::test_audit_verdict_ready_or
 FAILED	tests/test_app_ui_shell_skeleton_20260518.py::test_deployment_page_no_restart_button	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\deplo
 FAILED	tests/test_app_ui_shell_skeleton_20260518.py::test_dry_run_notice_used_in_tasks	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\tasks
 FAILED	tests/test_app_ui_shell_skeleton_20260518.py::test_forbidden_action_banner_used_in_tasks	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\admin-web\\src\\app\\assistant\\tasks
-FAILED	tests/test_authed_local_agent_dispatch_dry_run.py::test_authed_local_agent_dispatch_dry_run_passes_static_contract	AssertionError: assert 'FAIL_AUTHED_...SECURITY_RISK' == 'PASS_AUTHED_...DRY_RUN_READY'
-FAILED	tests/test_backend_direct_dict_boundary_lock_20260516.py::TestCadAiChatHold::test_ai_used_is_bool	KeyError: 'ai_used'
-FAILED	tests/test_backend_direct_dict_boundary_lock_20260516.py::TestCadAiChatHold::test_auth_behavior_recorded	assert 404 in (200, 401, 403)
-FAILED	tests/test_backend_direct_dict_boundary_lock_20260516.py::TestCadAiChatHold::test_confidence_is_float	KeyError: 'confidence'
-FAILED	tests/test_backend_direct_dict_boundary_lock_20260516.py::TestCadAiChatHold::test_empty_agent_id_returns_400	assert 404 == 400
-FAILED	tests/test_backend_direct_dict_boundary_lock_20260516.py::TestCadAiChatHold::test_empty_message_returns_400	assert 404 == 400
-FAILED	tests/test_backend_direct_dict_boundary_lock_20260516.py::TestCadAiChatHold::test_response_keys_locked	assert 404 == 200
-FAILED	tests/test_backend_direct_dict_boundary_lock_20260516.py::TestDirectDictBoundaryHoldRegistry::test_all_hold_endpoints_registered_in_app	AssertionError: HOLD 엔드포인트 /api/v1/web-tasks/run가 app에 없음
-FAILED	tests/test_backend_domain_core_models_20260516.py::TestNoContractBreak::test_runtime_endpoint_count_unchanged	AssertionError: endpoint 수 변경 감지: 0
-FAILED	tests/test_backend_legacy_router_direct_dict_audit_20260516.py::test_naver_search_router_all_endpoints_require_admin_or_owner	AssertionError: endpoint 수 불일치: 13
-FAILED	tests/test_backend_legacy_router_direct_dict_audit_20260516.py::test_naver_search_router_has_3_source_endpoints	AssertionError: naver_search_router source endpoint 수=13, 기준=3
-FAILED	tests/test_backend_legacy_router_direct_dict_audit_20260516.py::test_naver_search_router_not_registered_in_main_app	AttributeError: '_IncludedRouter' object has no attribute 'path'
-FAILED	tests/test_backend_legacy_router_direct_dict_audit_20260516.py::test_naver_search_router_quarantine_hold_status	AttributeError: '_IncludedRouter' object has no attribute 'path'
-FAILED	tests/test_backend_legacy_router_direct_dict_audit_20260516.py::test_runtime_http_endpoint_count	AssertionError: runtime HTTP=0, 기준=62
-FAILED	tests/test_backend_legacy_router_direct_dict_audit_20260516.py::test_runtime_websocket_count	AssertionError: runtime WS=0, 기준=1
-FAILED	tests/test_backend_legacy_router_direct_dict_audit_20260516.py::test_unregistered_router_endpoint_count	AssertionError: naver_search_router source endpoint=13, 기준=3
-FAILED	tests/test_browser_engine_routing_policy_20260507.py::test_no_conflict_with_site_compliance_policy	AssertionError: assert 'BLOCK' == 'REQUIRE_API_CONNECTOR'
-FAILED	tests/test_browser_engine_routing_preflight_chain_20260507.py::test_no_conflict_with_site_compliance_policy	AssertionError: assert 'BLOCK' == 'REQUIRE_API_CONNECTOR'
-FAILED	tests/test_browser_sandbox_gate.py::test_sandbox_gate_detects_codex_sandbox	assert True is False
-FAILED	tests/test_browser_site_compliance_policy_20260507.py::TestEvaluateSiteCompliance::test_gmail_requires_api_connector	AssertionError: assert 'BLOCK' == 'REQUIRE_API_CONNECTOR'
-FAILED	tests/test_browser_site_compliance_policy_20260507.py::TestGetSiteCompliancePolicy::test_gmail_requires_oauth_api	AssertionError: assert 'CDP_READ_ONLY' == 'OAUTH_API_ONLY'
-FAILED	tests/test_browser_site_compliance_policy_20260507.py::TestGooglePolicyEnforcement::test_all_google_services_require_oauth_or_api	AssertionError: assert 'CDP_READ_ONLY' in {'API_ONLY', 'OAUTH_API_ONLY'}
-FAILED	tests/test_browser_submit_controlled_browser_smoke_20260506.py::TestControlledBrowserSmoke::test_03_policy_validation_pass	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_controlled_browser_smoke_20260506.py::TestControlledBrowserSmoke::test_04_preview_generation	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_controlled_browser_smoke_20260506.py::TestControlledBrowserSmoke::test_07_controlled_submit_result_structure	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_controlled_browser_smoke_20260506.py::TestControlledBrowserSmoke::test_13_full_flow_summary	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_policy_validator_20260506.py::TestAllowedCases::test_allowed_internal_mock_form_all_conditions_met	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_policy_validator_20260506.py::TestDeniedCases::test_denied_login_form_with_password	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_policy_validator_20260506.py::TestDeniedFieldDetection::test_denied_field_case_insensitive	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_policy_validator_20260506.py::TestDeniedFieldDetection::test_detect_password_field	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_policy_validator_20260506.py::TestDeniedFieldDetection::test_detect_token_field	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_browser_submit_policy_validator_20260506.py::TestDeniedFieldDetection::test_no_denied_fields	AttributeError: 'function' object has no attribute 'get'
 FAILED	tests/test_browser_submit_real_browser_audit_integration_20260506.py::TestRealBrowserAuditIntegration::test_01_full_flow_real_browser_to_audit_log	AttributeError: 'function' object has no attribute 'get'
 FAILED	tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py::TestRealBrowserControlledClickSmoke::test_10_policy_validator_allows_controlled	AttributeError: 'function' object has no attribute 'get'
 FAILED	tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py::TestRealBrowserControlledClickSmoke::test_11_controlled_submit_result_structure	AttributeError: 'function' object has no attribute 'get'
 FAILED	tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py::TestRealBrowserControlledClickSmoke::test_15_verify_audit_redacted_payload	AttributeError: 'function' object has no attribute 'get'
 FAILED	tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py::TestRealBrowserControlledClickSmoke::test_17_full_flow_integration	AttributeError: 'function' object has no attribute 'get'
-FAILED	tests/test_cdp_playwright_smoke_20260607.py::test_blog_tab_open_smoke	playwright._impl._errors.Error: BrowserType.connect_over_cdp: connect ECONNREFUSED 127.0.0.1:9222
-FAILED	tests/test_cdp_playwright_smoke_20260607.py::test_playwright_connects_to_cdp	playwright._impl._errors.Error: BrowserType.connect_over_cdp: connect ECONNREFUSED 127.0.0.1:9222
 FAILED	tests/test_dashboard_routes.py::test_approve_expired_token	assert 200 == 410
 FAILED	tests/test_dashboard_routes.py::test_dashboard_200	jinja2.exceptions.TemplateNotFound: dashboard.html
 FAILED	tests/test_dashboard_routes.py::test_dashboard_shows_summary_cards	jinja2.exceptions.TemplateNotFound: dashboard.html
 FAILED	tests/test_dashboard_routes.py::test_dashboard_with_pending_token	jinja2.exceptions.TemplateNotFound: dashboard.html
 FAILED	tests/test_dashboard_routes.py::test_task_detail_200_not_found	jinja2.exceptions.TemplateNotFound: task_detail.html
 FAILED	tests/test_dashboard_routes.py::test_task_detail_200_with_token	jinja2.exceptions.TemplateNotFound: task_detail.html
-FAILED	tests/test_domain_room_allocation.py::test_p1_storage_boundary_still_zero_new_violations	AssertionError: STORAGE_BOUNDARY 신규 위반: [{'severity': 'warn', 'code': 'STORAGE_BOUNDARY', 'path': 'ai_orchestrator/connectors/instagram_dm_db.py:14', 'message':
-FAILED	tests/test_dry_run_manual_local_agent_browser_smoke.py::test_manual_local_agent_browser_smoke_dry_run_ready	AssertionError: assert False is True
-FAILED	tests/test_eum_auth_selectors.py::test_eum_terminal_company_subtype_is_distribution_company	AttributeError: module 'scripts.eum.auth' has no attribute '_TERMINAL_COMPANY_SUBTYPE_SELECTOR'. Did you mean: '_TERMINAL_COMPANY_SUBTYPE'?
-FAILED	tests/test_external_web_work_connectors_20260516.py::TestExistingCloseoutTestsUnchanged::test_cad_hold_unchanged	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\local_agent\\cad\\controller_loader.p
 FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_expected_safe_result_fixture_loads	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_expecte
 FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_fixture_dangerous_actions_false	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_local_e
 FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_fixture_execution_mode_local_playwright	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_local_e
@@ -278,9 +78,6 @@ FAILED	tests/test_kakao_webhooks.py::test_kakaowork_missing_user_id_rejected	ass
 FAILED	tests/test_kakao_webhooks.py::test_kakaowork_null_payload_rejected	assert 401 == 400
 FAILED	tests/test_kakao_webhooks.py::test_kakaowork_valid_signature	assert 401 == 200
 FAILED	tests/test_kakao_webhooks.py::test_kakaowork_via_api	assert 401 == 200
-FAILED	tests/test_live_inputs_split.py::test_root_is_thin	assert 438 <= 400
-FAILED	tests/test_local_agent_gui_ux_design_spec.py::test_regression_gui_impl_audit_unchanged	ImportError: cannot import name 'audit_local_agent_gui_implementation' from 'scripts.ops' (unknown location)
-FAILED	tests/test_local_agent_ip_allowlist_policy.py::test_regression_local_agent_router_imports	AssertionError: assert False
 FAILED	tests/test_local_agent_user_field_test.py::test_agent_id_masked_in_report	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
 FAILED	tests/test_local_agent_user_field_test.py::test_audit_fail_desktop_ui_touched	AssertionError: assert 'FAIL_REPORT_MISSING' == 'FAIL_DESKTOP_UI_TOUCHED'
 FAILED	tests/test_local_agent_user_field_test.py::test_audit_warn_same_machine	AssertionError: assert 'FAIL_REPORT_MISSING' in ('PASS_USER_FIELD_TEST', 'WARN_SAME_MACHINE_TEST_ONLY')
@@ -293,8 +90,6 @@ FAILED	tests/test_local_agent_user_field_test.py::test_report_has_required_steps
 FAILED	tests/test_local_agent_user_field_test.py::test_report_is_valid_json	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
 FAILED	tests/test_local_agent_user_field_test.py::test_report_marks_desktop_ui_unchanged	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
 FAILED	tests/test_local_agent_user_field_test.py::test_report_required_steps_passed	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
-FAILED	tests/test_mcp_gateway_baseline.py::test_app_structure_and_home_expose_mcp_gateway_readiness	assert 'External MCP Gateway' in '"use client";\n/**\n * HomePage — 단일 AI 작업 콘솔.\n *\n * 앱 = "AI에게 작업을 요청하는 콘솔 1개". 실제 작업(사이트 로그인·작성·수집·분석 등)은\n * CDP ...lChat 
-FAILED	tests/test_mcp_gateway_baseline.py::test_mcp_gateway_baseline_audit_passes	AssertionError: ['[PASS] MCP gateway baseline is locked', '[PASS] MCP registry template contains no secret-shaped text', '[PASS] MCP r...: External MCP Gateway'
 FAILED	tests/test_message_classifier.py::test_api_classify_invalid_source_type	assert 401 == 400
 FAILED	tests/test_message_classifier.py::test_api_classify_kakaotalk_channel	assert 401 == 200
 FAILED	tests/test_message_classifier.py::test_api_classify_kakaowork	assert 401 == 200
@@ -302,50 +97,7 @@ FAILED	tests/test_message_classifier.py::test_api_classify_missing_source_type	a
 FAILED	tests/test_module_quality_gate.py::test_active_source_secret_scan_passes_current_sources	AssertionError: possible active-source secret hits: data/.gate_head_cache/head_4bc8e2b4feb7/scripts/module_quality_gate_checks_web.py, data/.gate_head_cache/hea
 FAILED	tests/test_module_quality_gate.py::test_required_local_gate_wiring_passes_current_sources	AssertionError: GitHub Actions workflow files are forbidden: .github/workflows/ci.yml
 FAILED	tests/test_module_quality_gate.py::test_root_legacy_script_contract_passes_current_sources	AssertionError: [FAIL] UNCLASSIFIED_ROOT_SCRIPT - notice_router.py | [FAIL] UNCLASSIFIED_ROOT_SCRIPT - tmpnzbjosab.py | [FAIL] MISSING_ROOT_SCRIPT - verify_port
-FAILED	tests/test_module_separation_gate.py::test_current_tree_passes_gate	AssertionError: 모듈 분리 위반:
-FAILED	tests/test_module_separation_gate.py::test_no_leaf_coupling	assert 2 == 0
-FAILED	tests/test_module_separation_gate.py::test_no_root_too_large	assert 4 == 0
-FAILED	tests/test_naver_blog_assets.py::test_pixel_analysis_adjusts_representative_score	assert 0 == 1
-FAILED	tests/test_naver_cafe_list_collector.py::test_background_runner_join_request_returns_payload	AssertionError: assert False is True
-FAILED	tests/test_naver_cafe_list_collector.py::test_background_runner_joined_cafe_collect_returns_payload	AssertionError: assert False is True
-FAILED	tests/test_naver_cafe_list_collector.py::test_background_runner_main_mode_returns_sections	AssertionError: assert False is True
-FAILED	tests/test_naver_cafe_list_collector.py::test_background_runner_topic_search_mode_returns_attach_only_report	AssertionError: assert False is True
-FAILED	tests/test_naver_cafe_list_collector.py::test_create_isolated_cafe_target_creates_new_tab	AssertionError: assert '' == 'iso'
-FAILED	tests/test_naver_cafe_list_collector.py::test_member_collect_filters_home_links_readonly	AttributeError: module 'scripts.naver.cafe.member_collect' has no attribute '_filtered_links'
-FAILED	tests/test_naver_cafe_list_collector.py::test_router_cafe_join_submit_records_gate_pass	IndexError: list index out of range
-FAILED	tests/test_naver_excel_and_mail_attach.py::test_attach_files_requires_existing_files_and_compose_page	AttributeError: module 'scripts.naver.mail' has no attribute 'attach_files'
-FAILED	tests/test_naver_excel_and_mail_attach.py::test_parse_attach_files_accepts_semicolon_list	AttributeError: module 'scripts.naver.mail' has no attribute '_parse_attach_files'
-FAILED	tests/test_naver_service_router.py::test_dry_run_calendar_add_does_not_open_browser	KeyError: 'naver_calendar_add_latest.json'
-FAILED	tests/test_naver_service_router.py::test_dry_run_mybox_upload_requires_file_but_not_browser	KeyError: 'naver_mybox_upload_latest.json'
-FAILED	tests/test_naver_service_router.py::test_dry_run_talk_send_records_approval_gate_shape	KeyError: 'naver_talk_send_latest.json'
-FAILED	tests/test_naver_service_router.py::test_service_catalog_lists_all_naver_sections	AssertionError: assert 'UTF-8 query encoding' in 'collect supports keyword filter; topic-search uses Naver search API; join-request is prepare-only; join-submit
 FAILED	tests/test_ops_router_read_only_20260516.py::TestExistingBoundaryTestsUnchanged::test_cad_external_app_hold_in_mock_data	assert 'cad' in 'import type {\n  dashboardmetric,\n  worktrade,\n  approvalitem,\n  webtaskaction,\n  agentstatus,\n  auditeventrow,\... title: "승인 만료 후 작업 자동 
 FAILED	tests/test_ops_router_read_only_20260516.py::TestOpsApiClientFallback::test_has_fallback_path	assert 'fallback' in 'import { getBackendApiBase } from "@/lib/backend-auth";\nimport type {\n  ApprovalItem,\n  AuditEventRow,\n  AgentSta...ntStatusesLegacy()
 FAILED	tests/test_ops_router_read_only_20260516.py::TestOpsRouterPythonImport::test_ops_router_no_post_routes	AssertionError: POST endpoint 발견: [APIRoute(path='/ops/approvals/gc', name='gc_expired_approvals', methods=['POST'])]
 FAILED	tests/test_ops_router_read_only_20260516.py::TestOpsRouterReadOnly::test_no_post_endpoint	assert '@ops_router.post' not in '"""운영센터 rea...s_router"]\n'
-ERROR	tests/test_post_tasks_medium_isolation_smoke_20260518.py::test_21_ms1_medium_issue_token_not_called	AssertionError: Cannot include an APIRouter instance that already includes this router. Did you mean to include a different router?
-ERROR	tests/test_post_tasks_medium_isolation_smoke_20260518.py::test_22_ms2_medium_dry_run_status_and_field	AssertionError: Cannot include an APIRouter instance that already includes this router. Did you mean to include a different router?
-ERROR	tests/test_post_tasks_medium_isolation_smoke_20260518.py::test_23_ms3_approve_execute_task_not_called	AssertionError: Cannot include an APIRouter instance that already includes this router. Did you mean to include a different router?
-ERROR	tests/test_post_tasks_medium_isolation_smoke_20260518.py::test_24_ms4_low_execute_called	AssertionError: Cannot include an APIRouter instance that already includes this router. Did you mean to include a different router?
-ERROR	tests/test_post_tasks_medium_isolation_smoke_20260518.py::test_26_ms6_blocked_path_no_dry_run	AssertionError: Cannot include an APIRouter instance that already includes this router. Did you mean to include a different router?
-ERROR	tests/test_post_tasks_medium_isolation_smoke_20260518.py::test_29_dry_run_log_event_called_for_medium	AssertionError: Cannot include an APIRouter instance that already includes this router. Did you mean to include a different router?
-FAILED	tests/test_post_tasks_side_effect_gate_design_20260518.py::test_60_audit_verdict_ready	AssertionError: unexpected verdict: POST_TASKS_SIDE_EFFECT_GATE_DESIGN_FAIL, errors: ['필수 파일 없음: backend/compat/legacy_5050']
-FAILED	tests/test_post_tasks_side_effect_gate_design_20260518.py::test_61_audit_no_errors	AssertionError: errors: ['필수 파일 없음: backend/compat/legacy_5050']
-FAILED	tests/test_required_quality_gate.py::test_git_hooks_delegate_to_required_gate	assert 'python scripts/required_quality_gate.py' in '#!/bin/sh\n# commit-checklist-wrapper v1\n# 커밋 전 체크리스트(공통) → 통과 시 기존 훅(pre-commit.orig) 실행. 설치기: .githooks/
-FAILED	tests/test_root_legacy_scripts_audit.py::test_current_root_scripts_are_classified	AssertionError: assert [Finding(stat...ime_gate.py')] == []
-FAILED	tests/test_root_legacy_scripts_audit.py::test_root_script_inventory_matches_config	AssertionError: assert ['app.py', 'a...test.py', ...] == ['app.py', 'a...test.py', ...]
-FAILED	tests/test_shared_warehouse_policy.py::test_p1_storage_boundary_still_zero_new_violations	AssertionError: STORAGE_BOUNDARY 신규 위반: [{'severity': 'warn', 'code': 'STORAGE_BOUNDARY', 'path': 'ai_orchestrator/connectors/instagram_dm_db.py:14', 'message':
-FAILED	tests/test_site_work_function_baseline.py::test_site_work_function_baseline_audit_passes	AssertionError: ['naver task not marked done: mail inbox', 'smartstore approval total mismatch: 6']
-FAILED	tests/test_tenant_runtime_hooks.py::TestAuthTenantContext::test_build_tenant_context_adds_active_organization_id	AssertionError: assert 'active_organization_id' in <MagicMock name='mock.build_tenant_context()' id='2338021945904'>
-FAILED	tests/test_tenant_runtime_hooks.py::TestAuthTenantContext::test_build_tenant_context_adds_organization_ids	AssertionError: assert 'organization_ids' in <MagicMock name='mock.build_tenant_context()' id='2338021945904'>
-FAILED	tests/test_tenant_runtime_hooks.py::TestAuthTenantContext::test_build_tenant_context_maps_actor_to_actor_user_id	AssertionError: assert 'actor_user_id' in <MagicMock name='mock.build_tenant_context()' id='2338021945904'>
-FAILED	tests/test_tenant_runtime_hooks.py::TestAuthTenantContext::test_build_tenant_context_preserves_existing_fields	AssertionError: assert <MagicMock name='mock.build_tenant_context().__getitem__()' id='2338021941200'> == 'john'
-FAILED	tests/test_tenant_runtime_hooks.py::TestAuthTenantContext::test_require_active_organization_rejects_mismatch	Failed: DID NOT RAISE ValueError
-FAILED	tests/test_tenant_runtime_hooks.py::TestAuthTenantContext::test_require_active_organization_rejects_missing_field	AssertionError: assert <MagicMock name='mock.require_active_organization()' id='2338016863840'> == 'org-1'
-FAILED	tests/test_tenant_runtime_hooks.py::TestAuthTenantContext::test_require_active_organization_validates_context	AssertionError: assert <MagicMock name='mock.require_active_organization()' id='2338016863840'> == 'org-1'
-FAILED	tests/test_tenant_runtime_hooks.py::TestAuthTenantContext::test_require_membership_rejects_unknown_org	Failed: DID NOT RAISE HTTPException
-FAILED	tests/test_tenant_runtime_hooks.py::TestBackwardCompatibility::test_existing_auth_format_preserved	AssertionError: assert 'actor' in <MagicMock name='mock.build_tenant_context()' id='2338021945904'>
-FAILED	tests/test_user_data_contribution_consent.py::test_router_is_included_under_api_v1	AttributeError: '_IncludedRouter' object has no attribute 'path'
-FAILED	tests/test_user_present_runtime_integration_20260520.py::test_handle_result_idempotent_when_already_final	AttributeError: module 'ai_orchestrator.local_agent_router' has no attribute '_handle_result'
-FAILED	tests/test_user_present_runtime_integration_20260520.py::test_send_task_blocked_emits_status_message	TypeError: An asyncio.Future, a coroutine or an awaitable is required
-FAILED	tests/test_user_present_runtime_integration_20260520.py::test_task_blocked_strips_long_fields	TypeError: An asyncio.Future, a coroutine or an awaitable is required
