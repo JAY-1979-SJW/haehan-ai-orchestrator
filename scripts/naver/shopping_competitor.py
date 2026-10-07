@@ -8,7 +8,7 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
-from ai_orchestrator.connectors.naver_shopping_collectors import collect_shopping_search
+from scripts.naver.shopping.naver_shopping_collectors import collect_shopping_search
 
 
 DATA_DIR = Path("data")

@@ -3425,7 +3425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_openapi_config.py": {
+  "scripts/naver/shopping/naver_openapi_config.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3449,7 +3449,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_client.py": {
+  "scripts/naver/shopping/naver_search_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3513,7 +3513,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/connectors/naver_search_utils.py": {
+  "scripts/naver/shopping/naver_search_utils.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3529,7 +3529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_shopping_collectors.py": {
+  "scripts/naver/shopping/naver_shopping_collectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
