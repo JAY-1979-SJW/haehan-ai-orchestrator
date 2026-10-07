@@ -294,3 +294,37 @@ def test_build_sites_uses_the_class_it_is_given():
 
     built = sites.build_sites(lambda **kw: kw)
     assert [b["key"] for b in built] == EXPECTED_ORDER and all("login_strategy" in b for b in built)
+
+
+# ── 미구성(install 누락)이 자동 로그인 경로에서 조용히 삼켜지지 않는다 ─────────────────────────
+
+
+@pytest.fixture
+def unconfigured(monkeypatch):
+    monkeypatch.setattr(reg, "_REGISTRY", {})
+    monkeypatch.setattr(reg, "_loaded", False)
+    monkeypatch.setattr(reg, "_loading", False)
+    monkeypatch.setattr(reg, "_provider", None)
+
+
+def test_auto_login_does_not_swallow_the_unconfigured_error(unconfigured):
+    """_auto_login 이 '등록표 없음' 을 '자동 로그인 실패 → 사용자 대기' 로 바꿔 버리면 install 누락이 로그인 대기로 숨는다."""
+    from scripts.site_engine import login_session
+
+    with pytest.raises(RuntimeError, match="install"):
+        login_session._auto_login(object(), "naver")
+
+
+def test_ensure_login_propagates_the_unconfigured_error(unconfigured, monkeypatch):
+    from scripts.site_engine import login_session
+
+    monkeypatch.setattr(login_session, "is_logged_in", lambda page, site: False)
+    with pytest.raises(RuntimeError, match="install"):
+        login_session.ensure_login(object(), "naver", wait_seconds=1)
+
+
+def test_open_site_propagates_the_unconfigured_error(unconfigured):
+    from scripts.site_engine import site_access
+
+    with pytest.raises(RuntimeError, match="install"):
+        site_access.open_site("eum")
