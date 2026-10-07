@@ -11465,7 +11465,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/integration/mail_automation.py": {
+  "scripts/archive/naver/automation/integration/mail_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11497,7 +11497,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/mail_automation.py": {
+  "scripts/archive/naver/automation/mail_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
