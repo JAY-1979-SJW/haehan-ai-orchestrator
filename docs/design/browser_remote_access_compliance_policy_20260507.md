@@ -343,7 +343,7 @@ site_owner_approval = present
 
 ### 8.1 Site Compliance Policy 모듈
 
-**파일**: `ai_orchestrator/browser_tool/site_compliance_policy.py`
+**파일**: `ai_orchestrator/browser_tool/policy/site_compliance_policy.py`
 
 **핵심 함수**:
 ```python

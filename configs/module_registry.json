@@ -2785,7 +2785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/domain_profile_registry.py": {
+  "ai_orchestrator/browser_tool/policy/domain_profile_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2889,7 +2889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/security_signal_detector.py": {
+  "ai_orchestrator/browser_tool/policy/security_signal_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2897,7 +2897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/server_browser_boundary_policy.py": {
+  "ai_orchestrator/browser_tool/policy/server_browser_boundary_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2905,7 +2905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/site_access_compatibility_auditor.py": {
+  "ai_orchestrator/browser_tool/policy/site_access_compatibility_auditor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2913,7 +2913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/site_compliance_policy.py": {
+  "ai_orchestrator/browser_tool/policy/site_compliance_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -23250,6 +23250,14 @@
    "source": "rule"
   },
   "ai_orchestrator/browser_tool/approval/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/policy/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

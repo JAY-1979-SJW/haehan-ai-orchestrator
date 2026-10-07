@@ -4,7 +4,7 @@
 
 import pytest
 
-from ai_orchestrator.browser_tool.domain_profile_registry import (
+from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
     get_domain_profile,
     is_action_blocked_for_domain,
     is_domain_registered,

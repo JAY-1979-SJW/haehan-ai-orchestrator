@@ -141,7 +141,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.routing.browser_engine_routing_policy
     ai_orchestrator.browser_tool.routing.browser_engine_routing_preflight_chain
     ai_orchestrator.browser_tool.submit.controlled_submit
-    ai_orchestrator.browser_tool.domain_profile_registry
+    ai_orchestrator.browser_tool.policy.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
     ai_orchestrator.browser_tool.routing.fallback_decision_engine
     ai_orchestrator.browser_tool.preflight.gate_approval_preflight
@@ -153,10 +153,10 @@ forbidden_modules =
     ai_orchestrator.browser_tool.local_agent_user_present_ws_contract
     ai_orchestrator.browser_tool.policy
     ai_orchestrator.browser_tool.router
-    ai_orchestrator.browser_tool.security_signal_detector
-    ai_orchestrator.browser_tool.server_browser_boundary_policy
-    ai_orchestrator.browser_tool.site_access_compatibility_auditor
-    ai_orchestrator.browser_tool.site_compliance_policy
+    ai_orchestrator.browser_tool.policy.security_signal_detector
+    ai_orchestrator.browser_tool.policy.server_browser_boundary_policy
+    ai_orchestrator.browser_tool.policy.site_access_compatibility_auditor
+    ai_orchestrator.browser_tool.policy.site_compliance_policy
     ai_orchestrator.browser_tool.approval.submit_approval_state
     ai_orchestrator.browser_tool.approval.submit_audit_log
     ai_orchestrator.browser_tool.submit.submit_execution_gate
@@ -1238,12 +1238,12 @@ source_modules =
     ai_orchestrator.browser_tool.preflight.allowlist_preflight
     ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier
     ai_orchestrator.browser_tool.routing.browser_engine_routing_policy
-    ai_orchestrator.browser_tool.domain_profile_registry
+    ai_orchestrator.browser_tool.policy.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
     ai_orchestrator.browser_tool.preflight.gate_approval_preflight
     ai_orchestrator.browser_tool.policy
-    ai_orchestrator.browser_tool.server_browser_boundary_policy
-    ai_orchestrator.browser_tool.site_compliance_policy
+    ai_orchestrator.browser_tool.policy.server_browser_boundary_policy
+    ai_orchestrator.browser_tool.policy.site_compliance_policy
     ai_orchestrator.browser_tool.approval.submit_approval_state
     ai_orchestrator.browser_tool.submit.submit_execution_gate
     ai_orchestrator.browser_tool.submit.submit_policy
@@ -1375,8 +1375,8 @@ forbidden_modules =
     ai_orchestrator.browser_tool.local_agent_user_present_status_handler
     ai_orchestrator.browser_tool.local_agent_user_present_ws_contract
     ai_orchestrator.browser_tool.router
-    ai_orchestrator.browser_tool.security_signal_detector
-    ai_orchestrator.browser_tool.site_access_compatibility_auditor
+    ai_orchestrator.browser_tool.policy.security_signal_detector
+    ai_orchestrator.browser_tool.policy.site_access_compatibility_auditor
     ai_orchestrator.browser_tool.submit.submit_preview
     ai_orchestrator.browser_tool.unified_browser_safe_result
     ai_orchestrator.browser_tool.unified_browser_task_schema
@@ -2320,7 +2320,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.routing.browser_engine_routing_policy
     ai_orchestrator.browser_tool.routing.browser_engine_routing_preflight_chain
     ai_orchestrator.browser_tool.submit.controlled_submit
-    ai_orchestrator.browser_tool.domain_profile_registry
+    ai_orchestrator.browser_tool.policy.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
     ai_orchestrator.browser_tool.routing.fallback_decision_engine
     ai_orchestrator.browser_tool.preflight.gate_approval_preflight
@@ -2332,10 +2332,10 @@ forbidden_modules =
     ai_orchestrator.browser_tool.local_agent_user_present_ws_contract
     ai_orchestrator.browser_tool.policy
     ai_orchestrator.browser_tool.router
-    ai_orchestrator.browser_tool.security_signal_detector
-    ai_orchestrator.browser_tool.server_browser_boundary_policy
-    ai_orchestrator.browser_tool.site_access_compatibility_auditor
-    ai_orchestrator.browser_tool.site_compliance_policy
+    ai_orchestrator.browser_tool.policy.security_signal_detector
+    ai_orchestrator.browser_tool.policy.server_browser_boundary_policy
+    ai_orchestrator.browser_tool.policy.site_access_compatibility_auditor
+    ai_orchestrator.browser_tool.policy.site_compliance_policy
     ai_orchestrator.browser_tool.approval.submit_approval_state
     ai_orchestrator.browser_tool.approval.submit_audit_log
     ai_orchestrator.browser_tool.submit.submit_execution_gate
@@ -3423,8 +3423,8 @@ source_modules =
     ai_orchestrator.browser_tool.local_agent_user_present_status_handler
     ai_orchestrator.browser_tool.local_agent_user_present_ws_contract
     ai_orchestrator.browser_tool.router
-    ai_orchestrator.browser_tool.security_signal_detector
-    ai_orchestrator.browser_tool.site_access_compatibility_auditor
+    ai_orchestrator.browser_tool.policy.security_signal_detector
+    ai_orchestrator.browser_tool.policy.site_access_compatibility_auditor
     ai_orchestrator.browser_tool.submit.submit_preview
     ai_orchestrator.browser_tool.unified_browser_safe_result
     ai_orchestrator.browser_tool.unified_browser_task_schema
@@ -5386,7 +5386,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.routing.browser_engine_routing_policy
     ai_orchestrator.browser_tool.routing.browser_engine_routing_preflight_chain
     ai_orchestrator.browser_tool.submit.controlled_submit
-    ai_orchestrator.browser_tool.domain_profile_registry
+    ai_orchestrator.browser_tool.policy.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
     ai_orchestrator.browser_tool.routing.fallback_decision_engine
     ai_orchestrator.browser_tool.preflight.gate_approval_preflight
@@ -5397,10 +5397,10 @@ forbidden_modules =
     ai_orchestrator.browser_tool.local_agent_user_present_ws_contract
     ai_orchestrator.browser_tool.policy
     ai_orchestrator.browser_tool.router
-    ai_orchestrator.browser_tool.security_signal_detector
-    ai_orchestrator.browser_tool.server_browser_boundary_policy
-    ai_orchestrator.browser_tool.site_access_compatibility_auditor
-    ai_orchestrator.browser_tool.site_compliance_policy
+    ai_orchestrator.browser_tool.policy.security_signal_detector
+    ai_orchestrator.browser_tool.policy.server_browser_boundary_policy
+    ai_orchestrator.browser_tool.policy.site_access_compatibility_auditor
+    ai_orchestrator.browser_tool.policy.site_compliance_policy
     ai_orchestrator.browser_tool.approval.submit_approval_state
     ai_orchestrator.browser_tool.submit.submit_execution_gate
     ai_orchestrator.browser_tool.submit.submit_policy

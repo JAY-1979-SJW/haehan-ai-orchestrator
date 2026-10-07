@@ -1,6 +1,6 @@
 """USER_PRESENT 런타임용 사이트 정책 게이트 (stub 수준).
 
-기존 ai_orchestrator/browser_tool/site_compliance_policy.py 의 평가 결과를
+기존 ai_orchestrator/browser_tool/policy/site_compliance_policy.py 의 평가 결과를
 3종 정책(API_ONLY / USER_PRESENT_LOCAL_ONLY / AUTOMATION_BLOCKED) 기준으로
 allowlist/blocklist 형태로 압축한다.
 
@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 try:
-    from ai_orchestrator.browser_tool.site_compliance_policy import (
+    from ai_orchestrator.browser_tool.policy.site_compliance_policy import (
         evaluate_site_compliance as _evaluate,
     )
 except Exception:  # pragma: no cover - import 경로 안전망  # noqa: BLE001 - site_compliance_policy 모듈 import 실패 시 _evaluate=None 처리 - evaluate_gate()가 _evaluate is None 인 경우 allowed=False, policy=AUTOMATION_BLOCKED 로 fail-closed 반환하도록 아래에서 명시적으로 확인함(차단 방향), 허용으로 폴백하지 않음

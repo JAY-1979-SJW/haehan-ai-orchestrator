@@ -13,7 +13,8 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
-from ..browser_tool.site_compliance_policy import get_site_compliance_policy
+from ai_orchestrator.browser_tool.policy.site_compliance_policy import get_site_compliance_policy
+
 from ..vendor_directory import vendor_directory_service as vendors
 from . import site_preflight as sp
 from . import site_registry as sr

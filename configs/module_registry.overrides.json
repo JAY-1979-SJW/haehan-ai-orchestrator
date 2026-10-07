@@ -15,7 +15,7 @@
   "role": "policy",
   "reason": "정책 기반 엔진 라우팅 분류만 수행, click/type/fill/submit 코드 없음(docstring 명시) — L4 오분류"
  },
- "ai_orchestrator/browser_tool/domain_profile_registry.py": {
+ "ai_orchestrator/browser_tool/policy/domain_profile_registry.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "파일 docstring이 'profile은 실행 정책이지 로그인 자동화 코드가 아님'이라 명시 — L4 오분류"

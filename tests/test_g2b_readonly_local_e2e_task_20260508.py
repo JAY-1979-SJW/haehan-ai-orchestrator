@@ -11,8 +11,7 @@ import pathlib
 
 import pytest
 
-from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile as get_profile
-from local_agent.runtime.security_guard import validate_task_before_run
+from ai_orchestrator.browser_tool.policy.domain_profile_registry import get_domain_profile as get_profile
 from ai_orchestrator.contracts.local_task_protocol import (
     ALLOWED_TASK_ACTIONS,
     EXEC_MODE_LOCAL_PLAYWRIGHT,
@@ -23,6 +22,7 @@ from ai_orchestrator.contracts.local_task_protocol import (
     build_task,
     validate_task,
 )
+from local_agent.runtime.security_guard import validate_task_before_run
 
 _FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "g2b_readonly_local_e2e_task_20260508.json"
 _SAFE_RESULT = pathlib.Path(__file__).parent / "fixtures" / "g2b_readonly_expected_safe_result_20260508.json"

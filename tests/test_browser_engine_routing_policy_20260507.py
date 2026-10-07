@@ -359,7 +359,7 @@ def test_compatible_with_capability_classifier():
 
 
 def test_no_conflict_with_server_browser_boundary_policy():
-    from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+    from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
         classify_restricted_site_for_server_browser,
     )
 
@@ -372,7 +372,7 @@ def test_no_conflict_with_server_browser_boundary_policy():
 
 
 def test_no_conflict_with_site_compliance_policy():
-    from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
+    from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance
 
     # Gmail 은 CDP_READ_ONLY 완화 정책(5177645b): 읽기 = ALLOW_BROWSER_READONLY, 쓰기성 = BLOCK
     result = evaluate_site_compliance({"target_domain": "mail.google.com", "operation_type": "read"})

@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.browser_tool.domain_profile_registry import (
+from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
     get_domain_profile,
 )
 from ai_orchestrator.browser_tool.routing.execution_location_policy import (
@@ -19,13 +19,13 @@ from ai_orchestrator.browser_tool.routing.execution_location_policy import (
 from ai_orchestrator.browser_tool.routing.local_agent_handoff import (
     build_local_agent_handoff,
 )
+from ai_orchestrator.browser_tool.routing.unified_execution_router import (
+    route_browser_task,
+)
 from ai_orchestrator.browser_tool.unified_browser_safe_result import (
     EXEC_LOCAL_AGENT,
     EXEC_SERVER_BROWSER,
     STATUS_LOCAL_HANDOFF_CREATED,
-)
-from ai_orchestrator.browser_tool.routing.unified_execution_router import (
-    route_browser_task,
 )
 
 

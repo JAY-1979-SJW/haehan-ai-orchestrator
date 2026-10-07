@@ -15,6 +15,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
+    evaluate_server_browser_allowed,
+)
+from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance
 from ai_orchestrator.browser_tool.preflight.action_registry_preflight import (
     evaluate_action_registry_preflight,
 )
@@ -33,10 +37,6 @@ from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier i
 from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
     evaluate_browser_engine_routing,
 )
-from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
-    evaluate_server_browser_allowed,
-)
-from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
 
 # ── next_step 허용값 ──────────────────────────────────────────────────────────
 

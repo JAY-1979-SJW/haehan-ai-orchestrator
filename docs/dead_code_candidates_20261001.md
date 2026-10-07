@@ -41,7 +41,7 @@
 
 ## 3단계 — 사용자 판단 필요: 공개 함수·클래스 (78개)
 지금은 호출되지 않지만 기능 도구함·캠페인 도우미일 수 있다. 삭제 전 소유자 확인이 필요하다.
-- `ai_orchestrator/browser_tool/site_access_compatibility_auditor.py`: `build_site_access_audit_target`(function,L43), `build_site_access_audit_result`(function,L242)
+- `ai_orchestrator/browser_tool/policy/site_access_compatibility_auditor.py`: `build_site_access_audit_target`(function,L43), `build_site_access_audit_result`(function,L242)
 - `ai_orchestrator/clients/telegram_sender.py`: `answer_callback_query`(function,L96)
 - `ai_orchestrator/connectors/instagram/instagram_dm_db.py`: `set_legacy_ig_user_id`(function,L234)
 - `ai_orchestrator/gates/auth.py`: `get_tenant_context`(function,L176)

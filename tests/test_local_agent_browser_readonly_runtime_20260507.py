@@ -423,6 +423,7 @@ def test_compatible_with_site_access_compatibility_auditor():
         pathlib.Path(__file__).parent.parent
         / "ai_orchestrator"
         / "browser_tool"
+        / "policy"
         / "site_access_compatibility_auditor.py"
     )
     assert auditor_path.exists(), "site_access_compatibility_auditor.py 없음"
@@ -433,7 +434,7 @@ def test_compatible_with_site_access_compatibility_auditor():
 
 def test_compatible_with_site_compliance_policy():
     compliance_path = (
-        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "site_compliance_policy.py"
+        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "policy" / "site_compliance_policy.py"
     )
     assert compliance_path.exists(), "site_compliance_policy.py 없음"
 

@@ -28,8 +28,11 @@ import logging
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.browser_tool.domain_profile_registry import (
+from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
     get_domain_profile,
+)
+from ai_orchestrator.browser_tool.policy.security_signal_detector import (
+    detect_from_result,
 )
 from ai_orchestrator.browser_tool.routing.execution_location_policy import (
     BLOCKED,
@@ -50,9 +53,6 @@ from ai_orchestrator.browser_tool.routing.local_agent_handoff import (
     build_local_agent_handoff,
     handoff_to_task_protocol,
     validate_handoff_payload,
-)
-from ai_orchestrator.browser_tool.security_signal_detector import (
-    detect_from_result,
 )
 from ai_orchestrator.browser_tool.unified_browser_safe_result import (
     EXEC_BLOCKED,

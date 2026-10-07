@@ -102,9 +102,9 @@
 
 | 역할 | 경로 |
 |---|---|
-| 서버 브라우저 경계 정책 | ai_orchestrator/browser_tool/server_browser_boundary_policy.py |
-| 사이트 준수 정책 | ai_orchestrator/browser_tool/site_compliance_policy.py |
-| 사이트 접근 감사 | ai_orchestrator/browser_tool/site_access_compatibility_auditor.py |
+| 서버 브라우저 경계 정책 | ai_orchestrator/browser_tool/policy/server_browser_boundary_policy.py |
+| 사이트 준수 정책 | ai_orchestrator/browser_tool/policy/site_compliance_policy.py |
+| 사이트 접근 감사 | ai_orchestrator/browser_tool/policy/site_access_compatibility_auditor.py |
 | 로컬 Agent read-only 런타임 | local_agent/browser_readonly_runtime.py |
 | user-present 플로우 | ai_orchestrator/agent_hub/user_present_flow.py |
 | user-present 상태 store | local_agent/user_present_state_store.py |

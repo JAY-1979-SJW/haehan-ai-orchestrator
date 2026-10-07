@@ -33,8 +33,8 @@ import warnings
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
+from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 from ai_orchestrator.browser_tool.preflight.allowlist_preflight import evaluate_allowlist_preflight  # noqa: E402
-from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 from ai_orchestrator.connectors.g2b.g2b_domain_policy import (  # noqa: E402
     DOMAIN_G2B_PUBLIC_READONLY,
     DOMAIN_NEEDS_URL_VERIFICATION,
@@ -278,7 +278,7 @@ class TestG2BCompatibility(unittest.TestCase):
 
     # 20. server_boundary_policy와 호환 — g2b_public_readonly server_allowed=True
     def test_20_server_boundary_g2b_public_readonly(self):
-        from ai_orchestrator.browser_tool.server_browser_boundary_policy import evaluate_server_browser_allowed
+        from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import evaluate_server_browser_allowed
 
         for domain in ["g2b.go.kr", "www.g2b.go.kr"]:
             payload = {
@@ -291,7 +291,7 @@ class TestG2BCompatibility(unittest.TestCase):
 
     # 21. G2B matrix와 호환 — 기존 6개 READ_ONLY_ALLOWED 케이스 유지
     def test_21_g2b_matrix_readonly_still_allowed(self):
-        from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
+        from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance
 
         for domain in ["g2b.go.kr", "www.g2b.go.kr"]:
             for op in ["read", "navigate"]:

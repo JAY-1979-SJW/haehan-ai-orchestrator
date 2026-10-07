@@ -41,7 +41,7 @@ def test_01_g2b_import_does_not_break_allowlist_result():
 
 def test_02_g2b_execution_gate_import_does_not_break_site_compliance():
     """g2b_public_notice_execution_gate import 후 site_compliance 결과 불변."""
-    from ai_orchestrator.browser_tool.site_compliance_policy import (
+    from ai_orchestrator.browser_tool.policy.site_compliance_policy import (
         get_site_compliance_policy,
     )
 

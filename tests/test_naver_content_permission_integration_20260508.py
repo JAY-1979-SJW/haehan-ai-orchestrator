@@ -6,6 +6,14 @@
 
 import pytest
 
+from local_agent.runtime.approval_audit_log import (
+    EVENT_EXECUTION_COMPLETED,
+    EVENT_EXECUTION_STARTED,
+    clear_log,
+    get_log,
+    get_log_for_permission,
+    has_sensitive_data,
+)
 from local_agent.runtime.content_workflow_policy import (
     GRADE_USER_DIRECT,
     get_workflow_grade,
@@ -29,14 +37,6 @@ from local_agent.runtime.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,
-)
-from local_agent.runtime.approval_audit_log import (
-    EVENT_EXECUTION_COMPLETED,
-    EVENT_EXECUTION_STARTED,
-    clear_log,
-    get_log,
-    get_log_for_permission,
-    has_sensitive_data,
 )
 
 
@@ -275,7 +275,7 @@ class TestExistingSystemRegression:
         assert result["sensitive_data_collected"] is False
 
     def test_naver_domain_profile_registered(self):
-        from ai_orchestrator.browser_tool.domain_profile_registry import (
+        from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
             get_domain_profile,
         )
 
