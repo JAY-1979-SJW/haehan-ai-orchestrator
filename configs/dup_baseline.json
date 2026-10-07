@@ -14,10 +14,10 @@
    "scripts/google/sheets.py:_task_delete"
   ],
   "12f815d0a03c48ff8494bf6fd69a1488f3dd8a85": [
-   "ai_orchestrator/local_agent_redaction.py:_strip_browser",
-   "ai_orchestrator/local_agent_redaction.py:_strip_capabilities",
-   "ai_orchestrator/local_agent_redaction.py:_strip_cleanup",
-   "ai_orchestrator/local_agent_redaction.py:_strip_lifecycle"
+   "ai_orchestrator/agent_hub/redaction.py:_strip_browser",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_capabilities",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_cleanup",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_lifecycle"
   ],
   "17e17c11891ad7b30892002d0a95e9718029f2bd": [
    "local_agent/browser_approval_verifier.py:BrowserApprovalStore.mark_used",
@@ -79,8 +79,8 @@
    "orchestrator_v1/tasks/email_task_approval.py:reject"
   ],
   "3a1616afa4db701703834b6ec3b4e30bee779c3a": [
-   "ai_orchestrator/local_agent_redaction.py:_strip_click_target",
-   "ai_orchestrator/local_agent_redaction.py:_strip_url_info"
+   "ai_orchestrator/agent_hub/redaction.py:_strip_click_target",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_url_info"
   ],
   "3a206e750dedc94764bb59afad4ef3ad988fab6d": [
    "scripts/google/vision_usage_gate.py:save_vision_monthly_free_gate",

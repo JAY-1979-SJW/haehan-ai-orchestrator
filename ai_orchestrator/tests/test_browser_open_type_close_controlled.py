@@ -2,7 +2,7 @@
 
 from ai_orchestrator.browser_tool.backends.mock_backend import _handle_open_type_close_controlled
 from ai_orchestrator.browser_tool.policy import get_action_policy
-from ai_orchestrator.local_agent_redaction import _RESULT_DATA_ALLOWED_KEYS
+from ai_orchestrator.agent_hub.redaction import _RESULT_DATA_ALLOWED_KEYS
 
 
 class TestBrowserOpenTypeCloseControlledPolicy:

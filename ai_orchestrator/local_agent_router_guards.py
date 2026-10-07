@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 
-from .local_agent_models import LocalAgentTask
+from .agent_hub.models import LocalAgentTask
 
 logger = logging.getLogger(__name__)
 

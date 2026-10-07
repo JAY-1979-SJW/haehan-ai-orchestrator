@@ -2,7 +2,7 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.user_approval_gate import (
+from ai_orchestrator.agent_hub.policy.user_approval_gate import (
     STATUS_EXHAUSTED,
     STATUS_PENDING,
     STATUS_REJECTED,

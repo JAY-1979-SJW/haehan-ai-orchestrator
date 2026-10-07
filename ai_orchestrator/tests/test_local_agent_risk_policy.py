@@ -9,7 +9,7 @@ import pytest
 
 def test_action_risk_defined():
     """ACTION_RISK가 정의되어 있고 필수 액션들을 포함한다."""
-    from ai_orchestrator.local_agent_risk_policy import ACTION_RISK
+    from ai_orchestrator.agent_hub.policy.risk_policy import ACTION_RISK
 
     assert isinstance(ACTION_RISK, dict)
     assert len(ACTION_RISK) > 0
@@ -24,7 +24,7 @@ def test_action_risk_defined():
 
 def test_action_risk_levels():
     """ACTION_RISK의 risk_level 값이 예상과 일치한다."""
-    from ai_orchestrator.local_agent_risk_policy import ACTION_RISK
+    from ai_orchestrator.agent_hub.policy.risk_policy import ACTION_RISK
 
     # low risk
     assert ACTION_RISK["ping"] == "low"
@@ -43,7 +43,7 @@ def test_action_risk_levels():
 
 def test_server_auto_complete_defined():
     """_SERVER_AUTO_COMPLETE가 정의되어 있고 올바른 액션을 포함한다."""
-    from ai_orchestrator.local_agent_risk_policy import _SERVER_AUTO_COMPLETE
+    from ai_orchestrator.agent_hub.policy.risk_policy import _SERVER_AUTO_COMPLETE
 
     assert isinstance(_SERVER_AUTO_COMPLETE, frozenset)
     assert "ping" in _SERVER_AUTO_COMPLETE
@@ -54,7 +54,7 @@ def test_server_auto_complete_defined():
 
 def test_allowed_apps_defined():
     """ALLOWED_APPS가 정의되어 있고 올바른 앱을 포함한다."""
-    from ai_orchestrator.local_agent_risk_policy import ALLOWED_APPS
+    from ai_orchestrator.agent_hub.policy.risk_policy import ALLOWED_APPS
 
     assert isinstance(ALLOWED_APPS, list)
     assert "browser" in ALLOWED_APPS
@@ -164,7 +164,7 @@ def test_medium_risk_action():
 
 def test_browser_actions_defined():
     """browser automation 액션들이 정의되어 있다."""
-    from ai_orchestrator.local_agent_risk_policy import ACTION_RISK
+    from ai_orchestrator.agent_hub.policy.risk_policy import ACTION_RISK
 
     browser_actions = {
         "browser.inspect": "low",

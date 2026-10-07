@@ -18,7 +18,7 @@ def get_agent_cleanup_preview(agent_id: str) -> dict:
         "task_status_counts": {...}
     }
     """
-    from .local_agent_cleanup_policy import validate_cleanup_request
+    from .agent_hub.policy.cleanup_policy import validate_cleanup_request
 
     with _lock:
         agent = _agents.get(agent_id)
@@ -71,7 +71,7 @@ def cleanup_agent_and_tasks(
     - dry_run=true: preview만 반환, 실제 삭제 안 함
     - dry_run=false: force=true + confirm 정확 일치 필수
     """
-    from .local_agent_cleanup_policy import validate_cleanup_request
+    from .agent_hub.policy.cleanup_policy import validate_cleanup_request
 
     with _lock:
         agent = _agents.get(agent_id)

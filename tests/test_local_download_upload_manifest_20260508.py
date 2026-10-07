@@ -7,7 +7,7 @@ from ai_orchestrator.local_agent.download_upload_manifest import (
     is_safe_manifest,
     validate_manifest,
 )
-from ai_orchestrator.server.local_agent_file_upload_policy import (
+from ai_orchestrator.agent_hub.policy.file_upload_policy import (
     get_server_upload_policy_summary,
     validate_upload_manifest,
 )

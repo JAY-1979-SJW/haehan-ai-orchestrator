@@ -8,7 +8,7 @@ import secrets
 import uuid
 from datetime import datetime
 
-from .local_agent_models import LocalAgent, RegisterResult
+from .agent_hub.models import LocalAgent, RegisterResult
 from .local_agent_registry_common import (
     ACTIVE_TASK_STATUSES,
     HEARTBEAT_STALE_SECONDS,

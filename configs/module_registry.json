@@ -5185,7 +5185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/user_approval_gate.py": {
+  "ai_orchestrator/agent_hub/policy/user_approval_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5241,7 +5241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_audit_builders.py": {
+  "ai_orchestrator/agent_hub/audit_builders.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5249,7 +5249,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_audit_event_policy.py": {
+  "ai_orchestrator/agent_hub/policy/audit_event_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5257,7 +5257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_cleanup_policy.py": {
+  "ai_orchestrator/agent_hub/policy/cleanup_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5281,7 +5281,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_error_mapping.py": {
+  "ai_orchestrator/agent_hub/error_mapping.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5289,7 +5289,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_models.py": {
+  "ai_orchestrator/agent_hub/models.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -5297,7 +5297,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent_redaction.py": {
+  "ai_orchestrator/agent_hub/redaction.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5369,7 +5369,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_response_builders.py": {
+  "ai_orchestrator/agent_hub/response_builders.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5377,7 +5377,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_risk_policy.py": {
+  "ai_orchestrator/agent_hub/policy/risk_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5481,7 +5481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_status_policy.py": {
+  "ai_orchestrator/agent_hub/policy/status_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5977,7 +5977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/server/local_agent_file_upload_policy.py": {
+  "ai_orchestrator/agent_hub/policy/file_upload_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -23039,6 +23039,22 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/agent_hub/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/agent_hub/policy/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }

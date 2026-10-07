@@ -29,8 +29,8 @@ import logging
 
 from fastapi import APIRouter, Depends
 
-from . import local_agent_audit_builders as _audit
-from . import local_agent_audit_event_policy as _policy
+from .agent_hub import audit_builders as _audit
+from .agent_hub.policy import audit_event_policy as _policy
 from . import local_agent_diagnostics
 from . import local_agent_registry as _reg
 from . import local_agent_router_guards as _guards

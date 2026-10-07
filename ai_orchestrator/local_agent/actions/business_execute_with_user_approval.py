@@ -12,7 +12,7 @@ from ai_orchestrator.local_agent.business_action_profiles import (
     build_evidence_policy,
     get_profile,
 )
-from ai_orchestrator.local_agent.user_approval_gate import sanitize_params, verify_and_consume_token
+from ai_orchestrator.agent_hub.policy.user_approval_gate import sanitize_params, verify_and_consume_token
 
 ACTION_NAME = "business.execute_with_user_approval"
 

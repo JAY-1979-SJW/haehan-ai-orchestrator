@@ -7,7 +7,7 @@ from ai_orchestrator.local_agent.download_upload_manifest import (
     build_manifest,
     is_safe_manifest,
 )
-from ai_orchestrator.server.local_agent_file_upload_policy import validate_upload_manifest
+from ai_orchestrator.agent_hub.policy.file_upload_policy import validate_upload_manifest
 
 TASK_ID = "g2b-manifest-test-001"
 

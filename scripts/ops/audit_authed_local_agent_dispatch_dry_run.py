@@ -201,7 +201,7 @@ def _audit_router(findings, router=None, registration=None):
 
 def _audit_actions_ws(findings):
     actions = read_text("ai_orchestrator/contracts/local_agent_actions.py")
-    risk = read_text("ai_orchestrator/local_agent_risk_policy.py")
+    risk = read_text("ai_orchestrator/agent_hub/policy/risk_policy.py")
     if "web_open_url_readonly" in actions and "web_open_url_readonly" in risk:
         add(findings, "PASS", "readonly_action_registered", "action and risk policy present")
     else:

@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from . import local_agent_audit_builders as _audit
-from . import local_agent_audit_event_policy as _policy
+from .agent_hub import audit_builders as _audit
+from .agent_hub.policy import audit_event_policy as _policy
 from . import local_agent_registry as _reg
 from . import local_agent_router_guards as _guards  # 공유 leaf
 from .audit.audit_logger import log_event

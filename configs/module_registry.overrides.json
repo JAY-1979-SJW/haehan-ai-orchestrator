@@ -186,7 +186,7 @@
   "role": "workflow",
   "reason": "delegated_permission_store(L2)+natural_language_task_api(L6)를 결합하는 세션 오케스트레이터 — L4 generic(low) 오분류"
  },
- "ai_orchestrator/local_agent_models.py": {
+ "ai_orchestrator/agent_hub/models.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "LocalAgent/LocalAgentTask 데이터클래스 + 직렬화 메서드 — 순수 모델, L4 오분류"

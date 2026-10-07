@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from .local_agent_models import LocalAgentTask
+from .agent_hub.models import LocalAgentTask
 from .local_agent_registry_common import (
     _ensure_task_transition,
     _lock,

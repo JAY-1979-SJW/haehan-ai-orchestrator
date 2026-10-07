@@ -3,7 +3,7 @@
 순수 helper 함수들과 상태 판별 로직의 정확성을 검증한다.
 """
 import pytest
-from ..local_agent_models import LocalAgentTask
+from ..agent_hub.models import LocalAgentTask
 from ..local_agent_router_guards import (
     is_capture_screenshot_task,
     task_is_dry_run,

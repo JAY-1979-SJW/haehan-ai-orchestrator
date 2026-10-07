@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-from ai_orchestrator.local_agent_status_policy import (
+from ai_orchestrator.agent_hub.policy.status_policy import (
     ACTIVE_TASK_STATUSES,
     CANCELLABLE_TASK_STATUSES,
     KNOWN_TASK_STATUSES,
@@ -223,7 +223,7 @@ def test_active_excludes_terminal():
 
 def test_status_policy_module_importable():
     """상태 정책 모듈이 정상적으로 임포트 가능한지 검증."""
-    import ai_orchestrator.local_agent_status_policy as status_policy_module
+    import ai_orchestrator.agent_hub.policy.status_policy as status_policy_module
 
     assert hasattr(status_policy_module, "ACTIVE_TASK_STATUSES")
     assert hasattr(status_policy_module, "VALID_TASK_TRANSITIONS")

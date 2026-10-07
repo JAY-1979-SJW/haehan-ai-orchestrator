@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from ai_orchestrator import local_agent_redaction as redaction
+from ai_orchestrator.agent_hub import redaction as redaction
 from ai_orchestrator import local_agent_router_task as task_mod
 from ai_orchestrator import mcp_tool_names as tool_names
 from ai_orchestrator.local_agent_registry_common import LocalAgentTask

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from .local_agent_models import LocalAgentTask
-from .local_agent_redaction import _strip_result_data
+from .agent_hub.models import LocalAgentTask
+from .agent_hub.redaction import _strip_result_data
 from .local_agent_registry_common import (
     ACTIVE_TASK_STATUSES,
     DELIVERED_TIMEOUT_SECONDS,

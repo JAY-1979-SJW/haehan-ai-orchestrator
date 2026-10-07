@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator.asgi import app
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.local_agent.user_approval_gate import (
+from ai_orchestrator.agent_hub.policy.user_approval_gate import (
     _REQUESTS,
     _TOKENS,
     approve_request,
