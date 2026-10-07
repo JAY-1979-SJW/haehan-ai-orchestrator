@@ -200,9 +200,23 @@ def known_folder(name: str) -> Path:
     return Path.home() / _HOME_FALLBACK[key]
 
 
-# ── 이전 PC 경로 대체: 형제 프로젝트·OneDrive·환경변수 우선 해석 ─────────────────────
+# ── 저장소(소스 폴더) 위치 — data_root()/config_root() 와는 다른 질문이다 ─────────────
+# data_root()/config_root() 는 "앱 데이터를 어디 쓰나"(OS 표준, 저장소 상대 폴백 없음).
+# repo_root() 는 "이 저장소 소스가 어디 있나"(T1-① 정본화 — 439개 파일이 각자
+# Path(__file__).resolve().parents[N] 으로 계산하던 것의 단일 정본, 결함 #17 후속).
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def repo_root() -> Path:
+    """이 저장소(소스 체크아웃)의 루트 폴더. 환경변수로 바꿀 수 없다(소스 위치는 실행 위치로 고정).
+
+    worktree·Docker(COPY 로 들어간 /app 등)에서도 이 파일 기준 상대 경로이므로 항상 맞다.
+    """
+    return _REPO_ROOT
+
+
+# ── 이전 PC 경로 대체: 형제 프로젝트·OneDrive·환경변수 우선 해석 ─────────────────────
 
 
 def sibling_project(name: str) -> Path:
@@ -211,7 +225,7 @@ def sibling_project(name: str) -> Path:
     예전에는 드라이브 루트의 작업 폴더(work 아래 NN. 프로젝트)로 하드코딩했다. 프로젝트 루트가 어디든 저장소 기준으로 찾는다.
     존재 여부는 확인하지 않는다(호출부가 필요할 때 검사).
     """
-    return _REPO_ROOT.parent / name
+    return repo_root().parent / name
 
 
 def onedrive_root() -> Path | None:
