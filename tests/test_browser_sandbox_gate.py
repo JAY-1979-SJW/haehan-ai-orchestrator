@@ -45,17 +45,37 @@ def test_cdp_launcher_blocks_scheduler_start_in_sandbox(monkeypatch):
     assert gate.SANDBOX_BROWSER_LAUNCH_BLOCKED in str(exc.value)
 
 
-def test_web_connector_blocks_daemon_autostart_in_sandbox(tmp_path, monkeypatch):
+def test_connection_never_autostarts_daemon_and_raises_clear_error(tmp_path, monkeypatch):
+    """CDP 가 꺼져 있으면 라이브러리는 어떤 프로세스도 띄우지 않고 명확한 오류를 낸다(2026-10-08)."""
+    import subprocess
+
     from scripts.browser.cdp import connection
 
-    state_file = tmp_path / "cdp_daemon_state.json"
-    monkeypatch.setattr(connection, "_DAEMON_STATE", state_file)
-    monkeypatch.setenv("CODEX_SANDBOX_NETWORK_DISABLED", "1")
+    monkeypatch.setattr(connection, "_DAEMON_STATE", tmp_path / "cdp_daemon_state.json")
+    monkeypatch.setattr(connection, "_is_cdp_live", lambda _port: False)
 
-    with pytest.raises(RuntimeError) as exc:
-        connection._ensure_cdp_daemon()
+    def _fail(*_a, **_k):
+        raise AssertionError("subprocess must not be called")
 
-    assert gate.SANDBOX_BROWSER_LAUNCH_BLOCKED in str(exc.value)
+    monkeypatch.setattr(subprocess, "Popen", _fail)
+    monkeypatch.setattr(subprocess, "run", _fail)
+    assert not hasattr(connection, "_ensure_cdp_daemon")
+
+    with pytest.raises(connection.CdpNotRunningError) as exc:
+        connection._get_cdp_port()
+
+    assert "cdp_daemon.py start" in str(exc.value)
+
+
+def test_connection_uses_state_file_port_only_when_live(tmp_path, monkeypatch):
+    from scripts.browser.cdp import connection
+
+    state = tmp_path / "cdp_daemon_state.json"
+    state.write_text('{"cdp_port": 9555}', encoding="utf-8")
+    monkeypatch.setattr(connection, "_DAEMON_STATE", state)
+    monkeypatch.setattr(connection, "_is_cdp_live", lambda port: port == 9555)
+
+    assert connection._get_cdp_port() == 9555
 
 
 def test_cdp_daemon_blocks_chrome_launch_in_sandbox(monkeypatch):

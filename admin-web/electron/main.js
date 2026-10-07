@@ -195,9 +195,8 @@ if (!gotLock) {
 
     // ── CDP 브라우저: 온디맨드 ────────────────────────────────────────────────
     // 자동 시작/15초 워치독 제거(사용자 선택). CDP 창을 닫아도 다시 뜨지 않는다.
-    // 브라우저가 필요한 작업이 들어오면 백엔드(web_connector._ensure_cdp_daemon)가
-    // 그 시점에 CDP를 자동 기동하므로 기능 손실 없음. (startCdpBrowser 는 보존 —
-    // 추후 명시적 요청 시 호출 가능)
+    // 백엔드 라이브러리(connection._get_cdp_port)도 CDP 를 자동 기동하지 않는다 —
+    // 필요하면 사용자가 명시적으로 시작한다. (startCdpBrowser 는 보존 — 명시적 요청 시 호출 가능)
     if (cdpWatchdogTimer) { clearInterval(cdpWatchdogTimer); cdpWatchdogTimer = null; }
 
     // 데스크톱 자동 세션: 시작할 때마다 등록된 owner 의 새 토큰을 받아 config(auth_token)에 보관한다(webview 가 이를 쿠키로 사용).
