@@ -127,7 +127,7 @@
   "role": "policy",
   "reason": "세션 경계 판정 — auto_resume_after_auth(L2)가 참조하는 정책 헬퍼, L6 script_cli(low) 오분류"
  },
- "local_agent/runtime/natural_language_task_api.py": {
+ "local_agent/runtime/universal/natural_language_task_api.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "자연어 입력→universal_ai_site_agent/user_intent_parser(L6) 호출 오케스트레이션 — L4 browser_engine 오분류"
@@ -167,12 +167,12 @@
   "role": "contract",
   "reason": "태스크 프로토콜 스키마 정의 — auth_wait_controller/auto_resume(L2)가 참조하는 순수 계약, L4 오분류"
  },
- "local_agent/runtime/universal_action_verifier.py": {
+ "local_agent/runtime/universal/universal_action_verifier.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "universal_safe_result(L6)를 사용한 액션 검증 — 업무 흐름 검증기, L4 generic(low) 오분류"
  },
- "local_agent/runtime/universal_agent_session.py": {
+ "local_agent/runtime/universal/universal_agent_session.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "delegated_permission_store(L2)+natural_language_task_api(L6)를 결합하는 세션 오케스트레이터 — L4 generic(low) 오분류"

@@ -15,17 +15,17 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from local_agent.runtime.learned_site_profile_store import clear_all  # noqa: E402
-from local_agent.runtime.natural_language_task_api import (  # noqa: E402
+from local_agent.runtime.universal.learned_site_profile_store import clear_all  # noqa: E402
+from local_agent.runtime.universal.natural_language_task_api import (  # noqa: E402
     build_task_summary,
     check_result_safety,
     execute_natural_language_task,
 )
-from local_agent.runtime.real_site_smoke_runner import (  # noqa: E402
+from local_agent.runtime.universal.real_site_smoke_runner import (  # noqa: E402
     is_safe_readonly_target,
     run_all_smoke_scenarios,
 )
-from local_agent.runtime.universal_agent_session import (  # noqa: E402
+from local_agent.runtime.universal.universal_agent_session import (  # noqa: E402
     close_session,
     create_session,
     get_session_history,
@@ -136,7 +136,7 @@ def test_agent_session():
 
 def test_learned_profile():
     print("\n=== Learned Profile 저장/재사용 ===")
-    from local_agent.runtime.learned_site_profile_store import (
+    from local_agent.runtime.universal.learned_site_profile_store import (
         get_learned_profile,
         has_learned_profile,
     )

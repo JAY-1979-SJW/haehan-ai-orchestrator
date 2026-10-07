@@ -13,10 +13,10 @@ from local_agent.runtime.delegated_permission_store import (
     grant_permission,
     revoke,
 )
-from local_agent.runtime.learned_site_profile_store import (
+from local_agent.runtime.universal.learned_site_profile_store import (
     has_learned_profile,
 )
-from local_agent.runtime.natural_language_task_api import (
+from local_agent.runtime.universal.natural_language_task_api import (
     execute_natural_language_task,
 )
 

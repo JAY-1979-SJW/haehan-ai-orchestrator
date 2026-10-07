@@ -127,7 +127,7 @@ def test_classify_risk(text, expected):
 
 
 def test_risk_reuses_existing_keyword_table():
-    from local_agent.runtime.generic_selector_discovery import _RISK_BUTTON_KEYWORDS
+    from local_agent.runtime.universal.generic_selector_discovery import _RISK_BUTTON_KEYWORDS
 
     assert pa.RISK_KEYWORD_SOURCE is _RISK_BUTTON_KEYWORDS
 

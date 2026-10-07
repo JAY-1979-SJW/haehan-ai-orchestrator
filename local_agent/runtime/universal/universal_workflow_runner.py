@@ -32,7 +32,7 @@ from local_agent.runtime.site_profile_registry import (
     is_action_blocked_for_site,
     is_action_direct_required,
 )
-from local_agent.runtime.universal_safe_result import (
+from local_agent.runtime.universal.universal_safe_result import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_FAILED,
@@ -41,7 +41,7 @@ from local_agent.runtime.universal_safe_result import (
     STATUS_WARN_PERMISSION,
     build_universal_result,
 )
-from local_agent.runtime.workflow_template_engine import get_template
+from local_agent.runtime.universal.workflow_template_engine import get_template
 
 
 @dataclass

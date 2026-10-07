@@ -12,16 +12,16 @@ from local_agent.runtime.site_profile_registry import (
     _COMMON_BLOCKED,
     _REGISTRY,
 )
-from local_agent.runtime.universal_safe_result import (
+from local_agent.runtime.universal.universal_safe_result import (
     STATUS_COMPLETED,
     build_universal_result,
     validate_universal_result,
 )
-from local_agent.runtime.universal_workflow_runner import (
+from local_agent.runtime.universal.universal_workflow_runner import (
     run_single_action,
     run_workflow,
 )
-from local_agent.runtime.workflow_template_engine import _TEMPLATES
+from local_agent.runtime.universal.workflow_template_engine import _TEMPLATES
 
 _SAFE_FIELDS = [
     "cookie_exported",

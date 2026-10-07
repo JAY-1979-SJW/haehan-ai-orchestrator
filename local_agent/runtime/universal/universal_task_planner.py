@@ -5,17 +5,30 @@ import uuid
 from typing import Any
 
 from local_agent.runtime.site_capability_matrix import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
+    GRADE_AUTO_ALLOWED,
+    GRADE_BLOCKED,
+    GRADE_USER_DELEGATED,
+    GRADE_USER_DIRECT,
 )
-from local_agent.runtime.user_intent_parser import (
-    INTENT_READ_PAGE, INTENT_SEARCH_SITE, INTENT_FIND_NOTICE,
-    INTENT_DOWNLOAD_ATTACHMENTS, INTENT_SUMMARIZE_CONTENT, INTENT_EXTRACT_TABLE,
-    INTENT_GENERATE_BLOG_DRAFT, INTENT_PREPARE_FORM, INTENT_WRITE_POST,
-    INTENT_WRITE_COMMENT, INTENT_PUBLISH_POST, INTENT_UPDATE_POST,
-    INTENT_DELETE_POST, INTENT_SEND_MESSAGE, INTENT_SUBMIT_FORM,
-)
-from local_agent.runtime.unknown_site_fallback_policy import (
+from local_agent.runtime.universal.unknown_site_fallback_policy import (
     get_action_grade_for_unknown_site,
+)
+from local_agent.runtime.universal.user_intent_parser import (
+    INTENT_DELETE_POST,
+    INTENT_DOWNLOAD_ATTACHMENTS,
+    INTENT_EXTRACT_TABLE,
+    INTENT_FIND_NOTICE,
+    INTENT_GENERATE_BLOG_DRAFT,
+    INTENT_PREPARE_FORM,
+    INTENT_PUBLISH_POST,
+    INTENT_READ_PAGE,
+    INTENT_SEARCH_SITE,
+    INTENT_SEND_MESSAGE,
+    INTENT_SUBMIT_FORM,
+    INTENT_SUMMARIZE_CONTENT,
+    INTENT_UPDATE_POST,
+    INTENT_WRITE_COMMENT,
+    INTENT_WRITE_POST,
 )
 
 # intent → step list 매핑

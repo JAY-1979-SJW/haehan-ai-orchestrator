@@ -6,7 +6,7 @@ from local_agent.runtime.site_capability_matrix import (
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
 )
-from local_agent.runtime.unknown_site_fallback_policy import (
+from local_agent.runtime.universal.unknown_site_fallback_policy import (
     evaluate_unknown_site,
     get_action_grade_for_unknown_site,
     is_blocked_on_unknown_site,

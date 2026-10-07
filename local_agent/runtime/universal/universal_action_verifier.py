@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 from typing import Any
-from local_agent.runtime.universal_safe_result import (
-    STATUS_COMPLETED, STATUS_FAILED, STATUS_WARN,
+
+from local_agent.runtime.universal.universal_safe_result import (
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_WARN,
 )
 
 _SAFE_FIELDS = [
