@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.common.logger import get_logger  # noqa: E402
-from scripts.auth.login_session import ensure_login, is_logged_in  # noqa: E402
+from scripts.site_engine.login_session import ensure_login, is_logged_in  # noqa: E402
 from scripts.browser.page.web_connector import browser_session  # noqa: E402
 from scripts.browser.cdp.connection import close_page, get_page  # noqa: E402
 

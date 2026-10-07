@@ -21409,7 +21409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/auth/login_session.py": {
+  "scripts/site_engine/login_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",

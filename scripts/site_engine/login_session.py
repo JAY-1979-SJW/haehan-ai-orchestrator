@@ -3,7 +3,7 @@
 모든 웹 자동화 스크립트에서 공통으로 사용.
 
 사용법:
-    from scripts.auth.login_session import ensure_login, is_logged_in
+    from scripts.site_engine.login_session import ensure_login, is_logged_in
 
     # 로그인 확인 후 미로그인이면 바로 자동 로그인(저장된 자격증명). 실패·추가 인증이면 최대 5분 대기
     ensure_login(page, "google")

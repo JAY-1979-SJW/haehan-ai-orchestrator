@@ -17,7 +17,7 @@ FILES = [
     "scripts/local_agent.py",
     "scripts/local_agent/__init__.py",
     "scripts/local_agent/router.py",
-    "scripts/auth/login_session.py",
+    "scripts/site_engine/login_session.py",
     "scripts/google/auth.py",
     "scripts/common/logger.py",
     "logger.py",
@@ -33,7 +33,7 @@ def resolve(rel, module, names=(), level=0):
 
 
 def test_from_import_prefers_the_location_where_the_name_is_a_submodule():
-    targets, status = resolve("scripts/auth/login_session.py", "local_agent", ["site_entry_policy"])
+    targets, status = resolve("scripts/site_engine/login_session.py", "local_agent", ["site_entry_policy"])
     assert status == "internal"
     assert "local_agent/site_entry_policy.py" in targets  # 루트 패키지의 서브모듈
     assert "scripts/local_agent.py" not in targets  # 같은 이름의 scripts 모듈이 아니다
@@ -46,13 +46,13 @@ def test_the_same_holds_for_other_submodules_of_the_root_package():
 
 def test_without_a_matching_submodule_the_nearest_base_still_wins():
     """이름이 서브모듈이 아니면(예: 클래스·함수) 기존 순서(가까운 폴더 먼저)를 유지한다."""
-    targets, status = resolve("scripts/auth/login_session.py", "local_agent", ["SomeClass"])
+    targets, status = resolve("scripts/site_engine/login_session.py", "local_agent", ["SomeClass"])
     assert status == "internal" and "scripts/local_agent.py" in targets
     assert "local_agent/site_entry_policy.py" not in targets
 
 
 def test_plain_import_statement_is_unchanged():
-    targets, _ = resolve("scripts/auth/login_session.py", "local_agent")
+    targets, _ = resolve("scripts/site_engine/login_session.py", "local_agent")
     assert "scripts/local_agent.py" in targets  # 하위 이름이 없는 `import local_agent` 는 기존대로
 
 
@@ -74,5 +74,5 @@ def test_absolute_module_without_submodule_names_keeps_nearest_first_for_logger(
 
 
 def test_standard_library_and_third_party_stay_external():
-    assert resolve("scripts/auth/login_session.py", "json", ["loads"])[1] == "external"
+    assert resolve("scripts/site_engine/login_session.py", "json", ["loads"])[1] == "external"
     assert resolve("scripts/google/auth.py", "google.oauth2.credentials", ["Credentials"])[1] == "external"

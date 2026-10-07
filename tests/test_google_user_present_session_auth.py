@@ -85,7 +85,7 @@ def test_google_login_gate_blocks_direct_accounts_url(monkeypatch: pytest.Monkey
 
 
 def test_google_login_probe_gate_blocks_direct_accounts_url(monkeypatch: pytest.MonkeyPatch) -> None:
-    from scripts.auth import login_session
+    from scripts.site_engine import login_session
 
     page = _FakePage()
     monkeypatch.setitem(login_session.LOGIN_PROBE_URLS, "google", "https://accounts.google.com/signin")
