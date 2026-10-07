@@ -49,8 +49,11 @@ def _match(text: str, terms: list[str]) -> bool:
 def _scan_routers(terms: list[str]) -> list[dict]:
     results = []
     connector_dir = ROOT / "ai_orchestrator" / "connectors"
-    for f in sorted(connector_dir.glob("*_router.py")):
-        if not _match(f.name, terms):
+    # 평면 *_router.py 와 도구 폴더(connectors/<도구>/router.py 등)를 모두 본다. 도구별 폴더화(스마트스토어·하나팩스·eum 방식) 뒤
+    # 옛 평면 경로는 호환 shim(엔드포인트 없음)이라 폴더 안 실구현을 못 보면 '저장소 내 구현 없음' 오판으로 중복 구현을 부른다.
+    for f in sorted(set(connector_dir.glob("*_router.py")) | set(connector_dir.glob("*/*router.py"))):
+        rel = f.relative_to(connector_dir).as_posix()
+        if not _match(rel, terms):
             continue
         src = f.read_text(encoding="utf-8", errors="ignore")
         prefix_m = re.search(r'prefix\s*=\s*["\']([^"\']+)["\']', src)
@@ -67,7 +70,7 @@ def _scan_routers(terms: list[str]) -> list[dict]:
             full = f"/api/v1{prefix}{path}" if not path.startswith("/api") else path
             results.append(
                 {
-                    "file": f.name,
+                    "file": rel,
                     "method": method.upper(),
                     "path": full,
                 }
