@@ -22424,6 +22424,30 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/instagram/ops/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "instagram",
+   "reason": "도메인(instagram) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/instagram/ops/ig_batch.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "instagram",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_split_instagram_b2.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
