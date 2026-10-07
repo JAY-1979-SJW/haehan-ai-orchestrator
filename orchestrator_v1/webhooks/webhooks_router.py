@@ -19,10 +19,9 @@ from datetime import UTC, datetime
 
 from flask import Blueprint, jsonify, request
 
-import inbox_store
-import kakaowork_reader
 from orchestrator_v1.core import audit_logger
 from orchestrator_v1.core.logger import get_logger
+from orchestrator_v1.inbox import inbox_store, kakaowork_reader
 
 log = get_logger("webhooks_router")
 

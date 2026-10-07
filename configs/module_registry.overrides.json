@@ -1111,5 +1111,89 @@
   "role": "generic",
   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
+ },
+ "dashboard.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/dashboard.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_classifier.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_task_approval.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_task_executor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_task_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "hiworks_mail_reader.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/hiworks_mail_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "inbox_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "inbox_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "kakaowork_reader.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/kakaowork_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "log_analyzer.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/log_analyzer.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "message_classifier.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/message_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "monitor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/monitor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "notice_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/notice_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "telegram_notifier.py": {
+  "layer": "L3",
+  "role": "connector",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/telegram_notifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
  }
 }

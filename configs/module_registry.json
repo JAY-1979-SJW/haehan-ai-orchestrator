@@ -7733,41 +7733,41 @@
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/dashboard.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "email_classifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "email_task_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "email_task_executor.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "email_task_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
-   "reason": "DB·저장 신호",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "executor.py": {
    "layer": "L4",
@@ -7781,33 +7781,33 @@
    "layer": "L4",
    "role": "generic",
    "domain": "naver_mail",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/hiworks_mail_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "inbox_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "inbox_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
-   "reason": "DB·저장 신호",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "kakaowork_reader.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "kakao",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/kakaowork_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "local_agent/__init__.py": {
    "layer": "L10",
@@ -8221,9 +8221,9 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/log_analyzer.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "orchestrator_v1/core/logger.py": {
    "layer": "L1",
@@ -8245,9 +8245,9 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/message_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "orchestrator_v1/core/models.py": {
    "layer": "L1",
@@ -8261,9 +8261,9 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/monitor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "notice_radar/__init__.py": {
    "layer": "L4",
@@ -8333,9 +8333,9 @@
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/notice_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "policy_engine.py": {
    "layer": "L2",
@@ -16469,9 +16469,9 @@
    "layer": "L3",
    "role": "connector",
    "domain": "common",
-   "reason": "HTTP 클라이언트",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/telegram_notifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "tests/__init__.py": {
    "layer": "L11",
@@ -22039,6 +22039,134 @@
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/email_classifier.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/email_task_approval.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/email_task_executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/email_task_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/hiworks_mail_reader.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "naver_mail",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/inbox_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/inbox_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/kakaowork_reader.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "kakao",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/message_classifier.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/dashboard.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/log_analyzer.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/monitor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/telegram_notifier.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "HTTP 클라이언트",
+   "confidence": "high",
    "source": "rule"
   }
  }
