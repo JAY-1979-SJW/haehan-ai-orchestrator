@@ -4153,14 +4153,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "ai_orchestrator/agent_hub/action_evidence_collector.py": {
    "layer": "L2",
    "role": "policy",

@@ -29,7 +29,6 @@
   "schema_prefixes": [
     "migrations/",
     "ai_orchestrator/server/",
-    "ai_orchestrator/local_agent/",
     "browser_api/",
     "browser_worker/",
     "services/"

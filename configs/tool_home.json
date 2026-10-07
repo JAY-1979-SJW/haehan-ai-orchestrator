@@ -49,10 +49,7 @@
   {"prefix": "ai_orchestrator/connectors/google/", "reason": "도메인 계약 소유 — google 도메인 안의 YouTube 하위 탭 라우터"},
   {"prefix": "scripts/ops/selector_health/sites/", "reason": "플러그인 레지스트리 — 공용 틀 안의 사이트별 플러그인"},
   {"prefix": "scripts/ops/write_gates/", "reason": "플러그인 레지스트리 — 쓰기 게이트 플러그인"},
-  {"prefix": "ai_orchestrator/local_agent/", "reason": "기반 연동(T4 — local_agent 3벌 통합 때 함께 정함)"},
   {"prefix": "ai_orchestrator/browser_tool/", "reason": "기반 연동(T4)"},
-  {"prefix": "local_agent/", "reason": "기반 연동(T4)"},
-  {"prefix": "scripts/local_agent/", "reason": "기반 연동(T4)"},
   {"prefix": "scripts/ops/guard_youtube_upload.py", "reason": ".claude 훅이 이 경로를 직접 호출 — 이동 금지"}
  ]
 }

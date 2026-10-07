@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 313,
+ "count": 308,
  "folders": [
   {
    "path": ".",
@@ -1233,46 +1233,6 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent",
-   "purpose": "PC 실행 에이전트 (ai_orchestrator 하위)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent/actions",
-   "purpose": "ai_orchestrator/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent/browser",
-   "purpose": "ai_orchestrator/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent/browser/_js",
-   "purpose": "ai_orchestrator/local_agent/browser 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent/browser/mixins",
-   "purpose": "ai_orchestrator/local_agent/browser 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
    "path": "ai_orchestrator/marketing",

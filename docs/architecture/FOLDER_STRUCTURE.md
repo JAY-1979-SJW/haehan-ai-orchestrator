@@ -90,3 +90,8 @@
 ## T4 진행 기록 (local_agent 3벌 → 1벌, 설계 `_coordination/T4_DESIGN.md`)
 - C1·C2: 경로 고정·잠금 경쟁 수정(W2).
 - C3: 서버·PC 공유 계약 4개를 `ai_orchestrator/contracts/` 로 — `user_present_ws_contract`·`action_risk_policy`·`local_task_protocol`·`local_agent_actions`(참조 직접 교체, shim 없음).
+- C4~C8: 서버 쪽 에이전트 허브를 `ai_orchestrator/agent_hub/` 로 — 루트(models·redaction·audit_builders·error_mapping·response_builders·user_present_*·action_*·business_*), `policy/`(risk·status·cleanup·audit_event·file_upload_policy·user_approval_gate), `registry/`(facade + leaf 8 + diagnostics 2), `router/`(root + 11), `actions/`(핸들러 7).
+- C9: PC 런타임 57개를 `local_agent/runtime/` 으로. C10: 네이버 워크플로 5개를 `scripts/naver/{blog,cafe}/` 로.
+- C11: `scripts/local_agent/` 해체 — 컨트롤러 3개는 `local_agent/`, 점검·스모크는 `scripts/ops/`, 정부24·민원24·웹메일·CLI 라우터는 `scripts/sites/`, g2b E2E 는 `scripts/g2b/`, CDP 크롬 기동은 `scripts/browser/cdp/`.
+- C12: 사이트 믹스인 15개는 도구 집(`scripts/naver/{blog,cafe,mail}/`), CDP 엔진과 JS 는 `scripts/browser/agent/`(+`_js/`).
+- C13: `ai_orchestrator/local_agent/`·`scripts/local_agent/` 폴더 소멸, 폴더 승인 목록과 G11 예외(`local_agent/`·`ai_orchestrator/local_agent/`·`scripts/local_agent/`)에서 제거. `ai_orchestrator/` 최상위 `local_agent_*` 평면 33 → 0.
