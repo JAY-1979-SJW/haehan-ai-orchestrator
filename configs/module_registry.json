@@ -8097,7 +8097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "orchestrator_v1/core/logging_utils.py": {
+  "ai_orchestrator/core/logging_utils.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -16217,7 +16217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "orchestrator_v1/core/security_utils.py": {
+  "ai_orchestrator/core/security_utils.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",

@@ -10,7 +10,7 @@ import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from orchestrator_v1.core.logging_utils import mask_sensitive, truncate_large_text
+from ai_orchestrator.core.logging_utils import mask_sensitive, truncate_large_text
 
 _LOGS_DIR = Path(__file__).resolve().parents[2] / "logs"
 _AUDIT_PATH = _LOGS_DIR / "audit.jsonl"
