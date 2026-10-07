@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 51,
+ "hash_count": 48,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/connectors/naver_mail/bulk_service.py:_read_rows",
@@ -21,10 +21,6 @@
   "1ef00fb0baa2bafa918c4723022025c791761c39": [
    "scripts/naver/blog/marketing/gpt_images.py:_send_prompt",
    "scripts/naver/blog/marketing/gpt_writer.py:_send_prompt"
-  ],
-  "201281acaa36cddabef875967927d644c788db1e": [
-   "ai_orchestrator/browser_tool/approval_record_store.py:read_approval_records",
-   "ai_orchestrator/browser_tool/workflow_audit_writer.py:read_audit_records"
   ],
   "2a680e0f94b41e4cb814b289c9104964760a160e": [
    "scripts/common/youtube_api_common.py:_write_report",
@@ -90,10 +86,6 @@
   "3cf3fdb28abca552f265574e179191dc68812fb9": [
    "scripts/ops/smoke_app_ui_shell_browser.py:check_dry_run_notice_used",
    "scripts/ops/smoke_app_ui_shell_browser.py:check_forbidden_banner_used"
-  ],
-  "46249a05f1d9f085cf8724f1a7f169a1096929b4": [
-   "scripts/instagram/overlay.py:_wrap",
-   "scripts/instagram/reel_overlay.py:_wrap"
   ],
   "46785cd7ccaaac6c3a0302940c709ed092ec10ea": [
    "scripts/ops/live_parallel_task_dispatch_smoke.py:_start_worker",
@@ -237,10 +229,6 @@
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
    "scripts/browser/popup/popup_monitor.py:ChromeUIWatcher.start",
    "scripts/browser/popup/popup_monitor.py:PopupMonitor.start"
-  ],
-  "da69dd83b6ef3b8ce85e3d20c35cc3fcd4a8b16f": [
-   "scripts/instagram/overlay.py:_fit_cover",
-   "scripts/instagram/reel_overlay.py:_fit_cover"
   ],
   "dd98391254fcf8260de1b0c71e2290212b22ff73": [
    "scripts/naver/common/calendar_tasks.py:NaverCalendar.open",
