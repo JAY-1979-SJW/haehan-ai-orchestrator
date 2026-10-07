@@ -133,14 +133,54 @@ def preflight_blocking(base: str, head: str, root: Path) -> list[str]:
     ]
 
 
+NON_PY_SKIP_SUFFIX = (".md", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".lock")  # 문서·이미지는 시험이 경로로 읽는 설정이 아니다
+
+
+def py_files_referencing_non_py(root: Path, changed: list[str], tracked: list[str]) -> dict[str, list[str]]:
+    """바뀐 비-.py 파일(설정·정본 json/toml/yml·.importlinter·워크플로 등)을 **문자열로 읽는** .py 파일 → 참조한 파일 목록.
+
+    코드맵 간선은 .py import 만 보므로, 예컨대 configs/folder_registry.json 이 바뀌어도 그 파일을 여는 folder_gate.py 를 import 하는
+    tests/test_folder_gate.py 는 영향 시험에서 빠진다(2026-10-08 W3 364f4b83). 그래서 시험 파일만이 아니라 모든 .py 를 훑어, 참조하는 .py 를
+    '바뀐 .py'처럼 간선 탐색의 출발점에 더한다(시험이 직접 읽으면 그 시험이, 도구가 읽으면 그 도구를 import 하는 시험이 선택된다).
+    일치 규칙: 저장소 상대 경로 전체(슬래시·역슬래시)가 소스에 들어 있거나, 파일명이 따옴표로 둘러싸여 있으면(`"folder_registry.json"`,
+    경로 조인) 참조로 본다. 파일명만으로 맞추는 것은 추적 파일 중 그 이름이 하나뿐일 때만 한다(package.json 처럼 여럿이면 전체 경로로만).
+    """
+    targets = [c for c in changed if not c.endswith(".py") and not c.endswith(NON_PY_SKIP_SUFFIX)]
+    if not targets:
+        return {}
+    name_counts: dict[str, int] = {}
+    for f in tracked:
+        name = f.rsplit("/", 1)[-1]
+        name_counts[name] = name_counts.get(name, 0) + 1
+    needles: dict[str, list[str]] = {}
+    for rel in targets:
+        name = rel.rsplit("/", 1)[-1]
+        keys = [rel, rel.replace("/", chr(92))]
+        if name_counts.get(name, 0) <= 1:  # 이름이 유일할 때만 파일명 단독 일치를 허용
+            keys += [f'"{name}"', f"'{name}'"]
+        needles[rel] = keys
+    found: dict[str, list[str]] = {}
+    for src in (f for f in tracked if f.endswith(".py")):
+        try:
+            text = (root / src).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        hit = [rel for rel, keys in needles.items() if any(k in text for k in keys)]
+        if hit:
+            found[src] = hit
+    return found
+
+
 def impacted_test_files(base: str, head: str, root: Path) -> list[str]:
-    """바뀐 .py(base...head)에 코드맵 간선으로 닿는 시험 파일(현재 트리에 있는 것만). 바뀐 .py 가 없으면 빈 목록."""
+    """바뀐 파일(base...head)에 닿는 시험 파일(현재 트리에 있는 것만): 출발점 = 바뀐 .py + 바뀐 비-.py 를 문자열로 참조하는 .py, 거기서 코드맵 간선으로 역탐색."""
     from scripts.ops import verify_change as vc
 
-    changed = [p for p in vc.changed_files(base, head) if p.endswith(".py")]
-    if not changed:
+    changed_all = vc.changed_files(base, head)
+    tracked = vc.run(["git", "ls-files"], root).stdout.splitlines()
+    seeds = sorted({*(p for p in changed_all if p.endswith(".py")), *py_files_referencing_non_py(root, changed_all, tracked)})
+    if not seeds:
         return []
-    return [t for t in vc.affected_tests(changed) if (root / t).is_file()]
+    return [t for t in vc.affected_tests(seeds) if (root / t).is_file()]
 
 
 def plan_impacted(files: list[str], max_files: int = IMPACTED_MAX_FILES) -> str:
