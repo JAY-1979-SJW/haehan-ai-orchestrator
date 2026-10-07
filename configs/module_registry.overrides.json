@@ -1057,5 +1057,59 @@
   "role": "api",
   "reason": "루트 호환 shim — 원본 orchestrator_v1/webhooks/webhooks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
+ },
+ "approval_manager.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/approval_manager.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "candidate_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "candidate_to_task.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_to_task.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "executor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "policy_engine.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/policy_engine.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "risk_assessor.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/risk_assessor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "task_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "tasks_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "whitelist_executor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
  }
 }

@@ -94,10 +94,10 @@
       "layer": "L12",
       "paths": [
         "app.py",
-        "approval_manager.py",
-        "orchestrator_v1/core/audit_logger.py",
         "dashboard.py",
-        "executor.py"
+        "orchestrator_v1/core/audit_logger.py",
+        "orchestrator_v1/tasks/approval_manager.py",
+        "orchestrator_v1/tasks/executor.py"
       ],
       "required_gate": "codebase_layer_audit",
       "status": "accepted_residual"
