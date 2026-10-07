@@ -24,8 +24,8 @@ from scripts.browser_cdp_selection_gate import (  # noqa: E402 - sys.path 조정
     select_naver_session,
 )
 from scripts.naver.mail import folder_discovery as fd
-from scripts.naver.mail import settings_panel
 from scripts.naver.mail.read import cdp, list_collector  # noqa: E402 - sys.path 조정 뒤 import (이 파일의 기존 구조)
+from scripts.naver.mail.utilities import settings_panel  # noqa: E402 - sys.path 조정 뒤 import (이 파일의 기존 구조)
 
 
 @dataclass

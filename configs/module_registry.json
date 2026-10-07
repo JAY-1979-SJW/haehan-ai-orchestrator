@@ -12297,14 +12297,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail/background_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver_mail",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/naver/mail/batch_runner.py": {
    "layer": "L6",
    "role": "workflow",
@@ -12471,14 +12463,6 @@
    "domain": "naver_mail",
    "reason": "정책·게이트 이름",
    "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/mail/settings_panel.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "low",
    "source": "rule"
   },
   "scripts/naver/mail/smart_folder_collector.py": {
@@ -13311,22 +13295,6 @@
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver_mail/background_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver_mail",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver_mail/settings_panel.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
-   "confidence": "low",
    "source": "rule"
   },
   "scripts/navigator.py": {
