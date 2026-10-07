@@ -2,9 +2,9 @@
 
 사용법
 ======
-  python scripts/local_agent/start_chrome_with_cdp.py
-  python scripts/local_agent/start_chrome_with_cdp.py --port 9222
-  python scripts/local_agent/start_chrome_with_cdp.py --port 9222 --url https://www.gov.kr
+  python scripts/browser/cdp/start_chrome_with_cdp.py
+  python scripts/browser/cdp/start_chrome_with_cdp.py --port 9222
+  python scripts/browser/cdp/start_chrome_with_cdp.py --port 9222 --url https://www.gov.kr
 
 이 스크립트는 Chrome을 --remote-debugging-port 플래그로 실행한다.
 이미 실행 중이면 알림 후 종료한다.
@@ -21,7 +21,7 @@ import time
 from pathlib import Path
 
 # 프로젝트 루트를 sys.path에 추가
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_ROOT))
 
 from ai_orchestrator.local_agent.browser.cdp import (
@@ -60,7 +60,7 @@ def main() -> None:
         print("       Chrome이 설치되어 있는지 확인하세요.")
         sys.exit(1)
 
-    assert_browser_launch_allowed(component="scripts.local_agent.start_chrome_with_cdp", action="chrome_cdp_launch")
+    assert_browser_launch_allowed(component="scripts.browser.cdp.start_chrome_with_cdp", action="chrome_cdp_launch")
 
     profile_dir = str(_ROOT / "data" / "browser_sessions" / args.profile)
     cmd = get_chrome_start_command(

@@ -2,7 +2,7 @@
 Playwright 설치 상태 진단 스크립트
 
 로컬 에이전트 실행 전 Playwright 환경을 점검한다.
-사용: python scripts/local_agent/check_playwright_bootstrap.py
+사용: python scripts/ops/check_playwright_bootstrap.py
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ def main() -> int:
 
     if status == PLAYWRIGHT_BROWSER_MISSING:
         print("\nChromium 자동 설치를 시도하려면:")
-        print("  python scripts/local_agent/check_playwright_bootstrap.py --install")
+        print("  python scripts/ops/check_playwright_bootstrap.py --install")
         if "--install" in sys.argv:
             print("\nChromium 설치 중...")
             install_result = ensure_playwright_ready(auto_install=True)

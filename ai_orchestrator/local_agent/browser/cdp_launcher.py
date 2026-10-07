@@ -77,7 +77,7 @@ def ensure_cdp(
         raise RuntimeError(
             f"Task '{task_name}' 미등록. 다음 명령으로 등록 필요:\n"
             f"  powershell -ExecutionPolicy Bypass -File "
-            f"scripts/local_agent/install_cdp_chrome_task.ps1"
+            f"scripts/browser/cdp/install_cdp_chrome_task.ps1"
         )
 
     ok, msg = start_via_scheduler(task_name)

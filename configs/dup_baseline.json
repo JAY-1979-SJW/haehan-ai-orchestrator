@@ -193,7 +193,7 @@
    "local_agent/user_present_state_store.py:UserPresentStateStore.mark_user_confirmed"
   ],
   "6d1a5ce95e8f3c3f8d97ffa1240713c858e8731b": [
-   "scripts/local_agent/g2b/run_readonly_local_e2e.py:_save_report",
+   "scripts/g2b/run_readonly_local_e2e.py:_save_report",
    "scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py:_save_report"
   ],
   "710cc7b7c16a77349fcb79e5d3fb53ee9e40cd2f": [

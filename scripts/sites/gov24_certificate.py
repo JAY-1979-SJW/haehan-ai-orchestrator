@@ -82,7 +82,7 @@ def run_gov24_certificate(
     check = is_cdp_available(port=port)
     if not check["available"]:
         print("[오류] Chrome이 CDP 모드로 실행되지 않았습니다.")
-        print(f"       먼저 실행: python scripts/local_agent/start_chrome_with_cdp.py --port {port}")
+        print(f"       먼저 실행: python scripts/browser/cdp/start_chrome_with_cdp.py --port {port}")
         return {"ok": False, "error": "CDP 미연결"}
 
     # Intent 생성

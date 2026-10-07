@@ -3,7 +3,7 @@ Playwright 로컬 smoke 테스트 실행 스크립트
 
 안전한 URL(about:blank, data URL, 로컬 HTML)만 사용한다.
 외부 인증 사이트에 접속하지 않는다.
-사용: python scripts/local_agent/run_playwright_smoke.py
+사용: python scripts/ops/run_playwright_smoke.py
 """
 
 from __future__ import annotations

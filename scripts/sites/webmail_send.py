@@ -2,7 +2,7 @@
 
 사용법
 ======
-  python scripts/local_agent/webmail_send.py \\
+  python scripts/sites/webmail_send.py \\
     --to recipient@example.com \\
     --subject "제목" \\
     --body "본문" \\
@@ -137,7 +137,7 @@ def send_email(
     check = is_cdp_available(port=port)
     if not check["available"]:
         print(f"[메일] Chrome CDP 연결 필요 (포트 {port})")
-        print("       python scripts/local_agent/start_chrome_with_cdp.py")
+        print("       python scripts/browser/cdp/start_chrome_with_cdp.py")
         return {"ok": False, "error": "CDP 미연결"}
 
     # 이메일 발송은 항상 APPROVE → Intent에 명시적 포함

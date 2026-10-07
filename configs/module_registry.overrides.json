@@ -604,22 +604,22 @@
   "role": "generic",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/local_agent/router.py": {
+ "scripts/sites/local_cli_router.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "minwon_submit·webmail_send·사이트 모듈(blog_explorer 등)을 디스패치하는 로컬 에이전트 라우터 — 호출 대상이 L5·L6 이라 L6"
  },
- "scripts/local_agent/run_playwright_smoke.py": {
+ "scripts/ops/run_playwright_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/local_agent/run_universal_ai_real_site_smoke.py": {
+ "scripts/ops/run_universal_ai_real_site_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/local_agent/g2b/run_readonly_local_e2e.py": {
+ "scripts/g2b/run_readonly_local_e2e.py": {
   "layer": "L6",
   "role": "site_module",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L5, 2026-10-07 재판정)"
@@ -744,12 +744,12 @@
   "role": "policy",
   "reason": "request_approval 은 approval_api_client(L2)로 승인 요청을 보내는 얇은 게이트이고 Flask UI 는 로컬 폴백 — 서버 API 가 아니라 승인 게이트라 L8 이 아님"
  },
- "scripts/local_agent/gov/minwon_submit.py": {
+ "scripts/sites/minwon_submit.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "민원 제출을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류"
  },
- "scripts/local_agent/webmail_send.py": {
+ "scripts/sites/webmail_send.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "웹메일 발송을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류"

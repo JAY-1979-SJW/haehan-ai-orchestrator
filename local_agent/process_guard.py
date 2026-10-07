@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from scripts.local_agent.status_store import (
+from local_agent.status_store import (
     _LOCK_FILE,
     _STATUS_FILE,
     lock_exists,

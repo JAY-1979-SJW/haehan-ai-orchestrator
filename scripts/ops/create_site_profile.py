@@ -109,4 +109,4 @@ def main():
     site = sys.argv[1] if len(sys.argv) > 1 else ""
     print(f"[create-profile] 사이트 URL: {site or '(미지정)'}")
     print("  사이트 프로파일 생성은 인터랙티브 입력이 필요합니다.")
-    print("  scripts/local_agent/create_site_profile.py 직접 편집 후 실행하세요.")
+    print("  scripts/ops/create_site_profile.py 직접 편집 후 실행하세요.")

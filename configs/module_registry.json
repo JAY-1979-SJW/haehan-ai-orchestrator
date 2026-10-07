@@ -10841,15 +10841,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/check_playwright_bootstrap.py": {
+  "scripts/ops/check_playwright_bootstrap.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -10857,7 +10849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/controller.py": {
+  "local_agent/controller.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -10865,7 +10857,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/local_agent/create_site_profile.py": {
+  "scripts/ops/create_site_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -10873,7 +10865,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/local_agent/g2b/run_readonly_local_e2e.py": {
+  "scripts/g2b/run_readonly_local_e2e.py": {
    "layer": "L6",
    "role": "site_module",
    "domain": "g2b",
@@ -10881,15 +10873,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/gov/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/gov/gov24_certificate.py": {
+  "scripts/sites/gov24_certificate.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -10897,7 +10881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/gov/minwon_submit.py": {
+  "scripts/sites/minwon_submit.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -10905,31 +10889,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/naver/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/naver/blog_explorer.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/naver/blog_scraper.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/process_guard.py": {
+  "local_agent/process_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -10937,7 +10897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/router.py": {
+  "scripts/sites/local_cli_router.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -10953,7 +10913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/run_playwright_smoke.py": {
+  "scripts/ops/run_playwright_smoke.py": {
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -10961,7 +10921,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/run_security_install_discovery.py": {
+  "scripts/ops/run_security_install_discovery.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -10969,7 +10929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/run_universal_ai_real_site_smoke.py": {
+  "scripts/ops/run_universal_ai_real_site_smoke.py": {
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -10977,7 +10937,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/start_chrome_with_cdp.py": {
+  "scripts/browser/cdp/start_chrome_with_cdp.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -10985,7 +10945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/status_store.py": {
+  "local_agent/status_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -10993,7 +10953,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/local_agent/validate_site_profile.py": {
+  "scripts/ops/validate_site_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -11001,7 +10961,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/local_agent/webmail_send.py": {
+  "scripts/sites/webmail_send.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -23094,6 +23054,30 @@
    "role": "local_agent",
    "domain": "local_agent",
    "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
   }

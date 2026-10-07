@@ -20,7 +20,7 @@ Playwright `connect_over_cdp`로 연결하여 AI가 새 탭으로만 작업.
     chrome.exe --remote-debugging-port=9222 \
                --user-data-dir="C:\\Users\\<user>\\AppData\\Local\\Google\\Chrome\\User Data"
 
-(또는 helper 스크립트: scripts/local_agent/start_chrome_with_cdp.py)
+(또는 helper 스크립트: scripts/browser/cdp/start_chrome_with_cdp.py)
 
 사용 예
 ======
@@ -163,7 +163,7 @@ def open_cdp_session(
             raise CDPConnectionError(
                 f"Chrome 디버깅 포트({host}:{port})가 응답하지 않습니다.\n"
                 f"먼저 Chrome을 디버깅 모드로 시작해 주세요:\n  {cmd}\n"
-                f"helper: python scripts/local_agent/start_chrome_with_cdp.py"
+                f"helper: python scripts/browser/cdp/start_chrome_with_cdp.py"
             )
 
     pw = sync_playwright().start()

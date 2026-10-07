@@ -111,7 +111,7 @@ def submit_minwon(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
     check = is_cdp_available(port=port)
     if not check["available"]:
         print("[민원] Chrome CDP 연결 필요")
-        print("       python scripts/local_agent/start_chrome_with_cdp.py")
+        print("       python scripts/browser/cdp/start_chrome_with_cdp.py")
         return {"ok": False, "error": "CDP 미연결"}
 
     intent = create_intent(

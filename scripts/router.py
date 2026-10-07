@@ -34,7 +34,7 @@ _SERVICE_ROUTERS: dict[str, tuple[str, str]] = {
     "gabia": ("scripts.gabia.router", "run_gabia"),
     "g2b": ("scripts.g2b.router", "run_g2b"),
     "hanafax": ("scripts.hanafax.router", "run_hanafax"),
-    "local": ("scripts.local_agent.router", "run_local_agent"),
+    "local": ("scripts.sites.local_cli_router", "run_local_agent"),
     "explore": ("scripts.explorer.router", "run_explorer"),
 }
 
