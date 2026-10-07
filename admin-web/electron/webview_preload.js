@@ -16,8 +16,12 @@ contextBridge.exposeInMainWorld("haehanLocal", {
   // 외부 API 키(userData/.env) — 조회는 마스킹된 값만 반환, 저장은 마스킹 아닌 실값만 반영
   getEnvKeys: () => ipcRenderer.invoke("local-config:get-env-keys"),
   setEnvKeys: (patch) => ipcRenderer.invoke("local-config:set-env-keys", patch),
-  // Claude Desktop 의 claude_desktop_config.json 에 번들 MCP 서버(haehan-mcp.exe) 등록
-  connectClaudeDesktop: () => ipcRenderer.invoke("local-config:connect-claude-desktop"),
+  // Claude(데스크톱·Code) MCP 연결: 번들 MCP 를 userData\mcp\<빌드>\ 로 복사한 고정 경로로 등록
+  connectClaude: () => ipcRenderer.invoke("local-config:connect-claude"),
+  disconnectClaude: () => ipcRenderer.invoke("local-config:disconnect-claude"),
+  getClaudeStatus: () => ipcRenderer.invoke("local-config:claude-status"),
+  // 하위 호환 이름(옛 UI)
+  connectClaudeDesktop: () => ipcRenderer.invoke("local-config:connect-claude"),
 });
 
 // ── 상시 로그인: 저장된 세션 토큰을 localStorage 에 항상 동기화 ────────────────────
