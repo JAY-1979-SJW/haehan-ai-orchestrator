@@ -54,15 +54,6 @@
       "required_gate": "release_preflight"
     },
     {
-      "name": "portable_install",
-      "owner": "release",
-      "layer": "L10",
-      "paths": [
-        "README_실행방법.txt"
-      ],
-      "required_gate": "portable_install"
-    },
-    {
       "name": "server_api",
       "owner": "backend",
       "layer": "L8",

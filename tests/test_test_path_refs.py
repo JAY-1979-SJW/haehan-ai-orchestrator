@@ -86,8 +86,11 @@ def test_referenced_test_paths_exist_or_are_baselined():
 
 
 def test_baseline_entries_are_still_actually_broken():
-    """기준선에 올려 둔 경로가 사실은 이미 고쳐졌는데 목록만 안 지운 경우를 잡는다(목록 축소 유도)."""
-    assert _BASELINE_PATH.exists(), f"기준선 파일이 없음: {_BASELINE_PATH}"
+    """기준선에 올려 둔 경로가 사실은 이미 고쳐졌는데 목록만 안 지운 경우를 잡는다(목록 축소 유도).
+
+    기준선 파일이 없으면(=8건 모두 해소되어 2026-10-08 삭제됨) 확인할 대상이 없으니 통과."""
+    if not _BASELINE_PATH.exists():
+        return
     baseline: list[str] = json.loads(_BASELINE_PATH.read_text(encoding="utf-8"))
     assert baseline, "기준선이 비어 있음 — 아래 stale 검사가 공허하게 통과하니 빈 상태면 이 파일 자체를 삭제하세요"
     stale = [rel for rel in baseline if (ROOT / rel).exists()]

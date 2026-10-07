@@ -52,10 +52,6 @@ SAFE_BOUNDARY = {
 KNOWN_BASELINE_FAILURES = [
     "tests/test_app_foundation_p1_gates.py::test_server_browser_guard_no_violations",
     "tests/test_app_foundation_p1_gates.py::test_p1_gates_all_zero_new_violations",
-    "tests/test_cad_local_agent_adapter_20260509.py::test_cad_status_lists_physical_modules",
-    "tests/test_mcp_local_cad_adapter_tools_20260509.py::test_mcp_local_cad_adapter_status_json",
-    "tests/test_mcp_local_cad_adapter_tools_20260509.py::test_mcp_local_bridge_health_json",
-    "tests/test_mcp_local_cad_adapter_tools_20260509.py::test_fastmcp_call_tool_invokes_local_cad_bridge_health",
 ]
 
 # ── Phase 1-D dry-run compatibility matrix ───────────────────────────────────

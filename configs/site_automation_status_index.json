@@ -89,7 +89,19 @@
         "scripts/eum"
       ],
       "tests": [
-        "tests/test_eum_surface_imports.py"
+        "tests/test_eum_access_explorer.py",
+        "tests/test_eum_action_prepare.py",
+        "tests/test_eum_auth_selectors.py",
+        "tests/test_eum_capabilities.py",
+        "tests/test_eum_menu_actions.py",
+        "tests/test_eum_navigation.py",
+        "tests/test_eum_router_submit_result.py",
+        "tests/test_eum_router_work.py",
+        "tests/test_eum_run_log.py",
+        "tests/test_eum_sales_mail.py",
+        "tests/test_eum_send_mail_batch_dedupe.py",
+        "tests/test_eum_work_plan.py",
+        "tests/test_eum_workspace.py"
       ],
       "owner_module": "scripts/eum",
       "notes": [
@@ -225,7 +237,12 @@
         "scripts/hiworks"
       ],
       "tests": [
-        "tests/test_hiworks_surface_imports.py"
+        "tests/test_hiworks_actions.py",
+        "tests/test_hiworks_mail_batch.py",
+        "tests/test_hiworks_profile_validators.py",
+        "tests/test_hiworks_run_log.py",
+        "tests/test_hiworks_service_explorer.py",
+        "tests/test_hiworks_workflows.py"
       ],
       "owner_module": "scripts/hiworks",
       "notes": [
@@ -314,7 +331,6 @@
         "scripts/browser_cdp_selection_gate.py"
       ],
       "tests": [
-        "tests/test_naver_site_engine.py",
         "tests/test_naver_service_router.py",
         "tests/test_naver_cafe_list_collector.py",
         "tests/test_browser_cdp_selection_gate.py"
@@ -365,7 +381,6 @@
         "ai_orchestrator/connectors/naver"
       ],
       "tests": [
-        "tests/test_naver_mail_tools.py",
         "tests/test_naver_mail_background_runner.py",
         "tests/test_naver_mail_settings_panel.py"
       ],
@@ -403,7 +418,10 @@
         "scripts/smartstore"
       ],
       "tests": [
-        "tests/test_smartstore_surface_imports.py"
+        "tests/test_smartstore_actions.py",
+        "tests/test_smartstore_category_fixes.py",
+        "tests/test_smartstore_verify_and_abort.py",
+        "tests/test_split_smartstore_automation.py"
       ],
       "owner_module": "scripts/smartstore",
       "notes": [
