@@ -15065,7 +15065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/export_cafe_keywords_excel.py": {
+  "scripts/naver/cafe/ops/export_cafe_keywords_excel.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_cafe",
