@@ -5,7 +5,7 @@
       "command": "py",
       "args": [
         "-3",
-        "scripts/local/pc_inventory_mcp.py"
+        "scripts/ops/pc_inventory_mcp.py"
       ],
       "env": {}
     },

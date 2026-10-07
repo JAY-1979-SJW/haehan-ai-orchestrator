@@ -380,7 +380,7 @@ class TestTelegramFailureFallback:
         """telegram_sender.py에 TOKEN 미설정 시 skip 가드가 존재한다."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/clients/telegram_sender.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/notify/telegram_sender.py").read_text(encoding="utf-8")
         assert "skipped" in src
         assert "TELEGRAM_BOT_TOKEN" in src
 
@@ -428,7 +428,7 @@ class TestWebTaskRunIntegrationBoundary:
 
     def test_real_run_via_client_with_mock_telegram(self, client, auth):
         """TestClient real_run — Telegram mock, pending_approval 응답 확인."""
-        with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+        with patch("ai_orchestrator.notify.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
             r = client.post(
                 "/api/v1/web-tasks/run",
                 headers=auth,
@@ -447,7 +447,7 @@ class TestWebTaskRunIntegrationBoundary:
 
     def test_real_run_no_envelope(self, client, auth):
         """TestClient real_run 응답에 ApiResponse 봉투 없음."""
-        with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+        with patch("ai_orchestrator.notify.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
             r = client.post(
                 "/api/v1/web-tasks/run",
                 headers=auth,
@@ -465,7 +465,7 @@ class TestWebTaskRunIntegrationBoundary:
     def test_real_run_secret_not_in_response(self, client, auth):
         """params의 민감 필드가 응답에 포함되지 않는다."""
         secret = "audit_secret_xzy9876"
-        with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+        with patch("ai_orchestrator.notify.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
             r = client.post(
                 "/api/v1/web-tasks/run",
                 headers=auth,

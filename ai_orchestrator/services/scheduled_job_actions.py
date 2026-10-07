@@ -11,7 +11,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from ai_orchestrator.contracts.action_risk_policy import GRADE_USER_DELEGATED, classify_action
+from ai_orchestrator.contracts.action_risk_policy import (
+    GRADE_USER_DELEGATED,
+    classify_action,
+)
 
 DEFAULT_BLOG_TARGET = "skyjwsin"
 
@@ -144,7 +147,10 @@ def _run_community(_: dict[str, Any]) -> str:
 
 
 def _run_naver_login_check(params: dict[str, Any]) -> str:
-    from ai_orchestrator.connectors.naver_auth.session_guard import default_deps, ensure_login
+    from ai_orchestrator.connectors.naver_auth.session_guard import (
+        default_deps,
+        ensure_login,
+    )
 
     result = ensure_login(params["target"], default_deps())
     if result["action"] in ("failed", "captcha"):
@@ -162,7 +168,7 @@ def _run_gonobi(_: dict[str, Any]) -> str:
 def _run_telegram(params: dict[str, Any]) -> str:
     import html
 
-    from ai_orchestrator.clients.telegram_sender import send_message
+    from ai_orchestrator.notify.telegram_sender import send_message
 
     result = send_message(html.escape(params["text"]))
     if result.get("skipped"):
@@ -177,9 +183,12 @@ def _run_blog_publish(params: dict[str, Any]) -> str:
     """대상 계정으로 로그인돼 있을 때만 발행한다. 다른 계정이거나 로그아웃이면 전환·로그인하지 않고 중단한다(세션 보존)."""
 
     def job() -> str:
-        from scripts.naver.blog.automation.account_probe import alias_to_blog_id, read_alias
-        from scripts.naver.blog.core.writer import write_post
         from scripts.browser.cdp.connection import get_page
+        from scripts.naver.blog.automation.account_probe import (
+            alias_to_blog_id,
+            read_alias,
+        )
+        from scripts.naver.blog.core.writer import write_post
 
         page = get_page()
         alias = read_alias(page)
@@ -511,7 +520,9 @@ def catalog() -> list[dict[str, Any]]:
                 {"name": "body", "label": "본문", "type": "text", "options": [], "default": ""},
             ]
         if spec.validate is _fax_send_params:
-            from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
+            from ai_orchestrator.connectors.hanafax import (
+                authorization_store as fax_store,
+            )
 
             approved = [a for a in fax_store.list_authorizations() if a["approved"] and not a["revoked"]]
             fields.append(

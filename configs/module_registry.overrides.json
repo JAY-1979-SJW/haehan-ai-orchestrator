@@ -30,12 +30,6 @@
   "role": "workflow",
   "reason": "워크플로 실행 여부를 게이트하고 직접 트리거하는 오케스트레이터 — 단순 L2 policy 아님, dryrun_adapter/workflow(L6)와 동급"
  },
- "ai_orchestrator/clients/__init__.py": {
-  "layer": "L3",
-  "role": "connector",
-  "reason": "clients 패키지(허브 분리 1단계 신설)",
-  "source": "manual"
- },
  "ai_orchestrator/connectors/instagram/instagram_dm_rule_engine.py": {
   "layer": "L1",
   "role": "shared",

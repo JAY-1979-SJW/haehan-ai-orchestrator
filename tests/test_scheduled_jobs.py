@@ -9,9 +9,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.gates.auth import get_current_user
+from ai_orchestrator.scheduler import scheduled_job_service as svc
 from ai_orchestrator.scheduler import scheduled_job_store as store
 from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
-from ai_orchestrator.scheduler import scheduled_job_service as svc
 from ai_orchestrator.services import scheduled_job_actions as actions
 
 NOW = datetime(2026, 10, 1, 0, 0, 0, tzinfo=UTC)
@@ -149,7 +149,11 @@ def test_once_in_the_past_is_rejected(env):
 
 
 def test_real_catalog_grades_and_param_validation():
-    from ai_orchestrator.contracts.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
+    from ai_orchestrator.contracts.action_risk_policy import (
+        GRADE_AUTO_ALLOWED,
+        GRADE_USER_DELEGATED,
+        classify_action,
+    )
 
     for key, spec in actions.ACTIONS.items():
         if key.startswith("fake"):
@@ -376,7 +380,7 @@ def test_telegram_params_are_validated():
 def test_telegram_success_escapes_html_and_sends_the_text(monkeypatch):
     sent = []
     monkeypatch.setattr(
-        "ai_orchestrator.clients.telegram_sender.send_message", lambda text, **kw: sent.append(text) or {"ok": True}
+        "ai_orchestrator.notify.telegram_sender.send_message", lambda text, **kw: sent.append(text) or {"ok": True}
     )
     assert "보냈습니다" in actions.ACTIONS["telegram_notify"].run({"text": "<b>안녕</b> & 확인"})
     assert sent == ["&lt;b&gt;안녕&lt;/b&gt; &amp; 확인"]
@@ -384,7 +388,7 @@ def test_telegram_success_escapes_html_and_sends_the_text(monkeypatch):
 
 def test_telegram_missing_config_fails_loudly_not_silently(monkeypatch):
     monkeypatch.setattr(
-        "ai_orchestrator.clients.telegram_sender.send_message", lambda text, **kw: {"ok": False, "skipped": True}
+        "ai_orchestrator.notify.telegram_sender.send_message", lambda text, **kw: {"ok": False, "skipped": True}
     )
     with pytest.raises(RuntimeError, match="TELEGRAM_BOT_TOKEN"):
         actions.ACTIONS["telegram_notify"].run({"text": "x"})
@@ -393,7 +397,7 @@ def test_telegram_missing_config_fails_loudly_not_silently(monkeypatch):
 def test_telegram_error_text_is_never_copied_into_the_run_record(monkeypatch):
     leaked_url = "https://api.telegram.org/bot123:SECRET-TOKEN/sendMessage"
     monkeypatch.setattr(
-        "ai_orchestrator.clients.telegram_sender.send_message",
+        "ai_orchestrator.notify.telegram_sender.send_message",
         lambda text, **kw: {"ok": False, "error": f"Client error 401 for url '{leaked_url}'"},
     )
     with pytest.raises(RuntimeError) as err:
