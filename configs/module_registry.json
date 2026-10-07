@@ -22336,6 +22336,22 @@
    "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/connectors/marketing_ops_settings.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "marketing",
+   "reason": "도메인(marketing) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_marketing_ops_router_gates.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "marketing",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

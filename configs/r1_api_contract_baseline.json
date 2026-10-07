@@ -1,11 +1,4 @@
 {
   "_comment": "R1 게이트 허용 목록 — 이 시점에 이미 끊겨 있던 호출(기존 부채). 새로 끊기는 호출만 audit_r1_api_contract_gate.py가 차단한다. 수리는 목록 보고 후 별도 배정.",
-  "allowed_broken_calls": [
-    "GET /api/v1/naver/marketing-ops/neighbors",
-    "GET /api/v1/naver/marketing-ops/state",
-    "POST /api/v1/naver/marketing-ops/approve-channel",
-    "POST /api/v1/naver/marketing-ops/generate-package",
-    "POST /api/v1/naver/marketing-ops/neighbors/refresh",
-    "POST /api/v1/naver/marketing-ops/publish-blog"
-  ]
+  "allowed_broken_calls": []
 }
