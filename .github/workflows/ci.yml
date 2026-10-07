@@ -97,6 +97,12 @@ jobs:
           echo "AUDIT_KIT_BIN=$RUNNER_TEMP/akvenv/Scripts/audit-kit.exe" >> "$GITHUB_ENV"
           echo "AUDIT_KIT_REQUIRED=1" >> "$GITHUB_ENV"
 
+      - name: R1 API 계약 게이트 (admin-web↔FastAPI 신규 끊긴 호출 차단)
+        # 영향 테스트 선택만으로는 admin-web 단독 변경 커밋에서 안 돌 수 있어(2026-10-07
+        # 지휘창 지적) CI에 직접 연결. 기존 끊긴 호출(configs/r1_api_contract_baseline.json
+        # 허용목록)은 통과, 새로 끊기는 호출만 FAIL.
+        run: python scripts/ops/audit_r1_api_contract_gate.py
+
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
         # forbidden_imports/security_patterns/circular_imports 외에 "unknown layer 파일 수"
