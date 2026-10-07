@@ -132,7 +132,7 @@ class BlogWriterPro:
 
     def ai_enhance(self, title: str, body: str, keywords: list[str] | None = None) -> dict:
         """AI로 제목 개선안 + 자동 태그 + SEO 점수."""
-        from scripts.naver.blog.seo import BlogSEO
+        from scripts.naver.blog.seo.seo import BlogSEO
 
         seo = BlogSEO(self.page)
         try:
@@ -196,7 +196,7 @@ class BlogWriterPro:
     def prepare_images_with_alt(self, images: list[str], topic: str) -> list[dict]:
         """이미지 경로 + AI ALT 텍스트 매핑."""
         try:
-            from scripts.naver.blog.seo import BlogSEO
+            from scripts.naver.blog.seo.seo import BlogSEO
 
             seo = BlogSEO(self.page)
         except Exception:  # noqa: BLE001 - 네이버 블로그 발행 도우미 - SEO 분석/이미지 alt/예약시간 계산 실패는 기본값으로 폴백, 발행 자체를 우회하지 않음
@@ -220,7 +220,7 @@ class BlogWriterPro:
         schedule_at = None
         if auto_schedule:
             try:
-                from scripts.naver.blog.seo import BlogSEO
+                from scripts.naver.blog.seo.seo import BlogSEO
 
                 bt = BlogSEO(self.page).best_publish_time()
                 today = datetime.now()

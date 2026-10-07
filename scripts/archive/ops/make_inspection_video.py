@@ -602,7 +602,7 @@ def _make_mask_pw_field(id_sel, pw_sel):
 def run():
     from playwright.sync_api import sync_playwright
 
-    from scripts.browser.page.web_connector import _DEFAULT_CDP_HOST, _get_cdp_port
+    from scripts.browser.cdp.connection import _DEFAULT_CDP_HOST, _get_cdp_port
 
     fonts = load_fonts()
     fi = 0  # frame index

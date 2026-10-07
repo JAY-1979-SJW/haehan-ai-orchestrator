@@ -28,8 +28,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page  # noqa: E402 - 레거시 sys.path 조작 후 import
-
+from scripts.browser.cdp.connection import get_page  # noqa: E402 - 레거시 sys.path 조작 후 import
 from scripts.browser.page.page_helper_common import (  # noqa: E402 - 레거시 sys.path 조작 후 import
     _CRITICAL_SITE_PATTERNS,
     is_work_category,

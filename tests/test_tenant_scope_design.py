@@ -70,14 +70,15 @@ class TestBrowserTaskModelGap:
 
     def test_browser_task_model_does_not_exist(self):
         """BrowserTask 모델 부재 확인"""
-        try:
-            from local_agent.browser_task import BrowserTask
+        import importlib
+        import importlib.util
 
-            assert hasattr(BrowserTask, "organization_id"), "BrowserTask must have organization_id field"
-            assert hasattr(BrowserTask, "task_id"), "BrowserTask must have task_id field"
-        except ImportError:
+        if importlib.util.find_spec("local_agent.browser_task") is None:
             # Gap documented: BrowserTask 모델 미구현
-            pass
+            return
+        BrowserTask = importlib.import_module("local_agent.browser_task").BrowserTask
+        assert hasattr(BrowserTask, "organization_id"), "BrowserTask must have organization_id field"
+        assert hasattr(BrowserTask, "task_id"), "BrowserTask must have task_id field"
 
 
 class TestBrowserApprovalModelGap:
