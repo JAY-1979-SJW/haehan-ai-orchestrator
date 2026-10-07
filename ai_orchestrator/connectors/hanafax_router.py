@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.gates.send_approval import require_send_approval
 
 from .session_status_router import session_status_router  # noqa: F401 (side-effect import for type hints)
 
@@ -68,6 +69,8 @@ class SendRequest(BaseModel):
     body: str
     receiver_name: str = ""
     confirmed: bool = False  # 사용자 명시 승인 필수
+    # 사용자가 확인 단계에서 직접 입력한 승인 문구. 없거나 다르면 403.
+    send_confirm: str | None = None
 
 
 class SendResponse(BaseModel):
@@ -182,6 +185,17 @@ def get_queue(_: dict = Depends(require_role("admin", "owner"))):
 def send_fax(body: SendRequest, _: dict = Depends(require_role("admin", "owner"))):
     if not body.confirmed:
         raise HTTPException(status_code=400, detail="팩스 발송은 confirmed=true 승인이 필요합니다")
+    from ai_orchestrator.gates.fax_send_policy import parse_number
+    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+    from scripts.gate import CONFIRM_TEXTS
+
+    # 승인 문구(사용자가 직접 입력) → 번호 형식 → 수신거부 순으로 확인한다. 발송 전에 모두 끝낸다.
+    require_send_approval("hanafax_send", send_confirm=body.send_confirm, expected=CONFIRM_TEXTS["hanafax_send"])
+    digits = parse_number(body.receiver_fax)
+    if digits is None:
+        raise HTTPException(status_code=400, detail="수신 팩스번호 형식이 올바르지 않습니다")
+    if digits in fax_store.opt_out_numbers():
+        raise HTTPException(status_code=403, detail="수신거부 번호입니다")
     from scripts.hanafax.sender import send_fax as _send
 
     result = _send(
