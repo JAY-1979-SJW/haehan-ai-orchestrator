@@ -21,14 +21,17 @@ from datetime import datetime
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
+from scripts.common.sqlite_helpers import init_sqlite_schema
 
 _log = get_logger(__name__)
 DB_PATH = data_dir() / "cdp.db"
 
 
 def _init_db():
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("""
+    init_sqlite_schema(
+        DB_PATH,
+        (
+            """
         CREATE TABLE IF NOT EXISTS error_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ts TEXT NOT NULL,
@@ -40,11 +43,11 @@ def _init_db():
             recovered INTEGER,
             args_repr TEXT
         )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_err_ts ON error_log(ts)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_err_cat ON error_log(category)")
-    conn.commit()
-    conn.close()
+    """,
+            "CREATE INDEX IF NOT EXISTS idx_err_ts ON error_log(ts)",
+            "CREATE INDEX IF NOT EXISTS idx_err_cat ON error_log(category)",
+        ),
+    )
 
 
 def categorize_error(exc: Exception) -> str:

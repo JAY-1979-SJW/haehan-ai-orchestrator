@@ -209,7 +209,7 @@ def test_service_recent_summarizes_trend_and_log(env):
 @pytest.fixture
 def client(env, monkeypatch):
     import scripts.naver.cafe.collection.explorer as explorer
-    import scripts.browser.page.web_connector as wc
+    import scripts.browser.cdp.connection as wc
 
     monkeypatch.setattr(explorer, "_DATA_DIR", env / "my_cafes_dir")
     state = {"result": (cafes(1, 2, 3), "api"), "closed": 0, "new_pages": 0}

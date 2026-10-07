@@ -1,15 +1,14 @@
 """Naver Shopping competitor exploration helpers."""
 from __future__ import annotations
 
-import json
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from statistics import mean
 from typing import Any
 
+from scripts.common.json_report import save_json_report
 from scripts.naver.shopping.naver_shopping_collectors import collect_shopping_search
-
 
 DATA_DIR = Path("data")
 LATEST_PATH = DATA_DIR / "naver_shopping_competitors_latest.json"
@@ -73,10 +72,7 @@ def collect_openapi_competitors(
 
 
 def save_competitor_report(report: dict[str, Any], output: str | Path | None = None) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = Path(output) if output else LATEST_PATH
-    path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    return path
+    return save_json_report(report, DATA_DIR, LATEST_PATH, output)
 
 
 def print_competitor_summary(report: dict[str, Any], path: Path) -> None:

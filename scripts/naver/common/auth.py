@@ -22,15 +22,17 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import time
 from pathlib import Path
 from typing import Any
 
-from scripts.common.critical_logger import log_critical
-from scripts.browser.page.human_input import safe_human_input
-from scripts.common.logger import get_logger
 from scripts.auth.login_detector import detect_login_state, wait_for_login_generic
+from scripts.browser.page.human_input import safe_human_input
+from scripts.browser.popup.popup_detector import handle_page_popups
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 from security_utils import mask_identifier
 
 _log = get_logger(__name__)
@@ -580,3 +582,19 @@ def ensure_naver_login(
         except Exception:  # noqa: BLE001 - 여러 로그인 폼 진입 경로를 순차 시도하는 best-effort — 하나 실패해도 다음 방법 또는 상위 fallback으로 계속(2026-09-28 검토)
             pass
     return result
+
+
+def open_logged_in_page(page, url: str) -> bool:
+    """네이버 로그인 확인 후 url 로 이동하고 팝업을 정리한다. 로그인 실패면 False.
+
+    mybox/talk/calendar/place 의 Naver*.open 이 URL 만 다르게 똑같이 복사해 쓰던 본문을 한 곳으로 모았다.
+    """
+    result = ensure_naver_login(page, return_url=url)
+    if not result.get("ok"):
+        return False
+    page.goto(url, timeout=20000, wait_until="domcontentloaded")
+    time.sleep(3)
+    # 팝업 처리 시도 실패는 무시하고 계속 진행 — 진입 직후 팝업이 남아도 이후 조회·작업 로직이 각자 처리
+    with contextlib.suppress(Exception):
+        handle_page_popups(page, timeout_s=1.5)
+    return True

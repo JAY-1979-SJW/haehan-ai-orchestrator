@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.common.gate import check as gate_check
+from scripts.common.json_report import save_json_report
 
 DATA_DIR = Path("data")
 LATEST_PATH = DATA_DIR / "naver_keyword_tools_latest.json"
@@ -150,10 +151,7 @@ def assert_paid_actions_blocked() -> dict[str, Any]:
 
 
 def save_payload(payload: dict[str, Any], output: str | Path | None = None) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = Path(output) if output else LATEST_PATH
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    return path
+    return save_json_report(payload, DATA_DIR, LATEST_PATH, output)
 
 
 def print_summary(payload: dict[str, Any], path: Path) -> None:

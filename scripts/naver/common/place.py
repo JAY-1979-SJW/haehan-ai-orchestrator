@@ -5,14 +5,10 @@ URL: https://new.smartplace.naver.com/
 
 from __future__ import annotations
 
-import contextlib
-import time
-
 from playwright.sync_api import Page
 
 from scripts.common.logger import get_logger
-from scripts.naver.common.auth import ensure_naver_login
-from scripts.browser.popup.popup_detector import handle_page_popups
+from scripts.naver.common.auth import open_logged_in_page
 
 _log = get_logger(__name__)
 PLACE_URL = "https://new.smartplace.naver.com/"
@@ -23,15 +19,7 @@ class NaverPlace:
         self.page = page
 
     def open(self) -> bool:
-        result = ensure_naver_login(self.page, return_url=PLACE_URL)
-        if not result.get("ok"):
-            return False
-        self.page.goto(PLACE_URL, timeout=20000, wait_until="domcontentloaded")
-        time.sleep(3)
-        # 팝업 처리 시도 실패는 무시하고 계속 진행 — 읽기전용 조회이므로 팝업이 남아도 조회 로직에는 영향 적음
-        with contextlib.suppress(Exception):
-            handle_page_popups(self.page, timeout_s=1.5)
-        return True
+        return open_logged_in_page(self.page, PLACE_URL)
 
     def list_places(self) -> list[dict]:
         """내가 관리하는 매장 목록."""
