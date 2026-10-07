@@ -21,7 +21,7 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import storage_dir
 
-from ..persistence.sqlite_schema import add_column_if_missing, apply_schema, set_busy_timeout
+from ...persistence.sqlite_schema import add_column_if_missing, apply_schema, set_busy_timeout
 
 _DB_PATH = storage_dir() / "instagram_dm.db"
 

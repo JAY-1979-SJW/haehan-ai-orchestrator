@@ -643,7 +643,7 @@ def test_instagram_publish_case_blocks_before_browser(monkeypatch):
 def test_instagram_dm_skips_opted_out_commenter_and_never_sends(monkeypatch):
     from types import SimpleNamespace
 
-    from ai_orchestrator.connectors import instagram_dm_service as svc
+    from ai_orchestrator.connectors.instagram import instagram_dm_service as svc
 
     gate.add_opt_out("StopUser")
     updates: list[dict] = []

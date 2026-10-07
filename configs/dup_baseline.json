@@ -2,11 +2,11 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 107,
+ "hash_count": 108,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
-   "ai_orchestrator/services/gongmu_service.py:_read_rows",
-   "ai_orchestrator/connectors/naver_mail/bulk_service.py:_read_rows"
+   "ai_orchestrator/connectors/naver_mail/bulk_service.py:_read_rows",
+   "ai_orchestrator/services/gongmu_service.py:_read_rows"
   ],
   "088ada4c32833480504cc02bbb5e071313f817b4": [
    "scripts/google/calendar.py:_task_delete",
@@ -59,6 +59,10 @@
    "ai_orchestrator/connectors/google/calendar_reader.py:list_today",
    "ai_orchestrator/connectors/google/calendar_reader.py:list_week"
   ],
+  "254139cfe8d0630c0f701e9d321a4b5349246ffa": [
+   "ai_orchestrator/connectors/desktop_session_router.py:DesktopSetupRequest.name_not_empty",
+   "ai_orchestrator/connectors/user_auth_router.py:SignupRequest.name_not_empty"
+  ],
   "257357770777d154e9ba001b2cb134a832420d5f": [
    "scripts/ops/build_ep_batch_content.py:main",
    "scripts/ops/build_ep_batch_content_gov2.py:main"
@@ -97,10 +101,6 @@
    "scripts/google/docs.py:_task_search",
    "scripts/google/drive.py:_task_search",
    "scripts/google/sheets.py:_task_search"
-  ],
-  "37eb32939bb34d93d40767f3e1a771ada366cffa": [
-   "scripts/naver/automation/smartstore/__init__.py:__getattr__",
-   "scripts/naver/smartstore/automation/__init__.py:__getattr__"
   ],
   "38eb0fa59889cd8a4e260de9da214d4235ce2d3d": [
    "orchestrator_v1/tasks/email_task_approval.py:approve",
@@ -200,8 +200,8 @@
    "scripts/verify/verify_live_task_dispatch.py:_register_temp_agent"
   ],
   "56e7112793c4c286372377961b955a5f2e5c1bfd": [
-   "ai_orchestrator/connectors/instagram_dm_db.py:_schema_v1",
    "ai_orchestrator/connectors/hanafax/authorization_store.py:_schema_v1",
+   "ai_orchestrator/connectors/instagram/instagram_dm_db.py:_schema_v1",
    "ai_orchestrator/connectors/naver_mail/bulk_store.py:_schema_v1"
   ],
   "59dd4afcce19e06253c40ea945ed5c1dd32b420b": [
@@ -274,10 +274,10 @@
    "scripts/google/workflows_catalog.py:save_undeveloped_report"
   ],
   "936fbd68ef6ce7fbb209475fabbec4b2765e9f2d": [
-   "ai_orchestrator/persistence/agent_dispatch_store.py:_conn",
    "ai_orchestrator/connectors/hanafax/authorization_store.py:_conn",
    "ai_orchestrator/connectors/naver_mail/bulk_store.py:_conn",
    "ai_orchestrator/connectors/naver_mail/draft_store.py:_conn",
+   "ai_orchestrator/persistence/agent_dispatch_store.py:_conn",
    "ai_orchestrator/persistence/scheduled_job_store.py:_conn"
   ],
   "944d93c8f5c11f0e919b657379711f7dd622fc47": [
@@ -421,6 +421,10 @@
    "scripts/naver/blog/management/schedule.py:_init_db",
    "scripts/naver/smartstore/automation/analytics_dashboard.py:_init_db",
    "scripts/naver/smartstore/automation/competitor_analysis.py:_init_db"
+  ],
+  "d8087715da7bbae8538766132eaf76e03409332e": [
+   "ai_orchestrator/paths/runtime.py:data_dir",
+   "ai_orchestrator/paths/runtime.py:storage_dir"
   ],
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
    "scripts/popup_monitor.py:ChromeUIWatcher.start",

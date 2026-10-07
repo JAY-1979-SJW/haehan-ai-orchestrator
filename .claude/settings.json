@@ -42,7 +42,7 @@
           },
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','guard_instagram_publish.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'ai_orchestrator','connectors','instagram','guard_instagram_publish.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "인스타그램 실제 발행 여부 검사 중..."
           },
           {

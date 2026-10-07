@@ -3313,7 +3313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_dm_db.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "instagram",
@@ -3321,7 +3321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_dm_router.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "instagram",
@@ -3329,7 +3329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_rule_engine.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "instagram",
@@ -3337,7 +3337,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/connectors/instagram_dm_service.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_service.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -3345,7 +3345,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_dm_token_store.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_token_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "instagram",
@@ -3353,7 +3353,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_graph_client.py": {
+  "ai_orchestrator/connectors/instagram/instagram_graph_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -3361,7 +3361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_webhook_parser.py": {
+  "ai_orchestrator/connectors/instagram/instagram_webhook_parser.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -14889,7 +14889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_instagram_publish.py": {
+  "ai_orchestrator/connectors/instagram/guard_instagram_publish.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "instagram",
@@ -22816,6 +22816,14 @@
    "reason": "하나팩스 자동 발송 한 번 실행 워크플로(예약 작업·지금 발송의 공용 진입점) — 같은 폴더의 auto_send·authorization_service 와 같은 L6",
    "confidence": "low",
    "source": "manual"
+  },
+  "ai_orchestrator/connectors/instagram/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "instagram",
+   "reason": "도메인(instagram) 자동화",
+   "confidence": "low",
+   "source": "rule"
   }
  }
 }

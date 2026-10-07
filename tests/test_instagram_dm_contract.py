@@ -6,9 +6,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors import instagram_dm_db as db
-from ai_orchestrator.connectors import instagram_dm_router as mod
-from ai_orchestrator.connectors import instagram_dm_rule_engine as engine
+from ai_orchestrator.connectors.instagram import instagram_dm_db as db
+from ai_orchestrator.connectors.instagram import instagram_dm_router as mod
+from ai_orchestrator.connectors.instagram import instagram_dm_rule_engine as engine
 
 
 def _rule(**kw):

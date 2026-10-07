@@ -42,7 +42,7 @@ from ..connectors.google.router import google_router
 from ..connectors.hanafax.router import hanafax_router
 from ..connectors.hiworks.mail_router import hiworks_mail_router
 from ..connectors.inquiry_router import inquiry_router
-from ..connectors.instagram_dm_router import instagram_dm_router
+from ..connectors.instagram.instagram_dm_router import instagram_dm_router
 from ..connectors.kakao.setup_router import kakao_setup_router
 from ..connectors.kakao.skill_router import kakao_skill_router
 from ..connectors.naver_blog_router import naver_blog_router

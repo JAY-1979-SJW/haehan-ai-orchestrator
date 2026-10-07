@@ -35,7 +35,7 @@
   "reason": "clients 패키지(허브 분리 1단계 신설)",
   "source": "manual"
  },
- "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
+ "ai_orchestrator/connectors/instagram/instagram_dm_rule_engine.py": {
   "layer": "L1",
   "role": "shared",
   "reason": "docstring이 '순수 함수(DB/네트워크 의존 없음)' 라 명시 — L5 site_module 오분류"
