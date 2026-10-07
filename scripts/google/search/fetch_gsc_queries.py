@@ -14,7 +14,7 @@ Search Console 실적 화면에서 스크래핑해 저장한다. OpenAPI/OAuth �
        "queries": [{"query", "clicks", "impressions", "ctr", "position"}]}
 
 사용:
-    python -m scripts.ops.fetch_gsc_queries
+    python -m scripts.google.search.fetch_gsc_queries
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = Path(__file__).resolve().parents[3]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
@@ -33,7 +33,7 @@ from playwright.sync_api import sync_playwright  # noqa: E402
 
 from scripts.common.logger import get_logger  # noqa: E402
 
-logger = get_logger("scripts.ops.fetch_gsc_queries")
+logger = get_logger("scripts.google.search.fetch_gsc_queries")
 
 CDP_URL = "http://127.0.0.1:9222"
 SITE_RESOURCE = "sc-domain:haehan-ai.kr"

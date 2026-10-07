@@ -6,8 +6,8 @@ Phase 1-B 대상 3개 route의 adapter 상세 계약을 machine-readable하게 �
 실제 HTTP 호출 없이 정적 계약 검증만 수행한다.
 
 실행:
-    python scripts/ops/audit_5050_phase1b_adapter_contract_detail.py
-    python scripts/ops/audit_5050_phase1b_adapter_contract_detail.py --json
+    python scripts/archive/ops/audit_5050_phase1b_adapter_contract_detail.py
+    python scripts/archive/ops/audit_5050_phase1b_adapter_contract_detail.py --json
 
 절대 금지:
     실제 HTTP 호출 금지 / email fetch 실행 금지 / approve/reject 실행 금지
@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 # ── 안전 경계 ─────────────────────────────────────────────────────────────────

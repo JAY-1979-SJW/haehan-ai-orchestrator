@@ -149,7 +149,7 @@ def _toast(title: str, msg: str) -> None:
         pass
 
 
-def notify_user(site: str) -> None:
+def notify_user(site: str) -> threading.Event:
     """콘솔 출력 + 알림음 + Windows 토스트로 사용자에게 PIN 입력 안내."""
     banner = "=" * 62
     msg = (

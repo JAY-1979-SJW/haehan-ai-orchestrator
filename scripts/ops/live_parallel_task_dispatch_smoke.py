@@ -146,7 +146,7 @@ def _start_token_worker(
     device_token: str,
     log_path: Path,
 ) -> subprocess.Popen:
-    from scripts.ops.live_approved_browser_instruction_smoke import WORKER_CODE
+    from scripts.ops.smoke.live_approved_browser_instruction_smoke import WORKER_CODE
 
     env = direct_child_env()
     env["HAEHAN_LIVE_SERVER_URL"] = server_url
@@ -222,7 +222,7 @@ def _resolve_identity(args, server_url):
     if args.user:
         auth = (args.user, args.password)
     elif args.temp_admin:
-        from scripts.ops.live_approved_browser_instruction_smoke import remote_user
+        from scripts.ops.smoke.live_approved_browser_instruction_smoke import remote_user
 
         temp_admin_user = f"codex_parallel_{secrets.token_hex(4)}"
         temp_admin_password = secrets.token_urlsafe(24)
@@ -404,7 +404,7 @@ def main(argv: list[str] | None = None) -> int:
         print("[PASS] worker stopped")
         if temp_admin_user:
             try:
-                from scripts.ops.live_approved_browser_instruction_smoke import remote_user
+                from scripts.ops.smoke.live_approved_browser_instruction_smoke import remote_user
 
                 remote_user("remove", temp_admin_user)
                 print("[PASS] temp admin user removed")

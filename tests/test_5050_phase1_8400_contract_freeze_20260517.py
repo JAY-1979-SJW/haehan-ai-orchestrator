@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
+AUDIT_SCRIPT = ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
 
 
 def _load():
@@ -376,7 +376,7 @@ def test_phase1_paths_all_in_characterization():
     import importlib.util
     char_spec = importlib.util.spec_from_file_location(
         "audit_5050_legacy_characterization",
-        ROOT / "scripts" / "ops" / "audit_5050_legacy_characterization.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_legacy_characterization.py"
     )
     char_mod = importlib.util.module_from_spec(char_spec)
     char_spec.loader.exec_module(char_mod)
@@ -394,7 +394,7 @@ def test_phase1_migration_class_consistent():
     import importlib.util
     char_spec = importlib.util.spec_from_file_location(
         "audit_5050_legacy_characterization",
-        ROOT / "scripts" / "ops" / "audit_5050_legacy_characterization.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_legacy_characterization.py"
     )
     char_mod = importlib.util.module_from_spec(char_spec)
     char_spec.loader.exec_module(char_mod)

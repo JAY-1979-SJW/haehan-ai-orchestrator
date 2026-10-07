@@ -11,8 +11,8 @@ from local_agent.runtime.site_profile_registry import (
     LOGIN_WAITING_AUTH,
     is_site_registered,
 )
-from scripts.ops.create_site_profile import create_site_profile
-from scripts.ops.validate_site_profile import validate_all_registered, validate_profile
+from scripts.site_engine.create_site_profile import create_site_profile
+from scripts.site_engine.validate_site_profile import validate_all_registered, validate_profile
 
 
 def test_create_site_profile_basic():

@@ -3,8 +3,8 @@
 ASSISTANT_BACKEND_5050_LEGACY_CHARACTERIZATION_TEST_01
 
 실행:
-    python scripts/ops/audit_5050_legacy_characterization.py
-    python scripts/ops/audit_5050_legacy_characterization.py --json
+    python scripts/archive/ops/audit_5050_legacy_characterization.py
+    python scripts/archive/ops/audit_5050_legacy_characterization.py --json
 
 금지:
     5050 중단 금지 / nginx 변경 금지 / docker restart 금지
@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 # ── migration_class 상수 ──────────────────────────────────────────────────────

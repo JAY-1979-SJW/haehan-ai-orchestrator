@@ -1,9 +1,9 @@
 """셀렉터 헬스체크 CLI — 코드에 박힌 셀렉터가 실제 사이트에서 유효한지 실측.
 
 사용:
-    python scripts/ops/selector_health_check.py naver_blog
-    python scripts/ops/selector_health_check.py --all
-    python scripts/ops/selector_health_check.py --list
+    python scripts/ops/selector_health/selector_health_check.py naver_blog
+    python scripts/ops/selector_health/selector_health_check.py --all
+    python scripts/ops/selector_health/selector_health_check.py --list
 
 종료 코드:
     0 = 문제 없음
@@ -21,7 +21,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from scripts.ops.selector_health import format_report, load_specs, run_site_checks  # noqa: E402

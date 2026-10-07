@@ -12,8 +12,8 @@ ASSISTANT_BACKEND_5050_LEGACY_FASTAPI_MIGRATION_PLAN_01
 - read-only / 외부 호출 없음 / 서버 변경 없음
 
 실행:
-    python scripts/ops/audit_5050_legacy_fastapi_migration_readiness.py
-    python scripts/ops/audit_5050_legacy_fastapi_migration_readiness.py --json
+    python scripts/archive/ops/audit_5050_legacy_fastapi_migration_readiness.py
+    python scripts/archive/ops/audit_5050_legacy_fastapi_migration_readiness.py --json
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 READ_ONLY = True
 SHUTDOWN_5050_FORBIDDEN = True

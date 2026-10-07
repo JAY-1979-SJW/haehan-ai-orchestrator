@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_legacy_characterization.py"
+AUDIT_SCRIPT = ROOT / "scripts" / "archive" / "ops" / "audit_5050_legacy_characterization.py"
 
 
 def _load_audit():

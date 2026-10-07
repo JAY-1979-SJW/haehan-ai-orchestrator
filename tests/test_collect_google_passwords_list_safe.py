@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 import json
 
-MOD = "scripts.ops.collect_google_passwords_list"
+MOD = "scripts.auth.collect_google_passwords_list"
 
 
 class FakePage:

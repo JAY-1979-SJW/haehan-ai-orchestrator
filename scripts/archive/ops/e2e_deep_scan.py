@@ -1,6 +1,6 @@
 """딥스캔: 버튼 미감지 페이지 + 500 페이지 재점검 (더 긴 대기 + 넓은 셀렉터)
 
-실행: python -m scripts.ops.e2e_deep_scan (저장소 루트에서)
+실행: python -m scripts.archive.ops.e2e_deep_scan (저장소 루트에서)
 """
 
 import asyncio

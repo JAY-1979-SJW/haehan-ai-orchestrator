@@ -14,7 +14,7 @@ sys.dont_write_bytecode = True
 
 def check_site_registry_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/validate_site_registry_baseline.py"],
+        [PY, "scripts/site_engine/validate_site_registry_baseline.py"],
         timeout=120,
     )
     if not ok:

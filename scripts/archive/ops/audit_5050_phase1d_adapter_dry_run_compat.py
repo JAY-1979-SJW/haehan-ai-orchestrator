@@ -6,8 +6,8 @@ Phase 1-B에서 상세 계약이 고정된 adapter 3개에 대해
 실제 HTTP 호출 없이 dry-run fixture로 호환성 계약을 검증한다.
 
 실행:
-    python scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py
-    python scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py --json
+    python scripts/archive/ops/audit_5050_phase1d_adapter_dry_run_compat.py
+    python scripts/archive/ops/audit_5050_phase1d_adapter_dry_run_compat.py --json
 
 절대 금지:
     실제 HTTP 호출 금지 / email fetch 실행 금지 / approve/reject 실행 금지
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 # ── 안전 경계 ─────────────────────────────────────────────────────────────────

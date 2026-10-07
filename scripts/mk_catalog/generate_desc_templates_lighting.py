@@ -1,7 +1,7 @@
 """조명 5종 상세설명 샘플 템플릿 일괄 생성.
 
 실행:
-    python scripts/ops/generate_desc_templates_lighting.py
+    python scripts/mk_catalog/generate_desc_templates_lighting.py
 """
 
 from __future__ import annotations

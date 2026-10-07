@@ -54,9 +54,9 @@
   ],
   "513080ea99ea2367a1df1e1017113a7d956ef2a2": [
    "scripts/ops/audit_authed_local_agent_dispatch_dry_run.py:main",
-   "scripts/ops/dry_run_approved_browser_instruction_api.py:main",
-   "scripts/ops/dry_run_local_agent_cdp_attach.py:main",
-   "scripts/ops/dry_run_manual_local_agent_browser_smoke.py:main"
+   "scripts/ops/verify/dry_run_approved_browser_instruction_api.py:main",
+   "scripts/ops/verify/dry_run_local_agent_cdp_attach.py:main",
+   "scripts/ops/verify/dry_run_manual_local_agent_browser_smoke.py:main"
   ],
   "52a2e667f624dc6fae7152016dfa24097b3df7a5": [
    "scripts/ops/audit_app_api_contract_endpoints_prep.py:run_audit",

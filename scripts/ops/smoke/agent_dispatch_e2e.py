@@ -2,7 +2,7 @@
 # primary_trade: common
 """작업 분배 종단 시험 하니스 — 실제 Claude Code(action_run_claude_agent)로 계획·하위 작업을 실행한다.
 
-사용: python scripts/ops/agent_dispatch_e2e.py "<조사 목표>" [동시 처리 수=2] [계획자 원문 저장 경로]
+사용: python scripts/ops/smoke/agent_dispatch_e2e.py "<조사 목표>" [동시 처리 수=2] [계획자 원문 저장 경로]
 비용: 실제 `claude -p` 호출(계획 약 $0.02 + 하위 작업 약 $0.03씩). 외부 유료 AI API 가 아니라 사용자 PC 의 Claude Code 이며,
 읽기 전용 목표로 시험한다(제한 모드). 기준서: docs/specs/2026-10-02_app_agent_dispatch.md
 
@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 from types import SimpleNamespace
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc  # noqa: E402

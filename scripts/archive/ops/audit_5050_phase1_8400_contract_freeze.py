@@ -6,8 +6,8 @@ Phase 1 대상 5개 route의 8400 계약을 machine-readable로 고정한다.
 실제 HTTP 호출 없이 정적 계약 검증만 수행한다.
 
 실행:
-    python scripts/ops/audit_5050_phase1_8400_contract_freeze.py
-    python scripts/ops/audit_5050_phase1_8400_contract_freeze.py --json
+    python scripts/archive/ops/audit_5050_phase1_8400_contract_freeze.py
+    python scripts/archive/ops/audit_5050_phase1_8400_contract_freeze.py --json
 
 금지:
     실제 HTTP 호출 금지 / approve/reject 실행 금지 / execute 호출 금지
@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 # ── Phase 1 대상 contract freeze matrix ──────────────────────────────────────

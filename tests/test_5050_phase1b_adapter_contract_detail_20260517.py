@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1b_adapter_contract_detail.py"
+AUDIT_SCRIPT = ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1b_adapter_contract_detail.py"
 
 
 def _load():
@@ -437,7 +437,7 @@ def test_phase1b_paths_in_phase1_contracts():
     import importlib.util
     phase1_spec = importlib.util.spec_from_file_location(
         "audit_5050_phase1_8400_contract_freeze",
-        ROOT / "scripts" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
     )
     phase1_mod = importlib.util.module_from_spec(phase1_spec)
     phase1_spec.loader.exec_module(phase1_mod)
@@ -457,7 +457,7 @@ def test_phase1b_overlap_class_consistent_with_phase1():
     import importlib.util
     phase1_spec = importlib.util.spec_from_file_location(
         "audit_5050_phase1_8400_contract_freeze",
-        ROOT / "scripts" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
     )
     phase1_mod = importlib.util.module_from_spec(phase1_spec)
     phase1_spec.loader.exec_module(phase1_mod)
@@ -483,7 +483,7 @@ def test_phase1b_paths_in_characterization():
     import importlib.util
     char_spec = importlib.util.spec_from_file_location(
         "audit_5050_legacy_characterization",
-        ROOT / "scripts" / "ops" / "audit_5050_legacy_characterization.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_legacy_characterization.py"
     )
     char_mod = importlib.util.module_from_spec(char_spec)
     char_spec.loader.exec_module(char_mod)

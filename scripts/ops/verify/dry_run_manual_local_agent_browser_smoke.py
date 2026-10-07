@@ -14,7 +14,7 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 OUT_OF_SCOPE = {
     "scripts/archive/data/chrome_ui_monitor_state.json",
     "scripts/ops/check_naver_mail.py",

@@ -5,7 +5,7 @@
 - 개인정보 자동 마스킹
 
 실행:
-    python scripts/ops/record_promo_video.py
+    python scripts/video/record_promo_video.py
 """
 
 from __future__ import annotations

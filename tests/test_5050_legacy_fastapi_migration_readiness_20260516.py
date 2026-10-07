@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_legacy_fastapi_migration_readiness.py"
+SCRIPT = ROOT / "scripts" / "archive" / "ops" / "audit_5050_legacy_fastapi_migration_readiness.py"
 
 
 def _run_json() -> dict:

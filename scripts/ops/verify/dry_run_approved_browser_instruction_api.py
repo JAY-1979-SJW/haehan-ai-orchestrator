@@ -24,7 +24,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 DRY_RUN_TMP_ROOT = ROOT / "tmp" / "haehan-dry-runs"
 OUT_OF_SCOPE = {

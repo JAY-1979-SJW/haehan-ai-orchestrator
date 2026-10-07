@@ -6,7 +6,7 @@
 - 결과는 PASS / WARN / FAIL. FAIL 이 하나라도 있으면 종료코드 1.
 - 각 검사는 (이름, 상태, 설명) 을 돌려주는 작은 함수이고, 환경(파이썬 버전·경로·실행 함수)은 `Env` 로 주입해 시험에서 가짜로 바꾼다.
 
-사용: python scripts/ops/preflight.py [--json]
+사용: python scripts/ops/verify/preflight.py [--json]
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from importlib import metadata
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 PASS, WARN, FAIL = "PASS", "WARN", "FAIL"

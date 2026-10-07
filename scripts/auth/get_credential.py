@@ -1,8 +1,8 @@
 """Chrome 비밀번호 관리자에서 저장된 자격증명을 가져온다.
 
 사용법:
-    python scripts/ops/get_credential.py <도메인>
-    예) python scripts/ops/get_credential.py gabia.com
+    python scripts/auth/get_credential.py <도메인>
+    예) python scripts/auth/get_credential.py gabia.com
 
 동작 순서:
   1. CDP로 chrome://password-manager 열기
@@ -214,7 +214,7 @@ def _request_plaintext_password(tab_id, match, password_result, eval_done):
 
 
 def get_credential(domain: str) -> dict:
-    from scripts.ops.windows_auth_popup_monitor import (
+    from scripts.browser.popup.windows_auth_popup_monitor import (
         notify_user,
         wait_for_popup,
         wait_for_popup_close,
@@ -268,7 +268,7 @@ def get_credential(domain: str) -> dict:
         # 4. 팝업 감지 → 사용자 안내
         # requestPlaintextPassword 직후 팝업이 이미 떠있을 수 있으므로
         # 짧은 간격으로 먼저 체크 후, 없으면 최대 60초 대기
-        from scripts.ops.windows_auth_popup_monitor import (
+        from scripts.browser.popup.windows_auth_popup_monitor import (
             notify_popup_gone,
             wait_for_popup,
             wait_for_popup_close,
@@ -307,7 +307,7 @@ def get_credential(domain: str) -> dict:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python scripts/ops/get_credential.py <domain>")
+        print("Usage: python scripts/auth/get_credential.py <domain>")
         sys.exit(1)
 
     domain = sys.argv[1]

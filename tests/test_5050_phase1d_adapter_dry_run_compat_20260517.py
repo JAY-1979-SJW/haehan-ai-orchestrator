@@ -18,17 +18,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1d_adapter_dry_run_compat.py"
+AUDIT_SCRIPT = ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1d_adapter_dry_run_compat.py"
 
 # known baseline failures — 이번 공정과 무관한 기존 실패 목록 (문서성 상수)
 KNOWN_BASELINE_FAILURES = [
     "tests/test_app_foundation_p1_gates.py::test_server_browser_guard_no_violations",
     "tests/test_app_foundation_p1_gates.py::test_p1_gates_all_zero_new_violations",
-    "tests/test_cad_local_agent_adapter_20260509.py::test_cad_status_lists_physical_modules",
-    "tests/test_mcp_local_cad_adapter_tools_20260509.py::test_mcp_local_cad_adapter_status_json",
-    "tests/test_mcp_local_cad_adapter_tools_20260509.py::test_mcp_local_bridge_health_json",
-    "tests/test_mcp_local_cad_adapter_tools_20260509.py::test_fastmcp_call_tool_invokes_local_cad_bridge_health",
-]
+]  # CAD 4건은 B0-a(e43b0539)에서 해소되어 감사 스크립트 목록에서 빠졌다 — 이 상수도 같은 2건
 
 
 def _load():
@@ -631,7 +627,7 @@ def test_phase1d_consistent_with_phase1b():
     import importlib.util
     phase1b_spec = importlib.util.spec_from_file_location(
         "audit_5050_phase1b_adapter_contract_detail",
-        ROOT / "scripts" / "ops" / "audit_5050_phase1b_adapter_contract_detail.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1b_adapter_contract_detail.py"
     )
     phase1b_mod = importlib.util.module_from_spec(phase1b_spec)
     phase1b_spec.loader.exec_module(phase1b_mod)
@@ -649,7 +645,7 @@ def test_phase1d_risk_consistent_with_phase1b():
     import importlib.util
     phase1b_spec = importlib.util.spec_from_file_location(
         "audit_5050_phase1b_adapter_contract_detail",
-        ROOT / "scripts" / "ops" / "audit_5050_phase1b_adapter_contract_detail.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1b_adapter_contract_detail.py"
     )
     phase1b_mod = importlib.util.module_from_spec(phase1b_spec)
     phase1b_spec.loader.exec_module(phase1b_mod)
@@ -674,7 +670,7 @@ def test_phase1d_paths_in_phase1_contracts():
     import importlib.util
     phase1_spec = importlib.util.spec_from_file_location(
         "audit_5050_phase1_8400_contract_freeze",
-        ROOT / "scripts" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
     )
     phase1_mod = importlib.util.module_from_spec(phase1_spec)
     phase1_spec.loader.exec_module(phase1_mod)
@@ -697,7 +693,7 @@ def test_phase1d_paths_in_characterization():
     import importlib.util
     char_spec = importlib.util.spec_from_file_location(
         "audit_5050_legacy_characterization",
-        ROOT / "scripts" / "ops" / "audit_5050_legacy_characterization.py"
+        ROOT / "scripts" / "archive" / "ops" / "audit_5050_legacy_characterization.py"
     )
     char_mod = importlib.util.module_from_spec(char_spec)
     char_spec.loader.exec_module(char_mod)
@@ -758,15 +754,17 @@ def test_audit_no_forbidden_in_cases():
 def test_known_baseline_failures_documented():
     mod = _load()
     assert hasattr(mod, "KNOWN_BASELINE_FAILURES")
-    assert len(mod.KNOWN_BASELINE_FAILURES) == 6
+    assert len(mod.KNOWN_BASELINE_FAILURES) == 2
 
 
 def test_known_baseline_count_matches_test_file():
-    assert len(KNOWN_BASELINE_FAILURES) == 6
+    assert len(KNOWN_BASELINE_FAILURES) == 2
+    assert list(_load().KNOWN_BASELINE_FAILURES) == KNOWN_BASELINE_FAILURES
 
 
-def test_known_baseline_contains_cad_failures():
-    assert any("cad" in f.lower() for f in KNOWN_BASELINE_FAILURES)
+def test_resolved_cad_failures_are_not_listed_any_more():
+    assert not any("cad" in f.lower() for f in KNOWN_BASELINE_FAILURES)
+    assert not any("cad" in f.lower() for f in _load().KNOWN_BASELINE_FAILURES)
 
 
 def test_known_baseline_contains_p1_gates():
@@ -776,4 +774,4 @@ def test_known_baseline_contains_p1_gates():
 def test_phase1d_verdict_independent_of_baseline():
     audit = _audit()
     assert audit["verdict"] == "PHASE1D_ADAPTER_DRY_RUN_COMPAT_READY"
-    assert len(audit["known_baseline_failures"]) == 6
+    assert len(audit["known_baseline_failures"]) == 2
