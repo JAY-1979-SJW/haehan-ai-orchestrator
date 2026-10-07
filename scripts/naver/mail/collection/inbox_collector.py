@@ -10,7 +10,7 @@
   - 안읽은 필터: '안읽은 메일' 버튼 클릭 (모드 UNREAD_ONLY)
   - FULL_READ 는 본 모듈에선 plan만, 실행은 caller (CDP 호출 주입)
 
-기존 scripts/naver/mail_read/list_collector.py 의 LIST_EXPR / PAGES_EXPR 을 재사용 (코드 보존).
+기존 scripts/naver/mail/read/list_collector.py 의 LIST_EXPR / PAGES_EXPR 을 재사용 (코드 보존).
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from typing import Any, Protocol
 
 from scripts.naver.mail.processing import read_state_guard as rsg
 from scripts.naver.mail.utilities import time_parser as tp
-from scripts.naver.mail_read.list_collector import LIST_EXPR
+from scripts.naver.mail.read.list_collector import LIST_EXPR
 
 # ── 모드/제한 ────────────────────────────────────────────────────────
 
@@ -88,9 +88,9 @@ class CollectionResult:
     # {inbox_unread, total_aggregate, smart_folder_breakdown, source}
 
 
-# ── PII 마스킹 (mail_read.body_reader.redact 재사용) ─────────────────
+# ── PII 마스킹 (mail.read.body_reader.redact 재사용) ─────────────────
 
-from scripts.naver.mail_read.body_reader import redact as _redact  # noqa: E402
+from scripts.naver.mail.read.body_reader import redact as _redact  # noqa: E402
 
 
 def _mask_subject(s: str) -> str:

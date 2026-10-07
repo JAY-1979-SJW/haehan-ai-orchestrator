@@ -17,7 +17,9 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 
 
 def _cafe_dir() -> Path:

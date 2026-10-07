@@ -13,7 +13,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+from ..paths import repo_root
+
+ROOT = repo_root()
 _DIR = ROOT / "data" / "cafe"
 HISTORY_MAX = 90
 CHANGES_MAX = 200

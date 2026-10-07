@@ -361,7 +361,7 @@
         "scripts/naver_mail",
         "scripts/naver_mail/background_runner.py",
         "scripts/naver_mail/settings_panel.py",
-        "scripts/naver/mail_read",
+        "scripts/naver/mail/read",
         "ai_orchestrator/connectors/naver"
       ],
       "tests": [

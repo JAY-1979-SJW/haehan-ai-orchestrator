@@ -13,10 +13,11 @@ import os
 import smtplib
 import socket
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[3]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 IMAP_HOST, IMAP_PORT = "imap.naver.com", 993
 SMTP_HOST, SMTP_PORT = "smtp.naver.com", 465
 TIMEOUT_SEC = 25

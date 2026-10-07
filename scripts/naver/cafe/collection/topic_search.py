@@ -12,7 +12,7 @@ from typing import Any
 from urllib.parse import urlencode
 
 from scripts.gate import check as gate_check
-from scripts.naver.mail_read import cdp
+from scripts.naver.mail.read import cdp
 from scripts.naver.cafe import list_collector
 
 SEARCH_ROOT = "https://search.naver.com/search.naver"

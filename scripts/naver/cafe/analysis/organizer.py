@@ -15,7 +15,9 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 _DATA_DIR = ROOT / "data" / "cafe"
 
 # ── 카테고리 순서 (보고서용) ──────────────────────────────────────────
