@@ -1,3 +1,4 @@
+# 서버 배포 폐기(2026-10-07 18:05 결정) 후 미사용 — T4 때 존치/보관 재판단
 # Playwright 1.63 은 Debian 13(trixie) 공식 지원(#36916)이나 --with-deps 실측 미검증 -> bookworm 고정
 FROM python:3.14-slim-bookworm
 
