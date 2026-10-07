@@ -2,8 +2,8 @@
 서버 브라우저 경계 런타임 강제 테스트 (2026-05-07)
 
 테스트 대상:
-- browser_worker/policy.py (evaluate_server_browser_url_policy)
-- browser_worker/backends/real_playwright_backend.py (_validate_url)
+- ai_orchestrator/browser_tool/worker/policy.py (evaluate_server_browser_url_policy)
+- ai_orchestrator/browser_tool/worker/backends/real_playwright_backend.py (_validate_url)
 
 정책:
 - 제한 사이트(은행/카드/세무/정부/보험/인증서/Google) → page.goto 전 차단
@@ -312,7 +312,7 @@ class TestSourceCodePolicy:
 
 class TestCompatibilityWithBoundaryPolicy:
     def test_decision_constants_match_boundary_policy(self):
-        """browser_worker/policy.py와 server_browser_boundary_policy.py decision 문자열 일치."""
+        """ai_orchestrator/browser_tool/worker/policy.py와 server_browser_boundary_policy.py decision 문자열 일치."""
         from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
             DECISION_BLOCK as BP_BLOCK,
         )

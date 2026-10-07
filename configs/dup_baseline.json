@@ -24,8 +24,8 @@
    "local_agent/browser_approval_verifier.py:BrowserApprovalStore.revoke"
   ],
   "1c3787c65ac5010655eec0046e605c8bce5cf100": [
-   "notice_radar/browser_collector.py:_find_near_date",
-   "notice_radar/collector.py:_find_near_date"
+   "orchestrator_v1/inbox/notice_radar/browser_collector.py:_find_near_date",
+   "orchestrator_v1/inbox/notice_radar/collector.py:_find_near_date"
   ],
   "1c9a38fe45966559f5b897e707d0abe17ac69d49": [
    "scripts/google/cloud/live_console_explorer.py:save_cloud_console_live_report",

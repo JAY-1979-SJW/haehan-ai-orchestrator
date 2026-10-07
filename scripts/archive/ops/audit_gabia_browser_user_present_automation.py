@@ -3,8 +3,8 @@
 ASSISTANT_GABIA_BROWSER_USER_PRESENT_AUTOMATION_PLAN_01
 
 실행:
-    python scripts/ops/audit_gabia_browser_user_present_automation.py
-    python scripts/ops/audit_gabia_browser_user_present_automation.py --json
+    python scripts/archive/ops/audit_gabia_browser_user_present_automation.py
+    python scripts/archive/ops/audit_gabia_browser_user_present_automation.py --json
 """
 
 from __future__ import annotations
