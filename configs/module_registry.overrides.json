@@ -35,6 +35,12 @@
   "reason": "clients 패키지(허브 분리 1단계 신설)",
   "source": "manual"
  },
+ "ai_orchestrator/connectors/eum_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "호환 shim — 원본 ai_orchestrator/connectors/eum/router.py 와 같은 층·역할(L8/api). shim 은 원본 층을 따른다(이름 규칙이 다른 층으로 오분류해 shim→라우터가 층간 위반으로 보임, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
  "ai_orchestrator/connectors/google_router.py": {
   "layer": "L8",
   "role": "api",
