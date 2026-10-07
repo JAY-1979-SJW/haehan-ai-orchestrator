@@ -177,6 +177,11 @@ jobs:
         # configs/flat_root_baseline.json 으로 고정(줄이기만), 기준선에 없는 새 평면 파일만 FAIL.
         # 규칙·허용 진입점: configs/flat_root_gate.json.
         run: python scripts/ops/flat_root_gate.py --check-all
+      - name: 번들 경로 일관성 게이트 (spec·electron-builder·electron js·릴리스 워크플로의 깨진 경로/모듈 차단 — G17)
+        # PyInstaller spec 진입 파일·우리 모듈 hiddenimports·datas, admin-web/electron/package.json extraResources,
+        # lib/*.js 의 process.resourcesPath 경로, desktop-release.yml 경로가 실제(git 추적) 파일과 맞는지 본다.
+        # 폴더 이동 뒤 이 참조들이 그대로 남아 데스크톱 앱이 반복해 깨졌다(2026-10-08). 규칙: scripts/ops/bundle_path_gate.py 머리말.
+        run: python scripts/ops/bundle_path_gate.py --check-all
       - name: 폴더 승인 게이트 (승인 목록에 없는 폴더에 코드 파일이 있으면 차단 — G16)
         # 코드(.py·.ts·.tsx·.js)가 든 모든 폴더는 configs/folder_registry.json 에 승인돼 있어야 한다. 새 폴더는 대표님 승인 후 목록에 추가.
         # 규칙·절차: scripts/ops/folder_gate.py 머리말, docs/architecture/FOLDER_STRUCTURE.md.
