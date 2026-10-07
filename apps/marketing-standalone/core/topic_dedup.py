@@ -15,7 +15,7 @@ import sys as _sys
 from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
-from connectors.blog_accounts import get_account
+from core.blog_accounts import get_account
 
 
 def _cache_path(blog_id: str | None = None) -> _Path:

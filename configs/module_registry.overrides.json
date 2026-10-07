@@ -307,7 +307,7 @@
   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
   "source": "manual"
  },
- "apps/marketing-standalone/connectors/ai_responder.py": {
+ "apps/marketing-standalone/core/ai_responder.py": {
   "layer": "APP",
   "role": "standalone_app",
   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",

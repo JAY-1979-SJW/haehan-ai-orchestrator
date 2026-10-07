@@ -3,12 +3,12 @@
 원본과 차이:
   - Playwright Page 의존 제거 — SEO 분석은 페이지 없이 텍스트만으로 하는
     core.content_rules.seo_check 를 재사용(이미 이 앱에 있음).
-  - connectors.ai_responder(이 앱 사본, 고객 본인 OpenAI 키) 사용.
+  - core.ai_responder(이 앱 사본, 고객 본인 OpenAI 키) 사용.
 """
 
 from __future__ import annotations
 
-from connectors.ai_responder import AIResponder
+from core.ai_responder import AIResponder
 from core.content_rules import seo_check
 
 

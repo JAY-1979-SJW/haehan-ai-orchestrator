@@ -12,7 +12,7 @@
 | `core/content_rules.py` | 완전 독립 (seo_check, split_body) |
 | `core/topic_dedup.py` | 완전 독립 (발행 이력 캐시) |
 | `connectors/blog_images.py` | 완전 독립 (Unsplash) |
-| `connectors/blog_accounts.py` | 완전 독립 — **단, 값은 전부 템플릿**. 실제 회사 계정 정보 없음 |
+| `core/blog_accounts.py` | 완전 독립 — **단, 값은 전부 템플릿**. 실제 회사 계정 정보 없음 |
 | `connectors/cdp_helper.py` | 완전 독립 |
 | `connectors/instagram_graph_api.py` | 완전 독립 (Graph API) |
 | `connectors/naver_blog_cdp.py` | ⚠️ **Phase 1b 대상 — 원본 저장소에 브리지됨** |

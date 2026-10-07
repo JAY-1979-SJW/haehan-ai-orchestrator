@@ -6601,7 +6601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "apps/marketing-standalone/connectors/ai_responder.py": {
+  "apps/marketing-standalone/core/ai_responder.py": {
    "layer": "APP",
    "role": "standalone_app",
    "domain": "marketing",
@@ -6609,7 +6609,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "apps/marketing-standalone/connectors/blog_accounts.py": {
+  "apps/marketing-standalone/core/blog_accounts.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",

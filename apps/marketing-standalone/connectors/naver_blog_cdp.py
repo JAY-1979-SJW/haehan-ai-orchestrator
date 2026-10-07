@@ -1,7 +1,7 @@
 """CDP 로그인 + 발행 루프.
 
 원본: scripts/naver/blog/marketing/publish.py. accounts/topics 의존은
-이 앱의 사본(blog_accounts.py, ../core/topic_dedup.py)으로 교체했다.
+이 앱의 사본(../core/blog_accounts.py, ../core/topic_dedup.py)으로 교체했다.
 
 2026-09-12: Phase 1b 완료 — 실제 에디터 조작은 connectors/naver_writer.py
 (원본 scripts/naver/blog/core/writer.py 사본)로 포팅했다. 다만 로그인은
@@ -22,7 +22,7 @@ from pathlib import Path as _Path
 
 _APP_ROOT = _Path(__file__).resolve().parents[1]
 _sys.path.insert(0, str(_APP_ROOT))
-from connectors.blog_accounts import DEFAULT_ACCOUNT, get_account  # noqa: E402
+from core.blog_accounts import DEFAULT_ACCOUNT, get_account  # noqa: E402
 from core.topic_dedup import save_cache, topic_key  # noqa: E402
 
 
