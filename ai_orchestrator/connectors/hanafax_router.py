@@ -14,17 +14,17 @@ from __future__ import annotations
 import logging
 import re
 import sys
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import require_send_approval
+from ai_orchestrator.paths import repo_root
 
 from .session_status_router import session_status_router  # noqa: F401 (side-effect import for type hints)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 sys.path.insert(0, str(ROOT))
 
 hanafax_router = APIRouter(prefix="/hanafax", tags=["hanafax"])
