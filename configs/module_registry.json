@@ -12441,14 +12441,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_subdomain_dns_routing_foundation.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/audit_vendor_design_system_sync.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -12458,14 +12450,6 @@
    "source": "rule"
   },
   "scripts/ops/audit_web_project_provisioning_factory.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_windows_user_install_live_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13109,14 +13093,6 @@
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/smoke_app_ui_shell_readonly_api_wiring.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"

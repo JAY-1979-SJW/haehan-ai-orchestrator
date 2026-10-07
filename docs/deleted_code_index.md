@@ -1073,3 +1073,12 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/archive/ops/check_audit.py` — 2026-05-10 감사 로그 파일 이름을 박은 일회성 확인 스크립트. 문서 언급은 표의 설명 문구
 - `scripts/archive/ops/e2e_deep_scan.py` — 일회성 E2E 재점검(옛 프로젝트 위치 경로를 박아 둠). 문서 언급은 HANDOFF 의 '부수 발견' 기록
 - `scripts/archive/ops/e2e_full_report.py` — 위와 같음
+
+## 2026-10-08 삭제(2차) — scripts/ops 계약 감사 중 사용처 0 (stage/ops-folders)
+
+삭제 전 확인 ①~⑥ 은 위 절과 같다(운영 코드·문자열 경로·설정/훅·docs 실행 안내·사용자 스킬/조정 문서·예약 작업 모두 0, 이 스크립트만 검사하는 시험도 없음). 일괄 실행 글롭(`audit_*`)도 저장소에 없음을 확인했다.
+복원: `git checkout 38ee369f -- <경로>`
+
+- `scripts/ops/audit_subdomain_dns_routing_foundation.py` — autowork 서브도메인 DNS/nginx/SSL 기초 도면 감사(단계 완료용 일회성). 언급은 조정 문서의 파일 목록뿐
+- `scripts/ops/audit_windows_user_install_live_smoke.py` — WINDOWS_USER_INSTALL_LIVE_SMOKE_01 감사(단계 완료용 일회성). 언급 없음
+- `scripts/ops/smoke_app_ui_shell_readonly_api_wiring.py` — APP_UI_SHELL_READONLY_API_WIRING_01 정적 smoke. 짝 감사(audit_app_ui_shell_readonly_api_wiring)만 이를 대신 검사하며 이 파일을 부르는 곳 없음
