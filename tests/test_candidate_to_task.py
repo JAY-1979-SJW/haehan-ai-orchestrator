@@ -18,7 +18,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import candidate_store
-import candidate_to_task
+from orchestrator_v1.tasks import candidate_to_task
 import email_task_store
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
