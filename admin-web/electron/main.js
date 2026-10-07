@@ -33,7 +33,8 @@ const {
   SERVER_URL, FASTAPI_URL,
 } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
-const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
+const { createMainWindow, loadMainShell, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
+const { stage } = require("./lib/startup_log");
 const { createLicenseWindow, verifyLicense } = require("./lib/licenseWindow");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
 const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
@@ -128,8 +129,18 @@ if (!gotLock) {
   app.on("second-instance", () => bus.emit(EVENTS.SHOW_WINDOW));
 
   app.whenReady().then(async () => {
+    stage("ready");
+    const startCfg = loadConfig();
     // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
-    if (isOwnerMode(loadConfig())) process.env.OWNER_MODE = "true";
+    if (isOwnerMode(startCfg)) process.env.OWNER_MODE = "true";
+
+    // 빠른 시작: 소유자·라이선스가 이미 있으면 창부터 바로 띄우고(대기 화면), 서버는 뒤에서 준비한다.
+    const startHidden = process.argv.includes("--hidden");
+    const earlyKey = isOwnerMode(startCfg) || startCfg.license_key ? (startCfg.license_key || "OWNER") : null;
+    if (earlyKey && !startHidden) {
+      createMainWindow(earlyKey, false, { deferLoad: true });
+      stage("window-shown");
+    }
 
     // 자동실행 여부는 electron.app 로그인아이템 레지스트리가 아니라 config.json 의 autoStart
     // 값으로 관리한다(isAutoStartEnabled/setAutoStartEnabled). 시작프로그램 폴더의
@@ -147,30 +158,38 @@ if (!gotLock) {
 
     // webview 파티션의 Service Worker/캐시 정리 — 빌드 변경 시 옛 SW가 cache-first로
     // 깨진 자원을 서빙해 화면이 RSC 원문으로 깨지는 문제 방지. 쿠키(로그인)는 보존.
-    try {
-      await session.fromPartition("persist:haehan").clearStorageData({
-        storages: ["serviceworkers", "cachestorage"],
-      });
-    } catch (e) {
-      console.warn("[main] webview SW/캐시 정리 실패(무시):", e.message);
-    }
-    // HTTP 디스크 캐시도 비움 — 빌드 변경 시 옛 Next 청크/HTML 이 캐시돼 옛 화면이 뜨던
-    // 문제 해결(쿠키·localStorage 토큰은 보존). 로컬 서버라 재다운로드 비용 작음.
-    try {
-      await session.fromPartition("persist:haehan").clearCache();
-    } catch (e) {
-      console.warn("[main] webview HTTP 캐시 정리 실패(무시):", e.message);
-    }
+    const clearWebviewCache = async () => {
+      try {
+        await session.fromPartition("persist:haehan").clearStorageData({
+          storages: ["serviceworkers", "cachestorage"],
+        });
+      } catch (e) {
+        console.warn("[main] webview SW/캐시 정리 실패(무시):", e.message);
+      }
+      // HTTP 디스크 캐시도 비움 — 빌드 변경 시 옛 Next 청크/HTML 이 캐시돼 옛 화면이 뜨던
+      // 문제 해결(쿠키·localStorage 토큰은 보존). 로컬 서버라 재다운로드 비용 작음.
+      try {
+        await session.fromPartition("persist:haehan").clearCache();
+      } catch (e) {
+        console.warn("[main] webview HTTP 캐시 정리 실패(무시):", e.message);
+      }
+    };
 
-    // ── FastAPI 서버 시작 (번들 EXE 또는 외부 uvicorn 대기) ───────────────
-    const serverReady = await startFastAPIServer();
+    // ── 서버 두 개를 동시에 시작(빠른 시작) ───────────────────────────────────
+    // UI 서버(Next)는 FastAPI 에 의존하지 않고 기동한다(주소는 환경변수로 고정) — 순서대로 기다리던
+    // 것을 병렬로 바꿔 시작 시간을 줄인다. webview 캐시 정리도 함께.
+    const timed = (name, p) => p.then((ok) => { stage(name, ok ? "ok" : "FAIL"); return ok; });
+    const [serverReady, nextReady] = await Promise.all([
+      timed("fastapi-ready", startFastAPIServer()),
+      timed("next-ready", startNextServer()),
+      clearWebviewCache(),
+    ]);
     if (!serverReady) {
-      dialog.showErrorBox(
+      failStartup(
         "서버 시작 실패",
         "Haehan AI 서버를 시작할 수 없습니다.\n" +
         "로그 파일(%APPDATA%\\Haehan AI\\logs\\fastapi.log)을 확인하세요."
       );
-      app.quit();
       return;
     }
 
@@ -201,15 +220,12 @@ if (!gotLock) {
       }).catch(() => {});
     }
 
-    // ── Next.js 서버 시작 ────────────────────────────────────────────────────
-    const nextReady = await startNextServer();
     if (!nextReady) {
-      dialog.showErrorBox(
+      failStartup(
         "UI 서버 시작 실패",
         "Haehan AI UI 서버를 시작할 수 없습니다.\n" +
         "로그 파일(%APPDATA%\\Haehan AI\\logs\\nextjs.log)을 확인하세요."
       );
-      app.quit();
       return;
     }
 
@@ -226,9 +242,10 @@ if (!gotLock) {
     // 소유자 모드 또는 저장된 라이선스 → 바로 시작
     if (isOwnerMode(cfg) || cfg.license_key) {
       const key = cfg.license_key || "OWNER";
-      const startHidden = process.argv.includes("--hidden");
       startAgent(key);
-      createMainWindow(key, startHidden);
+      // 대기 화면으로 먼저 띄운 창이 있으면 본 화면만 열고, 없으면(자동시작 숨김 등) 새로 만든다
+      if (!loadMainShell()) createMainWindow(key, startHidden);
+      stage("shell-loaded");
       createTray(isAutoStartEnabled());
       // 창이 뜬 뒤 백그라운드로 Claude 연결 확인(처음이면 동의 요청) — 시작을 막지 않는다
       if (!startHidden) setTimeout(() => syncClaudeOnStart().catch((e) => console.warn("[main] Claude 연결 확인 실패(무시):", e.message)), 5000);
@@ -243,6 +260,19 @@ if (!gotLock) {
 }
 
 // ── 라이선스 입력 흐름 (일반 클라이언트 전용) ──────────────────────────────────
+// 시작 실패 처리: 사용자에게는 오류 창, 자동 점검(HAEHAN_E2E=1)에서는 창을 띄우지 않고 바로 종료
+// (사람이 닫아야 하는 오류 창이 뜨면 점검 환경에서 앱이 끝나지 않아 다음 점검까지 막히던 문제).
+function failStartup(title, body) {
+  stage("startup-failed", title);
+  if (process.env.HAEHAN_E2E === "1") {
+    console.error(`[main] ${title}: ${body}`);
+    app.exit(1);
+    return;
+  }
+  dialog.showErrorBox(title, body);
+  app.quit();
+}
+
 function startLicenseFlow() {
   const licWin = createLicenseWindow();
 

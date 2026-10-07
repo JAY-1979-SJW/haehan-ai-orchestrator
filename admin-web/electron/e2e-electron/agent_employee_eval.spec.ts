@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
-import { launchApp } from "./launch_helper";
+import { launchApp, waitForShell } from "./launch_helper";
 
 // AI 직원 실검증(E2E 평가) — 기준서: docs/specs/2026-10-05_ai_employee_e2e_eval.md
 // Task(지시문) → Grader(채점) → Transcript(기록). 채점은 AI 답변 문장이 아니라 서버가 실제로 받은 호출 기록(API 접근 로그)과 결과 값으로 한다.
@@ -121,7 +121,7 @@ test("AI 직원 실검증 — 읽기·승인 경계(1단계)", async () => {
 
   const app = await launchApp({ HAEHAN_OWNER: "1" });
   try {
-    await (await app.firstWindow()).waitForLoadState("domcontentloaded", { timeout: 30_000 });
+    await (await waitForShell(app)).waitForLoadState("domcontentloaded", { timeout: 30_000 });
     const ui = await getUiPage(app);
     await ui.waitForTimeout(10_000);
     await expect(ui.locator("input[placeholder*='요청을 입력'],textarea[placeholder*='요청을 입력']").first()).toBeVisible({ timeout: 30_000 });
