@@ -28,7 +28,7 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-# 독립 실행 도구 — 시험이 이 파일만 임시 저장소에 복사해 돌리므로 정본(scripts.app_paths)에 기대지 않고 파일 위치로 루트를 잡는다.
+# 독립 실행 도구 — 시험이 이 파일만 임시 저장소에 복사해 돌리므로 정본(scripts.common.app_paths)에 기대지 않고 파일 위치로 루트를 잡는다.
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))  # sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
 sys.path.insert(0, str(Path(__file__).resolve().parent))

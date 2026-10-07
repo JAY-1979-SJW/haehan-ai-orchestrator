@@ -5,7 +5,7 @@ FastAPI 로 최소 구현. 인메모리 큐 + 결과 저장소. 상용 서버 �
 검증하기 위해서만 쓴다.
 
 실행:
-    python scripts/mock_task_server.py --port 8765 --token test-token
+    python scripts/archive/one_off/mock_task_server.py --port 8765 --token test-token
 
 엔드포인트:
     GET  /tasks/poll         — Bearer auth. 큐 head 를 pop, 비어있으면 {}

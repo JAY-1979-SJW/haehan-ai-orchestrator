@@ -20,7 +20,7 @@ from pathlib import Path
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
 
-import scripts.audit_dev_reg_approvals as _mod  # noqa: E402
+import scripts.archive.debug.audit_dev_reg_approvals as _mod  # noqa: E402
 from ai_orchestrator.alert_classifier import (  # noqa: E402
     AlertClassification,
     build_alert_text,

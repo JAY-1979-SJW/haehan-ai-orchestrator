@@ -69,6 +69,11 @@
    "file": "scripts/site_access.py",
    "reason": "S2-E site_engine 이동 — 옛 경로 직접 실행(python -m scripts.site_access)은 역사 보고서 문서에만 있음(보존), 나머지 참조 새 경로로 수정",
    "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/mock_task_server.py",
+   "reason": "W15 archive 이동 — 참조 0(전수 grep), 직접 실행 호출처 없음",
+   "date": "2026-10-07"
   }
  ]
 }

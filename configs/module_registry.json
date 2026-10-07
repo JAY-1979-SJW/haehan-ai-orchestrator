@@ -8441,14 +8441,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/audit_dev_reg_approvals.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/auth/auth_session.py": {
    "layer": "L4",
    "role": "browser_engine",
@@ -10961,7 +10953,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/mk_catalog/reclassify_blog_new.py": {
+  "scripts/archive/one_off/reclassify_blog_new.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -10977,7 +10969,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/mock_task_server.py": {
+  "scripts/archive/one_off/mock_task_server.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -15582,14 +15574,6 @@
    "role": "browser_engine",
    "domain": "common",
    "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/validate_site_policy_config.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
   },
