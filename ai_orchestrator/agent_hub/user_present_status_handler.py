@@ -45,7 +45,7 @@ except ImportError:
         return errors
 
 try:
-    from ai_orchestrator.browser_tool.local_agent_user_present_status_store import (
+    from ai_orchestrator.agent_hub.user_present_status_store import (
         record_user_present_status as _record_status,
     )
     _STORE_AVAILABLE = True

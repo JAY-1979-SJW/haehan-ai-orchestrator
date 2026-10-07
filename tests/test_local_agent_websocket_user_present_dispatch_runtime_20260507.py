@@ -40,7 +40,7 @@ def _case(case_id: str) -> dict:
 
 
 # ── 모듈 임포트 ──────────────────────────────────────────────────────────────
-from ai_orchestrator.browser_tool.local_agent_user_present_dispatcher import (  # noqa: E402
+from ai_orchestrator.agent_hub.user_present_dispatcher import (  # noqa: E402
     DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
     build_user_present_dispatch_context,
     build_user_present_dispatch_response,
@@ -352,7 +352,7 @@ class TestSecurityPolicy:
     def test_dispatcher_has_no_browser_launch_code(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
+        import ai_orchestrator.agent_hub.user_present_dispatcher as mod
 
         src = inspect.getsource(mod)
         forbidden = ["playwright", "chromium", "firefox", "websockets.connect", "click(", "fill(", "type("]
@@ -362,7 +362,7 @@ class TestSecurityPolicy:
     def test_dispatcher_safe_to_execute_always_false(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
+        import ai_orchestrator.agent_hub.user_present_dispatcher as mod
 
         src = inspect.getsource(mod)
         assert "safe_to_execute" in src
@@ -370,7 +370,7 @@ class TestSecurityPolicy:
     def test_no_raw_url_in_dispatch_constants(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
+        import ai_orchestrator.agent_hub.user_present_dispatcher as mod
 
         src = inspect.getsource(mod)
         assert "target_url" not in src or "target_url_redacted" in src or "target_url_hash" in src

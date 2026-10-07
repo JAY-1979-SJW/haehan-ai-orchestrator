@@ -2961,7 +2961,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_dispatcher.py": {
+  "ai_orchestrator/agent_hub/user_present_dispatcher.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -2969,7 +2969,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_flow.py": {
+  "ai_orchestrator/agent_hub/user_present_flow.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -2977,7 +2977,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_status_handler.py": {
+  "ai_orchestrator/agent_hub/user_present_status_handler.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -2985,7 +2985,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_status_store.py": {
+  "ai_orchestrator/agent_hub/user_present_status_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",

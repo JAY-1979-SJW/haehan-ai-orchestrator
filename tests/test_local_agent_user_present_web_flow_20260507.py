@@ -10,7 +10,7 @@ import pathlib
 
 import pytest
 
-from ai_orchestrator.browser_tool.local_agent_user_present_flow import (
+from ai_orchestrator.agent_hub.user_present_flow import (
     DECISION_BLOCK,
     DECISION_READONLY,
     DECISION_REQUIRE_API,
@@ -33,7 +33,7 @@ from ai_orchestrator.browser_tool.local_agent_user_present_flow import (
 
 FIXTURE_PATH = pathlib.Path(__file__).parent / "fixtures" / "local_agent_user_present_web_flow_20260507.json"
 MODULE_PATH = (
-    pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "local_agent_user_present_flow.py"
+    pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "agent_hub" / "user_present_flow.py"
 )
 
 REQUIRED_CASE_FIELDS = [

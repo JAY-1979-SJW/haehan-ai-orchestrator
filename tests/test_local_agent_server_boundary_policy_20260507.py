@@ -462,7 +462,7 @@ class TestCompatibilityWithExistingPolicies:
 
     def test_compatible_with_local_agent_user_present_flow(self):
         """local_agent_user_present_flow와 호환 확인."""
-        from ai_orchestrator.browser_tool.local_agent_user_present_flow import evaluate_user_present_requirement
+        from ai_orchestrator.agent_hub.user_present_flow import evaluate_user_present_requirement
 
         evaluate_user_present_requirement({"site_category": "bank", "requires_certificate": True})
         boundary = classify_restricted_site_for_server_browser(

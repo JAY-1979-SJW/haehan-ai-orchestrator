@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (
+from ai_orchestrator.agent_hub.user_present_status_handler import (
     clear_status_registry,
     get_user_present_status,
     handle_user_present_status_event,
@@ -337,7 +337,7 @@ class TestSecurityPrinciples:
     def test_no_real_websocket_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         assert "websockets.connect" not in src
@@ -345,7 +345,7 @@ class TestSecurityPrinciples:
     def test_no_db_write_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         assert "INSERT INTO" not in src
@@ -354,7 +354,7 @@ class TestSecurityPrinciples:
     def test_no_browser_action_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         forbidden = ["page.click(", "page.fill(", "page.goto("]
@@ -364,7 +364,7 @@ class TestSecurityPrinciples:
     def test_no_task_executor_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         assert "TaskExecutor(" not in src
@@ -372,7 +372,7 @@ class TestSecurityPrinciples:
     def test_no_browser_worker_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         assert "browser_worker" not in src

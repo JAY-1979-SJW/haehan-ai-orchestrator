@@ -40,7 +40,7 @@ from ...gates.approval import approve_token, issue_token_for_dev_reg, reject_tok
 from ...gates.auth import require_role
 
 try:
-    from ...browser_tool.local_agent_user_present_status_handler import (
+    from ..user_present_status_handler import (
         handle_user_present_status_event as _handle_up_status_event,
     )
 
@@ -49,10 +49,10 @@ except ImportError:
     _UP_STATUS_HANDLER_AVAILABLE = False
 
 try:
-    from ...browser_tool.local_agent_user_present_status_store import (
+    from ..user_present_status_store import (
         get_user_present_status as _get_up_status,
     )
-    from ...browser_tool.local_agent_user_present_status_store import (
+    from ..user_present_status_store import (
         list_user_present_statuses as _list_up_statuses,
     )
 
@@ -61,7 +61,7 @@ except ImportError:
     _UP_STATUS_STORE_AVAILABLE = False
 
 try:
-    from ...browser_tool.local_agent_user_present_dispatcher import (
+    from ..user_present_dispatcher import (
         build_user_present_dispatch_response,
         should_dispatch_user_present_task,
     )

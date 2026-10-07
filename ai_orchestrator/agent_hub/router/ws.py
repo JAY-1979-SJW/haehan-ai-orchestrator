@@ -19,7 +19,7 @@ from ...audit.audit_logger import log_event
 from .up_queue import _drain_up_tasks  # 공유 leaf
 
 try:
-    from ...browser_tool.local_agent_user_present_status_handler import (
+    from ..user_present_status_handler import (
         handle_user_present_status_event as _handle_up_status_event,
     )
 
