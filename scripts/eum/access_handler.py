@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import log_op  # noqa: E402
 from scripts.popup_classifier import Decision  # noqa: E402
 
 log = get_logger(__name__)
@@ -66,7 +67,7 @@ def handle_access_block(
     """
     log.warning(f"[EUM] 비정상 접근 감지: {category} (심각도: {severity})")
 
-    result = {
+    result: dict[str, Any] = {
         "recovered": False,
         "retry_count": retry_count,
         "last_error": "",
@@ -134,7 +135,7 @@ def handle_access_block(
             )
 
     # 로그 기록
-    log.op(  # type: ignore[attr-defined]  # 기존 결함: logging.Logger 에 op 가 없다(별도 수정 과제, 이번 이동과 무관)
+    log_op(
         "eum_access_recovery",
         ok=result["recovered"],
         category=category,
