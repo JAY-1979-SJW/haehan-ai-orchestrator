@@ -9585,7 +9585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/site_engine/local_cli_router.py": {
+  "scripts/ops/local_cli_router.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
