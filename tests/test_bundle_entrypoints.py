@@ -22,9 +22,10 @@ def _entry_files(spec: Path) -> list[Path]:
     text = spec.read_text(encoding="utf-8")
     m = re.search(r"Analysis\(\s*(?:#[^\n]*\n\s*)*\[(.*?)\]", text, re.S)
     assert m, f"{spec.name}: Analysis 진입점 목록을 찾지 못함"
-    parts = re.findall(r"'([^']+)'|\"([^\"]+)\"", m.group(1))
-    names = [a or b for a, b in parts]
-    return [ROOT.joinpath(*names)]
+    # 진입점마다 str(ROOT / 'a' / 'b.py') 한 개 — 진입점별로 따로 경로를 만든다(여러 개여도 섞이지 않게)
+    entries = re.findall(r"str\(\s*ROOT\s*((?:/\s*['\"][^'\"]+['\"]\s*)+)\)", m.group(1))
+    assert entries, f"{spec.name}: 진입점 경로 식을 해석하지 못함"
+    return [ROOT.joinpath(*re.findall(r"['\"]([^'\"]+)['\"]", e)) for e in entries]
 
 
 def test_spec_entry_files_exist_and_have_no_relative_imports():
