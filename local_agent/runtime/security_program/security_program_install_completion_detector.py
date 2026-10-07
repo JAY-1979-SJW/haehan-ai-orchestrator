@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from local_agent.runtime.security_program_detector import detect_security_signals
+from local_agent.runtime.security_program.security_program_detector import detect_security_signals
 
 _SAFE_FIELDS = (
     "cookie_exported", "session_exported", "password_collected",

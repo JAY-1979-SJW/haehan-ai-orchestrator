@@ -4497,7 +4497,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/installer_folder_presenter.py": {
+  "local_agent/runtime/security_program/installer_folder_presenter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4513,7 +4513,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/local_security_installer_runner.py": {
+  "local_agent/runtime/security_program/local_security_installer_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4617,7 +4617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/security_installer_candidate_finder.py": {
+  "local_agent/runtime/security_program/security_installer_candidate_finder.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4625,7 +4625,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_installer_policy.py": {
+  "local_agent/runtime/security_program/security_installer_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4633,7 +4633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/security_program_auto_resume.py": {
+  "local_agent/runtime/security_program/security_program_auto_resume.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4641,7 +4641,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/security_program_detector.py": {
+  "local_agent/runtime/security_program/security_program_detector.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4649,7 +4649,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program_install_completion_detector.py": {
+  "local_agent/runtime/security_program/security_program_install_completion_detector.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4657,7 +4657,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/security_program_install_result_sanitizer.py": {
+  "local_agent/runtime/security_program/security_program_install_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4665,7 +4665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program_permission_gate.py": {
+  "local_agent/runtime/security_program/security_program_permission_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4793,7 +4793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/user_assisted_installer.py": {
+  "local_agent/runtime/security_program/user_assisted_installer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -23274,6 +23274,14 @@
    "source": "rule"
   },
   "local_agent/runtime/site_profile/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/security_program/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

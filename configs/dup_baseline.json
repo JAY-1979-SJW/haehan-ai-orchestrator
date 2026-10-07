@@ -150,9 +150,9 @@
    "scripts/ops/audit_post_tasks_side_effect_gate_design.py:_verify_no_http_import"
   ],
   "fcc9673f9a46bea4053b07a2b608145f7ffdd247": [
-   "local_agent/runtime/installer_folder_presenter.py:_result",
-   "local_agent/runtime/security_program_install_completion_detector.py:_result",
-   "local_agent/runtime/user_assisted_installer.py:_safe_result"
+   "local_agent/runtime/security_program/installer_folder_presenter.py:_result",
+   "local_agent/runtime/security_program/security_program_install_completion_detector.py:_result",
+   "local_agent/runtime/security_program/user_assisted_installer.py:_safe_result"
   ]
  }
 }

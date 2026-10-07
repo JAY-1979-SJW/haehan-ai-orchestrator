@@ -6,7 +6,7 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from local_agent.runtime.local_security_installer_runner import (
+from local_agent.runtime.security_program.local_security_installer_runner import (
     STATUS_INSTALL_COMPLETED,
     STATUS_INSTALL_FAILED,
     STATUS_INSTALL_PERMISSION_REQUIRED,
@@ -14,10 +14,10 @@ from local_agent.runtime.local_security_installer_runner import (
     check_install_completed,
     prepare_install,
 )
-from local_agent.runtime.security_installer_candidate_finder import find_installer_candidates
-from local_agent.runtime.security_installer_policy import evaluate_installer
-from local_agent.runtime.security_program_detector import detect_security_signals
-from local_agent.runtime.security_program_install_result_sanitizer import (
+from local_agent.runtime.security_program.security_installer_candidate_finder import find_installer_candidates
+from local_agent.runtime.security_program.security_installer_policy import evaluate_installer
+from local_agent.runtime.security_program.security_program_detector import detect_security_signals
+from local_agent.runtime.security_program.security_program_install_result_sanitizer import (
     build_safe_report,
 )
 

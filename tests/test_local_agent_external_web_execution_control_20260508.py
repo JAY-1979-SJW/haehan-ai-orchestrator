@@ -27,10 +27,10 @@ from ai_orchestrator.server.execution_location_guard import (
     classify_execution_location_for_server,
 )
 from ai_orchestrator.server.universal_agent_task_api import clear_all, create_task
-from local_agent.runtime.local_security_installer_runner import (
+from local_agent.runtime.security_program.local_security_installer_runner import (
     GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
 )
-from local_agent.runtime.local_security_installer_runner import (
+from local_agent.runtime.security_program.local_security_installer_runner import (
     STATUS_INSTALL_PERMISSION_REQUIRED,
     STATUS_WAITING_USER_UAC,
     check_action_allowed,
