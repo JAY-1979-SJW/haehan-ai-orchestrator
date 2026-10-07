@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.local_agent.browser.intent_token import (
@@ -27,6 +26,7 @@ from ai_orchestrator.local_agent.browser.intent_token import (
     is_origin_allowed,
     validate_intent,
 )
+from ai_orchestrator.paths.runtime import data_dir
 
 # 분류 결과 코드
 GATE_AUTO = "AUTO"
@@ -35,7 +35,7 @@ GATE_APPROVE = "APPROVE"
 GATE_BLOCKED = "BLOCKED"
 
 # ── gate_policy.json 로드 ────────────────────────────────────────────────────
-_POLICY_PATH = Path(__file__).resolve().parents[3] / "data" / "gate_policy.json"
+_POLICY_PATH = data_dir() / "gate_policy.json"
 
 
 def _load_policy() -> dict:

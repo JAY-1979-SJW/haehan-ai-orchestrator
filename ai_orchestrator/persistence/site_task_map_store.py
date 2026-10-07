@@ -17,11 +17,13 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 from ..domain import site_map_history as hist
 from ..domain import site_task_map as tm
 from . import site_map_history_store as history_store
 
-_DIR = Path(__file__).resolve().parents[2] / "data" / "site_task_map"
+_DIR = data_dir() / "site_task_map"
 _HOST_RE = re.compile(r"^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$")
 
 

@@ -45,6 +45,7 @@ import requests  # noqa: E402
 from mcp.server import Server  # noqa: E402
 
 from ai_orchestrator.local_agent.browser import universal_actions  # noqa: E402
+from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -461,7 +462,7 @@ def _api_call(
 
 # ── 템플릿 저장소 ─────────────────────────────────────────────────────────────
 # HAEHAN_DATA_DIR 우선 (Claude Desktop이 이 프로세스를 직접 실행하는 경우 그 env로 주입됨)
-TMPL_DIR = Path(os.environ.get("HAEHAN_DATA_DIR") or (ROOT / "data")) / "smartstore" / "desc_templates"
+TMPL_DIR = data_dir() / "smartstore" / "desc_templates"
 
 
 def _tmpl_dir() -> Path:
@@ -934,7 +935,7 @@ def _list_products() -> dict:
 
 # ── 공통 캐시 로더 ────────────────────────────────────────────────────────────
 
-SS_DATA_DIR = Path(os.environ.get("HAEHAN_DATA_DIR") or (ROOT / "data")) / "smartstore"
+SS_DATA_DIR = data_dir() / "smartstore"
 
 _SS_COLLECT_METHODS = {
     "products": ("list_products", 50),

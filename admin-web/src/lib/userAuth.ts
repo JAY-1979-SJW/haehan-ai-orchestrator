@@ -102,3 +102,23 @@ export async function changePassword(currentPassword: string, newPassword: strin
     throw new Error(data.detail ?? "비밀번호 변경 실패");
   }
 }
+
+export interface BuildInfo {
+  git_sha: string; // 7~40자 hex 또는 "unknown"
+  build_time: string; // ISO8601 또는 "unknown"
+}
+
+/** 서버(health)가 알려 주는 빌드 정보 — 데스크톱은 build-info.json 값을 서버에 env 로 넘겨 준다. 실패하면 null. */
+export async function getBuildInfo(): Promise<BuildInfo | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/health`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      git_sha: typeof data.git_sha === "string" ? data.git_sha : "unknown",
+      build_time: typeof data.build_time === "string" ? data.build_time : "unknown",
+    };
+  } catch {
+    return null;
+  }
+}

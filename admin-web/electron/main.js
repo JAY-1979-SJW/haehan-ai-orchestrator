@@ -29,6 +29,7 @@ const {
   getEnabledSites, setEnabledSites, getSiteSettings, setSiteSettings,
   getAuthToken, isAutoStartEnabled, setAutoStartEnabled,
   ENV_KEYS, saveUserEnv, maskedUserEnv, patchConfig,
+  consumeConfigWarnings,
   SERVER_URL, FASTAPI_URL,
 } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
@@ -178,6 +179,17 @@ if (!gotLock) {
     // 그 시점에 CDP를 자동 기동하므로 기능 손실 없음. (startCdpBrowser 는 보존 —
     // 추후 명시적 요청 시 호출 가능)
     if (cdpWatchdogTimer) { clearInterval(cdpWatchdogTimer); cdpWatchdogTimer = null; }
+
+    // config.json 이 손상·잠김이었다면(보존·복구한 내용) 한 번 알린다 — 기존 설정을 조용히 잃지 않도록(D6)
+    const cfgWarnings = consumeConfigWarnings();
+    if (cfgWarnings.length) {
+      dialog.showMessageBox({
+        type: "warning",
+        title: "설정 파일 경고",
+        message: "설정 파일에 문제가 있었습니다",
+        detail: cfgWarnings.join("\n\n"),
+      }).catch(() => {});
+    }
 
     // ── Next.js 서버 시작 ────────────────────────────────────────────────────
     const nextReady = await startNextServer();

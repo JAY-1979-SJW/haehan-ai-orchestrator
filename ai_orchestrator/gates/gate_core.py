@@ -45,6 +45,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.gates.gate_types import GateResult, GateVerdict, RiskLevel
+from ai_orchestrator.paths.runtime import data_dir
 
 # 로거 이름은 "scripts" 계층 아래에 둔다 — 핸들러는 "scripts" 루트 로거에 붙어 있어 기존 로그 출력·파일 기록이 그대로다.
 # (이 모듈은 scripts 를 import 하지 않는다. 이름 계층만 쓴다.)
@@ -319,7 +320,7 @@ _LOCK_STALE_S = 30.0  # 이보다 오래된 잠금 파일은 죽은 프로세스
 
 def _opt_out_path() -> Path:
     base = os.environ.get("GATE_DATA_DIR")
-    root = Path(base) if base else Path(__file__).resolve().parents[2] / "data" / "gate"
+    root = Path(base) if base else data_dir() / "gate"
     return root / "opt_out.json"
 
 

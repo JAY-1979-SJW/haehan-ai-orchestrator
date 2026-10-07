@@ -13,8 +13,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 ROOT = Path(__file__).resolve().parents[2]
-_DIR = ROOT / "data" / "cafe"
+_DIR = data_dir() / "cafe"
 HISTORY_MAX = 90
 CHANGES_MAX = 200
 

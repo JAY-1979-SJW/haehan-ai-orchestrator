@@ -20,6 +20,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 # ── 금지 필드 ─────────────────────────────────────────────────────────────────
 
 FORBIDDEN_EVIDENCE_FIELDS: frozenset[str] = frozenset(
@@ -65,7 +67,7 @@ _FORBIDDEN_FILE_CONTENT_KEYS: frozenset[str] = frozenset(
 _STORE: dict[str, dict[str, Any]] = {}
 _LOCK = threading.Lock()
 
-_DEFAULT_AUDIT_DIR = Path(__file__).parent.parent.parent / "data" / "audit"
+_DEFAULT_AUDIT_DIR = data_dir() / "audit"
 _EVIDENCE_FILE_NAME = "action_evidence.jsonl"
 
 

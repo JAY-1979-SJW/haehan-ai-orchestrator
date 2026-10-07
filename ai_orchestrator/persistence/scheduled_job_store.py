@@ -12,12 +12,13 @@ import uuid
 from collections.abc import Callable
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
+
+from ai_orchestrator.paths.runtime import storage_dir
 
 from .sqlite_schema import add_column_if_missing, apply_schema, set_busy_timeout
 
-_DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "scheduled_jobs.db"
+_DB_PATH = storage_dir() / "scheduled_jobs.db"
 
 _JOB_FIELDS = {
     "name",

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getMe, changePassword, clearToken, type UserInfo } from "@/lib/userAuth";
+import { getMe, changePassword, clearToken, getBuildInfo, type BuildInfo, type UserInfo } from "@/lib/userAuth";
 import { MarketingOpsSwitch } from "@/components/settings/MarketingOpsSwitch";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -22,6 +22,7 @@ export default function MyPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [build, setBuild] = useState<BuildInfo | null>(null);
 
   const [curPw, setCurPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -37,6 +38,10 @@ export default function MyPage() {
       setLoading(false);
     });
   }, [router]);
+
+  useEffect(() => {
+    getBuildInfo().then(setBuild);
+  }, []);
 
   const handleLogout = () => {
     clearToken();
@@ -175,6 +180,21 @@ export default function MyPage() {
               {pwLoading ? "변경 중..." : "비밀번호 변경"}
             </button>
           </form>
+        </div>
+
+        {/* 앱 정보 — 어느 빌드인지 확인(문의·진단용) */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
+          <h2 className="text-base font-semibold text-[#111827] mb-3">앱 정보</h2>
+          <dl className="text-sm text-[#374151] space-y-1.5" data-testid="build-info">
+            <div className="flex justify-between">
+              <dt className="text-[#6B7280]">빌드(커밋)</dt>
+              <dd className="font-mono">{build ? (build.git_sha === "unknown" ? "알 수 없음" : build.git_sha.slice(0, 7)) : "확인 불가"}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-[#6B7280]">빌드 시각</dt>
+              <dd className="font-mono">{build ? (build.build_time === "unknown" ? "알 수 없음" : build.build_time) : "확인 불가"}</dd>
+            </div>
+          </dl>
         </div>
 
         {/* 홈으로 */}

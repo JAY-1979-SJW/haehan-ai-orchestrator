@@ -18,6 +18,8 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from ai_orchestrator.paths.runtime import data_dir
+
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,7 +27,7 @@ sys.path.insert(0, str(ROOT))
 
 kakao_setup_router = APIRouter(prefix="/kakao/setup", tags=["kakao-setup"])
 
-STATE_PATH = ROOT / "data" / "kakao_setup_state.json"
+STATE_PATH = data_dir() / "kakao_setup_state.json"
 
 
 # ── 상태 모델 ─────────────────────────────────────────────────────────────────
