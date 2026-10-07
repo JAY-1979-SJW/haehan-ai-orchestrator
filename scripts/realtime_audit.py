@@ -16,9 +16,10 @@ from typing import Any, Iterable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
 from logging_utils import mask_sensitive
 
-LOG_DIR = ROOT / "data" / "logs"
+LOG_DIR = data_dir() / "logs"
 AUDIT_JSONL = LOG_DIR / "realtime_audit.jsonl"
 AUDIT_TEXT = LOG_DIR / "realtime_audit.log"
 

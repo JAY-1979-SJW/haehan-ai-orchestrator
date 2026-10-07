@@ -46,12 +46,13 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.schemas import OpStatus  # 상태값 타입 참조
 
 ROOT = Path(__file__).resolve().parents[1]
-LOG_DIR = ROOT / "data" / "logs"
+LOG_DIR = data_dir() / "logs"
 OPS_LOG_FILE = LOG_DIR / "ops.log"
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"
 
 _FMT = "%(asctime)s  [%(op_name)-24s] %(levelname)-4s  %(message)s"
 _DATE_FMT = "%Y-%m-%d %H:%M:%S"

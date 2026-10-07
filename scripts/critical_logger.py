@@ -32,10 +32,12 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 ROOT = Path(__file__).resolve().parents[1]
-LOG_DIR = ROOT / "data" / "logs"
+LOG_DIR = data_dir() / "logs"
 CRITICAL_LOG_FILE = LOG_DIR / "critical.log"
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"
 
 # 카테고리 분류 (확장 가능)
 CATEGORIES = {

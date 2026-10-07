@@ -24,12 +24,13 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"
 
 
 def _init_db():
