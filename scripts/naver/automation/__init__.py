@@ -43,7 +43,7 @@ def _load_core_export(name):
         from .order_automation import OrderAutomation
         return OrderAutomation
     if name == "SessionManager":
-        from .session_manager import SessionManager
+        from .platform.session_manager import SessionManager
         return SessionManager
     if name == "Workflow":
         from .workflow import Workflow
@@ -55,7 +55,7 @@ def _load_core_export(name):
         from .inventory_monitor import InventoryMonitor
         return InventoryMonitor
     if name == "ImageProcessor":
-        from .image_processor import ImageProcessor
+        from .platform.image_processor import ImageProcessor
         return ImageProcessor
     return None
 
@@ -63,7 +63,7 @@ def _load_core_export(name):
 def _load_extra_export(name):
     """지연 import 대상(뒤 그룹). 해당 이름이 아니면 None."""
     if name == "Scheduler":
-        from .scheduler import Scheduler
+        from .platform.scheduler import Scheduler
         return Scheduler
     if name == "AnalyticsDashboard":
         from .analytics_dashboard import AnalyticsDashboard
@@ -81,7 +81,7 @@ def _load_extra_export(name):
         from .notification_hub import NotificationHub
         return NotificationHub
     if name == "ErrorRecovery":
-        from .error_recovery import ErrorRecovery
+        from .platform.error_recovery import ErrorRecovery
         return ErrorRecovery
     return None
 

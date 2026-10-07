@@ -11065,22 +11065,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/error_recovery.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/image_processor.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/automation/integration/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -11193,23 +11177,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/scheduler.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/naver/automation/seo_optimizer.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/session_manager.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
