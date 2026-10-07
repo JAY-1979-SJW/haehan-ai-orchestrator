@@ -15,8 +15,9 @@ def render(stats: dict[str, int], total_targets: int = 0, limit: int = 0) -> str
     decided = killed + survived  # total 은 누적값이라 분모로 쓰지 않는다
     score = f"{killed / decided:.1%}" if decided else "n/a"
     lines = ["## 변이 검증(mutmut)", "", f"- 점수(killed/(killed+survived)): **{score}** ({killed}/{decided})"]
-    for key in ("survived", "no_tests", "timeout", "suspicious", "skipped"):
+    for key in ("survived", "timeout", "suspicious", "skipped"):
         lines.append(f"- {key}: {stats.get(key, 0)}")
+    lines.append(f"- 시험이 없는 변이체(no_tests): {stats.get('no_tests', 0)}")
     if not decided:
         lines.append("- ⚠ **실행된 변이체 0 — 설정 확인 필요**(패턴이 변이체 이름과 안 맞거나 source_paths 범위 문제)")
     if os.environ.get("MUTMUT_RUN_FAILED"):

@@ -79,3 +79,24 @@ def test_tests_for_files_picks_direct_references_only():
 def test_rewrite_toml_list_replaces_only_that_key():
     text = 'a = ["1"]\nalso_copy = ["x", "y"]\n'
     assert cf.rewrite_toml_list(text, "also_copy", ["z"]) == 'a = ["1"]\nalso_copy = ["z"]\n'
+
+
+
+def test_parse_diff_boundaries():
+    diff = (
+        "+++ b/scripts/x.py\n"
+        "@@ -3,2 +3,0 @@\n"  # 삭제만 있는 hunk(추가 0줄)
+        "@@ -9 +10 @@\n"  # 개수 생략 = 1줄
+        "@@ -20,0 +21,3 @@\n"
+        "+++ /dev/null\n"  # 삭제된 파일은 b/ 접두가 없다
+        "@@ -1,2 +0,0 @@\n"
+        "+++ b/README.md\n"
+        "@@ -1 +1 @@\n"
+    )
+    assert cf.parse_diff(diff) == {"scripts/x.py": {10, 21, 22, 23}}
+    assert cf.parse_diff("@@ -1 +1 @@\n") == {}  # 헤더 이전 hunk 는 무시
+
+
+def test_parse_diff_keeps_each_file_separate():
+    diff = "+++ b/a.py\n@@ -1 +1,2 @@\n+++ b/b.py\n@@ -5 +7 @@\n"
+    assert cf.parse_diff(diff) == {"a.py": {1, 2}, "b.py": {7}}
