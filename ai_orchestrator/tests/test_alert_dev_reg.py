@@ -21,7 +21,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
 
 import scripts.audit_dev_reg_approvals as _mod  # noqa: E402
-from ai_orchestrator.alert_classifier import (  # noqa: E402
+from ai_orchestrator.notify.alert_classifier import (  # noqa: E402
     AlertClassification,
     build_alert_text,
     classify,
@@ -361,7 +361,7 @@ def test_regression_no_sensitive_in_output(tmp_path, capsys):
 
 def test_run_log_written_with_alert_fields(tmp_path, capsys):
     """audit_and_alert() 가 실행 로그에 alert_sent·alert_type·retry_candidate 를 기록한다."""
-    from ai_orchestrator.persistence.dev_reg_audit_log import load_recent_runs
+    from ai_orchestrator.dev_reg.dev_reg_audit_log import load_recent_runs
 
     store = tmp_path / "dev_reg_approvals.jsonl"
     log_path = tmp_path / "dev_reg_audit_runs.jsonl"

@@ -14,7 +14,7 @@ import os
 import re
 from pathlib import Path
 
-from .. import config  # 기존 config.py 의 루트 유틸 재사용(로깅 설정 등 부수효과 X)
+from ..core import config  # 기존 config.py 의 루트 유틸 재사용(로깅 설정 등 부수효과 X)
 
 
 _SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_\-]{0,63}$")

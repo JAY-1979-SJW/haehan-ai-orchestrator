@@ -30,7 +30,7 @@ import pytest
 # ── import 대상 모듈 ────────────────────────────────────────────────────────
 import ai_orchestrator.gates.approval as _appr
 import ai_orchestrator.gates.policy as _policy
-import ai_orchestrator.task_state as _ts
+import ai_orchestrator.core.task_state as _ts
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────
 
@@ -287,7 +287,7 @@ class TestCriticalPolicy:
 
         import yaml
 
-        from ai_orchestrator.models import RiskAssessment, TaskRequest
+        from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 
         policy_path = pathlib.Path("ai_orchestrator/policies/default_policy.yaml")
         policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
@@ -311,7 +311,7 @@ class TestCriticalPolicy:
 
         import yaml
 
-        from ai_orchestrator.models import RiskAssessment, TaskRequest
+        from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 
         policy_path = pathlib.Path("ai_orchestrator/policies/default_policy.yaml")
         policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))

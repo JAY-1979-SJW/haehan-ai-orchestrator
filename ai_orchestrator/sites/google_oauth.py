@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 
-from ai_orchestrator.config import GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH
+from ai_orchestrator.core.config import GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH
 
 logger = logging.getLogger(__name__)
 

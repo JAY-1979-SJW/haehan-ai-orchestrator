@@ -33,7 +33,7 @@ AI_ORC = REPO / "ai_orchestrator"
 DOMAIN_CORE_MAP = {
     "Task": {
         "impl_files": [
-            "ai_orchestrator/task_state.py",
+            "ai_orchestrator/core/task_state.py",
             "ai_orchestrator/domain/models.py",  # STEP 1: Task baseline model 추가
         ],
         "domain_file": "ai_orchestrator/domain/models.py",
@@ -49,7 +49,7 @@ DOMAIN_CORE_MAP = {
     },
     "WorkTrade": {
         "impl_files": [
-            "ai_orchestrator/external_work_registry.py",
+            "ai_orchestrator/tasks/external_work_registry.py",
             "ai_orchestrator/domain/models.py",  # STEP 1: WorkTrade baseline model 추가
         ],
         "status": "BASELINE_MODEL_READY",
@@ -58,15 +58,15 @@ DOMAIN_CORE_MAP = {
     "Approval": {
         "impl_files": [
             "ai_orchestrator/gates/approval.py",
-            "ai_orchestrator/gates/dev_reg_approval.py",
-            "ai_orchestrator/services/web_task_approval_service.py",
+            "ai_orchestrator/dev_reg/dev_reg_approval.py",
+            "ai_orchestrator/web_task/web_task_approval_service.py",
         ],
         "status": "FUNCTIONAL",  # 동작하지만 서비스 계층 미분리
         "needs": ["approval_service_extract", "approval_history_model"],
     },
     "AuditEvent": {
         "impl_files": [
-            "ai_orchestrator/audit_logger.py",
+            "ai_orchestrator/audit/audit_logger.py",
             "ai_orchestrator/server/action_approval_audit_store.py",
             "ai_orchestrator/local_agent/approval_audit_log.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: 표준 스키마 기준선
@@ -86,7 +86,7 @@ DOMAIN_CORE_MAP = {
     },
     "ExternalWork": {
         "impl_files": [
-            "ai_orchestrator/external_work_registry.py",
+            "ai_orchestrator/tasks/external_work_registry.py",
             "ai_orchestrator/domain/models.py",  # STEP 1: ExternalWork baseline model 추가
             "ai_orchestrator/domain/model_adapters.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: ExecutionAttempt + ExternalAppHandoff
@@ -245,14 +245,14 @@ SERVICE_LAYER_DESIGN = {
     },
     "approval_service": {
         "purpose": "승인 토큰 발행, pending 생성, Telegram 발송 조율",
-        "current_location": "ai_orchestrator/services/web_task_approval_service.py (EXTRACTED)",
+        "current_location": "ai_orchestrator/web_task/web_task_approval_service.py (EXTRACTED)",
         "extraction_priority": "DONE",
         "must_not_call": ["router", "fastapi_http"],
         "test_criteria": ["token 발행 단위 테스트", "pending 생성 검증"],
     },
     "audit_service": {
         "purpose": "AuditEvent 기록, 조회, 필드 검증",
-        "current_location": "ai_orchestrator/audit_logger.py (functional)",
+        "current_location": "ai_orchestrator/audit/audit_logger.py (functional)",
         "extraction_priority": "MEDIUM",
         "must_not_call": ["router", "external_api"],
         "test_criteria": ["event 기록 검증", "금지 필드 차단 검증"],
@@ -266,7 +266,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "external_work_service": {
         "purpose": "ExternalWork 분류 조회, handoff 기록, 상태 추적",
-        "current_location": "ai_orchestrator/external_work_registry.py (registry only)",
+        "current_location": "ai_orchestrator/tasks/external_work_registry.py (registry only)",
         "extraction_priority": "MEDIUM",
         "must_not_call": ["db_write"],
         "test_criteria": ["분류 조회 검증", "handoff 기록 단위 테스트"],
@@ -328,7 +328,7 @@ class TestServiceLayerDesign:
     def test_approval_service_already_extracted(self):
         """approval_service는 web_task_approval_service.py로 이미 추출됨."""
         assert SERVICE_LAYER_DESIGN["approval_service"]["extraction_priority"] == "DONE"
-        src = pathlib.Path("ai_orchestrator/services/web_task_approval_service.py")
+        src = pathlib.Path("ai_orchestrator/web_task/web_task_approval_service.py")
         assert src.exists()
 
     def test_high_priority_services_list(self):
@@ -815,7 +815,7 @@ class TestAuditEvidenceDesign:
 
     def test_current_audit_logger_importable(self):
         """현재 audit_logger 모듈이 import 가능하다."""
-        import ai_orchestrator.audit_logger as m
+        import ai_orchestrator.audit.audit_logger as m
 
         assert hasattr(m, "log_event") or hasattr(m, "audit_log") or hasattr(m, "EVENT_TYPES")
 
@@ -838,14 +838,14 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/server/task_queue_schema.py",
     "ai_orchestrator/server/action_approval_audit_store.py",
     "ai_orchestrator/server/action_evidence_store.py",
-    "ai_orchestrator/task_state.py",
-    "ai_orchestrator/audit_logger.py",
+    "ai_orchestrator/core/task_state.py",
+    "ai_orchestrator/audit/audit_logger.py",
     "ai_orchestrator/gates/approval.py",
-    "ai_orchestrator/gates/dev_reg_approval.py",
-    "ai_orchestrator/services/web_task_approval_service.py",
-    "ai_orchestrator/services/web_task_registry.py",
-    "ai_orchestrator/web_task_templates.py",
-    "ai_orchestrator/external_work_registry.py",
+    "ai_orchestrator/dev_reg/dev_reg_approval.py",
+    "ai_orchestrator/web_task/web_task_approval_service.py",
+    "ai_orchestrator/web_task/web_task_registry.py",
+    "ai_orchestrator/web_task/web_task_templates.py",
+    "ai_orchestrator/tasks/external_work_registry.py",
     "ai_orchestrator/routers/ops_router.py",
     "ai_orchestrator/browser_tool/execution_location_policy.py",
     "ai_orchestrator/browser_tool/policy.py",
@@ -858,12 +858,12 @@ CORE_MODULES_MUST_IMPORT = [
     "ai_orchestrator.domain.response_adapter",
     "ai_orchestrator.server.execution_location_guard",
     "ai_orchestrator.server.task_queue_schema",
-    "ai_orchestrator.task_state",
+    "ai_orchestrator.core.task_state",
     "ai_orchestrator.gates.approval",
-    "ai_orchestrator.gates.dev_reg_approval",
-    "ai_orchestrator.services.web_task_approval_service",
-    "ai_orchestrator.services.web_task_registry",
-    "ai_orchestrator.external_work_registry",
+    "ai_orchestrator.dev_reg.dev_reg_approval",
+    "ai_orchestrator.web_task.web_task_approval_service",
+    "ai_orchestrator.web_task.web_task_registry",
+    "ai_orchestrator.tasks.external_work_registry",
     "ai_orchestrator.routers.ops_router",
 ]
 
@@ -915,7 +915,7 @@ class TestCoreFileIntegrity:
 
     def test_external_work_registry_importable_with_classification(self):
         """external_work_registry가 분류 상수와 함께 import된다."""
-        import ai_orchestrator.external_work_registry as m
+        import ai_orchestrator.tasks.external_work_registry as m
 
         assert (
             hasattr(m, "WORK_REGISTRY")
@@ -990,7 +990,7 @@ NEXT_PHASE_ROADMAP = [
         "phase": 6,
         "name": "API Contract 안정화",
         "goal": "response_envelope 적용 후보 전환, OpenAPI 정합성 확인",
-        "files": ["ai_orchestrator/routers/web_task_router.py (MODIFY)"],
+        "files": ["ai_orchestrator/web_task/web_task_router.py (MODIFY)"],
         "forbidden": ["기존 response key 파괴"],
         "test_criteria": "API contract 테스트 + backward-compat 테스트",
         "done_when": "NEEDS_ENVELOPE_REVIEW 3개 전환 완료",

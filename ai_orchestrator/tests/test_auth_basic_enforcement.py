@@ -57,7 +57,7 @@ def _write_users(tmp_path, payload=None) -> str:
 
 
 def _enable_auth(monkeypatch, users_path: str | None):
-    import ai_orchestrator.config as _config
+    import ai_orchestrator.core.config as _config
 
     monkeypatch.setattr(_config, "AUTH_ENABLED", True)
     if users_path is not None:
@@ -67,7 +67,7 @@ def _enable_auth(monkeypatch, users_path: str | None):
 
 
 def _disable_auth(monkeypatch):
-    import ai_orchestrator.config as _config
+    import ai_orchestrator.core.config as _config
 
     monkeypatch.setattr(_config, "AUTH_ENABLED", False)
 

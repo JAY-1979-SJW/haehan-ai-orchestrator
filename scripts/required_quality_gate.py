@@ -57,7 +57,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/ops/audit_ai_agent_app_structure_design_baseline.py",
         "scripts/ops/audit_ai_agent_ui_structure_blueprint.py",
         "scripts/ops/audit_mcp_gateway_baseline.py",
-        "scripts/ops/ai_work_session.py",
+        "scripts/common/ai_work_session.py",
         "scripts/ops/audit_ai_work_session_gate.py",
         "scripts/google/gmail_analysis.py",
         "scripts/google/ads_signup.py",

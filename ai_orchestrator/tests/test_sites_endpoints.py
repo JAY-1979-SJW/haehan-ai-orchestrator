@@ -43,7 +43,7 @@ def client(tmp_path_factory):
     os.environ["AUTH_ENABLED"] = "true"
     os.environ["HTTP_USERS_PATH"] = str(users_path)
 
-    from ai_orchestrator import config as _config
+    from ai_orchestrator.core import config as _config
 
     importlib.reload(_config)
     from ai_orchestrator.gates import auth as _auth
@@ -180,7 +180,7 @@ def test_dry_run_unknown_site_returns_404(client):
 # ── 감사 로그 비민감성 ───────────────────────────────────────────
 def test_audit_log_does_not_leak_secrets(client):
     """dry-run 및 health 호출 시 감사 로그에 password/Authorization/cookie 원문 금지."""
-    from ai_orchestrator.audit_logger import read_recent_logs
+    from ai_orchestrator.audit.audit_logger import read_recent_logs
 
     # 호출 흔적 남기기
     body = _dry_run_body()
@@ -203,7 +203,7 @@ def test_audit_log_does_not_leak_secrets(client):
 
 
 def test_audit_log_records_site_events(client):
-    from ai_orchestrator.audit_logger import read_recent_logs
+    from ai_orchestrator.audit.audit_logger import read_recent_logs
 
     r = client.get("/api/v1/site-health/dummy", auth=_auth("admin_u"))
     assert r.status_code == 200

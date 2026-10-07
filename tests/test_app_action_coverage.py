@@ -2,6 +2,7 @@
 
 import re
 
+import ai_orchestrator.asgi  # noqa: F401 — 앱을 만들면서 app_actions 에 앱을 주입한다
 from ai_orchestrator.routers import app_actions
 
 # 위험·민감 키워드: 이 키워드가 들어간 동작은 절대 SAFE(자동실행)면 안 된다.

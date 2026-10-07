@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import config as _config
+from ai_orchestrator.core import config as _config
 from ai_orchestrator.asgi import app
 
 API = "/api/v1"

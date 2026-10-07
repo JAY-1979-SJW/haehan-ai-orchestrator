@@ -63,7 +63,7 @@ def test_gabia_dns_external_work_read_exists():
 
 
 def test_external_work_registry_has_gabia():
-    from ai_orchestrator.external_work_registry import get_external_work
+    from ai_orchestrator.tasks.external_work_registry import get_external_work
     p = get_external_work("gabia", "dns_record_prepare")
     f = get_external_work("gabia", "dns_final_save")
     r = get_external_work("gabia", "dns_record_read")

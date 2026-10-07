@@ -204,7 +204,10 @@ def make_package_shim(old_dir: str, new_dir: str, root: Path, *, dry_run: bool =
         new_module = module_name(f"{new_rel}/__init__.py")
         siblings = [p.stem for p in new_path.glob("*.py") if p.stem != "__init__"]
         if siblings:
-            extra = ["", "# 형제 하위 모듈 선등록 — import old.sub.a 가 부모 __path__ 를 따라 새로 실행되는 것을 막는다"]
+            extra = [
+                "",
+                "# 형제 하위 모듈 선등록 — import old.sub.a 가 부모 __path__ 를 따라 새로 실행되는 것을 막는다",
+            ]
             for sib in siblings:
                 extra.append(f'_sys.modules[f"{{__name__}}.{sib}"] = _il.import_module("{new_module}.{sib}")')
             init_path = root / init_rel

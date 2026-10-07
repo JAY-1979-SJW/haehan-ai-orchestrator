@@ -53,7 +53,7 @@ except ImportError:
     _STORE_AVAILABLE = False
 
 try:
-    from ai_orchestrator.audit_logger import log_event as _log_event
+    from ai_orchestrator.audit.audit_logger import log_event as _log_event
     _AUDIT_AVAILABLE = True
 except ImportError:
     _AUDIT_AVAILABLE = False

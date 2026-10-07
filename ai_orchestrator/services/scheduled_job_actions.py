@@ -326,7 +326,7 @@ def _run_naver_mail_bulk_send(params: dict[str, Any]) -> str:
 
 def _run_gongmu_due_notice(_: dict[str, Any]) -> str:
     """새 기간(월·연) 업무를 앱 안 DB 에 추가하고 지연·임박 업무를 요약한다. 외부 접속·발송 없음(읽기 전용 요약)."""
-    from ai_orchestrator.services import gongmu_service as gongmu
+    from ai_orchestrator.gongmu import gongmu_service as gongmu
 
     gongmu.generate_all(actor="scheduled")
     return gongmu.notice_text()

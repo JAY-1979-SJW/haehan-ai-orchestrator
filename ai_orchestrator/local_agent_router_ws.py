@@ -15,7 +15,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from . import local_agent_registry as _reg
 from . import local_agent_router_guards as _guards  # 공유 leaf
-from .audit_logger import log_event
+from .audit.audit_logger import log_event
 from .local_agent_router_up_queue import _drain_up_tasks  # 공유 leaf
 
 try:

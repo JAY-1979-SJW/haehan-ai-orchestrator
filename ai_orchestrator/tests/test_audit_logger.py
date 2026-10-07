@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from ai_orchestrator import audit_logger
+from ai_orchestrator.audit import audit_logger
 
 
 def _clear_log():

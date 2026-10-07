@@ -16,7 +16,7 @@ from ai_orchestrator import local_agent_redaction as redaction
 from ai_orchestrator import local_agent_router_task as task_mod
 from ai_orchestrator import mcp_tool_names as tool_names
 from ai_orchestrator.local_agent_registry_common import LocalAgentTask
-from ai_orchestrator.routers import ai_agent_router as agent_mod
+from ai_orchestrator.site_work import ai_agent_router as agent_mod
 from tests.console_api_contract_support import (
     API,
     basic,

@@ -26,7 +26,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
-from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.audit.audit_logger import log_event
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.paths.runtime import data_dir
 

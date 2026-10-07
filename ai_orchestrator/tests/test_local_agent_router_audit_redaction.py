@@ -5,10 +5,11 @@ Only public_id or redacted markers are recorded.
 """
 
 from datetime import UTC, datetime
+from typing import Literal
 from unittest.mock import patch
 
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 from ai_orchestrator.gates import approval
-from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 
 def _make_test_request(task_id: str) -> TaskRequest:
@@ -23,7 +24,7 @@ def _make_test_request(task_id: str) -> TaskRequest:
     )
 
 
-def _make_test_risk(risk_level: str = "high") -> RiskAssessment:
+def _make_test_risk(risk_level: Literal["low", "medium", "high", "critical"] = "high") -> RiskAssessment:
     """Create test RiskAssessment."""
     return RiskAssessment(
         risk_level=risk_level,

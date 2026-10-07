@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import require_send_approval
 
-from ...audit_logger import log_event
+from ...audit.audit_logger import log_event
 from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, run_with_cdp_page, save_ss
 
 router = APIRouter()

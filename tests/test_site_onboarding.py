@@ -12,16 +12,16 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator import mcp_server
-from ai_orchestrator.domain import site_registry as sr
-from ai_orchestrator.domain import site_task_map as tm
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import site_registry_store as reg_store
-from ai_orchestrator.persistence import site_task_map_request_store as rstore
-from ai_orchestrator.persistence import site_task_map_store as map_store
 from ai_orchestrator.routers.site_onboarding_router import site_onboarding_router
-from ai_orchestrator.services import site_onboarding_service as svc
-from ai_orchestrator.services import site_task_map_explore_service as explore
+from ai_orchestrator.site_work import site_onboarding_service as svc
+from ai_orchestrator.site_work import site_registry as sr
+from ai_orchestrator.site_work import site_registry_store as reg_store
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_explore_service as explore
+from ai_orchestrator.site_work import site_task_map_request_store as rstore
+from ai_orchestrator.site_work import site_task_map_store as map_store
 
 NOW = "2026-10-05T09:00:00+09:00"
 HOST = "work.example-site.test"

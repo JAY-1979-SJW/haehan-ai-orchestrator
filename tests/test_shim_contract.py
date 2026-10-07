@@ -285,7 +285,9 @@ def test_package_shim_skips_existing_old_files(tmp_path, capsys):
     bodies = make_package_shim("oldpkg2", "newpkg2", tmp_path)
     assert set(bodies) == {"oldpkg2/fresh.py"}
     assert "건너뜀" in capsys.readouterr().err
-    assert (tmp_path / "oldpkg2" / "already.py").read_text(encoding="utf-8") == "# 이미 손으로 처리된 파일 — 건드리지 않는다\n"
+    assert (tmp_path / "oldpkg2" / "already.py").read_text(
+        encoding="utf-8"
+    ) == "# 이미 손으로 처리된 파일 — 건드리지 않는다\n"
 
 
 def test_package_shim_requires_existing_new_dir_with_py_files(tmp_path):
@@ -294,6 +296,8 @@ def test_package_shim_requires_existing_new_dir_with_py_files(tmp_path):
     (tmp_path / "new4-empty").mkdir()
     with pytest.raises(FileNotFoundError):
         make_package_shim("old4", "new4-empty", tmp_path)
+
+
 @pytest.mark.parametrize(
     ("old_path", "with_main"),
     [
@@ -314,7 +318,17 @@ def test_generated_shim_passes_project_ruff(old_path, with_main):
     text = render_shim("scripts.instagram.ig_batch", with_main=with_main, old_path=old_path)
     for cmd in (["check"], ["format", "--check", "--diff"]):
         r = subprocess.run(
-            [sys.executable, "-m", "ruff", *cmd, "--config", str(ROOT / "configs" / "ruff.toml"), "--stdin-filename", old_path, "-"],
+            [
+                sys.executable,
+                "-m",
+                "ruff",
+                *cmd,
+                "--config",
+                str(ROOT / "configs" / "ruff.toml"),
+                "--stdin-filename",
+                old_path,
+                "-",
+            ],
             input=text,
             capture_output=True,
             text=True,
