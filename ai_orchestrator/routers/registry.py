@@ -28,45 +28,45 @@ from ai_orchestrator.routers.vendor_directory_router import vendor_directory_rou
 from ai_orchestrator.routers.web_task_router import web_task_router
 from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmail
 
-from .audit_logger import log_event, read_recent_logs
-from .browser_tool.approval_record_router import approval_record_router
-from .connectors.cdp_screen_router import cdp_screen_router
-from .connectors.community_router import community_router
-from .connectors.desktop_session_router import desktop_session_router
-from .connectors.eum_router import eum_router
-from .connectors.gabia_router import gabia_router
-from .connectors.gmail_router import gmail_router
-from .connectors.gonobi_router import gonobi_router
-from .connectors.google_router import google_router
-from .connectors.hanafax_router import hanafax_router
-from .connectors.hiworks_mail_router import hiworks_mail_router
-from .connectors.inquiry_router import inquiry_router
-from .connectors.instagram_dm_router import instagram_dm_router
-from .connectors.kakao_setup_router import kakao_setup_router
-from .connectors.kakao_skill_router import kakao_skill_router
-from .connectors.naver_blog_router import naver_blog_router
-from .connectors.naver_cafe_router import naver_cafe_router
-from .connectors.naver_mail_router import naver_mail_router
-from .connectors.naver_news_router import naver_news_router
-from .connectors.naver_openapi_setup_router import naver_openapi_setup_router
-from .connectors.naver_search_router import naver_search_router
-from .connectors.naver_session_router import router as naver_session_router
-from .connectors.public_media_router import public_media_router
-from .connectors.session_status_router import session_status_router
-from .connectors.smartstore_router import smartstore_router
-from .connectors.user_auth_router import get_jwt_user, user_auth_router
-from .connectors.youtube_router import youtube_router
-from .executor import execute
-from .gates.approval import approve_token, issue_token, reject_token
-from .gates.auth import require_role
-from .inbox import get_inbox_item as _get_inbox_item
-from .inbox import read_recent_inbox
-from .local_agent_router import local_agent_router
-from .models import TaskRequest
-from .planner import plan
-from .routers.marketing_ops_router import marketing_ops_router
-from .sites.router import sites_router
-from .telegram_webhook import handle_telegram_update, handle_telegram_webhook
+from ..audit_logger import log_event, read_recent_logs
+from ..browser_tool.approval_record_router import approval_record_router
+from ..connectors.cdp_screen_router import cdp_screen_router
+from ..connectors.community_router import community_router
+from ..connectors.desktop_session_router import desktop_session_router
+from ..connectors.eum.router import eum_router
+from ..connectors.gabia.router import gabia_router
+from ..connectors.google.gmail_router import gmail_router
+from ..connectors.gonobi_router import gonobi_router
+from ..connectors.google_router import google_router
+from ..connectors.hanafax.router import hanafax_router
+from ..connectors.hiworks.mail_router import hiworks_mail_router
+from ..connectors.inquiry_router import inquiry_router
+from ..connectors.instagram_dm_router import instagram_dm_router
+from ..connectors.kakao.setup_router import kakao_setup_router
+from ..connectors.kakao.skill_router import kakao_skill_router
+from ..connectors.naver_blog_router import naver_blog_router
+from ..connectors.naver_cafe_router import naver_cafe_router
+from ..connectors.naver_mail_router import naver_mail_router
+from ..connectors.naver_news_router import naver_news_router
+from ..connectors.naver_openapi_setup_router import naver_openapi_setup_router
+from ..connectors.naver_search_router import naver_search_router
+from ..connectors.naver_session_router import router as naver_session_router
+from ..connectors.public_media_router import public_media_router
+from ..connectors.session_status_router import session_status_router
+from ..connectors.smartstore_router import smartstore_router
+from ..connectors.user_auth_router import get_jwt_user, user_auth_router
+from ..connectors.youtube_router import youtube_router
+from ..executor import execute
+from ..gates.approval import approve_token, issue_token, reject_token
+from ..gates.auth import require_role
+from ..inbox import get_inbox_item as _get_inbox_item
+from ..inbox import read_recent_inbox
+from ..local_agent_router import local_agent_router
+from ..models import TaskRequest
+from ..planner import plan
+from .marketing_ops_router import marketing_ops_router
+from ..sites.router import sites_router
+from ..telegram_webhook import handle_telegram_update, handle_telegram_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -145,14 +145,14 @@ router.include_router(session_status_router)  # 앱별 로그인 세션 현황
 router.include_router(hanafax_router)  # 하나팩스 팩스 발송
 router.include_router(instagram_dm_router)  # 인스타그램 댓글->키워드->비공개DM 자동화
 
-from .routers.deploy_router import router as deploy_router  # noqa: E402
-from .routers.server_router import router as server_router  # noqa: E402
+from .deploy_router import router as deploy_router  # noqa: E402
+from .server_router import router as server_router  # noqa: E402
 
 router.include_router(deploy_router)  # GitHub webhook → 자동 배포
 router.include_router(server_router)  # 서버 인스턴스/헬스/배포 개요
 router.include_router(config_router)  # 데스크톱 env 배포 + 로컬 재로딩
 
-from .connectors.grant_radar_router import grant_radar_router  # noqa: E402
+from ..connectors.grant_radar_router import grant_radar_router  # noqa: E402
 
 router.include_router(grant_radar_router)  # 정부 지원사업 레이더 (탐색·보고서)
 

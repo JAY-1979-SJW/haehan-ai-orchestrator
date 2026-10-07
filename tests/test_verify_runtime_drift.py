@@ -39,7 +39,7 @@ def test_evaluate_passes_when_heads_and_fingerprints_match():
 
 def test_evaluate_fails_dirty_local_and_container_fingerprint_drift():
     verdict = drift.evaluate(
-        _snapshot(status=" M ai_orchestrator/router.py", fingerprint="local"),
+        _snapshot(status=" M ai_orchestrator/routers/registry.py", fingerprint="local"),
         _server(fingerprint="server", container_fingerprint="container"),
     )
 

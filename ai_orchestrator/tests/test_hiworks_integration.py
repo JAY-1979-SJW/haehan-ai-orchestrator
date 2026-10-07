@@ -14,11 +14,9 @@ import logging
 
 import pytest
 
-from ai_orchestrator.connectors import (
-    hiworks_client,
-    hiworks_collectors,
-    hiworks_config,
-)
+from ai_orchestrator.connectors.hiworks import client as hiworks_client
+from ai_orchestrator.connectors.hiworks import collectors as hiworks_collectors
+from ai_orchestrator.connectors.hiworks import config as hiworks_config
 
 
 # ── helpers ─────────────────────────────────────────────────────

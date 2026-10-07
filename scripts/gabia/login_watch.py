@@ -24,9 +24,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = (
-    Path(__file__).resolve().parents[2]
-)  # scripts/gabia/ 로 한 단계 깊어져 parents[2] = 저장소 루트(이동 전과 같은 값, sys.path 부트스트랩)
+ROOT = Path(__file__).resolve().parents[2]  # 저장소 루트 — sys.path 부트스트랩(scripts/gabia/ 깊이)
 sys.path.insert(0, str(ROOT))
 
 GABIA_LOGIN_URL = "https://accounts.gabia.com/"

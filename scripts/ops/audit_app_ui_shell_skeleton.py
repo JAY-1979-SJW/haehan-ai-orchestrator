@@ -73,7 +73,7 @@ FORBIDDEN_SECRET_PATTERNS = [
 ]
 
 PROTECTED_BACKEND_FILES = [
-    "ai_orchestrator/router.py",
+    "ai_orchestrator/routers/registry.py",
     "ai_orchestrator/main.py",
     "docker-compose.yml",
     "docker-compose.yaml",

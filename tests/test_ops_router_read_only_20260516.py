@@ -18,7 +18,7 @@ from pathlib import Path
 
 REPO = Path(__file__).parent.parent
 OPS_ROUTER = REPO / "ai_orchestrator" / "routers" / "ops_router.py"
-ROUTER_PY = REPO / "ai_orchestrator" / "router.py"
+ROUTER_PY = REPO / "ai_orchestrator" / "routers" / "registry.py"
 OPS_CLIENT = REPO / "admin-web" / "src" / "app" / "ops" / "lib" / "opsApiClient.ts"
 API_BANNER = REPO / "admin-web" / "src" / "app" / "ops" / "components" / "ApiStatusBanner.tsx"
 BOUNDARY_TEST = REPO / "tests" / "test_admin_web_ops_dashboard_boundary_20260516.py"

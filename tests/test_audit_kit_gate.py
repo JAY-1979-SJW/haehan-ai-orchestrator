@@ -417,7 +417,7 @@ def test_not_required_values_stay_fail_open(py_file, monkeypatch, capsys, value)
 
 
 def _staged(monkeypatch, files):
-    monkeypatch.setattr(gate, "_staged_python_files", lambda: list(files))
+    monkeypatch.setattr(gate, "_staged_python_changes", lambda: [(f, None) for f in files])
 
 
 def test_staged_blocks_commit_on_new_findings(fake_kit, py_file, monkeypatch, capsys):

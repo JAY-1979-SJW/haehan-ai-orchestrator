@@ -440,7 +440,7 @@ def test_router_direct_import_still_no_cycle():
     try:
         from fastapi import APIRouter
 
-        import ai_orchestrator.router as r
+        import ai_orchestrator.routers.registry as r
 
         assert isinstance(r.router, APIRouter)
     finally:

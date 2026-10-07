@@ -134,7 +134,7 @@ def test_existing_endpoints_are_still_registered():
 
 
 def test_main_router_still_includes_the_session_router():
-    from ai_orchestrator.router import router
+    from ai_orchestrator.routers.registry import router
 
     app = FastAPI()
     app.include_router(router)

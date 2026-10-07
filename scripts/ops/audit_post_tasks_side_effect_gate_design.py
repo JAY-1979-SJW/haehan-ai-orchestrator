@@ -30,7 +30,7 @@ CALL_CHAIN = [
     {
         "step": 1,
         "call": "router.submit_task(body, user)",
-        "file": "ai_orchestrator/router.py",
+        "file": "ai_orchestrator/routers/registry.py",
         "line_approx": 140,
         "side_effects": ["log_event(TASK_RECEIVED) → audit_logs.jsonl write"],
         "blocking": False,
@@ -46,7 +46,7 @@ CALL_CHAIN = [
     {
         "step": 3,
         "call": "log_event(PLAN_CREATED)",
-        "file": "ai_orchestrator/router.py",
+        "file": "ai_orchestrator/routers/registry.py",
         "line_approx": 157,
         "side_effects": ["audit_logs.jsonl write"],
         "blocking": False,
@@ -81,7 +81,7 @@ CALL_CHAIN = [
     {
         "step": 6,
         "call": "log_event(DRY_RUN_RETURNED / EXECUTION_RATE_LIMITED / EXECUTION_TIMEOUT)",
-        "file": "ai_orchestrator/router.py",
+        "file": "ai_orchestrator/routers/registry.py",
         "line_approx": 175,
         "side_effects": ["audit_logs.jsonl write"],
         "blocking": False,
@@ -257,7 +257,7 @@ NEXT_PHASE_CONDITIONS = {
 
 
 def _check_router_stability() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "post_tasks_handler_exists": '@router.post("/tasks")' in content or "@router.post('/tasks')" in content,
         "task_approve_guard_active": (
@@ -280,7 +280,7 @@ def _check_router_stability() -> dict:
 
 def _check_key_files() -> tuple[list, list]:
     required = [
-        "ai_orchestrator/router.py",
+        "ai_orchestrator/routers/registry.py",
         "ai_orchestrator/executor.py",
         "ai_orchestrator/gates/approval.py",
         "ai_orchestrator/planner.py",

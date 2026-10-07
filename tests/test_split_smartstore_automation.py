@@ -7,13 +7,7 @@ import importlib
 from ai_orchestrator.paths import repo_root
 
 MODS = ("analytics_dashboard", "competitor_analysis", "csv_import", "inventory_monitor", "order_automation")
-OLD = "scripts.naver.automation.smartstore."
 NEW = "scripts.naver.smartstore.automation."
-
-
-def test_old_paths_alias_new_modules():
-    for m in MODS:
-        assert importlib.import_module(OLD + m) is importlib.import_module(NEW + m)
 
 
 def test_compat_reexports_still_work():

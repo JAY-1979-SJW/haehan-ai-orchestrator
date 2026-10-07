@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 BEFORE = json.loads((Path(__file__).parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
-MOVED = {"gmail_cdp_reader": "google.gmail_cdp_reader", "gmail_router": "google.gmail_router"}
+MOVED = {"gmail_router": "google.gmail_router"}  # gmail_cdp_reader 옛 경로 shim 은 정리됨(SHIM_CLEANUP_1)
 
 
 @pytest.mark.parametrize(("old", "new"), MOVED.items())
