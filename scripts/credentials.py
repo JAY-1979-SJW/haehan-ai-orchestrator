@@ -36,10 +36,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from ai_orchestrator.paths.runtime import atomic_write_bytes, atomic_write_text, data_dir  # noqa: E402
 from security_utils import mask_identifier  # noqa: E402
 
-CRED_FILE = ROOT / "data" / "credentials.json"
-KEY_FILE = ROOT / "data" / ".cred.key"  # keyring 이전 원본 / HAEHAN_CRED_KEY_BACKEND=file 개발용 경로
+CRED_FILE = data_dir() / "credentials.json"
+KEY_FILE = data_dir() / ".cred.key"  # keyring 이전 원본 / HAEHAN_CRED_KEY_BACKEND=file 개발용 경로
 KEY_SERVICE = "haehan-ai/credentials"
 KEY_ACCOUNT = "master-key"
 
@@ -50,7 +51,7 @@ class CredentialKeyError(RuntimeError):
 
 # 레거시 평문 파일 (마이그레이션 후 archive)
 _LEGACY_ENV_FILES = {
-    "naver": ROOT / "data" / ".env_naver",
+    "naver": data_dir() / ".env_naver",
 }
 _LEGACY_ENV_KEYS = {
     "naver": ("NAVER_ID", "NAVER_PW"),
@@ -81,7 +82,7 @@ def _file_key() -> bytes:
         return KEY_FILE.read_bytes().strip()
     KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
     key = Fernet.generate_key()
-    KEY_FILE.write_bytes(key)
+    atomic_write_bytes(KEY_FILE, key)
     # chmod 권한 강화 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
     with contextlib.suppress(Exception):
         KEY_FILE.chmod(0o600)
@@ -194,10 +195,7 @@ def _load_raw() -> dict:
 
 def _save_raw(data: dict) -> None:
     CRED_FILE.parent.mkdir(parents=True, exist_ok=True)
-    CRED_FILE.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    atomic_write_text(CRED_FILE, json.dumps(data, ensure_ascii=False, indent=2))
     # chmod 권한 강화 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
     with contextlib.suppress(Exception):
         CRED_FILE.chmod(0o600)
@@ -306,7 +304,7 @@ def migrate_legacy() -> dict:
     archived = []
     for site, fp in _LEGACY_ENV_FILES.items():
         if fp.exists() and site in data and data[site].get("pw_enc"):
-            archive_dir = ROOT / "data" / "_legacy_creds"
+            archive_dir = data_dir() / "_legacy_creds"
             archive_dir.mkdir(parents=True, exist_ok=True)
             target = archive_dir / fp.name
             try:

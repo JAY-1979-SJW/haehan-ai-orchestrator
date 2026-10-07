@@ -13,6 +13,7 @@ import time
 
 from playwright.sync_api import Page
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.app_paths import repo_root
 from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
@@ -20,7 +21,7 @@ from scripts.naver.auth import ensure_naver_login
 _log = get_logger(__name__)
 
 ROOT = repo_root()
-_DATA_DIR = ROOT / "data" / "cafe"
+_DATA_DIR = data_dir() / "cafe"
 
 _CAFE_HOME_URL = "https://section.cafe.naver.com/ca-fe/home"
 _LIST_URL = (

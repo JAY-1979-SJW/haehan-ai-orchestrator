@@ -13,6 +13,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.logger import get_logger
 from scripts.naver.automation.ai_responder import AIResponder
 from scripts.naver.blog.accounts import cache_file_for
@@ -23,7 +24,7 @@ _log = get_logger(__name__)
 # 분리됐지만(accounts.cache_file_for), 이 상수는 blog_id 인자 없이 부르는
 # 기존 호출부(load_cache()/save_cache())의 기본 대상으로 계속 쓴다.
 CACHE_FILE = Path(cache_file_for())  # 기본 계정(skyjwsin)
-RESEARCH_FILE = Path("data/blog_topic_research_latest.json")
+RESEARCH_FILE = data_dir() / "blog_topic_research_latest.json"
 _RESEARCH_MAX_AGE_DAYS = 30
 
 # 건설 실무 블로그 주제 풀 - RESEARCH_FILE이 없거나 30일 넘게 오래됐을 때만 쓰는

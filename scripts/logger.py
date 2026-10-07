@@ -30,8 +30,10 @@ import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
+
 ROOT = Path(__file__).resolve().parents[1]
-LOG_DIR = ROOT / "data" / "logs"
+LOG_DIR = data_dir() / "logs"
 LOG_FILE = LOG_DIR / "app.log"
 
 

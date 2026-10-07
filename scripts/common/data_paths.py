@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.app_paths import repo_root
 
 # 앱 키 → C:\AI 에이전트 하위 폴더명 매핑
@@ -47,7 +48,7 @@ def get_app_dir(app: str, sub: str = "") -> Path:
         folder = _APP_FOLDER.get(app, app)
         base = Path(root_env) / folder
     else:
-        base = _PROJECT_ROOT / "data" / app
+        base = data_dir() / app
 
     target = base / sub if sub else base
     target.mkdir(parents=True, exist_ok=True)

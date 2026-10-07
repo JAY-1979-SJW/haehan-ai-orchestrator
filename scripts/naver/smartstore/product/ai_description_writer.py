@@ -53,6 +53,7 @@ import re
 import time
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)
@@ -488,7 +489,7 @@ class AIDescriptionWriter:
         gen = self.generate(product)
         if not gen["ok"]:
             return ""
-        out = ROOT / "data" / "smartstore" / "description_preview.html"
+        out = data_dir() / "smartstore" / "description_preview.html"
         out.parent.mkdir(parents=True, exist_ok=True)
         full = (
             f"<!DOCTYPE html><html lang='ko'><head>"

@@ -24,6 +24,13 @@ from pathlib import Path
 
 from ai_orchestrator.paths import repo_root as repo_root
 
+# 런타임 데이터 위치 정본(ai_orchestrator.paths.runtime) 재노출 — 이 모듈의 data_dir(app, sub)(앱별 하위 폴더)와 이름이 겹쳐 runtime_ 접두를 붙인다.
+# ai_orchestrator 를 직접 import 하면 안 되는 scripts 하위 패키지(예: naver/blog/automation 의 분리 경계)가 쓴다.
+from ai_orchestrator.paths.runtime import atomic_write_bytes as atomic_write_bytes
+from ai_orchestrator.paths.runtime import atomic_write_text as atomic_write_text
+from ai_orchestrator.paths.runtime import data_dir as runtime_data_dir  # noqa: F401 - 재노출
+from ai_orchestrator.paths.runtime import storage_dir as runtime_storage_dir  # noqa: F401 - 재노출
+
 _SUITE = "HaehanAI"
 _PRODUCT = "Orchestrator"
 ENV_DATA_ROOT = "HAEHAN_DATA_ROOT"

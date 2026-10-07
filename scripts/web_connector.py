@@ -25,8 +25,10 @@ from pathlib import Path
 
 from playwright.sync_api import Page, sync_playwright
 
+from ai_orchestrator.paths.runtime import data_dir
+
 ROOT = Path(__file__).resolve().parents[1]
-_DAEMON_STATE = ROOT / "data" / "cdp_daemon_state.json"
+_DAEMON_STATE = data_dir() / "cdp_daemon_state.json"
 
 import sys  # noqa: E402
 
@@ -566,7 +568,7 @@ def browser_task_session(
         )
 
 
-SESSION_BASE_DIR = ROOT / "data" / "browser_sessions"
+SESSION_BASE_DIR = data_dir() / "browser_sessions"
 
 
 def session_dir(name: str) -> Path:

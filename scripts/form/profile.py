@@ -31,8 +31,10 @@ from pathlib import Path
 
 from cryptography.fernet import InvalidToken
 
+from ai_orchestrator.paths.runtime import atomic_write_text, data_dir
+
 ROOT = Path(__file__).resolve().parents[2]
-PROFILE_FILE = ROOT / "data" / "profile.json"
+PROFILE_FILE = data_dir() / "profile.json"
 
 # 공통 필드 카탈로그 — 회원가입에서 자주 쓰이는 역할
 KNOWN_FIELDS = [
@@ -88,10 +90,7 @@ def _load_raw() -> dict:
 
 def _save_raw(data: dict) -> None:
     PROFILE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    PROFILE_FILE.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    atomic_write_text(PROFILE_FILE, json.dumps(data, ensure_ascii=False, indent=2))
     # 저장 파일 권한(chmod 600) 설정 실패는 무시 -- 파일 저장 자체는 이미 완료된 뒤의 부가적 권한 강화 조치이며 Windows 등 chmod 미지원 환경에서도 저장 기능이 막히지 않도록 함
     with contextlib.suppress(Exception):
         PROFILE_FILE.chmod(0o600)

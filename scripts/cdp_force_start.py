@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
+from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
 from scripts import browser_lifecycle as lifecycle  # noqa: E402
 from scripts.browser_paths import find_chrome  # noqa: E402
 from scripts.config import CDP_BROWSER_POLICY  # noqa: E402
@@ -34,8 +35,8 @@ CDP_HOST = "127.0.0.1"
 # 프로필 경로 단일화: HAEHAN_CDP_PROFILE(앱·런처 공통 단일 출처) 우선, 없으면 기본 data/cdp_profile/ai_chrome.
 # cdp_manager.js(패키지 앱)·cdp_daemon.py 도 동일 env 사용 → 9222 브라우저 프로필이 런처마다 갈리지 않음.
 _PROFILE_ENV = os.environ.get("HAEHAN_CDP_PROFILE", "").strip()
-PROFILE_DIR = Path(_PROFILE_ENV) if _PROFILE_ENV else (ROOT / "data" / "cdp_profile" / "ai_chrome")
-PID_FILE = ROOT / "data" / "cdp_force_pid.json"
+PROFILE_DIR = Path(_PROFILE_ENV) if _PROFILE_ENV else (data_dir() / "cdp_profile" / "ai_chrome")
+PID_FILE = data_dir() / "cdp_force_pid.json"
 
 def _find_chrome() -> str:
     chrome = find_chrome()

@@ -30,8 +30,10 @@ from pathlib import Path
 
 from cryptography.fernet import InvalidToken
 
+from ai_orchestrator.paths.runtime import atomic_write_text, data_dir
+
 ROOT = Path(__file__).resolve().parents[1]
-SESSIONS_DIR = ROOT / "data" / "sessions"
+SESSIONS_DIR = data_dir() / "sessions"
 
 
 def _fernet():
@@ -102,7 +104,8 @@ def save_session(host: str, page, *, host_filter: bool = True) -> Path:
 
     SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
     fp = SESSIONS_DIR / f"{host}.json"
-    fp.write_text(
+    atomic_write_text(
+        fp,
         json.dumps(
             {
                 "host": host,
