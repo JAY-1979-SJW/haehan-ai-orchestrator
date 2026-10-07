@@ -7609,7 +7609,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "audit_logger.py": {
+  "orchestrator_v1/core/audit_logger.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -8225,7 +8225,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "logger.py": {
+  "orchestrator_v1/core/logger.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -8233,7 +8233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "logging_utils.py": {
+  "orchestrator_v1/core/logging_utils.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -8249,7 +8249,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "models.py": {
+  "orchestrator_v1/core/models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -16433,7 +16433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "security_utils.py": {
+  "orchestrator_v1/core/security_utils.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -21377,7 +21377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_agent_ws_auth.py": {
+  "scripts/verify/verify_agent_ws_auth.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21385,7 +21385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_live_agent_smoke.py": {
+  "scripts/verify/verify_live_agent_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21393,7 +21393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_live_browser_readonly_dispatch.py": {
+  "scripts/verify/verify_live_browser_readonly_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -21401,7 +21401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_live_task_dispatch.py": {
+  "scripts/verify/verify_live_task_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21409,7 +21409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_local_runtime_dry_run.py": {
+  "scripts/verify/verify_local_runtime_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21417,7 +21417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "webhooks_router.py": {
+  "orchestrator_v1/webhooks/webhooks_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -21887,6 +21887,78 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/core/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/webhooks/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "audit_logger.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "logger.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "공용 기반 이름(logger)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "logging_utils.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "공용 기반 이름(logging_utils)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "models.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "공용 기반 이름(models)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "security_utils.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "webhooks_router.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }

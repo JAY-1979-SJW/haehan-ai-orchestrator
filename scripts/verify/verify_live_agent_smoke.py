@@ -4,9 +4,12 @@ import argparse
 import asyncio
 import json
 import socket
+import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 루트 패키지(local_agent 등) 해석용
 from local_agent.network_bypass import urlopen_for_server, websocket_connect_kwargs
 
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
