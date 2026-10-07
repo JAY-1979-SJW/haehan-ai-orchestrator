@@ -64,7 +64,7 @@ from ..tasks.inbox import read_recent_inbox
 from ..local_agent_router import local_agent_router
 from ..core.models import TaskRequest
 from ..llm.planner import plan
-from .marketing_ops_router import marketing_ops_router
+from ..marketing.marketing_ops_router import marketing_ops_router
 from ..sites.router import sites_router
 from ..notify.telegram_webhook import handle_telegram_update, handle_telegram_webhook
 

@@ -3377,7 +3377,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/routers/marketing_ops_router.py": {
+  "ai_orchestrator/marketing/marketing_ops_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "marketing",
@@ -22097,7 +22097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/marketing_ops_settings.py": {
+  "ai_orchestrator/marketing/marketing_ops_settings.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "marketing",
@@ -22869,6 +22869,14 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/marketing/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "marketing",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"

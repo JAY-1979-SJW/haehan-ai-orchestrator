@@ -27,7 +27,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.audit_logger import log_event
-from ai_orchestrator.connectors.marketing_ops_settings import is_enabled, load_settings, save_settings
+from ai_orchestrator.marketing.marketing_ops_settings import is_enabled, load_settings, save_settings
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import require_send_approval
 from ai_orchestrator.paths.runtime import data_dir
