@@ -52,8 +52,8 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_google_youtube_search.py" in rendered
     assert "tests/test_google_precision_report.py" in rendered
     assert "tests/test_site_sso_subdomain_runtime.py" in rendered
-    assert "tests/test_youtube_oauth.py" in rendered
-    assert "tests/test_youtube_research.py" in rendered
+    assert "tests/youtube/test_youtube_oauth.py" in rendered
+    assert "tests/youtube/test_youtube_research.py" in rendered
     assert "tests/test_ai_agent_app_structure_design_baseline.py" in rendered
     assert "tests/test_ai_agent_ui_structure_blueprint.py" in rendered
     assert "tests/test_mcp_gateway_baseline.py" in rendered
@@ -248,7 +248,7 @@ def test_youtube_research_pytest_uses_workspace_temp(monkeypatch):
 
     monkeypatch.setattr(gate.subprocess, "run", fake_run)
 
-    result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/test_youtube_research.py", "-q"))
+    result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/youtube/test_youtube_research.py", "-q"))
 
     assert result.ok is True
     assert not any(part.startswith("--basetemp=") for part in captured["command"])

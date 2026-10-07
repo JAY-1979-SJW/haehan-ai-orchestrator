@@ -10,7 +10,7 @@ import pytest
 
 from ai_orchestrator.paths import repo_root
 
-BEFORE = json.loads((Path(__file__).parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
+BEFORE = json.loads((Path(__file__).parent.parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
 # kakao_setup_router·kakao_skill_router 옛 경로 shim 은 정리됨(SHIM_CLEANUP_2) — 새 경로만 확인한다
 
 

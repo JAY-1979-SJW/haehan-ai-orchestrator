@@ -16,7 +16,7 @@ import platform
 from pathlib import Path
 from unittest.mock import patch
 
-_repo_root = Path(__file__).resolve().parent.parent
+_repo_root = Path(__file__).resolve().parent.parent.parent
 
 
 # ── 1. _collect_host_proof 필드 확인 ─────────────────────────────────────────

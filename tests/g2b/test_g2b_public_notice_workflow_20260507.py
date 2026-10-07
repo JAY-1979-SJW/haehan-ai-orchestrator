@@ -25,7 +25,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import warnings
 
@@ -41,7 +41,7 @@ from ai_orchestrator.connectors.g2b.g2b_public_notice_workflow import (  # noqa:
     validate_g2b_public_notice_workflow_result,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
 
 _FORBIDDEN_STEP_NAMES = {
     "click",

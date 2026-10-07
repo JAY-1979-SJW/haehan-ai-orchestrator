@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-BEFORE = json.loads((Path(__file__).parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
+BEFORE = json.loads((Path(__file__).parent.parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
 # 옛 경로 shim(client·collectors·config: SHIM_CLEANUP_1, mail_router: SHIM_CLEANUP_2)은 정리됨 — 새 경로만 확인한다
 NEW_NAMES = {"hiworks_client": "hiworks.client", "hiworks_collectors": "hiworks.collectors", "hiworks_config": "hiworks.config"}
 

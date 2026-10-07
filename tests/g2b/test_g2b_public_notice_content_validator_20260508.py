@@ -29,8 +29,8 @@ from ai_orchestrator.connectors.g2b.g2b_public_notice_content_validator import (
     validate_g2b_public_notice_content_result,
 )
 
-_FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
-_REPORT_DIR = Path(__file__).resolve().parent.parent / "data" / "reports" / "g2b"
+_FIXTURE_PATH = Path(__file__).resolve().parent.parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
+_REPORT_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "reports" / "g2b"
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────────────────
@@ -241,7 +241,7 @@ def test_discovery_script_import_no_side_effect():
 
     loader = importlib.machinery.SourceFileLoader(
         "discover_valid_public_notice_urls",
-        str(Path(__file__).resolve().parent.parent / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"),
+        str(Path(__file__).resolve().parent.parent.parent / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"),
     )
     mod_spec = importlib.util.spec_from_loader("discover_valid_public_notice_urls", loader)
     mod = importlib.util.module_from_spec(mod_spec)
@@ -259,7 +259,7 @@ def test_discovery_max_depth_is_one():
 
     loader = importlib.machinery.SourceFileLoader(
         "discover_valid_public_notice_urls",
-        str(Path(__file__).resolve().parent.parent / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"),
+        str(Path(__file__).resolve().parent.parent.parent / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"),
     )
     mod_spec = importlib.util.spec_from_loader("discover_valid_public_notice_urls", loader)
     mod = importlib.util.module_from_spec(mod_spec)

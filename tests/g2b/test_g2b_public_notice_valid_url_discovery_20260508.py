@@ -15,7 +15,7 @@ import importlib.util
 import inspect
 from pathlib import Path
 
-_SCRIPT_PATH = Path(__file__).resolve().parent.parent / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"
+_SCRIPT_PATH = Path(__file__).resolve().parent.parent.parent / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"
 
 
 def _load_script():

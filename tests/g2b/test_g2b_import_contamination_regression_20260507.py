@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-_repo_root = Path(__file__).resolve().parent.parent
+_repo_root = Path(__file__).resolve().parent.parent.parent
 
 
 # ── 1. allowlist/site compliance 결과 불변성 ──────────────────────────────────

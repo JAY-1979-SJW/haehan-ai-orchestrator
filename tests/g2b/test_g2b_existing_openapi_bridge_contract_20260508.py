@@ -10,14 +10,14 @@ import json
 from pathlib import Path
 
 _CONTRACT_DOC = (
-    Path(__file__).resolve().parent.parent / "docs" / "design" / "g2b_existing_openapi_bridge_contract_20260508.md"
+    Path(__file__).resolve().parent.parent.parent / "docs" / "design" / "g2b_existing_openapi_bridge_contract_20260508.md"
 )
-_FIXTURE_SAMPLE = Path(__file__).resolve().parent / "fixtures" / "g2b_existing_openapi_bridge_sample_20260508.json"
+_FIXTURE_SAMPLE = Path(__file__).resolve().parent.parent / "fixtures" / "g2b_existing_openapi_bridge_sample_20260508.json"
 _FIXTURE_CANDIDATES = (
-    Path(__file__).resolve().parent / "fixtures" / "g2b_public_notice_existing_source_candidates_20260508.json"
+    Path(__file__).resolve().parent.parent / "fixtures" / "g2b_public_notice_existing_source_candidates_20260508.json"
 )
 _BRIDGE_MODULE = (
-    Path(__file__).resolve().parent.parent / "ai_orchestrator" / "connectors" / "g2b" / "g2b_existing_openapi_bridge.py"
+    Path(__file__).resolve().parent.parent.parent / "ai_orchestrator" / "connectors" / "g2b" / "g2b_existing_openapi_bridge.py"
 )
 
 

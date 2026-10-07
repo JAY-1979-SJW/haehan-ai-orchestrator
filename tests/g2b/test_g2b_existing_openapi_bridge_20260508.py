@@ -22,12 +22,12 @@ from ai_orchestrator.connectors.g2b.g2b_existing_openapi_bridge import (
     validate_g2b_notice_candidate,
 )
 
-_FIXTURE_SAMPLE = Path(__file__).resolve().parent / "fixtures" / "g2b_existing_openapi_bridge_sample_20260508.json"
+_FIXTURE_SAMPLE = Path(__file__).resolve().parent.parent / "fixtures" / "g2b_existing_openapi_bridge_sample_20260508.json"
 _FIXTURE_CANDIDATES = (
-    Path(__file__).resolve().parent / "fixtures" / "g2b_public_notice_existing_source_candidates_20260508.json"
+    Path(__file__).resolve().parent.parent / "fixtures" / "g2b_public_notice_existing_source_candidates_20260508.json"
 )
 _MODULE_PATH = (
-    Path(__file__).resolve().parent.parent / "ai_orchestrator" / "connectors" / "g2b" / "g2b_existing_openapi_bridge.py"
+    Path(__file__).resolve().parent.parent.parent / "ai_orchestrator" / "connectors" / "g2b" / "g2b_existing_openapi_bridge.py"
 )
 
 
@@ -303,7 +303,7 @@ def test_no_secret_storage():
 
 
 def test_existing_fixture_not_modified():
-    original_fixture = Path(__file__).resolve().parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
+    original_fixture = Path(__file__).resolve().parent.parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
     with original_fixture.open(encoding="utf-8") as f:
         data = json.load(f)
     # 기존 fixture는 "cases" 키를 가져야 함

@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import inbox_store
 from orchestrator_v1.inbox import kakaowork_reader

@@ -24,7 +24,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import warnings
 
@@ -34,7 +34,7 @@ os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 from ai_orchestrator.browser_tool.server_browser_boundary_policy import evaluate_server_browser_allowed  # noqa: E402
 from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "g2b_public_notice_readonly_matrix_20260507.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "g2b_public_notice_readonly_matrix_20260507.json"
 
 _READONLY_VERDICTS = {"READ_ONLY_ALLOWED"}
 _BLOCKED_VERDICTS = {"BLOCKED_LOGIN_REQUIRED", "BLOCKED_CERT_REQUIRED", "BLOCKED_AUTH_REQUIRED", "DOWNLOAD_MANUAL_ONLY"}

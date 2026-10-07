@@ -136,7 +136,7 @@
         "scripts/g2b"
       ],
       "tests": [
-        "tests/test_g2b_site_engine_skeleton.py"
+        "tests/g2b/test_g2b_site_engine_skeleton.py"
       ],
       "owner_module": "scripts/g2b",
       "notes": [
@@ -236,12 +236,12 @@
         "scripts/hiworks"
       ],
       "tests": [
-        "tests/test_hiworks_actions.py",
-        "tests/test_hiworks_mail_batch.py",
-        "tests/test_hiworks_profile_validators.py",
-        "tests/test_hiworks_run_log.py",
-        "tests/test_hiworks_service_explorer.py",
-        "tests/test_hiworks_workflows.py"
+        "tests/hiworks/test_hiworks_actions.py",
+        "tests/hiworks/test_hiworks_mail_batch.py",
+        "tests/hiworks/test_hiworks_profile_validators.py",
+        "tests/hiworks/test_hiworks_run_log.py",
+        "tests/hiworks/test_hiworks_service_explorer.py",
+        "tests/hiworks/test_hiworks_workflows.py"
       ],
       "owner_module": "scripts/hiworks",
       "notes": [
@@ -451,7 +451,7 @@
         "scripts/youtube"
       ],
       "tests": [
-        "tests/test_youtube_site_engine.py"
+        "tests/youtube/test_youtube_site_engine.py"
       ],
       "owner_module": "scripts/youtube",
       "notes": [

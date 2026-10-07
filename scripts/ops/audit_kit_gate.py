@@ -331,8 +331,8 @@ def mypy_against_head_many(
     }
 
 
-def _kit_hook(kit: list[str], path: Path, root: Path) -> tuple[list[str], str]:
-    """`audit-kit hook` 으로 한 파일 검사 → (신규 항목, 검사 못 한 이유)."""
+def _kit_hook_raw(kit: list[str], path: Path, root: Path) -> tuple[list[str] | None, str]:
+    """`audit-kit hook` 으로 한 파일을 검사해 `(기존)` 표시와 무관한 전체 항목을 돌려준다(이름 변경 비교용). (None, 이유) = 검사 못 함."""
     payload = json.dumps({"tool_input": {"file_path": str(path)}, "cwd": str(root)})
     try:
         proc = subprocess.run(
@@ -345,11 +345,53 @@ def _kit_hook(kit: list[str], path: Path, root: Path) -> tuple[list[str], str]:
             **no_window_kwargs(),
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
-        return [], f"{type(exc).__name__}: {exc}"
+        return None, f"{type(exc).__name__}: {exc}"
     stderr = proc.stderr.decode("utf-8", errors="replace")
     if proc.returncode not in (0, 2):
-        return [], f"audit-kit 종료코드 {proc.returncode}: {stderr[-200:].strip()}"
-    return ([f"{path.name}: {item}" for item in new_findings(stderr)] if proc.returncode == 2 else []), ""
+        return None, f"audit-kit 종료코드 {proc.returncode}: {stderr[-200:].strip()}"
+    if proc.returncode == 0:
+        return [], ""
+    lines = [ln.strip() for ln in stderr.splitlines() if ln.strip().startswith("[") and not any(n in ln for n in _NOISE)]
+    return lines, ""
+
+
+def _hook_finding_key(item: str) -> str:
+    """hook 지적 한 줄에서 `[표준 XXX]` 태그만 남기고 경로:줄번호·메시지는 비교용으로 남긴다.
+
+    HEAD 사본은 `_hook_base_<이름>` 으로 옆에 써서 돌리므로(상대 import 보존), audit-kit 출력에 그 파일명이
+    그대로 박혀(`tests/g2b/_hook_base_X.py:25 ...`) 원본(`tests/g2b/X.py:25 ...`)과 글자가 달라 그냥 비교하면
+    항상 "다른 지적"으로 보인다 — 경로:줄번호 토큰을 통째로 떼어내고 태그+메시지만 비교한다.
+    """
+    return re.sub(r"^(\[[^\]]+\])\s+\S+:\d+\s+", r"\1 ", item.strip())
+
+
+def _kit_hook_against_head(kit: list[str], path: Path, root: Path, old_rel: str | None) -> tuple[list[str], str]:
+    """`audit-kit hook` 으로 한 파일 검사 → (신규 항목, 검사 못 한 이유).
+
+    hook 체크(STD 류)는 audit-kit 내부적으로 git 이력을 안 봐서 `(기존)` 표시를 못 낸다 — 이름만 바뀐 파일(git mv)의
+    기존 문제가 '신규'로 오탐되는 걸 막기 위해, old_rel(이름 변경 전 경로)이 있으면 HEAD:<old_rel> 버전도 같이 검사해
+    두 결과에 공통으로 있는 항목(줄 번호 무시)을 빼고 돌려준다(2026-10-08, tests 이동 커밋에서 오탐 발견).
+    """
+    current, failed = _kit_hook_raw(kit, path, root)
+    if failed or current is None:
+        return [], failed
+    if not current:
+        return [], ""
+    if not old_rel:
+        return [f"{path.name}: {item}" for item in current if not item.endswith("(기존)")], ""
+    shown = subprocess.run(["git", "show", f"HEAD:{old_rel}"], capture_output=True, cwd=str(root), check=False, **no_window_kwargs())
+    if shown.returncode != 0:
+        return [f"{path.name}: {item}" for item in current if not item.endswith("(기존)")], ""
+    copy = path.with_name(f"_hook_base_{path.name}")
+    try:
+        copy.write_bytes(shown.stdout)
+        before, before_failed = _kit_hook_raw(kit, copy, root)
+    finally:
+        copy.unlink(missing_ok=True)
+    if before_failed or before is None:
+        return [f"{path.name}: {item}" for item in current if not item.endswith("(기존)")], ""
+    before_keys = {_hook_finding_key(item) for item in before}
+    return [f"{path.name}: {item}" for item in current if _hook_finding_key(item) not in before_keys], ""
 
 
 def _merge(findings: list[str], typed: list[str], why: str) -> tuple[list[str], str]:
@@ -359,9 +401,9 @@ def _merge(findings: list[str], typed: list[str], why: str) -> tuple[list[str], 
 def check_file(
     kit: list[str], path: Path, root: Path | None = None, old_rel: str | None = None
 ) -> tuple[list[str], str]:
-    """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다. old_rel: 이름 변경 전 경로(mypy 비교 기준)."""
+    """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다. old_rel: 이름 변경 전 경로(hook·mypy 비교 기준)."""
     root = root or ROOT
-    findings, failed = _kit_hook(kit, path, root)
+    findings, failed = _kit_hook_against_head(kit, path, root, old_rel)
     if failed:
         return [], failed
     py = mypy_python(kit)
@@ -382,7 +424,7 @@ def check_files(
     if not items:
         return []
     with ThreadPoolExecutor(max_workers=min(_HOOK_WORKERS, len(items))) as pool:
-        hooked = list(pool.map(lambda item: _kit_hook(kit, item[0], root), items))
+        hooked = list(pool.map(lambda item: _kit_hook_against_head(kit, item[0], root, item[1]), items))
     py = mypy_python(kit)
     ok = [item for item, (_f, failed) in zip(items, hooked, strict=True) if not failed]
     typed = mypy_against_head_many(py, ok, root) if py is not None and ok else {}

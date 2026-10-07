@@ -15681,7 +15681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_domain_normalization_policy_20260507.py": {
+  "tests/g2b/test_g2b_domain_normalization_policy_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15689,7 +15689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_existing_openapi_bridge_20260508.py": {
+  "tests/g2b/test_g2b_existing_openapi_bridge_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15697,7 +15697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_existing_openapi_bridge_contract_20260508.py": {
+  "tests/g2b/test_g2b_existing_openapi_bridge_contract_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15705,7 +15705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_host_proof_schema_20260508.py": {
+  "tests/g2b/test_g2b_host_proof_schema_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15713,7 +15713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_import_contamination_regression_20260507.py": {
+  "tests/g2b/test_g2b_import_contamination_regression_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15721,7 +15721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_actual_live_mode_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_actual_live_mode_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15729,7 +15729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_content_validator_20260508.py": {
+  "tests/g2b/test_g2b_public_notice_content_validator_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15737,7 +15737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_readonly_live_execution_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_readonly_live_execution_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15745,7 +15745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_readonly_matrix_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_readonly_matrix_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15753,7 +15753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_valid_url_discovery_20260508.py": {
+  "tests/g2b/test_g2b_public_notice_valid_url_discovery_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15761,7 +15761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_workflow_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_workflow_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15769,7 +15769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_workflow_dryrun_integration_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_workflow_dryrun_integration_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15777,7 +15777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_readonly_download_manifest_20260508.py": {
+  "tests/g2b/test_g2b_readonly_download_manifest_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15785,7 +15785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_readonly_local_e2e_task_20260508.py": {
+  "tests/g2b/test_g2b_readonly_local_e2e_task_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15793,7 +15793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_readonly_policy_guard_20260508.py": {
+  "tests/g2b/test_g2b_readonly_policy_guard_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15801,7 +15801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_readonly_safe_result_20260508.py": {
+  "tests/g2b/test_g2b_readonly_safe_result_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15809,7 +15809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_site_engine_skeleton.py": {
+  "tests/g2b/test_g2b_site_engine_skeleton.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -16233,7 +16233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_actions.py": {
+  "tests/hiworks/test_hiworks_actions.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16241,7 +16241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_mail_batch.py": {
+  "tests/hiworks/test_hiworks_mail_batch.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16249,7 +16249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_profile_validators.py": {
+  "tests/hiworks/test_hiworks_profile_validators.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16257,7 +16257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_run_log.py": {
+  "tests/hiworks/test_hiworks_run_log.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16265,7 +16265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_service_explorer.py": {
+  "tests/hiworks/test_hiworks_service_explorer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16273,7 +16273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_workflows.py": {
+  "tests/hiworks/test_hiworks_workflows.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16305,7 +16305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_instagram_api_publish_smoke.py": {
+  "tests/instagram/test_instagram_api_publish_smoke.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -16313,7 +16313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_instagram_dm_contract.py": {
+  "tests/instagram/test_instagram_dm_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -16345,7 +16345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_kakao_webhooks.py": {
+  "tests/kakao/test_kakao_webhooks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "kakao",
@@ -18561,7 +18561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_oauth.py": {
+  "tests/youtube/test_youtube_oauth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18569,7 +18569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_oauth_callback_route.py": {
+  "tests/youtube/test_youtube_oauth_callback_route.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18577,7 +18577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_research.py": {
+  "tests/youtube/test_youtube_research.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18585,7 +18585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_research_router.py": {
+  "tests/youtube/test_youtube_research_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18593,7 +18593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_site_engine.py": {
+  "tests/youtube/test_youtube_site_engine.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18601,7 +18601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_workflow.py": {
+  "tests/youtube/test_youtube_workflow.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18881,7 +18881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_instagram_dm_none_guards.py": {
+  "tests/instagram/test_instagram_dm_none_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -18921,7 +18921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_instagram_oauth_failclosed.py": {
+  "tests/instagram/test_instagram_oauth_failclosed.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -19761,7 +19761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_hiworks_moved.py": {
+  "tests/hiworks/test_split_hiworks_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -19769,7 +19769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_hiworks_paths.py": {
+  "tests/hiworks/test_split_hiworks_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -19777,7 +19777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_kakao_moved.py": {
+  "tests/kakao/test_split_kakao_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "kakao",
@@ -19785,7 +19785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_kakao_paths.py": {
+  "tests/kakao/test_split_kakao_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "kakao",
@@ -23213,6 +23213,46 @@
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/g2b/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "g2b",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/hiworks/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hiworks",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/instagram/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/kakao/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "kakao",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/youtube/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "youtube",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

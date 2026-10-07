@@ -24,8 +24,8 @@ from ai_orchestrator.contracts.local_task_protocol import (
     validate_task,
 )
 
-_FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "g2b_readonly_local_e2e_task_20260508.json"
-_SAFE_RESULT = pathlib.Path(__file__).parent / "fixtures" / "g2b_readonly_expected_safe_result_20260508.json"
+_FIXTURE = pathlib.Path(__file__).parent.parent / "fixtures" / "g2b_readonly_local_e2e_task_20260508.json"
+_SAFE_RESULT = pathlib.Path(__file__).parent.parent / "fixtures" / "g2b_readonly_expected_safe_result_20260508.json"
 
 G2B_HOST = "www.g2b.go.kr"
 G2B_URL = "https://www.g2b.go.kr/"
