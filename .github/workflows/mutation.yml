@@ -97,6 +97,20 @@ jobs:
           mutmut results --all true > mutmut_results.txt || true
           sed -E 's/__mutmut_[0-9]+//' mutmut_results.txt | sort | uniq -c | sort -rn | head -n 80 | tee mutmut_by_function.txt
           { echo; echo "### 함수·상태별 변이체 수"; echo '```'; cat mutmut_by_function.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY" || true
+          # 살아남은 변이체 이름과 diff(최대 30개). 목록 출력만 실패를 무시한다.
+          {
+            grep -E ': survived$' mutmut_results.txt | sed -E 's/: survived$//' | sort | head -n 30 > survivors.txt
+            echo "--- 살아남은 변이체 (최대 30개)"; cat survivors.txt
+            {
+              echo; echo "### 살아남은 변이체"
+              while read -r name; do
+                [ -n "$name" ] || continue
+                echo "#### $name"; echo '```diff'; mutmut show "$name" 2>&1 || true; echo '```'
+              done < survivors.txt
+            } > survivors_report.md
+            cat survivors_report.md
+            cat survivors_report.md >> "$GITHUB_STEP_SUMMARY"
+          } || true
           mutmut export-cicd-stats || true
       - name: 요약
         if: always()
