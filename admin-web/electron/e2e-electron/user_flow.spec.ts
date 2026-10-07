@@ -41,6 +41,14 @@ async function clickAndGo(ui: Page, label: string, urlPart: string, href?: strin
     return true;
   } catch (e) {
     console.log(`  ⚠️ '${label}' 클릭 실패: ${String(e).slice(0, 80)}`);
+    // 진단: 링크가 DOM 에 있는지·보이는지·창 폭(lg=1024 미만이면 사이드바 숨김)
+    const diag = await ui.evaluate((h) => ({
+      w: window.innerWidth,
+      links: Array.from(document.querySelectorAll("a[href]")).length,
+      target: !!h && !!document.querySelector(`a[href="${h}"]`),
+      aside: (() => { const a = document.querySelector("aside"); return a ? getComputedStyle(a).display : "none-found"; })(),
+    }), href ?? "").catch(() => null);
+    console.log("  진단:", JSON.stringify(diag));
     return false;
   }
 }
@@ -62,6 +70,9 @@ test("사용자 흐름 E2E — 앱 UI 직접 조작", async () => {
 
   const ui = await getUiPage(app);
   await ui.waitForLoadState("domcontentloaded", { timeout: 30_000 }).catch(() => {});
+  // webview 페이지의 뷰포트를 데스크톱 폭으로 고정한다(창 크기만으로는 webview 안 폭이 lg 기준 1024px 미만으로 남음 — CI 실측).
+  await ui.setViewportSize({ width: 1440, height: 900 }).catch((e) => console.log("  ⚠️ setViewportSize 실패:", String(e).slice(0, 80)));
+  console.log("  뷰포트 innerWidth =", await ui.evaluate(() => window.innerWidth).catch(() => "?"));
   await ui.waitForTimeout(10_000); // 서버 기동 + getMe 토큰 동기화 대기
   console.log("✅ webview(Next UI) 획득 url=", ui.url());
 
