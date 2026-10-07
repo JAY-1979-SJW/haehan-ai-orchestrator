@@ -13977,7 +13977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_quality_gate_hooks.py": {
+  "tests/quality_gates/test_ai_quality_gate_hooks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14273,7 +14273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_audit_kit_gate.py": {
+  "tests/quality_gates/test_audit_kit_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15281,7 +15281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_code_map_query.py": {
+  "tests/quality_gates/test_code_map_query.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15289,7 +15289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_code_map_reach_resolver.py": {
+  "tests/quality_gates/test_code_map_reach_resolver.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15489,7 +15489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_duplicate_code_check.py": {
+  "tests/quality_gates/test_duplicate_code_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16321,7 +16321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_install_git_hooks.py": {
+  "tests/quality_gates/test_install_git_hooks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17025,7 +17025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_merge_stage.py": {
+  "tests/quality_gates/test_merge_stage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17057,7 +17057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_boundaries.py": {
+  "tests/quality_gates/test_module_boundaries.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17065,7 +17065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_quality_gate.py": {
+  "tests/quality_gates/test_module_quality_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17073,7 +17073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_separation_gate.py": {
+  "tests/quality_gates/test_module_separation_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17521,7 +17521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_portability_standard.py": {
+  "tests/quality_gates/test_portability_standard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17529,7 +17529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_edit_fast_gate_baseline.py": {
+  "tests/quality_gates/test_post_edit_fast_gate_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17537,7 +17537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_edit_gate_python.py": {
+  "tests/quality_gates/test_post_edit_gate_python.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17585,7 +17585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_pre_change_dry_run.py": {
+  "tests/quality_gates/test_pre_change_dry_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17593,7 +17593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_preflight.py": {
+  "tests/quality_gates/test_preflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17625,7 +17625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_quality_gate.py": {
+  "tests/quality_gates/test_quality_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17641,7 +17641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_required_quality_gate.py": {
+  "tests/quality_gates/test_required_quality_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17657,7 +17657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_root_legacy_scripts_audit.py": {
+  "tests/quality_gates/test_root_legacy_scripts_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17665,7 +17665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_runtime_drift_watch.py": {
+  "tests/quality_gates/test_runtime_drift_watch.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18129,7 +18129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_skeleton_gate.py": {
+  "tests/quality_gates/test_skeleton_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18481,7 +18481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_verify_change_route_check.py": {
+  "tests/quality_gates/test_verify_change_route_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18489,7 +18489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_verify_runtime_drift.py": {
+  "tests/quality_gates/test_verify_runtime_drift.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18537,7 +18537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_worktree_change_index.py": {
+  "tests/quality_gates/test_worktree_change_index.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18545,7 +18545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_write_gates_duplicate_impl_gate.py": {
+  "tests/quality_gates/test_write_gates_duplicate_impl_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19265,7 +19265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_side_effect_gate_coverage.py": {
+  "tests/quality_gates/test_side_effect_gate_coverage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19273,7 +19273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_side_effect_gate_r2.py": {
+  "tests/quality_gates/test_side_effect_gate_r2.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19361,7 +19361,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "tests/test_gate_core_split_r2d2.py": {
+  "tests/quality_gates/test_gate_core_split_r2d2.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19529,7 +19529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_move_guardrails.py": {
+  "tests/quality_gates/test_move_guardrails.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19545,7 +19545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tool_home_gate.py": {
+  "tests/quality_gates/test_tool_home_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19569,7 +19569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_dup_gate.py": {
+  "tests/quality_gates/test_dup_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19585,7 +19585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_root_calc_gate.py": {
+  "tests/quality_gates/test_root_calc_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20017,7 +20017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_code_map_inert_init.py": {
+  "tests/quality_gates/test_code_map_inert_init.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20025,7 +20025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_opt_out_lock_windows.py": {
+  "tests/quality_gates/test_opt_out_lock_windows.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20041,7 +20041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_flat_root_gate.py": {
+  "tests/quality_gates/test_flat_root_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20049,7 +20049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_audit_kit_gate_rename.py": {
+  "tests/quality_gates/test_audit_kit_gate_rename.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20057,7 +20057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ruff_new_only_gate_rename.py": {
+  "tests/quality_gates/test_ruff_new_only_gate_rename.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20065,7 +20065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_verify_change_ruff_loud.py": {
+  "tests/quality_gates/test_verify_change_ruff_loud.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22905,7 +22905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_folder_gate.py": {
+  "tests/quality_gates/test_folder_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22929,7 +22929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_merge_step_check.py": {
+  "tests/quality_gates/test_merge_step_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22937,7 +22937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_cycles_import_based.py": {
+  "tests/quality_gates/test_module_cycles_import_based.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22953,7 +22953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_registry_sync_and_modules_summary.py": {
+  "tests/quality_gates/test_registry_sync_and_modules_summary.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22977,7 +22977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_test_path_refs.py": {
+  "tests/quality_gates/test_test_path_refs.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23137,7 +23137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ops_audit_cli.py": {
+  "tests/quality_gates/test_ops_audit_cli.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23169,7 +23169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_import_paths_hygiene.py": {
+  "tests/quality_gates/test_import_paths_hygiene.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23389,6 +23389,14 @@
    "layer": "L11",
    "role": "test",
    "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

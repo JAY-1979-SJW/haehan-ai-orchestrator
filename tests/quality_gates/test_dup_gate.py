@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DUP_GATE = ROOT / "scripts" / "ops" / "dup_gate.py"
 
 _COPY_PASTE_FUNC = """

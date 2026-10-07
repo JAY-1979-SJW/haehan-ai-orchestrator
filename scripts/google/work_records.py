@@ -16,7 +16,7 @@ DEFAULT_SCOPES = [
     "scripts/google/",
     "scripts/ops/audit_google_domain_module_boundaries.py",
     "tests/google/test_google_module_check.py",
-    "tests/test_module_quality_gate.py",
+    "tests/quality_gates/test_module_quality_gate.py",
     "docs/baseline/",
 ]
 DEFAULT_FORBIDDEN_SCOPES = [

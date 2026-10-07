@@ -3,7 +3,7 @@
 발행·발송 호출(sink)을 가진 함수가 게이트 호출(`require_side_effect` / `gate_check` / `check_send` / `@gated`)을
 하지 않으면 '미적용 경로'다. 기존 미적용 경로는 tests/data/side_effect_gate_baseline.json 에 고정해 두고,
 **새로운 미적용 경로가 생기면 실패**한다. 기존 경로에 게이트를 달면 기준선에서 빼도 된다(안 빼도 실패하지 않고 알려 준다).
-기준선 재생성: REGEN_SIDE_EFFECT_BASELINE=1 py -3.14 -m pytest tests/test_side_effect_gate_coverage.py
+기준선 재생성: REGEN_SIDE_EFFECT_BASELINE=1 py -3.14 -m pytest tests/quality_gates/test_side_effect_gate_coverage.py
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import json
 import os
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 BASELINE = ROOT / "tests" / "data" / "side_effect_gate_baseline.json"
 
 SCAN_DIRS = ("scripts", "ai_orchestrator", "browser_api", "orchestrator_v1")

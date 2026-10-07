@@ -4,7 +4,7 @@ from pathlib import Path
 from scripts.ops import audit_root_legacy_scripts as audit
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TEST_TMP = ROOT / "tmp" / "test_root_legacy_scripts_audit"
 
 

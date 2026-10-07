@@ -11,7 +11,7 @@ import pytest
 from scripts.ops import root_calc_gate as gate
 from scripts.ops.make_shim import make_shim
 
-REAL_ROOT = Path(__file__).resolve().parents[1]
+REAL_ROOT = Path(__file__).resolve().parents[2]
 CFG = gate.load_config(REAL_ROOT)
 
 

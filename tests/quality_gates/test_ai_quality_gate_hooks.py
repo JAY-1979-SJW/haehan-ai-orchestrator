@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 # post_edit_fast_gate 는 `python -m ruff` 로 새 ruff 오류를 찾는다. ruff 가 없으면 그 검사 자체가 동작하지 않아
 # 시험이 실패하므로(CI 는 requirements.txt 만 설치하고 거기에 ruff 가 없다) 그때만 건너뛴다.

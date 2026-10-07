@@ -16,7 +16,7 @@ import ai_orchestrator.gates.gate_types as gtypes
 import scripts.common.gate as shim
 import scripts.common.schemas as schemas
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _imports(path: Path) -> set[str]:

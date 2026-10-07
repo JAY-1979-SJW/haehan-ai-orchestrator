@@ -298,7 +298,7 @@ def test_eum_batch_script_blocks_without_phrase_before_smtp(monkeypatch, tmp_pat
     from pathlib import Path
 
     spec = importlib.util.spec_from_file_location(
-        "eum_batch_r2c", Path(__file__).resolve().parents[1] / "scripts" / "eum" / "send_mail_batch.py"
+        "eum_batch_r2c", Path(__file__).resolve().parents[2] / "scripts" / "eum" / "send_mail_batch.py"
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -323,7 +323,7 @@ def test_eum_batch_send_one_checks_phrase_and_opt_out(monkeypatch):
     from pathlib import Path
 
     spec = importlib.util.spec_from_file_location(
-        "eum_batch_r2c2", Path(__file__).resolve().parents[1] / "scripts" / "eum" / "send_mail_batch.py"
+        "eum_batch_r2c2", Path(__file__).resolve().parents[2] / "scripts" / "eum" / "send_mail_batch.py"
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -353,7 +353,7 @@ def test_eum_batch_loop_records_gate_block_without_reconnect(tmp_path):
     from pathlib import Path
 
     spec = importlib.util.spec_from_file_location(
-        "eum_batch_r2c3", Path(__file__).resolve().parents[1] / "scripts" / "eum" / "send_mail_batch.py"
+        "eum_batch_r2c3", Path(__file__).resolve().parents[2] / "scripts" / "eum" / "send_mail_batch.py"
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -518,7 +518,7 @@ def test_eum_batch_cli_error_message_has_no_phrase(tmp_path):
     import sys
     from pathlib import Path
 
-    script = Path(__file__).resolve().parents[1] / "scripts" / "eum" / "send_mail_batch.py"
+    script = Path(__file__).resolve().parents[2] / "scripts" / "eum" / "send_mail_batch.py"
     proc = subprocess.run(  # 승인 문구 없이 실제 발송 모드 — 대상이 없어도 게이트가 먼저 막는다
         [sys.executable, str(script), "--limit", "1"],
         capture_output=True,

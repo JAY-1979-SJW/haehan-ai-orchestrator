@@ -70,7 +70,7 @@ class _StubRegister(GeneralProductRegister):
 DATA = {"category": "인테리어조명", "name": "테스트상품", "price": 1000, "stock": 10, "main_image": "x.png"}
 
 # 이 파일은 **단계 진행 기계**(순서/중단/저장금지)를 검증한다.
-# 사전 검증(preflight)은 그보다 앞단의 별도 관문이며 tests/test_preflight.py 가 맡는다.
+# 사전 검증(preflight)은 그보다 앞단의 별도 관문이며 tests/quality_gates/test_preflight.py 가 맡는다.
 # 여기서는 skip_preflight=True 로 우회해 검증 대상을 섞지 않는다.
 # (실존하지 않는 'x.png' 는 preflight 가 정당하게 막는다 — 그 동작 자체는 정상이다)
 

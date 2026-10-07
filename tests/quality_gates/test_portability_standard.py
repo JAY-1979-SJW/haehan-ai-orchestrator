@@ -16,7 +16,7 @@ from packaging.utils import canonicalize_name
 
 from scripts.ops import make_constraints as mc
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 # ── 저장소의 이식성 약속 ──────────────────────────────────────────────────

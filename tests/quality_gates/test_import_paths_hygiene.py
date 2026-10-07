@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 SEO_USERS = (
     "scripts/naver/blog/__init__.py",
     "scripts/naver/blog/core/ai_writer.py",

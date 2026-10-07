@@ -89,7 +89,7 @@ def test_real_two_way_dependency_is_still_a_cycle():
 
 def test_real_repo_ai_orchestrator_init_is_inert():
     """이 저장소의 ai_orchestrator/__init__.py 는 빈 파일이라 부모 간선에서 제외 대상이다(보정의 동기)."""
-    real = Path(__file__).resolve().parents[1] / "ai_orchestrator" / "__init__.py"
+    real = Path(__file__).resolve().parents[2] / "ai_orchestrator" / "__init__.py"
     assert real.exists() and real.read_text(encoding="utf-8").strip() == ""
     res = Resolver(
         ["ai_orchestrator/__init__.py", "ai_orchestrator/paths/__init__.py", "ai_orchestrator/paths/runtime.py"]

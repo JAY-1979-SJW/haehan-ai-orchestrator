@@ -3,7 +3,7 @@ from pathlib import Path
 
 from scripts.ops.quality import required_quality_gate as gate
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TEST_PYCACHE = ROOT
 
 
@@ -33,9 +33,9 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_local_agent_e2e_baseline_contract.py" in rendered
     assert "tests/approval/test_approval_flow_baseline_contract.py" in rendered
     assert "tests/test_playwright_ai_baseline_contract.py" in rendered
-    assert "tests/test_required_quality_gate.py" in rendered
-    assert "tests/test_module_boundaries.py" in rendered
-    assert "tests/test_root_legacy_scripts_audit.py" in rendered
+    assert "tests/quality_gates/test_required_quality_gate.py" in rendered
+    assert "tests/quality_gates/test_module_boundaries.py" in rendered
+    assert "tests/quality_gates/test_root_legacy_scripts_audit.py" in rendered
     assert "tests/google/test_google_subdomain_logic.py" in rendered
     assert "tests/google/test_google_tab_logic.py" in rendered
     assert "tests/google/test_google_ads_signup.py" in rendered
@@ -213,14 +213,14 @@ def test_run_command_avoids_pycache_prefix_for_pytest(monkeypatch):
     monkeypatch.setenv("PYTHONPYCACHEPREFIX", "C:/tmp/problematic-pycache")
     monkeypatch.setattr(gate.subprocess, "run", fake_run)
 
-    result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/test_required_quality_gate.py", "-q"))
+    result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/quality_gates/test_required_quality_gate.py", "-q"))
 
     assert result.ok is True
     assert captured["command"][:4] == (
         gate.sys.executable,
         "-m",
         "pytest",
-        "tests/test_required_quality_gate.py",
+        "tests/quality_gates/test_required_quality_gate.py",
     )
     assert captured["command"][4] == "-q"
     assert len(captured["command"]) == 5

@@ -11,7 +11,7 @@ import json
 import re
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 # 시험 경로 문자열을 담고 있는 파일(§1-3-B 표) — 자유 텍스트(docs/, 주석)는 대상 밖.
 SOURCE_FILES = [

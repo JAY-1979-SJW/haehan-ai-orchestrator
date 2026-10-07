@@ -10,7 +10,7 @@ import pytest
 
 from scripts.ops import folder_gate as gate
 
-REAL_ROOT = Path(__file__).resolve().parents[1]
+REAL_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _git(root: Path, *args: str) -> str:
