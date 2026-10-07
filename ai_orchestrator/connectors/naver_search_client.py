@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlencode
 
-from .. import naver_openapi_config as cfg_mod
+from . import naver_openapi_config as cfg_mod
 
 logger = logging.getLogger(__name__)
 

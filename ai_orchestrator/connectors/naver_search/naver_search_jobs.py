@@ -27,7 +27,7 @@ from ..naver_blog.naver_blog_collectors import collect_blog_search
 from ..naver_shopping_collectors import collect_shopping_search
 from . import naver_search_db as db_mod
 from . import naver_search_state as state_mod
-from .naver_search_client import SOURCE_BLOG, SOURCE_SHOP, NaverSearchClient
+from ..naver_search_client import SOURCE_BLOG, SOURCE_SHOP, NaverSearchClient
 
 logger = logging.getLogger(__name__)
 

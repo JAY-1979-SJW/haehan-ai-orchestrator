@@ -18,7 +18,7 @@
 - write_post(page, cafe_url, board_name, title, body, ...)
 - confirm_publish(page)
 
-### API 엔드포인트 (ai_orchestrator/connectors/naver_cafe_router.py)
+### API 엔드포인트 (ai_orchestrator/connectors/naver_cafe/naver_cafe_router.py)
 - POST /naver-cafe/collect            (cafe_url, days, max_detail, keyword)
 - POST /naver-cafe/collect-my-cafes
 - POST /naver-cafe/ai-analyze         (category, days, max_posts)

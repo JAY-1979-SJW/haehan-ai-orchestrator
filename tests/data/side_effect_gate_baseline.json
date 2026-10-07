@@ -1,6 +1,5 @@
 [
  "ai_orchestrator/connectors/hanafax/auto_sender.py::build_sender._send",
- "ai_orchestrator/connectors/instagram/guard_instagram_publish.py::main",
  "ai_orchestrator/connectors/naver_mail/mailbox_flow.py::confirm_send",
  "ai_orchestrator/connectors/naver_mail/mailbox_router.py::send_draft",
  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py::BlogWriteMixin.blog_write_post",
@@ -10,6 +9,7 @@
  "scripts/hanafax/send_kras_campaign.py::main",
  "scripts/hanafax/send_kras_final_campaign.py::main",
  "scripts/instagram/api_publish.py::publish",
+ "scripts/instagram/guard_instagram_publish.py::main",
  "scripts/naver/automation/integration/workflow.py::Workflow.new_orders_to_alerts",
  "scripts/naver/blog/_runner.py::_task_confirm",
  "scripts/naver/blog/_runner.py::_task_write",

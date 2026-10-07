@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..naver_search.naver_search_client import SOURCE_BLOG, NaverSearchClient, SearchResult
-from ..naver_search.naver_search_utils import normalize_post_date, strip_html
+from ..naver_search_client import SOURCE_BLOG, NaverSearchClient, SearchResult
+from ..naver_search_utils import normalize_post_date, strip_html
 
 
 @dataclass

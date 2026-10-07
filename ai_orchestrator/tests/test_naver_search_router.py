@@ -16,9 +16,9 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator.connectors import (
     naver_openapi_config as cfg_mod,
+    naver_search_client,
 )
 from ai_orchestrator.connectors.naver_search import (
-    naver_search_client,
     naver_search_jobs,
 )
 from ai_orchestrator.connectors.naver_search import (

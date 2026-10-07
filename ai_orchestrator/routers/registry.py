@@ -46,8 +46,8 @@ from ..connectors.instagram.instagram_dm_router import instagram_dm_router
 from ..connectors.kakao.setup_router import kakao_setup_router
 from ..connectors.kakao.skill_router import kakao_skill_router
 from ..connectors.naver_blog.naver_blog_router import naver_blog_router
-from ..connectors.naver_cafe_router import naver_cafe_router
-from ..connectors.naver_mail_router import naver_mail_router
+from ..connectors.naver_cafe.naver_cafe_router import naver_cafe_router
+from ..connectors.naver_mail.naver_mail_router import naver_mail_router
 from ..connectors.naver_news_router import naver_news_router
 from ..connectors.naver_openapi_setup_router import naver_openapi_setup_router
 from ..connectors.naver_search.naver_search_router import naver_search_router
