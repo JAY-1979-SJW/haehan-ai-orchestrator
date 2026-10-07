@@ -34,7 +34,6 @@ from .connectors.cdp_screen_router import cdp_screen_router
 from .connectors.community_router import community_router
 from .connectors.desktop_session_router import desktop_session_router
 from .connectors.eum_router import eum_router
-from .connectors.marketing_ops_router import marketing_ops_router
 from .connectors.gabia_router import gabia_router
 from .connectors.gmail_router import gmail_router
 from .connectors.gonobi_router import gonobi_router
@@ -65,6 +64,7 @@ from .inbox import read_recent_inbox
 from .local_agent_router import local_agent_router
 from .models import TaskRequest
 from .planner import plan
+from .routers.marketing_ops_router import marketing_ops_router
 from .sites.router import sites_router
 from .telegram_webhook import handle_telegram_update, handle_telegram_webhook
 

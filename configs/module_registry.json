@@ -3465,7 +3465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/marketing_ops_router.py": {
+  "ai_orchestrator/routers/marketing_ops_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "marketing",
