@@ -9,6 +9,8 @@ g2b 전용 자동화 로직 없음.
 import json
 import pathlib
 
+import pytest
+
 from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile as get_profile
 from ai_orchestrator.local_agent.security_guard import validate_task_before_run
 from ai_orchestrator.local_agent.task_protocol import (
@@ -27,6 +29,44 @@ _SAFE_RESULT = pathlib.Path(__file__).parent / "fixtures" / "g2b_readonly_expect
 
 G2B_HOST = "www.g2b.go.kr"
 G2B_URL = "https://www.g2b.go.kr/"
+
+
+# tests/fixtures/* 는 .gitignore 대상이라 위 두 json 이 저장소에 추적되지 않는다(fresh checkout/CI 에 없음).
+# 시험이 읽는 값만 담은 합성 최소 내용을 tmp 에 만들어 경로를 그쪽으로 돌린다(실데이터 아님).
+_SYNTH_TASK = {
+    "task_id": "g2b-readonly-e2e-20260508-001",
+    "execution_mode": EXEC_MODE_LOCAL_PLAYWRIGHT,
+    "readonly": True,
+    "allow_submit": False,
+    "allow_sign": False,
+    "allow_payment": False,
+    "allow_bid_submit": False,
+    "allow_auto_login": False,
+    "allow_password_input": False,
+    "allow_otp_input": False,
+    "allow_cert_password_input": False,
+}
+_SYNTH_SAFE_RESULT = {
+    "sensitive_data_collected": False,
+    "cookie_exported": False,
+    "session_exported": False,
+    "password_collected": False,
+    "otp_collected": False,
+    "certificate_password_collected": False,
+    "storage_state_exported": False,
+    "server_browser_used": False,
+    "npki_accessed": False,
+}
+
+
+@pytest.fixture(autouse=True)
+def _synthetic_fixtures(tmp_path, monkeypatch):
+    task_p = tmp_path / _FIXTURE.name
+    safe_p = tmp_path / _SAFE_RESULT.name
+    task_p.write_text(json.dumps(_SYNTH_TASK), encoding="utf-8")
+    safe_p.write_text(json.dumps(_SYNTH_SAFE_RESULT), encoding="utf-8")
+    monkeypatch.setitem(globals(), "_FIXTURE", task_p)
+    monkeypatch.setitem(globals(), "_SAFE_RESULT", safe_p)
 
 
 class TestG2bTaskProtocol:
