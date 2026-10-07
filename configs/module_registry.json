@@ -22472,6 +22472,22 @@
    "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_webhook_parser.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "low",
    "source": "manual"
+  },
+  "ai_orchestrator/connectors/naver_blog/gonobi_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "naver_blog",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gonobi_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "ai_orchestrator/connectors/naver_blog/gonobi_scheduler.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_blog",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gonobi_scheduler.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
   }
  }
 }

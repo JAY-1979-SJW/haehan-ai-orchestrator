@@ -13,7 +13,10 @@ from scripts.app_paths import repo_root
 MOVED = {
     "ai_orchestrator.connectors.naver_blog_router": "ai_orchestrator.connectors.naver_blog.router",
     "ai_orchestrator.routers.blog_automation_router": "ai_orchestrator.connectors.naver_blog.automation_router",
+    "ai_orchestrator.connectors.gonobi_router": "ai_orchestrator.connectors.naver_blog.gonobi_router",
+    "ai_orchestrator.connectors.gonobi_scheduler": "ai_orchestrator.connectors.naver_blog.gonobi_scheduler",
 }
+BEFORE2 = json.loads((Path(__file__).parent / "data" / "split_w3_before2.json").read_text(encoding="utf-8"))
 BEFORE = json.loads((Path(__file__).parent / "data" / "split_w3_routes_before.json").read_text(encoding="utf-8"))
 
 
@@ -55,3 +58,22 @@ def test_old_path_shims_are_tiny_aliases():
     for old in MOVED:
         text = (repo_root() / (old.replace(".", "/") + ".py")).read_text(encoding="utf-8")
         assert "sys.modules[__name__]" in text and len(text.splitlines()) <= 8
+
+
+def test_gonobi_routes_unchanged():
+    router = importlib.import_module("ai_orchestrator.connectors.naver_blog.gonobi_router").gonobi_router
+    after = sorted([sorted(r.methods or []), r.path] for r in router.routes)
+    assert after == BEFORE2["gonobi_routes"]
+    assert len(after) == 6
+
+
+def test_gonobi_bootstrap_roots_are_the_repo_root():
+    """sys.path 부트스트랩용 _ROOT 가 한 단계 깊어진 뒤에도 저장소 루트다(parents[3])."""
+    for name in ("gonobi_router", "gonobi_scheduler"):
+        mod = importlib.import_module(f"ai_orchestrator.connectors.naver_blog.{name}")
+        assert mod._ROOT == repo_root()
+
+
+def test_gonobi_scheduler_public_names_unchanged():
+    mod = importlib.import_module("ai_orchestrator.connectors.naver_blog.gonobi_scheduler")
+    assert sorted(n for n in dir(mod) if not n.startswith("__")) == BEFORE2["gs_names"]
