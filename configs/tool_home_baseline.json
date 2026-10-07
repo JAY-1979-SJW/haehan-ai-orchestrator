@@ -2,8 +2,8 @@
  "_comment": "도구 집 게이트(G11) 기준선 — 이미 집 밖에 있던 파일(기존 부채). 늘리는 변경 금지, 이동·삭제로 줄이는 방향만. 규칙: configs/tool_home.json",
  "target": 0,
  "reviewed_at": "",
- "count": 105,
- "note": "최초 생성: 현재 집 밖 파일 전부",
+ "count": 103,
+ "note": "하향 갱신: 105 → 103",
  "files": [
   "admin-web/src/app/assistant/(legacy)/cafe/CafeClient.tsx",
   "admin-web/src/app/assistant/(legacy)/cafe/CategoryCard.tsx",
@@ -61,7 +61,6 @@
   "kakaowork_reader.py",
   "scripts/common/youtube_search_cache.py",
   "scripts/eum_extract_all_devices.py",
-  "scripts/eum_send_mail_batch.py",
   "scripts/gabia_login_watch.py",
   "scripts/mk_catalog/reclassify_blog_new.py",
   "scripts/naver/automation/smartstore/__init__.py",
@@ -108,7 +107,6 @@
   "scripts/ops/audit_naver_mail_unread_pagination_depth.py",
   "scripts/ops/daily_cafe_marketing_pipeline.py",
   "scripts/ops/guard_instagram_publish.py",
-  "scripts/ops/ig_batch.py",
-  "scripts/smoke_youtube_manual_login_probe.py"
+  "scripts/ops/ig_batch.py"
  ]
 }

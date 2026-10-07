@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 108,
+ "hash_count": 107,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/services/gongmu_service.py:_read_rows",
@@ -98,9 +98,13 @@
    "scripts/google/drive.py:_task_search",
    "scripts/google/sheets.py:_task_search"
   ],
+  "37eb32939bb34d93d40767f3e1a771ada366cffa": [
+   "scripts/naver/automation/smartstore/__init__.py:__getattr__",
+   "scripts/naver/smartstore/automation/__init__.py:__getattr__"
+  ],
   "38eb0fa59889cd8a4e260de9da214d4235ce2d3d": [
-   "orchestrator_v1/inbox/email_task_approval.py:approve",
-   "orchestrator_v1/inbox/email_task_approval.py:reject"
+   "orchestrator_v1/tasks/email_task_approval.py:approve",
+   "orchestrator_v1/tasks/email_task_approval.py:reject"
   ],
   "39354fa102eebefe67d0732c73b13ad8bcba5d3d": [
    "scripts/video/ig_dm_bot_ep01_visuals.py:_melt_kenburns_render",
@@ -210,10 +214,6 @@
    "scripts/video/ai_g2b_youtube_ep01.py:_text_card",
    "scripts/video/kotara_ctc_shorts.py:_text_card"
   ],
-  "6120498a4c11a9f9f2b21f7e26b36e60232149bc": [
-   "scripts/ops/live_parallel_task_dispatch_smoke.py:_start_token_worker",
-   "scripts/verify/verify_live_task_dispatch.py:_start_token_worker"
-  ],
   "632774467f6ef61fea21bd5fa6c830236bbe8fad": [
    "scripts/naver/smartstore/navigation/sidebar_v3.py:_refresh_dashboard",
    "scripts/naver/smartstore/registration/general_full_analyze.py:_enter_dashboard"
@@ -258,9 +258,9 @@
    "scripts/naver/content.py:print_action_summary"
   ],
   "7977b42cf3bf386ad6ca7c4479c72ddb04dcbae0": [
-   "orchestrator_v1/inbox/email_task_store.py:_load_all",
    "orchestrator_v1/inbox/inbox_store.py:_load_all",
-   "orchestrator_v1/tasks/candidate_store.py:_load_all"
+   "orchestrator_v1/tasks/candidate_store.py:_load_all",
+   "orchestrator_v1/tasks/email_task_store.py:_load_all"
   ],
   "8051340d49f4053a369da34c66a976ee564c8609": [
    "scripts/ops/audit_app_ui_readonly_backend_status_cards.py:_route_page",
@@ -416,15 +416,11 @@
    "scripts/video/ig_dm_bot_ep01.py:_gen_one",
    "scripts/video/kakao_skill_bot_ep01.py:_gen_one"
   ],
-  "d1bcc4c2b17d9626efed8054b965630032febe61": [
-   "scripts/ops/live_parallel_task_dispatch_smoke.py:_resolve_identity",
-   "scripts/verify/verify_live_task_dispatch.py:_resolve_identity"
-  ],
   "d4e3c4acd6b77cfecc179cdeedcc937f52670de8": [
-   "scripts/naver/automation/smartstore/analytics_dashboard.py:_init_db",
-   "scripts/naver/automation/smartstore/competitor_analysis.py:_init_db",
    "scripts/naver/blog/management/analytics.py:_init_db",
-   "scripts/naver/blog/management/schedule.py:_init_db"
+   "scripts/naver/blog/management/schedule.py:_init_db",
+   "scripts/naver/smartstore/automation/analytics_dashboard.py:_init_db",
+   "scripts/naver/smartstore/automation/competitor_analysis.py:_init_db"
   ],
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
    "scripts/popup_monitor.py:ChromeUIWatcher.start",
