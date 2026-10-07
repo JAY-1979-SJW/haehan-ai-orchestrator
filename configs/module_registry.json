@@ -5713,6 +5713,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/paths.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "공용 기반 이름(paths)",
+   "confidence": "high",
+   "source": "rule"
+  },
   "ai_orchestrator/persistence/__init__.py": {
    "layer": "L7",
    "role": "persistence",

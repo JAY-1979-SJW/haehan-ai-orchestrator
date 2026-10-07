@@ -8,7 +8,9 @@
 `%LOCALAPPDATA%\\HaehanAI\\` 는 해한 제품군 공용 상위 폴더(CADQuantity·runtime·inventory 가 이미 있다)이므로 그 바로
 아래에는 쓰지 않고 제품 하위 폴더 `Orchestrator` 만 사용한다.
 
-표준 라이브러리만 사용하고 프로젝트의 다른 모듈을 import 하지 않는다(코드맵 폴더 순환 방지).
+data_root()/config_root() 등 OS 표준 경로 해석 함수는 표준 라이브러리만 쓴다.
+repo_root()만 예외로 ai_orchestrator.paths 를 재수출한다(scripts → ai_orchestrator
+는 허용된 방향이라 코드맵 폴더 순환이 생기지 않는다. 2026-10-07).
 """
 
 from __future__ import annotations
@@ -19,6 +21,8 @@ import sys
 import uuid
 from ctypes import wintypes
 from pathlib import Path
+
+from ai_orchestrator.paths import repo_root as repo_root
 
 _SUITE = "HaehanAI"
 _PRODUCT = "Orchestrator"
@@ -202,18 +206,12 @@ def known_folder(name: str) -> Path:
 
 # ── 저장소(소스 폴더) 위치 — data_root()/config_root() 와는 다른 질문이다 ─────────────
 # data_root()/config_root() 는 "앱 데이터를 어디 쓰나"(OS 표준, 저장소 상대 폴백 없음).
-# repo_root() 는 "이 저장소 소스가 어디 있나"(T1-① 정본화 — 439개 파일이 각자
-# Path(__file__).resolve().parents[N] 으로 계산하던 것의 단일 정본, 결함 #17 후속).
-
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-
-
-def repo_root() -> Path:
-    """이 저장소(소스 체크아웃)의 루트 폴더. 환경변수로 바꿀 수 없다(소스 위치는 실행 위치로 고정).
-
-    worktree·Docker(COPY 로 들어간 /app 등)에서도 이 파일 기준 상대 경로이므로 항상 맞다.
-    """
-    return _REPO_ROOT
+# repo_root() 는 "이 저장소 소스가 어디 있나"(T1-① 정본화). 실제 구현은
+# ai_orchestrator/paths.py 에 있다(2026-10-07, 폴더 순환 해소 — ai_orchestrator
+# 쪽 호출자가 이 모듈을 import하면 ai_orchestrator↔scripts 양방향 간선이 생겨
+# 순환으로 집계되던 문제. scripts → ai_orchestrator 는 원래 허용된 방향이라
+# 여기서 재수출하는 건 문제없다). ai_orchestrator 안의 호출자는
+# ai_orchestrator.paths.repo_root 를 직접 쓴다.
 
 
 # ── 이전 PC 경로 대체: 형제 프로젝트·OneDrive·환경변수 우선 해석 ─────────────────────
