@@ -52,6 +52,14 @@ test("사용자 흐름 E2E — 앱 UI 직접 조작", async () => {
   await shell.waitForLoadState("domcontentloaded", { timeout: 30_000 });
   console.log("✅ Electron 앱 기동");
 
+  // 좌측 메뉴(PageShell 사이드바)는 Tailwind lg(>=1024px)부터만 보인다 — 그보다 좁으면 하단 탭 5개만 남아
+  // "스토어 AI 채팅"·"작업 목록" 링크가 화면에 없다(CI 에서 창이 ~1008px 로 떠서 재현). 데스크톱 사용 폭으로 키운다.
+  await app.evaluate(({ BrowserWindow }) => {
+    for (const w of BrowserWindow.getAllWindows()) {
+      if (!w.isDestroyed()) { w.setSize(1440, 900); w.center(); }
+    }
+  });
+
   const ui = await getUiPage(app);
   await ui.waitForLoadState("domcontentloaded", { timeout: 30_000 }).catch(() => {});
   await ui.waitForTimeout(10_000); // 서버 기동 + getMe 토큰 동기화 대기

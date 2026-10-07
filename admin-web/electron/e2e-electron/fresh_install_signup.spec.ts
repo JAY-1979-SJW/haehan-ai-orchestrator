@@ -144,9 +144,15 @@ test.describe("새 PC 첫 설치 — 데스크톱 자동 로그인(B안)", () =>
         await fillSetupForm(ui, "Version Check User", "version-check@e2e.test");
         await expect(ui).toHaveURL(/^(?!.*\/(setup|login)).*$/, { timeout: 20_000 });
 
-        await ui.goto("http://localhost:3000/about", { timeout: 20_000 }).catch(() => {});
-        // CI가 write-build-info.json 단계에서 넣는 <yyyymmdd>-<sha7> 형식 버전 문자열
-        await expect(ui.getByText(/\d{8}-[0-9a-f]{7}/)).toBeVisible({ timeout: 15_000 });
+        // '앱 정보'는 /mypage(data-testid=build-info)에 있다 — /about 은 공개 소개 페이지로 빌드 정보가 없다.
+        // 서버(/api/v1/health)가 build-info.json(GIT_SHA·BUILD_TIME)을 읽어 돌려준 값이 그대로 보여야 한다.
+        await ui.goto("http://localhost:3000/mypage", { timeout: 20_000 }).catch(() => {});
+        const info = ui.getByTestId("build-info");
+        await expect(info).toBeVisible({ timeout: 15_000 });
+        // 커밋: 7자리 hex 여야 한다("알 수 없음"·"확인 불가"면 실패)
+        await expect(info).toContainText(/빌드\(커밋\)\s*[0-9a-f]{7}/, { timeout: 15_000 });
+        // 빌드 시각: CI 가 넣은 ISO8601 UTC(예: 2026-10-08T01:23:45Z)
+        await expect(info).toContainText(/빌드 시각\s*\d{4}-\d{2}-\d{2}T/, { timeout: 15_000 });
       } finally {
         await app.close();
       }
