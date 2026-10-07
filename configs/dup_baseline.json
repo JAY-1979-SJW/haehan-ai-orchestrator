@@ -154,7 +154,7 @@
    "scripts/ops/audit_google_automation_baseline_contract.py:main",
    "scripts/ops/audit_google_cloud_module_baseline_contract.py:main",
    "scripts/ops/audit_google_cloud_router_compatibility.py:main",
-   "scripts/ops/audit_google_gmail_function_contract.py:main",
+   "scripts/google/audit_gmail_function_contract.py:main",
    "scripts/ops/audit_google_workspace_module_baseline_contract.py:main",
    "scripts/ops/audit_google_workspace_router_compatibility.py:main",
    "scripts/ops/audit_local_agent_e2e_baseline_contract.py:main",

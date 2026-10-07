@@ -13,10 +13,10 @@ from scripts.naver.mail import (
 from scripts.naver.mail import (
     unknown_classification_rules as ur,
 )
-from scripts.ops import (
+from scripts.naver.mail.analysis import (
     audit_naver_mail_action_item_dashboard as audit_dash,
 )
-from scripts.ops import (
+from scripts.naver.mail.analysis import (
     audit_naver_mail_unknown_classification_rules as audit_rules,
 )
 

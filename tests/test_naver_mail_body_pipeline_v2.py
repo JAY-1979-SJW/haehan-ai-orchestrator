@@ -13,7 +13,7 @@ from scripts.naver.mail import (
 from scripts.naver.mail import (
     unread_audit as ua,
 )
-from scripts.ops import audit_naver_mail_body_pipeline_v2 as audit
+from scripts.naver.mail.processing import audit_naver_mail_body_pipeline_v2 as audit
 
 # ── PII 마스킹 ──────────────────────────────────────────────────────
 

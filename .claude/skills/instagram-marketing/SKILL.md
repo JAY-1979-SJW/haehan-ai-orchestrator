@@ -121,13 +121,13 @@
 
 ## 구버전(CDP 클릭) — 참고용
 
-`scripts/instagram/publish.py`, `scripts/ops/ig_batch.py` 는 CDP로 웹 UI를
+`scripts/instagram/publish.py`, `scripts/instagram/ig_batch.py` 는 CDP로 웹 UI를
 클릭하는 방식. **캐러셀 다중 업로드가 안 되고**(input이 non-multiple) 릴스
 업로드 진입도 불안정해서, 정식 API 방식으로 대체했다. 단일 사진 발행 용도로만 남긴다.
 
 ```bash
-python scripts/ops/ig_batch.py --dry-run       # 다음 후보 + 캡션 미리보기만
-python scripts/ops/ig_batch.py --confirmed     # 실제 발행(단일 사진)
+python scripts/instagram/ig_batch.py --dry-run       # 다음 후보 + 캡션 미리보기만
+python scripts/instagram/ig_batch.py --confirmed     # 실제 발행(단일 사진)
 ```
 
 ## 승인 절차 (매번 필수)

@@ -13849,7 +13849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_site_settings_canonical_registry.py": {
+  "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -13905,7 +13905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_gmail_function_contract.py": {
+  "scripts/google/audit_gmail_function_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -14065,7 +14065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_action_item_dashboard.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14073,7 +14073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_body_pipeline_batch.py": {
+  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14081,7 +14081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_body_pipeline_v2.py": {
+  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14089,7 +14089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_business_report.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_business_report.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14097,7 +14097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_dynamic_folder_discovery.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14105,7 +14105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14113,7 +14113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_inbox_p0_complete.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14121,7 +14121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_smart_folder_coverage.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14129,7 +14129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unknown_classification_rules.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14137,7 +14137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14145,7 +14145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unread_pagination_depth.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -14505,14 +14505,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/daily_cafe_marketing_pipeline.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_cafe",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/deploy_diagnose.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -14641,7 +14633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ig_batch.py": {
+  "scripts/instagram/ig_batch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "instagram",

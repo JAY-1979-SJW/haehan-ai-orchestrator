@@ -8,7 +8,7 @@ from scripts.naver.mail import (
 from scripts.naver.mail import (
     unknown_classification_rules as ur,
 )
-from scripts.ops import audit_naver_mail_unknown_classification_rules as audit
+from scripts.naver.mail.analysis import audit_naver_mail_unknown_classification_rules as audit
 
 
 def _mk(action_id, category, title, sender_domain, priority="LOW"):

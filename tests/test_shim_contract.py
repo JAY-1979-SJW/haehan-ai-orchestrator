@@ -152,15 +152,15 @@ def _run_direct(script: Path, cwd: Path):
 def _subdir_repo(tmp_path: Path) -> Path:
     _write(tmp_path / "scripts" / "__init__.py", "")
     _write(tmp_path / "scripts" / "instagram" / "__init__.py", "")
-    _write(tmp_path / "scripts" / "instagram" / "ig_batch.py", "if __name__ == '__main__':\n    print('IG-MAIN-RAN')\n")
+    _write(tmp_path / "scripts" / "instagram" / "demo_batch.py", "if __name__ == '__main__':\n    print('IG-MAIN-RAN')\n")
     return tmp_path
 
 
 def test_subfolder_shim_direct_run_needs_root_bootstrap(tmp_path):
     """하위 폴더 shim 은 sys.path[0] 이 shim 폴더 → 루트 부트스트랩이 있어야 새 모듈을 찾는다."""
     _subdir_repo(tmp_path)
-    make_shim("scripts/ops/ig_batch.py", "scripts/instagram/ig_batch.py", tmp_path)
-    shim = tmp_path / "scripts" / "ops" / "ig_batch.py"
+    make_shim("scripts/ops/demo_batch.py", "scripts/instagram/demo_batch.py", tmp_path)
+    shim = tmp_path / "scripts" / "ops" / "demo_batch.py"
     body = shim.read_text(encoding="utf-8")
     assert BOOTSTRAP_MARK in body and "parents[2]" in body
     out = _run_direct(shim, tmp_path.parent / (tmp_path.name + "_cwd"))
@@ -170,8 +170,8 @@ def test_subfolder_shim_direct_run_needs_root_bootstrap(tmp_path):
 def test_subfolder_shim_without_bootstrap_fails_negative_control(tmp_path):
     """음성 대조: 부트스트랩을 뺀 옛 형태는 ModuleNotFoundError — 위 시험이 실제로 결함을 잡는다는 증거."""
     _subdir_repo(tmp_path)
-    make_shim("scripts/ops/ig_batch.py", "scripts/instagram/ig_batch.py", tmp_path)
-    shim = tmp_path / "scripts" / "ops" / "ig_batch.py"
+    make_shim("scripts/ops/demo_batch.py", "scripts/instagram/demo_batch.py", tmp_path)
+    shim = tmp_path / "scripts" / "ops" / "demo_batch.py"
     stripped = [
         ln
         for ln in shim.read_text(encoding="utf-8").splitlines()
@@ -299,7 +299,7 @@ def test_package_shim_requires_existing_new_dir_with_py_files(tmp_path):
 @pytest.mark.parametrize(
     ("old_path", "with_main"),
     [
-        ("scripts/ops/ig_batch.py", True),  # 하위 폴더 + 직접 실행 부트스트랩(I001 회귀: import 블록 중간 주석)
+        ("scripts/ops/demo_batch.py", True),  # 하위 폴더 + 직접 실행 부트스트랩(I001 회귀: import 블록 중간 주석)
         ("scripts/a/b/c/tool.py", True),
         ("dashboard.py", True),  # 루트 shim
         ("scripts/ops/x.py", False),  # __main__ 없음
@@ -313,7 +313,7 @@ def test_generated_shim_passes_project_ruff(old_path, with_main):
 
     from scripts.ops.make_shim import render_shim
 
-    text = render_shim("scripts.instagram.ig_batch", with_main=with_main, old_path=old_path)
+    text = render_shim("scripts.instagram.demo_batch", with_main=with_main, old_path=old_path)
     for cmd in (["check"], ["format", "--check", "--diff"]):
         r = subprocess.run(
             [sys.executable, "-m", "ruff", *cmd, "--config", str(ROOT / "configs" / "ruff.toml"), "--stdin-filename", old_path, "-"],

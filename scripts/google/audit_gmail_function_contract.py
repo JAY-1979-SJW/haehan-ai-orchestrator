@@ -1,4 +1,8 @@
-"""Read-only audit for Gmail function safety."""
+"""Read-only audit for Gmail function safety.
+
+실행: python -m scripts.google.audit_gmail_function_contract (저장소 루트에서). 파일 경로로 직접 실행하면
+scripts/google/calendar.py 가 표준 라이브러리 calendar 를 가려 requests import 가 깨진다.
+"""
 
 from __future__ import annotations
 

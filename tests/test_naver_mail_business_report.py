@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 
 from scripts.naver.mail import business_report as br
-from scripts.ops import audit_naver_mail_business_report as audit
+from scripts.naver.mail.analysis import audit_naver_mail_business_report as audit
 
 
 def _mk(

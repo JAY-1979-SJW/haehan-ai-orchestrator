@@ -33,7 +33,7 @@ from scripts.naver.mail.processing.batch_runner import (
     _classify_priority,
     _render_business_report,
 )
-from scripts.ops import audit_naver_mail_business_report as audit_br
+from scripts.naver.mail.analysis import audit_naver_mail_business_report as audit_br
 
 
 def _load_json(p: Path) -> dict:

@@ -48,7 +48,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/ops/audit_playwright_ai_baseline_contract.py",
         "scripts/ops/audit_module_boundaries.py",
         "scripts/ops/audit_root_legacy_scripts.py",
-        "scripts/ops/audit_google_gmail_function_contract.py",
+        "scripts/google/audit_gmail_function_contract.py",
         "scripts/ops/audit_google_home_login_gate.py",
         "scripts/ops/audit_google_automation_baseline_contract.py",
         "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py",
@@ -139,7 +139,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
     (sys.executable, "scripts/ops/audit_playwright_ai_baseline_contract.py"),
     (sys.executable, "scripts/ops/audit_module_boundaries.py"),
     (sys.executable, "scripts/ops/audit_root_legacy_scripts.py"),
-    (sys.executable, "scripts/ops/audit_google_gmail_function_contract.py"),
+    (sys.executable, "-m", "scripts.google.audit_gmail_function_contract"),  # 직접 경로 실행은 scripts/google/calendar.py 가 표준 calendar 를 가림 → -m
     (sys.executable, "scripts/ops/audit_google_home_login_gate.py"),
     (sys.executable, "scripts/ops/audit_google_automation_baseline_contract.py"),
     (sys.executable, "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py"),

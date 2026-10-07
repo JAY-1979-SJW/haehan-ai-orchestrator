@@ -104,6 +104,76 @@
    "file": "scripts/verify/verify_local_runtime_dry_run.py",
    "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
    "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_action_item_dashboard.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_business_report.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_unknown_classification_rules.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_body_pipeline_batch.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_body_pipeline_v2.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_dynamic_folder_discovery.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_inbox_p0_complete.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_smart_folder_coverage.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_unread_pagination_depth.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_gabia_site_settings_canonical_registry.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_google_gmail_function_contract.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/ig_batch.py",
+   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
   }
  ]
 }
