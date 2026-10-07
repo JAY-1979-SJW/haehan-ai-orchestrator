@@ -22834,12 +22834,12 @@
    "source": "rule"
   },
   "ai_orchestrator/connectors/hanafax/send_job.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "hanafax",
-   "reason": "도메인(hanafax) 자동화",
+   "reason": "하나팩스 자동 발송 한 번 실행 워크플로(예약 작업·지금 발송의 공용 진입점) — 같은 폴더의 auto_send·authorization_service 와 같은 L6",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   }
  }
 }

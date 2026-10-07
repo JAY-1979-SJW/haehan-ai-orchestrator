@@ -1314,5 +1314,11 @@
   "role": "shared",
   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
   "source": "manual"
+ },
+ "ai_orchestrator/connectors/hanafax/send_job.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "하나팩스 자동 발송 한 번 실행 워크플로(예약 작업·지금 발송의 공용 진입점) — 같은 폴더의 auto_send·authorization_service 와 같은 L6",
+  "source": "manual"
  }
 }
