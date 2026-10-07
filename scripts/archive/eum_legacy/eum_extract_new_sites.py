@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from scripts.common.logger import get_logger  # noqa: E402
-from scripts.web_connector import get_page  # noqa: E402
+from scripts.browser.page.web_connector import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 
