@@ -44,9 +44,9 @@ def test_domain_enum_no_conflict_with_scripts_schemas():
 
 
 def test_domain_enum_no_conflict_with_site_engine_execution_location():
-    """scripts/site_engine/types.py ExecutionLocation과 별개 공존."""
+    """scripts/site_engine/site_types.py ExecutionLocation과 별개 공존."""
     from ai_orchestrator.domain.enums import ExecutionLocation as OrchestratorEL
-    from scripts.site_engine.types import ExecutionLocation as SiteEngineEL
+    from scripts.site_engine.site_types import ExecutionLocation as SiteEngineEL
 
     assert OrchestratorEL is not SiteEngineEL
     # ai_orchestrator 5값, site_engine 3값 — 별개 도메인

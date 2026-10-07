@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from scripts.g2b.profile import ALL_KNOWN_ACTIONS, BLOCKED_ACTIONS
+from scripts.g2b.site_profile import ALL_KNOWN_ACTIONS, BLOCKED_ACTIONS
 
 # ── 상수 ─────────────────────────────────────────────────────────────
 

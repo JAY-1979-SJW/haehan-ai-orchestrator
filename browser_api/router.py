@@ -120,7 +120,7 @@ async def google_mail_compose(req: ActionRequest) -> ActionResponse:
 @router.post("/google/calendar/today")
 async def google_calendar_today(req: ActionRequest) -> ActionResponse:
     def _run():
-        from scripts.google.calendar import run
+        from scripts.google.calendar_tasks import run
 
         run("today", req.args)
 

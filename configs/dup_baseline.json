@@ -9,7 +9,7 @@
    "ai_orchestrator/services/mail_bulk_service.py:_read_rows"
   ],
   "088ada4c32833480504cc02bbb5e071313f817b4": [
-   "scripts/google/calendar.py:_task_delete",
+   "scripts/google/calendar_tasks.py:_task_delete",
    "scripts/google/drive.py:_task_delete",
    "scripts/google/sheets.py:_task_delete"
   ],
@@ -319,8 +319,8 @@
    "scripts/ops/audit_playwright_ai_baseline_contract.py:audit"
   ],
   "9d17aaddd02dae83d100a59580ff92ccf071d925": [
-   "scripts/google/calendar.py:_task_today",
-   "scripts/google/calendar.py:_task_week"
+   "scripts/google/calendar_tasks.py:_task_today",
+   "scripts/google/calendar_tasks.py:_task_week"
   ],
   "9ed3d869d7e334f1be7350a245cf9ca110c6aafa": [
    "scripts/ops/make_inspection_video.py:_scene_google",
@@ -381,7 +381,7 @@
    "scripts/google/router.py:_youtube_upload_live_fill"
   ],
   "c9053131b7a1ac351e1d64f38d457a20e05a5774": [
-   "scripts/naver/automation/platform/error_recovery.py:_init_db",
+   "scripts/naver/automation/error_recovery.py:_init_db",
    "scripts/naver/smartstore/product/bulk.py:_init_db"
   ],
   "cb29e64dc5c280b2a6a807e3bc8796e25ccd01fe": [
@@ -439,7 +439,7 @@
    "scripts/instagram/reel_overlay.py:_fit_cover"
   ],
   "dd98391254fcf8260de1b0c71e2290212b22ff73": [
-   "scripts/naver/calendar.py:NaverCalendar.open",
+   "scripts/naver/calendar_tasks.py:NaverCalendar.open",
    "scripts/naver/place.py:NaverPlace.open"
   ],
   "e36c0e76b7b2bf132fe345aaf357a99cfb41a76e": [
@@ -489,7 +489,7 @@
    "scripts/youtube/youtube_http_client.py:_should_retry_without_proxy"
   ],
   "f2dd54c583d5f6e43808f5917d535acd830fa502": [
-   "scripts/naver/automation/platform/scheduler.py:Scheduler.remove_task",
+   "scripts/naver/automation/scheduler.py:Scheduler.remove_task",
    "scripts/naver/blog/management/schedule.py:BlogSchedule.cancel"
   ],
   "f568a5f5be82c5fa8429969099bc76c6122861f9": [

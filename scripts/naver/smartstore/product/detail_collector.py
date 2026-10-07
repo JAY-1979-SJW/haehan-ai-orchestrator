@@ -11,20 +11,13 @@ import json
 import re
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from playwright.sync_api import Page
 
-ROOT = Path(__file__).resolve().parents[4]
-
-import sys
-
-sys.path.insert(0, str(ROOT))
-
-from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
-from scripts.common.logger import get_logger  # noqa: E402 - sys.path 부트스트랩 뒤 import
-from scripts.naver.smartstore.product import selectors as SEL
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.logger import get_logger
+from scripts.naver.smartstore.product import page_selectors as SEL
 
 log = get_logger(__name__)
 

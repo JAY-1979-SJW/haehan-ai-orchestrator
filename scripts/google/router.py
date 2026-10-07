@@ -30,7 +30,7 @@ from . import (
 )
 from .cloud import live_console_explorer
 from .gates import gate_google_oauth_required, gate_google_send_plan, gate_google_submit_plan  # noqa: F401
-from .profile import GOOGLE_PROFILE  # noqa: F401
+from .site_profile import GOOGLE_PROFILE  # noqa: F401
 from .validators import validate_google_no_plain_secret  # noqa: F401
 from .workspace import router as workspace_router
 

@@ -20,7 +20,7 @@ Phase A (기초) ✅ → Phase B (구조) ✅ → Phase C 부분 ✅ → **Phase
 APP_DOMAIN_G2B_SHELL_01
 ```
 
-- `scripts/g2b/profile.py` — 공사번호·입찰구분·기관코드 프로필
+- `scripts/g2b/site_profile.py` — 공사번호·입찰구분·기관코드 프로필
 - `scripts/g2b/gates.py` — 투찰/전자서명 BLOCKED 게이트
 - `scripts/g2b/validators.py` — 공고번호 형식 검증
 - 테스트 `tests/test_g2b_shell.py`

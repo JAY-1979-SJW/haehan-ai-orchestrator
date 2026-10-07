@@ -204,4 +204,4 @@ cross-domain 직접 import 금지: g2b ↔ gabia ↔ hiworks ↔ eum ↔ google 
 | e-sign | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | evidence-report | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
-**필요 작업:** `scripts/g2b/profile.py`, `scripts/g2b/gates.py`, `scripts/g2b/validators.py` 생성
+**필요 작업:** `scripts/g2b/site_profile.py`, `scripts/g2b/gates.py`, `scripts/g2b/validators.py` 생성

@@ -2,8 +2,7 @@
 """네이버 수동 로그인 확인 smoke 스크립트.
 
 실행 예:
-  python -m scripts.naver.smoke_naver_manual_login_probe --url https://www.naver.com/ --wait-seconds 120
-  (저장소 루트에서 -m 으로 실행 — 파일 경로로 직접 실행하면 scripts/naver/calendar.py 가 표준 calendar 를 가린다)
+  python scripts/naver/smoke_naver_manual_login_probe.py --url https://www.naver.com/ --wait-seconds 120
 
 동작:
   - 접속 허용 호스트는 기본으로 www.naver.com / nid.naver.com 만.

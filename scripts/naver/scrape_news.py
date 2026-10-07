@@ -25,9 +25,6 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-# scripts/naver/calendar.py 가 표준 라이브러리 calendar 를 가리는 문제 방지
-_naver_dir = str(Path(__file__).resolve().parent)
-sys.path = [p for p in sys.path if p != _naver_dir]
 sys.path.insert(0, str(ROOT))
 
 

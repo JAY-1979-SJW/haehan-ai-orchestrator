@@ -5,52 +5,52 @@ from __future__ import annotations
 # ── 1. profile 검증 ─────────────────────────────────────────────────────────
 
 def test_google_profile_import():
-    from scripts.google.profile import GOOGLE_PROFILE
+    from scripts.google.site_profile import GOOGLE_PROFILE
     assert GOOGLE_PROFILE.key == "google"
 
 
 def test_send_action_approval_required():
-    from scripts.google.profile import GOOGLE_PROFILE
-    from scripts.site_engine.types import SiteCapability
+    from scripts.google.site_profile import GOOGLE_PROFILE
+    from scripts.site_engine.site_types import SiteCapability
     policy = GOOGLE_PROFILE.action_policies.get(SiteCapability.SEND)
     assert policy is not None
     assert policy.requires_approval is True
 
 
 def test_submit_action_approval_required():
-    from scripts.google.profile import GOOGLE_PROFILE
-    from scripts.site_engine.types import SiteCapability
+    from scripts.google.site_profile import GOOGLE_PROFILE
+    from scripts.site_engine.site_types import SiteCapability
     policy = GOOGLE_PROFILE.action_policies.get(SiteCapability.SUBMIT)
     assert policy is not None
     assert policy.requires_approval is True
 
 
 def test_upload_action_approval_required():
-    from scripts.google.profile import GOOGLE_PROFILE
-    from scripts.site_engine.types import SiteCapability
+    from scripts.google.site_profile import GOOGLE_PROFILE
+    from scripts.site_engine.site_types import SiteCapability
     policy = GOOGLE_PROFILE.action_policies.get(SiteCapability.UPLOAD)
     assert policy is not None
     assert policy.requires_approval is True
 
 
 def test_publish_action_approval_required():
-    from scripts.google.profile import GOOGLE_PROFILE
-    from scripts.site_engine.types import SiteCapability
+    from scripts.google.site_profile import GOOGLE_PROFILE
+    from scripts.site_engine.site_types import SiteCapability
     policy = GOOGLE_PROFILE.action_policies.get(SiteCapability.PUBLISH)
     assert policy is not None
     assert policy.requires_approval is True
 
 
 def test_read_not_approval_required():
-    from scripts.google.profile import GOOGLE_PROFILE
-    from scripts.site_engine.types import SiteCapability
+    from scripts.google.site_profile import GOOGLE_PROFILE
+    from scripts.site_engine.site_types import SiteCapability
     policy = GOOGLE_PROFILE.action_policies.get(SiteCapability.READ)
     assert policy is None or policy.requires_approval is False
 
 
 def test_oauth_is_user_direct():
-    from scripts.google.profile import GOOGLE_PROFILE
-    from scripts.site_engine.types import GateDecision, SiteCapability
+    from scripts.google.site_profile import GOOGLE_PROFILE
+    from scripts.site_engine.site_types import GateDecision, SiteCapability
     policy = GOOGLE_PROFILE.action_policies.get(SiteCapability.SIGN)
     assert policy is not None
     assert policy.gate == GateDecision.USER_DIRECT_REQUIRED

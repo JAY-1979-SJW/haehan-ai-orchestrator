@@ -214,6 +214,11 @@
    "file": "scripts/fetch_tax_precedent_summary.py",
    "reason": "W16 평면 → 기능 폴더(ai_orchestrator/dev_reg·gongmu, folder_registry 승인 폴더) 이동 — 시험 import 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0). 새 실행은 python -m",
    "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/form/profile.py",
+   "reason": "A005 표준 모듈 가림 해소 — 같은 폴더 안 이름 변경(profile → personal_profile). 명시 참조(-m 사용 안내·import·시험)는 새 이름으로 수정, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml 검색 0)",
+   "date": "2026-10-08"
   }
  ]
 }

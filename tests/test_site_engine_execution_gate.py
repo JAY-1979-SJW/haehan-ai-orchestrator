@@ -11,7 +11,7 @@ from scripts.site_engine.execution_gate import (
     resolve_execution_location,
 )
 from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile
-from scripts.site_engine.types import (
+from scripts.site_engine.site_types import (
     ExecutionLocation,
     GateDecision,
     SiteCapability,
@@ -235,8 +235,8 @@ def test_no_sensitive_value_in_result():
 
 def test_types_import_no_conflict():
     from scripts.site_engine.execution_gate import ExecutionDecision as ED
-    from scripts.site_engine.types import GateDecision as GD
-    from scripts.site_engine.types import SiteCapability as SC
+    from scripts.site_engine.site_types import GateDecision as GD
+    from scripts.site_engine.site_types import SiteCapability as SC
 
     assert GD.BLOCKED != ED.BLOCKED or True  # 다른 enum, 값 충돌 없음
     assert SC.READ is not None

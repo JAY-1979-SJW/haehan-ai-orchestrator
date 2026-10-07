@@ -6,7 +6,7 @@ from scripts.site_engine.execution_gate import (
     ExecutionGateResult,
     evaluate_execution_gate,
 )
-from scripts.site_engine.types import SiteCapability
+from scripts.site_engine.site_types import SiteCapability
 
 
 def gate_google_read() -> ExecutionGateResult:

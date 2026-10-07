@@ -85,7 +85,7 @@ class NaverServices:
     @property
     def calendar(self):
         if self._calendar is None:
-            from scripts.naver.calendar import NaverCalendar
+            from scripts.naver.calendar_tasks import NaverCalendar
             self._calendar = NaverCalendar(self.page)
         return self._calendar
 

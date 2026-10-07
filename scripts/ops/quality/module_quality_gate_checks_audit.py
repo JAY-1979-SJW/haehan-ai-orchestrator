@@ -64,7 +64,7 @@ def check_google_workspace_module_baseline_contract() -> tuple[bool, str]:
 
 def check_google_gmail_function_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "-m", "scripts.google.audit_gmail_function_contract"],  # 직접 경로 실행은 scripts/google/calendar.py 가 표준 calendar 를 가림
+        [PY, "scripts/google/audit_gmail_function_contract.py"],
         timeout=120,
     )
     if not ok:

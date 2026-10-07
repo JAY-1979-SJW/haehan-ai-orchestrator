@@ -19,6 +19,7 @@ select = [
     "PLR0912",  # too-many-branches (STD-08 동일 근거)
     "PLR0913",  # too-many-arguments (STD-08, CLAUDE.md 4장 "인자 6개")
     "PLR0915",  # too-many-statements (STD-08)
+    "A005",     # stdlib-module-shadowing — 표준 라이브러리와 같은 이름의 모듈 금지(scripts/google 의 calendar 모듈이 표준 calendar 를 가려 직접 실행이 깨진 사고 → 이름 변경, 2026-10-08)
 ]
 ignore = [
     "E501",   # line too long — 120자 제한으로 완화
@@ -38,6 +39,10 @@ ignore = [
 [lint.mccabe]
 # 32. Claude 개발표준/project/ruff.toml 과 동일 임계값(2026-09-29 신규 도입, STD-08).
 max-complexity = 10
+
+[lint.flake8-builtins]
+# strict: 패키지 경로가 아니라 파일 이름만으로 판정 — 그 폴더의 스크립트를 직접 실행하면 sys.path[0] 이 그 폴더라 하위 모듈도 표준 모듈을 가린다.
+strict-checking = true
 
 [lint.pylint]
 max-args = 6

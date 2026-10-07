@@ -56,7 +56,7 @@ from scripts.site_engine.form_resolver import (
 )
 from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile
 from scripts.site_engine.registry import SiteProfileRegistry, get_default_registry
-from scripts.site_engine.types import (
+from scripts.site_engine.site_types import (
     ExecutionLocation,
     GateDecision,
     SiteActionKind,

@@ -22,14 +22,12 @@ import json
 import sqlite3
 import threading
 from datetime import datetime
-from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
-ROOT = Path(__file__).resolve().parents[4]
 DB_PATH = data_dir() / "cdp.db"
 
 
@@ -225,20 +223,14 @@ class Scheduler:
         """1회 실행 — 등록된 작업 중 실행 시점 도래한 것 처리."""
         now = datetime.now()
         executed = []
+        updates: list[tuple[str, str, int]] = []
         for task in self.list_tasks():
             if self._should_run(task, now):
                 _log.info("[scheduler] 실행: %s", task["name"])
                 result = self._execute(task)
-                # 결과 저장
-                conn = sqlite3.connect(str(DB_PATH))
-                conn.execute(
-                    """UPDATE scheduled_tasks
-                       SET last_run = ?, last_result = ?, run_count = run_count + 1
-                       WHERE id = ?""",
-                    (now.isoformat(timespec="seconds"), json.dumps(result, ensure_ascii=False)[:1000], task["id"]),
+                updates.append(
+                    (now.isoformat(timespec="seconds"), json.dumps(result, ensure_ascii=False)[:1000], task["id"])
                 )
-                conn.commit()
-                conn.close()
                 executed.append({"task": task["name"], "result": result})
                 log_critical(
                     "OTHER",
@@ -247,6 +239,18 @@ class Scheduler:
                     ok=result.get("ok"),
                     mode="scheduler_run",
                 )
+        if updates:  # 결과 저장 — 연결 한 번에 모아서(EFF-03: 반복문 안 sqlite3.connect 금지)
+            conn = sqlite3.connect(str(DB_PATH))
+            try:
+                conn.executemany(
+                    """UPDATE scheduled_tasks
+                       SET last_run = ?, last_result = ?, run_count = run_count + 1
+                       WHERE id = ?""",
+                    updates,
+                )
+                conn.commit()
+            finally:
+                conn.close()
         return executed
 
     def start(self, interval_s: int = 60) -> None:

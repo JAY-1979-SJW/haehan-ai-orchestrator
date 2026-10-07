@@ -16,7 +16,7 @@
 실제 구현은 모든 값을 일관되게 암호화.
 
 사용:
-    from scripts.form.profile import get_value, set_profile, get_profile
+    from scripts.form.personal_profile import get_value, set_profile, get_profile
     set_profile(name="홍길동", email="...", ...)
     val = get_value("name")             # "홍길동"
     val = get_value("default_id", site="naver")  # 사이트별 우선
@@ -239,7 +239,7 @@ def _cmd_set_override(site: str) -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("사용법: python -m scripts.form.profile <set|show|delete|override> [args]")
+        print("사용법: python -m scripts.form.personal_profile <set|show|delete|override> [args]")
         print("  set                              base 프로필 입력")
         print("  show [site]                      현재 값 (마스킹)")
         print("  override <site>                  사이트별 ID/PW 오버라이드")

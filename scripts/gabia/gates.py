@@ -17,11 +17,11 @@ from scripts.site_engine.execution_gate import (
     ExecutionGateResult,
     evaluate_execution_gate,
 )
-from scripts.site_engine.types import SiteCapability
+from scripts.site_engine.site_types import SiteCapability
 
 # profile을 lazy import로 순환 방지 후 전달 — BLOCKED/USER_DIRECT 정책을 정확히 적용
 def _profile():
-    from scripts.gabia.profile import GABIA_PROFILE
+    from scripts.gabia.site_profile import GABIA_PROFILE
     return GABIA_PROFILE
 
 

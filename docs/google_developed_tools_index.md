@@ -44,7 +44,7 @@ developed, gated, or verified in this repo. Check this index and
 | Gmail list/analyze/compose | `python scripts\cdp_client.py google mail <list|analyze|compose>` | read/prepare | implemented | `scripts/google/workspace/gmail.py`, `scripts/google/gmail_analysis.py` | console/data |
 | Gmail send gate | `python scripts\cdp_client.py google mail send ...` | approval/user-only | gated | `scripts/google/workspace/gmail.py`, `scripts/common/gate.py` | approval-gated action |
 | Drive wrapper | `python scripts\cdp_client.py google drive <list|search|file_info>` | read/partial | implemented partial | `scripts/google/workspace/drive.py`, `scripts/google/drive.py` | console/data |
-| Calendar wrapper | `python scripts\cdp_client.py google calendar <today|search>` | read/partial | implemented partial | `scripts/google/workspace/calendar.py`, `scripts/google/calendar.py` | console/data |
+| Calendar wrapper | `python scripts\cdp_client.py google calendar <today|search>` | read/partial | implemented partial | `scripts/google/workspace/calendar_tasks.py`, `scripts/google/calendar_tasks.py` | console/data |
 | Docs wrapper | `python scripts\cdp_client.py google docs <recent|create_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/docs.py`, `scripts/google/docs.py` | console/data |
 | Sheets wrapper | `python scripts\cdp_client.py google sheets <recent|update_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/sheets.py`, `scripts/google/sheets.py` | console/data |
 | Workspace wrappers | Workspace router for Slides, Forms, Meet, Chat, Contacts, Keep, Tasks | read/prepare | implemented | `scripts/google/workspace/*`, `scripts/google/workspace/router.py` | console/data |

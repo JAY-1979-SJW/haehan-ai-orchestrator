@@ -726,7 +726,7 @@ class SmartStore:
     def image(self):
         """이미지 일괄 처리."""
         if self._image is None:
-            from scripts.naver.automation.platform.image_processor import ImageProcessor
+            from scripts.naver.automation.image_processor import ImageProcessor
 
             self._image = ImageProcessor()
         return self._image
@@ -744,7 +744,7 @@ class SmartStore:
     def error_recovery(self):
         """에러 자동 복구."""
         if self._error_recovery is None:
-            from scripts.naver.automation.platform.error_recovery import ErrorRecovery
+            from scripts.naver.automation.error_recovery import ErrorRecovery
 
             self._error_recovery = ErrorRecovery(self.page)
         return self._error_recovery
@@ -753,7 +753,7 @@ class SmartStore:
     def scheduler(self):
         """정기 실행 스케줄러."""
         if self._scheduler is None:
-            from scripts.naver.automation.platform.scheduler import Scheduler
+            from scripts.naver.automation.scheduler import Scheduler
 
             self._scheduler = Scheduler()
         return self._scheduler
@@ -762,7 +762,7 @@ class SmartStore:
     def session(self):
         """세션 자동 관리."""
         if self._session is None:
-            from scripts.naver.automation.platform.session_manager import SessionManager
+            from scripts.naver.automation.session_manager import SessionManager
 
             self._session = SessionManager(self.page)
         return self._session

@@ -24,7 +24,7 @@
 ## 2. Approval Gate (승인 게이트)
 
 **담당 책임:** 사용자 승인 요청, 승인 기록, 승인 상태 관리  
-**파일:** `scripts/site_engine/execution_gate.py`, `scripts/site_engine/types.py`
+**파일:** `scripts/site_engine/execution_gate.py`, `scripts/site_engine/site_types.py`
 
 | 항목 | 내용 |
 |------|------|
@@ -39,7 +39,7 @@
 ## 3. Permission Model (권한 모델)
 
 **담당 책임:** 역할별 허용 행동 정의, gate decision 분류  
-**파일:** `scripts/site_engine/types.py` (GateDecision), `docs/architecture/permission_approval_model.md`
+**파일:** `scripts/site_engine/site_types.py` (GateDecision), `docs/architecture/permission_approval_model.md`
 
 | 항목 | 내용 |
 |------|------|
@@ -177,7 +177,7 @@
 |---------|------|------|---------|
 | Action Registry | `scripts/site_engine/registry.py` | ✅ | ✅ |
 | Approval Gate | `scripts/site_engine/execution_gate.py` | ✅ | ✅ |
-| Permission Model | `scripts/site_engine/types.py` | ✅ | ✅ |
+| Permission Model | `scripts/site_engine/site_types.py` | ✅ | ✅ |
 | Workflow/Task Queue | `scripts/site_engine/workflow_runner.py` | ✅ | 부분 |
 | Local Agent Gateway | `scripts/local_agent/router.py` | ✅ | 부분 |
 | Browser Execution Gateway | `scripts/site_engine/adapters/` | ✅ | ✅ |

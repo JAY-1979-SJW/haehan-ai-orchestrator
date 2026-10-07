@@ -17,14 +17,12 @@ import traceback
 from collections.abc import Callable
 from contextlib import suppress
 from datetime import datetime
-from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
-ROOT = Path(__file__).resolve().parents[4]
 DB_PATH = data_dir() / "cdp.db"
 
 
@@ -214,7 +212,7 @@ class ErrorRecovery:
         conn = sqlite3.connect(str(DB_PATH))
         conn.row_factory = sqlite3.Row
         sql = "SELECT * FROM error_log"
-        args = []
+        args: list[str | int] = []
         if category:
             sql += " WHERE category = ?"
             args.append(category)

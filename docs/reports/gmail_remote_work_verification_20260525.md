@@ -34,7 +34,7 @@ Conclusion:
 ### Gmail Safety Contract
 
 Commands rerun on 2026-05-25:
-- `python -m scripts.google.audit_gmail_function_contract`
+- `python scripts/google/audit_gmail_function_contract.py`
 - `python -m pytest tests/test_google_gmail_function_contract.py tests/test_google_gmail_analysis.py -q`
 
 Observed result:

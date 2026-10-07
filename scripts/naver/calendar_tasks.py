@@ -3,7 +3,7 @@
 URL: https://calendar.naver.com/
 
 사용:
-  from scripts.naver.calendar import NaverCalendar
+  from scripts.naver.calendar_tasks import NaverCalendar
   c = NaverCalendar(page)
   c.list_events(from_date, to_date)
   c.add_event(title, start, end, location, memo)

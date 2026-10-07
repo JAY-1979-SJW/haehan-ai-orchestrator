@@ -32,7 +32,7 @@ class BlogCommonMixin:
         PostWriteForm.naver 등 iframe 미사용 페이지는 self._page 반환.
 
         실검증(2026-06-23): PostView.naver 는 mainFrame iframe 사용 확인.
-        셀렉터 상수: scripts.naver.blog.selectors.MAINFRAME_NAME
+        셀렉터 상수: scripts.naver.blog.page_selectors.MAINFRAME_NAME
         """
         fr = self._page.frame(name="mainFrame")
         return fr if fr else self._page

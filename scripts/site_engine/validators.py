@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from scripts.site_engine.action_planner import ActionPlan, ActionPlanStatus
-from scripts.site_engine.types import GateDecision
+from scripts.site_engine.site_types import GateDecision
 from scripts.site_engine.workflow_runner import WorkflowRunPlan
 
 _SENSITIVE_PATTERNS = frozenset(

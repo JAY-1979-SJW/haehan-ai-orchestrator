@@ -57,17 +57,17 @@ from playwright.sync_api import Page
 
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
-from scripts.naver.blog.selectors import (
+from scripts.naver.blog.page_selectors import (
     EDITOR_BODY as BODY_SEL,
 )
-from scripts.naver.blog.selectors import (
+from scripts.naver.blog.page_selectors import (
     EDITOR_DRAFT_CANCEL,
     EDITOR_DRAFT_POPUP,
 )
-from scripts.naver.blog.selectors import (
+from scripts.naver.blog.page_selectors import (
     EDITOR_TITLE as TITLE_SEL,
 )
-from scripts.naver.blog.selectors import (
+from scripts.naver.blog.page_selectors import (
     EDITOR_VISIBILITY_MAP as VISIBILITY_MAP,
 )
 

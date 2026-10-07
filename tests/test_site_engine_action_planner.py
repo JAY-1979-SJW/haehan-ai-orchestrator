@@ -12,7 +12,7 @@ from scripts.site_engine.execution_gate import (
     ExecutionGateResult,
     GateReason,
 )
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 
 
 def _spec(cap: SiteCapability, action: str, step_id: str = "s1", field_name: str = "") -> dict:

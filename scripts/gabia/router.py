@@ -24,7 +24,7 @@ from .gates import (  # noqa: F401
     gate_gabia_payment,
     gate_gabia_credential_extract,
 )
-from .profile import GABIA_PROFILE  # noqa: F401
+from .site_profile import GABIA_PROFILE  # noqa: F401
 from .validators import validate_gabia_no_plain_secret  # noqa: F401
 
 __status__ = {

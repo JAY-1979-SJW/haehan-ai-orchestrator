@@ -100,7 +100,7 @@ notes
 | Connection recovery probes | local agent diagnostics | server auth/heartbeat/dispatch probes | locked | redacted credentials only | safe recovery plan, no indefinite auth retry | `python scripts/ops/audit_local_agent_connection_recovery_baseline.py` |
 | Desktop local server | desktop UI/runtime | `desktop/local_server.py` on local host | locked | subordinate to server contract | no persistent autostart without approval | `python scripts/ops/audit_desktop_auth_runtime_baseline_contract.py` |
 | CDP/browser attach | local-agent/browser tools | local browser discovery endpoints | locked | loopback/read-only discovery unless approved | dedicated profile, redacted tab data | `python scripts/ops/dry_run_local_agent_cdp_attach.py` |
-| Gmail functions | Google scripts/workflow | Gmail read/draft operations | locked | no final submit without approval | draft-only for send/reply, delete/star blocked | `python -m scripts.google.audit_gmail_function_contract` |
+| Gmail functions | Google scripts/workflow | Gmail read/draft operations | locked | no final submit without approval | draft-only for send/reply, delete/star blocked | `python scripts/google/audit_gmail_function_contract.py` |
 | Site work functions | site modules | Google/Naver/SmartStore/Hiworks/Gabia/YouTube | locked | approval/user-direct gates | state-changing work approval-gated or user-direct | `python scripts/ops/audit_site_work_function_baseline.py` |
 | Legacy scheduled autostart | old desktop/CDP scheduler helpers | Windows Task Scheduler/startup | deprecated | none | cleanup-only helpers | `python scripts/ops/audit_legacy_app_runtime_cleanup.py` |
 

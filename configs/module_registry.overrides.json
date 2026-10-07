@@ -447,7 +447,7 @@
   "reason": "eum.cw.or.kr 전용 ID/PW 자동로그인 구현(WEBLOG400M00 URL·human_input·web_connector 호출) — 정책 판단이 아니라 사이트별 자동화, 이름만 auth라 L2로 오분류. L5로 정정.",
   "source": "manual"
  },
- "scripts/g2b/profile.py": {
+ "scripts/g2b/site_profile.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "G2B 사이트 프로필 — action 분류 상수(READ_ONLY_ACTIONS 등) 골격 정책 선언만 포함, 실제 접속/로그인/투찰 구현 없음(docstring 명시). L2 정정.",
@@ -459,7 +459,7 @@
   "reason": "가비아 사이트 전용 로그인 자동화(login_detector 호출) — L2 아님, 사이트 모듈. 이름만 auth라 오분류.",
   "source": "manual"
  },
- "scripts/gabia/profile.py": {
+ "scripts/gabia/site_profile.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "가비아 SiteProfile 선언(SiteActionPolicy·GateDecision·SiteCapability) — 위험도·승인 정책 선언만 포함하고 실제 자동화 코드 없음. L2(정책) 정의에 부합. L5 저신뢰 기본값 오분류를 L2로 정정.",
@@ -714,7 +714,7 @@
   "role": "contract",
   "reason": "외부 import 없는 키워드 규칙 분류 함수(_rule_based 뿐) — L5 로 오분류, db.py(L7)가 import"
  },
- "scripts/naver/automation/platform/error_recovery.py": {
+ "scripts/naver/automation/error_recovery.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류"

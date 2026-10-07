@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 
 
 class BrowserActionKind(str, Enum):

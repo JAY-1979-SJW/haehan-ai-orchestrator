@@ -9137,7 +9137,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/form/profile.py": {
+  "scripts/form/personal_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -9177,7 +9177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/g2b/profile.py": {
+  "scripts/g2b/site_profile.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "g2b",
@@ -9241,7 +9241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gabia/profile.py": {
+  "scripts/gabia/site_profile.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "gabia",
@@ -9433,7 +9433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/calendar.py": {
+  "scripts/google/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -9849,7 +9849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/profile.py": {
+  "scripts/google/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -10025,7 +10025,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/workspace/calendar.py": {
+  "scripts/google/workspace/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -10401,7 +10401,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/hiworks/profile.py": {
+  "scripts/hiworks/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
@@ -11065,6 +11065,22 @@
    "confidence": "low",
    "source": "rule"
   },
+  "scripts/naver/automation/error_recovery.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/naver/automation/image_processor.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
   "scripts/naver/automation/integration/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -11129,46 +11145,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/platform/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/error_recovery.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/naver/automation/platform/image_processor.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/scheduler.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "naver",
-   "reason": "DB·저장 신호",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/session_manager.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/naver/automation/review_automation.py": {
    "layer": "L5",
    "role": "site_module",
@@ -11177,12 +11153,28 @@
    "confidence": "low",
    "source": "rule"
   },
+  "scripts/naver/automation/scheduler.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "naver",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/naver/automation/seo_optimizer.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/automation/session_manager.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "high",
    "source": "rule"
   },
   "scripts/naver/automation/workflow.py": {
@@ -11673,7 +11665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/blog/selectors.py": {
+  "scripts/naver/blog/page_selectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -12161,7 +12153,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/calendar.py": {
+  "scripts/naver/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -12545,7 +12537,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail/imap/mailbox.py": {
+  "scripts/naver/mail/imap/imap_mailbox.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -13161,7 +13153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/smartstore/product/selectors.py": {
+  "scripts/naver/smartstore/product/page_selectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
@@ -15369,7 +15361,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/site_engine/types.py": {
+  "scripts/site_engine/site_types.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -15673,7 +15665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/youtube/profile.py": {
+  "scripts/youtube/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
