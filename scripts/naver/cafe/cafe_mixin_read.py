@@ -10,7 +10,7 @@ import re
 import time
 from typing import TYPE_CHECKING, Any
 
-from .cafe_mixin_common import _js
+from scripts.naver.cafe.cafe_mixin_common import _js
 
 
 class CafeReadMixin:

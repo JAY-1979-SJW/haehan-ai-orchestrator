@@ -40,6 +40,8 @@
         --cafe https://cafe.naver.com/0moo --popular
 """
 
+from __future__ import annotations
+
 import argparse
 import csv
 import json
@@ -52,7 +54,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
 from ai_orchestrator.local_agent.browser._js_dir import JS_DIR
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # 엔진 ↔ 믹스인 import 순환을 피하려고 타입 힌트로만 쓰고 실제 사용은 main 안에서 불러온다(T4 C12a)
+    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
 
 def _load_js(name: str) -> str:
@@ -323,6 +328,8 @@ def main():
     args = parser.parse_args()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         # club_id 추출

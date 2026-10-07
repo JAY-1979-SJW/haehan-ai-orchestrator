@@ -4569,15 +4569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py": {
+  "scripts/naver/blog/blog_mixin.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -4585,7 +4577,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_collect.py": {
+  "scripts/naver/blog/blog_mixin_collect.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -4593,7 +4585,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_common.py": {
+  "scripts/naver/blog/blog_mixin_common.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -4601,7 +4593,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_download.py": {
+  "scripts/naver/blog/blog_mixin_download.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -4609,7 +4601,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_neighbor.py": {
+  "scripts/naver/blog/blog_mixin_neighbor.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -4617,7 +4609,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_read.py": {
+  "scripts/naver/blog/blog_mixin_read.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -4625,7 +4617,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py": {
+  "scripts/naver/blog/blog_mixin_write.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -4633,7 +4625,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py": {
+  "scripts/naver/cafe/cafe_mixin.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "naver_cafe",
@@ -4641,7 +4633,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_activity.py": {
+  "scripts/naver/cafe/cafe_mixin_activity.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4649,7 +4641,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py": {
+  "scripts/naver/cafe/cafe_mixin_article.py": {
    "layer": "L4",
    "role": "site_module",
    "domain": "naver_cafe",
@@ -4657,7 +4649,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_common.py": {
+  "scripts/naver/cafe/cafe_mixin_common.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4665,7 +4657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_media.py": {
+  "scripts/naver/cafe/cafe_mixin_media.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4673,7 +4665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_member.py": {
+  "scripts/naver/cafe/cafe_mixin_member.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4681,7 +4673,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_read.py": {
+  "scripts/naver/cafe/cafe_mixin_read.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4697,7 +4689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/mail_mixin.py": {
+  "scripts/naver/mail/mail_mixin.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",

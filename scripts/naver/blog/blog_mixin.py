@@ -7,12 +7,12 @@ MRO 로 해결된다. 공개 API(BlogMixin) 와 BrowserAgent 다중상속은 무
 """
 from __future__ import annotations
 
-from .blog_mixin_read import BlogReadMixin
-from .blog_mixin_write import BlogWriteMixin
-from .blog_mixin_neighbor import BlogNeighborMixin
-from .blog_mixin_collect import BlogCollectMixin
-from .blog_mixin_download import BlogDownloadMixin
-from .blog_mixin_common import BlogCommonMixin
+from scripts.naver.blog.blog_mixin_read import BlogReadMixin
+from scripts.naver.blog.blog_mixin_write import BlogWriteMixin
+from scripts.naver.blog.blog_mixin_neighbor import BlogNeighborMixin
+from scripts.naver.blog.blog_mixin_collect import BlogCollectMixin
+from scripts.naver.blog.blog_mixin_download import BlogDownloadMixin
+from scripts.naver.blog.blog_mixin_common import BlogCommonMixin
 
 
 class BlogMixin(

@@ -12,7 +12,7 @@ import time
 from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
-from .blog_mixin_common import _js
+from scripts.naver.blog.blog_mixin_common import _js
 
 _BLOG_POSTS_DOM_JS = """
             (() => {

@@ -116,12 +116,12 @@
   "role": "browser_engine",
   "reason": "BrowserAgent(L4)를 구동해 사이트맵을 탐지하는 실행기 — L1 contract 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py": {
+ "scripts/naver/blog/blog_mixin.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 블로그 전용 동작을 하드코딩한 믹스인(domain=naver_blog) — L4 로 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py": {
+ "scripts/naver/cafe/cafe_mixin.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
@@ -644,7 +644,7 @@
   "role": "persistence",
   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
- "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py": {
+ "scripts/naver/cafe/cafe_mixin_article.py": {
   "layer": "L4",
   "role": "site_module",
   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L5 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py(역방향) 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
@@ -754,32 +754,32 @@
   "role": "workflow",
   "reason": "웹메일 발송을 승인 후 수행하는 업무 흐름 스크립트 — L4 browser_engine 으로 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_collect.py": {
+ "scripts/naver/blog/blog_mixin_collect.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_common.py": {
+ "scripts/naver/blog/blog_mixin_common.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_download.py": {
+ "scripts/naver/blog/blog_mixin_download.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_neighbor.py": {
+ "scripts/naver/blog/blog_mixin_neighbor.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_read.py": {
+ "scripts/naver/blog/blog_mixin_read.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
  },
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py": {
+ "scripts/naver/blog/blog_mixin_write.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "writer.py·selectors.py(L5)를 호출하는 네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"

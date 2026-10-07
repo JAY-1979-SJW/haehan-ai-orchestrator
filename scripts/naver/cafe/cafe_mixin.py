@@ -7,11 +7,11 @@ CafeMixin 은 read/media/article/member/activity 서브믹스인을 다중상속
 """
 from __future__ import annotations
 
-from .cafe_mixin_read import CafeReadMixin
-from .cafe_mixin_media import CafeMediaMixin
-from .cafe_mixin_article import CafeArticleMixin
-from .cafe_mixin_member import CafeMemberMixin
-from .cafe_mixin_activity import CafeActivityMixin
+from scripts.naver.cafe.cafe_mixin_read import CafeReadMixin
+from scripts.naver.cafe.cafe_mixin_media import CafeMediaMixin
+from scripts.naver.cafe.cafe_mixin_article import CafeArticleMixin
+from scripts.naver.cafe.cafe_mixin_member import CafeMemberMixin
+from scripts.naver.cafe.cafe_mixin_activity import CafeActivityMixin
 
 
 class CafeMixin(

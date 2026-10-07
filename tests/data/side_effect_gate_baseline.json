@@ -1,5 +1,5 @@
 [
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py::BlogWriteMixin.blog_write_post",
+ "scripts/naver/blog/blog_mixin_write.py::BlogWriteMixin.blog_write_post",
  "ai_orchestrator/routers/naver_mailbox_router.py::send_draft",
  "ai_orchestrator/services/scheduled_job_actions.py::_run_blog_publish.job",
  "ai_orchestrator/services/scheduled_job_actions.py::_run_naver_mail_send",

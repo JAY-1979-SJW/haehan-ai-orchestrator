@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .cafe_mixin_common import _js
+from scripts.naver.cafe.cafe_mixin_common import _js
 
 # 네이버 카페 파일 호스트만 첨부파일로 인정
 _CAFE_FILE_HOSTS = (
@@ -377,7 +377,8 @@ class CafeArticleMixin:
         frames = self._page.frames
 
         article_frames = [f for f in frames if _is_article_frame_for(f, _target_aid)]
-        other_frames = [f for f in frames if f not in article_frames]
+        article_frame_ids = {id(f) for f in article_frames}  # 프레임 객체는 동일성으로 비교(= 이전 list `in` 과 같은 의미, O(1))
+        other_frames = [f for f in frames if id(f) not in article_frame_ids]
         ordered = article_frames + other_frames
 
         # 본문이 있는 아티클 프레임(af) 탐색
@@ -386,7 +387,7 @@ class CafeArticleMixin:
             if st["body"]:
                 break
             try:
-                _scan_frame_for_title_body(frame, frame in article_frames, st)
+                _scan_frame_for_title_body(frame, id(frame) in article_frame_ids, st)
             except Exception:  # noqa: BLE001, S112
                 continue
 

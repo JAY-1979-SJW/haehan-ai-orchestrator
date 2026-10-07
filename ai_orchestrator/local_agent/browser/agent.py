@@ -90,13 +90,11 @@ class PageInfo:
 
 
 # ── BrowserAgent ──────────────────────────────────────────────────────────────
-from ai_orchestrator.local_agent.browser.mixins import (  # noqa: E402
-    BlogMixin,
-    CafeMixin,
-    CalendarMixin,
-    MailMixin,
-    MyBoxMixin,
-)
+from ai_orchestrator.local_agent.browser.mixins.calendar_mixin import CalendarMixin  # noqa: E402
+from ai_orchestrator.local_agent.browser.mixins.mybox_mixin import MyBoxMixin  # noqa: E402
+from scripts.naver.blog.blog_mixin import BlogMixin  # noqa: E402
+from scripts.naver.cafe.cafe_mixin import CafeMixin  # noqa: E402
+from scripts.naver.mail.mail_mixin import MailMixin  # noqa: E402
 
 
 class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):

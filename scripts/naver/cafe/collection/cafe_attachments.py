@@ -23,6 +23,8 @@
         --pages 2 --download --out data/downloads
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import re
@@ -33,7 +35,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
 from ai_orchestrator.local_agent.browser._js_dir import JS_DIR
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # 엔진 ↔ 믹스인 import 순환을 피하려고 타입 힌트로만 쓰고 실제 사용은 main 안에서 불러온다(T4 C12a)
+    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
 _DEFAULT_DOWNLOAD_DIR = "data/downloads"
 
@@ -289,6 +294,8 @@ def main():
     if not args.command:
         parser.print_help()
         sys.exit(1)
+
+    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         if args.command == "list":
