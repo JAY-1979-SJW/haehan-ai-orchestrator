@@ -2,7 +2,7 @@
 
 사용:
   from scripts.naver.cafe import NaverCafe
-  from scripts.browser.page.web_connector import get_page
+  from scripts.browser.cdp.connection import get_page
 
   c = NaverCafe(get_page())
   c.open_my_cafes()                # 내 카페 목록
