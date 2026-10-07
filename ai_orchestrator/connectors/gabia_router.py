@@ -13,14 +13,15 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from pathlib import Path
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from ..paths import repo_root
+
 gabia_router = APIRouter(prefix="/gabia", tags=["gabia"])
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 
 
 # ── 응답 모델 ─────────────────────────────────────────────────────────────────
