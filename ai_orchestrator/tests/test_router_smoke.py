@@ -58,3 +58,42 @@ def test_approve_unknown_token_404():
         json={"approved_by": "tester"},
     )
     assert r.status_code == 404
+
+
+def test_health_instance_id_null_when_unset(monkeypatch):
+    monkeypatch.delenv("HAEHAN_INSTANCE_ID", raising=False)
+    body = client.get("/api/v1/health").json()
+    assert body["instance_id"] is None
+    assert body["status"] == "ok"  # 기존 필드 유지(하위 호환)
+
+
+def test_health_instance_id_echoes_app_token(monkeypatch):
+    monkeypatch.setenv("HAEHAN_INSTANCE_ID", "0123456789abcdef0123456789abcdef")
+    assert client.get("/api/v1/health").json()["instance_id"] == "0123456789abcdef0123456789abcdef"
+
+
+def test_health_instance_id_rejects_malformed(monkeypatch):
+    monkeypatch.setenv("HAEHAN_INSTANCE_ID", "bad value; <script>")
+    assert client.get("/api/v1/health").json()["instance_id"] is None
+
+
+def test_parent_watchdog_fires_when_parent_gone(monkeypatch):
+    import subprocess
+    import threading
+
+    from ai_orchestrator.server import desktop_entry
+
+    child = subprocess.Popen([sys.executable, "-c", "pass"])
+    child.wait()  # 이미 끝난 PID = 사라진 부모
+    monkeypatch.setenv("HAEHAN_PARENT_PID", str(child.pid))
+    fired = threading.Event()
+    t = desktop_entry.start_parent_watchdog(poll_seconds=0.05, on_gone=fired.set)
+    assert t is not None
+    assert fired.wait(5)
+
+
+def test_parent_watchdog_off_without_env(monkeypatch):
+    from ai_orchestrator.server import desktop_entry
+
+    monkeypatch.delenv("HAEHAN_PARENT_PID", raising=False)
+    assert desktop_entry.start_parent_watchdog() is None

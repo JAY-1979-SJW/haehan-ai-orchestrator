@@ -44,8 +44,22 @@ test.describe("새 PC 첫 설치 — 데스크톱 자동 로그인(B안)", () =>
     tmpUserData = fs.mkdtempSync(path.join(os.tmpdir(), "haehan-e2e-userdata-"));
   });
 
-  test.afterEach(() => {
-    fs.rmSync(tmpUserData, { recursive: true, force: true });
+  test.afterEach(async () => {
+    // 앱은 종료 시 자식 서버를 트리째 끝내고 기다린다(main.js before-quit). 그래도 Windows 는 프로세스 종료 직후
+    // 파일 핸들(백신·인덱서 포함) 해제가 잠깐 늦을 수 있어 EBUSY/EPERM 에 한해 짧게 재시도한다.
+    // 끝내 못 지우면 그대로 실패시킨다(서버가 실제로 남은 것이므로 숨기지 않는다).
+    let lastErr: unknown;
+    for (let i = 0; i < 10; i++) {
+      try {
+        fs.rmSync(tmpUserData, { recursive: true, force: true });
+        return;
+      } catch (e: any) {
+        lastErr = e;
+        if (!["EBUSY", "EPERM", "ENOTEMPTY"].includes(e?.code)) throw e;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
+    throw lastErr;
   });
 
   async function getUiPage(app: any): Promise<Page> {

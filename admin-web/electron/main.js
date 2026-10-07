@@ -40,9 +40,9 @@ const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./l
 const { createTray, updateAutoLaunchCheck, hasTray, setSystemChromeSupport } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
 const { Menu, Notification, dialog, session, webContents } = require("electron");
-const { startFastAPIServer, stopFastAPIServer, FASTAPI_PORT } = require("./lib/fastapi_server");
+const { startFastAPIServer, stopFastAPIServer, getFastAPILastError, FASTAPI_PORT } = require("./lib/fastapi_server");
 const { refreshDesktopSession } = require("./lib/desktop_session");
-const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
+const { startNextServer, stopNextServer, getNextLastError } = require("./lib/nextjs_server");
 const claudeMcp = require("./lib/claude_mcp");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
 const { startCdpBrowser, stopCdpBrowser, isCdpAlive, setUseSystemChromeProfile, systemChromeProfileSupport, openInCdpBrowser } = require("./lib/cdp_manager");
@@ -197,7 +197,7 @@ if (!gotLock) {
     if (!serverReady) {
       failStartup(
         "서버 시작 실패",
-        "Haehan AI 서버를 시작할 수 없습니다.\n" +
+        "Haehan AI 서버를 시작할 수 없습니다.\n" + (getFastAPILastError() ? getFastAPILastError() + "\n" : "") +
         "로그 파일(%APPDATA%\\Haehan AI\\logs\\fastapi.log)을 확인하세요."
       );
       return;
@@ -233,7 +233,7 @@ if (!gotLock) {
     if (!nextReady) {
       failStartup(
         "UI 서버 시작 실패",
-        "Haehan AI UI 서버를 시작할 수 없습니다.\n" +
+        "Haehan AI UI 서버를 시작할 수 없습니다.\n" + (getNextLastError() ? getNextLastError() + "\n" : "") +
         "로그 파일(%APPDATA%\\Haehan AI\\logs\\nextjs.log)을 확인하세요."
       );
       return;
@@ -426,10 +426,13 @@ app.on("before-quit", (event) => {
   if (cdpWatchdogTimer) clearInterval(cdpWatchdogTimer);
   setQuiting(true);
   stopAgent();
-  stopFastAPIServer();
-  stopNextServer();
   stopCdpBrowser();
-  setTimeout(() => app.quit(), 3200);
+  // 두 서버가 실제로 끝날 때까지 기다린 뒤 종료한다(고정 대기 대신) — 서버가 userData 파일·포트를 쥔 채 남지 않게.
+  // 한쪽이 멈춰도 앱이 영원히 안 끝나지 않도록 상한을 둔다.
+  Promise.race([
+    Promise.all([stopFastAPIServer(), stopNextServer()]),
+    new Promise((r) => setTimeout(r, 8000)),
+  ]).finally(() => app.quit());
 });
 
 // 트레이가 있으면 창을 닫아도 백그라운드 상주(트레이에서 다시 열기)

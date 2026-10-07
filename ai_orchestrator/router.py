@@ -233,14 +233,25 @@ def _build_value(env_name: str, pattern: re.Pattern[str]) -> str:
     return value if pattern.fullmatch(value) else _UNKNOWN_BUILD
 
 
+_INSTANCE_ID_RE = re.compile(r"^[0-9A-Za-z\-]{8,64}$")
+
+
+def _instance_id() -> str | None:
+    value = os.environ.get("HAEHAN_INSTANCE_ID", "").strip()
+    return value if _INSTANCE_ID_RE.fullmatch(value) else None
+
+
 @router.get("/health")
 def health():
     # git_sha·build_time: 운영이 어느 커밋으로 빌드됐는지 공개 health 로 대조하기 위한 값(주입 방법: Dockerfile ARG·compose build.args)
+    # instance_id: 데스크톱 앱이 실행마다 만들어 넘기는 무작위 표지(HAEHAN_INSTANCE_ID). 앱이 포트의 서버가 "내가 띄운 것"인지
+    # 확인하는 데만 쓴다(다른 프로필이 남긴 서버 재사용 방지). 비밀이 아니며, 없으면 null.
     return {
         "status": "ok",
         "service": "haehan-ai-orchestrator",
         "git_sha": _build_value("GIT_SHA", _GIT_SHA_RE),
         "build_time": _build_value("BUILD_TIME", _BUILD_TIME_RE),
+        "instance_id": _instance_id(),
     }
 
 

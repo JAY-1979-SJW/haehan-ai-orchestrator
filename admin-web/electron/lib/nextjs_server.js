@@ -11,7 +11,7 @@ const path = require("path");
 const fs = require("fs");
 const { fork } = require("child_process");
 const http = require("http");
-const { writePid, clearPid, killPreviousFromPidFile } = require("./pid_guard");
+const { writePid, clearPid, killPreviousFromPidFile, killTreeAndWait } = require("./pid_guard");
 
 const NEXT_PORT = parseInt(process.env.NEXT_PORT || "3000", 10);
 const HEALTH_URL = `http://127.0.0.1:${NEXT_PORT}`;
@@ -20,6 +20,7 @@ const HEALTH_POLL_MS = 500;
 
 let serverProc = null;
 let _ready = false;
+let _lastError = "";
 
 function resolveServerJs() {
   if (app.isPackaged) {
@@ -70,8 +71,21 @@ async function startNextServer() {
   // 단, 설치본(번들 server.js 있음)은 이미 떠 있는 서버를 30초 동안 기다릴 이유가 없다 — 처음 켤 때 매번
   // 30초를 그냥 기다린 뒤에야 자기 서버를 띄워 앱 시작이 31초 걸렸다(2026-10-08 E2E 시작 기록 실측).
   // 번들 서버가 있으면 한 번만 확인하고 바로 띄우고, 오래 기다리는 건 `next dev` 를 쓰는 개발 모드에서만.
+  _lastError = "";
   const serverJs = resolveServerJs();
-  const alreadyUp = serverJs ? await checkHealth() : await waitForServer(HEALTH_TIMEOUT_MS);
+  if (serverJs && app.isPackaged) {
+    // 설치본: 포트 3000 에 떠 있는 서버는 내가 띄운 것이 아니다(Next 는 health 신원이 없다) — 재사용하지 않는다.
+    // 직전 실행의 서버가 막 끝나는 중일 수 있어 잠시 기다리고, 계속 점유돼 있으면 명확히 실패한다.
+    const deadline = Date.now() + 10_000;
+    while ((await checkHealth()) && Date.now() < deadline) await new Promise((r) => setTimeout(r, HEALTH_POLL_MS));
+    if (await checkHealth()) {
+      _lastError = `포트 ${NEXT_PORT} 을(를) 다른 프로그램(또는 이전 Haehan AI)이 사용 중입니다. 실행 중인 Haehan AI 를 모두 종료한 뒤 다시 시작하세요.`;
+      console.error("[nextjs]", _lastError);
+      _ready = false;
+      return false;
+    }
+  }
+  const alreadyUp = serverJs ? (app.isPackaged ? false : await checkHealth()) : await waitForServer(HEALTH_TIMEOUT_MS);
   if (alreadyUp) {
     console.log("[nextjs] 서버 이미 실행 중");
     _ready = true;
@@ -90,12 +104,15 @@ async function startNextServer() {
 
   serverProc = fork(serverJs, [], {
     silent: true,
+    // 앱 본체가 강제 종료돼도 고아로 남지 않게 부모 감시를 먼저 로드한다
+    execArgv: ["--require", path.join(__dirname, "parent_watch.js")],
     cwd: path.dirname(serverJs),   // standalone/ 를 cwd로 — .next/ 상대 경로 탐색에 필수
     env: {
       ...process.env,
       PORT: String(NEXT_PORT),
       HOSTNAME: "127.0.0.1",
       NODE_ENV: "production",
+      HAEHAN_PARENT_PID: String(process.pid),
       // 데스크톱 표지 — Next 미들웨어가 로그인 대신 /setup(첫 실행 등록·자동 세션)으로 보낸다
       HAEHAN_DESKTOP: "1",
       // self-contained: 번들 .env.production(원격) 대신 로컬 FastAPI(8401)로 강제.
@@ -124,18 +141,15 @@ async function startNextServer() {
 }
 
 function stopNextServer() {
-  if (serverProc) {
-    console.log("[nextjs] 서버 종료 요청");
-    const proc = serverProc;
-    proc.kill("SIGTERM");
-    // exit 핸들러가 serverProc 을 null 로 정리하므로, 지연 SIGKILL 은 캡처해둔 proc 을 직접 검사한다
-    // (serverProc 을 여기서 바로 null 처리하면 타임아웃이 항상 false 로 평가돼 SIGKILL 이 안 나감).
-    setTimeout(() => { try { proc.kill("SIGKILL"); } catch {} }, 3000);
-    serverProc = null;
-  }
+  const proc = serverProc;
   _ready = false;
+  if (!proc) return Promise.resolve();
+  console.log("[nextjs] 서버 종료 요청");
+  return killTreeAndWait(proc);
 }
+
+function getNextLastError() { return _lastError; }
 
 function isNextReady() { return _ready; }
 
-module.exports = { startNextServer, stopNextServer, isNextReady, NEXT_PORT };
+module.exports = { startNextServer, stopNextServer, getNextLastError, isNextReady, NEXT_PORT };

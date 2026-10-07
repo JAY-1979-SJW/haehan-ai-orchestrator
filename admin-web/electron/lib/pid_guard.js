@@ -136,4 +136,27 @@ function killPreviousFromPidFile(name) {
   return { killed: !_isAlive(pid), pid };
 }
 
-module.exports = { pidFilePath, writePid, clearPid, isProcessWithImage, killPreviousFromPidFile };
+/**
+ * 자식 프로세스를 트리째 종료하고 실제로 끝날 때까지 기다린다(최대 timeoutMs).
+ * 왜: 종료 요청만 하고 곧바로 앱이 끝나면 서버가 userData 파일(app.log 등)을 쥔 채 남아 정리(삭제)가 EBUSY 로 실패하고
+ * 다음 실행이 포트를 못 잡는다. Windows 의 kill 은 자식의 자식을 못 죽이므로 taskkill /T 를 쓴다.
+ */
+function killTreeAndWait(proc, timeoutMs = 5000) {
+  return new Promise((resolve) => {
+    if (!proc || proc.exitCode !== null || proc.signalCode) return resolve();
+    const done = () => { clearTimeout(timer); resolve(); };
+    const timer = setTimeout(resolve, timeoutMs);
+    proc.once("exit", done);
+    try {
+      if (process.platform === "win32") {
+        spawnSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { windowsHide: true, timeout: 4000 });
+      } else {
+        proc.kill("SIGKILL");
+      }
+    } catch {
+      try { proc.kill("SIGKILL"); } catch {}
+    }
+  });
+}
+
+module.exports = { killTreeAndWait, pidFilePath, writePid, clearPid, isProcessWithImage, killPreviousFromPidFile };

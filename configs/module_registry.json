@@ -22632,6 +22632,30 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/electron/lib/instance_guard.js": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/lib/parent_watch.js": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/electron/tests/instance_guard.test.js": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
