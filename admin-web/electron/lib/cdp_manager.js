@@ -9,6 +9,11 @@
  * USE_SYSTEM_CHROME_PROFILE=true 일 때:
  *   - 기존 Chrome 프로세스를 graceful 종료 후 CDP 모드로 재실행
  *   - 사용자가 Chrome에 로그인해 둔 모든 세션(네이버·스마트스토어 등) 그대로 유지
+ *   - 단, Chrome 136 이상은 기본 프로필 원격 연결을 막아 쓸 수 없다 → 앱 전용 프로필로 대체(systemChromeProfileSupport)
+ *
+ * 로그인 유지 권장 방식(2026-10-08): 앱 전용 프로필 Chrome 에 사용자가 구글 계정으로 한 번 로그인(동기화)하면
+ * 저장된 비밀번호·자동 완성이 Chrome 동기화로 따라오고, 사이트 로그인 쿠키도 이 프로필에 계속 남는다.
+ * 앱은 비밀번호를 읽거나 보관하지 않는다(Chrome 이 직접 채운다).
  *
  * L3 Connectors 계층. 업무 로직 없음.
  */
@@ -17,6 +22,7 @@ const path = require("path");
 const fs = require("fs");
 const { spawn, execFile, execSync } = require("child_process");
 const http = require("http");
+const { patchConfig } = require("./config");
 
 let _chromeMissingWarned = false;
 
@@ -64,10 +70,13 @@ function resolveProfileDir() {
       : false;
     return { dir: process.env.HAEHAN_CDP_PROFILE, isSystem };
   }
-  // 2순위: 사용자 Chrome 프로필 사용 모드
+  // 2순위: 사용자 Chrome 프로필 사용 모드 — Chrome 136 이상은 기본 프로필에 원격 디버깅을 허용하지 않아 쓸 수 없다
   if (process.env.USE_SYSTEM_CHROME_PROFILE === "true" || _loadConfig().useSystemChromeProfile) {
     const systemProfile = resolveSystemChromeProfile();
-    if (systemProfile) {
+    const support = systemChromeProfileSupport();
+    if (systemProfile && !support.ok) {
+      console.warn("[cdp] 시스템 Chrome 프로필 사용 불가 —", support.reason, "— 앱 전용 프로필로 대체(사용 중인 Chrome 은 종료하지 않음)");
+    } else if (systemProfile) {
       console.log("[cdp] 시스템 Chrome 프로필 사용:", systemProfile);
       return { dir: systemProfile, isSystem: true };
     }
@@ -88,6 +97,25 @@ function resolveSystemChromeProfile() {
   const canary = path.join(process.env.LOCALAPPDATA || "", "Google", "Chrome SxS", "User Data");
   if (fs.existsSync(canary)) return canary;
   return null;
+}
+
+// Chrome 136 부터 기본 사용자 데이터 폴더(User Data)에는 --remote-debugging-port 가 무시된다
+// (Chrome 보안 변경 — 쿠키·비밀번호 탈취 방지). 그래서 그 이상 버전에서는 "내 Chrome 세션 사용"이 동작하지 않고,
+// 켜면 사용 중인 Chrome 만 종료되고 연결은 실패한다. 버전은 User Data\Last Version 파일로 읽는다.
+const SYSTEM_PROFILE_MAX_MAJOR = 135;
+
+/** 시스템 Chrome 프로필을 CDP 로 쓸 수 있는지. { ok, major, reason } */
+function systemChromeProfileSupport() {
+  const profile = resolveSystemChromeProfile();
+  if (!profile) return { ok: false, major: null, reason: "Chrome 프로필 없음" };
+  let major = null;
+  try {
+    major = parseInt(fs.readFileSync(path.join(profile, "Last Version"), "utf8").trim().split(".")[0], 10);
+  } catch (_) {}
+  if (Number.isFinite(major) && major > SYSTEM_PROFILE_MAX_MAJOR) {
+    return { ok: false, major, reason: `Chrome ${major} 은 기본 프로필 원격 연결을 막음(136 이상)` };
+  }
+  return { ok: true, major, reason: "" };
 }
 
 /** config.json 에서 설정 로드 (없으면 기본값). */
@@ -313,14 +341,29 @@ function stopCdpBrowser() {
  */
 function setUseSystemChromeProfile(enable) {
   try {
-    const cfgPath = path.join(app.getPath("userData"), "config.json");
-    const cfg = fs.existsSync(cfgPath) ? JSON.parse(fs.readFileSync(cfgPath, "utf8")) : {};
-    cfg.useSystemChromeProfile = enable;
-    fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+    // 원자적 쓰기(tmp + rename)·읽기 실패 시 덮어쓰기 거부는 config.patchConfig 가 맡는다
+    patchConfig({ useSystemChromeProfile: !!enable });
     console.log("[cdp] useSystemChromeProfile =", enable);
   } catch (e) {
     console.error("[cdp] config 저장 실패:", e);
   }
+}
+
+/**
+ * 앱 브라우저(CDP Chrome)에 새 탭으로 주소를 연다 — 브라우저가 꺼져 있으면 먼저 띄운다.
+ * 구글 로그인 안내(트레이 "브라우저에 구글 계정 로그인")에 쓴다. 성공하면 true.
+ */
+async function openInCdpBrowser(url) {
+  if (!(await startCdpBrowser())) return false;
+  return new Promise((resolve) => {
+    const req = http.request(
+      { host: CDP_HOST, port: CDP_PORT, path: `/json/new?${encodeURI(url)}`, method: "PUT", timeout: 5000 },
+      (res) => { res.resume(); resolve(res.statusCode === 200); }
+    );
+    req.on("error", () => resolve(false));
+    req.on("timeout", () => { req.destroy(); resolve(false); });
+    req.end();
+  });
 }
 
 module.exports = {
@@ -329,4 +372,6 @@ module.exports = {
   isCdpAlive,
   setUseSystemChromeProfile,
   resolveSystemChromeProfile,
+  systemChromeProfileSupport,
+  openInCdpBrowser,
 };

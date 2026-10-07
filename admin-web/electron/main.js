@@ -37,7 +37,7 @@ const { createMainWindow, loadMainShell, showMainWindow, getMainWindow, setQuiti
 const { stage } = require("./lib/startup_log");
 const { startAutoUpdate } = require("./lib/updater");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
-const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
+const { createTray, updateAutoLaunchCheck, hasTray, setSystemChromeSupport } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
 const { Menu, Notification, dialog, session, webContents } = require("electron");
 const { startFastAPIServer, stopFastAPIServer, FASTAPI_PORT } = require("./lib/fastapi_server");
@@ -45,7 +45,7 @@ const { refreshDesktopSession } = require("./lib/desktop_session");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
 const claudeMcp = require("./lib/claude_mcp");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
-const { startCdpBrowser, stopCdpBrowser, isCdpAlive, setUseSystemChromeProfile } = require("./lib/cdp_manager");
+const { startCdpBrowser, stopCdpBrowser, isCdpAlive, setUseSystemChromeProfile, systemChromeProfileSupport, openInCdpBrowser } = require("./lib/cdp_manager");
 // CDP watchdog — 앱이 CDP 를 책임지고 항상 살려둔다(클릭→앱 출력이 항상 되도록)
 let cdpWatchdogTimer = null;
 let appQuitting = false;
@@ -99,6 +99,12 @@ bus.on(EVENTS.YOUTUBE_STATUS, (status) => {
   if (win) win.webContents.send("youtube-status", status);
 });
 // 시스템 Chrome 프로필 토글 (트레이 체크박스)
+// 앱 브라우저(CDP Chrome, 앱 전용 프로필)에 구글 로그인 화면을 연다 — 한 번 로그인·동기화하면
+// Chrome 이 저장 비밀번호·자동 완성을 직접 채운다(앱은 비밀번호를 읽거나 보관하지 않음)
+bus.on(EVENTS.BROWSER_GOOGLE_SIGNIN, async () => {
+  const ok = await openInCdpBrowser("https://accounts.google.com/signin/chrome/sync");
+  if (!ok) new Notification({ title: "앱 브라우저를 열지 못했습니다", body: "Chrome 이 설치되어 있는지 확인하세요" }).show();
+});
 bus.on(EVENTS.TOGGLE_SYSTEM_CHROME, () => {
   const cfg = loadConfig();
   const next = !cfg.useSystemChromeProfile;
@@ -248,6 +254,7 @@ if (!gotLock) {
     // 대기 화면으로 먼저 띄운 창이 있으면 본 화면만 열고, 없으면(자동시작 숨김 등) 새로 만든다
     if (!loadMainShell()) createMainWindow(agentKey, startHidden);
     stage("shell-loaded");
+    setSystemChromeSupport(systemChromeProfileSupport().ok);
     createTray(isAutoStartEnabled());
     // 설치형이면 새 버전을 백그라운드로 확인·다운로드(본 화면이 뜬 뒤 지연 시작 — 시작 시간에 영향 없음)
     startAutoUpdate(getMainWindow);

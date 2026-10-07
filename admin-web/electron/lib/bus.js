@@ -28,6 +28,8 @@ const EVENTS = Object.freeze({
   // Claude(데스크톱·Code) MCP 연결/해제 요청 (트레이 메뉴)
   CLAUDE_CONNECT: "claude:connect",
   CLAUDE_DISCONNECT: "claude:disconnect",
+  // 앱 브라우저에 구글 계정 로그인 화면 열기 (트레이 메뉴) — 동기화로 저장 비밀번호·자동 완성을 쓴다
+  BROWSER_GOOGLE_SIGNIN: "cdp:google-signin",
 });
 
 // 단일 버스 인스턴스 (메인 프로세스 전역). 핸들러 수가 많지 않으므로 경고 한도만 상향.

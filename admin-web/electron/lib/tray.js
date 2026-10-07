@@ -6,6 +6,7 @@
  *   - 열기/클릭/더블클릭 → EVENTS.SHOW_WINDOW
  *   - YouTube 재연결      → EVENTS.YOUTUBE_RECONNECT
  *   - 자동시작 토글       → EVENTS.TOGGLE_AUTO_LAUNCH
+ *   - 구글 계정 로그인    → EVENTS.BROWSER_GOOGLE_SIGNIN
  *   - 종료는 electron app API 직접 호출(프레임워크, sibling 모듈 아님)
  */
 const { app, Tray, Menu } = require("electron");
@@ -15,6 +16,13 @@ const { bus, EVENTS } = require("./bus");
 const { loadConfig } = require("./config");
 
 let tray = null;
+// 내 Chrome 세션 사용 가능 여부 — cdp_manager 를 직접 import 하지 않게 main(컴포지션 루트)이 넣어 준다.
+// Chrome 136 이상은 기본 프로필 원격 연결을 막아 이 옵션이 동작하지 않으므로 회색(선택 불가)으로 보여 준다.
+let systemChromeSupported = true;
+
+function setSystemChromeSupport(supported) {
+  systemChromeSupported = !!supported;
+}
 
 function _buildMenu(autoLaunch) {
   const useSystemChrome = !!(loadConfig().useSystemChromeProfile);
@@ -22,10 +30,12 @@ function _buildMenu(autoLaunch) {
     { label: "열기", click: () => bus.emit(EVENTS.SHOW_WINDOW) },
     { label: "YouTube 계정 재연결", click: () => bus.emit(EVENTS.YOUTUBE_RECONNECT) },
     { type: "separator" },
+    { label: "앱 브라우저에 구글 계정 로그인 (비밀번호 자동 입력)", click: () => bus.emit(EVENTS.BROWSER_GOOGLE_SIGNIN) },
     {
-      label: "내 Chrome 세션 사용 (로그인 유지)",
+      label: systemChromeSupported ? "내 Chrome 세션 사용 (로그인 유지)" : "내 Chrome 세션 사용 (이 Chrome 버전에서는 불가)",
       type: "checkbox",
-      checked: useSystemChrome,
+      checked: useSystemChrome && systemChromeSupported,
+      enabled: systemChromeSupported,
       click: () => bus.emit(EVENTS.TOGGLE_SYSTEM_CHROME),
     },
     {
@@ -62,4 +72,4 @@ function updateAutoLaunchCheck(autoLaunch) {
 
 function hasTray() { return tray !== null; }
 
-module.exports = { createTray, updateAutoLaunchCheck, hasTray };
+module.exports = { createTray, updateAutoLaunchCheck, hasTray, setSystemChromeSupport };
