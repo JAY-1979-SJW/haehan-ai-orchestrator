@@ -202,9 +202,6 @@ def test_compare_flags_pass_to_fail():
 
 def test_real_pytest_command_shape(tmp_path):
     """실제 pytest 호출: 명시 파일 + --timeout + -p no:cacheprovider (전체 실행 아님)."""
-    # run_impacted_tests 는 --timeout 을 항상 붙이는 로컬 도구다. CI 설치 목록(requirements.txt·constraints.txt)에는 pytest-timeout 이
-    # 없어 거기서는 `--timeout` 이 알 수 없는 옵션(rc=4)이 되므로, 플러그인이 있는 환경에서만 실제 호출을 확인한다.
-    pytest.importorskip("pytest_timeout")
     _w(tmp_path, "tests/test_ok.py", "def test_ok():\n    assert True\n")
     junit = tmp_path / "j.xml"
     rc, _ = rit.run_pytest(["tests/test_ok.py"], 30, tmp_path, junit)
