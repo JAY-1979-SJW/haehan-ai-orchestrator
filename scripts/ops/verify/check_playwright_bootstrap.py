@@ -11,7 +11,8 @@ import sys
 from pathlib import Path
 
 # repo root를 sys.path에 추가
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+# haehan-root-bootstrap: 정본 paths 를 import 하기 전이라 루트를 직접 찾는다 — 폴더가 옮겨져도 깨지지 않게 pyproject.toml 이 있는 상위 폴더를 찾는다
+_REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
