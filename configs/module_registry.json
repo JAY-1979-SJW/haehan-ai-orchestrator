@@ -4801,7 +4801,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/user_attention_notifier.py": {
+  "local_agent/runtime/notify/user_attention_notifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4817,7 +4817,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/user_notification_adapter.py": {
+  "local_agent/runtime/notify/user_notification_adapter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -23298,6 +23298,14 @@
    "source": "rule"
   },
   "local_agent/runtime/download/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/notify/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

@@ -223,7 +223,7 @@ class TestSmoke:
         assert can_auto_resume("final_submit") is False
 
     def test_notification_adapter_import_ok(self):
-        from local_agent.runtime.user_notification_adapter import send_notification
+        from local_agent.runtime.notify.user_notification_adapter import send_notification
 
         assert callable(send_notification)
 

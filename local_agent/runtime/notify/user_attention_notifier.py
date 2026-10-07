@@ -129,7 +129,7 @@ def notify_auth_required(
     """
     # OS 알림 발송
     try:
-        from local_agent.runtime.user_notification_adapter import (
+        from local_agent.runtime.notify.user_notification_adapter import (
             notify_auth_required as _notify,
         )
 

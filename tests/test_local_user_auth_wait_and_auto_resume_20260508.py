@@ -24,7 +24,7 @@ from local_agent.runtime.auto_resume_after_auth import (
 from local_agent.runtime.local_session_boundary import (
     is_safe_for_export,
 )
-from local_agent.runtime.user_attention_notifier import (
+from local_agent.runtime.notify.user_attention_notifier import (
     build_auth_attention_notice,
     get_notifier_status,
     request_browser_foreground,

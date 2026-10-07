@@ -57,7 +57,7 @@
 - `local_agent/runtime/site_profile/site_capability_matrix.py`: `get_all_capabilities`(function,L153)
 - `local_agent/runtime/site_profile/site_profile_registry.py`: `get_all_site_ids`(function,L323)
 - `local_agent/runtime/task_client.py`: `poll_loop`(function,L130)
-- `local_agent/runtime/user_attention_notifier.py`: `build_timeout_notice`(function,L61), `build_cancel_notice`(function,L70)
+- `local_agent/runtime/notify/user_attention_notifier.py`: `build_timeout_notice`(function,L61), `build_cancel_notice`(function,L70)
 - `local_agent/runtime/universal/workflow_template_engine.py`: `get_all_workflow_ids`(function,L162)
 - `ai_orchestrator/openai_client.py`: `generate_plan_explanation`(function,L30)
 - `ai_orchestrator/persistence/registration_code_store.py`: `reset_store_for_tests`(function,L779)

@@ -14,7 +14,7 @@ from local_agent.runtime.auth_wait_controller import (
 from local_agent.runtime.browser_foreground_adapter import (
     HEADED_BROWSER_REQUIRED,
 )
-from local_agent.runtime.user_attention_notifier import (
+from local_agent.runtime.notify.user_attention_notifier import (
     build_auth_attention_notice,
     get_notifier_status,
     notify_auth_required,
@@ -86,7 +86,7 @@ class TestNotifyAuthRequired:
 
     def test_notification_failure_does_not_fail_status(self):
         with patch(
-            "local_agent.runtime.user_notification_adapter._try_send_os_notification",
+            "local_agent.runtime.notify.user_notification_adapter._try_send_os_notification",
             side_effect=Exception("OS error"),
         ):
             result = notify_auth_required(AUTH_SIGNAL_LOGIN)
