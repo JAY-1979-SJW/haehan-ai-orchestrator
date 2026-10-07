@@ -67,13 +67,17 @@ async function startNextServer() {
   // 2초를 넘기는 경우가 흔해 한 번만 확인하면 "이미 떠 있는데도 없다"고 오판해
   // 존재하지 않는 standalone 빌드를 찾다가 "UI 서버 시작 실패"로 이어졌다
   // (2026-09-28 Electron 셸 복원 후 재현·확인).
-  if (await waitForServer(HEALTH_TIMEOUT_MS)) {
+  // 단, 설치본(번들 server.js 있음)은 이미 떠 있는 서버를 30초 동안 기다릴 이유가 없다 — 처음 켤 때 매번
+  // 30초를 그냥 기다린 뒤에야 자기 서버를 띄워 앱 시작이 31초 걸렸다(2026-10-08 E2E 시작 기록 실측).
+  // 번들 서버가 있으면 한 번만 확인하고 바로 띄우고, 오래 기다리는 건 `next dev` 를 쓰는 개발 모드에서만.
+  const serverJs = resolveServerJs();
+  const alreadyUp = serverJs ? await checkHealth() : await waitForServer(HEALTH_TIMEOUT_MS);
+  if (alreadyUp) {
     console.log("[nextjs] 서버 이미 실행 중");
     _ready = true;
     return true;
   }
 
-  const serverJs = resolveServerJs();
   if (!serverJs) {
     console.warn("[nextjs] standalone server.js 없음 — Next.js 빌드 필요");
     return false;
