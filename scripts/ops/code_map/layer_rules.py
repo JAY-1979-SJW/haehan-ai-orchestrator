@@ -22,7 +22,7 @@ SITE_MODULES = {
 # S1 라벨 정정 (2026-09-24): 이름 부분문자열 추측이 실제 역할과 어긋난 파일. 근거는 docs/specs/2026-09-24_repair_s1_dryrun.md
 LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
     "ai_orchestrator/core/config.py": ("L1", "shared env/config helper (used by 22 files across layers)"),
-    "ai_orchestrator/audit_logger.py": ("L3", "low-level audit log writer, IO wrapper"),
+    "ai_orchestrator/audit/audit_logger.py": ("L3", "low-level audit log writer, IO wrapper"),
     "scripts/op_log.py": ("L3", "low-level operation log writer, IO wrapper"),
     "scripts/realtime_audit.py": ("L3", "low-level realtime audit log helper"),
     "scripts/cdp_db.py": ("L3", "low-level CDP sqlite IO wrapper"),

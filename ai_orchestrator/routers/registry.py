@@ -29,7 +29,7 @@ from ai_orchestrator.vendor_directory.vendor_directory_router import vendor_dire
 from ai_orchestrator.web_task.web_task_router import web_task_router
 from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmail
 
-from ..audit_logger import log_event, read_recent_logs
+from ..audit.audit_logger import log_event, read_recent_logs
 from ..browser_tool.approval_record_router import approval_record_router
 from ..connectors.cdp_screen_router import cdp_screen_router
 from ..connectors.community_router import community_router

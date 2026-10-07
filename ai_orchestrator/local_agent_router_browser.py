@@ -11,7 +11,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
 
 from . import local_agent_registry as _reg
-from .audit_logger import log_event
+from .audit.audit_logger import log_event
 from .gates.approval import issue_token_for_dev_reg
 from .gates.auth import require_role
 from .local_agent_router_schemas import (

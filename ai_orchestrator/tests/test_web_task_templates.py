@@ -38,7 +38,7 @@ def _isolated_storage(tmp_path, monkeypatch):
 
     importlib.reload(_wtr)
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.dev_reg.dev_reg_approval as _dra
     import ai_orchestrator.gates.approval as _ap
 
@@ -244,7 +244,7 @@ def test_unknown_template_id_audit_logged(admin_user):
             "dry_run": True,
         },
     )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     events = {e["event_type"] for e in _al.read_recent_logs(limit=50)}
     assert "WEB_TASK_TEMPLATE_NOT_FOUND" in events
@@ -286,7 +286,7 @@ def test_template_used_audit_event_recorded(admin_user):
             "dry_run": True,
         },
     )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     events = {e["event_type"] for e in _al.read_recent_logs(limit=50)}
     assert "WEB_TASK_TEMPLATE_USED" in events
@@ -331,7 +331,7 @@ def test_sensitive_override_not_in_audit_log(admin_user):
                 "dry_run": False,
             },
         )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     log_path = _al._LOG_PATH
     if not log_path.exists():

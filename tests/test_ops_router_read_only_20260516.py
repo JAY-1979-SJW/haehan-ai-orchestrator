@@ -140,7 +140,7 @@ class TestOpsRouterImports:
         assert "from ai_orchestrator.dev_reg.dev_reg_approval import list_pending" in self._src()
 
     def test_imports_audit_logger(self):
-        assert "from ai_orchestrator.audit_logger import read_recent_logs" in self._src()
+        assert "from ai_orchestrator.audit.audit_logger import read_recent_logs" in self._src()
 
     def test_imports_web_task_registry(self):
         assert "from ai_orchestrator.web_task.web_task_registry import list_entries" in self._src()

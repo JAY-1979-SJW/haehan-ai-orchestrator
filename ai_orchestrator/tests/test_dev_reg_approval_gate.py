@@ -42,7 +42,7 @@ def _isolated_storage(tmp_path, monkeypatch):
 
     importlib.reload(_ap)
     _ap.clear_rate_store()
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     importlib.reload(_al)
     import ai_orchestrator.dev_reg.dev_reg_approval as _dra
@@ -417,7 +417,7 @@ def test_audit_log_events_recorded(tmp_path):
             clock=lambda: future,  # 즉시 만료
         )
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     logs = _al.read_recent_logs(limit=50)
     event_types = {e["event_type"] for e in logs}
@@ -427,7 +427,7 @@ def test_audit_log_events_recorded(tmp_path):
 
 def test_approval_audit_event_recorded():
     """handle_telegram_decision 승인 시 DEV_REG_APPROVED 이벤트 기록."""
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
     from ai_orchestrator.dev_reg.dev_reg_approval import (
         create_pending,
         handle_telegram_decision,
@@ -457,7 +457,7 @@ def test_approval_audit_event_recorded():
 
 def test_rejection_audit_event_recorded():
     """거절 시 DEV_REG_REJECTED 이벤트 기록."""
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
     from ai_orchestrator.dev_reg.dev_reg_approval import (
         create_pending,
         handle_telegram_decision,
@@ -514,7 +514,7 @@ def test_sensitive_fields_not_in_audit_log(tmp_path):
             clock=lambda: future,
         )
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     log_path = _al._LOG_PATH
     if not log_path.exists():

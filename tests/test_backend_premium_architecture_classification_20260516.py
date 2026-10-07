@@ -66,7 +66,7 @@ DOMAIN_CORE_MAP = {
     },
     "AuditEvent": {
         "impl_files": [
-            "ai_orchestrator/audit_logger.py",
+            "ai_orchestrator/audit/audit_logger.py",
             "ai_orchestrator/server/action_approval_audit_store.py",
             "ai_orchestrator/local_agent/approval_audit_log.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: 표준 스키마 기준선
@@ -252,7 +252,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "audit_service": {
         "purpose": "AuditEvent 기록, 조회, 필드 검증",
-        "current_location": "ai_orchestrator/audit_logger.py (functional)",
+        "current_location": "ai_orchestrator/audit/audit_logger.py (functional)",
         "extraction_priority": "MEDIUM",
         "must_not_call": ["router", "external_api"],
         "test_criteria": ["event 기록 검증", "금지 필드 차단 검증"],
@@ -815,7 +815,7 @@ class TestAuditEvidenceDesign:
 
     def test_current_audit_logger_importable(self):
         """현재 audit_logger 모듈이 import 가능하다."""
-        import ai_orchestrator.audit_logger as m
+        import ai_orchestrator.audit.audit_logger as m
 
         assert hasattr(m, "log_event") or hasattr(m, "audit_log") or hasattr(m, "EVENT_TYPES")
 
@@ -839,7 +839,7 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/server/action_approval_audit_store.py",
     "ai_orchestrator/server/action_evidence_store.py",
     "ai_orchestrator/core/task_state.py",
-    "ai_orchestrator/audit_logger.py",
+    "ai_orchestrator/audit/audit_logger.py",
     "ai_orchestrator/gates/approval.py",
     "ai_orchestrator/dev_reg/dev_reg_approval.py",
     "ai_orchestrator/web_task/web_task_approval_service.py",

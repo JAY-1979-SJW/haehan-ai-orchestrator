@@ -30,7 +30,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     # auth/local_agent_router 를 reload 하지 않는다: reload 하면 get_current_user 가 시험마다 새 객체가 되는데
     # 하위 라우터는 처음 import 된 옛 객체에 묶여 있어 dependency_overrides 가 두 번째 시험부터 안 먹혀
     # 파일 전체 실행 시 등록이 401 이 되고 KeyError: 'agent_id' 가 난다(단독 실행만 통과, 2026-10-04 확인).
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
     import ai_orchestrator.local_agent_registry_common as _reg_common
@@ -453,7 +453,7 @@ def test_client_process_task_high_risk_returns_not_implemented_stage2():
 
 
 def test_ws_device_token_never_in_audit_log(admin_user):
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -475,7 +475,7 @@ def test_ws_device_token_never_in_audit_log(admin_user):
 
 
 def test_ws_connected_and_disconnected_audit_events(admin_user):
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -490,7 +490,7 @@ def test_ws_connected_and_disconnected_audit_events(admin_user):
 
 
 def test_ws_auth_failure_audit_event(admin_user):
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)
@@ -869,7 +869,7 @@ def test_ws_idle_timeout_triggers_expire_and_audit(admin_user, monkeypatch):
     """WS idle 처리 시 expire_stale_tasks가 호출되고 timeout audit이 기록된다."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.local_agent_registry as _reg
 
     # 수신 timeout 상수는 WS 엔드포인트를 분리한 local_agent_router_ws 모듈이 소유한다(결함 #111)
@@ -1093,7 +1093,7 @@ def test_disconnect_audit_task_requeued_event(admin_user):
     도입 후 첫 disconnect는 REQUEUED로 기록되고 FAILED는 재시도 소진 후에만 발생한다
     (재시도 소진 케이스는 test_disconnect_fails_after_retries_exhausted 참고).
     """
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)

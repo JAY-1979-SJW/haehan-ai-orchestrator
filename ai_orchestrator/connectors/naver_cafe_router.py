@@ -21,7 +21,7 @@ from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.paths import repo_root
 from ai_orchestrator.paths.runtime import data_dir
 
-from ..audit_logger import log_event
+from ..audit.audit_logger import log_event
 from ..services import cafe_membership_service
 
 logger = logging.getLogger(__name__)

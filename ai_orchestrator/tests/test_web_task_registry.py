@@ -49,7 +49,7 @@ def _isolated_storage(tmp_path, monkeypatch):
 
     importlib.reload(_wtr)
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.dev_reg.dev_reg_approval as _dra
     import ai_orchestrator.gates.approval as _ap
 
@@ -170,7 +170,7 @@ def test_unknown_task_audit_logged(admin_user):
             "params": {"app_name": "Test"},
         },
     )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     events = {e["event_type"] for e in _al.read_recent_logs(limit=50)}
     assert "WEB_TASK_REJECTED_UNKNOWN_TASK" in events
@@ -394,7 +394,7 @@ def test_sensitive_params_not_in_audit_log(admin_user, tmp_path):
             },
         )
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     log_path = _al._LOG_PATH
     if not log_path.exists():
@@ -453,7 +453,7 @@ def test_validation_failure_audit_logged(admin_user):
             "params": {},  # app_name 없음
         },
     )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     events = {e["event_type"] for e in _al.read_recent_logs(limit=50)}
     assert "WEB_TASK_VALIDATION_FAILED" in events
@@ -523,7 +523,7 @@ def test_dry_run_audit_event_recorded(admin_user):
             "dry_run": True,
         },
     )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     events = {e["event_type"] for e in _al.read_recent_logs(limit=50)}
     assert "WEB_TASK_DRY_RUN_COMPLETED" in events
@@ -542,7 +542,7 @@ def test_real_run_audit_events_recorded(admin_user):
                 "dry_run": False,
             },
         )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     events = {e["event_type"] for e in _al.read_recent_logs(limit=50)}
     assert "WEB_TASK_RUN_REQUESTED" in events

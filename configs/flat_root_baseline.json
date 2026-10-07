@@ -1,10 +1,9 @@
 {
  "_comment": "최상위 평면 금지 게이트(G15) 기준선 — 이미 평면에 있던 파일(기존 부채). 늘리는 변경 금지, 하위 폴더로 옮기거나 삭제해 줄이는 방향만. 규칙: configs/flat_root_gate.json",
  "target": 0,
- "count": 159,
- "note": "하향 갱신: 159 → 159",
+ "count": 158,
+ "note": "하향 갱신: 159 → 158",
  "files": [
-  "ai_orchestrator/audit_logger.py",
   "ai_orchestrator/local_agent_actions.py",
   "ai_orchestrator/local_agent_audit_builders.py",
   "ai_orchestrator/local_agent_audit_event_policy.py",
