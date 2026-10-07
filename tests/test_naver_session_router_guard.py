@@ -8,7 +8,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors import naver_session_router as R
+from ai_orchestrator.connectors.naver_auth import session_router as R
 from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.connectors.naver_auth import session_guard as G
 

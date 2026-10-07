@@ -3529,7 +3529,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_session_router.py": {
+  "ai_orchestrator/connectors/naver_auth/session_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver",

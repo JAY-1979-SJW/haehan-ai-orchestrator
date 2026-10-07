@@ -13,6 +13,7 @@
   {"name": "kakao", "keyword": "kakao", "homes": ["scripts/kakao/", "ai_orchestrator/connectors/kakao/"]},
   {"name": "instagram", "keyword": "instagram|ig-comment|(^|/)ig_", "homes": ["scripts/instagram/", "ai_orchestrator/connectors/instagram/"]},
   {"name": "youtube", "keyword": "youtube|yt_upload", "homes": ["scripts/youtube/", "ai_orchestrator/connectors/youtube/"]},
+  {"name": "naver_auth", "keyword": "naver_auth|naver_login|naver_session|login_pipeline", "homes": ["scripts/naver/", "ai_orchestrator/connectors/naver_auth/", "admin-web/src/app/naver/session/"]},
   {"name": "naver_cafe", "keyword": "cafe", "homes": ["scripts/naver/cafe/", "ai_orchestrator/connectors/naver_cafe/", "admin-web/src/app/naver/cafe/"]},
   {"name": "naver_mail", "keyword": "naver_mail|mailbox|mail_bulk|mail_draft|mail_imap|mail_read|naver/mail|/mail/|(^|/)mail(_|/)", "homes": ["scripts/naver/mail/", "ai_orchestrator/connectors/naver_mail/", "admin-web/src/app/mailbox/", "admin-web/src/app/mail/"]},
   {"name": "naver_blog", "keyword": "blog|gonobi", "homes": ["scripts/naver/blog/", "ai_orchestrator/connectors/naver_blog/", "admin-web/src/app/naver/blog/", "admin-web/src/app/naver/(legacy)/blog/"]},
