@@ -834,7 +834,7 @@
   "role": "api",
   "reason": "서버 lifespan 에서 도는 예약 작업 루프(서버 API 레이어의 기동 코드) — routers/ 에 두어 루트(server.py)와의 모듈 순환을 만들지 않는다. 파일명 규칙은 L4 generic 으로 분류하므로 classify.py 가 레지스트리를 다시 쓸 때 되돌아가지 않도록 overrides 에 확정"
  },
- "ai_orchestrator/workflows/hanafax_auto_send.py": {
+ "ai_orchestrator/connectors/hanafax/auto_send.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "하나팩스 승인서→정책 판정→발송기 호출→이력 기록의 업무 흐름(워크플로) — 파일명의 `send` 가 L1 contract 로 오분류 (2026-10-02)"
@@ -872,19 +872,19 @@
   "role": "contract",
   "reason": "저장소(L7)와 정책(L2)이 함께 읽는 공무 업무 상태 어휘·기준값·PlannedTask(순수 값, 부작용 없음) — L7 은 L1 만 읽을 수 있어 정책에서 분리한 L1 계약. dataclass 규칙에 우연히 기대지 않고 명시한다"
  },
- "ai_orchestrator/services/hanafax_authorization_service.py": {
+ "ai_orchestrator/connectors/hanafax/authorization_service.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "하나팩스 발송 승인서의 만들기·승인·취소·정지를 조율하는 업무 흐름 서비스(저장소 L7 + 정책 L2 + 발송 어댑터 L5 + 예약 작업 L6 를 조합, docstring 1행이 'L6 서비스') — 파일명의 'auth' 때문에 L2 정책으로 오분류",
   "source": "manual"
  },
- "ai_orchestrator/services/hanafax_reconcile.py": {
+ "ai_orchestrator/connectors/hanafax/reconcile.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "하나팩스 전송결과 대조(접수 건의 최종 성공·실패를 사이트 결과로 확인) 업무 흐름 서비스(docstring 1행이 'L6 서비스') — 이름 신호가 없어 기본값 L4 generic 로 오분류",
   "source": "manual"
  },
- "ai_orchestrator/services/hanafax_attachments.py": {
+ "ai_orchestrator/connectors/hanafax/attachments.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "하나팩스 첨부 파일 올리기·검사·정리를 조율하는 업무 흐름 서비스(docstring 1행이 'L6 서비스') — 이름 신호가 없어 기본값 L4 generic 로 오분류",

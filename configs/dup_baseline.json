@@ -201,7 +201,7 @@
   ],
   "56e7112793c4c286372377961b955a5f2e5c1bfd": [
    "ai_orchestrator/connectors/instagram_dm_db.py:_schema_v1",
-   "ai_orchestrator/persistence/fax_authorization_store.py:_schema_v1",
+   "ai_orchestrator/connectors/hanafax/authorization_store.py:_schema_v1",
    "ai_orchestrator/connectors/naver_mail/bulk_store.py:_schema_v1"
   ],
   "59dd4afcce19e06253c40ea945ed5c1dd32b420b": [
@@ -275,7 +275,7 @@
   ],
   "936fbd68ef6ce7fbb209475fabbec4b2765e9f2d": [
    "ai_orchestrator/persistence/agent_dispatch_store.py:_conn",
-   "ai_orchestrator/persistence/fax_authorization_store.py:_conn",
+   "ai_orchestrator/connectors/hanafax/authorization_store.py:_conn",
    "ai_orchestrator/connectors/naver_mail/bulk_store.py:_conn",
    "ai_orchestrator/connectors/naver_mail/draft_store.py:_conn",
    "ai_orchestrator/persistence/scheduled_job_store.py:_conn"
@@ -289,7 +289,7 @@
    "scripts/fetch_tax_precedent_summary.py:_latest_html_after"
   ],
   "9952c264a61e7ccf171f823d0d6aa163c53dccf1": [
-   "ai_orchestrator/gates/fax_send_policy.py:_recipient_skip_reason",
+   "ai_orchestrator/connectors/hanafax/send_policy.py:_recipient_skip_reason",
    "ai_orchestrator/connectors/naver_mail/bulk_policy.py:_recipient_skip_reason"
   ],
   "9a8ace6d278478f72b563b199bed5df9c065204a": [

@@ -1,7 +1,7 @@
 """L6 서비스 — 하나팩스 발송 승인서 만들기·승인·취소·정지 (API 라우터가 호출한다).
 
 기준서: docs/specs/2026-10-02_hanafax_auto_send.md
-검증·해시 계산은 여기서 하고, 저장은 `fax_authorization_store`, 판정은 `fax_send_policy` 가 맡는다.
+검증·해시 계산은 여기서 하고, 저장은 `authorization_store`, 판정은 `fax_send_policy` 가 맡는다.
 승인서는 한 번 승인하면 수정할 수 없다(범위를 바꾸려면 새로 만든다).
 """
 
@@ -17,12 +17,12 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.gates import fax_send_policy as policy
+from ai_orchestrator.connectors.hanafax import send_policy as policy
 from ai_orchestrator.paths.runtime import data_dir, storage_dir
-from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import hanafax_attachments as attachments
+from ai_orchestrator.connectors.hanafax import authorization_store as store
+from ai_orchestrator.connectors.hanafax import attachments as attachments
 from ai_orchestrator.services import scheduled_job_actions as actions
-from ai_orchestrator.sites import hanafax_auto_sender as adapter
+from ai_orchestrator.connectors.hanafax import auto_sender as adapter
 
 MAX_RECIPIENTS = 1000
 MAX_PER_RUN_CAP = 1000
@@ -38,7 +38,7 @@ _BLOCKED_PARTS = {"appdata", ".ssh", ".aws", ".gnupg", ".claude", ".git", "node_
 
 
 def _allowed_roots() -> list[Path]:
-    roots = [Path.home(), Path(__file__).resolve().parents[2]]
+    roots = [Path.home(), Path(__file__).resolve().parents[3]]
     roots += [Path(p) for p in os.environ.get("HAEHAN_FAX_ALLOWED_DIRS", "").split(os.pathsep) if p.strip()]
     return [r.resolve() for r in roots if r.exists()]
 
@@ -475,7 +475,7 @@ _reconcile_state: dict[str, dict[str, Any]] = {}
 
 
 def _reconcile_job(auth_id: str) -> None:
-    from ai_orchestrator.services import hanafax_reconcile
+    from ai_orchestrator.connectors.hanafax import reconcile as hanafax_reconcile
 
     try:
         state: dict[str, Any] = {"ok": True, **hanafax_reconcile.reconcile(auth_id)}

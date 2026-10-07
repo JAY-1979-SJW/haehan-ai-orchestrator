@@ -3,7 +3,7 @@
  "ai_orchestrator/connectors/naver_mail/mailbox_router.py::send_draft",
  "ai_orchestrator/services/scheduled_job_actions.py::_run_blog_publish.job",
  "ai_orchestrator/services/scheduled_job_actions.py::_run_naver_mail_send",
- "ai_orchestrator/sites/hanafax_auto_sender.py::build_sender._send",
+ "ai_orchestrator/connectors/hanafax/auto_sender.py::build_sender._send",
  "ai_orchestrator/connectors/naver_mail/mailbox_flow.py::confirm_send",
  "scripts/hanafax/batch.py::execute_batch",
  "scripts/hanafax/send_kras_campaign.py::main",

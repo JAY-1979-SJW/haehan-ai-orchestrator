@@ -720,7 +720,7 @@ def test_hanafax_single_send_phrase_number_and_opt_out(monkeypatch):
     from fastapi import HTTPException
 
     from ai_orchestrator.connectors.hanafax import router as hf
-    from ai_orchestrator.persistence import fax_authorization_store as store
+    from ai_orchestrator.connectors.hanafax import authorization_store as store
 
     sent: list[str] = []
     monkeypatch.setattr(

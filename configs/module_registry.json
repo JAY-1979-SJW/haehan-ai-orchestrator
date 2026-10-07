@@ -4073,7 +4073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/fax_send_policy.py": {
+  "ai_orchestrator/connectors/hanafax/send_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "hanafax",
@@ -5537,7 +5537,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/fax_authorization_store.py": {
+  "ai_orchestrator/connectors/hanafax/authorization_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "hanafax",
@@ -6049,7 +6049,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/services/hanafax_attachments.py": {
+  "ai_orchestrator/connectors/hanafax/attachments.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "hanafax",
@@ -6057,7 +6057,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/hanafax_authorization_service.py": {
+  "ai_orchestrator/connectors/hanafax/authorization_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "hanafax",
@@ -6065,7 +6065,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/hanafax_reconcile.py": {
+  "ai_orchestrator/connectors/hanafax/reconcile.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "hanafax",
@@ -6297,7 +6297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/sites/hanafax_auto_sender.py": {
+  "ai_orchestrator/connectors/hanafax/auto_sender.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hanafax",
@@ -7137,7 +7137,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/workflows/hanafax_auto_send.py": {
+  "ai_orchestrator/connectors/hanafax/auto_send.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "hanafax",

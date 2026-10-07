@@ -1,4 +1,4 @@
-"""ai_orchestrator.persistence.fax_authorization_store — 하나팩스 승인서·이력·수신거부·정지 저장소.
+"""ai_orchestrator.connectors.hanafax.authorization_store — 하나팩스 승인서·이력·수신거부·정지 저장소.
 
 모든 테스트는 임시 DB 를 쓴다(실제 ai_orchestrator/storage 를 건드리지 않는다). 실제 발송은 하지 않는다.
 """
@@ -9,8 +9,8 @@ import sqlite3
 
 import pytest
 
-from ai_orchestrator.gates import fax_send_policy as pol
-from ai_orchestrator.persistence import fax_authorization_store as store
+from ai_orchestrator.connectors.hanafax import send_policy as pol
+from ai_orchestrator.connectors.hanafax import authorization_store as store
 from ai_orchestrator.persistence.sqlite_schema import current_version
 
 RECIPIENTS = [{"fax": "02-111-2222", "name": "가나다"}, {"fax": "031-333-4444", "name": "라마바"}]

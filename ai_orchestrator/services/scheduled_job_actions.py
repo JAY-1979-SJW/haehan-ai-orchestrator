@@ -283,7 +283,7 @@ def _run_naver_mail_send(params: dict[str, Any]) -> str:
 
 def _fax_send_params(params: dict[str, Any]) -> dict[str, Any]:
     """승인서 id 하나만 받는다. 수신자·제목·문서는 승인서에서 읽는다(여기서 바꿀 수 없다)."""
-    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+    from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
 
     extra = set(params) - {"authorization_id"}
     if extra:
@@ -336,9 +336,9 @@ def _run_hanafax_send(params: dict[str, Any]) -> str:
     """승인서 범위 안에서 팩스를 자동 발송한다. 승인서가 드라이런이면 전송하지 않고 계획만 기록한다."""
     from datetime import datetime
 
-    from ai_orchestrator.sites import hanafax_auto_sender as adapter
-    from ai_orchestrator.persistence import fax_authorization_store as fax_store
-    from ai_orchestrator.workflows import hanafax_auto_send as fax_flow
+    from ai_orchestrator.connectors.hanafax import auto_sender as adapter
+    from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
+    from ai_orchestrator.connectors.hanafax import auto_send as fax_flow
 
     auth_id = params["authorization_id"]
     row = fax_store.get_authorization(auth_id)
@@ -543,7 +543,7 @@ def catalog() -> list[dict[str, Any]]:
                 {"name": "body", "label": "본문", "type": "text", "options": [], "default": ""},
             ]
         if spec.validate is _fax_send_params:
-            from ai_orchestrator.persistence import fax_authorization_store as fax_store
+            from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
 
             approved = [a for a in fax_store.list_authorizations() if a["approved"] and not a["revoked"]]
             fields.append(
