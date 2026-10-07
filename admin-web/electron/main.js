@@ -336,8 +336,16 @@ function notifyClaudeChanged(result = null) {
   return sent;
 }
 
+// 자동 점검(HAEHAN_E2E=1)은 사용자 PC 의 Claude 전역 설정(~/.claude.json·Claude Desktop 설정)을 바꾸지 않는다.
+// 실측 2026-10-08: 임시 프로필로 띄운 점검용 앱이 Claude Code 등록을 곧 지워질 %TEMP% 경로로 덮어써
+// 대표님 Claude 의 haehan-orchestrator 연결이 ✘ Failed 가 됐다.
+function claudeRegistrationBlocked() {
+  return process.env.HAEHAN_E2E === "1";
+}
+
 async function connectClaudeNow() {
   if (!app.isPackaged) return { ok: false, error: "dev_mode_unsupported", hint: "패키징된 앱에서만 지원합니다" };
+  if (claudeRegistrationBlocked()) return { ok: false, error: "e2e_mode", hint: "자동 점검 중에는 Claude 설정을 바꾸지 않습니다" };
   const r = await claudeMcp.connectClaude(claudeCtx());
   if (r.ok) patchConfig({ claude_mcp: { ...(loadConfig().claude_mcp || {}), connected: true, prompted: true, build_id: r.buildId, fastapi_url: FASTAPI_URL } });
   notifyClaudeChanged();
@@ -345,6 +353,7 @@ async function connectClaudeNow() {
 }
 
 function disconnectClaudeNow() {
+  if (claudeRegistrationBlocked()) return { ok: false, error: "e2e_mode", hint: "자동 점검 중에는 Claude 설정을 바꾸지 않습니다" };
   const r = claudeMcp.disconnectClaude(claudeCtx());
   if (r.ok) patchConfig({ claude_mcp: { ...(loadConfig().claude_mcp || {}), connected: false, prompted: true } });
   notifyClaudeChanged();
@@ -365,7 +374,7 @@ function notifyClaudeResult(title, r) {
 // 앱 시작 때: 이미 동의한 사용자는 새 빌드·주소 변경 시 조용히 갱신한다.
 // 처음이면 따로 창을 띄우지 않는다 — 화면 배지가 "연결 / 나중에" 안내 카드를 보여 준다(prompted 가 false 인 동안).
 async function syncClaudeOnStart() {
-  if (!app.isPackaged) return;
+  if (!app.isPackaged || claudeRegistrationBlocked()) return;
   const ctx = claudeCtx();
   if (!fs.existsSync(path.join(ctx.srcDir, claudeMcp.EXE_NAME))) return;
   const st = loadConfig().claude_mcp || {};

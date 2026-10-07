@@ -33,6 +33,13 @@
   // 초기 로드 — Next.js 메인 페이지
   view.src = SERVER + "/";
 
+  // 키보드 포커스: <webview> 안 페이지는 사용자가 한 번 클릭하기 전까지 키 입력을 못 받는다
+  // (실측 2026-10-08, 설치본 E2E: 포커스 없이 input.fill()/타이핑하면 keydown·input 이벤트가
+  // 게스트에 전혀 안 닿아 /setup 폼이 빈 값으로 제출됨 — webview.focus() 한 번이면 해결).
+  // 첫 화면(/setup 이름 입력 등)에서 바로 타이핑할 수 있게 로드 직후·창 복귀 시 포커스를 준다.
+  view.addEventListener("dom-ready", () => view.focus());
+  window.addEventListener("focus", () => view.focus());
+
   // 2026-09-29: 팝업/외부링크 분기(구 new-window 이벤트)는 메인 프로세스로 이동했다
   // (main.js의 app.on("web-contents-created", ...)) — 이 창은 nodeIntegration:false라
   // require가 없어 여기서 직접 shell.openExternal을 부르면 항상 ReferenceError였다
