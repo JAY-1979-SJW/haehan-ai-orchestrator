@@ -91,11 +91,11 @@ def redact_mapping(data: Mapping[str, Any]) -> dict[str, Any]:
 __all__ = [
     "REDACTED",
     "SENSITIVE_KEYS",
+    "is_sensitive_key",
     "mask_email",
     "mask_identifier",
-    "safe_preview",
-    "is_sensitive_key",
-    "redact_value",
-    "redact_obj",
     "redact_mapping",
+    "redact_obj",
+    "redact_value",
+    "safe_preview",
 ]
