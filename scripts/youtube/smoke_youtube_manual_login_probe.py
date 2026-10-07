@@ -2,7 +2,7 @@
 """유튜브/구글 계정 수동 로그인 확인 smoke 스크립트.
 
 실행 예:
-  python scripts/smoke_youtube_manual_login_probe.py \
+  python scripts/youtube/smoke_youtube_manual_login_probe.py \
     --url https://www.youtube.com --wait-seconds 180 \
     --require-visible-confirm --require-user-login-confirm \
     --keep-open --browser-channel chrome
@@ -203,7 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     # 발생하지 않도록 한다.
     sys.path.insert(
         0,
-        str(Path(__file__).resolve().parent.parent),
+        str(Path(__file__).resolve().parents[2]),  # 저장소 루트(scripts/youtube/ 깊이)
     )
     from local_agent.browser_login_probe import probe_manual_login_flow
 
