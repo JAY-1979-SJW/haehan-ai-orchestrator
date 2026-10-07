@@ -165,3 +165,17 @@ def test_main_appends_to_summary_file_utf8(tmp_path, monkeypatch, capsys):
 
 def test_stats_path_constant():
     assert sm.STATS == Path("mutants/mutmut-cicd-stats.json")
+
+
+def test_main_empty_limit_env_means_no_limit(tmp_path, monkeypatch, capsys):
+    stats = tmp_path / "s.json"
+    stats.write_text(json.dumps({"killed": 1, "survived": 1}), encoding="utf-8")
+    monkeypatch.setattr(sm, "STATS", stats)
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    monkeypatch.setenv("TOTAL_TARGETS", "50")
+    monkeypatch.setenv("TARGET_LIMIT", "")
+    assert sm.main() == 0
+    assert capsys.readouterr().out == sm.render({"killed": 1, "survived": 1}, 50, 0)
+    monkeypatch.setenv("TARGET_LIMIT", "0")
+    assert sm.main() == 0
+    assert "절삭" not in capsys.readouterr().out

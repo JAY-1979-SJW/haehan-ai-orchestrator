@@ -478,3 +478,19 @@ def test_main_write_source_paths_value_is_consumed(rec, tmp_path, monkeypatch, c
     # 값이 없으면(빈 문자열) 쓰기 분기가 아니라 기본 출력
     assert cf.main(["B", "--write-source-paths"]) == 0
     assert capsys.readouterr().out == "p1\np2\np3\n"
+
+
+def test_main_tests_flag_normalizes_backslashes_on_any_platform(rec, capsys, monkeypatch):
+    from pathlib import PureWindowsPath
+
+    seen = []
+
+    def fake_rglob(self, pattern):
+        seen.append((self, pattern))
+        return [PureWindowsPath("tests\\sub\\test_y.py"), PureWindowsPath("tests\\test_x.py")]
+
+    monkeypatch.setattr(Path, "rglob", fake_rglob)
+    assert cf.main(["B", "--tests"]) == 0
+    assert capsys.readouterr().out == "t1\nt2\n"
+    assert seen == [(Path("tests"), "test_*.py")]
+    assert rec["tests"][-1][1] == ["tests/sub/test_y.py", "tests/test_x.py"]
