@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.browser_value_registry import (
+from local_agent.runtime.browser_value_registry import (
     VTYPE_SAMPLE_NUMBER,
     VTYPE_SAMPLE_TEXT,
     ValuePolicy,

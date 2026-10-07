@@ -10,7 +10,7 @@ from __future__ import annotations
 import threading
 from typing import Any
 
-from ai_orchestrator.local_agent.delegated_permission_policy import (
+from local_agent.runtime.delegated_permission_policy import (
     CHECK_ALLOWED,
     PERM_ACTIVE,
     build_permission,

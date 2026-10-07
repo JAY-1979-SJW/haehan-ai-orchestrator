@@ -4,8 +4,8 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.delegated_action_executor import EXEC_ALLOWED
-from ai_orchestrator.local_agent.delegated_permission_store import (
+from local_agent.runtime.delegated_action_executor import EXEC_ALLOWED
+from local_agent.runtime.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,
@@ -107,6 +107,6 @@ class TestWorkflowWithPermission:
         # 철회된 권한: publish_result status가 EXEC_NEED_PERMISSION
         pub = result.get("publish_result")
         if pub:
-            from ai_orchestrator.local_agent.delegated_action_executor import EXEC_NEED_PERMISSION
+            from local_agent.runtime.delegated_action_executor import EXEC_NEED_PERMISSION
 
             assert pub["status"] == EXEC_NEED_PERMISSION

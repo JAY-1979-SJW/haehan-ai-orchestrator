@@ -23,16 +23,16 @@ from local_agent.runtime.approval_audit_log import (
     log_execution_completed,
     log_execution_started,
 )
-from ai_orchestrator.local_agent.delegated_permission_gate import (
+from local_agent.runtime.delegated_permission_gate import (
     GATE_PASS,
     evaluate_gate,
 )
-from ai_orchestrator.local_agent.site_profile_registry import (
+from local_agent.runtime.site_profile_registry import (
     get_site_profile,
     is_action_blocked_for_site,
     is_action_direct_required,
 )
-from ai_orchestrator.local_agent.universal_safe_result import (
+from local_agent.runtime.universal_safe_result import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_FAILED,
@@ -41,7 +41,7 @@ from ai_orchestrator.local_agent.universal_safe_result import (
     STATUS_WARN_PERMISSION,
     build_universal_result,
 )
-from ai_orchestrator.local_agent.workflow_template_engine import get_template
+from local_agent.runtime.workflow_template_engine import get_template
 
 
 @dataclass
@@ -222,7 +222,7 @@ def run_single_action(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 �
     profile = get_site_profile(site_id)
     _domain = domain or (profile["domains"][0] if profile and profile.get("domains") else site_id)
 
-    from ai_orchestrator.local_agent.delegated_action_executor import (
+    from local_agent.runtime.delegated_action_executor import (
         EXEC_ALLOWED,
         EXEC_BLOCKED,
         EXEC_NEED_PERMISSION,

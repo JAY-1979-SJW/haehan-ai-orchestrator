@@ -29,11 +29,11 @@ from local_agent.runtime.local_security_installer_runner import (
     STATUS_WAITING_USER_UAC,
     check_action_allowed,
 )
-from ai_orchestrator.local_agent.site_type_classifier import (
+from local_agent.runtime.site_type_classifier import (
     SITE_GOVERNMENT,
     classify_site,
 )
-from ai_orchestrator.local_agent.universal_safe_result import (
+from local_agent.runtime.universal_safe_result import (
     STATUS_COMPLETED,
     build_universal_result,
     sanitize_universal_result,

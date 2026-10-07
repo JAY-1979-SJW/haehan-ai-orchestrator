@@ -15,11 +15,11 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_orchestrator.local_agent.selector_pack_registry import (  # noqa: E402
+from local_agent.runtime.selector_pack_registry import (  # noqa: E402
     generate_skeleton_pack,
     register_selector_pack,
 )
-from ai_orchestrator.local_agent.site_profile_registry import (  # noqa: E402
+from local_agent.runtime.site_profile_registry import (  # noqa: E402
     _COMMON_BLOCKED,
     _COMMON_DIRECT,
     CAT_FORUM,
@@ -73,7 +73,10 @@ def create_site_profile(  # noqa: PLR0913 - 공개 시그니처 유지(동작 �
     with contextlib.suppress(ValueError):  # 이미 등록된 경우
         register_selector_pack(site_id, skeleton["selectors"])
 
-    return get_site_profile(site_id)
+    created = get_site_profile(site_id)
+    if created is None:  # 방금 등록한 프로필이 없다 — 이전에는 None 을 그대로 돌려줬다(반환 타입은 dict)
+        raise ValueError(f"등록한 사이트 프로필을 찾을 수 없습니다: {site_id}")
+    return created
 
 
 if __name__ == "__main__":

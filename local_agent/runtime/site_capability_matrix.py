@@ -11,7 +11,7 @@ from typing import Any
 from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
 )
-from ai_orchestrator.local_agent.site_profile_registry import get_site_profile
+from local_agent.runtime.site_profile_registry import get_site_profile
 
 # ── Capability 상수 ───────────────────────────────────────────────────────────
 
@@ -118,7 +118,7 @@ def get_required_permission(site_id: str, action: str) -> dict[str, Any]:
     cap = get_capability_for_action(action)
     grade = _CAPABILITY_GRADE.get(cap, GRADE_USER_DELEGATED) if cap else GRADE_USER_DELEGATED
 
-    from ai_orchestrator.local_agent.site_profile_registry import (
+    from local_agent.runtime.site_profile_registry import (
         is_action_blocked_for_site, is_action_direct_required,
     )
     if is_action_blocked_for_site(site_id, action):
@@ -139,7 +139,7 @@ def reject_if_blocked(site_id: str, action: str) -> dict[str, Any] | None:
     """
     BLOCKED action이면 차단 dict 반환. 아니면 None.
     """
-    from ai_orchestrator.local_agent.site_profile_registry import is_action_blocked_for_site
+    from local_agent.runtime.site_profile_registry import is_action_blocked_for_site
     if is_action_blocked_for_site(site_id, action):
         return {
             "blocked": True,

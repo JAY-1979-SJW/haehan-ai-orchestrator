@@ -4,17 +4,17 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from ai_orchestrator.local_agent.site_capability_matrix import (
+from local_agent.runtime.site_capability_matrix import (
     GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
 )
-from ai_orchestrator.local_agent.user_intent_parser import (
+from local_agent.runtime.user_intent_parser import (
     INTENT_READ_PAGE, INTENT_SEARCH_SITE, INTENT_FIND_NOTICE,
     INTENT_DOWNLOAD_ATTACHMENTS, INTENT_SUMMARIZE_CONTENT, INTENT_EXTRACT_TABLE,
     INTENT_GENERATE_BLOG_DRAFT, INTENT_PREPARE_FORM, INTENT_WRITE_POST,
     INTENT_WRITE_COMMENT, INTENT_PUBLISH_POST, INTENT_UPDATE_POST,
     INTENT_DELETE_POST, INTENT_SEND_MESSAGE, INTENT_SUBMIT_FORM,
 )
-from ai_orchestrator.local_agent.unknown_site_fallback_policy import (
+from local_agent.runtime.unknown_site_fallback_policy import (
     get_action_grade_for_unknown_site,
 )
 

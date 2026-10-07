@@ -1,7 +1,7 @@
 """Browser Discovery Candidates 테스트."""
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.browser_discovery_candidates import (
+from local_agent.runtime.browser_discovery_candidates import (
     build_candidate, validate_candidate_safety,
     CANDIDATE_MENU, CANDIDATE_FIELD, CANDIDATE_BUTTON,
     CANDIDATE_DESTRUCTIVE_BUTTON, CANDIDATE_SUBMIT_BUTTON,

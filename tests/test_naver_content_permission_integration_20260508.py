@@ -6,26 +6,26 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.content_workflow_policy import (
+from local_agent.runtime.content_workflow_policy import (
     GRADE_USER_DIRECT,
     get_workflow_grade,
     is_workflow_auto_allowed,
     requires_permission,
 )
-from ai_orchestrator.local_agent.delegated_action_executor import (
+from local_agent.runtime.delegated_action_executor import (
     EXEC_ALLOWED,
     EXEC_BLOCKED,
     EXEC_NEED_PERMISSION,
     EXEC_USER_DIRECT,
     execute_delegated_action,
 )
-from ai_orchestrator.local_agent.delegated_permission_policy import (
+from local_agent.runtime.delegated_permission_policy import (
     CHECK_EXHAUSTED,
     CHECK_EXPIRED,
     CHECK_REVOKED,
     CHECK_SCOPE_EXCEEDED,
 )
-from ai_orchestrator.local_agent.delegated_permission_store import (
+from local_agent.runtime.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,

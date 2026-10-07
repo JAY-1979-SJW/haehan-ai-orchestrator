@@ -7,17 +7,17 @@ from collections.abc import Callable
 from contextlib import suppress
 from typing import Any
 
-from ai_orchestrator.local_agent.generic_selector_discovery import discover_selectors
-from ai_orchestrator.local_agent.learned_site_profile_store import (
+from local_agent.runtime.generic_selector_discovery import discover_selectors
+from local_agent.runtime.learned_site_profile_store import (
     has_learned_profile,
     save_learned_profile,
 )
-from ai_orchestrator.local_agent.site_capability_matrix import (
+from local_agent.runtime.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
 )
-from ai_orchestrator.local_agent.site_type_classifier import classify_site
-from ai_orchestrator.local_agent.universal_page_observer import observe_page_from_dict
-from ai_orchestrator.local_agent.universal_safe_result import (
+from local_agent.runtime.site_type_classifier import classify_site
+from local_agent.runtime.universal_page_observer import observe_page_from_dict
+from local_agent.runtime.universal_safe_result import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_FAILED,
@@ -25,8 +25,8 @@ from ai_orchestrator.local_agent.universal_safe_result import (
     STATUS_WARN_PERMISSION,
     build_universal_result,
 )
-from ai_orchestrator.local_agent.universal_task_planner import create_plan, get_auto_only_plan
-from ai_orchestrator.local_agent.user_intent_parser import parse_intent
+from local_agent.runtime.universal_task_planner import create_plan, get_auto_only_plan
+from local_agent.runtime.user_intent_parser import parse_intent
 
 # 안전 경계 — 항상 False
 _AGENT_SAFE_FIELDS = {
@@ -263,7 +263,7 @@ def _update_learned_profile(
             action_risk_mapping={s["action"]: s["risk"] for s in plan.get("steps", [])},
         )
     else:
-        from ai_orchestrator.local_agent.learned_site_profile_store import update_learned_profile
+        from local_agent.runtime.learned_site_profile_store import update_learned_profile
 
         update_learned_profile(
             host,

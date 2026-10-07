@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
-from ai_orchestrator.local_agent.universal_safe_result import (
+from local_agent.runtime.universal_safe_result import (
     STATUS_COMPLETED, STATUS_FAILED, STATUS_WARN,
 )
 

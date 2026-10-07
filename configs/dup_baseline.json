@@ -259,7 +259,7 @@
   ],
   "9c61ce44dc64466f3098f9f13841854e81e5aa35": [
    "ai_orchestrator/local_agent/naver_content_safe_result.py:validate_naver_result",
-   "ai_orchestrator/local_agent/universal_safe_result.py:validate_universal_result"
+   "local_agent/runtime/universal_safe_result.py:validate_universal_result"
   ],
   "9cb75156eea54eb3e9293fc251ec4602a93db2fe": [
    "scripts/ops/audit_approval_flow_baseline_contract.py:audit",

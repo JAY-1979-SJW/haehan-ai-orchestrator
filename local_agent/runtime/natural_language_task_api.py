@@ -6,11 +6,11 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from ai_orchestrator.local_agent.universal_ai_site_agent import run_agent
-from ai_orchestrator.local_agent.universal_safe_result import (
+from local_agent.runtime.universal_ai_site_agent import run_agent
+from local_agent.runtime.universal_safe_result import (
     STATUS_FAILED,
 )
-from ai_orchestrator.local_agent.user_intent_parser import parse_intent
+from local_agent.runtime.user_intent_parser import parse_intent
 
 _SAFE_FIELDS = [
     "cookie_exported",

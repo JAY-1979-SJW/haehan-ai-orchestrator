@@ -7,14 +7,14 @@ from ai_orchestrator.local_agent.naver_cafe_workflow import (
     write_cafe_post, write_cafe_comment, get_cafe_workflow_grade,
     STEP_SEARCH, STEP_READ_POST, STEP_POST_WRITE, STEP_COMMENT_WRITE,
 )
-from ai_orchestrator.local_agent.content_workflow_policy import (
+from local_agent.runtime.content_workflow_policy import (
     GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED,
     is_workflow_auto_allowed, requires_permission,
 )
-from ai_orchestrator.local_agent.delegated_permission_store import (
+from local_agent.runtime.delegated_permission_store import (
     grant_permission, revoke, clear_all,
 )
-from ai_orchestrator.local_agent.delegated_action_executor import (
+from local_agent.runtime.delegated_action_executor import (
     EXEC_ALLOWED, EXEC_NEED_PERMISSION,
 )
 from ai_orchestrator.local_agent.naver_content_safe_result import validate_naver_result

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.local_agent.browser_discovery_candidates import (
+from local_agent.runtime.browser_discovery_candidates import (
     CANDIDATE_DESTRUCTIVE_BUTTON,
     CANDIDATE_DOWNLOAD_LINK,
     CANDIDATE_MENU,
@@ -25,12 +25,12 @@ from ai_orchestrator.local_agent.browser_discovery_candidates import (
     is_forbidden_label,
     validate_candidate_safety,
 )
-from ai_orchestrator.local_agent.browser_site_registry import (
+from local_agent.runtime.browser_site_registry import (
     EXECUTION_LOCAL_AGENT_REQUIRED,
     get_site,
     validate_raw_url,
 )
-from ai_orchestrator.local_agent.browser_value_registry import (
+from local_agent.runtime.browser_value_registry import (
     is_forbidden_value,
 )
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.browser_policy_integration import type_with_policy
-from ai_orchestrator.local_agent.browser_value_registry import (
+from local_agent.runtime.browser_policy_integration import type_with_policy
+from local_agent.runtime.browser_value_registry import (
     ValuePolicy, register_value, clear_all,
     VTYPE_SAMPLE_TEXT,
 )

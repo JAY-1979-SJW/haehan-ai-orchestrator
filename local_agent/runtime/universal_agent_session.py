@@ -8,15 +8,15 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from ai_orchestrator.local_agent.delegated_permission_store import (
+from local_agent.runtime.delegated_permission_store import (
     get_permission,
     grant_permission,
     revoke,
 )
-from ai_orchestrator.local_agent.learned_site_profile_store import (
+from local_agent.runtime.learned_site_profile_store import (
     has_learned_profile,
 )
-from ai_orchestrator.local_agent.natural_language_task_api import (
+from local_agent.runtime.natural_language_task_api import (
     execute_natural_language_task,
 )
 

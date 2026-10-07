@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.browser_site_registry import (
+from local_agent.runtime.browser_site_registry import (
     SitePolicy, register_site, get_site, resolve_url, validate_raw_url,
     list_sites, clear_all,
     EXECUTION_LOCAL_AGENT_REQUIRED, LOGIN_PUBLIC_READONLY,

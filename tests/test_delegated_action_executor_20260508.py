@@ -3,7 +3,7 @@
 """
 import pytest
 
-from ai_orchestrator.local_agent.delegated_action_executor import (
+from local_agent.runtime.delegated_action_executor import (
     EXEC_ALLOWED,
     EXEC_BLOCKED,
     EXEC_CONTENT_REJECTED,
@@ -11,7 +11,7 @@ from ai_orchestrator.local_agent.delegated_action_executor import (
     EXEC_USER_DIRECT,
     execute_delegated_action,
 )
-from ai_orchestrator.local_agent.delegated_permission_store import (
+from local_agent.runtime.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,

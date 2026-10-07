@@ -15,8 +15,8 @@ from local_agent.runtime.approval_audit_log import (
     log_execution_completed,
     log_execution_started,
 )
-from ai_orchestrator.local_agent.content_publish_guard import validate_publish_request
-from ai_orchestrator.local_agent.delegated_permission_gate import (
+from local_agent.runtime.content_publish_guard import validate_publish_request
+from local_agent.runtime.delegated_permission_gate import (
     GATE_BLOCKED,
     GATE_NEED_PERMISSION,
     GATE_USER_DIRECT,

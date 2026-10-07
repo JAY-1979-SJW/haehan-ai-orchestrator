@@ -6,11 +6,11 @@ from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.local_agent.natural_language_task_api import (
+from local_agent.runtime.natural_language_task_api import (
     check_result_safety,
     execute_natural_language_task,
 )
-from ai_orchestrator.local_agent.universal_safe_result import (
+from local_agent.runtime.universal_safe_result import (
     STATUS_COMPLETED,
     STATUS_WARN_AUTH,
     STATUS_WARN_PERMISSION,
