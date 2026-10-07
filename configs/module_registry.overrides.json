@@ -1314,5 +1314,11 @@
   "role": "shared",
   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
   "source": "manual"
+ },
+ "ai_orchestrator/dev_reg/dev_reg_telegram.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "notify/telegram_notifier(L1 contract)에서 옮겨 온 개발자 등록 텔레그램 메시지·callback_data 포맷 — 같은 내용이라 같은 층·역할(F12 순환 방지 이동). 규칙 기본값 L4 로 두면 L2 정책 모듈이 이를 import 할 때 층간 위반이 생긴다.",
+  "source": "manual"
  }
 }
