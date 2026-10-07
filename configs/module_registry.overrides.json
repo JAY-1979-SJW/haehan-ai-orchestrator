@@ -1103,7 +1103,7 @@
  "tasks_router.py": {
   "layer": "L8",
   "role": "api",
-  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
  },
  "whitelist_executor.py": {
@@ -1127,19 +1127,19 @@
  "email_task_approval.py": {
   "layer": "L2",
   "role": "policy",
-  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
  },
  "email_task_executor.py": {
   "layer": "L4",
   "role": "generic",
-  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
  },
  "email_task_store.py": {
   "layer": "L7",
   "role": "persistence",
-  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
  },
  "hiworks_mail_reader.py": {
@@ -1151,7 +1151,7 @@
  "inbox_router.py": {
   "layer": "L8",
   "role": "api",
-  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
  },
  "inbox_store.py": {

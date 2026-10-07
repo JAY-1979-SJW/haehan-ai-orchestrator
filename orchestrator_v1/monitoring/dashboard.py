@@ -17,7 +17,6 @@ from flask import Flask, Response, jsonify, render_template, request
 from orchestrator_v1.core import audit_logger
 from orchestrator_v1.core.logger import get_logger
 from orchestrator_v1.core.logging_utils import mask_sensitive
-from orchestrator_v1.inbox.inbox_router import inbox_bp
 from orchestrator_v1.inbox.notice_router import notice_bp
 from orchestrator_v1.monitoring.log_analyzer import (
     _read_jsonl,
@@ -27,8 +26,9 @@ from orchestrator_v1.monitoring.log_analyzer import (
     summarize_pending_approvals,
     summarize_recent_activity,
 )
+from orchestrator_v1.routers.inbox_router import inbox_bp
+from orchestrator_v1.routers.tasks_router import tasks_bp
 from orchestrator_v1.tasks import approval_manager
-from orchestrator_v1.tasks.tasks_router import tasks_bp
 from orchestrator_v1.webhooks.webhooks_router import webhooks_bp
 
 _BASE_DIR = str(Path(__file__).resolve().parents[2])

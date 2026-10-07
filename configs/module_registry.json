@@ -7749,7 +7749,7 @@
    "layer": "L2",
    "role": "policy",
    "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
    "source": "manual"
   },
@@ -7757,7 +7757,7 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
    "source": "manual"
   },
@@ -7765,7 +7765,7 @@
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
    "source": "manual"
   },
@@ -7789,7 +7789,7 @@
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
    "source": "manual"
   },
@@ -16461,7 +16461,7 @@
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
    "source": "manual"
   },
@@ -22025,7 +22025,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "orchestrator_v1/tasks/tasks_router.py": {
+  "orchestrator_v1/routers/tasks_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -22057,7 +22057,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "orchestrator_v1/inbox/email_task_approval.py": {
+  "orchestrator_v1/tasks/email_task_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -22065,7 +22065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "orchestrator_v1/inbox/email_task_executor.py": {
+  "orchestrator_v1/tasks/email_task_executor.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -22073,7 +22073,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "orchestrator_v1/inbox/email_task_store.py": {
+  "orchestrator_v1/tasks/email_task_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -22089,7 +22089,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "orchestrator_v1/inbox/inbox_router.py": {
+  "orchestrator_v1/routers/inbox_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -22311,6 +22311,14 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/routers/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }

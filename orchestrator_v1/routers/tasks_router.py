@@ -12,7 +12,7 @@ from typing import cast
 
 from flask import Blueprint, jsonify, request
 
-from orchestrator_v1.inbox import (
+from orchestrator_v1.tasks import (
     email_task_approval,
     email_task_executor,
     email_task_store,

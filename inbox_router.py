@@ -1,5 +1,5 @@
-# 호환 shim: 실제 모듈은 orchestrator_v1/inbox/inbox_router.py (docs/architecture/ROOT_MODULE_SPLIT_PLAN.md)
+# 호환 shim: 실제 모듈은 orchestrator_v1/routers/inbox_router.py (docs/architecture/ROOT_MODULE_SPLIT_PLAN.md)
 import importlib as _il
 import sys as _sys
 
-_sys.modules[__name__] = _il.import_module("orchestrator_v1.inbox.inbox_router")
+_sys.modules[__name__] = _il.import_module("orchestrator_v1.routers.inbox_router")

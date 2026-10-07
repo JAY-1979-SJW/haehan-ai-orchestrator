@@ -14,7 +14,7 @@ import time
 from orchestrator_v1.core import audit_logger
 from orchestrator_v1.core.logger import get_logger
 from orchestrator_v1.core.models import ExecutionPlan, RiskAssessment, TaskRequest
-from orchestrator_v1.inbox import email_task_approval, email_task_store
+from orchestrator_v1.tasks import email_task_approval, email_task_store
 from orchestrator_v1.tasks.whitelist_executor import execute_allowed
 
 log = get_logger("email_task_executor")
