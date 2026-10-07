@@ -100,7 +100,7 @@ SAFE_BOUNDARY = {
 
 def _check_work_trade() -> bool:
     try:
-        from ai_orchestrator.gabia.gabia_dns_work_registry import (
+        from ai_orchestrator.connectors.gabia.dns_work_registry import (
             get_work_trade,
         )
 
@@ -114,7 +114,7 @@ def _check_work_trade() -> bool:
 
 def _check_external_works() -> tuple[bool, list[str]]:
     try:
-        from ai_orchestrator.gabia.gabia_dns_work_registry import list_gabia_external_works
+        from ai_orchestrator.connectors.gabia.dns_work_registry import list_gabia_external_works
 
         works = list_gabia_external_works()
         ids = [w.external_work_id for w in works]
@@ -181,7 +181,7 @@ def _check_policy_decisions() -> dict[str, bool]:
 def _check_dns_models() -> dict[str, bool]:
     result: dict[str, Any] = {}
     try:
-        from ai_orchestrator.gabia.gabia_dns_models import (
+        from ai_orchestrator.connectors.gabia.dns_models import (
             make_assistant_subdomain_drafts,
             make_default_rollback_plan,
         )

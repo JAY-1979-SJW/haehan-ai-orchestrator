@@ -37,7 +37,6 @@
   {"prefix": "ai_orchestrator/domain/", "reason": "층 표준 폴더 — 도메인"},
   {"prefix": "ai_orchestrator/sites/", "reason": "층 표준 폴더 — 사이트 어댑터"},
   {"prefix": "ai_orchestrator/contracts/", "reason": "층 표준 폴더 — 계약"},
-  {"prefix": "ai_orchestrator/gabia/", "reason": "층 표준 폴더(T0 표 기준) — 도메인 패키지"},
   {"prefix": "admin-web/src/lib/", "reason": "층 표준 폴더 — 화면 공용 라이브러리"},
   {"prefix": "admin-web/src/components/", "reason": "층 표준 폴더 — 화면 공용 컴포넌트"},
   {"prefix": "admin-web/electron/", "reason": "층 표준 폴더 — 데스크톱 셸"},

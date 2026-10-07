@@ -633,7 +633,7 @@ class ExecutionPolicyService:
         requires_reauth: 재인증 필요 여부
         """
         try:
-            from ai_orchestrator.gabia.gabia_browser_task import (
+            from ai_orchestrator.connectors.gabia.browser_task import (
                 STATE_BLOCKED,
                 STATE_LOGIN_REQUIRED,
                 STATE_REAUTH_REQUIRED,

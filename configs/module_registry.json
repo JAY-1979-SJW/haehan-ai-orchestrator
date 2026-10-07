@@ -3953,7 +3953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gabia/__init__.py": {
+  "ai_orchestrator/connectors/gabia/autowork_subdomain_plan.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "gabia",
@@ -3961,15 +3961,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/gabia/autowork_subdomain_plan.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "gabia",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/gabia/gabia_browser_task.py": {
+  "ai_orchestrator/connectors/gabia/browser_task.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "gabia",
@@ -3977,7 +3969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gabia/gabia_dns_models.py": {
+  "ai_orchestrator/connectors/gabia/dns_models.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "gabia",
@@ -3985,7 +3977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gabia/gabia_dns_work_registry.py": {
+  "ai_orchestrator/connectors/gabia/dns_work_registry.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "gabia",
@@ -3993,7 +3985,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/gabia/site_settings_registry.py": {
+  "ai_orchestrator/connectors/gabia/site_settings_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "gabia",
