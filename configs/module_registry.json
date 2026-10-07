@@ -16033,7 +16033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/smoke/g2b_user_present_attachment_smoke.py": {
+  "scripts/g2b/smoke/g2b_user_present_attachment_smoke.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "g2b",
