@@ -93,6 +93,7 @@ def render_shim(new_module: str, *, with_main: bool, old_path: str = "", new_pat
             "",
         ]
     lines += [
+        "",
         "def _install(real, g, mods):",
         "    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.",
         '    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})',
