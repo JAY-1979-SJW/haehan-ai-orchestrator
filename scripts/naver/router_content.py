@@ -52,7 +52,7 @@ def _cmd_content(sub: str, args: list[str]) -> None:
         print_action_summary(catalog, path)
     else:
         print(
-            "usage: python scripts/browser/cdp/cdp_client.py naver content [explore|actions] [blog|blog_admin|cafe|all] [--limit=80]"
+            "usage: python scripts/browser/cdp_client.py naver content [explore|actions] [blog|blog_admin|cafe|all] [--limit=80]"
         )
 
 
@@ -266,7 +266,7 @@ def _cmd_seo(sub: str, args: list[str]) -> None:
         return
 
     print(
-        "usage: python scripts/browser/cdp/cdp_client.py naver seo [entrypoints|plan|assets|ownership|exposure|submit-plan|monitor|full|diagnose|submit] --site=https://haehan-ai.kr"
+        "usage: python scripts/browser/cdp_client.py naver seo [entrypoints|plan|assets|ownership|exposure|submit-plan|monitor|full|diagnose|submit] --site=https://haehan-ai.kr"
     )
 
 
@@ -277,7 +277,7 @@ def _cmd_developers(sub: str, args: list[str]) -> None:
 
     gate_check("scan_page")
     if sub not in ("entrypoints", "plan", "apps"):
-        print("usage: python scripts/browser/cdp/cdp_client.py naver developers [entrypoints|plan]")
+        print("usage: python scripts/browser/cdp_client.py naver developers [entrypoints|plan]")
         return
     payload = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
@@ -326,7 +326,7 @@ def _cmd_shopping(sub: str, args: list[str]) -> None:
 
     if sub not in ("competitors", "competitor", "search"):
         print(
-            "usage: python scripts/browser/cdp/cdp_client.py naver shopping competitors --query=KEYWORD [--display=20] [--my-price=N]"
+            "usage: python scripts/browser/cdp_client.py naver shopping competitors --query=KEYWORD [--display=20] [--my-price=N]"
         )
         return
 
@@ -348,7 +348,7 @@ def _cmd_excel(sub: str, args: list[str]) -> None:
     from scripts.naver.excel_reports import build_excel_report, print_excel_summary
 
     if sub not in ("report", "build", "latest"):
-        print("usage: python scripts/browser/cdp/cdp_client.py naver excel report [--output=PATH]")
+        print("usage: python scripts/browser/cdp_client.py naver excel report [--output=PATH]")
         return
     gate_check("file_write")
     output = _option_value(args, "--output=")
@@ -384,5 +384,5 @@ def _cmd_keyword_tools(sub: str, args: list[str]) -> None:
         return
 
     print(
-        "usage: python scripts/browser/cdp/cdp_client.py naver keyword-tools [catalog|plan|datalab|shopping|searchad-plan|paid-blocks] --query=..."
+        "usage: python scripts/browser/cdp_client.py naver keyword-tools [catalog|plan|datalab|shopping|searchad-plan|paid-blocks] --query=..."
     )

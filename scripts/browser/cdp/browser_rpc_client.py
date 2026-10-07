@@ -33,5 +33,5 @@ def rpc(cmd: str, timeout: float = 30.0, **kwargs) -> dict:
             return json.loads(chunks.decode("utf-8"))
     except ConnectionRefusedError as e:
         raise RuntimeError(
-            "browser_rpc_server가 안 떠 있습니다. python scripts/browser/cdp/browser_rpc_server.py start 로 먼저 시작하세요."
+            "browser_rpc_server가 안 떠 있습니다. python scripts/browser/browser_rpc_server.py start 로 먼저 시작하세요."
         ) from e

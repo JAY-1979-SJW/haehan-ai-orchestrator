@@ -339,7 +339,7 @@ def _cmd_subdomains(sub: str, args: list[str]) -> None:
     if sub in ("classify", "check", "task"):
         if not args:
             print(
-                "  [error] usage: python scripts/browser/cdp/cdp_client.py google subdomains classify <host-or-service> [operation]"
+                "  [error] usage: python scripts/browser/cdp_client.py google subdomains classify <host-or-service> [operation]"
             )
             return
         operation = args[1] if len(args) > 1 else "read"
@@ -368,7 +368,7 @@ def _cmd_tabs(sub: str, args: list[str]) -> None:
     if sub in ("classify", "check", "task"):
         if len(args) < 2:
             print(
-                "  [error] usage: python scripts/browser/cdp/cdp_client.py google tabs classify <tab> <host-or-service> [operation]"
+                "  [error] usage: python scripts/browser/cdp_client.py google tabs classify <tab> <host-or-service> [operation]"
             )
             return
         operation = args[2] if len(args) > 2 else "read"
@@ -542,7 +542,7 @@ def _cmd_workspace_basic(sub: str, args: list[str]) -> None:
     if sub in ("plan", "prepare"):
         if len(args) < 2:
             print(
-                "  [error] usage: python scripts/browser/cdp/cdp_client.py google basic plan <surface> <operation> [key=value ...] --google-work-mode=main"
+                "  [error] usage: python scripts/browser/cdp_client.py google basic plan <surface> <operation> [key=value ...] --google-work-mode=main"
             )
             return
         surface = args[0]
@@ -642,7 +642,7 @@ def _youtube_search(args: list[str]) -> None:
     query = values.get("query") or values.get("q") or " ".join(positional)
     if not query:
         print(
-            "  [error] usage: python scripts/browser/cdp/cdp_client.py google youtube search --query=... "
+            "  [error] usage: python scripts/browser/cdp_client.py google youtube search --query=... "
             "[--source=auto|official|browser] [--limit=10]"
         )
         return
@@ -862,7 +862,7 @@ def _youtube_upload_prepare(args: list[str]) -> None:
     print(f"state_change: {plan['state_change']}")
     if plan["missing_inputs"]:
         print(f"missing_inputs: {', '.join(plan['missing_inputs'])}")
-    print("live_fill: python scripts/browser/cdp/cdp_client.py google youtube upload-live-fill <plan_path> --no-final-submit")
+    print("live_fill: python scripts/browser/cdp_client.py google youtube upload-live-fill <plan_path> --no-final-submit")
 
 
 def _youtube_upload_check(args: list[str]) -> None:
@@ -886,7 +886,7 @@ def _run_live_fill_plan(args: list[str], usage: str, requirement: str) -> None:
 def _youtube_upload_live_fill(args: list[str]) -> None:
     _run_live_fill_plan(
         args,
-        "  [error] usage: python scripts/browser/cdp/cdp_client.py google youtube upload-live-fill <plan_path> --no-final-submit",
+        "  [error] usage: python scripts/browser/cdp_client.py google youtube upload-live-fill <plan_path> --no-final-submit",
         "  [error] youtube upload-live-fill requires --no-final-submit",
     )
 
@@ -972,7 +972,7 @@ def _work_undeveloped(args: list[str]) -> None:
 
 def _work_prepare(args: list[str]) -> None:
     if not args:
-        print("  [error] usage: python scripts/browser/cdp/cdp_client.py google work prepare <action_key> [key=value ...]")
+        print("  [error] usage: python scripts/browser/cdp_client.py google work prepare <action_key> [key=value ...]")
         return
     action_key = args[0]
     values = workflows.parse_kv_args(args[1:])
@@ -993,7 +993,7 @@ def _work_prepare(args: list[str]) -> None:
 def _work_execute(args: list[str]) -> None:
     if not args:
         print(
-            "  [error] usage: python scripts/browser/cdp/cdp_client.py google work execute "
+            "  [error] usage: python scripts/browser/cdp_client.py google work execute "
             "<plan_path> --approved --confirm=GOOGLE_APPROVED_EXECUTE"
         )
         return
@@ -1022,7 +1022,7 @@ def _work_execute(args: list[str]) -> None:
 
 def _work_verify(args: list[str]) -> None:
     if not args:
-        print("  [error] usage: python scripts/browser/cdp/cdp_client.py google work verify <result_path>")
+        print("  [error] usage: python scripts/browser/cdp_client.py google work verify <result_path>")
         return
     verification, path = workflows.verify_execution_result(args[0])
     print("=" * 60)
@@ -1036,7 +1036,7 @@ def _work_verify(args: list[str]) -> None:
 def _work_live_fill(args: list[str]) -> None:
     _run_live_fill_plan(
         args,
-        "  [error] usage: python scripts/browser/cdp/cdp_client.py google work live-fill <plan_path> --no-final-submit",
+        "  [error] usage: python scripts/browser/cdp_client.py google work live-fill <plan_path> --no-final-submit",
         "  [error] live-fill requires --no-final-submit",
     )
 
@@ -1050,7 +1050,7 @@ def _work_live_coverage(args: list[str]) -> None:
 def _work_live_fill_manifest(args: list[str]) -> None:
     if not args:
         print(
-            "  [error] usage: python scripts/browser/cdp/cdp_client.py google work live-fill-manifest "
+            "  [error] usage: python scripts/browser/cdp_client.py google work live-fill-manifest "
             "<manifest_path> --no-final-submit"
         )
         return

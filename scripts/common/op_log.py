@@ -27,9 +27,9 @@ critical_logger(감사추적)와 app.log(디버그)의 중간 레이어.
     log_op("mail_send", ok=True, to="vendor@x.com", subject="...")
 
 CLI:
-    python scripts/browser/cdp/cdp_client.py op-log list
-    python scripts/browser/cdp/cdp_client.py op-log tail
-    python scripts/browser/cdp/cdp_client.py op-log stats
+    python scripts/browser/cdp_client.py op-log list
+    python scripts/browser/cdp_client.py op-log tail
+    python scripts/browser/cdp_client.py op-log stats
 """
 
 from __future__ import annotations

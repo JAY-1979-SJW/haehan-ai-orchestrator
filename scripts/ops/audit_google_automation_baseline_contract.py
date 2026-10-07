@@ -38,7 +38,7 @@ REQUIRED_PHRASES = (
     "scripts/google/domain_readiness_audit.py",
     "scripts/google/vision_usage_gate.py",
     "scripts/ops/audit_google_home_login_gate.py",
-    "python scripts/browser/cdp/cdp_client.py google work undeveloped",
+    "python scripts/browser/cdp_client.py google work undeveloped",
     "tests/test_google_tab_registry.py",
     "tests/test_google_domain_readiness_audit.py",
     "tests/test_google_secret_action_gate.py",

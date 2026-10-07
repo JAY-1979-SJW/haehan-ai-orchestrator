@@ -21465,7 +21465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp/browser_rpc_server.py": {
+  "scripts/browser/browser_rpc_server.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -21481,7 +21481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp/cdp_client.py": {
+  "scripts/browser/cdp_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

@@ -105,7 +105,7 @@ def test_google_router_check_runs_module_index(monkeypatch) -> None:
 def test_google_work_record_checkpoint_is_lane_separated(tmp_path) -> None:
     record = work_records.checkpoint(
         step="google module test checkpoint",
-        command="python scripts/browser/cdp/cdp_client.py google check",
+        command="python scripts/browser/cdp_client.py google check",
         verification="google work record test passed",
         report="data/google_module_check_latest.json",
         touched=["scripts/google/module_check.py"],
@@ -127,7 +127,7 @@ def test_google_work_record_checkpoint_is_lane_separated(tmp_path) -> None:
 def test_google_router_records_prints_latest_history(monkeypatch, tmp_path, capsys) -> None:
     work_records.checkpoint(
         step="google router records checkpoint",
-        command="python scripts/browser/cdp/cdp_client.py google check",
+        command="python scripts/browser/cdp_client.py google check",
         record_root=tmp_path,
     )
     monkeypatch.setattr(work_records, "DEFAULT_RECORD_ROOT", tmp_path)

@@ -30,7 +30,7 @@ HELPER = ROOT / "local_agent" / "cdp_attach.py"
 CDP_DAEMON = ROOT / "scripts" / "browser" / "cdp" / "cdp_daemon.py"
 APP_REALTIME_CHECK = ROOT / "scripts" / "ops" / "app_realtime_check.py"
 CHROME_UI_MONITOR = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
-CDP_CLIENT = ROOT / "scripts" / "browser" / "cdp" / "cdp_client.py"
+CDP_CLIENT = ROOT / "scripts" / "browser" / "cdp_client.py"
 
 SENSITIVE_PATTERNS = (
     re.compile(r"webSocketDebuggerUrl\s*[:=]\s*['\"]?ws://", re.I),

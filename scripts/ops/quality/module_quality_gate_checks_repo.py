@@ -61,7 +61,7 @@ def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
     dry_run = ROOT / "scripts" / "ops" / "dry_run_local_agent_cdp_attach.py"
     tests = ROOT / "tests" / "test_local_agent_browser_runtime_operating_rules.py"
     monitor = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
-    cdp_client = ROOT / "scripts" / "browser" / "cdp" / "cdp_client.py"
+    cdp_client = ROOT / "scripts" / "browser" / "cdp_client.py"
 
     required_files = (doc, dry_run, tests, monitor, cdp_client)
     missing = [normalize_path(str(path.relative_to(ROOT))) for path in required_files if not path.exists()]

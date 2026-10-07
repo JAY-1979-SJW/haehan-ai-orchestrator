@@ -117,9 +117,9 @@ def build_keyword_plan(query: str, *, topic: str = "") -> dict[str, Any]:
             "Use resulting keywords as inputs for Naver Cafe read-only searches.",
         ],
         "tool_commands": [
-            f"python scripts/browser/cdp/cdp_client.py naver keyword-tools datalab --query={','.join(keywords)}",
-            f"python scripts/browser/cdp/cdp_client.py naver keyword-tools shopping --query={','.join(keywords)}",
-            f"python scripts/browser/cdp/cdp_client.py naver keyword-tools searchad-plan --query={','.join(keywords)}",
+            f"python scripts/browser/cdp_client.py naver keyword-tools datalab --query={','.join(keywords)}",
+            f"python scripts/browser/cdp_client.py naver keyword-tools shopping --query={','.join(keywords)}",
+            f"python scripts/browser/cdp_client.py naver keyword-tools searchad-plan --query={','.join(keywords)}",
         ],
         "paid_actions_blocked": build_paid_block_plans(),
     }

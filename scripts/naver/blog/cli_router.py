@@ -122,4 +122,4 @@ def _cmd_blog_assets(sub: str, args: list[str]) -> None:
         _blog_assets_manifest(args, create_shopping_upload_manifest, save_shopping_upload_manifest)
         return
 
-    print("usage: python scripts/browser/cdp/cdp_client.py naver blog-assets [plan|inventory|analyze|pixel-analyze|manifest] --blog-id=gonobi [--target=1000]")
+    print("usage: python scripts/browser/cdp_client.py naver blog-assets [plan|inventory|analyze|pixel-analyze|manifest] --blog-id=gonobi [--target=1000]")

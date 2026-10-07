@@ -6,7 +6,7 @@
     page = open_site("eum", "/web/man/WEBMAN390M00")   # 특정 경로
 
 CLI:
-    python scripts/browser/cdp/cdp_client.py open <site> [path]
+    python scripts/browser/cdp_client.py open <site> [path]
     python -m scripts.site_engine.site_access <site> [path]
 
 흐름:

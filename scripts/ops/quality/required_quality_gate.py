@@ -31,7 +31,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "py_compile",
         "local_agent/cdp_attach.py",
         "scripts/archive/misc/chrome_ui_monitor.py",
-        "scripts/browser/cdp/cdp_client.py",
+        "scripts/browser/cdp_client.py",
         "scripts/ops/dry_run_local_agent_cdp_attach.py",
         "scripts/ops/audit_common_tool_runtime.py",
         "scripts/ops/audit_common_tool_runtime_baseline_contract.py",

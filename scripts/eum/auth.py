@@ -545,7 +545,7 @@ def ensure_logged_in(page) -> None:
     else:
         print("✘ 실패")
         raise RuntimeError(
-            f"EUM 자동 로그인 실패: {result['reason']}\n  자격증명 확인: python scripts/browser/cdp/cdp_client.py cred set eum"
+            f"EUM 자동 로그인 실패: {result['reason']}\n  자격증명 확인: python scripts/browser/cdp_client.py cred set eum"
         )
 
 

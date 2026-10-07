@@ -5,7 +5,7 @@ L5 성격)·scripts/browser/navigator·popup·explorer·gabia(상위 도메인 �
 몰라야 한다(기반이 상위를 import하면 역방향 — module_cycles 유발). 이 모듈이
 그 반대: 그것들을 알고, cdp_client 의 명령 핸들러들과 함께 모아 디스패치한다.
 
-사용법은 scripts/browser/cdp/cdp_client.py 의 docstring과 동일 — 명령 처리 로직만
+사용법은 scripts/browser/cdp_client.py 의 docstring과 동일 — 명령 처리 로직만
 여기로 옮겼다(동작 변경 없음, 2026-10-07 STD-08 후속 리팩터, S1-c).
 """
 
@@ -14,7 +14,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable
 
-from scripts.browser.cdp.cdp_client import (
+from scripts.browser.cdp_client import (
     _cmd_analyze,
     _cmd_auto_login,
     _cmd_check_login,
@@ -516,7 +516,7 @@ def _dispatch(cmd: str, task: str, sub: str, args: list[str]) -> None:
     handler = _HANDLERS.get(cmd)
     if handler is None:
         print(f"알 수 없는 명령: {cmd}")
-        from scripts.browser.cdp.cdp_client import __doc__ as _cdp_client_doc
+        from scripts.browser.cdp_client import __doc__ as _cdp_client_doc
 
         print(_cdp_client_doc)
         return
@@ -525,7 +525,7 @@ def _dispatch(cmd: str, task: str, sub: str, args: list[str]) -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        from scripts.browser.cdp.cdp_client import __doc__ as _cdp_client_doc
+        from scripts.browser.cdp_client import __doc__ as _cdp_client_doc
 
         print(_cdp_client_doc)
         return
