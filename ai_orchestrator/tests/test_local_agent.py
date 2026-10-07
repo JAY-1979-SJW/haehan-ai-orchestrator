@@ -33,21 +33,21 @@ def _isolated_storage(tmp_path, monkeypatch):
     # local_agent_router 분리 후: 서브라우터 leaf 들도 reload 해야 갱신된 auth 를
     # 재바인딩한다(의존 순서: 공유 leaf → 라우트 leaf → 컴포지션 루트).
     for _m in (
-        "local_agent_router_schemas",
-        "local_agent_router_up_queue",
-        "local_agent_router_validation",
-        "local_agent_router_guards",
-        "local_agent_router_registration",
-        "local_agent_router_query",
-        "local_agent_router_task",
-        "local_agent_router_browser",
-        "local_agent_router_user_present",
-        "local_agent_router_cleanup",
-        "local_agent_router_ws",
+        "agent_hub.router.schemas",
+        "agent_hub.router.up_queue",
+        "agent_hub.router.validation",
+        "agent_hub.router.guards",
+        "agent_hub.router.registration",
+        "agent_hub.router.query",
+        "agent_hub.router.task",
+        "agent_hub.router.browser",
+        "agent_hub.router.user_present",
+        "agent_hub.router.cleanup",
+        "agent_hub.router.ws",
     ):
         with contextlib.suppress(ModuleNotFoundError):
             importlib.reload(importlib.import_module(f"ai_orchestrator.{_m}"))
-    import ai_orchestrator.local_agent_router as _lar
+    import ai_orchestrator.agent_hub.router.root as _lar
 
     importlib.reload(_lar)
 
@@ -88,7 +88,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")

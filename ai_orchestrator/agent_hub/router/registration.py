@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from .agent_hub.registry import facade as _reg
-from .audit.audit_logger import log_event
-from .auth import registration_codes as _regcodes
-from .gates.auth import require_role
-from .local_agent_router_schemas import (
+from ..registry import facade as _reg
+from ...audit.audit_logger import log_event
+from ...auth import registration_codes as _regcodes
+from ...gates.auth import require_role
+from .schemas import (
     AgentRegisterRequest,
     IssueRegistrationCodeRequest,
     RegisterWithCodeRequest,

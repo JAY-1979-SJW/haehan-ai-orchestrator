@@ -29,7 +29,7 @@ REQUIRED_FILES = (
     "local_agent/agent.py",
     "local_agent/websocket_client.py",
     "local_agent/browser_readonly_runtime.py",
-    "ai_orchestrator/local_agent_router.py",
+    "ai_orchestrator/agent_hub/router/root.py",
     "ai_orchestrator/contracts/local_agent_actions.py",
     "ai_orchestrator/agent_hub/policy/risk_policy.py",
 )
@@ -98,8 +98,8 @@ def _dry_run_files_router(findings):
     router = "\n".join(
         read(rel)
         for rel in (
-            "ai_orchestrator/local_agent_router.py",
-            "ai_orchestrator/local_agent_router_registration.py",
+            "ai_orchestrator/agent_hub/router/root.py",
+            "ai_orchestrator/agent_hub/router/registration.py",
         )
         if (ROOT / rel).exists()
     )

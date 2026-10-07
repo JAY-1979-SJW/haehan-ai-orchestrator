@@ -4,7 +4,7 @@
 """
 import pytest
 from ..agent_hub.models import LocalAgentTask
-from ..local_agent_router_guards import (
+from ..agent_hub.router.guards import (
     is_capture_screenshot_task,
     task_is_dry_run,
     can_approve_task,

@@ -5369,7 +5369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router.py": {
+  "ai_orchestrator/agent_hub/router/root.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -5377,7 +5377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_browser.py": {
+  "ai_orchestrator/agent_hub/router/browser.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -5385,7 +5385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_cleanup.py": {
+  "ai_orchestrator/agent_hub/router/cleanup.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -5393,7 +5393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_guards.py": {
+  "ai_orchestrator/agent_hub/router/guards.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5401,7 +5401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_query.py": {
+  "ai_orchestrator/agent_hub/router/query.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -5409,7 +5409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_registration.py": {
+  "ai_orchestrator/agent_hub/router/registration.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -5417,7 +5417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_schemas.py": {
+  "ai_orchestrator/agent_hub/router/schemas.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5425,7 +5425,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent_router_task.py": {
+  "ai_orchestrator/agent_hub/router/task.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -5433,7 +5433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_up_queue.py": {
+  "ai_orchestrator/agent_hub/router/up_queue.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5441,7 +5441,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_user_present.py": {
+  "ai_orchestrator/agent_hub/router/user_present.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -5449,7 +5449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_validation.py": {
+  "ai_orchestrator/agent_hub/router/validation.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5457,7 +5457,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_ws.py": {
+  "ai_orchestrator/agent_hub/router/ws.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -23079,6 +23079,14 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/agent_hub/router/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }

@@ -358,7 +358,7 @@ def test_audit_warn_installer_flow_incomplete():
 
 
 def test_regression_local_agent_router_imports():
-    from ai_orchestrator import local_agent_router as r
+    from ai_orchestrator.agent_hub.router import root as r
     assert hasattr(r, "local_agent_router")
 
 

@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 from fastapi import HTTPException
 
-from .local_agent_router_schemas import BrowserReadonlyInstructionRequest
+from .schemas import BrowserReadonlyInstructionRequest
 
 logger = logging.getLogger(__name__)
 

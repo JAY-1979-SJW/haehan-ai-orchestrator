@@ -191,7 +191,7 @@
   "role": "contract",
   "reason": "LocalAgent/LocalAgentTask 데이터클래스 + 직렬화 메서드 — 순수 모델, L4 오분류"
  },
- "ai_orchestrator/local_agent_router_schemas.py": {
+ "ai_orchestrator/agent_hub/router/schemas.py": {
   "layer": "L4",
   "role": "generic",
   "reason": "registration_codes.py(L4)를 실제 top-level import — 순수 L1 pydantic 계약 아님. local_agent_router.py 언급은 docstring 텍스트뿐(실제 import 아님, false-positive 텍스트스캔 edge 였음 — 문구 수정으로 제거)"

@@ -62,7 +62,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -873,7 +873,7 @@ def test_ws_idle_timeout_triggers_expire_and_audit(admin_user, monkeypatch):
     import ai_orchestrator.agent_hub.registry.facade as _reg
 
     # 수신 timeout 상수는 WS 엔드포인트를 분리한 local_agent_router_ws 모듈이 소유한다(결함 #111)
-    import ai_orchestrator.local_agent_router_ws as _lar
+    import ai_orchestrator.agent_hub.router.ws as _lar
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1325,7 +1325,7 @@ def test_ws_enqueue_pushes_immediately_without_pull(admin_user):
 
 
 def test_ws_wake_registry_cleared_on_disconnect(admin_user):
-    import ai_orchestrator.local_agent_router_ws as _ws
+    import ai_orchestrator.agent_hub.router.ws as _ws
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)

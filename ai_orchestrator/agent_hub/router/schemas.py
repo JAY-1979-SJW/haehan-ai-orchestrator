@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from .auth import registration_codes as _regcodes
+from ...auth import registration_codes as _regcodes
 
 
 class AgentRegisterRequest(BaseModel):

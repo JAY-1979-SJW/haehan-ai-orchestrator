@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from .agent_hub.registry import diagnostics as local_agent_diagnostics
-from .gates.auth import require_role
+from ..registry import diagnostics as local_agent_diagnostics
+from ...gates.auth import require_role
 
 query_router = APIRouter()
 

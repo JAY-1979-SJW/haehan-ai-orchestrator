@@ -13,13 +13,13 @@ import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from .agent_hub.registry import facade as _reg
-from . import local_agent_router_guards as _guards  # 공유 leaf
-from .audit.audit_logger import log_event
-from .local_agent_router_up_queue import _drain_up_tasks  # 공유 leaf
+from ..registry import facade as _reg
+from . import guards as _guards  # 공유 leaf
+from ...audit.audit_logger import log_event
+from .up_queue import _drain_up_tasks  # 공유 leaf
 
 try:
-    from .browser_tool.local_agent_user_present_status_handler import (
+    from ...browser_tool.local_agent_user_present_status_handler import (
         handle_user_present_status_event as _handle_up_status_event,
     )
 

@@ -9,19 +9,19 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .agent_hub import audit_builders as _audit
-from .agent_hub.policy import audit_event_policy as _policy
-from .agent_hub.registry import facade as _reg
-from . import local_agent_router_guards as _guards  # 공유 leaf
-from .audit.audit_logger import log_event
-from .gates.approval import approve_token, issue_token_for_dev_reg, reject_token
-from .gates.auth import require_role
-from .local_agent_router_schemas import (
+from .. import audit_builders as _audit
+from ..policy import audit_event_policy as _policy
+from ..registry import facade as _reg
+from . import guards as _guards  # 공유 leaf
+from ...audit.audit_logger import log_event
+from ...gates.approval import approve_token, issue_token_for_dev_reg, reject_token
+from ...gates.auth import require_role
+from .schemas import (
     AgentTaskApprovalRequest,
     AgentTaskRequest,
     CancelTaskRequest,
 )
-from .local_agent_router_validation import _capture_approval_note  # 공유 leaf
+from .validation import _capture_approval_note  # 공유 leaf
 
 _CANCEL_REASON_MAX_LEN = 200
 

@@ -296,7 +296,7 @@ class TestBuildDispatchResponse:
 
 class TestInMemoryQueue:
     def test_enqueue_and_drain(self):
-        from ai_orchestrator.local_agent_router import _drain_up_tasks, _enqueue_up_task
+        from ai_orchestrator.agent_hub.router.root import _drain_up_tasks, _enqueue_up_task
 
         _drain_up_tasks("agent_q_test")  # 초기화
         task = {"message_type": "USER_PRESENT_TASK", "workflow_run_id": "wr_q_001", "safe_to_execute": False}
@@ -307,13 +307,13 @@ class TestInMemoryQueue:
         assert drained[0]["safe_to_execute"] is False
 
     def test_drain_empty_queue(self):
-        from ai_orchestrator.local_agent_router import _drain_up_tasks
+        from ai_orchestrator.agent_hub.router.root import _drain_up_tasks
 
         drained = _drain_up_tasks("agent_empty_test")
         assert drained == []
 
     def test_drain_clears_queue(self):
-        from ai_orchestrator.local_agent_router import _drain_up_tasks, _enqueue_up_task
+        from ai_orchestrator.agent_hub.router.root import _drain_up_tasks, _enqueue_up_task
 
         _drain_up_tasks("agent_clear_test")
         _enqueue_up_task("agent_clear_test", {"message_type": "USER_PRESENT_TASK", "safe_to_execute": False})
@@ -322,7 +322,7 @@ class TestInMemoryQueue:
         assert drained_again == []
 
     def test_multiple_agents_isolated(self):
-        from ai_orchestrator.local_agent_router import _drain_up_tasks, _enqueue_up_task
+        from ai_orchestrator.agent_hub.router.root import _drain_up_tasks, _enqueue_up_task
 
         _drain_up_tasks("agent_a")
         _drain_up_tasks("agent_b")
@@ -334,7 +334,7 @@ class TestInMemoryQueue:
         assert len(drained_b) == 1 and drained_b[0]["wfid"] == "b1"
 
     def test_enqueued_task_safe_to_execute_false(self):
-        from ai_orchestrator.local_agent_router import _drain_up_tasks, _enqueue_up_task
+        from ai_orchestrator.agent_hub.router.root import _drain_up_tasks, _enqueue_up_task
 
         _drain_up_tasks("agent_sec_test")
         task = {"message_type": "USER_PRESENT_TASK", "safe_to_execute": False}

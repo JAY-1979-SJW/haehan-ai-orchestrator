@@ -13,7 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 from ai_orchestrator.agent_hub.registry import agent as reg_agent
-from ai_orchestrator import local_agent_router_ws as server_ws
+from ai_orchestrator.agent_hub.router import ws as server_ws
 from local_agent import websocket_client as client
 
 

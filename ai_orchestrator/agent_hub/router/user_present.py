@@ -10,16 +10,16 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from .agent_hub.registry import facade as _reg
-from .audit.audit_logger import log_event
-from .gates.auth import require_role
-from .local_agent_router_up_queue import _enqueue_up_task  # 공유 leaf
+from ..registry import facade as _reg
+from ...audit.audit_logger import log_event
+from ...gates.auth import require_role
+from .up_queue import _enqueue_up_task  # 공유 leaf
 
 try:
-    from .browser_tool.local_agent_user_present_status_store import (
+    from ...browser_tool.local_agent_user_present_status_store import (
         get_user_present_status as _get_up_status,
     )
-    from .browser_tool.local_agent_user_present_status_store import (
+    from ...browser_tool.local_agent_user_present_status_store import (
         list_user_present_statuses as _list_up_statuses,
     )
 
@@ -28,7 +28,7 @@ except ImportError:
     _UP_STATUS_STORE_AVAILABLE = False
 
 try:
-    from .browser_tool.local_agent_user_present_dispatcher import (
+    from ...browser_tool.local_agent_user_present_dispatcher import (
         build_user_present_dispatch_response,
     )
 

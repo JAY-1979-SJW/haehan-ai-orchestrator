@@ -81,7 +81,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
     from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 
     app = FastAPI()

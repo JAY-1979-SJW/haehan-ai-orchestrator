@@ -211,7 +211,7 @@ def test_response_builders_module_importable():
 def test_no_circular_import_with_router():
     """응답 빌더 모듈과 라우터 간 순환 참조 없음을 검증."""
     try:
-        from ai_orchestrator.local_agent_router import local_agent_router
+        from ai_orchestrator.agent_hub.router.root import local_agent_router
 
         assert local_agent_router is not None
     except ImportError:

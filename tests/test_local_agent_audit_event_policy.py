@@ -255,7 +255,7 @@ def test_no_circular_import_with_router():
     """정책 모듈과 라우터 간 순환 참조 없음을 검증."""
     try:
         # router를 임포트하면 policy도 임포트되어야 함
-        from ai_orchestrator.local_agent_router import LocalAgentRouter
+        from ai_orchestrator.agent_hub.router.root import LocalAgentRouter
 
         # 성공하면 순환 참조가 없음
         assert LocalAgentRouter is not None

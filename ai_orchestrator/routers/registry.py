@@ -62,7 +62,7 @@ from ..gates.approval import approve_token, issue_token, reject_token
 from ..gates.auth import require_role
 from ..tasks.inbox import get_inbox_item as _get_inbox_item
 from ..tasks.inbox import read_recent_inbox
-from ..local_agent_router import local_agent_router
+from ..agent_hub.router.root import local_agent_router
 from ..core.models import TaskRequest
 from ..llm.planner import plan
 from ..marketing.marketing_ops_router import marketing_ops_router

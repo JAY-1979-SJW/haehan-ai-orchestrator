@@ -29,18 +29,18 @@ import logging
 
 from fastapi import APIRouter, Depends
 
-from .agent_hub import audit_builders as _audit
-from .agent_hub.policy import audit_event_policy as _policy
-from .agent_hub.registry import diagnostics as local_agent_diagnostics
-from .agent_hub.registry import facade as _reg
-from . import local_agent_router_guards as _guards
-from .audit.audit_logger import log_event
-from .auth import registration_codes as _regcodes
-from .gates.approval import approve_token, issue_token_for_dev_reg, reject_token
-from .gates.auth import require_role
+from .. import audit_builders as _audit
+from ..policy import audit_event_policy as _policy
+from ..registry import diagnostics as local_agent_diagnostics
+from ..registry import facade as _reg
+from . import guards as _guards
+from ...audit.audit_logger import log_event
+from ...auth import registration_codes as _regcodes
+from ...gates.approval import approve_token, issue_token_for_dev_reg, reject_token
+from ...gates.auth import require_role
 
 try:
-    from .browser_tool.local_agent_user_present_status_handler import (
+    from ...browser_tool.local_agent_user_present_status_handler import (
         handle_user_present_status_event as _handle_up_status_event,
     )
 
@@ -49,10 +49,10 @@ except ImportError:
     _UP_STATUS_HANDLER_AVAILABLE = False
 
 try:
-    from .browser_tool.local_agent_user_present_status_store import (
+    from ...browser_tool.local_agent_user_present_status_store import (
         get_user_present_status as _get_up_status,
     )
-    from .browser_tool.local_agent_user_present_status_store import (
+    from ...browser_tool.local_agent_user_present_status_store import (
         list_user_present_statuses as _list_up_statuses,
     )
 
@@ -61,7 +61,7 @@ except ImportError:
     _UP_STATUS_STORE_AVAILABLE = False
 
 try:
-    from .browser_tool.local_agent_user_present_dispatcher import (
+    from ...browser_tool.local_agent_user_present_dispatcher import (
         build_user_present_dispatch_response,
         should_dispatch_user_present_task,
     )
@@ -71,7 +71,7 @@ except ImportError:
     _UP_DISPATCHER_AVAILABLE = False
 
 # USER_PRESENT_TASK 전송 대기 큐는 local_agent_router_up_queue(공유 leaf)로 분리. 파사드 재노출.
-from .local_agent_router_up_queue import _drain_up_tasks, _enqueue_up_task
+from .up_queue import _drain_up_tasks, _enqueue_up_task
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +82,8 @@ local_agent_router = APIRouter(prefix="/local-agents", tags=["local-agents"])
 # ── HTTP 라우트 ──────────────────────────────────────────────────────────
 # 등록 라우트군은 local_agent_router_registration 으로 분리.
 # 컴포지션 루트가 include_router 로 관리(경로 동일).
-from .local_agent_router_registration import registration_router as _registration_router  # noqa: E402
-from .local_agent_router_schemas import (  # noqa: E402
+from .registration import registration_router as _registration_router  # noqa: E402
+from .schemas import (  # noqa: E402
     AgentRegisterRequest,
     AgentTaskApprovalRequest,
     AgentTaskRequest,
@@ -95,7 +95,7 @@ from .local_agent_router_schemas import (  # noqa: E402
 )
 
 # 검증/감사노트 헬퍼는 local_agent_router_validation(공유 leaf)로 분리. 파사드 재노출.
-from .local_agent_router_validation import (  # noqa: E402
+from .validation import (  # noqa: E402
     _capture_approval_note,
     _validate_readonly_browser_instruction,
 )
@@ -112,35 +112,35 @@ def list_local_agents(
 
 # 진단 라우트군(/diagnostics 등 read-only)은 local_agent_router_query 로 분리.
 # 컴포지션 루트가 include_router 로 관리(경로 동일).
-from .local_agent_router_query import query_router as _query_router  # noqa: E402
+from .query import query_router as _query_router  # noqa: E402
 
 local_agent_router.include_router(_query_router)
 
 
 # 브라우저 라우트군은 local_agent_router_browser 로 분리. 컴포지션 루트가 관리.
-from .local_agent_router_browser import browser_router as _browser_router  # noqa: E402
+from .browser import browser_router as _browser_router  # noqa: E402
 
 local_agent_router.include_router(_browser_router)
 
 
 # 사용자임장 라우트군은 local_agent_router_user_present 로 분리. 컴포지션 루트가 관리.
-from .local_agent_router_user_present import user_present_router as _user_present_router  # noqa: E402
+from .user_present import user_present_router as _user_present_router  # noqa: E402
 
 local_agent_router.include_router(_user_present_router)
 
 
 # 정리(cleanup) 라우트군은 local_agent_router_cleanup 로 분리. 컴포지션 루트가 관리.
-from .local_agent_router_cleanup import cleanup_router as _cleanup_router  # noqa: E402
+from .cleanup import cleanup_router as _cleanup_router  # noqa: E402
 
 local_agent_router.include_router(_cleanup_router)
 
 
-from .local_agent_router_task import task_router as _task_router  # noqa: E402
+from .task import task_router as _task_router  # noqa: E402
 
 local_agent_router.include_router(_task_router)
 
 
 # WebSocket 엔드포인트는 local_agent_router_ws 로 분리. 컴포지션 루트가 관리.
-from .local_agent_router_ws import ws_router as _ws_router  # noqa: E402
+from .ws import ws_router as _ws_router  # noqa: E402
 
 local_agent_router.include_router(_ws_router)

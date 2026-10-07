@@ -28,10 +28,12 @@ ROOT = Path(__file__).resolve().parents[2]
 SEPARATED_MODULES: list[dict] = [
     {
         "name": "local_agent_router",
-        "root": "ai_orchestrator/local_agent_router.py",
+        "root": "ai_orchestrator/agent_hub/router/root.py",
         # 진행 ratchet: 분리할수록 낮춘다. 목표 ≤ 400(얇은 컴포지션 루트).
         "max_root_loc": 150,
-        "leaf_glob": "ai_orchestrator/local_agent_router_*.py",
+        # 폴더형(T4 C6): leaf 는 root 와 같은 폴더의 *.py
+        "leaf_dir": "ai_orchestrator/agent_hub/router",
+        "package": "ai_orchestrator.agent_hub.router",
         # 누구나 import 가능한 공유 leaf (계약/공용 유틸/검증/큐상태)
         "shared_leaves": {"schemas", "guards", "validation", "up_queue"},
     },

@@ -86,7 +86,7 @@ def staged_paths(status_lines: list[str]) -> set[str]:
 
 def make_client(user: dict) -> TestClient:
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")

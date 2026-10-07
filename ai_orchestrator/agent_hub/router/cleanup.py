@@ -7,9 +7,9 @@ leaf 서브라우터. 컴포지션 루트(local_agent_router)가 include_router 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from .agent_hub.registry import facade as _reg
-from .audit.audit_logger import log_event
-from .gates.auth import require_role
+from ..registry import facade as _reg
+from ...audit.audit_logger import log_event
+from ...gates.auth import require_role
 
 cleanup_router = APIRouter()
 
