@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 import time
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -65,6 +66,8 @@ def api_inbox(
             raise ImportError("hiworks_mail_reader.py 로드 불가")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # type: ignore[attr-defined]
+        # 루트의 hiworks_mail_reader.py 는 호환 shim 이라 로드하면 sys.modules 가 실제 모듈로 바뀐다 — 로드한 객체 대신 그것을 쓴다.
+        mod = sys.modules.get("hiworks_mail_reader", mod)
         items = mod.fetch_recent_mails(limit=limit)
         duration_ms = int((time.monotonic() - t0) * 1000)
         log_event(
