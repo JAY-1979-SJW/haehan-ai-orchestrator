@@ -18,7 +18,7 @@ from pathlib import Path
 from scripts.naver.mail import folder_discovery as fd
 from scripts.naver.mail import folder_profile as fpr
 from scripts.naver.mail import smart_folder_collector as sfc
-from scripts.naver.mail_read import cdp
+from scripts.naver.mail.read import cdp
 from scripts.ops import (
     audit_naver_mail_dynamic_folder_discovery as audit_dd,
 )

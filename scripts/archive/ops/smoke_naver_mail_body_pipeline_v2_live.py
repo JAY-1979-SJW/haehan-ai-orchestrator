@@ -14,7 +14,7 @@ from pathlib import Path
 
 from scripts.naver.mail import body_pipeline_v2 as bp
 from scripts.naver.mail import inbox_collector as ic
-from scripts.naver.mail_read import cdp
+from scripts.naver.mail.read import cdp
 from scripts.ops import audit_naver_mail_body_pipeline_v2 as audit
 
 
