@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_submit_policy_allowlist_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_submit_policy_allowlist_20260506.json"
 
 
 class TestBrowserSubmitPolicyFixtureStructure:
@@ -381,7 +381,7 @@ class TestBrowserSubmitPolicyNoActualSubmitImplementation:
     def test_no_browser_execution_calls(self):
         """Design must not contain browser execution API calls."""
         # Read the design document
-        design_path = Path(__file__).parent.parent / "docs" / "design" / "browser_submit_policy_design_20260506.md"
+        design_path = Path(__file__).parent.parent.parent / "docs" / "design" / "browser_submit_policy_design_20260506.md"
         if not design_path.exists():
             pytest.skip("Design document not found")
 

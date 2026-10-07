@@ -11,7 +11,7 @@ from ai_orchestrator.browser_tool.site_compliance_policy import (
     validate_site_compliance_result,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_site_compliance_policy_20260507.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_site_compliance_policy_20260507.json"
 
 
 class TestGetSiteCompliancePolicy:

@@ -14897,7 +14897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_sandbox_gate.py": {
+  "tests/browser/test_browser_sandbox_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14905,7 +14905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_selector_resolver_policy_20260509.py": {
+  "tests/browser/test_browser_selector_resolver_policy_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14913,7 +14913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_site_compliance_policy_20260507.py": {
+  "tests/browser/test_browser_site_compliance_policy_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14921,7 +14921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_site_registry_policy_20260509.py": {
+  "tests/browser/test_browser_site_registry_policy_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14929,7 +14929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_api_flow_20260509.py": {
+  "tests/browser/test_browser_submit_api_flow_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14937,7 +14937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_approval_state_persistence_20260506.py": {
+  "tests/browser/test_browser_submit_approval_state_persistence_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14945,7 +14945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_audit_log_persistence_20260506.py": {
+  "tests/browser/test_browser_submit_audit_log_persistence_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14953,7 +14953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_controlled_browser_smoke_20260506.py": {
+  "tests/browser/test_browser_submit_controlled_browser_smoke_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14961,7 +14961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_controlled_internal_20260506.py": {
+  "tests/browser/test_browser_submit_controlled_internal_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14969,7 +14969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_execution_gate_schema_20260506.py": {
+  "tests/browser/test_browser_submit_execution_gate_schema_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14977,7 +14977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_execution_gate_validator_20260506.py": {
+  "tests/browser/test_browser_submit_execution_gate_validator_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14985,7 +14985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_gate_controlled_integration_smoke_20260506.py": {
+  "tests/browser/test_browser_submit_gate_controlled_integration_smoke_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14993,7 +14993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_policy_design_20260506.py": {
+  "tests/browser/test_browser_submit_policy_design_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15001,7 +15001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_policy_optin_20260509.py": {
+  "tests/browser/test_browser_submit_policy_optin_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15009,7 +15009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_policy_validator_20260506.py": {
+  "tests/browser/test_browser_submit_policy_validator_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15017,7 +15017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_preview_schema_20260506.py": {
+  "tests/browser/test_browser_submit_preview_schema_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15025,7 +15025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_real_browser_audit_integration_20260506.py": {
+  "tests/browser/test_browser_submit_real_browser_audit_integration_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15033,7 +15033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py": {
+  "tests/browser/test_browser_submit_real_browser_controlled_click_smoke_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15041,7 +15041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_type_risk_reclassification_20260506.py": {
+  "tests/browser/test_browser_submit_type_risk_reclassification_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15049,7 +15049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_with_user_approval_action_20260509.py": {
+  "tests/browser/test_browser_submit_with_user_approval_action_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15057,7 +15057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_task_handler.py": {
+  "tests/browser/test_browser_task_handler.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15065,7 +15065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_task_session.py": {
+  "tests/browser/test_browser_task_session.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15073,7 +15073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_tool_router.py": {
+  "tests/browser/test_browser_tool_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15081,7 +15081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_tool_worker_backend.py": {
+  "tests/browser/test_browser_tool_worker_backend.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15089,7 +15089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_type_policy_optin_20260509.py": {
+  "tests/browser/test_browser_type_policy_optin_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15097,7 +15097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_value_registry_policy_20260509.py": {
+  "tests/browser/test_browser_value_registry_policy_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15105,7 +15105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_watch.py": {
+  "tests/browser/test_browser_watch.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15113,7 +15113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_websocket_bridge.py": {
+  "tests/browser/test_browser_websocket_bridge.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15121,7 +15121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_websocket_contract.py": {
+  "tests/browser/test_browser_websocket_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15129,7 +15129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_websocket_handshake.py": {
+  "tests/browser/test_browser_websocket_handshake.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15137,7 +15137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_websocket_payload_schema.py": {
+  "tests/browser/test_browser_websocket_payload_schema.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15145,7 +15145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_worker_mock_backend.py": {
+  "tests/browser/test_browser_worker_mock_backend.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15153,7 +15153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_worker_real_backend.py": {
+  "tests/browser/test_browser_worker_real_backend.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15161,7 +15161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_worker_schemas.py": {
+  "tests/browser/test_browser_worker_schemas.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15225,7 +15225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_daemon_status.py": {
+  "tests/browser/test_cdp_daemon_status.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15233,7 +15233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_lanes_tabs.py": {
+  "tests/browser/test_cdp_lanes_tabs.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15241,7 +15241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_playwright_smoke_20260607.py": {
+  "tests/browser/test_cdp_playwright_smoke_20260607.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15249,7 +15249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_session_selector.py": {
+  "tests/browser/test_cdp_session_selector.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15257,7 +15257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_verify.py": {
+  "tests/browser/test_cdp_verify.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -16289,7 +16289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_human_input.py": {
+  "tests/browser/test_human_input.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17513,7 +17513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_popup_watcher.py": {
+  "tests/browser/test_popup_watcher.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -17889,7 +17889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_session_tracker_change.py": {
+  "tests/browser/test_session_tracker_change.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18497,7 +18497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_web_connector_stale_reconnect.py": {
+  "tests/browser/test_web_connector_stale_reconnect.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18777,7 +18777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_watch_process.py": {
+  "tests/browser/test_browser_watch_process.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -18801,7 +18801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_daemon_restart_policy.py": {
+  "tests/browser/test_cdp_daemon_restart_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -18809,7 +18809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_chrome_launch_flags.py": {
+  "tests/browser/test_chrome_launch_flags.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

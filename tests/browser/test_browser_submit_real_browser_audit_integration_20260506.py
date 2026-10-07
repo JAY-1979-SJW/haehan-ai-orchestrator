@@ -47,7 +47,7 @@ from ai_orchestrator.browser_tool.submit_preview import (
 @pytest.fixture
 def fixture_html_content():
     """Load fixture HTML content."""
-    fixture_path = Path(__file__).parent / "fixtures" / "browser_controlled_submit_form_20260506.html"
+    fixture_path = Path(__file__).parent.parent / "fixtures" / "browser_controlled_submit_form_20260506.html"
     with fixture_path.open(encoding="utf-8") as f:
         return f.read()
 
@@ -63,7 +63,7 @@ def fixture_data_url(fixture_html_content):
 @pytest.fixture
 def allowlist():
     """Load allowlist fixture."""
-    fixture_path = Path(__file__).parent / "fixtures" / "browser_submit_policy_allowlist_20260506.json"
+    fixture_path = Path(__file__).parent.parent / "fixtures" / "browser_submit_policy_allowlist_20260506.json"
     with fixture_path.open(encoding="utf-8") as f:
         return json.load(f)
 

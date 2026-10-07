@@ -19,7 +19,7 @@ from ai_orchestrator.browser_tool.submit_execution_gate import (
     evaluate_execution_gate,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
 
 
 @pytest.fixture(scope="module")

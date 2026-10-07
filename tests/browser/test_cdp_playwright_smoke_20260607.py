@@ -53,7 +53,7 @@ def test_cdp_status_endpoint_matches_reality():
     import sys
     from pathlib import Path
 
-    sys.path.insert(0, str(Path(__file__).parent.parent))
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
     # 서버가 실행 중이면 API로 확인, 아니면 라우터 함수 직접 호출
     try:

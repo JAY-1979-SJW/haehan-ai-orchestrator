@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
 
 
 @pytest.fixture(scope="module")
