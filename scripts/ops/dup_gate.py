@@ -28,14 +28,10 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
-if str(_BOOT) not in sys.path:
-    sys.path.insert(0, str(_BOOT))
+# 독립 실행 도구 — 시험이 이 파일만 임시 저장소에 복사해 돌리므로 정본(scripts.app_paths)에 기대지 않고 파일 위치로 루트를 잡는다.
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))  # sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from scripts.app_paths import repo_root  # noqa: E402
-
-ROOT = repo_root()
 
 from _dup_structure_hash import (  # noqa: E402
     body_statement_count,
