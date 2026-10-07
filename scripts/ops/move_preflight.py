@@ -2,6 +2,7 @@
 
 사용:
     python scripts/ops/move_preflight.py <옛경로.py> [...] [--json]
+    python scripts/ops/move_preflight.py <폴더>/ [--json]            # 하위 패키지를 통째로 옮길 때: 폴더 안 .py(__init__.py 포함) 전부 + 같은 폴더 bare import(`import 패키지`) 참조까지
     python scripts/ops/move_preflight.py --staged-renames          # 커밋 훅용: git mv 한 것만 점검, 막을 것 있으면 exit 1
 
 찾는 참조 종류 (kind):
@@ -93,6 +94,9 @@ class _Target:
         self.stem = Path(self.rel).stem if not self.rel.endswith("__init__.py") else Path(self.rel).parent.name
         self.parent_dir = Path(self.rel).parent.name
         self.parent_module = self.module.rpartition(".")[0]
+        # 같은 폴더 안의 bare import(`import smartstore` / `from smartstore import x`) 후보 위치: 패키지(__init__)면 그 패키지 폴더의 부모, 모듈이면 자기 폴더.
+        # 파이썬 3 에서 단독 이름 import 는 sys.path 에 그 폴더가 있을 때만 되지만(스크립트 실행·sys.path 부트스트랩) 실제로 쓰이므로 참조로 센다.
+        self.bare_dir = Path(self.rel).parent.parent.as_posix() if self.rel.endswith("__init__.py") else Path(self.rel).parent.as_posix()
         self.variants = _path_variants(self.rel)
         self.mod_re = _dotted_module_re(self.module)
         self.path_re = _path_re(self.rel)
@@ -115,12 +119,16 @@ def _py_refs(rel: str, text: str, t: _Target) -> list[dict]:  # noqa: C901, PLR0
                 for a in node.names:
                     if a.name == t.module or a.name.startswith(t.module + "."):
                         refs.append({"kind": "import", "line": node.lineno, "text": f"import {a.name}"})
+                    elif (a.name == t.stem or a.name.startswith(t.stem + ".")) and Path(rel).parent.as_posix() == t.bare_dir:
+                        refs.append({"kind": "import", "line": node.lineno, "text": f"import {a.name}  (같은 폴더 bare import — sys.path 의존)"})
             elif isinstance(node, ast.ImportFrom):
                 base = node.module or ""
                 if node.level:
                     cut = len(pkg) - (node.level - 1)
                     base = ".".join([*pkg[: max(cut, 0)], *([base] if base else [])])
-                if base == t.module or base.startswith(t.module + "."):
+                if not node.level and (node.module == t.stem or (node.module or "").startswith(t.stem + ".")) and Path(rel).parent.as_posix() == t.bare_dir:
+                    refs.append({"kind": "import", "line": node.lineno, "text": f"from {node.module} import ...  (같은 폴더 bare import — sys.path 의존)"})
+                elif base == t.module or base.startswith(t.module + "."):
                     refs.append(
                         {
                             "kind": "import",
@@ -238,7 +246,7 @@ def scan(targets: list[str], root: Path = ROOT) -> dict[str, list[dict]]:
     ts = [_Target(x, root) for x in targets]
     out: dict[str, list[dict]] = {t.rel: [] for t in ts}
     for rel in _tracked_files(root):
-        if Path(rel).suffix.lower() not in _TEXT_EXT:
+        if Path(rel).suffix.lower() not in _TEXT_EXT or rel == ACK_FILE:  # 확인 목록 파일 자신은 참조로 세지 않는다
             continue
         if rel.startswith(("node_modules/", "_archive/", "dist-build-tmp/")):
             continue
@@ -297,6 +305,24 @@ def recommend(t: _Target, refs: list[dict], *, cannot_reason: str | None = None)
     return {"shim": "none", "reason": "참조 없음", "kinds": kinds}
 
 
+ACK_FILE = "configs/move_preflight_ack.json"
+
+
+def _acked(root: Path) -> set[str]:
+    """'__main__ 블록이 있는 파일을 shim 없이 옮겨도 된다'고 **참조 전수 수정 후** 확인해 둔 옛 경로 목록(리뷰 대상 설정 파일).
+
+    암묵 직접 실행(__main__ 블록) 차단만 풀어 준다 — 경로 로드·직접 실행·설정·훅 같은 **명시 참조**가 남아 있으면 여전히 막는다.
+    항목 형식: {"acked": [{"file": "scripts/x.py", "reason": "...", "date": "2026-10-07"}]} (사유 필수)."""
+    p = root / ACK_FILE
+    if not p.is_file():
+        return set()
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    return {e["file"].replace("\\", "/") for e in data.get("acked", []) if e.get("file") and e.get("reason")}
+
+
 def report(files: list[str], root: Path = ROOT, new_paths: dict[str, str] | None = None) -> list[dict]:
     refs_by = scan(files, root)
     out = []
@@ -310,7 +336,7 @@ def report(files: list[str], root: Path = ROOT, new_paths: dict[str, str] | None
         rec = recommend(t, refs, cannot_reason=reason)
         new_mod = module_name(new_paths[rel]) if new_paths and rel in new_paths else None
         shim_ok = _has_matching_shim(t, root, new_mod)
-        if t.has_main and not shim_ok:
+        if t.has_main and not shim_ok and t.rel not in _acked(root):
             refs = [
                 *refs,
                 {
@@ -377,6 +403,20 @@ def _render_text(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def expand_targets(paths: list[str], root: Path) -> list[str]:
+    """폴더 인자는 그 안의 .py 전부(__init__.py 포함)로 펼친다 — 하위 패키지를 통째로 옮길 때 패키지 자체(`from . import <패키지>`)를 가리키는
+    참조는 __init__.py 를 대상으로 해야 잡히므로, 파일을 하나씩 나열하다 __init__.py 를 빼먹는 일을 막는다."""
+    out: list[str] = []
+    for raw in paths:
+        rel = raw.replace("\\", "/").rstrip("/")
+        p = root / rel
+        if p.is_dir():
+            out += sorted(f.relative_to(root).as_posix() for f in p.rglob("*.py") if "__pycache__" not in f.parts)
+        else:
+            out.append(rel)
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:  # noqa: C901 - CLI 진입점: 인자 해석과 훅 차단 메시지 출력
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -389,7 +429,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901 - CLI 진입점: �
     a = ap.parse_args(argv)
     root = a.root.resolve()
     new_paths: dict[str, str] | None = None
-    files = a.files
+    files = expand_targets(a.files, root)
     if a.staged_renames:
         new_paths = staged_renames(root)
         files = list(new_paths)
