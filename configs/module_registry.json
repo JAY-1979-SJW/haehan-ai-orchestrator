@@ -23202,20 +23202,20 @@
    "source": "rule"
   },
   "scripts/entry/site_access_cli.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "프로세스 시작점(직접 실행 main) — 사이트 등록표 조합(site_login_registry, L5)을 설치하고 엔진·탐색기를 부르는 맨 위 층(cdp_cli 와 같은 층·역할)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/entry/site_crawl_cli.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "프로세스 시작점(직접 실행 main) — 사이트 등록표 조합(site_login_registry, L5)을 설치하고 엔진·탐색기를 부르는 맨 위 층(cdp_cli 와 같은 층·역할)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "tests/test_site_registry_entrypoints.py": {
    "layer": "L11",
