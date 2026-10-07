@@ -5,7 +5,7 @@ candidate → task 승격 모듈
 - 생성된 task는 status=pending, 자동 실행 없음
 """
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import audit_logger
 import email_task_store
@@ -83,7 +83,7 @@ def promote(
     task_id = _make_task_id(item_id)
     category = candidate.get("category", "general")
     risk_level = _RISK_OVERRIDE.get(category, _DEFAULT_RISK_LEVEL)
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
 
     # ── email_tasks.jsonl에 저장 ──────────────────────────────────
     email_task_store.save_email_task(
