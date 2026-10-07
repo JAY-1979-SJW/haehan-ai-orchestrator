@@ -6,11 +6,13 @@ import importlib as _il
 import sys as _sys
 
 if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
-    import pathlib as _pl
     import runpy as _runpy
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    from pathlib import Path as _Path
 
-    # 스크립트로 직접 실행하면 sys.path[0] 이 shim 폴더라 저장소 루트를 넣어 줘야 새 모듈을 찾는다(make_shim 이 만들지 않는 부트스트랩 — W4 수정 전 임시).
-    _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+    _root = str(_Path(__file__).resolve().parents[1])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
     _runpy.run_module("scripts.gabia.login_watch", run_name="__main__")
     raise SystemExit
