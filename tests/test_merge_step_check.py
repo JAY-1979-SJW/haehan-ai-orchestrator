@@ -107,3 +107,90 @@ def test_main_fails_when_a_gate_fails_or_preflight_blocks(monkeypatch, capsys):
     assert rc == 1 and "실패" in out
     rc, out = _run_main(monkeypatch, capsys, before=37, after=37, blocking=["a/mod.py: 1건 (path_string x.py:3)"])
     assert rc == 1 and "move_preflight 막음 1건" in out
+
+
+# ── 영향 시험 실행 옵션(--impacted-tests) ─────────────────────────────────────
+
+
+def test_plan_impacted_never_turns_an_empty_list_into_a_full_run():
+    assert msc.plan_impacted([]) == "empty"
+    assert msc.plan_impacted(["tests/test_a.py"]) == "run"
+    assert msc.plan_impacted([f"tests/test_{i}.py" for i in range(msc.IMPACTED_MAX_FILES)]) == "run"
+    assert msc.plan_impacted([f"tests/test_{i}.py" for i in range(msc.IMPACTED_MAX_FILES + 1)]) == "list_only"
+    assert msc.plan_impacted(["a", "b", "c"], max_files=2) == "list_only"
+
+
+def test_split_failures_marks_only_base_failures_as_existing():
+    new, existing = msc.split_failures(["t/a.py::x", "t/b.py::y", "t/new.py::z"], {"t/a.py::x"})
+    assert new == ["t/b.py::y", "t/new.py::z"] and existing == ["t/a.py::x"]
+
+
+def test_impacted_section_skips_run_when_empty_or_too_many(monkeypatch, tmp_path):
+    ran: list = []
+    monkeypatch.setattr(msc, "run_impacted", lambda tree, files, workers: ran.append(files) or [])
+    monkeypatch.setattr(msc, "impacted_test_files", lambda base, head, root: [])
+    assert msc.impacted_section("b", tmp_path, 1, 400)["status"] == "empty"
+    monkeypatch.setattr(msc, "impacted_test_files", lambda base, head, root: [f"tests/test_{i}.py" for i in range(5)])
+    result = msc.impacted_section("b", tmp_path, 1, 3)
+    assert result["status"] == "list_only" and len(result["files"]) == 5
+    assert ran == []  # 비었거나 상한 초과면 pytest 를 부르지 않는다
+
+
+def test_impacted_section_separates_new_and_existing_failures(monkeypatch, tmp_path):
+    base_tree = tmp_path / "base"
+    (base_tree / "tests").mkdir(parents=True)
+    (base_tree / "tests" / "test_old.py").write_text("", encoding="utf-8")  # 기준에도 있는 시험 파일 (test_new.py 는 없음)
+    calls: list[tuple[Path, list[str]]] = []
+
+    def fake_run(tree, files, workers):
+        calls.append((tree, list(files)))
+        return ["tests/test_old.py::t1", "tests/test_new.py::t2"] if tree == msc.ROOT else ["tests/test_old.py::t1"]
+
+    monkeypatch.setattr(msc, "run_impacted", fake_run)
+    monkeypatch.setattr(msc, "impacted_test_files", lambda base, head, root: ["tests/test_old.py", "tests/test_new.py"])
+    result = msc.impacted_section("b", base_tree, 2, 400)
+    assert result["status"] == "run"
+    assert result["existing_failures"] == ["tests/test_old.py::t1"]  # 기준에서도 실패 → 판정 제외
+    assert result["new_failures"] == ["tests/test_new.py::t2"]  # 기준에 없는 시험 파일의 실패는 새 실패
+    assert calls[1] == (base_tree, ["tests/test_old.py"])  # 기준에서는 head 에서 실패한 파일 중 기준에 있는 것만 다시 돈다
+
+
+def test_impacted_section_adds_slot_notice_at_100_files(monkeypatch, tmp_path):
+    monkeypatch.setattr(msc, "run_impacted", lambda tree, files, workers: [])
+    monkeypatch.setattr(msc, "impacted_test_files", lambda base, head, root: [f"tests/test_{i}.py" for i in range(msc.IMPACTED_SLOT_NOTICE)])
+    assert "HEAVY_SLOT" in msc.impacted_section("b", tmp_path, 1, 400)["notice"]
+
+
+def test_run_impacted_caps_workers_at_four(monkeypatch, tmp_path):
+    seen: list[list[str]] = []
+
+    def fake_run(cmd, tree, timeout=0):
+        seen.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr("scripts.ops.verify_change.run", fake_run)
+    monkeypatch.setattr(msc, "_xdist_available", lambda: True)
+    assert msc.run_impacted(tmp_path, ["tests/test_a.py"], 99) == []
+    assert seen[0][seen[0].index("-n") + 1] == "4"
+    seen.clear()
+    msc.run_impacted(tmp_path, ["tests/test_a.py"], 1)
+    assert "-n" not in seen[0]
+
+
+def test_main_fails_on_new_impacted_failure_but_not_on_existing_ones(monkeypatch, capsys):
+    measure, _ok, _block = _fake_measure(37, 37)
+    monkeypatch.setattr(msc, "measure_tree", measure)
+    monkeypatch.setattr(msc, "baseline_sizes", lambda tree: {"G11 tool_home 기준선": 84})
+    monkeypatch.setattr(msc, "gate_results", lambda tree: {"registry_sync": True})
+    monkeypatch.setattr(msc, "_run", lambda cmd, cwd, timeout=0: subprocess.CompletedProcess(cmd, 0, "", ""))
+    monkeypatch.setattr(msc, "preflight_blocking", lambda base, head, root: [])
+    monkeypatch.setattr(msc, "moved_py", lambda base, head, root: {})
+    monkeypatch.setattr("scripts.ops.verify_change._checkout", lambda ref, dest: True)
+    monkeypatch.setattr(msc, "_git", lambda cwd, *args: subprocess.CompletedProcess(args, 0, "", ""))
+    section = {"status": "run", "files": ["tests/test_a.py"], "new_failures": [], "existing_failures": ["tests/test_a.py::old"], "notice": ""}
+    monkeypatch.setattr(msc, "impacted_section", lambda base, base_tree, workers, max_files: section)
+    assert msc.main(["--no-runcheck", "--impacted-tests"]) == 0
+    assert "기존 실패" in capsys.readouterr().out
+    section["new_failures"] = ["tests/test_a.py::broken"]
+    assert msc.main(["--no-runcheck", "--impacted-tests"]) == 1
+    assert "영향 시험 새 실패 1건" in capsys.readouterr().out

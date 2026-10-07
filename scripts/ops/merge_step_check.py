@@ -12,6 +12,10 @@
 
 하나라도 '증가'(순환·층 역전·금지 import·LIVE import 실패·기준선 크기·막는 참조) 하거나 게이트·정본 점검이 실패하면 종료코드 1.
 기준선 크기는 줄이기만 하는 값이라 늘면 실패, 줄면 개선으로 표시한다. 무거운 작업이므로 HEAVY_SLOT 규칙 안에서 돌린다.
+--impacted-tests 를 주면 영향 시험도 돌린다: 바뀐 .py(base...HEAD) → 코드맵 간선으로 그 모듈에 닿는 시험 파일(verify_change.affected_tests)만 실행.
+  대상이 0개면 실행하지 않는다(빈 목록이 전체 실행이 되는 사고 방지). 시험 파일이 --max-test-files(기본 400)를 넘으면 실행하지 않고 목록만 보여 준다.
+  병렬은 pytest-xdist 최대 4(-n). 100개 이상이면 HEAVY_SLOT 을 잡고 돌리라고 안내한다. 새 실패만 판정에 넣고, 기준(base)에서도 실패하는 시험은 '기존 실패'로 따로 표시한다.
+  로컬 전체 verify 는 여전히 금지 — 이 옵션은 영향 범위만 돈다.
 측정 로직은 새로 만들지 않고 기존 도구(code_map/*, verify_change._checkout, move_preflight.report, 각 게이트 CLI)를 그대로 부른다.
 """
 
@@ -30,6 +34,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 PY = sys.executable
+IMPACTED_MAX_FILES = 400  # 영향 시험 파일이 이보다 많으면 실행하지 않고 목록만
+IMPACTED_SLOT_NOTICE = 100  # 이 개수 이상이면 HEAVY_SLOT 안내
+IMPACTED_MAX_WORKERS = 4  # pytest-xdist 상한
+IMPACTED_CHUNK = 100  # 한 pytest 프로세스에 넘기는 시험 파일 수(윈도우 명령줄 길이 제한 여유)
+IMPACTED_TIMEOUT_S = 3600
 PREFLIGHT_SHOW = 25  # 표에 보여 줄 막는 참조 줄 수(나머지는 --json)
 # (표시 이름, 기준선 파일, 크기를 읽는 키) — 줄이기만 하는 값
 BASELINES = (
@@ -124,6 +133,76 @@ def preflight_blocking(base: str, head: str, root: Path) -> list[str]:
     ]
 
 
+def impacted_test_files(base: str, head: str, root: Path) -> list[str]:
+    """바뀐 .py(base...head)에 코드맵 간선으로 닿는 시험 파일(현재 트리에 있는 것만). 바뀐 .py 가 없으면 빈 목록."""
+    from scripts.ops import verify_change as vc
+
+    changed = [p for p in vc.changed_files(base, head) if p.endswith(".py")]
+    if not changed:
+        return []
+    return [t for t in vc.affected_tests(changed) if (root / t).is_file()]
+
+
+def plan_impacted(files: list[str], max_files: int = IMPACTED_MAX_FILES) -> str:
+    """'empty'(실행 안 함) · 'list_only'(너무 많아 목록만) · 'run'. 빈 목록을 절대 '전체 실행'으로 바꾸지 않는다."""
+    if not files:
+        return "empty"
+    return "list_only" if len(files) > max_files else "run"
+
+
+def _xdist_available() -> bool:
+    import importlib.util
+
+    return importlib.util.find_spec("xdist") is not None
+
+
+def run_impacted(tree: Path, files: list[str], workers: int) -> list[str]:
+    """시험 파일을 묶음으로 실행하고 실패·수집오류 id 목록을 돌려준다. 병렬은 xdist 가 있을 때 최대 IMPACTED_MAX_WORKERS."""
+    from scripts.ops import verify_change as vc
+
+    workers = max(1, min(workers, IMPACTED_MAX_WORKERS))
+    extra = ["-n", str(workers)] if workers > 1 and _xdist_available() else []
+    failures: list[str] = []
+    for i in range(0, len(files), IMPACTED_CHUNK):
+        chunk = files[i : i + IMPACTED_CHUNK]
+        proc = vc.run(
+            [PY, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rfE", "--continue-on-collection-errors", *extra, *chunk],
+            tree,
+            timeout=IMPACTED_TIMEOUT_S,
+        )
+        found = [
+            ln.split()[1]
+            for ln in proc.stdout.splitlines()
+            if ln.startswith(("FAILED ", "ERROR ")) and len(ln.split()) > 1 and vc._is_pytest_id(ln.split()[1])
+        ]
+        if proc.returncode not in (0, 1, 5) and not found:
+            found.append(f"{chunk[0]}..(+{len(chunk) - 1})::<rc={proc.returncode}>")
+        failures += found
+    return sorted(set(failures))
+
+
+def split_failures(head_fail: list[str], base_fail: set[str]) -> tuple[list[str], list[str]]:
+    """(새 실패, 기존 실패) — 기준(base)에서도 같은 id 로 실패한 것만 기존 실패. 기준에 없는 시험 파일의 실패는 새 실패."""
+    return [f for f in head_fail if f not in base_fail], [f for f in head_fail if f in base_fail]
+
+
+def impacted_section(base: str, base_tree: Path, workers: int, max_files: int) -> dict:
+    """영향 시험 실행 전체 흐름. 결과 dict: status(empty|list_only|run), files, new_failures, existing_failures, notice."""
+    files = impacted_test_files(base, "HEAD", ROOT)
+    plan = plan_impacted(files, max_files)
+    out: dict = {"status": plan, "files": files, "new_failures": [], "existing_failures": [], "notice": ""}
+    if plan != "run":
+        return out
+    if len(files) >= IMPACTED_SLOT_NOTICE:
+        out["notice"] = f"영향 시험 파일 {len(files)}개 — 무거운 작업이니 HEAVY_SLOT 슬롯을 잡고 돌리세요."
+    head_fail = run_impacted(ROOT, files, workers)
+    failing_files = sorted({f.split("::")[0] for f in head_fail})
+    in_base = [f for f in failing_files if (base_tree / f).is_file()]
+    base_fail = set(run_impacted(base_tree, in_base, workers)) if in_base else set()
+    out["new_failures"], out["existing_failures"] = split_failures(head_fail, base_fail)
+    return out
+
+
 def gate_results(tree: Path) -> dict[str, bool]:
     res = {"registry_sync": _run(["scripts/ops/code_map/registry_sync.py", "--check"], tree).returncode == 0}
     for name, cmd in GATES:
@@ -156,6 +235,27 @@ def _table(rows: list[tuple[str, int | None, int | None, str]]) -> str:
     return "\n".join(lines)
 
 
+def _impacted_text(r: dict) -> str:
+    n = len(r["files"])
+    if r["status"] == "empty":
+        return "영향 시험: 대상 0개 — 실행하지 않음(빈 목록을 전체 실행으로 바꾸지 않는다)"
+    if r["status"] == "list_only":
+        lines = [f"영향 시험: 시험 파일 {n}개로 상한 초과 — 실행하지 않고 목록만 표시"]
+        lines += [f"  - {f}" for f in r["files"][:PREFLIGHT_SHOW]]
+        if n > PREFLIGHT_SHOW:
+            lines.append(f"  ... 외 {n - PREFLIGHT_SHOW}개 (전체는 --json)")
+        return chr(10).join(lines)
+    lines = [
+        f"영향 시험: 시험 파일 {n}개 실행 — 새 실패 {len(r['new_failures'])}건, "
+        f"기존 실패 {len(r['existing_failures'])}건(기준에서도 실패, 판정 제외)"
+    ]
+    if r["notice"]:
+        lines.insert(0, r["notice"])
+    lines += [f"  새 실패: {f}" for f in r["new_failures"][:PREFLIGHT_SHOW]]
+    lines += [f"  기존 실패: {f}" for f in r["existing_failures"][:PREFLIGHT_SHOW]]
+    return chr(10).join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -164,6 +264,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--base", default="origin/master", help="비교 기준 ref (기본 origin/master)")
     ap.add_argument("--no-runcheck", action="store_true", help="LIVE import 실패(runcheck R0) 측정을 건너뛴다")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--impacted-tests", action="store_true", help="바뀐 모듈에 닿는 시험 파일만 실행(새 실패만 판정)")
+    ap.add_argument("--max-test-files", type=int, default=IMPACTED_MAX_FILES, help="이보다 많으면 실행하지 않고 목록만")
+    ap.add_argument("--workers", type=int, default=1, help=f"pytest-xdist 워커 수(최대 {IMPACTED_MAX_WORKERS})")
     a = ap.parse_args(argv)
     runcheck = not a.no_runcheck
 
@@ -173,6 +276,7 @@ def main(argv: list[str] | None = None) -> int:
 
     head_m = measure_tree(ROOT, runcheck)
     head_b = baseline_sizes(ROOT)
+    impacted: dict | None = None
     with tempfile.TemporaryDirectory(prefix="merge_step_base_") as td:
         base_tree = Path(td) / "base"
         if not _checkout(a.base, base_tree):
@@ -181,6 +285,8 @@ def main(argv: list[str] | None = None) -> int:
         try:
             base_m = measure_tree(base_tree, runcheck)
             base_b = baseline_sizes(base_tree)
+            if a.impacted_tests:
+                impacted = impacted_section(a.base, base_tree, a.workers, a.max_test_files)
         finally:
             _git(ROOT, "worktree", "remove", "--force", str(base_tree))
 
@@ -196,11 +302,13 @@ def main(argv: list[str] | None = None) -> int:
     failed = [r[0] for r in rows if r[3] == "증가"] + [k for k, ok in gates.items() if not ok]
     if blocking:
         failed.append(f"move_preflight 막음 {len(blocking)}건")
+    if impacted and impacted["new_failures"]:
+        failed.append(f"영향 시험 새 실패 {len(impacted['new_failures'])}건")
 
     if a.json:
         print(
             json.dumps(
-                {"rows": rows, "gates": gates, "preflight_blocking": blocking, "failed": failed},
+                {"rows": rows, "gates": gates, "preflight_blocking": blocking, "impacted": impacted, "failed": failed},
                 ensure_ascii=False,
                 indent=1,
             )
@@ -217,6 +325,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  - {b}")
         if len(blocking) > PREFLIGHT_SHOW:
             print(f"  ... 외 {len(blocking) - PREFLIGHT_SHOW}건 (전체는 --json)")
+        if impacted is not None:
+            print()
+            print(_impacted_text(impacted))
         print()
         print("결과: " + ("통과" if not failed else "실패 — " + ", ".join(failed)))
     return 1 if failed else 0
