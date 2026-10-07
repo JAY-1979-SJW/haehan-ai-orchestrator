@@ -13,6 +13,8 @@ from __future__ import annotations
 import logging
 import os
 
+from scripts.gate import is_opted_out
+
 from . import instagram_dm_db as db
 from . import instagram_dm_rule_engine as rule_engine
 from . import instagram_dm_token_store as token_store
@@ -89,6 +91,12 @@ def process_comment_event(comment_event_id: str, *, instagram_account_id: str) -
     blocked_reason = _blocked_reason(account, rule)
     if blocked_reason:
         db.update_reply_result(reply_log_id, status="BLOCKED", blocked_reason=blocked_reason)
+        return
+
+    # 수신거부(광고성 DM 법적 의무) — 자동 실행 경로라 승인 문구는 받을 수 없고, 수신거부 대조만 한다.
+    # 거부 목록 파일이 깨졌으면 보수적으로 보내지 않는다(is_opted_out 이 True).
+    if is_opted_out(str(event["commenter_username"] or "")):
+        db.update_reply_result(reply_log_id, status="BLOCKED", blocked_reason="OPTED_OUT")
         return
 
     if _dry_run():

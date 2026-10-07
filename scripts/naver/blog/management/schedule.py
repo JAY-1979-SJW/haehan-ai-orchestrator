@@ -104,9 +104,13 @@ class BlogSchedule:
         conn.close()
         return [dict(r) for r in rows]
 
-    def process_due(self) -> dict:
-        """예약 시간 도래한 글 자동 발행."""
+    def process_due(self, approval: str | None = None) -> dict:
+        """예약 시간 도래한 글 자동 발행. approval 은 사용자가 직접 입력한 승인 문구(없으면 GateBlocked)."""
         import json
+
+        from scripts.gate import require_approved
+
+        require_approved("blog_publish", approval, via="blog_schedule_process_due")
 
         now = datetime.now().isoformat(timespec="seconds")
         conn = sqlite3.connect(str(DB_PATH))

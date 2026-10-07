@@ -215,7 +215,7 @@ def write_to_naver(
         except GateBlocked as exc:
             raise HTTPException(
                 status_code=403,
-                detail=f"발행 차단: {exc.result.reason} (publish_confirm 에 '{BLOG_PUBLISH_CONFIRM_TEXT}' 입력 필요)",
+                detail=f"발행 차단: {exc.result.reason} (사용자가 직접 입력한 승인 문구가 필요합니다)",
             ) from exc
 
     def _do() -> dict:

@@ -119,8 +119,11 @@ class DriveAPI:
         except Exception as e:  # noqa: BLE001 - 구글 드라이브 CDP 자동화(검색/업로드/폴더생성/공유링크) - 실패 시 ok:False와 에러 반환, 성공 위장 없음
             return {"ok": False, "error": str(e)[:100]}
 
-    def share_link(self, file_index: int = 0, role: str = "viewer") -> dict:
-        """N번째 파일 공유 링크 생성 + 복사."""
+    def share_link(self, file_index: int = 0, role: str = "viewer", approval: str | None = None) -> dict:
+        """N번째 파일 공유 링크 생성 + 복사. approval: 사용자가 직접 입력한 승인 문구(없으면 GateBlocked)."""
+        from scripts.gate import require_approved
+
+        require_approved("drive_share", approval, via="drive_share_link", file_index=file_index)
         try:
             files = self.list_recent(limit=max(file_index + 1, 10))
             if file_index >= len(files):

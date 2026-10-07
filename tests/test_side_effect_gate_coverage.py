@@ -18,8 +18,23 @@ BASELINE = ROOT / "tests" / "data" / "side_effect_gate_baseline.json"
 
 SCAN_DIRS = ("scripts", "ai_orchestrator", "browser_api", "orchestrator_v1")
 SKIP_PARTS = {"__pycache__", "node_modules", ".venv", "archive", "ops", "tests"}  # scripts/ops 는 점검 스크립트
-SINK_CALLS = {"send_mail", "sendmail", "send_draft", "media_publish", "send_reply"}  # 이름이 곧 외부 발송·게시
-SINK_STRINGS = ("media_publish", "Send ⌘Enter")  # Graph API 경로·Gmail 보내기 버튼 셀렉터 문자열
+# 발행·발송 sink 함수 목록 — `.publish()` 같은 호출명 패턴이 아니라 실제 외부 효과를 내는 함수를 명시한다.
+# (BlogWriter.write_post 호출은 호출명 패턴에 안 걸려 발행 경로가 처음부터 안 잡혔다 — W2 가 찾은 사각지대)
+SINK_CALLS = {  # 이름이 곧 외부 발송·게시·공유
+    "write_post",  # BlogWriter/카페 글 작성(+즉시 발행). 예약 실행의 write_post(require_approval=False) 도 여기에 걸린다
+    "edit_post",  # 발행된 글 수정
+    "confirm_publish",  # 승인 대기 중인 글 발행
+    "send_mail",
+    "sendmail",
+    "send_draft",
+    "media_publish",
+    "send_reply",
+    "send_fax",
+    "send_private_reply",
+    "share_link",
+    "submit_reply",
+}
+SINK_STRINGS = ("media_publish", "Send ⌘Enter", "공유하기")  # Graph API 경로·Gmail 보내기 버튼 셀렉터 문자열
 PUBLISH_RECEIVERS = ("bw", "writer")  # bw.publish() / self.writer.publish() — BlogWriter 계열 발행 호출
 # gates.check_send(force=True) 는 항상 통과시킬 수 있어 게이트로 인정하지 않는다(R2b). require_send 는 승인 문구를 대조한다.
 GUARDS = {
@@ -27,9 +42,12 @@ GUARDS = {
     "require_send",
     "require_send_approval",
     "_require_send_approval",
+    "require_approved",
     "gate_check",
     "gated",
     "check_send",
+    # 인스타 DM 웹훅은 자동 실행이라 승인 문구를 받을 수 없다 — 수신거부 대조만 한다(정책: 환경 플래그 기본 꺼짐).
+    "is_opted_out",
 }
 WEAK_GUARD_RECEIVERS = {"gates"}  # gates.check_send(force=...) 는 불리언으로 통과 가능 — policy.check_send 같은 별도 정책만 인정
 # 정의 자체가 발송 구현이라 호출이 아닌 것(예: smtplib 래퍼 정의)은 SINK 호출이 없으므로 자동 제외된다.
@@ -41,6 +59,13 @@ REQUIRED_GUARDED = {
     "ai_orchestrator/connectors/eum_router.py::send_one._compose_and_send",
     "ai_orchestrator/connectors/hiworks_mail_router.py::api_send",
     "scripts/eum_send_mail_batch.py::send_one",
+    "scripts/naver/blog/core/ai_writer.py::BlogAIWriter.draft_and_save",
+    "scripts/naver/blog/core/writer_pro.py::BlogWriterPro._publish_by_mode",
+    "scripts/naver/blog/management/schedule.py::BlogSchedule.process_due",
+    "scripts/naver/blog/marketing/publish.py::publish_one",  # write_post 호출(사각지대였던 sink)
+    "scripts/instagram/publish.py::publish_case",
+    "scripts/hanafax/router.py::_cmd_send",
+    "ai_orchestrator/connectors/instagram_dm_service.py::process_comment_event",
 }
 
 

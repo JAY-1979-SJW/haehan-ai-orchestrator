@@ -85,9 +85,15 @@ def connect_and_ensure_login(cdp_url: str = "http://localhost:9222", blog_id: st
     return pw, browser, page
 
 
-def publish_one(page, *, post: dict, img_paths: list[str]) -> dict:
-    """포스트 1건 발행. body_segments + images로 이미지를 글 중간에 배치."""
+def publish_one(page, *, post: dict, img_paths: list[str], approval: str | None = None) -> dict:
+    """포스트 1건 발행. body_segments + images로 이미지를 글 중간에 배치.
+
+    approval: 사용자가 직접 입력한 승인 문구. 없거나 다르면 GateBlocked(발행하지 않는다).
+    """
+    from scripts.gate import require_approved
     from scripts.naver.blog.core.writer import write_post
+
+    require_approved("blog_publish", approval, via="blog_marketing_publish_one", title=str(post.get("title", ""))[:60])
 
     segments = post.get("body_segments") or []
     try:

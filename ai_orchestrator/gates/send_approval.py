@@ -32,5 +32,6 @@ def require_send_approval(
     except GateBlocked as exc:
         raise HTTPException(
             status_code=403,
-            detail=f"발송 차단: {exc.result.reason} (send_confirm 에 '{expected}' 입력 필요)",
+            # 승인 문구 자체는 응답에 담지 않는다 — 사람이 아는 통로는 화면 모달 안내와 CLI --help 뿐이다.
+            detail=f"발송 차단: {exc.result.reason} (사용자가 직접 입력한 승인 문구가 필요합니다)",
         ) from exc

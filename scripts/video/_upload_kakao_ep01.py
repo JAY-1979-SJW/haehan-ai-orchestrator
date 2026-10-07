@@ -26,5 +26,10 @@ values = {
 
 plan, plan_path = prepare_upload_plan(video_path, values)
 print("PLAN OK", plan_path)
-result, result_path = execute_upload_plan(plan_path, approved=True, confirm=APPROVAL_PHRASE, dry_run=False)
+# 승인 문구는 사용자가 --confirm= 으로 직접 입력해야 한다(코드에 고정해 자동 승인하지 않는다). 없으면 드라이런만 한다.
+confirm = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--confirm=")), "")
+live = confirm == APPROVAL_PHRASE
+if not live:
+    print("[DRY-RUN] 실제 업로드하려면 --confirm=<승인 문구(직접 입력)> 가 필요합니다")
+result, result_path = execute_upload_plan(plan_path, approved=live, confirm=confirm, dry_run=not live)
 print(json.dumps(result, ensure_ascii=False, indent=2))

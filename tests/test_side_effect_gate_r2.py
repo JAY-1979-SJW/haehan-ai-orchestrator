@@ -420,3 +420,363 @@ def test_hiworks_mail_send_requires_phrase_before_browser(monkeypatch):
     assert opened == []
     h.api_send(h.HWMailSendRequest(confirmed=True, send_confirm=h.HIWORKS_SEND_CONFIRM_TEXT), user=user)
     assert opened == [1]
+
+
+# ── R2d-1: 블로그 직접 호출·인스타·유튜브·스마트스토어·드라이브·하나팩스 단건 ─────────
+
+
+def _all_phrases() -> set[str]:
+    phrases = set(gate.CONFIRM_TEXTS.values())
+    from ai_orchestrator.connectors import eum_router, gmail_router, hiworks_mail_router, naver_blog_router
+    from scripts.hiworks import mail_batch
+
+    phrases |= {
+        naver_blog_router.BLOG_PUBLISH_CONFIRM_TEXT,
+        gmail_router.GMAIL_SEND_CONFIRM_TEXT,
+        eum_router.EUM_SALES_MAIL_CONFIRM_TEXT,
+        hiworks_mail_router.HIWORKS_SEND_CONFIRM_TEXT,
+        mail_batch.APPROVAL_CONFIRM_TEXT,
+        "HIWORKS_APPROVED_SUBMIT",
+        "EUM_APPROVED_MAIL_BATCH",
+        "YOUTUBE_APPROVED_UPLOAD",
+    }
+    return phrases
+
+
+def _assert_no_phrase(text: str) -> None:
+    leaked = [p for p in _all_phrases() if p in text]
+    assert not leaked, f"차단 응답에 승인 문구가 노출됨: {leaked}"
+
+
+def _http_detail(fn):
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as exc:
+        fn()
+    assert exc.value.status_code in (400, 403)
+    return str(exc.value.detail)
+
+
+def test_blocked_http_responses_never_contain_approval_phrases(monkeypatch):
+    """경로마다 '차단 응답 본문에 승인 문구 문자열이 없다'를 고정한다(R2d 정책)."""
+    from ai_orchestrator.connectors import eum_router as e
+    from ai_orchestrator.connectors import gmail_router as g
+    from ai_orchestrator.connectors import hanafax_router as hf
+    from ai_orchestrator.connectors import hiworks_mail_router as h
+    from ai_orchestrator.connectors import naver_blog_router as b
+    from ai_orchestrator.connectors.smartstore import reviews as rv
+
+    for mod in (e, g, h):
+        monkeypatch.setattr(mod, "log_event", lambda *a, **k: None)
+    user = {"actor": "a", "role": "admin"}
+    details = [
+        _http_detail(lambda: b.write_to_naver(b.BlogWriteRequest(title="t", body="b", publish=True), user=user)),
+        _http_detail(
+            lambda: g.api_reply(
+                g.GmailReplyRequest(thread_id="t", to="a@b.c", subject="s", body="b", dry_run=False), user=user
+            )
+        ),
+        _http_detail(lambda: g.api_send(g.GmailSendRequest(confirmed=True), user=user)),
+        _http_detail(
+            lambda: e.send_one(e.SendRequest(to="a@b.c", subject="s", body="b", confirmed=True), user=user)
+        ),
+        _http_detail(lambda: h.api_send(h.HWMailSendRequest(confirmed=True), user=user)),
+        _http_detail(lambda: rv.api_reviews_reply(rv.ReplyReviewsRequest(confirm=True, dry_run=False), user=user)),
+        _http_detail(
+            lambda: hf.send_fax(
+                hf.SendRequest(receiver_fax="02-1234-5678", subject="s", body="b", confirmed=True), _=user
+            )
+        ),
+    ]
+    assert all("승인 문구" in d for d in details)
+    for d in details:
+        _assert_no_phrase(d)
+
+
+def test_cli_error_messages_never_contain_approval_phrases():
+    from scripts.hiworks import router as hr
+
+    msgs: list[str] = []
+    for call in (
+        lambda: hr._cmd_submit_section("svc", ["cid", "--approved", "--confirm=nope"]),
+        lambda: hr._cmd_submit_section("svc", []),
+        lambda: hr._cmd_send_batch("go", ["--approved", "--confirm=nope"]),
+        lambda: hr._cmd_send_batch("go", []),
+    ):
+        with pytest.raises(SystemExit) as exc:
+            call()
+        msgs.append(str(exc.value))
+    for m in msgs:
+        _assert_no_phrase(m)
+
+
+def test_eum_batch_cli_error_message_has_no_phrase(tmp_path):
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    script = Path(__file__).resolve().parents[1] / "scripts" / "eum_send_mail_batch.py"
+    proc = subprocess.run(  # 승인 문구 없이 실제 발송 모드 — 대상이 없어도 게이트가 먼저 막는다
+        [sys.executable, str(script), "--limit", "1"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        cwd=str(tmp_path),
+        env={**__import__("os").environ, "GATE_DATA_DIR": str(tmp_path / "gate"), "HIWORKS_MAIL_ACCOUNT": "", "HIWORKS_MAIL_PASSWORD": ""},
+        timeout=60,
+        check=False,
+    )
+    out = proc.stdout + proc.stderr
+    assert proc.returncode != 0
+    _assert_no_phrase(out.replace("--confirm", ""))  # --help 문구가 아닌 오류 메시지에는 문구가 없어야 한다
+
+
+# ── 블로그 직접 호출 ──
+
+
+class _Boom:
+    def __getattr__(self, name):
+        raise AssertionError(f"승인 전에 외부 객체를 건드림: {name}")
+
+
+def test_blog_inner_publish_paths_need_typed_approval():
+    from scripts.naver.blog.core.ai_writer import BlogAIWriter
+    from scripts.naver.blog.core.writer_pro import BlogWriterPro
+    from scripts.naver.blog.management.schedule import BlogSchedule
+    from scripts.naver.blog.marketing.publish import publish_one
+
+    with pytest.raises(gate.GateBlocked):
+        BlogSchedule(_Boom()).process_due()
+    with pytest.raises(gate.GateBlocked):
+        BlogAIWriter(_Boom()).draft_and_save("주제", publish=True)
+    with pytest.raises(gate.GateBlocked):
+        BlogWriterPro._publish_by_mode(_Boom(), False, None, approval="yes")
+    with pytest.raises(gate.GateBlocked):
+        publish_one(_Boom(), post={"title": "t", "body": "b", "tags": []}, img_paths=[])
+
+
+def test_blog_pro_draft_and_schedule_modes_need_no_approval():
+    from scripts.naver.blog.core.writer_pro import BlogWriterPro
+
+    calls: list[str] = []
+
+    class W:
+        def save_draft(self):
+            calls.append("draft")
+            return {"ok": True}
+
+        def schedule_publish(self, at):
+            calls.append("schedule")
+            return {"ok": True}
+
+        def publish(self):
+            calls.append("publish")
+            return {"ok": True}
+
+    pro = BlogWriterPro.__new__(BlogWriterPro)
+    pro.writer = W()
+    pro._publish_by_mode(True, None)
+    pro._publish_by_mode(False, object())
+    assert calls == ["draft", "schedule"]
+    pro._publish_by_mode(False, None, approval=gate.CONFIRM_TEXTS["blog_publish"])
+    assert calls[-1] == "publish"
+
+
+@pytest.mark.parametrize("script", ["publish_ep_batch", "publish_ep_batch_gov2", "apply_cta_to_batches"])
+def test_blog_batch_scripts_exit_before_browser_without_phrase(script, monkeypatch):
+    import importlib
+
+    mod = importlib.import_module(f"scripts.naver.blog.cli.{script}")
+    monkeypatch.setattr("sys.argv", [script + ".py"])
+    monkeypatch.setattr(mod, "get_page", lambda: (_ for _ in ()).throw(AssertionError("브라우저 접근")))
+    with pytest.raises(SystemExit) as exc:
+        mod.main()
+    assert "발행 차단" in str(exc.value)
+    _assert_no_phrase(str(exc.value))
+
+
+def test_blog_ai_batch_20_blocks_before_any_work_without_phrase():
+    import importlib
+
+    mod = importlib.import_module("scripts.naver.blog.cli.blog_ai_batch_20")
+    with pytest.raises(gate.GateBlocked):
+        mod.run(count=1, dry_run=False)
+
+
+# ── 인스타그램 ──
+
+
+def test_instagram_api_publish_requires_phrase_before_any_network(monkeypatch):
+    from scripts.instagram import api_publish as ig
+
+    touched: list[str] = []
+    for name in ("create_reel_container", "create_carousel", "create_story_container", "wait_ready"):
+        monkeypatch.setattr(ig, name, lambda *a, _n=name, **k: touched.append(_n) or "cid")
+    monkeypatch.setattr(ig, "publish", lambda cid: touched.append("publish") or {"id": "p1"})
+    for call in (
+        lambda: ig.publish_reel("u", "c", confirmed=True),
+        lambda: ig.publish_carousel(["a", "b"], "c", confirmed=True, approval="no"),
+        lambda: ig.publish_story(image_url="u", confirmed=True),
+    ):
+        with pytest.raises(gate.GateBlocked):
+            call()
+    assert touched == []  # 컨테이너 생성 전에 막힌다
+    assert ig.publish_reel("u", "c")["published"] is False  # confirmed=False(컨테이너만)는 승인 불필요
+    touched.clear()
+    ig.publish_reel("u", "c", confirmed=True, approval=gate.CONFIRM_TEXTS["instagram_publish"])
+    assert "publish" in touched
+
+
+def test_instagram_publish_case_blocks_before_browser(monkeypatch):
+    from scripts.instagram import publish as ip
+
+    monkeypatch.setattr(ip, "build_caption", lambda c: (_ for _ in ()).throw(AssertionError("승인 전 진행")))
+    case = type("C", (), {"case_id": "c1", "images": []})()
+    with pytest.raises(gate.GateBlocked):
+        ip.publish_case(case, confirmed=True)
+
+
+def test_instagram_dm_skips_opted_out_commenter_and_never_sends(monkeypatch):
+    from types import SimpleNamespace
+
+    from ai_orchestrator.connectors import instagram_dm_service as svc
+
+    gate.add_opt_out("StopUser")
+    updates: list[dict] = []
+    fake_db = SimpleNamespace(
+        get_account=lambda i: {"automation_enabled": 1, "instagram_user_id": "ig1"},
+        list_comment_events=lambda i, limit=500: [
+            {"id": "e1", "comment_text": "hi", "media_id": "m", "commenter_username": "stopuser", "comment_id": "c1"}
+        ],
+        list_rules=lambda i: [],
+        update_comment_event_status=lambda *a, **k: None,
+        try_reserve_reply_slot=lambda **k: ("log1", True),
+        update_reply_result=lambda lid, **k: updates.append(k),
+        set_account_status=lambda *a, **k: None,
+    )
+    rule = {"id": "r1", "enabled": 1, "reply_message": "x"}
+    fake_engine = SimpleNamespace(
+        evaluate=lambda **k: SimpleNamespace(matched=True, rule=rule, reason="", matched_keyword="k"),
+        render_template=lambda t, **k: t,
+    )
+    monkeypatch.setattr(svc, "db", fake_db)
+    monkeypatch.setattr(svc, "rule_engine", fake_engine)
+    monkeypatch.setattr(svc, "_blocked_reason", lambda a, r: None)
+    monkeypatch.setattr(svc, "send_private_reply", lambda *a, **k: (_ for _ in ()).throw(AssertionError("DM 발송됨")))
+    svc.process_comment_event("e1", instagram_account_id="acc1")
+    assert updates and updates[-1].get("blocked_reason") == "OPTED_OUT"
+
+
+# ── 유튜브 ──
+
+
+def test_youtube_execute_route_defaults_to_dry_run():
+    from ai_orchestrator.connectors.youtube.upload import ExecuteRequest
+
+    assert ExecuteRequest(plan_path="p", confirm="c").dry_run is True
+
+
+def test_youtube_live_upload_passes_gate_only_with_phrase(tmp_path, monkeypatch):
+    import json
+
+    from scripts.youtube import uploader as u
+
+    plan = tmp_path / "plan.json"
+    plan.write_text(json.dumps({"ready_for_approval": True}), encoding="utf-8")
+    monkeypatch.setattr(u, "RESULT_DIR", tmp_path / "res")
+    monkeypatch.setattr(u, "LATEST_RESULT", tmp_path / "latest.json")
+    monkeypatch.setattr(u, "emit_event", lambda *a, **k: None)
+    calls: list[int] = []
+    monkeypatch.setattr(u, "_upload_with_official_api", lambda p: calls.append(1) or {"ok": True, "video_id": "v"})
+    res, _ = u.execute_upload_plan(plan, approved=False, confirm="", dry_run=False)
+    assert res["status"] == "blocked" and calls == []
+    res, _ = u.execute_upload_plan(plan, approved=True, confirm=u.APPROVAL_PHRASE, dry_run=False)
+    assert res["status"] == "ok" and calls == [1]
+
+
+# ── 스마트스토어·드라이브·하나팩스 ──
+
+
+def test_smartstore_submit_reply_blocks_before_touching_cdp():
+    from scripts.naver.smartstore.inquiry_reply import submit_reply
+
+    for bad in (None, "", "yes"):
+        with pytest.raises(gate.GateBlocked):
+            submit_reply(_Boom(), approval=bad)
+
+
+def test_drive_share_link_blocks_before_touching_page():
+    from scripts.google.drive_api import DriveAPI
+
+    with pytest.raises(gate.GateBlocked):
+        DriveAPI(_Boom()).share_link(0)
+
+
+def test_hanafax_single_send_phrase_number_and_opt_out(monkeypatch):
+    from fastapi import HTTPException
+
+    from ai_orchestrator.connectors import hanafax_router as hf
+    from ai_orchestrator.persistence import fax_authorization_store as store
+
+    sent: list[str] = []
+    monkeypatch.setattr(
+        "scripts.hanafax.sender.send_fax",
+        lambda receiver_fax, subject, body, receiver_name="": sent.append(receiver_fax)
+        or {"success": True, "message": "ok"},
+    )
+    monkeypatch.setattr(store, "opt_out_numbers", lambda: {"0212345678"})
+    user = {"actor": "a", "role": "admin"}
+    phrase = gate.CONFIRM_TEXTS["hanafax_send"]
+
+    def call(**kw):
+        base = {"receiver_fax": "02-9999-8888", "subject": "s", "body": "b", "confirmed": True}
+        return hf.send_fax(hf.SendRequest(**{**base, **kw}), _=user)
+
+    with pytest.raises(HTTPException) as exc:
+        call()
+    assert exc.value.status_code == 403
+    with pytest.raises(HTTPException) as exc:
+        call(send_confirm=phrase, receiver_fax="abc")
+    assert exc.value.status_code == 400
+    with pytest.raises(HTTPException) as exc:
+        call(send_confirm=phrase, receiver_fax="(02) 1234-5678")
+    assert exc.value.status_code == 403 and "수신거부" in exc.value.detail
+    assert sent == []
+    assert call(send_confirm=phrase).ok is True
+    assert sent == ["02-9999-8888"]
+
+
+def test_hanafax_cli_single_send_needs_typed_phrase(monkeypatch):
+    from scripts.hanafax import router as fr
+
+    sent: list[str] = []
+    monkeypatch.setattr(
+        "scripts.hanafax.sender.send_fax",
+        lambda receiver_fax, subject, body, **k: sent.append(receiver_fax) or {"success": True, "message": "ok"},
+    )
+    with pytest.raises(SystemExit) as exc:
+        fr._cmd_send("02-1111-2222", ["제목"])
+    _assert_no_phrase(str(exc.value))
+    assert sent == []
+    fr._cmd_send("02-1111-2222", ["제목", f"--confirm={gate.CONFIRM_TEXTS['hanafax_send']}"])
+    assert sent == ["02-1111-2222"]
+
+
+def test_is_opted_out_semantics(tmp_path):
+    assert gate.is_opted_out("a@b.c") is False
+    gate.add_opt_out("A@B.c")
+    assert gate.is_opted_out("a@b.C") is True
+    (tmp_path / "gate" / "opt_out.json").write_text("[broken", encoding="utf-8")
+    assert gate.is_opted_out("zzz@b.c") is True  # 깨졌으면 보수적으로 차단
+
+
+def test_blog_pro_smart_publish_passes_approval_through():
+    """smart_publish 가 approval 인자를 받아 _publish_by_mode 까지 넘긴다(인자 누락 NameError 방지)."""
+    import inspect
+
+    from scripts.naver.blog.core.writer_pro import BlogWriterPro
+
+    assert "approval" in inspect.signature(BlogWriterPro.smart_publish).parameters
+    src = inspect.getsource(BlogWriterPro.smart_publish)
+    assert "self._publish_by_mode(save_draft_only, schedule_at, approval)" in src

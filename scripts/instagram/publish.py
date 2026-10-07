@@ -30,9 +30,14 @@ def _get_page(ctx):
     return ctx.new_page()
 
 
-def publish_case(case: Case, confirmed: bool = False) -> dict:
-    """case의 이미지를 업로드하고 캡션을 채운다. confirmed=True 일 때만 실제 게시."""
+def publish_case(case: Case, confirmed: bool = False, approval: str | None = None) -> dict:
+    """case의 이미지를 업로드하고 캡션을 채운다. confirmed=True + 승인 문구(approval)가 있을 때만 실제 게시."""
     from playwright.sync_api import sync_playwright
+
+    if confirmed:  # 브라우저를 열기 전에 확인한다
+        from scripts.gate import require_approved
+
+        require_approved("instagram_publish", approval, via="ig_publish_case", case_id=case.case_id)
 
     caption = build_caption(case)
     result = {"case_id": case.case_id, "image_count": len(case.images), "caption": caption, "posted": False}

@@ -60,12 +60,21 @@ def _cmd_send(sub: str | None, args: list[str]) -> None:
     """단건 발송: hanafax send <팩스번호> <제목>"""
     from scripts.hanafax.sender import send_fax
 
+    confirm = next((a.split("=", 1)[1] for a in args if a.startswith("--confirm=")), None)
+    args = [a for a in args if not a.startswith("--confirm=")]
     fax_no = sub or (args[0] if args else "")
     subject = args[0] if (sub and args) else (args[1] if len(args) > 1 else "")
     body = args[-1] if len(args) > 2 else subject
 
     if not fax_no or not subject:
-        raise SystemExit("사용법: hanafax send <팩스번호> <제목> [본문]")
+        raise SystemExit("사용법: hanafax send <팩스번호> <제목> [본문] --confirm=<승인 문구(직접 입력)>")
+
+    from scripts.gate import GateBlocked, require_approved
+
+    try:
+        require_approved("hanafax_send", confirm, via="hanafax_cli_send")
+    except GateBlocked as exc:
+        raise SystemExit(f"발송 차단: {exc.result.reason} (사용자가 직접 입력한 승인 문구가 필요합니다)") from exc
 
     print(f"팩스 발송: {fax_no} / {subject}")
     result = send_fax(receiver_fax=fax_no, subject=subject, body=body)
