@@ -40,6 +40,10 @@
    "scripts/ops/audit_backend_premium_security_boundary.py:main",
    "scripts/ops/audit_backend_premium_service_layer.py:main"
   ],
+  "2c0c8a1552865935b6e32f6c0ebd15b3438c33b0": [
+   "scripts/naver/automation/platform/session_manager.py:SessionManager.check_and_recover",
+   "scripts/naver/automation/session_manager.py:SessionManager.check_and_recover"
+  ],
   "2f788045f55b2d0e39cbb3db38fce3ca8ee42330": [
    "scripts/hanafax/export_kras_fax_pdf.py:_fit_merged_wrap_rows",
    "scripts/hanafax/send_kras_final_campaign.py:_fit_merged_wrap_rows"
@@ -70,6 +74,7 @@
    "scripts/naver/smartstore/product/page_builder.py:render_notice"
   ],
   "3ce118397eab18dd5384132301bce7b0c332d45f": [
+   "scripts/google/audit_gmail_function_contract.py:main",
    "scripts/ops/audit_app_baseline_contract.py:main",
    "scripts/ops/audit_app_development_standard.py:main",
    "scripts/ops/audit_app_structure_contract.py:main",
@@ -80,7 +85,6 @@
    "scripts/ops/audit_google_automation_baseline_contract.py:main",
    "scripts/ops/audit_google_cloud_module_baseline_contract.py:main",
    "scripts/ops/audit_google_cloud_router_compatibility.py:main",
-   "scripts/ops/audit_google_gmail_function_contract.py:main",
    "scripts/ops/audit_google_workspace_module_baseline_contract.py:main",
    "scripts/ops/audit_google_workspace_router_compatibility.py:main",
    "scripts/ops/audit_local_agent_e2e_baseline_contract.py:main",
@@ -190,10 +194,6 @@
    "ai_orchestrator/connectors/naver_mail/draft_store.py:_conn",
    "ai_orchestrator/scheduler/scheduled_job_store.py:_conn"
   ],
-  "9842698e9a64e7b185f921f4134572d8aa0577a9": [
-   "scripts/fetch_nts_interpretations.py:_latest_html_after",
-   "scripts/fetch_tax_precedent_summary.py:_latest_html_after"
-  ],
   "9952c264a61e7ccf171f823d0d6aa163c53dccf1": [
    "ai_orchestrator/connectors/hanafax/send_policy.py:_recipient_skip_reason",
    "ai_orchestrator/connectors/naver_mail/bulk_policy.py:_recipient_skip_reason"
@@ -247,7 +247,7 @@
    "ai_orchestrator/connectors/naver_search/naver_search_router.py:api_run_shopping_search"
   ],
   "c9053131b7a1ac351e1d64f38d457a20e05a5774": [
-   "scripts/naver/automation/platform/error_recovery.py:_init_db",
+   "scripts/naver/automation/error_recovery.py:_init_db",
    "scripts/naver/smartstore/product/bulk.py:_init_db"
   ],
   "cb29e64dc5c280b2a6a807e3bc8796e25ccd01fe": [
@@ -281,7 +281,7 @@
    "scripts/instagram/reel_overlay.py:_fit_cover"
   ],
   "dd98391254fcf8260de1b0c71e2290212b22ff73": [
-   "scripts/naver/calendar.py:NaverCalendar.open",
+   "scripts/naver/calendar_tasks.py:NaverCalendar.open",
    "scripts/naver/place.py:NaverPlace.open"
   ],
   "e52edc3fccea138286e4ee989420aca94771e83d": [
@@ -307,7 +307,7 @@
    "scripts/google/youtube/search_common.py:_should_retry_without_proxy"
   ],
   "f2dd54c583d5f6e43808f5917d535acd830fa502": [
-   "scripts/naver/automation/platform/scheduler.py:Scheduler.remove_task",
+   "scripts/naver/automation/scheduler.py:Scheduler.remove_task",
    "scripts/naver/blog/management/schedule.py:BlogSchedule.cancel"
   ],
   "f568a5f5be82c5fa8429969099bc76c6122861f9": [

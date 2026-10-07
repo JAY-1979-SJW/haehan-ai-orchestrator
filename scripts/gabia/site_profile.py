@@ -6,7 +6,7 @@ write/change/payment 계열은 반드시 승인형 또는 사용자 직접 조�
 from __future__ import annotations
 
 from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile
-from scripts.site_engine.types import GateDecision, SiteCapability, SiteProfileStatus
+from scripts.site_engine.site_types import GateDecision, SiteCapability, SiteProfileStatus
 
 GABIA_PROFILE = SiteProfile(
     key="gabia",

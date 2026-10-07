@@ -2,8 +2,8 @@
  "_comment": "도구 집 게이트(G11) 기준선 — 이미 집 밖에 있던 파일(기존 부채). 늘리는 변경 금지, 이동·삭제로 줄이는 방향만. 규칙: configs/tool_home.json",
  "target": 0,
  "reviewed_at": "",
- "count": 34,
- "note": "하향 갱신: 55 → 34",
+ "count": 19,
+ "note": "하향 갱신: 34 → 19",
  "files": [
   "admin-web/src/app/assistant/(legacy)/cafe/CafeClient.tsx",
   "admin-web/src/app/assistant/(legacy)/cafe/CategoryCard.tsx",
@@ -23,21 +23,6 @@
   "ai_orchestrator/connectors/naver_search_client.py",
   "ai_orchestrator/connectors/naver_search_utils.py",
   "ai_orchestrator/connectors/naver_shopping_collectors.py",
-  "hiworks_mail_reader.py",
-  "scripts/ops/audit_gabia_site_settings_canonical_registry.py",
-  "scripts/ops/audit_google_gmail_function_contract.py",
-  "scripts/ops/audit_naver_mail_action_item_dashboard.py",
-  "scripts/ops/audit_naver_mail_body_pipeline_batch.py",
-  "scripts/ops/audit_naver_mail_body_pipeline_v2.py",
-  "scripts/ops/audit_naver_mail_business_report.py",
-  "scripts/ops/audit_naver_mail_dynamic_folder_discovery.py",
-  "scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py",
-  "scripts/ops/audit_naver_mail_inbox_p0_complete.py",
-  "scripts/ops/audit_naver_mail_smart_folder_coverage.py",
-  "scripts/ops/audit_naver_mail_unknown_classification_rules.py",
-  "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py",
-  "scripts/ops/audit_naver_mail_unread_pagination_depth.py",
-  "scripts/ops/daily_cafe_marketing_pipeline.py",
-  "scripts/ops/ig_batch.py"
+  "hiworks_mail_reader.py"
  ]
 }

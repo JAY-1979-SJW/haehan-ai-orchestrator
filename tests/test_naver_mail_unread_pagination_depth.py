@@ -5,7 +5,7 @@ import pytest
 
 from scripts.naver.mail import inbox_collector as ic
 from scripts.naver.mail import read_state_guard as rsg
-from scripts.ops import audit_naver_mail_unread_pagination_depth as audit
+from scripts.naver.mail.collection import audit_naver_mail_unread_pagination_depth as audit
 
 # 기존 FakeActions 재사용 import
 from tests.test_naver_mail_inbox_p0_complete import FakeActions, _mk_row

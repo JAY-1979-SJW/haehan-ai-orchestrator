@@ -7,7 +7,7 @@
 
 > **정정(2026-10-07, B1 작업 중 발견)**: `scripts/archive/one_off/reclassify_blog_new.py` 는 이름에 `blog` 가 있어 키워드 분류가 블로그 이탈로 잡았으나 실제로는 카탈로그 상품 분류 스크립트(mk_catalog)다. 이동 대상이 아니므로 이탈 목록에서 뺐다(`TOOL_HOME_MAP_leaks.tsv` 에서 1줄 삭제). 이 문서의 숫자는 그만큼 줄어든다: 이탈 224→223, 이동 71→70, naver_blog 이탈 41→40(이동 12→11). 또 youtube 이탈 31건 중 실제 이동 대상은 `yt_upload` 6 + 스모크 1뿐이고 나머지는 google 도메인 하위 탭(정상)·완성형 shim·제외로 재분류했다(아래 youtube 절).
 
-> **정정 2(2026-10-07, G11 도구 집 게이트 작업 중)**: ① 루트 `hiworks_mail_reader.py`·`kakaowork_reader.py` 는 1단계 분리 뒤 `orchestrator_v1/inbox/` 로 간 실제 파일의 **호환 shim** 이다. 이전 표는 이를 실제 파일로 보고 '이동'으로 분류했으나, 이동 대상은 `orchestrator_v1/inbox/` 의 실제 파일이고 루트 shim 은 유지한다(옛 경로의 import·경로 로드·직접 실행 호환 — `scripts/ops/make_shim.py` 형식). ② `scripts/ops/audit_google_gmail_function_contract.py` 는 일회성 감사 스크립트라 `scripts/google/ops/` 로 옮기는 것이 아니라 **archive 후보**(`scripts/archive/`)다. ③ 집 규칙은 이제 게이트로 강제된다: `configs/tool_home.json`(도구 키워드·집·예외+사유) · `configs/tool_home_baseline.json`(기존 집 밖 105건 고정) · `scripts/ops/tool_home_gate.py`(pre-commit `--staged`, CI `--check-all`). 이 문서의 224건은 키워드 분류의 전수 조사였고, 게이트 기준선은 예외(시험·archive·apps·층 표준 폴더·google 의 youtube 하위 탭 등)와 이미 이동한 파일을 뺀 현재 실제 집 밖 파일이다.
+> **정정 2(2026-10-07, G11 도구 집 게이트 작업 중)**: ① 루트 `hiworks_mail_reader.py`·`kakaowork_reader.py` 는 1단계 분리 뒤 `orchestrator_v1/inbox/` 로 간 실제 파일의 **호환 shim** 이다. 이전 표는 이를 실제 파일로 보고 '이동'으로 분류했으나, 이동 대상은 `orchestrator_v1/inbox/` 의 실제 파일이고 루트 shim 은 유지한다(옛 경로의 import·경로 로드·직접 실행 호환 — `scripts/ops/make_shim.py` 형식). ② `scripts/google/audit_gmail_function_contract.py` 는 일회성 감사 스크립트라 `scripts/google/ops/` 로 옮기는 것이 아니라 **archive 후보**(`scripts/archive/`)다. ③ 집 규칙은 이제 게이트로 강제된다: `configs/tool_home.json`(도구 키워드·집·예외+사유) · `configs/tool_home_baseline.json`(기존 집 밖 105건 고정) · `scripts/ops/tool_home_gate.py`(pre-commit `--staged`, CI `--check-all`). 이 문서의 224건은 키워드 분류의 전수 조사였고, 게이트 기준선은 예외(시험·archive·apps·층 표준 폴더·google 의 youtube 하위 탭 등)와 이미 이동한 파일을 뺀 현재 실제 집 밖 파일이다.
 
 ## 0. 측정 방법과 한계 (숫자를 읽기 전에)
 - **파일 분류**: `5f83b90d`의 추적 파일 중 코드(py·ts·tsx·js, 시험·docs·보관(`scripts/archive`)·`admin-web/vendor` 제외) 1,960개를 **경로 이름의 키워드**로 도구에 배정했다(구체적인 도구 먼저: smartstore → hanafax → … → naver_blog). 이름에 도구가 드러나지 않는 파일(예: 공용 CDP 헬퍼)은 배정되지 않는다. 즉 **도구 이름이 경로에 있는 파일만** 센 것이다. 806개가 도구에 배정됐다.
@@ -108,7 +108,7 @@
 - **완성형 shim(추가 작업 없음)**: 평면 `connectors/youtube_router.py`·`routers/youtube_{oauth,research}_router.py` — 실구현은 이미 `connectors/youtube/` 패키지(스마트스토어와 같은 형태).
 - 제외: `scripts/common/youtube_search_cache.py`(⚠ G5 겹침, §6-1), `scripts/ops/guard_youtube_upload.py`(`.claude/settings.json` 훅), `apps/youtube-analyzer-standalone/*`(10, 독립앱 결정 1)
 
-**instagram (이탈 23)**: 평면 `connectors/instagram_*`(7) → `connectors/instagram/`(⚠ `instagram_dm_db.py`는 G5와 겹침), `scripts/ops/ig_batch.py` → `scripts/instagram/ops/`, `apps/ig-comment-dm-bot/*`(14) → 독립앱(결정 1; `processed_store.py`는 G5에서 이미 B 분류).
+**instagram (이탈 23)**: 평면 `connectors/instagram_*`(7) → `connectors/instagram/`(⚠ `instagram_dm_db.py`는 G5와 겹침), `scripts/instagram/ig_batch.py` → `scripts/instagram/ops/`, `apps/ig-comment-dm-bot/*`(14) → 독립앱(결정 1; `processed_store.py`는 G5에서 이미 B 분류).
 **smartstore (이탈 8)**: `scripts/naver/automation/smartstore/*`(6) → `scripts/naver/smartstore/automation/`(참조 있음, `__init__` 6), 평면 `smartstore_router.py`는 이미 4줄 shim(제거 대상), `scripts/ops/selector_health/sites/naver_smartstore.py`는 정상.
 **eum (6)**: 루트 `scripts/eum_*.py` 5개 → `scripts/eum/`(이름에서 `eum_` 접두 제거), 평면 `eum_router.py` → `connectors/eum/`.
 **gabia (7)**: 루트 `gabia_login_watch.py` 외 → `scripts/gabia/`, `scripts/ops/` 일회성 4개 archive후보.

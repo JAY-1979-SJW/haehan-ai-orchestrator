@@ -17,7 +17,7 @@ from scripts.naver.mail import (
 from scripts.naver.mail import (
     smart_folder_collector as sfc,
 )
-from scripts.ops import audit_naver_mail_dynamic_folder_discovery_closeout as audit
+from scripts.naver.mail.collection import audit_naver_mail_dynamic_folder_discovery_closeout as audit
 from tests.test_naver_mail_smart_folder_coverage import (
     MultiFolderActions,
     _mk_row,

@@ -16,7 +16,7 @@ EUM과 하이웍스에서 확정한 브라우저, 승인, 감사, 문서화 기�
 | 코드 레이어 분류 | `docs/layer_classification.md` | L0-L12 경계와 사이트 모듈 구조 |
 | 품질 게이트 | `scripts/ops/quality/quality_gate.py` | 코드/문서/테스트/DB 스키마 변경 조건 검사 |
 | Pre-change dry-run | `docs/pre_change_dry_run_policy_20260513.md` | 코드 수정 전 현재 동작/dry-run 증적 기록 |
-| 배포 dry-run | `scripts/deploy_dry_run.py` | 배포 관련 변경 전 dry-run 증적 기록 |
+| 배포 dry-run | `scripts/ops/deploy_dry_run.py` | 배포 관련 변경 전 dry-run 증적 기록 |
 | 사이트 상태 취합 | `docs/site_automation_status_index.md` | 모든 사이트 완료/진행 상태 공통 인덱스 |
 | EUM 기준 구현 | `docs/eum_logic_reference_20260513.md` | 현재 사이트에 검증한 실제 적용 패턴 |
 | 하이웍스 기준 구현 | `docs/hiworks_logic_reference_20260513.md` | 섹션 입력/버튼 action catalog, 승인+확인문구 실행 기준, 메일 준비/발송 계획 패턴 |
@@ -82,12 +82,12 @@ discover -> plan -> prepare -> submit -> verify -> log
 | --- | --- |
 | 공통 CDP 진입 | `scripts/cdp_client.py`, `scripts/browser/cdp/cdp_daemon.py` |
 | 사이트 라우터 | `scripts/site_engine/command_router.py`, `scripts/<site>/router.py` |
-| 브라우저 재사용 | `scripts/web_connector.py` |
+| 브라우저 재사용 | `scripts/browser/cdp/connection.py` |
 | 로그인/세션 | `scripts/<site>/auth.py`, `scripts/site_engine/site_access.py` |
 | 팝업/비정상 접근 | `scripts/browser/popup/popup_watcher.py`, `scripts/browser/popup/popup_classifier.py`, `scripts/<site>/access_handler.py` |
 | 작업 계획 | `scripts/<site>/work_plan.py` |
 | 실행 로그 | `scripts/<site>/run_log.py` |
-| 실시간 감사 | `scripts/common/realtime_audit.py`, `scripts/watch_log.py` |
+| 실시간 감사 | `scripts/common/realtime_audit.py`, `scripts/ops/watch_log.py` |
 | 승인 게이트 | `scripts/common/gate.py`, `scripts/<site>/gates.py` |
 | 작업트리 분류 | `scripts/ops/worktree_change_index.py` |
 
@@ -142,7 +142,7 @@ surface index before live work.
 - Latest adapter artifact: `data/google_execution_adapter_catalog_latest.json`
 - Command: `python scripts\cdp_client.py google surfaces catalog`
 - Action command: `python scripts\cdp_client.py google work catalog`
-- Adapter command: `python scripts\cdp_client.py google work adapters`
+- Adapter command: `python scripts\cdp_client.py google work ai_orchestrator.connectors.g2b`
 - Rule: read-only live exploration first; write, publish, release, billing,
   IAM, API key, upload, comment, and indexing actions require dry-run and
   explicit approval.

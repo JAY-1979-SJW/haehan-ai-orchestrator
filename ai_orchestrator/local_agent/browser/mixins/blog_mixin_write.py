@@ -4,13 +4,13 @@ write/edit/delete_post, upload_image, comment, like, neighbor 추가/삭제,
 guestbook 작성, scrap. [docs/module_separation_standard.md]
 
 DOM 구조 확인 (2026-06-23 실검증):
-  - 상세 내용은 scripts/naver/blog/selectors.py 참고.
+  - 상세 내용은 scripts/naver/blog/page_selectors.py 참고.
   - blog.naver.com/ID/logNo 는 mainFrame iframe 내부 렌더링.
     → 반드시 self._blog_frame() 사용 (BlogCommonMixin 제공).
   - 방명록·스크랩: 네이버 서비스 종료 (selectors.DEPRECATED 참고).
 
 NOTE: blog_write_post / blog_edit_post 는 scripts.naver.blog.core.writer.BlogWriter 에
-위임한다. 셀렉터는 scripts/naver/blog/selectors.py 에서 중앙 관리한다.
+위임한다. 셀렉터는 scripts/naver/blog/page_selectors.py 에서 중앙 관리한다.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import re
 import time
 from typing import TYPE_CHECKING, Any
 
-from scripts.naver.blog.selectors import (
+from scripts.naver.blog.page_selectors import (
     COMMENT_DELETE,
     COMMENT_INPUT,
     COMMENT_LIST_TOGGLE,

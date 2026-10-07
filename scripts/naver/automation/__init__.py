@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 # 서브패키지 노출
-from scripts.naver.automation import content, integration, platform  # noqa: F401
+from scripts.naver.automation import content, integration  # noqa: F401
 
 __all__ = [
     "ReviewAutoResponder",

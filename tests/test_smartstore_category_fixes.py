@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import inspect
 
-from scripts.naver.smartstore.product import selectors as S
+from scripts.naver.smartstore.product import page_selectors as S
 from scripts.naver.smartstore.product.general_product import GeneralProductRegister
 
 

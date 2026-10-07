@@ -1,7 +1,7 @@
 """상세설명 미리보기 — CDP 브라우저로 열기."""
 import sys, time
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from playwright.sync_api import sync_playwright

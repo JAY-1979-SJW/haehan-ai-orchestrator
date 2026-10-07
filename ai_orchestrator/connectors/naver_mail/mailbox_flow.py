@@ -18,7 +18,8 @@ from typing import Any
 from ai_orchestrator.connectors.naver_mail import new_policy as mail_new_policy
 from scripts.naver.blog.accounts import BLOG_ACCOUNTS
 from scripts.naver.mail.imap import attachments as att
-from scripts.naver.mail.imap import mailbox, sender
+from scripts.naver.mail.imap import imap_mailbox as mailbox
+from scripts.naver.mail.imap import sender
 from scripts.naver.mail.imap.protocol import load_password
 
 # 라우터가 어댑터를 직접 import 하지 않도록 필요한 이름을 다시 내보낸다

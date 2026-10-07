@@ -77,13 +77,13 @@ IMPORT_SCAN_PREFIXES = {
     "ai_orchestrator",
     "agent",
     "local_agent",
-    "browser_api",
-    "browser_worker",
+    "ai_orchestrator.connectors.instagram",
+    "ai_orchestrator.browser_tool.worker",
     "services",
-    "adapters",
+    "ai_orchestrator.connectors.g2b",
 }
 
-OPENAPI_APP_MODULES = (  # browser_api.server 는 2026-10-07 scripts/archive/misc 로 보관(실행 대상 아님) — 목록에서 뺌
+OPENAPI_APP_MODULES = (  # scripts.archive.misc.browser_api_server 는 2026-10-07 scripts/archive/misc 로 보관(실행 대상 아님) — 목록에서 뺌
     "ai_orchestrator.browser_tool.worker.app",
     "ai_orchestrator.asgi",
 )
@@ -96,7 +96,7 @@ PYDANTIC_SCHEMA_MODULES = (
     "ai_orchestrator.server.task_queue_schema",
     "ai_orchestrator.local_agent.action_schemas",
     "local_agent.browser_websocket_schema",
-)  # agent.models 는 2026-10-07 scripts/archive/misc 로 보관(가져다 쓰는 곳 없음) — 목록에서 뺌
+)  # scripts.archive.misc.agent_models 는 2026-10-07 scripts/archive/misc 로 보관(가져다 쓰는 곳 없음) — 목록에서 뺌
 
 
 SITE_STANDARD_FILES = {
@@ -615,8 +615,8 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/browser/cdp/cdp_db.py",
     "scripts/common/youtube_search_cache.py",
     "scripts/common/critical_logger.py",
-    "scripts/naver/automation/platform/error_recovery.py",
-    "scripts/naver/automation/platform/scheduler.py",
+    "scripts/naver/automation/error_recovery.py",
+    "scripts/naver/automation/scheduler.py",
     "scripts/naver/smartstore/automation/analytics_dashboard.py",
     "scripts/naver/smartstore/automation/competitor_analysis.py",
     "scripts/naver/blog/gonobi/db.py",
@@ -652,7 +652,7 @@ _ROUTER_FORBIDDEN_PATTERNS = [
 _ROUTER_FILE_PATTERNS = [
     "scripts/*/router.py",
     "ai_orchestrator/server/*.py",
-    "browser_api/*.py",
+    "ai_orchestrator.connectors.instagram/*.py",
 ]
 
 

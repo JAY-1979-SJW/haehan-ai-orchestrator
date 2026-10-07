@@ -26,7 +26,7 @@ from ai_orchestrator.site_work import site_task_map_store as store
 from ai_orchestrator.site_work import site_task_spec as sts
 from ai_orchestrator.site_work import site_task_spec_service as spec_service
 from scripts.site_engine.execution_gate import require_approval_for_action
-from scripts.site_engine.types import SiteCapability
+from scripts.site_engine.site_types import SiteCapability
 
 HOST = "spec.example-test.kr"
 NOW = "2026-10-05T12:00:00+09:00"

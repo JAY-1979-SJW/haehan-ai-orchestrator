@@ -409,7 +409,7 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
 def _cmd_calendar(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
-    from scripts.naver.calendar import NaverCalendar
+    from scripts.naver.calendar_tasks import NaverCalendar
     from scripts.browser.cdp.connection import get_page
 
     if sub in ("list", "events"):

@@ -14,7 +14,7 @@ from scripts.site_engine.execution_gate import (
     ExecutionDecision,
     ExecutionGateResult,
 )
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 
 
 class ActionPlanStatus(str, Enum):

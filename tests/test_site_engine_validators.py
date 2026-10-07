@@ -6,7 +6,7 @@ from scripts.site_engine.execution_gate import (
     ExecutionGateResult,
     GateReason,
 )
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 from scripts.site_engine.validators import (
     validate_action_plan_steps,
     validate_no_blocked_step_executable,

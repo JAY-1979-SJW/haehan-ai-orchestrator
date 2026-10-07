@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 
-from scripts.site_engine.types import (
+from scripts.site_engine.site_types import (
     ExecutionLocation,
     GateDecision,
     SiteCapability,

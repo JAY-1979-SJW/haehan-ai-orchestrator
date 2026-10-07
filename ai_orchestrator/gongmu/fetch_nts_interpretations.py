@@ -10,7 +10,7 @@ board_box 안에 "내용 더보기"를 눌러야 보이는 숨김 span까지 이
 있어(display:none) 별도 클릭 없이 전문을 긁을 수 있다.
 
 사용법:
-  python scripts/fetch_nts_interpretations.py <검색어1> <검색어2> ...
+  python -m ai_orchestrator.gongmu.fetch_nts_interpretations <검색어1> <검색어2> ...  (저장소 루트에서)
 출력: data/nts_interpretations/<검색어>.json
 """
 
@@ -26,7 +26,9 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-ROOT = Path(__file__).parent.parent
+from ai_orchestrator.paths import repo_root
+
+ROOT = repo_root()
 VISITS_DIR = ROOT / "data" / "manual_visits" / "taxlaw.nts.go.kr"
 OUT_DIR = ROOT / "data" / "nts_interpretations"
 
@@ -34,12 +36,14 @@ OUT_DIR = ROOT / "data" / "nts_interpretations"
 INTERP_CATEGORIES = {"질의회신", "사전답변", "과세기준자문", "고시서면질의"}
 
 
-def _run(cmd: list[str]) -> str:
+def run_in_repo(cmd: list[str]) -> str:
+    """저장소 루트에서 명령 실행(CDP 클라이언트 호출용) — stdout+stderr 를 돌려준다."""
     r = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", timeout=60)
     return r.stdout + r.stderr
 
 
-def _latest_html_after(marker_files: set[str]) -> str | None:
+def latest_html_after(marker_files: set[str]) -> str | None:
+    """marker_files 이후 새로 생긴 CDP 스냅샷 HTML 중 가장 최근 것(없으면 None). fetch_tax_precedent_summary 도 쓴다."""
     files = {str(p) for p in VISITS_DIR.glob("*.html")}
     new = files - marker_files
     if not new:
@@ -85,11 +89,11 @@ def _extract_interpretations(html_path: str) -> list[dict]:
 def fetch_keyword(keyword: str) -> list[dict]:
     before = {str(p) for p in VISITS_DIR.glob("*.html")}
     q = urllib.parse.quote(keyword)
-    _run(
+    run_in_repo(
         ["python", "scripts/browser/cdp/cdp_client.py", "goto", f"https://taxlaw.nts.go.kr/is/USEISA001M.do?schVcb={q}&searchType="]
     )
-    _run(["python", "scripts/browser/cdp/cdp_client.py", "snapshot"])
-    html_path = _latest_html_after(before)
+    run_in_repo(["python", "scripts/browser/cdp/cdp_client.py", "snapshot"])
+    html_path = latest_html_after(before)
     if not html_path:
         return []
     return _extract_interpretations(html_path)

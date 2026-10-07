@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile
-from scripts.site_engine.types import GateDecision, SiteCapability, SiteProfileStatus
+from scripts.site_engine.site_types import GateDecision, SiteCapability, SiteProfileStatus
 
 HIWORKS_PROFILE = SiteProfile(
     key="hiworks",

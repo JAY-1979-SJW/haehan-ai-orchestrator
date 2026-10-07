@@ -1,4 +1,4 @@
-"""네이버 블로그 UI 셀렉터 단일 관리 (독립 앱 사본, 원본: scripts/naver/blog/selectors.py, 0줄 변경).
+"""네이버 블로그 UI 셀렉터 단일 관리 (독립 앱 사본, 원본: scripts/naver/blog/page_selectors.py, 0줄 변경).
 
 Naver UI 변경 시 이 파일만 수정한다.
 실검증 날짜를 각 섹션 주석에 명시한다.

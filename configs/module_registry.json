@@ -7193,7 +7193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/app_realtime_check.py": {
+  "scripts/ops/app_realtime_check.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7521,7 +7521,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/deploy_dry_run.py": {
+  "scripts/ops/deploy_dry_run.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -7529,7 +7529,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/dev_reg_cli.py": {
+  "ai_orchestrator/dev_reg/dev_reg_cli.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -7537,7 +7537,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/e2e_deep_scan.py": {
+  "scripts/ops/e2e_deep_scan.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7545,7 +7545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/e2e_full_report.py": {
+  "scripts/ops/e2e_full_report.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7945,7 +7945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/fetch_nts_interpretations.py": {
+  "ai_orchestrator/gongmu/fetch_nts_interpretations.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7953,7 +7953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/fetch_tax_precedent_summary.py": {
+  "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -8009,7 +8009,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/form/profile.py": {
+  "scripts/form/personal_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -8049,7 +8049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/g2b/profile.py": {
+  "scripts/g2b/site_profile.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "g2b",
@@ -8113,7 +8113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gabia/profile.py": {
+  "scripts/gabia/site_profile.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "gabia",
@@ -8273,7 +8273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/calendar.py": {
+  "scripts/google/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8689,7 +8689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/profile.py": {
+  "scripts/google/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8865,7 +8865,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/workspace/calendar.py": {
+  "scripts/google/workspace/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -9241,7 +9241,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/hiworks/profile.py": {
+  "scripts/hiworks/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
@@ -9665,7 +9665,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/marketing_summary_build.py": {
+  "scripts/naver/cafe/ops/marketing_summary_build.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "marketing",
@@ -9837,9 +9837,9 @@
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/automation/image_processor.py": {
    "layer": "L5",
@@ -9911,38 +9911,6 @@
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/error_recovery.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/naver/automation/platform/image_processor.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/scheduler.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "naver",
-   "reason": "DB·저장 신호",
-   "confidence": "high",
    "source": "rule"
   },
   "scripts/naver/automation/platform/session_manager.py": {
@@ -10473,7 +10441,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/blog/selectors.py": {
+  "scripts/naver/blog/page_selectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -10961,7 +10929,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/calendar.py": {
+  "scripts/naver/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11881,7 +11849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/smartstore/product/selectors.py": {
+  "scripts/naver/smartstore/product/page_selectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
@@ -12465,7 +12433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_site_settings_canonical_registry.py": {
+  "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -12521,7 +12489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_gmail_function_contract.py": {
+  "scripts/google/audit_gmail_function_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12681,7 +12649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_action_item_dashboard.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12689,7 +12657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_body_pipeline_batch.py": {
+  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12697,7 +12665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_body_pipeline_v2.py": {
+  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12705,7 +12673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_business_report.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_business_report.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12713,7 +12681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_dynamic_folder_discovery.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12721,7 +12689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12729,7 +12697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_inbox_p0_complete.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12737,7 +12705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_smart_folder_coverage.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12745,7 +12713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unknown_classification_rules.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12753,7 +12721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12761,7 +12729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unread_pagination_depth.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -13121,14 +13089,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/daily_cafe_marketing_pipeline.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_cafe",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/deploy_diagnose.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -13249,7 +13209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ig_batch.py": {
+  "scripts/instagram/ig_batch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "instagram",
@@ -13745,7 +13705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/preview_description.py": {
+  "scripts/naver/smartstore/preview_description.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -13753,7 +13713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/run_page_builder.py": {
+  "scripts/naver/smartstore/run_page_builder.py": {
    "layer": "L6",
    "role": "generic",
    "domain": "common",
@@ -13841,7 +13801,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/site_engine/types.py": {
+  "scripts/site_engine/site_types.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -13881,7 +13841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/smoke_naver_manual_login_probe.py": {
+  "scripts/naver/smoke_naver_manual_login_probe.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver",
@@ -14025,7 +13985,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/watch_log.py": {
+  "scripts/ops/watch_log.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -14065,7 +14025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/youtube/profile.py": {
+  "scripts/youtube/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -22729,7 +22689,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail/imap/mailbox.py": {
+  "scripts/naver/mail/imap/imap_mailbox.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",

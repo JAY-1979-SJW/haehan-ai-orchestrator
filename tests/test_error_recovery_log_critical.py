@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from scripts.naver.automation.platform import error_recovery as er
+from scripts.naver.automation import error_recovery as er
 
 
 def test_log_error_does_not_raise_and_records_error_category(tmp_path, monkeypatch):

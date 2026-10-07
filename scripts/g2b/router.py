@@ -78,7 +78,7 @@ def run_g2b(task: str | None, sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_status() -> None:
-    from scripts.g2b.profile import G2B_SITE_PROFILE
+    from scripts.g2b.site_profile import G2B_SITE_PROFILE
 
     result = _build_response(
         command="status",

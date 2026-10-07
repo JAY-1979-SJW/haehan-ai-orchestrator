@@ -65,8 +65,8 @@ spec:
 | `scripts/realtime_audit.py` | L4(기본값) → L7 | `data/logs/realtime_audit.jsonl` 에 감사 이벤트 기록/조회 — L7(저장·감사) 정의에 정확히 부합 | L2→L4 3건, L7→L4 2건 |
 | `security_utils.py` | L4(기본값) → L1 | 로그·감사 이벤트 민감정보 마스킹 정규식/헬퍼(`REDACTED`, `SENSITIVE_KEYS`) 순수 함수 | L1→L4 1건 |
 | `app.py` | L4(기본값) → L8 | "시나리오 실행기" — `policy_engine`/`risk_assessor`/`approval_manager` 오케스트레이션 후 `dashboard.py`(Flask, L8) 부팅. 브라우저 엔진이 아니라 최상위 실행 진입점 | L4→L8 1건 |
-| `scripts/gabia/profile.py` | L5(저신뢰) → L2 | `SiteProfile`(`SiteActionPolicy`·`GateDecision`·`SiteCapability`) 선언만 포함, 실제 자동화 코드 없음 — 정책 선언 | L2→L5 1건 |
-| `scripts/g2b/profile.py` | L5(저신뢰) → L2 | G2B 사이트 프로필 — action 분류 상수 골격 정책 선언만(docstring: "실제 접속·로그인·투찰 구현 없음") | L2→L5 1건 |
+| `scripts/gabia/site_profile.py` | L5(저신뢰) → L2 | `SiteProfile`(`SiteActionPolicy`·`GateDecision`·`SiteCapability`) 선언만 포함, 실제 자동화 코드 없음 — 정책 선언 | L2→L5 1건 |
+| `scripts/g2b/site_profile.py` | L5(저신뢰) → L2 | G2B 사이트 프로필 — action 분류 상수 골격 정책 선언만(docstring: "실제 접속·로그인·투찰 구현 없음") | L2→L5 1건 |
 | `scripts/google/workflows.py` | L6 → L5 | google 도메인 site module 내부에서만 쓰는 public API aggregator(leaf 모듈 re-export). 다른 도메인이 부르는 범용 업무흐름이 아님. `workflow` 이름으로 L6 오분류 | L5→L6 10건 |
 | `scripts/google/workflows_actions.py`/`_catalog.py`/`_common.py`/`_execute.py`/`_report.py` | L6 → L5 | `workflows.py` aggregator 의 leaf 모듈(google 도메인 내부 상세 구현) — `workflows.py` 와 함께 정정 필요(정정 안 하면 새 L5→L6 위반 5건 생성됨을 재계산으로 확인) | L5→L6 5건 |
 | `scripts/hanafax/batch.py` | L6 → L5 | 하나팩스 큐(JSONL) 기반 순차 발송 — `router.py`(L5)와 같은 폴더의 hanafax 도메인 전용 상세 구현 | L5→L6 1건 |

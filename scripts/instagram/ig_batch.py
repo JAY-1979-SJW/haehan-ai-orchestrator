@@ -1,10 +1,10 @@
 """인스타그램(big.sun2024) 다음 시공사례 발행 CLI.
 
 사용:
-    python scripts/ops/ig_batch.py --dry-run          # 후보 확인만
-    python scripts/ops/ig_batch.py                     # 업로드+캡션까지 (미발행)
-    python scripts/ops/ig_batch.py --confirmed         # 실제 발행 (매번 사용자 승인 후에만 사용)
-    python scripts/ops/ig_batch.py --category 펜던트     # 카테고리 지정
+    python scripts/instagram/ig_batch.py --dry-run          # 후보 확인만
+    python scripts/instagram/ig_batch.py                     # 업로드+캡션까지 (미발행)
+    python scripts/instagram/ig_batch.py --confirmed         # 실제 발행 (매번 사용자 승인 후에만 사용)
+    python scripts/instagram/ig_batch.py --category 펜던트     # 카테고리 지정
 """
 
 from __future__ import annotations

@@ -1,22 +1,24 @@
 """
 전체 앱 E2E 점검 스크립트
 모든 페이지 x 버튼/탭/링크 클릭 → 결과 + 스크린샷 + 보고서 생성
+실행: python -m scripts.ops.e2e_full_report (저장소 루트에서)
 """
 
 import asyncio
 import contextlib
 import json
-import pathlib
 import re
 import time
 from dataclasses import dataclass, field
 
 from playwright.async_api import Locator, Page, async_playwright
 
+from scripts.common.app_paths import repo_root
+
 BASE = "http://127.0.0.1:3000"
 # 저장소 루트 기준 상대경로(2026-09-29 defect: 하드코딩된 구 경로 C:/work/... 가 이미
 # 이 PC에서도 깨져 있었음 — 프로젝트가 C:\Users\skyjw\claude-dev-handoff\... 로 이동됨).
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = repo_root()
 SS_DIR = ROOT / "data" / "e2e_report"
 SS_DIR.mkdir(parents=True, exist_ok=True)
 REPORT = SS_DIR / "report.json"

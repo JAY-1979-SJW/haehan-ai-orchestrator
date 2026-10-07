@@ -81,7 +81,7 @@ SUBMODULE_OWNERS: dict[str, dict[str, Any]] = {
 SURFACE_IMPLEMENTATION_MODULES: dict[str, str] = {
     "gmail": "scripts.google.workspace.gmail",
     "drive": "scripts.google.workspace.drive",
-    "calendar": "scripts.google.workspace.calendar",
+    "calendar": "scripts.google.workspace.calendar_tasks",
     "docs": "scripts.google.workspace.docs",
     "sheets": "scripts.google.workspace.sheets",
     "slides": "scripts.google.workspace.slides",

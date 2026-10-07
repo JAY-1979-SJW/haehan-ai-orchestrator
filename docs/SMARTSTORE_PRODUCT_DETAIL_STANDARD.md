@@ -187,7 +187,7 @@ data/smartstore/
 ### 4-2. 셀렉터 관리 원칙
 
 ```python
-# scripts/naver/smartstore/product/selectors.py 에 집중 관리
+# scripts/naver/smartstore/product/page_selectors.py 에 집중 관리
 SELECTORS = {
     "product_name":     'input[name="productName"]',
     "price":            'input[name="salePrice"]',
@@ -394,7 +394,7 @@ log_event(
 ### Phase 1 — 상세 조회 (P0, read-only)
 
 ```
-Step 1. scripts/naver/smartstore/product/selectors.py 작성
+Step 1. scripts/naver/smartstore/product/page_selectors.py 작성
 Step 2. scripts/naver/smartstore/product/detail_collector.py 작성
         └── collect_product_detail(page, product_id) → ProductDetail
 Step 3. GET /smartstore/products/{product_id} 엔드포인트 추가

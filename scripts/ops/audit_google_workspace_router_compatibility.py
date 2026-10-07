@@ -23,10 +23,13 @@ WORKSPACE_ROUTER_COMMANDS = (
 LEGACY_WRAPPERS = {
     "gmail": ("scripts.google.gmail", "list"),
     "drive": ("scripts.google.drive", "list"),
-    "calendar": ("scripts.google.calendar", "today"),
+    "calendar": ("scripts.google.calendar_tasks", "today"),
     "docs": ("scripts.google.docs", "recent"),
     "sheets": ("scripts.google.sheets", "recent"),
 }
+
+# 서비스 키와 wrapper 모듈 이름이 다른 경우(표준 calendar 가림 방지로 calendar → calendar_tasks, A005)
+WRAPPER_MODULES = {"calendar": "calendar_tasks"}
 
 CATALOG_ONLY_SERVICES = ("slides", "forms", "meet", "chat", "contacts", "keep", "tasks")
 WORKSPACE_APPROVAL_ACTIONS = [
@@ -100,7 +103,7 @@ def _audit_legacy_wrapper_delegation() -> list[str]:
                     lambda task, args, service=service: calls.append((service, task, list(args))),
                 )
             )
-            wrapper = import_module(f"scripts.google.workspace.{service}")
+            wrapper = import_module(f"scripts.google.workspace.{WRAPPER_MODULES.get(service, service)}")
             wrapper.run("", ["arg1"])
             if calls[-1] != (service, expected_default, ["arg1"]):
                 failures.append(f"{service} wrapper delegation mismatch: got {calls[-1]}")

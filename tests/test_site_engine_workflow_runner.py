@@ -1,7 +1,7 @@
 """Unit tests for scripts.site_engine.workflow_runner."""
 
 from scripts.site_engine.action_planner import build_action_plan
-from scripts.site_engine.types import SiteCapability
+from scripts.site_engine.site_types import SiteCapability
 from scripts.site_engine.workflow_runner import (
     WorkflowDefinition,
     WorkflowStatus,

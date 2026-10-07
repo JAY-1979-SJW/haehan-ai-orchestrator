@@ -20,7 +20,7 @@ from ai_orchestrator.connectors.naver_mail.mailbox_router import naver_mailbox_r
 from ai_orchestrator.connectors.naver_mail import mailbox_flow as service
 from scripts.naver.mail.imap import attachments as att
 from scripts.naver.mail.imap import folders as fld
-from scripts.naver.mail.imap import mailbox as mb
+from scripts.naver.mail.imap import imap_mailbox as mb
 from scripts.naver.mail.imap import sender
 
 PW = "not-a-real-value-123456"

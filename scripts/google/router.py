@@ -30,7 +30,7 @@ from . import (
 )
 from .cloud import live_console_explorer
 from .gates import gate_google_oauth_required, gate_google_send_plan, gate_google_submit_plan  # noqa: F401
-from .profile import GOOGLE_PROFILE  # noqa: F401
+from .site_profile import GOOGLE_PROFILE  # noqa: F401
 from .validators import validate_google_no_plain_secret  # noqa: F401
 from .workspace import router as workspace_router
 
@@ -56,7 +56,7 @@ __status__ = {
         "cloud live-read": "read_only",
         "surfaces explore": "read_only",
         "work catalog": "done",
-        "work adapters": "done",
+        "work ai_orchestrator.connectors.g2b": "done",
         "work prepare": "done",
         "work execute": "approval_gated",
         "work verify": "done",
@@ -1065,7 +1065,7 @@ _WORK_HANDLERS: dict[str, Callable[[list[str]], None]] = {
     "catalog": _work_catalog,
     "list": _work_catalog,
     "index": _work_catalog,
-    "adapters": _work_adapters,
+    "ai_orchestrator.connectors.g2b": _work_adapters,
     "adapter-catalog": _work_adapters,
     "undeveloped": _work_undeveloped,
     "gaps": _work_undeveloped,

@@ -44,7 +44,7 @@ developed, gated, or verified in this repo. Check this index and
 | Gmail list/analyze/compose | `python scripts\cdp_client.py google mail <list|analyze|compose>` | read/prepare | implemented | `scripts/google/workspace/gmail.py`, `scripts/google/gmail_analysis.py` | console/data |
 | Gmail send gate | `python scripts\cdp_client.py google mail send ...` | approval/user-only | gated | `scripts/google/workspace/gmail.py`, `scripts/common/gate.py` | approval-gated action |
 | Drive wrapper | `python scripts\cdp_client.py google drive <list|search|file_info>` | read/partial | implemented partial | `scripts/google/workspace/drive.py`, `scripts/google/drive.py` | console/data |
-| Calendar wrapper | `python scripts\cdp_client.py google calendar <today|search>` | read/partial | implemented partial | `scripts/google/workspace/calendar.py`, `scripts/google/calendar.py` | console/data |
+| Calendar wrapper | `python scripts\cdp_client.py google calendar <today|search>` | read/partial | implemented partial | `scripts/google/workspace/calendar_tasks.py`, `scripts/google/calendar_tasks.py` | console/data |
 | Docs wrapper | `python scripts\cdp_client.py google docs <recent|create_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/docs.py`, `scripts/google/docs.py` | console/data |
 | Sheets wrapper | `python scripts\cdp_client.py google sheets <recent|update_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/sheets.py`, `scripts/google/sheets.py` | console/data |
 | Workspace wrappers | Workspace router for Slides, Forms, Meet, Chat, Contacts, Keep, Tasks | read/prepare | implemented | `scripts/google/workspace/*`, `scripts/google/workspace/router.py` | console/data |
@@ -70,7 +70,7 @@ developed, gated, or verified in this repo. Check this index and
 | Domain taxonomy | `python scripts\cdp_client.py google domains report` | read/report | implemented | `scripts/google/domain_taxonomy.py` | `data/google_domain_taxonomy_latest.json` |
 | Precision report | `python scripts\cdp_client.py google precision build` | read/report | implemented | `scripts/google/precision_report.py` | `data/google_precision_report_latest.json` |
 | Work action catalog | `python scripts\cdp_client.py google work catalog` | read | implemented | `scripts/google/workflows.py` | `data/google_work_action_catalog_latest.json` |
-| Work adapter catalog | `python scripts\cdp_client.py google work adapters` | read | implemented | `scripts/google/workflows.py` | `data/google_execution_adapter_catalog_latest.json` |
+| Work adapter catalog | `python scripts\cdp_client.py google work ai_orchestrator.connectors.g2b` | read | implemented | `scripts/google/workflows.py` | `data/google_execution_adapter_catalog_latest.json` |
 | Work prepare | `python scripts\cdp_client.py google work prepare <action_key> key=value ...` | prepare | implemented | `scripts/google/workflows.py` | `data/google_prepare_latest.json` |
 | Work execute | `python scripts\cdp_client.py google work execute <plan_path> --approved --confirm=GOOGLE_APPROVED_EXECUTE` | approval | gated | `scripts/google/workflows.py` | execution result JSON |
 | Work verify | `python scripts\cdp_client.py google work verify <result_path>` | read | implemented | `scripts/google/workflows.py` | verification JSON |

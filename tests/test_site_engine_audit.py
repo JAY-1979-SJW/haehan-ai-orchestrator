@@ -5,7 +5,7 @@ from scripts.site_engine.audit import (
     build_audit_event,
     mask_sensitive,
 )
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 
 _MASK = "***REDACTED***"
 

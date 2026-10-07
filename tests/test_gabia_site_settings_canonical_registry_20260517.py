@@ -18,7 +18,7 @@ def load_registry():
 
 
 def load_audit():
-    import scripts.ops.audit_gabia_site_settings_canonical_registry as m
+    import scripts.gabia.ops.audit_gabia_site_settings_canonical_registry as m
 
     return m
 
