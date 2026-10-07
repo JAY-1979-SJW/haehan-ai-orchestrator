@@ -17,7 +17,14 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.make_shim import BOOTSTRAP_MARK, MARKER, find_shims, has_main_block, make_shim
+from scripts.ops.make_shim import (
+    BOOTSTRAP_MARK,
+    MARKER,
+    find_shims,
+    has_main_block,
+    make_package_shim,
+    make_shim,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -228,3 +235,61 @@ def test_make_shim_refuses_overwrite_and_missing_target(tmp_path):
         make_shim("a.py", "b.py", tmp_path)
     with pytest.raises(FileNotFoundError):
         make_shim("c.py", "nope.py", tmp_path)
+
+
+# ── 패키지 shim(G2 패키지 지원, mail_read 실측 기반) ──────────────────────────
+
+
+def test_package_shim_creates_one_shim_per_submodule(tmp_path, monkeypatch):
+    _write(tmp_path / "newpkg" / "sub" / "__init__.py", "")
+    _write(tmp_path / "newpkg" / "sub" / "a.py", "A_VALUE = 1\n")
+    _write(
+        tmp_path / "newpkg" / "sub" / "b.py",
+        "B_VALUE = 2\n\nif __name__ == '__main__':\n    print('B-MAIN-RAN')\n",
+    )
+
+    bodies = make_package_shim("oldpkg/sub", "newpkg/sub", tmp_path)
+    assert set(bodies) == {"oldpkg/sub/__init__.py", "oldpkg/sub/a.py", "oldpkg/sub/b.py"}
+    for rel in bodies:
+        assert (tmp_path / rel).exists()
+        assert MARKER in (tmp_path / rel).read_text(encoding="utf-8")[:600]
+
+    shims = {rel: target for rel, target in find_shims(tmp_path) if rel.startswith("oldpkg/")}
+    assert shims == {
+        "oldpkg/sub/__init__.py": "newpkg.sub",
+        "oldpkg/sub/a.py": "newpkg.sub.a",
+        "oldpkg/sub/b.py": "newpkg.sub.b",
+    }
+
+    monkeypatch.syspath_prepend(str(tmp_path))
+    for n in ("newpkg", "newpkg.sub", "newpkg.sub.a", "newpkg.sub.b", "oldpkg", "oldpkg.sub", "oldpkg.sub.a"):
+        sys.modules.pop(n, None)
+
+    # 패키지 import 별칭
+    assert importlib.import_module("oldpkg.sub") is importlib.import_module("newpkg.sub")
+    # 하위 모듈 import 별칭(mail_read.cdp 같은 직접 접근)
+    assert importlib.import_module("oldpkg.sub.a") is importlib.import_module("newpkg.sub.a")
+    assert importlib.import_module("oldpkg.sub.a").A_VALUE == 1
+    # from 옛패키지 import 하위모듈 스타일도 받는다
+    from oldpkg.sub import a as old_a
+
+    assert old_a.A_VALUE == 1
+
+
+def test_package_shim_skips_existing_old_files(tmp_path, capsys):
+    _write(tmp_path / "newpkg2" / "already.py", "X = 1\n")
+    _write(tmp_path / "newpkg2" / "fresh.py", "Y = 2\n")
+    _write(tmp_path / "oldpkg2" / "already.py", "# 이미 손으로 처리된 파일 — 건드리지 않는다\n")
+
+    bodies = make_package_shim("oldpkg2", "newpkg2", tmp_path)
+    assert set(bodies) == {"oldpkg2/fresh.py"}
+    assert "건너뜀" in capsys.readouterr().err
+    assert (tmp_path / "oldpkg2" / "already.py").read_text(encoding="utf-8") == "# 이미 손으로 처리된 파일 — 건드리지 않는다\n"
+
+
+def test_package_shim_requires_existing_new_dir_with_py_files(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        make_package_shim("old3", "new3-does-not-exist", tmp_path)
+    (tmp_path / "new4-empty").mkdir()
+    with pytest.raises(FileNotFoundError):
+        make_package_shim("old4", "new4-empty", tmp_path)
