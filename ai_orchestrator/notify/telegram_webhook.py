@@ -5,7 +5,8 @@ from pathlib import Path
 from ..audit_logger import log_event
 from ..gates.approval import approve_token, reject_token
 from ..tasks.inbox import create_inbox_item
-from .telegram_notifier import build_result_text, parse_callback_data, parse_dev_reg_callback_data
+from ..dev_reg.dev_reg_telegram import parse_dev_reg_callback_data
+from .telegram_notifier import build_result_text, parse_callback_data
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +206,7 @@ def _handle_dev_reg_callback(
     actor = user["actor"]
     role = user["role"]
 
-    from ..gates.dev_reg_approval import handle_telegram_decision
+    from ..dev_reg.dev_reg_approval import handle_telegram_decision
 
     result = handle_telegram_decision(
         token_id=token_id,

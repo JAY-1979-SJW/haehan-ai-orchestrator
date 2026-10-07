@@ -408,7 +408,7 @@ class TestWebTaskRunIntegrationBoundary:
 
     def test_dry_run_via_client_no_pending_record(self, client, auth):
         """TestClient dry_run=True — dev_reg_approval pending 레코드 없음."""
-        import ai_orchestrator.gates.dev_reg_approval as _dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as _dra
 
         before = len(_dra.list_pending())
 

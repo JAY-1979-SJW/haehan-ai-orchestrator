@@ -35,7 +35,7 @@ CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.scheduler.scheduled_job_store", "_DB_PATH", STORAGE, ("scheduled_jobs.db",)),
     ("ai_orchestrator.persistence.work_record_store", "_DB_PATH", STORAGE, ("work_records.db",)),
     ("ai_orchestrator.connectors.instagram_dm_db", "_DB_PATH", STORAGE, ("instagram_dm.db",)),
-    ("ai_orchestrator.services.dev_reg_runner", "_SCREENSHOT_DIR", STORAGE, ("screenshots", "dev_reg")),
+    ("ai_orchestrator.dev_reg.dev_reg_runner", "_SCREENSHOT_DIR", STORAGE, ("screenshots", "dev_reg")),
     ("ai_orchestrator.services.hanafax_attachments", "_UPLOAD_DIR", STORAGE, ("fax_attachments",)),
     ("ai_orchestrator.services.hanafax_authorization_service", "_CACHE_DIR", STORAGE, ("fax_address_cache",)),
     ("ai_orchestrator.core.config", "LOG_DIR", STORAGE, ()),

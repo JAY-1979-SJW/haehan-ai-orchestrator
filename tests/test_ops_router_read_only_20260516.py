@@ -137,7 +137,7 @@ class TestOpsRouterImports:
         return OPS_ROUTER.read_text(encoding="utf-8")
 
     def test_imports_dev_reg_approval(self):
-        assert "from ai_orchestrator.gates.dev_reg_approval import list_pending" in self._src()
+        assert "from ai_orchestrator.dev_reg.dev_reg_approval import list_pending" in self._src()
 
     def test_imports_audit_logger(self):
         assert "from ai_orchestrator.audit_logger import read_recent_logs" in self._src()

@@ -18,6 +18,7 @@ import importlib
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -43,11 +44,11 @@ def _isolated(tmp_path, monkeypatch):
     import ai_orchestrator.audit_logger as _al
 
     importlib.reload(_al)
-    import ai_orchestrator.gates.dev_reg_approval as _d
+    import ai_orchestrator.dev_reg.dev_reg_approval as _d
 
     importlib.reload(_d)
     _d.clear()
-    import ai_orchestrator.persistence.dev_reg_audit_log as _dl
+    import ai_orchestrator.dev_reg.dev_reg_audit_log as _dl
 
     importlib.reload(_dl)
 
@@ -79,9 +80,9 @@ def _create_pending(
     risk_level: str = "medium",
     requested_by: str = "agent@test",
     expires_in: float = 3600,
-) -> dict:
+) -> Any:
+    import ai_orchestrator.dev_reg.dev_reg_approval as dra
     import ai_orchestrator.gates.approval as ap
-    import ai_orchestrator.gates.dev_reg_approval as dra
 
     # 음수 expires_in 은 이미 만료된 레코드를 만들기 위한 것.
     # TTL 은 최소 1분으로 발행하되, expires_at 은 지정된 과거 시각으로 덮어씀.
@@ -162,7 +163,7 @@ class TestHistory:
         assert "RESULT: WARN" in out
 
     def test_shows_records(self, capsys):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-h001")
         dra.mark_executed("dr-h001", result="ok")
@@ -183,7 +184,7 @@ class TestHistory:
         assert "showing: 2 record(s)" in out
 
     def test_failed_status_returns_warn(self, capsys):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-fail")
         dra.mark_failed("dr-fail", error="submit error")
@@ -217,7 +218,7 @@ class TestDetail:
         assert "찾을 수 없습니다" in out
 
     def test_expired_status_returns_warn(self, capsys):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-expired")
         dra.mark_expired_internal("dr-expired")
@@ -242,7 +243,7 @@ class TestDetail:
 class TestExpire:
     def test_expire_pending_succeeds(self, capsys):
         _create_pending("dr-exp1")
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         cli = _get_cli()
         rc = cli.cmd_expire("dr-exp1")
@@ -256,7 +257,7 @@ class TestExpire:
         assert updated.status == "expired"
 
     def test_expire_non_pending_returns_fail(self, capsys):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-exec")
         dra.mark_executed("dr-exec", result="ok")
@@ -275,7 +276,7 @@ class TestExpire:
         assert "RESULT: FAIL" in out
 
     def test_expire_signals_event(self):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-ev1")
         ev = dra.register_approval_waiter("dr-ev1")
@@ -297,7 +298,7 @@ class TestSummary:
         assert "pending_count" in out
 
     def test_counts_correct(self, capsys):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-s1")
         _create_pending("dr-s2")
@@ -380,7 +381,7 @@ class TestNoSensitiveLeakage:
 
     def test_summary_field_with_password_kw_redacted(self, capsys):
         """summary 필드 값에 password 키워드 포함 시 REDACTED."""
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         importlib.reload(dra)
         # 실제 password 값 노출은 create_pending 레벨에서 차단되지만
@@ -447,7 +448,7 @@ class TestForbiddenCommands:
 
 class TestRegression:
     def test_create_and_get_detail_works_after_cli_import(self):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-reg1")
         rec = dra.get_detail("dr-reg1")
@@ -455,7 +456,7 @@ class TestRegression:
         assert rec["status"] == "pending"
 
     def test_mark_executed_after_cli_expire_different_task(self, capsys):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-a")
         _create_pending("dr-b")
@@ -468,7 +469,7 @@ class TestRegression:
         assert dra.get("dr-a").status == "expired"
 
     def test_list_pending_excludes_non_pending(self):
-        import ai_orchestrator.gates.dev_reg_approval as dra
+        import ai_orchestrator.dev_reg.dev_reg_approval as dra
 
         _create_pending("dr-p1")
         _create_pending("dr-p2")

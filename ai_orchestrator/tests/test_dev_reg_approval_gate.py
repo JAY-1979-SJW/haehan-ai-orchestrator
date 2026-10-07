@@ -45,7 +45,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.audit_logger as _al
 
     importlib.reload(_al)
-    import ai_orchestrator.gates.dev_reg_approval as _dra
+    import ai_orchestrator.dev_reg.dev_reg_approval as _dra
 
     importlib.reload(_dra)
     _dra.clear()
@@ -115,7 +115,7 @@ def _run_with_outcome(
     만료 케이스: clock 을 미래 시각으로 고정 → timeout_sec=0 → event.wait() 즉시 반환.
     승인/거절 케이스: runner 를 별도 스레드에서 실행 + pending 레코드 등록 후 즉시 신호 전달.
     """
-    from ai_orchestrator.services.dev_reg_runner import run_dev_reg
+    from ai_orchestrator.dev_reg.dev_reg_runner import run_dev_reg
 
     page = MagicMock()
 
@@ -148,8 +148,8 @@ def _run_with_outcome(
     runner_thread = threading.Thread(target=_run, daemon=True)
     runner_thread.start()
 
+    import ai_orchestrator.dev_reg.dev_reg_approval as _dra
     import ai_orchestrator.gates.approval as _ap
-    import ai_orchestrator.gates.dev_reg_approval as _dra
 
     # pending 레코드 등록 대기 (최대 2초, 20ms 간격)
     for _ in range(100):
@@ -192,8 +192,11 @@ def test_submit_not_called_before_approval(tmp_path):
 
 def test_only_allowed_telegram_user_can_approve():
     """허용 목록에 없는 telegram_user_id 는 승인 불가."""
+    from ai_orchestrator.dev_reg.dev_reg_approval import (
+        create_pending,
+        handle_telegram_decision,
+    )
     from ai_orchestrator.gates.approval import issue_token_for_dev_reg
-    from ai_orchestrator.gates.dev_reg_approval import create_pending, handle_telegram_decision
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
@@ -223,8 +226,11 @@ def test_only_allowed_telegram_user_can_approve():
 
 def test_forbidden_role_cannot_approve():
     """viewer 역할로는 승인 불가 — approve_token 이 forbidden 반환."""
+    from ai_orchestrator.dev_reg.dev_reg_approval import (
+        create_pending,
+        handle_telegram_decision,
+    )
     from ai_orchestrator.gates.approval import issue_token_for_dev_reg
-    from ai_orchestrator.gates.dev_reg_approval import create_pending, handle_telegram_decision
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
@@ -253,9 +259,9 @@ def test_forbidden_role_cannot_approve():
 
 def test_unregistered_telegram_user_blocked():
     """telegram_users.json 에 없는 사용자 ID 는 handle_telegram_update 에서 차단."""
+    from ai_orchestrator.dev_reg.dev_reg_approval import create_pending
+    from ai_orchestrator.dev_reg.dev_reg_telegram import build_dev_reg_callback_data
     from ai_orchestrator.gates.approval import issue_token_for_dev_reg
-    from ai_orchestrator.gates.dev_reg_approval import create_pending
-    from ai_orchestrator.notify.telegram_notifier import build_dev_reg_callback_data
     from ai_orchestrator.notify.telegram_webhook import handle_telegram_update
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
@@ -291,8 +297,11 @@ def test_unregistered_telegram_user_blocked():
 def test_expired_token_rejected(monkeypatch):
     """토큰 만료 후 승인 시도 시 expired 반환."""
     import ai_orchestrator.gates.approval as _ap
+    from ai_orchestrator.dev_reg.dev_reg_approval import (
+        create_pending,
+        handle_telegram_decision,
+    )
     from ai_orchestrator.gates.approval import issue_token_for_dev_reg
-    from ai_orchestrator.gates.dev_reg_approval import create_pending, handle_telegram_decision
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     # TTL 1분으로 발행
@@ -329,8 +338,11 @@ def test_expired_token_rejected(monkeypatch):
 
 def test_reused_token_rejected():
     """이미 승인된 토큰으로 두 번째 승인 시도 시 already_used."""
+    from ai_orchestrator.dev_reg.dev_reg_approval import (
+        create_pending,
+        handle_telegram_decision,
+    )
     from ai_orchestrator.gates.approval import issue_token_for_dev_reg
-    from ai_orchestrator.gates.dev_reg_approval import create_pending, handle_telegram_decision
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
@@ -391,7 +403,7 @@ def test_audit_log_events_recorded(tmp_path):
     # telegram_sender.send_photo 를 mock (실제 HTTP 호출 방지)
     with patch("ai_orchestrator.clients.telegram_sender.send_photo", return_value={"ok": False, "skipped": True}):
         adapter = _make_adapter()
-        from ai_orchestrator.services.dev_reg_runner import run_dev_reg
+        from ai_orchestrator.dev_reg.dev_reg_runner import run_dev_reg
 
         page = MagicMock()
         future = datetime.now(UTC) + timedelta(minutes=35)
@@ -416,8 +428,11 @@ def test_audit_log_events_recorded(tmp_path):
 def test_approval_audit_event_recorded():
     """handle_telegram_decision 승인 시 DEV_REG_APPROVED 이벤트 기록."""
     import ai_orchestrator.audit_logger as _al
+    from ai_orchestrator.dev_reg.dev_reg_approval import (
+        create_pending,
+        handle_telegram_decision,
+    )
     from ai_orchestrator.gates.approval import issue_token_for_dev_reg
-    from ai_orchestrator.gates.dev_reg_approval import create_pending, handle_telegram_decision
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
@@ -443,8 +458,11 @@ def test_approval_audit_event_recorded():
 def test_rejection_audit_event_recorded():
     """거절 시 DEV_REG_REJECTED 이벤트 기록."""
     import ai_orchestrator.audit_logger as _al
+    from ai_orchestrator.dev_reg.dev_reg_approval import (
+        create_pending,
+        handle_telegram_decision,
+    )
     from ai_orchestrator.gates.approval import issue_token_for_dev_reg
-    from ai_orchestrator.gates.dev_reg_approval import create_pending, handle_telegram_decision
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
@@ -477,7 +495,7 @@ def test_sensitive_fields_not_in_audit_log(tmp_path):
     # params 에 민감 값 포함 — adapter 의 summary 에는 포함되지 않아야 함
     with patch("ai_orchestrator.clients.telegram_sender.send_photo", return_value={"ok": False, "skipped": True}):
         adapter = _make_adapter()
-        from ai_orchestrator.services.dev_reg_runner import run_dev_reg
+        from ai_orchestrator.dev_reg.dev_reg_runner import run_dev_reg
 
         page = MagicMock()
         future = datetime.now(UTC) + timedelta(minutes=35)
@@ -509,7 +527,7 @@ def test_sensitive_fields_not_in_audit_log(tmp_path):
 
 def test_dev_reg_approval_record_no_raw_secrets():
     """dev_reg_approval JSONL 에 패스워드·쿠키·세션 토큰이 포함되지 않는다."""
-    import ai_orchestrator.gates.dev_reg_approval as _dra
+    import ai_orchestrator.dev_reg.dev_reg_approval as _dra
 
     _SENSITIVE = ["plaintext_password_xyz", "raw_cookie_value", "session_abc"]
 
@@ -558,7 +576,7 @@ def test_dev_reg_approval_record_no_raw_secrets():
 
 def test_dev_reg_callback_data_format():
     """build/parse 대칭성 및 64바이트 제한 검증."""
-    from ai_orchestrator.notify.telegram_notifier import (
+    from ai_orchestrator.dev_reg.dev_reg_telegram import (
         build_dev_reg_callback_data,
         parse_dev_reg_callback_data,
     )
@@ -575,7 +593,7 @@ def test_dev_reg_callback_data_format():
 
 def test_parse_dev_reg_rejects_invalid():
     """잘못된 callback_data 는 None 반환."""
-    from ai_orchestrator.notify.telegram_notifier import parse_dev_reg_callback_data
+    from ai_orchestrator.dev_reg.dev_reg_telegram import parse_dev_reg_callback_data
 
     assert parse_dev_reg_callback_data("") is None
     assert parse_dev_reg_callback_data("approve|task|token") is None  # 기존 형식 → None
@@ -587,8 +605,8 @@ def test_parse_dev_reg_rejects_invalid():
 
 def test_existing_webhook_unaffected():
     """기존 handle_telegram_webhook 는 dr_* 추가 후에도 정상 동작."""
-    from ai_orchestrator.gates.approval import issue_token
     from ai_orchestrator.core.models import RiskAssessment, TaskRequest
+    from ai_orchestrator.gates.approval import issue_token
     from ai_orchestrator.notify.telegram_webhook import handle_telegram_webhook
 
     tid = f"TG-{uuid.uuid4().hex[:8]}"
@@ -617,3 +635,11 @@ def test_existing_webhook_unaffected():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+def test_dev_reg_callback_separator_matches_the_notifier():
+    """dev_reg_telegram 은 알림 모듈을 import 하지 않으려고 구분자를 따로 두므로 값이 같은지 고정한다."""
+    from ai_orchestrator.dev_reg import dev_reg_telegram
+    from ai_orchestrator.notify import telegram_notifier
+
+    assert dev_reg_telegram.CALLBACK_SEP == telegram_notifier.CALLBACK_SEP

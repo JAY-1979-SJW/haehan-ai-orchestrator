@@ -17,9 +17,9 @@ import logging
 from dataclasses import dataclass
 
 from ai_orchestrator.clients import telegram_sender as _ts
-from ai_orchestrator.gates import dev_reg_approval as _dra
+from ai_orchestrator.dev_reg import dev_reg_approval as _dra
 from ai_orchestrator.gates.approval import issue_token_for_dev_reg
-from ai_orchestrator.notify.telegram_notifier import build_dev_reg_message
+from ai_orchestrator.dev_reg.dev_reg_telegram import build_dev_reg_message
 
 logger = logging.getLogger(__name__)
 

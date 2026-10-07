@@ -378,7 +378,7 @@ def audit_and_alert(
     # 2026-09-29 복원(defect_index #32): 원본 삭제 이후 "허브 분리 1단계"
     # 리팩터(e9c7144b)로 두 모듈이 ai_orchestrator 루트에서
     # persistence/·clients/ 하위로 이동됐다 — 새 경로로 갱신.
-    from ai_orchestrator.persistence.dev_reg_audit_log import append_run
+    from ai_orchestrator.dev_reg.dev_reg_audit_log import append_run
 
     data = _collect(
         pending_max=pending_max,

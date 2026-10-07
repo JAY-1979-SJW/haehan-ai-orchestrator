@@ -79,7 +79,7 @@ def setup(tmp_path_factory):
     import ai_orchestrator.audit_logger as _al
 
     importlib.reload(_al)
-    import ai_orchestrator.gates.dev_reg_approval as _dra
+    import ai_orchestrator.dev_reg.dev_reg_approval as _dra
 
     importlib.reload(_dra)
     _dra.clear()

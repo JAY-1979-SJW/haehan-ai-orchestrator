@@ -58,7 +58,7 @@ DOMAIN_CORE_MAP = {
     "Approval": {
         "impl_files": [
             "ai_orchestrator/gates/approval.py",
-            "ai_orchestrator/gates/dev_reg_approval.py",
+            "ai_orchestrator/dev_reg/dev_reg_approval.py",
             "ai_orchestrator/services/web_task_approval_service.py",
         ],
         "status": "FUNCTIONAL",  # 동작하지만 서비스 계층 미분리
@@ -841,7 +841,7 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/core/task_state.py",
     "ai_orchestrator/audit_logger.py",
     "ai_orchestrator/gates/approval.py",
-    "ai_orchestrator/gates/dev_reg_approval.py",
+    "ai_orchestrator/dev_reg/dev_reg_approval.py",
     "ai_orchestrator/services/web_task_approval_service.py",
     "ai_orchestrator/services/web_task_registry.py",
     "ai_orchestrator/web_task_templates.py",
@@ -860,7 +860,7 @@ CORE_MODULES_MUST_IMPORT = [
     "ai_orchestrator.server.task_queue_schema",
     "ai_orchestrator.core.task_state",
     "ai_orchestrator.gates.approval",
-    "ai_orchestrator.gates.dev_reg_approval",
+    "ai_orchestrator.dev_reg.dev_reg_approval",
     "ai_orchestrator.services.web_task_approval_service",
     "ai_orchestrator.services.web_task_registry",
     "ai_orchestrator.tasks.external_work_registry",

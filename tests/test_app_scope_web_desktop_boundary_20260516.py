@@ -34,7 +34,7 @@ class TestInScopeWebTaskEngine:
         "ai_orchestrator.web_task_templates",
         "ai_orchestrator.services.web_task_approval_service",
         "ai_orchestrator.gates.approval",
-        "ai_orchestrator.gates.dev_reg_approval",
+        "ai_orchestrator.dev_reg.dev_reg_approval",
         "ai_orchestrator.core.task_state",
         "ai_orchestrator.audit_logger",
     ]
