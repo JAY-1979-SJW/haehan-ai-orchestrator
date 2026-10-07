@@ -1,0 +1,225 @@
+도구	현재 위치	층	분류	이동 대상(안)	운영 import(근사)	시험 import(근사)
+eum	scripts/eum_collect_now.py	구현	이동	scripts/eum/collect_now.py	0	0
+eum	scripts/eum_export_excel.py	구현	이동	scripts/eum/export_excel.py	0	0
+eum	scripts/eum_extract_all_devices.py	구현	이동	scripts/eum/extract_all_devices.py	1	0
+eum	scripts/eum_login_check.py	구현	이동	scripts/eum/login_check.py	0	0
+eum	scripts/eum_send_mail_batch.py	구현	이동	scripts/eum/send_mail_batch.py	0	0
+eum	ai_orchestrator/connectors/eum_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/eum/router.py	0	1
+g2b	scripts/smoke/g2b_user_present_attachment_smoke.py	구현	이동	scripts/g2b/smoke/g2b_user_present_attachment_smoke.py	0	0
+g2b	ai_orchestrator/browser_tool/g2b_domain_policy.py	구현	기반연동(T4)	scripts/g2b/g2b_domain_policy.py	1	2
+g2b	ai_orchestrator/browser_tool/g2b_existing_openapi_bridge.py	구현	기반연동(T4)	scripts/g2b/g2b_existing_openapi_bridge.py	0	2
+g2b	ai_orchestrator/browser_tool/g2b_public_notice_content_validator.py	구현	기반연동(T4)	scripts/g2b/g2b_public_notice_content_validator.py	1	2
+g2b	ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py	구현	기반연동(T4)	scripts/g2b/g2b_public_notice_dryrun_adapter.py	2	3
+g2b	ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py	구현	기반연동(T4)	scripts/g2b/g2b_public_notice_execution_gate.py	2	5
+g2b	ai_orchestrator/browser_tool/g2b_public_notice_local_live_runner.py	구현	기반연동(T4)	scripts/g2b/g2b_public_notice_local_live_runner.py	2	4
+g2b	ai_orchestrator/browser_tool/g2b_public_notice_workflow.py	구현	기반연동(T4)	scripts/g2b/g2b_public_notice_workflow.py	2	3
+g2b	scripts/local_agent/g2b/run_readonly_local_e2e.py	구현	기반연동(T4)	scripts/g2b/run_readonly_local_e2e.py	0	0
+gabia	scripts/gabia_login_watch.py	구현	이동	scripts/gabia/login_watch.py	1	0
+gabia	scripts/ops/login_gabia_datago.py	구현	이동	scripts/gabia/ops/login_gabia_datago.py	0	0
+gabia	ai_orchestrator/connectors/gabia_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/gabia/router.py	0	0
+gabia	scripts/ops/audit_gabia_browser_user_present_automation.py	구현	일회성·감사(archive 후보)	scripts/gabia/ops/audit_gabia_browser_user_present_automation.py	0	0
+gabia	scripts/ops/audit_gabia_dns_user_approval_workflow.py	구현	일회성·감사(archive 후보)	scripts/gabia/ops/audit_gabia_dns_user_approval_workflow.py	0	0
+gabia	scripts/ops/audit_gabia_session_storage_safety.py	구현	일회성·감사(archive 후보)	scripts/gabia/ops/audit_gabia_session_storage_safety.py	0	0
+gabia	scripts/ops/audit_gabia_site_settings_canonical_registry.py	구현	일회성·감사(archive 후보)	scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py	0	1
+google	ai_orchestrator/connectors/gmail_cdp_reader.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/google/gmail_cdp_reader.py	1	0
+google	ai_orchestrator/connectors/gmail_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/google/gmail_router.py	0	1
+google	ai_orchestrator/connectors/google_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/google/router.py	0	0
+google	scripts/ops/audit_google_gmail_function_contract.py	구현	일회성·감사(archive 후보)	scripts/google/ops/audit_google_gmail_function_contract.py	0	1
+hanafax	ai_orchestrator/connectors/hanafax_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hanafax/router.py	0	3
+hiworks	hiworks_mail_reader.py	구현	이동	scripts/hiworks/hiworks_mail_reader.py	0	0
+hiworks	ai_orchestrator/connectors/hiworks_client.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hiworks/client.py	0	0
+hiworks	ai_orchestrator/connectors/hiworks_collectors.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hiworks/collectors.py	0	0
+hiworks	ai_orchestrator/connectors/hiworks_config.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hiworks/config.py	0	0
+hiworks	ai_orchestrator/connectors/hiworks_mail_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hiworks/mail_router.py	0	1
+instagram	scripts/ops/ig_batch.py	구현	이동	scripts/instagram/ops/ig_batch.py	0	0
+instagram	ai_orchestrator/connectors/instagram_dm_db.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/instagram/dm_db.py	0	4
+instagram	ai_orchestrator/connectors/instagram_dm_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/instagram/dm_router.py	0	4
+instagram	ai_orchestrator/connectors/instagram_dm_rule_engine.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/instagram/dm_rule_engine.py	0	3
+instagram	ai_orchestrator/connectors/instagram_dm_service.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/instagram/dm_service.py	0	3
+instagram	ai_orchestrator/connectors/instagram_dm_token_store.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/instagram/dm_token_store.py	0	0
+instagram	ai_orchestrator/connectors/instagram_graph_client.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/instagram/graph_client.py	0	0
+instagram	ai_orchestrator/connectors/instagram_webhook_parser.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/instagram/webhook_parser.py	0	0
+instagram	apps/ig-comment-dm-bot/connectors/__init__.py	구현	독립앱(결정)	scripts/instagram/__init__.py	0	0
+instagram	apps/ig-comment-dm-bot/connectors/ig_api.py	구현	독립앱(결정)	scripts/instagram/ig_api.py	0	0
+instagram	apps/ig-comment-dm-bot/core/__init__.py	구현	독립앱(결정)	scripts/instagram/__init__.py	0	0
+instagram	apps/ig-comment-dm-bot/core/app_paths.py	구현	독립앱(결정)	scripts/instagram/app_paths.py	0	0
+instagram	apps/ig-comment-dm-bot/core/keyword_matcher.py	구현	독립앱(결정)	scripts/instagram/keyword_matcher.py	0	0
+instagram	apps/ig-comment-dm-bot/core/poller.py	구현	독립앱(결정)	scripts/instagram/poller.py	0	0
+instagram	apps/ig-comment-dm-bot/core/processed_store.py	구현	독립앱(결정)	scripts/instagram/processed_store.py	0	0
+instagram	apps/ig-comment-dm-bot/core/settings_store.py	구현	독립앱(결정)	scripts/instagram/settings_store.py	0	0
+instagram	apps/ig-comment-dm-bot/core/token_store.py	구현	독립앱(결정)	scripts/instagram/token_store.py	0	0
+instagram	apps/ig-comment-dm-bot/demo_screencast.py	구현	독립앱(결정)	scripts/instagram/demo_screencast.py	0	0
+instagram	apps/ig-comment-dm-bot/main.py	구현	독립앱(결정)	scripts/instagram/main.py	0	0
+instagram	apps/ig-comment-dm-bot/ui/__init__.py	구현	독립앱(결정)	scripts/instagram/__init__.py	0	0
+instagram	apps/ig-comment-dm-bot/ui/main_window.py	구현	독립앱(결정)	scripts/instagram/main_window.py	0	0
+instagram	apps/marketing-standalone/connectors/instagram_graph_api.py	구현	독립앱(결정)	scripts/instagram/instagram_graph_api.py	0	0
+instagram	scripts/ops/guard_instagram_publish.py	구현	일회성·감사(archive 후보)	scripts/instagram/ops/guard_instagram_publish.py	0	0
+kakao	ai_orchestrator/connectors/kakao_setup_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/kakao/setup_router.py	0	0
+kakao	ai_orchestrator/connectors/kakao_skill_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/kakao/skill_router.py	0	0
+kakaowork	kakaowork_reader.py	구현	이동	scripts/kakaowork/kakaowork_reader.py	0	1
+naver_blog	scripts/gonobi_download_images.py	구현	이동	scripts/naver/blog/gonobi/download_images.py	0	0
+naver_blog	scripts/gonobi_gallery_check.py	구현	이동	scripts/naver/blog/gonobi/gallery_check.py	0	0
+naver_blog	scripts/gonobi_page_test.py	구현	이동	scripts/naver/blog/gonobi/page_test.py	0	0
+naver_blog	scripts/gonobi_reclassify_images.py	구현	이동	scripts/naver/blog/gonobi/reclassify_images.py	0	0
+naver_blog	scripts/gonobi_redownload_small.py	구현	이동	scripts/naver/blog/gonobi/redownload_small.py	0	0
+naver_blog	scripts/gonobi_scrape.py	구현	이동	scripts/naver/blog/gonobi/scrape.py	0	0
+naver_blog	scripts/gonobi_verify_images.py	구현	이동	scripts/naver/blog/gonobi/verify_images.py	0	0
+naver_blog	scripts/gonobi_verify_paged.py	구현	이동	scripts/naver/blog/gonobi/verify_paged.py	0	0
+naver_blog	scripts/gonobi_verify_problems.py	구현	이동	scripts/naver/blog/gonobi/verify_problems.py	0	0
+naver_blog	scripts/mk_catalog/reclassify_blog_new.py	구현	이동	scripts/naver/blog/reclassify_blog_new.py	0	0
+naver_blog	scripts/naver/router_blog.py	구현	이동	scripts/naver/blog/router_blog.py	0	0
+naver_blog	scripts/navigator_blog.py	구현	이동	scripts/naver/blog/navigator_blog.py	0	0
+naver_blog	ai_orchestrator/connectors/gonobi_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_blog/gonobi_router.py	0	0
+naver_blog	ai_orchestrator/connectors/gonobi_scheduler.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_blog/gonobi_scheduler.py	0	0
+naver_blog	ai_orchestrator/connectors/naver_blog_collectors.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_blog/collectors.py	0	0
+naver_blog	ai_orchestrator/connectors/naver_blog_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_blog/router.py	0	2
+naver_blog	ai_orchestrator/routers/blog_automation_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/naver_blog/automation_router.py	1	1
+naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_comments.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_comments.js	-	-
+naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_images.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_images.js	-	-
+naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_neighbors.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_neighbors.js	-	-
+naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_posts.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_posts.js	-	-
+naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_posts_mobile.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_posts_mobile.js	-	-
+naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_search.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_search.js	-	-
+naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_stats.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_stats.js	-	-
+naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_tags.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_tags.js	-	-
+naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin.py	0	0
+naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_collect.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_collect.py	0	0
+naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_common.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_common.py	0	0
+naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_download.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_download.py	0	0
+naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_neighbor.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_neighbor.py	0	0
+naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_read.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_read.py	0	0
+naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_write.py	0	0
+naver_blog	ai_orchestrator/local_agent/naver_blog_workflow.py	구현	기반연동(T4)	scripts/naver/blog/naver_blog_workflow.py	1	1
+naver_blog	scripts/local_agent/naver/blog_explorer.py	구현	기반연동(T4)	scripts/naver/blog/blog_explorer.py	1	0
+naver_blog	scripts/local_agent/naver/blog_scraper.py	구현	기반연동(T4)	scripts/naver/blog/blog_scraper.py	1	0
+naver_blog	apps/marketing-standalone/connectors/blog_accounts.py	구현	독립앱(결정)	scripts/naver/blog/blog_accounts.py	0	0
+naver_blog	apps/marketing-standalone/connectors/blog_images.py	구현	독립앱(결정)	scripts/naver/blog/blog_images.py	0	0
+naver_blog	apps/marketing-standalone/connectors/naver_blog_cdp.py	구현	독립앱(결정)	scripts/naver/blog/naver_blog_cdp.py	0	0
+naver_blog	apps/marketing-standalone/site_modules/blog_router.py	구현	독립앱(결정)	scripts/naver/blog/blog_router.py	0	0
+naver_blog	scripts/ops/selector_health/sites/naver_blog.py	구현	정상(플러그인 레지스트리)	scripts/naver/blog/ops/naver_blog.py	1	0
+naver_blog	scripts/ops/write_gates/naver_blog_safety_gate.py	구현	정상(플러그인 레지스트리)	scripts/naver/blog/ops/naver_blog_safety_gate.py	1	1
+naver_cafe	scripts/naver/router_cafe.py	구현	이동	scripts/naver/cafe/router_cafe.py	0	3
+naver_cafe	scripts/ops/daily_cafe_marketing_pipeline.py	구현	이동	scripts/naver/cafe/ops/daily_cafe_marketing_pipeline.py	0	0
+naver_cafe	scripts/ops/export_cafe_keywords_excel.py	구현	이동	scripts/naver/cafe/ops/export_cafe_keywords_excel.py	0	0
+naver_cafe	ai_orchestrator/connectors/naver_cafe_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_cafe/router.py	0	1
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/CafeClient.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/CategoryCard.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/cafeShared.ts	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/page.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/AiAnalysisTab.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/ArticlesTab.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/MyCafesChangesPanel.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/MyCafesTab.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/ReportTab.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/SummaryTab.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
+naver_cafe	ai_orchestrator/local_agent/browser/_js/extract_cafe_posts.js	구현	기반연동(T4)	scripts/naver/cafe/extract_cafe_posts.js	-	-
+naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin.py	0	0
+naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_activity.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_activity.py	0	0
+naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_article.py	0	0
+naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_common.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_common.py	0	0
+naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_media.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_media.py	0	0
+naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_member.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_member.py	0	0
+naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_read.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_read.py	0	0
+naver_cafe	ai_orchestrator/local_agent/naver_cafe_workflow.py	구현	기반연동(T4)	scripts/naver/cafe/naver_cafe_workflow.py	1	1
+naver_cafe	scripts/local_agent/run_naver_cafe_to_blog_workflow.py	구현	기반연동(T4)	scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py	0	0
+naver_mail	scripts/naver/automation/integration/mail_automation.py	구현	이동	scripts/naver/mail/mail_automation.py	1	0
+naver_mail	scripts/naver/automation/mail_automation.py	구현	이동	scripts/naver/mail/mail_automation.py	0	0
+naver_mail	scripts/naver/mail_imap/__init__.py	구현	이동	scripts/naver/mail/imap/__init__.py	9	7
+naver_mail	scripts/naver/mail_imap/attachments.py	구현	이동	scripts/naver/mail/imap/attachments.py	5	1
+naver_mail	scripts/naver/mail_imap/bulk_sender.py	구현	이동	scripts/naver/mail/imap/bulk_sender.py	1	1
+naver_mail	scripts/naver/mail_imap/folders.py	구현	이동	scripts/naver/mail/imap/folders.py	1	1
+naver_mail	scripts/naver/mail_imap/html_sanitize.py	구현	이동	scripts/naver/mail/imap/html_sanitize.py	3	1
+naver_mail	scripts/naver/mail_imap/mailbox.py	구현	이동	scripts/naver/mail/imap/mailbox.py	2	2
+naver_mail	scripts/naver/mail_imap/protocol.py	구현	이동	scripts/naver/mail/imap/protocol.py	6	1
+naver_mail	scripts/naver/mail_imap/reader.py	구현	이동	scripts/naver/mail/imap/reader.py	3	2
+naver_mail	scripts/naver/mail_imap/sender.py	구현	이동	scripts/naver/mail/imap/sender.py	6	4
+naver_mail	scripts/naver/mail_imap/settings.py	구현	이동	scripts/naver/mail/imap/settings.py	1	1
+naver_mail	scripts/naver/mail_read/__init__.py	구현	이동	scripts/naver/mail/read/__init__.py	17	1
+naver_mail	scripts/naver/mail_read/body_reader.py	구현	이동	scripts/naver/mail/read/body_reader.py	3	1
+naver_mail	scripts/naver/mail_read/cdp.py	구현	이동	scripts/naver/mail/read/cdp.py	13	0
+naver_mail	scripts/naver/mail_read/classify.py	구현	이동	scripts/naver/mail/read/classify.py	0	1
+naver_mail	scripts/naver/mail_read/entry.py	구현	이동	scripts/naver/mail/read/entry.py	0	0
+naver_mail	scripts/naver/mail_read/list_collector.py	구현	이동	scripts/naver/mail/read/list_collector.py	3	1
+naver_mail	scripts/naver/mail_read/pipeline.py	구현	이동	scripts/naver/mail/read/pipeline.py	0	0
+naver_mail	scripts/naver_mail/background_runner.py	구현	이동	scripts/naver/mail/background_runner.py	0	0
+naver_mail	scripts/naver_mail/settings_panel.py	구현	이동	scripts/naver/mail/settings_panel.py	0	0
+naver_mail	ai_orchestrator/connectors/naver_mail_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_mail/router.py	0	0
+naver_mail	ai_orchestrator/routers/naver_mail_bulk_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/naver_mail/bulk_router.py	1	0
+naver_mail	ai_orchestrator/routers/naver_mailbox_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/naver_mail/mailbox_router.py	1	2
+naver_mail	ai_orchestrator/local_agent/browser/mixins/mail_mixin.py	구현	기반연동(T4)	scripts/naver/mail/mail_mixin.py	0	0
+naver_mail	scripts/ops/audit_naver_mail_action_item_dashboard.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_action_item_dashboard.py	1	1
+naver_mail	scripts/ops/audit_naver_mail_body_pipeline_batch.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_body_pipeline_batch.py	1	1
+naver_mail	scripts/ops/audit_naver_mail_body_pipeline_v2.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_body_pipeline_v2.py	1	1
+naver_mail	scripts/ops/audit_naver_mail_business_report.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_business_report.py	1	1
+naver_mail	scripts/ops/audit_naver_mail_dynamic_folder_discovery.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_dynamic_folder_discovery.py	0	1
+naver_mail	scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py	0	1
+naver_mail	scripts/ops/audit_naver_mail_inbox_p0_complete.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_inbox_p0_complete.py	1	1
+naver_mail	scripts/ops/audit_naver_mail_smart_folder_coverage.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_smart_folder_coverage.py	1	1
+naver_mail	scripts/ops/audit_naver_mail_unknown_classification_rules.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_unknown_classification_rules.py	0	1
+naver_mail	scripts/ops/audit_naver_mail_unread_filter_dom_fix.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_unread_filter_dom_fix.py	1	1
+naver_mail	scripts/ops/audit_naver_mail_unread_pagination_depth.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_unread_pagination_depth.py	1	1
+naver_mail	scripts/ops/generate_naver_mail_action_dashboard.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/generate_naver_mail_action_dashboard.py	0	0
+naver_mail	scripts/ops/naver_mail_priority_body_review_20260520.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/naver_mail_priority_body_review_20260520.py	0	0
+naver_mail	scripts/ops/naver_mail_unread_report_20260520.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/naver_mail_unread_report_20260520.py	0	0
+naver_mail	scripts/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py	0	0
+naver_mail	scripts/ops/report_naver_mail_inbox_consolidated.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/report_naver_mail_inbox_consolidated.py	0	0
+naver_mail	scripts/ops/smoke_naver_mail_body_pipeline_batch_live.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/smoke_naver_mail_body_pipeline_batch_live.py	0	0
+naver_mail	scripts/ops/smoke_naver_mail_body_pipeline_v2_live.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/smoke_naver_mail_body_pipeline_v2_live.py	0	0
+naver_mail	scripts/ops/smoke_naver_mail_dynamic_folder_discovery_live.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/smoke_naver_mail_dynamic_folder_discovery_live.py	0	0
+naver_mail	scripts/ops/smoke_naver_mail_inbox_p0_live.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/smoke_naver_mail_inbox_p0_live.py	0	0
+naver_mail	scripts/ops/smoke_naver_mail_smart_folder_coverage_live.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/smoke_naver_mail_smart_folder_coverage_live.py	0	0
+naver_search	scripts/naver/shopping_competitor.py	구현	이동	scripts/naver/shopping/shopping_competitor.py	1	1
+naver_search	ai_orchestrator/connectors/naver_kin_client.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/kin_client.py	2	0
+naver_search	ai_orchestrator/connectors/naver_news_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/news_router.py	0	0
+naver_search	ai_orchestrator/connectors/naver_openapi_config.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/openapi_config.py	1	0
+naver_search	ai_orchestrator/connectors/naver_openapi_setup_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/openapi_setup_router.py	0	0
+naver_search	ai_orchestrator/connectors/naver_public_page_reader.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/public_page_reader.py	0	0
+naver_search	ai_orchestrator/connectors/naver_search_client.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/client.py	1	0
+naver_search	ai_orchestrator/connectors/naver_search_db.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/db.py	0	1
+naver_search	ai_orchestrator/connectors/naver_search_jobs.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/jobs.py	1	0
+naver_search	ai_orchestrator/connectors/naver_search_queries.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/queries.py	2	1
+naver_search	ai_orchestrator/connectors/naver_search_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/router.py	0	5
+naver_search	ai_orchestrator/connectors/naver_search_run_log.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/run_log.py	0	1
+naver_search	ai_orchestrator/connectors/naver_search_runner.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/runner.py	0	1
+naver_search	ai_orchestrator/connectors/naver_search_state.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/state.py	0	0
+naver_search	ai_orchestrator/connectors/naver_search_utils.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/utils.py	0	0
+naver_search	ai_orchestrator/connectors/naver_shopping_collectors.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_search/shopping_collectors.py	1	0
+smartstore	scripts/naver/automation/smartstore/__init__.py	구현	이동	scripts/naver/smartstore/automation/__init__.py	6	0
+smartstore	scripts/naver/automation/smartstore/analytics_dashboard.py	구현	이동	scripts/naver/smartstore/automation/analytics_dashboard.py	1	0
+smartstore	scripts/naver/automation/smartstore/competitor_analysis.py	구현	이동	scripts/naver/smartstore/automation/competitor_analysis.py	1	0
+smartstore	scripts/naver/automation/smartstore/csv_import.py	구현	이동	scripts/naver/smartstore/automation/csv_import.py	1	0
+smartstore	scripts/naver/automation/smartstore/inventory_monitor.py	구현	이동	scripts/naver/smartstore/automation/inventory_monitor.py	1	0
+smartstore	scripts/naver/automation/smartstore/order_automation.py	구현	이동	scripts/naver/smartstore/automation/order_automation.py	1	0
+smartstore	ai_orchestrator/connectors/smartstore_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/smartstore/router.py	0	0
+smartstore	scripts/ops/selector_health/sites/naver_smartstore.py	구현	정상(플러그인 레지스트리)	scripts/naver/smartstore/ops/naver_smartstore.py	1	0
+youtube	ai_orchestrator/connectors/google/youtube.py	API	이동	ai_orchestrator/connectors/youtube/youtube.py	0	0
+youtube	scripts/common/youtube_search_cache.py	구현	이동	scripts/youtube/youtube_search_cache.py	2	0
+youtube	scripts/google/youtube/__init__.py	구현	이동	scripts/youtube/search/__init__.py	6	3
+youtube	scripts/google/youtube/search.py	구현	이동	scripts/youtube/search/search.py	1	1
+youtube	scripts/google/youtube/search_analyze.py	구현	이동	scripts/youtube/search/search_analyze.py	0	1
+youtube	scripts/google/youtube/search_common.py	구현	이동	scripts/youtube/search/search_common.py	4	0
+youtube	scripts/google/youtube/search_score.py	구현	이동	scripts/youtube/search/search_score.py	1	0
+youtube	scripts/google/youtube/search_search.py	구현	이동	scripts/youtube/search/search_search.py	1	1
+youtube	scripts/google/youtube/search_transcript.py	구현	이동	scripts/youtube/search/search_transcript.py	1	0
+youtube	scripts/google/youtube_upload.py	구현	이동	scripts/youtube/youtube_upload.py	1	1
+youtube	scripts/smoke_youtube_manual_login_probe.py	구현	이동	scripts/youtube/smoke_youtube_manual_login_probe.py	0	0
+youtube	scripts/yt_upload/runner.py	구현	이동	scripts/youtube/upload/runner.py	0	0
+youtube	scripts/yt_upload/step1_navigate.py	구현	이동	scripts/youtube/upload/step1_navigate.py	0	0
+youtube	scripts/yt_upload/step2_open_dialog.py	구현	이동	scripts/youtube/upload/step2_open_dialog.py	0	0
+youtube	scripts/yt_upload/step3_set_file.py	구현	이동	scripts/youtube/upload/step3_set_file.py	0	0
+youtube	scripts/yt_upload/step4_metadata.py	구현	이동	scripts/youtube/upload/step4_metadata.py	0	0
+youtube	scripts/yt_upload/step5_publish.py	구현	이동	scripts/youtube/upload/step5_publish.py	0	0
+youtube	ai_orchestrator/connectors/youtube_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/youtube/router.py	0	0
+youtube	ai_orchestrator/routers/youtube_oauth_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/youtube/oauth_router.py	0	1
+youtube	ai_orchestrator/routers/youtube_research_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/youtube/research_router.py	0	1
+youtube	apps/youtube-analyzer-standalone/cli.py	구현	독립앱(결정)	scripts/youtube/cli.py	0	0
+youtube	apps/youtube-analyzer-standalone/connectors/__init__.py	구현	독립앱(결정)	scripts/youtube/__init__.py	0	0
+youtube	apps/youtube-analyzer-standalone/connectors/keyframe_extractor.py	구현	독립앱(결정)	scripts/youtube/keyframe_extractor.py	0	0
+youtube	apps/youtube-analyzer-standalone/connectors/transcriber.py	구현	독립앱(결정)	scripts/youtube/transcriber.py	0	0
+youtube	apps/youtube-analyzer-standalone/connectors/youtube_data_api.py	구현	독립앱(결정)	scripts/youtube/youtube_data_api.py	0	0
+youtube	apps/youtube-analyzer-standalone/connectors/yt_dlp_downloader.py	구현	독립앱(결정)	scripts/youtube/yt_dlp_downloader.py	0	0
+youtube	apps/youtube-analyzer-standalone/core/__init__.py	구현	독립앱(결정)	scripts/youtube/__init__.py	0	0
+youtube	apps/youtube-analyzer-standalone/core/report_builder.py	구현	독립앱(결정)	scripts/youtube/report_builder.py	0	0
+youtube	apps/youtube-analyzer-standalone/core/url_parser.py	구현	독립앱(결정)	scripts/youtube/url_parser.py	0	0
+youtube	apps/youtube-analyzer-standalone/core/viral_score.py	구현	독립앱(결정)	scripts/youtube/viral_score.py	0	0
+youtube	scripts/ops/guard_youtube_upload.py	구현	일회성·감사(archive 후보)	scripts/youtube/ops/guard_youtube_upload.py	0	0
