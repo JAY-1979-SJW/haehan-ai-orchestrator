@@ -738,6 +738,12 @@
    "new": "scripts/ops/watch_log.py",
    "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
    "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/google/domain_taxonomy.py",
+   "new": "scripts/google/common/domain_taxonomy.py",
+   "reason": "google-common 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(설정·시험·baseline 문서 포함)에서 grep 해 0건으로 수정 확인, 직접 실행 호출처 없음",
+   "date": "2026-10-08"
   }
  ]
 }
