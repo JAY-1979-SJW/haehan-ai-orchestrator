@@ -1,7 +1,7 @@
 """세션 상태 추적 — 도메인별 로그인 상태 인메모리 캐시.
 
 사용:
-    from scripts.session_tracker import is_logged_in, mark_state
+    from scripts.browser.session.session_tracker import is_logged_in, mark_state
     mark_state("naver.com", {"logged_in": True, "user": "skyjwsin"})
     if is_logged_in("naver.com"):
         ...

@@ -11,12 +11,12 @@
 클라이언트(각 Bash 호출)는 로컬 TCP로 명령만 보낸다.
 
 실행:
-    python scripts/browser_rpc_server.py start   # 백그라운드 시작
-    python scripts/browser_rpc_server.py status
-    python scripts/browser_rpc_server.py stop
+    python scripts/browser/cdp/browser_rpc_server.py start   # 백그라운드 시작
+    python scripts/browser/cdp/browser_rpc_server.py status
+    python scripts/browser/cdp/browser_rpc_server.py stop
 
 클라이언트 사용(스크립트 안에서):
-    from scripts.browser_rpc_client import rpc
+    from scripts.browser.cdp.browser_rpc_client import rpc
     rpc("goto", url="https://blog.naver.com/skyjwsin")
     text = rpc("text")["result"]
     rpc("click", selector="text=삭제")
@@ -237,4 +237,4 @@ if __name__ == "__main__":
     elif action == "stop":
         cmd_stop()
     else:
-        print("사용: python scripts/browser_rpc_server.py [start|status|stop]")
+        print("사용: python scripts/browser/cdp/browser_rpc_server.py [start|status|stop]")

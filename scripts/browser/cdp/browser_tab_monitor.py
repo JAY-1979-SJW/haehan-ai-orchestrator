@@ -160,9 +160,9 @@ if __name__ == "__main__":
         print("""탭 관리 CLI
 
 사용법:
-  python scripts/browser_tab_monitor.py list
-  python scripts/browser_tab_monitor.py list eum.cw
-  python scripts/browser_tab_monitor.py count
-  python scripts/browser_tab_monitor.py cleanup 5
-  python scripts/browser_tab_monitor.py close-domain naver.com
+  python scripts/browser/cdp/browser_tab_monitor.py list
+  python scripts/browser/cdp/browser_tab_monitor.py list eum.cw
+  python scripts/browser/cdp/browser_tab_monitor.py count
+  python scripts/browser/cdp/browser_tab_monitor.py cleanup 5
+  python scripts/browser/cdp/browser_tab_monitor.py close-domain naver.com
 """)

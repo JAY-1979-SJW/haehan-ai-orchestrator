@@ -5,9 +5,10 @@ workflows 의존. [docs/module_separation_standard.md]
 """
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
 from pathlib import Path
+
+from scripts.google.report_io import save_json_with_latest
 
 from . import workflows
 from .live_inputs_config import (
@@ -89,14 +90,7 @@ def build_live_input_coverage() -> dict:
 
 def save_live_input_coverage(coverage: dict | None = None, path: Path | None = None) -> Path:
     coverage = coverage or build_live_input_coverage()
-    LIVE_INPUT_COVERAGE_DIR.mkdir(parents=True, exist_ok=True)
-    LATEST_LIVE_INPUT_COVERAGE.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    target = path or LIVE_INPUT_COVERAGE_DIR / f"google_live_input_coverage_{timestamp}.json"
-    text = json.dumps(coverage, ensure_ascii=False, indent=2)
-    target.write_text(text, encoding="utf-8")
-    LATEST_LIVE_INPUT_COVERAGE.write_text(text, encoding="utf-8")
-    return target
+    return save_json_with_latest(coverage, LIVE_INPUT_COVERAGE_DIR, LATEST_LIVE_INPUT_COVERAGE, "google_live_input_coverage", path)
 
 
 def print_live_input_coverage(coverage: dict, path: Path) -> None:

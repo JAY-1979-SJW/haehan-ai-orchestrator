@@ -871,18 +871,24 @@ def _youtube_upload_check(args: list[str]) -> None:
     youtube_upload.print_youtube_upload_plan(plan, path)
 
 
-def _youtube_upload_live_fill(args: list[str]) -> None:
+def _run_live_fill_plan(args: list[str], usage: str, requirement: str) -> None:
+    """실입력 계획 파일(args[0])을 최종 제출 없이 채운다 — 인자 없거나 --no-final-submit 빠지면 오류 출력 후 중단."""
     if not args:
-        print(
-            "  [error] usage: python scripts/browser/cdp/cdp_client.py google youtube upload-live-fill "
-            "<plan_path> --no-final-submit"
-        )
+        print(usage)
         return
     if "--no-final-submit" not in args:
-        print("  [error] youtube upload-live-fill requires --no-final-submit")
+        print(requirement)
         return
     result, path = live_inputs.run_live_input(args[0], no_final_submit=True)
     live_inputs.print_live_input_summary(result, path)
+
+
+def _youtube_upload_live_fill(args: list[str]) -> None:
+    _run_live_fill_plan(
+        args,
+        "  [error] usage: python scripts/browser/cdp/cdp_client.py google youtube upload-live-fill <plan_path> --no-final-submit",
+        "  [error] youtube upload-live-fill requires --no-final-submit",
+    )
 
 
 def _youtube_classify(args: list[str]) -> None:
@@ -1028,14 +1034,11 @@ def _work_verify(args: list[str]) -> None:
 
 
 def _work_live_fill(args: list[str]) -> None:
-    if not args:
-        print("  [error] usage: python scripts/browser/cdp/cdp_client.py google work live-fill <plan_path> --no-final-submit")
-        return
-    if "--no-final-submit" not in args:
-        print("  [error] live-fill requires --no-final-submit")
-        return
-    result, path = live_inputs.run_live_input(args[0], no_final_submit=True)
-    live_inputs.print_live_input_summary(result, path)
+    _run_live_fill_plan(
+        args,
+        "  [error] usage: python scripts/browser/cdp/cdp_client.py google work live-fill <plan_path> --no-final-submit",
+        "  [error] live-fill requires --no-final-submit",
+    )
 
 
 def _work_live_coverage(args: list[str]) -> None:

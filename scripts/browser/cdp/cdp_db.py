@@ -412,7 +412,7 @@ def get_mail_sends(
     return [dict(r) for r in rows]
 
 
-# ── CLI (python scripts/cdp_db.py) ───────────────────────────────
+# ── CLI (python scripts/browser/cdp/cdp_db.py) ───────────────────────────────
 
 
 def log_automation_run(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
@@ -684,5 +684,5 @@ if __name__ == "__main__":
             print(f"\n[사용자 요청 이력{' — ' + site if site else ''}]")
             print_site_requests(site, limit)
     else:
-        print("사용법: python scripts/cdp_db.py [sessions|logs|mails|requests] [site] [limit]")
-        print("        python scripts/cdp_db.py requests summary")
+        print("사용법: python scripts/browser/cdp/cdp_db.py [sessions|logs|mails|requests] [site] [limit]")
+        print("        python scripts/browser/cdp/cdp_db.py requests summary")

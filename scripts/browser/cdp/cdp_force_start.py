@@ -5,9 +5,9 @@
   - 데몬 없이 Chrome + CDP만 빠르게 띄울 때
 
 실행:
-  python scripts/cdp_force_start.py          # 시작
-  python scripts/cdp_force_start.py status   # 상태 확인
-  python scripts/cdp_force_start.py stop     # 종료
+  python scripts/browser/cdp/cdp_force_start.py          # 시작
+  python scripts/browser/cdp/cdp_force_start.py status   # 상태 확인
+  python scripts/browser/cdp/cdp_force_start.py stop     # 종료
 """
 
 from __future__ import annotations
@@ -257,5 +257,5 @@ if __name__ == "__main__":
         cmd_stop()
     else:
         print(f"알 수 없는 명령: {cmd}")
-        print("사용법: python scripts/cdp_force_start.py [start|status|stop] [url]")
+        print("사용법: python scripts/browser/cdp/cdp_force_start.py [start|status|stop] [url]")
         sys.exit(1)

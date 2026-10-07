@@ -7,6 +7,7 @@ from typing import Any
 from scripts.common.config import GOOGLE_URLS
 
 from .base import page_goto, page_wait_click, page_wait_type, page_wait_visible, task_context
+from .browser_tasks import ContextDeleteSpec, run_context_menu_delete, run_search
 
 
 def run(task: str, args: list[str]) -> None:
@@ -57,22 +58,7 @@ def _task_list(page: Any, args: list[str]) -> None:
 
 def _task_search(page: Any, args: list[str]) -> None:
     """파일 검색."""
-    if not args:
-        print("  [오류] 검색어를 입력하세요")
-        return
-
-    query = " ".join(args)
-    print(f"\n[작업] Drive 검색: {query}")
-
-    page_goto(page, GOOGLE_URLS["drive_home"])
-    page_wait_visible(page, '[role="main"]', timeout=20000)
-
-    if page_wait_type(page, 'input[aria-label*="Search"], input[placeholder*="Drive 검색"]', query):
-        page.keyboard.press("Enter")
-        page_wait_visible(page, '[role="main"]', timeout=10000)
-        print("  ✓ 검색 완료")
-    else:
-        print("  ⚠  검색창 못 찾음")
+    run_search(page, args, service="Drive", home_url=GOOGLE_URLS["drive_home"], search_selector='input[aria-label*="Search"], input[placeholder*="Drive 검색"]')
 
 
 def _task_rename(page: Any, args: list[str]) -> None:
@@ -114,31 +100,22 @@ def _task_rename(page: Any, args: list[str]) -> None:
 
 def _task_delete(page: Any, args: list[str]) -> None:
     """파일 삭제."""
-    if not args:
-        print("  [오류] 삭제할 파일명을 입력하세요")
-        return
-
-    file_name = " ".join(args)
-    print(f"\n[작업] Drive 파일 삭제: {file_name}")
-
-    page_goto(page, GOOGLE_URLS["drive_home"])
-    page_wait_visible(page, "[data-id]", timeout=20000)
-
-    page.evaluate(f"""() => {{
-        for (const el of document.querySelectorAll('[data-name]')) {{
-            if (el.getAttribute('data-name') === {file_name!r}) {{
-                el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true }}));
-                break;
-            }}
-        }}
-    }}""")
-
-    if page_wait_visible(page, '[role="menu"]', timeout=5000):
-        page_wait_click(page, '[role="menuitem"]:has-text("삭제"), [role="menuitem"]:has-text("Delete")')
-        page_wait_visible(page, "[data-id]", timeout=5000)
-        print("  ✓ 삭제 완료")
-    else:
-        print("  ⚠  컨텍스트 메뉴 못 찾음")
+    run_context_menu_delete(
+        page,
+        args,
+        ContextDeleteSpec(
+            empty_message="  [오류] 삭제할 파일명을 입력하세요",
+            heading="Drive 파일 삭제",
+            home_url=GOOGLE_URLS["drive_home"],
+            ready_selector="[data-id]",
+            ready_timeout=20000,
+            candidates_selector="[data-name]",
+            match_condition="el.getAttribute('data-name') === {name}",
+            menu_selector='[role="menu"]',
+            done_message="  ✓ 삭제 완료",
+            fail_message="  ⚠  컨텍스트 메뉴 못 찾음",
+        ),
+    )
 
 
 def _task_upload(page: Any, args: list[str]) -> None:

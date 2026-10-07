@@ -6,14 +6,14 @@
   클라이언트는 이 포트로 연결해 같은 브라우저 인스턴스에서 명령 실행.
 
 실행:
-  python scripts/cdp_daemon.py start       # 백그라운드 데몬 시작
-  python scripts/cdp_daemon.py stop        # 데몬 정지
-  python scripts/cdp_daemon.py restart     # 재시작
-  python scripts/cdp_daemon.py status      # 상태 확인
-  python scripts/cdp_daemon.py logs        # 로그 확인
-  python scripts/cdp_daemon.py install     # disabled; reports manual startup policy
-  python scripts/cdp_daemon.py uninstall   # remove legacy startup wrapper
-  python scripts/cdp_daemon.py _run        # 내부 전용 (데몬 본체 직접 실행)
+  python scripts/browser/cdp/cdp_daemon.py start       # 백그라운드 데몬 시작
+  python scripts/browser/cdp/cdp_daemon.py stop        # 데몬 정지
+  python scripts/browser/cdp/cdp_daemon.py restart     # 재시작
+  python scripts/browser/cdp/cdp_daemon.py status      # 상태 확인
+  python scripts/browser/cdp/cdp_daemon.py logs        # 로그 확인
+  python scripts/browser/cdp/cdp_daemon.py install     # disabled; reports manual startup policy
+  python scripts/browser/cdp/cdp_daemon.py uninstall   # remove legacy startup wrapper
+  python scripts/browser/cdp/cdp_daemon.py _run        # 내부 전용 (데몬 본체 직접 실행)
 """
 
 from __future__ import annotations
@@ -176,7 +176,7 @@ def _sanitize_chrome_prefs() -> None:
 
 
 def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
-    assert_browser_launch_allowed(component="scripts.cdp_daemon", action="chrome_cdp_launch")
+    assert_browser_launch_allowed(component="scripts.browser.cdp.cdp_daemon", action="chrome_cdp_launch")
     exe, kind = _find_browser(BROWSER_TYPE)
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     _sanitize_chrome_prefs()
@@ -655,7 +655,7 @@ def cmd_start() -> None:
     except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
         pass
 
-    assert_browser_launch_allowed(component="scripts.cdp_daemon", action="cdp_daemon_start")
+    assert_browser_launch_allowed(component="scripts.browser.cdp.cdp_daemon", action="cdp_daemon_start")
 
     script = Path(__file__).resolve()
     if sys.platform == "win32":
@@ -853,8 +853,8 @@ def _startup_folder() -> Path:
 def cmd_install() -> None:
     """Report the manual-start policy; legacy autostart registration is disabled."""
     print("CDP autostart install is disabled by the target-app scope baseline.")
-    print("Use explicit, task-scoped start only: python scripts/cdp_daemon.py start")
-    print("To remove an old startup wrapper, run: python scripts/cdp_daemon.py uninstall")
+    print("Use explicit, task-scoped start only: python scripts/browser/cdp/cdp_daemon.py start")
+    print("To remove an old startup wrapper, run: python scripts/browser/cdp/cdp_daemon.py uninstall")
 
 
 def cmd_uninstall() -> None:

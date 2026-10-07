@@ -25,7 +25,7 @@ python scripts/browser/cdp/cdp_force_start.py stop     # 종료 (요청 없이 �
 ```python
 import sys
 sys.path.insert(0, r"C:\work\01. haehan-ai-orchestrator")
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 
 cdp = CDP(port=9222)
 cdp.navigate("https://example.com")

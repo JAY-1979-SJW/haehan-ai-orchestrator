@@ -157,7 +157,7 @@ L6  Workflows          scripts/*/workflows.py
 
 L7  Persistence/Audit  ai_orchestrator/audit_logger.py
                        ai_orchestrator/persistence/user_db.py
-                       scripts/cdp_db.py
+                       scripts/browser/cdp/cdp_db.py
                        scripts/common/op_log.py                 (940파일)
 
 L8  Server API         ai_orchestrator/asgi.py

@@ -193,7 +193,7 @@ python scripts/cdp_client.py close-popup
 ```
 
 ```python
-from scripts.popup_detector import detect_popup, close_all_popups, handle_page_popups
+from scripts.browser.popup.popup_detector import detect_popup, close_all_popups, handle_page_popups
 from scripts.web_connector import get_page
 
 page = get_page()
@@ -237,7 +237,7 @@ python scripts/cdp_client.py popup-auto
 ```
 
 ```python
-from scripts.popup_watcher import install_watcher, poll_events, auto_handle
+from scripts.browser.popup.popup_watcher import install_watcher, poll_events, auto_handle
 
 # 감시기 설치 (모든 프레임)
 result = install_watcher(page)

@@ -13,8 +13,8 @@
   python scripts/browser/cdp/cdp_client.py user-watch 0   # 무한 대기
 
 또는 직접:
-  python scripts/user_action_monitor.py
-  python scripts/user_action_monitor.py --timeout 600 --host gabia
+  python scripts/browser/page/user_action_monitor.py
+  python scripts/browser/page/user_action_monitor.py --timeout 600 --host gabia
 """
 
 from __future__ import annotations

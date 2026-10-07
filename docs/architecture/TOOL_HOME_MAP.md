@@ -5,7 +5,7 @@
 - 지시: "프로그램을 도구별로 폴더·모듈로 나누고 중복을 없앤다"(대표님). 계획서: `C:\work\_coordination\TOOL_MODULARIZATION_PLAN.md` §3 T0.
 - 함께 둔 표(전수 목록): 같은 폴더의 `TOOL_HOME_MAP_leaks.tsv`(집 밖 파일 224건), `TOOL_HOME_MAP_dup_groups.tsv`(운영 코드 중복 묶음 367건), `TOOL_HOME_MAP_dup_candidates.tsv`(공용화 후보 67건), `TOOL_HOME_MAP_dated_scripts.tsv`(날짜 박힌 스크립트 5건).
 
-> **정정(2026-10-07, B1 작업 중 발견)**: `scripts/mk_catalog/reclassify_blog_new.py` 는 이름에 `blog` 가 있어 키워드 분류가 블로그 이탈로 잡았으나 실제로는 카탈로그 상품 분류 스크립트(mk_catalog)다. 이동 대상이 아니므로 이탈 목록에서 뺐다(`TOOL_HOME_MAP_leaks.tsv` 에서 1줄 삭제). 이 문서의 숫자는 그만큼 줄어든다: 이탈 224→223, 이동 71→70, naver_blog 이탈 41→40(이동 12→11). 또 youtube 이탈 31건 중 실제 이동 대상은 `yt_upload` 6 + 스모크 1뿐이고 나머지는 google 도메인 하위 탭(정상)·완성형 shim·제외로 재분류했다(아래 youtube 절).
+> **정정(2026-10-07, B1 작업 중 발견)**: `scripts/archive/one_off/reclassify_blog_new.py` 는 이름에 `blog` 가 있어 키워드 분류가 블로그 이탈로 잡았으나 실제로는 카탈로그 상품 분류 스크립트(mk_catalog)다. 이동 대상이 아니므로 이탈 목록에서 뺐다(`TOOL_HOME_MAP_leaks.tsv` 에서 1줄 삭제). 이 문서의 숫자는 그만큼 줄어든다: 이탈 224→223, 이동 71→70, naver_blog 이탈 41→40(이동 12→11). 또 youtube 이탈 31건 중 실제 이동 대상은 `yt_upload` 6 + 스모크 1뿐이고 나머지는 google 도메인 하위 탭(정상)·완성형 shim·제외로 재분류했다(아래 youtube 절).
 
 > **정정 2(2026-10-07, G11 도구 집 게이트 작업 중)**: ① 루트 `hiworks_mail_reader.py`·`kakaowork_reader.py` 는 1단계 분리 뒤 `orchestrator_v1/inbox/` 로 간 실제 파일의 **호환 shim** 이다. 이전 표는 이를 실제 파일로 보고 '이동'으로 분류했으나, 이동 대상은 `orchestrator_v1/inbox/` 의 실제 파일이고 루트 shim 은 유지한다(옛 경로의 import·경로 로드·직접 실행 호환 — `scripts/ops/make_shim.py` 형식). ② `scripts/ops/audit_google_gmail_function_contract.py` 는 일회성 감사 스크립트라 `scripts/google/ops/` 로 옮기는 것이 아니라 **archive 후보**(`scripts/archive/`)다. ③ 집 규칙은 이제 게이트로 강제된다: `configs/tool_home.json`(도구 키워드·집·예외+사유) · `configs/tool_home_baseline.json`(기존 집 밖 105건 고정) · `scripts/ops/tool_home_gate.py`(pre-commit `--staged`, CI `--check-all`). 이 문서의 224건은 키워드 분류의 전수 조사였고, 게이트 기준선은 예외(시험·archive·apps·층 표준 폴더·google 의 youtube 하위 탭 등)와 이미 이동한 파일을 뺀 현재 실제 집 밖 파일이다.
 
@@ -92,7 +92,7 @@
 
 **naver_blog (이탈 41)**
 - `scripts/gonobi_*.py` 9개(루트 스크립트, 참조 0건) → `scripts/naver/blog/gonobi/`(이미 `gonobi/` 폴더 존재)
-- `scripts/naver/router_blog.py`·`scripts/navigator_blog.py` → `scripts/naver/blog/` (`scripts/mk_catalog/reclassify_blog_new.py` 는 정정으로 제외 — 위 정정 참고)
+- `scripts/naver/router_blog.py`·`scripts/navigator_blog.py` → `scripts/naver/blog/` (`scripts/archive/one_off/reclassify_blog_new.py` 는 정정으로 제외 — 위 정정 참고)
 - `ai_orchestrator/connectors/{gonobi_router,gonobi_scheduler,naver_blog_*}.py`(평면) 및 `routers/blog_automation_router.py` → `connectors/naver_blog/`
 - `local_agent/browser/mixins/blog_mixin*.py`(7)·`_js/extract_blog_*.js`(8)·`naver_blog_workflow.py`·`scripts/local_agent/naver/blog_*.py` → T4연동 18건
 - `apps/marketing-standalone/connectors/{blog_accounts,blog_images,naver_blog_cdp}.py`·`site_modules/blog_router.py` → 독립앱 4건(결정 1)

@@ -80,11 +80,11 @@ discover -> plan -> prepare -> submit -> verify -> log
 
 | 영역 | 경로 |
 | --- | --- |
-| 공통 CDP 진입 | `scripts/cdp_client.py`, `scripts/cdp_daemon.py` |
+| 공통 CDP 진입 | `scripts/cdp_client.py`, `scripts/browser/cdp/cdp_daemon.py` |
 | 사이트 라우터 | `scripts/site_engine/command_router.py`, `scripts/<site>/router.py` |
 | 브라우저 재사용 | `scripts/web_connector.py` |
 | 로그인/세션 | `scripts/<site>/auth.py`, `scripts/site_engine/site_access.py` |
-| 팝업/비정상 접근 | `scripts/popup_watcher.py`, `scripts/popup_classifier.py`, `scripts/<site>/access_handler.py` |
+| 팝업/비정상 접근 | `scripts/browser/popup/popup_watcher.py`, `scripts/browser/popup/popup_classifier.py`, `scripts/<site>/access_handler.py` |
 | 작업 계획 | `scripts/<site>/work_plan.py` |
 | 실행 로그 | `scripts/<site>/run_log.py` |
 | 실시간 감사 | `scripts/common/realtime_audit.py`, `scripts/watch_log.py` |
@@ -208,7 +208,7 @@ Naver developed tools are indexed separately:
 - Cafe tools: `scripts/naver/cafe/`
 - Keyword tools: `scripts/naver/keyword_tools.py`
 - Mail background/tools: `scripts/naver_mail/`, `scripts/naver/mail_read/`
-- Common tab isolation gate: `scripts/browser_cdp_selection_gate.py`
+- Common tab isolation gate: `scripts/browser/session/browser_cdp_selection_gate.py`
 
 Current verified Naver tool groups:
 

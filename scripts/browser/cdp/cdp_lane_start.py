@@ -1,10 +1,10 @@
 """CDP 칸(lane) 단위 시작·상태·종료 CLI.
 
 기준서: docs/specs/2026-10-02_app_agent_dispatch.md §9-2
-  python scripts/cdp_lane_start.py list                      — 칸 목록과 켜짐 여부
-  python scripts/cdp_lane_start.py start --lane naver [url]  — 그 칸의 Chrome 시작(동시 칸 상한 확인)
-  python scripts/cdp_lane_start.py status --lane naver
-  python scripts/cdp_lane_start.py stop --lane naver
+  python scripts/browser/cdp/cdp_lane_start.py list                      — 칸 목록과 켜짐 여부
+  python scripts/browser/cdp/cdp_lane_start.py start --lane naver [url]  — 그 칸의 Chrome 시작(동시 칸 상한 확인)
+  python scripts/browser/cdp/cdp_lane_start.py status --lane naver
+  python scripts/browser/cdp/cdp_lane_start.py stop --lane naver
 
 `general` 칸은 기존 `cdp_force_start.py` 와 완전히 같은 동작(포트 9222, 기존 프로필·PID 파일).
 `cdp_force_start.py` 자체는 수정하지 않는다(다른 모듈 6곳이 import) — 이 CLI 는 별도 프로세스에서 그 모듈의

@@ -8,9 +8,9 @@ CDP HTTP 엔드포인트만 사용(경량, playwright attach 불필요 → 빌�
   - about:blank·새 탭·중복 URL 만 정리 대상
 
 사용:
-    python scripts/cdp_tab_manager.py list
-    python scripts/cdp_tab_manager.py clean            # dry-run (기본)
-    python scripts/cdp_tab_manager.py clean --confirm  # 실제 닫기
+    python scripts/browser/cdp/cdp_tab_manager.py list
+    python scripts/browser/cdp/cdp_tab_manager.py clean            # dry-run (기본)
+    python scripts/browser/cdp/cdp_tab_manager.py clean --confirm  # 실제 닫기
 
 L4 Browser Engine 계층. 업무 로직 없음.
 """

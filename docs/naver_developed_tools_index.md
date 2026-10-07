@@ -10,7 +10,7 @@ be checked before adding more Naver automation.
 
 - Use existing CDP sessions only; do not launch, restart, or close browsers.
 - Use the common tab-isolation gate for browser work:
-  `scripts/browser_cdp_selection_gate.py:create_isolated_target`.
+  `scripts/browser/session/browser_cdp_selection_gate.py:create_isolated_target`.
 - Read and prepare workflows may run after session/live-safety checks.
 - Final submit, send, publish, delete, move, save, join submit, upload, billing,
   API key issue, and ad publish actions require explicit approval or are blocked.

@@ -6,8 +6,8 @@
 | 커밋 | 내용 |
 |---|---|
 | `cbc52a4a` | 죽은 코드 5건 삭제(`cafe.py`, `secure_login.py`, `_human_type`, `wait_for_logout`, `list_naver_accounts`) — 복원법은 `docs/deleted_code_index.md` |
-| `6ab874f8` | `select_naver_session` 중복 제거 → `scripts/browser_cdp_selection_gate.py` 한 곳 |
-| `0a1ba412` | `naver/auth.py::_safe_human_input` 사본 삭제 → 공용 `scripts/human_input.py`(`click_timeout_ms`, 네이버는 8000) |
+| `6ab874f8` | `select_naver_session` 중복 제거 → `scripts/browser/session/browser_cdp_selection_gate.py` 한 곳 |
+| `0a1ba412` | `naver/auth.py::_safe_human_input` 사본 삭제 → 공용 `scripts/browser/page/human_input.py`(`click_timeout_ms`, 네이버는 8000) |
 
 검증: 새 테스트 17개 통과, 변이 6개 전부 검출, 영향 테스트 새 실패 0(나머지는 기준선 백로그).
 

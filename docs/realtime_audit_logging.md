@@ -159,7 +159,7 @@ python scripts/ops/quality/install_quality_gate.py
 - 모든 로그인은 감지 즉시 저장한다.
 - 저장 대상은 쿠키와 localStorage/sessionStorage 기반 세션이며, 비밀번호/OTP/인증서/토큰 평문은 저장하지 않는다.
 - 세션 파일은 `scripts/auth/auth_session.py`의 암호화 저장 경로를 사용한다.
-- 감지 결과는 `scripts/cdp_db.py`의 `sessions.session_file`에도 연결한다.
+- 감지 결과는 `scripts/browser/cdp/cdp_db.py`의 `sessions.session_file`에도 연결한다.
 - `LOGIN_SESSION_SAVED` 감사 이벤트를 남긴다.
 
 실시간 감시 명령:

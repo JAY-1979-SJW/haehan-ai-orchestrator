@@ -1,26 +1,26 @@
 """CDP 브라우저 원격 콘솔 — CLI + Python API 겸용.
 
 ━━━ CLI 사용 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    python scripts/cdp_console.py                      # 대화형 REPL
-    python scripts/cdp_console.py eval "JS표현식"      # 단발 JS 실행
-    python scripts/cdp_console.py tabs                 # 탭 목록
-    python scripts/cdp_console.py info                 # 뷰포트·DPR
-    python scripts/cdp_console.py goto <url>           # URL 이동
-    python scripts/cdp_console.py screenshot [파일]    # 스크린샷
-    python scripts/cdp_console.py page-summary         # 페이지 구조 요약
-    python scripts/cdp_console.py find <텍스트>        # 텍스트로 요소 탐색
-    python scripts/cdp_console.py inspect <셀렉터>     # 요소 상세
-    python scripts/cdp_console.py count <셀렉터>       # 매칭 수
-    python scripts/cdp_console.py html <셀렉터>        # outerHTML
-    python scripts/cdp_console.py attrs <셀렉터>       # 속성 목록
-    python scripts/cdp_console.py table [셀렉터]       # 테이블 추출
-    python scripts/cdp_console.py form                 # 폼 필드 목록
-    python scripts/cdp_console.py links [필터]         # 링크 목록
-    python scripts/cdp_console.py suggest <텍스트>     # 셀렉터 추천
-    python scripts/cdp_console.py xhr-watch [초]       # XHR 감지
+    python scripts/browser/cdp/cdp_console.py                      # 대화형 REPL
+    python scripts/browser/cdp/cdp_console.py eval "JS표현식"      # 단발 JS 실행
+    python scripts/browser/cdp/cdp_console.py tabs                 # 탭 목록
+    python scripts/browser/cdp/cdp_console.py info                 # 뷰포트·DPR
+    python scripts/browser/cdp/cdp_console.py goto <url>           # URL 이동
+    python scripts/browser/cdp/cdp_console.py screenshot [파일]    # 스크린샷
+    python scripts/browser/cdp/cdp_console.py page-summary         # 페이지 구조 요약
+    python scripts/browser/cdp/cdp_console.py find <텍스트>        # 텍스트로 요소 탐색
+    python scripts/browser/cdp/cdp_console.py inspect <셀렉터>     # 요소 상세
+    python scripts/browser/cdp/cdp_console.py count <셀렉터>       # 매칭 수
+    python scripts/browser/cdp/cdp_console.py html <셀렉터>        # outerHTML
+    python scripts/browser/cdp/cdp_console.py attrs <셀렉터>       # 속성 목록
+    python scripts/browser/cdp/cdp_console.py table [셀렉터]       # 테이블 추출
+    python scripts/browser/cdp/cdp_console.py form                 # 폼 필드 목록
+    python scripts/browser/cdp/cdp_console.py links [필터]         # 링크 목록
+    python scripts/browser/cdp/cdp_console.py suggest <텍스트>     # 셀렉터 추천
+    python scripts/browser/cdp/cdp_console.py xhr-watch [초]       # XHR 감지
 
 ━━━ Python API 사용 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    from scripts.cdp_console import connect
+    from scripts.browser.cdp.cdp_console import connect
 
     with connect() as s:
         summary = s.page_summary()
@@ -39,7 +39,7 @@
 
     # Playwright Page와 함께 — 같은 탭을 두 가지 방식으로 제어
     from scripts.browser.cdp.connection import get_page
-    from scripts.cdp_console import connect_to_page
+    from scripts.browser.cdp.cdp_console import connect_to_page
 
     page = get_page()
     page.goto("https://...")

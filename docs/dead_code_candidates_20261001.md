@@ -9,7 +9,7 @@
 - `local_agent/browser_websocket_handshake.py`: `_get_hostname_hash`(함수,L0)
 - `local_agent/kras_connector.py`: `_http_error_detail`(함수,L0)
 - `scripts/cdp_client.py`: `_load_daemon_state`(함수,L0)
-- `scripts/cdp_daemon.py`: `_clear_session_restore_artifacts`(함수,L0)
+- `scripts/browser/cdp/cdp_daemon.py`: `_clear_session_restore_artifacts`(함수,L0)
 - `scripts/eum/auth.py`: `_prepare_login_page`(함수,L0)
 - `scripts/eum/shared/layout_openpyxl.py`: `_make_border`(함수,L0), `_pt_to_px`(함수,L0)
 - `scripts/google/precision_report.py`: `_host_from_surface`(함수,L0)
@@ -27,12 +27,12 @@
 
 ## 2단계 — 삭제하지 않음: 연결 안 된 안전 검사·기록 함수 (21개)
 호출되지 않는 게이트·검증·차단·기록 함수다. 지우면 "보호가 연결되지 않았다"는 사실만 묻히므로 결함으로 등록해
-연결 여부를 확인한다(결함 #116). `scripts/cdp_db.py` 의 기록 함수는 결함 #16(항상 0행인 테이블)의 원인이다.
+연결 여부를 확인한다(결함 #116). `scripts/browser/cdp/cdp_db.py` 의 기록 함수는 결함 #16(항상 0행인 테이블)의 원인이다.
 - `ai_orchestrator/browser_tool/policy.py`: `requires_dry_run_only`(function,L88)
 - `ai_orchestrator/local_agent/unknown_site_fallback_policy.py`: `is_allowed_on_unknown_site`(function,L93)
 - `ai_orchestrator/local_agent/workflow_template_engine.py`: `get_step_risk_level`(function,L170)
 - `ai_orchestrator/server/external_url_blocker.py`: `guard_server_playwright_invocation`(function,L110), `is_browser_module_call_blocked`(function,L133)
-- `scripts/cdp_db.py`: `log_request`(function,L158), `log_mail_send`(function,L335), `update_mail_send`(function,L370), `update_automation_run`(function,L454), `log_security_event`(function,L555)
+- `scripts/browser/cdp/cdp_db.py`: `log_request`(function,L158), `log_mail_send`(function,L335), `update_mail_send`(function,L370), `update_automation_run`(function,L454), `log_security_event`(function,L555)
 - `scripts/g2b/validators.py`: `validate_notice_search_payload`(function,L91), `validate_notice_detail_payload`(function,L98), `validate_attachment_payload`(function,L111), `validate_bid_analysis_draft_payload`(function,L122), `validate_submit_draft_payload`(function,L131)
 - `scripts/google/gates.py`: `gate_google_search`(function,L22), `gate_google_publish_plan`(function,L65)
 - `scripts/naver/cafe/write/join_request.py`: `approve_join_submit`(function,L188)
@@ -70,7 +70,7 @@
 - `local_agent/browser_realtime_watcher.py`: `detect_login_states`(function,L170)
 - `local_agent/browser_websocket_schema.py`: `safe_result_dict`(function,L497)
 - `local_agent/gui_chat_state.py`: `mode_label_kr`(function,L24), `ai_status_label_kr`(function,L40), `ChatUiController`(class,L99)
-- `scripts/browser_tab_monitor.py`: `ensure_single_tab`(function,L138)
+- `scripts/browser/cdp/browser_tab_monitor.py`: `ensure_single_tab`(function,L138)
 - `scripts/community/sites/iboss.py`: `list_board`(function,L53), `fetch_post_detail`(function,L99)
 - `scripts/google/developer/__init__.py`: `android_app_labels`(function,L23), `android_app_report`(function,L27)
 - `scripts/inquiry/store.py`: `looks_like_contact`(function,L108)
@@ -86,8 +86,8 @@
 - `scripts/naver/smartstore/product/ai_description_writer.py`: `build_trust_summary`(function,L117)
 - `scripts/naver/smartstore/product/detail_collector.py`: `list_cached_product_ids`(function,L86)
 - `scripts/ops/codebase_layer_audit.py`: `issue_key`(function,L1303)
-- `scripts/popup_monitor.py`: `ChromeUIWatcher`(class,L366), `chrome_ui_status`(function,L463)
-- `scripts/session_tracker.py`: `clear_state`(function,L32), `all_states`(function,L37)
+- `scripts/browser/popup/popup_monitor.py`: `ChromeUIWatcher`(class,L366), `chrome_ui_status`(function,L463)
+- `scripts/browser/session/session_tracker.py`: `clear_state`(function,L32), `all_states`(function,L37)
 - `scripts/video/_cdp_tab.py`: `TabCDP`(class,L20), `close_tab`(function,L105)
 - `scripts/video/scripted_recorder.py`: `place_chrome`(function,L179)
 - `scripts/web_connector.py`: `shutdown_browser_session`(function,L563)
