@@ -19,7 +19,12 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      base:
+        description: '비교 기준 ref 또는 sha (비우면 직전 커밋 HEAD^ 기준). 작업 브랜치 전체를 검증하려면 예: master'
+        required: false
+        type: string
 
 # 공개 저장소 기본값: 토큰 권한 최소화 + 같은 브랜치의 이전 실행은 새 푸시가 오면 취소
 permissions:
@@ -152,12 +157,20 @@ jobs:
       - name: Determine base/head refs
         id: refs
         shell: bash
+        # 수동 실행 입력(inputs.base)은 스크립트 주입을 막으려고 run 안에 직접 쓰지 않고 env 로만 넘긴다.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_BASE: ${{ inputs.base }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
             echo "head=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
           else
             base="${{ github.event.before }}"
+            if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$DISPATCH_BASE" ]; then
+              # 수동 실행에서 base 를 준 경우: 브랜치 전체를 그 기준과 비교(checkout fetch-depth: 0 이라 origin/* ref 사용 가능)
+              base=$(git rev-parse "origin/${DISPATCH_BASE}" 2>/dev/null || git rev-parse "${DISPATCH_BASE}")
+            fi
             if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
               base=$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)
             fi
