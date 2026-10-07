@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 109,
+ "hash_count": 108,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/services/gongmu_service.py:_read_rows",
@@ -287,10 +287,6 @@
   "944d93c8f5c11f0e919b657379711f7dd622fc47": [
    "scripts/google/android_app_dev_report.py:save_android_app_dev_report",
    "scripts/google/domain_taxonomy.py:save_google_domain_taxonomy"
-  ],
-  "9842698e9a64e7b185f921f4134572d8aa0577a9": [
-   "scripts/fetch_nts_interpretations.py:_latest_html_after",
-   "scripts/fetch_tax_precedent_summary.py:_latest_html_after"
   ],
   "9952c264a61e7ccf171f823d0d6aa163c53dccf1": [
    "ai_orchestrator/gates/fax_send_policy.py:_recipient_skip_reason",

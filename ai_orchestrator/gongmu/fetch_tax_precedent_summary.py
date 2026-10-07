@@ -9,7 +9,7 @@ law.go.kr DRF API(target=prec)는 세금 판례 상세조회에서 항상 "일�
 "[0] 벤더 공식 API가 없을 때만 CDP" 원칙).
 
 사용법:
-  python scripts/fetch_tax_precedent_summary.py <tax_precedents_index.json 경로> [--limit N]
+  python -m ai_orchestrator.gongmu.fetch_tax_precedent_summary <tax_precedents_index.json 경로> [--limit N]  (저장소 루트에서)
 
 출력: 같은 디렉터리에 <파일명>_with_summary.json — 원본 각 항목에 summary,
 judgment_note, source_ntstDcmId, fetched_ok 필드를 추가한다.
@@ -18,29 +18,13 @@ judgment_note, source_ntstDcmId, fetched_ok 필드를 추가한다.
 from __future__ import annotations
 
 import json
-import os
-import subprocess
 import sys
 import time
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-ROOT = Path(__file__).parent.parent
-VISITS_DIR = ROOT / "data" / "manual_visits" / "taxlaw.nts.go.kr"
-
-
-def _run(cmd: list[str]) -> str:
-    r = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", timeout=60)
-    return r.stdout + r.stderr
-
-
-def _latest_html_after(marker_files: set[str]) -> str | None:
-    files = {str(p) for p in VISITS_DIR.glob("*.html")}
-    new = files - marker_files
-    if not new:
-        return None
-    return max(new, key=os.path.getmtime)
+from ai_orchestrator.gongmu.fetch_nts_interpretations import VISITS_DIR, latest_html_after, run_in_repo
 
 
 def _extract_summary(html_path: str) -> tuple[str, str]:
@@ -56,11 +40,11 @@ def _extract_summary(html_path: str) -> tuple[str, str]:
 
 def fetch_one(prec_seq: str) -> dict:
     before = {str(p) for p in VISITS_DIR.glob("*.html")}
-    _run(
+    run_in_repo(
         ["python", "scripts/browser/cdp/cdp_client.py", "goto", f"https://www.law.go.kr/LSW/precInfoP.do?precSeq={prec_seq}&mode=0"]
     )
-    _run(["python", "scripts/browser/cdp/cdp_client.py", "snapshot"])
-    html_path = _latest_html_after(before)
+    run_in_repo(["python", "scripts/browser/cdp/cdp_client.py", "snapshot"])
+    html_path = latest_html_after(before)
     if not html_path:
         return {"fetched_ok": False, "error": "no_snapshot"}
     if "ntstDcmId" not in html_path:

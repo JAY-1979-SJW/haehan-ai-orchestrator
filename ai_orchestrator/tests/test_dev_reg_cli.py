@@ -51,7 +51,7 @@ def _isolated(tmp_path, monkeypatch):
 
     importlib.reload(_dl)
 
-    import scripts.dev_reg_cli as cli
+    import ai_orchestrator.dev_reg.dev_reg_cli as cli
 
     importlib.reload(cli)
 
@@ -104,7 +104,7 @@ def _create_pending(
 
 
 def _get_cli():
-    import scripts.dev_reg_cli as cli
+    import ai_orchestrator.dev_reg.dev_reg_cli as cli
 
     importlib.reload(cli)
     return cli
@@ -385,7 +385,7 @@ class TestNoSensitiveLeakage:
         importlib.reload(dra)
         # 실제 password 값 노출은 create_pending 레벨에서 차단되지만
         # CLI 레이어의 추가 방어도 검증
-        import scripts.dev_reg_cli as cli
+        import ai_orchestrator.dev_reg.dev_reg_cli as cli
 
         importlib.reload(cli)
         val = cli._safe_value("note", "password=abc123")
@@ -417,7 +417,7 @@ class TestMissingTask:
 class TestForbiddenCommands:
     def test_no_approve_subcommand(self):
         """CLI 파서에 approve 서브커맨드가 없어야 한다."""
-        import scripts.dev_reg_cli as cli
+        import ai_orchestrator.dev_reg.dev_reg_cli as cli
 
         parser = cli._build_parser()
         # subcommand choices 에 approve 가 없어야 함
@@ -428,14 +428,14 @@ class TestForbiddenCommands:
 
     def test_approve_arg_raises(self):
         """approve 인자를 전달하면 SystemExit 발생."""
-        import scripts.dev_reg_cli as cli
+        import ai_orchestrator.dev_reg.dev_reg_cli as cli
 
         parser = cli._build_parser()
         with pytest.raises(SystemExit):
             parser.parse_args(["approve", "dr-fake"])
 
     def test_reject_arg_raises(self):
-        import scripts.dev_reg_cli as cli
+        import ai_orchestrator.dev_reg.dev_reg_cli as cli
 
         parser = cli._build_parser()
         with pytest.raises(SystemExit):

@@ -13,6 +13,8 @@
   - 토큰/민감정보 출력 금지
   - read-only (expire 제외)
 
+실행: python -m ai_orchestrator.dev_reg.dev_reg_cli <명령> (저장소 루트에서 — ai_orchestrator 는 패키지로만 실행)
+
 출력: 표 형태, 마지막 줄 RESULT: PASS|WARN|FAIL
 종료 코드: PASS=0, WARN=2, FAIL=3
 """
@@ -22,16 +24,10 @@ from __future__ import annotations
 import argparse
 import sys
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 
-_THIS_DIR = Path(__file__).resolve().parent
-_REPO_ROOT = _THIS_DIR.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-
-from ai_orchestrator.gates import dev_reg_approval  # noqa: E402 — sys.path 설정 뒤 import
-from ai_orchestrator.gates.approval import revoke_token  # noqa: E402 — sys.path 설정 뒤 import
-from ai_orchestrator.persistence import dev_reg_audit_log  # noqa: E402 — sys.path 설정 뒤 import
+from ai_orchestrator.gates import dev_reg_approval
+from ai_orchestrator.gates.approval import revoke_token
+from ai_orchestrator.persistence import dev_reg_audit_log
 
 # 출력에서 제거할 필드
 _BLOCKED_FIELDS = frozenset({"approval_token_hash", "screenshot_path", "token_id"})

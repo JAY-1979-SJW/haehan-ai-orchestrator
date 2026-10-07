@@ -8657,7 +8657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/dev_reg_cli.py": {
+  "ai_orchestrator/dev_reg/dev_reg_cli.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -9073,7 +9073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/fetch_nts_interpretations.py": {
+  "ai_orchestrator/gongmu/fetch_nts_interpretations.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -9081,7 +9081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/fetch_tax_precedent_summary.py": {
+  "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -22714,6 +22714,22 @@
    "source": "rule"
   },
   "scripts/auth/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/dev_reg/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/gongmu/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
