@@ -127,6 +127,12 @@ jobs:
           HAEHAN_BUILD_VERSION: ${{ steps.buildinfo.outputs.version }}
         run: npx electron-builder --win portable nsis --publish never -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
 
+      - name: 설치본 내용물 점검 (빠진 파일을 E2E 전에 잡는다)
+        # 빌드는 성공해도 묶을 파일이 빠질 수 있다(2026-10-08: .next/static·public 누락 → 앱이 "로딩 중"에서 멈춤).
+        # 앱이 실행 때 찾는 경로를 직접 확인해 1분 안에 실패시킨다 — 40분짜리 E2E 까지 가지 않는다.
+        shell: bash
+        run: python scripts/ops/verify_desktop_bundle.py dist-electron-new/win-unpacked --dist dist-electron-new
+
       - name: SHA256 checksums
         shell: bash
         run: |
