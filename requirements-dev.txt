@@ -1,0 +1,9 @@
+# 개발·검증 도구 — CI verify 와 로컬 검증에 필요하다. 런타임 requirements.txt·constraints.txt 에는 넣지 않는다(앱 번들에 들어가면 안 됨).
+#
+# 왜 필요한가(2026-10-07): CI 러너에는 이 도구들이 설치돼 있지 않았다.
+#  - ruff: tests/test_shim_contract.py(생성된 shim 이 프로젝트 ruff 를 통과하는지)가 `python -m ruff` 를 부른다.
+#          verify_change 의 '바뀐 파일 ruff' 검사도 같은 방식인데, 예전에는 ruff 가 없어도 조용히 0건으로 통과했다(함께 수정).
+#  - pytest-timeout: scripts/ops/run_impacted_tests.py 가 `--timeout` 으로 pytest 를 부른다(tests/test_move_guardrails.py).
+# 버전은 검증된 개발 PC(Windows, Python 3.14)와 맞춘다. 올릴 때는 이 파일만 고친다.
+ruff==0.16.10
+pytest-timeout==2.4.0
