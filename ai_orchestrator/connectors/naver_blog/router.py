@@ -13,12 +13,13 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
-from scripts.app_paths import repo_root
 from scripts.naver.blog.unsplash_images import UPLOADS_DIR
 from scripts.naver.blog.unsplash_images import (
     resolve_unsplash_images as _resolve_unsplash_images,  # 재노출(옛 이름 유지)
 )
 from scripts.realtime_audit import emit_event
+
+from ...paths import repo_root
 
 _log = logging.getLogger(__name__)
 
