@@ -16,15 +16,15 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.domain import site_map_history as hist
-from ai_orchestrator.domain import site_task_map as tm
-from ai_orchestrator.domain import site_task_spec as sts
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import site_task_map_store as store
 from ai_orchestrator.routers.site_task_map_router import site_task_map_router
-from ai_orchestrator.services import site_task_map_service as map_service
-from ai_orchestrator.services import site_task_spec_service as spec_service
+from ai_orchestrator.site_work import site_map_history as hist
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_service as map_service
+from ai_orchestrator.site_work import site_task_map_store as store
+from ai_orchestrator.site_work import site_task_spec as sts
+from ai_orchestrator.site_work import site_task_spec_service as spec_service
 from scripts.site_engine.execution_gate import require_approval_for_action
 from scripts.site_engine.types import SiteCapability
 

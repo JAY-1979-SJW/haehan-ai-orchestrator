@@ -12,11 +12,11 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
-from ..domain import site_map_history as hist
-from ..domain import site_map_sources as sources
-from ..domain import site_task_map as tm
-from ..domain.site_map_menu import OPEN_PAGE_ID
-from ..persistence import site_task_map_store as store
+from . import site_map_history as hist
+from . import site_map_sources as sources
+from . import site_task_map as tm
+from . import site_task_map_store as store
+from .site_map_menu import OPEN_PAGE_ID
 
 LOOKUP_LIMIT_MAX = 20
 

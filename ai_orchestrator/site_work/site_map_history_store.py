@@ -16,7 +16,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from ..domain import site_map_history as hist
+from . import site_map_history as hist
 
 _HOST_RE = re.compile(r"^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$")
 _REV_FILE = re.compile(r"^(\d+)\.json$")

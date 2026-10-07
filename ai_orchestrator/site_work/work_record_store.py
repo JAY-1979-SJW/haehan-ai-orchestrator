@@ -24,7 +24,8 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import storage_dir
 
-from ..domain.work_record import (
+from ..persistence.sqlite_schema import apply_schema, set_busy_timeout
+from .work_record import (
     ARTIFACT_MAX_BYTES,
     ERROR_MAX,
     EVENT_DETAIL_MAX,
@@ -77,7 +78,6 @@ from ..domain.work_record import (
     validate_tenant,
     validate_title,
 )
-from .sqlite_schema import apply_schema, set_busy_timeout
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _DB_PATH = storage_dir() / "work_records.db"

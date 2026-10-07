@@ -15,13 +15,13 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
-from ..domain import site_registry as sr
-from ..domain import site_task_map as tm
-from ..persistence import site_registry_store as store
-from ..persistence import site_task_map_store as map_store
 from ..vendor_directory import vendor_directory_service as vendors
 from . import site_preflight_service as preflight
+from . import site_registry as sr
+from . import site_registry_store as store
+from . import site_task_map as tm
 from . import site_task_map_explore_service as explore
+from . import site_task_map_store as map_store
 
 
 def _now() -> str:

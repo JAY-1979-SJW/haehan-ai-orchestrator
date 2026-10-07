@@ -14,8 +14,8 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
-from ..domain import site_task_map as tm
-from ..persistence import site_task_map_request_store as store
+from . import site_task_map as tm
+from . import site_task_map_request_store as store
 
 PENDING, RUNNING, DONE, FAILED, CANCELLED = "pending", "running", "done", "failed", "cancelled"
 STATUSES = (PENDING, RUNNING, DONE, FAILED, CANCELLED)

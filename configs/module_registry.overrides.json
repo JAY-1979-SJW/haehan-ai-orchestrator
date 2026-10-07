@@ -862,25 +862,25 @@
   "reason": "메일 순차 대량 발송 워크플로(승인서→정책 판정→한 명씩 발송→이력 기록, docstring 1행이 'L6 워크플로') — 파일 안 dataclass 때문에 정의 위주 L1 contract 로 오분류. 같은 폴더 naver_mail_drafts·naver_mailbox_flow 와 같은 유형",
   "source": "manual"
  },
- "ai_orchestrator/domain/site_task_map.py": {
+ "ai_orchestrator/site_work/site_task_map.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "사이트 업무 지도 스키마·위험 등급·분류·병합 규칙(순수 함수, 네트워크·파일·시계 없음) — 저장소(L7)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/domain/site_task_spec.py": {
+ "ai_orchestrator/site_work/site_task_spec.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "업무 후보 never 분류·업무 명세(spec) 생성·검증 규칙(순수 함수, 네트워크·파일·시계 없음, docstring 1행이 'L1 Shared Contracts') — site_task_map.py와 같은 성격이라 같은 층. site_task_map.py가 이 모듈을 쓰는 방향(L1→L1, 역전 아님)이고 이 모듈은 site_task_map을 import하지 않는다. generic L4 오분류(M12 PR 통합 중 발견 — site_task_map(L1)→site_task_spec(L4) 거짓 층 역전 1건의 원인)",
   "source": "manual"
  },
- "ai_orchestrator/services/site_task_map_service.py": {
+ "ai_orchestrator/site_work/site_task_map_service.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "지도 조회·확정 업무 흐름(규칙은 domain, 저장은 persistence 에 위임, HTTP·브라우저 모름) — generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/services/site_task_map_explore_service.py": {
+ "ai_orchestrator/site_work/site_task_map_explore_service.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "탐색 요청 승인·실행 상태 전이 업무 흐름(실행기 주입, 브라우저·scripts 모름) — generic L4 오분류",
@@ -904,25 +904,25 @@
   "reason": "L1 공유 계약 끝점 폴더(import 없음) — 루트/persistence 양방향 순환 방지",
   "source": "manual"
  },
- "ai_orchestrator/domain/site_registry.py": {
+ "ai_orchestrator/site_work/site_registry.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "등록 사이트 상태 전이·정책 검증·탐색 결과 반영 규칙(순수 함수, 파일·네트워크·시계 없음) — 저장소(L7)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/services/site_onboarding_service.py": {
+ "ai_orchestrator/site_work/site_onboarding_service.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "사이트 등록·최초 탐색 시작·상태 지연 평가 업무 흐름(규칙은 domain, 저장은 persistence, 탐색은 기존 explore 서비스에 위임, HTTP·브라우저 모름) — generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/domain/site_map_labels.py": {
+ "ai_orchestrator/site_work/site_map_labels.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "지도 이름 정리·전역 메뉴 분리 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/domain/site_map_menu.py": {
+ "ai_orchestrator/site_work/site_map_menu.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "메뉴 색인·주소 열기 검증 규칙(순수 함수, 입출력 없음) — 저장소(L7)·탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
@@ -940,7 +940,7 @@
   "reason": "가입 카페 수집 결과를 이력과 비교·반영·분석하는 업무 흐름(규칙은 domain, 저장은 persistence, 브라우저·HTTP 모름) — generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/domain/site_map_sources.py": {
+ "ai_orchestrator/site_work/site_map_sources.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "데이터 소스·사이트 선언 도구의 정리·마스킹·병합 규칙(순수 함수, 입출력 없음) — 탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
@@ -952,13 +952,13 @@
   "reason": "가입 카페 활동 분석(순수 계산, 입출력 없음) — 서비스(L6)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/domain/site_preflight.py": {
+ "ai_orchestrator/site_work/site_preflight.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "사전 조사 규칙(robots 해석·sitemap 주소·진행/차단 판정, 순수 함수) — generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/services/site_preflight_service.py": {
+ "ai_orchestrator/site_work/site_preflight_service.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "사전 조사 업무 흐름(공식 API·robots·정책을 모아 판정, 조회기는 주입) — generic L4 오분류",
@@ -970,7 +970,7 @@
   "reason": "robots.txt·sitemap.xml 단순 GET(호스트 고정·내부망 거부, 브라우저 없음) — generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/domain/site_map_history.py": {
+ "ai_orchestrator/site_work/site_map_history.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "지도 구조 요약·지문·map_rev·diff·버전 고정 확인 규칙(순수 함수, 입출력 없음) — generic L4 오분류",

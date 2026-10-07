@@ -3913,7 +3913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/domain/site_registry.py": {
+  "ai_orchestrator/site_work/site_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -3921,7 +3921,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/domain/site_task_map.py": {
+  "ai_orchestrator/site_work/site_task_map.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -5617,7 +5617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/site_registry_store.py": {
+  "ai_orchestrator/site_work/site_registry_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5625,7 +5625,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/site_task_map_request_store.py": {
+  "ai_orchestrator/site_work/site_task_map_request_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5633,7 +5633,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/site_task_map_store.py": {
+  "ai_orchestrator/site_work/site_task_map_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5713,7 +5713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/ai_agent_router.py": {
+  "ai_orchestrator/site_work/ai_agent_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -6129,7 +6129,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/site_onboarding_service.py": {
+  "ai_orchestrator/site_work/site_onboarding_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -6137,7 +6137,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/site_task_map_explore_service.py": {
+  "ai_orchestrator/site_work/site_task_map_explore_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -6145,7 +6145,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/site_task_map_service.py": {
+  "ai_orchestrator/site_work/site_task_map_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -21313,7 +21313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/domain/site_map_labels.py": {
+  "ai_orchestrator/site_work/site_map_labels.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -21457,7 +21457,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/domain/site_map_menu.py": {
+  "ai_orchestrator/site_work/site_map_menu.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -21465,7 +21465,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/domain/site_map_sources.py": {
+  "ai_orchestrator/site_work/site_map_sources.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -21649,7 +21649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/domain/site_preflight.py": {
+  "ai_orchestrator/site_work/site_preflight.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -21657,7 +21657,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/site_preflight_service.py": {
+  "ai_orchestrator/site_work/site_preflight_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -21689,7 +21689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/domain/work_record.py": {
+  "ai_orchestrator/site_work/work_record.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -21697,7 +21697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/work_record_store.py": {
+  "ai_orchestrator/site_work/work_record_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -21721,7 +21721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/domain/site_map_history.py": {
+  "ai_orchestrator/site_work/site_map_history.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -21729,7 +21729,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/persistence/site_map_history_store.py": {
+  "ai_orchestrator/site_work/site_map_history_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -22289,7 +22289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/domain/site_task_spec.py": {
+  "ai_orchestrator/site_work/site_task_spec.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -22297,7 +22297,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/site_task_spec_service.py": {
+  "ai_orchestrator/site_work/site_task_spec_service.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -22962,6 +22962,14 @@
    "source": "rule"
   },
   "ai_orchestrator/web_task/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/site_work/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",

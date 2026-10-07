@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from ai_orchestrator.routers.action_router import action_router
 from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 from ai_orchestrator.routers.agent_dispatch_router import agent_dispatch_router
-from ai_orchestrator.routers.ai_agent_router import ai_agent_router
+from ai_orchestrator.site_work.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
 from ai_orchestrator.auth.auth_router import auth_router
 from ai_orchestrator.routers.blog_automation_router import blog_automation_router

@@ -19,7 +19,7 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import data_dir
 
-from ..domain import site_registry as sr
+from . import site_registry as sr
 
 _FILE = data_dir() / "site_registry" / "sites.json"
 _lock = threading.Lock()
