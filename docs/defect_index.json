@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
-  "updated": "2026-09-29",
-  "next_no": 120,
+  "updated": "2026-10-07",
+  "next_no": 121,
   "items": [
     {
       "no": 1,
@@ -1605,6 +1605,22 @@
       "stage": "RUN",
       "status": "fixed",
       "fix_note": "2026-10-05 해결(사용자 A안 승인): ops 라우터는 읽기 전용 유지 — POST /ops/approvals/gc 라우트 제거(호출처 없음, 같은 만료 처리는 services/dev_reg_runner.py 의 mark_expired_internal 이 이미 수행). 라우트 수 427→426(HTTP 425→424, POST 196→195) 기준값·시험 갱신. 프런트 시험 2건(fallback 문구·CAD 목 데이터 기대)은 현행 코드(…Legacy 함수·HWPX/Excel 항목) 기준으로 갱신."
+    },
+    {
+      "no": 120,
+      "id": "gonobi.db_path_resolves_outside_repo",
+      "category": 1,
+      "title": "gonobi 수집 DB 경로(scripts/naver/blog/gonobi/db.py:15 _DEFAULT_DB)가 Path(__file__).parents[5] 라 저장소 바깥(저장소의 상위 폴더)을 가리킴 — 실데이터는 저장소 밖에 있고 저장소의 data/gonobi.db 는 빈 파일",
+      "where": [
+        "scripts/naver/blog/gonobi/db.py:15",
+        "ai_orchestrator/connectors/gonobi_router.py(open_db 사용)",
+        "ai_orchestrator/connectors/gonobi_scheduler.py",
+        "scripts/gonobi_*.py(open_db 사용)"
+      ],
+      "evidence": "2026-10-07 읽기 전용 확인: 파일 위치가 scripts/naver/blog/gonobi/db.py 라 parents[4]=저장소 루트인데 parents[5] 를 써서 한 단계 위를 가리킨다. 정본 저장소(C:\\work\\orchestrator-scrubbed)에서는 C:\\work\\data\\gonobi.db 가 실제 사용되고 거기에 실데이터가 있다(2,990,080바이트, 2026-06-10 수정, gonobi_posts 962건·gonobi_images 4072건). 저장소의 data/gonobi.db 는 0바이트(2026-08-16, 테이블 없음). 다른 배치에서는 위치가 달라진다 — git worktree(C:\\hhwt-*)는 C:\\data\\gonobi.db, Docker(/app)는 /data/gonobi.db. 파일이 더 얕은 폴더에 있다가 깊은 폴더로 옮겨지면서 parents 인덱스를 고치지 않은 것으로 추정(미확인). 2026-10-07 도구 분리(split-naver_blog) 중 발견, 값이 바뀌어 기존 데이터를 못 찾게 되므로 그 작업에서는 고치지 않았다.",
+      "stage": "RUN",
+      "status": "open",
+      "fix_note": "고칠 때 절차(데이터 이전이 먼저): ① 서버·gonobi_scheduler 정지 ② C:\\work\\data\\gonobi.db 를 백업 복사(원본 유지) ③ 코드는 scripts.app_paths.repo_root()/\"data\"/\"gonobi.db\" 로 바꾸되(환경변수 GONOBI_DB 로 덮어쓸 수 있게 하면 배치별 차이가 없어짐) 같은 커밋에서 하지 말고 데이터 이전 뒤에 적용 ④ 저장소의 0바이트 data/gonobi.db 를 치우고 백업을 새 위치로 복사 → 건수 대조(posts 962, images 4072 이상) ⑤ 재기동 후 /gonobi 라우트 count 와 수집 1회로 확인 ⑥ 옛 위치 파일은 보관 후 정리. 주의: 이전 없이 코드만 바꾸면 빈 DB 를 읽어 수집이 처음부터 다시 돌고 기존 데이터가 사라진 것처럼 보인다. 대표님 확인 후 진행."
     }
   ]
 }
