@@ -385,7 +385,7 @@ class TestRegressionExistingSystem:
 
     def test_existing_download_policy_still_works(self):
         """기존 다운로드 정책 회귀."""
-        from local_agent.runtime.download_policy import check_file
+        from local_agent.runtime.download.download_policy import check_file
 
         result = check_file("입찰공고문.pdf", task_downloaded_files=["입찰공고문.pdf"])
         assert result["upload_allowed"] is True

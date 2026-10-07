@@ -2,7 +2,7 @@
 download_policy 테스트
 """
 
-from local_agent.runtime.download_policy import (
+from local_agent.runtime.download.download_policy import (
     MAX_FILE_SIZE_BYTES,
     check_file,
     check_files,

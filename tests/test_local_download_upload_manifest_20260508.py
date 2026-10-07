@@ -6,7 +6,7 @@ from ai_orchestrator.agent_hub.policy.file_upload_policy import (
     get_server_upload_policy_summary,
     validate_upload_manifest,
 )
-from local_agent.runtime.download_upload_manifest import (
+from local_agent.runtime.download.download_upload_manifest import (
     build_manifest,
     is_safe_manifest,
     validate_manifest,
@@ -86,7 +86,7 @@ class TestBuildManifest:
         assert manifest["files"][0]["upload_allowed"] is False
 
     def test_oversized_file_blocked(self):
-        from local_agent.runtime.download_policy import MAX_FILE_SIZE_BYTES
+        from local_agent.runtime.download.download_policy import MAX_FILE_SIZE_BYTES
 
         manifest = build_manifest(
             TASK_ID,

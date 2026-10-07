@@ -4465,7 +4465,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/download_policy.py": {
+  "local_agent/runtime/download/download_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4473,7 +4473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/download_result_sanitizer.py": {
+  "local_agent/runtime/download/download_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4481,7 +4481,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/download_upload_manifest.py": {
+  "local_agent/runtime/download/download_upload_manifest.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -23290,6 +23290,14 @@
    "source": "rule"
   },
   "local_agent/runtime/permission/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/download/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

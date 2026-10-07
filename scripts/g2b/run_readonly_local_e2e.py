@@ -42,7 +42,7 @@ from ai_orchestrator.contracts.local_task_protocol import (  # noqa: E402
     STATUS_WAITING_USER_AUTH,
     build_task,
 )
-from local_agent.runtime.download_upload_manifest import build_manifest  # noqa: E402
+from local_agent.runtime.download.download_upload_manifest import build_manifest  # noqa: E402
 from local_agent.runtime.local_session_boundary import enforce_session_boundary  # noqa: E402
 from local_agent.runtime.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_READY,

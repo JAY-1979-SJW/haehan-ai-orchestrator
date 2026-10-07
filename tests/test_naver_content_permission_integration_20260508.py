@@ -283,7 +283,7 @@ class TestExistingSystemRegression:
         assert profile["default_execution"] == "LOCAL_BROWSER_DEFAULT"
 
     def test_download_policy_still_works(self):
-        from local_agent.runtime.download_policy import check_file
+        from local_agent.runtime.download.download_policy import check_file
 
         assert check_file("입찰공고문.pdf", task_downloaded_files=["입찰공고문.pdf"])["upload_allowed"] is True
         assert check_file("cert.pfx", task_downloaded_files=["cert.pfx"])["upload_allowed"] is False
