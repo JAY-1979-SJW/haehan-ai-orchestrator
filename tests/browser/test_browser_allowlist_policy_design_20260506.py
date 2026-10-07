@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_allowlist_policy_20260506.json"
 
 ALLOWED_OPERATION_TYPES = {"read", "navigate", "open_url", "click", "type", "submit"}
 
@@ -332,7 +332,7 @@ def test_read_navigate_actions_not_affected():
 
 def test_reclassification_fixture_unchanged():
     """submit/type risk reclassification fixture의 핵심 값이 유지된다."""
-    reclassification_fixture = Path(__file__).parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
+    reclassification_fixture = Path(__file__).parent.parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
     with reclassification_fixture.open(encoding="utf-8") as f:
         data = json.load(f)
     # execute_type은 HIGH_STATE_CHANGE
@@ -349,7 +349,7 @@ def test_reclassification_fixture_unchanged():
 
 def test_untracked_preflight_md_not_deleted():
     """BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md untracked 유지 (삭제 금지)."""
-    preflight = Path(__file__).parents[1] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
+    preflight = Path(__file__).parents[2] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
     if not preflight.exists():
         pytest.skip("WARN: BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md not found")
     assert preflight.is_file()

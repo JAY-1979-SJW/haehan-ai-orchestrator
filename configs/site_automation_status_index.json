@@ -332,7 +332,7 @@
       "tests": [
         "tests/test_naver_service_router.py",
         "tests/naver_cafe/test_naver_cafe_list_collector.py",
-        "tests/test_browser_cdp_selection_gate.py"
+        "tests/browser/test_browser_cdp_selection_gate.py"
       ],
       "owner_module": "scripts/naver",
       "notes": [

@@ -22,7 +22,7 @@ from ai_orchestrator.browser_tool.agent_action_registry import (
     is_known_action,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
 
 READ_NAVIGATE_ACTIONS = [
     "browser.inspect",
@@ -179,7 +179,7 @@ def test_untracked_preflight_md_not_deleted():
     이 파일은 untracked 상태로 유지되어야 하며, 이번 작업에서 삭제/수정하지 않는다.
     파일이 존재하면 PASS, 존재하지 않으면 WARN (삭제 감지).
     """
-    preflight = Path(__file__).parents[1] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
+    preflight = Path(__file__).parents[2] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
     if not preflight.exists():
         pytest.skip("WARN: BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md not found (may have been deleted)")
     assert preflight.is_file()

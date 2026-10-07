@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
 
 GATE_REQUIRED = {
     "browser.plan_submit",

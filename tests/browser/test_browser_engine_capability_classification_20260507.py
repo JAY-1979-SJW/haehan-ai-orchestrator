@@ -29,10 +29,10 @@ from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
     validate_engine_capability_result,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_engine_capability_classification_20260507.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_engine_capability_classification_20260507.json"
 
 MODULE_PATH = (
-    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_capability_classifier.py"
+    Path(__file__).parent.parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_capability_classifier.py"
 )
 
 

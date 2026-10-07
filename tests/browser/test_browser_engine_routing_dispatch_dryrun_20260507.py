@@ -25,7 +25,7 @@ from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import 
     validate_dryrun_dispatch_result,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_engine_routing_dispatch_dryrun_20260507.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_engine_routing_dispatch_dryrun_20260507.json"
 
 
 @pytest.fixture(scope="module")

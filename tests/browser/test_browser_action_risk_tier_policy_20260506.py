@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_risk_tier_policy_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_action_risk_tier_policy_20260506.json"
 
 EXPECTED_TIERS = {"LOW_READ", "LOW_NAVIGATE", "MEDIUM_TYPE", "MEDIUM_DOWNLOAD", "HIGH_STATE_CHANGE", "CRITICAL_SUBMIT"}
 

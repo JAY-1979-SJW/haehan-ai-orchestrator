@@ -15,7 +15,7 @@ from ai_orchestrator.browser_tool.approval_record_store import (
     build_approval_request,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_registry_preflight_20260507.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_action_registry_preflight_20260507.json"
 
 
 class TestGetBrowserActionPolicy:

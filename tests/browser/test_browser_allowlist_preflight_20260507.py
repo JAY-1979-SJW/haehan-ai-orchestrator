@@ -10,7 +10,7 @@ from ai_orchestrator.browser_tool.allowlist_preflight import (
     validate_allowlist_result,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_allowlist_preflight_20260507.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_allowlist_preflight_20260507.json"
 
 
 class TestNormalizeUrlForPolicy:

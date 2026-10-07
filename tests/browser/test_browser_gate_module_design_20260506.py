@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_gate_module_design_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_gate_module_design_20260506.json"
 
 ALLOWED_GATE_DECISIONS = {"ALLOW", "BLOCK", "DENY_BY_DEFAULT"}
 ALLOWED_BLOCK_REASONS = {
@@ -259,7 +259,7 @@ def test_no_task_executor_import():
 
     files_to_check = [
         Path(__file__),
-        Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "submit_execution_gate.py",
+        Path(__file__).parent.parent.parent / "ai_orchestrator" / "browser_tool" / "submit_execution_gate.py",
     ]
     blocked = ["task_executor", "browser_worker", "ai_orchestrator.browser_tool.worker"]
 
@@ -297,7 +297,7 @@ def test_all_cases_have_operation_type():
 
 def test_existing_gate_fixture_still_valid():
     """기존 submit_execution_gate fixture의 핵심 구조가 유지된다."""
-    existing = Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
+    existing = Path(__file__).parent.parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
     if not existing.exists():
         pytest.skip("existing gate fixture not found")
     with existing.open(encoding="utf-8") as f:
@@ -309,7 +309,7 @@ def test_existing_gate_fixture_still_valid():
 
 def test_existing_allowlist_fixture_submit_deny():
     """기존 allowlist fixture의 submit DENY_BY_DEFAULT 유지 확인."""
-    allowlist = Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
+    allowlist = Path(__file__).parent.parent / "fixtures" / "browser_allowlist_policy_20260506.json"
     with allowlist.open(encoding="utf-8") as f:
         d = json.load(f)
     assert d["default_verdicts"]["submit"] == "DENY_BY_DEFAULT"
@@ -317,7 +317,7 @@ def test_existing_allowlist_fixture_submit_deny():
 
 def test_untracked_preflight_md_not_deleted():
     """BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md untracked 유지 (삭제 금지)."""
-    preflight = Path(__file__).parents[1] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
+    preflight = Path(__file__).parents[2] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
     if not preflight.exists():
         pytest.skip("WARN: BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md not found")
     assert preflight.is_file()

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_audit_module_design_20260506.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_audit_module_design_20260506.json"
 
 ALLOWED_EVENT_STAGES = {
     "REQUEST_RECEIVED",
@@ -346,7 +346,7 @@ def test_all_case_block_reasons_valid():
 
 def test_gate_fixture_gate_decisions_compatible():
     """기존 gate fixture의 gate_decisions가 audit 설계와 호환된다."""
-    gate_fixture = Path(__file__).parent / "fixtures" / "browser_gate_module_design_20260506.json"
+    gate_fixture = Path(__file__).parent.parent / "fixtures" / "browser_gate_module_design_20260506.json"
     assert gate_fixture.exists(), "gate module fixture not found"
     with gate_fixture.open(encoding="utf-8") as f:
         g = json.load(f)
@@ -355,7 +355,7 @@ def test_gate_fixture_gate_decisions_compatible():
 
 def test_allowlist_fixture_submit_deny_by_default():
     """기존 allowlist fixture의 submit=DENY_BY_DEFAULT 유지."""
-    allowlist = Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
+    allowlist = Path(__file__).parent.parent / "fixtures" / "browser_allowlist_policy_20260506.json"
     assert allowlist.exists(), "allowlist fixture not found"
     with allowlist.open(encoding="utf-8") as f:
         a = json.load(f)
@@ -364,7 +364,7 @@ def test_allowlist_fixture_submit_deny_by_default():
 
 def test_untracked_preflight_md_not_deleted():
     """BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md untracked 유지 (삭제 금지)."""
-    preflight = Path(__file__).parents[1] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
+    preflight = Path(__file__).parents[2] / "BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"
     if not preflight.exists():
         pytest.skip("WARN: BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md not found")
     assert preflight.is_file()

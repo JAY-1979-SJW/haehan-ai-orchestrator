@@ -29,9 +29,9 @@ from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
     validate_browser_engine_routing_result,
 )
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_engine_routing_policy_20260507.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_engine_routing_policy_20260507.json"
 
-MODULE_PATH = Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_policy.py"
+MODULE_PATH = Path(__file__).parent.parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_policy.py"
 
 
 @pytest.fixture(scope="module")
