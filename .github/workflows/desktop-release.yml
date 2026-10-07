@@ -116,6 +116,41 @@ jobs:
           ( cd "$out_dir" && sha256sum *.exe > checksums.txt 2>/dev/null || true )
           cat "$out_dir/checksums.txt" 2>/dev/null || echo "체크섬 대상 exe 없음 — 위 단계 출력 확인"
 
+      - name: electron-builder --win dir (E2E용 unpacked, portable과 별개)
+        # 포터블(.exe)은 실행마다 임시 폴더에 풀리는 자기-추출 방식이라 Playwright의
+        # electron.launch({ executablePath })로 바로 몰기 애매하다. E2E는 같은 빌드를
+        # --dir(unpacked 폴더)로도 한 번 더 뽑아 그 안의 실제 exe를 실행 대상으로 쓴다.
+        shell: bash
+        working-directory: admin-web/electron
+        run: npx electron-builder --win dir -c.extraMetadata.version=${{ steps.buildinfo.outputs.version }}
+
+      - name: E2E (Electron, 빌드 산출물) — app/user_flow/fresh_install_signup
+        # 기존 e2e-electron/*.spec.ts·playwright.electron.config.ts 재사용(신규 프레임워크 없음).
+        # 제외: diagnose.spec.ts(mail/google 조회 버튼이 실제 외부 OAuth 계정을 침),
+        # agent_employee_eval.spec.ts(외부 사이트 books.toscrape.com·cafe.naver.com 접속,
+        # CDP 9222 전제, 15분 평가 — 결제/배포 없이 CI에서 못 돈다). user_flow.spec.ts의
+        # AI 비서 GPT 1턴은 유료 API라 HAEHAN_E2E_SKIP_PAID_API=1로 스킵.
+        id: e2e
+        shell: bash
+        working-directory: admin-web/electron
+        env:
+          HAEHAN_E2E_EXE_PATH: ${{ github.workspace }}/dist-electron-new/win-unpacked/Haehan AI.exe
+          HAEHAN_E2E_SKIP_PAID_API: "1"
+        run: npx playwright test -c playwright.electron.config.ts app user_flow fresh_install_signup
+
+      - name: Upload E2E failure artifacts (스크린샷·trace)
+        if: failure() && steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: HaehanAI-Desktop-e2e-failure-${{ steps.buildinfo.outputs.version }}
+          path: |
+            admin-web/electron/test-results/**
+            admin-web/electron/playwright-report/**
+            data/screenshots_check/electron/**
+            data/e2e_user_flow/**
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
