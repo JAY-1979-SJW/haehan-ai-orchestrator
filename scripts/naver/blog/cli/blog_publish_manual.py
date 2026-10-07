@@ -228,7 +228,7 @@ def collect_images(draft: dict, count: int = 3, blog_id: str | None = None) -> l
     return pick_3_images(pool, base)[:count]  # 전부 겹치면 어쩔 수 없이 반환
 
 
-def publish(draft: dict, auto_images: bool = True, blog_id: str | None = None) -> dict:
+def publish(draft: dict, auto_images: bool = True, blog_id: str | None = None, approval: str | None = None) -> dict:
     from scripts.naver.blog.accounts import get_account
     from scripts.naver.blog.marketing.publish import connect_and_ensure_login, publish_one, record_success
     from scripts.naver.blog.marketing.topics import load_cache
@@ -248,7 +248,7 @@ def publish(draft: dict, auto_images: bool = True, blog_id: str | None = None) -
     }
     pw, _browser, page = connect_and_ensure_login(blog_id=target_blog_id)
     try:
-        result = publish_one(page, post=post, img_paths=images)
+        result = publish_one(page, post=post, img_paths=images, approval=approval)
     finally:
         # playwright 인스턴스 정리(stop) 실패는 무시 — 리소스 정리 실패가 발행 결과에 영향 없음
         with contextlib.suppress(Exception):
@@ -277,6 +277,9 @@ def main() -> None:
     )
     ap.add_argument("--check", action="store_true", help="점검만 (기본)")
     ap.add_argument("--publish", action="store_true", help="실제 발행")
+    from scripts.gate import CONFIRM_TEXTS
+
+    ap.add_argument("--confirm", default=None, help=f"실제 발행 승인 문구(직접 입력): {CONFIRM_TEXTS['blog_publish']}")
     ap.add_argument("--no-images", action="store_true", help="이미지 자동 수집 끄기")
     ap.add_argument("--port", type=int, default=9222, help="CDP 포트")
     args = ap.parse_args()
@@ -299,8 +302,15 @@ def main() -> None:
     seo = review(draft)
 
     if not args.publish:
-        print("\n※ 실제 발행하려면 --publish")
+        print("\n※ 실제 발행하려면 --publish --confirm=<승인 문구>")
         return
+
+    from scripts.gate import GateBlocked, require_approved
+
+    try:  # 로그인·이미지 작업 전에 승인 문구부터 확인한다
+        require_approved("blog_publish", args.confirm, via="blog_publish_manual")
+    except GateBlocked as exc:
+        raise SystemExit(f"발행 차단: {exc.result.reason} (사용자가 직접 입력한 승인 문구가 필요합니다)") from exc
 
     # 발행 직전 로그인 확인 — 이미지 업로드까지 다 해놓고 캡차로 실패하는
     # 낭비를 막는다(2026-08-24 사고). 실패 시 자동 재로그인 없이 멈춘다.
@@ -314,7 +324,7 @@ def main() -> None:
 
     if seo["warnings"]:
         print("\n경고가 있는 상태로 발행합니다 (사람이 확인함).")
-    result = publish(draft, auto_images=not args.no_images, blog_id=blog_id)
+    result = publish(draft, auto_images=not args.no_images, blog_id=blog_id, approval=args.confirm)
     print(f"\n{'✅ 발행 완료' if result.get('ok') else '❌ 발행 실패'}  log_no={result.get('log_no', '')}")
 
 

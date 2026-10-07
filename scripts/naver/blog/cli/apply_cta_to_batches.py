@@ -88,7 +88,16 @@ def load_batch(full_path: Path, log_path: Path, old_cta: str, new_cta: str) -> l
 
 
 def main() -> int:
-    skip_n = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+    # 사용법: python apply_cta_to_batches.py [건너뛸 개수] --confirm=<승인 문구(사용자가 직접 입력)>
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    confirm = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--confirm=")), None)
+    skip_n = int(args[0]) if args else 0
+    from scripts.gate import GateBlocked, require_approved
+
+    try:  # force_approved() 로 게이트를 우회하기 전에, 사용자가 입력한 승인 문구를 먼저 확인한다
+        require_approved("blog_publish", confirm, via="apply_cta_to_batches")
+    except GateBlocked as exc:
+        raise SystemExit(f"발행 차단: {exc.result.reason} (사용자가 직접 입력한 승인 문구가 필요합니다)") from exc
     batch = load_batch(V2_FULL, V2_LOG, OLD_CTA_V2, NEW_CTA_V2) + load_batch(
         GOV2_FULL, GOV2_LOG, OLD_CTA_GOV2, NEW_CTA_GOV2
     )

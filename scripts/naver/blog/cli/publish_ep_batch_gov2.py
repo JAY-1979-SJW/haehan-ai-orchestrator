@@ -36,7 +36,16 @@ def resolve_topic_image(title: str) -> str | None:
 
 
 def main() -> int:
-    skip_n = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+    # 사용법: python publish_ep_batch_gov2.py [건너뛸 개수] --confirm=<승인 문구(사용자가 직접 입력)>
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    confirm = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--confirm=")), None)
+    skip_n = int(args[0]) if args else 0
+    from scripts.gate import GateBlocked, require_approved
+
+    try:  # force_approved() 로 게이트를 우회하기 전에, 사용자가 입력한 승인 문구를 먼저 확인한다
+        require_approved("blog_publish", confirm, via="publish_ep_batch_gov2")
+    except GateBlocked as exc:
+        raise SystemExit(f"발행 차단: {exc.result.reason} (사용자가 직접 입력한 승인 문구가 필요합니다)") from exc
     items = json.loads(FULL_PATH.read_text(encoding="utf-8"))
     page = get_page()
 
