@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 from scripts.eum.install_targets import collect_all_install_targets

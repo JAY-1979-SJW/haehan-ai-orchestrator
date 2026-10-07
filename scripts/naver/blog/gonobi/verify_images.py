@@ -4,7 +4,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 

@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
 CATEGORIES = [
@@ -39,11 +39,12 @@ CATEGORIES = [
 def extract_posts_from_html(html: str) -> list[dict]:
     """HTML에서 포스트 logNo + 제목 추출."""
     log_nos = list(dict.fromkeys(re.findall(r"gonobi[/\\\\](\d{10,})", html)))
+    log_no_set = set(log_nos)  # 반복문 안 멤버십 검사를 O(1) 로(순서가 필요한 log_nos 는 그대로)
     title_map: dict[str, str] = {}
     # <a href="...logNo...">제목</a> 패턴
     for m in re.finditer(r'href="[^"]*?(\d{10,})[^"]*?"[^>]*>([^<]{3,80})</a>', html):
         ln, title = m.group(1), m.group(2).strip()
-        if ln in log_nos and title and ln not in title_map:
+        if ln in log_no_set and title and ln not in title_map:
             title_map[ln] = title
     return [
         {"log_no": ln, "title": title_map.get(ln, ""), "url": f"https://blog.naver.com/gonobi/{ln}"} for ln in log_nos

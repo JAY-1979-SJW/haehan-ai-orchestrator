@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 VERDICT_SAFE = "GABIA_SESSION_STORAGE_SAFE_WITH_BROWSER_PROFILE_ONLY"
 VERDICT_BLOCKED = "GABIA_SESSION_STORAGE_PLAINTEXT_COOKIE_BLOCKED"

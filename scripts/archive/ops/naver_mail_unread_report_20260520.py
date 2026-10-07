@@ -87,7 +87,7 @@ def evaluate(target_id, expr, timeout=8.0):
     return val
 
 
-def screenshot(target_id, name) -> Path:
+def screenshot(target_id, name) -> Path | None:
     w = _open_ws_for(target_id)
     ev = _send(w, 2, "Page.captureScreenshot", {"format": "png"}, timeout=10.0)
     w.close()
