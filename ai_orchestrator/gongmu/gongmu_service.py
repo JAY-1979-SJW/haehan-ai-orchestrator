@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from ai_orchestrator.gates import gongmu_task_policy as policy
 from ai_orchestrator.gates import mail_draft_policy as draft_policy
-from ai_orchestrator.persistence import gongmu_store as store
+from ai_orchestrator.gongmu import gongmu_store as store
+from ai_orchestrator.gongmu import gongmu_task_policy as policy
 
 ROOT = Path(__file__).resolve().parents[2]
 MAX_NAME = 100

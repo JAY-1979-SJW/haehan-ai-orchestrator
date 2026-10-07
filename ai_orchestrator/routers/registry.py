@@ -16,7 +16,7 @@ from ai_orchestrator.routers.blog_automation_router import blog_automation_route
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
 from ai_orchestrator.routers.dev_reg_approval_read_router import dev_reg_approval_read_router
-from ai_orchestrator.routers.gongmu_router import gongmu_router
+from ai_orchestrator.gongmu.gongmu_router import gongmu_router
 from ai_orchestrator.routers.naver_mail_bulk_router import naver_mail_bulk_router
 from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
 from ai_orchestrator.routers.ops_router import ops_router

@@ -16,7 +16,7 @@ from collections.abc import Callable
 from datetime import date, timedelta
 from typing import Any
 
-from ..domain.gongmu_defaults import (  # noqa: F401  (정책을 거쳐 쓰던 기존 이름을 그대로 다시 내보낸다)
+from .gongmu_defaults import (  # noqa: F401  (정책을 거쳐 쓰던 기존 이름을 그대로 다시 내보낸다)
     CLOSED_STATUSES,
     DEFAULT_CATALOG,
     DEFAULT_SETTINGS,

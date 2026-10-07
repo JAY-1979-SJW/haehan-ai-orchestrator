@@ -20,8 +20,8 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import storage_dir
 
-from ..domain import gongmu_defaults as defaults
-from .sqlite_schema import apply_schema, set_busy_timeout
+from ..persistence.sqlite_schema import apply_schema, set_busy_timeout
+from . import gongmu_defaults as defaults
 
 _DB_PATH = storage_dir() / "gongmu.db"
 
