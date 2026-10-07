@@ -100,3 +100,30 @@ def test_parse_diff_boundaries():
 def test_parse_diff_keeps_each_file_separate():
     diff = "+++ b/a.py\n@@ -1 +1,2 @@\n+++ b/b.py\n@@ -5 +7 @@\n"
     assert cf.parse_diff(diff) == {"a.py": {1, 2}, "b.py": {7}}
+
+
+def test_changed_line_ranges_runs_git_diff_on_source_roots(monkeypatch):
+    seen = {}
+
+    class _Done:
+        stdout = "+++ b/scripts/x.py\n@@ -1 +4,2 @@\n"
+
+    def fake_run(cmd, **kw):
+        seen["cmd"], seen["kw"] = cmd, kw
+        return _Done()
+
+    monkeypatch.setattr(cf.subprocess, "run", fake_run)
+    assert cf.changed_line_ranges("base", "head") == {"scripts/x.py": {4, 5}}
+    cmd = seen["cmd"]
+    assert cmd[:5] == ["git", "diff", "-U0", "--diff-filter=ACMR", "base"] and cmd[5] == "head"
+    assert cmd[-len(cf.SOURCE_ROOTS) :] == list(cf.SOURCE_ROOTS) and "--" in cmd
+    assert seen["kw"]["check"] is True and seen["kw"]["capture_output"] is True
+
+
+def test_main_prints_patterns_with_limit(monkeypatch, capsys):
+    monkeypatch.setattr(cf, "changed_line_ranges", lambda base, head: {"scripts/ops/a.py": {1, 6}})
+    monkeypatch.setattr(cf, "patterns_for_diff", lambda ranges: ["p1", "p2", "p3"])
+    assert cf.main(["base", "--limit", "2"]) == 0
+    out = capsys.readouterr()
+    assert out.out.split() == ["p1", "p2"] and "3개 중 앞 2개" in out.err
+    assert cf.main([]) == 2
