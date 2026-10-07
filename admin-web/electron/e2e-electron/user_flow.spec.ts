@@ -64,22 +64,23 @@ test("사용자 흐름 E2E — 앱 UI 직접 조작", async () => {
   await expect(ui.getByTestId("ai-agent-console")).toBeVisible({ timeout: 20_000 });
   console.log("✅ [1] 대시보드 로그인 상태 렌더");
 
-  // ── 2. 상품 관리: 스마트스토어 로그인 세션으로 실데이터 ──────────
-  const okProd = await clickAndGo(ui, "상품 관리", "products");
-  await shot(ui, "02_products.png");
-  expect(okProd).toBe(true);
-  console.log("✅ [2] 상품 관리 진입");
+  // ── 2. 스마트스토어: 좌측 메뉴 "스토어 AI 채팅" → /naver/smartstore ──
+  // 855d595a(단일 AI 콘솔 개편)로 홈에서 "상품 관리"·"EUM 단말기 영업" 메뉴가 빠졌다(설치본 실측 2026-10-08).
+  // 지금 사용자가 실제로 누르는 좌측 메뉴(admin-web/src/lib/nav.ts)를 따라간다 — 전 화면 진입은 all_screens.spec 이 맡는다.
+  const okStore = await clickAndGo(ui, "스토어 AI 채팅", "naver/smartstore");
+  await shot(ui, "02_smartstore.png");
+  expect(okStore).toBe(true);
+  expect(ui.url()).toContain("/naver/smartstore");
+  console.log("✅ [2] 스마트스토어 진입");
 
-  // ── 3. 홈 복귀 → EUM 단말기 영업 ────────────────────────────────
+  // ── 3. 홈 복귀 → 업무 현황 "작업 목록" ─────────────────────────────
   await ui.goto("http://localhost:3000/", { timeout: 20_000 }).catch(() => {});
   await ui.waitForTimeout(4_000);
-  const okEum = await clickAndGo(ui, "EUM 단말기 영업", "eum");
-  await ui.waitForTimeout(3_000);
-  await shot(ui, "03_eum.png");
-  if (okEum) {
-    await expect(ui.getByText(/영업 타겟|신규현장/).first()).toBeVisible({ timeout: 15_000 }).catch(() => {});
-    console.log("✅ [3] EUM 영업 화면 렌더");
-  }
+  const okTasks = await clickAndGo(ui, "작업 목록", "assistant/tasks");
+  await shot(ui, "03_tasks.png");
+  expect(okTasks).toBe(true);
+  expect(ui.url()).toContain("/assistant/tasks");
+  console.log("✅ [3] 작업 목록 진입");
 
   // ── 4. 운영센터 ────────────────────────────────────────────────
   await ui.goto("http://localhost:3000/", { timeout: 20_000 }).catch(() => {});
