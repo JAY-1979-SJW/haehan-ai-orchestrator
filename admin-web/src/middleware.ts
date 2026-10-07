@@ -6,6 +6,11 @@ const TOKEN_COOKIE = "haehan_ai_token";
 // 인증 없이 접근 가능한 공개 경로
 const PUBLIC_PATHS = [
   "/login",
+  // 데스크톱 첫 실행 등록/자동 세션 화면과 그 API(백엔드가 데스크톱 모드에서만 응답, 그 외 404)
+  "/setup",
+  "/api/proxy/api/v1/auth/desktop-setup-status",
+  "/api/proxy/api/v1/auth/desktop-setup",
+  "/api/proxy/api/v1/auth/desktop-session",
   "/signup",
   "/about",
   "/api/auth",
@@ -37,6 +42,16 @@ function redirectToLogin(req: NextRequest): NextResponse {
   return NextResponse.redirect(loginUrl);
 }
 
+// 데스크톱 앱(Electron 이 Next 를 띄울 때 HAEHAN_DESKTOP=1)에서는 로그인 화면 대신 /setup 으로 보낸다:
+// 첫 실행이면 이름·이메일 입력, 이미 등록돼 있으면 /setup 이 자동 세션을 받아 바로 들어간다.
+function redirectToEntry(req: NextRequest): NextResponse {
+  if (process.env.HAEHAN_DESKTOP !== "1") return redirectToLogin(req);
+  const { pathname, search } = req.nextUrl;
+  const setupUrl = new URL("/setup", req.url);
+  setupUrl.searchParams.set("returnTo", pathname + search);
+  return NextResponse.redirect(setupUrl);
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -51,7 +66,7 @@ export async function middleware(req: NextRequest) {
 
   // JWT 쿠키 확인
   const token = req.cookies.get(TOKEN_COOKIE)?.value;
-  if (!token) return redirectToLogin(req);
+  if (!token) return redirectToEntry(req);
 
   // JWT 서명 검증 (jose — Edge Runtime 호환)
   // JWT_SECRET 미설정 시 서명 검증을 건너뛰고 쿠키 존재만 확인 (개발 편의)
@@ -60,8 +75,8 @@ export async function middleware(req: NextRequest) {
     try {
       await jwtVerify(token, new TextEncoder().encode(secret));
     } catch {
-      // 서명 불일치 또는 만료 → 재로그인
-      return redirectToLogin(req);
+      // 서명 불일치 또는 만료 → 재로그인(데스크톱은 /setup 이 새 세션을 받는다)
+      return redirectToEntry(req);
     }
   }
 

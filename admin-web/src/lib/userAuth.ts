@@ -122,3 +122,45 @@ export async function getBuildInfo(): Promise<BuildInfo | null> {
     return null;
   }
 }
+
+// ── 데스크톱 로컬 모드: 첫 실행 등록(이름·이메일)·자동 세션 ────────────────────────────
+// 백엔드가 데스크톱 모드에서만 응답한다(그 외 404). 비밀번호는 쓰지 않는다.
+const DESKTOP_HEADERS = { "Content-Type": "application/json", "X-Haehan-Desktop": "1" };
+
+export async function getDesktopSetupStatus(): Promise<{ needs_setup: boolean } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/auth/desktop-setup-status`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function desktopSetup(name: string, email: string): Promise<{ token: string; user: UserInfo }> {
+  const res = await fetch(`${API_BASE}/api/v1/auth/desktop-setup`, {
+    method: "POST",
+    headers: DESKTOP_HEADERS,
+    body: JSON.stringify({ name, email }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = Array.isArray(data.detail) ? data.detail.map((d: { msg?: string }) => d.msg).join(", ") : data.detail;
+    throw new Error(detail ?? "등록 실패");
+  }
+  return data;
+}
+
+/** 등록된 owner 로 새 토큰을 받는다. 첫 실행(등록 필요)이면 "needs_setup", 실패하면 null. */
+export async function desktopSession(): Promise<{ token: string; user: UserInfo } | "needs_setup" | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/auth/desktop-session`, { method: "POST", headers: DESKTOP_HEADERS, body: "{}" });
+    if (res.status === 409) {
+      const data = await res.json().catch(() => ({}));
+      return data.detail === "needs_setup" ? "needs_setup" : null;
+    }
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}

@@ -104,3 +104,24 @@ def test_build_info_is_read_validated_and_never_fatal(tmp_path):
     assert r["ok"] == {"git_sha": "a" * 40, "build_time": "2026-10-07T12:34:56Z", "version": "20261007-aaaaaaa"}
     assert r["bad"] == {}  # 형식 위반 값은 버린다(서버도 한 번 더 검증)
     assert r["broken"] == {}  # JSON 이 깨져도 예외 없음
+
+
+# ── B안: 시작할 때마다 자동 세션 토큰 갱신 ────────────────────────────────
+
+
+def test_desktop_session_refresh_stores_new_token_with_desktop_header(tmp_path):
+    r = run_case("desktop-session-200", tmp_path)
+    assert r["result"] == "refreshed" and r["token"] == "NEW-TOKEN"
+    assert r["seen"] == {"method": "POST", "path": "/api/v1/auth/desktop-session", "header": "1"}
+
+
+def test_desktop_session_needs_setup_clears_stale_token(tmp_path):
+    r = run_case("desktop-session-needs-setup", tmp_path)
+    assert r["result"] == "needs_setup" and r["token"] == ""
+
+
+@pytest.mark.parametrize("mode", ["404", "no-owner", "down"])
+def test_desktop_session_keeps_existing_token_when_unavailable(tmp_path, mode):
+    """서버 모드(404)·활성 owner 없음·서버 접속 실패 — 시작을 막지 않고 기존 토큰을 그대로 둔다."""
+    r = run_case(f"desktop-session-{mode}", tmp_path)
+    assert r["result"] == "kept" and r["token"] == "OLD-TOKEN"
