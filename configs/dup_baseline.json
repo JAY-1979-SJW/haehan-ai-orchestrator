@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 107,
+ "hash_count": 106,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/services/gongmu_service.py:_read_rows",
@@ -97,10 +97,6 @@
    "scripts/google/docs.py:_task_search",
    "scripts/google/drive.py:_task_search",
    "scripts/google/sheets.py:_task_search"
-  ],
-  "37eb32939bb34d93d40767f3e1a771ada366cffa": [
-   "scripts/naver/automation/smartstore/__init__.py:__getattr__",
-   "scripts/naver/smartstore/automation/__init__.py:__getattr__"
   ],
   "38eb0fa59889cd8a4e260de9da214d4235ce2d3d": [
    "orchestrator_v1/tasks/email_task_approval.py:approve",

@@ -35,22 +35,10 @@
   "reason": "clients 패키지(허브 분리 1단계 신설)",
   "source": "manual"
  },
- "ai_orchestrator/connectors/eum_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "호환 shim — 원본 ai_orchestrator/connectors/eum/router.py 와 같은 층·역할(L8/api). shim 은 원본 층을 따른다(이름 규칙이 다른 층으로 오분류해 shim→라우터가 층간 위반으로 보임, ROOT_MODULE_SPLIT_PLAN)",
-  "source": "manual"
- },
  "ai_orchestrator/connectors/google_router.py": {
   "layer": "L8",
   "role": "api",
   "reason": "docstring이 '하위 호환 re-export' 라 명시 — google/router.py(L8) APIRouter 를 그대로 재노출하는 라우터 자신, L5 오분류"
- },
- "ai_orchestrator/connectors/hanafax_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "호환 shim — 원본 ai_orchestrator/connectors/hanafax/router.py 와 같은 층·역할(L8/api). shim 은 원본 층을 따른다(이름 규칙이 다른 층으로 오분류해 shim→라우터가 층간 위반으로 보임, ROOT_MODULE_SPLIT_PLAN)",
-  "source": "manual"
  },
  "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
   "layer": "L1",
@@ -624,7 +612,7 @@
  "scripts/run_page_builder.py": {
   "layer": "L6",
   "role": "generic",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
  "scripts/local_agent/router.py": {
   "layer": "L6",
@@ -634,47 +622,47 @@
  "scripts/local_agent/run_playwright_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
  "scripts/local_agent/run_universal_ai_real_site_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
  "scripts/local_agent/g2b/run_readonly_local_e2e.py": {
   "layer": "L6",
   "role": "site_module",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L5, 2026-10-07 재판정)"
  },
  "scripts/module_quality_gate.py": {
   "layer": "L6",
   "role": "policy",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
  "scripts/temp_oauth_revoke.py": {
   "layer": "L6",
   "role": "policy",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/agent.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
  "scripts/youtube/upload/step1_navigate.py": {
   "layer": "L6",
   "role": "policy",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
  "scripts/naver/blog/management/post_cache.py": {
   "layer": "L6",
   "role": "persistence",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py": {
   "layer": "L4",
   "role": "site_module",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L5 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py(역방향) 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
  "scripts/popup_monitor.py": {
   "layer": "L4",
   "role": "persistence",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+  "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/navigator.py·popup_classifier.py 를 import. 지우면 층 역전 +3건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
  "ai_orchestrator/services/scheduled_job_service.py": {
   "layer": "L6",
@@ -811,20 +799,10 @@
   "role": "site_module",
   "reason": "writer.py·selectors.py(L5)를 호출하는 네이버 블로그 전용 믹스인 — L4 generic 으로 오분류"
  },
- "scripts/site_registry.py": {
-  "layer": "L4",
-  "role": "browser_engine",
-  "reason": "SiteSpec 와 사이트 조회·등록·지연 로더만 가진 코어(사이트별 로그인 지식은 scripts/site_registry_sites.py 로 분리) — L4 범용 엔진(cdp_client·login_session·site_access)이 import. 코어→사이트 모듈 결합은 변수에 담은 문자열 로더(데이터 주도)라 정적 간선이 없고, 결합이 0 은 아님(결함 #113 종결 메모)"
- },
  "scripts/naver/smartstore/product/bulk.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "스마트스토어 상품 일괄 등록(Playwright Page)이 본체이고 DB 기록은 부수적 — 'DB 기록' 규칙이 L7 로 오분류. L5 smartstore 모듈들이 import"
- },
- "scripts/youtube/research_search.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "YouTube 검색·댓글 수집 사이트 모듈이고 캐시는 조회만 한다 — '저장 신호' 규칙이 L7 로 오분류"
  },
  "local_agent/browser_approval_errors.py": {
   "layer": "L1",
@@ -878,11 +856,6 @@
   "layer": "L1",
   "role": "contract",
   "reason": "저장소(L7)와 정책(L2)이 함께 읽는 메일 초안 상태 어휘·전이표(순수 값, 부작용 없음) — L7 은 L1 만 읽을 수 있어 정책에서 분리한 L1 계약. 이름 신호가 없어 기본값 L4 로 오분류되는 것을 막는다"
- },
- "ai_orchestrator/domain/gongmu_defaults.py": {
-  "layer": "L1",
-  "role": "contract",
-  "reason": "저장소(L7)와 정책(L2)이 함께 읽는 공무 업무 상태 어휘·기준값·PlannedTask(순수 값, 부작용 없음) — L7 은 L1 만 읽을 수 있어 정책에서 분리한 L1 계약. dataclass 규칙에 우연히 기대지 않고 명시한다"
  },
  "ai_orchestrator/services/hanafax_authorization_service.py": {
   "layer": "L6",
@@ -1100,12 +1073,6 @@
   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
  },
- "ai_orchestrator/connectors/kakao_skill_router.py": {
-  "layer": "L4",
-  "role": "generic",
-  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-  "source": "manual"
- },
  "dashboard.py": {
   "layer": "L8",
   "role": "api",
@@ -1166,82 +1133,10 @@
   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
   "source": "manual"
  },
- "ai_orchestrator/connectors/hiworks/client.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_client.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/hiworks/collectors.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_collectors.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
  "ai_orchestrator/connectors/hiworks/config.py": {
   "layer": "L5",
   "role": "site_module",
   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_config.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/hiworks/mail_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_mail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/hiworks_mail_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/hiworks_mail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/kakao/setup_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/kakao_setup_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/kakao_setup_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/kakao_setup_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/kakao/skill_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/kakao_skill_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/google/gmail_cdp_reader.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_cdp_reader.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/google/gmail_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/gmail_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gmail_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/gabia/router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gabia_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "ai_orchestrator/connectors/gabia_router.py": {
-  "layer": "L8",
-  "role": "api",
-  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gabia_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
   "source": "manual"
  },
  "scripts/gabia/login_watch.py": {
@@ -1249,41 +1144,6 @@
   "role": "browser_engine",
   "reason": "이동한 파일 — 원본 scripts/gabia_login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
   "source": "manual"
- },
- "scripts/naver/smartstore/automation/analytics_dashboard.py": {
-  "layer": "L7",
-  "role": "persistence",
-  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/analytics_dashboard.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "scripts/naver/smartstore/automation/competitor_analysis.py": {
-  "layer": "L7",
-  "role": "persistence",
-  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/competitor_analysis.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "scripts/naver/smartstore/automation/csv_import.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/csv_import.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "scripts/naver/smartstore/automation/inventory_monitor.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/inventory_monitor.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "scripts/naver/smartstore/automation/order_automation.py": {
-  "layer": "L5",
-  "role": "site_module",
-  "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/order_automation.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
-  "source": "manual"
- },
- "scripts/yt_upload/step1_navigate.py": {
-  "layer": "L6",
-  "role": "policy",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
  },
  "ai_orchestrator/paths/__init__.py": {
   "layer": "L1",

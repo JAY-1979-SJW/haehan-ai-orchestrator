@@ -4,6 +4,7 @@
 보지 않는 것을 맡는다: audit-kit 의 **개발 기준서 파일 단위 검사(조항 ID, 신규/기존 구분)** 와 **순환 import**.
 ruff 는 audit-kit 쪽에서 끄고(`pyproject.toml` `[tool.audit-kit] hook_tools = "design"`) 중복 실행하지 않는다. **mypy 는 이 게이트가
 직접 돌린다**: audit-kit 가상환경의 mypy 로 파일 하나를 검사해 HEAD 버전에 없던 **신규 타입 오류만** 막는다(ruff 와 같은 원칙).
+`--staged`(커밋 단계)는 같은 결과를 일괄로 낸다: hook 은 동시에, mypy 는 기준 폴더별 1회(`check_files`) — 파일 100개 이동 커밋이 15분 걸리던 문제.
 
 모드
 - `--post-edit` (PostToolUse): stdin 의 편집 파일 한 개를 `audit-kit hook` 으로 검사. **이번 편집이 만든 문제**가 있으면 exit 2 (Claude 가 보고 고친다).
@@ -25,6 +26,7 @@ import subprocess
 import sys
 import threading
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -36,6 +38,10 @@ STOP_BUDGET_S = 90
 MAX_SHOWN = 30
 _NOISE = ("import-not-found", "import-untyped")  # audit-kit 가상환경에 프로젝트 의존성이 없어 생기는 잡음
 _EXE_NAMES = ("audit-kit.exe", "audit-kit")
+_MYPY_ARGS = ("--ignore-missing-imports", "--follow-imports=silent", "--no-error-summary", "--no-color-output")
+# `경로:줄:칸: error: 문장` — 경로는 드라이브 콜론(C:)을 포함할 수 있어 가장 짧게 잡고, 줄·칸은 없을 수도 있다
+_MYPY_ERROR_LINE = re.compile(r"^(?P<path>.+?)(?::\d+){0,2}: error: (?P<msg>.*)$")
+_HOOK_WORKERS = max(1, min(8, os.cpu_count() or 1))  # audit-kit hook 은 파일을 읽기만 해서 동시에 돌려도 된다
 
 
 def find_audit_kit(root: Path | None = None, env: Mapping[str, str] | None = None) -> list[str] | None:
@@ -119,7 +125,7 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
     끄고, 다른 모듈의 오류는 이 파일 검사에 섞이지 않게 한다.
     """
     root = root or ROOT
-    cmd = [py, "-m", "mypy", "--ignore-missing-imports", "--follow-imports=silent", "--no-error-summary", "--no-color-output", str(path)]
+    cmd = [py, "-m", "mypy", *_MYPY_ARGS, str(path)]
     proc = None
     with _MYPY_LOCK:
         for _attempt in range(2):  # 자체 오류(종료코드 2 이상)는 일시적일 수 있어 한 번 다시 시도한다
@@ -142,23 +148,107 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
     return found
 
 
-def mypy_new(py: str, path: Path, baseline: Path | None, root: Path | None = None) -> tuple[list[str], str]:
-    """`baseline` 파일(편집 전/기준 트리의 같은 파일)에 없던 mypy 오류만 → (신규 목록, 못 한 이유). baseline 이 None 이면 전부 신규."""
-    current = mypy_keys(py, path, root)
+def _mypy_base_dir(path: Path) -> str:
+    """mypy 가 이 파일을 실행할 때 검색 경로에 넣는 기준 폴더(`__init__.py` 가 없는 첫 상위 폴더).
+
+    mypy 는 명령줄로 받은 파일마다 이 폴더를 import 검색 경로에 더한다 — 같은 기준 폴더의 파일끼리만 한 번에 돌려야
+    파일별로 따로 돌릴 때와 import 해석(=오류)이 같다. 같은 기준 폴더 안에서는 모듈 이름도 겹치지 않는다.
+    """
+    folder = path.absolute().parent
+    while ((folder / "__init__.py").is_file() or (folder / "__init__.pyi").is_file()) and folder.parent != folder:
+        folder = folder.parent
+    return os.path.normcase(str(folder))
+
+
+def _norm(path: Path | str) -> str:
+    return os.path.normcase(os.path.abspath(str(path)))
+
+
+def _split_mypy_output(text: str, group: list[Path], root: Path) -> dict[Path, set[str]] | None:
+    """여러 파일을 한 번에 돌린 mypy 출력을 파일별 오류 문장 집합으로 나눈다. 어느 파일 것인지 모를 오류 줄이 있으면 None."""
+    index = {_norm(p): p for p in group}
+    found: dict[Path, set[str]] = {p: set() for p in group}
+    for line in text.splitlines():
+        if not re.search(r": error: (.*)$", line):
+            continue
+        match = _MYPY_ERROR_LINE.match(line)
+        target = index.get(_norm(root / match.group("path"))) if match else None
+        if match is None or target is None:
+            return None
+        found[target].add(match.group("msg").strip())
+    return found
+
+
+def _mypy_group(py: str, group: list[Path], root: Path) -> dict[Path, set[str] | None]:
+    """같은 기준 폴더의 파일들을 mypy 한 번으로 검사. 결과는 파일마다 `mypy_keys` 를 부른 것과 같다.
+
+    mypy 자체 오류(종료코드 2 이상, 예: 한 파일의 문법 오류는 검사 전체를 멈춘다)·출력 해석 실패면 파일별 실행으로 되돌아가
+    같은 결과를 낸다. 시간 초과·mypy 미설치는 파일별로 돌려도 같으므로 전부 '실행 못 함'(None).
+    """
+    if len(group) == 1:
+        return {group[0]: mypy_keys(py, group[0], root)}
+    cmd = [py, "-m", "mypy", *_MYPY_ARGS, *(str(p) for p in group)]
+    proc = None
+    with _MYPY_LOCK:
+        for _attempt in range(2):  # mypy_keys 와 같이 자체 오류는 한 번 다시 시도
+            try:
+                proc = subprocess.run(
+                    cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S * len(group), cwd=str(root), check=False
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                return dict.fromkeys(group)
+            if proc.returncode in (0, 1):
+                break
+    if proc is not None and proc.returncode == 1 and b"No module named mypy" in (getattr(proc, "stderr", None) or b""):
+        return dict.fromkeys(group)
+    split = None
+    if proc is not None and proc.returncode in (0, 1):
+        split = _split_mypy_output(proc.stdout.decode("utf-8", errors="replace"), group, root)
+    if split is None:  # 잠금 밖에서 파일별로(mypy_keys 가 스스로 잠근다)
+        return {p: mypy_keys(py, p, root) for p in group}
+    return dict(split)
+
+
+def mypy_keys_batch(py: str, paths: list[Path], root: Path | None = None) -> dict[Path, set[str] | None]:
+    """여러 파일의 mypy 오류 문장 집합을 기준 폴더별 mypy 1회로 구한다 — 파일마다 `mypy_keys` 를 부른 것과 같은 결과."""
+    root = root or ROOT
+    groups: dict[str, list[Path]] = {}
+    for path in dict.fromkeys(paths):
+        groups.setdefault(_mypy_base_dir(path), []).append(path)
+    result: dict[Path, set[str] | None] = {}
+    for group in groups.values():
+        result.update(_mypy_group(py, group, root))
+    return result
+
+
+def _new_typed(path: Path, current: set[str] | None, has_baseline: bool, before_keys: set[str] | None) -> tuple[list[str], str]:
+    """mypy 결과(현재·기준) → (신규 목록, 못 한 이유). `mypy_new` 와 일괄 검사가 같은 규칙을 쓴다."""
     if current is None:
         return [], "mypy 를 실행하지 못했습니다"
     before: set[str] = set()
-    if baseline is not None:
-        before_keys = mypy_keys(py, baseline, root)
+    if has_baseline:
         if before_keys is None:
             return [], "기준 파일의 mypy 를 실행하지 못했습니다"
         before = before_keys
     return [f"[mypy] {path.name}: {msg}" for msg in sorted(current - before)], ""
 
 
-def _mypy_against_head(py: str, path: Path, root: Path) -> tuple[list[str], str]:
-    """편집한 파일을 HEAD 버전과 비교(편집 전에 없던 오류만). HEAD 에 없는 새 파일이면 전부 신규."""
-    rel = path.resolve().relative_to(root.resolve()).as_posix()
+def mypy_new(py: str, path: Path, baseline: Path | None, root: Path | None = None) -> tuple[list[str], str]:
+    """`baseline` 파일(편집 전/기준 트리의 같은 파일)에 없던 mypy 오류만 → (신규 목록, 못 한 이유). baseline 이 None 이면 전부 신규."""
+    current = mypy_keys(py, path, root)
+    if current is None:
+        return _new_typed(path, None, False, None)
+    before_keys = mypy_keys(py, baseline, root) if baseline is not None else None
+    return _new_typed(path, current, baseline is not None, before_keys)
+
+
+def _mypy_against_head(py: str, path: Path, root: Path, old_rel: str | None = None) -> tuple[list[str], str]:
+    """편집한 파일을 HEAD 버전과 비교(편집 전에 없던 오류만). HEAD 에 없는 새 파일이면 전부 신규.
+
+    `old_rel`: git 이 이름 변경(R)으로 본 파일의 옛 경로(저장소 기준 posix). 있으면 HEAD:<옛 경로> 를 비교 기준으로 쓴다 — 옛 위치에
+    있던 기존 오류가 이동 때문에 '새 파일의 신규 오류'로 잡히지 않게 한다(2026-10-07, git mv 이동 커밋에서 오탐 3건).
+    """
+    rel = old_rel or path.resolve().relative_to(root.resolve()).as_posix()
     shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False)
     if shown.returncode != 0:
         return mypy_new(py, path, None, root)
@@ -170,9 +260,66 @@ def _mypy_against_head(py: str, path: Path, root: Path) -> tuple[list[str], str]
         copy.unlink(missing_ok=True)
 
 
-def check_file(kit: list[str], path: Path, root: Path | None = None) -> tuple[list[str], str]:
-    """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다."""
+def _head_blobs(root: Path, rels: list[str]) -> dict[str, bytes | None]:
+    """여러 `HEAD:<경로>` 내용을 `git cat-file --batch` 한 번으로 읽는다(없으면 None). 실패하면 파일별 `git show` 로 되돌아간다."""
+    unique = list(dict.fromkeys(rels))
+    if not unique:
+        return {}
+    request = "".join(f"HEAD:{rel}\n" for rel in unique).encode("utf-8")
+    proc = subprocess.run(["git", "cat-file", "--batch"], input=request, capture_output=True, cwd=str(root), check=False)
+    blobs: dict[str, bytes | None] = {}
+    data, pos = proc.stdout, 0
+    for rel in unique:
+        if proc.returncode != 0:
+            break
+        end = data.find(b"\n", pos)
+        if end < 0:
+            break
+        header = data[pos:end].split()
+        pos = end + 1
+        if len(header) == 3 and header[2].isdigit():  # `<oid> <종류> <크기>` 다음에 내용과 줄바꿈 하나
+            size = int(header[2])
+            blobs[rel] = data[pos : pos + size] if header[1] == b"blob" else None
+            pos += size + 1
+        else:  # `<이름> missing` 등 — HEAD 에 없다
+            blobs[rel] = None
+    if len(blobs) != len(unique):  # 출력을 다 못 읽었으면 예전 방식으로
+        for rel in unique:
+            shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False)
+            blobs[rel] = shown.stdout if shown.returncode == 0 else None
+    return blobs
+
+
+def mypy_against_head_many(
+    py: str, items: list[tuple[Path, str | None]], root: Path | None = None
+) -> dict[Path, tuple[list[str], str]]:
+    """여러 파일을 각자의 HEAD 버전과 비교 — 파일마다 `_mypy_against_head` 를 부른 것과 같은 결과를 mypy 몇 번(기준 폴더 수)으로 낸다.
+
+    HEAD 버전 사본은 예전처럼 원본 옆(`_mypy_base_<이름>`)에 두어 상대 import 가 같게 풀리고, 이름 변경(old_rel)은 HEAD:<옛 경로> 와 비교한다.
+    """
     root = root or ROOT
+    rels = [old_rel or path.resolve().relative_to(root.resolve()).as_posix() for path, old_rel in items]
+    blobs = _head_blobs(root, rels)
+    copies: dict[Path, Path] = {}
+    try:
+        for (path, _old), rel in zip(items, rels, strict=True):
+            content = blobs.get(rel)
+            if content is not None:
+                copy = path.with_name(f"_mypy_base_{path.name}")  # 같은 폴더에 둬야 상대 import 가 같게 풀린다
+                copy.write_bytes(content)
+                copies[path] = copy
+        keys = mypy_keys_batch(py, [path for path, _old in items] + list(copies.values()), root)
+    finally:
+        for copy in copies.values():
+            copy.unlink(missing_ok=True)
+    return {
+        path: _new_typed(path, keys.get(path), path in copies, keys.get(copies[path]) if path in copies else None)
+        for path, _old in items
+    }
+
+
+def _kit_hook(kit: list[str], path: Path, root: Path) -> tuple[list[str], str]:
+    """`audit-kit hook` 으로 한 파일 검사 → (신규 항목, 검사 못 한 이유)."""
     payload = json.dumps({"tool_input": {"file_path": str(path)}, "cwd": str(root)})
     try:
         proc = subprocess.run(
@@ -188,12 +335,52 @@ def check_file(kit: list[str], path: Path, root: Path | None = None) -> tuple[li
     stderr = proc.stderr.decode("utf-8", errors="replace")
     if proc.returncode not in (0, 2):
         return [], f"audit-kit 종료코드 {proc.returncode}: {stderr[-200:].strip()}"
-    findings = [f"{path.name}: {item}" for item in new_findings(stderr)] if proc.returncode == 2 else []
+    return ([f"{path.name}: {item}" for item in new_findings(stderr)] if proc.returncode == 2 else []), ""
+
+
+def _merge(findings: list[str], typed: list[str], why: str) -> tuple[list[str], str]:
+    return findings + typed, ("" if findings or typed or not why else why)
+
+
+def check_file(
+    kit: list[str], path: Path, root: Path | None = None, old_rel: str | None = None
+) -> tuple[list[str], str]:
+    """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다. old_rel: 이름 변경 전 경로(mypy 비교 기준)."""
+    root = root or ROOT
+    findings, failed = _kit_hook(kit, path, root)
+    if failed:
+        return [], failed
     py = mypy_python(kit)
     if py is None:
         return findings, ""
-    typed, why = _mypy_against_head(py, path, root)
-    return findings + typed, ("" if findings or typed or not why else why)
+    return _merge(findings, *_mypy_against_head(py, path, root, old_rel))
+
+
+def check_files(
+    kit: list[str], items: list[tuple[Path, str | None]], root: Path | None = None
+) -> list[tuple[Path, list[str], str]]:
+    """여러 파일 검사 — 결과·순서는 파일마다 `check_file` 을 부른 것과 같다(커밋 단계용 일괄 실행).
+
+    `audit-kit hook` 은 파일마다 따로지만 동시에(최대 8개) 돌리고, mypy 는 hook 이 끝난 뒤 기준 폴더별로 한 번만 돌린다
+    (예전: 파일당 현재·HEAD 2회). hook 이 실패한 파일은 예전처럼 mypy 를 보지 않는다.
+    """
+    root = root or ROOT
+    if not items:
+        return []
+    with ThreadPoolExecutor(max_workers=min(_HOOK_WORKERS, len(items))) as pool:
+        hooked = list(pool.map(lambda item: _kit_hook(kit, item[0], root), items))
+    py = mypy_python(kit)
+    ok = [item for item, (_f, failed) in zip(items, hooked, strict=True) if not failed]
+    typed = mypy_against_head_many(py, ok, root) if py is not None and ok else {}
+    out: list[tuple[Path, list[str], str]] = []
+    for (path, _old), (findings, failed) in zip(items, hooked, strict=True):
+        if failed:
+            out.append((path, [], failed))
+        elif py is None:
+            out.append((path, findings, ""))
+        else:
+            out.append((path, *_merge(findings, *typed[path])))
+    return out
 
 
 def _eligible(path: Path, root: Path | None = None) -> bool:
@@ -304,19 +491,39 @@ def run_stop(stdin_text: str) -> int:
     return 0
 
 
-def _staged_python_files() -> list[Path]:
-    """커밋에 올라갈(staged, 삭제 제외) 저장소 안 .py 파일."""
+def _staged_python_changes() -> list[tuple[Path, str | None]]:
+    """커밋에 올라갈(staged, 삭제 제외) 저장소 안 .py 파일과, 이름 변경(R)이면 옛 경로.
+
+    `git diff --cached -M --name-status` 로 읽어 R(이름 변경) 파일의 옛 경로를 함께 돌려준다 → 비교 기준을 HEAD:<옛 경로> 로 쓴다.
+    새 파일(A)·복사(C)·수정(M)은 옛 경로가 None(HEAD:<같은 경로>, 없으면 전부 신규). 복사는 원본이 남아 있어 새 파일로 본다(보수적).
+    """
     out = subprocess.run(
-        ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
+        ["git", "diff", "--cached", "-M", "--name-status", "--diff-filter=ACMR", "-z"],
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     ).stdout
-    candidates = [ROOT / rel for rel in out.split("\0") if rel]
-    return [c for c in candidates if _eligible(c)]
+    parts = [x for x in out.split("\0") if x]
+    changes: list[tuple[Path, str | None]] = []
+    i = 0
+    while i < len(parts):
+        status = parts[i]
+        if status[:1] in ("R", "C") and i + 2 < len(parts):
+            changes.append((ROOT / parts[i + 2], parts[i + 1] if status[0] == "R" else None))
+            i += 3
+        else:
+            if i + 1 < len(parts):
+                changes.append((ROOT / parts[i + 1], None))
+            i += 2
+    return [(c, old) for c, old in changes if _eligible(c)]
+
+
+def _staged_python_files() -> list[Path]:
+    """커밋에 올라갈(staged, 삭제 제외) 저장소 안 .py 파일."""
+    return [c for c, _old in _staged_python_changes()]
 
 
 def run_staged() -> int:
     """pre-commit 용: staged .py 의 신규 문제가 있으면 1(커밋 차단). 기존 문제는 막지 않는다."""
-    files = _staged_python_files()
+    files = _staged_python_changes()
     if not files:
         return 0
     kit = find_audit_kit()
@@ -327,8 +534,7 @@ def run_staged() -> int:
         sys.stderr.write("[audit_kit_gate] audit-kit 를 찾지 못해 커밋 검사를 생략합니다 (AUDIT_KIT_BIN 환경변수로 위치 지정 가능)\n")
         return 0
     problems: list[str] = []
-    for path in files:
-        findings, skipped = check_file(kit, path)
+    for path, findings, skipped in check_files(kit, files):
         if skipped:
             sys.stderr.write(f"[audit_kit_gate] {path.name} 검사하지 못했습니다(막지 않음): {skipped}\n")
         problems.extend(findings)

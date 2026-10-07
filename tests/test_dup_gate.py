@@ -152,3 +152,48 @@ def test_staged_mode_only_checks_staged_files(repo):
     _git_add_all(repo)
     result2 = _run_gate(repo, "check", "--staged")
     assert result2.returncode == 1, result2.stdout
+
+
+# ── check --all: 저장소 전체 비교(2026-10-07 기준선 감사 — staged·변경 파일 검사는 새 중복이 샘) ─────────────
+
+
+def test_check_all_passes_when_every_duplicate_group_is_in_the_baseline(repo):
+    _write(repo, "pkg_a/one.py", _COPY_PASTE_FUNC.format(name="legacy_a"))
+    _write(repo, "pkg_b/two.py", _COPY_PASTE_FUNC.format(name="legacy_b"))
+    _git_add_all(repo)
+    _run_gate(repo, "build-baseline")
+    result = _run_gate(repo, "check", "--all")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "PASS" in result.stdout
+
+
+def test_check_all_fails_on_a_new_group_even_when_the_files_are_not_staged_or_listed(repo):
+    """변경 파일 목록에 없는 두 파일 사이의 새 중복도 전체 비교는 잡는다."""
+    _write(repo, "pkg_a/one.py", _UNIQUE_FUNC.format(name="only_copy"))
+    _git_add_all(repo)
+    _run_gate(repo, "build-baseline")  # 기준선에는 중복이 없다
+    _write(repo, "pkg_b/two.py", _UNIQUE_FUNC.format(name="second_copy"))
+    _git_add_all(repo)
+    result = _run_gate(repo, "check", "--all")
+    assert result.returncode == 1
+    assert "새 중복 묶음" in result.stdout and "pkg_b/two.py" in result.stdout
+
+
+def test_check_all_reports_vanished_baseline_hashes_but_still_passes(repo):
+    _write(repo, "pkg_a/one.py", _COPY_PASTE_FUNC.format(name="legacy_a"))
+    _write(repo, "pkg_b/two.py", _COPY_PASTE_FUNC.format(name="legacy_b"))
+    _git_add_all(repo)
+    _run_gate(repo, "build-baseline")
+    (repo / "pkg_b" / "two.py").unlink()
+    _git_add_all(repo)
+    result = _run_gate(repo, "check", "--all")
+    assert result.returncode == 0
+    assert "기준선에만 남은" in result.stderr
+
+
+def test_check_all_ignores_exempt_folders(repo):
+    _write(repo, "pkg_a/one.py", _UNIQUE_FUNC.format(name="only_copy"))
+    _write(repo, "scripts/archive/old.py", _UNIQUE_FUNC.format(name="archived_copy"))
+    _git_add_all(repo)
+    _run_gate(repo, "build-baseline")
+    assert _run_gate(repo, "check", "--all").returncode == 0

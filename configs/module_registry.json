@@ -3209,14 +3209,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/eum_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "eum",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/connectors/gabia/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -3225,27 +3217,11 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/gabia_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "gabia",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/connectors/google/gmail_cdp_reader.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
    "reason": "도메인(google) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gmail_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "google",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
    "source": "rule"
   },
@@ -3345,14 +3321,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/hanafax_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "hanafax",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/connectors/hiworks/client.py": {
    "layer": "L5",
    "role": "site_module",
@@ -3373,17 +3341,9 @@
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
-   "reason": "도메인(hiworks) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/hiworks_mail_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "hiworks",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/hiworks_config.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/connectors/inquiry_router.py": {
    "layer": "L8",
@@ -3447,22 +3407,6 @@
    "domain": "instagram",
    "reason": "도메인(instagram) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/kakao_setup_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "kakao",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/kakao_skill_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "kakao",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
    "source": "rule"
   },
   "ai_orchestrator/routers/marketing_ops_router.py": {
@@ -4725,7 +4669,7 @@
    "layer": "L4",
    "role": "site_module",
    "domain": "naver_cafe",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L5 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py(역방향) 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -7287,7 +7231,7 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/approval_manager.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/connectors/__init__.py": {
    "layer": "APP",
@@ -7710,8 +7654,8 @@
    "role": "persistence",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "conftest.py": {
    "layer": "L11",
@@ -7727,7 +7671,7 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/dashboard.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "email_task_approval.py": {
    "layer": "L2",
@@ -7735,39 +7679,39 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "email_task_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "executor.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "hiworks_mail_reader.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_mail",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/hiworks_mail_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "inbox_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/__init__.py": {
    "layer": "L10",
@@ -8182,8 +8126,8 @@
    "role": "generic",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/log_analyzer.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "orchestrator_v1/core/logger.py": {
    "layer": "L1",
@@ -8214,8 +8158,8 @@
    "role": "generic",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/monitor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "notice_radar/__init__.py": {
    "layer": "L4",
@@ -8287,7 +8231,7 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/notice_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "policy_engine.py": {
    "layer": "L2",
@@ -8295,7 +8239,7 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/policy_engine.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "scripts/__init__.py": {
    "layer": "L4",
@@ -10957,7 +10901,7 @@
    "layer": "L6",
    "role": "site_module",
    "domain": "g2b",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L5, 2026-10-07 재판정)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -11037,7 +10981,7 @@
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -11053,7 +10997,7 @@
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -11237,7 +11181,7 @@
    "layer": "L6",
    "role": "policy",
    "domain": "common",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -11957,7 +11901,7 @@
    "layer": "L6",
    "role": "persistence",
    "domain": "naver_blog",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -15669,7 +15613,7 @@
    "layer": "L4",
    "role": "persistence",
    "domain": "browser",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/navigator.py·popup_classifier.py 를 import. 지우면 층 역전 +3건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -15741,7 +15685,7 @@
    "layer": "L6",
    "role": "generic",
    "domain": "common",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -16021,7 +15965,7 @@
    "layer": "L6",
    "role": "policy",
    "domain": "common",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/agent.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -16325,7 +16269,7 @@
    "layer": "L6",
    "role": "policy",
    "domain": "youtube",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -16382,8 +16326,8 @@
    "role": "persistence",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "telegram_notifier.py": {
    "layer": "L3",
@@ -16391,7 +16335,7 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/telegram_notifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "tests/__init__.py": {
    "layer": "L11",
@@ -21831,7 +21775,7 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/core/audit_logger.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "logger.py": {
    "layer": "L1",
@@ -21839,7 +21783,7 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/core/logger.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "logging_utils.py": {
    "layer": "L1",
@@ -21847,7 +21791,7 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/core/logging_utils.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "models.py": {
    "layer": "L1",
@@ -21855,15 +21799,15 @@
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/core/models.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "security_utils.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
    "reason": "루트 호환 shim — 원본 orchestrator_v1/core/security_utils.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
+   "confidence": "high",
+   "source": "confirmed"
   },
   "orchestrator_v1/tasks/__init__.py": {
    "layer": "L4",
@@ -22205,9 +22149,9 @@
    "layer": "L1",
    "role": "shared",
    "domain": "common",
-   "reason": "게이트 결과 타입만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출(R2d-2 설계서 §4)",
+   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
    "confidence": "high",
-   "source": "manual"
+   "source": "confirmed"
   },
   "tests/test_gate_core_split_r2d2.py": {
    "layer": "L11",
@@ -22274,12 +22218,12 @@
    "source": "rule"
   },
   "ai_orchestrator/paths/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "shared",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "tests/test_repo_root_canonical.py": {
    "layer": "L11",
@@ -22850,6 +22794,70 @@
    "source": "rule"
   },
   "tests/test_tool_home_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/contracts/display_name.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/ops/folder_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_audit_kit_gate_rename.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_folder_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_module_cycles_import_based.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_registry_sync_and_modules_summary.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_ruff_new_only_gate_rename.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_verify_change_ruff_loud.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

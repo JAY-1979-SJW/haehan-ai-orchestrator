@@ -16,6 +16,8 @@ extractor.py에서 그대로 가져온 구조 해시)를 쓴다. dupscan 자체�
   build-baseline            오늘 기준 전체 저장소를 스캔해 기존 중복 묶음을 기준선에 기록
   check --staged            git staged .py 파일만 검사(pre-commit)
   check <file> [file...]    지정 파일만 검사(CI verify에서 명시적으로 넘길 때)
+  check --all               저장소 전체 비교(CI): 기준선에 없는 중복 묶음이 하나라도 있으면 실패, 기준선에만 남은(사라진) 해시는 알려 준다.
+                            staged·변경 파일 검사는 새 중복이 '다른 파일'에 생기면 놓칠 수 있어(양쪽이 모두 새 파일이 아니면 한쪽만 검사) 전체 비교를 더한다.
 """
 
 from __future__ import annotations
@@ -172,7 +174,30 @@ def _print_blocked(blocked: list[str]) -> None:
     print("=" * 60)
 
 
+def cmd_check_all(_args: argparse.Namespace) -> int:
+    """저장소 전체에서 구조 동일 중복 묶음을 모아 기준선과 비교한다(새 묶음 = 실패, 사라진 기준선 해시 = 안내)."""
+    baseline_hashes = load_baseline_hashes()
+    index = build_repo_index()
+    dups = {h: locs for h, locs in index.items() if len(locs) >= 2}
+    new = sorted(set(dups) - baseline_hashes)
+    stale = sorted(baseline_hashes - set(dups))
+    if stale:
+        print(f"[dup-gate/G12] 참고: 기준선에만 남은(더는 중복이 아닌) 해시 {len(stale)}건 — build-baseline 으로 줄일 수 있다.", file=sys.stderr)
+    if new:
+        print("=" * 60)
+        print(f"[dup-gate/G12] 기준선에 없는 새 중복 묶음 {len(new)}건 — 실패:")
+        for h in new[:20]:
+            print(f"    - {h[:8]}: " + " ↔ ".join(f"{f}:{q}" for f, q in sorted(dups[h])[:4]))
+        print("    기존 구현을 재사용하거나 공용 함수로 추출하세요(기준선에 넣어 가리지 마세요).")
+        print("=" * 60)
+        return 1
+    print(f"[dup-gate/G12] PASS — 중복 묶음 {len(dups)}건 모두 기준선(기존 부채) 안")
+    return 0
+
+
 def cmd_check(args: argparse.Namespace) -> int:
+    if getattr(args, "all", False):
+        return cmd_check_all(args)
     targets = _normalize_targets(args)
     if not targets:
         return 0
@@ -198,6 +223,7 @@ def main(argv: list[str] | None = None) -> int:
     p_check = sub.add_parser("check")
     p_check.add_argument("files", nargs="*")
     p_check.add_argument("--staged", action="store_true")
+    p_check.add_argument("--all", action="store_true", help="저장소 전체를 기준선과 비교(CI)")
     p_check.set_defaults(func=cmd_check)
 
     args = ap.parse_args(argv)

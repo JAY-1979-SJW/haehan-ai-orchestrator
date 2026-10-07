@@ -55,26 +55,25 @@ def data_root_override() -> Path | None:
     return _env_path(ENV_DATA_ROOT)
 
 
-def data_dir() -> Path:
-    """업무 데이터(JSON·보고서·세션 상태·감사 폴더 등) 루트. 디렉터리를 만들지는 않는다."""
-    explicit = _env_path(ENV_DATA_DIR)
+def _resolve_dir(env_name: str, root_subdir: str, default: Path) -> Path:
+    """폴더 위치 규칙 한 곳: 개별 환경변수 > HAEHAN_DATA_ROOT/<하위> > 예전 기본 위치. data_dir·storage_dir 가 함께 쓴다."""
+    explicit = _env_path(env_name)
     if explicit is not None:
         return explicit
     root = data_root_override()
     if root is not None:
-        return root / "data"
-    return default_data_dir()
+        return root / root_subdir
+    return default
+
+
+def data_dir() -> Path:
+    """업무 데이터(JSON·보고서·세션 상태·감사 폴더 등) 루트. 디렉터리를 만들지는 않는다."""
+    return _resolve_dir(ENV_DATA_DIR, "data", default_data_dir())
 
 
 def storage_dir() -> Path:
     """DB(SQLite)·감사/승인 JSONL·비밀·업로드 첨부 루트. 디렉터리를 만들지는 않는다."""
-    explicit = _env_path(ENV_STORAGE_DIR)
-    if explicit is not None:
-        return explicit
-    root = data_root_override()
-    if root is not None:
-        return root / "storage"
-    return default_storage_dir()
+    return _resolve_dir(ENV_STORAGE_DIR, "storage", default_storage_dir())
 
 
 def ensure_runtime_dirs() -> None:

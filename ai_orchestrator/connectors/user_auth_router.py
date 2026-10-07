@@ -10,6 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
 
 from ai_orchestrator import config
+from ai_orchestrator.contracts.display_name import validate_display_name
 from ai_orchestrator.gates.auth import (  # 승인 등 owner 작업·콘솔 JWT 수용·OWNER_EMAILS
     is_owner_email,
     register_bearer_resolver,
@@ -99,12 +100,7 @@ class SignupRequest(BaseModel):
     @field_validator("name")
     @classmethod
     def name_not_empty(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("이름을 입력하세요")
-        if len(v) > 50:
-            raise ValueError("이름은 최대 50자입니다")
-        return v
+        return validate_display_name(v)
 
     @field_validator("password")
     @classmethod
