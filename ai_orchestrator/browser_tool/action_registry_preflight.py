@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from agent.action_registry import get_meta, is_known_action
+from ai_orchestrator.browser_tool.agent_action_registry import get_meta, is_known_action
 
 from .gate_approval_preflight import evaluate_gate_approval_preflight
 

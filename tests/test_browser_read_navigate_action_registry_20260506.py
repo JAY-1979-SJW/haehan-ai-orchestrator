@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from agent.action_registry import (
+from ai_orchestrator.browser_tool.agent_action_registry import (
     CATEGORY_BROWSER,
     RISK_LOW,
     get_meta,
@@ -147,7 +147,7 @@ def test_allowlist_required_documented_as_todo():
     """
     import inspect
 
-    import agent.action_registry as reg_module
+    import ai_orchestrator.browser_tool.agent_action_registry as reg_module
 
     source = inspect.getsource(reg_module)
     assert "allowlist" in source.lower(), (

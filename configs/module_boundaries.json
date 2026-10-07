@@ -68,7 +68,6 @@
       "layer": "L8",
       "paths": [
         "ai_orchestrator/",
-        "services/",
         "scripts/verify/verify_live_agent_smoke.py",
         "scripts/verify/verify_live_task_dispatch.py"
       ],

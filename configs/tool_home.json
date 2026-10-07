@@ -44,7 +44,6 @@
   {"prefix": "local_agent/", "reason": "기반 연동(T4)"},
   {"prefix": "scripts/local_agent/", "reason": "기반 연동(T4)"},
   {"prefix": "browser_worker/", "reason": "기반 연동(T4)"},
-  {"prefix": "browser_api/", "reason": "기반 연동(T4)"},
   {"prefix": "scripts/ops/guard_youtube_upload.py", "reason": ".claude 훅이 이 경로를 직접 호출 — 이동 금지"}
  ]
 }
