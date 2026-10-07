@@ -24,7 +24,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_common_tool_runtime_baseline_contract.py" in rendered
     assert "tests/test_common_engine_commercialization_baseline.py" in rendered
     assert "tests/test_local_agent_connection_recovery_baseline.py" in rendered
-    assert "tests/test_desktop_auth_runtime_baseline_contract.py" in rendered
+    assert "tests/desktop/test_desktop_auth_runtime_baseline_contract.py" in rendered
     assert "tests/test_local_agent_e2e_flow_contract.py" in rendered
     assert "tests/test_app_baseline_contract.py" in rendered
     assert "tests/test_standard_workflow_contract.py" in rendered

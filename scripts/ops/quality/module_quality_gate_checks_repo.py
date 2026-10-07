@@ -199,7 +199,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_common_tool_runtime_baseline_contract.py",
         "tests/test_common_engine_commercialization_baseline.py",
         "tests/test_local_agent_connection_recovery_baseline.py",
-        "tests/test_desktop_auth_runtime_baseline_contract.py",
+        "tests/desktop/test_desktop_auth_runtime_baseline_contract.py",
         "tests/test_local_agent_e2e_flow_contract.py",
         "tests/test_app_baseline_contract.py",
         "tests/test_standard_workflow_contract.py",

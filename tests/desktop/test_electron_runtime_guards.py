@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).resolve().parents[1]
-HARNESS = Path(__file__).with_name("electron_guard_harness.js")
+REPO = Path(__file__).resolve().parents[2]
+HARNESS = Path(__file__).parent.parent / "electron_guard_harness.js"
 NODE = shutil.which("node")
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="node 가 없다")

@@ -63,7 +63,7 @@ def test_no_repository_relative_fallback(monkeypatch, tmp_path):
     # 저장소(소스 폴더) 아래로 폴백하면 안 된다
     monkeypatch.setattr(ap, "_is_windows", lambda: False)
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
-    repo = Path(__file__).resolve().parents[1]
+    repo = Path(__file__).resolve().parents[2]
     assert repo not in ap.data_root().parents and ap.data_root() != repo
 
 

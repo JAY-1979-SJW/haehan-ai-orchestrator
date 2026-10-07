@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "ops" / "desktop_fresh_run.ps1"
 PS = shutil.which("powershell") or shutil.which("pwsh")
 

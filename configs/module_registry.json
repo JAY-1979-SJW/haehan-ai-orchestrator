@@ -14137,7 +14137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_paths.py": {
+  "tests/common/test_app_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14145,7 +14145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_paths_migrate.py": {
+  "tests/common/test_app_paths_migrate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15385,7 +15385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_credentials_cli_security.py": {
+  "tests/auth/test_credentials_cli_security.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15393,7 +15393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_credentials_key_protection.py": {
+  "tests/auth/test_credentials_key_protection.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15441,7 +15441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_desktop_auth_runtime_baseline_contract.py": {
+  "tests/desktop/test_desktop_auth_runtime_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16865,7 +16865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_local_user_secret_store.py": {
+  "tests/auth/test_local_user_secret_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16905,7 +16905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_auto_resume_wiring_20260520.py": {
+  "tests/auth/test_login_auto_resume_wiring_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16913,7 +16913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_detector_realtime.py": {
+  "tests/auth/test_login_detector_realtime.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16921,7 +16921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_pipeline_integrity_audit_20260520.py": {
+  "tests/auth/test_login_pipeline_integrity_audit_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16929,7 +16929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_session_monitor.py": {
+  "tests/auth/test_login_session_monitor.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17633,7 +17633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_realtime_audit.py": {
+  "tests/common/test_realtime_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17689,7 +17689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_scripts_logger_rotation.py": {
+  "tests/common/test_scripts_logger_rotation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17697,7 +17697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_security.py": {
+  "tests/common/test_security.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18161,7 +18161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_sqlite_schema.py": {
+  "tests/common/test_sqlite_schema.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18393,7 +18393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_user_approval_gate.py": {
+  "tests/auth/test_user_approval_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18417,7 +18417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_user_auth_audit.py": {
+  "tests/auth/test_user_auth_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18657,7 +18657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_user_db_init_guard.py": {
+  "tests/auth/test_user_db_init_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18849,7 +18849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_dashboard_auth_none_guards.py": {
+  "tests/auth/test_dashboard_auth_none_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19257,7 +19257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_user_auth.py": {
+  "tests/auth/test_console_api_contract_user_auth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19313,7 +19313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_jwt_auth.py": {
+  "tests/auth/test_console_api_contract_jwt_auth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19329,7 +19329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_owner_emails.py": {
+  "tests/auth/test_console_api_contract_owner_emails.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19393,7 +19393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_pending_reject.py": {
+  "tests/auth/test_console_api_contract_pending_reject.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19417,7 +19417,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "tests/test_repo_root_canonical.py": {
+  "tests/common/test_repo_root_canonical.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19441,7 +19441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_desktop_claude_mcp.py": {
+  "tests/desktop/test_desktop_claude_mcp.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19457,7 +19457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_publish_release_to_nas.py": {
+  "tests/desktop/test_publish_release_to_nas.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19985,7 +19985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_desktop_fresh_run.py": {
+  "tests/desktop/test_desktop_fresh_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19993,7 +19993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_desktop_owner_bootstrap.py": {
+  "tests/desktop/test_desktop_owner_bootstrap.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20001,7 +20001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_electron_runtime_guards.py": {
+  "tests/desktop/test_electron_runtime_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22873,7 +22873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_bundle_entrypoints.py": {
+  "tests/desktop/test_bundle_entrypoints.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22881,7 +22881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_bundle_path_gate.py": {
+  "tests/desktop/test_bundle_path_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22921,7 +22921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_legacy_install_import.py": {
+  "tests/desktop/test_legacy_install_import.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23121,7 +23121,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "tests/test_common_http_retry.py": {
+  "tests/common/test_common_http_retry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23330,6 +23330,30 @@
    "source": "rule"
   },
   "tests/site_work/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/auth/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/common/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/desktop/__init__.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

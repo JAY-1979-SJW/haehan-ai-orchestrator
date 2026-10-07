@@ -16,7 +16,7 @@ import requests
 
 from ai_orchestrator import mcp_server
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 ELECTRON = ROOT / "admin-web" / "electron"
 
 

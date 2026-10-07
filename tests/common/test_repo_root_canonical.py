@@ -16,7 +16,7 @@ from pathlib import Path
 from scripts.common.app_paths import repo_root
 from scripts.common.data_paths import _PROJECT_ROOT as DATA_PATHS_ROOT
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_repo_root_matches_this_file_based_computation():
