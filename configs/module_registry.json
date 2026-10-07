@@ -14337,7 +14337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_browser_user_present_automation.py": {
+  "scripts/archive/ops/audit_gabia_browser_user_present_automation.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -14345,7 +14345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_dns_user_approval_workflow.py": {
+  "scripts/archive/ops/audit_gabia_dns_user_approval_workflow.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -14353,7 +14353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_session_storage_safety.py": {
+  "scripts/archive/ops/audit_gabia_session_storage_safety.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -15209,7 +15209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/login_gabia_datago.py": {
+  "scripts/gabia/ops/login_gabia_datago.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
