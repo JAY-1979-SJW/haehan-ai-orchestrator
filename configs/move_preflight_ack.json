@@ -600,6 +600,144 @@
    "file": "scripts/form/personal_profile.py",
    "reason": "A005 표준 모듈 가림 해소 — 같은 폴더 안 이름 변경(profile → personal_profile). 명시 참조(-m 사용 안내·import·시험)는 새 이름으로 수정, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml 검색 0)",
    "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/dev_reg_cli.py",
+   "new": "ai_orchestrator/dev_reg/dev_reg_cli.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/fetch_nts_interpretations.py",
+   "new": "ai_orchestrator/gongmu/fetch_nts_interpretations.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/fetch_tax_precedent_summary.py",
+   "new": "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/form/profile.py",
+   "new": "scripts/form/personal_profile.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_gabia_site_settings_canonical_registry.py",
+   "new": "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_google_gmail_function_contract.py",
+   "new": "scripts/google/audit_gmail_function_contract.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/ig_batch.py",
+   "new": "scripts/instagram/ig_batch.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/marketing_summary_build.py",
+   "new": "scripts/naver/cafe/ops/marketing_summary_build.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_action_item_dashboard.py",
+   "new": "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_business_report.py",
+   "new": "scripts/naver/mail/analysis/audit_naver_mail_business_report.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_unknown_classification_rules.py",
+   "new": "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_dynamic_folder_discovery.py",
+   "new": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py",
+   "new": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_inbox_p0_complete.py",
+   "new": "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_smart_folder_coverage.py",
+   "new": "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py",
+   "new": "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_unread_pagination_depth.py",
+   "new": "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_body_pipeline_batch.py",
+   "new": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_naver_mail_body_pipeline_v2.py",
+   "new": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/smoke_naver_manual_login_probe.py",
+   "new": "scripts/naver/smoke_naver_manual_login_probe.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/app_realtime_check.py",
+   "new": "scripts/ops/app_realtime_check.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/deploy_dry_run.py",
+   "new": "scripts/ops/deploy_dry_run.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/watch_log.py",
+   "new": "scripts/ops/watch_log.py",
+   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+   "date": "2026-10-08"
   }
  ]
 }
