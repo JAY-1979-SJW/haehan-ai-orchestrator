@@ -7,11 +7,12 @@ import traceback
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
-from pathlib import Path
 from time import perf_counter
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 RUNS_DIR = ROOT / "data" / "eum_runs"
 
 

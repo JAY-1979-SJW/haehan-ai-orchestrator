@@ -9,10 +9,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.app_paths import repo_root
 from scripts.eum.menu_actions import open_menu_page
 from scripts.eum.sales_mail import DEFAULT_SOURCE, load_new_site_projects
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 
 
 def _eum_dir() -> Path:

@@ -12,7 +12,6 @@ import json
 import logging
 import sys
 import time
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -20,6 +19,7 @@ from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import addresses, require_send_approval
+from ai_orchestrator.paths import repo_root
 
 from ..audit_logger import log_event
 
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 eum_router = APIRouter(prefix="/eum", tags=["eum"])
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = repo_root()
 _TARGETS_LATEST = _ROOT / "data" / "eum_sales_mail_targets_latest.json"
 
 
