@@ -50,7 +50,7 @@
 - `scripts/browser/agent/approval_api_client.py`: `approval_api_configured`(function,L34)
 - `scripts/browser/agent/browser_session.py`: `wait_for_user_action`(function,L128)
 - `scripts/browser/agent/sitemap_detector.py`: `detect_selectors_by_network`(function,L93)
-- `local_agent/runtime/delegated_permission_store.py`: `get_store_snapshot`(function,L96)
+- `local_agent/runtime/permission/delegated_permission_store.py`: `get_store_snapshot`(function,L96)
 - `local_agent/runtime/universal/generic_selector_discovery.py`: `get_risk_button_types`(function,L134)
 - `scripts/naver/blog/naver_content_safe_result.py`: `build_publish_result`(function,L104)
 - `local_agent/runtime/site_profile/selector_pack_registry.py`: `is_pack_registered`(function,L91)

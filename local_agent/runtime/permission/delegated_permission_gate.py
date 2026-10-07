@@ -14,12 +14,12 @@ from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_USER_DIRECT,
     classify_action,
 )
-from local_agent.runtime.delegated_permission_policy import (
+from local_agent.runtime.permission.delegated_permission_policy import (
     CHECK_ALLOWED,
     CHECK_BLOCKED,
     CHECK_PERMISSION_REQUIRED,
 )
-from local_agent.runtime.delegated_permission_store import use_permission
+from local_agent.runtime.permission.delegated_permission_store import use_permission
 
 # ── 게이트 결과 상수 ───────────────────────────────────────────────────────────
 

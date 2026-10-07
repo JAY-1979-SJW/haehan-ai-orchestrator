@@ -13,15 +13,15 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from local_agent.runtime.delegated_action_executor import (
+from ai_orchestrator.contracts.local_task_protocol import (
+    build_task,
+)
+from local_agent.runtime.permission.delegated_action_executor import (
     execute_delegated_action,
 )
 from scripts.naver.blog.naver_content_safe_result import (
     build_blog_draft_result,
     sanitize_naver_result,
-)
-from ai_orchestrator.contracts.local_task_protocol import (
-    build_task,
 )
 
 # ── 블로그 workflow 단계 상수 ─────────────────────────────────────────────────
@@ -198,6 +198,6 @@ def read_blog_post(
 
 def get_blog_workflow_grade(step: str) -> str:
     """블로그 workflow 단계의 실행 등급 반환."""
-    from local_agent.runtime.content_workflow_policy import get_workflow_grade
+    from local_agent.runtime.permission.content_workflow_policy import get_workflow_grade
 
     return get_workflow_grade(step)

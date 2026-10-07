@@ -10,13 +10,13 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from local_agent.runtime.approval_audit_log import (
+from local_agent.runtime.permission.approval_audit_log import (
     log_execution_blocked,
     log_execution_completed,
     log_execution_started,
 )
-from local_agent.runtime.content_publish_guard import validate_publish_request
-from local_agent.runtime.delegated_permission_gate import (
+from local_agent.runtime.permission.content_publish_guard import validate_publish_request
+from local_agent.runtime.permission.delegated_permission_gate import (
     GATE_BLOCKED,
     GATE_NEED_PERMISSION,
     GATE_USER_DIRECT,

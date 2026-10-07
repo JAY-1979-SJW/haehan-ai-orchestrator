@@ -2,22 +2,35 @@
 네이버 카페 workflow 테스트
 """
 import pytest
-from scripts.naver.cafe.naver_cafe_workflow import (
-    search_cafe, read_cafe_post, generate_blog_material_from_post,
-    write_cafe_post, write_cafe_comment, get_cafe_workflow_grade,
-    STEP_SEARCH, STEP_READ_POST, STEP_POST_WRITE, STEP_COMMENT_WRITE,
+
+from local_agent.runtime.permission.content_workflow_policy import (
+    GRADE_AUTO_ALLOWED,
+    GRADE_USER_DELEGATED,
+    is_workflow_auto_allowed,
+    requires_permission,
 )
-from local_agent.runtime.content_workflow_policy import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED,
-    is_workflow_auto_allowed, requires_permission,
+from local_agent.runtime.permission.delegated_action_executor import (
+    EXEC_ALLOWED,
+    EXEC_NEED_PERMISSION,
 )
-from local_agent.runtime.delegated_permission_store import (
-    grant_permission, revoke, clear_all,
-)
-from local_agent.runtime.delegated_action_executor import (
-    EXEC_ALLOWED, EXEC_NEED_PERMISSION,
+from local_agent.runtime.permission.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
 )
 from scripts.naver.blog.naver_content_safe_result import validate_naver_result
+from scripts.naver.cafe.naver_cafe_workflow import (
+    STEP_COMMENT_WRITE,
+    STEP_POST_WRITE,
+    STEP_READ_POST,
+    STEP_SEARCH,
+    generate_blog_material_from_post,
+    get_cafe_workflow_grade,
+    read_cafe_post,
+    search_cafe,
+    write_cafe_comment,
+    write_cafe_post,
+)
 
 
 @pytest.fixture(autouse=True)

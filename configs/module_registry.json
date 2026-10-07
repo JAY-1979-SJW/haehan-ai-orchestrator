@@ -3889,7 +3889,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/approval_audit_log.py": {
+  "local_agent/runtime/permission/approval_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4417,7 +4417,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/content_publish_guard.py": {
+  "local_agent/runtime/permission/content_publish_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4425,7 +4425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/content_workflow_policy.py": {
+  "local_agent/runtime/permission/content_workflow_policy.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4433,7 +4433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/delegated_action_executor.py": {
+  "local_agent/runtime/permission/delegated_action_executor.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4441,7 +4441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/delegated_permission_gate.py": {
+  "local_agent/runtime/permission/delegated_permission_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4449,7 +4449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/delegated_permission_policy.py": {
+  "local_agent/runtime/permission/delegated_permission_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4457,7 +4457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/delegated_permission_store.py": {
+  "local_agent/runtime/permission/delegated_permission_store.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -23282,6 +23282,14 @@
    "source": "rule"
   },
   "local_agent/runtime/security_program/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/permission/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

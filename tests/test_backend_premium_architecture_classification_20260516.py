@@ -68,7 +68,7 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/audit/audit_logger.py",
             "ai_orchestrator/server/action_approval_audit_store.py",
-            "local_agent/runtime/approval_audit_log.py",
+            "local_agent/runtime/permission/approval_audit_log.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: 표준 스키마 기준선
             "ai_orchestrator/audit_evidence/adapters.py",  # STEP 4: read-only adapter
         ],

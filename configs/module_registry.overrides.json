@@ -117,7 +117,7 @@
   "role": "browser_engine",
   "reason": "agent.py(BrowserAgent, L4)를 구동해 사이트맵을 탐지 — 단순 외부 API 커넥터(L3) 아님, 브라우저 엔진 성격"
  },
- "local_agent/runtime/delegated_permission_store.py": {
+ "local_agent/runtime/permission/delegated_permission_store.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "저장 전 delegated_permission_policy(L2)의 build/check/revoke를 직접 호출해 검증까지 수행 — 단순 L7 저장소 아님, 정책 집행 성격"

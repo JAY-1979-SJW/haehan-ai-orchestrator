@@ -9,8 +9,8 @@ import ast
 from pathlib import Path
 from typing import Any
 
-from local_agent.runtime import delegated_permission_store as store
-from local_agent.runtime.delegated_permission_policy import (
+from local_agent.runtime.permission import delegated_permission_store as store
+from local_agent.runtime.permission.delegated_permission_policy import (
     CHECK_ALLOWED,
     CHECK_PERMISSION_REQUIRED,
     check_permission,

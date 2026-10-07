@@ -18,25 +18,7 @@ from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_USER_DIRECT,
     classify_action,
 )
-from local_agent.runtime.delegated_action_executor import (
-    EXEC_ALLOWED,
-    EXEC_BLOCKED,
-    EXEC_NEED_PERMISSION,
-    EXEC_USER_DIRECT,
-    execute_delegated_action,
-)
-from local_agent.runtime.delegated_permission_policy import (
-    CHECK_EXHAUSTED,
-    CHECK_EXPIRED,
-    CHECK_REVOKED,
-    CHECK_SCOPE_EXCEEDED,
-)
-from local_agent.runtime.delegated_permission_store import (
-    clear_all,
-    grant_permission,
-    revoke,
-)
-from local_agent.runtime.approval_audit_log import (
+from local_agent.runtime.permission.approval_audit_log import (
     EVENT_EXECUTION_BLOCKED,
     EVENT_EXECUTION_COMPLETED,
     EVENT_EXECUTION_STARTED,
@@ -44,6 +26,24 @@ from local_agent.runtime.approval_audit_log import (
     get_log,
     get_log_for_permission,
     has_sensitive_data,
+)
+from local_agent.runtime.permission.delegated_action_executor import (
+    EXEC_ALLOWED,
+    EXEC_BLOCKED,
+    EXEC_NEED_PERMISSION,
+    EXEC_USER_DIRECT,
+    execute_delegated_action,
+)
+from local_agent.runtime.permission.delegated_permission_policy import (
+    CHECK_EXHAUSTED,
+    CHECK_EXPIRED,
+    CHECK_REVOKED,
+    CHECK_SCOPE_EXCEEDED,
+)
+from local_agent.runtime.permission.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
 )
 from local_agent.runtime.safe_write_result_sanitizer import validate_write_result
 
