@@ -16,7 +16,7 @@ from approval_manager import build_execution_plan, is_token_valid
 from logger import get_logger
 from whitelist_executor import execute_allowed
 
-_BASE_DIR = Path(__file__).resolve().parent
+_BASE_DIR = Path(__file__).resolve().parents[2]
 _EXEC_LOG_PATH = _BASE_DIR / "logs" / "execution.jsonl"
 
 _BLOCKED_LEVELS = {"high", "critical"}

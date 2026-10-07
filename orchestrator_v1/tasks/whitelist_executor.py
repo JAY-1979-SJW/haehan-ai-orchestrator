@@ -17,7 +17,7 @@ from models import ExecutionPlan, RiskAssessment, TaskRequest
 
 log = get_logger("executor")
 
-_HISTORY_PATH = Path(__file__).parent / "storage" / "execution_history.jsonl"
+_HISTORY_PATH = Path(__file__).resolve().parents[2] / "storage" / "execution_history.jsonl"
 
 _EXECUTABLE_LOW_ACTIONS = {"read_file", "list_dir", "inspect_logs", "status_check"}
 _BLOCKED_LEVELS = {"high", "critical"}

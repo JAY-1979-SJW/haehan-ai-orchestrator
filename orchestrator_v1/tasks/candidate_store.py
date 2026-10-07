@@ -9,7 +9,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-_BASE_DIR = str(Path(__file__).resolve().parent)
+_BASE_DIR = str(Path(__file__).resolve().parents[2])
 _CANDIDATES_PATH = Path(_BASE_DIR) / "storage" / "candidates.jsonl"
 
 

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-_POLICY_PATH = Path(__file__).parent / "policies" / "default_policy.yaml"
+_POLICY_PATH = Path(__file__).resolve().parents[2] / "policies" / "default_policy.yaml"
 
 
 def load_policy(path: str | None = None) -> dict:

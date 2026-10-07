@@ -7433,6 +7433,14 @@
    "confidence": "high",
    "source": "confirmed"
   },
+  "approval_manager.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "apps/ig-comment-dm-bot/connectors/__init__.py": {
    "layer": "APP",
    "role": "standalone_app",
@@ -7849,6 +7857,22 @@
    "confidence": "high",
    "source": "rule"
   },
+  "candidate_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "candidate_to_task.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
   "conftest.py": {
    "layer": "L11",
    "role": "test",
@@ -7894,6 +7918,14 @@
    "role": "persistence",
    "domain": "common",
    "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
   },
@@ -8543,6 +8575,22 @@
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
+   "source": "rule"
+  },
+  "policy_engine.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "risk_assessor.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
    "source": "rule"
   },
   "scripts/__init__.py": {
@@ -16689,6 +16737,22 @@
    "confidence": "low",
    "source": "rule"
   },
+  "task_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tasks_router.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
   "telegram_notifier.py": {
    "layer": "L3",
    "role": "connector",
@@ -21903,6 +21967,14 @@
    "domain": "common",
    "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
+   "source": "rule"
+  },
+  "whitelist_executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }
