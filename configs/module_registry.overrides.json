@@ -1195,5 +1195,155 @@
   "role": "connector",
   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/telegram_notifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram/dm_db.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_db.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram_dm_db.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_db.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram/dm_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram_dm_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram/dm_rule_engine.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_rule_engine.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram/dm_service.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_service.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram_dm_service.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_service.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram/dm_token_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_token_store.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram_dm_token_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_token_store.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram/graph_client.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_graph_client.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram_graph_client.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_graph_client.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram/webhook_parser.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_webhook_parser.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram_webhook_parser.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_webhook_parser.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/naver_blog/router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/naver_blog_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/naver_blog_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/naver_blog_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/naver_blog/automation_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "이동한 파일 — 원본 ai_orchestrator/routers/blog_automation_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/routers/blog_automation_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/routers/blog_automation_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gonobi_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gonobi_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gonobi_scheduler.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gonobi_scheduler.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/blog/router_blog.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동한 파일 — 원본 scripts/naver/router_blog.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/router_blog.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "옛 경로 shim — 원본 scripts/naver/router_blog.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/naver/blog/navigator_blog.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "이동한 파일 — 원본 scripts/navigator_blog.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/navigator_blog.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "옛 경로 shim — 원본 scripts/navigator_blog.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/instagram/ops/ig_batch.py": {
+  "layer": "L12",
+  "role": "ops_tool",
+  "reason": "이동한 파일 — 원본 scripts/ops/ig_batch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
+ },
+ "scripts/ops/ig_batch.py": {
+  "layer": "L12",
+  "role": "ops_tool",
+  "reason": "옛 경로 shim — 원본 scripts/ops/ig_batch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+  "source": "manual"
  }
 }

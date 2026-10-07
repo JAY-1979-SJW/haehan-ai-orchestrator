@@ -3293,17 +3293,17 @@
    "layer": "L8",
    "role": "api",
    "domain": "naver_blog",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gonobi_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/gonobi_scheduler.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_blog",
-   "reason": "업무 흐름 이름",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gonobi_scheduler.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/google/__init__.py": {
    "layer": "L5",
@@ -3437,57 +3437,57 @@
    "layer": "L7",
    "role": "persistence",
    "domain": "instagram",
-   "reason": "DB·저장 신호",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_db.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram_dm_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "instagram",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "instagram",
-   "reason": "docstring이 '순수 함수(DB/네트워크 의존 없음)' 라 명시 — L5 site_module 오분류",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_rule_engine.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "confirmed"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram_dm_service.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_service.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram_dm_token_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "instagram",
-   "reason": "DB·저장 신호",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_dm_token_store.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram_graph_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_graph_client.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram_webhook_parser.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/instagram_webhook_parser.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/kakao_setup_router.py": {
    "layer": "L8",
@@ -3525,9 +3525,9 @@
    "layer": "L8",
    "role": "api",
    "domain": "naver_blog",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/naver_blog_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/naver_cafe_router.py": {
    "layer": "L8",
@@ -5957,9 +5957,9 @@
    "layer": "L8",
    "role": "api",
    "domain": "naver_blog",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/routers/blog_automation_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/routers/chat_router.py": {
    "layer": "L8",
@@ -13669,9 +13669,9 @@
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
-   "reason": "도메인(naver) 자동화",
+   "reason": "옛 경로 shim — 원본 scripts/naver/router_blog.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/naver/router_cafe.py": {
    "layer": "L5",
@@ -14325,9 +14325,9 @@
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
-   "reason": "범용 브라우저·CDP",
+   "reason": "옛 경로 shim — 원본 scripts/navigator_blog.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/navigator_common.py": {
    "layer": "L4",
@@ -15677,9 +15677,9 @@
    "layer": "L12",
    "role": "ops_tool",
    "domain": "instagram",
-   "reason": "운영·감사 도구",
+   "reason": "옛 경로 shim — 원본 scripts/ops/ig_batch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/ops/inspect_excel.py": {
    "layer": "L12",
@@ -22333,33 +22333,33 @@
    "layer": "L7",
    "role": "persistence",
    "domain": "instagram",
-   "reason": "DB·저장 신호",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_db.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram/dm_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "instagram",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram/dm_rule_engine.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L1",
+   "role": "shared",
    "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_rule_engine.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/instagram/dm_service.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_service.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "tests/test_split_instagram_moved.py": {
    "layer": "L11",
@@ -22381,17 +22381,17 @@
    "layer": "L8",
    "role": "api",
    "domain": "naver_blog",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/routers/blog_automation_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/naver_blog/router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_blog",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/naver_blog_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "tests/test_split_naver_blog_moved.py": {
    "layer": "L11",
@@ -22402,20 +22402,20 @@
    "source": "rule"
   },
   "scripts/naver/blog/navigator_blog.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
+   "reason": "이동한 파일 — 원본 scripts/navigator_blog.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/naver/blog/router_blog.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
+   "reason": "이동한 파일 — 원본 scripts/naver/router_blog.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "tests/test_split_naver_blog_b2.py": {
    "layer": "L11",
@@ -22434,12 +22434,12 @@
    "source": "rule"
   },
   "scripts/instagram/ops/ig_batch.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L12",
+   "role": "ops_tool",
    "domain": "instagram",
-   "reason": "업무 흐름 이름",
+   "reason": "이동한 파일 — 원본 scripts/ops/ig_batch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "tests/test_split_instagram_b2.py": {
    "layer": "L11",
@@ -22448,6 +22448,30 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/connectors/instagram/dm_token_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "instagram",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_dm_token_store.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "low",
+   "source": "manual"
+  },
+  "ai_orchestrator/connectors/instagram/graph_client.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "instagram",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_graph_client.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "ai_orchestrator/connectors/instagram/webhook_parser.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "instagram",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/instagram_webhook_parser.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "low",
+   "source": "manual"
   }
  }
 }
