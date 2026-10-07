@@ -188,6 +188,17 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Upload UNVERIFIED installer (E2E 실패 시 — 대표님 PC 수동 확인용, 배포 금지)
+        # E2E 가 실패해도 빌드 자체는 된 설치 파일을 사람이 직접 설치해 확인할 수 있게 남긴다.
+        # 이름에 UNVERIFIED 를 붙여 정식 아티팩트(HaehanAI-Desktop-<버전>)·NAS 게시와 섞이지 않게 하고 1일만 보관한다.
+        if: failure() && steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: UNVERIFIED-HaehanAI-setup-${{ steps.buildinfo.outputs.version }}
+          path: dist-electron-new/*-setup.exe
+          if-no-files-found: ignore
+          retention-days: 1
+
       - name: Stage release files (exe·checksums·릴리스 노트·설치 안내서를 한 폴더에 평평하게)
         # 게시 도구(publish_release_to_nas.py)는 산출물 폴더에 HaehanAI-*.exe·checksums.txt(필수)와
         # RELEASE_NOTES.md·설치_및_사용_안내.md(있으면)를 기대한다. 업로드 경로가 여러 폴더에 걸치면
