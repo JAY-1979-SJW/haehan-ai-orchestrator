@@ -26,6 +26,14 @@ _ALIAS_RE = re.compile(
 )
 _MARKER_RE = re.compile(r"^#\s*haehan-shim:\s*([\w.]+)", re.M)
 
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
+
 _SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist-build-tmp", "_archive"}
 
 
@@ -179,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("old")
     ap.add_argument("new")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
+    ap.add_argument("--root", type=Path, default=ROOT)
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")  # cp949 콘솔에서 --help/dry-run 한글이 터지지 않게
