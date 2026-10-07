@@ -179,3 +179,8 @@ def test_main_empty_limit_env_means_no_limit(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("TARGET_LIMIT", "0")
     assert sm.main() == 0
     assert "절삭" not in capsys.readouterr().out
+
+
+def test_render_default_limit_is_unlimited():
+    assert "절삭" not in sm.render({"killed": 1}, total_targets=5)
+    assert "절삭" not in sm.render({"killed": 1}, 5)
