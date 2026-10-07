@@ -22,7 +22,7 @@ def _pytest_base(kind: str = "pytest_runtime") -> Path:
 def _isolate_dotenv_override() -> None:
     """`.env` 가 시험이 지정한 환경변수를 덮어쓰지 못하게 `load_dotenv` 의 override 를 항상 끈다.
 
-    `ai_orchestrator.config` 는 import(=시험의 importlib.reload)마다 `load_dotenv(override=True)` 를 불러 상위 폴더의
+    `ai_orchestrator.core.config` 는 import(=시험의 importlib.reload)마다 `load_dotenv(override=True)` 를 불러 상위 폴더의
     `.env` 로 환경변수를 덮어쓴다. 개발 PC 의 `.env` 에 `HTTP_USERS_PATH=` 처럼 빈 값이 있으면, 시험이 방금 지정한
     사용자 파일 경로가 빈 값으로 돌아가 인증 시험이 401 로 실패하고, `.env` 가 없는 CI·깨끗한 복사본에서는 통과했다
     (2026-10-04 실측: 같은 시험이 폴더 위치에 따라 실패/통과, 단독 실행 기준 32건). `.env` 로 빈 값을 채우는 동작은 그대로 둔다.

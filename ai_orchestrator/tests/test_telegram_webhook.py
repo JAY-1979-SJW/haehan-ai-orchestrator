@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_orchestrator.audit_logger import read_recent_logs
 from ai_orchestrator.gates.approval import issue_token
-from ai_orchestrator.models import RiskAssessment, TaskRequest
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 from ai_orchestrator.telegram_webhook import handle_telegram_webhook
 
 

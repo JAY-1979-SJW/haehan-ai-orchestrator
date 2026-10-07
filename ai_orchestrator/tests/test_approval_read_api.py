@@ -66,7 +66,7 @@ def setup(tmp_path_factory):
     os.environ["HTTP_USERS_PATH"] = str(users_path)
     os.environ["LOG_DIR"] = str(storage_dir)
 
-    import ai_orchestrator.config as _config
+    import ai_orchestrator.core.config as _config
 
     importlib.reload(_config)
     import ai_orchestrator.gates.auth as _auth

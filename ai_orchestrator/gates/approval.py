@@ -8,8 +8,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from ai_orchestrator.audit_logger import log_event
-from ai_orchestrator.config import APPROVAL_STORE_PATH as _STORE_PATH
-from ai_orchestrator.models import RiskAssessment, TaskRequest
+from ai_orchestrator.core.config import APPROVAL_STORE_PATH as _STORE_PATH
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 
 logger = logging.getLogger(__name__)
 

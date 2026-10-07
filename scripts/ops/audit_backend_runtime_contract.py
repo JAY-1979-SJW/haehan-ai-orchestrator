@@ -124,7 +124,7 @@ def scan_forbidden_backend_patterns() -> list[str]:
 
 
 def auth_default_is_safe() -> bool:
-    config_text = (ROOT / "ai_orchestrator" / "config.py").read_text(encoding="utf-8", errors="replace")
+    config_text = (ROOT / "ai_orchestrator" / "core" / "config.py").read_text(encoding="utf-8", errors="replace")
     return 'os.environ.get("AUTH_ENABLED", "true")' in config_text
 
 

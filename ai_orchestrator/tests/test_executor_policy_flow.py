@@ -8,7 +8,7 @@ plan.allowed / requires_approval / rate_limits / execution_policy / whitelist / 
 from unittest.mock import Mock, patch
 
 from ai_orchestrator import executor
-from ai_orchestrator.models import ExecutionPlan, TaskRequest
+from ai_orchestrator.core.models import ExecutionPlan, TaskRequest
 
 
 def _req(task_id="task-1", action="test_action", **kwargs):

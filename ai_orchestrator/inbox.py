@@ -4,7 +4,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 
-from .config import INBOX_PATH as _INBOX_PATH
+from .core.config import INBOX_PATH as _INBOX_PATH
 
 logger = logging.getLogger(__name__)
 

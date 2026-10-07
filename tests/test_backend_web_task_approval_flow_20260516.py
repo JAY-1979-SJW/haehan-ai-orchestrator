@@ -393,7 +393,7 @@ class TestWebTaskRunIntegrationBoundary:
 
     @pytest.fixture(scope="class")
     def client(self):
-        import ai_orchestrator.config as config
+        import ai_orchestrator.core.config as config
 
         config.AUTH_ENABLED = False
         from fastapi.testclient import TestClient

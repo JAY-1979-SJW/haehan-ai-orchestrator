@@ -19,7 +19,7 @@ _N = 20
 
 @pytest.fixture
 def client(monkeypatch, tmp_path):
-    import ai_orchestrator.config as config
+    import ai_orchestrator.core.config as config
 
     monkeypatch.setattr(config, "AUTH_ENABLED", False)
     store = tmp_path / "approvals.jsonl"

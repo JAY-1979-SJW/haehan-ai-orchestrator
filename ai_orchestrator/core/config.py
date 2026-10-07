@@ -53,7 +53,7 @@ GMAIL_TOKEN_PATH = Path(_gtok) if _gtok else LOG_DIR / "gmail_token.json"
 AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 
 _http_users_env = os.environ.get("HTTP_USERS_PATH", "").strip()
-HTTP_USERS_PATH = Path(_http_users_env) if _http_users_env else Path(__file__).parent / "policies" / "http_users.json"
+HTTP_USERS_PATH = Path(_http_users_env) if _http_users_env else Path(__file__).resolve().parents[1] / "policies" / "http_users.json"
 
 # ── CAD 프록시 ────────────────────────────────────────────────────
 # cad-backend(cad-quantity FastAPI) 의 내부 주소. 도커 네트워크 연결 시

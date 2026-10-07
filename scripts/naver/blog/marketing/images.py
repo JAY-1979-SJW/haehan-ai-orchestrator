@@ -22,7 +22,7 @@ _log = get_logger(__name__)
 
 # 데이터 저장 위치 — 앱 본체(ai_orchestrator)에 의존하지 않는다.
 #
-# 원래는 `from ai_orchestrator.config import get_local_data_dir` 였는데,
+# 원래는 `from ai_orchestrator.core.config import get_local_data_dir` 였는데,
 # 이게 블로그 모듈이 앱 패키지에 걸린 **유일한 의존**이었다(2026-08-24 실측).
 # 기준서 0절이 "언제든 들어낼 수 있는 경계 유지"를 요구하므로 직접 구현으로
 # 대체했다. 동작은 동일하다 — `LOCAL_DATA_DIR` 환경변수, 없으면 repo/data.

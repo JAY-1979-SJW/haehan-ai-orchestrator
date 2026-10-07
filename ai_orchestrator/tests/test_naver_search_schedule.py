@@ -34,7 +34,7 @@ from ai_orchestrator.connectors.naver_search_runner import (
 
 @pytest.fixture(autouse=True)
 def _disable_auth(monkeypatch):
-    from ai_orchestrator import config as _config
+    from ai_orchestrator.core import config as _config
 
     monkeypatch.setattr(_config, "AUTH_ENABLED", False, raising=False)
     yield

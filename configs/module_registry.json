@@ -3169,7 +3169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/config.py": {
+  "ai_orchestrator/core/config.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -3905,7 +3905,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/execution_limits.py": {
+  "ai_orchestrator/core/execution_limits.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -5457,7 +5457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/logging_setup.py": {
+  "ai_orchestrator/core/logging_setup.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -5481,7 +5481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/models.py": {
+  "ai_orchestrator/core/models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -6377,7 +6377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/task_state.py": {
+  "ai_orchestrator/core/task_state.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -22775,6 +22775,14 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/core/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   }
  }

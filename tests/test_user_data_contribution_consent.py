@@ -182,7 +182,7 @@ def test_router_is_included_under_api_v1() -> None:
 
 
 def test_api_export_blocks_missing_consent(monkeypatch) -> None:
-    from ai_orchestrator import config
+    from ai_orchestrator.core import config
 
     monkeypatch.setattr(config, "AUTH_ENABLED", False)
     client = TestClient(app)

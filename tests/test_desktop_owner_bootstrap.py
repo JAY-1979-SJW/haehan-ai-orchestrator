@@ -13,7 +13,7 @@ import threading
 
 import pytest
 
-from ai_orchestrator import config
+from ai_orchestrator.core import config
 from ai_orchestrator.gates import auth as gate_auth
 from ai_orchestrator.persistence import auth_audit, user_db
 from tests.console_api_contract_support import API, make_client

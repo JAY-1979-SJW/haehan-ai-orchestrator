@@ -12,8 +12,8 @@ from ai_orchestrator.gates.approval import (  # noqa: E402 — sys.stdout 재설
     issue_token,
     validate_token,
 )
-from ai_orchestrator.logging_setup import setup_logging  # noqa: E402 — sys.stdout 재설정 뒤 import
-from ai_orchestrator.models import TaskRequest  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.core.logging_setup import setup_logging  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.core.models import TaskRequest  # noqa: E402 — sys.stdout 재설정 뒤 import
 from ai_orchestrator.openai_client import (  # noqa: E402 — sys.stdout 재설정 뒤 import
     generate_approval_reason,
     generate_task_summary,

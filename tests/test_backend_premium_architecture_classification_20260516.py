@@ -33,7 +33,7 @@ AI_ORC = REPO / "ai_orchestrator"
 DOMAIN_CORE_MAP = {
     "Task": {
         "impl_files": [
-            "ai_orchestrator/task_state.py",
+            "ai_orchestrator/core/task_state.py",
             "ai_orchestrator/domain/models.py",  # STEP 1: Task baseline model 추가
         ],
         "domain_file": "ai_orchestrator/domain/models.py",
@@ -838,7 +838,7 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/server/task_queue_schema.py",
     "ai_orchestrator/server/action_approval_audit_store.py",
     "ai_orchestrator/server/action_evidence_store.py",
-    "ai_orchestrator/task_state.py",
+    "ai_orchestrator/core/task_state.py",
     "ai_orchestrator/audit_logger.py",
     "ai_orchestrator/gates/approval.py",
     "ai_orchestrator/gates/dev_reg_approval.py",
@@ -858,7 +858,7 @@ CORE_MODULES_MUST_IMPORT = [
     "ai_orchestrator.domain.response_adapter",
     "ai_orchestrator.server.execution_location_guard",
     "ai_orchestrator.server.task_queue_schema",
-    "ai_orchestrator.task_state",
+    "ai_orchestrator.core.task_state",
     "ai_orchestrator.gates.approval",
     "ai_orchestrator.gates.dev_reg_approval",
     "ai_orchestrator.services.web_task_approval_service",

@@ -62,7 +62,7 @@ from ..gates.auth import require_role
 from ..inbox import get_inbox_item as _get_inbox_item
 from ..inbox import read_recent_inbox
 from ..local_agent_router import local_agent_router
-from ..models import TaskRequest
+from ..core.models import TaskRequest
 from ..planner import plan
 from .marketing_ops_router import marketing_ops_router
 from ..sites.router import sites_router

@@ -38,9 +38,9 @@ CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.services.dev_reg_runner", "_SCREENSHOT_DIR", STORAGE, ("screenshots", "dev_reg")),
     ("ai_orchestrator.services.hanafax_attachments", "_UPLOAD_DIR", STORAGE, ("fax_attachments",)),
     ("ai_orchestrator.services.hanafax_authorization_service", "_CACHE_DIR", STORAGE, ("fax_address_cache",)),
-    ("ai_orchestrator.config", "LOG_DIR", STORAGE, ()),
-    ("ai_orchestrator.config", "AUDIT_LOG_PATH", STORAGE, ("audit_logs.jsonl",)),
-    ("ai_orchestrator.config", "_DEFAULT_DATA_DIR", DATA, ()),
+    ("ai_orchestrator.core.config", "LOG_DIR", STORAGE, ()),
+    ("ai_orchestrator.core.config", "AUDIT_LOG_PATH", STORAGE, ("audit_logs.jsonl",)),
+    ("ai_orchestrator.core.config", "_DEFAULT_DATA_DIR", DATA, ()),
     ("ai_orchestrator.chat_sessions", "_STORE_PATH", DATA, ("chat_sessions.json",)),
     ("ai_orchestrator.connectors.eum.router", "_TARGETS_LATEST", DATA, ("eum_sales_mail_targets_latest.json",)),
     ("ai_orchestrator.connectors.grant_radar_router", "DATA_DIR", DATA, ("grant_radar",)),
@@ -129,8 +129,8 @@ def test_constants_follow_data_root(tmp_path):
 
 def test_log_dir_env_still_wins_for_audit_logs(tmp_path):
     got = _resolve(_clean_env(HAEHAN_DATA_ROOT=str(tmp_path / "r"), LOG_DIR=str(tmp_path / "logs")))
-    assert got["ai_orchestrator.config:LOG_DIR"] == str(tmp_path / "logs")
-    assert got["ai_orchestrator.config:AUDIT_LOG_PATH"] == str(tmp_path / "logs" / "audit_logs.jsonl")
+    assert got["ai_orchestrator.core.config:LOG_DIR"] == str(tmp_path / "logs")
+    assert got["ai_orchestrator.core.config:AUDIT_LOG_PATH"] == str(tmp_path / "logs" / "audit_logs.jsonl")
 
 
 # ── 해석 순서 ─────────────────────────────────────────────────────────────

@@ -33,7 +33,7 @@ def _isolated(tmp_path, monkeypatch):
     """각 테스트마다 독립 storage + 모듈 초기화."""
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
 
-    import ai_orchestrator.config as _cfg
+    import ai_orchestrator.core.config as _cfg
 
     importlib.reload(_cfg)
     import ai_orchestrator.gates.approval as _ap

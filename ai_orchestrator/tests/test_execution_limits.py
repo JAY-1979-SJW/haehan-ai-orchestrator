@@ -5,15 +5,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
-from ai_orchestrator.config import EXECUTION_HISTORY_PATH
-from ai_orchestrator.execution_limits import (
+from ai_orchestrator.core.config import EXECUTION_HISTORY_PATH
+from ai_orchestrator.core.execution_limits import (
     BLOCK_RATE_ACTION,
     BLOCK_RATE_USER,
     BLOCK_TIMEOUT,
     current_limits,
 )
+from ai_orchestrator.core.models import ExecutionPlan, TaskRequest
 from ai_orchestrator.executor import execute
-from ai_orchestrator.models import ExecutionPlan, TaskRequest
 
 
 def _cleanup_history():

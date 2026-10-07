@@ -113,7 +113,7 @@ def test_me_owner_role():
 
 def test_me_returns_401_when_auth_enabled_and_no_credentials(monkeypatch):
     """AUTH_ENABLED=True일 때 인증 없이 호출하면 401을 반환한다."""
-    import ai_orchestrator.config as _config
+    import ai_orchestrator.core.config as _config
 
     # reload 없이 monkeypatch만 사용 — get_current_user는 런타임에 config 값을 읽음
     monkeypatch.setattr(_config, "AUTH_ENABLED", True)

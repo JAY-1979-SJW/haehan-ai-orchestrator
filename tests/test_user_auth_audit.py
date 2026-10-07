@@ -7,7 +7,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import config
+from ai_orchestrator.core import config
 from ai_orchestrator.persistence import auth_audit, user_db
 
 _gauth = None

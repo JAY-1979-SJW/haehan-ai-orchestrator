@@ -18,7 +18,7 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import config
+from ai_orchestrator.core import config
 from ai_orchestrator.connectors import user_auth_router as user_auth
 from ai_orchestrator.gates import auth as gate
 from ai_orchestrator.gates.auth import require_role

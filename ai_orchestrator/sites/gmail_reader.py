@@ -3,7 +3,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 
-from ai_orchestrator.config import GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH
+from ai_orchestrator.core.config import GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_orchestrator.executor import execute
-from ai_orchestrator.models import TaskRequest
+from ai_orchestrator.core.models import TaskRequest
 from ai_orchestrator.planner import plan
 
 

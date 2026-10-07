@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 from ai_orchestrator.gates import approval
-from ai_orchestrator.models import RiskAssessment, TaskRequest
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 
 
 def test_issue_token_logs_audit_event(tmp_path, monkeypatch):

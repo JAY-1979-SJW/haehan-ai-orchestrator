@@ -35,7 +35,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     """각 테스트마다 독립된 storage 경로 사용."""
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
 
-    import ai_orchestrator.config as _cfg
+    import ai_orchestrator.core.config as _cfg
 
     importlib.reload(_cfg)
     import ai_orchestrator.gates.approval as _ap
@@ -588,7 +588,7 @@ def test_parse_dev_reg_rejects_invalid():
 def test_existing_webhook_unaffected():
     """기존 handle_telegram_webhook 는 dr_* 추가 후에도 정상 동작."""
     from ai_orchestrator.gates.approval import issue_token
-    from ai_orchestrator.models import RiskAssessment, TaskRequest
+    from ai_orchestrator.core.models import RiskAssessment, TaskRequest
     from ai_orchestrator.telegram_webhook import handle_telegram_webhook
 
     tid = f"TG-{uuid.uuid4().hex[:8]}"

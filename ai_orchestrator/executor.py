@@ -4,7 +4,7 @@ import time
 from collections.abc import Callable
 
 from .connectors import playwright_connector, system_connector
-from .execution_limits import (
+from .core.execution_limits import (
     BLOCK_TIMEOUT,
     EXEC_TIMEOUT_SEC,
     check_execution_policy,
@@ -12,7 +12,7 @@ from .execution_limits import (
     record_execution,
     run_with_timeout,
 )
-from .models import ExecutionPlan, TaskRequest
+from .core.models import ExecutionPlan, TaskRequest
 
 logger = logging.getLogger(__name__)
 

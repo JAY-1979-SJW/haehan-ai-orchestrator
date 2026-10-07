@@ -227,7 +227,7 @@ class TestEnvelopeConversionVerdict:
 
 @pytest.fixture(scope="module")
 def client():
-    import ai_orchestrator.config as config
+    import ai_orchestrator.core.config as config
 
     config.AUTH_ENABLED = False
     from ai_orchestrator.asgi import app
@@ -321,7 +321,7 @@ class TestSiteTasksDryRunKeyContract:
 
         _reg.register(_DummyConn(), overwrite=True)
         try:
-            import ai_orchestrator.config as config
+            import ai_orchestrator.core.config as config
 
             config.AUTH_ENABLED = False
             c = TC(app, raise_server_exceptions=False)

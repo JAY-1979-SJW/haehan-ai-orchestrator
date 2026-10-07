@@ -43,7 +43,7 @@ HOLD_REASON_TELEGRAM = (
 
 @pytest.fixture(scope="module")
 def client():
-    import ai_orchestrator.config as config
+    import ai_orchestrator.core.config as config
 
     config.AUTH_ENABLED = False
     from ai_orchestrator.asgi import app
