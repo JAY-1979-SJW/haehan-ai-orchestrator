@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from . import config
 from .config import APP_HOST, APP_PORT
 from .connectors.naver_search_runner import schedule_loop
 from .logging_setup import setup_logging
@@ -97,9 +98,33 @@ async def _stop_task(task: asyncio.Task | None) -> None:
             await task
 
 
+def _check_jwt_secret() -> None:
+    """AUTH_ENABLED 인데 JWT_SECRET 이 없거나 짧으면 알린다. JWT_SECRET_REQUIRED=true 면 없을 때 시작을 막는다.
+
+    없으면 프로세스마다 임의 키라 재시작·재배포 때 모든 로그인이 풀리고, 워커가 둘 이상이면 로그인이 간헐적으로 실패한다.
+    config 는 호출 시점에 읽는다(시험에서 값을 바꿀 수 있게)."""
+    if not config.AUTH_ENABLED:
+        return
+    if not config.JWT_SECRET_CONFIGURED:
+        message = (
+            "[보안] AUTH_ENABLED=true 인데 JWT_SECRET 이 설정되지 않았습니다 — 프로세스마다 임의 키를 쓰므로 "
+            "재시작·재배포 때 모든 로그인이 풀립니다. .env 에 32자 이상 무작위 JWT_SECRET 을 설정하세요."
+        )
+        if config.JWT_SECRET_REQUIRED:
+            raise RuntimeError(message + " (JWT_SECRET_REQUIRED=true 라 시작을 중단합니다)")
+        logger.error(message)
+    elif len(config.JWT_SECRET) < config.JWT_SECRET_MIN_LENGTH:
+        logger.error(
+            "[보안] JWT_SECRET 이 %d자로 너무 짧습니다(권장 %d자 이상). 추측 가능한 키는 토큰 위조로 이어집니다.",
+            len(config.JWT_SECRET),
+            config.JWT_SECRET_MIN_LENGTH,
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
+    _check_jwt_secret()
     logger.info("haehan-ai-orchestrator 시작 | host=%s port=%s", APP_HOST, APP_PORT)
     _write_server_discovery_file()
     _LOOPBACK_ONLY = {"127.0.0.1", "::1", "localhost"}

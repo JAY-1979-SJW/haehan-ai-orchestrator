@@ -58,8 +58,36 @@ _JWT_ROLE_MAP = {"owner": "owner", "admin": "admin", "operator": "operator", "vi
 _JWT_NO_PRIVILEGE_ROLE = "user"
 
 
+def is_owner_email(email: object) -> bool:
+    """이메일이 설정(OWNER_EMAILS)에 있는가. 대소문자·앞뒤 공백 무시, 별칭(+tag)은 정확히 같아야 한다."""
+    return str(email or "").strip().lower() in config.OWNER_EMAILS
+
+
+def is_owner_email_account(record: dict) -> bool:
+    """OWNER_EMAILS 의 owner 취급 대상인가: 설정된 이메일 + **승인된 활성 계정**(enabled=1)일 때만.
+
+    미승인·비활성 계정, 활성 여부를 알 수 없는 레코드는 대상이 아니다(fail-closed)."""
+    return record.get("enabled") in (1, True) and is_owner_email(record.get("email"))
+
+
+_owner_email_logged: set[str] = set()
+
+
+def _note_owner_email_grant(record: dict) -> None:
+    """OWNER_EMAILS 로 owner 취급된 계정을 프로세스당 한 번 로그에 남긴다(이메일은 마스킹)."""
+    key = str(record.get("id") or record.get("email"))
+    if key in _owner_email_logged:
+        return
+    _owner_email_logged.add(key)
+    local, _, domain = str(record.get("email") or "").partition("@")
+    logger.info("[auth] OWNER_EMAILS 설정에 따라 owner 로 취급: %s***@%s (DB role=%s)", local[:1], domain, record.get("role"))
+
+
 def _user_from_bearer(token: str) -> dict:
-    """Bearer JWT → {actor, role}. 만료·위조·서명 불일치·미등록 사용자·승인 대기·검증기 미등록은 모두 401."""
+    """Bearer JWT → {actor, role}. 만료·위조·서명 불일치·미등록 사용자·승인 대기·검증기 미등록은 모두 401.
+
+    role 은 DB role 을 표(_JWT_ROLE_MAP)로 매핑하되, OWNER_EMAILS 의 승인된 활성 계정이면 owner 로 올린다(올리기만 하고
+    내리지 않으며, DB 는 바꾸지 않는다). 올린 경우 반환에 role_source="OWNER_EMAILS" 를 표시한다."""
     record = _bearer_resolver(token) if _bearer_resolver is not None else None
     if not record:
         raise HTTPException(
@@ -68,7 +96,12 @@ def _user_from_bearer(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     role = _JWT_ROLE_MAP.get(str(record.get("role", "")), _JWT_NO_PRIVILEGE_ROLE)
-    return {"actor": str(record.get("email") or record.get("id")), "role": role}
+    user = {"actor": str(record.get("email") or record.get("id")), "role": role}
+    if role != "owner" and is_owner_email_account(record):
+        _note_owner_email_grant(record)
+        user["role"] = "owner"
+        user["role_source"] = "OWNER_EMAILS"
+    return user
 
 
 def _load_users() -> dict[str, dict]:

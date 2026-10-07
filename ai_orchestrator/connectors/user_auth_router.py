@@ -10,7 +10,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
 
 from ai_orchestrator import config
-from ai_orchestrator.gates.auth import (  # 승인 등 owner 작업·콘솔 JWT 수용
+from ai_orchestrator.gates.auth import (  # 승인 등 owner 작업·콘솔 JWT 수용·OWNER_EMAILS
+    is_owner_email,
     register_bearer_resolver,
     require_role,
 )
@@ -161,6 +162,9 @@ def signup(body: SignupRequest):
         raise HTTPException(status_code=409, detail="이미 사용 중인 이메일입니다")
     user = user_db.create_user(body.email, body.name, body.password)
     auth_audit.record_auth_event("signup", "success", actor_id=user.get("id"), email=body.email)
+    if is_owner_email(body.email):
+        # 이메일 인증이 없으므로 owner 이메일 가입은 감사 로그로 눈에 띄게 남긴다(승인 전 본인 가입인지 확인할 단서).
+        auth_audit.record_auth_event("signup", "owner_email_pending", actor_id=user.get("id"), email=body.email)
     return SignupResponse(
         status="pending_approval",
         message="가입이 접수되었습니다. 관리자 승인 후 로그인할 수 있습니다.",
@@ -216,6 +220,12 @@ def list_pending(_admin: dict = Depends(require_role("admin", "owner"))):
 def approve(user_id: str, admin: dict = Depends(require_role("admin", "owner"))):
     """승인 대기 사용자를 활성화(enabled=1) (관리자 전용)."""
     actor = admin.get("actor") or admin.get("id")
+    # OWNER_EMAILS 의 이메일로 가입한 계정은 승인되는 순간 owner 가 되므로, owner 가 아닌 관리자(admin)는 승인할 수 없다.
+    # (이메일 인증이 없어 남의 owner 이메일로 먼저 가입할 수 있다 — admin 이 그 계정을 승인해 owner 로 만드는 권한 상승 차단)
+    target = user_db._get_user_unfiltered(user_id)
+    if target is not None and is_owner_email(target.get("email")) and admin.get("role") != "owner":
+        auth_audit.record_auth_event("approve", "owner_email_forbidden", actor_id=actor, target_user_id=user_id)
+        raise HTTPException(status_code=403, detail="owner 이메일 계정은 owner 만 승인할 수 있습니다")
     if not user_db.approve_user(user_id):
         auth_audit.record_auth_event("approve", "not_found", actor_id=actor, target_user_id=user_id)
         raise HTTPException(status_code=404, detail="대상 사용자를 찾을 수 없습니다")
