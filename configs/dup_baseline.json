@@ -2,14 +2,13 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 86,
+ "hash_count": 81,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/services/gongmu_service.py:_read_rows",
    "ai_orchestrator/services/mail_bulk_service.py:_read_rows"
   ],
   "088ada4c32833480504cc02bbb5e071313f817b4": [
-   "scripts/google/calendar.py:_task_delete",
    "scripts/google/drive.py:_task_delete",
    "scripts/google/sheets.py:_task_delete"
   ],
@@ -19,13 +18,9 @@
    "ai_orchestrator/local_agent_redaction.py:_strip_cleanup",
    "ai_orchestrator/local_agent_redaction.py:_strip_lifecycle"
   ],
-  "17e17c11891ad7b30892002d0a95e9718029f2bd": [
-   "local_agent/browser_approval_verifier.py:BrowserApprovalStore.mark_used",
-   "local_agent/browser_approval_verifier.py:BrowserApprovalStore.revoke"
-  ],
   "1c3787c65ac5010655eec0046e605c8bce5cf100": [
-   "notice_radar/browser_collector.py:_find_near_date",
-   "notice_radar/collector.py:_find_near_date"
+   "orchestrator_v1/inbox/notice_radar/browser_collector.py:_find_near_date",
+   "orchestrator_v1/inbox/notice_radar/collector.py:_find_near_date"
   ],
   "1c9a38fe45966559f5b897e707d0abe17ac69d49": [
    "scripts/google/cloud/live_console_explorer.py:save_cloud_console_live_report",
@@ -38,10 +33,6 @@
   "201281acaa36cddabef875967927d644c788db1e": [
    "ai_orchestrator/browser_tool/approval_record_store.py:read_approval_records",
    "ai_orchestrator/browser_tool/workflow_audit_writer.py:read_audit_records"
-  ],
-  "225dc945f7e77efedc66126004b98338d8799019": [
-   "ai_orchestrator/sites/calendar_reader.py:list_today",
-   "ai_orchestrator/sites/calendar_reader.py:list_week"
   ],
   "26fd0276d37b3180a48d40698f192f91873f1f91": [
    "scripts/google/live_inputs_fill.py:_cdp_click_first_selector",
@@ -73,10 +64,6 @@
    "scripts/google/docs.py:_task_search",
    "scripts/google/drive.py:_task_search",
    "scripts/google/sheets.py:_task_search"
-  ],
-  "38eb0fa59889cd8a4e260de9da214d4235ce2d3d": [
-   "orchestrator_v1/tasks/email_task_approval.py:approve",
-   "orchestrator_v1/tasks/email_task_approval.py:reject"
   ],
   "3a1616afa4db701703834b6ec3b4e30bee779c3a": [
    "ai_orchestrator/local_agent_redaction.py:_strip_click_target",
@@ -188,10 +175,6 @@
    "scripts/naver/mybox.py:NaverMyBox.open",
    "scripts/naver/talk.py:NaverTalk.open"
   ],
-  "6641f27e38dba4feaf5e182ea2f6daff8ddae293": [
-   "local_agent/user_present_state_store.py:UserPresentStateStore.mark_user_cancelled",
-   "local_agent/user_present_state_store.py:UserPresentStateStore.mark_user_confirmed"
-  ],
   "6d1a5ce95e8f3c3f8d97ffa1240713c858e8731b": [
    "scripts/local_agent/g2b/run_readonly_local_e2e.py:_save_report",
    "scripts/local_agent/run_naver_cafe_to_blog_workflow.py:_save_report"
@@ -268,10 +251,6 @@
    "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py:audit",
    "scripts/ops/audit_local_agent_e2e_baseline_contract.py:audit",
    "scripts/ops/audit_playwright_ai_baseline_contract.py:audit"
-  ],
-  "9d17aaddd02dae83d100a59580ff92ccf071d925": [
-   "scripts/google/calendar.py:_task_today",
-   "scripts/google/calendar.py:_task_week"
   ],
   "a02b6be2b26f8d575820935f909cd473dc775f38": [
    "scripts/youtube/oauth.py:parse_kv_args",

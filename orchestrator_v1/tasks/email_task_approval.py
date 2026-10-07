@@ -131,8 +131,8 @@ def request_approval(
     }
 
 
-def approve(token_id: str, approved_by: str, *, token_path: str | None = None) -> dict:
-    """approval token을 approved 상태로 변경. pending 상태일 때만 처리."""
+def _decide(token_id: str, status: str, actor: str, token_path: str | None) -> dict:
+    """pending 상태의 approval token 을 status(approved|rejected)로 바꾼다(approve/reject 공통)."""
     tp = token_path or _DEFAULT_TOKEN_PATH
     tokens = _load_tokens(tp)
     entry = tokens.get(token_id)
@@ -141,28 +141,21 @@ def approve(token_id: str, approved_by: str, *, token_path: str | None = None) -
     if entry["status"] != "pending":
         return {"status": "already_processed", "token_id": token_id, "current_status": entry["status"]}
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
-    entry["status"] = "approved"
-    entry["approved_by"] = approved_by
-    entry["approved_at"] = now
+    entry["status"] = status
+    entry[f"{status}_by"] = actor
+    entry[f"{status}_at"] = now
     _save_tokens(tokens, tp)
-    return {"status": "approved", "token_id": token_id, "task_id": entry["task_id"]}
+    return {"status": status, "token_id": token_id, "task_id": entry["task_id"]}
+
+
+def approve(token_id: str, approved_by: str, *, token_path: str | None = None) -> dict:
+    """approval token을 approved 상태로 변경. pending 상태일 때만 처리."""
+    return _decide(token_id, "approved", approved_by, token_path)
 
 
 def reject(token_id: str, rejected_by: str, *, token_path: str | None = None) -> dict:
     """approval token을 rejected 상태로 변경. pending 상태일 때만 처리."""
-    tp = token_path or _DEFAULT_TOKEN_PATH
-    tokens = _load_tokens(tp)
-    entry = tokens.get(token_id)
-    if not entry:
-        return {"status": "not_found", "token_id": token_id}
-    if entry["status"] != "pending":
-        return {"status": "already_processed", "token_id": token_id, "current_status": entry["status"]}
-    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
-    entry["status"] = "rejected"
-    entry["rejected_by"] = rejected_by
-    entry["rejected_at"] = now
-    _save_tokens(tokens, tp)
-    return {"status": "rejected", "token_id": token_id, "task_id": entry["task_id"]}
+    return _decide(token_id, "rejected", rejected_by, token_path)
 
 
 def get_approval_for_task(task_id: str, *, token_path: str | None = None) -> dict | None:

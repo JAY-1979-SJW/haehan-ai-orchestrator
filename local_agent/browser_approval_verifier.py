@@ -139,6 +139,15 @@ class BrowserApprovalStore:
         """Retrieve approval record by ID."""
         return self._records.get(approval_id)
 
+    def _set_status(self, approval_id: str, status: str, log_label: str) -> bool:
+        """approval 상태를 바꾼다(mark_used/revoke 공통). 없으면 False."""
+        record = self._records.get(approval_id)
+        if not record:
+            return False
+        record.status = status
+        logger.info(f"Approval {log_label}: {approval_id}")
+        return True
+
     def mark_used(self, approval_id: str) -> bool:
         """Mark approval as used (one-time use).
 
@@ -148,12 +157,7 @@ class BrowserApprovalStore:
         Returns:
             True if marked, False if not found
         """
-        record = self._records.get(approval_id)
-        if not record:
-            return False
-        record.status = "used"
-        logger.info(f"Approval marked used: {approval_id}")
-        return True
+        return self._set_status(approval_id, "used", "marked used")
 
     def revoke(self, approval_id: str) -> bool:
         """Revoke approval.
@@ -164,12 +168,7 @@ class BrowserApprovalStore:
         Returns:
             True if revoked, False if not found
         """
-        record = self._records.get(approval_id)
-        if not record:
-            return False
-        record.status = "revoked"
-        logger.info(f"Approval revoked: {approval_id}")
-        return True
+        return self._set_status(approval_id, "revoked", "revoked")
 
     def clear(self) -> None:
         """Clear all records (for testing)."""
