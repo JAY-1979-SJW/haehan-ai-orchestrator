@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 106,
+ "hash_count": 86,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/services/gongmu_service.py:_read_rows",
@@ -13,19 +13,11 @@
    "scripts/google/drive.py:_task_delete",
    "scripts/google/sheets.py:_task_delete"
   ],
-  "0b57461ff1c5cdf7c5440a8971e33976d72ff06a": [
-   "scripts/video/ai_g2b_youtube_ep01_real.py:build_video",
-   "scripts/video/ai_g2b_youtube_ep02.py:build_video"
-  ],
   "12f815d0a03c48ff8494bf6fd69a1488f3dd8a85": [
    "ai_orchestrator/local_agent_redaction.py:_strip_browser",
    "ai_orchestrator/local_agent_redaction.py:_strip_capabilities",
    "ai_orchestrator/local_agent_redaction.py:_strip_cleanup",
    "ai_orchestrator/local_agent_redaction.py:_strip_lifecycle"
-  ],
-  "170cc44b98ede81258f0e3728d415d8a891c5a3e": [
-   "scripts/instagram/kotara_ctc_reel.py:scene_3",
-   "scripts/instagram/kotara_ctc_reel.py:scene_5"
   ],
   "17e17c11891ad7b30892002d0a95e9718029f2bd": [
    "local_agent/browser_approval_verifier.py:BrowserApprovalStore.mark_used",
@@ -35,17 +27,9 @@
    "notice_radar/browser_collector.py:_find_near_date",
    "notice_radar/collector.py:_find_near_date"
   ],
-  "1c96365211a86059bdbb2017a474defa83ccf186": [
-   "scripts/video/ig_dm_bot_ep01_visuals.py:mux",
-   "scripts/video/kakao_skill_bot_ep01_visuals.py:mux"
-  ],
   "1c9a38fe45966559f5b897e707d0abe17ac69d49": [
    "scripts/google/cloud/live_console_explorer.py:save_cloud_console_live_report",
    "scripts/google/live_surface_explorer.py:save_google_surface_live_report"
-  ],
-  "1ccb96fa58ebafab740d83f957be8ba2ae6aed39": [
-   "scripts/video/ig_dm_bot_ep01_visuals.py:_demo_card",
-   "scripts/video/kakao_skill_bot_ep01_visuals.py:_demo_card"
   ],
   "1ef00fb0baa2bafa918c4723022025c791761c39": [
    "scripts/naver/blog/marketing/gpt_images.py:_send_prompt",
@@ -58,10 +42,6 @@
   "225dc945f7e77efedc66126004b98338d8799019": [
    "ai_orchestrator/sites/calendar_reader.py:list_today",
    "ai_orchestrator/sites/calendar_reader.py:list_week"
-  ],
-  "257357770777d154e9ba001b2cb134a832420d5f": [
-   "scripts/ops/build_ep_batch_content.py:main",
-   "scripts/ops/build_ep_batch_content_gov2.py:main"
   ],
   "26fd0276d37b3180a48d40698f192f91873f1f91": [
    "scripts/google/live_inputs_fill.py:_cdp_click_first_selector",
@@ -85,10 +65,6 @@
    "scripts/ops/audit_backend_premium_security_boundary.py:main",
    "scripts/ops/audit_backend_premium_service_layer.py:main"
   ],
-  "2c963e5d12349a321c162a345b538e7d4bd2b7a9": [
-   "scripts/instagram/kotara_ctc_reel.py:scene_2",
-   "scripts/instagram/kotara_ctc_reel.py:scene_7"
-  ],
   "2f788045f55b2d0e39cbb3db38fce3ca8ee42330": [
    "scripts/hanafax/export_kras_fax_pdf.py:_fit_merged_wrap_rows",
    "scripts/hanafax/send_kras_final_campaign.py:_fit_merged_wrap_rows"
@@ -101,14 +77,6 @@
   "38eb0fa59889cd8a4e260de9da214d4235ce2d3d": [
    "orchestrator_v1/tasks/email_task_approval.py:approve",
    "orchestrator_v1/tasks/email_task_approval.py:reject"
-  ],
-  "39354fa102eebefe67d0732c73b13ad8bcba5d3d": [
-   "scripts/video/ig_dm_bot_ep01_visuals.py:_melt_kenburns_render",
-   "scripts/video/kakao_skill_bot_ep01_visuals.py:_melt_kenburns_render"
-  ],
-  "39a554dd976bb9b2921d74ead8c97d4a4cebd183": [
-   "scripts/ops/build_ep_batch_content.py:make_chart",
-   "scripts/ops/build_ep_batch_content_gov2.py:make_chart"
   ],
   "3a1616afa4db701703834b6ec3b4e30bee779c3a": [
    "ai_orchestrator/local_agent_redaction.py:_strip_click_target",
@@ -162,7 +130,6 @@
    "scripts/ops/smoke_app_ui_shell_browser.py:check_forbidden_banner_used"
   ],
   "46249a05f1d9f085cf8724f1a7f169a1096929b4": [
-   "scripts/instagram/kotara_ctc_reel.py:_wrap",
    "scripts/instagram/overlay.py:_wrap",
    "scripts/instagram/reel_overlay.py:_wrap"
   ],
@@ -206,17 +173,9 @@
    "scripts/ops/audit_app_test_baseline_current_contract_sync.py:print_report",
    "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:print_report"
   ],
-  "5dc633de7d8ed3c96f0adbcc29985e1b0e22ba31": [
-   "scripts/video/ai_g2b_youtube_ep01.py:_text_card",
-   "scripts/video/kotara_ctc_shorts.py:_text_card"
-  ],
   "632774467f6ef61fea21bd5fa6c830236bbe8fad": [
    "scripts/naver/smartstore/navigation/sidebar_v3.py:_refresh_dashboard",
    "scripts/naver/smartstore/registration/general_full_analyze.py:_enter_dashboard"
-  ],
-  "63832d8736c32606e3bba5e77ce5e78154c1ece7": [
-   "scripts/ops/make_inspection_video.py:_scene_gabia",
-   "scripts/ops/make_inspection_video.py:_scene_kakao"
   ],
   "643849f1cfb8f7a6f57647e3ead6b85444bdf781": [
    "scripts/ops/audit_5050_legacy_characterization.py:main",
@@ -240,10 +199,6 @@
   "710cc7b7c16a77349fcb79e5d3fb53ee9e40cd2f": [
    "scripts/naver/blog/marketing/multichannel.py:generate_community_answer",
    "scripts/naver/blog/marketing/multichannel.py:generate_youtube_script"
-  ],
-  "752dc657cc70ac6db74b797ac0daf80214ad3ec5": [
-   "scripts/instagram/kotara_ctc_reel.py:scene_4",
-   "scripts/instagram/kotara_ctc_reel.py:scene_6"
   ],
   "76a31dc5575f6481b80fa19eec4be8d386273459": [
    "scripts/ops/live_parallel_task_dispatch_smoke.py:_request_json",
@@ -318,17 +273,9 @@
    "scripts/google/calendar.py:_task_today",
    "scripts/google/calendar.py:_task_week"
   ],
-  "9ed3d869d7e334f1be7350a245cf9ca110c6aafa": [
-   "scripts/ops/make_inspection_video.py:_scene_google",
-   "scripts/ops/make_inspection_video.py:_scene_hiworks"
-  ],
   "a02b6be2b26f8d575820935f909cd473dc775f38": [
    "scripts/youtube/oauth.py:parse_kv_args",
    "scripts/youtube/research_common.py:parse_kv_args"
-  ],
-  "a0d3793fb09312dd9762fb5ca835c35e4d7e3667": [
-   "scripts/video/ai_g2b_youtube_ep01_real.py:mux_audio",
-   "scripts/video/ai_g2b_youtube_ep02.py:mux_audio"
   ],
   "a380d0b5c797e708fb4d43618fe561a5f5027412": [
    "scripts/google/android_app_dev_report.py:print_android_app_dev_summary",
@@ -341,10 +288,6 @@
   "b079ef93b4262c5749c8d82af8b3a280b65c0972": [
    "scripts/eum/deregistration.py:_selector_from_field",
    "scripts/eum/registration.py:_selector_from_field"
-  ],
-  "b0afc54a6d4cc68f35fa29d476578c1fd7b49cef": [
-   "scripts/video/ig_dm_bot_ep01_visuals.py:_speech_bubble",
-   "scripts/video/kakao_skill_bot_ep01_visuals.py:_speech_bubble"
   ],
   "b1fd589b4a7eeb68d40ccc93a4ab99789faa99db": [
    "scripts/hiworks/actions.py:load_action_catalog",
@@ -368,10 +311,6 @@
    "ai_orchestrator/connectors/naver_search_router.py:api_run_blog_search",
    "ai_orchestrator/connectors/naver_search_router.py:api_run_shopping_search"
   ],
-  "c4fab93892a16501ce990cc92552873b8a2b811e": [
-   "scripts/video/ai_g2b_youtube_ep01_real.py:_caption_frame",
-   "scripts/video/ai_g2b_youtube_ep02.py:_caption_frame"
-  ],
   "c851f72bc9531ab2d10bc702bfaf0044d675d11c": [
    "scripts/google/router.py:_work_live_fill",
    "scripts/google/router.py:_youtube_upload_live_fill"
@@ -390,27 +329,11 @@
    "scripts/hiworks/validators.py:validate_hiworks_action_plan",
    "scripts/youtube/validators.py:validate_youtube_action_plan"
   ],
-  "cc2e66a7fe2adc5bd5071c33f86f979cffa484cd": [
-   "scripts/ops/build_ep_batch_content.py:_body_part_chart_tips",
-   "scripts/ops/build_ep_batch_content_gov2.py:_body_part_chart_tips"
-  ],
-  "cc7dac4d0ef1fb730e2f86dffa3ab93b2693c5ad": [
-   "scripts/video/ig_dm_bot_ep01.py:generate_all",
-   "scripts/video/kakao_skill_bot_ep01.py:generate_all"
-  ],
-  "ce8d937baedf2b87e6da32566c452c347f0bbe8a": [
-   "scripts/video/ai_g2b_youtube_ep01_real.py:_text_card",
-   "scripts/video/ai_g2b_youtube_ep02.py:_text_card"
-  ],
   "cf8971bf73cf0cca56b729d1a669437da54f0683": [
    "scripts/naver/company_seo.py:save_diagnosis",
    "scripts/naver/company_seo.py:save_plan",
    "scripts/naver/keyword_tools.py:save_payload",
    "scripts/naver/shopping_competitor.py:save_competitor_report"
-  ],
-  "d11fe5962de4c6cae5a9817430a569f93217d7eb": [
-   "scripts/video/ig_dm_bot_ep01.py:_gen_one",
-   "scripts/video/kakao_skill_bot_ep01.py:_gen_one"
   ],
   "d4e3c4acd6b77cfecc179cdeedcc937f52670de8": [
    "scripts/naver/blog/management/analytics.py:_init_db",
@@ -421,10 +344,6 @@
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
    "scripts/popup_monitor.py:ChromeUIWatcher.start",
    "scripts/popup_monitor.py:PopupMonitor.start"
-  ],
-  "d9372ac71a1ef1716b42c0e51ef6216a4ed84dab": [
-   "scripts/video/ig_dm_bot_ep01.py:main",
-   "scripts/video/kakao_skill_bot_ep01.py:main"
   ],
   "da69dd83b6ef3b8ce85e3d20c35cc3fcd4a8b16f": [
    "scripts/instagram/overlay.py:_fit_cover",
