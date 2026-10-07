@@ -51,10 +51,8 @@ jobs:
             python scripts/ops/changed_functions.py "origin/${{ github.base_ref }}" HEAD > all_patterns.txt
             python scripts/ops/changed_functions.py "origin/${{ github.base_ref }}" HEAD --files > files.txt
           else
-            printf '%s
-' ${{ toJSON(inputs.patterns) }} > all_patterns.txt
-            printf '%s
-' ${{ toJSON(inputs.files) }} > files.txt
+            printf '%s\n' ${{ toJSON(inputs.patterns) }} > all_patterns.txt
+            printf '%s\n' ${{ toJSON(inputs.files) }} > files.txt
           fi
           sed -i '/^$/d' all_patterns.txt files.txt
           echo "TOTAL_TARGETS=$(wc -l < all_patterns.txt)" >> "$GITHUB_ENV"
