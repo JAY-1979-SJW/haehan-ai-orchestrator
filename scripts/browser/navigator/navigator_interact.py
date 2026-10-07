@@ -5,9 +5,9 @@ from __future__ import annotations
 import contextlib
 import time
 
-from scripts.navigator_common import _find_element_in_frames
-from scripts.op_log import log_op
+from scripts.browser.navigator.navigator_common import _find_element_in_frames
 from scripts.browser.page.web_connector import get_page
+from scripts.op_log import log_op
 
 _TYPE_FINDER_JS = """(needle) => {
         const isShown = el => {
@@ -207,7 +207,7 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
             _fill_contenteditable(frame, handle, text, clear)
 
         # 입력 결과 검증 — 표준 verify_input 사용 (page 재사용으로 중첩 회피)
-        from scripts.navigator_verify import verify_input
+        from scripts.browser.navigator.navigator_verify import verify_input
 
         v = verify_input(text, timeout_s=3.0, page=page)
         mark = "✓" if v["found"] else "⚠"
@@ -302,7 +302,7 @@ def click_link(text: str, timeout_ms: int = 15000) -> bool:
     where = "새 탭" if new_page is not page else "현재 탭"
     print(f"✓ 이동 완료 ({where}): {new_page.url}")
     print("=" * 60)
-    from scripts.navigator_scan import scan_page
+    from scripts.browser.navigator.navigator_scan import scan_page
 
     scan_page()
     return True
@@ -369,7 +369,7 @@ def click_button(text: str, timeout_ms: int = 10000) -> bool:
 
     # 결과 감지 (URL 변경 / 새 탭)
     time.sleep(1)
-    from scripts.navigator_scan import scan_page
+    from scripts.browser.navigator.navigator_scan import scan_page
 
     if page.url != url_before:
         print(f"  → URL 변경: {page.url}")
@@ -453,7 +453,7 @@ def paste_image(image_path: str, target: str = "body") -> bool:
         import win32con
         from PIL import Image
 
-        img = Image.open(img_path)
+        img: Image.Image = Image.open(img_path)
         if img.mode != "RGB":
             img = img.convert("RGB")
         buf = io.BytesIO()

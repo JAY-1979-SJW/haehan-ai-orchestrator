@@ -13585,7 +13585,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator.py": {
+  "scripts/browser/navigator/navigator.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -13601,7 +13601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/navigator_common.py": {
+  "scripts/browser/navigator/navigator_common.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -13609,7 +13609,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_interact.py": {
+  "scripts/browser/navigator/navigator_interact.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -13617,7 +13617,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_nav.py": {
+  "scripts/browser/navigator/navigator_nav.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -13625,7 +13625,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_scan.py": {
+  "scripts/browser/navigator/navigator_scan.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -13633,7 +13633,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_session.py": {
+  "scripts/browser/navigator/navigator_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -13641,7 +13641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/navigator_verify.py": {
+  "scripts/browser/navigator/navigator_verify.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -22822,6 +22822,14 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
   }

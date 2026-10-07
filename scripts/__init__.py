@@ -4,7 +4,7 @@
     로깅: scripts.op_log, scripts.critical_logger
     게이트: scripts.gate
     스키마: scripts.schemas
-    브라우저: scripts.navigator, scripts.browser.cdp.cdp_daemon, scripts.cdp_event_monitor
+    브라우저: scripts.browser.navigator.navigator, scripts.browser.cdp.cdp_daemon, scripts.cdp_event_monitor
     로거: scripts.logger
 
 하위 패키지:

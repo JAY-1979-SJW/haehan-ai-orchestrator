@@ -141,7 +141,7 @@ def test_l2_navigate_with_alias_still_uses_navigator(monkeypatch):
     fake_nav = types.SimpleNamespace(
         goto=lambda url, timeout_ms=60000: calls.append(url),
     )
-    monkeypatch.setitem(__import__("sys").modules, "scripts.navigator", fake_nav)
+    monkeypatch.setitem(__import__("sys").modules, "scripts.browser.navigator.navigator", fake_nav)
 
     out = bx.default_runner(bx.ACT_NAVIGATE, {"url": "gmail"})
     assert out["ok"] is True

@@ -5,8 +5,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from scripts.browser.navigator.navigator_common import SESSION_BACKUP_DIR
 from scripts.browser.page.web_connector import get_page
-from scripts.navigator_common import SESSION_BACKUP_DIR
 
 
 def save_session(label: str | None = None) -> Path:

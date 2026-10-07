@@ -4,7 +4,7 @@
   - ActionRequest / ActionResult 표준 스키마
   - target 해석(browser_session_store + CDP target_id 기반)
   - runner injection 가능 (테스트 시 fake runner 주입)
-  - default runner 는 scripts.navigator 의 기본 함수에 위임 (Playwright 의존)
+  - default runner 는 scripts.browser.navigator.navigator 의 기본 함수에 위임 (Playwright 의존)
 
 본 모듈은 Playwright import 를 함수 내부로 지연시켜, 단위 테스트에서
 실제 브라우저 없이도 동작 검증할 수 있게 한다.
@@ -161,7 +161,7 @@ def _run_navigate(params: dict[str, Any]) -> dict[str, Any]:
                 "reason": f"{type(exc).__name__}: {str(exc)[:200]}",
             }
     try:
-        from scripts import navigator as nav
+        from scripts.browser.navigator import navigator as nav
 
         nav.goto(url, timeout_ms=int(params.get("timeout_ms", 60000)))
         return {"ok": True}
@@ -170,7 +170,7 @@ def _run_navigate(params: dict[str, Any]) -> dict[str, Any]:
 
 
 def _run_click(params: dict[str, Any]) -> dict[str, Any]:
-    from scripts import navigator as nav
+    from scripts.browser.navigator import navigator as nav
 
     target = str(params.get("text") or params.get("target") or "")
     if not target:
@@ -184,7 +184,7 @@ def _run_click(params: dict[str, Any]) -> dict[str, Any]:
 
 
 def _run_type(params: dict[str, Any]) -> dict[str, Any]:
-    from scripts import navigator as nav
+    from scripts.browser.navigator import navigator as nav
 
     target = str(params.get("target") or "")
     text = str(params.get("text") or "")
@@ -242,7 +242,7 @@ def _run_wait_for_selector(params: dict[str, Any]) -> dict[str, Any]:
 
 
 def default_runner(action_type: str, params: dict[str, Any]) -> dict[str, Any]:
-    """scripts.navigator 의 primitive 함수에 위임.
+    """scripts.browser.navigator.navigator 의 primitive 함수에 위임.
 
     모든 import 는 함수 내부에서 지연 — 단위 테스트는 본 함수를 호출하지 않는다.
     """

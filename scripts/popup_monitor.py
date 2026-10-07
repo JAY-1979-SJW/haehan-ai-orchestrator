@@ -273,7 +273,7 @@ class PopupMonitor:
 
         if self._auto and is_auto_handleable(decision):
             try:
-                from scripts.navigator import click_button
+                from scripts.browser.navigator.navigator import click_button
 
                 ok = click_button(decision["target"] or "확인")
                 self._handled += 1

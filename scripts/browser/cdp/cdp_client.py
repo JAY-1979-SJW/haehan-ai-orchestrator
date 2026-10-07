@@ -50,7 +50,7 @@ def _cmd_check_login() -> None:
 
 
 def _cmd_goto(task: str) -> None:
-    from scripts.navigator import goto
+    from scripts.browser.navigator.navigator import goto
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py goto <별칭_or_URL>")
@@ -59,7 +59,7 @@ def _cmd_goto(task: str) -> None:
 
 
 def _cmd_wait_login(task: str, sub: str) -> None:
-    from scripts.navigator import wait_login
+    from scripts.browser.navigator.navigator import wait_login
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py wait-login <사이트> [타임아웃초]")
@@ -70,13 +70,13 @@ def _cmd_wait_login(task: str, sub: str) -> None:
 
 
 def _cmd_save_session(task: str) -> None:
-    from scripts.navigator import save_session
+    from scripts.browser.navigator.navigator import save_session
 
     save_session(task or None)
 
 
 def _cmd_write_post(task: str, sub: str, args: list[str]) -> None:
-    from scripts.navigator import write_blog_post
+    from scripts.browser.navigator.navigator import write_blog_post
 
     if not task or not sub:
         print("사용법: python scripts/browser/cdp/cli.py write-post <제목> <본문> [이미지경로]")
@@ -87,7 +87,7 @@ def _cmd_write_post(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_paste_image(task: str, sub: str) -> None:
-    from scripts.navigator import paste_image
+    from scripts.browser.navigator.navigator import paste_image
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py paste-image <이미지경로> [target]")
@@ -98,7 +98,7 @@ def _cmd_paste_image(task: str, sub: str) -> None:
 
 
 def _cmd_handle_draft_popup() -> None:
-    from scripts.navigator import handle_draft_restore_popup
+    from scripts.browser.navigator.navigator import handle_draft_restore_popup
 
     r = handle_draft_restore_popup()
     mark = (
@@ -111,7 +111,7 @@ def _cmd_handle_draft_popup() -> None:
 
 
 def _cmd_is_ready(task: str, sub: str, args: list[str]) -> None:
-    from scripts.navigator import is_ready
+    from scripts.browser.navigator.navigator import is_ready
 
     check_args = [a for a in [task, sub] + args if a]  # noqa: RUF005
     if not check_args:
@@ -128,7 +128,7 @@ def _cmd_is_ready(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_verify_input(task: str, sub: str, args: list[str]) -> None:
-    from scripts.navigator import verify_input
+    from scripts.browser.navigator.navigator import verify_input
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py verify-input <텍스트>")
@@ -143,7 +143,7 @@ def _cmd_verify_input(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_verify_text(task: str, sub: str, args: list[str]) -> None:
-    from scripts.navigator import verify_text
+    from scripts.browser.navigator.navigator import verify_text
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py verify-text <텍스트>")
@@ -156,19 +156,19 @@ def _cmd_verify_text(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_scan_links() -> None:
-    from scripts.navigator import scan_links
+    from scripts.browser.navigator.navigator import scan_links
 
     scan_links()
 
 
 def _cmd_scan_page() -> None:
-    from scripts.navigator import scan_page
+    from scripts.browser.navigator.navigator import scan_page
 
     scan_page()
 
 
 def _cmd_type_into(task: str, sub: str, args: list[str]) -> None:
-    from scripts.navigator import type_into
+    from scripts.browser.navigator.navigator import type_into
 
     if not task or not sub:
         print("사용법: python scripts/browser/cdp/cli.py type-into <대상> <텍스트>")
@@ -180,7 +180,7 @@ def _cmd_type_into(task: str, sub: str, args: list[str]) -> None:
 
 
 def _cmd_click_button(task: str) -> None:
-    from scripts.navigator import click_button
+    from scripts.browser.navigator.navigator import click_button
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py click-button <텍스트>")
@@ -190,7 +190,7 @@ def _cmd_click_button(task: str) -> None:
 
 
 def _cmd_click_link(task: str) -> None:
-    from scripts.navigator import click_link
+    from scripts.browser.navigator.navigator import click_link
 
     if not task:
         print("사용법: python scripts/browser/cdp/cli.py click-link <텍스트>")

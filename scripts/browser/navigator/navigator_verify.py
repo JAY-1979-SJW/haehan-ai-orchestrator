@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import contextlib
 
-from scripts.navigator_common import _normalize_text
+from scripts.browser.navigator.navigator_common import _normalize_text
 from scripts.browser.page.web_connector import get_page
 
 

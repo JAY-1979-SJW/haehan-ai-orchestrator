@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 SESSION_BACKUP_DIR = ROOT / "data" / "browser_sessions" / "backups"
 
 # 도메인 별칭 → URL

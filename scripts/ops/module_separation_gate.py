@@ -68,7 +68,7 @@ SEPARATED_MODULES: list[dict] = [
     },
     {
         "name": "navigator",
-        "root": "scripts/navigator.py",
+        "root": "scripts/browser/navigator/navigator.py",
         "max_root_loc": 25,
         "leaf_glob": "scripts/navigator_*.py",
         "shared_leaves": {"common", "scan", "verify"},

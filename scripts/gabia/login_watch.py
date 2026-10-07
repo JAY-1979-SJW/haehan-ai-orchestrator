@@ -138,7 +138,7 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                         print()
                         print("  → DNS 관리 화면으로 이동 중...")
                         try:
-                            from scripts.navigator import goto
+                            from scripts.browser.navigator.navigator import goto
 
                             goto(GABIA_DNS_MGMT_URL)
                             dns_navigated = True

@@ -6,8 +6,8 @@ import subprocess
 import sys
 import time
 
+from scripts.browser.navigator.navigator_common import ROOT
 from scripts.logger import get_logger
-from scripts.navigator_common import ROOT
 from scripts.op_log import log_op
 
 _log = get_logger(__name__)

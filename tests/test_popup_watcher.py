@@ -131,7 +131,7 @@ class TestAutoHandle:
         mock_page.frames = [mock_frame]
 
         with mock.patch("scripts.browser.page.web_connector.get_page", return_value=mock_page):
-            with mock.patch("scripts.navigator.click_button", return_value=True) as mock_click:
+            with mock.patch("scripts.browser.navigator.navigator.click_button", return_value=True) as mock_click:
                 result = auto_handle()
                 assert len(result["handled"]) == 1
                 assert result["handled"][0]["clicked"] is True

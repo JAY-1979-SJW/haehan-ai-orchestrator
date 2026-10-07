@@ -73,7 +73,7 @@ def install_watcher(page=None) -> dict:
     """페이지에 MutationObserver JS 코드를 주입한다."""
     if page is None:
         from scripts.browser.page.web_connector import (
-            get_page,  # 2026-09-29 defect_index #39: scripts.navigator 에는 get_page 가 없음(실제 정의는 web_connector, navigator_nav.py 가 이미 이렇게 씀)
+            get_page,  # 2026-09-29 defect_index #39: scripts.browser.navigator.navigator 에는 get_page 가 없음(실제 정의는 web_connector, navigator_nav.py 가 이미 이렇게 씀)
         )
 
         page = get_page()
@@ -96,7 +96,7 @@ def poll_events(page=None, since_ms: int = 0) -> list[PopupEvent]:
     """window.__hh_popup_state.events에서 since_ms 이후 이벤트를 읽어온다."""
     if page is None:
         from scripts.browser.page.web_connector import (
-            get_page,  # 2026-09-29 defect_index #39: scripts.navigator 에는 get_page 가 없음(실제 정의는 web_connector, navigator_nav.py 가 이미 이렇게 씀)
+            get_page,  # 2026-09-29 defect_index #39: scripts.browser.navigator.navigator 에는 get_page 가 없음(실제 정의는 web_connector, navigator_nav.py 가 이미 이렇게 씀)
         )
 
         page = get_page()
@@ -117,7 +117,7 @@ def clear_events(page=None) -> None:
     """window.__hh_popup_state.events를 초기화한다."""
     if page is None:
         from scripts.browser.page.web_connector import (
-            get_page,  # 2026-09-29 defect_index #39: scripts.navigator 에는 get_page 가 없음(실제 정의는 web_connector, navigator_nav.py 가 이미 이렇게 씀)
+            get_page,  # 2026-09-29 defect_index #39: scripts.browser.navigator.navigator 에는 get_page 가 없음(실제 정의는 web_connector, navigator_nav.py 가 이미 이렇게 씀)
         )
 
         page = get_page()
@@ -133,7 +133,7 @@ def auto_handle(page=None) -> dict:
     """poll_events → 각 이벤트 처리 → clear_events."""
     if page is None:
         from scripts.browser.page.web_connector import (
-            get_page,  # 2026-09-29 defect_index #39: scripts.navigator 에는 get_page 가 없음(실제 정의는 web_connector, navigator_nav.py 가 이미 이렇게 씀)
+            get_page,  # 2026-09-29 defect_index #39: scripts.browser.navigator.navigator 에는 get_page 가 없음(실제 정의는 web_connector, navigator_nav.py 가 이미 이렇게 씀)
         )
 
         page = get_page()
@@ -156,7 +156,7 @@ def auto_handle(page=None) -> dict:
             _log.debug("[popup_watcher] 팝업 스킵: %s", ev["marker"])
             continue
         if spec["action"] == "click_button":
-            from scripts.navigator import click_button
+            from scripts.browser.navigator.navigator import click_button
 
             _log.debug("[popup_watcher] 버튼 클릭 시도: %s", spec["target"])
             ok = click_button(spec["target"])

@@ -118,7 +118,7 @@ def scan_page() -> dict:
     }"""
 
     # 모든 프레임(메인 + iframe들)을 순회하며 누적 수집
-    data = {"links": [], "inputs": [], "buttons": [], "editables": [], "iframes": []}
+    data: dict[str, list] = {"links": [], "inputs": [], "buttons": [], "editables": [], "iframes": []}
     frame_count = 0
     for frame in page.frames:
         try:
