@@ -55,7 +55,9 @@ jobs:
       admin_web: ${{ steps.filter.outputs.admin_web }}
     steps:
       - uses: actions/checkout@v7
-      - uses: dorny/paths-filter@v3
+      # 공개 저장소 + 공급망 보안 — 제3자 액션은 태그가 아니라 전체 SHA로 고정
+      # (태그는 재지정 가능). git ls-remote 로 v3(=v3.0.4) 해석한 SHA.
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
         id: filter
         with:
           filters: |
