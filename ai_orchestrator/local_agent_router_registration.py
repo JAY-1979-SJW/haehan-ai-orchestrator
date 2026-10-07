@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 
 from . import local_agent_registry as _reg
-from .audit_logger import log_event
+from .audit.audit_logger import log_event
 from .auth import registration_codes as _regcodes
 from .gates.auth import require_role
 from .local_agent_router_schemas import (

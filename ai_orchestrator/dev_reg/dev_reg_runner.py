@@ -31,7 +31,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.audit.audit_logger import log_event
 from ai_orchestrator.clients import telegram_sender as _ts
 from ai_orchestrator.dev_reg import dev_reg_approval as _dra
 from ai_orchestrator.gates.approval import get_token, issue_token_for_dev_reg

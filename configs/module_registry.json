@@ -2769,7 +2769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/audit_logger.py": {
+  "ai_orchestrator/audit/audit_logger.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22998,6 +22998,22 @@
    "role": "ops_tool",
    "domain": "common",
    "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/audit/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_audit_logger_location.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   }

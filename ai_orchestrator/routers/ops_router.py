@@ -25,7 +25,7 @@ import logging
 from fastapi import APIRouter, Depends, Query
 
 from ai_orchestrator import local_agent_registry as _reg
-from ai_orchestrator.audit_logger import read_recent_logs as _read_logs
+from ai_orchestrator.audit.audit_logger import read_recent_logs as _read_logs
 from ai_orchestrator.auth.user_auth_router import get_jwt_user
 from ai_orchestrator.dev_reg.dev_reg_approval import list_pending as _list_pending
 from ai_orchestrator.tasks.external_work_registry import (

@@ -294,7 +294,7 @@ class TestBrowserAuditEventTypes:
     def test_browser_audit_event_types_missing(self):
         """Audit logger에 BROWSER_* event types 추가 필요"""
         try:
-            from ai_orchestrator.audit_logger import EVENT_TYPES
+            from ai_orchestrator.audit.audit_logger import EVENT_TYPES
 
             browser_event_types = {
                 "BROWSER_TASK_CREATED",

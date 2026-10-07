@@ -29,7 +29,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.audit.audit_logger import log_event
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.web_task.web_task_approval_service import create_web_task_pending_approval
 from ai_orchestrator.web_task.web_task_registry import get_entry, list_entries

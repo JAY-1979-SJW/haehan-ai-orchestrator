@@ -4,14 +4,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from ai_orchestrator.audit_logger import read_recent_logs
+from ai_orchestrator.audit.audit_logger import read_recent_logs
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 from ai_orchestrator.gates.approval import (
     RATE_LIMIT_MAX,
     approve_token,
     issue_token,
     validate_token,
 )
-from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 
 
 def _req(task_id: str, action="edit_config") -> TaskRequest:
@@ -122,7 +122,7 @@ def test_rate_limit():
 
 # ── 10. audit 로그 이벤트명 구분 검증 ────────────────────────────
 def test_audit_event_names():
-    from ai_orchestrator.audit_logger import log_event
+    from ai_orchestrator.audit.audit_logger import log_event
 
     tid = _unique_task()
     token = issue_token(_req(tid), _risk())
@@ -145,7 +145,7 @@ def test_audit_event_names():
 
 # ── 11. already_used audit 이벤트 ─────────────────────────��──────
 def test_already_used_audit_event():
-    from ai_orchestrator.audit_logger import log_event
+    from ai_orchestrator.audit.audit_logger import log_event
 
     actor = f"already-actor-{uuid.uuid4().hex}"
     tid = _unique_task()

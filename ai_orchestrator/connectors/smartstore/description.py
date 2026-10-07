@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
 
-from ...audit_logger import log_event
+from ...audit.audit_logger import log_event
 from ._helpers import ROOT, tmpl_dir
 
 router = APIRouter()

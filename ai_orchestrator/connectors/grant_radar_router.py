@@ -168,7 +168,7 @@ def make_draft(body: DraftRequest):
 
     # 감사 로그 (외부 제출 아님, 초안 생성 기록)
     try:
-        from ..audit_logger import log_event
+        from ..audit.audit_logger import log_event
 
         log_event(
             event_type="GRANT_DRAFT_CREATED",
@@ -233,7 +233,7 @@ def fill_form(body: FillRequest):
 
     if result.get("ok"):
         try:
-            from ..audit_logger import log_event
+            from ..audit.audit_logger import log_event
 
             log_event(
                 event_type="GRANT_FORM_FILLED",

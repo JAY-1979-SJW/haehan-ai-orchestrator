@@ -36,7 +36,7 @@ class TestInScopeWebTaskEngine:
         "ai_orchestrator.gates.approval",
         "ai_orchestrator.dev_reg.dev_reg_approval",
         "ai_orchestrator.core.task_state",
-        "ai_orchestrator.audit_logger",
+        "ai_orchestrator.audit.audit_logger",
     ]
 
     @pytest.mark.parametrize("module", IN_SCOPE_MODULES)
