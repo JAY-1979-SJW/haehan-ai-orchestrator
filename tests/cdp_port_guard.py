@@ -128,21 +128,29 @@ def _install_asyncio_guard(monkeypatch: Any) -> None:
 
 
 # 실제 9222 Chrome 에 접속/조작하는 시험(2026-10-05 정적 조사) — 기본 skip, HAEHAN_ALLOW_REAL_CDP=1 일 때만 실행.
+# 키는 폴더 무관 "파일명::시험명"(tests/<기능>/ 이동 후에도 계속 매칭되도록 — B0-a).
 SKIP_REASON = "실제 9222 Chrome 접속 시험 — HAEHAN_ALLOW_REAL_CDP=1 일 때만 실행(사용자 로그인 세션 보호)"
 REAL_CDP_TESTS: dict[str, str] = {
-    "tests/test_cdp_playwright_smoke_20260607.py::test_playwright_connects_to_cdp": "connect_over_cdp(9222)",
-    "tests/test_cdp_playwright_smoke_20260607.py::test_cdp_status_endpoint_matches_reality": "urlopen 9222/json/version",
-    "tests/test_cdp_playwright_smoke_20260607.py::test_blog_tab_open_smoke": "connect_over_cdp + 새 탭 열기/닫기(blog.naver.com)",
-    "tests/test_naver_cafe_list_collector.py::test_create_isolated_cafe_target_creates_new_tab": "discover_sessions 9222-9233 /json",
-    "tests/test_naver_cafe_list_collector.py::test_background_runner_main_mode_returns_sections": "discover_sessions 9222-9233 /json",
-    "tests/test_naver_cafe_list_collector.py::test_background_runner_topic_search_mode_returns_attach_only_report": "discover_sessions 9222-9233 /json",
-    "tests/test_naver_cafe_list_collector.py::test_background_runner_joined_cafe_collect_returns_payload": "discover_sessions 9222-9233 /json",
-    "tests/test_naver_cafe_list_collector.py::test_background_runner_join_request_returns_payload": "discover_sessions 9222-9233 /json",
-    "tests/test_google_youtube_search.py::test_market_research_run_writes_json_and_markdown": "패치 대상 오류 -> 실제 search_videos 가 브라우저로 YouTube 검색",
-    "tests/integration/manual/test_gmail.py::test_list_inbox": "get_page() + mail.google.com 접속, page.close()",
-    "tests/integration/manual/test_gmail_direct.py::test_gmail_serial": "get_page() 실접속",
-    "tests/integration/manual/test_blog_agent.py::test_blog_exploration": "수동 시험(실브라우저)",
+    "test_cdp_playwright_smoke_20260607.py::test_playwright_connects_to_cdp": "connect_over_cdp(9222)",
+    "test_cdp_playwright_smoke_20260607.py::test_cdp_status_endpoint_matches_reality": "urlopen 9222/json/version",
+    "test_cdp_playwright_smoke_20260607.py::test_blog_tab_open_smoke": "connect_over_cdp + 새 탭 열기/닫기(blog.naver.com)",
+    "test_naver_cafe_list_collector.py::test_create_isolated_cafe_target_creates_new_tab": "discover_sessions 9222-9233 /json",
+    "test_naver_cafe_list_collector.py::test_background_runner_main_mode_returns_sections": "discover_sessions 9222-9233 /json",
+    "test_naver_cafe_list_collector.py::test_background_runner_topic_search_mode_returns_attach_only_report": "discover_sessions 9222-9233 /json",
+    "test_naver_cafe_list_collector.py::test_background_runner_joined_cafe_collect_returns_payload": "discover_sessions 9222-9233 /json",
+    "test_naver_cafe_list_collector.py::test_background_runner_join_request_returns_payload": "discover_sessions 9222-9233 /json",
+    "test_google_youtube_search.py::test_market_research_run_writes_json_and_markdown": "패치 대상 오류 -> 실제 search_videos 가 브라우저로 YouTube 검색",
+    "test_gmail.py::test_list_inbox": "get_page() + mail.google.com 접속, page.close()",
+    "test_gmail_direct.py::test_gmail_serial": "get_page() 실접속",
+    "test_blog_agent.py::test_blog_exploration": "수동 시험(실브라우저)",
 }
+
+
+def _basename_key(nodeid: str) -> str:
+    """nodeid(`<경로>/<파일>.py::<시험명>`)에서 폴더를 뺀 `<파일>.py::<시험명>` 키를 만든다."""
+    path_part, _, rest = nodeid.partition("::")
+    filename = path_part.rsplit("/", 1)[-1]
+    return f"{filename}::{rest}" if rest else filename
 
 
 def apply_real_cdp_skips(items: list, skip_marker: Any) -> int:
@@ -152,7 +160,7 @@ def apply_real_cdp_skips(items: list, skip_marker: Any) -> int:
     count = 0
     for item in items:
         nodeid = str(getattr(item, "nodeid", "")).replace("\\", "/")
-        if nodeid in REAL_CDP_TESTS:
+        if _basename_key(nodeid) in REAL_CDP_TESTS:
             item.add_marker(skip_marker)
             count += 1
     return count

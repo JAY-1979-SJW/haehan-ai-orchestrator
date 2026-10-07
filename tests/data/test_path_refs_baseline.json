@@ -1,0 +1,10 @@
+[
+ "tests/test_cad_local_agent_adapter_20260509.py",
+ "tests/test_eum_surface_imports.py",
+ "tests/test_hiworks_surface_imports.py",
+ "tests/test_mcp_local_cad_adapter_tools_20260509.py",
+ "tests/test_naver_mail_tools.py",
+ "tests/test_naver_site_engine.py",
+ "tests/test_portable_zip_install_contract.py",
+ "tests/test_smartstore_surface_imports.py"
+]
