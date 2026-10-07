@@ -15,7 +15,7 @@
 - D 거대·혼합: local_agent/actions.py, blog_cad_draft_posts.py, cdp_popup_manager.py, general_product.py.
 
 ## 3. 핵심 문제 Top10
-1 L2 라벨 오류 커넥터군(scripts/cdp_client.py 외 4, L2->L4 50엣지)
+1 L2 라벨 오류 커넥터군(scripts/entry/cdp_cli.py 외 4, L2->L4 50엣지)
 2 scripts/google/workflows.py L5->L6 11건
 3 ai_orchestrator/connectors/naver_blog_router.py L6->L8 3건(라우터를 서비스가 import)
 4 L1->L4 34: local_agent/browser/mixins/{calendar,mail}_mixin.py

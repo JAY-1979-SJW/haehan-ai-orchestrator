@@ -491,10 +491,10 @@ def deregister_device(
 **테스트 케이스:**
 ```bash
 # 신규 등록 테스트
-python scripts/cdp_client.py eum registration <공사코드> <단말기ID>
+python scripts/entry/cdp_cli.py eum registration <공사코드> <단말기ID>
 
 # 철거 테스트
-python scripts/cdp_client.py eum deregistration <단말기ID>
+python scripts/entry/cdp_cli.py eum deregistration <단말기ID>
 
 # CLI에서 success/message 확인
 ```

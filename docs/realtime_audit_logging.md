@@ -91,8 +91,8 @@ python scripts/ops/watch_log.py data/logs/critical.log
 연결된 명령 예:
 
 ```bash
-python scripts/cdp_client.py eum work history DEVICE-001
-python scripts/cdp_client.py eum work registration P-001 D-001 Seoul --prepare
+python scripts/entry/cdp_cli.py eum work history DEVICE-001
+python scripts/entry/cdp_cli.py eum work registration P-001 D-001 Seoul --prepare
 ```
 
 ---
@@ -165,13 +165,13 @@ python scripts/ops/quality/install_quality_gate.py
 실시간 감시 명령:
 
 ```powershell
-python scripts\cdp_client.py login-watch
+python scripts\entry\cdp_cli.py login-watch
 ```
 
 지정 시간만 실행:
 
 ```powershell
-python scripts\cdp_client.py login-watch 1 300
+python scripts\entry\cdp_cli.py login-watch 1 300
 ```
 
 등록된 사이트는 사이트 키로 저장하고, 등록되지 않은 사이트는 현재 URL host를 site key로 저장한다.

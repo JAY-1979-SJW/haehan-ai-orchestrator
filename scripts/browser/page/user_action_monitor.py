@@ -9,8 +9,8 @@
   - 버튼 클릭 (지정 셀렉터)
 
 실행:
-  python scripts/browser/cdp_client.py user-watch [타임아웃초]
-  python scripts/browser/cdp_client.py user-watch 0   # 무한 대기
+  python scripts/entry/cdp_cli.py user-watch [타임아웃초]
+  python scripts/entry/cdp_cli.py user-watch 0   # 무한 대기
 
 또는 직접:
   python scripts/browser/page/user_action_monitor.py

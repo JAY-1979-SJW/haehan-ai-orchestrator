@@ -38,25 +38,25 @@ Rules:
 ## Commands
 
 ```powershell
-python scripts\cdp_client.py google surfaces catalog
-python scripts\cdp_client.py google subdomains catalog
-python scripts\cdp_client.py google subdomains classify gmail read
-python scripts\cdp_client.py google subdomains classify mail.google.com send
-python scripts\cdp_client.py google tabs catalog
-python scripts\cdp_client.py google tabs classify workspace gmail read
-python scripts\cdp_client.py google tabs classify workspace mail.google.com send
-python scripts\cdp_client.py google cloud live-read
-python scripts\cdp_client.py google cloud live-logic
-python scripts\cdp_client.py google surfaces live-read
-python scripts\cdp_client.py google surfaces live-logic
-python scripts\cdp_client.py google work catalog
-python scripts\cdp_client.py google work adapters
-python scripts\cdp_client.py google work live-coverage
-python scripts\cdp_client.py google work prepare youtube_studio_upload_video video_path=C:\tmp\sample.mp4 title=draft description=draft visibility=private
-python scripts\cdp_client.py google work live-fill data\google_prepare_latest.json --no-final-submit
-python scripts\cdp_client.py google work live-fill-manifest configs\google_live_input_manifest_template.json --no-final-submit
-python scripts\cdp_client.py google work execute data\google_prepare_latest.json --approved --confirm=GOOGLE_APPROVED_EXECUTE
-python scripts\cdp_client.py google work verify data\google_execution_results\<result>.json
+python scripts\entry\cdp_cli.py google surfaces catalog
+python scripts\entry\cdp_cli.py google subdomains catalog
+python scripts\entry\cdp_cli.py google subdomains classify gmail read
+python scripts\entry\cdp_cli.py google subdomains classify mail.google.com send
+python scripts\entry\cdp_cli.py google tabs catalog
+python scripts\entry\cdp_cli.py google tabs classify workspace gmail read
+python scripts\entry\cdp_cli.py google tabs classify workspace mail.google.com send
+python scripts\entry\cdp_cli.py google cloud live-read
+python scripts\entry\cdp_cli.py google cloud live-logic
+python scripts\entry\cdp_cli.py google surfaces live-read
+python scripts\entry\cdp_cli.py google surfaces live-logic
+python scripts\entry\cdp_cli.py google work catalog
+python scripts\entry\cdp_cli.py google work adapters
+python scripts\entry\cdp_cli.py google work live-coverage
+python scripts\entry\cdp_cli.py google work prepare youtube_studio_upload_video video_path=C:\tmp\sample.mp4 title=draft description=draft visibility=private
+python scripts\entry\cdp_cli.py google work live-fill data\google_prepare_latest.json --no-final-submit
+python scripts\entry\cdp_cli.py google work live-fill-manifest configs\google_live_input_manifest_template.json --no-final-submit
+python scripts\entry\cdp_cli.py google work execute data\google_prepare_latest.json --approved --confirm=GOOGLE_APPROVED_EXECUTE
+python scripts\entry\cdp_cli.py google work verify data\google_execution_results\<result>.json
 ```
 
 The last command is intentionally approval-gated. Without approval it records a

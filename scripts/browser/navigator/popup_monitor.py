@@ -17,10 +17,10 @@
     mon.stop()
 
 CLI:
-    python scripts/browser/cdp_client.py popup-monitor start
-    python scripts/browser/cdp_client.py popup-monitor status
-    python scripts/browser/cdp_client.py popup-monitor list
-    python scripts/browser/cdp_client.py popup-monitor handle <id> ack
+    python scripts/entry/cdp_cli.py popup-monitor start
+    python scripts/entry/cdp_cli.py popup-monitor status
+    python scripts/entry/cdp_cli.py popup-monitor list
+    python scripts/entry/cdp_cli.py popup-monitor handle <id> ack
 """
 
 from __future__ import annotations

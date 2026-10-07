@@ -7,13 +7,13 @@ input() / 터미널 대기 없음. AI가 모든 단계를 자동 수행.
   2) confirm → 사용자 승인 후 호출 → 확인 버튼 클릭 → 발행 완료
 
 CLI 사용 예:
-  python scripts/browser/cdp_client.py naver blog write \\
+  python scripts/entry/cdp_cli.py naver blog write \\
       --title="제목" --body="본문" --tags="태그1,태그2" \\
       --category="일상" --visibility=public
 
-  python scripts/browser/cdp_client.py naver blog confirm   # 승인 후 발행 확정
+  python scripts/entry/cdp_cli.py naver blog confirm   # 승인 후 발행 확정
 
-  python scripts/browser/cdp_client.py naver blog draft \\
+  python scripts/entry/cdp_cli.py naver blog draft \\
       --title="제목" --body="본문"
 """
 from __future__ import annotations

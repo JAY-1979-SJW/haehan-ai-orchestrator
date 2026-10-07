@@ -75,7 +75,7 @@ def build_report() -> dict:
                 "missing_inputs": plan["missing_inputs"],
                 "state_change": plan["state_change"],
                 "no_final_submit_command": (
-                    f"python scripts\\cdp_client.py google work live-fill "
+                    f"python scripts\\entry\\cdp_cli.py google work live-fill "
                     f"{plan_path} --no-final-submit"
                 ),
             }

@@ -26,9 +26,9 @@ The baseline is `complete_baseline`, not `complete_live`.
 
 Implemented baseline items:
 
-- Static action catalog: `python scripts/cdp_client.py smartstore actions catalog`
-- Product prepare dry-run: `python scripts/cdp_client.py smartstore prepare product --data=<json> --dry-run`
-- Approval-gated submit dry-run: `python scripts/cdp_client.py smartstore submit product --data=<json> --dry-run --approved --confirm=SMARTSTORE_APPROVED_SUBMIT`
+- Static action catalog: `python scripts/entry/cdp_cli.py smartstore actions catalog`
+- Product prepare dry-run: `python scripts/entry/cdp_cli.py smartstore prepare product --data=<json> --dry-run`
+- Approval-gated submit dry-run: `python scripts/entry/cdp_cli.py smartstore submit product --data=<json> --dry-run --approved --confirm=SMARTSTORE_APPROVED_SUBMIT`
 - Product list router fix: `smartstore product list` now calls `NaverSmartStore.list_products()`.
 - Realtime audit record for SmartStore submit/dry-run records.
 

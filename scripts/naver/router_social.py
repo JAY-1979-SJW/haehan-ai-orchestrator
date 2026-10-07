@@ -27,7 +27,7 @@ def _cmd_pay(sub: str, args: list[str]) -> None:
         out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "points": points}
         _print_saved(out, _save_latest("naver_pay_points_latest.json", out))
     else:
-        print("usage: python scripts/browser/cdp_client.py naver pay [orders|points] [--limit=30]")
+        print("usage: python scripts/entry/cdp_cli.py naver pay [orders|points] [--limit=30]")
 
 
 def _cmd_talk(sub: str, args: list[str]) -> None:
@@ -46,7 +46,7 @@ def _cmd_talk(sub: str, args: list[str]) -> None:
 
     if sub not in ("send", "message"):
         print(
-            "usage: python scripts/browser/cdp_client.py naver talk [list|send] --partner=NAME --message=TEXT [--dry-run|--execute --approved --confirm=NAVER_APPROVED_SEND]"
+            "usage: python scripts/entry/cdp_cli.py naver talk [list|send] --partner=NAME --message=TEXT [--dry-run|--execute --approved --confirm=NAVER_APPROVED_SEND]"
         )
         return
 
@@ -97,7 +97,7 @@ def _cmd_place(sub: str, args: list[str]) -> None:
         out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "reviews": reviews}
         _print_saved(out, _save_latest("naver_place_reviews_latest.json", out))
     else:
-        print("usage: python scripts/browser/cdp_client.py naver place [list|reviews] [--limit=30]")
+        print("usage: python scripts/entry/cdp_cli.py naver place [list|reviews] [--limit=30]")
 
 
 def _cmd_smartstore(sub: str, args: list[str]) -> None:

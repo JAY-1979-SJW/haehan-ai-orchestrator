@@ -29,3 +29,26 @@ def test_script_targets_launched_by_subprocess_have_a_main():
             if not target.is_file() or '__name__ == "__main__"' not in target.read_text(encoding="utf-8"):
                 problems.append(f"{rel} → scripts/{folder}/{name}.py (실행부 없음)")
     assert not problems, problems
+
+
+def test_cdp_cli_runs_as_a_script_from_any_working_directory(tmp_path):
+    """안내 문구가 `python scripts/entry/cdp_cli.py <명령>` 이므로 직접 실행도 scripts 패키지를 찾아야 한다(사용법 출력, 종료 코드 0)."""
+    import os
+    import subprocess
+    import sys
+
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    env["HAEHAN_NO_BROWSER_LAUNCH"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"  # 한글 사용법을 파이프로 받으므로 출력 인코딩을 고정(이 시험의 관심사는 경로 해석)
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "entry" / "cdp_cli.py")],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=120,
+    )
+    assert r.returncode == 0, r.stderr[-500:]
+    assert "CDP" in r.stdout

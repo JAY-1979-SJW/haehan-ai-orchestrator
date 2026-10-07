@@ -159,7 +159,7 @@ def _cmd_new_sites() -> None:
     with_email = sum(1 for row in rows if row.get("이메일"))
     print(f"저장: {result.get('saved_path', DEFAULT_SOURCE)}")
     print(f"이메일 확보: {with_email}/{len(rows)}")
-    print("next: python scripts/browser/cdp_client.py eum sales-mail")
+    print("next: python scripts/entry/cdp_cli.py eum sales-mail")
 
 
 def _cmd_install_targets(sub: str | None, args: list[str]) -> None:
@@ -348,7 +348,7 @@ def _cmd_page_info(sub: str | None, args: list[str]) -> None:
     """Print compact capability details for one menu page."""
     query = " ".join([part for part in [sub, *(args or [])] if part]).strip()
     if not query:
-        print("usage: python scripts/browser/cdp_client.py eum page-info <menu-name-or-WEBMAN-code>")
+        print("usage: python scripts/entry/cdp_cli.py eum page-info <menu-name-or-WEBMAN-code>")
         return
     from scripts.eum.capabilities import find_capability, print_page_info
 
@@ -362,7 +362,7 @@ def _cmd_open_menu(sub: str | None, args: list[str]) -> None:
     gate_check("eum_extract_all_devices")
     query = " ".join([part for part in [sub, *(args or [])] if part]).strip()
     if not query:
-        print("usage: python scripts/browser/cdp_client.py eum open-menu <menu-name-or-WEBMAN-code>")
+        print("usage: python scripts/entry/cdp_cli.py eum open-menu <menu-name-or-WEBMAN-code>")
         return
 
     from scripts.eum.menu_actions import open_menu_page, print_menu_result, save_menu_result
@@ -419,7 +419,7 @@ def _cmd_work(sub: str | None, args: list[str]) -> None:
 
     alias = sub or (args[0] if args else "")
     if not alias:
-        print("usage: python scripts/browser/cdp_client.py eum work <alias-or-WEBMAN-code>")
+        print("usage: python scripts/entry/cdp_cli.py eum work <alias-or-WEBMAN-code>")
         print_workflow_help("__missing__")
         return
 
@@ -524,7 +524,7 @@ def _cmd_registration(sub: str | None, args: list[str], *, submit: bool = False)
     from scripts.eum.registration import register_device
 
     if sub:
-        # 예: python scripts/browser/cdp_client.py eum registration 2024-001 DEV-001 장소
+        # 예: python scripts/entry/cdp_cli.py eum registration 2024-001 DEV-001 장소
         project_code = sub
         device_id = args[0] if args else "TEST-001"
         location = args[1] if len(args) > 1 else "서울시"
@@ -568,21 +568,21 @@ def _cmd_deregistration(sub: str | None, args: list[str], *, submit: bool = Fals
 def _print_help() -> None:
     print("""EUM 사용법:
   [조회/분석]
-  python scripts/browser/cdp_client.py eum extract      단말기 전체 추출
-  python scripts/browser/cdp_client.py eum dashboard    업무 대시보드
-  python scripts/browser/cdp_client.py eum monitor      운용 모니터링 (통신단절/미사용/준공임박)
-  python scripts/browser/cdp_client.py eum history      단말기 이력 조회 (WEBMAN400M00)
-  python scripts/browser/cdp_client.py eum explore      전체 사이트 탐색
+  python scripts/entry/cdp_cli.py eum extract      단말기 전체 추출
+  python scripts/entry/cdp_cli.py eum dashboard    업무 대시보드
+  python scripts/entry/cdp_cli.py eum monitor      운용 모니터링 (통신단절/미사용/준공임박)
+  python scripts/entry/cdp_cli.py eum history      단말기 이력 조회 (WEBMAN400M00)
+  python scripts/entry/cdp_cli.py eum explore      전체 사이트 탐색
 
   [홍보/메일]
-  python scripts/browser/cdp_client.py eum new-sites    신규 현장 발굴
-  python scripts/browser/cdp_client.py eum mail         홍보메일 초안
-  python scripts/browser/cdp_client.py eum mail send    홍보메일 발송 (승인 필요)
+  python scripts/entry/cdp_cli.py eum new-sites    신규 현장 발굴
+  python scripts/entry/cdp_cli.py eum mail         홍보메일 초안
+  python scripts/entry/cdp_cli.py eum mail send    홍보메일 발송 (승인 필요)
 
   [단말기 관리] ✨ 신규 기능
-  python scripts/browser/cdp_client.py eum registration <공사코드> <단말기ID> [장소]  신규 등록 (WEBMAN381M00)
-  python scripts/browser/cdp_client.py eum deregistration <단말기ID> [철거일]  철거 신청 (WEBMAN382M00)
+  python scripts/entry/cdp_cli.py eum registration <공사코드> <단말기ID> [장소]  신규 등록 (WEBMAN381M00)
+  python scripts/entry/cdp_cli.py eum deregistration <단말기ID> [철거일]  철거 신청 (WEBMAN382M00)
 
   [시스템]
-  python scripts/browser/cdp_client.py eum task-run     전체 파이프라인 실행
-  python scripts/browser/cdp_client.py eum login        자동 로그인""")
+  python scripts/entry/cdp_cli.py eum task-run     전체 파이프라인 실행
+  python scripts/entry/cdp_cli.py eum login        자동 로그인""")

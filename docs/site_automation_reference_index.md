@@ -140,9 +140,9 @@ surface index before live work.
 - Latest artifact: `data/google_surface_catalog_latest.json`
 - Latest action artifact: `data/google_work_action_catalog_latest.json`
 - Latest adapter artifact: `data/google_execution_adapter_catalog_latest.json`
-- Command: `python scripts\cdp_client.py google surfaces catalog`
-- Action command: `python scripts\cdp_client.py google work catalog`
-- Adapter command: `python scripts\cdp_client.py google work ai_orchestrator.connectors.g2b`
+- Command: `python scripts\entry\cdp_cli.py google surfaces catalog`
+- Action command: `python scripts\entry\cdp_cli.py google work catalog`
+- Adapter command: `python scripts\entry\cdp_cli.py google work ai_orchestrator.connectors.g2b`
 - Rule: read-only live exploration first; write, publish, release, billing,
   IAM, API key, upload, comment, and indexing actions require dry-run and
   explicit approval.
@@ -188,7 +188,7 @@ workflows.
 - Recording workflow: `scripts/youtube/recording.py`
 - Upload workflow: `scripts/youtube/uploader.py`
 - Reference: `docs/youtube_recording_upload_workflow_20260513.md`
-- Command entry: `python scripts\cdp_client.py youtube ...`
+- Command entry: `python scripts\entry\cdp_cli.py youtube ...`
 
 Recording, upload, and public publishing are separate approval decisions.
 - Policy reference: `docs/common_login_session_safety_policy_20260513.md`

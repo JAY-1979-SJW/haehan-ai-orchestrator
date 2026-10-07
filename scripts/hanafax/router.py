@@ -150,4 +150,4 @@ def _print_help() -> None:
   queue [N]                           큐 미리보기
 
 큐 파일: data/hanafax_queue.jsonl
-자격증명: python scripts/browser/cdp_client.py cred set hanafax""")
+자격증명: python scripts/entry/cdp_cli.py cred set hanafax""")

@@ -17,7 +17,7 @@
 
 사용:
     python scripts/eum/full_explorer.py
-    python scripts/browser/cdp_client.py eum explore
+    python scripts/entry/cdp_cli.py eum explore
 """
 
 from __future__ import annotations

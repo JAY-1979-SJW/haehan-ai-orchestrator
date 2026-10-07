@@ -37,7 +37,7 @@ def prepare_action(action_key: str, values: dict[str, str] | None = None) -> tup
             "status": "blocked_until_approved" if action.requires_approval else "read_only_ready",
             "execute_mode": action.execute_mode,
             "command": (
-                f"python scripts\\cdp_client.py google work execute {command_path} "
+                f"python scripts\\entry\\cdp_cli.py google work execute {command_path} "
                 f"--approved --confirm={action.approval_phrase}"
             ),
         },

@@ -443,15 +443,15 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
         ],
         "post_approval_commands": [
             (
-                "python scripts/browser/cdp_client.py youtube oauth start "
+                "python scripts/entry/cdp_cli.py youtube oauth start "
                 f"scope=force-ssl client_file={client_file} redirect_uri={redirect_uri}"
             ),
             (
-                "python scripts/browser/cdp_client.py youtube oauth exchange "
+                "python scripts/entry/cdp_cli.py youtube oauth exchange "
                 f"code=<returned_code> client_file={client_file} redirect_uri={redirect_uri} output={token_file}"
             ),
             (
-                "python scripts/browser/cdp_client.py youtube research caption-list "
+                "python scripts/entry/cdp_cli.py youtube research caption-list "
                 f"video_id=<owned_or_authorized_video_id> token_file={token_file}"
             ),
         ],

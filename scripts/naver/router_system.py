@@ -64,7 +64,7 @@ def _cmd_session_check() -> None:
         print("[OK] 로그인 상태 정상")
     else:
         print("[X] 로그인 필요")
-        print("  python scripts/browser/cdp_client.py naver login")
+        print("  python scripts/entry/cdp_cli.py naver login")
 
     print("=" * 60)
 

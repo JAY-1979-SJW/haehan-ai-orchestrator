@@ -1,7 +1,7 @@
 """하나팩스(www.hanafax.com) 인증 모듈.
 
 자격증명 저장:
-    python scripts/browser/cdp_client.py cred set hanafax
+    python scripts/entry/cdp_cli.py cred set hanafax
 
 사용:
     from scripts.hanafax.auth import get_credentials, test_login
@@ -30,7 +30,7 @@ def test_login(user_id: str | None = None, password: str | None = None) -> dict:
     if not uid or not pwd:
         uid, pwd = get_credentials()
     if not uid or not pwd:
-        return {"ok": False, "message": "자격증명 없음. python scripts/browser/cdp_client.py cred set hanafax"}
+        return {"ok": False, "message": "자격증명 없음. python scripts/entry/cdp_cli.py cred set hanafax"}
 
     try:
         from playwright.sync_api import sync_playwright

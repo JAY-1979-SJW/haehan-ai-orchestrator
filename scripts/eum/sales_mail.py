@@ -347,7 +347,7 @@ def prepare_sales_mail(
         run_id = cdp_db.log_automation_run(
             "eum",
             "sales_mail_prepare",
-            command="python scripts/browser/cdp_client.py eum sales-mail",
+            command="python scripts/entry/cdp_cli.py eum sales-mail",
             status="success",
             risk_level="auto",
             input_ref=str(Path(source)),

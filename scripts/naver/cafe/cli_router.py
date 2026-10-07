@@ -308,7 +308,7 @@ def _cafe_write(sub: str, args: list[str]) -> None:
 
     if sub not in ("write", "prepare-post", "publish"):
         print(
-            "usage: python scripts/browser/cdp_client.py naver cafe [list|home|topic-search|join-request|collect|boards|posts|read|write|publish] ..."
+            "usage: python scripts/entry/cdp_cli.py naver cafe [list|home|topic-search|join-request|collect|boards|posts|read|write|publish] ..."
         )
         return
 
@@ -420,7 +420,7 @@ def _cmd_calendar(sub: str, args: list[str]) -> None:
 
     if sub not in ("add", "prepare", "save"):
         print(
-            "usage: python scripts/browser/cdp_client.py naver calendar [list|add] --title=TITLE --start=ISO [--end=ISO] [--dry-run|--execute] [--save --approved --confirm=NAVER_APPROVED_SAVE]"
+            "usage: python scripts/entry/cdp_cli.py naver calendar [list|add] --title=TITLE --start=ISO [--end=ISO] [--dry-run|--execute] [--save --approved --confirm=NAVER_APPROVED_SAVE]"
         )
         return
 
@@ -495,7 +495,7 @@ def _cmd_mybox(sub: str, args: list[str]) -> None:
         return
 
     if sub != "upload":
-        print("usage: python scripts/browser/cdp_client.py naver mybox [list|search|upload] ...")
+        print("usage: python scripts/entry/cdp_cli.py naver mybox [list|search|upload] ...")
         return
 
     local_path = (

@@ -16,31 +16,31 @@ record prepare -> record execute -> upload prepare -> upload execute dry-run -> 
 Prepare a local screen recording plan:
 
 ```powershell
-python scripts\cdp_client.py youtube record prepare duration=60 output=data\youtube_recordings\work.mp4
+python scripts\entry\cdp_cli.py youtube record prepare duration=60 output=data\youtube_recordings\work.mp4
 ```
 
 Execute recording after approval:
 
 ```powershell
-python scripts\cdp_client.py youtube record execute <plan_path> --approved --confirm=YOUTUBE_APPROVED_RECORD
+python scripts\entry\cdp_cli.py youtube record execute <plan_path> --approved --confirm=YOUTUBE_APPROVED_RECORD
 ```
 
 Prepare upload manifest:
 
 ```powershell
-python scripts\cdp_client.py youtube upload prepare data\youtube_recordings\work.mp4 title="업무 기록" privacy=private tags=work,local
+python scripts\entry\cdp_cli.py youtube upload prepare data\youtube_recordings\work.mp4 title="업무 기록" privacy=private tags=work,local
 ```
 
 Dry-run upload gate:
 
 ```powershell
-python scripts\cdp_client.py youtube upload execute <plan_path> --approved --confirm=YOUTUBE_APPROVED_UPLOAD --dry-run
+python scripts\entry\cdp_cli.py youtube upload execute <plan_path> --approved --confirm=YOUTUBE_APPROVED_UPLOAD --dry-run
 ```
 
 Live upload uses the official YouTube Data API path and must remain approved:
 
 ```powershell
-python scripts\cdp_client.py youtube upload execute <plan_path> --approved --confirm=YOUTUBE_APPROVED_UPLOAD --live
+python scripts\entry\cdp_cli.py youtube upload execute <plan_path> --approved --confirm=YOUTUBE_APPROVED_UPLOAD --live
 ```
 
 ## Approval Rules

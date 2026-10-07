@@ -5,7 +5,7 @@ L5 성격)·scripts/browser/navigator·popup·explorer·gabia(상위 도메인 �
 몰라야 한다(기반이 상위를 import하면 역방향 — module_cycles 유발). 이 모듈이
 그 반대: 그것들을 알고, cdp_client 의 명령 핸들러들과 함께 모아 디스패치한다.
 
-사용법은 scripts/browser/cdp_client.py 의 docstring과 동일 — 명령 처리 로직만
+사용법은 scripts/entry/cdp_cli.py 의 docstring과 동일 — 명령 처리 로직만
 여기로 옮겼다(동작 변경 없음, 2026-10-07 STD-08 후속 리팩터, S1-c).
 """
 
@@ -13,8 +13,12 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Callable
+from pathlib import Path
 
-from scripts.browser.cdp_client import (
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))  # `python scripts/entry/cdp_cli.py` 로 직접 실행해도 scripts 패키지를 찾는다
+
+from scripts.browser.cdp_client import (  # noqa: E402
     _cmd_analyze,
     _cmd_auto_login,
     _cmd_check_login,
@@ -28,7 +32,7 @@ from scripts.browser.cdp_client import (
     _cmd_session,
     _cmd_user_watch,
 )
-from scripts.entry import site_login_registry
+from scripts.entry import site_login_registry  # noqa: E402
 
 _SITE_ROUTER_CMDS = (
     "naver",
