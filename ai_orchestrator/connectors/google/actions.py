@@ -28,12 +28,12 @@ def _cdp_call(fn, *, reason: str = "google-tools-action"):
     Playwright 내부 타겟 핸드셰이크 단계에서 반복적으로 정확히 180000ms(고정값)
     멈추는 현상을 확인(원시 CDP HTTP /json 은 항상 0.5초 이내 응답 — 브라우저
     자체는 정상, "매 호출마다 새로 연결"하는 방식 자체가 문제). Gmail(gmail_cdp_
-    reader.py)은 처음부터 scripts.web_connector 의 공유·캐시된 단일 연결
+    reader.py)은 처음부터 scripts.browser.page.web_connector 의 공유·캐시된 단일 연결
     (run_on_browser_thread, 프로세스 생애주기 동안 1회만 connect_over_cdp)을
     써서 이 세션 내내 이 문제를 한 번도 겪지 않았다 — 동일 패턴으로 통일.
     (CLAUDE.md '반복 실수' 참고.)
     """
-    from scripts.web_connector import open_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import open_page, run_on_browser_thread
 
     def _work():
         page = open_page(allow_new_tab=True, reason=reason)

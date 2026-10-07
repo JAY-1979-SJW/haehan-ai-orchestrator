@@ -17,12 +17,13 @@ _GMAIL_INBOX_URL = "https://mail.google.com/mail/u/0/#inbox"
 
 def fetch_gmail_via_cdp(max_results: int = 20) -> list[dict]:
     """CDP 브라우저(기존 Google 세션)로 Gmail 받은편지함을 읽어 반환."""
-    from scripts.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     def _work():
         from playwright.sync_api import TimeoutError as PWTimeout
 
-        from scripts.web_connector import get_page_by_url, open_page
+        from scripts.browser.page.web_connector import get_page_by_url
+        from scripts.browser.cdp.connection import open_page
 
         # Gmail 탭 찾기 또는 열기
         try:

@@ -179,7 +179,7 @@ def _run_blog_publish(params: dict[str, Any]) -> str:
     def job() -> str:
         from scripts.naver.blog.automation.account_probe import alias_to_blog_id, read_alias
         from scripts.naver.blog.core.writer import write_post
-        from scripts.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         page = get_page()
         alias = read_alias(page)
@@ -201,7 +201,7 @@ def _run_blog_publish(params: dict[str, Any]) -> str:
             raise RuntimeError("블로그 발행에 실패했습니다: " + str(result.get("error") or result.get("reason") or "")[:100])
         return f"발행했습니다 (글번호 {result.get('log_no') or '확인 안 됨'})"
 
-    from scripts.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     return run_on_browser_thread(job, timeout=900)
 
@@ -212,7 +212,7 @@ def _in_new_tab(fn: Callable[[Any], Any]) -> Any:
     def job() -> Any:
         import contextlib
 
-        from scripts.web_connector import open_page
+        from scripts.browser.cdp.connection import open_page
 
         page = open_page(allow_new_tab=True, reason="naver-mail-imap-setting")
         try:
@@ -221,7 +221,7 @@ def _in_new_tab(fn: Callable[[Any], Any]) -> Any:
             with contextlib.suppress(Exception):  # 탭 정리 실패는 결과에 영향 없음
                 page.close()
 
-    from scripts.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     return run_on_browser_thread(job, timeout=180)
 
@@ -489,7 +489,7 @@ def get_action(key: str) -> ActionSpec | None:
 
 def ensure_cdp() -> None:
     """브라우저(CDP, 9222)가 꺼져 있으면 기동한다. 이미 떠 있으면 아무것도 하지 않는다."""
-    from scripts.cdp_force_start import _is_cdp_alive, cmd_start
+    from scripts.browser.cdp.cdp_force_start import _is_cdp_alive, cmd_start
 
     if _is_cdp_alive():
         return

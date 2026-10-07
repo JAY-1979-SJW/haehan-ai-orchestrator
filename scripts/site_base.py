@@ -26,7 +26,8 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.logger import get_logger  # noqa: E402
 from scripts.login_session import ensure_login, is_logged_in  # noqa: E402
-from scripts.web_connector import browser_session, close_page, get_page  # noqa: E402
+from scripts.browser.page.web_connector import browser_session  # noqa: E402
+from scripts.browser.cdp.connection import close_page, get_page  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -57,7 +58,7 @@ def task_context(
 
     log_id = None
     if with_db_log:
-        from scripts.cdp_db import log_start
+        from scripts.browser.cdp.cdp_db import log_start
 
         log_id = log_start(site, task, args)
 
@@ -74,7 +75,7 @@ def task_context(
                 ensure_login(page, site)
                 yield page
                 if with_db_log and log_id is not None:
-                    from scripts.cdp_db import log_finish
+                    from scripts.browser.cdp.cdp_db import log_finish
 
                     log_finish(log_id, "success")
                 log.info("[%s] %s 완료", site, task)
@@ -86,13 +87,13 @@ def task_context(
         ensure_login(page, site)
         yield page
         if with_db_log and log_id is not None:
-            from scripts.cdp_db import log_finish
+            from scripts.browser.cdp.cdp_db import log_finish
 
             log_finish(log_id, "success")
         log.info("[%s] %s 완료", site, task)
     except Exception as e:
         if with_db_log and log_id is not None:
-            from scripts.cdp_db import log_finish
+            from scripts.browser.cdp.cdp_db import log_finish
 
             log_finish(log_id, "fail", error_msg=str(e))
         log.error("[%s] %s 실패: %s", site, task, e)

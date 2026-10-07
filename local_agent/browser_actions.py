@@ -26,7 +26,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 
 from .web_reader import (
     MEDIUM_KEYWORDS,

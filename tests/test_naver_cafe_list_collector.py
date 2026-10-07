@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from scripts.browser_cdp_selection_gate import CdpPage, CdpSession
+from scripts.browser.session.browser_cdp_selection_gate import CdpPage, CdpSession
 from scripts.naver import router, router_cafe
 from scripts.naver.cafe import join_request, main_page, member_collect, topic_search
 from scripts.naver.cafe import list_background_runner as runner

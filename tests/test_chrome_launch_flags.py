@@ -10,10 +10,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from scripts import browser_lifecycle as lc
+from scripts.browser.session import browser_lifecycle as lc
 
 ROOT = Path(__file__).resolve().parents[1]
-CDP_LAUNCHERS = ("scripts/cdp_daemon.py", "scripts/cdp_force_start.py")  # 로그인 유지가 필요한 9222 브라우저 실행 경로
+CDP_LAUNCHERS = ("scripts/browser/cdp/cdp_daemon.py", "scripts/browser/cdp/cdp_force_start.py")  # 로그인 유지가 필요한 9222 브라우저 실행 경로
 ALL_LAUNCHERS = (*CDP_LAUNCHERS, "scripts/naver/browser_gate.py")
 
 

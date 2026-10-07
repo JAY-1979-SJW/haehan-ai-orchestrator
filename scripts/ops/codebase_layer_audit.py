@@ -614,7 +614,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "ai_orchestrator/auth/registration_code_store.py",
     "apps/ig-comment-dm-bot/core/processed_store.py",
     "local_agent/browser_approval_db_store.py",
-    "scripts/cdp_db.py",
+    "scripts/browser/cdp/cdp_db.py",
     "scripts/common/youtube_search_cache.py",
     "scripts/critical_logger.py",
     "scripts/naver/automation/platform/error_recovery.py",
@@ -628,7 +628,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/naver/shopping/crawl.py",
     "scripts/naver/smartstore/product/bulk.py",
     "scripts/op_log.py",
-    "scripts/popup_monitor.py",
+    "scripts/browser/popup/popup_monitor.py",
 }
 
 # STORAGE_BOUNDARY test known debt (tests 폴더 내 sqlite3 사용)

@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from scripts.google import Google
-from scripts.web_connector import get_page
+from scripts.browser.cdp.connection import get_page
 
 
 def test_gmail_serial():

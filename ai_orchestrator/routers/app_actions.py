@@ -113,7 +113,7 @@ def _build_call_kwargs(ep, params: dict, user: dict) -> dict | None:
 
 def run_action(path: str, params: dict | None, user: dict, confirmed: bool = False) -> dict:
     """동작 1개 실행. DESTRUCTIVE 만 차단, 나머지는 즉시 실행."""
-    from scripts.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     params = params or {}
     target = next(((ep, name) for p, ep, name in _post_routes() if p == path), None)

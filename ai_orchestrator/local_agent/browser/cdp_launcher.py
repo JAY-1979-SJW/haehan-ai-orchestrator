@@ -11,7 +11,7 @@ import urllib.error
 import urllib.request
 
 from ai_orchestrator.local_agent.browser.cdp_audit import L1, L2
-from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 
 CDP_HOST = "127.0.0.1"
 CDP_PORT = 9222

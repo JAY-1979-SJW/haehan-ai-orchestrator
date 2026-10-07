@@ -5,7 +5,7 @@
 
 통합 진입점:
     from scripts.naver import NaverServices
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     n = NaverServices(get_page())
     n.login()                                  # 자동 로그인

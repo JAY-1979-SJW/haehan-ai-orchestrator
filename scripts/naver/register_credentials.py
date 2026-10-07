@@ -58,7 +58,7 @@ def main():
     print()
     print("  이제 자동 로그인 가능합니다:")
     print("    from scripts.naver.blog.writer import write_post")
-    print("    from scripts.web_connector import get_page")
+    print("    from scripts.browser.cdp.connection import get_page")
     print("    write_post(get_page(), title='...', body='...')")
 
 

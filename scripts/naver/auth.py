@@ -12,7 +12,7 @@
 
 사용:
   from scripts.naver.auth import login_naver
-  from scripts.web_connector import get_page
+  from scripts.browser.cdp.connection import get_page
 
   page = get_page()
   result = login_naver(page)  # 환경변수/파일 사용
@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.critical_logger import log_critical
-from scripts.human_input import safe_human_input
+from scripts.browser.page.human_input import safe_human_input
 from scripts.logger import get_logger
 from scripts.login_detector import detect_login_state, wait_for_login_generic
 from security_utils import mask_identifier

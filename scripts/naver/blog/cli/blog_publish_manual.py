@@ -69,7 +69,7 @@ def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
 
     반환: {"ok": bool, "blog_id": str, "reason": str}
     """
-    from scripts.cdp_helper import CDP
+    from scripts.browser.cdp.cdp_helper import CDP
     from scripts.naver.blog.accounts import get_account
 
     account = get_account(blog_id)

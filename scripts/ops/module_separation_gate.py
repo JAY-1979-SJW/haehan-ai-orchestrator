@@ -61,14 +61,14 @@ SEPARATED_MODULES: list[dict] = [
     },
     {
         "name": "page_helper",
-        "root": "scripts/page_helper.py",
+        "root": "scripts/browser/page/page_helper.py",
         "max_root_loc": 45,
         "leaf_glob": "scripts/page_helper_*.py",
         "shared_leaves": {"common", "interact"},
     },
     {
         "name": "navigator",
-        "root": "scripts/navigator.py",
+        "root": "scripts/browser/navigator/navigator.py",
         "max_root_loc": 25,
         "leaf_glob": "scripts/navigator_*.py",
         "shared_leaves": {"common", "scan", "verify"},

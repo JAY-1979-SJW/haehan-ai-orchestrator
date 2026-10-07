@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 
-from scripts.browser_paths import find_ffmpeg  # noqa: E402
+from scripts.browser.session.browser_paths import find_ffmpeg  # noqa: E402
 
 OUTPUT_DIR = ROOT / "data" / "promo_video"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

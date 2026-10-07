@@ -4,7 +4,7 @@ import sys
 import time
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
-from scripts.web_connector import get_page
+from scripts.browser.cdp.connection import get_page
 
 page = get_page()
 BASE = "https://developers.kakao.com/console/app"

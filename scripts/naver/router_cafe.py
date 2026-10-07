@@ -256,7 +256,7 @@ def _cafe_posts(args: list[str]) -> None:
     from datetime import datetime
 
     from scripts.naver.cafe import NaverCafe
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     gate_check("scan_page")
     cafe_url = _option_value(args, "--cafe-url=") or (args[0] if args and not str(args[0]).startswith("--") else "")
@@ -280,7 +280,7 @@ def _cafe_read(args: list[str]) -> None:
     from datetime import datetime
 
     from scripts.naver.cafe import NaverCafe
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     gate_check("scan_page")
     post_url = (
@@ -305,11 +305,11 @@ def _cafe_write(sub: str, args: list[str]) -> None:
         save_cafe_submit_record,
         save_cafe_write_plan,
     )
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     if sub not in ("write", "prepare-post", "publish"):
         print(
-            "usage: python scripts/cdp_client.py naver cafe [list|home|topic-search|join-request|collect|boards|posts|read|write|publish] ..."
+            "usage: python scripts/browser/cdp/cdp_client.py naver cafe [list|home|topic-search|join-request|collect|boards|posts|read|write|publish] ..."
         )
         return
 
@@ -410,7 +410,7 @@ def _cmd_calendar(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
     from scripts.naver.calendar import NaverCalendar
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     if sub in ("list", "events"):
         gate_check("scan_page")
@@ -421,7 +421,7 @@ def _cmd_calendar(sub: str, args: list[str]) -> None:
 
     if sub not in ("add", "prepare", "save"):
         print(
-            "usage: python scripts/cdp_client.py naver calendar [list|add] --title=TITLE --start=ISO [--end=ISO] [--dry-run|--execute] [--save --approved --confirm=NAVER_APPROVED_SAVE]"
+            "usage: python scripts/browser/cdp/cdp_client.py naver calendar [list|add] --title=TITLE --start=ISO [--end=ISO] [--dry-run|--execute] [--save --approved --confirm=NAVER_APPROVED_SAVE]"
         )
         return
 
@@ -475,7 +475,7 @@ def _cmd_mybox(sub: str, args: list[str]) -> None:
     from pathlib import Path
 
     from scripts.naver.mybox import NaverMyBox
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     if sub in ("list", "files"):
         gate_check("scan_page")
@@ -496,7 +496,7 @@ def _cmd_mybox(sub: str, args: list[str]) -> None:
         return
 
     if sub != "upload":
-        print("usage: python scripts/cdp_client.py naver mybox [list|search|upload] ...")
+        print("usage: python scripts/browser/cdp/cdp_client.py naver mybox [list|search|upload] ...")
         return
 
     local_path = (

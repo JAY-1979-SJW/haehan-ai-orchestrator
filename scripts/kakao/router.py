@@ -47,13 +47,13 @@ def _cmd_session_check() -> None:
         print("✓ 로그인 상태 정상")
     else:
         print("✗ 로그인 필요")
-        print("  python scripts/cdp_client.py kakao login")
+        print("  python scripts/browser/cdp/cdp_client.py kakao login")
     print("=" * 60)
 
 
 def _cmd_login() -> None:
     from scripts.kakao.auth import login
-    from scripts.web_connector import browser_session
+    from scripts.browser.page.web_connector import browser_session
 
     print("=" * 60)
     print("카카오 로그인")

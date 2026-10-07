@@ -167,7 +167,7 @@ def main():
 
     # 팝업 처리
     try:
-        from scripts.popup_detector import handle_page_popups
+        from scripts.browser.popup.popup_detector import handle_page_popups
 
         handle_page_popups(page, timeout_s=2.0)
     except Exception:  # noqa: BLE001 - 페이지 팝업 처리 실패는 무시하고 계속 진행(팝업 없는 정상 케이스가 대부분)

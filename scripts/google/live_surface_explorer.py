@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.cdp_console import connect
+from scripts.browser.cdp.cdp_console import connect
 from scripts.google import surfaces, tab_logic
 from scripts.google.cloud.live_console_explorer import (
     _extract_visible_console_snapshot,

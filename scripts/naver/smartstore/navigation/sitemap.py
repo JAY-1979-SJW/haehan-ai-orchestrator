@@ -27,8 +27,8 @@ sys.path.insert(0, str(ROOT))
 from scripts.critical_logger import log_critical  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
 from scripts.login_detector import get_logged_in_user, is_logged_in_generic  # noqa: E402
-from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
-from scripts.web_connector import get_page  # noqa: E402
+from scripts.browser.popup.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.browser.cdp.connection import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 

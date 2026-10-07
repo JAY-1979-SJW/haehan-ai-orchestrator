@@ -277,7 +277,7 @@ def open_private_tab(
     `ctx.new_page()+goto` 는 쓰지 않는다 — 환경에 따라 goto 가 멈추는 것이 실측됐고(cdp_tabs 문서, 2026-10-03 localhost 화면),
     `get_task_page` 는 같은 호스트의 기존 탭을 재사용해 사용자 탭을 이동시킨다. 페이지를 못 찾으면 만든 탭을 닫고 오류를 낸다.
     """
-    from scripts import cdp_tabs
+    from scripts.browser.cdp import cdp_tabs
 
     opener = opener or cdp_tabs.open_tab
     closer = closer or cdp_tabs.close_tab
@@ -292,8 +292,8 @@ def open_private_tab(
 
 def run_request(request: dict[str, Any]) -> dict[str, Any]:
     """승인된 탐색 요청 실행기(서비스에 주입). 새 전용 탭에서 탐색하고, 끝나면 **그 탭만** 닫는다. 사용자 탭은 건드리지 않는다."""
-    from scripts import cdp_tabs
-    from scripts.web_connector import get_context, run_on_browser_thread
+    from scripts.browser.cdp import cdp_tabs
+    from scripts.browser.cdp.connection import get_context, run_on_browser_thread
 
     def work() -> dict[str, Any]:
         page, handle = open_private_tab(get_context(), request["start_url"])

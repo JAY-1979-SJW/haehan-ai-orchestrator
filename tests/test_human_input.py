@@ -1,10 +1,10 @@
-"""공용 사람처럼 입력(scripts/human_input.py) — 클릭 대기 옵션, force 클릭 폴백, 보이는지 재확인. 가짜 페이지만 쓴다."""
+"""공용 사람처럼 입력(scripts/browser/page/human_input.py) — 클릭 대기 옵션, force 클릭 폴백, 보이는지 재확인. 가짜 페이지만 쓴다."""
 
 from __future__ import annotations
 
 import pytest
 
-from scripts import human_input as H
+from scripts.browser.page import human_input as H
 
 
 class FakeElement:

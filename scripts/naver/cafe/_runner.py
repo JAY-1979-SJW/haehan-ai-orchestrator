@@ -36,7 +36,7 @@ import argparse
 import json
 import sys
 
-from scripts.web_connector import get_page
+from scripts.browser.cdp.connection import get_page
 from .writer import write_post, confirm_publish
 
 

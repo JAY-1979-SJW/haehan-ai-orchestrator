@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from scripts import human_input as H
+from scripts.browser.page import human_input as H
 from scripts.naver import auth as A
 
 
@@ -116,7 +116,7 @@ def test_password_failure_result_never_contains_the_raw_password():
 
 
 def test_naver_no_longer_keeps_its_own_copy_of_the_input_helper():
-    """공용 scripts/human_input.py 로 통합했다 — 자체 사본이 다시 생기면 안 된다."""
+    """공용 scripts/browser/page/human_input.py 로 통합했다 — 자체 사본이 다시 생기면 안 된다."""
     assert not hasattr(A, "_safe_human_input")
     assert A.safe_human_input is H.safe_human_input
 

@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.cdp_console import connect
+from scripts.browser.cdp.cdp_console import connect
 from scripts.google import surfaces, tab_logic
 from scripts.google.surface_explorer import RISK_CONTROL_KEYWORDS
 

@@ -2817,62 +2817,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/g2b/g2b_domain_policy.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "g2b",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/g2b/g2b_existing_openapi_bridge.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "g2b",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/g2b/g2b_public_notice_content_validator.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "g2b",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/g2b/g2b_public_notice_dryrun_adapter.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "g2b",
-   "reason": "g2b_public_notice_workflow(L6)를 dry-run으로 감싸는 워크플로 어댑터 — L4 generic(low) 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/connectors/g2b/g2b_public_notice_execution_gate.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "g2b",
-   "reason": "워크플로 실행 여부를 게이트하고 직접 트리거하는 오케스트레이터 — 단순 L2 policy 아님, dryrun_adapter/workflow(L6)와 동급",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/connectors/g2b/g2b_public_notice_local_live_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "g2b",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/g2b/g2b_public_notice_workflow.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "g2b",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/browser_tool/gate_approval_preflight.py": {
    "layer": "L2",
    "role": "policy",
@@ -7761,7 +7705,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/browser_cdp_selection_gate.py": {
+  "scripts/browser/session/browser_cdp_selection_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -7769,7 +7713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_paths.py": {
+  "scripts/browser/session/browser_paths.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7777,7 +7721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_rpc_client.py": {
+  "scripts/browser/cdp/browser_rpc_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7785,7 +7729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_rpc_server.py": {
+  "scripts/browser/cdp/browser_rpc_server.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7793,7 +7737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_sandbox_gate.py": {
+  "scripts/browser/session/browser_sandbox_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -7801,7 +7745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_tab_monitor.py": {
+  "scripts/browser/cdp/browser_tab_monitor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7809,7 +7753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_task_session.py": {
+  "scripts/browser/session/browser_task_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7817,7 +7761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_client.py": {
+  "scripts/browser/cdp/cdp_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7825,7 +7769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_console.py": {
+  "scripts/browser/cdp/cdp_console.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7833,7 +7777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_daemon.py": {
+  "scripts/browser/cdp/cdp_daemon.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7841,7 +7785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_db.py": {
+  "scripts/browser/cdp/cdp_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "browser",
@@ -7849,7 +7793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_force_start.py": {
+  "scripts/browser/cdp/cdp_force_start.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7857,7 +7801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_helper.py": {
+  "scripts/browser/cdp/cdp_helper.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7865,7 +7809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_lane_start.py": {
+  "scripts/browser/cdp/cdp_lane_start.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7873,7 +7817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_lanes.py": {
+  "scripts/browser/cdp/cdp_lanes.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7881,7 +7825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_session_selector.py": {
+  "scripts/browser/cdp/cdp_session_selector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7889,7 +7833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_tab_manager.py": {
+  "scripts/browser/cdp/cdp_tab_manager.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7897,7 +7841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_tabs.py": {
+  "scripts/browser/cdp/cdp_tabs.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7905,7 +7849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_verify.py": {
+  "scripts/browser/cdp/cdp_verify.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7919,22 +7863,6 @@
    "domain": "common",
    "reason": "운영·감사 도구",
    "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/chrome_ui_monitor.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/chrome_ui_watcher.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
    "source": "rule"
   },
   "scripts/common/__init__.py": {
@@ -9905,7 +9833,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/human_input.py": {
+  "scripts/browser/page/human_input.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -12897,7 +12825,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator.py": {
+  "scripts/browser/navigator/navigator.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -12905,7 +12833,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_blog.py": {
+  "scripts/naver/blog/navigator_blog.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -12913,7 +12841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/navigator_common.py": {
+  "scripts/browser/navigator/navigator_common.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -12921,7 +12849,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_interact.py": {
+  "scripts/browser/navigator/navigator_interact.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -12929,7 +12857,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_nav.py": {
+  "scripts/browser/navigator/navigator_nav.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -12937,7 +12865,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_scan.py": {
+  "scripts/browser/navigator/navigator_scan.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -12945,7 +12873,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/navigator_session.py": {
+  "scripts/browser/navigator/navigator_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -12953,7 +12881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/navigator_verify.py": {
+  "scripts/browser/navigator/navigator_verify.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -14705,7 +14633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_analyzer.py": {
+  "scripts/browser/page/page_analyzer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -14713,7 +14641,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/page_helper.py": {
+  "scripts/browser/page/page_helper.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14721,7 +14649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_common.py": {
+  "scripts/browser/page/page_helper_common.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14729,7 +14657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_inspect.py": {
+  "scripts/browser/page/page_helper_inspect.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14737,7 +14665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_interact.py": {
+  "scripts/browser/page/page_helper_interact.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14745,7 +14673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_nav.py": {
+  "scripts/browser/page/page_helper_nav.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14753,7 +14681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/page_helper_watch.py": {
+  "scripts/browser/page/page_helper_watch.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14761,7 +14689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/popup_classifier.py": {
+  "scripts/browser/popup/popup_classifier.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14769,7 +14697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/popup_detector.py": {
+  "scripts/browser/popup/popup_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14777,7 +14705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/popup_monitor.py": {
+  "scripts/browser/popup/popup_monitor.py": {
    "layer": "L4",
    "role": "persistence",
    "domain": "browser",
@@ -14785,7 +14713,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/popup_watcher.py": {
+  "scripts/browser/popup/popup_watcher.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -14881,7 +14809,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/session_tracker.py": {
+  "scripts/browser/session/session_tracker.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -15137,7 +15065,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/user_action_monitor.py": {
+  "scripts/browser/page/user_action_monitor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -15209,7 +15137,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/web_connector.py": {
+  "scripts/browser/page/web_connector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -20529,7 +20457,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/browser_lifecycle.py": {
+  "scripts/browser/session/browser_lifecycle.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -21817,6 +21745,46 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/browser/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp_cli.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/session/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/page/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_opt_out_lock_windows.py": {
    "layer": "L11",
    "role": "test",
@@ -21857,12 +21825,36 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/g2b/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
-   "confidence": "low",
+  "tests/test_verify_change_ruff_loud.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/popup/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/cdp/connection.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
    "source": "rule"
   },
   "admin-web/src/components/chat/domainChatRegistry.ts": {
@@ -22070,6 +22062,70 @@
    "role": "browser_engine",
    "domain": "browser",
    "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/g2b/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "g2b",
+   "reason": "도메인(g2b) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/g2b/g2b_domain_policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "g2b",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/g2b/g2b_existing_openapi_bridge.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "g2b",
+   "reason": "도메인(g2b) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_content_validator.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "g2b",
+   "reason": "도메인(g2b) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_dryrun_adapter.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "g2b",
+   "reason": "g2b_public_notice_workflow(L6)를 dry-run으로 감싸는 워크플로 어댑터 — L4 generic(low) 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_execution_gate.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "g2b",
+   "reason": "워크플로 실행 여부를 게이트하고 직접 트리거하는 오케스트레이터 — 단순 L2 policy 아님, dryrun_adapter/workflow(L6)와 동급",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_local_live_runner.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "g2b",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_workflow.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "g2b",
+   "reason": "업무 흐름 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -22986,14 +23042,6 @@
    "source": "rule"
   },
   "tests/test_site_task_spec.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_verify_change_ruff_loud.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

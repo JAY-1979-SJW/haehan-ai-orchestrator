@@ -5,10 +5,11 @@
  "hash_count": 81,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
-   "ai_orchestrator/services/gongmu_service.py:_read_rows",
+   "ai_orchestrator/gongmu/gongmu_service.py:_read_rows",
    "ai_orchestrator/services/mail_bulk_service.py:_read_rows"
   ],
   "088ada4c32833480504cc02bbb5e071313f817b4": [
+   "scripts/google/calendar.py:_task_delete",
    "scripts/google/drive.py:_task_delete",
    "scripts/google/sheets.py:_task_delete"
   ],
@@ -43,8 +44,8 @@
    "scripts/kakao/auth.py:login"
   ],
   "2a680e0f94b41e4cb814b289c9104964760a160e": [
-   "scripts/youtube/oauth.py:_write_report",
-   "scripts/youtube/research_common.py:_write_report"
+   "scripts/common/youtube_api_common.py:_write_report",
+   "scripts/youtube/oauth.py:_write_report"
   ],
   "2bc87d002245021e496c951eebabbff968c07c32": [
    "scripts/ops/audit_backend_premium_api_contract.py:main",
@@ -208,11 +209,11 @@
    "scripts/google/workflows_catalog.py:save_undeveloped_report"
   ],
   "936fbd68ef6ce7fbb209475fabbec4b2765e9f2d": [
-   "ai_orchestrator/persistence/agent_dispatch_store.py:_conn",
+   "ai_orchestrator/agent_dispatch/agent_dispatch_store.py:_conn",
    "ai_orchestrator/persistence/fax_authorization_store.py:_conn",
    "ai_orchestrator/persistence/mail_bulk_store.py:_conn",
    "ai_orchestrator/persistence/naver_mail_draft_store.py:_conn",
-   "ai_orchestrator/persistence/scheduled_job_store.py:_conn"
+   "ai_orchestrator/scheduler/scheduled_job_store.py:_conn"
   ],
   "944d93c8f5c11f0e919b657379711f7dd622fc47": [
    "scripts/google/android_app_dev_report.py:save_android_app_dev_report",
@@ -253,8 +254,8 @@
    "scripts/ops/audit_playwright_ai_baseline_contract.py:audit"
   ],
   "a02b6be2b26f8d575820935f909cd473dc775f38": [
-   "scripts/youtube/oauth.py:parse_kv_args",
-   "scripts/youtube/research_common.py:parse_kv_args"
+   "scripts/common/youtube_api_common.py:parse_kv_args",
+   "scripts/youtube/oauth.py:parse_kv_args"
   ],
   "a380d0b5c797e708fb4d43618fe561a5f5027412": [
    "scripts/google/android_app_dev_report.py:print_android_app_dev_summary",
@@ -321,8 +322,8 @@
    "scripts/naver/smartstore/automation/competitor_analysis.py:_init_db"
   ],
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
-   "scripts/popup_monitor.py:ChromeUIWatcher.start",
-   "scripts/popup_monitor.py:PopupMonitor.start"
+   "scripts/browser/popup/popup_monitor.py:ChromeUIWatcher.start",
+   "scripts/browser/popup/popup_monitor.py:PopupMonitor.start"
   ],
   "da69dd83b6ef3b8ce85e3d20c35cc3fcd4a8b16f": [
    "scripts/instagram/overlay.py:_fit_cover",
@@ -332,6 +333,10 @@
    "scripts/naver/calendar.py:NaverCalendar.open",
    "scripts/naver/place.py:NaverPlace.open"
   ],
+  "e0629eccbee21fd03c8dc90f3076b7f408b3b6d8": [
+   "scripts/eum/labor_test.py:main",
+   "scripts/eum/site_devices.py:main"
+  ],
   "e36c0e76b7b2bf132fe345aaf357a99cfb41a76e": [
    "scripts/eum/deregistration.py:_analysis_entries",
    "scripts/eum/registration.py:_analysis_entries"
@@ -340,12 +345,8 @@
    "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:_route_file",
    "scripts/ops/smoke_app_ui_shell_browser.py:_page"
   ],
-  "e53b6c96e67ad5ce8bb56b8fc41422ae9b2f71ab": [
-   "scripts/eum/labor_test.py:main",
-   "scripts/eum/site_devices.py:main"
-  ],
   "e55f06f8e61437d0e4a448891d63f8c86d52f388": [
-   "scripts/cdp_helper.py:CDP.shot",
+   "scripts/browser/cdp/cdp_helper.py:CDP.shot",
    "scripts/video/_cdp_tab.py:TabCDP.shot"
   ],
   "ea67e9101017d3eceedb5e96ea8b995ef1198941": [
@@ -375,8 +376,8 @@
    "scripts/google/sheets.py:_task_new"
   ],
   "ef7fe454c93d0a29914ccee0d6e53ac1cdd068e1": [
-   "scripts/google/youtube/search_common.py:_should_retry_without_proxy",
-   "scripts/youtube/youtube_http_client.py:_should_retry_without_proxy"
+   "scripts/common/youtube_http_client.py:_should_retry_without_proxy",
+   "scripts/google/youtube/search_common.py:_should_retry_without_proxy"
   ],
   "f2dd54c583d5f6e43808f5917d535acd830fa502": [
    "scripts/naver/automation/platform/scheduler.py:Scheduler.remove_task",

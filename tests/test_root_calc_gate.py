@@ -72,7 +72,7 @@ def test_non_python_and_exempt_paths_are_ignored():
         "ai_orchestrator/paths/__init__.py",
         "scripts/app_paths.py",
         "scripts/data_paths.py",
-        "scripts/browser_paths.py",
+        "scripts/browser/session/browser_paths.py",
         "scripts/some/tests/conftest.py",
     ):
         assert not gate.check_file(path, [(1, code.strip())], code, CFG), path

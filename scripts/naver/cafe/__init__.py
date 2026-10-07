@@ -45,7 +45,7 @@ from playwright.sync_api import Page
 from scripts.community.analyzer import prepare_posts_for_review
 from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
-from scripts.popup_detector import handle_page_popups
+from scripts.browser.popup.popup_detector import handle_page_popups
 
 from .analysis.organizer import organize
 from .analysis.pipeline import run_pipeline

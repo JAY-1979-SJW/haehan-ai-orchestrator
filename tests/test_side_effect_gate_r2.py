@@ -105,7 +105,7 @@ def test_blog_publish_requires_confirm_phrase_before_browser(monkeypatch):
 
     opened: list[int] = []
     monkeypatch.setattr(
-        "scripts.web_connector.run_on_browser_thread", lambda fn, timeout=0: opened.append(1) or {"ok": True}
+        "scripts.browser.cdp.connection.run_on_browser_thread", lambda fn, timeout=0: opened.append(1) or {"ok": True}
     )
     for bad in (None, "", "yes"):
         req = r.BlogWriteRequest(title="t", body="b", publish=True, publish_confirm=bad)
@@ -119,7 +119,7 @@ def test_blog_publish_passes_with_phrase_and_draft_needs_none(monkeypatch):
     from ai_orchestrator.connectors import naver_blog_router as r
 
     monkeypatch.setattr(r, "emit_event", lambda *a, **k: None)
-    monkeypatch.setattr("scripts.web_connector.run_on_browser_thread", lambda fn, timeout=0: {"ok": True})
+    monkeypatch.setattr("scripts.browser.cdp.connection.run_on_browser_thread", lambda fn, timeout=0: {"ok": True})
     ok = r.write_to_naver(
         r.BlogWriteRequest(title="t", body="b", publish=True, publish_confirm=r.BLOG_PUBLISH_CONFIRM_TEXT), user={}
     )
@@ -228,7 +228,7 @@ def test_gmail_send_needs_confirmed_and_phrase_before_browser(monkeypatch):
 
     g, _ = _gmail(monkeypatch)
     opened: list[int] = []
-    monkeypatch.setattr("scripts.web_connector.run_on_browser_thread", lambda fn, timeout=0: opened.append(1))
+    monkeypatch.setattr("scripts.browser.cdp.connection.run_on_browser_thread", lambda fn, timeout=0: opened.append(1))
     user = {"actor": "a", "role": "admin"}
     with pytest.raises(HTTPException) as exc:
         g.api_send(g.GmailSendRequest(confirmed=True), user=user)
@@ -385,7 +385,7 @@ def test_eum_sales_mail_send_requires_phrase_and_checks_opt_out(monkeypatch):
 
     opened: list[int] = []
     monkeypatch.setattr(e, "log_event", lambda *a, **k: None)
-    monkeypatch.setattr("scripts.web_connector.run_on_browser_thread", lambda fn, timeout=0: opened.append(1) or {"success": True})
+    monkeypatch.setattr("scripts.browser.cdp.connection.run_on_browser_thread", lambda fn, timeout=0: opened.append(1) or {"success": True})
     user = {"actor": "a", "role": "admin"}
     base = {"to": "Kim <kim@x.com>", "subject": "s", "body": "b", "confirmed": True}
     for bad in (None, "", "nope"):
@@ -409,7 +409,7 @@ def test_hiworks_mail_send_requires_phrase_before_browser(monkeypatch):
 
     opened: list[int] = []
     monkeypatch.setattr(h, "log_event", lambda *a, **k: None)
-    monkeypatch.setattr("scripts.web_connector.run_on_browser_thread", lambda fn, timeout=0: opened.append(1) or {"success": True})
+    monkeypatch.setattr("scripts.browser.cdp.connection.run_on_browser_thread", lambda fn, timeout=0: opened.append(1) or {"success": True})
     user = {"actor": "a", "role": "admin"}
     with pytest.raises(HTTPException) as exc:
         h.api_send(h.HWMailSendRequest(confirmed=True), user=user)

@@ -6,7 +6,7 @@ CDP로 직접 조작한다. 기존 구현(collection/write) 대비 신규 영역
 범위(승인됨): 게시판 목록 조회 + 신규 게시판 추가만. 이름변경·순서변경·삭제는 범위 밖(향후 확장).
 
 사용:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.cafe.management.board import list_boards, add_board
 
     page = get_page()

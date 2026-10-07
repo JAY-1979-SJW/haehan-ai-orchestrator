@@ -59,7 +59,7 @@ def build_youtube_oauth_console_open_plan(
             "OS file/URL opener",
             "shell URL open",
         ],
-        "open_method": "scripts.web_connector.get_page().goto",
+        "open_method": "scripts.browser.cdp.connection.get_page().goto",
         "sequence": [
             {
                 "step": 1,
@@ -124,7 +124,7 @@ def open_youtube_oauth_console_managed(
     if dry_run:
         return {**plan, "dry_run": True, "opened": False}
 
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     page = get_page()
     visited: list[dict[str, Any]] = []

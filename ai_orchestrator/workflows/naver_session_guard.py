@@ -174,7 +174,8 @@ def default_deps() -> GuardDeps:
     from ai_orchestrator.workflows.naver_login_pipeline import _is_cdp_alive, _start_cdp, run_naver_login_pipeline
     from scripts import login_detector
     from scripts.naver.blog.automation.account_probe import read_alias
-    from scripts.web_connector import get_page_by_url, open_page, run_on_browser_thread
+    from scripts.browser.page.web_connector import get_page_by_url
+    from scripts.browser.cdp.connection import open_page, run_on_browser_thread
 
     def _detect(start_browser: bool) -> dict[str, Any]:
         try:

@@ -28,7 +28,7 @@ import json
 import time
 import urllib.parse
 
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)

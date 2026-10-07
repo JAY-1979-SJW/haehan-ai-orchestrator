@@ -10,7 +10,7 @@ from scripts.hiworks.schemas import DATA_DIR, HIWORKS_DASHBOARD_URL, HIWORKS_DOM
 
 
 def open_hiworks(path: str = ""):
-    from scripts.web_connector import get_page_by_url
+    from scripts.browser.page.web_connector import get_page_by_url
 
     page = get_page_by_url(HIWORKS_DOMAIN_HINT, create_url=HIWORKS_DASHBOARD_URL)
     if path and path != page.url:

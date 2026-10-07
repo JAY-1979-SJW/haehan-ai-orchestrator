@@ -1,4 +1,4 @@
-from scripts import cdp_daemon
+from scripts.browser.cdp import cdp_daemon
 
 
 class _FakeResponse:

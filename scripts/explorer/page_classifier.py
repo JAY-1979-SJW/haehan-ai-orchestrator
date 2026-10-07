@@ -114,7 +114,7 @@ def _rule_modal(snap: dict, disc: dict):
             "modal_popup",
             0.85,
             [f"modal_signs={len(snap['modal_signs'])}"],
-            ["scripts.popup_watcher / popup_classifier"],
+            ["scripts.browser.popup.popup_watcher / popup_classifier"],
         )
     return None
 

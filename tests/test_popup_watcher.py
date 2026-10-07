@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest import mock
 
-from scripts.popup_watcher import (
+from scripts.browser.popup.popup_watcher import (
     POPUP_MARKERS,
     auto_handle,
     build_watcher_js,
@@ -35,7 +35,7 @@ class TestInstallWatcher:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             result = install_watcher()
             assert result["installed"] is True
             assert result["frame_count"] == 1
@@ -49,7 +49,7 @@ class TestInstallWatcher:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame1, mock_frame2]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             result = install_watcher()
             assert result["frame_count"] == 1  # 성공한 1개만
 
@@ -70,7 +70,7 @@ class TestPollEvents:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             result = poll_events(since_ms=0)
             assert result == events
 
@@ -81,7 +81,7 @@ class TestPollEvents:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             poll_events(since_ms=5000)
             # evaluate 호출 시 since_ms가 전달되었는지 확인
             call_args = mock_frame.evaluate.call_args
@@ -94,7 +94,7 @@ class TestPollEvents:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             result = poll_events()
             assert result == []
 
@@ -106,7 +106,7 @@ class TestClearEvents:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             clear_events()
             mock_frame.evaluate.assert_called_once()
             # evaluate에 빈 배열 설정 코드가 포함되어야 함
@@ -130,8 +130,8 @@ class TestAutoHandle:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
-            with mock.patch("scripts.navigator.click_button", return_value=True) as mock_click:
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
+            with mock.patch("scripts.browser.navigator.navigator.click_button", return_value=True) as mock_click:
                 result = auto_handle()
                 assert len(result["handled"]) == 1
                 assert result["handled"][0]["clicked"] is True
@@ -152,7 +152,7 @@ class TestAutoHandle:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             result = auto_handle()
             assert len(result["skipped"]) == 1
             assert len(result["handled"]) == 0
@@ -172,7 +172,7 @@ class TestAutoHandle:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             result = auto_handle()
             assert len(result["unknown"]) == 1
             assert result["unknown"][0]["marker"] == "새로운 팝업"
@@ -185,7 +185,7 @@ class TestAutoHandle:
         mock_page = mock.Mock()
         mock_page.frames = [mock_frame]
 
-        with mock.patch("scripts.web_connector.get_page", return_value=mock_page):
+        with mock.patch("scripts.browser.cdp.connection.get_page", return_value=mock_page):
             auto_handle()
             # poll + clear 순서로 2번 호출됨
             assert mock_frame.evaluate.call_count >= 1

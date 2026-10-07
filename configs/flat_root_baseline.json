@@ -158,7 +158,6 @@
   "scripts/user_action_monitor.py",
   "scripts/validate_site_policy_config.py",
   "scripts/watch_log.py",
-  "scripts/web_connector.py",
   "security_utils.py",
   "task_store.py",
   "telegram_notifier.py"

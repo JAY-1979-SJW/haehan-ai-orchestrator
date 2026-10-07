@@ -1,7 +1,7 @@
 """네이버 카페 글쓰기 자동화.
 
 사용:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.cafe.writer import write_post, confirm_publish
 
     page = get_page()

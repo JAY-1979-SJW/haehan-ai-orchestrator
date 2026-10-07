@@ -1344,7 +1344,7 @@ def action_cdp_run(params: dict) -> ActionResult:
     no_wait = bool(params.get("no_wait", True))
 
     root = Path(__file__).parents[1]
-    script = root / "scripts" / "cdp_client.py"
+    script = root / "scripts" / "browser" / "cdp" / "cdp_client.py"
 
     cmd = [sys.executable, str(script), site]
     if task:

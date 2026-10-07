@@ -1,7 +1,7 @@
 """마케팅 운영실 API — scripts/naver/blog/marketing/ 파이프라인을 웹에서 조회/승인/발행.
 
 기존 파이프라인(주제 리서치·콘텐츠 생성·발행)을 그대로 호출만 한다 — 로직
-중복 구현 없음. CDP 접속은 scripts.web_connector(get_page/run_on_browser_thread)
+중복 구현 없음. CDP 접속은 scripts.browser.page.web_connector(get_page/run_on_browser_thread)
 공용 브라우저 스레드를 재사용 — 요청마다 새 playwright 연결을 만들면 탭이
 쌓여 CDP 자체가 느려지는 문제(2026-08-17 실측)를 피하기 위함.
 
@@ -253,7 +253,7 @@ def publish_blog(
     from scripts.naver.blog.marketing.images import pick_3_images
     from scripts.naver.blog.marketing.publish import existing_unsplash_fallback, record_success
     from scripts.naver.blog.marketing.topics import load_cache
-    from scripts.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     blog = package["blog"]
     all_images = existing_unsplash_fallback()
@@ -348,7 +348,7 @@ def refresh_neighbors(
     """CDP로 실제 이웃 목록을 다시 조회해 캐시 갱신 (107명 기준 약 10~20초 소요)."""
     from scripts.naver.blog.community.neighbor_manager import BlogNeighborManager
     from scripts.naver.blog.marketing import TARGET_BLOG_ID
-    from scripts.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     def _do() -> dict:
         page = get_page()

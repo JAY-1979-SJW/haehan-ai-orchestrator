@@ -194,7 +194,7 @@ def fetch_history(page, device_id: str | None = None) -> list[dict]:
 def main(device_id: str | None = None) -> None:
     """CLI 실행."""
     from scripts.eum.auth import is_logged_in, login
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     # CLI 인자 파싱
     if device_id is None:

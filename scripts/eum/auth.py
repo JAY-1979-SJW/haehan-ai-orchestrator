@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.human_input import safe_human_input  # noqa: E402
+from scripts.browser.page.human_input import safe_human_input  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
 from scripts.op_log import op_context  # noqa: E402
 
@@ -545,13 +545,13 @@ def ensure_logged_in(page) -> None:
     else:
         print("✘ 실패")
         raise RuntimeError(
-            f"EUM 자동 로그인 실패: {result['reason']}\n  자격증명 확인: python scripts/cdp_client.py cred set eum"
+            f"EUM 자동 로그인 실패: {result['reason']}\n  자격증명 확인: python scripts/browser/cdp/cdp_client.py cred set eum"
         )
 
 
 def main() -> None:
     """CLI 실행: 로그인 시도 및 결과 출력."""
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     print("=" * 60)
     print("EUM 자동 로그인")
