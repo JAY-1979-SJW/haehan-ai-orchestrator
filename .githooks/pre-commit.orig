@@ -197,6 +197,22 @@ if _ak.exists():
     if _ak_result.returncode != 0:
         sys.exit(_ak_result.returncode)
 
+# ── 이동 사전점검 게이트 (git mv 한 .py 의 남은 경로 로드/직접 실행 참조) ──────
+# alias 한 줄 shim 은 import 만 받는다. 파일 경로 로드·직접 실행·설정/훅 경로 참조가 새 경로로 안 고쳐졌고
+# 옛 경로에 맞는 shim 도 없으면 커밋을 막는다(2026-10-07 hiworks·dashboard 회귀).
+# 해결: python scripts/ops/make_shim.py <옛> <새> 또는 참조를 새 경로로 수정. 우회 옵션 없음.
+_mp = ROOT / "scripts" / "ops" / "move_preflight.py"
+if _mp.exists() and any(
+    ln.startswith("R") and ln.split("\t")[-1].endswith(".py")
+    for ln in subprocess.run(
+        ["git", "diff", "--cached", "--name-status", "-M", "--diff-filter=R"],
+        cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace",
+    ).stdout.splitlines()
+):
+    _mp_result = subprocess.run([*_pyexe(), str(_mp), "--staged-renames"], cwd=str(ROOT))
+    if _mp_result.returncode != 0:
+        sys.exit(_mp_result.returncode)
+
 # ── R1 API 계약 게이트 (화면↔서버 끊긴 호출 신규분만 차단) ────────────────
 # admin-web/src 또는 FastAPI 라우터(ai_orchestrator)가 staged일 때만 실행 —
 # 영향 테스트 선택만으로는 admin-web 단독 변경 시 전혀 안 돌아서(2026-10-07
