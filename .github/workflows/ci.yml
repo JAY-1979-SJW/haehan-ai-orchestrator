@@ -125,6 +125,22 @@ jobs:
         # 허용목록)은 통과, 새로 끊기는 호출만 FAIL.
         run: python scripts/ops/audit_r1_api_contract_gate.py
 
+      - name: G12 중복 게이트 (신규 구조동일 중복 함수 차단)
+        # dup_gate.py check — PR의 base..head 사이에 바뀐(추가/수정) .py 파일만 대상.
+        # 기존 중복은 configs/dup_baseline.json 기준선으로 고정(새로 생긴 것만 FAIL).
+        shell: bash
+        run: |
+          base="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base=$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)
+          fi
+          mapfile -t changed < <(git diff --name-only --diff-filter=ACM "$base" HEAD -- '*.py')
+          if [ "${#changed[@]}" -gt 0 ]; then
+            python scripts/ops/dup_gate.py check "${changed[@]}"
+          else
+            echo "변경된 .py 없음 — G12 건너뜀"
+          fi
+
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
         # forbidden_imports/security_patterns/circular_imports 외에 "unknown layer 파일 수"
