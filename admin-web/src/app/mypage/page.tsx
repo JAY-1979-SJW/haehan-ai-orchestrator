@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getMe, changePassword, clearToken, getBuildInfo, type BuildInfo, type UserInfo } from "@/lib/userAuth";
+import { getMe, changePassword, clearToken, getBuildInfo, getDesktopSetupStatus, type BuildInfo, type UserInfo } from "@/lib/userAuth";
 
 const ROLE_LABEL: Record<string, string> = {
   user: "일반 사용자",
@@ -22,6 +22,7 @@ export default function MyPage() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [build, setBuild] = useState<BuildInfo | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   const [curPw, setCurPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -40,6 +41,8 @@ export default function MyPage() {
 
   useEffect(() => {
     getBuildInfo().then(setBuild);
+    // 백엔드가 데스크톱 모드에서만 응답한다(서버 모드는 404 → null). 화면에서 따로 추측하지 않는다.
+    getDesktopSetupStatus().then((st) => setIsDesktop(st !== null));
   }, []);
 
   const handleLogout = () => {
@@ -125,7 +128,8 @@ export default function MyPage() {
           </div>
         </div>
 
-        {/* 비밀번호 변경 */}
+        {/* 비밀번호 변경 — 데스크톱(서버가 desktop-setup-status 로 알려 줌)은 비밀번호가 없어 숨긴다. 서버 모드는 그대로 보인다 */}
+        {!isDesktop && (
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
           <h2 className="text-sm font-bold text-[#111827] mb-4">비밀번호 변경</h2>
           <form onSubmit={handlePasswordChange} className="space-y-3">
@@ -177,6 +181,7 @@ export default function MyPage() {
             </button>
           </form>
         </div>
+        )}
 
         {/* 앱 정보 — 어느 빌드인지 확인(문의·진단용) */}
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
