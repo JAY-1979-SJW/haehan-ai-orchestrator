@@ -187,7 +187,7 @@
       "risk_level": "high",
       "tools": [
         "scripts/google",
-        "ai_orchestrator/connectors/gmail_router.py"
+        "ai_orchestrator/connectors/google/gmail_router.py"
       ],
       "tests": [
         "tests/test_google_site_engine.py",

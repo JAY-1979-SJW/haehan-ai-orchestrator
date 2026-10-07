@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 
-from ai_orchestrator.connectors import hiworks_mail_router as r
+from ai_orchestrator.connectors.hiworks import mail_router as r
 from ai_orchestrator.paths import repo_root
 
 

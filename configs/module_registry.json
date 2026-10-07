@@ -3209,36 +3209,12 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/eum_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "eum",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/connectors/gabia/__init__.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "gabia",
    "reason": "도메인(gabia) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gabia_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "gabia",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gmail_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "google",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
    "source": "rule"
   },
   "ai_orchestrator/connectors/gonobi_router.py": {
@@ -3337,22 +3313,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/hanafax_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "hanafax",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/hiworks_mail_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "hiworks",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/connectors/inquiry_router.py": {
    "layer": "L8",
    "role": "api",
@@ -3415,14 +3375,6 @@
    "domain": "instagram",
    "reason": "도메인(instagram) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/kakao_setup_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "kakao",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
    "source": "rule"
   },
   "ai_orchestrator/routers/marketing_ops_router.py": {
@@ -21249,14 +21201,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/kakao_skill_router.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
-   "confidence": "low",
-   "source": "manual"
-  },
   "admin-web/src/app/site-map/RegisteredSites.tsx": {
    "layer": "L9",
    "role": "ui",
@@ -21409,22 +21353,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_cafe/activity.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "naver_cafe",
-   "reason": "가입 카페 활동 분석(순수 계산, 입출력 없음) — 서비스(L6)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/connectors/naver_cafe/membership_diff.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "naver_cafe",
-   "reason": "가입 카페 신규·탈퇴 비교와 보호 규칙(순수 함수, 입출력 없음) — 서비스(L6)·저장소가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
   "ai_orchestrator/domain/site_map_menu.py": {
    "layer": "L1",
    "role": "contract",
@@ -21438,22 +21366,6 @@
    "role": "contract",
    "domain": "common",
    "reason": "데이터 소스·사이트 선언 도구의 정리·마스킹·병합 규칙(순수 함수, 입출력 없음) — 탐색기·서비스가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/connectors/naver_cafe/membership_store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "naver_cafe",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/naver_cafe/membership_service.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver_cafe",
-   "reason": "가입 카페 수집 결과를 이력과 비교·반영·분석하는 업무 흐름(규칙은 domain, 저장은 persistence, 브라우저·HTTP 모름) — generic L4 오분류",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -22186,12 +22098,12 @@
    "source": "rule"
   },
   "ai_orchestrator/paths/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "shared",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "tests/test_repo_root_canonical.py": {
    "layer": "L11",
@@ -22746,20 +22658,20 @@
    "source": "rule"
   },
   "ai_orchestrator/paths/migrate.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "shared",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/paths/runtime.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "shared",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "외부 의존 없는 잎 패키지 — ai_orchestrator 밖 모듈·paths 밖 ai_orchestrator 모듈을 import 하지 않음(표준 라이브러리와 paths 내부 상대 import 만). 규칙 기본값 L4 가 이를 쓰는 L1 모듈(config 등)과 층간 위반을 만들어 L1 shared 로 정정(2026-10-07).",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "tests/electron_guard_harness.js": {
    "layer": "L11",
@@ -22849,11 +22761,51 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_verify_change_ruff_loud.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "ai_orchestrator/connectors/naver_cafe/__init__.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_cafe",
    "reason": "도메인(naver_cafe) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/naver_cafe/activity.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "naver_cafe",
+   "reason": "가입 카페 활동 분석(순수 계산, 입출력 없음) — 서비스(L6)가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/naver_cafe/membership_diff.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "naver_cafe",
+   "reason": "가입 카페 신규·탈퇴 비교와 보호 규칙(순수 함수, 입출력 없음) — 서비스(L6)·저장소가 읽을 수 있도록 L1 계약으로 명시. generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/naver_cafe/membership_service.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "naver_cafe",
+   "reason": "가입 카페 수집 결과를 이력과 비교·반영·분석하는 업무 흐름(규칙은 domain, 저장은 persistence, 브라우저·HTTP 모름) — generic L4 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/connectors/naver_cafe/membership_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "naver_cafe",
+   "reason": "DB·저장 신호",
    "confidence": "low",
    "source": "rule"
   }

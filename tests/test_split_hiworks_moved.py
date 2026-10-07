@@ -9,15 +9,8 @@ from pathlib import Path
 import pytest
 
 BEFORE = json.loads((Path(__file__).parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
-MOVED = {"hiworks_mail_router": "hiworks.mail_router"}  # client·collectors·config 옛 경로 shim 은 정리됨(SHIM_CLEANUP_1)
+# 옛 경로 shim(client·collectors·config: SHIM_CLEANUP_1, mail_router: SHIM_CLEANUP_2)은 정리됨 — 새 경로만 확인한다
 NEW_NAMES = {"hiworks_client": "hiworks.client", "hiworks_collectors": "hiworks.collectors", "hiworks_config": "hiworks.config"}
-
-
-@pytest.mark.parametrize(("old", "new"), MOVED.items())
-def test_old_path_is_alias_of_new_module(old, new):
-    assert importlib.import_module(f"ai_orchestrator.connectors.{old}") is importlib.import_module(
-        f"ai_orchestrator.connectors.{new}"
-    )
 
 
 @pytest.mark.parametrize("old", ["hiworks_client", "hiworks_collectors", "hiworks_config"])

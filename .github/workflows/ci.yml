@@ -134,6 +134,11 @@ jobs:
           # (scripts/ops/make_constraints.py 로 재생성, docs/specs/2026-10-04_portability_standard.md)
           python -m pip install -r requirements.txt -c constraints.txt
 
+      - name: Install dev tools (ruff · pytest-timeout)
+        # 런타임 requirements 에는 없는 검증 도구. 없으면 shim 계약 시험(ruff)·run_impacted_tests(--timeout)가 CI 에서만 실패하고,
+        # verify_change 의 '바뀐 파일 ruff' 가 조용히 건너뛰어진다(requirements-dev.txt 머리말 참고).
+        run: python -m pip install -r requirements-dev.txt
+
       - name: Install audit-kit + mypy (개발 기준서·타입 신규 오류 검사용 별도 가상환경)
         # verify_change.py 가 AUDIT_KIT_BIN 의 audit-kit 로 기준서 검사를, 같은 가상환경의 mypy 로 "기준 대비 신규 타입 오류"만
         # 검사한다(공개 저장소라 토큰 불필요). 프로젝트 의존성과 섞이지 않게, 그리고 저장소 스캔(layer audit 등)에
