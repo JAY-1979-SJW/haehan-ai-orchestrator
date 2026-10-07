@@ -344,7 +344,7 @@ def test_preview_module_never_presses_send_button():
     """미리보기 모듈에는 '팩스보내기' 버튼 셀렉터가 없고, 결과(전송) 페이지 이동을 차단하며 대화상자를 취소한다."""
     from pathlib import Path
 
-    src = (Path(__file__).resolve().parents[1] / "scripts" / "hanafax" / "preview.py").read_text(encoding="utf-8")
+    src = (Path(__file__).resolve().parents[2] / "scripts" / "hanafax" / "preview.py").read_text(encoding="utf-8")
     assert "e_money_chk" not in src
     assert "submit_Result*" in src and "route.abort()" in src
     assert "d.dismiss()" in src and "d.accept()" not in src

@@ -15529,7 +15529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_access_explorer.py": {
+  "tests/eum/test_eum_access_explorer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15537,7 +15537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_action_prepare.py": {
+  "tests/eum/test_eum_action_prepare.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15545,7 +15545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_auth_selectors.py": {
+  "tests/eum/test_eum_auth_selectors.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15553,7 +15553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_capabilities.py": {
+  "tests/eum/test_eum_capabilities.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15561,7 +15561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_menu_actions.py": {
+  "tests/eum/test_eum_menu_actions.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15569,7 +15569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_navigation.py": {
+  "tests/eum/test_eum_navigation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15577,7 +15577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_router_work.py": {
+  "tests/eum/test_eum_router_work.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15585,7 +15585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_run_log.py": {
+  "tests/eum/test_eum_run_log.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15593,7 +15593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_sales_mail.py": {
+  "tests/eum/test_eum_sales_mail.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15601,7 +15601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_work_plan.py": {
+  "tests/eum/test_eum_work_plan.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15609,7 +15609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_workspace.py": {
+  "tests/eum/test_eum_workspace.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15657,7 +15657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_fax_authorization_store.py": {
+  "tests/hanafax/test_fax_authorization_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -15665,7 +15665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_fax_send_policy.py": {
+  "tests/hanafax/test_fax_send_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -15817,7 +15817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_browser_user_present_automation_20260516.py": {
+  "tests/gabia/test_gabia_browser_user_present_automation_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15825,7 +15825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_dns_user_approval_workflow_20260516.py": {
+  "tests/gabia/test_gabia_dns_user_approval_workflow_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15833,7 +15833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_domain_registration_assist.py": {
+  "tests/gabia/test_gabia_domain_registration_assist.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15841,7 +15841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_site_engine.py": {
+  "tests/gabia/test_gabia_site_engine.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15849,7 +15849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_site_settings_canonical_registry_20260517.py": {
+  "tests/gabia/test_gabia_site_settings_canonical_registry_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -16161,7 +16161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_attachments.py": {
+  "tests/hanafax/test_hanafax_attachments.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16169,7 +16169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_auto_send.py": {
+  "tests/hanafax/test_hanafax_auto_send.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16177,7 +16177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_bulk_send_smoke.py": {
+  "tests/hanafax/test_hanafax_bulk_send_smoke.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16185,7 +16185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_hardening.py": {
+  "tests/hanafax/test_hanafax_hardening.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16193,7 +16193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_p3.py": {
+  "tests/hanafax/test_hanafax_p3.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16201,7 +16201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_reconcile.py": {
+  "tests/hanafax/test_hanafax_reconcile.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16209,7 +16209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_resolve.py": {
+  "tests/hanafax/test_hanafax_resolve.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16217,7 +16217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_site_group.py": {
+  "tests/hanafax/test_hanafax_site_group.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16225,7 +16225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_status_failure.py": {
+  "tests/hanafax/test_hanafax_status_failure.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -18137,7 +18137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_smartstore_actions.py": {
+  "tests/smartstore/test_smartstore_actions.py": {
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
@@ -18145,7 +18145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_smartstore_category_fixes.py": {
+  "tests/smartstore/test_smartstore_category_fixes.py": {
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
@@ -18153,7 +18153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_smartstore_verify_and_abort.py": {
+  "tests/smartstore/test_smartstore_verify_and_abort.py": {
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
@@ -18857,7 +18857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_router_submit_result.py": {
+  "tests/eum/test_eum_router_submit_result.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18865,7 +18865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_send_mail_batch_dedupe.py": {
+  "tests/eum/test_eum_send_mail_batch_dedupe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18873,7 +18873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_bulk_send_result_init.py": {
+  "tests/hanafax/test_hanafax_bulk_send_result_init.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -19737,7 +19737,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "tests/test_split_gabia_moved.py": {
+  "tests/gabia/test_split_gabia_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -19793,7 +19793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_smartstore_automation.py": {
+  "tests/smartstore/test_split_smartstore_automation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
@@ -22889,7 +22889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_access_handler.py": {
+  "tests/eum/test_eum_access_handler.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22897,7 +22897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_shared_helpers.py": {
+  "tests/eum/test_eum_shared_helpers.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23183,6 +23183,38 @@
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "low",
+   "source": "rule"
+  },
+  "tests/eum/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "eum",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/gabia/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "gabia",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/hanafax/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/smartstore/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "smartstore",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
    "source": "rule"
   }
  }

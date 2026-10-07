@@ -179,7 +179,7 @@ def test_scheduled_jobs_ai_can_only_list():
 
 def test_google_hub_reads_are_allowed_but_read_only():
     """화면과 AI 가 같은 읽기를 할 수 있게 하되(2026-10-04 앱 실검증 D5), 브라우저(CDP)를 여는 gcp/status·만들기는 열지 않는다.
-    하나팩스 kill-switch 는 정책상 읽기도 열지 않는다(tests/test_hanafax_p3.py::test_ai_registry_exposes_draft_only_not_approve_or_run)."""
+    하나팩스 kill-switch 는 정책상 읽기도 열지 않는다(tests/hanafax/test_hanafax_p3.py::test_ai_registry_exposes_draft_only_not_approve_or_run)."""
     reg = mcp_server.API_REGISTRY
     for key, path in {
         "google.calendar_today": "/api/v1/google/tools/calendar/today",

@@ -2,7 +2,7 @@
 
 The command is meant to be run after the worktree index and before code edits:
 
-    python scripts/ops/pre_change_dry_run.py --scope smartstore --reason "router update" -- python -m pytest tests/test_smartstore_actions.py -q
+    python scripts/ops/pre_change_dry_run.py --scope smartstore --reason "router update" -- python -m pytest tests/smartstore/test_smartstore_actions.py -q
 """
 
 from __future__ import annotations

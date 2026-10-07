@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "eum" / "send_mail_batch.py"
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "eum" / "send_mail_batch.py"
 
 
 @pytest.fixture()

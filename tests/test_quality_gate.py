@@ -41,7 +41,7 @@ def test_existing_code_change_errors_without_flag():
 def test_code_change_with_test_passes_doc_test_rule():
     files = [
         quality_gate.ChangedFile("scripts/eum/router.py", "M"),
-        quality_gate.ChangedFile("tests/test_eum_router_work.py", "M"),
+        quality_gate.ChangedFile("tests/eum/test_eum_router_work.py", "M"),
     ]
 
     issues = quality_gate.evaluate_changes(files, _cfg(), allow_existing_code_change=True)

@@ -7,7 +7,7 @@ DNS 저장/변경 없음. 서버 접속 없음. 쿠키 저장 없음.
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 

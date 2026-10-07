@@ -88,19 +88,19 @@
         "scripts/eum"
       ],
       "tests": [
-        "tests/test_eum_access_explorer.py",
-        "tests/test_eum_action_prepare.py",
-        "tests/test_eum_auth_selectors.py",
-        "tests/test_eum_capabilities.py",
-        "tests/test_eum_menu_actions.py",
-        "tests/test_eum_navigation.py",
-        "tests/test_eum_router_submit_result.py",
-        "tests/test_eum_router_work.py",
-        "tests/test_eum_run_log.py",
-        "tests/test_eum_sales_mail.py",
-        "tests/test_eum_send_mail_batch_dedupe.py",
-        "tests/test_eum_work_plan.py",
-        "tests/test_eum_workspace.py"
+        "tests/eum/test_eum_access_explorer.py",
+        "tests/eum/test_eum_action_prepare.py",
+        "tests/eum/test_eum_auth_selectors.py",
+        "tests/eum/test_eum_capabilities.py",
+        "tests/eum/test_eum_menu_actions.py",
+        "tests/eum/test_eum_navigation.py",
+        "tests/eum/test_eum_router_submit_result.py",
+        "tests/eum/test_eum_router_work.py",
+        "tests/eum/test_eum_run_log.py",
+        "tests/eum/test_eum_sales_mail.py",
+        "tests/eum/test_eum_send_mail_batch_dedupe.py",
+        "tests/eum/test_eum_work_plan.py",
+        "tests/eum/test_eum_workspace.py"
       ],
       "owner_module": "scripts/eum",
       "notes": [
@@ -167,8 +167,8 @@
         "scripts/gabia"
       ],
       "tests": [
-        "tests/test_gabia_site_engine.py",
-        "tests/test_gabia_site_settings_canonical_registry_20260517.py"
+        "tests/gabia/test_gabia_site_engine.py",
+        "tests/gabia/test_gabia_site_settings_canonical_registry_20260517.py"
       ],
       "owner_module": "scripts/gabia",
       "notes": [
@@ -417,10 +417,10 @@
         "scripts/smartstore"
       ],
       "tests": [
-        "tests/test_smartstore_actions.py",
-        "tests/test_smartstore_category_fixes.py",
-        "tests/test_smartstore_verify_and_abort.py",
-        "tests/test_split_smartstore_automation.py"
+        "tests/smartstore/test_smartstore_actions.py",
+        "tests/smartstore/test_smartstore_category_fixes.py",
+        "tests/smartstore/test_smartstore_verify_and_abort.py",
+        "tests/smartstore/test_split_smartstore_automation.py"
       ],
       "owner_module": "scripts/smartstore",
       "notes": [
