@@ -278,6 +278,9 @@ def test_schema_version_and_wal(tmp_path):
         con.close()
 
 
+ISSUE_API_MODULE = "ai_orchestrator/routers/human_approval_router.py"  # P0c 발급 API — 승인 발급 호출이 허용된 유일한 모듈
+
+
 def test_only_issue_api_module_may_call_approve():
     """approve() 호출처는 이 모듈과 시험뿐이어야 한다(P0c 에서 발급 API 모듈 1곳이 추가됨). 에이전트 경로가 직접 부르는 코드를 막는 계약."""
     allowed_dirs = ("tests",)
@@ -285,7 +288,7 @@ def test_only_issue_api_module_may_call_approve():
     for base in ("ai_orchestrator", "scripts", "browser_api"):
         for path in (ROOT / base).rglob("*.py"):
             rel = path.relative_to(ROOT).as_posix()
-            if rel == "ai_orchestrator/gates/human_approval.py" or rel.startswith(allowed_dirs) or "__pycache__" in rel:
+            if rel in {"ai_orchestrator/gates/human_approval.py", ISSUE_API_MODULE} or rel.startswith(allowed_dirs) or "__pycache__" in rel:
                 continue
             try:
                 tree = ast.parse(path.read_text(encoding="utf-8"))

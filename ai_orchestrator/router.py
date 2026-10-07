@@ -30,6 +30,7 @@ from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmai
 
 from .audit_logger import log_event, read_recent_logs
 from .browser_tool.approval_record_router import approval_record_router
+from .routers.human_approval_router import human_approval_router
 from .connectors.cdp_screen_router import cdp_screen_router
 from .connectors.community_router import community_router
 from .connectors.eum_router import eum_router
@@ -98,6 +99,7 @@ router.include_router(dev_reg_approval_read_router)
 router.include_router(local_agent_router)
 router.include_router(admin_ui_router)
 router.include_router(approval_record_router)
+router.include_router(human_approval_router)  # R2d-2 사람 승인 제안·발급(발급은 프록시 증명 필요)
 router.include_router(action_router)
 router.include_router(naver_search_router)  # read-only naver search endpoints
 router.include_router(naver_openapi_setup_router)  # 등록된 앱 Client ID/Secret 조회(설정화면 자동입력)

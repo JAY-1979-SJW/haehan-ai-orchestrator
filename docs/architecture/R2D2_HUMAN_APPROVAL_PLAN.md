@@ -240,7 +240,14 @@ R2d-1까지 구현된 것과 조사에서 확인된 사실이다.
 
 ## 13. §P0c 수정안 — Origin 검사를 "프록시 증명"으로 대체 (P0c 구현 전 보강, 2026-10-07)
 
-> 상태: 지휘창이 방향을 확인했다(HMAC 증명·fail-closed 503·`/auth/me` 계약 불변). **(a) 증명 방식 채택과 (b) 새 환경변수·admin-web 프록시 변경 범위는 대표님 확인 후** P0c 로 구현한다.
+> 상태: **구현됨(P0c).** 대표님이 (a) HMAC 증명 방식과 (b) `APPROVAL_PROXY_SECRET`·admin-web 프록시 변경을 승인했다(2026-10-07, "권장대로 진행"). 추가 요구: 사용자에게 보이는 단계를 늘리지 않는다 — 증명은 화면 뒤에서 자동으로 붙고 승인 버튼 흐름은 그대로이며, PIN 은 기본 꺼짐을 유지한다.
+>
+> 구현 위치: `ai_orchestrator/gates/human_session.py`(증명 검증·`require_human_session`), `ai_orchestrator/routers/human_approval_router.py`(제안·조회·발급, `/api/v1/approvals/*`), `admin-web/src/lib/approvalProxy.ts`(서명)와 `admin-web/src/app/api/proxy/[...path]/route.ts`(승인 발급 경로 분기), `.env.example`·`docker-compose.yml`(`APPROVAL_PROXY_SECRET`), `admin-web/electron/main.js`(Electron 은 실행마다 자동 생성 — 사용자 설정 불필요). 시험: `tests/test_human_session_p0c.py`(30개).
+>
+> 구현 세부: 인증 꺼짐(단독 모드)의 승인자 이름은 `local-owner`, `approved_via` 는 허용 목록의 `jwt` 로 기록한다. nonce 는 프로세스 메모리에 120초 기억한다(단일 워커 전제 — 다중 워커로 확장하면 공유 저장소로 옮긴다. 재전송이 다른 워커로 가도 승인 전이는 CAS 로 1회만 성공한다). 프록시는 승인 발급 경로에서 POST·same-origin·JSON 이 아니면 403, 비밀이 없으면 503 을 돌려주고, 클라이언트 `Authorization` 과 서버 Basic 은 쓰지 않는다.
+>
+> **후속 항목(이번 범위 아님)** — PIN 을 켰을 때의 불편을 줄이는 기능: ① PIN 확인 일정 시간 기억 ② 묶음 승인. 둘 다 PIN(P1)과 함께 설계한다.
+> ③ **다중 워커 전환 시 nonce 기억을 공유 저장소로 옮길 것**(현재 운영 uvicorn 은 워커 1개 — W4 확인 — 라 프로세스 메모리로 충분).
 
 ### 13.1 발견: 백엔드의 Origin 검사는 프록시 구조에서 성립하지 않는다
 

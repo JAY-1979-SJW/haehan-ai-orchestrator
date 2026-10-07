@@ -40,6 +40,12 @@ const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server"
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
 const { startCdpBrowser, stopCdpBrowser, isCdpAlive, setUseSystemChromeProfile } = require("./lib/cdp_manager");
+// 사람 승인 발급 증명 키(R2d-2 P0c) — 프록시(Next)와 백엔드(FastAPI)가 같은 값을 쓰도록 자식 프로세스를 띄우기 전에 한 번 만든다.
+// 두 자식 모두 process.env 를 물려받는다. 사용자가 직접 정해 둔 값이 있으면 그대로 쓴다. 파일에 저장하지 않는다(실행마다 새로 생성).
+if (!(process.env.APPROVAL_PROXY_SECRET || "").trim()) {
+  process.env.APPROVAL_PROXY_SECRET = require("crypto").randomBytes(32).toString("hex");
+}
+
 // CDP watchdog — 앱이 CDP 를 책임지고 항상 살려둔다(클릭→앱 출력이 항상 되도록)
 let cdpWatchdogTimer = null;
 let appQuitting = false;

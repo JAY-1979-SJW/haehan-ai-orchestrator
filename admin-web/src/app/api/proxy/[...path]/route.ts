@@ -8,6 +8,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 
+import { APPROVAL_HEADER, isApprovalIssuePath, isSameOriginJson, signApproval } from "@/lib/approvalProxy";
+
 const BACKEND = (
   process.env.API_BASE_URL ??
   process.env.BACKEND_URL ??
@@ -71,19 +73,45 @@ function buildResponseHeaders(upstream: Response): HeadersInit {
   return headers;
 }
 
+function jsonError(status: number, detail: string): NextResponse {
+  return NextResponse.json({ detail }, { status });
+}
+
+/**
+ * 승인 발급 경로(approvals/<id>/approve|reject|revoke) 전용 헤더 — 사람이 화면에서 누른 요청임을 증명한다.
+ * 클라이언트가 보낸 Authorization 은 무시하고 로그인 쿠키(JWT)만 쓰며, 서버 Basic 은 붙이지 않는다.
+ */
+function buildApprovalHeaders(req: NextRequest, upstreamPath: string, body: Uint8Array, secret: string): HeadersInit {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  const cookieTok = req.cookies.get("haehan_ai_token")?.value;
+  const bearer = cookieTok ? decodeURIComponent(cookieTok) : "";
+  if (bearer) headers["Authorization"] = `Bearer ${bearer}`;
+  headers[APPROVAL_HEADER] = signApproval({ secret, method: req.method, path: upstreamPath, body, bearer });
+  return headers;
+}
+
 async function proxy(req: NextRequest, segments: string[]): Promise<NextResponse | Response> {
   const path = segments.join("/");
   const search = req.nextUrl.search;
   const upstreamUrl = `${BACKEND}/${path}${search}`;
+  const issuing = isApprovalIssuePath(`/${path}`);
 
   let body: BodyInit | null = null;
   if (req.method !== "GET" && req.method !== "HEAD") {
     body = await req.arrayBuffer();
   }
 
+  let headers = buildUpstreamHeaders(req);
+  if (issuing) {
+    const secret = (process.env.APPROVAL_PROXY_SECRET ?? "").trim();
+    if (!secret) return jsonError(503, "승인 발급이 구성되지 않았습니다");
+    if (req.method !== "POST" || !isSameOriginJson(req.headers)) return jsonError(403, "관리 화면에서만 승인할 수 있습니다");
+    headers = buildApprovalHeaders(req, `/${path}`, new Uint8Array(body ? (body as ArrayBuffer) : new ArrayBuffer(0)), secret);
+  }
+
   const upstream = await fetch(upstreamUrl, {
     method: req.method,
-    headers: buildUpstreamHeaders(req),
+    headers,
     body: body ?? undefined,
     // @ts-expect-error — Node.js fetch 확장
     duplex: "half",

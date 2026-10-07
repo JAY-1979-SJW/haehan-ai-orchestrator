@@ -1,7 +1,7 @@
 {
   "doc": "백엔드 런타임 라우트 개수의 단일 정본. 라우트를 추가·삭제하면 이 파일 한 곳만 고친다(시험·감사 스크립트가 모두 여기서 읽는다). 값은 tests/app_routes.py 의 runtime_routes()/http_routes()/websocket_routes() 로 센 실측치이며, 이 파일이 실제 개수와 다르면 시험이 실패한다. total = http + websocket. post = POST 메서드를 가진 HTTP 라우트 수.",
-  "total": 428,
-  "http": 426,
+  "total": 434,
+  "http": 432,
   "websocket": 2,
-  "post": 195
+  "post": 199
 }

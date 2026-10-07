@@ -31,6 +31,8 @@ services:
       AUTH_ENABLED: "true"
       # 서버 .env 에 JWT_SECRET 을 설정한 뒤 true 로 켠다(기본 false = 경고만). 없는 채로 켜면 시작하지 않는다.
       JWT_SECRET_REQUIRED: ${JWT_SECRET_REQUIRED:-false}
+      # 사람 승인 발급 증명 키 — admin-web 프록시와 같은 값. 비면 승인 발급 API 는 503(fail-closed).
+      APPROVAL_PROXY_SECRET: ${APPROVAL_PROXY_SECRET:-}
       APP_HOST: 0.0.0.0
       APP_PORT: "8400"
     extra_hosts:
@@ -72,6 +74,7 @@ services:
       NODE_ENV: production
       # Next 미들웨어가 로그인 쿠키(JWT)의 서명을 검증하려면 API 와 같은 값이 필요하다. 비면 쿠키 존재만 확인한다.
       JWT_SECRET: ${JWT_SECRET:-}
+      APPROVAL_PROXY_SECRET: ${APPROVAL_PROXY_SECRET:-}
     depends_on:
       ai-orchestrator-api:
         condition: service_healthy

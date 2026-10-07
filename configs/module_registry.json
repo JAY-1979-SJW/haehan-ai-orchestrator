@@ -22336,6 +22336,38 @@
    "reason": "DB·저장 신호",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/lib/approvalProxy.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/human_session.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/human_approval_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_human_session_p0c.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
