@@ -62,9 +62,10 @@ def test_api_path_inbox():
 
 # ── 3. API client GET-only (mutation method 없음) ─────────────────────────────
 
-# 현행: api.ts 에는 정당한 쓰기 클라이언트가 있다(POST 3곳 = postJson·템플릿 저장·스마트스토어 채팅, DELETE 1곳 = 템플릿 삭제).
+# 재고정(2026-10-07, R1 스마트스토어 /chat 제거 — runSmartStoreAgent POST 1건 삭제):
+# api.ts 에는 정당한 쓰기 클라이언트가 있다(POST 2곳 = postJson·템플릿 저장, DELETE 1곳 = 템플릿 삭제).
 # audit_app_ui_shell_readonly_api_wiring 도 PUT/PATCH 만 금지하고 POST/DELETE 는 허용한다. 알려진 위치 수로 고정한다.
-@pytest.mark.parametrize("method,expected", [("POST", 3), ("PUT", 0), ("PATCH", 0), ("DELETE", 1)])
+@pytest.mark.parametrize("method,expected", [("POST", 2), ("PUT", 0), ("PATCH", 0), ("DELETE", 1)])
 def test_api_client_no_mutation_method(method: str, expected: int):
     content = API_CLIENT.read_text(encoding="utf-8")
     assert content.count(f'method: "{method}"') == expected
