@@ -28,8 +28,14 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-ROOT = Path(__file__).resolve().parents[2]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from scripts.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 
 from _dup_structure_hash import (  # noqa: E402
     body_statement_count,
