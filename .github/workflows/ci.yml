@@ -45,9 +45,33 @@ jobs:
         with:
           fetch-depth: 0
       - name: gitleaks
+        # push/PR 은 액션이 커밋 범위만 검사한다. workflow_dispatch 는 범위가 없어 전체 이력을 훑으므로 아래 단계로 대신한다.
+        if: github.event_name != 'workflow_dispatch'
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 수동 실행(workflow_dispatch): base..HEAD 범위만 검사 — push/PR 과 같은 범위 방식. base 입력이 없으면 직전 커밋(HEAD^) 기준.
+      # 옛 이력의 검출은 이 범위 밖이라 영구 실패하지 않는다(옛 검출을 '비밀 아님'으로 판정하는 일은 별도 확인 사항).
+      # gitleaks 바이너리는 공식 릴리스(v8.24.3)를 내려받아 SHA256 으로 고정 확인한다(액션이 쓰는 것과 같은 버전).
+      - name: gitleaks (수동 실행 — base..HEAD 범위)
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          DISPATCH_BASE: ${{ inputs.base }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DISPATCH_BASE}" ]; then
+            base=$(bash scripts/ci/resolve_ci_base.sh)
+          else
+            base=$(git rev-parse --verify --quiet "HEAD^" || git rev-parse --verify "HEAD")
+          fi
+          ver=8.24.3
+          sha=9991e0b2903da4c8f6122b5c3186448b927a5da4deef1fe45271c3793f4ee29c
+          curl -sSL -o "$RUNNER_TEMP/gitleaks.tgz" "https://github.com/gitleaks/gitleaks/releases/download/v${ver}/gitleaks_${ver}_linux_x64.tar.gz"
+          echo "${sha}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          echo "gitleaks 범위: ${base}..HEAD"
+          "$RUNNER_TEMP/gitleaks" detect --redact -v --exit-code=2 --log-opts="--no-merges ${base}..HEAD"
 
   # admin-web 변경 여부 판정 — frontend job을 admin-web/** 가 바뀐 push/PR에서만 돌린다
   # (2026-10-07 R4: 화면 코드 검증 공백 메우기. push 이벤트는 매번 전체 돌아도 무방할
@@ -163,12 +187,9 @@ jobs:
             base="${{ github.event.before }}"
             if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$DISPATCH_BASE" ]; then
               # 수동 실행에서 base 를 준 경우: 브랜치 전체를 그 기준과 비교(checkout fetch-depth: 0 이라 origin/* ref 사용 가능)
-              # 존재하지 않는 이름을 git rev-parse 에 그냥 주면 이름 그대로 출력돼 base 가 여러 줄이 된다 → --verify --quiet 와 ^{commit} 으로 커밋만 받는다
-              base=$(git rev-parse --verify --quiet "origin/${DISPATCH_BASE}^{commit}" || git rev-parse --verify --quiet "${DISPATCH_BASE}^{commit}" || true)
-              if [ -z "$base" ]; then
-                echo "::error::dispatch base 를 커밋으로 해석할 수 없음: ${DISPATCH_BASE}"
-                exit 1
-              fi
+              # scripts/ci/resolve_ci_base.sh — 짧은 해시·긴 해시·브랜치 이름을 한 줄 해시로 풀고, 못 풀면 명확한 오류로 종료한다
+              # (옛 방식 `git rev-parse origin/X || git rev-parse X` 는 없는 ref 의 이름을 stdout 에 찍어 base 가 두 줄이 됐다)
+              base=$(bash scripts/ci/resolve_ci_base.sh)
             fi
             if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
               base=$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)
