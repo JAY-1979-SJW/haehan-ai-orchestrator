@@ -23,7 +23,7 @@ log = get_logger("email_task_executor")
 _RISK_BLOCKED_LEVELS = {"high", "critical"}
 _RISK_MEDIUM = "medium"
 
-_DEFAULT_POLICY = {
+_DEFAULT_POLICY: dict[str, list[str]] = {
     "allowed_paths": [],
     "blocked_paths": [],
     "blocked_commands": [],

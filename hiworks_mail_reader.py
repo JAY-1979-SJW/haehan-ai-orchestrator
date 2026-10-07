@@ -48,7 +48,7 @@ def _decode_header_value(raw) -> str:
 def _decode_payload(part: email.message.Message) -> str | None:
     """파트 payload 를 디코드. payload 가 없으면 None."""
     payload = part.get_payload(decode=True)
-    if not payload:
+    if not payload or not isinstance(payload, bytes):
         return None
     charset = part.get_content_charset() or "utf-8"
     return payload.decode(charset, errors="replace")

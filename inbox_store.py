@@ -135,7 +135,7 @@ def save_message(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 �
             "source_account": source_account,
         }
 
-    entry = {
+    entry: dict[str, object] = {
         "source_type": source_type,
         "source_account": source_account,
         "external_id": external_id,
