@@ -22408,6 +22408,22 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/src/components/settings/MarketingOpsSwitch.tsx": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "marketing",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "admin-web/src/lib/marketingOps.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "marketing",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
