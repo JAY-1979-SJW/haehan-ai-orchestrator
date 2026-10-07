@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 
 # (모듈, 표현식, data 루트 아래 상대 경로) — 표현식은 모듈을 import 한 뒤 평가한다.
 ITEMS: list[tuple[str, str, tuple[str, ...]]] = [

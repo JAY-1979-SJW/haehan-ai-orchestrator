@@ -21,18 +21,18 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_local_agent_cdp_attach.py" in rendered
     assert "tests/test_dry_run_local_agent_cdp_attach.py" in rendered
     assert "tests/test_common_tool_runtime.py" in rendered
-    assert "tests/test_common_tool_runtime_baseline_contract.py" in rendered
-    assert "tests/test_common_engine_commercialization_baseline.py" in rendered
+    assert "tests/app_contracts/test_common_tool_runtime_baseline_contract.py" in rendered
+    assert "tests/app_contracts/test_common_engine_commercialization_baseline.py" in rendered
     assert "tests/test_local_agent_connection_recovery_baseline.py" in rendered
     assert "tests/desktop/test_desktop_auth_runtime_baseline_contract.py" in rendered
     assert "tests/test_local_agent_e2e_flow_contract.py" in rendered
     assert "tests/app_contracts/test_app_baseline_contract.py" in rendered
-    assert "tests/test_standard_workflow_contract.py" in rendered
-    assert "tests/test_module_baseline_contract.py" in rendered
-    assert "tests/test_backend_core_baseline_contract.py" in rendered
+    assert "tests/app_contracts/test_standard_workflow_contract.py" in rendered
+    assert "tests/app_contracts/test_module_baseline_contract.py" in rendered
+    assert "tests/app_contracts/test_backend_core_baseline_contract.py" in rendered
     assert "tests/test_local_agent_e2e_baseline_contract.py" in rendered
     assert "tests/approval/test_approval_flow_baseline_contract.py" in rendered
-    assert "tests/test_playwright_ai_baseline_contract.py" in rendered
+    assert "tests/app_contracts/test_playwright_ai_baseline_contract.py" in rendered
     assert "tests/quality_gates/test_required_quality_gate.py" in rendered
     assert "tests/quality_gates/test_module_boundaries.py" in rendered
     assert "tests/quality_gates/test_root_legacy_scripts_audit.py" in rendered
@@ -56,7 +56,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/youtube/test_youtube_research.py" in rendered
     assert "tests/test_ai_agent_app_structure_design_baseline.py" in rendered
     assert "tests/test_ai_agent_ui_structure_blueprint.py" in rendered
-    assert "tests/test_mcp_gateway_baseline.py" in rendered
+    assert "tests/server_core/test_mcp_gateway_baseline.py" in rendered
     assert "tests/test_ai_work_session_gate.py" in rendered
     assert "scripts/ops/dry_run_local_agent_cdp_attach.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime.py" in rendered

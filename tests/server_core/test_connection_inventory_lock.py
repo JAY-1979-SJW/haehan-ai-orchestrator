@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 CONNECTION_INVENTORY = ROOT / "docs" / "inventory" / "CONNECTION_INVENTORY.md"
 APP_BASELINE = ROOT / "docs" / "baseline" / "APP_BASELINE.md"
 

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 # 평문(한글) 출력을 내는 훅 스크립트. JSON 으로만 출력하는 가드(ensure_ascii)는 대상이 아니다.
 PLAIN_TEXT_HOOKS = (

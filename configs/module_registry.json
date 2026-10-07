@@ -13945,7 +13945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_usage.py": {
+  "tests/server_core/test_agent_usage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14329,7 +14329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_core_baseline_contract.py": {
+  "tests/app_contracts/test_backend_core_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14441,7 +14441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_runtime_contract_gate.py": {
+  "tests/app_contracts/test_backend_runtime_contract_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15313,7 +15313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_common_engine_commercialization_baseline.py": {
+  "tests/app_contracts/test_common_engine_commercialization_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15321,7 +15321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_common_operations_index.py": {
+  "tests/quality_gates/test_common_operations_index.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15337,7 +15337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_common_tool_runtime_baseline_contract.py": {
+  "tests/app_contracts/test_common_tool_runtime_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15361,7 +15361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_conftest_dotenv_isolation.py": {
+  "tests/quality_gates/test_conftest_dotenv_isolation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15369,7 +15369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_connection_inventory_lock.py": {
+  "tests/server_core/test_connection_inventory_lock.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16281,7 +16281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hook_utf8_output.py": {
+  "tests/quality_gates/test_hook_utf8_output.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17001,7 +17001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mcp_gateway_baseline.py": {
+  "tests/server_core/test_mcp_gateway_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17049,7 +17049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_baseline_contract.py": {
+  "tests/app_contracts/test_module_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17497,7 +17497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_playwright_ai_baseline_contract.py": {
+  "tests/app_contracts/test_playwright_ai_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17577,7 +17577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_postflight.py": {
+  "tests/smartstore/test_postflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17769,7 +17769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_selector_health.py": {
+  "tests/site_engine/test_selector_health.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17777,7 +17777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_selector_health_weekly.py": {
+  "tests/site_engine/test_selector_health_weekly.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18041,7 +18041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_onboarding_tool_20260508.py": {
+  "tests/site_engine/test_site_onboarding_tool_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18057,7 +18057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_registry_baseline.py": {
+  "tests/site_engine/test_site_registry_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18121,7 +18121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_work_function_baseline.py": {
+  "tests/site_engine/test_site_work_function_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18177,7 +18177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_standard_workflow_contract.py": {
+  "tests/app_contracts/test_standard_workflow_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18257,7 +18257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tool_registry.py": {
+  "tests/quality_gates/test_tool_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18553,7 +18553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_write_gates_naver_blog_safety_gate.py": {
+  "tests/naver_blog/test_write_gates_naver_blog_safety_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -19297,7 +19297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_r1_api_contract_gate.py": {
+  "tests/app_contracts/test_r1_api_contract_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20009,7 +20009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_runtime_data_paths.py": {
+  "tests/quality_gates/test_runtime_data_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22961,7 +22961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_scripts_data_paths.py": {
+  "tests/quality_gates/test_scripts_data_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22985,7 +22985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_workflow_utf8_env.py": {
+  "tests/quality_gates/test_workflow_utf8_env.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

@@ -18,7 +18,7 @@ import pytest
 
 from ai_orchestrator.paths import migrate, runtime
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 PKG = REPO / "ai_orchestrator"
 
 # (모듈, 상수, 기대값 — 예전 계산식 결과). 교체 전과 같은 값이어야 한다.
