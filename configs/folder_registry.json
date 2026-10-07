@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 306,
+ "count": 318,
  "folders": [
   {
    "path": ".",
@@ -155,6 +155,14 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "admin-web/src/app/api/naver/marketing-ops",
+   "purpose": "마케팅 운영 화면 API 라우트(도구 집, tool_home.json)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
    "path": "admin-web/src/app/api/naver/marketing-ops/approve-channel",
    "purpose": "admin-web/src/app/api/naver/marketing-ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "앱",
@@ -209,6 +217,14 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/smartstore",
+   "purpose": "스마트스토어 화면 API 라우트(도구 집, tool_home.json)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
   },
   {
    "path": "admin-web/src/app/api/smartstore/images/upload",
@@ -529,6 +545,14 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/cafe",
+   "purpose": "네이버 카페 화면(도구 집, tool_home.json)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
   },
   {
    "path": "admin-web/src/app/naver/session",
@@ -1059,12 +1083,36 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "ai_orchestrator/connectors/instagram",
+   "purpose": "인스타그램 API",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
    "path": "ai_orchestrator/connectors/kakao",
    "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/kakaowork",
+   "purpose": "카카오워크 API(도구 집, tool_home.json)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "ai_orchestrator/connectors/naver_auth",
+   "purpose": "네이버 로그인 API",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
   },
   {
    "path": "ai_orchestrator/connectors/naver_blog",
@@ -1089,6 +1137,14 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/naver_search",
+   "purpose": "네이버 검색 API",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
   },
   {
    "path": "ai_orchestrator/connectors/smartstore",
@@ -1715,6 +1771,14 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/common/gates",
+   "purpose": "스크립트 공용 게이트",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
    "path": "scripts/community",
    "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",
@@ -1929,6 +1993,14 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/kakaowork",
+   "purpose": "카카오워크 구현(도구 집, tool_home.json)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
   },
   {
    "path": "scripts/local",
@@ -2179,6 +2251,14 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/naver/mail/imap",
+   "purpose": "네이버 메일 IMAP 구현(TOOL_HOME_MAP B2)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
    "path": "scripts/naver/mail/processing",
    "purpose": "scripts/naver/mail 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",
@@ -2337,6 +2417,22 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/ops/smoke",
+   "purpose": "스모크·라이브 점검 도구",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "scripts/ops/verify",
+   "purpose": "검증 도구(verify 계열)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
   },
   {
    "path": "scripts/ops/write_gates",
