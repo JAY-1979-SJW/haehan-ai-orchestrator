@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 from fastapi import HTTPException
 
-from ai_orchestrator.connectors import hanafax_router as router
+from ai_orchestrator.connectors.hanafax import router
 
 MISSING = "BrowserType.launch: Executable doesn't exist at C:\\x\\chrome-headless-shell.exe"
 

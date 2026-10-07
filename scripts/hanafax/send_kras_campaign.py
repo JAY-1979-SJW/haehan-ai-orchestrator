@@ -31,13 +31,14 @@ import tempfile
 import time
 from pathlib import Path
 
+from scripts.app_paths import repo_root
 from scripts.hanafax.kras_campaign_template import build_docx
 from scripts.hanafax.sender import send_fax
 
 log = logging.getLogger("hanafax.kras_campaign")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 SENT_LOG = ROOT / "data" / "kras_fax_sent_log.json"
 SUBJECT = "귀사만을 위한 AI 안전관리시스템 안내"
 

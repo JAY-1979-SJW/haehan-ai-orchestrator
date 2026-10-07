@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from scripts.naver.mail.utilities import pii_mask
-from scripts.naver.mail_read import body_reader
+from scripts.naver.mail.read import body_reader
 
 from . import unread_audit as ua
 

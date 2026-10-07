@@ -99,7 +99,7 @@ class TestTelegramWebhookHold:
         """router.py에 callback_query 분기 코드가 존재한다."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/registry.py").read_text(encoding="utf-8")
         assert "callback_query" in src
         assert "handle_telegram_update" in src
         assert "handle_telegram_webhook" in src

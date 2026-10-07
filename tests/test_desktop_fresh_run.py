@@ -126,7 +126,7 @@ def test_full_flow_with_fake_app_uses_temp_user_data_and_summarizes(tmp_path):
         "        self.send_response(200); self.end_headers()\n"
         "srv = socketserver.TCPServer(('127.0.0.1', 8401), H)\n"
         "threading.Thread(target=srv.serve_forever, daemon=True).start()\n"
-        "time.sleep(5)\n",
+        "time.sleep(15)\n",  # 점검 스크립트는 2초 간격으로 포트를 확인한다 — 느린 러너에서도 한 번은 보이게 충분히 떠 있는다
         encoding="utf-8",
     )
     fake_cmd = tmp_path / "fake.cmd"

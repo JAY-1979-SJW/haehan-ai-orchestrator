@@ -15,7 +15,7 @@ from typing import Any
 import websocket  # type: ignore
 
 from scripts.gate import check as gate_check
-from scripts.naver.mail_read import cdp
+from scripts.naver.mail.read import cdp
 
 CAFE_HOME_URL = "https://section.cafe.naver.com/ca-fe/home"
 API_BASE = "https://apis.naver.com/cafe-home-web/cafe-home/v1/cafes"

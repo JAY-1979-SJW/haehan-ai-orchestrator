@@ -1,0 +1,2542 @@
+{
+ "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
+ "count": 317,
+ "folders": [
+  {
+   "path": ".",
+   "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": ".githooks",
+   "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web",
+   "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/electron",
+   "purpose": "Electron 데스크톱 쉘 (admin-web 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/electron/e2e-electron",
+   "purpose": "admin-web/electron 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/electron/lib",
+   "purpose": "공용 라이브러리 (admin-web/electron 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/electron/tests",
+   "purpose": "시험 (admin-web/electron 하위)",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/public",
+   "purpose": "admin-web 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src",
+   "purpose": "소스 (admin-web 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app",
+   "purpose": "Next 앱 라우트 (admin-web/src 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/about",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/approval/requests",
+   "purpose": "admin-web/src/app/api/approval 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/approval/requests/[id]",
+   "purpose": "admin-web/src/app/api/approval/requests 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/approval/requests/[id]/approve",
+   "purpose": "admin-web/src/app/api/approval/requests/[id] 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/approval/requests/[id]/history",
+   "purpose": "admin-web/src/app/api/approval/requests/[id] 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/approval/requests/[id]/reject",
+   "purpose": "admin-web/src/app/api/approval/requests/[id] 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/google/chat",
+   "purpose": "admin-web/src/app/api/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/market-research/run",
+   "purpose": "admin-web/src/app/api/market-research 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/naver/marketing-ops",
+   "purpose": "마케팅 운영 화면 API 라우트(도구 집, tool_home.json)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "admin-web/src/app/api/naver/marketing-ops/approve-channel",
+   "purpose": "admin-web/src/app/api/naver/marketing-ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/naver/marketing-ops/generate-package",
+   "purpose": "admin-web/src/app/api/naver/marketing-ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/naver/marketing-ops/neighbors",
+   "purpose": "admin-web/src/app/api/naver/marketing-ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/naver/marketing-ops/neighbors/refresh",
+   "purpose": "admin-web/src/app/api/naver/marketing-ops/neighbors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/naver/marketing-ops/publish-blog",
+   "purpose": "admin-web/src/app/api/naver/marketing-ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/naver/marketing-ops/state",
+   "purpose": "admin-web/src/app/api/naver/marketing-ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/proxy/[...path]",
+   "purpose": "admin-web/src/app/api/proxy 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/api/smartstore",
+   "purpose": "스마트스토어 화면 API 라우트(도구 집, tool_home.json)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "admin-web/src/app/api/smartstore/images/upload",
+   "purpose": "admin-web/src/app/api/smartstore/images 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/cafe",
+   "purpose": "admin-web/src/app/assistant/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/cafe/tabs",
+   "purpose": "admin-web/src/app/assistant/(legacy)/cafe 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/deployment",
+   "purpose": "admin-web/src/app/assistant/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/external-sites",
+   "purpose": "admin-web/src/app/assistant/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/inbox",
+   "purpose": "admin-web/src/app/assistant/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/logs",
+   "purpose": "admin-web/src/app/assistant/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/news",
+   "purpose": "admin-web/src/app/assistant/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/storage",
+   "purpose": "admin-web/src/app/assistant/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/tasks",
+   "purpose": "admin-web/src/app/assistant/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/(legacy)/tasks/[id]",
+   "purpose": "admin-web/src/app/assistant/(legacy)/tasks 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/assistant/approval",
+   "purpose": "admin-web/src/app/assistant 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/gongmu",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/google",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/google/components",
+   "purpose": "화면 컴포넌트 (admin-web/src/app/google 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/hanafax",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/login",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/login-status",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/mail",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/mail/components",
+   "purpose": "화면 컴포넌트 (admin-web/src/app/mail 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/mailbox",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/mailbox/bulk",
+   "purpose": "admin-web/src/app/mailbox 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/mailbox/components",
+   "purpose": "화면 컴포넌트 (admin-web/src/app/mailbox 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/mailbox/components/bulk",
+   "purpose": "admin-web/src/app/mailbox/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/mailbox/lib",
+   "purpose": "공용 라이브러리 (admin-web/src/app/mailbox 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/mypage",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/blog",
+   "purpose": "admin-web/src/app/naver/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/keywords",
+   "purpose": "admin-web/src/app/naver/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/keywords/components",
+   "purpose": "화면 컴포넌트 (admin-web/src/app/naver/(legacy)/keywords 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore",
+   "purpose": "admin-web/src/app/naver/(legacy) 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore/components",
+   "purpose": "화면 컴포넌트 (admin-web/src/app/naver/(legacy)/smartstore 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore/marketing",
+   "purpose": "admin-web/src/app/naver/(legacy)/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore/orders",
+   "purpose": "admin-web/src/app/naver/(legacy)/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore/products",
+   "purpose": "admin-web/src/app/naver/(legacy)/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore/products/components",
+   "purpose": "화면 컴포넌트 (admin-web/src/app/naver/(legacy)/smartstore/products 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore/reviews",
+   "purpose": "admin-web/src/app/naver/(legacy)/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore/settlements",
+   "purpose": "admin-web/src/app/naver/(legacy)/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/(legacy)/smartstore/stats",
+   "purpose": "admin-web/src/app/naver/(legacy)/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/blog",
+   "purpose": "admin-web/src/app/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/naver/cafe",
+   "purpose": "네이버 카페 화면(도구 집, tool_home.json)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "admin-web/src/app/naver/session",
+   "purpose": "admin-web/src/app/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/ops",
+   "purpose": "운영·감사 도구 (admin-web/src/app 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/ops/components",
+   "purpose": "화면 컴포넌트 (admin-web/src/app/ops 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/ops/lib",
+   "purpose": "공용 라이브러리 (admin-web/src/app/ops 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/scheduled",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/setup",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/signup",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/app/site-map",
+   "purpose": "admin-web/src/app 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components",
+   "purpose": "화면 컴포넌트 (admin-web/src 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/app",
+   "purpose": "Next 앱 라우트 (admin-web/src/components 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/assistant",
+   "purpose": "admin-web/src/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/browser-approval",
+   "purpose": "admin-web/src/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/browser-submit",
+   "purpose": "admin-web/src/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/browser-submit/__fixtures__",
+   "purpose": "admin-web/src/components/browser-submit 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/browser-submit/__tests__",
+   "purpose": "admin-web/src/components/browser-submit 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/chat",
+   "purpose": "admin-web/src/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/settings",
+   "purpose": "admin-web/src/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/sitemap",
+   "purpose": "admin-web/src/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/components/ui",
+   "purpose": "admin-web/src/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/lib",
+   "purpose": "공용 라이브러리 (admin-web/src 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/lib/assistant",
+   "purpose": "admin-web/src/lib 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/lib/smartstore",
+   "purpose": "admin-web/src/lib 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui",
+   "purpose": "admin-web/src 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui/components/cards",
+   "purpose": "admin-web/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui/components/feedback",
+   "purpose": "admin-web/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui/components/forms",
+   "purpose": "admin-web/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui/components/layout",
+   "purpose": "admin-web/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui/components/lists",
+   "purpose": "admin-web/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui/components/status",
+   "purpose": "admin-web/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui/components/tables",
+   "purpose": "admin-web/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/standard-ui/tokens",
+   "purpose": "admin-web/src/standard-ui 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/src/types",
+   "purpose": "admin-web/src 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system",
+   "purpose": "admin-web/vendor/@haehan 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/.storybook",
+   "purpose": "admin-web/vendor/@haehan/design-system 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/app",
+   "purpose": "Next 앱 라우트 (admin-web/vendor/@haehan/design-system 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui",
+   "purpose": "admin-web/vendor/@haehan/design-system/src 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/components/cards",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/components/feedback",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/components/forms",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/components/layout",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/components/lists",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/components/status",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/components/tables",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui/components 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/stories",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "admin-web/vendor/@haehan/design-system/src/standard-ui/tokens",
+   "purpose": "admin-web/vendor/@haehan/design-system/src/standard-ui 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator",
+   "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/agent_dispatch",
+   "purpose": "에이전트 작업 배정(F2)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/agent_hub",
+   "purpose": "서버 쪽 로컬 에이전트 관리(T4)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/agent_hub/actions",
+   "purpose": "에이전트 허브 동작(action) 모음",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
+  },
+  {
+   "path": "ai_orchestrator/agent_hub/policy",
+   "purpose": "에이전트 정책(T4)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/agent_hub/registry",
+   "purpose": "에이전트 레지스트리(T4)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/agent_hub/router",
+   "purpose": "에이전트 관리 라우터(T4)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/audit",
+   "purpose": "감사 로그 정본(잎, T1)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/audit_evidence",
+   "purpose": "ai_orchestrator 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/auth",
+   "purpose": "로그인·계정·등록 코드(F15)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool",
+   "purpose": "브라우저 도구 (ai_orchestrator 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool/backends",
+   "purpose": "ai_orchestrator/browser_tool 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool/worker",
+   "purpose": "브라우저 워커(별도 컨테이너 앱, T4 때 재정리)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(S6 결정 2026-10-08 00:00, 지휘창 전달)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool/worker/backends",
+   "purpose": "브라우저 워커 백엔드(mock·playwright)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(S6 결정 2026-10-08 00:00, 지휘창 전달)"
+  },
+  {
+   "path": "ai_orchestrator/clients",
+   "purpose": "ai_orchestrator 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors",
+   "purpose": "외부 서비스 연결 API (ai_orchestrator 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/eum",
+   "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/g2b",
+   "purpose": "나라장터 API(F8)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/gabia",
+   "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/google",
+   "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/hanafax",
+   "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/hiworks",
+   "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/instagram",
+   "purpose": "인스타그램 API",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "ai_orchestrator/connectors/kakao",
+   "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/kakaowork",
+   "purpose": "카카오워크 API(도구 집, tool_home.json)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "ai_orchestrator/connectors/naver_auth",
+   "purpose": "네이버 로그인 API",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "ai_orchestrator/connectors/naver_blog",
+   "purpose": "네이버 블로그 API(F6)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/naver_cafe",
+   "purpose": "네이버 카페 API(F5)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/naver_mail",
+   "purpose": "네이버 메일 API(F3)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/naver_search",
+   "purpose": "네이버 검색 API",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "ai_orchestrator/connectors/smartstore",
+   "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/connectors/youtube",
+   "purpose": "ai_orchestrator/connectors 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/contracts",
+   "purpose": "공유 계약·스키마 (ai_orchestrator 하위)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/core",
+   "purpose": "서버 공용 기반(models·task_state·execution_limits·logging_setup)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/dev_reg",
+   "purpose": "개발자 등록 승인(F12)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/domain",
+   "purpose": "도메인 규칙 (ai_orchestrator 하위)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/external_sites",
+   "purpose": "ai_orchestrator 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/gabia",
+   "purpose": "ai_orchestrator 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/gates",
+   "purpose": "게이트·승인·정책 (ai_orchestrator 하위)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/gongmu",
+   "purpose": "공무(F9)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/llm",
+   "purpose": "LLM 호출·가드(app_llm·openai_client·openai_guard·planner)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/local_agent",
+   "purpose": "PC 실행 에이전트 (ai_orchestrator 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/local_agent/actions",
+   "purpose": "ai_orchestrator/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/local_agent/browser",
+   "purpose": "ai_orchestrator/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/local_agent/browser/_js",
+   "purpose": "ai_orchestrator/local_agent/browser 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/local_agent/browser/mixins",
+   "purpose": "ai_orchestrator/local_agent/browser 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/marketing",
+   "purpose": "마케팅 운영실(F14)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/mcp",
+   "purpose": "MCP 서버·도구 이름(mcp_server·mcp_tool_names)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/notify",
+   "purpose": "알림(텔레그램 발송·웹훅·경보 분류)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/paths",
+   "purpose": "경로·데이터 위치 정본 (ai_orchestrator 하위)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/persistence",
+   "purpose": "저장소(DB·JSONL) (ai_orchestrator 하위)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/routers",
+   "purpose": "FastAPI 라우터 (ai_orchestrator 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/safety_policy",
+   "purpose": "ai_orchestrator 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/scheduler",
+   "purpose": "예약 작업(F10)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/server",
+   "purpose": "서버 보조 (ai_orchestrator 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/services",
+   "purpose": "서비스 로직 (ai_orchestrator 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/site_work",
+   "purpose": "사이트 탐색·AI 직원 서버 쪽 기능(F1)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/sites",
+   "purpose": "사이트 어댑터 (ai_orchestrator 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/sites/adapters",
+   "purpose": "어댑터(정리 대상) (ai_orchestrator/sites 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/sites/connectors",
+   "purpose": "외부 서비스 연결 API (ai_orchestrator/sites 하위)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/tasks",
+   "purpose": "작업 실행·템플릿·외부 작업 레지스트리",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/tests",
+   "purpose": "시험 (ai_orchestrator 하위)",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "ai_orchestrator/user_data",
+   "purpose": "사용자 데이터 기여(F16)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/vendor_directory",
+   "purpose": "업체 디렉터리(F11)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/web_task",
+   "purpose": "웹 작업 레지스트리·승인(F13)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "ai_orchestrator/workflows",
+   "purpose": "업무 흐름 (ai_orchestrator 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/ig-comment-dm-bot",
+   "purpose": "apps 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/ig-comment-dm-bot/connectors",
+   "purpose": "외부 서비스 연결 API (apps/ig-comment-dm-bot 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/ig-comment-dm-bot/core",
+   "purpose": "apps/ig-comment-dm-bot 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/ig-comment-dm-bot/ui",
+   "purpose": "apps/ig-comment-dm-bot 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/marketing-standalone",
+   "purpose": "apps 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/marketing-standalone/connectors",
+   "purpose": "외부 서비스 연결 API (apps/marketing-standalone 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/marketing-standalone/core",
+   "purpose": "apps/marketing-standalone 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/marketing-standalone/site_modules",
+   "purpose": "apps/marketing-standalone 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/youtube-analyzer-standalone",
+   "purpose": "apps 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/youtube-analyzer-standalone/connectors",
+   "purpose": "외부 서비스 연결 API (apps/youtube-analyzer-standalone 하위)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "apps/youtube-analyzer-standalone/core",
+   "purpose": "apps/youtube-analyzer-standalone 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "local_agent",
+   "purpose": "PC 실행 에이전트 (저장소 루트)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "local_agent/runtime",
+   "purpose": "로컬 에이전트 실행 런타임",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
+  },
+  {
+   "path": "orchestrator_v1",
+   "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "orchestrator_v1/core",
+   "purpose": "orchestrator_v1 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "orchestrator_v1/inbox",
+   "purpose": "orchestrator_v1 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "orchestrator_v1/inbox/notice_radar",
+   "purpose": "공고 레이더(공고 수집·분석·브리핑)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(S6 결정 2026-10-08 00:00, 지휘창 전달)"
+  },
+  {
+   "path": "orchestrator_v1/monitoring",
+   "purpose": "orchestrator_v1 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "orchestrator_v1/routers",
+   "purpose": "FastAPI 라우터 (orchestrator_v1 하위)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "orchestrator_v1/tasks",
+   "purpose": "orchestrator_v1 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "orchestrator_v1/webhooks",
+   "purpose": "orchestrator_v1 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts",
+   "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive",
+   "purpose": "일회성·보관(삭제 아님) (scripts 하위)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/debug",
+   "purpose": "scripts/archive 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/eum_legacy",
+   "purpose": "scripts/archive 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/explore",
+   "purpose": "scripts/archive 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/misc",
+   "purpose": "scripts/archive 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/naver/automation",
+   "purpose": "scripts/archive/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/naver/automation/integration",
+   "purpose": "scripts/archive/naver/automation 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/one_off",
+   "purpose": "scripts/archive 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/ops",
+   "purpose": "운영·감사 도구 (scripts/archive 하위)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/archive/shadowed_modules",
+   "purpose": "scripts/archive 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "레거시",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/auth",
+   "purpose": "로그인·인증 세션·자격 증명",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/browser",
+   "purpose": "브라우저 기반 한 곳",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/browser/agent",
+   "purpose": "브라우저 에이전트 도구",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
+  },
+  {
+   "path": "scripts/browser/agent/_js",
+   "purpose": "브라우저 에이전트가 주입하는 JS 조각",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
+  },
+  {
+   "path": "scripts/browser/cdp",
+   "purpose": "CDP 연결·모니터",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/browser/navigator",
+   "purpose": "네비게이터",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/browser/page",
+   "purpose": "페이지 도우미·분석",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/browser/popup",
+   "purpose": "팝업 처리",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/browser/session",
+   "purpose": "브라우저 세션·수명·게이트",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/common",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/common/gates",
+   "purpose": "스크립트 공용 게이트",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "scripts/community",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/community/sites",
+   "purpose": "사이트 어댑터 (scripts/community 하위)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/eum",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/eum/shared",
+   "purpose": "scripts/eum 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/explorer",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/form",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/g2b",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/g2b/smoke",
+   "purpose": "scripts/g2b 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/gabia",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/gabia/ops",
+   "purpose": "운영·감사 도구 (scripts/gabia 하위)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/gates",
+   "purpose": "게이트·승인·정책 (scripts 하위)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/ai",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/cloud",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/developer",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/identity",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/marketing",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/media",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/search",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/workspace",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/youtube",
+   "purpose": "scripts/google 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/grant_radar",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/hanafax",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/hiworks",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/inquiry",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/instagram",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/kakao",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/kakaowork",
+   "purpose": "카카오워크 구현(도구 집, tool_home.json)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "scripts/local",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/local_agent",
+   "purpose": "PC 실행 에이전트 (scripts 하위)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/local_agent/g2b",
+   "purpose": "scripts/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/local_agent/gov",
+   "purpose": "scripts/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/local_agent/naver",
+   "purpose": "scripts/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/mk_catalog",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/automation",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/automation/content",
+   "purpose": "scripts/naver/automation 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/automation/integration",
+   "purpose": "scripts/naver/automation 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/automation/platform",
+   "purpose": "scripts/naver/automation 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/automation",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/cli",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/community",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/core",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/gonobi",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/management",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/marketing",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/seo",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/blog/utilities",
+   "purpose": "scripts/naver/blog 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/cafe",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/cafe/analysis",
+   "purpose": "scripts/naver/cafe 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/cafe/background",
+   "purpose": "scripts/naver/cafe 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/cafe/collection",
+   "purpose": "scripts/naver/cafe 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/cafe/management",
+   "purpose": "scripts/naver/cafe 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/cafe/ops",
+   "purpose": "운영·감사 도구 (scripts/naver/cafe 하위)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/cafe/write",
+   "purpose": "scripts/naver/cafe 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/mail",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/mail/analysis",
+   "purpose": "scripts/naver/mail 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/mail/collection",
+   "purpose": "scripts/naver/mail 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/mail/imap",
+   "purpose": "네이버 메일 IMAP 구현(TOOL_HOME_MAP B2)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "scripts/naver/mail/processing",
+   "purpose": "scripts/naver/mail 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/mail/read",
+   "purpose": "scripts/naver/mail 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/mail/utilities",
+   "purpose": "scripts/naver/mail 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/mail_imap",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/mail_read",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/searchad",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/shopping",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/shopping/competitor_detail",
+   "purpose": "scripts/naver/shopping 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/smartstore",
+   "purpose": "scripts/naver 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/smartstore/api",
+   "purpose": "scripts/naver/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/smartstore/automation",
+   "purpose": "scripts/naver/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/smartstore/navigation",
+   "purpose": "scripts/naver/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/smartstore/product",
+   "purpose": "scripts/naver/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/smartstore/registration",
+   "purpose": "scripts/naver/smartstore 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver_mail",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/ops",
+   "purpose": "운영·감사 도구 (scripts 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/ops/code_map",
+   "purpose": "scripts/ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/ops/quality",
+   "purpose": "품질 게이트·설치 도구",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/ops/selector_health",
+   "purpose": "scripts/ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/ops/selector_health/sites",
+   "purpose": "사이트 어댑터 (scripts/ops/selector_health 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/ops/smoke",
+   "purpose": "스모크·라이브 점검 도구",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "scripts/ops/verify",
+   "purpose": "검증 도구(verify 계열)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님"
+  },
+  {
+   "path": "scripts/ops/write_gates",
+   "purpose": "scripts/ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/site_engine",
+   "purpose": "사이트 엔진 (scripts 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/site_engine/adapters",
+   "purpose": "어댑터(정리 대상) (scripts/site_engine 하위)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/sites",
+   "purpose": "사이트 어댑터 (scripts 하위)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/smoke",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/verify",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/video",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/youtube",
+   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/youtube/upload",
+   "purpose": "scripts/youtube 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "tests",
+   "purpose": "시험 (저장소 루트)",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "tests/helpers",
+   "purpose": "tests 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "tests/integration",
+   "purpose": "tests 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "tests/integration/manual",
+   "purpose": "tests/integration 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-07",
+   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  }
+ ]
+}

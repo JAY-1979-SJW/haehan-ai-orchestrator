@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.codebase_layer_audit import classify_path  # noqa: E402
+from scripts.ops.code_map.layer_rules import classify_path  # noqa: E402
 
 OUT_DIR = ROOT / "data" / "code_map"
 CODE_SUFFIX = (".py", ".ts", ".tsx", ".js")

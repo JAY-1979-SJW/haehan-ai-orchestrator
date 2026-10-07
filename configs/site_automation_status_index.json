@@ -187,7 +187,7 @@
       "risk_level": "high",
       "tools": [
         "scripts/google",
-        "ai_orchestrator/connectors/gmail_router.py"
+        "ai_orchestrator/connectors/google/gmail_router.py"
       ],
       "tests": [
         "tests/test_google_site_engine.py",
@@ -361,7 +361,7 @@
         "scripts/naver_mail",
         "scripts/naver_mail/background_runner.py",
         "scripts/naver_mail/settings_panel.py",
-        "scripts/naver/mail_read",
+        "scripts/naver/mail/read",
         "ai_orchestrator/connectors/naver"
       ],
       "tests": [

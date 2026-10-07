@@ -336,7 +336,7 @@ def test_status_reports_environment_and_that_naver_is_untouched(api, monkeypatch
 
 def test_router_is_registered_in_the_main_router():
     """FastAPI 0.142 는 include_router 를 지연 등록해 router.routes 로는 하위 경로가 안 보인다 — openapi 로 확인한다."""
-    from ai_orchestrator.router import router
+    from ai_orchestrator.routers.registry import router
 
     app = FastAPI()
     app.include_router(router)

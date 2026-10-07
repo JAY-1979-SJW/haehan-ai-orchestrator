@@ -17,10 +17,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.app_paths import repo_root
 from scripts.common import youtube_search_cache as _shared_cache
 from security_utils import safe_preview
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = repo_root()
 REPORT_DIR = ROOT / "data" / "google_youtube_search_reports"
 LATEST_SEARCH = ROOT / "data" / "google_youtube_search_latest.json"
 LATEST_ANALYSIS = ROOT / "data" / "google_youtube_rank_analysis_latest.json"

@@ -1,0 +1,13 @@
+{
+  "_comment": "최상위 평면 금지 게이트(G15) 규칙 정본. flat_dirs 바로 아래에 새 .py 를 추가하면 차단한다(기존 파일은 configs/flat_root_baseline.json). 설계: docs/architecture/FOLDER_STRUCTURE.md",
+  "flat_dirs": ["scripts", "ai_orchestrator", ""],
+  "entry_points": [
+    {"name": "asgi.py", "reason": "ASGI 서버 진입점(uvicorn ai_orchestrator.asgi:app)"},
+    {"name": "router.py", "reason": "API 라우터 최상위 호환 진입점(등록 모듈은 routers/registry.py 로 이동 예정, S3a)"},
+    {"name": "config.py", "reason": "환경설정 단일 정본(.env 로드)"},
+    {"name": "app.py", "reason": "저장소 루트 실행 진입점"},
+    {"name": "__init__.py", "reason": "패키지 표식"},
+    {"name": "conftest.py", "reason": "pytest 설정(최상위에서만 의미가 있음)"},
+    {"name": "sitecustomize.py", "reason": "파이썬이 이름으로 자동 로드하는 파일"}
+  ]
+}

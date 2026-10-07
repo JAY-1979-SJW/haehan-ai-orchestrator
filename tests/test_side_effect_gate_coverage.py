@@ -55,11 +55,11 @@ REQUIRED_GUARDED = {
     "ai_orchestrator/connectors/naver_blog_router.py::write_to_naver._do",  # 게이트는 바깥 write_to_naver 에 있다
     "ai_orchestrator/routers/marketing_ops_router.py::publish_blog._do",  # 게이트는 바깥 publish_blog 에 있다
     "scripts/hiworks/mail_batch.py::execute_send_batch",
-    "ai_orchestrator/connectors/gmail_router.py::api_reply",
-    "ai_orchestrator/connectors/gmail_router.py::api_send",
-    "ai_orchestrator/connectors/eum_router.py::send_one._compose_and_send",
-    "ai_orchestrator/connectors/hiworks_mail_router.py::api_send",
-    "scripts/eum_send_mail_batch.py::send_one",
+    "ai_orchestrator/connectors/google/gmail_router.py::api_reply",
+    "ai_orchestrator/connectors/google/gmail_router.py::api_send",
+    "ai_orchestrator/connectors/eum/router.py::send_one._compose_and_send",
+    "ai_orchestrator/connectors/hiworks/mail_router.py::api_send",
+    "scripts/eum/send_mail_batch.py::send_one",
     "scripts/naver/blog/core/ai_writer.py::BlogAIWriter.draft_and_save",
     "scripts/naver/blog/core/writer_pro.py::BlogWriterPro._publish_by_mode",
     "scripts/naver/blog/management/schedule.py::BlogSchedule.process_due",

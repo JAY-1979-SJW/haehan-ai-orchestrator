@@ -13,7 +13,7 @@ from typing import Any
 from scripts.gate import check as gate_check
 from scripts.naver.cafe import list_collector
 from scripts.naver.cafe.member_collect import normalize_cafe_url
-from scripts.naver.mail_read import cdp
+from scripts.naver.mail.read import cdp
 
 APPROVAL_CONFIRM_TEXT = "NAVER_APPROVED_CAFE_JOIN"
 

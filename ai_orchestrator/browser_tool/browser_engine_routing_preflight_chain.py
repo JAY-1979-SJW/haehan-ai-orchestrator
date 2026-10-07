@@ -282,7 +282,7 @@ def _evaluate_boundary(ctx: dict[str, Any]) -> dict[str, Any]:
 
     # SERVER_PLAYWRIGHT_READONLY_ALLOWED인 경우 URL 기반 정책으로 확인
     # (category 기반 classify는 미분류 허용 URL을 차단하므로 URL 정책 우선 사용)
-    from browser_worker.policy import evaluate_server_browser_url_policy  # lazy import
+    from ai_orchestrator.browser_tool.worker.policy import evaluate_server_browser_url_policy  # lazy import
 
     url_policy = evaluate_server_browser_url_policy(
         target_url,

@@ -18,7 +18,12 @@ import secrets
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel, field_validator
 
-from ai_orchestrator.connectors.user_auth_router import AuthResponse, UserResponse, _make_token
+from ai_orchestrator.connectors.user_auth_router import (
+    AuthResponse,
+    UserResponse,
+    _make_token,
+)
+from ai_orchestrator.contracts.display_name import validate_display_name
 from ai_orchestrator.gates.auth import desktop_owner_bootstrap_allowed
 from ai_orchestrator.persistence import auth_audit, user_db
 
@@ -46,12 +51,7 @@ class DesktopSetupRequest(BaseModel):
     @field_validator("name")
     @classmethod
     def name_not_empty(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("이름을 입력하세요")
-        if len(v) > 50:
-            raise ValueError("이름은 최대 50자입니다")
-        return v
+        return validate_display_name(v)
 
     @field_validator("email")
     @classmethod

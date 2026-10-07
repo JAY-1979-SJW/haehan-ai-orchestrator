@@ -1,15 +1,23 @@
-"""Naver Mail 읽기 전용 파이프라인 (CDP 기반).
+# haehan-shim: scripts.naver.mail.read
+# 호환 shim: 실제 모듈은 scripts.naver.mail.read 로 이동했다 (scripts/naver/mail/read/__init__.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-기존 scripts/naver/mail.py (Playwright compose/send) 는 보존.
-본 패키지는 main-page-first 정책을 따르는 읽기 흐름:
-  entry      — 세션 확인 + login_wait
-  list_collector — 페이지네이션으로 안읽은 메일 전수 수집
-  body_reader    — 본문 + PII 마스킹 + 링크/피싱 판정
-  classify       — 발신자/제목 규칙 기반 분류
-  pipeline       — 위 단계 직렬 오케스트레이션
 
-CDP 포트는 자동화 Chrome 9222 고정. user_browser_session 정책 준수.
-"""
-from . import entry, list_collector, body_reader, classify, pipeline
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
-__all__ = ["entry", "list_collector", "body_reader", "classify", "pipeline"]
+
+_install(_il.import_module("scripts.naver.mail.read"), globals(), _sys.modules)
+
+# 형제 하위 모듈 선등록 — import old.sub.a 가 부모 __path__ 를 따라 새로 실행되는 것을 막는다
+_sys.modules[f"{__name__}.body_reader"] = _il.import_module("scripts.naver.mail.read.body_reader")
+_sys.modules[f"{__name__}.cdp"] = _il.import_module("scripts.naver.mail.read.cdp")
+_sys.modules[f"{__name__}.classify"] = _il.import_module("scripts.naver.mail.read.classify")
+_sys.modules[f"{__name__}.entry"] = _il.import_module("scripts.naver.mail.read.entry")
+_sys.modules[f"{__name__}.list_collector"] = _il.import_module("scripts.naver.mail.read.list_collector")
+_sys.modules[f"{__name__}.pipeline"] = _il.import_module("scripts.naver.mail.read.pipeline")

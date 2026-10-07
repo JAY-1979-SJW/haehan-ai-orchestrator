@@ -46,17 +46,19 @@ def _list_events(time_min: str, time_max: str, max_results: int = 20) -> list[di
     return items
 
 
-def list_today() -> list[dict]:
-    """오늘 일정."""
+def _list_days(days: int) -> list[dict]:
+    """오늘 0시(UTC)부터 days 일 일정(list_today/list_week 공통)."""
     now = datetime.now(UTC)
     start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end = start + timedelta(days=1)
+    end = start + timedelta(days=days)
     return _list_events(start.isoformat(), end.isoformat())
+
+
+def list_today() -> list[dict]:
+    """오늘 일정."""
+    return _list_days(1)
 
 
 def list_week() -> list[dict]:
     """이번 주(오늘부터 7일) 일정."""
-    now = datetime.now(UTC)
-    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end = start + timedelta(days=7)
-    return _list_events(start.isoformat(), end.isoformat())
+    return _list_days(7)

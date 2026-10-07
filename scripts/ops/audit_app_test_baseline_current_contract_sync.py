@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 TESTS_DIR = ROOT / "tests"
 FRONTEND_SRC = ROOT / "admin-web" / "src"
-ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
+ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "registry.py"
 APP_STATUS_ROUTER = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
 DASHBOARD_PAGE = FRONTEND_SRC / "app" / "assistant" / "page.tsx"
 

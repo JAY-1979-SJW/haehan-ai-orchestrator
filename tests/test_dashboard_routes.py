@@ -265,7 +265,7 @@ def test_high_approval_does_not_enable_execution(client):
     """admin이 high를 승인해도 whitelist_executor는 여전히 BLOCKED 반환."""
     from models import ExecutionPlan, RiskAssessment, TaskRequest
     from policy_engine import load_policy
-    from whitelist_executor import can_execute
+    from orchestrator_v1.tasks.whitelist_executor import can_execute
 
     token_id = _add_token("task-high-exec", "high")
     client.post("/dashboard/approve", json={"token_id": token_id, "task_id": "task-high-exec", "user_id": "admin-1"})

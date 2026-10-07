@@ -257,14 +257,14 @@ def test_no_docker_compose_field():
 
 
 def test_post_tasks_code_unchanged():
-    from ai_orchestrator import router
+    from ai_orchestrator.routers import registry as router
 
     assert hasattr(router, "submit_task"), "POST /tasks handler 없음"
     assert router.POST_TASKS_DRY_RUN_ENABLED is True
 
 
 def test_approve_reject_unchanged():
-    from ai_orchestrator import router
+    from ai_orchestrator.routers import registry as router
 
     assert hasattr(router, "approve_task")
     assert hasattr(router, "reject_task")

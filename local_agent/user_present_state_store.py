@@ -136,26 +136,28 @@ class UserPresentStateStore:
     def mark_waiting_for_user(self, workflow_run_id: str) -> dict[str, Any]:
         return self._update_state(workflow_run_id, STATE_WAITING_FOR_USER)
 
-    def mark_user_confirmed(self, workflow_run_id: str) -> dict[str, Any]:
+    def _transition(
+        self, workflow_run_id: str, allowed: Any, target: str, stamp_key: str, error_detail: str
+    ) -> dict[str, Any]:
+        """상태 전이(mark_user_confirmed/cancelled 공통): 없으면 KeyError, 허용 상태가 아니면 ValueError."""
         task = self.get_user_present_task(workflow_run_id)
         if task is None:
             raise KeyError(f"task not found: {workflow_run_id}")
-        if task["state"] not in _CONFIRMABLE_STATES:
-            raise ValueError(
-                f"상태 전이 불가: {task['state']} → USER_CONFIRMED. "
-                f"WAITING_FOR_USER 상태일 때만 가능합니다."
-            )
-        return self._update_state(workflow_run_id, STATE_USER_CONFIRMED, {"confirmed_at": _now_iso()})
+        if task["state"] not in allowed:
+            raise ValueError(f"상태 전이 불가: {task['state']} → {error_detail}")
+        return self._update_state(workflow_run_id, target, {stamp_key: _now_iso()})
+
+    def mark_user_confirmed(self, workflow_run_id: str) -> dict[str, Any]:
+        return self._transition(
+            workflow_run_id,
+            _CONFIRMABLE_STATES,
+            STATE_USER_CONFIRMED,
+            "confirmed_at",
+            "USER_CONFIRMED. WAITING_FOR_USER 상태일 때만 가능합니다.",
+        )
 
     def mark_user_cancelled(self, workflow_run_id: str) -> dict[str, Any]:
-        task = self.get_user_present_task(workflow_run_id)
-        if task is None:
-            raise KeyError(f"task not found: {workflow_run_id}")
-        if task["state"] not in _CANCELLABLE_STATES:
-            raise ValueError(
-                f"상태 전이 불가: {task['state']} → CANCELLED."
-            )
-        return self._update_state(workflow_run_id, STATE_CANCELLED, {"cancelled_at": _now_iso()})
+        return self._transition(workflow_run_id, _CANCELLABLE_STATES, STATE_CANCELLED, "cancelled_at", "CANCELLED.")
 
     def sanitize_user_present_task_for_user(self, task: dict[str, Any]) -> dict[str, Any]:
         """사용자 화면에 표시할 수 있는 필드만 반환한다."""

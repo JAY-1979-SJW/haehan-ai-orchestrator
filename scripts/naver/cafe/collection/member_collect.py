@@ -13,7 +13,7 @@ from urllib.parse import quote
 
 from scripts.gate import check as gate_check
 from scripts.naver.cafe import list_collector
-from scripts.naver.mail_read import cdp
+from scripts.naver.mail.read import cdp
 
 DEFAULT_TERMS = [
     "AI",

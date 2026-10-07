@@ -152,7 +152,11 @@ def test_first_run_setup_creates_exactly_one_owner_and_logs_in(monkeypatch, tmp_
     r = _setup(client)
     assert r.status_code == 201
     body = r.json()
-    assert body["user"]["email"] == "hong@example.com" and body["user"]["role"] == "owner" and body["user"]["name"] == "홍길동"
+    assert (
+        body["user"]["email"] == "hong@example.com"
+        and body["user"]["role"] == "owner"
+        and body["user"]["name"] == "홍길동"
+    )
     assert "password_hash" not in json.dumps(body)
     assert client.get(f"{AUTH}/desktop-setup-status").json() == {"needs_setup": False}
     # 발급된 토큰은 실제로 그 사용자로 인증된다
@@ -207,7 +211,9 @@ def test_setup_validation(monkeypatch):
     _desktop(monkeypatch)
     client = make_client()
     assert client.post(f"{AUTH}/desktop-setup", json={"name": "  ", "email": "a@b.co"}, headers=H).status_code == 422
-    assert client.post(f"{AUTH}/desktop-setup", json={"name": "A", "email": "not-an-email"}, headers=H).status_code == 422
+    assert (
+        client.post(f"{AUTH}/desktop-setup", json={"name": "A", "email": "not-an-email"}, headers=H).status_code == 422
+    )
     assert user_db.count_users() == 0
 
 

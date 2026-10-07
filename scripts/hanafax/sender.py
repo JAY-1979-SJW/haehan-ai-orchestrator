@@ -21,9 +21,11 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from scripts.app_paths import repo_root
+
 log = logging.getLogger("hanafax.sender")
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 _TEMPLATE_DOCX = ROOT / "data" / "hanafax_template.docx"
 _BASE_URL = "https://www.hanafax.com"
 _LOCK = threading.Lock()

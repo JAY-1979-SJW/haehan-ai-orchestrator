@@ -55,7 +55,7 @@ from scripts.ops.code_map.registry_sync import (  # noqa: E402
     diff_registry,
     tracked_code_files,
 )
-from scripts.ops.codebase_layer_audit import _FORBIDDEN_IMPORT_PAIRS  # noqa: E402
+from scripts.ops.code_map.layer_rules import _FORBIDDEN_IMPORT_PAIRS  # noqa: E402
 
 FIX_HINT = (
     "python scripts/ops/code_map/registry_sync.py --fix && "

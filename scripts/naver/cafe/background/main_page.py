@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from scripts.gate import check as gate_check
-from scripts.naver.mail_read import cdp
+from scripts.naver.mail.read import cdp
 from scripts.naver.cafe import list_collector
 
 CAFE_HOME_URL = "https://section.cafe.naver.com/ca-fe/home"

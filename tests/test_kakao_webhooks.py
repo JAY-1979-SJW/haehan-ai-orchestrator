@@ -26,7 +26,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import inbox_store
-import kakaowork_reader
+from orchestrator_v1.inbox import kakaowork_reader
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -242,7 +242,7 @@ def test_kakaotalk_channel_missing_user_id_rejected(client):
 
 def test_kakaotalk_channel_source_type(client, tmp_path):
     """source_type=kakaotalk_channel으로 저장되는지 inbox_store를 통해 검증."""
-    from webhooks_router import _parse_kakaotalk_channel_payload
+    from orchestrator_v1.webhooks.webhooks_router import _parse_kakaotalk_channel_payload
 
     msg = _parse_kakaotalk_channel_payload(_KAKAOTALK_PAYLOAD)
     assert msg["source_type"] == "kakaotalk_channel"
@@ -268,7 +268,7 @@ def test_two_channels_stored_independently(tmp_inbox):
         path=tmp_inbox,
     )
 
-    from webhooks_router import _parse_kakaotalk_channel_payload
+    from orchestrator_v1.webhooks.webhooks_router import _parse_kakaotalk_channel_payload
 
     kt_msg = _parse_kakaotalk_channel_payload(_KAKAOTALK_PAYLOAD)
     inbox_store.save_message(

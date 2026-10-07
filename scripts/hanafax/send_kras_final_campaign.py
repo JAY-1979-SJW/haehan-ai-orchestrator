@@ -29,14 +29,14 @@ from pathlib import Path
 import fitz
 import win32com.client as win32
 
-from scripts.app_paths import known_folder
+from scripts.app_paths import known_folder, repo_root
 from scripts.hanafax.kst_date import now_kst, today_kr_str
 from scripts.hanafax.sender import send_fax
 
 log = logging.getLogger("hanafax.kras_final_campaign")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 SRC_XLSX = str(known_folder("downloads") / "해한AI_AI안전관리시스템_영업공문_최종.xlsx")
 DATA_JSON = ROOT / "data" / "safety_doc_targets_20260907.json"
 MASTER_SENT_LOG = ROOT / "data" / "kras_pdf_fax_sent_log.json"

@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-from adapters.file_adapter import file_exists, list_dir, preview_patch, read_file
+from orchestrator_v1.tasks.file_adapter import file_exists, list_dir, preview_patch, read_file
 
 _TMPDIR = tempfile.gettempdir()
 _ALLOWED = [_TMPDIR]

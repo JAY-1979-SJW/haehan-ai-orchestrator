@@ -9,7 +9,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors.hanafax_router import hanafax_router
+from ai_orchestrator.connectors.hanafax.router import hanafax_router
 from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.persistence import fax_authorization_store as store
 from ai_orchestrator.services import hanafax_attachments as att

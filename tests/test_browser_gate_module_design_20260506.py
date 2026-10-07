@@ -241,7 +241,7 @@ def test_no_browser_import_in_this_module():
     다른 테스트가 먼저 해당 모듈을 import해도 이 테스트는 영향받지 않는다.
     """
     source = Path(__file__).read_text(encoding="utf-8")
-    blocked = ["playwright", "browser_worker", "dispatcher", "task_executor"]
+    blocked = ["playwright", "browser_worker", "ai_orchestrator.browser_tool.worker", "dispatcher", "task_executor"]
     for mod in blocked:
         # import 구문으로 직접 참조하는 경우만 차단 (주석·문자열 내 단순 언급은 허용)
         import_patterns = [f"import {mod}", f"from {mod}"]
@@ -261,7 +261,7 @@ def test_no_task_executor_import():
         Path(__file__),
         Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "submit_execution_gate.py",
     ]
-    blocked = ["task_executor", "browser_worker"]
+    blocked = ["task_executor", "browser_worker", "ai_orchestrator.browser_tool.worker"]
 
     for fpath in files_to_check:
         if not fpath.exists():

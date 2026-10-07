@@ -12,10 +12,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from scripts.app_paths import repo_root
 from scripts.google import workflows
 from scripts.google.domain_taxonomy import build_google_page_tab_catalog
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 REPORT_DIR = ROOT / "data" / "google_youtube_upload_plans"
 LATEST_PLAN = ROOT / "data" / "google_youtube_upload_plan_latest.json"
 

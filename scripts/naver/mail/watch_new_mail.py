@@ -21,9 +21,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -32,7 +33,7 @@ from scripts.naver.mail.collection.background_runner import (  # noqa: E402
     create_isolated_mail_target,
     select_naver_session,
 )
-from scripts.naver.mail_read import list_collector  # noqa: E402
+from scripts.naver.mail.read import list_collector  # noqa: E402
 
 STATE_PATH = ROOT / "data" / "naver_mail_watch_state.json"
 _MAX_SEEN_KEEP = 500

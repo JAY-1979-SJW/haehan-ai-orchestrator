@@ -144,7 +144,7 @@ def test_08_router_no_browser_worker_at_import_time():
     module_level_bw_imports = [
         line
         for line in lines
-        if ("from browser_worker" in line or "import browser_worker" in line)
+        if ("from browser_worker" in line or "import browser_worker" in line or "browser_tool.worker" in line)
         and not line.strip().startswith("#")
         and not line.strip().startswith("def ")
         and not line.strip().startswith(" ")  # 들여쓰기 있으면 함수 내부
@@ -164,7 +164,7 @@ def test_09_preflight_chain_no_browser_worker_at_module_level():
     module_level_imports = [
         line
         for line in lines
-        if ("from browser_worker" in line or "import browser_worker" in line)
+        if ("from browser_worker" in line or "import browser_worker" in line or "browser_tool.worker" in line)
         and not line.strip().startswith("#")
         and not line.startswith(" ")
         and not line.startswith("\t")
@@ -220,7 +220,7 @@ def test_12_gate_module_design_tests_pass_after_all_g2b_imports():
     # gate_module_design 테스트 파일 소스 확인
     test_file = _repo_root / "tests" / "test_browser_gate_module_design_20260506.py"
     source = test_file.read_text(encoding="utf-8")
-    blocked = ["playwright", "browser_worker", "dispatcher", "task_executor"]
+    blocked = ["playwright", "browser_worker", "ai_orchestrator.browser_tool.worker", "dispatcher", "task_executor"]
     for mod in blocked:
         for pattern in [f"import {mod}", f"from {mod}"]:
             assert pattern not in source, f"테스트 파일에 금지 import 발견: {pattern}"

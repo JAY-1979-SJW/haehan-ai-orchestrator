@@ -9,7 +9,7 @@ import os
 import time
 from pathlib import Path
 
-from adapters import command_adapter, file_adapter
+from orchestrator_v1.tasks import command_adapter, file_adapter
 from orchestrator_v1.core import audit_logger
 from orchestrator_v1.core.logger import get_logger, log_event
 from orchestrator_v1.core.logging_utils import truncate_large_text

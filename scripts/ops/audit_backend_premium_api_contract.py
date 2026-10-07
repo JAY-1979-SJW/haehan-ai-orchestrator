@@ -60,7 +60,7 @@ def _item(cid: str, status: str, evidence: str, details: dict | None = None) -> 
 
 def _check_router_import() -> dict:
     try:
-        importlib.import_module("ai_orchestrator.router")
+        importlib.import_module("ai_orchestrator.routers.registry")
         return _item("ac-01", "PASS", "router import 성공")
     except Exception as e:  # noqa: BLE001 - 백엔드 API 계약 자체검증 스크립트 - import/실행 실패를 체크리스트 FAIL/WARN으로 기록(런타임 게이트 아님)
         return _item("ac-01", "FAIL", str(e)[:120])
@@ -122,7 +122,7 @@ def _check_web_task_path(web_task: bool) -> dict:
 
 def _check_approval_path() -> dict:
     approval_src = ""
-    for f in [ROOT / "ai_orchestrator/router.py", ROOT / "ai_orchestrator/approval_router.py"]:
+    for f in [ROOT / "ai_orchestrator/routers/registry.py", ROOT / "ai_orchestrator/approval_router.py"]:
         if f.exists():
             approval_src += f.read_text(encoding="utf-8")
     has_approval = "approval" in approval_src.lower() or "approve" in approval_src.lower()
@@ -144,8 +144,8 @@ def _check_test_files_exist() -> tuple[dict, dict, dict]:
 
 def _check_router_registration() -> tuple[dict, dict, str]:
     router_src = (
-        (ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8")
-        if (ROOT / "ai_orchestrator/router.py").exists()
+        (ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8")
+        if (ROOT / "ai_orchestrator/routers/registry.py").exists()
         else ""
     )
     naver_reg = "naver" in router_src.lower() or "naver_search" in router_src

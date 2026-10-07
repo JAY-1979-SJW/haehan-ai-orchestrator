@@ -197,6 +197,77 @@ if _ak.exists():
     if _ak_result.returncode != 0:
         sys.exit(_ak_result.returncode)
 
+# ── 이동 사전점검 게이트 (git mv 한 .py 의 남은 경로 로드/직접 실행 참조) ──────
+# alias 한 줄 shim 은 import 만 받는다. 파일 경로 로드·직접 실행·설정/훅 경로 참조가 새 경로로 안 고쳐졌고
+# 옛 경로에 맞는 shim 도 없으면 커밋을 막는다(2026-10-07 hiworks·dashboard 회귀).
+# 해결: python scripts/ops/make_shim.py <옛> <새> 또는 참조를 새 경로로 수정. 우회 옵션 없음.
+_mp = ROOT / "scripts" / "ops" / "move_preflight.py"
+if _mp.exists() and any(
+    ln.startswith("R") and ln.split("\t")[-1].endswith(".py")
+    for ln in subprocess.run(
+        ["git", "diff", "--cached", "--name-status", "-M", "--diff-filter=R"],
+        cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace",
+    ).stdout.splitlines()
+):
+    _mp_result = subprocess.run([*_pyexe(), str(_mp), "--staged-renames"], cwd=str(ROOT))
+    if _mp_result.returncode != 0:
+        sys.exit(_mp_result.returncode)
+
+# ── 도구 집 게이트 (도구 키워드 새 파일이 집 밖이면 차단 — G11) ─────────────────
+# 새로 추가(A)·이름변경(R)된 .py/.ts/.tsx 가 도구 집(scripts/<도구>/·connectors/<도구>/·화면 폴더) 밖이면 차단.
+# 기존 집 밖 파일은 configs/tool_home_baseline.json 으로 고정(수정은 통과). 우회 옵션 없음.
+_th = ROOT / "scripts" / "ops" / "tool_home_gate.py"
+if _th.exists() and any(
+    f.endswith((".py", ".ts", ".tsx"))
+    for f in subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "--diff-filter=AR"],
+        cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace",
+    ).stdout.splitlines()
+):
+    _th_result = subprocess.run([*_pyexe(), str(_th), "--staged"], cwd=str(ROOT))
+    if _th_result.returncode != 0:
+        sys.exit(_th_result.returncode)
+
+# ── 최상위 평면 금지 게이트 (scripts/*.py·ai_orchestrator/*.py·루트 *.py 에 새 파일 차단 — G15) ──────
+# 새로 추가(A)·이름변경(R)된 .py 가 평면 금지 폴더 바로 아래면 차단. 기존 평면 파일은 configs/flat_root_baseline.json 으로
+# 고정(수정·삭제는 통과). 진입점(asgi·router·config·app·__init__·conftest·sitecustomize)은 허용. 우회 옵션 없음.
+_fr = ROOT / "scripts" / "ops" / "flat_root_gate.py"
+if _fr.exists() and any(
+    f.endswith(".py")
+    for f in subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "--diff-filter=AR"],
+        cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace",
+    ).stdout.splitlines()
+):
+    _fr_result = subprocess.run([*_pyexe(), str(_fr), "--staged"], cwd=str(ROOT))
+    if _fr_result.returncode != 0:
+        sys.exit(_fr_result.returncode)
+
+# ── 폴더 승인 게이트 (승인 목록에 없는 폴더에 새 코드 파일 차단 — G16) ────────────────────────
+# 새로 추가(A)·이름변경(R)된 코드(.py·.ts·.tsx·.js)의 폴더가 configs/folder_registry.json 에 없으면 차단. 새 폴더는 대표님 승인 후 목록에 추가
+# (PR 라벨 folder-approved 는 CI 가 확인). 삭제·기존 파일 수정은 보지 않는다. 우회 옵션 없음.
+_fg = ROOT / "scripts" / "ops" / "folder_gate.py"
+if _fg.exists() and any(
+    f.endswith((".py", ".ts", ".tsx", ".js"))
+    for f in subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "--diff-filter=AR"],
+        cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace",
+    ).stdout.splitlines()
+):
+    _fg_result = subprocess.run([*_pyexe(), str(_fg), "--staged"], cwd=str(ROOT))
+    if _fg_result.returncode != 0:
+        sys.exit(_fg_result.returncode)
+
+# ── 루트 직접 계산 차단 게이트 (G5 — 새로 추가된 줄만) ───────────────────────────
+# Path(__file__).parents[N] / .parent.parent / dirname(dirname(__file__)) 로 저장소 루트를 파일마다 따로 계산하는
+# 새 줄이 있으면 차단 → ai_orchestrator.paths.repo_root / scripts.app_paths.repo_root 사용. 기존 줄은 막지 않는다.
+# 우회 옵션 없음(예외: configs/root_calc_gate.json 에 사유와 함께).
+_rc = ROOT / "scripts" / "ops" / "root_calc_gate.py"
+if _rc.exists() and py_files:
+    _rc_result = subprocess.run([*_pyexe(), str(_rc), "--staged"], cwd=str(ROOT))
+    if _rc_result.returncode != 0:
+        sys.exit(_rc_result.returncode)
+
 # ── R1 API 계약 게이트 (화면↔서버 끊긴 호출 신규분만 차단) ────────────────
 # admin-web/src 또는 FastAPI 라우터(ai_orchestrator)가 staged일 때만 실행 —
 # 영향 테스트 선택만으로는 admin-web 단독 변경 시 전혀 안 돌아서(2026-10-07
@@ -211,6 +282,16 @@ if _r1_staged:
         _r1_result = subprocess.run([*_pyexe(), str(_r1)], cwd=str(ROOT))
         if _r1_result.returncode != 0:
             sys.exit(_r1_result.returncode)
+
+# ── G12 중복 게이트 (새 구조동일 중복 함수만 차단) ──────────────────────────
+# 이름·상수를 지운 AST 해시가 같은 함수(4문장 이상)가 다른 파일에 이미 있으면 차단.
+# 기존 중복은 configs/dup_baseline.json 기준선으로 고정(새로 생긴 것만 막음).
+# 시험 파일·scripts/archive/·apps/ 는 예외. 우회 옵션 없음(기준선 재생성: build-baseline).
+_dg = ROOT / "scripts" / "ops" / "dup_gate.py"
+if _dg.exists() and py_files:
+    _dg_result = subprocess.run([*_pyexe(), str(_dg), "check", *py_files], cwd=str(ROOT))
+    if _dg_result.returncode != 0:
+        sys.exit(_dg_result.returncode)
 
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P

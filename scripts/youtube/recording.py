@@ -9,9 +9,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.app_paths import repo_root
 from scripts.realtime_audit import emit_event
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 PLAN_DIR = ROOT / "data" / "youtube_recording_plans"
 RESULT_DIR = ROOT / "data" / "youtube_recording_results"
 LATEST_PLAN = ROOT / "data" / "youtube_recording_plan_latest.json"
