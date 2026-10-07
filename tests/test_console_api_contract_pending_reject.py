@@ -11,8 +11,8 @@ import json
 import pytest
 
 from ai_orchestrator.core import config
-from ai_orchestrator.connectors import user_auth_router as user_auth
-from ai_orchestrator.persistence import auth_audit, user_db
+from ai_orchestrator.auth import user_auth_router as user_auth
+from ai_orchestrator.auth import auth_audit, user_db
 from tests.console_api_contract_support import API, basic, enable_basic_auth, make_client
 
 OWNER_MAIL = "boss@example.com"

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.connectors import user_auth_router as user_auth
-from ai_orchestrator.persistence import auth_audit, user_db
+from ai_orchestrator.auth import auth_audit, user_db
+from ai_orchestrator.auth import user_auth_router as user_auth
 from tests.console_api_contract_support import (
     API,
     basic,

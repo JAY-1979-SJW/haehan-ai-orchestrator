@@ -9,13 +9,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
 
+from ai_orchestrator.auth import auth_audit, user_db
 from ai_orchestrator.core import config
 from ai_orchestrator.gates.auth import (  # 승인 등 owner 작업·콘솔 JWT 수용·OWNER_EMAILS
     is_owner_email,
     register_bearer_resolver,
     require_role,
 )
-from ai_orchestrator.persistence import auth_audit, user_db
 
 user_auth_router = APIRouter(prefix="/users", tags=["users"])
 

@@ -11,7 +11,7 @@ from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 from ai_orchestrator.routers.agent_dispatch_router import agent_dispatch_router
 from ai_orchestrator.routers.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
-from ai_orchestrator.routers.auth_router import auth_router
+from ai_orchestrator.auth.auth_router import auth_router
 from ai_orchestrator.routers.blog_automation_router import blog_automation_router
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
@@ -32,7 +32,7 @@ from ..audit_logger import log_event, read_recent_logs
 from ..browser_tool.approval_record_router import approval_record_router
 from ..connectors.cdp_screen_router import cdp_screen_router
 from ..connectors.community_router import community_router
-from ..connectors.desktop_session_router import desktop_session_router
+from ..auth.desktop_session_router import desktop_session_router
 from ..connectors.eum.router import eum_router
 from ..connectors.gabia.router import gabia_router
 from ..connectors.google.gmail_router import gmail_router
@@ -54,7 +54,7 @@ from ..connectors.naver_session_router import router as naver_session_router
 from ..connectors.public_media_router import public_media_router
 from ..connectors.session_status_router import session_status_router
 from ..connectors.smartstore_router import smartstore_router
-from ..connectors.user_auth_router import get_jwt_user, user_auth_router
+from ..auth.user_auth_router import get_jwt_user, user_auth_router
 from ..connectors.youtube_router import youtube_router
 from ..tasks.executor import execute
 from ..gates.approval import approve_token, issue_token, reject_token

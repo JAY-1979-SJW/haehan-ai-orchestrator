@@ -799,7 +799,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "ai_orchestrator/connectors/naver_search_db.py",
     "ai_orchestrator/connectors/naver_search_queries.py",
     "ai_orchestrator/local_agent/browser/cdp_session_manager.py",
-    "ai_orchestrator/persistence/registration_code_store.py",
+    "ai_orchestrator/auth/registration_code_store.py",
     "apps/ig-comment-dm-bot/core/processed_store.py",
     "local_agent/browser_approval_db_store.py",
     "scripts/cdp_db.py",

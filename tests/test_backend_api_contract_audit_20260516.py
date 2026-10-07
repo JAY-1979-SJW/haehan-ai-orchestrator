@@ -152,7 +152,7 @@ def test_router_imports_clean():
     """
     import ai_orchestrator.local_agent_router as lar
     import ai_orchestrator.routers.admin_ui_router as aur
-    import ai_orchestrator.routers.auth_router as auth
+    import ai_orchestrator.auth.auth_router as auth
     import ai_orchestrator.web_task.web_task_router as wtr
 
     assert lar.local_agent_router is not None

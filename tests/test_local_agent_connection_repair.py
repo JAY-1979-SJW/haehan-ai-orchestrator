@@ -6,7 +6,7 @@ import json
 import pytest
 
 from ai_orchestrator import local_agent_registry as reg
-from ai_orchestrator import registration_codes as rc
+from ai_orchestrator.auth import registration_codes as rc
 from local_agent import connection_diagnostics as cd
 from scripts.ops import audit_local_desktop_agent_connection as audit
 
@@ -363,7 +363,7 @@ def test_regression_local_agent_router_imports():
 
 
 def test_regression_registration_codes_imports():
-    from ai_orchestrator import registration_codes as rc
+    from ai_orchestrator.auth import registration_codes as rc
     assert hasattr(rc, "issue_code")
     assert hasattr(rc, "consume_code")
 
