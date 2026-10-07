@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import candidate_store
 import inbox_store
-from email_classifier import classify
+from orchestrator_v1.inbox.email_classifier import classify
 
 # ── 공통 inbox item 팩토리 ────────────────────────────────────────────────────
 

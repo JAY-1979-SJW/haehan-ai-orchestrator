@@ -22,7 +22,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
 import email_task_approval
-import email_task_executor
+from orchestrator_v1.tasks import email_task_executor
 import email_task_store
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
