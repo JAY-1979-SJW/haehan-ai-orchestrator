@@ -187,47 +187,6 @@ function maskedUserEnv() {
   return out;
 }
 
-// ── Claude Desktop MCP 연동 ───────────────────────────────────────────────────
-// Claude Desktop 의 claude_desktop_config.json 에 이 앱의 번들 MCP 서버(haehan-mcp.exe)를
-// 등록한다. 다른 직원 PC에서도 python 환경 없이 바로 연결되도록 exe 그대로 가리킨다.
-
-function claudeDesktopConfigPath() {
-  return path.join(app.getPath("appData"), "Claude", "claude_desktop_config.json");
-}
-
-function connectClaudeDesktop() {
-  if (!app.isPackaged) {
-    return { ok: false, error: "dev_mode_unsupported", hint: "패키징된 앱에서만 지원합니다" };
-  }
-  const cfgPath = claudeDesktopConfigPath();
-  if (!fs.existsSync(cfgPath)) {
-    return { ok: false, error: "claude_desktop_not_found", hint: "Claude Desktop을 먼저 설치·실행하세요" };
-  }
-
-  let cfg;
-  try {
-    const raw = fs.readFileSync(cfgPath, "utf-8").replace(/^﻿/, "");
-    cfg = JSON.parse(raw);
-  } catch (e) {
-    return { ok: false, error: "config_parse_failed", hint: String(e) };
-  }
-
-  const mcpExe = path.join(process.resourcesPath, "mcp", "haehan-mcp", "haehan-mcp.exe");
-  if (!fs.existsSync(mcpExe)) {
-    return { ok: false, error: "mcp_exe_missing", hint: mcpExe };
-  }
-
-  cfg.mcpServers = cfg.mcpServers || {};
-  cfg.mcpServers["haehan-orchestrator"] = {
-    command: mcpExe,
-    args: [],
-    env: { HAEHAN_DATA_DIR: path.join(app.getPath("userData"), "data") },
-  };
-
-  fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 4), "utf-8");
-  return { ok: true, hint: "Claude Desktop을 재시작하면 적용됩니다" };
-}
-
 module.exports = {
   SERVER_URL,
   FASTAPI_URL,
@@ -249,5 +208,4 @@ module.exports = {
   loadUserEnv,
   saveUserEnv,
   maskedUserEnv,
-  connectClaudeDesktop,
 };
