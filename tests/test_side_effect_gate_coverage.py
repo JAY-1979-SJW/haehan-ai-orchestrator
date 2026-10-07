@@ -65,7 +65,7 @@ REQUIRED_GUARDED = {
     "scripts/naver/blog/marketing/publish.py::publish_one",  # write_post 호출(사각지대였던 sink)
     "scripts/instagram/publish.py::publish_case",
     "scripts/hanafax/router.py::_cmd_send",
-    "ai_orchestrator/connectors/instagram_dm_service.py::process_comment_event",
+    "ai_orchestrator/connectors/instagram/dm_service.py::process_comment_event",
 }
 
 

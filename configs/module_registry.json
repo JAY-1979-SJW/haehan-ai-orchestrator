@@ -22320,6 +22320,54 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/connectors/instagram/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "instagram",
+   "reason": "도메인(instagram) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/instagram/dm_db.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "instagram",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/instagram/dm_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "instagram",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/instagram/dm_rule_engine.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "instagram",
+   "reason": "도메인(instagram) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/instagram/dm_service.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "instagram",
+   "reason": "도메인(instagram) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_split_instagram_moved.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

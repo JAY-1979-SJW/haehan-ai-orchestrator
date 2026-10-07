@@ -795,7 +795,7 @@ _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
 # 2026-10-04: 허브 분리로 옮겨진 7개 파일의 경로를 갱신하고(같은 파일, 이미 허용된 부채), 이전에 목록에 없던 DB 직접 사용 6개를 추가 —
 # 6개는 DB 모듈 자체이거나(instagram_dm_db·gonobi/db) 연결을 직접 여는 파일이라 L7 헬퍼로 옮기는 별도 리팩터링 대상.
 _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
-    "ai_orchestrator/connectors/instagram_dm_db.py",
+    "ai_orchestrator/connectors/instagram/dm_db.py",
     "ai_orchestrator/connectors/naver_search_db.py",
     "ai_orchestrator/connectors/naver_search_queries.py",
     "ai_orchestrator/local_agent/browser/cdp_session_manager.py",
