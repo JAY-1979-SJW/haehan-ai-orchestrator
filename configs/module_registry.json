@@ -3269,9 +3269,9 @@
    "layer": "L8",
    "role": "api",
    "domain": "gabia",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/gabia_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/gmail_cdp_reader.py": {
    "layer": "L5",
@@ -10021,9 +10021,9 @@
    "layer": "L4",
    "role": "browser_engine",
    "domain": "gabia",
-   "reason": "JS 평가로 로그인 상태만 폴링하는 읽기 전용 감시 CLI(자체 _get_page) — 이름 규칙이 L5 로 오분류",
+   "reason": "옛 경로 shim — 원본 scripts/gabia_login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "confirmed"
+   "source": "manual"
   },
   "scripts/gate.py": {
    "layer": "L2",
@@ -22474,6 +22474,30 @@
    "source": "rule"
   },
   "tests/test_split_gabia_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "gabia",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/gabia/router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "gabia",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/gabia_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "scripts/gabia/login_watch.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "gabia",
+   "reason": "이동한 파일 — 원본 scripts/gabia_login_watch.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "low",
+   "source": "manual"
+  },
+  "tests/test_split_gabia_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
