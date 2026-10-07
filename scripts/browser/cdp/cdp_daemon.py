@@ -328,7 +328,7 @@ def _start_popup_monitor_process() -> None:
     """Run popup monitor out-of-process to keep Playwright sync API isolated."""
     if _procs.popup_monitor and _procs.popup_monitor.poll() is None:
         return
-    script = ROOT / "scripts" / "browser" / "cdp_client.py"
+    script = ROOT / "scripts" / "browser" / "cdp_cli.py"
     _procs.popup_monitor = _launch_background_python([str(script), "popup-monitor", "start", "2.0"])
     _state.popup_monitor_pid = _procs.popup_monitor.pid
     _save_state(_state)

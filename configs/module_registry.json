@@ -23184,6 +23184,14 @@
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
+  },
+  "tests/test_subprocess_script_targets_have_main.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

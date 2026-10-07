@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
   const repoRoot = process.env.MARKET_RESEARCH_REPO_ROOT || process.cwd();
   const args = [
-    path.join("scripts", "cdp_client.py"),
+    path.join("scripts", "browser", "cdp_cli.py"),
     "google",
     "youtube",
     "research-run",
