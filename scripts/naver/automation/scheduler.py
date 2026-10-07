@@ -27,6 +27,7 @@ from typing import Any
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
+from scripts.common.sqlite_helpers import execute_one_change
 
 _log = get_logger(__name__)
 DB_PATH = data_dir() / "cdp.db"
@@ -164,11 +165,7 @@ class Scheduler:
         return [dict(r) for r in rows]
 
     def remove_task(self, name: str) -> dict:
-        conn = sqlite3.connect(str(DB_PATH))
-        cur = conn.execute("DELETE FROM scheduled_tasks WHERE name = ?", (name,))
-        conn.commit()
-        conn.close()
-        return {"ok": cur.rowcount > 0}
+        return execute_one_change(DB_PATH, "DELETE FROM scheduled_tasks WHERE name = ?", (name,))
 
     def _should_run(self, task: dict, now: datetime) -> bool:
         if not task.get("enabled"):

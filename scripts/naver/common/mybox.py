@@ -13,15 +13,13 @@ URL: https://mybox.naver.com/
 from __future__ import annotations
 
 import time
-from contextlib import suppress
 from pathlib import Path
 
 from playwright.sync_api import Page
 
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
-from scripts.naver.common.auth import ensure_naver_login
-from scripts.browser.popup.popup_detector import handle_page_popups
+from scripts.naver.common.auth import open_logged_in_page
 
 _log = get_logger(__name__)
 
@@ -33,14 +31,7 @@ class NaverMyBox:
         self.page = page
 
     def open(self) -> bool:
-        result = ensure_naver_login(self.page, return_url=MYBOX_URL)
-        if not result.get("ok"):
-            return False
-        self.page.goto(MYBOX_URL, timeout=20000, wait_until="domcontentloaded")
-        time.sleep(3)
-        with suppress(Exception):
-            handle_page_popups(self.page, timeout_s=1.5)
-        return True
+        return open_logged_in_page(self.page, MYBOX_URL)
 
     def list_files(self, limit: int = 50) -> list[dict]:
         """현재 보이는 파일/폴더 목록."""

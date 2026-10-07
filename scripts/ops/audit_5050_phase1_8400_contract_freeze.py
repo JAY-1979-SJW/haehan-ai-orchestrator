@@ -16,8 +16,6 @@ Phase 1 대상 5개 route의 8400 계약을 machine-readable로 고정한다.
 
 from __future__ import annotations
 
-import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -288,16 +286,9 @@ def _print_report(audit: dict) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="5050 Phase 1 8400 contract freeze 감사")
-    parser.add_argument("--json", action="store_true")
-    args = parser.parse_args()
+    from scripts.common.audit_cli import run_json_or_report_cli
 
-    audit = run_audit()
-    if args.json:
-        print(json.dumps(audit, ensure_ascii=False, indent=2))
-    else:
-        _print_report(audit)
-    sys.exit(0 if audit["success"] else 1)
+    run_json_or_report_cli("5050 Phase 1 8400 contract freeze 감사", run_audit, _print_report, "success")
 
 
 if __name__ == "__main__":

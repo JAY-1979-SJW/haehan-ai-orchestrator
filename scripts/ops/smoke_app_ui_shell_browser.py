@@ -248,28 +248,25 @@ def check_mock_providers(report: SmokeReport) -> None:
         report.add("mock_providers_12", "FAIL", f"누락: {missing}")
 
 
-def check_dry_run_notice_used(report: SmokeReport) -> None:
+def _check_tasks_page_uses(report: SmokeReport, check_name: str, component: str) -> None:
+    """tasks/page.tsx 가 component 를 쓰는지 확인(dry_run_notice_used·forbidden_banner_used 공용)."""
     tasks_page = _page("tasks", "page.tsx")
     if not tasks_page.exists():
-        report.add("dry_run_notice_used", "FAIL", "tasks/page.tsx 없음")
+        report.add(check_name, "FAIL", "tasks/page.tsx 없음")
         return
     content = tasks_page.read_text(encoding="utf-8")
-    if "DryRunNotice" in content:
-        report.add("dry_run_notice_used", "PASS", "tasks/page.tsx에 DryRunNotice 사용")
+    if component in content:
+        report.add(check_name, "PASS", f"tasks/page.tsx에 {component} 사용")
     else:
-        report.add("dry_run_notice_used", "FAIL", "tasks/page.tsx에 DryRunNotice 없음")
+        report.add(check_name, "FAIL", f"tasks/page.tsx에 {component} 없음")
+
+
+def check_dry_run_notice_used(report: SmokeReport) -> None:
+    _check_tasks_page_uses(report, "dry_run_notice_used", "DryRunNotice")
 
 
 def check_forbidden_banner_used(report: SmokeReport) -> None:
-    tasks_page = _page("tasks", "page.tsx")
-    if not tasks_page.exists():
-        report.add("forbidden_banner_used", "FAIL", "tasks/page.tsx 없음")
-        return
-    content = tasks_page.read_text(encoding="utf-8")
-    if "ForbiddenActionBanner" in content:
-        report.add("forbidden_banner_used", "PASS", "tasks/page.tsx에 ForbiddenActionBanner 사용")
-    else:
-        report.add("forbidden_banner_used", "FAIL", "tasks/page.tsx에 ForbiddenActionBanner 없음")
+    _check_tasks_page_uses(report, "forbidden_banner_used", "ForbiddenActionBanner")
 
 
 def check_approval_no_execute_connection(report: SmokeReport) -> None:

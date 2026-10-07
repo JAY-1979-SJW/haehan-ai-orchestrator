@@ -6,14 +6,12 @@ URL: https://talk.naver.com/
 from __future__ import annotations
 
 import time
-from contextlib import suppress
 
 from playwright.sync_api import Page
 
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
-from scripts.naver.common.auth import ensure_naver_login
-from scripts.browser.popup.popup_detector import handle_page_popups
+from scripts.naver.common.auth import open_logged_in_page
 
 _log = get_logger(__name__)
 TALK_URL = "https://talk.naver.com/"
@@ -25,14 +23,7 @@ class NaverTalk:
         self.page = page
 
     def open(self) -> bool:
-        result = ensure_naver_login(self.page, return_url=TALK_URL)
-        if not result.get("ok"):
-            return False
-        self.page.goto(TALK_URL, timeout=20000, wait_until="domcontentloaded")
-        time.sleep(3)
-        with suppress(Exception):
-            handle_page_popups(self.page, timeout_s=1.5)
-        return True
+        return open_logged_in_page(self.page, TALK_URL)
 
     def list_chats(self, limit: int = 30) -> list[dict]:
         """대화 목록."""

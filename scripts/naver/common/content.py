@@ -12,6 +12,7 @@ from typing import Any
 from scripts.common.logger import get_logger
 from scripts.naver.common.auth import ensure_naver_login
 from scripts.naver.common.live_safety import ensure_page_safe, throttle_live
+from scripts.site_engine.catalog_helpers import print_keyed_summary, select_named_targets
 from scripts.site_engine.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
@@ -117,12 +118,7 @@ def _contains_any(text: str, tokens: set[str]) -> bool:
 
 
 def select_targets(name: str | None = None) -> dict[str, dict[str, str]]:
-    if not name or name == "all":
-        return dict(CONTENT_TARGETS)
-    key = name.strip().lower()
-    if key not in CONTENT_TARGETS:
-        raise KeyError(f"unknown Naver content target: {name}")
-    return {key: CONTENT_TARGETS[key]}
+    return select_named_targets(CONTENT_TARGETS, name, "Naver content target")
 
 
 def open_naver_content(page, url: str) -> None:
@@ -390,16 +386,14 @@ def print_surface_summary(results: list[dict[str, Any]], path: Path | None = Non
 
 
 def print_action_summary(catalog: dict[str, Any], path: Path | None = None) -> None:
-    print("=" * 60)
-    print("Naver blog/cafe action catalog")
-    print("=" * 60)
-    for target in catalog.get("targets") or []:
-        summary = target.get("summary") or {}
-        print(
-            f"- {target.get('key')}: inputs={summary.get('input_total', 0)} "
-            f"buttons={summary.get('button_total', 0)} "
-            f"submit_gated={summary.get('submit_gated_buttons', 0)} "
-            f"unknown_gated={summary.get('unknown_gated_buttons', 0)}"
-        )
-    if path:
-        print(f"saved: {path}")
+    print_keyed_summary(
+        "Naver blog/cafe action catalog",
+        catalog.get("targets") or [],
+        (
+            ("inputs", "input_total"),
+            ("buttons", "button_total"),
+            ("submit_gated", "submit_gated_buttons"),
+            ("unknown_gated", "unknown_gated_buttons"),
+        ),
+        path,
+    )

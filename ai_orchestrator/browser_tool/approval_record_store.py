@@ -458,23 +458,20 @@ def _append_unlocked(record: ApprovalRecord, jsonl_path: Path) -> ApprovalWriteR
         )
 
 
-def read_approval_records(jsonl_path: Path | str) -> list[dict]:
-    """Read all approval records from JSONL file.
+def read_jsonl_records(jsonl_path: Path | str, kind: str) -> list[dict]:
+    """JSONL 파일의 모든 기록을 dict 목록으로 읽는다(빈 줄은 건너뜀). kind 는 오류 문구의 기록 종류.
 
-    Args:
-        jsonl_path: Path to JSONL file
-
-    Returns:
-        List of record dicts
+    read_approval_records 와 workflow_audit_writer.read_audit_records 가 오류 문구만 다르게 똑같이
+    복사해 쓰던 본문을 여기 한 곳으로 모았다(L7 저장 모듈 — L6 workflow_audit_writer 가 import).
 
     Raises:
-        FileNotFoundError: If file doesn't exist
-        ValueError: If any line is not valid JSON
+        FileNotFoundError: 파일이 없으면 — f"{kind} file not found: {path}"
+        ValueError: JSON 이 아닌 줄이 있으면 — f"Invalid JSON at line {n}: {e}"
     """
     jsonl_path = Path(jsonl_path)
 
     if not jsonl_path.exists():
-        raise FileNotFoundError(f"Approval file not found: {jsonl_path}")
+        raise FileNotFoundError(f"{kind} file not found: {jsonl_path}")
 
     records = []
     with jsonl_path.open(encoding="utf-8") as f:
@@ -489,6 +486,22 @@ def read_approval_records(jsonl_path: Path | str) -> list[dict]:
                 raise ValueError(f"Invalid JSON at line {line_num}: {e}") from e
 
     return records
+
+
+def read_approval_records(jsonl_path: Path | str) -> list[dict]:
+    """Read all approval records from JSONL file.
+
+    Args:
+        jsonl_path: Path to JSONL file
+
+    Returns:
+        List of record dicts
+
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        ValueError: If any line is not valid JSON
+    """
+    return read_jsonl_records(jsonl_path, "Approval")
 
 
 def get_approval_history(

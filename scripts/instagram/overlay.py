@@ -20,23 +20,29 @@ W, H = 1080, 1350
 ACCENT = (255, 214, 102)  # 따뜻한 조명색 포인트
 
 
-def _fit_cover(img: Image.Image) -> Image.Image:
-    """4:5 캔버스를 꽉 채우도록 리사이즈 후 중앙 크롭."""
+def fit_cover(img: Image.Image, w: int, h: int) -> Image.Image:
+    """w×h 캔버스를 꽉 채우도록 리사이즈 후 중앙 크롭(캐러셀 4:5·릴스 9:16 공용 — reel_overlay 도 사용)."""
     src_ratio = img.width / img.height
-    dst_ratio = W / H
+    dst_ratio = w / h
     if src_ratio > dst_ratio:
-        nh = H
+        nh = h
         nw = int(nh * src_ratio)
     else:
-        nw = W
+        nw = w
         nh = int(nw / src_ratio)
     img = img.resize((nw, nh), Image.Resampling.LANCZOS)
-    left = (nw - W) // 2
-    top = (nh - H) // 2
-    return img.crop((left, top, left + W, top + H))
+    left = (nw - w) // 2
+    top = (nh - h) // 2
+    return img.crop((left, top, left + w, top + h))
 
 
-def _wrap(draw, text: str, font, max_w: int) -> list[str]:
+def _fit_cover(img: Image.Image) -> Image.Image:
+    """4:5 캔버스를 꽉 채우도록 리사이즈 후 중앙 크롭."""
+    return fit_cover(img, W, H)
+
+
+def wrap_text(draw, text: str, font, max_w: int) -> list[str]:
+    """글자 단위로 max_w(픽셀)를 넘기 전에 줄을 나눈다(줄바꿈 문자는 강제 줄바꿈). reel_overlay 도 사용."""
     lines, cur = [], ""
     for ch in text:
         if ch == "\n":
@@ -52,6 +58,9 @@ def _wrap(draw, text: str, font, max_w: int) -> list[str]:
     if cur:
         lines.append(cur)
     return lines
+
+
+_wrap = wrap_text
 
 
 def render_slide(

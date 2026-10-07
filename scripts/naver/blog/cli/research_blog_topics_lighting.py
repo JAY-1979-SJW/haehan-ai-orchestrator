@@ -219,34 +219,9 @@ def _top_keyword_candidates(posts: list[dict], top_n: int = 40) -> list[tuple[st
 
 
 def _search_volume(candidates: list[tuple[str, int]]) -> list[dict]:
-    from scripts.naver.searchad import get_keyword_stats
+    from scripts.naver.searchad.keyword_tool import keyword_search_volume
 
-    keywords = [w for w, _ in candidates]
-    stats = get_keyword_stats(keywords)
-
-    by_kw = {}
-    for s in stats:
-        for orig in keywords:
-            if orig.replace(" ", "") == s["keyword"]:
-                by_kw[orig] = s
-
-    rows = []
-    for w, freq in candidates:
-        s = by_kw.get(w)
-        if not s:
-            continue
-        rows.append(
-            {
-                "keyword": w,
-                "ohou_freq": freq,
-                "pc": s["pc_count"],
-                "mobile": s["mobile_count"],
-                "total_search": s["pc_count"] + s["mobile_count"],
-                "competition": s["competition"],
-            }
-        )
-    rows.sort(key=lambda r: -r["total_search"])
-    return rows
+    return keyword_search_volume(candidates, "ohou_freq")
 
 
 def _real_questions(keyword_rows: list[dict]) -> list[dict]:

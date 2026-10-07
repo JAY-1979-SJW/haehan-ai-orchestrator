@@ -19,8 +19,7 @@ from playwright.sync_api import Page
 
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
-from scripts.naver.common.auth import ensure_naver_login
-from scripts.browser.popup.popup_detector import handle_page_popups
+from scripts.naver.common.auth import open_logged_in_page
 
 _log = get_logger(__name__)
 
@@ -32,15 +31,7 @@ class NaverCalendar:
         self.page = page
 
     def open(self) -> bool:
-        result = ensure_naver_login(self.page, return_url=CALENDAR_URL)
-        if not result.get("ok"):
-            return False
-        self.page.goto(CALENDAR_URL, timeout=20000, wait_until="domcontentloaded")
-        time.sleep(3)
-        # 네이버 캘린더 일정 조회/추가 자동화 - confirm=True 일 때만 실제 저장 버튼 클릭(감사로그 남김), 실패시 ok:False,error 반환
-        with contextlib.suppress(Exception):
-            handle_page_popups(self.page, timeout_s=1.5)
-        return True
+        return open_logged_in_page(self.page, CALENDAR_URL)
 
     def list_events(self, target_date: date | None = None) -> list[dict]:
         """현재 표시된 캘린더의 일정 목록 (대략적)."""
