@@ -189,6 +189,16 @@
    "file": "scripts/watch_log.py",
    "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
    "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/smoke_naver_manual_login_probe.py",
+   "reason": "W16 평면 → 도구 집(scripts/naver/…) 이동 — 명시 참조(시험·일일 카페 파이프라인 import)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/marketing_summary_build.py",
+   "reason": "W16 평면 → 도구 집(scripts/naver/…) 이동 — 명시 참조(시험·일일 카페 파이프라인 import)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+   "date": "2026-10-08"
   }
  ]
 }

@@ -609,7 +609,7 @@
   "reason": "로그·감사 이벤트의 민감정보 마스킹 정규식/헬퍼(REDACTED, SENSITIVE_KEYS) 순수 함수 — IO 없음. L4 기본값 오분류를 L1로 정정.",
   "source": "manual"
  },
- "scripts/run_page_builder.py": {
+ "scripts/naver/smartstore/run_page_builder.py": {
   "layer": "L6",
   "role": "generic",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"

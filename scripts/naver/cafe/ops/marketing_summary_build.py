@@ -2,14 +2,18 @@
 
 신규 수집을 하지 않는다 — 이미 세션 중 확보한 데이터(data/cafe/*)를 읽어
 요약만 한다. 유튜브 벤치마크는 API로 실측한 값을 그대로 옮겨 적었다(재수집 아님).
+
+실행: python -m scripts.naver.cafe.ops.marketing_summary_build (저장소 루트에서). 일일 파이프라인
+(scripts/naver/cafe/ops/daily_cafe_marketing_pipeline.py)이 main() 을 직접 부른다.
 """
 
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+from scripts.common.app_paths import repo_root
+
+ROOT = repo_root()
 CAFE_SOURCES = [
     ROOT / "data" / "cafe" / "_month_full_detail_20260816.json",  # 2026-07~08, 전수(2,477건)
     ROOT / "data" / "cafe" / "raw_articles_20260816_140233.json",  # 전체글보기 300일 백필(7,500건, 2026-05부터만 도달)

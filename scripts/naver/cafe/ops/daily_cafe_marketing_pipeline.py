@@ -57,7 +57,7 @@ def main() -> int:
         print(f"[daily-pipeline] 수집 실패(건너뜀): {result['snapshot_error']}")
 
     try:
-        from scripts import marketing_summary_build
+        from scripts.naver.cafe.ops import marketing_summary_build
 
         marketing_summary_build.main()
         result["build_ok"] = True

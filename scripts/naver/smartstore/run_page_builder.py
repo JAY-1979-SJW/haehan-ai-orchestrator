@@ -1,7 +1,7 @@
 """ProductPageBuilder 실행 — 샘플 상품으로 미리보기 생성."""
 import sys
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from scripts.naver.smartstore.product.page_builder import ProductPageBuilder

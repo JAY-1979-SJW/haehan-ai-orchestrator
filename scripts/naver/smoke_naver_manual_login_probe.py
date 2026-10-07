@@ -2,7 +2,8 @@
 """네이버 수동 로그인 확인 smoke 스크립트.
 
 실행 예:
-  python scripts/smoke_naver_manual_login_probe.py --url https://www.naver.com/ --wait-seconds 120
+  python -m scripts.naver.smoke_naver_manual_login_probe --url https://www.naver.com/ --wait-seconds 120
+  (저장소 루트에서 -m 으로 실행 — 파일 경로로 직접 실행하면 scripts/naver/calendar.py 가 표준 calendar 를 가린다)
 
 동작:
   - 접속 허용 호스트는 기본으로 www.naver.com / nid.naver.com 만.
@@ -102,10 +103,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # import 는 실행 시점에만 — pytest 가 실수로 import 만 해도 외부 접속이
     # 발생하지 않도록 한다.
-    sys.path.insert(
-        0,
-        str(Path(__file__).resolve().parent.parent),
-    )
+    _root = str(Path(__file__).resolve().parents[2])  # 저장소 루트 — local_agent import 용 sys.path 부트스트랩
+    if _root not in sys.path:
+        sys.path.insert(0, _root)
     from local_agent.browser_login_probe import probe_manual_login_flow
 
     allowed_hosts = list(DEFAULT_ALLOWED_HOSTS)
