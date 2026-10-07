@@ -19,7 +19,7 @@ from ai_orchestrator.local_agent.common_tool_runtime import (  # noqa: E402
     dry_run_common_tool_flow,
     validate_common_tool_task,
 )
-from ai_orchestrator.local_agent.task_protocol import build_task, validate_task  # noqa: E402
+from ai_orchestrator.contracts.local_task_protocol import build_task, validate_task  # noqa: E402
 
 
 def _fail(message: str) -> int:

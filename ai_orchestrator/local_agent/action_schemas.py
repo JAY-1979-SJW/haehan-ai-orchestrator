@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
 )
 

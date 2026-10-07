@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from ai_orchestrator.local_agent.playwright_runner import run_task
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_BLOCKED,
     STATUS_FAILED,
     STATUS_WAITING_USER_AUTH,

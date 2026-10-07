@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+from ai_orchestrator.contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
 from ai_orchestrator.local_agent_registry import (
     ACTION_RISK,
     clear,

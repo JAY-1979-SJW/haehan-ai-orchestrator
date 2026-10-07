@@ -7,7 +7,7 @@ delegated_permission 모델에 따른 실행 등급 정의.
 
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,

@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 
 from ai_orchestrator.paths.runtime import data_dir
 
-from .local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+from .contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
 from .local_agent_models import LocalAgent, LocalAgentTask, RegisterResult
 from .local_agent_risk_policy import _SERVER_AUTO_COMPLETE, ACTION_RISK, ALLOWED_APPS
 

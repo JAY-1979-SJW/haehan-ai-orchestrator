@@ -630,7 +630,7 @@ POLICY_LAYER_MAP = {
         "risk_gap": None,
     },
     "action_risk_policy": {
-        "impl": "ai_orchestrator/local_agent/action_risk_policy.py",
+        "impl": "ai_orchestrator/contracts/action_risk_policy.py",
         "status": "IMPLEMENTED",
         "test_covered": True,
         "risk_gap": None,

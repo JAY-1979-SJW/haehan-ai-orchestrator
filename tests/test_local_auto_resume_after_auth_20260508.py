@@ -7,7 +7,7 @@ from ai_orchestrator.local_agent.auto_resume_after_auth import (
     classify_resume_eligibility,
     resume_after_auth,
 )
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_COMPLETED,
     STATUS_USER_ACTION_REQUIRED,
 )

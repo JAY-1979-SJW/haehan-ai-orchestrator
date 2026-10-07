@@ -19,7 +19,7 @@ from ai_orchestrator.local_agent.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_READY,
     check_playwright_status,
 )
-from ai_orchestrator.local_agent.task_protocol import build_task  # noqa: E402
+from ai_orchestrator.contracts.local_task_protocol import build_task  # noqa: E402
 
 _FIXTURE_PATH = pathlib.Path(_REPO_ROOT) / "tests" / "fixtures" / "local_agent_safe_smoke_page.html"
 

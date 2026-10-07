@@ -149,7 +149,7 @@ def test_once_in_the_past_is_rejected(env):
 
 
 def test_real_catalog_grades_and_param_validation():
-    from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
+    from ai_orchestrator.contracts.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
 
     for key, spec in actions.ACTIONS.items():
         if key.startswith("fake"):

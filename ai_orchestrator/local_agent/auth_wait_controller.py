@@ -16,7 +16,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_WAITING_USER_AUTH,
     STATUS_USER_ACTION_REQUIRED,
     STATUS_AUTH_COMPLETED,

@@ -57,10 +57,10 @@ except ImportError:
     _STATUS_SENDER_AVAILABLE = False
 
 try:
-    from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT as _AUTO_EXECUTE_VIA_AGENT
+    from ai_orchestrator.contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT as _AUTO_EXECUTE_VIA_AGENT
 except ImportError:
     # Fallback for environments where ai_orchestrator cannot be imported.
-    # This maintains consistency with ai_orchestrator.local_agent_actions.
+    # This maintains consistency with ai_orchestrator.contracts.local_agent_actions.
     _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset(
         {
             "ping",

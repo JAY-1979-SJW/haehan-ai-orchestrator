@@ -13,7 +13,7 @@ import pytest
 
 from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile as get_profile
 from ai_orchestrator.local_agent.security_guard import validate_task_before_run
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     ALLOWED_TASK_ACTIONS,
     EXEC_MODE_LOCAL_PLAYWRIGHT,
     STATUS_COMPLETED,

@@ -19,7 +19,7 @@ from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import
     handle_user_present_status_event,
     validate_user_present_status_event,
 )
-from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+from ai_orchestrator.contracts.user_present_ws_contract import (
     MSG_USER_PRESENT_STATUS,
     STATUS_CANCELLED,
     STATUS_FAILED,
@@ -130,7 +130,7 @@ class TestWebsocketClientUserPresentTask:
 
 class TestSensitiveFieldBlocking:
     def test_raw_url_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -139,7 +139,7 @@ class TestSensitiveFieldBlocking:
         assert "target_url" not in clean
 
     def test_password_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -148,7 +148,7 @@ class TestSensitiveFieldBlocking:
         assert "password" not in clean
 
     def test_otp_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -157,7 +157,7 @@ class TestSensitiveFieldBlocking:
         assert "otp" not in clean
 
     def test_certificate_password_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -166,7 +166,7 @@ class TestSensitiveFieldBlocking:
         assert "certificate_password" not in clean
 
     def test_token_cookie_session_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -322,7 +322,7 @@ class TestWebSocketCompatibility:
         assert callable(process_user_present_task)
 
     def test_no_conflict_with_browser_websocket_schema(self):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             _VALID_STATUS_VALUES,
         )
         from local_agent.browser_websocket_schema import VALID_TASK_STATUS
@@ -389,7 +389,7 @@ class TestSecurityPrinciples:
 
 class TestCompatibility:
     def test_compatible_with_ws_contract(self):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             build_user_present_ws_task_message,
             validate_user_present_ws_task_message,
         )

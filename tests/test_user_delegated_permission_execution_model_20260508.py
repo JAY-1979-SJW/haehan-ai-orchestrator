@@ -11,7 +11,7 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
     GRADE_USER_DELEGATED,
@@ -356,7 +356,7 @@ class TestRegressionExistingSystem:
     def test_existing_security_guard_still_works(self):
         """기존 security_guard 모듈 회귀."""
         from ai_orchestrator.local_agent.security_guard import validate_task_before_run
-        from ai_orchestrator.local_agent.task_protocol import build_task
+        from ai_orchestrator.contracts.local_task_protocol import build_task
 
         task = build_task("read_page", "https://www.g2b.go.kr/", domain="www.g2b.go.kr")
         guard = validate_task_before_run(task)
@@ -368,7 +368,7 @@ class TestRegressionExistingSystem:
             AUTH_SIGNAL_LOGIN,
             enter_auth_wait,
         )
-        from ai_orchestrator.local_agent.task_protocol import STATUS_WAITING_USER_AUTH
+        from ai_orchestrator.contracts.local_task_protocol import STATUS_WAITING_USER_AUTH
 
         result = enter_auth_wait("regression-task", AUTH_SIGNAL_LOGIN, "www.g2b.go.kr")
         assert result["status"] == STATUS_WAITING_USER_AUTH

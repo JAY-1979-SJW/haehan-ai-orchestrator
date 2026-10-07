@@ -91,7 +91,7 @@
   "role": "policy",
   "reason": "등록 액션 스펙+실행 핸들러 매핑(승인 게이트가 참조하는 정책 레지스트리) — L4 generic 오분류"
  },
- "ai_orchestrator/local_agent/action_risk_policy.py": {
+ "ai_orchestrator/contracts/action_risk_policy.py": {
   "layer": "L1",
   "role": "shared",
   "reason": "GRADE_* 순수 상수 정의만, 외부 의존 없음 — action_schemas(L1)가 참조하는 공유 계약, L2 오분류"
@@ -171,7 +171,7 @@
   "role": "policy",
   "reason": "docstring이 '사이트별 자동화 정책을 profile로 관리'라 명시 — site_capability_matrix(L2)와 동급 정책 레지스트리, L4 오분류"
  },
- "ai_orchestrator/local_agent/task_protocol.py": {
+ "ai_orchestrator/contracts/local_task_protocol.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "태스크 프로토콜 스키마 정의 — auth_wait_controller/auto_resume(L2)가 참조하는 순수 계약, L4 오분류"

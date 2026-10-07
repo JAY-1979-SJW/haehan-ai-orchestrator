@@ -85,3 +85,7 @@
 - 앱 전체 구조: [APP_STRUCTURE.md](APP_STRUCTURE.md)
 - 최상위 평면 금지: G15 게이트 `scripts/ops/flat_root_gate.py` — 규칙 `configs/flat_root_gate.json`, 기준선 `configs/flat_root_baseline.json`(줄이기만). pre-commit `--staged`, CI `--check-all`
 - 폴더 승인(G16): `scripts/ops/folder_gate.py` — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더는 `configs/folder_registry.json` 에 승인돼 있어야 한다(하위 폴더도 각각). 새 폴더는 작업 창 → 지휘창 '새 폴더 요청'(경로·목적·왜 기존 폴더로 안 되는지) → 대표님 승인 → 목록 추가 → PR 라벨 `folder-approved`(지휘창만 붙임). pre-commit `--staged`, CI `--check-all` + `--check-approval`(목록 추가 시 라벨 확인). 삭제는 승인 불필요.
+
+## T4 진행 기록 (local_agent 3벌 → 1벌, 설계 `_coordination/T4_DESIGN.md`)
+- C1·C2: 경로 고정·잠금 경쟁 수정(W2).
+- C3: 서버·PC 공유 계약 4개를 `ai_orchestrator/contracts/` 로 — `user_present_ws_contract`·`action_risk_policy`·`local_task_protocol`·`local_agent_actions`(참조 직접 교체, shim 없음).

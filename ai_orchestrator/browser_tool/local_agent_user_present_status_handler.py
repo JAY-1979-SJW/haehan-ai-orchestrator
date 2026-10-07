@@ -20,13 +20,13 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 try:
-    from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+    from ai_orchestrator.contracts.user_present_ws_contract import (
         MSG_USER_PRESENT_STATUS,
-        STATUS_WAITING_FOR_USER,
-        STATUS_USER_CONFIRMED,
-        STATUS_CANCELLED,
         STATUS_BLOCKED,
+        STATUS_CANCELLED,
         STATUS_FAILED,
+        STATUS_USER_CONFIRMED,
+        STATUS_WAITING_FOR_USER,
         validate_user_present_ws_status_event,
     )
 except ImportError:

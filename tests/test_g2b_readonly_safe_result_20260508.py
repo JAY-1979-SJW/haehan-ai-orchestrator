@@ -11,7 +11,7 @@ from ai_orchestrator.local_agent.result_sanitizer import (
     sanitize_result,
     validate_sanitized_result,
 )
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_COMPLETED,
     STATUS_USER_ACTION_REQUIRED,
     STATUS_WAITING_USER_AUTH,

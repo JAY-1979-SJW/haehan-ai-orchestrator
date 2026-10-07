@@ -26,7 +26,7 @@ from ai_orchestrator.local_agent.security_guard import (
     block_forbidden_action,
     validate_task_before_run,
 )
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     EXEC_MODE_LOCAL_PLAYWRIGHT,
     build_task,
 )

@@ -148,7 +148,7 @@ def _sanitize_result(raw: dict[str, Any]) -> dict[str, Any]:
 
 def _classify_blocked_action_payloads() -> list[dict[str, Any]]:
     """민감 동작 차단 검증 (실제 실행 없이 정책 분류만)."""
-    from ai_orchestrator.local_agent.action_risk_policy import (
+    from ai_orchestrator.contracts.action_risk_policy import (
         GRADE_BLOCKED,
         GRADE_USER_DIRECT,
         classify_action,

@@ -13,7 +13,7 @@ from ai_orchestrator.local_agent.auth_wait_controller import (
     build_timeout_result,
     enter_auth_wait,
 )
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_AUTH_CANCELLED,
     STATUS_AUTH_COMPLETED,
     STATUS_AUTH_TIMEOUT,

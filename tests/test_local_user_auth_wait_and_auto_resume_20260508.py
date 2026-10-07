@@ -19,7 +19,7 @@ from ai_orchestrator.local_agent.auto_resume_after_auth import (
 from ai_orchestrator.local_agent.local_session_boundary import (
     is_safe_for_export,
 )
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_COMPLETED,
     STATUS_USER_ACTION_REQUIRED,
     STATUS_WAITING_USER_AUTH,
@@ -205,7 +205,7 @@ class TestSmoke:
     """기존 LOCAL_PLAYWRIGHT 관련 기능 회귀 체크."""
 
     def test_allowed_actions_unchanged(self):
-        from ai_orchestrator.local_agent.task_protocol import ALLOWED_TASK_ACTIONS
+        from ai_orchestrator.contracts.local_task_protocol import ALLOWED_TASK_ACTIONS
 
         expected = {
             "open_url",
@@ -221,7 +221,7 @@ class TestSmoke:
         assert expected == set(ALLOWED_TASK_ACTIONS)
 
     def test_status_constants_include_new(self):
-        from ai_orchestrator.local_agent.task_protocol import (
+        from ai_orchestrator.contracts.local_task_protocol import (
             STATUS_AUTH_CANCELLED,
             STATUS_AUTH_COMPLETED,
             STATUS_AUTH_FAILED,
@@ -236,7 +236,7 @@ class TestSmoke:
         assert STATUS_AUTO_RESUME_READY == "AUTO_RESUME_READY"
 
     def test_build_result_accepts_new_statuses(self):
-        from ai_orchestrator.local_agent.task_protocol import STATUS_AUTH_COMPLETED, build_result
+        from ai_orchestrator.contracts.local_task_protocol import STATUS_AUTH_COMPLETED, build_result
 
         result = build_result(
             task_id="t1",

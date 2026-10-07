@@ -20,7 +20,7 @@ from ai_orchestrator.local_agent.result_sanitizer import sanitize_result
 from ai_orchestrator.local_agent.security_guard import (
     validate_task_before_run,
 )
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     EXEC_MODE_LOCAL_PLAYWRIGHT,
     STATUS_BLOCKED,
     STATUS_FAILED,
@@ -91,7 +91,7 @@ def poll_and_run_once(runner_fn: Any) -> dict[str, Any] | None:
         return result
 
     if guard.get("user_direct_required"):
-        from ai_orchestrator.local_agent.task_protocol import STATUS_USER_ACTION_REQUIRED
+        from ai_orchestrator.contracts.local_task_protocol import STATUS_USER_ACTION_REQUIRED
 
         result = build_result(
             task_id=task_id,

@@ -3009,7 +3009,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_ws_contract.py": {
+  "ai_orchestrator/contracts/user_present_ws_contract.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4193,7 +4193,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/action_risk_policy.py": {
+  "ai_orchestrator/contracts/action_risk_policy.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "local_agent",
@@ -5113,7 +5113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/task_protocol.py": {
+  "ai_orchestrator/contracts/local_task_protocol.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -5233,7 +5233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_actions.py": {
+  "ai_orchestrator/contracts/local_agent_actions.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",

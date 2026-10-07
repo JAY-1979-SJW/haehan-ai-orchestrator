@@ -8,7 +8,7 @@ root(local_agent_registry.py)는 이 leaf 와 나머지 leaf 를 재노출하는
 # ruff: noqa: F401
 from __future__ import annotations
 
-from .local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+from .contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
 from .local_agent_models import LocalAgent, LocalAgentTask, RegisterResult
 
 # 마스킹/정책 내부 이름 — 이 이름을 창구로 참조하는 테스트 다수 (2026-09-30 복원)

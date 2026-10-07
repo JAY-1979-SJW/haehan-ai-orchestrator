@@ -14,7 +14,7 @@ mock/local fixture만 사용. 외부 사이트 실접속 0건.
 
 import pytest
 
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
     GRADE_USER_DELEGATED,

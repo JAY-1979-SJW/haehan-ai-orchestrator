@@ -8,7 +8,7 @@ from ai_orchestrator.local_agent.security_guard import (
     sanitize_runtime_result,
     validate_task_before_run,
 )
-from ai_orchestrator.local_agent.task_protocol import build_task
+from ai_orchestrator.contracts.local_task_protocol import build_task
 
 
 def _task(action: str = "open_url", **kw) -> dict:

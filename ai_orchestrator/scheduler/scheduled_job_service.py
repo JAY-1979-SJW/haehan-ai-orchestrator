@@ -13,7 +13,7 @@ import threading
 from datetime import UTC, datetime, time, timedelta
 from typing import Any
 
-from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
+from ai_orchestrator.contracts.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
 from ai_orchestrator.scheduler import scheduled_job_store as store
 from ai_orchestrator.services import scheduled_job_actions as actions
 

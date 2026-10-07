@@ -43,7 +43,7 @@ from ai_orchestrator.local_agent.playwright_bootstrap import (  # noqa: E402
     check_playwright_status,
 )
 from ai_orchestrator.local_agent.result_sanitizer import sanitize_result  # noqa: E402
-from ai_orchestrator.local_agent.task_protocol import (  # noqa: E402
+from ai_orchestrator.contracts.local_task_protocol import (  # noqa: E402
     STATUS_FAILED,
     STATUS_USER_ACTION_REQUIRED,
     STATUS_WAITING_USER_AUTH,

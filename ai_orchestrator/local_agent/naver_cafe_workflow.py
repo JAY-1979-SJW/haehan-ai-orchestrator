@@ -20,7 +20,7 @@ from ai_orchestrator.local_agent.naver_content_safe_result import (
     build_cafe_read_result,
     sanitize_naver_result,
 )
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     build_task,
 )
 

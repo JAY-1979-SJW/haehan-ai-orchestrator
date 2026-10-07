@@ -255,7 +255,7 @@ class TestExistingSystemRegression:
 
     def test_existing_security_guard(self):
         from ai_orchestrator.local_agent.security_guard import validate_task_before_run
-        from ai_orchestrator.local_agent.task_protocol import build_task
+        from ai_orchestrator.contracts.local_task_protocol import build_task
 
         task = build_task("read_page", "https://www.g2b.go.kr/", domain="www.g2b.go.kr")
         guard = validate_task_before_run(task)
@@ -266,7 +266,7 @@ class TestExistingSystemRegression:
             AUTH_SIGNAL_LOGIN,
             enter_auth_wait,
         )
-        from ai_orchestrator.local_agent.task_protocol import STATUS_WAITING_USER_AUTH
+        from ai_orchestrator.contracts.local_task_protocol import STATUS_WAITING_USER_AUTH
 
         result = enter_auth_wait("regression-naver", AUTH_SIGNAL_LOGIN, "nid.naver.com")
         assert result["status"] == STATUS_WAITING_USER_AUTH

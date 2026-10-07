@@ -26,7 +26,7 @@ except ImportError:
     )
 
 try:
-    from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+    from ai_orchestrator.contracts.user_present_ws_contract import (
         MSG_USER_PRESENT_TASK,
         build_user_present_ws_task_message,
         sanitize_user_present_ws_payload,

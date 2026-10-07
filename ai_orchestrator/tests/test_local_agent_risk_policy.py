@@ -181,6 +181,6 @@ def test_browser_actions_defined():
 
 
 def test_web_open_url_readonly_auto_execute_registered():
-    from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+    from ai_orchestrator.contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
 
     assert "web_open_url_readonly" in AUTO_EXECUTE_VIA_AGENT

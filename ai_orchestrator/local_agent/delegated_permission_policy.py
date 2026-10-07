@@ -10,7 +10,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     is_blocked,
     is_delegatable,
 )

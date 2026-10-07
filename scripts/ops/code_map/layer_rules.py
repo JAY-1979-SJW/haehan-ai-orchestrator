@@ -29,7 +29,7 @@ LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
     "ai_orchestrator/local_agent/browser/audit_log.py": ("L3", "low-level audit log writer"),
     "ai_orchestrator/local_agent/browser/cdp_audit.py": ("L3", "low-level CDP audit log helper"),
     "logging_utils.py": ("L3", "shared logging facade, IO wrapper"),
-    "ai_orchestrator/local_agent/task_protocol.py": ("L1", "task protocol DTO/contract"),
+    "ai_orchestrator/contracts/local_task_protocol.py": ("L1", "task protocol DTO/contract"),
     "ai_orchestrator/safety_policy/secret_redaction.py": ("L1", "redaction helper (L1 per layer definition)"),
     "ai_orchestrator/local_agent/result_sanitizer.py": ("L1", "result sanitizer/redaction helper"),
     "local_agent/desktop_config.py": ("L1", "desktop config helper"),

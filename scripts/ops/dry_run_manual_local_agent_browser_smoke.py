@@ -30,7 +30,7 @@ REQUIRED_FILES = (
     "local_agent/websocket_client.py",
     "local_agent/browser_readonly_runtime.py",
     "ai_orchestrator/local_agent_router.py",
-    "ai_orchestrator/local_agent_actions.py",
+    "ai_orchestrator/contracts/local_agent_actions.py",
     "ai_orchestrator/local_agent_risk_policy.py",
 )
 SENSITIVE_PATTERNS = (
@@ -121,7 +121,7 @@ def _dry_run_config_actions(findings):
     else:
         add(findings, "FAIL", "auth_fail_closed_defaults", "AUTH_ENABLED true defaults missing")
 
-    actions = read("ai_orchestrator/local_agent_actions.py")
+    actions = read("ai_orchestrator/contracts/local_agent_actions.py")
     risk = read("ai_orchestrator/local_agent_risk_policy.py")
     if "web_open_url_readonly" in actions and "web_open_url_readonly" in risk:
         add(findings, "PASS", "readonly_action_allowed", "registered in action and risk policy")

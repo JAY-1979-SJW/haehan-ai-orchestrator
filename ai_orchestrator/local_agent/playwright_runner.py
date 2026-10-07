@@ -35,7 +35,7 @@ from ai_orchestrator.local_agent.auth_wait_controller import (
     AUTH_SIGNAL_OTP,
     enter_auth_wait,
 )
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_FAILED,
