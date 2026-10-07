@@ -26,7 +26,7 @@ from ai_orchestrator.routers.site_task_map_router import site_task_map_router
 from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router
 from ai_orchestrator.routers.vendor_directory_router import vendor_directory_router
 from ai_orchestrator.routers.web_task_router import web_task_router
-from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmail
+from ai_orchestrator.connectors.google.gmail_reader import collect_to_inbox as _collect_gmail
 
 from ..audit_logger import log_event, read_recent_logs
 from ..browser_tool.approval_record_router import approval_record_router

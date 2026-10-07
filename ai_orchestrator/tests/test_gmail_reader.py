@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
-import ai_orchestrator.sites.gmail_reader as gr
+import ai_orchestrator.connectors.google.gmail_reader as gr
 from ai_orchestrator.inbox import exists_by_external_id
 
 

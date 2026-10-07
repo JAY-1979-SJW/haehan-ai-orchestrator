@@ -6233,7 +6233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/sites/calendar_reader.py": {
+  "ai_orchestrator/connectors/google/calendar_reader.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -6273,7 +6273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/sites/drive_reader.py": {
+  "ai_orchestrator/connectors/google/drive_reader.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -6281,7 +6281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/sites/gmail_reader.py": {
+  "ai_orchestrator/connectors/google/gmail_reader.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -6289,7 +6289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/sites/google_oauth.py": {
+  "ai_orchestrator/connectors/google/oauth.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "google",

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def _list_events(time_min: str, time_max: str, max_results: int = 20) -> list[dict]:
-    from ai_orchestrator.sites import google_oauth
+    from ai_orchestrator.connectors.google import oauth as google_oauth
 
     service = google_oauth.build_service("calendar", "v3")
     # timeMin/timeMax는 RFC3339(시간대 오프셋 포함) 필수, singleEvents=True 여야

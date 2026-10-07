@@ -179,7 +179,7 @@ def _gmail(monkeypatch):
     sent: list[dict] = []
     monkeypatch.setattr(g, "log_event", lambda *a, **k: None)
     monkeypatch.setattr(
-        "ai_orchestrator.sites.gmail_reader.send_reply", lambda **kw: sent.append(kw) or {"id": "m1"}
+        "ai_orchestrator.connectors.google.gmail_reader.send_reply", lambda **kw: sent.append(kw) or {"id": "m1"}
     )
     return g, sent
 

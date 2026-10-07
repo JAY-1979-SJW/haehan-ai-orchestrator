@@ -56,8 +56,8 @@
    "ai_orchestrator/browser_tool/workflow_audit_writer.py:read_audit_records"
   ],
   "225dc945f7e77efedc66126004b98338d8799019": [
-   "ai_orchestrator/sites/calendar_reader.py:list_today",
-   "ai_orchestrator/sites/calendar_reader.py:list_week"
+   "ai_orchestrator/connectors/google/calendar_reader.py:list_today",
+   "ai_orchestrator/connectors/google/calendar_reader.py:list_week"
   ],
   "257357770777d154e9ba001b2cb134a832420d5f": [
    "scripts/ops/build_ep_batch_content.py:main",

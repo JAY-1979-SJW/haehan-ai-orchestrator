@@ -18,7 +18,7 @@ _MIME_SHEET = "application/vnd.google-apps.spreadsheet"
 
 
 def _list_files(query: str | None, limit: int) -> list[dict]:
-    from ai_orchestrator.sites import google_oauth
+    from ai_orchestrator.connectors.google import oauth as google_oauth
 
     service = google_oauth.build_service("drive", "v3")
     kwargs: dict = {

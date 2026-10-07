@@ -132,7 +132,7 @@ def fetch_recent_emails(max_results: int = 50, hours: int = 24) -> list[dict]:
 def fetch_unread_emails(max_results: int = 10) -> list[dict]:
     """Gmail API로 안 읽은 메일 조회(CDP 대체). google_oauth 공용 자격증명 사용
     (gmail.readonly 스코프로 충분 — 이 함수는 읽기전용)."""
-    from ai_orchestrator.sites import google_oauth
+    from ai_orchestrator.connectors.google import oauth as google_oauth
 
     service = google_oauth.build_service("gmail", "v1")
     response = service.users().messages().list(userId="me", q="is:unread", maxResults=max_results).execute()
@@ -166,7 +166,7 @@ def send_reply(*, thread_id: str, in_reply_to: str, to: str, subject: str, body:
     """
     from email.mime.text import MIMEText
 
-    from ai_orchestrator.sites import google_oauth
+    from ai_orchestrator.connectors.google import oauth as google_oauth
 
     to = _reject_header_injection(to, "to")
     subject = _reject_header_injection(subject, "subject")

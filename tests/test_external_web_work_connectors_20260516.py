@@ -213,7 +213,7 @@ class TestSecretNonExposureBoundary:
 
     def test_gmail_reader_source_has_no_hardcoded_secrets(self):
         """gmail_reader.py에 하드코딩 secret/token 없음."""
-        src = (REPO_ROOT / "ai_orchestrator" / "sites" / "gmail_reader.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "connectors" / "google" / "gmail_reader.py").read_text(encoding="utf-8")
         # 변수 선언이 아닌 실제 값 하드코딩 여부 확인 (따옴표 안에 실제 값이 있으면 안 됨)
         import re
 
