@@ -99,7 +99,7 @@ def _count_naver_catalog_categories() -> set[str]:
 def _audit_routing(failures, is_service_cmd, validate_registry):
     not_routed = [cmd for cmd in SERVICE_COMMANDS if not is_service_cmd(cmd)]
     if not_routed:
-        failures.append("service command(s) not routed through scripts.router: " + ", ".join(not_routed))
+        failures.append("service command(s) not routed through scripts.site_engine.command_router: " + ", ".join(not_routed))
 
     registry_errors = validate_registry()
     if registry_errors:
@@ -224,7 +224,7 @@ def audit() -> tuple[bool, list[str]]:
     from scripts.google.cloud.local_browser import dry_run_cloud_readonly_browser_task
     from scripts.hiworks.actions import build_action_catalog as build_hiworks_action_catalog
     from scripts.naver.smartstore.actions import build_action_catalog as build_smartstore_action_catalog
-    from scripts.router import is_service_cmd
+    from scripts.site_engine.command_router import is_service_cmd
     from scripts.sites.subdomain_registry import validate_registry
     from scripts.youtube import uploader
 
@@ -244,7 +244,7 @@ def audit() -> tuple[bool, list[str]]:
 
     return not failures, failures or [
         "SITE_WORK_FUNCTION_BASELINE exists and is locked",
-        "site service commands are routed through scripts.router",
+        "site service commands are routed through scripts.site_engine.command_router",
         "Google/Naver/SmartStore/Hiworks/Gabia/YouTube work contracts match baseline",
         "state-changing work remains approval-gated or user-direct",
     ]

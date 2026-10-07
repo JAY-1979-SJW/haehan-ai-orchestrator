@@ -81,9 +81,9 @@ discover -> plan -> prepare -> submit -> verify -> log
 | 영역 | 경로 |
 | --- | --- |
 | 공통 CDP 진입 | `scripts/cdp_client.py`, `scripts/cdp_daemon.py` |
-| 사이트 라우터 | `scripts/router.py`, `scripts/<site>/router.py` |
+| 사이트 라우터 | `scripts/site_engine/command_router.py`, `scripts/<site>/router.py` |
 | 브라우저 재사용 | `scripts/web_connector.py` |
-| 로그인/세션 | `scripts/<site>/auth.py`, `scripts/site_access.py` |
+| 로그인/세션 | `scripts/<site>/auth.py`, `scripts/site_engine/site_access.py` |
 | 팝업/비정상 접근 | `scripts/popup_watcher.py`, `scripts/popup_classifier.py`, `scripts/<site>/access_handler.py` |
 | 작업 계획 | `scripts/<site>/work_plan.py` |
 | 실행 로그 | `scripts/<site>/run_log.py` |
@@ -99,7 +99,7 @@ All live site workflows must apply login/session integrity checks before
 navigation, scanning, preparation, or submit execution.
 
 - Policy: `docs/common_login_session_safety_policy_20260513.md`
-- Common module: `scripts/site_session_safety.py`
+- Common module: `scripts/site_engine/site_session_safety.py`
 
 Hard-stop examples:
 

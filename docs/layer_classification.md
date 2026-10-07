@@ -68,7 +68,7 @@ Required rules:
 | Root has many one-off scripts | Hard to know active vs legacy | Move active scripts into site/module folders; archive old probes. |
 | Worktree has many concurrent changes | Hard to stage and review by intent | Use `scripts/ops/worktree_change_index.py` and handle one owner/category at a time. |
 | Encoding corruption in some Korean docstrings/comments | Hard to read and maintain | Avoid editing corrupted comments unless rewriting full file as UTF-8. |
-| Multiple browser stacks coexist | Confusing execution path | Use `scripts/cdp_client.py` + `scripts/router.py` for current site CLI; platform APIs stay under `ai_orchestrator/`. |
+| Multiple browser stacks coexist | Confusing execution path | Use `scripts/cdp_client.py` + `scripts/site_engine/command_router.py` for current site CLI; platform APIs stay under `ai_orchestrator/`. |
 | Archive/debug files are mixed in scans | False positives in architecture review | Exclude `scripts/archive/`, `docs/reports/`, `data/`, `tmp/`, `logs/` from active-code decisions. |
 | DB and audit are partially centralized | Risk of duplicate persistence paths | New site workflows should write via `scripts/cdp_db.py` and `scripts/common/op_log.py` unless platform API requires another store. |
 

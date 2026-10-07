@@ -223,8 +223,8 @@ def _first_visible_selector(page, selectors):
 # ── 메인 ─────────────────────────────────────────────────────────────────────
 def _scene_registry(page, fi, fonts, step):
     print(f"  {step(1)} 레지스트리 표시")
-    from scripts.site_registry import get_site as _gs
-    from scripts.site_registry import list_sites
+    from scripts.site_engine.site_registry import get_site as _gs
+    from scripts.site_engine.site_registry import list_sites
 
     sites = list_sites()
     rows = ""

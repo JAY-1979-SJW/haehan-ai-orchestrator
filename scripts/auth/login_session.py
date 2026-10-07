@@ -202,12 +202,12 @@ _REGISTRY_KEY = {
 
 def _auto_login(page: Page, site: str) -> bool:
     """등록된 사이트면 저장된 자격증명으로 바로 로그인한다. 로그인됐으면 True, 못 하면 False(대기 방식으로 넘어감)."""
-    from scripts.site_registry import get_site
+    from scripts.site_engine.site_registry import get_site
 
     key = _REGISTRY_KEY.get(site.lower(), site.lower())
     if not get_site(key):
         return False
-    from scripts.site_access import LoginError, ensure_logged_in
+    from scripts.site_engine.site_access import LoginError, ensure_logged_in
 
     try:
         ensure_logged_in(page, key)

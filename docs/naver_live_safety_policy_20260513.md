@@ -83,7 +83,7 @@ Login/session mismatch is not a Naver-only rule. It is a common site automation
 blocker.
 
 - Common policy: `docs/common_login_session_safety_policy_20260513.md`
-- Common module: `scripts/site_session_safety.py`
+- Common module: `scripts/site_engine/site_session_safety.py`
 
 Naver live safety uses the common policy first, then applies Naver-specific
 robot/captcha/security-signal checks.

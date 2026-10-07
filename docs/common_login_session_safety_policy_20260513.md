@@ -54,7 +54,7 @@ Rules:
 
 Common module:
 
-- `scripts/site_session_safety.py`
+- `scripts/site_engine/site_session_safety.py`
 
 Current integration:
 

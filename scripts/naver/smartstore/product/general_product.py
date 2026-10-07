@@ -33,7 +33,7 @@ from scripts.common.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 from scripts.naver.smartstore.product.postflight import postflight
 from scripts.naver.smartstore.product.preflight import preflight
-from scripts.site_session_safety import assert_session_integrity
+from scripts.site_engine.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
 

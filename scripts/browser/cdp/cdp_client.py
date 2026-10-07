@@ -404,7 +404,7 @@ _SITE_ROUTER_CMDS = (
 
 def _cmd_site_router(cmd: str, task: str, sub: str, args: list[str]) -> None:
     # 'explore' 는 신규 통합 사이트 탐색에 양보 (아래 case로 처리)
-    from scripts.router import dispatch
+    from scripts.site_engine.command_router import dispatch
 
     dispatch(cmd, task, sub, args)
 
@@ -414,9 +414,9 @@ def _cmd_crawl(task: str, sub: str, args: list[str]) -> None:
     import os  # noqa: F401 - 원본 그대로 보존(2026-09-29 STD-08 리팩터, 로직 변경 없음)
 
     from scripts.explorer.site_crawler import crawl_site
-    from scripts.site_access import LoginError, open_site
-    from scripts.site_registry import list_sites
-    from scripts.site_watch import StepFailure
+    from scripts.site_engine.site_access import LoginError, open_site
+    from scripts.site_engine.site_registry import list_sites
+    from scripts.site_engine.site_watch import StepFailure
 
     if not task:
         print("사용법: python scripts/cdp_client.py crawl <사이트> [depth=3] [max=50]")
@@ -455,9 +455,9 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
     # 로그인 후 자동 사이트 탐색
     import os
 
-    from scripts.site_access import LoginError, explore_after_login
-    from scripts.site_registry import list_sites
-    from scripts.site_watch import StepFailure
+    from scripts.site_engine.site_access import LoginError, explore_after_login
+    from scripts.site_engine.site_registry import list_sites
+    from scripts.site_engine.site_watch import StepFailure
 
     if not task:
         print("사용법: python scripts/cdp_client.py explore <사이트> [경로] [depth] [max] [--dry-run]")
@@ -577,9 +577,9 @@ def _cmd_open(task: str, sub: str, args: list[str]) -> None:
     # 통합 사이트 접속 (A방식 + B방식 fallback + 전 단계 감시)
     import os
 
-    from scripts.site_access import LoginError, open_site
-    from scripts.site_registry import list_sites
-    from scripts.site_watch import StepFailure
+    from scripts.site_engine.site_access import LoginError, open_site
+    from scripts.site_engine.site_registry import list_sites
+    from scripts.site_engine.site_watch import StepFailure
 
     if not task:
         print("사용법: python scripts/cdp_client.py open <사이트> [경로] [--dry-run] [--force-login]")
@@ -718,7 +718,7 @@ def _cmd_cred(task: str, sub: str) -> None:
 
 
 def _cmd_services() -> None:
-    from scripts.router import list_services
+    from scripts.site_engine.command_router import list_services
 
     rows = list_services()
     print(f"{'명령':<14} {'라우터 모듈'}")

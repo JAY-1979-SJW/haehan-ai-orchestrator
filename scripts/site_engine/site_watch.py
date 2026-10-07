@@ -1,7 +1,7 @@
 """사이트 접속/로그인 전 단계 감시 + 실패 시 아티팩트 번들.
 
 사용:
-    from scripts.site_watch import StepWatcher
+    from scripts.site_engine.site_watch import StepWatcher
     w = StepWatcher(site="eum")
     with w.step("01_goto") as s:
         page.goto(...)
@@ -34,7 +34,7 @@ from scripts.common.op_log import log_op
 
 log = get_logger(__name__)
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = ROOT / "data" / "reports"
 
 

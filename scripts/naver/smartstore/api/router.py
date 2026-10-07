@@ -293,7 +293,7 @@ def _cmd_analytics(sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_session_check() -> None:
-    from scripts.site_base import check_session
+    from scripts.site_engine.site_base import check_session
 
     print("=" * 60)
     print("SmartStore session check")

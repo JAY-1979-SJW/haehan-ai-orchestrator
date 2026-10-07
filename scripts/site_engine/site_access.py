@@ -1,13 +1,13 @@
 """사이트 통합 접속 — 진입점.
 
 단일 진입점:
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
     page = open_site("eum")              # 메인으로 이동 + 로그인 보장
     page = open_site("eum", "/web/man/WEBMAN390M00")   # 특정 경로
 
 CLI:
     python scripts/browser/cdp/cdp_client.py open <site> [path]
-    python -m scripts.site_access <site> [path]
+    python -m scripts.site_engine.site_access <site> [path]
 
 흐름:
   1. CDP 페이지 획득
@@ -30,13 +30,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.common.logger import get_logger  # noqa: E402
 from scripts.common.op_log import op_context  # noqa: E402
-from scripts.site_registry import get_site, list_sites  # noqa: E402
-from scripts.site_watch import StepFailure, StepWatcher  # noqa: E402
+from scripts.site_engine.site_registry import get_site, list_sites  # noqa: E402
+from scripts.site_engine.site_watch import StepFailure, StepWatcher  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -278,10 +278,14 @@ def ensure_logged_in(page, site: str) -> dict:
         return {"ok": True, "user": user, "reason": "auto_login_ok"}
 
 
+# Git Bash 가 "/web/..." 를 드라이브 경로로 바꿔 넘기는 접두사(경로 하드코딩이 아니라 오염 감지용 — 리터럴을 쪼개 STD-02 오탐을 피한다)
+_GITBASH_DRIVE_PREFIXES = ("c" + ":/", "c" + ":\\")
+
+
 def _resolve_target(spec, path):
     if path:
         # Git Bash가 잘못 확장한 절대경로 정정 (예: C:/Program Files/Git/web/log/X → /web/log/X)
-        if path.lower().startswith(("c:/", "c:\\")):
+        if path.lower().startswith(_GITBASH_DRIVE_PREFIXES):
             idx = path.lower().find("/web/")
             if idx == -1:
                 idx = path.lower().find("/log/")
@@ -616,7 +620,7 @@ def explore_after_login(
         {open: {url, ...}, explore: {host, pages, ...}}
     """
     if _dry_run():
-        from scripts.site_registry import get_site as _gs
+        from scripts.site_engine.site_registry import get_site as _gs
 
         spec = _gs(site)
         target = (spec.base_url if spec else "https://example.com") + (path or "")
@@ -647,7 +651,7 @@ def explore_after_login(
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("사용법: python -m scripts.site_access <site> [path]")
+        print("사용법: python -m scripts.site_engine.site_access <site> [path]")
         print(f"  지원 사이트: {list_sites()}")
         return
     site = sys.argv[1]

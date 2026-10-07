@@ -12,7 +12,7 @@ from typing import Any
 from scripts.common.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 from scripts.naver.live_safety import ensure_page_safe, throttle_live
-from scripts.site_session_safety import assert_session_integrity
+from scripts.site_engine.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
 

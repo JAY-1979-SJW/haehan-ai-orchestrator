@@ -1,4 +1,4 @@
-from scripts import site_access
+from scripts.site_engine import site_access
 
 
 class _Spec:

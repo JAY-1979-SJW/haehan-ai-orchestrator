@@ -1,7 +1,7 @@
 """사이트 등록표 코어 — 사이트 메타데이터 조회·등록 (사이트별 지식 없음).
 
 결함 #113: 이 파일은 원래 사이트별 로그인 함수 약 12개와 7개 사이트 항목을 직접 품고 있어(L5 사이트 지식) L4 범용 엔진
-(cdp_client·login_session·site_access)이 이를 import 하면 층간 위반이었다. 사이트별 지식은 `scripts/site_registry_sites.py`(L5)로 옮기고,
+(cdp_client·login_session·site_access)이 이를 import 하면 층간 위반이었다. 사이트별 지식은 `scripts/site_engine/site_registry_sites.py`(L5)로 옮기고,
 이 코어는 `SiteSpec`·조회·등록만 한다. 호출처는 그대로 `get_site`·`list_sites` 를 부른다.
 
 사이트 모듈 연결: 처음 `get_site`/`list_sites` 가 불리면 `_LOADER` 가 가리키는 모듈을 문자열로 불러 `build_sites(SiteSpec)` 결과를 등록한다.
@@ -15,7 +15,7 @@ import importlib
 from collections.abc import Callable
 from dataclasses import dataclass
 
-_LOADER = "scripts.site_registry_sites"  # 변수에 담은 문자열 — 정적 import 가 아니다(위 설명 참고)
+_LOADER = "scripts.site_engine.site_registry_sites"  # 변수에 담은 문자열 — 정적 import 가 아니다(위 설명 참고)
 
 
 @dataclass

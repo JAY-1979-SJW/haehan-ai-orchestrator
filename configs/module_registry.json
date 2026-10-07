@@ -15369,7 +15369,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/router.py": {
+  "scripts/site_engine/command_router.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -15417,7 +15417,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/site_access.py": {
+  "scripts/site_engine/site_access.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -15425,7 +15425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/site_base.py": {
+  "scripts/site_engine/site_base.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -15537,7 +15537,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_registry.py": {
+  "scripts/site_engine/site_registry.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -15545,7 +15545,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_registry_sites.py": {
+  "scripts/site_engine/site_registry_sites.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "common",
@@ -15553,7 +15553,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_session_safety.py": {
+  "scripts/site_engine/site_session_safety.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -15561,7 +15561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/site_watch.py": {
+  "scripts/site_engine/site_watch.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",

@@ -43,7 +43,7 @@
 python scripts/cdp_client.py eum <task>
   │
   ▼
-scripts/router.py  → dispatch()
+scripts/site_engine/command_router.py  → dispatch()
   │
   ▼
 scripts/eum/router.py  →  run_eum(task, sub, args)

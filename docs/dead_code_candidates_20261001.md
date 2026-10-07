@@ -19,7 +19,7 @@
 - `scripts/naver/browser_gate.py`: `_norm_path`(함수,L0)
 - `scripts/ops/export_cafe_keywords_excel.py`: `_cell`(함수,L0)
 - `scripts/ops/windows_auth_popup_monitor.py`: `_get_foreground_title`(함수,L0)
-- `scripts/site_access.py`: `_find_or_open_tab`(함수,L0)
+- `scripts/site_engine/site_access.py`: `_find_or_open_tab`(함수,L0)
 - `scripts/video/ig_dm_bot_ep01_visuals.py`: `_diagram_card`(함수,L0)
 - `scripts/video/record_promo.py`: `_video_dir`(함수,L0)
 

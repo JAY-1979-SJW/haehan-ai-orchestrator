@@ -11,7 +11,7 @@ import inspect
 
 import pytest
 
-from scripts import site_registry as reg
+from scripts.site_engine import site_registry as reg
 
 EXPECTED_ORDER = ["eum", "naver", "smartstore", "google", "hiworks", "gabia", "kakao"]
 
@@ -180,7 +180,7 @@ def test_core_never_imports_the_site_module_statically():
         elif isinstance(node, ast.ImportFrom):
             imported.append(node.module or "")
     assert not any("site_registry_sites" in m or m.startswith("scripts.eum") for m in imported), imported
-    assert reg._LOADER == "scripts.site_registry_sites"
+    assert reg._LOADER == "scripts.site_engine.site_registry_sites"
 
 
 def test_site_module_does_not_import_the_core():
@@ -222,7 +222,7 @@ def test_loader_failure_is_not_swallowed_and_leaves_nothing_half_registered(clea
     with pytest.raises(ModuleNotFoundError):
         reg.get_site("eum")
     assert reg._REGISTRY == {} and reg._loaded is False
-    monkeypatch.setattr(reg, "_LOADER", "scripts.site_registry_sites")  # 고치면 다음 호출에서 정상 로드된다
+    monkeypatch.setattr(reg, "_LOADER", "scripts.site_engine.site_registry_sites")  # 고치면 다음 호출에서 정상 로드된다
     assert reg.list_sites() == EXPECTED_ORDER
 
 
@@ -251,7 +251,7 @@ def test_a_conflicting_site_loaded_from_the_module_rolls_everything_back(clean_r
 
 
 def test_build_sites_uses_the_class_it_is_given():
-    from scripts import site_registry_sites as sites
+    from scripts.site_engine import site_registry_sites as sites
 
     built = sites.build_sites(lambda **kw: kw)
     assert [b["key"] for b in built] == EXPECTED_ORDER and all("login_strategy" in b for b in built)
