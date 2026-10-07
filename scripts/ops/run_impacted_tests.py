@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -41,12 +40,11 @@ def collect_tests(files: list[str], map_path: Path | None = None, root: Path = R
 
 
 def _pyexe() -> list[str]:
-    if shutil.which("py"):
-        try:
-            subprocess.run(["py", "-3.14", "--version"], capture_output=True, check=True)
-            return ["py", "-3.14"]
-        except Exception:  # noqa: BLE001 - py 런처에 3.14 가 없으면 현재 인터프리터로 대체(결과에 영향 없는 선택)
-            pass
+    """pytest 를 돌릴 인터프리터 — **지금 이 도구를 실행 중인 인터프리터**를 그대로 쓴다.
+
+    예전에는 `py -3.14` 를 우선했는데, CI(Windows 러너)에서는 py 런처가 가리키는 3.14 가 의존성이 설치된 setup-python
+    인터프리터와 달라 pytest 가 없어서 실패했다(test_real_pytest_command_shape, 2026-10-07). 이 도구는 이미 올바른
+    인터프리터(py -3.14 로 시작했든 CI 의 venv 든)로 실행 중이므로 sys.executable 이 항상 맞다."""
     return [sys.executable]
 
 

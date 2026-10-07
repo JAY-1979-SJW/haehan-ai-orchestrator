@@ -210,3 +210,10 @@ def test_real_pytest_command_shape(tmp_path):
     rc, _ = rit.run_pytest(["tests/test_ok.py"], 30, tmp_path, junit)
     assert rc == 0 and rit.parse_junit(junit) == {"tests.test_ok::test_ok": "passed"}
     assert not (tmp_path / ".pytest_cache").exists()
+
+
+def test_pytest_runs_with_the_current_interpreter():
+    """CI 회귀 방지: py 런처가 다른 3.14 를 가리켜도(의존성 없는 인터프리터) 현재 인터프리터로 돌린다."""
+    import sys
+
+    assert rit._pyexe() == [sys.executable]
