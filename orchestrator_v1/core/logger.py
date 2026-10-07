@@ -10,7 +10,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-LOGS_DIR = Path(__file__).parent / "logs"
+LOGS_DIR = Path(__file__).resolve().parents[2] / "logs"
 
 # 포맷: 구조화 필드 포함. extra dict로 event_type/task_id/action_type/actor 전달
 _FMT = (

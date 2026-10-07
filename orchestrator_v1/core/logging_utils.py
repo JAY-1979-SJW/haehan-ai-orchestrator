@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from security_utils import redact_obj
+from orchestrator_v1.core.security_utils import redact_obj
 
 
 def mask_sensitive(data: Any) -> Any:

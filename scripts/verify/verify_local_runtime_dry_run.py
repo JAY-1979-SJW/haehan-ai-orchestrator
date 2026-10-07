@@ -10,9 +10,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 루트 패키지(local_agent 등) 해석용
 from local_agent.network_bypass import urlopen_for_server
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 SERVER_URL = "https://haehan-ai.kr/orchestrator"
 SERVER_HEALTH_URL = SERVER_URL + "/api/v1/health"
 OUT_OF_SCOPE = {
