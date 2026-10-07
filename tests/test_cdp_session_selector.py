@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.cdp_session_selector import CdpCandidate, configured_ports, select_cdp_session
+from scripts.browser.cdp.cdp_session_selector import CdpCandidate, configured_ports, select_cdp_session
 
 
 def _candidate(port: int, urls: list[str]) -> CdpCandidate:

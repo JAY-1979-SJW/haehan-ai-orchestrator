@@ -7,8 +7,8 @@
     ...
 
 사용:
-    python scripts/cdp_client.py hanafax batch-send [--limit=N] [--delay=30] [--dry-run]
-    python scripts/cdp_client.py hanafax batch-send --approved --confirm=HANAFAX_APPROVED_BATCH
+    python scripts/browser/cdp/cdp_client.py hanafax batch-send [--limit=N] [--delay=30] [--dry-run]
+    python scripts/browser/cdp/cdp_client.py hanafax batch-send --approved --confirm=HANAFAX_APPROVED_BATCH
 """
 
 from __future__ import annotations

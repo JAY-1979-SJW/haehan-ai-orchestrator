@@ -1,9 +1,12 @@
 """YouTube Studio 업로드 — 단일 CDP 연결 유지, 단계별 실행."""
-import sys, time, threading
+import sys
+import threading
+import time
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-from scripts.cdp_helper import CDP
 from scripts.app_paths import resolve_external, sibling_project
+from scripts.browser.cdp.cdp_helper import CDP
 
 VIDEO = str(
     resolve_external(
@@ -16,6 +19,7 @@ PRIVACY = "PUBLIC"  # PUBLIC / PRIVATE / UNLISTED
 STEP = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 
 import atexit
+
 cdp = CDP()
 atexit.register(cdp.close)  # 어떤 종료 방식이든 반드시 연결 닫기
 time.sleep(0.5)

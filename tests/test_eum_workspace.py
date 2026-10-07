@@ -29,7 +29,7 @@ def test_workflow_alias_lookup():
 def test_print_workflow_help(capsys):
     assert print_workflow_help("history") is True
     out = capsys.readouterr().out
-    assert "python scripts/cdp_client.py eum history <device_id>" in out
+    assert "python scripts/browser/cdp/cdp_client.py eum history <device_id>" in out
     assert "auto_execute: True" in out
 
     assert print_workflow_help("missing") is False

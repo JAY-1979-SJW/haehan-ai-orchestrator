@@ -96,9 +96,9 @@ def _cmd_create_profile(args: list[str]) -> None:
 
 def _print_help() -> None:
     print("""로컬에이전트 사용법:
-  python scripts/cdp_client.py local gov24           정부24 주민등록등본 발급 (승인 필요)
-  python scripts/cdp_client.py local minwon          민원24 온라인 민원 접수 (승인 필요)
-  python scripts/cdp_client.py local blog-explore <ID>  네이버 블로그 탐색
-  python scripts/cdp_client.py local blog-scrape <ID>   네이버 블로그 수집
-  python scripts/cdp_client.py local check           Playwright 환경 점검
-  python scripts/cdp_client.py local create-profile <URL> 사이트 프로파일 생성""")
+  python scripts/browser/cdp/cdp_client.py local gov24           정부24 주민등록등본 발급 (승인 필요)
+  python scripts/browser/cdp/cdp_client.py local minwon          민원24 온라인 민원 접수 (승인 필요)
+  python scripts/browser/cdp/cdp_client.py local blog-explore <ID>  네이버 블로그 탐색
+  python scripts/browser/cdp/cdp_client.py local blog-scrape <ID>   네이버 블로그 수집
+  python scripts/browser/cdp/cdp_client.py local check           Playwright 환경 점검
+  python scripts/browser/cdp/cdp_client.py local create-profile <URL> 사이트 프로파일 생성""")

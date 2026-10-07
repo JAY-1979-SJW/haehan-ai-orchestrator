@@ -206,10 +206,10 @@ def _cmd_suite(args: list[str]) -> None:
 
 def _print_help() -> None:
     print("""G2B 사용법:
-  python scripts/cdp_client.py g2b status              세대 상태 조회
-  python scripts/cdp_client.py g2b gate <action>       gate 판정
-  python scripts/cdp_client.py g2b analysis-draft      입찰분석 초안
-  python scripts/cdp_client.py g2b submit-draft        제출 초안
-  python scripts/cdp_client.py g2b discover            공개 공고 URL 탐색
-  python scripts/cdp_client.py g2b download            첨부파일 배치 다운로드
-  python scripts/cdp_client.py g2b suite               Read-Only 라이브 스위트""")
+  python scripts/browser/cdp/cdp_client.py g2b status              세대 상태 조회
+  python scripts/browser/cdp/cdp_client.py g2b gate <action>       gate 판정
+  python scripts/browser/cdp/cdp_client.py g2b analysis-draft      입찰분석 초안
+  python scripts/browser/cdp/cdp_client.py g2b submit-draft        제출 초안
+  python scripts/browser/cdp/cdp_client.py g2b discover            공개 공고 URL 탐색
+  python scripts/browser/cdp/cdp_client.py g2b download            첨부파일 배치 다운로드
+  python scripts/browser/cdp/cdp_client.py g2b suite               Read-Only 라이브 스위트""")

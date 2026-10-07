@@ -31,7 +31,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
@@ -326,7 +326,7 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
     import subprocess
     from pathlib import Path as _Path
 
-    STATE_FILE = _Path(__file__).resolve().parents[1] / "data" / "runtime" / "chrome_ui_monitor_state.json"
+    STATE_FILE = _Path(__file__).resolve().parents[3] / "data" / "runtime" / "chrome_ui_monitor_state.json"
     sub_cmd = task or "status"
 
     if sub_cmd == "start":
@@ -338,7 +338,7 @@ def _cmd_chrome_ui_monitor(task: str, sub: str) -> None:
 
         proc = subprocess.Popen(
             [str(pythonw), str(script), str(interval)],
-            cwd=str(_Path(__file__).resolve().parents[1]),
+            cwd=str(_Path(__file__).resolve().parents[3]),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
@@ -605,10 +605,13 @@ def _cmd_open(task: str, sub: str, args: list[str]) -> None:
     print(f"\n[작업] {task} 사이트 접속 — 전 단계 감시 (A→B fallback){suffix}")
     try:
         res = open_site(task, path, force_login=force_login)
-        if dry and isinstance(res, dict):
-            print(
-                f"\n✓ [DRY] 흐름 검증 완료 — site={res.get('site')} url={res.get('url')} logged_in={res.get('logged_in')}"
-            )
+        if isinstance(res, dict):
+            if dry:
+                print(
+                    f"\n✓ [DRY] 흐름 검증 완료 — site={res.get('site')} url={res.get('url')} logged_in={res.get('logged_in')}"
+                )
+            else:
+                print(f"\n✓ 접속 완료 — {res.get('url')}")
         else:
             print(f"\n✓ 접속 완료 — {res.url}")
     except StepFailure as e:
@@ -642,7 +645,7 @@ def _cmd_gabia(task: str, sub: str, args: list[str]) -> None:
     # 별도로 사용자에게 보고한다 — 고치는 건 별도 승인 사항.
     match task:
         case "login-watch":
-            from scripts.gabia_login_watch import watch_gabia_login
+            from scripts.gabia.login_watch import watch_gabia_login
 
             timeout_s = int(sub) if sub and sub.isdigit() else 300
             no_nav = "--no-navigate" in args

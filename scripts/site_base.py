@@ -57,7 +57,7 @@ def task_context(
 
     log_id = None
     if with_db_log:
-        from scripts.cdp_db import log_start
+        from scripts.browser.cdp.cdp_db import log_start
 
         log_id = log_start(site, task, args)
 
@@ -74,7 +74,7 @@ def task_context(
                 ensure_login(page, site)
                 yield page
                 if with_db_log and log_id is not None:
-                    from scripts.cdp_db import log_finish
+                    from scripts.browser.cdp.cdp_db import log_finish
 
                     log_finish(log_id, "success")
                 log.info("[%s] %s 완료", site, task)
@@ -86,13 +86,13 @@ def task_context(
         ensure_login(page, site)
         yield page
         if with_db_log and log_id is not None:
-            from scripts.cdp_db import log_finish
+            from scripts.browser.cdp.cdp_db import log_finish
 
             log_finish(log_id, "success")
         log.info("[%s] %s 완료", site, task)
     except Exception as e:
         if with_db_log and log_id is not None:
-            from scripts.cdp_db import log_finish
+            from scripts.browser.cdp.cdp_db import log_finish
 
             log_finish(log_id, "fail", error_msg=str(e))
         log.error("[%s] %s 실패: %s", site, task, e)

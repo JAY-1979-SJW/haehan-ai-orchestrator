@@ -14,10 +14,10 @@
     restore_session('eum.cw.or.kr', page)        # 새 세션에서 복원
 
 CLI:
-    python scripts/cdp_client.py session save <site>
-    python scripts/cdp_client.py session load <site>
-    python scripts/cdp_client.py session list
-    python scripts/cdp_client.py session delete <site>
+    python scripts/browser/cdp/cdp_client.py session save <site>
+    python scripts/browser/cdp/cdp_client.py session load <site>
+    python scripts/browser/cdp/cdp_client.py session list
+    python scripts/browser/cdp/cdp_client.py session delete <site>
 """
 
 from __future__ import annotations

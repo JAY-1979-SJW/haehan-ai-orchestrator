@@ -47,7 +47,7 @@ def _cmd_session_check() -> None:
         print("✓ 로그인 상태 정상")
     else:
         print("✗ 로그인 필요")
-        print("  python scripts/cdp_client.py kakao login")
+        print("  python scripts/browser/cdp/cdp_client.py kakao login")
     print("=" * 60)
 
 

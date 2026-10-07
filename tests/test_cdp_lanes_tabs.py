@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import cdp_lane_start, cdp_lanes, cdp_tabs
+from scripts.browser.cdp import cdp_lane_start, cdp_lanes, cdp_tabs
 
 
 class FakeChrome:

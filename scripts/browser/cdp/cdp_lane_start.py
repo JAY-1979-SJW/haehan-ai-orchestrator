@@ -18,11 +18,11 @@ import argparse
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts import cdp_force_start as base  # noqa: E402
-from scripts import cdp_lanes  # noqa: E402
+from scripts.browser.cdp import cdp_force_start as base  # noqa: E402
+from scripts.browser.cdp import cdp_lanes  # noqa: E402
 
 
 def apply_lane(lane: cdp_lanes.Lane) -> None:

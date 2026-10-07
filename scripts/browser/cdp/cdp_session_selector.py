@@ -112,7 +112,7 @@ def select_cdp_session(
         tab_domains = [_domain(tab.get("url", "")) for tab in row.tabs]
         target_hits = [domain for domain in tab_domains if _matches(domain, normalized_targets)]
         avoid_hits = [domain for domain in tab_domains if _matches(domain, normalized_avoid)]
-        item = {
+        item: dict[str, Any] = {
             "port": row.port,
             "available": row.available,
             "tab_count": len(row.tabs),

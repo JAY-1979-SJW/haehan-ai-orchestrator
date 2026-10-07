@@ -68,7 +68,7 @@ def main() -> None:
     try:
         import urllib.request
 
-        from scripts import cdp_db
+        from scripts.browser.cdp import cdp_db
         from scripts.config import CDP_HOST, CDP_PORT
         from scripts.logger import get_logger
         from scripts.login_detector import (
@@ -85,7 +85,7 @@ def main() -> None:
             urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=2)
         except Exception:  # noqa: BLE001 - 여러 사이트 로그인 상태 읽기전용 확인 CLI — CDP 데몬 미가동/탭확인 실패 시 안내 메시지 출력 후 종료할 뿐 로그인 상태를 변경하지 않음
             print("✗ CDP 데몬이 실행 중이지 않습니다")
-            print("  먼저 'python scripts/cdp_daemon.py start' 실행하세요")
+            print("  먼저 'python scripts/browser/cdp/cdp_daemon.py start' 실행하세요")
             return
 
         # Playwright로 현재 브라우저 상태 확인

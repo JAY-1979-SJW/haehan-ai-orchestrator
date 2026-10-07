@@ -6,7 +6,7 @@
     page = open_site("eum", "/web/man/WEBMAN390M00")   # 특정 경로
 
 CLI:
-    python scripts/cdp_client.py open <site> [path]
+    python scripts/browser/cdp/cdp_client.py open <site> [path]
     python -m scripts.site_access <site> [path]
 
 흐름:
@@ -378,7 +378,7 @@ def open_site(
     *,
     ensure_login: bool = True,
     force_login: bool = False,
-) -> object:
+) -> dict[str, Any] | Any:  # 드라이런은 dict, 실제 접속은 Playwright Page(이 코드베이스에서 타입 미도입)
     """사이트 접속. 모든 단계를 StepWatcher 로 감시. 실패 시 즉시 중단 + 보고서.
 
     Args:

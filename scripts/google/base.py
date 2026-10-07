@@ -60,7 +60,7 @@ def check_session() -> dict:
 
 def get_page(headless: bool = False) -> Page:
     """CDP 브라우저의 기존 탭 재사용. (web_connector.get_page 위임)"""
-    from scripts.cdp_db import init_db
+    from scripts.browser.cdp.cdp_db import init_db
 
     init_db()
     return _wc_get_page()
@@ -69,7 +69,7 @@ def get_page(headless: bool = False) -> Page:
 @contextmanager
 def task_context(site: str, task: str, args: list[str]) -> Generator[Page, None, None]:
     """작업 실행 컨텍스트 - 로그인 확인 + DB 로그 자동 기록."""
-    from scripts.cdp_db import init_db
+    from scripts.browser.cdp.cdp_db import init_db
 
     init_db()
     with _task_context_base(

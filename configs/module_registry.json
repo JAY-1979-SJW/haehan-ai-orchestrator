@@ -8641,7 +8641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_tab_monitor.py": {
+  "scripts/browser/cdp/browser_tab_monitor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8657,7 +8657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_client.py": {
+  "scripts/browser/cdp/cdp_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8665,7 +8665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_console.py": {
+  "scripts/browser/cdp/cdp_console.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8673,7 +8673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_daemon.py": {
+  "scripts/browser/cdp/cdp_daemon.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8681,7 +8681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_db.py": {
+  "scripts/browser/cdp/cdp_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "browser",
@@ -8689,7 +8689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_force_start.py": {
+  "scripts/browser/cdp/cdp_force_start.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8697,7 +8697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_helper.py": {
+  "scripts/browser/cdp/cdp_helper.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8705,7 +8705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_lane_start.py": {
+  "scripts/browser/cdp/cdp_lane_start.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8713,7 +8713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_lanes.py": {
+  "scripts/browser/cdp/cdp_lanes.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8721,7 +8721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_session_selector.py": {
+  "scripts/browser/cdp/cdp_session_selector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8729,7 +8729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_tab_manager.py": {
+  "scripts/browser/cdp/cdp_tab_manager.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8737,7 +8737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_tabs.py": {
+  "scripts/browser/cdp/cdp_tabs.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8745,7 +8745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_verify.py": {
+  "scripts/browser/cdp/cdp_verify.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8761,7 +8761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/chrome_ui_monitor.py": {
+  "scripts/browser/cdp/chrome_ui_monitor.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -8769,7 +8769,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/chrome_ui_watcher.py": {
+  "scripts/browser/cdp/chrome_ui_watcher.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -10849,22 +10849,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/quality/install_git_hooks.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/ops/quality/install_quality_gate.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/kakao/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -11153,14 +11137,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/quality/log_code_change.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/logger.py": {
    "layer": "L1",
    "role": "shared",
@@ -11286,62 +11262,6 @@
    "role": "api",
    "domain": "common",
    "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/quality/module_quality_gate.py": {
-   "layer": "L6",
-   "role": "policy",
-   "domain": "common",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/ops/quality/module_quality_gate_checks_audit.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/quality/module_quality_gate_checks_repo.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/quality/module_quality_gate_checks_web.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/quality/module_quality_gate_common.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/ops/quality/module_quality_gate_modules.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/quality/module_quality_gate_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "common",
-   "reason": "업무 흐름 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -15753,15 +15673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/py_compile_no_cache.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/ops/quality/quality_gate.py": {
+  "scripts/quality_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -15774,14 +15686,6 @@
    "role": "persistence",
    "domain": "common",
    "reason": "실시간 감사 이벤트를 data/logs/realtime_audit.jsonl 에 기록/조회하는 감사 로그 저장소 — L7(저장·감사) 정의에 정확히 부합. L4 기본값 오분류를 L7로 정정.",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/ops/quality/required_quality_gate.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -16056,30 +15960,6 @@
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
-  },
-  "scripts/archive/one_off/temp_gcp_create_client.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/temp_gcp_dom.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/temp_oauth_revoke.py": {
-   "layer": "L6",
-   "role": "policy",
-   "domain": "common",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
-   "confidence": "high",
-   "source": "confirmed"
   },
   "scripts/user_action_monitor.py": {
    "layer": "L4",
@@ -22969,13 +22849,109 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_scripts_data_paths.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
+  "scripts/browser/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
+  },
+  "scripts/browser/cdp/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/temp_gcp_create_client.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "google",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/temp_gcp_dom.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "google",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/temp_oauth_revoke.py": {
+   "layer": "L6",
+   "role": "policy",
+   "domain": "common",
+   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/ops/quality/install_git_hooks.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/install_quality_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/log_code_change.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate.py": {
+   "layer": "L6",
+   "role": "policy",
+   "domain": "common",
+   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/ops/quality/module_quality_gate_checks_audit.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_checks_repo.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_checks_web.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_common.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/ops/quality/module_quality_gate_exports.py": {
    "layer": "L12",
@@ -22985,11 +22961,51 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/quality_gate.py": {
-   "layer": "L2",
-   "role": "policy",
+  "scripts/ops/quality/module_quality_gate_modules.py": {
+   "layer": "L12",
+   "role": "ops_tool",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_runner.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/py_compile_no_cache.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/quality_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "리포지토리 커밋/스테이지 변경 감사용 CLI 도구(quality gate). 앱 도메인 정책이 아니라 운영 도구 — L12(문서·운영 도구, 의존 방향 규칙 밖). 이름만 gate라 L2로 오분류.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/ops/quality/required_quality_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_scripts_data_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   }

@@ -103,9 +103,9 @@ def build_youtube_upload_plan(values: dict[str, str]) -> dict[str, Any]:
         "workflow_missing_inputs": workflow_plan["missing_inputs"],
         "youtube_page_tabs": page_tabs,
         "commands": {
-            "prepare": "python scripts/cdp_client.py google youtube upload-prepare video_path=... title=... description=... visibility=private",
-            "preapproval_check": "python scripts/cdp_client.py google youtube upload-check video_path=... title=... description=... visibility=private made_for_kids=no",
-            "live_no_final_submit": f"python scripts/cdp_client.py google youtube upload-live-fill {workflow_path} --no-final-submit",
+            "prepare": "python scripts/browser/cdp/cdp_client.py google youtube upload-prepare video_path=... title=... description=... visibility=private",
+            "preapproval_check": "python scripts/browser/cdp/cdp_client.py google youtube upload-check video_path=... title=... description=... visibility=private made_for_kids=no",
+            "live_no_final_submit": f"python scripts/browser/cdp/cdp_client.py google youtube upload-live-fill {workflow_path} --no-final-submit",
         },
     }
 

@@ -16,7 +16,7 @@
 
 사용:
     python -m scripts.explorer.site_crawler <site> [depth] [max_pages]
-    python scripts/cdp_client.py crawl <site> [depth] [max]
+    python scripts/browser/cdp/cdp_client.py crawl <site> [depth] [max]
 """
 
 from __future__ import annotations

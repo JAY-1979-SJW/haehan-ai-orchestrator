@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 107,
+ "hash_count": 109,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/services/gongmu_service.py:_read_rows",
@@ -58,6 +58,10 @@
   "225dc945f7e77efedc66126004b98338d8799019": [
    "ai_orchestrator/sites/calendar_reader.py:list_today",
    "ai_orchestrator/sites/calendar_reader.py:list_week"
+  ],
+  "254139cfe8d0630c0f701e9d321a4b5349246ffa": [
+   "ai_orchestrator/connectors/desktop_session_router.py:DesktopSetupRequest.name_not_empty",
+   "ai_orchestrator/connectors/user_auth_router.py:SignupRequest.name_not_empty"
   ],
   "257357770777d154e9ba001b2cb134a832420d5f": [
    "scripts/ops/build_ep_batch_content.py:main",
@@ -422,6 +426,10 @@
    "scripts/naver/smartstore/automation/analytics_dashboard.py:_init_db",
    "scripts/naver/smartstore/automation/competitor_analysis.py:_init_db"
   ],
+  "d8087715da7bbae8538766132eaf76e03409332e": [
+   "ai_orchestrator/paths/runtime.py:data_dir",
+   "ai_orchestrator/paths/runtime.py:storage_dir"
+  ],
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
    "scripts/popup_monitor.py:ChromeUIWatcher.start",
    "scripts/popup_monitor.py:PopupMonitor.start"
@@ -451,7 +459,7 @@
    "scripts/eum/site_devices.py:main"
   ],
   "e55f06f8e61437d0e4a448891d63f8c86d52f388": [
-   "scripts/cdp_helper.py:CDP.shot",
+   "scripts/browser/cdp/cdp_helper.py:CDP.shot",
    "scripts/video/_cdp_tab.py:TabCDP.shot"
   ],
   "ea67e9101017d3eceedb5e96ea8b995ef1198941": [

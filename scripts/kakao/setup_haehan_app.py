@@ -125,7 +125,7 @@ def gate1_connect():
             return _pass("GATE-1", f"Playwright 연결됨 — {url[:50]}")
     except Exception as e:  # noqa: BLE001 - 카카오 개발자 콘솔 앱 등록 자동화(GATE-1~8) - 세션은 저장/복원만 수행(로그아웃/쿠키삭제 없음), 실패시 _fail() 로 게이트 실패를 명확히 보고. 결제나 비가역 최종 제출 없음
         return _fail(
-            "GATE-1", f"Playwright 연결 실패: {e}", "CDP 브라우저 실행 확인: python scripts/cdp_force_start.py start"
+            "GATE-1", f"Playwright 연결 실패: {e}", "CDP 브라우저 실행 확인: python scripts/browser/cdp/cdp_force_start.py start"
         )
 
 

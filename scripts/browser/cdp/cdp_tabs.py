@@ -22,7 +22,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from scripts import cdp_lanes
+from scripts.browser.cdp import cdp_lanes
 
 DEFAULT_WAIT_SEC = 10.0
 POLL_SEC = 0.3

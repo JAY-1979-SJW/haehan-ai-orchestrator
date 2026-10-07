@@ -20,7 +20,7 @@ from pathlib import Path
 from scripts.config import CDP_HOST
 from scripts.config import CDP_PORT as GENERAL_PORT
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 MAX_ACTIVE_LANES = 3
 GENERAL = "general"
 

@@ -138,7 +138,7 @@ def _is_cdp_alive(timeout: float = 2.0) -> bool:
 
 
 def _start_cdp() -> None:
-    from scripts.cdp_force_start import cmd_start
+    from scripts.browser.cdp.cdp_force_start import cmd_start
 
     if cmd_start() != 0:
         raise RuntimeError("CDP 브라우저 시작 실패")

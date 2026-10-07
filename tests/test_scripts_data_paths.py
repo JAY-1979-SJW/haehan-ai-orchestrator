@@ -47,7 +47,7 @@ ITEMS: list[tuple[str, str, tuple[str, ...]]] = [
     ("scripts.naver.blog.automation.store", "DEFAULT_BASE", ("blog_automation",)),
     ("scripts.form.profile", "PROFILE_FILE", ("profile.json",)),
     # 배치 2b — 공용 cdp.db 와 로그·세션·일정 DB
-    ("scripts.cdp_db", "DB_PATH", ("cdp.db",)),
+    ("scripts.browser.cdp.cdp_db", "DB_PATH", ("cdp.db",)),
     ("scripts.critical_logger", "LOG_DIR", ("logs",)),
     ("scripts.critical_logger", "DB_PATH", ("cdp.db",)),
     ("scripts.op_log", "LOG_DIR", ("logs",)),
@@ -56,7 +56,7 @@ ITEMS: list[tuple[str, str, tuple[str, ...]]] = [
     ("scripts.realtime_audit", "LOG_DIR", ("logs",)),
     ("scripts.web_connector", "_DAEMON_STATE", ("cdp_daemon_state.json",)),
     ("scripts.web_connector", "SESSION_BASE_DIR", ("browser_sessions",)),
-    ("scripts.cdp_force_start", "PID_FILE", ("cdp_force_pid.json",)),
+    ("scripts.browser.cdp.cdp_force_start", "PID_FILE", ("cdp_force_pid.json",)),
     ("scripts.naver.automation.platform.scheduler", "DB_PATH", ("cdp.db",)),
     ("scripts.naver.automation.platform.error_recovery", "DB_PATH", ("cdp.db",)),
     ("scripts.naver.blog.management.schedule", "DB_PATH", ("cdp.db",)),

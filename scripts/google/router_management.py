@@ -18,7 +18,7 @@ def run_session_check() -> None:
     elif result["logged_in"]:
         print("[ok] logged in")
     else:
-        print("[needs-login] run: python scripts/cdp_client.py google login")
+        print("[needs-login] run: python scripts/browser/cdp/cdp_client.py google login")
     print("=" * 60)
 
 

@@ -297,7 +297,7 @@ def test_script_runs_as_subprocess_status_and_bad_command():
 
 
 def test_cdp_force_start_survives_watch_failures(monkeypatch, capsys):
-    from scripts import cdp_force_start as cfs
+    from scripts.browser.cdp import cdp_force_start as cfs
 
     def boom():
         raise RuntimeError("watch broke")
@@ -312,7 +312,7 @@ def test_cdp_force_start_survives_watch_failures(monkeypatch, capsys):
 
 @pytest.mark.parametrize("fn", ["_start_watch", "_stop_watch"])
 def test_cdp_force_start_has_watch_hooks(fn):
-    from scripts import cdp_force_start as cfs
+    from scripts.browser.cdp import cdp_force_start as cfs
 
     assert callable(getattr(cfs, fn))
 
