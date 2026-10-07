@@ -12545,7 +12545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/browser_watch.py": {
+  "scripts/browser/cdp/browser_watch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",

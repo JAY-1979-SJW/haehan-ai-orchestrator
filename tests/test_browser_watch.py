@@ -1,4 +1,4 @@
-"""scripts/ops/browser_watch.py — 탭 생성·이동·종료 감시 로그 시험."""
+"""scripts/browser/cdp/browser_watch.py — 탭 생성·이동·종료 감시 로그 시험."""
 
 import json
 import os
@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import websocket
 
-from scripts.ops import browser_watch as bw
+from scripts.browser.cdp import browser_watch as bw
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -277,7 +277,7 @@ def test_start_launches_detached_and_second_start_is_skipped(tmp_path, monkeypat
 
 def test_script_runs_as_subprocess_status_and_bad_command():
     ok = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "ops" / "browser_watch.py"), "status"],
+        [sys.executable, str(ROOT / "scripts" / "browser" / "cdp" / "browser_watch.py"), "status"],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -286,7 +286,7 @@ def test_script_runs_as_subprocess_status_and_bad_command():
     )
     assert ok.returncode == 0 and "browser_watch:" in ok.stdout
     bad = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "ops" / "browser_watch.py"), "nope"],
+        [sys.executable, str(ROOT / "scripts" / "browser" / "cdp" / "browser_watch.py"), "nope"],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -322,7 +322,7 @@ def test_is_running_true_for_real_watch_process(tmp_path, monkeypatch):
     monkeypatch.setattr(bw, "PID_PATH", tmp_path / "pid.json")
     monkeypatch.setattr(bw, "_browser_ws_url", lambda port: None)
     proc = subprocess.Popen(
-        [sys.executable, str(ROOT / "scripts" / "ops" / "browser_watch.py"), "run"],
+        [sys.executable, str(ROOT / "scripts" / "browser" / "cdp" / "browser_watch.py"), "run"],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

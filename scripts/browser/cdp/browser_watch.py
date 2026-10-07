@@ -4,10 +4,10 @@
 맺지 않으므로 자동화에 간섭하지 않는다. 설계: docs/specs/2026-09-30_browser_watch_log.md
 
 사용법:
-    python scripts/ops/browser_watch.py run      # 포그라운드 감시(Ctrl+C 로 종료)
-    python scripts/ops/browser_watch.py start    # 분리 기동(이미 떠 있으면 생략)
-    python scripts/ops/browser_watch.py stop
-    python scripts/ops/browser_watch.py status
+    python scripts/browser/cdp/browser_watch.py run      # 포그라운드 감시(Ctrl+C 로 종료)
+    python scripts/browser/cdp/browser_watch.py start    # 분리 기동(이미 떠 있으면 생략)
+    python scripts/browser/cdp/browser_watch.py stop
+    python scripts/browser/cdp/browser_watch.py status
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ import urllib.request
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 CDP_PORT = 9222
 LOG_PATH = ROOT / "data" / "logs" / "browser_watch.jsonl"
 PID_PATH = ROOT / "data" / "browser_watch_pid.json"
@@ -401,7 +401,7 @@ def main(argv: list[str]) -> int:
     if cmd == "status":
         print(f"browser_watch: {'실행 중' if is_running() else '중지'} (log={LOG_PATH})")
         return 0
-    print("사용법: python scripts/ops/browser_watch.py [run|start|stop|status]")
+    print("사용법: python scripts/browser/cdp/browser_watch.py [run|start|stop|status]")
     return 1
 
 
