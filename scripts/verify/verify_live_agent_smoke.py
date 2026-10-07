@@ -112,8 +112,12 @@ async def _await_heartbeat_ack(ws, report, agent_id, timeout):
 
 
 async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, token: str, timeout: float) -> None:
-    from local_agent import __version__
-    from local_agent.connection_diagnostics import normalize_ws_url
+    from local_agent import (  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
+        __version__,
+        connection_diagnostics,
+    )
+
+    normalize_ws_url = connection_diagnostics.normalize_ws_url
 
     try:
         import websockets  # type: ignore
