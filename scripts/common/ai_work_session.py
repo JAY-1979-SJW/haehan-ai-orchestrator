@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RECORD_ROOT = ROOT / "data" / "runtime" / "ai_work_records"
-AI_WORK_RECORD = ROOT / "scripts" / "ops" / "ai_work_record.py"
+AI_WORK_RECORD = ROOT / "scripts" / "common" / "ai_work_record.py"
 
 
 def safe_lane(value: str) -> str:
