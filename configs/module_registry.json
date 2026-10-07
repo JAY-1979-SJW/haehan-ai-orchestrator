@@ -14865,7 +14865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/check_naver_session_validity_20260520.py": {
+  "scripts/archive/ops/check_naver_session_validity_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver",
@@ -15185,7 +15185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/live_check_login_realtime_20260520.py": {
+  "scripts/archive/ops/live_check_login_realtime_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -15585,7 +15585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify_naver_main_first_live_20260520.py": {
+  "scripts/archive/ops/verify_naver_main_first_live_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver",
