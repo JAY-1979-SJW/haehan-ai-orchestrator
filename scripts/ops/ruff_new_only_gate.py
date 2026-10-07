@@ -67,7 +67,8 @@ def _parse_diff_hunks(diff_text: str) -> dict[str, set[int]]:
 
 def changed_lines_staged() -> dict[str, set[int]] | None:
     """스테이징(index) 대비 HEAD 기준 바뀐 줄. git 자체를 못 쓰면 None(판정 불가)."""
-    p = _run_git(["diff", "--cached", "--unified=0"])
+    # -M: git 설정(diff.renames)과 무관하게 이름 변경(git mv)을 감지한다 — 무변경 이동은 바뀐 줄 0, 편집한 이동은 그 줄만
+    p = _run_git(["diff", "--cached", "-M", "--unified=0"])
     if p.returncode != 0:
         return None
     return _parse_diff_hunks(p.stdout)
@@ -82,7 +83,7 @@ def changed_lines_between(base_ref: str, head_ref: str | None) -> dict[str, set[
     head_ref 가 없으면(verify_change.py --head 생략 = 현재 작업트리) 커밋되지 않은
     변경까지 포함해 작업트리 대비로 비교한다."""
     ref_spec = f"{base_ref}..{head_ref}" if head_ref else base_ref
-    p = _run_git(["diff", ref_spec, "--unified=0"])
+    p = _run_git(["diff", ref_spec, "-M", "--unified=0"])
     if p.returncode != 0:
         return None
     return _parse_diff_hunks(p.stdout)
