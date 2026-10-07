@@ -11,7 +11,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/ui/PageShell";
-import { getMe, type UserInfo } from "@/lib/userAuth";
+import { getMe, desktopSession, setToken, type UserInfo } from "@/lib/userAuth";
 import { UniversalChat } from "@/components/chat/UniversalChat";
 
 export default function HomePage() {
@@ -20,10 +20,36 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    getMe()
-      .then((u) => { setUser(u); setAuthChecked(true); })
-      .catch(() => { setAuthChecked(true); });
-  }, []);
+    let cancelled = false;
+    (async () => {
+      const u = await getMe().catch(() => null);
+      if (cancelled) return;
+      if (u) {
+        setUser(u);
+        setAuthChecked(true);
+        return;
+      }
+
+      // 웹에서는 404(detail 외 값) → null 이라 즉시 /about 으로 간다(기존 동작 보존).
+      // 데스크톱 앱에서는 이미 등록된 owner 면 자동 로그인, 첫 실행이면 /setup 으로 보낸다(B안).
+      const session = await desktopSession();
+      if (cancelled) return;
+      if (session && session !== "needs_setup") {
+        setToken(session.token);
+        setUser(session.user);
+        setAuthChecked(true);
+        return;
+      }
+      if (session === "needs_setup") {
+        router.replace("/setup");
+        return;
+      }
+      setAuthChecked(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   useEffect(() => {
     if (authChecked && !user) router.replace("/about");

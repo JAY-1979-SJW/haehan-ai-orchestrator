@@ -57,9 +57,11 @@ test("사용자 흐름 E2E — 앱 UI 직접 조작", async () => {
   console.log("✅ webview(Next UI) 획득 url=", ui.url());
 
   // ── 1. 대시보드: 로그인 상태(=/login 으로 안 튕김) ──────────────
+  // "오케스트레이터" 문구는 855d595a(단일 AI 콘솔 UI 전면 개편)로 대시보드에서 빠지고
+  // /about 랜딩에만 남았다 — 대시보드 자체를 식별하는 data-testid 로 교체(2026-10-08).
   await shot(ui, "01_dashboard.png");
   expect(ui.url()).not.toContain("/login");
-  await expect(ui.getByText(/오케스트레이터/).first()).toBeVisible({ timeout: 20_000 });
+  await expect(ui.getByTestId("ai-agent-console")).toBeVisible({ timeout: 20_000 });
   console.log("✅ [1] 대시보드 로그인 상태 렌더");
 
   // ── 2. 상품 관리: 스마트스토어 로그인 세션으로 실데이터 ──────────

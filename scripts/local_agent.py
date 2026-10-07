@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import sys
@@ -16,6 +17,16 @@ import threading
 import time
 import traceback
 from pathlib import Path
+
+# PyInstaller 패키징 exe 는 stdout/stderr 가 파이프로 리다이렉트될 때 콘솔 코드페이지
+# (예: cp1252)로 떨어져 print() 의 한글 문구가 UnicodeEncodeError 로 크래시한다
+# (2026-10-08 CI E2E 에서 재현: local_agent.py:274 "[에이전트] 서버 연결 중" 출력에서 크래시,
+# PYTHONIOENCODING/PYTHONUTF8 환경변수가 frozen exe 까지 전달되지 않는 경우에도 안전하도록
+# 코드에서 직접 강제). best-effort — 실패해도 에이전트 기동 자체는 막지 않는다.
+with contextlib.suppress(Exception):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+with contextlib.suppress(Exception):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
