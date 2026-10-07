@@ -36,21 +36,21 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_required_quality_gate.py" in rendered
     assert "tests/test_module_boundaries.py" in rendered
     assert "tests/test_root_legacy_scripts_audit.py" in rendered
-    assert "tests/test_google_subdomain_logic.py" in rendered
-    assert "tests/test_google_tab_logic.py" in rendered
-    assert "tests/test_google_ads_signup.py" in rendered
-    assert "tests/test_google_live_surface_explorer.py" in rendered
-    assert "tests/test_google_cloud_live_console_explorer.py" in rendered
-    assert "tests/test_google_ai_usage_labels.py" in rendered
-    assert "tests/test_google_android_app_dev.py" in rendered
-    assert "tests/test_google_domain_taxonomy.py" in rendered
-    assert "tests/test_google_managed_console.py" in rendered
-    assert "tests/test_google_work_mode_gate.py" in rendered
-    assert "tests/test_google_workspace_basic.py" in rendered
-    assert "tests/test_google_home_login_gate.py" in rendered
-    assert "tests/test_google_youtube_upload.py" in rendered
-    assert "tests/test_google_youtube_search.py" in rendered
-    assert "tests/test_google_precision_report.py" in rendered
+    assert "tests/google/test_google_subdomain_logic.py" in rendered
+    assert "tests/google/test_google_tab_logic.py" in rendered
+    assert "tests/google/test_google_ads_signup.py" in rendered
+    assert "tests/google/test_google_live_surface_explorer.py" in rendered
+    assert "tests/google/test_google_cloud_live_console_explorer.py" in rendered
+    assert "tests/google/test_google_ai_usage_labels.py" in rendered
+    assert "tests/google/test_google_android_app_dev.py" in rendered
+    assert "tests/google/test_google_domain_taxonomy.py" in rendered
+    assert "tests/google/test_google_managed_console.py" in rendered
+    assert "tests/google/test_google_work_mode_gate.py" in rendered
+    assert "tests/google/test_google_workspace_basic.py" in rendered
+    assert "tests/google/test_google_home_login_gate.py" in rendered
+    assert "tests/google/test_google_youtube_upload.py" in rendered
+    assert "tests/google/test_google_youtube_search.py" in rendered
+    assert "tests/google/test_google_precision_report.py" in rendered
     assert "tests/test_site_sso_subdomain_runtime.py" in rendered
     assert "tests/youtube/test_youtube_oauth.py" in rendered
     assert "tests/youtube/test_youtube_research.py" in rendered
@@ -272,7 +272,7 @@ def test_google_youtube_search_pytest_uses_workspace_temp(monkeypatch):
     command = next(
         command
         for command in gate.COMMANDS
-        if "tests/test_google_youtube_search.py" in command and gate.command_is_pytest(command)
+        if "tests/google/test_google_youtube_search.py" in command and gate.command_is_pytest(command)
     )
 
     assert gate.command_needs_isolated_pytest_temp(command) is True

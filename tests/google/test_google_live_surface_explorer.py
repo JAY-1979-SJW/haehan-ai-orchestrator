@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from scripts.google import live_surface_explorer as live
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_live_surface_selector_filters_by_tab_and_excludes_cloud() -> None:

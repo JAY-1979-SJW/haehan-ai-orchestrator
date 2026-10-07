@@ -18,7 +18,7 @@ from scripts.auth import login_detector as ld
 from scripts.explorer import page_analysis, page_snapshot
 from scripts.ops.write_gates import sitemap_gate
 
-FIXTURE = Path(__file__).parent / "fixtures" / "login_state" / "naver_logged_out_blog_home.json"
+FIXTURE = Path(__file__).parent.parent / "fixtures" / "login_state" / "naver_logged_out_blog_home.json"
 NAVER_URL = "https://section.blog.naver.com/BlogHome.naver"
 
 
@@ -93,7 +93,7 @@ def test_logged_out_screen_is_out_and_user_is_none(use_snapshot):
     assert (result["state"], result["logged_in"], result["user"], result["method"]) == ("out", False, None, "element")
 
 
-LOGGED_IN_FIXTURE = Path(__file__).parent / "fixtures" / "login_state" / "naver_logged_in_home.json"
+LOGGED_IN_FIXTURE = Path(__file__).parent.parent / "fixtures" / "login_state" / "naver_logged_in_home.json"
 
 
 def _logged_in_fixture() -> dict:

@@ -15897,7 +15897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_ads_signup.py": {
+  "tests/google/test_google_ads_signup.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15905,7 +15905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_ai_usage_labels.py": {
+  "tests/google/test_google_ai_usage_labels.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15913,7 +15913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_android_app_dev.py": {
+  "tests/google/test_google_android_app_dev.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15921,7 +15921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_cloud_live_console_explorer.py": {
+  "tests/google/test_google_cloud_live_console_explorer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15929,7 +15929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_cloud_wrapper.py": {
+  "tests/google/test_google_cloud_wrapper.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15937,7 +15937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_domain_readiness_audit.py": {
+  "tests/google/test_google_domain_readiness_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15945,7 +15945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_domain_taxonomy.py": {
+  "tests/google/test_google_domain_taxonomy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15953,7 +15953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_gmail_analysis.py": {
+  "tests/google/test_google_gmail_analysis.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15961,7 +15961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_gmail_function_contract.py": {
+  "tests/google/test_google_gmail_function_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15969,7 +15969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_home_login_gate.py": {
+  "tests/google/test_google_home_login_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15977,7 +15977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_live_input_representative_preflight.py": {
+  "tests/google/test_google_live_input_representative_preflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15985,7 +15985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_live_surface_explorer.py": {
+  "tests/google/test_google_live_surface_explorer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15993,7 +15993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_managed_console.py": {
+  "tests/google/test_google_managed_console.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16001,7 +16001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_module_check.py": {
+  "tests/google/test_google_module_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16009,7 +16009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_precision_report.py": {
+  "tests/google/test_google_precision_report.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16017,7 +16017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_prefill_maturity.py": {
+  "tests/google/test_google_prefill_maturity.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16025,7 +16025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_router_workspace_integration.py": {
+  "tests/google/test_google_router_workspace_integration.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16033,7 +16033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_secret_action_gate.py": {
+  "tests/google/test_google_secret_action_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16041,7 +16041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_site_engine.py": {
+  "tests/google/test_google_site_engine.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16049,7 +16049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_subdomain_logic.py": {
+  "tests/google/test_google_subdomain_logic.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16057,7 +16057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_surfaces.py": {
+  "tests/google/test_google_surfaces.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16065,7 +16065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_tab_logic.py": {
+  "tests/google/test_google_tab_logic.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16073,7 +16073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_tab_registry.py": {
+  "tests/google/test_google_tab_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16081,7 +16081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_user_present_session_auth.py": {
+  "tests/google/test_google_user_present_session_auth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16089,7 +16089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_vision_usage_gate.py": {
+  "tests/google/test_google_vision_usage_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16097,7 +16097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_work_mode_gate.py": {
+  "tests/google/test_google_work_mode_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16105,7 +16105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_workflows.py": {
+  "tests/google/test_google_workflows.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16113,7 +16113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_workspace_basic.py": {
+  "tests/google/test_google_workspace_basic.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16121,7 +16121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_workspace_wrapper.py": {
+  "tests/google/test_google_workspace_wrapper.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16129,7 +16129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_youtube_search.py": {
+  "tests/google/test_google_youtube_search.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -16137,7 +16137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_youtube_upload.py": {
+  "tests/google/test_google_youtube_upload.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -16937,7 +16937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_state_by_elements.py": {
+  "tests/naver_auth/test_login_state_by_elements.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17097,7 +17097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_auth_input_timeout.py": {
+  "tests/naver_auth/test_naver_auth_input_timeout.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17105,7 +17105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_auth_redaction.py": {
+  "tests/naver_auth/test_naver_auth_redaction.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17233,7 +17233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_login_entry_policy.py": {
+  "tests/naver_auth/test_naver_login_entry_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17401,7 +17401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_session_guard.py": {
+  "tests/naver_auth/test_naver_session_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17409,7 +17409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_session_router_guard.py": {
+  "tests/naver_auth/test_naver_session_router_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -22913,7 +22913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_shared_helpers.py": {
+  "tests/google/test_google_shared_helpers.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -23285,6 +23285,22 @@
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/google/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_auth/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

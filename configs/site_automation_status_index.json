@@ -201,10 +201,10 @@
         "ai_orchestrator/connectors/google/gmail_router.py"
       ],
       "tests": [
-        "tests/test_google_site_engine.py",
-        "tests/test_google_surfaces.py",
-        "tests/test_google_workflows.py",
-        "tests/test_google_user_present_session_auth.py"
+        "tests/google/test_google_site_engine.py",
+        "tests/google/test_google_surfaces.py",
+        "tests/google/test_google_workflows.py",
+        "tests/google/test_google_user_present_session_auth.py"
       ],
       "owner_module": "scripts/google",
       "notes": [

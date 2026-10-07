@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from scripts.google.cloud import live_console_explorer as live
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_cloud_live_explorer_redacts_urls_and_sensitive_text() -> None:
