@@ -6,7 +6,6 @@ AI 미사용 — 제목/본문/발신자 키워드 매칭으로 보수적 분류
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 # ── 분류 규칙 정의 ────────────────────────────────────────────────────────────
 # 각 항목: (category, keywords, candidate_task_type)
