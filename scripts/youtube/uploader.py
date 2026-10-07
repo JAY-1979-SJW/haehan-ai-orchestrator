@@ -7,9 +7,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from orchestrator_v1.core.security_utils import safe_preview
 from scripts.publish_guard import guarded
 from scripts.realtime_audit import emit_event
-from security_utils import safe_preview
 
 ROOT = Path(__file__).resolve().parents[2]
 PLAN_DIR = ROOT / "data" / "youtube_upload_plans"
@@ -209,6 +209,10 @@ def execute_upload_plan(
     elif dry_run:
         result.update({"status": "dry_run_ok", "reason": "dry_run_no_upload"})
     else:
+        # 실제 업로드 직전 공통 게이트(승인 문구 대조 + 감사 기록). 문구는 사용자가 입력한 confirm 값이다.
+        from scripts.gate import require_side_effect
+
+        require_side_effect("youtube_upload", approval=confirm, expected=APPROVAL_PHRASE, plan=str(plan_path))
         upload = _upload_with_official_api(plan)
         result.update(
             {

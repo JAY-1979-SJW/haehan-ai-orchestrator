@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import pathlib
 
+from tests.app_routes import EXPECTED_HTTP_ROUTES, EXPECTED_WEBSOCKET_ROUTES
+
 # ===========================================================================
 # SECTION 1: naver_search_router 미등록 현황
 # ===========================================================================
@@ -346,8 +348,8 @@ def test_next_phase_manual_review_candidates_locked():
 # ===========================================================================
 
 # 2026-10-05 갱신(HTTP 62→423, WS 1→2): 저장소 성장·FastAPI 0.142 로 지연 include 래퍼를 펼쳐 실제 라우트를 보게 됨(HTTP+WS=425=EXPECTED_RUNTIME_ROUTES)
-RUNTIME_HTTP_ENDPOINT_COUNT = 426  # M11: 지도 이력 /site-map/{host}/history·/diff GET 2개 추가(425→427); 이전: M10: 사이트 사전 조사 /site-registry/{host}/preflight GET·POST 2개 추가(423→425) / gc 제거 -1(429→428 기준, 2026-10-05)
-RUNTIME_WEBSOCKET_COUNT = 2
+RUNTIME_HTTP_ENDPOINT_COUNT = EXPECTED_HTTP_ROUTES  # 기대값 정본: configs/route_count_expectation.json (라우트를 추가·삭제하면 그 파일만 고친다)
+RUNTIME_WEBSOCKET_COUNT = EXPECTED_WEBSOCKET_ROUTES  # 기대값 정본: configs/route_count_expectation.json
 # FULL_CLASSIFICATION(아래 SECTION 4)은 라우터 분류 매핑이 63개 시점에 작성된 스냅샷이라 현행 425개 전체를 분류하지 않는다.
 # 분류 매핑 시험(③④)은 그 시점 값(HTTP 62 + WS 1 = 63)과 대조한다 — 분류 데이터 전체 재작성은 이번 승인 범위 밖.
 CLASSIFICATION_SNAPSHOT_RUNTIME_TOTAL = 63

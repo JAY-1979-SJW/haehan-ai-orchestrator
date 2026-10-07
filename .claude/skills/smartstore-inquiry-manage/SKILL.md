@@ -73,9 +73,15 @@ from scripts.naver.smartstore.inquiry_workflow import get_order_status
 status_text = get_order_status(cdp, 9222, "상품주문번호")
 
 fill_reply_draft(cdp, "답변 내용")   # read-only 성격, 승인 없이 가능
-# 사용자 명시 승인 후에만:
-result = submit_reply(cdp)          # "답변처리가 완료되었습니다." 등 반환
+# 사용자 명시 승인 후에만 — approval 에는 사용자가 직접 입력한 승인 문구만 넘긴다:
+result = submit_reply(cdp, approval=user_typed_phrase)  # "답변처리가 완료되었습니다." 등 반환
 ```
+
+**승인 문구 규칙 (R2 안전장치)**: `submit_reply()`는 `approval` 이 없거나 사용자가 입력한
+승인 문구와 다르면 `GateBlocked` 로 막혀 전송하지 않는다. 에이전트는 호출 전에 사용자에게
+답변 내용을 보여 주고 **승인 문구를 사용자가 직접 입력하게** 한다. 문구를 코드·스킬·이전 응답에서
+가져와 **에이전트가 대신 채워 넣지 않는다**(그러면 게이트가 무의미해진다). 차단 메시지에는
+문구가 담기지 않으며, 문구는 사용자만 알려 준다.
 
 **주의 (2026-08-23 실측 함정)**:
 - 답변 textarea에 **JS로 값만 주입하면** 프레임워크가 "문의유형=직접입력"
@@ -86,7 +92,7 @@ result = submit_reply(cdp)          # "답변처리가 완료되었습니다." �
   있다 — `fill_reply_draft()` → `submit_reply()` 순서를 지키고 중간에
   다른 select를 건드리지 않는다.
 - 답변 전송은 고객 노출 액션이라 **매번 사용자 명시 승인 후에만**
-  `submit_reply()`를 호출한다(CLAUDE.md 외부 발행 원칙).
+  `submit_reply()`를 호출한다(CLAUDE.md 외부 발행 원칙) — 호출 때 사용자가 입력한 승인 문구를 `approval=` 로 넘긴다.
 
 ## 4. 팝업/네이티브 alert 처리
 

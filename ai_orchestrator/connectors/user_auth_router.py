@@ -10,7 +10,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
 
 from ai_orchestrator import config
-from ai_orchestrator.gates.auth import require_role  # 관리자(Basic Auth) — 승인 등 owner 작업
+from ai_orchestrator.gates.auth import (  # 승인 등 owner 작업·콘솔 JWT 수용·OWNER_EMAILS
+    is_owner_email,
+    register_bearer_resolver,
+    require_role,
+)
 from ai_orchestrator.persistence import auth_audit, user_db
 
 user_auth_router = APIRouter(prefix="/users", tags=["users"])
@@ -36,6 +40,16 @@ def _decode_token(token: str) -> str | None:
         return payload.get("sub")
     except jwt.PyJWTError:
         return None
+
+
+def resolve_bearer_user(token: str) -> dict | None:
+    """Bearer JWT → 활성 사용자 레코드. 만료·위조·서명 불일치·알 수 없는 사용자·승인 대기(enabled=0)는 None.
+
+    `gates.auth.get_current_user` 가 콘솔 라우트에서 JWT 를 받을 때 쓴다(아래 register_bearer_resolver).
+    검증 자체는 위 `_decode_token`·`user_db.get_user_by_id` 를 그대로 재사용한다(새 JWT 로직 없음).
+    """
+    user_id = _decode_token(token)
+    return user_db.get_user_by_id(user_id) if user_id else None
 
 
 def get_jwt_user(
@@ -148,6 +162,9 @@ def signup(body: SignupRequest):
         raise HTTPException(status_code=409, detail="이미 사용 중인 이메일입니다")
     user = user_db.create_user(body.email, body.name, body.password)
     auth_audit.record_auth_event("signup", "success", actor_id=user.get("id"), email=body.email)
+    if is_owner_email(body.email):
+        # 이메일 인증이 없으므로 owner 이메일 가입은 감사 로그로 눈에 띄게 남긴다(승인 전 본인 가입인지 확인할 단서).
+        auth_audit.record_auth_event("signup", "owner_email_pending", actor_id=user.get("id"), email=body.email)
     return SignupResponse(
         status="pending_approval",
         message="가입이 접수되었습니다. 관리자 승인 후 로그인할 수 있습니다.",
@@ -203,8 +220,18 @@ def list_pending(_admin: dict = Depends(require_role("admin", "owner"))):
 def approve(user_id: str, admin: dict = Depends(require_role("admin", "owner"))):
     """승인 대기 사용자를 활성화(enabled=1) (관리자 전용)."""
     actor = admin.get("actor") or admin.get("id")
+    # OWNER_EMAILS 의 이메일로 가입한 계정은 승인되는 순간 owner 가 되므로, owner 가 아닌 관리자(admin)는 승인할 수 없다.
+    # (이메일 인증이 없어 남의 owner 이메일로 먼저 가입할 수 있다 — admin 이 그 계정을 승인해 owner 로 만드는 권한 상승 차단)
+    target = user_db._get_user_unfiltered(user_id)
+    if target is not None and is_owner_email(target.get("email")) and admin.get("role") != "owner":
+        auth_audit.record_auth_event("approve", "owner_email_forbidden", actor_id=actor, target_user_id=user_id)
+        raise HTTPException(status_code=403, detail="owner 이메일 계정은 owner 만 승인할 수 있습니다")
     if not user_db.approve_user(user_id):
         auth_audit.record_auth_event("approve", "not_found", actor_id=actor, target_user_id=user_id)
         raise HTTPException(status_code=404, detail="대상 사용자를 찾을 수 없습니다")
     auth_audit.record_auth_event("approve", "success", actor_id=actor, target_user_id=user_id)
     return {"status": "approved", "user_id": user_id}
+
+
+# 콘솔 라우트(require_role)가 Bearer JWT 도 받도록 검증 함수를 게이트에 등록한다(L2 게이트가 L7 DB 를 직접 import 하지 않게 하는 의존 역전).
+register_bearer_resolver(resolve_bearer_user)

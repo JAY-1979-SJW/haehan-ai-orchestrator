@@ -55,6 +55,9 @@ class SeoRequest(BaseModel):
     target_keywords: list[str] = []
 
 
+BLOG_PUBLISH_CONFIRM_TEXT = "NAVER_BLOG_APPROVED_PUBLISH"
+
+
 class BlogWriteRequest(BaseModel):
     title: str
     body: str
@@ -63,6 +66,8 @@ class BlogWriteRequest(BaseModel):
     media: list[str] = []  # 업로드된 사진·동영상 파일명
     image_count: int = 3  # Unsplash 자동 선택 이미지 수 (media 없을 때 적용, 0=이미지 없음)
     publish: bool = False  # False=임시저장(되돌림 가능) / True=실제 발행(외부공개 — 사용자 확인 필수)
+    # publish=True 일 때 사용자가 확인 단계에서 직접 입력한 승인 문구(BLOG_PUBLISH_CONFIRM_TEXT). 없거나 다르면 403.
+    publish_confirm: str | None = None
     # 섹션별 사진 배치 (선택) — 지정 시 media/image_count 무시하고 이 순서 그대로 삽입.
     # [{"type": "text", "value": "..."}, {"type": "image", "value": "업로드된 파일명"}, ...]
     # 미지정 시 기존 방식(첫 사진만 맨 위, 나머지는 본문 끝) 그대로 동작 — 하위호환.
@@ -198,7 +203,20 @@ def write_to_naver(
 
     BlogWriter 가 SE3 셀렉터·iframe·자동로그인을 처리. 범용 클릭 에이전트보다 정확.
     """
+    from ai_orchestrator.gates.gate_core import GateBlocked, require_side_effect
     from scripts.web_connector import get_page, run_on_browser_thread
+
+    if req.publish:
+        # 외부 공개 발행: 사용자가 확인 단계에서 입력한 승인 문구가 있어야 한다. 막히면 브라우저를 열기 전에 403.
+        try:
+            require_side_effect(
+                "blog_publish", approval=req.publish_confirm, expected=BLOG_PUBLISH_CONFIRM_TEXT, title=req.title
+            )
+        except GateBlocked as exc:
+            raise HTTPException(
+                status_code=403,
+                detail=f"발행 차단: {exc.result.reason} (사용자가 직접 입력한 승인 문구가 필요합니다)",
+            ) from exc
 
     def _do() -> dict:
         from scripts.naver.blog.core.writer import BlogWriter

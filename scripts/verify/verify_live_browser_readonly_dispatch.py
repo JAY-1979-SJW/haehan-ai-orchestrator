@@ -9,9 +9,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 루트 패키지(local_agent 등) 해석용
 from local_agent.network_bypass import direct_child_env, urlopen_for_server
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
 
@@ -185,6 +186,7 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         _stop_worker(worker)
         print("[PASS] worker stopped")
+    return 0
 
 
 if __name__ == "__main__":

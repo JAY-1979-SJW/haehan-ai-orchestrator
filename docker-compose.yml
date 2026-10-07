@@ -10,6 +10,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # 빌드 식별(/api/v1/health 의 git_sha·build_time). scripts/ops/server_deploy.py 가 값을 넘기고, 없으면 "unknown".
+      args:
+        GIT_SHA: ${GIT_SHA:-unknown}
+        BUILD_TIME: ${BUILD_TIME:-unknown}
     image: haehan-ai-orchestrator-api:local
     container_name: haehan-ai-orchestrator-api
     working_dir: /app
@@ -25,6 +29,8 @@ services:
       LOG_DIR: /app/ai_orchestrator/storage
       HTTP_USERS_PATH: /run/secrets/api/http_users.json
       AUTH_ENABLED: "true"
+      # 서버 .env 에 JWT_SECRET 을 설정한 뒤 true 로 켠다(기본 false = 경고만). 없는 채로 켜면 시작하지 않는다.
+      JWT_SECRET_REQUIRED: ${JWT_SECRET_REQUIRED:-false}
       APP_HOST: 0.0.0.0
       APP_PORT: "8400"
     extra_hosts:
@@ -64,6 +70,8 @@ services:
       - "3000"
     environment:
       NODE_ENV: production
+      # Next 미들웨어가 로그인 쿠키(JWT)의 서명을 검증하려면 API 와 같은 값이 필요하다. 비면 쿠키 존재만 확인한다.
+      JWT_SECRET: ${JWT_SECRET:-}
     depends_on:
       ai-orchestrator-api:
         condition: service_healthy

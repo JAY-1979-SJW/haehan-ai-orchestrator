@@ -1,29 +1,5 @@
-from dataclasses import dataclass, field
-from typing import Literal
+# 호환 shim: 실제 모듈은 orchestrator_v1/core/models.py (docs/architecture/ROOT_MODULE_SPLIT_PLAN.md)
+import importlib as _il
+import sys as _sys
 
-
-@dataclass
-class TaskRequest:
-    task_id: str
-    source: Literal["pc", "server", "manual"]
-    action_type: str
-    target: str
-    description: str
-    payload: dict = field(default_factory=dict)
-    requested_by: str = "system"
-
-
-@dataclass
-class RiskAssessment:
-    risk_level: Literal["low", "medium", "high", "critical"]
-    reasons: list = field(default_factory=list)
-    requires_approval: bool = False
-
-
-@dataclass
-class ExecutionPlan:
-    task_id: str
-    allowed: bool
-    requires_approval: bool
-    steps: list = field(default_factory=list)
-    blocked_reasons: list = field(default_factory=list)
+_sys.modules[__name__] = _il.import_module("orchestrator_v1.core.models")

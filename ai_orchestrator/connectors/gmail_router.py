@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.gates.send_approval import addresses, require_send_approval
 
 from ..audit_logger import log_event
 
@@ -33,8 +34,13 @@ class GmailComposeRequest(BaseModel):
     dry_run: bool = True
 
 
+GMAIL_SEND_CONFIRM_TEXT = "GMAIL_APPROVED_SEND"
+
+
 class GmailSendRequest(BaseModel):
     confirmed: bool = False
+    # 사용자가 확인 단계에서 직접 입력한 승인 문구(GMAIL_SEND_CONFIRM_TEXT). 없거나 다르면 403.
+    send_confirm: str | None = None
 
 
 class GmailReplyRequest(BaseModel):
@@ -46,6 +52,8 @@ class GmailReplyRequest(BaseModel):
     subject: str
     body: str
     dry_run: bool = True
+    # dry_run=False(실제 발송)일 때 사용자가 확인 단계에서 직접 입력한 승인 문구. 없거나 다르면 403.
+    send_confirm: str | None = None
 
 
 class GmailAiDraftRequest(BaseModel):
@@ -165,6 +173,12 @@ def api_compose(
         raise HTTPException(status_code=500, detail=f"Gmail 작성 실패: {e}") from e
 
 
+def _require_send_approval(send_confirm: str | None, *, recipients: list[str] | None, **meta: str) -> None:
+    require_send_approval(
+        "gmail_send", send_confirm=send_confirm, expected=GMAIL_SEND_CONFIRM_TEXT, recipients=recipients, **meta
+    )
+
+
 @gmail_router.post("/reply")
 def api_reply(
     req: GmailReplyRequest,
@@ -195,9 +209,12 @@ def api_reply(
             "dry_run": True,
             "thread_id": req.thread_id,
             "body_preview": req.body[:200],
-            "detail": "dry_run=True: 실행하려면 dry_run=False로 재요청(그 즉시 실제 발송됨)",
+            "detail": "dry_run=True: 실행하려면 dry_run=False + send_confirm(사용자가 직접 입력한 승인 문구)로 재요청(그 즉시 실제 발송됨)",
             "requires_send_approval": True,
         }
+
+    # 실제 발송 전 공통 검사: 승인 문구 + 수신거부. 외부 호출(Gmail API) 전에 403.
+    _require_send_approval(req.send_confirm, recipients=addresses(req.to), subject=req.subject)
 
     try:
         from ai_orchestrator.sites.gmail_reader import send_reply
@@ -340,6 +357,8 @@ def api_send(
     """현재 브라우저에 준비된 Gmail 발송. confirmed=True 필수."""
     if not req.confirmed:
         raise HTTPException(status_code=400, detail="confirmed=True 필수")
+    # 수신자는 브라우저 작성창 안에 있어 여기서 알 수 없으므로 수신거부 대조는 못 한다 — 승인 문구만 확인.
+    _require_send_approval(req.send_confirm, recipients=None)
 
     log_event(
         "GMAIL_SEND_REQUESTED",

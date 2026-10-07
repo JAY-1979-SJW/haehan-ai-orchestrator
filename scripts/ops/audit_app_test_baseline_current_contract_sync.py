@@ -67,9 +67,9 @@ def run_audit() -> None:
     legacy_test = _test_src("test_backend_legacy_router_direct_dict_audit_20260516.py")
     cycle_test = _test_src("test_backend_router_server_cycle_break_20260516.py")
 
-    # 현행 기준(tests/test_app_test_baseline_current_contract_sync 와 동일): 427/425, cycle_test 는 audit 단일 기준에 위임
-    _add("domain_test endpoint count 427 반영", "== 427" in domain_test)
-    _add("legacy_test HTTP count 425 반영", "= 425" in legacy_test)
+    # 현행 기준(tests/test_app_test_baseline_current_contract_sync 와 동일): 숫자를 직접 적지 않고 단일 정본(configs/route_count_expectation.json)을 읽는지 확인, cycle_test 는 audit 기준에 위임
+    _add("domain_test endpoint count 정본 참조", "EXPECTED_RUNTIME_ROUTES" in domain_test)
+    _add("legacy_test HTTP count 정본 참조", "EXPECTED_HTTP_ROUTES" in legacy_test)
     _add("cycle_test route count audit 기준 위임", "audit.EXPECTED_RUNTIME_ROUTES" in cycle_test)
 
     # app_status_router 3개 GET endpoint 확인

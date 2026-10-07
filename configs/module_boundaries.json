@@ -37,8 +37,8 @@
       "owner": "desktop",
       "layer": "L10",
       "paths": [
-        "verify_local_runtime_dry_run.py",
-        "verify_agent_ws_auth.py"
+        "scripts/verify/verify_local_runtime_dry_run.py",
+        "scripts/verify/verify_agent_ws_auth.py"
       ],
       "required_gate": "desktop_auth_runtime"
     },
@@ -69,8 +69,8 @@
       "paths": [
         "ai_orchestrator/",
         "services/",
-        "verify_live_agent_smoke.py",
-        "verify_live_task_dispatch.py"
+        "scripts/verify/verify_live_agent_smoke.py",
+        "scripts/verify/verify_live_task_dispatch.py"
       ],
       "required_gate": "live_agent"
     },
@@ -94,10 +94,10 @@
       "layer": "L12",
       "paths": [
         "app.py",
-        "approval_manager.py",
-        "audit_logger.py",
         "dashboard.py",
-        "executor.py"
+        "orchestrator_v1/core/audit_logger.py",
+        "orchestrator_v1/tasks/approval_manager.py",
+        "orchestrator_v1/tasks/executor.py"
       ],
       "required_gate": "codebase_layer_audit",
       "status": "accepted_residual"

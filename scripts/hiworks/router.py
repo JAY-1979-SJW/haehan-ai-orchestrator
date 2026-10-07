@@ -6,6 +6,7 @@ import contextlib
 import json
 
 from scripts.hiworks import gates
+from scripts.hiworks.actions import APPROVAL_CONFIRM_TEXT as SUBMIT_CONFIRM_TEXT
 from scripts.hiworks.actions import (
     apply_prepare_values,
     build_action_catalog,
@@ -230,16 +231,23 @@ def _cmd_submit_section(sub: str | None, args: list[str]) -> None:
     if not service or not control_id:
         raise SystemExit(
             "usage: python scripts/cdp_client.py hiworks submit-section <service> <control_id> "
-            "[--approved --confirm=HIWORKS_APPROVED_SUBMIT] [--dry-run] [--approved-by=name]"
+            "[--approved --confirm=<승인 문구(직접 입력)>] [--dry-run] [--approved-by=name]"
         )
     approved = "--approved" in args
     dry_run = "--dry-run" in args
     confirm = option_value(args, "--confirm=") or ""
     approved_by = option_value(args, "--approved-by=") or "operator"
-    if approved and confirm != "HIWORKS_APPROVED_SUBMIT":
-        raise SystemExit("approved submit requires --confirm=HIWORKS_APPROVED_SUBMIT")
+    if approved and confirm != SUBMIT_CONFIRM_TEXT:
+        raise SystemExit("approved submit requires --confirm=<사용자가 직접 입력한 승인 문구>")
 
-    gates.check_send(force=approved, service=service, control_id=control_id, dry_run=dry_run, approved_by=approved_by)
+    gates.require_send(
+        approval=confirm if approved else None,
+        expected=SUBMIT_CONFIRM_TEXT,
+        service=service,
+        control_id=control_id,
+        dry_run=dry_run,
+        approved_by=approved_by,
+    )
     workflow = workflow_for_alias("submit-section") or {"key": "submit_section", "risk": "send"}
     with work_run(workflow, [service, control_id, *(args or [])]):
         catalog = load_action_catalog()
@@ -278,8 +286,8 @@ def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
 
     if approved and not dry_run:
         if confirm != APPROVAL_CONFIRM_TEXT:
-            raise SystemExit(f"approved send requires --confirm={APPROVAL_CONFIRM_TEXT}")
-        gates.check_send(force=True, context="hiworks batch send", dry_run=False)
+            raise SystemExit("approved send requires --confirm=<사용자가 직접 입력한 승인 문구>")
+        gates.require_send(approval=confirm, expected=APPROVAL_CONFIRM_TEXT, dry_run=False, batch_limit=limit)
         workflow = workflow_for_alias("send-batch") or {"key": "send_batch_execute", "risk": "send"}
         with work_run(workflow, [str(limit), f"--delay-min={delay_min}", f"--delay-max={delay_max}", "--approved"]):
             from scripts.hiworks.explorer import open_hiworks
@@ -287,13 +295,13 @@ def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
 
             plan, _ = build_and_save_send_plan(limit=limit, delay_min=delay_min, delay_max=delay_max)
             page = open_hiworks(HIWORKS_MAIL_URL)
-            result = execute_send_batch(plan, page=page)
+            result = execute_send_batch(plan, page=page, approval=confirm)
             print_send_result(result)
         return
 
     if not dry_run:
         raise SystemExit(
-            "Actual Hiworks batch send requires --approved --confirm=HIWORKS_APPROVED_SEND_BATCH\n"
+            "Actual Hiworks batch send requires --approved --confirm=<사용자가 직접 입력한 승인 문구>\n"
             "Run with --dry-run first to preview the plan."
         )
 

@@ -10,7 +10,26 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-from scripts.ops.audit_backend_runtime_contract import iter_runtime_routes
+from scripts.ops.audit_backend_runtime_contract import (
+    EXPECTED_HTTP_ROUTES,
+    EXPECTED_POST_ROUTES,
+    EXPECTED_RUNTIME_ROUTES,
+    EXPECTED_WEBSOCKET_ROUTES,
+    iter_runtime_routes,
+)
+
+# 라우트 개수 기대값은 configs/route_count_expectation.json 한 곳이 정본이다(위 상수는 그것을 읽은 값). 시험에 숫자를 직접 적지 않는다.
+__all__ = [
+    "EXPECTED_HTTP_ROUTES",
+    "EXPECTED_POST_ROUTES",
+    "EXPECTED_RUNTIME_ROUTES",
+    "EXPECTED_WEBSOCKET_ROUTES",
+    "RuntimeRoute",
+    "http_routes",
+    "route_paths",
+    "runtime_routes",
+    "websocket_routes",
+]
 
 
 class RuntimeRoute(NamedTuple):

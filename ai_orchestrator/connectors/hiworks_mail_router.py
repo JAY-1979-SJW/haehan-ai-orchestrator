@@ -8,12 +8,14 @@
 from __future__ import annotations
 
 import logging
+import sys
 import time
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.gates.send_approval import require_send_approval
 
 from ..audit_logger import log_event
 
@@ -29,8 +31,13 @@ class HWMailComposeRequest(BaseModel):
     dry_run: bool = True
 
 
+HIWORKS_SEND_CONFIRM_TEXT = "HIWORKS_APPROVED_SEND"
+
+
 class HWMailSendRequest(BaseModel):
     confirmed: bool = False
+    # 사용자가 확인 단계에서 직접 입력한 승인 문구(HIWORKS_SEND_CONFIRM_TEXT). 없거나 다르면 403.
+    send_confirm: str | None = None
 
 
 @hiworks_mail_router.get("/inbox")
@@ -59,6 +66,8 @@ def api_inbox(
             raise ImportError("hiworks_mail_reader.py 로드 불가")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # type: ignore[attr-defined]
+        # 루트의 hiworks_mail_reader.py 는 호환 shim 이라 로드하면 sys.modules 가 실제 모듈로 바뀐다 — 로드한 객체 대신 그것을 쓴다.
+        mod = sys.modules.get("hiworks_mail_reader", mod)
         items = mod.fetch_recent_mails(limit=limit)
         duration_ms = int((time.monotonic() - t0) * 1000)
         log_event(
@@ -133,6 +142,8 @@ def api_send(
     """현재 브라우저에 열린 하이웍스 작성 메일 발송. confirmed=True 필수."""
     if not req.confirmed:
         raise HTTPException(status_code=400, detail="confirmed=True 필수")
+    # 수신자는 브라우저 작성창 안에 있어 여기서 알 수 없으므로 수신거부 대조는 못 한다 — 승인 문구만 확인.
+    require_send_approval("mail_send", send_confirm=req.send_confirm, expected=HIWORKS_SEND_CONFIRM_TEXT)
 
     log_event(
         "HIWORKS_MAIL_SEND_REQUESTED",

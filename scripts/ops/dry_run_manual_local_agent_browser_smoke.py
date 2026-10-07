@@ -25,7 +25,7 @@ OUT_OF_SCOPE = {
 REQUIRED_FILES = (
     "docs/design/authenticated_local_agent_dispatch_dry_run_20260523.md",
     "scripts/ops/audit_authed_local_agent_dispatch_dry_run.py",
-    "verify_live_browser_readonly_dispatch.py",
+    "scripts/verify/verify_live_browser_readonly_dispatch.py",
     "local_agent/agent.py",
     "local_agent/websocket_client.py",
     "local_agent/browser_readonly_runtime.py",
@@ -136,7 +136,7 @@ def _dry_run_ws_verifier(findings):
     else:
         add(findings, "FAIL", "playwright_off_event_loop", "sync browser may run inside event loop")
 
-    verifier = read("verify_live_browser_readonly_dispatch.py")
+    verifier = read("scripts/verify/verify_live_browser_readonly_dispatch.py")
     if "_mask_agent_id" in verifier and "device_token" not in verifier:
         add(findings, "PASS", "live_verifier_redaction", "agent id masked and no token reference")
     else:

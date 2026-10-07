@@ -95,6 +95,14 @@ def wait_ready(container_id: str) -> None:
     raise TimeoutError(f"처리 대기 시간 초과: {container_id}")
 
 
+def _require_publish_approval(confirmed: bool, approval: str | None, via: str) -> None:
+    """실제 게시(confirmed=True)는 사용자가 직접 입력한 승인 문구가 있어야 한다. 컨테이너 생성 전에 확인한다."""
+    if confirmed:
+        from scripts.gate import require_approved
+
+        require_approved("instagram_publish", approval, via=via)
+
+
 def publish(container_id: str) -> dict:
     _, uid = _creds()
     res = _post(f"{uid}/media_publish", {"creation_id": container_id})
@@ -103,8 +111,9 @@ def publish(container_id: str) -> dict:
 
 
 @guarded("ig_publish")
-def publish_reel(video_url: str, caption: str, confirmed: bool = False) -> dict:
-    """릴스 발행 전 과정. confirmed=True 일 때만 실제 게시한다."""
+def publish_reel(video_url: str, caption: str, confirmed: bool = False, approval: str | None = None) -> dict:
+    """릴스 발행 전 과정. confirmed=True + 승인 문구(approval)가 있을 때만 실제 게시한다."""
+    _require_publish_approval(confirmed, approval, "ig_publish_reel")
     cid = create_reel_container(video_url, caption)
     wait_ready(cid)
     if not confirmed:
@@ -145,7 +154,8 @@ def create_carousel(image_urls: list[str], caption: str) -> str:
 
 
 @guarded("ig_publish")
-def publish_carousel(image_urls: list[str], caption: str, confirmed: bool = False) -> dict:
+def publish_carousel(image_urls: list[str], caption: str, confirmed: bool = False, approval: str | None = None) -> dict:
+    _require_publish_approval(confirmed, approval, "ig_publish_carousel")
     cid = create_carousel(image_urls, caption)
     if not confirmed:
         return {"container_id": cid, "published": False}
@@ -178,8 +188,11 @@ def create_story_container(*, image_url: str = "", video_url: str = "") -> str:
 
 
 @guarded("ig_publish")
-def publish_story(*, image_url: str = "", video_url: str = "", confirmed: bool = False) -> dict:
-    """스토리 발행. confirmed=True 일 때만 실제 게시한다."""
+def publish_story(
+    *, image_url: str = "", video_url: str = "", confirmed: bool = False, approval: str | None = None
+) -> dict:
+    """스토리 발행. confirmed=True + 승인 문구(approval)가 있을 때만 실제 게시한다."""
+    _require_publish_approval(confirmed, approval, "ig_publish_story")
     cid = create_story_container(image_url=image_url, video_url=video_url)
     if video_url:
         wait_ready(cid)

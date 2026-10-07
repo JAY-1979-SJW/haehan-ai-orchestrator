@@ -78,8 +78,13 @@ class BlogAIWriter:
         publish: bool = False,
         schedule_at: datetime | None = None,
         length: str = "medium",
+        approval: str | None = None,
     ) -> dict:
-        """초안 생성 → 임시저장 또는 발행/예약."""
+        """초안 생성 → 임시저장 또는 발행/예약. publish=True 는 사용자가 직접 입력한 승인 문구(approval)가 필요하다."""
+        if publish and not schedule_at:
+            from scripts.gate import require_approved
+
+            require_approved("blog_publish", approval, via="blog_ai_draft_and_save")
         draft = self.draft(topic, keywords=keywords, length=length, return_seo=False)
         if not draft.get("ok"):
             return draft

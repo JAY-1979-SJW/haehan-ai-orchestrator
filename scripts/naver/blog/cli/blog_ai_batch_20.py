@@ -101,7 +101,17 @@ def _pick_images(dry_run: bool, all_images: list, idx: int) -> list:
     return img_paths
 
 
-def run(count: int = 20, dry_run: bool = False) -> None:
+def _require_batch_approval(dry_run: bool, approval: str | None, count: int) -> None:
+    """이 일괄 작성은 글마다 즉시 발행한다 — 시작 전에 사용자가 직접 입력한 승인 문구를 확인한다(dry-run 은 제외)."""
+    if dry_run:
+        return
+    from scripts.gate import require_approved
+
+    require_approved("blog_publish", approval, via="blog_ai_batch_20", count=count)
+
+
+def run(count: int = 20, dry_run: bool = False, approval: str | None = None) -> None:
+    _require_batch_approval(dry_run, approval, count)
     print(f"\n{'=' * 60}")
     print(f"  블로그 AI 일괄 작성 {'[DRY-RUN]' if dry_run else '[실행]'}")
     print(f"  대상 계정: {TARGET_BLOG_ID}  |  목표: {count}편")
@@ -163,7 +173,7 @@ def run(count: int = 20, dry_run: bool = False) -> None:
             )
             continue
 
-        pub = publish_one(page, post=post, img_paths=img_paths)
+        pub = publish_one(page, post=post, img_paths=img_paths, approval=approval)
         results.append(
             {
                 "topic": topic,
@@ -193,5 +203,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="실제 발행 없이 시뮬레이션")
     parser.add_argument("--count", type=int, default=20, help="작성할 포스트 수")
+    from scripts.gate import CONFIRM_TEXTS, GateBlocked
+
+    parser.add_argument("--confirm", default=None, help=f"실제 발행 승인 문구(직접 입력): {CONFIRM_TEXTS['blog_publish']}")
     args = parser.parse_args()
-    run(count=args.count, dry_run=args.dry_run)
+    try:
+        run(count=args.count, dry_run=args.dry_run, approval=args.confirm)
+    except GateBlocked as exc:
+        raise SystemExit(f"발행 차단: {exc.result.reason} (사용자가 직접 입력한 승인 문구가 필요합니다)") from exc

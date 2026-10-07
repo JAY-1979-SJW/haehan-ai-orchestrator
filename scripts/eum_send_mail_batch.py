@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import smtplib
+import sys
 import tempfile
 import time
 from collections.abc import Callable
@@ -15,9 +16,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:  # `python scripts/eum_send_mail_batch.py` 로 직접 실행해도 scripts.gate 를 import 할 수 있게
+    sys.path.insert(0, str(ROOT))
+
+from scripts.gate import GateBlocked, require_side_effect  # noqa: E402 - sys.path 보정 뒤에 import
+
 load_dotenv()
 
-ROOT = Path(__file__).resolve().parents[1]
 TARGETS_FILE = ROOT / "data" / "eum_new_sites_install_targets.json"
 LOG_FILE = ROOT / "data" / "eum_mail_send_log.json"
 
@@ -27,6 +33,9 @@ ACCOUNT = os.getenv("HIWORKS_MAIL_ACCOUNT")
 PASSWORD = os.getenv("HIWORKS_MAIL_PASSWORD")
 
 SUBJECT = "전자카드 단말기 임대시 AI 안전서류 무상제공"
+
+# 실제 발송 승인 문구 — 사용자가 --confirm= 으로 직접 입력해야 한다(자동 입력 금지). 발송 건수는 제한하지 않는다.
+CONFIRM_TEXT = "EUM_APPROVED_MAIL_BATCH"
 
 BODY_TEMPLATE = """\
 안녕하세요, {업체명} 담당자님.
@@ -163,13 +172,15 @@ def select_targets(rows: list[dict], log: dict) -> list[dict]:
     return [r for r in rows if _norm_email(r.get("이메일")) not in sent]
 
 
-def send_one(server: smtplib.SMTP, row: dict) -> bool:
+def send_one(server: smtplib.SMTP, row: dict, approval: str | None = None) -> bool:
+    """1건 발송. 승인 문구와 수신거부를 확인하며, 막히면 GateBlocked 를 낸다(발송하지 않음)."""
     email = (row.get("이메일") or "").strip()
     company = (row.get("업체명") or "담당자").strip()
     project = (row.get("공사명") or "").strip()
     if not email or "@" not in email:
         return False
 
+    require_side_effect("mail_send", approval=approval, expected=CONFIRM_TEXT, recipient=email, subject=SUBJECT)
     account, _ = require_credentials()
     body = BODY_TEMPLATE.format(업체명=company, 공사명=project)
 
@@ -232,6 +243,10 @@ def run_send_loop(
                     log["failed"].append({"email": email, "reason": "invalid_email", "row": row})
                     logger.warning("[%d/%d] ✗ 이메일 없음: %s", i, len(targets), row.get("업체명"))
 
+            except GateBlocked as e:
+                # 수신거부 등으로 막힌 건 — 보내지 않고 사유를 기록한다(SMTP 재연결은 하지 않는다)
+                logger.warning("[%d/%d] ✗ 발송 차단 %s: %s", i, len(targets), email, e.result.reason)
+                log["failed"].append({"email": email, "reason": f"gate: {e.result.reason}", "row": row})
             except Exception as e:  # noqa: BLE001 - 개별 발송 실패는 failed 로그에 기록 후 다음 건 계속(성공으로 기록하지 않음)
                 logger.error("[%d/%d] ✗ 발송 실패 %s: %s", i, len(targets), email, e)
                 log["failed"].append({"email": email, "reason": str(e), "row": row})
@@ -249,7 +264,7 @@ def run_send_loop(
     return reconnect_count
 
 
-def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
+def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0, approval: str | None = None):
     rows = json.loads(TARGETS_FILE.read_text(encoding="utf-8"))
 
     # 2025년 이후 필터
@@ -277,6 +292,8 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
             logger.info("[%d] %s → %s", i, r.get("업체명"), r.get("이메일"))
         return
 
+    # 실제 발송은 승인 문구가 있어야 시작한다 — SMTP 접속 전에 막는다(건별로도 send_one 이 다시 검사).
+    require_side_effect("mail_send", approval=approval, expected=CONFIRM_TEXT, count=len(targets))
     require_credentials()
     holder = {"server": connect_smtp()}
 
@@ -289,7 +306,7 @@ def main(dry_run: bool = False, limit: int | None = None, start_from: int = 0):
 
     try:
         reconnect_count = run_send_loop(
-            targets, log, lambda row: send_one(holder["server"], row), reconnect=_reconnect
+            targets, log, lambda row: send_one(holder["server"], row, approval), reconnect=_reconnect
         )
     finally:
         # 서버 종료 실패 무시 - sent/failed 로그가 실제 결과를 별도로 보존
@@ -306,5 +323,9 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--start-from", type=int, default=0)
+    parser.add_argument("--confirm", default=None, help=f"실제 발송 승인 문구({CONFIRM_TEXT}) — 직접 입력")
     args = parser.parse_args()
-    main(dry_run=args.dry_run, limit=args.limit, start_from=args.start_from)
+    try:
+        main(dry_run=args.dry_run, limit=args.limit, start_from=args.start_from, approval=args.confirm)
+    except GateBlocked as exc:
+        raise SystemExit(f"발송 차단: {exc.result.reason} (--confirm=<사용자가 직접 입력한 승인 문구> 필요)") from exc

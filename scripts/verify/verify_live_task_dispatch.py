@@ -12,9 +12,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 루트 패키지(local_agent 등) 해석용
 from local_agent.network_bypass import direct_child_env, urlopen_for_server
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
 
@@ -125,7 +126,7 @@ def _start_token_worker(
     device_token: str,
     log_path: Path,
 ) -> subprocess.Popen:
-    from scripts.ops.live_approved_browser_instruction_smoke import WORKER_CODE
+    from scripts.verify._shared import WORKER_CODE
 
     env = direct_child_env()
     env["HAEHAN_LIVE_SERVER_URL"] = server_url
@@ -165,7 +166,7 @@ def _resolve_identity(args, server_url):
     if args.user:
         auth = (args.user, args.password)
     elif args.temp_admin:
-        from scripts.ops.live_approved_browser_instruction_smoke import remote_user
+        from scripts.verify._shared import remote_user
 
         temp_admin_user = f"codex_dispatch_{secrets.token_hex(4)}"
         temp_admin_password = secrets.token_urlsafe(24)
@@ -296,12 +297,13 @@ def main(argv: list[str] | None = None) -> int:
         print("[PASS] worker stopped")
         if temp_admin_user:
             try:
-                from scripts.ops.live_approved_browser_instruction_smoke import remote_user
+                from scripts.verify._shared import remote_user
 
                 remote_user("remove", temp_admin_user)
                 print("[PASS] temp admin user removed")
             except Exception:  # noqa: BLE001 - 라이브 태스크 디스패치 검증 스크립트 -- 임시 에이전트 등록 실패 시 FAIL 처리 후 종료(fail-closed), 상태 폴링 조회 실패는 다음 루프에서 재시도, 임시 관리자 계정 정리 실패는 경고만 출력(검증 결과를 바꾸지 않음)
                 print("[WARN] temp admin user cleanup failed")
+    return 0
 
 
 if __name__ == "__main__":

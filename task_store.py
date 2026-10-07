@@ -1,24 +1,5 @@
-"""
-인메모리 Task 레지스트리 (6단계)
-task_id → {task, risk, policy} 를 저장해서 executor.py가 조회할 수 있게 함.
-approval_manager._store와 같은 in-process 공유 방식.
-"""
-from typing import Optional
+# 호환 shim: 실제 모듈은 orchestrator_v1/tasks/task_store.py (docs/architecture/ROOT_MODULE_SPLIT_PLAN.md)
+import importlib as _il
+import sys as _sys
 
-_store: dict = {}
-
-
-def register(task, risk, policy: dict) -> None:
-    _store[task.task_id] = {
-        "task":   task,
-        "risk":   risk,
-        "policy": policy,
-    }
-
-
-def get(task_id: str) -> Optional[dict]:
-    return _store.get(task_id)
-
-
-def clear() -> None:
-    _store.clear()
+_sys.modules[__name__] = _il.import_module("orchestrator_v1.tasks.task_store")

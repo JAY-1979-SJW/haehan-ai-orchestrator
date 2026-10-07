@@ -7285,9 +7285,9 @@
    "layer": "L2",
    "role": "policy",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/approval_manager.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "apps/ig-comment-dm-bot/connectors/__init__.py": {
    "layer": "APP",
@@ -7609,7 +7609,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "audit_logger.py": {
+  "orchestrator_v1/core/audit_logger.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -7709,17 +7709,17 @@
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
-   "reason": "DB·저장 신호",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "candidate_to_task.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_to_task.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "conftest.py": {
    "layer": "L11",
@@ -7733,81 +7733,81 @@
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/dashboard.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "email_classifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "email_task_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "email_task_executor.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "email_task_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
-   "reason": "DB·저장 신호",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "executor.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "hiworks_mail_reader.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_mail",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/hiworks_mail_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "inbox_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "inbox_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
-   "reason": "DB·저장 신호",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "kakaowork_reader.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "kakao",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/kakaowork_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "local_agent/__init__.py": {
    "layer": "L10",
@@ -8221,11 +8221,11 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/log_analyzer.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
-  "logger.py": {
+  "orchestrator_v1/core/logger.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -8233,7 +8233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "logging_utils.py": {
+  "orchestrator_v1/core/logging_utils.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -8245,11 +8245,11 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/message_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
-  "models.py": {
+  "orchestrator_v1/core/models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -8261,9 +8261,9 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/monitor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "notice_radar/__init__.py": {
    "layer": "L4",
@@ -8333,25 +8333,25 @@
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/notice_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "policy_engine.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/policy_engine.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "risk_assessor.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/risk_assessor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/__init__.py": {
    "layer": "L4",
@@ -16433,7 +16433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "security_utils.py": {
+  "orchestrator_v1/core/security_utils.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -16453,25 +16453,25 @@
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
-   "reason": "DB·저장 신호",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "tasks_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "telegram_notifier.py": {
    "layer": "L3",
    "role": "connector",
    "domain": "common",
-   "reason": "HTTP 클라이언트",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/telegram_notifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "tests/__init__.py": {
    "layer": "L11",
@@ -21377,7 +21377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_agent_ws_auth.py": {
+  "scripts/verify/verify_agent_ws_auth.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21385,7 +21385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_live_agent_smoke.py": {
+  "scripts/verify/verify_live_agent_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21393,7 +21393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_live_browser_readonly_dispatch.py": {
+  "scripts/verify/verify_live_browser_readonly_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -21401,7 +21401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_live_task_dispatch.py": {
+  "scripts/verify/verify_live_task_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21409,7 +21409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "verify_local_runtime_dry_run.py": {
+  "scripts/verify/verify_local_runtime_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21417,7 +21417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "webhooks_router.py": {
+  "orchestrator_v1/webhooks/webhooks_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -21429,9 +21429,9 @@
    "layer": "L4",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "admin-web/src/app/site-map/RegisteredSites.tsx": {
    "layer": "L9",
@@ -21886,6 +21886,454 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/core/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/webhooks/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "audit_logger.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/audit_logger.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "logger.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/logger.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "logging_utils.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/logging_utils.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "models.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/models.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "security_utils.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/security_utils.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "confidence": "low",
+   "source": "manual"
+  },
+  "webhooks_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/webhooks/webhooks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+   "confidence": "low",
+   "source": "manual"
+  },
+  "orchestrator_v1/tasks/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/approval_manager.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/candidate_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/candidate_to_task.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/policy_engine.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/risk_assessor.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/task_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/routers/tasks_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/whitelist_executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/email_classifier.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/email_task_approval.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/email_task_executor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/email_task_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/hiworks_mail_reader.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "naver_mail",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/routers/inbox_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/inbox_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/kakaowork_reader.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "kakao",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/message_classifier.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/dashboard.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/log_analyzer.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/monitor.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/monitoring/telegram_notifier.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "HTTP 클라이언트",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_health_build_info.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/console_api_contract_support.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_console_api_contract_agent_run.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_console_api_contract_chat_sessions.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_console_api_contract_user_auth.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_side_effect_gate_coverage.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_side_effect_gate_r2.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audit_api_contract_frontend_backend.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audit_r1_api_contract_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_r1_api_contract_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/send_approval.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_console_api_contract_jwt_auth.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_route_count_single_source.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_console_api_contract_owner_emails.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_jwt_secret_startup_check.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/gate_core.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/gate_types.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "common",
+   "reason": "게이트 결과 타입만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출(R2d-2 설계서 §4)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "tests/test_gate_core_split_r2d2.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/routers/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_root_shim_direct_run.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/verify/_shared.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
   }

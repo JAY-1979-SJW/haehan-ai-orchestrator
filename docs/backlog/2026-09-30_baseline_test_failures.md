@@ -1,7 +1,7 @@
 # 기존 테스트 실패 백로그 (2026-09-30 기준선)
 
 - 측정: 커밋 `4bc8e2b4`(브랜치 `feat/login-state-by-element`), Python 3.14.7, `pytest --timeout=60`, 실행 시간 약 11분(스냅샷) + 4.6분(실제 트리 재확인)
-- **전체 목록:** [`2026-09-30_baseline_test_failures.tsv`](2026-09-30_baseline_test_failures.tsv) — 350건(실패 349 + 오류 5~6 중 G6 인코딩 4건 해소 후), 75개 파일. 컬럼 `status / test_id / message`
+- **전체 목록:** [`2026-09-30_baseline_test_failures.tsv`](2026-09-30_baseline_test_failures.tsv) — 350건(실패 349 + 오류 5~6 중 G6 인코딩 4건 해소 후), 75개 파일. **2026-10-07 갱신(W4): 확인·정리된 248줄 삭제 → 102건, 14개 파일 → 통합 브랜치에서 t2·t3 병합 후 g2b 6·user_field_test 12줄 삭제 → 84건, 12개 파일** (65개 파일 재측정 시 실패는 g2b 6·user_field_test 12·blueprint 2·contract_sync 1뿐이었고 앞의 3묶음 중 blueprint·contract_sync 는 이 브랜치에서 수정, g2b·user_field_test 는 `stage/testfix-t2-fixtures`·`stage/testfix-t3-user-field-test` 에서 처리돼 통합 브랜치에 병합됨(해당 줄 삭제 완료). 남은 줄: CDP 실브라우저 미실행 2파일 + 보류 10파일). 컬럼 `status / test_id / message`
 - 목적: 게이트가 "이번 편집이 만든 실패"만 막도록 기준선이 생겼으므로(`post_edit_fast_gate.py`, 2026-09-30), 이 목록은 **나중에 묶음 단위로 정리할 작업 목록**이다. 이 문서 작성 시 코드는 한 줄도 고치지 않았다.
 
 ## 1. 측정 방법과 한계 (숫자를 읽기 전에)

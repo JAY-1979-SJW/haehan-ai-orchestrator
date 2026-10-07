@@ -197,6 +197,21 @@ if _ak.exists():
     if _ak_result.returncode != 0:
         sys.exit(_ak_result.returncode)
 
+# ── R1 API 계약 게이트 (화면↔서버 끊긴 호출 신규분만 차단) ────────────────
+# admin-web/src 또는 FastAPI 라우터(ai_orchestrator)가 staged일 때만 실행 —
+# 영향 테스트 선택만으로는 admin-web 단독 변경 시 전혀 안 돌아서(2026-10-07
+# 지휘창 지적) 훅에 직접 연결. 기존 끊긴 호출(허용목록)은 통과, 신규만 차단.
+_r1_staged = [
+    f for f in r.stdout.splitlines()
+    if f.startswith("admin-web/src/") or f.startswith("ai_orchestrator/")
+]
+if _r1_staged:
+    _r1 = ROOT / "scripts" / "ops" / "audit_r1_api_contract_gate.py"
+    if _r1.exists():
+        _r1_result = subprocess.run([*_pyexe(), str(_r1)], cwd=str(ROOT))
+        if _r1_result.returncode != 0:
+            sys.exit(_r1_result.returncode)
+
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P
 import importlib.util, os

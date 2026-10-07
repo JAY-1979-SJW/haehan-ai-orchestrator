@@ -234,13 +234,18 @@ class BlogWriterPro:
         return schedule_at
 
 
-    def _publish_by_mode(self, save_draft_only: bool, schedule_at: datetime | None) -> dict:
-        """발행 모드 분기(임시저장/예약/즉시)."""
+    def _publish_by_mode(
+        self, save_draft_only: bool, schedule_at: datetime | None, approval: str | None = None
+    ) -> dict:
+        """발행 모드 분기(임시저장/예약/즉시). 즉시 발행은 사용자가 직접 입력한 승인 문구(approval)가 필요하다."""
         if save_draft_only:
             result = self.writer.save_draft()
         elif schedule_at:
             result = self.writer.schedule_publish(schedule_at)
         else:
+            from scripts.gate import require_approved
+
+            require_approved("blog_publish", approval, via="blog_pro_smart_publish")
             result = self.writer.publish()
         return result
 
@@ -262,8 +267,9 @@ class BlogWriterPro:
         auto_schedule: bool = False,
         save_draft_only: bool = False,
         dry_run: bool = False,
+        approval: str | None = None,
     ) -> dict:
-        """원샷 고도화 발행.
+        """원샷 고도화 발행. 즉시 발행(임시저장·예약·dry_run 제외)은 사용자가 직접 입력한 승인 문구(approval)가 필요하다.
 
         Returns:
             {ok, mode, url?, seo_score, issues, draft_path, ...}
@@ -351,7 +357,7 @@ class BlogWriterPro:
         self.writer.set_search_exposure(True)
 
         # 9) 발행 모드 분기
-        result = self._publish_by_mode(save_draft_only, schedule_at)
+        result = self._publish_by_mode(save_draft_only, schedule_at, approval)
 
         # 10) 통계 + 로그
         result.update(

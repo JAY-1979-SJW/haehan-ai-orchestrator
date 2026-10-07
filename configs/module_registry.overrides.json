@@ -603,7 +603,7 @@
   "reason": "런타임 임시 디렉터리 경로 선택 순수 함수(후보 경로 목록 반환) — 브라우저·외부 IO 없음. L4 기본값 오분류를 L1로 정정.",
   "source": "manual"
  },
- "security_utils.py": {
+ "orchestrator_v1/core/security_utils.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "로그·감사 이벤트의 민감정보 마스킹 정규식/헬퍼(REDACTED, SENSITIVE_KEYS) 순수 함수 — IO 없음. L4 기본값 오분류를 L1로 정정.",
@@ -1020,6 +1020,186 @@
   "layer": "L1",
   "role": "contract",
   "reason": "지도 구조 요약·지문·map_rev·diff·버전 고정 확인 규칙(순수 함수, 입출력 없음) — generic L4 오분류",
+  "source": "manual"
+ },
+ "logger.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/core/logger.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "logging_utils.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/core/logging_utils.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "audit_logger.py": {
+  "layer": "L12",
+  "role": "ops_tool",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/core/audit_logger.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "security_utils.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/core/security_utils.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "models.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/core/models.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "webhooks_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/webhooks/webhooks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "approval_manager.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/approval_manager.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "candidate_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "candidate_to_task.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/candidate_to_task.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "executor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "policy_engine.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/policy_engine.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "risk_assessor.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/risk_assessor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "task_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "tasks_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/tasks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "whitelist_executor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/whitelist_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "dashboard.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/dashboard.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_classifier.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/email_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_task_approval.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_approval.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_task_executor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_executor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "email_task_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/tasks/email_task_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "hiworks_mail_reader.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/hiworks_mail_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "inbox_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/routers/inbox_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "inbox_store.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/inbox_store.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "kakaowork_reader.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/kakaowork_reader.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "log_analyzer.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/log_analyzer.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "message_classifier.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/message_classifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "monitor.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/monitor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "notice_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/inbox/notice_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "telegram_notifier.py": {
+  "layer": "L3",
+  "role": "connector",
+  "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/telegram_notifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
+  "source": "manual"
+ },
+ "ai_orchestrator/gates/gate_types.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
   "source": "manual"
  }
 }

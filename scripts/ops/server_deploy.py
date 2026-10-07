@@ -15,9 +15,11 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -56,6 +58,16 @@ def _git_sync() -> bool:
     return True
 
 
+def _build_env() -> dict[str, str]:
+    """compose build.args(GIT_SHA·BUILD_TIME)로 넘길 값 — 병합 후 HEAD 커밋과 빌드 시각(UTC). 실패하면 넘기지 않아 "unknown"."""
+    env = dict(os.environ)
+    sha = _run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    if sha:
+        env["GIT_SHA"] = sha
+        env["BUILD_TIME"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return env
+
+
 def _compose_rebuild() -> None:
     # docker compose(v2) 우선, 없으면 docker-compose(v1)
     base = (
@@ -63,7 +75,7 @@ def _compose_rebuild() -> None:
         if _run(["docker", "compose", "version"], capture_output=True).returncode == 0
         else ["docker-compose"]
     )
-    _run([*base, "up", "-d", "--build", *COMPOSE_SERVICES])
+    _run([*base, "up", "-d", "--build", *COMPOSE_SERVICES], env=_build_env())
 
 
 def _reload_nginx() -> None:

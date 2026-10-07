@@ -1,4 +1,5 @@
 import os
+import re
 import secrets as _secrets
 from pathlib import Path
 
@@ -91,9 +92,27 @@ except (ValueError, TypeError):
     APP_PORT = 8401
 
 # ── JWT 인증 ────────────────────────────────────────────────────────────────
-JWT_SECRET = os.environ.get("JWT_SECRET", "").strip() or _secrets.token_hex(32)
+_JWT_SECRET_ENV = os.environ.get("JWT_SECRET", "").strip()
+JWT_SECRET_CONFIGURED = bool(_JWT_SECRET_ENV)  # False 면 아래 임의 키 — 재시작·다중 프로세스에서 토큰이 맞지 않는다
+JWT_SECRET = _JWT_SECRET_ENV or _secrets.token_hex(32)
+# true 면 AUTH_ENABLED 인데 JWT_SECRET 이 없을 때 서버가 시작하지 않는다(asgi._check_jwt_secret). 기본 false = 경고만.
+JWT_SECRET_REQUIRED = os.environ.get("JWT_SECRET_REQUIRED", "").strip().lower() in {"1", "true", "yes", "on"}
+JWT_SECRET_MIN_LENGTH = 32
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = 30
+
+
+def parse_owner_emails(raw: str) -> frozenset[str]:
+    """OWNER_EMAILS(쉼표·세미콜론·공백 구분) → 소문자 이메일 집합. '@' 가 하나가 아니거나 앞뒤가 빈 항목은 버린다.
+
+    가입 시 이메일은 소문자·공백 제거로 저장되므로 같은 기준으로 맞춘다. 별칭(`+tag`, gmail 점)은 정규화하지 않는다(정확히 같은 주소만)."""
+    items = (item.strip().lower() for item in re.split(r"[,;\s]+", raw or ""))
+    return frozenset(item for item in items if item.count("@") == 1 and all(item.split("@")))
+
+
+# 이 이메일의 '승인된 활성 계정'은 DB role 과 무관하게 owner 로 취급한다(gates/auth.py 에서 판정 시점에만 적용, DB 는 안 바꿈).
+# 비어 있으면 기존 동작 그대로. 값은 재시작해야 바뀐다.
+OWNER_EMAILS = parse_owner_emails(os.environ.get("OWNER_EMAILS", ""))
 
 # ── 로컬 대용량 데이터 루트 ──────────────────────────────────────────────────
 # .env의 LOCAL_DATA_DIR을 매 호출마다 재읽어 경로 변경 시 재시작 불필요.

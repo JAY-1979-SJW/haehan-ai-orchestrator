@@ -80,12 +80,17 @@ def fill_reply_draft(cdp: CDP, text: str) -> str:
 
 
 @guarded("smartstore_inquiry_reply", ok_fn=lambda msg: "완료" in msg)
-def submit_reply(cdp: CDP, timeout: float = 5.0) -> str:
+def submit_reply(cdp: CDP, timeout: float = 5.0, approval: str | None = None) -> str:
     """채워진 답변을 실제로 전송한다 ("답변하기" 클릭). 고객 노출 액션 — 매번 사용자 승인 후 호출.
+
+    approval: 사용자가 직접 입력한 승인 문구. 없거나 다르면 GateBlocked(전송하지 않는다). 자동으로 채우지 않는다.
 
     반환값: 결과 alert 메시지 (성공 시 "답변처리가 완료되었습니다.", 검증 실패 시
     "제목을 선택해 주세요." 등). alert가 없으면 마지막 JS 반환값을 그대로 준다.
     """
+    from scripts.gate import require_approved
+
+    require_approved("smartstore_reply", approval, via="smartstore_inquiry_reply")
     cdp.send("Page.enable")
     dialog_info: dict = {}
 

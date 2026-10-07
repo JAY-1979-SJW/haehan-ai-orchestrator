@@ -4,9 +4,12 @@ import argparse
 import asyncio
 import json
 import socket
+import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 루트 패키지(local_agent 등) 해석용
 from local_agent.network_bypass import urlopen_for_server, websocket_connect_kwargs
 
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
@@ -109,8 +112,12 @@ async def _await_heartbeat_ack(ws, report, agent_id, timeout):
 
 
 async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, token: str, timeout: float) -> None:
-    from local_agent import __version__
-    from local_agent.connection_diagnostics import normalize_ws_url
+    from local_agent import (  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
+        __version__,
+        connection_diagnostics,
+    )
+
+    normalize_ws_url = connection_diagnostics.normalize_ws_url
 
     try:
         import websockets  # type: ignore

@@ -44,8 +44,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # admin-web 변경 여부 판정 — frontend job을 admin-web/** 가 바뀐 push/PR에서만 돌린다
+  # (2026-10-07 R4: 화면 코드 검증 공백 메우기. push 이벤트는 매번 전체 돌아도 무방할
+  # 만큼 드물지만(master 직푸시), PR은 수가 많아 무관한 변경에서도 매번 npm ci를
+  # 치르면 낭비 — dorny/paths-filter 는 프로젝트 의존성을 새로 들이지 않는 GH Action).
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      admin_web: ${{ steps.filter.outputs.admin_web }}
+    steps:
+      - uses: actions/checkout@v7
+      # 공개 저장소 + 공급망 보안 — 제3자 액션은 태그가 아니라 전체 SHA로 고정
+      # (태그는 재지정 가능). git ls-remote 로 v3(=v3.0.4) 해석한 SHA.
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
+        id: filter
+        with:
+          filters: |
+            admin_web:
+              - 'admin-web/**'
+
   # 프런트(admin-web) 타입체크 — 화면 코드가 CI 에서 검증되지 않던 공백을 메운다.
   frontend:
+    needs: changes
+    if: needs.changes.outputs.admin_web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -63,7 +85,7 @@ jobs:
 
   verify:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -96,6 +118,12 @@ jobs:
           test -f "$RUNNER_TEMP/akvenv/Scripts/audit-kit.exe"
           echo "AUDIT_KIT_BIN=$RUNNER_TEMP/akvenv/Scripts/audit-kit.exe" >> "$GITHUB_ENV"
           echo "AUDIT_KIT_REQUIRED=1" >> "$GITHUB_ENV"
+
+      - name: R1 API 계약 게이트 (admin-web↔FastAPI 신규 끊긴 호출 차단)
+        # 영향 테스트 선택만으로는 admin-web 단독 변경 커밋에서 안 돌 수 있어(2026-10-07
+        # 지휘창 지적) CI에 직접 연결. 기존 끊긴 호출(configs/r1_api_contract_baseline.json
+        # 허용목록)은 통과, 새로 끊기는 호출만 FAIL.
+        run: python scripts/ops/audit_r1_api_contract_gate.py
 
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한

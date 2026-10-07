@@ -15,9 +15,15 @@ import hashlib
 import json
 import logging
 import secrets
+from collections.abc import Callable
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBasic,
+    HTTPBasicCredentials,
+    HTTPBearer,
+)
 
 from ai_orchestrator import config
 
@@ -31,6 +37,71 @@ _DUMMY_USER = {
 }
 
 _security = HTTPBasic(auto_error=False)
+_bearer = HTTPBearer(auto_error=False)
+
+# 콘솔 JWT 수용(2026-10-07, 대표님 결정 A안): 로그인한 사용자의 Bearer JWT 도 Basic 과 같은 require_role 체계로 받는다.
+# JWT 검증(서명·만료·사용자 조회)은 사용자 로그인 구현이 정본이라 이 게이트가 DB 를 직접 보지 않고,
+# 그쪽(connectors/user_auth_router.py)이 시작할 때 검증 함수를 등록한다. 등록이 없으면 Bearer 는 전부 401(fail-closed).
+_bearer_resolver: Callable[[str], dict | None] | None = None
+
+
+def register_bearer_resolver(resolver: Callable[[str], dict | None]) -> None:
+    """Bearer 토큰 → 활성 사용자 레코드(없으면 None)를 돌려주는 함수를 등록한다."""
+    global _bearer_resolver
+    _bearer_resolver = resolver
+
+
+# JWT 사용자 role(users.role) → require_role 역할 매핑. 표에 있는 역할만 같은 이름의 권한을 얻는다.
+# 그 밖의 값(가입 기본값 "user" 포함)은 "user" 로 취급해 어떤 require_role 라우트도 통과하지 못한다(최소 권한).
+#   owner→owner · admin→admin · operator→operator · viewer→viewer · 그 외→user(통과 라우트 없음)
+_JWT_ROLE_MAP = {"owner": "owner", "admin": "admin", "operator": "operator", "viewer": "viewer"}
+_JWT_NO_PRIVILEGE_ROLE = "user"
+
+
+def is_owner_email(email: object) -> bool:
+    """이메일이 설정(OWNER_EMAILS)에 있는가. 대소문자·앞뒤 공백 무시, 별칭(+tag)은 정확히 같아야 한다."""
+    return str(email or "").strip().lower() in config.OWNER_EMAILS
+
+
+def is_owner_email_account(record: dict) -> bool:
+    """OWNER_EMAILS 의 owner 취급 대상인가: 설정된 이메일 + **승인된 활성 계정**(enabled=1)일 때만.
+
+    미승인·비활성 계정, 활성 여부를 알 수 없는 레코드는 대상이 아니다(fail-closed)."""
+    return record.get("enabled") in (1, True) and is_owner_email(record.get("email"))
+
+
+_owner_email_logged: set[str] = set()
+
+
+def _note_owner_email_grant(record: dict) -> None:
+    """OWNER_EMAILS 로 owner 취급된 계정을 프로세스당 한 번 로그에 남긴다(이메일은 마스킹)."""
+    key = str(record.get("id") or record.get("email"))
+    if key in _owner_email_logged:
+        return
+    _owner_email_logged.add(key)
+    local, _, domain = str(record.get("email") or "").partition("@")
+    logger.info("[auth] OWNER_EMAILS 설정에 따라 owner 로 취급: %s***@%s (DB role=%s)", local[:1], domain, record.get("role"))
+
+
+def _user_from_bearer(token: str) -> dict:
+    """Bearer JWT → {actor, role}. 만료·위조·서명 불일치·미등록 사용자·승인 대기·검증기 미등록은 모두 401.
+
+    role 은 DB role 을 표(_JWT_ROLE_MAP)로 매핑하되, OWNER_EMAILS 의 승인된 활성 계정이면 owner 로 올린다(올리기만 하고
+    내리지 않으며, DB 는 바꾸지 않는다). 올린 경우 반환에 role_source="OWNER_EMAILS" 를 표시한다."""
+    record = _bearer_resolver(token) if _bearer_resolver is not None else None
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="토큰이 유효하지 않습니다",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    role = _JWT_ROLE_MAP.get(str(record.get("role", "")), _JWT_NO_PRIVILEGE_ROLE)
+    user = {"actor": str(record.get("email") or record.get("id")), "role": role}
+    if role != "owner" and is_owner_email_account(record):
+        _note_owner_email_grant(record)
+        user["role"] = "owner"
+        user["role_source"] = "OWNER_EMAILS"
+    return user
 
 
 def _load_users() -> dict[str, dict]:
@@ -82,14 +153,20 @@ def _verify_password(candidate: str, stored_hash: str) -> bool:
 
 def get_current_user(
     credentials: HTTPBasicCredentials | None = Depends(_security),
+    bearer: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict:
     """현재 요청자 신원을 {actor, role} 로 반환.
 
     - AUTH_ENABLED=False  → 무조건 dummy owner
-    - AUTH_ENABLED=True   → Basic 자격증명 검증, 실패 시 401
+    - AUTH_ENABLED=True   → Bearer JWT(로그인 사용자, role 은 _JWT_ROLE_MAP 으로 매핑) 또는 Basic 자격증명 검증, 실패 시 401
+      Authorization 헤더는 하나라 Bearer 와 Basic 은 동시에 오지 않는다. Bearer 가 실패하면 Basic 으로 되돌리지 않고 401.
     """
     if not config.AUTH_ENABLED:
         return dict(_DUMMY_USER)
+
+    # 함수를 직접 호출하는 시험·코드에서는 Depends 객체가 기본값으로 남으므로 실제 자격증명만 인정한다.
+    if isinstance(bearer, HTTPAuthorizationCredentials):
+        return _user_from_bearer(bearer.credentials)
 
     if credentials is None:
         raise HTTPException(

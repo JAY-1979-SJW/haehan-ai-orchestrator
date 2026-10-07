@@ -374,7 +374,7 @@ API_REGISTRY: dict[str, dict[str, str]] = {
     "blog.write_to_naver": {
         "method": "POST",
         "path": "/api/v1/naver/blog/write-to-naver",
-        "desc": "⚠️ 실제 네이버 블로그 발행 — 매번 재확인 필요",
+        "desc": "⚠️ 실제 네이버 블로그 발행 — publish=true 는 사용자가 확인 단계에서 직접 입력한 publish_confirm 문구가 있어야 하며(자동 입력 금지), 없으면 403",
     },
     # 네이버 카페
     "cafe.my_cafes": {"method": "GET", "path": "/api/v1/naver-cafe/my-cafes", "desc": "가입 카페 목록"},
