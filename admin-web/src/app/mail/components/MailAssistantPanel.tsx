@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Modal } from "@/components/ui/Modal";
 
 /**
  * Gmail 개인 메일함 AI 비서 — 안 읽은 메일 요약 + 회신 초안(AI) → 사람 승인 → 발송.
@@ -9,9 +10,12 @@ import { useState } from "react";
  *
  * 안전 설계: AI 초안 생성(/gmail/ai-draft-unread)은 읽기전용이고 발송 능력이 전혀 없다.
  * 실제 발송은 이 화면에서 사람이 초안을 검토·수정하고 "발송" 버튼을 눌러야만
- * (+ 브라우저 confirm 재확인) /gmail/reply(dry_run=false) 를 호출한다 — API 발송은
+ * (+ 확인 모달에서 사용자가 승인 문구를 직접 입력) /gmail/reply(dry_run=false, send_confirm) 를 호출한다 — API 발송은
  * 원자적 1회 호출이라 별도 /gmail/send 는 이 경로에서 더 이상 필요 없다.
  */
+
+// 사용자에게 보여 주는 안내 문구일 뿐이다. 요청에는 사용자가 입력한 값만 실리며, 서버가 같은 문구를 다시 검사한다.
+const SEND_CONFIRM_HINT = "GMAIL_APPROVED_SEND";
 
 interface DraftItem {
   message_id: string;
@@ -36,6 +40,9 @@ export function MailAssistantPanel() {
   const [itemState, setItemState] = useState<Record<string, ItemState>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 발송 확인 모달 — 사용자가 승인 문구를 직접 입력해야 발송된다(Electron 에서는 window.prompt 를 쓸 수 없다).
+  const [confirmItem, setConfirmItem] = useState<DraftItem | null>(null);
+  const [confirmText, setConfirmText] = useState("");
 
   async function handleCheck() {
     setLoading(true);
@@ -73,10 +80,21 @@ export function MailAssistantPanel() {
     setItemState((s) => ({ ...s, [messageId]: { ...s[messageId], editedBody: body } }));
   }
 
-  async function handleSend(it: DraftItem) {
+  function handleSend(it: DraftItem) {
     const body = itemState[it.message_id]?.editedBody ?? "";
     if (!body.trim()) return;
-    if (!window.confirm("이 내용으로 실제 회신을 발송합니다. 계속할까요?")) return;
+    setConfirmText("");
+    setConfirmItem(it);
+  }
+
+  function closeConfirm() {
+    setConfirmItem(null);
+    setConfirmText("");
+  }
+
+  async function doSend(it: DraftItem, typed: string) {
+    const body = itemState[it.message_id]?.editedBody ?? "";
+    if (!body.trim() || !typed.trim()) return;
 
     setItemState((s) => ({ ...s, [it.message_id]: { ...s[it.message_id], sending: true, error: null } }));
     try {
@@ -91,6 +109,7 @@ export function MailAssistantPanel() {
           subject: it.subject,
           body,
           dry_run: false,
+          send_confirm: typed.trim(), // 사용자가 입력한 값만 보낸다 — 코드에 고정된 문구를 싣지 않는다
         }),
       });
       const replyData = await replyRes.json();
@@ -171,6 +190,44 @@ export function MailAssistantPanel() {
           })}
         </div>
       )}
+      <Modal
+        open={confirmItem !== null}
+        title="회신 발송 확인"
+        onClose={closeConfirm}
+        footer={
+          <>
+            <button type="button" onClick={closeConfirm} className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+              취소
+            </button>
+            <button
+              type="button"
+              disabled={confirmText.trim() === ""}
+              onClick={() => {
+                const target = confirmItem;
+                const typed = confirmText;
+                closeConfirm();
+                if (target) void doSend(target, typed);
+              }}
+              className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+            >
+              발송
+            </button>
+          </>
+        }
+      >
+        <p className="mb-2 text-xs text-gray-600">
+          <b>{confirmItem?.from}</b> 에게 이 내용으로 실제 회신을 발송합니다. 발송하려면 아래 문구를 그대로 입력하세요.
+        </p>
+        <p className="mb-2 rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-800">{SEND_CONFIRM_HINT}</p>
+        <input
+          type="text"
+          aria-label="발송 승인 문구"
+          value={confirmText}
+          onChange={(e) => setConfirmText(e.target.value)}
+          autoComplete="off"
+          className="w-full rounded border border-gray-200 p-2 text-xs"
+        />
+      </Modal>
     </section>
   );
 }

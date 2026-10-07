@@ -168,3 +168,123 @@ def test_stale_lock_file_is_cleared(tmp_path):
     os.utime(lock, (old, old))
     gate.add_opt_out("z@t.com")
     assert gate.is_opted_out("z@t.com") if hasattr(gate, "is_opted_out") else "z@t.com" in gate.opt_out_list()
+
+
+# ── R2b: Gmail /reply·/send, 하이웍스 CLI ─────────────────────────────
+
+
+def _gmail(monkeypatch):
+    from ai_orchestrator.connectors import gmail_router as g
+
+    sent: list[dict] = []
+    monkeypatch.setattr(g, "log_event", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "ai_orchestrator.sites.gmail_reader.send_reply", lambda **kw: sent.append(kw) or {"id": "m1"}
+    )
+    return g, sent
+
+
+def _reply(g, **kw):
+    base = {"thread_id": "t", "in_reply_to": "", "to": "Kim <kim@x.com>", "subject": "s", "body": "b", "dry_run": False}
+    return g.api_reply(g.GmailReplyRequest(**{**base, **kw}), user={"actor": "a", "role": "admin"})
+
+
+def test_gmail_reply_dry_run_sends_nothing(monkeypatch):
+    g, sent = _gmail(monkeypatch)
+    assert _reply(g, dry_run=True)["dry_run"] is True
+    assert sent == []
+
+
+def test_gmail_reply_without_phrase_is_403_and_sends_nothing(monkeypatch):
+    from fastapi import HTTPException
+
+    g, sent = _gmail(monkeypatch)
+    for bad in (None, "", "yes", "gmail_approved_send"):
+        with pytest.raises(HTTPException) as exc:
+            _reply(g, send_confirm=bad)
+        assert exc.value.status_code == 403
+    assert sent == []
+
+
+def test_gmail_reply_blocks_opt_out_even_with_display_name_and_case(monkeypatch):
+    from fastapi import HTTPException
+
+    g, sent = _gmail(monkeypatch)
+    gate.add_opt_out("kim@x.com")
+    with pytest.raises(HTTPException) as exc:
+        _reply(g, to="Kim <KIM@x.com>, other@y.com", send_confirm=g.GMAIL_SEND_CONFIRM_TEXT)
+    assert exc.value.status_code == 403 and "수신거부" in exc.value.detail
+    assert sent == []
+
+
+def test_gmail_reply_sends_with_phrase(monkeypatch):
+    g, sent = _gmail(monkeypatch)
+    out = _reply(g, send_confirm=g.GMAIL_SEND_CONFIRM_TEXT)
+    assert out["ok"] is True and len(sent) == 1
+
+
+def test_gmail_send_needs_confirmed_and_phrase_before_browser(monkeypatch):
+    from fastapi import HTTPException
+
+    g, _ = _gmail(monkeypatch)
+    opened: list[int] = []
+    monkeypatch.setattr("scripts.web_connector.run_on_browser_thread", lambda fn, timeout=0: opened.append(1))
+    user = {"actor": "a", "role": "admin"}
+    with pytest.raises(HTTPException) as exc:
+        g.api_send(g.GmailSendRequest(confirmed=True), user=user)
+    assert exc.value.status_code == 403
+    with pytest.raises(HTTPException) as exc:
+        g.api_send(g.GmailSendRequest(confirmed=False, send_confirm=g.GMAIL_SEND_CONFIRM_TEXT), user=user)
+    assert exc.value.status_code == 400
+    assert opened == []
+
+
+def test_hiworks_cli_submit_requires_typed_confirm(monkeypatch):
+    from scripts.hiworks import router
+
+    class Reached(Exception):
+        pass
+
+    monkeypatch.setattr(router, "open_hiworks", lambda *a, **k: (_ for _ in ()).throw(Reached()))
+    monkeypatch.setattr(router, "work_run", lambda *a, **k: __import__("contextlib").nullcontext())
+    monkeypatch.setattr(router, "load_action_catalog", lambda: {})
+    monkeypatch.setattr(router, "build_submit_execution_plan", lambda *a, **k: {})
+    monkeypatch.setattr(router, "selected_targets", lambda s: {s: {"url": "u"}})
+    # --approved 없이는 게이트에서 막힌다(force 불리언으로 통과하지 않는다)
+    with pytest.raises(gate.GateBlocked):
+        router._cmd_submit_section("svc", ["cid"])
+    # --approved 가 있어도 문구가 다르면 SystemExit
+    with pytest.raises(SystemExit):
+        router._cmd_submit_section("svc", ["cid", "--approved", "--confirm=nope"])
+    # 올바른 문구면 게이트를 지나 다음 단계(브라우저 열기)에 도달한다
+    with pytest.raises(Reached):
+        router._cmd_submit_section("svc", ["cid", "--approved", "--confirm=HIWORKS_APPROVED_SUBMIT"])
+
+
+def test_hiworks_cli_send_batch_gate_uses_typed_confirm(monkeypatch):
+    from scripts.hiworks import router
+
+    seen: list[dict] = []
+
+    class Reached(Exception):
+        pass
+
+    def fake_require(**kw):
+        seen.append(kw)
+        raise Reached
+
+    monkeypatch.setattr(router.gates, "require_send", fake_require)
+    with pytest.raises(SystemExit):
+        router._cmd_send_batch("go", ["--approved", "--confirm=wrong"])
+    assert seen == []
+    with pytest.raises(Reached):
+        router._cmd_send_batch("go", ["--approved", f"--confirm={router.APPROVAL_CONFIRM_TEXT}"])
+    assert seen[0]["approval"] == router.APPROVAL_CONFIRM_TEXT
+    assert seen[0]["expected"] == router.APPROVAL_CONFIRM_TEXT
+
+
+def test_multiple_recipients_any_opt_out_blocks():
+    gate.add_opt_out("b@t.com")
+    with pytest.raises(gate.GateBlocked, match="수신거부"):
+        gate.require_side_effect("gmail_send", approval=OK, expected=OK, recipient=["a@t.com", "B@t.com"])
+    gate.require_side_effect("gmail_send", approval=OK, expected=OK, recipient=["a@t.com", "c@t.com"])
