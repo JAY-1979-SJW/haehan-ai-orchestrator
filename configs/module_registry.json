@@ -3493,17 +3493,17 @@
    "layer": "L8",
    "role": "api",
    "domain": "kakao",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/kakao_setup_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/kakao_skill_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "kakao",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "옛 경로 shim — 원본 ai_orchestrator/connectors/kakao_skill_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "ai_orchestrator/connectors/marketing_ops_router.py": {
    "layer": "L8",
@@ -22373,6 +22373,38 @@
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/kakao/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "kakao",
+   "reason": "도메인(kakao) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/kakao/setup_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "kakao",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/kakao_setup_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "ai_orchestrator/connectors/kakao/skill_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "kakao",
+   "reason": "이동한 파일 — 원본 ai_orchestrator/connectors/kakao_skill_router.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "tests/test_split_kakao_moved.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "kakao",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
