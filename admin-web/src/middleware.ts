@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { unauthenticatedAction } from "@/lib/authGate";
 
 const TOKEN_COOKIE = "haehan_ai_token";
 
@@ -42,11 +43,13 @@ function redirectToLogin(req: NextRequest): NextResponse {
   return NextResponse.redirect(loginUrl);
 }
 
-// 데스크톱 앱(Electron 이 Next 를 띄울 때 HAEHAN_DESKTOP=1)에서는 로그인 화면 대신 /setup 으로 보낸다:
-// 첫 실행이면 이름·이메일 입력, 이미 등록돼 있으면 /setup 이 자동 세션을 받아 바로 들어간다.
+// 인증 실패 처리: 화면 이동은 /setup(데스크톱: 첫 실행이면 이름·이메일 입력, 이미 등록돼 있으면 자동 세션) 또는 /login 으로 보내고,
+// /api/* 요청은 HTML 리다이렉트 대신 401 JSON 으로 답한다(fetch 가 HTML 을 json() 으로 읽다 터지는 것 방지).
 function redirectToEntry(req: NextRequest): NextResponse {
-  if (process.env.HAEHAN_DESKTOP !== "1") return redirectToLogin(req);
   const { pathname, search } = req.nextUrl;
+  const action = unauthenticatedAction(pathname, process.env.HAEHAN_DESKTOP === "1");
+  if (action.kind === "json401") return NextResponse.json(action.body, { status: 401 });
+  if (action.to === "/login") return redirectToLogin(req);
   const setupUrl = new URL("/setup", req.url);
   setupUrl.searchParams.set("returnTo", pathname + search);
   return NextResponse.redirect(setupUrl);

@@ -69,7 +69,10 @@ export async function getMe(): Promise<UserInfo | null> {
   const res = await fetch(`${API_BASE}/api/v1/users/me`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  if (res.ok) return res.json();
+  if (res.ok) {
+    // 프록시가 HTML(로그인 이동 페이지 등)을 200 으로 돌려주면 json() 이 터진다 → 로그인 안 된 것으로 취급
+    try { return (await res.json()) as UserInfo; } catch { return null; }
+  }
 
   // 자기완결 데스크톱(AUTH_ENABLED=false) fallback: /auth/me 시도.
   // 번들 exe의 /users/me 가 구버전이어도 /auth/me 는 AUTH off 시 owner 반환.

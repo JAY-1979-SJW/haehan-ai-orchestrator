@@ -124,7 +124,7 @@ test.describe("새 PC 첫 설치 — 데스크톱 자동 로그인(B안)", () =>
         expect(ui2.url()).not.toContain("/login");
 
         // 데이터 유지(D1): 1회차에 등록한 이름이 재실행 후에도 그대로 보여야 한다
-        await ui2.goto("http://localhost:3000/about", { timeout: 20_000 }).catch(() => {});
+        await ui2.goto(new URL(ui2.url()).origin + "/about", { timeout: 20_000 }).catch(() => {});
         await expect(ui2.getByText(/Persisted User/)).toBeVisible({ timeout: 15_000 });
       } finally {
         await app2.close();
@@ -146,7 +146,7 @@ test.describe("새 PC 첫 설치 — 데스크톱 자동 로그인(B안)", () =>
 
         // '앱 정보'는 /mypage(data-testid=build-info)에 있다 — /about 은 공개 소개 페이지로 빌드 정보가 없다.
         // 서버(/api/v1/health)가 build-info.json(GIT_SHA·BUILD_TIME)을 읽어 돌려준 값이 그대로 보여야 한다.
-        await ui.goto("http://localhost:3000/mypage", { timeout: 20_000 }).catch(() => {});
+        await ui.goto(new URL(ui.url()).origin + "/mypage", { timeout: 20_000 }).catch(() => {});
         const info = ui.getByTestId("build-info");
         await expect(info).toBeVisible({ timeout: 15_000 });
         // 커밋: 7자리 hex 여야 한다("알 수 없음"·"확인 불가"면 실패)

@@ -80,7 +80,10 @@ export const ROUTES: RouteSpec[] = [
   { url: "/assistant/external-sites", source: "assistant/(legacy)/external-sites/page.tsx", title: "외부 사이트 제공자" },
 ];
 
-const BASE = "http://localhost:3000";
+// 앱(webview)이 실제로 쓰는 origin 은 http://127.0.0.1:3000 (lib/config.js SERVER_URL). 세션 쿠키·localStorage 는
+// origin(호스트) 단위라 localhost:3000 으로 이동하면 토큰이 없어 모든 보호 경로가 /setup 으로 튕긴다.
+// 그래서 고정값 대신 webview 가 열려 있는 origin 을 beforeAll 에서 읽어 쓴다.
+let BASE = "http://127.0.0.1:3000";
 const OUT_DIR = path.resolve(__dirname, "../test-results");
 const REPORT = path.join(OUT_DIR, "all_screens_report.jsonl");
 
@@ -142,6 +145,7 @@ test.describe("전 화면 스모크(안전등급 A, 읽기 전용)", () => {
     );
     ui = await getUiPage(app);
     await ui.waitForLoadState("domcontentloaded", { timeout: 30_000 }).catch(() => {});
+    BASE = new URL(ui.url()).origin;
 
     // 첫 실행이면 /setup — 이름·이메일만 입력(fresh_install_signup.spec.ts 와 같은 선택자)
     await ui.waitForURL(/\/setup/, { timeout: 30_000 }).catch(() => {});
