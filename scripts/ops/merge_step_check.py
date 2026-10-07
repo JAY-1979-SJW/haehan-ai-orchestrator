@@ -196,9 +196,10 @@ def impacted_section(base: str, base_tree: Path, workers: int, max_files: int) -
     if len(files) >= IMPACTED_SLOT_NOTICE:
         out["notice"] = f"영향 시험 파일 {len(files)}개 — 무거운 작업이니 HEAVY_SLOT 슬롯을 잡고 돌리세요."
     head_fail = run_impacted(ROOT, files, workers)
-    failing_files = sorted({f.split("::")[0] for f in head_fail})
-    in_base = [f for f in failing_files if (base_tree / f).is_file()]
-    base_fail = set(run_impacted(base_tree, in_base, workers)) if in_base else set()
+    # 기준(base) 비교는 실패한 파일만이 아니라 같은 영향 시험 묶음 전체(기준에 있는 것)를 다시 돈다 — 시험끼리의 순서·상태 간섭으로
+    # 묶음 안에서만 실패하는 기존 실패(2026-10-08 root-cleanup: kakao·message_classifier 21건)를 '새 실패'로 오판하지 않기 위해서다.
+    in_base = [f for f in files if (base_tree / f).is_file()]
+    base_fail = set(run_impacted(base_tree, in_base, workers)) if head_fail and in_base else set()
     out["new_failures"], out["existing_failures"] = split_failures(head_fail, base_fail)
     return out
 
