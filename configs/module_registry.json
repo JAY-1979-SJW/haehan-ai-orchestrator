@@ -9225,7 +9225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/eum_collect_now.py": {
+  "scripts/eum/collect_now.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "eum",
@@ -9233,7 +9233,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/eum_export_excel.py": {
+  "scripts/eum/export_excel.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "eum",
@@ -9249,7 +9249,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/eum_login_check.py": {
+  "scripts/eum/login_check.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "eum",
