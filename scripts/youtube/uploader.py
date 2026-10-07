@@ -7,9 +7,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from orchestrator_v1.core.security_utils import safe_preview
 from scripts.publish_guard import guarded
 from scripts.realtime_audit import emit_event
-from security_utils import safe_preview
 
 ROOT = Path(__file__).resolve().parents[2]
 PLAN_DIR = ROOT / "data" / "youtube_upload_plans"
