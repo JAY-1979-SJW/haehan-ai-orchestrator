@@ -24,9 +24,9 @@ gabia	scripts/ops/audit_gabia_site_settings_canonical_registry.py	구현	일회�
 google	ai_orchestrator/connectors/gmail_cdp_reader.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/google/gmail_cdp_reader.py	1	0
 google	ai_orchestrator/connectors/gmail_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/google/gmail_router.py	0	1
 google	ai_orchestrator/connectors/google_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/google/router.py	0	0
-google	scripts/ops/audit_google_gmail_function_contract.py	구현	일회성·감사(archive 후보)	scripts/google/ops/audit_google_gmail_function_contract.py	0	1
+google	scripts/ops/audit_google_gmail_function_contract.py	구현	일회성·감사(archive 후보 — 도구 집으로 옮기지 않고 scripts/archive/ 로)	scripts/archive/google_ops/audit_google_gmail_function_contract.py	0	1
 hanafax	ai_orchestrator/connectors/hanafax_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hanafax/router.py	0	3
-hiworks	hiworks_mail_reader.py	구현	이동	scripts/hiworks/hiworks_mail_reader.py	0	0
+hiworks	hiworks_mail_reader.py	구현	1단계 shim(실제 파일은 orchestrator_v1/inbox/hiworks_mail_reader.py — 이동 대상은 실제 파일, 루트 shim 은 유지)	scripts/hiworks/hiworks_mail_reader.py (실제 파일 이동 + 옛 경로 shim 유지)	0	0
 hiworks	ai_orchestrator/connectors/hiworks_client.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hiworks/client.py	0	0
 hiworks	ai_orchestrator/connectors/hiworks_collectors.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hiworks/collectors.py	0	0
 hiworks	ai_orchestrator/connectors/hiworks_config.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/hiworks/config.py	0	0
@@ -56,7 +56,7 @@ instagram	apps/marketing-standalone/connectors/instagram_graph_api.py	구현	독
 instagram	scripts/ops/guard_instagram_publish.py	구현	일회성·감사(archive 후보)	scripts/instagram/ops/guard_instagram_publish.py	0	0
 kakao	ai_orchestrator/connectors/kakao_setup_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/kakao/setup_router.py	0	0
 kakao	ai_orchestrator/connectors/kakao_skill_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/kakao/skill_router.py	0	0
-kakaowork	kakaowork_reader.py	구현	이동	scripts/kakaowork/kakaowork_reader.py	0	1
+kakaowork	kakaowork_reader.py	구현	1단계 shim(실제 파일은 orchestrator_v1/inbox/kakaowork_reader.py — 이동 대상은 실제 파일, 루트 shim 은 유지)	scripts/kakaowork/kakaowork_reader.py (실제 파일 이동 + 옛 경로 shim 유지)	0	1
 naver_blog	scripts/gonobi_download_images.py	구현	이동	scripts/naver/blog/gonobi/download_images.py	0	0
 naver_blog	scripts/gonobi_gallery_check.py	구현	이동	scripts/naver/blog/gonobi/gallery_check.py	0	0
 naver_blog	scripts/gonobi_page_test.py	구현	이동	scripts/naver/blog/gonobi/page_test.py	0	0
