@@ -369,8 +369,8 @@
    "scripts/google/sheets.py:_task_recent"
   ],
   "c1eb1bfad2e951956dc956e12f9a206e7b92ba72": [
-   "ai_orchestrator/connectors/naver_search_router.py:api_run_blog_search",
-   "ai_orchestrator/connectors/naver_search_router.py:api_run_shopping_search"
+   "ai_orchestrator/connectors/naver_search/naver_search_router.py:api_run_blog_search",
+   "ai_orchestrator/connectors/naver_search/naver_search_router.py:api_run_shopping_search"
   ],
   "c4fab93892a16501ce990cc92552873b8a2b811e": [
    "scripts/video/ai_g2b_youtube_ep01_real.py:_caption_frame",

@@ -12,7 +12,7 @@ from ai_orchestrator.paths import (
 
 from . import config
 from .config import APP_HOST, APP_PORT
-from .connectors.naver_search_runner import schedule_loop
+from .connectors.naver_search.naver_search_runner import schedule_loop
 from .logging_setup import setup_logging
 from .routers.registry import router
 

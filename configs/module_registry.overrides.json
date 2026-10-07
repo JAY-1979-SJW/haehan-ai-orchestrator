@@ -40,12 +40,12 @@
   "role": "shared",
   "reason": "docstring이 '순수 함수(DB/네트워크 의존 없음)' 라 명시 — L5 site_module 오분류"
  },
- "ai_orchestrator/connectors/naver_search_run_log.py": {
+ "ai_orchestrator/connectors/naver_search/naver_search_run_log.py": {
   "layer": "L7",
   "role": "persistence",
   "reason": "JSONL append-only 실행 기록 파일 — 저장/로그 성격, L5 site_module 오분류"
  },
- "ai_orchestrator/connectors/naver_search_state.py": {
+ "ai_orchestrator/connectors/naver_search/naver_search_state.py": {
   "layer": "L7",
   "role": "persistence",
   "reason": "data/naver_search_state.json 상태 저장 파일 — 저장 성격, L5 site_module 오분류"

@@ -3449,7 +3449,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_client.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3457,7 +3457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_db.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -3465,7 +3465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_jobs.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_jobs.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3473,7 +3473,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_queries.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_queries.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -3481,7 +3481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_router.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_search",
@@ -3489,7 +3489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_run_log.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_run_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -3497,7 +3497,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/connectors/naver_search_runner.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_search",
@@ -3505,7 +3505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_state.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_state.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -3513,7 +3513,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/connectors/naver_search_utils.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_utils.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -22822,6 +22822,14 @@
    "role": "site_module",
    "domain": "instagram",
    "reason": "도메인(instagram) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/naver_search/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_search",
+   "reason": "도메인(naver_search) 자동화",
    "confidence": "low",
    "source": "rule"
   }

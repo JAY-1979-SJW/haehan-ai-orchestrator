@@ -50,7 +50,7 @@ from ..connectors.naver_cafe_router import naver_cafe_router
 from ..connectors.naver_mail_router import naver_mail_router
 from ..connectors.naver_news_router import naver_news_router
 from ..connectors.naver_openapi_setup_router import naver_openapi_setup_router
-from ..connectors.naver_search_router import naver_search_router
+from ..connectors.naver_search.naver_search_router import naver_search_router
 from ..connectors.public_media_router import public_media_router
 from ..connectors.session_status_router import session_status_router
 from ..connectors.smartstore.router import smartstore_router

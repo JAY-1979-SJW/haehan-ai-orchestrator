@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .naver_search_client import SOURCE_SHOP, NaverSearchClient, SearchResult
-from .naver_search_utils import strip_html, to_int_price
+from .naver_search.naver_search_client import SOURCE_SHOP, NaverSearchClient, SearchResult
+from .naver_search.naver_search_utils import strip_html, to_int_price
 
 
 @dataclass

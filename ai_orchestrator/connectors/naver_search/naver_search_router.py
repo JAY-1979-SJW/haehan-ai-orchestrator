@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends
 
 from ai_orchestrator.gates.auth import require_role
 
-from ..audit_logger import log_event
+from ...audit_logger import log_event
 from . import naver_search_queries as q
 from .naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
 
@@ -229,7 +229,7 @@ def api_crawl_shopping(
     import sys
     from pathlib import Path
 
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -266,7 +266,7 @@ def api_crawl_report(
     import sys
     from pathlib import Path
 
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -301,7 +301,7 @@ def api_price_distribution(
     import sys
     from pathlib import Path as _Path
 
-    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -335,7 +335,7 @@ def api_mall_analysis(
     import sys
     from pathlib import Path as _Path
 
-    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -368,7 +368,7 @@ def api_brand_analysis(
     import sys
     from pathlib import Path as _Path
 
-    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -399,7 +399,7 @@ def api_keyword_summary(
     import sys
     from pathlib import Path as _Path
 
-    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -430,7 +430,7 @@ def api_competition_score(
     import sys
     from pathlib import Path as _Path
 
-    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
