@@ -19,6 +19,8 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+    # labeled·unlabeled: 지휘창이 folder-approved 라벨을 붙이면(폴더 승인 게이트 G16) CI 가 다시 돌아 통과하게 한다
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
     inputs:
       base:
@@ -169,6 +171,10 @@ jobs:
         # configs/flat_root_baseline.json 으로 고정(줄이기만), 기준선에 없는 새 평면 파일만 FAIL.
         # 규칙·허용 진입점: configs/flat_root_gate.json.
         run: python scripts/ops/flat_root_gate.py --check-all
+      - name: 폴더 승인 게이트 (승인 목록에 없는 폴더에 코드 파일이 있으면 차단 — G16)
+        # 코드(.py·.ts·.tsx·.js)가 든 모든 폴더는 configs/folder_registry.json 에 승인돼 있어야 한다. 새 폴더는 대표님 승인 후 목록에 추가.
+        # 규칙·절차: scripts/ops/folder_gate.py 머리말, docs/architecture/FOLDER_STRUCTURE.md.
+        run: python scripts/ops/folder_gate.py --check-all
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
         # forbidden_imports/security_patterns/circular_imports 외에 "unknown layer 파일 수"
@@ -212,6 +218,13 @@ jobs:
             echo "base=$base" >> "$GITHUB_OUTPUT"
             echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: 폴더 승인 증거 (목록에 폴더가 추가되면 PR 라벨 folder-approved 필요 — G16)
+        # 라벨 이름은 사용자 입력이라 run 안에 직접 쓰지 않고 env(FOLDER_GATE_LABELS)로만 넘긴다. 이벤트 종류는 Actions 가 GITHUB_EVENT_NAME 으로 준다.
+        # pull_request: 추가가 있으면 라벨 필요 · workflow_dispatch: 추가가 있으면 FAIL · push: 병합 전 PR 에서 확인했으므로 경고만.
+        env:
+          FOLDER_GATE_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: python scripts/ops/folder_gate.py --check-approval --base ${{ steps.refs.outputs.base }} --head ${{ steps.refs.outputs.head }}
 
       - name: G12 중복 게이트 (신규 구조동일 중복 함수 차단)
         # dup_gate.py check — PR의 base..head 사이에 바뀐(추가/수정) .py 파일만 대상.
