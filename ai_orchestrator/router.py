@@ -1,4 +1,6 @@
 import logging
+import os
+import re
 from dataclasses import asdict as _asdict
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -216,9 +218,26 @@ _STATUS_AUDIT = {
 }
 
 
+_UNKNOWN_BUILD = "unknown"
+_GIT_SHA_RE = re.compile(r"^[0-9a-fA-F]{7,40}$")
+_BUILD_TIME_RE = re.compile(r"^[0-9A-Za-z:+.\-_ ]{1,40}$")
+
+
+def _build_value(env_name: str, pattern: re.Pattern[str]) -> str:
+    """빌드 때 주입한 환경변수(GIT_SHA·BUILD_TIME)를 읽는다. 없거나 형식이 다르면 "unknown"."""
+    value = os.environ.get(env_name, "").strip()
+    return value if pattern.fullmatch(value) else _UNKNOWN_BUILD
+
+
 @router.get("/health")
 def health():
-    return {"status": "ok", "service": "haehan-ai-orchestrator"}
+    # git_sha·build_time: 운영이 어느 커밋으로 빌드됐는지 공개 health 로 대조하기 위한 값(주입 방법: Dockerfile ARG·compose build.args)
+    return {
+        "status": "ok",
+        "service": "haehan-ai-orchestrator",
+        "git_sha": _build_value("GIT_SHA", _GIT_SHA_RE),
+        "build_time": _build_value("BUILD_TIME", _BUILD_TIME_RE),
+    }
 
 
 @router.post("/tasks")

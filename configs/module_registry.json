@@ -21888,6 +21888,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_health_build_info.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
