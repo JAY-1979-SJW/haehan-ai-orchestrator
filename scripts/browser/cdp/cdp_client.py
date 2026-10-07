@@ -4,32 +4,32 @@
   데몬의 브라우저 세션에 명령 전달
 
 사용법:
-  python scripts/cdp_client.py check-login          # 현재 열려있는 탭 로그인 상태 확인
-  python scripts/cdp_client.py open <사이트> [경로] # 통합 접속 (A방식 자동로그인+B방식 fallback) ★권장
-  python scripts/cdp_client.py explore <site> [path] [depth] [max] # 로그인+자동 사이트탐색 (sitemap 생성)
-  python scripts/cdp_client.py crawl <site> [depth=3] [max=50] # 홈페이지부터 전체 크롤 + 미설계 페이지 자동 반영
-  python scripts/cdp_client.py crawl-here [depth=2] [max=30]  # 현재 탭부터 BFS 탐색 (로그인 우회) ★수동 로그인 후
-  python scripts/cdp_client.py snapshot                  # 현재 활성 탭 1회 분석 + 저장 (수동 탐색)
-  python scripts/cdp_client.py visits [host]             # 저장된 수동 스냅샷 목록 + 타입 통계
-  python scripts/cdp_client.py session save <host>       # 인증 세션 저장 (쿠키+storage 암호화)
-  python scripts/cdp_client.py session load <host>       # 세션 복원
-  python scripts/cdp_client.py user-watch [타임아웃초] [호스트]  # 사용자 수동 조작 실시간 감지 (URL변화/클릭/XHR/DOM)
-  python scripts/cdp_client.py gabia login-watch [초]  # 가비아 로그인 실시간 감지 → 감지 즉시 DNS 관리 화면 이동
-  python scripts/cdp_client.py auto-login <사이트>  # 감지기 전용 (사용자 수동 로그인 대기)
-  python scripts/cdp_client.py login-watch [interval] [timeout] # 모든 탭 로그인 실시간 감지/저장
-  python scripts/cdp_client.py naver login           # 네이버 로그인
-  python scripts/cdp_client.py naver session-check   # 세션 확인
-  python scripts/cdp_client.py naver blog write      # 블로그 작성
-  python scripts/cdp_client.py google mail list      # Gmail 목록
-  python scripts/cdp_client.py google calendar today # 오늘 일정
+  python scripts/browser/cdp/cli.py check-login          # 현재 열려있는 탭 로그인 상태 확인
+  python scripts/browser/cdp/cli.py open <사이트> [경로] # 통합 접속 (A방식 자동로그인+B방식 fallback) ★권장
+  python scripts/browser/cdp/cli.py explore <site> [path] [depth] [max] # 로그인+자동 사이트탐색 (sitemap 생성)
+  python scripts/browser/cdp/cli.py crawl <site> [depth=3] [max=50] # 홈페이지부터 전체 크롤 + 미설계 페이지 자동 반영
+  python scripts/browser/cdp/cli.py crawl-here [depth=2] [max=30]  # 현재 탭부터 BFS 탐색 (로그인 우회) ★수동 로그인 후
+  python scripts/browser/cdp/cli.py snapshot                  # 현재 활성 탭 1회 분석 + 저장 (수동 탐색)
+  python scripts/browser/cdp/cli.py visits [host]             # 저장된 수동 스냅샷 목록 + 타입 통계
+  python scripts/browser/cdp/cli.py session save <host>       # 인증 세션 저장 (쿠키+storage 암호화)
+  python scripts/browser/cdp/cli.py session load <host>       # 세션 복원
+  python scripts/browser/cdp/cli.py user-watch [타임아웃초] [호스트]  # 사용자 수동 조작 실시간 감지 (URL변화/클릭/XHR/DOM)
+  python scripts/browser/cdp/cli.py gabia login-watch [초]  # 가비아 로그인 실시간 감지 → 감지 즉시 DNS 관리 화면 이동
+  python scripts/browser/cdp/cli.py auto-login <사이트>  # 감지기 전용 (사용자 수동 로그인 대기)
+  python scripts/browser/cdp/cli.py login-watch [interval] [timeout] # 모든 탭 로그인 실시간 감지/저장
+  python scripts/browser/cdp/cli.py naver login           # 네이버 로그인
+  python scripts/browser/cdp/cli.py naver session-check   # 세션 확인
+  python scripts/browser/cdp/cli.py naver blog write      # 블로그 작성
+  python scripts/browser/cdp/cli.py google mail list      # Gmail 목록
+  python scripts/browser/cdp/cli.py google calendar today # 오늘 일정
 """
 
 from __future__ import annotations
 
 import json
 import sys
-from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
@@ -53,7 +53,7 @@ def _cmd_goto(task: str) -> None:
     from scripts.navigator import goto
 
     if not task:
-        print("사용법: python scripts/cdp_client.py goto <별칭_or_URL>")
+        print("사용법: python scripts/browser/cdp/cli.py goto <별칭_or_URL>")
         return
     goto(task)
 
@@ -62,7 +62,7 @@ def _cmd_wait_login(task: str, sub: str) -> None:
     from scripts.navigator import wait_login
 
     if not task:
-        print("사용법: python scripts/cdp_client.py wait-login <사이트> [타임아웃초]")
+        print("사용법: python scripts/browser/cdp/cli.py wait-login <사이트> [타임아웃초]")
         return
     t_out = int(sub) if sub.isdigit() else 300
     ok = wait_login(task, timeout_s=t_out)
@@ -79,7 +79,7 @@ def _cmd_write_post(task: str, sub: str, args: list[str]) -> None:
     from scripts.navigator import write_blog_post
 
     if not task or not sub:
-        print("사용법: python scripts/cdp_client.py write-post <제목> <본문> [이미지경로]")
+        print("사용법: python scripts/browser/cdp/cli.py write-post <제목> <본문> [이미지경로]")
         return
     img = args[0] if args else None
     ok = write_blog_post(task, sub, image_path=img)
@@ -90,7 +90,7 @@ def _cmd_paste_image(task: str, sub: str) -> None:
     from scripts.navigator import paste_image
 
     if not task:
-        print("사용법: python scripts/cdp_client.py paste-image <이미지경로> [target]")
+        print("사용법: python scripts/browser/cdp/cli.py paste-image <이미지경로> [target]")
         return
     tgt = sub if sub else "body"
     ok = paste_image(task, tgt)
@@ -115,7 +115,7 @@ def _cmd_is_ready(task: str, sub: str, args: list[str]) -> None:
 
     check_args = [a for a in [task, sub] + args if a]  # noqa: RUF005
     if not check_args:
-        print("사용법: python scripts/cdp_client.py is-ready <체크1> [체크2 ...]")
+        print("사용법: python scripts/browser/cdp/cli.py is-ready <체크1> [체크2 ...]")
         print("  예: is-ready url_contains:naver readystate has_button:발행")
         return
     r = is_ready(check_args, timeout_s=2.0)
@@ -131,7 +131,7 @@ def _cmd_verify_input(task: str, sub: str, args: list[str]) -> None:
     from scripts.navigator import verify_input
 
     if not task:
-        print("사용법: python scripts/cdp_client.py verify-input <텍스트>")
+        print("사용법: python scripts/browser/cdp/cli.py verify-input <텍스트>")
         return
     full = " ".join([task, sub] + args).strip()  # noqa: RUF005
     v = verify_input(full)
@@ -146,7 +146,7 @@ def _cmd_verify_text(task: str, sub: str, args: list[str]) -> None:
     from scripts.navigator import verify_text
 
     if not task:
-        print("사용법: python scripts/cdp_client.py verify-text <텍스트>")
+        print("사용법: python scripts/browser/cdp/cli.py verify-text <텍스트>")
         return
     full = " ".join([task, sub] + args).strip()  # noqa: RUF005
     results = verify_text(full)
@@ -171,7 +171,7 @@ def _cmd_type_into(task: str, sub: str, args: list[str]) -> None:
     from scripts.navigator import type_into
 
     if not task or not sub:
-        print("사용법: python scripts/cdp_client.py type-into <대상> <텍스트>")
+        print("사용법: python scripts/browser/cdp/cli.py type-into <대상> <텍스트>")
         return
     # 텍스트는 sub + args 전체를 공백 join
     full_text = " ".join([sub] + args)  # noqa: RUF005
@@ -183,7 +183,7 @@ def _cmd_click_button(task: str) -> None:
     from scripts.navigator import click_button
 
     if not task:
-        print("사용법: python scripts/cdp_client.py click-button <텍스트>")
+        print("사용법: python scripts/browser/cdp/cli.py click-button <텍스트>")
         return
     ok = click_button(task)
     sys.exit(0 if ok else 1)
@@ -193,7 +193,7 @@ def _cmd_click_link(task: str) -> None:
     from scripts.navigator import click_link
 
     if not task:
-        print("사용법: python scripts/cdp_client.py click-link <텍스트>")
+        print("사용법: python scripts/browser/cdp/cli.py click-link <텍스트>")
         return
     ok = click_link(task)
     sys.exit(0 if ok else 1)
@@ -387,28 +387,6 @@ def _cmd_analyze() -> None:
     print(json.dumps(result, ensure_ascii=False, indent=2)[:500])
 
 
-_SITE_ROUTER_CMDS = (
-    "naver",
-    "google",
-    "gmail",
-    "youtube",
-    "kakao",
-    "eum",
-    "hiworks",
-    "gabia",
-    "smartstore",
-    "g2b",
-    "local",
-)
-
-
-def _cmd_site_router(cmd: str, task: str, sub: str, args: list[str]) -> None:
-    # 'explore' 는 신규 통합 사이트 탐색에 양보 (아래 case로 처리)
-    from scripts.router import dispatch
-
-    dispatch(cmd, task, sub, args)
-
-
 def _cmd_crawl(task: str, sub: str, args: list[str]) -> None:
     # 홈페이지부터 전체 자동 크롤 + 미설계 페이지 자동 반영
     import os  # noqa: F401 - 원본 그대로 보존(2026-09-29 STD-08 리팩터, 로직 변경 없음)
@@ -419,7 +397,7 @@ def _cmd_crawl(task: str, sub: str, args: list[str]) -> None:
     from scripts.site_watch import StepFailure
 
     if not task:
-        print("사용법: python scripts/cdp_client.py crawl <사이트> [depth=3] [max=50]")
+        print("사용법: python scripts/browser/cdp/cli.py crawl <사이트> [depth=3] [max=50]")
         print(f"  지원: {list_sites()}")
         return
     args_all = ([sub] if sub else []) + list(args)
@@ -460,7 +438,7 @@ def _cmd_explore(task: str, sub: str, args: list[str]) -> None:
     from scripts.site_watch import StepFailure
 
     if not task:
-        print("사용법: python scripts/cdp_client.py explore <사이트> [경로] [depth] [max] [--dry-run]")
+        print("사용법: python scripts/browser/cdp/cli.py explore <사이트> [경로] [depth] [max] [--dry-run]")
         print(f"  지원: {list_sites()}")
         return
     args_all = ([sub] if sub else []) + list(args)
@@ -573,6 +551,18 @@ def _cmd_session(task: str, sub: str) -> None:
         print(f"알 수 없는 session 명령: {sub_cmd}")
 
 
+def _print_open_site_result(res: dict[str, Any] | Any, *, dry: bool) -> None:
+    if isinstance(res, dict):
+        if dry:
+            print(
+                f"\n✓ [DRY] 흐름 검증 완료 — site={res.get('site')} url={res.get('url')} logged_in={res.get('logged_in')}"
+            )
+        else:
+            print(f"\n✓ 접속 완료 — {res.get('url')}")
+    else:
+        print(f"\n✓ 접속 완료 — {res.url}")
+
+
 def _cmd_open(task: str, sub: str, args: list[str]) -> None:
     # 통합 사이트 접속 (A방식 + B방식 fallback + 전 단계 감시)
     import os
@@ -582,7 +572,7 @@ def _cmd_open(task: str, sub: str, args: list[str]) -> None:
     from scripts.site_watch import StepFailure
 
     if not task:
-        print("사용법: python scripts/cdp_client.py open <사이트> [경로] [--dry-run] [--force-login]")
+        print("사용법: python scripts/browser/cdp/cli.py open <사이트> [경로] [--dry-run] [--force-login]")
         print(f"  지원: {list_sites()}")
         return
     # --dry-run 플래그 해석
@@ -605,15 +595,7 @@ def _cmd_open(task: str, sub: str, args: list[str]) -> None:
     print(f"\n[작업] {task} 사이트 접속 — 전 단계 감시 (A→B fallback){suffix}")
     try:
         res = open_site(task, path, force_login=force_login)
-        if isinstance(res, dict):
-            if dry:
-                print(
-                    f"\n✓ [DRY] 흐름 검증 완료 — site={res.get('site')} url={res.get('url')} logged_in={res.get('logged_in')}"
-                )
-            else:
-                print(f"\n✓ 접속 완료 — {res.get('url')}")
-        else:
-            print(f"\n✓ 접속 완료 — {res.url}")
+        _print_open_site_result(res, dry=dry)
     except StepFailure as e:
         print(f"\n✘ 단계 실패: {e.step} ({e.kind})")
         print(f"   사유: {e.message}")
@@ -639,9 +621,9 @@ def _cmd_user_watch(task: str, sub: str) -> None:
 
 
 def _cmd_gabia(task: str, sub: str, args: list[str]) -> None:
-    # NOTE(2026-09-29 STD-08 리팩터 중 발견, 이번엔 그대로 보존): 위 _SITE_ROUTER_CMDS 가드에
-    # "gabia" 가 이미 포함돼 있어 원본에서도 이 함수는 도달 불가능한 코드였다(match 는 위에서
-    # 부터 순서대로 첫 매치를 쓴다). 동작을 바꾸지 않는 것이 이번 작업 범위라 그대로 옮기고,
+    # NOTE(2026-09-29 STD-08 리팩터 중 발견, 이번엔 그대로 보존): cli.py 의 _SITE_ROUTER_CMDS
+    # 가드에 "gabia" 가 이미 포함돼 있어 원본에서도 이 함수는 도달 불가능한 코드였다(match 는
+    # 위에서부터 순서대로 첫 매치를 쓴다). 동작을 바꾸지 않는 것이 이번 작업 범위라 그대로 옮기고,
     # 별도로 사용자에게 보고한다 — 고치는 건 별도 승인 사항.
     match task:
         case "login-watch":
@@ -653,8 +635,8 @@ def _cmd_gabia(task: str, sub: str, args: list[str]) -> None:
             sys.exit(0 if result["logged_in"] else 1)
         case _:
             print("가비아 명령:")
-            print("  python scripts/cdp_client.py gabia login-watch [타임아웃초]")
-            print("  python scripts/cdp_client.py gabia login-watch [타임아웃초] --no-navigate")
+            print("  python scripts/browser/cdp/cli.py gabia login-watch [타임아웃초]")
+            print("  python scripts/browser/cdp/cli.py gabia login-watch [타임아웃초] --no-navigate")
 
 
 def _cmd_auto_login(task: str, sub: str) -> None:
@@ -662,7 +644,7 @@ def _cmd_auto_login(task: str, sub: str) -> None:
     from scripts.web_connector import get_page
 
     if not task:
-        print("사용법: python scripts/cdp_client.py auto-login <사이트> [URL]")
+        print("사용법: python scripts/browser/cdp/cli.py auto-login <사이트> [URL]")
         return
     url = sub if sub else None
     print(f"\n[작업] {task} 자동 로그인 + 세션 저장")
@@ -715,17 +697,6 @@ def _cmd_cred(task: str, sub: str) -> None:
         _cmd_delete(site) if site else print("사용법: cred delete <사이트>")
     else:
         print("사용법: cred [set|get|list|delete] [사이트]")
-
-
-def _cmd_services() -> None:
-    from scripts.router import list_services
-
-    rows = list_services()
-    print(f"{'명령':<14} {'라우터 모듈'}")
-    print("-" * 56)
-    for r in rows:
-        alias = " (alias)" if r.get("alias") else ""
-        print(f"{r['cmd']:<14} {r['module']}{alias}")
 
 
 def _cmd_gate(task: str, sub: str) -> None:
@@ -781,89 +752,6 @@ def _cmd_op_log(task: str, sub: str) -> None:
         print("사용법: op-log [list|tail|stats] [op_name] [hours]")
 
 
-# cmd 문자열 → 핸들러 매핑. 원래 match cmd: 의 case 순서를 그대로 옮긴 것 — 동작은 동일하다.
-# (2026-09-29 STD-08: match 는 case 40개를 mccabe/pylint 가 "분기 40개"로 그대로 세어(각
-# 본문이 한 줄 호출이어도) 복잡도를 못 벗어났다 — dict 조회로 바꿔 실제로 해소했다.)
-_HANDLERS: dict[str, Callable[[str, str, list[str]], None]] = {
-    "check-login": lambda task, sub, args: _cmd_check_login(),
-    "goto": lambda task, sub, args: _cmd_goto(task),
-    "wait-login": lambda task, sub, args: _cmd_wait_login(task, sub),
-    "save-session": lambda task, sub, args: _cmd_save_session(task),
-    "write-post": lambda task, sub, args: _cmd_write_post(task, sub, args),
-    "paste-image": lambda task, sub, args: _cmd_paste_image(task, sub),
-    "handle-draft-popup": lambda task, sub, args: _cmd_handle_draft_popup(),
-    "is-ready": lambda task, sub, args: _cmd_is_ready(task, sub, args),
-    "verify-input": lambda task, sub, args: _cmd_verify_input(task, sub, args),
-    "verify-text": lambda task, sub, args: _cmd_verify_text(task, sub, args),
-    "scan-links": lambda task, sub, args: _cmd_scan_links(),
-    "scan-page": lambda task, sub, args: _cmd_scan_page(),
-    "type-into": lambda task, sub, args: _cmd_type_into(task, sub, args),
-    "click-button": lambda task, sub, args: _cmd_click_button(task),
-    "click-link": lambda task, sub, args: _cmd_click_link(task),
-    "popup-install": lambda task, sub, args: _cmd_popup_install(),
-    "detect-popup": lambda task, sub, args: _cmd_detect_popup(),
-    "close-popup": lambda task, sub, args: _cmd_close_popup(),
-    "popup-poll": lambda task, sub, args: _cmd_popup_poll(),
-    "popup-auto": lambda task, sub, args: _cmd_popup_auto(),
-    "popup-monitor": lambda task, sub, args: _cmd_popup_monitor(task, sub, args),
-    "chrome-ui-monitor": lambda task, sub, args: _cmd_chrome_ui_monitor(task, sub),
-    "analyze": lambda task, sub, args: _cmd_analyze(),
-    "crawl": lambda task, sub, args: _cmd_crawl(task, sub, args),
-    "explore": lambda task, sub, args: _cmd_explore(task, sub, args),
-    "crawl-here": lambda task, sub, args: _cmd_crawl_here(task, sub, args),
-    "explore-here": lambda task, sub, args: _cmd_crawl_here(task, sub, args),
-    "snapshot": lambda task, sub, args: _cmd_snapshot(),
-    "snap": lambda task, sub, args: _cmd_snapshot(),
-    "visits": lambda task, sub, args: _cmd_visits(task),
-    "session": lambda task, sub, args: _cmd_session(task, sub),
-    "open": lambda task, sub, args: _cmd_open(task, sub, args),
-    "user-watch": lambda task, sub, args: _cmd_user_watch(task, sub),
-    "gabia": lambda task, sub, args: _cmd_gabia(task, sub, args),
-    "auto-login": lambda task, sub, args: _cmd_auto_login(task, sub),
-    "login-watch": lambda task, sub, args: _cmd_login_watch(task, sub),
-    "cred": lambda task, sub, args: _cmd_cred(task, sub),
-    "credentials": lambda task, sub, args: _cmd_cred(task, sub),
-    "services": lambda task, sub, args: _cmd_services(),
-    "gate": lambda task, sub, args: _cmd_gate(task, sub),
-    "op-log": lambda task, sub, args: _cmd_op_log(task, sub),
-}
-
-
-def _dispatch(cmd: str, task: str, sub: str, args: list[str]) -> None:
-    # 원본 match 의 순서를 그대로 보존: _SITE_ROUTER_CMDS 를 _HANDLERS 조회보다 먼저 본다.
-    # "gabia" 는 이 튜플에 이미 있어(_cmd_gabia 함수 주석 참고) _HANDLERS["gabia"] 는 원본과
-    # 마찬가지로 도달 불가능하다 — 동작을 바꾸지 않기 위해 그대로 둔다.
-    if cmd in _SITE_ROUTER_CMDS:
-        # 'explore' 는 신규 통합 사이트 탐색에 양보 (아래 _HANDLERS["explore"] 로 처리)
-        _cmd_site_router(cmd, task, sub, args)
-        return
-    handler = _HANDLERS.get(cmd)
-    if handler is None:
-        print(f"알 수 없는 명령: {cmd}")
-        print(__doc__)
-        return
-    handler(task, sub, args)
-
-
-def main() -> None:
-    if len(sys.argv) < 2:
-        print(__doc__)
-        return
-
-    cmd = sys.argv[1]
-    task = sys.argv[2] if len(sys.argv) > 2 else ""
-    sub = sys.argv[3] if len(sys.argv) > 3 else ""
-    args = sys.argv[4:] if len(sys.argv) > 4 else []
-
-    try:
-        _dispatch(cmd, task, sub, args)
-    except Exception as e:  # noqa: BLE001 - CDP 브라우저 데몬 제어 CLI - 상태조회/모니터 시작중지/로그인 커맨드 래퍼, 예외시 오류 출력 후 sys.exit(1) 로 실패를 명확히 알림(fail-loud)
-        print(f"  [오류] {e}")
-        import traceback
-
-        traceback.print_exc()
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+# CLI 디스패치(_HANDLERS·_dispatch·main)와 직접 실행 진입점은 scripts/browser/cdp/cli.py
+# 로 분리했다(cdp_client 는 라이브러리라 scripts.router 를 몰라야 한다 — 2026-10-07 STD-08
+# 후속). 직접 실행하려면 `python scripts/browser/cdp/cli.py ...` 를 쓴다.

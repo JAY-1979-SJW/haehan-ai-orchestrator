@@ -21,7 +21,7 @@ def write_blog_post(
 ) -> bool:
     """Naver 블로그 글 1편 자동 작성 (제목 + 본문 + 선택 이미지 + 임시저장).
 
-    각 단계를 별도 subprocess로 cdp_client.py 명령 실행 — Playwright sync 중첩 회피.
+    각 단계를 별도 subprocess로 cdp_client CLI(cli.py) 명령 실행 — Playwright sync 중첩 회피.
     발행은 절대 자동 안 함. 임시저장까지만 수행.
     """
     print("=" * 60)
@@ -31,7 +31,7 @@ def write_blog_post(
     _log.info("write_blog_post: title=%s image=%s", title[:40], image_path)
     _t_blog = time.perf_counter()
 
-    script = str(ROOT / "scripts" / "browser" / "cdp" / "cdp_client.py")
+    script = str(ROOT / "scripts" / "browser" / "cdp" / "cli.py")
     py = sys.executable
 
     def _run(args: list[str], label: str, soft: bool = False) -> bool:
