@@ -5,10 +5,65 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 REPORT = Path("data/inspection/local_agent_user_field_test/user_field_test_report.json")
 CHECKSUMS = Path("data/inspection/local_agent_user_field_test/checksums.json")
 SUMMARY = Path("data/inspection/local_agent_user_field_test/user_field_test_summary.md")
 RUNBOOK = Path("docs/ops/local_agent_external_field_runbook.md")
+
+
+_STEP_KEYS = (
+    "01_extract_zip_to_clean_folder",
+    "02_self_test_python_free",
+    "03_diagnostics_python_free",
+    "04_gui_launch",
+    "05_registration_with_code",
+    "06_credential_manager_storage",
+    "07_wss_auth_ok",
+    "08_heartbeat",
+    "09_reexecute_auto_reconnect",
+    "10_error_token_not_stored",
+    "11_error_register_no_env",
+    "12_smartscreen_antivirus",
+    "13_user_feedback",
+)
+
+
+@pytest.fixture(autouse=True)
+def _synthetic_report_and_checksums(tmp_path, monkeypatch):
+    """report.json / checksums.json 은 .gitignore(data/**/*.json) 로 미추적 — 합성본을 tmp 에 만들어 경로만 돌린다."""
+    import hashlib
+
+    from scripts.ops import audit_local_agent_user_field_test as audit
+
+    steps = {k: {"ok": True} for k in _STEP_KEYS}
+    steps["06_credential_manager_storage"]["credential_value_in_report"] = False
+    steps["12_smartscreen_antivirus"]["smartscreen_warning_observed"] = False
+    report_doc = {
+        "steps": steps,
+        "artifacts": {
+            "exe_sha256": hashlib.sha256(b"synthetic-exe").hexdigest(),
+            "zip_sha256": hashlib.sha256(b"synthetic-zip").hexdigest(),
+            "zip_size_bytes": 13,
+        },
+        "test_environment": {"external_pc_used": False},
+        "desktop_ui_react_unchanged": {"verified": True},
+    }
+    report = tmp_path / "user_field_test_report.json"
+    report.write_text(json.dumps(report_doc, ensure_ascii=False, indent=2), encoding="utf-8")
+    checksums = tmp_path / "checksums.json"
+    checksums.write_text(
+        json.dumps(
+            {report.name: hashlib.sha256(report.read_bytes()).hexdigest()},
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setitem(globals(), "REPORT", report)
+    monkeypatch.setitem(globals(), "CHECKSUMS", checksums)
+    monkeypatch.setattr(audit, "REPORT", report)
+    monkeypatch.setattr(audit, "CHECKSUMS", checksums)
 
 
 # ── 1) 산출물 존재 ────────────────────────────────────────────
