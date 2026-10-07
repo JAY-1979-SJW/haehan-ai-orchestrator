@@ -16,8 +16,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:  # `python scripts/eum_send_mail_batch.py` 로 직접 실행해도 scripts.gate 를 import 할 수 있게
+ROOT = Path(__file__).resolve().parents[2]  # 저장소 루트(scripts/eum/ 깊이) — sys.path 부트스트랩에 쓰여 repo_root 로 못 바꿈
+if str(ROOT) not in sys.path:  # `python scripts/eum/send_mail_batch.py` 로 직접 실행해도 scripts.gate 를 import 할 수 있게
     sys.path.insert(0, str(ROOT))
 
 from scripts.gate import GateBlocked, require_side_effect  # noqa: E402 - sys.path 보정 뒤에 import
@@ -185,7 +185,7 @@ def send_one(server: smtplib.SMTP, row: dict, approval: str | None = None) -> bo
     body = BODY_TEMPLATE.format(업체명=company, 공사명=project)
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = Header(SUBJECT, "utf-8")
+    msg["Subject"] = Header(SUBJECT, "utf-8")  # type: ignore[assignment]  # 런타임에 Header 객체를 받는다(이동 전부터 동작) — 형 표기만 좁다
     from email.utils import formataddr
 
     msg["From"] = formataddr((Header("해한AI엔지니어링 신재우", "utf-8").encode(), account))
