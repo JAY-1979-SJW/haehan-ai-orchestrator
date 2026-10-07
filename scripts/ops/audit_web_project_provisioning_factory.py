@@ -139,7 +139,7 @@ def _print_report(audit: dict) -> None:
 
 
 def main() -> None:
-    from scripts.ops.audit_cli import run_json_or_report_cli
+    from scripts.common.audit_cli import run_json_or_report_cli
 
     run_json_or_report_cli("Web Project Provisioning Factory 감사", run_audit, _print_report, "all_ok")
 

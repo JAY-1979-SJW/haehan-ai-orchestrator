@@ -5,7 +5,7 @@
 출력 문구·반환값·종료 코드는 원래 스크립트와 같다.
 
 호출하는 감사 스크립트는 직접 실행(`python scripts/ops/audit_x.py`)될 때 맨 위에서 저장소 루트를 sys.path 에
-넣으므로, 이 모듈은 함수 안에서 `from scripts.ops.audit_cli import ...` 로 지연 import 한다(E402 회피).
+넣으므로, 이 모듈은 함수 안에서 `from scripts.common.audit_cli import ...` 로 지연 import 한다(E402 회피).
 표준 라이브러리만 쓴다.
 """
 

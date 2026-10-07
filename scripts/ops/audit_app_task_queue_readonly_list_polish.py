@@ -115,7 +115,7 @@ def run_audit() -> None:
 
 
 def print_report() -> str:
-    from scripts.ops.audit_cli import print_check_report
+    from scripts.common.audit_cli import print_check_report
 
     return print_check_report(
         "APP_TASK_QUEUE_READONLY_LIST_POLISH AUDIT", checks, (VERDICT_READY, VERDICT_WARN, VERDICT_BLOCKED), 3

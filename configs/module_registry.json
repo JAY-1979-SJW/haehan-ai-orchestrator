@@ -23129,7 +23129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_cli.py": {
+  "scripts/common/audit_cli.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

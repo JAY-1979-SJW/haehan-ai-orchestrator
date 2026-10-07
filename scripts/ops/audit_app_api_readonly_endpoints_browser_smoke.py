@@ -88,7 +88,7 @@ def run_audit() -> None:
 
 
 def print_report() -> str:
-    from scripts.ops.audit_cli import print_check_report
+    from scripts.common.audit_cli import print_check_report
 
     return print_check_report(
         "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE AUDIT", checks, (VERDICT_READY, VERDICT_WARN, VERDICT_BLOCKED), 2

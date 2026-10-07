@@ -206,7 +206,7 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
-    from scripts.ops.audit_cli import report_findings
+    from scripts.common.audit_cli import report_findings
 
     ok, findings = audit()
     return report_findings(ok, findings, "SITE_SSO_SUBDOMAIN_RUNTIME_BASELINE")

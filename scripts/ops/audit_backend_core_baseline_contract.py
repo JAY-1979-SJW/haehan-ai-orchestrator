@@ -48,7 +48,7 @@ def missing_phrases(text: str, phrases: tuple[str, ...]) -> list[str]:
 
 
 def audit() -> tuple[bool, list[str]]:
-    from scripts.ops.audit_cli import BaselineRefSpec, audit_baseline_with_module_ref
+    from scripts.common.audit_cli import BaselineRefSpec, audit_baseline_with_module_ref
 
     return audit_baseline_with_module_ref(
         BaselineRefSpec(
@@ -71,7 +71,7 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
-    from scripts.ops.audit_cli import report_findings
+    from scripts.common.audit_cli import report_findings
 
     ok, findings = audit()
     return report_findings(ok, findings, "BACKEND_CORE_BASELINE_CONTRACT")

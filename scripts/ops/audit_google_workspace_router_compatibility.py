@@ -161,7 +161,7 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
-    from scripts.ops.audit_cli import report_findings
+    from scripts.common.audit_cli import report_findings
 
     ok, findings = audit()
     return report_findings(ok, findings, "GOOGLE_WORKSPACE_ROUTER_COMPATIBILITY")

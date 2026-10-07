@@ -1,4 +1,4 @@
-"""scripts/ops/audit_cli.py — 감사 스크립트 공용 출력·CLI 틀(N2 중복 통합) 시험."""
+"""scripts/common/audit_cli.py — 감사 스크립트 공용 출력·CLI 틀(N2 중복 통합) 시험."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import audit_cli
+from scripts.common import audit_cli
 
 
 def test_report_findings(capsys: pytest.CaptureFixture[str]) -> None:

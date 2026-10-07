@@ -228,7 +228,7 @@ def run_audit() -> dict[str, Any]:
 
 
 def main() -> int:
-    from scripts.ops.audit_cli import run_checklist_cli
+    from scripts.common.audit_cli import run_checklist_cli
 
     return run_checklist_cli(AUDIT_NAME, run_audit)
 
