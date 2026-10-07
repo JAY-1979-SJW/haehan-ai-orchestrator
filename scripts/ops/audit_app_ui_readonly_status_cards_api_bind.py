@@ -120,31 +120,11 @@ def run_audit() -> None:
 
 
 def print_report() -> str:
-    passed = sum(1 for _, r, _ in checks if r)
-    failed = sum(1 for _, r, _ in checks if not r)
+    from scripts.ops.audit_cli import print_check_report
 
-    print(f"\n{'=' * 64}")
-    print("APP_UI_READONLY_STATUS_CARDS_API_BIND AUDIT")
-    print(f"{'=' * 64}")
-    for name, result, detail in checks:
-        status = "PASS" if result else "FAIL"
-        line = f"  [{status}] {name}"
-        if detail:
-            line += f" — {detail}"
-        print(line)
-    print(f"{'=' * 64}")
-    print(f"  총 {len(checks)}개 검사: PASS={passed}, FAIL={failed}")
-
-    if failed == 0:
-        verdict = VERDICT_READY
-    elif failed <= 2:
-        verdict = VERDICT_WARN
-    else:
-        verdict = VERDICT_BLOCKED
-
-    print(f"  최종 판정: {verdict}")
-    print(f"{'=' * 64}\n")
-    return verdict
+    return print_check_report(
+        "APP_UI_READONLY_STATUS_CARDS_API_BIND AUDIT", checks, (VERDICT_READY, VERDICT_WARN, VERDICT_BLOCKED), 2
+    )
 
 
 if __name__ == "__main__":

@@ -251,11 +251,10 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
+    from scripts.ops.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_SITE_WORK_FUNCTION_BASELINE' if ok else 'FAIL_SITE_WORK_FUNCTION_BASELINE'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "SITE_WORK_FUNCTION_BASELINE")
 
 
 if __name__ == "__main__":

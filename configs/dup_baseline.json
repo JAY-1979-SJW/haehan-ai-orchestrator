@@ -2,7 +2,7 @@
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 39,
+ "hash_count": 32,
  "hashes": {
   "0375546e7217dda427468b770a6de139d41462c6": [
    "ai_orchestrator/connectors/naver_mail/bulk_service.py:_read_rows",
@@ -21,16 +21,6 @@
   "2a680e0f94b41e4cb814b289c9104964760a160e": [
    "scripts/common/youtube_api_common.py:_write_report",
    "scripts/youtube/oauth.py:_write_report"
-  ],
-  "2bc87d002245021e496c951eebabbff968c07c32": [
-   "scripts/ops/audit_backend_premium_api_contract.py:main",
-   "scripts/ops/audit_backend_premium_audit_evidence.py:main",
-   "scripts/ops/audit_backend_premium_domain_core.py:main",
-   "scripts/ops/audit_backend_premium_endpoint_inventory.py:main",
-   "scripts/ops/audit_backend_premium_external_app_bridge.py:main",
-   "scripts/ops/audit_backend_premium_policy_layer.py:main",
-   "scripts/ops/audit_backend_premium_security_boundary.py:main",
-   "scripts/ops/audit_backend_premium_service_layer.py:main"
   ],
   "3a1616afa4db701703834b6ec3b4e30bee779c3a": [
    "ai_orchestrator/local_agent_redaction.py:_strip_click_target",
@@ -56,32 +46,6 @@
   "3c36397accb3a079b3594dbc4618397788646787": [
    "scripts/naver/smartstore/product/page_builder.py:render_detail",
    "scripts/naver/smartstore/product/page_builder.py:render_notice"
-  ],
-  "3ce118397eab18dd5384132301bce7b0c332d45f": [
-   "scripts/google/audit_gmail_function_contract.py:main",
-   "scripts/ops/audit_app_baseline_contract.py:main",
-   "scripts/ops/audit_app_development_standard.py:main",
-   "scripts/ops/audit_app_structure_contract.py:main",
-   "scripts/ops/audit_approval_flow_baseline_contract.py:main",
-   "scripts/ops/audit_backend_core_baseline_contract.py:main",
-   "scripts/ops/audit_common_tool_runtime_baseline_contract.py:main",
-   "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py:main",
-   "scripts/ops/audit_google_automation_baseline_contract.py:main",
-   "scripts/ops/audit_google_cloud_module_baseline_contract.py:main",
-   "scripts/ops/audit_google_cloud_router_compatibility.py:main",
-   "scripts/ops/audit_google_workspace_module_baseline_contract.py:main",
-   "scripts/ops/audit_google_workspace_router_compatibility.py:main",
-   "scripts/ops/audit_local_agent_e2e_baseline_contract.py:main",
-   "scripts/ops/audit_local_agent_e2e_flow_contract.py:main",
-   "scripts/ops/audit_module_baseline_contract.py:main",
-   "scripts/ops/audit_playwright_ai_baseline_contract.py:main",
-   "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py:main",
-   "scripts/ops/audit_site_work_function_baseline.py:main",
-   "scripts/ops/audit_standard_workflow_contract.py:main"
-  ],
-  "3cf3fdb28abca552f265574e179191dc68812fb9": [
-   "scripts/ops/smoke_app_ui_shell_browser.py:check_dry_run_notice_used",
-   "scripts/ops/smoke_app_ui_shell_browser.py:check_forbidden_banner_used"
   ],
   "46785cd7ccaaac6c3a0302940c709ed092ec10ea": [
    "scripts/ops/live_parallel_task_dispatch_smoke.py:_start_worker",
@@ -109,22 +73,9 @@
    "ai_orchestrator/connectors/instagram/instagram_dm_db.py:_schema_v1",
    "ai_orchestrator/connectors/naver_mail/bulk_store.py:_schema_v1"
   ],
-  "59dd4afcce19e06253c40ea945ed5c1dd32b420b": [
-   "scripts/ops/audit_app_api_readonly_endpoints_browser_smoke.py:print_report",
-   "scripts/ops/audit_app_task_queue_readonly_list_polish.py:print_report",
-   "scripts/ops/audit_app_test_baseline_current_contract_sync.py:print_report",
-   "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:print_report"
-  ],
   "632774467f6ef61fea21bd5fa6c830236bbe8fad": [
    "scripts/naver/smartstore/navigation/sidebar_v3.py:_refresh_dashboard",
    "scripts/naver/smartstore/registration/general_full_analyze.py:_enter_dashboard"
-  ],
-  "643849f1cfb8f7a6f57647e3ead6b85444bdf781": [
-   "scripts/ops/audit_5050_legacy_characterization.py:main",
-   "scripts/ops/audit_5050_phase1_8400_contract_freeze.py:main",
-   "scripts/ops/audit_5050_phase1b_adapter_contract_detail.py:main",
-   "scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py:main",
-   "scripts/ops/audit_web_project_provisioning_factory.py:main"
   ],
   "6d1a5ce95e8f3c3f8d97ffa1240713c858e8731b": [
    "scripts/local_agent/g2b/run_readonly_local_e2e.py:_save_report",
@@ -168,23 +119,9 @@
    "ai_orchestrator/local_agent/naver_content_safe_result.py:validate_naver_result",
    "ai_orchestrator/local_agent/universal_safe_result.py:validate_universal_result"
   ],
-  "9cb75156eea54eb3e9293fc251ec4602a93db2fe": [
-   "scripts/ops/audit_approval_flow_baseline_contract.py:audit",
-   "scripts/ops/audit_backend_core_baseline_contract.py:audit",
-   "scripts/ops/audit_common_tool_runtime_baseline_contract.py:audit",
-   "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py:audit",
-   "scripts/ops/audit_local_agent_e2e_baseline_contract.py:audit",
-   "scripts/ops/audit_playwright_ai_baseline_contract.py:audit"
-  ],
   "a02b6be2b26f8d575820935f909cd473dc775f38": [
    "scripts/common/youtube_api_common.py:parse_kv_args",
    "scripts/youtube/oauth.py:parse_kv_args"
-  ],
-  "b26ae391e3d034e06090d085411a5b5784ecfbf7": [
-   "scripts/ops/audit_common_engine_commercialization_baseline.py:main",
-   "scripts/ops/audit_google_cloud_action_policy_baseline_contract.py:main",
-   "scripts/ops/audit_google_cloud_readonly_local_browser_dryrun.py:main",
-   "scripts/ops/audit_local_agent_connection_recovery_baseline.py:main"
   ],
   "c1eb1bfad2e951956dc956e12f9a206e7b92ba72": [
    "ai_orchestrator/connectors/naver_search/naver_search_router.py:api_run_blog_search",

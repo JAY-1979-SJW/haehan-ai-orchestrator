@@ -8,9 +8,7 @@ exit code: 0=PASS/PASS_WITH_KNOWN_WARN, 1=FAIL, 2=STOP_CONDITION
 
 from __future__ import annotations
 
-import argparse
 import importlib
-import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -253,21 +251,9 @@ def run_audit() -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--json", action="store_true")
-    args = parser.parse_args()
-    result = run_audit()
-    if args.json:
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-    else:
-        print(
-            f"[{AUDIT_NAME}] verdict={result['verdict']} "
-            f"pass={result['summary']['pass']} warn={result['summary']['warn']} fail={result['summary']['fail']}"
-        )
-        for r in result["checklist"]:
-            icon = "✓" if r["status"] == "PASS" else ("△" if r["status"] == "WARN" else "✗")
-            print(f"  {icon} [{r['id']}] {r['title']} — {r['evidence'][:80]}")
-    return 0 if result["verdict"] in ("PASS", "PASS_WITH_KNOWN_WARN", "PASS_WITH_EXTERNAL_APP_HOLD") else 1
+    from scripts.ops.audit_cli import run_checklist_cli
+
+    return run_checklist_cli(AUDIT_NAME, run_audit)
 
 
 if __name__ == "__main__":

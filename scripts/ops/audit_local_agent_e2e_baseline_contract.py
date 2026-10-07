@@ -4,7 +4,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -52,36 +51,33 @@ def missing_phrases(text: str, phrases: tuple[str, ...]) -> list[str]:
 
 
 def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not LOCAL_AGENT_BASELINE.exists():
-        return False, ["docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md missing"]
-    if not MODULE_BASELINE.exists():
-        return False, ["docs/baseline/MODULE_BASELINE.md missing"]
+    from scripts.ops.audit_cli import BaselineRefSpec, audit_baseline_with_module_ref
 
-    local_agent_text = LOCAL_AGENT_BASELINE.read_text(encoding="utf-8", errors="replace")
-    module_text = MODULE_BASELINE.read_text(encoding="utf-8", errors="replace")
-
-    missing_local_agent = missing_phrases(local_agent_text, REQUIRED_LOCAL_AGENT_PHRASES)
-    if missing_local_agent:
-        failures.append("local_agent_e2e baseline missing phrase(s): " + ", ".join(missing_local_agent))
-
-    missing_module_refs = missing_phrases(module_text, REQUIRED_MODULE_BASELINE_PHRASES)
-    if missing_module_refs:
-        failures.append("module baseline missing local_agent_e2e reference(s): " + ", ".join(missing_module_refs))
-
-    return not failures, failures or [
-        "LOCAL_AGENT_E2E_BASELINE exists and is locked",
-        "local-agent auth/dispatch/state/redaction boundaries are documented",
-        "module baseline references LOCAL_AGENT_E2E_BASELINE",
-    ]
+    return audit_baseline_with_module_ref(
+        BaselineRefSpec(
+            baseline=LOCAL_AGENT_BASELINE,
+            baseline_missing="docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md missing",
+            baseline_phrases=REQUIRED_LOCAL_AGENT_PHRASES,
+            baseline_fail_prefix="local_agent_e2e baseline missing phrase(s): ",
+            module_baseline=MODULE_BASELINE,
+            module_missing="docs/baseline/MODULE_BASELINE.md missing",
+            module_phrases=REQUIRED_MODULE_BASELINE_PHRASES,
+            module_fail_prefix="module baseline missing local_agent_e2e reference(s): ",
+            success=[
+                "LOCAL_AGENT_E2E_BASELINE exists and is locked",
+                "local-agent auth/dispatch/state/redaction boundaries are documented",
+                "module baseline references LOCAL_AGENT_E2E_BASELINE",
+            ],
+        ),
+        missing_phrases,
+    )
 
 
 def main() -> int:
+    from scripts.ops.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_LOCAL_AGENT_E2E_BASELINE_CONTRACT' if ok else 'FAIL_LOCAL_AGENT_E2E_BASELINE_CONTRACT'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "LOCAL_AGENT_E2E_BASELINE_CONTRACT")
 
 
 if __name__ == "__main__":

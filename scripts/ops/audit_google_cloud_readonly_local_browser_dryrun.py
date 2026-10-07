@@ -131,18 +131,10 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
+    from scripts.ops.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(
-        "RESULT="
-        + (
-            "PASS_GOOGLE_CLOUD_READONLY_LOCAL_BROWSER_DRYRUN"
-            if ok
-            else "FAIL_GOOGLE_CLOUD_READONLY_LOCAL_BROWSER_DRYRUN"
-        )
-    )
-    return 0 if ok else 1
+    return report_findings(ok, findings, "GOOGLE_CLOUD_READONLY_LOCAL_BROWSER_DRYRUN")
 
 
 if __name__ == "__main__":

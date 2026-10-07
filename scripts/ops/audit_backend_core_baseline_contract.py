@@ -4,7 +4,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -49,36 +48,33 @@ def missing_phrases(text: str, phrases: tuple[str, ...]) -> list[str]:
 
 
 def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not BACKEND_BASELINE.exists():
-        return False, ["docs/baseline/modules/BACKEND_CORE_BASELINE.md missing"]
-    if not MODULE_BASELINE.exists():
-        return False, ["docs/baseline/MODULE_BASELINE.md missing"]
+    from scripts.ops.audit_cli import BaselineRefSpec, audit_baseline_with_module_ref
 
-    backend_text = BACKEND_BASELINE.read_text(encoding="utf-8", errors="replace")
-    module_text = MODULE_BASELINE.read_text(encoding="utf-8", errors="replace")
-
-    missing_backend = missing_phrases(backend_text, REQUIRED_BACKEND_PHRASES)
-    if missing_backend:
-        failures.append("backend_core baseline missing phrase(s): " + ", ".join(missing_backend))
-
-    missing_module_refs = missing_phrases(module_text, REQUIRED_MODULE_BASELINE_PHRASES)
-    if missing_module_refs:
-        failures.append("module baseline missing backend_core reference(s): " + ", ".join(missing_module_refs))
-
-    return not failures, failures or [
-        "BACKEND_CORE_BASELINE exists and is locked",
-        "backend auth/approval/task/dispatch boundaries are documented",
-        "module baseline references BACKEND_CORE_BASELINE",
-    ]
+    return audit_baseline_with_module_ref(
+        BaselineRefSpec(
+            baseline=BACKEND_BASELINE,
+            baseline_missing="docs/baseline/modules/BACKEND_CORE_BASELINE.md missing",
+            baseline_phrases=REQUIRED_BACKEND_PHRASES,
+            baseline_fail_prefix="backend_core baseline missing phrase(s): ",
+            module_baseline=MODULE_BASELINE,
+            module_missing="docs/baseline/MODULE_BASELINE.md missing",
+            module_phrases=REQUIRED_MODULE_BASELINE_PHRASES,
+            module_fail_prefix="module baseline missing backend_core reference(s): ",
+            success=[
+                "BACKEND_CORE_BASELINE exists and is locked",
+                "backend auth/approval/task/dispatch boundaries are documented",
+                "module baseline references BACKEND_CORE_BASELINE",
+            ],
+        ),
+        missing_phrases,
+    )
 
 
 def main() -> int:
+    from scripts.ops.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_BACKEND_CORE_BASELINE_CONTRACT' if ok else 'FAIL_BACKEND_CORE_BASELINE_CONTRACT'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "BACKEND_CORE_BASELINE_CONTRACT")
 
 
 if __name__ == "__main__":

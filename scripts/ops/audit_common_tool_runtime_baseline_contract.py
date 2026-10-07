@@ -4,7 +4,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -54,36 +53,33 @@ def missing_phrases(text: str, phrases: tuple[str, ...]) -> list[str]:
 
 
 def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not COMMON_BASELINE.exists():
-        return False, ["docs/baseline/modules/COMMON_TOOL_RUNTIME_BASELINE.md missing"]
-    if not MODULE_BASELINE.exists():
-        return False, ["docs/baseline/MODULE_BASELINE.md missing"]
+    from scripts.ops.audit_cli import BaselineRefSpec, audit_baseline_with_module_ref
 
-    common_text = COMMON_BASELINE.read_text(encoding="utf-8", errors="replace")
-    module_text = MODULE_BASELINE.read_text(encoding="utf-8", errors="replace")
-
-    missing_common = missing_phrases(common_text, REQUIRED_COMMON_PHRASES)
-    if missing_common:
-        failures.append("common_tool_runtime baseline missing phrase(s): " + ", ".join(missing_common))
-
-    missing_module_refs = missing_phrases(module_text, REQUIRED_MODULE_BASELINE_PHRASES)
-    if missing_module_refs:
-        failures.append("module baseline missing common_tool_runtime reference(s): " + ", ".join(missing_module_refs))
-
-    return not failures, failures or [
-        "COMMON_TOOL_RUNTIME_BASELINE exists and is locked",
-        "common task/result/risk/approval/forbidden-field boundaries are documented",
-        "module baseline references COMMON_TOOL_RUNTIME_BASELINE",
-    ]
+    return audit_baseline_with_module_ref(
+        BaselineRefSpec(
+            baseline=COMMON_BASELINE,
+            baseline_missing="docs/baseline/modules/COMMON_TOOL_RUNTIME_BASELINE.md missing",
+            baseline_phrases=REQUIRED_COMMON_PHRASES,
+            baseline_fail_prefix="common_tool_runtime baseline missing phrase(s): ",
+            module_baseline=MODULE_BASELINE,
+            module_missing="docs/baseline/MODULE_BASELINE.md missing",
+            module_phrases=REQUIRED_MODULE_BASELINE_PHRASES,
+            module_fail_prefix="module baseline missing common_tool_runtime reference(s): ",
+            success=[
+                "COMMON_TOOL_RUNTIME_BASELINE exists and is locked",
+                "common task/result/risk/approval/forbidden-field boundaries are documented",
+                "module baseline references COMMON_TOOL_RUNTIME_BASELINE",
+            ],
+        ),
+        missing_phrases,
+    )
 
 
 def main() -> int:
+    from scripts.ops.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_COMMON_TOOL_RUNTIME_BASELINE_CONTRACT' if ok else 'FAIL_COMMON_TOOL_RUNTIME_BASELINE_CONTRACT'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "COMMON_TOOL_RUNTIME_BASELINE_CONTRACT")
 
 
 if __name__ == "__main__":
