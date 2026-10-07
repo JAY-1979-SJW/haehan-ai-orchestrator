@@ -9,6 +9,7 @@
  "scripts/hanafax/send_kras_campaign.py::main",
  "scripts/hanafax/send_kras_final_campaign.py::main",
  "scripts/instagram/api_publish.py::publish",
+ "scripts/instagram/ig_batch.py::main",
  "scripts/naver/automation/integration/workflow.py::Workflow.new_orders_to_alerts",
  "scripts/naver/blog/_runner.py::_task_confirm",
  "scripts/naver/blog/_runner.py::_task_write",
