@@ -146,6 +146,20 @@ hidden_imports = [
     "requests.adapters",
 ]
 
+# 우리 패키지는 손으로 적은 목록 대신 하위 모듈 전체를 자동 수집한다 — 폴더를 옮길 때마다 목록이
+# 낡아 번들에서 모듈이 빠졌다(2026-10-08 E2E 실측: 루트 shim 이 import_module 로 부르는
+# orchestrator_v1.inbox.* 가 정적 분석에 안 잡혀 'No module named orchestrator_v1.inbox').
+# 시험 폴더는 번들에 넣지 않는다.
+from PyInstaller.utils.hooks import collect_submodules
+
+
+def _not_tests(name: str) -> bool:
+    return ".tests" not in name and not name.endswith("tests")
+
+
+for _pkg in ("ai_orchestrator", "orchestrator_v1"):
+    hidden_imports += collect_submodules(_pkg, filter=_not_tests)
+
 # ── Data files ──────────────────────────────────────────────────────────────
 def _tree_excluding(src_dir: Path, dest_prefix: str, exclude_dirnames: set[str]) -> list[tuple[str, str]]:
     """src_dir 전체를 (file, dest) 목록으로 모으되, exclude_dirnames 에 든 하위

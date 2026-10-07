@@ -266,7 +266,10 @@ function failStartup(title, body) {
   stage("startup-failed", title);
   if (process.env.HAEHAN_E2E === "1") {
     console.error(`[main] ${title}: ${body}`);
-    app.exit(1);
+    // app.exit 은 before-quit 정리를 건너뛰므로, 먼저 띄운 서버를 직접 끈다(남으면 다음 실행에서 포트 3000·8401 충돌)
+    try { stopNextServer(); } catch {}
+    try { stopFastAPIServer(); } catch {}
+    setTimeout(() => app.exit(1), 1500);
     return;
   }
   dialog.showErrorBox(title, body);
