@@ -53,7 +53,7 @@ def client(tmp_path_factory):
     from ai_orchestrator.sites import router as _sites_router
 
     importlib.reload(_sites_router)
-    from ai_orchestrator import router as _router
+    from ai_orchestrator.routers import registry as _router
 
     importlib.reload(_router)
     from ai_orchestrator import asgi as _server

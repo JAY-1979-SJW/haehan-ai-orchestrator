@@ -486,7 +486,7 @@ def app_client(tmp_path_factory):
     from ai_orchestrator.sites import router as _sr
 
     importlib.reload(_sr)
-    from ai_orchestrator import router as _rt
+    from ai_orchestrator.routers import registry as _rt
 
     importlib.reload(_rt)
     from ai_orchestrator import asgi as _srv
@@ -570,7 +570,7 @@ def _approval_token(r):
     주의: 정책이 풀려 토큰이 발급돼도 승인 응답에 'executed' 키가 없어(2026-10-05 실측: 플래그를 끄면 8건이 KeyError) 시험 본문이
     추가로 낡았다 — 정책 결정 뒤 별도로 정리해야 한다(이번 변경은 토큰 부재로 인한 실패만 건너뛰기로 바꾼 것).
     """
-    from ai_orchestrator import router as _router
+    from ai_orchestrator.routers import registry as _router
 
     token_id = r.json().get("approval_token_id")
     if not token_id and _router.POST_TASKS_DRY_RUN_ENABLED:

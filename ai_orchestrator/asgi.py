@@ -14,7 +14,7 @@ from . import config
 from .config import APP_HOST, APP_PORT
 from .connectors.naver_search_runner import schedule_loop
 from .logging_setup import setup_logging
-from .router import router
+from .routers.registry import router
 
 logger = logging.getLogger(__name__)
 

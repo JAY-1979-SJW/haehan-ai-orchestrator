@@ -54,7 +54,7 @@ def next_phase(audit_mod):
 
 @pytest.fixture(scope="module")
 def router_content():
-    return (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
+    return (REPO_ROOT / "ai_orchestrator/routers/registry.py").read_text(encoding="utf-8", errors="ignore")
 
 
 # ── 1~2. import ──────────────────────────────────────────────────────────────
@@ -198,8 +198,8 @@ def router_mod():
         import importlib.util as ilu
 
         spec = ilu.spec_from_file_location(
-            "ai_orchestrator.router",
-            REPO_ROOT / "ai_orchestrator/router.py",
+            "ai_orchestrator.routers.registry",
+            REPO_ROOT / "ai_orchestrator/routers/registry.py",
         )
         mod = ilu.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -213,7 +213,7 @@ def router_mod():
                 sys.modules.pop(mod_name, None)
             else:
                 sys.modules[mod_name] = originals[mod_name]
-        sys.modules.pop("ai_orchestrator.router", None)
+        sys.modules.pop("ai_orchestrator.routers.registry", None)
 
 
 def test_17_dry_run_flag_value_true(router_mod):

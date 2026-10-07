@@ -28,7 +28,7 @@ hidden_imports = [
     # ai_orchestrator 패키지 (uvicorn 문자열 import 대응)
     "ai_orchestrator",
     "ai_orchestrator.server",
-    "ai_orchestrator.router",
+    "ai_orchestrator.routers.registry",
     "ai_orchestrator.auth",
     "ai_orchestrator.user_db",
     "ai_orchestrator.local_agent_registry",

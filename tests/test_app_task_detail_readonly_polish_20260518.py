@@ -15,7 +15,7 @@ from tests.app_ui_paths import assistant_route  # noqa: E402
 
 DETAIL_PAGE = assistant_route("tasks", "[id]", "page.tsx")
 DETAIL_PANEL = ROOT / "admin-web" / "src" / "components" / "assistant" / "TaskDetailPanel.tsx"
-ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
+ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "registry.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 
 
