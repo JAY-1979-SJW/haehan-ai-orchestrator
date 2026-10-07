@@ -7,7 +7,7 @@ from scripts.ops.write_gates import naver_blog_safety_gate as gate
 
 def test_is_reviewed_blog_path_relative():
     assert gate.is_reviewed_blog_path("scripts/naver/blog/writer.py")
-    assert gate.is_reviewed_blog_path("ai_orchestrator/connectors/naver_blog_router.py")
+    assert gate.is_reviewed_blog_path("ai_orchestrator/connectors/naver_blog/naver_blog_router.py")
     assert gate.is_reviewed_blog_path("tests/test_x.py")
     assert not gate.is_reviewed_blog_path("scripts/ops/scratch.py")
 
@@ -33,7 +33,7 @@ def test_check_blogwriter_bypass_blocks_outside_reviewed_path():
 
 def test_check_blogwriter_bypass_allows_reviewed_path():
     content = "from scripts.naver.blog.core.writer import " + "Blog" + "Writer\n"
-    msg = gate.check_blogwriter_bypass("ai_orchestrator/connectors/naver_blog_router.py", content)
+    msg = gate.check_blogwriter_bypass("ai_orchestrator/connectors/naver_blog/naver_blog_router.py", content)
     assert msg is None
 
 

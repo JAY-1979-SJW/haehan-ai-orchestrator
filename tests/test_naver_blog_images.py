@@ -132,7 +132,7 @@ def test_paths_still_point_at_the_repo_data_folder():
 
 
 def test_router_keeps_its_old_names_as_re_exports():
-    from ai_orchestrator.connectors import naver_blog_router as router
+    from ai_orchestrator.connectors.naver_blog import naver_blog_router as router
 
     assert router._resolve_unsplash_images is images.resolve_unsplash_images
     assert router.UPLOADS_DIR is images.UPLOADS_DIR

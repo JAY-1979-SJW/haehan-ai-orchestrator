@@ -49,7 +49,7 @@ CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.routers.marketing_ops_router", "_CACHE_FILE", DATA, ("blog_topic_cache.json",)),
     ("ai_orchestrator.routers.marketing_ops_router", "_REPORTS_DIR", DATA, ("reports",)),
     ("ai_orchestrator.routers.marketing_ops_router", "_PACKAGES_DIR", DATA, ("marketing_packages",)),
-    ("ai_orchestrator.connectors.naver_blog_router", "DRAFTS_DIR", DATA, ("blog_drafts",)),
+    ("ai_orchestrator.connectors.naver_blog.naver_blog_router", "DRAFTS_DIR", DATA, ("blog_drafts",)),
     ("ai_orchestrator.connectors.naver_cafe_router", "_CAFE_DIR", DATA, ("cafe",)),
     ("ai_orchestrator.connectors.public_media_router", "MEDIA_DIR", DATA, ("public_media",)),
     ("ai_orchestrator.connectors.session_status_router", "DATA_PATH", DATA, ("login_session_monitor_latest.json",)),

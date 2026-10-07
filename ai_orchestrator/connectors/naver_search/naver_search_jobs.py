@@ -23,7 +23,7 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import data_dir
 
-from ..naver_blog_collectors import collect_blog_search
+from ..naver_blog.naver_blog_collectors import collect_blog_search
 from ..naver_shopping_collectors import collect_shopping_search
 from . import naver_search_db as db_mod
 from . import naver_search_state as state_mod

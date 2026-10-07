@@ -36,7 +36,7 @@ from ..connectors.community_router import community_router
 from ..connectors.desktop_session_router import desktop_session_router
 from ..connectors.eum.router import eum_router
 from ..connectors.gabia.router import gabia_router
-from ..connectors.gonobi_router import gonobi_router
+from ..connectors.naver_blog.gonobi_router import gonobi_router
 from ..connectors.google.gmail_router import gmail_router
 from ..connectors.google.router import google_router
 from ..connectors.hanafax.router import hanafax_router
@@ -45,7 +45,7 @@ from ..connectors.inquiry_router import inquiry_router
 from ..connectors.instagram.instagram_dm_router import instagram_dm_router
 from ..connectors.kakao.setup_router import kakao_setup_router
 from ..connectors.kakao.skill_router import kakao_skill_router
-from ..connectors.naver_blog_router import naver_blog_router
+from ..connectors.naver_blog.naver_blog_router import naver_blog_router
 from ..connectors.naver_cafe_router import naver_cafe_router
 from ..connectors.naver_mail_router import naver_mail_router
 from ..connectors.naver_news_router import naver_news_router

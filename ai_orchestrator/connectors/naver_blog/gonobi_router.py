@@ -19,7 +19,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_ROOT))
 
 gonobi_router = APIRouter(prefix="/gonobi", tags=["gonobi"])

@@ -7,11 +7,11 @@ import logging
 import pytest
 
 from ai_orchestrator.connectors import (
-    naver_blog_collectors,
     naver_openapi_config as cfg_mod,
     naver_public_page_reader,
     naver_shopping_collectors,
 )
+from ai_orchestrator.connectors.naver_blog import naver_blog_collectors
 from ai_orchestrator.connectors.naver_search import (
     naver_search_client,
     naver_search_jobs,
