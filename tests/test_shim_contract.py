@@ -9,13 +9,15 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import os
 import runpy
+import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from scripts.ops.make_shim import MARKER, find_shims, has_main_block, make_shim
+from scripts.ops.make_shim import BOOTSTRAP_MARK, MARKER, find_shims, has_main_block, make_shim
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -119,19 +121,92 @@ def test_generated_shim_satisfies_all_four_contracts(tmp_path, monkeypatch):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # type: ignore[union-attr]
     assert mod.VALUE == 7 and mod.helper() == 7
-    # 3. 직접 실행
-    import subprocess
+    # 3. 직접 실행 — PYTHONPATH 없이, 저장소 밖 cwd 에서
+    out = _run_direct(tmp_path / "old_real.py", tmp_path / "elsewhere")
+    assert "MAIN-RAN" in out.stdout, out.stderr
 
-    r = subprocess.run(
-        [sys.executable, str(tmp_path / "old_real.py")],
-        cwd=tmp_path,
+
+def _run_direct(script: Path, cwd: Path):
+    """`python <shim>` 직접 실행 재현 — PYTHONPATH 제거 + 저장소 밖 cwd (W3 가 찾은 결함: 이 둘이 가렸었다)."""
+    cwd.mkdir(parents=True, exist_ok=True)
+    env = {k: v for k, v in os.environ.items() if k.upper() != "PYTHONPATH"}
+    return subprocess.run(
+        [sys.executable, str(script)],
+        cwd=str(cwd),
         capture_output=True,
         text=True,
         encoding="utf-8",
         errors="replace",
-        env={**__import__("os").environ, "PYTHONPATH": str(tmp_path)},
+        env=env,
     )
-    assert "MAIN-RAN" in r.stdout, r.stderr
+
+
+def _subdir_repo(tmp_path: Path) -> Path:
+    _write(tmp_path / "scripts" / "__init__.py", "")
+    _write(tmp_path / "scripts" / "instagram" / "__init__.py", "")
+    _write(tmp_path / "scripts" / "instagram" / "ig_batch.py", "if __name__ == '__main__':\n    print('IG-MAIN-RAN')\n")
+    return tmp_path
+
+
+def test_subfolder_shim_direct_run_needs_root_bootstrap(tmp_path):
+    """하위 폴더 shim 은 sys.path[0] 이 shim 폴더 → 루트 부트스트랩이 있어야 새 모듈을 찾는다."""
+    _subdir_repo(tmp_path)
+    make_shim("scripts/ops/ig_batch.py", "scripts/instagram/ig_batch.py", tmp_path)
+    shim = tmp_path / "scripts" / "ops" / "ig_batch.py"
+    body = shim.read_text(encoding="utf-8")
+    assert BOOTSTRAP_MARK in body and "parents[2]" in body
+    out = _run_direct(shim, tmp_path.parent / (tmp_path.name + "_cwd"))
+    assert "IG-MAIN-RAN" in out.stdout, out.stderr
+
+
+def test_subfolder_shim_without_bootstrap_fails_negative_control(tmp_path):
+    """음성 대조: 부트스트랩을 뺀 옛 형태는 ModuleNotFoundError — 위 시험이 실제로 결함을 잡는다는 증거."""
+    _subdir_repo(tmp_path)
+    make_shim("scripts/ops/ig_batch.py", "scripts/instagram/ig_batch.py", tmp_path)
+    shim = tmp_path / "scripts" / "ops" / "ig_batch.py"
+    stripped = [
+        ln
+        for ln in shim.read_text(encoding="utf-8").splitlines()
+        if not any(t in ln for t in (BOOTSTRAP_MARK, "_Path", "_root"))
+    ]
+    shim.write_text("\n".join(stripped) + "\n", encoding="utf-8")
+    out = _run_direct(shim, tmp_path.parent / (tmp_path.name + "_cwd2"))
+    assert out.returncode != 0 and "No module named 'scripts" in out.stderr
+
+
+def test_root_level_shim_has_no_bootstrap(tmp_path):
+    _write(tmp_path / "newpkg" / "real.py", "if __name__ == '__main__':\n    pass\n")
+    assert BOOTSTRAP_MARK not in make_shim("old.py", "newpkg/real.py", tmp_path, dry_run=True)
+
+
+@pytest.mark.parametrize("shim", SHIMS, ids=_ids(SHIMS))
+def test_real_shim_direct_run_imports_target_without_pythonpath(shim, tmp_path):
+    """저장소의 모든 shim 을 `python <shim>` 과 같은 sys.path[0] 로, PYTHONPATH 없이 저장소 밖에서 실행 —
+    새 모듈 실행(run_module)만 import 로 대체해 부작용(서버 기동 등) 없이 '새 모듈을 찾는가'만 본다."""
+    rel, target = shim
+    real_file = _real_file(target)
+    if real_file is None or not has_main_block(real_file.read_text(encoding="utf-8", errors="replace")):
+        pytest.skip("실제 모듈에 __main__ 블록 없음")
+    child = "\n".join(
+        [
+            "import sys, runpy, importlib",
+            f"sys.path.insert(0, {str((ROOT / rel).parent)!r})",
+            "def fake(mod, run_name=None, **kw):",
+            "    importlib.import_module(mod); print('IMPORT-OK'); return {}",
+            "runpy.run_module = fake",
+            "try:",
+            f"    runpy.run_path({str(ROOT / rel)!r}, run_name='__main__')",
+            "except SystemExit:",
+            "    pass",
+        ]
+    )
+    cwd = tmp_path / "cwd"
+    cwd.mkdir()
+    env = {k: v for k, v in os.environ.items() if k.upper() != "PYTHONPATH"}
+    r = subprocess.run(
+        [sys.executable, "-c", child], cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace", env=env
+    )
+    assert "IMPORT-OK" in r.stdout, r.stderr[-400:]
 
 
 def test_generated_shim_without_main_has_no_forwarding(tmp_path):
