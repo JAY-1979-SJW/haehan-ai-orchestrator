@@ -1195,5 +1195,11 @@
   "role": "connector",
   "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/telegram_notifier.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
   "source": "manual"
+ },
+ "ai_orchestrator/gates/gate_types.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",
+  "source": "manual"
  }
 }
