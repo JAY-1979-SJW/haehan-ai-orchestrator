@@ -10657,7 +10657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/instagram/kotara_ctc_reel.py": {
+  "scripts/archive/one_off/kotara_ctc_reel.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -14601,7 +14601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/build_ep_batch_content.py": {
+  "scripts/archive/one_off/build_ep_batch_content.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -14609,7 +14609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/build_ep_batch_content_gov2.py": {
+  "scripts/archive/one_off/build_ep_batch_content_gov2.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -15026,14 +15026,6 @@
    "source": "rule"
   },
   "scripts/ops/make_constraints.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/make_inspection_video.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -15913,7 +15905,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/ai_g2b_youtube_ep01.py": {
+  "scripts/archive/one_off/ai_g2b_youtube_ep01.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -15921,7 +15913,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/ai_g2b_youtube_ep01_real.py": {
+  "scripts/archive/one_off/ai_g2b_youtube_ep01_real.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -15929,7 +15921,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/ai_g2b_youtube_ep02.py": {
+  "scripts/archive/one_off/ai_g2b_youtube_ep02.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -15937,7 +15929,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/ig_dm_bot_ep01.py": {
+  "scripts/archive/one_off/ig_dm_bot_ep01.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -15945,7 +15937,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/ig_dm_bot_ep01_captions.py": {
+  "scripts/archive/one_off/ig_dm_bot_ep01_captions.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -15953,7 +15945,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/ig_dm_bot_ep01_thumbnail.py": {
+  "scripts/archive/one_off/ig_dm_bot_ep01_thumbnail.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -15961,7 +15953,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/ig_dm_bot_ep01_visuals.py": {
+  "scripts/archive/one_off/ig_dm_bot_ep01_visuals.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -15969,7 +15961,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/kakao_skill_bot_ep01.py": {
+  "scripts/archive/one_off/kakao_skill_bot_ep01.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "kakao",
@@ -15977,7 +15969,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/kakao_skill_bot_ep01_visuals.py": {
+  "scripts/archive/one_off/kakao_skill_bot_ep01_visuals.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "kakao",
@@ -15985,7 +15977,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/kotara_ctc_shorts.py": {
+  "scripts/archive/one_off/kotara_ctc_shorts.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "video",
@@ -22846,6 +22838,14 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/ops/make_inspection_video.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
    "confidence": "high",
    "source": "rule"
   }

@@ -24,7 +24,7 @@ PIL로 직접 그린다.
 
 ## 1. 프레임 렌더링 — 기존 헬퍼 재사용
 
-`scripts/instagram/kotara_ctc_reel.py`가 재사용 가능한 뉴트럴/프리미엄
+`scripts/archive/one_off/kotara_ctc_reel.py`가 재사용 가능한 뉴트럴/프리미엄
 스타일 헬퍼를 이미 구현해뒀다. 새 제품이라도 이 함수들을 import해서 쓰고
 처음부터 다시 만들지 않는다:
 
@@ -47,7 +47,7 @@ PIL로 직접 그린다.
 
 사용자가 장면별 초 단위 타이밍이 있는 대본을 주면, **화면 길이를 그
 타이밍대로 고정**하고 내레이션 TTS 속도를 장면 길이에 맞춰 압축한다(반대
-아님). `scripts/video/kotara_ctc_shorts.py::_tts_fit()` 패턴을 재사용:
+아님). `scripts/archive/one_off/kotara_ctc_shorts.py::_tts_fit()` 패턴을 재사용:
 
 ```python
 def _tts_fit(text, target_seconds, out_dir, idx):
