@@ -21917,49 +21917,49 @@
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
-   "reason": "운영·감사 도구",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/audit_logger.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "logger.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
-   "reason": "공용 기반 이름(logger)",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/logger.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "logging_utils.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
-   "reason": "공용 기반 이름(logging_utils)",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/logging_utils.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
-   "reason": "공용 기반 이름(models)",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/models.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "security_utils.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/core/security_utils.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   },
   "webhooks_router.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L8",
+   "role": "api",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "루트 호환 shim — 원본 orchestrator_v1/webhooks/webhooks_router.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "low",
-   "source": "rule"
+   "source": "manual"
   }
  }
 }
