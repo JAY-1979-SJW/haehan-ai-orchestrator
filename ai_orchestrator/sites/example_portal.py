@@ -11,10 +11,10 @@ from __future__ import annotations
 import time
 from typing import ClassVar, Literal
 
-from ..browser import probe_launch
-from ..connector import SiteConnector
-from ..models import SiteHealthStatus
-from .. import secrets_policy
+from . import secrets_policy
+from .browser import probe_launch
+from .connector import SiteConnector
+from .models import SiteHealthStatus
 
 
 class ExamplePortalConnector(SiteConnector):

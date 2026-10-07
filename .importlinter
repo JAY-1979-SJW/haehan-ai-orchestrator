@@ -507,8 +507,8 @@ forbidden_modules =
     ai_orchestrator.sites.adapters.naver_cafe_collection
     ai_orchestrator.sites.adapters.naver_dev_reg
     ai_orchestrator.sites.browser
-    ai_orchestrator.sites.connectors.dummy
-    ai_orchestrator.sites.connectors.example_portal
+    ai_orchestrator.sites.dummy
+    ai_orchestrator.sites.example_portal
     ai_orchestrator.sites.health
     ai_orchestrator.sites.registry
     ai_orchestrator.sites.router
@@ -1638,8 +1638,8 @@ forbidden_modules =
     ai_orchestrator.sites.adapters.naver_cafe_collection
     ai_orchestrator.sites.adapters.naver_dev_reg
     ai_orchestrator.sites.browser
-    ai_orchestrator.sites.connectors.dummy
-    ai_orchestrator.sites.connectors.example_portal
+    ai_orchestrator.sites.dummy
+    ai_orchestrator.sites.example_portal
     ai_orchestrator.sites.health
     ai_orchestrator.sites.registry
     ai_orchestrator.sites.router
@@ -2685,8 +2685,8 @@ forbidden_modules =
     ai_orchestrator.sites.adapters.naver_cafe_collection
     ai_orchestrator.sites.adapters.naver_dev_reg
     ai_orchestrator.sites.browser
-    ai_orchestrator.sites.connectors.dummy
-    ai_orchestrator.sites.connectors.example_portal
+    ai_orchestrator.sites.dummy
+    ai_orchestrator.sites.example_portal
     ai_orchestrator.sites.health
     ai_orchestrator.sites.registry
     ai_orchestrator.sites.router
@@ -3526,8 +3526,8 @@ source_modules =
     ai_orchestrator.sites.adapters.example_portal_adapter
     ai_orchestrator.sites.adapters.naver_cafe_adapter
     ai_orchestrator.sites.browser
-    ai_orchestrator.sites.connectors.dummy
-    ai_orchestrator.sites.connectors.example_portal
+    ai_orchestrator.sites.dummy
+    ai_orchestrator.sites.example_portal
     ai_orchestrator.sites.health
     ai_orchestrator.sites.registry
     ai_orchestrator.sites.session_manager
@@ -5725,8 +5725,8 @@ forbidden_modules =
     ai_orchestrator.sites.adapters.naver_cafe_collection
     ai_orchestrator.sites.adapters.naver_dev_reg
     ai_orchestrator.sites.browser
-    ai_orchestrator.sites.connectors.dummy
-    ai_orchestrator.sites.connectors.example_portal
+    ai_orchestrator.sites.dummy
+    ai_orchestrator.sites.example_portal
     ai_orchestrator.sites.health
     ai_orchestrator.sites.registry
     ai_orchestrator.sites.router

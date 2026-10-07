@@ -5577,15 +5577,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/sites/connectors/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/sites/connectors/dummy.py": {
+  "ai_orchestrator/sites/dummy.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -5593,7 +5585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/sites/connectors/example_portal.py": {
+  "ai_orchestrator/sites/example_portal.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",

@@ -10,9 +10,9 @@ from __future__ import annotations
 import time
 from typing import ClassVar
 
-from ..browser import probe_launch
-from ..connector import SiteConnector
-from ..models import SiteHealthStatus
+from .browser import probe_launch
+from .connector import SiteConnector
+from .models import SiteHealthStatus
 
 
 class DummyConnector(SiteConnector):
