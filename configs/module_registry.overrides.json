@@ -1259,5 +1259,35 @@
   "role": "api",
   "reason": "데스크톱 앱 서버 진입점 — asgi(L8)를 기동하는 엔트리라 같은 L8 로 분류(진입점이 앱 조립 계층을 부르는 방향)",
   "source": "manual"
+ },
+ "ai_orchestrator/connectors/gabia/browser_task.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "이동 전 층을 유지 — 폴더·이름이 바뀌며 규칙 기본값이 다른 층으로 재분류돼 층간 위반이 생겼다(integrate-4 최종 측정)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gabia/dns_models.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "이동 전 층을 유지 — 폴더·이름이 바뀌며 규칙 기본값이 다른 층으로 재분류돼 층간 위반이 생겼다(integrate-4 최종 측정)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/gabia/site_settings_registry.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "이동 전 층을 유지 — 폴더·이름이 바뀌며 규칙 기본값이 다른 층으로 재분류돼 층간 위반이 생겼다(integrate-4 최종 측정)",
+  "source": "manual"
+ },
+ "ai_orchestrator/connectors/instagram/instagram_dm_service.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "이동 전 층을 유지 — 폴더·이름이 바뀌며 규칙 기본값이 다른 층으로 재분류돼 층간 위반이 생겼다(integrate-4 최종 측정)",
+  "source": "manual"
+ },
+ "ai_orchestrator/paths/legacy_import.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "paths 패키지의 일부(bootstrap 이 부르는 가져오기 도구, 표준 라이브러리·paths 내부만 사용) — 같은 패키지의 runtime·migrate 와 같은 L1 shared",
+  "source": "manual"
  }
 }

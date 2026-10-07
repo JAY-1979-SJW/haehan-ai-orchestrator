@@ -20866,20 +20866,20 @@
    "source": "rule"
   },
   "ai_orchestrator/connectors/gabia/browser_task.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L1",
+   "role": "contract",
    "domain": "gabia",
-   "reason": "도메인(gabia) 자동화",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "이동 전 층을 유지 — 폴더·이름이 바뀌며 규칙 기본값이 다른 층으로 재분류돼 층간 위반이 생겼다(integrate-4 최종 측정)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/connectors/gabia/dns_models.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L1",
+   "role": "contract",
    "domain": "gabia",
-   "reason": "도메인(gabia) 자동화",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "이동 전 층을 유지 — 폴더·이름이 바뀌며 규칙 기본값이 다른 층으로 재분류돼 층간 위반이 생겼다(integrate-4 최종 측정)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/connectors/gabia/dns_work_registry.py": {
    "layer": "L5",
@@ -20890,12 +20890,12 @@
    "source": "rule"
   },
   "ai_orchestrator/connectors/gabia/site_settings_registry.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L1",
+   "role": "contract",
    "domain": "gabia",
-   "reason": "도메인(gabia) 자동화",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "이동 전 층을 유지 — 폴더·이름이 바뀌며 규칙 기본값이 다른 층으로 재분류돼 층간 위반이 생겼다(integrate-4 최종 측정)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/connectors/google/calendar_reader.py": {
    "layer": "L5",
@@ -21026,12 +21026,12 @@
    "source": "confirmed"
   },
   "ai_orchestrator/connectors/instagram/instagram_dm_service.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "instagram",
-   "reason": "DB·저장 신호",
+   "reason": "이동 전 층을 유지 — 폴더·이름이 바뀌며 규칙 기본값이 다른 층으로 재분류돼 층간 위반이 생겼다(integrate-4 최종 측정)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/connectors/instagram/instagram_dm_token_store.py": {
    "layer": "L7",
@@ -21618,12 +21618,12 @@
    "source": "rule"
   },
   "ai_orchestrator/paths/legacy_import.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "shared",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "paths 패키지의 일부(bootstrap 이 부르는 가져오기 도구, 표준 라이브러리·paths 내부만 사용) — 같은 패키지의 runtime·migrate 와 같은 L1 shared",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/scheduler/__init__.py": {
    "layer": "L4",
