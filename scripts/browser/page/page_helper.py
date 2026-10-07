@@ -8,16 +8,7 @@ popup/nav/interact/watch/inspect 기능이 각 leaf 에 구현돼 있다.
 from __future__ import annotations
 
 from .page_helper_common import (  # noqa: F401
-    _AUTO_POPUP_HANDLE,
-    _CRITICAL_SITE_PATTERNS,
-    _ERROR_SELECTORS,
-    _GOV_FALLBACK_TLD,
     WORK_CATEGORIES,
-    _detect_critical_category,
-    _find_frame,
-    _safe_auto_login_detect,
-    _safe_auto_popup,
-    _safe_critical_log,
     disable_auto_login_detection,
     disable_auto_popup_handling,
     enable_auto_login_detection,

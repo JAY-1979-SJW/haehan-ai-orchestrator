@@ -78,7 +78,7 @@ class Blog:
     @property
     def seo(self):
         if self._seo is None:
-            from scripts.naver.blog.seo import BlogSEO
+            from scripts.naver.blog.seo.seo import BlogSEO
             self._seo = BlogSEO(self.page)
         return self._seo
 

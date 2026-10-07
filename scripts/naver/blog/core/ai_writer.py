@@ -63,7 +63,7 @@ class BlogAIWriter:
 
         # SEO 분석
         if return_seo and result["ok"]:
-            from scripts.naver.blog.seo import BlogSEO
+            from scripts.naver.blog.seo.seo import BlogSEO
 
             seo = BlogSEO(self.page)
             result["seo"] = seo.optimize_post(title, body, target_keywords=keywords)

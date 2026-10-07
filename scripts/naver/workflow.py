@@ -100,9 +100,9 @@ class Workflow:
 
         # 메일 알림
         if mail_recipient:
-            subject = f"[스마트스토어] 신규 주문 {new_count}건 도착"
-            body = f"신규 주문 {new_count}건이 발송 대기 중입니다.\n\n셀러센터에서 확인해 주세요."
-            r = self.n.mail.compose(mail_recipient, subject, body, send=send_alerts)
+            # scripts.naver.mail 은 읽기전용이라 NaverMail(발송 클래스)이 존재한 적이 없다 — 예전엔 서비스 객체의 mail 접근에서
+            # ImportError 로 죽었다(defect_index #38 과 같은 원인). smartstore/automation/inventory_monitor 와 같은 계약으로 명확히 실패시킨다.
+            r = {"ok": False, "error": "naver_mail_send_not_implemented"}
             alerts.append({"type": "mail", "result": r})
 
         # 카페 공지
