@@ -30,7 +30,7 @@ function configPath() {
 //   corrupt    : 내용이 깨짐(JSON 아님) → 깨진 파일을 config.json.corrupt-<시각> 으로 보존하고 오류로 알린 뒤,
 //                복구 가능한 핵심 값(비밀·로그인 토큰·라이선스·소유자 모드 등)만 건져 새 파일의 시작값으로 쓴다
 //   unreadable : 읽기 자체가 실패(잠금·권한) → 짧게 재시도 후에도 실패하면 **쓰기를 거부**한다(throw)
-const _SALVAGE_STRINGS = ["jwt_secret", "auth_token", "license_key"];
+const _SALVAGE_STRINGS = ["jwt_secret", "auth_token", "license_key", "desktop_agent_key"];
 const _SALVAGE_BOOLS = ["owner_mode", "autoStart", "useSystemChromeProfile"];
 let _configWarnings = [];
 
@@ -140,6 +140,19 @@ function patchConfig(patch) {
  */
 function isOwnerMode(cfg = loadConfig()) {
   return cfg.owner_mode === true || process.env.HAEHAN_OWNER === "1";
+}
+
+/**
+ * 데스크톱 로컬 에이전트 키 — 라이선스 키 대신 이 PC 안에서만 쓰는 무작위 키(대표님 결정 2026-10-08:
+ * 데스크톱은 라이선스 없이 시작). 처음 실행 때 한 번 만들어 config.json 에 보관하고, 로컬 서버에
+ * HAEHAN_DESKTOP_AGENT_KEY 로 넘겨 로컬 에이전트 접속(WS)을 인증한다. 원격 서버로 보내지 않는다.
+ */
+function ensureDesktopAgentKey() {
+  const cfg = loadConfig();
+  if (typeof cfg.desktop_agent_key === "string" && cfg.desktop_agent_key.length >= 32) return cfg.desktop_agent_key;
+  const key = "desktop-" + require("crypto").randomBytes(24).toString("hex");
+  patchConfig({ desktop_agent_key: key });
+  return key;
 }
 
 // ── 사이트 선택·설정 (순수 로컬 저장; P1-2) ─────────────────────────────────────
@@ -296,6 +309,7 @@ module.exports = {
   patchConfig,
   consumeConfigWarnings,
   isOwnerMode,
+  ensureDesktopAgentKey,
   getOrCreateJwtSecret,
   getAuthToken,
   setAuthToken,

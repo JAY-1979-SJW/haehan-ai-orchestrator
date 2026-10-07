@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import datetime
+import hmac
 import json
 import logging
+import os
 import secrets
 from pathlib import Path
 
+from ai_orchestrator.gates.auth import desktop_owner_bootstrap_allowed
 from ai_orchestrator.paths.runtime import data_dir
 
 logger = logging.getLogger(__name__)
@@ -66,8 +69,20 @@ def issue(name: str, email: str, plan: str = "basic", expire_days: int = 365) ->
     return db[key]
 
 
+def _is_desktop_agent_key(key: str) -> bool:
+    """데스크톱 로컬 모드에서 Electron 이 넘긴 이 PC 전용 에이전트 키인가(대표님 결정 2026-10-08: 데스크톱은
+    라이선스 없이 시작). 로컬 데스크톱 조건(AUTH_ENABLED=false + HAEHAN_DESKTOP=1 + loopback)일 때만 인정하고,
+    서버 모드에서는 이 경로가 열리지 않는다."""
+    expected = os.environ.get("HAEHAN_DESKTOP_AGENT_KEY", "")
+    if len(expected) < 32 or not key or not desktop_owner_bootstrap_allowed():
+        return False
+    return hmac.compare_digest(key.encode("utf-8"), expected.encode("utf-8"))
+
+
 def verify(key: str) -> tuple[bool, dict | None, str]:
     """라이선스 검증. (ok, record, reason)"""
+    if _is_desktop_agent_key(key):
+        return True, {"plan": "desktop", "active": True}, "ok"
     db = _load()
     rec = db.get(key)
     if not rec:

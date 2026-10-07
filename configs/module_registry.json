@@ -193,14 +193,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "admin-web/electron/lib/licenseWindow.js": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
   "admin-web/electron/lib/mainWindow.js": {
    "layer": "L9",
    "role": "ui",
@@ -22586,6 +22578,14 @@
    "source": "confirmed"
   },
   "tests/test_bundle_entrypoints.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_desktop_agent_key.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

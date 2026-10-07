@@ -5,7 +5,7 @@
  *   lib/config.js        설정 IO + 소유자 모드 판정
  *   lib/agent.js         로컬 CDP 에이전트(Python) 프로세스
  *   lib/mainWindow.js    메인 창(shell.html webview) + 트레이 복원
- *   lib/licenseWindow.js 라이선스 입력 창 + 검증
+ *   (라이선스 입력 창은 2026-10-08 삭제 — 데스크톱은 라이선스 없이 이 PC 전용 로컬 키로 시작)
  *   lib/youtube.js       YouTube OAuth
  *   lib/tray.js          시스템 트레이
  *
@@ -25,7 +25,7 @@ const path = require("path");
 app.commandLine.appendSwitch("remote-debugging-port", "9333");
 
 const {
-  loadConfig, saveConfig, isOwnerMode,
+  loadConfig, isOwnerMode, ensureDesktopAgentKey,
   getEnabledSites, setEnabledSites, getSiteSettings, setSiteSettings,
   getAuthToken, isAutoStartEnabled, setAutoStartEnabled,
   ENV_KEYS, saveUserEnv, maskedUserEnv, patchConfig,
@@ -35,7 +35,6 @@ const {
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, loadMainShell, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
 const { stage } = require("./lib/startup_log");
-const { createLicenseWindow, verifyLicense } = require("./lib/licenseWindow");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
 const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
@@ -134,11 +133,15 @@ if (!gotLock) {
     // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
     if (isOwnerMode(startCfg)) process.env.OWNER_MODE = "true";
 
-    // 빠른 시작: 소유자·라이선스가 이미 있으면 창부터 바로 띄우고(대기 화면), 서버는 뒤에서 준비한다.
+    // 데스크톱은 라이선스 없이 시작한다(대표님 결정 2026-10-08) — 라이선스 키가 없으면 이 PC 전용 로컬 키를 쓴다.
+    // 로컬 서버가 이 키로 에이전트 접속을 인증하도록 서버를 띄우기 전에 환경변수로 넘긴다.
+    const agentKey = startCfg.license_key || ensureDesktopAgentKey();
+    process.env.HAEHAN_DESKTOP_AGENT_KEY = agentKey;
+
+    // 빠른 시작: 창부터 바로 띄우고(대기 화면), 서버는 뒤에서 준비한다.
     const startHidden = process.argv.includes("--hidden");
-    const earlyKey = isOwnerMode(startCfg) || startCfg.license_key ? (startCfg.license_key || "OWNER") : null;
-    if (earlyKey && !startHidden) {
-      createMainWindow(earlyKey, false, { deferLoad: true });
+    if (!startHidden) {
+      createMainWindow(agentKey, false, { deferLoad: true });
       stage("window-shown");
     }
 
@@ -239,27 +242,21 @@ if (!gotLock) {
       );
     }
 
-    // 소유자 모드 또는 저장된 라이선스 → 바로 시작
-    if (isOwnerMode(cfg) || cfg.license_key) {
-      const key = cfg.license_key || "OWNER";
-      startAgent(key);
-      // 대기 화면으로 먼저 띄운 창이 있으면 본 화면만 열고, 없으면(자동시작 숨김 등) 새로 만든다
-      if (!loadMainShell()) createMainWindow(key, startHidden);
-      stage("shell-loaded");
-      createTray(isAutoStartEnabled());
-      // 창이 뜬 뒤 백그라운드로 Claude 연결 확인(처음이면 동의 요청) — 시작을 막지 않는다
-      if (!startHidden) setTimeout(() => syncClaudeOnStart().catch((e) => console.warn("[main] Claude 연결 확인 실패(무시):", e.message)), 5000);
-      else syncClaudeOnStart().catch(() => {});
-    } else {
-      startLicenseFlow();
-    }
+    // 라이선스 입력 화면 없이 바로 시작(첫 실행이면 Next 가 /setup 으로 이름·이메일 등록을 안내 — B안)
+    startAgent(agentKey);
+    // 대기 화면으로 먼저 띄운 창이 있으면 본 화면만 열고, 없으면(자동시작 숨김 등) 새로 만든다
+    if (!loadMainShell()) createMainWindow(agentKey, startHidden);
+    stage("shell-loaded");
+    createTray(isAutoStartEnabled());
+    // 창이 뜬 뒤 백그라운드로 Claude 연결 확인(처음이면 동의 요청) — 시작을 막지 않는다
+    if (!startHidden) setTimeout(() => syncClaudeOnStart().catch((e) => console.warn("[main] Claude 연결 확인 실패(무시):", e.message)), 5000);
+    else syncClaudeOnStart().catch(() => {});
 
     // 창 표시/복원은 버스로 일원화 (showMainWindow 가 없으면 재생성까지 처리)
     app.on("activate", () => bus.emit(EVENTS.SHOW_WINDOW));
   });
 }
 
-// ── 라이선스 입력 흐름 (일반 클라이언트 전용) ──────────────────────────────────
 // 시작 실패 처리: 사용자에게는 오류 창, 자동 점검(HAEHAN_E2E=1)에서는 창을 띄우지 않고 바로 종료
 // (사람이 닫아야 하는 오류 창이 뜨면 점검 환경에서 앱이 끝나지 않아 다음 점검까지 막히던 문제).
 function failStartup(title, body) {
@@ -274,38 +271,6 @@ function failStartup(title, body) {
   }
   dialog.showErrorBox(title, body);
   app.quit();
-}
-
-function startLicenseFlow() {
-  const licWin = createLicenseWindow();
-
-  // on(반복 허용) — 첫 시도가 틀렸을 때도 사용자가 다시 제출할 수 있어야 하므로 once() 는 부적합.
-  // 성공 시에만 리스너를 해제한다(창이 닫히므로 이후 제출 불가).
-  const onSubmit = async (_, key) => {
-    // 2026-09-29 electron-verifier 검증(WARN) 대응: key를 검증 없이 바로 verifyLicense
-    // (내부에서 URL 조각으로 사용)에 넘기던 것을 타입/길이 확인 후 거부하도록.
-    if (typeof key !== "string" || !key.trim() || key.length > 200) {
-      licWin.webContents.send("license-error");
-      return;
-    }
-    let ok = false;
-    try {
-      const res = await verifyLicense(key);
-      ok = !!res.ok;
-    } catch { ok = false; } // fail-close: verifyLicense 자체 예외 시 거부 (오프라인 허용은 verifyLicense 내부에서 담당)
-
-    if (ok) {
-      ipcMain.removeListener("license-submit", onSubmit);
-      saveConfig({ ...loadConfig(), license_key: key });
-      licWin.close();
-      startAgent(key);
-      createMainWindow(key);
-      createTray(isAutoStartEnabled());
-    } else {
-      licWin.webContents.send("license-error");
-    }
-  };
-  ipcMain.on("license-submit", onSubmit);
 }
 
 // ── 로컬 설정 브리지 (P1-3) — webview UI ↔ config.json ──────────────────────
