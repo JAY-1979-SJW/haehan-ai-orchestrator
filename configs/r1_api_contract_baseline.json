@@ -6,7 +6,6 @@
     "POST /api/v1/naver/marketing-ops/approve-channel",
     "POST /api/v1/naver/marketing-ops/generate-package",
     "POST /api/v1/naver/marketing-ops/neighbors/refresh",
-    "POST /api/v1/naver/marketing-ops/publish-blog",
-    "POST /api/v1/smartstore/chat"
+    "POST /api/v1/naver/marketing-ops/publish-blog"
   ]
 }

@@ -1069,17 +1069,6 @@ export async function popupPollerStop(): Promise<{ ok: boolean }> {
   return postJson("/api/v1/smartstore/popup/poller/stop");
 }
 
-// ── 스마트스토어 AI 에이전트 ──────────────────────────────────────────────────
-
-export type AgentSSEEvent =
-  | { event: "start";            data: { prompt: string; confirmed: boolean } }
-  | { event: "text";             data: { text: string } }
-  | { event: "step_start";       data: { step: number; tool: string; inputs: Record<string, unknown>; write: boolean } }
-  | { event: "step_done";        data: { step: number; tool: string; ok: boolean; result: Record<string, unknown> } }
-  | { event: "confirm_required"; data: { tool: string; inputs: Record<string, unknown>; message: string } }
-  | { event: "done";             data: { steps: number } }
-  | { event: "error";            data: { message: string } };
-
 // ── 상세설명 템플릿 ───────────────────────────────────────────────────────────
 
 export interface DescTemplate {
@@ -1124,41 +1113,3 @@ export async function deleteDescTemplate(id: string): Promise<{ ok: boolean }> {
   return res.json();
 }
 
-export function runSmartStoreAgent(
-  prompt: string,
-  confirmed: boolean,
-  onEvent: (e: AgentSSEEvent) => void,
-  signal?: AbortSignal,
-): Promise<void> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (_AUTH_HEADER) headers["Authorization"] = _AUTH_HEADER;
-
-  // 백엔드 실제 엔드포인트는 /smartstore/chat (messages 기반). 경로·body 정합.
-  return fetch(`${API_BASE}/api/v1/smartstore/chat`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ messages: [{ role: "user", content: prompt }], confirmed, provider: "gpt" }),
-    signal,
-  }).then(async (res) => {
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const reader = res.body!.getReader();
-    const decoder = new TextDecoder();
-    let buf = "";
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      const parts = buf.split("\n\n");
-      buf = parts.pop() ?? "";
-      for (const part of parts) {
-        const eventLine = part.match(/^event: (.+)/m)?.[1]?.trim();
-        const dataLine  = part.match(/^data: (.+)/m)?.[1]?.trim();
-        if (eventLine && dataLine) {
-          try {
-            onEvent({ event: eventLine, data: JSON.parse(dataLine) } as AgentSSEEvent);
-          } catch { /* ignore malformed */ }
-        }
-      }
-    }
-  });
-}
