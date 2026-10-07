@@ -21409,7 +21409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/domain/cafe_activity.py": {
+  "ai_orchestrator/connectors/naver_cafe/activity.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "naver_cafe",
@@ -21417,7 +21417,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/domain/cafe_membership_diff.py": {
+  "ai_orchestrator/connectors/naver_cafe/membership_diff.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "naver_cafe",
@@ -21441,7 +21441,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/persistence/cafe_membership_store.py": {
+  "ai_orchestrator/connectors/naver_cafe/membership_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_cafe",
@@ -21449,7 +21449,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/services/cafe_membership_service.py": {
+  "ai_orchestrator/connectors/naver_cafe/membership_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_cafe",
@@ -22847,6 +22847,14 @@
    "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/naver_cafe/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_cafe",
+   "reason": "도메인(naver_cafe) 자동화",
+   "confidence": "low",
    "source": "rule"
   }
  }

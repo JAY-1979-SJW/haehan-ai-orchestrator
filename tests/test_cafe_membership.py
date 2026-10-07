@@ -13,11 +13,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.connectors import naver_cafe_router as router_module
-from ai_orchestrator.domain import cafe_membership_diff as diff
+from ai_orchestrator.connectors.naver_cafe import membership_diff as diff
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import cafe_membership_store as store
-from ai_orchestrator.services import cafe_membership_service as service
+from ai_orchestrator.connectors.naver_cafe import membership_store as store
+from ai_orchestrator.connectors.naver_cafe import membership_service as service
 
 
 def cafe(i: int, name: str | None = None) -> dict:

@@ -54,7 +54,7 @@ CONSTANTS: list[tuple[str, str, str, tuple[str, ...]]] = [
     ("ai_orchestrator.connectors.public_media_router", "MEDIA_DIR", DATA, ("public_media",)),
     ("ai_orchestrator.connectors.session_status_router", "DATA_PATH", DATA, ("login_session_monitor_latest.json",)),
     ("ai_orchestrator.connectors.smartstore._helpers", "_SS_DATA_DIR", DATA, ("smartstore",)),
-    ("ai_orchestrator.persistence.cafe_membership_store", "_DIR", DATA, ("cafe",)),
+    ("ai_orchestrator.connectors.naver_cafe.membership_store", "_DIR", DATA, ("cafe",)),
     ("ai_orchestrator.persistence.site_registry_store", "_FILE", DATA, ("site_registry", "sites.json")),
     ("ai_orchestrator.persistence.site_task_map_store", "_DIR", DATA, ("site_task_map",)),
     ("ai_orchestrator.persistence.site_task_map_request_store", "_DIR", DATA, ("site_task_map_requests",)),

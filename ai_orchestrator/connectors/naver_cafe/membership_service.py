@@ -12,9 +12,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from ..domain import cafe_activity as activity
-from ..domain import cafe_membership_diff as diff
-from ..persistence import cafe_membership_store as store
+from ai_orchestrator.connectors.naver_cafe import activity
+from ai_orchestrator.connectors.naver_cafe import membership_diff as diff
+from ai_orchestrator.connectors.naver_cafe import membership_store as store
 
 CHANGES_LIMIT_MAX = 100
 
