@@ -27,8 +27,7 @@ def main() -> int:
     limit = int(os.environ.get("TARGET_LIMIT", "0") or 0)
     try:
         stats = json.loads(STATS.read_text(encoding="utf-8"))
-    except OSError, ValueError:
-        stats = {}
+    except (OSError, ValueError) as _read_error:
         text = "## 변이 검증(mutmut)\n\n통계 파일이 없습니다(대상 함수 없음 또는 실행 실패).\n"
     else:
         text = render(stats, total_targets, limit)
