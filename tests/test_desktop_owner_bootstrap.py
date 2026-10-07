@@ -84,7 +84,7 @@ def test_existing_pending_user_blocks_bootstrap():
 
 
 def test_concurrent_signups_make_exactly_one_owner():
-    results: list[tuple[dict, bool]] = []
+    results: list[tuple[dict | None, bool]] = []
     errors: list[BaseException] = []
     barrier = threading.Barrier(12)
 
