@@ -213,8 +213,9 @@ def cmd_check(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    with contextlib.suppress(AttributeError, ValueError):
-        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+    for stream in (sys.stdout, sys.stderr):  # 참고·차단 메시지는 stderr 로도 나간다 — 콘솔 코드페이지(cp949)에서 한글이 깨지지 않게 둘 다 고정
+        with contextlib.suppress(AttributeError, ValueError):
+            stream.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
