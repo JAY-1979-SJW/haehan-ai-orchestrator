@@ -55,6 +55,16 @@
         "filter": ["**/*"]
       },
       {
+        "from": "../.next/static",
+        "to": "nextjs/.next/static",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../public",
+        "to": "nextjs/public",
+        "filter": ["**/*"]
+      },
+      {
         "from": "build-info.json",
         "to": "build-info.json"
       }
