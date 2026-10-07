@@ -15089,7 +15089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/generate_naver_mail_action_dashboard.py": {
+  "scripts/archive/ops/generate_naver_mail_action_dashboard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15273,7 +15273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/naver_mail_priority_body_review_20260520.py": {
+  "scripts/archive/ops/naver_mail_priority_body_review_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15281,7 +15281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/naver_mail_unread_report_20260520.py": {
+  "scripts/archive/ops/naver_mail_unread_report_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15337,7 +15337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py": {
+  "scripts/archive/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15345,7 +15345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/report_naver_mail_inbox_consolidated.py": {
+  "scripts/archive/ops/report_naver_mail_inbox_consolidated.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15497,7 +15497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_body_pipeline_batch_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_body_pipeline_batch_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15505,7 +15505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_body_pipeline_v2_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_body_pipeline_v2_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15513,7 +15513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_dynamic_folder_discovery_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_dynamic_folder_discovery_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15521,7 +15521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_inbox_p0_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_inbox_p0_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -15529,7 +15529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_naver_mail_smart_folder_coverage_live.py": {
+  "scripts/archive/ops/smoke_naver_mail_smart_folder_coverage_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
