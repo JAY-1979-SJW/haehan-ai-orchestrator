@@ -1,5 +1,44 @@
 {
  "acked": [
-  {"file": "scripts/temp_oauth_revoke.py", "reason": "S2 archive 이동 — 일회성 스크립트, 직접 실행 호출처 없음(참조는 시험 경로 갱신 완료)", "date": "2026-10-07"}
+  {
+   "file": "scripts/temp_oauth_revoke.py",
+   "reason": "S2 archive 이동 — 일회성 스크립트, 직접 실행 호출처 없음(참조는 시험 경로 갱신 완료)",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/install_git_hooks.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/install_quality_gate.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/log_code_change.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/module_quality_gate.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/py_compile_no_cache.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/quality_gate.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/required_quality_gate.py",
+   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+   "date": "2026-10-07"
+  }
  ]
 }

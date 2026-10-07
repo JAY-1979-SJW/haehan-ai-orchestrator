@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 
 try:
-    from scripts.module_quality_gate_common import PY, _run_check_command
+    from scripts.ops.quality.module_quality_gate_common import PY, _run_check_command
 except ModuleNotFoundError:
     from module_quality_gate_common import PY, _run_check_command  # type: ignore[no-redef, import-not-found]
 

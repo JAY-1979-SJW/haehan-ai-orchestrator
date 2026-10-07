@@ -281,7 +281,7 @@ The following checks must pass before claiming the site work baseline is ready:
 - Unit tests for Google, Naver, SmartStore, Hiworks, Gabia, YouTube, and SSO
   runtime contracts.
 - `scripts/ops/audit_site_work_function_baseline.py`
-- `scripts/module_quality_gate.py --module repo_guard`
+- `scripts/ops/quality/module_quality_gate.py --module repo_guard`
 
 Live browser checks are useful evidence, but they are not required by this
 static baseline because they depend on local login state.

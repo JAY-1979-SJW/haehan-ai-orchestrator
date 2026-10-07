@@ -10,7 +10,7 @@ import py_compile
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def cfile_for(path: Path) -> Path:

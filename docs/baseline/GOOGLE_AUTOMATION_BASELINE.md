@@ -329,7 +329,7 @@ python scripts/ops/audit_google_home_login_gate.py
 python -m pytest tests/test_google_vision_usage_gate.py -q
 python scripts/google/domain_readiness_audit.py
 python scripts/ops/audit_google_automation_baseline_contract.py
-python scripts/module_quality_gate.py --module repo_guard
+python scripts/ops/quality/module_quality_gate.py --module repo_guard
 ```
 
 ## 8. Development Sequence

@@ -432,7 +432,7 @@ Step 4. 편집 이력 JSONL → 이력 탭 표시
 ```bash
 python scripts/ops/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
 
 **판정 기준:**

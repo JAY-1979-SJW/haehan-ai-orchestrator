@@ -555,7 +555,7 @@
   "reason": "카카오 사이트 전용 로그인 자동화(login_detector 호출) — 사이트 모듈. 이름만 auth라 오분류.",
   "source": "manual"
  },
- "scripts/module_quality_gate_common.py": {
+ "scripts/ops/quality/module_quality_gate_common.py": {
   "layer": "L12",
   "role": "ops_tool",
   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
@@ -591,7 +591,7 @@
   "reason": "네이버 검색광고 사이트 전용 로그인 자동화(credentials 호출) — 사이트 모듈. 이름만 auth라 오분류.",
   "source": "manual"
  },
- "scripts/quality_gate.py": {
+ "scripts/ops/quality/quality_gate.py": {
   "layer": "L12",
   "role": "ops_tool",
   "reason": "리포지토리 커밋/스테이지 변경 감사용 CLI 도구(quality gate). 앱 도메인 정책이 아니라 운영 도구 — L12(문서·운영 도구, 의존 방향 규칙 밖). 이름만 gate라 L2로 오분류.",
@@ -603,7 +603,7 @@
   "reason": "실시간 감사 이벤트를 data/logs/realtime_audit.jsonl 에 기록/조회하는 감사 로그 저장소 — L7(저장·감사) 정의에 정확히 부합. L4 기본값 오분류를 L7로 정정.",
   "source": "manual"
  },
- "scripts/required_quality_gate.py": {
+ "scripts/ops/quality/required_quality_gate.py": {
   "layer": "L12",
   "role": "ops_tool",
   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
@@ -646,7 +646,7 @@
   "role": "site_module",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
  },
- "scripts/module_quality_gate.py": {
+ "scripts/ops/quality/module_quality_gate.py": {
   "layer": "L6",
   "role": "policy",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"

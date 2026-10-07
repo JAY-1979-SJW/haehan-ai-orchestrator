@@ -12,14 +12,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
-try:
-    from scripts.runtime_temp import usable_temp_base
-except ModuleNotFoundError:  # direct script execution: sys.path[0] == scripts/
-    from runtime_temp import usable_temp_base  # type: ignore[import-not-found]
+_ROOT_BOOT = str(Path(__file__).resolve().parents[3])  # 직접 실행(python .../quality/x.py)에서도 scripts 패키지를 찾게 한다
+if _ROOT_BOOT not in sys.path:
+    sys.path.insert(0, _ROOT_BOOT)
+from scripts.runtime_temp import usable_temp_base  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 sys.dont_write_bytecode = True
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 MODULE_GATE_PYCACHE = Path(
     os.environ.get(
         "HAEHAN_MODULE_GATE_PYCACHE", str(usable_temp_base("module_gate_pycache", "HAEHAN_MODULE_GATE_PYCACHE"))
@@ -163,7 +163,7 @@ def _source_contains(path: str, needles: Iterable[str]) -> list[str]:
 def all_steps() -> list[GateStep]:
     # Imported lazily to avoid circular import with modules leaf
     try:
-        from scripts.module_quality_gate_modules import MODULES as _MODULES
+        from scripts.ops.quality.module_quality_gate_modules import MODULES as _MODULES
     except ModuleNotFoundError:
         from module_quality_gate_modules import MODULES as _MODULES  # type: ignore[no-redef, import-not-found]
     return [step for module in _MODULES for step in module.steps]

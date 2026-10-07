@@ -56,7 +56,7 @@ Reference pack:
 | Login/session integrity before live work | `docs/common_login_session_safety_policy_20260513.md` |
 | Full business workflow development | `docs/business_workflow_full_development_policy_20260513.md` |
 | Pre-change dry-run before code update | `docs/pre_change_dry_run_policy_20260513.md` |
-| Commit gate failure | `scripts/quality_gate.py` |
+| Commit gate failure | `scripts/ops/quality/quality_gate.py` |
 | Deploy-related change | `scripts/deploy_dry_run.py` |
 
 ## Review Categories

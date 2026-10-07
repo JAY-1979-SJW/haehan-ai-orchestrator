@@ -195,7 +195,7 @@ def build_index(status_output: str | None = None, *, root: Path = ROOT) -> dict[
             "docs/site_automation_status_index.md",
             "docs/realtime_audit_logging.md",
             "docs/pre_change_dry_run_policy_20260513.md",
-            "scripts/quality_gate.py",
+            "scripts/ops/quality/quality_gate.py",
             "scripts/ops/pre_change_dry_run.py",
             "scripts/deploy_dry_run.py",
         ],

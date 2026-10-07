@@ -10,7 +10,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 try:
-    from scripts.module_quality_gate_checks_audit import (
+    from scripts.ops.quality.module_quality_gate_checks_audit import (
         check_app_baseline_contract,
         check_approval_flow_baseline_contract,
         check_backend_core_baseline_contract,
@@ -37,7 +37,7 @@ try:
         check_site_work_function_baseline,
         check_standard_workflow_contract,
     )
-    from scripts.module_quality_gate_checks_repo import (
+    from scripts.ops.quality.module_quality_gate_checks_repo import (
         check_forbidden_command_matrix,
         check_local_agent_browser_runtime_rules,
         check_module_boundary_contract,
@@ -45,13 +45,13 @@ try:
         check_required_local_gate_wiring,
         check_root_legacy_script_contract,
     )
-    from scripts.module_quality_gate_checks_web import (
+    from scripts.ops.quality.module_quality_gate_checks_web import (
         check_active_source_secret_scan,
         check_admin_web_audit,
         check_admin_web_lint,
         check_admin_web_typecheck,
     )
-    from scripts.module_quality_gate_common import (
+    from scripts.ops.quality.module_quality_gate_common import (
         ROOT,
         GateStep,
         command_is_forbidden,
@@ -59,7 +59,7 @@ try:
         redact,
         workspace_temp_root,
     )
-    from scripts.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules
+    from scripts.ops.quality.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules
 except ModuleNotFoundError:
     from module_quality_gate_checks_audit import (  # type: ignore[no-redef, import-not-found]
         check_app_baseline_contract,

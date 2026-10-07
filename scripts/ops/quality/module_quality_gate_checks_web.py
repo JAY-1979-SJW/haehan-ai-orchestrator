@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import cast
 
 try:
-    from scripts.module_quality_gate_common import ROOT, _run_check_command, normalize_path, redact
+    from scripts.ops.quality.module_quality_gate_common import ROOT, _run_check_command, normalize_path, redact
 except ModuleNotFoundError:
     from module_quality_gate_common import (  # type: ignore[no-redef, import-not-found]
         ROOT,

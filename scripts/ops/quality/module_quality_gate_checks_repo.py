@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 try:
-    from scripts.module_quality_gate_common import (
+    from scripts.ops.quality.module_quality_gate_common import (
         PY,
         ROOT,
         _run_check_command,
@@ -163,7 +163,7 @@ def _local_gate_file_failure(required_gate, pre_commit, pre_commit_orig, pre_pus
 
 
 def check_required_local_gate_wiring() -> tuple[bool, str]:
-    required_gate = ROOT / "scripts" / "required_quality_gate.py"
+    required_gate = ROOT / "scripts" / "ops" / "quality" / "required_quality_gate.py"
     pre_commit = ROOT / ".githooks" / "pre-commit"
     pre_commit_orig = ROOT / ".githooks" / "pre-commit.orig"
     pre_push = ROOT / ".githooks" / "pre-push"
@@ -224,7 +224,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "scripts/ops/audit_approval_flow_baseline_contract.py",
         "scripts/ops/audit_playwright_ai_baseline_contract.py",
         "scripts/ops/audit_root_legacy_scripts.py",
-        "scripts/module_quality_gate.py --module repo_guard",
+        "scripts/ops/quality/module_quality_gate.py --module repo_guard",
     )
     missing_needles = [needle for needle in required_needles if needle not in required_rendered]
     if missing_needles:
@@ -241,7 +241,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
     hooks_path = normalize_path(config.stdout.strip()) if config.returncode == 0 else ""
     # 설치기가 절대경로(<저장소>/.githooks)로 설정하는 환경도 현행 구조로 인정한다.
     if hooks_path != ".githooks" and not hooks_path.endswith("/.githooks"):
-        return False, "core.hooksPath must be .githooks; run python scripts/install_git_hooks.py"
+        return False, "core.hooksPath must be .githooks; run python scripts/ops/quality/install_git_hooks.py"
 
     return True, "required local gate is wired through pre-commit/pre-push and Actions are disabled"
 

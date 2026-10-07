@@ -5,7 +5,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 HOOKS_DIR = ROOT / ".githooks"
 PRE_COMMIT = HOOKS_DIR / "pre-commit"
 

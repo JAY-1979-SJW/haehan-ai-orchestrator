@@ -15,13 +15,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
-try:
-    from scripts.runtime_temp import usable_temp_base
-except ModuleNotFoundError:  # direct script execution: sys.path[0] == scripts/
-    from runtime_temp import usable_temp_base  # type: ignore[import-not-found]
+_ROOT_BOOT = str(Path(__file__).resolve().parents[3])  # 직접 실행(python .../quality/x.py)에서도 scripts 패키지를 찾게 한다
+if _ROOT_BOOT not in sys.path:
+    sys.path.insert(0, _ROOT_BOOT)
+from scripts.runtime_temp import usable_temp_base  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 30
 PYTEST_FLAGS = ("-p", "no:cacheprovider", "-q")
 
@@ -79,7 +79,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/youtube/research.py",
         "scripts/youtube/router.py",
         "ai_orchestrator/local_agent/common_tool_runtime.py",
-        "scripts/module_quality_gate.py",
+        "scripts/ops/quality/module_quality_gate.py",
         "tests/test_common_tool_runtime.py",
         "tests/test_common_tool_runtime_baseline_contract.py",
         "tests/test_common_engine_commercialization_baseline.py",
@@ -265,7 +265,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_ai_work_session_gate.py",
         *PYTEST_FLAGS,
     ),
-    (sys.executable, "scripts/module_quality_gate.py", "--module", "repo_guard"),
+    (sys.executable, "scripts/ops/quality/module_quality_gate.py", "--module", "repo_guard"),
 )
 
 FORBIDDEN_COMMAND_TOKENS = {
@@ -338,7 +338,7 @@ def command_timeout_for(command: tuple[str, ...]) -> int:
     timeout_s = command_timeout_seconds()
     if (
         len(command) >= 4
-        and command[1].endswith("scripts/module_quality_gate.py")
+        and command[1].endswith("scripts/ops/quality/module_quality_gate.py")
         and "--module" in command
         and "repo_guard" in command
     ):

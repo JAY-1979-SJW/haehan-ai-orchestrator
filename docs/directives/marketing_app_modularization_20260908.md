@@ -72,7 +72,7 @@ apps/marketing-standalone/          ← 신규 최상위 디렉터리 (신규 �
 ```bash
 python scripts/ops/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 python scripts/ops/duplicate_code_check.py   # 사본이 "중복 구현"으로 오탐되는지 확인
 ```
 

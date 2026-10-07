@@ -5,11 +5,11 @@ from __future__ import annotations
 import contextlib
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 HOOK = ROOT / ".git" / "hooks" / "pre-commit"
 
 HOOK_BODY = """#!/bin/sh
-python scripts/quality_gate.py --staged --enforce
+python scripts/ops/quality/quality_gate.py --staged --enforce
 python scripts/ops/audit_google_home_login_gate.py
 """
 

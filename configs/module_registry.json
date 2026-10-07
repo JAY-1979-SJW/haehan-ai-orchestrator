@@ -10849,7 +10849,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/install_git_hooks.py": {
+  "scripts/ops/quality/install_git_hooks.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -10857,7 +10857,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/install_quality_gate.py": {
+  "scripts/ops/quality/install_quality_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -11153,7 +11153,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/log_code_change.py": {
+  "scripts/ops/quality/log_code_change.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -11289,7 +11289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/module_quality_gate.py": {
+  "scripts/ops/quality/module_quality_gate.py": {
    "layer": "L6",
    "role": "policy",
    "domain": "common",
@@ -11297,7 +11297,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/module_quality_gate_checks_audit.py": {
+  "scripts/ops/quality/module_quality_gate_checks_audit.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -11305,7 +11305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/module_quality_gate_checks_repo.py": {
+  "scripts/ops/quality/module_quality_gate_checks_repo.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -11313,7 +11313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/module_quality_gate_checks_web.py": {
+  "scripts/ops/quality/module_quality_gate_checks_web.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -11321,7 +11321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/module_quality_gate_common.py": {
+  "scripts/ops/quality/module_quality_gate_common.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11329,7 +11329,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/module_quality_gate_modules.py": {
+  "scripts/ops/quality/module_quality_gate_modules.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -11337,7 +11337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/module_quality_gate_runner.py": {
+  "scripts/ops/quality/module_quality_gate_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -15753,7 +15753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/py_compile_no_cache.py": {
+  "scripts/ops/quality/py_compile_no_cache.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -15761,7 +15761,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/quality_gate.py": {
+  "scripts/ops/quality/quality_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -15777,7 +15777,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/required_quality_gate.py": {
+  "scripts/ops/quality/required_quality_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21481,14 +21481,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/module_quality_gate_exports.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/naver/dispatch.py": {
    "layer": "L5",
    "role": "site_module",
@@ -22982,6 +22974,22 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/quality/module_quality_gate_exports.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/quality_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
   }

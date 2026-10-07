@@ -493,8 +493,8 @@
    "scripts/naver/content.py:select_targets"
   ],
   "fa2262ce66ecd05aed741ed73da86d8b0690aed7": [
-   "scripts/module_quality_gate_common.py:redact",
-   "scripts/required_quality_gate.py:redact"
+   "scripts/ops/quality/module_quality_gate_common.py:redact",
+   "scripts/ops/quality/required_quality_gate.py:redact"
   ],
   "fcc9673f9a46bea4053b07a2b608145f7ffdd247": [
    "ai_orchestrator/local_agent/installer_folder_presenter.py:_result",

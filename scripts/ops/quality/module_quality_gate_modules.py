@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 
 try:
-    from scripts.module_quality_gate_common import PY, GateModule, GateStep
+    from scripts.ops.quality.module_quality_gate_common import PY, GateModule, GateStep
 except ModuleNotFoundError:
     from module_quality_gate_common import PY, GateModule, GateStep  # type: ignore[no-redef, import-not-found]
 
@@ -54,7 +54,7 @@ MODULES: tuple[GateModule, ...] = (
                 "common_engine_commercialization_py_compile",
                 (
                     PY,
-                    "scripts/py_compile_no_cache.py",
+                    "scripts/ops/quality/py_compile_no_cache.py",
                     "scripts/ops/audit_common_engine_commercialization_baseline.py",
                     "tests/test_common_engine_commercialization_baseline.py",
                 ),
@@ -82,7 +82,7 @@ MODULES: tuple[GateModule, ...] = (
                 "local_agent_connection_recovery_py_compile",
                 (
                     PY,
-                    "scripts/py_compile_no_cache.py",
+                    "scripts/ops/quality/py_compile_no_cache.py",
                     "scripts/ops/audit_local_agent_connection_recovery_baseline.py",
                     "tests/test_local_agent_connection_recovery_baseline.py",
                     "scripts/verify/verify_agent_ws_auth.py",
@@ -110,7 +110,7 @@ MODULES: tuple[GateModule, ...] = (
         name="portable_install",
         description="portable ZIP install scripts and contract",
         steps=(
-            GateStep("portable_py_compile", (PY, "scripts/py_compile_no_cache.py", "verify_portable_zip_install.py")),
+            GateStep("portable_py_compile", (PY, "scripts/ops/quality/py_compile_no_cache.py", "verify_portable_zip_install.py")),
             GateStep("portable_static_verify", (PY, "verify_portable_zip_install.py", "--static-only")),
             GateStep(
                 "portable_contract_pytest",
@@ -127,7 +127,7 @@ MODULES: tuple[GateModule, ...] = (
                 "desktop_auth_py_compile",
                 (
                     PY,
-                    "scripts/py_compile_no_cache.py",
+                    "scripts/ops/quality/py_compile_no_cache.py",
                     "local_agent/desktop_launcher.py",
                     "scripts/verify/verify_agent_ws_auth.py",
                     "scripts/verify/verify_local_runtime_dry_run.py",
@@ -155,7 +155,7 @@ MODULES: tuple[GateModule, ...] = (
         steps=(
             GateStep(
                 "live_agent_py_compile",
-                (PY, "scripts/py_compile_no_cache.py", "scripts/verify/verify_live_agent_smoke.py", "scripts/verify/verify_live_task_dispatch.py"),
+                (PY, "scripts/ops/quality/py_compile_no_cache.py", "scripts/verify/verify_live_agent_smoke.py", "scripts/verify/verify_live_task_dispatch.py"),
             ),
             GateStep(
                 "live_agent_smoke",
@@ -186,7 +186,7 @@ MODULES: tuple[GateModule, ...] = (
                 "backend_core_py_compile",
                 (
                     PY,
-                    "scripts/py_compile_no_cache.py",
+                    "scripts/ops/quality/py_compile_no_cache.py",
                     "ai_orchestrator/asgi.py",
                     "ai_orchestrator/router.py",
                     "ai_orchestrator/gates/auth.py",
@@ -241,7 +241,7 @@ MODULES: tuple[GateModule, ...] = (
                 "local_agent_e2e_py_compile",
                 (
                     PY,
-                    "scripts/py_compile_no_cache.py",
+                    "scripts/ops/quality/py_compile_no_cache.py",
                     "scripts/ops/audit_local_agent_e2e_flow_contract.py",
                     "tests/test_local_agent_e2e_flow_contract.py",
                 ),

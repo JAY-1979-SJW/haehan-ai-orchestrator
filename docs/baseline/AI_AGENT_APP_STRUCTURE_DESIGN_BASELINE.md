@@ -262,7 +262,7 @@ A new tool is accepted only when all items are complete:
 - State-changing work is approval-gated or user-direct.
 - Reports are stored under `data/` or `docs/reports/` with secrets masked.
 - Tests or audit assertions cover the route, gate, and output policy.
-- `python scripts/required_quality_gate.py` passes.
+- `python scripts/ops/quality/required_quality_gate.py` passes.
 
 ## Required Verification
 
@@ -273,7 +273,7 @@ npm run typecheck
 npm run build
 python scripts/ops/audit_app_structure_contract.py
 python scripts/ops/audit_site_work_function_baseline.py
-python scripts/required_quality_gate.py
+python scripts/ops/quality/required_quality_gate.py
 ```
 
 `npm` commands run from `admin-web/`. Python commands run from the repo root.

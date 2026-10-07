@@ -176,7 +176,7 @@ py -3.14 -m pytest <나온 테스트 파일들> -q
 # 게이트 3종 (커밋 전 필수)
 py -3.14 scripts/ops/codebase_layer_audit.py
 py -3.14 -m pytest tests/test_codebase_layer_audit.py -q
-py -3.14 scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+py -3.14 scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 
 # audit-kit 공식 재검사 (worktree 없는 깨끗한 상태에서만 신뢰할 것)
 audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrator" --no-mypy --fail-on never

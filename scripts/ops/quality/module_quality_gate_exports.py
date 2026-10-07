@@ -5,7 +5,7 @@ sibling leaf 직접 import 를 피하려고 루트가 직접 import 한다.
 [docs/module_separation_standard.md]
 """
 
-from .module_quality_gate_checks_audit import (  # noqa: F401
+from scripts.ops.quality.module_quality_gate_checks_audit import (  # noqa: F401
     check_app_baseline_contract,
     check_approval_flow_baseline_contract,
     check_backend_core_baseline_contract,
@@ -32,7 +32,7 @@ from .module_quality_gate_checks_audit import (  # noqa: F401
     check_site_work_function_baseline,
     check_standard_workflow_contract,
 )
-from .module_quality_gate_checks_repo import (  # noqa: F401
+from scripts.ops.quality.module_quality_gate_checks_repo import (  # noqa: F401
     check_forbidden_command_matrix,
     check_local_agent_browser_runtime_rules,
     check_module_boundary_contract,
@@ -41,7 +41,7 @@ from .module_quality_gate_checks_repo import (  # noqa: F401
     check_root_legacy_script_contract,
     imports_local_agent,
 )
-from .module_quality_gate_checks_web import (  # noqa: F401
+from scripts.ops.quality.module_quality_gate_checks_web import (  # noqa: F401
     _is_secret_scan_excluded,
     audit_high_critical_names,
     audit_vulnerability_counts,
@@ -51,7 +51,7 @@ from .module_quality_gate_checks_web import (  # noqa: F401
     check_admin_web_typecheck,
     next_lockfile_meets_security_floor,
 )
-from .module_quality_gate_common import (  # noqa: F401
+from scripts.ops.quality.module_quality_gate_common import (  # noqa: F401
     FORBIDDEN_TOKENS,
     MODULE_GATE_PYCACHE,
     OUT_OF_SCOPE,
@@ -71,9 +71,4 @@ from .module_quality_gate_common import (  # noqa: F401
     redact,
     workspace_temp_root,
 )
-from .module_quality_gate_modules import (  # noqa: F401
-    MODULES,
-    iter_selected_steps,
-    module_names,
-    selected_modules,
-)
+from scripts.ops.quality.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules
