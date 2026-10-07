@@ -57,7 +57,7 @@ REQUIRED_GUARDED = {
     "ai_orchestrator/connectors/gmail_router.py::api_reply",
     "ai_orchestrator/connectors/gmail_router.py::api_send",
     "ai_orchestrator/connectors/eum_router.py::send_one._compose_and_send",
-    "ai_orchestrator/connectors/hiworks_mail_router.py::api_send",
+    "ai_orchestrator/connectors/hiworks/mail_router.py::api_send",
     "scripts/eum_send_mail_batch.py::send_one",
     "scripts/naver/blog/core/ai_writer.py::BlogAIWriter.draft_and_save",
     "scripts/naver/blog/core/writer_pro.py::BlogWriterPro._publish_by_mode",
