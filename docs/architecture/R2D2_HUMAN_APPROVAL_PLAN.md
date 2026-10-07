@@ -64,7 +64,7 @@ R2d-1까지 구현된 것과 조사에서 확인된 사실이다.
 |---|---|---|
 | L1 방식 구분 | 발급 API는 **Bearer JWT로 인증된 사용자만**. `auth_method`(`jwt`/`basic`/`disabled`)를 사용자 dict에 추가(W4 변경 위에), `jwt`가 아니면 403. MCP(헤더 없음)·Basic 서비스 자격·`AUTH_ENABLED=false`·프록시 Basic 폴백은 모두 403 | A1 |
 | L2 사람 요인 (**선택, 기본 꺼짐**) | 사용자가 설정에서 **승인 PIN을 켜면** 승인할 때 PIN을 직접 입력해야 한다. 서버에는 솔트 해시만 저장, 시도 횟수 제한(5회 실패 시 분 단위 증가 잠금), 실패는 감사 기록. PIN 설정·변경은 owner만. PIN은 JWT·쿠키·로컬스토리지·화면 코드 어디에도 저장하지 않는다. **꺼져 있으면 이 층이 없다**(§2.4 잔여 위험) | **A3**(켰을 때), A2 |
-| L3 출처 검사 | 발급 API는 `Origin`/`Referer`가 허용 목록(관리 화면 도메인)이고 `Sec-Fetch-Site`가 same-origin일 때만. 본문 `Content-Type: application/json` 강제(단순 요청 폼 차단) | A6 |
+| L3 출처 검사 | 발급 API는 `Origin`/`Referer`가 허용 목록(관리 화면 도메인)이고 `Sec-Fetch-Site`가 same-origin일 때만. 본문 `Content-Type: application/json` 강제(단순 요청 폼 차단) | A6 | ※ 백엔드 Origin 검사는 프록시 구조에서 성립하지 않아 **§13(프록시 증명)으로 대체**
 | L4 승인 비노출 | 승인은 **서버 저장 기록**이고 비밀 토큰이 없다. 실행은 실제 내용을 해시해 일치하는 승인을 소진한다. 차단 응답·로그에 문구·PIN·해시 원문을 싣지 않는다 | A2 |
 | L5 내용 결속·1회·만료 | 해시·대상 불일치 또는 만료·소진이면 실패. 소진은 DB의 원자적 갱신(CAS) | A4, A5 |
 | L6 에이전트 도구 차단 | 발급·PIN 설정 엔드포인트는 MCP `API_REGISTRY`에 없다. "MCP 레지스트리에 발급 경로가 없음", "발급 경로가 `jwt` 외에서 403"을 **계약 시험**으로 고정 | A1 |
@@ -237,3 +237,53 @@ R2d-1까지 구현된 것과 조사에서 확인된 사실이다.
 - **이번 문서**: 설계만. 구현은 대표님 승인 후 단계별 커밋(P0부터).
 - **범위 밖**: `apps/ig-comment-dm-bot`·`apps/marketing-standalone`(별도 앱), 개발 등록 승인(`dev_reg_approval`), `scripts/google/drive.py` CLI 업로드, 네이버 대량메일·하나팩스 대량의 자체 상한 정책(승인 행위만 통합).
 - **의존**: W4의 Bearer·`OWNER_EMAILS`·`HttpOnly` 쿠키 전환 및 `auth_method` 표지. W2의 `marketing_ops_router`는 P3에서 합류.
+
+## 13. §P0c 수정안 — Origin 검사를 "프록시 증명"으로 대체 (P0c 구현 전 보강, 2026-10-07)
+
+> 상태: 지휘창이 방향을 확인했다(HMAC 증명·fail-closed 503·`/auth/me` 계약 불변). **(a) 증명 방식 채택과 (b) 새 환경변수·admin-web 프록시 변경 범위는 대표님 확인 후** P0c 로 구현한다.
+
+### 13.1 발견: 백엔드의 Origin 검사는 프록시 구조에서 성립하지 않는다
+
+- 관리 화면(`admin-web`)의 `/api/proxy/[...path]`는 백엔드로 `content-type`, `accept`, `cache-control`, `x-request-id`, `x-device-token`, `authorization`만 전달한다. **`Origin`·`Referer`·`Cookie`·`User-Agent`는 전달하지 않는다.** 쿠키의 JWT는 `Authorization: Bearer`로 바뀌어 간다.
+- 따라서 백엔드가 `Origin`을 요구하면 **정상 화면 요청도 거부**되고, 요구하지 않으면 검사가 없는 것과 같다. 직접 호출하는 스크립트는 `Origin`·`Sec-Fetch-*` 헤더를 마음대로 쓸 수 있어 위조도 쉽다.
+- 정리: Origin·Fetch-Metadata 검사는 *다른 사이트의 브라우저 요청(CSRF, A6)* 만 막는다. 백엔드는 쿠키가 아니라 `Authorization` 헤더로 인증하므로 클래식 CSRF는 원래 해당이 적고, **JWT를 가진 스크립트(A3 일부)와 서비스 자격(A1)은 Origin 검사로 막지 못한다.** 이 둘을 막는 것은 L1(JWT 전용·방식 구분), 아래의 프록시 증명, 그리고 PIN(L2)이다.
+- §2.3의 L3 "Origin 검사"는 이 절로 **대체**한다.
+
+### 13.2 대체안: 프록시가 증명하는 방식 (L3')
+
+1. **백엔드 의존성 `require_human_session`** (`ai_orchestrator/gates/human_session.py`, 신규)
+   - 인증 방식 도출: 요청의 `Authorization` 스킴으로 판단한다(`Bearer`→`jwt`, `Basic`→`basic`, 인증 꺼짐→`disabled`). `get_current_user`가 이미 한 가지 스킴만 검증하므로 도출은 안전하다. **`auth.py`와 사용자 dict에는 키를 추가하지 않는다** — `/auth/me`가 `{actor, role}` 정확 일치 응답을 계약 시험으로 고정하고 있어, 키를 더하면 API 계약이 바뀐다.
+   - 조건: `jwt` + 역할 `admin`·`owner` + 프록시 증명 유효. 그 밖(Basic·MCP·인증 꺼짐·viewer/operator)은 403.
+2. **프록시 증명 `X-Approval-Proxy`** (서버 비밀 `APPROVAL_PROXY_SECRET`)
+   - admin-web 프록시가 `approvals/*/{approve,reject,revoke}` 경로에서만 다음을 한다.
+     ① 브라우저 same-origin 요청만 통과(`Origin` 호스트 = 요청 호스트, `Sec-Fetch-Site: same-origin`, `Content-Type: application/json`) — CSRF 차단(A6)
+     ② 클라이언트가 보낸 `Authorization`을 무시하고 쿠키→Bearer만 사용
+     ③ `HMAC-SHA256(secret, METHOD | PATH | 타임스탬프 | sha256(본문) | sha256(Bearer))`을 `X-Approval-Proxy: <ts>.<nonce>.<hex>`로 첨부
+   - 백엔드는 같은 비밀로 검증한다: 서명 일치, 타임스탬프 ±60초, nonce 1회용(재전송 차단, 기억 창 안에서), 본문·경로 변조 시 불일치.
+   - 증명이 없거나 틀리면 403(응답에 비밀·기대값 비노출).
+3. **fail-closed**: `APPROVAL_PROXY_SECRET`이 설정되지 않으면 발급 API(`approve`·`reject`·`revoke`)는 **503**(발급 미구성)으로 닫힌다. 제안(`POST /approvals/requests`)과 조회는 열려 있다(제안은 승인을 만들지 않는다).
+4. **인증 꺼짐(단독 모드)**: §11-2대로 로컬 화면에서 발급 가능하다. 단 같은 프록시 경로(Electron 포함)를 거쳐 증명이 있어야 하고, PIN을 설정했으면 PIN이 필요하다. 이 모드는 JWT 구분이 없어 **PIN이 사실상 유일한 사람 요인**이다(§2.4에 같은 취지로 명시).
+
+### 13.3 효과와 한계 (정직한 정리)
+
+| 공격 | 막는가 | 수단 |
+|---|---|---|
+| A1 MCP·Basic 서비스 자격으로 발급 | 막음 | L1(jwt 전용) + 증명 비밀 없음 |
+| 직접 백엔드를 호출하는 스크립트(JWT 소지) | 막음 | 증명 비밀 없음 → 403 |
+| A6 다른 사이트의 브라우저 요청 | 막음 | 프록시의 same-origin 검사 |
+| 증명 헤더 재전송·본문 변조 | 막음 | 타임스탬프·nonce·본문 해시 |
+| 사용자 브라우저를 직접 조작하는 에이전트(A3) | **PIN 켠 경우만 막음** | PIN(L2). 꺼져 있으면 승인 버튼을 누를 수 있다(§2.4) |
+| 서버 환경변수(`APPROVAL_PROXY_SECRET`)를 읽을 수 있는 프로세스 | 못 막음 | 범위 밖 — 서버 접근 통제 |
+| PC 완전 장악 | 못 막음 | 범위 밖 |
+
+### 13.4 구현·시험 계획 (P0c)
+
+- 신규: `ai_orchestrator/gates/human_session.py`(의존성·증명 검증), `ai_orchestrator/routers/human_approval_router.py`(제안 `POST /approvals/requests` — admin·owner·operator 인증, 대기 목록·상세 조회, `approve`·`reject`·`revoke` — 사람 세션 전용), `router.py` 등록, admin-web 프록시 `route.ts` 분기와 서명 함수(`admin-web/src/lib/approvalProxy.ts`), `.env.example`에 `APPROVAL_PROXY_SECRET` 안내.
+- 시험:
+  - 인증 방식 행렬: 무인증 401, Basic(admin) 제안 200·발급 403, JWT viewer/operator 발급 403, JWT admin/owner + 증명 200.
+  - 증명: 헤더 없음·서명 불일치·시각 초과·nonce 재사용·본문/경로 변조 403, 비밀 미설정 503.
+  - `/auth/me` 응답 불변(계약 시험 기존 그대로 통과).
+  - **교차 언어 시험**: 프록시의 서명 함수(`approvalProxy.ts`)를 `node`(type stripping)로 실행한 값을 파이썬이 검증해, 두 구현의 정규화 문자열이 같음을 고정한다.
+  - **계약 시험**: MCP `API_REGISTRY`에 `approvals` 경로가 없음, `human_approval.approve`의 호출처가 발급 라우터 1곳뿐임(P0b의 AST 시험 갱신).
+  - 차단 응답에 비밀·해시·승인 번호가 없음(R2d 정책 확장).
+- PIN(L2)은 P1에서 구현한다. P0c 시점의 `approved_via`는 `jwt`다.
