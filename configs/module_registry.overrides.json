@@ -1,4 +1,9 @@
 {
+ "ai_orchestrator/server/desktop_entry.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "데스크톱 번들(PyInstaller) 서버 진입점 — asgi 앱을 불러 uvicorn 실행(mcp_server 와 같은 진입점 계층), L4 기본값 오분류"
+ },
  "agent/action_registry.py": {
   "layer": "L2",
   "role": "policy",
