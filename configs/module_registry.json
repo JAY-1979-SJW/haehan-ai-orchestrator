@@ -4637,7 +4637,7 @@
    "layer": "L4",
    "role": "site_module",
    "domain": "naver_cafe",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L5 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py(역방향) 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -10861,7 +10861,7 @@
    "layer": "L6",
    "role": "site_module",
    "domain": "g2b",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L5, 2026-10-07 재판정)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -10941,7 +10941,7 @@
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -10957,7 +10957,7 @@
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -11141,7 +11141,7 @@
    "layer": "L6",
    "role": "policy",
    "domain": "common",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -11813,7 +11813,7 @@
    "layer": "L6",
    "role": "persistence",
    "domain": "naver_blog",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -15525,7 +15525,7 @@
    "layer": "L4",
    "role": "persistence",
    "domain": "browser",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/navigator.py·popup_classifier.py 를 import. 지우면 층 역전 +3건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -15597,7 +15597,7 @@
    "layer": "L6",
    "role": "generic",
    "domain": "common",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -15877,7 +15877,7 @@
    "layer": "L6",
    "role": "policy",
    "domain": "common",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/agent.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -16181,7 +16181,7 @@
    "layer": "L6",
    "role": "policy",
    "domain": "youtube",
-   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
