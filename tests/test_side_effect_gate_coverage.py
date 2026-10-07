@@ -22,7 +22,15 @@ SINK_CALLS = {"send_mail", "sendmail", "send_draft", "media_publish", "send_repl
 SINK_STRINGS = ("media_publish", "Send ⌘Enter")  # Graph API 경로·Gmail 보내기 버튼 셀렉터 문자열
 PUBLISH_RECEIVERS = ("bw", "writer")  # bw.publish() / self.writer.publish() — BlogWriter 계열 발행 호출
 # gates.check_send(force=True) 는 항상 통과시킬 수 있어 게이트로 인정하지 않는다(R2b). require_send 는 승인 문구를 대조한다.
-GUARDS = {"require_side_effect", "require_send", "_require_send_approval", "gate_check", "gated", "check_send"}
+GUARDS = {
+    "require_side_effect",
+    "require_send",
+    "require_send_approval",
+    "_require_send_approval",
+    "gate_check",
+    "gated",
+    "check_send",
+}
 WEAK_GUARD_RECEIVERS = {"gates"}  # gates.check_send(force=...) 는 불리언으로 통과 가능 — policy.check_send 같은 별도 정책만 인정
 # 정의 자체가 발송 구현이라 호출이 아닌 것(예: smtplib 래퍼 정의)은 SINK 호출이 없으므로 자동 제외된다.
 REQUIRED_GUARDED = {
@@ -30,6 +38,9 @@ REQUIRED_GUARDED = {
     "scripts/hiworks/mail_batch.py::execute_send_batch",
     "ai_orchestrator/connectors/gmail_router.py::api_reply",
     "ai_orchestrator/connectors/gmail_router.py::api_send",
+    "ai_orchestrator/connectors/eum_router.py::send_one._compose_and_send",
+    "ai_orchestrator/connectors/hiworks_mail_router.py::api_send",
+    "scripts/eum_send_mail_batch.py::send_one",
 }
 
 

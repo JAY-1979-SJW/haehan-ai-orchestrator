@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.gates.send_approval import addresses, require_send_approval
 
 from ..audit_logger import log_event
 
@@ -172,25 +173,10 @@ def api_compose(
         raise HTTPException(status_code=500, detail=f"Gmail 작성 실패: {e}") from e
 
 
-def _addresses(header_value: str) -> list[str]:
-    """'Name <a@b.c>, d@e.f' 형태의 To 값에서 주소만 뽑는다(수신거부 대조용)."""
-    from email.utils import getaddresses
-
-    return [addr for _, addr in getaddresses([header_value]) if addr]
-
-
 def _require_send_approval(send_confirm: str | None, *, recipients: list[str] | None, **meta: str) -> None:
-    from scripts.gate import GateBlocked, require_side_effect
-
-    try:
-        require_side_effect(
-            "gmail_send", approval=send_confirm, expected=GMAIL_SEND_CONFIRM_TEXT, recipient=recipients, **meta
-        )
-    except GateBlocked as exc:
-        raise HTTPException(
-            status_code=403,
-            detail=f"발송 차단: {exc.result.reason} (send_confirm 에 '{GMAIL_SEND_CONFIRM_TEXT}' 입력 필요)",
-        ) from exc
+    require_send_approval(
+        "gmail_send", send_confirm=send_confirm, expected=GMAIL_SEND_CONFIRM_TEXT, recipients=recipients, **meta
+    )
 
 
 @gmail_router.post("/reply")
@@ -228,7 +214,7 @@ def api_reply(
         }
 
     # 실제 발송 전 공통 검사: 승인 문구 + 수신거부. 외부 호출(Gmail API) 전에 403.
-    _require_send_approval(req.send_confirm, recipients=_addresses(req.to), subject=req.subject)
+    _require_send_approval(req.send_confirm, recipients=addresses(req.to), subject=req.subject)
 
     try:
         from ai_orchestrator.sites.gmail_reader import send_reply

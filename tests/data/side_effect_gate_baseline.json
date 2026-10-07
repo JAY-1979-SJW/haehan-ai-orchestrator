@@ -1,10 +1,7 @@
 [
- "ai_orchestrator/connectors/eum_router.py::send_one._compose_and_send",
- "ai_orchestrator/connectors/hiworks_mail_router.py::api_send",
  "ai_orchestrator/routers/naver_mailbox_router.py::send_draft",
  "ai_orchestrator/services/scheduled_job_actions.py::_run_naver_mail_send",
  "ai_orchestrator/workflows/naver_mailbox_flow.py::confirm_send",
- "scripts/eum_send_mail_batch.py::send_one",
  "scripts/instagram/api_publish.py::publish",
  "scripts/naver/blog/core/ai_writer.py::BlogAIWriter.draft_and_save",
  "scripts/naver/blog/core/writer.py::confirm_publish",
