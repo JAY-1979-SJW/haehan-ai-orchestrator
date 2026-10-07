@@ -10,6 +10,7 @@ from __future__ import annotations
 import inspect
 import logging
 import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +34,15 @@ def _classify(blob: str) -> str:
     return "DESTRUCTIVE" if _DESTRUCTIVE.search(blob) else "SAFE"
 
 
-def _get_app():
-    from ai_orchestrator.asgi import app
+_app_ref: list[Any] = [None]  # 앱 시작점(asgi)이 주입한다 — 라우터가 asgi 를 거꾸로 import 하지 않게(층 역참조 제거)
 
-    return app
+
+def configure_app(app: Any) -> None:
+    _app_ref[0] = app
+
+
+def _get_app():
+    return _app_ref[0]
 
 
 def _post_routes() -> list[tuple]:

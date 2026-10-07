@@ -14,6 +14,7 @@ from .core import config
 from .core.config import APP_HOST, APP_PORT
 from .connectors.naver_search_runner import schedule_loop
 from .core.logging_setup import setup_logging
+from .routers import app_actions
 from .routers.registry import router
 
 logger = logging.getLogger(__name__)
@@ -216,6 +217,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="haehan-ai-orchestrator", version="1.0.0", lifespan=lifespan)
 app.include_router(router)
+app_actions.configure_app(app)  # 앱 액션 목록이 라우트를 훑을 앱을 주입(routers 가 asgi 를 import 하지 않는다)
 
 from .gates.browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
 
