@@ -88,15 +88,15 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/google/ai_usage_labels.py" in rendered
     assert "scripts/google/android_app_dev_labels.py" in rendered
     assert "scripts/google/android_app_dev_report.py" in rendered
-    assert "scripts/google/domain_taxonomy.py" in rendered
+    assert "scripts/google/common/domain_taxonomy.py" in rendered
     assert "scripts/google/managed_console.py" in rendered
     assert "scripts/google/precision_report.py" in rendered
-    assert "scripts/google/subdomain_logic.py" in rendered
-    assert "scripts/google/tab_logic.py" in rendered
+    assert "scripts/google/common/subdomain_logic.py" in rendered
+    assert "scripts/google/common/tab_logic.py" in rendered
     assert "scripts/common/gates/work_mode_gate.py" in rendered
     assert "scripts/google/workspace_basic.py" in rendered
     assert "scripts/google/youtube/search.py" in rendered
-    assert "scripts/google/youtube_upload.py" in rendered
+    assert "scripts/google/common/youtube_upload.py" in rendered
     assert "scripts/youtube/oauth.py" in rendered
     assert "scripts/youtube/research.py" in rendered
     assert "scripts/youtube/router.py" in rendered

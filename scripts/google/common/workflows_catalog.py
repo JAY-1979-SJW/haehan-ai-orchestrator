@@ -6,21 +6,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
-from scripts.google.report_io import save_json_with_latest
+from scripts.google.common.report_io import save_json_with_latest
 
-from .workflows_common import (
-    ACTION_CATALOG_DIR,
-    ADAPTER_CATALOG_DIR,
-    APPROVAL_PHRASE,
-    LATEST_ACTION_CATALOG,
-    LATEST_ADAPTER_CATALOG,
-    LATEST_UNDEVELOPED_REPORT,
-    UNDEVELOPED_REPORT_DIR,
-    GoogleWorkAction,
-    _adapter_profile_for_action,
-    _surface_map,
-)
-from .workflows_actions import GOOGLE_WORK_ACTIONS
+from scripts.google.common.workflows_common import ACTION_CATALOG_DIR, ADAPTER_CATALOG_DIR, APPROVAL_PHRASE, LATEST_ACTION_CATALOG, LATEST_ADAPTER_CATALOG, LATEST_UNDEVELOPED_REPORT, UNDEVELOPED_REPORT_DIR, GoogleWorkAction, _adapter_profile_for_action, _surface_map
+from scripts.google.common.workflows_actions import GOOGLE_WORK_ACTIONS
 
 
 def build_adapter_profiles(
@@ -94,7 +83,7 @@ def save_adapter_catalog(catalog: dict | None = None, path: Path | None = None) 
 
 def build_undeveloped_report(actions: Iterable[GoogleWorkAction] = GOOGLE_WORK_ACTIONS) -> dict:
     """Separate implemented Google work from gated or missing development work."""
-    from . import live_inputs
+    from scripts.google.common import live_inputs
 
     action_catalog = build_action_catalog(actions)
     adapter_by_action = {

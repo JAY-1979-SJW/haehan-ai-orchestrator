@@ -93,7 +93,7 @@ repository=DB / adapter=외부 연동.
 | 순위 | 모듈 | LOC | 성격 |
 |------|------|-----|------|
 | 1 | `ai_orchestrator/agent_hub/router/root.py` | 1763 | L8 라우터 비대 — 핸들러 책임별 분리 |
-| 2 | `scripts/google/live_inputs.py` | 1684 | L5 사이트 — 입력 종류별 분리 |
+| 2 | `scripts/google/common/live_inputs.py` | 1684 | L5 사이트 — 입력 종류별 분리 |
 | 3 | `scripts/naver/cafe/cafe_mixin.py` | 1592 | L4 믹스인 — 능력별 분리 |
 | 4 | `scripts/page_helper.py` | 1475 | L4 범용 — 헬퍼군 분리 |
 | 5 | `scripts/google/youtube/search.py` | 1451 | L5 — 검색/분석/수집 분리 |

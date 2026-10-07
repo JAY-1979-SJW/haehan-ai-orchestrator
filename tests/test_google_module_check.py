@@ -51,7 +51,7 @@ def test_google_module_index_has_top_manager_and_submodules(tmp_path) -> None:
     assert by_domain["gmail"]["implementation_module"] == "scripts.google.workspace.gmail"
     assert by_domain["cloud_apis_credentials"]["implementation_module"] == "scripts.google.cloud.api_credentials"
     assert by_domain["youtube"]["implementation_module"] == "scripts.google.youtube.search"
-    assert by_domain["youtube_studio"]["implementation_module"] == "scripts.google.youtube_upload"
+    assert by_domain["youtube_studio"]["implementation_module"] == "scripts.google.common.youtube_upload"
     assert by_domain["secret_manager"]["secret_tabs"] == ["secrets", "versions"]
     assert by_domain["gmail"]["page_tab_count"] == 5
     assert by_domain["youtube_studio"]["approval_tab_count"] >= 5

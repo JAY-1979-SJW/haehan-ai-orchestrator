@@ -26,8 +26,8 @@ REQUIRED_PHRASES = (
     "automatic username/password entry",
     "cookie export",
     "session export",
-    "scripts/google/subdomain_logic.py",
-    "scripts/google/tab_logic.py",
+    "scripts/google/common/subdomain_logic.py",
+    "scripts/google/common/tab_logic.py",
     "unknown Google subdomains fail closed before execution",
     "hosts outside the requested Google tab must fail closed",
     "auto-login and credential replay stay false",
@@ -130,7 +130,7 @@ def _check_occasional_site_login() -> list[str]:
 
 
 def _check_google_subdomain_logic() -> list[str]:
-    from scripts.google import subdomain_logic
+    from scripts.google.common import subdomain_logic
 
     failures: list[str] = []
     google_catalog = subdomain_logic.build_google_subdomain_logic_catalog()
@@ -151,7 +151,7 @@ def _check_google_subdomain_logic() -> list[str]:
 
 
 def _check_google_tab_logic() -> list[str]:
-    from scripts.google import tab_logic
+    from scripts.google.common import tab_logic
 
     failures: list[str] = []
     tab_catalog = tab_logic.build_all_tab_logic_catalog()

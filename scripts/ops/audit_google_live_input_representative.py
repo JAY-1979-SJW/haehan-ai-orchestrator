@@ -58,7 +58,7 @@ REPRESENTATIVE_ACTIONS: tuple[tuple[str, dict[str, str]], ...] = (
 
 
 def build_report() -> dict:
-    from scripts.google import live_inputs, workflows
+    from scripts.google.common import live_inputs, workflows
 
     coverage = live_inputs.build_live_input_coverage()
     supported = {item["action_key"] for item in coverage["supported"]}

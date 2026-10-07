@@ -6,16 +6,8 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .workflows_common import (
-    EXECUTION_DIR,
-    LATEST_PREPARE,
-    PREPARE_DIR,
-    VERIFICATION_DIR,
-    _adapter_profile_for_action,
-    _open_target_readonly,
-    _redact_values,
-)
-from .workflows_actions import get_action
+from scripts.google.common.workflows_common import EXECUTION_DIR, LATEST_PREPARE, PREPARE_DIR, VERIFICATION_DIR, _adapter_profile_for_action, _open_target_readonly, _redact_values
+from scripts.google.common.workflows_actions import get_action
 
 
 def prepare_action(action_key: str, values: dict[str, str] | None = None) -> tuple[dict, Path]:

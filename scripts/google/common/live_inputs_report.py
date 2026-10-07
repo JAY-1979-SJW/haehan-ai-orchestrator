@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .live_inputs_config import (
-    LATEST_LIVE_INPUT,
-    LATEST_LIVE_INPUT_MANIFEST,
-)
+from scripts.google.common.live_inputs_config import LATEST_LIVE_INPUT, LATEST_LIVE_INPUT_MANIFEST
 
 
 def print_live_input_summary(result: dict, path: Path) -> None:

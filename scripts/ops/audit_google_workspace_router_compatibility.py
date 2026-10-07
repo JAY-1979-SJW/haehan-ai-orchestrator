@@ -20,11 +20,11 @@ WORKSPACE_ROUTER_COMMANDS = (
 )
 
 LEGACY_WRAPPERS = {
-    "gmail": ("scripts.google.gmail", "list"),
-    "drive": ("scripts.google.drive", "list"),
-    "calendar": ("scripts.google.calendar_tasks", "today"),
-    "docs": ("scripts.google.docs", "recent"),
-    "sheets": ("scripts.google.sheets", "recent"),
+    "gmail": ("scripts.google.common.gmail", "list"),
+    "drive": ("scripts.google.common.drive", "list"),
+    "calendar": ("scripts.google.common.calendar_tasks", "today"),
+    "docs": ("scripts.google.common.docs", "recent"),
+    "sheets": ("scripts.google.common.sheets", "recent"),
 }
 
 # 서비스 키와 wrapper 모듈 이름이 다른 경우(표준 calendar 가림 방지로 calendar → calendar_tasks, A005)

@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import surfaces
+from scripts.google.common import surfaces
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 LATEST_ACTION_CATALOG = ROOT / "data" / "google_work_action_catalog_latest.json"
 ACTION_CATALOG_DIR = ROOT / "data" / "google_work_action_catalogs"
 LATEST_PREPARE = ROOT / "data" / "google_prepare_latest.json"

@@ -123,7 +123,7 @@ def _check_cloud_hosts(cloud: dict, summary: dict) -> list[str]:
 
 
 def _check_cloud_live_input(cloud: dict) -> list[str]:
-    from scripts.google.live_inputs import build_live_input_coverage
+    from scripts.google.common.live_inputs import build_live_input_coverage
 
     failures = []
     live_supported = {item["action_key"] for item in build_live_input_coverage()["supported"]}
@@ -147,7 +147,7 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google Cloud baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google.tab_registry import build_google_tab_summary
+    from scripts.google.common.tab_registry import build_google_tab_summary
 
     summary = build_google_tab_summary()
     cloud = next((tab for tab in summary["tabs"] if tab["key"] == "cloud"), None)

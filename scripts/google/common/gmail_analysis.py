@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 REPORT_DIR = ROOT / "data" / "google_gmail_analysis"
 LATEST_REPORT = ROOT / "data" / "google_gmail_analysis_latest.json"
 
@@ -120,7 +120,7 @@ def analyze_text(*, subject: str = "", sender: str = "", body: str = "", mail_in
 
 def analyze_visible_message(page: Any, mail_index: int = 0) -> tuple[dict[str, Any], Path]:
     """Open and analyze one visible Gmail message in the current user session."""
-    from scripts.google.gmail_api import GmailAPI
+    from scripts.google.common.gmail_api import GmailAPI
 
     api = GmailAPI(page)
     read = api.read(mail_index)

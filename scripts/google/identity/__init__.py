@@ -1,7 +1,7 @@
 """Google identity/account sub-tab package."""
 from __future__ import annotations
 
-from scripts.google.tab_logic import build_tab_logic_catalog, classify_tab_operation, get_tab_summary
+from scripts.google.common.tab_logic import build_tab_logic_catalog, classify_tab_operation, get_tab_summary
 
 TAB_KEY = "identity"
 

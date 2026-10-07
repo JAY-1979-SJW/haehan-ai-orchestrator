@@ -13,7 +13,7 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 # 브라우저 연결 모듈

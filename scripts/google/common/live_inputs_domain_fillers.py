@@ -11,23 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .live_inputs_config import (
-    FINAL_CONTROL_LABELS,
-    LATEST_LIVE_INPUT,
-    LATEST_LIVE_INPUT_MANIFEST,
-    LIVE_INPUT_ADAPTERS,
-    LIVE_INPUT_DIR,
-    LIVE_INPUT_MANIFEST_DIR,
-    ROOT,
-    _locator_timeout,
-    _page_timeout,
-    _page_wait,
-)
-from .live_inputs_fill import (
-    _domain_prefill_selectors,
-    _generic_selectors,
-    _safe_to_generic_fill,
-)
+from scripts.google.common.live_inputs_config import FINAL_CONTROL_LABELS, LATEST_LIVE_INPUT, LATEST_LIVE_INPUT_MANIFEST, LIVE_INPUT_ADAPTERS, LIVE_INPUT_DIR, LIVE_INPUT_MANIFEST_DIR, ROOT, _locator_timeout, _page_timeout, _page_wait
+from scripts.google.common.live_inputs_fill import _domain_prefill_selectors, _generic_selectors, _safe_to_generic_fill
 
 
 def _fill_gmail_send(page: Any, action: dict, values: dict, result: dict) -> None:

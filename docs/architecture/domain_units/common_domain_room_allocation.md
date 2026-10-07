@@ -59,7 +59,7 @@ cross-domain 직접 import 금지: 각 도메인 간 직접 import 금지. 공�
 | profile | `scripts/google/site_profile.py` | ✅ |
 | gates | `scripts/google/gates.py` | ✅ |
 | validators | `scripts/google/validators.py` | ✅ |
-| usecase | `scripts/google/workflows.py`, `surfaces.py` | ✅ |
+| usecase | `scripts/google/common/workflows.py`, `surfaces.py` | ✅ |
 | adapter | `scripts/google/*_api.py` (gmail_api, drive_api 등) | ✅ |
 | storage | `data/google/` | ❌ (미정) |
 | test | `tests/test_google_*.py` | ✅ |

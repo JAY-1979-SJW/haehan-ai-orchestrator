@@ -10,11 +10,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .live_inputs_config import (
-    FINAL_CONTROL_LABELS,
-    LIVE_INPUT_ADAPTERS,
-    ROOT,
-)
+from scripts.google.common.live_inputs_config import FINAL_CONTROL_LABELS, LIVE_INPUT_ADAPTERS, ROOT
 
 
 def _safe_to_generic_fill(field: str, value: str) -> bool:

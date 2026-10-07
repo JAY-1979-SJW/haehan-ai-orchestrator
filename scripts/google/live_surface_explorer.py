@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.browser.cdp.cdp_console import connect
-from scripts.google import surfaces, tab_logic
+from scripts.google.common import surfaces, tab_logic
 from scripts.google.cloud.live_console_explorer import (
     _extract_visible_console_snapshot,
     _redact_text,
@@ -20,7 +20,7 @@ from scripts.google.cloud.live_console_explorer import (
     _risk_controls,
     load_latest_cloud_console_live_report,
 )
-from scripts.google.report_io import save_json_with_latest
+from scripts.google.common.report_io import save_json_with_latest
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT_DIR = ROOT / "data" / "google_surface_live"

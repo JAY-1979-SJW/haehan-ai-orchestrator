@@ -9,20 +9,8 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlencode
 
-from .live_inputs_config import (
-    DOMAIN_SPECIFIC_PREFILL_MODES,
-    LIVE_INPUT_ADAPTERS,
-    _cdp_wait,
-)
-from .live_inputs_fill import (
-    _cdp_click_first_selector,
-    _cdp_click_text,
-    _cdp_detect_file_input,
-    _cdp_fill_domain_specific_input_handoff,
-    _cdp_fill_first,
-    _cdp_fill_generic_input_handoff,
-    _cdp_verify_gmail_compose_values,
-)
+from scripts.google.common.live_inputs_config import DOMAIN_SPECIFIC_PREFILL_MODES, LIVE_INPUT_ADAPTERS, _cdp_wait
+from scripts.google.common.live_inputs_fill import _cdp_click_first_selector, _cdp_click_text, _cdp_detect_file_input, _cdp_fill_domain_specific_input_handoff, _cdp_fill_first, _cdp_fill_generic_input_handoff, _cdp_verify_gmail_compose_values
 
 
 def _cdp_fill_gmail_send(session: Any, values: dict, result: dict) -> None:

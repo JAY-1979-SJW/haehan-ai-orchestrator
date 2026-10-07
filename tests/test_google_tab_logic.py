@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from importlib import import_module
 
-from scripts.google import tab_logic, tab_registry
+from scripts.google.common import tab_logic, tab_registry
 
 
 def test_google_tab_logic_catalog_exposes_all_locked_tabs() -> None:

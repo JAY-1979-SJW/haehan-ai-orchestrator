@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 import re
 
-from scripts.google import browser_tasks
-from scripts.google.report_io import (
+from scripts.google.common import browser_tasks
+from scripts.google.common.report_io import (
     print_report_summary,
     save_json_md_report,
     save_json_with_latest,

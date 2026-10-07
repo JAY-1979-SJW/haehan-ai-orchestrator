@@ -41,7 +41,7 @@ Every Google surface and action must belong to exactly one sub-tab:
 | `developer` | Firebase, Apps Script, Colab, Play Console, Google/Chrome/Android developer docs |
 | `media` | Google Photos and private media workflows |
 
-The code contract is `scripts/google/tab_registry.py`.
+The code contract is `scripts/google/common/tab_registry.py`.
 
 ## 3. Authentication Rules
 
@@ -258,14 +258,14 @@ Representative host boundaries:
 ## 6. Current Code Ownership
 
 - `scripts/google/auth.py`: user-present Google session authentication.
-- `scripts/google/tab_registry.py`: official Google sub-tab registry.
-- `scripts/google/surfaces.py`: 50 Google surfaces.
-- `scripts/google/workflows.py`: 96 Google actions and approval handoff contract.
-- `scripts/google/subdomain_logic.py`: host-level read and approval boundary.
-- `scripts/google/tab_logic.py`: app-attachable tab-level logic and user guidance.
+- `scripts/google/common/tab_registry.py`: official Google sub-tab registry.
+- `scripts/google/common/surfaces.py`: 50 Google surfaces.
+- `scripts/google/common/workflows.py`: 96 Google actions and approval handoff contract.
+- `scripts/google/common/subdomain_logic.py`: host-level read and approval boundary.
+- `scripts/google/common/tab_logic.py`: app-attachable tab-level logic and user guidance.
 - `scripts/google/live_surface_explorer.py`: direct-CDP read-only live evidence for all 50 surfaces.
 - `scripts/google/cloud/live_console_explorer.py`: direct-CDP read-only Cloud Console evidence.
-- `scripts/google/live_inputs.py`: live input coverage and no-final-submit policy.
+- `scripts/google/common/live_inputs.py`: live input coverage and no-final-submit policy.
 - `scripts/google/managed_console.py`: managed-CDP-only Google Console/OAuth
   entrypoint; default browser openers are forbidden.
 - `scripts/common/gates/secret_action_gate.py`: Google secret/API key/OAuth issuance
@@ -316,7 +316,7 @@ Representative host boundaries:
 Minimum verification before committing Google work:
 
 ```text
-python -m py_compile scripts/google/auth.py scripts/google/tab_registry.py scripts/google/surfaces.py scripts/google/workflows.py scripts/google/live_inputs.py scripts/google/subdomain_logic.py scripts/google/tab_logic.py scripts/google/live_surface_explorer.py scripts/google/cloud/live_console_explorer.py
+python -m py_compile scripts/google/auth.py scripts/google/common/tab_registry.py scripts/google/common/surfaces.py scripts/google/common/workflows.py scripts/google/common/live_inputs.py scripts/google/common/subdomain_logic.py scripts/google/common/tab_logic.py scripts/google/live_surface_explorer.py scripts/google/cloud/live_console_explorer.py
 python -m py_compile scripts/google/managed_console.py scripts/google/workspace_basic.py scripts/google/ads_signup.py
 python -m py_compile scripts/common/gates/secret_action_gate.py
 python -m py_compile scripts/google/domain_readiness_audit.py

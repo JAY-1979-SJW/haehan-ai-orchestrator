@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .base import page_goto, page_wait_click, page_wait_type, page_wait_visible
+from scripts.google.common.base import page_goto, page_wait_click, page_wait_type, page_wait_visible
 
 _RECENT_TITLES_JS = r"""() => {
         const results = [];

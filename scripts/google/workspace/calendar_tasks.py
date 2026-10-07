@@ -1,7 +1,7 @@
 """Workspace Calendar wrapper preserving the existing top-level implementation."""
 from __future__ import annotations
 
-from scripts.google import calendar_tasks as _legacy
+from scripts.google.common import calendar_tasks as _legacy
 
 
 def run(task: str = "today", args: list[str] | None = None) -> None:

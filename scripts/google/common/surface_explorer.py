@@ -9,9 +9,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from . import surfaces
+from scripts.google.common import surfaces
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EXPLORATION_DIR = ROOT / "data" / "google_surface_explorations"
 LATEST_EXPLORATION = ROOT / "data" / "google_surface_exploration_latest.json"
 

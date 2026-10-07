@@ -21,7 +21,7 @@
 |---|---|---|
 | `ai_orchestrator/services/execution_policy_service.py` | fail-open 정책 판정 5개 메서드 | (STD-04 배치 중) |
 | `ai_orchestrator/persistence/registration_code_store.py` | DB 쓰기 실패를 조용히 삼켜 1회용 등록코드 재사용 가능 | `a910ba57` |
-| `scripts/google/live_inputs_fill.py` | `Path` import 누락으로 무조건 NameError (5월부터 존재) | `9d20cac9` |
+| `scripts/google/common/live_inputs_fill.py` | `Path` import 누락으로 무조건 NameError (5월부터 존재) | `9d20cac9` |
 | `.githooks/pre-commit.orig` 등 3개 훅 | worktree에서 커밋 시 메인 체크아웃을 조용히 훼손 | `19e6035b` |
 | `.githooks/commit-msg` | 자기 `print()`가 cp949에서 죽어 대량삭제 차단 자체가 안 됨 | `c6d0be71` |
 

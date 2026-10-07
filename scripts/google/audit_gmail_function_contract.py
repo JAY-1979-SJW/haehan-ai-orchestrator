@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-GMAIL_CLI = ROOT / "scripts" / "google" / "gmail.py"
-GMAIL_API = ROOT / "scripts" / "google" / "gmail_api.py"
-GMAIL_ANALYSIS = ROOT / "scripts" / "google" / "gmail_analysis.py"
+GMAIL_CLI = ROOT / "scripts" / "google" / "common" / "gmail.py"
+GMAIL_API = ROOT / "scripts" / "google" / "common" / "gmail_api.py"
+GMAIL_ANALYSIS = ROOT / "scripts" / "google" / "common" / "gmail_analysis.py"
 GOOGLE_ROUTER = ROOT / "scripts" / "google" / "router.py"
 
 
@@ -58,7 +58,7 @@ def _check_required_phrases(combined: str) -> list[str]:
 
 
 def _check_gmail_send_action() -> list[str]:
-    from scripts.google import workflows
+    from scripts.google.common import workflows
 
     failures = []
     action = workflows.get_action("gmail_send_email")
@@ -70,7 +70,7 @@ def _check_gmail_send_action() -> list[str]:
 
 
 def _check_gmail_live_input_coverage() -> list[str]:
-    from scripts.google import live_inputs
+    from scripts.google.common import live_inputs
 
     supported = {item["action_key"]: item for item in live_inputs.build_live_input_coverage()["supported"]}
     gmail = supported.get("gmail_send_email")

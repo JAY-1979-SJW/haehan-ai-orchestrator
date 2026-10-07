@@ -11,7 +11,8 @@ from dataclasses import asdict, dataclass
 from typing import Any
 from urllib.parse import urlparse
 
-from . import surfaces, workflows
+from scripts.google.common import surfaces
+from scripts.google.common import workflows
 
 
 @dataclass(frozen=True)

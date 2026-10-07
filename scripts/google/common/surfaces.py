@@ -11,9 +11,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
-from scripts.google.report_io import save_json_with_latest
+from scripts.google.common.report_io import save_json_with_latest
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 LATEST_CATALOG = ROOT / "data" / "google_surface_catalog_latest.json"
 REPORT_DIR = ROOT / "data" / "google_surface_catalogs"
 

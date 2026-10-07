@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import subdomain_logic, tab_registry
+from scripts.google.common import subdomain_logic
+from scripts.google.common import tab_registry
 
 TAB_USER_GUIDANCE: dict[str, dict[str, Any]] = {
     "search": {
