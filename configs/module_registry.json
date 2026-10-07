@@ -15505,7 +15505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/smoke/local_agent_public_external_readonly_live_smoke.py": {
+  "scripts/ops/smoke/local_agent_public_external_readonly_live_smoke.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -20793,7 +20793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_agent_ws_auth.py": {
+  "scripts/ops/verify/verify_agent_ws_auth.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20801,7 +20801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_live_agent_smoke.py": {
+  "scripts/ops/verify/verify_live_agent_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20809,7 +20809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_live_browser_readonly_dispatch.py": {
+  "scripts/ops/verify/verify_live_browser_readonly_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -20817,7 +20817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_live_task_dispatch.py": {
+  "scripts/ops/verify/verify_live_task_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20825,7 +20825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/verify_local_runtime_dry_run.py": {
+  "scripts/ops/verify/verify_local_runtime_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21721,7 +21721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/verify/_shared.py": {
+  "scripts/ops/verify/_shared.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",

@@ -12,10 +12,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 루트 패키지(local_agent 등) 해석용
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # 루트 패키지(local_agent 등) 해석용
 from local_agent.network_bypass import direct_child_env, urlopen_for_server
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
 
@@ -126,7 +126,7 @@ def _start_token_worker(
     device_token: str,
     log_path: Path,
 ) -> subprocess.Popen:
-    from scripts.verify._shared import WORKER_CODE
+    from scripts.ops.verify._shared import WORKER_CODE
 
     env = direct_child_env()
     env["HAEHAN_LIVE_SERVER_URL"] = server_url
@@ -166,7 +166,7 @@ def _resolve_identity(args, server_url):
     if args.user:
         auth = (args.user, args.password)
     elif args.temp_admin:
-        from scripts.verify._shared import remote_user
+        from scripts.ops.verify._shared import remote_user
 
         temp_admin_user = f"codex_dispatch_{secrets.token_hex(4)}"
         temp_admin_password = secrets.token_urlsafe(24)
@@ -297,7 +297,7 @@ def main(argv: list[str] | None = None) -> int:
         print("[PASS] worker stopped")
         if temp_admin_user:
             try:
-                from scripts.verify._shared import remote_user
+                from scripts.ops.verify._shared import remote_user
 
                 remote_user("remove", temp_admin_user)
                 print("[PASS] temp admin user removed")

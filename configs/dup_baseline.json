@@ -176,8 +176,8 @@
   ],
   "46785cd7ccaaac6c3a0302940c709ed092ec10ea": [
    "scripts/ops/live_parallel_task_dispatch_smoke.py:_start_worker",
-   "scripts/verify/verify_live_browser_readonly_dispatch.py:_start_worker",
-   "scripts/verify/verify_live_task_dispatch.py:_start_worker"
+   "scripts/ops/verify/verify_live_browser_readonly_dispatch.py:_start_worker",
+   "scripts/ops/verify/verify_live_task_dispatch.py:_start_worker"
   ],
   "49dee0d8de6e96167b552d0fd60bb495efd7a171": [
    "scripts/site_engine/action_planner.py:_is_credential_extraction",
@@ -201,7 +201,7 @@
   ],
   "563afd3b20d392f9574923fdde0c953cfaafbf92": [
    "scripts/ops/live_parallel_task_dispatch_smoke.py:_register_temp_agent",
-   "scripts/verify/verify_live_task_dispatch.py:_register_temp_agent"
+   "scripts/ops/verify/verify_live_task_dispatch.py:_register_temp_agent"
   ],
   "56e7112793c4c286372377961b955a5f2e5c1bfd": [
    "ai_orchestrator/connectors/instagram_dm_db.py:_schema_v1",
@@ -255,7 +255,7 @@
   ],
   "76a31dc5575f6481b80fa19eec4be8d386273459": [
    "scripts/ops/live_parallel_task_dispatch_smoke.py:_request_json",
-   "scripts/verify/verify_live_task_dispatch.py:_request_json"
+   "scripts/ops/verify/verify_live_task_dispatch.py:_request_json"
   ],
   "77f4d8c54d71a79d80a2dcf29f4c21a3dcfaa0c1": [
    "scripts/hiworks/actions.py:print_prepare_plan_summary",

@@ -37,8 +37,8 @@
       "owner": "desktop",
       "layer": "L10",
       "paths": [
-        "scripts/verify/verify_local_runtime_dry_run.py",
-        "scripts/verify/verify_agent_ws_auth.py"
+        "scripts/ops/verify/verify_local_runtime_dry_run.py",
+        "scripts/ops/verify/verify_agent_ws_auth.py"
       ],
       "required_gate": "desktop_auth_runtime"
     },
@@ -69,8 +69,8 @@
       "paths": [
         "ai_orchestrator/",
         "services/",
-        "scripts/verify/verify_live_agent_smoke.py",
-        "scripts/verify/verify_live_task_dispatch.py"
+        "scripts/ops/verify/verify_live_agent_smoke.py",
+        "scripts/ops/verify/verify_live_task_dispatch.py"
       ],
       "required_gate": "live_agent"
     },
