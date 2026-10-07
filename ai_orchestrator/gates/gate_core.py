@@ -60,6 +60,17 @@ def set_audit_sink(fn: Callable[..., Any] | None) -> None:
     _audit_sink = fn
 
 
+def audit(name: str, **fields: Any) -> None:
+    """등록된 감사 싱크로 사건을 기록한다(게이트 판정 밖의 사건 — 승인 발급·소진 등). 싱크가 없거나 실패해도 조용히 넘어간다."""
+    sink = _audit_sink
+    if sink is None:
+        return
+    try:
+        sink(name, **{k: str(v)[:80] for k, v in fields.items()})
+    except Exception as exc:  # noqa: BLE001 - 감사 기록 실패는 보조 기능 실패이며 호출자의 판정·흐름에 영향을 주지 않는다
+        _log.debug("[gate] 감사 기록 실패(무시): %s", exc)
+
+
 # ── 작업별 기본 위험 등급 레지스트리 ────────────────────────────────
 
 _RISK_REGISTRY: dict[str, RiskLevel] = {
