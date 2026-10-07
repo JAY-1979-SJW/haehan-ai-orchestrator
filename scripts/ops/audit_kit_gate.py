@@ -99,6 +99,7 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
             capture_output=True,
             timeout=PER_FILE_TIMEOUT_S,
             cwd=str(root),
+            env=_utf8_env(),
             check=False,
             **no_window_kwargs(),
         )
@@ -110,6 +111,11 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
         return None
     lines = proc.stderr.decode("utf-8", errors="replace").splitlines()
     return [ln.strip() for ln in lines if ln.strip().startswith("[") and not any(n in ln for n in _NOISE)]
+
+
+def _utf8_env() -> dict[str, str]:
+    """하위 프로세스(audit-kit·mypy)가 콘솔 코드페이지(cp949)가 아니라 utf-8 로 출력하게 한다 — 결과를 utf-8 로 읽기 때문."""
+    return {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
 
 
 def is_real_kit(kit: list[str]) -> bool:
@@ -142,7 +148,13 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
         for _attempt in range(2):  # 자체 오류(종료코드 2 이상)는 일시적일 수 있어 한 번 다시 시도한다
             try:
                 proc = subprocess.run(
-                    cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False, **no_window_kwargs()
+                    cmd,
+                    capture_output=True,
+                    timeout=PER_FILE_TIMEOUT_S,
+                    cwd=str(root),
+                    env=_utf8_env(),
+                    check=False,
+                    **no_window_kwargs(),
                 )
             except (OSError, subprocess.TimeoutExpired):
                 return None
@@ -206,7 +218,13 @@ def _mypy_group(py: str, group: list[Path], root: Path) -> dict[Path, set[str] |
         for _attempt in range(2):  # mypy_keys 와 같이 자체 오류는 한 번 다시 시도
             try:
                 proc = subprocess.run(
-                    cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S * len(group), cwd=str(root), check=False
+                    cmd,
+                    capture_output=True,
+                    timeout=PER_FILE_TIMEOUT_S * len(group),
+                    cwd=str(root),
+                    env=_utf8_env(),
+                    check=False,
+                    **no_window_kwargs(),
                 )
             except (OSError, subprocess.TimeoutExpired):
                 return dict.fromkeys(group)
@@ -341,6 +359,7 @@ def _kit_hook(kit: list[str], path: Path, root: Path) -> tuple[list[str], str]:
             capture_output=True,
             timeout=PER_FILE_TIMEOUT_S,
             cwd=str(root),
+            env=_utf8_env(),
             check=False,
             **no_window_kwargs(),
         )
