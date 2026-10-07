@@ -21,8 +21,8 @@ NAVER_CDP_ROUTERS = [
     "ai_orchestrator/connectors/naver_blog_router.py",
     "ai_orchestrator/connectors/community_router.py",
     "ai_orchestrator/connectors/eum/router.py",
-    "ai_orchestrator/connectors/gmail_router.py",
-    "ai_orchestrator/connectors/hiworks_mail_router.py",
+    "ai_orchestrator/connectors/google/gmail_router.py",
+    "ai_orchestrator/connectors/hiworks/mail_router.py",
 ]
 
 
