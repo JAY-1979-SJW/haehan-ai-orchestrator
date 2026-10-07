@@ -14,12 +14,12 @@
   "role": "policy",
   "reason": "파일 docstring이 'profile은 실행 정책이지 로그인 자동화 코드가 아님'이라 명시 — L4 오분류"
  },
- "ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py": {
+ "ai_orchestrator/connectors/g2b/g2b_public_notice_dryrun_adapter.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "g2b_public_notice_workflow(L6)를 dry-run으로 감싸는 워크플로 어댑터 — L4 generic(low) 오분류"
  },
- "ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py": {
+ "ai_orchestrator/connectors/g2b/g2b_public_notice_execution_gate.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "워크플로 실행 여부를 게이트하고 직접 트리거하는 오케스트레이터 — 단순 L2 policy 아님, dryrun_adapter/workflow(L6)와 동급"

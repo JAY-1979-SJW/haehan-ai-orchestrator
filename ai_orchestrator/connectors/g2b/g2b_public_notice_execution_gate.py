@@ -17,13 +17,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter import (
+from ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter import (
     ADAPTER_G2B_BLOCKED,
     ADAPTER_G2B_DRYRUN_READY,
     ADAPTER_G2B_NEEDS_VERIFICATION,
     evaluate_g2b_public_notice_dryrun,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (
+from ai_orchestrator.connectors.g2b.g2b_public_notice_workflow import (
     VERDICT_ALLOWED,
     VERDICT_BLOCKED,
     VERDICT_NEEDS_VERIFICATION,

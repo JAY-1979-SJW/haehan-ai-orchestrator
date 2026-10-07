@@ -97,22 +97,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "orchestrator_v1/tasks/command_adapter.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "orchestrator_v1/tasks/file_adapter.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "admin-web/electron/e2e-electron/app.spec.ts": {
    "layer": "L9",
    "role": "ui",
@@ -2657,38 +2641,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/agent_action_registry.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "local_agent",
-   "reason": "액션 카테고리/리스크 메타데이터 레지스트리 — 여러 계층이 참조하는 정책성 상수 레지스트리, L10 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/archive/misc/agent_models.py": {
-   "layer": "L1",
-   "role": "shared",
-   "domain": "local_agent",
-   "reason": "공용 기반 이름(models)",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_agent_action_registry_approval_policy.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "local_agent",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_agent_action_registry_unit.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "local_agent",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -2865,7 +2817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_domain_policy.py": {
+  "ai_orchestrator/connectors/g2b/g2b_domain_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "g2b",
@@ -2873,7 +2825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_existing_openapi_bridge.py": {
+  "ai_orchestrator/connectors/g2b/g2b_existing_openapi_bridge.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -2881,7 +2833,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_content_validator.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_content_validator.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -2889,7 +2841,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_dryrun_adapter.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -2897,7 +2849,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_execution_gate.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -2905,7 +2857,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_local_live_runner.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_local_live_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -2913,7 +2865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/g2b_public_notice_workflow.py": {
+  "ai_orchestrator/connectors/g2b/g2b_public_notice_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -7033,86 +6985,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/archive/misc/browser_api_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "browser",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/misc/browser_api_server.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "browser",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/worker/__init__.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/worker/app.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "browser",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/worker/backends/__init__.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/worker/backends/mock_playwright_backend.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/worker/backends/real_playwright_backend.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/worker/policy.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/worker/schemas.py": {
-   "layer": "L1",
-   "role": "shared",
-   "domain": "browser",
-   "reason": "공용 기반 이름(schemas)",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/worker/service.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "candidate_store.py": {
    "layer": "L7",
    "role": "persistence",
@@ -7624,70 +7496,6 @@
    "reason": "루트 호환 shim — 원본 orchestrator_v1/monitoring/monitor.py 와 같은 층·역할(shim 은 원본 층을 따른다, ROOT_MODULE_SPLIT_PLAN)",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "orchestrator_v1/inbox/notice_radar/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "g2b",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "orchestrator_v1/inbox/notice_radar/analyzer.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "g2b",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "orchestrator_v1/inbox/notice_radar/browser_collector.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "orchestrator_v1/inbox/notice_radar/collector.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "orchestrator_v1/inbox/notice_radar/models.py": {
-   "layer": "L1",
-   "role": "shared",
-   "domain": "g2b",
-   "reason": "공용 기반 이름(models)",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "orchestrator_v1/inbox/notice_radar/parsers.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "g2b",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "orchestrator_v1/inbox/notice_radar/pipeline.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "g2b",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "orchestrator_v1/inbox/notice_radar/site_profiles.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "g2b",
-   "reason": "정의 위주(모델·스키마·dataclass)",
-   "confidence": "high",
-   "source": "rule"
   },
   "notice_router.py": {
    "layer": "L8",
@@ -10146,14 +9954,6 @@
    "source": "rule"
   },
   "scripts/instagram/cases.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/kotara_ctc_reel.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -14081,22 +13881,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/archive/one_off/build_ep_batch_content.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/build_ep_batch_content_gov2.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/capability_check.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -15385,86 +15169,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/archive/one_off/ai_g2b_youtube_ep01.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "youtube",
-   "reason": "도메인(youtube) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/ai_g2b_youtube_ep01_real.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "youtube",
-   "reason": "도메인(youtube) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/ai_g2b_youtube_ep02.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "youtube",
-   "reason": "도메인(youtube) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/ig_dm_bot_ep01.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/ig_dm_bot_ep01_captions.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/ig_dm_bot_ep01_thumbnail.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/ig_dm_bot_ep01_visuals.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/kakao_skill_bot_ep01.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "kakao",
-   "reason": "도메인(kakao) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/kakao_skill_bot_ep01_visuals.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "kakao",
-   "reason": "도메인(kakao) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/kotara_ctc_shorts.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "video",
-   "reason": "도메인(video) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/video/manim_diagram_scene.py": {
    "layer": "L5",
    "role": "site_module",
@@ -15585,14 +15289,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/common/youtube_api_common.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "youtube",
-   "reason": "도메인(youtube) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/youtube/research_ops.py": {
    "layer": "L5",
    "role": "site_module",
@@ -15631,14 +15327,6 @@
    "domain": "youtube",
    "reason": "도메인(youtube) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/common/youtube_http_client.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "youtube",
-   "reason": "도메인(youtube) 자동화",
-   "confidence": "high",
    "source": "rule"
   },
   "scripts/youtube/upload/runner.py": {
@@ -22169,75 +21857,11 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_verify_change_ruff_loud.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/folder_gate.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_folder_gate.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_registry_sync_and_modules_summary.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/contracts/display_name.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "tests/test_module_cycles_import_based.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_workflow_utf8_env.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/ops/make_inspection_video.py": {
-   "layer": "L12",
-   "role": "archive",
-   "domain": "common",
-   "reason": "문서·보관 경로",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/common/youtube_comments.py": {
+  "ai_orchestrator/connectors/g2b/__init__.py": {
    "layer": "L5",
    "role": "site_module",
-   "domain": "youtube",
-   "reason": "도메인(youtube) 자동화",
+   "domain": "g2b",
+   "reason": "도메인(g2b) 자동화",
    "confidence": "low",
    "source": "rule"
   },
@@ -22375,6 +21999,86 @@
    "domain": "common",
    "reason": "DB·저장 신호",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/agent_action_registry.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "browser",
+   "reason": "액션 카테고리/리스크 메타데이터 레지스트리 — 여러 계층이 참조하는 정책성 상수 레지스트리, L10 오분류",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/browser_tool/worker/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/worker/app.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "browser",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/worker/backends/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/worker/backends/mock_playwright_backend.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/worker/backends/real_playwright_backend.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/worker/policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "browser",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/worker/schemas.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "browser",
+   "reason": "공용 기반 이름(schemas)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/worker/service.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/contracts/display_name.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
    "source": "rule"
   },
   "ai_orchestrator/core/__init__.py": {
@@ -22961,6 +22665,222 @@
    "confidence": "high",
    "source": "rule"
   },
+  "orchestrator_v1/inbox/notice_radar/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "g2b",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_radar/analyzer.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "g2b",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_radar/browser_collector.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "g2b",
+   "reason": "도메인(g2b) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_radar/collector.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "g2b",
+   "reason": "도메인(g2b) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_radar/models.py": {
+   "layer": "L1",
+   "role": "shared",
+   "domain": "g2b",
+   "reason": "공용 기반 이름(models)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_radar/parsers.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "g2b",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_radar/pipeline.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "g2b",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/inbox/notice_radar/site_profiles.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "g2b",
+   "reason": "정의 위주(모델·스키마·dataclass)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/command_adapter.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "orchestrator_v1/tasks/file_adapter.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/archive/misc/agent_models.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/misc/browser_api_router.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "browser",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/misc/browser_api_server.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "browser",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/ai_g2b_youtube_ep01.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "youtube",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/ai_g2b_youtube_ep01_real.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "youtube",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/ai_g2b_youtube_ep02.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "youtube",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/build_ep_batch_content.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/build_ep_batch_content_gov2.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/ig_dm_bot_ep01.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "instagram",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/ig_dm_bot_ep01_captions.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "instagram",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/ig_dm_bot_ep01_thumbnail.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "instagram",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/ig_dm_bot_ep01_visuals.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "instagram",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/kakao_skill_bot_ep01.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "kakao",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/kakao_skill_bot_ep01_visuals.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "kakao",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/kotara_ctc_reel.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/one_off/kotara_ctc_shorts.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/archive/ops/make_inspection_video.py": {
+   "layer": "L12",
+   "role": "archive",
+   "domain": "common",
+   "reason": "문서·보관 경로",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/common/ai_work_record.py": {
    "layer": "L4",
    "role": "generic",
@@ -22977,11 +22897,59 @@
    "confidence": "low",
    "source": "rule"
   },
+  "scripts/common/youtube_api_common.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "youtube",
+   "reason": "도메인(youtube) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/common/youtube_comments.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "youtube",
+   "reason": "도메인(youtube) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/common/youtube_http_client.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "youtube",
+   "reason": "도메인(youtube) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/ops/code_map/layer_rules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
    "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/folder_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_agent_action_registry_approval_policy.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_agent_action_registry_unit.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -22993,7 +22961,47 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_folder_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_module_cycles_import_based.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_registry_sync_and_modules_summary.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_site_task_spec.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_verify_change_ruff_loud.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_workflow_utf8_env.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
