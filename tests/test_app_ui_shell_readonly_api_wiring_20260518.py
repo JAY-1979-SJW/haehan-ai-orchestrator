@@ -35,7 +35,7 @@ def _all_frontend() -> list[Path]:
 # ── 1. audit script import ────────────────────────────────────────────────────
 
 def test_audit_script_importable():
-    import scripts.ops.audit_app_ui_shell_readonly_api_wiring  # noqa: F401
+    import scripts.ops.audits.app.audit_app_ui_shell_readonly_api_wiring  # noqa: F401
 
 
 # ── 2. API client ─────────────────────────────────────────────────────────────
@@ -235,19 +235,19 @@ def test_no_forbidden_button(pattern: str, name: str):
 # ── 11. 이전 공정 회귀 충돌 없음 ─────────────────────────────────────────────
 
 def test_no_conflict_with_browser_smoke():
-    import scripts.ops.audit_app_ui_shell_browser_smoke as m
+    import scripts.ops.audits.app.audit_app_ui_shell_browser_smoke as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_PASS, m.VERDICT_WARN)
 
 
 def test_no_conflict_with_skeleton():
-    import scripts.ops.audit_app_ui_shell_skeleton as m
+    import scripts.ops.audits.app.audit_app_ui_shell_skeleton as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN)
 
 
 def test_no_conflict_with_mvp_design():
-    import scripts.ops.audit_app_foundation_mvp_design as m
+    import scripts.ops.audits.app.audit_app_foundation_mvp_design as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN)
 
@@ -255,7 +255,7 @@ def test_no_conflict_with_mvp_design():
 # ── 12. audit verdict ─────────────────────────────────────────────────────────
 
 def test_audit_verdict_ready_or_warn():
-    import scripts.ops.audit_app_ui_shell_readonly_api_wiring as m
+    import scripts.ops.audits.app.audit_app_ui_shell_readonly_api_wiring as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN), \
         f"verdict={report.verdict}"

@@ -35,13 +35,13 @@
    "local_agent/web_reader.py:_is_sensitive_name"
   ],
   "3bd89a273c4d15fb3674b39da45fd8f10666602f": [
-   "scripts/ops/audit_app_api_contract_endpoints_prep.py:AuditReport.summary",
-   "scripts/ops/audit_app_api_readonly_endpoints_implementation_plan.py:AuditReport.summary",
-   "scripts/ops/audit_app_foundation_mvp_design.py:AuditReport.summary",
-   "scripts/ops/audit_app_foundation_mvp_prep.py:AuditReport.summary",
-   "scripts/ops/audit_app_ui_readonly_backend_status_cards.py:AuditReport.summary",
-   "scripts/ops/audit_app_ui_shell_readonly_api_wiring.py:AuditReport.summary",
-   "scripts/ops/audit_app_ui_shell_skeleton.py:AuditReport.summary"
+   "scripts/ops/audits/app/audit_app_api_contract_endpoints_prep.py:AuditReport.summary",
+   "scripts/ops/audits/app/audit_app_api_readonly_endpoints_implementation_plan.py:AuditReport.summary",
+   "scripts/ops/audits/app/audit_app_foundation_mvp_design.py:AuditReport.summary",
+   "scripts/ops/audits/app/audit_app_foundation_mvp_prep.py:AuditReport.summary",
+   "scripts/ops/audits/app/audit_app_ui_readonly_backend_status_cards.py:AuditReport.summary",
+   "scripts/ops/audits/app/audit_app_ui_shell_readonly_api_wiring.py:AuditReport.summary",
+   "scripts/ops/audits/app/audit_app_ui_shell_skeleton.py:AuditReport.summary"
   ],
   "3c36397accb3a079b3594dbc4618397788646787": [
    "scripts/naver/smartstore/product/page_builder.py:render_detail",
@@ -53,16 +53,16 @@
    "scripts/ops/verify/verify_live_task_dispatch.py:_start_worker"
   ],
   "513080ea99ea2367a1df1e1017113a7d956ef2a2": [
-   "scripts/ops/audit_authed_local_agent_dispatch_dry_run.py:main",
+   "scripts/ops/audits/agent/audit_authed_local_agent_dispatch_dry_run.py:main",
    "scripts/ops/verify/dry_run_approved_browser_instruction_api.py:main",
    "scripts/ops/verify/dry_run_local_agent_cdp_attach.py:main",
    "scripts/ops/verify/dry_run_manual_local_agent_browser_smoke.py:main"
   ],
   "52a2e667f624dc6fae7152016dfa24097b3df7a5": [
-   "scripts/ops/audit_app_api_contract_endpoints_prep.py:run_audit",
-   "scripts/ops/audit_app_api_readonly_endpoints_implementation_plan.py:run_audit",
-   "scripts/ops/audit_app_foundation_mvp_prep.py:run_audit",
-   "scripts/ops/audit_app_ui_shell_readonly_api_wiring.py:run_audit"
+   "scripts/ops/audits/app/audit_app_api_contract_endpoints_prep.py:run_audit",
+   "scripts/ops/audits/app/audit_app_api_readonly_endpoints_implementation_plan.py:run_audit",
+   "scripts/ops/audits/app/audit_app_foundation_mvp_prep.py:run_audit",
+   "scripts/ops/audits/app/audit_app_ui_shell_readonly_api_wiring.py:run_audit"
   ],
   "563afd3b20d392f9574923fdde0c953cfaafbf92": [
    "scripts/ops/live_parallel_task_dispatch_smoke.py:_register_temp_agent",
@@ -91,8 +91,8 @@
    "orchestrator_v1/tasks/email_task_store.py:_load_all"
   ],
   "8051340d49f4053a369da34c66a976ee564c8609": [
-   "scripts/ops/audit_app_ui_readonly_backend_status_cards.py:_route_page",
-   "scripts/ops/audit_app_ui_shell_readonly_api_wiring.py:_route_page"
+   "scripts/ops/audits/app/audit_app_ui_readonly_backend_status_cards.py:_route_page",
+   "scripts/ops/audits/app/audit_app_ui_shell_readonly_api_wiring.py:_route_page"
   ],
   "936fbd68ef6ce7fbb209475fabbec4b2765e9f2d": [
    "ai_orchestrator/agent_dispatch/agent_dispatch_store.py:_conn",
@@ -106,10 +106,10 @@
    "ai_orchestrator/connectors/naver_mail/bulk_policy.py:_recipient_skip_reason"
   ],
   "9a8ace6d278478f72b563b199bed5df9c065204a": [
-   "scripts/ops/audit_ai_agent_app_structure_design_baseline.py:main",
-   "scripts/ops/audit_ai_agent_ui_structure_blueprint.py:main",
-   "scripts/ops/audit_ai_work_session_gate.py:main",
-   "scripts/ops/audit_mcp_gateway_baseline.py:main"
+   "scripts/ops/audits/app/audit_ai_agent_app_structure_design_baseline.py:main",
+   "scripts/ops/audits/app/audit_ai_agent_ui_structure_blueprint.py:main",
+   "scripts/ops/audits/app/audit_ai_work_session_gate.py:main",
+   "scripts/ops/audits/agent/audit_mcp_gateway_baseline.py:main"
   ],
   "9b552a1faf8f83ef33ab2239c494f722e4226b02": [
    "scripts/naver/cafe/analysis/organizer.py:_load_classified",
@@ -136,18 +136,18 @@
    "scripts/browser/navigator/popup_monitor.py:PopupMonitor.start"
   ],
   "e52edc3fccea138286e4ee989420aca94771e83d": [
-   "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:_route_file",
-   "scripts/ops/smoke_app_ui_shell_browser.py:_page"
+   "scripts/ops/audits/app/audit_app_ui_readonly_status_cards_api_bind.py:_route_file",
+   "scripts/ops/audits/app/smoke_app_ui_shell_browser.py:_page"
   ],
   "e55f06f8e61437d0e4a448891d63f8c86d52f388": [
    "scripts/browser/cdp/cdp_helper.py:CDP.shot",
    "scripts/video/_cdp_tab.py:TabCDP.shot"
   ],
   "ee97c78137c675a6f7e2e4ffb03f989607ac408b": [
-   "scripts/ops/audit_post_tasks_dry_run_flag_implementation.py:_verify_no_http_import",
-   "scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py:_verify_no_http_import",
-   "scripts/ops/audit_post_tasks_medium_isolation_smoke.py:_verify_no_http_import",
-   "scripts/ops/audit_post_tasks_side_effect_gate_design.py:_verify_no_http_import"
+   "scripts/ops/audits/backend/audit_post_tasks_dry_run_flag_implementation.py:_verify_no_http_import",
+   "scripts/ops/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:_verify_no_http_import",
+   "scripts/ops/audits/backend/audit_post_tasks_medium_isolation_smoke.py:_verify_no_http_import",
+   "scripts/ops/audits/backend/audit_post_tasks_side_effect_gate_design.py:_verify_no_http_import"
   ],
   "fcc9673f9a46bea4053b07a2b608145f7ffdd247": [
    "local_agent/runtime/installer_folder_presenter.py:_result",

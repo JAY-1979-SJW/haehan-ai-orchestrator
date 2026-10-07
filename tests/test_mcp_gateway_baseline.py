@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.ops.audit_mcp_gateway_baseline import audit
+from scripts.ops.audits.agent.audit_mcp_gateway_baseline import audit
 
 
 def test_mcp_gateway_baseline_audit_passes() -> None:

@@ -25,7 +25,7 @@ OUT_OF_SCOPE = {
 }
 REQUIRED_FILES = (
     "docs/design/authenticated_local_agent_dispatch_dry_run_20260523.md",
-    "scripts/ops/audit_authed_local_agent_dispatch_dry_run.py",
+    "scripts/ops/audits/agent/audit_authed_local_agent_dispatch_dry_run.py",
     "scripts/ops/verify/verify_live_browser_readonly_dispatch.py",
     "local_agent/agent.py",
     "local_agent/websocket_client.py",

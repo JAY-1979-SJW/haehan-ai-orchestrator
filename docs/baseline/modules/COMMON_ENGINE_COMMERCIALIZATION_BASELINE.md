@@ -199,7 +199,7 @@ The commercial app must not:
 Baseline verification:
 
 ```text
-python scripts/ops/audit_common_engine_commercialization_baseline.py
+python scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py
 python -m pytest tests/test_common_engine_commercialization_baseline.py -q
 ```
 

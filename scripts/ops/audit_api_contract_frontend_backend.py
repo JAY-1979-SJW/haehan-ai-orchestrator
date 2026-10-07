@@ -130,7 +130,7 @@ def scan_frontend_calls() -> list[FrontendCall]:
 
 
 def scan_backend_routes() -> list[BackendRoute]:
-    from audit_backend_runtime_contract import iter_runtime_routes  # type: ignore[import-not-found]
+    from scripts.ops.audits.backend.audit_backend_runtime_contract import iter_runtime_routes
 
     routes = []
     for method, path, _name in iter_runtime_routes():

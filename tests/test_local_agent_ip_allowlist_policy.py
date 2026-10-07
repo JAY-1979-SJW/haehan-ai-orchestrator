@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.ops import audit_local_agent_ip_allowlist_policy as audit
+from scripts.ops.audits.agent import audit_local_agent_ip_allowlist_policy as audit
 
 POLICY_DOC = Path("docs/ops/local_agent_ip_allowlist_policy.md")
 NGINX_PLAN = Path("docs/ops/local_agent_public_ws_nginx_plan.md")

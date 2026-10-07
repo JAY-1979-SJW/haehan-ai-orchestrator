@@ -25,7 +25,7 @@ def _read(path: Path) -> str:
 
 
 def test_audit_script_import():
-    import scripts.ops.audit_app_ui_readonly_status_cards_api_bind  # noqa
+    import scripts.ops.audits.app.audit_app_ui_readonly_status_cards_api_bind  # noqa
 
 
 # ── api.ts 신규 함수 ──────────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ def test_no_conflict_with_plan():
 
 
 def test_backend_smoke_still_passes():
-    from scripts.ops.smoke_app_api_readonly_endpoints import run_smoke
+    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import run_smoke
 
     report = run_smoke()
     assert report.verdict != "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_BLOCKED"
@@ -181,7 +181,7 @@ def test_backend_smoke_still_passes():
 
 
 def test_audit_verdict():
-    from scripts.ops.audit_app_ui_readonly_status_cards_api_bind import print_report, run_audit
+    from scripts.ops.audits.app.audit_app_ui_readonly_status_cards_api_bind import print_report, run_audit
 
     run_audit()
     verdict = print_report()

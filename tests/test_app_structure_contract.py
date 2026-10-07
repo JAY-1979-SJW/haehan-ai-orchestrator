@@ -1,4 +1,4 @@
-from scripts.ops import audit_app_structure_contract as audit
+from scripts.ops.audits.app import audit_app_structure_contract as audit
 
 
 def test_app_structure_contract_passes():

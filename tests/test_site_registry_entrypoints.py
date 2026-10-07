@@ -34,8 +34,8 @@ EXEMPT: dict[str, str] = {
     "scripts/eum/registration.py": _EUM_FORM,
     "scripts/eum/deregistration.py": _EUM_FORM,
     "scripts/eum/form_analyzer.py": _EUM_FORM,
-    "scripts/ops/audit_google_workspace_router_compatibility.py": _AUDIT,
-    "scripts/ops/audit_site_work_function_baseline.py": _AUDIT,
+    "scripts/ops/audits/google/audit_google_workspace_router_compatibility.py": _AUDIT,
+    "scripts/ops/audits/app/audit_site_work_function_baseline.py": _AUDIT,
 }
 
 SKIP_PREFIXES = ("scripts/archive/", "tests/", "ai_orchestrator/tests/", "scripts/ops/smoke/")

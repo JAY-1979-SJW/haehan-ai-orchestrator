@@ -77,7 +77,7 @@ def cycle_test():
 # ── audit script ─────────────────────────────────────────────────────────────
 class TestAuditScriptImportable:
     def test_audit_script_exists(self):
-        audit = ROOT / "scripts" / "ops" / "audit_app_test_baseline_current_contract_sync.py"
+        audit = ROOT / "scripts" / "ops" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py"
         assert audit.exists()
 
     def test_audit_script_importable(self):
@@ -85,7 +85,7 @@ class TestAuditScriptImportable:
 
         spec = importlib.util.spec_from_file_location(
             "audit_sync",
-            ROOT / "scripts" / "ops" / "audit_app_test_baseline_current_contract_sync.py",
+            ROOT / "scripts" / "ops" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py",
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -96,7 +96,7 @@ class TestAuditScriptImportable:
 
         spec = importlib.util.spec_from_file_location(
             "audit_sync2",
-            ROOT / "scripts" / "ops" / "audit_app_test_baseline_current_contract_sync.py",
+            ROOT / "scripts" / "ops" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py",
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)

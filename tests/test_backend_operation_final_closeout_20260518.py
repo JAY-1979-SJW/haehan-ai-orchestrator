@@ -26,7 +26,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_closeout",
-        "scripts/ops/audit_backend_operation_final_closeout.py",
+        "scripts/ops/audits/backend/audit_backend_operation_final_closeout.py",
     )
 
 

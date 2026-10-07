@@ -27,7 +27,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_storage_persistence",
-        "scripts/ops/audit_backend_runtime_storage_persistence.py",
+        "scripts/ops/audits/backend/audit_backend_runtime_storage_persistence.py",
     )
 
 

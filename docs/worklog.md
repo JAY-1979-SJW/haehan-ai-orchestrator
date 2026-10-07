@@ -2190,7 +2190,7 @@
 - 12:56 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -m pytest tests/ -q --tb=line 2>&1 | tail -5`
 - 12:54 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -m pytest tests/test_app_api_contract_endpoints_prep_20260518.py -v...`
 - 12:53 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -n "check_get_only\|FORBIDDEN_MUTATION\|api_no_post\|POST method\|DEL...`
-- 12:53 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -c " import scripts.ops.audit_app_ui_shell_readonly_api_wiring as a...`
+- 12:53 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -c " import scripts.ops.audits.app.audit_app_ui_shell_readonly_api_wiring as a...`
 - 12:53 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -m pytest tests/ -q --tb=line -x 2>&1 | tail -10`
 - 12:51 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python scripts/quality_gate.py --staged --enforce --allow-existing-code-ch...`
 - 12:51 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -m pytest tests/test_app_api_contract_endpoints_prep_20260518.py::t...`
@@ -2203,7 +2203,7 @@
 - 12:47 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -c " import ast, pathlib, sys  # 삭제된 스크립트 목록 (git status에서 D로 표시된 것...`
 - 12:46 **[지시]** 좀비 프로세스가 계속 살아있어 반영해서 삭제해
 - 12:45 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git log --oneline 59a957b..HEAD -- admin-web/src/lib/assistant/api.ts | he...`
-- 12:45 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && sed -n '195,220p' scripts/ops/audit_app_ui_readonly_backend_status_cards.py`
+- 12:45 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && sed -n '195,220p' scripts/ops/audits/app/audit_app_ui_readonly_backend_status_cards.py`
 - 12:45 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -n "glob\|find\|walk\|api\.ts\|src/lib" scripts/ops/audit_app_ui_read...`
 - 12:45 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -rn "method.*DELETE\|DELETE.*method" admin-web/src/lib/ 2>&1`
 - 12:45 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -c " import re content = open('admin-web/src/lib/api.ts', encoding=...`
@@ -2211,7 +2211,7 @@
 - 12:44 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -n "api_no_delete\|DELETE\|no_delete" scripts/ops/audit_app_ui_readon...`
 - 12:44 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -n "POST\|DELETE" admin-web/src/lib/api.ts`
 - 12:44 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -n "DELETE\|approveUser\|denyUser\|mutation" admin-web/src/lib/api.ts...`
-- 12:44 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -c " import scripts.ops.audit_app_ui_readonly_backend_status_cards ...`
+- 12:44 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -c " import scripts.ops.audits.app.audit_app_ui_readonly_backend_status_cards ...`
 - 12:43 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git log --oneline 59a957b..HEAD -- admin-web/src/ 2>&1 | head -15`
 - 12:43 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git show 59a957b --stat | head -15 && git log --oneline 59a957b^..HEAD --f...`
 - 12:43 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git log --oneline 59a957b..HEAD -- admin-web/src/lib/api.ts | head -10`

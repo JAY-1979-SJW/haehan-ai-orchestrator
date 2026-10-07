@@ -188,7 +188,7 @@ def stage_ai_check() -> StageResult:
 
         root = Path(__file__).resolve().parents[2]
         result = subprocess.run(
-            [sys.executable, str(root / "scripts" / "ops" / "ai_check_a4.py"), str(test_file)],
+            [sys.executable, str(root / "scripts" / "ops" / "office" / "ai_check_a4.py"), str(test_file)],
             cwd=str(root),
             capture_output=True,
             text=True,

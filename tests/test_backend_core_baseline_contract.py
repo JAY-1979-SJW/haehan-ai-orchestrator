@@ -1,4 +1,4 @@
-from scripts.ops import audit_backend_core_baseline_contract as audit
+from scripts.ops.audits.backend import audit_backend_core_baseline_contract as audit
 
 
 def test_backend_core_baseline_contract_passes():

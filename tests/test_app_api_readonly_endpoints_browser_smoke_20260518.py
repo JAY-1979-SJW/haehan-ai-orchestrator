@@ -33,48 +33,48 @@ _FORBIDDEN_FIELDS = [
 
 
 def test_smoke_script_import():
-    import scripts.ops.smoke_app_api_readonly_endpoints  # noqa
+    import scripts.ops.audits.app.smoke_app_api_readonly_endpoints  # noqa
 
 
 def test_audit_script_import():
-    import scripts.ops.audit_app_api_readonly_endpoints_browser_smoke  # noqa
+    import scripts.ops.audits.app.audit_app_api_readonly_endpoints_browser_smoke  # noqa
 
 
 # ── smoke 메타 ────────────────────────────────────────────────────────────────
 
 
 def test_smoke_endpoint_list():
-    from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS
+    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import ENDPOINTS
 
     assert len(ENDPOINTS) == 3
 
 
 def test_smoke_health_summary_in_endpoints():
-    from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS
+    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import ENDPOINTS
 
     assert "/api/v1/app/health/summary" in ENDPOINTS
 
 
 def test_smoke_providers_in_endpoints():
-    from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS
+    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import ENDPOINTS
 
     assert "/api/v1/app/providers" in ENDPOINTS
 
 
 def test_smoke_storage_in_endpoints():
-    from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS
+    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import ENDPOINTS
 
     assert "/api/v1/app/storage/status" in ENDPOINTS
 
 
 def test_smoke_id():
-    from scripts.ops.smoke_app_api_readonly_endpoints import SMOKE_ID
+    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import SMOKE_ID
 
     assert SMOKE_ID == "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE"
 
 
 def test_smoke_phase():
-    from scripts.ops.smoke_app_api_readonly_endpoints import SMOKE_PHASE
+    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import SMOKE_PHASE
 
     assert SMOKE_PHASE == "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_01"
 
@@ -84,7 +84,7 @@ def test_smoke_phase():
 
 @pytest.fixture(scope="module")
 def smoke_report():
-    from scripts.ops.smoke_app_api_readonly_endpoints import run_smoke
+    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import run_smoke
 
     return run_smoke()
 
@@ -279,7 +279,7 @@ def test_no_conflict_with_prep():
 
 
 def test_audit_verdict():
-    from scripts.ops.audit_app_api_readonly_endpoints_browser_smoke import print_report, run_audit
+    from scripts.ops.audits.app.audit_app_api_readonly_endpoints_browser_smoke import print_report, run_audit
 
     run_audit()
     verdict = print_report()

@@ -1,4 +1,4 @@
-from scripts.ops import audit_google_live_input_representative as audit
+from scripts.ops.audits.google import audit_google_live_input_representative as audit
 
 
 def test_representative_live_input_preflight_passes():

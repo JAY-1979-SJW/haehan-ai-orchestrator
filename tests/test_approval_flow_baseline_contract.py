@@ -1,4 +1,4 @@
-from scripts.ops import audit_approval_flow_baseline_contract as audit
+from scripts.ops.audits.app import audit_approval_flow_baseline_contract as audit
 
 
 def test_approval_flow_baseline_contract_passes():

@@ -23,7 +23,7 @@
 ## 제외 (건드리지 않음)
 - `scripts/ops/guard_openai_call.py` 훅, CLAUDE.md 승인제 규칙, `ai_orchestrator/openai_guard.py` — 재유입 방지 장치
 - `apps/marketing-standalone/**` — 판매 준비 중인 별도 제품 + 미커밋 작업 중(사용자 결정 필요 시 별도)
-- 미커밋 WIP 파일(.githooks/commit_checklist.py, scripts/ops/ai_check_a4.py 등) — 커밋 후 별도 정리
+- 미커밋 WIP 파일(.githooks/commit_checklist.py, scripts/ops/office/ai_check_a4.py 등) — 커밋 후 별도 정리
 - `.env` 의 키 값(파일은 손대지 않음)
 
 ## 절차 (검증 파이프라인)

@@ -55,7 +55,7 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "scripts/ops/quality/py_compile_no_cache.py",
-                    "scripts/ops/audit_common_engine_commercialization_baseline.py",
+                    "scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py",
                     "tests/test_common_engine_commercialization_baseline.py",
                 ),
             ),
@@ -83,7 +83,7 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "scripts/ops/quality/py_compile_no_cache.py",
-                    "scripts/ops/audit_local_agent_connection_recovery_baseline.py",
+                    "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py",
                     "tests/test_local_agent_connection_recovery_baseline.py",
                     "scripts/ops/verify/verify_agent_ws_auth.py",
                     "scripts/ops/verify/verify_live_agent_smoke.py",
@@ -189,7 +189,7 @@ MODULES: tuple[GateModule, ...] = (
                     "ai_orchestrator/server/server_egress_policy.py",
                     "ai_orchestrator/server/execution_location_guard.py",
                     "ai_orchestrator/server/external_url_blocker.py",
-                    "scripts/ops/audit_backend_runtime_contract.py",
+                    "scripts/ops/audits/backend/audit_backend_runtime_contract.py",
                 ),
             ),
             GateStep("backend_runtime_contract", check="backend_runtime_contract"),
@@ -230,13 +230,13 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "scripts/ops/quality/py_compile_no_cache.py",
-                    "scripts/ops/audit_local_agent_e2e_flow_contract.py",
+                    "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py",
                     "tests/test_local_agent_e2e_flow_contract.py",
                 ),
             ),
             GateStep(
                 "local_agent_e2e_contract",
-                (PY, "scripts/ops/audit_local_agent_e2e_flow_contract.py"),
+                (PY, "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py"),
             ),
             GateStep(
                 "local_agent_e2e_pytest",

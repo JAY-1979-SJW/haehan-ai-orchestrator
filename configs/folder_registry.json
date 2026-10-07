@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 336,
+ "count": 343,
  "folders": [
   {
    "path": ".",
@@ -1739,6 +1739,14 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/entry",
+   "purpose": "프로세스 시작점(CLI cdp_cli·site_access/site_crawl 직접 실행 main)과 사이트 로그인 조합(site_login_registry.install) — 모든 사이트 모듈을 아는 맨 위 층이라 사이트 모듈에서 도달 불가능해야 순환이 생기지 않는다",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(site_registry 조합 위치 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
    "path": "scripts/eum",
    "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",
@@ -1978,6 +1986,14 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/agent_mixins",
+   "purpose": "엔진(scripts/browser/agent) 이 다중상속으로 합성하는 네이버 블로그·카페·메일 믹스인 — 도구 스크립트(blog·cafe)와 다른 모듈로 두어 엔진↔도구 순환을 끊는다",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(지휘창 전달, T4 순환 해소)"
   },
   {
    "path": "scripts/naver/automation",
@@ -2308,12 +2324,60 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/ops/audits",
+   "purpose": "계약·기준선 감사 모음(읽기 전용) — scripts/ops 평면 정리",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/audits/agent",
+   "purpose": "로컬 에이전트·데스크톱·MCP·Playwright 계약 감사",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/audits/app",
+   "purpose": "앱 구조·UI·사이트·공용 기준선 감사와 짝 smoke",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/audits/backend",
+   "purpose": "백엔드·서버 운영 계약 감사",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/audits/google",
+   "purpose": "Google 자동화·Cloud·Workspace 계약 감사",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
    "path": "scripts/ops/code_map",
    "purpose": "scripts/ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "기능",
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/ops/office",
+   "purpose": "엑셀·A4·견적서 서식 도구",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
   },
   {
    "path": "scripts/ops/quality",
@@ -2682,22 +2746,6 @@
    "status": "approved",
    "approved_at": "2026-10-08",
    "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
-  },
-  {
-   "path": "scripts/naver/agent_mixins",
-   "purpose": "엔진(scripts/browser/agent) 이 다중상속으로 합성하는 네이버 블로그·카페·메일 믹스인 — 도구 스크립트(blog·cafe)와 다른 모듈로 두어 엔진↔도구 순환을 끊는다",
-   "kind": "도구",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(지휘창 전달, T4 순환 해소)"
-  },
-  {
-   "path": "scripts/entry",
-   "purpose": "프로세스 시작점(CLI cdp_cli·site_access/site_crawl 직접 실행 main)과 사이트 로그인 조합(site_login_registry.install) — 모든 사이트 모듈을 아는 맨 위 층이라 사이트 모듈에서 도달 불가능해야 순환이 생기지 않는다",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(site_registry 조합 위치 승인, 지휘창 경유 2026-10-08)"
   }
  ]
 }

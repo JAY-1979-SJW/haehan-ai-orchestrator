@@ -1,4 +1,4 @@
-from scripts.ops import audit_local_agent_connection_recovery_baseline as audit
+from scripts.ops.audits.agent import audit_local_agent_connection_recovery_baseline as audit
 
 
 def test_local_agent_connection_recovery_baseline_passes():
