@@ -66,7 +66,6 @@ naver_blog	scripts/gonobi_scrape.py	구현	이동	scripts/naver/blog/gonobi/scra
 naver_blog	scripts/gonobi_verify_images.py	구현	이동	scripts/naver/blog/gonobi/verify_images.py	0	0
 naver_blog	scripts/gonobi_verify_paged.py	구현	이동	scripts/naver/blog/gonobi/verify_paged.py	0	0
 naver_blog	scripts/gonobi_verify_problems.py	구현	이동	scripts/naver/blog/gonobi/verify_problems.py	0	0
-naver_blog	scripts/mk_catalog/reclassify_blog_new.py	구현	이동	scripts/naver/blog/reclassify_blog_new.py	0	0
 naver_blog	scripts/naver/router_blog.py	구현	이동	scripts/naver/blog/router_blog.py	0	0
 naver_blog	scripts/navigator_blog.py	구현	이동	scripts/naver/blog/navigator_blog.py	0	0
 naver_blog	ai_orchestrator/connectors/gonobi_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_blog/gonobi_router.py	0	0

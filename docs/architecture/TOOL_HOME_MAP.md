@@ -5,6 +5,8 @@
 - 지시: "프로그램을 도구별로 폴더·모듈로 나누고 중복을 없앤다"(대표님). 계획서: `C:\work\_coordination\TOOL_MODULARIZATION_PLAN.md` §3 T0.
 - 함께 둔 표(전수 목록): 같은 폴더의 `TOOL_HOME_MAP_leaks.tsv`(집 밖 파일 224건), `TOOL_HOME_MAP_dup_groups.tsv`(운영 코드 중복 묶음 367건), `TOOL_HOME_MAP_dup_candidates.tsv`(공용화 후보 67건), `TOOL_HOME_MAP_dated_scripts.tsv`(날짜 박힌 스크립트 5건).
 
+> **정정(2026-10-07, B1 작업 중 발견)**: `scripts/mk_catalog/reclassify_blog_new.py` 는 이름에 `blog` 가 있어 키워드 분류가 블로그 이탈로 잡았으나 실제로는 카탈로그 상품 분류 스크립트(mk_catalog)다. 이동 대상이 아니므로 이탈 목록에서 뺐다(`TOOL_HOME_MAP_leaks.tsv` 에서 1줄 삭제). 이 문서의 숫자는 그만큼 줄어든다: 이탈 224→223, 이동 71→70, naver_blog 이탈 41→40(이동 12→11).
+
 ## 0. 측정 방법과 한계 (숫자를 읽기 전에)
 - **파일 분류**: `5f83b90d`의 추적 파일 중 코드(py·ts·tsx·js, 시험·docs·보관(`scripts/archive`)·`admin-web/vendor` 제외) 1,960개를 **경로 이름의 키워드**로 도구에 배정했다(구체적인 도구 먼저: smartstore → hanafax → … → naver_blog). 이름에 도구가 드러나지 않는 파일(예: 공용 CDP 헬퍼)은 배정되지 않는다. 즉 **도구 이름이 경로에 있는 파일만** 센 것이다. 806개가 도구에 배정됐다.
 - **import 건수**는 정적 문자열 근사(운영 코드·시험을 구분)다. 동적 import·경로 문자열 참조·JS/TS는 잡지 못한다. 이동 전에 `verify_change`와 `grep`으로 재확인한다.
@@ -88,7 +90,7 @@
 
 **naver_blog (이탈 41)**
 - `scripts/gonobi_*.py` 9개(루트 스크립트, 참조 0건) → `scripts/naver/blog/gonobi/`(이미 `gonobi/` 폴더 존재)
-- `scripts/naver/router_blog.py`·`scripts/navigator_blog.py`·`scripts/mk_catalog/reclassify_blog_new.py` → `scripts/naver/blog/`
+- `scripts/naver/router_blog.py`·`scripts/navigator_blog.py` → `scripts/naver/blog/` (`scripts/mk_catalog/reclassify_blog_new.py` 는 정정으로 제외 — 위 정정 참고)
 - `ai_orchestrator/connectors/{gonobi_router,gonobi_scheduler,naver_blog_*}.py`(평면) 및 `routers/blog_automation_router.py` → `connectors/naver_blog/`
 - `local_agent/browser/mixins/blog_mixin*.py`(7)·`_js/extract_blog_*.js`(8)·`naver_blog_workflow.py`·`scripts/local_agent/naver/blog_*.py` → T4연동 18건
 - `apps/marketing-standalone/connectors/{blog_accounts,blog_images,naver_blog_cdp}.py`·`site_modules/blog_router.py` → 독립앱 4건(결정 1)
