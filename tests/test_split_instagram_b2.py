@@ -43,6 +43,8 @@ def test_publish_guard_hook_still_matches_both_paths(path):
     assert any(p.search(cmd) for p in guard.TRIGGER_PATTERNS)
 
 
-def test_ig_batch_shim_is_tiny():
+def test_ig_batch_shim_is_generated_by_make_shim_and_forwards_execution():
+    """옛 경로는 make_shim 이 만든 shim(식별 마커)이다 — import 별칭·파일 경로 로드·직접 실행 전달을 모두 받는다."""
     shim = (ROOT / "scripts/ops/ig_batch.py").read_text(encoding="utf-8")
-    assert "from scripts.instagram.ops.ig_batch import main" in shim and len(shim.splitlines()) <= 16
+    assert shim.splitlines()[0] == "# haehan-shim: scripts.instagram.ops.ig_batch"
+    assert "run_module" in shim
