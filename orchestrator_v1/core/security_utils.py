@@ -36,6 +36,12 @@ EMAIL_RE = re.compile(r"(?i)([a-z0-9._%+-]{2})[a-z0-9._%+-]*@([a-z0-9.-]+\.[a-z]
 RRN_RE = re.compile(r"\b\d{6}-?[1-4]\d{6}\b")
 CARD_RE = re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b")
 BEARER_RE = re.compile(r"(?i)\b(bearer)\s+[a-z0-9._~+/=-]{12,}")
+# 키 이름 없이 값만으로 드러나는 발급 토큰 — OpenAI/GitHub/Slack/AWS/JWT
+OPENAI_KEY_RE = re.compile(r"\bsk-[A-Za-z0-9]{20,}\b")
+GITHUB_TOKEN_RE = re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b")
+SLACK_TOKEN_RE = re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")
+AWS_KEY_RE = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
+JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]{5,}\.eyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\b")
 
 
 def mask_email(value: str) -> str:
@@ -59,6 +65,11 @@ def safe_preview(value: str, limit: int = 100) -> str:
     text = RRN_RE.sub("[RRN_REDACTED]", text)
     text = CARD_RE.sub("[CARD_REDACTED]", text)
     text = BEARER_RE.sub(r"\1 [TOKEN_REDACTED]", text)
+    text = JWT_RE.sub("[TOKEN_REDACTED]", text)
+    text = OPENAI_KEY_RE.sub("[TOKEN_REDACTED]", text)
+    text = GITHUB_TOKEN_RE.sub("[TOKEN_REDACTED]", text)
+    text = SLACK_TOKEN_RE.sub("[TOKEN_REDACTED]", text)
+    text = AWS_KEY_RE.sub("[TOKEN_REDACTED]", text)
     return text
 
 

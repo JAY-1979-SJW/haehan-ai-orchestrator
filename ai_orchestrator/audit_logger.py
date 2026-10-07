@@ -2,6 +2,8 @@ import json
 import logging
 from datetime import UTC, datetime
 
+from orchestrator_v1.core.logging_utils import mask_sensitive
+
 from .config import AUDIT_LOG_PATH as _LOG_PATH
 
 logger = logging.getLogger(__name__)
@@ -87,6 +89,7 @@ def log_event(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, �
     token_id: str = "",
     note: str = "",
 ) -> None:
+    masked_note = mask_sensitive(note) if note else note
     entry = {
         "timestamp": datetime.now(UTC).isoformat(),
         "event_type": event_type,
@@ -100,7 +103,7 @@ def log_event(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, �
         "actor": actor,
         "role": role,
         "token_id": token_id,
-        "note": note,
+        "note": masked_note,
     }
 
     logger.info(
@@ -110,7 +113,7 @@ def log_event(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수, �
         actor,
         role or "-",
         decision,
-        f" | {note}" if note else "",
+        f" | {masked_note}" if masked_note else "",
     )
 
     try:
