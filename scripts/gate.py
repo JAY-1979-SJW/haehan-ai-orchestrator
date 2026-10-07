@@ -33,11 +33,13 @@ CLAUDE.md 의 "사용자 승인 후 자동 진행" 정책 적용 시 호출자�
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import json
 import os
 import threading
-from collections.abc import Callable
+import time
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -289,12 +291,41 @@ def list_registry() -> list[dict]:
 # 수신거부 목록은 data/gate/opt_out.json (GATE_DATA_DIR 로 변경) 에 tmp+rename 으로만 쓴다.
 
 _opt_out_lock = threading.Lock()
+_LOCK_WAIT_S = 10.0
+_LOCK_STALE_S = 30.0  # 이보다 오래된 잠금 파일은 죽은 프로세스가 남긴 것으로 보고 치운다
 
 
 def _opt_out_path() -> Path:
     base = os.environ.get("GATE_DATA_DIR")
     root = Path(base) if base else Path(__file__).resolve().parents[1] / "data" / "gate"
     return root / "opt_out.json"
+
+
+@contextlib.contextmanager
+def _opt_out_guard() -> Iterator[None]:
+    """수신거부 목록 읽고-합치고-쓰기 구간의 배타 잠금. 스레드 락 + 잠금 파일(O_CREAT|O_EXCL)로 프로세스 간에도 막는다."""
+    lock_path = _opt_out_path().with_suffix(".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    deadline = time.monotonic() + _LOCK_WAIT_S
+    with _opt_out_lock:
+        while True:
+            try:
+                os.close(os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+                break
+            except FileExistsError:
+                with contextlib.suppress(OSError):
+                    if time.time() - lock_path.stat().st_mtime > _LOCK_STALE_S:
+                        lock_path.unlink()
+                        continue
+                if time.monotonic() > deadline:
+                    # 잠금을 못 얻으면 쓰지 않고 실패시킨다 — 조용히 덮어써서 수신거부를 잃는 것보다 낫다.
+                    raise TimeoutError(f"[gate] 수신거부 잠금 획득 실패: {lock_path}") from None
+                time.sleep(0.02)
+        try:
+            yield
+        finally:
+            with contextlib.suppress(OSError):
+                lock_path.unlink()
 
 
 def opt_out_list() -> set[str] | None:
@@ -310,7 +341,7 @@ def opt_out_list() -> set[str] | None:
 
 
 def add_opt_out(address: str) -> None:
-    with _opt_out_lock:
+    with _opt_out_guard():
         path = _opt_out_path()
         merged = sorted((opt_out_list() or set()) | {address.strip().lower()})
         path.parent.mkdir(parents=True, exist_ok=True)

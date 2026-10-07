@@ -126,3 +126,45 @@ def test_blog_publish_passes_with_phrase_and_draft_needs_none(monkeypatch):
     assert ok["ok"] is True and ok["publish"] is True
     draft = r.write_to_naver(r.BlogWriteRequest(title="t", body="b", publish=False), user={})
     assert draft["ok"] is True and draft["publish"] is False
+
+
+# ── 수신거부 동시 추가(프로세스 간) ──────────────────────────────────
+
+
+def _add_many(state_dir: str, prefix: str, n: int) -> None:
+    import os
+
+    os.environ["GATE_DATA_DIR"] = state_dir
+    from scripts import gate as g
+
+    for i in range(n):
+        g.add_opt_out(f"{prefix}{i}@t.com")
+
+
+def test_two_processes_adding_opt_out_concurrently_keep_all(tmp_path):
+    import multiprocessing as mp
+
+    state = str(tmp_path / "gate")
+    ctx = mp.get_context("spawn")
+    procs = [ctx.Process(target=_add_many, args=(state, p, 25)) for p in ("a", "b", "c")]
+    [p.start() for p in procs]
+    [p.join(120) for p in procs]
+    assert all(p.exitcode == 0 for p in procs)
+    got = gate.opt_out_list()
+    expected = {f"{p}{i}@t.com" for p in ("a", "b", "c") for i in range(25)}
+    assert got == expected  # 75건 모두 남아야 한다 — 하나라도 사라지면 수신거부 누락
+    assert not (tmp_path / "gate" / "opt_out.lock").exists()
+
+
+def test_stale_lock_file_is_cleared(tmp_path):
+    import os
+    import time
+
+    state = tmp_path / "gate"
+    state.mkdir()
+    lock = state / "opt_out.lock"
+    lock.write_text("", encoding="utf-8")
+    old = time.time() - 120
+    os.utime(lock, (old, old))
+    gate.add_opt_out("z@t.com")
+    assert gate.is_opted_out("z@t.com") if hasattr(gate, "is_opted_out") else "z@t.com" in gate.opt_out_list()
