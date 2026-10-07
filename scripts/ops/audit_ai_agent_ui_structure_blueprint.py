@@ -31,11 +31,12 @@ REQUIRED_APP_TOKENS = [
 ]
 
 REQUIRED_HOME_TOKENS = [
-    "AI agent UI structure blueprint",
-    "docs/baseline/AI_AGENT_UI_STRUCTURE_BLUEPRINT.md",
-    "Chat And Result Workspace",
-    "Quick Actions And Immediate Results",
-    "Current App Tool Surfaces",
+    # 2026-10-07 화면 개편(단일 AI 콘솔) 반영: 홈 소스(admin-web/src/app/page.tsx)에 실제 있는 문구로 현행화(개수 5개 유지)
+    "단일 AI 작업 콘솔",
+    'data-testid="ai-agent-console"',
+    "UniversalChat",
+    "Haehan AI 콘솔",
+    "AI에게 작업을 요청하세요",
 ]
 
 
