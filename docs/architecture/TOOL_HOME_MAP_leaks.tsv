@@ -191,26 +191,26 @@ smartstore	scripts/naver/automation/smartstore/inventory_monitor.py	구현	이�
 smartstore	scripts/naver/automation/smartstore/order_automation.py	구현	이동	scripts/naver/smartstore/automation/order_automation.py	1	0
 smartstore	ai_orchestrator/connectors/smartstore_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/smartstore/router.py	0	0
 smartstore	scripts/ops/selector_health/sites/naver_smartstore.py	구현	정상(플러그인 레지스트리)	scripts/naver/smartstore/ops/naver_smartstore.py	1	0
-youtube	ai_orchestrator/connectors/google/youtube.py	API	이동	ai_orchestrator/connectors/youtube/youtube.py	0	0
-youtube	scripts/common/youtube_search_cache.py	구현	이동	scripts/youtube/youtube_search_cache.py	2	0
-youtube	scripts/google/youtube/__init__.py	구현	이동	scripts/youtube/search/__init__.py	6	3
-youtube	scripts/google/youtube/search.py	구현	이동	scripts/youtube/search/search.py	1	1
-youtube	scripts/google/youtube/search_analyze.py	구현	이동	scripts/youtube/search/search_analyze.py	0	1
-youtube	scripts/google/youtube/search_common.py	구현	이동	scripts/youtube/search/search_common.py	4	0
-youtube	scripts/google/youtube/search_score.py	구현	이동	scripts/youtube/search/search_score.py	1	0
-youtube	scripts/google/youtube/search_search.py	구현	이동	scripts/youtube/search/search_search.py	1	1
-youtube	scripts/google/youtube/search_transcript.py	구현	이동	scripts/youtube/search/search_transcript.py	1	0
-youtube	scripts/google/youtube_upload.py	구현	이동	scripts/youtube/youtube_upload.py	1	1
-youtube	scripts/smoke_youtube_manual_login_probe.py	구현	이동	scripts/youtube/smoke_youtube_manual_login_probe.py	0	0
-youtube	scripts/yt_upload/runner.py	구현	이동	scripts/youtube/upload/runner.py	0	0
-youtube	scripts/yt_upload/step1_navigate.py	구현	이동	scripts/youtube/upload/step1_navigate.py	0	0
-youtube	scripts/yt_upload/step2_open_dialog.py	구현	이동	scripts/youtube/upload/step2_open_dialog.py	0	0
-youtube	scripts/yt_upload/step3_set_file.py	구현	이동	scripts/youtube/upload/step3_set_file.py	0	0
-youtube	scripts/yt_upload/step4_metadata.py	구현	이동	scripts/youtube/upload/step4_metadata.py	0	0
-youtube	scripts/yt_upload/step5_publish.py	구현	이동	scripts/youtube/upload/step5_publish.py	0	0
-youtube	ai_orchestrator/connectors/youtube_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/youtube/router.py	0	0
-youtube	ai_orchestrator/routers/youtube_oauth_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/youtube/oauth_router.py	0	1
-youtube	ai_orchestrator/routers/youtube_research_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/youtube/research_router.py	0	1
+youtube	ai_orchestrator/connectors/google/youtube.py	API	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	0	0
+youtube	scripts/common/youtube_search_cache.py	구현	제외(G5 겹침 — 저장부는 persistence)	(이동 안 함)	2	0
+youtube	scripts/google/youtube/__init__.py	구현	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	6	3
+youtube	scripts/google/youtube/search.py	구현	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	1	1
+youtube	scripts/google/youtube/search_analyze.py	구현	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	0	1
+youtube	scripts/google/youtube/search_common.py	구현	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	4	0
+youtube	scripts/google/youtube/search_score.py	구현	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	1	0
+youtube	scripts/google/youtube/search_search.py	구현	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	1	1
+youtube	scripts/google/youtube/search_transcript.py	구현	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	1	0
+youtube	scripts/google/youtube_upload.py	구현	정상(google 도메인의 YouTube 하위 탭 — 계약 소유)	(이동 안 함)	1	1
+youtube	scripts/smoke_youtube_manual_login_probe.py	구현	이동 완료(split-youtube 2ce2345e)	scripts/youtube/smoke_youtube_manual_login_probe.py	0	0
+youtube	scripts/yt_upload/runner.py	구현	이동 완료(B1 b4908817)	scripts/youtube/upload/runner.py	0	0
+youtube	scripts/yt_upload/step1_navigate.py	구현	이동 완료(B1 b4908817)	scripts/youtube/upload/step1_navigate.py	0	0
+youtube	scripts/yt_upload/step2_open_dialog.py	구현	이동 완료(B1 b4908817)	scripts/youtube/upload/step2_open_dialog.py	0	0
+youtube	scripts/yt_upload/step3_set_file.py	구현	이동 완료(B1 b4908817)	scripts/youtube/upload/step3_set_file.py	0	0
+youtube	scripts/yt_upload/step4_metadata.py	구현	이동 완료(B1 b4908817)	scripts/youtube/upload/step4_metadata.py	0	0
+youtube	scripts/yt_upload/step5_publish.py	구현	이동 완료(B1 b4908817)	scripts/youtube/upload/step5_publish.py	0	0
+youtube	ai_orchestrator/connectors/youtube_router.py	API	완성형 shim(추가 작업 없음)	(이미 connectors/youtube/ 패키지의 호환 shim)	0	0
+youtube	ai_orchestrator/routers/youtube_oauth_router.py	API	완성형 shim(추가 작업 없음)	(이미 connectors/youtube/ 패키지의 호환 shim)	0	1
+youtube	ai_orchestrator/routers/youtube_research_router.py	API	완성형 shim(추가 작업 없음)	(이미 connectors/youtube/ 패키지의 호환 shim)	0	1
 youtube	apps/youtube-analyzer-standalone/cli.py	구현	독립앱(결정)	scripts/youtube/cli.py	0	0
 youtube	apps/youtube-analyzer-standalone/connectors/__init__.py	구현	독립앱(결정)	scripts/youtube/__init__.py	0	0
 youtube	apps/youtube-analyzer-standalone/connectors/keyframe_extractor.py	구현	독립앱(결정)	scripts/youtube/keyframe_extractor.py	0	0
@@ -221,4 +221,4 @@ youtube	apps/youtube-analyzer-standalone/core/__init__.py	구현	독립앱(결�
 youtube	apps/youtube-analyzer-standalone/core/report_builder.py	구현	독립앱(결정)	scripts/youtube/report_builder.py	0	0
 youtube	apps/youtube-analyzer-standalone/core/url_parser.py	구현	독립앱(결정)	scripts/youtube/url_parser.py	0	0
 youtube	apps/youtube-analyzer-standalone/core/viral_score.py	구현	독립앱(결정)	scripts/youtube/viral_score.py	0	0
-youtube	scripts/ops/guard_youtube_upload.py	구현	일회성·감사(archive 후보)	scripts/youtube/ops/guard_youtube_upload.py	0	0
+youtube	scripts/ops/guard_youtube_upload.py	구현	제외(.claude 훅 — 이동 금지)	(이동 안 함)	0	0
