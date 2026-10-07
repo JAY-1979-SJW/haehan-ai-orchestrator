@@ -1,0 +1,54 @@
+"""mutmut export-cicd-stats 결과를 GITHUB_STEP_SUMMARY 용 Markdown 으로 요약한다. 점수로 실패시키지 않는다(항상 exit 0)."""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+STATS = Path("mutants/mutmut-cicd-stats.json")
+
+
+def render(stats: dict[str, int], total_targets: int = 0, limit: int = 0) -> str:
+    killed, survived = stats.get("killed", 0), stats.get("survived", 0)
+    decided = killed + survived  # total 은 누적값이라 분모로 쓰지 않는다
+    score = f"{killed / decided:.1%}" if decided else "n/a"
+    lines = ["## 변이 검증(mutmut)", "", f"- 점수(killed/(killed+survived)): **{score}** ({killed}/{decided})"]
+    for key in ("survived", "timeout", "suspicious", "skipped"):
+        lines.append(f"- {key}: {stats.get(key, 0)}")
+    lines.append(f"- 시험이 없는 변이체(no_tests): {stats.get('no_tests', 0)}")
+    if not decided:
+        lines.append("- ⚠ **실행된 변이체 0 — 설정 확인 필요**(패턴이 변이체 이름과 안 맞거나 source_paths 범위 문제)")
+    if os.environ.get("MUTMUT_RUN_FAILED"):
+        lines.append("- 🔴 **mutmut 실행 자체 실패**(통계 수집/시험 수집 오류) — 점수는 의미 없음, 로그 확인")
+    if limit and total_targets > limit:
+        lines.append(f"- ⚠ 대상 함수 {total_targets}개 중 {limit}개만 검사함(상한 절삭)")
+    return "\n".join(lines) + "\n"
+
+
+def _int_env(name: str) -> int:
+    """환경변수 정수값. 미설정·빈 값은 0."""
+    return int(os.environ.get(name) or 0)
+
+
+def main() -> int:
+    total_targets = _int_env("TOTAL_TARGETS")
+    limit = _int_env("TARGET_LIMIT")
+    try:
+        stats = json.loads(STATS.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as _read_error:
+        text = "## 변이 검증(mutmut)\n\n통계 파일이 없습니다(대상 함수 없음 또는 실행 실패).\n"
+    else:
+        text = render(stats, total_targets, limit)
+    target = os.environ.get("GITHUB_STEP_SUMMARY")
+    if target:
+        with open(target, "a", encoding="utf-8") as fh:
+            fh.write(text)
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

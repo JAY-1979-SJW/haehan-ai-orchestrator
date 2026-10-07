@@ -114,3 +114,9 @@ repository=DB / adapter=외부 연동.
 - 기존 공개 import 경로·응답 key 보존(파사드).
 - leaf 간 직접 결합 0, 순환 0, cross-domain 0.
 - 전 게이트 PASS, 관련 테스트 통과, 모듈 단위 커밋.
+
+---
+
+## 변이 검증 원칙 (대표님 확정 2026-10-08)
+
+변이 검증 = mutmut(GitHub Actions `mutation.yml`, 바뀐 함수만 대상, 처음에는 점수로 실패시키지 않고 요약만), 게이트 검출력 = 고정 시험. 수동으로 코드를 깨뜨려 보는 LLM 실험은 하지 않는다.

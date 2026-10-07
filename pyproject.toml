@@ -21,3 +21,11 @@ bandit_promote = []
 # 2026-09-30 이 앱 468건 전수 확인 결과 전부 오탐. 프로젝트 ruff 설정(configs/ruff.toml)도 같은 이유로 제외 중.
 # 아래 목록은 audit-kit 기본값(E1,E2,E3,E5,W,I,N,D,Q,COM)에 B008 만 더한 것 — 기본값을 덮어쓰므로 유지할 것.
 ruff_ignore = ["E1", "E2", "E3", "E5", "W", "I", "N", "D", "Q", "COM", "B008"]
+
+# 변이 검증(mutmut) — 대표님 확정 2026-10-08. mutmut 은 Windows 네이티브 미지원이라 Actions(ubuntu)에서만 돈다(.github/workflows/mutation.yml).
+# 바뀐 함수만 패턴(`*모듈.함수*`)으로 지정해 돌리며, 시험이 경로로 읽는 설정·데이터는 also_copy 로 mutants/ 에 복사한다. 첫 실측 결과로 조정할 것.
+[tool.mutmut]
+source_paths = ["ai_orchestrator/", "scripts/", "local_agent/", "orchestrator_v1/"]
+# 실행 시 source_paths 는 워크플로가 바뀐 파일로만 덮어쓴다(전체 생성 방지). 변이 대상이 아닌 소스 루트는 import 용으로 복사한다.
+also_copy = ["configs/", "data/", "docs/", "tests/", "pytest.ini", "ai_orchestrator/", "scripts/", "local_agent/", "orchestrator_v1/"]
+pytest_add_cli_args_test_selection = ["tests/"]

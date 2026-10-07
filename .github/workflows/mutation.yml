@@ -1,0 +1,129 @@
+name: Mutation
+
+# 대표님 확정 2026-10-08: 변이 검증은 mutmut 로 통일(수동으로 코드를 깨뜨려 보는 실험은 하지 않는다).
+# PR 에서는 바뀐 함수만, 수동 실행(workflow_dispatch)은 지정한 패턴만 검사한다. 처음에는 점수로 실패시키지 않고 요약만 남긴다.
+# mutmut 은 Windows 네이티브 미지원이라 ubuntu 에서 돈다. 게이트 검출력 검증은 별도의 고정 시험이 맡는다.
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      files:
+        description: '변이 대상 소스 파일(공백 구분, 예: scripts/ops/changed_functions.py)'
+        required: true
+        type: string
+      tests:
+        description: '실행할 시험 파일(공백 구분, 예: tests/test_changed_functions.py)'
+        required: true
+        type: string
+      patterns:
+        description: 'mutmut 변이체 패턴(공백 구분, 예: "scripts.ops.changed_functions.x_module_dotted_path__mutmut_*")'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUTF8: "1"
+  TARGET_LIMIT: "40"
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install mutmut pytest pytest-timeout
+      - name: 대상 함수 결정
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="origin/${{ github.base_ref }}"
+            python scripts/ops/changed_functions.py "$base" HEAD > all_patterns.txt
+            python scripts/ops/changed_functions.py "$base" HEAD --files > files.txt
+            python scripts/ops/changed_functions.py "$base" HEAD --tests > tests.txt
+          else
+            printf '%s\n' ${{ toJSON(inputs.patterns) }} > all_patterns.txt
+            printf '%s\n' ${{ toJSON(inputs.files) }} > files.txt
+            printf '%s\n' ${{ toJSON(inputs.tests) }} > tests.txt
+          fi
+          sed -i '/^$/d' all_patterns.txt files.txt tests.txt
+          echo "TOTAL_TARGETS=$(wc -l < all_patterns.txt)" >> "$GITHUB_ENV"
+          head -n "$TARGET_LIMIT" all_patterns.txt > patterns.txt
+          echo "--- 변이 대상 파일"; cat files.txt
+          echo "--- 대상 시험(직접 참조)"; cat tests.txt
+          echo "--- 변이체 패턴"; cat patterns.txt
+      - name: mutmut 실행
+        run: |
+          if [ ! -s patterns.txt ]; then echo "- 바뀐 함수 없음 — 건너뜀" >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          if [ ! -s tests.txt ]; then echo "- 바뀐 파일을 직접 참조하는 시험 0개 — 건너뜀(변이를 잡을 시험이 없음)" >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          # 이 실행에서만 pyproject 를 덮어쓴다(커밋하지 않음): 변이 대상=바뀐 파일(전체 46만 변이체 생성 방지),
+          # 시험=바뀐 파일을 직접 참조하는 시험, 사본에도 루트 호환 shim(*.py)을 넣어 import 가 원본과 같게 한다.
+          python - <<'PY'
+          import pathlib
+          from scripts.ops.changed_functions import rewrite_toml_list
+
+          def lines(name):
+              return [x for x in pathlib.Path(name).read_text(encoding="utf-8").split() if x]
+
+          base = ["configs/", "data/", "docs/", "tests/", "pytest.ini", "ai_orchestrator/", "scripts/", "local_agent/", "orchestrator_v1/"]
+          roots = sorted(x.name for x in pathlib.Path(".").glob("*.py"))
+          p = pathlib.Path("pyproject.toml")
+          t = p.read_text(encoding="utf-8")
+          t = rewrite_toml_list(t, "source_paths", lines("files.txt"))
+          t = rewrite_toml_list(t, "also_copy", base + roots)
+          t = rewrite_toml_list(t, "pytest_add_cli_args_test_selection", lines("tests.txt"))
+          p.write_text(t, encoding="utf-8")
+          PY
+          grep -n -E "^(source_paths|also_copy|pytest_add_cli_args_test_selection)" pyproject.toml | cut -c1-300
+          mapfile -t patterns < patterns.txt
+          mutmut run "${patterns[@]}" 2>&1 | tee mutmut_run.log || true
+          if grep -q -E "failed to collect stats|runner returned" mutmut_run.log; then echo "MUTMUT_RUN_FAILED=1" >> "$GITHUB_ENV"; fi
+          echo "--- 함수·상태별 변이체 수 (no tests = 그 함수를 검사할 시험이 없음)"
+          mutmut results --all true > mutmut_results.txt || true
+          sed -E 's/__mutmut_[0-9]+//' mutmut_results.txt | sort | uniq -c | sort -rn | head -n 80 | tee mutmut_by_function.txt
+          { echo; echo "### 함수·상태별 변이체 수"; echo '```'; cat mutmut_by_function.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY" || true
+          # 살아남은 변이체 이름과 diff(최대 30개). 목록 출력만 실패를 무시한다.
+          {
+            grep -E ': survived$' mutmut_results.txt | sed -E 's/: survived$//' | sort | head -n 30 > survivors.txt
+            echo "--- 살아남은 변이체 (최대 30개)"; cat survivors.txt
+            {
+              echo; echo "### 살아남은 변이체"
+              while read -r name; do
+                [ -n "$name" ] || continue
+                echo "#### $name"; echo '```diff'; mutmut show "$name" 2>&1 || true; echo '```'
+              done < survivors.txt
+            } > survivors_report.md
+            cat survivors_report.md
+            cat survivors_report.md >> "$GITHUB_STEP_SUMMARY"
+          } || true
+          mutmut export-cicd-stats || true
+      - name: 요약
+        if: always()
+        run: python scripts/ops/summarize_mutation.py
+      - name: 실행 실패 확인
+        if: always()
+        run: |
+          if [ -n "$MUTMUT_RUN_FAILED" ]; then echo "mutmut 실행 자체가 실패했다(시험 수집 오류 등) — 로그 확인"; exit 1; fi
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mutation-stats
+          path: |
+            mutants/mutmut-cicd-stats.json
+            mutants/*.log
+          if-no-files-found: ignore
