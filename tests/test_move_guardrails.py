@@ -265,3 +265,31 @@ def test_directory_argument_expands_to_all_files_including_init(pkg_repo, capsys
     assert rows[0]["file"] == "scripts/auto/smartstore/__init__.py"
     init_row = rows[0]
     assert any(r["file"] == "scripts/auto/__init__.py" and r["kind"] == "import" for r in init_row["references"])
+
+
+# ── 확인 목록(configs/move_preflight_ack.json): 암묵 직접 실행 차단만 풀고 명시 참조는 계속 막는다 ──────────
+
+
+def _ack(repo, *files, reason="참조 전수 수정 확인"):
+    _w(repo, "configs/move_preflight_ack.json", json.dumps({"acked": [{"file": f, "reason": reason} for f in files]}))
+
+
+def test_ack_lifts_only_the_implicit_main_block(repo):
+    _git(repo, "mv", "dash.py", "pkg/dash.py")
+    assert mp.main(["--staged-renames", "--root", str(repo)]) == 1  # 기본: __main__ 있는 파일은 shim 없으면 차단
+    _ack(repo, "dash.py")
+    assert mp.main(["--staged-renames", "--root", str(repo)]) == 0  # 확인 목록에 있으면 통과
+
+
+def test_ack_without_reason_is_ignored(repo):
+    _git(repo, "mv", "dash.py", "pkg/dash.py")
+    _w(repo, "configs/move_preflight_ack.json", json.dumps({"acked": [{"file": "dash.py"}]}))
+    assert mp.main(["--staged-renames", "--root", str(repo)]) == 1  # 사유 없는 항목은 무효
+
+
+def test_ack_does_not_hide_explicit_references(repo):
+    _w(repo, "run_dash.bat", "python dash.py\n")  # 명시적 직접 실행 참조
+    _git(repo, "add", "-A")
+    _git(repo, "mv", "dash.py", "pkg/dash.py")
+    _ack(repo, "dash.py")
+    assert mp.main(["--staged-renames", "--root", str(repo)]) == 1  # 명시 참조가 남아 있으면 확인 목록과 무관하게 차단

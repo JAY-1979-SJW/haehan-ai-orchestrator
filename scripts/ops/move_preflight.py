@@ -246,7 +246,7 @@ def scan(targets: list[str], root: Path = ROOT) -> dict[str, list[dict]]:
     ts = [_Target(x, root) for x in targets]
     out: dict[str, list[dict]] = {t.rel: [] for t in ts}
     for rel in _tracked_files(root):
-        if Path(rel).suffix.lower() not in _TEXT_EXT:
+        if Path(rel).suffix.lower() not in _TEXT_EXT or rel == ACK_FILE:  # 확인 목록 파일 자신은 참조로 세지 않는다
             continue
         if rel.startswith(("node_modules/", "_archive/", "dist-build-tmp/")):
             continue
@@ -305,6 +305,24 @@ def recommend(t: _Target, refs: list[dict], *, cannot_reason: str | None = None)
     return {"shim": "none", "reason": "참조 없음", "kinds": kinds}
 
 
+ACK_FILE = "configs/move_preflight_ack.json"
+
+
+def _acked(root: Path) -> set[str]:
+    """'__main__ 블록이 있는 파일을 shim 없이 옮겨도 된다'고 **참조 전수 수정 후** 확인해 둔 옛 경로 목록(리뷰 대상 설정 파일).
+
+    암묵 직접 실행(__main__ 블록) 차단만 풀어 준다 — 경로 로드·직접 실행·설정·훅 같은 **명시 참조**가 남아 있으면 여전히 막는다.
+    항목 형식: {"acked": [{"file": "scripts/x.py", "reason": "...", "date": "2026-10-07"}]} (사유 필수)."""
+    p = root / ACK_FILE
+    if not p.is_file():
+        return set()
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    return {e["file"].replace("\\", "/") for e in data.get("acked", []) if e.get("file") and e.get("reason")}
+
+
 def report(files: list[str], root: Path = ROOT, new_paths: dict[str, str] | None = None) -> list[dict]:
     refs_by = scan(files, root)
     out = []
@@ -318,7 +336,7 @@ def report(files: list[str], root: Path = ROOT, new_paths: dict[str, str] | None
         rec = recommend(t, refs, cannot_reason=reason)
         new_mod = module_name(new_paths[rel]) if new_paths and rel in new_paths else None
         shim_ok = _has_matching_shim(t, root, new_mod)
-        if t.has_main and not shim_ok:
+        if t.has_main and not shim_ok and t.rel not in _acked(root):
             refs = [
                 *refs,
                 {
