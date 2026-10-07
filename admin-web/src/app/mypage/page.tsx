@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getMe, changePassword, clearToken, type UserInfo } from "@/lib/userAuth";
+import { MarketingOpsSwitch } from "@/components/settings/MarketingOpsSwitch";
 
 const ROLE_LABEL: Record<string, string> = {
   user: "일반 사용자",
@@ -119,6 +120,9 @@ export default function MyPage() {
             </div>
           </div>
         </div>
+
+        {/* 기능 스위치 — 관리자·오너만(서버 API 도 admin·owner 전용) */}
+        {(user.role === "admin" || user.role === "owner") && <MarketingOpsSwitch />}
 
         {/* 비밀번호 변경 */}
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">

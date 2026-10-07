@@ -12,7 +12,7 @@
 | 2 | 같은 토큰을 **localStorage에도** 저장한다 | `userAuth.ts:17-24`(`getToken`·`setToken`) |
 | 3 | 로그인 응답이 토큰을 JSON 본문으로 주고 페이지가 `setToken(token)` 호출 | `admin-web/src/app/login/page.tsx:22` |
 | 4 | 서버가 `Set-Cookie`하는 곳이 없다 | `admin-web` 전체 grep(`Set-Cookie`·`cookies.set`) 0건 |
-| 5 | localStorage 토큰을 직접 읽는 곳 4곳: `cafeShared.ts:32`, `AiAnalysisTab.tsx:14`, `ApiStatusBanner.tsx:20`, `userAuth.ts`의 `getMe`·`changePassword`(`:68`,`:91`) | grep `localStorage.getItem("haehan_ai_token")`·`getToken()` |
+| 5 | localStorage 토큰을 직접 읽는 곳 5곳: `cafeShared.ts:32`, `AiAnalysisTab.tsx:14`, `ApiStatusBanner.tsx:20`, `userAuth.ts`의 `getMe`·`changePassword`(`:68`,`:91`), **`lib/marketingOps.ts`(마케팅 운영 스위치 — `getToken()`으로 Bearer 를 붙임, 전환 때 `Authorization` 없이 `/api/proxy` 쿠키 방식으로 바꿀 것)** | grep `localStorage.getItem("haehan_ai_token")`·`getToken()` |
 | 6 | 쿠키를 서버에서 읽는 곳: 미들웨어(서명 검증), 프록시(쿠키→`Authorization: Bearer`), `/ops` 서버 컴포넌트 | `middleware.ts:50-67`, `api/proxy/[...path]/route.ts:49-58`, `app/ops/page.tsx:57` |
 | 7 | Electron은 userData `config.json`의 `auth_token`을 preload가 localStorage와 쿠키(`SameSite=Lax; max-age=31536000`, **Secure 없음**, 1년)로 복제한다 | `admin-web/electron/webview_preload.js:28-42`, `electron/lib/config.js:119-125`, `main.js:253` |
 | 8 | CSP·보안 헤더 설정이 없다. `dangerouslySetInnerHTML` 사용은 0건 | `next.config.mjs`(헤더 없음), `middleware.ts` |
