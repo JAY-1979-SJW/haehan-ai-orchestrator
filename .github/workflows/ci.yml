@@ -159,6 +159,11 @@ jobs:
         # (docs/architecture/TOOL_HOME_MAP.md). 기존 집 밖 파일은 configs/tool_home_baseline.json 으로
         # 고정, 기준선에 없는 새 이탈만 FAIL. 규칙·예외 사유: configs/tool_home.json.
         run: python scripts/ops/tool_home_gate.py --check-all
+      - name: 최상위 평면 금지 게이트 (scripts·ai_orchestrator·루트 평면에 새 .py 가 생기면 차단)
+        # 새 코드는 알맞은 하위 폴더에 둔다(docs/architecture/FOLDER_STRUCTURE.md). 기존 평면 파일은
+        # configs/flat_root_baseline.json 으로 고정(줄이기만), 기준선에 없는 새 평면 파일만 FAIL.
+        # 규칙·허용 진입점: configs/flat_root_gate.json.
+        run: python scripts/ops/flat_root_gate.py --check-all
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
         # forbidden_imports/security_patterns/circular_imports 외에 "unknown layer 파일 수"
