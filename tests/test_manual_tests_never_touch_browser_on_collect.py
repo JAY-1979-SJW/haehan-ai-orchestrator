@@ -55,7 +55,7 @@ def test_conftest_skips_manual_tests_even_when_named_explicitly(monkeypatch):
     monkeypatch.delenv(conftest.RUN_MANUAL_ENV, raising=False)
     manual = _Item("tests/integration/manual/test_gmail.py::test_list_inbox")
     manual_win = _Item("tests\\integration\\manual\\test_gmail_direct.py::test_gmail_serial")
-    other = _Item("tests/test_site_task_map.py::test_x")
+    other = _Item("tests/site_work/test_site_task_map.py::test_x")
     conftest.pytest_collection_modifyitems(None, [manual, manual_win, other])
     assert len(manual.markers) == 1 and len(manual_win.markers) == 1  # 건너뛰기 표시가 붙었다
     assert other.markers == []  # 다른 시험은 건드리지 않는다

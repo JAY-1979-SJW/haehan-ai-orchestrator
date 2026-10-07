@@ -13897,7 +13897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_paths.py": {
+  "tests/site_work/test_agent_dispatch_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13905,7 +13905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_policy.py": {
+  "tests/site_work/test_agent_dispatch_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13913,7 +13913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_races.py": {
+  "tests/site_work/test_agent_dispatch_races.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13921,7 +13921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_router.py": {
+  "tests/site_work/test_agent_dispatch_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13929,7 +13929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_service.py": {
+  "tests/site_work/test_agent_dispatch_service.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14257,7 +14257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_approval_audit_log_20260508.py": {
+  "tests/approval/test_approval_audit_log_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14265,7 +14265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_approval_flow_baseline_contract.py": {
+  "tests/approval/test_approval_flow_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14465,7 +14465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_web_task_approval_flow_20260516.py": {
+  "tests/server_features/test_backend_web_task_approval_flow_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15345,7 +15345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_community_scheduler_cdp.py": {
+  "tests/server_features/test_community_scheduler_cdp.py": {
    "layer": "L11",
    "role": "test",
    "domain": "community",
@@ -15881,7 +15881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gongmu_policy.py": {
+  "tests/server_features/test_gongmu_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15889,7 +15889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gongmu_service.py": {
+  "tests/server_features/test_gongmu_service.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17945,7 +17945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_action_planner.py": {
+  "tests/site_engine/test_site_engine_action_planner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17953,7 +17953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_audit.py": {
+  "tests/site_engine/test_site_engine_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17961,7 +17961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_browser_adapter.py": {
+  "tests/site_engine/test_site_engine_browser_adapter.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -17969,7 +17969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_capability_detector.py": {
+  "tests/site_engine/test_site_engine_capability_detector.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17977,7 +17977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_execution_gate.py": {
+  "tests/site_engine/test_site_engine_execution_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17985,7 +17985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_form_resolver.py": {
+  "tests/site_engine/test_site_engine_form_resolver.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17993,7 +17993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_profiles.py": {
+  "tests/site_engine/test_site_engine_profiles.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18001,7 +18001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_registry.py": {
+  "tests/site_engine/test_site_engine_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18009,7 +18009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_validators.py": {
+  "tests/site_engine/test_site_engine_validators.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18017,7 +18017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_workflow_runner.py": {
+  "tests/site_engine/test_site_engine_workflow_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18033,7 +18033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_onboarding.py": {
+  "tests/site_work/test_site_onboarding.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18089,7 +18089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_task_map.py": {
+  "tests/site_work/test_site_task_map.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18097,7 +18097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_task_map_explore.py": {
+  "tests/site_work/test_site_task_map_explore.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18105,7 +18105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_task_map_service.py": {
+  "tests/site_work/test_site_task_map_service.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18425,7 +18425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_user_data_contribution_consent.py": {
+  "tests/server_features/test_user_data_contribution_consent.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18473,7 +18473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_vendor_api_registry.py": {
+  "tests/server_features/test_vendor_api_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18641,7 +18641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_map_labels.py": {
+  "tests/site_work/test_site_map_labels.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18649,7 +18649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_approval_record_concurrency.py": {
+  "tests/approval/test_approval_record_concurrency.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18705,7 +18705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_get_gate_policies.py": {
+  "tests/site_engine/test_site_engine_get_gate_policies.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18713,7 +18713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_approval_state_transition.py": {
+  "tests/approval/test_approval_state_transition.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18825,7 +18825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_map_menu.py": {
+  "tests/site_work/test_site_map_menu.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18833,7 +18833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_map_sources.py": {
+  "tests/site_work/test_site_map_sources.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18913,7 +18913,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "tests/test_site_preflight.py": {
+  "tests/site_work/test_site_preflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18929,7 +18929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_work_record_domain.py": {
+  "tests/site_work/test_work_record_domain.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18937,7 +18937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_work_record_store.py": {
+  "tests/site_work/test_work_record_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18945,7 +18945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_map_history.py": {
+  "tests/site_work/test_site_map_history.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19385,7 +19385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_marketing_ops_router_gates.py": {
+  "tests/server_features/test_marketing_ops_router_gates.py": {
    "layer": "L11",
    "role": "test",
    "domain": "marketing",
@@ -22969,7 +22969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_task_spec.py": {
+  "tests/site_work/test_site_task_spec.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23301,6 +23301,38 @@
    "layer": "L11",
    "role": "test",
    "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/approval/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/server_features/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/site_engine/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/site_work/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

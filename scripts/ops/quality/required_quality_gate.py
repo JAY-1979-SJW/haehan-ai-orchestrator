@@ -89,7 +89,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_module_baseline_contract.py",
         "tests/test_backend_core_baseline_contract.py",
         "tests/test_local_agent_e2e_baseline_contract.py",
-        "tests/test_approval_flow_baseline_contract.py",
+        "tests/approval/test_approval_flow_baseline_contract.py",
         "tests/test_playwright_ai_baseline_contract.py",
         "tests/test_local_agent_browser_runtime_operating_rules.py",
         "tests/test_local_agent_cdp_attach.py",
@@ -168,7 +168,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_module_baseline_contract.py",
         "tests/test_backend_core_baseline_contract.py",
         "tests/test_local_agent_e2e_baseline_contract.py",
-        "tests/test_approval_flow_baseline_contract.py",
+        "tests/approval/test_approval_flow_baseline_contract.py",
         *PYTEST_FLAGS,
     ),
     (

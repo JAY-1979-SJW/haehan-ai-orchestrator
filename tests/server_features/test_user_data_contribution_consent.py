@@ -27,7 +27,7 @@ def _safe_record() -> dict[str, str]:
         "safe_result_summary": "page title extracted",
         "error_code": "",
         "state_transition": "queued->completed",
-        "verification_reference": "tests/test_user_data_contribution_consent.py",
+        "verification_reference": "tests/server_features/test_user_data_contribution_consent.py",
         "user_feedback": "useful",
         "masked_user_reference": "user_***",
     }

@@ -31,7 +31,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_module_baseline_contract.py" in rendered
     assert "tests/test_backend_core_baseline_contract.py" in rendered
     assert "tests/test_local_agent_e2e_baseline_contract.py" in rendered
-    assert "tests/test_approval_flow_baseline_contract.py" in rendered
+    assert "tests/approval/test_approval_flow_baseline_contract.py" in rendered
     assert "tests/test_playwright_ai_baseline_contract.py" in rendered
     assert "tests/test_required_quality_gate.py" in rendered
     assert "tests/test_module_boundaries.py" in rendered

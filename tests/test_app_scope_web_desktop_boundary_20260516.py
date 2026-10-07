@@ -143,7 +143,7 @@ class TestBackendCloseoutBoundary:
 
     # 이 테스트들은 IN_SCOPE 백엔드 준공 항목임을 명시한다.
     CLOSEOUT_IN_SCOPE_TESTS = [
-        "tests/test_backend_web_task_approval_flow_20260516.py",
+        "tests/server_features/test_backend_web_task_approval_flow_20260516.py",
         "tests/test_backend_direct_dict_boundary_lock_20260516.py",
         "tests/test_backend_frontend_dependency_audit_20260516.py",
         "tests/test_backend_endpoint_inventory_recount_20260516.py",

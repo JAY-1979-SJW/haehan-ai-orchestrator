@@ -355,7 +355,7 @@ class TestExistingCloseoutTestsUnchanged:
 
     CLOSEOUT_TESTS = [
         "tests/test_app_scope_web_desktop_boundary_20260516.py",
-        "tests/test_backend_web_task_approval_flow_20260516.py",
+        "tests/server_features/test_backend_web_task_approval_flow_20260516.py",
         "tests/test_backend_direct_dict_boundary_lock_20260516.py",
     ]
 

@@ -15,7 +15,7 @@ from ai_orchestrator.agent_dispatch import agent_dispatch_policy as pol
 from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
 from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc
 from ai_orchestrator.agent_dispatch import agent_dispatch_runner as runner
-from tests.test_agent_dispatch_service import FakeReg, T, make_proposed
+from tests.site_work.test_agent_dispatch_service import FakeReg, T, make_proposed
 
 
 @pytest.fixture
