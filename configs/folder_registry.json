@@ -1003,6 +1003,22 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "ai_orchestrator/browser_tool/worker",
+   "purpose": "브라우저 워커(별도 컨테이너 앱, T4 때 재정리)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(S6 결정 2026-10-08 00:00, 지휘창 전달)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool/worker/backends",
+   "purpose": "브라우저 워커 백엔드(mock·playwright)",
+   "kind": "앱",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(S6 결정 2026-10-08 00:00, 지휘창 전달)"
+  },
+  {
    "path": "ai_orchestrator/clients",
    "purpose": "ai_orchestrator 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "기능",
@@ -1507,22 +1523,6 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
-   "path": "browser_worker",
-   "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "레거시",
-   "status": "legacy_to_remove",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "browser_worker/backends",
-   "purpose": "browser_worker 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "레거시",
-   "status": "legacy_to_remove",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
    "path": "local_agent",
    "purpose": "PC 실행 에이전트 (저장소 루트)",
    "kind": "기능",
@@ -1537,14 +1537,6 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
-  },
-  {
-   "path": "notice_radar",
-   "purpose": "저장소 루트 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "레거시",
-   "status": "legacy_to_remove",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
    "path": "orchestrator_v1",
@@ -1569,6 +1561,14 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "orchestrator_v1/inbox/notice_radar",
+   "purpose": "공고 레이더(공고 수집·분석·브리핑)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(S6 결정 2026-10-08 00:00, 지휘창 전달)"
   },
   {
    "path": "orchestrator_v1/monitoring",

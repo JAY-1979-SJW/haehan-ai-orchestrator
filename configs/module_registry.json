@@ -7529,7 +7529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/__init__.py": {
+  "ai_orchestrator/browser_tool/worker/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7537,7 +7537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/app.py": {
+  "ai_orchestrator/browser_tool/worker/app.py": {
    "layer": "L8",
    "role": "api",
    "domain": "browser",
@@ -7545,7 +7545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/backends/__init__.py": {
+  "ai_orchestrator/browser_tool/worker/backends/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7553,7 +7553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/backends/mock_playwright_backend.py": {
+  "ai_orchestrator/browser_tool/worker/backends/mock_playwright_backend.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7561,7 +7561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/backends/real_playwright_backend.py": {
+  "ai_orchestrator/browser_tool/worker/backends/real_playwright_backend.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -7569,7 +7569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/policy.py": {
+  "ai_orchestrator/browser_tool/worker/policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -7577,7 +7577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/schemas.py": {
+  "ai_orchestrator/browser_tool/worker/schemas.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "browser",
@@ -7585,7 +7585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "browser_worker/service.py": {
+  "ai_orchestrator/browser_tool/worker/service.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -8105,7 +8105,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "notice_radar/__init__.py": {
+  "orchestrator_v1/inbox/notice_radar/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -8113,7 +8113,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "notice_radar/analyzer.py": {
+  "orchestrator_v1/inbox/notice_radar/analyzer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -8121,7 +8121,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "notice_radar/browser_collector.py": {
+  "orchestrator_v1/inbox/notice_radar/browser_collector.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "g2b",
@@ -8129,7 +8129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "notice_radar/collector.py": {
+  "orchestrator_v1/inbox/notice_radar/collector.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "g2b",
@@ -8137,7 +8137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "notice_radar/models.py": {
+  "orchestrator_v1/inbox/notice_radar/models.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "g2b",
@@ -8145,7 +8145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "notice_radar/parsers.py": {
+  "orchestrator_v1/inbox/notice_radar/parsers.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "g2b",
@@ -8153,7 +8153,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "notice_radar/pipeline.py": {
+  "orchestrator_v1/inbox/notice_radar/pipeline.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "g2b",
@@ -8161,7 +8161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "notice_radar/site_profiles.py": {
+  "orchestrator_v1/inbox/notice_radar/site_profiles.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "g2b",

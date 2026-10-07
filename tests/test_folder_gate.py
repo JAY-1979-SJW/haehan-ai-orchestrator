@@ -241,7 +241,8 @@ def test_initial_registration_when_base_has_no_registry_passes(tmp_path):
 # ── 생성·조회 ───────────────────────────────────────────────────────────
 
 
-def test_init_registry_covers_current_tree_and_pre_approved_targets(tmp_path):
+def test_init_registry_covers_current_tree_and_pre_approved_targets(tmp_path, monkeypatch):
+    monkeypatch.setattr(gate, "LEGACY_TO_REMOVE", frozenset({"notice_radar"}))
     _git(tmp_path, "init", "-q")
     _git(tmp_path, "config", "user.email", "t@t")
     _git(tmp_path, "config", "user.name", "t")

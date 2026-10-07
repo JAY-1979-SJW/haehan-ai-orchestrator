@@ -382,7 +382,7 @@ class TestSecurityPolicy(unittest.TestCase):
         import local_agent.user_present_status_sender as sender
 
         src = Path(sender.__file__).read_text(encoding="utf-8")
-        forbidden = ["playwright", "execute_click", "execute_type", "browser_worker"]
+        forbidden = ["playwright", "execute_click", "execute_type", "browser_worker", "ai_orchestrator.browser_tool.worker"]
         for kw in forbidden:
             self.assertNotIn(kw, src, f"금지 키워드 발견: {kw}")
 
@@ -399,7 +399,7 @@ class TestSecurityPolicy(unittest.TestCase):
         import local_agent.user_present_status_sender as sender
 
         src = Path(sender.__file__).read_text(encoding="utf-8")
-        for kw in ["task_executor", "browser_worker"]:
+        for kw in ["task_executor", "browser_worker", "ai_orchestrator.browser_tool.worker"]:
             self.assertNotIn(kw, src)
 
     def test_22_no_db_write(self):

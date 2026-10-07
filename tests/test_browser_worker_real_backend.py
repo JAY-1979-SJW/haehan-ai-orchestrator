@@ -3,8 +3,8 @@
 import os
 from unittest.mock import MagicMock, patch
 
-from browser_worker.backends.real_playwright_backend import RealPlaywrightBackend
-from browser_worker.schemas import WorkerBrowserRequest
+from ai_orchestrator.browser_tool.worker.backends.real_playwright_backend import RealPlaywrightBackend
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest
 
 
 class TestRealPlaywrightBackendFeatureGate:
@@ -41,7 +41,7 @@ class TestRealPlaywrightBackendFeatureGate:
             )
 
             # Mock the sync_playwright to avoid actual launch
-            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
+            with patch("ai_orchestrator.browser_tool.worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
@@ -125,7 +125,7 @@ class TestRealPlaywrightBackendCleanup:
                 dry_run=False,
             )
 
-            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
+            with patch("ai_orchestrator.browser_tool.worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
@@ -156,7 +156,7 @@ class TestRealPlaywrightBackendCleanup:
                 dry_run=False,
             )
 
-            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
+            with patch("ai_orchestrator.browser_tool.worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
@@ -194,7 +194,7 @@ class TestDryRunVsActualExecution:
             dry_run=True,
         )
 
-        from browser_worker.service import handle_browser_request
+        from ai_orchestrator.browser_tool.worker.service import handle_browser_request
 
         response = handle_browser_request(request)
 
@@ -212,7 +212,7 @@ class TestDryRunVsActualExecution:
             dry_run=True,
         )
 
-        from browser_worker.service import handle_browser_request
+        from ai_orchestrator.browser_tool.worker.service import handle_browser_request
 
         response = handle_browser_request(request)
 

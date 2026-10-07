@@ -9,8 +9,8 @@ Execution is gated by:
 
 import os
 
-from browser_worker.policy import evaluate_server_browser_url_policy
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from ai_orchestrator.browser_tool.worker.policy import evaluate_server_browser_url_policy
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 
 try:
     from playwright.sync_api import sync_playwright

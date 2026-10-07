@@ -1,6 +1,6 @@
 """Tests for Browser Worker schemas."""
 
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 
 
 class TestWorkerBrowserRequest:

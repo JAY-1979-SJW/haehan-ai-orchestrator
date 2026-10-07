@@ -16,8 +16,9 @@ RUN pip install --no-cache-dir -c constraints.txt -r requirements.txt
 # Install Playwright Chromium binary and dependencies
 RUN python -m playwright install --with-deps chromium
 
-# Copy browser_worker package only
-COPY browser_worker/ ./browser_worker/
+# Copy the worker package (ai_orchestrator.browser_tool.worker); browser_tool/__init__ imports only within browser_tool
+COPY ai_orchestrator/__init__.py ./ai_orchestrator/__init__.py
+COPY ai_orchestrator/browser_tool/ ./ai_orchestrator/browser_tool/
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
@@ -25,4 +26,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8500/health',timeout=3).status==200 else 1)"
 
 # Start browser worker service
-CMD ["uvicorn", "browser_worker.app:app", "--host", "0.0.0.0", "--port", "8500"]
+CMD ["uvicorn", "ai_orchestrator.browser_tool.worker.app:app", "--host", "0.0.0.0", "--port", "8500"]

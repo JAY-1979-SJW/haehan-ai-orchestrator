@@ -384,6 +384,7 @@ class TestG2BWorkflowCodeSafety(unittest.TestCase):
         code = "\n".join(import_lines)
         self.assertNotIn("task_executor", code)
         self.assertNotIn("browser_worker", code)
+        self.assertNotIn("ai_orchestrator.browser_tool.worker", code)
 
 
 class TestG2BWorkflowFixtureCompatibility(unittest.TestCase):

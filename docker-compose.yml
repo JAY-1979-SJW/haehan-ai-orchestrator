@@ -92,7 +92,7 @@ services:
     image: haehan-ai-orchestrator-browser-worker:local
     container_name: haehan-ai-orchestrator-browser-worker
     working_dir: /app
-    command: ["uvicorn", "browser_worker.app:app", "--host", "0.0.0.0", "--port", "8500"]
+    command: ["uvicorn", "ai_orchestrator.browser_tool.worker.app:app", "--host", "0.0.0.0", "--port", "8500"]
     expose:
       - "8500"
     environment:
