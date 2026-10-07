@@ -2,7 +2,7 @@
  "_comment": "도구 집 게이트(G11) 기준선 — 이미 집 밖에 있던 파일(기존 부채). 늘리는 변경 금지, 이동·삭제로 줄이는 방향만. 규칙: configs/tool_home.json",
  "target": 0,
  "reviewed_at": "",
- "count": 84,
+ "count": 83,
  "note": "하향 갱신: 84 → 84",
  "files": [
   "admin-web/src/app/assistant/(legacy)/cafe/CafeClient.tsx",
@@ -47,7 +47,6 @@
   "ai_orchestrator/connectors/smartstore_router.py",
   "ai_orchestrator/connectors/youtube_router.py",
   "hiworks_mail_reader.py",
-  "scripts/common/youtube_search_cache.py",
   "scripts/gabia_login_watch.py",
   "scripts/mk_catalog/reclassify_blog_new.py",
   "scripts/naver/mail_imap/__init__.py",

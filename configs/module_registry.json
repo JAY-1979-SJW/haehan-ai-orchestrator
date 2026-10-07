@@ -16081,7 +16081,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/youtube/research_common.py": {
+  "scripts/common/youtube_api_common.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -16129,7 +16129,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/youtube/youtube_http_client.py": {
+  "scripts/common/youtube_http_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -22815,6 +22815,14 @@
    "domain": "common",
    "reason": "문서·보관 경로",
    "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/common/youtube_comments.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "youtube",
+   "reason": "도메인(youtube) 자동화",
+   "confidence": "low",
    "source": "rule"
   }
  }

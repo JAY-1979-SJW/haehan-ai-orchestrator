@@ -36,6 +36,7 @@
   {"prefix": "admin-web/src/lib/", "reason": "층 표준 폴더 — 화면 공용 라이브러리"},
   {"prefix": "orchestrator_v1/", "reason": "층 표준 폴더 — 루트 모듈 분리 결과(inbox/tasks/monitoring/core/webhooks)"},
   {"prefix": "scripts/google/youtube", "reason": "도메인 계약 소유 — YouTube 는 google 도메인의 하위 탭(module_contracts·tab_registry, skeleton_gate 'google must not import youtube domain')"},
+  {"prefix": "scripts/common/youtube_", "reason": "scripts/google/youtube 와 scripts/youtube 가 함께 쓰는 공용 잎 — google 도메인은 youtube 도메인을 import 할 수 없어 집(scripts/youtube/) 안에 둘 수 없음(금지 import 해소 구조, 대표님 승인 2026-10-08 00:55)"},
   {"prefix": "ai_orchestrator/connectors/google/", "reason": "도메인 계약 소유 — google 도메인 안의 YouTube 하위 탭 라우터"},
   {"prefix": "scripts/ops/selector_health/sites/", "reason": "플러그인 레지스트리 — 공용 틀 안의 사이트별 플러그인"},
   {"prefix": "scripts/ops/write_gates/", "reason": "플러그인 레지스트리 — 쓰기 게이트 플러그인"},
