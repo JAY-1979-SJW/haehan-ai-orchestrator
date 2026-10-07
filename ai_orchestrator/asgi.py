@@ -121,10 +121,27 @@ def _check_jwt_secret() -> None:
         )
 
 
+def _connect_gate_audit() -> None:
+    """게이트 판정 감사 기록(op_log)을 앱 시작점에서 연결한다.
+
+    게이트 핵심(gate_core)은 scripts 를 import 하지 않으므로(R2d-2 설계서 §4, 순환 해소) 감사 싱크를 여기서 주입한다.
+    scripts.gate(shim)를 import 하는 CLI·스크립트 경로는 shim 이 같은 싱크를 등록한다.
+    """
+    from ai_orchestrator.gates.gate_core import set_audit_sink
+
+    def _audit(name: str, **fields) -> None:
+        from scripts.op_log import log_op
+
+        log_op(name, **fields)
+
+    set_audit_sink(_audit)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
     _check_jwt_secret()
+    _connect_gate_audit()
     logger.info("haehan-ai-orchestrator 시작 | host=%s port=%s", APP_HOST, APP_PORT)
     _write_server_discovery_file()
     _LOOPBACK_ONLY = {"127.0.0.1", "::1", "localhost"}

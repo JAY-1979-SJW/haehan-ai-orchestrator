@@ -187,7 +187,7 @@ def send_fax(body: SendRequest, _: dict = Depends(require_role("admin", "owner")
         raise HTTPException(status_code=400, detail="팩스 발송은 confirmed=true 승인이 필요합니다")
     from ai_orchestrator.gates.fax_send_policy import parse_number
     from ai_orchestrator.persistence import fax_authorization_store as fax_store
-    from scripts.gate import CONFIRM_TEXTS
+    from ai_orchestrator.gates.gate_core import CONFIRM_TEXTS
 
     # 승인 문구(사용자가 직접 입력) → 번호 형식 → 수신거부 순으로 확인한다. 발송 전에 모두 끝낸다.
     require_send_approval("hanafax_send", send_confirm=body.send_confirm, expected=CONFIRM_TEXTS["hanafax_send"])

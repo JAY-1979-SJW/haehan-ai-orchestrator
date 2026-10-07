@@ -10,7 +10,7 @@ from email.utils import getaddresses
 
 from fastapi import HTTPException
 
-from scripts.gate import GateBlocked, require_side_effect
+from ai_orchestrator.gates.gate_core import GateBlocked, require_side_effect
 
 
 def addresses(header_value: str) -> list[str]:
