@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from adapters.command_adapter import run_command
+from orchestrator_v1.tasks.command_adapter import run_command
 
 
 def test_pwd_or_whoami_success():

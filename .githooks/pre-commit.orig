@@ -243,6 +243,17 @@ if _fr.exists() and any(
     if _fr_result.returncode != 0:
         sys.exit(_fr_result.returncode)
 
+# ── 번들 경로 일관성 게이트 (spec·electron-builder·electron js·릴리스 워크플로의 깨진 경로/모듈 차단 — G17) ──
+# 폴더 이동 뒤 PyInstaller spec 진입 파일·hiddenimports·datas, package.json extraResources, lib/*.js 의
+# process.resourcesPath 경로, desktop-release.yml 경로가 그대로 남아 데스크톱 앱이 반복해 깨졌다(2026-10-08).
+# *.spec·package.json·admin-web/electron/**·.github/workflows/**·spec 에 이름이 적힌 .py 가 staged 일 때만
+# 게이트 안에서 판정해 전체 검사한다(아니면 즉시 통과). 우회 옵션 없음.
+_bp = ROOT / "scripts" / "ops" / "bundle_path_gate.py"
+if _bp.exists():
+    _bp_result = subprocess.run([*_pyexe(), str(_bp), "--staged"], cwd=str(ROOT))
+    if _bp_result.returncode != 0:
+        sys.exit(_bp_result.returncode)
+
 # ── 폴더 승인 게이트 (승인 목록에 없는 폴더에 새 코드 파일 차단 — G16) ────────────────────────
 # 새로 추가(A)·이름변경(R)된 코드(.py·.ts·.tsx·.js)의 폴더가 configs/folder_registry.json 에 없으면 차단. 새 폴더는 대표님 승인 후 목록에 추가
 # (PR 라벨 folder-approved 는 CI 가 확인). 삭제·기존 파일 수정은 보지 않는다. 우회 옵션 없음.

@@ -15,12 +15,12 @@ from pathlib import Path
 
 from flask import Blueprint, jsonify, request
 
-from notice_radar import (
+from orchestrator_v1.inbox.notice_radar import (
     analyze_current_browser_notice,
     analyze_notice_folder,
     analyze_notice_url,
 )
-from notice_radar.site_profiles import get_daily_briefing_sites, get_site_profile
+from orchestrator_v1.inbox.notice_radar.site_profiles import get_daily_briefing_sites, get_site_profile
 
 notice_bp = Blueprint("notices", __name__, url_prefix="/api/v1/notices")
 

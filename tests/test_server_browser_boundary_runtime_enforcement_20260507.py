@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import pathlib
 
-from browser_worker.backends.real_playwright_backend import RealPlaywrightBackend
-from browser_worker.policy import (
+from ai_orchestrator.browser_tool.worker.backends.real_playwright_backend import RealPlaywrightBackend
+from ai_orchestrator.browser_tool.worker.policy import (
     DECISION_BLOCK,
     DECISION_REQUIRE_API_CONNECTOR,
     DECISION_REQUIRE_LOCAL_AGENT,
@@ -25,7 +25,7 @@ from browser_worker.policy import (
     DECISION_SERVER_BROWSER_ALLOWED_READONLY,
     evaluate_server_browser_url_policy,
 )
-from browser_worker.schemas import WorkerBrowserRequest
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest
 
 # ── evaluate_server_browser_url_policy 단위 테스트 ────────────────────────────
 
@@ -265,8 +265,8 @@ class TestPageGotoNotCalledForBlockedUrls:
 
 
 class TestSourceCodePolicy:
-    POLICY_FILE = pathlib.Path(__file__).parent.parent / "browser_worker" / "policy.py"
-    BACKEND_FILE = pathlib.Path(__file__).parent.parent / "browser_worker" / "backends" / "real_playwright_backend.py"
+    POLICY_FILE = pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "worker" / "policy.py"
+    BACKEND_FILE = pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "worker" / "backends" / "real_playwright_backend.py"
 
     def _policy_src(self):
         return self.POLICY_FILE.read_text(encoding="utf-8")
@@ -336,12 +336,16 @@ class TestCompatibilityWithBoundaryPolicy:
         assert DECISION_BLOCK == BP_BLOCK
 
     def test_no_circular_import(self):
-        """browser_worker.policy에서 ai_orchestrator import 없음."""
-        import browser_worker.policy as bwp
+        """ai_orchestrator.browser_tool.worker.policy에서 ai_orchestrator import 없음."""
+        import ai_orchestrator.browser_tool.worker.policy as bwp
 
         src = pathlib.Path(bwp.__file__).read_text(encoding="utf-8")
-        assert "from ai_orchestrator" not in src
-        assert "import ai_orchestrator" not in src
+        # 워커 자기 패키지(ai_orchestrator.browser_tool.worker.*) 외의 ai_orchestrator 모듈은 import 하지 않는다(컨테이너에 복사되지 않음).
+        own = "ai_orchestrator.browser_tool.worker"
+        for line in src.splitlines():
+            s = line.strip()
+            if s.startswith(("from ai_orchestrator", "import ai_orchestrator")):
+                assert s.split()[1].startswith(own), s
 
     def test_compatible_google_accounts_decision(self):
         """Google accounts: 양쪽 정책 모두 BLOCK."""

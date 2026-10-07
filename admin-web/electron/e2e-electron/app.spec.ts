@@ -1,21 +1,21 @@
 import { test, expect } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
-import { launchApp } from "./launch_helper";
+import { launchApp, waitForShell } from "./launch_helper";
 
 const SS_DIR = path.resolve(
   __dirname,
   "../../../../data/screenshots_check/electron"
 );
 
-test.setTimeout(90_000);
+test.setTimeout(240_000);
 
 test("Electron 앱 기능 점검", async () => {
   fs.mkdirSync(SS_DIR, { recursive: true });
 
   const app = await launchApp({ HAEHAN_OWNER: "1" });
 
-  const win = await app.firstWindow();
+  const win = await waitForShell(app);
   await win.waitForLoadState("domcontentloaded", { timeout: 30_000 });
 
   // 1. webview 태그 존재

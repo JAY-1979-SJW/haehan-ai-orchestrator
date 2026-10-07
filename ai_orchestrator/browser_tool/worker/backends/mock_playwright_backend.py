@@ -3,7 +3,7 @@
 This backend does not execute actual browser operations.
 It simulates dry-run browser.inspect responses without launching Playwright.
 """
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 
 
 class MockPlaywrightBackend:

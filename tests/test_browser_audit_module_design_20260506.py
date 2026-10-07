@@ -379,7 +379,7 @@ def test_no_browser_import_in_this_module():
 
     src = Path(__file__).read_text(encoding="utf-8")
     tree = ast.parse(src)
-    blocked = {"playwright", "browser_worker", "dispatcher", "task_executor"}
+    blocked = {"playwright", "browser_worker", "ai_orchestrator.browser_tool.worker", "dispatcher", "task_executor"}
     for node in ast.walk(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             names = [node.module] if isinstance(node, ast.ImportFrom) else [a.name for a in node.names]
@@ -395,7 +395,7 @@ def test_no_task_executor_import():
 
     src = Path(__file__).read_text(encoding="utf-8")
     tree = ast.parse(src)
-    blocked = {"task_executor", "browser_worker"}
+    blocked = {"task_executor", "browser_worker", "ai_orchestrator.browser_tool.worker"}
     for node in ast.walk(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             names = [node.module] if isinstance(node, ast.ImportFrom) else [a.name for a in node.names]

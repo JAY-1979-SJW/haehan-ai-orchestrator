@@ -1,8 +1,8 @@
 """브라우저 자동화 API 서버 — 포트 8100
 
 실행:
-  python browser_api/server.py
-  uvicorn browser_api.server:app --host 0.0.0.0 --port 8100 --reload
+  python scripts/archive/misc/browser_api_server.py
+  uvicorn scripts.archive.misc.browser_api_server:app --host 0.0.0.0 --port 8100 --reload
 
 API 문서:
   http://localhost:8100/docs
@@ -12,11 +12,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from fastapi import FastAPI
-from browser_api.router import router
+from scripts.archive.misc.browser_api_router import router
 
 app = FastAPI(
     title="Browser Automation API",
@@ -34,4 +34,4 @@ def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("browser_api.server:app", host="0.0.0.0", port=8100, reload=True)
+    uvicorn.run("scripts.archive.misc.browser_api_server:app", host="0.0.0.0", port=8100, reload=True)

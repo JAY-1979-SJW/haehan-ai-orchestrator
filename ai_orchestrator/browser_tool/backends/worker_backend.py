@@ -13,8 +13,8 @@ from collections.abc import Callable
 import httpx
 
 from ai_orchestrator.browser_tool.schemas import BrowserResult, BrowserTask
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
-from browser_worker.service import handle_browser_request
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from ai_orchestrator.browser_tool.worker.service import handle_browser_request
 
 
 class BrowserWorkerClient:

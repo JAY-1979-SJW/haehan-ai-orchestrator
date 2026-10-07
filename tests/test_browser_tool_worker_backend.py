@@ -5,7 +5,7 @@ from ai_orchestrator.browser_tool.backends.worker_backend import (
     BrowserWorkerClient,
 )
 from ai_orchestrator.browser_tool.schemas import BrowserTask
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 
 
 class MockTransport:
@@ -49,7 +49,7 @@ class TestBrowserWorkerClient:
         mock_transport = MockTransport(mock_response)
 
         client = BrowserWorkerClient(transport_fn=mock_transport)
-        from browser_worker.schemas import WorkerBrowserRequest
+        from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserRequest
 
         request = WorkerBrowserRequest(
             action="browser.inspect",
@@ -190,7 +190,7 @@ class TestBrowserWorkerBackend:
     def test_convert_to_browser_result(self):
         """Test converting worker response to browser result."""
         from ai_orchestrator.browser_tool.schemas import BrowserTask
-        from browser_worker.schemas import WorkerBrowserResponse
+        from ai_orchestrator.browser_tool.worker.schemas import WorkerBrowserResponse
 
         worker_response = WorkerBrowserResponse.dry_run_success(
             action="browser.inspect",

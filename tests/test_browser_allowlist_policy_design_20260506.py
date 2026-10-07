@@ -318,7 +318,7 @@ def test_browser_open_type_close_controlled_allowlist_required():
 
 def test_read_navigate_actions_not_affected():
     """read/navigate 3개 action은 allowlist_required=false or 기존 값 유지."""
-    from agent.action_registry import get_meta
+    from ai_orchestrator.browser_tool.agent_action_registry import get_meta
 
     for action in ["browser.inspect", "browser.plan_click", "browser.plan_open_url"]:
         meta = get_meta(action)

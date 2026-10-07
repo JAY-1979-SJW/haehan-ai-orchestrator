@@ -376,6 +376,7 @@ class TestSecurityPrinciples:
 
         src = inspect.getsource(mod)
         assert "browser_worker" not in src
+        assert "ai_orchestrator.browser_tool.worker" not in src
 
     def test_in_memory_transport_no_external_connection(self):
         transport = InMemoryTestTransport()
