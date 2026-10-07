@@ -102,12 +102,12 @@
   "role": "browser_engine",
   "reason": "BrowserAgent(L4)를 구동해 사이트맵을 탐지하는 실행기 — L1 contract 오분류"
  },
- "scripts/naver/blog/blog_mixin.py": {
+ "scripts/naver/agent_mixins/blog_mixin.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "scripts/naver/cafe/cafe_mixin.py": {
+ "scripts/naver/agent_mixins/cafe_mixin.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
@@ -605,7 +605,7 @@
   "role": "persistence",
   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/browser/cdp/cdp_helper.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
- "scripts/naver/cafe/cafe_mixin_article.py": {
+ "scripts/naver/agent_mixins/cafe_mixin_article.py": {
   "layer": "L4",
   "role": "site_module",
   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L5 이나 실제로 상위 층의 ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py(역방향) 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
@@ -706,32 +706,32 @@
   "role": "policy",
   "reason": "request_approval 은 approval_api_client(L2)로 승인 요청을 보내는 얇은 게이트이고 Flask UI 는 로컬 폴백 — 서버 API 가 아니라 승인 게이트라 L8 이 아님"
  },
- "scripts/naver/blog/blog_mixin_collect.py": {
+ "scripts/naver/agent_mixins/blog_mixin_collect.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "scripts/naver/blog/blog_mixin_common.py": {
+ "scripts/naver/agent_mixins/blog_mixin_common.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "scripts/naver/blog/blog_mixin_download.py": {
+ "scripts/naver/agent_mixins/blog_mixin_download.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "scripts/naver/blog/blog_mixin_neighbor.py": {
+ "scripts/naver/agent_mixins/blog_mixin_neighbor.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "scripts/naver/blog/blog_mixin_read.py": {
+ "scripts/naver/agent_mixins/blog_mixin_read.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"
  },
- "scripts/naver/blog/blog_mixin_write.py": {
+ "scripts/naver/agent_mixins/blog_mixin_write.py": {
   "layer": "L4",
   "role": "browser_engine",
   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다"

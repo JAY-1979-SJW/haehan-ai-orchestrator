@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from scripts.naver.cafe.cafe_mixin_common import _js
+from scripts.naver.agent_mixins.cafe_mixin_common import _js
 
 # 네이버 카페 파일 호스트만 첨부파일로 인정
 _CAFE_FILE_HOSTS = (

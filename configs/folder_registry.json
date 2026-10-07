@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 336,
+ "count": 337,
  "folders": [
   {
    "path": ".",
@@ -2689,6 +2689,14 @@
    "status": "approved",
    "approved_at": "2026-10-08",
    "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "scripts/naver/agent_mixins",
+   "purpose": "엔진(scripts/browser/agent) 이 다중상속으로 합성하는 네이버 블로그·카페·메일 믹스인 — 도구 스크립트(blog·cafe)와 다른 모듈로 두어 엔진↔도구 순환을 끊는다",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(지휘창 전달, T4 순환 해소)"
   }
  ]
 }

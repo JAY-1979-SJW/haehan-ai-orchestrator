@@ -92,9 +92,9 @@ class PageInfo:
 # ── BrowserAgent ──────────────────────────────────────────────────────────────
 from scripts.browser.agent.calendar_mixin import CalendarMixin  # noqa: E402
 from scripts.browser.agent.mybox_mixin import MyBoxMixin  # noqa: E402
-from scripts.naver.blog.blog_mixin import BlogMixin  # noqa: E402
-from scripts.naver.cafe.cafe_mixin import CafeMixin  # noqa: E402
-from scripts.naver.mail.mail_mixin import MailMixin  # noqa: E402
+from scripts.naver.agent_mixins.blog_mixin import BlogMixin  # noqa: E402
+from scripts.naver.agent_mixins.cafe_mixin import CafeMixin  # noqa: E402
+from scripts.naver.agent_mixins.mail_mixin import MailMixin  # noqa: E402
 
 
 class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):

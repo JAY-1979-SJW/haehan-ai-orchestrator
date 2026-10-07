@@ -48,17 +48,17 @@ SEPARATED_MODULES: list[dict] = [
     },
     {
         "name": "cafe_mixin",
-        "root": "scripts/naver/cafe/cafe_mixin.py",
+        "root": "scripts/naver/agent_mixins/cafe_mixin.py",
         "max_root_loc": 30,  # ratchet: 서브믹스인 분리하며 낮춘다(목표 ≤ 200)
-        "leaf_glob": "scripts/naver/cafe/cafe_mixin_*.py",
+        "leaf_glob": "scripts/naver/agent_mixins/cafe_mixin_*.py",
         # 공유 leaf (_js 등 공통 헬퍼)
         "shared_leaves": {"common"},
     },
     {
         "name": "blog_mixin",
-        "root": "scripts/naver/blog/blog_mixin.py",
+        "root": "scripts/naver/agent_mixins/blog_mixin.py",
         "max_root_loc": 30,
-        "leaf_glob": "scripts/naver/blog/blog_mixin_*.py",
+        "leaf_glob": "scripts/naver/agent_mixins/blog_mixin_*.py",
         "shared_leaves": {"common"},
     },
     {

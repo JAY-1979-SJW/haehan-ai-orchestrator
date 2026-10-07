@@ -10,7 +10,7 @@ import re
 import time
 from typing import TYPE_CHECKING, Any
 
-from scripts.naver.cafe.cafe_mixin_common import _js
+from scripts.naver.agent_mixins.cafe_mixin_common import _js
 
 _ATTENDANCE_DATE_RE = r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})"
 
