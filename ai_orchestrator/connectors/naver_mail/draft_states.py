@@ -1,7 +1,7 @@
 """L1 공유 계약 — 메일 AI 초안의 상태 어휘와 상태 전이 규칙(순수 값·판정, 부작용 없음).
 
-저장소(`persistence/naver_mail_draft_store`, L7)는 L2 정책을 읽을 수 없으므로, 저장소와 정책이 함께 쓰는
-상태 이름·전이표·유효 기간을 여기에 둔다. 정책(`gates/mail_draft_policy`)은 이 이름들을 그대로 다시 내보낸다.
+저장소(`connectors/naver_mail/draft_store`, L7)는 L2 정책을 읽을 수 없으므로, 저장소와 정책이 함께 쓰는
+상태 이름·전이표·유효 기간을 여기에 둔다. 정책(`connectors/naver_mail/draft_policy`)은 이 이름들을 그대로 다시 내보낸다.
 """
 
 from __future__ import annotations

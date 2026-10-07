@@ -87,7 +87,7 @@
 - `scripts/naver_mail/{background_runner,settings_panel}.py`(2, 재노출 shim) → `scripts/naver/mail/`
 - `scripts/naver/automation/{,integration/}mail_automation.py`(2) → `scripts/naver/mail/` (결함 #39: `NaverMail` 부재 UNREACHED — 이동 전에 폐기 여부 결정)
 - `scripts/ops/` 감사·스모크 21개 → archive후보(참조 0건 다수) 또는 `scripts/naver/mail/ops/`
-- `ai_orchestrator/routers/naver_mailbox_router.py`·`naver_mail_bulk_router.py` → `connectors/naver_mail/mailbox_router.py`·`bulk_router.py`, 평면 `connectors/naver_mail_router.py` → `connectors/naver_mail/router.py`(옛 `/naver-mail`, 항상 501 — B 점검)
+- `ai_orchestrator/connectors/naver_mail/mailbox_router.py`·`naver_mail_bulk_router.py` → `connectors/naver_mail/mailbox_router.py`·`bulk_router.py`, 평면 `connectors/naver_mail_router.py` → `connectors/naver_mail/router.py`(옛 `/naver-mail`, 항상 501 — B 점검)
 - `local_agent/browser/mixins/mail_mixin.py` → T4연동
 
 **naver_blog (이탈 41)**

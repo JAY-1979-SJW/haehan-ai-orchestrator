@@ -1,4 +1,4 @@
-"""네이버 메일 순차 대량 발송 라우터 (L8) — HTTP 처리만. 업무 흐름은 services/mail_bulk_service.
+"""네이버 메일 순차 대량 발송 라우터 (L8) — HTTP 처리만. 업무 흐름은 connectors/naver_mail/bulk_service.
 
 기준서: docs/specs/2026-10-02_mail_bulk_sequential.md
   GET  /mail-bulk/authorizations                  — 승인서 목록(주소 마스킹)
@@ -27,7 +27,7 @@ from fastapi import Path as PathParam
 from pydantic import BaseModel, Field
 
 from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.services import mail_bulk_service as service
+from ai_orchestrator.connectors.naver_mail import bulk_service as service
 
 naver_mail_bulk_router = APIRouter(prefix="/mail-bulk", tags=["mail-bulk"])
 _ADMIN = Depends(require_role("admin", "owner"))

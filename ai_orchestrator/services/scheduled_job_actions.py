@@ -299,7 +299,7 @@ def _fax_send_params(params: dict[str, Any]) -> dict[str, Any]:
 
 def _mail_bulk_params(params: dict[str, Any]) -> dict[str, Any]:
     """승인서 id 하나만 받는다. 수신자·내용·첨부는 승인서에서 읽는다(여기서 바꿀 수 없다)."""
-    from ai_orchestrator.persistence import mail_bulk_store as bulk_store
+    from ai_orchestrator.connectors.naver_mail import bulk_store as bulk_store
 
     extra = set(params) - {"authorization_id"}
     if extra:
@@ -315,7 +315,7 @@ def _mail_bulk_params(params: dict[str, Any]) -> dict[str, Any]:
 
 def _run_naver_mail_bulk_send(params: dict[str, Any]) -> str:
     """승인서 범위 안에서 메일을 한 명씩 차례로 보내는 백그라운드 실행을 시작한다(오래 걸려 예약 루프를 막지 않는다)."""
-    from ai_orchestrator.services import mail_bulk_service as bulk_service
+    from ai_orchestrator.connectors.naver_mail import bulk_service as bulk_service
 
     auth_id = params["authorization_id"]
     if bulk_service.status(auth_id)["running"]:

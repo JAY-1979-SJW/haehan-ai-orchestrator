@@ -16,8 +16,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
-from ai_orchestrator.workflows import naver_mailbox_flow as service
+from ai_orchestrator.connectors.naver_mail.mailbox_router import naver_mailbox_router
+from ai_orchestrator.connectors.naver_mail import mailbox_flow as service
 from scripts.naver.mail_imap import attachments as att
 from scripts.naver.mail_imap import folders as fld
 from scripts.naver.mail_imap import mailbox as mb

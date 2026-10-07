@@ -3,7 +3,7 @@
 기준서: docs/specs/2026-10-02_construction_gongmu.md (G1)
 - 이 모듈은 외부 사이트에 접속하지 않고 아무것도 제출·발송하지 않는다(G3 연동 전까지).
 - 업무 판정은 `gates/gongmu_task_policy`(순수), 저장은 `persistence/gongmu_store`.
-- 서류 경로·가져오기 파일은 메일 첨부와 같은 허용 폴더 규칙(`mail_draft_policy.validate_attachment_path`)으로
+- 서류 경로·가져오기 파일은 메일 첨부와 같은 허용 폴더 규칙(`naver_mail.draft_policy.validate_attachment_path`)으로
   검사한다(openpyxl 은 XML 공격을 막지 않으므로 임의 경로를 받지 않는다).
 - 법률 판단을 제공하지 않는다 — `DISCLAIMER` 를 화면에 보여준다.
 """
@@ -18,7 +18,7 @@ from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from ai_orchestrator.gates import gongmu_task_policy as policy
-from ai_orchestrator.gates import mail_draft_policy as draft_policy
+from ai_orchestrator.connectors.naver_mail import draft_policy as draft_policy
 from ai_orchestrator.persistence import gongmu_store as store
 
 ROOT = Path(__file__).resolve().parents[2]

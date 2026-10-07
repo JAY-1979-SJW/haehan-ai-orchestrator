@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 
 from ai_orchestrator import mcp_server
-from ai_orchestrator.gates import mail_new_policy as pol
+from ai_orchestrator.connectors.naver_mail import new_policy as pol
 from scripts.naver.mail_imap import mailbox
 
 

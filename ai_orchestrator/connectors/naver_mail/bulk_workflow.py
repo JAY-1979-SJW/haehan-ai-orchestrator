@@ -25,8 +25,8 @@ from datetime import UTC, datetime
 from datetime import time as dtime
 from typing import Any
 
-from ai_orchestrator.gates import mail_bulk_policy as policy
-from ai_orchestrator.persistence import mail_bulk_store as store
+from ai_orchestrator.connectors.naver_mail import bulk_policy as policy
+from ai_orchestrator.connectors.naver_mail import bulk_store as store
 from scripts.naver.mail_imap import attachments as att
 from scripts.naver.mail_imap import sender as smtp_draft
 

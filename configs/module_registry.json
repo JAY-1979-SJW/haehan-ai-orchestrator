@@ -3841,7 +3841,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/domain/mail_draft_states.py": {
+  "ai_orchestrator/connectors/naver_mail/draft_states.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -4089,7 +4089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/mail_bulk_policy.py": {
+  "ai_orchestrator/connectors/naver_mail/bulk_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -4097,7 +4097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/mail_draft_policy.py": {
+  "ai_orchestrator/connectors/naver_mail/draft_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -4105,7 +4105,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/gates/mail_new_policy.py": {
+  "ai_orchestrator/connectors/naver_mail/new_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -5553,7 +5553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/mail_bulk_store.py": {
+  "ai_orchestrator/connectors/naver_mail/bulk_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5561,7 +5561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/persistence/naver_mail_draft_store.py": {
+  "ai_orchestrator/connectors/naver_mail/draft_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_mail",
@@ -5761,7 +5761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/naver_mail_bulk_router.py": {
+  "ai_orchestrator/connectors/naver_mail/bulk_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_mail",
@@ -5769,7 +5769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/naver_mailbox_router.py": {
+  "ai_orchestrator/connectors/naver_mail/mailbox_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_mail",
@@ -6073,7 +6073,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/services/mail_bulk_service.py": {
+  "ai_orchestrator/connectors/naver_mail/bulk_service.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -7153,7 +7153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/workflows/naver_mail_bulk.py": {
+  "ai_orchestrator/connectors/naver_mail/bulk_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_mail",
@@ -7161,7 +7161,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/workflows/naver_mail_drafts.py": {
+  "ai_orchestrator/connectors/naver_mail/drafts_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_mail",
@@ -7169,7 +7169,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/workflows/naver_mailbox_flow.py": {
+  "ai_orchestrator/connectors/naver_mail/mailbox_flow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_mail",
@@ -22806,6 +22806,14 @@
    "role": "persistence",
    "domain": "naver_cafe",
    "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/naver_mail/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
    "confidence": "low",
    "source": "rule"
   }
