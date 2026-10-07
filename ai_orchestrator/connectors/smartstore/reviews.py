@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.gates.send_approval import require_send_approval
 
 from ...audit_logger import log_event
 from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, run_with_cdp_page, save_ss
@@ -79,6 +80,8 @@ class ReplyReviewsRequest(BaseModel):
     limit: int = 10
     dry_run: bool = True
     confirm: bool = False
+    # 실제 저장(dry_run=false)일 때 사용자가 직접 입력한 승인 문구. 없거나 다르면 403.
+    send_confirm: str | None = None
 
 
 @router.post("/reviews/reply")
@@ -93,6 +96,10 @@ def api_reviews_reply(body: ReplyReviewsRequest, user: dict = Depends(require_ro
             "note": "dry_run=True — 실제 저장 없이 계획만 반환합니다.",
             "limit": body.limit,
         }
+    from scripts.gate import CONFIRM_TEXTS
+
+    # 실제 저장은 사용자가 직접 입력한 승인 문구가 있어야 한다(없으면 403, CDP 접근 전에 차단)
+    require_send_approval("smartstore_reply", send_confirm=body.send_confirm, expected=CONFIRM_TEXTS["smartstore_reply"])
     sys.path.insert(0, str(ROOT))
     from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder
 
