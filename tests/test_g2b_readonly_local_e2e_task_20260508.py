@@ -12,7 +12,7 @@ import pathlib
 import pytest
 
 from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile as get_profile
-from ai_orchestrator.local_agent.security_guard import validate_task_before_run
+from local_agent.runtime.security_guard import validate_task_before_run
 from ai_orchestrator.contracts.local_task_protocol import (
     ALLOWED_TASK_ACTIONS,
     EXEC_MODE_LOCAL_PLAYWRIGHT,
@@ -207,7 +207,7 @@ class TestG2bAuthDetection:
         return mock_run
 
     def test_login_signal_returns_waiting_user_auth(self):
-        from ai_orchestrator.local_agent.auth_wait_controller import (
+        from local_agent.runtime.auth_wait_controller import (
             AUTH_SIGNAL_LOGIN,
             enter_auth_wait,
         )
@@ -217,7 +217,7 @@ class TestG2bAuthDetection:
         assert result["sensitive_data_collected"] is False
 
     def test_cert_signal_returns_waiting_user_auth(self):
-        from ai_orchestrator.local_agent.auth_wait_controller import (
+        from local_agent.runtime.auth_wait_controller import (
             AUTH_SIGNAL_CERT,
             enter_auth_wait,
         )
@@ -226,7 +226,7 @@ class TestG2bAuthDetection:
         assert result["status"] == STATUS_WAITING_USER_AUTH
 
     def test_otp_signal_returns_user_action_required(self):
-        from ai_orchestrator.local_agent.auth_wait_controller import (
+        from local_agent.runtime.auth_wait_controller import (
             AUTH_SIGNAL_OTP,
             enter_auth_wait,
         )
@@ -235,7 +235,7 @@ class TestG2bAuthDetection:
         assert result["status"] == STATUS_USER_ACTION_REQUIRED
 
     def test_auto_resume_allowed_for_read_page(self):
-        from ai_orchestrator.local_agent.auto_resume_after_auth import can_auto_resume
+        from local_agent.runtime.auto_resume_after_auth import can_auto_resume
 
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("extract_text") is True
@@ -243,7 +243,7 @@ class TestG2bAuthDetection:
         assert can_auto_resume("detect_login_status") is True
 
     def test_auto_resume_blocked_for_dangerous_actions(self):
-        from ai_orchestrator.local_agent.auto_resume_after_auth import can_auto_resume
+        from local_agent.runtime.auto_resume_after_auth import can_auto_resume
 
         assert can_auto_resume("submit") is False
         assert can_auto_resume("sign") is False

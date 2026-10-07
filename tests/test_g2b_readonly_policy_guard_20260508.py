@@ -18,11 +18,11 @@ from ai_orchestrator.browser_tool.security_signal_detector import (
     SIG_PAYMENT_OR_TRANSFER,
     detect_from_page_text,
 )
-from ai_orchestrator.local_agent.auto_resume_after_auth import (
+from local_agent.runtime.auto_resume_after_auth import (
     can_auto_resume,
     classify_resume_eligibility,
 )
-from ai_orchestrator.local_agent.security_guard import (
+from local_agent.runtime.security_guard import (
     block_forbidden_action,
     validate_task_before_run,
 )

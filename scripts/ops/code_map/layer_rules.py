@@ -31,7 +31,7 @@ LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
     "logging_utils.py": ("L3", "shared logging facade, IO wrapper"),
     "ai_orchestrator/contracts/local_task_protocol.py": ("L1", "task protocol DTO/contract"),
     "ai_orchestrator/safety_policy/secret_redaction.py": ("L1", "redaction helper (L1 per layer definition)"),
-    "ai_orchestrator/local_agent/result_sanitizer.py": ("L1", "result sanitizer/redaction helper"),
+    "local_agent/runtime/result_sanitizer.py": ("L1", "result sanitizer/redaction helper"),
     "local_agent/desktop_config.py": ("L1", "desktop config helper"),
     "local_agent/network_bypass.py": ("L3", "low-level network IO helper"),
 }

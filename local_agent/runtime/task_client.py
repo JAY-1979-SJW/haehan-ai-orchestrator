@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.local_agent.result_sanitizer import sanitize_result
-from ai_orchestrator.local_agent.security_guard import (
+from local_agent.runtime.result_sanitizer import sanitize_result
+from local_agent.runtime.security_guard import (
     validate_task_before_run,
 )
 from ai_orchestrator.contracts.local_task_protocol import (

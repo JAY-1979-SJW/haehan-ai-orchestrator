@@ -29,7 +29,7 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.local_agent.auth_wait_controller import (
+from local_agent.runtime.auth_wait_controller import (
     AUTH_SIGNAL_CERT,
     AUTH_SIGNAL_LOGIN,
     AUTH_SIGNAL_OTP,

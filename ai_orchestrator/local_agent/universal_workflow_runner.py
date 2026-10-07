@@ -18,7 +18,7 @@ from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
 )
-from ai_orchestrator.local_agent.approval_audit_log import (
+from local_agent.runtime.approval_audit_log import (
     log_execution_blocked,
     log_execution_completed,
     log_execution_started,

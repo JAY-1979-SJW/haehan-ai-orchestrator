@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.security_guard import (
+from local_agent.runtime.security_guard import (
     block_forbidden_action,
     detect_user_direct_required,
     sanitize_runtime_result,

@@ -21,10 +21,10 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from ai_orchestrator.local_agent.download_policy import (
+from local_agent.runtime.download_policy import (
     check_file,
 )
-from ai_orchestrator.local_agent.download_result_sanitizer import (
+from local_agent.runtime.download_result_sanitizer import (
     sanitize_download_result,
     validate_sanitized_download_result,
 )

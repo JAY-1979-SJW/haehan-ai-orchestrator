@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.task_client import poll_and_run_once
+from local_agent.runtime.task_client import poll_and_run_once
 from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,

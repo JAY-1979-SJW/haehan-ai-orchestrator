@@ -36,19 +36,19 @@ _REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_orchestrator.local_agent.download_upload_manifest import build_manifest  # noqa: E402
-from ai_orchestrator.local_agent.local_session_boundary import enforce_session_boundary  # noqa: E402
-from ai_orchestrator.local_agent.playwright_bootstrap import (  # noqa: E402
-    PLAYWRIGHT_READY,
-    check_playwright_status,
-)
-from ai_orchestrator.local_agent.result_sanitizer import sanitize_result  # noqa: E402
 from ai_orchestrator.contracts.local_task_protocol import (  # noqa: E402
     STATUS_FAILED,
     STATUS_USER_ACTION_REQUIRED,
     STATUS_WAITING_USER_AUTH,
     build_task,
 )
+from local_agent.runtime.download_upload_manifest import build_manifest  # noqa: E402
+from local_agent.runtime.local_session_boundary import enforce_session_boundary  # noqa: E402
+from local_agent.runtime.playwright_bootstrap import (  # noqa: E402
+    PLAYWRIGHT_READY,
+    check_playwright_status,
+)
+from local_agent.runtime.result_sanitizer import sanitize_result  # noqa: E402
 
 # ── 설정 ──────────────────────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ def _check_dangerous_state(result: dict) -> str | None:
 
 
 def _run_e2e() -> dict:
-    from ai_orchestrator.local_agent.playwright_runner import run_task
+    from local_agent.runtime.playwright_runner import run_task
 
     report: dict = {
         "run_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
@@ -227,7 +227,7 @@ def _run_e2e() -> dict:
     manifest = build_manifest(
         task_id=TASK_ID,
         downloaded_files=sample_candidates,
-        task_downloaded_filenames=[f["filename"] for f in sample_candidates],
+        task_downloaded_filenames=[str(f["filename"]) for f in sample_candidates],
     )
     step_e = {
         "step": "download_manifest_dry_run",

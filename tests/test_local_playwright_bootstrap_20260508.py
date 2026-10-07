@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 import types
-import ai_orchestrator.local_agent.playwright_bootstrap as bootstrap
-from ai_orchestrator.local_agent.playwright_bootstrap import (
+import local_agent.runtime.playwright_bootstrap as bootstrap
+from local_agent.runtime.playwright_bootstrap import (
     PLAYWRIGHT_READY,
     PLAYWRIGHT_PACKAGE_MISSING,
     PLAYWRIGHT_BROWSER_MISSING,

@@ -10,7 +10,7 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from ai_orchestrator.local_agent.approval_audit_log import (
+from local_agent.runtime.approval_audit_log import (
     log_execution_blocked,
     log_execution_completed,
     log_execution_started,
@@ -22,7 +22,7 @@ from ai_orchestrator.local_agent.delegated_permission_gate import (
     GATE_USER_DIRECT,
     evaluate_gate,
 )
-from ai_orchestrator.local_agent.safe_write_result_sanitizer import (
+from local_agent.runtime.safe_write_result_sanitizer import (
     build_write_result,
     sanitize_write_result,
 )

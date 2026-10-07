@@ -38,7 +38,7 @@ from ai_orchestrator.local_agent.naver_content_workflow_runner import (  # noqa:
     WORKFLOW_WARN_PERMISSION,
     run_cafe_to_blog_workflow,
 )
-from ai_orchestrator.local_agent.playwright_bootstrap import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+from local_agent.runtime.playwright_bootstrap import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     PLAYWRIGHT_READY,
     check_playwright_status,
 )
@@ -76,7 +76,7 @@ def main() -> None:
         }
     else:
         try:
-            from ai_orchestrator.local_agent.playwright_runner import run_task
+            from local_agent.runtime.playwright_runner import run_task
 
             report = run_cafe_to_blog_workflow(
                 cafe_url=CAFE_URL,
@@ -98,8 +98,9 @@ def main() -> None:
     path = _save_report(report)
     print(f"\n[결과] final_status={report['final_status']}")
     print(f"[권한 필요] {report.get('permission_required', [])}")
-    if report.get("blog_draft"):
-        titles = report["blog_draft"].get("title_candidates", [])
+    blog_draft = report.get("blog_draft")
+    if isinstance(blog_draft, dict) and blog_draft:
+        titles = blog_draft.get("title_candidates", [])
         print(f"[초안 제목 후보] {titles[:2]}")
     print(f"[리포트] {path}")
 

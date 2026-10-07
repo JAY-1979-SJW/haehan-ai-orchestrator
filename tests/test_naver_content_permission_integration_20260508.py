@@ -6,14 +6,6 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.approval_audit_log import (
-    EVENT_EXECUTION_COMPLETED,
-    EVENT_EXECUTION_STARTED,
-    clear_log,
-    get_log,
-    get_log_for_permission,
-    has_sensitive_data,
-)
 from ai_orchestrator.local_agent.content_workflow_policy import (
     GRADE_USER_DIRECT,
     get_workflow_grade,
@@ -37,6 +29,14 @@ from ai_orchestrator.local_agent.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,
+)
+from local_agent.runtime.approval_audit_log import (
+    EVENT_EXECUTION_COMPLETED,
+    EVENT_EXECUTION_STARTED,
+    clear_log,
+    get_log,
+    get_log_for_permission,
+    has_sensitive_data,
 )
 
 
@@ -254,32 +254,36 @@ class TestExistingSystemRegression:
         assert result["status"] == EXEC_BLOCKED
 
     def test_existing_security_guard(self):
-        from ai_orchestrator.local_agent.security_guard import validate_task_before_run
         from ai_orchestrator.contracts.local_task_protocol import build_task
+        from local_agent.runtime.security_guard import validate_task_before_run
 
         task = build_task("read_page", "https://www.g2b.go.kr/", domain="www.g2b.go.kr")
         guard = validate_task_before_run(task)
         assert guard["allowed"] is True
 
     def test_existing_auth_wait_controller(self):
-        from ai_orchestrator.local_agent.auth_wait_controller import (
+        from ai_orchestrator.contracts.local_task_protocol import (
+            STATUS_WAITING_USER_AUTH,
+        )
+        from local_agent.runtime.auth_wait_controller import (
             AUTH_SIGNAL_LOGIN,
             enter_auth_wait,
         )
-        from ai_orchestrator.contracts.local_task_protocol import STATUS_WAITING_USER_AUTH
 
         result = enter_auth_wait("regression-naver", AUTH_SIGNAL_LOGIN, "nid.naver.com")
         assert result["status"] == STATUS_WAITING_USER_AUTH
         assert result["sensitive_data_collected"] is False
 
     def test_naver_domain_profile_registered(self):
-        from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile
+        from ai_orchestrator.browser_tool.domain_profile_registry import (
+            get_domain_profile,
+        )
 
         profile = get_domain_profile("cafe.naver.com")
         assert profile["default_execution"] == "LOCAL_BROWSER_DEFAULT"
 
     def test_download_policy_still_works(self):
-        from ai_orchestrator.local_agent.download_policy import check_file
+        from local_agent.runtime.download_policy import check_file
 
         assert check_file("입찰공고문.pdf", task_downloaded_files=["입찰공고문.pdf"])["upload_allowed"] is True
         assert check_file("cert.pfx", task_downloaded_files=["cert.pfx"])["upload_allowed"] is False

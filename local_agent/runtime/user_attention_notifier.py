@@ -86,7 +86,7 @@ def request_browser_foreground(
     실패해도 WARN 처리하며 작업은 계속된다.
     """
     try:
-        from ai_orchestrator.local_agent.browser_foreground_adapter import (
+        from local_agent.runtime.browser_foreground_adapter import (
             request_foreground,
         )
 
@@ -129,7 +129,7 @@ def notify_auth_required(
     """
     # OS 알림 발송
     try:
-        from ai_orchestrator.local_agent.user_notification_adapter import (
+        from local_agent.runtime.user_notification_adapter import (
             notify_auth_required as _notify,
         )
 

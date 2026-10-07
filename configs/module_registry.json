@@ -4265,7 +4265,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/approval_audit_log.py": {
+  "local_agent/runtime/approval_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4273,7 +4273,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/auth_completion_detector.py": {
+  "local_agent/runtime/auth_completion_detector.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4281,7 +4281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/auth_wait_controller.py": {
+  "local_agent/runtime/auth_wait_controller.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4289,7 +4289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/auto_resume_after_auth.py": {
+  "local_agent/runtime/auto_resume_after_auth.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4745,7 +4745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser_foreground_adapter.py": {
+  "local_agent/runtime/browser_foreground_adapter.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4793,7 +4793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/common_tool_runtime.py": {
+  "local_agent/runtime/common_tool_runtime.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4849,7 +4849,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/download_policy.py": {
+  "local_agent/runtime/download_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4857,7 +4857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/download_result_sanitizer.py": {
+  "local_agent/runtime/download_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4865,7 +4865,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/download_upload_manifest.py": {
+  "local_agent/runtime/download_upload_manifest.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4905,7 +4905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/local_session_boundary.py": {
+  "local_agent/runtime/local_session_boundary.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4953,7 +4953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/playwright_bootstrap.py": {
+  "local_agent/runtime/playwright_bootstrap.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4961,7 +4961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/playwright_runner.py": {
+  "local_agent/runtime/playwright_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4977,7 +4977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/result_sanitizer.py": {
+  "local_agent/runtime/result_sanitizer.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4985,7 +4985,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/safe_write_result_sanitizer.py": {
+  "local_agent/runtime/safe_write_result_sanitizer.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4993,7 +4993,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/security_guard.py": {
+  "local_agent/runtime/security_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5089,7 +5089,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/task_client.py": {
+  "local_agent/runtime/task_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -5185,7 +5185,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/user_attention_notifier.py": {
+  "local_agent/runtime/user_attention_notifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -5201,7 +5201,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/user_notification_adapter.py": {
+  "local_agent/runtime/user_notification_adapter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
