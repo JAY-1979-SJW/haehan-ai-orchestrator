@@ -91,7 +91,12 @@ except (ValueError, TypeError):
     APP_PORT = 8401
 
 # ── JWT 인증 ────────────────────────────────────────────────────────────────
-JWT_SECRET = os.environ.get("JWT_SECRET", "").strip() or _secrets.token_hex(32)
+_JWT_SECRET_ENV = os.environ.get("JWT_SECRET", "").strip()
+JWT_SECRET_CONFIGURED = bool(_JWT_SECRET_ENV)  # False 면 아래 임의 키 — 재시작·다중 프로세스에서 토큰이 맞지 않는다
+JWT_SECRET = _JWT_SECRET_ENV or _secrets.token_hex(32)
+# true 면 AUTH_ENABLED 인데 JWT_SECRET 이 없을 때 서버가 시작하지 않는다(asgi._check_jwt_secret). 기본 false = 경고만.
+JWT_SECRET_REQUIRED = os.environ.get("JWT_SECRET_REQUIRED", "").strip().lower() in {"1", "true", "yes", "on"}
+JWT_SECRET_MIN_LENGTH = 32
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = 30
 
