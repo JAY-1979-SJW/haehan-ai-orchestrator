@@ -55,12 +55,6 @@ FAILED	tests/test_dashboard_routes.py::test_dashboard_shows_summary_cards	jinja2
 FAILED	tests/test_dashboard_routes.py::test_dashboard_with_pending_token	jinja2.exceptions.TemplateNotFound: dashboard.html
 FAILED	tests/test_dashboard_routes.py::test_task_detail_200_not_found	jinja2.exceptions.TemplateNotFound: task_detail.html
 FAILED	tests/test_dashboard_routes.py::test_task_detail_200_with_token	jinja2.exceptions.TemplateNotFound: task_detail.html
-FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_expected_safe_result_fixture_loads	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_expecte
-FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_fixture_dangerous_actions_false	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_local_e
-FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_fixture_execution_mode_local_playwright	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_local_e
-FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_fixture_loads	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_local_e
-FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_fixture_no_auto_login	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_local_e
-FAILED	tests/test_g2b_readonly_local_e2e_task_20260508.py::TestG2bTaskProtocol::test_fixture_readonly_true	FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\skyjw\\claude-dev-handoff\\01. haehan-ai-orchestrator\\tests\\fixtures\\g2b_readonly_local_e
 FAILED	tests/test_kakao_webhooks.py::test_kakaotalk_channel_empty_payload_rejected	assert 401 == 400
 FAILED	tests/test_kakao_webhooks.py::test_kakaotalk_channel_empty_utterance_rejected	assert 401 == 400
 FAILED	tests/test_kakao_webhooks.py::test_kakaotalk_channel_missing_user_id_rejected	assert 401 == 400
@@ -78,18 +72,6 @@ FAILED	tests/test_kakao_webhooks.py::test_kakaowork_missing_user_id_rejected	ass
 FAILED	tests/test_kakao_webhooks.py::test_kakaowork_null_payload_rejected	assert 401 == 400
 FAILED	tests/test_kakao_webhooks.py::test_kakaowork_valid_signature	assert 401 == 200
 FAILED	tests/test_kakao_webhooks.py::test_kakaowork_via_api	assert 401 == 200
-FAILED	tests/test_local_agent_user_field_test.py::test_agent_id_masked_in_report	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
-FAILED	tests/test_local_agent_user_field_test.py::test_audit_fail_desktop_ui_touched	AssertionError: assert 'FAIL_REPORT_MISSING' == 'FAIL_DESKTOP_UI_TOUCHED'
-FAILED	tests/test_local_agent_user_field_test.py::test_audit_warn_same_machine	AssertionError: assert 'FAIL_REPORT_MISSING' in ('PASS_USER_FIELD_TEST', 'WARN_SAME_MACHINE_TEST_ONLY')
-FAILED	tests/test_local_agent_user_field_test.py::test_checksums_exists	AssertionError: assert False
-FAILED	tests/test_local_agent_user_field_test.py::test_credential_manager_value_not_exported	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
-FAILED	tests/test_local_agent_user_field_test.py::test_no_token_leak_in_report	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
-FAILED	tests/test_local_agent_user_field_test.py::test_report_artifacts_have_sha256	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
-FAILED	tests/test_local_agent_user_field_test.py::test_report_exists	AssertionError: assert False
-FAILED	tests/test_local_agent_user_field_test.py::test_report_has_required_steps	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
-FAILED	tests/test_local_agent_user_field_test.py::test_report_is_valid_json	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
-FAILED	tests/test_local_agent_user_field_test.py::test_report_marks_desktop_ui_unchanged	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
-FAILED	tests/test_local_agent_user_field_test.py::test_report_required_steps_passed	FileNotFoundError: [Errno 2] No such file or directory: 'data\\inspection\\local_agent_user_field_test\\user_field_test_report.json'
 FAILED	tests/test_message_classifier.py::test_api_classify_invalid_source_type	assert 401 == 400
 FAILED	tests/test_message_classifier.py::test_api_classify_kakaotalk_channel	assert 401 == 200
 FAILED	tests/test_message_classifier.py::test_api_classify_kakaowork	assert 401 == 200
