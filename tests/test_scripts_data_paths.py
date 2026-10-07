@@ -133,16 +133,16 @@ def test_follow_data_root(tmp_path):
         (
             "scripts.naver.cafe.collection.explorer",
             "_DATA_DIR",
-            "ai_orchestrator.connectors.naver_cafe_router",
+            "ai_orchestrator.connectors.naver_cafe.naver_cafe_router",
             "_CAFE_DIR",
         ),
         (
             "scripts.naver.blog.core.writer_pro",
             "DRAFT_DIR",
-            "ai_orchestrator.connectors.naver_blog_router",
+            "ai_orchestrator.connectors.naver_blog.naver_blog_router",
             "DRAFTS_DIR",
         ),
-        ("scripts.naver.blog.unsplash_images", "UPLOADS_DIR", "ai_orchestrator.connectors.naver_blog_router", None),
+        ("scripts.naver.blog.unsplash_images", "UPLOADS_DIR", "ai_orchestrator.connectors.naver_blog.naver_blog_router", None),
         (
             "scripts.naver.blog.marketing.topics",
             "RESEARCH_FILE",

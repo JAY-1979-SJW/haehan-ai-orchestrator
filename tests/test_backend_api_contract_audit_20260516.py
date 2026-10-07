@@ -174,7 +174,7 @@ def test_sites_router_imports_clean():
 
 
 def test_naver_search_router_imports_clean():
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
     assert naver_search_router is not None
 

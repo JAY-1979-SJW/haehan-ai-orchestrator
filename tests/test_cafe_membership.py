@@ -12,7 +12,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors import naver_cafe_router as router_module
+from ai_orchestrator.connectors.naver_cafe import naver_cafe_router as router_module
 from ai_orchestrator.connectors.naver_cafe import membership_diff as diff
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user

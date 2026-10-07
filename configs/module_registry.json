@@ -3057,7 +3057,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/gonobi_router.py": {
+  "ai_orchestrator/connectors/naver_blog/gonobi_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_blog",
@@ -3065,7 +3065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/gonobi_scheduler.py": {
+  "ai_orchestrator/connectors/naver_blog/gonobi_scheduler.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_blog",
@@ -3153,7 +3153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_dm_db.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "instagram",
@@ -3161,7 +3161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_dm_router.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "instagram",
@@ -3169,7 +3169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_rule_engine.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "instagram",
@@ -3177,7 +3177,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/connectors/instagram_dm_service.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_service.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -3185,7 +3185,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_dm_token_store.py": {
+  "ai_orchestrator/connectors/instagram/instagram_dm_token_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "instagram",
@@ -3193,7 +3193,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_graph_client.py": {
+  "ai_orchestrator/connectors/instagram/instagram_graph_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -3201,7 +3201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/instagram_webhook_parser.py": {
+  "ai_orchestrator/connectors/instagram/instagram_webhook_parser.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "instagram",
@@ -3209,7 +3209,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_blog_collectors.py": {
+  "ai_orchestrator/connectors/naver_blog/naver_blog_collectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -3217,7 +3217,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_blog_router.py": {
+  "ai_orchestrator/connectors/naver_blog/naver_blog_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_blog",
@@ -3225,7 +3225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_cafe_router.py": {
+  "ai_orchestrator/connectors/naver_cafe/naver_cafe_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_cafe",
@@ -3241,7 +3241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_mail_router.py": {
+  "ai_orchestrator/connectors/naver_mail/naver_mail_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_mail",
@@ -3289,7 +3289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_db.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -3297,7 +3297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_jobs.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_jobs.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3305,7 +3305,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_queries.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_queries.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -3313,7 +3313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_router.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "naver_search",
@@ -3321,7 +3321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_run_log.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_run_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -3329,7 +3329,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/connectors/naver_search_runner.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_search",
@@ -3337,7 +3337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_state.py": {
+  "ai_orchestrator/connectors/naver_search/naver_search_state.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -3720,46 +3720,6 @@
    "reason": "provider 등록/조회 레지스트리 — auth_policy_registry(L2)와 동급 정책 레지스트리, L4 오분류",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "ai_orchestrator/connectors/gabia/autowork_subdomain_plan.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "gabia",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gabia/browser_task.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "gabia",
-   "reason": "정의 위주(모델·스키마·dataclass)",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gabia/dns_models.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "gabia",
-   "reason": "정의 위주(모델·스키마·dataclass)",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gabia/dns_work_registry.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "gabia",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gabia/site_settings_registry.py": {
-   "layer": "L1",
-   "role": "contract",
-   "domain": "gabia",
-   "reason": "정의 위주(모델·스키마·dataclass)",
-   "confidence": "high",
-   "source": "rule"
   },
   "ai_orchestrator/gates/__init__.py": {
    "layer": "L2",
@@ -13425,7 +13385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_instagram_publish.py": {
+  "scripts/instagram/guard_instagram_publish.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "instagram",
@@ -20785,6 +20745,30 @@
    "confidence": "high",
    "source": "confirmed"
   },
+  "ai_orchestrator/connectors/instagram/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "instagram",
+   "reason": "도메인(instagram) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/naver_search/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_search",
+   "reason": "도메인(naver_search) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "admin-web/electron/lib/startup_log.js": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
   "admin-web/src/components/chat/domainChatRegistry.ts": {
    "layer": "L9",
    "role": "ui",
@@ -21055,6 +21039,46 @@
    "domain": "g2b",
    "reason": "업무 흐름 이름",
    "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/gabia/autowork_subdomain_plan.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "gabia",
+   "reason": "도메인(gabia) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/gabia/browser_task.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "gabia",
+   "reason": "도메인(gabia) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/gabia/dns_models.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "gabia",
+   "reason": "도메인(gabia) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/gabia/dns_work_registry.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "gabia",
+   "reason": "도메인(gabia) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/gabia/site_settings_registry.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "gabia",
+   "reason": "도메인(gabia) 자동화",
+   "confidence": "low",
    "source": "rule"
   },
   "ai_orchestrator/contracts/display_name.py": {
@@ -21344,6 +21368,14 @@
    "reason": "DB·저장 신호",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/server/desktop_entry.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "데스크톱 앱 서버 진입점 — asgi(L8)를 기동하는 엔트리라 같은 L8 로 분류(진입점이 앱 조립 계층을 부르는 방향)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/site_work/__init__.py": {
    "layer": "L4",
@@ -22537,6 +22569,46 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/eum/form_selectors.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "eum",
+   "reason": "도메인(eum) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/eum/report_io.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "eum",
+   "reason": "도메인(eum) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/google/browser_tasks.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/google/report_io.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/google/tab_live_summary.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
   "scripts/naver/blog/navigator_blog.py": {
    "layer": "L5",
    "role": "site_module",
@@ -22625,6 +22697,14 @@
    "confidence": "high",
    "source": "confirmed"
   },
+  "scripts/ops/bundle_path_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/ops/code_map/layer_rules.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -22634,6 +22714,14 @@
    "source": "rule"
   },
   "scripts/ops/folder_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/merge_step_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22913,6 +23001,22 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_bundle_entrypoints.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_bundle_path_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_eum_access_handler.py": {
    "layer": "L11",
    "role": "test",
@@ -22921,7 +23025,31 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_eum_shared_helpers.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_folder_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_google_shared_helpers.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_merge_step_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22962,118 +23090,6 @@
    "source": "rule"
   },
   "tests/test_workflow_utf8_env.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/merge_step_check.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_merge_step_check.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/eum/form_selectors.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "eum",
-   "reason": "도메인(eum) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/eum/report_io.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "eum",
-   "reason": "도메인(eum) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/google/browser_tasks.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/google/report_io.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/google/tab_live_summary.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "도메인(google) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "tests/test_eum_shared_helpers.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_google_shared_helpers.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "google",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/electron/lib/startup_log.js": {
-   "layer": "L9",
-   "role": "ui",
-   "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/server/desktop_entry.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "데스크톱 앱 서버 진입점 — asgi(L8)를 기동하는 엔트리라 같은 L8 로 분류(진입점이 앱 조립 계층을 부르는 방향)",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "tests/test_bundle_entrypoints.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/bundle_path_gate.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_bundle_path_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

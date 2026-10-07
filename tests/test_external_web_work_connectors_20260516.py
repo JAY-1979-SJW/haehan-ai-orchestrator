@@ -235,13 +235,13 @@ class TestNaverSearchRouterRegistration:
 
     def test_naver_search_router_importable(self):
         """naver_search_router가 임포트 가능하다."""
-        from ai_orchestrator.connectors.naver_search_router import naver_search_router
+        from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
         assert naver_search_router is not None
 
     def test_naver_search_router_has_three_endpoints(self):
         """naver_search_router에 blog-search, shopping-search, status 3개 endpoint 존재."""
-        from ai_orchestrator.connectors.naver_search_router import naver_search_router
+        from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
         routes = [r.path for r in naver_search_router.routes]
         assert any("blog-search" in r for r in routes), "blog-search endpoint 없음"
@@ -250,12 +250,12 @@ class TestNaverSearchRouterRegistration:
 
     def test_naver_search_router_is_read_only(self):
         """naver_search_router 소스에 write/delete/update 없음 (read-only 확인)."""
-        src = (REPO_ROOT / "ai_orchestrator" / "connectors" / "naver_search_router.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "connectors" / "naver_search" / "naver_search_router.py").read_text(encoding="utf-8")
         assert "쓰기 API 없음" in src or "read-only" in src.lower(), "naver_search_router에 read-only 명시 없음"
 
     def test_naver_search_router_requires_admin_or_owner(self):
         """naver_search_router가 require_role 인증을 사용한다."""
-        src = (REPO_ROOT / "ai_orchestrator" / "connectors" / "naver_search_router.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "connectors" / "naver_search" / "naver_search_router.py").read_text(encoding="utf-8")
         assert "require_role" in src, "naver_search_router에 인증(require_role) 없음"
 
 

@@ -12,7 +12,7 @@ from ai_orchestrator.paths import (
 
 from .core import config
 from .core.config import APP_HOST, APP_PORT
-from .connectors.naver_search_runner import schedule_loop
+from ai_orchestrator.connectors.naver_search.naver_search_runner import schedule_loop
 from .core.logging_setup import setup_logging
 from .routers import app_actions
 from .routers.registry import router
@@ -169,7 +169,7 @@ async def lifespan(app: FastAPI):
 
     # gonobi 블로그 주기적 수집 스케줄러
     try:
-        from .connectors.gonobi_scheduler import gonobi_schedule_loop
+        from .connectors.naver_blog.gonobi_scheduler import gonobi_schedule_loop
 
         gonobi_task = asyncio.create_task(gonobi_schedule_loop())
     except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동/종료 시 백그라운드 스케줄러(커뮤니티/gonobi/CDP폴러) 시작 실패 처리 - 로그만 남기고 해당 기능 비활성화, 보안 판정과 무관

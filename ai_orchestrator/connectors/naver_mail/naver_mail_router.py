@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
 
-from ..audit.audit_logger import log_event
+from ai_orchestrator.audit.audit_logger import log_event
 
 logger = logging.getLogger(__name__)
 

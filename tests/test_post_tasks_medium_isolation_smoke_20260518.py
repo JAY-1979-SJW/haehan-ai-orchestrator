@@ -220,7 +220,7 @@ def router_mod():
         "ai_orchestrator.browser_tool.approval_record_router",
         "ai_orchestrator.routers.action_router",
         "ai_orchestrator.cad_ai_router",
-        "ai_orchestrator.connectors.naver_search_router",
+        "ai_orchestrator.connectors.naver_search.naver_search_router",
         "ai_orchestrator.routers.ops_router",
     ]
     originals = {n: sys.modules.get(n) for n in mock_names}
@@ -242,7 +242,7 @@ def router_mod():
         "ai_orchestrator.browser_tool.approval_record_router": MagicMock(approval_record_router=APIRouter()),
         "ai_orchestrator.routers.action_router": MagicMock(action_router=APIRouter()),
         "ai_orchestrator.cad_ai_router": MagicMock(cad_ai_router=APIRouter()),
-        "ai_orchestrator.connectors.naver_search_router": MagicMock(naver_search_router=APIRouter()),
+        "ai_orchestrator.connectors.naver_search.naver_search_router": MagicMock(naver_search_router=APIRouter()),
         "ai_orchestrator.routers.ops_router": MagicMock(ops_router=APIRouter()),
     }
     for mod_name, mock in mocks.items():

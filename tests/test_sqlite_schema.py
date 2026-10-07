@@ -140,7 +140,7 @@ def test_second_connection_does_not_rerun_applied_step(tmp_path):
 def test_stores_apply_busy_timeout_and_gongmu_seeds_once(tmp_path, monkeypatch):
     """스토어 연결에 busy_timeout 이 적용되고, gongmu 시드는 DB 파일당 한 번만 돈다."""
     from ai_orchestrator.agent_dispatch import agent_dispatch_store
-    from ai_orchestrator.connectors import instagram_dm_db
+    from ai_orchestrator.connectors.instagram import instagram_dm_db
     from ai_orchestrator.gongmu import gongmu_store
     from ai_orchestrator.connectors.hanafax import authorization_store as fax_authorization_store
     from ai_orchestrator.connectors.naver_mail import bulk_store as mail_bulk_store, draft_store as naver_mail_draft_store

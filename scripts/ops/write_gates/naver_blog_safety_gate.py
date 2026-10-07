@@ -56,7 +56,7 @@ def check_blogwriter_bypass(file_path: str, content: str) -> str | None:
         f"{_BLOG_WRITER_CLASS_NAME}를 검증된 경로 밖(스크래치패드/임시 스크립트 등)에서 직접 호출하려 합니다.\n"
         "   네이버 블로그 작성/발행은 이미 검증된 파이프라인이 있습니다:\n"
         "     - API: POST /api/v1/naver/blog/write-to-naver (서버 구동 중이면 이걸 사용)\n"
-        "     - 코드: ai_orchestrator/connectors/naver_blog_router.py write_to_naver()\n"
+        "     - 코드: ai_orchestrator/connectors/naver_blog/naver_blog_router.py write_to_naver()\n"
         "   즉석 스크립트로 단계를 새로 짜지 말고 위 경로를 그대로 호출하세요.\n"
         "   (2026-08-14: 즉석 스크립트가 검증되지 않은 순서로 본문을 지운 사고 발생)"
     )

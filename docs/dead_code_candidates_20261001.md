@@ -43,7 +43,7 @@
 지금은 호출되지 않지만 기능 도구함·캠페인 도우미일 수 있다. 삭제 전 소유자 확인이 필요하다.
 - `ai_orchestrator/browser_tool/site_access_compatibility_auditor.py`: `build_site_access_audit_target`(function,L43), `build_site_access_audit_result`(function,L242)
 - `ai_orchestrator/clients/telegram_sender.py`: `answer_callback_query`(function,L96)
-- `ai_orchestrator/connectors/instagram_dm_db.py`: `set_legacy_ig_user_id`(function,L234)
+- `ai_orchestrator/connectors/instagram/instagram_dm_db.py`: `set_legacy_ig_user_id`(function,L234)
 - `ai_orchestrator/gates/auth.py`: `get_tenant_context`(function,L176)
 - `ai_orchestrator/local_agent/action_registry.py`: `list_action_names`(function,L22), `list_actions_by_grade`(function,L26)
 - `ai_orchestrator/local_agent/action_risk_policy.py`: `get_all_delegatable_actions`(function,L118), `get_all_blocked_actions`(function,L122)

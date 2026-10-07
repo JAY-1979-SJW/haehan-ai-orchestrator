@@ -101,7 +101,7 @@ def test_batch_skips_opt_out_and_has_no_count_cap(tmp_path, monkeypatch):
 def test_blog_publish_requires_confirm_phrase_before_browser(monkeypatch):
     from fastapi import HTTPException
 
-    from ai_orchestrator.connectors import naver_blog_router as r
+    from ai_orchestrator.connectors.naver_blog import naver_blog_router as r
 
     opened: list[int] = []
     monkeypatch.setattr(
@@ -116,7 +116,7 @@ def test_blog_publish_requires_confirm_phrase_before_browser(monkeypatch):
 
 
 def test_blog_publish_passes_with_phrase_and_draft_needs_none(monkeypatch):
-    from ai_orchestrator.connectors import naver_blog_router as r
+    from ai_orchestrator.connectors.naver_blog import naver_blog_router as r
 
     monkeypatch.setattr(r, "emit_event", lambda *a, **k: None)
     monkeypatch.setattr("scripts.browser.cdp.connection.run_on_browser_thread", lambda fn, timeout=0: {"ok": True})
@@ -247,7 +247,7 @@ def test_hiworks_cli_submit_requires_typed_confirm(monkeypatch):
 
     monkeypatch.setattr(router, "open_hiworks", lambda *a, **k: (_ for _ in ()).throw(Reached()))
     monkeypatch.setattr(router, "work_run", lambda *a, **k: __import__("contextlib").nullcontext())
-    monkeypatch.setattr(router, "load_action_catalog", lambda: {})
+    monkeypatch.setattr(router, "load_action_catalog", dict)
     monkeypatch.setattr(router, "build_submit_execution_plan", lambda *a, **k: {})
     monkeypatch.setattr(router, "selected_targets", lambda s: {s: {"url": "u"}})
     # --approved 없이는 게이트에서 막힌다(force 불리언으로 통과하지 않는다)
@@ -427,10 +427,10 @@ def test_hiworks_mail_send_requires_phrase_before_browser(monkeypatch):
 
 def _all_phrases() -> set[str]:
     phrases = set(gate.CONFIRM_TEXTS.values())
-    from ai_orchestrator.connectors import naver_blog_router
     from ai_orchestrator.connectors.eum import router as eum_router
     from ai_orchestrator.connectors.google import gmail_router
     from ai_orchestrator.connectors.hiworks import mail_router as hiworks_mail_router
+    from ai_orchestrator.connectors.naver_blog import naver_blog_router
     from scripts.hiworks import mail_batch
 
     phrases |= {
@@ -462,11 +462,11 @@ def _http_detail(fn):
 
 def test_blocked_http_responses_never_contain_approval_phrases(monkeypatch):
     """경로마다 '차단 응답 본문에 승인 문구 문자열이 없다'를 고정한다(R2d 정책)."""
-    from ai_orchestrator.connectors import naver_blog_router as b
     from ai_orchestrator.connectors.eum import router as e
     from ai_orchestrator.connectors.google import gmail_router as g
     from ai_orchestrator.connectors.hanafax import router as hf
     from ai_orchestrator.connectors.hiworks import mail_router as h
+    from ai_orchestrator.connectors.naver_blog import naver_blog_router as b
     from ai_orchestrator.connectors.smartstore import reviews as rv
 
     for mod in (e, g, h):
@@ -643,7 +643,7 @@ def test_instagram_publish_case_blocks_before_browser(monkeypatch):
 def test_instagram_dm_skips_opted_out_commenter_and_never_sends(monkeypatch):
     from types import SimpleNamespace
 
-    from ai_orchestrator.connectors import instagram_dm_service as svc
+    from ai_orchestrator.connectors.instagram import instagram_dm_service as svc
 
     gate.add_opt_out("StopUser")
     updates: list[dict] = []
@@ -719,8 +719,8 @@ def test_drive_share_link_blocks_before_touching_page():
 def test_hanafax_single_send_phrase_number_and_opt_out(monkeypatch):
     from fastapi import HTTPException
 
-    from ai_orchestrator.connectors.hanafax import router as hf
     from ai_orchestrator.connectors.hanafax import authorization_store as store
+    from ai_orchestrator.connectors.hanafax import router as hf
 
     sent: list[str] = []
     monkeypatch.setattr(

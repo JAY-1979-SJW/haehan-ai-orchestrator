@@ -632,7 +632,7 @@ NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
 네이버 블로그 글에 사진을 첨부할 때는 **Unsplash API**를 사용한다 (AI API 아님, 승인 절차 대상 아님, 상시 허용).
 
 - 환경변수: `UNSPLASH_ACCESS_KEY` (`.env` 참조, 원문 로그 출력 금지)
-- 이미 구현되어 있음 — 신규 코드 불필요: `ai_orchestrator/connectors/naver_blog_router.py`
+- 이미 구현되어 있음 — 신규 코드 불필요: `ai_orchestrator/connectors/naver_blog/naver_blog_router.py`
   - 검색: `GET https://api.unsplash.com/search/photos` (쿼리 영어 3단어 이내, orientation=landscape)
   - 로컬 캐시: `data/unsplash_images.json`
   - 다운로드: `data/blog_uploads/unsplash_*.jpg` (Unsplash 정책상 `download_location` 트리거 필요)

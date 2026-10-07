@@ -20,20 +20,13 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
-from . import instagram_dm_db as db
-from . import instagram_dm_rule_engine as rule_engine
-from . import instagram_dm_token_store as token_store
-from .instagram_dm_service import process_comment_event
-from .instagram_graph_client import (
-    InstagramApiError,
-    build_authorize_url,
-    exchange_code_for_short_lived_token,
-    exchange_for_long_lived_token,
-)
-from .instagram_graph_client import (
-    verify_token as graph_verify_token,
-)
-from .instagram_webhook_parser import parse_comment_events
+from ai_orchestrator.connectors.instagram import instagram_dm_db as db
+from ai_orchestrator.connectors.instagram import instagram_dm_rule_engine as rule_engine
+from ai_orchestrator.connectors.instagram import instagram_dm_token_store as token_store
+from ai_orchestrator.connectors.instagram.instagram_dm_service import process_comment_event
+from ai_orchestrator.connectors.instagram.instagram_graph_client import InstagramApiError, build_authorize_url, exchange_code_for_short_lived_token, exchange_for_long_lived_token
+from ai_orchestrator.connectors.instagram.instagram_graph_client import verify_token as graph_verify_token
+from ai_orchestrator.connectors.instagram.instagram_webhook_parser import parse_comment_events
 
 logger = logging.getLogger(__name__)
 

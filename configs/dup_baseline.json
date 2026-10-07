@@ -130,7 +130,7 @@
   ],
   "56e7112793c4c286372377961b955a5f2e5c1bfd": [
    "ai_orchestrator/connectors/hanafax/authorization_store.py:_schema_v1",
-   "ai_orchestrator/connectors/instagram_dm_db.py:_schema_v1",
+   "ai_orchestrator/connectors/instagram/instagram_dm_db.py:_schema_v1",
    "ai_orchestrator/connectors/naver_mail/bulk_store.py:_schema_v1"
   ],
   "59dd4afcce19e06253c40ea945ed5c1dd32b420b": [
@@ -243,8 +243,8 @@
    "scripts/ops/audit_local_agent_connection_recovery_baseline.py:main"
   ],
   "c1eb1bfad2e951956dc956e12f9a206e7b92ba72": [
-   "ai_orchestrator/connectors/naver_search_router.py:api_run_blog_search",
-   "ai_orchestrator/connectors/naver_search_router.py:api_run_shopping_search"
+   "ai_orchestrator/connectors/naver_search/naver_search_router.py:api_run_blog_search",
+   "ai_orchestrator/connectors/naver_search/naver_search_router.py:api_run_shopping_search"
   ],
   "c9053131b7a1ac351e1d64f38d457a20e05a5774": [
    "scripts/naver/automation/platform/error_recovery.py:_init_db",

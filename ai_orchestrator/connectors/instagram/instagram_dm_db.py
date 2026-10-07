@@ -21,7 +21,7 @@ from typing import Any
 
 from ai_orchestrator.paths.runtime import storage_dir
 
-from ..persistence.sqlite_schema import add_column_if_missing, apply_schema, set_busy_timeout
+from ai_orchestrator.persistence.sqlite_schema import add_column_if_missing, apply_schema, set_busy_timeout
 
 _DB_PATH = storage_dir() / "instagram_dm.db"
 
@@ -291,7 +291,7 @@ def create_rule(  # noqa: PLR0913 - 공개 시그니처 유지(호출부 다수,
     enabled: bool = True,
     match_type: str = "ANY_KEYWORD",
 ) -> str:
-    from .instagram_dm_rule_engine import normalize_text
+    from ai_orchestrator.connectors.instagram.instagram_dm_rule_engine import normalize_text
 
     now = _now()
     rule_id = _new_id()
