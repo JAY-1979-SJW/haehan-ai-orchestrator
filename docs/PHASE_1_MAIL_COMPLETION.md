@@ -16,8 +16,8 @@
 ### 2️⃣ mail_inbox() 메서드 구현
 
 **파일**:
-- `ai_orchestrator/local_agent/browser/_js/extract_mail_inbox.js` ✓ 생성
-- `ai_orchestrator/local_agent/browser/mixins/mail_mixin.py` ✓ 메서드 추가
+- `scripts/browser/agent/_js/extract_mail_inbox.js` ✓ 생성
+- `scripts/naver/mail/mail_mixin.py` ✓ 메서드 추가
 
 **메서드 시그니처**:
 ```python
@@ -131,7 +131,7 @@ def mail_inbox(self, max_n: int = 30) -> list[dict]:
 ## 📁 파일 구조 (Phase 1 완료)
 
 ```
-ai_orchestrator/local_agent/browser/
+scripts/browser/agent/
 ├─ bootstrap.py                           [자동 감지 엔진]
 ├─ sitemap_detector.py                    [사이트 맵 탐지]
 ├─ deep_sitemap_detector.py               [심층 탐지]

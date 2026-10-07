@@ -32,9 +32,9 @@
 
 | 시설 | 레이어 | 상태 | 위치 |
 |------|--------|------|------|
-| CDP Client | L4 | ✅ | `ai_orchestrator/local_agent/browser/cdp_client.py` |
-| Popup Watcher | L4 | ✅ | `ai_orchestrator/local_agent/browser/popup_watcher.py` |
-| Browser Navigator | L4 | ✅ | `ai_orchestrator/local_agent/browser/navigator.py` |
+| CDP Client | L4 | ✅ | `scripts/browser/agent/cdp_client.py` |
+| Popup Watcher | L4 | ✅ | `scripts/browser/agent/popup_watcher.py` |
+| Browser Navigator | L4 | ✅ | `scripts/browser/agent/navigator.py` |
 | App Logger | L7 | ✅ | `data/logs/app.log` + `data/cdp.db` |
 | Ops Logger | L7 | ✅ | `data/logs/ops.log` |
 | Action Registry | L2 | ⬜ | 미구현 |

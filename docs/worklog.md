@@ -68,7 +68,7 @@
 - 15:10 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator\admin-web\electron" && node -c lib/cdp_manager.js && echo "cdp_manager.js 구문 OK"`
 - 15:09 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git config core.hooksPath; echo "---"; ls -la .git/hooks/pre-commit 2>/dev...`
 - 15:06 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -B3 -A5 "subprocess\.Popen\|Start-Process" scripts/ops/start_app.ps1`
-- 15:06 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -A5 "subprocess\.Popen" scripts/local_agent/start_chrome_with_cdp.py`
+- 15:06 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -A5 "subprocess\.Popen" scripts/browser/cdp/start_chrome_with_cdp.py`
 - 15:05 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && grep -r "subprocess\.Popen" --include="*.py" | grep -v "node_modules\|dist...`
 - 15:02 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && find . -type f \( -name "*.py" -o -name "*.ps1" -o -name "*.bat" -o -name ...`
 - 15:02 **[실행]** `find "C:/work/01. haehan-ai-orchestrator/admin-web/electron" -type f \( -name "*.js" -o -name "*.ts" \) ! -path "*/no...`
@@ -2136,7 +2136,7 @@
 - 13:39 **[실행]** `find "C:\work\01. haehan-ai-orchestrator\admin-web\src" -name "*.ts" -o -name "*.tsx" | xargs grep -l "login\|auth\|s...`
 - 13:39 **[실행]** `grep -rn "Basic\|bearer\|session\|cookie\|login\|authenticate" "C:\work\01. haehan-ai-orchestrator\ai_orchestrator\au...`
 - 13:39 **[지시]** 앱 로그인은 세션이 아닌 아이디와 비번을 주면? 로그인 세션이 로컬에 있으면 용량이 높아지나?
-- 13:38 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git add ai_orchestrator/local_agent_router_cleanup.py ai_orchestrator/cad/...`
+- 13:38 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git add ai_orchestrator/agent_hub/router/cleanup.py ai_orchestrator/cad/...`
 - 13:38 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python scripts/quality_gate.py --staged --enforce --allow-existing-code-ch...`
 - 13:36 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -c " import warnings, sys with warnings.catch_warnings():     warni...`
 - 13:35 **[실행]** `grep -n "cad_router\s*=\|APIRouter" "C:\work\01. haehan-ai-orchestrator\ai_orchestrator\cad\router.py" | head -5`

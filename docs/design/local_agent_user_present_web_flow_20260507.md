@@ -201,7 +201,7 @@
 
 | 역할 | 경로 |
 |---|---|
-| 사용자 직접 인증 모듈 | ai_orchestrator/browser_tool/local_agent_user_present_flow.py |
+| 사용자 직접 인증 모듈 | ai_orchestrator/agent_hub/user_present_flow.py |
 | 테스트 | tests/test_local_agent_user_present_web_flow_20260507.py |
 | fixture | tests/fixtures/local_agent_user_present_web_flow_20260507.json |
 | 이 문서 | docs/design/local_agent_user_present_web_flow_20260507.md |

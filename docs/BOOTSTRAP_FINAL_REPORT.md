@@ -359,16 +359,16 @@ with BrowserAgent() as agent:
 
 ### 신규 파일
 
-- `ai_orchestrator/local_agent/browser/cdp_launcher.py` (185줄)
-- `ai_orchestrator/local_agent/browser/cdp_session_manager.py` (165줄)
-- `ai_orchestrator/local_agent/browser/cdp_audit.py` (~200줄)
+- `scripts/browser/agent/cdp_launcher.py` (185줄)
+- `scripts/browser/agent/cdp_session_manager.py` (165줄)
+- `scripts/common/cdp_audit.py` (~200줄)
 - `scripts/local_agent/install_cdp_chrome_task.ps1` (~80줄)
 - `docs/HAIKU_CDP_BOOTSTRAP_PLAN.md` (부트스트랩 절차)
 - `docs/HAIKU_OPERATING_INSTRUCTIONS.md` (운영 규칙서)
 
 ### 수정 파일
 
-- `ai_orchestrator/local_agent/browser/agent.py`
+- `scripts/browser/agent/agent.py`
   - `import uuid` 추가
   - `connect()`: ensure_cdp(), session_id, L2 이벤트 추가
   - `close()`: L2 이벤트 추가
@@ -405,10 +405,10 @@ with BrowserAgent() as agent:
 
 | 목적 | 명령 |
 |------|------|
-| 사이트 자동 열기 | `python -m ai_orchestrator.local_agent.browser.cdp_launcher <url>` |
-| 로그인 감지 | `python -m ai_orchestrator.local_agent.browser.cdp_launcher <url> --wait-login <domain> 300` |
-| CDP 상태 확인 | `python -c "from ai_orchestrator.local_agent.browser.cdp_launcher import probe_cdp; print(probe_cdp())"` |
-| 로그인 도메인 확인 | `python -c "from ai_orchestrator.local_agent.browser.cdp_session_manager import get_logged_in_sites; print(get_logged_in_sites())"` |
+| 사이트 자동 열기 | `python -m scripts.browser.agent.cdp_launcher <url>` |
+| 로그인 감지 | `python -m scripts.browser.agent.cdp_launcher <url> --wait-login <domain> 300` |
+| CDP 상태 확인 | `python -c "from scripts.browser.agent.cdp_launcher import probe_cdp; print(probe_cdp())"` |
+| 로그인 도메인 확인 | `python -c "from scripts.browser.agent.cdp_session_manager import get_logged_in_sites; print(get_logged_in_sites())"` |
 | 감사 로그 조회 | `tail -f data/audit/L2_audit/browser_audit_*.jsonl` |
 | Chrome 재시작 | `schtasks /run /tn HaehanCdpChrome` |
 

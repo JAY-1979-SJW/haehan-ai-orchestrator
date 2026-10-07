@@ -51,7 +51,7 @@ notes
 | Tool group | Primary paths | Category | Status | Execution location | Owner baseline | Verification |
 |---|---|---|---|---|---|---|
 | Backend core | `ai_orchestrator/server/`, backend audits/tests | server | locked | server | `BACKEND_CORE_BASELINE.md` | `python scripts/ops/audit_backend_core_baseline_contract.py` |
-| Common tool runtime | `ai_orchestrator/local_agent/common_tool_runtime.py` | local-agent | locked | local-agent | `COMMON_TOOL_RUNTIME_BASELINE.md` | `python scripts/ops/audit_common_tool_runtime.py` |
+| Common tool runtime | `local_agent/runtime/common_tool_runtime.py` | local-agent | locked | local-agent | `COMMON_TOOL_RUNTIME_BASELINE.md` | `python scripts/ops/audit_common_tool_runtime.py` |
 | Local-agent E2E | local-agent dispatch/auth tests and audits | local-agent | locked | local-agent | `LOCAL_AGENT_E2E_BASELINE.md` | `python scripts/ops/audit_local_agent_e2e_flow_contract.py` |
 | Connection recovery | connection diagnostics, WebSocket probes, recovery audits | local-agent | locked | local-agent | `LOCAL_AGENT_CONNECTION_RECOVERY_BASELINE.md` | `python scripts/ops/audit_local_agent_connection_recovery_baseline.py` |
 | Approval flow | approval API/policy/state audits and tests | server | locked | server | `APPROVAL_FLOW_BASELINE.md` | `python scripts/ops/audit_approval_flow_baseline_contract.py` |

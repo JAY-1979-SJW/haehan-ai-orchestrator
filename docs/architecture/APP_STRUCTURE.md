@@ -58,7 +58,7 @@ It must not:
 | Layer | Primary paths | Role | Must not do |
 |---|---|---|---|
 | Server app/API | `ai_orchestrator/` | Authentication, authorization, approval, task queue, state, audit, safe APIs | Run local browser/tool work directly |
-| Common runtime | `ai_orchestrator/local_agent/common_tool_runtime.py` | Shared task/result/risk/approval contract | Execute tools directly or accept unsafe fields |
+| Common runtime | `local_agent/runtime/common_tool_runtime.py` | Shared task/result/risk/approval contract | Execute tools directly or accept unsafe fields |
 | Common engine/site policy | `scripts/site_engine/`, `scripts/sites/` | Profiles, gates, execution planning, validation | Duplicate policy in site routers |
 | Site/tool adapters | `scripts/google/`, `scripts/naver/`, `scripts/smartstore/`, `scripts/hiworks/`, `scripts/gabia/`, `scripts/youtube/` | Thin site-specific workflows and adapters | Bypass approval or user-direct gates |
 | Local agent | `local_agent/` | Authenticated PC-side execution for server-dispatched tasks | Accept raw user work outside server task contract |

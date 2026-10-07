@@ -130,7 +130,7 @@ USER_CONFIRMED → 재확인: 불가 (final 상태)
 |---|---|
 | 상태 store | local_agent/user_present_state_store.py |
 | 로컬 웹 UI 서버 | local_agent/user_present_ui_server.py |
-| 정책 판정 | ai_orchestrator/browser_tool/local_agent_user_present_flow.py |
+| 정책 판정 | ai_orchestrator/agent_hub/user_present_flow.py |
 | read-only 런타임 | local_agent/browser_readonly_runtime.py |
 | 테스트 | tests/test_local_agent_user_present_ui_runtime_20260507.py |
 | fixture | tests/fixtures/local_agent_user_present_ui_runtime_20260507.json |

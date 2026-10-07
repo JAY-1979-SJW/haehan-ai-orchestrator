@@ -19,7 +19,7 @@ S59	유사	0.886	경로/파일	프로젝트 내부에서 하나로 통합	8	8	sc
 S52	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	5	2	scripts	(공용·미분류)	84	_body_part_chart_tips; _body_part_compare; _body_part_pitfalls	scripts/ops/build_ep_batch_content.py | scripts/ops/build_ep_batch_content_gov2.py
 E75	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	7	7	scripts	(공용·미분류)	84	summary	scripts/ops/audit_app_api_contract_endpoints_prep.py | scripts/ops/audit_app_api_readonly_endpoints_implementation_plan.py | scripts/ops/audit_app_foundation_mvp_design.py | scripts/ops/audit_app_foundation_mvp_prep.py | scripts/ops/audit_app_ui_readonly_backend_status_cards.py | scripts/ops/audit_app_ui_shell_readonly_api_wiring.py …
 S58	유사	0.81	기타	프로젝트 내부에서 하나로 통합	4	4	scripts	(공용·미분류),instagram,youtube	82	main	scripts/ops/guard_cdp_new_tab.py | scripts/ops/guard_instagram_publish.py | scripts/ops/guard_openai_call.py | scripts/ops/guard_youtube_upload.py
-S72	유사	0.848	로깅	프로젝트 내부에서 하나로 통합	5	2	ai_orchestrator	naver_blog,naver_cafe	80	edit_blog_post; publish_blog_post; schedule_blog_publish; write_cafe_comment…	ai_orchestrator/local_agent/naver_blog_workflow.py | ai_orchestrator/local_agent/naver_cafe_workflow.py
+S72	유사	0.848	로깅	프로젝트 내부에서 하나로 통합	5	2	ai_orchestrator	naver_blog,naver_cafe	80	edit_blog_post; publish_blog_post; schedule_blog_publish; write_cafe_comment…	scripts/naver/blog/naver_blog_workflow.py | scripts/naver/cafe/naver_cafe_workflow.py
 E89	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	9	9	scripts	(공용·미분류)	80	_item; item	scripts/ops/audit_backend_premium_api_contract.py | scripts/ops/audit_backend_premium_audit_evidence.py | scripts/ops/audit_backend_premium_domain_core.py | scripts/ops/audit_backend_premium_endpoint_inventory.py | scripts/ops/audit_backend_premium_external_app_bridge.py | scripts/ops/audit_backend_premium_external_app_hold.py …
 E63	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	4	4	scripts	(공용·미분류)	78	print_report	scripts/ops/audit_app_api_readonly_endpoints_browser_smoke.py | scripts/ops/audit_app_task_queue_readonly_list_polish.py | scripts/ops/audit_app_test_baseline_current_contract_sync.py | scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py
 S64	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	4	4	scripts	g2b,instagram,kakao	77	mux; mux_audio	scripts/video/ai_g2b_youtube_ep01_real.py | scripts/video/ai_g2b_youtube_ep02.py | scripts/video/ig_dm_bot_ep01_visuals.py | scripts/video/kakao_skill_bot_ep01_visuals.py
@@ -55,7 +55,7 @@ E211	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	
 E239	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	5	3	scripts	(공용·미분류)	48	check_forbidden_actions; check_forbidden_buttons; check_forbidden_mutations	scripts/ops/audit_app_ui_readonly_backend_status_cards.py | scripts/ops/audit_app_ui_shell_readonly_api_wiring.py | scripts/ops/smoke_app_ui_shell_browser.py
 S80	유사	0.811	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	46	validate_site_access_audit_result; validate_site_compliance_result	ai_orchestrator/browser_tool/site_access_compatibility_auditor.py | ai_orchestrator/browser_tool/site_compliance_policy.py
 S292	유사	0.8	경로/파일	프로젝트 내부에서 하나로 통합	6	6	scripts	g2b,instagram,kakao,youtube	45	_mp3_duration_sec; _probe_duration	scripts/video/ai_g2b_youtube_ep01.py | scripts/video/ai_g2b_youtube_ep01_real.py | scripts/video/ai_g2b_youtube_ep02.py | scripts/video/ig_dm_bot_ep01.py | scripts/video/kakao_skill_bot_ep01.py | scripts/video/kotara_ctc_shorts.py
-E207	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	5	5	scripts	(공용·미분류),eum,g2b,hanafax,smartstore	44	_print_help	scripts/eum/router.py | scripts/g2b/router.py | scripts/hanafax/router.py | scripts/local_agent/router.py | scripts/naver/smartstore/api/router.py
+E207	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	5	5	scripts	(공용·미분류),eum,g2b,hanafax,smartstore	44	_print_help	scripts/eum/router.py | scripts/g2b/router.py | scripts/hanafax/router.py | scripts/sites/local_cli_router.py | scripts/naver/smartstore/api/router.py
 E264	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	5	5	scripts	(공용·미분류)	44	main	scripts/ops/audit_5050_legacy_characterization.py | scripts/ops/audit_5050_phase1_8400_contract_freeze.py | scripts/ops/audit_5050_phase1b_adapter_contract_detail.py | scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py | scripts/ops/audit_web_project_provisioning_factory.py
 S96	유사	0.808	로깅	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	43	_sanitize_chrome_prefs; _sanitize_prefs	scripts/cdp_daemon.py | scripts/cdp_force_start.py
 S195	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	3	2	scripts	(공용·미분류)	42	_body_part_compare; _body_part_prompt	scripts/ops/build_ep_batch_content.py | scripts/ops/build_ep_batch_content_gov2.py
@@ -85,7 +85,7 @@ E323	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	
 S358	유사	0.914	경로/파일	프로젝트 내부에서 하나로 통합	4	4	scripts	(공용·미분류)	35	summary	scripts/ops/audit_app_construction_schedule.py | scripts/ops/audit_app_foundation_governance.py | scripts/ops/audit_domain_room_allocation.py | scripts/ops/audit_shared_warehouse_policy.py
 S157	유사	0.8	GUI	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	34	judge_amend; judge_spec	scripts/ops/audit_local_agent_gui_ux_design_spec.py | scripts/ops/audit_local_agent_gui_ux_design_spec_ai_chat_amend.py
 S217	유사	0.825	Excel	프로젝트 내부에서 하나로 통합	2	2	scripts	google	34	recent	scripts/google/docs_api.py | scripts/google/sheets_api.py
-E761	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	4	2	ai_orchestrator	(공용·미분류)	34	can_cancel_task; is_terminal_status	ai_orchestrator/local_agent_router_guards.py | ai_orchestrator/local_agent_status_policy.py
+E761	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	4	2	ai_orchestrator	(공용·미분류)	34	can_cancel_task; is_terminal_status	ai_orchestrator/agent_hub/router/guards.py | ai_orchestrator/agent_hub/policy/status_policy.py
 E71	구조 동일	1.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	(공용·미분류),naver_blog	33	write_mixed_content	apps/marketing-standalone/connectors/naver_writer.py | scripts/naver/blog/core/writer.py
 S209	유사	0.89	웹/HTTP	프로젝트 내부에서 하나로 통합	2	2	scripts	smartstore	32	_open_image_modal	scripts/naver/smartstore/product/general_product.py | scripts/ops/selector_health/sites/naver_smartstore.py
 E321	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	3	3	scripts	instagram	32	_wrap	scripts/instagram/kotara_ctc_reel.py | scripts/instagram/overlay.py | scripts/instagram/reel_overlay.py
@@ -145,10 +145,10 @@ E131	구조 동일	1.0	로깅	haehan_common 이전 추천 (독립 코드)	3	3	ap
 E172	구조 동일	1.0	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	(공용·미분류),naver_blog	20	_detect_blog_id	apps/marketing-standalone/connectors/naver_writer.py | scripts/naver/blog/core/writer.py
 S392	유사	0.974	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	20	_verify_router_state	scripts/ops/audit_backend_operation_final_closeout.py | scripts/ops/audit_post_tasks_medium_isolation_smoke.py
 E408	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	eum	20	fetch_labor_test; fetch_test_workers	scripts/eum/labor_test.py | scripts/eum/test_workers.py
-S421	유사	0.861	기타	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류),g2b	20	run_g2b; run_local_agent	scripts/g2b/router.py | scripts/local_agent/router.py
-E534	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	3	3	ai_orchestrator	(공용·미분류)	20	_result; _safe_result	ai_orchestrator/local_agent/installer_folder_presenter.py | ai_orchestrator/local_agent/security_program_install_completion_detector.py | ai_orchestrator/local_agent/user_assisted_installer.py
+S421	유사	0.861	기타	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류),g2b	20	run_g2b; run_local_agent	scripts/g2b/router.py | scripts/sites/local_cli_router.py
+E534	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	3	3	ai_orchestrator	(공용·미분류)	20	_result; _safe_result	local_agent/runtime/installer_folder_presenter.py | local_agent/runtime/security_program_install_completion_detector.py | local_agent/runtime/user_assisted_installer.py
 S665	유사	0.855	경로/파일	프로젝트 내부에서 하나로 통합	3	2	scripts	(공용·미분류)	20	check_dry_run_notice_used; check_forbidden_banner_used; check_inbox_wired_in_tasks	scripts/ops/audit_app_ui_shell_readonly_api_wiring.py | scripts/ops/smoke_app_ui_shell_browser.py
-S690	유사	0.831	기타	프로젝트 내부에서 하나로 통합	3	3	ai_orchestrator	(공용·미분류)	20	validate_naver_result; validate_universal_result; validate_write_result	ai_orchestrator/local_agent/naver_content_safe_result.py | ai_orchestrator/local_agent/safe_write_result_sanitizer.py | ai_orchestrator/local_agent/universal_safe_result.py
+S690	유사	0.831	기타	프로젝트 내부에서 하나로 통합	3	3	ai_orchestrator	(공용·미분류)	20	validate_naver_result; validate_universal_result; validate_write_result	scripts/naver/blog/naver_content_safe_result.py | local_agent/runtime/safe_write_result_sanitizer.py | local_agent/runtime/universal_safe_result.py
 E1073	구조 동일	1.0	Excel	프로젝트 내부에서 하나로 통합	2	2	scripts	google	20	run	scripts/google/drive.py | scripts/google/sheets.py
 S1192	유사	0.827	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	google	20	_cdp_fill_domain_specific_input_handoff; _fill_domain_specific_input_handoff	scripts/google/live_inputs_domain_fillers.py | scripts/google/live_inputs_fill.py
 E187	구조 동일	1.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	(공용·미분류),naver_blog	19	_is_toolbar_active	apps/marketing-standalone/connectors/naver_writer.py | scripts/naver/blog/core/writer.py
@@ -198,7 +198,7 @@ E274	구조 동일	1.0	설정	공용화 검토 (프로젝트 내부 모듈 의�
 E275	구조 동일	1.0	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	naver_blog	14	record_success	apps/marketing-standalone/connectors/naver_blog_cdp.py | scripts/naver/blog/marketing/publish.py
 S581	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	14	_check_safety_flags	scripts/ops/audit_backend_runtime_storage_persistence.py | scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py
 E589	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류),hiworks	14	print_action_summary; print_prepare_plan_summary	scripts/hiworks/actions.py | scripts/naver/content.py
-S606	유사	0.815	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	14	get_signal_grade; get_status_grade	ai_orchestrator/local_agent/security_program_detector.py | ai_orchestrator/local_agent/user_assisted_installer.py
+S606	유사	0.815	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	14	get_signal_grade; get_status_grade	local_agent/runtime/security_program_detector.py | local_agent/runtime/user_assisted_installer.py
 E610	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	youtube	14	parse_kv_args	scripts/youtube/oauth.py | scripts/youtube/research_common.py
 E822	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	3	3	scripts	eum	14	main	scripts/eum/labor_test.py | scripts/eum/site_devices.py | scripts/eum/test_workers.py
 E824	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	3	3	scripts	(공용·미분류)	14	_check_files_exist; _check_policy_files_exist; _check_service_files_exist	scripts/ops/audit_backend_premium_audit_evidence.py | scripts/ops/audit_backend_premium_policy_layer.py | scripts/ops/audit_backend_premium_service_layer.py
@@ -219,7 +219,7 @@ E672	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	
 E673	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	scripts	google	13	cloud_summary; workspace_summary	scripts/google/cloud/registry.py | scripts/google/workspace/registry.py
 S694	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	13	build_body	scripts/ops/build_ep_batch_content.py | scripts/ops/build_ep_batch_content_gov2.py
 E1365	구조 동일	1.0	DB	프로젝트 내부에서 하나로 통합	3	3	ai_orchestrator	(공용·미분류),naver_mail	13	list_runs; list_send_log	ai_orchestrator/persistence/fax_authorization_store.py | ai_orchestrator/persistence/mail_bulk_store.py | ai_orchestrator/persistence/scheduled_job_store.py
-S215	유사	0.807	DB	haehan_common 이전 추천 (독립 코드)	3	3	ai_orchestrator,scripts	(공용·미분류),hanafax	12	_sha256; _sha256_file; file_sha256	ai_orchestrator/sites/hanafax_auto_sender.py | scripts/app_paths_migrate.py | scripts/local_agent/run_security_install_discovery.py
+S215	유사	0.807	DB	haehan_common 이전 추천 (독립 코드)	3	3	ai_orchestrator,scripts	(공용·미분류),hanafax	12	_sha256; _sha256_file; file_sha256	ai_orchestrator/sites/hanafax_auto_sender.py | scripts/app_paths_migrate.py | scripts/ops/run_security_install_discovery.py
 E297	구조 동일	1.0	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	ai_orchestrator,scripts	(공용·미분류),google	12	_live_fill_handlers; current_limits	ai_orchestrator/execution_limits.py | scripts/google/live_inputs.py
 E309	구조 동일	1.0	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	instagram	12	wait_ready	apps/marketing-standalone/connectors/instagram_graph_api.py | scripts/instagram/api_publish.py
 E310	구조 동일	1.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	(공용·미분류),naver_blog	12	_type_body_paragraphs; _type_paragraphs_fallback	apps/marketing-standalone/connectors/naver_writer.py | scripts/naver/blog/core/writer.py
@@ -229,7 +229,7 @@ E706	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	
 E722	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류),naver_mail	12	describe	ai_orchestrator/gates/fax_send_policy.py | ai_orchestrator/gates/mail_bulk_policy.py
 E727	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	scripts	google	12	label_for_surface	scripts/google/ai_usage_labels.py | scripts/google/android_app_dev_labels.py
 E728	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	google	12	save_android_app_dev_report; save_google_domain_taxonomy	scripts/google/android_app_dev_report.py | scripts/google/domain_taxonomy.py
-S758	유사	0.983	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	12	_ask_approval; _ask_submit_approval	scripts/local_agent/gov/minwon_submit.py | scripts/local_agent/webmail_send.py
+S758	유사	0.983	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	12	_ask_approval; _ask_submit_approval	scripts/sites/minwon_submit.py | scripts/sites/webmail_send.py
 S782	유사	0.911	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	hanafax,naver_mail	12	summary	ai_orchestrator/workflows/hanafax_auto_send.py | ai_orchestrator/workflows/naver_mail_bulk.py
 S851	유사	0.822	로깅	프로젝트 내부에서 하나로 통합	2	2	scripts	naver_blog	12	_fetch_image; _redownload	scripts/gonobi_download_images.py | scripts/gonobi_redownload_small.py
 E899	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	3	3	scripts	(공용·미분류),hiworks,smartstore	12	_option_value; option_value	scripts/hiworks/utils.py | scripts/naver/router_common.py | scripts/naver/smartstore/api/router.py
@@ -249,12 +249,12 @@ S1363	유사	0.823	경로/파일	프로젝트 내부에서 하나로 통합	2	2	
 S1378	유사	0.836	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	naver_blog,naver_search	11	collect_blog_search; collect_shopping_search	ai_orchestrator/connectors/naver_blog_collectors.py | ai_orchestrator/connectors/naver_shopping_collectors.py
 E177	구조 동일	1.0	설정	haehan_common 이전 추천 (독립 코드)	2	2	apps,scripts	(공용·미분류)	10	__init__	apps/marketing-standalone/connectors/cdp_helper.py | scripts/cdp_helper.py
 E178	구조 동일	1.0	로깅	haehan_common 이전 추천 (독립 코드)	2	2	apps,scripts	(공용·미분류)	10	_reconnect	apps/marketing-standalone/connectors/cdp_helper.py | scripts/cdp_helper.py
-S719	유사	0.938	웹/HTTP	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	10	_categorize_approve_keyword; _detect_auth_signal	ai_orchestrator/local_agent/browser/action_gate.py | ai_orchestrator/local_agent/playwright_runner.py
+S719	유사	0.938	웹/HTTP	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	10	_categorize_approve_keyword; _detect_auth_signal	scripts/browser/agent/action_gate.py | local_agent/runtime/playwright_runner.py
 S841	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	google	10	load_latest_cloud_console_live_report; load_latest_google_surface_live_report	scripts/google/cloud/live_console_explorer.py | scripts/google/live_surface_explorer.py
 S849	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류),hiworks	10	_classify_button; classify_button	scripts/hiworks/actions.py | scripts/naver/content.py
 E854	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	google,youtube	10	audit	ai_orchestrator/connectors/google/_helpers.py | ai_orchestrator/connectors/youtube/_helpers.py
 E855	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류),naver_mail	10	_recipient_skip_reason	ai_orchestrator/gates/fax_send_policy.py | ai_orchestrator/gates/mail_bulk_policy.py
-E857	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	10	validate_naver_result; validate_universal_result	ai_orchestrator/local_agent/naver_content_safe_result.py | ai_orchestrator/local_agent/universal_safe_result.py
+E857	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	10	validate_naver_result; validate_universal_result	scripts/naver/blog/naver_content_safe_result.py | local_agent/runtime/universal_safe_result.py
 E861	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	local_agent	(공용·미분류)	10	_is_sensitive_name	local_agent/site_mapper.py | local_agent/web_reader.py
 E864	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류),eum	10	_find_selector; find_selector	scripts/eum/auth.py | scripts/human_input.py
 E865	구조 동일	1.0	설정	프로젝트 내부에서 하나로 통합	2	2	scripts	eum	10	_analysis_entries	scripts/eum/deregistration.py | scripts/eum/registration.py
@@ -270,7 +270,7 @@ S1068	유사	0.81	로깅	프로젝트 내부에서 하나로 통합	2	2	scripts	
 E1368	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	2	2	local_agent	(공용·미분류)	10	_normalize_hints; _normalize_str_list	local_agent/browser_login_probe.py | local_agent/site_mapper.py
 E269	구조 동일	1.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	(공용·미분류),naver_blog	9	confirm_publish	apps/marketing-standalone/connectors/naver_writer.py | scripts/naver/blog/core/writer.py
 E299	구조 동일	1.0	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	naver_blog	9	ensure_images	apps/marketing-standalone/site_modules/blog_router.py | scripts/naver/blog/cli/blog_publish_manual.py
-S356	유사	0.84	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	ai_orchestrator,local_agent	(공용·미분류)	9	_result	ai_orchestrator/local_agent/playwright_bootstrap.py | local_agent/browser_actions.py
+S356	유사	0.84	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	ai_orchestrator,local_agent	(공용·미분류)	9	_result	local_agent/runtime/playwright_bootstrap.py | local_agent/browser_actions.py
 E373	구조 동일	1.0	설정	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	instagram	9	publish_reel	apps/marketing-standalone/connectors/instagram_graph_api.py | scripts/instagram/api_publish.py
 S403	유사	0.816	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	(공용·미분류),naver_blog	9	save_draft	apps/marketing-standalone/connectors/naver_writer.py | scripts/naver/blog/core/writer.py
 S772	유사	0.85	웹/HTTP	프로젝트 내부에서 하나로 통합	2	2	scripts	naver_search,smartstore	9	_read_option_row_price; _uploaded_image_count	scripts/naver/shopping/competitor_detail/detail_parser.py | scripts/naver/smartstore/product/general_product.py
@@ -284,7 +284,7 @@ S998	유사	0.804	설정	프로젝트 내부에서 하나로 통합	2	2	ai_orche
 S1005	유사	0.826	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	9	_build_validation_checks; build_site_access_audit_target	ai_orchestrator/browser_tool/site_access_compatibility_auditor.py | ai_orchestrator/browser_tool/submit_preview.py
 S1372	유사	0.833	설정	프로젝트 내부에서 하나로 통합	2	2	scripts	naver_mail	9	_click_folder_expr; _click_menu_expr	scripts/naver/mail/collection/folder_discovery.py | scripts/naver/mail/utilities/settings_panel.py
 E1374	구조 동일	1.0	DB	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류),naver_mail	9	revoke	ai_orchestrator/persistence/fax_authorization_store.py | ai_orchestrator/persistence/mail_bulk_store.py
-S136	유사	1.0	기타	haehan_common 이전 추천 (독립 코드)	2	2	ai_orchestrator,scripts	(공용·미분류),smartstore	8	_popup_record; make_register_agent_response	ai_orchestrator/local_agent_response_builders.py | scripts/naver/smartstore/navigation/cdp_popup_manager.py
+S136	유사	1.0	기타	haehan_common 이전 추천 (독립 코드)	2	2	ai_orchestrator,scripts	(공용·미분류),smartstore	8	_popup_record; make_register_agent_response	ai_orchestrator/agent_hub/response_builders.py | scripts/naver/smartstore/navigation/cdp_popup_manager.py
 E191	구조 동일	1.0	웹/HTTP	haehan_common 이전 추천 (독립 코드)	2	2	ai_orchestrator,apps	instagram	8	get_recent_media	ai_orchestrator/connectors/instagram_graph_client.py | apps/ig-comment-dm-bot/connectors/ig_api.py
 E192	구조 동일	1.0	웹/HTTP	haehan_common 이전 추천 (독립 코드)	2	2	ai_orchestrator,apps	instagram	8	get_comments	ai_orchestrator/connectors/instagram_graph_client.py | apps/ig-comment-dm-bot/connectors/ig_api.py
 E361	구조 동일	1.0	경로/파일	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	2	2	apps,scripts	(공용·미분류)	8	_naver_auth_cookies_present	apps/marketing-standalone/connectors/naver_login_check.py | scripts/naver/auth.py
@@ -315,14 +315,14 @@ S971	유사	0.882	경로/파일	프로젝트 내부에서 하나로 통합	2	2	s
 S980	유사	0.905	웹/HTTP	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	7	list_approval_requests; list_evidence	ai_orchestrator/server/action_approval_audit_store.py | ai_orchestrator/server/action_evidence_store.py
 E1074	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	youtube	7	_api_key; api_key	scripts/google/youtube/search_common.py | scripts/youtube/youtube_http_client.py
 S1091	유사	0.971	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	hanafax,hiworks	7	_save_result; _save_send_result	scripts/hanafax/batch.py | scripts/hiworks/mail_batch.py
-E1097	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	7	check_result_safety; verify_no_sensitive_data	ai_orchestrator/local_agent/natural_language_task_api.py | ai_orchestrator/local_agent/universal_action_verifier.py
+E1097	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	7	check_result_safety; verify_no_sensitive_data	local_agent/runtime/natural_language_task_api.py | local_agent/runtime/universal_action_verifier.py
 E1098	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류),naver_mail	7	_parse_dt; _parse_iso	ai_orchestrator/server/user_data_contribution_store.py | ai_orchestrator/workflows/naver_mail_bulk.py
 E1106	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	orchestrator_v1	(공용·미분류)	7	get_candidate; get_email_task	orchestrator_v1/inbox/email_task_store.py | orchestrator_v1/tasks/candidate_store.py
 E1107	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	7	_decrypt	scripts/credentials.py | scripts/form/profile.py
 E1108	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	7	_load_raw	scripts/credentials.py | scripts/form/profile.py
 E1109	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	hiworks,smartstore	7	load_action_catalog	scripts/hiworks/actions.py | scripts/naver/smartstore/api/actions.py
 E1110	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류),hiworks	7	select_targets; selected_targets	scripts/hiworks/service_explorer.py | scripts/naver/content.py
-E1111	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	2	2	scripts	g2b,naver_cafe	7	_save_report	scripts/local_agent/g2b/run_readonly_local_e2e.py | scripts/local_agent/run_naver_cafe_to_blog_workflow.py
+E1111	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	2	2	scripts	g2b,naver_cafe	7	_save_report	scripts/g2b/run_readonly_local_e2e.py | scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py
 E1112	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	7	_page; _route_file	scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py | scripts/ops/smoke_app_ui_shell_browser.py
 E1113	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	instagram,kakao	7	list_scenes	scripts/video/ig_dm_bot_ep01.py | scripts/video/kakao_skill_bot_ep01.py
 E1114	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	instagram,kakao	7	_gen_one	scripts/video/ig_dm_bot_ep01.py | scripts/video/kakao_skill_bot_ep01.py
@@ -343,7 +343,7 @@ E986	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	scr
 E1075	구조 동일	1.0	DB	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류),naver_blog	6	cancel; remove_task	scripts/naver/automation/platform/scheduler.py | scripts/naver/blog/management/schedule.py
 E1168	구조 동일	1.0	기타	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류),naver_mail	6	_as_utc_naive_compare; _compare_aware	ai_orchestrator/gates/fax_send_policy.py | ai_orchestrator/gates/mail_bulk_policy.py
 E1194	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류),naver_blog	6	_interval_sec	ai_orchestrator/connectors/community_scheduler.py | ai_orchestrator/connectors/gonobi_scheduler.py
-E1196	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	_url_safe	ai_orchestrator/local_agent/actions/business_execute_with_user_approval.py | ai_orchestrator/local_agent/actions/business_prepare_action.py
+E1196	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	_url_safe	ai_orchestrator/agent_hub/actions/business_execute_with_user_approval.py | ai_orchestrator/agent_hub/actions/business_prepare_action.py
 E1198	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	_append_jsonl	ai_orchestrator/server/action_approval_audit_store.py | ai_orchestrator/server/action_evidence_store.py
 E1199	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	get_execution_policy_service; get_task_queue_service	ai_orchestrator/services/execution_policy_service.py | ai_orchestrator/services/task_queue_service.py
 E1203	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	hanafax,naver_mail	6	_parse_hhmm	ai_orchestrator/workflows/hanafax_auto_send.py | ai_orchestrator/workflows/naver_mail_bulk.py
@@ -353,12 +353,12 @@ E1208	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합
 E1209	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	6	_current_url	scripts/explorer/auto_explorer.py | scripts/explorer/site_crawler.py
 E1210	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	youtube	6	_int_value	scripts/google/youtube/search_common.py | scripts/youtube/research_common.py
 E1213	구조 동일	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	instagram,kakao	6	_card_paths	scripts/video/ig_dm_bot_ep01_visuals.py | scripts/video/kakao_skill_bot_ep01_visuals.py
-S1264	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	close_session; delete_learned_profile	ai_orchestrator/local_agent/learned_site_profile_store.py | ai_orchestrator/local_agent/universal_agent_session.py
+S1264	유사	1.0	경로/파일	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	close_session; delete_learned_profile	local_agent/runtime/learned_site_profile_store.py | local_agent/runtime/universal_agent_session.py
 S1293	유사	0.81	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	6	_load_bridge_source; _load_policy_src	scripts/ops/audit_backend_premium_external_app_bridge.py | scripts/ops/audit_backend_premium_security_boundary.py
 S1294	유사	0.814	로깅	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	6	_match_role; classify	scripts/explorer/page_analysis.py | scripts/ops/cdp_click_watch.py
 S1306	유사	0.809	로깅	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	6	main	scripts/grant_radar/report.py | scripts/grant_radar/scan.py
 S1309	유사	0.837	경로/파일	프로젝트 내부에서 하나로 통합	2	2	scripts	(공용·미분류)	6	write_payload; write_record	scripts/ops/ai_work_record.py | scripts/ops/runtime_drift_watch.py
-S1402	유사	0.862	경로/파일	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	clear	ai_orchestrator/chat_sessions.py | ai_orchestrator/local_agent_registry_common.py
+S1402	유사	0.862	경로/파일	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	clear	ai_orchestrator/chat_sessions.py | ai_orchestrator/agent_hub/registry/common.py
 S1403	유사	0.897	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류),naver_cafe	6	_has_element; _has_selector	ai_orchestrator/sites/adapters/dev_reg_base.py | ai_orchestrator/sites/adapters/naver_cafe_adapter.py
 E1407	구조 동일	1.0	DB	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류),naver_mail	6	add_opt_out	ai_orchestrator/persistence/fax_authorization_store.py | ai_orchestrator/persistence/mail_bulk_store.py
 E1408	구조 동일	1.0	로깅	프로젝트 내부에서 하나로 통합	2	2	ai_orchestrator	(공용·미분류)	6	abort_form	ai_orchestrator/sites/adapters/dev_reg_base.py | ai_orchestrator/sites/adapters/google_dev_reg.py

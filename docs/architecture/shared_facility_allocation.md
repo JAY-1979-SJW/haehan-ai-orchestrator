@@ -69,7 +69,7 @@
 ## 5. Local Agent Gateway (로컬 에이전트 게이트웨이)
 
 **담당 책임:** 로컬 PC 작업 라우팅, 로컬-서버 브리지  
-**파일:** `scripts/local_agent/router.py`, `scripts/local_agent/` 전체
+**파일:** `scripts/sites/local_cli_router.py`, `scripts/local_agent/` 전체
 
 | 항목 | 내용 |
 |------|------|
@@ -179,7 +179,7 @@
 | Approval Gate | `scripts/site_engine/execution_gate.py` | ✅ | ✅ |
 | Permission Model | `scripts/site_engine/types.py` | ✅ | ✅ |
 | Workflow/Task Queue | `scripts/site_engine/workflow_runner.py` | ✅ | 부분 |
-| Local Agent Gateway | `scripts/local_agent/router.py` | ✅ | 부분 |
+| Local Agent Gateway | `scripts/sites/local_cli_router.py` | ✅ | 부분 |
 | Browser Execution Gateway | `scripts/site_engine/adapters/` | ✅ | ✅ |
 | Evidence Store | `data/evidence/` | ❌ (미정) | ❌ |
 | Report Store | `data/reports/` | 부분 | ❌ |

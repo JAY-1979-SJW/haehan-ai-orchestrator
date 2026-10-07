@@ -28,7 +28,7 @@ self._page.evaluate("""async () => {
 
 ### 🔧 1.1 calendar_events — 응답 구조 오해 수정
 
-**파일**: `ai_orchestrator/local_agent/browser/mixins/calendar_mixin.py`
+**파일**: `scripts/browser/agent/calendar_mixin.py`
 
 **문제**: 현재 코드는 `data.retScheduleList.returnValue`를 **list로 가정**하고 사용 → 실제로는 **object**
 
@@ -122,7 +122,7 @@ def calendar_events(self, start: str, end: str) -> list[dict]:
 
 ### 🔧 1.2 mail_search — search_input 셀렉터 + 직접 API 호출
 
-**파일**: `ai_orchestrator/local_agent/browser/mixins/mail_mixin.py`
+**파일**: `scripts/naver/mail/mail_mixin.py`
 
 **핵심 발견** (`explore_unresolved_v2.py` 캡처):
 
@@ -225,7 +225,7 @@ def mail_search(self, query: str, max_n: int = 30) -> list[dict]:
 
 ### 🔧 1.3 mybox_list — 2단계 API 호출 (file/get → file/list)
 
-**파일**: `ai_orchestrator/local_agent/browser/mixins/mybox_mixin.py`
+**파일**: `scripts/browser/agent/mybox_mixin.py`
 
 **핵심 발견** (`explore_unresolved_v2.py` 캡처):
 
