@@ -1,7 +1,7 @@
 """YouTube Studio 업로드 — 단일 CDP 연결 유지, 단계별 실행."""
 import sys, time, threading
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from scripts.cdp_helper import CDP
 from scripts.app_paths import resolve_external, sibling_project
 
