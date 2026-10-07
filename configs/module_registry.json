@@ -5713,7 +5713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/paths.py": {
+  "ai_orchestrator/paths/__init__.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
