@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getMe, changePassword, clearToken, type UserInfo } from "@/lib/userAuth";
+import { getMe, changePassword, clearToken, getBuildInfo, getDesktopSetupStatus, type BuildInfo, type UserInfo } from "@/lib/userAuth";
 import { MarketingOpsSwitch } from "@/components/settings/MarketingOpsSwitch";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -22,6 +22,8 @@ export default function MyPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [build, setBuild] = useState<BuildInfo | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   const [curPw, setCurPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -37,6 +39,12 @@ export default function MyPage() {
       setLoading(false);
     });
   }, [router]);
+
+  useEffect(() => {
+    getBuildInfo().then(setBuild);
+    // 백엔드가 데스크톱 모드에서만 응답한다(서버 모드는 404 → null). 화면에서 따로 추측하지 않는다.
+    getDesktopSetupStatus().then((st) => setIsDesktop(st !== null));
+  }, []);
 
   const handleLogout = () => {
     clearToken();
@@ -124,7 +132,8 @@ export default function MyPage() {
         {/* 기능 스위치 — 관리자·오너만(서버 API 도 admin·owner 전용) */}
         {(user.role === "admin" || user.role === "owner") && <MarketingOpsSwitch />}
 
-        {/* 비밀번호 변경 */}
+        {/* 비밀번호 변경 — 데스크톱(서버가 desktop-setup-status 로 알려 줌)은 비밀번호가 없어 숨긴다. 서버 모드는 그대로 보인다 */}
+        {!isDesktop && (
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
           <h2 className="text-sm font-bold text-[#111827] mb-4">비밀번호 변경</h2>
           <form onSubmit={handlePasswordChange} className="space-y-3">
@@ -175,6 +184,22 @@ export default function MyPage() {
               {pwLoading ? "변경 중..." : "비밀번호 변경"}
             </button>
           </form>
+        </div>
+        )}
+
+        {/* 앱 정보 — 어느 빌드인지 확인(문의·진단용) */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
+          <h2 className="text-base font-semibold text-[#111827] mb-3">앱 정보</h2>
+          <dl className="text-sm text-[#374151] space-y-1.5" data-testid="build-info">
+            <div className="flex justify-between">
+              <dt className="text-[#6B7280]">빌드(커밋)</dt>
+              <dd className="font-mono">{build ? (build.git_sha === "unknown" ? "알 수 없음" : build.git_sha.slice(0, 7)) : "확인 불가"}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-[#6B7280]">빌드 시각</dt>
+              <dd className="font-mono">{build ? (build.build_time === "unknown" ? "알 수 없음" : build.build_time) : "확인 불가"}</dd>
+            </div>
+          </dl>
         </div>
 
         {/* 홈으로 */}

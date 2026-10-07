@@ -28,10 +28,11 @@ from fastapi.responses import FileResponse
 
 from ai_orchestrator.audit_logger import log_event
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.paths.runtime import data_dir
 
 public_media_router = APIRouter(prefix="/public-media", tags=["public-media"])
 
-MEDIA_DIR = Path(__file__).resolve().parents[2] / "data" / "public_media"
+MEDIA_DIR = data_dir() / "public_media"
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 _ALLOWED_EXT = {".mp4", ".mov", ".jpg", ".jpeg", ".png"}

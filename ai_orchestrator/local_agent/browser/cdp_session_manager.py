@@ -11,8 +11,9 @@ from datetime import datetime
 from pathlib import Path
 
 from ai_orchestrator.local_agent.browser.cdp_audit import L2, L3
+from ai_orchestrator.paths.runtime import data_dir
 
-PROFILE_ROOT = Path(__file__).resolve().parents[3] / "data" / "cdp_profile"
+PROFILE_ROOT = data_dir() / "cdp_profile"
 ACTOR = "session_manager"
 
 # 사이트별 인증 쿠키 마커 — 등장 시 로그인 완료로 판정

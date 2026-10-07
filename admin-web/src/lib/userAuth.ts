@@ -102,3 +102,65 @@ export async function changePassword(currentPassword: string, newPassword: strin
     throw new Error(data.detail ?? "비밀번호 변경 실패");
   }
 }
+
+export interface BuildInfo {
+  git_sha: string; // 7~40자 hex 또는 "unknown"
+  build_time: string; // ISO8601 또는 "unknown"
+}
+
+/** 서버(health)가 알려 주는 빌드 정보 — 데스크톱은 build-info.json 값을 서버에 env 로 넘겨 준다. 실패하면 null. */
+export async function getBuildInfo(): Promise<BuildInfo | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/health`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      git_sha: typeof data.git_sha === "string" ? data.git_sha : "unknown",
+      build_time: typeof data.build_time === "string" ? data.build_time : "unknown",
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── 데스크톱 로컬 모드: 첫 실행 등록(이름·이메일)·자동 세션 ────────────────────────────
+// 백엔드가 데스크톱 모드에서만 응답한다(그 외 404). 비밀번호는 쓰지 않는다.
+const DESKTOP_HEADERS = { "Content-Type": "application/json", "X-Haehan-Desktop": "1" };
+
+export async function getDesktopSetupStatus(): Promise<{ needs_setup: boolean } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/auth/desktop-setup-status`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function desktopSetup(name: string, email: string): Promise<{ token: string; user: UserInfo }> {
+  const res = await fetch(`${API_BASE}/api/v1/auth/desktop-setup`, {
+    method: "POST",
+    headers: DESKTOP_HEADERS,
+    body: JSON.stringify({ name, email }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = Array.isArray(data.detail) ? data.detail.map((d: { msg?: string }) => d.msg).join(", ") : data.detail;
+    throw new Error(detail ?? "등록 실패");
+  }
+  return data;
+}
+
+/** 등록된 owner 로 새 토큰을 받는다. 첫 실행(등록 필요)이면 "needs_setup", 실패하면 null. */
+export async function desktopSession(): Promise<{ token: string; user: UserInfo } | "needs_setup" | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/auth/desktop-session`, { method: "POST", headers: DESKTOP_HEADERS, body: "{}" });
+    if (res.status === 409) {
+      const data = await res.json().catch(() => ({}));
+      return data.detail === "needs_setup" ? "needs_setup" : null;
+    }
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}

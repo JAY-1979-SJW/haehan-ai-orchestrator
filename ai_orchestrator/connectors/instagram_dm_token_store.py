@@ -15,7 +15,8 @@ import contextlib
 import json
 import os
 import sys
-from pathlib import Path
+
+from ai_orchestrator.paths.runtime import storage_dir
 
 _USE_KEYRING = sys.platform == "win32"
 
@@ -37,7 +38,7 @@ if _USE_KEYRING:
 else:
     from cryptography.fernet import Fernet, InvalidToken
 
-    _STORE_PATH = Path(__file__).resolve().parents[1] / "storage" / "instagram_dm_tokens.enc.json"
+    _STORE_PATH = storage_dir() / "instagram_dm_tokens.enc.json"
 
     class TokenEncryptionKeyMissing(RuntimeError):
         pass

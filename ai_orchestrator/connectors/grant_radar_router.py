@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -19,12 +18,13 @@ from pathlib import Path
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from ai_orchestrator.paths.runtime import data_dir
+
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
-# 쓰기 데이터는 영속 경로(HAEHAN_DATA_DIR), 읽기전용 프로필은 번들 configs
-_ENV_DATA = os.environ.get("HAEHAN_DATA_DIR")
-DATA_DIR = (Path(_ENV_DATA) / "grant_radar") if _ENV_DATA else (ROOT / "data" / "grant_radar")
+# 쓰기 데이터는 영속 경로(paths.runtime.data_dir — HAEHAN_DATA_DIR/HAEHAN_DATA_ROOT), 읽기전용 프로필은 번들 configs
+DATA_DIR = data_dir() / "grant_radar"
 REPORT_FILE = DATA_DIR / "report_latest.json"
 DRAFT_DIR = DATA_DIR / "drafts"
 COMPANY_FILE = ROOT / "configs" / "grant_radar_company.json"

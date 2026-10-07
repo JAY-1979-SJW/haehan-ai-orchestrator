@@ -13,10 +13,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ..paths import repo_root
+from ai_orchestrator.paths import repo_root
+from ai_orchestrator.paths.runtime import data_dir
 
 ROOT = repo_root()
-_DIR = ROOT / "data" / "cafe"
+_DIR = data_dir() / "cafe"
 HISTORY_MAX = 90
 CHANGES_MAX = 200
 

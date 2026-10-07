@@ -19,6 +19,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 # ── 저장 금지 필드 ────────────────────────────────────────────────────────────
 
 _FORBIDDEN_STORE_FIELDS: frozenset[str] = frozenset(
@@ -59,7 +61,7 @@ _STORE: dict[str, dict[str, Any]] = {}
 _LOCK = threading.Lock()
 
 # JSONL 저장 경로 (환경 변수 또는 기본값)
-_DEFAULT_AUDIT_DIR = Path(__file__).parent.parent.parent / "data" / "audit"
+_DEFAULT_AUDIT_DIR = data_dir() / "audit"
 _AUDIT_FILE_NAME = "action_approval_audit.jsonl"
 
 

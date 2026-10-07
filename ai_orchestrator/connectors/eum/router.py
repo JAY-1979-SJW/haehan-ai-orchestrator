@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import addresses, require_send_approval
 from ai_orchestrator.paths import repo_root
+from ai_orchestrator.paths.runtime import data_dir
 
 from ...audit_logger import log_event
 
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 eum_router = APIRouter(prefix="/eum", tags=["eum"])
 
 _ROOT = repo_root()
-_TARGETS_LATEST = _ROOT / "data" / "eum_sales_mail_targets_latest.json"
+_TARGETS_LATEST = data_dir() / "eum_sales_mail_targets_latest.json"
 
 
 def _ensure_root_on_path() -> None:

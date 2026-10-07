@@ -5,19 +5,17 @@ from __future__ import annotations
 import datetime
 import json
 import logging
-import os
 import secrets
 from pathlib import Path
+
+from ai_orchestrator.paths.runtime import data_dir
 
 logger = logging.getLogger(__name__)
 
 
 def _data_root() -> Path:
     """번들(exe) 환경과 개발 환경 모두에서 data/ 경로를 정확히 반환."""
-    env_dir = os.environ.get("HAEHAN_DATA_DIR")
-    if env_dir:
-        return Path(env_dir)
-    return Path(__file__).resolve().parents[3] / "data"
+    return data_dir()  # HAEHAN_DATA_DIR/HAEHAN_DATA_ROOT 해석은 paths.runtime 이 한다
 
 
 ROOT = Path(__file__).resolve().parents[3]

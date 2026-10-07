@@ -13,6 +13,8 @@ import logging
 import os
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
+
 logger = logging.getLogger(__name__)
 
 _SAFE_FIELDS = frozenset(
@@ -34,7 +36,7 @@ _SAFE_FIELDS = frozenset(
 
 
 def _repo_data_dir() -> Path:
-    return Path(__file__).resolve().parents[2] / "data"
+    return data_dir()
 
 
 def default_run_log_path() -> Path:

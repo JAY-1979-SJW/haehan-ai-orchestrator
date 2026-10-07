@@ -62,6 +62,32 @@ def test_validate_artifacts_includes_release_notes_when_present(tmp_path):
     assert any(f.name == "RELEASE_NOTES.md" for f in files)
 
 
+def test_validate_artifacts_includes_install_guide_when_present(tmp_path):
+    """사용자 안내서(설치_및_사용_안내.md)도 있으면 함께 올린다. 필수 규칙(exe·checksums)은 그대로."""
+    d = _make_artifact_dir(tmp_path, with_notes=True)
+    (d / "설치_및_사용_안내.md").write_text("# 안내", encoding="utf-8")
+    names = [f.name for f in validate_artifacts(d)]
+    assert "RELEASE_NOTES.md" in names and "설치_및_사용_안내.md" in names
+    assert any(n.startswith("HaehanAI-") and n.endswith(".exe") for n in names) and "checksums.txt" in names
+
+
+def test_install_guide_alone_does_not_satisfy_required_files(tmp_path):
+    d = tmp_path / "out"
+    d.mkdir()
+    (d / "설치_및_사용_안내.md").write_text("# 안내", encoding="utf-8")
+    (d / "checksums.txt").write_text("x", encoding="utf-8")
+    with pytest.raises(PublishError):  # exe 가 없으면 문서가 있어도 게시 불가(메인 exe 필수 규칙 유지)
+        validate_artifacts(d)
+
+
+def test_dry_run_plan_mentions_install_guide(tmp_path, capsys):
+    d = _make_artifact_dir(tmp_path, with_notes=True)
+    (d / "설치_및_사용_안내.md").write_text("# 안내", encoding="utf-8")
+    assert publish(d, "20261007-abc1234", dry_run=True) == 0
+    out = capsys.readouterr().out
+    assert "설치_및_사용_안내.md" in out and "RELEASE_NOTES.md" in out and "HaehanAI-" in out
+
+
 def test_validate_artifacts_missing_dir(tmp_path):
     with pytest.raises(PublishError):
         validate_artifacts(tmp_path / "missing")
