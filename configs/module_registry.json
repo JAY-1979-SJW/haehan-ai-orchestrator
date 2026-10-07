@@ -12077,41 +12077,41 @@
    "layer": "L7",
    "role": "persistence",
    "domain": "smartstore",
-   "reason": "DB·저장 신호",
+   "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/analytics_dashboard.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/naver/automation/smartstore/competitor_analysis.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "smartstore",
-   "reason": "DB·저장 신호",
+   "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/competitor_analysis.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/naver/automation/smartstore/csv_import.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
+   "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/csv_import.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/naver/automation/smartstore/inventory_monitor.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
+   "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/inventory_monitor.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/naver/automation/smartstore/order_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
+   "reason": "옛 경로 shim — 원본 scripts/naver/automation/smartstore/order_automation.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
    "confidence": "high",
-   "source": "rule"
+   "source": "manual"
   },
   "scripts/naver/automation/workflow.py": {
    "layer": "L6",
@@ -22501,6 +22501,62 @@
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/smartstore/automation/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "smartstore",
+   "reason": "도메인(smartstore) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/smartstore/automation/analytics_dashboard.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "smartstore",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/analytics_dashboard.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "scripts/naver/smartstore/automation/competitor_analysis.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "smartstore",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/competitor_analysis.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "scripts/naver/smartstore/automation/csv_import.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "smartstore",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/csv_import.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "scripts/naver/smartstore/automation/inventory_monitor.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "smartstore",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/inventory_monitor.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "scripts/naver/smartstore/automation/order_automation.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "smartstore",
+   "reason": "이동한 파일 — 원본 scripts/naver/automation/smartstore/order_automation.py 와 같은 층·역할(도구 집 이동은 층을 바꾸지 않는다, TOOL_HOME_MAP)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "tests/test_split_smartstore_automation.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "smartstore",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

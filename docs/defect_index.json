@@ -564,7 +564,7 @@
         "scripts/eum/form_analyzer.py:115",
         "scripts/popup_watcher.py",
         "scripts/naver/smartstore/product/detail_collector.py",
-        "scripts/naver/automation/smartstore/order_automation.py:133",
+        "scripts/naver/smartstore/automation/order_automation.py:133",
         "ai_orchestrator/connectors/smartstore/catalog.py:119",
         "tests/test_naver_mail_action_gate_policy.py",
         "tests/test_local_agent_router_split.py",
