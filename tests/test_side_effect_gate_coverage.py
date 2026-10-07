@@ -52,7 +52,7 @@ GUARDS = {
 WEAK_GUARD_RECEIVERS = {"gates"}  # gates.check_send(force=...) 는 불리언으로 통과 가능 — policy.check_send 같은 별도 정책만 인정
 # 정의 자체가 발송 구현이라 호출이 아닌 것(예: smtplib 래퍼 정의)은 SINK 호출이 없으므로 자동 제외된다.
 REQUIRED_GUARDED = {
-    "ai_orchestrator/connectors/naver_blog_router.py::write_to_naver._do",  # 게이트는 바깥 write_to_naver 에 있다
+    "ai_orchestrator/connectors/naver_blog/router.py::write_to_naver._do",  # 게이트는 바깥 write_to_naver 에 있다
     "scripts/hiworks/mail_batch.py::execute_send_batch",
     "ai_orchestrator/connectors/gmail_router.py::api_reply",
     "ai_orchestrator/connectors/gmail_router.py::api_send",
