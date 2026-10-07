@@ -1,4 +1,5 @@
-"""Compatibility wrapper for the archived EUM device extractor."""
-from __future__ import annotations
+# 호환 shim: 실제 모듈은 scripts/eum/extract_all_devices.py (도구 지도 B2·split-eum)
+import importlib as _il
+import sys as _sys
 
-from scripts.archive.eum_legacy.eum_extract_all_devices import *  # noqa: F401,F403
+_sys.modules[__name__] = _il.import_module("scripts.eum.extract_all_devices")

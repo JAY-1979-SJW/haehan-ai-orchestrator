@@ -105,7 +105,7 @@ def _cmd_extract(sub: str | None, args: list[str]) -> None:
     print("=" * 60)
     print("EUM 단말기설치현황 추출")
     print("=" * 60)
-    from scripts.eum_extract_all_devices import main
+    from scripts.eum.extract_all_devices import main
 
     main()
 

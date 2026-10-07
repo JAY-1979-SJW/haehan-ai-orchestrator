@@ -9705,7 +9705,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/eum_send_mail_batch.py": {
+  "scripts/eum/send_mail_batch.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "eum",
@@ -22298,6 +22298,30 @@
    "source": "rule"
   },
   "scripts/eum/login_check.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "eum",
+   "reason": "도메인(eum) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/eum/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "eum",
+   "reason": "도메인(eum) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/connectors/eum/router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "eum",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/eum/extract_all_devices.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "eum",
