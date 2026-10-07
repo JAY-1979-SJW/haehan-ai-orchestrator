@@ -14473,7 +14473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_gates.py": {
+  "tests/naver_blog/test_blog_automation_gates.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14481,7 +14481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_llm.py": {
+  "tests/naver_blog/test_blog_automation_llm.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14489,7 +14489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_router.py": {
+  "tests/naver_blog/test_blog_automation_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14497,7 +14497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_rules.py": {
+  "tests/naver_blog/test_blog_automation_rules.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14505,7 +14505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_runner.py": {
+  "tests/naver_blog/test_blog_automation_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14513,7 +14513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_store.py": {
+  "tests/naver_blog/test_blog_automation_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14521,7 +14521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_writer.py": {
+  "tests/naver_blog/test_blog_automation_writer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -16969,7 +16969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_bulk_smtp.py": {
+  "tests/naver_mail/test_mail_bulk_smtp.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16985,7 +16985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mailbox_ai_window.py": {
+  "tests/naver_mail/test_mailbox_ai_window.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16993,7 +16993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mailbox_new_alert.py": {
+  "tests/naver_mail/test_mailbox_new_alert.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17113,7 +17113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_blog_assets.py": {
+  "tests/naver_blog/test_naver_blog_assets.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -17121,7 +17121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_blog_images.py": {
+  "tests/naver_blog/test_naver_blog_images.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -17129,7 +17129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_blog_workflow_20260508.py": {
+  "tests/naver_blog/test_naver_blog_workflow_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -17145,7 +17145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_cafe_list_collector.py": {
+  "tests/naver_cafe/test_naver_cafe_list_collector.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -17153,7 +17153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_cafe_to_blog_workflow_20260508.py": {
+  "tests/naver_cafe/test_naver_cafe_to_blog_workflow_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -17161,7 +17161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_cafe_workflow_20260508.py": {
+  "tests/naver_cafe/test_naver_cafe_workflow_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -17169,7 +17169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_cafe_write_router.py": {
+  "tests/naver_cafe/test_naver_cafe_write_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -17241,7 +17241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_action_gate_policy.py": {
+  "tests/naver_mail/test_naver_mail_action_gate_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17249,7 +17249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_action_item_dashboard.py": {
+  "tests/naver_mail/test_naver_mail_action_item_dashboard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17257,7 +17257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_background_runner.py": {
+  "tests/naver_mail/test_naver_mail_background_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17265,7 +17265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_body_pipeline_batch.py": {
+  "tests/naver_mail/test_naver_mail_body_pipeline_batch.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17273,7 +17273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_body_pipeline_v2.py": {
+  "tests/naver_mail/test_naver_mail_body_pipeline_v2.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17281,7 +17281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_business_report.py": {
+  "tests/naver_mail/test_naver_mail_business_report.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17289,7 +17289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_dynamic_folder_discovery.py": {
+  "tests/naver_mail/test_naver_mail_dynamic_folder_discovery.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17297,7 +17297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_dynamic_folder_discovery_closeout.py": {
+  "tests/naver_mail/test_naver_mail_dynamic_folder_discovery_closeout.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17305,7 +17305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_html.py": {
+  "tests/naver_mail/test_naver_mail_html.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17313,7 +17313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_imap.py": {
+  "tests/naver_mail/test_naver_mail_imap.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17321,7 +17321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_inbox_p0_complete.py": {
+  "tests/naver_mail/test_naver_mail_inbox_p0_complete.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17329,7 +17329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_read_pipeline_20260520.py": {
+  "tests/naver_mail/test_naver_mail_read_pipeline_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17337,7 +17337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_rw.py": {
+  "tests/naver_mail/test_naver_mail_rw.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17345,7 +17345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_settings_panel.py": {
+  "tests/naver_mail/test_naver_mail_settings_panel.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17353,7 +17353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_smart_folder_coverage.py": {
+  "tests/naver_mail/test_naver_mail_smart_folder_coverage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17361,7 +17361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_unknown_classification_rules.py": {
+  "tests/naver_mail/test_naver_mail_unknown_classification_rules.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17369,7 +17369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_unread_pagination_depth.py": {
+  "tests/naver_mail/test_naver_mail_unread_pagination_depth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17377,7 +17377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mailbox.py": {
+  "tests/naver_mail/test_naver_mailbox.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17385,7 +17385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_search_table_guard.py": {
+  "tests/naver_search/test_naver_search_table_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -19873,7 +19873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_read_shim.py": {
+  "tests/naver_mail/test_naver_mail_read_shim.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -23161,7 +23161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_services_no_phantom_mail.py": {
+  "tests/naver_mail/test_naver_services_no_phantom_mail.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -23253,6 +23253,38 @@
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_blog/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_cafe/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_cafe",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_mail/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_search/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_search",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

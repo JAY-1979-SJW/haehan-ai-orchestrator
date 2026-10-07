@@ -15,7 +15,7 @@ from scripts.naver.mail import (
     folder_profile as fpr,
 )
 from scripts.naver.mail.collection import audit_naver_mail_dynamic_folder_discovery as audit
-from tests.test_naver_mail_smart_folder_coverage import (
+from tests.naver_mail.test_naver_mail_smart_folder_coverage import (
     MultiFolderActions,
     _mk_row,
 )

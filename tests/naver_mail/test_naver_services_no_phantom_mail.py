@@ -11,7 +11,7 @@ from pathlib import Path
 
 from scripts.naver.services import NaverServices
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 
 
 def test_naver_services_has_no_mail_property():

@@ -11,7 +11,7 @@ from scripts.naver.mail import (
     smart_folder_collector as sfc,
 )
 from scripts.naver.mail.collection import audit_naver_mail_smart_folder_coverage as audit
-from tests.test_naver_mail_inbox_p0_complete import FakeActions, _mk_row
+from tests.naver_mail.test_naver_mail_inbox_p0_complete import FakeActions, _mk_row
 
 # ── 풍부한 Fake — LNB + multi-folder 응답 시뮬레이션 ─────────────────
 

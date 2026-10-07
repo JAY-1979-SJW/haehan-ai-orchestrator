@@ -8,7 +8,7 @@ from scripts.naver.mail import read_state_guard as rsg
 from scripts.naver.mail.collection import audit_naver_mail_unread_pagination_depth as audit
 
 # 기존 FakeActions 재사용 import
-from tests.test_naver_mail_inbox_p0_complete import FakeActions, _mk_row
+from tests.naver_mail.test_naver_mail_inbox_p0_complete import FakeActions, _mk_row
 
 
 def _attach_breakdown(fa, inbox, total, smart):

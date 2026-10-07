@@ -14,7 +14,7 @@ import pytest
 
 import scripts.naver.blog.unsplash_images as images
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 CLI_FILES = [
     "scripts/naver/blog/cli/apply_cta_to_batches.py",
     "scripts/naver/blog/cli/publish_ep_batch.py",
