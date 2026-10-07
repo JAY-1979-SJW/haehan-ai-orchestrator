@@ -76,9 +76,22 @@
       ],
       "icon": "icon.png"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "JAY-1979-SJW",
+        "repo": "haehan-ai-orchestrator",
+        "releaseType": "release"
+      }
+    ],
     "nsis": {
+      "artifactName": "HaehanAI-${env.HAEHAN_BUILD_VERSION}-setup.exe",
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
       "installerLanguages": [
         "ko_KR"
       ],
@@ -97,5 +110,8 @@
     "electron": "^31.0.0",
     "electron-builder": "^26.8.1",
     "electron-packager": "^17.1.2"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

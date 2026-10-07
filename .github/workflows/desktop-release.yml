@@ -115,15 +115,16 @@ jobs:
           echo "pkg_version=${pkg_version}" >> "$GITHUB_OUTPUT"
           echo "sha7=${sha7}" >> "$GITHUB_OUTPUT"
 
-      - name: electron-builder --win portable
+      - name: electron-builder --win portable nsis (포터블 + 설치형)
         # -c.extraMetadata.version 은 앱 메타데이터·Windows 파일 버전용 semver(<yyyy>.<mmdd>.<run>).
-        # 산출물 이름은 package.json portable.artifactName 의 HaehanAI-${env.HAEHAN_BUILD_VERSION}-portable.exe 로
+        # 산출물 이름은 package.json portable/nsis.artifactName 의 HaehanAI-${env.HAEHAN_BUILD_VERSION}-{portable,setup}.exe 로
         # 사람이 읽는 yyyymmdd-sha7 이 들어간다 → 게시 도구 glob(HaehanAI-*.exe)·VERSION_RE 가 그대로 통과한다.
+        # 설치형은 자동 업데이트용 latest.yml·*.blockmap 도 만든다. GitHub 게시는 아래 publish-release 작업(v* 태그 push 때만)이 한다.
         shell: bash
         working-directory: admin-web/electron
         env:
           HAEHAN_BUILD_VERSION: ${{ steps.buildinfo.outputs.version }}
-        run: npx electron-builder --win portable -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
+        run: npx electron-builder --win portable nsis --publish never -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
 
       - name: SHA256 checksums
         shell: bash
@@ -140,7 +141,7 @@ jobs:
         working-directory: admin-web/electron
         env:
           HAEHAN_BUILD_VERSION: ${{ steps.buildinfo.outputs.version }}
-        run: npx electron-builder --win dir -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
+        run: npx electron-builder --win dir --publish never -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
 
       - name: E2E (Electron, 빌드 산출물) — app/user_flow/fresh_install_signup
         # 기존 e2e-electron/*.spec.ts·playwright.electron.config.ts 재사용(신규 프레임워크 없음).
@@ -194,6 +195,8 @@ jobs:
         run: |
           mkdir -p release-out
           cp dist-electron-new/*.exe dist-electron-new/checksums.txt release-out/
+          # 자동 업데이트 메타데이터(설치형 전용) — electron-updater 가 latest.yml 로 새 버전을 찾고 blockmap 으로 차등 다운로드한다
+          cp dist-electron-new/latest.yml dist-electron-new/*.blockmap release-out/
           for f in docs/release/desktop/*.md; do
             if [ -f "$f" ]; then cp "$f" release-out/; else echo "릴리스 문서 없음(이 ref 에는 docs/release/desktop 이 없다) — 건너뜀"; fi
           done
@@ -206,3 +209,31 @@ jobs:
           path: release-out/*
           if-no-files-found: error
           retention-days: 30
+
+  # 자동 업데이트 출처(GitHub Releases) 게시 — v* 태그를 push 했을 때만 돈다(브랜치·수동 빌드는 아티팩트만).
+  # 쓰기 권한은 이 작업에만 준다(빌드 작업은 contents: read 그대로).
+  publish-release:
+    needs: build-desktop
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          pattern: HaehanAI-Desktop-*
+          path: release-out
+          merge-multiple: true
+
+      - name: Create GitHub Release (설치 파일·latest.yml·blockmap)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -la release-out
+          notes="release-out/RELEASE_NOTES.md"
+          if [ -f "$notes" ]; then notes_arg=(--notes-file "$notes"); else notes_arg=(--notes "Haehan AI 데스크톱 $TAG"); fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "Haehan AI $TAG" "${notes_arg[@]}" \
+            release-out/*-setup.exe release-out/*.blockmap release-out/latest.yml release-out/checksums.txt

@@ -35,6 +35,7 @@ const {
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, loadMainShell, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
 const { stage } = require("./lib/startup_log");
+const { startAutoUpdate } = require("./lib/updater");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
 const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
@@ -248,6 +249,8 @@ if (!gotLock) {
     if (!loadMainShell()) createMainWindow(agentKey, startHidden);
     stage("shell-loaded");
     createTray(isAutoStartEnabled());
+    // 설치형이면 새 버전을 백그라운드로 확인·다운로드(본 화면이 뜬 뒤 지연 시작 — 시작 시간에 영향 없음)
+    startAutoUpdate(getMainWindow);
     // 창이 뜬 뒤 백그라운드로 Claude 연결 확인(처음이면 동의 요청) — 시작을 막지 않는다
     if (!startHidden) setTimeout(() => syncClaudeOnStart().catch((e) => console.warn("[main] Claude 연결 확인 실패(무시):", e.message)), 5000);
     else syncClaudeOnStart().catch(() => {});
