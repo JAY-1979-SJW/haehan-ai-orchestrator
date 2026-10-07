@@ -58,6 +58,26 @@ _JWT_ROLE_MAP = {"owner": "owner", "admin": "admin", "operator": "operator", "vi
 _JWT_NO_PRIVILEGE_ROLE = "user"
 
 
+_LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+def desktop_owner_bootstrap_allowed() -> bool:
+    """데스크톱 로컬 모드에서만 '첫 가입자 자동 owner 승인'을 허용한다(대표님 결정 A안, DESKTOP_RUNTIME_AUDIT D3).
+
+    세 조건을 모두 만족해야 한다 — 하나라도 아니면 꺼짐(서버에서 누가 먼저 가입해 owner 를 가져가는 일을 막는다):
+      1. AUTH_ENABLED=false (데스크톱은 단독 사용자 로컬 앱이라 인증 게이트를 끈다. 서버는 true)
+      2. HAEHAN_DESKTOP=1 (Electron 이 서버를 띄울 때만 넣는 데스크톱 표지)
+      3. 서버가 loopback(127.0.0.1/localhost) 에만 바인딩
+    """
+    import os
+
+    return (
+        not config.AUTH_ENABLED
+        and os.environ.get("HAEHAN_DESKTOP", "").strip() == "1"
+        and str(config.APP_HOST).strip().lower() in _LOOPBACK_HOSTS
+    )
+
+
 def is_owner_email(email: object) -> bool:
     """이메일이 설정(OWNER_EMAILS)에 있는가. 대소문자·앞뒤 공백 무시, 별칭(+tag)은 정확히 같아야 한다."""
     return str(email or "").strip().lower() in config.OWNER_EMAILS

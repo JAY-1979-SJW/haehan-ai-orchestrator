@@ -6,7 +6,8 @@ import contextlib
 import json
 import threading
 from datetime import UTC, datetime
-from pathlib import Path
+
+from ai_orchestrator.paths.runtime import data_dir
 
 from .local_agent_actions import AUTO_EXECUTE_VIA_AGENT
 from .local_agent_models import LocalAgent, LocalAgentTask, RegisterResult
@@ -86,7 +87,7 @@ _tasks: dict[str, LocalAgentTask] = {}
 # 에이전트가 그대로 재인증되게 한다. 연결상태(connected_at 등)는 저장하지 않는다 —
 # 재시작 직후는 실제로 미연결 상태가 맞고, 클라이언트가 재연결하면 set_agent_connected가
 # 정확히 다시 채운다. token_hash만 저장(device_token 원문 저장 금지 — 기존 보안 정책과 동일).
-_REGISTRY_STATE_PATH = Path(__file__).resolve().parents[1] / "data" / "local_agent_registry_state.json"
+_REGISTRY_STATE_PATH = data_dir() / "local_agent_registry_state.json"
 
 
 def _save_agents_to_disk() -> None:

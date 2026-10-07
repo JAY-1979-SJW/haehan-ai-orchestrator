@@ -17,9 +17,11 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 from ..domain import site_registry as sr
 
-_FILE = Path(__file__).resolve().parents[2] / "data" / "site_registry" / "sites.json"
+_FILE = data_dir() / "site_registry" / "sites.json"
 _lock = threading.Lock()
 
 

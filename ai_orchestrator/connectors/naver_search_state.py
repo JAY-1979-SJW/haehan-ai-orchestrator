@@ -18,6 +18,8 @@ import os
 from datetime import UTC, datetime
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +36,7 @@ def default_state_path() -> Path:
     override = os.environ.get("NAVER_SEARCH_STATE_PATH", "").strip()
     if override:
         return Path(override)
-    return Path(__file__).resolve().parents[2] / "data" / "naver_search_state.json"
+    return data_dir() / "naver_search_state.json"
 
 
 def _empty() -> dict:

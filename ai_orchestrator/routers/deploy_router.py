@@ -27,13 +27,14 @@ from typing import Any
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.paths.runtime import data_dir
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/deploy", tags=["deploy"])
 
 ROOT = Path(__file__).resolve().parents[2]
-STATUS_FILE = ROOT / "data" / "runtime" / "server_deploy_latest.json"
+STATUS_FILE = data_dir() / "runtime" / "server_deploy_latest.json"
 # 호스트 트리거 데몬 주소 (host.docker.internal:8401)
 TRIGGER_HOST = os.environ.get("DEPLOY_TRIGGER_HOST", "host.docker.internal")
 TRIGGER_PORT = int(os.environ.get("DEPLOY_TRIGGER_PORT", "8401"))

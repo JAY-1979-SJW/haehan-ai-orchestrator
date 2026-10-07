@@ -16,12 +16,13 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
+
+from ai_orchestrator.paths.runtime import storage_dir
 
 from .sqlite_schema import apply_schema, set_busy_timeout
 
-_DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "mail_bulk.db"
+_DB_PATH = storage_dir() / "mail_bulk.db"
 
 # 발송 이력 상태
 SENT = "sent"  # SMTP 가 수신자를 받아 감

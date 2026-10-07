@@ -20,15 +20,16 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.realtime_audit import emit_event
 
 marketing_ops_router = APIRouter(prefix="/naver/marketing-ops", tags=["marketing-ops"])
 
 _ROOT = Path(__file__).resolve().parents[2]
-_RESEARCH_FILE = _ROOT / "data" / "blog_topic_research_latest.json"
-_CACHE_FILE = _ROOT / "data" / "blog_topic_cache.json"
-_REPORTS_DIR = _ROOT / "data" / "reports"
-_PACKAGES_DIR = _ROOT / "data" / "marketing_packages"
+_RESEARCH_FILE = data_dir() / "blog_topic_research_latest.json"
+_CACHE_FILE = data_dir() / "blog_topic_cache.json"
+_REPORTS_DIR = data_dir() / "reports"
+_PACKAGES_DIR = data_dir() / "marketing_packages"
 _PACKAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -259,7 +260,7 @@ def approve_channel(req: ApproveChannelRequest, user: dict = Depends(require_rol
 
 # ── 블로그 이웃 목록 ────────────────────────────────────────────────────────
 
-_NEIGHBORS_CACHE = _ROOT / "data" / "reports" / "blog_neighbors_latest.json"
+_NEIGHBORS_CACHE = data_dir() / "reports" / "blog_neighbors_latest.json"
 
 
 @marketing_ops_router.get("/neighbors")

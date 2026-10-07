@@ -15,13 +15,14 @@ import sqlite3
 import uuid
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
+
+from ai_orchestrator.paths.runtime import storage_dir
 
 from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 from .sqlite_schema import apply_schema, set_busy_timeout
 
-_DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "agent_dispatch.db"
+_DB_PATH = storage_dir() / "agent_dispatch.db"
 
 # 분배안 상태
 PLANNING, PROPOSED, RUNNING, COMPLETED, FAILED, CANCELLED = (

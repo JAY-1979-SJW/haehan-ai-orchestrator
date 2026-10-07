@@ -11,6 +11,7 @@ from pydantic import BaseModel, field_validator
 
 from ai_orchestrator import config
 from ai_orchestrator.gates.auth import (  # 승인 등 owner 작업·콘솔 JWT 수용·OWNER_EMAILS
+    desktop_owner_bootstrap_allowed,
     is_owner_email,
     register_bearer_resolver,
     require_role,
@@ -139,7 +140,7 @@ class AuthResponse(BaseModel):
 
 
 class SignupResponse(BaseModel):
-    status: str  # "pending_approval"
+    status: str  # "pending_approval" (데스크톱 첫 사용자 부트스트랩이면 "approved")
     message: str
     user: UserResponse
 
@@ -160,8 +161,18 @@ def signup(body: SignupRequest):
     if user_db.email_exists(body.email):
         auth_audit.record_auth_event("signup", "conflict", email=body.email)
         raise HTTPException(status_code=409, detail="이미 사용 중인 이메일입니다")
-    user = user_db.create_user(body.email, body.name, body.password)
+    user, bootstrapped = user_db.create_user_bootstrapping(
+        body.email, body.name, body.password, allow_bootstrap=desktop_owner_bootstrap_allowed()
+    )
     auth_audit.record_auth_event("signup", "success", actor_id=user.get("id"), email=body.email)
+    if bootstrapped:
+        # 데스크톱 새 설치의 첫 사용자 — 감사 로그에 눈에 띄게 남긴다(이메일은 auth_audit 가 마스킹).
+        auth_audit.record_auth_event("signup", "bootstrap_owner", actor_id=user.get("id"), email=body.email)
+        return SignupResponse(
+            status="approved",
+            message="첫 사용자(소유자)로 등록되었습니다. 바로 로그인할 수 있습니다.",
+            user=UserResponse(**user_db.safe_user(user)),
+        )
     if is_owner_email(body.email):
         # 이메일 인증이 없으므로 owner 이메일 가입은 감사 로그로 눈에 띄게 남긴다(승인 전 본인 가입인지 확인할 단서).
         auth_audit.record_auth_event("signup", "owner_email_pending", actor_id=user.get("id"), email=body.email)

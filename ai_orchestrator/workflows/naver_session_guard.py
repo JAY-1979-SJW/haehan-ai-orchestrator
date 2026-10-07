@@ -26,12 +26,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
 from scripts.naver.blog.automation.account_probe import alias_to_blog_id
 
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
-ATTEMPTS_FILE = ROOT / "data" / "naver_login_attempts.json"
+ATTEMPTS_FILE = data_dir() / "naver_login_attempts.json"
 SETTLE_CHECKS = 6  # 로그인 직후 페이지 이동이 끝나 상태를 읽을 수 있을 때까지 다시 읽는 횟수
 SETTLE_WAIT_SECONDS = 3.0
 _KEEP = 100

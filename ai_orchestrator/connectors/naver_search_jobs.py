@@ -21,6 +21,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 from . import naver_search_db as db_mod
 from . import naver_search_state as state_mod
 from .naver_blog_collectors import collect_blog_search
@@ -42,7 +44,7 @@ def _utc_now_iso() -> str:
 
 def _repo_data_dir() -> Path:
     # ai_orchestrator/connectors/X.py → repo root /data
-    return Path(__file__).resolve().parents[2] / "data"
+    return data_dir()
 
 
 def default_blog_store_path() -> Path:

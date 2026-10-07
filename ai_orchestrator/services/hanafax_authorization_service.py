@@ -17,11 +17,12 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.sites import hanafax_auto_sender as adapter
 from ai_orchestrator.gates import fax_send_policy as policy
+from ai_orchestrator.paths.runtime import data_dir, storage_dir
 from ai_orchestrator.persistence import fax_authorization_store as store
 from ai_orchestrator.services import hanafax_attachments as attachments
 from ai_orchestrator.services import scheduled_job_actions as actions
+from ai_orchestrator.sites import hanafax_auto_sender as adapter
 
 MAX_RECIPIENTS = 1000
 MAX_PER_RUN_CAP = 1000
@@ -85,7 +86,7 @@ def _clean_recipients(raw: Any) -> list[dict[str, str]]:
 _FAX_HEADERS = ("팩스", "fax")  # 우선순위 순 — 없으면 전화·연락처 열을 쓴다
 _PHONE_HEADERS = ("수신번호", "연락처", "전화")
 _NAME_HEADERS = ("업체명", "상호", "회사", "수신자", "이름", "name")
-_OLD_LOG = Path(__file__).resolve().parents[2] / "data" / "hanafax_sent_log.json"
+_OLD_LOG = data_dir() / "hanafax_sent_log.json"
 _OLD_OK = {"sent", "전송 성공"}  # 예전 이력에서 이미 성공한 상태
 
 
@@ -411,7 +412,7 @@ def run_status(auth_id: str) -> dict[str, Any]:
 # 승인서의 수신번호·제목·첨부를 하나팩스 접수 화면에 채워 스크린샷만 만든다(`scripts/hanafax/preview.py`).
 # 보내기 버튼은 누르지 않는다. 사용자가 볼지 말지 정하며, 승인에는 필요하지 않다.
 # 스크린샷에 수신번호가 보이므로 로컬 `data/` 에만 두고 커밋하지 않는다.
-_PREVIEW_DIR = Path(__file__).resolve().parents[2] / "data" / "hanafax_preview"
+_PREVIEW_DIR = data_dir() / "hanafax_preview"
 _previewing: set[str] = set()
 _preview_state: dict[str, dict[str, Any]] = {}
 
@@ -511,7 +512,7 @@ def reconcile_status(auth_id: str) -> dict[str, Any]:
 # 그룹 연락처는 사이트에서 10명씩 넘겨 가며 읽으므로(1천 명대는 몇 분) 백그라운드로 읽어 **로컬 캐시**에 두고,
 # 승인서를 만들 때 그 캐시를 쓴다(`site_group`=그룹 번호). 캐시에는 개인정보(번호·이름)가 있어 `storage/`(커밋 제외)에만 둔다.
 GROUP_CACHE_TTL_HOURS = 24
-_CACHE_DIR = Path(__file__).resolve().parents[1] / "storage" / "fax_address_cache"
+_CACHE_DIR = storage_dir() / "fax_address_cache"
 _group_syncing: set[str] = set()
 _group_state: dict[str, dict[str, Any]] = {}
 

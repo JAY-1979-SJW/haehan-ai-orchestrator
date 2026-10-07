@@ -22,29 +22,112 @@ function configPath() {
   return path.join(app.getPath("userData"), "config.json");
 }
 
-function loadConfig() {
-  try {
-    const p = configPath();
-    if (fs.existsSync(p)) {
-      // UTF-8 BOM 제거 후 파싱 — 일부 에디터/PowerShell 이 BOM 을 붙여
-      // JSON.parse 가 실패하던 문제 방지
-      const raw = fs.readFileSync(p, "utf-8").replace(/^﻿/, "");
-      return JSON.parse(raw);
+// ── config.json 읽기/쓰기 — 읽기 실패 때 설정을 덮어쓰지 않는다 (DESKTOP_RUNTIME_AUDIT D6) ──
+// 예전에는 읽기·파싱 실패를 삼키고 {} 를 돌려줘서, 일시적 읽기 오류(백신 잠금 등) 뒤 저장이 파일 전체를 덮어썼다
+// (JWT_SECRET 재생성 → 전원 로그아웃 + 라이선스·사이트 설정 소실).
+//   missing    : 파일 없음(최초 실행) → {}
+//   ok         : 정상
+//   corrupt    : 내용이 깨짐(JSON 아님) → 깨진 파일을 config.json.corrupt-<시각> 으로 보존하고 오류로 알린 뒤,
+//                복구 가능한 핵심 값(비밀·로그인 토큰·라이선스·소유자 모드 등)만 건져 새 파일의 시작값으로 쓴다
+//   unreadable : 읽기 자체가 실패(잠금·권한) → 짧게 재시도 후에도 실패하면 **쓰기를 거부**한다(throw)
+const _SALVAGE_STRINGS = ["jwt_secret", "auth_token", "license_key"];
+const _SALVAGE_BOOLS = ["owner_mode", "autoStart", "useSystemChromeProfile"];
+let _configWarnings = [];
+
+function _warnConfig(message) {
+  _configWarnings.push(message);
+  console.error("[config] " + message);
+}
+
+/** 앱이 사용자에게 한 번 알릴 설정 경고를 꺼낸다(꺼내면 비워진다). */
+function consumeConfigWarnings() {
+  const w = _configWarnings;
+  _configWarnings = [];
+  return w;
+}
+
+function _sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function _salvage(raw) {
+  const out = {};
+  for (const k of _SALVAGE_STRINGS) {
+    const m = raw.match(new RegExp('"' + k + '"\\s*:\\s*"([^"\\\\]*)"'));
+    if (m && m[1]) out[k] = m[1];
+  }
+  for (const k of _SALVAGE_BOOLS) {
+    const m = raw.match(new RegExp('"' + k + '"\\s*:\\s*(true|false)'));
+    if (m) out[k] = m[1] === "true";
+  }
+  return out;
+}
+
+function _readConfigState() {
+  const p = configPath();
+  if (!fs.existsSync(p)) return { state: "missing", cfg: {} };
+  let raw;
+  let lastErr;
+  for (let i = 0; i < 3; i++) {
+    try {
+      raw = fs.readFileSync(p, "utf-8");
+      break;
+    } catch (e) {
+      lastErr = e;
+      _sleepSync(80);
     }
-  } catch {}
-  return {};
+  }
+  if (raw === undefined) {
+    _warnConfig(`설정 파일을 읽지 못했습니다(${lastErr && lastErr.code}) — 덮어쓰지 않습니다: ${p}`);
+    return { state: "unreadable", cfg: {}, error: lastErr };
+  }
+  // UTF-8 BOM 제거 후 파싱 — 일부 에디터/PowerShell 이 BOM 을 붙여 JSON.parse 가 실패하던 문제 방지
+  const text = raw.replace(/^﻿/, "");
+  try {
+    const cfg = JSON.parse(text);
+    if (cfg && typeof cfg === "object" && !Array.isArray(cfg)) return { state: "ok", cfg };
+    throw new Error("설정 최상위가 객체가 아님");
+  } catch (e) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const saved = `${p}.corrupt-${stamp}`;
+    try {
+      fs.renameSync(p, saved); // 원본을 보존(복구·조사용) — 이후 새 파일이 만들어진다
+    } catch (re) {
+      _warnConfig(`깨진 설정 파일을 보존하지 못했습니다(${re.code}) — 덮어쓰지 않습니다: ${p}`);
+      return { state: "unreadable", cfg: {}, error: re };
+    }
+    const salvaged = _salvage(text);
+    _warnConfig(
+      `설정 파일이 손상되어 ${path.basename(saved)} 로 보존했습니다(${e.message}). ` +
+        `복구한 항목: ${Object.keys(salvaged).join(", ") || "없음"}. 나머지 설정은 다시 지정해야 할 수 있습니다.`
+    );
+    return { state: "corrupt", cfg: salvaged };
+  }
+}
+
+function loadConfig() {
+  return _readConfigState().cfg;
 }
 
 function saveConfig(cfg) {
   const p = configPath();
+  // 읽기 실패 상태에서는 저장하지 않는다 — 덮어쓰면 기존 설정을 잃는다.
+  const st = _readConfigState();
+  if (st.state === "unreadable") {
+    throw new Error("config.json 을 읽을 수 없어 저장을 중단했습니다(기존 설정 보호)");
+  }
   fs.mkdirSync(path.dirname(p), { recursive: true });
   const tmp = p + ".tmp";
   fs.writeFileSync(tmp, JSON.stringify(cfg, null, 2));
-  fs.renameSync(tmp, p);
+  fs.renameSync(tmp, p); // 원자적 쓰기(tmp + rename)
 }
 
 function patchConfig(patch) {
-  const next = { ...loadConfig(), ...patch };
+  const st = _readConfigState();
+  if (st.state === "unreadable") {
+    throw new Error("config.json 을 읽을 수 없어 저장을 중단했습니다(기존 설정 보호)");
+  }
+  const next = { ...st.cfg, ...patch };
   saveConfig(next);
   return next;
 }
@@ -106,12 +189,29 @@ function setSiteSettings(siteId, settings) {
 // ── 영속 로그인용 JWT_SECRET / 토큰 (userData config.json, 비추적) ────────────────
 // JWT_SECRET 을 이 PC 에 고정해 FastAPI 재시작에도 발급 토큰이 유효하게 한다.
 // (env 미설정 시 FastAPI 는 재시작마다 랜덤 secret → 토큰 무효화되던 문제 해결)
+let _ephemeralJwtSecret = "";
 function getOrCreateJwtSecret() {
-  const cfg = loadConfig();
-  if (typeof cfg.jwt_secret === "string" && cfg.jwt_secret.length >= 32) return cfg.jwt_secret;
+  const st = _readConfigState();
+  const cfg = st.cfg;
+  if (typeof cfg.jwt_secret === "string" && cfg.jwt_secret.length >= 32) {
+    if (st.state === "corrupt") {
+      try { saveConfig(cfg); } catch {} // 손상 파일에서 건진 값(비밀 포함)을 새 파일에 바로 기록 — 로그인이 유지된다
+    }
+    return cfg.jwt_secret;
+  }
   const secret = crypto.randomBytes(32).toString("hex");
-  patchConfig({ jwt_secret: secret });
-  return secret;
+  if (st.state !== "unreadable") {
+    try {
+      saveConfig({ ...cfg, jwt_secret: secret }); // 기존 설정은 그대로 두고 비밀만 추가
+      return secret;
+    } catch (e) {
+      _warnConfig(`JWT_SECRET 을 저장하지 못했습니다(${e.message})`);
+    }
+  }
+  // 읽기/쓰기가 안 되는 상태: 설정을 덮어쓰지 않고 이번 실행에만 쓸 임시 비밀을 쓴다(로그인은 다음 실행에서 풀릴 수 있음).
+  if (!_ephemeralJwtSecret) _ephemeralJwtSecret = secret;
+  _warnConfig("영구 JWT_SECRET 을 쓸 수 없어 이번 실행에만 임시 비밀을 사용합니다 — 다음 실행에서 다시 로그인해야 할 수 있습니다.");
+  return _ephemeralJwtSecret;
 }
 
 /** 저장된 사용자 세션 토큰(있으면). webview localStorage 에 주입해 상시 로그인 유지. */
@@ -235,6 +335,7 @@ module.exports = {
   loadConfig,
   saveConfig,
   patchConfig,
+  consumeConfigWarnings,
   isOwnerMode,
   getOrCreateJwtSecret,
   getAuthToken,
