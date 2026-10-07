@@ -33,6 +33,19 @@ ITEMS: list[tuple[str, str, tuple[str, ...]]] = [
     ("scripts.naver.shopping.crawl", "DB_PATH", ("shopping_competitor_v2.db",)),
     ("scripts.naver.blog.accounts", 'get_account("skyjwsin")["cache_file"]', ("blog_topic_cache_skyjwsin.json",)),
     ("scripts.naver.blog.accounts", 'get_account("skyjwshin")["cache_file"]', ("blog_topic_cache_skyjwshin.json",)),
+    # 배치 2a — 계정·토큰·기록·상태
+    ("scripts.credentials", "CRED_FILE", ("credentials.json",)),
+    ("scripts.credentials", "KEY_FILE", (".cred.key",)),
+    ("scripts.auth_session", "SESSIONS_DIR", ("sessions",)),
+    ("scripts.youtube.oauth", "TOKEN_DIR", ("secrets",)),
+    ("scripts.youtube.uploader", "PLAN_DIR", ("youtube_upload_plans",)),
+    ("scripts.youtube.uploader", "RESULT_DIR", ("youtube_upload_results",)),
+    ("scripts.inquiry.store", "_FILE", ("inquiries", "inquiries.jsonl")),
+    ("scripts.community.scheduler", "_DIR", ("community",)),
+    ("scripts.community.registry", "_SITES_FILE", ("community", "sites.json")),
+    ("scripts.community.notifier", "_CFG", ("community", "notify_config.json")),
+    ("scripts.naver.blog.automation.store", "DEFAULT_BASE", ("blog_automation",)),
+    ("scripts.form.profile", "PROFILE_FILE", ("profile.json",)),
 ]
 
 _CLEAN = ("HAEHAN_DATA_ROOT", "HAEHAN_DATA_DIR", "HAEHAN_STORAGE_DIR", "LOG_DIR")

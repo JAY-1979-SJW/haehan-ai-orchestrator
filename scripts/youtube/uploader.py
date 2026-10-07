@@ -7,15 +7,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
 from orchestrator_v1.core.security_utils import safe_preview
 from scripts.publish_guard import guarded
 from scripts.realtime_audit import emit_event
 
 ROOT = Path(__file__).resolve().parents[2]
-PLAN_DIR = ROOT / "data" / "youtube_upload_plans"
-RESULT_DIR = ROOT / "data" / "youtube_upload_results"
-LATEST_PLAN = ROOT / "data" / "youtube_upload_plan_latest.json"
-LATEST_RESULT = ROOT / "data" / "youtube_upload_result_latest.json"
+PLAN_DIR = data_dir() / "youtube_upload_plans"
+RESULT_DIR = data_dir() / "youtube_upload_results"
+LATEST_PLAN = data_dir() / "youtube_upload_plan_latest.json"
+LATEST_RESULT = data_dir() / "youtube_upload_result_latest.json"
 APPROVAL_PHRASE = "YOUTUBE_APPROVED_UPLOAD"
 ALLOWED_PRIVACY = {"private", "unlisted", "public"}
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}

@@ -90,3 +90,15 @@ def ensure_runtime_dirs() -> None:
             target.mkdir(parents=True, exist_ok=True)
         except OSError:
             pass
+
+
+def atomic_write_bytes(path: Path, data: bytes) -> None:
+    """상태 파일을 tmp 에 쓴 뒤 rename — 쓰는 도중 앱이 종료돼도 반쪽 파일이 남지 않는다."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_bytes(data)
+    tmp.replace(path)
+
+
+def atomic_write_text(path: Path, text: str, encoding: str = "utf-8") -> None:
+    atomic_write_bytes(path, text.encode(encoding))
