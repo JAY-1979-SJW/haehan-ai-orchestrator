@@ -10,12 +10,13 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from scripts.app_paths import repo_root
 from scripts.instagram.cases import Case
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
-REEL_DIR = Path(__file__).resolve().parents[2] / "data" / "instagram_reels"
+REEL_DIR = repo_root() / "data" / "instagram_reels"
 W, H = 1080, 1920
 
 

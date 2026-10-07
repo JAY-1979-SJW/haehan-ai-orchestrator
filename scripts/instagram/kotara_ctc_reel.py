@@ -14,7 +14,9 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-ROOT = Path(__file__).resolve().parents[2]
+from scripts.app_paths import repo_root
+
+ROOT = repo_root()
 SRC_DIR = ROOT / "data" / "naver_blog_images" / "gonobi_224362505769"
 OUT_DIR = ROOT / "data" / "instagram_reels" / "kotara_ctc"
 OUT_DIR.mkdir(parents=True, exist_ok=True)

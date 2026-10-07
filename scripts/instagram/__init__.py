@@ -10,11 +10,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from scripts.app_paths import onedrive_root, resolve_external
+from scripts.app_paths import onedrive_root, repo_root, resolve_external
 
 TARGET_IG_ACCOUNT = "big.sun2024"
 IMAGE_ROOT = resolve_external("HAEHAN_LIGHTING_IMAGE_DIR", "전등 이미지", "gonobi_images_v2", base=onedrive_root())
-CACHE_PATH = Path(__file__).resolve().parents[2] / "data" / "instagram_post_cache.json"
+CACHE_PATH = repo_root() / "data" / "instagram_post_cache.json"
 MAX_CAROUSEL = 10
