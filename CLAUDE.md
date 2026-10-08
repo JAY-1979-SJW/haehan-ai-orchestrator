@@ -12,12 +12,12 @@
 사이트 자동화, 데이터 수집, CDP 조작, 스크래핑 코드를 **새로 작성하기 전에** 반드시 아래를 먼저 실행한다.
 
 ```bash
-python scripts/ops/capability_check.py <도메인>
+python scripts/ops/hooks/capability_check.py <도메인>
 # 예시
-python scripts/ops/capability_check.py cafe
-python scripts/ops/capability_check.py smartstore
-python scripts/ops/capability_check.py eum
-python scripts/ops/capability_check.py naver mail
+python scripts/ops/hooks/capability_check.py cafe
+python scripts/ops/hooks/capability_check.py smartstore
+python scripts/ops/hooks/capability_check.py eum
+python scripts/ops/hooks/capability_check.py naver mail
 ```
 
 출력에서 기존 구현(API 엔드포인트, Python 함수, CLI 커맨드)이 확인되면:
@@ -287,7 +287,7 @@ chmod/chown 자동 변경 금지
 
 작업 후 반드시 실행:
 ```bash
-python scripts/ops/codebase_layer_audit.py
+python scripts/ops/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
 python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
@@ -301,7 +301,7 @@ quality gate errors > 0 → STOP
 ## 코딩 컨벤션 및 완료 보고 기준 (2026-09-26 추가)
 
 ### 재사용 우선
-새 함수/유틸을 만들기 전 `scripts/ops/capability_check.py`, `scripts/ops/duplicate_code_check.py`,
+새 함수/유틸을 만들기 전 `scripts/ops/hooks/capability_check.py`, `scripts/ops/hooks/duplicate_code_check.py`,
 Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/import, 없을 때만 신규 작성.
 검증 안 된 추측성 코드 금지 — 불확실하면 Grep/Read로 실제 시그니처·동작을 확인한 뒤 작성한다.
 
