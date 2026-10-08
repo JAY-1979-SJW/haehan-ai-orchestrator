@@ -97,7 +97,7 @@ def test_user_cancelled_transition():
 
 
 def test_site_compliance_gate_blocks_automation_blocked_site():
-    from local_agent.site_compliance_gate import (
+    from local_agent.policy.site_compliance_gate import (
         POLICY_AUTOMATION_BLOCKED,
         evaluate_gate,
         is_blocked,
@@ -126,8 +126,8 @@ def test_site_compliance_gate_blocks_automation_blocked_site():
 def test_site_compliance_gate_allows_user_present_local_only_when_user_present():
     # 알려지지 않은 사이트는 기본적으로 BLOCK 이므로, USER_PRESENT_LOCAL_ONLY
     # 분기는 policy module 의 patch 로 시뮬레이션한다.
-    import local_agent.site_compliance_gate as gate
-    from local_agent.site_compliance_gate import (
+    import local_agent.policy.site_compliance_gate as gate
+    from local_agent.policy.site_compliance_gate import (
         POLICY_USER_PRESENT_LOCAL_ONLY,
         evaluate_gate,
     )

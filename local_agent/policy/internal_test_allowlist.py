@@ -22,7 +22,6 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlparse
 
-
 # ── 정책 상수 ────────────────────────────────────────────────────────────────
 
 ALLOWED_SCHEME: str = "http"

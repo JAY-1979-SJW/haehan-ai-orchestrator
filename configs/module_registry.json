@@ -7137,7 +7137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/internal_test_allowlist.py": {
+  "local_agent/policy/internal_test_allowlist.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -7201,7 +7201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/site_compliance_gate.py": {
+  "local_agent/policy/site_compliance_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -7209,7 +7209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/site_entry_policy.py": {
+  "local_agent/policy/site_entry_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -7225,7 +7225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/tenant_scope_contract.py": {
+  "local_agent/policy/tenant_scope_contract.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -23338,6 +23338,14 @@
    "source": "rule"
   },
   "local_agent/gui/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/policy/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

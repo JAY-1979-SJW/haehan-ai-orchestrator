@@ -552,7 +552,7 @@ forbidden_modules =
     local_agent.gui.gui_icons
     local_agent.gui.gui_log_buffer
     local_agent.gui.gui_state
-    local_agent.internal_test_allowlist
+    local_agent.policy.internal_test_allowlist
     local_agent.kras_connector
     local_agent.login_auto_flow
     local_agent.login_state_detector
@@ -560,10 +560,10 @@ forbidden_modules =
     local_agent.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
-    local_agent.site_compliance_gate
-    local_agent.site_entry_policy
+    local_agent.policy.site_compliance_gate
+    local_agent.policy.site_entry_policy
     local_agent.site_mapper
-    local_agent.tenant_scope_contract
+    local_agent.policy.tenant_scope_contract
     local_agent.token_store
     local_agent.user_present.user_present_state_store
     local_agent.user_present.user_present_status_sender
@@ -1310,9 +1310,9 @@ source_modules =
     ai_orchestrator.web_task.web_task_approval_service
     local_agent.browser_approval_verifier
     local_agent.browser_instance_guard
-    local_agent.internal_test_allowlist
-    local_agent.site_compliance_gate
-    local_agent.site_entry_policy
+    local_agent.policy.internal_test_allowlist
+    local_agent.policy.site_compliance_gate
+    local_agent.policy.site_entry_policy
     orchestrator_v1.tasks.approval_manager
     orchestrator_v1.tasks.email_task_approval
     orchestrator_v1.tasks.policy_engine
@@ -1683,7 +1683,7 @@ forbidden_modules =
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
-    local_agent.tenant_scope_contract
+    local_agent.policy.tenant_scope_contract
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
@@ -2730,7 +2730,7 @@ forbidden_modules =
     local_agent.gui.gui_icons
     local_agent.gui.gui_log_buffer
     local_agent.gui.gui_state
-    local_agent.internal_test_allowlist
+    local_agent.policy.internal_test_allowlist
     local_agent.kras_connector
     local_agent.login_auto_flow
     local_agent.login_state_detector
@@ -2738,10 +2738,10 @@ forbidden_modules =
     local_agent.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
-    local_agent.site_compliance_gate
-    local_agent.site_entry_policy
+    local_agent.policy.site_compliance_gate
+    local_agent.policy.site_entry_policy
     local_agent.site_mapper
-    local_agent.tenant_scope_contract
+    local_agent.policy.tenant_scope_contract
     local_agent.token_store
     local_agent.user_present.user_present_state_store
     local_agent.user_present.user_present_status_sender
@@ -3834,7 +3834,7 @@ forbidden_modules =
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
-    local_agent.tenant_scope_contract
+    local_agent.policy.tenant_scope_contract
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
@@ -4996,7 +4996,7 @@ forbidden_modules =
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
-    local_agent.tenant_scope_contract
+    local_agent.policy.tenant_scope_contract
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
@@ -5283,7 +5283,7 @@ forbidden_modules =
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
-    local_agent.tenant_scope_contract
+    local_agent.policy.tenant_scope_contract
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
@@ -5766,7 +5766,7 @@ forbidden_modules =
     local_agent.gui.gui_icons
     local_agent.gui.gui_log_buffer
     local_agent.gui.gui_state
-    local_agent.internal_test_allowlist
+    local_agent.policy.internal_test_allowlist
     local_agent.kras_connector
     local_agent.login_auto_flow
     local_agent.login_state_detector
@@ -5774,10 +5774,10 @@ forbidden_modules =
     local_agent.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
-    local_agent.site_compliance_gate
-    local_agent.site_entry_policy
+    local_agent.policy.site_compliance_gate
+    local_agent.policy.site_entry_policy
     local_agent.site_mapper
-    local_agent.tenant_scope_contract
+    local_agent.policy.tenant_scope_contract
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
@@ -6454,7 +6454,7 @@ source_modules =
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
-    local_agent.tenant_scope_contract
+    local_agent.policy.tenant_scope_contract
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader

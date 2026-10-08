@@ -3,8 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from local_agent import site_entry_policy as sep
-
+from local_agent.policy import site_entry_policy as sep
 
 # ── 1) 정책 lookup ───────────────────────────────────────────────────
 
