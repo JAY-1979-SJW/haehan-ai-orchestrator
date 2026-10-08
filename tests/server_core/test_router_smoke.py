@@ -1,11 +1,14 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.asgi import app
+from ai_orchestrator.core import config
 
 client = TestClient(app, raise_server_exceptions=True)
 
@@ -17,6 +20,17 @@ _LOW_RISK_TASK = {
     "description": "라우터 스모크 테스트",
     "requested_by": "test",
 }
+
+
+@pytest.fixture(autouse=True)
+def _no_auth(monkeypatch):
+    """이 스모크 시험은 인증 없이 라우터 연결만 확인한다.
+
+    config.AUTH_ENABLED 기본값은(.env 없을 때) "true" 다(운영 기본값) — 인증 토큰 없이 호출하면
+    401 이 되어 이 시험이 원래 확인하려던 "라우팅이 올바른가" 를 가린다. 대상 AUTH_ENABLED=False
+    (데스크톱/무인증 모드)로 명시해 인증과 무관하게 라우팅만 검증한다.
+    """
+    monkeypatch.setattr(config, "AUTH_ENABLED", False)
 
 
 def test_health_200():
