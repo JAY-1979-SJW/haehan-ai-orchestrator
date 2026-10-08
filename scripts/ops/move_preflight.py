@@ -106,6 +106,14 @@ class _Target:
         self.path_re = _path_re(self.rel)
         f = root / (main_from or self.rel)  # 이미 옮겨졌으면 새 위치에서 __main__ 을 본다
         self.has_main = f.is_file() and has_main_block(f.read_text(encoding="utf-8", errors="replace"))
+        # 같은 basename("policy.py" 등)을 가진 **다른** 파일이 저장소에 더 있으면, 문자열에 디렉터리가
+        # 없는 bare 파일명만으로는 "이 이동 대상을 가리킨다"고 확신할 수 없다(이름만 같은 다른 파일 참조일
+        # 수 있음) — 그런 경우 bare-name 매칭의 신뢰도를 낮춘다(대표님 지시: maps 전체경로 판정 원칙).
+        self.ambiguous_basename = any(
+            p.is_file() and p.relative_to(root).as_posix() != self.rel
+            for p in root.rglob(f"{self.stem}.py")
+            if "__pycache__" not in p.parts
+        )
 
 
 def _divide_chain_join(node: ast.AST) -> str | None:
@@ -208,8 +216,16 @@ def _py_refs(rel: str, text: str, t: _Target) -> list[dict]:  # noqa: C901, PLR0
         m = _PYTHON_RUN_RE.findall(v)
         direct = any(t.rel in x.replace("\\", "/") or x.replace("\\", "/").endswith("/" + t.rel) for x in m)
         full_path = bool(t.path_re.search(v)) and (" " not in v.strip() or "/" in v or "\\" in v)
-        base_only = v == f"{t.stem}.py" or v.endswith("/" + f"{t.stem}.py") or v.endswith("\\" + f"{t.stem}.py")
-        if direct or full_path or (base_only and parent_present):
+        # 디렉터리가 있는 문자열(v 에 "/"·"\\" 포함)은 그 디렉터리가 이 대상의 바로 위 폴더
+        # (parent_dir)와 실제로 일치할 때만 "같은 파일"로 본다 — 파일명만 같고 폴더가 다르면
+        # (예: ai_orchestrator/browser_tool/policy.py ≠ ai_orchestrator/gates/policy.py) 이 대상의
+        # 참조가 아니다(대표님 지시: maps 전체경로 판정과 동일 원칙).
+        has_dir_in_string = "/" in v or "\\" in v
+        seg_match = v.endswith(f"/{t.parent_dir}/{t.stem}.py") or v.endswith(f"\\{t.parent_dir}\\{t.stem}.py")
+        # 디렉터리 없이 파일명만(Path 조인 체인의 마지막 세그먼트 분리형) 인 경우에만 bare 매칭 허용
+        # — 그 경우에도 같은 basename 을 가진 다른 파일이 저장소에 있으면(이름만으론 식별 불가) 쓰지 않는다.
+        bare_only = (not has_dir_in_string) and v == f"{t.stem}.py" and not t.ambiguous_basename
+        if direct or full_path or seg_match or (bare_only and parent_present):
             if has_spec:
                 kind = "path_load"
             elif has_runpy_path:
