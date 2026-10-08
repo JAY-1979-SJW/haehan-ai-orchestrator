@@ -12,10 +12,17 @@ NEW = "scripts.naver.smartstore.automation."
 
 
 def test_old_duplicate_paths_removed():
-    """옛 이중 경로(scripts/naver/automation/<모듈>.py 재수출 shim)는 지웠다 — 정본은 smartstore/automation 하나."""
-    for m in (*MODS, "review_automation", "workflow"):
+    """옛 이중 경로(scripts/naver/automation/<모듈>.py 재수출 shim)는 지웠다 — 정본은 smartstore/automation 하나.
+
+    workflow 는 이후 별도 리팩터(234a5a54, 부모↔자식 순환 해소)로 scripts/naver/workflow.py 로
+    한 번 더 옮겨져 smartstore/automation 아래가 아니다 — 그 정본 경로로 확인한다.
+    """
+    for m in (*MODS, "review_automation"):
         assert importlib.util.find_spec("scripts.naver.automation." + m) is None
         assert importlib.import_module(NEW + m) is not None
+    assert importlib.util.find_spec("scripts.naver.automation.workflow") is None
+    assert importlib.util.find_spec("scripts.naver.smartstore.automation.workflow") is None
+    assert importlib.import_module("scripts.naver.workflow") is not None
 
 
 def test_root_constant_value_unchanged():
