@@ -17,7 +17,7 @@ _FIXTURE_CANDIDATES = (
     Path(__file__).resolve().parent / "fixtures" / "g2b_public_notice_existing_source_candidates_20260508.json"
 )
 _BRIDGE_MODULE = (
-    Path(__file__).resolve().parent.parent / "ai_orchestrator" / "browser_tool" / "g2b_existing_openapi_bridge.py"
+    Path(__file__).resolve().parent.parent / "ai_orchestrator" / "connectors" / "g2b" / "g2b_existing_openapi_bridge.py"
 )
 
 
@@ -140,7 +140,7 @@ def test_bridge_module_no_http_call():
 
 
 def test_bridge_verdict_not_content_valid_pass():
-    from ai_orchestrator.browser_tool.g2b_existing_openapi_bridge import (
+    from ai_orchestrator.connectors.g2b.g2b_existing_openapi_bridge import (
         build_g2b_notice_candidates_from_existing_source,
         classify_existing_source_bridge_result,
     )
@@ -157,7 +157,7 @@ def test_bridge_verdict_not_content_valid_pass():
 
 
 def test_blocked_url_not_in_safe_candidates():
-    from ai_orchestrator.browser_tool.g2b_existing_openapi_bridge import (
+    from ai_orchestrator.connectors.g2b.g2b_existing_openapi_bridge import (
         build_g2b_notice_candidates_from_existing_source,
     )
 

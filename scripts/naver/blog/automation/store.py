@@ -20,10 +20,11 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from scripts.common.app_paths import runtime_data_dir
 from scripts.naver.blog.automation.rules import Rule, is_valid_rule_id, parse_rule, rule_to_dict
 
 ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_BASE = ROOT / "data" / "blog_automation"
+DEFAULT_BASE = runtime_data_dir() / "blog_automation"
 HISTORY_MAX = 2000
 
 _LOCK = threading.RLock()

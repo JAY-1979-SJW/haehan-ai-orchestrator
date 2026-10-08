@@ -6,9 +6,9 @@ from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
-from ai_orchestrator.gates import mail_bulk_policy as pol
-from ai_orchestrator.persistence import mail_bulk_store as store
-from ai_orchestrator.workflows import naver_mail_bulk as bulk
+from ai_orchestrator.connectors.naver_mail import bulk_policy as pol
+from ai_orchestrator.connectors.naver_mail import bulk_store as store
+from ai_orchestrator.connectors.naver_mail import bulk_workflow as bulk
 
 KST = timezone(timedelta(hours=9))
 NOW = datetime(2026, 10, 5, 10, 0, tzinfo=KST)

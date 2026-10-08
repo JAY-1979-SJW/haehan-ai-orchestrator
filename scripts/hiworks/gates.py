@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
-from scripts.gate import require_side_effect
+from scripts.common.gate import check as gate_check
+from scripts.common.gate import require_side_effect
 from scripts.site_engine.execution_gate import (
     ExecutionGateInput,
     ExecutionGateResult,

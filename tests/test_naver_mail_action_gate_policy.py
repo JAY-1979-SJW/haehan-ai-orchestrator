@@ -1,6 +1,6 @@
 import pytest
 
-from scripts.gate import GateBlocked
+from scripts.common.gate import GateBlocked
 from scripts.naver import mail
 from scripts.naver import router
 from scripts.naver.mail import read_state_guard as rsg

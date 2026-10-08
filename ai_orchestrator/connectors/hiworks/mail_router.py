@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import require_send_approval
 
-from ...audit_logger import log_event
+from ...audit.audit_logger import log_event
 from ...paths import repo_root
 
 logger = logging.getLogger(__name__)
@@ -113,7 +113,7 @@ def api_compose(
 
     try:
         from scripts.hiworks.mail import fill_compose
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         result = run_on_browser_thread(
@@ -157,7 +157,7 @@ def api_send(
 
     try:
         from scripts.hiworks.mail import send_mail
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         result = run_on_browser_thread(lambda: send_mail(get_page()), timeout=120)

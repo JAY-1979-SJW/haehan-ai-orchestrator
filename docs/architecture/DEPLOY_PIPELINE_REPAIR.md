@@ -24,7 +24,7 @@ docker 호출 스크립트의 repo 커밋을 차단 → 배포 스크립트를 r
 ## 2. 해결 방향: Scoped Exception (정책을 콕 집어 수정)
 
 게이트를 끄지 않고, **단 하나의 지정된 서버 배포 스크립트에만** docker 허용.
-나머지 전체는 docker 금지 유지. (게이트는 이미 `scripts/quality_gate.py`를 예외 처리하는
+나머지 전체는 docker 금지 유지. (게이트는 이미 `scripts/ops/quality/quality_gate.py`를 예외 처리하는
 선례가 있음 — `quality_gate.py:151`)
 
 ---
@@ -37,7 +37,7 @@ docker 호출 스크립트의 repo 커밋을 차단 → 배포 스크립트를 r
 "no_local_docker_cli_allow_paths": ["scripts/ops/server_deploy.py"]   // 신규
 ```
 
-### 3-2. `scripts/quality_gate.py` (L2 게이트)
+### 3-2. `scripts/ops/quality/quality_gate.py` (L2 게이트)
 `_has_local_docker_cli()` 에 예외 경로 체크 추가 (기존 quality_gate.py 예외와 동일 패턴):
 ```python
 allow = config.get("no_local_docker_cli_allow_paths", [])  # 호출부에서 전달

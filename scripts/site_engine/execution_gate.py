@@ -1,6 +1,6 @@
 """site_engine execution gate — 공통 실행 판단 foundation.
 
-기존 scripts/gate.py를 대체하지 않는다.
+기존 scripts/common/gate.py를 대체하지 않는다.
 이 모듈은 SiteProfile 기반의 공통 실행 위치·승인·차단 판단 모델을 제공한다.
 
 판단 흐름:

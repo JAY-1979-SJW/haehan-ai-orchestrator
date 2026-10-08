@@ -31,9 +31,9 @@ def test_domain_enum_import_clean():
 
 
 def test_domain_enum_no_conflict_with_scripts_schemas():
-    """scripts/schemas.py RiskLevel(AUTO/NOTIFY)과 다른 네임스페이스."""
+    """scripts/common/schemas.py RiskLevel(AUTO/NOTIFY)과 다른 네임스페이스."""
     from ai_orchestrator.domain.enums import RiskLevel as OrchestratorRiskLevel
-    from scripts.schemas import RiskLevel as ScriptsRiskLevel
+    from scripts.common.schemas import RiskLevel as ScriptsRiskLevel
 
     # 서로 다른 클래스여야 한다 (충돌 없음)
     assert OrchestratorRiskLevel is not ScriptsRiskLevel
@@ -152,8 +152,8 @@ def test_router_imports_clean():
     """
     import ai_orchestrator.local_agent_router as lar
     import ai_orchestrator.routers.admin_ui_router as aur
-    import ai_orchestrator.routers.auth_router as auth
-    import ai_orchestrator.routers.web_task_router as wtr
+    import ai_orchestrator.auth.auth_router as auth
+    import ai_orchestrator.web_task.web_task_router as wtr
 
     assert lar.local_agent_router is not None
     assert aur.admin_ui_router is not None
@@ -174,7 +174,7 @@ def test_sites_router_imports_clean():
 
 
 def test_naver_search_router_imports_clean():
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
     assert naver_search_router is not None
 

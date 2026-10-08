@@ -43,7 +43,7 @@
 python scripts/cdp_client.py eum <task>
   │
   ▼
-scripts/router.py  → dispatch()
+scripts/site_engine/command_router.py  → dispatch()
   │
   ▼
 scripts/eum/router.py  →  run_eum(task, sub, args)
@@ -331,7 +331,7 @@ data/
 1. .env에 EUM_ID / EUM_PW 입력
 
 2. CDP 데몬 실행 (브라우저 세션 관리)
-   python scripts/cdp_daemon.py start
+   python scripts/browser/cdp/cdp_daemon.py start
 
 3. EUM 로그인 확인
    python scripts/cdp_client.py eum login

@@ -6,11 +6,12 @@ read-only unless explicitly approved by a higher-level workflow.
 """
 from __future__ import annotations
 
-import json
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
+
+from scripts.google.report_io import save_json_with_latest
 
 ROOT = Path(__file__).resolve().parents[2]
 LATEST_CATALOG = ROOT / "data" / "google_surface_catalog_latest.json"
@@ -661,14 +662,7 @@ def build_surface_catalog(surfaces: Iterable[GoogleSurface] = GOOGLE_SURFACES) -
 
 def save_surface_catalog(catalog: dict | None = None, path: Path | None = None) -> Path:
     catalog = catalog or build_surface_catalog()
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    LATEST_CATALOG.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    target = path or REPORT_DIR / f"google_surface_catalog_{timestamp}.json"
-    text = json.dumps(catalog, ensure_ascii=False, indent=2)
-    target.write_text(text, encoding="utf-8")
-    LATEST_CATALOG.write_text(text, encoding="utf-8")
-    return target
+    return save_json_with_latest(catalog, REPORT_DIR, LATEST_CATALOG, "google_surface_catalog", path)
 
 
 def print_surface_summary(catalog: dict, path: Path) -> None:

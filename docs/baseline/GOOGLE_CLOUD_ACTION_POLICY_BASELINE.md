@@ -134,5 +134,5 @@ Minimum verification for Cloud action policy changes:
 ```text
 python scripts/ops/audit_google_cloud_action_policy_baseline_contract.py
 python scripts/ops/audit_google_cloud_router_compatibility.py
-python scripts/module_quality_gate.py --module repo_guard
+python scripts/ops/quality/module_quality_gate.py --module repo_guard
 ```

@@ -23,10 +23,10 @@ def test_classify_site_module_layers():
 
 
 def test_classify_core_layers():
-    assert classify_path("scripts/gate.py")[0] == "L2"
-    assert classify_path("scripts/web_connector.py")[0] == "L3"
-    assert classify_path("scripts/cdp_client.py")[0] == "L4"
-    assert classify_path("scripts/cdp_db.py")[0] == "L3"  # S1 정정: 저수준 IO 래퍼
+    assert classify_path("scripts/common/gate.py")[0] == "L2"
+    assert classify_path("scripts/browser/page/web_connector.py")[0] == "L3"
+    assert classify_path("scripts/browser/cdp/cdp_client.py")[0] == "L4"
+    assert classify_path("scripts/browser/cdp/cdp_db.py")[0] == "L3"  # S1 정정: 저수준 IO 래퍼
     assert classify_path("admin-web/src/app/page.tsx")[0] == "L9"
     assert classify_path("agent/excel/workflows.py")[0] == "L10"
     assert classify_path("docs/layer_classification.md")[0] == "L12"

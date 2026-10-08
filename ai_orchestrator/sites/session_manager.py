@@ -29,7 +29,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 
 from . import secrets_policy
 from .browser import DEFAULT_HEADLESS, DEFAULT_TIMEOUT_MS

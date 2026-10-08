@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
 from ai_orchestrator.browser_tool.allowlist_preflight import evaluate_allowlist_preflight  # noqa: E402
-from ai_orchestrator.browser_tool.g2b_domain_policy import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_domain_policy import (  # noqa: E402
     DOMAIN_G2B_PUBLIC_READONLY,
     DOMAIN_NEEDS_URL_VERIFICATION,
     DOMAIN_READONLY_CANDIDATE,
@@ -311,7 +311,7 @@ class TestG2BCompatibility(unittest.TestCase):
 class TestG2BCodeSafety(unittest.TestCase):
     # 23. 쿠키/session/token 추출 코드 없음
     def test_23_no_cookie_session_token_extraction(self):
-        import ai_orchestrator.browser_tool.g2b_domain_policy as m
+        import ai_orchestrator.connectors.g2b.g2b_domain_policy as m
 
         src = inspect.getsource(m)
         forbidden = [
@@ -326,7 +326,7 @@ class TestG2BCodeSafety(unittest.TestCase):
 
     # 24. 자동 click/type/fill/submit 코드 없음
     def test_24_no_automation_calls(self):
-        import ai_orchestrator.browser_tool.g2b_domain_policy as m
+        import ai_orchestrator.connectors.g2b.g2b_domain_policy as m
 
         src = inspect.getsource(m)
         for call in ["page.click(", "page.type(", "page.fill(", "page.goto(", ".submit("]:
@@ -334,7 +334,7 @@ class TestG2BCodeSafety(unittest.TestCase):
 
     # 25. DB write 없음
     def test_25_no_db_write(self):
-        import ai_orchestrator.browser_tool.g2b_domain_policy as m
+        import ai_orchestrator.connectors.g2b.g2b_domain_policy as m
 
         src = inspect.getsource(m)
         for mod in ["sqlite3", "psycopg2", "sqlalchemy", "pymongo"]:

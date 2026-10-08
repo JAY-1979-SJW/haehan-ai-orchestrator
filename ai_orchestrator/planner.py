@@ -1,23 +1,15 @@
-import logging
+# haehan-shim: ai_orchestrator.llm.planner
+# 호환 shim: 실제 모듈은 ai_orchestrator.llm.planner 로 이동했다 (ai_orchestrator/llm/planner.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-from .gates.policy import evaluate_request, load_policy
-from .gates.risk_classifier import classify_risk
-from .models import ExecutionPlan, RiskAssessment, TaskRequest
 
-logger = logging.getLogger(__name__)
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def plan(req: TaskRequest) -> tuple[RiskAssessment, ExecutionPlan]:
-    risk = classify_risk(req)
-    logger.info(
-        "위험도 분류 | task=%s | level=%s | requires_approval=%s", req.task_id, risk.risk_level, risk.requires_approval
-    )
-    policy = load_policy()
-    execution_plan = evaluate_request(req, risk, policy)
-    logger.info(
-        "실행 계획 수립 | task=%s | allowed=%s | blocked=%s",
-        req.task_id,
-        execution_plan.allowed,
-        execution_plan.blocked_reasons or None,
-    )
-    return risk, execution_plan
+_install(_il.import_module("ai_orchestrator.llm.planner"), globals(), _sys.modules)

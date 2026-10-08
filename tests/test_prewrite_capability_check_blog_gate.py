@@ -74,7 +74,7 @@ def test_ctrl_a_then_font_size_blocked_even_with_gap():
 def test_blogwriter_use_inside_reviewed_connector_path_allowed():
     # 저장소에 실제로 있는 검증된 경로를 ROOT 기준으로 쓴다(없는 경로는 '신규 파일 기존 구현 확인' 게이트가 따로 차단)
     result = _run_hook(
-        str(ROOT / "ai_orchestrator" / "connectors" / "naver_blog_router.py"),
+        str(ROOT / "ai_orchestrator" / "connectors" / "naver_blog" / "naver_blog_router.py"),
         "from scripts.naver.blog.core.writer import BlogWriter\n",
     )
     assert result.returncode == 0

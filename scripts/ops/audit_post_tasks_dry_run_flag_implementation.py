@@ -98,8 +98,8 @@ def _check_router_implementation() -> dict:
         "dry_run_status_string": "DRY_RUN: would issue token" in content,
         "dry_run_field_in_response": '"dry_run": True' in content or "'dry_run': True" in content,
         "issue_token_still_present": "issue_token(req, risk" in content,
-        "execute_task_not_imported": "execute_task" not in content.split("from ..executor import")[1].split("\n")[0]
-        if "from ..executor import" in content
+        "execute_task_not_imported": "execute_task" not in content.split("from ..tasks.executor import")[1].split("\n")[0]
+        if "from ..tasks.executor import" in content
         else True,
         "phase_1r_guards_intact": (
             "LEGACY_5050_TASK_APPROVE_ROUTE_WIRING_ENABLED = False" in content

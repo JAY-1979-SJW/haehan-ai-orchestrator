@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from scripts import realtime_audit
+from scripts.common import realtime_audit
 from scripts.eum import run_log
 
 

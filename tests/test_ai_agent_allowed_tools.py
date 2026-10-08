@@ -7,7 +7,7 @@ import asyncio
 import pytest
 
 from ai_orchestrator import mcp_tool_names as names
-from ai_orchestrator.routers.ai_agent_router import _DEFAULT_ALLOWED_TOOLS
+from ai_orchestrator.site_work.ai_agent_router import _DEFAULT_ALLOWED_TOOLS
 
 
 def test_router_uses_shared_names_without_restricted():
@@ -33,8 +33,8 @@ def test_registered_mcp_tools_match_shared_names():
 
 def test_chat_run_requests_full_result_and_limits_match_chat_store():
     """채팅 답변이 서버 필터 500자에서 잘리던 문제(2026-10-02) — /run 이 전문(result_full)을 요청하고 저장 상한과 일치."""
-    from ai_orchestrator import chat_sessions
-    from ai_orchestrator.routers import ai_agent_router as router
+    from ai_orchestrator.site_work import ai_agent_router as router
+    from ai_orchestrator.tasks import chat_sessions
 
     assert router.RunAgentRequest(prompt="x").result_max_chars == router.CHAT_RESULT_MAX_CHARS == 20000
     assert chat_sessions._MAX_MESSAGE_TEXT_LEN == router.CHAT_RESULT_MAX_CHARS
@@ -47,7 +47,7 @@ def test_run_endpoint_passes_result_max_chars_to_queued_task(monkeypatch):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.routers import ai_agent_router as router
+    from ai_orchestrator.site_work import ai_agent_router as router
 
     queued: list[dict] = []
     fake_reg = SimpleNamespace(

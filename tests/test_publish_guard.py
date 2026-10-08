@@ -1,8 +1,8 @@
-"""scripts/publish_guard.py 단위 테스트 — 텔레그램 전송은 항상 mock, 실제 발송 금지."""
+"""scripts/common/publish_guard.py 단위 테스트 — 텔레그램 전송은 항상 mock, 실제 발송 금지."""
 
 from __future__ import annotations
 
-import scripts.publish_guard as pg
+import scripts.common.publish_guard as pg
 
 
 def test_guarded_publish_success_passthrough(monkeypatch):

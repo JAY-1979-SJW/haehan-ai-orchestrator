@@ -88,12 +88,10 @@ def save_labor_test(records: list[dict[str, Any]]) -> Path:
 
 
 def main() -> None:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
+    from scripts.eum.menu_actions import fetch_save_print
 
-    page = get_page()
-    records = fetch_labor_test(page)
-    path = save_labor_test(records)
-    print(f"근로내역테스트: {len(records)}건 조회 → {path}")
+    fetch_save_print(get_page(), fetch_labor_test, save_labor_test, "근로내역테스트")
 
 
 if __name__ == "__main__":

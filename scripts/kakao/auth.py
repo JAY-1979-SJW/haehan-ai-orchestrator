@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -85,7 +85,7 @@ def login(page) -> dict:
     SMS/카카오앱 인증이 필수이므로 자동 로그인 불가.
     브라우저를 카카오 로그인 페이지로 이동 후 사용자가 로그인하면 감지한다.
     """
-    from scripts.login_detector import monitor_for_login
+    from scripts.auth.login_detector import monitor_for_login
 
     if is_logged_in(page):
         log.info("kakao: 이미 로그인됨")

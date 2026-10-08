@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-from runtime_temp import usable_temp_base  # type: ignore[import-not-found]
+from common.runtime_temp import usable_temp_base  # type: ignore[import-not-found]  # scripts/ 가 sys.path[0] 일 때(직접 실행) 형제 패키지 common 을 바로 찾는다
 
 ROOT = Path(__file__).resolve().parents[1]
 

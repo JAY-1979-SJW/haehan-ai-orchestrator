@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-
-from validate_site_policy_config import validate_config
+from scripts.archive.one_off.validate_site_policy_config import validate_config
 
 
 def _base() -> dict:

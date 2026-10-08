@@ -12,10 +12,10 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors import marketing_ops_settings as S
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.routers import marketing_ops_router as M
-from scripts.gate import CONFIRM_TEXTS
+from ai_orchestrator.marketing import marketing_ops_router as M
+from ai_orchestrator.marketing import marketing_ops_settings as S
+from scripts.common.gate import CONFIRM_TEXTS
 
 BLOG_PUBLISH_CONFIRM_TEXT = CONFIRM_TEXTS["blog_publish"]
 
@@ -89,7 +89,7 @@ def test_publish_blog_confirmed_false_short_circuits_before_gate(api):
 
 def test_publish_blog_passes_gate_with_correct_send_confirm(api):
     _toggle(api, True)
-    with patch("scripts.web_connector.run_on_browser_thread", return_value={"ok": True, "log_no": "t1"}):
+    with patch("scripts.browser.cdp.connection.run_on_browser_thread", return_value={"ok": True, "log_no": "t1"}):
         r = api.post(
             "/naver/marketing-ops/publish-blog",
             json={"package_id": "nope", "confirmed": True, "send_confirm": BLOG_PUBLISH_CONFIRM_TEXT},

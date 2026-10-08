@@ -69,7 +69,7 @@ _LAST_TOUCH: dict[str, float] = {}
 
 def _emit(event_type: str, *, site: str, workflow: str, status: str, message: str, metadata: dict[str, Any]) -> None:
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             event_type,

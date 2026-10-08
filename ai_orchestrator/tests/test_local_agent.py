@@ -51,7 +51,7 @@ def _isolated_storage(tmp_path, monkeypatch):
 
     importlib.reload(_lar)
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
     import ai_orchestrator.local_agent_registry_common as _reg_common
@@ -407,7 +407,7 @@ def test_unknown_action_audit_logged(admin_user):
             "params": {"path": "C:/nope.txt"},
         },
     )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     events = {e["event_type"] for e in _al.read_recent_logs(limit=50)}
     assert "LOCAL_AGENT_TASK_REJECTED" in events
@@ -453,7 +453,7 @@ def test_high_risk_audit_event_recorded(admin_user):
             "action": "capture_screenshot",
         },
     )
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     events = {e["event_type"] for e in _al.read_recent_logs(limit=50)}
     assert "LOCAL_AGENT_TASK_WAITING_APPROVAL" in events
@@ -467,7 +467,7 @@ def test_device_token_not_in_audit_log(admin_user):
     reg = _register_agent(client)
     token = reg["device_token"]
     assert token  # sanity
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     log_path = _al._LOG_PATH
     if log_path.exists():
@@ -486,7 +486,7 @@ def test_approval_token_id_recorded_but_no_secret_in_log(admin_user):
     )
     token_id = resp.json()["token_id"]
     # 등록된 device_token 은 별개. 둘 다 안전하게 처리됐는지 확인.
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     _al._LOG_PATH.read_text(encoding="utf-8")
     # token_id 자체는 식별자라 기록될 수 있다 (감사 추적 목적).
@@ -522,7 +522,7 @@ def test_sensitive_params_stripped_from_task(admin_user):
     assert "session_token" not in data["params"]
     assert "cookie" not in data["params"]
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     raw = _al._LOG_PATH.read_text(encoding="utf-8") if _al._LOG_PATH.exists() else ""
     assert _SECRET not in raw, "민감 params 가 감사 로그에 노출됨"
@@ -2018,7 +2018,7 @@ def test_cancel_api_response_no_token_hash_or_device_token(admin_user):
 def test_cancel_api_audit_cancelled_event(admin_user, tmp_path, monkeypatch):
     import json
 
-    import ai_orchestrator.audit_logger as al
+    import ai_orchestrator.audit.audit_logger as al
 
     monkeypatch.setattr(al, "_LOG_PATH", tmp_path / "audit.jsonl")
 
@@ -2038,7 +2038,7 @@ def test_cancel_api_audit_cancelled_event(admin_user, tmp_path, monkeypatch):
 def test_cancel_api_audit_cancel_requested_event(admin_user, tmp_path, monkeypatch):
     import json
 
-    import ai_orchestrator.audit_logger as al
+    import ai_orchestrator.audit.audit_logger as al
 
     monkeypatch.setattr(al, "_LOG_PATH", tmp_path / "audit.jsonl")
 
@@ -2060,7 +2060,7 @@ def test_cancel_api_audit_no_reason_raw(admin_user, tmp_path, monkeypatch):
     """audit note에 reason 원문 전체가 남지 않는다 (reason_len만 기록)."""
     import json
 
-    import ai_orchestrator.audit_logger as al
+    import ai_orchestrator.audit.audit_logger as al
 
     monkeypatch.setattr(al, "_LOG_PATH", tmp_path / "audit.jsonl")
 

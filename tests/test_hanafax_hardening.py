@@ -11,11 +11,11 @@ from datetime import datetime
 
 import pytest
 
-from ai_orchestrator.sites import hanafax_auto_sender as adapter
-from ai_orchestrator.gates import fax_send_policy as pol
-from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import hanafax_authorization_service as service
-from ai_orchestrator.workflows import hanafax_auto_send as flow
+from ai_orchestrator.connectors.hanafax import auto_sender as adapter
+from ai_orchestrator.connectors.hanafax import send_policy as pol
+from ai_orchestrator.connectors.hanafax import authorization_store as store
+from ai_orchestrator.connectors.hanafax import authorization_service as service
+from ai_orchestrator.connectors.hanafax import auto_send as flow
 
 _REAL_SAFE_PATH = service._safe_path
 

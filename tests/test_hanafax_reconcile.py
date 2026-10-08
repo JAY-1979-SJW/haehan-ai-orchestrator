@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import hanafax_authorization_service as service
-from ai_orchestrator.services import hanafax_reconcile as rec
-from ai_orchestrator.workflows import hanafax_auto_send as flow
+from ai_orchestrator.connectors.hanafax import authorization_store as store
+from ai_orchestrator.connectors.hanafax import authorization_service as service
+from ai_orchestrator.connectors.hanafax import reconcile as rec
+from ai_orchestrator.connectors.hanafax import auto_send as flow
 from scripts.hanafax import send_result
 
 NOW = datetime(2026, 10, 2, 15, 0).astimezone()

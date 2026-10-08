@@ -22,7 +22,7 @@
 공통 기록 API:
 
 ```python
-from scripts.realtime_audit import emit_event
+from scripts.common.realtime_audit import emit_event
 
 emit_event(
     "EUM_WORK_STARTED",
@@ -52,20 +52,20 @@ emit_event(
 최근 감사 이벤트:
 
 ```bash
-python scripts/realtime_audit.py recent --limit 30
-python scripts/realtime_audit.py recent --site eum
+python scripts/common/realtime_audit.py recent --limit 30
+python scripts/common/realtime_audit.py recent --site eum
 ```
 
 JSONL 실시간 감시:
 
 ```bash
-python scripts/realtime_audit.py tail
+python scripts/common/realtime_audit.py tail
 ```
 
 사람이 읽는 텍스트 로그 감시:
 
 ```bash
-python scripts/realtime_audit.py tail --text
+python scripts/common/realtime_audit.py tail --text
 python scripts/watch_log.py
 ```
 
@@ -124,7 +124,7 @@ python scripts/cdp_client.py eum work registration P-001 D-001 Seoul --prepare
 
 ## 6. 초기 품질 게이트
 
-저장소 변경 품질은 `scripts/quality_gate.py`가 검사한다.
+저장소 변경 품질은 `scripts/ops/quality/quality_gate.py`가 검사한다.
 
 검사 항목:
 
@@ -138,14 +138,14 @@ python scripts/cdp_client.py eum work registration P-001 D-001 Seoul --prepare
 실행:
 
 ```bash
-python scripts/quality_gate.py
-python scripts/quality_gate.py --staged --enforce
+python scripts/ops/quality/quality_gate.py
+python scripts/ops/quality/quality_gate.py --staged --enforce
 ```
 
 로컬 pre-commit 훅 설치:
 
 ```bash
-python scripts/install_quality_gate.py
+python scripts/ops/quality/install_quality_gate.py
 ```
 
 훅은 staged 변경만 검사하므로 기존 작업트리의 미정리 파일 때문에 커밋 전 검사가 불필요하게 깨지지 않는다.
@@ -158,8 +158,8 @@ python scripts/install_quality_gate.py
 
 - 모든 로그인은 감지 즉시 저장한다.
 - 저장 대상은 쿠키와 localStorage/sessionStorage 기반 세션이며, 비밀번호/OTP/인증서/토큰 평문은 저장하지 않는다.
-- 세션 파일은 `scripts/auth_session.py`의 암호화 저장 경로를 사용한다.
-- 감지 결과는 `scripts/cdp_db.py`의 `sessions.session_file`에도 연결한다.
+- 세션 파일은 `scripts/auth/auth_session.py`의 암호화 저장 경로를 사용한다.
+- 감지 결과는 `scripts/browser/cdp/cdp_db.py`의 `sessions.session_file`에도 연결한다.
 - `LOGIN_SESSION_SAVED` 감사 이벤트를 남긴다.
 
 실시간 감시 명령:

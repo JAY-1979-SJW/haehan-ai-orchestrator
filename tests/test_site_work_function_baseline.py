@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from scripts.ops.audit_site_work_function_baseline import audit
-from scripts.router import is_service_cmd
+from scripts.site_engine.command_router import is_service_cmd
 
 
 def test_site_work_function_baseline_audit_passes() -> None:

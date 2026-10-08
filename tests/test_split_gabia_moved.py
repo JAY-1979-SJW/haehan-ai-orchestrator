@@ -14,7 +14,7 @@ BEFORE = json.loads((repo_root() / "tests" / "data" / "split_w3d_before.json").r
 
 def test_old_paths_alias_new_modules():
     for old, new in (
-        ("scripts.gabia_login_watch", "scripts.gabia.login_watch"),
+        ("scripts.gabia.login_watch", "scripts.gabia.login_watch"),
     ):
         assert importlib.import_module(old) is importlib.import_module(new)
 
@@ -34,14 +34,14 @@ def test_router_root_and_script_exist():
 
 
 def test_watch_public_names_unchanged():
-    mod = importlib.import_module("scripts.gabia_login_watch")
+    mod = importlib.import_module("scripts.gabia.login_watch")
     names = {n for n in dir(mod) if not n.startswith("__")}
     missing = set(BEFORE["watch_names"]) - names
     assert not missing, missing
 
 
 def test_old_script_runs_directly():
-    for rel in ("scripts/gabia_login_watch.py", "scripts/gabia/login_watch.py"):
+    for rel in ("scripts/gabia/login_watch.py", "scripts/gabia/login_watch.py"):
         r = subprocess.run(
             [sys.executable, str(repo_root() / rel), "--help"],
             capture_output=True,

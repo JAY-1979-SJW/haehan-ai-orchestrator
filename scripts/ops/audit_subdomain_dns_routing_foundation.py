@@ -32,7 +32,7 @@ SAFE_BOUNDARY = {
 def _check_dns_draft() -> dict[str, bool | str]:
     result: dict[str, bool | str] = {}
     try:
-        from ai_orchestrator.gabia.autowork_subdomain_plan import (
+        from ai_orchestrator.connectors.gabia.autowork_subdomain_plan import (
             AUTOWORK_DNS_APPROVAL_SUMMARY,
             AUTOWORK_DNS_DRAFT,
             AUTOWORK_FQDN,
@@ -55,7 +55,7 @@ def _check_dns_draft() -> dict[str, bool | str]:
 def _check_nginx_plan() -> dict[str, bool | str]:
     result: dict[str, bool | str] = {}
     try:
-        from ai_orchestrator.gabia.autowork_subdomain_plan import (
+        from ai_orchestrator.connectors.gabia.autowork_subdomain_plan import (
             EXISTING_NGINX_ROUTES,
             NGINX_RECOMMENDED_PLAN,
         )
@@ -74,7 +74,7 @@ def _check_nginx_plan() -> dict[str, bool | str]:
 
 def _check_5050_protection() -> bool:
     try:
-        from ai_orchestrator.gabia.autowork_subdomain_plan import EXISTING_NGINX_ROUTES
+        from ai_orchestrator.connectors.gabia.autowork_subdomain_plan import EXISTING_NGINX_ROUTES
 
         for r in EXISTING_NGINX_ROUTES:
             if r["location"] == "/orchestrator/":
@@ -87,7 +87,7 @@ def _check_5050_protection() -> bool:
 def _check_ssl_plan() -> dict[str, bool | str]:
     result: dict[str, bool | str] = {}
     try:
-        from ai_orchestrator.gabia.autowork_subdomain_plan import SSL_PLAN
+        from ai_orchestrator.connectors.gabia.autowork_subdomain_plan import SSL_PLAN
 
         result["ssl_plan_exists"] = SSL_PLAN is not None
         result["ssl_fqdn_correct"] = SSL_PLAN.get("fqdn") == "autowork.haehan-ai.kr"
@@ -103,7 +103,7 @@ def _check_ssl_plan() -> dict[str, bool | str]:
 def _check_smoke() -> dict[str, bool | str]:
     result: dict[str, bool | str] = {}
     try:
-        from ai_orchestrator.gabia.autowork_subdomain_plan import SMOKE_CHECKLIST
+        from ai_orchestrator.connectors.gabia.autowork_subdomain_plan import SMOKE_CHECKLIST
 
         result["smoke_count_ge_8"] = len(SMOKE_CHECKLIST) >= 8
         result["smoke_has_dns_resolve"] = any(
@@ -127,7 +127,7 @@ def _check_smoke() -> dict[str, bool | str]:
 def _check_rollback() -> dict[str, bool | str]:
     result: dict[str, bool | str] = {}
     try:
-        from ai_orchestrator.gabia.autowork_subdomain_plan import (
+        from ai_orchestrator.connectors.gabia.autowork_subdomain_plan import (
             AUTOWORK_ROLLBACK_PLAN,
             NGINX_ROLLBACK_PLAN,
             SSL_ROLLBACK_PLAN,
@@ -148,11 +148,11 @@ def _check_rollback() -> dict[str, bool | str]:
 def _check_gabia_flow() -> dict[str, bool | str]:
     result: dict[str, bool | str] = {}
     try:
-        from ai_orchestrator.gabia.autowork_subdomain_plan import (
+        from ai_orchestrator.connectors.gabia.autowork_subdomain_plan import (
             AUTOWORK_DNS_APPROVAL_SUMMARY,
             AUTOWORK_DNS_CHANGE_PREVIEW,
         )
-        from ai_orchestrator.gabia.gabia_browser_task import make_autowork_dns_task
+        from ai_orchestrator.connectors.gabia.browser_task import make_autowork_dns_task
 
         result["change_preview_exists"] = AUTOWORK_DNS_CHANGE_PREVIEW is not None
         result["change_preview_approval_req"] = AUTOWORK_DNS_CHANGE_PREVIEW.approval_required is True
@@ -207,7 +207,7 @@ def main() -> None:
 
     all_pass = all(c["ok"] for c in checklist)
 
-    from ai_orchestrator.gabia.autowork_subdomain_plan import (
+    from ai_orchestrator.connectors.gabia.autowork_subdomain_plan import (
         AUTOWORK_DNS_DRAFT,
         AUTOWORK_ROLLBACK_PLAN,
         NGINX_RECOMMENDED_PLAN,

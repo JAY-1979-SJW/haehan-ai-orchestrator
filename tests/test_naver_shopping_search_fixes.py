@@ -58,7 +58,7 @@ def test_search_shopping_passes_display_and_sort(monkeypatch):
         return _Outcome()
 
     monkeypatch.setattr(
-        "ai_orchestrator.connectors.naver_search_jobs.run_naver_shopping_search_job",
+        "ai_orchestrator.connectors.naver_search.naver_search_jobs.run_naver_shopping_search_job",
         fake_job,
     )
 
@@ -92,7 +92,7 @@ def test_search_shopping_exposes_is_live(monkeypatch):
 
     for status, expected_live in (("ok", True), ("dry_run", False), ("error", False)):
         monkeypatch.setattr(
-            "ai_orchestrator.connectors.naver_search_jobs.run_naver_shopping_search_job",
+            "ai_orchestrator.connectors.naver_search.naver_search_jobs.run_naver_shopping_search_job",
             make_job(status),
         )
         r = search_mod.search_shopping("테스트")

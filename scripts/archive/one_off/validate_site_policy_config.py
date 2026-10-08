@@ -1,8 +1,8 @@
 """site policy JSON config 검증 스크립트.
 
 Usage:
-    python scripts/validate_site_policy_config.py configs/site_policies/g2b.json
-    python scripts/validate_site_policy_config.py configs/site_policies/  # 디렉터리 일괄 검증
+    python scripts/archive/one_off/validate_site_policy_config.py configs/site_policies/g2b.json
+    python scripts/archive/one_off/validate_site_policy_config.py configs/site_policies/  # 디렉터리 일괄 검증
 """
 
 from __future__ import annotations
@@ -93,7 +93,7 @@ def validate_file(path: Path) -> dict:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("사용법: python scripts/validate_site_policy_config.py <json파일 또는 디렉터리>")
+        print("사용법: python scripts/archive/one_off/validate_site_policy_config.py <json파일 또는 디렉터리>")
         sys.exit(1)
 
     target = Path(sys.argv[1])

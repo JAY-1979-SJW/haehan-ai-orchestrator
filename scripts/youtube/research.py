@@ -5,7 +5,7 @@ search/video/comments/analysis/captions/ops 기능이 각 leaf 에 구현돼 있
 """
 from __future__ import annotations
 
-from .research_common import (  # noqa: F401
+from scripts.common.youtube_api_common import (  # noqa: F401
     parse_kv_args, parse_youtube_video_id,
     _api_key, _get_json, _get_json_oauth, _get_text_oauth,
     _now, _stamp, _write_report, _resolve_repo_path, _oauth_token,

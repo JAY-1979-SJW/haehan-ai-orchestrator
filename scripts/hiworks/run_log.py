@@ -33,7 +33,7 @@ def _audit_event(
     metadata: dict[str, Any] | None = None,
 ) -> None:
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             event_type,

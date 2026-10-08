@@ -1,4 +1,4 @@
-"""T1-① 경로 처리 정본화 1단계 — scripts.app_paths.repo_root() 가 모든 진입점에서 같은 값을 내는지.
+"""T1-① 경로 처리 정본화 1단계 — scripts.common.app_paths.repo_root() 가 모든 진입점에서 같은 값을 내는지.
 
 배경: 운영 코드 약 439개 파일이 저장소 루트를 각자 Path(__file__).resolve().parents[N]
 으로 계산한다(TOOL_MODULARIZATION_PLAN.md §3-1). repo_root() 를 단일 정본으로 삼고,
@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 from scripts.common.data_paths import _PROJECT_ROOT as DATA_PATHS_ROOT
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -32,7 +32,7 @@ def test_repo_root_from_subprocess_cwd_elsewhere():
     """실행 위치(cwd)가 저장소 밖이어도 __file__ 기준이라 같은 값이 나와야 한다
     (CLI를 scripts/ 밑에서 돌리거나 다른 디렉터리에서 돌리는 경우의 대체 시험 —
     실제 cwd 의존이 없음을 확인하는 것이 핵심)."""
-    code = "from scripts.app_paths import repo_root; print(repo_root())"
+    code = "from scripts.common.app_paths import repo_root; print(repo_root())"
     # 저장소 루트를 sys.path 에 넣어 cwd와 무관하게 import 되게 한다(실제 CLI도 동일 방식)
     result = subprocess.run(
         [sys.executable, "-c", code],
@@ -55,12 +55,12 @@ def test_orchestrator_v1_module_import_sees_same_repo_root():
 
 def test_docker_app_workdir_layout_matches_repo_root_assumption():
     """Dockerfile이 COPY . . 로 저장소 내용을 /app 바로 아래 두므로(WORKDIR /app),
-    컨테이너 안에서도 scripts/app_paths.py 기준 parents[1] 이 /app 과 같아야 한다 —
+    컨테이너 안에서도 scripts/common/app_paths.py 기준 parents[1] 이 /app 과 같아야 한다 —
     이 파일 자체가 그 상대 구조를 쓰므로 검증은 Dockerfile 레이아웃 자체를 읽어 확인."""
     dockerfile = REPO_ROOT / "Dockerfile"
     text = dockerfile.read_text(encoding="utf-8")
     assert "WORKDIR /app" in text
     assert "COPY . ." in text
-    # scripts/app_paths.py 는 저장소 루트 바로 아래 scripts/ 안에 있어야
+    # scripts/common/app_paths.py 는 저장소 루트 바로 아래 scripts/ 안에 있어야
     # parents[1] 이 WORKDIR(/app)과 같은 폴더를 가리킨다.
-    assert (REPO_ROOT / "scripts" / "app_paths.py").exists()
+    assert (REPO_ROOT / "scripts" / "common" / "app_paths.py").exists()

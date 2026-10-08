@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.gates import agent_dispatch_policy as pol
+from ai_orchestrator.agent_dispatch import agent_dispatch_policy as pol
 
 
 def T(tid, resources=None, *, read_only=False, deps=None, **kw):

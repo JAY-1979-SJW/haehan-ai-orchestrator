@@ -23,8 +23,8 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]

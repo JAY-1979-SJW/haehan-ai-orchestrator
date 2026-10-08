@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 
@@ -114,6 +115,19 @@ def save_menu_result(result: dict[str, Any], path: Path | None = None) -> Path:
     out = path or DATA_DIR / f"eum_menu_page_{stamp}.json"
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     return out
+
+
+def fetch_save_print(
+    page,
+    fetch: Callable[[Any], list[dict[str, Any]]],
+    save: Callable[[list[dict[str, Any]]], Path],
+    label: str,
+) -> Path:
+    """조회 화면 공통 실행: fetch(page) → save(records) → '<label>: N건 조회 → 경로' 출력."""
+    records = fetch(page)
+    path = save(records)
+    print(f"{label}: {len(records)}건 조회 → {path}")
+    return path
 
 
 def print_menu_result(result: dict[str, Any], path: Path | None = None) -> None:

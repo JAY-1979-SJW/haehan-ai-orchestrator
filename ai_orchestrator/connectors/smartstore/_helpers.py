@@ -57,7 +57,7 @@ def tmpl_dir() -> Path:
 
 
 def run_with_cdp_page(fn):
-    """공유 CDP 연결(scripts.web_connector)의 기존 탭에서 fn(page)를 실행하고 결과를 반환.
+    """공유 CDP 연결(scripts.browser.page.web_connector)의 기존 탭에서 fn(page)를 실행하고 결과를 반환.
 
     2026-09-30 이전엔 이 파일에 cdp_connect()가 있었는데, 호출마다 독자적으로
     sync_playwright().start()+connect_over_cdp()를 새로 맺는 패턴이라 이 저장소 CLAUDE.md
@@ -72,7 +72,7 @@ def run_with_cdp_page(fn):
 
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    from scripts.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     def _work():
         page = get_page()
@@ -82,7 +82,7 @@ def run_with_cdp_page(fn):
 
 
 def run_with_cdp_context(fn):
-    """공유 CDP 연결(scripts.web_connector)의 BrowserContext(여러 탭)로 fn(ctx)를 실행.
+    """공유 CDP 연결(scripts.browser.page.web_connector)의 BrowserContext(여러 탭)로 fn(ctx)를 실행.
 
     run_with_cdp_page()와 같은 목적이지만, 팝업 관리처럼 ctx.pages 전체를 훑어 URL
     패턴으로 활성 탭을 골라야 하는 호출자(smartstore/popup.py)를 위한 컨텍스트 레벨 버전.
@@ -91,7 +91,7 @@ def run_with_cdp_context(fn):
 
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    from scripts.web_connector import get_context, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_context, run_on_browser_thread
 
     def _work():
         ctx = get_context()

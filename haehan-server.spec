@@ -29,8 +29,8 @@ hidden_imports = [
     "ai_orchestrator",
     "ai_orchestrator.server",
     "ai_orchestrator.routers.registry",
-    "ai_orchestrator.auth",
-    "ai_orchestrator.user_db",
+    "ai_orchestrator.gates.auth",
+    "ai_orchestrator.auth.user_db",
     "ai_orchestrator.local_agent_registry",
     "ai_orchestrator.local_agent_registry_common",
     "ai_orchestrator.local_agent_registry_agent",
@@ -42,8 +42,9 @@ hidden_imports = [
     "ai_orchestrator.local_agent_router",
     "ai_orchestrator.local_agent_router_ws",
     "ai_orchestrator.local_agent_router_registration",
-    "ai_orchestrator.audit_logger",
-    "scripts.web_connector",
+    "ai_orchestrator.audit.audit_logger",
+    "scripts.browser.cdp.connection",
+    "scripts.browser.page.web_connector",
     "scripts.naver.smartstore.navigation.cdp_popup_manager",
     # FastAPI / uvicorn
     "uvicorn.logging",
@@ -146,6 +147,20 @@ hidden_imports = [
     "requests.adapters",
 ]
 
+# 우리 패키지는 손으로 적은 목록 대신 하위 모듈 전체를 자동 수집한다 — 폴더를 옮길 때마다 목록이
+# 낡아 번들에서 모듈이 빠졌다(2026-10-08 E2E 실측: 루트 shim 이 import_module 로 부르는
+# orchestrator_v1.inbox.* 가 정적 분석에 안 잡혀 'No module named orchestrator_v1.inbox').
+# 시험 폴더는 번들에 넣지 않는다.
+from PyInstaller.utils.hooks import collect_submodules
+
+
+def _not_tests(name: str) -> bool:
+    return ".tests" not in name and not name.endswith("tests")
+
+
+for _pkg in ("ai_orchestrator", "orchestrator_v1"):
+    hidden_imports += collect_submodules(_pkg, filter=_not_tests)
+
 # ── Data files ──────────────────────────────────────────────────────────────
 def _tree_excluding(src_dir: Path, dest_prefix: str, exclude_dirnames: set[str]) -> list[tuple[str, str]]:
     """src_dir 전체를 (file, dest) 목록으로 모으되, exclude_dirnames 에 든 하위
@@ -187,7 +202,9 @@ print("[spec] Chromium 번들 제외 — 대상 PC에 Google Chrome 설치 필�
 
 # ── Analysis ─────────────────────────────────────────────────────────────────
 a = Analysis(
-    [str(ROOT / 'ai_orchestrator' / 'asgi.py')],  # 진입점(2026-10-07: scripts/run_server.py → asgi.py, 루트 모듈 분리 반영)
+    # 진입점: 상대 import 가 없는 전용 진입 파일. asgi.py 를 직접 쓰면 단독 스크립트로 실행돼
+    # `from . import config` 가 실패한다(2026-10-08 첫 빌드 E2E fastapi.log 실측).
+    [str(ROOT / 'ai_orchestrator' / 'server' / 'desktop_entry.py')],
     pathex=[str(ROOT)],
     binaries=[],
     datas=datas,

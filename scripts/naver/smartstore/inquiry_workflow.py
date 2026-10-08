@@ -2,7 +2,7 @@
 
 `scripts/naver/smartstore/navigation/popup_handler.py`는 Playwright `page`
 객체를 쓰는 버전이 이미 있다 — 이 세션의 CDP 문의처리 워크플로는
-`scripts.cdp_helper.CDP`(raw websocket)로 동작해 그 API를 그대로 재사용할
+`scripts.browser.cdp.cdp_helper.CDP`(raw websocket)로 동작해 그 API를 그대로 재사용할
 수 없어, 같은 셀렉터/의도를 CDP용으로 다시 구현했다. Playwright 기반
 자동화에서는 popup_handler.dismiss_all_popups()를 쓴다.
 
@@ -22,7 +22,7 @@
 import json
 import time
 
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 
 _CLOSE_POPUP_JS = """(function(){
   // 팝업은 iframe 안이 아니라 최상위 문서에 오버레이로 렌더링되는 경우가

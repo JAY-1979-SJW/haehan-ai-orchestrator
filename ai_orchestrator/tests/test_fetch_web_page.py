@@ -345,16 +345,16 @@ def test_fetch_web_page_connector_exception_returns_safe_error(monkeypatch):
 def _isolated_logdir(tmp_path, monkeypatch):
     """executor 직접 호출용 — auth 는 건드리지 않고 LOG_DIR 만 격리."""
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
-    from ai_orchestrator import config as _cfg
+    from ai_orchestrator.core import config as _cfg
 
     importlib.reload(_cfg)
-    from ai_orchestrator import execution_limits as _el
+    from ai_orchestrator.core import execution_limits as _el
 
     importlib.reload(_el)
     from ai_orchestrator.connectors import playwright_connector as _pc
 
     importlib.reload(_pc)
-    from ai_orchestrator import executor as _ex
+    from ai_orchestrator.tasks import executor as _ex
 
     importlib.reload(_ex)
     yield _cfg, _el, _pc, _ex
@@ -362,7 +362,7 @@ def _isolated_logdir(tmp_path, monkeypatch):
 
 def test_audit_note_includes_final_url_and_http_status(_isolated_logdir, monkeypatch):
     _cfg, _el, _pc, _ex = _isolated_logdir
-    from ai_orchestrator.models import TaskRequest
+    from ai_orchestrator.core.models import TaskRequest
 
     # 야간 정책 의존성을 제거 — 주간(KST 12:30) 으로 고정
     monkeypatch.setattr(
@@ -408,7 +408,7 @@ def test_audit_note_includes_final_url_and_http_status(_isolated_logdir, monkeyp
 
 def test_audit_note_includes_blocked_reason_for_non_allowlist(_isolated_logdir, monkeypatch):
     _cfg, _el, _pc, _ex = _isolated_logdir
-    from ai_orchestrator.models import TaskRequest
+    from ai_orchestrator.core.models import TaskRequest
 
     monkeypatch.setattr(
         _el,
@@ -460,26 +460,26 @@ def app_client(tmp_path_factory):
     os.environ["HTTP_USERS_PATH"] = str(users_path)
     os.environ["LOG_DIR"] = str(logdir)
 
-    from ai_orchestrator import config as _config
+    from ai_orchestrator.core import config as _config
 
     importlib.reload(_config)
     from ai_orchestrator.gates import auth as _auth
 
     importlib.reload(_auth)
-    from ai_orchestrator import execution_limits as _el
+    from ai_orchestrator.core import execution_limits as _el
 
     importlib.reload(_el)
     from ai_orchestrator.connectors import playwright_connector as _pc
 
     importlib.reload(_pc)
-    from ai_orchestrator import executor as _ex
+    from ai_orchestrator.tasks import executor as _ex
 
     importlib.reload(_ex)
     from ai_orchestrator.gates import approval as _ap
 
     importlib.reload(_ap)
     _ap.clear_rate_store()
-    from ai_orchestrator import task_state as _ts
+    from ai_orchestrator.core import task_state as _ts
 
     importlib.reload(_ts)
     _ts.clear()
@@ -538,7 +538,7 @@ def _force_daytime(app_client, monkeypatch):
     개별 테스트(`test_fetch_web_page_night_block_has_priority`)가 자체적으로
     `_now` 를 patch 하는 경우 그 scope 의 patch 가 우선 적용된다.
     """
-    from ai_orchestrator import execution_limits as _el
+    from ai_orchestrator.core import execution_limits as _el
 
     monkeypatch.setattr(
         _el,
@@ -580,7 +580,7 @@ def _approval_token(r):
 
 
 def test_fetch_web_page_in_whitelist(app_client):
-    from ai_orchestrator import executor as ex
+    from ai_orchestrator.tasks import executor as ex
 
     assert "fetch_web_page" in ex.ALLOWED_ACTIONS
 
@@ -694,8 +694,8 @@ def test_fetch_web_page_blocks_malformed_url_target(app_client):
 
 def test_fetch_web_page_night_block_has_priority(app_client):
     """야간 강제 시 fetch_web_page 도 BLOCKED:night_blocked (connector 호출 전 차단)."""
-    from ai_orchestrator import execution_limits as el
     from ai_orchestrator.connectors import playwright_connector as pc
+    from ai_orchestrator.core import execution_limits as el
 
     task_id, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"))
     token_id = _approval_token(r)
@@ -716,8 +716,8 @@ def test_fetch_web_page_night_block_has_priority(app_client):
 
 def test_fetch_web_page_task_cooldown_has_priority(app_client):
     """동일 task_id 가 최근 성공 기록을 가지면 fetch 실행 전 task_cooldown 차단."""
-    from ai_orchestrator import execution_limits as el
     from ai_orchestrator.connectors import playwright_connector as pc
+    from ai_orchestrator.core import execution_limits as el
 
     fixed_now = datetime(2026, 4, 22, 3, 30, tzinfo=UTC)  # KST 12:30
     task_id = _uniq("CD")
@@ -737,8 +737,8 @@ def test_fetch_web_page_task_cooldown_has_priority(app_client):
 
 def test_fetch_web_page_user_rate_limit_has_priority(app_client):
     """user 5min 초과 시 fetch 도 BLOCKED:rate_limited_user_5min (connector 호출 전 차단)."""
-    from ai_orchestrator import execution_limits as el
     from ai_orchestrator.connectors import playwright_connector as pc
+    from ai_orchestrator.core import execution_limits as el
 
     fixed_now = datetime(2026, 4, 22, 3, 31, tzinfo=UTC)  # 주간
     rate_user = "rate_admin_u"
@@ -748,8 +748,8 @@ def test_fetch_web_page_user_rate_limit_has_priority(app_client):
         r = el.check_user_5min_window(rate_user, max_count=5)
         assert r[0] is False and r[1] == el.BLOCK_USER_5MIN
 
-    from ai_orchestrator import executor as ex
-    from ai_orchestrator.models import TaskRequest
+    from ai_orchestrator.core.models import TaskRequest
+    from ai_orchestrator.tasks import executor as ex
 
     with patch.object(el, "_now", return_value=fixed_now), patch.object(pc, "fetch_web_page") as spy:
         req = TaskRequest(

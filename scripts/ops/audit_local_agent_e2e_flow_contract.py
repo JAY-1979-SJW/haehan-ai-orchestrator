@@ -63,7 +63,7 @@ def _make_client() -> TestClient:
 
 
 def _reset_runtime_state() -> None:
-    import ai_orchestrator.audit_logger as audit_logger
+    import ai_orchestrator.audit.audit_logger as audit_logger
     import ai_orchestrator.gates.approval as approval
     import ai_orchestrator.local_agent_registry as registry
     import ai_orchestrator.local_agent_router as local_agent_router

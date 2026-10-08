@@ -1,75 +1,27 @@
-"""CDP 칸(lane) 단위 시작·상태·종료 CLI.
+# haehan-shim: scripts.browser.cdp.cdp_lane_start
+# 호환 shim: 실제 모듈은 scripts.browser.cdp.cdp_lane_start 로 이동했다 (scripts/browser/cdp/cdp_lane_start.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-기준서: docs/specs/2026-10-02_app_agent_dispatch.md §9-2
-  python scripts/cdp_lane_start.py list                      — 칸 목록과 켜짐 여부
-  python scripts/cdp_lane_start.py start --lane naver [url]  — 그 칸의 Chrome 시작(동시 칸 상한 확인)
-  python scripts/cdp_lane_start.py status --lane naver
-  python scripts/cdp_lane_start.py stop --lane naver
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-`general` 칸은 기존 `cdp_force_start.py` 와 완전히 같은 동작(포트 9222, 기존 프로필·PID 파일).
-`cdp_force_start.py` 자체는 수정하지 않는다(다른 모듈 6곳이 import) — 이 CLI 는 별도 프로세스에서 그 모듈의
-전역값(포트·프로필·PID 파일)만 칸 값으로 바꿔 같은 시작 로직을 재사용한다.
-로그인 세션 보존 원칙: 쿠키 삭제·로그아웃 없음, 종료는 해당 칸의 Chrome 프로세스만.
-"""
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[1])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-from __future__ import annotations
-
-import argparse
-import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-from scripts import cdp_force_start as base  # noqa: E402
-from scripts import cdp_lanes  # noqa: E402
+    _runpy.run_module("scripts.browser.cdp.cdp_lane_start", run_name="__main__")
+    raise SystemExit
 
 
-def apply_lane(lane: cdp_lanes.Lane) -> None:
-    """`cdp_force_start` 의 전역값을 이 칸의 포트·프로필·PID 파일로 바꾼다(이 프로세스 안에서만)."""
-    base.CDP_PORT = lane.port
-    base.PROFILE_DIR = lane.profile_dir
-    base.PID_FILE = lane.pid_file
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def cmd_list() -> int:
-    for lane in cdp_lanes.LANES.values():
-        state = "켜짐" if cdp_lanes.is_alive(lane) else "꺼짐"
-        sites = ", ".join(lane.sites) or "(기본·그 외 전부)"
-        print(f"{lane.name:<10} 포트 {lane.port}  {state:<3}  프로필 {lane.profile_dir}  사이트: {sites}")
-    problems = cdp_lanes.validate_registry()
-    for p in problems:
-        print(f"[등록표 오류] {p}")
-    return 1 if problems else 0
-
-
-def run(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(description="CDP 칸 시작·상태·종료")
-    parser.add_argument("command", choices=["list", "start", "status", "stop"])
-    parser.add_argument("url", nargs="?", default="")
-    parser.add_argument("--lane", default=cdp_lanes.GENERAL)
-    args = parser.parse_args(argv)
-    if args.command == "list":
-        return cmd_list()
-    try:
-        lane = cdp_lanes.get_lane(args.lane)
-    except cdp_lanes.UnknownLane as e:
-        print(e)
-        return 2
-    if args.command == "start":
-        ok, why = cdp_lanes.can_start(lane.name)
-        if not ok:
-            print(f"✗ '{lane.name}' 칸을 켜지 않습니다: {why}")
-            return 3
-    apply_lane(lane)
-    if args.command == "start":
-        return base.cmd_start(args.url)
-    if args.command == "status":
-        base.cmd_status()
-        return 0
-    base.cmd_stop()
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(run(sys.argv[1:]))
+_install(_il.import_module("scripts.browser.cdp.cdp_lane_start"), globals(), _sys.modules)

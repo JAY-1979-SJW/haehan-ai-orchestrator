@@ -109,7 +109,7 @@ parallel work is active. Google management work is locked to the `google` lane:
 ```text
 data/runtime/ai_work_records/google/latest.json
 data/runtime/ai_work_records/google/history.jsonl
-python scripts/cdp_client.py google records --limit=10
+python scripts/browser/cdp/cdp_client.py google records --limit=10
 ```
 
 Google module checks and Google domain boundary audits must append a checkpoint

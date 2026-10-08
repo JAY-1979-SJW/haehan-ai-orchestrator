@@ -12,7 +12,7 @@ blog/marketing 파이프라인(topics.py/content.py)이 만드는 블로그 글�
 
 from __future__ import annotations
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.automation.ai_responder import AIResponder
 
 _log = get_logger(__name__)

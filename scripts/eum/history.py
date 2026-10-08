@@ -23,8 +23,8 @@ try:
 except ImportError:
     pass
 
-from scripts.logger import get_logger  # noqa: E402
-from scripts.op_log import op_context  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -194,7 +194,7 @@ def fetch_history(page, device_id: str | None = None) -> list[dict]:
 def main(device_id: str | None = None) -> None:
     """CLI 실행."""
     from scripts.eum.auth import is_logged_in, login
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     # CLI 인자 파싱
     if device_id is None:

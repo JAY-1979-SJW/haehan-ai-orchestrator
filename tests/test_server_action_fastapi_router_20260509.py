@@ -25,7 +25,7 @@ EVIDENCE_URL = "/api/v1/actions/evidence"
 
 @pytest.fixture
 def client(monkeypatch, tmp_path):
-    import ai_orchestrator.config as config
+    import ai_orchestrator.core.config as config
 
     users_path = tmp_path / "http_users.json"
     users_path.write_text(

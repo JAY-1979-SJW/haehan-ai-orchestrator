@@ -1,6 +1,6 @@
 """popup_classifier + popup_monitor DB 단위 검증 (브라우저 불필요)."""
-from scripts.popup_classifier import classify, is_auto_handleable
-from scripts.popup_monitor import _ensure_table, _record_event, list_pending, ack_event, status
+from scripts.browser.popup.popup_classifier import classify, is_auto_handleable
+from scripts.browser.popup.popup_monitor import _ensure_table, _record_event, ack_event, list_pending, status
 
 print("\n[1] 분류기 룰 매칭 테스트")
 print("-" * 70)
@@ -51,6 +51,7 @@ print(f"  ack(id1) → {ok}")
 print("\n[3] 상태 조회")
 print("-" * 70)
 import json
+
 st = status()
 print(json.dumps(st, ensure_ascii=False, indent=2))
 

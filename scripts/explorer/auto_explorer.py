@@ -33,7 +33,7 @@ from urllib.parse import urljoin, urlparse
 
 from scripts.form.bot_radar import scan as bot_scan
 from scripts.form.discovery import discover_form
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

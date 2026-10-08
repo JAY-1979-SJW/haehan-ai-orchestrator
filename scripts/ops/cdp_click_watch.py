@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 
 CATEGORY_RULES = [
     ("고객문의", ("문의", "qna", "inquiry"), ("미답변", "고객문의", "1:1문의")),

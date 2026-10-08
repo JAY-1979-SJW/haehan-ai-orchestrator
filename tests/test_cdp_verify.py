@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from scripts import cdp_verify as v
+from scripts.browser.cdp import cdp_verify as v
 
 
 def _info(**over) -> v.PageInfo:

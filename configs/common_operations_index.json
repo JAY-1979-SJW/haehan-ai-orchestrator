@@ -22,7 +22,7 @@
     },
     {
       "gate_id": "quality_gate",
-      "command": "python scripts/quality_gate.py",
+      "command": "python scripts/ops/quality/quality_gate.py",
       "required_for": ["before_commit", "before_deploy"]
     },
     {

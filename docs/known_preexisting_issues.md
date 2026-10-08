@@ -10,7 +10,7 @@
 ## 존재하지 않는 속성/함수 참조 (설치 시 바로 깨질 수 있는 종류)
 - [STD-02] `tests/test_eum_auth_selectors.py` — 존재하지 않는 `_TERMINAL_COMPANY_SUBTYPE_SELECTOR` 속성을 요구
 - [STD-02] `scripts.naver.mail` 모듈에 `attach_files`/`send_mail` 함수 자체가 없음 (`tests/test_naver_excel_and_mail_attach.py`)
-- [STD-02] `scripts.navigator` 모듈에 `get_page` 없음 (`tests/test_popup_watcher.py`)
+- [STD-02] `scripts.browser.navigator.navigator` 모듈에 `get_page` 없음 (`tests/test_popup_watcher.py`)
 - [STD-04 chunk01] `member_collect._filtered_links` 속성 없음
 - [STD-02 chunk03(예상)] `ai_orchestrator/local_agent_router_ws.py`의 `__all__`에 `local_agent_router` 미정의 (F822)
 - [STD-04] `scripts/archive/debug/audit_dev_reg_approvals.py` 모듈 자체가 git에 없음 — import 시도하는 테스트가 collection 단계에서부터 실패

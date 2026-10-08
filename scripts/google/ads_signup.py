@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from .managed_console import GOOGLE_HOME_URL
-from scripts.gates.work_mode_gate import build_google_work_mode_policy
+from scripts.common.gates.work_mode_gate import build_google_work_mode_policy
 
 
 GOOGLE_ADS_HOME_URL = "https://ads.google.com/"

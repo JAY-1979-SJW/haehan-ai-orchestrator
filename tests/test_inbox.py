@@ -115,12 +115,10 @@ def test_source_type_filter(tmp_inbox):
 # ── 5. 앱 부팅 가능 여부 ──────────────────────────────────────────────────────
 
 
-def test_app_boot():
+def test_app_boot(monkeypatch):
     """dashboard.create_app()이 예외 없이 Flask 앱을 반환하는지 확인."""
-    import os
-
-    os.environ.setdefault("ORCH_DASHBOARD_USER", "test_user")
-    os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test_pass")
+    monkeypatch.setenv("ORCH_DASHBOARD_USER", "test_user")
+    monkeypatch.setenv("ORCH_DASHBOARD_PASSWORD", "test_pass")
 
     from dashboard import create_app
 

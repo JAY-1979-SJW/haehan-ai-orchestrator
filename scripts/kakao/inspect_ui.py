@@ -1,7 +1,9 @@
-import sys, time
+import sys
+import time
+
 sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parents[2]))
-from scripts.web_connector import get_page
-from scripts.page_helper import page_goto
+from scripts.browser.cdp.connection import get_page
+from scripts.browser.page.page_helper import page_goto
 
 page = get_page()
 

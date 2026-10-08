@@ -19,7 +19,7 @@ class TestOrganizationModelGap:
     def test_organization_model_does_not_exist(self):
         """조직 모델이 현재 없음을 확인"""
         try:
-            from ai_orchestrator.models import Organization
+            from ai_orchestrator.core.models import Organization
 
             # 만약 이 import가 성공하면, model이 추가된 것
             assert hasattr(Organization, "organization_id"), "Organization model must have organization_id field"
@@ -34,7 +34,7 @@ class TestMembershipModelGap:
     def test_membership_model_does_not_exist(self):
         """멤버십 모델이 현재 없음을 확인"""
         try:
-            from ai_orchestrator.models import Membership
+            from ai_orchestrator.core.models import Membership
 
             # 만약 이 import가 성공하면, model이 추가된 것
             assert hasattr(Membership, "organization_id"), "Membership must have organization_id"
@@ -294,7 +294,7 @@ class TestBrowserAuditEventTypes:
     def test_browser_audit_event_types_missing(self):
         """Audit logger에 BROWSER_* event types 추가 필요"""
         try:
-            from ai_orchestrator.audit_logger import EVENT_TYPES
+            from ai_orchestrator.audit.audit_logger import EVENT_TYPES
 
             browser_event_types = {
                 "BROWSER_TASK_CREATED",
@@ -416,7 +416,7 @@ class TestGapDocumentation:
     def test_gap_g2_organization_model_required(self):
         """G2: Organization model 필수"""
         try:
-            from ai_orchestrator.models import Organization  # noqa: F401 — 존재 여부만 확인(gap 테스트)
+            from ai_orchestrator.core.models import Organization  # noqa: F401 — 존재 여부만 확인(gap 테스트)
 
             pytest.skip("G2 already implemented")
         except ImportError:

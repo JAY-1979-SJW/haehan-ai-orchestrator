@@ -199,5 +199,5 @@ Minimum verification:
 ```text
 python scripts/ops/audit_site_sso_subdomain_runtime_baseline.py
 python -m pytest tests/test_site_sso_subdomain_runtime.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py -q
-python scripts/module_quality_gate.py --module repo_guard
+python scripts/ops/quality/module_quality_gate.py --module repo_guard
 ```

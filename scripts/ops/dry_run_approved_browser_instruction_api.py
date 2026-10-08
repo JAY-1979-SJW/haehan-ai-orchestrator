@@ -171,8 +171,8 @@ def dry_run() -> DryRunResult:
     else:
         add(findings, "PASS", "out_of_scope_staged", "none")
 
-    from ai_orchestrator import audit_logger as _al
     from ai_orchestrator import local_agent_registry as _reg
+    from ai_orchestrator.audit import audit_logger as _al
     from ai_orchestrator.gates import approval as _ap
 
     DRY_RUN_TMP_ROOT.mkdir(parents=True, exist_ok=True)

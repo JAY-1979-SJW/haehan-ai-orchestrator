@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
-import ai_orchestrator.sites.gmail_reader as gr
-from ai_orchestrator.inbox import exists_by_external_id
+import ai_orchestrator.connectors.google.gmail_reader as gr
+from ai_orchestrator.tasks.inbox import exists_by_external_id
 
 
 def _fake_msg(message_id: str, subject: str = "테스트 메일", body: str = "본문 내용") -> dict:

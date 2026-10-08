@@ -36,7 +36,7 @@ REQUIRED_DESKTOP_PHRASES = (
     "hardcoded admin bearer is forbidden.",
     "mix unrelated app UI state with this app",
     "hide auth failure behind mock success",
-    "python scripts/module_quality_gate.py --module desktop_auth_runtime",
+    "python scripts/ops/quality/module_quality_gate.py --module desktop_auth_runtime",
 )
 
 REQUIRED_MODULE_BASELINE_PHRASES = (

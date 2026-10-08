@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 PLANS_DIR = ROOT / "data" / "eum_plans"

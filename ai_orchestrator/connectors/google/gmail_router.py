@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gates.send_approval import addresses, require_send_approval
 
-from ...audit_logger import log_event
+from ...audit.audit_logger import log_event
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def api_inbox(
     t0 = time.monotonic()
     try:
         if source == "api":
-            from ai_orchestrator.sites.gmail_reader import fetch_recent_emails
+            from ai_orchestrator.connectors.google.gmail_reader import fetch_recent_emails
 
             items = fetch_recent_emails(max_results=max_results, hours=hours)
         else:
@@ -105,7 +105,7 @@ def api_collect(
 ) -> dict:
     """Gmail 최근 메일을 내부 inbox에 저장."""
     try:
-        from ai_orchestrator.sites.gmail_reader import collect_to_inbox
+        from ai_orchestrator.connectors.google.gmail_reader import collect_to_inbox
 
         result = collect_to_inbox(max_results=max_results, hours=hours)
         log_event(
@@ -151,7 +151,7 @@ def api_compose(
 
     try:
         from scripts.google.gmail_api import GmailAPI
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         g = run_on_browser_thread(lambda: GmailAPI(get_page()), timeout=60)
@@ -217,7 +217,7 @@ def api_reply(
     _require_send_approval(req.send_confirm, recipients=addresses(req.to), subject=req.subject)
 
     try:
-        from ai_orchestrator.sites.gmail_reader import send_reply
+        from ai_orchestrator.connectors.google.gmail_reader import send_reply
 
         result = send_reply(
             thread_id=req.thread_id,
@@ -265,7 +265,7 @@ def api_ai_draft_unread(
     t0 = time.monotonic()
 
     try:
-        from ai_orchestrator.sites.gmail_reader import fetch_unread_emails
+        from ai_orchestrator.connectors.google.gmail_reader import fetch_unread_emails
 
         raw_mails = fetch_unread_emails(max_results=limit)
         mails = [
@@ -372,7 +372,7 @@ def api_send(
     # GmailAPI는 stateless(브라우저 페이지 재사용) 이므로
     # /compose 후 브라우저에 열린 작성창에서 발송 버튼 클릭
     try:
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         sent = run_on_browser_thread(

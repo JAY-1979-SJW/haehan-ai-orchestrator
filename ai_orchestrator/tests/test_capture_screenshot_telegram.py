@@ -26,7 +26,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 
-from ai_orchestrator.telegram_notifier import (
+from ai_orchestrator.notify.telegram_notifier import (
     build_capture_screenshot_approval_message,
     parse_callback_data,
 )
@@ -289,7 +289,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     # 하위 라우터는 처음 import 된 옛 객체에 묶여 있어 dependency_overrides 가 두 번째 시험부터 안 먹혀
     # 파일 전체 실행 시 등록이 401 이 되고 KeyError: 'agent_id' 가 난다(단독 실행만 통과, 2026-10-04 확인).
 
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
     import ai_orchestrator.local_agent_registry_common as _reg_common
@@ -337,7 +337,7 @@ def _register(client) -> tuple[str, str]:
 
 
 def test_audit_approval_requested_includes_reason_note(admin_user):
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)
@@ -357,7 +357,7 @@ def test_audit_approval_requested_includes_reason_note(admin_user):
 
 
 def test_audit_does_not_leak_token_raw_in_event_fields(admin_user):
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)

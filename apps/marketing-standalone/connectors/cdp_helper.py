@@ -1,6 +1,6 @@
 """CDP 공통 헬퍼 — 백그라운드 스레드로 이벤트 범람 처리.
 
-원본: scripts/cdp_helper.py — 독립배포 앱이라 scripts/ 를 import 할 수 없어 부득이하게
+원본: scripts/browser/cdp/cdp_helper.py — 독립배포 앱이라 scripts/ 를 import 할 수 없어 부득이하게
 복제(docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md §3 참고).
 ROOT 경로 기준만 이 앱 폴더로 조정, 로직은 원본과 계속 동기화 유지(2026-09-29 재동기화).
 """

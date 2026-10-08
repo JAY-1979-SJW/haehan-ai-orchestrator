@@ -10,14 +10,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
-from scripts.page_helper import (  # noqa: E402
+from scripts.browser.page.page_helper import (  # noqa: E402
     page_goto,
     page_wait_click,
     page_wait_nav,
     page_wait_type,
     page_wait_visible,
 )
+from scripts.common.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -35,10 +35,10 @@ __all__ = [
 
 
 from scripts.naver.browser_gate import require_naver_browser  # noqa: E402
-from scripts.site_base import (  # noqa: E402
+from scripts.site_engine.site_base import (  # noqa: E402
     check_session as _check_session_base,
 )
-from scripts.site_base import (  # noqa: E402
+from scripts.site_engine.site_base import (  # noqa: E402
     task_context as _task_context_base,
 )
 

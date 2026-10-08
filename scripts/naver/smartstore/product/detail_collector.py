@@ -22,12 +22,13 @@ import sys
 
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402 - sys.path 부트스트랩 뒤 import
 from scripts.naver.smartstore.product import selectors as SEL
 
 log = get_logger(__name__)
 
-PRODUCTS_DIR = ROOT / "data" / "smartstore" / "products"
+PRODUCTS_DIR = data_dir() / "smartstore" / "products"
 SMARTSTORE_BASE = "https://sell.smartstore.naver.com"
 
 

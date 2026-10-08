@@ -20,8 +20,8 @@ from fastapi import Path as PathParam
 from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.services import site_onboarding_service as service
-from ai_orchestrator.services import site_preflight_service as preflight
+from ai_orchestrator.site_work import site_onboarding_service as service
+from ai_orchestrator.site_work import site_preflight_service as preflight
 from scripts.explorer import preflight_fetch
 
 site_onboarding_router = APIRouter(prefix="/site-registry", tags=["site-registry"])

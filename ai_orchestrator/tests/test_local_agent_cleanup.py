@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent / "../.."))
 
 from ai_orchestrator import local_agent_registry as _reg
 from ai_orchestrator import local_agent_registry_common as _reg_common
-from ai_orchestrator import registration_codes as _regcodes
+from ai_orchestrator.auth import registration_codes as _regcodes
 from ai_orchestrator.local_agent_cleanup_policy import is_smoke_test_agent, validate_cleanup_request
 
 

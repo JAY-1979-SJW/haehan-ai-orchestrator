@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 import types
 
-from scripts import browser_lifecycle as lc
+from scripts.browser.session import browser_lifecycle as lc
 
 
 def test_restore_switch_is_the_bare_chrome_switch():
@@ -222,7 +222,7 @@ def test_start_url_only_allows_http_https_or_blank():
 
 def test_central_policy_is_valid_and_guardrails_are_on():
     """정책의 세 불리언은 끄면 안 된다(로그인 유지·깨끗한 시작이 깨진다) — 끄는 변경은 이 시험이 막는다."""
-    from scripts.config import CDP_BROWSER_POLICY
+    from scripts.common.config import CDP_BROWSER_POLICY
 
     assert lc.validate_policy(CDP_BROWSER_POLICY) == []
     assert all(CDP_BROWSER_POLICY[k] is True for k in lc.POLICY_REQUIRED_TRUE)

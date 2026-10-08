@@ -15,8 +15,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from local_agent import site_entry_policy  # noqa: E402
-from scripts.config import LOGIN_PROBE_URLS  # noqa: E402
-from scripts.gates.work_mode_gate import build_google_work_mode_policy  # noqa: E402
+from scripts.common.config import LOGIN_PROBE_URLS  # noqa: E402
+from scripts.common.gates.work_mode_gate import build_google_work_mode_policy  # noqa: E402
 from scripts.google import auth, managed_console  # noqa: E402
 
 GOOGLE_HOME = "https://www.google.com/"
@@ -63,9 +63,9 @@ def _audit_enforcement_sources(failures):
     if 'site_entry_policy.assert_main_page_first(GOOGLE_LOGIN_URL, site_key="google")' not in auth_src:
         failures.append("scripts/google/auth.py must enforce main-page-first before page.goto")
 
-    login_session_src = _source("scripts/login_session.py")
+    login_session_src = _source("scripts/auth/login_session.py")
     if 'site_entry_policy.assert_main_page_first(LOGIN_PROBE_URLS[site], site_key="google")' not in login_session_src:
-        failures.append("scripts/login_session.py must enforce main-page-first for google probe")
+        failures.append("scripts/auth/login_session.py must enforce main-page-first for google probe")
 
     plan = managed_console.build_youtube_oauth_console_open_plan()
     sequence = plan.get("sequence") or []

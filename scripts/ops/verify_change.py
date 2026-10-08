@@ -21,18 +21,39 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import importlib.util
 import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PY = sys.executable
+_T0 = time.monotonic()
+PER_TEST_TIMEOUT_S = 300  # pytest-timeout: 시험 하나가 멈추면 90분을 다 쓰지 않고 그 시험 이름으로 실패한다
+MAX_XDIST_WORKERS = 4  # pytest-xdist 가 있으면 영향 시험을 이만큼 병렬로
+AUDIT_KIT_SLOW_S = 20  # audit-kit 한 파일이 이보다 오래 걸리면 파일 이름을 로그에 남긴다
+
+
+def _log(msg: str) -> None:
+    """단계별 진행 로그(즉시 flush) — 이 도구는 끝날 때까지 출력이 없어서 CI 가 멈췄을 때 어느 단계인지 알 수 없었다(2026-10-08 PR #160)."""
+    print(f"[verify +{int(time.monotonic() - _T0):>5}s] {msg}", flush=True)
+
+
+def _pytest_extra_args() -> list[str]:
+    """있으면 쓰는 pytest 플러그인 인자: 시험별 시간 상한(pytest-timeout)·병렬(pytest-xdist). 없으면 빈 목록(설치 안 된 PC 에서도 그대로 동작)."""
+    extra: list[str] = []
+    if importlib.util.find_spec("pytest_timeout") is not None:
+        extra += [f"--timeout={PER_TEST_TIMEOUT_S}"]
+    if importlib.util.find_spec("xdist") is not None:
+        extra += ["-n", str(MAX_XDIST_WORKERS)]
+    return extra
 
 # 2026-09-30 수정(defect_index 신규 항목): "바뀐 파일 ruff" 체크가 head 쪽 ruff 결과를
 # base 와 비교 없이 그대로 "새로 생긴 문제"로 보고해, 손 안 댄 줄의 기존(pre-existing)
@@ -90,9 +111,10 @@ CODE_EXT = tuple(CFG.get("code_ext", [".py"]))  # 분류 정본에 있어야 하
 
 
 def run(cmd: list[str], cwd: Path, timeout: int = 900) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        cmd, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, env=ENV
-    )
+    """명령 실행. 시간 초과면 자손(CDP 데몬·Chrome 등)까지 종료하고 TimeoutExpired — 파이프를 문 자손 때문에 영원히 멈추지 않는다."""
+    from code_map.proc_tree import run_tree_killed  # type: ignore[import-not-found]
+
+    return run_tree_killed(cmd, cwd=cwd, timeout=timeout, env=ENV)
 
 
 def changed_files(base: str, head: str | None) -> list[str]:
@@ -153,6 +175,11 @@ def moved_location_deps(base: str, head: str | None) -> list[str]:
         for i, line in enumerate(new_src.splitlines(), 1):
             s = line.strip()
             if s.startswith("#") or not any(k in s for k in LOCATION_DEP):
+                continue
+            # "__file__" 단독(.parent/.parents 체인 없음)은 자기 경로를 그대로 재실행/참조하는
+            # 용도라 이동 깊이와 무관 — 상대 import("from .")만 깊이에 의존하므로 그것만 본다
+            # (실측: browser_rpc_server.py·cdp_daemon.py 의 자기 재실행 줄이 깊이 변화마다 오탐).
+            if "__file__" in s and ".parent" not in s and "from ." not in s and "import ." not in s:
                 continue
             if line in old_lines and not _same_relative_target(s, old, new, base, head, moved):
                 out.append(f"{new}:{i}: {s[:100]}")
@@ -305,12 +332,17 @@ def measure(tree: Path, tests: list[str]) -> dict:
     문자열 그대로, m/committed 등 다음 단계가 쓰는 값은 반환해 넘긴다).
     """
     r: dict = {}
+    name = tree.name
+    _log(f"[{name}] pytest 수집")
     r["collect_errors"] = _measure_collect_errors(tree)
+    _log(f"[{name}] 코드맵·LIVE import")
     m, committed, r["import_fail"] = _measure_code_map_and_import_fail(tree)
     r["routes"] = _measure_routes(tree)
     r["violations"] = _measure_violations(tree, m)
     r["skeleton"], r["cycles"] = _measure_skeleton_and_cycles(tree, m, committed)
+    _log(f"[{name}] 영향 시험 {len(tests)}개 실행")
     r["test_failures"], r["test_timeouts"] = _measure_affected_test_results(tree, tests)
+    _log(f"[{name}] 측정 끝 (시험 실패 {len(r['test_failures'])}건, 시간 초과 {len(r['test_timeouts'])}건)")
     return r
 
 
@@ -322,7 +354,7 @@ def _is_pytest_id(token: str) -> bool:
 def _pytest(tree: Path, files: list[str], timeout: int) -> list[str]:
     """테스트 파일 묶음 실행 → 실패 id 목록. 수집 오류가 나도 나머지는 계속 돈다."""
     p = run(
-        [PY, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rfE", "--continue-on-collection-errors", *files],
+        [PY, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rfE", "--continue-on-collection-errors", *_pytest_extra_args(), *files],
         tree,
         timeout=timeout,
     )
@@ -444,10 +476,12 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
     audit-kit 이 없는 PC·CI 에서는 검사를 생략하고 그 사실을 알린다(설치된 PC 에서는 필수: 새 문제가 있으면 FAIL).
     """
     from audit_kit_gate import (  # type: ignore[import-not-found]  # scripts/ops 안의 형제 모듈
+        _new_typed,
+        batch_raw_findings,
         find_audit_kit,
         finding_key,
         is_real_kit,
-        mypy_new,
+        mypy_keys_batch,
         mypy_python,
         raw_findings,
     )
@@ -456,24 +490,85 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
     if kit is None or not py_changed:
         return [], "[verify] audit-kit 를 찾지 못해 기준서 검사를 생략합니다 (AUDIT_KIT_BIN 으로 위치 지정)" if kit is None else ""
 
+    # mypy 는 파일마다 따로 돌리면 전역 잠금 때문에 직렬이라 변경 파일 1065개(PR #160)에서 90분을 넘겼다 → 기준 폴더별 1회씩 일괄 실행한다
+    # (head·base 각각). 파일별 결과(오류 문장 집합)는 같고, 신규 판정은 파일마다 같은 규칙(_new_typed)을 쓴다.
+    py = mypy_python(kit)
+    head_keys: dict = {}
+    base_keys: dict = {}
+    if py is not None:
+        _log(f"mypy 일괄 검사 시작: 변경 {len(py_changed)}개 (head·base)")
+        head_keys = mypy_keys_batch(py, [head_tree / rel for rel in py_changed], head_tree)
+        base_keys = mypy_keys_batch(py, [base_tree / rel for rel in py_changed if (base_tree / rel).exists()], base_tree)
+        _log("mypy 일괄 검사 끝")
+
+    # audit-kit hook 은 호출마다 프로젝트 그래프를 새로 만들어 파일당 ~8초라서 변경 1000개면 90분을 넘겼다(PR #160) →
+    # 한 프로세스에서 여러 파일을 묶어 돌려(그래프 1회) 파일당 ~1초 이하로. 묶음이 못 낸 파일만 단독 호출로 다시 시도한다.
+    _log(f"audit-kit 묶음 검사 시작: 변경 {len(py_changed)}개 (head·base)")
+    head_batch = batch_raw_findings(kit, head_tree, py_changed)
+    base_batch = batch_raw_findings(kit, base_tree, [rel for rel in py_changed if (base_tree / rel).exists()])
+    _log(f"audit-kit 묶음 검사 끝: head {len(head_batch)}개·base {len(base_batch)}개 (나머지는 단독 재시도)")
+    done = [0]
+
     def one(rel: str) -> list[str]:
-        head = raw_findings(kit, head_tree / rel, head_tree)
+        started = time.monotonic()
+        try:
+            return _one(rel)
+        finally:
+            done[0] += 1
+            if time.monotonic() - started > AUDIT_KIT_SLOW_S:  # 느린 파일은 이름을 남긴다 — 멈춤 추적용(PR #160)
+                _log(f"audit-kit 느린 파일 {time.monotonic() - started:.0f}s: {rel}")
+            if done[0] % 100 == 0:
+                _log(f"audit-kit 파일 검사 진행 {done[0]}/{len(py_changed)}")
+
+    def _one(rel: str) -> list[str]:
+        head = head_batch[rel] if rel in head_batch else raw_findings(kit, head_tree / rel, head_tree)
         if head is None:
             return [f"{rel}: audit-kit 검사를 하지 못했습니다"]
-        base = raw_findings(kit, base_tree / rel, base_tree) if (base_tree / rel).exists() else []
+        has_base = (base_tree / rel).exists()
+        if not has_base:
+            base: list[str] | None = []
+        else:
+            base = base_batch[rel] if rel in base_batch else raw_findings(kit, base_tree / rel, base_tree)
         known = {finding_key(x) for x in (base or [])}
         out = [f"{rel}: {x}" for x in head if finding_key(x) not in known]
-        py = mypy_python(kit)
         if py is not None:  # mypy: 기준 트리의 같은 파일에 없던 타입 오류만
-            typed, why = mypy_new(py, head_tree / rel, base_tree / rel if (base_tree / rel).exists() else None, head_tree)
+            typed, why = _new_typed(head_tree / rel, head_keys.get(head_tree / rel), has_base, base_keys.get(base_tree / rel))
             out += [f"{rel}: {x}" for x in typed] + ([f"{rel}: {why}"] if why else [])
         return out
 
+    _log(f"audit-kit 파일 검사 시작: {len(py_changed)}개")
     with ThreadPoolExecutor(4) as pool:
         found = [item for items in pool.map(one, py_changed) for item in items]
+    _log("audit-kit 파일 검사 끝")
     if is_real_kit(kit) and mypy_python(kit) is None:  # 진짜 audit-kit 인데 mypy 를 돌릴 파이썬이 없다 = 타입 검사가 조용히 빠진다 → 실패로 취급
         found.append("mypy 실행 환경(audit-kit 가상환경의 python)을 찾지 못해 타입 검사를 할 수 없습니다 — audit-kit 를 다시 설치하세요")
     return found, ""
+
+
+RUFF_CHUNK = 150  # 한 ruff 호출에 넘기는 파일 수 — 변경 1000개를 한 명령줄에 넣으면 윈도우 한도(32767자)를 넘는다(PR #160, WinError 206)
+
+
+def _run_ruff(ruff_cfg: list[str], files: list[str], head_tree: Path) -> subprocess.CompletedProcess:
+    """바뀐 파일에 ruff(JSON)를 묶음으로 나눠 돌리고 결과를 하나의 JSON 배열로 합친다.
+
+    한 묶음이라도 ruff 가 못 돌았으면(종료코드 2 이상·출력 비었음·JSON 아님) 그 묶음의 결과를 그대로 돌려줘서 `_new_ruff_findings` 가
+    '검사가 수행되지 않았다'로 드러내게 한다(조용히 0건 처리하지 않는다).
+    """
+    merged: list = []
+    worst = 0
+    for i in range(0, len(files), RUFF_CHUNK):
+        chunk = files[i : i + RUFF_CHUNK]
+        proc = run([PY, "-m", "ruff", "check", *ruff_cfg, "--no-cache", "--output-format", "json", *chunk], head_tree)
+        out = (proc.stdout or "").strip()
+        try:
+            rows = json.loads(out) if out else None
+        except json.JSONDecodeError:
+            rows = None
+        if proc.returncode >= 2 or rows is None:
+            return proc
+        merged += rows
+        worst = max(worst, proc.returncode)
+    return subprocess.CompletedProcess(["ruff", "check"], worst, json.dumps(merged), "")
 
 
 def _new_ruff_findings(
@@ -528,10 +623,13 @@ def main() -> int:
     a = ap.parse_args()
     with contextlib.suppress(AttributeError, ValueError):
         sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
+    _log(f"시작: base={a.base} head={a.head or '작업트리'}")
     changed = changed_files(a.base, a.head)
     loc_deps = moved_location_deps(a.base, a.head)
+    _log(f"변경 파일 {len(changed)}개 — 코드맵 빌드")
     run([PY, "scripts/ops/code_map/build.py"], ROOT)
     tests = affected_tests(changed)
+    _log(f"영향 시험 파일 {len(tests)}개")
     tmp = Path(tempfile.mkdtemp(prefix="verify_base_"))
     trees = [tmp / "base"] + ([tmp / "head"] if a.head else [])
     try:
@@ -544,26 +642,23 @@ def main() -> int:
         reg = ROOT / "configs/module_registry.json"
         reg_bytes = reg.read_bytes() if head_tree == ROOT and reg.exists() else None
         # 기준·변경 후는 서로 다른 폴더라 동시에 잰다(대기 시간 절반)
+        py_changed = [c for c in changed if c.endswith(".py") and (head_tree / c).exists()]
         try:
-            with ThreadPoolExecutor(2) as ex:
+            _log("기준·변경 후 측정 + audit-kit 파일 검사 시작(셋을 동시에: 서로 파일을 읽기만 한다)")
+            with ThreadPoolExecutor(3) as ex:
                 fb, fa = ex.submit(measure, trees[0], tests), ex.submit(measure, head_tree, tests)
+                fk = ex.submit(_audit_kit_new_findings, py_changed, trees[0], head_tree)  # 시험(약 20분)과 겹쳐 돌려 직렬 대기를 없앤다
                 before, after = fb.result(), fa.result()
+                kit_errors, kit_note = fk.result()
+            _log("기준·변경 후 측정 + audit-kit 끝")
         finally:
             if reg_bytes is not None:
                 reg.write_bytes(reg_bytes)
-        py_changed = [c for c in changed if c.endswith(".py") and (head_tree / c).exists()]
-        kit_errors, kit_note = _audit_kit_new_findings(py_changed, trees[0], head_tree)
         if kit_note:
             print(kit_note)
+        _log("ruff 검사")
         ruff_cfg = ["--config", str(ROOT / CFG["ruff_config"])] if CFG["ruff_config"] else []
-        ruff = (
-            run(
-                [PY, "-m", "ruff", "check", *ruff_cfg, "--no-cache", "--output-format", "json", *py_changed],
-                head_tree,
-            )
-            if py_changed
-            else None
-        )
+        ruff = _run_ruff(ruff_cfg, py_changed, head_tree) if py_changed else None
     finally:
         killed = kill_leftovers(tmp.name)  # 측정 폴더 경로가 명령줄에 든 잔여 프로세스
         if killed:
@@ -586,6 +681,7 @@ def main() -> int:
         "moved": moved,
         "receiving": receiving,
     }
+    _log("판정 보고서 작성")
     ok, report = _build_verify_report(a, changed, tests, measurements)
     print(report)
     if a.json:

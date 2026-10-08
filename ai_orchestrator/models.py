@@ -1,29 +1,15 @@
-from dataclasses import dataclass, field
-from typing import Literal
+# haehan-shim: ai_orchestrator.core.models
+# 호환 shim: 실제 모듈은 ai_orchestrator.core.models 로 이동했다 (ai_orchestrator/core/models.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
 
-@dataclass
-class TaskRequest:
-    task_id: str
-    source: Literal["pc", "server", "manual"]
-    action_type: str
-    target: str
-    description: str
-    payload: dict = field(default_factory=dict)
-    requested_by: str = "system"
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-@dataclass
-class RiskAssessment:
-    risk_level: Literal["low", "medium", "high", "critical"]
-    reasons: list = field(default_factory=list)
-    requires_approval: bool = False
-
-
-@dataclass
-class ExecutionPlan:
-    task_id: str
-    allowed: bool
-    requires_approval: bool
-    steps: list = field(default_factory=list)
-    blocked_reasons: list = field(default_factory=list)
+_install(_il.import_module("ai_orchestrator.core.models"), globals(), _sys.modules)

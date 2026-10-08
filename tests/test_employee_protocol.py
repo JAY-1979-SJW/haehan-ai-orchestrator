@@ -14,11 +14,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator import mcp_server
-from ai_orchestrator.domain import vendor_directory as vd
+from ai_orchestrator.vendor_directory import vendor_directory as vd
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.routers.vendor_directory_router import vendor_directory_router
-from ai_orchestrator.services import vendor_directory_service as service
+from ai_orchestrator.vendor_directory.vendor_directory_router import vendor_directory_router
+from ai_orchestrator.vendor_directory import vendor_directory_service as service
 
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL_TS = ROOT / "admin-web" / "src" / "components" / "chat" / "employeeProtocol.ts"

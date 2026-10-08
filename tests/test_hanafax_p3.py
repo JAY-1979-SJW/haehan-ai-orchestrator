@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.sites import hanafax_auto_sender as adapter
+from ai_orchestrator.connectors.hanafax import auto_sender as adapter
 from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, classify_action
-from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import hanafax_authorization_service as service
+from ai_orchestrator.connectors.hanafax import authorization_store as store
+from ai_orchestrator.connectors.hanafax import authorization_service as service
 from ai_orchestrator.services import scheduled_job_actions as actions
 
 RECIPIENTS = [{"fax": "02-111-2222", "name": "가나다"}, {"fax": "031-333-4444", "name": "라마바"}]
@@ -308,13 +308,13 @@ def test_bulk_run_sends_in_chunks_via_group_sender(doc, monkeypatch):
         return {"success": True, "job_id": f"B{len(calls)}", "sent_faxes": [r["receiver_fax"] for r in receivers], "missing_faxes": [], "message": "팩스 전송 완료"}
 
     monkeypatch.setattr(engine, "send_fax_bulk", fake_bulk)
-    monkeypatch.setattr("ai_orchestrator.workflows.hanafax_auto_send.BULK_CHUNK", 2)
+    monkeypatch.setattr("ai_orchestrator.connectors.hanafax.auto_send.BULK_CHUNK", 2)
     recipients = [{"fax": f"02-400-{1000 + i}", "name": f"업체{i}"} for i in range(5)]
     row = service.create(_payload(doc, recipients=recipients, max_per_run=10), user="u")
     service.approve(row["id"], user="a", live=True)
     from datetime import datetime
 
-    from ai_orchestrator.workflows import hanafax_auto_send as flow
+    from ai_orchestrator.connectors.hanafax import auto_send as flow
 
     result = flow.run_bulk(row["id"], adapter.build_bulk_sender(str(doc), row["document_hash"]), datetime.now().astimezone(), chunk_size=2)
     assert result.sent == 5 and [len(c) for c in calls] == [2, 2, 1]
@@ -324,7 +324,7 @@ def test_bulk_unknown_chunk_stops_remaining_chunks(doc, monkeypatch):
     from datetime import datetime
 
     import scripts.hanafax.sender as engine
-    from ai_orchestrator.workflows import hanafax_auto_send as flow
+    from ai_orchestrator.connectors.hanafax import auto_send as flow
 
     calls = []
     monkeypatch.setattr(
@@ -388,14 +388,14 @@ def test_preview_rejected_for_changed_document_or_unknown_id(doc):
 
 @pytest.mark.parametrize("raw", ["02-111-2222 #5", "+82-2-111-2222", "001-1234-5678", "010-1234-5678", "02-111-2222 ext5", "02/111/2222", "1588-1234"])
 def test_parse_number_rejects_ambiguous_or_costly_numbers(raw):
-    from ai_orchestrator.gates import fax_send_policy as pol
+    from ai_orchestrator.connectors.hanafax import send_policy as pol
 
     assert pol.parse_number(raw) is None
 
 
 @pytest.mark.parametrize("raw", ["02-111-2222", "(02) 111-2222", "031 333 4444", "0311112222"])
 def test_parse_number_accepts_domestic_numbers(raw):
-    from ai_orchestrator.gates import fax_send_policy as pol
+    from ai_orchestrator.connectors.hanafax import send_policy as pol
 
     assert pol.parse_number(raw) and pol.parse_number(raw).startswith("0")
 
@@ -417,7 +417,7 @@ def test_run_denies_when_stored_validity_is_unreadable(doc, sent):
     """저장소 값이 깨져 있어도(예: 수동 편집) 만료를 무시하지 않고 거부한다."""
     import sqlite3
 
-    from ai_orchestrator.workflows import hanafax_auto_send as flow
+    from ai_orchestrator.connectors.hanafax import auto_send as flow
 
     row = service.create(_payload(doc), user="u")
     service.approve(row["id"], user="a", live=True)

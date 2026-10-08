@@ -54,7 +54,7 @@ Rules:
 
 Common module:
 
-- `scripts/site_session_safety.py`
+- `scripts/site_engine/site_session_safety.py`
 
 Current integration:
 
@@ -85,12 +85,12 @@ Common modules:
 
 - `security_utils.py`: sensitive-key detection, email/identifier masking,
   nested dict/list/tuple redaction, inline token/RRN/card masking.
-- `scripts/security.py`: compatibility wrapper for the existing
-  `scripts.security` import path.
+- `scripts/common/security.py`: compatibility wrapper for the existing
+  `scripts.common.security` import path.
 - `logging_utils.py`: compatibility facade that delegates to `security_utils.py`.
-- `scripts/credentials.py`: encrypted credential storage; CLI `get` and `list`
+- `scripts/auth/credentials.py`: encrypted credential storage; CLI `get` and `list`
   must show only masked IDs and masked password previews.
-- `scripts/local_user_secret_store.py`: per-user local OS keyring storage for
+- `scripts/auth/local_user_secret_store.py`: per-user local OS keyring storage for
   approved secret material such as OAuth client JSON. Commands return only
   status and `local-secret://...` references, never raw secret values.
 
