@@ -282,6 +282,26 @@ def _mypy_group(py: str, group: list[Path], root: Path) -> dict[Path, set[str] |
     return dict(split)
 
 
+_CMD_CHAR_BUDGET = 20000  # 한 mypy 명령줄에 넣는 경로 글자 수 상한 — 윈도우 명령줄 한도(32767자) 아래로 여유를 둔다
+
+
+def _split_by_command_length(group: list[Path]) -> list[list[Path]]:
+    """파일이 많으면(PR #160: 변경 1049개 ≈ 10만 자) 한 명령에 다 넣을 수 없다 — WinError 206(OSError)이 나면 전부 '실행 못 함'이 되어 버린다."""
+    parts: list[list[Path]] = []
+    current: list[Path] = []
+    size = 0
+    for path in group:
+        length = len(str(path)) + 1
+        if current and size + length > _CMD_CHAR_BUDGET:
+            parts.append(current)
+            current, size = [], 0
+        current.append(path)
+        size += length
+    if current:
+        parts.append(current)
+    return parts
+
+
 def mypy_keys_batch(py: str, paths: list[Path], root: Path | None = None) -> dict[Path, set[str] | None]:
     """여러 파일의 mypy 오류 문장 집합을 기준 폴더별 mypy 1회로 구한다 — 파일마다 `mypy_keys` 를 부른 것과 같은 결과."""
     root = root or ROOT
@@ -290,7 +310,8 @@ def mypy_keys_batch(py: str, paths: list[Path], root: Path | None = None) -> dic
         groups.setdefault(_mypy_base_dir(path), []).append(path)
     result: dict[Path, set[str] | None] = {}
     for group in groups.values():
-        result.update(_mypy_group(py, group, root))
+        for part in _split_by_command_length(group):
+            result.update(_mypy_group(py, part, root))
     return result
 
 

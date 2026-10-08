@@ -107,3 +107,28 @@ def test_batch_script_prints_json_to_stdout(fake_audit_kit):
     assert proc.returncode == 0
     data = json.loads(proc.stdout.decode("utf-8"))
     assert data["a.py"] == [] and data["bad.py"][0].startswith("[표준 STD-02]")
+
+
+# ── mypy 일괄 검사: 명령줄 길이 한도 (PR #160 WinError 206 → 전 파일 '실행 못 함') ───────────
+
+
+def test_split_by_command_length_keeps_each_part_under_the_budget(monkeypatch):
+    monkeypatch.setattr(gate, "_CMD_CHAR_BUDGET", 100)
+    paths = [Path(f"repo/pkg/module_{i:04d}.py") for i in range(30)]
+    parts = gate._split_by_command_length(paths)
+    assert len(parts) > 1 and [p for part in parts for p in part] == paths  # 순서·구성 보존
+    assert all(sum(len(str(p)) + 1 for p in part) <= 100 or len(part) == 1 for part in parts)
+
+
+def test_mypy_keys_batch_runs_one_mypy_per_part_and_merges(monkeypatch, tmp_path):
+    monkeypatch.setattr(gate, "_CMD_CHAR_BUDGET", 120)
+    seen: list[int] = []
+
+    def fake_group(py, group, root):
+        seen.append(len(group))
+        return {p: {"e"} for p in group}
+
+    monkeypatch.setattr(gate, "_mypy_group", fake_group)
+    paths = [tmp_path / f"m{i:03d}.py" for i in range(20)]
+    result = gate.mypy_keys_batch("py", paths, tmp_path)
+    assert set(result) == set(paths) and len(seen) > 1 and sum(seen) == 20

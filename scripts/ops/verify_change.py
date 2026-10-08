@@ -540,6 +540,32 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
     return found, ""
 
 
+RUFF_CHUNK = 150  # 한 ruff 호출에 넘기는 파일 수 — 변경 1000개를 한 명령줄에 넣으면 윈도우 한도(32767자)를 넘는다(PR #160, WinError 206)
+
+
+def _run_ruff(ruff_cfg: list[str], files: list[str], head_tree: Path) -> subprocess.CompletedProcess:
+    """바뀐 파일에 ruff(JSON)를 묶음으로 나눠 돌리고 결과를 하나의 JSON 배열로 합친다.
+
+    한 묶음이라도 ruff 가 못 돌았으면(종료코드 2 이상·출력 비었음·JSON 아님) 그 묶음의 결과를 그대로 돌려줘서 `_new_ruff_findings` 가
+    '검사가 수행되지 않았다'로 드러내게 한다(조용히 0건 처리하지 않는다).
+    """
+    merged: list = []
+    worst = 0
+    for i in range(0, len(files), RUFF_CHUNK):
+        chunk = files[i : i + RUFF_CHUNK]
+        proc = run([PY, "-m", "ruff", "check", *ruff_cfg, "--no-cache", "--output-format", "json", *chunk], head_tree)
+        out = (proc.stdout or "").strip()
+        try:
+            rows = json.loads(out) if out else None
+        except json.JSONDecodeError:
+            rows = None
+        if proc.returncode >= 2 or rows is None:
+            return proc
+        merged += rows
+        worst = max(worst, proc.returncode)
+    return subprocess.CompletedProcess(["ruff", "check"], worst, json.dumps(merged), "")
+
+
 def _new_ruff_findings(
     ruff: subprocess.CompletedProcess | None, head_tree: Path, base_ref: str, head_ref: str | None
 ) -> list[str]:
@@ -627,14 +653,7 @@ def main() -> int:
             print(kit_note)
         _log("ruff 검사")
         ruff_cfg = ["--config", str(ROOT / CFG["ruff_config"])] if CFG["ruff_config"] else []
-        ruff = (
-            run(
-                [PY, "-m", "ruff", "check", *ruff_cfg, "--no-cache", "--output-format", "json", *py_changed],
-                head_tree,
-            )
-            if py_changed
-            else None
-        )
+        ruff = _run_ruff(ruff_cfg, py_changed, head_tree) if py_changed else None
     finally:
         killed = kill_leftovers(tmp.name)  # 측정 폴더 경로가 명령줄에 든 잔여 프로세스
         if killed:
