@@ -1058,3 +1058,40 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/ops/codebase_layer_audit.py` — `issue_key`
 - `scripts/session_tracker.py` — `clear_state`, `all_states`
 - `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
+
+---
+
+## 2026-10-08 추가 삭제(3차) — browser_tool submit 6파일 + gui_chat_state.py 전체 삭제
+
+근거: 운영 import·호출 0(실제 submit 플로우는 ai_orchestrator/local_agent/actions/browser_submit_with_user_approval.py 등 별도 구현이 담당, 이 파일들을 import 안 함), 문자열 경로·workflow·spec·Electron·.mcp.json·훅·docs 실행 안내·PC 예약 작업 참조 0. model_adapters.py 의 "impl" 문자열 1건만 걸려있었고(정책 설명용, 실제 호출 아님) 실제 구현 경로로 수정함. 삭제마다 같은 모듈만 전용으로 검사하는 시험 파일도 함께 제거(다른 기능과 섞인 test_browser_action_registry_risk_mapping_20260506.py 는 보존). 삭제 전후 `pytest --collect-only` 12849→12522(차이 327 = 삭제된 시험 파일 몫), 영향 시험(test_browser_gate_module_design, test_browser_action_registry_risk_mapping, model_adapters 관련 3파일) 전부 통과 확인(HAEHAN_NO_BROWSER_LAUNCH=1, py -3.14).
+복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용).
+
+소스 파일:
+- `ai_orchestrator/browser_tool/controlled_submit.py`
+- `ai_orchestrator/browser_tool/submit_policy.py`
+- `ai_orchestrator/browser_tool/submit_preview.py`
+- `ai_orchestrator/browser_tool/submit_execution_gate.py`
+- `ai_orchestrator/browser_tool/submit_audit_log.py`
+- `ai_orchestrator/browser_tool/submit_approval_state.py`
+- `local_agent/gui_chat_state.py` — `ChatUiController`, `ChatUiMessage`, `AiModeState`, `ChatUiState`, `mode_label_kr`, `ai_status_label_kr`
+
+전용 시험 파일(위 6개 소스만 검사):
+- `tests/test_browser_submit_controlled_browser_smoke_20260506.py`
+- `tests/test_browser_submit_controlled_internal_20260506.py`
+- `tests/test_browser_submit_gate_controlled_integration_smoke_20260506.py`
+- `tests/test_browser_submit_real_browser_audit_integration_20260506.py`
+- `tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py`
+- `tests/test_browser_submit_approval_state_persistence_20260506.py`
+- `tests/test_browser_submit_audit_log_persistence_20260506.py`
+- `tests/test_browser_submit_execution_gate_validator_20260506.py`
+- `tests/test_browser_submit_execution_gate_schema_20260506.py`
+- `tests/test_browser_submit_policy_validator_20260506.py`
+- `tests/test_browser_submit_policy_design_20260506.py`
+- `tests/test_browser_submit_preview_schema_20260506.py`
+
+전용 fixture(위 시험 파일에서만 참조, 다른 곳 0):
+- `tests/fixtures/browser_controlled_submit_form_20260506.html`
+- `tests/fixtures/browser_submit_policy_allowlist_20260506.json`
+
+보존(사용처 0 아님): `tests/fixtures/browser_submit_execution_gate_fixture_20260506.json` — 남아있는 `tests/test_browser_gate_module_design_20260506.py` 가 여전히 참조(파일 없으면 skip 처리되어 삭제해도 안 깨지지만, 다른 시험이 참조 중이라 보존).
+- `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)

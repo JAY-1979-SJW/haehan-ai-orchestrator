@@ -330,7 +330,7 @@ _SAFETY_POLICY_SUMMARY: list[dict[str, Any]] = [
         "decision": SafetyDecision.BLOCK,
         "reason": "투찰/전자서명/결제는 자동 실행 금지",
         "required_execution_location": "USER_DIRECT_REQUIRED",
-        "impl": "browser_tool/controlled_submit.py",
+        "impl": "ai_orchestrator/local_agent/actions/browser_submit_with_user_approval.py",
     },
 ]
 

@@ -2857,14 +2857,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/controlled_submit.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/browser_tool/domain_profile_registry.py": {
    "layer": "L2",
    "role": "policy",
@@ -3054,46 +3046,6 @@
    "role": "policy",
    "domain": "browser",
    "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/submit_approval_state.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/submit_audit_log.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "browser",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/submit_execution_gate.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/submit_policy.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/submit_preview.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
   },
@@ -7874,14 +7826,6 @@
    "source": "rule"
   },
   "local_agent/file_scanner.py": {
-   "layer": "L10",
-   "role": "local_agent",
-   "domain": "local_agent",
-   "reason": "로컬 에이전트 패키지",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "local_agent/gui_chat_state.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -17441,103 +17385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_approval_state_persistence_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_audit_log_persistence_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_controlled_browser_smoke_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_controlled_internal_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_execution_gate_schema_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_execution_gate_validator_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_gate_controlled_integration_smoke_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_policy_design_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/test_browser_submit_policy_optin_20260509.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_policy_validator_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_preview_schema_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_real_browser_audit_integration_20260506.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
