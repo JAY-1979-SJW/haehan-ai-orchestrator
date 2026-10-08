@@ -87,7 +87,7 @@
 | device_token 저장 | `local_agent.token_store` + `desktop` keyring 별도 | **local_agent.token_store** |
 | 서버 WS heartbeat | `local_agent.websocket_client` + `desktop.local_server._connect_to_server_ws` | **local_agent.websocket_client** (desktop에서 spawn) |
 | 트레이 아이콘 | `local_agent.gui_tray` + `desktop.tray_app` | **local_agent.gui_tray** |
-| 로그 redaction | `local_agent.redaction` + `desktop` ad-hoc | **local_agent.redaction** |
+| 로그 redaction | `local_agent.common.redaction` + `desktop` ad-hoc | **local_agent.common.redaction** |
 | 진단 텍스트 | `local_agent.connection_diagnostics` + `desktop` 패널 | **local_agent.connection_diagnostics** |
 
 ### 2.4 유지 (각 라인 고유)
@@ -329,9 +329,9 @@ HaehanAI.exe 실행
 4. dev key (`openai_key_store`)는 test mode에서만 사용
 5. admin UI는 role guard 통과 후에만 노출
 6. Chrome profile cookie / set-cookie 헤더 원문 출력 금지
-7. 로그/리포트 redaction 필수 (`local_agent.redaction`)
+7. 로그/리포트 redaction 필수 (`local_agent.common.redaction`)
 
-### 8.2 redaction 패턴 (통합 source = `local_agent.redaction`)
+### 8.2 redaction 패턴 (통합 source = `local_agent.common.redaction`)
 
 - `device_token=...` → `[REDACTED]`
 - `registration_code=...` → `[REDACTED]`

@@ -84,7 +84,7 @@ source_modules =
     ai_orchestrator.vendor_directory.vendor_directory
     ai_orchestrator.web_task.web_task_templates
     local_agent.browser.approval.browser_approval_errors
-    local_agent.config
+    local_agent.common.config
     orchestrator_v1.core.logger
     orchestrator_v1.core.logging_utils
     orchestrator_v1.core.models
@@ -525,7 +525,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_router
     local_agent.actions
     local_agent.agent
-    local_agent.audit
+    local_agent.common.audit
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
@@ -546,7 +546,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
-    local_agent.desktop_config
+    local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
     local_agent.gui.gui_icons
@@ -557,7 +557,7 @@ forbidden_modules =
     local_agent.login_auto_flow
     local_agent.login_state_detector
     local_agent.network_bypass
-    local_agent.redaction
+    local_agent.common.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.policy.site_compliance_gate
@@ -1653,7 +1653,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_router
     local_agent.actions
     local_agent.agent
-    local_agent.audit
+    local_agent.common.audit
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
@@ -1669,7 +1669,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
-    local_agent.desktop_config
+    local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
     local_agent.gui.gui_icons
@@ -1679,7 +1679,7 @@ forbidden_modules =
     local_agent.login_auto_flow
     local_agent.login_state_detector
     local_agent.network_bypass
-    local_agent.redaction
+    local_agent.common.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
@@ -2703,7 +2703,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_router
     local_agent.actions
     local_agent.agent
-    local_agent.audit
+    local_agent.common.audit
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
@@ -2724,7 +2724,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
-    local_agent.desktop_config
+    local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
     local_agent.gui.gui_icons
@@ -2735,7 +2735,7 @@ forbidden_modules =
     local_agent.login_auto_flow
     local_agent.login_state_detector
     local_agent.network_bypass
-    local_agent.redaction
+    local_agent.common.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.policy.site_compliance_gate
@@ -3804,7 +3804,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_router
     local_agent.actions
     local_agent.agent
-    local_agent.audit
+    local_agent.common.audit
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
@@ -3820,7 +3820,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
-    local_agent.desktop_config
+    local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
     local_agent.gui.gui_icons
@@ -3830,7 +3830,7 @@ forbidden_modules =
     local_agent.login_auto_flow
     local_agent.login_state_detector
     local_agent.network_bypass
-    local_agent.redaction
+    local_agent.common.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
@@ -4966,7 +4966,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_router
     local_agent.actions
     local_agent.agent
-    local_agent.audit
+    local_agent.common.audit
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
@@ -4982,7 +4982,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
-    local_agent.desktop_config
+    local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
     local_agent.gui.gui_icons
@@ -4992,7 +4992,7 @@ forbidden_modules =
     local_agent.login_auto_flow
     local_agent.login_state_detector
     local_agent.network_bypass
-    local_agent.redaction
+    local_agent.common.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
@@ -5253,7 +5253,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_router
     local_agent.actions
     local_agent.agent
-    local_agent.audit
+    local_agent.common.audit
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
@@ -5269,7 +5269,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
-    local_agent.desktop_config
+    local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
     local_agent.gui.gui_icons
@@ -5279,7 +5279,7 @@ forbidden_modules =
     local_agent.login_auto_flow
     local_agent.login_state_detector
     local_agent.network_bypass
-    local_agent.redaction
+    local_agent.common.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper
@@ -5742,7 +5742,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_router
     local_agent.actions
     local_agent.agent
-    local_agent.audit
+    local_agent.common.audit
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
@@ -5760,7 +5760,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
-    local_agent.desktop_config
+    local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
     local_agent.gui.gui_icons
@@ -5771,7 +5771,7 @@ forbidden_modules =
     local_agent.login_auto_flow
     local_agent.login_state_detector
     local_agent.network_bypass
-    local_agent.redaction
+    local_agent.common.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.policy.site_compliance_gate
@@ -6424,7 +6424,7 @@ type = forbidden
 source_modules =
     local_agent.actions
     local_agent.agent
-    local_agent.audit
+    local_agent.common.audit
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
@@ -6440,7 +6440,7 @@ source_modules =
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
-    local_agent.desktop_config
+    local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
     local_agent.gui.gui_icons
@@ -6450,7 +6450,7 @@ source_modules =
     local_agent.login_auto_flow
     local_agent.login_state_detector
     local_agent.network_bypass
-    local_agent.redaction
+    local_agent.common.redaction
     local_agent.registration_client
     local_agent.server_action_adapter
     local_agent.site_mapper

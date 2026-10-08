@@ -23,8 +23,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import ai_orchestrator.gates.approval as _ap
 import ai_orchestrator.agent_hub.registry.facade as reg
+import ai_orchestrator.gates.approval as _ap
 
 
 @pytest.fixture(autouse=True)
@@ -50,8 +50,8 @@ def _make_test_client(user):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.agent_hub.router.root import local_agent_router
+    from ai_orchestrator.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -230,7 +230,7 @@ def test_approve_with_token_id_succeeds_public_id_rejected():
 def test_result_data_approval_id_is_public_id_not_token_id(tmp_path, monkeypatch):
     reg.clear()
     import local_agent.actions as _actions
-    import local_agent.config as _cfg
+    import local_agent.common.config as _cfg
     from local_agent.websocket_client import process_task
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)

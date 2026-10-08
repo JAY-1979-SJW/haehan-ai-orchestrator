@@ -24,9 +24,11 @@ import random
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
-from . import __version__, config
+from local_agent import __version__
+from local_agent.common import config
+from local_agent.common.audit import log_local_event
+
 from .actions import FORBIDDEN_ACTIONS, execute_action
-from .audit import log_local_event
 from .network_bypass import websocket_connect_kwargs
 
 

@@ -29,11 +29,11 @@ import os
 import re
 import time
 from typing import Any, Callable
-
-from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 from urllib.parse import urlparse
 
-from . import audit as _audit
+from local_agent.common import audit as _audit
+from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
+
 from .web_reader import (
     analyze_html_structure,
     validate_url_for_readonly_open,

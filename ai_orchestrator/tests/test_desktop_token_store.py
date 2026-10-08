@@ -19,9 +19,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
-from local_agent import desktop_config as _cfg
-from local_agent import redaction as _red
 from local_agent import token_store as _ts
+from local_agent.common import desktop_config as _cfg
+from local_agent.common import redaction as _red
 
 # ─── Fake keyring backend ────────────────────────────────────────────────
 

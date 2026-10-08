@@ -6905,7 +6905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/audit.py": {
+  "local_agent/common/audit.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7073,7 +7073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/config.py": {
+  "local_agent/common/config.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "local_agent",
@@ -7089,7 +7089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/desktop_config.py": {
+  "local_agent/common/desktop_config.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7177,7 +7177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/redaction.py": {
+  "local_agent/common/redaction.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -23370,6 +23370,14 @@
    "source": "rule"
   },
   "local_agent/browser/bridge/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/common/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

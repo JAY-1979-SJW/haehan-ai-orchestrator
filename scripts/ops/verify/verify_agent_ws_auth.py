@@ -30,8 +30,10 @@ def _websocket_close_code(exc: object) -> int | None:
 async def _probe(server_url: str, timeout: float) -> tuple[bool, str, str]:
     from local_agent import (  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
         __version__,
-        desktop_config,
         token_store,
+    )
+    from local_agent.common import (
+        desktop_config,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
     )
     from local_agent.connection_diagnostics import normalize_ws_url
     from local_agent.network_bypass import websocket_connect_kwargs

@@ -25,7 +25,7 @@ def _discover_server_base_url() -> str:
     try:
         import json
 
-        discovery_path = Path(__file__).resolve().parents[1] / "data" / "runtime" / "server_info.json"
+        discovery_path = Path(__file__).resolve().parents[2] / "data" / "runtime" / "server_info.json"
         if discovery_path.exists():
             info = json.loads(discovery_path.read_text(encoding="utf-8"))
             host, port = info.get("host"), info.get("port")

@@ -22,8 +22,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 from local_agent import agent as _agent
-from local_agent import desktop_config as _cfg
 from local_agent import token_store as _ts
+from local_agent.common import desktop_config as _cfg
 from local_agent.registration_client import (
     RegistrationError,
     register_with_code,

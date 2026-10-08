@@ -24,8 +24,8 @@ from urllib.parse import urlparse
 
 from ai_orchestrator.browser_tool.router import route_browser_task_with_params
 from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
-
-from . import browser_actions, config
+from local_agent import browser_actions
+from local_agent.common import config
 
 logger = logging.getLogger(__name__)
 

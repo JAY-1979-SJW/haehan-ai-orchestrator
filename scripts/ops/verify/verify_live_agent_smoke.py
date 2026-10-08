@@ -51,7 +51,8 @@ class Report:
 
 
 def _load_credentials(server_url: str) -> tuple[str, str]:
-    from local_agent import desktop_config, token_store
+    from local_agent import token_store
+    from local_agent.common import desktop_config
 
     cfg = desktop_config.load_config()
     effective_server = (server_url or cfg.server_url or DEFAULT_SERVER_URL).rstrip("/")

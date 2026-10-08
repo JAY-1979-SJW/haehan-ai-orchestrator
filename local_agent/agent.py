@@ -23,13 +23,15 @@ from pathlib import Path
 from urllib import error as _urlerr
 from urllib import request as _urlreq
 
-from . import __version__, config
-from . import desktop_config as _desk_cfg
+from local_agent import __version__
+from local_agent.common import config
+from local_agent.common import desktop_config as _desk_cfg
+from local_agent.common.audit import log_local_event
+from local_agent.common.redaction import safe_summary as _safe_summary
+
 from . import network_bypass as _network_bypass
 from . import token_store as _token_store
 from .actions import execute_action
-from .audit import log_local_event
-from .redaction import safe_summary as _safe_summary
 from .registration_client import (
     RegistrationError,
 )
