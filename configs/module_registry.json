@@ -6041,7 +6041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_cafe_adapter.py": {
+  "tests/naver_cafe/test_naver_cafe_adapter.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -6049,7 +6049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_cafe_adapter_no_write.py": {
+  "tests/naver_cafe/test_naver_cafe_adapter_no_write.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -6057,7 +6057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_cafe_collection.py": {
+  "tests/naver_cafe/test_naver_cafe_collection.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -6065,7 +6065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_cafe_collection_parse_only.py": {
+  "tests/naver_cafe/test_naver_cafe_collection_parse_only.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -6073,7 +6073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_openapi_collection.py": {
+  "tests/naver_search/test_naver_openapi_collection.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -6081,7 +6081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_search_db.py": {
+  "tests/naver_search/test_naver_search_db.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -6089,7 +6089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_search_incremental.py": {
+  "tests/naver_search/test_naver_search_incremental.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -6097,7 +6097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_search_router.py": {
+  "tests/naver_search/test_naver_search_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -6105,7 +6105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_search_schedule.py": {
+  "tests/naver_search/test_naver_search_schedule.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -6169,7 +6169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_adapter_interface_unit.py": {
+  "tests/site_engine/test_site_adapter_interface_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6177,7 +6177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_adapter_runner.py": {
+  "tests/site_engine/test_site_adapter_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6185,7 +6185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_job_state.py": {
+  "tests/site_engine/test_site_job_state.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6193,7 +6193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_mapper.py": {
+  "tests/site_engine/test_site_mapper.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6201,7 +6201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_session_manager.py": {
+  "tests/site_engine/test_site_session_manager.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6209,7 +6209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_endpoints.py": {
+  "tests/site_engine/test_sites_endpoints.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6217,7 +6217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_health.py": {
+  "tests/site_engine/test_sites_health.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6225,7 +6225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_import_smoke.py": {
+  "tests/site_engine/test_sites_import_smoke.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6233,7 +6233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_models.py": {
+  "tests/site_engine/test_sites_models.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6241,7 +6241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_registry.py": {
+  "tests/site_engine/test_sites_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6249,7 +6249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_secrets_policy.py": {
+  "tests/site_engine/test_sites_secrets_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

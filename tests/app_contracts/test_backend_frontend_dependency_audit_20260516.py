@@ -9,7 +9,7 @@
 판정 결론:
   1. site-tasks/dry-run
      - admin-web frontend에 직접 참조 없음
-     - ai_orchestrator/tests/test_sites_endpoints.py에서 status/task_id/target_site 키 검증
+     - tests/site_engine/test_sites_endpoints.py에서 status/task_id/target_site 키 검증
      - KEEP_CURRENT_CONTRACT (TEST_ONLY_DEPENDENCY)
 
   2. web-tasks/run
@@ -39,7 +39,7 @@ from fastapi.testclient import TestClient
 DEPENDENCY_TABLE = {
     "POST /api/v1/site-tasks/dry-run": {
         "admin_web_files": [],
-        "test_files": ["ai_orchestrator/tests/test_sites_endpoints.py"],
+        "test_files": ["tests/site_engine/test_sites_endpoints.py"],
         "used_keys_in_tests": ["status", "task_id", "target_site", "error_code"],
         "used_keys_in_frontend": [],
         "verdict": "TEST_ONLY_DEPENDENCY",

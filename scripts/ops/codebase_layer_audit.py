@@ -631,8 +631,8 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
 
 # STORAGE_BOUNDARY test known debt (tests 폴더 내 sqlite3 사용)
 _STORAGE_BOUNDARY_TEST_KNOWN_DEBT: set[str] = {
-    "ai_orchestrator/tests/test_naver_search_db.py",
-    "ai_orchestrator/tests/test_naver_search_incremental.py",
+    "tests/naver_search/test_naver_search_db.py",
+    "tests/naver_search/test_naver_search_incremental.py",
 }
 
 
